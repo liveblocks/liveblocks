@@ -1,0 +1,50 @@
+.button {
+  position: relative;
+  outline: none;
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  gap: 8px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 14px;
+  height: 2rem;
+  font-weight: 500;
+}
+
+.button.square {
+  width: 2rem;
+}
+
+.button:not(.square) {
+  padding-right: 12px;
+  padding-left: 12px;
+}
+
+.primary {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  border: 1px solid var(--color-accent);
+  color: white;
+}
+
+.secondary {
+  background: black;
+  border: 1px solid black;
+  color: white;
+}
+
+.tertiary {
+  background: white;
+  border: 1px solid #dcdce4;
+}
+
+.ghost {
+  border: 1px solid transparent;
+  background-color: transparent;
+}
+
+.ghost:hover,
+.host:focus {
+  border: 1px solid #dcdce4;
+}

@@ -10,7 +10,9 @@ Made with
 - Install Playwright: `npx playwright install`
 - At the root level, add a file `.env.local`
 - Go to https://liveblocks.io/dashboard/apikeys, copy your secret key
-- In `.env.local`, add the the env variable: `LIVEBLOCKS_SECRET_KEY=YOUR_SECRET_KEY`
+- In `.env.local`, add the the env variable:
+  `LIVEBLOCKS_SECRET_KEY=YOUR_SECRET_KEY` and
+  `NEXT_PUBLIC_LIVEBLOCKS_BASE_URL=https://api.liveblocks.io/v7`
 - run `npm install`
 - run `npm run dev`
 - In another terminal, run `npm run test`

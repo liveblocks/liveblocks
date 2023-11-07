@@ -7,6 +7,10 @@
   right: 0;
   bottom: 0;
   left: 0;
+
+  --editor-max-width: 800px;
+  --editor-min-height: 1100px;
+  --comments-width: 310px;
 }
 
 .editorHeader {
@@ -44,14 +48,50 @@
   cursor: default;
 }
 
+.editorContainerOffset {
+  margin-left: calc(0px - var(--comments-width));
+  min-height: 0;
+  height: auto;
+}
+
 .editorContainer {
   position: relative;
-  min-height: 100%;
+  min-height: var(--editor-min-height);
   width: 100%;
-  max-width: 900px;
+  max-width: var(--editor-max-width);
   margin: var(--space-8) auto;
   border: 1px solid var(--color-border);
   background: var(--color-surface-elevated);
+}
+
+.threadListContainer {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  margin-left: var(--space-8);
+  min-width: var(--comments-width);
+}
+
+.mobileThreadListContainer {
+  display: none;
+}
+
+@media (max-width: 1279px) {
+  .editorContainerOffset {
+    margin-left: 0;
+    padding: 0 var(--space-8);
+  }
+
+  .threadListContainer {
+    display: none;
+  }
+
+  .mobileThreadListContainer {
+    display: block;
+    max-width: 100%;
+    width: var(--editor-max-width);
+    margin: var(--space-8) auto;
+  }
 }
 
 .placeholder {

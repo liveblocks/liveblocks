@@ -1,19 +1,18 @@
+import { nn } from "@liveblocks/core";
 import { authorize } from "@liveblocks/node";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 import { randomUser } from "../_utils";
 
-const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
-const LIVEBLOCKS_AUTHORIZE_ENDPOINT = process.env.LIVEBLOCKS_AUTHORIZE_ENDPOINT;
+const SECRET_KEY = nn(
+  process.env.LIVEBLOCKS_SECRET_KEY,
+  "Please specify LIVEBLOCKS_SECRET_KEY env var"
+);
 
 export default async function legacyAuth(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  if (!API_KEY) {
-    return res.status(403).end();
-  }
-
   const room = (req.body as { room: string }).room;
   const user = randomUser();
 
@@ -24,10 +23,13 @@ export default async function legacyAuth(
       name: user.name,
       issuedBy: "/api/auth/legacy-token",
     },
-    secret: API_KEY,
+    secret: SECRET_KEY,
 
     // @ts-expect-error - Hidden setting
-    liveblocksAuthorizeEndpoint: LIVEBLOCKS_AUTHORIZE_ENDPOINT,
+    baseUrl: nn(
+      process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
+      "Please specify NEXT_PUBLIC_LIVEBLOCKS_BASE_URL env var"
+    ),
   });
   return res.status(response.status).end(response.body);
 }

@@ -3,10 +3,10 @@
   "private": true,
   "main": "index.js",
   "dependencies": {
-    "@typescript-eslint/eslint-plugin": "^5.60.1",
-    "@typescript-eslint/parser": "^5.60.1",
-    "eslint": "^8.44.0",
-    "eslint-plugin-import": "^2.27.5",
+    "@typescript-eslint/eslint-plugin": "^6.9.0",
+    "@typescript-eslint/parser": "^6.9.0",
+    "eslint": "^8.52.0",
+    "eslint-plugin-import": "^2.29.0",
     "eslint-plugin-simple-import-sort": "^10.0.0"
   }
 }

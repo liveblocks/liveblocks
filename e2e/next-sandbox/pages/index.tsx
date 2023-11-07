@@ -42,6 +42,16 @@ export default function Home() {
           </ul>
         </li>
         <li>
+          <Link href="/comments?room=e2e-comments">
+            <a>Comments</a>
+          </Link>
+        </li>
+        <li>
+          <Link href="/comments/with-suspense?room=e2e-comments-with-suspense">
+            <a>Comments (with Suspense)</a>
+          </Link>
+        </li>
+        <li>
           <Link href="/offline?room=e2e-offline">
             <a>Offline</a>
           </Link>
@@ -85,6 +95,11 @@ export default function Home() {
               </Link>
             </li>
           </ul>
+        </li>
+        <li>
+          <Link href="/multi?room=e2e-multi">
+            <a>Multiple rooms</a>
+          </Link>
         </li>
       </ul>
     </div>

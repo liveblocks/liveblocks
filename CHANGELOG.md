@@ -1,3 +1,111 @@
+# v1.5.2
+
+### `@liveblocks/react`
+
+- Fix return type of `resolveUsers`.
+
+# v1.5.1
+
+- Fixes a bug in the bounds check of the `backgroundKeepAliveTimeout` option.
+
+# v1.5.0
+
+Support multiple RoomProviders, or mixing and matching our React package in the
+same app with a Redux and/or Zustand instance.
+
+At the client level, there is a new API for entering/leaving rooms, which we’re
+now recommending over the old APIs. (The old APIs remain working exactly how
+they are today, however.)
+
+```ts
+// Old APIs we'll no longer be recommending (but that will remain working)
+const room = client.enter("my-room", options);
+client.getRoom("my-room");
+client.leave("my-room");
+```
+
+```ts
+// New API we'll be recommending instead
+const { room, leave } = client.enterRoom("my-room", options);
+leave();
+```
+
+### `@liveblocks/client`
+
+- New client config option: `backgroundKeepAliveTimeout` (a numeric value in
+  milliseconds). See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-client#createClientBackgroundKeepAliveTimeout).
+- New APIs:
+  - `Client.enterRoom(roomId, options)` – enters the room and return both the
+    room and an "unsubscribe function" to leave that room again. This newer API
+    supports entering/leaving the same room multiple times, making it possible
+    to connect to the same room from different parts of your application. See
+    [docs](https://liveblocks.io/docs/api-reference/liveblocks-client#Client.enterRoom).
+  - `Client.logout()` – Call this on the Liveblocks client when you log out a
+    user in your application. It will purge all auth tokens and force-leave any
+    rooms, if any are still connected. See
+    [docs](https://liveblocks.io/docs/api-reference/liveblocks-client#Client.logout).
+  - `LiveList.clone()` – see
+    [docs](https://liveblocks.io/docs/api-reference/liveblocks-client#LiveList.clone).
+  - `LiveMap.clone()` – see
+    [docs](https://liveblocks.io/docs/api-reference/liveblocks-client#LiveMap.clone).
+  - `LiveObject.clone()` – see
+    [docs](https://liveblocks.io/docs/api-reference/liveblocks-client#LiveObject.clone).
+- Deprecated APIs:
+  - `client.enter(roomId, options)`
+  - `client.leave(roomId)`
+- Renamed enter option: `shouldInitiallyConnect` → `autoConnect`. Its meaning or
+  working did not change.
+- Fixes a potential `Cannot set parent: node already has a parent` error when
+  initializing storage with Live datastructures that are already tied to a
+  Storage tree.
+
+### `@liveblocks/react`
+
+- Support using multiple `RoomProvider` components in your component tree for
+  the same room ID.
+- Renamed `RoomProvider` prop: `shouldInitiallyConnect` → `autoConnect`. Its
+  meaning or working did not change.
+- New hook:
+  - `useOthersListener({ type, user, others })`, see
+    [docs](https://liveblocks.io/docs/api-reference/liveblocks-react#useOthersListener)
+
+### `@liveblocks/redux`
+
+- **Breaking:** The `leaveRoom()` function no longer accepts a `roomId`. It will
+  always leave the currently joined room.
+
+### `@liveblocks/zustand`
+
+- The `enterRoom()` function will now return a leave callback function.
+- **Breaking:** The `leaveRoom()` function no longer accepts a `roomId`. It will
+  always leave the currently joined room.
+
+# v1.4.8
+
+### `create-liveblocks-app`
+
+- Add Comments hooks and options to `--init` command.
+
+### `@liveblocks/client`
+
+- Export all `CommentBody`-related types.
+
+### `@liveblocks/react-comments`
+
+- Improve default styles:
+  - Cap CSS selector specificity to improve overridability.
+  - Set tokens on `.lb-root` instead of `:root` to improve cascading tokens
+    (overriding `--lb-accent` on `body` for example, didn't create the expected
+    results), and to work within shadow DOMs.
+- Fix reactions and links styles on Safari.
+
+# v1.4.7
+
+### `@liveblocks/react`
+
+- Fix `userIds` type in `ResolveUsersArgs`.
+
 # v1.4.6
 
 ### `@liveblocks/react`
@@ -11,8 +119,8 @@
   user info of a single user ID, this function will now expect a list of users'
   info matching the provided list of user IDs.
 - **Breaking (beta):** The `ResolveUserOptions` and
-  `ResolveMentionSuggestionsOptions` types were renamed to `ResolveUserArgs` and
-  `ResolveMentionSuggestionsArgs` respectively.
+  `ResolveMentionSuggestionsOptions` types were renamed to `ResolveUsersArgs`
+  and `ResolveMentionSuggestionsArgs` respectively.
 - `resolveUsers` and `resolveMentionSuggestions` now accept synchronous
   functions.
 - `resolveUsers` now also provides the current room ID.

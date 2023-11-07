@@ -1,6 +1,6 @@
 import { assertNever, nn } from "../lib/assert";
 import type { Json } from "../lib/Json";
-import { entries, isPlainObject } from "../lib/utils";
+import { deepClone, entries, isPlainObject } from "../lib/utils";
 import type { CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
@@ -115,6 +115,14 @@ export function isLiveRegister(value: unknown): value is LiveRegister<Json> {
   return value instanceof LiveRegister;
 }
 
+export function cloneLson<L extends Lson | undefined>(value: L): L {
+  return value === undefined
+    ? (undefined as L)
+    : isLiveStructure(value)
+    ? (value.clone() as L)
+    : (deepClone(value) as L);
+}
+
 export function liveNodeToLson(obj: LiveNode): Lson {
   if (obj instanceof LiveRegister) {
     return obj.data;
@@ -200,18 +208,18 @@ export function getTreesDiffOperations(
           });
           break;
         case CrdtType.OBJECT:
-          ops.push(
-            crdt.parentId
-              ? {
-                  type: OpCode.CREATE_OBJECT,
-                  id,
-                  parentId: crdt.parentId,
-                  parentKey: crdt.parentKey,
-                  data: crdt.data,
-                }
-              : // Root object
-                { type: OpCode.CREATE_OBJECT, id, data: crdt.data }
-          );
+          if (crdt.parentId === undefined || crdt.parentKey === undefined) {
+            throw new Error(
+              "Internal error. Cannot serialize storage root into an operation"
+            );
+          }
+          ops.push({
+            type: OpCode.CREATE_OBJECT,
+            id,
+            parentId: crdt.parentId,
+            parentKey: crdt.parentKey,
+            data: crdt.data,
+          });
           break;
         case CrdtType.MAP:
           ops.push({

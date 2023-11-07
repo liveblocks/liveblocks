@@ -1,12 +1,12 @@
 import { assertNever } from "../lib/assert";
 import type { Pos } from "../lib/position";
 import { asPos } from "../lib/position";
-import type { CreateChildOp, Op } from "../protocol/Op";
+import type { CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { SerializedCrdt } from "../protocol/SerializedCrdt";
 import type * as DevTools from "../types/DevToolsTreeNode";
 import type { Immutable } from "../types/Immutable";
-import type { LiveNode } from "./Lson";
+import type { LiveNode, Lson } from "./Lson";
 import type { StorageUpdate } from "./StorageUpdates";
 
 export type ApplyResult =
@@ -256,7 +256,7 @@ export abstract class AbstractCrdt {
   }
 
   /** @internal */
-  abstract _attachChild(op: CreateChildOp, source: OpSource): ApplyResult;
+  abstract _attachChild(op: CreateOp, source: OpSource): ApplyResult;
 
   /** @internal */
   _detach(): void {
@@ -295,7 +295,7 @@ export abstract class AbstractCrdt {
     parentId: string,
     parentKey: string,
     pool?: ManagedPool
-  ): CreateChildOp[];
+  ): CreateOp[];
 
   /** @internal */
   abstract _serialize(): SerializedCrdt;
@@ -368,4 +368,10 @@ export abstract class AbstractCrdt {
     // Return cached version
     return this._cachedImmutable;
   }
+
+  /**
+   * Returns a deep clone of the current LiveStructure, suitable for insertion
+   * in the tree elsewhere.
+   */
+  abstract clone(): Lson;
 }

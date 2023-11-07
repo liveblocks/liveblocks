@@ -263,5 +263,13 @@
     "technologies": ["storage", "nodejs"],
     "date": "2023-10-06",
     "featured": true
+  },
+  {
+    "title": "How to send email notifications when comments are created",
+    "path": "/how-to-send-email-notifications-when-comments-are-created",
+    "topics": ["tutorials", "webhooks", "notifications"],
+    "technologies": ["react-comments", "nodejs"],
+    "date": "2023-11-01",
+    "featured": true
   }
 ]

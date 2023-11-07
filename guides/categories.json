@@ -41,6 +41,10 @@
       "name": "Databases"
     },
     {
+      "id": "notifications",
+      "name": "Notifications"
+    },
+    {
       "id": "errors",
       "name": "Errors"
     }
@@ -97,6 +101,10 @@
     {
       "id": "yjs",
       "name": "Yjs"
+    },
+    {
+      "id": "react-comments",
+      "name": "React Comments"
     },
     {
       "id": "lexical",

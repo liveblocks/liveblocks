@@ -24,7 +24,9 @@ type Presence = {
   } | null;
 };
 
-const room = client.enter<Presence>(roomId, {
+// If you no longer need the room (for example when you unmount your
+// component), make sure to call leave()
+const { room, leave } = client.enterRoom<Presence>(roomId, {
   initialPresence: { cursor: null },
 });
 

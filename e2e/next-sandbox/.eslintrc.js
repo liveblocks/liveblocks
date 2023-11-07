@@ -1,8 +1,17 @@
 const commonRestrictedSyntax = require("@liveblocks/eslint-config/restricted-syntax");
 
 module.exports = {
+  settings: {
+    react: {
+      version: "detect", // Needed for eslint-plugin-react
+    },
+  },
   root: true,
-  extends: ["@liveblocks/eslint-config"],
+  extends: [
+    "@liveblocks/eslint-config",
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended",
+  ],
   rules: {
     // -------------------------------
     // Custom syntax we want to forbid

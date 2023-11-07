@@ -8,6 +8,7 @@ import type {
   LiveObject,
   LostConnectionEvent,
   LsonObject,
+  OthersEvent,
   Room,
   Status,
   User,
@@ -17,6 +18,7 @@ import type {
   AsyncCache,
   BaseMetadata,
   CommentData,
+  EnterOptions,
   RoomEventMessage,
   ToImmutable,
 } from "@liveblocks/core";
@@ -46,6 +48,7 @@ import type { CommentsApiError } from "./comments/errors";
 import { useDebounce } from "./comments/lib/use-debounce";
 import { useAsyncCache } from "./lib/use-async-cache";
 import { useInitial } from "./lib/use-initial";
+import { useLatest } from "./lib/use-latest";
 import { useRerender } from "./lib/use-rerender";
 import type {
   InternalRoomContextBundle,
@@ -77,7 +80,7 @@ const missing_unstable_batchedUpdates = (
       ...
     </RoomProvider>
 
-Why? Please see https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child for more information`;
+Why? Please see https://liveblocks.io/docs/platform/troubleshooting#stale-props-zombie-child for more information`;
 
 const superfluous_unstable_batchedUpdates =
   "You don’t need to pass unstable_batchedUpdates to RoomProvider anymore, since you’re on React 18+ already.";
@@ -102,12 +105,6 @@ function alwaysEmptyList() {
 // reference, to avoid a React.useCallback() wrapper.
 function alwaysNull() {
   return null;
-}
-
-// Don't try to inline this. This function is intended to be a stable
-// reference, to avoid a React.useCallback() wrapper.
-function alwaysConnecting() {
-  return "connecting" as const;
 }
 
 function makeMutationContext<
@@ -158,7 +155,7 @@ type Options<TUserMeta extends BaseUserMeta> = {
    */
   resolveUsers?: (
     args: ResolveUsersArgs
-  ) => PromiseOrNot<TUserMeta["info"] | undefined>;
+  ) => PromiseOrNot<(TUserMeta["info"] | undefined)[] | undefined>;
 
   /**
    * @beta
@@ -170,9 +167,10 @@ type Options<TUserMeta extends BaseUserMeta> = {
   ) => PromiseOrNot<string[]>;
 
   /**
-   * @internal Internal endpoint
+   * @internal To point the client to a different Liveblocks server. Only
+   * useful for Liveblocks developers. Not for end users.
    */
-  serverEndpoint?: string;
+  baseUrl?: string;
 };
 
 let hasWarnedIfNoResolveUsers = false;
@@ -238,21 +236,76 @@ export function createRoomContext<
   TRoomEvent,
   TThreadMetadata
 > {
-  const RoomContext = React.createContext<Room<
-    TPresence,
-    TStorage,
-    TUserMeta,
-    TRoomEvent
-  > | null>(null);
+  type TRoom = Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
+  type TRoomLeavePair = { room: TRoom; leave: () => void };
 
-  function RoomProvider(props: RoomProviderProps<TPresence, TStorage>) {
-    const {
-      id: roomId,
-      initialPresence,
-      initialStorage,
-      unstable_batchedUpdates,
-      shouldInitiallyConnect,
-    } = props;
+  const RoomContext = React.createContext<TRoom | null>(null);
+
+  /**
+   * RATIONALE:
+   * At the "Outer" RoomProvider level, we keep a cache and produce
+   * a stableEnterRoom function, which we pass down to the real "Inner"
+   * RoomProvider level.
+   *
+   * The purpose is to ensure that if `stableEnterRoom("my-room")` is called
+   * multiple times for the same room ID, it will always return the exact same
+   * (cached) value, so that in total only a single "leave" function gets
+   * produced and registered in the client.
+   *
+   * If we didn't use this cache, then in React StrictMode
+   * stableEnterRoom("my-room") might get called multiple (at least 4) times,
+   * causing more leave functions to be produced in the client, some of which
+   * we cannot get a hold on (because StrictMode would discard those results by
+   * design). This would make it appear to the Client that the Room is still in
+   * use by some party that hasn't called `leave()` on it yet, thus causing the
+   * Room to not be freed and destroyed when the component unmounts later.
+   */
+  function RoomProviderOuter(props: RoomProviderProps<TPresence, TStorage>) {
+    const [cache] = React.useState<Map<string, TRoomLeavePair>>(
+      () => new Map()
+    );
+
+    // Produce a version of client.enterRoom() that when called for the same
+    // room ID multiple times, will not keep producing multiple leave
+    // functions, but instead return the cached one.
+    const stableEnterRoom = React.useCallback(
+      (
+        roomId: string,
+        options: EnterOptions<TPresence, TStorage>
+      ): TRoomLeavePair => {
+        const cached = cache.get(roomId);
+        if (cached) return cached;
+
+        const rv = client.enterRoom<TPresence, TStorage, TUserMeta, TRoomEvent>(
+          roomId,
+          options
+        );
+
+        // Wrap the leave function to also delete the cached value
+        const origLeave = rv.leave;
+        rv.leave = () => {
+          origLeave();
+          cache.delete(roomId);
+        };
+
+        cache.set(roomId, rv);
+        return rv;
+      },
+      [cache]
+    );
+
+    return <RoomProviderInner {...props} stableEnterRoom={stableEnterRoom} />;
+  }
+
+  function RoomProviderInner(
+    props: RoomProviderProps<TPresence, TStorage> & {
+      stableEnterRoom: (
+        roomId: string,
+        options: EnterOptions<TPresence, TStorage>
+      ) => TRoomLeavePair;
+    }
+  ) {
+    const { id: roomId, stableEnterRoom } = props;
 
     if (process.env.NODE_ENV !== "production") {
       if (!roomId) {
@@ -279,48 +332,47 @@ export function createRoomContext<
 
     // Note: We'll hold on to the initial value given here, and ignore any
     // changes to this argument in subsequent renders
-    const frozen = useInitial({
-      initialPresence,
-      initialStorage,
-      unstable_batchedUpdates,
-      shouldInitiallyConnect:
-        shouldInitiallyConnect === undefined
-          ? typeof window !== "undefined"
-          : shouldInitiallyConnect,
+    const frozenProps = useInitial({
+      initialPresence: props.initialPresence,
+      initialStorage: props.initialStorage,
+      unstable_batchedUpdates: props.unstable_batchedUpdates,
+      autoConnect:
+        props.autoConnect ??
+        props.shouldInitiallyConnect ??
+        typeof window !== "undefined",
     });
 
-    const [room, setRoom] = React.useState<
-      Room<TPresence, TStorage, TUserMeta, TRoomEvent>
-    >(() =>
-      client.enter(roomId, {
-        initialPresence: frozen.initialPresence,
-        initialStorage: frozen.initialStorage,
-        shouldInitiallyConnect: frozen.shouldInitiallyConnect,
-        unstable_batchedUpdates: frozen.unstable_batchedUpdates,
+    const [{ room }, setRoomLeavePair] = React.useState(() =>
+      stableEnterRoom(roomId, {
+        ...frozenProps,
+        autoConnect: false, // Deliberately using false here on the first render, see below
       })
     );
 
     React.useEffect(() => {
-      const room = client.enter<TPresence, TStorage, TUserMeta, TRoomEvent>(
-        roomId,
-        {
-          initialPresence: frozen.initialPresence,
-          initialStorage: frozen.initialStorage,
-          shouldInitiallyConnect: frozen.shouldInitiallyConnect,
-          unstable_batchedUpdates: frozen.unstable_batchedUpdates,
-        }
-      );
+      const pair = stableEnterRoom(roomId, frozenProps);
 
-      setRoom(room);
+      setRoomLeavePair(pair);
+      const { room, leave } = pair;
+
+      // In React, it's important to start connecting to the room as an effect,
+      // rather than doing this during the initial render. This means that
+      // during the initial render (both on the server-side, and on the first
+      // hydration on the client-side), the value of the `useStatus()` hook
+      // will correctly be "initial", and transition to "connecting" as an
+      // effect.
+      if (frozenProps.autoConnect) {
+        room.connect();
+      }
 
       return () => {
         const commentsRoom = commentsRooms.get(room);
         if (commentsRoom) {
           commentsRooms.delete(room);
         }
-        client.leave(roomId);
+        leave();
       };
-    }, [roomId, frozen]);
+    }, [roomId, frozenProps, stableEnterRoom]);
 
     return (
       <RoomContext.Provider value={room}>
@@ -347,7 +399,7 @@ export function createRoomContext<
     return others.map((user) => user.connectionId);
   }
 
-  function useRoom(): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
+  function useRoom(): TRoom {
     const room = React.useContext(RoomContext);
     if (room === null) {
       throw new Error("RoomProvider is missing from the React tree.");
@@ -359,7 +411,7 @@ export function createRoomContext<
     const room = useRoom();
     const subscribe = room.events.status.subscribe;
     const getSnapshot = room.getStatus;
-    const getServerSnapshot = alwaysConnecting;
+    const getServerSnapshot = room.getStatus;
     return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   }
 
@@ -500,36 +552,41 @@ export function createRoomContext<
     );
   }
 
+  function useOthersListener(
+    callback: (event: OthersEvent<TPresence, TUserMeta>) => void
+  ) {
+    const room = useRoom();
+    const savedCallback = useLatest(callback);
+
+    React.useEffect(
+      () =>
+        room.events.others.subscribe((event) => savedCallback.current(event)),
+      [room, savedCallback]
+    );
+  }
+
   function useLostConnectionListener(
     callback: (event: LostConnectionEvent) => void
   ): void {
     const room = useRoom();
-    const savedCallback = React.useRef(callback);
-
-    React.useEffect(() => {
-      savedCallback.current = callback;
-    });
+    const savedCallback = useLatest(callback);
 
     React.useEffect(
       () =>
-        room.events.lostConnection.subscribe((event: LostConnectionEvent) =>
+        room.events.lostConnection.subscribe((event) =>
           savedCallback.current(event)
         ),
-      [room]
+      [room, savedCallback]
     );
   }
 
   function useErrorListener(callback: (err: Error) => void): void {
     const room = useRoom();
-    const savedCallback = React.useRef(callback);
-
-    React.useEffect(() => {
-      savedCallback.current = callback;
-    });
+    const savedCallback = useLatest(callback);
 
     React.useEffect(
-      () => room.events.error.subscribe((e: Error) => savedCallback.current(e)),
-      [room]
+      () => room.events.error.subscribe((e) => savedCallback.current(e)),
+      [room, savedCallback]
     );
   }
 
@@ -537,11 +594,7 @@ export function createRoomContext<
     callback: (data: RoomEventMessage<TPresence, TUserMeta, TRoomEvent>) => void
   ): void {
     const room = useRoom();
-    const savedCallback = React.useRef(callback);
-
-    React.useEffect(() => {
-      savedCallback.current = callback;
-    });
+    const savedCallback = useLatest(callback);
 
     React.useEffect(() => {
       const listener = (
@@ -551,7 +604,7 @@ export function createRoomContext<
       };
 
       return room.events.customEvent.subscribe(listener);
-    }, [room]);
+    }, [room, savedCallback]);
   }
 
   function useSelf(): User<TPresence, TUserMeta> | null;
@@ -864,7 +917,7 @@ export function createRoomContext<
   const commentsErrorEventSource =
     makeEventSource<CommentsApiError<TThreadMetadata>>();
   const commentsRooms = new Map<
-    Room<TPresence, TStorage, TUserMeta, TRoomEvent>,
+    Room<JsonObject, LsonObject, BaseUserMeta, Json>,
     CommentsRoom<TThreadMetadata>
   >();
 
@@ -1085,13 +1138,14 @@ export function createRoomContext<
     TThreadMetadata
   > = {
     RoomContext,
-    RoomProvider,
+    RoomProvider: RoomProviderOuter,
 
     useRoom,
     useStatus,
 
     useBatch,
     useBroadcastEvent,
+    useOthersListener,
     useLostConnectionListener,
     useErrorListener,
     useEventListener,
@@ -1133,13 +1187,14 @@ export function createRoomContext<
 
     suspense: {
       RoomContext,
-      RoomProvider,
+      RoomProvider: RoomProviderOuter,
 
       useRoom,
       useStatus,
 
       useBatch,
       useBroadcastEvent,
+      useOthersListener,
       useLostConnectionListener,
       useErrorListener,
       useEventListener,

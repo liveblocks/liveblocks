@@ -16,7 +16,7 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
  * https://join.team/liveblocks ;)
  */
 
-export type { Client } from "./client";
+export type { Client, EnterOptions } from "./client";
 export { createClient } from "./client";
 export type { BaseAuthResult, Delegates } from "./connection";
 export type {
@@ -24,7 +24,7 @@ export type {
   LostConnectionEvent,
   Status,
 } from "./connection";
-export { isLiveNode } from "./crdts/liveblocks-helpers";
+export { cloneLson, isLiveNode } from "./crdts/liveblocks-helpers";
 export { LiveList } from "./crdts/LiveList";
 export { LiveMap } from "./crdts/LiveMap";
 export { LiveObject } from "./crdts/LiveObject";
@@ -76,9 +76,11 @@ export { asPos, makePosition } from "./lib/position";
 export type { Resolve } from "./lib/Resolve";
 export { shallow } from "./lib/shallow";
 export { stringify } from "./lib/stringify";
+export type { Brand } from "./lib/utils";
 export {
   b64decode,
   isPlainObject,
+  raise,
   tryParseJson,
   withTimeout,
 } from "./lib/utils";
@@ -96,13 +98,11 @@ export type {
 export { ClientMsgCode } from "./protocol/ClientMsg";
 export type {
   AckOp,
-  CreateChildOp,
   CreateListOp,
   CreateMapOp,
   CreateObjectOp,
   CreateOp,
   CreateRegisterOp,
-  CreateRootObjectOp,
   DeleteCrdtOp,
   DeleteObjectKeyOp,
   Op,
@@ -153,7 +153,7 @@ export type {
 } from "./types/IWebSocket";
 export { WebsocketCloseCodes } from "./types/IWebSocket";
 export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
-export type { Others } from "./types/Others";
+export type { Others, OthersEvent } from "./types/Others";
 export type {
   PlainLson,
   PlainLsonFields,
@@ -191,7 +191,9 @@ export { createCommentsApi } from "./comments";
 export type { BaseMetadata } from "./comments/types/BaseMetadata";
 export type {
   CommentBody,
+  CommentBodyBlockElement,
   CommentBodyElement,
+  CommentBodyInlineElement,
   CommentBodyLink,
   CommentBodyMention,
   CommentBodyParagraph,
