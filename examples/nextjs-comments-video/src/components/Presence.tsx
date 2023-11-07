@@ -1,20 +1,18 @@
 "use client";
 
 import { PresenceStates, useOthers, useSelf } from "@/liveblocks.config";
-import styles from "./Avatars.module.css";
+import styles from "./Presence.module.css";
 import { PauseIcon } from "@/icons/Pause";
 import { PlayIcon } from "@/icons/Play";
 import { ClientSideSuspense } from "@liveblocks/react";
 
-export function Avatars() {
+export function Presence() {
   return (
-    <ClientSideSuspense fallback={null}>
-      {() => <AvatarStack />}
-    </ClientSideSuspense>
+    <ClientSideSuspense fallback={null}>{() => <Avatars />}</ClientSideSuspense>
   );
 }
 
-function AvatarStack() {
+function Avatars() {
   const users = useOthers();
   const currentUser = useSelf();
 
