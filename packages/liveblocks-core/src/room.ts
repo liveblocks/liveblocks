@@ -1230,12 +1230,10 @@ export function createRoom<
   };
 
   async function streamFetch(authTokenOrPublicApiKey: string, roomId: string) {
-    const baseUrl = new URL(config.liveblocksServer);
-    baseUrl.protocol = "https";
     const url = new URL(
       `/v2/c/rooms/${encodeURIComponent(roomId)}/storage`,
-      baseUrl
-    );
+      config.baseUrl
+    ).toString();
     const fetcher = config.polyfills?.fetch || /* istanbul ignore next */ fetch;
     return fetcher(url.toString(), {
       method: "GET",
