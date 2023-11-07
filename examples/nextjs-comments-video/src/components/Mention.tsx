@@ -14,7 +14,7 @@ export function Mention({
   return (
     <span className={styles.mention}>
       @
-      <Suspense>
+      <Suspense fallback="…">
         <User userId={userId} />
       </Suspense>
     </span>
