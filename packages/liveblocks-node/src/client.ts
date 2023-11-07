@@ -440,8 +440,9 @@ export class Liveblocks {
   }
 
   /**
-   * Boadcasts an event to a room without having to connect to it via the client from @liveblocks/client.
+   * Boadcasts an event to a room without having to connect to it via the client from @liveblocks/client. The connectionId passed to event listeners is -1 when using this API.
    * @param roomId The id of the room to broadcast the event to.
+   * @param message The message to broadcast. It can be any JSON serializable value.
    */
   public async broadcastEvent(roomId: string, message: Json): Promise<void> {
     await this.post(url`/v2/rooms/${roomId}/broadcast_event`, message);
@@ -505,11 +506,12 @@ export class Liveblocks {
     const res = await this.post(url`/v2/rooms/${roomId}/storage`, document);
     return (await res.json()) as Promise<PlainLsonObject>;
   }
+
   /**
-   * Deletes all of the room’s Storage data and disconnect all users from the room if there are any.
+   * Deletes all of the room’s Storage data and disconnect all users from the room if there are any. Note that this does not delete the Yjs document in the room if one exists.
    * @param roomId The id of the room to delete the storage from.
    */
-  public async deleteStorage(roomId: string): Promise<void> {
+  public async deleteStorageDocument(roomId: string): Promise<void> {
     await this.delete(url`/v2/rooms/${roomId}/storage`);
   }
 
