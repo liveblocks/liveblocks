@@ -2,6 +2,7 @@
 
 ### `@liveblocks/react-comments`
 
+- Fix `Composer` focus issues.
 - Improve relative date formatting for some locales. (e.g. the `"fr"`` locale
   formatted “1h ago” as “-1 h” instead of “il y a 1 h”)
 - Improve default monospace font for inline code blocks.
