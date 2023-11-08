@@ -7,11 +7,11 @@ import type {
   CommentBodyText,
 } from "@liveblocks/core";
 
-type CommentBodyElementType =
+type CommentBodyElementName =
   | Exclude<CommentBodyElement, CommentBodyText>["type"]
   | "text";
 
-type CommentBodyElementTypes = {
+type CommentBodyElements = {
   paragraph: CommentBodyParagraph;
   text: CommentBodyText;
   link: CommentBodyLink;
@@ -47,7 +47,7 @@ function isCommentBodyLink(
 }
 
 const commentBodyElementsGuards: Record<
-  CommentBodyElementType,
+  CommentBodyElementName,
   (element: CommentBodyElement) => boolean
 > = {
   paragraph: isCommentBodyParagraph,
@@ -56,33 +56,49 @@ const commentBodyElementsGuards: Record<
   mention: isCommentBodyMention,
 };
 
+const commentBodyElementsTypes: Record<
+  CommentBodyElementName,
+  "block" | "inline"
+> = {
+  paragraph: "block",
+  text: "inline",
+  link: "inline",
+  mention: "inline",
+};
+
 function traverseCommentBody(
   body: CommentBody,
   visitor: CommentBodyVisitor
 ): void;
-function traverseCommentBody<T extends CommentBodyElementType>(
+function traverseCommentBody<T extends CommentBodyElementName>(
   body: CommentBody,
-  type: T,
-  visitor: CommentBodyVisitor<CommentBodyElementTypes[T]>
+  element: T,
+  visitor: CommentBodyVisitor<CommentBodyElements[T]>
 ): void;
 function traverseCommentBody(
   body: CommentBody,
-  typeOrVisitor: CommentBodyElementType | CommentBodyVisitor,
+  elementOrVisitor: CommentBodyElementName | CommentBodyVisitor,
   possiblyVisitor?: CommentBodyVisitor
 ): void {
-  const type = typeof typeOrVisitor === "string" ? typeOrVisitor : undefined;
+  const element =
+    typeof elementOrVisitor === "string" ? elementOrVisitor : undefined;
+  const type = element ? commentBodyElementsTypes[element] : "all";
+  const guard = element ? commentBodyElementsGuards[element] : () => true;
   const visitor =
-    typeof typeOrVisitor === "function" ? typeOrVisitor : possiblyVisitor;
-  const guard = type ? commentBodyElementsGuards[type] : () => true;
+    typeof elementOrVisitor === "function" ? elementOrVisitor : possiblyVisitor;
 
   for (const block of body.content) {
-    if (guard(block)) {
-      visitor?.(block);
+    if (type === "all" || type === "block") {
+      if (guard(block)) {
+        visitor?.(block);
+      }
     }
 
-    for (const inline of block.children) {
-      if (guard(inline)) {
-        visitor?.(inline);
+    if (type === "all" || type === "inline") {
+      for (const inline of block.children) {
+        if (guard(inline)) {
+          visitor?.(inline);
+        }
       }
     }
   }
