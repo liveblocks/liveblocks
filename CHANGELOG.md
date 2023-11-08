@@ -1,4 +1,4 @@
-# 1.7.1 (not yet released)
+# 1.7.1
 
 ### `@liveblocks/react-comments`
 
