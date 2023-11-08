@@ -442,6 +442,22 @@ Classes containing colons `:` are internal and may change over time.
 
 {/* TODO: Think about adding back the browser support section */}
 
+#### Portaled elements
+
+Floating elements within the default components (e.g. tooltips, drowdowns, etc)
+are portaled to the end of the document to avoid `z-index` conflicts and
+`overflow` issues.
+
+When portaled, those elements are also wrapped in a container to handle their
+positioning. These containers don’t have any specific class names or data
+attributes as they shouldn’t be targeted or styled directly, but they will
+mirror whatever `z-index` value is set on their inner element (which would be
+`auto` by default). So if you need to set a specific `z-index` value on floating
+elements, you should set it on the floating elements themselves directly,
+ignoring their containers. You can either target specific floating elements
+(e.g. `.lb-tooltip`, `.lb-dropdown`, etc) or all of them at once via the
+`.lb-portal` class name.
+
 #### Overrides
 
 Overrides can be used to customize components’ strings and localization-related
