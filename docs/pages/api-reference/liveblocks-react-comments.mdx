@@ -450,13 +450,25 @@ are portaled to the end of the document to avoid `z-index` conflicts and
 
 When portaled, those elements are also wrapped in a container to handle their
 positioning. These containers don’t have any specific class names or data
-attributes as they shouldn’t be targeted or styled directly, but they will
-mirror whatever `z-index` value is set on their inner element (which would be
+attributes so they shouldn’t be targeted or styled directly, but they will
+mirror whichever `z-index` value is set on their inner element (which would be
 `auto` by default). So if you need to set a specific `z-index` value on floating
 elements, you should set it on the floating elements themselves directly,
 ignoring their containers. You can either target specific floating elements
 (e.g. `.lb-tooltip`, `.lb-dropdown`, etc) or all of them at once via the
 `.lb-portal` class name.
+
+```css
+/* Target all floating elements */
+.lb-portal {
+  z-index: 5;
+}
+
+/* Target a specific floating element */
+.lb-tooltip {
+  z-index: 10;
+}
+```
 
 #### Overrides
 
