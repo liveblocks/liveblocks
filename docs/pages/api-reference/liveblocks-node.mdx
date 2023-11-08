@@ -23,6 +23,8 @@ const liveblocks = new Liveblocks({
 });
 ```
 
+### Authorization
+
 To authorize your users with Liveblocks, you have the choice between two
 different APIs.
 
@@ -31,7 +33,7 @@ different APIs.
 - [`Liveblocks.identifyUser`](#id-tokens) is best if you’re using fine-grained
   permissions with our REST API.
 
-### Liveblocks.prepareSession [#access-tokens]
+#### Liveblocks.prepareSession [#access-tokens]
 
 The purpose of this API is to help you implement your custom authentication back
 end (i.e. the _server_ part of the diagram). You use the
@@ -123,7 +125,7 @@ To implement your back end, follow these steps:
 
 </Steps>
 
-#### Access tokens example [#access-token-example]
+##### Access tokens example [#access-token-example]
 
 Here’s a real-world example of access tokens in a Next.js route
 handler/endpoint. You can find examples for other frameworks in our
@@ -167,7 +169,7 @@ export async function POST(request: Request) {
 }
 ```
 
-### Liveblocks.identifyUser [#id-tokens]
+#### Liveblocks.identifyUser [#id-tokens]
 
 The purpose of this API is to help you implement your custom authentication back
 end (i.e. the _server_ part of the diagram). You use the
@@ -231,7 +233,7 @@ static metadata to this user’s session. This will be publicly visible to all
 other people in the room. Useful for metadata like the user’s full name, or
 their avatar URL.
 
-#### ID tokens example
+##### ID tokens example
 
 Here’s a real-world example of ID tokens in a Next.js route handler/endpoint.
 You can find examples for other frameworks in our
@@ -273,7 +275,255 @@ export default async function auth(req, res) {
 }
 ```
 
-### Liveblocks.getThreads [#get-threads]
+### Room
+
+#### Liveblocks.getRooms [#get-rooms]
+
+Returns a list of rooms. This is a wrapper around the
+[Get Rooms API](/docs/api-reference/rest-api-endpoints#get-rooms) and returns
+the same response.
+
+```ts
+const { data: rooms, nextPage } = await liveblocks.getRooms();
+
+// A list of rooms
+// [{ type: "room", id: "my-room-id", ... }, ...]
+console.log(rooms);
+
+// A pagination value used for retrieving the next page of results
+// "L3YyL3Jvb21z..."
+console.log(nextPage);
+```
+
+A number of options are also available, enabling you to filter for certain
+rooms.
+
+```ts
+const { data: rooms, nextPage } = await liveblocks.getRooms({
+  // Optional, the amount of rooms to load, between 1 and 100, defaults to 20
+  limit: 20,
+
+  // Optional, filter for rooms that allow entry to group ID(s) in `groupAccesses`
+  groupIds: ["engineering", "design"],
+
+  // Optional, filter for rooms that allow entry to a user's ID in `usersAccesses`
+  userId: "my-user-id",
+
+  // Optional, filter for rooms with custom metadata in `metadata`
+  metadata: {
+    myRoomType: "whiteboard",
+  },
+
+  // Optional, cursor used for pagination, value retrieved from the previous page's `nextPage`
+  startingAfter: "L3YyL3Jvb21z...",
+});
+```
+
+#### Liveblocks.createRoom [#post-rooms]
+
+Programmatically creates a new room. `id` and `defaultAccesses` are required.
+This is a wrapper around the
+[Create Room API](/docs/api-reference/rest-api-endpoints#post-rooms) and returns
+the same response.
+
+```ts
+const room = await liveblocks.createRoom("my-room-id", {
+  defaultAccesses: ["room:write"],
+});
+
+// { type: "room", id: "my-room-id", ... }
+console.log(room);
+```
+
+A number of room creation options are available, allowing you to set permissions
+and attach custom metadata.
+
+```ts
+const room = await liveblocks.createRoom("my-room-id", {
+  // The default room permissions. `[]` for private, `["room:write"]` for public.
+  defaultAccesses: [],
+
+  // Optional, the room's group ID permissions
+  groupAccesses: {
+    design: ["room:write"],
+    engineering: ["room:presence:write", "room:read"],
+  },
+
+  // Optional, the room's user ID permissions
+  userAccesses: {
+    "my-user-id": ["room:write"],
+  },
+
+  // Optional, custom metadata to attach to the room
+  metadata: {
+    myRoomType: "whiteboard",
+  },
+});
+```
+
+Group and user permissions are only used with
+[ID token authorization](/docs/api-reference/liveblocks-node#id-tokens), learn
+more about
+[managing permission with ID tokens](/docs/rooms/permissions/id-token).
+
+#### Liveblocks.getRoom [#get-rooms-roomId]
+
+Returns a room. Throws an error if the room isn’t found. This is a wrapper
+around the
+[Get Room API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId) and
+returns the same response.
+
+```ts
+const room = await liveblocks.getRoom("my-room-id");
+
+// { type: "room", id: "my-room-id", ... }
+console.log(room);
+```
+
+#### Liveblocks.updateRoom [#post-rooms-roomId]
+
+Updates properties on a room. Throws an error if the room isn’t found. This is a
+wrapper around the
+[Update Room API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId) and
+returns the same response.
+
+```ts
+const room = await liveblocks.updateRoom("my-room-id", {
+  // The metadata or permissions you're updating
+  // ...
+});
+
+// { type: "room", id: "my-room-id", ... }
+console.log(room);
+```
+
+Permissions and metadata properties can be updated on the room. Note that you
+need only pass the properties you’re updating. Setting a property to `null` will
+delete the property.
+
+```ts
+const room = await liveblocks.createRoom("my-room-id", {
+  // Optional, update the default room permissions. `[]` for private, `["room:write"]` for public.
+  defaultAccesses: [],
+
+  // Optional, update the room's group ID permissions
+  groupAccesses: {
+    design: ["room:write"],
+    engineering: ["room:presence:write", "room:read"],
+  },
+
+  // Optional, update the room's user ID permissions
+  userAccesses: {
+    "my-user-id": ["room:write"],
+  },
+
+  // Optional, custom metadata to update on the room
+  metadata: {
+    myRoomType: "whiteboard",
+  },
+});
+```
+
+Group and user permissions are only used with
+[ID token authorization](/docs/api-reference/liveblocks-node#id-tokens), learn
+more about
+[managing permission with ID tokens](/docs/rooms/permissions/id-token).
+
+#### Liveblocks.deleteRoom [#delete-rooms-roomId]
+
+Deletes a room. Throws an error if the room isn’t found. This is a wrapper
+around the
+[Delete Room API](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId)
+and returns no response.
+
+```ts
+await liveblocks.deleteRoom("my-room-id");
+```
+
+#### Liveblocks.getActiveUsers [#get-rooms-roomId-active-users]
+
+Returns a list of users that are currently present in the room. Throws an error
+if the room isn’t found. This is a wrapper around the
+[Get Active Users API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-active-users)
+and returns the same response.
+
+```ts
+const activeUsers = await liveblocks.getActiveUsers("my-room-id");
+
+// [{ type: "user", id: "my-user-id", ... }, ...]
+console.log(activeUsers);
+```
+
+Using `UserMeta["info"]` from your config file as a generic adds typing to the
+returned `activeUsers`.
+
+```ts file="liveblocks.config.ts" highlight="5-8"
+// ...
+
+export type UserMeta = {
+  id: string;
+  info: {
+    name: string;
+    avatar: string;
+  };
+};
+```
+
+```ts highlight="4"
+import { UserMeta } from "../liveblocks.config";
+
+const activeUsers =
+  await liveblocks.getActiveUsers<UserMeta["info"]>("my-room-id");
+
+// [{ ..., info: { name: "Nimesh", avatar: "https://..." }, ...]
+console.log(activeUsers);
+```
+
+#### Liveblocks.broadcastEvent [#post-broadcast-event]
+
+Broadcasts a custom event to the room. Throws an error if the room isn’t found.
+This is a wrapper around the
+[Broadcast Event API](/docs/api-reference/rest-api-endpoints#post-broadcast-event)
+and returns the same response.
+
+```ts
+const customEvent = {
+  type: "EMOJI",
+  emoji: "🔥",
+};
+
+await liveblocks.broadcastEvent("my-room-id", customEvent);
+```
+
+You can respond to custom events on the front end with
+[`useBroadcastEvent`](/docs/api-reference/liveblocks-react#useBroadcastEvent)
+and
+[`room.subscribe("event")`](/docs/api-reference/liveblocks-client#Room.subscribe.event).
+When receiving an event sent with `Liveblocks.broadcastEvent`, `user` will be
+`null` and `connectionId` will be `-1`.
+
+```tsx
+import { useEventListener } from "./liveblocks.config";
+
+// When receiving an event sent from `@liveblocks/node`
+useEventListener(({ event, user, connectionId }) => {
+  // `null`
+  console.log(user);
+
+  // `-1`
+  console.log(connectionId);
+});
+```
+
+### Storage
+
+### Yjs
+
+### Schema validation
+
+### Comments
+
+#### Liveblocks.getThreads [#get-threads]
 
 Returns a list of threads found inside a room. Throws an error if the room isn’t
 found. This is a wrapper around the
@@ -286,7 +536,7 @@ const threads = await liveblocks.getThreads({
 });
 ```
 
-### Liveblocks.getThread [#get-thread]
+#### Liveblocks.getThread [#get-thread]
 
 Returns a thread. Throws an error if the room or thread isn’t found. This is a
 wrapper around the
@@ -300,7 +550,7 @@ const thread = await liveblocks.getThread({
 });
 ```
 
-### Liveblocks.getThreadParticipants [#get-thread-participants]
+#### Liveblocks.getThreadParticipants [#get-thread-participants]
 
 Returns a list of participants found inside a thread. A participant is a user
 who has commented or been mentioned in the thread. Throws an error if the room
@@ -310,12 +560,12 @@ and returns the same response.
 
 ```ts
 const { participantIds } = await liveblocks.getThreadParticipants({
-  roomId: "my-room",
-  threadId: "my-thread",
+  roomId: "my-room-id",
+  threadId: "my-thread-id",
 });
 ```
 
-### Liveblocks.getComment [#get-comment]
+#### Liveblocks.getComment [#get-comment]
 
 Returns a comment. Throws an error if the room, thread, or comment isn’t found.
 This is a wrapper around the
@@ -324,9 +574,9 @@ returns the same response.
 
 ```ts
 const comment = await liveblocks.getComment({
-  roomId: "my-room",
-  threadId: "my-thread",
-  commentId: "my-comment",
+  roomId: "my-room-id",
+  threadId: "my-thread-id",
+  commentId: "my-comment-id",
 });
 ```
 
