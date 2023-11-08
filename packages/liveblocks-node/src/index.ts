@@ -1,7 +1,14 @@
 export { authorize } from "./authorize";
 export type { LiveblocksOptions } from "./client";
 export { Liveblocks } from "./client";
-export { getMentionIdsFromCommentBody } from "./comment-body";
+export type {
+  CommentBodyToPlainTextElements,
+  CommentBodyToPlainTextOptions,
+} from "./comment-body";
+export {
+  commentBodyToPlainText,
+  getMentionIdsFromCommentBody,
+} from "./comment-body";
 export type {
   CommentCreatedEvent,
   CommentDeletedEvent,
