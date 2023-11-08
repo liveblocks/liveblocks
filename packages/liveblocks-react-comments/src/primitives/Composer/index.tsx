@@ -854,9 +854,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     // Manually add a selection in the editor if the selection
     // is still empty after being focused
     useEffect(() => {
-      console.log("effect");
       if (isFocused && editor.selection === null) {
-        console.log("calling select()");
         select();
       }
     }, [editor, select, isFocused]);
