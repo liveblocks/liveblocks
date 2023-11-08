@@ -10,10 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.5.2",
-    "@liveblocks/node": "^1.5.2",
-    "@liveblocks/react": "^1.5.2",
-    "@liveblocks/react-comments": "^1.5.2",
+    "@liveblocks/client": "^1.7.1",
+    "@liveblocks/node": "^1.7.1",
+    "@liveblocks/react": "^1.7.1",
+    "@liveblocks/react-comments": "^1.7.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-error-boundary": "^4.0.11"
