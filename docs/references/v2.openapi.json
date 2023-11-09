@@ -792,7 +792,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Success. Returns the room’s Yjs document encoded as a bianry Yjs update.",
+            "description": "Success. Returns the room’s Yjs document encoded as a binary Yjs update.",
             "content": {
               "application/octet-stream": {
                 "schema": {
