@@ -279,7 +279,8 @@ export default async function auth(req, res) {
 
 #### Liveblocks.getRooms [#get-rooms]
 
-Returns a list of rooms. This is a wrapper around the
+Returns a list of rooms that in your current project. Rooms are sorted by
+creation time, with the newest room first. This is a wrapper around the
 [Get Rooms API](/docs/api-reference/rest-api-endpoints#get-rooms) and returns
 the same response.
 
@@ -314,9 +315,28 @@ const { data: rooms, nextPage } = await liveblocks.getRooms({
     myRoomType: "whiteboard",
   },
 
-  // Optional, cursor used for pagination, value retrieved from the previous page's `nextPage`
+  // Optional, cursor used for pagination, use `nextPage` from the previous page's response
   startingAfter: "L3YyL3Jvb21z...",
 });
+```
+
+You can use `nextPage` to paginate rooms.
+
+```ts
+import { RoomInfo } from "@liveblocks/node";
+
+// An array of pages, each containing a list of retrieved rooms
+const pages: RoomInfo[][] = [];
+
+// Holds the pagination cursor for the next set of rooms
+let startingAfter;
+
+// Call to get the next page of rooms
+async function getNextPage() {
+  const { data, nextPage } = await liveblocks.getRooms({ startingAfter });
+  pages.push(data);
+  startingAfter = nextPage;
+}
 ```
 
 #### Liveblocks.createRoom [#post-rooms]
@@ -484,7 +504,7 @@ console.log(activeUsers);
 Broadcasts a custom event to the room. Throws an error if the room isn’t found.
 This is a wrapper around the
 [Broadcast Event API](/docs/api-reference/rest-api-endpoints#post-broadcast-event)
-and returns the same response.
+and returns no response.
 
 ```ts
 const customEvent = {
