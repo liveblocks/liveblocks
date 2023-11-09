@@ -80,7 +80,7 @@ describe("client", () => {
     await expect(
       client.getRooms({
         limit: 10,
-        startingAfter: 2,
+        startingAfter: "2",
         metadata: {
           color: "blue",
         },

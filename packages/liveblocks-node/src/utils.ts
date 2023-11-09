@@ -1,3 +1,5 @@
+import type { Brand } from "@liveblocks/core";
+
 export const DEFAULT_BASE_URL = "https://api.liveblocks.io";
 
 export async function fetchPolyfill(): Promise<typeof fetch> {
@@ -94,10 +96,6 @@ export function urljoin(
   }
   return url.toString();
 }
-
-declare const brand: unique symbol;
-
-type Brand<T, TBrand extends string> = T & { [brand]: TBrand };
 
 /**
  * A string that is guaranteed to be URL safe (where all arguments are properly

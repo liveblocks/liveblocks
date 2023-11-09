@@ -83,14 +83,6 @@ export type RoomUser<Info> = {
   info: Info;
 };
 
-export type YJson =
-  | {
-      [x: string]: unknown;
-    }
-  | string
-  | undefined
-  | unknown[];
-
 export type Schema = {
   id: string;
   name: string;
@@ -310,7 +302,7 @@ export class Liveblocks {
   public async getRooms(
     params: {
       limit?: number;
-      startingAfter?: number;
+      startingAfter?: string;
       metadata?: RoomMetadata;
       userId?: string;
       groupIds?: string;
@@ -319,27 +311,21 @@ export class Liveblocks {
     nextPage: string | null;
     data: RoomInfo[];
   }> {
-    const path = url`v2/rooms`;
+    const path = url`/v2/rooms`;
 
-    const queryParams = new URLSearchParams();
-    if (params.limit) {
-      queryParams.set("limit", params.limit.toString());
-    }
-    if (params.startingAfter) {
-      queryParams.set("startingAfter", params.startingAfter.toString());
-    }
-    if (params.userId) {
-      queryParams.set("userId", params.userId);
-    }
-    if (params.groupIds) {
-      queryParams.set("groupIds", params.groupIds);
-    }
-    if (params.metadata) {
-      Object.entries(params.metadata).forEach(([key, val]) => {
-        const value = Array.isArray(val) ? val.join(",") : val;
-        queryParams.set(`metadata.${key}`, value);
-      });
-    }
+    const queryParams = {
+      limit: params.limit,
+      startingAfter: params.startingAfter,
+      userId: params.userId,
+      groupIds: params.groupIds,
+      // "Flatten" {metadata: {foo: "bar"}} to {"metadata.foo": "bar"}
+      ...Object.fromEntries(
+        Object.entries(params.metadata ?? {}).map(([key, val]) => {
+          const value = Array.isArray(val) ? val.join(",") : val;
+          return [`metadata.${key}`, value];
+        })
+      ),
+    };
 
     const res = await this.get(path, queryParams);
     return (await res.json()) as Promise<{
@@ -487,7 +473,7 @@ export class Liveblocks {
     roomId: string,
     format: "plain-lson" | "json" = "plain-lson"
   ): Promise<PlainLsonObject | JsonObject> {
-    const path = url`v2/rooms/${roomId}/storage`;
+    const path = url`/v2/rooms/${roomId}/storage`;
     const res = await this.get(path, { format });
     return (await res.json()) as Promise<PlainLsonObject | JsonObject>;
   }
@@ -535,7 +521,7 @@ export class Liveblocks {
       key?: string;
       type?: string;
     } = {}
-  ): Promise<Record<string, YJson>> {
+  ): Promise<JsonObject> {
     const { format, key, type } = params;
 
     const path = url`v2/rooms/${roomId}/ydoc`;
@@ -546,7 +532,7 @@ export class Liveblocks {
       type,
     });
 
-    return (await res.json()) as Promise<Record<string, YJson>>;
+    return (await res.json()) as Promise<JsonObject>;
   }
 
   /**
