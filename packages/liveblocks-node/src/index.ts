@@ -2,8 +2,8 @@ export { authorize } from "./authorize";
 export type { LiveblocksOptions } from "./client";
 export { Liveblocks } from "./client";
 export type {
-  CommentBodyToPlainTextElements,
-  CommentBodyToPlainTextOptions,
+  CommentBodyToStringElements as CommentBodyToPlainTextElements,
+  CommentBodyToStringOptions as CommentBodyToPlainTextOptions,
 } from "./comment-body";
 export {
   commentBodyToPlainText,
