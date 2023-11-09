@@ -125,12 +125,17 @@ export type CommentBodyToStringOptions<
   /**
    * TODO: JSDoc
    */
-  format?: "plain" | "html";
+  format?: "plain" | "html" | "markdown";
 
   /**
    * TODO: JSDoc
    */
   elements?: Partial<CommentBodyToStringElements<TUserMeta>>;
+
+  /**
+   * TODO: JSDoc
+   */
+  separator?: string;
 
   /**
    * TODO: JSDoc
@@ -262,6 +267,7 @@ async function resolveUsersInCommentBody<TUserMeta extends BaseUserMeta>(
   return resolvedUsers;
 }
 
+// TODO: Escape content? Do the same for Markdown?
 /**
  * Tagged template literal used to hint to external tooling
  * (Prettier, editors' syntax highlighting, etc) that the string is HTML.
@@ -286,7 +292,7 @@ function toAbsoluteUrl(url: string): string | undefined {
   return;
 }
 
-const defaultCommentBodyToPlainTextElements: CommentBodyToStringElements = {
+const commentBodyToPlainTextElements: CommentBodyToStringElements = {
   paragraph: ({ children }) => children,
   text: ({ element }) => element.text,
   link: ({ element }) => element.url,
@@ -295,7 +301,7 @@ const defaultCommentBodyToPlainTextElements: CommentBodyToStringElements = {
   },
 };
 
-const defaultCommentBodyToHtmlElements: CommentBodyToStringElements = {
+const commentBodyToHtmlElements: CommentBodyToStringElements = {
   paragraph: ({ children }) => {
     return html`<p>${children}</p>`;
   },
@@ -322,10 +328,46 @@ const defaultCommentBodyToHtmlElements: CommentBodyToStringElements = {
     return html`<span>${children}</span>`;
   },
   link: ({ element, href }) => {
-    return `<a href="${href}" target="_blank" rel="noopener noreferrer">${element.url}</a>`;
+    return html`<a href="${href}" target="_blank" rel="noopener noreferrer"
+      >${element.url}</a
+    >`;
   },
   mention: ({ element, user }) => {
     return html`<span>@${user?.name ?? element.id}</span>`;
+  },
+};
+
+const commentBodyToMarkdownElements: CommentBodyToStringElements = {
+  paragraph: ({ children }) => {
+    return children;
+  },
+  text: ({ element }) => {
+    // <code><s><em><strong>text</strong></s></em></code>
+    let children = element.text;
+
+    if (element.bold) {
+      children = `**${children}**`;
+    }
+
+    if (element.italic) {
+      children = `_${children}_`;
+    }
+
+    if (element.strikethrough) {
+      children = `~~${children}~~`;
+    }
+
+    if (element.code) {
+      children = `\`${children}\``;
+    }
+
+    return children;
+  },
+  link: ({ element, href }) => {
+    return `[${element.url}](${href})`;
+  },
+  mention: ({ element, user }) => {
+    return `@${user?.name ?? element.id}`;
   },
 };
 
@@ -338,10 +380,14 @@ export async function commentBodyToString<
   body: CommentBody,
   options?: CommentBodyToStringOptions<TUserMeta>
 ): Promise<string> {
+  const format = options?.format ?? "plain";
+  const separator = options?.separator ?? format === "markdown" ? "\n\n" : "\n";
   const elements = {
-    ...(options?.format === "html"
-      ? defaultCommentBodyToHtmlElements
-      : defaultCommentBodyToPlainTextElements),
+    ...(format === "html"
+      ? commentBodyToHtmlElements
+      : format === "markdown"
+      ? commentBodyToMarkdownElements
+      : commentBodyToPlainTextElements),
     ...options?.elements,
   };
   const resolvedUsers = await resolveUsersInCommentBody(
@@ -387,5 +433,5 @@ export async function commentBodyToString<
     }
   });
 
-  return blocks.filter(isSomething).join("\n");
+  return blocks.filter(isSomething).join(separator);
 }
