@@ -6,12 +6,12 @@ export type {
   CommentBodyMentionElementArgs,
   CommentBodyParagraphElementArgs,
   CommentBodyTextElementArgs,
-  CommentBodyToStringElements,
-  CommentBodyToStringOptions,
+  StringifyCommentBodyElements,
+  StringifyCommentBodyOptions,
 } from "./comment-body";
 export {
-  commentBodyToString,
   getMentionIdsFromCommentBody,
+  stringifyCommentBody,
 } from "./comment-body";
 export type {
   CommentCreatedEvent,

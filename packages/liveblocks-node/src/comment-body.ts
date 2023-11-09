@@ -95,7 +95,7 @@ export type CommentBodyMentionElementArgs<
   user?: TUserMeta["info"];
 };
 
-export type CommentBodyToStringElements<
+export type StringifyCommentBodyElements<
   TUserMeta extends BaseUserMeta = BaseUserMeta,
 > = {
   /**
@@ -119,7 +119,7 @@ export type CommentBodyToStringElements<
   mention: (args: CommentBodyMentionElementArgs<TUserMeta>) => string;
 };
 
-export type CommentBodyToStringOptions<
+export type StringifyCommentBodyOptions<
   TUserMeta extends BaseUserMeta = BaseUserMeta,
 > = {
   /**
@@ -130,7 +130,7 @@ export type CommentBodyToStringOptions<
   /**
    * TODO: JSDoc
    */
-  elements?: Partial<CommentBodyToStringElements<TUserMeta>>;
+  elements?: Partial<StringifyCommentBodyElements<TUserMeta>>;
 
   /**
    * TODO: JSDoc
@@ -292,7 +292,7 @@ function toAbsoluteUrl(url: string): string | undefined {
   return;
 }
 
-const commentBodyToPlainTextElements: CommentBodyToStringElements = {
+const stringifyCommentBodyPlainElements: StringifyCommentBodyElements = {
   paragraph: ({ children }) => children,
   text: ({ element }) => element.text,
   link: ({ element }) => element.url,
@@ -301,7 +301,7 @@ const commentBodyToPlainTextElements: CommentBodyToStringElements = {
   },
 };
 
-const commentBodyToHtmlElements: CommentBodyToStringElements = {
+const stringifyCommentBodyHtmlElements: StringifyCommentBodyElements = {
   paragraph: ({ children }) => {
     return html`<p>${children}</p>`;
   },
@@ -337,7 +337,7 @@ const commentBodyToHtmlElements: CommentBodyToStringElements = {
   },
 };
 
-const commentBodyToMarkdownElements: CommentBodyToStringElements = {
+const stringifyCommentBodyMarkdownElements: StringifyCommentBodyElements = {
   paragraph: ({ children }) => {
     return children;
   },
@@ -374,20 +374,20 @@ const commentBodyToMarkdownElements: CommentBodyToStringElements = {
 /**
  * TODO: JSDoc
  */
-export async function commentBodyToString<
+export async function stringifyCommentBody<
   TUserMeta extends BaseUserMeta = BaseUserMeta,
 >(
   body: CommentBody,
-  options?: CommentBodyToStringOptions<TUserMeta>
+  options?: StringifyCommentBodyOptions<TUserMeta>
 ): Promise<string> {
   const format = options?.format ?? "plain";
   const separator = options?.separator ?? format === "markdown" ? "\n\n" : "\n";
   const elements = {
     ...(format === "html"
-      ? commentBodyToHtmlElements
+      ? stringifyCommentBodyHtmlElements
       : format === "markdown"
-      ? commentBodyToMarkdownElements
-      : commentBodyToPlainTextElements),
+      ? stringifyCommentBodyMarkdownElements
+      : stringifyCommentBodyPlainElements),
     ...options?.elements,
   };
   const resolvedUsers = await resolveUsersInCommentBody(
