@@ -320,7 +320,8 @@ const { data: rooms, nextPage } = await liveblocks.getRooms({
 });
 ```
 
-You can use `nextPage` to paginate rooms.
+You can use `nextPage` to paginate rooms. In this example, when `getNextPage` is
+called, the next set of rooms is added to `pages`.
 
 ```ts
 import { RoomInfo } from "@liveblocks/node";
@@ -539,8 +540,9 @@ useEventListener(({ event, user, connectionId }) => {
 
 #### Liveblocks.getStorageDocument [#get-rooms-roomId-storage]
 
-Returns the contents of the room’s Storage tree. Throws an error if the room
-isn’t found. This is a wrapper around the
+Returns the contents of a room’s Storage tree. By default, returns Storage in
+LSON format. Throws an error if the room isn’t found. This is a wrapper around
+the
 [Get Storage Document API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-storage)
 and returns the same response.
 
@@ -548,12 +550,13 @@ and returns the same response.
 const storage = await liveblocks.getStorageDocument("my-room-id");
 ```
 
-By default, this will return your Storage as LSON, a custom Liveblocks format
-that preserves information about the conflict-free data types used.
+LSON is a custom Liveblocks format that preserves information about the
+conflict-free data types used. By default, `getStorageDocument` returns Storage
+in this format. This is the same as using `"plain-json"` in the second argument.
 
-```ts
+```ts highlight="2"
 // Retrieve LSON Storage data
-const storage = await liveblocks.getStorageDocument("my-room-id");
+const storage = await liveblocks.getStorageDocument("my-room-id", "plain-lson");
 
 // If this were your Storage type...
 type Storage = {
@@ -572,7 +575,7 @@ type Storage = {
 console.log(storage);
 ```
 
-You can also retrieve storage as JSON, by passing `"json"` as the second
+You can also retrieve Storage as JSON by passing `"json"` into the second
 argument.
 
 ```ts highlight="2"
@@ -588,6 +591,95 @@ type Storage = {
 //   names: ["Olivier", "Nimesh"]
 // }
 console.log(storage);
+```
+
+#### Liveblocks.initializeStorageDocument [#post-rooms-roomId-storage]
+
+Initializes a room’s Storage tree with given LSON data. To use this, the room
+must have [already been created](#post-rooms) and have empty Storage. Throws an
+error if the room isn’t found. Calling this will disconnect all active users
+from the room. This is a wrapper around the
+[Initialize Storage Document API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-storage)
+and returns the same response.
+
+```ts
+// Create a new room
+const room = await liveblocks.createRoom("my-room-id", {
+  defaultAccesses: ["room:write"],
+});
+
+// Initialize Storage
+const storage = await liveblocks.initializeStorageDocument("my-room-id", {
+  // Your LSON Storage value
+  // ...
+});
+```
+
+LSON is a custom Liveblocks format that preserves information about
+conflict-free data types. Here’s an example of initializing a simple Storage
+value.
+
+```ts highlight="7-9,13-19"
+// Create a new room
+const room = await liveblocks.createRoom("my-room-id", {
+  defaultAccesses: ["room:write"],
+});
+
+// If this were your Storage type...
+type Storage = {
+  names: LiveList<string>;
+};
+
+// Create this Storage and add names to the LiveList
+const storage = await liveblocks.initializeStorageDocument("my-room-id", {
+  liveblocksType: "LiveObject",
+  data: {
+    names: {
+      liveblocksType: "LiveList",
+      data: ["Olivier", "Nimesh"],
+    },
+  },
+});
+```
+
+Using the `toPlainLson` helper provided by `@liveblocks/client`, you can more
+easily create LSON.
+
+```ts highlight="1,14-16,21"
+import { toPlainLson, LiveList, LiveObject } from "@liveblocks/client";
+
+// Create a new room
+const room = await liveblocks.createRoom("my-room-id", {
+  defaultAccesses: ["room:write"],
+});
+
+// If this were your Storage type...
+type Storage = {
+  names: LiveList<string>;
+};
+
+// Create the initial conflict-free data
+const initialStorage: LiveObject<Storage> = new LiveObject({
+  names: new LiveList[("Olivier", "Nimesh")](),
+});
+
+// Convert to LSON and create Storage
+const storage = await liveblocks.initializeStorageDocument(
+  "my-room-id",
+  toPlainLson(initialStorage)
+);
+```
+
+#### Liveblocks.deleteStorageDocument [#delete-rooms-roomId-storage]
+
+Deletes a room’s Storage data. Calling this will disconnect all active users
+from the room. Throws an error if the room isn’t found. This is a wrapper around
+the
+[Delete Storage Document API](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId-storage)
+and returns no response.
+
+```ts
+await liveblocks.deleteStorageDocument("my-room-id");
 ```
 
 ### Yjs
