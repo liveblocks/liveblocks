@@ -537,6 +537,59 @@ useEventListener(({ event, user, connectionId }) => {
 
 ### Storage
 
+#### Liveblocks.getStorageDocument [#get-rooms-roomId-storage]
+
+Returns the contents of the room’s Storage tree. Throws an error if the room
+isn’t found. This is a wrapper around the
+[Get Storage Document API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-storage)
+and returns the same response.
+
+```ts
+const storage = await liveblocks.getStorageDocument("my-room-id");
+```
+
+By default, this will return your Storage as LSON, a custom Liveblocks format
+that preserves information about the conflict-free data types used.
+
+```ts
+// Retrieve LSON Storage data
+const storage = await liveblocks.getStorageDocument("my-room-id");
+
+// If this were your Storage type...
+type Storage = {
+  names: LiveList<string>;
+};
+
+// {
+//   liveblocksType: "LiveObject",
+//   data: {
+//     names: {
+//       liveblocksType: "LiveList",
+//       data: ["Olivier", "Nimesh"],
+//     }
+//   }
+// }
+console.log(storage);
+```
+
+You can also retrieve storage as JSON, by passing `"json"` as the second
+argument.
+
+```ts highlight="2"
+// Retrieve JSON Storage data
+const storage = await liveblocks.getStorageDocument("my-room-id", "json");
+
+// If this were your Storage type...
+type Storage = {
+  names: LiveList<string>;
+};
+
+// {
+//   names: ["Olivier", "Nimesh"]
+// }
+console.log(storage);
+```
+
 ### Yjs
 
 ### Schema validation
