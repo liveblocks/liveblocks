@@ -2,11 +2,15 @@ export { authorize } from "./authorize";
 export type { LiveblocksOptions } from "./client";
 export { Liveblocks } from "./client";
 export type {
-  CommentBodyToStringElements as CommentBodyToPlainTextElements,
-  CommentBodyToStringOptions as CommentBodyToPlainTextOptions,
+  CommentBodyLinkElementArgs,
+  CommentBodyMentionElementArgs,
+  CommentBodyParagraphElementArgs,
+  CommentBodyTextElementArgs,
+  CommentBodyToStringElements,
+  CommentBodyToStringOptions,
 } from "./comment-body";
 export {
-  commentBodyToPlainText,
+  commentBodyToString,
   getMentionIdsFromCommentBody,
 } from "./comment-body";
 export type {

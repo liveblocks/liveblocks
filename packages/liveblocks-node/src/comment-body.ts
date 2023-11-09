@@ -50,23 +50,73 @@ type CommentBodyVisitor<T extends CommentBodyElement = CommentBodyElement> = (
   element: T
 ) => void;
 
+export type CommentBodyParagraphElementArgs = {
+  /**
+   * The paragraph element.
+   */
+  element: CommentBodyParagraph;
+
+  /**
+   * The text content of the paragraph.
+   */
+  children: string;
+};
+
+export type CommentBodyTextElementArgs = {
+  /**
+   * The text element.
+   */
+  element: CommentBodyText;
+};
+
+export type CommentBodyLinkElementArgs = {
+  /**
+   * The link element.
+   */
+  element: CommentBodyLink;
+
+  /**
+   * The absolute URL of the link.
+   */
+  href: string;
+};
+
+export type CommentBodyMentionElementArgs<
+  TUserMeta extends BaseUserMeta = BaseUserMeta,
+> = {
+  /**
+   * The mention element.
+   */
+  element: CommentBodyMention;
+
+  /**
+   * TODO: JSDoc
+   */
+  user?: TUserMeta["info"];
+};
+
 export type CommentBodyToStringElements<
   TUserMeta extends BaseUserMeta = BaseUserMeta,
 > = {
   /**
    * TODO: JSDoc
    */
-  text: (element: CommentBodyText) => string;
+  paragraph: (args: CommentBodyParagraphElementArgs) => string;
 
   /**
    * TODO: JSDoc
    */
-  link: (element: CommentBodyLink) => string;
+  text: (args: CommentBodyTextElementArgs) => string;
 
   /**
    * TODO: JSDoc
    */
-  mention: (element: CommentBodyMention, user?: TUserMeta["info"]) => string;
+  link: (args: CommentBodyLinkElementArgs) => string;
+
+  /**
+   * TODO: JSDoc
+   */
+  mention: (args: CommentBodyMentionElementArgs<TUserMeta>) => string;
 };
 
 export type CommentBodyToStringOptions<
@@ -75,14 +125,19 @@ export type CommentBodyToStringOptions<
   /**
    * TODO: JSDoc
    */
-  resolveUsers?: (
-    args: CommentBodyResolveUsersArgs
-  ) => PromiseOrNot<(TUserMeta["info"] | undefined)[] | undefined>;
+  format?: "plain" | "html";
 
   /**
    * TODO: JSDoc
    */
   elements?: Partial<CommentBodyToStringElements<TUserMeta>>;
+
+  /**
+   * TODO: JSDoc
+   */
+  resolveUsers?: (
+    args: CommentBodyResolveUsersArgs
+  ) => PromiseOrNot<(TUserMeta["info"] | undefined)[] | undefined>;
 };
 
 function isCommentBodyParagraph(
@@ -207,71 +262,10 @@ async function resolveUsersInCommentBody<TUserMeta extends BaseUserMeta>(
   return resolvedUsers;
 }
 
-const defaultCommentBodyToPlainTextElements: CommentBodyToStringElements = {
-  text: (element) => element.text,
-  link: (element) => element.url,
-  mention: (element, user) => {
-    return `@${user?.name ?? element.id}`;
-  },
-};
-
 /**
- * TODO: JSDoc
+ * Tagged template literal used to hint to external tooling
+ * (Prettier, editors' syntax highlighting, etc) that the string is HTML.
  */
-export async function commentBodyToPlainText<
-  TUserMeta extends BaseUserMeta = BaseUserMeta,
->(
-  body: CommentBody,
-  options?: CommentBodyToStringOptions<TUserMeta>
-): Promise<string> {
-  const elements = {
-    ...defaultCommentBodyToPlainTextElements,
-    ...options?.elements,
-  };
-  const resolvedUsers = await resolveUsersInCommentBody(
-    body,
-    options?.resolveUsers
-  );
-
-  if (!body || !body?.content) {
-    return "";
-  }
-
-  const blocks = body.content.map((block) => {
-    switch (block.type) {
-      case "paragraph": {
-        const children = block.children
-          .map((inline) => {
-            if (isCommentBodyMention(inline)) {
-              return elements.mention(inline, resolvedUsers.get(inline.id));
-            }
-
-            if (isCommentBodyLink(inline)) {
-              return elements.link(inline);
-            }
-
-            if (isCommentBodyText(inline)) {
-              return elements.text(inline);
-            }
-
-            return null;
-          })
-          .filter(isSomething)
-          .join("");
-
-        return children;
-      }
-
-      default:
-        return null;
-    }
-  });
-
-  return blocks.filter(isSomething).join("\n");
-}
-
-// Tagged template literal used to hint to external tooling
-// (Prettier, editors' syntax highlighting, etc) that the string is HTML.
 const html = String.raw;
 
 /**
@@ -292,8 +286,20 @@ function toAbsoluteUrl(url: string): string | undefined {
   return;
 }
 
+const defaultCommentBodyToPlainTextElements: CommentBodyToStringElements = {
+  paragraph: ({ children }) => children,
+  text: ({ element }) => element.text,
+  link: ({ element }) => element.url,
+  mention: ({ element, user }) => {
+    return `@${user?.name ?? element.id}`;
+  },
+};
+
 const defaultCommentBodyToHtmlElements: CommentBodyToStringElements = {
-  text: (element) => {
+  paragraph: ({ children }) => {
+    return html`<p>${children}</p>`;
+  },
+  text: ({ element }) => {
     // <code><s><em><strong>text</strong></s></em></code>
     let children = element.text;
 
@@ -315,12 +321,10 @@ const defaultCommentBodyToHtmlElements: CommentBodyToStringElements = {
 
     return html`<span>${children}</span>`;
   },
-  link: (element) => {
-    const href = toAbsoluteUrl(element.url) ?? element.url;
-
+  link: ({ element, href }) => {
     return `<a href="${href}" target="_blank" rel="noopener noreferrer">${element.url}</a>`;
   },
-  mention: (element, user) => {
+  mention: ({ element, user }) => {
     return html`<span>@${user?.name ?? element.id}</span>`;
   },
 };
@@ -328,14 +332,16 @@ const defaultCommentBodyToHtmlElements: CommentBodyToStringElements = {
 /**
  * TODO: JSDoc
  */
-export async function commentBodyToHtml<
+export async function commentBodyToString<
   TUserMeta extends BaseUserMeta = BaseUserMeta,
 >(
   body: CommentBody,
   options?: CommentBodyToStringOptions<TUserMeta>
 ): Promise<string> {
   const elements = {
-    ...defaultCommentBodyToHtmlElements,
+    ...(options?.format === "html"
+      ? defaultCommentBodyToHtmlElements
+      : defaultCommentBodyToPlainTextElements),
     ...options?.elements,
   };
   const resolvedUsers = await resolveUsersInCommentBody(
@@ -350,16 +356,22 @@ export async function commentBodyToHtml<
           .map((inline) => {
             if (isCommentBodyMention(inline)) {
               return inline.id
-                ? elements.mention(inline, resolvedUsers.get(inline.id))
+                ? elements.mention({
+                    element: inline,
+                    user: resolvedUsers.get(inline.id),
+                  })
                 : null;
             }
 
             if (isCommentBodyLink(inline)) {
-              return elements.link(inline);
+              return elements.link({
+                element: inline,
+                href: toAbsoluteUrl(inline.url) ?? inline.url,
+              });
             }
 
             if (isCommentBodyText(inline)) {
-              return elements.text(inline);
+              return elements.text({ element: inline });
             }
 
             return null;
@@ -367,7 +379,7 @@ export async function commentBodyToHtml<
           .filter(isSomething)
           .join("");
 
-        return html`<p>${paragraph}</p>`;
+        return elements.paragraph({ element: block, children: paragraph });
       }
 
       default:
