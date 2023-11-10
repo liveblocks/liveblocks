@@ -59,9 +59,13 @@ type ThreadParticipants = {
 };
 
 export type RoomPermission =
+  | []
   | ["room:write"]
   | ["room:read", "room:presence:write"];
-export type RoomAccesses = Record<string, RoomPermission>;
+export type RoomAccesses = Record<
+  string,
+  ["room:write"] | ["room:read", "room:presence:write"]
+>;
 export type RoomMetadata = Record<string, string | string[]>;
 
 export type RoomInfo = {
@@ -435,8 +439,14 @@ export class Liveblocks {
     roomId: string,
     params: {
       defaultAccesses?: RoomPermission | null;
-      groupsAccesses?: Record<string, RoomPermission | null>;
-      usersAccesses?: Record<string, RoomPermission | null>;
+      groupsAccesses?: Record<
+        string,
+        ["room:write"] | ["room:read", "room:presence:write"] | null
+      >;
+      usersAccesses?: Record<
+        string,
+        ["room:write"] | ["room:read", "room:presence:write"] | null
+      >;
       metadata?: Record<string, string | string[] | null>;
     }
   ): Promise<RoomInfo> {
