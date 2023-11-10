@@ -279,9 +279,9 @@ export default async function auth(req, res) {
 
 #### Liveblocks.getRooms [#get-rooms]
 
-Returns a list of rooms that are in your current project. The project is
+Returns a list of rooms that are in the current project. The project is
 determined by the secret key you’re using. Rooms are sorted by creation time,
-with the newest room first. This is a wrapper around the
+with the newest room at index `0`. This is a wrapper around the
 [Get Rooms API](/docs/api-reference/rest-api-endpoints#get-rooms) and returns
 the same response.
 
@@ -343,8 +343,11 @@ async function getNextPage() {
 
 #### Liveblocks.createRoom [#post-rooms]
 
-Programmatically creates a new room. `id` and `defaultAccesses` are required.
-This is a wrapper around the
+Programmatically creates a new room from a room ID. The `defaultAccesses` option
+is required—setting it to `["room:write"]` creates a public room, whereas
+setting it to `[]` will create a private room that needs
+[ID token permission to enter](/docs/rooms/permissions/id-token). This is a
+wrapper around the
 [Create Room API](/docs/api-reference/rest-api-endpoints#post-rooms) and returns
 the same response.
 
