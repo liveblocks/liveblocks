@@ -267,12 +267,78 @@ async function resolveUsersInCommentBody<TUserMeta extends BaseUserMeta>(
   return resolvedUsers;
 }
 
-// TODO: Escape content? Do the same for Markdown?
+function toSingleLine(string: string) {
+  if (!string.includes("\n")) {
+    return string;
+  }
+
+  return string
+    .split("\n")
+    .map((line) => line.trim())
+    .join("");
+}
+
+const htmlEntities = ["&", "<", ">", '"', "'", "/", "`", "="];
+
+const markdownEntities = [
+  "_",
+  "*",
+  "#",
+  ".",
+  "-",
+  "+",
+  "`",
+  "!",
+  "|",
+  "(",
+  ")",
+  "{",
+  "}",
+  "[",
+  "]",
+];
+
+function createEscapingTaggedTemplate(entities: string[]) {
+  const entitiesRegex = new RegExp(
+    Object.keys(entities)
+      .map((entity) => `\\${entity}`)
+      .join("|"),
+    "g"
+  );
+
+  function escape(string?: string) {
+    return string?.replace(entitiesRegex, (entity) => `\\${entity}`) ?? "";
+  }
+
+  return (strings: TemplateStringsArray, ...values: string[]) => {
+    return toSingleLine(
+      strings.reduce((result, str, i) => {
+        const value = values[i - 1];
+        const escapedValue = Array.isArray(value)
+          ? value.join("")
+          : escape(value);
+
+        return result + escapedValue + str;
+      })
+    );
+  };
+}
+
 /**
- * Tagged template literal used to hint to external tooling
- * (Prettier, editors' syntax highlighting, etc) that the string is HTML.
+ * Build an HTML string from a template literal where the values
+ * are escaped and newlines/identation are removed.
+ *
+ * Nested calls are supported and won't be escaped.
  */
-const html = String.raw;
+const html = createEscapingTaggedTemplate(htmlEntities);
+
+/**
+ * Build a Markdown string from a template literal where the values
+ * are escaped and newlines/identation are removed.
+ *
+ * Nested calls are supported and won't be escaped.
+ */
+const markdown = createEscapingTaggedTemplate(markdownEntities);
 
 /**
  * Helper function to convert a URL (relative or absolute) to an absolute URL.
@@ -303,11 +369,15 @@ const stringifyCommentBodyPlainElements: StringifyCommentBodyElements = {
 
 const stringifyCommentBodyHtmlElements: StringifyCommentBodyElements = {
   paragraph: ({ children }) => {
-    return html`<p>${children}</p>`;
+    return children ? html`<p>${children}</p>` : children;
   },
   text: ({ element }) => {
     // <code><s><em><strong>text</strong></s></em></code>
     let children = element.text;
+
+    if (!children) {
+      return children;
+    }
 
     if (element.bold) {
       children = html`<strong>${children}</strong>`;
@@ -325,15 +395,15 @@ const stringifyCommentBodyHtmlElements: StringifyCommentBodyElements = {
       children = html`<code>${children}</code>`;
     }
 
-    return html`<span>${children}</span>`;
+    return children;
   },
   link: ({ element, href }) => {
-    return html`<a href="${href}" target="_blank" rel="noopener noreferrer"
-      >${element.url}</a
-    >`;
+    return html`<a href="${href}" target="_blank" rel="noopener noreferrer">
+      ${element.url}
+    </a>`;
   },
   mention: ({ element, user }) => {
-    return html`<span>@${user?.name ?? element.id}</span>`;
+    return html`<span data-mention>@${user?.name ?? element.id}</span>`;
   },
 };
 
@@ -345,29 +415,33 @@ const stringifyCommentBodyMarkdownElements: StringifyCommentBodyElements = {
     // <code><s><em><strong>text</strong></s></em></code>
     let children = element.text;
 
+    if (!children) {
+      return children;
+    }
+
     if (element.bold) {
-      children = `**${children}**`;
+      children = markdown`**${children}**`;
     }
 
     if (element.italic) {
-      children = `_${children}_`;
+      children = markdown`_${children}_`;
     }
 
     if (element.strikethrough) {
-      children = `~~${children}~~`;
+      children = markdown`~~${children}~~`;
     }
 
     if (element.code) {
-      children = `\`${children}\``;
+      children = markdown`\`${children}\``;
     }
 
     return children;
   },
   link: ({ element, href }) => {
-    return `[${element.url}](${href})`;
+    return markdown`[${element.url}](${href})`;
   },
   mention: ({ element, user }) => {
-    return `@${user?.name ?? element.id}`;
+    return markdown`@${user?.name ?? element.id}`;
   },
 };
 
