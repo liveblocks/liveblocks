@@ -7,7 +7,7 @@
     `CommentBody`.
   - `stringifyCommentBody(body, options)` - Convert a `CommentBody` to a string,
     either as plain text, HTML, or Markdown. It supports resolving mention IDs
-    similarly to `@liveblocks/react` and overriding each elements to control the
+    similarly to `@liveblocks/react` and overriding each element to control the
     formatting.
 
 # v1.7.1
