@@ -1015,7 +1015,7 @@
     },
     "/rooms/{roomId}/schema": {
       "get": {
-        "summary": "Get schema by room",
+        "summary": "Get schema by room ID",
         "description": "This endpoint retrieves the schema attached to a room.",
         "tags": ["Schema validation"],
         "parameters": [
