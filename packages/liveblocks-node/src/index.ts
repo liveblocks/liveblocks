@@ -5,6 +5,7 @@ export type {
   CommentBodyLinkElementArgs,
   CommentBodyMentionElementArgs,
   CommentBodyParagraphElementArgs,
+  CommentBodyResolveUsersArgs,
   CommentBodyTextElementArgs,
   StringifyCommentBodyElements,
   StringifyCommentBodyOptions,

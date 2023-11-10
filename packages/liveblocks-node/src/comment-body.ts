@@ -14,7 +14,7 @@ import { isSomething } from "./utils";
 
 type PromiseOrNot<T> = T | Promise<T>;
 
-type CommentBodyResolveUsersArgs = {
+export type CommentBodyResolveUsersArgs = {
   /**
    * The ID of the users to resolve.
    */

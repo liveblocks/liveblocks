@@ -1,5 +1,6 @@
 import type { CommentBody } from "@liveblocks/core";
 
+import type { CommentBodyResolveUsersArgs } from "../comment-body";
 import {
   getMentionIdsFromCommentBody,
   stringifyCommentBody,
@@ -18,7 +19,7 @@ const commentBody: CommentBody = {
         { text: "Hello " },
         { text: "world", bold: true },
         { text: " and " },
-        { type: "mention", id: "1234" },
+        { type: "mention", id: "chris" },
       ],
     },
   ],
@@ -33,7 +34,7 @@ const commentBodyWithMultipleParagraphs: CommentBody = {
         { text: "Hello " },
         { text: "world", italic: true, bold: true },
         { text: " and " },
-        { type: "mention", id: "1234" },
+        { type: "mention", id: "vincent" },
       ],
     },
     {
@@ -140,6 +141,14 @@ const commentBodyWithMentions: CommentBody = {
   ],
 };
 
+function resolveUsers({ userIds }: CommentBodyResolveUsersArgs) {
+  return userIds.map((userId) => {
+    return {
+      name: capitalize(userId),
+    };
+  });
+}
+
 describe("getMentionIdsFromCommentBody", () => {
   test("returns an array of all mentions' IDs", () => {
     expect(getMentionIdsFromCommentBody(commentBodyWithMentions)).toEqual([
@@ -176,8 +185,8 @@ describe("getMentionIdsFromCommentBody", () => {
 
 describe("stringifyCommentBody", () => {
   const commentBodyFixturesStringifiedPlain = [
-    "Hello world and @1234",
-    "Hello world and @1234\nhttps://liveblocks.io",
+    "Hello world and @chris",
+    "Hello world and @vincent\nhttps://liveblocks.io",
     "",
     "",
     "",
@@ -188,8 +197,8 @@ describe("stringifyCommentBody", () => {
       [...commentBodyFixtures[index]!, stringified] as const
   );
   const commentBodyFixturesStringifiedHtml = [
-    "<p>Hello <strong>world</strong> and <span data-mention>@1234</span></p>",
-    '<p>Hello <em><strong>world</strong></em> and <span data-mention>@1234</span></p>\n<p><a href="https://liveblocks.io" target="_blank" rel="noopener noreferrer">https://liveblocks.io</a></p>',
+    "<p>Hello <strong>world</strong> and <span data-mention>@chris</span></p>",
+    '<p>Hello <em><strong>world</strong></em> and <span data-mention>@vincent</span></p>\n<p><a href="https://liveblocks.io" target="_blank" rel="noopener noreferrer">https://liveblocks.io</a></p>',
     "",
     "",
     "",
@@ -200,8 +209,8 @@ describe("stringifyCommentBody", () => {
       [...commentBodyFixtures[index]!, stringified] as const
   );
   const commentBodyFixturesStringifiedMarkdown = [
-    "Hello **world** and @1234",
-    "Hello _**world**_ and @1234\n\n[https://liveblocks.io](https://liveblocks.io)",
+    "Hello **world** and @chris",
+    "Hello _**world**_ and @vincent\n\n[https://liveblocks.io](https://liveblocks.io)",
     "",
     "",
     "",
@@ -291,25 +300,110 @@ describe("stringifyCommentBody", () => {
     );
   });
 
+  const resolveUsersExpected = [
+    ["plain text", "plain", "Hello @Chris and @Vincent\n@Nimesh"],
+    [
+      "HTML",
+      "html",
+      "<p>Hello <span data-mention>@Chris</span> and <span data-mention>@Vincent</span></p>\n<p><span data-mention>@Nimesh</span></p>",
+    ],
+    ["Markdown", "markdown", "Hello @Chris and @Vincent\n\n@Nimesh"],
+  ] as const;
+
+  test.each(resolveUsersExpected)(
+    "resolves user IDs as %s",
+    async (_, format, stringified) => {
+      await expect(
+        stringifyCommentBody(commentBodyWithMentions, {
+          format,
+          resolveUsers,
+        })
+      ).resolves.toBe(stringified);
+    }
+  );
+
   test("accepts a custom separator between blocks", async () => {
     await expect(
       stringifyCommentBody(commentBodyWithMultipleParagraphs, {
         separator: "\n\n\n",
       })
-    ).resolves.toBe("Hello world and @1234\n\n\nhttps://liveblocks.io");
+    ).resolves.toBe("Hello world and @vincent\n\n\nhttps://liveblocks.io");
   });
 
-  test("resolves user IDs", async () => {
+  test("accepts custom elements", async () => {
     await expect(
-      stringifyCommentBody(commentBodyWithMentions, {
-        resolveUsers: ({ userIds }) => {
-          return userIds.map((userId) => {
-            return {
-              name: capitalize(userId),
-            };
-          });
+      stringifyCommentBody(commentBodyWithMultipleParagraphs, {
+        elements: {
+          paragraph: ({ children }) => {
+            // prettier-ignore
+            return `<Paragraph>${children}</Paragraph>`;
+          },
+          text: ({ element }) => {
+            return element.text;
+          },
+          link: ({ element, href }) => {
+            // prettier-ignore
+            return `<Link to="${href}">${element.url}</Link>`;
+          },
+          mention: ({ element }) => {
+            // prettier-ignore
+            return `<Mention>@${element.id}</Mention>`;
+          },
         },
       })
-    ).resolves.toBe("Hello @Chris and @Vincent\n@Nimesh");
+    ).resolves.toBe(
+      '<Paragraph>Hello world and <Mention>@vincent</Mention></Paragraph>\n<Paragraph><Link to="https://liveblocks.io">https://liveblocks.io</Link></Paragraph>'
+    );
+  });
+
+  test("provides arguments to custom elements", async () => {
+    const paragraph = jest.fn();
+    const text = jest.fn();
+    const link = jest.fn();
+    const mention = jest.fn();
+
+    await stringifyCommentBody(commentBodyWithMultipleParagraphs, {
+      elements: {
+        paragraph,
+        text,
+        link,
+        mention,
+      },
+      resolveUsers,
+    });
+
+    const firstParagraph = commentBodyWithMultipleParagraphs.content[0]!;
+    const secondParagraph = commentBodyWithMultipleParagraphs.content[1]!;
+
+    expect(paragraph).toHaveBeenNthCalledWith(1, {
+      children: "",
+      element: firstParagraph,
+    });
+    expect(paragraph).toHaveBeenNthCalledWith(2, {
+      children: "",
+      element: secondParagraph,
+    });
+
+    expect(text).toHaveBeenNthCalledWith(1, {
+      element: firstParagraph.children[0],
+    });
+    expect(text).toHaveBeenNthCalledWith(2, {
+      element: firstParagraph.children[1],
+    });
+    expect(text).toHaveBeenNthCalledWith(3, {
+      element: firstParagraph.children[2],
+    });
+
+    expect(link).toHaveBeenNthCalledWith(1, {
+      element: secondParagraph.children[0],
+      href: "https://liveblocks.io",
+    });
+
+    expect(mention).toHaveBeenNthCalledWith(1, {
+      element: firstParagraph.children[3],
+      user: {
+        name: "Vincent",
+      },
+    });
   });
 });
