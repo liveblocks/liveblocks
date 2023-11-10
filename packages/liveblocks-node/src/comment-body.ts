@@ -569,7 +569,8 @@ export async function stringifyCommentBody<
   options?: StringifyCommentBodyOptions<TUserMeta>
 ): Promise<string> {
   const format = options?.format ?? "plain";
-  const separator = options?.separator ?? format === "markdown" ? "\n\n" : "\n";
+  const separator =
+    options?.separator ?? (format === "markdown" ? "\n\n" : "\n");
   const elements = {
     ...(format === "html"
       ? stringifyCommentBodyHtmlElements

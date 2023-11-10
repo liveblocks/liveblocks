@@ -230,7 +230,7 @@ describe("stringifyCommentBody", () => {
   );
 
   test("escapes HTML", async () => {
-    const commentBodyWithHtml: CommentBody = {
+    const commentBodyHtml: CommentBody = {
       version: 1,
       content: [
         {
@@ -249,14 +249,14 @@ describe("stringifyCommentBody", () => {
     };
 
     await expect(
-      stringifyCommentBody(commentBodyWithHtml, { format: "html" })
+      stringifyCommentBody(commentBodyHtml, { format: "html" })
     ).resolves.toBe(
       '<p>Hello <em><strong>&lt;strong&gt;world&lt;/strong&gt;</strong></em> and <a href="https://liveblocks.io" target="_blank" rel="noopener noreferrer">https://liveblocks.io</a></p>'
     );
   });
 
   test("escapes Markdown", async () => {
-    const commentBodyWithMarkdown: CommentBody = {
+    const commentBodyMarkdown: CommentBody = {
       version: 1,
       content: [
         {
@@ -275,9 +275,17 @@ describe("stringifyCommentBody", () => {
     };
 
     await expect(
-      stringifyCommentBody(commentBodyWithMarkdown, { format: "markdown" })
+      stringifyCommentBody(commentBodyMarkdown, { format: "markdown" })
     ).resolves.toBe(
       "Hello _**\\*\\*world\\*\\***_ and [https://liveblocks.io](https://liveblocks.io)"
     );
+  });
+
+  test("accepts a custom separator between blocks", async () => {
+    await expect(
+      stringifyCommentBody(commentBodyMultipleParagraphs, {
+        separator: "\n\n\n",
+      })
+    ).resolves.toBe("Hello world and @1234\n\n\nhttps://liveblocks.io");
   });
 });
