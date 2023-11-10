@@ -228,4 +228,56 @@ describe("stringifyCommentBody", () => {
       ).resolves.toBe(stringified);
     }
   );
+
+  test("escapes HTML", async () => {
+    const commentBodyWithHtml: CommentBody = {
+      version: 1,
+      content: [
+        {
+          type: "paragraph",
+          children: [
+            { text: "Hello " },
+            { text: "<strong>world</strong>", bold: true, italic: true },
+            { text: " and " },
+            {
+              type: "link",
+              url: "https://liveblocks.io",
+            },
+          ],
+        },
+      ],
+    };
+
+    await expect(
+      stringifyCommentBody(commentBodyWithHtml, { format: "html" })
+    ).resolves.toBe(
+      '<p>Hello <em><strong>&lt;strong&gt;world&lt;/strong&gt;</strong></em> and <a href="https://liveblocks.io" target="_blank" rel="noopener noreferrer">https://liveblocks.io</a></p>'
+    );
+  });
+
+  test("escapes Markdown", async () => {
+    const commentBodyWithMarkdown: CommentBody = {
+      version: 1,
+      content: [
+        {
+          type: "paragraph",
+          children: [
+            { text: "Hello " },
+            { text: "**world**", bold: true, italic: true },
+            { text: " and " },
+            {
+              type: "link",
+              url: "https://liveblocks.io",
+            },
+          ],
+        },
+      ],
+    };
+
+    await expect(
+      stringifyCommentBody(commentBodyWithMarkdown, { format: "markdown" })
+    ).resolves.toBe(
+      "Hello _**\\*\\*world\\*\\***_ and [https://liveblocks.io](https://liveblocks.io)"
+    );
+  });
 });

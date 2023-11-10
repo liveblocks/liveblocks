@@ -267,78 +267,181 @@ async function resolveUsersInCommentBody<TUserMeta extends BaseUserMeta>(
   return resolvedUsers;
 }
 
-function toSingleLine(string: string) {
-  if (!string.includes("\n")) {
-    return string;
-  }
+const htmlEscapables = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;",
+};
 
-  return string
-    .split("\n")
-    .map((line) => line.trim())
-    .join("");
+const htmlEscapablesRegex = new RegExp(
+  Object.keys(htmlEscapables)
+    .map((entity) => `\\${entity}`)
+    .join("|"),
+  "g"
+);
+
+function htmlSafe(value: string) {
+  return new HtmlSafeString([String(value)], []);
 }
 
-const htmlEntities = ["&", "<", ">", '"', "'", "/", "`", "="];
+function joinHtml(strings: (string | HtmlSafeString)[]) {
+  if (strings.length <= 0) {
+    return new HtmlSafeString([""], []);
+  }
 
-const markdownEntities = [
-  "_",
-  "*",
-  "#",
-  ".",
-  "-",
-  "+",
-  "`",
-  "!",
-  "|",
-  "(",
-  ")",
-  "{",
-  "}",
-  "[",
-  "]",
-];
-
-function createEscapingTaggedTemplate(entities: string[]) {
-  const entitiesRegex = new RegExp(
-    Object.keys(entities)
-      .map((entity) => `\\${entity}`)
-      .join("|"),
-    "g"
+  return new HtmlSafeString(
+    ["", ...(Array(strings.length - 1).fill("") as string[]), ""],
+    strings
   );
+}
 
-  function escape(string?: string) {
-    return string?.replace(entitiesRegex, (entity) => `\\${entity}`) ?? "";
+function escapeHtml(
+  value: string | string[] | HtmlSafeString | HtmlSafeString[]
+) {
+  if (value instanceof HtmlSafeString) {
+    return value.toString();
   }
 
-  return (strings: TemplateStringsArray, ...values: string[]) => {
-    return toSingleLine(
-      strings.reduce((result, str, i) => {
-        const value = values[i - 1];
-        const escapedValue = Array.isArray(value)
-          ? value.join("")
-          : escape(value);
+  if (Array.isArray(value)) {
+    return joinHtml(value).toString();
+  }
 
-        return result + escapedValue + str;
-      })
-    );
-  };
+  return String(value).replace(
+    htmlEscapablesRegex,
+    (character) => htmlEscapables[character as keyof typeof htmlEscapables]
+  );
+}
+
+// Adapted from https://github.com/Janpot/escape-html-template-tag
+export class HtmlSafeString {
+  private _strings: readonly string[];
+  private _values: readonly (
+    | string
+    | string[]
+    | HtmlSafeString
+    | HtmlSafeString[]
+  )[];
+
+  constructor(
+    strings: readonly string[],
+    values: readonly (string | string[] | HtmlSafeString | HtmlSafeString[])[]
+  ) {
+    this._strings = strings;
+    this._values = values;
+  }
+
+  toString(): string {
+    return this._strings.reduce((result, str, i) => {
+      return result + escapeHtml(this._values[i - 1]!) + str;
+    });
+  }
 }
 
 /**
- * Build an HTML string from a template literal where the values
- * are escaped and newlines/identation are removed.
- *
+ * Build an HTML string from a template literal where the values are escaped.
  * Nested calls are supported and won't be escaped.
  */
-const html = createEscapingTaggedTemplate(htmlEntities);
+function html(
+  strings: TemplateStringsArray,
+  ...values: (string | string[] | HtmlSafeString | HtmlSafeString[])[]
+) {
+  return new HtmlSafeString(strings, values) as unknown as string;
+}
+
+const markdownEscapables = {
+  _: "\\_",
+  "*": "\\*",
+  "#": "\\#",
+  "`": "\\`",
+  "~": "\\~",
+  "!": "\\!",
+  "|": "\\|",
+  "(": "\\(",
+  ")": "\\)",
+  "{": "\\{",
+  "}": "\\}",
+  "[": "\\[",
+  "]": "\\]",
+};
+
+const markdownEscapablesRegex = new RegExp(
+  Object.keys(markdownEscapables)
+    .map((entity) => `\\${entity}`)
+    .join("|"),
+  "g"
+);
+
+function joinMarkdown(strings: (string | MarkdownSafeString)[]) {
+  if (strings.length <= 0) {
+    return new MarkdownSafeString([""], []);
+  }
+
+  return new MarkdownSafeString(
+    ["", ...(Array(strings.length - 1).fill("") as string[]), ""],
+    strings
+  );
+}
+
+function escapeMarkdown(
+  value: string | string[] | MarkdownSafeString | MarkdownSafeString[]
+) {
+  if (value instanceof MarkdownSafeString) {
+    return value.toString();
+  }
+
+  if (Array.isArray(value)) {
+    return joinMarkdown(value).toString();
+  }
+
+  return String(value).replace(
+    markdownEscapablesRegex,
+    (character) =>
+      markdownEscapables[character as keyof typeof markdownEscapables]
+  );
+}
+
+// Adapted from https://github.com/Janpot/escape-html-template-tag
+export class MarkdownSafeString {
+  private _strings: readonly string[];
+  private _values: readonly (
+    | string
+    | string[]
+    | MarkdownSafeString
+    | MarkdownSafeString[]
+  )[];
+
+  constructor(
+    strings: readonly string[],
+    values: readonly (
+      | string
+      | string[]
+      | MarkdownSafeString
+      | MarkdownSafeString[]
+    )[]
+  ) {
+    this._strings = strings;
+    this._values = values;
+  }
+
+  toString(): string {
+    return this._strings.reduce((result, str, i) => {
+      return result + escapeMarkdown(this._values[i - 1]!) + str;
+    });
+  }
+}
 
 /**
- * Build a Markdown string from a template literal where the values
- * are escaped and newlines/identation are removed.
- *
+ * Build a Markdown string from a template literal where the values are escaped.
  * Nested calls are supported and won't be escaped.
  */
-const markdown = createEscapingTaggedTemplate(markdownEntities);
+function markdown(
+  strings: TemplateStringsArray,
+  ...values: (string | string[] | MarkdownSafeString | MarkdownSafeString[])[]
+) {
+  return new MarkdownSafeString(strings, values) as unknown as string;
+}
 
 /**
  * Helper function to convert a URL (relative or absolute) to an absolute URL.
@@ -369,7 +472,8 @@ const stringifyCommentBodyPlainElements: StringifyCommentBodyElements = {
 
 const stringifyCommentBodyHtmlElements: StringifyCommentBodyElements = {
   paragraph: ({ children }) => {
-    return children ? html`<p>${children}</p>` : children;
+    // prettier-ignore
+    return children ? html`<p>${htmlSafe(children)}</p>` : children;
   },
   text: ({ element }) => {
     // <code><s><em><strong>text</strong></s></em></code>
@@ -380,29 +484,33 @@ const stringifyCommentBodyHtmlElements: StringifyCommentBodyElements = {
     }
 
     if (element.bold) {
+      // prettier-ignore
       children = html`<strong>${children}</strong>`;
     }
 
     if (element.italic) {
+      // prettier-ignore
       children = html`<em>${children}</em>`;
     }
 
     if (element.strikethrough) {
+      // prettier-ignore
       children = html`<s>${children}</s>`;
     }
 
     if (element.code) {
+      // prettier-ignore
       children = html`<code>${children}</code>`;
     }
 
     return children;
   },
   link: ({ element, href }) => {
-    return html`<a href="${href}" target="_blank" rel="noopener noreferrer">
-      ${element.url}
-    </a>`;
+    // prettier-ignore
+    return html`<a href="${href}" target="_blank" rel="noopener noreferrer">${element.url}</a>`;
   },
   mention: ({ element, user }) => {
+    // prettier-ignore
     return html`<span data-mention>@${user?.name ?? element.id}</span>`;
   },
 };
@@ -420,27 +528,33 @@ const stringifyCommentBodyMarkdownElements: StringifyCommentBodyElements = {
     }
 
     if (element.bold) {
+      // prettier-ignore
       children = markdown`**${children}**`;
     }
 
     if (element.italic) {
+      // prettier-ignore
       children = markdown`_${children}_`;
     }
 
     if (element.strikethrough) {
+      // prettier-ignore
       children = markdown`~~${children}~~`;
     }
 
     if (element.code) {
+      // prettier-ignore
       children = markdown`\`${children}\``;
     }
 
     return children;
   },
   link: ({ element, href }) => {
+    // prettier-ignore
     return markdown`[${element.url}](${href})`;
   },
   mention: ({ element, user }) => {
+    // prettier-ignore
     return markdown`@${user?.name ?? element.id}`;
   },
 };
