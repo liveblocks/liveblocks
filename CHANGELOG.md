@@ -1,3 +1,15 @@
+# v1.8.0
+
+### `@liveblocks/node`
+
+- Add utilities to work with the `CommentBody` format from Comments:
+  - `getMentionIdsFromCommentBody(body)` - Get a list of all mention IDs from a
+    `CommentBody`.
+  - `stringifyCommentBody(body, options)` - Convert a `CommentBody` to a string,
+    either as plain text, HTML, or Markdown. It supports resolving mention IDs
+    similarly to `@liveblocks/react` and overriding each elements to control the
+    formatting.
+
 # v1.7.1
 
 ### `@liveblocks/react-comments`
