@@ -67,13 +67,17 @@ export type RoomMetadata = Record<string, string | string[]>;
 export type RoomInfo = {
   type: "room";
   id: string;
-  lastConnectionAt?: string;
-  createdAt?: string;
   metadata: RoomMetadata;
   groupsAccesses: RoomAccesses;
   usersAccesses: RoomAccesses;
   defaultAccesses: RoomPermission;
-  schema?: string;
+  lastConnectionAt?: Date;
+  createdAt?: Date;
+};
+
+type RoomInfoOriginal = Omit<RoomInfo, "lastConnectionAt" | "createdAt"> & {
+  lastConnectionAt?: Date;
+  createdAt?: Date;
 };
 
 export type RoomUser<Info> = {
@@ -87,9 +91,14 @@ export type Schema = {
   id: string;
   name: string;
   version: number;
+  body: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type SchemaOriginal = Omit<Schema, "createdAt" | "updatedAt"> & {
   createdAt: string;
   updatedAt: string;
-  body: string;
 };
 
 /**
@@ -119,17 +128,12 @@ export class Liveblocks {
       Authorization: `Bearer ${this._secret}`,
       "Content-Type": "application/json",
     };
-
     const fetch = await fetchPolyfill();
     const res = await fetch(url, {
       method: "POST",
       headers,
       body: JSON.stringify(json),
     });
-    if (!res.ok) {
-      const text = await res.text();
-      throw new HttpError(res.status, text);
-    }
     return res;
   }
 
@@ -140,17 +144,12 @@ export class Liveblocks {
       Authorization: `Bearer ${this._secret}`,
       "Content-Type": "application/json",
     };
-
     const fetch = await fetchPolyfill();
     const res = await fetch(url, {
       method: "PUT",
       headers,
       body: JSON.stringify(json),
     });
-    if (!res.ok) {
-      const text = await res.text();
-      throw new HttpError(res.status, text);
-    }
     return res;
   }
 
@@ -160,13 +159,8 @@ export class Liveblocks {
     const headers = {
       Authorization: `Bearer ${this._secret}`,
     };
-
     const fetch = await fetchPolyfill();
     const res = await fetch(url, { method: "DELETE", headers });
-    if (!res.ok) {
-      const text = await res.text();
-      throw new HttpError(res.status, text);
-    }
     return res;
   }
 
@@ -175,15 +169,9 @@ export class Liveblocks {
     const url = urljoin(this._baseUrl, path, params);
     const headers = {
       Authorization: `Bearer ${this._secret}`,
-      "Content-Type": "application/json",
     };
-
     const fetch = await fetchPolyfill();
     const res = await fetch(url, { method: "GET", headers });
-    if (!res.ok) {
-      const text = await res.text();
-      throw new HttpError(res.status, text);
-    }
     return res;
   }
 
@@ -249,7 +237,7 @@ export class Liveblocks {
       | string // Shorthand for userId
       | Identity,
     options?: {
-      userInfo: Json;
+      userInfo: IUserInfo;
       // ....
     }
   ): Promise<AuthResponse> {
@@ -328,10 +316,31 @@ export class Liveblocks {
     };
 
     const res = await this.get(path, queryParams);
-    return (await res.json()) as Promise<{
+
+    const data = (await res.json()) as {
       nextPage: string | null;
-      data: RoomInfo[];
-    }>;
+      data: RoomInfoOriginal[];
+    };
+
+    const rooms = data.data.map((room) => {
+      // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
+      const lastConnectionAt = room.lastConnectionAt
+        ? new Date(room.lastConnectionAt)
+        : undefined;
+
+      const createdAt = room.createdAt ? new Date(room.createdAt) : undefined;
+
+      return {
+        ...room,
+        lastConnectionAt,
+        createdAt,
+      };
+    });
+
+    return {
+      ...data,
+      data: rooms,
+    };
   }
 
   /**
@@ -354,16 +363,33 @@ export class Liveblocks {
   ): Promise<RoomInfo> {
     const { defaultAccesses, groupsAccesses, usersAccesses, metadata } = params;
 
-    const path = url`/v2/rooms`;
-
-    const res = await this.post(path, {
+    const res = await this.post(url`/v2/rooms`, {
       id: roomId,
       defaultAccesses,
       groupsAccesses,
       usersAccesses,
       metadata,
     });
-    return res.json() as Promise<RoomInfo>;
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    const data = (await res.json()) as RoomInfoOriginal;
+
+    // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
+    const lastConnectionAt = data.lastConnectionAt
+      ? new Date(data.lastConnectionAt)
+      : undefined;
+
+    const createdAt = data.createdAt ? new Date(data.createdAt) : undefined;
+
+    return {
+      ...data,
+      lastConnectionAt,
+      createdAt,
+    };
   }
 
   /**
@@ -373,7 +399,26 @@ export class Liveblocks {
    */
   public async getRoom(roomId: string): Promise<RoomInfo> {
     const res = await this.get(url`/v2/rooms/${roomId}`);
-    return (await res.json()) as Promise<RoomInfo>;
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    const data = (await res.json()) as RoomInfoOriginal;
+
+    // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
+    const lastConnectionAt = data.lastConnectionAt
+      ? new Date(data.lastConnectionAt)
+      : undefined;
+
+    const createdAt = data.createdAt ? new Date(data.createdAt) : undefined;
+
+    return {
+      ...data,
+      lastConnectionAt,
+      createdAt,
+    };
   }
 
   /**
@@ -403,7 +448,26 @@ export class Liveblocks {
       usersAccesses,
       metadata,
     });
-    return (await res.json()) as Promise<RoomInfo>;
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    const data = (await res.json()) as RoomInfoOriginal;
+
+    // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
+    const lastConnectionAt = data.lastConnectionAt
+      ? new Date(data.lastConnectionAt)
+      : undefined;
+
+    const createdAt = data.createdAt ? new Date(data.createdAt) : undefined;
+
+    return {
+      ...data,
+      lastConnectionAt,
+      createdAt,
+    };
   }
 
   /**
@@ -411,7 +475,12 @@ export class Liveblocks {
    * @param roomId The id of the room to delete.
    */
   public async deleteRoom(roomId: string): Promise<void> {
-    await this.delete(url`/v2/rooms/${roomId}`);
+    const res = await this.delete(url`/v2/rooms/${roomId}`);
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
   }
 
   /**
@@ -423,6 +492,12 @@ export class Liveblocks {
     roomId: string
   ): Promise<RoomUser<T>[]> {
     const res = await this.get(url`/v2/rooms/${roomId}/active_users`);
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
     return (await res.json()) as Promise<RoomUser<T>[]>;
   }
 
@@ -432,7 +507,14 @@ export class Liveblocks {
    * @param message The message to broadcast. It can be any JSON serializable value.
    */
   public async broadcastEvent(roomId: string, message: Json): Promise<void> {
-    await this.post(url`/v2/rooms/${roomId}/broadcast_event`, message);
+    const res = await this.post(
+      url`/v2/rooms/${roomId}/broadcast_event`,
+      message
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
   }
 
   /* -------------------------------------------------------------------------------------------------
@@ -473,8 +555,11 @@ export class Liveblocks {
     roomId: string,
     format: "plain-lson" | "json" = "plain-lson"
   ): Promise<PlainLsonObject | JsonObject> {
-    const path = url`/v2/rooms/${roomId}/storage`;
-    const res = await this.get(path, { format });
+    const res = await this.get(url`/v2/rooms/${roomId}/storage`, { format });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
     return (await res.json()) as Promise<PlainLsonObject | JsonObject>;
   }
 
@@ -491,6 +576,10 @@ export class Liveblocks {
     document: PlainLsonObject
   ): Promise<PlainLsonObject> {
     const res = await this.post(url`/v2/rooms/${roomId}/storage`, document);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
     return (await res.json()) as Promise<PlainLsonObject>;
   }
 
@@ -499,7 +588,11 @@ export class Liveblocks {
    * @param roomId The id of the room to delete the storage from.
    */
   public async deleteStorageDocument(roomId: string): Promise<void> {
-    await this.delete(url`/v2/rooms/${roomId}/storage`);
+    const res = await this.delete(url`/v2/rooms/${roomId}/storage`);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
   }
 
   /* -------------------------------------------------------------------------------------------------
@@ -532,6 +625,11 @@ export class Liveblocks {
       type,
     });
 
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
     return (await res.json()) as Promise<JsonObject>;
   }
 
@@ -547,9 +645,13 @@ export class Liveblocks {
     }
   ): Promise<void> {
     const { update } = params;
-    await this.put(url`/v2/rooms/${roomId}/ydoc`, {
+    const res = await this.put(url`/v2/rooms/${roomId}/ydoc`, {
       update,
     });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
   }
 
   /**
@@ -562,6 +664,10 @@ export class Liveblocks {
     roomId: string
   ): Promise<ArrayBuffer> {
     const res = await this.get(url`/v2/rooms/${roomId}/ydoc-binary`);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
     return res.arrayBuffer();
   }
 
@@ -580,7 +686,21 @@ export class Liveblocks {
       name,
       body,
     });
-    return (await res.json()) as Promise<Schema>;
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+    const data = (await res.json()) as SchemaOriginal;
+
+    // Convert createdAt and updatedAt from ISO date strings to Date objects
+    const createdAt = new Date(data.createdAt);
+    const updatedAt = new Date(data.updatedAt);
+
+    return {
+      ...data,
+      createdAt,
+      updatedAt,
+    };
   }
 
   /**
@@ -590,7 +710,21 @@ export class Liveblocks {
    */
   public async getSchema(schemaId: string): Promise<Schema> {
     const res = await this.get(url`/v2/schemas/${schemaId}`);
-    return (await res.json()) as Promise<Schema>;
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+    const data = (await res.json()) as SchemaOriginal;
+
+    // Convert createdAt and updatedAt from ISO date strings to Date objects
+    const createdAt = new Date(data.createdAt);
+    const updatedAt = new Date(data.updatedAt);
+
+    return {
+      ...data,
+      createdAt,
+      updatedAt,
+    };
   }
 
   /**
@@ -603,7 +737,22 @@ export class Liveblocks {
     const res = await this.put(url`/v2/schemas/${schemaId}`, {
       body,
     });
-    return (await res.json()) as Promise<Schema>;
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    const data = (await res.json()) as SchemaOriginal;
+
+    // Convert createdAt and updatedAt from ISO date strings to Date objects
+    const createdAt = new Date(data.createdAt);
+    const updatedAt = new Date(data.updatedAt);
+
+    return {
+      ...data,
+      createdAt,
+      updatedAt,
+    };
   }
 
   /**
@@ -611,7 +760,11 @@ export class Liveblocks {
    * @param schemaId Id of the schema - this is the combination of the schema name and version of the schema to update. For example, `my-schema@1`.
    */
   public async deleteSchema(schemaId: string): Promise<void> {
-    await this.delete(url`/v2/schemas/${schemaId}`);
+    const res = await this.delete(url`/v2/schemas/${schemaId}`);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
   }
 
   /**
@@ -621,7 +774,22 @@ export class Liveblocks {
    */
   public async getSchemaByRoomId(roomId: string): Promise<Schema> {
     const res = await this.get(url`/v2/rooms/${roomId}/schema`);
-    return (await res.json()) as Promise<Schema>;
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    const data = (await res.json()) as SchemaOriginal;
+
+    // Convert createdAt and updatedAt from ISO date strings to Date objects
+    const createdAt = new Date(data.createdAt);
+    const updatedAt = new Date(data.updatedAt);
+
+    return {
+      ...data,
+      createdAt,
+      updatedAt,
+    };
   }
 
   /**
@@ -638,6 +806,10 @@ export class Liveblocks {
     const res = await this.post(url`/v2/rooms/${roomId}/schema`, {
       schema: schemaId,
     });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
     return (await res.json()) as Promise<{ schema: string }>;
   }
 
@@ -646,7 +818,11 @@ export class Liveblocks {
    * @param roomId The id of the room to detach the schema from.
    */
   public async detachSchemaFromRoom(roomId: string): Promise<void> {
-    await this.delete(url`/v2/rooms/${roomId}/schema`);
+    const res = await this.delete(url`/v2/rooms/${roomId}/schema`);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
   }
 
   /* -------------------------------------------------------------------------------------------------
@@ -659,11 +835,17 @@ export class Liveblocks {
    * @param params.roomId The room ID to get the threads from.
    * @returns A list of threads.
    */
-  public async getThreads(params: { roomId: string }): Promise<ThreadData[]> {
+  public async getThreads(params: {
+    roomId: string;
+  }): Promise<{ data: ThreadData[] }> {
     const { roomId } = params;
 
     const res = await this.get(url`/v2/rooms/${roomId}/threads`);
-    return (await res.json()) as Promise<ThreadData[]>;
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+    return (await res.json()) as Promise<{ data: ThreadData[] }>;
   }
 
   /**
@@ -680,6 +862,10 @@ export class Liveblocks {
     const { roomId, threadId } = params;
 
     const res = await this.get(url`/v2/rooms/${roomId}/threads/${threadId}`);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
     return (await res.json()) as Promise<ThreadData>;
   }
 
@@ -702,6 +888,10 @@ export class Liveblocks {
     const res = await this.get(
       url`/v2/rooms/${roomId}/threads/${threadId}/participants`
     );
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
     return (await res.json()) as Promise<ThreadParticipants>;
   }
 
@@ -723,20 +913,15 @@ export class Liveblocks {
     const res = await this.get(
       url`/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`
     );
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
     return (await res.json()) as Promise<CommentData>;
-  }
-
-  /**
-   * Checks whether the error is an HttpError.
-   * @param error The error to check.
-   * @returns Whether the error is an HttpError.
-   */
-  public isHttpError(error: unknown): error is HttpError {
-    return error instanceof HttpError;
   }
 }
 
-class HttpError extends Error {
+export class LiveblocksError extends Error {
   status: number;
 
   constructor(status: number, message = "") {

@@ -1,15 +1,15 @@
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
-import { Liveblocks } from "../client";
+import { Liveblocks, LiveblocksError } from "../client";
 import { DEFAULT_BASE_URL } from "../utils";
 
 describe("client", () => {
   const room = {
     type: "room",
     id: "react-todo-list",
-    lastConnectionAt: "2022-08-04T21:07:09.380Z",
-    createdAt: "2022-07-13T14:32:50.697Z",
+    lastConnectionAt: new Date("2022-08-04T21:07:09.380Z"),
+    createdAt: new Date("2022-07-13T14:32:50.697Z"),
     metadata: {
       color: "blue",
       size: "10",
@@ -159,8 +159,8 @@ describe("client", () => {
       // If it doesn't throw, fail the test.
       expect(true).toBe(false);
     } catch (err) {
-      expect(client.isHttpError(err)).toBe(true);
-      if (client.isHttpError(err)) {
+      expect(err instanceof LiveblocksError).toBe(true);
+      if (err instanceof LiveblocksError) {
         expect(err.status).toBe(404);
         expect(err.message).toBe(JSON.stringify(error));
       }
@@ -184,7 +184,7 @@ describe("client", () => {
       // If it doesn't throw, fail the test.
       expect(true).toBe(false);
     } catch (err) {
-      expect(client.isHttpError(err)).toBe(false);
+      expect(err instanceof LiveblocksError).toBe(false);
     }
   });
 });
