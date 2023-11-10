@@ -5,6 +5,10 @@ import {
   stringifyCommentBody,
 } from "../comment-body";
 
+function capitalize(string: string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
 const commentBody: CommentBody = {
   version: 1,
   content: [
@@ -20,7 +24,7 @@ const commentBody: CommentBody = {
   ],
 };
 
-const commentBodyMultipleParagraphs: CommentBody = {
+const commentBodyWithMultipleParagraphs: CommentBody = {
   version: 1,
   content: [
     {
@@ -49,7 +53,7 @@ const commentBodyEmpty: CommentBody = {
   content: [],
 };
 
-const commentBodyEmptyParagraph: CommentBody = {
+const commentBodyWithEmptyParagraph: CommentBody = {
   version: 1,
   content: [
     {
@@ -59,7 +63,7 @@ const commentBodyEmptyParagraph: CommentBody = {
   ],
 };
 
-const commentBodyEmptyInlineElements: CommentBody = {
+const commentBodyWithEmptyInlineElements: CommentBody = {
   version: 1,
   content: [
     {
@@ -73,7 +77,7 @@ const commentBodyEmptyInlineElements: CommentBody = {
   ],
 };
 
-const commentBodyUnknownBlockElement: CommentBody = {
+const commentBodyWithUnknownBlockElement: CommentBody = {
   version: 1,
   content: [
     {
@@ -84,7 +88,7 @@ const commentBodyUnknownBlockElement: CommentBody = {
   ],
 };
 
-const commentBodyUnknownInlineElement: CommentBody = {
+const commentBodyWithUnknownInlineElement: CommentBody = {
   version: 1,
   content: [
     {
@@ -97,67 +101,73 @@ const commentBodyUnknownInlineElement: CommentBody = {
 
 const commentBodyFixtures: [string, CommentBody][] = [
   ["a comment body", commentBody],
-  ["a comment body with multiple paragraphs", commentBodyMultipleParagraphs],
+  [
+    "a comment body with multiple paragraphs",
+    commentBodyWithMultipleParagraphs,
+  ],
   ["an empty comment body", commentBodyEmpty],
-  ["a comment body with an empty paragraph", commentBodyEmptyParagraph],
-  ["a comment body with empty inline elements", commentBodyEmptyInlineElements],
+  ["a comment body with an empty paragraph", commentBodyWithEmptyParagraph],
+  [
+    "a comment body with empty inline elements",
+    commentBodyWithEmptyInlineElements,
+  ],
   [
     "a comment body with an unknown block element",
-    commentBodyUnknownBlockElement,
+    commentBodyWithUnknownBlockElement,
   ],
   [
     "a comment body with an unknown inline element",
-    commentBodyUnknownInlineElement,
+    commentBodyWithUnknownInlineElement,
   ],
 ];
 
+const commentBodyWithMentions: CommentBody = {
+  version: 1,
+  content: [
+    {
+      type: "paragraph",
+      children: [
+        { text: "Hello " },
+        { type: "mention", id: "chris" },
+        { text: " and " },
+        { type: "mention", id: "vincent" },
+      ],
+    },
+    {
+      type: "paragraph",
+      children: [{ type: "mention", id: "nimesh" }],
+    },
+  ],
+};
+
 describe("getMentionIdsFromCommentBody", () => {
-  const commentBodyWithMentions: CommentBody = {
-    version: 1,
-    content: [
-      {
-        type: "paragraph",
-        children: [
-          { text: "Hello " },
-          { type: "mention", id: "0" },
-          { text: " and " },
-          { type: "mention", id: "1" },
-        ],
-      },
-      {
-        type: "paragraph",
-        children: [{ type: "mention", id: "2" }],
-      },
-    ],
-  };
-
-  const commentBodyWithoutMentions: CommentBody = {
-    version: 1,
-    content: [
-      {
-        type: "paragraph",
-        children: [
-          { text: "Hello " },
-          { text: "world", bold: true },
-          { text: " and " },
-          {
-            type: "link",
-            url: "https://liveblocks.io",
-          },
-        ],
-      },
-    ],
-  };
-
   test("returns an array of all mentions' IDs", () => {
     expect(getMentionIdsFromCommentBody(commentBodyWithMentions)).toEqual([
-      "0",
-      "1",
-      "2",
+      "chris",
+      "vincent",
+      "nimesh",
     ]);
   });
 
   test("returns an empty array if there are no mentions", () => {
+    const commentBodyWithoutMentions: CommentBody = {
+      version: 1,
+      content: [
+        {
+          type: "paragraph",
+          children: [
+            { text: "Hello " },
+            { text: "world", bold: true },
+            { text: " and " },
+            {
+              type: "link",
+              url: "https://liveblocks.io",
+            },
+          ],
+        },
+      ],
+    };
+
     expect(getMentionIdsFromCommentBody(commentBodyWithoutMentions)).toEqual(
       []
     );
@@ -283,9 +293,23 @@ describe("stringifyCommentBody", () => {
 
   test("accepts a custom separator between blocks", async () => {
     await expect(
-      stringifyCommentBody(commentBodyMultipleParagraphs, {
+      stringifyCommentBody(commentBodyWithMultipleParagraphs, {
         separator: "\n\n\n",
       })
     ).resolves.toBe("Hello world and @1234\n\n\nhttps://liveblocks.io");
+  });
+
+  test("resolves user IDs", async () => {
+    await expect(
+      stringifyCommentBody(commentBodyWithMentions, {
+        resolveUsers: ({ userIds }) => {
+          return userIds.map((userId) => {
+            return {
+              name: capitalize(userId),
+            };
+          });
+        },
+      })
+    ).resolves.toBe("Hello @Chris and @Vincent\n@Nimesh");
   });
 });
