@@ -268,6 +268,7 @@ export function CollaborativeEditor() {
           defaultValue=""
           options={{
             tabSize: 2,
+            padding: { top: 20 },
           }}
         />
       </div>
@@ -432,12 +433,6 @@ a global CSS file:
   user-select: none;
   z-index: 1000;
 }
-
-/* Move the editor down so cursors aren't hidden by overflow */
-.monaco-editor .overflow-guard > .margin,
-.monaco-editor .lines-content > * {
-  top: 20px !important;
-}
 ```
 
 You can then import this into your editor to enable live cursors:
@@ -462,6 +457,7 @@ export function CollaborativeEditor() {
           defaultValue=""
           options={{
             tabSize: 2,
+            padding: { top: 20 },
           }}
         />
       </div>
@@ -699,6 +695,7 @@ export function CollaborativeEditor() {
           defaultValue=""
           options={{
             tabSize: 2,
+            padding: { top: 20 },
           }}
         />
       </div>
