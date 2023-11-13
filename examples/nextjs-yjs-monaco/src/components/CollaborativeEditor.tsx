@@ -68,6 +68,7 @@ export function CollaborativeEditor() {
           defaultValue=""
           options={{
             tabSize: 2,
+            padding: { top: 20 },
           }}
         />
       </div>
