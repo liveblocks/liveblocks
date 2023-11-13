@@ -344,8 +344,8 @@ async function getNextPage() {
 #### Liveblocks.createRoom [#post-rooms]
 
 Programmatically creates a new room from a room ID. The `defaultAccesses` option
-is required—setting it to `["room:write"]` creates a public room, whereas
-setting it to `[]` will create a private room that needs
+is required. Setting `defaultAccesses` to `["room:write"]` creates a public
+room, whereas setting it to `[]` will create a private room that needs
 [ID token permission to enter](/docs/rooms/permissions/id-token). This is a
 wrapper around the
 [Create Room API](/docs/api-reference/rest-api-endpoints#post-rooms) and returns
