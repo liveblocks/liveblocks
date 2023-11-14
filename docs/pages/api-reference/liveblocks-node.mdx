@@ -1008,7 +1008,201 @@ const comment = await liveblocks.getComment({
 
 ---
 
-## WebhookHandler [#WebhookHandler]
+## Utilities
+
+### getMentionIdsFromCommentBody [#get-mention-ids-from-comment-body]
+
+Returns an array of each user’s ID that has been mentioned in a `CommentBody`
+(found under `comment.body`).
+
+```ts
+import { getMentionIdsFromCommentBody } from "@liveblocks/node";
+
+const mentionedIds = getMentionIdsFromCommentBody(comment.body);
+```
+
+This is most commonly used in combination with the
+[Comments API functions](/docs/api-reference/liveblocks-node#Comments), for
+example [`getComment`](/docs/api-reference/liveblocks-node#get-comment).
+
+```ts
+import { Liveblocks, getMentionIdsFromCommentBody } from "@liveblocks/node";
+
+// Create a node client
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+// Retrieve a comment
+const comment = await liveblocks.getComment({
+  roomId: "my-room-id",
+  threadId: "my-thread-id",
+  commentId: "my-comment-id",
+});
+
+// Get the mentions inside the comment's body
+const mentionedIds = getMentionIdsFromCommentBody(comment.body);
+
+// ["marc@example.com", "vincent@example.com", ...]
+console.log(mentionedIds);
+```
+
+Here’s an example with a custom `CommentBody`.
+
+```ts
+import { CommentBody, getMentionIdsFromCommentBody } from "@liveblocks/node";
+
+// Create a custom `CommentBody`
+const commentBody: CommentBody = {
+  version: 1,
+  content: [
+    {
+      type: "paragraph",
+      children: [
+        { text: "Hello " },
+        { type: "mention", id: "chris@example.com" },
+      ],
+    },
+  ],
+};
+
+// Get the mentions inside the comment's body
+const mentionedIds = getMentionIdsFromCommentBody(commentBody);
+
+// ["chris@example.com"]
+console.log(mentionedIds);
+```
+
+### stringifyCommentBody [#stringify-comment-body]
+
+Used to convert a `CommentBody` (found under `comment.body`) into either a plain
+string, markdown, HTML, or a custom format.
+
+```ts
+import { stringifyCommentBody } from "@liveblocks/node";
+
+const stringComment = stringifyCommentBody(comment.body);
+```
+
+This is most commonly used in combination with the
+[Comments API functions](/docs/api-reference/liveblocks-node#Comments), for
+example [`getComment`](/docs/api-reference/liveblocks-node#get-comment).
+
+```ts
+import { Liveblocks, stringifyCommentBody } from "@liveblocks/node";
+
+// Create a node client
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+// Retrieve a comment
+const comment = await liveblocks.getComment({
+  roomId: "my-room-id",
+  threadId: "my-thread-id",
+  commentId: "my-comment-id",
+});
+
+// Convert CommentBody to plain string
+const stringComment = stringifyCommentBody(comment.body);
+
+// "Hello marc@example.com from https://liveblocks.io"
+console.log(stringComment);
+```
+
+A number of options are also available.
+
+```ts
+import { stringifyCommentBody } from "@liveblocks/node";
+
+const stringComment = stringifyCommentBody(comment.body, {
+  // Optional, convert to specific format, "plain" (default) | "markdown" | "html"
+  format: "markdown",
+
+  // Optional, supply a separator to be used between paragraphs
+  separator: `\n\n`,
+
+  // Optional, override any elements in the CommentBody with a custom string
+  elements: {
+    // Optional, override the `paragraph` element
+    paragraph: ({ element, children }) => `<p>${children}</p>`,
+
+    // Optional, override the `text` element
+    text: ({ element }) =>
+      element.bold ? `<strong>${element.text}</strong>` : `${element.text}`,
+
+    // Optional, override the `link` element
+    link: ({ element, href }) =>
+      `<a href="${href}" target="_blank">${element.url}</a>`,
+
+    // Optional, override the `mention` element. `user` available if `resolveUsers` supplied
+    mention: ({ element, user }) =>
+      `<a href="${user.profileUrl}">${element.id}</a>`,
+  },
+
+  // Optional, get your user's names and info from their ID to be displayed in mentions
+  async resolveUsers({ userIds }) {
+    const usersData = await __getUsersFromDB__(userIds);
+
+    return usersData.map((userData) => ({
+      // Name is inserted into the output instead of a user's ID
+      name: userData.name,
+
+      // Custom formatting in `elements.mention` allows custom properties to be used
+      profileUrl: userData.profileUrl,
+    }));
+  },
+});
+```
+
+#### Formatting examples
+
+Here are a number of different formatting examples derived from the same
+`CommentBody`.
+
+```ts
+// "Hello marc@example.com from https://liveblocks.io"
+stringifyCommentBody(comment.body);
+
+// "Hello Marc from https://liveblocks.io"
+stringifyCommentBody(comment.body, {
+  resolveUser({ userIds }) {
+    return [{ name: "Marc" }];
+  },
+});
+
+// "**Hello** Marc from [https://liveblocks.io](https://liveblocks.io)"
+stringifyCommentBody(comment.body, {
+  format: "markdown",
+
+  resolveUser() {
+    return [{ name: "Marc" }];
+  },
+});
+
+// "<b>Hello</b> Marc from <a href="https://liveblocks.io">https://liveblocks.io</a>"
+stringifyCommentBody(comment.body, {
+  format: "html",
+
+  resolveUser() {
+    return [{ name: "Marc" }];
+  },
+});
+
+// "<b>Hello</b> <a href="https://example.com" data-id="marc@example.com">Marc</a> fr..."
+stringifyCommentBody(comment.body, {
+  format: "html",
+
+  mention: ({ element, user }) =>
+    `<a href="${user.profileUrl}" data-id="${element.id}">${user.name}</a>`,
+
+  resolveUser() {
+    return [{ name: "Marc", profileUrl: "https://example.com" }];
+  },
+});
+```
+
+### WebhookHandler [#WebhookHandler]
 
 <Banner title="Need help implementing webhooks?">
 
@@ -1027,7 +1221,7 @@ webhook page.
 const webhookHandler = new WebhookHandler(process.env.WEBHOOK_SECRET);
 ```
 
-### verifyRequest [#verifyRequest]
+#### verifyRequest [#verifyRequest]
 
 Verifies the request and returns the event.
 
@@ -1038,7 +1232,7 @@ const event = webhookHandler.verifyRequest({
 });
 ```
 
-#### Example using Next.js [#webhook-example]
+##### Example using Next.js [#webhook-example]
 
 ```js
 import { WebhookHandler } from "@liveblocks/node";
@@ -1073,7 +1267,7 @@ export function POST(request) {
 
 ---
 
-## authorize (deprecated) [#authorize]
+### authorize (deprecated) [#authorize]
 
 <Banner title="Deprecated" type="error">
   For now, it’s still supported, but this way of authorizing will eventually get
