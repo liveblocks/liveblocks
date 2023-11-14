@@ -1164,14 +1164,14 @@ Here are a number of different formatting examples derived from the same
 // "Hello marc@example.com from https://liveblocks.io"
 stringifyCommentBody(comment.body);
 
-// "Hello Marc from https://liveblocks.io"
+// "Hello @Marc from https://liveblocks.io"
 stringifyCommentBody(comment.body, {
   resolveUser({ userIds }) {
     return [{ name: "Marc" }];
   },
 });
 
-// "**Hello** Marc from [https://liveblocks.io](https://liveblocks.io)"
+// "**Hello** @Marc from [https://liveblocks.io](https://liveblocks.io)"
 stringifyCommentBody(comment.body, {
   format: "markdown",
 
@@ -1180,7 +1180,8 @@ stringifyCommentBody(comment.body, {
   },
 });
 
-// "<b>Hello</b> Marc from <a href="https://liveblocks.io">https://liveblocks.io</a>"
+// "<b>Hello</b> <span data-mention>@Marc</span> from
+// <a href="https://liveblocks.io">https://liveblocks.io</a>"
 stringifyCommentBody(comment.body, {
   format: "html",
 
@@ -1189,7 +1190,8 @@ stringifyCommentBody(comment.body, {
   },
 });
 
-// "<b>Hello</b> <a href="https://example.com" data-id="marc@example.com">Marc</a> fr..."
+// "<b>Hello</b> <a href="https://example.com" data-id="marc@example.com">@Marc</a> from
+// <a href="https://liveblocks.io">https://liveblocks.io</a>"
 stringifyCommentBody(comment.body, {
   format: "html",
 
