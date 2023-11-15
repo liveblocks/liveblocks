@@ -375,35 +375,63 @@ describe("stringifyCommentBody", () => {
     const firstParagraph = commentBodyWithMultipleParagraphs.content[0]!;
     const secondParagraph = commentBodyWithMultipleParagraphs.content[1]!;
 
-    expect(paragraph).toHaveBeenNthCalledWith(1, {
-      children: "",
-      element: firstParagraph,
-    });
-    expect(paragraph).toHaveBeenNthCalledWith(2, {
-      children: "",
-      element: secondParagraph,
-    });
-
-    expect(text).toHaveBeenNthCalledWith(1, {
-      element: firstParagraph.children[0],
-    });
-    expect(text).toHaveBeenNthCalledWith(2, {
-      element: firstParagraph.children[1],
-    });
-    expect(text).toHaveBeenNthCalledWith(3, {
-      element: firstParagraph.children[2],
-    });
-
-    expect(link).toHaveBeenNthCalledWith(1, {
-      element: secondParagraph.children[0],
-      href: "https://liveblocks.io",
-    });
-
-    expect(mention).toHaveBeenNthCalledWith(1, {
-      element: firstParagraph.children[3],
-      user: {
-        name: "Vincent",
+    expect(paragraph).toHaveBeenNthCalledWith(
+      1,
+      {
+        children: "",
+        element: firstParagraph,
       },
-    });
+      0
+    );
+    expect(paragraph).toHaveBeenNthCalledWith(
+      2,
+      {
+        children: "",
+        element: secondParagraph,
+      },
+      1
+    );
+
+    expect(text).toHaveBeenNthCalledWith(
+      1,
+      {
+        element: firstParagraph.children[0],
+      },
+      0
+    );
+    expect(text).toHaveBeenNthCalledWith(
+      2,
+      {
+        element: firstParagraph.children[1],
+      },
+      1
+    );
+    expect(text).toHaveBeenNthCalledWith(
+      3,
+      {
+        element: firstParagraph.children[2],
+      },
+      2
+    );
+
+    expect(link).toHaveBeenNthCalledWith(
+      1,
+      {
+        element: secondParagraph.children[0],
+        href: "https://liveblocks.io",
+      },
+      0
+    );
+
+    expect(mention).toHaveBeenNthCalledWith(
+      1,
+      {
+        element: firstParagraph.children[3],
+        user: {
+          name: "Vincent",
+        },
+      },
+      3
+    );
   });
 });

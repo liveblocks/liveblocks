@@ -101,22 +101,25 @@ export type StringifyCommentBodyElements<
   /**
    * TODO: JSDoc
    */
-  paragraph: (args: CommentBodyParagraphElementArgs) => string;
+  paragraph: (args: CommentBodyParagraphElementArgs, index: number) => string;
 
   /**
    * TODO: JSDoc
    */
-  text: (args: CommentBodyTextElementArgs) => string;
+  text: (args: CommentBodyTextElementArgs, index: number) => string;
 
   /**
    * TODO: JSDoc
    */
-  link: (args: CommentBodyLinkElementArgs) => string;
+  link: (args: CommentBodyLinkElementArgs, index: number) => string;
 
   /**
    * TODO: JSDoc
    */
-  mention: (args: CommentBodyMentionElementArgs<TUserMeta>) => string;
+  mention: (
+    args: CommentBodyMentionElementArgs<TUserMeta>,
+    index: number
+  ) => string;
 };
 
 export type StringifyCommentBodyOptions<
@@ -584,29 +587,35 @@ export async function stringifyCommentBody<
     options?.resolveUsers
   );
 
-  const blocks = body.content.map((block) => {
+  const blocks = body.content.map((block, blockIndex) => {
     switch (block.type) {
       case "paragraph": {
         const paragraph = block.children
-          .map((inline) => {
+          .map((inline, inlineIndex) => {
             if (isCommentBodyMention(inline)) {
               return inline.id
-                ? elements.mention({
-                    element: inline,
-                    user: resolvedUsers.get(inline.id),
-                  })
+                ? elements.mention(
+                    {
+                      element: inline,
+                      user: resolvedUsers.get(inline.id),
+                    },
+                    inlineIndex
+                  )
                 : null;
             }
 
             if (isCommentBodyLink(inline)) {
-              return elements.link({
-                element: inline,
-                href: toAbsoluteUrl(inline.url) ?? inline.url,
-              });
+              return elements.link(
+                {
+                  element: inline,
+                  href: toAbsoluteUrl(inline.url) ?? inline.url,
+                },
+                inlineIndex
+              );
             }
 
             if (isCommentBodyText(inline)) {
-              return elements.text({ element: inline });
+              return elements.text({ element: inline }, inlineIndex);
             }
 
             return null;
@@ -614,7 +623,10 @@ export async function stringifyCommentBody<
           .filter(isSomething)
           .join("");
 
-        return elements.paragraph({ element: block, children: paragraph });
+        return elements.paragraph(
+          { element: block, children: paragraph },
+          blockIndex
+        );
       }
 
       default:
