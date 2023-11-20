@@ -1010,15 +1010,15 @@ const comment = await liveblocks.getComment({
 
 ## Utilities
 
-### getMentionIdsFromCommentBody [#get-mention-ids-from-comment-body]
+### getMentionedIdsFromCommentBody [#get-mentioned-ids-from-comment-body]
 
 Returns an array of each user’s ID that has been mentioned in a `CommentBody`
 (found under `comment.body`).
 
 ```ts
-import { getMentionIdsFromCommentBody } from "@liveblocks/node";
+import { getMentionedIdsFromCommentBody } from "@liveblocks/node";
 
-const mentionedIds = getMentionIdsFromCommentBody(comment.body);
+const mentionedIds = getMentionedIdsFromCommentBody(comment.body);
 ```
 
 This is most commonly used in combination with the
@@ -1026,7 +1026,7 @@ This is most commonly used in combination with the
 example [`getComment`](/docs/api-reference/liveblocks-node#get-comment).
 
 ```ts
-import { Liveblocks, getMentionIdsFromCommentBody } from "@liveblocks/node";
+import { Liveblocks, getMentionedIdsFromCommentBody } from "@liveblocks/node";
 
 // Create a node client
 const liveblocks = new Liveblocks({
@@ -1041,7 +1041,7 @@ const comment = await liveblocks.getComment({
 });
 
 // Get the mentions inside the comment's body
-const mentionedIds = getMentionIdsFromCommentBody(comment.body);
+const mentionedIds = getMentionedIdsFromCommentBody(comment.body);
 
 // ["marc@example.com", "vincent@example.com", ...]
 console.log(mentionedIds);
@@ -1050,7 +1050,7 @@ console.log(mentionedIds);
 Here’s an example with a custom `CommentBody`.
 
 ```ts
-import { CommentBody, getMentionIdsFromCommentBody } from "@liveblocks/node";
+import { CommentBody, getMentionedIdsFromCommentBody } from "@liveblocks/node";
 
 // Create a custom `CommentBody`
 const commentBody: CommentBody = {
@@ -1067,7 +1067,7 @@ const commentBody: CommentBody = {
 };
 
 // Get the mentions inside the comment's body
-const mentionedIds = getMentionIdsFromCommentBody(commentBody);
+const mentionedIds = getMentionedIdsFromCommentBody(commentBody);
 
 // ["chris@example.com"]
 console.log(mentionedIds);
