@@ -2,7 +2,7 @@ import type { CommentBody } from "@liveblocks/core";
 
 import type { CommentBodyResolveUsersArgs } from "../comment-body";
 import {
-  getMentionIdsFromCommentBody,
+  getMentionedIdsFromCommentBody,
   stringifyCommentBody,
 } from "../comment-body";
 
@@ -149,9 +149,9 @@ function resolveUsers({ userIds }: CommentBodyResolveUsersArgs) {
   });
 }
 
-describe("getMentionIdsFromCommentBody", () => {
+describe("getMentionedIdsFromCommentBody", () => {
   test("returns an array of all mentions' IDs", () => {
-    expect(getMentionIdsFromCommentBody(commentBodyWithMentions)).toEqual([
+    expect(getMentionedIdsFromCommentBody(commentBodyWithMentions)).toEqual([
       "chris",
       "vincent",
       "nimesh",
@@ -177,7 +177,7 @@ describe("getMentionIdsFromCommentBody", () => {
       ],
     };
 
-    expect(getMentionIdsFromCommentBody(commentBodyWithoutMentions)).toEqual(
+    expect(getMentionedIdsFromCommentBody(commentBodyWithoutMentions)).toEqual(
       []
     );
   });

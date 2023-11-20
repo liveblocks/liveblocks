@@ -235,12 +235,14 @@ function traverseCommentBody(
 /**
  * Get an array of each user's ID that has been mentioned in a `CommentBody`.
  */
-export function getMentionIdsFromCommentBody(body: CommentBody): string[] {
-  const mentionIds = new Set<string>();
+export function getMentionedIdsFromCommentBody(body: CommentBody): string[] {
+  const mentionedIds = new Set<string>();
 
-  traverseCommentBody(body, "mention", (mention) => mentionIds.add(mention.id));
+  traverseCommentBody(body, "mention", (mention) =>
+    mentionedIds.add(mention.id)
+  );
 
-  return Array.from(mentionIds);
+  return Array.from(mentionedIds);
 }
 
 async function resolveUsersInCommentBody<TUserMeta extends BaseUserMeta>(
@@ -255,7 +257,7 @@ async function resolveUsersInCommentBody<TUserMeta extends BaseUserMeta>(
     return resolvedUsers;
   }
 
-  const userIds = getMentionIdsFromCommentBody(body);
+  const userIds = getMentionedIdsFromCommentBody(body);
   const users = await resolveUsers({
     userIds,
   });

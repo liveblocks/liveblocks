@@ -11,7 +11,7 @@ export type {
   StringifyCommentBodyOptions,
 } from "./comment-body";
 export {
-  getMentionIdsFromCommentBody,
+  getMentionedIdsFromCommentBody,
   stringifyCommentBody,
 } from "./comment-body";
 export type {

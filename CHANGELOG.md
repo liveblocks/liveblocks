@@ -6,8 +6,8 @@ transform comments, to `@liveblocks/node`.
 ### `@liveblocks/node`
 
 - Add utilities to work with the `CommentBody` format from Comments:
-  - `getMentionIdsFromCommentBody(body)` - Get a list of all mentioned IDs from
-    a `CommentBody`. See
+  - `getMentionedIdsFromCommentBody(body)` - Get a list of all mentioned IDs
+    from a `CommentBody`. See
     [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#get-mention-ids-from-comment-body).
   - `stringifyCommentBody(body, options)` - Convert a `CommentBody` to a string,
     either as plain text, HTML, or Markdown. It supports resolving mention IDs
