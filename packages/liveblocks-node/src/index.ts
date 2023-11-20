@@ -1,9 +1,9 @@
 export { authorize } from "./authorize";
 export type {
   LiveblocksOptions,
-  RoomPermission,
   RoomAccesses,
   RoomInfo,
+  RoomPermission,
   RoomUser,
   Schema,
   ThreadParticipants,
