@@ -54,7 +54,7 @@ type Identity = {
   groupIds: string[];
 };
 
-type ThreadParticipants = {
+export type ThreadParticipants = {
   participantIds: string[];
 };
 
@@ -80,8 +80,8 @@ export type RoomInfo = {
 };
 
 type RoomInfoOriginal = Omit<RoomInfo, "lastConnectionAt" | "createdAt"> & {
-  lastConnectionAt?: Date;
-  createdAt?: Date;
+  lastConnectionAt?: string;
+  createdAt?: string;
 };
 
 export type RoomUser<Info> = {
@@ -297,7 +297,7 @@ export class Liveblocks {
       startingAfter?: string;
       metadata?: RoomMetadata;
       userId?: string;
-      groupIds?: string;
+      groupIds?: string[];
     } = {}
   ): Promise<{
     nextPage: string | null;
@@ -309,7 +309,7 @@ export class Liveblocks {
       limit: params.limit,
       startingAfter: params.startingAfter,
       userId: params.userId,
-      groupIds: params.groupIds,
+      groupIds: params.groupIds ? params.groupIds.join(",") : undefined,
       // "Flatten" {metadata: {foo: "bar"}} to {"metadata.foo": "bar"}
       ...Object.fromEntries(
         Object.entries(params.metadata ?? {}).map(([key, val]) => {
@@ -936,6 +936,7 @@ export class LiveblocksError extends Error {
 
   constructor(status: number, message = "") {
     super(message);
+    this.name = "LiveblocksError";
     this.status = status;
   }
 }

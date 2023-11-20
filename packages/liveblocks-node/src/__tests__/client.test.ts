@@ -35,8 +35,7 @@ describe("client", () => {
         { status: 200 }
       );
     }),
-    http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId`, ({ params }) => {
-      console.log("params", params);
+    http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId`, () => {
       return HttpResponse.json(room, { status: 200 });
     })
   );
@@ -163,6 +162,7 @@ describe("client", () => {
       if (err instanceof LiveblocksError) {
         expect(err.status).toBe(404);
         expect(err.message).toBe(JSON.stringify(error));
+        expect(err.name).toBe("LiveblocksError");
       }
     }
   });

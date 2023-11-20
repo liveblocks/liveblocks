@@ -1,5 +1,13 @@
 export { authorize } from "./authorize";
-export type { LiveblocksOptions } from "./client";
+export type {
+  LiveblocksOptions,
+  RoomPermission,
+  RoomAccesses,
+  RoomInfo,
+  RoomUser,
+  Schema,
+  ThreadParticipants,
+} from "./client";
 export { Liveblocks } from "./client";
 export type {
   CommentCreatedEvent,
@@ -18,3 +26,11 @@ export type {
   WebhookRequest,
 } from "./webhooks";
 export { WebhookHandler } from "./webhooks";
+export type {
+  CommentData,
+  IUserInfo,
+  Json,
+  JsonObject,
+  PlainLsonObject,
+  ThreadData,
+} from "@liveblocks/core";
