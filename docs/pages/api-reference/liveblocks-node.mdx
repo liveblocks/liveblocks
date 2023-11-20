@@ -1076,12 +1076,12 @@ console.log(mentionedIds);
 ### stringifyCommentBody [#stringify-comment-body]
 
 Used to convert a `CommentBody` (found under `comment.body`) into either a plain
-string, markdown, HTML, or a custom format.
+string, Markdown, HTML, or a custom format.
 
 ```ts
 import { stringifyCommentBody } from "@liveblocks/node";
 
-const stringComment = stringifyCommentBody(comment.body);
+const stringComment = await stringifyCommentBody(comment.body);
 ```
 
 This is most commonly used in combination with the
@@ -1104,7 +1104,7 @@ const comment = await liveblocks.getComment({
 });
 
 // Convert CommentBody to plain string
-const stringComment = stringifyCommentBody(comment.body);
+const stringComment = await stringifyCommentBody(comment.body);
 
 // "Hello marc@example.com from https://liveblocks.io"
 console.log(stringComment);
@@ -1115,7 +1115,7 @@ A number of options are also available.
 ```ts
 import { stringifyCommentBody } from "@liveblocks/node";
 
-const stringComment = stringifyCommentBody(comment.body, {
+const stringComment = await stringifyCommentBody(comment.body, {
   // Optional, convert to specific format, "plain" (default) | "markdown" | "html"
   format: "markdown",
 
@@ -1162,17 +1162,17 @@ Here are a number of different formatting examples derived from the same
 
 ```ts
 // "Hello marc@example.com from https://liveblocks.io"
-stringifyCommentBody(comment.body);
+await stringifyCommentBody(comment.body);
 
 // "Hello @Marc from https://liveblocks.io"
-stringifyCommentBody(comment.body, {
+await stringifyCommentBody(comment.body, {
   resolveUser({ userIds }) {
     return [{ name: "Marc" }];
   },
 });
 
 // "**Hello** @Marc from [https://liveblocks.io](https://liveblocks.io)"
-stringifyCommentBody(comment.body, {
+await stringifyCommentBody(comment.body, {
   format: "markdown",
 
   resolveUser() {
@@ -1182,7 +1182,7 @@ stringifyCommentBody(comment.body, {
 
 // "<b>Hello</b> <span data-mention>@Marc</span> from
 // <a href="https://liveblocks.io">https://liveblocks.io</a>"
-stringifyCommentBody(comment.body, {
+await stringifyCommentBody(comment.body, {
   format: "html",
 
   resolveUser() {
@@ -1192,7 +1192,7 @@ stringifyCommentBody(comment.body, {
 
 // "<b>Hello</b> <a href="https://example.com" data-id="marc@example.com">@Marc</a> from
 // <a href="https://liveblocks.io">https://liveblocks.io</a>"
-stringifyCommentBody(comment.body, {
+await stringifyCommentBody(comment.body, {
   format: "html",
 
   mention: ({ element, user }) =>
