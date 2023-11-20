@@ -90,7 +90,7 @@ export type CommentBodyMentionElementArgs<
   element: CommentBodyMention;
 
   /**
-   * TODO: JSDoc
+   * The mention's user info, if the `resolvedUsers` option was provided.
    */
   user?: TUserMeta["info"];
 };
@@ -99,22 +99,22 @@ export type StringifyCommentBodyElements<
   TUserMeta extends BaseUserMeta = BaseUserMeta,
 > = {
   /**
-   * TODO: JSDoc
+   * The element used to display paragraphs.
    */
   paragraph: (args: CommentBodyParagraphElementArgs, index: number) => string;
 
   /**
-   * TODO: JSDoc
+   * The element used to display text elements.
    */
   text: (args: CommentBodyTextElementArgs, index: number) => string;
 
   /**
-   * TODO: JSDoc
+   * The element used to display links.
    */
   link: (args: CommentBodyLinkElementArgs, index: number) => string;
 
   /**
-   * TODO: JSDoc
+   * The element used to display mentions.
    */
   mention: (
     args: CommentBodyMentionElementArgs<TUserMeta>,
@@ -126,22 +126,23 @@ export type StringifyCommentBodyOptions<
   TUserMeta extends BaseUserMeta = BaseUserMeta,
 > = {
   /**
-   * TODO: JSDoc
+   * Which format to convert the comment to.
    */
   format?: "plain" | "html" | "markdown";
 
   /**
-   * TODO: JSDoc
+   * The elements used to customize the resulting string. Each element has
+   * priority over the defaults inherited from the `format` option.
    */
   elements?: Partial<StringifyCommentBodyElements<TUserMeta>>;
 
   /**
-   * TODO: JSDoc
+   * The separator used between paragraphs.
    */
   separator?: string;
 
   /**
-   * TODO: JSDoc
+   * A function that returns user info from user IDs.
    */
   resolveUsers?: (
     args: CommentBodyResolveUsersArgs
@@ -232,7 +233,7 @@ function traverseCommentBody(
 }
 
 /**
- * TODO: JSDoc
+ * Get an array of each user's ID that has been mentioned in a `CommentBody`.
  */
 export function getMentionIdsFromCommentBody(body: CommentBody): string[] {
   const mentionIds = new Set<string>();
@@ -563,7 +564,8 @@ const stringifyCommentBodyMarkdownElements: StringifyCommentBodyElements = {
 };
 
 /**
- * TODO: JSDoc
+ * Convert a `CommentBody` into either a plain string,
+ * Markdown, HTML, or a custom format.
  */
 export async function stringifyCommentBody<
   TUserMeta extends BaseUserMeta = BaseUserMeta,
