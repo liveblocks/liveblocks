@@ -1008,6 +1008,38 @@ const comment = await liveblocks.getComment({
 
 ---
 
+## Error handling [#Error-handling]
+
+Errors in our API methods, such as network failures, invalid arguments, or
+server-side issues, are reported through the `LiveblocksError` class. This
+custom error class extends the standard JavaScript Error and includes a `status`
+property, which provides the HTTP status code for the error, such as 404 for not
+found or 500 for server errors.
+
+Example of handling errors in a typical API call:
+
+```ts
+try {
+  const room = await liveblocks.getRoom("my-room-id");
+  // Process room
+} catch (error) {
+  if (error instanceof LiveblocksError) {
+    // Handle specific LiveblocksError cases
+    console.error(`Error fetching room: ${error.status} - ${error.message}`);
+    switch (
+      error.status
+      // Specific cases based on status codes
+    ) {
+    }
+  } else {
+    // Handle general errors
+    console.error(`Unexpected error: ${error.message}`);
+  }
+}
+```
+
+---
+
 ## Utilities
 
 ### getMentionedIdsFromCommentBody [#get-mentioned-ids-from-comment-body]
