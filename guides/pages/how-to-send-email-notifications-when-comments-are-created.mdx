@@ -355,7 +355,7 @@ to transform `comment.body`.
 import { stringifyCommentBody } from "@liveblocks/node";
 
 // Format comment text into a string
-const stringComment = stringifyCommentBody(comment.body);
+const stringComment = await stringifyCommentBody(comment.body);
 
 // "Thank you so much emil.joyce@example.com!"
 console.log(stringComment);
@@ -373,7 +373,7 @@ formatting, and add the user information.
 import { stringifyCommentBody } from "@liveblocks/node";
 
 // Format comment text into an HTML string
-const htmlComment = stringifyCommentBody(comment.body, {
+const htmlComment = await stringifyCommentBody(comment.body, {
   // Transform into HTML
   format: "html",
 
@@ -393,7 +393,7 @@ console.log(stringComment);
 
 On line 18, you can now see that we’re creating an HTML string, and using the
 mentioned user’s name. Note that you can also easily transform your comment into
-markdown, or a completely custom format, learn more under
+Markdown, or a completely custom format, learn more under
 [`stringifyCommentBody`](/docs/api-reference/liveblocks-node#stringify-comment-body).
 
 Let’s use this HTML formatting function in our endpoint, getting user
@@ -438,7 +438,7 @@ export async function POST(request: Request) {
       ]);
 
       // HTML comment body
-      const htmlComment = stringifyCommentBody(comment.body, {
+      const htmlComment = await stringifyCommentBody(comment.body, {
         format: "html",
 
         async resolveUsers({ userIds }) {
@@ -518,7 +518,7 @@ export async function POST(request: Request) {
       ]);
 
       // HTML comment body
-      const htmlComment = stringifyCommentBody(comment.body, {
+      const htmlComment = await stringifyCommentBody(comment.body, {
         format: "html",
 
         async resolveUsers({ userIds }) {
@@ -648,7 +648,7 @@ created! In this guide we’ve learned:
 
 - How to use [webhooks](/docs/platform/webhooks) and the
   [`CommentCreatedEvent`](/docs/platform/webhooks#CommentCreatedEvent).
-- How to use the `@liveblocks/node` to get
+- How to use the `@liveblocks/node` package to get
   [comment data](/docs/api-reference/liveblocks-node#get-comment) and
   [thread participants](/docs/api-reference/liveblocks-node#get-thread-participants).
 - How to shape a comment’s body into HTML with
