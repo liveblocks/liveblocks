@@ -84,7 +84,7 @@ describe("client", () => {
           color: "blue",
         },
         userId: "user1",
-        groupIds: "group1",
+        groupIds: ["group1"],
       })
     ).resolves.toEqual({
       nextPage: "/v2/rooms?startingAfter=1",
