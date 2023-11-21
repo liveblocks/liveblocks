@@ -337,93 +337,70 @@ export async function POST(request: Request) {
 
 Now that we have the comment data and a list of participants, we have one more
 step before sending the notifications—formatting the comment’s text, found
-inside `comment.body`. The content of the comment is stored as an array of
-paragraphs each containing an array of elements. For example, here’s a
-single-paragraph comment, and its corresponding content:
+inside `comment.body`. Let’s take a look at how it works for an example comment,
+using
+[`stringifyCommentBody`](/docs/api-reference/liveblocks-node#stringify-comment-body)
+to transform `comment.body`.
 
-Hello **world**
+<Figure>
+  <Image
+    src="/assets/tutorials/comments/comment-body.png"
+    alt="Comment with example body: 'Thank you so much @Emil Joyce!', with 'so much' in bold"
+    width={1289}
+    height={390}
+  />
+</Figure>
 
-```ts highlight="6-9"
-import { CommentBody } from "@liveblocks/client";
+```ts
+import { stringifyCommentBody } from "@liveblocks/node";
 
-const commentBody: CommentBody = {
-  version: 1,
-  content: [
-    {
-      type: "paragraph",
-      children: [{ text: "Hello " }, { text: "world", bold: true }],
-    },
-  ],
-};
+// Format comment text into a string
+const stringComment = await stringifyCommentBody(comment.body);
+
+// "Thank you so much emil.joyce@example.com!"
+console.log(stringComment);
 ```
 
-We can loop through the paragraphs to create custom formatting for the comment,
-for example you may wish to transform this content into markdown, HTML, or a
-simple string of text.
+As you can see on line 6, we’re converting the body into a plain string, which
+means we lose the formatting. We’re also seeing the user’s ID, instead of the
+name—this is because we need to provide the user’s information, as the comment
+only stores the user’s ID.
 
-### Simple formatting
+By providing two options, we can transform the comment into HTML, keeping the
+formatting, and add the user information.
 
-Here’s a function to get us started with formatting. This transforms a comment’s
-body into a simple string of text. If you look closely, you can see we’re also
-handling mentions and links here. These elements correspondingly return the
-user’s ID, and the URL of the link:
+```ts
+import { stringifyCommentBody } from "@liveblocks/node";
 
-```tsx file="convert.ts"
-import {
-  CommentBody,
-  CommentBodyParagraph,
-  CommentBodyInlineElement,
-} from "@liveblocks/client";
-import { CommentBodyParagraph } from "@liveblocks/client";
+// Format comment text into an HTML string
+const htmlComment = await stringifyCommentBody(comment.body, {
+  // Transform into HTML
+  format: "html",
 
-// Formats a comment's body as a string
-export function getTextFromCommentBody(body?: CommentBody): string {
-  let text = "";
+  // Provider user information
+  async resolveUsers({ userIds }) {
+    // ["emil.joyce@example.com", ...]
+    console.log(userIds);
 
-  if (body) {
-    for (const paragraph of body.content) {
-      text += getTextFromParagraph();
-    }
-  }
+    // Return each user's name
+    [{ name: "Emil Joyce" } /*, ... */];
+  },
+});
 
-  return text;
-}
-
-// Format a paragraph as a string
-function getTextFromParagraph(paragraph: CommentBodyParagraph) {
-  let paragraph = "";
-
-  for (const element of paragraph.children) {
-    paragraph += getTextFromInlineElement(element);
-  }
-
-  paragraph += "\n";
-  return paragraph;
-}
-
-// Format an inline element as a string
-function getTextFromInlineElement(element: CommentBodyInlineElement) {
-  if (element?.type === "mention") {
-    return `@${element.id}`;
-  }
-
-  if (element?.type === "link") {
-    return element.url;
-  }
-
-  if ("text" in element) {
-    return element.text;
-  }
-
-  return "";
-}
+// "<p>Thank you <b>so much</b> <span data-mention>@Emil Joyce</span>!</p>"
+console.log(stringComment);
 ```
 
-We can then add this to our endpoint to get the formatted comment text.
+On line 18, you can now see that we’re creating an HTML string, and using the
+mentioned user’s name. Note that you can also easily transform your comment into
+Markdown, or a completely custom format, learn more under
+[`stringifyCommentBody`](/docs/api-reference/liveblocks-node#stringify-comment-body).
 
-```ts highlight="2,39-40"
-import { Liveblocks, WebhookHandler } from "@liveblocks/node";
-import { getTextFromCommentBody } from "./convert";
+Let’s use this HTML formatting function in our endpoint, getting user
+information from your database.
+
+```ts highlight="1,38-50"
+import { Liveblocks, WebhookHandler, stringifyCommentBody } from "@liveblocks/node";
 
 // Add your signing key from a project's webhooks dashboard
 const WEBHOOK_SECRET = "YOUR_SIGNING_SECRET";
@@ -460,8 +437,19 @@ export async function POST(request: Request) {
         liveblocks.getThreadParticipants({ roomId, threadId }),
       ]);
 
-      // Formatted comment body
-      const commentText = getTextFromCommentBody(comment.body);
+      // HTML comment body
+      const htmlComment = await stringifyCommentBody(comment.body, {
+        format: "html",
+
+        async resolveUsers({ userIds }) {
+          // Get the correct users from your database
+          const users = await __getUsers__(userIds);
+
+          return users.map((user) => ({
+            name: user.name,
+          });
+        },
+      });
 
       // Send notifications
       // ...
@@ -474,85 +462,6 @@ export async function POST(request: Request) {
   return new Response(null, { status: 200 });
 }
 ```
-
-### HTML formatting
-
-Bear in mind that you can modify the conversion functions as you like, for
-example here’s how you can transform a comment’s body into HTML, allowing you to
-add more styles, links to user profiles, and more.
-
-```ts file="convert.ts" highlight="23,29,36,37,41,48,52,56,60" isCollapsable isCollapsed
-import {
-  CommentBody,
-  CommentBodyParagraph,
-  CommentBodyInlineElement,
-} from "@liveblocks/client";
-import { CommentBodyParagraph } from "@liveblocks/client";
-
-// Formats a comment's body as HTML
-function getHtmlFromCommentBody(body?: CommentBody): string {
-  let text = "";
-
-  if (body) {
-    for (const paragraph of body.content) {
-      text += getHtmlFromParagraph(paragraph);
-    }
-  }
-
-  return text;
-}
-
-// Format a paragraph as HTML
-function getHtmlFromParagraph(paragraph: CommentBodyParagraph) {
-  let paragraphText = "<p>";
-
-  for (const element of paragraph.children) {
-    paragraphText += getHtmlFromInlineElement(element);
-  }
-
-  paragraphText += "</p>";
-  return paragraphText;
-}
-
-// Format an inline element as HTML
-function getHtmlFromInlineElement(element: CommentBodyInlineElement) {
-  if (element?.type === "mention") {
-    const user = __getUserName__(element.id);
-    return `<a href="${user.profileLink}">@${user.name}</a>`;
-  }
-
-  if (element?.type === "link") {
-    return `<a href="${element.url}">${element.url}</a>`;
-  }
-
-  if ("text" in element) {
-    let text = element.text;
-
-    if (element.bold) {
-      text = `<b>${text}</b>`;
-    }
-
-    if (element.italic) {
-      text = `<i>${text}</i>`;
-    }
-
-    if (element.strikethrough) {
-      text = `<s>${text}</s>`;
-    }
-
-    if (element.code) {
-      text = `<code>${text}</code>`;
-    }
-
-    return text;
-  }
-
-  return "";
-}
-```
-
-In the rest of this guide, we’ll be using the simple string formatting from
-before.
 
 ## Send notifications
 
@@ -570,9 +479,8 @@ database, which you can retrieve from these `userIds`.
 After getting each user’s email, simply loop through and send the formatted
 comment.
 
-```ts highlight="42-54"
-import { Liveblocks, WebhookHandler } from "@liveblocks/node";
-import { getTextFromCommentBody } from "./convert";
+```ts highlight="52-64"
+import { Liveblocks, WebhookHandler, stringifyCommentBody } from "@liveblocks/node";
 
 // Add your signing key from a project's webhooks dashboard
 const WEBHOOK_SECRET = "YOUR_SIGNING_SECRET";
@@ -609,10 +517,21 @@ export async function POST(request: Request) {
         liveblocks.getThreadParticipants({ roomId, threadId }),
       ]);
 
-      // Formatted comment body
-      const commentText = getTextFromCommentBody(comment.body);
+      // HTML comment body
+      const htmlComment = await stringifyCommentBody(comment.body, {
+        format: "html",
 
-      // Get users from your database
+        async resolveUsers({ userIds }) {
+          // Get the correct users from your database
+          const users = await __getUsers__(userIds);
+
+          return users.map((user) => ({
+            name: user.name,
+          });
+        },
+      });
+
+      // Get participating users from your database
       const users = await __getUsers__(participantIds);
 
       // Send notifications
@@ -622,7 +541,7 @@ export async function POST(request: Request) {
         //   from: "hello@my-company.com",
         //   to: user.email,
         //   title: "New comment",
-        //   text: commentText
+        //   html: htmlComment
         // });
       }
     } catch (err) {
@@ -642,9 +561,8 @@ this code example, we’re using it to send the notifications to each user. Make
 sure to add your API key from the
 [Resend dashboard](https://resend.com/overview) before running the code.
 
-```ts highlight="3,5-6,49-59" file="route.ts"
-import { Liveblocks, WebhookHandler } from "@liveblocks/node";
-import { getTextFromCommentBody } from "./convert";
+```ts highlight="2,4-5,59-69" file="route.ts"
+import { Liveblocks, WebhookHandler, stringifyCommentBody } from "@liveblocks/node";
 import { Resend } from "resend";
 
 // Create Resend client (add your API key)
@@ -685,10 +603,21 @@ export async function POST(request: Request) {
         liveblocks.getThreadParticipants({ roomId, threadId }),
       ]);
 
-      // Formatted comment body
-      const commentText = getTextFromCommentBody(comment.body);
+      // HTML comment body
+      const htmlComment = stringifyCommentBody(comment.body, {
+        format: "html",
 
-      // Get users from your database
+        async resolveUsers({ userIds }) {
+          // Get the correct users from your database
+          const users = await __getUsers__(userIds);
+
+          return users.map((user) => ({
+            name: user.name,
+          });
+        },
+      });
+
+      // Get participating users from your database
       const users = await __getUsers__(participantIds);
 
       // Send email to the users' email addresses
@@ -697,10 +626,10 @@ export async function POST(request: Request) {
           from: "My company <hello@my-company.com>",
           to: [users.map((user) => user.email)],
           subject: "New comment",
-          text: commentText,
+          html: htmlComment,
         });
-      } catch (error) {
-        console.error(error);
+      } catch (err) {
+        console.error(err);
       }
     } catch (err) {
       console.log(err);
@@ -719,8 +648,9 @@ created! In this guide we’ve learned:
 
 - How to use [webhooks](/docs/platform/webhooks) and the
   [`CommentCreatedEvent`](/docs/platform/webhooks#CommentCreatedEvent).
-- How to use the `@liveblocks/node` to get
+- How to use the `@liveblocks/node` package to get
   [comment data](/docs/api-reference/liveblocks-node#get-comment) and
   [thread participants](/docs/api-reference/liveblocks-node#get-thread-participants).
-- How to shape a comment’s body into your custom format.
+- How to shape a comment’s body into HTML with
+  [`stringifyCommentBody`](/docs/api-reference/liveblocks-node#stringify-comment-body).
 - How to send email notifications with [Resend](https://resend.com).
