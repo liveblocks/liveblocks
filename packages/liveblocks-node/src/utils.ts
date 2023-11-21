@@ -1,3 +1,5 @@
+import type { Brand } from "@liveblocks/core";
+
 export const DEFAULT_BASE_URL = "https://api.liveblocks.io";
 
 export async function fetchPolyfill(): Promise<typeof fetch> {
@@ -42,7 +44,7 @@ export function normalizeStatusCode(statusCode: number): number {
   }
 }
 
-type QueryParams =
+export type QueryParams =
   | Record<string, string | number | null | undefined>
   | URLSearchParams;
 
@@ -93,4 +95,23 @@ export function urljoin(
     ).toString();
   }
   return url.toString();
+}
+
+/**
+ * A string that is guaranteed to be URL safe (where all arguments are properly
+ * encoded), only obtainable as the result of using `url` template strings.
+ */
+export type URLSafeString = Brand<string, "URLSafeString">;
+
+/**
+ * Builds a URL where each "hole" in the template string will automatically be
+ * encodeURIComponent()-escaped, so it's impossible to build invalid URLs.
+ */
+export function url(
+  strings: TemplateStringsArray,
+  ...values: string[]
+): URLSafeString {
+  return strings.reduce(
+    (result, str, i) => result + encodeURIComponent(values[i - 1] ?? "") + str
+  ) as URLSafeString;
 }
