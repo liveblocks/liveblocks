@@ -614,7 +614,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       [disabled, self?.canComment]
     );
     const { editor, validate, setFocused } = useComposerEditorContext();
-    const { submit, focus, isEmpty, isFocused } = useComposer();
+    const { submit, focus, select, isEmpty, isFocused } = useComposer();
     const initialBody = useInitial(defaultValue ?? emptyCommentBody);
     const initialEditorValue = useMemo(() => {
       return commentBodyToComposerBody(initialBody);
@@ -844,11 +844,20 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       [editor]
     );
 
+    // Manually focus the editor when `autoFocus` is true
     useEffect(() => {
       if (autoFocus) {
         focus();
       }
     }, [autoFocus, editor, focus]);
+
+    // Manually add a selection in the editor if the selection
+    // is still empty after being focused
+    useEffect(() => {
+      if (isFocused && editor.selection === null) {
+        select();
+      }
+    }, [editor, select, isFocused]);
 
     return (
       <Slate
@@ -935,6 +944,13 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       });
     }, [editor]);
 
+    const select = useCallback(() => {
+      SlateTransforms.select(editor, {
+        anchor: SlateEditor.end(editor, []),
+        focus: SlateEditor.end(editor, []),
+      });
+    }, [editor]);
+
     const focus = useCallback(
       (resetSelection = true) => {
         if (!ReactEditor.isFocused(editor)) {
@@ -1012,6 +1028,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
             isEmpty,
             submit,
             clear,
+            select,
             focus,
             blur,
             createMention,

@@ -12,15 +12,20 @@ transform comments, to `@liveblocks/node`.
 
 ### `@liveblocks/react-comments`
 
+- Fix `Composer` focus issues.
 - Improve relative date formatting for some locales. (e.g. the `"fr"`` locale
   formatted “1h ago” as “-1 h” instead of “il y a 1 h”)
 - Improve default monospace font for inline code blocks.
 
-# 1.7.0
+# v1.7.0
 
 [Liveblocks Comments](https://liveblocks.io/comments) is now available for
 everyone as a public beta, learn more about this
 [in the announcement](https://liveblocks.io/blog/liveblocks-comments-is-available-for-everyone).
+
+### `@liveblocks/client`
+
+- Improve some internal logging.
 
 ### `@liveblocks/react`
 
@@ -34,17 +39,11 @@ everyone as a public beta, learn more about this
 
 - Add `ThreadMetadata` type to `--init` command.
 
-# v1.6.1
-
-### `@liveblocks/client`
-
-- Improve some internal logging
-
 # v1.6.0
 
 ### `@liveblocks/yjs`
 
-- Add support for subdocs
+- Add support for subdocs.
 
 # v1.5.2
 
