@@ -10,6 +10,19 @@ export type {
 } from "./client";
 export { Liveblocks } from "./client";
 export type {
+  CommentBodyLinkElementArgs,
+  CommentBodyMentionElementArgs,
+  CommentBodyParagraphElementArgs,
+  CommentBodyResolveUsersArgs,
+  CommentBodyTextElementArgs,
+  StringifyCommentBodyElements,
+  StringifyCommentBodyOptions,
+} from "./comment-body";
+export {
+  getMentionedIdsFromCommentBody,
+  stringifyCommentBody,
+} from "./comment-body";
+export type {
   CommentCreatedEvent,
   CommentDeletedEvent,
   CommentEditedEvent,
