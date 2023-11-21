@@ -5,6 +5,8 @@ transform comments, to `@liveblocks/node`.
 
 ### `@liveblocks/node`
 
+- Add all the REST APIs as fully typed methods to `Liveblocks` client. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#Liveblocks-client).
 - Add utilities to work with the `CommentBody` format from Comments:
   - `getMentionedIdsFromCommentBody(body)` - Get a list of all mentioned IDs
     from a `CommentBody`. See
@@ -15,7 +17,7 @@ transform comments, to `@liveblocks/node`.
     formatting. See
     [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#stringify-comment-body).
 
-# v1.7.1
+# 1.7.1
 
 ### `@liveblocks/react-comments`
 
