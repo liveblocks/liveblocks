@@ -1008,13 +1008,14 @@ const comment = await liveblocks.getComment({
 
 ---
 
-## Error handling [#Error-handling]
+## Error handling [#error-handling]
 
 Errors in our API methods, such as network failures, invalid arguments, or
 server-side issues, are reported through the `LiveblocksError` class. This
-custom error class extends the standard JavaScript Error and includes a `status`
-property, which provides the HTTP status code for the error, such as 404 for not
-found or 500 for server errors.
+custom error class extends the standard JavaScript
+[`Error`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error)
+and includes a `status` property, which provides the HTTP status code for the
+error, such as 404 for not found or 500 for server errors.
 
 Example of handling errors in a typical API call:
 
