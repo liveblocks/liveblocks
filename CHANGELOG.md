@@ -1,4 +1,14 @@
-# 1.7.1 (not yet released)
+# v1.8.0
+
+This release adds all the REST APIs as fully typed methods, and utilities to
+transform comments, to `@liveblocks/node`.
+
+### `@liveblocks/node`
+
+- Add all the REST APIs as fully typed methods to `Liveblocks` client. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#Liveblocks-client).
+
+# 1.7.1
 
 ### `@liveblocks/react-comments`
 
