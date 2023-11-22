@@ -195,7 +195,7 @@ export function useRevalidateCache<Data>(
  * @param revalidateCache - The function used to revalidate the cache
  * @returns A function that can be used to mutate the cache with optimistic data
  */
-export function useMutation<Data>(
+export function useMutate<Data>(
   manager: CacheManager<Data>,
   revalidateCache: (shouldDedupe: boolean) => Promise<void>
 ) {

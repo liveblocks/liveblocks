@@ -30,7 +30,7 @@ import {
 import createCacheManager from "./lib/create-cache-manager";
 import {
   useAutomaticRevalidation,
-  useMutation,
+  useMutate,
   useRevalidateCache,
 } from "./lib/revalidation";
 
@@ -209,7 +209,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
   function useEditThreadMetadata() {
     const revalidate = useRevalidateCache(manager, room.getThreads);
-    const mutate = useMutation(manager, revalidate);
+    const mutate = useMutate(manager, revalidate);
 
     const editThreadMetadata = useCallback(
       (options: EditThreadMetadataOptions<TThreadMetadata>): void => {
@@ -255,7 +255,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
   function useCreateThread() {
     const revalidate = useRevalidateCache(manager, room.getThreads);
-    const mutate = useMutation(manager, revalidate);
+    const mutate = useMutate(manager, revalidate);
 
     const createThread = useCallback(
       (
@@ -318,7 +318,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
   function useCreateComment() {
     const revalidate = useRevalidateCache(manager, room.getThreads);
-    const mutate = useMutation(manager, revalidate);
+    const mutate = useMutate(manager, revalidate);
 
     const createComment = useCallback(
       ({ threadId, body }: CreateCommentOptions): CommentData => {
@@ -375,7 +375,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
   function useEditComment() {
     const revalidate = useRevalidateCache(manager, room.getThreads);
-    const mutate = useMutation(manager, revalidate);
+    const mutate = useMutate(manager, revalidate);
 
     const editComment = useCallback(
       ({ threadId, commentId, body }: EditCommentOptions): void => {
@@ -425,7 +425,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
   function useDeleteComment() {
     const revalidate = useRevalidateCache(manager, room.getThreads);
-    const mutate = useMutation(manager, revalidate);
+    const mutate = useMutate(manager, revalidate);
 
     const deleteComment = useCallback(
       ({ threadId, commentId }: DeleteCommentOptions): void => {
@@ -486,7 +486,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
   function useAddReaction() {
     const revalidate = useRevalidateCache(manager, room.getThreads);
-    const mutate = useMutation(manager, revalidate);
+    const mutate = useMutate(manager, revalidate);
 
     const createComment = useCallback(
       ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
@@ -564,7 +564,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
   function useRemoveReaction() {
     const revalidate = useRevalidateCache(manager, room.getThreads);
-    const mutate = useMutation(manager, revalidate);
+    const mutate = useMutate(manager, revalidate);
 
     const createComment = useCallback(
       ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
