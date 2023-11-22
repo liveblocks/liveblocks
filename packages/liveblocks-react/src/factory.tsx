@@ -34,13 +34,9 @@ import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import type {
-  CommentReactionOptions,
   CommentsRoom,
   CreateCommentOptions,
-  CreateThreadOptions,
-  DeleteCommentOptions,
   EditCommentOptions,
-  EditThreadMetadataOptions,
   ThreadsState,
 } from "./comments/CommentsRoom";
 import { createCommentsRoom } from "./comments/CommentsRoom";
@@ -923,84 +919,47 @@ export function createRoomContext<
 
   function useThreads(): ThreadsState<TThreadMetadata> {
     const room = useRoom();
-
     return getCommentsRoom(room).useThreads();
   }
 
   function useThreadsSuspense() {
     const room = useRoom();
-
     return getCommentsRoom(room).useThreadsSuspense();
   }
 
   function useCreateThread() {
     const room = useRoom();
-
-    return React.useCallback(
-      (options: CreateThreadOptions<TThreadMetadata>) =>
-        getCommentsRoom(room).createThread(options),
-      [room]
-    );
+    return getCommentsRoom(room).useCreateThread();
   }
 
   function useEditThreadMetadata() {
     const room = useRoom();
-
-    return React.useCallback(
-      (options: EditThreadMetadataOptions<TThreadMetadata>) =>
-        getCommentsRoom(room).editThreadMetadata(options),
-      [room]
-    );
+    return getCommentsRoom(room).useEditThreadMetadata();
   }
 
   function useAddReaction() {
     const room = useRoom();
-
-    return React.useCallback(
-      (options: CommentReactionOptions) =>
-        getCommentsRoom(room).addReaction(options),
-      [room]
-    );
+    return getCommentsRoom(room).useAddReaction();
   }
 
   function useRemoveReaction() {
     const room = useRoom();
-
-    return React.useCallback(
-      (options: CommentReactionOptions) =>
-        getCommentsRoom(room).removeReaction(options),
-      [room]
-    );
+    return getCommentsRoom(room).useRemoveReaction();
   }
 
   function useCreateComment(): (options: CreateCommentOptions) => CommentData {
     const room = useRoom();
-
-    return React.useCallback(
-      (options: CreateCommentOptions) =>
-        getCommentsRoom(room).createComment(options),
-      [room]
-    );
+    return getCommentsRoom(room).useCreateComment();
   }
 
   function useEditComment(): (options: EditCommentOptions) => void {
     const room = useRoom();
-
-    return React.useCallback(
-      (options: EditCommentOptions) =>
-        getCommentsRoom(room).editComment(options),
-      [room]
-    );
+    return getCommentsRoom(room).useEditComment();
   }
 
   function useDeleteComment() {
     const room = useRoom();
-
-    return React.useCallback(
-      (options: DeleteCommentOptions) =>
-        getCommentsRoom(room).deleteComment(options),
-      [room]
-    );
+    return getCommentsRoom(room).useDeleteComment();
   }
 
   const { resolveUsers, resolveMentionSuggestions } = options ?? {};
