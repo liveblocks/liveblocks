@@ -269,8 +269,7 @@ describe("toPlainLson", () => {
       fruits: ["strawberry", "apple", "mango"],
       vegetables: { broccoli: "delicious", spinach: "also tasty" },
     };
-    const plainToPlain = toPlainLson(mockPlainObject);
-    expect(mockPlainObject).toEqual(plainToPlain);
+    expect(toPlainLson(mockPlainObject)).toEqual(mockPlainObject);
   });
 
   it("toPlainLson with a liveStructure object should return plain lson object", () => {
@@ -283,7 +282,7 @@ describe("toPlainLson", () => {
     });
 
     // What the Plain Lson should look like if the util works
-    const lsonObject = {
+    const plainLsonValue = {
       liveblocksType: "LiveObject",
       data: {
         fruits: {
@@ -297,8 +296,7 @@ describe("toPlainLson", () => {
       },
     };
 
-    const lsonToPlain = toPlainLson(mockLsonObject);
-    expect(lsonObject).toEqual(lsonToPlain);
+    expect(toPlainLson(mockLsonObject)).toEqual(plainLsonValue);
   });
 
   // See https://github.com/liveblocks/liveblocks/issues/1304
@@ -311,7 +309,7 @@ describe("toPlainLson", () => {
     });
 
     // What the Plain Lson should look like if the util works
-    const lsonObject = {
+    const plainLsonValue = {
       liveblocksType: "LiveObject",
       data: {
         a: null,
@@ -320,7 +318,6 @@ describe("toPlainLson", () => {
       },
     };
 
-    const lsonToPlain = toPlainLson(mockLsonObject);
-    expect(lsonObject).toEqual(lsonToPlain);
+    expect(toPlainLson(mockLsonObject)).toEqual(plainLsonValue);
   });
 });
