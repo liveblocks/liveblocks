@@ -300,4 +300,27 @@ describe("toPlainLson", () => {
     const lsonToPlain = toPlainLson(mockLsonObject);
     expect(lsonObject).toEqual(lsonToPlain);
   });
+
+  // See https://github.com/liveblocks/liveblocks/issues/1304
+  it("toPlainLson regression #1", () => {
+    const mockLsonObject = new LiveObject({
+      a: null,
+      b: 0,
+      c: false,
+      d: undefined,
+    });
+
+    // What the Plain Lson should look like if the util works
+    const lsonObject = {
+      liveblocksType: "LiveObject",
+      data: {
+        a: null,
+        b: 0,
+        c: false,
+      },
+    };
+
+    const lsonToPlain = toPlainLson(mockLsonObject);
+    expect(lsonObject).toEqual(lsonToPlain);
+  });
 });
