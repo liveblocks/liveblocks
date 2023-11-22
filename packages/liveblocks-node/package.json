@@ -44,8 +44,7 @@
     "@types/node": "^20.7.1",
     "@types/node-fetch": "^2.6.6",
     "msw": "^2.0.2",
-    "svix": "^0.75.0",
-    "tsd": "^0.29.0"
+    "svix": "^0.75.0"
   },
   "bugs": {
     "url": "https://github.com/liveblocks/liveblocks/issues"
