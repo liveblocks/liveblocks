@@ -29,6 +29,7 @@
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack",
     "test": "jest --silent --verbose --color=always",
+    "test:types": "tsd",
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
   "dependencies": {
@@ -42,6 +43,7 @@
     "@liveblocks/jest-config": "*",
     "@types/node": "^20.7.1",
     "@types/node-fetch": "^2.6.6",
+    "msw": "^2.0.2",
     "svix": "^0.75.0"
   },
   "bugs": {
