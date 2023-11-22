@@ -247,7 +247,6 @@ export function useMutate<Data>(
       manager.request = undefined;
       void revalidateCache(false);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- ESLint recommends against adding `manager` as a dependency, but not doing so causes the code inside `useEffect` to reference an outdated version of `manager`
     [manager, revalidateCache]
   );
 
