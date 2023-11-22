@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/react-comments",
-  "version": "1.7.1",
+  "version": "1.8.0",
   "description": "A set of React components to add real time comments a la Notion, Figma, Google Docs in your product.",
   "license": "Apache-2.0",
   "main": "./dist/index.js",
@@ -49,9 +49,9 @@
   },
   "dependencies": {
     "@floating-ui/react-dom": "^2.0.2",
-    "@liveblocks/client": "1.7.1",
-    "@liveblocks/core": "1.7.1",
-    "@liveblocks/react": "1.7.1",
+    "@liveblocks/client": "1.8.0",
+    "@liveblocks/core": "1.8.0",
+    "@liveblocks/react": "1.8.0",
     "@radix-ui/react-dropdown-menu": "^2.0.6",
     "@radix-ui/react-popover": "^1.0.7",
     "@radix-ui/react-slot": "^1.0.2",
