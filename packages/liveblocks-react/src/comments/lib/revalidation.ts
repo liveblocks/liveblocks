@@ -288,8 +288,6 @@ export function useAutomaticRevalidation<Data>(
     function scheduleRevalidation() {
       if (refreshInterval === 0) return;
 
-      console.log("useAutomaticRevalidation", refreshInterval);
-
       revalidationTimerId = window.setTimeout(() => {
         const isOnline = isOnlineRef.current;
         const isVisible = document.visibilityState === "visible";
