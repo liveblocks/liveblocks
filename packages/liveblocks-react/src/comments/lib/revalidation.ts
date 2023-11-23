@@ -226,21 +226,27 @@ export function useMutate<Data>(
         data: options.optimisticData,
       };
 
+      let error: unknown;
+
       try {
         await data;
-
-        // If there was a newer mutation while this mutation was in flight, we return early and don't trigger a revalidation (since the mutation request is outdated)
-        const activeMutation = manager.mutation;
-        if (
-          activeMutation &&
-          beforeMutationTimestamp !== activeMutation.startTime
-        ) {
-          return;
-        }
       } catch (err) {
-        // If the mutation request fails, revert the optimistic update and throw the error
+        error = err;
+      }
+
+      // If there was a newer mutation while this mutation was in flight, we return early and don't trigger a revalidation (since the mutation request is outdated)
+      const activeMutation = manager.mutation;
+      if (
+        activeMutation &&
+        beforeMutationTimestamp !== activeMutation.startTime
+      ) {
+        if (error) throw error;
+        return;
+      }
+
+      // If the mutation request failed, revert the optimistic update
+      if (error) {
         manager.cache = currentCache;
-        throw err;
       }
 
       // Mark the mutation as completed by setting the end time to the current timestamp
@@ -251,7 +257,12 @@ export function useMutate<Data>(
 
       // Deleting the concurrent request markers so new requests will not be deduped.
       manager.request = undefined;
+
+      // Trigger a revalidation request to update the cache with the latest data
       void revalidateCache(false);
+
+      // Throw the error if the mutation request failed
+      if (error) throw error;
     },
     [manager, revalidateCache]
   );
