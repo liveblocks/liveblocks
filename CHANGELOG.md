@@ -1,6 +1,7 @@
 # v1.8.1
 
-- Fixes a bug in `toPlainLson` helper (#1304)
+- Fix a bug in `toPlainLson` helper
+- Fix a bug where pausing history more than once could lead to history loss
 
 # v1.8.0
 
