@@ -1,7 +1,7 @@
 import { act, fireEvent, renderHook } from "@testing-library/react";
 
-import createCacheManager from "../comments/lib/create-cache-manager";
 import {
+  createCacheManager,
   useAutomaticRevalidation,
   useRevalidateCache,
 } from "../comments/lib/revalidation";
@@ -10,11 +10,11 @@ describe("revalidation", () => {
   test("should not revalidate if browser is offline", () => {
     const mockFetcher = jest.fn().mockResolvedValue(42);
 
-    const mananger = createCacheManager<number>();
+    const manager = createCacheManager<number>();
 
     renderHook(() => {
-      const revalidate = useRevalidateCache(mananger, mockFetcher);
-      useAutomaticRevalidation(mananger, revalidate, {
+      const revalidate = useRevalidateCache(manager, mockFetcher);
+      useAutomaticRevalidation(manager, revalidate, {
         revalidateOnFocus: true,
       });
     });

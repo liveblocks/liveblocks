@@ -5,6 +5,7 @@
  * Original `swr` library can be found at [SWR GitHub repository](https://github.com/vercel/swr)
  */
 
+import { makeEventSource } from "@liveblocks/core";
 import { useCallback, useEffect, useRef } from "react";
 
 const DEFAULT_ERROR_RETRY_INTERVAL = 5000;
@@ -360,4 +361,48 @@ export function useAutomaticRevalidation<Data>(
       );
     };
   }, [revalidateCache, revalidateOnFocus]);
+}
+
+/**
+ * Creates a cache manager that can be used to store the current cache state and subscribe to changes.
+ */
+export function createCacheManager<Data>(): CacheManager<Data> & {
+  subscribe: (callback: (state: Cache<Data> | undefined) => void) => () => void;
+} {
+  let cache: Cache<Data> | undefined; // Stores the current cache state
+  let request: RequestInfo<Data> | undefined; // Stores the currently active revalidation request
+  let mutation: MutationInfo | undefined; // Stores the start and end time of the currently active mutation
+
+  const eventSource = makeEventSource<Cache<Data> | undefined>();
+
+  return {
+    get cache() {
+      return cache;
+    },
+
+    set cache(value: Cache<Data> | undefined) {
+      cache = value;
+      eventSource.notify(cache);
+    },
+
+    get request() {
+      return request;
+    },
+
+    set request(value: RequestInfo<Data> | undefined) {
+      request = value;
+    },
+
+    get mutation() {
+      return mutation;
+    },
+
+    set mutation(value: MutationInfo | undefined) {
+      mutation = value;
+    },
+
+    subscribe(callback: (state: Cache<Data> | undefined) => void) {
+      return eventSource.subscribe(callback);
+    },
+  };
 }

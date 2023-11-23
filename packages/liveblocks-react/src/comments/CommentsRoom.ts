@@ -27,8 +27,8 @@ import {
   EditThreadMetadataError,
   RemoveReactionError,
 } from "./errors";
-import createCacheManager from "./lib/create-cache-manager";
 import {
+  createCacheManager,
   useAutomaticRevalidation,
   useMutate,
   useRevalidateCache,
@@ -104,7 +104,13 @@ export type ThreadsStateLoading = {
   error?: never;
 };
 
-export type ThreadsStateSuccessOrError<TThreadMetadata extends BaseMetadata> = {
+/**
+ * Represents the resolved state of a thread-fetching operation.
+ *
+ * This type is used to handle the result of fetching thread data, indicating whether the operation is no longer loading,
+ * the fetched threads data and any error that might have occurred during the operation.
+ */
+export type ThreadsStateResolved<TThreadMetadata extends BaseMetadata> = {
   isLoading: false;
   threads: ThreadData<TThreadMetadata>[];
   error?: Error;
@@ -118,7 +124,7 @@ export type ThreadsStateSuccess<TThreadMetadata extends BaseMetadata> = {
 
 export type ThreadsState<TThreadMetadata extends BaseMetadata> =
   | ThreadsStateLoading
-  | ThreadsStateSuccessOrError<TThreadMetadata>;
+  | ThreadsStateResolved<TThreadMetadata>;
 
 function createOptimisticId(prefix: string) {
   return `${prefix}_${nanoid()}`;
