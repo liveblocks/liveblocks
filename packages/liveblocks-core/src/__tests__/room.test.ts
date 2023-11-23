@@ -1044,6 +1044,40 @@ describe("room", () => {
     expect(room.getPresence()).toEqual({ x: 1 });
   });
 
+  test("pausing history twice is a no-op", async () => {
+    const { room, root } = await prepareDisconnectedStorageUpdateTest<{
+      items: LiveList<LiveObject<Record<string, number>>>;
+    }>([
+      createSerializedObject("0:0", {}),
+      createSerializedList("0:1", "0:0", "items"),
+      createSerializedObject("0:2", {}, "0:1", FIRST_POSITION),
+    ]);
+
+    const items = root.get("items");
+
+    room.history.pause();
+    nn(items.get(0)).set("a", 1);
+    room.history.pause(); // Pausing again should be a no-op!
+    nn(items.get(0)).set("b", 2);
+    room.history.pause(); // Pausing again should be a no-op!
+    room.history.resume();
+    room.history.resume(); // Resuming again should also be a no-op!
+
+    expect(items.toImmutable()).toEqual([{ a: 1, b: 2 }]);
+    expect(room.history.canUndo()).toBe(true);
+    expect(room.history.canRedo()).toBe(false);
+    room.history.undo();
+
+    expect(items.toImmutable()).toEqual([{}]);
+    expect(room.history.canUndo()).toBe(false);
+    expect(room.history.canRedo()).toBe(true);
+    room.history.redo();
+
+    expect(items.toImmutable()).toEqual([{ a: 1, b: 2 }]);
+    expect(room.history.canUndo()).toBe(true);
+    expect(room.history.canRedo()).toBe(false);
+  });
+
   test("undo redo batch", async () => {
     const { room, root, expectUpdates } =
       await prepareDisconnectedStorageUpdateTest<{
