@@ -1,3 +1,7 @@
+# v1.8.1
+
+- Fixes a bug in `toPlainLson` helper (#1304)
+
 # v1.8.0
 
 This release adds all the REST APIs as fully typed methods, and utilities to
