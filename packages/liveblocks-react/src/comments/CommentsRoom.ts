@@ -33,6 +33,8 @@ import {
   useMutate,
   useRevalidateCache,
 } from "./lib/revalidation";
+import useIsDocumentVisible from "./lib/use-is-document-visible";
+import useIsOnline from "./lib/use-is-online";
 
 const POLLING_INTERVAL_REALTIME = 30000;
 const POLLING_INTERVAL = 5000;
@@ -124,6 +126,28 @@ function createOptimisticId(prefix: string) {
   return `${prefix}_${nanoid()}`;
 }
 
+/**
+ * Returns the polling interval based on the room connection status, the browser online status and the document visibility.
+ * @param isBrowserOnline Whether the browser is online.
+ * @param isDocumentVisible Whether the document is visible.
+ * @param isRoomConnected Whether the room is connected.
+ * @returns The polling interval in milliseconds or undefined if we don't poll the server.
+ */
+function getPollingInterval(
+  isBrowserOnline: boolean,
+  isDocumentVisible: boolean,
+  isRoomConnected: boolean
+): number | undefined {
+  // If the browser is offline or the document is not visible, we don't poll the server.
+  if (!isBrowserOnline || !isDocumentVisible) return;
+
+  // If the room is connected, we poll the server in real-time.
+  if (isRoomConnected) return POLLING_INTERVAL_REALTIME;
+
+  // (Otherwise) If the room is not connected, we poll the server at POLLING_INTERVAL rate.
+  return POLLING_INTERVAL;
+}
+
 export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
   errorEventSource: EventSource<CommentsError<TThreadMetadata>>
@@ -139,8 +163,14 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
       room.getStatus
     );
 
-    const interval =
-      status === "connected" ? POLLING_INTERVAL_REALTIME : POLLING_INTERVAL;
+    const isOnline = useIsOnline();
+    const isDocumentVisible = useIsDocumentVisible();
+
+    const interval = getPollingInterval(
+      isOnline,
+      isDocumentVisible,
+      status === "connected"
+    );
 
     // Automatically revalidate the cache when the window gains focus or when the connection is restored. Also poll the server based on the connection status.
     useAutomaticRevalidation(manager, revalidateCache, {

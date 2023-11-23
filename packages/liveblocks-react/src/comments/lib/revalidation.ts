@@ -8,6 +8,9 @@
 import { makeEventSource } from "@liveblocks/core";
 import { useCallback, useEffect, useRef } from "react";
 
+import useIsDocumentVisible from "./use-is-document-visible";
+import useIsOnline from "./use-is-online";
+
 const DEFAULT_ERROR_RETRY_INTERVAL = 5000;
 const DEFAULT_MAX_ERROR_RETRY_COUNT = 5;
 const DEFAULT_DEDUPING_INTERVAL = 2000;
@@ -46,8 +49,10 @@ let timestamp = 0;
  * This hook returns a function that can be used to revalidate the cache.
  * @param manager - The cache manager
  * @param fetcher - The function used to fetch the data
- * @param options
- * @returns
+ * @param options.dedupingInterval - The interval (in milliseconds) at which requests should be deduped.
+ * @param options.errorRetryInterval - The interval (in milliseconds) at which failed requests should be retried.
+ * @param options.errorRetryCount - The maximum number of times a request should be retried.
+ * @returns A function that can be used to revalidate the cache
  */
 export function useRevalidateCache<Data>(
   manager: CacheManager<Data>,
@@ -260,7 +265,7 @@ export function useMutate<Data>(
  * @param revalidateCache - The function used to revalidate the cache
  * @param options.revalidateOnFocus - If true, the cache will be revalidated when the document becomes visible
  * @param options.revalidateOnReconnect - If true, the cache will be revalidated when the browser comes back online
- * @param options.refreshInterval - The interval (in milliseconds) at which the cache should be revalidated
+ * @param options.refreshInterval - The interval (in milliseconds) at which the cache should be revalidated. If set to 0, the cache will not be revalidated periodically
  */
 export function useAutomaticRevalidation<Data>(
   manager: CacheManager<Data>,
@@ -271,7 +276,8 @@ export function useAutomaticRevalidation<Data>(
     refreshInterval?: number;
   } = {}
 ) {
-  const isOnlineRef = useRef(true); // Stores the current online status of the browser
+  const isOnline = useIsOnline(); // Stores the current online status of the browser
+  const isDocumentVisible = useIsDocumentVisible(); // Stores the current visibility status of the document
 
   const {
     revalidateOnFocus = true,
@@ -289,11 +295,8 @@ export function useAutomaticRevalidation<Data>(
       if (refreshInterval === 0) return;
 
       revalidationTimerId = window.setTimeout(() => {
-        const isOnline = isOnlineRef.current;
-        const isVisible = document.visibilityState === "visible";
-
         // Only revalidate if the browser is online AND document is visible AND there are currently no errors, otherwise schedule the next revalidation
-        if (isOnline && isVisible && !manager.cache?.error) {
+        if (isOnline && isDocumentVisible && !manager.cache?.error) {
           // Revalidate cache and then schedule the next revalidation
           void revalidateCache(true).then(scheduleRevalidation);
           return;
@@ -309,58 +312,41 @@ export function useAutomaticRevalidation<Data>(
     return () => {
       window.clearTimeout(revalidationTimerId);
     };
-  }, [revalidateCache, refreshInterval, manager]);
+  }, [revalidateCache, refreshInterval, isOnline, isDocumentVisible, manager]);
 
   /**
-   * Subscribe to online and offline events to trigger a revalidation when the browser comes back online.
+   * Subscribe to the 'online' event to trigger a revalidation when the browser comes back online.
    * Note: There is a 'navigator.onLine' property that can be used to determine the online status of the browser, but it is not reliable (see https://bugs.chromium.org/p/chromium/issues/detail?id=678075).
    */
   useEffect(() => {
     function handleIsOnline() {
-      isOnlineRef.current = true;
-      const isVisible = document.visibilityState === "visible";
-
-      if (revalidateOnReconnect && isVisible) void revalidateCache(true);
-    }
-
-    function handleIsOffline() {
-      isOnlineRef.current = false;
+      if (revalidateOnReconnect && isDocumentVisible) {
+        void revalidateCache(true);
+      }
     }
 
     window.addEventListener("online", handleIsOnline);
-    window.addEventListener("offline", handleIsOffline);
     return () => {
       window.removeEventListener("online", handleIsOnline);
-      window.removeEventListener("offline", handleIsOffline);
     };
-  }, [revalidateCache, revalidateOnReconnect]);
+  }, [revalidateCache, revalidateOnReconnect, isDocumentVisible]);
 
   /**
-   * Subscribe to focus and visibility change events to trigger a revalidation when the document becomes visible.
+   * Subscribe to visibility change events to trigger a revalidation when the document becomes visible.
    */
   useEffect(() => {
-    function handleFocusOrVisibilityChange() {
+    function handleVisibilityChange() {
       const isVisible = document.visibilityState === "visible";
-      const isOnline = isOnlineRef.current;
-
       if (revalidateOnFocus && isVisible && isOnline) {
         void revalidateCache(true);
       }
     }
 
-    window.addEventListener("focus", handleFocusOrVisibilityChange);
-    document.addEventListener(
-      "visibilitychange",
-      handleFocusOrVisibilityChange
-    );
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
-      window.removeEventListener("focus", handleFocusOrVisibilityChange);
-      document.removeEventListener(
-        "visibilitychange",
-        handleFocusOrVisibilityChange
-      );
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [revalidateCache, revalidateOnFocus]);
+  }, [revalidateCache, revalidateOnFocus, isOnline]);
 }
 
 /**
