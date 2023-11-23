@@ -104,12 +104,6 @@ export type ThreadsStateLoading = {
   error?: never;
 };
 
-/**
- * Represents the resolved state of a thread-fetching operation.
- *
- * This type is used to handle the result of fetching thread data, indicating whether the operation is no longer loading,
- * the fetched threads data and any error that might have occurred during the operation.
- */
 export type ThreadsStateResolved<TThreadMetadata extends BaseMetadata> = {
   isLoading: false;
   threads: ThreadData<TThreadMetadata>[];
