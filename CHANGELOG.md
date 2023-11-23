@@ -1,3 +1,7 @@
+# v1.8.1
+
+- Fix a bug where pausing history more than once can lead to history loss
+
 # v1.8.0
 
 This release adds all the REST APIs as fully typed methods, and utilities to
