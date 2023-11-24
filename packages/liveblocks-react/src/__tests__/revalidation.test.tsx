@@ -216,4 +216,57 @@ describe("revalidation", () => {
     // Since the revalidation should be debounced or controlled, it should not be called multiple times.
     expect(mockFetcher).toHaveBeenCalledTimes(1);
   });
+
+  test("should handle errors in fetcher function gracefully", async () => {
+    const mockFetcher = jest.fn().mockRejectedValue(new Error("Fetch failed"));
+    const manager = createCacheManager<number>();
+
+    const { result } = renderHook(() =>
+      useRevalidateCache(manager, mockFetcher)
+    );
+
+    // Trigger revalidation
+    await act(() => {
+      result.current(false);
+    });
+
+    // Check if the error state is handled correctly
+    expect(manager.cache).toBeDefined();
+    expect(manager.cache!.error).toBeDefined();
+    expect(manager.cache!.error!.message).toBe("Fetch failed");
+  });
+
+  test("should clean up all event listeners and intervals on unmount", () => {
+    const mockFetcher = jest.fn().mockResolvedValue(42);
+    const manager = createCacheManager<number>();
+
+    const { unmount } = renderHook(() => {
+      const revalidate = useRevalidateCache(manager, mockFetcher);
+      return useAutomaticRevalidation(manager, revalidate);
+    });
+
+    // Spy on cleanup functions
+    const clearTimeoutSpy = jest.spyOn(window, "clearTimeout");
+    const removeWindowEventListenerSpy = jest.spyOn(
+      window,
+      "removeEventListener"
+    );
+    const removeDocumentEventListenerSpy = jest.spyOn(
+      document,
+      "removeEventListener"
+    );
+
+    unmount();
+
+    // Assert that cleanup functions are called
+    expect(clearTimeoutSpy).toHaveBeenCalled();
+    expect(removeWindowEventListenerSpy).toHaveBeenCalledWith(
+      "online",
+      expect.any(Function)
+    );
+    expect(removeDocumentEventListenerSpy).toHaveBeenCalledWith(
+      "visibilitychange",
+      expect.any(Function)
+    );
+  });
 });
