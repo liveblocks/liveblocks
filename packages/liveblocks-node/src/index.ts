@@ -46,10 +46,23 @@ export type {
 } from "./webhooks";
 export { WebhookHandler } from "./webhooks";
 export type {
+  CommentBody,
+  CommentBodyBlockElement,
+  CommentBodyElement,
+  CommentBodyInlineElement,
+  CommentBodyLink,
+  CommentBodyMention,
+  CommentBodyParagraph,
+  CommentBodyText,
   CommentData,
   IUserInfo,
   Json,
+  JsonArray,
   JsonObject,
+  JsonScalar,
+  Lson,
+  LsonObject,
   PlainLsonObject,
   ThreadData,
+  User,
 } from "@liveblocks/core";
