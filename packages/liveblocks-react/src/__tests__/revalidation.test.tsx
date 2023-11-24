@@ -10,11 +10,20 @@ const mockVisibility = jest.spyOn(document, "visibilityState", "get");
 
 describe("revalidation", () => {
   beforeEach(() => {
+    // Initial state is online (by default) and visible
     mockVisibility.mockReturnValue("visible");
   });
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  beforeAll(() => {
+    jest.useFakeTimers();
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
   });
 
   test("should not revalidate on focus if browser is offline", () => {
@@ -94,37 +103,65 @@ describe("revalidation", () => {
     expect(mockFetcher).toHaveBeenCalledTimes(1);
   });
 
-  test("should revalidate at specified intervals when online and document is visible", () => {
-    jest.useFakeTimers();
+  test("should revalidate when document is visible and browser is online", () => {
     const mockFetcher = jest.fn().mockResolvedValue(42);
     const manager = createCacheManager<number>();
-    const refreshInterval = 1000; // 1 second for example
 
     renderHook(() => {
       const revalidate = useRevalidateCache(manager, mockFetcher);
+      useAutomaticRevalidation(manager, revalidate, {
+        revalidateOnFocus: true,
+      });
+    });
+
+    // Simulate initial online state and document hidden
+    act(() => {
+      window.dispatchEvent(new Event("online"));
+      mockVisibility.mockReturnValue("hidden");
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+
+    // Simulate browser going online
+    act(() => {
+      mockVisibility.mockReturnValue("visible");
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+
+    expect(mockFetcher).toHaveBeenCalledTimes(1);
+  });
+
+  test("should revalidate at specified intervals when online and document is visible", async () => {
+    const mockFetcher = jest.fn().mockResolvedValue(42);
+    const manager = createCacheManager<number>();
+    const dedupingInterval = 1000; // 1 second for example
+    const refreshInterval = 2000; // 4 seconds for example
+
+    renderHook(() => {
+      const revalidate = useRevalidateCache(manager, mockFetcher, {
+        dedupingInterval,
+      });
+
       useAutomaticRevalidation(manager, revalidate, {
         refreshInterval,
       });
     });
 
-    // Simulate initial conditions: online and visible
-    act(() => {
-      mockVisibility.mockReturnValue("visible");
-      window.dispatchEvent(new Event("online"));
-    });
-
     // Fast-forward time by the specified interval
-    act(() => {
+    await act(() => {
       jest.advanceTimersByTime(refreshInterval);
     });
 
     expect(mockFetcher).toHaveBeenCalledTimes(1);
 
-    jest.useRealTimers();
+    // Advance timers by another interval
+    await act(() => {
+      jest.advanceTimersByTime(refreshInterval);
+    });
+
+    expect(mockFetcher).toHaveBeenCalledTimes(2);
   });
 
-  test("should not revalidate at intervals when offline or document is hidden", () => {
-    jest.useFakeTimers();
+  test("should not revalidate at intervals when offline or document is hidden", async () => {
     const mockFetcher = jest.fn().mockResolvedValue(42);
     const manager = createCacheManager<number>();
     const refreshInterval = 1000; // 1 second for example
@@ -142,15 +179,17 @@ describe("revalidation", () => {
       mockVisibility.mockReturnValue("hidden");
     });
 
-    // Fast-forward time by the specified interval
-    act(() => {
+    // Fast-forward time by the specified interval and verify that revalidation is not triggered
+    await act(() => {
       jest.advanceTimersByTime(refreshInterval);
     });
-
     expect(mockFetcher).not.toHaveBeenCalled();
 
-    // Clean up fake timers
-    jest.useRealTimers();
+    // Advance timers by another interval and verify that revalidation is still not triggered
+    await act(() => {
+      jest.advanceTimersByTime(refreshInterval);
+    });
+    expect(mockFetcher).not.toHaveBeenCalled();
   });
 
   test("should not trigger duplicate revalidations for multiple triggers", () => {
