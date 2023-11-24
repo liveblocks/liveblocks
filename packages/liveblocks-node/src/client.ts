@@ -3,7 +3,14 @@
  * This is because this package is made to be used in Node.js, and
  * @liveblocks/core has browser-specific code.
  */
-import type { CommentData, ThreadData } from "@liveblocks/core";
+import type {
+  CommentData,
+  IUserInfo,
+  Json,
+  JsonObject,
+  PlainLsonObject,
+  ThreadData,
+} from "@liveblocks/core";
 
 import { Session } from "./Session";
 import {
@@ -12,7 +19,10 @@ import {
   DEFAULT_BASE_URL,
   fetchPolyfill,
   normalizeStatusCode,
+  type QueryParams,
+  url,
   urljoin,
+  type URLSafeString,
 } from "./utils";
 
 export type LiveblocksOptions = {
@@ -30,7 +40,7 @@ export type LiveblocksOptions = {
 };
 
 export type CreateSessionOptions = {
-  userInfo: unknown;
+  userInfo: IUserInfo;
 };
 
 export type AuthResponse = {
@@ -44,8 +54,55 @@ type Identity = {
   groupIds: string[];
 };
 
-type ThreadParticipants = {
+export type ThreadParticipants = {
   participantIds: string[];
+};
+
+export type RoomPermission =
+  | []
+  | ["room:write"]
+  | ["room:read", "room:presence:write"];
+export type RoomAccesses = Record<
+  string,
+  ["room:write"] | ["room:read", "room:presence:write"]
+>;
+export type RoomMetadata = Record<string, string | string[]>;
+
+export type RoomInfo = {
+  type: "room";
+  id: string;
+  metadata: RoomMetadata;
+  groupsAccesses: RoomAccesses;
+  usersAccesses: RoomAccesses;
+  defaultAccesses: RoomPermission;
+  lastConnectionAt?: Date;
+  createdAt?: Date;
+};
+
+type RoomInfoOriginal = Omit<RoomInfo, "lastConnectionAt" | "createdAt"> & {
+  lastConnectionAt?: string;
+  createdAt?: string;
+};
+
+export type RoomUser<Info> = {
+  type: "user";
+  id: string | null;
+  connectionId: number;
+  info: Info;
+};
+
+export type Schema = {
+  id: string;
+  name: string;
+  version: number;
+  body: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type SchemaOriginal = Omit<Schema, "createdAt" | "updatedAt"> & {
+  createdAt: string;
+  updatedAt: string;
 };
 
 /**
@@ -69,35 +126,62 @@ export class Liveblocks {
   }
 
   /** @internal */
-  private async post(
-    path: `/${string}`,
-    json: Record<string, unknown>
-  ): Promise<Response> {
+  private async post(path: URLSafeString, json: Json): Promise<Response> {
     const url = urljoin(this._baseUrl, path);
     const headers = {
       Authorization: `Bearer ${this._secret}`,
       "Content-Type": "application/json",
     };
-
     const fetch = await fetchPolyfill();
-    return fetch(url, {
+    const res = await fetch(url, {
       method: "POST",
       headers,
       body: JSON.stringify(json),
     });
+    return res;
   }
 
   /** @internal */
-  private async get(path: `/${string}`): Promise<Response> {
+  private async put(path: URLSafeString, json: Json): Promise<Response> {
     const url = urljoin(this._baseUrl, path);
     const headers = {
       Authorization: `Bearer ${this._secret}`,
       "Content-Type": "application/json",
     };
-
     const fetch = await fetchPolyfill();
-    return fetch(url, { method: "GET", headers });
+    const res = await fetch(url, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify(json),
+    });
+    return res;
   }
+
+  /** @internal */
+  private async delete(path: URLSafeString): Promise<Response> {
+    const url = urljoin(this._baseUrl, path);
+    const headers = {
+      Authorization: `Bearer ${this._secret}`,
+    };
+    const fetch = await fetchPolyfill();
+    const res = await fetch(url, { method: "DELETE", headers });
+    return res;
+  }
+
+  /** @internal */
+  async get(path: URLSafeString, params?: QueryParams): Promise<Response> {
+    const url = urljoin(this._baseUrl, path, params);
+    const headers = {
+      Authorization: `Bearer ${this._secret}`,
+    };
+    const fetch = await fetchPolyfill();
+    const res = await fetch(url, { method: "GET", headers });
+    return res;
+  }
+
+  /* -------------------------------------------------------------------------------------------------
+   * Authentication
+   * -----------------------------------------------------------------------------------------------*/
 
   /**
    * Prepares a new session to authorize a user to access Liveblocks.
@@ -157,11 +241,11 @@ export class Liveblocks {
       | string // Shorthand for userId
       | Identity,
     options?: {
-      userInfo: unknown;
+      userInfo: IUserInfo;
       // ....
     }
   ): Promise<AuthResponse> {
-    const path = "/v2/identify-user";
+    const path = url`/v2/identify-user`;
     const userId = typeof identity === "string" ? identity : identity.userId;
     const groupIds =
       typeof identity === "string" ? undefined : identity.groupIds;
@@ -194,29 +278,584 @@ export class Liveblocks {
     }
   }
 
+  /* -------------------------------------------------------------------------------------------------
+   * Room
+   * -----------------------------------------------------------------------------------------------*/
+
+  /**
+   * Returns a list of your rooms. The rooms are returned sorted by creation date, from newest to oldest. You can filter rooms by metadata, users accesses and groups accesses.
+   * @param params.limit (optional) A limit on the number of rooms to be returned. The limit can range between 1 and 100, and defaults to 20.
+   * @param params.startingAfter (optional) A cursor used for pagination. You get the value from the response of the previous page.
+   * @param params.userId (optional) A filter on users accesses.
+   * @param params.metadata (optional) A filter on metadata. Multiple metadata keys can be used to filter rooms.
+   * @param params.groupIds (optional) A filter on groups accesses. Multiple groups can be used.
+   * @returns A list of rooms.
+   */
+  public async getRooms(
+    params: {
+      limit?: number;
+      startingAfter?: string;
+      metadata?: RoomMetadata;
+      userId?: string;
+      groupIds?: string[];
+    } = {}
+  ): Promise<{
+    nextPage: string | null;
+    data: RoomInfo[];
+  }> {
+    const path = url`/v2/rooms`;
+
+    const queryParams = {
+      limit: params.limit,
+      startingAfter: params.startingAfter,
+      userId: params.userId,
+      groupIds: params.groupIds ? params.groupIds.join(",") : undefined,
+      // "Flatten" {metadata: {foo: "bar"}} to {"metadata.foo": "bar"}
+      ...Object.fromEntries(
+        Object.entries(params.metadata ?? {}).map(([key, val]) => {
+          const value = Array.isArray(val) ? val.join(",") : val;
+          return [`metadata.${key}`, value];
+        })
+      ),
+    };
+
+    const res = await this.get(path, queryParams);
+
+    const data = (await res.json()) as {
+      nextPage: string | null;
+      data: RoomInfoOriginal[];
+    };
+
+    const rooms = data.data.map((room) => {
+      // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
+      const lastConnectionAt = room.lastConnectionAt
+        ? new Date(room.lastConnectionAt)
+        : undefined;
+
+      const createdAt = room.createdAt ? new Date(room.createdAt) : undefined;
+
+      return {
+        ...room,
+        lastConnectionAt,
+        createdAt,
+      };
+    });
+
+    return {
+      ...data,
+      data: rooms,
+    };
+  }
+
+  /**
+   * Creates a new room with the given id.
+   * @param roomId The id of the room to create.
+   * @param params.defaultAccesses The default accesses for the room.
+   * @param params.groupAccesses (optional) The group accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.userAccesses (optional) The user accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.metadata (optional) The metadata for the room. Supports upto a maximum of 50 entries. Key length has a limit of 40 characters. Value length has a limit of 256 characters.
+   * @returns The created room.
+   */
+  public async createRoom(
+    roomId: string,
+    params: {
+      defaultAccesses: RoomPermission;
+      groupsAccesses?: RoomAccesses;
+      usersAccesses?: RoomAccesses;
+      metadata?: RoomMetadata;
+    }
+  ): Promise<RoomInfo> {
+    const { defaultAccesses, groupsAccesses, usersAccesses, metadata } = params;
+
+    const res = await this.post(url`/v2/rooms`, {
+      id: roomId,
+      defaultAccesses,
+      groupsAccesses,
+      usersAccesses,
+      metadata,
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    const data = (await res.json()) as RoomInfoOriginal;
+
+    // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
+    const lastConnectionAt = data.lastConnectionAt
+      ? new Date(data.lastConnectionAt)
+      : undefined;
+
+    const createdAt = data.createdAt ? new Date(data.createdAt) : undefined;
+
+    return {
+      ...data,
+      lastConnectionAt,
+      createdAt,
+    };
+  }
+
+  /**
+   * Returns a room with the given id.
+   * @param roomId The id of the room to return.
+   * @returns The room with the given id.
+   */
+  public async getRoom(roomId: string): Promise<RoomInfo> {
+    const res = await this.get(url`/v2/rooms/${roomId}`);
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    const data = (await res.json()) as RoomInfoOriginal;
+
+    // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
+    const lastConnectionAt = data.lastConnectionAt
+      ? new Date(data.lastConnectionAt)
+      : undefined;
+
+    const createdAt = data.createdAt ? new Date(data.createdAt) : undefined;
+
+    return {
+      ...data,
+      lastConnectionAt,
+      createdAt,
+    };
+  }
+
+  /**
+   * Updates specific properties of a room. It’s not necessary to provide the entire room’s information.
+   * Setting a property to `null` means to delete this property.
+   * @param roomId The id of the room to update.
+   * @param params.defaultAccesses (optional) The default accesses for the room.
+   * @param params.groupAccesses (optional) The group accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.userAccesses (optional) The user accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.metadata (optional) The metadata for the room. Supports upto a maximum of 50 entries. Key length has a limit of 40 characters. Value length has a limit of 256 characters.
+   * @returns The updated room.
+   */
+  public async updateRoom(
+    roomId: string,
+    params: {
+      defaultAccesses?: RoomPermission | null;
+      groupsAccesses?: Record<
+        string,
+        ["room:write"] | ["room:read", "room:presence:write"] | null
+      >;
+      usersAccesses?: Record<
+        string,
+        ["room:write"] | ["room:read", "room:presence:write"] | null
+      >;
+      metadata?: Record<string, string | string[] | null>;
+    }
+  ): Promise<RoomInfo> {
+    const { defaultAccesses, groupsAccesses, usersAccesses, metadata } = params;
+
+    const res = await this.post(url`/v2/rooms/${roomId}`, {
+      defaultAccesses,
+      groupsAccesses,
+      usersAccesses,
+      metadata,
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    const data = (await res.json()) as RoomInfoOriginal;
+
+    // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
+    const lastConnectionAt = data.lastConnectionAt
+      ? new Date(data.lastConnectionAt)
+      : undefined;
+
+    const createdAt = data.createdAt ? new Date(data.createdAt) : undefined;
+
+    return {
+      ...data,
+      lastConnectionAt,
+      createdAt,
+    };
+  }
+
+  /**
+   * Deletes a room with the given id. A deleted room is no longer accessible from the API or the dashboard and it cannot be restored.
+   * @param roomId The id of the room to delete.
+   */
+  public async deleteRoom(roomId: string): Promise<void> {
+    const res = await this.delete(url`/v2/rooms/${roomId}`);
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+  }
+
+  /**
+   * Returns a list of users currently present in the requested room. For better performance, we recommand to call this endpoint every 10 seconds maximum. Duplicates can happen if a user is in the requested room with multiple browser tabs opened.
+   * @param roomId The id of the room to get the users from.
+   * @returns A list of users currently present in the requested room.
+   */
+  public async getActiveUsers<T = unknown>(
+    roomId: string
+  ): Promise<RoomUser<T>[]> {
+    const res = await this.get(url`/v2/rooms/${roomId}/active_users`);
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    return (await res.json()) as Promise<RoomUser<T>[]>;
+  }
+
+  /**
+   * Boadcasts an event to a room without having to connect to it via the client from @liveblocks/client. The connectionId passed to event listeners is -1 when using this API.
+   * @param roomId The id of the room to broadcast the event to.
+   * @param message The message to broadcast. It can be any JSON serializable value.
+   */
+  public async broadcastEvent(roomId: string, message: Json): Promise<void> {
+    const res = await this.post(
+      url`/v2/rooms/${roomId}/broadcast_event`,
+      message
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+  }
+
+  /* -------------------------------------------------------------------------------------------------
+   * Storage
+   * -----------------------------------------------------------------------------------------------*/
+
+  /**
+   * Returns the contents of the room’s Storage tree.
+   * The default outputted format is called “plain LSON”, which includes information on the Live data structures in the tree.
+   * These nodes show up in the output as objects with two properties:
+   *
+   * ```json
+   * {
+   *   "liveblocksType": "LiveObject",
+   *   "data": ...
+   * }
+   * ```
+   *
+   * If you’re not interested in this information, you can use the `format` parameter to get a more compact output.
+   *
+   * @param roomId The id of the room to get the storage from.
+   * @param format (optional) Set to return `plan-lson` representation by default. If set to `json`, the output will be formatted as a simplified JSON representation of the Storage tree.
+   * In that format, each LiveObject and LiveMap will be formatted as a simple JSON object, and each LiveList will be formatted as a simple JSON array. This is a lossy format because information about the original data structures is not retained, but it may be easier to work with.
+   */
+  public getStorageDocument(
+    roomId: string,
+    format: "plain-lson"
+  ): Promise<PlainLsonObject>;
+
+  public getStorageDocument(roomId: string): Promise<PlainLsonObject>; // Default to 'plain-lson' when no format is provided
+
+  public getStorageDocument(
+    roomId: string,
+    format: "json"
+  ): Promise<JsonObject>;
+
+  public async getStorageDocument(
+    roomId: string,
+    format: "plain-lson" | "json" = "plain-lson"
+  ): Promise<PlainLsonObject | JsonObject> {
+    const res = await this.get(url`/v2/rooms/${roomId}/storage`, { format });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+    return (await res.json()) as Promise<PlainLsonObject | JsonObject>;
+  }
+
+  /**
+   * Initializes a room’s Storage. The room must already exist and have an empty Storage.
+   * Calling this endpoint will disconnect all users from the room if there are any.
+   *
+   * @param roomId The id of the room to initialize the storage from.
+   * @param document The document to initialize the storage with.
+   * @returns The initialized storage document. It is of the same format as the one passed in.
+   */
+  public async initializeStorageDocument(
+    roomId: string,
+    document: PlainLsonObject
+  ): Promise<PlainLsonObject> {
+    const res = await this.post(url`/v2/rooms/${roomId}/storage`, document);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+    return (await res.json()) as Promise<PlainLsonObject>;
+  }
+
+  /**
+   * Deletes all of the room’s Storage data and disconnect all users from the room if there are any. Note that this does not delete the Yjs document in the room if one exists.
+   * @param roomId The id of the room to delete the storage from.
+   */
+  public async deleteStorageDocument(roomId: string): Promise<void> {
+    const res = await this.delete(url`/v2/rooms/${roomId}/storage`);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+  }
+
+  /* -------------------------------------------------------------------------------------------------
+   * Yjs
+   * -----------------------------------------------------------------------------------------------*/
+
+  /**
+   * Returns a JSON representation of the room’s Yjs document.
+   * @param roomId The id of the room to get the Yjs document from.
+   * @param params.format (optional) If true, YText will return formatting.
+   * @param params.key (optional) If provided, returns only a single key’s value, e.g. doc.get(key).toJSON().
+   * @param params.type (optional) Used with key to override the inferred type, i.e. "ymap" will return doc.get(key, Y.Map).
+   * @returns A JSON representation of the room’s Yjs document.
+   */
+  public async getYjsDocument(
+    roomId: string,
+    params: {
+      format?: boolean;
+      key?: string;
+      type?: string;
+    } = {}
+  ): Promise<JsonObject> {
+    const { format, key, type } = params;
+
+    const path = url`v2/rooms/${roomId}/ydoc`;
+
+    const res = await this.get(path, {
+      formatting: format ? "true" : undefined,
+      key,
+      type,
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    return (await res.json()) as Promise<JsonObject>;
+  }
+
+  /**
+   * Send a Yjs binary update to the room’s Yjs document. You can use this endpoint to initialize Yjs data for the room or to update the room’s Yjs document.
+   * @param roomId The id of the room to send the Yjs binary update to.
+   * @param params The Yjs binary update to send. Read the [Yjs documentation](https://docs.yjs.dev/api/document-updates) to learn how to create a binary update.
+   */
+  public async sendYjsBinaryUpdate(
+    roomId: string,
+    params: {
+      update: string;
+    }
+  ): Promise<void> {
+    const { update } = params;
+    const res = await this.put(url`/v2/rooms/${roomId}/ydoc`, {
+      update,
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+  }
+
+  /**
+   * Returns the room’s Yjs document encoded as a single binary update. This can be used by Y.applyUpdate(responseBody) to get a copy of the document in your backend.
+   * See [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more information on working with updates.
+   * @param roomId The id of the room to get the Yjs document from.
+   * @returns The room’s Yjs document encoded as a single binary update.
+   */
+  public async getYjsDocumentAsBinaryUpdate(
+    roomId: string
+  ): Promise<ArrayBuffer> {
+    const res = await this.get(url`/v2/rooms/${roomId}/ydoc-binary`);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+    return res.arrayBuffer();
+  }
+
+  /* -------------------------------------------------------------------------------------------------
+   * Schema Validation
+   * -----------------------------------------------------------------------------------------------*/
+
+  /**
+   * Creates a new schema which can be referenced later to enforce a room’s Storage data structure.
+   * @param name The name used to reference the schema. Must be a non-empty string with less than 65 characters and only contain lowercase letters, numbers and dashes
+   * @param body The exact allowed shape of data in the room. It is a multi-line string written in the [Liveblocks schema syntax](https://liveblocks.io/docs/platform/schema-validation/syntax).
+   * @returns The created schema.
+   */
+  public async createSchema(name: string, body: string): Promise<Schema> {
+    const res = await this.post(url`/v2/schemas`, {
+      name,
+      body,
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+    const data = (await res.json()) as SchemaOriginal;
+
+    // Convert createdAt and updatedAt from ISO date strings to Date objects
+    const createdAt = new Date(data.createdAt);
+    const updatedAt = new Date(data.updatedAt);
+
+    return {
+      ...data,
+      createdAt,
+      updatedAt,
+    };
+  }
+
+  /**
+   * Returns a schema by its id.
+   * @param schemaId Id of the schema - this is the combination of the schema name and version of the schema to update. For example, `my-schema@1`.
+   * @returns The schema with the given id.
+   */
+  public async getSchema(schemaId: string): Promise<Schema> {
+    const res = await this.get(url`/v2/schemas/${schemaId}`);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+    const data = (await res.json()) as SchemaOriginal;
+
+    // Convert createdAt and updatedAt from ISO date strings to Date objects
+    const createdAt = new Date(data.createdAt);
+    const updatedAt = new Date(data.updatedAt);
+
+    return {
+      ...data,
+      createdAt,
+      updatedAt,
+    };
+  }
+
+  /**
+   * Updates the body for the schema. A schema can only be updated if it is not used by any room.
+   * @param schemaId Id of the schema - this is the combination of the schema name and version of the schema to update. For example, `my-schema@1`.
+   * @param body The exact allowed shape of data in the room. It is a multi-line string written in the [Liveblocks schema syntax](https://liveblocks.io/docs/platform/schema-validation/syntax).
+   * @returns The updated schema. The version of the schema will be incremented.
+   */
+  public async updateSchema(schemaId: string, body: string): Promise<Schema> {
+    const res = await this.put(url`/v2/schemas/${schemaId}`, {
+      body,
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    const data = (await res.json()) as SchemaOriginal;
+
+    // Convert createdAt and updatedAt from ISO date strings to Date objects
+    const createdAt = new Date(data.createdAt);
+    const updatedAt = new Date(data.updatedAt);
+
+    return {
+      ...data,
+      createdAt,
+      updatedAt,
+    };
+  }
+
+  /**
+   * Deletes a schema by its id. A schema can only be deleted if it is not used by any room.
+   * @param schemaId Id of the schema - this is the combination of the schema name and version of the schema to update. For example, `my-schema@1`.
+   */
+  public async deleteSchema(schemaId: string): Promise<void> {
+    const res = await this.delete(url`/v2/schemas/${schemaId}`);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+  }
+
+  /**
+   * Returns the schema attached to a room.
+   * @param roomId The id of the room to get the schema from.
+   * @returns
+   */
+  public async getSchemaByRoomId(roomId: string): Promise<Schema> {
+    const res = await this.get(url`/v2/rooms/${roomId}/schema`);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    const data = (await res.json()) as SchemaOriginal;
+
+    // Convert createdAt and updatedAt from ISO date strings to Date objects
+    const createdAt = new Date(data.createdAt);
+    const updatedAt = new Date(data.updatedAt);
+
+    return {
+      ...data,
+      createdAt,
+      updatedAt,
+    };
+  }
+
+  /**
+   * Attaches a schema to a room, and instantly enables runtime schema validation for the room.
+   * If the current contents of the room’s Storage do not match the schema, attaching will fail and the error message will give details on why the schema failed to attach.
+   * @param roomId The id of the room to attach the schema to.
+   * @param schemaId Id of the schema - this is the combination of the schema name and version of the schema to update. For example, `my-schema@1`.
+   * @returns The schema id as JSON.
+   */
+  public async attachSchemaToRoom(
+    roomId: string,
+    schemaId: string
+  ): Promise<{ schema: string }> {
+    const res = await this.post(url`/v2/rooms/${roomId}/schema`, {
+      schema: schemaId,
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+    return (await res.json()) as Promise<{ schema: string }>;
+  }
+
+  /**
+   * Detaches a schema from a room, and disables runtime schema validation for the room.
+   * @param roomId The id of the room to detach the schema from.
+   */
+  public async detachSchemaFromRoom(roomId: string): Promise<void> {
+    const res = await this.delete(url`/v2/rooms/${roomId}/schema`);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+  }
+
+  /* -------------------------------------------------------------------------------------------------
+   * Comments
+   * -----------------------------------------------------------------------------------------------*/
+
   /**
    * Gets all the threads in a room.
    *
    * @param params.roomId The room ID to get the threads from.
    * @returns A list of threads.
    */
-  public async getThreads(params: { roomId: string }): Promise<ThreadData[]> {
+  public async getThreads(params: {
+    roomId: string;
+  }): Promise<{ data: ThreadData[] }> {
     const { roomId } = params;
 
-    const resp = await this.get(
-      `/v2/rooms/${encodeURIComponent(roomId)}/threads`
-    );
-
-    const body = await (resp.json() as Promise<ThreadData[]>);
-
-    if (resp.status !== 200) {
-      throw {
-        status: resp.status,
-        ...body,
-      };
+    const res = await this.get(url`/v2/rooms/${roomId}/threads`);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
     }
-
-    return body;
+    return (await res.json()) as Promise<{ data: ThreadData[] }>;
   }
 
   /**
@@ -232,22 +871,12 @@ export class Liveblocks {
   }): Promise<ThreadData> {
     const { roomId, threadId } = params;
 
-    const resp = await this.get(
-      `/v2/rooms/${encodeURIComponent(roomId)}/threads/${encodeURIComponent(
-        threadId
-      )}`
-    );
-
-    const body = await (resp.json() as Promise<ThreadData>);
-
-    if (resp.status !== 200) {
-      throw {
-        status: resp.status,
-        ...body,
-      };
+    const res = await this.get(url`/v2/rooms/${roomId}/threads/${threadId}`);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
     }
-
-    return body;
+    return (await res.json()) as Promise<ThreadData>;
   }
 
   /**
@@ -266,22 +895,14 @@ export class Liveblocks {
   }): Promise<ThreadParticipants> {
     const { roomId, threadId } = params;
 
-    const resp = await this.get(
-      `/v2/rooms/${encodeURIComponent(roomId)}/threads/${encodeURIComponent(
-        threadId
-      )}/participants`
+    const res = await this.get(
+      url`/v2/rooms/${roomId}/threads/${threadId}/participants`
     );
-
-    const body = await (resp.json() as Promise<ThreadParticipants>);
-
-    if (resp.status !== 200) {
-      throw {
-        status: resp.status,
-        ...body,
-      };
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
     }
-
-    return body;
+    return (await res.json()) as Promise<ThreadParticipants>;
   }
 
   /**
@@ -299,21 +920,23 @@ export class Liveblocks {
   }): Promise<CommentData> {
     const { roomId, threadId, commentId } = params;
 
-    const resp = await this.get(
-      `/v2/rooms/${encodeURIComponent(roomId)}/threads/${encodeURIComponent(
-        threadId
-      )}/comments/${encodeURIComponent(commentId)}`
+    const res = await this.get(
+      url`/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`
     );
-
-    const body = await (resp.json() as Promise<CommentData>);
-
-    if (resp.status !== 200) {
-      throw {
-        status: resp.status,
-        ...body,
-      };
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
     }
+    return (await res.json()) as Promise<CommentData>;
+  }
+}
 
-    return body;
+export class LiveblocksError extends Error {
+  status: number;
+
+  constructor(status: number, message = "") {
+    super(message);
+    this.name = "LiveblocksError";
+    this.status = status;
   }
 }

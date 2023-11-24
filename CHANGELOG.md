@@ -1,12 +1,37 @@
-# v1.7.2
+# v1.8.2
 
 ### `@liveblocks/react-comments`
 
-- Improve network loss and document visibility handling inside CommentsRoom.
+- Improve network loss and document visibility handling during comment
+  revalidation.
 - Better error handling on mutations (e.g. thread creation, comment creation,
   etc.)
 
-# v1.7.1
+# v1.8.1
+
+- Fix a bug in `toPlainLson` helper
+- Fix a bug where pausing history more than once could lead to history loss
+
+# v1.8.0
+
+This release adds all the REST APIs as fully typed methods, and utilities to
+transform comments, to `@liveblocks/node`.
+
+### `@liveblocks/node`
+
+- Add all the REST APIs as fully typed methods to `Liveblocks` client. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#Liveblocks-client).
+- Add utilities to work with the `CommentBody` format from Comments:
+  - `getMentionedIdsFromCommentBody(body)` - Get a list of all mentioned IDs
+    from a `CommentBody`. See
+    [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#get-mentioned-ids-from-comment-body).
+  - `stringifyCommentBody(body, options)` - Convert a `CommentBody` to a string,
+    either as plain text, HTML, or Markdown. It supports resolving mention IDs
+    similarly to `@liveblocks/react` and overriding each element to control the
+    formatting. See
+    [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#stringify-comment-body).
+
+# 1.7.1
 
 ### `@liveblocks/react-comments`
 

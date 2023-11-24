@@ -2269,7 +2269,9 @@ export function createRoom<
   }
 
   function pauseHistory() {
-    context.pausedHistory = [];
+    if (context.pausedHistory === null) {
+      context.pausedHistory = [];
+    }
   }
 
   function resumeHistory() {

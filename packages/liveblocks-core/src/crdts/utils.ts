@@ -51,10 +51,9 @@ export function toPlainLson(lson: Lson): PlainLson {
     return {
       liveblocksType: "LiveObject",
       data: Object.fromEntries(
-        Object.entries(lson.toObject()).map(([key, value]) => [
-          key,
-          value ? toPlainLson(value) : "",
-        ])
+        Object.entries(lson.toObject()).flatMap(([key, value]) =>
+          value !== undefined ? [[key, toPlainLson(value)]] : []
+        )
       ),
     };
   } else if (lson instanceof LiveMap) {

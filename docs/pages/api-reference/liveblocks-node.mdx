@@ -23,6 +23,8 @@ const liveblocks = new Liveblocks({
 });
 ```
 
+### Authorization
+
 To authorize your users with Liveblocks, you have the choice between two
 different APIs.
 
@@ -31,7 +33,7 @@ different APIs.
 - [`Liveblocks.identifyUser`](#id-tokens) is best if you’re using fine-grained
   permissions with our REST API.
 
-### Liveblocks.prepareSession [#access-tokens]
+#### Liveblocks.prepareSession [#access-tokens]
 
 The purpose of this API is to help you implement your custom authentication back
 end (i.e. the _server_ part of the diagram). You use the
@@ -123,7 +125,7 @@ To implement your back end, follow these steps:
 
 </Steps>
 
-#### Access tokens example [#access-token-example]
+##### Access tokens example [#access-token-example]
 
 Here’s a real-world example of access tokens in a Next.js route
 handler/endpoint. You can find examples for other frameworks in our
@@ -167,7 +169,7 @@ export async function POST(request: Request) {
 }
 ```
 
-### Liveblocks.identifyUser [#id-tokens]
+#### Liveblocks.identifyUser [#id-tokens]
 
 The purpose of this API is to help you implement your custom authentication back
 end (i.e. the _server_ part of the diagram). You use the
@@ -231,7 +233,7 @@ static metadata to this user’s session. This will be publicly visible to all
 other people in the room. Useful for metadata like the user’s full name, or
 their avatar URL.
 
-#### ID tokens example
+##### ID tokens example
 
 Here’s a real-world example of ID tokens in a Next.js route handler/endpoint.
 You can find examples for other frameworks in our
@@ -273,7 +275,681 @@ export default async function auth(req, res) {
 }
 ```
 
-### Liveblocks.getThreads [#get-threads]
+### Room
+
+#### Liveblocks.getRooms [#get-rooms]
+
+Returns a list of rooms that are in the current project. The project is
+determined by the secret key you’re using. Rooms are sorted by creation time,
+with the newest room at index `0`. This is a wrapper around the
+[Get Rooms API](/docs/api-reference/rest-api-endpoints#get-rooms) and returns
+the same response.
+
+```ts
+const { data: rooms, nextPage } = await liveblocks.getRooms();
+
+// A list of rooms
+// [{ type: "room", id: "my-room-id", ... }, ...]
+console.log(rooms);
+
+// A pagination value used for retrieving the next page of results
+// "L3YyL3Jvb21z..."
+console.log(nextPage);
+```
+
+A number of options are also available, enabling you to filter for certain
+rooms.
+
+```ts
+const { data: rooms, nextPage } = await liveblocks.getRooms({
+  // Optional, the amount of rooms to load, between 1 and 100, defaults to 20
+  limit: 20,
+
+  // Optional, filter for rooms that allow entry to group ID(s) in `groupAccesses`
+  groupIds: ["engineering", "design"],
+
+  // Optional, filter for rooms that allow entry to a user's ID in `usersAccesses`
+  userId: "my-user-id",
+
+  // Optional, filter for rooms with custom metadata in `metadata`
+  metadata: {
+    myRoomType: "whiteboard",
+  },
+
+  // Optional, cursor used for pagination, use `nextPage` from the previous page's response
+  startingAfter: "L3YyL3Jvb21z...",
+});
+```
+
+You can use `nextPage` to paginate rooms. In this example, when `getNextPage` is
+called, the next set of rooms is added to `pages`.
+
+```ts
+import { RoomInfo } from "@liveblocks/node";
+
+// An array of pages, each containing a list of retrieved rooms
+const pages: RoomInfo[][] = [];
+
+// Holds the pagination cursor for the next set of rooms
+let startingAfter;
+
+// Call to get the next page of rooms
+async function getNextPage() {
+  const { data, nextPage } = await liveblocks.getRooms({ startingAfter });
+  pages.push(data);
+  startingAfter = nextPage;
+}
+```
+
+#### Liveblocks.createRoom [#post-rooms]
+
+Programmatically creates a new room from a room ID. The `defaultAccesses` option
+is required. Setting `defaultAccesses` to `["room:write"]` creates a public
+room, whereas setting it to `[]` will create a private room that needs
+[ID token permission to enter](/docs/rooms/permissions/id-token). This is a
+wrapper around the
+[Create Room API](/docs/api-reference/rest-api-endpoints#post-rooms) and returns
+the same response.
+
+```ts
+const room = await liveblocks.createRoom("my-room-id", {
+  defaultAccesses: ["room:write"],
+});
+
+// { type: "room", id: "my-room-id", ... }
+console.log(room);
+```
+
+A number of room creation options are available, allowing you to set permissions
+and attach custom metadata.
+
+```ts
+const room = await liveblocks.createRoom("my-room-id", {
+  // The default room permissions. `[]` for private, `["room:write"]` for public.
+  defaultAccesses: [],
+
+  // Optional, the room's group ID permissions
+  groupAccesses: {
+    design: ["room:write"],
+    engineering: ["room:presence:write", "room:read"],
+  },
+
+  // Optional, the room's user ID permissions
+  userAccesses: {
+    "my-user-id": ["room:write"],
+  },
+
+  // Optional, custom metadata to attach to the room
+  metadata: {
+    myRoomType: "whiteboard",
+  },
+});
+```
+
+Group and user permissions are only used with
+[ID token authorization](/docs/api-reference/liveblocks-node#id-tokens), learn
+more about
+[managing permission with ID tokens](/docs/rooms/permissions/id-token).
+
+#### Liveblocks.getRoom [#get-rooms-roomId]
+
+Returns a room. Throws an error if the room isn’t found. This is a wrapper
+around the
+[Get Room API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId) and
+returns the same response.
+
+```ts
+const room = await liveblocks.getRoom("my-room-id");
+
+// { type: "room", id: "my-room-id", ... }
+console.log(room);
+```
+
+#### Liveblocks.updateRoom [#post-rooms-roomId]
+
+Updates properties on a room. Throws an error if the room isn’t found. This is a
+wrapper around the
+[Update Room API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId) and
+returns the same response.
+
+```ts
+const room = await liveblocks.updateRoom("my-room-id", {
+  // The metadata or permissions you're updating
+  // ...
+});
+
+// { type: "room", id: "my-room-id", ... }
+console.log(room);
+```
+
+Permissions and metadata properties can be updated on the room. Note that you
+need only pass the properties you’re updating. Setting a property to `null` will
+delete the property.
+
+```ts
+const room = await liveblocks.createRoom("my-room-id", {
+  // Optional, update the default room permissions. `[]` for private, `["room:write"]` for public.
+  defaultAccesses: [],
+
+  // Optional, update the room's group ID permissions
+  groupAccesses: {
+    design: ["room:write"],
+    engineering: ["room:presence:write", "room:read"],
+  },
+
+  // Optional, update the room's user ID permissions
+  userAccesses: {
+    "my-user-id": ["room:write"],
+  },
+
+  // Optional, custom metadata to update on the room
+  metadata: {
+    myRoomType: "whiteboard",
+  },
+});
+```
+
+Group and user permissions are only used with
+[ID token authorization](/docs/api-reference/liveblocks-node#id-tokens), learn
+more about
+[managing permission with ID tokens](/docs/rooms/permissions/id-token).
+
+#### Liveblocks.deleteRoom [#delete-rooms-roomId]
+
+Deletes a room. Throws an error if the room isn’t found. This is a wrapper
+around the
+[Delete Room API](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId)
+and returns no response.
+
+```ts
+await liveblocks.deleteRoom("my-room-id");
+```
+
+#### Liveblocks.getActiveUsers [#get-rooms-roomId-active-users]
+
+Returns a list of users that are currently present in the room. Throws an error
+if the room isn’t found. This is a wrapper around the
+[Get Active Users API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-active-users)
+and returns the same response.
+
+```ts
+const activeUsers = await liveblocks.getActiveUsers("my-room-id");
+
+// [{ type: "user", id: "my-user-id", ... }, ...]
+console.log(activeUsers);
+```
+
+Using `UserMeta["info"]` from your config file as a generic adds typing to the
+returned `activeUsers`.
+
+```ts file="liveblocks.config.ts" highlight="5-8"
+// ...
+
+export type UserMeta = {
+  id: string;
+  info: {
+    name: string;
+    avatar: string;
+  };
+};
+```
+
+```ts highlight="4"
+import { UserMeta } from "../liveblocks.config";
+
+const activeUsers =
+  await liveblocks.getActiveUsers<UserMeta["info"]>("my-room-id");
+
+// [{ ..., info: { name: "Nimesh", avatar: "https://..." }, ...]
+console.log(activeUsers);
+```
+
+#### Liveblocks.broadcastEvent [#post-broadcast-event]
+
+Broadcasts a custom event to the room. Throws an error if the room isn’t found.
+This is a wrapper around the
+[Broadcast Event API](/docs/api-reference/rest-api-endpoints#post-broadcast-event)
+and returns no response.
+
+```ts
+const customEvent = {
+  type: "EMOJI",
+  emoji: "🔥",
+};
+
+await liveblocks.broadcastEvent("my-room-id", customEvent);
+```
+
+You can respond to custom events on the front end with
+[`useBroadcastEvent`](/docs/api-reference/liveblocks-react#useBroadcastEvent)
+and
+[`room.subscribe("event")`](/docs/api-reference/liveblocks-client#Room.subscribe.event).
+When receiving an event sent with `Liveblocks.broadcastEvent`, `user` will be
+`null` and `connectionId` will be `-1`.
+
+```tsx
+import { useEventListener } from "./liveblocks.config";
+
+// When receiving an event sent from `@liveblocks/node`
+useEventListener(({ event, user, connectionId }) => {
+  // `null`
+  console.log(user);
+
+  // `-1`
+  console.log(connectionId);
+});
+```
+
+### Storage
+
+#### Liveblocks.getStorageDocument [#get-rooms-roomId-storage]
+
+Returns the contents of a room’s Storage tree. By default, returns Storage in
+LSON format. Throws an error if the room isn’t found. This is a wrapper around
+the
+[Get Storage Document API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-storage)
+and returns the same response.
+
+```ts
+const storage = await liveblocks.getStorageDocument("my-room-id");
+```
+
+LSON is a custom Liveblocks format that preserves information about the
+conflict-free data types used. By default, `getStorageDocument` returns Storage
+in this format. This is the same as using `"plain-json"` in the second argument.
+
+```ts highlight="2"
+// Retrieve LSON Storage data
+const storage = await liveblocks.getStorageDocument("my-room-id", "plain-lson");
+
+// If this were your Storage type...
+type Storage = {
+  names: LiveList<string>;
+};
+
+// {
+//   liveblocksType: "LiveObject",
+//   data: {
+//     names: {
+//       liveblocksType: "LiveList",
+//       data: ["Olivier", "Nimesh"],
+//     }
+//   }
+// }
+console.log(storage);
+```
+
+You can also retrieve Storage as JSON by passing `"json"` into the second
+argument.
+
+```ts highlight="2"
+// Retrieve JSON Storage data
+const storage = await liveblocks.getStorageDocument("my-room-id", "json");
+
+// If this were your Storage type...
+type Storage = {
+  names: LiveList<string>;
+};
+
+// {
+//   names: ["Olivier", "Nimesh"]
+// }
+console.log(storage);
+```
+
+#### Liveblocks.initializeStorageDocument [#post-rooms-roomId-storage]
+
+Initializes a room’s Storage tree with given LSON data. To use this, the room
+must have [already been created](#post-rooms) and have empty Storage. Throws an
+error if the room isn’t found. Calling this will disconnect all active users
+from the room. This is a wrapper around the
+[Initialize Storage Document API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-storage)
+and returns the same response.
+
+```ts
+// Create a new room
+const room = await liveblocks.createRoom("my-room-id", {
+  defaultAccesses: ["room:write"],
+});
+
+// Initialize Storage
+const storage = await liveblocks.initializeStorageDocument("my-room-id", {
+  // Your LSON Storage value
+  // ...
+});
+```
+
+LSON is a custom Liveblocks format that preserves information about
+conflict-free data types. Here’s an example of initializing a simple Storage
+value.
+
+```ts highlight="7-9,13-19"
+// Create a new room
+const room = await liveblocks.createRoom("my-room-id", {
+  defaultAccesses: ["room:write"],
+});
+
+// If this were your Storage type...
+type Storage = {
+  names: LiveList<string>;
+};
+
+// Create this Storage and add names to the LiveList
+const storage = await liveblocks.initializeStorageDocument("my-room-id", {
+  liveblocksType: "LiveObject",
+  data: {
+    names: {
+      liveblocksType: "LiveList",
+      data: ["Olivier", "Nimesh"],
+    },
+  },
+});
+```
+
+Using the `toPlainLson` helper provided by `@liveblocks/client`, you can more
+easily create LSON.
+
+```ts highlight="1,14-16,21"
+import { toPlainLson, LiveList, LiveObject } from "@liveblocks/client";
+
+// Create a new room
+const room = await liveblocks.createRoom("my-room-id", {
+  defaultAccesses: ["room:write"],
+});
+
+// If this were your Storage type...
+type Storage = {
+  names: LiveList<string>;
+};
+
+// Create the initial conflict-free data
+const initialStorage: LiveObject<Storage> = new LiveObject({
+  names: new LiveList[("Olivier", "Nimesh")](),
+});
+
+// Convert to LSON and create Storage
+const storage = await liveblocks.initializeStorageDocument(
+  "my-room-id",
+  toPlainLson(initialStorage)
+);
+```
+
+#### Liveblocks.deleteStorageDocument [#delete-rooms-roomId-storage]
+
+Deletes a room’s Storage data. Calling this will disconnect all active users
+from the room. Throws an error if the room isn’t found. This is a wrapper around
+the
+[Delete Storage Document API](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId-storage)
+and returns no response.
+
+```ts
+await liveblocks.deleteStorageDocument("my-room-id");
+```
+
+### Yjs
+
+#### Liveblocks.getYjsDocument [#get-rooms-roomId-ydoc]
+
+Returns a JSON representation of a room’s Yjs document. Throws an error if the
+room isn’t found. This is a wrapper around the
+[Get Yjs Document API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-ydoc)
+and returns the same response.
+
+```ts
+const yjsDocument = await liveblocks.getYjsDocument("my-room-id");
+
+// { yourYText: "...", yourYArray: [...], ... }
+console.log(yjsDocument);
+```
+
+A number of options are available.
+
+```ts
+const yjsDocument = await liveblocks.getYjsDocument("my-room-id", {
+  // Optional, if true, `yText` values will return formatting
+  formatting: true,
+
+  // Optional, return a single key's value, e.g. `yDoc.get("my-key-id").toJson()`
+  key: "my-key-id",
+
+  // Optional, override the inferred `key` type, e.g. "ymap" for `doc.get(key, Y.Map)`
+  type: "ymap",
+});
+```
+
+#### Liveblocks.sendYjsBinaryUpdate [#put-rooms-roomId-ydoc]
+
+Send a Yjs binary update to a room’s Yjs document. You can use this to update or
+initialize the room’s Yjs document. Throws an error if the room isn’t found.
+This is a wrapper around the
+[Send a Binary Yjs Update API](/docs/api-reference/rest-api-endpoints#put-rooms-roomId-ydoc)
+and returns no response.
+
+```ts
+await liveblocks.sendYjsBinaryUpdate("my-room-id", {
+  // Your yDoc in binary update format
+  update: Y.encodeStateAsUpdate(yDoc),
+});
+```
+
+Here’s an example of how to update a room’s Yjs document with your changes.
+
+```ts
+import * as Y from "yjs";
+
+// Create a Yjs document
+const yDoc = new Y.Doc();
+
+// Create your data structures and make your update
+const yText = yDoc.getText("text");
+yText.insert(0, "Hello world");
+
+// Encode your yDoc state as a binary update message and send to Liveblocks
+await liveblocks.sendYjsBinaryUpdate("my-room-id", {
+  update: Y.encodeStateAsUpdate(yDoc),
+});
+```
+
+To create a new room and initialize its Yjs document, call
+[`liveblocks.createRoom`](#post-rooms) before sending the binary update.
+
+```ts highlight="1-2"
+// Create new room
+const room = await liveblocks.createRoom("my-room-id");
+
+// Set initial Yjs document value
+await liveblocks.sendYjsBinaryUpdate("my-room-id", {
+  update: Y.encodeStateAsUpdate(yDoc),
+});
+```
+
+Note that each text and code editor handles binary updates in a different way.
+For example, this is how to create a binary update with
+[Slate](https://www.slatejs.org/).
+
+```ts title="Slate binary update" highlight="3,13-17,19-21" isCollapsed isCollapsable
+import { Liveblocks } from "@liveblocks/node";
+import * as Y from "yjs";
+import { slateNodesToInsertDelta } from "@slate-yjs/core";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+export async function POST() {
+  // Create a Yjs document
+  const yDoc = new Y.Doc();
+
+  // Create Slate document state
+  const slateDoc = {
+    type: "paragraph",
+    children: [{ text: "Hello world" }],
+  };
+
+  // Create your data structures and make your update
+  const insertDelta = slateNodesToInsertDelta(slateDoc);
+  (yDoc.get("content", Y.XmlText) as Y.XmlText).applyDelta(insertDelta);
+
+  // Update Yjs document value
+  await liveblocks.sendYjsBinaryUpdate("my-room-id", {
+    update: Y.encodeStateAsUpdate(yDoc),
+  });
+}
+```
+
+Read the [Yjs documentation](https://docs.yjs.dev/api/document-updates) to learn
+more about creating binary updates.
+
+#### Liveblocks.getYjsDocumentAsBinaryUpdate [#get-rooms-roomId-ydoc-binary]
+
+Return a room’s Yjs document as a single binary update. You can use this to get
+a copy of your Yjs document in your back end. Throws an error if the room isn’t
+found. This is a wrapper around the
+[Get Yjs Document Encoded as a Binary Yjs Update API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-ydoc-binary)
+and returns the same response.
+
+```ts
+const binaryYjsUpdate =
+  await liveblocks.getYjsDocumentAsBinaryUpdate("my-room-id");
+```
+
+Read the [Yjs documentation](https://docs.yjs.dev/api/document-updates) to learn
+more about using binary updates.
+
+### Schema validation
+
+#### Liveblocks.createSchema [#post-create-new-schema]
+
+Creates a schema that can be used to enforce a room’s Storage data structure.
+The schema consists of a unique name, and a body which specifies the data shape
+of the room in Liveblocks
+[schema syntax](/docs/platform/schema-validation/syntax). This is a wrapper
+around the
+[Create Schema API](/docs/api-reference/rest-api-endpoints#post-create-new-schema)
+and returns the same response.
+
+```ts
+const schemaBody = `
+  type Storage {
+    names: LiveList<string>
+  }
+`;
+
+const schema = await liveblocks.createSchema("my-schema-name", schemaBody);
+
+// { id: "my-schema-name@1", name: "my-schema-name", version: 1, ... }
+console.log(schema);
+```
+
+Read the [schema validation](/docs/platform/schema-validation) page to learn
+more.
+
+#### Liveblocks.getSchema [#get-create-new-schema]
+
+Returns a schema from its ID. A schema’s ID is a combination of its name and
+version, for example the ID for version `1` of `my-schema-name` is
+`my-schema-name@1`. This is a wrapper around the
+[Get Schema API](/docs/api-reference/rest-api-endpoints#get-create-new-schema)
+and returns the same response.
+
+```ts
+const updatedBody = `
+  type Storage {
+    names: LiveMap<string, string>
+  }
+`;
+
+const schema = await liveblocks.getSchema("my-schema-name@1", updatedBody);
+
+// { id: "my-schema-name@1", name: "my-schema-name", version: 1, ... }
+console.log(schema);
+```
+
+Read the [schema validation](/docs/platform/schema-validation) page to learn
+more.
+
+#### Liveblocks.updateSchema [#put-update-new-schema]
+
+Updates a schema’s body and increments its version. A schema’s body specifies
+the data shape of the room in Liveblocks
+[schema syntax](/docs/platform/schema-validation/syntax). Find the schema by its
+ID, a combination of its name and version, for example the ID for version `1` of
+`my-schema-name` is `my-schema-name@1`. This is a wrapper around the
+[Update Schema API](/docs/api-reference/rest-api-endpoints#put-update-new-schema)
+and returns the same response.
+
+```ts
+const schema = await liveblocks.updateSchema("my-schema-name@1");
+
+// { id: "my-schema-name@1", name: "my-schema-name", version: 1, ... }
+console.log(schema);
+```
+
+Read the [schema validation](/docs/platform/schema-validation) page to learn
+more.
+
+#### Liveblocks.deleteSchema [#delete-a-schema]
+
+Deletes a schema. This is only allowed if the schema is not attached to a room.
+Find the schema by its ID, a combination of its name and version, for example
+the ID for version `1` of `my-schema-name` is `my-schema-name@1`. This is a
+wrapper around the
+[Delete Schema API](/docs/api-reference/rest-api-endpoints#delete-a-schema) and
+returns no response.
+
+```ts
+await liveblocks.deleteSchema("my-schema-name@1");
+```
+
+Read the [schema validation](/docs/platform/schema-validation) page to learn
+more.
+
+#### Liveblocks.getSchemaByRoomId [#get-new-schema]
+
+Returns the schema attached to a room. Throws an error if the room isn’t found.
+This is a wrapper around the
+[Get Schema By Room API](/docs/api-reference/rest-api-endpoints#get-new-schema)
+and returns the same response.
+
+```ts
+const schema = await liveblocks.getSchemaByRoomId("my-room-id");
+
+// { id: "my-schema-name@1", name: "my-schema-name", version: 1, ... }
+console.log(schema);
+```
+
+Read the [schema validation](/docs/platform/schema-validation) page to learn
+more.
+
+#### Liveblocks.attachSchemaToRoom [#post-attach-schema-to-room]
+
+Attaches a schema to a room, and instantly enables runtime schema validation in
+it. Attach the schema by its ID, a combination of its name and version, for
+example the ID for version `1` of `my-schema-name` is `my-schema-name@1`. This
+is a wrapper around the
+[Attach Schema to a Room API](/docs/api-reference/rest-api-endpoints#post-attach-schema-to-room)
+and returns the same response.
+
+If the current contents of the room’s Storage do not match the schema, attaching
+will fail and the error message will give details on why the schema failed to
+attach. It’ll also throw an error if the room isn’t found.
+
+```ts
+const schema = await liveblocks.attachSchemaToRoom(
+  "my-room-id",
+  "my-schema-name@1"
+);
+
+// { id: "my-schema-name@1", name: "my-schema-name", version: 1, ... }
+console.log(schema);
+```
+
+Read the [schema validation](/docs/platform/schema-validation) page to learn
+more.
+
+### Comments
+
+#### Liveblocks.getThreads [#get-threads]
 
 Returns a list of threads found inside a room. Throws an error if the room isn’t
 found. This is a wrapper around the
@@ -286,7 +962,7 @@ const threads = await liveblocks.getThreads({
 });
 ```
 
-### Liveblocks.getThread [#get-thread]
+#### Liveblocks.getThread [#get-thread]
 
 Returns a thread. Throws an error if the room or thread isn’t found. This is a
 wrapper around the
@@ -300,7 +976,7 @@ const thread = await liveblocks.getThread({
 });
 ```
 
-### Liveblocks.getThreadParticipants [#get-thread-participants]
+#### Liveblocks.getThreadParticipants [#get-thread-participants]
 
 Returns a list of participants found inside a thread. A participant is a user
 who has commented or been mentioned in the thread. Throws an error if the room
@@ -310,12 +986,12 @@ and returns the same response.
 
 ```ts
 const { participantIds } = await liveblocks.getThreadParticipants({
-  roomId: "my-room",
-  threadId: "my-thread",
+  roomId: "my-room-id",
+  threadId: "my-thread-id",
 });
 ```
 
-### Liveblocks.getComment [#get-comment]
+#### Liveblocks.getComment [#get-comment]
 
 Returns a comment. Throws an error if the room, thread, or comment isn’t found.
 This is a wrapper around the
@@ -324,15 +1000,242 @@ returns the same response.
 
 ```ts
 const comment = await liveblocks.getComment({
-  roomId: "my-room",
-  threadId: "my-thread",
-  commentId: "my-comment",
+  roomId: "my-room-id",
+  threadId: "my-thread-id",
+  commentId: "my-comment-id",
 });
+```
+
+### Error handling [#error-handling]
+
+Errors in our API methods, such as network failures, invalid arguments, or
+server-side issues, are reported through the `LiveblocksError` class. This
+custom error class extends the standard JavaScript
+[`Error`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error)
+and includes a `status` property, which provides the HTTP status code for the
+error, such as 404 for not found or 500 for server errors.
+
+Example of handling errors in a typical API call:
+
+```ts
+try {
+  const room = await liveblocks.getRoom("my-room-id");
+  // Process room
+} catch (error) {
+  if (error instanceof LiveblocksError) {
+    // Handle specific LiveblocksError cases
+    console.error(`Error fetching room: ${error.status} - ${error.message}`);
+    switch (
+      error.status
+      // Specific cases based on status codes
+    ) {
+    }
+  } else {
+    // Handle general errors
+    console.error(`Unexpected error: ${error.message}`);
+  }
+}
 ```
 
 ---
 
-## WebhookHandler [#WebhookHandler]
+## Utilities
+
+### getMentionedIdsFromCommentBody [#get-mentioned-ids-from-comment-body]
+
+Returns an array of each user’s ID that has been mentioned in a `CommentBody`
+(found under `comment.body`).
+
+```ts
+import { getMentionedIdsFromCommentBody } from "@liveblocks/node";
+
+const mentionedIds = getMentionedIdsFromCommentBody(comment.body);
+```
+
+This is most commonly used in combination with the
+[Comments API functions](/docs/api-reference/liveblocks-node#Comments), for
+example [`getComment`](/docs/api-reference/liveblocks-node#get-comment).
+
+```ts
+import { Liveblocks, getMentionedIdsFromCommentBody } from "@liveblocks/node";
+
+// Create a node client
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+// Retrieve a comment
+const comment = await liveblocks.getComment({
+  roomId: "my-room-id",
+  threadId: "my-thread-id",
+  commentId: "my-comment-id",
+});
+
+// Get the mentions inside the comment's body
+const mentionedIds = getMentionedIdsFromCommentBody(comment.body);
+
+// ["marc@example.com", "vincent@example.com", ...]
+console.log(mentionedIds);
+```
+
+Here’s an example with a custom `CommentBody`.
+
+```ts
+import { CommentBody, getMentionedIdsFromCommentBody } from "@liveblocks/node";
+
+// Create a custom `CommentBody`
+const commentBody: CommentBody = {
+  version: 1,
+  content: [
+    {
+      type: "paragraph",
+      children: [
+        { text: "Hello " },
+        { type: "mention", id: "chris@example.com" },
+      ],
+    },
+  ],
+};
+
+// Get the mentions inside the comment's body
+const mentionedIds = getMentionedIdsFromCommentBody(commentBody);
+
+// ["chris@example.com"]
+console.log(mentionedIds);
+```
+
+### stringifyCommentBody [#stringify-comment-body]
+
+Used to convert a `CommentBody` (found under `comment.body`) into either a plain
+string, Markdown, HTML, or a custom format.
+
+```ts
+import { stringifyCommentBody } from "@liveblocks/node";
+
+const stringComment = await stringifyCommentBody(comment.body);
+```
+
+This is most commonly used in combination with the
+[Comments API functions](/docs/api-reference/liveblocks-node#Comments), for
+example [`getComment`](/docs/api-reference/liveblocks-node#get-comment).
+
+```ts
+import { Liveblocks, stringifyCommentBody } from "@liveblocks/node";
+
+// Create a node client
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+// Retrieve a comment
+const comment = await liveblocks.getComment({
+  roomId: "my-room-id",
+  threadId: "my-thread-id",
+  commentId: "my-comment-id",
+});
+
+// Convert CommentBody to plain string
+const stringComment = await stringifyCommentBody(comment.body);
+
+// "Hello marc@example.com from https://liveblocks.io"
+console.log(stringComment);
+```
+
+A number of options are also available.
+
+```ts
+import { stringifyCommentBody } from "@liveblocks/node";
+
+const stringComment = await stringifyCommentBody(comment.body, {
+  // Optional, convert to specific format, "plain" (default) | "markdown" | "html"
+  format: "markdown",
+
+  // Optional, supply a separator to be used between paragraphs
+  separator: `\n\n`,
+
+  // Optional, override any elements in the CommentBody with a custom string
+  elements: {
+    // Optional, override the `paragraph` element
+    paragraph: ({ element, children }) => `<p>${children}</p>`,
+
+    // Optional, override the `text` element
+    text: ({ element }) =>
+      element.bold ? `<strong>${element.text}</strong>` : `${element.text}`,
+
+    // Optional, override the `link` element
+    link: ({ element, href }) =>
+      `<a href="${href}" target="_blank">${element.url}</a>`,
+
+    // Optional, override the `mention` element. `user` available if `resolveUsers` supplied
+    mention: ({ element, user }) =>
+      `<a href="${user.profileUrl}">${element.id}</a>`,
+  },
+
+  // Optional, get your user's names and info from their ID to be displayed in mentions
+  async resolveUsers({ userIds }) {
+    const usersData = await __getUsersFromDB__(userIds);
+
+    return usersData.map((userData) => ({
+      // Name is inserted into the output instead of a user's ID
+      name: userData.name,
+
+      // Custom formatting in `elements.mention` allows custom properties to be used
+      profileUrl: userData.profileUrl,
+    }));
+  },
+});
+```
+
+#### Formatting examples
+
+Here are a number of different formatting examples derived from the same
+`CommentBody`.
+
+```ts
+// "Hello marc@example.com from https://liveblocks.io"
+await stringifyCommentBody(comment.body);
+
+// "Hello @Marc from https://liveblocks.io"
+await stringifyCommentBody(comment.body, {
+  resolveUser({ userIds }) {
+    return [{ name: "Marc" }];
+  },
+});
+
+// "**Hello** @Marc from [https://liveblocks.io](https://liveblocks.io)"
+await stringifyCommentBody(comment.body, {
+  format: "markdown",
+
+  resolveUser() {
+    return [{ name: "Marc" }];
+  },
+});
+
+// "<b>Hello</b> <span data-mention>@Marc</span> from
+// <a href="https://liveblocks.io">https://liveblocks.io</a>"
+await stringifyCommentBody(comment.body, {
+  format: "html",
+
+  resolveUser() {
+    return [{ name: "Marc" }];
+  },
+});
+
+// "<b>Hello</b> <a href="https://example.com" data-id="marc@example.com">@Marc</a> from
+// <a href="https://liveblocks.io">https://liveblocks.io</a>"
+await stringifyCommentBody(comment.body, {
+  format: "html",
+
+  mention: ({ element, user }) =>
+    `<a href="${user.profileUrl}" data-id="${element.id}">${user.name}</a>`,
+
+  resolveUser() {
+    return [{ name: "Marc", profileUrl: "https://example.com" }];
+  },
+});
+```
+
+### WebhookHandler [#WebhookHandler]
 
 <Banner title="Need help implementing webhooks?">
 
@@ -351,7 +1254,7 @@ webhook page.
 const webhookHandler = new WebhookHandler(process.env.WEBHOOK_SECRET);
 ```
 
-### verifyRequest [#verifyRequest]
+#### verifyRequest [#verifyRequest]
 
 Verifies the request and returns the event.
 
@@ -362,7 +1265,7 @@ const event = webhookHandler.verifyRequest({
 });
 ```
 
-#### Example using Next.js [#webhook-example]
+##### Example using Next.js [#webhook-example]
 
 ```js
 import { WebhookHandler } from "@liveblocks/node";
@@ -397,7 +1300,7 @@ export function POST(request) {
 
 ---
 
-## authorize (deprecated) [#authorize]
+### authorize (deprecated) [#authorize]
 
 <Banner title="Deprecated" type="error">
   For now, it’s still supported, but this way of authorizing will eventually get

@@ -4,8 +4,8 @@
   "license": "Apache-2.0",
   "private": true,
   "dependencies": {
-    "@liveblocks/client": "^1.7.1",
-    "@liveblocks/zustand": "^1.7.1",
+    "@liveblocks/client": "^1.8.0",
+    "@liveblocks/zustand": "^1.8.0",
     "@types/jest": "^27.5.2",
     "@types/node": "^16.11.45",
     "@types/react": "^18.0.15",
