@@ -1,5 +1,6 @@
+import { nn } from "../lib/assert";
+import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type {
-  BaseUserMeta,
   CommentBody,
   CommentBodyBlockElement,
   CommentBodyElement,
@@ -8,9 +9,7 @@ import type {
   CommentBodyMention,
   CommentBodyParagraph,
   CommentBodyText,
-} from "@liveblocks/core";
-
-import { isSomething } from "./utils";
+} from "./types/CommentBody";
 
 type PromiseOrNot<T> = T | Promise<T>;
 
@@ -148,6 +147,10 @@ export type StringifyCommentBodyOptions<
     args: CommentBodyResolveUsersArgs
   ) => PromiseOrNot<(TUserMeta["info"] | undefined)[] | undefined>;
 };
+
+function isSomething<T>(input: null | undefined | T): input is T {
+  return input !== null && input !== undefined;
+}
 
 function isCommentBodyParagraph(
   element: CommentBodyElement
@@ -340,7 +343,7 @@ export class HtmlSafeString {
 
   toString(): string {
     return this._strings.reduce((result, str, i) => {
-      return result + escapeHtml(this._values[i - 1]!) + str;
+      return result + escapeHtml(nn(this._values[i - 1])) + str;
     });
   }
 }
@@ -433,7 +436,7 @@ export class MarkdownSafeString {
 
   toString(): string {
     return this._strings.reduce((result, str, i) => {
-      return result + escapeMarkdown(this._values[i - 1]!) + str;
+      return result + escapeMarkdown(nn(this._values[i - 1])) + str;
     });
   }
 }
