@@ -1,3 +1,11 @@
+# v1.7.2
+
+### `@liveblocks/react-comments`
+
+- Improve network loss and document visibility handling inside CommentsRoom.
+- Better error handling on mutations (e.g. thread creation, comment creation,
+  etc.)
+
 # v1.7.1
 
 ### `@liveblocks/react-comments`
