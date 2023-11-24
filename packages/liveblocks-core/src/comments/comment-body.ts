@@ -148,10 +148,6 @@ export type StringifyCommentBodyOptions<
   ) => PromiseOrNot<(TUserMeta["info"] | undefined)[] | undefined>;
 };
 
-function isSomething<T>(input: null | undefined | T): input is T {
-  return input !== null && input !== undefined;
-}
-
 function isCommentBodyParagraph(
   element: CommentBodyElement
 ): element is CommentBodyParagraph {
@@ -594,52 +590,55 @@ export async function stringifyCommentBody<
     options?.resolveUsers
   );
 
-  const blocks = body.content.map((block, blockIndex) => {
+  const blocks = body.content.flatMap((block, blockIndex) => {
     switch (block.type) {
       case "paragraph": {
-        const paragraph = block.children
-          .map((inline, inlineIndex) => {
-            if (isCommentBodyMention(inline)) {
-              return inline.id
-                ? elements.mention(
+        const inlines = block.children.flatMap((inline, inlineIndex) => {
+          if (isCommentBodyMention(inline)) {
+            return inline.id
+              ? [
+                  elements.mention(
                     {
                       element: inline,
                       user: resolvedUsers.get(inline.id),
                     },
                     inlineIndex
-                  )
-                : null;
-            }
+                  ),
+                ]
+              : [];
+          }
 
-            if (isCommentBodyLink(inline)) {
-              return elements.link(
+          if (isCommentBodyLink(inline)) {
+            return [
+              elements.link(
                 {
                   element: inline,
                   href: toAbsoluteUrl(inline.url) ?? inline.url,
                 },
                 inlineIndex
-              );
-            }
+              ),
+            ];
+          }
 
-            if (isCommentBodyText(inline)) {
-              return elements.text({ element: inline }, inlineIndex);
-            }
+          if (isCommentBodyText(inline)) {
+            return [elements.text({ element: inline }, inlineIndex)];
+          }
 
-            return null;
-          })
-          .filter(isSomething)
-          .join("");
+          return [];
+        });
 
-        return elements.paragraph(
-          { element: block, children: paragraph },
-          blockIndex
-        );
+        return [
+          elements.paragraph(
+            { element: block, children: inlines.join("") },
+            blockIndex
+          ),
+        ];
       }
 
       default:
-        return null;
+        return [];
     }
   });
 
-  return blocks.filter(isSomething).join(separator);
+  return blocks.join(separator);
 }
