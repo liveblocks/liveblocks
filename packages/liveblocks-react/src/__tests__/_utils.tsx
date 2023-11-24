@@ -4,6 +4,7 @@ import { render, renderHook } from "@testing-library/react";
 import type { ReactElement } from "react";
 import * as React from "react";
 
+import type { CacheManager } from "../comments/lib/revalidation";
 import { RoomProvider } from "./_liveblocks.config";
 
 /**
@@ -47,6 +48,16 @@ function customRenderHook<Result, Props>(
   }
 ): RenderHookResult<Result, Props> {
   return renderHook(render, { wrapper: AllTheProviders, ...options });
+}
+
+export function createCacheManager<Data>(
+  initialCache?: Data | undefined
+): CacheManager<Data> {
+  return {
+    cache: initialCache ? { isLoading: false, data: initialCache } : undefined,
+    request: undefined,
+    mutation: undefined,
+  };
 }
 
 export const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));

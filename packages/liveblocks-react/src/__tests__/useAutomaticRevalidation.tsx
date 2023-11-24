@@ -1,14 +1,14 @@
 import { act, renderHook } from "@testing-library/react";
 
 import {
-  createCacheManager,
   useAutomaticRevalidation,
   useRevalidateCache,
 } from "../comments/lib/revalidation";
+import { createCacheManager } from "./_utils";
 
 const mockVisibility = jest.spyOn(document, "visibilityState", "get");
 
-describe("revalidation", () => {
+describe("useAutomaticRevalidation", () => {
   beforeEach(() => {
     // Initial state is online (by default) and visible
     mockVisibility.mockReturnValue("visible");
@@ -215,25 +215,6 @@ describe("revalidation", () => {
 
     // Since the revalidation should be debounced or controlled, it should not be called multiple times.
     expect(mockFetcher).toHaveBeenCalledTimes(1);
-  });
-
-  test("should handle errors in fetcher function gracefully", async () => {
-    const mockFetcher = jest.fn().mockRejectedValue(new Error("Fetch failed"));
-    const manager = createCacheManager<number>();
-
-    const { result } = renderHook(() =>
-      useRevalidateCache(manager, mockFetcher)
-    );
-
-    // Trigger revalidation
-    await act(() => {
-      result.current(false);
-    });
-
-    // Check if the error state is handled correctly
-    expect(manager.cache).toBeDefined();
-    expect(manager.cache!.error).toBeDefined();
-    expect(manager.cache!.error!.message).toBe("Fetch failed");
   });
 
   test("should clean up all event listeners and intervals on unmount", () => {
