@@ -500,7 +500,7 @@ export class Liveblocks {
    */
   public async getActiveUsers<T = unknown>(
     roomId: string
-  ): Promise<RoomUser<T>[]> {
+  ): Promise<{ data: RoomUser<T>[] }> {
     const res = await this.get(url`/v2/rooms/${roomId}/active_users`);
 
     if (!res.ok) {
@@ -508,7 +508,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    return (await res.json()) as Promise<RoomUser<T>[]>;
+    return (await res.json()) as Promise<{ data: RoomUser<T>[] }>;
   }
 
   /**
