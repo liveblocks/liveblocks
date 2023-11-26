@@ -13,5 +13,6 @@ function subscribe(onStoreChange: () => void) {
 }
 
 function getSnapshot() {
-  return document.visibilityState === "visible";
+  const isDocumentDefined = typeof document !== "undefined";
+  return isDocumentDefined ? document.visibilityState === "visible" : true;
 }
