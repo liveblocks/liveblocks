@@ -1511,6 +1511,13 @@ const mentionedIds = getMentionedIdsFromCommentBody(commentBody);
 console.log(mentionedIds);
 ```
 
+<Banner title="Also available from @liveblocks/node">
+
+If you’d like to use this on the server side, it's also available from
+[`@liveblocks/node`](/docs/api-reference/liveblocks-node#get-mentioned-ids-from-comment-body).
+
+</Banner>
+
 ### stringifyCommentBody [#stringify-comment-body]
 
 Used to convert a `CommentBody` (found under `comment.body`) into either a plain
@@ -1520,6 +1527,9 @@ string, Markdown, HTML, or a custom format.
 import { stringifyCommentBody } from "@liveblocks/client";
 
 const stringComment = await stringifyCommentBody(comment.body);
+
+// "Hello marc@example.com from https://liveblocks.io"
+console.log(stringComment);
 ```
 
 A number of options are available.
@@ -1566,6 +1576,13 @@ const stringComment = await stringifyCommentBody(comment.body, {
   },
 });
 ```
+
+<Banner title="Also available from @liveblocks/node">
+
+If you’d like to use this on the server side, it's also available from
+[`@liveblocks/node`](/docs/api-reference/liveblocks-node#stringify-comment-body).
+
+</Banner>
 
 #### Formatting examples
 
