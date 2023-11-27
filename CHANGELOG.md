@@ -1,11 +1,11 @@
 # v1.8.2 (not yet released)
 
-### `@liveblocks/react-comments`
+### `@liveblocks/react`
 
-- Improve network loss and document visibility handling during comment
-  revalidation.
-- Better error handling on mutations (e.g. thread creation, comment creation,
-  etc.)
+- Improve Comments revalidation when losing network or staying in the
+  background.
+- Improve error handling of Comments mutations. (e.g. thread creation, comment
+  creation, etc.)
 
 # v1.8.1
 
