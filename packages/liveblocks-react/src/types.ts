@@ -667,7 +667,9 @@ export type RoomContextBundle<
      * @example
      * const { threads, error, isLoading } = useThreads();
      */
-    useThreads(): ThreadsState<TThreadMetadata>;
+    useThreads(options?: {
+      query: Partial<TThreadMetadata>;
+    }): ThreadsState<TThreadMetadata>;
 
     /**
      * @beta
@@ -817,7 +819,9 @@ export type RoomContextBundle<
          * @example
          * const { threads } = useThreads();
          */
-        useThreads(): ThreadsStateSuccess<TThreadMetadata>;
+        useThreads(options?: {
+          query: Partial<TThreadMetadata>;
+        }): ThreadsStateSuccess<TThreadMetadata>;
 
         /**
          * @beta
