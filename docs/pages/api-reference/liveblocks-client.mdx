@@ -1469,6 +1469,153 @@ root.set("a", list);
 root.set("b", list.clone());
 ```
 
+## Utilities
+
+### getMentionedIdsFromCommentBody [#get-mentioned-ids-from-comment-body]
+
+Returns an array of each user’s ID that has been mentioned in a `CommentBody`
+(found under `comment.body`).
+
+```ts
+import { getMentionedIdsFromCommentBody } from "@liveblocks/client";
+
+const mentionedIds = getMentionedIdsFromCommentBody(comment.body);
+```
+
+Here’s an example with a custom `CommentBody`.
+
+```ts
+import {
+  CommentBody,
+  getMentionedIdsFromCommentBody,
+} from "@liveblocks/client";
+
+// Create a custom `CommentBody`
+const commentBody: CommentBody = {
+  version: 1,
+  content: [
+    {
+      type: "paragraph",
+      children: [
+        { text: "Hello " },
+        { type: "mention", id: "chris@example.com" },
+      ],
+    },
+  ],
+};
+
+// Get the mentions inside the comment's body
+const mentionedIds = getMentionedIdsFromCommentBody(commentBody);
+
+// ["chris@example.com"]
+console.log(mentionedIds);
+```
+
+### stringifyCommentBody [#stringify-comment-body]
+
+Used to convert a `CommentBody` (found under `comment.body`) into either a plain
+string, Markdown, HTML, or a custom format.
+
+```ts
+import { stringifyCommentBody } from "@liveblocks/client";
+
+const stringComment = await stringifyCommentBody(comment.body);
+```
+
+A number of options are available.
+
+```ts
+import { stringifyCommentBody } from "@liveblocks/client";
+
+const stringComment = await stringifyCommentBody(comment.body, {
+  // Optional, convert to specific format, "plain" (default) | "markdown" | "html"
+  format: "markdown",
+
+  // Optional, supply a separator to be used between paragraphs
+  separator: `\n\n`,
+
+  // Optional, override any elements in the CommentBody with a custom string
+  elements: {
+    // Optional, override the `paragraph` element
+    paragraph: ({ element, children }) => `<p>${children}</p>`,
+
+    // Optional, override the `text` element
+    text: ({ element }) =>
+      element.bold ? `<strong>${element.text}</strong>` : `${element.text}`,
+
+    // Optional, override the `link` element
+    link: ({ element, href }) =>
+      `<a href="${href}" target="_blank">${element.url}</a>`,
+
+    // Optional, override the `mention` element. `user` available if `resolveUsers` supplied
+    mention: ({ element, user }) =>
+      `<a href="${user.profileUrl}">${element.id}</a>`,
+  },
+
+  // Optional, get your user's names and info from their ID to be displayed in mentions
+  async resolveUsers({ userIds }) {
+    const usersData = await __getUsersFromDB__(userIds);
+
+    return usersData.map((userData) => ({
+      // Name is inserted into the output instead of a user's ID
+      name: userData.name,
+
+      // Custom formatting in `elements.mention` allows custom properties to be used
+      profileUrl: userData.profileUrl,
+    }));
+  },
+});
+```
+
+#### Formatting examples
+
+Here are a number of different formatting examples derived from the same
+`CommentBody`.
+
+```ts
+// "Hello marc@example.com from https://liveblocks.io"
+await stringifyCommentBody(comment.body);
+
+// "Hello @Marc from https://liveblocks.io"
+await stringifyCommentBody(comment.body, {
+  resolveUser({ userIds }) {
+    return [{ name: "Marc" }];
+  },
+});
+
+// "**Hello** @Marc from [https://liveblocks.io](https://liveblocks.io)"
+await stringifyCommentBody(comment.body, {
+  format: "markdown",
+
+  resolveUser() {
+    return [{ name: "Marc" }];
+  },
+});
+
+// "<b>Hello</b> <span data-mention>@Marc</span> from
+// <a href="https://liveblocks.io">https://liveblocks.io</a>"
+await stringifyCommentBody(comment.body, {
+  format: "html",
+
+  resolveUser() {
+    return [{ name: "Marc" }];
+  },
+});
+
+// "<b>Hello</b> <a href="https://example.com" data-id="marc@example.com">@Marc</a> from
+// <a href="https://liveblocks.io">https://liveblocks.io</a>"
+await stringifyCommentBody(comment.body, {
+  format: "html",
+
+  mention: ({ element, user }) =>
+    `<a href="${user.profileUrl}" data-id="${element.id}">${user.name}</a>`,
+
+  resolveUser() {
+    return [{ name: "Marc", profileUrl: "https://example.com" }];
+  },
+});
+```
+
 [`atob`]: https://developer.mozilla.org/en-US/docs/Web/API/atob
 [`base-64`]: https://www.npmjs.com/package/base-64
 [`client.enterRoom`]: /docs/api-reference/liveblocks-client#Client.enterRoom
