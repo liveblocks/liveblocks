@@ -1,3 +1,19 @@
+# v1.8.2 (not yet released)
+
+### `@liveblocks/client`
+
+- Export the `CommentBody` utilities added to `@liveblocks/node` in v1.8.0.
+- Harmonize exports with `@liveblocks/node`. (added `IUserInfo` and
+  `PlainLsonObject`)
+
+### `@liveblocks/node`
+
+- Harmonize exports with `@liveblocks/client`. (added `CommentBody`,
+  `CommentBodyBlockElement`, `CommentBodyElement`, `CommentBodyInlineElement`,
+  `CommentBodyLink`, `CommentBodyMention`, `CommentBodyParagraph`,
+  `CommentBodyText`, `JsonArray`, `JsonScalar`, `Lson`, `LsonObject`, and
+  `User`)
+
 # v1.8.1
 
 - Fix a bug in `toPlainLson` helper
