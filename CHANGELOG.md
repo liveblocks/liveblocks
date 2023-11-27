@@ -1,5 +1,12 @@
 # v1.8.2 (not yet released)
 
+### `@liveblocks/react`
+
+- Improve Comments revalidation when losing network or staying in the
+  background.
+- Improve error handling of Comments mutations. (e.g. thread creation, comment
+  creation, etc.)
+
 ### `@liveblocks/client`
 
 - Export the `CommentBody` utilities added to `@liveblocks/node` in v1.8.0.
