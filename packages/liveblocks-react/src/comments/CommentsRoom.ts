@@ -184,7 +184,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
      */
     useEffect(() => {
       const unsubscribe = room.events.comments.subscribe(() => {
-        void revalidateCache(true);
+        void revalidateCache(false);
       });
       return () => {
         unsubscribe();
