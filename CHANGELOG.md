@@ -1,4 +1,4 @@
-# v1.8.2 (not yet released)
+# v1.8.2
 
 ### `@liveblocks/react`
 
