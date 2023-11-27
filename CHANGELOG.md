@@ -1,4 +1,4 @@
-# v1.8.2 (not yet released)
+# v1.8.2
 
 ### `@liveblocks/react`
 
@@ -6,6 +6,20 @@
   background.
 - Improve error handling of Comments mutations. (e.g. thread creation, comment
   creation, etc.)
+
+### `@liveblocks/client`
+
+- Export the `CommentBody` utilities added to `@liveblocks/node` in v1.8.0.
+- Harmonize exports with `@liveblocks/node`. (added `IUserInfo` and
+  `PlainLsonObject`)
+
+### `@liveblocks/node`
+
+- Harmonize exports with `@liveblocks/client`. (added `CommentBody`,
+  `CommentBodyBlockElement`, `CommentBodyElement`, `CommentBodyInlineElement`,
+  `CommentBodyLink`, `CommentBodyMention`, `CommentBodyParagraph`,
+  `CommentBodyText`, `JsonArray`, `JsonScalar`, `Lson`, `LsonObject`, and
+  `User`)
 
 # v1.8.1
 

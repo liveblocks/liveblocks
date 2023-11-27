@@ -69,6 +69,7 @@
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
+    "@rollup/plugin-replace": "^5.0.5",
     "@rollup/plugin-typescript": "^11.1.2",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.1.1",

@@ -1,5 +1,6 @@
+import { nn } from "../lib/assert";
+import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type {
-  BaseUserMeta,
   CommentBody,
   CommentBodyBlockElement,
   CommentBodyElement,
@@ -8,9 +9,7 @@ import type {
   CommentBodyMention,
   CommentBodyParagraph,
   CommentBodyText,
-} from "@liveblocks/core";
-
-import { isSomething } from "./utils";
+} from "./types/CommentBody";
 
 type PromiseOrNot<T> = T | Promise<T>;
 
@@ -340,7 +339,7 @@ export class HtmlSafeString {
 
   toString(): string {
     return this._strings.reduce((result, str, i) => {
-      return result + escapeHtml(this._values[i - 1]!) + str;
+      return result + escapeHtml(nn(this._values[i - 1])) + str;
     });
   }
 }
@@ -433,7 +432,7 @@ export class MarkdownSafeString {
 
   toString(): string {
     return this._strings.reduce((result, str, i) => {
-      return result + escapeMarkdown(this._values[i - 1]!) + str;
+      return result + escapeMarkdown(nn(this._values[i - 1])) + str;
     });
   }
 }
@@ -591,52 +590,55 @@ export async function stringifyCommentBody<
     options?.resolveUsers
   );
 
-  const blocks = body.content.map((block, blockIndex) => {
+  const blocks = body.content.flatMap((block, blockIndex) => {
     switch (block.type) {
       case "paragraph": {
-        const paragraph = block.children
-          .map((inline, inlineIndex) => {
-            if (isCommentBodyMention(inline)) {
-              return inline.id
-                ? elements.mention(
+        const inlines = block.children.flatMap((inline, inlineIndex) => {
+          if (isCommentBodyMention(inline)) {
+            return inline.id
+              ? [
+                  elements.mention(
                     {
                       element: inline,
                       user: resolvedUsers.get(inline.id),
                     },
                     inlineIndex
-                  )
-                : null;
-            }
+                  ),
+                ]
+              : [];
+          }
 
-            if (isCommentBodyLink(inline)) {
-              return elements.link(
+          if (isCommentBodyLink(inline)) {
+            return [
+              elements.link(
                 {
                   element: inline,
                   href: toAbsoluteUrl(inline.url) ?? inline.url,
                 },
                 inlineIndex
-              );
-            }
+              ),
+            ];
+          }
 
-            if (isCommentBodyText(inline)) {
-              return elements.text({ element: inline }, inlineIndex);
-            }
+          if (isCommentBodyText(inline)) {
+            return [elements.text({ element: inline }, inlineIndex)];
+          }
 
-            return null;
-          })
-          .filter(isSomething)
-          .join("");
+          return [];
+        });
 
-        return elements.paragraph(
-          { element: block, children: paragraph },
-          blockIndex
-        );
+        return [
+          elements.paragraph(
+            { element: block, children: inlines.join("") },
+            blockIndex
+          ),
+        ];
       }
 
       default:
-        return null;
+        return [];
     }
   });
 
-  return blocks.filter(isSomething).join(separator);
+  return blocks.join(separator);
 }

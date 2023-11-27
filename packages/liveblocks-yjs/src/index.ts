@@ -12,7 +12,6 @@ import type * as Y from "yjs";
 import { Awareness } from "./awareness";
 import yDocHandler from "./doc";
 import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
-2;
 
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 

@@ -24,10 +24,16 @@ function createFile(file: string, data: string | NodeJS.ArrayBufferView) {
   fs.writeFileSync(file, data);
 }
 
+let hasRun = false;
+
 export function styles({ files }: Options): Plugin {
   return {
     name: "styles",
     buildStart: async () => {
+      if (hasRun) {
+        return;
+      }
+
       const processor = postcss([
         require("stylelint"),
         require("postcss-import"),
@@ -69,6 +75,8 @@ export function styles({ files }: Options): Plugin {
         createFile(destination, css);
         createFile(`${destination}.map`, map.toString());
       }
+
+      hasRun = true;
     },
   };
 }
