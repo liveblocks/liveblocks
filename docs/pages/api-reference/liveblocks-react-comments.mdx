@@ -86,26 +86,94 @@ export type ThreadMetadata = {
 
 #### Props [#thread-props]
 
-<Table columns={["26%", "32%", "42%"]}>
-
-| Prop                      | Type                                                                                 | Description                                                                                                 |
-| ------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
-| `thread` <DocsRequired /> | `ThreadData`                                                                         | The thread to display.                                                                                      |
-| `showComposer`            | `boolean \| "collapsed"`                                                             | How to show or hide the composer to reply to the thread.<br/>Defaults to `"collapsed"`.                     |
-| `showActions`             | `boolean \| "hover"`                                                                 | How to show or hide the actions.<br/>Defaults to `"hover"`.                                                 |
-| `showReactions`           | `boolean`                                                                            | Whether to show reactions.<br/>Defaults to `true`.                                                          |
-| `showResolveAction`       | `boolean`                                                                            | Whether to show the action to resolve the thread.<br/>Defaults to `true`.                                   |
-| `indentCommentContent`    | `boolean`                                                                            | Whether to indent the comments’ content.<br/>Defaults to `true`.                                            |
-| `showDeletedComments`     | `boolean`                                                                            | Whether to show deleted comments.<br/>Defaults to `false`.                                                  |
-| `onResolvedChange`        | `(resolved: boolean) => void`                                                        | The event handler called when changing the resolved status.                                                 |
-| `onThreadDelete`          | `(thread: ThreadData) => void`                                                       | The event handler called when the thread is deleted. A thread is deleted when all its comments are deleted. |
-| `onCommentEdit`           | `(comment: CommentData) => void`                                                     | The event handler called when a comment is edited.                                                          |
-| `onCommentDelete`         | `(comment: CommentData) => void`                                                     | The event handler called when a comment is deleted.                                                         |
-| `onAuthorClick`           | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void</code>          | The event handler called when clicking on a comment’s author.                                               |
-| `onMentionClick`          | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void</code>          | The event handler called when clicking on a mention.                                                        |
-| `overrides`               | <code>Partial&lt;ThreadOverrides \& CommentOverrides \& ComposerOverrides&gt;</code> | Override the component’s strings.                                                                           |
-
-</Table>
+<PropsTable>
+  <PropsTableItem name="thread" type="ThreadData" required>
+    The thread to display.
+  </PropsTableItem>
+  <PropsTableItem
+    name="showComposer"
+    type='boolean | "collapsed"'
+    defaultValue='"collapsed"'
+  >
+    How to show or hide the composer to reply to the thread.
+  </PropsTableItem>
+  <PropsTableItem
+    name="showActions"
+    type='boolean | "hover"'
+    defaultValue='"hover"'
+  >
+    How to show or hide the actions.
+  </PropsTableItem>
+  <PropsTableItem name="showReactions" type="boolean" defaultValue="true">
+    Whether to show reactions.
+  </PropsTableItem>
+  <PropsTableItem name="showResolveAction" type="boolean" defaultValue="true">
+    Whether to show the action to resolve the thread.
+  </PropsTableItem>
+  <PropsTableItem
+    name="indentCommentContent"
+    type="boolean"
+    defaultValue="true"
+  >
+    Whether to indent the comments’ content.
+  </PropsTableItem>
+  <PropsTableItem
+    name="showDeletedComments"
+    type="boolean"
+    defaultValue="false"
+  >
+    Whether to show deleted comments.
+  </PropsTableItem>
+  <PropsTableItem
+    name="onResolvedChange"
+    type="function"
+    detailedType="(resolved: boolean) => void"
+  >
+    The event handler called when changing the resolved status.
+  </PropsTableItem>
+  <PropsTableItem
+    name="onThreadDelete"
+    type="function"
+    detailedType="(thread: ThreadData) => void"
+  >
+    The event handler called when the thread is deleted. A thread is deleted
+    when all its comments are deleted.
+  </PropsTableItem>
+  <PropsTableItem
+    name="onCommentEdit"
+    type="function"
+    detailedType="(comment: CommentData) => void"
+  >
+    The event handler called when a comment is edited.
+  </PropsTableItem>
+  <PropsTableItem
+    name="onCommentDelete"
+    type="function"
+    detailedType="(comment: CommentData) => void"
+  >
+    The event handler called when a comment is deleted.
+  </PropsTableItem>
+  <PropsTableItem
+    name="onAuthorClick"
+    type="function"
+    detailedType="(userId: string, event: MouseEvent<HTMLElement>) => void"
+  >
+    The event handler called when clicking on a comment’s author.
+  </PropsTableItem>
+  <PropsTableItem
+    name="onMentionClick"
+    type="function"
+    detailedType="(userId: string, event: MouseEvent<HTMLElement>) => void"
+  >
+    The event handler called when clicking on a mention.
+  </PropsTableItem>
+  <PropsTableItem
+    name="overrides"
+    type="Partial<ThreadOverrides & CommentOverrides & ComposerOverrides>"
+  >
+    Override the component’s strings.
+  </PropsTableItem>
+</PropsTable>
 
 {/* TODO: Document classes and data attributes */}
 
@@ -253,23 +321,51 @@ Learn more about mutation hooks under
 
 #### Props [#composer-props]
 
-<Table columns={["26%", "32%", "42%"]}>
-
-| Prop                | Type                                                                                                                  | Description                                                                                       |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `threadId`          | `string`                                                                                                              | The ID of the thread to reply to or to edit a comment in.                                         |
-| `commentId`         | `string`                                                                                                              | The ID of the comment to edit.                                                                    |
-| `metadata`          | `ThreadMetadata`                                                                                                      | The metadata of the thread to create.                                                             |
-| `onComposerSubmit`  | <code>(comment: ComposerSubmitComment, event: FormEvent&lt;HTMLFormElement&gt;) => Promise&lt;void&gt; \| void</code> | The event handler called when the composer is submitted.                                          |
-| `defaultValue`      | `CommentBody`                                                                                                         | The composer’s initial value.                                                                     |
-| `collapsed`         | `boolean`                                                                                                             | Whether the composer is collapsed. Setting a value will make the composer controlled.             |
-| `onCollapsedChange` | `(collapsed: boolean) => void`                                                                                        | The event handler called when the collapsed state of the composer changes.                        |
-| `defaultCollapsed`  | `boolean`                                                                                                             | Whether the composer is initially collapsed. Setting a value will make the composer uncontrolled. |
-| `disabled`          | `boolean`                                                                                                             | Whether the composer is disabled.                                                                 |
-| `autoFocus`         | `boolean`                                                                                                             | Whether to focus the composer on mount.                                                           |
-| `overrides`         | <code>Partial&lt;ComposerOverrides&gt;</code>                                                                         | Override the component’s strings.                                                                 |
-
-</Table>
+<PropsTable>
+  <PropsTableItem name="threadId" type="string">
+    The ID of the thread to reply to or to edit a comment in.
+  </PropsTableItem>
+  <PropsTableItem name="commentId" type="string">
+    The ID of the comment to edit.
+  </PropsTableItem>
+  <PropsTableItem name="metadata" type="ThreadMetadata">
+    The metadata of the thread to create.
+  </PropsTableItem>
+  <PropsTableItem
+    name="onComposerSubmit"
+    type="function"
+    detailedType="(comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => Promise<void> | void"
+  >
+    The event handler called when the composer is submitted.
+  </PropsTableItem>
+  <PropsTableItem name="defaultValue" type="CommentBody">
+    The composer’s initial value.
+  </PropsTableItem>
+  <PropsTableItem name="collapsed" type="boolean">
+    Whether the composer is collapsed. Setting a value will make the composer
+    controlled.
+  </PropsTableItem>
+  <PropsTableItem
+    name="onCollapsedChange"
+    type="function"
+    detailedType="(collapsed: boolean) => void"
+  >
+    The event handler called when the collapsed state of the composer changes.
+  </PropsTableItem>
+  <PropsTableItem name="defaultCollapsed" type="boolean">
+    Whether the composer is initially collapsed. Setting a value will make the
+    composer uncontrolled.
+  </PropsTableItem>
+  <PropsTableItem name="disabled" type="boolean">
+    Whether the composer is disabled.
+  </PropsTableItem>
+  <PropsTableItem name="autoFocus" type="boolean">
+    Whether to focus the composer on mount.
+  </PropsTableItem>
+  <PropsTableItem name="overrides" type="Partial<ComposerOverrides>">
+    Override the component’s strings.
+  </PropsTableItem>
+</PropsTable>
 
 {/* TODO: Document classes and data attributes */}
 
@@ -311,22 +407,62 @@ function Component({ thread }: { thread: ThreadData }) {
 
 #### Props [#comment-props]
 
-<Table columns={["26%", "32%", "42%"]}>
-
-| Prop                       | Type                                                                        | Description                                                                                                                           |
-| -------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `comment` <DocsRequired /> | `CommentData`                                                               | The comment to display.                                                                                                               |
-| `showActions`              | `boolean \| "hover"`                                                        | How to show or hide the actions.<br/>Defaults to `"hover"`.                                                                           |
-| `showReactions`            | `boolean`                                                                   | Whether to show reactions.<br/>Defaults to `true`.                                                                                    |
-| `indentContent`            | `boolean`                                                                   | Whether to indent the comment’s content.<br/>Defaults to `true`.                                                                      |
-| `showDeleted`              | `boolean`                                                                   | Whether to show the comment if it was deleted. If set to `false`, it will render deleted comments as `null`.<br/>Defaults to `false`. |
-| `onCommentEdit`            | `(comment: CommentData) => void`                                            | The event handler called when the comment is edited.                                                                                  |
-| `onCommentDelete`          | `(comment: CommentData) => void`                                            | The event handler called when the comment is deleted.                                                                                 |
-| `onAuthorClick`            | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void</code> | The event handler called when clicking on the author.                                                                                 |
-| `onMentionClick`           | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void</code> | The event handler called when clicking on a mention.                                                                                  |
-| `overrides`                | <code>Partial&lt;CommentOverrides \& ComposerOverrides&gt;</code>           | Override the component’s strings.                                                                                                     |
-
-</Table>
+<PropsTable>
+  <PropsTableItem name="comment" type="CommentData" required>
+    The comment to display.
+  </PropsTableItem>
+  <PropsTableItem
+    name="showActions"
+    type='boolean | "hover"'
+    defaultValue='"hover"'
+  >
+    How to show or hide the actions.
+  </PropsTableItem>
+  <PropsTableItem name="showReactions" type="boolean" defaultValue="true">
+    Whether to show reactions.
+  </PropsTableItem>
+  <PropsTableItem name="indentContent" type="boolean" defaultValue="true">
+    Whether to indent the comment’s content.
+  </PropsTableItem>
+  <PropsTableItem name="showDeleted" type="boolean" defaultValue="false">
+    Whether to show the comment if it was deleted. If set to `false`, it will
+    render deleted comments as `null`.
+  </PropsTableItem>
+  <PropsTableItem
+    name="onCommentEdit"
+    type="function"
+    detailedType="(comment: CommentData) => void"
+  >
+    The event handler called when the comment is edited.
+  </PropsTableItem>
+  <PropsTableItem
+    name="onCommentDelete"
+    type="function"
+    detailedType="(comment: CommentData) => void"
+  >
+    The event handler called when the comment is deleted.
+  </PropsTableItem>
+  <PropsTableItem
+    name="onAuthorClick"
+    type="function"
+    detailedType="(userId: string, event: MouseEvent<HTMLElement>) => void"
+  >
+    The event handler called when clicking on the author.
+  </PropsTableItem>
+  <PropsTableItem
+    name="onMentionClick"
+    type="function"
+    detailedType="(userId: string, event: MouseEvent<HTMLElement>) => void"
+  >
+    The event handler called when clicking on a mention.
+  </PropsTableItem>
+  <PropsTableItem
+    name="overrides"
+    type="Partial<CommentOverrides & ComposerOverrides>"
+  >
+    Override the component’s strings.
+  </PropsTableItem>
+</PropsTable>
 
 {/* TODO: Document classes and data attributes */}
 
@@ -375,34 +511,93 @@ these variables within `.lb-root` to globally style your components.
 }
 ```
 
-<Table columns={["30%", "28%", "42%"]}>
-
-| CSS variable                         | Default value                                                                        | Description                                                                          |
-| ------------------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
-| `--lb-radius`                        | `0.5em`                                                                              | The border radius scale. `em` values recommended.                                    |
-| `--lb-spacing`                       | `1em`                                                                                | The spacing scale. `em` values recommended.                                          |
-| `--lb-accent`                        | `#1177ff`                                                                            | The accent color.                                                                    |
-| `--lb-accent-foreground`             | `#ffffff`                                                                            | The foreground color used over the accent color.                                     |
-| `--lb-background`                    | `#ffffff`                                                                            | The main background color.                                                           |
-| `--lb-foreground`                    | `#111111`                                                                            | The main foreground color.                                                           |
-| `--lb-icon-size`                     | `20px`                                                                               | The size of icons.                                                                   |
-| `--lb-icon-weight`                   | `1.5px`                                                                              | The stroke weight of icons.                                                          |
-| `--lb-avatar-radius`                 | `50%`                                                                                | The border radius used for avatars.                                                  |
-| `--lb-button-radius`                 | `calc(0.75 * var(--lb-radius))`                                                      | The border radius used for buttons.                                                  |
-| `--lb-transition-duration`           | `0.1s`                                                                               | The duration used for transitioned elements.                                         |
-| `--lb-transition-easing`             | `cubic-bezier(0.4, 0, 0.2, 1)`                                                       | The easing function used for transitioned elements.                                  |
-| `--lb-elevation-shadow`              | `0 0 0 1px rgb(0 0 0 / 4%), 0 2px 6px rgb(0 0 0 / 8%),  0 8px 26px rgb(0 0 0 / 12%)` | The box shadow added to elevated elements.                                           |
-| `--lb-tooltip-shadow`                | `0 2px 4px rgb(0 0 0 / 8%), 0 4px 12px rgb(0 0 0 / 12%)`                             | The box shadow added to tooltips.                                                    |
-| `--lb-elevation-background`          | `var(--lb-background)`                                                               | The background color used for elevated elements.                                     |
-| `--lb-elevation-foreground`          | `var(--lb-foreground)`                                                               | The foreground color used for elevated elements.                                     |
-| `--lb-tooltip-background`            | `#222222`                                                                            | The background color used for tooltips.                                              |
-| `--lb-tooltip-foreground`            | `#ffffff`                                                                            | The foreground color used for tooltips.                                              |
-| `--lb-accent-contrast`               | `8%`                                                                                 | Affects the lightness of accent colors. `%` value required.                          |
-| `--lb-foreground-contrast`           | `6%`                                                                                 | Affects the lightness of foreground colors. `%` value required.                      |
-| `--lb-elevation-foreground-contrast` | `6%`                                                                                 | Affects the lightness of foreground colors in elevated elements. `%` value required. |
-| `--lb-tooltip-foreground-contrast`   | `10%`                                                                                | Affects the lightness of foreground colors in tooltips. `%` value required.          |
-
-</Table>
+<PropsTable>
+  <PropsTableItem name="--lb-radius" defaultValue="0.5em">
+    The border radius scale. `em` values recommended.
+  </PropsTableItem>
+  <PropsTableItem name="--lb-spacing" defaultValue="1em">
+    The spacing scale. `em` values recommended.
+  </PropsTableItem>
+  <PropsTableItem name="--lb-accent" defaultValue="#1177ff">
+    The accent color.
+  </PropsTableItem>
+  <PropsTableItem name="--lb-accent-foreground" defaultValue="#ffffff">
+    The foreground color used over the accent color.
+  </PropsTableItem>
+  <PropsTableItem name="--lb-background" defaultValue="#ffffff">
+    The main background color.
+  </PropsTableItem>
+  <PropsTableItem name="--lb-foreground" defaultValue="#111111">
+    The main foreground color.
+  </PropsTableItem>
+  <PropsTableItem name="--lb-icon-size" defaultValue="20px">
+    The size of icons.
+  </PropsTableItem>
+  <PropsTableItem name="--lb-icon-weight" defaultValue="1.5px">
+    The stroke weight of icons.
+  </PropsTableItem>
+  <PropsTableItem name="--lb-avatar-radius" defaultValue="50%">
+    The border radius used for avatars.
+  </PropsTableItem>
+  <PropsTableItem
+    name="--lb-button-radius"
+    defaultValue="calc(0.75 * var(--lb-radius))"
+  >
+    The border radius used for buttons.
+  </PropsTableItem>
+  <PropsTableItem name="--lb-transition-duration" defaultValue="0.1s">
+    The duration used for transitioned elements.
+  </PropsTableItem>
+  <PropsTableItem
+    name="--lb-transition-easing"
+    defaultValue="cubic-bezier(0.4, 0, 0.2, 1)"
+  >
+    The easing function used for transitioned elements.
+  </PropsTableItem>
+  <PropsTableItem
+    name="--lb-elevation-shadow"
+    defaultValue="0 0 0 1px rgb(0 0 0 / 4%), 0 2px 6px rgb(0 0 0 / 8%),  0 8px 26px rgb(0 0 0 / 12%)"
+  >
+    The box shadow added to elevated elements.
+  </PropsTableItem>
+  <PropsTableItem
+    name="--lb-tooltip-shadow"
+    defaultValue="0 2px 4px rgb(0 0 0 / 8%), 0 4px 12px rgb(0 0 0 / 12%)"
+  >
+    The box shadow added to tooltips.
+  </PropsTableItem>
+  <PropsTableItem
+    name="--lb-elevation-background"
+    defaultValue="var(--lb-background)"
+  >
+    The background color used for elevated elements.
+  </PropsTableItem>
+  <PropsTableItem
+    name="--lb-elevation-foreground"
+    defaultValue="var(--lb-foreground)"
+  >
+    The foreground color used for elevated elements.
+  </PropsTableItem>
+  <PropsTableItem name="--lb-tooltip-background" defaultValue="#222222">
+    The background color used for tooltips.
+  </PropsTableItem>
+  <PropsTableItem name="--lb-tooltip-foreground" defaultValue="#ffffff">
+    The foreground color used for tooltips.
+  </PropsTableItem>
+  <PropsTableItem name="--lb-accent-contrast" defaultValue="8%">
+    Affects the lightness of accent colors. `%` value required.
+  </PropsTableItem>
+  <PropsTableItem name="--lb-foreground-contrast" defaultValue="6%">
+    Affects the lightness of foreground colors. `%` value required.
+  </PropsTableItem>
+  <PropsTableItem name="--lb-elevation-foreground-contrast" defaultValue="6%">
+    Affects the lightness of foreground colors in elevated elements. `%` value
+    required.
+  </PropsTableItem>
+  <PropsTableItem name="--lb-tooltip-foreground-contrast" defaultValue="10%">
+    Affects the lightness of foreground colors in tooltips. `%` value required.
+  </PropsTableItem>
+</PropsTable>
 
 {/* TODO: Explain automatic color scales (with a palette-type visual) */}
 
@@ -666,14 +861,18 @@ occurs when the composer is submitted. You must create your own mutations within
 <Composer.Form onComposerSubmit={({ body }) => {}}>{/* ... */}</Composer.Form>
 ```
 
-<Table columns={["26%", "32%", "42%"]}>
-
-| Prop               | Type                                                                                                                    | Description                                                                         |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `onComposerSubmit` | <code>((comment: ComposerSubmitComment, event: FormEvent&lt;HTMLFormElement&gt;) => Promise&lt;void&gt; \| void)</code> | The event handler called when the form is submitted.                                |
-| `asChild`          | `boolean`                                                                                                               | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
-
-</Table>
+<PropsTable>
+  <PropsTableItem
+    name="onComposerSubmit"
+    type="function"
+    detailedType="((comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => Promise<void> | void)"
+  >
+    The event handler called when the form is submitted.
+  </PropsTableItem>
+  <PropsTableItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropsTableItem>
+</PropsTable>
 
 #### Composer.Editor [#primitives-Composer.Editor]
 
@@ -683,18 +882,26 @@ Displays the composer’s editor.
 <Composer.Editor placeholder="Write a comment…" />
 ```
 
-<Table columns={["26%", "32%", "42%"]}>
-
-| Prop           | Type                                                 | Description                                               |
-| -------------- | ---------------------------------------------------- | --------------------------------------------------------- |
-| `defaultValue` | `CommentBody`                                        | The editor’s initial value.                               |
-| `placeholder`  | `string`                                             | The text to display when the editor is empty.             |
-| `disabled`     | `boolean`                                            | Whether the editor is disabled.                           |
-| `autoFocus`    | `boolean`                                            | Whether to focus the editor on mount.                     |
-| `dir`          | `"ltr" \| "rtl"`                                     | The reading direction of the editor and related elements. |
-| `components`   | <code>Partial&lt;ComposerEditorComponents&gt;</code> | The components displayed within the editor.               |
-
-</Table>
+<PropsTable>
+  <PropsTableItem name="defaultValue" type="CommentBody">
+    The editor’s initial value.
+  </PropsTableItem>
+  <PropsTableItem name="placeholder" type="string">
+    The text to display when the editor is empty.
+  </PropsTableItem>
+  <PropsTableItem name="disabled" type="boolean">
+    Whether the editor is disabled.
+  </PropsTableItem>
+  <PropsTableItem name="autoFocus" type="boolean">
+    Whether to focus the editor on mount.
+  </PropsTableItem>
+  <PropsTableItem name="dir" type='"ltr" | "rtl"'>
+    The reading direction of the editor and related elements.
+  </PropsTableItem>
+  <PropsTableItem name="components" type="Partial<ComposerEditorComponents>">
+    The components displayed within the editor.
+  </PropsTableItem>
+</PropsTable>
 
 <Table columns={["28%", "auto"]}>
 
@@ -709,15 +916,26 @@ Displays the composer’s editor.
 
 The components displayed within the editor.
 
-<Table columns={["26%", "32%", "42%"]}>
-
-| Component            | Type                                                                   | Description                                                                                             |
-| -------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `Mention`            | <code>ComponentType&lt;ComposerEditorMentionProps&gt;</code>           | The component used to display mentions.<br/>Defaults to the mention’s `userId` prefixed by an @.        |
-| `MentionSuggestions` | <code>ComponentType&lt;ComposerEditorMentionSuggestionProps&gt;</code> | The component used to display mention suggestions.<br/>Defaults to a list of the suggestions’ `userId`. |
-| `Link`               | <code>ComponentType&lt;ComposerEditorLinkProps&gt;</code>              | The component used to display links.<br/>Defaults to the link’s `children` property.                    |
-
-</Table>
+<PropsTable>
+  <PropsTableItem
+    name="Mention"
+    type="ComponentType<ComposerEditorMentionProps>"
+  >
+    The component used to display mentions. Defaults to the mention’s `userId`
+    prefixed by an @.
+  </PropsTableItem>
+  <PropsTableItem
+    name="MentionSuggestions"
+    type="ComponentType<ComposerEditorMentionSuggestionProps>"
+  >
+    The component used to display mention suggestions. Defaults to a list of the
+    suggestions’ `userId`.
+  </PropsTableItem>
+  <PropsTableItem name="Link" type="ComponentType<ComposerEditorLinkProps>">
+    The component used to display links. Defaults to the link’s `children`
+    property.
+  </PropsTableItem>
+</PropsTable>
 
 ###### Mention [#primitives-Composer.Editor-Mention]
 
@@ -733,27 +951,27 @@ The component used to display mentions.
 />
 ```
 
-<Table columns={["26%", "32%", "42%"]}>
-
-| Prop         | Type      | Description                      |
-| ------------ | --------- | -------------------------------- |
-| `userId`     | `string`  | The mention’s user ID.           |
-| `isSelected` | `boolean` | Whether the mention is selected. |
-
-</Table>
+<PropsTable>
+  <PropsTableItem name="userId" type="string">
+    The mention’s user ID.
+  </PropsTableItem>
+  <PropsTableItem name="isSelected" type="boolean">
+    Whether the mention is selected.
+  </PropsTableItem>
+</PropsTable>
 
 ###### MentionSuggestions [#primitives-Composer.Editor-MentionSuggestions]
 
 The component used to display mention suggestions.
 
-<Table columns={["26%", "32%", "42%"]}>
-
-| Prop             | Type       | Description                     |
-| ---------------- | ---------- | ------------------------------- |
-| `userIds`        | `string[]` | The list of suggested user IDs. |
-| `selectedUserId` | `string`   | The currently selected user ID. |
-
-</Table>
+<PropsTable>
+  <PropsTableItem name="userIds" type="string[]">
+    The list of suggested user IDs.
+  </PropsTableItem>
+  <PropsTableItem name="selectedUserId" type="string">
+    he currently selected user ID.
+  </PropsTableItem>
+</PropsTable>
 
 ```tsx
 <Composer.Editor
@@ -781,14 +999,14 @@ The component used to display links.
 />
 ```
 
-<Table columns={["26%", "32%", "42%"]}>
-
-| Prop       | Type        | Description              |
-| ---------- | ----------- | ------------------------ |
-| `href`     | `string`    | The link’s absolute URL. |
-| `children` | `ReactNode` | The link’s content.      |
-
-</Table>
+<PropsTable>
+  <PropsTableItem name="href" type="string">
+    The link’s absolute URL.
+  </PropsTableItem>
+  <PropsTableItem name="children" type="ReactNode">
+    The link’s content.
+  </PropsTableItem>
+</PropsTable>
 
 #### Composer.Mention [#primitives-Composer.Mention]
 
@@ -798,13 +1016,11 @@ Displays mentions within `Composer.Editor`.
 <Composer.Mention>@{userId}</Composer.Mention>
 ```
 
-<Table columns={["26%", "32%", "42%"]}>
-
-| Prop      | Type      | Description                                                                         |
-| --------- | --------- | ----------------------------------------------------------------------------------- |
-| `asChild` | `boolean` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
-
-</Table>
+<PropsTable>
+  <PropsTableItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropsTableItem>
+</PropsTable>
 
 <Table columns={["28%", "auto"]}>
 
@@ -822,13 +1038,11 @@ Contains suggestions within `Composer.Editor`.
 <Composer.Suggestions>{/* … */}<Composer.Suggestions>
 ```
 
-<Table columns={["26%", "32%", "42%"]}>
-
-| Prop      | Type      | Description                                                                         |
-| --------- | --------- | ----------------------------------------------------------------------------------- |
-| `asChild` | `boolean` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
-
-</Table>
+<PropsTable>
+  <PropsTableItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropsTableItem>
+</PropsTable>
 
 #### Composer.SuggestionsList [#primitives-Composer.SuggestionsList]
 
@@ -844,13 +1058,11 @@ Displays a list of suggestions within `Composer.Editor`.
 </Composer.SuggestionsList>
 ```
 
-<Table columns={["26%", "32%", "42%"]}>
-
-| Prop      | Type      | Description                                                                         |
-| --------- | --------- | ----------------------------------------------------------------------------------- |
-| `asChild` | `boolean` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
-
-</Table>
+<PropsTable>
+  <PropsTableItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropsTableItem>
+</PropsTable>
 
 #### Composer.SuggestionsListItem [#primitives-Composer.SuggestionsListItem]
 
@@ -862,14 +1074,14 @@ Displays a suggestion within `Composer.SuggestionsList`.
 </Composer.SuggestionsListItem>
 ```
 
-<Table columns={["26%", "32%", "42%"]}>
-
-| Prop                     | Type      | Description                                                                         |
-| ------------------------ | --------- | ----------------------------------------------------------------------------------- |
-| `value` <DocsRequired /> | `string`  | The suggestion’s value.                                                             |
-| `asChild`                | `boolean` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
-
-</Table>
+<PropsTable>
+  <PropsTableItem name="value" type="string" required>
+    The suggestion’s value.
+  </PropsTableItem>
+  <PropsTableItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropsTableItem>
+</PropsTable>
 
 <Table columns={["28%", "auto"]}>
 
@@ -887,13 +1099,11 @@ Displays links within `Composer.Editor`.
 <Composer.Link href={href}>{children}</Composer.Link>
 ```
 
-<Table columns={["26%", "32%", "42%"]}>
-
-| Prop      | Type      | Description                                                                         |
-| --------- | --------- | ----------------------------------------------------------------------------------- |
-| `asChild` | `boolean` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
-
-</Table>
+<PropsTable>
+  <PropsTableItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropsTableItem>
+</PropsTable>
 
 #### Composer.Submit [#primitives-Composer.Submit]
 
@@ -903,13 +1113,11 @@ A button to submit the composer.
 <Composer.Submit>Send</Composer.Submit>
 ```
 
-<Table columns={["26%", "32%", "42%"]}>
-
-| Prop      | Type      | Description                                                                         |
-| --------- | --------- | ----------------------------------------------------------------------------------- |
-| `asChild` | `boolean` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
-
-</Table>
+<PropsTable>
+  <PropsTableItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropsTableItem>
+</PropsTable>
 
 ### Comment [#primitives-Comment]
 
@@ -972,28 +1180,33 @@ Displays a comment body.
 <Comment.Body body={comment.body} />
 ```
 
-<Table columns={["26%", "32%", "42%"]}>
-
-| Prop         | Type                                              | Description                                                                         |
-| ------------ | ------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `body`       | `CommentBody`                                     | The comment body to display. If not defined, the component will render `null`.      |
-| `components` | <code>Partial&lt;CommentBodyComponents&gt;</code> | The components displayed within the comment body.                                   |
-| `asChild`    | `boolean`                                         | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
-
-</Table>
+<PropsTable>
+  <PropsTableItem name="body" type="CommentBody">
+    The comment body to display. If not defined, the component will render
+    `null`.
+  </PropsTableItem>
+  <PropsTableItem name="components" type="Partial<CommentBodyComponents>">
+    The components displayed within the comment body.
+  </PropsTableItem>
+  <PropsTableItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropsTableItem>
+</PropsTable>
 
 ##### components [#primitives-Comment.Body-components]
 
 The components displayed within the comment body.
 
-<Table columns={["26%", "32%", "42%"]}>
-
-| Component | Type                                                      | Description                                                                                      |
-| --------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `Mention` | <code>ComponentType&lt;CommentBodyMentionProps&gt;</code> | The component used to display mentions.<br/>Defaults to the mention’s `userId` prefixed by an @. |
-| `Link`    | <code>ComponentType&lt;CommentBodyLinkProps&gt;</code>    | The component used to display links.<br/>Defaults to the link’s `children` property.             |
-
-</Table>
+<PropsTable>
+  <PropsTableItem name="Mention" type="ComponentType<CommentBodyMentionProps>">
+    The component used to display mentions. Defaults to the mention’s `userId`
+    prefixed by an @.
+  </PropsTableItem>
+  <PropsTableItem name="Link" type="ComponentType<CommentBodyLinkProps>">
+    The component used to display links. Defaults to the link’s `children`
+    property.
+  </PropsTableItem>
+</PropsTable>
 
 ###### Mention [#primitives-Comment.Body-Mention]
 
@@ -1007,13 +1220,11 @@ The component used to display mentions.
 />
 ```
 
-<Table columns={["26%", "32%", "42%"]}>
-
-| Prop     | Type     | Description            |
-| -------- | -------- | ---------------------- |
-| `userId` | `string` | The mention’s user ID. |
-
-</Table>
+<PropsTable>
+  <PropsTableItem name="userId" type="string">
+    The mention’s user ID.
+  </PropsTableItem>
+</PropsTable>
 
 ###### Link [#primitives-Comment.Body-Link]
 
@@ -1029,14 +1240,14 @@ The component used to display links.
 />
 ```
 
-<Table columns={["26%", "32%", "42%"]}>
-
-| Prop       | Type        | Description              |
-| ---------- | ----------- | ------------------------ |
-| `href`     | `string`    | The link’s absolute URL. |
-| `children` | `ReactNode` | The link’s content.      |
-
-</Table>
+<PropsTable>
+  <PropsTableItem name="href" type="string">
+    The link’s absolute URL.
+  </PropsTableItem>
+  <PropsTableItem name="children" type="ReactNode">
+    The link’s content.
+  </PropsTableItem>
+</PropsTable>
 
 #### Comment.Mention [#primitives-Comment.Mention]
 
@@ -1046,13 +1257,11 @@ Displays mentions within `Comment.Body`.
 <Comment.Mention>@{userId}</Comment.Mention>
 ```
 
-<Table columns={["26%", "32%", "42%"]}>
-
-| Prop      | Type      | Description                                                                         |
-| --------- | --------- | ----------------------------------------------------------------------------------- |
-| `asChild` | `boolean` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
-
-</Table>
+<PropsTable>
+  <PropsTableItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropsTableItem>
+</PropsTable>
 
 #### Comment.Link [#primitives-Comment.Link]
 
@@ -1062,13 +1271,11 @@ Displays links within `Comment.Body`.
 <Comment.Link href={href}>{children}</Comment.Link>
 ```
 
-<Table columns={["26%", "32%", "42%"]}>
-
-| Prop      | Type      | Description                                                                         |
-| --------- | --------- | ----------------------------------------------------------------------------------- |
-| `asChild` | `boolean` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
-
-</Table>
+<PropsTable>
+  <PropsTableItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropsTableItem>
+</PropsTable>
 
 ### Timestamp [#primitives-Timestamp]
 
@@ -1100,18 +1307,37 @@ function MyComments({ thread }: { thread: ThreadData }) {
 }
 ```
 
-<Table columns={["26%", "32%", "42%"]}>
-
-| Prop                    | Type                                 | Description                                                                                                                                 |
-| ----------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `date` <DocsRequired /> | `Date \| string \| number`           | The date to display.                                                                                                                        |
-| `children`              | `(date: Date) => ReactNode`          | A function to format the displayed date.<br/>Defaults to a relative date formatting function.                                               |
-| `title`                 | `string \| ((date: Date) => string)` | The `title` attribute’s value or a function to format it.<br/>Defaults to an absolute date formatting function.                             |
-| `interval`              | `number \| false`                    | The interval in milliseconds at which the component will re-render. Can be set to `false` to disable re-rendering.<br/>Defaults to `30000`. |
-| `locale`                | `string`                             | The locale used when formatting the date.<br/>Defaults to the browser’s locale.                                                             |
-| `asChild`               | `boolean`                            | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`.                                                         |
-
-</Table>
+<PropsTable>
+  <PropsTableItem name="date" type="Date | string | number" required>
+    The date to display.
+  </PropsTableItem>
+  <PropsTableItem
+    name="children"
+    type="function"
+    detailedType="(date: Date) => ReactNode"
+  >
+    A function to format the displayed date. Defaults to a relative date
+    formatting function.
+  </PropsTableItem>
+  <PropsTableItem
+    name="title"
+    type="function"
+    detailedType="string | ((date: Date) => string)"
+  >
+    The `title` attribute’s value or a function to format it. Defaults to an
+    absolute date formatting function.
+  </PropsTableItem>
+  <PropsTableItem name="interval" type="number | false" defaultValue="30000">
+    The interval in milliseconds at which the component will re-render. Can be
+    set to `false` to disable re-rendering.
+  </PropsTableItem>
+  <PropsTableItem name="locale" type="string">
+    The locale used when formatting the date. Defaults to the browser’s locale.
+  </PropsTableItem>
+  <PropsTableItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropsTableItem>
+</PropsTable>
 
 ## Hooks
 
