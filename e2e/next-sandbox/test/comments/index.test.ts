@@ -42,7 +42,7 @@ test.describe("Comments", () => {
     await waitForJson(pages, "#numOfThreads", n, { timeout: 30_000 });
   });
 
-  test.skip("verify thread creation on A and B are broadcasted correctly to each other", async () => {
+  test("verify thread creation on A and B are broadcasted correctly to each other", async () => {
     const [page1, page2] = pages;
 
     await waitForJson(pages, "#isLoading", false, { timeout: 15_000 });
