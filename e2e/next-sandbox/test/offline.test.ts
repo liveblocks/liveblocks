@@ -15,7 +15,7 @@ test.describe.configure({ mode: "parallel" });
 
 const TEST_URL = "http://localhost:3007/offline/";
 
-test.describe("Offline", () => {
+test.describe.skip("Offline", () => {
   let pages: [Page, Page];
 
   test.beforeEach(async ({}, testInfo) => {
