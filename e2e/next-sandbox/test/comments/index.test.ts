@@ -21,7 +21,7 @@ test.describe("Comments", () => {
 
   test.afterEach(() => Promise.all(pages.map((page) => page.close())));
 
-  test.skip("verify A and B display same number of threads after threads are loaded", async () => {
+  test("verify A and B display same number of threads after threads are loaded", async () => {
     await waitForJson(pages, "#isLoading", false, { timeout: 15_000 });
     await waitUntilEqualOnAllPages(pages, "#numOfThreads", { interval: 250 });
   });
