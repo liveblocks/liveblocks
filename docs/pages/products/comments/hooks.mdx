@@ -5,19 +5,8 @@ meta:
   description: "..."
 ---
 
-Hooks
-
-## Methods (better name needed)
-
-[Show two different ways of using the hooks]
-
-### Suspense
-
-[ErrorBoundary, ClientSideSuspense]
-
-### Non-suspense
-
-[null checking]
+The Comments React hooks can be used to fetch, create, and modify threads on the
+client.
 
 ## Threads hook
 
@@ -46,3 +35,101 @@ Hooks
 ## Composer primitive hook
 
 - [`useComposer`](/docs/api-reference/liveblocks-react-comments#useComposer)
+
+## Methods
+
+There are two different ways to use Liveblocks hooks; with
+[React Suspense](https://react.dev/reference/react/Suspense), and without it. We
+recommend using the Suspense versions, as they often result in simpler code.
+
+### Suspense hooks
+
+Using Suspense hooks means that any data retrieved, for example `threads` from
+`getThreads`, will never be `undefined`, and your component will never see an
+error.
+
+```tsx
+import { useThreads } from "../liveblocks.config.ts";
+
+// Suspense: `threads` is always defined
+function MyThreads() {
+  const { threads } = useThreads();
+
+  // [{ type: "thread", id: "th_sf8s6sh...", ... }, ...]
+  console.log(threads);
+}
+```
+
+To catch errors and display a loading screen, you can use
+[`ErrorBoundary`](https://www.npmjs.com/package/react-error-boundary) and
+[`ClientSideSuspense`](/docs/api-reference/liveblocks-react#suspense-avoid-ssr).
+
+```tsx highlight="7-11"
+import { ClientSideSuspense } from "@liveblocks/react";
+import { ErrorBoundary } from "react-error-boundary";
+
+// Handle errors and loading state in the component above
+function Component() {
+  return (
+    <ErrorBoundary fallback={<div>Error</div>}>
+      <ClientSideSuspense fallback={<div>Loading...</div>}>
+        {() => <MyThreads />}
+      </ClientSideSuspense>
+    </ErrorBoundary>
+  );
+}
+```
+
+To use Suspense, make sure you’re exporting your hooks from the `suspense`
+property in your config file.
+
+```tsx file="liveblocks.config.ts" highlight="5-7"
+// ...
+
+export const {
+  suspense: {
+    // Export from here to use Suspense hooks
+    useThreads,
+    useUser,
+  },
+} = createRoomContext(client, {});
+```
+
+### Regular hooks
+
+The regular versions of Liveblocks hooks require you to check for `error` and
+`isLoading` properties. You can then handle these states in the same component.
+
+```tsx
+import { useThreads } from "../liveblocks.config.ts";
+
+// Handle errors and loading state in the same component
+function MyThreads() {
+  const { threads, error, isLoading } = useThreads();
+
+  if (error) {
+    return <div>Error</div>;
+  }
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  // Non-Suspense: `threads` is only defined AFTER the `if` checks
+  // [{ type: "thread", id: "th_sf8s6sh...", ... }, ...]
+  console.log(threads);
+}
+```
+
+To use the regular hooks, make sure you’re exporting from the root level in your
+config file.
+
+```tsx file="liveblocks.config.ts" highlight="4-6"
+// ...
+
+export const {
+  // Export from here to use regular hooks
+  useThreads,
+  useUser,
+} = createRoomContext(client, {});
+```
