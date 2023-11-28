@@ -1021,6 +1021,7 @@ Example of handling errors in a typical API call:
 try {
   const room = await liveblocks.getRoom("my-room-id");
   // Process room
+  // ...
 } catch (error) {
   if (error instanceof LiveblocksError) {
     // Handle specific LiveblocksError cases
