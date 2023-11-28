@@ -875,7 +875,7 @@ occurs when the composer is submitted. You must create your own mutations within
   <PropertiesListItem
     name="onComposerSubmit"
     type="function"
-    detailedType="((comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => Promise<void> | void)"
+    detailedType="(comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => Promise<void> | void"
   >
     The event handler called when the form is submitted.
   </PropertiesListItem>
@@ -1337,7 +1337,7 @@ function MyComments({ thread }: { thread: ThreadData }) {
   </PropertiesListItem>
   <PropertiesListItem
     name="title"
-    type="function"
+    type="string | function"
     detailedType="string | ((date: Date) => string)"
   >
     The `title` attribute’s value or a function to format it. Defaults to an
