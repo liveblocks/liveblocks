@@ -86,94 +86,98 @@ export type ThreadMetadata = {
 
 #### Props [#thread-props]
 
-<PropsTable>
-  <PropsTableItem name="thread" type="ThreadData" required>
+<PropertiesList>
+  <PropertiesListItem name="thread" type="ThreadData" required>
     The thread to display.
-  </PropsTableItem>
-  <PropsTableItem
+  </PropertiesListItem>
+  <PropertiesListItem
     name="showComposer"
     type='boolean | "collapsed"'
     defaultValue='"collapsed"'
   >
     How to show or hide the composer to reply to the thread.
-  </PropsTableItem>
-  <PropsTableItem
+  </PropertiesListItem>
+  <PropertiesListItem
     name="showActions"
     type='boolean | "hover"'
     defaultValue='"hover"'
   >
     How to show or hide the actions.
-  </PropsTableItem>
-  <PropsTableItem name="showReactions" type="boolean" defaultValue="true">
+  </PropertiesListItem>
+  <PropertiesListItem name="showReactions" type="boolean" defaultValue="true">
     Whether to show reactions.
-  </PropsTableItem>
-  <PropsTableItem name="showResolveAction" type="boolean" defaultValue="true">
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="showResolveAction"
+    type="boolean"
+    defaultValue="true"
+  >
     Whether to show the action to resolve the thread.
-  </PropsTableItem>
-  <PropsTableItem
+  </PropertiesListItem>
+  <PropertiesListItem
     name="indentCommentContent"
     type="boolean"
     defaultValue="true"
   >
     Whether to indent the comments’ content.
-  </PropsTableItem>
-  <PropsTableItem
+  </PropertiesListItem>
+  <PropertiesListItem
     name="showDeletedComments"
     type="boolean"
     defaultValue="false"
   >
     Whether to show deleted comments.
-  </PropsTableItem>
-  <PropsTableItem
+  </PropertiesListItem>
+  <PropertiesListItem
     name="onResolvedChange"
     type="function"
     detailedType="(resolved: boolean) => void"
   >
     The event handler called when changing the resolved status.
-  </PropsTableItem>
-  <PropsTableItem
+  </PropertiesListItem>
+  <PropertiesListItem
     name="onThreadDelete"
     type="function"
     detailedType="(thread: ThreadData) => void"
   >
     The event handler called when the thread is deleted. A thread is deleted
     when all its comments are deleted.
-  </PropsTableItem>
-  <PropsTableItem
+  </PropertiesListItem>
+  <PropertiesListItem
     name="onCommentEdit"
     type="function"
     detailedType="(comment: CommentData) => void"
   >
     The event handler called when a comment is edited.
-  </PropsTableItem>
-  <PropsTableItem
+  </PropertiesListItem>
+  <PropertiesListItem
     name="onCommentDelete"
     type="function"
     detailedType="(comment: CommentData) => void"
   >
     The event handler called when a comment is deleted.
-  </PropsTableItem>
-  <PropsTableItem
+  </PropertiesListItem>
+  <PropertiesListItem
     name="onAuthorClick"
     type="function"
     detailedType="(userId: string, event: MouseEvent<HTMLElement>) => void"
   >
     The event handler called when clicking on a comment’s author.
-  </PropsTableItem>
-  <PropsTableItem
+  </PropertiesListItem>
+  <PropertiesListItem
     name="onMentionClick"
     type="function"
     detailedType="(userId: string, event: MouseEvent<HTMLElement>) => void"
   >
     The event handler called when clicking on a mention.
-  </PropsTableItem>
-  <PropsTableItem
+  </PropertiesListItem>
+  <PropertiesListItem
     name="overrides"
     type="Partial<ThreadOverrides & CommentOverrides & ComposerOverrides>"
   >
     Override the component’s strings.
-  </PropsTableItem>
-</PropsTable>
+  </PropertiesListItem>
+</PropertiesList>
 
 {/* TODO: Document classes and data attributes */}
 
@@ -321,51 +325,51 @@ Learn more about mutation hooks under
 
 #### Props [#composer-props]
 
-<PropsTable>
-  <PropsTableItem name="threadId" type="string">
+<PropertiesList>
+  <PropertiesListItem name="threadId" type="string">
     The ID of the thread to reply to or to edit a comment in.
-  </PropsTableItem>
-  <PropsTableItem name="commentId" type="string">
+  </PropertiesListItem>
+  <PropertiesListItem name="commentId" type="string">
     The ID of the comment to edit.
-  </PropsTableItem>
-  <PropsTableItem name="metadata" type="ThreadMetadata">
+  </PropertiesListItem>
+  <PropertiesListItem name="metadata" type="ThreadMetadata">
     The metadata of the thread to create.
-  </PropsTableItem>
-  <PropsTableItem
+  </PropertiesListItem>
+  <PropertiesListItem
     name="onComposerSubmit"
     type="function"
     detailedType="(comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => Promise<void> | void"
   >
     The event handler called when the composer is submitted.
-  </PropsTableItem>
-  <PropsTableItem name="defaultValue" type="CommentBody">
+  </PropertiesListItem>
+  <PropertiesListItem name="defaultValue" type="CommentBody">
     The composer’s initial value.
-  </PropsTableItem>
-  <PropsTableItem name="collapsed" type="boolean">
+  </PropertiesListItem>
+  <PropertiesListItem name="collapsed" type="boolean">
     Whether the composer is collapsed. Setting a value will make the composer
     controlled.
-  </PropsTableItem>
-  <PropsTableItem
+  </PropertiesListItem>
+  <PropertiesListItem
     name="onCollapsedChange"
     type="function"
     detailedType="(collapsed: boolean) => void"
   >
     The event handler called when the collapsed state of the composer changes.
-  </PropsTableItem>
-  <PropsTableItem name="defaultCollapsed" type="boolean">
+  </PropertiesListItem>
+  <PropertiesListItem name="defaultCollapsed" type="boolean">
     Whether the composer is initially collapsed. Setting a value will make the
     composer uncontrolled.
-  </PropsTableItem>
-  <PropsTableItem name="disabled" type="boolean">
+  </PropertiesListItem>
+  <PropertiesListItem name="disabled" type="boolean">
     Whether the composer is disabled.
-  </PropsTableItem>
-  <PropsTableItem name="autoFocus" type="boolean">
+  </PropertiesListItem>
+  <PropertiesListItem name="autoFocus" type="boolean">
     Whether to focus the composer on mount.
-  </PropsTableItem>
-  <PropsTableItem name="overrides" type="Partial<ComposerOverrides>">
+  </PropertiesListItem>
+  <PropertiesListItem name="overrides" type="Partial<ComposerOverrides>">
     Override the component’s strings.
-  </PropsTableItem>
-</PropsTable>
+  </PropertiesListItem>
+</PropertiesList>
 
 {/* TODO: Document classes and data attributes */}
 
@@ -407,62 +411,62 @@ function Component({ thread }: { thread: ThreadData }) {
 
 #### Props [#comment-props]
 
-<PropsTable>
-  <PropsTableItem name="comment" type="CommentData" required>
+<PropertiesList>
+  <PropertiesListItem name="comment" type="CommentData" required>
     The comment to display.
-  </PropsTableItem>
-  <PropsTableItem
+  </PropertiesListItem>
+  <PropertiesListItem
     name="showActions"
     type='boolean | "hover"'
     defaultValue='"hover"'
   >
     How to show or hide the actions.
-  </PropsTableItem>
-  <PropsTableItem name="showReactions" type="boolean" defaultValue="true">
+  </PropertiesListItem>
+  <PropertiesListItem name="showReactions" type="boolean" defaultValue="true">
     Whether to show reactions.
-  </PropsTableItem>
-  <PropsTableItem name="indentContent" type="boolean" defaultValue="true">
+  </PropertiesListItem>
+  <PropertiesListItem name="indentContent" type="boolean" defaultValue="true">
     Whether to indent the comment’s content.
-  </PropsTableItem>
-  <PropsTableItem name="showDeleted" type="boolean" defaultValue="false">
+  </PropertiesListItem>
+  <PropertiesListItem name="showDeleted" type="boolean" defaultValue="false">
     Whether to show the comment if it was deleted. If set to `false`, it will
     render deleted comments as `null`.
-  </PropsTableItem>
-  <PropsTableItem
+  </PropertiesListItem>
+  <PropertiesListItem
     name="onCommentEdit"
     type="function"
     detailedType="(comment: CommentData) => void"
   >
     The event handler called when the comment is edited.
-  </PropsTableItem>
-  <PropsTableItem
+  </PropertiesListItem>
+  <PropertiesListItem
     name="onCommentDelete"
     type="function"
     detailedType="(comment: CommentData) => void"
   >
     The event handler called when the comment is deleted.
-  </PropsTableItem>
-  <PropsTableItem
+  </PropertiesListItem>
+  <PropertiesListItem
     name="onAuthorClick"
     type="function"
     detailedType="(userId: string, event: MouseEvent<HTMLElement>) => void"
   >
     The event handler called when clicking on the author.
-  </PropsTableItem>
-  <PropsTableItem
+  </PropertiesListItem>
+  <PropertiesListItem
     name="onMentionClick"
     type="function"
     detailedType="(userId: string, event: MouseEvent<HTMLElement>) => void"
   >
     The event handler called when clicking on a mention.
-  </PropsTableItem>
-  <PropsTableItem
+  </PropertiesListItem>
+  <PropertiesListItem
     name="overrides"
     type="Partial<CommentOverrides & ComposerOverrides>"
   >
     Override the component’s strings.
-  </PropsTableItem>
-</PropsTable>
+  </PropertiesListItem>
+</PropertiesList>
 
 {/* TODO: Document classes and data attributes */}
 
@@ -511,93 +515,99 @@ these variables within `.lb-root` to globally style your components.
 }
 ```
 
-<PropsTable>
-  <PropsTableItem name="--lb-radius" defaultValue="0.5em">
+<PropertiesList>
+  <PropertiesListItem name="--lb-radius" defaultValue="0.5em">
     The border radius scale. `em` values recommended.
-  </PropsTableItem>
-  <PropsTableItem name="--lb-spacing" defaultValue="1em">
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-spacing" defaultValue="1em">
     The spacing scale. `em` values recommended.
-  </PropsTableItem>
-  <PropsTableItem name="--lb-accent" defaultValue="#1177ff">
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-accent" defaultValue="#1177ff">
     The accent color.
-  </PropsTableItem>
-  <PropsTableItem name="--lb-accent-foreground" defaultValue="#ffffff">
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-accent-foreground" defaultValue="#ffffff">
     The foreground color used over the accent color.
-  </PropsTableItem>
-  <PropsTableItem name="--lb-background" defaultValue="#ffffff">
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-background" defaultValue="#ffffff">
     The main background color.
-  </PropsTableItem>
-  <PropsTableItem name="--lb-foreground" defaultValue="#111111">
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-foreground" defaultValue="#111111">
     The main foreground color.
-  </PropsTableItem>
-  <PropsTableItem name="--lb-icon-size" defaultValue="20px">
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-icon-size" defaultValue="20px">
     The size of icons.
-  </PropsTableItem>
-  <PropsTableItem name="--lb-icon-weight" defaultValue="1.5px">
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-icon-weight" defaultValue="1.5px">
     The stroke weight of icons.
-  </PropsTableItem>
-  <PropsTableItem name="--lb-avatar-radius" defaultValue="50%">
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-avatar-radius" defaultValue="50%">
     The border radius used for avatars.
-  </PropsTableItem>
-  <PropsTableItem
+  </PropertiesListItem>
+  <PropertiesListItem
     name="--lb-button-radius"
     defaultValue="calc(0.75 * var(--lb-radius))"
   >
     The border radius used for buttons.
-  </PropsTableItem>
-  <PropsTableItem name="--lb-transition-duration" defaultValue="0.1s">
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-transition-duration" defaultValue="0.1s">
     The duration used for transitioned elements.
-  </PropsTableItem>
-  <PropsTableItem
+  </PropertiesListItem>
+  <PropertiesListItem
     name="--lb-transition-easing"
     defaultValue="cubic-bezier(0.4, 0, 0.2, 1)"
   >
     The easing function used for transitioned elements.
-  </PropsTableItem>
-  <PropsTableItem
+  </PropertiesListItem>
+  <PropertiesListItem
     name="--lb-elevation-shadow"
     defaultValue="0 0 0 1px rgb(0 0 0 / 4%), 0 2px 6px rgb(0 0 0 / 8%),  0 8px 26px rgb(0 0 0 / 12%)"
   >
     The box shadow added to elevated elements.
-  </PropsTableItem>
-  <PropsTableItem
+  </PropertiesListItem>
+  <PropertiesListItem
     name="--lb-tooltip-shadow"
     defaultValue="0 2px 4px rgb(0 0 0 / 8%), 0 4px 12px rgb(0 0 0 / 12%)"
   >
     The box shadow added to tooltips.
-  </PropsTableItem>
-  <PropsTableItem
+  </PropertiesListItem>
+  <PropertiesListItem
     name="--lb-elevation-background"
     defaultValue="var(--lb-background)"
   >
     The background color used for elevated elements.
-  </PropsTableItem>
-  <PropsTableItem
+  </PropertiesListItem>
+  <PropertiesListItem
     name="--lb-elevation-foreground"
     defaultValue="var(--lb-foreground)"
   >
     The foreground color used for elevated elements.
-  </PropsTableItem>
-  <PropsTableItem name="--lb-tooltip-background" defaultValue="#222222">
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-tooltip-background" defaultValue="#222222">
     The background color used for tooltips.
-  </PropsTableItem>
-  <PropsTableItem name="--lb-tooltip-foreground" defaultValue="#ffffff">
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-tooltip-foreground" defaultValue="#ffffff">
     The foreground color used for tooltips.
-  </PropsTableItem>
-  <PropsTableItem name="--lb-accent-contrast" defaultValue="8%">
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-accent-contrast" defaultValue="8%">
     Affects the lightness of accent colors. `%` value required.
-  </PropsTableItem>
-  <PropsTableItem name="--lb-foreground-contrast" defaultValue="6%">
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-foreground-contrast" defaultValue="6%">
     Affects the lightness of foreground colors. `%` value required.
-  </PropsTableItem>
-  <PropsTableItem name="--lb-elevation-foreground-contrast" defaultValue="6%">
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="--lb-elevation-foreground-contrast"
+    defaultValue="6%"
+  >
     Affects the lightness of foreground colors in elevated elements. `%` value
     required.
-  </PropsTableItem>
-  <PropsTableItem name="--lb-tooltip-foreground-contrast" defaultValue="10%">
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="--lb-tooltip-foreground-contrast"
+    defaultValue="10%"
+  >
     Affects the lightness of foreground colors in tooltips. `%` value required.
-  </PropsTableItem>
-</PropsTable>
+  </PropertiesListItem>
+</PropertiesList>
 
 {/* TODO: Explain automatic color scales (with a palette-type visual) */}
 
@@ -861,18 +871,18 @@ occurs when the composer is submitted. You must create your own mutations within
 <Composer.Form onComposerSubmit={({ body }) => {}}>{/* ... */}</Composer.Form>
 ```
 
-<PropsTable>
-  <PropsTableItem
+<PropertiesList>
+  <PropertiesListItem
     name="onComposerSubmit"
     type="function"
     detailedType="((comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => Promise<void> | void)"
   >
     The event handler called when the form is submitted.
-  </PropsTableItem>
-  <PropsTableItem name="asChild" type="boolean" defaultValue="false">
+  </PropertiesListItem>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
     Replace the rendered element by the one passed as a child.
-  </PropsTableItem>
-</PropsTable>
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Composer.Editor [#primitives-Composer.Editor]
 
@@ -882,26 +892,29 @@ Displays the composer’s editor.
 <Composer.Editor placeholder="Write a comment…" />
 ```
 
-<PropsTable>
-  <PropsTableItem name="defaultValue" type="CommentBody">
+<PropertiesList>
+  <PropertiesListItem name="defaultValue" type="CommentBody">
     The editor’s initial value.
-  </PropsTableItem>
-  <PropsTableItem name="placeholder" type="string">
+  </PropertiesListItem>
+  <PropertiesListItem name="placeholder" type="string">
     The text to display when the editor is empty.
-  </PropsTableItem>
-  <PropsTableItem name="disabled" type="boolean">
+  </PropertiesListItem>
+  <PropertiesListItem name="disabled" type="boolean">
     Whether the editor is disabled.
-  </PropsTableItem>
-  <PropsTableItem name="autoFocus" type="boolean">
+  </PropertiesListItem>
+  <PropertiesListItem name="autoFocus" type="boolean">
     Whether to focus the editor on mount.
-  </PropsTableItem>
-  <PropsTableItem name="dir" type='"ltr" | "rtl"'>
+  </PropertiesListItem>
+  <PropertiesListItem name="dir" type='"ltr" | "rtl"'>
     The reading direction of the editor and related elements.
-  </PropsTableItem>
-  <PropsTableItem name="components" type="Partial<ComposerEditorComponents>">
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="components"
+    type="Partial<ComposerEditorComponents>"
+  >
     The components displayed within the editor.
-  </PropsTableItem>
-</PropsTable>
+  </PropertiesListItem>
+</PropertiesList>
 
 <Table columns={["28%", "auto"]}>
 
@@ -916,26 +929,26 @@ Displays the composer’s editor.
 
 The components displayed within the editor.
 
-<PropsTable>
-  <PropsTableItem
+<PropertiesList>
+  <PropertiesListItem
     name="Mention"
     type="ComponentType<ComposerEditorMentionProps>"
   >
     The component used to display mentions. Defaults to the mention’s `userId`
     prefixed by an @.
-  </PropsTableItem>
-  <PropsTableItem
+  </PropertiesListItem>
+  <PropertiesListItem
     name="MentionSuggestions"
     type="ComponentType<ComposerEditorMentionSuggestionProps>"
   >
     The component used to display mention suggestions. Defaults to a list of the
     suggestions’ `userId`.
-  </PropsTableItem>
-  <PropsTableItem name="Link" type="ComponentType<ComposerEditorLinkProps>">
+  </PropertiesListItem>
+  <PropertiesListItem name="Link" type="ComponentType<ComposerEditorLinkProps>">
     The component used to display links. Defaults to the link’s `children`
     property.
-  </PropsTableItem>
-</PropsTable>
+  </PropertiesListItem>
+</PropertiesList>
 
 ###### Mention [#primitives-Composer.Editor-Mention]
 
@@ -951,27 +964,27 @@ The component used to display mentions.
 />
 ```
 
-<PropsTable>
-  <PropsTableItem name="userId" type="string">
+<PropertiesList>
+  <PropertiesListItem name="userId" type="string">
     The mention’s user ID.
-  </PropsTableItem>
-  <PropsTableItem name="isSelected" type="boolean">
+  </PropertiesListItem>
+  <PropertiesListItem name="isSelected" type="boolean">
     Whether the mention is selected.
-  </PropsTableItem>
-</PropsTable>
+  </PropertiesListItem>
+</PropertiesList>
 
 ###### MentionSuggestions [#primitives-Composer.Editor-MentionSuggestions]
 
 The component used to display mention suggestions.
 
-<PropsTable>
-  <PropsTableItem name="userIds" type="string[]">
+<PropertiesList>
+  <PropertiesListItem name="userIds" type="string[]">
     The list of suggested user IDs.
-  </PropsTableItem>
-  <PropsTableItem name="selectedUserId" type="string">
+  </PropertiesListItem>
+  <PropertiesListItem name="selectedUserId" type="string">
     he currently selected user ID.
-  </PropsTableItem>
-</PropsTable>
+  </PropertiesListItem>
+</PropertiesList>
 
 ```tsx
 <Composer.Editor
@@ -999,14 +1012,14 @@ The component used to display links.
 />
 ```
 
-<PropsTable>
-  <PropsTableItem name="href" type="string">
+<PropertiesList>
+  <PropertiesListItem name="href" type="string">
     The link’s absolute URL.
-  </PropsTableItem>
-  <PropsTableItem name="children" type="ReactNode">
+  </PropertiesListItem>
+  <PropertiesListItem name="children" type="ReactNode">
     The link’s content.
-  </PropsTableItem>
-</PropsTable>
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Composer.Mention [#primitives-Composer.Mention]
 
@@ -1016,11 +1029,11 @@ Displays mentions within `Composer.Editor`.
 <Composer.Mention>@{userId}</Composer.Mention>
 ```
 
-<PropsTable>
-  <PropsTableItem name="asChild" type="boolean" defaultValue="false">
+<PropertiesList>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
     Replace the rendered element by the one passed as a child.
-  </PropsTableItem>
-</PropsTable>
+  </PropertiesListItem>
+</PropertiesList>
 
 <Table columns={["28%", "auto"]}>
 
@@ -1038,11 +1051,11 @@ Contains suggestions within `Composer.Editor`.
 <Composer.Suggestions>{/* … */}<Composer.Suggestions>
 ```
 
-<PropsTable>
-  <PropsTableItem name="asChild" type="boolean" defaultValue="false">
+<PropertiesList>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
     Replace the rendered element by the one passed as a child.
-  </PropsTableItem>
-</PropsTable>
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Composer.SuggestionsList [#primitives-Composer.SuggestionsList]
 
@@ -1058,11 +1071,11 @@ Displays a list of suggestions within `Composer.Editor`.
 </Composer.SuggestionsList>
 ```
 
-<PropsTable>
-  <PropsTableItem name="asChild" type="boolean" defaultValue="false">
+<PropertiesList>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
     Replace the rendered element by the one passed as a child.
-  </PropsTableItem>
-</PropsTable>
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Composer.SuggestionsListItem [#primitives-Composer.SuggestionsListItem]
 
@@ -1074,14 +1087,14 @@ Displays a suggestion within `Composer.SuggestionsList`.
 </Composer.SuggestionsListItem>
 ```
 
-<PropsTable>
-  <PropsTableItem name="value" type="string" required>
+<PropertiesList>
+  <PropertiesListItem name="value" type="string" required>
     The suggestion’s value.
-  </PropsTableItem>
-  <PropsTableItem name="asChild" type="boolean" defaultValue="false">
+  </PropertiesListItem>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
     Replace the rendered element by the one passed as a child.
-  </PropsTableItem>
-</PropsTable>
+  </PropertiesListItem>
+</PropertiesList>
 
 <Table columns={["28%", "auto"]}>
 
@@ -1099,11 +1112,11 @@ Displays links within `Composer.Editor`.
 <Composer.Link href={href}>{children}</Composer.Link>
 ```
 
-<PropsTable>
-  <PropsTableItem name="asChild" type="boolean" defaultValue="false">
+<PropertiesList>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
     Replace the rendered element by the one passed as a child.
-  </PropsTableItem>
-</PropsTable>
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Composer.Submit [#primitives-Composer.Submit]
 
@@ -1113,11 +1126,11 @@ A button to submit the composer.
 <Composer.Submit>Send</Composer.Submit>
 ```
 
-<PropsTable>
-  <PropsTableItem name="asChild" type="boolean" defaultValue="false">
+<PropertiesList>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
     Replace the rendered element by the one passed as a child.
-  </PropsTableItem>
-</PropsTable>
+  </PropertiesListItem>
+</PropertiesList>
 
 ### Comment [#primitives-Comment]
 
@@ -1180,33 +1193,36 @@ Displays a comment body.
 <Comment.Body body={comment.body} />
 ```
 
-<PropsTable>
-  <PropsTableItem name="body" type="CommentBody">
+<PropertiesList>
+  <PropertiesListItem name="body" type="CommentBody">
     The comment body to display. If not defined, the component will render
     `null`.
-  </PropsTableItem>
-  <PropsTableItem name="components" type="Partial<CommentBodyComponents>">
+  </PropertiesListItem>
+  <PropertiesListItem name="components" type="Partial<CommentBodyComponents>">
     The components displayed within the comment body.
-  </PropsTableItem>
-  <PropsTableItem name="asChild" type="boolean" defaultValue="false">
+  </PropertiesListItem>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
     Replace the rendered element by the one passed as a child.
-  </PropsTableItem>
-</PropsTable>
+  </PropertiesListItem>
+</PropertiesList>
 
 ##### components [#primitives-Comment.Body-components]
 
 The components displayed within the comment body.
 
-<PropsTable>
-  <PropsTableItem name="Mention" type="ComponentType<CommentBodyMentionProps>">
+<PropertiesList>
+  <PropertiesListItem
+    name="Mention"
+    type="ComponentType<CommentBodyMentionProps>"
+  >
     The component used to display mentions. Defaults to the mention’s `userId`
     prefixed by an @.
-  </PropsTableItem>
-  <PropsTableItem name="Link" type="ComponentType<CommentBodyLinkProps>">
+  </PropertiesListItem>
+  <PropertiesListItem name="Link" type="ComponentType<CommentBodyLinkProps>">
     The component used to display links. Defaults to the link’s `children`
     property.
-  </PropsTableItem>
-</PropsTable>
+  </PropertiesListItem>
+</PropertiesList>
 
 ###### Mention [#primitives-Comment.Body-Mention]
 
@@ -1220,11 +1236,11 @@ The component used to display mentions.
 />
 ```
 
-<PropsTable>
-  <PropsTableItem name="userId" type="string">
+<PropertiesList>
+  <PropertiesListItem name="userId" type="string">
     The mention’s user ID.
-  </PropsTableItem>
-</PropsTable>
+  </PropertiesListItem>
+</PropertiesList>
 
 ###### Link [#primitives-Comment.Body-Link]
 
@@ -1240,14 +1256,14 @@ The component used to display links.
 />
 ```
 
-<PropsTable>
-  <PropsTableItem name="href" type="string">
+<PropertiesList>
+  <PropertiesListItem name="href" type="string">
     The link’s absolute URL.
-  </PropsTableItem>
-  <PropsTableItem name="children" type="ReactNode">
+  </PropertiesListItem>
+  <PropertiesListItem name="children" type="ReactNode">
     The link’s content.
-  </PropsTableItem>
-</PropsTable>
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Comment.Mention [#primitives-Comment.Mention]
 
@@ -1257,11 +1273,11 @@ Displays mentions within `Comment.Body`.
 <Comment.Mention>@{userId}</Comment.Mention>
 ```
 
-<PropsTable>
-  <PropsTableItem name="asChild" type="boolean" defaultValue="false">
+<PropertiesList>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
     Replace the rendered element by the one passed as a child.
-  </PropsTableItem>
-</PropsTable>
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Comment.Link [#primitives-Comment.Link]
 
@@ -1271,11 +1287,11 @@ Displays links within `Comment.Body`.
 <Comment.Link href={href}>{children}</Comment.Link>
 ```
 
-<PropsTable>
-  <PropsTableItem name="asChild" type="boolean" defaultValue="false">
+<PropertiesList>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
     Replace the rendered element by the one passed as a child.
-  </PropsTableItem>
-</PropsTable>
+  </PropertiesListItem>
+</PropertiesList>
 
 ### Timestamp [#primitives-Timestamp]
 
@@ -1307,37 +1323,41 @@ function MyComments({ thread }: { thread: ThreadData }) {
 }
 ```
 
-<PropsTable>
-  <PropsTableItem name="date" type="Date | string | number" required>
+<PropertiesList>
+  <PropertiesListItem name="date" type="Date | string | number" required>
     The date to display.
-  </PropsTableItem>
-  <PropsTableItem
+  </PropertiesListItem>
+  <PropertiesListItem
     name="children"
     type="function"
     detailedType="(date: Date) => ReactNode"
   >
     A function to format the displayed date. Defaults to a relative date
     formatting function.
-  </PropsTableItem>
-  <PropsTableItem
+  </PropertiesListItem>
+  <PropertiesListItem
     name="title"
     type="function"
     detailedType="string | ((date: Date) => string)"
   >
     The `title` attribute’s value or a function to format it. Defaults to an
     absolute date formatting function.
-  </PropsTableItem>
-  <PropsTableItem name="interval" type="number | false" defaultValue="30000">
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="interval"
+    type="number | false"
+    defaultValue="30000"
+  >
     The interval in milliseconds at which the component will re-render. Can be
     set to `false` to disable re-rendering.
-  </PropsTableItem>
-  <PropsTableItem name="locale" type="string">
+  </PropertiesListItem>
+  <PropertiesListItem name="locale" type="string">
     The locale used when formatting the date. Defaults to the browser’s locale.
-  </PropsTableItem>
-  <PropsTableItem name="asChild" type="boolean" defaultValue="false">
+  </PropertiesListItem>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
     Replace the rendered element by the one passed as a child.
-  </PropsTableItem>
-</PropsTable>
+  </PropertiesListItem>
+</PropertiesList>
 
 ## Hooks
 
