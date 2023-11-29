@@ -50,7 +50,6 @@ describe("client", () => {
       return HttpResponse.json(room, { status: 200 });
     }),
     http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/active_users`, () => {
-      console.log("Hii");
       return HttpResponse.json({
         data: activeUsers,
       });
