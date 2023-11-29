@@ -8,21 +8,158 @@ meta:
 The Comments React hooks can be used to fetch, create, and modify threads on the
 client.
 
-## Threads hook
+## Threads hook [#threads-hook]
 
-[useThreads]
+The most important Comments hook is
+[`useThreads`](/docs/api-reference/liveblocks-react#useThreads), which retrieves
+a list of each thread in the current room. This can be used to render a list of
+threads, either using the
+[default components](/docs/products/comments/default-components), or
+[primitives](/docs/products/comments/primitives). Here’s an example of it used
+with the default
+[`Thread`](/docs/api-reference/liveblocks-react-comments#Thread) component.
 
-- [`useThreads`](/docs/api-reference/liveblocks-react#useThreads)
+```tsx
+import { useThreads } from "../liveblocks.config";
 
-## User hooks
+function Component() {
+  const { threads } = useThreads();
 
-[useUsers]
+  // [{ type: "thread", id: "th_sf8s6sh...", ... }, ...]
+  console.log(threads);
 
-- [`useUser`](/docs/api-reference/liveblocks-react#useUser)
+  return (
+    <>
+      {threads.map((thread) => (
+        <Thread key={thread.id} thread={thread} />
+      ))}
+    </>
+  );
+}
+```
 
-## Mutation hooks
+There are two versions of the
+[`useThreads`](/docs/api-reference/liveblocks-react#useThreads) hook, the
+[Suspense version](#suspense-hooks), which we recommend by default, and the
+[regular version](#regular-hooks).
 
-[...the other hooks]
+## User hook [#user-hook]
+
+The only information Comments stores about users is their user ID, which is set
+when [authenticating with Liveblocks](/docs/rooms/authentication). With the
+[`useUser`](/docs/api-reference/liveblocks-react#useUser) hook, you can fetch a
+user’s information from their ID. This is particularly helpful when building
+primitive components, as this allows you fetch their name, avatar, and any other
+custom data you’ve set.
+
+```tsx
+import { useUser } from "../liveblocks.config";
+
+function Component() {
+  const { user } = useUser("olivier@example.com");
+
+  // { name: "Olivier", avatar: "https://...", color: "red" }
+  console.log(user);
+
+  return <img src={user.avatar} alt={user.name} />;
+}
+```
+
+The user data retrieved is set within the
+[`resolveUsers`](/docs/api-reference/liveblocks-react#resolveUsers) function in
+your `liveblocks.config.ts` file.
+
+```ts
+async function resolveUsers({ userIds }) {
+  // ["olivier@example.com"]
+  console.log(userIds);
+
+  return [
+    {
+      name: "Olivier",
+      avatar: "https://example.com/olivier.png",
+      color: "red",
+    },
+  ];
+}
+```
+
+There are two versions of the
+[`useUser`](/docs/api-reference/liveblocks-react#useUser) hook,
+[Suspense](#suspense-hooks), which we recommend by default, and
+[regular](#regular-hooks).
+
+## Mutation hooks [#mutation-hooks]
+
+A number of hooks can be used to mutate comment and thread data, for example:
+
+- Creating threads
+- Deleting comments
+- Adding emoji reactions
+
+Some of these hooks are quite simple, such as
+[`useAddReaction`](/docs/api-reference/liveblocks-react#useAddReaction) which
+adds a reaction to a specified comment.
+
+```tsx highlight="6,9-13"
+import { CommentData } from "@liveblocks/client";
+import { useAddReaction } from "../liveblocks.config.ts";
+
+// A button that adds a "⭐" reaction to a comment
+function Component({ comment }: { CommentData }) {
+  const addReaction = useAddReaction();
+
+  function handleClick() {
+    addReaction({
+      threadId: comment.threadId,
+      commentId: comment.commentId,
+      emoji: "⭐",
+    });
+  }
+
+  return <button onClick={handleClick}>Star ⭐</button>;
+}
+```
+
+Whereas others, such as
+[`useCreateThread`](/docs/api-reference/liveblocks-react#useCreateThread), have
+more complex behaviour and are designed to work alongside
+[primitives](/docs/products/comments/primitives).
+
+```tsx highlight="10,18-21"
+import {
+  Composer,
+  ComposerSubmitComment,
+} from "@liveblocks/react-comments/primitives";
+import { useCreateThread } from "../liveblocks.config.ts";
+import { FormEvent } from "react";
+
+// A custom composer that creates a thread on submit
+function MyComposer() {
+  const createThread = useCreateThread();
+
+  function handleComposerSubmit(
+    { body }: ComposerSubmitComment,
+    event: FormEvent<HTMLFormElement>
+  ) {
+    event.preventdefault();
+
+    const thread = createThread({
+      body,
+      metadata: {},
+    });
+  }
+
+  return (
+    <Composer.Form onComposerSubmit={handleComposerSubmit}>
+      <Composer.Editor />
+      <Composer.Submit>Create thread</Composer.Submit>
+    </Composer.Form>
+  );
+}
+```
+
+You can find more information on each mutation hook in our API reference pages:
 
 - [`useCreateThread`](/docs/api-reference/liveblocks-react#useCreateThread)
 - [`useEditThreadMetadata`](/docs/api-reference/liveblocks-react#useEditThreadMetadata)
@@ -32,17 +169,17 @@ client.
 - [`useAddReaction`](/docs/api-reference/liveblocks-react#useAddReaction)
 - [`useRemoveReaction`](/docs/api-reference/liveblocks-react#useRemoveReaction)
 
-## Composer primitive hook
+There’s only one version of these hooks, so it doesn’t make a difference if you
+export them from `suspense` in your config file or not.
 
-- [`useComposer`](/docs/api-reference/liveblocks-react-comments#useComposer)
+## Hook types [#hook-types]
 
-## Methods
-
-There are two different ways to use Liveblocks hooks; with
+There are two different ways to use the [threads](#threads-hook) and
+[user](#user-hook) hooks; with
 [React Suspense](https://react.dev/reference/react/Suspense), and without it. We
 recommend using the Suspense versions, as they often result in simpler code.
 
-### Suspense hooks
+### Suspense hooks [#suspense-hooks]
 
 Using Suspense hooks means that any data retrieved, for example `threads` from
 `getThreads`, will never be `undefined`, and your component will never see an
@@ -95,7 +232,7 @@ export const {
 } = createRoomContext(client, {});
 ```
 
-### Regular hooks
+### Regular hooks [#regular-hooks]
 
 The regular versions of Liveblocks hooks require you to check for `error` and
 `isLoading` properties. You can then handle these states in the same component.
