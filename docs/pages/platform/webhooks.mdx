@@ -118,7 +118,7 @@ const webhookHandler = new WebhookHandler(process.env.SECRET); // "whsec_..." ob
 ```ts
 const event = webhookHandler.verifyRequest({
   headers: req.headers,
-  rawBody: req.body,
+  rawBody: JSON.stringify(body),
 });
 ```
 
