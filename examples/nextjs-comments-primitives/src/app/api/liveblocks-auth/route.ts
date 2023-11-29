@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
   }
 
-  // Create a session for the current user
+  // Get the current user's unique id from your database
   const userIndex = Math.floor(Math.random() * NAMES.length);
 
   // Create a session for the current user
