@@ -1,3 +1,10 @@
+# v1.8.3 (Unreleased)
+
+### `@liveblocks/node`
+
+- Fixes the return type of `getActiveUsers` to match the data returned from the
+  endpoint.
+
 # v1.8.2
 
 ### `@liveblocks/react`

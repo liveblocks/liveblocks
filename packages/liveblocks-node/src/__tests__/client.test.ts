@@ -25,6 +25,17 @@ describe("client", () => {
     },
   };
 
+  const activeUsers = [
+    {
+      type: "user",
+      id: "alice",
+      connectionId: 123,
+      info: {
+        name: "Alice",
+      },
+    },
+  ];
+
   const server = setupServer(
     http.get(`${DEFAULT_BASE_URL}/v2/rooms`, () => {
       return HttpResponse.json(
@@ -37,6 +48,11 @@ describe("client", () => {
     }),
     http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId`, () => {
       return HttpResponse.json(room, { status: 200 });
+    }),
+    http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/active_users`, () => {
+      return HttpResponse.json({
+        data: activeUsers,
+      });
     })
   );
 
@@ -132,6 +148,13 @@ describe("client", () => {
   test("should return room data when getRoom receives a successful response", async () => {
     const client = new Liveblocks({ secret: "sk_xxx" });
     await expect(client.getRoom("123")).resolves.toEqual(room);
+  });
+
+  test("should return active users when getActiveUsers receives a successful response", async () => {
+    const client = new Liveblocks({ secret: "sk_xxx" });
+    await expect(client.getActiveUsers("123")).resolves.toEqual({
+      data: activeUsers,
+    });
   });
 
   test("should throw an ApiError when getRoom receives an error response", async () => {
