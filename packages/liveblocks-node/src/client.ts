@@ -4,6 +4,7 @@
  * @liveblocks/core has browser-specific code.
  */
 import type {
+  CommentBody,
   CommentData,
   IUserInfo,
   Json,
@@ -922,6 +923,38 @@ export class Liveblocks {
 
     const res = await this.get(
       url`/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+    return (await res.json()) as Promise<CommentData>;
+  }
+
+  /**
+   * Creates a comment.
+   * 
+   * @param params.roomId The room ID to create the comment in.
+   * @param params.threadId The thread ID to create the comment in.
+   * @returns The created comment.
+   */
+  public async createComment(params: {
+    roomId: string;
+    threadId: string;
+    comment: {
+      userId: string;
+      /**
+       * ISO 8601 date string
+       */
+      createdAt?: string;
+      body: CommentBody;
+    };
+  }): Promise<CommentData> {
+    const { roomId, threadId, comment } = params;
+
+    const res = await this.post(
+      url`/v2/rooms/${roomId}/threads/${threadId}/comments`,
+      comment
     );
     if (!res.ok) {
       const text = await res.text();
