@@ -295,6 +295,29 @@ describe("WebhookHandler", () => {
       expect(event).toEqual(userEnteredBody);
     });
 
+    it.only("should throw if the rawBody is not a string", () => {
+      jest.useFakeTimers({
+        now: 1674850126000,
+      });
+
+      const webhookHandler = new WebhookHandler(secret);
+      expect(() =>
+        webhookHandler.verifyRequest({
+          headers: {
+            ...userEnteredHeaders,
+            "webhook-signature": generateSignatureWithSvix(
+              secret,
+              userEnteredHeaders["webhook-id"],
+              userEnteredHeaders["webhook-timestamp"],
+              rawUserEnteredBody
+            ),
+          },
+          rawBody: {} as any,
+        })
+      ).toThrowError(`Invalid body, must be a string, got \"object\" instead. 
+      It is likely that you need to JSON.stringify the body before passing it.`);
+    });
+
     it("should throw if the signature is invalid", () => {
       jest.useFakeTimers({
         now: 1674850126000,
