@@ -295,7 +295,7 @@ describe("WebhookHandler", () => {
       expect(event).toEqual(userEnteredBody);
     });
 
-    it.only("should throw if the rawBody is not a string", () => {
+    it("should throw if the rawBody is not a string", () => {
       jest.useFakeTimers({
         now: 1674850126000,
       });
@@ -312,9 +312,10 @@ describe("WebhookHandler", () => {
               rawUserEnteredBody
             ),
           },
-          rawBody: {} as any,
+          // @ts-expect-error: we want to test invalid rawBody
+          rawBody: {},
         })
-      ).toThrowError(`Invalid body, must be a string, got \"object\" instead. 
+      ).toThrowError(`Invalid body, must be a string, got "object" instead. 
       It is likely that you need to JSON.stringify the body before passing it.`);
     });
 
