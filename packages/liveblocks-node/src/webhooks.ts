@@ -32,8 +32,9 @@ export class WebhookHandler {
     const { webhookId, timestamp, rawSignatures } = this.verifyHeaders(headers);
 
     if (typeof rawBody !== "string") {
-      throw new Error(`Invalid body, must be a string, got "${typeof rawBody}" instead. 
-      It is likely that you need to JSON.stringify the body before passing it.`);
+      throw new Error(
+        `Invalid rawBody field, must be a string, got "${typeof rawBody}" instead. It is likely that you need to JSON.stringify the body before passing it.`
+      );
     }
 
     this.verifyTimestamp(timestamp);

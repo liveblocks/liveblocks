@@ -315,8 +315,9 @@ describe("WebhookHandler", () => {
           // @ts-expect-error: we want to test invalid rawBody
           rawBody: {},
         })
-      ).toThrowError(`Invalid body, must be a string, got "object" instead. 
-      It is likely that you need to JSON.stringify the body before passing it.`);
+      ).toThrowError(
+        `Invalid rawBody field, must be a string, got "object" instead. It is likely that you need to JSON.stringify the body before passing it.`
+      );
     });
 
     it("should throw if the signature is invalid", () => {
