@@ -85,7 +85,7 @@ export {
   withTimeout,
 } from "./lib/utils";
 export type { CustomAuthenticationResult } from "./protocol/Authentication";
-export type { BaseUserMeta } from "./protocol/BaseUserMeta";
+export type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 export type {
   BroadcastEventClientMsg,
   ClientMsg,
@@ -187,7 +187,20 @@ export type { DevTools };
 
 // Comments
 export type { CommentsApi } from "./comments";
-export { createCommentsApi } from "./comments";
+export { CommentsApiError, createCommentsApi } from "./comments";
+export type {
+  CommentBodyLinkElementArgs,
+  CommentBodyMentionElementArgs,
+  CommentBodyParagraphElementArgs,
+  CommentBodyResolveUsersArgs,
+  CommentBodyTextElementArgs,
+  StringifyCommentBodyElements,
+  StringifyCommentBodyOptions,
+} from "./comments/comment-body";
+export {
+  getMentionedIdsFromCommentBody,
+  stringifyCommentBody,
+} from "./comments/comment-body";
 export type { BaseMetadata } from "./comments/types/BaseMetadata";
 export type {
   CommentBody,

@@ -22,10 +22,12 @@ import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
 const client = createClient({
-  /* client options */
+  // publicApiKey: "",
+  // authEndpoint: "/api/auth",
+  // throttle: 100,
 });
 
-// Presence represents the properties that will exist on every User in the Room
+// Presence represents the properties that exist on every user in the Room
 // and that will automatically be kept in sync. Accessible through the
 // `user.presence` property. Must be JSON-serializable.
 type Presence = {
@@ -34,7 +36,7 @@ type Presence = {
 };
 
 // Optionally, Storage represents the shared document that persists in the
-// Room, even after all Users leave. Fields under Storage typically are
+// Room, even after all users leave. Fields under Storage typically are
 // LiveList, LiveMap, LiveObject instances, for which updates are
 // automatically persisted and synced to all connected clients.
 type Storage = {
@@ -42,28 +44,30 @@ type Storage = {
   // ...
 };
 
-// Optionally, UserMeta represents static/readonly metadata on each User, as
-// provided by your own custom auth backend (if used). Useful for data that
-// will not change during a session, like a User's name or avatar.
+// Optionally, UserMeta represents static/readonly metadata on each user, as
+// provided by your own custom auth back end (if used). Useful for data that
+// will not change during a session, like a user's name or avatar.
 // type UserMeta = {
 //   id?: string,  // Accessible through `user.id`
 //   info?: Json,  // Accessible through `user.info`
 // };
 
-// Optionally, the type of custom events broadcasted and listened for in this
-// room. Must be JSON-serializable.
+// Optionally, the type of custom events broadcast and listened to in this
+// room. Use a union for multiple events. Must be JSON-serializable.
 // type RoomEvent = {};
 
-// Optionally, ThreadMetadata represents metadata on each thread.
-// Must only contain scalar values.
-// type ThreadMetadata = {
-//   resolved?: boolean;
+// Optionally, when using Comments, ThreadMetadata represents metadata on
+// each thread. Can only contain booleans, strings, and numbers.
+// export type ThreadMetadata = {
+//   resolved: boolean;
+//   quote: string;
+//   time: number;
 // };
 
 export const {
   RoomProvider,
   useMyPresence,
-  useObject,
+  useStorage,
   /* ...all the other hooks you’re using... */
 } = createRoomContext<
   Presence,
@@ -74,11 +78,12 @@ export const {
 
 #### resolveUsers
 
-<Banner title="Private beta">
+<Banner title="Public beta">
 
-Comments is currently in private beta.
-[Sign up for the waitlist](https://forms.gle/xgp54aTMsoH8hrjU9) to get access in
-the near future.
+Comments is currently in beta. If you have any questions or feedback, please
+reach out to us via the dedicated Discord channel,
+[#comments-beta](https://discord.com/channels/913109211746009108/1126614905160749097).
+We’d love to hear from you.
 
 </Banner>
 
@@ -125,11 +130,12 @@ Once that’s done, components will show user names and avatars accordingly.
 
 #### resolveMentionSuggestions
 
-<Banner title="Private beta">
+<Banner title="Public beta">
 
-Comments is currently in private beta.
-[Sign up for the waitlist](https://forms.gle/xgp54aTMsoH8hrjU9) to get access in
-the near future.
+Comments is currently in beta. If you have any questions or feedback, please
+reach out to us via the dedicated Discord channel,
+[#comments-beta](https://discord.com/channels/913109211746009108/1126614905160749097).
+We’d love to hear from you.
 
 </Banner>
 
@@ -390,6 +396,13 @@ const myPresence = useSelf((me) => me.presence);
 const updateMyPresence = useUpdateMyPresence();
 ```
 
+`updateMyPresence` accepts an optional argument to add a new item to the
+undo/redo stack. See [`room.history`][] for more information.
+
+```ts
+updateMyPresence({ selectedId: "xxx" }, { addToHistory: true });
+```
+
 ### useUpdateMyPresence
 
 Returns a setter function to update the current user’s presence.
@@ -410,6 +423,13 @@ import { useUpdateMyPresence } from "./liveblocks.config";
 const updateMyPresence = useUpdateMyPresence();
 
 updateMyPresence({ y: 0 });
+```
+
+`updateMyPresence` accepts an optional argument to add a new item to the
+undo/redo stack. See [`room.history`][] for more information.
+
+```ts
+updateMyPresence({ selectedId: "xxx" }, { addToHistory: true });
 ```
 
 ### useSelf
@@ -1167,11 +1187,12 @@ the dependency arrays of your `useMutation` calls:
 
 ## Comments
 
-<Banner title="Private beta">
+<Banner title="Public beta">
 
-Comments is currently in private beta.
-[Sign up for the waitlist](https://forms.gle/xgp54aTMsoH8hrjU9) to get access in
-the near future.
+Comments is currently in beta. If you have any questions or feedback, please
+reach out to us via the dedicated Discord channel,
+[#comments-beta](https://discord.com/channels/913109211746009108/1126614905160749097).
+We’d love to hear from you.
 
 </Banner>
 

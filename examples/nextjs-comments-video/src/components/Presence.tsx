@@ -1,11 +1,18 @@
 "use client";
 
 import { PresenceStates, useOthers, useSelf } from "@/liveblocks.config";
-import styles from "./Avatars.module.css";
+import styles from "./Presence.module.css";
 import { PauseIcon } from "@/icons/Pause";
 import { PlayIcon } from "@/icons/Play";
+import { ClientSideSuspense } from "@liveblocks/react";
 
-export function Avatars() {
+export function Presence() {
+  return (
+    <ClientSideSuspense fallback={null}>{() => <Avatars />}</ClientSideSuspense>
+  );
+}
+
+function Avatars() {
   const users = useOthers();
   const currentUser = useSelf();
 
@@ -37,8 +44,7 @@ export function Avatars() {
 
 type AvatarProps = { src: string; name: string; state: PresenceStates };
 
-export function Avatar({ src, name, state }: AvatarProps) {
-  // TODO use `state` to show a `playing | paused | seeking` indicator
+function Avatar({ src, name, state }: AvatarProps) {
   return (
     <div className={styles.avatar} data-tooltip={name}>
       <img src={src} className={styles.avatar_picture} alt={name} />

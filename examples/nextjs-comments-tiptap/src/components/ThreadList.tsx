@@ -71,14 +71,18 @@ function CustomThread({
     (thread: CustomThreadData) => {
       removeCommentHighlight(editor, thread.metadata.highlightId);
     },
-    [editor, thread]
+    [editor]
   );
 
   const quoteHtml = getCommentHighlightContent(thread.metadata.highlightId);
 
   return (
     <div className="hide-collaboration-cursor">
-      <div className={styles.thread} data-active={active}>
+      <div
+        className={styles.thread}
+        data-active={active}
+        data-highlight-id={thread.metadata.highlightId}
+      >
         {quoteHtml ? (
           <div
             className={styles.threadQuote}
@@ -127,8 +131,16 @@ function ThreadComposer({ editor }: Props) {
       editor.storage.commentHighlight.currentHighlightId = null;
       editor.storage.commentHighlight.showComposer = false;
       editor.storage.commentHighlight.previousHighlightSelection = null;
+
+      // On mobile, after next render, scroll new thread into view
+      setTimeout(() => {
+        const newThreadElement = document.querySelector(
+          `[data-threads="mobile"] [data-highlight-id="${highlightId}"]`
+        );
+        newThreadElement?.scrollIntoView();
+      });
     },
-    [editor]
+    [editor, createThread]
   );
 
   // If clicking outside the composer, hide it and remove highlight
@@ -139,7 +151,15 @@ function ThreadComposer({ editor }: Props) {
 
     const element = composer.current;
 
-    function handleFocusOut() {
+    function closeComposer(event: FocusEvent) {
+      // Don't close when new focus target a child of .lb-portal (e.g. emoji picker)
+      if (
+        event.relatedTarget instanceof HTMLElement &&
+        event.relatedTarget.closest(".lb-portal")
+      ) {
+        return;
+      }
+
       removeCommentHighlight(
         editor,
         editor.storage.commentHighlight.currentHighlightId
@@ -148,10 +168,10 @@ function ThreadComposer({ editor }: Props) {
       editor.storage.commentHighlight.showComposer = false;
     }
 
-    element.addEventListener("focusout", handleFocusOut);
+    element.addEventListener("focusout", closeComposer);
 
     return () => {
-      element.removeEventListener("focusout", handleFocusOut);
+      element.removeEventListener("focusout", closeComposer);
     };
   }, [editor, composer]);
 

@@ -64,6 +64,12 @@
   background: var(--color-surface-elevated);
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .editorPanel {
+    scroll-behavior: smooth;
+  }
+}
+
 .threadListContainer {
   position: absolute;
   top: 0;

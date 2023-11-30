@@ -34,17 +34,13 @@ import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import type {
-  CommentReactionOptions,
   CommentsRoom,
   CreateCommentOptions,
-  CreateThreadOptions,
-  DeleteCommentOptions,
   EditCommentOptions,
-  EditThreadMetadataOptions,
   ThreadsState,
 } from "./comments/CommentsRoom";
 import { createCommentsRoom } from "./comments/CommentsRoom";
-import type { CommentsApiError } from "./comments/errors";
+import type { CommentsError } from "./comments/errors";
 import { useDebounce } from "./comments/lib/use-debounce";
 import { useAsyncCache } from "./lib/use-async-cache";
 import { useInitial } from "./lib/use-initial";
@@ -185,17 +181,6 @@ function warnIfNoResolveUsers(usersCache?: AsyncCache<unknown, unknown>) {
       "Set the resolveUsers option in createRoomContext to specify user info."
     );
     hasWarnedIfNoResolveUsers = true;
-  }
-}
-
-// TODO: Remove after beta
-let hasWarnedAboutCommentsBeta = false;
-function warnIfBetaCommentsHook() {
-  if (!hasWarnedAboutCommentsBeta && process.env.NODE_ENV !== "production") {
-    console.warn(
-      "Comments is currently in private beta. Learn more at https://liveblocks.io/docs/products/comments."
-    );
-    hasWarnedAboutCommentsBeta = true;
   }
 }
 
@@ -915,7 +900,7 @@ export function createRoomContext<
   }
 
   const commentsErrorEventSource =
-    makeEventSource<CommentsApiError<TThreadMetadata>>();
+    makeEventSource<CommentsError<TThreadMetadata>>();
   const commentsRooms = new Map<
     Room<JsonObject, LsonObject, BaseUserMeta, Json>,
     CommentsRoom<TThreadMetadata>
@@ -934,120 +919,47 @@ export function createRoomContext<
 
   function useThreads(): ThreadsState<TThreadMetadata> {
     const room = useRoom();
-
-    React.useEffect(() => {
-      warnIfBetaCommentsHook();
-    }, []);
-
     return getCommentsRoom(room).useThreads();
   }
 
   function useThreadsSuspense() {
     const room = useRoom();
-
-    React.useEffect(() => {
-      warnIfBetaCommentsHook();
-    }, []);
-
     return getCommentsRoom(room).useThreadsSuspense();
   }
 
   function useCreateThread() {
     const room = useRoom();
-
-    React.useEffect(() => {
-      warnIfBetaCommentsHook();
-    }, []);
-
-    return React.useCallback(
-      (options: CreateThreadOptions<TThreadMetadata>) =>
-        getCommentsRoom(room).createThread(options),
-      [room]
-    );
+    return getCommentsRoom(room).useCreateThread();
   }
 
   function useEditThreadMetadata() {
     const room = useRoom();
-
-    React.useEffect(() => {
-      warnIfBetaCommentsHook();
-    }, []);
-
-    return React.useCallback(
-      (options: EditThreadMetadataOptions<TThreadMetadata>) =>
-        getCommentsRoom(room).editThreadMetadata(options),
-      [room]
-    );
+    return getCommentsRoom(room).useEditThreadMetadata();
   }
 
   function useAddReaction() {
     const room = useRoom();
-
-    React.useEffect(() => {
-      warnIfBetaCommentsHook();
-    }, []);
-
-    return React.useCallback(
-      (options: CommentReactionOptions) =>
-        getCommentsRoom(room).addReaction(options),
-      [room]
-    );
+    return getCommentsRoom(room).useAddReaction();
   }
 
   function useRemoveReaction() {
     const room = useRoom();
-
-    React.useEffect(() => {
-      warnIfBetaCommentsHook();
-    }, []);
-
-    return React.useCallback(
-      (options: CommentReactionOptions) =>
-        getCommentsRoom(room).removeReaction(options),
-      [room]
-    );
+    return getCommentsRoom(room).useRemoveReaction();
   }
 
   function useCreateComment(): (options: CreateCommentOptions) => CommentData {
     const room = useRoom();
-
-    React.useEffect(() => {
-      warnIfBetaCommentsHook();
-    }, []);
-
-    return React.useCallback(
-      (options: CreateCommentOptions) =>
-        getCommentsRoom(room).createComment(options),
-      [room]
-    );
+    return getCommentsRoom(room).useCreateComment();
   }
 
   function useEditComment(): (options: EditCommentOptions) => void {
     const room = useRoom();
-
-    React.useEffect(() => {
-      warnIfBetaCommentsHook();
-    }, []);
-
-    return React.useCallback(
-      (options: EditCommentOptions) =>
-        getCommentsRoom(room).editComment(options),
-      [room]
-    );
+    return getCommentsRoom(room).useEditComment();
   }
 
   function useDeleteComment() {
     const room = useRoom();
-
-    React.useEffect(() => {
-      warnIfBetaCommentsHook();
-    }, []);
-
-    return React.useCallback(
-      (options: DeleteCommentOptions) =>
-        getCommentsRoom(room).deleteComment(options),
-      [room]
-    );
+    return getCommentsRoom(room).useDeleteComment();
   }
 
   const { resolveUsers, resolveMentionSuggestions } = options ?? {};

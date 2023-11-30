@@ -21,3 +21,7 @@
 .lb-portal {
   z-index: var(--z-above-comments-sidemenu);
 }
+
+.lb-composer .lb-composer-editor {
+  outline: none;
+}

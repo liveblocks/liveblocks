@@ -13,14 +13,12 @@ commenting experience to your React application using the hooks from
 from
 [`@liveblocks/react-comments`](/docs/api-reference/liveblocks-react-comments).
 
-<Banner title="Private beta">
+<Banner title="Public beta">
 
-Comments is currently in private beta and is only available to a select group of
-users. If you want to participate in the beta,
-[sign up for the waitlist](https://forms.gle/xgp54aTMsoH8hrjU9). During this
-beta period, breaking changes may occur, but no data loss. We use beta testers’
-feedback to improve the product. Your input is important and helps us shape the
-final version.
+Comments is currently in beta. If you have any questions or feedback, please
+reach out to us via the dedicated Discord channel,
+[#comments-beta](https://discord.com/channels/913109211746009108/1126614905160749097).
+We’d love to hear from you.
 
 </Banner>
 
@@ -102,12 +100,13 @@ final version.
       We’ll add `useThreads` to get the threads in the room, then we’ll use the `Thread` component
       to render them. Finally, we’ll add a way to create threads by adding a `Composer`.
 
-      ```tsx file="Room.tsx" highlight="5,9,11"
+      ```tsx file="Room.tsx" highlight="5,9-12"
       import { useThreads } from "./liveblocks.config";
       import { Composer, Thread } from "@liveblocks/react-comments";
 
       export function Room() {
         const { threads } = useThreads();
+
         return (
           <div>
             {threads.map((thread) => (
@@ -137,17 +136,14 @@ final version.
 
   </Step>
   <Step lastStep>
-    <StepTitle>Next: set up authentication</StepTitle>
+    <StepTitle>Next: authenticate and add your users</StepTitle>
     <StepContent>
+    
+      Comments is set up and working now, but each user is anonymous—the next step is to
+      authenticate each user as they connect, and attach their name and avatar to their comments.
 
-      By default, Liveblocks is configured to work without an authentication endpoint
-      where everyone automatically has access to rooms and where users are assigned a random ID. This approach is great for
-      prototyping where setting up your own security isn’t always
-      required. If you want to start using real user IDs and permissions, you’ll need
-      to set up an authentication endpoint.
-
-      <ButtonLink className="not-markdown" href="/docs/rooms/authentication">
-        Set up authentication
+      <ButtonLink className="not-markdown" href="/docs/guides/how-to-add-users-to-liveblocks-comments">
+        Add your users to Comments
       </ButtonLink>
     </StepContent>
 
@@ -156,8 +152,51 @@ final version.
 
 ## What to read next
 
-Discover the API and check out the examples:
+Congratulations! You’ve set up the foundation to start building a commenting
+experience for your React application.
 
 - [API Reference](/docs/api-reference/liveblocks-react-comments)
-- [Next.js example using the default components](https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-comments)
-- [Next.js example using the primitives with Tailwind](https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-comments-primitives)
+- [How to send email notifications when comments are created](/docs/guides/how-to-send-email-notifications-when-comments-are-created)
+
+---
+
+## Examples using React
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Comments",
+      slug: "comments/react-comments",
+      image: "/images/examples/thumbnails/comments.jpg",
+    }}
+    technologies={["nextjs", "react"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Video Comments",
+      slug: "video-comments/nextjs-comments-video",
+      image: "/images/examples/thumbnails/comments-video.png",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Overlay Comments",
+      slug: "overlay-comments/nextjs-comments-overlay",
+      image: "/images/examples/thumbnails/comments-overlay.png",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Text Editor Comments",
+      slug: "text-editor-comments/nextjs-comments-tiptap",
+      image: "/images/examples/thumbnails/comments-text-editor.png",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>

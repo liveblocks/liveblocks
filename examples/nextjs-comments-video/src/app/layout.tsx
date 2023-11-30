@@ -2,6 +2,8 @@ import { Inter } from "next/font/google";
 
 import "../globals.css";
 import "@liveblocks/react-comments/styles.css";
+import "@liveblocks/react-comments/styles/dark/attributes.css";
+import "../comments.css";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -20,7 +22,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={inter.variable} data-theme="dark">
       <head>
         <link
           href="https://liveblocks.io/favicon-32x32.png"

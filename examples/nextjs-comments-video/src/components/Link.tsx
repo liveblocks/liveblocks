@@ -8,5 +8,9 @@ export function Link({
   href,
   children,
 }: ComposerEditorLinkProps | CommentBodyLinkProps) {
-  return <span className={styles.link}>{children}</span>;
+  return (
+    <a href={href} className={styles.link}>
+      {children}
+    </a>
+  );
 }

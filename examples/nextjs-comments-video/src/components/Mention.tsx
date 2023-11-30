@@ -1,14 +1,22 @@
+"use client";
+
 import {
   CommentBodyMentionProps,
   ComposerEditorMentionProps,
 } from "@liveblocks/react-comments/primitives";
-import { useUser } from "@/liveblocks.config";
 import styles from "./Mention.module.css";
+import { Suspense } from "react";
+import { User } from "./User";
 
 export function Mention({
   userId,
 }: ComposerEditorMentionProps | CommentBodyMentionProps) {
-  const { user } = useUser(userId);
-
-  return <span className={styles.mention}>@{user.name}</span>;
+  return (
+    <span className={styles.mention}>
+      @
+      <Suspense fallback="…">
+        <User userId={userId} />
+      </Suspense>
+    </span>
+  );
 }

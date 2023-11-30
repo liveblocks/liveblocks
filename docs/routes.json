@@ -27,6 +27,11 @@
             "hidden": true
           },
           {
+            "title": "Comments",
+            "path": "/get-started/nextjs-comments",
+            "hidden": true
+          },
+          {
             "title": "Redux",
             "path": "/get-started/redux",
             "hidden": true

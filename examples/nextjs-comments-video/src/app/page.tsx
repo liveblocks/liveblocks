@@ -2,7 +2,7 @@ import { Room } from "@/app/Room";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { Threads } from "@/components/Threads";
 import styles from "./page.module.css";
-import { Avatars } from "@/components/Avatars";
+import { Presence } from "@/components/Presence";
 
 export default function Home() {
   return (
@@ -10,7 +10,7 @@ export default function Home() {
       <div className={styles.wrapper}>
         <header className={styles.header}>
           <h1>michael-james-16296843-720p.mp4</h1>
-          <Avatars />
+          <Presence />
         </header>
         <main className={styles.main}>
           <div className={styles.videoPanel}>

@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Composer,
   ComposerSubmitComment,
@@ -61,47 +63,53 @@ export function NewThreadComposer({
   );
 
   return (
-    <>
-      <Composer.Form onComposerSubmit={handleSubmit} className={styles.wrapper}>
-        <div className={styles.composer}>
-          {currentUser && (
-            <img
-              className={styles.composerAvatar}
-              width={24}
-              height={24}
-              src={currentUser.info.avatar}
-              alt={currentUser.info.name}
-            />
-          )}
-          <Composer.Editor
-            className={styles.composerEditor}
-            placeholder="Add comment…"
-            onFocus={handleFocus}
-            onKeyDown={handleKeyDown}
-            components={{
-              Mention,
-              MentionSuggestions,
-              Link,
-            }}
+    <Composer.Form onComposerSubmit={handleSubmit} className={styles.wrapper}>
+      <div className={styles.composer}>
+        {currentUser && (
+          <img
+            className={styles.composerAvatar}
+            width={24}
+            height={24}
+            src={currentUser.info.avatar}
+            alt={currentUser.info.name}
           />
-        </div>
-        <div className={styles.options}>
-          <label htmlFor="attach-time" className={styles.optionsTime}>
-            <span>
-              <TimeIcon />
-              {formatTime(time)}
-            </span>
-            <input
-              id="attach-time"
-              className={styles.checkbox}
-              type="checkbox"
-              checked={attachTime}
-              onChange={handleCheckboxChecked}
-            />
-          </label>
-          <Composer.Submit className="button">Comment</Composer.Submit>
-        </div>
-      </Composer.Form>
-    </>
+        )}
+        <Composer.Editor
+          className={styles.composerEditor}
+          placeholder="Add comment…"
+          onFocus={handleFocus}
+          onKeyDown={handleKeyDown}
+          components={{
+            Mention: (props) => (
+              <Composer.Mention asChild>
+                <Mention {...props} />
+              </Composer.Mention>
+            ),
+            MentionSuggestions,
+            Link: (props) => (
+              <Composer.Link asChild>
+                <Link {...props}>{props.children}</Link>
+              </Composer.Link>
+            ),
+          }}
+        />
+      </div>
+      <div className={styles.options}>
+        <label htmlFor="attach-time" className={styles.optionsTime}>
+          <span>
+            <TimeIcon />
+            {formatTime(time)}
+          </span>
+          <input
+            id="attach-time"
+            className={styles.checkbox}
+            type="checkbox"
+            checked={attachTime}
+            onChange={handleCheckboxChecked}
+          />
+        </label>
+        <Composer.Submit className="button">Comment</Composer.Submit>
+      </div>
+    </Composer.Form>
   );
 }

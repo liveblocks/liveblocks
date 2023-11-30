@@ -16,8 +16,7 @@ function ContentFormat({ content, className, ...props }: Props) {
         <span className="truncate font-mono text-[95%]">ContentFormat</span>
       </div>
       <div className="truncate font-mono text-[95%] opacity-60">
-        {// eslint-disable-next-line @typescript-eslint/no-base-to-string
-        content.value?.toString()}
+        {content.value?.toString()}
       </div>
     </div>
   );

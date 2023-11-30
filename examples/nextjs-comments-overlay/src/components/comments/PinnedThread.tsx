@@ -71,7 +71,13 @@ export function PinnedThread({
         onPointerUp={handlePointerUp}
         data-draggable={true}
       >
-        <img src={user.avatar} alt={user.name} width="28px" height="28px" />
+        <img
+          src={user.avatar}
+          alt={user.name}
+          width="28px"
+          height="28px"
+          draggable={false}
+        />
       </div>
       {!minimized ? (
         <div className={styles.pinnedContent}>

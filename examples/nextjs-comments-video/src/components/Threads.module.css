@@ -10,6 +10,7 @@
 .threadWrapper {
   position: relative;
   border-bottom: 1px solid var(--gray4);
+  background: var(--gray1);
 }
 
 .thread {
@@ -42,7 +43,7 @@
   color: var(--accent);
   display: inline-flex;
   gap: 6px;
-  margin: var(--lb-spacing) 0 0 var(--lb-spacing);
+  margin: var(--spacing) 0 0 var(--spacing);
   padding: 0 6px;
   align-items: center;
   font-size: 13px;

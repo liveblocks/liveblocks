@@ -199,11 +199,15 @@ export function VideoPlayer() {
       </div>
 
       {/* Add comment component */}
-      <NewThreadComposer
-        getCurrentPercentage={getCurrentPercentage}
-        setPlaying={setPlaying}
-        time={duration * time}
-      />
+      <ClientSideSuspense fallback={null}>
+        {() => (
+          <NewThreadComposer
+            getCurrentPercentage={getCurrentPercentage}
+            setPlaying={setPlaying}
+            time={duration * time}
+          />
+        )}
+      </ClientSideSuspense>
     </div>
   );
 }

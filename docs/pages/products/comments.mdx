@@ -13,10 +13,12 @@ all kinds of commenting experiences that look and feel like your product. With
 Comments, you can build things like mentions, thread resolution, text
 annotations, video annotations, and more.
 
-<Banner title="Private beta">
-  
-Comments is currently in private beta. [Sign up for the waitlist](https://forms.gle/xgp54aTMsoH8hrjU9)
-to get access in the near future.
+<Banner title="Public beta">
+
+Comments is currently in beta. If you have any questions or feedback, please
+reach out to us via the dedicated Discord channel,
+[#comments-beta](https://discord.com/channels/913109211746009108/1126614905160749097).
+We’d love to hear from you.
 
 </Banner>
 
@@ -32,26 +34,69 @@ to get access in the near future.
   />
   <DocsCard
     type="technology"
-    title="React (Components)"
+    title="React Comments"
     href="/docs/api-reference/liveblocks-react-comments"
     description="@liveblocks/react-comments"
     visual={<DocsReactIcon />}
   />
+  <DocsCard
+    type="technology"
+    title="REST API"
+    href="/docs/api-reference/rest-api-endpoints#Comments"
+    description="HTTP endpoints"
+    visual={<DocsApiIcon />}
+  />
 </ListGrid>
 
-## Philosophy
+### Examples using Comments
 
-Learn more about the overall philosophy for Liveblocks Comments through a few
-opinions and design decisions. Comments is meant to be fully customizable,
-enabling you to create all kinds of commenting experiences that look and feel
-like your product. With Comments, you can build things like mentions, thread
-resolution, text annotations, video annotations, and more.
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Comments",
+      slug: "comments/nextjs-comments",
+      image: "/images/examples/thumbnails/comments.jpg",
+    }}
+    technologies={["nextjs", "react"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Video Comments",
+      slug: "video-comments/nextjs-comments-video",
+      image: "/images/examples/thumbnails/comments-video.png",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Overlay Comments",
+      slug: "overlay-comments/nextjs-comments-overlay",
+      image: "/images/examples/thumbnails/comments-overlay.png",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Text Editor Comments",
+      slug: "text-editor-comments/nextjs-comments-tiptap",
+      image: "/images/examples/thumbnails/comments-text-editor.png",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>
+
+## Overview
 
 ### No need to synchronize your users’ info with Liveblocks
 
 When posting a comment, we do not store the author name or avatar. We only store
-the author ID. We believe that it’s easier for you to retrieve users metadata
-when needed instead of synchronizing your database of users with Liveblocks.
+the author’s user ID. We believe that it’s easier for you to retrieve users
+metadata when needed instead of synchronizing your database of users with
+Liveblocks.
 
 ```tsx
 createRoomContext(client, {
@@ -68,7 +113,7 @@ createRoomContext(client, {
 
 ### Metadata
 
-With metadata available at the threads level, you can tailor your commenting
+With the ability to attach metadata to threads, you can tailor your commenting
 experience to your specific needs by refining and shaping it.
 
 Some examples of custom requirements include:
@@ -112,13 +157,12 @@ implementation pathways:
 
 #### Default components
 
-- The default components are designed to be easily integrated as plug-and-play.
-- They come with customizable but optional (and overridable) default styles,
-  including support for dark mode.
-- They are opinionated with a few options, you’ll benefit from our UX and UI
-  expertise incorporated into these components.
+- Opinionated components that work out-of-the-box.
+- Customizable but optional (and overridable) default styles, including support
+  for dark mode.
 
-```tsx file="App.tsx" highlight="2,9,11"
+```tsx file="App.tsx" highlight="1,3,10,12"
+import "@liveblocks/react-comments/styles.css";
 import { useThreads } from "./liveblocks.config";
 import { Composer, Thread } from "@liveblocks/react-comments";
 
@@ -160,15 +204,8 @@ export function CustomComment({ comment }) {
 ##### Inspired by Radix
 
 Our admiration for [Radix](https://www.radix-ui.com/) runs deep. Their approach
-to low-level components has been a beacon of inspiration as we crafted the
-primitives.
-
-- We prioritize making the components usable for everyone.
-- The components are designed for complete stylistic customization without
-  default style constraints. They are also modular, allowing for easy
-  combination and extensibility.
-- We minimize dependencies to ensure the components remain efficient and
-  lightweight.
+to low-level components and composition has been a beacon of inspiration as we
+crafted the primitives.
 
 #### Combining default components and primitives
 
@@ -181,13 +218,13 @@ component from scratch using the primitives and still use the default
 ### Webhooks
 
 Webhooks are the foundation for extending Liveblocks in any way you want. You
-can subscribe to any comments-related events, such as creation, edition and
+can subscribe to any Comments-related events, such as creation, edition and
 deletion.
 
 With Webhooks, you can leverage your own email marketing tool to send emails,
 apply your product’s branding, choose your notification strategy, or even
 synchronize threads in Slack.
 
-To use our Webhooks, please follow [our guide](/docs/platform/webhooks) and/or
-take a look at our
-[example specific to comments events](https://github.com/liveblocks/liveblocks/tree/comments/examples/nextjs-comments/src/app/api/webhooks/route.ts).
+To start using Webhooks, please follow
+[the general guide](/docs/platform/webhooks) and/or take a look at
+[the specific guide about email notifications when comments are created](/docs/guides/how-to-send-email-notifications-when-comments-are-created).

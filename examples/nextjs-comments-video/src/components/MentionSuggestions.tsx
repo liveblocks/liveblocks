@@ -1,9 +1,13 @@
+"use client";
+
 import {
   Composer,
   ComposerEditorMentionSuggestionsProps,
 } from "@liveblocks/react-comments/primitives";
-import { useUser } from "@/liveblocks.config";
 import styles from "./MentionSuggestions.module.css";
+import { Avatar } from "./Avatar";
+import { Suspense } from "react";
+import { User } from "./User";
 
 export function MentionSuggestions({
   userIds,
@@ -20,15 +24,15 @@ export function MentionSuggestions({
 }
 
 function MentionSuggestion({ userId }: { userId: string }) {
-  const { user } = useUser(userId);
-
   return (
     <Composer.SuggestionsListItem
       value={userId}
       className={styles.mentionSuggestion}
     >
-      <img src={user.avatar} width={20} height="20" alt={user.name} />
-      {user.name}
+      <Suspense>
+        <Avatar userId={userId} width={20} height={20} />
+        <User userId={userId} />
+      </Suspense>
     </Composer.SuggestionsListItem>
   );
 }
