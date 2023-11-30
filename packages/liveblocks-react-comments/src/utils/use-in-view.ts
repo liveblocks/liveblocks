@@ -35,6 +35,9 @@ function unobserve(element: Element) {
   intersectionObserver.unobserve(element);
 }
 
+/**
+ * Observe whether an element is currently in view or not.
+ */
 export function useInView(ref: RefObject<Element>, options?: Options) {
   const [isInView, setInView] = useState(false);
   const enabled = options?.enabled ?? true;
