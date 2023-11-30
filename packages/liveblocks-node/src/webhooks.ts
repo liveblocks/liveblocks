@@ -27,13 +27,18 @@ export class WebhookHandler {
    * Verifies a webhook request and returns the event
    */
   public verifyRequest(request: WebhookRequest): WebhookEvent {
-    const { webhookId, timestamp, rawSignatures } = this.verifyHeaders(
-      request.headers
-    );
+    const { headers, rawBody } = request;
+
+    const { webhookId, timestamp, rawSignatures } = this.verifyHeaders(headers);
+
+    if (typeof rawBody !== "string") {
+      throw new Error(`Invalid body, must be a string, got "${typeof rawBody}" instead. 
+      It is likely that you need to JSON.stringify the body before passing it.`);
+    }
 
     this.verifyTimestamp(timestamp);
 
-    const signature = this.sign(`${webhookId}.${timestamp}.${request.rawBody}`);
+    const signature = this.sign(`${webhookId}.${timestamp}.${rawBody}`);
 
     const expectedSignatures = rawSignatures
       .split(" ")
@@ -50,7 +55,7 @@ export class WebhookHandler {
         )}, got ${signature}`
       );
 
-    const event: WebhookEvent = JSON.parse(request.rawBody) as WebhookEvent;
+    const event: WebhookEvent = JSON.parse(rawBody) as WebhookEvent;
 
     this.verifyWebhookEventType(event);
 
