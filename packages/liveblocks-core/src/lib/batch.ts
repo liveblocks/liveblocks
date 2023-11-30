@@ -7,7 +7,7 @@ type Reject = (reason?: unknown) => void;
 
 type BatchCallback<Result, Args extends unknown[]> = (
   args: Args[]
-) => Result[] | Promise<Result[]>;
+) => (Result | Error)[] | Promise<(Result | Error)[]>;
 
 class BatchItem<Result, Args extends unknown[]> {
   readonly args: Args;
@@ -54,7 +54,7 @@ export class Batch<Result, Args extends unknown[] = []> {
       return this.flush();
     } else if (this.queue.length === 1) {
       this.clearDelayTimeout();
-      this.delayTimeoutId = setTimeout(this.flush, this.delay);
+      this.delayTimeoutId = setTimeout(this.flush.bind(this), this.delay);
     }
   }
 
@@ -73,17 +73,33 @@ export class Batch<Result, Args extends unknown[] = []> {
     const items = this.queue.splice(0);
     const args = items.map((item) => item.args);
 
-    void Promise.resolve(this.callback(args)).then((results: Result[]) => {
-      results.forEach((result, index) => {
-        const item = items[index];
+    void Promise.resolve(this.callback(args))
+      .then((results: (Result | Error)[]) => {
+        items.forEach((item, index) => {
+          const result = results?.[index];
 
-        if (result instanceof Error) {
-          item.reject(result);
-        } else {
-          item.resolve(result);
-        }
+          if (result instanceof Error) {
+            item.reject(result);
+          } else if (result !== undefined) {
+            item.resolve(result);
+          } else {
+            if (Array.isArray(results)) {
+              item.reject(
+                new Error(
+                  `Batch callback must return an array of the same length as the number of items in the batch. Expected ${items.length}, but got ${results.length}.`
+                )
+              );
+            } else {
+              item.reject(new Error("Batch callback must return an array."));
+            }
+          }
+        });
+      })
+      .catch((error) => {
+        items.forEach((item) => {
+          item.reject(error);
+        });
       });
-    });
   }
 
   private clearDelayTimeout(): void {
