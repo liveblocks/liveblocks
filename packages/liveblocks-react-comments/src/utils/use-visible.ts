@@ -36,10 +36,10 @@ function unobserve(element: Element) {
 }
 
 /**
- * Observe whether an element is currently in view or not.
+ * Observe whether an element is currently visible or not.
  */
-export function useInView(ref: RefObject<Element>, options?: Options) {
-  const [isInView, setInView] = useState(false);
+export function useVisible(ref: RefObject<Element>, options?: Options) {
+  const [isVisible, setVisible] = useState(false);
   const enabled = options?.enabled ?? true;
 
   useEffect(() => {
@@ -51,7 +51,7 @@ export function useInView(ref: RefObject<Element>, options?: Options) {
 
     if (enabled) {
       observe(element, (entry) => {
-        setInView(entry.isIntersecting);
+        setVisible(entry.isIntersecting);
       });
     } else {
       unobserve(element);
@@ -62,5 +62,5 @@ export function useInView(ref: RefObject<Element>, options?: Options) {
     };
   }, [enabled]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return isInView;
+  return isVisible;
 }
