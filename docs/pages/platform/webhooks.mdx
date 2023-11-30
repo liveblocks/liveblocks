@@ -30,8 +30,12 @@ so from within the webhooks dashboard for your project.
 3. Click the **“Create endpoint…”** button
 4. Enter the URL of the endpoint you would like to use. Configure with your own
    endpoint or generate a
-   <a href="https://www.svix.com/play/" target="_blank">Svix playground</a> link
-   by clicking on **"use Svix play"**.
+   <a href="https://www.svix.com/play/" target="_blank">
+     Svix playground
+   </a>
+
+link by clicking on **"use Svix play"**.
+
 5. Select the events you would like to subscribe to
 6. Click **“Create endpoint”**
 
@@ -115,12 +119,22 @@ const webhookHandler = new WebhookHandler(process.env.SECRET); // "whsec_..." ob
 
 #### 3. Verify an event request [@hidden]
 
+We can verify a genuine webhook request with
+[`WebhookHandler.verifyRequest`](/docs/api-reference/liveblocks-node#verifyRequest)
+
 ```ts
 const event = webhookHandler.verifyRequest({
   headers: req.headers,
-  rawBody: JSON.stringify(body),
+  rawBody: req.body,
 });
 ```
+
+<Banner title="rawBody is a string" type="warning">
+
+Note that some frameworks parse request bodies into objects, so you may need to
+use `rawBody: JSON.stringify(req.body)` instead.
+
+</Banner>
 
 The method will return a `WebhookEvent` object that is fully typed. You can then
 use the event to perform actions based on the event type.
