@@ -49,12 +49,56 @@ export class Batch<Result, Args extends unknown[] = []> {
     this.delay = options?.delay ?? DEFAULT_DELAY;
   }
 
+  private clearDelayTimeout(): void {
+    if (this.delayTimeoutId !== undefined) {
+      clearTimeout(this.delayTimeoutId);
+      this.delayTimeoutId = undefined;
+    }
+  }
+
   private schedule() {
     if (this.queue.length === this.size) {
-      return this.flush();
+      void this.flush();
     } else if (this.queue.length === 1) {
       this.clearDelayTimeout();
-      this.delayTimeoutId = setTimeout(this.flush.bind(this), this.delay);
+      this.delayTimeoutId = setTimeout(() => void this.flush(), this.delay);
+    }
+  }
+
+  private async flush(): Promise<void> {
+    if (this.queue.length === 0) {
+      return;
+    }
+
+    const items = this.queue.splice(0);
+    const args = items.map((item) => item.args);
+
+    try {
+      const results = await this.callback(args);
+
+      items.forEach((item, index) => {
+        const result = results?.[index];
+
+        if (result instanceof Error) {
+          item.reject(result);
+        } else if (result !== undefined) {
+          item.resolve(result);
+        } else {
+          if (Array.isArray(results)) {
+            item.reject(
+              new Error(
+                `Batch callback must return an array of the same length as the number of items in the batch. Expected ${items.length}, but got ${results.length}.`
+              )
+            );
+          } else {
+            item.reject(new Error("Batch callback must return an array."));
+          }
+        }
+      });
+    } catch (error) {
+      items.forEach((item) => {
+        item.reject(error);
+      });
     }
   }
 
@@ -63,48 +107,6 @@ export class Batch<Result, Args extends unknown[] = []> {
       this.queue.push(new BatchItem(args, resolve, reject));
       this.schedule();
     });
-  }
-
-  flush(): void {
-    if (this.queue.length === 0) {
-      return;
-    }
-
-    const items = this.queue.splice(0);
-    const args = items.map((item) => item.args);
-
-    void Promise.resolve(this.callback(args))
-      .then((results: (Result | Error)[]) => {
-        items.forEach((item, index) => {
-          const result = results?.[index];
-
-          if (result instanceof Error) {
-            item.reject(result);
-          } else if (result !== undefined) {
-            item.resolve(result);
-          } else {
-            if (Array.isArray(results)) {
-              item.reject(
-                new Error(
-                  `Batch callback must return an array of the same length as the number of items in the batch. Expected ${items.length}, but got ${results.length}.`
-                )
-              );
-            } else {
-              item.reject(new Error("Batch callback must return an array."));
-            }
-          }
-        });
-      })
-      .catch((error) => {
-        items.forEach((item) => {
-          item.reject(error);
-        });
-      });
-  }
-
-  private clearDelayTimeout(): void {
-    clearTimeout(this.delayTimeoutId);
-    this.delayTimeoutId = undefined;
   }
 
   clear(): void {

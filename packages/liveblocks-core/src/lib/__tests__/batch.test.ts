@@ -3,6 +3,7 @@ import { Batch } from "../batch";
 
 const SOME_TIME = 5;
 const ERROR_MESSAGE = "error";
+const ERROR = new Error(ERROR_MESSAGE);
 
 const synchronousCallback = (args: [string][]) => {
   return args.map(([userId]) => userId);
@@ -69,21 +70,20 @@ describe("Batch", () => {
     expect(callback).toHaveBeenNthCalledWith(2, [["b"]]);
   });
 
-  test("should batch manually", async () => {
-    const callback = jest.fn(synchronousCallback);
+  test("should reject erroring batch", async () => {
+    const callback = jest.fn(() => {
+      throw ERROR;
+    });
     const batch = new Batch<string, [string]>(callback, { delay: SOME_TIME });
 
     const a = batch.add("a");
-    batch.flush();
     const b = batch.add("b");
 
-    await expect(a).resolves.toEqual("a");
-    await expect(b).resolves.toEqual("b");
-    expect(callback).toHaveBeenNthCalledWith(1, [["a"]]);
-    expect(callback).toHaveBeenNthCalledWith(2, [["b"]]);
+    await expect(a).rejects.toEqual(ERROR);
+    await expect(b).rejects.toEqual(ERROR);
   });
 
-  test("should reject batch", async () => {
+  test("should reject rejected batch", async () => {
     const callback = jest.fn(() => {
       return Promise.reject(ERROR_MESSAGE);
     });
@@ -98,7 +98,7 @@ describe("Batch", () => {
 
   test("should reject individual calls", async () => {
     const callback = jest.fn(() => {
-      return ["a", new Error(ERROR_MESSAGE)];
+      return ["a", ERROR];
     });
     const batch = new Batch<string, [string]>(callback, { delay: SOME_TIME });
 
@@ -106,7 +106,7 @@ describe("Batch", () => {
     const b = batch.add("b");
 
     await expect(a).resolves.toEqual("a");
-    await expect(b).rejects.toEqual(new Error(ERROR_MESSAGE));
+    await expect(b).rejects.toEqual(ERROR);
   });
 
   test("should reject if callback doesn't return an array", async () => {
