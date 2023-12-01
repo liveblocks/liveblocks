@@ -965,6 +965,40 @@ export class Liveblocks {
   }
 
   /**
+   * Edits a comment. The comment must already exist in the specified room and thread. If the comment does not exist, a `LiveblocksError` will be thrown with status code 404.
+   * @param params.roomId The room ID to edit the comment in.
+   * @param params.threadId The thread ID to edit the comment in.
+   * @param params.commentId The comment ID to edit.
+   * @param params.data.body The body of the comment.
+   * @param params.data.editedAt (optional) The date the comment was edited.
+   * @returns The edited comment.
+   */
+  public async editComment(params: {
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    data: {
+      body: CommentBody;
+      editedAt?: Date;
+    };
+  }): Promise<CommentData> {
+    const { roomId, threadId, commentId, data } = params;
+
+    const res = await this.put(
+      url`/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`,
+      {
+        ...data,
+        editedAt: data.editedAt?.toISOString(),
+      }
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+    return (await res.json()) as Promise<CommentData>;
+  }
+
+  /**
    * Creates a new thread. The thread will be created with the specified comment as its first comment.
    * If the thread already exists, a `LiveblocksError` will be thrown with status code 409.
    * @param params.roomId The room ID to create the thread in.
