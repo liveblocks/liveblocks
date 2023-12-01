@@ -4,6 +4,7 @@
  * @liveblocks/core has browser-specific code.
  */
 import type {
+  BaseMetadata,
   CommentBody,
   CommentData,
   IUserInfo,
@@ -933,7 +934,7 @@ export class Liveblocks {
 
   /**
    * Creates a comment.
-   * 
+   *
    * @param params.roomId The room ID to create the comment in.
    * @param params.threadId The thread ID to create the comment in.
    * @returns The created comment.
@@ -961,6 +962,38 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
     return (await res.json()) as Promise<CommentData>;
+  }
+
+  public async createThread<
+    TThreadMetadata extends BaseMetadata = never,
+  >(params: {
+    roomId: string;
+    thread: {
+      metadata: [TThreadMetadata] extends [never]
+        ? Record<string, never>
+        : TThreadMetadata;
+      comment: {
+        userId: string;
+        createdAt?: Date;
+        body: CommentBody;
+      };
+    };
+  }): Promise<ThreadData> {
+    const { roomId, thread } = params;
+
+    const res = await this.post(url`/v2/rooms/${roomId}/threads`, {
+      ...thread,
+      comment: {
+        ...thread.comment,
+        createdAt: thread.comment.createdAt?.toISOString(),
+      },
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+    return (await res.json()) as Promise<ThreadData>;
   }
 }
 
