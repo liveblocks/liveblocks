@@ -999,6 +999,28 @@ export class Liveblocks {
   }
 
   /**
+   * Deletes a comment. The comment must already exist in the specified room and thread. If the comment does not exist, a `LiveblocksError` will be thrown with status code 404.
+   * @param params.roomId The room ID to delete the comment in.
+   * @param params.threadId The thread ID to delete the comment in.
+   * @param params.commentId The comment ID to delete.
+   */
+  public async deleteComment(params: {
+    roomId: string;
+    threadId: string;
+    commentId: string;
+  }): Promise<void> {
+    const { roomId, threadId, commentId } = params;
+
+    const res = await this.delete(
+      url`/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+  }
+
+  /**
    * Creates a new thread. The thread will be created with the specified comment as its first comment.
    * If the thread already exists, a `LiveblocksError` will be thrown with status code 409.
    * @param params.roomId The room ID to create the thread in.
