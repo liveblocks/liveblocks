@@ -1005,6 +1005,40 @@ export class Liveblocks {
     }
     return (await res.json()) as Promise<ThreadData>;
   }
+
+  /**
+   * Updates a thread's metadata. The thread must already exist in the specified room. If the thread does not exist, a `LiveblocksError` will be thrown with status code 404.
+   * @param params.roomId The room ID to update the thread in.
+   * @param params.threadId The thread ID to update.
+   * @param params.data.metadata The metadata for the thread. Value must be a string, boolean or number
+   * @param params.data.userId The user ID of the user who updated the thread.
+   * @returns The updated thread.
+   */
+  public async updateThreadMetadata<
+    TThreadMetadata extends BaseMetadata = never,
+  >(params: {
+    roomId: string;
+    threadId: string;
+    data: {
+      metadata: [TThreadMetadata] extends [never]
+        ? Record<string, never>
+        : TThreadMetadata;
+      userId: string;
+    };
+  }): Promise<ThreadData> {
+    const { roomId, threadId, data } = params;
+
+    const res = await this.post(
+      url`/v2/rooms/${roomId}/threads/${threadId}/metadata`,
+      data
+    );
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+    return (await res.json()) as Promise<ThreadData>;
+  }
 }
 
 export class LiveblocksError extends Error {
