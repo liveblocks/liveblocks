@@ -964,12 +964,22 @@ export class Liveblocks {
     return (await res.json()) as Promise<CommentData>;
   }
 
+  /**
+   * Creates a new thread. The thread will be created with the specified comment as its first comment.
+   * If the thread already exists, a `LiveblocksError` will be thrown with status code 409.
+   * @param params.roomId The room ID to create the thread in.
+   * @param params.thread.metadata (optional) The metadata for the thread. Supports upto a maximum of 10 entries. Value must be a string, boolean or number
+   * @param params.thread.comment.userId The user ID of the user who created the comment.
+   * @param params.thread.comment.createdAt (optional) The date the comment was created.
+   * @param params.thread.comment.body The body of the comment.
+   * @returns The created thread. The thread will be created with the specified comment as its first comment.
+   */
   public async createThread<
     TThreadMetadata extends BaseMetadata = never,
   >(params: {
     roomId: string;
     thread: {
-      metadata: [TThreadMetadata] extends [never]
+      metadata?: [TThreadMetadata] extends [never]
         ? Record<string, never>
         : TThreadMetadata;
       comment: {
