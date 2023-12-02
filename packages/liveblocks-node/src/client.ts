@@ -1095,6 +1095,41 @@ export class Liveblocks {
     }
     return (await res.json()) as Promise<ThreadData>;
   }
+
+  /**
+   * Deletes a reaction from a comment. The comment must already exist in the specified room and thread. If the comment does not exist, a `LiveblocksError` will be thrown with status code 404.
+   * @param params.roomId The room ID to delete the comment reaction in.
+   * @param params.threadId The thread ID to delete the comment reaction in.
+   * @param params.commentId The comment ID to delete the reaction from.
+   * @param params.data.emoji The (emoji) reaction to delete.
+   * @param params.data.userId The user ID of the user associated with the reaction.
+   * @param params.data.removedAt (optional) The date the reaction is set to be deleted.
+   */
+  public async deleteCommentReaction(params: {
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    data: {
+      emoji: string;
+      userId: string;
+      removedAt?: Date;
+    };
+  }): Promise<void> {
+    const { roomId, threadId, data } = params;
+
+    const res = await this.post(
+      url`/v2/rooms/${roomId}/threads/${threadId}/comments/${params.commentId}/remove-reaction`,
+      {
+        ...data,
+        removedAt: data.removedAt?.toISOString(),
+      }
+    );
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+  }
 }
 
 export class LiveblocksError extends Error {
