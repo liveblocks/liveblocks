@@ -1160,6 +1160,7 @@ export class Liveblocks {
    * @param params.threadId The thread ID to update.
    * @param params.data.metadata The metadata for the thread. Value must be a string, boolean or number
    * @param params.data.userId The user ID of the user who updated the thread.
+   * @param params.data.updatedAt (optional) The date the thread is set to be updated.
    * @returns The updated thread.
    */
   public async updateThreadMetadata<
@@ -1170,13 +1171,17 @@ export class Liveblocks {
     data: {
       metadata: BaseMetadata;
       userId: string;
+      updatedAt?: Date;
     };
   }): Promise<ThreadData<TThreadMetadata>> {
     const { roomId, threadId, data } = params;
 
     const res = await this.post(
       url`/v2/rooms/${roomId}/threads/${threadId}/metadata`,
-      data
+      {
+        ...data,
+        updatedAt: data.updatedAt?.toISOString(),
+      }
     );
 
     if (!res.ok) {
