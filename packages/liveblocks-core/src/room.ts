@@ -709,6 +709,8 @@ type PrivateRoomAPI = {
     explicitClose(event: IWebSocketCloseEvent): void;
     rawSend(data: string): void;
   };
+
+  _disableThrottle(): void;
 };
 
 // The maximum message size on websockets is 1MB. We'll set the threshold
@@ -2353,6 +2355,8 @@ export function createRoom<
           explicitClose: (event) => managedSocket._privateSendMachineEvent({ type: "EXPLICIT_SOCKET_CLOSE", event }),
           rawSend: (data) => managedSocket.send(data),
         },
+
+        _disableThrottle: () => (config.throttleDelay = 0),
       },
 
       id: config.roomId,
