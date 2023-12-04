@@ -1022,6 +1022,9 @@ export class Liveblocks {
    *
    * @param params.roomId The room ID to create the comment in.
    * @param params.threadId The thread ID to create the comment in.
+   * @param params.data.userId The user ID of the user who is set to create the comment.
+   * @param params.data.createdAt (optional) The date the comment is set to be created.
+   * @param params.data.body The body of the comment.
    * @returns The created comment.
    */
   public async createComment(params: {
