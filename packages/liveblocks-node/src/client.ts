@@ -112,6 +112,12 @@ export type ThreadData<TThreadMetadata extends BaseMetadata = never> = Omit<
   comments: CommentData[];
 };
 
+export type CommentReaction = {
+  emoji: string;
+  createdAt: string;
+  userId: string;
+};
+
 export type RoomUser<Info> = {
   type: "user";
   id: string | null;
@@ -1042,7 +1048,7 @@ export class Liveblocks {
   }
 
   /**
-   * Edits a comment. The comment must already exist in the specified room and thread. If the comment does not exist, a `LiveblocksError` will be thrown with status code 404.
+   * Edits a comment.
    * @param params.roomId The room ID to edit the comment in.
    * @param params.threadId The thread ID to edit the comment in.
    * @param params.commentId The comment ID to edit.
@@ -1077,7 +1083,7 @@ export class Liveblocks {
   }
 
   /**
-   * Deletes a comment. The comment must already exist in the specified room and thread. If the comment does not exist, a `LiveblocksError` will be thrown with status code 404.
+   * Deletes a comment.
    * @param params.roomId The room ID to delete the comment in.
    * @param params.threadId The thread ID to delete the comment in.
    * @param params.commentId The comment ID to delete.
@@ -1144,7 +1150,7 @@ export class Liveblocks {
   }
 
   /**
-   * Updates a thread's metadata. The thread must already exist in the specified room. If the thread does not exist, a `LiveblocksError` will be thrown with status code 404.
+   * Updates a thread's metadata.
    * @param params.roomId The room ID to update the thread in.
    * @param params.threadId The thread ID to update.
    * @param params.data.metadata The metadata for the thread. Value must be a string, boolean or number
@@ -1179,9 +1185,47 @@ export class Liveblocks {
   }
 
   /**
-   * Deletes a reaction from a comment. The comment must already exist in the specified room and thread. If the comment does not exist, a `LiveblocksError` will be thrown with status code 404.
-   * @param params.roomId The room ID to delete the comment reaction in.
-   * @param params.threadId The thread ID to delete the comment reaction in.
+   * Adds a new comment reaction to a comment.
+   * @param params.roomId The room ID to add the comment reaction in.
+   * @param params.threadId The thread ID to add the comment reaction in.
+   * @param params.commentId The comment ID to add the reaction in.
+   * @param params.data.emoji The (emoji) reaction to add.
+   * @param params.data.userId The user ID of the user associated with the reaction.
+   * @param params.data.createdAt (optional) The date the reaction is set to be created.
+   * @returns The created comment reaction.
+   */
+  public async addCommentReaction(params: {
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    data: {
+      emoji: string;
+      userId: string;
+      createdAt?: Date;
+    };
+  }): Promise<CommentReaction> {
+    const { roomId, threadId, commentId, data } = params;
+
+    const res = await this.post(
+      url`/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}/add-reaction`,
+      {
+        ...data,
+        createdAt: data.createdAt?.toISOString(),
+      }
+    );
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    return (await res.json()) as Promise<CommentReaction>;
+  }
+
+  /**
+   * Deletes a reaction from a comment.
+   * @param params.roomId The room ID to delete the comment reaction from.
+   * @param params.threadId The thread ID to delete the comment reaction from.
    * @param params.commentId The comment ID to delete the reaction from.
    * @param params.data.emoji The (emoji) reaction to delete.
    * @param params.data.userId The user ID of the user associated with the reaction.
