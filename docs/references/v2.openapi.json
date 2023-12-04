@@ -1629,6 +1629,20 @@
             }
           }
         }
+      },
+      "delete": {
+        "summary": "Delete comment",
+        "tags": ["Comments"],
+        "responses": {
+          "204": {
+            "description": "Success. The comment was deleted"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-comment"
+          }
+        },
+        "operationId": "delete-comment-commentId",
+        "description": "This endpoint deletes a comment. A deleted comment is no longer accessible from the API or the dashboard and it cannot be restored. \n\n"
       }
     },
     "/rooms/{roomId}/threads/{threadId}/comments": {
