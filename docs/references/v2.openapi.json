@@ -1478,6 +1478,153 @@
         }
       }
     },
+    "/rooms/{roomId}/threads/{threadId}/participants": {
+      "get": {
+        "summary": "Get thread participants",
+        "tags": ["Comments"],
+        "description": "This endpoint returns the list of thread participants. It is a list of unique user IDs representing all the thread comment authors and mentioned users in comments.",
+        "operationId": "get-thread-participants",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the thread"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the thread’s participants",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "participantIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "Success": {
+                    "value": {
+                      "participantIds": ["user-1", "user-2"]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/threads/{threadId}/comments": {
+      "post": {
+        "summary": "Create comment",
+        "description": "This endpoint creates a new comment.",
+        "tags": ["Comments"],
+        "operationId": "post-comments-commentId",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the thread"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the created comment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Comment"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "type": "comment",
+                      "threadId": "thread-id",
+                      "roomId": "room-id",
+                      "id": "comment-id",
+                      "userId": "string",
+                      "createdAt": "2022-07-13T14:32:50.697Z",
+                      "body": {
+                        "version": 1,
+                        "content": []
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "$ref": "#/components/responses/409-comment"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-thread"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateComment"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "userId": "alice",
+                    "createdAt": "2022-07-13T14:32:50.697Z",
+                    "body": {
+                      "version": 1,
+                      "content": []
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/rooms/{roomId}/threads/{threadId}/comments/{commentId}": {
       "get": {
         "summary": "Get comment",
@@ -1491,7 +1638,8 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "ID of the room"
           },
           {
             "name": "threadId",
@@ -1499,7 +1647,8 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "ID of the thread"
           },
           {
             "name": "commentId",
@@ -1507,7 +1656,8 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "ID of the comment"
           }
         ],
         "responses": {
@@ -1645,12 +1795,12 @@
         "description": "This endpoint deletes a comment. A deleted comment is no longer accessible from the API or the dashboard and it cannot be restored. \n\n"
       }
     },
-    "/rooms/{roomId}/threads/{threadId}/comments": {
+    "/rooms/{roomId}/threads/{threadId}/comments/add-reaction": {
       "post": {
-        "summary": "Create comment",
-        "description": "This endpoint creates a new comment.",
+        "summary": "Add reaction to comment",
+        "description": "This endpoint adds a reaction to a comment.",
         "tags": ["Comments"],
-        "operationId": "post-comments-commentId",
+        "operationId": "post-comments-commentId-add-reaction",
         "parameters": [
           {
             "name": "roomId",
@@ -1669,29 +1819,31 @@
               "type": "string"
             },
             "description": "ID of the thread"
+          },
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the comment"
           }
         ],
         "responses": {
           "200": {
-            "description": "Success. Returns the created comment.",
+            "description": "Success. Returns the created reaction.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Comment"
+                  "$ref": "#/components/schemas/CommentReaction"
                 },
                 "examples": {
                   "example": {
                     "value": {
-                      "type": "comment",
-                      "threadId": "thread-id",
-                      "roomId": "room-id",
-                      "id": "comment-id",
-                      "userId": "string",
+                      "emoji": "👨‍👩‍👧",
                       "createdAt": "2022-07-13T14:32:50.697Z",
-                      "body": {
-                        "version": 1,
-                        "content": []
-                      }
+                      "userId": "alice"
                     }
                   }
                 }
@@ -1699,27 +1851,24 @@
             }
           },
           "409": {
-            "$ref": "#/components/responses/409-comment"
+            "$ref": "#/components/responses/409-comment-reaction"
           },
           "404": {
-            "$ref": "#/components/responses/404-thread"
+            "$ref": "#/components/responses/404-comment"
           }
         },
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateComment"
+                "$ref": "#/components/schemas/AddCommentReaction"
               },
               "examples": {
                 "example": {
                   "value": {
-                    "userId": "alice",
+                    "emoji": "👨‍👩‍👧",
                     "createdAt": "2022-07-13T14:32:50.697Z",
-                    "body": {
-                      "version": 1,
-                      "content": []
-                    }
+                    "userId": "alice"
                   }
                 }
               }
@@ -1728,12 +1877,12 @@
         }
       }
     },
-    "/rooms/{roomId}/threads/{threadId}/participants": {
-      "get": {
-        "summary": "Get thread participants",
+    "/rooms/{roomId}/threads/{threadId}/comments/remove-reaction": {
+      "post": {
+        "summary": "Remove comment reaction",
+        "description": "This endpoint removes a comment reaction. A deleted comment reaction is no longer accessible from the API or the dashboard and it cannot be restored. \n\n",
         "tags": ["Comments"],
-        "description": "This endpoint returns the list of thread participants. It is a list of unique user IDs representing all the thread comment authors and mentioned users in comments.",
-        "operationId": "get-thread-participants",
+        "operationId": "post-comments-commentId-remove-reaction",
         "parameters": [
           {
             "name": "roomId",
@@ -1741,7 +1890,8 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "ID of the room"
           },
           {
             "name": "threadId",
@@ -1749,43 +1899,43 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "ID of the thread"
+          },
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the comment"
           }
         ],
         "responses": {
-          "200": {
-            "description": "Success. Returns the thread’s participants",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "participantIds": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    }
-                  }
-                },
-                "examples": {
-                  "Success": {
-                    "value": {
-                      "participantIds": ["user-1", "user-2"]
-                    }
+          "204": {
+            "description": "Success. The comment reaction was deleted"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-comment-reaction"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveCommentReaction"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "emoji": "👨‍👩‍👧",
+                    "userId": "alice",
+                    "removedAt": "2022-07-13T14:32:50.697Z"
                   }
                 }
               }
             }
-          },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404"
           }
         }
       }
@@ -2594,6 +2744,78 @@
           }
         ],
         "description": ""
+      },
+      "CommentReaction": {
+        "type": "object",
+        "title": "CommentReaction",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "emoji": {
+            "type": "string"
+          }
+        },
+        "required": ["userId", "emoji"],
+        "examples": [
+          {
+            "emoji": "👨‍👩‍👧",
+            "createdAt": "2022-07-13T14:32:50.697Z",
+            "userId": "alice"
+          }
+        ]
+      },
+      "AddCommentReaction": {
+        "type": "object",
+        "title": "AddCommentReaction",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "emoji": {
+            "type": "string"
+          }
+        },
+        "required": ["userId", "emoji"],
+        "examples": [
+          {
+            "emoji": "👨‍👩‍👧",
+            "createdAt": "2022-07-13T14:32:50.697Z",
+            "userId": "alice"
+          }
+        ]
+      },
+      "RemoveCommentReaction": {
+        "type": "object",
+        "title": "RemoveCommentReaction",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "removedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "emoji": {
+            "type": "string"
+          }
+        },
+        "required": ["userId", "emoji"],
+        "examples": [
+          {
+            "emoji": "👨‍👩‍👧",
+            "removedAt": "2022-07-13T14:32:50.697Z",
+            "userId": "alice"
+          }
+        ]
       }
     },
     "securitySchemes": {
@@ -2935,6 +3157,54 @@
                 "value": {
                   "error": "RESOURCE_NOT_FOUND",
                   "message": "Comment not found"
+                }
+              }
+            }
+          },
+          "application/xml": {
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          }
+        }
+      },
+      "409-comment-reaction": {
+        "description": "Reaction already exists.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "RESOURCE_ALREADY_EXISTS": {
+                "value": {
+                  "error": "RESOURCE_ALREADY_EXISTS",
+                  "message": "Reaction already exists"
+                }
+              }
+            }
+          },
+          "application/xml": {
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          }
+        }
+      },
+      "404-comment-reaction": {
+        "description": "Comment not found.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "RESOURCE_NOT_FOUND": {
+                "value": {
+                  "error": "RESOURCE_NOT_FOUND",
+                  "message": "Comment reaction not found"
                 }
               }
             }
