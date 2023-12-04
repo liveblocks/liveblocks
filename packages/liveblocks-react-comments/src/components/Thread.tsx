@@ -9,7 +9,7 @@ import type {
   RefAttributes,
   SyntheticEvent,
 } from "react";
-import React, { forwardRef, useCallback, useMemo } from "react";
+import React, { forwardRef, Fragment, useCallback, useMemo } from "react";
 
 import { ResolveIcon } from "../icons/Resolve";
 import { ResolvedIcon } from "../icons/Resolved";
@@ -191,7 +191,7 @@ export const Thread = forwardRef(
             {thread.comments.map((comment, index) => {
               const isFirstComment = index === firstCommentIndex;
 
-              return (
+              const children = (
                 <Comment
                   key={comment.id}
                   className="lb-thread-comment"
@@ -242,6 +242,17 @@ export const Thread = forwardRef(
                     ) : null
                   }
                 />
+              );
+
+              return index === 1 ? (
+                <Fragment key={comment.id}>
+                  <div className="lb-thread-unread-indicator">
+                    <span className="lb-thread-unread-label">New</span>
+                  </div>
+                  {children}
+                </Fragment>
+              ) : (
+                children
               );
             })}
           </div>

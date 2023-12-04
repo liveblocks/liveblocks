@@ -969,12 +969,15 @@
 }
 
 .lb-thread-comments {
+  position: relative;
+  z-index: 0;
   display: flex;
   flex-direction: column;
 }
 
 .lb-thread-comment {
-  padding-block: calc(0.5 * var(--lb-spacing));
+  z-index: 0;
+  padding-block: calc(0.6 * var(--lb-spacing));
 
   &:where(.lb-comment\:indent-content) {
     min-block-size: calc(var(--lb-comment-avatar-size) + var(--lb-spacing));
@@ -993,16 +996,43 @@
   &:where(:last-of-type) {
     padding-block-end: var(--lb-spacing);
 
-    :where(.lb-comment-body) {
-      margin-block-end: calc(0.25 * var(--lb-spacing));
-    }
-
     &:where(.lb-comment\:indent-content) {
       min-block-size: calc(
         var(--lb-comment-avatar-size) + 1.75 * var(--lb-spacing)
       );
     }
   }
+}
+
+.lb-thread-unread-indicator {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: calc(0.5 * var(--lb-spacing));
+  justify-content: center;
+  align-items: center;
+  block-size: 0;
+  background: red;
+
+  &::before {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    inline-size: 100%;
+    block-size: 0;
+    border-block-start: 1px solid var(--lb-foreground-subtle);
+  }
+}
+
+.lb-thread-unread-label {
+  z-index: 1;
+  flex: none;
+  padding: calc(0.25 * var(--lb-spacing)) calc(0.75 * var(--lb-spacing));
+  background: var(--lb-background);
+  color: var(--lb-accent);
+  font-weight: 600;
+  font-size: 0.675em;
+  text-transform: uppercase;
 }
 
 .lb-thread-composer {
