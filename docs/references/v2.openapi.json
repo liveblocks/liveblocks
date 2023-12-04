@@ -1547,7 +1547,7 @@
         "summary": "Create comment",
         "description": "This endpoint creates a new comment.",
         "tags": ["Comments"],
-        "operationId": "post-comments-commentId",
+        "operationId": "post-comments",
         "parameters": [
           {
             "name": "roomId",
@@ -1695,7 +1695,7 @@
         "summary": "Edit comment",
         "description": "This endpoint edits the specified comment.",
         "tags": ["Comments"],
-        "operationId": "post-comments",
+        "operationId": "post-comments-commentId",
         "parameters": [
           {
             "name": "roomId",

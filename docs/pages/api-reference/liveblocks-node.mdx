@@ -962,6 +962,32 @@ const threads = await liveblocks.getThreads({
 });
 ```
 
+#### Liveblocks.createThread [#create-thread]
+
+Creates a new thread within a specific room, using room ID and thread data. This
+method allows for the inclusion of custom metadata and a comment with optional
+creation date. This is a wrapper around the
+[Create Thread API](/docs/api-reference/rest-api-endpoints#post-threads) and
+returns the new thread.
+
+```ts
+const thread = await liveblocks.createThread({
+  roomId: "my-room",
+  data: {
+    metadata: {
+      color: "blue",
+    },
+    comment: {
+      userId: "user1",
+      body: {
+        version: 1,
+        content: [],
+      },
+    },
+  },
+});
+```
+
 #### Liveblocks.getThread [#get-thread]
 
 Returns a thread. Throws an error if the room or thread isn’t found. This is a
@@ -991,6 +1017,50 @@ const { participantIds } = await liveblocks.getThreadParticipants({
 });
 ```
 
+#### Liveblocks.updateThreadMetadata [#update-thread-metadata]
+
+Updates the metadata of a specific thread within a room. This method allows you
+to modify the metadata of a thread, including user information and the date of
+the last update. Throws an error if the room or thread isn’t found. This is a
+wrapper around the
+[Update Thread Metadata API](/docs/api-reference/rest-api-endpoints#update-thread-metadata)
+and returns the updated thread.
+
+```ts
+const updatedThread = await liveblocks.updateThreadMetadata({
+  roomId: "my-room",
+  threadId: "my-thread",
+  data: {
+    metadata: {
+      color: "yellow",
+    },
+    userId: "user1",
+  },
+});
+```
+
+#### Liveblocks.createComment [#create-comment]
+
+Creates a new comment in a specific thread within a room. This method allows
+users to add comments to a conversation thread, specifying the user who made the
+comment and the content of the comment. This is a wrapper around the
+[Get Comment API](/docs/api-reference/rest-api-endpoints#post-comments) and
+returns the new comment.
+
+```ts
+const comment = await liveblocks.createComment({
+  roomId: "my-room",
+  threadId: "my-thread",
+  data: {
+    body: {
+      version: 1,
+      content: [],
+    },
+    userId: "user1",
+  },
+});
+```
+
 #### Liveblocks.getComment [#get-comment]
 
 Returns a comment. Throws an error if the room, thread, or comment isn’t found.
@@ -1003,6 +1073,86 @@ const comment = await liveblocks.getComment({
   roomId: "my-room-id",
   threadId: "my-thread-id",
   commentId: "my-comment-id",
+});
+```
+
+#### Liveblocks.editComment [#edit-comment]
+
+Edits an existing comment in a specific thread within a room. This method allows
+users to update the content of their previously posted comments, with the option
+to specify the time of the edit. Throws an error if the comment isn’t found.
+This is a wrapper around the
+[Edit Comment API](/docs/api-reference/rest-api-endpoints#post-comments-commentId)
+and returns the updated comment.
+
+```ts
+const editedComment = await liveblocks.editComment({
+  roomId: "my-room",
+  threadId: "my-thread",
+  commentId: "my-comment",
+  data: {
+    body: {
+      version: 1,
+      content: [],
+    },
+    userId: "user1",
+    editedAt: new Date(), // Optional, the date and time of the edit
+  },
+});
+```
+
+#### Liveblocks.deleteComment [#delete-comment]
+
+Deletes a specific comment from a thread within a room. Throws an error if the
+comment isn’t found. This is a wrapper around the
+[Delete Comment API](/docs/api-reference/rest-api-endpoints#delete-comment-commentId)
+and returns no response.
+
+```ts
+await liveblocks.deleteComment({
+  roomId: "my-room",
+  threadId: "my-thread",
+  commentId: "my-comment",
+});
+```
+
+#### Liveblocks.addCommentReaction [#add-comment-reaction]
+
+Adds a reaction to a specific comment in a thread within a room. Throws an error
+if the comment reaction isn’t found. This is a wrapper around the
+[Add Comment Reaction API](/docs/api-reference/rest-api-endpoints#post-comments-commentId-add-reaction)
+and returns the new reaction.
+
+```ts
+const reaction = await liveblocks.addCommentReaction({
+  roomId: "my-room-id",
+  threadId: "my-thread-id",
+  commentId: "my-comment-id",
+  data: {
+    emoji: "👨‍👩‍👧",
+    userId: "your-user-id",
+    createdAt: new Date(), // Optional, the date and time when the reaction was added
+  },
+});
+```
+
+#### Liveblocks.removeCommentReaction [#remove-comment-reaction]
+
+Removes a reaction from a specific comment in a thread within a room. Throws an
+error if the comment reaction isn’t found. This is a wrapper around the
+[Remove Comment Reaction API](/docs/api-reference/rest-api-endpoints#post-comments-commentId-remove-reaction)
+and returns no response.
+
+```ts
+await liveblocks.deleteCommentReaction({
+  roomId: "my-room",
+  threadId: "my-thread",
+  commentId: "my-comment",
+  data: {
+    emoji: "👨‍👩‍👧",
+    userId: "your-user-id",
+    removedAt: new Date(), // Optional, the date and time when the reaction is set to be deleted
+  },
 });
 ```
 
