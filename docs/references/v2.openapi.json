@@ -1266,7 +1266,7 @@
                           "userId": "alice",
                           "createdAt": "2022-07-13T14:32:50.697Z",
                           "body": {
-                            "version": "1",
+                            "version": 1,
                             "content": []
                           }
                         }
@@ -1436,7 +1436,7 @@
                           "userId": "alice",
                           "createdAt": "2024-07-13T14:32:50.697Z",
                           "body": {
-                            "version": "1",
+                            "version": 1,
                             "content": []
                           }
                         }
@@ -1542,10 +1542,101 @@
         }
       },
       "post": {
+        "summary": "Edit comment",
+        "description": "This endpoint edits the specified comment.",
+        "tags": ["Comments"],
+        "operationId": "post-comments",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the thread"
+          },
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the comment"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the edited comment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateComment"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "type": "comment",
+                      "threadId": "thread-id",
+                      "roomId": "room-id",
+                      "id": "comment-id",
+                      "userId": "string",
+                      "createdAt": "2023-07-13T14:32:50.697Z",
+                      "body": {
+                        "version": 1,
+                        "content": []
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "$ref": "#/components/responses/409-comment"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-thread"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateComment"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "editedAt": "2023-07-13T14:32:50.697Z",
+                    "body": {
+                      "version": 1,
+                      "content": []
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/threads/{threadId}/comments": {
+      "post": {
         "summary": "Create comment",
         "description": "This endpoint creates a new comment.",
         "tags": ["Comments"],
-        "operationId": "post-comments",
+        "operationId": "post-comments-commentId",
         "parameters": [
           {
             "name": "roomId",
@@ -1584,7 +1675,7 @@
                       "userId": "string",
                       "createdAt": "2022-07-13T14:32:50.697Z",
                       "body": {
-                        "version": "1",
+                        "version": 1,
                         "content": []
                       }
                     }
@@ -2447,6 +2538,41 @@
           {
             "userId": "alice",
             "createdAt": "2022-07-13T14:32:50.697Z",
+            "body": {
+              "version": 1,
+              "content": []
+            }
+          }
+        ],
+        "description": ""
+      },
+      "UpdateComment": {
+        "title": "UpdateComment",
+        "type": "object",
+        "properties": {
+          "editedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "body": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "number"
+              },
+              "content": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "required": ["body"],
+        "examples": [
+          {
+            "editedAt": "2022-07-13T14:32:50.697Z",
             "body": {
               "version": 1,
               "content": []
