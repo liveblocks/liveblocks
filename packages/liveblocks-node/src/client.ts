@@ -6,12 +6,12 @@
 import type {
   BaseMetadata,
   CommentBody,
+  CommentData as CommentDataOriginal,
   IUserInfo,
   Json,
   JsonObject,
   PlainLsonObject,
   ThreadData as ThreadDataOriginal,
-  CommentData as CommentDataOriginal,
 } from "@liveblocks/core";
 
 import { Session } from "./Session";
@@ -254,7 +254,9 @@ export class Liveblocks {
     const updatedAt = data.updatedAt ? new Date(data.updatedAt) : undefined;
     const createdAt = new Date(data.createdAt);
 
-    const comments = data.comments.map(this.convertToCommentData);
+    const comments = data.comments.map((comment) =>
+      this.convertToCommentData(comment)
+    );
 
     return {
       ...data,

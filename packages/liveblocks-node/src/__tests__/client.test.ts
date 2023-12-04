@@ -1,12 +1,8 @@
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
-import {
-  CommentData,
-  Liveblocks,
-  LiveblocksError,
-  ThreadData,
-} from "../client";
+import type { CommentData, ThreadData } from "../client";
+import { Liveblocks, LiveblocksError } from "../client";
 import { DEFAULT_BASE_URL } from "../utils";
 
 describe("client", () => {
