@@ -1169,7 +1169,8 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "ID of the room"
           }
         ],
         "operationId": "get-threads",
@@ -1221,18 +1222,113 @@
               }
             }
           },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
           "404": {
-            "$ref": "#/components/responses/404"
+            "$ref": "#/components/responses/404-thread"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create thread",
+        "description": "This endpoint creates a new thread.",
+        "tags": ["Comments"],
+        "operationId": "post-threads",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the created thread.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Thread"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "type": "thread",
+                      "id": "thread-id",
+                      "roomId": "room-id",
+                      "comments": [
+                        {
+                          "type": "comment",
+                          "threadId": "thread-id",
+                          "roomId": "room-id",
+                          "id": "comment-id",
+                          "userId": "alice",
+                          "createdAt": "2022-07-13T14:32:50.697Z",
+                          "body": {
+                            "version": "1",
+                            "content": []
+                          }
+                        }
+                      ],
+                      "createdAt": "2022-07-13T14:32:50.697Z",
+                      "metadata": {
+                        "color": "blue"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "$ref": "#/components/responses/409-thread"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Thread"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "comment": {
+                      "userId": "alice",
+                      "createdAt": "2022-07-13T14:32:50.697Z",
+                      "body": {
+                        "version": 1,
+                        "content": []
+                      }
+                    },
+                    "metadata": {
+                      "color": "blue"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
     },
+    "/rooms/{roomId}/threads/{threadId}/comments/{commentId}/add-reaction": {
+      "post": {
+        "summary": "Add reaction to comment",
+        "tags": ["Reaction"],
+        "responses": {
+          "200": {
+            "operationId": "post-add-reaction",
+            "description": "Success. Returns the created reaction",
+            "requestBody": {
+              "content": {}
+            }
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/threads/{threadId}/comments/{commentId}/remove-reaction": {},
     "/rooms/{roomId}/threads/{threadId}": {
       "get": {
         "summary": "Get thread",
@@ -2035,6 +2131,59 @@
         ],
         "description": ""
       },
+      "CreateThread": {
+        "title": "CreateThread",
+        "type": "object",
+        "properties": {
+          "comment": {
+            "type": "object",
+            "properties": {
+              "userId": {
+                "type": "string"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "body": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "number"
+                  },
+                  "content": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            },
+            "required": ["userId", "body"]
+          },
+          "metadata": {
+            "type": "object"
+          }
+        },
+        "required": ["comment"],
+        "examples": [
+          {
+            "comment": {
+              "userId": "alice",
+              "createdAt": "2022-07-13T14:32:50.697Z",
+              "body": {
+                "version": 1,
+                "content": []
+              }
+            },
+            "metadata": {
+              "color": "blue"
+            }
+          }
+        ],
+        "description": ""
+      },
       "Comment": {
         "type": "object",
         "title": "Comment",
@@ -2340,6 +2489,54 @@
                   "docs": ""
                 }
               }
+            }
+          }
+        }
+      },
+      "409-thread": {
+        "description": "Thread already exists.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "RESOURCE_ALREADY_EXISTS": {
+                "value": {
+                  "error": "RESOURCE_ALREADY_EXISTS",
+                  "message": "Thread already exists"
+                }
+              }
+            }
+          },
+          "application/xml": {
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          }
+        }
+      },
+      "404-thread": {
+        "description": "Thread not found.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "RESOURCE_NOT_FOUND": {
+                "value": {
+                  "error": "RESOURCE_NOT_FOUND",
+                  "message": "Thread not found"
+                }
+              }
+            }
+          },
+          "application/xml": {
+            "schema": {
+              "type": "object",
+              "properties": {}
             }
           }
         }
