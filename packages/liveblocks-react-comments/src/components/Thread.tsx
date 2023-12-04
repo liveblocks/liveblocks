@@ -55,7 +55,12 @@ function UnreadIndicator() {
   }, []);
 
   return (
-    <div className="lb-thread-unread-separator">
+    <div
+      className={classNames(
+        "lb-thread-unread-separator",
+        showMarkAsRead && "lb-thread-unread-separator:mark-as-read"
+      )}
+    >
       <button
         className="lb-thread-unread-indicator"
         onPointerEnter={handleHoverStart}

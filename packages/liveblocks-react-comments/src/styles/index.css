@@ -1021,14 +1021,21 @@
     inline-size: 100%;
     block-size: 0;
     border-block-start: 1px solid var(--lb-foreground-subtle);
+    transition-timing-function: var(--lb-transition-easing);
+    transition-duration: var(--lb-transition-duration);
+    transition-property: border;
   }
+}
+
+.lb-thread-unread-separator\:mark-as-read::before {
+  border-block-start: 1px solid var(--lb-accent-moderate);
 }
 
 .lb-thread-unread-indicator {
   all: unset;
   z-index: 1;
   flex: none;
-  padding: calc(0.5 * var(--lb-spacing)) calc(0.75 * var(--lb-spacing));
+  padding: calc(0.5 * var(--lb-spacing)) var(--lb-spacing);
   background: var(--lb-background);
   color: var(--lb-accent);
   font-weight: 600;
