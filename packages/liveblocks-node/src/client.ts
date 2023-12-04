@@ -6,12 +6,12 @@
 import type {
   BaseMetadata,
   CommentBody,
-  CommentData,
   IUserInfo,
   Json,
   JsonObject,
   PlainLsonObject,
-  ThreadData,
+  ThreadData as ThreadDataOriginal,
+  CommentData as CommentDataOriginal,
 } from "@liveblocks/core";
 
 import { Session } from "./Session";
@@ -84,6 +84,32 @@ export type RoomInfo = {
 type RoomInfoOriginal = Omit<RoomInfo, "lastConnectionAt" | "createdAt"> & {
   lastConnectionAt?: string;
   createdAt?: string;
+};
+
+export type CommentData = Omit<
+  CommentDataOriginal,
+  "createdAt" | "editedAt" | "body" | "deletedAt"
+> & {
+  createdAt: Date;
+  editedAt?: Date;
+} & (
+    | {
+        body: CommentBody;
+        deletedAt?: never;
+      }
+    | {
+        body?: never;
+        deletedAt: Date;
+      }
+  );
+
+export type ThreadData<TThreadMetadata extends BaseMetadata = never> = Omit<
+  ThreadDataOriginal<TThreadMetadata>,
+  "createdAt" | "updatedAt" | "comments"
+> & {
+  createdAt: Date;
+  updatedAt?: Date;
+  comments: CommentData[];
 };
 
 export type RoomUser<Info> = {
@@ -179,6 +205,57 @@ export class Liveblocks {
     const fetch = await fetchPolyfill();
     const res = await fetch(url, { method: "GET", headers });
     return res;
+  }
+
+  /**
+   * @internal
+   * Converts a comment data object returned by the API to a comment data object that can be used by the client.
+   * This is necessary because the API returns dates as ISO strings, but the client expects them as Date objects.
+   * @param data The comment data object returned by the API.
+   * @returns The comment data object that can be used by the client.
+   */
+  private convertToCommentData(data: CommentDataOriginal): CommentData {
+    const editedAt = data.editedAt ? new Date(data.editedAt) : undefined;
+    const createdAt = new Date(data.createdAt);
+
+    if (data.body) {
+      return {
+        ...data,
+        createdAt,
+        editedAt,
+      };
+    } else {
+      const deletedAt = new Date(data.deletedAt);
+      return {
+        ...data,
+        createdAt,
+        editedAt,
+        deletedAt,
+      };
+    }
+  }
+
+  /**
+   * @internal
+   * Converts a thread data object returned by the API to a thread data object that can be used by the client.
+   * This is necessary because the API returns dates as ISO strings, but the client expects them as Date objects.
+   * @param data The thread data object returned by the API.
+   * @returns The thread data object that can be used by the client.
+   */
+  private convertToThreadData<TThreadMetadata extends BaseMetadata = never>(
+    data: ThreadDataOriginal<TThreadMetadata>
+  ): ThreadData<TThreadMetadata> {
+    const updatedAt = data.updatedAt ? new Date(data.updatedAt) : undefined;
+    const createdAt = new Date(data.createdAt);
+
+    const comments = data.comments.map(this.convertToCommentData);
+
+    return {
+      ...data,
+      createdAt,
+      updatedAt,
+      comments,
+    };
   }
 
   /* -------------------------------------------------------------------------------------------------
@@ -984,7 +1061,7 @@ export class Liveblocks {
   }): Promise<CommentData> {
     const { roomId, threadId, commentId, data } = params;
 
-    const res = await this.put(
+    const res = await this.post(
       url`/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`,
       {
         ...data,
@@ -995,7 +1072,8 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
-    return (await res.json()) as Promise<CommentData>;
+
+    return this.convertToCommentData((await res.json()) as CommentDataOriginal);
   }
 
   /**
@@ -1034,7 +1112,7 @@ export class Liveblocks {
     TThreadMetadata extends BaseMetadata = never,
   >(params: {
     roomId: string;
-    thread: {
+    data: {
       metadata?: [TThreadMetadata] extends [never]
         ? Record<string, never>
         : TThreadMetadata;
@@ -1044,14 +1122,14 @@ export class Liveblocks {
         body: CommentBody;
       };
     };
-  }): Promise<ThreadData> {
-    const { roomId, thread } = params;
+  }): Promise<ThreadData<TThreadMetadata>> {
+    const { roomId, data } = params;
 
     const res = await this.post(url`/v2/rooms/${roomId}/threads`, {
-      ...thread,
+      ...data,
       comment: {
-        ...thread.comment,
-        createdAt: thread.comment.createdAt?.toISOString(),
+        ...data.comment,
+        createdAt: data.comment.createdAt?.toISOString(),
       },
     });
 
@@ -1059,7 +1137,10 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
-    return (await res.json()) as Promise<ThreadData>;
+
+    return this.convertToThreadData(
+      (await res.json()) as ThreadDataOriginal<TThreadMetadata>
+    );
   }
 
   /**
@@ -1076,12 +1157,10 @@ export class Liveblocks {
     roomId: string;
     threadId: string;
     data: {
-      metadata: [TThreadMetadata] extends [never]
-        ? Record<string, never>
-        : TThreadMetadata;
+      metadata: BaseMetadata;
       userId: string;
     };
-  }): Promise<ThreadData> {
+  }): Promise<ThreadData<TThreadMetadata>> {
     const { roomId, threadId, data } = params;
 
     const res = await this.post(
@@ -1093,7 +1172,10 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
-    return (await res.json()) as Promise<ThreadData>;
+
+    return this.convertToThreadData(
+      (await res.json()) as ThreadDataOriginal<TThreadMetadata>
+    );
   }
 
   /**

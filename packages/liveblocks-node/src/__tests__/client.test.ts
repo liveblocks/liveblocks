@@ -1,7 +1,12 @@
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
-import { Liveblocks, LiveblocksError } from "../client";
+import {
+  CommentData,
+  Liveblocks,
+  LiveblocksError,
+  ThreadData,
+} from "../client";
 import { DEFAULT_BASE_URL } from "../utils";
 
 describe("client", () => {
@@ -35,6 +40,33 @@ describe("client", () => {
       },
     },
   ];
+
+  const comment: CommentData = {
+    type: "comment",
+    id: "comment1",
+    roomId: "room1",
+    threadId: "thread1",
+    userId: "user1",
+    createdAt: new Date("2022-07-13T14:32:50.697Z"),
+    reactions: [],
+    body: {
+      version: 1,
+      content: [],
+    },
+  };
+
+  const thread: ThreadData<{
+    color: string;
+  }> = {
+    type: "thread",
+    id: "thread1",
+    roomId: "room1",
+    metadata: {
+      color: "blue",
+    },
+    createdAt: new Date("2022-07-13T14:32:50.697Z"),
+    comments: [],
+  };
 
   const server = setupServer(
     http.get(`${DEFAULT_BASE_URL}/v2/rooms`, () => {
@@ -157,7 +189,178 @@ describe("client", () => {
     });
   });
 
-  test("should throw an ApiError when getRoom receives an error response", async () => {
+  test("should return the edited comment when editComment receives a successful response", async () => {
+    const commentData = {
+      body: {
+        version: 1 as const,
+        content: [],
+      },
+      editedAt: new Date(),
+    };
+
+    server.use(
+      http.post(
+        `${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads/:threadId/comments/:commentId`,
+        async ({ request }) => {
+          const data = await request.json();
+
+          if (JSON.stringify(data) === JSON.stringify(commentData)) {
+            return HttpResponse.json(comment);
+          }
+
+          return HttpResponse.error();
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+    const res = await client.editComment({
+      roomId: "room1",
+      threadId: "thread1",
+      commentId: "comment1",
+      data: commentData,
+    });
+    expect(res).toEqual(comment);
+  });
+
+  test("should throw a LiveblocksError when editComment receives an error response", async () => {
+    const error = {
+      error: "RESOURCE_NOT_FOUND",
+      message: "Comment not found",
+    };
+
+    server.use(
+      http.post(
+        `${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads/:threadId/comments/:commentId`,
+        () => {
+          return HttpResponse.json(error, { status: 404 });
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    // This should throw a LiveblocksError
+    try {
+      // Attempt to get, which should fail and throw an error.
+      await client.editComment({
+        roomId: "room1",
+        threadId: "thread1",
+        commentId: "comment1",
+        data: {
+          body: {
+            version: 1 as const,
+            content: [],
+          },
+        },
+      });
+      // If it doesn't throw, fail the test.
+      expect(true).toBe(false);
+    } catch (err) {
+      expect(err instanceof LiveblocksError).toBe(true);
+      if (err instanceof LiveblocksError) {
+        expect(err.status).toBe(404);
+        expect(err.message).toBe(JSON.stringify(error));
+        expect(err.name).toBe("LiveblocksError");
+      }
+    }
+  });
+
+  test("should return the created thread when createThread receives a successful response", async () => {
+    const threadData = {
+      comment: {
+        userId: "user1",
+        createdAt: new Date(),
+        body: {
+          version: 1 as const,
+          content: [],
+        },
+      },
+      metadata: {
+        color: "blue",
+      },
+    };
+
+    server.use(
+      http.post(
+        `${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads`,
+        async ({ request }) => {
+          const data = await request.json();
+
+          if (JSON.stringify(threadData) === JSON.stringify(data)) {
+            return HttpResponse.json(thread);
+          }
+
+          return HttpResponse.error();
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+    const res = await client.createThread({
+      roomId: "room1",
+      data: threadData,
+    });
+
+    expect(res).toEqual(thread);
+  });
+
+  test("should throw a LiveblocksError when createThread receives an error response", async () => {
+    const threadData = {
+      comment: {
+        userId: "user1",
+        createdAt: new Date(),
+        body: {
+          version: 1 as const,
+          content: [],
+        },
+      },
+      metadata: {
+        color: "blue",
+      },
+    };
+
+    const error = {
+      error: "RESOURCE_ALREADY_EXISTES",
+      message: "Thread already exists",
+    };
+
+    server.use(
+      http.post(
+        `${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads`,
+        async ({ request }) => {
+          const data = await request.json();
+          if (JSON.stringify(threadData) === JSON.stringify(data)) {
+            return HttpResponse.json(error, { status: 409 });
+          }
+
+          return HttpResponse.error();
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    // This should throw a LiveblocksError
+    try {
+      // Attempt to create a thread, which should fail and throw an error.
+      await client.createThread({
+        roomId: "room1",
+        data: threadData,
+      });
+      // If it doesn't throw, fail the test.
+      expect(true).toBe(false);
+    } catch (err) {
+      expect(err instanceof LiveblocksError).toBe(true);
+      if (err instanceof LiveblocksError) {
+        expect(err.status).toBe(409);
+        expect(err.message).toBe(JSON.stringify(error));
+        expect(err.name).toBe("LiveblocksError");
+      }
+    }
+  });
+
+  test("should throw a LiveblocksError when getRoom receives an error response", async () => {
     const error = {
       error: "ROOM_NOT_FOUND",
       message: "Room not found",
@@ -174,7 +377,7 @@ describe("client", () => {
 
     const client = new Liveblocks({ secret: "sk_xxx" });
 
-    // This should throw an HttpError
+    // This should throw an LiveblocksError
     try {
       // Attempt to get, which should fail and throw an error.
       await client.getRoom("123");
