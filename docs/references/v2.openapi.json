@@ -1583,7 +1583,7 @@
                       "threadId": "thread-id",
                       "roomId": "room-id",
                       "id": "comment-id",
-                      "userId": "string",
+                      "userId": "alice",
                       "createdAt": "2022-07-13T14:32:50.697Z",
                       "body": {
                         "version": 1,
@@ -1675,7 +1675,7 @@
                       "threadId": "thread-id",
                       "roomId": "room-id",
                       "id": "comment-id",
-                      "userId": "string",
+                      "userId": "alice",
                       "createdAt": "2019-08-24T14:15:22Z",
                       "editedAt": "2019-08-24T14:15:22Z",
                       "deletedAt": "2019-08-24T14:15:22Z",
@@ -1740,7 +1740,7 @@
                       "threadId": "thread-id",
                       "roomId": "room-id",
                       "id": "comment-id",
-                      "userId": "string",
+                      "userId": "alice",
                       "createdAt": "2023-07-13T14:32:50.697Z",
                       "body": {
                         "version": 1,
@@ -1795,7 +1795,7 @@
         "description": "This endpoint deletes a comment. A deleted comment is no longer accessible from the API or the dashboard and it cannot be restored. \n\n"
       }
     },
-    "/rooms/{roomId}/threads/{threadId}/comments/add-reaction": {
+    "/rooms/{roomId}/threads/{threadId}/comments/{commentId}/add-reaction": {
       "post": {
         "summary": "Add reaction to comment",
         "description": "This endpoint adds a reaction to a comment.",
@@ -1877,7 +1877,7 @@
         }
       }
     },
-    "/rooms/{roomId}/threads/{threadId}/comments/remove-reaction": {
+    "/rooms/{roomId}/threads/{threadId}/comments/{commentId}/remove-reaction": {
       "post": {
         "summary": "Remove comment reaction",
         "description": "This endpoint removes a comment reaction. A deleted comment reaction is no longer accessible from the API or the dashboard and it cannot be restored. \n\n",
