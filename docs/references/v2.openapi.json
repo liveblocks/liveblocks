@@ -1313,22 +1313,6 @@
         }
       }
     },
-    "/rooms/{roomId}/threads/{threadId}/comments/{commentId}/add-reaction": {
-      "post": {
-        "summary": "Add reaction to comment",
-        "tags": ["Reaction"],
-        "responses": {
-          "200": {
-            "operationId": "post-add-reaction",
-            "description": "Success. Returns the created reaction",
-            "requestBody": {
-              "content": {}
-            }
-          }
-        }
-      }
-    },
-    "/rooms/{roomId}/threads/{threadId}/comments/{commentId}/remove-reaction": {},
     "/rooms/{roomId}/threads/{threadId}": {
       "get": {
         "summary": "Get thread",
@@ -1552,14 +1536,89 @@
               }
             }
           },
-          "401": {
-            "$ref": "#/components/responses/401"
+          "404": {
+            "$ref": "#/components/responses/404-thread"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create comment",
+        "description": "This endpoint creates a new comment.",
+        "tags": ["Comments"],
+        "operationId": "post-comments",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
           },
-          "403": {
-            "$ref": "#/components/responses/403"
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the thread"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the created comment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Comment"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "type": "comment",
+                      "threadId": "thread-id",
+                      "roomId": "room-id",
+                      "id": "comment-id",
+                      "userId": "string",
+                      "createdAt": "2022-07-13T14:32:50.697Z",
+                      "body": {
+                        "version": "1",
+                        "content": []
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "$ref": "#/components/responses/409-comment"
           },
           "404": {
-            "$ref": "#/components/responses/404"
+            "$ref": "#/components/responses/404-thread"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateComment"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "userId": "alice",
+                    "createdAt": "2022-07-13T14:32:50.697Z",
+                    "body": {
+                      "version": 1,
+                      "content": []
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -2356,6 +2415,45 @@
             "body": {}
           }
         ]
+      },
+      "CreateComment": {
+        "title": "CreateComment",
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "body": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "number"
+              },
+              "content": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "required": ["userId", "body"],
+        "examples": [
+          {
+            "userId": "alice",
+            "createdAt": "2022-07-13T14:32:50.697Z",
+            "body": {
+              "version": 1,
+              "content": []
+            }
+          }
+        ],
+        "description": ""
       }
     },
     "securitySchemes": {
@@ -2649,6 +2747,54 @@
                 "value": {
                   "error": "RESOURCE_NOT_FOUND",
                   "message": "Thread not found"
+                }
+              }
+            }
+          },
+          "application/xml": {
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          }
+        }
+      },
+      "409-comment": {
+        "description": "Comment already exists.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "RESOURCE_ALREADY_EXISTS": {
+                "value": {
+                  "error": "RESOURCE_ALREADY_EXISTS",
+                  "message": "Comment already exists"
+                }
+              }
+            }
+          },
+          "application/xml": {
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          }
+        }
+      },
+      "404-comment": {
+        "description": "Comment not found.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "RESOURCE_NOT_FOUND": {
+                "value": {
+                  "error": "RESOURCE_NOT_FOUND",
+                  "message": "Comment not found"
                 }
               }
             }
