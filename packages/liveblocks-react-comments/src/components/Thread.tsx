@@ -9,7 +9,13 @@ import type {
   RefAttributes,
   SyntheticEvent,
 } from "react";
-import React, { forwardRef, Fragment, useCallback, useMemo } from "react";
+import React, {
+  forwardRef,
+  Fragment,
+  useCallback,
+  useMemo,
+  useState,
+} from "react";
 
 import { ResolveIcon } from "../icons/Resolve";
 import { ResolvedIcon } from "../icons/Resolved";
@@ -26,6 +32,43 @@ import { Comment } from "./Comment";
 import { Composer } from "./Composer";
 import { Button } from "./internal/Button";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";
+
+function UnreadIndicator() {
+  const [isHovered, setHovered] = useState(false);
+  const [isFocused, setFocused] = useState(false);
+  const showMarkAsRead = isHovered || isFocused;
+
+  const handleHoverStart = useCallback(() => {
+    setHovered(true);
+  }, []);
+
+  const handleHoverEnd = useCallback(() => {
+    setHovered(false);
+  }, []);
+
+  const handleFocusStart = useCallback(() => {
+    setFocused(true);
+  }, []);
+
+  const handleFocusEnd = useCallback(() => {
+    setFocused(false);
+  }, []);
+
+  return (
+    <div className="lb-thread-unread-separator">
+      <button
+        className="lb-thread-unread-indicator"
+        onPointerEnter={handleHoverStart}
+        onPointerLeave={handleHoverEnd}
+        onPointerCancel={handleHoverEnd}
+        onFocus={handleFocusStart}
+        onBlur={handleFocusEnd}
+      >
+        {showMarkAsRead ? "Mark as read" : "New"}
+      </button>
+    </div>
+  );
+}
 
 export interface ThreadProps<
   TThreadMetadata extends BaseMetadata = ThreadMetadata,
@@ -246,9 +289,7 @@ export const Thread = forwardRef(
 
               return index === 1 ? (
                 <Fragment key={comment.id}>
-                  <div className="lb-thread-unread-indicator">
-                    <span className="lb-thread-unread-label">New</span>
-                  </div>
+                  <UnreadIndicator />
                   {children}
                 </Fragment>
               ) : (

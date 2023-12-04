@@ -1004,7 +1004,7 @@
   }
 }
 
-.lb-thread-unread-indicator {
+.lb-thread-unread-separator {
   position: relative;
   z-index: 1;
   display: flex;
@@ -1024,15 +1024,17 @@
   }
 }
 
-.lb-thread-unread-label {
+.lb-thread-unread-indicator {
+  all: unset;
   z-index: 1;
   flex: none;
-  padding: calc(0.25 * var(--lb-spacing)) calc(0.75 * var(--lb-spacing));
+  padding: calc(0.5 * var(--lb-spacing)) calc(0.75 * var(--lb-spacing));
   background: var(--lb-background);
   color: var(--lb-accent);
   font-weight: 600;
   font-size: 0.675em;
   text-transform: uppercase;
+  cursor: pointer;
 }
 
 .lb-thread-composer {
