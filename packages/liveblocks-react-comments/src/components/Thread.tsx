@@ -17,6 +17,8 @@ import React, {
   useState,
 } from "react";
 
+import { ArrowDownIcon } from "../icons/ArrowDown";
+import { CheckIcon } from "../icons/Check";
 import { ResolveIcon } from "../icons/Resolve";
 import { ResolvedIcon } from "../icons/Resolved";
 import {
@@ -69,7 +71,17 @@ function UnreadIndicator() {
         onFocus={handleFocusStart}
         onBlur={handleFocusEnd}
       >
-        {showMarkAsRead ? "Mark as read" : "New"}
+        {showMarkAsRead ? (
+          <>
+            <CheckIcon className="lb-thread-unread-indicator-icon" />
+            Mark as read
+          </>
+        ) : (
+          <>
+            <ArrowDownIcon className="lb-thread-unread-indicator-icon" />
+            New
+          </>
+        )}
       </button>
     </div>
   );

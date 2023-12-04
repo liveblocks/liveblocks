@@ -155,7 +155,11 @@
 
   inline-size: var(--lb-icon-size);
   block-size: var(--lb-icon-size);
-  stroke-width: var(--lb-icon-weight);
+
+  * {
+    stroke-width: var(--lb-icon-weight);
+    vector-effect: non-scaling-stroke;
+  }
 }
 
 /*************************************
@@ -1034,7 +1038,10 @@
 .lb-thread-unread-indicator {
   all: unset;
   z-index: 1;
+  display: flex;
   flex: none;
+  gap: calc(0.375 * var(--lb-spacing));
+  align-items: center;
   padding: calc(0.5 * var(--lb-spacing)) var(--lb-spacing);
   background: var(--lb-background);
   color: var(--lb-accent);
@@ -1042,6 +1049,11 @@
   font-size: 0.675em;
   text-transform: uppercase;
   cursor: pointer;
+}
+
+.lb-thread-unread-indicator-icon {
+  inline-size: calc(0.6 * var(--lb-icon-size));
+  block-size: calc(0.6 * var(--lb-icon-size));
 }
 
 .lb-thread-composer {
