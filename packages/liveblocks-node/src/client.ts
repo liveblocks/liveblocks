@@ -1027,26 +1027,26 @@ export class Liveblocks {
   public async createComment(params: {
     roomId: string;
     threadId: string;
-    comment: {
+    data: {
       userId: string;
-      /**
-       * ISO 8601 date string
-       */
-      createdAt?: string;
+      createdAt?: Date;
       body: CommentBody;
     };
   }): Promise<CommentData> {
-    const { roomId, threadId, comment } = params;
+    const { roomId, threadId, data } = params;
 
     const res = await this.post(
       url`/v2/rooms/${roomId}/threads/${threadId}/comments`,
-      comment
+      {
+        ...data,
+        createdAt: data.createdAt?.toISOString(),
+      }
     );
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
-    return (await res.json()) as Promise<CommentData>;
+    return this.convertToCommentData((await res.json()) as CommentDataOriginal);
   }
 
   /**
