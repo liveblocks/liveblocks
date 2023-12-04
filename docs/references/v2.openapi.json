@@ -1289,7 +1289,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Thread"
+                "$ref": "#/components/schemas/CreateThread"
               },
               "examples": {
                 "example": {
@@ -1342,7 +1342,8 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "ID of the room"
           },
           {
             "name": "threadId",
@@ -1350,7 +1351,8 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "ID of the thread"
           }
         ],
         "responses": {
@@ -1397,6 +1399,97 @@
           },
           "404": {
             "$ref": "#/components/responses/404"
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/threads/{threadId}/metadata": {
+      "post": {
+        "summary": "Update thread metadata",
+        "tags": ["Comments"],
+        "description": "This endpoint updates the metadata of a thread. The metadata is a JSON object that can be used to store any information you want about the thread.",
+        "operationId": "update-thread-metadata",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the thread"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the updated thread.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Thread"
+                },
+                "examples": {
+                  "Success": {
+                    "value": {
+                      "type": "thread",
+                      "id": "thread-id",
+                      "roomId": "room-id",
+                      "comments": [
+                        {
+                          "type": "comment",
+                          "threadId": "thread-id",
+                          "roomId": "room-id",
+                          "id": "comment-id",
+                          "userId": "alice",
+                          "createdAt": "2024-07-13T14:32:50.697Z",
+                          "body": {
+                            "version": "1",
+                            "content": []
+                          }
+                        }
+                      ],
+                      "createdAt": "2022-07-13T14:32:50.697Z",
+                      "metadata": {
+                        "color": "yellow"
+                      },
+                      "updatedAt": "2023-07-13T14:32:50.697Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/404-thread"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateThread"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "metadata": {
+                      "color": "yellow"
+                    },
+                    "userId": "alice",
+                    "createdAt": "2023-07-13T14:32:50.697Z"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -2180,6 +2273,33 @@
             "metadata": {
               "color": "blue"
             }
+          }
+        ],
+        "description": ""
+      },
+      "UpdateThread": {
+        "title": "UpdateThread",
+        "type": "object",
+        "properties": {
+          "metadata": {
+            "type": "object"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": ["metadata", "userId"],
+        "examples": [
+          {
+            "metadata": {
+              "color": "blue"
+            },
+            "userId": "alice",
+            "createdAt": "2023-07-13T14:32:50.697Z"
           }
         ],
         "description": ""
