@@ -1043,7 +1043,21 @@ const updatedThread = await liveblocks.updateThreadMetadata({
 
 Creates a new comment in a specific thread within a room. This method allows
 users to add comments to a conversation thread, specifying the user who made the
-comment and the content of the comment. This is a wrapper around the
+comment and the content of the comment. The comment content contains a body
+property which is an array of paragraphs, each containing text nodes, for
+example:
+
+```json
+[
+  {
+    "type": "paragraph",
+    "children": [{ "text": "Hello " }, { "text": "world", "bold": true }]
+  }
+]
+```
+
+Note that `content` corresponds to the `CommentBody` type exported from
+`@liveblocks/node`. This method is a wrapper around the
 [Get Comment API](/docs/api-reference/rest-api-endpoints#post-comments) and
 returns the new comment.
 
@@ -1054,7 +1068,12 @@ const comment = await liveblocks.createComment({
   data: {
     body: {
       version: 1,
-      content: [],
+      content: [
+        {
+          type: "paragraph",
+          children: [{ text: "Hello " }, { text: "world", bold: true }],
+        },
+      ],
     },
     userId: "user1",
   },
