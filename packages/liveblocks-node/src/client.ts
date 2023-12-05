@@ -7,6 +7,7 @@ import type {
   BaseMetadata,
   CommentBody,
   CommentData as CommentDataOriginal,
+  CommentReactionUser,
   IUserInfo,
   Json,
   JsonObject,
@@ -85,10 +86,6 @@ type RoomInfoOriginal = Omit<RoomInfo, "lastConnectionAt" | "createdAt"> & {
   lastConnectionAt?: string;
   createdAt?: string;
 };
-
-type CommentReactionUser =
-  CommentDataOriginal["reactions"][number]["users"][number];
-
 /**
  * This CommentData type modifies the (original) CommentData type from @liveblocks/core (which is also the shape of the comment data returned by the API)
  * All properties that are dates are converted from ISO strings to Date objects.
@@ -1194,7 +1191,7 @@ export class Liveblocks {
   }
 
   /**
-   * Updates a thread's metadata.
+   * Updates the metadata of the specified thread in a room.
    * @param params.roomId The room ID to update the thread in.
    * @param params.threadId The thread ID to update.
    * @param params.data.metadata The metadata for the thread. Value must be a string, boolean or number
@@ -1202,7 +1199,7 @@ export class Liveblocks {
    * @param params.data.updatedAt (optional) The date the thread is set to be updated.
    * @returns The updated thread.
    */
-  public async updateThreadMetadata<
+  public async editThreadMetadata<
     TThreadMetadata extends BaseMetadata = never,
   >(params: {
     roomId: string;

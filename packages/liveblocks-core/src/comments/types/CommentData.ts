@@ -1,6 +1,6 @@
 import type { CommentBody } from "./CommentBody";
 
-type CommentReactionUser = {
+export type CommentReactionUser = {
   id: string;
 };
 
