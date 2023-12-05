@@ -45,6 +45,7 @@ function getChild(children: ReactNode) {
 export function useAnimationPersist(ref: RefObject<HTMLElement>) {
   const [isPresent, unmount] = usePersist();
   const previousAnimationName = useRef<string | null>(null);
+  const unmountAnimationName = useRef<string | null>(null);
 
   useLayoutEffect(() => {
     const element = ref.current;
@@ -54,6 +55,10 @@ export function useAnimationPersist(ref: RefObject<HTMLElement>) {
     }
 
     const handleAnimationEnd = (event: AnimationEvent) => {
+      if (event.animationName === unmountAnimationName.current) {
+        unmount();
+      }
+
       previousAnimationName.current = event.animationName;
     };
 
@@ -64,27 +69,20 @@ export function useAnimationPersist(ref: RefObject<HTMLElement>) {
       element.removeEventListener("animationcancel", handleAnimationEnd);
       element.removeEventListener("animationend", handleAnimationEnd);
     };
-  }, [ref]);
+  }, [ref, unmount]);
 
   useLayoutEffect(() => {
     const element = ref.current;
+    let animationFrameId: number;
 
     if (!element) {
       return;
     }
 
-    let animationFrameId: number;
-    let styles: CSSStyleDeclaration;
-
-    const handleAnimationEnd = (event: AnimationEvent) => {
-      if (event.animationName === styles.animationName) {
-        unmount();
-      }
-    };
-
     if (!isPresent) {
       animationFrameId = requestAnimationFrame(() => {
-        styles = getComputedStyle(element);
+        const styles = getComputedStyle(element);
+        unmountAnimationName.current = styles.animationName;
 
         if (
           styles.animationName === "none" ||
@@ -92,17 +90,12 @@ export function useAnimationPersist(ref: RefObject<HTMLElement>) {
           styles.display === "none"
         ) {
           unmount();
-        } else {
-          element.addEventListener("animationend", handleAnimationEnd);
-          element.addEventListener("animationcancel", handleAnimationEnd);
         }
       });
     }
 
     return () => {
       cancelAnimationFrame(animationFrameId);
-      element.removeEventListener("animationend", handleAnimationEnd);
-      element.removeEventListener("animationcancel", handleAnimationEnd);
     };
   }, [isPresent, ref, unmount]);
 }
