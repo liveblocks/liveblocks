@@ -1224,6 +1224,12 @@
           },
           "404": {
             "$ref": "#/components/responses/404-thread"
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
           }
         }
       },
@@ -1283,6 +1289,12 @@
           },
           "409": {
             "$ref": "#/components/responses/409-thread"
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
           }
         },
         "requestBody": {
@@ -1382,7 +1394,7 @@
             "$ref": "#/components/responses/403"
           },
           "404": {
-            "$ref": "#/components/responses/404"
+            "$ref": "#/components/responses/404-thread"
           }
         }
       }
@@ -1454,6 +1466,9 @@
           },
           "404": {
             "$ref": "#/components/responses/404-thread"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
           }
         },
         "requestBody": {
@@ -1537,7 +1552,7 @@
             "$ref": "#/components/responses/403"
           },
           "404": {
-            "$ref": "#/components/responses/404"
+            "$ref": "#/components/responses/404-thread"
           }
         }
       }
@@ -1600,6 +1615,12 @@
           },
           "404": {
             "$ref": "#/components/responses/404-thread"
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
           }
         },
         "requestBody": {
@@ -1688,6 +1709,12 @@
           },
           "404": {
             "$ref": "#/components/responses/404-thread"
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
           }
         }
       },
@@ -1757,6 +1784,12 @@
           },
           "404": {
             "$ref": "#/components/responses/404-thread"
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
           }
         },
         "requestBody": {
@@ -1789,6 +1822,12 @@
           },
           "404": {
             "$ref": "#/components/responses/404-comment"
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
           }
         },
         "operationId": "delete-comment-commentId",
@@ -1855,6 +1894,12 @@
           },
           "404": {
             "$ref": "#/components/responses/404-comment"
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
           }
         },
         "requestBody": {
@@ -1918,6 +1963,12 @@
           },
           "404": {
             "$ref": "#/components/responses/404-comment-reaction"
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
           }
         },
         "requestBody": {

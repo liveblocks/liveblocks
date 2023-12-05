@@ -1103,8 +1103,9 @@ const editedComment = await liveblocks.editComment({
 
 #### Liveblocks.deleteComment [#delete-comment]
 
-Deletes a specific comment from a thread within a room. Throws an error if the
-comment isn’t found. This is a wrapper around the
+Deletes a specific comment from a thread within a room. If there are no
+remaining comments in the thread, the thread is also deleted. This method throws
+an error if the comment isn’t found. This is a wrapper around the
 [Delete Comment API](/docs/api-reference/rest-api-endpoints#delete-comment-commentId)
 and returns no response.
 
