@@ -152,7 +152,7 @@ export interface ComposerEditorMentionSuggestionsWrapperProps {
   dir?: ComposerEditorProps["dir"];
   id: string;
   itemId: (userId?: string) => string | undefined;
-  mentionDraft: MentionDraft;
+  mentionDraft?: MentionDraft;
   userIds?: string[];
   selectedUserId?: string;
   setSelectedUserId: (userId: string) => void;

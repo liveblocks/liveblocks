@@ -1,7 +1,7 @@
 "use client";
 
 import { nn } from "@liveblocks/core";
-import type { ReactNode } from "react";
+import type { ReactNode, RefObject } from "react";
 import React, {
   Children,
   createContext,
@@ -40,6 +40,71 @@ function getChild(children: ReactNode) {
     : children;
 
   return isValidElement(child) ? child : undefined;
+}
+
+export function useAnimationPersist(ref: RefObject<HTMLElement>) {
+  const [isPresent, unmount] = usePersist();
+  const previousAnimationName = useRef<string | null>(null);
+
+  useLayoutEffect(() => {
+    const element = ref.current;
+
+    if (!element) {
+      return;
+    }
+
+    const handleAnimationEnd = (event: AnimationEvent) => {
+      previousAnimationName.current = event.animationName;
+    };
+
+    element.addEventListener("animationcancel", handleAnimationEnd);
+    element.addEventListener("animationend", handleAnimationEnd);
+
+    return () => {
+      element.removeEventListener("animationcancel", handleAnimationEnd);
+      element.removeEventListener("animationend", handleAnimationEnd);
+    };
+  }, [ref]);
+
+  useLayoutEffect(() => {
+    const element = ref.current;
+
+    if (!element) {
+      return;
+    }
+
+    let animationFrameId: number;
+    let styles: CSSStyleDeclaration;
+
+    const handleAnimationEnd = (event: AnimationEvent) => {
+      if (event.animationName === styles.animationName) {
+        unmount();
+      }
+    };
+
+    if (!isPresent) {
+      animationFrameId = requestAnimationFrame(() => {
+        styles = getComputedStyle(element);
+
+        if (
+          styles.animationName === "none" ||
+          styles.animationName === previousAnimationName.current ||
+          styles.display === "none"
+        ) {
+          unmount();
+        } else {
+          element.addEventListener("animationend", handleAnimationEnd);
+          element.addEventListener("animationcancel", handleAnimationEnd);
+        }
+      });
+    }
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      element.removeEventListener("animationend", handleAnimationEnd);
+      element.removeEventListener("animationcancel", handleAnimationEnd);
+    };
+  }, [isPresent, ref, unmount]);
 }
 
 /**
