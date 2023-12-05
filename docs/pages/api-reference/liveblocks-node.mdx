@@ -949,7 +949,7 @@ more.
 
 ### Comments
 
-#### Liveblocks.getThreads [#get-threads]
+#### Liveblocks.getThreads [#get-threads] [@badge=Beta]
 
 Returns a list of threads found inside a room. Throws an error if the room isn’t
 found. This is a wrapper around the
@@ -962,7 +962,7 @@ const threads = await liveblocks.getThreads({
 });
 ```
 
-#### Liveblocks.createThread [#create-thread]
+#### Liveblocks.createThread [#create-thread] [@badge=Beta]
 
 Creates a new thread within a specific room, using room ID and thread data. This
 method allows for the inclusion of custom metadata and a comment with optional
@@ -1017,7 +1017,7 @@ const { participantIds } = await liveblocks.getThreadParticipants({
 });
 ```
 
-#### Liveblocks.updateThreadMetadata [#update-thread-metadata]
+#### Liveblocks.updateThreadMetadata [#update-thread-metadata] [@badge=Beta]
 
 Updates the metadata of a specific thread within a room. This method allows you
 to modify the metadata of a thread, including user information and the date of
@@ -1039,7 +1039,7 @@ const updatedThread = await liveblocks.updateThreadMetadata({
 });
 ```
 
-#### Liveblocks.createComment [#create-comment]
+#### Liveblocks.createComment [#create-comment] [@badge=Beta]
 
 Creates a new comment in a specific thread within a room. This method allows
 users to add comments to a conversation thread, specifying the user who made the
@@ -1097,7 +1097,7 @@ const comment = await liveblocks.getComment({
 });
 ```
 
-#### Liveblocks.editComment [#edit-comment]
+#### Liveblocks.editComment [#edit-comment] [@badge=Beta]
 
 Edits an existing comment in a specific thread within a room. This method allows
 users to update the content of their previously posted comments, with the option
@@ -1122,7 +1122,7 @@ const editedComment = await liveblocks.editComment({
 });
 ```
 
-#### Liveblocks.deleteComment [#delete-comment]
+#### Liveblocks.deleteComment [#delete-comment] [@badge=Beta]
 
 Deletes a specific comment from a thread within a room. If there are no
 remaining comments in the thread, the thread is also deleted. This method throws
@@ -1138,7 +1138,7 @@ await liveblocks.deleteComment({
 });
 ```
 
-#### Liveblocks.addCommentReaction [#add-comment-reaction]
+#### Liveblocks.addCommentReaction [#add-comment-reaction] [@badge=Beta]
 
 Adds a reaction to a specific comment in a thread within a room. Throws an error
 if the comment reaction isn’t found. This is a wrapper around the
@@ -1158,7 +1158,7 @@ const reaction = await liveblocks.addCommentReaction({
 });
 ```
 
-#### Liveblocks.removeCommentReaction [#remove-comment-reaction]
+#### Liveblocks.removeCommentReaction [#remove-comment-reaction] [@badge=Beta]
 
 Removes a reaction from a specific comment in a thread within a room. Throws an
 error if the comment reaction isn’t found. This is a wrapper around the
@@ -1497,7 +1497,7 @@ export function POST(request) {
 
 ---
 
-### authorize (deprecated) [#authorize]
+### authorize [#authorize] [@badge=Deprecated]
 
 <Banner title="Deprecated" type="error">
   For now, it’s still supported, but this way of authorizing will eventually get
