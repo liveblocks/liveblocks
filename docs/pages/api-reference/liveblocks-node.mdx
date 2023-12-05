@@ -949,7 +949,7 @@ more.
 
 ### Comments
 
-#### Liveblocks.getThreads [#get-threads] [@badge=Beta]
+#### Liveblocks.getThreads [#get-threads]
 
 Returns a list of threads found inside a room. Throws an error if the room isn’t
 found. This is a wrapper around the
@@ -957,35 +957,110 @@ found. This is a wrapper around the
 returns the same response.
 
 ```ts
-const threads = await liveblocks.getThreads({
-  roomId: "my-room",
+const { data: threads } = await liveblocks.getThreads({
+  roomId: "my-room-id",
 });
+
+// [{ type: "thread", id: "th_d75sF3...", ... }, ...]
+console.log(threads);
 ```
 
 #### Liveblocks.createThread [#create-thread] [@badge=Beta]
 
 Creates a new thread within a specific room, using room ID and thread data. This
-method allows for the inclusion of custom metadata and a comment with optional
-creation date. This is a wrapper around the
+is a wrapper around the
 [Create Thread API](/docs/api-reference/rest-api-endpoints#post-threads) and
 returns the new thread.
 
 ```ts
 const thread = await liveblocks.createThread({
-  roomId: "my-room",
+  roomId: "my-room-id",
+
   data: {
-    metadata: {
-      color: "blue",
-    },
     comment: {
-      userId: "user1",
+      userId: "florent@example.com",
       body: {
         version: 1,
-        content: [],
+        content: [
+          /* The comment's body text goes here, see below */
+        ],
       },
     },
   },
 });
+
+// { type: "thread", id: "th_d75sF3...", ... }
+console.log(thread);
+```
+
+A comment’s body is an array of paragraphs, each containing child nodes. Here’s
+an example of how to construct a comment’s body, which can be submitted under
+`data.comment.body`.
+
+```tsx highlight="3-11,20"
+import { CommentBody } from "@liveblocks/node";
+
+const body: CommentBody = {
+  version: 1,
+  content: [
+    {
+      type: "paragraph",
+      children: [{ text: "Hello " }, { text: "world", bold: true }],
+    },
+  ],
+};
+
+const thread = await liveblocks.createThread({
+  roomId: "my-room-id",
+
+  data: {
+    // ...
+    comment: {
+      // The comment's body, uses the `CommentBody` type
+      body,
+
+      // ...
+    },
+  },
+});
+```
+
+This method has a number of options, allowing for custom metadata and a creation
+date for the comment.
+
+```ts
+const thread = await liveblocks.createThread({
+  roomId: "my-room-id",
+
+  data: {
+    // Optional, custom metadata properties
+    metadata: {
+      color: "blue",
+      page: 3,
+      resolved: true,
+    },
+
+    // Data for the first comment in the thread
+    comment: {
+      // The ID of the user that created the comment
+      userId: "florent@example.com",
+
+      // Optional, when the comment was created.
+      createdAt: new Date(),
+
+      // The comment's body, uses the `CommentBody` type
+      body: {
+        version: 1,
+        content: [
+          /* The comment's body text goes here, see above */
+        ],
+      },
+    },
+  },
+});
+
+// { type: "thread", id: "th_d75sF3...", ... }
+console.log(thread);
 ```
 
 #### Liveblocks.getThread [#get-thread]
@@ -997,9 +1072,12 @@ the same response.
 
 ```ts
 const thread = await liveblocks.getThread({
-  roomId: "my-room",
-  threadId: "my-thread",
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
 });
+
+// { type: "thread", id: "th_d75sF3...", ... }
+console.log(thread);
 ```
 
 #### Liveblocks.getThreadParticipants [#get-thread-participants]
@@ -1013,8 +1091,11 @@ and returns the same response.
 ```ts
 const { participantIds } = await liveblocks.getThreadParticipants({
   roomId: "my-room-id",
-  threadId: "my-thread-id",
+  threadId: "th_d75sF3...",
 });
+
+// ["chris@example.com", "nimesh@example.com", ...]
+console.log(participantIds);
 ```
 
 #### Liveblocks.updateThreadMetadata [#update-thread-metadata] [@badge=Beta]
@@ -1028,56 +1109,132 @@ and returns the updated thread.
 
 ```ts
 const updatedThread = await liveblocks.updateThreadMetadata({
-  roomId: "my-room",
-  threadId: "my-thread",
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+
   data: {
     metadata: {
       color: "yellow",
     },
-    userId: "user1",
+    userId: "marc@example.com",
+    updatedAt: new Date(), // Optional
   },
 });
+
+// { type: "thread", id: "th_d75sF3...", ... }
+console.log(updatedThread);
+```
+
+Metadata can be a `string`, `number`, or `boolean`. You can also use `null` to
+remove metadata from a thread. Here’s an example using every option.
+
+```ts
+const updatedThread = await liveblocks.updateThreadMetadata({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+
+  data: {
+    // Custom metadata
+    metadata: {
+      // Metadata can be a string, number, or boolean
+      title: "My thread title",
+      page: 3,
+      resolved: true,
+
+      // Remove metadata with null
+      color: null,
+    },
+
+    // The ID of the user that updated the metadata
+    userId: "marc@example.com",
+
+    // Optional, the time the user updated the metadata
+    updatedAt: new Date(),
+  },
+});
+
+// { type: "thread", id: "th_d75sF3...", ... }
+console.log(updatedThread);
 ```
 
 #### Liveblocks.createComment [#create-comment] [@badge=Beta]
 
 Creates a new comment in a specific thread within a room. This method allows
 users to add comments to a conversation thread, specifying the user who made the
-comment and the content of the comment. The comment content contains a body
-property which is an array of paragraphs, each containing text nodes, for
-example:
-
-```json
-[
-  {
-    "type": "paragraph",
-    "children": [{ "text": "Hello " }, { "text": "world", "bold": true }]
-  }
-]
-```
-
-Note that `content` corresponds to the `CommentBody` type exported from
-`@liveblocks/node`.
-
-This method is a wrapper around the
+comment and the content of the comment. This method is a wrapper around the
 [Get Comment API](/docs/api-reference/rest-api-endpoints#post-comments) and
 returns the new comment.
 
 ```ts
 const comment = await liveblocks.createComment({
-  roomId: "my-room",
-  threadId: "my-thread",
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+
   data: {
     body: {
       version: 1,
       content: [
-        {
-          type: "paragraph",
-          children: [{ text: "Hello " }, { text: "world", bold: true }],
-        },
+        /* The comment's body text goes here, see below */
       ],
     },
     userId: "user1",
+    createdAt: new Date(), // Optional
+  },
+});
+```
+
+A comment’s body is an array of paragraphs, each containing child nodes. Here’s
+an example of how to construct a comment’s body, which can be submitted under
+`data.body`.
+
+```tsx highlight="3-11,19"
+import { CommentBody } from "@liveblocks/node";
+
+const body: CommentBody = {
+  version: 1,
+  content: [
+    {
+      type: "paragraph",
+      children: [{ text: "Hello " }, { text: "world", bold: true }],
+    },
+  ],
+};
+
+const comment = await liveblocks.createComment({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+
+  data: {
+    // The comment's body, uses the `CommentBody` type
+    body,
+
+    // ...
+  },
+});
+```
+
+This method has a number of options, including the option to add a custom
+creation date to the comment.
+
+```ts
+const comment = await liveblocks.createComment({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+
+  data: {
+    // The comment's body, uses the `CommentBody` type
+    body: {
+      version: 1,
+      content: [
+        /* The comment's body text goes here, see above */
+      ],
+    },
+
+    // The ID of the user that created the comment
+    userId: "user1",
+
+    // The time the comment was created
+    createdAt: new Date(),
   },
 });
 ```
@@ -1092,9 +1249,12 @@ returns the same response.
 ```ts
 const comment = await liveblocks.getComment({
   roomId: "my-room-id",
-  threadId: "my-thread-id",
-  commentId: "my-comment-id",
+  threadId: "th_d75sF3...",
+  commentId: "cm_agH76a...",
 });
+
+// { type: "comment", threadId: "th_d75sF3...", ... }
+console.log(comment);
 ```
 
 #### Liveblocks.editComment [#edit-comment] [@badge=Beta]
@@ -1108,18 +1268,81 @@ and returns the updated comment.
 
 ```ts
 const editedComment = await liveblocks.editComment({
-  roomId: "my-room",
-  threadId: "my-thread",
-  commentId: "my-comment",
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+  commentId: "cm_agH76a...",
+
   data: {
     body: {
       version: 1,
-      content: [],
+      content: [
+        /* The comment's body text goes here, see below */
+      ],
     },
-    userId: "user1",
-    editedAt: new Date(), // Optional, the date and time of the edit
+    userId: "alicia@example.com",
+    createdAt: new Date(), // Optional
   },
 });
+
+// { type: "comment", threadId: "th_d75sF3...", ... }
+console.log(editedComment);
+```
+
+A comment’s body is an array of paragraphs, each containing child nodes. Here’s
+an example of how to construct a comment’s body, which can be submitted under
+`data.body`.
+
+```tsx highlight="3-11,19"
+import { CommentBody } from "@liveblocks/node";
+
+const body: CommentBody = {
+  version: 1,
+  content: [
+    {
+      type: "paragraph",
+      children: [{ text: "Hello " }, { text: "world", bold: true }],
+    },
+  ],
+};
+
+const comment = await liveblocks.createComment({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+
+  data: {
+    // The comment's body, uses the `CommentBody` type
+    body,
+
+    // ...
+  },
+});
+```
+
+```ts
+const editedComment = await liveblocks.editComment({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+  commentId: "cm_agH76a...",
+
+  data: {
+    // The comment's body, uses the `CommentBody` type
+    body: {
+      version: 1,
+      content: [
+        /* The comment's body text goes here, see above */
+      ],
+    },
+
+    // The ID of the user that edited the comment
+    userId: "alicia@example.com",
+
+    // Optional, the time the comment was edited
+    editedAt: new Date(),
+  },
+});
+
+// { type: "comment", threadId: "th_d75sF3...", ... }
+console.log(editedComment);
 ```
 
 #### Liveblocks.deleteComment [#delete-comment] [@badge=Beta]
@@ -1132,9 +1355,9 @@ and returns no response.
 
 ```ts
 await liveblocks.deleteComment({
-  roomId: "my-room",
-  threadId: "my-thread",
-  commentId: "my-comment",
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+  commentId: "cm_agH76a...",
 });
 ```
 
@@ -1148,14 +1371,18 @@ and returns the new reaction.
 ```ts
 const reaction = await liveblocks.addCommentReaction({
   roomId: "my-room-id",
-  threadId: "my-thread-id",
-  commentId: "my-comment-id",
+  threadId: "th_d75sF3...",
+  commentId: "cm_agH76a...",
+
   data: {
     emoji: "👨‍👩‍👧",
     userId: "your-user-id",
     createdAt: new Date(), // Optional, the date and time when the reaction was added
   },
 });
+
+// { emoji: "👨‍👩‍👧", users: [{ id: "guillaume@example.com" }, ...], ... }
+console.log(reaction);
 ```
 
 #### Liveblocks.removeCommentReaction [#remove-comment-reaction] [@badge=Beta]
@@ -1167,9 +1394,10 @@ and returns no response.
 
 ```ts
 await liveblocks.deleteCommentReaction({
-  roomId: "my-room",
-  threadId: "my-thread",
-  commentId: "my-comment",
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+  commentId: "cm_agH76a...",
+
   data: {
     emoji: "👨‍👩‍👧",
     userId: "your-user-id",
