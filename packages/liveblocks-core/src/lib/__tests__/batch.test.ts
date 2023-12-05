@@ -75,6 +75,7 @@ describe("Batch", () => {
     await expect(b).resolves.toEqual("b");
 
     // Callback should be called twice, once for "a" and once for "b".
+    expect(callback).toHaveBeenCalledTimes(2);
     expect(callback).toHaveBeenNthCalledWith(1, [["a"]]);
     expect(callback).toHaveBeenNthCalledWith(2, [["b"]]);
   });
@@ -139,6 +140,42 @@ describe("Batch", () => {
         "Batch callback must return an array of the same length as the number of calls in the batch. Expected 1, but got 0."
       )
     );
+  });
+
+  test("should deduplicate identical calls", async () => {
+    const callback = jest.fn(synchronousCallback);
+    const batch = new Batch<string, [string]>(callback, { delay: SOME_TIME });
+
+    const a = batch.add("a");
+    const b = batch.add("b");
+    const duplicatedA = batch.add("a");
+
+    await expect(a).resolves.toEqual("a");
+    await expect(b).resolves.toEqual("b");
+    await expect(duplicatedA).resolves.toEqual("a");
+
+    // Callback should be called only once for ["a", "b"].
+    expect(callback).toHaveBeenCalledTimes(1);
+    expect(callback).toHaveBeenCalledWith([["a"], ["b"]]);
+  });
+
+  test("should not deduplicate identical calls if they're not in the same batch", async () => {
+    const callback = jest.fn(synchronousCallback);
+    const batch = new Batch<string, [string]>(callback, { delay: SOME_TIME });
+
+    const a = batch.add("a");
+    const b = batch.add("b");
+    await sleep(SOME_TIME * 1.5);
+    const duplicatedA = batch.add("a");
+
+    await expect(a).resolves.toEqual("a");
+    await expect(b).resolves.toEqual("b");
+    await expect(duplicatedA).resolves.toEqual("a");
+
+    // Callback should be called twice, once for ["a", "b"] and once for ["a"] again.
+    expect(callback).toHaveBeenCalledTimes(2);
+    expect(callback).toHaveBeenNthCalledWith(1, [["a"], ["b"]]);
+    expect(callback).toHaveBeenNthCalledWith(2, [["a"]]);
   });
 });
 

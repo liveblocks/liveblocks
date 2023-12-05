@@ -23,15 +23,16 @@ interface Options {
   delay?: number;
 }
 
+const noop = () => {};
+
 class BatchCall<Result, Args extends unknown[]> {
   readonly args: Args;
-  readonly resolve: Resolve<Result>;
-  readonly reject: Reject;
+  resolve: Resolve<Result> = noop;
+  reject: Reject = noop;
+  promise: Promise<Result> = new Promise(noop);
 
-  constructor(args: Args, resolve: Resolve<Result>, reject: Reject) {
+  constructor(args: Args) {
     this.args = args;
-    this.resolve = resolve;
-    this.reject = reject;
   }
 }
 
@@ -116,11 +117,26 @@ export class Batch<Result, Args extends unknown[] = []> {
   }
 
   add(...args: Args): Promise<Result> {
-    // Add the call to the queue and schedule a flush.
-    return new Promise<Result>((resolve, reject) => {
-      this.queue.push(new BatchCall(args, resolve, reject));
-      this.schedule();
+    // Check if there's already an identical call in the queue.
+    const existingCall = this.queue.find(
+      (call) => stringify(call.args) === stringify(args)
+    );
+
+    // If an existing call exists, return its promise.
+    if (existingCall) {
+      return existingCall.promise;
+    }
+
+    // If no existing call exists, add the call to the queue and schedule a flush.
+    const call = new BatchCall<Result, Args>(args);
+    call.promise = new Promise<Result>((resolve, reject) => {
+      call.resolve = resolve;
+      call.reject = reject;
     });
+    this.queue.push(call);
+    this.schedule();
+
+    return call.promise;
   }
 
   clear(): void {
