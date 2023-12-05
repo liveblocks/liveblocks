@@ -1,7 +1,7 @@
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
-import type { CommentData, ThreadData } from "../client";
+import type { CommentData, CommentReaction, ThreadData } from "../client";
 import { Liveblocks, LiveblocksError } from "../client";
 import { DEFAULT_BASE_URL } from "../utils";
 
@@ -44,7 +44,13 @@ describe("client", () => {
     threadId: "thread1",
     userId: "user1",
     createdAt: new Date("2022-07-13T14:32:50.697Z"),
-    reactions: [],
+    reactions: [
+      {
+        emoji: "🐐",
+        createdAt: new Date("2022-07-13T14:32:50.697Z"),
+        users: [{ id: "user1" }],
+      },
+    ],
     body: {
       version: 1,
       content: [],
@@ -61,7 +67,13 @@ describe("client", () => {
       color: "blue",
     },
     createdAt: new Date("2022-07-13T14:32:50.697Z"),
-    comments: [],
+    comments: [comment],
+  };
+
+  const reaction: CommentReaction = {
+    emoji: "🐐",
+    createdAt: new Date("2022-07-13T14:32:50.697Z"),
+    userId: "user1",
   };
 
   const server = setupServer(
@@ -387,6 +399,89 @@ describe("client", () => {
         expect(err.name).toBe("LiveblocksError");
       }
     }
+  });
+
+  test("should return a list of threads when getThreads receives a successful response", async () => {
+    server.use(
+      http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads`, () => {
+        return HttpResponse.json(
+          {
+            data: [thread],
+          },
+          { status: 200 }
+        );
+      })
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    await expect(
+      client.getThreads({
+        roomId: "room1",
+      })
+    ).resolves.toEqual({
+      data: [thread],
+    });
+  });
+
+  test("should return the specified thread when getThread receives a successful response", async () => {
+    server.use(
+      http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads/:threadId`, () => {
+        return HttpResponse.json(thread, { status: 200 });
+      })
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    await expect(
+      client.getThread({
+        roomId: "room1",
+        threadId: "thread1",
+      })
+    ).resolves.toEqual(thread);
+  });
+
+  test("should return the specified comment when getComment receives a successful response", async () => {
+    server.use(
+      http.get(
+        `${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads/:threadId/comments/:commentId`,
+        () => {
+          return HttpResponse.json(comment, { status: 200 });
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    await expect(
+      client.getComment({
+        roomId: "room1",
+        threadId: "thread1",
+        commentId: "comment1",
+      })
+    ).resolves.toEqual(comment);
+  });
+
+  test("should add a reaction to a comment when addReaction receives a successful response", async () => {
+    server.use(
+      http.post(
+        `${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads/:threadId/comments/:commentId/add-reaction`,
+        () => {
+          return HttpResponse.json(reaction, { status: 200 });
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    await expect(
+      client.addCommentReaction({
+        roomId: "room1",
+        threadId: "thread1",
+        commentId: "comment1",
+        data: reaction,
+      })
+    ).resolves.toEqual(reaction);
   });
 
   test("should throw an error when getRoom fails due to network error", async () => {

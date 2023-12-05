@@ -86,12 +86,20 @@ type RoomInfoOriginal = Omit<RoomInfo, "lastConnectionAt" | "createdAt"> & {
   createdAt?: string;
 };
 
+type CommentReactionUser =
+  CommentDataOriginal["reactions"][number]["users"][number];
+
 export type CommentData = Omit<
   CommentDataOriginal,
-  "createdAt" | "editedAt" | "body" | "deletedAt"
+  "createdAt" | "editedAt" | "body" | "deletedAt" | "reactions"
 > & {
   createdAt: Date;
   editedAt?: Date;
+  reactions: {
+    emoji: string;
+    createdAt: Date;
+    users: CommentReactionUser[];
+  }[];
 } & (
     | {
         body: CommentBody;
@@ -112,10 +120,14 @@ export type ThreadData<TThreadMetadata extends BaseMetadata = never> = Omit<
   comments: CommentData[];
 };
 
-export type CommentReaction = {
+type CommentReactionOriginal = {
   emoji: string;
   createdAt: string;
   userId: string;
+};
+
+export type CommentReaction = Omit<CommentReactionOriginal, "createdAt"> & {
+  createdAt: Date;
 };
 
 export type RoomUser<Info> = {
@@ -223,10 +235,15 @@ export class Liveblocks {
   private convertToCommentData(data: CommentDataOriginal): CommentData {
     const editedAt = data.editedAt ? new Date(data.editedAt) : undefined;
     const createdAt = new Date(data.createdAt);
+    const reactions = data.reactions.map((reaction) => ({
+      ...reaction,
+      createdAt: new Date(reaction.createdAt),
+    }));
 
     if (data.body) {
       return {
         ...data,
+        reactions,
         createdAt,
         editedAt,
       };
@@ -234,6 +251,7 @@ export class Liveblocks {
       const deletedAt = new Date(data.deletedAt);
       return {
         ...data,
+        reactions,
         createdAt,
         editedAt,
         deletedAt,
@@ -942,7 +960,10 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
-    return (await res.json()) as Promise<{ data: ThreadData[] }>;
+    const { data } = (await res.json()) as { data: ThreadDataOriginal[] };
+    return {
+      data: data.map((thread) => this.convertToThreadData(thread)),
+    };
   }
 
   /**
@@ -952,10 +973,10 @@ export class Liveblocks {
    * @param params.threadId The thread ID.
    * @returns A thread.
    */
-  public async getThread(params: {
+  public async getThread<TThreadMetadata extends BaseMetadata = never>(params: {
     roomId: string;
     threadId: string;
-  }): Promise<ThreadData> {
+  }): Promise<ThreadData<TThreadMetadata>> {
     const { roomId, threadId } = params;
 
     const res = await this.get(url`/v2/rooms/${roomId}/threads/${threadId}`);
@@ -963,7 +984,9 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
-    return (await res.json()) as Promise<ThreadData>;
+    return this.convertToThreadData(
+      (await res.json()) as ThreadDataOriginal<TThreadMetadata>
+    );
   }
 
   /**
@@ -1014,7 +1037,7 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
-    return (await res.json()) as Promise<CommentData>;
+    return this.convertToCommentData((await res.json()) as CommentDataOriginal);
   }
 
   /**
@@ -1088,7 +1111,7 @@ export class Liveblocks {
   }
 
   /**
-   * Deletes a comment.
+   * Deletes a comment. Deletes a comment. If there are no remaining comments in the thread, the thread is also deleted.
    * @param params.roomId The room ID to delete the comment in.
    * @param params.threadId The thread ID to delete the comment in.
    * @param params.commentId The comment ID to delete.
@@ -1229,7 +1252,12 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    return (await res.json()) as Promise<CommentReaction>;
+    const reaction = (await res.json()) as CommentReactionOriginal;
+
+    return {
+      ...reaction,
+      createdAt: new Date(reaction.createdAt),
+    };
   }
 
   /**
