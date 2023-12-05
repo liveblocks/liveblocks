@@ -1040,9 +1040,9 @@
   z-index: 1;
   display: flex;
   flex: none;
-  gap: calc(0.375 * var(--lb-spacing));
+  gap: calc(0.325 * var(--lb-spacing));
   align-items: center;
-  padding: calc(0.5 * var(--lb-spacing)) var(--lb-spacing);
+  padding: calc(0.25 * var(--lb-spacing)) var(--lb-spacing);
   background: var(--lb-background);
   color: var(--lb-accent);
   font-weight: 600;
