@@ -89,6 +89,10 @@ type RoomInfoOriginal = Omit<RoomInfo, "lastConnectionAt" | "createdAt"> & {
 type CommentReactionUser =
   CommentDataOriginal["reactions"][number]["users"][number];
 
+/**
+ * This CommentData type modifies the (original) CommentData type from @liveblocks/core (which is also the shape of the comment data returned by the API)
+ * All properties that are dates are converted from ISO strings to Date objects.
+ */
 export type CommentData = Omit<
   CommentDataOriginal,
   "createdAt" | "editedAt" | "body" | "deletedAt" | "reactions"
@@ -111,6 +115,11 @@ export type CommentData = Omit<
       }
   );
 
+/**
+ * This ThreadData type modifies the (original) ThreadData type from @liveblocks/core (which is also the shape of the thread data returned by the API)
+ * All properties that are dates are converted from ISO strings to Date objects.
+ * The comments are also converted to the modified CommentData type defined above.
+ */
 export type ThreadData<TThreadMetadata extends BaseMetadata = never> = Omit<
   ThreadDataOriginal<TThreadMetadata>,
   "createdAt" | "updatedAt" | "comments"
@@ -120,12 +129,19 @@ export type ThreadData<TThreadMetadata extends BaseMetadata = never> = Omit<
   comments: CommentData[];
 };
 
+/**
+ * This is the original shape of a comment reaction returned by the API.
+ */
 type CommentReactionOriginal = {
   emoji: string;
   createdAt: string;
   userId: string;
 };
 
+/**
+ * This CommentReaction type modifies the original comment reaction shape (CommentReactionOriginal) returned by the API.
+ * All properties that are dates are converted from ISO strings to Date objects.
+ */
 export type CommentReaction = Omit<CommentReactionOriginal, "createdAt"> & {
   createdAt: Date;
 };
