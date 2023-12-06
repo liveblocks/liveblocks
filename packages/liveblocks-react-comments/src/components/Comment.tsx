@@ -13,7 +13,13 @@ import type {
   ReactNode,
   SyntheticEvent,
 } from "react";
-import React, { forwardRef, useCallback, useMemo, useState } from "react";
+import React, {
+  forwardRef,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { CheckIcon } from "../icons/Check";
 import { CrossIcon } from "../icons/Cross";
@@ -38,6 +44,8 @@ import * as ComposerPrimitive from "../primitives/Composer";
 import { Timestamp } from "../primitives/Timestamp";
 import { MENTION_CHARACTER } from "../slate/plugins/mentions";
 import { classNames } from "../utils/class-names";
+import { useRefs } from "../utils/use-refs";
+import { useVisibleCallback } from "../utils/use-visible";
 import { Composer } from "./Composer";
 import { Avatar } from "./internal/Avatar";
 import { Button } from "./internal/Button";
@@ -110,6 +118,11 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
    * @internal
    */
   root?: boolean;
+
+  /**
+   * @internal
+   */
+  markThreadAsReadWhenVisible?: string;
 
   /**
    * @internal
@@ -284,9 +297,10 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       onCommentDelete,
       overrides,
       root = true,
+      className,
       additionalActions,
       additionalActionsClassName,
-      className,
+      markThreadAsReadWhenVisible,
       ...props
     },
     forwardedRef
@@ -298,6 +312,8 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       useRemoveReaction,
       useSelf,
     } = useRoomContextBundle();
+    const ref = useRef<HTMLDivElement>(null);
+    const mergedRefs = useRefs(forwardedRef, ref);
     const self = useSelf();
     const deleteComment = useDeleteComment();
     const editComment = useEditComment();
@@ -307,6 +323,15 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     const [isEditing, setEditing] = useState(false);
     const [isMoreActionOpen, setMoreActionOpen] = useState(false);
     const [isReactionActionOpen, setReactionActionOpen] = useState(false);
+
+    const markThreadAsRead = useCallback(() => {
+      // TODO: Mark thread as read
+      console.log("Mark thread as read", markThreadAsReadWhenVisible);
+    }, [markThreadAsReadWhenVisible]);
+
+    useVisibleCallback(ref, markThreadAsRead, {
+      enabled: Boolean(markThreadAsReadWhenVisible),
+    });
 
     const stopPropagation = useCallback((event: SyntheticEvent) => {
       event.stopPropagation();
@@ -412,7 +437,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
           data-deleted={!comment.body ? "" : undefined}
           dir={$.dir}
           {...props}
-          ref={forwardedRef}
+          ref={mergedRefs}
         >
           <div className="lb-comment-header">
             <div className="lb-comment-details">

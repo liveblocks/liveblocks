@@ -1,12 +1,14 @@
 import { type RefObject, useEffect, useState } from "react";
 
+import { useLatest } from "./use-latest";
+
 type Options = { enabled?: boolean };
 
 type IntersectionObserverSingleCallback = (
   entry: IntersectionObserverEntry
 ) => void;
 
-let intersectionObserver: IntersectionObserver;
+let intersectionObserver: IntersectionObserver | undefined;
 const intersectionCallbacks = new WeakMap<
   Element,
   IntersectionObserverSingleCallback
@@ -32,7 +34,7 @@ function observe(
 
 function unobserve(element: Element) {
   intersectionCallbacks.delete(element);
-  intersectionObserver.unobserve(element);
+  intersectionObserver?.unobserve(element);
 }
 
 /**
@@ -63,4 +65,35 @@ export function useVisible(ref: RefObject<Element>, options?: Options) {
   }, [enabled]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return isVisible;
+}
+
+export function useVisibleCallback<T extends (...args: any[]) => void>(
+  ref: RefObject<Element>,
+  callback: T,
+  options?: Options
+) {
+  const enabled = options?.enabled ?? true;
+  const latestCallback = useLatest(callback);
+
+  useEffect(() => {
+    const element = ref.current;
+
+    if (!element) {
+      return;
+    }
+
+    if (enabled) {
+      observe(element, (entry) => {
+        if (entry.isIntersecting) {
+          latestCallback.current();
+        }
+      });
+    } else {
+      unobserve(element);
+    }
+
+    return () => {
+      unobserve(element);
+    };
+  }, [enabled]); // eslint-disable-line react-hooks/exhaustive-deps
 }

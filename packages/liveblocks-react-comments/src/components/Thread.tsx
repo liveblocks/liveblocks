@@ -29,62 +29,15 @@ import {
 } from "../overrides";
 import type { ThreadMetadata } from "../types";
 import { classNames } from "../utils/class-names";
+import { findLastIndex } from "../utils/find-last-index";
 import type { CommentProps } from "./Comment";
 import { Comment } from "./Comment";
 import { Composer } from "./Composer";
 import { Button } from "./internal/Button";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";
 
-function UnreadIndicator() {
-  const [isHovered, setHovered] = useState(false);
-  const [isFocused, setFocused] = useState(false);
-  const showMarkAsRead = isHovered || isFocused;
-
-  const handleHoverStart = useCallback(() => {
-    setHovered(true);
-  }, []);
-
-  const handleHoverEnd = useCallback(() => {
-    setHovered(false);
-  }, []);
-
-  const handleFocusStart = useCallback(() => {
-    setFocused(true);
-  }, []);
-
-  const handleFocusEnd = useCallback(() => {
-    setFocused(false);
-  }, []);
-
-  return (
-    <div
-      className={classNames(
-        "lb-thread-unread-separator",
-        showMarkAsRead && "lb-thread-unread-separator:mark-as-read"
-      )}
-    >
-      <button
-        className="lb-thread-unread-indicator"
-        onPointerEnter={handleHoverStart}
-        onPointerLeave={handleHoverEnd}
-        onPointerCancel={handleHoverEnd}
-        onFocus={handleFocusStart}
-        onBlur={handleFocusEnd}
-      >
-        {showMarkAsRead ? (
-          <>
-            <CheckIcon className="lb-thread-unread-indicator-icon" />
-            Mark as read
-          </>
-        ) : (
-          <>
-            <ArrowDownIcon className="lb-thread-unread-indicator-icon" />
-            New
-          </>
-        )}
-      </button>
-    </div>
-  );
+interface UnreadIndicatorProps extends ComponentPropsWithoutRef<"div"> {
+  threadId: string;
 }
 
 export interface ThreadProps<
@@ -162,6 +115,70 @@ export interface ThreadProps<
   overrides?: Partial<ThreadOverrides & CommentOverrides & ComposerOverrides>;
 }
 
+function UnreadIndicator({
+  threadId,
+  className,
+  ...props
+}: UnreadIndicatorProps) {
+  const [isHovered, setHovered] = useState(false);
+  const [isFocused, setFocused] = useState(false);
+  const showMarkAsRead = isHovered || isFocused;
+
+  const handleClick = useCallback(() => {
+    // TODO: Mark thread as read
+    console.log("Mark thread as read", threadId);
+  }, [threadId]);
+
+  const handleHoverStart = useCallback(() => {
+    setHovered(true);
+  }, []);
+
+  const handleHoverEnd = useCallback(() => {
+    setHovered(false);
+  }, []);
+
+  const handleFocusStart = useCallback(() => {
+    setFocused(true);
+  }, []);
+
+  const handleFocusEnd = useCallback(() => {
+    setFocused(false);
+  }, []);
+
+  return (
+    <div
+      className={classNames(
+        "lb-thread-unread-separator",
+        showMarkAsRead && "lb-thread-unread-separator:mark-as-read",
+        className
+      )}
+      {...props}
+    >
+      <button
+        className="lb-thread-unread-indicator"
+        onClick={handleClick}
+        onPointerEnter={handleHoverStart}
+        onPointerLeave={handleHoverEnd}
+        onPointerCancel={handleHoverEnd}
+        onFocus={handleFocusStart}
+        onBlur={handleFocusEnd}
+      >
+        {showMarkAsRead ? (
+          <>
+            <CheckIcon className="lb-thread-unread-indicator-icon" />
+            Mark as read
+          </>
+        ) : (
+          <>
+            <ArrowDownIcon className="lb-thread-unread-indicator-icon" />
+            New
+          </>
+        )}
+      </button>
+    </div>
+  );
+}
+
 /**
  * Displays a thread of comments, with a composer to reply
  * to it.
@@ -202,6 +219,11 @@ export const Thread = forwardRef(
       return showDeletedComments
         ? 0
         : thread.comments.findIndex((comment) => comment.body);
+    }, [showDeletedComments, thread.comments]);
+    const lastCommentIndex = useMemo(() => {
+      return showDeletedComments
+        ? thread.comments.length - 1
+        : findLastIndex(thread.comments, (comment) => comment.body);
     }, [showDeletedComments, thread.comments]);
     const unreadCommentIndex = useMemo(() => {
       // If not subscribed to the thread, return nothing
@@ -276,7 +298,7 @@ export const Thread = forwardRef(
           data-resolved={
             (thread.metadata as ThreadMetadata).resolved ? "" : undefined
           }
-          data-unseen={unreadCommentIndex !== undefined ? "" : undefined}
+          data-unread={unreadCommentIndex !== undefined ? "" : undefined}
           dir={$.dir}
           {...props}
           ref={forwardedRef}
@@ -284,17 +306,14 @@ export const Thread = forwardRef(
           <div className="lb-thread-comments">
             {thread.comments.map((comment, index) => {
               const isFirstComment = index === firstCommentIndex;
+              const isUnread =
+                unreadCommentIndex !== undefined && index >= unreadCommentIndex;
 
               const children = (
                 <Comment
                   key={comment.id}
                   className="lb-thread-comment"
-                  data-unseen={
-                    unreadCommentIndex !== undefined &&
-                    index >= unreadCommentIndex
-                      ? ""
-                      : undefined
-                  }
+                  data-unread={isUnread ? "" : undefined}
                   root={false}
                   comment={comment}
                   indentContent={indentCommentContent}
@@ -305,6 +324,11 @@ export const Thread = forwardRef(
                   onCommentDelete={handleCommentDelete}
                   onAuthorClick={onAuthorClick}
                   onMentionClick={onMentionClick}
+                  markThreadAsReadWhenVisible={
+                    index === lastCommentIndex && isUnread
+                      ? thread.id
+                      : undefined
+                  }
                   additionalActionsClassName={
                     isFirstComment ? "lb-thread-actions" : undefined
                   }
@@ -346,7 +370,7 @@ export const Thread = forwardRef(
 
               return index === unreadCommentIndex ? (
                 <Fragment key={comment.id}>
-                  <UnreadIndicator />
+                  <UnreadIndicator threadId={thread.id} />
                   {children}
                 </Fragment>
               ) : (
