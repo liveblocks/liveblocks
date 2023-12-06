@@ -12,7 +12,7 @@ import type {
   Room,
   ThreadData,
 } from "@liveblocks/core";
-import { CommentsApiError, console } from "@liveblocks/core";
+import { CommentsApiError, console, makeEventSource } from "@liveblocks/core";
 import { nanoid } from "nanoid";
 import { useCallback, useEffect } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
@@ -28,10 +28,13 @@ import {
   RemoveReactionError,
 } from "./errors";
 import {
-  createCacheManager,
+  CacheManager,
+  MutationInfo,
   useAutomaticRevalidation,
   useMutate,
   useRevalidateCache,
+  RequestInfo,
+  Cache,
 } from "./lib/revalidation";
 import useIsDocumentVisible from "./lib/use-is-document-visible";
 import useIsOnline from "./lib/use-is-online";
@@ -44,6 +47,10 @@ const COMMENT_ID_PREFIX = "cm";
 
 type PartialNullable<T> = {
   [P in keyof T]?: T[P] | null | undefined;
+};
+
+type UseThreadsOptions<TThreadMetadata extends BaseMetadata> = {
+  query: TThreadMetadata;
 };
 
 export type CommentsRoom<TThreadMetadata extends BaseMetadata> = {
@@ -122,6 +129,10 @@ export type ThreadsState<TThreadMetadata extends BaseMetadata> =
   | ThreadsStateLoading
   | ThreadsStateResolved<TThreadMetadata>;
 
+type CacheManagerWithSubscription<Data> = CacheManager<Data> & {
+  subscribe: (callback: (state: Cache<Data> | undefined) => void) => () => void;
+};
+
 function createOptimisticId(prefix: string) {
   return `${prefix}_${nanoid()}`;
 }
@@ -152,9 +163,34 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
   errorEventSource: EventSource<CommentsError<TThreadMetadata>>
 ): CommentsRoom<TThreadMetadata> {
-  const manager = createCacheManager<ThreadData<TThreadMetadata>[]>();
+  const registry = new Map<
+    string,
+    CacheManagerWithSubscription<ThreadData<TThreadMetadata>[]>
+  >();
 
+  function getCacheManager(
+    key: string
+  ): CacheManagerWithSubscription<ThreadData<TThreadMetadata>[]> {
+    const entry = registry.get(key);
+    if (!entry) {
+      const manager = createCacheManager<ThreadData<TThreadMetadata>[]>();
+      registry.set(key, manager);
+      return manager;
+    }
+    return entry;
+  }
+
+  const manager = getCacheManager(JSON.stringify({}));
+
+  /**
+   * @internal
+   * An internal hook that handles automatic revalidation of the cache based on the connection status and the document visibility.
+   * Additionally, the hook handles subscription to comment events in the room to trigger a revalidation when a comment is added, edited or deleted.
+   * @param revalidateCache A function that revalidates the cache.
+   * @returns The threads state.
+   */
   function _useThreads(
+    manager: CacheManagerWithSubscription<ThreadData<TThreadMetadata>[]>,
     revalidateCache: (shouldDedupe: boolean) => Promise<void>
   ): ThreadsState<TThreadMetadata> {
     const status = useSyncExternalStore(
@@ -215,13 +251,13 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
       void revalidate(true);
     }, [revalidate]);
 
-    return _useThreads(revalidate);
+    return _useThreads(manager, revalidate);
   }
 
   function useThreadsSuspense(): ThreadsStateSuccess<TThreadMetadata> {
     const revalidate = useRevalidateCache(manager, room.getThreads);
 
-    const cache = _useThreads(revalidate);
+    const cache = _useThreads(manager, revalidate);
 
     if (cache.error) {
       throw cache.error;
@@ -720,5 +756,148 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     useDeleteComment,
     useAddReaction,
     useRemoveReaction,
+  };
+}
+
+function createCacheController<Data>() {
+  const registry = new Map<
+    string,
+    {
+      cache: Cache<Data> | undefined;
+      request: RequestInfo<Data> | undefined;
+      mutation: MutationInfo | undefined;
+      eventSource: EventSource<Cache<Data>>;
+    }
+  >();
+
+  const getCacheManager = (key: string) => {
+    const entry = registry.get(key);
+    if (!entry) {
+    }
+
+    // return {
+    //   get cache() {
+    //     return entry.cache;
+    //   },
+    // };
+  };
+
+  return {
+    getCache(key: string) {
+      return registry.get(key)?.cache;
+    },
+    setCache(key: string, cache: Cache<Data>) {
+      const entry = registry.get(key);
+      if (entry) {
+        entry.cache = cache;
+        entry.eventSource.notify(cache);
+      } else {
+        const eventSource = makeEventSource<Cache<Data>>();
+        registry.set(key, {
+          cache,
+          request: undefined,
+          mutation: undefined,
+          eventSource: eventSource,
+        });
+        eventSource.notify(cache);
+      }
+    },
+
+    getRequest(key: string) {
+      return registry.get(key)?.request;
+    },
+    setRequest(key: string, info: RequestInfo<Data>) {
+      const entry = registry.get(key);
+      if (entry) {
+        entry.request = info;
+        return;
+      } else {
+        registry.set(key, {
+          cache: undefined,
+          request: info,
+          mutation: undefined,
+          eventSource: makeEventSource<Cache<Data>>(),
+        });
+      }
+    },
+
+    getMutation(key: string) {
+      return registry.get(key)?.mutation;
+    },
+    setMutation(key: string, info: MutationInfo) {
+      const entry = registry.get(key);
+      if (entry) {
+        entry.mutation = info;
+      } else {
+        registry.set(key, {
+          cache: undefined,
+          request: undefined,
+          mutation: info,
+          eventSource: makeEventSource<Cache<Data>>(),
+        });
+      }
+    },
+
+    delete(key: string) {
+      registry.delete(key);
+    },
+
+    subscribe(key: string, callback: (state: Cache<Data> | undefined) => void) {
+      const entry = registry.get(key);
+      if (entry) {
+        return entry.eventSource.subscribe(callback);
+      } else {
+        const eventSource = makeEventSource<Cache<Data>>();
+        registry.set(key, {
+          cache: undefined,
+          request: undefined,
+          mutation: undefined,
+          eventSource: eventSource,
+        });
+        return eventSource.subscribe(callback);
+      }
+    },
+  };
+}
+
+/**
+ * Creates a cache manager that can be used to store the current cache state and subscribe to changes.
+ */
+export function createCacheManager<Data>(): CacheManagerWithSubscription<Data> {
+  let cache: Cache<Data> | undefined; // Stores the current cache state
+  let request: RequestInfo<Data> | undefined; // Stores the currently active revalidation request
+  let mutation: MutationInfo | undefined; // Stores the start and end time of the currently active mutation
+
+  const eventSource = makeEventSource<Cache<Data> | undefined>();
+
+  return {
+    get cache() {
+      return cache;
+    },
+
+    set cache(value: Cache<Data> | undefined) {
+      cache = value;
+      eventSource.notify(cache);
+    },
+
+    get request() {
+      return request;
+    },
+
+    set request(value: RequestInfo<Data> | undefined) {
+      request = value;
+    },
+
+    get mutation() {
+      return mutation;
+    },
+
+    set mutation(value: MutationInfo | undefined) {
+      mutation = value;
+    },
+
+    subscribe(callback: (state: Cache<Data> | undefined) => void) {
+      return eventSource.subscribe(callback);
+    },
   };
 }
