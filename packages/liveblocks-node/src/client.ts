@@ -12,12 +12,17 @@ import type {
   Json,
   JsonObject,
   PlainLsonObject,
-  ThreadData,
-  ThreadDataPlain,
   Reaction,
   ReactionPlain,
+  ThreadData,
+  ThreadDataPlain,
 } from "@liveblocks/core";
-import { convertToCommentData, convertToThreadData } from "@liveblocks/core";
+import {
+  convertToCommentData,
+  convertToCommentReaction,
+  convertToThreadData,
+} from "@liveblocks/core";
+
 import { Session } from "./Session";
 import {
   assertNonEmpty,
@@ -30,7 +35,6 @@ import {
   urljoin,
   type URLSafeString,
 } from "./utils";
-import { convertToCommentReaction } from "@liveblocks/core";
 
 export type LiveblocksOptions = {
   /**

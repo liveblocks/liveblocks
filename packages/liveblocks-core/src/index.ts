@@ -198,11 +198,11 @@ export type {
   StringifyCommentBodyOptions,
 } from "./comments/comment-body";
 export {
+  convertToCommentData,
+  convertToCommentReaction,
+  convertToThreadData,
   getMentionedIdsFromCommentBody,
   stringifyCommentBody,
-  convertToCommentData,
-  convertToThreadData,
-  convertToCommentReaction,
 } from "./comments/comment-body";
 export type { BaseMetadata } from "./comments/types/BaseMetadata";
 export type {
@@ -217,8 +217,8 @@ export type {
 } from "./comments/types/CommentBody";
 export type {
   CommentData,
-  CommentReaction,
   CommentDataPlain,
+  CommentReaction,
 } from "./comments/types/CommentData";
 export type { Reaction, ReactionPlain } from "./comments/types/Reaction";
 export type { ThreadData, ThreadDataPlain } from "./comments/types/ThreadData";

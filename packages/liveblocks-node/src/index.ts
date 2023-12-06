@@ -55,11 +55,11 @@ export type {
   Lson,
   LsonObject,
   PlainLsonObject,
+  Reaction,
   StringifyCommentBodyElements,
   StringifyCommentBodyOptions,
   ThreadData,
   User,
-  Reaction,
 } from "@liveblocks/core";
 export {
   getMentionedIdsFromCommentBody,
