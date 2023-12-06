@@ -310,14 +310,19 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
           body,
           reactions: [],
         };
-        const newThread = {
+        const newThread: ThreadData<TThreadMetadata> = {
           id: threadId,
           type: "thread",
           createdAt: now,
           roomId: room.id,
-          metadata,
+          notificationInfo: {
+            id: "TODO",
+            readAt: now,
+            notifiedAt: now,
+          },
+          metadata: metadata as ThreadData<TThreadMetadata>["metadata"],
           comments: [newComment],
-        } as ThreadData<TThreadMetadata>;
+        };
 
         mutate(room.createThread({ threadId, commentId, body, metadata }), {
           optimisticData: [...threads, newThread],
@@ -372,6 +377,13 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
           thread.id === threadId
             ? {
                 ...thread,
+                notificationInfo: {
+                  id: thread.notificationInfo
+                    ? thread.notificationInfo.id
+                    : "TODO",
+                  readAt: now,
+                  notifiedAt: now,
+                },
                 comments: [...thread.comments, comment],
               }
             : thread
@@ -416,15 +428,16 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
           thread.id === threadId
             ? {
                 ...thread,
-                comments: thread.comments.map((comment) =>
-                  comment.id === commentId
-                    ? ({
-                        ...comment,
-                        editedAt: now,
-                        body,
-                      } as CommentData)
-                    : comment
-                ),
+                comments: thread.comments.map((comment) => {
+                  const editedComment: CommentData = {
+                    ...comment,
+                    deletedAt: undefined,
+                    editedAt: now,
+                    body,
+                  };
+
+                  return comment.id === commentId ? editedComment : comment;
+                }),
               }
             : thread
         );
