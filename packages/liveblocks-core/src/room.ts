@@ -1231,7 +1231,10 @@ export function createRoom<
     comments: makeEventSource<CommentsEventServerMsg>(),
   };
 
-  async function httpPostToRoom(endpoint: "/send-message", body: JsonObject) {
+  async function httpPostToRoom(
+    endpoint: "/send-message" | "/_ctl",
+    body: JsonObject
+  ) {
     if (!managedSocket.authValue) {
       throw new Error("Not authorized");
     }
@@ -1256,29 +1259,8 @@ export function createRoom<
     });
   }
 
-  async function _serverCtl(cmd: { nextOpSlow: boolean }): Promise<void> {
-    if (!managedSocket.authValue) {
-      throw new Error("Not authorized");
-    }
-
-    const authTokenOrPublicApiKey =
-      managedSocket.authValue.type === "public"
-        ? managedSocket.authValue.publicApiKey
-        : managedSocket.authValue.token.raw;
-
-    const url = new URL(
-      `/v2/c/rooms/${encodeURIComponent(config.roomId)}/_ctl`,
-      config.baseUrl
-    ).toString();
-    const fetcher = config.polyfills?.fetch || /* istanbul ignore next */ fetch;
-    await fetcher(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authTokenOrPublicApiKey}`,
-      },
-      body: JSON.stringify({ cmd }),
-    });
+  async function _serverCtl(cmd: { nextOpSlow: boolean }) {
+    await httpPostToRoom("/_ctl", { cmd });
   }
 
   function sendMessages(messages: ClientMsg<TPresence, TRoomEvent>[]) {
