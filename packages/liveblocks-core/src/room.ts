@@ -2333,6 +2333,7 @@ export function createRoom<
 
   const commentsApi = createCommentsApi(config.roomId, delegates.authenticate, {
     baseUrl: config.baseUrl,
+    polyfills: config.polyfills,
   });
 
   return Object.defineProperty(

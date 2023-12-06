@@ -1,13 +1,10 @@
 import type { AuthValue } from "../auth-manager";
 import type { JsonObject } from "../lib/Json";
+import type { RoomConfig } from "../room";
 import type { BaseMetadata } from "./types/BaseMetadata";
 import type { CommentBody } from "./types/CommentBody";
 import type { CommentData } from "./types/CommentData";
 import type { ThreadData } from "./types/ThreadData";
-
-type Options = {
-  baseUrl: string;
-};
 
 function getAuthBearerHeaderFromAuthValue(authValue: AuthValue) {
   if (authValue.type === "public") {
@@ -72,7 +69,7 @@ export class CommentsApiError extends Error {
 export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
   roomId: string,
   getAuthValue: () => Promise<AuthValue>,
-  config: Options
+  config: Pick<RoomConfig, "baseUrl" | "polyfills">
 ): CommentsApi<TThreadMetadata> {
   async function fetchJson<T>(
     endpoint: string,
@@ -122,7 +119,8 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
       `/v2/c/rooms/${encodeURIComponent(roomId)}${endpoint}`,
       config.baseUrl
     ).toString();
-    return await fetch(url, {
+    const fetcher = config.polyfills?.fetch || /* istanbul ignore next */ fetch;
+    return await fetcher(url, {
       ...options,
       headers: {
         ...options?.headers,
