@@ -203,6 +203,39 @@ export const Thread = forwardRef(
         ? 0
         : thread.comments.findIndex((comment) => comment.body);
     }, [showDeletedComments, thread.comments]);
+    const unreadCommentIndex = useMemo(() => {
+      // If not subscribed to the thread, return nothing
+      if (!thread.notificationInfo) {
+        return;
+      }
+
+      if (!thread.notificationInfo.readAt) {
+        // If subscribed to the thread but not read yet, return first visible comment?
+        if (showDeletedComments) {
+          return 0;
+        } else {
+          return thread.comments.findIndex((comment) => comment.body);
+        }
+      } else {
+        const readAt = new Date(thread.notificationInfo.readAt);
+        const notifiedAt = new Date(thread.notificationInfo.notifiedAt);
+
+        // If subscribed to the thread and not fully read, return first visible unread comment
+        if (readAt < notifiedAt) {
+          if (showDeletedComments) {
+            return thread.comments.findIndex(
+              (comment) => new Date(comment.createdAt) > readAt
+            );
+          } else {
+            return thread.comments.findIndex(
+              (comment) => comment.body && new Date(comment.createdAt) > readAt
+            );
+          }
+        }
+      }
+
+      return;
+    }, [showDeletedComments, thread]);
 
     const stopPropagation = useCallback((event: SyntheticEvent) => {
       event.stopPropagation();
@@ -304,7 +337,7 @@ export const Thread = forwardRef(
                 />
               );
 
-              return index === 1 ? (
+              return index === unreadCommentIndex ? (
                 <Fragment key={comment.id}>
                   <UnreadIndicator />
                   {children}
