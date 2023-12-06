@@ -276,6 +276,7 @@ export const Thread = forwardRef(
           data-resolved={
             (thread.metadata as ThreadMetadata).resolved ? "" : undefined
           }
+          data-unseen={unreadCommentIndex !== undefined ? "" : undefined}
           dir={$.dir}
           {...props}
           ref={forwardedRef}
@@ -288,6 +289,12 @@ export const Thread = forwardRef(
                 <Comment
                   key={comment.id}
                   className="lb-thread-comment"
+                  data-unseen={
+                    unreadCommentIndex !== undefined &&
+                    index >= unreadCommentIndex
+                      ? ""
+                      : undefined
+                  }
                   root={false}
                   comment={comment}
                   indentContent={indentCommentContent}
