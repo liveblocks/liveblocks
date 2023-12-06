@@ -959,12 +959,12 @@ await liveblocks.detachSchemaFromRoom("my-room-id");
 
 ### Comments
 
-#### Liveblocks.getThreads [#get-threads]
+#### Liveblocks.getThreads [#get-rooms-roomId-threads]
 
 Returns a list of threads found inside a room. Throws an error if the room isn’t
 found. This is a wrapper around the
-[Get Room Threads API](/docs/api-reference/rest-api-endpoints#get-threads) and
-returns the same response.
+[Get Room Threads API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-threads)
+and returns the same response.
 
 ```ts
 const { data: threads } = await liveblocks.getThreads({
@@ -975,12 +975,12 @@ const { data: threads } = await liveblocks.getThreads({
 console.log(threads);
 ```
 
-#### Liveblocks.createThread [#create-thread] [@badge=Beta]
+#### Liveblocks.createThread [#post-rooms-roomId-threads] [@badge=Beta]
 
 Creates a new thread within a specific room, using room ID and thread data. This
 is a wrapper around the
-[Create Thread API](/docs/api-reference/rest-api-endpoints#post-threads) and
-returns the new thread.
+[Create Thread API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads)
+and returns the new thread.
 
 ```ts
 const thread = await liveblocks.createThread({
@@ -1073,12 +1073,12 @@ const thread = await liveblocks.createThread({
 console.log(thread);
 ```
 
-#### Liveblocks.getThread [#get-thread]
+#### Liveblocks.getThread [#get-rooms-roomId-threads-threadId]
 
 Returns a thread. Throws an error if the room or thread isn’t found. This is a
 wrapper around the
-[Get Thread API](/docs/api-reference/rest-api-endpoints#get-thread) and returns
-the same response.
+[Get Thread API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-threads-threadId)
+and returns the same response.
 
 ```ts
 const thread = await liveblocks.getThread({
@@ -1090,12 +1090,12 @@ const thread = await liveblocks.getThread({
 console.log(thread);
 ```
 
-#### Liveblocks.getThreadParticipants [#get-thread-participants]
+#### Liveblocks.getThreadParticipants [#get-rooms-roomId-threads-threadId-participants]
 
 Returns a list of participants found inside a thread. A participant is a user
 who has commented or been mentioned in the thread. Throws an error if the room
 or thread isn’t found. This is a wrapper around the
-[Get Thread Participants API](/docs/api-reference/rest-api-endpoints#get-thread-participants)
+[Get Thread Participants API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-threads-threadId-participants)
 and returns the same response.
 
 ```ts
@@ -1108,13 +1108,13 @@ const { participantIds } = await liveblocks.getThreadParticipants({
 console.log(participantIds);
 ```
 
-#### Liveblocks.updateThreadMetadata [#update-thread-metadata] [@badge=Beta]
+#### Liveblocks.updateThreadMetadata [#post-rooms-roomId-threads-threadId-metadata] [@badge=Beta]
 
 Updates the metadata of a specific thread within a room. This method allows you
 to modify the metadata of a thread, including user information and the date of
 the last update. Throws an error if the room or thread isn’t found. This is a
 wrapper around the
-[Update Thread Metadata API](/docs/api-reference/rest-api-endpoints#update-thread-metadata)
+[Update Thread Metadata API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-metadata)
 and returns the updated thread.
 
 ```ts
@@ -1167,13 +1167,13 @@ const updatedThread = await liveblocks.updateThreadMetadata({
 console.log(updatedThread);
 ```
 
-#### Liveblocks.createComment [#create-comment] [@badge=Beta]
+#### Liveblocks.createComment [#post-rooms-roomId-threads-threadId-comments] [@badge=Beta]
 
 Creates a new comment in a specific thread within a room. This method allows
 users to add comments to a conversation thread, specifying the user who made the
 comment and the content of the comment. This method is a wrapper around the
-[Get Comment API](/docs/api-reference/rest-api-endpoints#post-comments) and
-returns the new comment.
+[Get Comment API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-comments)
+and returns the new comment.
 
 ```ts
 const comment = await liveblocks.createComment({
@@ -1249,12 +1249,12 @@ const comment = await liveblocks.createComment({
 });
 ```
 
-#### Liveblocks.getComment [#get-comment]
+#### Liveblocks.getComment [#get-rooms-roomId-threads-threadId-comments-commentId]
 
 Returns a comment. Throws an error if the room, thread, or comment isn’t found.
 This is a wrapper around the
-[Get Comment API](/docs/api-reference/rest-api-endpoints#get-comment) and
-returns the same response.
+[Get Comment API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-threads-threadId-comments-commentId)
+and returns the same response.
 
 ```ts
 const comment = await liveblocks.getComment({
@@ -1267,13 +1267,13 @@ const comment = await liveblocks.getComment({
 console.log(comment);
 ```
 
-#### Liveblocks.editComment [#edit-comment] [@badge=Beta]
+#### Liveblocks.editComment [#post-rooms-roomId-threads-threadId-comments-commentId] [@badge=Beta]
 
 Edits an existing comment in a specific thread within a room. This method allows
 users to update the content of their previously posted comments, with the option
 to specify the time of the edit. Throws an error if the comment isn’t found.
 This is a wrapper around the
-[Edit Comment API](/docs/api-reference/rest-api-endpoints#post-comments-commentId)
+[Edit Comment API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-comments-commentId)
 and returns the updated comment.
 
 ```ts
@@ -1355,12 +1355,12 @@ const editedComment = await liveblocks.editComment({
 console.log(editedComment);
 ```
 
-#### Liveblocks.deleteComment [#delete-comment] [@badge=Beta]
+#### Liveblocks.deleteComment [#post-rooms-roomId-threads-threadId-comments-commentId] [@badge=Beta]
 
 Deletes a specific comment from a thread within a room. If there are no
 remaining comments in the thread, the thread is also deleted. This method throws
 an error if the comment isn’t found. This is a wrapper around the
-[Delete Comment API](/docs/api-reference/rest-api-endpoints#delete-comment-commentId)
+[Delete Comment API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-comments-commentId)
 and returns no response.
 
 ```ts
@@ -1371,11 +1371,11 @@ await liveblocks.deleteComment({
 });
 ```
 
-#### Liveblocks.addCommentReaction [#add-comment-reaction] [@badge=Beta]
+#### Liveblocks.addCommentReaction [#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction] [@badge=Beta]
 
 Adds a reaction to a specific comment in a thread within a room. Throws an error
 if the comment reaction isn’t found. This is a wrapper around the
-[Add Comment Reaction API](/docs/api-reference/rest-api-endpoints#post-comments-commentId-add-reaction)
+[Add Comment Reaction API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction)
 and returns the new reaction.
 
 ```ts
@@ -1395,11 +1395,11 @@ const reaction = await liveblocks.addCommentReaction({
 console.log(reaction);
 ```
 
-#### Liveblocks.removeCommentReaction [#remove-comment-reaction] [@badge=Beta]
+#### Liveblocks.removeCommentReaction [#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction] [@badge=Beta]
 
 Removes a reaction from a specific comment in a thread within a room. Throws an
 error if the comment reaction isn’t found. This is a wrapper around the
-[Remove Comment Reaction API](/docs/api-reference/rest-api-endpoints#post-comments-commentId-remove-reaction)
+[Remove Comment Reaction API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction)
 and returns no response.
 
 ```ts
