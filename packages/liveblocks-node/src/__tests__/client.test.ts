@@ -1,10 +1,9 @@
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
-import type { CommentReaction } from "../client";
 import { Liveblocks, LiveblocksError } from "../client";
 import { DEFAULT_BASE_URL } from "../utils";
-import type { CommentData, ThreadData } from "@liveblocks/core";
+import type { CommentData, Reaction, ThreadData } from "@liveblocks/core";
 
 describe("client", () => {
   const room = {
@@ -71,7 +70,7 @@ describe("client", () => {
     comments: [comment],
   };
 
-  const reaction: CommentReaction = {
+  const reaction: Reaction = {
     emoji: "🐐",
     createdAt: new Date("2022-07-13T14:32:50.697Z"),
     userId: "user1",
