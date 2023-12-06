@@ -39,6 +39,11 @@ export default function Home() {
                 <a>LiveObject</a>
               </Link>
             </li>
+            <li>
+              <Link href="/storage/gates?room=e2e-storage-gates">
+                <a>Input/output Gates</a>
+              </Link>
+            </li>
           </ul>
         </li>
         <li>
