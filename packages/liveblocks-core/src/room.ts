@@ -1978,7 +1978,7 @@ export function createRoom<
     const now = Date.now();
     const elapsedMillis = now - context.buffer.lastFlushedAt;
 
-    if (elapsedMillis > config.throttleDelay) {
+    if (elapsedMillis >= config.throttleDelay) {
       // Flush the buffer right now
       const messagesToFlush = serializeBuffer();
       if (messagesToFlush.length === 0) {
