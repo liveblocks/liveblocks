@@ -6,13 +6,14 @@
 import type {
   BaseMetadata,
   CommentBody,
-  CommentData as CommentDataOriginal,
-  CommentReactionUser,
+  CommentData,
+  CommentDataPlain,
   IUserInfo,
   Json,
   JsonObject,
   PlainLsonObject,
-  ThreadData as ThreadDataOriginal,
+  ThreadData,
+  ThreadDataPlain,
 } from "@liveblocks/core";
 
 import { Session } from "./Session";
@@ -40,6 +41,10 @@ export type LiveblocksOptions = {
    * useful for Liveblocks developers. Not for end users.
    */
   baseUrl?: string;
+};
+
+type DateToString<T> = {
+  [P in keyof T]: T[P] extends Date ? string : T[P];
 };
 
 export type CreateSessionOptions = {
@@ -82,66 +87,7 @@ export type RoomInfo = {
   createdAt?: Date;
 };
 
-type RoomInfoOriginal = Omit<RoomInfo, "lastConnectionAt" | "createdAt"> & {
-  lastConnectionAt?: string;
-  createdAt?: string;
-};
-/**
- * This CommentData type modifies the (original) CommentData type from @liveblocks/core (which is also the shape of the comment data returned by the API)
- * All properties that are dates are converted from ISO strings to Date objects.
- */
-export type CommentData = Omit<
-  CommentDataOriginal,
-  "createdAt" | "editedAt" | "body" | "deletedAt" | "reactions"
-> & {
-  createdAt: Date;
-  editedAt?: Date;
-  reactions: {
-    emoji: string;
-    createdAt: Date;
-    users: CommentReactionUser[];
-  }[];
-} & (
-    | {
-        body: CommentBody;
-        deletedAt?: never;
-      }
-    | {
-        body?: never;
-        deletedAt: Date;
-      }
-  );
-
-/**
- * This ThreadData type modifies the (original) ThreadData type from @liveblocks/core (which is also the shape of the thread data returned by the API)
- * All properties that are dates are converted from ISO strings to Date objects.
- * The comments are also converted to the modified CommentData type defined above.
- */
-export type ThreadData<TThreadMetadata extends BaseMetadata = never> = Omit<
-  ThreadDataOriginal<TThreadMetadata>,
-  "createdAt" | "updatedAt" | "comments"
-> & {
-  createdAt: Date;
-  updatedAt?: Date;
-  comments: CommentData[];
-};
-
-/**
- * This is the original shape of a comment reaction returned by the API.
- */
-type CommentReactionOriginal = {
-  emoji: string;
-  createdAt: string;
-  userId: string;
-};
-
-/**
- * This CommentReaction type modifies the original comment reaction shape (CommentReactionOriginal) returned by the API.
- * All properties that are dates are converted from ISO strings to Date objects.
- */
-export type CommentReaction = Omit<CommentReactionOriginal, "createdAt"> & {
-  createdAt: Date;
-};
+type RoomInfoPlain = DateToString<RoomInfo>;
 
 export type RoomUser<Info> = {
   type: "user";
@@ -159,10 +105,15 @@ export type Schema = {
   updatedAt: Date;
 };
 
-type SchemaOriginal = Omit<Schema, "createdAt" | "updatedAt"> & {
-  createdAt: string;
-  updatedAt: string;
+type SchemaPlain = DateToString<Schema>;
+
+export type CommentReaction = {
+  emoji: string;
+  createdAt: Date;
+  userId: string;
 };
+
+export type CommentReactionPlain = DateToString<CommentReaction>;
 
 /**
  * Interact with the Liveblocks API from your Node.js backend.
@@ -245,7 +196,7 @@ export class Liveblocks {
    * @param data The comment data object returned by the API.
    * @returns The comment data object that can be used by the client.
    */
-  private convertToCommentData(data: CommentDataOriginal): CommentData {
+  private convertToCommentData(data: CommentDataPlain): CommentData {
     const editedAt = data.editedAt ? new Date(data.editedAt) : undefined;
     const createdAt = new Date(data.createdAt);
     const reactions = data.reactions.map((reaction) => ({
@@ -280,7 +231,7 @@ export class Liveblocks {
    * @returns The thread data object that can be used by the client.
    */
   private convertToThreadData<TThreadMetadata extends BaseMetadata = never>(
-    data: ThreadDataOriginal<TThreadMetadata>
+    data: ThreadDataPlain<TThreadMetadata>
   ): ThreadData<TThreadMetadata> {
     const updatedAt = data.updatedAt ? new Date(data.updatedAt) : undefined;
     const createdAt = new Date(data.createdAt);
@@ -441,7 +392,7 @@ export class Liveblocks {
 
     const data = (await res.json()) as {
       nextPage: string | null;
-      data: RoomInfoOriginal[];
+      data: RoomInfoPlain[];
     };
 
     const rooms = data.data.map((room) => {
@@ -498,7 +449,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    const data = (await res.json()) as RoomInfoOriginal;
+    const data = (await res.json()) as RoomInfoPlain;
 
     // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
     const lastConnectionAt = data.lastConnectionAt
@@ -527,7 +478,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    const data = (await res.json()) as RoomInfoOriginal;
+    const data = (await res.json()) as RoomInfoPlain;
 
     // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
     const lastConnectionAt = data.lastConnectionAt
@@ -582,7 +533,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    const data = (await res.json()) as RoomInfoOriginal;
+    const data = (await res.json()) as RoomInfoPlain;
 
     // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
     const lastConnectionAt = data.lastConnectionAt
@@ -818,7 +769,7 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
-    const data = (await res.json()) as SchemaOriginal;
+    const data = (await res.json()) as SchemaPlain;
 
     // Convert createdAt and updatedAt from ISO date strings to Date objects
     const createdAt = new Date(data.createdAt);
@@ -842,7 +793,7 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
-    const data = (await res.json()) as SchemaOriginal;
+    const data = (await res.json()) as SchemaPlain;
 
     // Convert createdAt and updatedAt from ISO date strings to Date objects
     const createdAt = new Date(data.createdAt);
@@ -870,7 +821,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    const data = (await res.json()) as SchemaOriginal;
+    const data = (await res.json()) as SchemaPlain;
 
     // Convert createdAt and updatedAt from ISO date strings to Date objects
     const createdAt = new Date(data.createdAt);
@@ -907,7 +858,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    const data = (await res.json()) as SchemaOriginal;
+    const data = (await res.json()) as SchemaPlain;
 
     // Convert createdAt and updatedAt from ISO date strings to Date objects
     const createdAt = new Date(data.createdAt);
@@ -973,7 +924,7 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
-    const { data } = (await res.json()) as { data: ThreadDataOriginal[] };
+    const { data } = (await res.json()) as { data: ThreadDataPlain[] };
     return {
       data: data.map((thread) => this.convertToThreadData(thread)),
     };
@@ -998,7 +949,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
     return this.convertToThreadData(
-      (await res.json()) as ThreadDataOriginal<TThreadMetadata>
+      (await res.json()) as ThreadDataPlain<TThreadMetadata>
     );
   }
 
@@ -1050,7 +1001,7 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
-    return this.convertToCommentData((await res.json()) as CommentDataOriginal);
+    return this.convertToCommentData((await res.json()) as CommentDataPlain);
   }
 
   /**
@@ -1085,7 +1036,7 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
-    return this.convertToCommentData((await res.json()) as CommentDataOriginal);
+    return this.convertToCommentData((await res.json()) as CommentDataPlain);
   }
 
   /**
@@ -1120,7 +1071,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    return this.convertToCommentData((await res.json()) as CommentDataOriginal);
+    return this.convertToCommentData((await res.json()) as CommentDataPlain);
   }
 
   /**
@@ -1186,7 +1137,7 @@ export class Liveblocks {
     }
 
     return this.convertToThreadData(
-      (await res.json()) as ThreadDataOriginal<TThreadMetadata>
+      (await res.json()) as ThreadDataPlain<TThreadMetadata>
     );
   }
 
@@ -1226,7 +1177,7 @@ export class Liveblocks {
     }
 
     return this.convertToThreadData(
-      (await res.json()) as ThreadDataOriginal<TThreadMetadata>
+      (await res.json()) as ThreadDataPlain<TThreadMetadata>
     );
   }
 
@@ -1265,7 +1216,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    const reaction = (await res.json()) as CommentReactionOriginal;
+    const reaction = (await res.json()) as CommentReactionPlain;
 
     return {
       ...reaction,

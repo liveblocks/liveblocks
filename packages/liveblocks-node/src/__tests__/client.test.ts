@@ -1,9 +1,10 @@
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
-import type { CommentData, CommentReaction, ThreadData } from "../client";
+import type { CommentReaction } from "../client";
 import { Liveblocks, LiveblocksError } from "../client";
 import { DEFAULT_BASE_URL } from "../utils";
+import type { CommentData, ThreadData } from "@liveblocks/core";
 
 describe("client", () => {
   const room = {

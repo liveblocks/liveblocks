@@ -215,6 +215,6 @@ export type {
 export type {
   CommentData,
   CommentReaction,
-  CommentReactionUser,
+  CommentDataPlain,
 } from "./comments/types/CommentData";
-export type { ThreadData } from "./comments/types/ThreadData";
+export type { ThreadData, ThreadDataPlain } from "./comments/types/ThreadData";
