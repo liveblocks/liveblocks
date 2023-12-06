@@ -14,8 +14,10 @@ import type {
   PlainLsonObject,
   ThreadData,
   ThreadDataPlain,
+  Reaction,
+  ReactionPlain,
 } from "@liveblocks/core";
-
+import { convertToCommentData, convertToThreadData } from "@liveblocks/core";
 import { Session } from "./Session";
 import {
   assertNonEmpty,
@@ -28,6 +30,7 @@ import {
   urljoin,
   type URLSafeString,
 } from "./utils";
+import { convertToCommentReaction } from "@liveblocks/core";
 
 export type LiveblocksOptions = {
   /**
@@ -107,14 +110,6 @@ export type Schema = {
 
 type SchemaPlain = DateToString<Schema>;
 
-export type CommentReaction = {
-  emoji: string;
-  createdAt: Date;
-  userId: string;
-};
-
-export type CommentReactionPlain = DateToString<CommentReaction>;
-
 /**
  * Interact with the Liveblocks API from your Node.js backend.
  */
@@ -187,65 +182,6 @@ export class Liveblocks {
     const fetch = await fetchPolyfill();
     const res = await fetch(url, { method: "GET", headers });
     return res;
-  }
-
-  /**
-   * @internal
-   * Converts a comment data object returned by the API to a comment data object that can be used by the client.
-   * This is necessary because the API returns dates as ISO strings, but the client expects them as Date objects.
-   * @param data The comment data object returned by the API.
-   * @returns The comment data object that can be used by the client.
-   */
-  private convertToCommentData(data: CommentDataPlain): CommentData {
-    const editedAt = data.editedAt ? new Date(data.editedAt) : undefined;
-    const createdAt = new Date(data.createdAt);
-    const reactions = data.reactions.map((reaction) => ({
-      ...reaction,
-      createdAt: new Date(reaction.createdAt),
-    }));
-
-    if (data.body) {
-      return {
-        ...data,
-        reactions,
-        createdAt,
-        editedAt,
-      };
-    } else {
-      const deletedAt = new Date(data.deletedAt);
-      return {
-        ...data,
-        reactions,
-        createdAt,
-        editedAt,
-        deletedAt,
-      };
-    }
-  }
-
-  /**
-   * @internal
-   * Converts a thread data object returned by the API to a thread data object that can be used by the client.
-   * This is necessary because the API returns dates as ISO strings, but the client expects them as Date objects.
-   * @param data The thread data object returned by the API.
-   * @returns The thread data object that can be used by the client.
-   */
-  private convertToThreadData<TThreadMetadata extends BaseMetadata = never>(
-    data: ThreadDataPlain<TThreadMetadata>
-  ): ThreadData<TThreadMetadata> {
-    const updatedAt = data.updatedAt ? new Date(data.updatedAt) : undefined;
-    const createdAt = new Date(data.createdAt);
-
-    const comments = data.comments.map((comment) =>
-      this.convertToCommentData(comment)
-    );
-
-    return {
-      ...data,
-      createdAt,
-      updatedAt,
-      comments,
-    };
   }
 
   /* -------------------------------------------------------------------------------------------------
@@ -926,7 +862,7 @@ export class Liveblocks {
     }
     const { data } = (await res.json()) as { data: ThreadDataPlain[] };
     return {
-      data: data.map((thread) => this.convertToThreadData(thread)),
+      data: data.map((thread) => convertToThreadData(thread)),
     };
   }
 
@@ -948,7 +884,7 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
-    return this.convertToThreadData(
+    return convertToThreadData(
       (await res.json()) as ThreadDataPlain<TThreadMetadata>
     );
   }
@@ -1001,7 +937,7 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
-    return this.convertToCommentData((await res.json()) as CommentDataPlain);
+    return convertToCommentData((await res.json()) as CommentDataPlain);
   }
 
   /**
@@ -1036,7 +972,7 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
-    return this.convertToCommentData((await res.json()) as CommentDataPlain);
+    return convertToCommentData((await res.json()) as CommentDataPlain);
   }
 
   /**
@@ -1071,7 +1007,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    return this.convertToCommentData((await res.json()) as CommentDataPlain);
+    return convertToCommentData((await res.json()) as CommentDataPlain);
   }
 
   /**
@@ -1136,7 +1072,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    return this.convertToThreadData(
+    return convertToThreadData(
       (await res.json()) as ThreadDataPlain<TThreadMetadata>
     );
   }
@@ -1176,7 +1112,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    return this.convertToThreadData(
+    return convertToThreadData(
       (await res.json()) as ThreadDataPlain<TThreadMetadata>
     );
   }
@@ -1200,7 +1136,7 @@ export class Liveblocks {
       userId: string;
       createdAt?: Date;
     };
-  }): Promise<CommentReaction> {
+  }): Promise<Reaction> {
     const { roomId, threadId, commentId, data } = params;
 
     const res = await this.post(
@@ -1216,12 +1152,8 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    const reaction = (await res.json()) as CommentReactionPlain;
-
-    return {
-      ...reaction,
-      createdAt: new Date(reaction.createdAt),
-    };
+    const reaction = (await res.json()) as ReactionPlain;
+    return convertToCommentReaction(reaction);
   }
 
   /**

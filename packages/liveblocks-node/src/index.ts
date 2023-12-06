@@ -59,6 +59,7 @@ export type {
   StringifyCommentBodyOptions,
   ThreadData,
   User,
+  Reaction,
 } from "@liveblocks/core";
 export {
   getMentionedIdsFromCommentBody,
