@@ -1386,12 +1386,12 @@ const reaction = await liveblocks.addCommentReaction({
 
   data: {
     emoji: "👨‍👩‍👧",
-    userId: "your-user-id",
-    createdAt: new Date(), // Optional, the date and time when the reaction was added
+    userId: "guillaume@example.com",
+    createdAt: new Date(), // Optional, the time the reaction was added
   },
 });
 
-// { emoji: "👨‍👩‍👧", users: [{ id: "guillaume@example.com" }, ...], ... }
+// { emoji: "👨‍👩‍👧", userId "guillaume@example.com", ... }
 console.log(reaction);
 ```
 
@@ -1410,8 +1410,8 @@ await liveblocks.deleteCommentReaction({
 
   data: {
     emoji: "👨‍👩‍👧",
-    userId: "your-user-id",
-    removedAt: new Date(), // Optional, the date and time when the reaction is set to be deleted
+    userId: "steven@example.com",
+    removedAt: new Date(), // Optional, the time the reaction is to be deleted
   },
 });
 ```
