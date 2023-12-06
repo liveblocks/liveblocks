@@ -1108,7 +1108,7 @@ const { participantIds } = await liveblocks.getThreadParticipants({
 console.log(participantIds);
 ```
 
-#### Liveblocks.updateThreadMetadata [#post-rooms-roomId-threads-threadId-metadata] [@badge=Beta]
+#### Liveblocks.editThreadMetadata [#post-rooms-roomId-threads-threadId-metadata] [@badge=Beta]
 
 Updates the metadata of a specific thread within a room. This method allows you
 to modify the metadata of a thread, including user information and the date of
@@ -1118,7 +1118,7 @@ wrapper around the
 and returns the updated thread.
 
 ```ts
-const updatedThread = await liveblocks.updateThreadMetadata({
+const editedThread = await liveblocks.editThreadMetadata({
   roomId: "my-room-id",
   threadId: "th_d75sF3...",
 
@@ -1132,14 +1132,14 @@ const updatedThread = await liveblocks.updateThreadMetadata({
 });
 
 // { type: "thread", id: "th_d75sF3...", ... }
-console.log(updatedThread);
+console.log(editedThread);
 ```
 
 Metadata can be a `string`, `number`, or `boolean`. You can also use `null` to
 remove metadata from a thread. Here’s an example using every option.
 
 ```ts
-const updatedThread = await liveblocks.updateThreadMetadata({
+const editedThread = await liveblocks.editThreadMetadata({
   roomId: "my-room-id",
   threadId: "th_d75sF3...",
 
@@ -1164,7 +1164,7 @@ const updatedThread = await liveblocks.updateThreadMetadata({
 });
 
 // { type: "thread", id: "th_d75sF3...", ... }
-console.log(updatedThread);
+console.log(editedThread);
 ```
 
 #### Liveblocks.createComment [#post-rooms-roomId-threads-threadId-comments] [@badge=Beta]
@@ -1395,11 +1395,11 @@ const reaction = await liveblocks.addCommentReaction({
 console.log(reaction);
 ```
 
-#### Liveblocks.removeCommentReaction [#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction] [@badge=Beta]
+#### Liveblocks.deleteCommentReaction [#post-rooms-roomId-threads-threadId-comments-commentId-remove-reaction] [@badge=Beta]
 
 Removes a reaction from a specific comment in a thread within a room. Throws an
 error if the comment reaction isn’t found. This is a wrapper around the
-[Remove Comment Reaction API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction)
+[Delete Comment Reaction API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-comments-commentId-remove-reaction)
 and returns no response.
 
 ```ts
