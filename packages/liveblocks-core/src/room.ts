@@ -711,6 +711,7 @@ type PrivateRoomAPI = {
   };
 
   _disableThrottle(): void;
+  _serverCtl: (cmd: { nextOpSlow: boolean }) => Promise<void>;
 };
 
 // The maximum message size on websockets is 1MB. We'll set the threshold
@@ -1252,6 +1253,31 @@ export function createRoom<
         Authorization: `Bearer ${authTokenOrPublicApiKey}`,
       },
       body: JSON.stringify(body),
+    });
+  }
+
+  async function _serverCtl(cmd: { nextOpSlow: boolean }): Promise<void> {
+    if (!managedSocket.authValue) {
+      throw new Error("Not authorized");
+    }
+
+    const authTokenOrPublicApiKey =
+      managedSocket.authValue.type === "public"
+        ? managedSocket.authValue.publicApiKey
+        : managedSocket.authValue.token.raw;
+
+    const url = new URL(
+      `/v2/c/rooms/${encodeURIComponent(config.roomId)}/_ctl`,
+      config.baseUrl
+    ).toString();
+    const fetcher = config.polyfills?.fetch || /* istanbul ignore next */ fetch;
+    await fetcher(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authTokenOrPublicApiKey}`,
+      },
+      body: JSON.stringify({ cmd }),
     });
   }
 
@@ -2357,6 +2383,7 @@ export function createRoom<
         },
 
         _disableThrottle: () => (config.throttleDelay = 0),
+        _serverCtl,
       },
 
       id: config.roomId,
