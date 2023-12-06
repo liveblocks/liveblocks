@@ -1,6 +1,6 @@
 import type { AuthValue } from "../auth-manager";
 import type { JsonObject } from "../lib/Json";
-import type { RoomConfig } from "../room";
+import type { Polyfills } from "../room";
 import type { BaseMetadata } from "./types/BaseMetadata";
 import type { CommentBody } from "./types/CommentBody";
 import type { CommentData } from "./types/CommentData";
@@ -16,6 +16,11 @@ function getAuthBearerHeaderFromAuthValue(authValue: AuthValue) {
 
 type PartialNullable<T> = {
   [P in keyof T]?: T[P] | null | undefined;
+};
+
+type RoomConfig = {
+  baseUrl: string;
+  polyfills?: Polyfills;
 };
 
 export type CommentsApi<TThreadMetadata extends BaseMetadata> = {
@@ -69,7 +74,7 @@ export class CommentsApiError extends Error {
 export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
   roomId: string,
   getAuthValue: () => Promise<AuthValue>,
-  config: Pick<RoomConfig, "baseUrl" | "polyfills">
+  config: RoomConfig
 ): CommentsApi<TThreadMetadata> {
   async function fetchJson<T>(
     endpoint: string,
