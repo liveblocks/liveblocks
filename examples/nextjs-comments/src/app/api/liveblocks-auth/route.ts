@@ -9,6 +9,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+  // @ts-expect-error: dev
+  baseUrl: "https://dev.dev-liveblocks5948.workers.dev/",
 });
 
 export async function POST(request: NextRequest) {
@@ -16,8 +18,12 @@ export async function POST(request: NextRequest) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
   }
 
+  const userIndexCookie = request.cookies.get("userIndex");
+
   // Get the current user's unique id from your database
-  const userIndex = Math.floor(Math.random() * NAMES.length);
+  const userIndex = userIndexCookie
+    ? Number(userIndexCookie.value) % NAMES.length
+    : Math.floor(Math.random() * NAMES.length);
 
   // Create a session for the current user
   const session = liveblocks.prepareSession(`user-${userIndex}`);

@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { RoomProvider, useThreads } from "../../liveblocks.config";
 import { Loading } from "../components/Loading";
 import { Composer, Thread } from "@liveblocks/react-comments";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
+import { setCookie } from "tiny-cookie";
 
 /**
  * Displays a list of threads, along with a composer for creating
@@ -28,6 +29,7 @@ function Example() {
 
 export default function Page() {
   const roomId = useOverrideRoomId("nextjs-comments");
+  useOverrideUserIndex();
 
   return (
     <RoomProvider id={roomId} initialPresence={{}}>
@@ -57,4 +59,17 @@ function useOverrideRoomId(roomId: string) {
   }, [roomId, roomIdParam]);
 
   return overrideRoomId;
+}
+
+function useOverrideUserIndex() {
+  const params = useSearchParams();
+  const userIndexParam = params?.get("userIndex");
+
+  useEffect(() => {
+    if (!userIndexParam) {
+      return;
+    }
+
+    setCookie("userIndex", userIndexParam, { expires: "1M" });
+  }, [userIndexParam]);
 }
