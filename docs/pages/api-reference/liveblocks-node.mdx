@@ -947,6 +947,16 @@ console.log(schema);
 Read the [schema validation](/docs/platform/schema-validation) page to learn
 more.
 
+#### Liveblocks.detachSchemaFromRoom [#delete-detach-schema-to-room]
+
+Detaches a schema from a room. This is a wrapper around the
+[Detach Schema from a Room API](/docs/api-reference/rest-api-endpoints#post-detach-schema-to-room)
+and returns no response.
+
+```ts
+await liveblocks.detachSchemaFromRoom("my-room-id");
+```
+
 ### Comments
 
 #### Liveblocks.getThreads [#get-threads]
