@@ -1118,29 +1118,28 @@ wrapper around the
 and returns the updated metadata.
 
 ```ts
-const metadata = await liveblocks.editThreadMetadata({
+const editedMetadata = await liveblocks.editThreadMetadata({
   roomId: "my-room-id",
   threadId: "th_d75sF3...",
 
   data: {
     metadata: {
       color: "yellow",
-      page: null,
     },
     userId: "marc@example.com",
     updatedAt: new Date(), // Optional
   },
 });
 
-// { color: "yellow", resolved: true }
-console.log(editedThread);
+// { color: "yellow", page: 3, resolved: true }
+console.log(editedMetadata);
 ```
 
 Metadata can be a `string`, `number`, or `boolean`. You can also use `null` to
 remove metadata from a thread. Here’s an example using every option.
 
 ```ts
-const editedThread = await liveblocks.editThreadMetadata({
+const editedMetadata = await liveblocks.editThreadMetadata({
   roomId: "my-room-id",
   threadId: "th_d75sF3...",
 
@@ -1164,8 +1163,8 @@ const editedThread = await liveblocks.editThreadMetadata({
   },
 });
 
-// { type: "thread", id: "th_d75sF3...", ... }
-console.log(editedThread);
+// { title: "My thread title", page: 3, resolved: true }
+console.log(editedMetadata);
 ```
 
 #### Liveblocks.createComment [#post-rooms-roomId-threads-threadId-comments] [@badge=Beta]
