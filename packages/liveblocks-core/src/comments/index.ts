@@ -38,7 +38,7 @@ export type CommentsApi<TThreadMetadata extends BaseMetadata> = {
   editThreadMetadata(options: {
     metadata: PartialNullable<TThreadMetadata>;
     threadId: string;
-  }): Promise<ThreadData<TThreadMetadata>>;
+  }): Promise<TThreadMetadata>;
   createComment(options: {
     threadId: string;
     commentId: string;
@@ -193,7 +193,7 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     metadata: PartialNullable<TThreadMetadata>;
     threadId: string;
   }) {
-    const thread = await fetchJson<ThreadDataPlain<TThreadMetadata>>(
+    return await fetchJson<TThreadMetadata>(
       `/threads/${encodeURIComponent(threadId)}/metadata`,
       {
         method: "POST",
@@ -203,8 +203,6 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
         body: JSON.stringify(metadata),
       }
     );
-
-    return convertToThreadData(thread);
   }
 
   async function createComment({

@@ -1104,7 +1104,7 @@ export class Liveblocks {
       userId: string;
       updatedAt?: Date;
     };
-  }): Promise<ThreadData<TThreadMetadata>> {
+  }): Promise<TThreadMetadata> {
     const { roomId, threadId, data } = params;
 
     const res = await this.post(
@@ -1120,9 +1120,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    return convertToThreadData(
-      (await res.json()) as ThreadDataPlain<TThreadMetadata>
-    );
+    return (await res.json()) as TThreadMetadata;
   }
 
   /**
