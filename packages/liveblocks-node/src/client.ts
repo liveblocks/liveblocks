@@ -1165,15 +1165,15 @@ export class Liveblocks {
   }
 
   /**
-   * Deletes a reaction from a comment.
-   * @param params.roomId The room ID to delete the comment reaction from.
-   * @param params.threadId The thread ID to delete the comment reaction from.
-   * @param params.commentId The comment ID to delete the reaction from.
-   * @param params.data.emoji The (emoji) reaction to delete.
+   * Removes a reaction from a comment.
+   * @param params.roomId The room ID to remove the comment reaction from.
+   * @param params.threadId The thread ID to remove the comment reaction from.
+   * @param params.commentId The comment ID to remove the reaction from.
+   * @param params.data.emoji The (emoji) reaction to remove.
    * @param params.data.userId The user ID of the user associated with the reaction.
-   * @param params.data.removedAt (optional) The date the reaction is set to be deleted.
+   * @param params.data.removedAt (optional) The date the reaction is set to be removed.
    */
-  public async deleteCommentReaction(params: {
+  public async removeCommentReaction(params: {
     roomId: string;
     threadId: string;
     commentId: string;
