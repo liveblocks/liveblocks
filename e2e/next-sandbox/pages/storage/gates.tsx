@@ -57,6 +57,16 @@ function Sandbox() {
     obj.set(key, value);
   }, []);
 
+  const setInBatch = useMutation(
+    ({ storage }, key: string, values: number[]) => {
+      const obj = storage.get("object");
+      for (const value of values) {
+        obj.set(key, value);
+      }
+    },
+    []
+  );
+
   const clear = useMutation(({ storage }) => {
     const obj = storage.get("object");
     const keys = Object.keys(obj.toObject());
@@ -100,12 +110,24 @@ function Sandbox() {
           Set to 3
         </Button>
 
+        <Button id="set-batch" onClick={() => setInBatch("b", [4, 5])}>
+          Set 4, 5 (in batch)
+        </Button>
+
         <Button
           id="slow"
           onClick={() => void room.__internal._testCtl({ nextOpSlow: true })}
           subtitle="Make next Op slow"
         >
           Slow
+        </Button>
+
+        <Button
+          id="fail-next-batch"
+          onClick={() => void room.__internal._testCtl({ nextOpFail: true })}
+          subtitle="Make next Op batch fail in the middle"
+        >
+          Fail
         </Button>
 
         <Button

@@ -93,4 +93,33 @@ test.describe("Storage - Input/output Gates (multiple pages)", () => {
     await page2.click("#set-to-three");
     await waitForJson(pages, "#obj", { a: 3 });
   });
+
+  test("test failing transaction", async () => {
+    const [page1, page2] = pages;
+
+    await page1.click("#disable-throttling");
+    await page2.click("#disable-throttling");
+
+    // Part I
+    await page1.click("#clear");
+    await waitForJson(pages, "#obj", {});
+
+    // Ensure the next batch op will fail
+    await page1.click("#fail-next-batch");
+    await new Promise<void>((res) => setTimeout(() => res(), 500));
+
+    // Setting the batch will trigger a failure, leading to a discrepancy
+    // between the clients
+    await page2.click("#set-batch");
+    await waitForJson(page2, "#obj", { b: 5 });
+    await waitForJson(page1, "#obj", {});
+
+    // ...and reloading the clients will make the partially-executed batch apparent
+    await page1.reload();
+    await page2.reload();
+
+    // NOTE: While this behavior certainly is undesirable, it's not the
+    // point of this test
+    await waitForJson(pages, "#obj", { b: 4 });
+  });
 });
