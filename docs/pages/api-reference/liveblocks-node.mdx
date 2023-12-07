@@ -1396,7 +1396,7 @@ const reaction = await liveblocks.addCommentReaction({
 console.log(reaction);
 ```
 
-#### Liveblocks.deleteCommentReaction [#post-rooms-roomId-threads-threadId-comments-commentId-remove-reaction] [@badge=Beta]
+#### Liveblocks.removeCommentReaction [#post-rooms-roomId-threads-threadId-comments-commentId-remove-reaction] [@badge=Beta]
 
 Removes a reaction from a specific comment in a thread within a room. Throws an
 error if the comment reaction isn’t found. This is a wrapper around the
@@ -1404,7 +1404,7 @@ error if the comment reaction isn’t found. This is a wrapper around the
 and returns no response.
 
 ```ts
-await liveblocks.deleteCommentReaction({
+await liveblocks.removeCommentReaction({
   roomId: "my-room-id",
   threadId: "th_d75sF3...",
   commentId: "cm_agH76a...",
