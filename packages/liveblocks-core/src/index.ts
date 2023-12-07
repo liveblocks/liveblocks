@@ -186,8 +186,6 @@ import type * as DevTools from "./types/DevToolsTreeNode";
 export type { DevTools };
 
 // Comments
-export type { CommentsApi } from "./comments";
-export { CommentsApiError, createCommentsApi } from "./comments";
 export type {
   CommentBodyLinkElementArgs,
   CommentBodyMentionElementArgs,
@@ -201,6 +199,7 @@ export {
   getMentionedIdsFromCommentBody,
   stringifyCommentBody,
 } from "./comments/comment-body";
+export { CommentsApiError } from "./comments/CommentsApiError";
 export type { BaseMetadata } from "./comments/types/BaseMetadata";
 export type {
   CommentBody,
