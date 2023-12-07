@@ -50,6 +50,10 @@ export type LiveblocksOptions = {
   baseUrl?: string;
 };
 
+type Nullable<T> = {
+  [P in keyof T]: T[P] | null;
+};
+
 type DateToString<T> = {
   [P in keyof T]: T[P] extends Date ? string : T[P];
 };
@@ -1096,7 +1100,7 @@ export class Liveblocks {
     roomId: string;
     threadId: string;
     data: {
-      metadata: BaseMetadata;
+      metadata: Nullable<BaseMetadata>;
       userId: string;
       updatedAt?: Date;
     };
@@ -1142,7 +1146,6 @@ export class Liveblocks {
     };
   }): Promise<Reaction> {
     const { roomId, threadId, commentId, data } = params;
-
     const res = await this.post(
       url`/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}/add-reaction`,
       {
