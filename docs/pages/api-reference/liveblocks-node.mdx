@@ -1115,23 +1115,24 @@ to modify the metadata of a thread, including user information and the date of
 the last update. Throws an error if the room or thread isn’t found. This is a
 wrapper around the
 [Update Thread Metadata API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-metadata)
-and returns the updated thread.
+and returns the updated metadata.
 
 ```ts
-const editedThread = await liveblocks.editThreadMetadata({
+const metadata = await liveblocks.editThreadMetadata({
   roomId: "my-room-id",
   threadId: "th_d75sF3...",
 
   data: {
     metadata: {
       color: "yellow",
+      page: null,
     },
     userId: "marc@example.com",
     updatedAt: new Date(), // Optional
   },
 });
 
-// { type: "thread", id: "th_d75sF3...", ... }
+// { color: "yellow", resolved: true }
 console.log(editedThread);
 ```
 

@@ -1493,37 +1493,16 @@
         ],
         "responses": {
           "200": {
-            "description": "Success. Returns the updated thread.",
+            "description": "Success. Returns the updated metadata.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Thread"
+                  "$ref": "#/components/schemas/ThreadMetadata"
                 },
                 "examples": {
                   "Success": {
                     "value": {
-                      "type": "thread",
-                      "id": "thread-id",
-                      "roomId": "room-id",
-                      "comments": [
-                        {
-                          "type": "comment",
-                          "threadId": "thread-id",
-                          "roomId": "room-id",
-                          "id": "comment-id",
-                          "userId": "alice",
-                          "createdAt": "2024-07-13T14:32:50.697Z",
-                          "body": {
-                            "version": 1,
-                            "content": []
-                          }
-                        }
-                      ],
-                      "createdAt": "2022-07-13T14:32:50.697Z",
-                      "metadata": {
-                        "color": "yellow"
-                      },
-                      "updatedAt": "2023-07-13T14:32:50.697Z"
+                      "color": "yellow"
                     }
                   }
                 }
@@ -2674,6 +2653,21 @@
             },
             "userId": "alice",
             "createdAt": "2023-07-13T14:32:50.697Z"
+          }
+        ],
+        "description": ""
+      },
+      "ThreadMetadata": {
+        "type": "object",
+        "title": "ThreadMetadata",
+        "properties": {
+          "type": "object"
+        },
+        "required": [],
+        "examples": [
+          {
+            "color": "blue",
+            "age": 25
           }
         ],
         "description": ""
