@@ -711,7 +711,10 @@ type PrivateRoomAPI = {
   };
 
   _disableThrottle(): void;
-  _serverCtl: (cmd: { nextOpSlow: boolean }) => Promise<void>;
+  _testCtl: (cmd: {
+    nextOpSlow?: boolean;
+    nextOpFail?: boolean;
+  }) => Promise<void>;
 };
 
 // The maximum message size on websockets is 1MB. We'll set the threshold
@@ -1232,7 +1235,7 @@ export function createRoom<
   };
 
   async function httpPostToRoom(
-    endpoint: "/send-message" | "/_ctl",
+    endpoint: "/send-message" | "/_testCtl",
     body: JsonObject
   ) {
     if (!managedSocket.authValue) {
@@ -1259,8 +1262,8 @@ export function createRoom<
     });
   }
 
-  async function _serverCtl(cmd: { nextOpSlow: boolean }) {
-    await httpPostToRoom("/_ctl", { cmd });
+  async function _testCtl(cmd: { nextOpSlow?: boolean; nextOpFail?: boolean }) {
+    await httpPostToRoom("/_testCtl", { cmd });
   }
 
   function sendMessages(messages: ClientMsg<TPresence, TRoomEvent>[]) {
@@ -2365,7 +2368,7 @@ export function createRoom<
         },
 
         _disableThrottle: () => (config.throttleDelay = 0),
-        _serverCtl,
+        _testCtl,
       },
 
       id: config.roomId,

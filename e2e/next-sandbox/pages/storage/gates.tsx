@@ -38,7 +38,7 @@ export default function Home() {
 
 type Internal = {
   _disableThrottle(): void;
-  _serverCtl(cmd: { nextOpSlow: boolean }): Promise<void>;
+  _testCtl(cmd: { nextOpSlow?: boolean; nextOpFail?: boolean }): Promise<void>;
 };
 
 type PrivateRoom = ReturnType<typeof useRoom> & {
@@ -102,7 +102,7 @@ function Sandbox() {
 
         <Button
           id="slow"
-          onClick={() => void room.__internal._serverCtl({ nextOpSlow: true })}
+          onClick={() => void room.__internal._testCtl({ nextOpSlow: true })}
           subtitle="Make next Op slow"
         >
           Slow
