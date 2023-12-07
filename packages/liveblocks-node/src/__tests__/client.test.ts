@@ -1,4 +1,8 @@
-import type { CommentData, Reaction, ThreadData } from "@liveblocks/core";
+import type {
+  CommentData,
+  CommentUserReaction,
+  ThreadData,
+} from "@liveblocks/core";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
@@ -70,7 +74,7 @@ describe("client", () => {
     comments: [comment],
   };
 
-  const reaction: Reaction = {
+  const reaction: CommentUserReaction = {
     emoji: "🐐",
     createdAt: new Date("2022-07-13T14:32:50.697Z"),
     userId: "user1",

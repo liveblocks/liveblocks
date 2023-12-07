@@ -2,13 +2,16 @@ import type { AuthValue } from "../auth-manager";
 import type { JsonObject } from "../lib/Json";
 import {
   convertToCommentData,
-  convertToCommentReaction,
+  convertToCommentUserReaction,
   convertToThreadData,
 } from "./comment-body";
 import type { BaseMetadata } from "./types/BaseMetadata";
 import type { CommentBody } from "./types/CommentBody";
 import type { CommentData, CommentDataPlain } from "./types/CommentData";
-import type { Reaction, ReactionPlain } from "./types/Reaction";
+import type {
+  CommentUserReaction,
+  CommentUserReactionPlain,
+} from "./types/CommentReaction";
 import type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
 
 type Options = {
@@ -57,7 +60,7 @@ export type CommentsApi<TThreadMetadata extends BaseMetadata> = {
     threadId: string;
     commentId: string;
     emoji: string;
-  }): Promise<Reaction>;
+  }): Promise<CommentUserReaction>;
   removeReaction(options: {
     threadId: string;
     commentId: string;
@@ -285,7 +288,7 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     commentId: string;
     emoji: string;
   }) {
-    const reaction = await fetchJson<ReactionPlain>(
+    const reaction = await fetchJson<CommentUserReactionPlain>(
       `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
         commentId
       )}/reactions`,
@@ -298,7 +301,7 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
       }
     );
 
-    return convertToCommentReaction(reaction);
+    return convertToCommentUserReaction(reaction);
   }
 
   async function removeReaction({

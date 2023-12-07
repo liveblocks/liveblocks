@@ -1,14 +1,12 @@
 import type { CommentBody } from "./CommentBody";
 import type { DateToString } from "./DateToString";
 
-type CommentReactionUser = {
-  id: string;
-};
-
 export type CommentReaction = {
   emoji: string;
   createdAt: Date;
-  users: CommentReactionUser[];
+  users: {
+    id: string;
+  }[];
 };
 
 /**

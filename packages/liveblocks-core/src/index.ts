@@ -199,7 +199,7 @@ export type {
 } from "./comments/comment-body";
 export {
   convertToCommentData,
-  convertToCommentReaction,
+  convertToCommentUserReaction,
   convertToThreadData,
   getMentionedIdsFromCommentBody,
   stringifyCommentBody,
@@ -220,5 +220,8 @@ export type {
   CommentDataPlain,
   CommentReaction,
 } from "./comments/types/CommentData";
-export type { Reaction, ReactionPlain } from "./comments/types/Reaction";
+export type {
+  CommentUserReaction,
+  CommentUserReactionPlain,
+} from "./comments/types/CommentReaction";
 export type { ThreadData, ThreadDataPlain } from "./comments/types/ThreadData";

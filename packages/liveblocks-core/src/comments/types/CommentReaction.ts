@@ -1,9 +1,9 @@
 import type { DateToString } from "./DateToString";
 
-export type Reaction = {
+export type CommentUserReaction = {
   emoji: string;
   createdAt: Date;
   userId: string;
 };
 
-export type ReactionPlain = DateToString<Reaction>;
+export type CommentUserReactionPlain = DateToString<CommentUserReaction>;

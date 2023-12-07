@@ -8,18 +8,18 @@ import type {
   CommentBody,
   CommentData,
   CommentDataPlain,
+  CommentUserReaction,
+  CommentUserReactionPlain,
   IUserInfo,
   Json,
   JsonObject,
   PlainLsonObject,
-  Reaction,
-  ReactionPlain,
   ThreadData,
   ThreadDataPlain,
 } from "@liveblocks/core";
 import {
   convertToCommentData,
-  convertToCommentReaction,
+  convertToCommentUserReaction,
   convertToThreadData,
 } from "@liveblocks/core";
 
@@ -184,6 +184,7 @@ export class Liveblocks {
   /** @internal */
   async get(path: URLSafeString, params?: QueryParams): Promise<Response> {
     const url = urljoin(this._baseUrl, path, params);
+    console.log("url", url);
     const headers = {
       Authorization: `Bearer ${this._secret}`,
     };
@@ -863,7 +864,9 @@ export class Liveblocks {
   }): Promise<{ data: ThreadData[] }> {
     const { roomId } = params;
 
-    const res = await this.get(url`/v2/rooms/${roomId}/threads`);
+    const res = await this.get(url`/v2/rooms/${roomId}/threads`, {
+      "metadata.resolved": "false",
+    });
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -1142,7 +1145,7 @@ export class Liveblocks {
       userId: string;
       createdAt?: Date;
     };
-  }): Promise<Reaction> {
+  }): Promise<CommentUserReaction> {
     const { roomId, threadId, commentId, data } = params;
     const res = await this.post(
       url`/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}/add-reaction`,
@@ -1157,8 +1160,8 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    const reaction = (await res.json()) as ReactionPlain;
-    return convertToCommentReaction(reaction);
+    const reaction = (await res.json()) as CommentUserReactionPlain;
+    return convertToCommentUserReaction(reaction);
   }
 
   /**

@@ -12,7 +12,10 @@ import type {
   CommentBodyText,
 } from "./types/CommentBody";
 import type { CommentData, CommentDataPlain } from "./types/CommentData";
-import type { Reaction, ReactionPlain } from "./types/Reaction";
+import type {
+  CommentUserReaction,
+  CommentUserReactionPlain,
+} from "./types/CommentReaction";
 import type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
 
 type PromiseOrNot<T> = T | Promise<T>;
@@ -710,7 +713,9 @@ export function convertToThreadData<
  * @param data The plain comment reaction object (usually returned by the API)
  * @returns The rich comment reaction object that can be used by the client.
  */
-export function convertToCommentReaction(data: ReactionPlain): Reaction {
+export function convertToCommentUserReaction(
+  data: CommentUserReactionPlain
+): CommentUserReaction {
   return {
     ...data,
     createdAt: new Date(data.createdAt),
