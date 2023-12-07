@@ -1374,7 +1374,8 @@ await liveblocks.deleteComment({
 #### Liveblocks.addCommentReaction [#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction] [@badge=Beta]
 
 Adds a reaction to a specific comment in a thread within a room. Throws an error
-if the comment reaction isn’t found. This is a wrapper around the
+if the comment isn’t found or if the user has already added the same reaction on
+the comment. This is a wrapper around the
 [Add Comment Reaction API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction)
 and returns the new reaction.
 
