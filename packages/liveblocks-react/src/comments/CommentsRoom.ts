@@ -315,11 +315,6 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
           type: "thread",
           createdAt: now,
           roomId: room.id,
-          notificationInfo: {
-            id: "TODO",
-            readAt: now,
-            notifiedAt: now,
-          },
           metadata: metadata as ThreadData<TThreadMetadata>["metadata"],
           comments: [newComment],
         };
@@ -377,13 +372,13 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
           thread.id === threadId
             ? {
                 ...thread,
-                notificationInfo: {
-                  id: thread.notificationInfo
-                    ? thread.notificationInfo.id
-                    : "TODO",
-                  readAt: now,
-                  notifiedAt: now,
-                },
+                notificationInfo: thread.notificationInfo
+                  ? {
+                      ...thread.notificationInfo,
+                      readAt: now,
+                      notifiedAt: now,
+                    }
+                  : undefined,
                 comments: [...thread.comments, comment],
               }
             : thread
