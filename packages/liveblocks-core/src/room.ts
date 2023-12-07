@@ -1228,14 +1228,18 @@ export function createRoom<
     comments: makeEventSource<CommentsEventServerMsg>(),
   };
 
-  async function httpSend(
-    authTokenOrPublicApiKey: string,
-    roomId: string,
-    nonce: string,
-    messages: ClientMsg<TPresence, TRoomEvent>[]
-  ) {
+  async function httpPostToRoom(endpoint: "/send-message", body: JsonObject) {
+    if (!managedSocket.authValue) {
+      throw new Error("Not authorized");
+    }
+
+    const authTokenOrPublicApiKey =
+      managedSocket.authValue.type === "public"
+        ? managedSocket.authValue.publicApiKey
+        : managedSocket.authValue.token.raw;
+
     const url = new URL(
-      `/v2/c/rooms/${encodeURIComponent(roomId)}/send-message`,
+      `/v2/c/rooms/${encodeURIComponent(config.roomId)}${endpoint}`,
       config.baseUrl
     ).toString();
     const fetcher = config.polyfills?.fetch || /* istanbul ignore next */ fetch;
@@ -1245,30 +1249,25 @@ export function createRoom<
         "Content-Type": "application/json",
         Authorization: `Bearer ${authTokenOrPublicApiKey}`,
       },
-      body: JSON.stringify({ nonce, messages }),
+      body: JSON.stringify(body),
     });
   }
 
   function sendMessages(messages: ClientMsg<TPresence, TRoomEvent>[]) {
     const serializedPayload = JSON.stringify(messages);
     const nonce = context.dynamicSessionInfo.current?.nonce;
-    if (config.unstable_fallbackToHTTP && managedSocket.authValue && nonce) {
+    if (config.unstable_fallbackToHTTP && nonce) {
       // if our message contains UTF-8, we can't simply use length. See: https://stackoverflow.com/questions/23318037/size-of-json-object-in-kbs-mbs
       // if this turns out to be expensive, we could just guess with a lower value.
       const size = new TextEncoder().encode(serializedPayload).length;
       if (size > MAX_SOCKET_MESSAGE_SIZE) {
-        void httpSend(
-          managedSocket.authValue.type === "public"
-            ? managedSocket.authValue.publicApiKey
-            : managedSocket.authValue.token.raw,
-          config.roomId,
-          nonce,
-          messages
-        ).then((resp) => {
-          if (!resp.ok && resp.status === 403) {
-            managedSocket.reconnect();
+        void httpPostToRoom("/send-message", { nonce, messages }).then(
+          (resp) => {
+            if (!resp.ok && resp.status === 403) {
+              managedSocket.reconnect();
+            }
           }
-        });
+        );
         console.warn(
           "Message was too large for websockets and sent over HTTP instead"
         );
