@@ -31,6 +31,7 @@ import type {
   EditThreadMetadataOptions,
   ThreadsState,
   ThreadsStateSuccess,
+  useThreadsOptions,
 } from "./comments/CommentsRoom";
 
 export type PromiseOrNot<T> = T | Promise<T>;
@@ -667,9 +668,9 @@ export type RoomContextBundle<
      * @example
      * const { threads, error, isLoading } = useThreads();
      */
-    useThreads(options?: {
-      query?: { metadata?: Partial<TThreadMetadata> };
-    }): ThreadsState<TThreadMetadata>;
+    useThreads(
+      options?: useThreadsOptions<TThreadMetadata>
+    ): ThreadsState<TThreadMetadata>;
 
     /**
      * @beta
@@ -819,9 +820,9 @@ export type RoomContextBundle<
          * @example
          * const { threads } = useThreads();
          */
-        useThreads(options?: {
-          query?: { metadata?: Partial<TThreadMetadata> };
-        }): ThreadsStateSuccess<TThreadMetadata>;
+        useThreads(
+          options?: useThreadsOptions<TThreadMetadata>
+        ): ThreadsStateSuccess<TThreadMetadata>;
 
         /**
          * @beta

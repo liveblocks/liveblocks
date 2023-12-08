@@ -38,6 +38,7 @@ import type {
   CreateCommentOptions,
   EditCommentOptions,
   ThreadsState,
+  useThreadsOptions,
 } from "./comments/CommentsRoom";
 import { createCommentsRoom } from "./comments/CommentsRoom";
 import type { CommentsError } from "./comments/errors";
@@ -917,14 +918,16 @@ export function createRoomContext<
     return commentsRoom;
   }
 
-  function useThreads(): ThreadsState<TThreadMetadata> {
+  function useThreads(
+    options?: useThreadsOptions<TThreadMetadata>
+  ): ThreadsState<TThreadMetadata> {
     const room = useRoom();
-    return getCommentsRoom(room).useThreads();
+    return getCommentsRoom(room).useThreads(options);
   }
 
-  function useThreadsSuspense() {
+  function useThreadsSuspense(options?: useThreadsOptions<TThreadMetadata>) {
     const room = useRoom();
-    return getCommentsRoom(room).useThreadsSuspense();
+    return getCommentsRoom(room).useThreadsSuspense(options);
   }
 
   function useCreateThread() {

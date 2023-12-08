@@ -47,8 +47,12 @@ type PartialNullable<T> = {
 };
 
 export type CommentsRoom<TThreadMetadata extends BaseMetadata> = {
-  useThreads(): ThreadsState<TThreadMetadata>;
-  useThreadsSuspense(): ThreadsStateSuccess<TThreadMetadata>;
+  useThreads(
+    options?: useThreadsOptions<TThreadMetadata>
+  ): ThreadsState<TThreadMetadata>;
+  useThreadsSuspense(
+    options?: useThreadsOptions<TThreadMetadata>
+  ): ThreadsStateSuccess<TThreadMetadata>;
   useCreateThread(): (
     options: CreateThreadOptions<TThreadMetadata>
   ) => ThreadData<TThreadMetadata>;
@@ -60,6 +64,10 @@ export type CommentsRoom<TThreadMetadata extends BaseMetadata> = {
   useDeleteComment(): (options: DeleteCommentOptions) => void;
   useAddReaction(): (options: CommentReactionOptions) => void;
   useRemoveReaction(): (options: CommentReactionOptions) => void;
+};
+
+export type useThreadsOptions<TMetadata extends BaseMetadata> = {
+  query: { metadata: Partial<TMetadata> };
 };
 
 export type CreateThreadOptions<TMetadata extends BaseMetadata> = [
