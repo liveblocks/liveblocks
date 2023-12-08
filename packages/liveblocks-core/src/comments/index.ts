@@ -31,7 +31,9 @@ type PartialNullable<T> = {
 };
 
 export type CommentsApi<TThreadMetadata extends BaseMetadata> = {
-  getThreads(): Promise<ThreadData<TThreadMetadata>[]>;
+  getThreads(
+    query: Partial<TThreadMetadata>
+  ): Promise<ThreadData<TThreadMetadata>[]>;
   createThread(options: {
     threadId: string;
     commentId: string;
@@ -140,8 +142,15 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     });
   }
 
-  async function getThreads(): Promise<ThreadData<TThreadMetadata>[]> {
-    const response = await fetchApi(roomId, "/threads");
+  async function getThreads(
+    query: Partial<TThreadMetadata>
+  ): Promise<ThreadData<TThreadMetadata>[]> {
+    const response = await fetchApi(
+      roomId,
+      `/threads?${Array.from(Object.entries(query))
+        .map((entry) => `metadata.${entry[0]}=${entry[1]}`)
+        .join("&")}`
+    );
 
     if (response.ok) {
       const json = await (response.json() as Promise<{

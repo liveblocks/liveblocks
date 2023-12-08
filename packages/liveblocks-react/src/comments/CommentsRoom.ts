@@ -12,7 +12,7 @@ import type {
   Room,
   ThreadData,
 } from "@liveblocks/core";
-import { CommentsApiError, console } from "@liveblocks/core";
+import { CommentsApiError, console, stringify } from "@liveblocks/core";
 import { nanoid } from "nanoid";
 import { useCallback, useEffect } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
@@ -67,7 +67,7 @@ export type CommentsRoom<TThreadMetadata extends BaseMetadata> = {
 };
 
 export type useThreadsOptions<TMetadata extends BaseMetadata> = {
-  query: { metadata: Partial<TMetadata> };
+  query?: { metadata?: Partial<TMetadata> };
 };
 
 export type CreateThreadOptions<TMetadata extends BaseMetadata> = [
@@ -161,9 +161,23 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   errorEventSource: EventSource<CommentsError<TThreadMetadata>>
 ): CommentsRoom<TThreadMetadata> {
   const manager = createCacheManager<ThreadData<TThreadMetadata>[]>();
+  const queries = new Map<string, Partial<TThreadMetadata>>();
+
+  async function fetchThreads() {
+    const responses = await Promise.all(
+      Array.from(queries.values()).map(room.getThreads)
+    );
+
+    const threads = Array.from(
+      new Map(responses.flat().map((thread) => [thread.id, thread])).values()
+    );
+
+    return threads;
+  }
 
   function _useThreads(
-    revalidateCache: (shouldDedupe: boolean) => Promise<void>
+    revalidateCache: (shouldDedupe: boolean) => Promise<void>,
+    query: Partial<TThreadMetadata> = {}
   ): ThreadsState<TThreadMetadata> {
     const status = useSyncExternalStore(
       room.events.status.subscribe,
@@ -187,6 +201,9 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
       refreshInterval: interval,
     });
 
+    // TODO: Increment / decrement based on mounting / unmounting to fetch queries that are actively used
+    queries.set(stringify(query), query);
+
     /**
      * Subscribe to comment events in the room to trigger a revalidation when a comment is added, edited or deleted.
      */
@@ -209,27 +226,48 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
       return { isLoading: true };
     }
 
+    let threads: ThreadData<TThreadMetadata>[] = [];
+
+    if (cache.data !== undefined) {
+      if (query === undefined) {
+        threads = cache.data;
+      } else {
+        threads = cache.data.filter((thread) => {
+          for (const key in query) {
+            if (thread.metadata[key] !== query[key]) {
+              return false;
+            }
+          }
+          return true;
+        });
+      }
+    }
+
     return {
       isLoading: cache.isLoading,
-      threads: cache.data ?? [],
+      threads,
       error: cache.error,
     };
   }
 
-  function useThreads(): ThreadsState<TThreadMetadata> {
-    const revalidate = useRevalidateCache(manager, room.getThreads);
+  function useThreads(
+    options?: useThreadsOptions<TThreadMetadata>
+  ): ThreadsState<TThreadMetadata> {
+    const revalidate = useRevalidateCache(manager, fetchThreads);
 
     useEffect(() => {
       void revalidate(true);
     }, [revalidate]);
 
-    return _useThreads(revalidate);
+    return _useThreads(revalidate, options?.query?.metadata);
   }
 
-  function useThreadsSuspense(): ThreadsStateSuccess<TThreadMetadata> {
-    const revalidate = useRevalidateCache(manager, room.getThreads);
+  function useThreadsSuspense(
+    options?: useThreadsOptions<TThreadMetadata>
+  ): ThreadsStateSuccess<TThreadMetadata> {
+    const revalidate = useRevalidateCache(manager, fetchThreads);
 
-    const cache = _useThreads(revalidate);
+    const cache = _useThreads(revalidate, options?.query?.metadata);
 
     if (cache.error) {
       throw cache.error;
@@ -246,7 +284,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   }
 
   function useEditThreadMetadata() {
-    const revalidate = useRevalidateCache(manager, room.getThreads);
+    const revalidate = useRevalidateCache(manager, fetchThreads);
     const mutate = useMutate(manager, revalidate);
 
     const editThreadMetadata = useCallback(
@@ -292,7 +330,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   }
 
   function useCreateThread() {
-    const revalidate = useRevalidateCache(manager, room.getThreads);
+    const revalidate = useRevalidateCache(manager, fetchThreads);
     const mutate = useMutate(manager, revalidate);
 
     const createThread = useCallback(
@@ -355,7 +393,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   }
 
   function useCreateComment() {
-    const revalidate = useRevalidateCache(manager, room.getThreads);
+    const revalidate = useRevalidateCache(manager, fetchThreads);
     const mutate = useMutate(manager, revalidate);
 
     const createComment = useCallback(
@@ -412,7 +450,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   }
 
   function useEditComment() {
-    const revalidate = useRevalidateCache(manager, room.getThreads);
+    const revalidate = useRevalidateCache(manager, fetchThreads);
     const mutate = useMutate(manager, revalidate);
 
     const editComment = useCallback(
@@ -462,7 +500,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   }
 
   function useDeleteComment() {
-    const revalidate = useRevalidateCache(manager, room.getThreads);
+    const revalidate = useRevalidateCache(manager, fetchThreads);
     const mutate = useMutate(manager, revalidate);
 
     const deleteComment = useCallback(
@@ -523,7 +561,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   }
 
   function useAddReaction() {
-    const revalidate = useRevalidateCache(manager, room.getThreads);
+    const revalidate = useRevalidateCache(manager, fetchThreads);
     const mutate = useMutate(manager, revalidate);
 
     const createComment = useCallback(
@@ -601,7 +639,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   }
 
   function useRemoveReaction() {
-    const revalidate = useRevalidateCache(manager, room.getThreads);
+    const revalidate = useRevalidateCache(manager, fetchThreads);
     const mutate = useMutate(manager, revalidate);
 
     const createComment = useCallback(

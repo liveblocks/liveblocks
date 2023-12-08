@@ -14,15 +14,53 @@ import { ErrorBoundary } from "react-error-boundary";
  */
 
 function Example() {
-  const { threads } = useThreads();
-
   return (
     <main>
+      <div style={{ color: "white" }}>RESOLVED</div>
+      <ResolveThreads />
+      <div style={{ color: "white" }}>NOT RESOLVED</div>
+      <UnresolvedThreads />
+      <div style={{ color: "white" }}>ALL THREADS</div>
+      <AllThreads />
+      <Composer className="composer" />
+    </main>
+  );
+}
+
+function AllThreads() {
+  const { threads } = useThreads();
+  return (
+    <>
       {threads.map((thread) => (
         <Thread key={thread.id} thread={thread} className="thread" />
       ))}
-      <Composer className="composer" />
-    </main>
+    </>
+  );
+}
+
+function ResolveThreads() {
+  const { threads } = useThreads({
+    query: { metadata: { resolved: true } },
+  });
+  return (
+    <>
+      {threads.map((thread) => (
+        <Thread key={thread.id} thread={thread} className="thread" />
+      ))}
+    </>
+  );
+}
+
+function UnresolvedThreads() {
+  const { threads } = useThreads({
+    query: { metadata: { resolved: false } },
+  });
+  return (
+    <>
+      {threads.map((thread) => (
+        <Thread key={thread.id} thread={thread} className="thread" />
+      ))}
+    </>
   );
 }
 
