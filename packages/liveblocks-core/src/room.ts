@@ -2578,7 +2578,7 @@ export function makeAuthDelegateForRoom(
   authManager: AuthManager
 ): () => Promise<AuthValue> {
   return async () => {
-    return authManager.getAuthValue("room:read", roomId);
+    return authManager.getAuthValue({ requestedScope: "room:read", roomId });
   };
 }
 
