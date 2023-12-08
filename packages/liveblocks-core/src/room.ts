@@ -1,9 +1,6 @@
 import type { AuthManager, AuthValue } from "./auth-manager";
-import { CommentsApiError } from "./comments/CommentsApiError";
-import type { BaseMetadata } from "./comments/types/BaseMetadata";
-import type { CommentBody } from "./comments/types/CommentBody";
-import type { CommentData } from "./comments/types/CommentData";
-import type { ThreadData } from "./comments/types/ThreadData";
+import type { CommentsApi } from "./comments";
+import { createCommentsApi } from "./comments";
 import type {
   Delegates,
   LegacyConnectionStatus,
@@ -69,10 +66,6 @@ import type { User } from "./types/User";
 import { PKG_VERSION } from "./version";
 
 type TimeoutID = ReturnType<typeof setTimeout>;
-
-type PartialNullable<T> = {
-  [P in keyof T]?: T[P] | null | undefined;
-};
 
 //
 // NOTE:
@@ -468,8 +461,7 @@ export type Room<
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json,
-  TThreadMetadata extends BaseMetadata = never,
-> = {
+> = CommentsApi<any /* TODO: Remove this any by adding a proper thread metadata on the Room type */> & {
   /**
    * @internal
    * Private methods to directly control the underlying state machine for this
@@ -610,49 +602,6 @@ export type Room<
    * const root = room.getStorageSnapshot();
    */
   getStorageSnapshot(): LiveObject<TStorage> | null;
-
-  getThreads(): Promise<ThreadData<TThreadMetadata>[]>;
-
-  createThread(options: {
-    threadId: string;
-    commentId: string;
-    metadata: TThreadMetadata | undefined;
-    body: CommentBody;
-  }): Promise<ThreadData<TThreadMetadata>>;
-
-  editThreadMetadata(options: {
-    metadata: PartialNullable<TThreadMetadata>;
-    threadId: string;
-  }): Promise<ThreadData<TThreadMetadata>>;
-
-  createComment(options: {
-    threadId: string;
-    commentId: string;
-    body: CommentBody;
-  }): Promise<CommentData>;
-
-  editComment(options: {
-    threadId: string;
-    commentId: string;
-    body: CommentBody;
-  }): Promise<CommentData>;
-
-  deleteComment(options: {
-    threadId: string;
-    commentId: string;
-  }): Promise<void>;
-
-  addReaction(options: {
-    threadId: string;
-    commentId: string;
-    emoji: string;
-  }): Promise<CommentData>;
-
-  removeReaction(options: {
-    threadId: string;
-    commentId: string;
-    emoji: string;
-  }): Promise<CommentData>;
 
   readonly events: {
     readonly status: Observable<Status>;
@@ -983,14 +932,13 @@ export function createRoom<
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json,
-  TThreadMetadata extends BaseMetadata = never,
 >(
   options: Omit<
     RoomInitializers<TPresence, TStorage>,
     "autoConnect" | "shouldInitiallyConnect"
   >,
   config: RoomConfig
-): Room<TPresence, TStorage, TUserMeta, TRoomEvent, TThreadMetadata> {
+): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const initialPresence =
     typeof options.initialPresence === "function"
       ? options.initialPresence(config.roomId)
@@ -1080,7 +1028,10 @@ export function createRoom<
   function onStatusDidChange(newStatus: Status) {
     const authValue = managedSocket.authValue;
     if (authValue !== null) {
-      const tokenKey = getAuthBearerHeaderFromAuthValue(authValue);
+      const tokenKey =
+        authValue.type === "secret"
+          ? authValue.token.raw
+          : authValue.publicApiKey;
 
       if (tokenKey !== lastTokenKey) {
         lastTokenKey = tokenKey;
@@ -1307,7 +1258,9 @@ export function createRoom<
       const size = new TextEncoder().encode(serializedPayload).length;
       if (size > MAX_SOCKET_MESSAGE_SIZE) {
         void httpSend(
-          getAuthBearerHeaderFromAuthValue(managedSocket.authValue),
+          managedSocket.authValue.type === "public"
+            ? managedSocket.authValue.publicApiKey
+            : managedSocket.authValue.token.raw,
           config.roomId,
           nonce,
           messages
@@ -2378,235 +2331,10 @@ export function createRoom<
     comments: eventHub.comments.observable,
   };
 
-  async function fetchClientApi(
-    roomId: string,
-    endpoint: string,
-    options?: RequestInit
-  ): Promise<Response> {
-    // TODO: Use the right scope with authManager.getAuthValue
-    const authValue = await delegates.authenticate();
-    const url = new URL(
-      `/v2/c/rooms/${encodeURIComponent(roomId)}${endpoint}`,
-      config.baseUrl
-    ).toString();
-    const fetcher = config.polyfills?.fetch || /* istanbul ignore next */ fetch;
-    return await fetcher(url, {
-      ...options,
-      headers: {
-        ...options?.headers,
-        Authorization: `Bearer ${getAuthBearerHeaderFromAuthValue(authValue)}`,
-      },
-    });
-  }
-
-  async function fetchCommentsApi<T>(
-    endpoint: string,
-    options?: RequestInit
-  ): Promise<T> {
-    const response = await fetchClientApi(config.roomId, endpoint, options);
-
-    if (!response.ok) {
-      if (response.status >= 400 && response.status < 600) {
-        let error: CommentsApiError;
-
-        try {
-          const errorBody = (await response.json()) as { message: string };
-
-          error = new CommentsApiError(
-            errorBody.message,
-            response.status,
-            errorBody
-          );
-        } catch {
-          error = new CommentsApiError(response.statusText, response.status);
-        }
-
-        throw error;
-      }
-    }
-
-    let body;
-
-    try {
-      body = (await response.json()) as T;
-    } catch {
-      body = {} as T;
-    }
-
-    return body;
-  }
-
-  async function getThreads(): Promise<ThreadData<TThreadMetadata>[]> {
-    const response = await fetchClientApi(config.roomId, "/threads");
-
-    if (response.ok) {
-      const json = await (response.json() as Promise<{
-        data: ThreadData<TThreadMetadata>[];
-      }>);
-      return json.data;
-    } else if (response.status === 404) {
-      return [];
-    } else {
-      throw new Error("There was an error while getting threads.");
-    }
-  }
-
-  function createThread({
-    metadata,
-    body,
-    commentId,
-    threadId,
-  }: {
-    roomId: string;
-    threadId: string;
-    commentId: string;
-    metadata: TThreadMetadata | undefined;
-    body: CommentBody;
-  }) {
-    return fetchCommentsApi<ThreadData<TThreadMetadata>>("/threads", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        id: threadId,
-        comment: {
-          id: commentId,
-          body,
-        },
-        metadata,
-      }),
-    });
-  }
-
-  function editThreadMetadata({
-    metadata,
-    threadId,
-  }: {
-    roomId: string;
-    metadata: PartialNullable<TThreadMetadata>;
-    threadId: string;
-  }) {
-    return fetchCommentsApi<ThreadData<TThreadMetadata>>(
-      `/threads/${encodeURIComponent(threadId)}/metadata`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(metadata),
-      }
-    );
-  }
-
-  function createComment({
-    threadId,
-    commentId,
-    body,
-  }: {
-    threadId: string;
-    commentId: string;
-    body: CommentBody;
-  }) {
-    return fetchCommentsApi<CommentData>(
-      `/threads/${encodeURIComponent(threadId)}/comments`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id: commentId,
-          body,
-        }),
-      }
-    );
-  }
-
-  function editComment({
-    threadId,
-    commentId,
-    body,
-  }: {
-    threadId: string;
-    commentId: string;
-    body: CommentBody;
-  }) {
-    return fetchCommentsApi<CommentData>(
-      `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
-        commentId
-      )}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          body,
-        }),
-      }
-    );
-  }
-
-  async function deleteComment({
-    threadId,
-    commentId,
-  }: {
-    roomId: string;
-    threadId: string;
-    commentId: string;
-  }) {
-    await fetchCommentsApi(
-      `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
-        commentId
-      )}`,
-      {
-        method: "DELETE",
-      }
-    );
-  }
-
-  function addReaction({
-    threadId,
-    commentId,
-    emoji,
-  }: {
-    threadId: string;
-    commentId: string;
-    emoji: string;
-  }) {
-    return fetchCommentsApi<CommentData>(
-      `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
-        commentId
-      )}/reactions`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ emoji }),
-      }
-    );
-  }
-
-  function removeReaction({
-    threadId,
-    commentId,
-    emoji,
-  }: {
-    threadId: string;
-    commentId: string;
-    emoji: string;
-  }) {
-    return fetchCommentsApi<CommentData>(
-      `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
-        commentId
-      )}/reactions/${encodeURIComponent(emoji)}`,
-      {
-        method: "DELETE",
-      }
-    );
-  }
+  const commentsApi = createCommentsApi(config.roomId, delegates.authenticate, {
+    baseUrl: config.baseUrl,
+    polyfills: config.polyfills,
+  });
 
   return Object.defineProperty(
     {
@@ -2673,14 +2401,7 @@ export function createRoom<
       getPresence: () => context.myPresence.current,
       getOthers: () => context.others.current,
 
-      getThreads,
-      createThread,
-      editThreadMetadata,
-      createComment,
-      editComment,
-      deleteComment,
-      addReaction,
-      removeReaction,
+      ...commentsApi,
     },
 
     // Explictly make the __internal field non-enumerable, to avoid aggressive
@@ -2852,12 +2573,6 @@ function isRoomEventName(value: string): value is RoomEventName {
     value === "lost-connection" ||
     value === "connection"
   );
-}
-
-function getAuthBearerHeaderFromAuthValue(authValue: AuthValue) {
-  return authValue.type === "public"
-    ? authValue.publicApiKey
-    : authValue.token.raw;
 }
 
 export function makeAuthDelegateForRoom(
