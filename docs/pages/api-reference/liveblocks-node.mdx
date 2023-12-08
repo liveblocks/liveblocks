@@ -475,7 +475,7 @@ and returns the same response.
 ```ts
 const activeUsers = await liveblocks.getActiveUsers("my-room-id");
 
-// [{ type: "user", id: "my-user-id", ... }, ...]
+// { data: [{ type: "user", id: "my-user-id", ... }, ...] }
 console.log(activeUsers);
 ```
 
@@ -500,7 +500,7 @@ import { UserMeta } from "../liveblocks.config";
 const activeUsers =
   await liveblocks.getActiveUsers<UserMeta["info"]>("my-room-id");
 
-// [{ ..., info: { name: "Nimesh", avatar: "https://..." }, ...]
+// { data: [{ ..., info: { name: "Nimesh", avatar: "https://..." }, ...] }
 console.log(activeUsers);
 ```
 
@@ -1270,12 +1270,23 @@ const webhookHandler = new WebhookHandler(process.env.WEBHOOK_SECRET);
 
 #### verifyRequest [#verifyRequest]
 
-Verifies the request and returns the event.
+Verifies the request and returns the event. Note that `rawBody` takes the body
+as a `string`.
 
 ```js
 const event = webhookHandler.verifyRequest({
   headers: req.headers,
   rawBody: req.body,
+});
+```
+
+Some frameworks parse request bodies into objects, which means using
+`JSON.stringify` may be necessary.
+
+```js highlight="3"
+const event = webhookHandler.verifyRequest({
+  headers: req.headers,
+  rawBody: JSON.stringify(req.body),
 });
 ```
 
@@ -1293,7 +1304,7 @@ export function POST(request) {
   try {
     const event = webhookHandler.verifyRequest({
       headers: req.headers,
-      rawBody: req.body,
+      rawBody: JSON.stringify(req.body),
     });
 
     // Handle `WebhookEvent`

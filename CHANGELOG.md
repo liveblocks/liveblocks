@@ -1,3 +1,13 @@
+# v1.8.3 (Unreleased)
+
+### `@liveblocks/node`
+
+- Implement Comments Write REST APIs as fully typed methods. (includes
+  `createThread`, `editThreadMetadata`, `createComment`, `editComment`,
+  `deleteComment`, `addCommentReaction`, and `removeCommentReaction` methods)
+- Fixes the return type of `getActiveUsers` to match the data returned from the
+  endpoint.
+
 # v1.8.2
 
 ### `@liveblocks/react`
