@@ -3,6 +3,7 @@ import { isIdle } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
+import { Batch } from "./lib/batch";
 import { deprecateIf } from "./lib/deprecation";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
@@ -15,6 +16,7 @@ import {
   makeAuthDelegateForRoom,
   makeCreateSocketDelegateForRoom,
 } from "./room";
+import type { InboxNotificationData } from "./types/InboxNotificationData";
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1_000;
@@ -116,6 +118,11 @@ export type Client = {
    * Call this whenever you log out a user in your application.
    */
   logout(): void;
+
+  /**
+   * TODO: JSDoc
+   */
+  markInboxNotificationAsRead(inboxNotificationId: string): Promise<void>;
 };
 
 export type AuthEndpoint =
@@ -233,6 +240,7 @@ export function createClient(options: ClientOptions): Client {
   };
 
   const roomsById = new Map<string, RoomInfo>();
+  const inboxNotificationsById = new Map<string, InboxNotificationData>();
 
   function teardownRoom(room: OpaqueRoom) {
     unlinkDevTools(room.id);
@@ -402,8 +410,35 @@ export function createClient(options: ClientOptions): Client {
     }
   }
 
+  function markInboxNotificationsAsRead(
+    _inboxNotificationIds: string[]
+  ): Promise<void> {
+    // TODO: POST /c/inbox-notifications/read
+    // TODO: Optimistically update each inbox notification within inboxNotificationIds
+    // TODO: Optimistically update the affected threads based on the notifications' threadId?
+    return Promise.resolve();
+  }
+
+  const batchedMarkInboxNotificationsAsRead = new Batch(
+    async (batchedInboxNotificationIds: [string][]) => {
+      const inboxNotificationIds = batchedInboxNotificationIds.flat();
+
+      await markInboxNotificationsAsRead(inboxNotificationIds);
+
+      return inboxNotificationIds;
+    },
+    { delay: 100 }
+  );
+
+  async function markInboxNotificationAsRead(
+    inboxNotificationId: string
+  ): Promise<void> {
+    await batchedMarkInboxNotificationsAsRead.add(inboxNotificationId);
+  }
+
   return {
     logout,
+    markInboxNotificationAsRead,
 
     // Old, deprecated APIs
     enter,
