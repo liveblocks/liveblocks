@@ -21,8 +21,8 @@ function parseGrammarRule(
     typeof src === "string"
       ? ErrorReporter.fromText(src)
       : "path" in src
-      ? ErrorReporter.fromSrc(src)
-      : src;
+        ? ErrorReporter.fromSrc(src)
+        : src;
 
   try {
     return generatedParser.parse(reporter.contents(), {
