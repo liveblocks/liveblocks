@@ -534,8 +534,8 @@ function Row<TTreeNode extends DevTools.TreeNode>({
               "tree-focus:text-light-0 bg-light-100 dark:bg-dark-100 hover:bg-light-200 dark:hover:bg-dark-200",
             ]
           : isWithinSelectedParent
-          ? "hover:bg-light-100 dark:hover:bg-dark-100 tree-focus:bg-light-100 dark:tree-focus:bg-dark-100 hover:tree-focus:bg-light-200 dark:tree-focus:hover:bg-dark-200"
-          : "hover:bg-light-100 dark:hover:bg-dark-100"
+            ? "hover:bg-light-100 dark:hover:bg-dark-100 tree-focus:bg-light-100 dark:tree-focus:bg-dark-100 hover:tree-focus:bg-light-200 dark:tree-focus:hover:bg-dark-200"
+            : "hover:bg-light-100 dark:hover:bg-dark-100"
       )}
       data-selected={isSelected || undefined}
       {...props}
@@ -547,8 +547,8 @@ function Row<TTreeNode extends DevTools.TreeNode>({
             isSelected
               ? "bg-white/20"
               : isWithinSelectedParent
-              ? "bg-light-200 dark:bg-dark-200"
-              : "bg-light-100 dark:bg-dark-100"
+                ? "bg-light-200 dark:bg-dark-200"
+                : "bg-light-100 dark:bg-dark-100"
           }
         />
       )}
@@ -619,8 +619,8 @@ function YLogsRow<TTreeNode extends YLogsTreeNode>({
               "tree-focus:text-light-0 bg-light-100 dark:bg-dark-100 hover:bg-light-200 dark:hover:bg-dark-200",
             ]
           : isWithinSelectedParent
-          ? "hover:bg-light-100 dark:hover:bg-dark-100 tree-focus:bg-light-100 dark:tree-focus:bg-dark-100 hover:tree-focus:bg-light-200 dark:tree-focus:hover:bg-dark-200"
-          : "hover:bg-light-100 dark:hover:bg-dark-100"
+            ? "hover:bg-light-100 dark:hover:bg-dark-100 tree-focus:bg-light-100 dark:tree-focus:bg-dark-100 hover:tree-focus:bg-light-200 dark:tree-focus:hover:bg-dark-200"
+            : "hover:bg-light-100 dark:hover:bg-dark-100"
       )}
       data-selected={isSelected || undefined}
       {...props}

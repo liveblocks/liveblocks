@@ -316,7 +316,7 @@ describe("WebhookHandler", () => {
           rawBody: {},
         })
       ).toThrowError(
-        "Invalid rawBody field, must be a string, got \"object\" instead. It is likely that you need to JSON.stringify the body before passing it."
+        'Invalid rawBody field, must be a string, got "object" instead. It is likely that you need to JSON.stringify the body before passing it.'
       );
     });
 
