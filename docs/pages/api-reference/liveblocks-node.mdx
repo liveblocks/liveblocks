@@ -1400,7 +1400,7 @@ console.log(reaction);
 
 Removes a reaction from a specific comment in a thread within a room. Throws an
 error if the comment reaction isn’t found. This is a wrapper around the
-[Delete Comment Reaction API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-comments-commentId-remove-reaction)
+[Remove Comment Reaction API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-comments-commentId-remove-reaction)
 and returns no response.
 
 ```ts
@@ -1412,7 +1412,7 @@ await liveblocks.removeCommentReaction({
   data: {
     emoji: "👨‍👩‍👧",
     userId: "steven@example.com",
-    removedAt: new Date(), // Optional, the time the reaction is to be deleted
+    removedAt: new Date(), // Optional, the time the reaction is to be removed
   },
 });
 ```
