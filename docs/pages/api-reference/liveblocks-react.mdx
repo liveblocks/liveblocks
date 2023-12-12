@@ -1206,6 +1206,21 @@ import { useThreads } from "./liveblocks.config";
 const { threads, error, isLoading } = useThreads();
 ```
 
+`useThreads` also take an optional `query` parameter to filter threads based on
+their metadata.
+
+```tsx
+// Returns the threads with metadata.color === "blue" and metadata.foo === "bar"
+const { threads } = useThreads({
+  query: {
+    metadata: {
+      color: "blue",
+      foo: "bar",
+    },
+  },
+});
+```
+
 👉 A [Suspense version][] of this hook is also available, which will never
 return a loading state and will throw when there's an error.
 
@@ -1304,6 +1319,98 @@ Returns a function that removes a reaction from a comment.
 const removeReaction = useRemoveReaction();
 removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
 ```
+
+### useMarkThreadsAsRead
+
+Returns a function that marks threads as read.
+
+```tsx
+const markThreadsAsRead = useMarkThreadsAsRead();
+markThreadsAsRead({ threadIds: ["th_xxx_1", "th_xxx_2"] });
+```
+
+## Notifications
+
+### useInboxNotifications
+
+Returns the 20 more recent inbox notifications for the current user across all
+rooms.
+
+```tsx
+import { useInboxNotifications } from "./liveblocks.config";
+
+const { inboxNotifications, error, isLoading, loadMore } =
+  useInboxNotifications();
+```
+
+`loadMore` will fetch the next 20 inbox notifications and append them to the
+array of `inboxNotifications`
+
+👉 A [Suspense version][] of this hook is also available, which will never
+return `null`.
+
+### useUnreadInboxNotificationsCount
+
+Returns the count of unread inbox notifications. Useful when building a 🔔
+component so users can see how many unread inbox notifications they have.
+
+```tsx
+const count = useUnreadInboxNotificationsCount();
+```
+
+### useReadInboxNotification
+
+Return a function that marks an inbox notification as read.
+
+```tsx
+const readInboxNotification = useReadInboxNotification();
+readInboxNotification("in_xxx");
+```
+
+### useReadAllInboxNotifications
+
+Return a function that marks all inbox notification as read.
+
+```tsx
+const readAllInboxNotifications = useReadAllInboxNotifications();
+readAllInboxNotifications();
+```
+
+### Notification settings
+
+By default, users receive notifications when:
+
+- they are mentioned on a thread
+- there is a reply to a thread they have been participating in
+
+It's possible to override this behavior for a given user and room using
+`useUpdateRoomNotificationSettings`.
+
+### useRoomNotificationSettings
+
+Returns the room notification settings for the current user.
+
+```tsx
+const { isLoading, error, settings } = useRoomNotificationSettings();
+settings.threads; // "all" or "repliesAndMentions" or "mute"
+```
+
+### useUpdateRoomNotificationSettings
+
+Returns a function that updates the user notification settings for the current
+room.
+
+```tsx
+const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
+updateRoomNotificationSettings({
+  threads: "all" | "repliesAndMentions" | "mute",
+});
+```
+
+- `"all"`: notify current user when a new comment posted in a room
+- `"repliesAndMentions"`: default behavior
+- `"mute"`: do not notify current user, even if they are mentioned or if there
+  is a reply on a thread they participated on
 
 ## Helpers
 

@@ -96,6 +96,134 @@ We’d love to hear from you.
   />
 </ListGrid>
 
+## Concepts
+
+### Threads
+
+<Figure>
+  <Image
+    src="/assets/comments/thread.png"
+    alt="Thread"
+    width={768}
+    height={446}
+  />
+</Figure>
+
+A thread contains a list of comments sorted by creation date. Threads are always
+attached to a room.
+
+### Comments
+
+<Figure>
+  <Image
+    src="/assets/comments/comment.png"
+    alt="Comment"
+    width={768}
+    height={446}
+  />
+</Figure>
+
+### Inbox notification
+
+_TODO: Insert image showing an InboxNotification component_
+
+Inbox notifications are what a user usually sees when clicking on 🔔 in an app.
+
+A single inbox notification regroup all the activities that happened on a single
+thread.
+
+Inbox notifications belong to a single user. When an inbox notification is
+marked as read, the associated thread is also marked as read. The opposite is
+also true; when a thread is marked as read, the associated inbox notification is
+marked as read.
+
+#### Notification settings
+
+By default, a user will receive a notification if:
+
+- They have been mentioned in a thread
+- Someone posted a comment on a thread they have been participating in
+
+_TODO: Insert image showing room notification settings like Notion or Figma_
+
+This default behavior can be **overridden** by changing the notification
+settings at the room level
+
+For example, if someone created a document, they will likely want to receive a
+notification for every new thread associated with it. Room notification settings
+are defined per user.
+
+If a user decides to mute notifications for a room, new comments will not create
+or update inbox notifications.
+
+#### Emails
+
+_TODO: Insert InboxNotification email default template_
+
+We're not going to send emails for you for the following reasons:
+
+- You might not want to share your users emails with us for compliance reasons
+  (GDPR, SOC 2)
+- You most likely already have your own infrastructure for transactional emails
+  (branded templates and sender reputation)
+
+Instead, we do as much as possible to help you handle email notifications
+without actually sending the emails. We're using webhooks to notify you when to
+send an email to your users and we provide utilities to help you craft the email
+template.
+
+```ts
+import { Liveblocks, WebhookHandler } from "@liveblocks/node";
+
+// Add your signing key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_SIGNING_SECRET";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+const liveblocks = new Liveblocks({
+  // Add your secret key from a project's API keys dashboard
+  secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
+
+  // Email notification configuration
+  emailNotification: {
+    // Return users info (name, avatar, etc)
+    resolveUsers: ({ userIds }) => __getUsers__(userIds),
+
+    // Return the email associated to the user id
+    resolveUserEmail: (userId) => __getUserEmail__(userId),
+
+    // Return the link of thread associated to the notification.
+    // The user will navigate to this link
+    threadUrl: ({ roomId, threadId }) =>
+      `https://acme.com/docs/${roomId}?threadId=${threadId}`,
+
+    /* Optional template customization using react-email */
+  },
+});
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a secured webhook request
+  /* ... */
+
+  if (event.type === "emailNotification") {
+    const { to, subject, html } = liveblocks.buildEmail({
+      event,
+    });
+
+    const data = await __sendEmail__({
+      from: "Acme <hello@acme.com>",
+      to,
+      subject,
+      html,
+    });
+  }
+
+  return new Response(null, { status: 200 });
+}
+```
+
 ## Overview
 
 ### No need to synchronize your users’ info with Liveblocks

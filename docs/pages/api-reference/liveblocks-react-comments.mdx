@@ -470,6 +470,59 @@ function Component({ thread }: { thread: ThreadData }) {
 
 {/* TODO: Document classes and data attributes */}
 
+### InboxNotification
+
+<Figure>
+  <Image
+    src="/assets/comments/todo.png"
+    alt="Inbox Notification"
+    width={768}
+    height={446}
+  />
+</Figure>
+
+Displays an inbox notification.
+
+```tsx
+<InboxNotification inboxNotification={inboxNotification} />
+```
+
+Map through `inboxNotifications` to render a list of the user's inbox
+notifications. InboxNotification can be retrieved with
+[`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications).
+
+```tsx highlight="10"
+import { InboxNotification } from "@liveblocks/react-comments";
+import { useInboxNotifications } from "../liveblocks.config";
+
+function Component() {
+  const { inboxNotifications } = useInboxNotifications();
+
+  return (
+    <>
+      {inboxNotifications.map((inboxNotification) => (
+        <InboxNotification
+          key={inboxNotification.id}
+          inboxNotification={inboxNotification}
+        />
+      ))}
+    </>
+  );
+}
+```
+
+#### Props [#inbox-notification-props]
+
+<PropertiesList>
+  <PropertiesListItem
+    name="inboxNotification"
+    type="InboxNotificationData"
+    required
+  >
+    The inbox notification to display.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### Styling and customization
 
 #### Default styles
