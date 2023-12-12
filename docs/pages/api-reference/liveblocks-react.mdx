@@ -1223,7 +1223,7 @@ const { threads } = useThreads({
 ```
 
 👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there's an error.
+return a loading state and will throw when there’s an error.
 
 ### useUser
 
@@ -1236,7 +1236,7 @@ const { user, error, isLoading } = useUser("user-id");
 ```
 
 👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there's an error.
+return a loading state and will throw when there’s an error.
 
 <Banner title="Providing a resolver function">
 
@@ -1386,7 +1386,7 @@ const count = useUnreadInboxNotificationsCount();
 
 #### useReadInboxNotification [@badge=Beta]
 
-Return a function that marks an inbox notification as read.
+Returns a function that marks an inbox notification as read.
 
 ```tsx
 import { useReadInboxNotification } from "../liveblocks.config.ts";
@@ -1397,7 +1397,7 @@ readInboxNotification("in_xxx");
 
 #### useReadAllInboxNotifications [@badge=Beta]
 
-Return a function that marks all inbox notification as read.
+Returns a function that marks all inbox notification as read.
 
 ```tsx
 import { useReadAllInboxNotifications } from "../liveblocks.config.ts";
@@ -1406,45 +1406,62 @@ const readAllInboxNotifications = useReadAllInboxNotifications();
 readAllInboxNotifications();
 ```
 
-#### Notification settings [@badge=Beta]
-
-By default, users receive notifications when:
-
-- they are mentioned on a thread
-- there is a reply to a thread they have been participating in
-
-It's possible to override this behavior for a given user and room using
-`useUpdateRoomNotificationSettings`.
-
 #### useRoomNotificationSettings [@badge=Beta]
 
-Returns the room notification settings for the current user.
+Returns the room notification settings for the current user. It’s possible to
+override notification behavior for a given user and room with
+[`useUpdateRoomNotificationSettings`](#useUpdateRoomNotificationSettings).
 
 ```tsx
 import { useRoomNotificationSettings } from "../liveblocks.config.ts";
 
 const { isLoading, error, settings } = useRoomNotificationSettings();
-settings.threads; // "all" or "repliesAndMentions" or "mute"
+
+// "all" | "repliesAndMentions" | "mute"
+console.log(settings.threads);
 ```
 
 #### useUpdateRoomNotificationSettings [@badge=Beta]
 
 Returns a function that updates the user notification settings for the current
-room.
+room. By default, users receive notifications when, they’re mentioned in a
+thread, or if there’s a reply to a thread they have been participating in, but
+this can be customized.
 
 ```tsx
 import { useUpdateRoomNotificationSettings } from "../liveblocks.config.ts";
 
 const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
+
+// Default. Notify if mentioned or participating in a thread
 updateRoomNotificationSettings({
-  threads: "all" | "repliesAndMentions" | "mute",
+  threads: "repliesAndMentions",
 });
 ```
 
-- `"all"`: notify current user when a new comment posted in a room
-- `"repliesAndMentions"`: default behavior
-- `"mute"`: do not notify current user, even if they are mentioned or if there
-  is a reply on a thread they participated on
+There are three options available.
+
+- `"all"`: Notify the current user when a new comment is posted in a room.
+- `"repliesAndMentions"`: Default behavior.
+- `"mute"`: Do not notify current user, even if they are mentioned or if there
+  is a reply on a thread they participated on.
+
+```tsx
+// Default. Notify if mentioned or participating in a thread
+updateRoomNotificationSettings({
+  threads: "repliesAndMention",
+});
+
+// Notify the current for every comment in the room
+updateRoomNotificationSettings({
+  threads: "all",
+});
+
+// Never notify the current user, even if mentioned or participating in a thread
+updateRoomNotificationSettings({
+  threads: "mute",
+});
+```
 
 ## Helpers
 
