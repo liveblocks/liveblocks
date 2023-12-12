@@ -1206,16 +1206,17 @@ import { useThreads } from "./liveblocks.config";
 const { threads, error, isLoading } = useThreads();
 ```
 
-`useThreads` also take an optional `query` parameter to filter threads based on
-their metadata.
+`useThreads` can also take an optional `query` parameter, to filter threads
+based on their metadata.
 
 ```tsx
-// Returns the threads with metadata.color === "blue" and metadata.foo === "bar"
+// Returns the threads with `metadata.color === "blue"` and `metadata.resolved === true`
 const { threads } = useThreads({
   query: {
     metadata: {
+      // Custom metadata query goes here
       color: "blue",
-      foo: "bar",
+      resolved: true,
     },
   },
 });
