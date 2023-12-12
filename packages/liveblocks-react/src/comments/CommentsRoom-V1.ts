@@ -32,7 +32,7 @@ import {
   useAutomaticRevalidation,
   useMutate,
   useRevalidateCache,
-} from "./lib/revalidation";
+} from "./lib/revalidation-v1";
 import useIsDocumentVisible from "./lib/use-is-document-visible";
 import useIsOnline from "./lib/use-is-online";
 
@@ -184,7 +184,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
      */
     useEffect(() => {
       const unsubscribe = room.events.comments.subscribe(() => {
-        void revalidateCache(true);
+        void revalidateCache(false);
       });
       return () => {
         unsubscribe();

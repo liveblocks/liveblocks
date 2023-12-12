@@ -21,8 +21,20 @@ type PartialNullable<T> = {
   [P in keyof T]?: T[P] | null | undefined;
 };
 
+export type QueryParams =
+  | Record<string, string | number | boolean | null | undefined>
+  | URLSearchParams;
+
+export type ThreadsFilterOptions<TThreadMetadata extends BaseMetadata> = {
+  query: {
+    metadata: Partial<TThreadMetadata>;
+  };
+};
+
 export type CommentsApi<TThreadMetadata extends BaseMetadata> = {
-  getThreads(): Promise<ThreadData<TThreadMetadata>[]>;
+  getThreads(
+    options?: ThreadsFilterOptions<TThreadMetadata>
+  ): Promise<ThreadData<TThreadMetadata>[]>;
   createThread(options: {
     threadId: string;
     commentId: string;
@@ -114,15 +126,23 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
   async function fetchApi(
     roomId: string,
     endpoint: string,
-    options?: RequestInit
+    options?: RequestInit,
+    params?: QueryParams
   ): Promise<Response> {
     // TODO: Use the right scope
     const authValue = await getAuthValue();
     const url = new URL(
       `/v2/c/rooms/${encodeURIComponent(roomId)}${endpoint}`,
       config.baseUrl
-    ).toString();
-    return await fetch(url, {
+    );
+
+    if (params !== undefined) {
+      url.search = (
+        params instanceof URLSearchParams ? params : toURLSearchParams(params)
+      ).toString();
+    }
+
+    return await fetch(url.toString(), {
       ...options,
       headers: {
         ...options?.headers,
@@ -131,8 +151,17 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     });
   }
 
-  async function getThreads(): Promise<ThreadData<TThreadMetadata>[]> {
-    const response = await fetchApi(roomId, "/threads");
+  async function getThreads(
+    options?: ThreadsFilterOptions<TThreadMetadata>
+  ): Promise<ThreadData<TThreadMetadata>[]> {
+    const queryParams = {
+      ...Object.fromEntries(
+        Object.entries(options?.query.metadata ?? {}).map(([key, value]) => {
+          return [`metadata.${key}`, value];
+        })
+      ),
+    };
+    const response = await fetchApi(roomId, "/threads", undefined, queryParams);
 
     if (response.ok) {
       const json = await (response.json() as Promise<{
@@ -313,4 +342,35 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     addReaction,
     removeReaction,
   };
+}
+
+/**
+ * Safely but conveniently build a URLSearchParams instance from a given
+ * dictionary of values. For example:
+ *
+ *   {
+ *     "foo": "bar+qux/baz",
+ *     "empty": "",
+ *     "n": 42,
+ *     "nope": undefined,
+ *     "alsonope": null,
+ *   }
+ *
+ * Will produce a value that will get serialized as
+ * `foo=bar%2Bqux%2Fbaz&empty=&n=42`.
+ *
+ * Notice how the number is converted to its string representation
+ * automatically and the `null`/`undefined` values simply don't end up in the
+ * URL.
+ */
+function toURLSearchParams(
+  params: Record<string, string | number | boolean | null | undefined>
+): URLSearchParams {
+  const result = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null) {
+      result.set(key, value.toString());
+    }
+  }
+  return result;
 }
