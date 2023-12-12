@@ -197,7 +197,7 @@ effect.
 
 ```tsx
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
-import { RoomProvider } from "./liveblocks.config";
+import { RoomProvider } from "../liveblocks.config";
 
 function AppRoot() {
   return (
@@ -233,7 +233,7 @@ Returns the [`Room`][] of the nearest [`RoomProvider`][] above in the React
 component tree.
 
 ```ts
-import { useRoom } from "./liveblocks.config";
+import { useRoom } from "../liveblocks.config";
 
 const room = useRoom();
 ```
@@ -243,7 +243,7 @@ const room = useRoom();
 Listen to potential room connection errors.
 
 ```ts
-import { useErrorListener } from "./liveblocks.config";
+import { useErrorListener } from "../liveblocks.config";
 
 useErrorListener((error) => {
   switch (error.code) {
@@ -272,7 +272,7 @@ Returns the current WebSocket connection status of the room, and will re-render
 your component whenever it changes.
 
 ```ts
-import { useStatus } from "./liveblocks.config";
+import { useStatus } from "../liveblocks.config";
 
 const status = useStatus();
 ```
@@ -380,7 +380,7 @@ presence object to `updateMyPresence`, and any changes will be merged into the
 current presence. It will not replace the entire presence object.
 
 ```ts
-import { useMyPresence } from "./liveblocks.config";
+import { useMyPresence } from "../liveblocks.config";
 
 const [myPresence, updateMyPresence] = useMyPresence();
 updateMyPresence({ x: 0 });
@@ -418,7 +418,7 @@ presence object to `updateMyPresence`, and any changes will be merged into the
 current presence. It will not replace the entire presence object.
 
 ```ts
-import { useUpdateMyPresence } from "./liveblocks.config";
+import { useUpdateMyPresence } from "../liveblocks.config";
 
 const updateMyPresence = useUpdateMyPresence();
 
@@ -438,7 +438,7 @@ Returns the current user once it is connected to the room, and automatically
 subscribes to updates to the current user.
 
 ```ts
-import { useSelf } from "./liveblocks.config";
+import { useSelf } from "../liveblocks.config";
 
 const currentUser = useSelf();
 // {
@@ -649,7 +649,7 @@ Returns a callback that lets you broadcast custom events to other users in the
 room.
 
 ```ts highlight="3-5"
-import { useBroadcastEvent } from "./liveblocks.config";
+import { useBroadcastEvent } from "../liveblocks.config";
 
 // On client A
 const broadcast = useBroadcastEvent();
@@ -673,7 +673,7 @@ the user that sent the message. If an event was sent from the
 REST API, `connectionId` will be `-1`.
 
 ```ts highlight="7-13"
-import { useEventListener } from "./liveblocks.config";
+import { useEventListener } from "../liveblocks.config";
 
 // On client A
 const broadcast = useBroadcastEvent();
@@ -813,7 +813,7 @@ its nested values get updated.
 
 ```tsx file="index.tsx"
 import { LiveObject } from "@liveblocks/client";
-import { RoomProvider } from "./liveblocks.config";
+import { RoomProvider } from "../liveblocks.config";
 import { Component } from "./Component";
 
 export function App() {
@@ -834,7 +834,7 @@ export function App() {
 ```
 
 ```tsx file="Component.tsx"
-import { useObject } from "./liveblocks.config";
+import { useObject } from "../liveblocks.config";
 
 function Component() {
   const object = useObject("mathematician");
@@ -877,7 +877,7 @@ value gets updated.
 
 ```tsx file="index.tsx"
 import { LiveMap } from "@liveblocks/client";
-import { RoomProvider } from "./liveblocks.config";
+import { RoomProvider } from "../liveblocks.config";
 import { Component } from "./Component";
 
 export function App() {
@@ -899,7 +899,7 @@ export function App() {
 ```
 
 ```tsx file="Component.tsx"
-import { useMap } from "./liveblocks.config";
+import { useMap } from "../liveblocks.config";
 
 function Component() {
   const fruitsByName = useMap("fruitsByName");
@@ -938,7 +938,7 @@ value gets updated.
 
 ```tsx file="index.tsx"
 import { LiveList } from "@liveblocks/client";
-import { RoomProvider } from "./liveblocks.config";
+import { RoomProvider } from "../liveblocks.config";
 import { Component } from "./Component";
 
 export function App() {
@@ -956,7 +956,7 @@ export function App() {
 ```
 
 ```tsx file="Component.tsx"
-import { useList } from "./liveblocks.config";
+import { useList } from "../liveblocks.config";
 
 function Component() {
   const animals = useList("animals");
@@ -987,7 +987,7 @@ modifications are merged in a single history item (undo/redo). All the
 subscribers are called only after the batch is over.
 
 ```tsx
-import { useBatch } from "./liveblocks.config";
+import { useBatch } from "../liveblocks.config";
 
 const batch = useBatch();
 batch(() => {
@@ -1000,7 +1000,7 @@ batch(() => {
 Returns the room’s history. See [`Room.history`][] for more information.
 
 ```ts
-import { useHistory } from "./liveblocks.config";
+import { useHistory } from "../liveblocks.config";
 
 const { undo, redo, pause, resume } = useHistory();
 ```
@@ -1011,7 +1011,7 @@ Returns a function that undoes the last operation executed by the current
 client. It does not impact operations made by other clients.
 
 ```ts
-import { useUndo } from "./liveblocks.config";
+import { useUndo } from "../liveblocks.config";
 
 const undo = useUndo();
 ```
@@ -1022,7 +1022,7 @@ Returns a function that redoes the last operation executed by the current
 client. It does not impact operations made by other clients.
 
 ```ts
-import { useRedo } from "./liveblocks.config";
+import { useRedo } from "../liveblocks.config";
 
 const redo = useRedo();
 ```
@@ -1032,7 +1032,7 @@ const redo = useRedo();
 Returns whether there are any operations to undo.
 
 ```ts
-import { useCanUndo, useUpdateMyPresence } from "./liveblocks.config";
+import { useCanUndo, useUpdateMyPresence } from "../liveblocks.config";
 
 const updateMyPresence = useUpdateMyPresence();
 const canUndo = useCanUndo();
@@ -1047,7 +1047,7 @@ updateMyPresence({ y: 0 });
 Returns whether there are any operations to redo.
 
 ```ts
-import { useCanRedo, useUndo, useUpdateMyPresence } from "./liveblocks.config";
+import { useCanRedo, useUndo, useUpdateMyPresence } from "../liveblocks.config";
 
 const updateMyPresence = useUpdateMyPresence();
 const undo = useUndo();
@@ -1201,7 +1201,7 @@ We’d love to hear from you.
 Returns the threads within the current room.
 
 ```tsx
-import { useThreads } from "./liveblocks.config";
+import { useThreads } from "../liveblocks.config";
 
 const { threads, error, isLoading } = useThreads();
 ```
@@ -1230,7 +1230,7 @@ return a loading state and will throw when there's an error.
 Returns user info from a given user ID.
 
 ```tsx
-import { useUser } from "./liveblocks.config";
+import { useUser } from "../liveblocks.config";
 
 const { user, error, isLoading } = useUser("user-id");
 ```
@@ -1246,17 +1246,24 @@ To use `useUser`, you should provide a resolver function to the
 
 </Banner>
 
-### useCreateThread
+### Mutation hooks
+
+Comments mutation hooks are used to modify comments and threads. Examples
+include creating threads, deleting comments, and adding reactions.
+
+#### useCreateThread
 
 Returns a function that creates a thread with an initial comment, and optionally
 some metadata.
 
 ```tsx
+import { useCreateThread } from "../liveblocks.config";
+
 const createThread = useCreateThread();
 const thread = createThread({ body: {}, metadata: {} });
 ```
 
-### useEditThreadMetadata
+#### useEditThreadMetadata
 
 Returns a function that edits a thread’s metadata.
 
@@ -1267,24 +1274,30 @@ To delete an existing metadata property, set its value to `null`.
 </Banner>
 
 ```tsx
+import { useEditThreadMetadata } from "../liveblocks.config";
+
 const editThreadMetadata = useEditThreadMetadata();
 const thread = editThreadMetadata({ threadId: "th_xxx", metadata: {} });
 ```
 
-### useCreateComment
+#### useCreateComment
 
 Returns a function that adds a comment to a thread.
 
 ```tsx
+import { useCreateComment } from "../liveblocks.config.ts";
+
 const createComment = useCreateComment();
 const comment = createComment({ threadId: "th_xxx", body: {} });
 ```
 
-### useEditComment
+#### useEditComment
 
 Returns a function that edits a comment’s body.
 
 ```tsx
+import { useEditComment } from "../liveblocks.config.ts";
+
 const editComment = useEditComment();
 const comment = editComment({
   threadId: "th_xxx",
@@ -1293,52 +1306,62 @@ const comment = editComment({
 });
 ```
 
-### useDeleteComment
+#### useDeleteComment
 
 Returns a function that deletes a comment. If it is the last non-deleted
 comment, the thread also gets deleted.
 
 ```tsx
+import { useDeleteComment } from "../liveblocks.config.ts";
+
 const deleteComment = useDeleteComment();
 deleteComment({ threadId: "th_xxx", commentId: "cm_xxx" });
 ```
 
-### useAddReaction
+#### useAddReaction
 
 Returns a function that adds a reaction to a comment.
 
 ```tsx
+import { useAddReaction } from "../liveblocks.config.ts";
+
 const addReaction = useAddReaction();
 addReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
 ```
 
-### useRemoveReaction
+#### useRemoveReaction
 
 Returns a function that removes a reaction from a comment.
 
 ```tsx
+import { useRemoveReaction } from "../liveblocks.config.ts";
+
 const removeReaction = useRemoveReaction();
 removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
 ```
 
-### useMarkThreadsAsRead
+#### useMarkThreadsAsRead
 
 Returns a function that marks threads as read.
 
 ```tsx
+import { useMarkThreadsAsRead } from "../liveblocks.config.ts";
+
 const markThreadsAsRead = useMarkThreadsAsRead();
 markThreadsAsRead({ threadIds: ["th_xxx_1", "th_xxx_2"] });
 ```
 
-## Notifications
+### Notification hooks
 
-### useInboxNotifications
+Comments notification hooks are all related to handling inbox notifications.
+
+#### useInboxNotifications
 
 Returns the 20 more recent inbox notifications for the current user across all
 rooms.
 
 ```tsx
-import { useInboxNotifications } from "./liveblocks.config";
+import { useInboxNotifications } from "../liveblocks.config";
 
 const { inboxNotifications, error, isLoading, loadMore } =
   useInboxNotifications();
@@ -1350,34 +1373,40 @@ array of `inboxNotifications`
 👉 A [Suspense version][] of this hook is also available, which will never
 return `null`.
 
-### useUnreadInboxNotificationsCount
+#### useUnreadInboxNotificationsCount
 
 Returns the count of unread inbox notifications. Useful when building a 🔔
 component so users can see how many unread inbox notifications they have.
 
 ```tsx
+import { useUnreadInboxNotificationsCount } from "../liveblocks.config.ts";
+
 const count = useUnreadInboxNotificationsCount();
 ```
 
-### useReadInboxNotification
+#### useReadInboxNotification
 
 Return a function that marks an inbox notification as read.
 
 ```tsx
+import { useReadInboxNotification } from "../liveblocks.config.ts";
+
 const readInboxNotification = useReadInboxNotification();
 readInboxNotification("in_xxx");
 ```
 
-### useReadAllInboxNotifications
+#### useReadAllInboxNotifications
 
 Return a function that marks all inbox notification as read.
 
 ```tsx
+import { useReadAllInboxNotifications } from "../liveblocks.config.ts";
+
 const readAllInboxNotifications = useReadAllInboxNotifications();
 readAllInboxNotifications();
 ```
 
-### Notification settings
+#### Notification settings
 
 By default, users receive notifications when:
 
@@ -1387,21 +1416,25 @@ By default, users receive notifications when:
 It's possible to override this behavior for a given user and room using
 `useUpdateRoomNotificationSettings`.
 
-### useRoomNotificationSettings
+#### useRoomNotificationSettings
 
 Returns the room notification settings for the current user.
 
 ```tsx
+import { useRoomNotificationSettings } from "../liveblocks.config.ts";
+
 const { isLoading, error, settings } = useRoomNotificationSettings();
 settings.threads; // "all" or "repliesAndMentions" or "mute"
 ```
 
-### useUpdateRoomNotificationSettings
+#### useUpdateRoomNotificationSettings
 
 Returns a function that updates the user notification settings for the current
 room.
 
 ```tsx
+import { useUpdateRoomNotificationSettings } from "../liveblocks.config.ts";
+
 const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
 updateRoomNotificationSettings({
   threads: "all" | "repliesAndMentions" | "mute",
