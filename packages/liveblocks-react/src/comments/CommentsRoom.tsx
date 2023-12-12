@@ -256,8 +256,8 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
     const cache = useSyncExternalStore(
       manager.subscribe,
-      () => manager.getQueriesInfo().get(key)?.cache,
-      () => manager.getQueriesInfo().get(key)?.cache
+      () => manager.getQueriesInfo().get(key)?.state,
+      () => manager.getQueriesInfo().get(key)?.state
     );
 
     if (!cache || cache.isLoading) {
@@ -287,7 +287,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
         // If there is no info for this query, we create one and set the cache state to loading and the count to 1
         manager.getQueriesInfo().set(key, {
           options: options!,
-          cache: { isLoading: true },
+          state: { isLoading: true },
           count: 1,
         });
       }
@@ -329,7 +329,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
       // If there is no info for this query, we create one and set the cache state to loading and the count to 1
       manager.getQueriesInfo().set(key, {
         options: options!,
-        cache: { isLoading: true },
+        state: { isLoading: true },
         count: 1,
       });
     }
@@ -877,7 +877,7 @@ export function createThreadsCacheManager<
     string,
     {
       options: ThreadsFilterOptions<TThreadMetadata>;
-      cache: CacheState<ThreadData<TThreadMetadata>[]>;
+      state: CacheState<ThreadData<TThreadMetadata>[]>;
       count: number;
     }
   > = new Map();
@@ -908,7 +908,7 @@ export function createThreadsCacheManager<
         });
         console.log(info.options.query.metadata, filtered);
         // Update the cache state associated with this query
-        info.cache = { isLoading: false, data: filtered };
+        info.state = { isLoading: false, data: filtered };
       }
 
       eventSource.notify(value);
