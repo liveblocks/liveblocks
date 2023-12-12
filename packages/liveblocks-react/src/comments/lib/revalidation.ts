@@ -141,7 +141,7 @@ export function useRevalidateCache<Data>(
         if (!activeRequest || activeRequest.timestamp !== startAt) return;
 
         // If there is an active mutation, we ignore the revalidation result as it is outdated (and because the mutation will trigger a revalidation)
-        const activeMutation = manager.getMutation?.();
+        const activeMutation = manager.getMutation();
         if (
           activeMutation &&
           (activeMutation.startTime > startAt ||

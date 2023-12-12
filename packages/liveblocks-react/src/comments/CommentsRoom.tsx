@@ -324,29 +324,15 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
     const key = useMemo(() => stringify(options), [options]);
 
-    useEffect(() => {
-      const info = manager.getQueriesInfo().get(key);
-      if (info) {
-        info.count += 1;
-      } else {
-        // If there is no info for this query, we create one and set the cache state to loading and the count to 1
-        manager.getQueriesInfo().set(key, {
-          options: options!,
-          cache: { isLoading: true },
-          count: 1,
-        });
-      }
-
-      return () => {
-        const info = manager.getQueriesInfo().get(key);
-        if (!info) return;
-
-        info.count -= 1;
-        // If there are no more components using this query, we delete the query info
-        if (info.count > 0) return;
-        manager.getQueriesInfo().delete(key);
-      };
-    }, [key, options]);
+    const info = manager.getQueriesInfo().get(key);
+    if (!info) {
+      // If there is no info for this query, we create one and set the cache state to loading and the count to 1
+      manager.getQueriesInfo().set(key, {
+        options: options!,
+        cache: { isLoading: true },
+        count: 1,
+      });
+    }
 
     const revalidateCache = useRevalidateCache(manager, fetcher);
 
@@ -908,6 +894,7 @@ export function createThreadsCacheManager<
     setCache(value: ThreadData<TThreadMetadata>[]) {
       cache = value;
 
+      console.log("SETTING CACHE", queriesInfo);
       // Iterate over each query and update the cache state associated with it.
       for (const info of queriesInfo.values()) {
         // Filter the cache to only include threads that match the current query
@@ -919,6 +906,7 @@ export function createThreadsCacheManager<
           }
           return true;
         });
+        console.log(info.options.query.metadata, filtered);
         // Update the cache state associated with this query
         info.cache = { isLoading: false, data: filtered };
       }
