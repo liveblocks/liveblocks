@@ -125,63 +125,60 @@ attached to a room.
 
 ### Inbox notification
 
-_TODO: Insert image showing an InboxNotification component_
+[TODO]: # "Add InboxNotification image"
 
-Inbox notifications are what a user usually sees when clicking on 🔔 in an app.
+Inbox notifications are what a user usually sees when clicking on a bell icon 🔔
+in an app.
 
-A single inbox notification regroup all the activities that happened on a single
-thread.
-
-Inbox notifications belong to a single user. When an inbox notification is
-marked as read, the associated thread is also marked as read. The opposite is
-also true; when a thread is marked as read, the associated inbox notification is
-marked as read.
+A single inbox notification groups all the activities that have occurred in a
+single thread. Each inbox notification belongs to a single user. When an inbox
+notification is marked as read, the associated thread is also marked as read.
+The opposite is also true; when a thread is marked as read, the associated inbox
+notification is marked as read.
 
 #### Notification settings
 
 By default, a user will receive a notification if:
 
-- They have been mentioned in a thread
-- Someone posted a comment on a thread they have been participating in
+- They’ve been mentioned in a thread.
+- A user has posted a comment in a thread they’ve been participating in.
 
-_TODO: Insert image showing room notification settings like Notion or Figma_
+[TODO]: # "Insert image showing room notification settings like Notion or Figma"
 
-This default behavior can be **overridden** by changing the notification
-settings at the room level
-
-For example, if someone created a document, they will likely want to receive a
-notification for every new thread associated with it. Room notification settings
-are defined per user.
+You can override the default behavior by
+[changing notification settings](/docs/api-reference/liveblocks-react#useUpdateRoomNotificationSettings)
+at room level, and per user. This is particularly helpful in certain situations.
+For example, if a user creates a document, they will likely wish to receive
+notification for every new thread inside the document, not only when they’re
+mentioned.
 
 If a user decides to mute notifications for a room, new comments will not create
 or update inbox notifications.
 
 #### Emails
 
-_TODO: Insert InboxNotification email default template_
+[TODO]: # "Insert InboxNotification email default template"
 
-We're not going to send emails for you for the following reasons:
+Liveblocks Comments does not directly send emails as we recognize that most
+users already have their own branded email infrastructure already, and they may
+not wish to share more user data than necessary, for compliance reasons (GDPR,
+SOC 2).
 
-- You might not want to share your users emails with us for compliance reasons
-  (GDPR, SOC 2)
-- You most likely already have your own infrastructure for transactional emails
-  (branded templates and sender reputation)
-
-Instead, we do as much as possible to help you handle email notifications
-without actually sending the emails. We're using webhooks to notify you when to
-send an email to your users and we provide utilities to help you craft the email
-template.
+Instead, Comments does as much as possible to help you handle email
+notifications without actually sending the emails. With Comments webhooks you
+can trigger sending emails to your users on certain helpful events, using
+provided utilities to help you craft your email templates.
 
 ```ts
 import { Liveblocks, WebhookHandler } from "@liveblocks/node";
 
-// Add your signing key from a project's webhooks dashboard
-const WEBHOOK_SECRET = "YOUR_SIGNING_SECRET";
+// Add your webhook secret key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET";
 const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
 
 const liveblocks = new Liveblocks({
   // Add your secret key from a project's API keys dashboard
-  secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
+  secret: "{{SECRET_KEY}}",
 
   // Email notification configuration
   emailNotification: {
@@ -196,7 +193,8 @@ const liveblocks = new Liveblocks({
     threadUrl: ({ roomId, threadId }) =>
       `https://acme.com/docs/${roomId}?threadId=${threadId}`,
 
-    /* Optional template customization using react-email */
+    // Optional template customization using react-email
+    // ...
   },
 });
 
@@ -205,7 +203,7 @@ export async function POST(request: Request) {
   const headers = request.headers;
 
   // Verify if this is a secured webhook request
-  /* ... */
+  // ...
 
   if (event.type === "emailNotification") {
     const { to, subject, html } = liveblocks.buildEmail({
