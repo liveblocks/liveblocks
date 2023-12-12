@@ -787,7 +787,7 @@ const myTodos = useStorage(
 
 </Banner>
 
-### useObject
+### useObject [@badge=Deprecated]
 
 <Banner title="No longer recommended">
 
@@ -851,7 +851,7 @@ function Component() {
 👉 A [Suspense version][] of this hook is also available, which will never
 return `null`.
 
-### useMap
+### useMap [@badge=Deprecated]
 
 <Banner title="No longer recommended">
 
@@ -912,7 +912,7 @@ function Component() {
 }
 ```
 
-### useList
+### useList [@badge=Deprecated]
 
 <Banner title="No longer recommended">
 
@@ -1340,7 +1340,7 @@ const removeReaction = useRemoveReaction();
 removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
 ```
 
-#### useMarkThreadsAsRead
+#### useMarkThreadsAsRead [@badge=Beta]
 
 Returns a function that marks threads as read.
 
@@ -1355,7 +1355,7 @@ markThreadsAsRead({ threadIds: ["th_xxx_1", "th_xxx_2"] });
 
 Comments notification hooks are all related to handling inbox notifications.
 
-#### useInboxNotifications
+#### useInboxNotifications [@badge=Beta]
 
 Returns the 20 more recent inbox notifications for the current user across all
 rooms.
@@ -1373,7 +1373,7 @@ array of `inboxNotifications`
 👉 A [Suspense version][] of this hook is also available, which will never
 return `null`.
 
-#### useUnreadInboxNotificationsCount
+#### useUnreadInboxNotificationsCount [@badge=Beta]
 
 Returns the count of unread inbox notifications. Useful when building a 🔔
 component so users can see how many unread inbox notifications they have.
@@ -1384,7 +1384,7 @@ import { useUnreadInboxNotificationsCount } from "../liveblocks.config.ts";
 const count = useUnreadInboxNotificationsCount();
 ```
 
-#### useReadInboxNotification
+#### useReadInboxNotification [@badge=Beta]
 
 Return a function that marks an inbox notification as read.
 
@@ -1395,7 +1395,7 @@ const readInboxNotification = useReadInboxNotification();
 readInboxNotification("in_xxx");
 ```
 
-#### useReadAllInboxNotifications
+#### useReadAllInboxNotifications [@badge=Beta]
 
 Return a function that marks all inbox notification as read.
 
@@ -1406,7 +1406,7 @@ const readAllInboxNotifications = useReadAllInboxNotifications();
 readAllInboxNotifications();
 ```
 
-#### Notification settings
+#### Notification settings [@badge=Beta]
 
 By default, users receive notifications when:
 
@@ -1416,7 +1416,7 @@ By default, users receive notifications when:
 It's possible to override this behavior for a given user and room using
 `useUpdateRoomNotificationSettings`.
 
-#### useRoomNotificationSettings
+#### useRoomNotificationSettings [@badge=Beta]
 
 Returns the room notification settings for the current user.
 
@@ -1427,7 +1427,7 @@ const { isLoading, error, settings } = useRoomNotificationSettings();
 settings.threads; // "all" or "repliesAndMentions" or "mute"
 ```
 
-#### useUpdateRoomNotificationSettings
+#### useUpdateRoomNotificationSettings [@badge=Beta]
 
 Returns a function that updates the user notification settings for the current
 room.
