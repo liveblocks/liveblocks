@@ -27,7 +27,7 @@ export default function RootLayout({
       </head>
       <body>
         {children}
-        {HAS_OPENAI_KEY ? (
+        {!HAS_OPENAI_KEY ? (
           <div className="no-key">
             <div>
               <h2>OpenAI API key required</h2>
