@@ -154,14 +154,15 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
   async function getThreads(
     options?: ThreadsFilterOptions<TThreadMetadata>
   ): Promise<ThreadData<TThreadMetadata>[]> {
-    const queryParams = {
-      ...Object.fromEntries(
-        Object.entries(options?.query.metadata ?? {}).map(([key, value]) => {
-          return [`metadata.${key}`, value];
-        })
-      ),
-    };
-    const response = await fetchApi(roomId, "/threads", undefined, queryParams);
+    const response = await fetchApi(roomId, "/threads/search", {
+      body: JSON.stringify({
+        metadata: options?.query.metadata,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    });
 
     if (response.ok) {
       const json = await (response.json() as Promise<{
