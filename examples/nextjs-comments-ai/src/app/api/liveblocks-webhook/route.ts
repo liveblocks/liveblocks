@@ -15,6 +15,7 @@ const liveblocks = new Liveblocks({
 });
 
 // Add your webhook secret key from a project's webhooks dashboard
+// Get this by setting up an endpoint with a `commentCreated` event
 const webhookHandler = new WebhookHandler(
   process.env.LIVEBLOCKS_WEBHOOK_SECRET_KEY as string
 );
