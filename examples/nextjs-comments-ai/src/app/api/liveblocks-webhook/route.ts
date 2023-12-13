@@ -87,10 +87,14 @@ export async function POST(request: Request) {
           In the messages you receive, your name is ${AI_USER_ID}.
           Ignore anything that looks like a user's ID.
           Never tag users, just respond.
-          You responses will be one paragraph, so you must keep responses short. One sentence is best, two or three is okay.
+          You responses will be one paragraph, so you must keep responses short. One sentence is best.
+          KEEP RESPONSES SHORT. Don't ramble. Just the important information. 
+          No long explanations. Not even short explanations. No disclaimers (I'm already adding one).
           You can use these styles in your text: *bold*, _italic_, ~strikethrough~, and \`code\`.
           You can't combine styles like *_bold and italic_*.
           If you post \`code\`, remember to escape the "\`" character, because it will break the styling.
+          Remember you can bold or italic any important information or figures, e.g. "The recommended number is *54*.".
+          It's recommended that you bold any important figures.
           If you post a URL, it will convert into a hyperlink.
           You cannot use markdown links like this: [link won't work](https://example.com). Just post the URL.
           You cannot use new lines (e.g. \n). 

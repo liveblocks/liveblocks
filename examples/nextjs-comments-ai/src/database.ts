@@ -78,7 +78,8 @@ const USER_INFO: UserMeta[] = [
 ];
 
 export function getRandomUser() {
-  return USER_INFO[Math.floor(Math.random() * 10) % USER_INFO.length];
+  const realUsers = USER_INFO.filter(({ id }) => id !== AI_USER_ID);
+  return realUsers[Math.floor(Math.random() * 10) % realUsers.length];
 }
 
 export function getUser(id: string) {
