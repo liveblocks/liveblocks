@@ -6,9 +6,9 @@ const USER_INFO: UserMeta[] = [
   {
     id: "__ai-bot__",
     info: {
-      name: "AI [Bot]",
+      name: "Liveblocks AI",
       color: "#000000",
-      avatar: "https://liveblocks.io/avatars/avatar-29.png",
+      avatar: "/ai-avatar.png",
     },
   },
   {

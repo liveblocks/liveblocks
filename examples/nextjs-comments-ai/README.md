@@ -7,7 +7,7 @@
   </a>
 </p>
 
-# Comments with OpenAI bot
+# Comments with OpenAI
 
 <p>
   <a href="https://liveblocks.io/examples/comments/nextjs-comments-ai/preview">
