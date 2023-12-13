@@ -77,6 +77,7 @@ export async function POST(request: Request) {
     }
   }
 
+  // Send prompt and context to OpenAI
   const response = await openai.chat.completions.create({
     model: "gpt-4-1106-preview",
     messages: [
@@ -87,9 +88,9 @@ export async function POST(request: Request) {
           In the messages you receive, your name is ${AI_USER_ID}.
           Ignore anything that looks like a user's ID.
           Never tag users, just respond.
-          You responses will be one paragraph, so you must keep responses short. One sentence is best.
-          KEEP RESPONSES SHORT. Don't ramble. Just the important information. 
-          No long explanations. Not even short explanations. No disclaimers (I'm already adding one).
+          You responses will be one sentence long.
+          Keep responses. Don't ramble. Just the important information. 
+          No long explanations. Not even short explanations. No disclaimers.
           You can use these styles in your text: *bold*, _italic_, ~strikethrough~, and \`code\`.
           You can't combine styles like *_bold and italic_*.
           If you post \`code\`, remember to escape the "\`" character, because it will break the styling.
@@ -116,10 +117,10 @@ export async function POST(request: Request) {
     ],
   });
 
+  // Parse response into the correct format and create the comment
   const message = parseAiResponse(
     response.choices[0].message.content as string
   );
-
   await liveblocks.createComment({
     roomId,
     threadId,
@@ -143,7 +144,6 @@ export async function POST(request: Request) {
 // OpenAI can generate this code for you, but it slows it down a lot
 function parseAiResponse(input: string): CommentBodyInlineElement[] {
   const elements: CommentBodyInlineElement[] = [];
-  // Improved regex for links to exclude trailing punctuation
   const regex =
     /(\*.*?\*)|(_.*?_)|(~.*?~)|(`.*?(?:\\`.)*?`)|(https?:\/\/\S+[\w\/])/g;
   let lastIndex = 0;
@@ -151,27 +151,32 @@ function parseAiResponse(input: string): CommentBodyInlineElement[] {
   input.replace(
     regex,
     (match, bold, italic, strikethrough, code, link, index) => {
-      // Add text before the matched element
       if (index > lastIndex) {
         elements.push({ text: input.slice(lastIndex, index) });
       }
 
       if (link) {
-        // Check for trailing punctuation and remove it from the URL
         const adjustedLink = link.replace(/[.,!;?]+$/, "");
         elements.push({ type: "link", url: adjustedLink });
       } else {
         let text = match.slice(1, -1);
-        // Unescape backticks in code blocks
         if (code) {
           text = text.replace(/\\`/g, "`");
         }
         const textElement: CommentBodyText = { text };
 
-        if (bold) textElement.bold = true;
-        if (italic) textElement.italic = true;
-        if (strikethrough) textElement.strikethrough = true;
-        if (code) textElement.code = true;
+        if (bold) {
+          textElement.bold = true;
+        }
+        if (italic) {
+          textElement.italic = true;
+        }
+        if (strikethrough) {
+          textElement.strikethrough = true;
+        }
+        if (code) {
+          textElement.code = true;
+        }
 
         elements.push(textElement);
       }
@@ -181,7 +186,6 @@ function parseAiResponse(input: string): CommentBodyInlineElement[] {
     }
   );
 
-  // Add remaining text
   if (lastIndex < input.length) {
     elements.push({ text: input.slice(lastIndex) });
   }
