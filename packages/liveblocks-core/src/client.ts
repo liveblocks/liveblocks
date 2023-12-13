@@ -126,7 +126,7 @@ export type Client = {
 
 export type AuthEndpoint =
   | string
-  | ((room: string) => Promise<CustomAuthenticationResult>);
+  | ((room?: string) => Promise<CustomAuthenticationResult>);
 
 /**
  * The authentication endpoint that is called to ensure that the current user has access to a room.
@@ -205,7 +205,7 @@ function getBaseUrlFromClientOptions(clientOptions: ClientOptions) {
  * // It's also possible to use a function to call your authentication endpoint.
  * // Useful to add additional headers or use an API wrapper (like Firebase functions)
  * const client = createClient({
- *   authEndpoint: async (room) => {
+ *   authEndpoint: async (room?) => {
  *     const response = await fetch("/api/auth", {
  *       method: "POST",
  *       headers: {
