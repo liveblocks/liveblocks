@@ -1,6 +1,6 @@
 {
-  "name": "@liveblocks-examples/nextjs-comments",
-  "description": "This example shows how to build comments with Liveblocks and Next.js.",
+  "name": "@liveblocks-examples/nextjs-comments-ai",
+  "description": "This example shows how to build comments with an AI bot, powered by Liveblocks, Next.js, and OpenAI.",
   "license": "Apache-2.0",
   "private": true,
   "scripts": {
