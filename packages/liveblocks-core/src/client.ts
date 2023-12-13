@@ -16,7 +16,6 @@ import {
   makeAuthDelegateForRoom,
   makeCreateSocketDelegateForRoom,
 } from "./room";
-import type { InboxNotificationData } from "./types/InboxNotificationData";
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1_000;
@@ -240,7 +239,7 @@ export function createClient(options: ClientOptions): Client {
   };
 
   const roomsById = new Map<string, RoomInfo>();
-  const inboxNotificationsById = new Map<string, InboxNotificationData>();
+  // const inboxNotificationsById = new Map<string, InboxNotificationData>();
 
   function teardownRoom(room: OpaqueRoom) {
     unlinkDevTools(room.id);
