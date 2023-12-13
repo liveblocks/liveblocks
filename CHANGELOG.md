@@ -1,9 +1,16 @@
-# v1.8.3 (Unreleased)
+# v1.9.0 (Unreleased)
 
 ### `@liveblocks/node`
 
-- Fixes the return type of `getActiveUsers` to match the data returned from the
+- Add the Comments write REST APIs as fully typed methods. (includes
+  `createThread`, `editThreadMetadata`, `createComment`, `editComment`,
+  `deleteComment`, `addCommentReaction`, and `removeCommentReaction` methods)
+- Fix the return type of `getActiveUsers` to match the data returned from the
   endpoint.
+
+### `@liveblocks/react-comments`
+
+- Add support for exit animations to `ComposerSuggestions`.
 
 # v1.8.2
 

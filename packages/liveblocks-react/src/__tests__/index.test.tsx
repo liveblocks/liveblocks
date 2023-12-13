@@ -440,7 +440,7 @@ describe("useThreads", () => {
         metadata: {},
         roomId: "room",
         type: "thread",
-        createdAt: "2021-10-06T01:45:56.558Z",
+        createdAt: new Date("2021-10-06T01:45:56.558Z"),
         comments: [],
       },
     ];

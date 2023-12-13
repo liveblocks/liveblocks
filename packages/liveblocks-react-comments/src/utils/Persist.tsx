@@ -54,6 +54,14 @@ export function useAnimationPersist(ref: RefObject<HTMLElement>) {
       return;
     }
 
+    /**
+     * Stop persisting at the end of the last animation.
+     *
+     * We keep track of all ending animations because animations stay
+     * on getComputedStyle(element).animationName even if they're over,
+     * so we need to keep track of previous animations to truly know if
+     * an animation should be waited on.
+     */
     const handleAnimationEnd = (event: AnimationEvent) => {
       if (event.animationName === unmountAnimationName.current) {
         unmount();
@@ -80,6 +88,8 @@ export function useAnimationPersist(ref: RefObject<HTMLElement>) {
     }
 
     if (!isPresent) {
+      // If the element should be unmounting, wait for a repaint and check
+      // if it is visible and has an animation. If not, unmount immediately.
       animationFrameId = requestAnimationFrame(() => {
         const styles = getComputedStyle(element);
         unmountAnimationName.current = styles.animationName;
