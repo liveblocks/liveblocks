@@ -13,9 +13,8 @@
     "@liveblocks/node": "^1.9.0-example1",
     "@liveblocks/react": "^1.9.0-example1",
     "@liveblocks/react-comments": "^1.9.0-example1",
-    "ai": "^2.2.29",
     "next": "^13.4.16",
-    "openai": "^4.20.1",
+    "openai": "^4.21.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-error-boundary": "^4.0.11"
