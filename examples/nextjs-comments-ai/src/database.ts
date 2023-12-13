@@ -81,10 +81,6 @@ export function getRandomUser() {
   return USER_INFO[Math.floor(Math.random() * 10) % USER_INFO.length];
 }
 
-export function getAiUser() {
-  return AI_USER;
-}
-
 export function getUser(id: string) {
   return USER_INFO.find((u) => u.id === id) || null;
 }

@@ -94,3 +94,35 @@ main {
     box-shadow: inset 0 0 0 1px rgb(255 255 255 / 6%);
   }
 }
+
+.no-key {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.6)
+}
+
+pre {
+  background: rgba(45, 45, 45, 1);
+  border-radius: 6px;
+  color: #fff;
+  padding: 12px;
+}
+
+pre code {
+  line-height: 1.5;
+  background: none;
+}
+
+code {
+  background: rgba(230, 230, 230, 1);
+  padding: 4px;
+  border-radius: 4px;
+}
+
