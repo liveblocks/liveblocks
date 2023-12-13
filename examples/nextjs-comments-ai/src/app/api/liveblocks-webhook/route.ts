@@ -86,6 +86,7 @@ export async function POST(request: Request) {
           Your output will go directly into a comment.
           In the messages you receive, your name is ${AI_USER_ID}.
           Ignore anything that looks like a user's ID.
+          Never tag users, just respond.
           You responses will be one paragraph, so you must keep responses short. One sentence is best, two or three is okay.
           You can use these styles in your text: *bold*, _italic_, ~strikethrough~, and \`code\`.
           You can't combine styles like *_bold and italic_*.
@@ -114,8 +115,6 @@ export async function POST(request: Request) {
   const message = parseAiResponse(
     response.choices[0].message.content as string
   );
-  console.log(response.choices[0].message.content);
-  console.log(JSON.stringify(message, null, 2));
 
   await liveblocks.createComment({
     roomId,
@@ -137,6 +136,7 @@ export async function POST(request: Request) {
 }
 
 // Basic function that converts OpenAI's output to the content of a CommentBody paragraph
+// OpenAI can generate this code for you, but it slows it down a lot
 function parseAiResponse(input: string): CommentBodyInlineElement[] {
   const elements: CommentBodyInlineElement[] = [];
   // Improved regex for links to exclude trailing punctuation
