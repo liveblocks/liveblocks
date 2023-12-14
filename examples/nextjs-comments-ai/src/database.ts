@@ -1,10 +1,10 @@
 import { UserMeta } from "@/liveblocks.config";
 
-export const AI_USER_ID = "__ai-bot__";
+export const AI_USER_ID = "__ai__";
 
 const USER_INFO: UserMeta[] = [
   {
-    id: "__ai-bot__",
+    id: AI_USER_ID,
     info: {
       name: "Liveblocks AI",
       color: "#000000",
