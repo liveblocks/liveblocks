@@ -36,6 +36,22 @@ This will download the example and ask permission to open your browser, enabling
 you to automatically get your API key from your
 [liveblocks.io](https://liveblocks.io) account.
 
+### Setting up Webhooks
+
+You need to set up webhooks to make this example run.
+
+- Follow our guide on [testing webhooks locally](https://liveblocks.io/docs/guides/how-to-test-webhooks-on-localhost#Use-your-webhook-event), making sure to check the `commentCreated` event when creating the webhook
+- Copy your **webhook secret key** from the webhooks dashboard
+- Add your webhook secret key to `.env.local` as the `LIVEBLOCKS_WEBHOOK_SECRET_KEY` environment variable.
+
+### Setting up OpenAI
+
+You need your OpenAI API key to run the AI agent.
+
+- Create an account on [OpenAI](https://openai.com)
+- Create a new API key from the [OpenAI Dashboard](https://platform.openai.com/api-keys)
+- Add your OpenAI API key to `.env.local` as the `OPENAI_API_KEY` environment variable.
+
 ### Manual setup
 
 <details><summary>Read more</summary>
@@ -51,6 +67,7 @@ Alternatively, you can set up your project manually:
 - Create an `.env.local` file and add your **secret** key as the
   `LIVEBLOCKS_SECRET_KEY` environment variable
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
+- Follow the "Setting up webooks" and "Setting up OpenAI" sections above.
 
 </details>
 
@@ -70,6 +87,8 @@ npx create-liveblocks-app@latest --example nextjs-comments-ai --vercel
 This will download the example and ask permission to open your browser, enabling
 you to deploy to Vercel.
 
+Next, follow the "Setting up webooks" and "Setting up OpenAI" sections above.
+
 </details>
 
 ### Develop on CodeSandbox
@@ -82,5 +101,7 @@ After forking
 [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-comments-ai)
 on CodeSandbox, create the `LIVEBLOCKS_SECRET_KEY` environment variable as a
 [secret](https://codesandbox.io/docs/secrets).
+
+Next, follow the "Setting up webooks" and "Setting up OpenAI" sections above.
 
 </details>
