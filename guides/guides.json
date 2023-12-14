@@ -279,5 +279,12 @@
     "technologies": ["react-comments", "react"],
     "date": "2023-11-02",
     "featured": true
+  },
+  {
+    "title": "How to test webhooks on localhost",
+    "path": "/how-to-test-webhooks-on-localhost",
+    "topics": ["webhooks"],
+    "technologies": ["nodejs"],
+    "date": "2023-12-14"
   }
 ]
