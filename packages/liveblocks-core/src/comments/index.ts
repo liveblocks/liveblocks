@@ -26,8 +26,8 @@ export type QueryParams =
   | URLSearchParams;
 
 export type ThreadsFilterOptions<TThreadMetadata extends BaseMetadata> = {
-  query: {
-    metadata: Partial<TThreadMetadata>;
+  query?: {
+    metadata?: Partial<TThreadMetadata>;
   };
 };
 
@@ -126,8 +126,7 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
   async function fetchApi(
     roomId: string,
     endpoint: string,
-    options?: RequestInit,
-    params?: QueryParams
+    options?: RequestInit
   ): Promise<Response> {
     // TODO: Use the right scope
     const authValue = await getAuthValue();
@@ -135,12 +134,6 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
       `/v2/c/rooms/${encodeURIComponent(roomId)}${endpoint}`,
       config.baseUrl
     );
-
-    if (params !== undefined) {
-      url.search = (
-        params instanceof URLSearchParams ? params : toURLSearchParams(params)
-      ).toString();
-    }
 
     return await fetch(url.toString(), {
       ...options,
@@ -156,7 +149,7 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
   ): Promise<ThreadData<TThreadMetadata>[]> {
     const response = await fetchApi(roomId, "/threads/search", {
       body: JSON.stringify({
-        metadata: options?.query.metadata,
+        ...(options?.query?.metadata && { metadata: options.query.metadata }),
       }),
       headers: {
         "Content-Type": "application/json",
@@ -343,35 +336,4 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     addReaction,
     removeReaction,
   };
-}
-
-/**
- * Safely but conveniently build a URLSearchParams instance from a given
- * dictionary of values. For example:
- *
- *   {
- *     "foo": "bar+qux/baz",
- *     "empty": "",
- *     "n": 42,
- *     "nope": undefined,
- *     "alsonope": null,
- *   }
- *
- * Will produce a value that will get serialized as
- * `foo=bar%2Bqux%2Fbaz&empty=&n=42`.
- *
- * Notice how the number is converted to its string representation
- * automatically and the `null`/`undefined` values simply don't end up in the
- * URL.
- */
-function toURLSearchParams(
-  params: Record<string, string | number | boolean | null | undefined>
-): URLSearchParams {
-  const result = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) {
-    if (value !== undefined && value !== null) {
-      result.set(key, value.toString());
-    }
-  }
-  return result;
 }

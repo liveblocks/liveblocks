@@ -182,6 +182,62 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     CacheState<ThreadData<TThreadMetadata>[]> // The cache state associated with this filter option
   >();
 
+  const revalidationManagers = new Map<
+    string,
+    CacheManager<ThreadData<TThreadMetadata>[]>
+  >();
+
+  function createThreadsRevalidationManager(key: string) {
+    let request: RequestInfo<ThreadData<TThreadMetadata>[]> | undefined; // Stores the currently active revalidation request
+    let error: Error | undefined; // Stores any error that occurred during the last revalidation request
+
+    return {
+      getCache() {
+        return undefined;
+      },
+      setCache(value: ThreadData<TThreadMetadata>[]) {
+        const cache = new Map(
+          (manager.getCache() ?? []).map((thread) => [thread.id, thread])
+        );
+
+        for (const thread of value) {
+          cache.set(thread.id, thread);
+        }
+
+        setCache(key, {
+          isLoading: false,
+          data: value,
+        });
+
+        manager.setCache(Array.from(cache.values()));
+      },
+      // Request
+      getRequest() {
+        return request;
+      },
+      setRequest(
+        value: RequestInfo<ThreadData<TThreadMetadata>[]> | undefined
+      ) {
+        request = value;
+      },
+
+      // Error
+      getError() {
+        return error;
+      },
+      setError(err: Error) {
+        error = err;
+        manager.setError(err);
+      },
+
+      // Mutation
+      getMutation() {
+        return undefined;
+      },
+      setMutation() {},
+    };
+  }
+
   // An event source that notifies subscribers when the threads cache is updated
   const eventSource = makeEventSource<ThreadData<TThreadMetadata>[]>();
 
@@ -228,12 +284,8 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
       const threads = Array.from(
         new Map(responses.flat().map((thread) => [thread.id, thread])).values()
-      ).sort(
-        (a, b) =>
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
       );
 
-      console.log("threads", threads);
       return threads;
     }, [room]);
 
@@ -252,8 +304,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
       // Only subscribe to the `comments` event if the reference count is 0 (meaning that there are no components with a subscription)
       if (commentsEventSubscribersCount === 0) {
         const unsubscribe = room.events.comments.subscribe(() => {
-          console.log("COMMENT EVENT");
-          revalidateCache({ shouldDedupe: true });
+          void revalidateCache({ shouldDedupe: true });
         });
         commentsEventDisposerRef.current = unsubscribe;
       }
@@ -278,7 +329,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
         for (const [key, info] of filterOptions.entries()) {
           // Filter the cache to only include threads that match the current query
           const filtered = value.filter((thread) => {
-            for (const key in info.options.query.metadata) {
+            for (const key in info.options?.query?.metadata) {
               if (thread.metadata[key] !== info.options.query.metadata[key]) {
                 return false;
               }
@@ -396,92 +447,120 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
   function useThreads(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-    options?: ThreadsFilterOptions<TThreadMetadata>
+    options: ThreadsFilterOptions<TThreadMetadata> = { query: { metadata: {} } }
   ): ThreadsState<TThreadMetadata> {
     const key = useMemo(() => stringify(options), [options]);
 
-    const fetcher = useThreadsFetcher();
+    let revalidationManager = revalidationManagers.get(key);
+    if (!revalidationManager) {
+      revalidationManager = createThreadsRevalidationManager(key);
+      revalidationManagers.set(key, revalidationManager);
+    }
 
-    const revalidateCache = useRevalidateCache(manager, fetcher);
+    const fetcher = useCallback(
+      () => {
+        return room.getThreads(options);
+      },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [key]
+    );
 
-    useEffect(() => {
-      const info = filterOptions.get(key);
-      if (info) {
-        info.count += 1;
-      } else {
-        // If there is no info for this query, we create one and set the cache state to loading and the count to 1
-        filterOptions.set(key, {
-          options: options!,
-          count: 1,
-        });
-
-        cacheStates.set(key, { isLoading: true });
-      }
-
-      return () => {
-        const info = filterOptions.get(key);
-        if (!info) return;
-
-        info.count -= 1;
-        // If there are no more components using this query, we delete the query info
-        if (info.count > 0) return;
-        filterOptions.delete(key);
-      };
-    }, [key, options]);
+    const revalidateCache = useRevalidateCache(revalidationManager, fetcher);
 
     useEffect(
       () => {
-        void revalidateCache({ shouldDedupe: false });
+        const info = filterOptions.get(key);
+        if (info) {
+          info.count += 1;
+        } else {
+          // If there is no info for this query, we create one and set the cache state to loading and the count to 1
+          filterOptions.set(key, {
+            options,
+            count: 1,
+          });
+
+          cacheStates.set(key, { isLoading: true });
+        }
+
+        return () => {
+          const info = filterOptions.get(key);
+          if (!info) return;
+
+          info.count -= 1;
+          // If there are no more components using this query, we delete the query info
+          if (info.count > 0) return;
+          filterOptions.delete(key);
+        };
       },
-      // eslint-disable-next-line react-hooks/exhaustive-deps - We want to revalidate cache when filter options change
-      [revalidateCache, options]
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [key]
     );
+
+    useEffect(() => {
+      void revalidateCache({ shouldDedupe: true });
+    }, [revalidateCache]);
 
     return _useThreads(room, key);
   }
 
   function useThreadsSuspense(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-    options?: ThreadsFilterOptions<TThreadMetadata>
+    options: ThreadsFilterOptions<TThreadMetadata> = {}
   ): ThreadsStateSuccess<TThreadMetadata> {
     const key = useMemo(() => stringify(options), [options]);
 
-    const fetcher = useThreadsFetcher();
+    let revalidationManager = revalidationManagers.get(key);
+    if (!revalidationManager) {
+      revalidationManager = createThreadsRevalidationManager(key);
+      revalidationManagers.set(key, revalidationManager);
+    }
+
+    const fetcher = useCallback(
+      () => {
+        return room.getThreads(options);
+      },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [key]
+    );
 
     const info = filterOptions.get(key);
     if (!info) {
       // If there is no info for this query, we create one and set the cache state to loading and the count to 0
       filterOptions.set(key, {
-        options: options!,
+        options,
         count: 0,
       });
       cacheStates.set(key, { isLoading: true });
     }
 
-    useEffect(() => {
-      const info = filterOptions.get(key);
-      if (info) {
-        info.count += 1;
-      } else {
-        // If there is no info for this query, we create one and set the cache state to loading and the count to 1
-        filterOptions.set(key, {
-          options: options!,
-          count: 1,
-        });
-      }
+    const revalidateCache = useRevalidateCache(revalidationManager, fetcher);
 
-      return () => {
+    useEffect(
+      () => {
         const info = filterOptions.get(key);
-        if (!info) return;
+        if (info) {
+          info.count += 1;
+        } else {
+          // If there is no info for this query, we create one and set the cache state to loading and the count to 1
+          filterOptions.set(key, {
+            options,
+            count: 1,
+          });
+        }
 
-        info.count -= 1;
-        // If there are no more components using this query, we delete the query info
-        if (info.count > 0) return;
-        filterOptions.delete(key);
-      };
-    }, [key, options]);
+        return () => {
+          const info = filterOptions.get(key);
+          if (!info) return;
 
-    const revalidateCache = useRevalidateCache(manager, fetcher);
+          info.count -= 1;
+          // If there are no more components using this query, we delete the query info
+          if (info.count > 0) return;
+          filterOptions.delete(key);
+        };
+      },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [key]
+    );
 
     const cache = _useThreads(room, key);
 
@@ -490,7 +569,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     }
 
     if (cache.isLoading || !cache.threads) {
-      throw revalidateCache({ shouldDedupe: false });
+      throw revalidateCache({ shouldDedupe: true });
     }
 
     return {
@@ -1041,7 +1120,13 @@ export function createThreadsCacheManager<
       return cache;
     },
     setCache(value: ThreadData<TThreadMetadata>[]) {
-      cache = value;
+      // Because the cache can be set as a result of a fetcher that makes multiple `getThreads` calls in parallel, we aren't sure the final thread results are sorted by date, so we do it here.
+      const sorted = value.sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+
+      cache = sorted;
       // Notify subscribers that the cache has been updated
       cacheEventSource.notify(cache);
     },
