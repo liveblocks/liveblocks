@@ -20,7 +20,7 @@
   <img src="https://img.shields.io/badge/next.js-message?style=flat&logo=next.js&color=07f&logoColor=fff" alt="Next.js" />
 </p>
 
-This example shows how to build comments with an AI bot, powered by [Liveblocks](https://liveblocks.io), [Next.js](https://nextjs.org/), and [OpenAI](https://openai.com).
+This example shows how to build comments with an AI agent, powered by [Liveblocks](https://liveblocks.io), [Next.js](https://nextjs.org/), and [OpenAI](https://openai.com).
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/comments.png" width="536" alt="Comments" />
 
