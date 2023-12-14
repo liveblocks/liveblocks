@@ -324,13 +324,16 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     }, [revalidateCache, room]);
 
     useEffect(() => {
-      const unsubscribe = manager.subscribe("cache", (value) => {
+      const unsubscribe = manager.subscribe("cache", (threads) => {
         // Iterate over each query and update the cache state associated with it.
         for (const [key, info] of filterOptions.entries()) {
           // Filter the cache to only include threads that match the current query
-          const filtered = value.filter((thread) => {
-            for (const key in info.options?.query?.metadata) {
-              if (thread.metadata[key] !== info.options.query.metadata[key]) {
+          const filtered = threads.filter((thread) => {
+            const query = info.options.query;
+            if (!query) return true;
+
+            for (const key in query.metadata) {
+              if (thread.metadata[key] !== query.metadata[key]) {
                 return false;
               }
             }
@@ -350,7 +353,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
         }
 
         // Notify subscribers that the cache has been updated
-        eventSource.notify(value);
+        eventSource.notify(threads);
       });
       return () => {
         unsubscribe();
