@@ -22,7 +22,7 @@
 
 This example shows how to build comments with an AI agent, powered by [Liveblocks](https://liveblocks.io), [Next.js](https://nextjs.org/), and [OpenAI](https://openai.com).
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/comments.png" width="536" alt="Comments" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/comments-AI-bot.png" width="536" alt="Comments" />
 
 ## Getting started
 
