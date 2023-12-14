@@ -22,6 +22,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
 } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
@@ -35,7 +36,12 @@ import {
   EditThreadMetadataError,
   RemoveReactionError,
 } from "./errors";
-import type { CacheState, MutationInfo, RequestInfo } from "./lib/revalidation";
+import type {
+  CacheManager,
+  CacheState,
+  MutationInfo,
+  RequestInfo,
+} from "./lib/revalidation";
 import {
   useAutomaticRevalidation,
   useMutate,
@@ -154,14 +160,45 @@ export type ThreadsState<TThreadMetadata extends BaseMetadata> =
   | ThreadsStateLoading
   | ThreadsStateResolved<TThreadMetadata>;
 
+type ThreadsFilterOptionsInfo<TThreadMetadata extends BaseMetadata> = {
+  options: ThreadsFilterOptions<TThreadMetadata>; // The filter option
+  count: number; // The number of components using this filter option
+};
+
 export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   errorEventSource: EventSource<CommentsError<TThreadMetadata>>
 ): CommentsRoom<TThreadMetadata> {
   const manager = createThreadsCacheManager<TThreadMetadata>();
 
+  // A map that stores filter description for each filter option. The key is a stringified version of the filter options.
+  const filterOptions = new Map<
+    string,
+    ThreadsFilterOptionsInfo<TThreadMetadata>
+  >();
+
+  // A map that stores the cache state for each filter option. The key is a stringified version of the filter options.
+  const cacheStates = new Map<
+    string,
+    CacheState<ThreadData<TThreadMetadata>[]> // The cache state associated with this filter option
+  >();
+
+  // An event source that notifies subscribers when the threads cache is updated
+  const eventSource = makeEventSource<ThreadData<TThreadMetadata>[]>();
+
+  const subscribe = eventSource.subscribe;
+  const getCache = (key: string) => cacheStates.get(key);
+  const setCache = (
+    key: string,
+    value: CacheState<ThreadData<TThreadMetadata>[]>
+  ) => {
+    cacheStates.set(key, value);
+  };
+
   const FetcherContext = createContext<
     (() => Promise<ThreadData<TThreadMetadata>[]>) | null
   >(null);
+
+  const CommentsEventSubscriptionContext = createContext<() => void>(() => {});
 
   function getThreads(): ThreadData<TThreadMetadata>[] {
     const threads = manager.getCache();
@@ -179,23 +216,115 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   }: PropsWithChildren<{
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>;
   }>) {
+    const commentsEventSubscribersCountRef = useRef(0); // Reference count for the number of components with a subscription (via the `subscribe` function) to the comments event source.
+    const commentsEventDisposerRef = useRef<() => void>(); // Disposer function for the `comments` event listener
+
     const fetcher = useCallback(async () => {
       const responses = await Promise.all(
-        Array.from(manager.getQueriesInfo().values()).map((info) => {
+        Array.from(filterOptions.values()).map((info) => {
           return room.getThreads(info.options);
         })
       );
 
       const threads = Array.from(
         new Map(responses.flat().map((thread) => [thread.id, thread])).values()
+      ).sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
       );
 
+      console.log("threads", threads);
       return threads;
     }, [room]);
 
+    const revalidateCache = useRevalidateCache(manager, fetcher);
+
+    /**
+     * Subscribes to the `comments` event and returns a function that can be used to unsubscribe.
+     * Ensures that there is only one subscription to the `comments` event despite multiple calls to the `subscribe` function (via the `useThreads` hook).
+     * This is so that revalidation is only triggered once when the `comments` event is fired.
+     * @returns An unsubscribe function that can be used to unsubscribe from the `comments` event.
+     */
+    const subscribeToCommentEvents = useCallback(() => {
+      const commentsEventSubscribersCount =
+        commentsEventSubscribersCountRef.current;
+
+      // Only subscribe to the `comments` event if the reference count is 0 (meaning that there are no components with a subscription)
+      if (commentsEventSubscribersCount === 0) {
+        const unsubscribe = room.events.comments.subscribe(() => {
+          console.log("COMMENT EVENT");
+          revalidateCache({ shouldDedupe: true });
+        });
+        commentsEventDisposerRef.current = unsubscribe;
+      }
+
+      commentsEventSubscribersCountRef.current =
+        commentsEventSubscribersCount + 1;
+
+      return () => {
+        // Only unsubscribe from the `comments` event if the reference count is 0 (meaning that there are no components with a subscription)
+        commentsEventSubscribersCountRef.current =
+          commentsEventSubscribersCountRef.current - 1;
+        if (commentsEventSubscribersCountRef.current > 0) return;
+
+        commentsEventDisposerRef.current?.();
+        commentsEventDisposerRef.current = undefined;
+      };
+    }, [revalidateCache, room]);
+
+    useEffect(() => {
+      const unsubscribe = manager.subscribe("cache", (value) => {
+        // Iterate over each query and update the cache state associated with it.
+        for (const [key, info] of filterOptions.entries()) {
+          // Filter the cache to only include threads that match the current query
+          const filtered = value.filter((thread) => {
+            for (const key in info.options.query.metadata) {
+              if (thread.metadata[key] !== info.options.query.metadata[key]) {
+                return false;
+              }
+            }
+            return true;
+          });
+
+          setCache(key, {
+            isLoading: false,
+            data: filtered,
+          });
+        }
+
+        // Clear any cache state that is not associated with a query
+        for (const [key] of cacheStates.entries()) {
+          if (filterOptions.has(key)) continue;
+          cacheStates.delete(key);
+        }
+
+        // Notify subscribers that the cache has been updated
+        eventSource.notify(value);
+      });
+      return () => {
+        unsubscribe();
+      };
+    }, []);
+
+    useEffect(() => {
+      const unsubscribe = manager.subscribe("error", (error: Error) => {
+        // Update the cache state for each query to include the error
+        for (const state of cacheStates.values()) {
+          state.error = error;
+        }
+      });
+      return () => {
+        unsubscribe();
+      };
+    }, []);
+
     return (
       <FetcherContext.Provider value={fetcher}>
-        {children}
+        <CommentsEventSubscriptionContext.Provider
+          value={subscribeToCommentEvents}
+        >
+          {children}
+        </CommentsEventSubscriptionContext.Provider>
       </FetcherContext.Provider>
     );
   }
@@ -213,13 +342,11 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
   function _useThreads(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-    key: string,
-    revalidateCache: ({
-      shouldDedupe,
-    }: {
-      shouldDedupe: boolean;
-    }) => Promise<void>
+    key: string
   ): ThreadsState<TThreadMetadata> {
+    const fetcher = useThreadsFetcher();
+    const revalidateCache = useRevalidateCache(manager, fetcher);
+
     const status = useSyncExternalStore(
       room.events.status.subscribe,
       room.getStatus,
@@ -228,6 +355,9 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
     const isOnline = useIsOnline();
     const isDocumentVisible = useIsDocumentVisible();
+    const subscribeToCommentEvents = useContext(
+      CommentsEventSubscriptionContext
+    );
 
     const interval = getPollingInterval(
       isOnline,
@@ -245,19 +375,12 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     /**
      * Subscribe to comment events in the room to trigger a revalidation when a comment is added, edited or deleted.
      */
-    useEffect(() => {
-      const unsubscribe = room.events.comments.subscribe(() => {
-        void revalidateCache({ shouldDedupe: false });
-      });
-      return () => {
-        unsubscribe();
-      };
-    }, [revalidateCache, room]);
+    useEffect(subscribeToCommentEvents, [subscribeToCommentEvents]);
 
     const cache = useSyncExternalStore(
-      manager.subscribe,
-      () => manager.getQueriesInfo().get(key)?.state,
-      () => manager.getQueriesInfo().get(key)?.state
+      subscribe,
+      () => getCache(key),
+      () => getCache(key)
     );
 
     if (!cache || cache.isLoading) {
@@ -275,68 +398,92 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
     options?: ThreadsFilterOptions<TThreadMetadata>
   ): ThreadsState<TThreadMetadata> {
-    const fetcher = useThreadsFetcher();
-
     const key = useMemo(() => stringify(options), [options]);
 
+    const fetcher = useThreadsFetcher();
+
+    const revalidateCache = useRevalidateCache(manager, fetcher);
+
     useEffect(() => {
-      const info = manager.getQueriesInfo().get(key);
+      const info = filterOptions.get(key);
       if (info) {
         info.count += 1;
       } else {
         // If there is no info for this query, we create one and set the cache state to loading and the count to 1
-        manager.getQueriesInfo().set(key, {
+        filterOptions.set(key, {
           options: options!,
-          state: { isLoading: true },
           count: 1,
         });
+
+        cacheStates.set(key, { isLoading: true });
       }
 
       return () => {
-        const info = manager.getQueriesInfo().get(key);
+        const info = filterOptions.get(key);
         if (!info) return;
 
         info.count -= 1;
         // If there are no more components using this query, we delete the query info
         if (info.count > 0) return;
-        manager.getQueriesInfo().delete(key);
+        filterOptions.delete(key);
       };
     }, [key, options]);
-
-    const revalidateCache = useRevalidateCache(manager, fetcher);
 
     useEffect(
       () => {
         void revalidateCache({ shouldDedupe: false });
       },
-      // eslint-disable-next-line react-hooks/exhaustive-deps -- We want to revalidate the cache when the options change
-      [revalidateCache]
+      // eslint-disable-next-line react-hooks/exhaustive-deps - We want to revalidate cache when filter options change
+      [revalidateCache, options]
     );
 
-    return _useThreads(room, key, revalidateCache);
+    return _useThreads(room, key);
   }
 
   function useThreadsSuspense(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
     options?: ThreadsFilterOptions<TThreadMetadata>
   ): ThreadsStateSuccess<TThreadMetadata> {
-    const fetcher = useThreadsFetcher();
-
     const key = useMemo(() => stringify(options), [options]);
 
-    const info = manager.getQueriesInfo().get(key);
+    const fetcher = useThreadsFetcher();
+
+    const info = filterOptions.get(key);
     if (!info) {
-      // If there is no info for this query, we create one and set the cache state to loading and the count to 1
-      manager.getQueriesInfo().set(key, {
+      // If there is no info for this query, we create one and set the cache state to loading and the count to 0
+      filterOptions.set(key, {
         options: options!,
-        state: { isLoading: true },
-        count: 1,
+        count: 0,
       });
+      cacheStates.set(key, { isLoading: true });
     }
+
+    useEffect(() => {
+      const info = filterOptions.get(key);
+      if (info) {
+        info.count += 1;
+      } else {
+        // If there is no info for this query, we create one and set the cache state to loading and the count to 1
+        filterOptions.set(key, {
+          options: options!,
+          count: 1,
+        });
+      }
+
+      return () => {
+        const info = filterOptions.get(key);
+        if (!info) return;
+
+        info.count -= 1;
+        // If there are no more components using this query, we delete the query info
+        if (info.count > 0) return;
+        filterOptions.delete(key);
+      };
+    }, [key, options]);
 
     const revalidateCache = useRevalidateCache(manager, fetcher);
 
-    const cache = _useThreads(room, key, revalidateCache);
+    const cache = _useThreads(room, key);
 
     if (cache.error) {
       throw cache.error;
@@ -865,26 +1012,28 @@ function getPollingInterval(
   return POLLING_INTERVAL;
 }
 
+interface ThreadsCacheManager<TThreadMetadata extends BaseMetadata>
+  extends CacheManager<ThreadData<TThreadMetadata>[]> {
+  subscribe(
+    type: "cache",
+    callback: (state: ThreadData<TThreadMetadata>[]) => void
+  ): () => void;
+  subscribe(type: "error", callback: (error: Error) => void): () => void;
+}
+
 export function createThreadsCacheManager<
   TThreadMetadata extends BaseMetadata,
->() {
-  let cache: ThreadData<TThreadMetadata>[] | undefined;
-  let request: RequestInfo<ThreadData<TThreadMetadata>[]> | undefined;
-  let error: Error | undefined;
-  let mutation: MutationInfo | undefined;
+>(): ThreadsCacheManager<TThreadMetadata> {
+  let cache: ThreadData<TThreadMetadata>[] | undefined; // Stores the current cache state
+  let request: RequestInfo<ThreadData<TThreadMetadata>[]> | undefined; // Stores the currently active revalidation request
+  let error: Error | undefined; // Stores any error that occurred during the last revalidation request
+  let mutation: MutationInfo | undefined; // Stores the start and end time of the currently active mutation
 
-  const queriesInfo: Map<
-    string,
-    {
-      options: ThreadsFilterOptions<TThreadMetadata>;
-      state: CacheState<ThreadData<TThreadMetadata>[]>;
-      count: number;
-    }
-  > = new Map();
+  // Create an event source to notify subscribers when the cache is updated
+  const cacheEventSource = makeEventSource<ThreadData<TThreadMetadata>[]>();
 
-  const eventSource = makeEventSource<
-    ThreadData<TThreadMetadata>[] | undefined
-  >();
+  // Create an event source to notify subscribers when there is an error
+  const errorEventSource = makeEventSource<Error>();
 
   return {
     // Cache
@@ -893,25 +1042,8 @@ export function createThreadsCacheManager<
     },
     setCache(value: ThreadData<TThreadMetadata>[]) {
       cache = value;
-
-      console.log("SETTING CACHE", queriesInfo);
-      // Iterate over each query and update the cache state associated with it.
-      for (const info of queriesInfo.values()) {
-        // Filter the cache to only include threads that match the current query
-        const filtered = cache.filter((thread) => {
-          for (const key in info.options.query.metadata) {
-            if (thread.metadata[key] !== info.options.query.metadata[key]) {
-              return false;
-            }
-          }
-          return true;
-        });
-        console.log(info.options.query.metadata, filtered);
-        // Update the cache state associated with this query
-        info.state = { isLoading: false, data: filtered };
-      }
-
-      eventSource.notify(value);
+      // Notify subscribers that the cache has been updated
+      cacheEventSource.notify(cache);
     },
 
     // Request
@@ -928,6 +1060,8 @@ export function createThreadsCacheManager<
     },
     setError(err: Error) {
       error = err;
+      // Notify subscribers that there was an error
+      errorEventSource.notify(err);
     },
 
     // Mutation
@@ -938,16 +1072,21 @@ export function createThreadsCacheManager<
       mutation = info;
     },
 
-    // Queries Info
-    getQueriesInfo() {
-      return queriesInfo;
-    },
-
     // Subscription
     subscribe(
-      callback: (state: ThreadData<TThreadMetadata>[] | undefined) => void
+      type: "cache" | "error",
+      callback:
+        | ((state: ThreadData<TThreadMetadata>[]) => void)
+        | ((error: Error) => void)
     ) {
-      return eventSource.subscribe(callback);
+      switch (type) {
+        case "cache":
+          return cacheEventSource.subscribe(
+            callback as (state: ThreadData<TThreadMetadata>[]) => void
+          );
+        case "error":
+          return errorEventSource.subscribe(callback as (error: Error) => void);
+      }
     },
   };
 }

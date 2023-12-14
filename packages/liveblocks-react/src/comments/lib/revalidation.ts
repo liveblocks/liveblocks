@@ -37,12 +37,19 @@ export type MutationInfo = {
 };
 
 export interface CacheManager<Data> {
-  getCache(): Data;
-  setCache(data: Data): void;
+  // Cache
+  getCache(): Data | undefined;
+  setCache(data: Data | undefined): void;
+
+  // Error
   getError(): Error | undefined;
   setError(error: Error): void;
+
+  // Request
   getRequest(): RequestInfo<Data> | undefined;
   setRequest(request: RequestInfo<Data> | undefined): void;
+
+  // Mutation
   getMutation(): MutationInfo | undefined;
   setMutation(mutation: MutationInfo): void;
 }

@@ -229,9 +229,8 @@ export function createRoomContext<
   const commentsErrorEventSource =
     makeEventSource<CommentsError<TThreadMetadata>>();
 
-  const { CommentsRoomProvider, ...commentsRoom } = createCommentsRoom(
-    commentsErrorEventSource
-  );
+  const { CommentsRoomProvider, ...commentsRoom } =
+    createCommentsRoom<TThreadMetadata>(commentsErrorEventSource);
 
   /**
    * RATIONALE:
