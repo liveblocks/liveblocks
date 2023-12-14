@@ -20,6 +20,7 @@ import type {
   CommentData,
   EnterOptions,
   RoomEventMessage,
+  ThreadsFilterOptions,
   ToImmutable,
 } from "@liveblocks/core";
 import {
@@ -34,7 +35,6 @@ import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import type {
-  CommentsRoom,
   CreateCommentOptions,
   EditCommentOptions,
   ThreadsState,
@@ -226,6 +226,12 @@ export function createRoomContext<
 
   const RoomContext = React.createContext<TRoom | null>(null);
 
+  const commentsErrorEventSource =
+    makeEventSource<CommentsError<TThreadMetadata>>();
+
+  const { CommentsRoomProvider, ...commentsRoom } =
+    createCommentsRoom<TThreadMetadata>(commentsErrorEventSource);
+
   /**
    * RATIONALE:
    * At the "Outer" RoomProvider level, we keep a cache and produce
@@ -351,29 +357,27 @@ export function createRoomContext<
       }
 
       return () => {
-        const commentsRoom = commentsRooms.get(room);
-        if (commentsRoom) {
-          commentsRooms.delete(room);
-        }
         leave();
       };
     }, [roomId, frozenProps, stableEnterRoom]);
 
     return (
       <RoomContext.Provider value={room}>
-        <ContextBundle.Provider
-          value={
-            internalBundle as unknown as InternalRoomContextBundle<
-              JsonObject,
-              LsonObject,
-              BaseUserMeta,
-              never,
-              BaseMetadata
-            >
-          }
-        >
-          {props.children}
-        </ContextBundle.Provider>
+        <CommentsRoomProvider room={room}>
+          <ContextBundle.Provider
+            value={
+              internalBundle as unknown as InternalRoomContextBundle<
+                JsonObject,
+                LsonObject,
+                BaseUserMeta,
+                never,
+                BaseMetadata
+              >
+            }
+          >
+            {props.children}
+          </ContextBundle.Provider>
+        </CommentsRoomProvider>
       </RoomContext.Provider>
     );
   }
@@ -899,67 +903,51 @@ export function createRoomContext<
     return useLegacyKey(key) as TStorage[TKey];
   }
 
-  const commentsErrorEventSource =
-    makeEventSource<CommentsError<TThreadMetadata>>();
-  const commentsRooms = new Map<
-    Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-    CommentsRoom<TThreadMetadata>
-  >();
-
-  function getCommentsRoom(
-    room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>
-  ) {
-    let commentsRoom = commentsRooms.get(room);
-    if (commentsRoom === undefined) {
-      commentsRoom = createCommentsRoom(room, commentsErrorEventSource);
-      commentsRooms.set(room, commentsRoom);
-    }
-    return commentsRoom;
+  function useThreads(
+    options?: ThreadsFilterOptions<TThreadMetadata>
+  ): ThreadsState<TThreadMetadata> {
+    const room = useRoom();
+    return commentsRoom.useThreads(room, options);
   }
 
-  function useThreads(): ThreadsState<TThreadMetadata> {
+  function useThreadsSuspense(options?: ThreadsFilterOptions<TThreadMetadata>) {
     const room = useRoom();
-    return getCommentsRoom(room).useThreads();
-  }
-
-  function useThreadsSuspense() {
-    const room = useRoom();
-    return getCommentsRoom(room).useThreadsSuspense();
+    return commentsRoom.useThreadsSuspense(room, options);
   }
 
   function useCreateThread() {
     const room = useRoom();
-    return getCommentsRoom(room).useCreateThread();
+    return commentsRoom.useCreateThread(room);
   }
 
   function useEditThreadMetadata() {
     const room = useRoom();
-    return getCommentsRoom(room).useEditThreadMetadata();
+    return commentsRoom.useEditThreadMetadata(room);
   }
 
   function useAddReaction() {
     const room = useRoom();
-    return getCommentsRoom(room).useAddReaction();
+    return commentsRoom.useAddReaction(room);
   }
 
   function useRemoveReaction() {
     const room = useRoom();
-    return getCommentsRoom(room).useRemoveReaction();
+    return commentsRoom.useRemoveReaction(room);
   }
 
   function useCreateComment(): (options: CreateCommentOptions) => CommentData {
     const room = useRoom();
-    return getCommentsRoom(room).useCreateComment();
+    return commentsRoom.useCreateComment(room);
   }
 
   function useEditComment(): (options: EditCommentOptions) => void {
     const room = useRoom();
-    return getCommentsRoom(room).useEditComment();
+    return commentsRoom.useEditComment(room);
   }
 
   function useDeleteComment() {
     const room = useRoom();
-    return getCommentsRoom(room).useDeleteComment();
+    return commentsRoom.useDeleteComment(room);
   }
 
   const { resolveUsers, resolveMentionSuggestions } = options ?? {};

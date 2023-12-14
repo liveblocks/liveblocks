@@ -30,8 +30,20 @@ type PartialNullable<T> = {
   [P in keyof T]?: T[P] | null | undefined;
 };
 
+export type QueryParams =
+  | Record<string, string | number | boolean | null | undefined>
+  | URLSearchParams;
+
+export type ThreadsFilterOptions<TThreadMetadata extends BaseMetadata> = {
+  query?: {
+    metadata?: Partial<TThreadMetadata>;
+  };
+};
+
 export type CommentsApi<TThreadMetadata extends BaseMetadata> = {
-  getThreads(): Promise<ThreadData<TThreadMetadata>[]>;
+  getThreads(
+    options?: ThreadsFilterOptions<TThreadMetadata>
+  ): Promise<ThreadData<TThreadMetadata>[]>;
   createThread(options: {
     threadId: string;
     commentId: string;
@@ -130,8 +142,9 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     const url = new URL(
       `/v2/c/rooms/${encodeURIComponent(roomId)}${endpoint}`,
       config.baseUrl
-    ).toString();
-    return await fetch(url, {
+    );
+
+    return await fetch(url.toString(), {
       ...options,
       headers: {
         ...options?.headers,
@@ -140,8 +153,18 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     });
   }
 
-  async function getThreads(): Promise<ThreadData<TThreadMetadata>[]> {
-    const response = await fetchApi(roomId, "/threads");
+  async function getThreads(
+    options?: ThreadsFilterOptions<TThreadMetadata>
+  ): Promise<ThreadData<TThreadMetadata>[]> {
+    const response = await fetchApi(roomId, "/threads/search", {
+      body: JSON.stringify({
+        ...(options?.query?.metadata && { metadata: options.query.metadata }),
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    });
 
     if (response.ok) {
       const json = await (response.json() as Promise<{

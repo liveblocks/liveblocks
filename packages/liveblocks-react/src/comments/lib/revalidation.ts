@@ -5,7 +5,6 @@
  * Original `swr` library can be found at [SWR GitHub repository](https://github.com/vercel/swr)
  */
 
-import { makeEventSource } from "@liveblocks/core";
 import { useCallback, useEffect, useRef } from "react";
 
 import useIsDocumentVisible from "./use-is-document-visible";
@@ -15,7 +14,7 @@ const DEFAULT_ERROR_RETRY_INTERVAL = 5000;
 const DEFAULT_MAX_ERROR_RETRY_COUNT = 5;
 const DEFAULT_DEDUPING_INTERVAL = 2000;
 
-export type Cache<Data> =
+export type CacheState<Data> =
   | {
       isLoading: true;
       data?: never;
@@ -37,11 +36,23 @@ export type MutationInfo = {
   endTime: number;
 };
 
-export type CacheManager<Data> = {
-  cache: Cache<Data> | undefined; // Stores the current cache state
-  request: RequestInfo<Data> | undefined; // Stores the currently active revalidation request
-  mutation: MutationInfo | undefined; // Stores the start and end time of the currently active mutation
-};
+export interface CacheManager<Data> {
+  // Cache
+  getCache(): Data | undefined;
+  setCache(data: Data | undefined): void;
+
+  // Error
+  getError(): Error | undefined;
+  setError(error: Error): void;
+
+  // Request
+  getRequest(): RequestInfo<Data> | undefined;
+  setRequest(request: RequestInfo<Data> | undefined): void;
+
+  // Mutation
+  getMutation(): MutationInfo | undefined;
+  setMutation(mutation: MutationInfo): void;
+}
 
 let timestamp = 0;
 
@@ -77,18 +88,24 @@ export function useRevalidateCache<Data>(
    * @param retryCount - The number of times the request has been retried (used for exponential backoff)
    */
   const _revalidateCache = useCallback(
-    async (shouldDedupe: boolean, retryCount: number = 0) => {
+    async ({
+      shouldDedupe,
+      retryCount = 0,
+    }: {
+      shouldDedupe: boolean;
+      retryCount: number;
+    }) => {
       let startAt: number;
 
       // A new request should be started if there is no ongoing request OR if `shouldDedupe` is false
-      const shouldStartRequest = !manager.request || !shouldDedupe;
+      const shouldStartRequest = !manager.getRequest() || !shouldDedupe;
 
       function deleteActiveRequest() {
-        const activeRequest = manager.request;
+        const activeRequest = manager.getRequest();
         if (!activeRequest) return;
-        if (activeRequest.timestamp !== startAt) return;
 
-        manager.request = undefined;
+        if (activeRequest.timestamp !== startAt) return;
+        manager.setRequest(undefined);
       }
 
       // Uses the exponential backoff algorithm to retry the request on error.
@@ -100,22 +117,22 @@ export function useRevalidateCache<Data>(
         if (retryCount > errorRetryCount) return;
 
         setTimeout(() => {
-          void _revalidateCache(false, retryCount + 1);
+          void _revalidateCache({
+            shouldDedupe: false,
+            retryCount: retryCount + 1,
+          });
         }, timeout);
       }
 
+      if (shouldStartRequest) {
+        manager.setRequest({
+          fetcher: fetcher(),
+          timestamp: ++timestamp,
+        });
+      }
+
       try {
-        if (shouldStartRequest) {
-          const currentCache = manager.cache;
-          if (!currentCache) manager.cache = { isLoading: true };
-
-          manager.request = {
-            fetcher: fetcher(),
-            timestamp: ++timestamp,
-          };
-        }
-
-        const activeRequest = manager.request;
+        let activeRequest = manager.getRequest();
         if (!activeRequest) return;
 
         startAt = activeRequest.timestamp;
@@ -126,11 +143,12 @@ export function useRevalidateCache<Data>(
           setTimeout(deleteActiveRequest, dedupingInterval);
         }
 
+        activeRequest = manager.getRequest();
         // If there was a newer revalidation request (or if the current request was removed due to a mutation), while this request was in flight, we return early and don't update the cache (since the revalidation request is outdated)
-        if (!manager.request || manager.request.timestamp !== startAt) return;
+        if (!activeRequest || activeRequest.timestamp !== startAt) return;
 
         // If there is an active mutation, we ignore the revalidation result as it is outdated (and because the mutation will trigger a revalidation)
-        const activeMutation = manager.mutation;
+        const activeMutation = manager.getMutation();
         if (
           activeMutation &&
           (activeMutation.startTime > startAt ||
@@ -140,10 +158,7 @@ export function useRevalidateCache<Data>(
           return;
         }
 
-        manager.cache = {
-          isLoading: false,
-          data: newData,
-        };
+        manager.setCache(newData);
       } catch (err) {
         deleteActiveRequest();
 
@@ -153,11 +168,7 @@ export function useRevalidateCache<Data>(
 
         if (shouldStartRequest && isVisible && isOnline) handleError();
 
-        manager.cache = {
-          data: manager.cache?.data,
-          isLoading: false,
-          error: err as Error,
-        };
+        manager.setError(err as Error);
       }
       return;
     },
@@ -186,8 +197,8 @@ export function useRevalidateCache<Data>(
   }, []);
 
   const revalidateCache = useCallback(
-    (shoulDedupe: boolean) => {
-      return _revalidateCache(shoulDedupe, 0);
+    ({ shouldDedupe }: { shouldDedupe: boolean }) => {
+      return _revalidateCache({ shouldDedupe, retryCount: 0 });
     },
     [_revalidateCache]
   );
@@ -203,7 +214,11 @@ export function useRevalidateCache<Data>(
  */
 export function useMutate<Data>(
   manager: CacheManager<Data>,
-  revalidateCache: (shouldDedupe: boolean) => Promise<void>
+  revalidateCache: ({
+    shouldDedupe,
+  }: {
+    shouldDedupe: boolean;
+  }) => Promise<void>
 ) {
   const mutate = useCallback(
     async (
@@ -213,18 +228,15 @@ export function useMutate<Data>(
       }
     ) => {
       const beforeMutationTimestamp = ++timestamp;
-      manager.mutation = {
+      manager.setMutation({
         startTime: beforeMutationTimestamp,
         endTime: 0,
-      };
+      });
 
-      const currentCache = manager.cache;
+      const currentCache = manager.getCache();
 
       // Update the cache with the optimistic data
-      manager.cache = {
-        isLoading: false,
-        data: options.optimisticData,
-      };
+      manager.setCache(options.optimisticData);
 
       let error: unknown;
 
@@ -235,7 +247,7 @@ export function useMutate<Data>(
       }
 
       // If there was a newer mutation while this mutation was in flight, we return early and don't trigger a revalidation (since the mutation request is outdated)
-      const activeMutation = manager.mutation;
+      const activeMutation = manager.getMutation();
       if (
         activeMutation &&
         beforeMutationTimestamp !== activeMutation.startTime
@@ -246,20 +258,20 @@ export function useMutate<Data>(
 
       // If the mutation request failed, revert the optimistic update
       if (error) {
-        manager.cache = currentCache;
+        manager.setCache(currentCache);
       }
 
       // Mark the mutation as completed by setting the end time to the current timestamp
-      manager.mutation = {
+      manager.setMutation({
         startTime: beforeMutationTimestamp,
         endTime: ++timestamp,
-      };
+      });
 
       // Deleting the concurrent request markers so new requests will not be deduped.
-      manager.request = undefined;
+      manager.setRequest(undefined);
 
       // Trigger a revalidation request to update the cache with the latest data
-      void revalidateCache(false);
+      void revalidateCache({ shouldDedupe: false });
 
       // Throw the error if the mutation request failed
       if (error) throw error;
@@ -280,7 +292,11 @@ export function useMutate<Data>(
  */
 export function useAutomaticRevalidation<Data>(
   manager: CacheManager<Data>,
-  revalidateCache: (shouldDedupe: boolean) => Promise<void>,
+  revalidateCache: ({
+    shouldDedupe,
+  }: {
+    shouldDedupe: boolean;
+  }) => Promise<void>,
   options: {
     revalidateOnFocus?: boolean;
     revalidateOnReconnect?: boolean;
@@ -307,9 +323,11 @@ export function useAutomaticRevalidation<Data>(
 
       revalidationTimerId = window.setTimeout(() => {
         // Only revalidate if the browser is online AND document is visible AND there are currently no errors, otherwise schedule the next revalidation
-        if (isOnline && isDocumentVisible && !manager.cache?.error) {
+        if (isOnline && isDocumentVisible && !manager.getError()) {
           // Revalidate cache and then schedule the next revalidation
-          void revalidateCache(true).then(scheduleRevalidation);
+          void revalidateCache({ shouldDedupe: true }).then(
+            scheduleRevalidation
+          );
           return;
         }
 
@@ -332,7 +350,7 @@ export function useAutomaticRevalidation<Data>(
   useEffect(() => {
     function handleIsOnline() {
       if (revalidateOnReconnect && isDocumentVisible) {
-        void revalidateCache(true);
+        void revalidateCache({ shouldDedupe: true });
       }
     }
 
@@ -349,7 +367,7 @@ export function useAutomaticRevalidation<Data>(
     function handleVisibilityChange() {
       const isVisible = document.visibilityState === "visible";
       if (revalidateOnFocus && isVisible && isOnline) {
-        void revalidateCache(true);
+        void revalidateCache({ shouldDedupe: true });
       }
     }
 
@@ -358,48 +376,4 @@ export function useAutomaticRevalidation<Data>(
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [revalidateCache, revalidateOnFocus, isOnline]);
-}
-
-/**
- * Creates a cache manager that can be used to store the current cache state and subscribe to changes.
- */
-export function createCacheManager<Data>(): CacheManager<Data> & {
-  subscribe: (callback: (state: Cache<Data> | undefined) => void) => () => void;
-} {
-  let cache: Cache<Data> | undefined; // Stores the current cache state
-  let request: RequestInfo<Data> | undefined; // Stores the currently active revalidation request
-  let mutation: MutationInfo | undefined; // Stores the start and end time of the currently active mutation
-
-  const eventSource = makeEventSource<Cache<Data> | undefined>();
-
-  return {
-    get cache() {
-      return cache;
-    },
-
-    set cache(value: Cache<Data> | undefined) {
-      cache = value;
-      eventSource.notify(cache);
-    },
-
-    get request() {
-      return request;
-    },
-
-    set request(value: RequestInfo<Data> | undefined) {
-      request = value;
-    },
-
-    get mutation() {
-      return mutation;
-    },
-
-    set mutation(value: MutationInfo | undefined) {
-      mutation = value;
-    },
-
-    subscribe(callback: (state: Cache<Data> | undefined) => void) {
-      return eventSource.subscribe(callback);
-    },
-  };
 }
