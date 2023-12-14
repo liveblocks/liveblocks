@@ -1206,8 +1206,24 @@ import { useThreads } from "./liveblocks.config";
 const { threads, error, isLoading } = useThreads();
 ```
 
+`useThreads` can also take an optional `query` parameter, to filter threads
+based on their metadata.
+
+```tsx
+// Returns the threads with `metadata.color === "blue"` and `metadata.resolved === true`
+const { threads } = useThreads({
+  query: {
+    metadata: {
+      // Custom metadata query goes here
+      color: "blue",
+      resolved: true,
+    },
+  },
+});
+```
+
 👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there's an error.
+return a loading state and will throw when there’s an error.
 
 ### useUser
 
@@ -1220,7 +1236,7 @@ const { user, error, isLoading } = useUser("user-id");
 ```
 
 👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there's an error.
+return a loading state and will throw when there’s an error.
 
 <Banner title="Providing a resolver function">
 
