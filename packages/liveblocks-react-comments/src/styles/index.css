@@ -1016,7 +1016,6 @@
   justify-content: center;
   align-items: center;
   block-size: 0;
-  background: red;
 
   &::before {
     content: "";

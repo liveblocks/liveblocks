@@ -413,8 +413,6 @@ export function createClient(options: ClientOptions): Client {
     _inboxNotificationIds: string[]
   ): Promise<void> {
     // TODO: POST /c/inbox-notifications/read
-    // TODO: Optimistically update each inbox notification within inboxNotificationIds
-    // TODO: Optimistically update the affected threads based on the notifications' threadId?
     return Promise.resolve();
   }
 
