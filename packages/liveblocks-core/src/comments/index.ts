@@ -1,9 +1,18 @@
 import type { AuthValue } from "../auth-manager";
 import type { JsonObject } from "../lib/Json";
+import {
+  convertToCommentData,
+  convertToCommentUserReaction,
+  convertToThreadData,
+} from "./comment-body";
 import type { BaseMetadata } from "./types/BaseMetadata";
 import type { CommentBody } from "./types/CommentBody";
-import type { CommentData } from "./types/CommentData";
-import type { ThreadData } from "./types/ThreadData";
+import type { CommentData, CommentDataPlain } from "./types/CommentData";
+import type {
+  CommentUserReaction,
+  CommentUserReactionPlain,
+} from "./types/CommentReaction";
+import type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
 
 type Options = {
   baseUrl: string;
@@ -44,7 +53,7 @@ export type CommentsApi<TThreadMetadata extends BaseMetadata> = {
   editThreadMetadata(options: {
     metadata: PartialNullable<TThreadMetadata>;
     threadId: string;
-  }): Promise<ThreadData<TThreadMetadata>>;
+  }): Promise<TThreadMetadata>;
   createComment(options: {
     threadId: string;
     commentId: string;
@@ -63,12 +72,12 @@ export type CommentsApi<TThreadMetadata extends BaseMetadata> = {
     threadId: string;
     commentId: string;
     emoji: string;
-  }): Promise<CommentData>;
+  }): Promise<CommentUserReaction>;
   removeReaction(options: {
     threadId: string;
     commentId: string;
     emoji: string;
-  }): Promise<CommentData>;
+  }): Promise<void>;
 };
 
 export class CommentsApiError extends Error {
@@ -159,9 +168,9 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
 
     if (response.ok) {
       const json = await (response.json() as Promise<{
-        data: ThreadData<TThreadMetadata>[];
+        data: ThreadDataPlain<TThreadMetadata>[];
       }>);
-      return json.data;
+      return json.data.map((thread) => convertToThreadData(thread));
     } else if (response.status === 404) {
       return [];
     } else {
@@ -169,7 +178,7 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     }
   }
 
-  function createThread({
+  async function createThread({
     metadata,
     body,
     commentId,
@@ -181,23 +190,28 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     metadata: TThreadMetadata | undefined;
     body: CommentBody;
   }) {
-    return fetchJson<ThreadData<TThreadMetadata>>("/threads", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        id: threadId,
-        comment: {
-          id: commentId,
-          body,
+    const thread = await fetchJson<ThreadDataPlain<TThreadMetadata>>(
+      "/threads",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        metadata,
-      }),
-    });
+        body: JSON.stringify({
+          id: threadId,
+          comment: {
+            id: commentId,
+            body,
+          },
+          metadata,
+        }),
+      }
+    );
+
+    return convertToThreadData(thread);
   }
 
-  function editThreadMetadata({
+  async function editThreadMetadata({
     metadata,
     threadId,
   }: {
@@ -205,7 +219,7 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     metadata: PartialNullable<TThreadMetadata>;
     threadId: string;
   }) {
-    return fetchJson<ThreadData<TThreadMetadata>>(
+    return await fetchJson<TThreadMetadata>(
       `/threads/${encodeURIComponent(threadId)}/metadata`,
       {
         method: "POST",
@@ -217,7 +231,7 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     );
   }
 
-  function createComment({
+  async function createComment({
     threadId,
     commentId,
     body,
@@ -226,7 +240,7 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     commentId: string;
     body: CommentBody;
   }) {
-    return fetchJson<CommentData>(
+    const comment = await fetchJson<CommentDataPlain>(
       `/threads/${encodeURIComponent(threadId)}/comments`,
       {
         method: "POST",
@@ -239,9 +253,11 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
         }),
       }
     );
+
+    return convertToCommentData(comment);
   }
 
-  function editComment({
+  async function editComment({
     threadId,
     commentId,
     body,
@@ -250,7 +266,7 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     commentId: string;
     body: CommentBody;
   }) {
-    return fetchJson<CommentData>(
+    const comment = await fetchJson<CommentDataPlain>(
       `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
         commentId
       )}`,
@@ -264,6 +280,8 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
         }),
       }
     );
+
+    return convertToCommentData(comment);
   }
 
   async function deleteComment({
@@ -284,7 +302,7 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     );
   }
 
-  function addReaction({
+  async function addReaction({
     threadId,
     commentId,
     emoji,
@@ -293,7 +311,7 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     commentId: string;
     emoji: string;
   }) {
-    return fetchJson<CommentData>(
+    const reaction = await fetchJson<CommentUserReactionPlain>(
       `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
         commentId
       )}/reactions`,
@@ -305,9 +323,11 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
         body: JSON.stringify({ emoji }),
       }
     );
+
+    return convertToCommentUserReaction(reaction);
   }
 
-  function removeReaction({
+  async function removeReaction({
     threadId,
     commentId,
     emoji,
@@ -316,7 +336,7 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     commentId: string;
     emoji: string;
   }) {
-    return fetchJson<CommentData>(
+    await fetchJson<CommentData>(
       `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
         commentId
       )}/reactions/${encodeURIComponent(emoji)}`,

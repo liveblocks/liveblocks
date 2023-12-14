@@ -8,10 +8,6 @@ export async function fetchPolyfill(): Promise<typeof fetch> {
     : ((await import("node-fetch")).default as unknown as typeof fetch);
 }
 
-export function isSomething<T>(input: null | undefined | T): input is T {
-  return input !== null && input !== undefined;
-}
-
 export function isNonEmpty(value: unknown): value is string {
   return typeof value === "string" && value.length > 0;
 }

@@ -1,3 +1,9 @@
+import { detectDupes } from "@liveblocks/core";
+
+import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
+
+detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
+
 export { authorize } from "./authorize";
 export type {
   LiveblocksOptions,
@@ -9,19 +15,6 @@ export type {
   ThreadParticipants,
 } from "./client";
 export { Liveblocks } from "./client";
-export type {
-  CommentBodyLinkElementArgs,
-  CommentBodyMentionElementArgs,
-  CommentBodyParagraphElementArgs,
-  CommentBodyResolveUsersArgs,
-  CommentBodyTextElementArgs,
-  StringifyCommentBodyElements,
-  StringifyCommentBodyOptions,
-} from "./comment-body";
-export {
-  getMentionedIdsFromCommentBody,
-  stringifyCommentBody,
-} from "./comment-body";
 export type {
   CommentCreatedEvent,
   CommentDeletedEvent,
@@ -40,10 +33,35 @@ export type {
 } from "./webhooks";
 export { WebhookHandler } from "./webhooks";
 export type {
+  CommentBody,
+  CommentBodyBlockElement,
+  CommentBodyElement,
+  CommentBodyInlineElement,
+  CommentBodyLink,
+  CommentBodyLinkElementArgs,
+  CommentBodyMention,
+  CommentBodyMentionElementArgs,
+  CommentBodyParagraph,
+  CommentBodyParagraphElementArgs,
+  CommentBodyResolveUsersArgs,
+  CommentBodyText,
+  CommentBodyTextElementArgs,
   CommentData,
+  CommentUserReaction,
   IUserInfo,
   Json,
+  JsonArray,
   JsonObject,
+  JsonScalar,
+  Lson,
+  LsonObject,
   PlainLsonObject,
+  StringifyCommentBodyElements,
+  StringifyCommentBodyOptions,
   ThreadData,
+  User,
+} from "@liveblocks/core";
+export {
+  getMentionedIdsFromCommentBody,
+  stringifyCommentBody,
 } from "@liveblocks/core";

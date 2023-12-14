@@ -644,8 +644,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
         const threadId = createOptimisticId(THREAD_ID_PREFIX);
         const commentId = createOptimisticId(COMMENT_ID_PREFIX);
-        const now = new Date().toISOString();
-        const userId = getCurrentUserId(room);
+        const now = new Date();
 
         const newComment: CommentData = {
           id: commentId,
@@ -653,7 +652,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
           roomId: room.id,
           createdAt: now,
           type: "comment",
-          userId,
+          userId: getCurrentUserId(room),
           body,
           reactions: [],
         };
@@ -705,8 +704,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
         const threads = getThreads();
 
         const commentId = createOptimisticId(COMMENT_ID_PREFIX);
-        const now = new Date().toISOString();
-        const userId = getCurrentUserId(room);
+        const now = new Date();
 
         const comment: CommentData = {
           id: commentId,
@@ -714,7 +712,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
           roomId: room.id,
           type: "comment",
           createdAt: now,
-          userId,
+          userId: getCurrentUserId(room),
           body,
           reactions: [],
         };
@@ -762,7 +760,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     const editComment = useCallback(
       ({ threadId, commentId, body }: EditCommentOptions): void => {
         const threads = getThreads();
-        const now = new Date().toISOString();
+        const now = new Date();
 
         const optimisticData = threads.map((thread) =>
           thread.id === threadId
@@ -814,7 +812,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     const deleteComment = useCallback(
       ({ threadId, commentId }: DeleteCommentOptions): void => {
         const threads = getThreads();
-        const now = new Date().toISOString();
+        const now = new Date();
 
         const newThreads: ThreadData<TThreadMetadata>[] = [];
 
@@ -877,7 +875,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     const createComment = useCallback(
       ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
         const threads = getThreads();
-        const now = new Date().toISOString();
+        const now = new Date();
         const userId = getCurrentUserId(room);
 
         const optimisticData = threads.map((thread) =>

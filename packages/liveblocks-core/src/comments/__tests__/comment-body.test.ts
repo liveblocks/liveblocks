@@ -1,10 +1,9 @@
-import type { CommentBody } from "@liveblocks/core";
-
 import type { CommentBodyResolveUsersArgs } from "../comment-body";
 import {
   getMentionedIdsFromCommentBody,
   stringifyCommentBody,
 } from "../comment-body";
+import type { CommentBody } from "../types/CommentBody";
 
 function capitalize(string: string) {
   return string.charAt(0).toUpperCase() + string.slice(1);

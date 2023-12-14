@@ -1,11 +1,39 @@
-# v1.8.2 (not yet released)
+# v1.9.0 (Unreleased)
+
+### `@liveblocks/node`
+
+- Add the Comments write REST APIs as fully typed methods. (includes
+  `createThread`, `editThreadMetadata`, `createComment`, `editComment`,
+  `deleteComment`, `addCommentReaction`, and `removeCommentReaction` methods)
+- Fix the return type of `getActiveUsers` to match the data returned from the
+  endpoint.
 
 ### `@liveblocks/react-comments`
 
-- Improve network loss and document visibility handling during comment
-  revalidation.
-- Better error handling on mutations (e.g. thread creation, comment creation,
-  etc.)
+- Add support for exit animations to `ComposerSuggestions`.
+
+# v1.8.2
+
+### `@liveblocks/react`
+
+- Improve Comments revalidation when losing network or staying in the
+  background.
+- Improve error handling of Comments mutations. (e.g. thread creation, comment
+  creation, etc.)
+
+### `@liveblocks/client`
+
+- Export the `CommentBody` utilities added to `@liveblocks/node` in v1.8.0.
+- Harmonize exports with `@liveblocks/node`. (added `IUserInfo` and
+  `PlainLsonObject`)
+
+### `@liveblocks/node`
+
+- Harmonize exports with `@liveblocks/client`. (added `CommentBody`,
+  `CommentBodyBlockElement`, `CommentBodyElement`, `CommentBodyInlineElement`,
+  `CommentBodyLink`, `CommentBodyMention`, `CommentBodyParagraph`,
+  `CommentBodyText`, `JsonArray`, `JsonScalar`, `Lson`, `LsonObject`, and
+  `User`)
 
 # v1.8.1
 

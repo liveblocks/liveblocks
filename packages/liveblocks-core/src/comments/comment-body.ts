@@ -1,5 +1,7 @@
+import { nn } from "../lib/assert";
+import type { BaseUserMeta } from "../protocol/BaseUserMeta";
+import type { BaseMetadata } from "./types/BaseMetadata";
 import type {
-  BaseUserMeta,
   CommentBody,
   CommentBodyBlockElement,
   CommentBodyElement,
@@ -8,9 +10,13 @@ import type {
   CommentBodyMention,
   CommentBodyParagraph,
   CommentBodyText,
-} from "@liveblocks/core";
-
-import { isSomething } from "./utils";
+} from "./types/CommentBody";
+import type { CommentData, CommentDataPlain } from "./types/CommentData";
+import type {
+  CommentUserReaction,
+  CommentUserReactionPlain,
+} from "./types/CommentReaction";
+import type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
 
 type PromiseOrNot<T> = T | Promise<T>;
 
@@ -340,7 +346,7 @@ export class HtmlSafeString {
 
   toString(): string {
     return this._strings.reduce((result, str, i) => {
-      return result + escapeHtml(this._values[i - 1]!) + str;
+      return result + escapeHtml(nn(this._values[i - 1])) + str;
     });
   }
 }
@@ -433,7 +439,7 @@ export class MarkdownSafeString {
 
   toString(): string {
     return this._strings.reduce((result, str, i) => {
-      return result + escapeMarkdown(this._values[i - 1]!) + str;
+      return result + escapeMarkdown(nn(this._values[i - 1])) + str;
     });
   }
 }
@@ -582,8 +588,8 @@ export async function stringifyCommentBody<
     ...(format === "html"
       ? stringifyCommentBodyHtmlElements
       : format === "markdown"
-      ? stringifyCommentBodyMarkdownElements
-      : stringifyCommentBodyPlainElements),
+        ? stringifyCommentBodyMarkdownElements
+        : stringifyCommentBodyPlainElements),
     ...options?.elements,
   };
   const resolvedUsers = await resolveUsersInCommentBody(
@@ -591,52 +597,127 @@ export async function stringifyCommentBody<
     options?.resolveUsers
   );
 
-  const blocks = body.content.map((block, blockIndex) => {
+  const blocks = body.content.flatMap((block, blockIndex) => {
     switch (block.type) {
       case "paragraph": {
-        const paragraph = block.children
-          .map((inline, inlineIndex) => {
-            if (isCommentBodyMention(inline)) {
-              return inline.id
-                ? elements.mention(
+        const inlines = block.children.flatMap((inline, inlineIndex) => {
+          if (isCommentBodyMention(inline)) {
+            return inline.id
+              ? [
+                  elements.mention(
                     {
                       element: inline,
                       user: resolvedUsers.get(inline.id),
                     },
                     inlineIndex
-                  )
-                : null;
-            }
+                  ),
+                ]
+              : [];
+          }
 
-            if (isCommentBodyLink(inline)) {
-              return elements.link(
+          if (isCommentBodyLink(inline)) {
+            return [
+              elements.link(
                 {
                   element: inline,
                   href: toAbsoluteUrl(inline.url) ?? inline.url,
                 },
                 inlineIndex
-              );
-            }
+              ),
+            ];
+          }
 
-            if (isCommentBodyText(inline)) {
-              return elements.text({ element: inline }, inlineIndex);
-            }
+          if (isCommentBodyText(inline)) {
+            return [elements.text({ element: inline }, inlineIndex)];
+          }
 
-            return null;
-          })
-          .filter(isSomething)
-          .join("");
+          return [];
+        });
 
-        return elements.paragraph(
-          { element: block, children: paragraph },
-          blockIndex
-        );
+        return [
+          elements.paragraph(
+            { element: block, children: inlines.join("") },
+            blockIndex
+          ),
+        ];
       }
 
       default:
-        return null;
+        return [];
     }
   });
 
-  return blocks.filter(isSomething).join(separator);
+  return blocks.join(separator);
+}
+
+/**
+ * Converts a plain comment data object (usually returned by the API) to a comment data object that can be used by the client.
+ * This is necessary because the plain data object stores dates as ISO strings, but the client expects them as Date objects.
+ * @param data The plain comment data object (usually returned by the API)
+ * @returns The rich comment data object that can be used by the client.
+ */
+export function convertToCommentData(data: CommentDataPlain): CommentData {
+  const editedAt = data.editedAt ? new Date(data.editedAt) : undefined;
+  const createdAt = new Date(data.createdAt);
+  const reactions = data.reactions.map((reaction) => ({
+    ...reaction,
+    createdAt: new Date(reaction.createdAt),
+  }));
+
+  if (data.body) {
+    return {
+      ...data,
+      reactions,
+      createdAt,
+      editedAt,
+    };
+  } else {
+    const deletedAt = new Date(data.deletedAt);
+    return {
+      ...data,
+      reactions,
+      createdAt,
+      editedAt,
+      deletedAt,
+    };
+  }
+}
+
+/**
+ * Converts a plain thread data object (usually returned by the API) to a thread data object that can be used by the client.
+ * This is necessary because the plain data object stores dates as ISO strings, but the client expects them as Date objects.
+ * @param data The plain thread data object (usually returned by the API)
+ * @returns The rich hread data object that can be used by the client.
+ */
+export function convertToThreadData<
+  TThreadMetadata extends BaseMetadata = never,
+>(data: ThreadDataPlain<TThreadMetadata>): ThreadData<TThreadMetadata> {
+  const updatedAt = data.updatedAt ? new Date(data.updatedAt) : undefined;
+  const createdAt = new Date(data.createdAt);
+
+  const comments = data.comments.map((comment) =>
+    convertToCommentData(comment)
+  );
+
+  return {
+    ...data,
+    createdAt,
+    updatedAt,
+    comments,
+  };
+}
+
+/**
+ * Converts a plain comment reaction object (usually returned by the API) to a comment reaction object that can be used by the client.
+ * This is necessary because the plain data object stores dates as ISO strings, but the client expects them as Date objects.
+ * @param data The plain comment reaction object (usually returned by the API)
+ * @returns The rich comment reaction object that can be used by the client.
+ */
+export function convertToCommentUserReaction(
+  data: CommentUserReactionPlain
+): CommentUserReaction {
+  return {
+    ...data,
+    createdAt: new Date(data.createdAt),
+  };
 }
