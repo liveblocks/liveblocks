@@ -372,13 +372,6 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
           thread.id === threadId
             ? {
                 ...thread,
-                notificationInfo: thread.notificationInfo
-                  ? {
-                      ...thread.notificationInfo,
-                      readAt: now,
-                      notifiedAt: now,
-                    }
-                  : undefined,
                 comments: [...thread.comments, comment],
               }
             : thread
