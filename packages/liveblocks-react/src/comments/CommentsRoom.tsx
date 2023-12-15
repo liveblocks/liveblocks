@@ -253,7 +253,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
   const CommentsEventSubscriptionContext = createContext<() => void>(() => {});
 
-  function getThreads(): ThreadData<TThreadMetadata>[] {
+  function getCachedThreads(): ThreadData<TThreadMetadata>[] {
     const threads = manager.getCache();
     if (!threads) {
       throw new Error(
@@ -274,8 +274,11 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
     const fetcher = useCallback(async () => {
       const responses = await Promise.all(
-        Array.from(filterOptions.values()).map((info) => {
-          return room.getThreads(info.options);
+        Array.from(filterOptions.values()).map(async (info) => {
+          // TODO: Cache/use inbox notifications returned by `getThreads`
+          const { threads } = await room.getThreads(info.options);
+
+          return threads;
         })
       );
 
@@ -458,8 +461,11 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     }
 
     const fetcher = useCallback(
-      () => {
-        return room.getThreads(options);
+      async () => {
+        // TODO: Cache/use inbox notifications returned by `getThreads`
+        const { threads } = await room.getThreads(options);
+
+        return threads;
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps
       [key]
@@ -516,8 +522,11 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     }
 
     const fetcher = useCallback(
-      () => {
-        return room.getThreads(options);
+      async () => {
+        // TODO: Cache/use inbox notifications returned by `getThreads`
+        const { threads } = await room.getThreads(options);
+
+        return threads;
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps
       [key]
@@ -581,7 +590,13 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   function useEditThreadMetadata(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
   ) {
-    const revalidate = useRevalidateCache(manager, room.getThreads);
+    const getThreads = useCallback(async () => {
+      // TODO: Cache/use inbox notifications returned by `getThreads`
+      const { threads } = await room.getThreads();
+
+      return threads;
+    }, [room]);
+    const revalidate = useRevalidateCache(manager, getThreads);
     const mutate = useMutate(manager, revalidate);
 
     const editThreadMetadata = useCallback(
@@ -589,7 +604,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
         const threadId = options.threadId;
         const metadata: PartialNullable<TThreadMetadata> =
           "metadata" in options ? options.metadata : {};
-        const threads = getThreads();
+        const threads = getCachedThreads();
 
         const optimisticData = threads.map((thread) =>
           thread.id === threadId
@@ -640,7 +655,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
         const body = options.body;
         const metadata: TThreadMetadata =
           "metadata" in options ? options.metadata : ({} as TThreadMetadata);
-        const threads = getThreads();
+        const threads = getCachedThreads();
 
         const threadId = createOptimisticId(THREAD_ID_PREFIX);
         const commentId = createOptimisticId(COMMENT_ID_PREFIX);
@@ -701,7 +716,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
     const createComment = useCallback(
       ({ threadId, body }: CreateCommentOptions): CommentData => {
-        const threads = getThreads();
+        const threads = getCachedThreads();
 
         const commentId = createOptimisticId(COMMENT_ID_PREFIX);
         const now = new Date();
@@ -754,12 +769,18 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   function useEditComment(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
   ) {
-    const revalidate = useRevalidateCache(manager, room.getThreads);
+    const getThreads = useCallback(async () => {
+      // TODO: Cache/use inbox notifications returned by `getThreads`
+      const { threads } = await room.getThreads();
+
+      return threads;
+    }, [room]);
+    const revalidate = useRevalidateCache(manager, getThreads);
     const mutate = useMutate(manager, revalidate);
 
     const editComment = useCallback(
       ({ threadId, commentId, body }: EditCommentOptions): void => {
-        const threads = getThreads();
+        const threads = getCachedThreads();
         const now = new Date();
 
         const optimisticData = threads.map((thread) =>
@@ -807,12 +828,18 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   function useDeleteComment(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
   ) {
-    const revalidate = useRevalidateCache(manager, room.getThreads);
+    const getThreads = useCallback(async () => {
+      // TODO: Cache/use inbox notifications returned by `getThreads`
+      const { threads } = await room.getThreads();
+
+      return threads;
+    }, [room]);
+    const revalidate = useRevalidateCache(manager, getThreads);
     const mutate = useMutate(manager, revalidate);
 
     const deleteComment = useCallback(
       ({ threadId, commentId }: DeleteCommentOptions): void => {
-        const threads = getThreads();
+        const threads = getCachedThreads();
         const now = new Date();
 
         const newThreads: ThreadData<TThreadMetadata>[] = [];
@@ -870,12 +897,18 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   function useAddReaction(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
   ) {
-    const revalidate = useRevalidateCache(manager, room.getThreads);
+    const getThreads = useCallback(async () => {
+      // TODO: Cache/use inbox notifications returned by `getThreads`
+      const { threads } = await room.getThreads();
+
+      return threads;
+    }, [room]);
+    const revalidate = useRevalidateCache(manager, getThreads);
     const mutate = useMutate(manager, revalidate);
 
     const createComment = useCallback(
       ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
-        const threads = getThreads();
+        const threads = getCachedThreads();
         const now = new Date();
         const userId = getCurrentUserId(room);
 
@@ -950,12 +983,18 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   function useRemoveReaction(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
   ) {
-    const revalidate = useRevalidateCache(manager, room.getThreads);
+    const getThreads = useCallback(async () => {
+      // TODO: Cache/use inbox notifications returned by `getThreads`
+      const { threads } = await room.getThreads();
+
+      return threads;
+    }, [room]);
+    const revalidate = useRevalidateCache(manager, getThreads);
     const mutate = useMutate(manager, revalidate);
 
     const createComment = useCallback(
       ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
-        const threads = getThreads();
+        const threads = getCachedThreads();
         const userId = getCurrentUserId(room);
 
         const optimisticData = threads.map((thread) =>

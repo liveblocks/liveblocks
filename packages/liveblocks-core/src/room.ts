@@ -2,6 +2,7 @@ import type { AuthManager, AuthValue } from "./auth-manager";
 import {
   convertToCommentData,
   convertToCommentUserReaction,
+  convertToInboxNotificationData,
   convertToThreadData,
 } from "./comments/convert-plain-data";
 import type {
@@ -64,7 +65,10 @@ import type {
   CommentUserReactionPlain,
 } from "./types/CommentReaction";
 import type * as DevTools from "./types/DevToolsTreeNode";
-import type { InboxNotificationDataPlain } from "./types/InboxNotificationData";
+import type {
+  InboxNotificationData,
+  InboxNotificationDataPlain,
+} from "./types/InboxNotificationData";
 import type {
   IWebSocket,
   IWebSocketCloseEvent,
@@ -478,13 +482,14 @@ export type ThreadsOptions<TThreadMetadata extends BaseMetadata> = {
   };
 };
 
-type CommentsApi<TThreadMetadata extends BaseMetadata> = {
+type CommentsApi<TThreadMetadata extends BaseMetadata = never> = {
   /**
    * @private
    */
-  getThreads(
-    options?: ThreadsOptions<TThreadMetadata>
-  ): Promise<ThreadData<TThreadMetadata>[]>;
+  getThreads(options?: ThreadsOptions<TThreadMetadata>): Promise<{
+    threads: ThreadData<TThreadMetadata>[];
+    inboxNotifications: InboxNotificationData[];
+  }>;
 
   /**
    * @private
@@ -1092,9 +1097,7 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     });
   }
 
-  async function getThreads(
-    options?: ThreadsOptions<TThreadMetadata>
-  ): Promise<ThreadData<TThreadMetadata>[]> {
+  async function getThreads(options?: ThreadsOptions<TThreadMetadata>) {
     const response = await fetchApi(roomId, "/threads/search", {
       body: JSON.stringify({
         ...(options?.query?.metadata && { metadata: options.query.metadata }),
@@ -1111,11 +1114,14 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
         inboxNotifications: InboxNotificationDataPlain[];
       }>);
 
-      // TODO: Handle inbox notifications
-
-      return json.data.map((thread) => convertToThreadData(thread));
+      return {
+        threads: json.data.map((thread) => convertToThreadData(thread)),
+        inboxNotifications: json.inboxNotifications.map((notification) =>
+          convertToInboxNotificationData(notification)
+        ),
+      };
     } else if (response.status === 404) {
-      return [];
+      return { threads: [], inboxNotifications: [] };
     } else {
       throw new Error("There was an error while getting threads.");
     }

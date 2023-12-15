@@ -16,7 +16,9 @@ import {
   makeAuthDelegateForRoom,
   makeCreateSocketDelegateForRoom,
 } from "./room";
+import type { BaseMetadata } from "./types/BaseMetadata";
 import type { InboxNotificationData } from "./types/InboxNotificationData";
+import type { ThreadData } from "./types/ThreadData";
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1_000;
@@ -48,11 +50,14 @@ export type EnterOptions<
   }
 >;
 
-type InboxNotificationsApi = {
+type InboxNotificationsApi<TThreadMetadata extends BaseMetadata = never> = {
   /**
    * @private
    */
-  getInboxNotifications(): Promise<InboxNotificationData[]>;
+  getInboxNotifications(): Promise<{
+    inboxNotifications: InboxNotificationData[];
+    threads: ThreadData<TThreadMetadata>[];
+  }>;
 
   /**
    * @private
@@ -428,24 +433,22 @@ export function createClient(options: ClientOptions): Client {
     }
   }
 
-  function getInboxNotifications(): Promise<InboxNotificationData[]> {
+  function getInboxNotifications() {
     // TODO: GET /c/inbox-notifications
-    return Promise.resolve([]);
+    return Promise.resolve({ inboxNotifications: [], threads: [] });
   }
 
-  function getUnreadInboxNotificationsCount(): Promise<number> {
+  function getUnreadInboxNotificationsCount() {
     // TODO: GET /c/inbox-notifications/count
     return Promise.resolve(0);
   }
 
-  function markAllInboxNotificationsAsRead(): Promise<void> {
+  function markAllInboxNotificationsAsRead() {
     // TODO: POST /c/inbox-notifications/read with { inboxNotificationIds: "all" }
     return Promise.resolve();
   }
 
-  function markInboxNotificationsAsRead(
-    _inboxNotificationIds: string[]
-  ): Promise<void> {
+  function markInboxNotificationsAsRead(_inboxNotificationIds: string[]) {
     // TODO: POST /c/inbox-notifications/read with { inboxNotificationIds }
     return Promise.resolve();
   }
@@ -461,9 +464,7 @@ export function createClient(options: ClientOptions): Client {
     { delay: MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY }
   );
 
-  async function markInboxNotificationAsRead(
-    inboxNotificationId: string
-  ): Promise<void> {
+  async function markInboxNotificationAsRead(inboxNotificationId: string) {
     await batchedMarkInboxNotificationsAsRead.add(inboxNotificationId);
   }
 
