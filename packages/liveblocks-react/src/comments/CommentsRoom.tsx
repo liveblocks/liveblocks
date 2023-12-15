@@ -659,12 +659,12 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
           body,
           reactions: [],
         };
-        const newThread = {
+        const newThread: ThreadData<TThreadMetadata> = {
           id: threadId,
           type: "thread",
           createdAt: now,
           roomId: room.id,
-          metadata,
+          metadata: metadata as ThreadData<TThreadMetadata>["metadata"],
           comments: [newComment],
         } as ThreadData<TThreadMetadata>;
 
@@ -769,15 +769,16 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
           thread.id === threadId
             ? {
                 ...thread,
-                comments: thread.comments.map((comment) =>
-                  comment.id === commentId
-                    ? ({
-                        ...comment,
-                        editedAt: now,
-                        body,
-                      } as CommentData)
-                    : comment
-                ),
+                comments: thread.comments.map((comment) => {
+                  const editedComment: CommentData = {
+                    ...comment,
+                    deletedAt: undefined,
+                    editedAt: now,
+                    body,
+                  };
+
+                  return comment.id === commentId ? editedComment : comment;
+                }),
               }
             : thread
         );
