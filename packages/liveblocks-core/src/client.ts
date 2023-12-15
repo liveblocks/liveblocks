@@ -16,6 +16,7 @@ import {
   makeAuthDelegateForRoom,
   makeCreateSocketDelegateForRoom,
 } from "./room";
+import type { InboxNotificationData } from "./types/InboxNotificationData";
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1_000;
@@ -26,6 +27,8 @@ const MIN_LOST_CONNECTION_TIMEOUT = 200;
 const RECOMMENDED_MIN_LOST_CONNECTION_TIMEOUT = 1_000;
 const MAX_LOST_CONNECTION_TIMEOUT = 30_000;
 const DEFAULT_LOST_CONNECTION_TIMEOUT = 5_000;
+
+const MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY = 50;
 
 export type EnterOptions<
   TPresence extends JsonObject,
@@ -45,7 +48,29 @@ export type EnterOptions<
   }
 >;
 
-export type Client = {
+type InboxNotificationsApi = {
+  /**
+   * @private
+   */
+  getInboxNotifications(): Promise<InboxNotificationData[]>;
+
+  /**
+   * @private
+   */
+  getUnreadInboxNotificationsCount(): Promise<number>;
+
+  /**
+   * @private
+   */
+  markAllInboxNotificationsAsRead(): Promise<void>;
+
+  /**
+   * @private
+   */
+  markInboxNotificationAsRead(inboxNotificationId: string): Promise<void>;
+};
+
+export type Client = InboxNotificationsApi & {
   /**
    * Gets a room. Returns null if {@link Client.enter} has not been called previously.
    *
@@ -117,11 +142,6 @@ export type Client = {
    * Call this whenever you log out a user in your application.
    */
   logout(): void;
-
-  /**
-   * TODO: JSDoc
-   */
-  markInboxNotificationAsRead(inboxNotificationId: string): Promise<void>;
 };
 
 export type AuthEndpoint =
@@ -239,7 +259,6 @@ export function createClient(options: ClientOptions): Client {
   };
 
   const roomsById = new Map<string, RoomInfo>();
-  // const inboxNotificationsById = new Map<string, InboxNotificationData>();
 
   function teardownRoom(room: OpaqueRoom) {
     unlinkDevTools(room.id);
@@ -409,10 +428,25 @@ export function createClient(options: ClientOptions): Client {
     }
   }
 
+  function getInboxNotifications(): Promise<InboxNotificationData[]> {
+    // TODO: GET /c/inbox-notifications
+    return Promise.resolve([]);
+  }
+
+  function getUnreadInboxNotificationsCount(): Promise<number> {
+    // TODO: GET /c/inbox-notifications/count
+    return Promise.resolve(0);
+  }
+
+  function markAllInboxNotificationsAsRead(): Promise<void> {
+    // TODO: POST /c/inbox-notifications/read with { inboxNotificationIds: "all" }
+    return Promise.resolve();
+  }
+
   function markInboxNotificationsAsRead(
     _inboxNotificationIds: string[]
   ): Promise<void> {
-    // TODO: POST /c/inbox-notifications/read
+    // TODO: POST /c/inbox-notifications/read with { inboxNotificationIds }
     return Promise.resolve();
   }
 
@@ -424,7 +458,7 @@ export function createClient(options: ClientOptions): Client {
 
       return inboxNotificationIds;
     },
-    { delay: 100 }
+    { delay: MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY }
   );
 
   async function markInboxNotificationAsRead(
@@ -435,6 +469,9 @@ export function createClient(options: ClientOptions): Client {
 
   return {
     logout,
+    getInboxNotifications,
+    getUnreadInboxNotificationsCount,
+    markAllInboxNotificationsAsRead,
     markInboxNotificationAsRead,
 
     // Old, deprecated APIs

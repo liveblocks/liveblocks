@@ -479,38 +479,69 @@ export type ThreadsOptions<TThreadMetadata extends BaseMetadata> = {
 };
 
 type CommentsApi<TThreadMetadata extends BaseMetadata> = {
+  /**
+   * @private
+   */
   getThreads(
     options?: ThreadsOptions<TThreadMetadata>
   ): Promise<ThreadData<TThreadMetadata>[]>;
+
+  /**
+   * @private
+   */
   createThread(options: {
     threadId: string;
     commentId: string;
     metadata: TThreadMetadata | undefined;
     body: CommentBody;
   }): Promise<ThreadData<TThreadMetadata>>;
+
+  /**
+   * @private
+   */
   editThreadMetadata(options: {
     metadata: PartialNullable<TThreadMetadata>;
     threadId: string;
   }): Promise<TThreadMetadata>;
+
+  /**
+   * @private
+   */
   createComment(options: {
     threadId: string;
     commentId: string;
     body: CommentBody;
   }): Promise<CommentData>;
+
+  /**
+   * @private
+   */
   editComment(options: {
     threadId: string;
     commentId: string;
     body: CommentBody;
   }): Promise<CommentData>;
+
+  /**
+   * @private
+   */
   deleteComment(options: {
     threadId: string;
     commentId: string;
   }): Promise<void>;
+
+  /**
+   * @private
+   */
   addReaction(options: {
     threadId: string;
     commentId: string;
     emoji: string;
   }): Promise<CommentUserReaction>;
+
+  /**
+   * @private
+   */
   removeReaction(options: {
     threadId: string;
     commentId: string;
