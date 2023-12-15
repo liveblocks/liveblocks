@@ -9,10 +9,10 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.9.0-example1",
-    "@liveblocks/node": "^1.9.0-example1",
-    "@liveblocks/react": "^1.9.0-example1",
-    "@liveblocks/react-comments": "^1.9.0-example1",
+    "@liveblocks/client": "^1.9.0",
+    "@liveblocks/node": "^1.9.0",
+    "@liveblocks/react": "^1.9.0",
+    "@liveblocks/react-comments": "^1.9.0",
     "next": "^13.4.16",
     "openai": "^4.21.0",
     "react": "^18.2.0",
