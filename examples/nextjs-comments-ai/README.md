@@ -36,7 +36,7 @@ This will download the example and ask permission to open your browser, enabling
 you to automatically get your API key from your
 [liveblocks.io](https://liveblocks.io) account.
 
-### Setting up Webhooks
+### Setting up webhooks
 
 You need to set up webhooks to make this example run.
 
@@ -46,7 +46,7 @@ You need to set up webhooks to make this example run.
 
 ### Setting up OpenAI
 
-You need your OpenAI API key to run the AI agent.
+You need your own OpenAI API key to run the AI agent.
 
 - Create an account on [OpenAI](https://openai.com)
 - Create a new API key from the [OpenAI Dashboard](https://platform.openai.com/api-keys)
