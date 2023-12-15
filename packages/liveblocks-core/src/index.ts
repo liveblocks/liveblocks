@@ -186,8 +186,6 @@ import type * as DevTools from "./types/DevToolsTreeNode";
 export type { DevTools };
 
 // Comments
-export type { CommentsApi, ThreadsOptions } from "./comments";
-export { CommentsApiError, createCommentsApi } from "./comments";
 export type {
   CommentBodyLinkElementArgs,
   CommentBodyMentionElementArgs,
@@ -207,6 +205,8 @@ export {
   convertToInboxNotificationData,
   convertToThreadData,
 } from "./comments/convert-plain-data";
+export type { ThreadsOptions } from "./room";
+export { CommentsApiError } from "./room";
 export type { BaseMetadata } from "./types/BaseMetadata";
 export type {
   CommentBody,
