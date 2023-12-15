@@ -36,7 +36,7 @@ Create this endpoint in your project, and make it available on `localhost` at
 the following URL:
 
 ```
-/api/liveblocks-database-sync
+/api/liveblocks-webhook
 ```
 
 ## Testing webhooks locally
@@ -72,14 +72,13 @@ your localhost server is running:
 ngrok http 3000
 ```
 
-The URL is generates can be placed into the Liveblocks webhooks dashboard for
+The URL it generates can be placed into the Liveblocks webhooks dashboard for
 quick testing.
 
 ## Set up webhooks on the Liveblocks dashboard
 
 To use webhooks, you need to pass your endpoint URL to the webhooks dashboard
-inside your Liveblocks project, and tell the webhook to trigger when Storage
-document data has changed.
+inside your Liveblocks project, and tell the webhook to trigger on any specific [webhook events](/docs/platform/webhooks#Liveblocks-events).
 
 <Steps>
   <Step>
@@ -184,14 +183,14 @@ document data has changed.
 
 ## Verify the webhook request
 
-It’s recommend to verify that your webhook requests have come from Liveblocks,
+It’s recommended to verify that your webhook requests have come from Liveblocks,
 and the [`@liveblocks/node`](/docs/api-reference/liveblocks-node) package
 provides you with a function that will verify this for you. You can set this up
 by creating a
 [`WebhookHandler`](/docs/api-reference/liveblocks-node#WebhookHandler) and
 running [`verifyRequest`](/docs/api-reference/liveblocks-node#verifyRequest).
 
-Make sure to add your “Liveblocks webhook Secret” from the Liveblocks
+Make sure to add your "Webhook secret key" from the Liveblocks
 dashboard—in a real project we’d recommend using an environment variable for
 this.
 
@@ -276,5 +275,5 @@ export async function POST(request: Request) {
 }
 ```
 
-Visit the [webhook event](/docs/platform/webhooks#Liveblocks-events) section of
+Visit the [webhook events](/docs/platform/webhooks#Liveblocks-events) section of
 our webhooks guide to learn more.
