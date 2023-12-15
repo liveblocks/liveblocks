@@ -36,7 +36,7 @@ export type QueryParams =
   | Record<string, string | number | boolean | null | undefined>
   | URLSearchParams;
 
-export type ThreadsFilterOptions<TThreadMetadata extends BaseMetadata> = {
+export type ThreadsOptions<TThreadMetadata extends BaseMetadata> = {
   query?: {
     metadata?: Partial<TThreadMetadata>;
   };
@@ -44,7 +44,7 @@ export type ThreadsFilterOptions<TThreadMetadata extends BaseMetadata> = {
 
 export type CommentsApi<TThreadMetadata extends BaseMetadata> = {
   getThreads(
-    options?: ThreadsFilterOptions<TThreadMetadata>
+    options?: ThreadsOptions<TThreadMetadata>
   ): Promise<ThreadData<TThreadMetadata>[]>;
   createThread(options: {
     threadId: string;
@@ -156,7 +156,7 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
   }
 
   async function getThreads(
-    options?: ThreadsFilterOptions<TThreadMetadata>
+    options?: ThreadsOptions<TThreadMetadata>
   ): Promise<ThreadData<TThreadMetadata>[]> {
     const response = await fetchApi(roomId, "/threads/search", {
       body: JSON.stringify({

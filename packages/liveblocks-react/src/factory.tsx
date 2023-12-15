@@ -20,7 +20,7 @@ import type {
   CommentData,
   EnterOptions,
   RoomEventMessage,
-  ThreadsFilterOptions,
+  ThreadsOptions,
   ToImmutable,
 } from "@liveblocks/core";
 import {
@@ -904,13 +904,13 @@ export function createRoomContext<
   }
 
   function useThreads(
-    options?: ThreadsFilterOptions<TThreadMetadata>
+    options?: ThreadsOptions<TThreadMetadata>
   ): ThreadsState<TThreadMetadata> {
     const room = useRoom();
     return commentsRoom.useThreads(room, options);
   }
 
-  function useThreadsSuspense(options?: ThreadsFilterOptions<TThreadMetadata>) {
+  function useThreadsSuspense(options?: ThreadsOptions<TThreadMetadata>) {
     const room = useRoom();
     return commentsRoom.useThreadsSuspense(room, options);
   }

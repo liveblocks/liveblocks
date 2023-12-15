@@ -11,7 +11,7 @@ import type {
   Resolve,
   Room,
   ThreadData,
-  ThreadsFilterOptions,
+  ThreadsOptions,
 } from "@liveblocks/core";
 import { CommentsApiError, makeEventSource, stringify } from "@liveblocks/core";
 import { nanoid } from "nanoid";
@@ -69,11 +69,11 @@ export type CommentsRoom<TThreadMetadata extends BaseMetadata> = {
   }>): JSX.Element;
   useThreads(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-    options?: ThreadsFilterOptions<TThreadMetadata>
+    options?: ThreadsOptions<TThreadMetadata>
   ): ThreadsState<TThreadMetadata>;
   useThreadsSuspense(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-    options?: ThreadsFilterOptions<TThreadMetadata>
+    options?: ThreadsOptions<TThreadMetadata>
   ): ThreadsStateSuccess<TThreadMetadata>;
   useCreateThread(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
@@ -160,8 +160,8 @@ export type ThreadsState<TThreadMetadata extends BaseMetadata> =
   | ThreadsStateLoading
   | ThreadsStateResolved<TThreadMetadata>;
 
-type ThreadsFilterOptionsInfo<TThreadMetadata extends BaseMetadata> = {
-  options: ThreadsFilterOptions<TThreadMetadata>; // The filter option
+type ThreadsOptionsInfo<TThreadMetadata extends BaseMetadata> = {
+  options: ThreadsOptions<TThreadMetadata>; // The filter option
   count: number; // The number of components using this filter option
 };
 
@@ -171,10 +171,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   const manager = createThreadsCacheManager<TThreadMetadata>();
 
   // A map that stores filter description for each filter option. The key is a stringified version of the filter options.
-  const filterOptions = new Map<
-    string,
-    ThreadsFilterOptionsInfo<TThreadMetadata>
-  >();
+  const filterOptions = new Map<string, ThreadsOptionsInfo<TThreadMetadata>>();
 
   // A map that stores the cache state for each filter option. The key is a stringified version of the filter options.
   const cacheStates = new Map<
@@ -450,7 +447,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
   function useThreads(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-    options: ThreadsFilterOptions<TThreadMetadata> = { query: { metadata: {} } }
+    options: ThreadsOptions<TThreadMetadata> = { query: { metadata: {} } }
   ): ThreadsState<TThreadMetadata> {
     const key = useMemo(() => stringify(options), [options]);
 
@@ -508,7 +505,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
   function useThreadsSuspense(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-    options: ThreadsFilterOptions<TThreadMetadata> = {}
+    options: ThreadsOptions<TThreadMetadata> = {}
   ): ThreadsStateSuccess<TThreadMetadata> {
     const key = useMemo(() => stringify(options), [options]);
 

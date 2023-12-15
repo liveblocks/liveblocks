@@ -19,7 +19,7 @@ import type {
   RoomEventMessage,
   RoomInitializers,
   ThreadData,
-  ThreadsFilterOptions,
+  ThreadsOptions,
   ToImmutable,
 } from "@liveblocks/core";
 
@@ -669,7 +669,7 @@ export type RoomContextBundle<
      * const { threads, error, isLoading } = useThreads();
      */
     useThreads(
-      options?: ThreadsFilterOptions<TThreadMetadata>
+      options?: ThreadsOptions<TThreadMetadata>
     ): ThreadsState<TThreadMetadata>;
 
     /**
@@ -821,7 +821,7 @@ export type RoomContextBundle<
          * const { threads } = useThreads();
          */
         useThreads(
-          options?: ThreadsFilterOptions<TThreadMetadata>
+          options?: ThreadsOptions<TThreadMetadata>
         ): ThreadsStateSuccess<TThreadMetadata>;
 
         /**
