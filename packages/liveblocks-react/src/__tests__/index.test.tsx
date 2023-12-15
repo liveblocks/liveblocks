@@ -446,8 +446,8 @@ describe("useThreads", () => {
     ];
 
     server.use(
-      rest.get(
-        "https://api.liveblocks.io/v2/c/rooms/room/threads",
+      rest.post(
+        "https://api.liveblocks.io/v2/c/rooms/room/threads/search",
         (_, res, ctx) => {
           return res(
             ctx.json({

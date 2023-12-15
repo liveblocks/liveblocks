@@ -184,7 +184,6 @@ export class Liveblocks {
   /** @internal */
   async get(path: URLSafeString, params?: QueryParams): Promise<Response> {
     const url = urljoin(this._baseUrl, path, params);
-    console.log("url", url);
     const headers = {
       Authorization: `Bearer ${this._secret}`,
     };

@@ -28,8 +28,8 @@ describe("useMutation", () => {
       await mutate(Promise.resolve(), { optimisticData: 42 });
     });
 
-    expect(manager.cache).toEqual({ isLoading: false, data: 42 });
-    expect(mockRevalidateCache).toHaveBeenCalledWith(false);
+    expect(manager.getCache()).toEqual(42);
+    expect(mockRevalidateCache).toHaveBeenCalledWith({ shouldDedupe: false });
   });
 
   test("should revert cache to initial state on mutation error", async () => {
@@ -51,9 +51,9 @@ describe("useMutation", () => {
       ).rejects.toThrow("Mutation error");
     });
 
-    expect(mockRevalidateCache).toHaveBeenCalledWith(false);
+    expect(mockRevalidateCache).toHaveBeenCalledWith({ shouldDedupe: false });
     // Verify that the cache has been reverted to its initial state
-    expect(manager.cache).toEqual({ isLoading: false, data: 42 });
+    expect(manager.getCache()).toEqual(42);
   });
 
   test("should reflect latest mutation in cache", async () => {
@@ -72,7 +72,7 @@ describe("useMutation", () => {
       mutate(Promise.resolve(), { optimisticData: 62 });
     });
 
-    expect(manager.cache).toEqual({ isLoading: false, data: 62 });
+    expect(manager.getCache()).toEqual(62);
   });
 
   test("should handle race conditions in mutations correctly", async () => {
@@ -102,10 +102,7 @@ describe("useMutation", () => {
     });
 
     // The cache should reflect the data from the last mutation
-    expect(manager.cache).toEqual({
-      isLoading: false,
-      data: 62,
-    });
+    expect(manager.getCache()).toEqual(62);
 
     // revalidateCache should have been called only once (for the last mutation)
     expect(mockRevalidateCache).toHaveBeenCalledTimes(1);
@@ -138,7 +135,7 @@ describe("useMutation", () => {
       const mutationPromise = mutate(delayedMutation, {
         optimisticData: 52,
       });
-      const revalidatePromise = revalidate(true);
+      const revalidatePromise = revalidate({ shouldDedupe: true });
 
       jest.runAllTimers(); // Complete all timers
 
@@ -147,9 +144,6 @@ describe("useMutation", () => {
     });
 
     // Final cache state should reflect the most recent update
-    expect(manager.cache).toEqual({
-      isLoading: false,
-      data: 62,
-    });
+    expect(manager.getCache()).toEqual(62);
   });
 });
