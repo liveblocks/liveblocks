@@ -204,6 +204,7 @@ export {
 export {
   convertToCommentData,
   convertToCommentUserReaction,
+  convertToInboxNotificationData,
   convertToThreadData,
 } from "./comments/convert-plain-data";
 export type { BaseMetadata } from "./types/BaseMetadata";

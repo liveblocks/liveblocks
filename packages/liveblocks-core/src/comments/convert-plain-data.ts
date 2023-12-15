@@ -4,6 +4,10 @@ import type {
   CommentUserReaction,
   CommentUserReactionPlain,
 } from "../types/CommentReaction";
+import type {
+  InboxNotificationData,
+  InboxNotificationDataPlain,
+} from "../types/InboxNotificationData";
 import type { ThreadData, ThreadDataPlain } from "../types/ThreadData";
 
 /**
@@ -43,7 +47,7 @@ export function convertToCommentData(data: CommentDataPlain): CommentData {
  * Converts a plain thread data object (usually returned by the API) to a thread data object that can be used by the client.
  * This is necessary because the plain data object stores dates as ISO strings, but the client expects them as Date objects.
  * @param data The plain thread data object (usually returned by the API)
- * @returns The rich hread data object that can be used by the client.
+ * @returns The rich thread data object that can be used by the client.
  */
 export function convertToThreadData<
   TThreadMetadata extends BaseMetadata = never,
@@ -75,5 +79,24 @@ export function convertToCommentUserReaction(
   return {
     ...data,
     createdAt: new Date(data.createdAt),
+  };
+}
+
+/**
+ * Converts a plain inbox notification data object (usually returned by the API) to an inbox notification data object that can be used by the client.
+ * This is necessary because the plain data object stores dates as ISO strings, but the client expects them as Date objects.
+ * @param data The plain inbox notification data object (usually returned by the API)
+ * @returns The rich inbox notification data object that can be used by the client.
+ */
+export function convertToInboxNotificationData(
+  data: InboxNotificationDataPlain
+): InboxNotificationData {
+  const notifiedAt = new Date(data.notifiedAt);
+  const readAt = data.readAt ? new Date(data.readAt) : null;
+
+  return {
+    ...data,
+    notifiedAt,
+    readAt,
   };
 }
