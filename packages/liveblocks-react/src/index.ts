@@ -15,3 +15,6 @@ export type {
 // Re-exports from @liveblocks/client, for convenience
 export type { Json, JsonObject } from "@liveblocks/client";
 export { shallow } from "@liveblocks/client";
+
+// Re-exports from @liveblocks/core, for convenience
+export type { ThreadsFilterOptions } from "@liveblocks/core";

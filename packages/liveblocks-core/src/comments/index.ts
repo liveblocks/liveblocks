@@ -30,10 +30,6 @@ type PartialNullable<T> = {
   [P in keyof T]?: T[P] | null | undefined;
 };
 
-export type QueryParams =
-  | Record<string, string | number | boolean | null | undefined>
-  | URLSearchParams;
-
 export type ThreadsFilterOptions<TThreadMetadata extends BaseMetadata> = {
   query?: {
     metadata?: Partial<TThreadMetadata>;
