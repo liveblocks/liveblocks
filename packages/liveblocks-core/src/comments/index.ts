@@ -1,19 +1,19 @@
 import type { AuthValue } from "../auth-manager";
 import type { JsonObject } from "../lib/Json";
 import type { Polyfills } from "../room";
+import type { BaseMetadata } from "../types/BaseMetadata";
+import type { CommentBody } from "../types/CommentBody";
+import type { CommentData, CommentDataPlain } from "../types/CommentData";
+import type {
+  CommentUserReaction,
+  CommentUserReactionPlain,
+} from "../types/CommentReaction";
+import type { ThreadData, ThreadDataPlain } from "../types/ThreadData";
 import {
   convertToCommentData,
   convertToCommentUserReaction,
   convertToThreadData,
-} from "./comment-body";
-import type { BaseMetadata } from "./types/BaseMetadata";
-import type { CommentBody } from "./types/CommentBody";
-import type { CommentData, CommentDataPlain } from "./types/CommentData";
-import type {
-  CommentUserReaction,
-  CommentUserReactionPlain,
-} from "./types/CommentReaction";
-import type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
+} from "./convert-plain-data";
 
 function getAuthBearerHeaderFromAuthValue(authValue: AuthValue) {
   if (authValue.type === "public") {
