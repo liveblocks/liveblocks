@@ -472,7 +472,6 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     options: ThreadsFilterOptions<TThreadMetadata> = { query: { metadata: {} } }
   ): ThreadsState<TThreadMetadata> {
     const normalizedOptions = normalizeFilterOptions(options);
-
     const key = useMemo(
       () => stringify(normalizedOptions),
       [normalizedOptions]
@@ -1213,8 +1212,3 @@ function normalizeFilterOptions<TThreadMetadata extends BaseMetadata>({
     },
   };
 }
-
-// function isSubset(subset: BaseMetadata, superset: BaseMetadata): boolean {
-//   for (const key in subset) {
-//   }
-// }
