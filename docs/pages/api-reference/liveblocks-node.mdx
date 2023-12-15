@@ -947,62 +947,473 @@ console.log(schema);
 Read the [schema validation](/docs/platform/schema-validation) page to learn
 more.
 
+#### Liveblocks.detachSchemaFromRoom [#delete-detach-schema-to-room]
+
+Detaches a schema from a room. This is a wrapper around the
+[Detach Schema from a Room API](/docs/api-reference/rest-api-endpoints#post-detach-schema-to-room)
+and returns no response.
+
+```ts
+await liveblocks.detachSchemaFromRoom("my-room-id");
+```
+
 ### Comments
 
-#### Liveblocks.getThreads [#get-threads]
+#### Liveblocks.getThreads [#get-rooms-roomId-threads]
 
 Returns a list of threads found inside a room. Throws an error if the room isn’t
 found. This is a wrapper around the
-[Get Room Threads API](/docs/api-reference/rest-api-endpoints#get-threads) and
-returns the same response.
+[Get Room Threads API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-threads)
+and returns the same response.
 
 ```ts
-const threads = await liveblocks.getThreads({
-  roomId: "my-room",
+const { data: threads } = await liveblocks.getThreads({
+  roomId: "my-room-id",
+});
+
+// [{ type: "thread", id: "th_d75sF3...", ... }, ...]
+console.log(threads);
+```
+
+#### Liveblocks.createThread [#post-rooms-roomId-threads] [@badge=Beta]
+
+Creates a new thread within a specific room, using room ID and thread data. This
+is a wrapper around the
+[Create Thread API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads)
+and returns the new thread.
+
+```ts
+const thread = await liveblocks.createThread({
+  roomId: "my-room-id",
+
+  data: {
+    comment: {
+      userId: "florent@example.com",
+      body: {
+        version: 1,
+        content: [
+          /* The comment's body text goes here, see below */
+        ],
+      },
+    },
+  },
+});
+
+// { type: "thread", id: "th_d75sF3...", ... }
+console.log(thread);
+```
+
+A comment’s body is an array of paragraphs, each containing child nodes. Here’s
+an example of how to construct a comment’s body, which can be submitted under
+`data.comment.body`.
+
+```tsx highlight="3-11,20"
+import { CommentBody } from "@liveblocks/node";
+
+const body: CommentBody = {
+  version: 1,
+  content: [
+    {
+      type: "paragraph",
+      children: [{ text: "Hello " }, { text: "world", bold: true }],
+    },
+  ],
+};
+
+const thread = await liveblocks.createThread({
+  roomId: "my-room-id",
+
+  data: {
+    // ...
+    comment: {
+      // The comment's body, uses the `CommentBody` type
+      body,
+
+      // ...
+    },
+  },
 });
 ```
 
-#### Liveblocks.getThread [#get-thread]
+This method has a number of options, allowing for custom metadata and a creation
+date for the comment.
+
+```ts
+const thread = await liveblocks.createThread({
+  roomId: "my-room-id",
+
+  data: {
+    // Optional, custom metadata properties
+    metadata: {
+      color: "blue",
+      page: 3,
+      resolved: true,
+    },
+
+    // Data for the first comment in the thread
+    comment: {
+      // The ID of the user that created the comment
+      userId: "florent@example.com",
+
+      // Optional, when the comment was created.
+      createdAt: new Date(),
+
+      // The comment's body, uses the `CommentBody` type
+      body: {
+        version: 1,
+        content: [
+          /* The comment's body text goes here, see above */
+        ],
+      },
+    },
+  },
+});
+
+// { type: "thread", id: "th_d75sF3...", ... }
+console.log(thread);
+```
+
+#### Liveblocks.getThread [#get-rooms-roomId-threads-threadId]
 
 Returns a thread. Throws an error if the room or thread isn’t found. This is a
 wrapper around the
-[Get Thread API](/docs/api-reference/rest-api-endpoints#get-thread) and returns
-the same response.
+[Get Thread API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-threads-threadId)
+and returns the same response.
 
 ```ts
 const thread = await liveblocks.getThread({
-  roomId: "my-room",
-  threadId: "my-thread",
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
 });
+
+// { type: "thread", id: "th_d75sF3...", ... }
+console.log(thread);
 ```
 
-#### Liveblocks.getThreadParticipants [#get-thread-participants]
+#### Liveblocks.getThreadParticipants [#get-rooms-roomId-threads-threadId-participants]
 
 Returns a list of participants found inside a thread. A participant is a user
 who has commented or been mentioned in the thread. Throws an error if the room
 or thread isn’t found. This is a wrapper around the
-[Get Thread Participants API](/docs/api-reference/rest-api-endpoints#get-thread-participants)
+[Get Thread Participants API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-threads-threadId-participants)
 and returns the same response.
 
 ```ts
 const { participantIds } = await liveblocks.getThreadParticipants({
   roomId: "my-room-id",
-  threadId: "my-thread-id",
+  threadId: "th_d75sF3...",
+});
+
+// ["chris@example.com", "nimesh@example.com", ...]
+console.log(participantIds);
+```
+
+#### Liveblocks.editThreadMetadata [#post-rooms-roomId-threads-threadId-metadata] [@badge=Beta]
+
+Updates the metadata of a specific thread within a room. This method allows you
+to modify the metadata of a thread, including user information and the date of
+the last update. Throws an error if the room or thread isn’t found. This is a
+wrapper around the
+[Update Thread Metadata API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-metadata)
+and returns the updated metadata.
+
+```ts
+const editedMetadata = await liveblocks.editThreadMetadata({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+
+  data: {
+    metadata: {
+      color: "yellow",
+    },
+    userId: "marc@example.com",
+    updatedAt: new Date(), // Optional
+  },
+});
+
+// { color: "yellow", page: 3, resolved: true }
+console.log(editedMetadata);
+```
+
+Metadata can be a `string`, `number`, or `boolean`. You can also use `null` to
+remove metadata from a thread. Here’s an example using every option.
+
+```ts
+const editedMetadata = await liveblocks.editThreadMetadata({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+
+  data: {
+    // Custom metadata
+    metadata: {
+      // Metadata can be a string, number, or boolean
+      title: "My thread title",
+      page: 3,
+      resolved: true,
+
+      // Remove metadata with null
+      color: null,
+    },
+
+    // The ID of the user that updated the metadata
+    userId: "marc@example.com",
+
+    // Optional, the time the user updated the metadata
+    updatedAt: new Date(),
+  },
+});
+
+// { title: "My thread title", page: 3, resolved: true }
+console.log(editedMetadata);
+```
+
+#### Liveblocks.createComment [#post-rooms-roomId-threads-threadId-comments] [@badge=Beta]
+
+Creates a new comment in a specific thread within a room. This method allows
+users to add comments to a conversation thread, specifying the user who made the
+comment and the content of the comment. This method is a wrapper around the
+[Get Comment API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-comments)
+and returns the new comment.
+
+```ts
+const comment = await liveblocks.createComment({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+
+  data: {
+    body: {
+      version: 1,
+      content: [
+        /* The comment's body text goes here, see below */
+      ],
+    },
+    userId: "pierre@example.com",
+    createdAt: new Date(), // Optional
+  },
 });
 ```
 
-#### Liveblocks.getComment [#get-comment]
+A comment’s body is an array of paragraphs, each containing child nodes. Here’s
+an example of how to construct a comment’s body, which can be submitted under
+`data.body`.
+
+```tsx highlight="3-11,19"
+import { CommentBody } from "@liveblocks/node";
+
+const body: CommentBody = {
+  version: 1,
+  content: [
+    {
+      type: "paragraph",
+      children: [{ text: "Hello " }, { text: "world", bold: true }],
+    },
+  ],
+};
+
+const comment = await liveblocks.createComment({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+
+  data: {
+    // The comment's body, uses the `CommentBody` type
+    body,
+
+    // ...
+  },
+});
+```
+
+This method has a number of options, including the option to add a custom
+creation date to the comment.
+
+```ts
+const comment = await liveblocks.createComment({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+
+  data: {
+    // The comment's body, uses the `CommentBody` type
+    body: {
+      version: 1,
+      content: [
+        /* The comment's body text goes here, see above */
+      ],
+    },
+
+    // The ID of the user that created the comment
+    userId: "adrien@example.com",
+
+    // The time the comment was created
+    createdAt: new Date(),
+  },
+});
+```
+
+#### Liveblocks.getComment [#get-rooms-roomId-threads-threadId-comments-commentId]
 
 Returns a comment. Throws an error if the room, thread, or comment isn’t found.
 This is a wrapper around the
-[Get Comment API](/docs/api-reference/rest-api-endpoints#get-comment) and
-returns the same response.
+[Get Comment API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-threads-threadId-comments-commentId)
+and returns the same response.
 
 ```ts
 const comment = await liveblocks.getComment({
   roomId: "my-room-id",
-  threadId: "my-thread-id",
-  commentId: "my-comment-id",
+  threadId: "th_d75sF3...",
+  commentId: "cm_agH76a...",
+});
+
+// { type: "comment", threadId: "th_d75sF3...", ... }
+console.log(comment);
+```
+
+#### Liveblocks.editComment [#post-rooms-roomId-threads-threadId-comments-commentId] [@badge=Beta]
+
+Edits an existing comment in a specific thread within a room. This method allows
+users to update the content of their previously posted comments, with the option
+to specify the time of the edit. Throws an error if the comment isn’t found.
+This is a wrapper around the
+[Edit Comment API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-comments-commentId)
+and returns the updated comment.
+
+```ts
+const editedComment = await liveblocks.editComment({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+  commentId: "cm_agH76a...",
+
+  data: {
+    body: {
+      version: 1,
+      content: [
+        /* The comment's body text goes here, see below */
+      ],
+    },
+    userId: "alicia@example.com",
+    createdAt: new Date(), // Optional
+  },
+});
+
+// { type: "comment", threadId: "th_d75sF3...", ... }
+console.log(editedComment);
+```
+
+A comment’s body is an array of paragraphs, each containing child nodes. Here’s
+an example of how to construct a comment’s body, which can be submitted under
+`data.body`.
+
+```tsx highlight="3-11,19"
+import { CommentBody } from "@liveblocks/node";
+
+const body: CommentBody = {
+  version: 1,
+  content: [
+    {
+      type: "paragraph",
+      children: [{ text: "Hello " }, { text: "world", bold: true }],
+    },
+  ],
+};
+
+const comment = await liveblocks.createComment({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+
+  data: {
+    // The comment's body, uses the `CommentBody` type
+    body,
+
+    // ...
+  },
+});
+```
+
+```ts
+const editedComment = await liveblocks.editComment({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+  commentId: "cm_agH76a...",
+
+  data: {
+    // The comment's body, uses the `CommentBody` type
+    body: {
+      version: 1,
+      content: [
+        /* The comment's body text goes here, see above */
+      ],
+    },
+
+    // The ID of the user that edited the comment
+    userId: "alicia@example.com",
+
+    // Optional, the time the comment was edited
+    editedAt: new Date(),
+  },
+});
+
+// { type: "comment", threadId: "th_d75sF3...", ... }
+console.log(editedComment);
+```
+
+#### Liveblocks.deleteComment [#delete-rooms-roomId-threads-threadId-comments-commentId] [@badge=Beta]
+
+Deletes a specific comment from a thread within a room. If there are no
+remaining comments in the thread, the thread is also deleted. This method throws
+an error if the comment isn’t found. This is a wrapper around the
+[Delete Comment API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-comments-commentId)
+and returns no response.
+
+```ts
+await liveblocks.deleteComment({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+  commentId: "cm_agH76a...",
+});
+```
+
+#### Liveblocks.addCommentReaction [#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction] [@badge=Beta]
+
+Adds a reaction to a specific comment in a thread within a room. Throws an error
+if the comment isn’t found or if the user has already added the same reaction on
+the comment. This is a wrapper around the
+[Add Comment Reaction API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction)
+and returns the new reaction.
+
+```ts
+const reaction = await liveblocks.addCommentReaction({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+  commentId: "cm_agH76a...",
+
+  data: {
+    emoji: "👨‍👩‍👧",
+    userId: "guillaume@example.com",
+    createdAt: new Date(), // Optional, the time the reaction was added
+  },
+});
+
+// { emoji: "👨‍👩‍👧", userId "guillaume@example.com", ... }
+console.log(reaction);
+```
+
+#### Liveblocks.removeCommentReaction [#post-rooms-roomId-threads-threadId-comments-commentId-remove-reaction] [@badge=Beta]
+
+Removes a reaction from a specific comment in a thread within a room. Throws an
+error if the comment reaction isn’t found. This is a wrapper around the
+[Remove Comment Reaction API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-comments-commentId-remove-reaction)
+and returns no response.
+
+```ts
+await liveblocks.removeCommentReaction({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+  commentId: "cm_agH76a...",
+
+  data: {
+    emoji: "👨‍👩‍👧",
+    userId: "steven@example.com",
+    removedAt: new Date(), // Optional, the time the reaction is to be removed
+  },
 });
 ```
 
@@ -1325,7 +1736,7 @@ export function POST(request) {
 
 ---
 
-### authorize (deprecated) [#authorize]
+### authorize [#authorize] [@badge=Deprecated]
 
 <Banner title="Deprecated" type="error">
   For now, it’s still supported, but this way of authorizing will eventually get

@@ -1,4 +1,4 @@
-# v1.9.0 (Unreleased)
+# v1.9.0
 
 ### `@liveblocks/node`
 
@@ -7,6 +7,10 @@
   `deleteComment`, `addCommentReaction`, and `removeCommentReaction` methods)
 - Fix the return type of `getActiveUsers` to match the data returned from the
   endpoint.
+
+### `@liveblocks/react`
+
+- Add `query` option to `useThreads` to filter threads based on their metadata.
 
 ### `@liveblocks/react-comments`
 
