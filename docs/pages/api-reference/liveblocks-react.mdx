@@ -995,6 +995,16 @@ batch(() => {
 });
 ```
 
+Note that `batch` cannot take an `async` function.
+
+```tsx
+// ❌ Won't work
+batch(async () => /* ... */);
+
+// ✅ Will work
+batch(() => /*... */);
+```
+
 ### useHistory
 
 Returns the room’s history. See [`Room.history`][] for more information.
