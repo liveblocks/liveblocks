@@ -325,7 +325,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     const [isReactionActionOpen, setReactionActionOpen] = useState(false);
 
     const markThreadAsRead = useCallback(() => {
-      // TODO: Mark thread as read
+      // [comments-unread] TODO: Mark thread as read
       console.log("Mark thread as read", markThreadAsReadWhenVisible);
     }, [markThreadAsReadWhenVisible]);
 

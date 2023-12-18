@@ -434,22 +434,22 @@ export function createClient(options: ClientOptions): Client {
   }
 
   function getInboxNotifications() {
-    // TODO: GET /c/inbox-notifications
+    // [comments-unread] TODO: GET /c/inbox-notifications
     return Promise.resolve({ inboxNotifications: [], threads: [] });
   }
 
   function getUnreadInboxNotificationsCount() {
-    // TODO: GET /c/inbox-notifications/count
+    // [comments-unread] TODO: GET /c/inbox-notifications/count
     return Promise.resolve(0);
   }
 
   function markAllInboxNotificationsAsRead() {
-    // TODO: POST /c/inbox-notifications/read with { inboxNotificationIds: "all" }
+    // [comments-unread] TODO: POST /c/inbox-notifications/read with { inboxNotificationIds: "all" }
     return Promise.resolve();
   }
 
   function markInboxNotificationsAsRead(_inboxNotificationIds: string[]) {
-    // TODO: POST /c/inbox-notifications/read with { inboxNotificationIds }
+    // [comments-unread] TODO: POST /c/inbox-notifications/read with { inboxNotificationIds }
     return Promise.resolve();
   }
 

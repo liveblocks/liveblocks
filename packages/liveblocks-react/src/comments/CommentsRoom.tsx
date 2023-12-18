@@ -275,7 +275,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     const fetcher = useCallback(async () => {
       const responses = await Promise.all(
         Array.from(filterOptions.values()).map(async (info) => {
-          // TODO: Cache/use inbox notifications returned by `getThreads`
+          // [comments-unread] TODO: Cache/use inbox notifications returned by `getThreads`
           const { threads } = await room.getThreads(info.options);
 
           return threads;
@@ -462,7 +462,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
     const fetcher = useCallback(
       async () => {
-        // TODO: Cache/use inbox notifications returned by `getThreads`
+        // [comments-unread] TODO: Cache/use inbox notifications returned by `getThreads`
         const { threads } = await room.getThreads(options);
 
         return threads;
@@ -523,7 +523,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
     const fetcher = useCallback(
       async () => {
-        // TODO: Cache/use inbox notifications returned by `getThreads`
+        // [comments-unread] TODO: Cache/use inbox notifications returned by `getThreads`
         const { threads } = await room.getThreads(options);
 
         return threads;
@@ -591,7 +591,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
   ) {
     const getThreads = useCallback(async () => {
-      // TODO: Cache/use inbox notifications returned by `getThreads`
+      // [comments-unread] TODO: Cache/use inbox notifications returned by `getThreads`
       const { threads } = await room.getThreads();
 
       return threads;
@@ -770,7 +770,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
   ) {
     const getThreads = useCallback(async () => {
-      // TODO: Cache/use inbox notifications returned by `getThreads`
+      // [comments-unread] TODO: Cache/use inbox notifications returned by `getThreads`
       const { threads } = await room.getThreads();
 
       return threads;
@@ -829,7 +829,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
   ) {
     const getThreads = useCallback(async () => {
-      // TODO: Cache/use inbox notifications returned by `getThreads`
+      // [comments-unread] TODO: Cache/use inbox notifications returned by `getThreads`
       const { threads } = await room.getThreads();
 
       return threads;
@@ -898,7 +898,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
   ) {
     const getThreads = useCallback(async () => {
-      // TODO: Cache/use inbox notifications returned by `getThreads`
+      // [comments-unread] TODO: Cache/use inbox notifications returned by `getThreads`
       const { threads } = await room.getThreads();
 
       return threads;
@@ -984,7 +984,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
   ) {
     const getThreads = useCallback(async () => {
-      // TODO: Cache/use inbox notifications returned by `getThreads`
+      // [comments-unread] TODO: Cache/use inbox notifications returned by `getThreads`
       const { threads } = await room.getThreads();
 
       return threads;
