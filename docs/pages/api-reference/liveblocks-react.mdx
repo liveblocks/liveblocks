@@ -981,10 +981,11 @@ which will automatically batch all mutations.
 
 </Banner>
 
-Returns a function that batches modifications made during the given function.
-All the modifications are sent to other clients in a single message. All the
-modifications are merged in a single history item (undo/redo). All the
-subscribers are called only after the batch is over.
+Returns a function that batches Storage and Presence modifications made during
+the given function. Each modification is grouped together, which means that
+other clients receive the changes as a single message after the batch function
+has run. Every modification made during the batch is merged into a single
+history item (undo/redo).
 
 ```tsx
 import { useBatch } from "./liveblocks.config";
@@ -993,6 +994,16 @@ const batch = useBatch();
 batch(() => {
   // All modifications made in this callback are batched
 });
+```
+
+Note that `batch` cannot take an `async` function.
+
+```tsx
+// ❌ Won't work
+batch(async () => /* ... */);
+
+// ✅ Will work
+batch(() => /*... */);
 ```
 
 ### useHistory
