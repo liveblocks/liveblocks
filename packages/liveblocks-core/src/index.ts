@@ -186,8 +186,24 @@ import type * as DevTools from "./types/DevToolsTreeNode";
 export type { DevTools };
 
 // Comments
-export type { CommentsApi } from "./comments";
+export type { CommentsApi, ThreadsFilterOptions } from "./comments";
 export { CommentsApiError, createCommentsApi } from "./comments";
+export type {
+  CommentBodyLinkElementArgs,
+  CommentBodyMentionElementArgs,
+  CommentBodyParagraphElementArgs,
+  CommentBodyResolveUsersArgs,
+  CommentBodyTextElementArgs,
+  StringifyCommentBodyElements,
+  StringifyCommentBodyOptions,
+} from "./comments/comment-body";
+export {
+  convertToCommentData,
+  convertToCommentUserReaction,
+  convertToThreadData,
+  getMentionedIdsFromCommentBody,
+  stringifyCommentBody,
+} from "./comments/comment-body";
 export type { BaseMetadata } from "./comments/types/BaseMetadata";
 export type {
   CommentBody,
@@ -201,6 +217,11 @@ export type {
 } from "./comments/types/CommentBody";
 export type {
   CommentData,
+  CommentDataPlain,
   CommentReaction,
 } from "./comments/types/CommentData";
-export type { ThreadData } from "./comments/types/ThreadData";
+export type {
+  CommentUserReaction,
+  CommentUserReactionPlain,
+} from "./comments/types/CommentReaction";
+export type { ThreadData, ThreadDataPlain } from "./comments/types/ThreadData";

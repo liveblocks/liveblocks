@@ -396,6 +396,13 @@ const myPresence = useSelf((me) => me.presence);
 const updateMyPresence = useUpdateMyPresence();
 ```
 
+`updateMyPresence` accepts an optional argument to add a new item to the
+undo/redo stack. See [`room.history`][] for more information.
+
+```ts
+updateMyPresence({ selectedId: "xxx" }, { addToHistory: true });
+```
+
 ### useUpdateMyPresence
 
 Returns a setter function to update the current user’s presence.
@@ -416,6 +423,13 @@ import { useUpdateMyPresence } from "./liveblocks.config";
 const updateMyPresence = useUpdateMyPresence();
 
 updateMyPresence({ y: 0 });
+```
+
+`updateMyPresence` accepts an optional argument to add a new item to the
+undo/redo stack. See [`room.history`][] for more information.
+
+```ts
+updateMyPresence({ selectedId: "xxx" }, { addToHistory: true });
 ```
 
 ### useSelf
@@ -967,10 +981,11 @@ which will automatically batch all mutations.
 
 </Banner>
 
-Returns a function that batches modifications made during the given function.
-All the modifications are sent to other clients in a single message. All the
-modifications are merged in a single history item (undo/redo). All the
-subscribers are called only after the batch is over.
+Returns a function that batches Storage and Presence modifications made during
+the given function. Each modification is grouped together, which means that
+other clients receive the changes as a single message after the batch function
+has run. Every modification made during the batch is merged into a single
+history item (undo/redo).
 
 ```tsx
 import { useBatch } from "./liveblocks.config";
@@ -979,6 +994,16 @@ const batch = useBatch();
 batch(() => {
   // All modifications made in this callback are batched
 });
+```
+
+Note that `batch` cannot take an `async` function.
+
+```tsx
+// ❌ Won't work
+batch(async () => /* ... */);
+
+// ✅ Will work
+batch(() => /*... */);
 ```
 
 ### useHistory
@@ -1192,8 +1217,24 @@ import { useThreads } from "./liveblocks.config";
 const { threads, error, isLoading } = useThreads();
 ```
 
+`useThreads` can also take an optional `query` parameter, to filter threads
+based on their metadata.
+
+```tsx
+// Returns the threads with `metadata.color === "blue"` and `metadata.resolved === true`
+const { threads } = useThreads({
+  query: {
+    metadata: {
+      // Custom metadata query goes here
+      color: "blue",
+      resolved: true,
+    },
+  },
+});
+```
+
 👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there's an error.
+return a loading state and will throw when there’s an error.
 
 ### useUser
 
@@ -1206,7 +1247,7 @@ const { user, error, isLoading } = useUser("user-id");
 ```
 
 👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there's an error.
+return a loading state and will throw when there’s an error.
 
 <Banner title="Providing a resolver function">
 
@@ -1645,7 +1686,7 @@ function Page() {
 
 ## Deprecated
 
-### LiveblocksProvider
+### LiveblocksProvider [@badge=Deprecated]
 
 <Banner type="error" title="Deprecated in 0.17, removed in 0.18">
 

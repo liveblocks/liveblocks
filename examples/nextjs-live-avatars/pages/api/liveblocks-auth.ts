@@ -15,7 +15,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   const session = liveblocks.prepareSession(`user-${userIndex}`, {
     userInfo: {
       name: NAMES[userIndex],
-      imageUrl: `https://liveblocks.io/avatars/avatar-${Math.floor(
+      avatar: `https://liveblocks.io/avatars/avatar-${Math.floor(
         Math.random() * 30
       )}.png`,
     },

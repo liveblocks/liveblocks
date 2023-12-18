@@ -1,16 +1,86 @@
-# 1.7.1 (not yet released)
+# v1.9.0
+
+### `@liveblocks/node`
+
+- Add the Comments write REST APIs as fully typed methods. (includes
+  `createThread`, `editThreadMetadata`, `createComment`, `editComment`,
+  `deleteComment`, `addCommentReaction`, and `removeCommentReaction` methods)
+- Fix the return type of `getActiveUsers` to match the data returned from the
+  endpoint.
+
+### `@liveblocks/react`
+
+- Add `query` option to `useThreads` to filter threads based on their metadata.
 
 ### `@liveblocks/react-comments`
 
+- Add support for exit animations to `ComposerSuggestions`.
+
+# v1.8.2
+
+### `@liveblocks/react`
+
+- Improve Comments revalidation when losing network or staying in the
+  background.
+- Improve error handling of Comments mutations. (e.g. thread creation, comment
+  creation, etc.)
+
+### `@liveblocks/client`
+
+- Export the `CommentBody` utilities added to `@liveblocks/node` in v1.8.0.
+- Harmonize exports with `@liveblocks/node`. (added `IUserInfo` and
+  `PlainLsonObject`)
+
+### `@liveblocks/node`
+
+- Harmonize exports with `@liveblocks/client`. (added `CommentBody`,
+  `CommentBodyBlockElement`, `CommentBodyElement`, `CommentBodyInlineElement`,
+  `CommentBodyLink`, `CommentBodyMention`, `CommentBodyParagraph`,
+  `CommentBodyText`, `JsonArray`, `JsonScalar`, `Lson`, `LsonObject`, and
+  `User`)
+
+# v1.8.1
+
+- Fix a bug in `toPlainLson` helper
+- Fix a bug where pausing history more than once could lead to history loss
+
+# v1.8.0
+
+This release adds all the REST APIs as fully typed methods, and utilities to
+transform comments, to `@liveblocks/node`.
+
+### `@liveblocks/node`
+
+- Add all the REST APIs as fully typed methods to `Liveblocks` client. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#Liveblocks-client).
+- Add utilities to work with the `CommentBody` format from Comments:
+  - `getMentionedIdsFromCommentBody(body)` - Get a list of all mentioned IDs
+    from a `CommentBody`. See
+    [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#get-mentioned-ids-from-comment-body).
+  - `stringifyCommentBody(body, options)` - Convert a `CommentBody` to a string,
+    either as plain text, HTML, or Markdown. It supports resolving mention IDs
+    similarly to `@liveblocks/react` and overriding each element to control the
+    formatting. See
+    [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#stringify-comment-body).
+
+# 1.7.1
+
+### `@liveblocks/react-comments`
+
+- Fix `Composer` focus issues.
 - Improve relative date formatting for some locales. (e.g. the `"fr"`` locale
   formatted “1h ago” as “-1 h” instead of “il y a 1 h”)
 - Improve default monospace font for inline code blocks.
 
-# 1.7.0
+# v1.7.0
 
 [Liveblocks Comments](https://liveblocks.io/comments) is now available for
 everyone as a public beta, learn more about this
 [in the announcement](https://liveblocks.io/blog/liveblocks-comments-is-available-for-everyone).
+
+### `@liveblocks/client`
+
+- Improve some internal logging.
 
 ### `@liveblocks/react`
 
@@ -24,17 +94,11 @@ everyone as a public beta, learn more about this
 
 - Add `ThreadMetadata` type to `--init` command.
 
-# v1.6.1
-
-### `@liveblocks/client`
-
-- Improve some internal logging
-
 # v1.6.0
 
 ### `@liveblocks/yjs`
 
-- Add support for subdocs
+- Add support for subdocs.
 
 # v1.5.2
 

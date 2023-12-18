@@ -20,6 +20,7 @@ import type {
   CommentData,
   EnterOptions,
   RoomEventMessage,
+  ThreadsFilterOptions,
   ToImmutable,
 } from "@liveblocks/core";
 import {
@@ -34,13 +35,8 @@ import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import type {
-  CommentReactionOptions,
-  CommentsRoom,
   CreateCommentOptions,
-  CreateThreadOptions,
-  DeleteCommentOptions,
   EditCommentOptions,
-  EditThreadMetadataOptions,
   ThreadsState,
 } from "./comments/CommentsRoom";
 import { createCommentsRoom } from "./comments/CommentsRoom";
@@ -230,6 +226,12 @@ export function createRoomContext<
 
   const RoomContext = React.createContext<TRoom | null>(null);
 
+  const commentsErrorEventSource =
+    makeEventSource<CommentsError<TThreadMetadata>>();
+
+  const { CommentsRoomProvider, ...commentsRoom } =
+    createCommentsRoom<TThreadMetadata>(commentsErrorEventSource);
+
   /**
    * RATIONALE:
    * At the "Outer" RoomProvider level, we keep a cache and produce
@@ -355,29 +357,27 @@ export function createRoomContext<
       }
 
       return () => {
-        const commentsRoom = commentsRooms.get(room);
-        if (commentsRoom) {
-          commentsRooms.delete(room);
-        }
         leave();
       };
     }, [roomId, frozenProps, stableEnterRoom]);
 
     return (
       <RoomContext.Provider value={room}>
-        <ContextBundle.Provider
-          value={
-            internalBundle as unknown as InternalRoomContextBundle<
-              JsonObject,
-              LsonObject,
-              BaseUserMeta,
-              never,
-              BaseMetadata
-            >
-          }
-        >
-          {props.children}
-        </ContextBundle.Provider>
+        <CommentsRoomProvider room={room}>
+          <ContextBundle.Provider
+            value={
+              internalBundle as unknown as InternalRoomContextBundle<
+                JsonObject,
+                LsonObject,
+                BaseUserMeta,
+                never,
+                BaseMetadata
+              >
+            }
+          >
+            {props.children}
+          </ContextBundle.Provider>
+        </CommentsRoomProvider>
       </RoomContext.Provider>
     );
   }
@@ -903,104 +903,51 @@ export function createRoomContext<
     return useLegacyKey(key) as TStorage[TKey];
   }
 
-  const commentsErrorEventSource =
-    makeEventSource<CommentsError<TThreadMetadata>>();
-  const commentsRooms = new Map<
-    Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-    CommentsRoom<TThreadMetadata>
-  >();
-
-  function getCommentsRoom(
-    room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>
-  ) {
-    let commentsRoom = commentsRooms.get(room);
-    if (commentsRoom === undefined) {
-      commentsRoom = createCommentsRoom(room, commentsErrorEventSource);
-      commentsRooms.set(room, commentsRoom);
-    }
-    return commentsRoom;
+  function useThreads(
+    options?: ThreadsFilterOptions<TThreadMetadata>
+  ): ThreadsState<TThreadMetadata> {
+    const room = useRoom();
+    return commentsRoom.useThreads(room, options);
   }
 
-  function useThreads(): ThreadsState<TThreadMetadata> {
+  function useThreadsSuspense(options?: ThreadsFilterOptions<TThreadMetadata>) {
     const room = useRoom();
-
-    return getCommentsRoom(room).useThreads();
-  }
-
-  function useThreadsSuspense() {
-    const room = useRoom();
-
-    return getCommentsRoom(room).useThreadsSuspense();
+    return commentsRoom.useThreadsSuspense(room, options);
   }
 
   function useCreateThread() {
     const room = useRoom();
-
-    return React.useCallback(
-      (options: CreateThreadOptions<TThreadMetadata>) =>
-        getCommentsRoom(room).createThread(options),
-      [room]
-    );
+    return commentsRoom.useCreateThread(room);
   }
 
   function useEditThreadMetadata() {
     const room = useRoom();
-
-    return React.useCallback(
-      (options: EditThreadMetadataOptions<TThreadMetadata>) =>
-        getCommentsRoom(room).editThreadMetadata(options),
-      [room]
-    );
+    return commentsRoom.useEditThreadMetadata(room);
   }
 
   function useAddReaction() {
     const room = useRoom();
-
-    return React.useCallback(
-      (options: CommentReactionOptions) =>
-        getCommentsRoom(room).addReaction(options),
-      [room]
-    );
+    return commentsRoom.useAddReaction(room);
   }
 
   function useRemoveReaction() {
     const room = useRoom();
-
-    return React.useCallback(
-      (options: CommentReactionOptions) =>
-        getCommentsRoom(room).removeReaction(options),
-      [room]
-    );
+    return commentsRoom.useRemoveReaction(room);
   }
 
   function useCreateComment(): (options: CreateCommentOptions) => CommentData {
     const room = useRoom();
-
-    return React.useCallback(
-      (options: CreateCommentOptions) =>
-        getCommentsRoom(room).createComment(options),
-      [room]
-    );
+    return commentsRoom.useCreateComment(room);
   }
 
   function useEditComment(): (options: EditCommentOptions) => void {
     const room = useRoom();
-
-    return React.useCallback(
-      (options: EditCommentOptions) =>
-        getCommentsRoom(room).editComment(options),
-      [room]
-    );
+    return commentsRoom.useEditComment(room);
   }
 
   function useDeleteComment() {
     const room = useRoom();
-
-    return React.useCallback(
-      (options: DeleteCommentOptions) =>
-        getCommentsRoom(room).deleteComment(options),
-      [room]
-    );
+    return commentsRoom.useDeleteComment(room);
   }
 
   const { resolveUsers, resolveMentionSuggestions } = options ?? {};

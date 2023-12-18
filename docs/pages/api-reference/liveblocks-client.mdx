@@ -706,13 +706,10 @@ const unsubscribe = room.subscribe("storage-status", (status) => {
 
 ### Room.batch
 
-Batches modifications made during the given function.
-
-All the modifications are sent to other clients in a single message.
-
-All the subscribers are called only after the batch is over.
-
-All the modifications are merged in a single history item (undo/redo).
+Batches Storage and Presence modifications made during the given function. Each
+modification is grouped together, which means that other clients receive the
+changes as a single message after the batch function has run. Every modification
+made during the batch is merged into a single history item (undo/redo).
 
 ```ts
 const { root } = await room.getStorage();
@@ -720,6 +717,16 @@ room.batch(() => {
   root.set("x", 0);
   room.updatePresence({ cursor: { x: 100, y: 100 } });
 });
+```
+
+Note that `room.batch` cannot take an `async` function.
+
+```tsx
+// ❌ Won't work
+room.batch(async () => /* ... */);
+
+// ✅ Will work
+room.batch(() => /*... */);
 ```
 
 ### Room.history
@@ -1467,6 +1474,170 @@ Storage tree.
 const list = new LiveList(/* ... */);
 root.set("a", list);
 root.set("b", list.clone());
+```
+
+## Utilities
+
+### getMentionedIdsFromCommentBody [#get-mentioned-ids-from-comment-body]
+
+Returns an array of each user’s ID that has been mentioned in a `CommentBody`
+(found under `comment.body`).
+
+```ts
+import { getMentionedIdsFromCommentBody } from "@liveblocks/client";
+
+const mentionedIds = getMentionedIdsFromCommentBody(comment.body);
+```
+
+Here’s an example with a custom `CommentBody`.
+
+```ts
+import {
+  CommentBody,
+  getMentionedIdsFromCommentBody,
+} from "@liveblocks/client";
+
+// Create a custom `CommentBody`
+const commentBody: CommentBody = {
+  version: 1,
+  content: [
+    {
+      type: "paragraph",
+      children: [
+        { text: "Hello " },
+        { type: "mention", id: "chris@example.com" },
+      ],
+    },
+  ],
+};
+
+// Get the mentions inside the comment's body
+const mentionedIds = getMentionedIdsFromCommentBody(commentBody);
+
+// ["chris@example.com"]
+console.log(mentionedIds);
+```
+
+<Banner title="Also available from @liveblocks/node">
+
+If you’d like to use this on the server side, it's also available from
+[`@liveblocks/node`](/docs/api-reference/liveblocks-node#get-mentioned-ids-from-comment-body).
+
+</Banner>
+
+### stringifyCommentBody [#stringify-comment-body]
+
+Used to convert a `CommentBody` (found under `comment.body`) into either a plain
+string, Markdown, HTML, or a custom format.
+
+```ts
+import { stringifyCommentBody } from "@liveblocks/client";
+
+const stringComment = await stringifyCommentBody(comment.body);
+
+// "Hello marc@example.com from https://liveblocks.io"
+console.log(stringComment);
+```
+
+A number of options are available.
+
+```ts
+import { stringifyCommentBody } from "@liveblocks/client";
+
+const stringComment = await stringifyCommentBody(comment.body, {
+  // Optional, convert to specific format, "plain" (default) | "markdown" | "html"
+  format: "markdown",
+
+  // Optional, supply a separator to be used between paragraphs
+  separator: `\n\n`,
+
+  // Optional, override any elements in the CommentBody with a custom string
+  elements: {
+    // Optional, override the `paragraph` element
+    paragraph: ({ element, children }) => `<p>${children}</p>`,
+
+    // Optional, override the `text` element
+    text: ({ element }) =>
+      element.bold ? `<strong>${element.text}</strong>` : `${element.text}`,
+
+    // Optional, override the `link` element
+    link: ({ element, href }) =>
+      `<a href="${href}" target="_blank">${element.url}</a>`,
+
+    // Optional, override the `mention` element. `user` available if `resolveUsers` supplied
+    mention: ({ element, user }) =>
+      `<a href="${user.profileUrl}">${element.id}</a>`,
+  },
+
+  // Optional, get your user's names and info from their ID to be displayed in mentions
+  async resolveUsers({ userIds }) {
+    const usersData = await __getUsersFromDB__(userIds);
+
+    return usersData.map((userData) => ({
+      // Name is inserted into the output instead of a user's ID
+      name: userData.name,
+
+      // Custom formatting in `elements.mention` allows custom properties to be used
+      profileUrl: userData.profileUrl,
+    }));
+  },
+});
+```
+
+<Banner title="Also available from @liveblocks/node">
+
+If you’d like to use this on the server side, it's also available from
+[`@liveblocks/node`](/docs/api-reference/liveblocks-node#stringify-comment-body).
+
+</Banner>
+
+#### Formatting examples
+
+Here are a number of different formatting examples derived from the same
+`CommentBody`.
+
+```ts
+// "Hello marc@example.com from https://liveblocks.io"
+await stringifyCommentBody(comment.body);
+
+// "Hello @Marc from https://liveblocks.io"
+await stringifyCommentBody(comment.body, {
+  resolveUser({ userIds }) {
+    return [{ name: "Marc" }];
+  },
+});
+
+// "**Hello** @Marc from [https://liveblocks.io](https://liveblocks.io)"
+await stringifyCommentBody(comment.body, {
+  format: "markdown",
+
+  resolveUser() {
+    return [{ name: "Marc" }];
+  },
+});
+
+// "<b>Hello</b> <span data-mention>@Marc</span> from
+// <a href="https://liveblocks.io">https://liveblocks.io</a>"
+await stringifyCommentBody(comment.body, {
+  format: "html",
+
+  resolveUser() {
+    return [{ name: "Marc" }];
+  },
+});
+
+// "<b>Hello</b> <a href="https://example.com" data-id="marc@example.com">@Marc</a> from
+// <a href="https://liveblocks.io">https://liveblocks.io</a>"
+await stringifyCommentBody(comment.body, {
+  format: "html",
+
+  mention: ({ element, user }) =>
+    `<a href="${user.profileUrl}" data-id="${element.id}">${user.name}</a>`,
+
+  resolveUser() {
+    return [{ name: "Marc", profileUrl: "https://example.com" }];
+  },
+});
 ```
 
 [`atob`]: https://developer.mozilla.org/en-US/docs/Web/API/atob

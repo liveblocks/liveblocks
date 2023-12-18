@@ -79,6 +79,7 @@ import type {
   ComposerBodyMention,
 } from "../../types";
 import { isKey } from "../../utils/is-key";
+import { Persist, useAnimationPersist, usePersist } from "../../utils/Persist";
 import { Portal } from "../../utils/Portal";
 import { requestSubmit } from "../../utils/request-submit";
 import { useId } from "../../utils/use-id";
@@ -197,42 +198,38 @@ function ComposerEditorMentionSuggestionsWrapper({
   const [content, setContent] = useState<HTMLDivElement | null>(null);
   const [contentZIndex, setContentZIndex] = useState<string>();
   const contentRef = useCallback(setContent, [setContent]);
-  const floatingMiddlewares: UseFloatingOptions["middleware"] = useMemo(() => {
+  const floatingOptions: UseFloatingOptions = useMemo(() => {
     const detectOverflowOptions: DetectOverflowOptions = {
       padding: FLOATING_ELEMENT_COLLISION_PADDING,
     };
 
-    return [
-      flip({ ...detectOverflowOptions, crossAxis: false }),
-      hide(detectOverflowOptions),
-      shift({
-        ...detectOverflowOptions,
-        limiter: limitShift(),
-      }),
-      size({
-        ...detectOverflowOptions,
-        apply({ availableWidth, availableHeight, elements }) {
-          elements.floating.style.setProperty(
-            "--lb-composer-suggestions-available-width",
-            `${availableWidth}px`
-          );
-          elements.floating.style.setProperty(
-            "--lb-composer-suggestions-available-height",
-            `${availableHeight}px`
-          );
-        },
-      }),
-    ];
-  }, []);
-  const floatingOptions: UseFloatingOptions = useMemo(() => {
     return {
       strategy: "fixed",
-      open: Boolean(mentionDraft?.range && isFocused),
       placement: getPlacementFromPosition(position, dir),
-      middleware: floatingMiddlewares,
+      middleware: [
+        flip({ ...detectOverflowOptions, crossAxis: false }),
+        hide(detectOverflowOptions),
+        shift({
+          ...detectOverflowOptions,
+          limiter: limitShift(),
+        }),
+        size({
+          ...detectOverflowOptions,
+          apply({ availableWidth, availableHeight, elements }) {
+            elements.floating.style.setProperty(
+              "--lb-composer-suggestions-available-width",
+              `${availableWidth}px`
+            );
+            elements.floating.style.setProperty(
+              "--lb-composer-suggestions-available-height",
+              `${availableHeight}px`
+            );
+          },
+        }),
+      ],
       whileElementsMounted: autoUpdate,
     };
-  }, [floatingMiddlewares, isFocused, position, dir, mentionDraft?.range]);
+  }, [position, dir]);
   const {
     refs: { setReference, setFloating },
     strategy,
@@ -250,8 +247,12 @@ function ComposerEditorMentionSuggestionsWrapper({
     }
   }, [content]);
 
-  useEffect(() => {
-    const domRange = getDOMRange(editor, mentionDraft?.range);
+  useLayoutEffect(() => {
+    if (!mentionDraft) {
+      return;
+    }
+
+    const domRange = getDOMRange(editor, mentionDraft.range);
 
     if (domRange) {
       setReference({
@@ -259,38 +260,45 @@ function ComposerEditorMentionSuggestionsWrapper({
         getClientRects: () => domRange.getClientRects(),
       });
     }
-  }, [setReference, editor, mentionDraft?.range]);
+  }, [setReference, editor, mentionDraft]);
 
-  return isFocused && userIds ? (
-    <ComposerSuggestionsContext.Provider
-      value={{
-        id,
-        itemId,
-        selectedValue: selectedUserId,
-        setSelectedValue: setSelectedUserId,
-        onItemSelect,
-        placement,
-        dir,
-        ref: contentRef,
-      }}
-    >
-      <Portal
-        ref={setFloating}
-        style={{
-          position: strategy,
-          top: 0,
-          left: 0,
-          transform: isPositioned
-            ? `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`
-            : "translate3d(0, -200%, 0)",
-          minWidth: "max-content",
-          zIndex: contentZIndex,
-        }}
-      >
-        <MentionSuggestions userIds={userIds} selectedUserId={selectedUserId} />
-      </Portal>
-    </ComposerSuggestionsContext.Provider>
-  ) : null;
+  return (
+    <Persist>
+      {mentionDraft?.range && isFocused && userIds ? (
+        <ComposerSuggestionsContext.Provider
+          value={{
+            id,
+            itemId,
+            selectedValue: selectedUserId,
+            setSelectedValue: setSelectedUserId,
+            onItemSelect,
+            placement,
+            dir,
+            ref: contentRef,
+          }}
+        >
+          <Portal
+            ref={setFloating}
+            style={{
+              position: strategy,
+              top: 0,
+              left: 0,
+              transform: isPositioned
+                ? `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`
+                : "translate3d(0, -200%, 0)",
+              minWidth: "max-content",
+              zIndex: contentZIndex,
+            }}
+          >
+            <MentionSuggestions
+              userIds={userIds}
+              selectedUserId={selectedUserId}
+            />
+          </Portal>
+        </ComposerSuggestionsContext.Provider>
+      ) : null}
+    </Persist>
+  );
 }
 
 function ComposerEditorElement({
@@ -414,20 +422,26 @@ const ComposerSuggestions = forwardRef<
   HTMLDivElement,
   ComposerSuggestionsProps
 >(({ children, style, asChild, ...props }, forwardedRef) => {
-  const { ref, placement, dir } = useComposerSuggestionsContext(
-    COMPOSER_SUGGESTIONS_NAME
-  );
-  const mergedRefs = useRefs(forwardedRef, ref);
+  const [isPresent] = usePersist();
+  const ref = useRef<HTMLDivElement>(null);
+  const {
+    ref: contentRef,
+    placement,
+    dir,
+  } = useComposerSuggestionsContext(COMPOSER_SUGGESTIONS_NAME);
+  const mergedRefs = useRefs(forwardedRef, contentRef, ref);
   const [side, align] = useMemo(
     () => getSideAndAlignFromPlacement(placement),
     [placement]
   );
   const Component = asChild ? Slot : "div";
+  useAnimationPersist(ref);
 
   return (
     <Component
       dir={dir}
       {...props}
+      data-state={isPresent ? "open" : "closed"}
       data-side={side}
       data-align={align}
       style={{
@@ -614,7 +628,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       [disabled, self?.canComment]
     );
     const { editor, validate, setFocused } = useComposerEditorContext();
-    const { submit, focus, isEmpty, isFocused } = useComposer();
+    const { submit, focus, select, isEmpty, isFocused } = useComposer();
     const initialBody = useInitial(defaultValue ?? emptyCommentBody);
     const initialEditorValue = useMemo(() => {
       return commentBodyToComposerBody(initialBody);
@@ -844,11 +858,20 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       [editor]
     );
 
+    // Manually focus the editor when `autoFocus` is true
     useEffect(() => {
       if (autoFocus) {
         focus();
       }
     }, [autoFocus, editor, focus]);
+
+    // Manually add a selection in the editor if the selection
+    // is still empty after being focused
+    useEffect(() => {
+      if (isFocused && editor.selection === null) {
+        select();
+      }
+    }, [editor, select, isFocused]);
 
     return (
       <Slate
@@ -874,19 +897,17 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
           renderLeaf={ComposerEditorLeaf}
           renderPlaceholder={ComposerEditorPlaceholder}
         />
-        {mentionDraft && (
-          <ComposerEditorMentionSuggestionsWrapper
-            dir={dir}
-            mentionDraft={mentionDraft}
-            selectedUserId={selectedMentionSuggestionUserId}
-            setSelectedUserId={setSelectedMentionSuggestionUserId}
-            userIds={mentionSuggestions}
-            id={suggestionsListId}
-            itemId={suggestionsListItemId}
-            onItemSelect={createMention}
-            MentionSuggestions={MentionSuggestions}
-          />
-        )}
+        <ComposerEditorMentionSuggestionsWrapper
+          dir={dir}
+          mentionDraft={mentionDraft}
+          selectedUserId={selectedMentionSuggestionUserId}
+          setSelectedUserId={setSelectedMentionSuggestionUserId}
+          userIds={mentionSuggestions}
+          id={suggestionsListId}
+          itemId={suggestionsListItemId}
+          onItemSelect={createMention}
+          MentionSuggestions={MentionSuggestions}
+        />
       </Slate>
     );
   }
@@ -932,6 +953,13 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
           anchor: SlateEditor.start(editor, []),
           focus: SlateEditor.end(editor, []),
         },
+      });
+    }, [editor]);
+
+    const select = useCallback(() => {
+      SlateTransforms.select(editor, {
+        anchor: SlateEditor.end(editor, []),
+        focus: SlateEditor.end(editor, []),
       });
     }, [editor]);
 
@@ -1012,6 +1040,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
             isEmpty,
             submit,
             clear,
+            select,
             focus,
             blur,
             createMention,

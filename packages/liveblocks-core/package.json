@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/core",
-  "version": "1.7.0",
+  "version": "1.9.0",
   "description": "Private internals for Liveblocks. DO NOT import directly from this package!",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -32,7 +32,7 @@
   },
   "scripts": {
     "dev": "tsup --watch",
-    "build": "tsup",
+    "build": "tsup && node dist/index.mjs",
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack",

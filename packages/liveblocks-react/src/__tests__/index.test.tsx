@@ -440,14 +440,14 @@ describe("useThreads", () => {
         metadata: {},
         roomId: "room",
         type: "thread",
-        createdAt: "2021-10-06T01:45:56.558Z",
+        createdAt: new Date("2021-10-06T01:45:56.558Z"),
         comments: [],
       },
     ];
 
     server.use(
-      rest.get(
-        "https://api.liveblocks.io/v2/c/rooms/room/threads",
+      rest.post(
+        "https://api.liveblocks.io/v2/c/rooms/room/threads/search",
         (_, res, ctx) => {
           return res(
             ctx.json({
