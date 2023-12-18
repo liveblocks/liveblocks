@@ -40,9 +40,9 @@ you to automatically get your API key from your
 
 You need to set up webhooks to make this example run.
 
-- Follow our guide on [testing webhooks locally](https://liveblocks.io/docs/guides/how-to-test-webhooks-on-localhost#Use-your-webhook-event), making sure to check the `commentCreated` event when creating the webhook
+- Follow our guide on [testing webhooks locally](https://liveblocks.io/docs/guides/how-to-test-webhooks-on-localhost), making sure to [check the “**commentCreated**” event](https://liveblocks.io/docs/platform/webhooks#edit-endpoint-events) when creating the webhook
 - Copy your **webhook secret key** from the webhooks dashboard
-- Add your webhook secret key to `.env.local` as the `LIVEBLOCKS_WEBHOOK_SECRET_KEY` environment variable.
+- Add your webhook secret key to `.env.local` as the `LIVEBLOCKS_WEBHOOK_SECRET_KEY` environment variable
 
 ### Setting up OpenAI
 
@@ -50,7 +50,7 @@ You need your own OpenAI API key to run the AI agent.
 
 - Create an account on [OpenAI](https://openai.com)
 - Create a new API key from the [OpenAI Dashboard](https://platform.openai.com/api-keys)
-- Add your OpenAI API key to `.env.local` as the `OPENAI_API_KEY` environment variable.
+- Add your OpenAI API key to `.env.local` as the `OPENAI_API_KEY` environment variable
 
 ### Manual setup
 
