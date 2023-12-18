@@ -205,7 +205,7 @@ export {
   convertToInboxNotificationData,
   convertToThreadData,
 } from "./comments/convert-plain-data";
-export type { ThreadsOptions } from "./room";
+export type { GetThreadsOptions } from "./room";
 export { CommentsApiError } from "./room";
 export type { BaseMetadata } from "./types/BaseMetadata";
 export type {

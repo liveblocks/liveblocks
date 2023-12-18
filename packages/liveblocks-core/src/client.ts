@@ -1,4 +1,9 @@
+import type { AuthValue } from "./auth-manager";
 import { createAuthManager } from "./auth-manager";
+import {
+  convertToInboxNotificationData,
+  convertToThreadData,
+} from "./comments/convert-plain-data";
 import { isIdle } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
 import type { LsonObject } from "./crdts/Lson";
@@ -17,8 +22,11 @@ import {
   makeCreateSocketDelegateForRoom,
 } from "./room";
 import type { BaseMetadata } from "./types/BaseMetadata";
-import type { InboxNotificationData } from "./types/InboxNotificationData";
-import type { ThreadData } from "./types/ThreadData";
+import type {
+  InboxNotificationData,
+  InboxNotificationDataPlain,
+} from "./types/InboxNotificationData";
+import type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1_000;
@@ -205,6 +213,10 @@ export type ClientOptions = {
 //     | ((room: string) => Promise<{ token: string }>);
 //
 
+export type GetInboxNotificationsOptions = {
+  limit?: number;
+};
+
 function getBaseUrlFromClientOptions(clientOptions: ClientOptions) {
   if ("liveblocksServer" in clientOptions) {
     throw new Error("Client option no longer supported");
@@ -216,6 +228,14 @@ function getBaseUrlFromClientOptions(clientOptions: ClientOptions) {
     return clientOptions.baseUrl;
   } else {
     return DEFAULT_BASE_URL;
+  }
+}
+
+export function getAuthBearerHeaderFromAuthValue(authValue: AuthValue): string {
+  if (authValue.type === "public") {
+    return authValue.publicApiKey;
+  } else {
+    return authValue.token.raw;
   }
 }
 
@@ -255,6 +275,7 @@ export function createClient(options: ClientOptions): Client {
   const backgroundKeepAliveTimeout = getBackgroundKeepAliveTimeout(
     clientOptions.backgroundKeepAliveTimeout
   );
+  const baseUrl = getBaseUrlFromClientOptions(clientOptions);
 
   const authManager = createAuthManager(options);
 
@@ -327,7 +348,6 @@ export function createClient(options: ClientOptions): Client {
       "Please provide an initial presence value for the current user when entering the room."
     );
 
-    const baseUrl = getBaseUrlFromClientOptions(clientOptions);
     const newRoom = createRoom<TPresence, TStorage, TUserMeta, TRoomEvent>(
       {
         initialPresence: options.initialPresence ?? {},
@@ -433,24 +453,97 @@ export function createClient(options: ClientOptions): Client {
     }
   }
 
-  function getInboxNotifications() {
-    // [comments-unread] TODO: GET /c/inbox-notifications
-    return Promise.resolve({ inboxNotifications: [], threads: [] });
+  async function fetchClientApi(
+    endpoint: string,
+    options?: RequestInit
+  ): Promise<Response> {
+    const authValue = await authManager.getAuthValue();
+    const url = new URL(`/v2/c/${endpoint}`, baseUrl);
+    const fetcher =
+      clientOptions.polyfills?.fetch || /* istanbul ignore next */ fetch;
+    return await fetcher(url.toString(), {
+      ...options,
+      headers: {
+        ...options?.headers,
+        Authorization: `Bearer ${getAuthBearerHeaderFromAuthValue(authValue)}`,
+      },
+    });
   }
 
-  function getUnreadInboxNotificationsCount() {
-    // [comments-unread] TODO: GET /c/inbox-notifications/count
-    return Promise.resolve(0);
+  async function fetchJson<T>(
+    endpoint: string,
+    options?: RequestInit
+  ): Promise<T> {
+    const response = await fetchClientApi(endpoint, options);
+
+    if (!response.ok) {
+      if (response.status >= 400 && response.status < 600) {
+        let errorMessage = "";
+        try {
+          const errorBody = (await response.json()) as { message: string };
+          errorMessage = errorBody.message;
+        } catch (error) {
+          errorMessage = response.statusText;
+        }
+        throw new Error(
+          `Request failed with status ${response.status}: ${errorMessage}`
+        );
+      }
+    }
+
+    let body;
+
+    try {
+      body = (await response.json()) as T;
+    } catch {
+      body = {} as T;
+    }
+
+    return body;
   }
 
-  function markAllInboxNotificationsAsRead() {
-    // [comments-unread] TODO: POST /c/inbox-notifications/read with { inboxNotificationIds: "all" }
-    return Promise.resolve();
+  async function getInboxNotifications(options?: GetInboxNotificationsOptions) {
+    const queryParams = toURLSearchParams({ limit: options?.limit });
+    const json = await fetchJson<{
+      // [comments-unread] TODO: How do we type ThreadMetadata?
+      threads: ThreadDataPlain[];
+      inboxNotifications: InboxNotificationDataPlain[];
+    }>(`/inbox-notifications?${queryParams.toString()}`);
+
+    return {
+      threads: json.threads.map((thread) => convertToThreadData(thread)),
+      inboxNotifications: json.inboxNotifications.map((notification) =>
+        convertToInboxNotificationData(notification)
+      ),
+    };
   }
 
-  function markInboxNotificationsAsRead(_inboxNotificationIds: string[]) {
-    // [comments-unread] TODO: POST /c/inbox-notifications/read with { inboxNotificationIds }
-    return Promise.resolve();
+  async function getUnreadInboxNotificationsCount() {
+    const { count } = await fetchJson<{
+      count: number;
+    }>("/inbox-notifications/count");
+
+    return count;
+  }
+
+  async function markAllInboxNotificationsAsRead() {
+    await fetchJson("/inbox-notifications/read", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ inboxNotificationIds: "all" }),
+    });
+  }
+
+  async function markInboxNotificationsAsRead(inboxNotificationIds: string[]) {
+    await fetchJson("/inbox-notifications/read", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ inboxNotificationIds }),
+    });
   }
 
   const batchedMarkInboxNotificationsAsRead = new Batch(
@@ -529,4 +622,35 @@ function getLostConnectionTimeout(value: number): number {
     MAX_LOST_CONNECTION_TIMEOUT,
     RECOMMENDED_MIN_LOST_CONNECTION_TIMEOUT
   );
+}
+
+/**
+ * Safely but conveniently build a URLSearchParams instance from a given
+ * dictionary of values. For example:
+ *
+ *   {
+ *     "foo": "bar+qux/baz",
+ *     "empty": "",
+ *     "n": 42,
+ *     "nope": undefined,
+ *     "alsonope": null,
+ *   }
+ *
+ * Will produce a value that will get serialized as
+ * `foo=bar%2Bqux%2Fbaz&empty=&n=42`.
+ *
+ * Notice how the number is converted to its string representation
+ * automatically and the `null`/`undefined` values simply don't end up in the
+ * URL.
+ */
+function toURLSearchParams(
+  params: Record<string, string | number | null | undefined>
+): URLSearchParams {
+  const result = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null) {
+      result.set(key, value.toString());
+    }
+  }
+  return result;
 }

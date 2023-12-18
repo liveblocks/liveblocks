@@ -1,4 +1,5 @@
 import type { AuthManager, AuthValue } from "./auth-manager";
+import { getAuthBearerHeaderFromAuthValue } from "./client";
 import {
   convertToCommentData,
   convertToCommentUserReaction,
@@ -476,7 +477,7 @@ type SubscribeFn<
   (type: "storage-status", listener: Callback<StorageStatus>): () => void;
 };
 
-export type ThreadsOptions<TThreadMetadata extends BaseMetadata> = {
+export type GetThreadsOptions<TThreadMetadata extends BaseMetadata> = {
   query?: {
     metadata?: Partial<TThreadMetadata>;
   };
@@ -486,7 +487,7 @@ type CommentsApi<TThreadMetadata extends BaseMetadata = never> = {
   /**
    * @private
    */
-  getThreads(options?: ThreadsOptions<TThreadMetadata>): Promise<{
+  getThreads(options?: GetThreadsOptions<TThreadMetadata>): Promise<{
     threads: ThreadData<TThreadMetadata>[];
     inboxNotifications: InboxNotificationData[];
   }>;
@@ -1039,11 +1040,32 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
   getAuthValue: () => Promise<AuthValue>,
   config: Pick<RoomConfig, "baseUrl" | "polyfills">
 ): CommentsApi<TThreadMetadata> {
+  async function fetchClientApi(
+    roomId: string,
+    endpoint: string,
+    options?: RequestInit
+  ): Promise<Response> {
+    // TODO: Use the right scope
+    const authValue = await getAuthValue();
+    const url = new URL(
+      `/v2/c/rooms/${encodeURIComponent(roomId)}${endpoint}`,
+      config.baseUrl
+    );
+    const fetcher = config.polyfills?.fetch || /* istanbul ignore next */ fetch;
+    return await fetcher(url.toString(), {
+      ...options,
+      headers: {
+        ...options?.headers,
+        Authorization: `Bearer ${getAuthBearerHeaderFromAuthValue(authValue)}`,
+      },
+    });
+  }
+
   async function fetchJson<T>(
     endpoint: string,
     options?: RequestInit
   ): Promise<T> {
-    const response = await fetchApi(roomId, endpoint, options);
+    const response = await fetchClientApi(roomId, endpoint, options);
 
     if (!response.ok) {
       if (response.status >= 400 && response.status < 600) {
@@ -1076,29 +1098,8 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     return body;
   }
 
-  async function fetchApi(
-    roomId: string,
-    endpoint: string,
-    options?: RequestInit
-  ): Promise<Response> {
-    // TODO: Use the right scope
-    const authValue = await getAuthValue();
-    const url = new URL(
-      `/v2/c/rooms/${encodeURIComponent(roomId)}${endpoint}`,
-      config.baseUrl
-    );
-    const fetcher = config.polyfills?.fetch || /* istanbul ignore next */ fetch;
-    return await fetcher(url.toString(), {
-      ...options,
-      headers: {
-        ...options?.headers,
-        Authorization: `Bearer ${getAuthBearerHeaderFromAuthValue(authValue)}`,
-      },
-    });
-  }
-
-  async function getThreads(options?: ThreadsOptions<TThreadMetadata>) {
-    const response = await fetchApi(roomId, "/threads/search", {
+  async function getThreads(options?: GetThreadsOptions<TThreadMetadata>) {
+    const response = await fetchClientApi(roomId, "/threads/search", {
       body: JSON.stringify({
         ...(options?.query?.metadata && { metadata: options.query.metadata }),
       }),
@@ -2952,14 +2953,6 @@ function isRoomEventName(value: string): value is RoomEventName {
     value === "lost-connection" ||
     value === "connection"
   );
-}
-
-function getAuthBearerHeaderFromAuthValue(authValue: AuthValue) {
-  if (authValue.type === "public") {
-    return authValue.publicApiKey;
-  } else {
-    return authValue.token.raw;
-  }
 }
 
 export function makeAuthDelegateForRoom(

@@ -11,7 +11,6 @@ import type {
   Resolve,
   Room,
   ThreadData,
-  ThreadsOptions,
 } from "@liveblocks/core";
 import { CommentsApiError, makeEventSource, stringify } from "@liveblocks/core";
 import { nanoid } from "nanoid";
@@ -26,6 +25,7 @@ import React, {
 } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
+import type { UseThreadsOptions } from "../types";
 import {
   AddReactionError,
   type CommentsError,
@@ -69,11 +69,11 @@ export type CommentsRoom<TThreadMetadata extends BaseMetadata> = {
   }>): JSX.Element;
   useThreads(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-    options?: ThreadsOptions<TThreadMetadata>
+    options?: UseThreadsOptions<TThreadMetadata>
   ): ThreadsState<TThreadMetadata>;
   useThreadsSuspense(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-    options?: ThreadsOptions<TThreadMetadata>
+    options?: UseThreadsOptions<TThreadMetadata>
   ): ThreadsStateSuccess<TThreadMetadata>;
   useCreateThread(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
@@ -160,8 +160,9 @@ export type ThreadsState<TThreadMetadata extends BaseMetadata> =
   | ThreadsStateLoading
   | ThreadsStateResolved<TThreadMetadata>;
 
-type ThreadsOptionsInfo<TThreadMetadata extends BaseMetadata> = {
-  options: ThreadsOptions<TThreadMetadata>; // The filter option
+// [comments-unread] TODO: Only keep track (and use as key) options.query, not the entire options object
+type UseThreadsOptionsInfo<TThreadMetadata extends BaseMetadata> = {
+  options: UseThreadsOptions<TThreadMetadata>; // The filter option
   count: number; // The number of components using this filter option
 };
 
@@ -171,7 +172,10 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   const manager = createThreadsCacheManager<TThreadMetadata>();
 
   // A map that stores filter description for each filter option. The key is a stringified version of the filter options.
-  const filterOptions = new Map<string, ThreadsOptionsInfo<TThreadMetadata>>();
+  const filterOptions = new Map<
+    string,
+    UseThreadsOptionsInfo<TThreadMetadata>
+  >();
 
   // A map that stores the cache state for each filter option. The key is a stringified version of the filter options.
   const cacheStates = new Map<
@@ -450,7 +454,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
   function useThreads(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-    options: ThreadsOptions<TThreadMetadata> = { query: { metadata: {} } }
+    options: UseThreadsOptions<TThreadMetadata> = { query: { metadata: {} } }
   ): ThreadsState<TThreadMetadata> {
     const key = useMemo(() => stringify(options), [options]);
 
@@ -511,7 +515,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
   function useThreadsSuspense(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-    options: ThreadsOptions<TThreadMetadata> = {}
+    options: UseThreadsOptions<TThreadMetadata> = {}
   ): ThreadsStateSuccess<TThreadMetadata> {
     const key = useMemo(() => stringify(options), [options]);
 

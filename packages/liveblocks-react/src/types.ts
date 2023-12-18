@@ -15,13 +15,16 @@ import type {
 import type {
   BaseMetadata,
   CommentData,
+  GetThreadsOptions,
   Resolve,
   RoomEventMessage,
   RoomInitializers,
   ThreadData,
-  ThreadsOptions,
   ToImmutable,
 } from "@liveblocks/core";
+
+export type UseThreadsOptions<TThreadMetadata extends BaseMetadata> =
+  GetThreadsOptions<TThreadMetadata>;
 
 import type {
   CommentReactionOptions,
@@ -669,7 +672,7 @@ export type RoomContextBundle<
      * const { threads, error, isLoading } = useThreads();
      */
     useThreads(
-      options?: ThreadsOptions<TThreadMetadata>
+      options?: UseThreadsOptions<TThreadMetadata>
     ): ThreadsState<TThreadMetadata>;
 
     /**
@@ -821,7 +824,7 @@ export type RoomContextBundle<
          * const { threads } = useThreads();
          */
         useThreads(
-          options?: ThreadsOptions<TThreadMetadata>
+          options?: UseThreadsOptions<TThreadMetadata>
         ): ThreadsStateSuccess<TThreadMetadata>;
 
         /**
