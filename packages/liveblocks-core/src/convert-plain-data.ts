@@ -1,14 +1,14 @@
-import type { BaseMetadata } from "../types/BaseMetadata";
-import type { CommentData, CommentDataPlain } from "../types/CommentData";
+import type { BaseMetadata } from "./types/BaseMetadata";
+import type { CommentData, CommentDataPlain } from "./types/CommentData";
 import type {
   CommentUserReaction,
   CommentUserReactionPlain,
-} from "../types/CommentReaction";
+} from "./types/CommentReaction";
 import type {
   PartialInboxNotificationData,
   PartialInboxNotificationDataPlain,
-} from "../types/InboxNotificationData";
-import type { ThreadData, ThreadDataPlain } from "../types/ThreadData";
+} from "./types/InboxNotificationData";
+import type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
 
 /**
  * Converts a plain comment data object (usually returned by the API) to a comment data object that can be used by the client.

@@ -5,7 +5,7 @@ import {
   convertToCommentUserReaction,
   convertToPartialInboxNotificationData,
   convertToThreadData,
-} from "./comments/convert-plain-data";
+} from "./convert-plain-data";
 import type {
   Delegates,
   LegacyConnectionStatus,

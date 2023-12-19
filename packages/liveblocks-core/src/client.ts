@@ -3,7 +3,7 @@ import { createAuthManager } from "./auth-manager";
 import {
   convertToPartialInboxNotificationData,
   convertToThreadData,
-} from "./comments/convert-plain-data";
+} from "./convert-plain-data";
 import { isIdle } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
 import type { LsonObject } from "./crdts/Lson";

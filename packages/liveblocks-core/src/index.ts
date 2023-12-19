@@ -203,7 +203,7 @@ export {
   convertToCommentData,
   convertToCommentUserReaction,
   convertToThreadData,
-} from "./comments/convert-plain-data";
+} from "./convert-plain-data";
 export type { GetThreadsOptions } from "./room";
 export { CommentsApiError } from "./room";
 export type { BaseMetadata } from "./types/BaseMetadata";
