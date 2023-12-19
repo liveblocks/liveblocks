@@ -16,6 +16,7 @@ import type {
   BaseMetadata,
   CommentData,
   GetThreadsOptions,
+  InboxNotificationData,
   Resolve,
   RoomEventMessage,
   RoomInitializers,
@@ -26,6 +27,8 @@ import type {
 export type UseThreadsOptions<TThreadMetadata extends BaseMetadata> =
   GetThreadsOptions<TThreadMetadata>;
 
+import type { PropsWithChildren } from "react";
+
 import type {
   CommentReactionOptions,
   CreateCommentOptions,
@@ -33,8 +36,6 @@ import type {
   DeleteCommentOptions,
   EditCommentOptions,
   EditThreadMetadataOptions,
-  ThreadsState,
-  ThreadsStateSuccess,
 } from "./comments/CommentsRoom";
 
 export type PromiseOrNot<T> = T | Promise<T>;
@@ -85,6 +86,57 @@ export type UserState<T> =
   | UserStateLoading
   | UserStateError
   | UserStateSuccess<T>;
+
+export type ThreadsStateLoading = {
+  isLoading: true;
+  threads?: never;
+  error?: never;
+};
+
+export type ThreadsStateResolved<TThreadMetadata extends BaseMetadata> = {
+  isLoading: false;
+  threads: ThreadData<TThreadMetadata>[];
+  error?: Error;
+};
+
+export type ThreadsStateSuccess<TThreadMetadata extends BaseMetadata> = {
+  isLoading: false;
+  threads: ThreadData<TThreadMetadata>[];
+  error?: never;
+};
+
+export type ThreadsState<TThreadMetadata extends BaseMetadata> =
+  | ThreadsStateLoading
+  | ThreadsStateResolved<TThreadMetadata>;
+
+export type InboxNotificationsStateLoading = {
+  isLoading: true;
+  inboxNotifications?: never;
+  error?: never;
+  loadMore: () => void;
+};
+
+export type InboxNotificationsStateResolved<
+  TThreadMetadata extends BaseMetadata,
+> = {
+  isLoading: false;
+  inboxNotifications: InboxNotificationData<TThreadMetadata>[];
+  error?: Error;
+  loadMore: () => void;
+};
+
+export type InboxNotificationsStateSuccess<
+  TThreadMetadata extends BaseMetadata,
+> = {
+  isLoading: false;
+  inboxNotifications: InboxNotificationData<TThreadMetadata>[];
+  error?: never;
+  loadMore: () => void;
+};
+
+export type InboxNotificationsState<TThreadMetadata extends BaseMetadata> =
+  | InboxNotificationsStateLoading
+  | InboxNotificationsStateResolved<TThreadMetadata>;
 
 export type RoomProviderProps<
   TPresence extends JsonObject,
@@ -918,5 +970,67 @@ export type InternalRoomContextBundle<
   > & {
     hasResolveMentionSuggestions: boolean;
     useMentionSuggestions(search?: string): string[] | undefined;
+  }
+>;
+
+type LiveblocksContextBundleShared = {
+  // [comments-unread] TODO: JSDoc
+  LiveblocksProvider(props: PropsWithChildren): JSX.Element;
+
+  // [comments-unread] TODO: JSDoc
+  useMarkInboxNotificationAsRead(): (inboxNotificationId: string) => void;
+
+  // [comments-unread] TODO: JSDoc
+  useMarkAllInboxNotificationsAsRead(): () => void;
+};
+
+export type LiveblocksContextBundle<
+  TUserMeta extends BaseUserMeta,
+  TThreadMetadata extends BaseMetadata,
+> = Resolve<
+  LiveblocksContextBundleShared & {
+    /**
+     * @beta
+     *
+     * Returns the inbox notifications for the current user.
+     *
+     * @example
+     * const { inboxNotifications, error, isLoading, loadMore } = useInboxNotifications();
+     */
+    useInboxNotifications(): InboxNotificationsState<TThreadMetadata>;
+
+    /**
+     * @beta
+     *
+     * Returns user info from a given user ID.
+     *
+     * @example
+     * const { user, error, isLoading } = useUser("user-id");
+     */
+    useUser(userId: string): UserState<TUserMeta["info"]>;
+
+    suspense: Resolve<
+      LiveblocksContextBundleShared & {
+        /**
+         * @beta
+         *
+         * Returns the inbox notifications for the current user.
+         *
+         * @example
+         * const { inboxNotifications, error, isLoading, loadMore } = useInboxNotifications();
+         */
+        useInboxNotifications(): InboxNotificationsStateSuccess<TThreadMetadata>;
+
+        /**
+         * @beta
+         *
+         * Returns user info from a given user ID.
+         *
+         * @example
+         * const { user } = useUser("user-id");
+         */
+        useUser(userId: string): UserStateSuccess<TUserMeta["info"]>;
+      }
+    >;
   }
 >;

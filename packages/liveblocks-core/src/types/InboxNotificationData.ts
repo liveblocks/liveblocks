@@ -1,6 +1,8 @@
+import type { BaseMetadata } from "./BaseMetadata";
 import type { DateToString } from "./DateToString";
+import type { ThreadData } from "./ThreadData";
 
-export type ThreadInboxNotificationData = {
+type PartialThreadInboxNotificationData = {
   kind: "thread";
   id: string;
   threadId: string;
@@ -8,6 +10,16 @@ export type ThreadInboxNotificationData = {
   readAt: Date | null;
 };
 
-export type InboxNotificationData = ThreadInboxNotificationData;
+export type PartialInboxNotificationData = PartialThreadInboxNotificationData;
 
-export type InboxNotificationDataPlain = DateToString<InboxNotificationData>;
+export type PartialInboxNotificationDataPlain =
+  DateToString<PartialInboxNotificationData>;
+
+type ThreadInboxNotificationData<TThreadMetadata extends BaseMetadata = never> =
+  PartialThreadInboxNotificationData & {
+    thread: ThreadData<TThreadMetadata>;
+  };
+
+export type InboxNotificationData<
+  TThreadMetadata extends BaseMetadata = never,
+> = ThreadInboxNotificationData<TThreadMetadata>;

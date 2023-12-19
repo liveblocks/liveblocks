@@ -1,7 +1,7 @@
 import type { AuthValue } from "./auth-manager";
 import { createAuthManager } from "./auth-manager";
 import {
-  convertToInboxNotificationData,
+  convertToPartialInboxNotificationData,
   convertToThreadData,
 } from "./comments/convert-plain-data";
 import { isIdle } from "./connection";
@@ -23,8 +23,8 @@ import {
 } from "./room";
 import type { BaseMetadata } from "./types/BaseMetadata";
 import type {
-  InboxNotificationData,
-  InboxNotificationDataPlain,
+  PartialInboxNotificationData,
+  PartialInboxNotificationDataPlain,
 } from "./types/InboxNotificationData";
 import type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
 
@@ -63,7 +63,7 @@ type InboxNotificationsApi<TThreadMetadata extends BaseMetadata = never> = {
    * @private
    */
   getInboxNotifications(): Promise<{
-    inboxNotifications: InboxNotificationData[];
+    inboxNotifications: PartialInboxNotificationData[];
     threads: ThreadData<TThreadMetadata>[];
   }>;
 
@@ -507,13 +507,13 @@ export function createClient(options: ClientOptions): Client {
     const json = await fetchJson<{
       // [comments-unread] TODO: How do we type ThreadMetadata?
       threads: ThreadDataPlain[];
-      inboxNotifications: InboxNotificationDataPlain[];
+      inboxNotifications: PartialInboxNotificationDataPlain[];
     }>(`/inbox-notifications?${queryParams.toString()}`);
 
     return {
       threads: json.threads.map((thread) => convertToThreadData(thread)),
       inboxNotifications: json.inboxNotifications.map((notification) =>
-        convertToInboxNotificationData(notification)
+        convertToPartialInboxNotificationData(notification)
       ),
     };
   }

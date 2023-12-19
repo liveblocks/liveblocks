@@ -25,6 +25,7 @@ export type {
   CommentData,
   History,
   Immutable,
+  InboxNotificationData,
   IUserInfo,
   Json,
   JsonArray,

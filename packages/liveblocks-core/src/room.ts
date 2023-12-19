@@ -3,7 +3,7 @@ import { getAuthBearerHeaderFromAuthValue } from "./client";
 import {
   convertToCommentData,
   convertToCommentUserReaction,
-  convertToInboxNotificationData,
+  convertToPartialInboxNotificationData,
   convertToThreadData,
 } from "./comments/convert-plain-data";
 import type {
@@ -67,8 +67,8 @@ import type {
 } from "./types/CommentReaction";
 import type * as DevTools from "./types/DevToolsTreeNode";
 import type {
-  InboxNotificationData,
-  InboxNotificationDataPlain,
+  PartialInboxNotificationData,
+  PartialInboxNotificationDataPlain,
 } from "./types/InboxNotificationData";
 import type {
   IWebSocket,
@@ -489,7 +489,7 @@ type CommentsApi<TThreadMetadata extends BaseMetadata = never> = {
    */
   getThreads(options?: GetThreadsOptions<TThreadMetadata>): Promise<{
     threads: ThreadData<TThreadMetadata>[];
-    inboxNotifications: InboxNotificationData[];
+    inboxNotifications: PartialInboxNotificationData[];
   }>;
 
   /**
@@ -1112,13 +1112,13 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     if (response.ok) {
       const json = await (response.json() as Promise<{
         data: ThreadDataPlain<TThreadMetadata>[];
-        inboxNotifications: InboxNotificationDataPlain[];
+        inboxNotifications: PartialInboxNotificationDataPlain[];
       }>);
 
       return {
         threads: json.data.map((thread) => convertToThreadData(thread)),
         inboxNotifications: json.inboxNotifications.map((notification) =>
-          convertToInboxNotificationData(notification)
+          convertToPartialInboxNotificationData(notification)
         ),
       };
     } else if (response.status === 404) {

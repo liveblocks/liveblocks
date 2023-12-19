@@ -6,7 +6,7 @@ import { rest } from "msw";
 import { setupServer } from "msw/node";
 import * as React from "react";
 
-import { createRoomContext } from "../factory";
+import { createRoomContext } from "../room";
 import {
   useCanRedo,
   useCanUndo,

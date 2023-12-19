@@ -25,7 +25,11 @@ import React, {
 } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
-import type { UseThreadsOptions } from "../types";
+import type {
+  ThreadsState,
+  ThreadsStateSuccess,
+  UseThreadsOptions,
+} from "../types";
 import {
   AddReactionError,
   type CommentsError,
@@ -137,28 +141,6 @@ export type CommentReactionOptions = {
   commentId: string;
   emoji: string;
 };
-
-export type ThreadsStateLoading = {
-  isLoading: true;
-  threads?: never;
-  error?: never;
-};
-
-export type ThreadsStateResolved<TThreadMetadata extends BaseMetadata> = {
-  isLoading: false;
-  threads: ThreadData<TThreadMetadata>[];
-  error?: Error;
-};
-
-export type ThreadsStateSuccess<TThreadMetadata extends BaseMetadata> = {
-  isLoading: false;
-  threads: ThreadData<TThreadMetadata>[];
-  error?: never;
-};
-
-export type ThreadsState<TThreadMetadata extends BaseMetadata> =
-  | ThreadsStateLoading
-  | ThreadsStateResolved<TThreadMetadata>;
 
 // [comments-unread] TODO: Only keep track (and use as key) options.query, not the entire options object
 type UseThreadsOptionsInfo<TThreadMetadata extends BaseMetadata> = {

@@ -36,7 +36,6 @@ import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/w
 import type {
   CreateCommentOptions,
   EditCommentOptions,
-  ThreadsState,
 } from "./comments/CommentsRoom";
 import { createCommentsRoom } from "./comments/CommentsRoom";
 import type { CommentsError } from "./comments/errors";
@@ -54,6 +53,7 @@ import type {
   ResolveUsersArgs,
   RoomContextBundle,
   RoomProviderProps,
+  ThreadsState,
   UserState,
   UserStateSuccess,
   UseThreadsOptions,
@@ -229,6 +229,7 @@ export function createRoomContext<
   const commentsErrorEventSource =
     makeEventSource<CommentsError<TThreadMetadata>>();
 
+  // [comments-unread] TODO: Merge CommentsRoom within room.tsx to simplify things? CommentsRoom dates from when they were separate from rooms, but now 1 room = 1 CommentRoom.
   const { CommentsRoomProvider, ...commentsRoom } =
     createCommentsRoom<TThreadMetadata>(commentsErrorEventSource);
 

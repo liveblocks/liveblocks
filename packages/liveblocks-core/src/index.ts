@@ -202,7 +202,6 @@ export {
 export {
   convertToCommentData,
   convertToCommentUserReaction,
-  convertToInboxNotificationData,
   convertToThreadData,
 } from "./comments/convert-plain-data";
 export type { GetThreadsOptions } from "./room";
@@ -227,4 +226,9 @@ export type {
   CommentUserReaction,
   CommentUserReactionPlain,
 } from "./types/CommentReaction";
+export type {
+  InboxNotificationData,
+  PartialInboxNotificationData,
+  PartialInboxNotificationDataPlain,
+} from "./types/InboxNotificationData";
 export type { ThreadData, ThreadDataPlain } from "./types/ThreadData";

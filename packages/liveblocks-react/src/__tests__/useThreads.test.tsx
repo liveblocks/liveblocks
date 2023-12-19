@@ -6,7 +6,7 @@ import { rest } from "msw";
 import { setupServer } from "msw/node";
 import React, { Suspense } from "react";
 
-import { createRoomContext } from "../factory";
+import { createRoomContext } from "../room";
 import MockWebSocket from "./_MockWebSocket";
 
 const THREADS_POLLING_INTERVAL_WITH_WS = 30000;
