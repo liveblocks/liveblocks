@@ -7,6 +7,7 @@ import {
   nanoSleep,
   pickFrom,
   preparePages,
+  sleep,
   waitForJson,
   waitUntilEqualOnAllPages,
 } from "./utils";
@@ -207,6 +208,7 @@ test.describe("Offline", () => {
 
     await page1.click("#push");
     await page1.click("#send-invalid-data");
+    await sleep(300); // give the server a few millis to disconnect
     await page1.click("#push");
     await page1.click("#push");
     await waitForJson(page1, "#socketStatus", "disconnected");
