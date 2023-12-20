@@ -16,13 +16,11 @@ Updating a Yjs document requires you to create a
 [binary update](https://docs.yjs.dev/api/document-updates), before sending it to
 Liveblocks using
 [`Liveblocks.sendYjsBinaryUpdate`](/docs/api-reference/liveblocks-node#put-rooms-roomId-ydoc).
-We recommend installing `js-base64` to use its `fromUint8Array` utility. Here’s
-an example in a serverless endpoint.
+Here’s an example in a serverless endpoint.
 
 ```ts
 import * as Y from "yjs";
 import { Liveblocks } from "@liveblocks/node";
-import { fromUint8Array } from "js-base64";
 
 const liveblocks = new Liveblocks({
   secret: "{{SECRET_KEY}}",
@@ -37,13 +35,11 @@ export async function POST() {
   const yText = yDoc.getText("text");
   yText.insert(0, "Hello world");
 
-  // Encode the document state as a base64 update string
-  const yUpdate = fromUint8Array(Y.encodeStateAsUpdate(yDoc));
+  // Encode the document state as an update
+  const yUpdate = Y.encodeStateAsUpdate(yDoc);
 
   // Insert the update
-  await liveblocks.sendYjsBinaryUpdate(roomId, {
-    update: yUpdate,
-  });
+  await liveblocks.sendYjsBinaryUpdate(roomId, yUpdate);
 }
 ```
 
@@ -57,7 +53,6 @@ send the update as before.
 ```ts highlight="21-24"
 import * as Y from "yjs";
 import { Liveblocks } from "@liveblocks/node";
-import { fromUint8Array } from "js-base64";
 
 const liveblocks = new Liveblocks({
   secret: "{{SECRET_KEY}}",
@@ -72,8 +67,8 @@ export async function POST() {
   const yText = yDoc.getText("text");
   yText.insert(0, "Hello world");
 
-  // Encode the document state as a base64 update string
-  const yUpdate = fromUint8Array(Y.encodeStateAsUpdate(yDoc));
+  // Encode the document state as an update
+  const yUpdate = Y.encodeStateAsUpdate(yDoc);
 
   // Create the new room
   const room = await liveblocks.createRoom(roomId, {
@@ -81,9 +76,7 @@ export async function POST() {
   });
 
   // Initialize the Yjs document with the update
-  await liveblocks.sendYjsBinaryUpdate(roomId, {
-    update: yUpdate,
-  });
+  await liveblocks.sendYjsBinaryUpdate(roomId, yUpdate);
 }
 ```
 
@@ -96,7 +89,6 @@ initialize a [Slate](/docs/get-started/yjs-slate-react) document.
 ```ts highlight="4,15-19,21-23"
 import * as Y from "yjs";
 import { Liveblocks } from "@liveblocks/node";
-import { fromUint8Array } from "js-base64";
 import { slateNodesToInsertDelta } from "@slate-yjs/core";
 
 const liveblocks = new Liveblocks({
@@ -118,8 +110,8 @@ export async function POST() {
   const insertDelta = slateNodesToInsertDelta(slateDoc);
   (yDoc.get("content", Y.XmlText) as Y.XmlText).applyDelta(insertDelta);
 
-  // Encode the document state as a base64 update string
-  const yUpdate = fromUint8Array(Y.encodeStateAsUpdate(yDoc));
+  // Encode the document state as an update
+  const yUpdate = Y.encodeStateAsUpdate(yDoc);
 
   // Create the new room
   const room = await liveblocks.createRoom(roomId, {
@@ -127,8 +119,6 @@ export async function POST() {
   });
 
   // Initialize the Yjs document with the update
-  await liveblocks.sendYjsBinaryUpdate(roomId, {
-    update: yUpdate,
-  });
+  await liveblocks.sendYjsBinaryUpdate(roomId, yUpdate);
 }
 ```

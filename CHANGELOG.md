@@ -1,3 +1,10 @@
+# v1.9.1
+
+### `@liveblocks/node`
+
+- Fixes the signature and behavior of the `Liveblocks.sendYjsBinaryUpdate()`
+  API. It now takes a Yjs encoded update (`Uint8Array`) directly.
+
 # v1.9.0
 
 ### `@liveblocks/node`
