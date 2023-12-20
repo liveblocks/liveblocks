@@ -277,8 +277,12 @@
             "path": "/products/comments/styling"
           },
           {
-            "title": "Notifications",
-            "path": "/products/comments/notifications"
+            "title": "Notification inbox",
+            "path": "/products/comments/notification-inbox"
+          },
+          {
+            "title": "Email notifications",
+            "path": "/products/comments/email-notifications"
           }
         ]
       }

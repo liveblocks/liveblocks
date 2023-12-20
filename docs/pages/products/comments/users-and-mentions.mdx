@@ -5,7 +5,10 @@ meta:
   description: "..."
 ---
 
-Adding users
+When a comment is posted, Liveblocks doesn’t store any user metadata, for
+example their avatar or name. Instead, it only saves their user ID, which you
+manually set when authenticating. To fetch user metadata, we provide functions
+that allow you to return the correct data.
 
 <Banner title="Step-by-step tutorial">
 
@@ -14,6 +17,24 @@ you’d prefer a full step-by-step tutorial, make sure to read
 [how to add users to Liveblocks Comments](/docs/guides/how-to-add-users-to-liveblocks-comments).
 
 </Banner>
+
+## Authenticate your users
+
+You can set a user’s ID when
+[authenticating your application](/docs/rooms/authentication). This ID is then
+used inside Comments to represent the current user.
+
+```ts
+const session = liveblocks.prepareSession("marc@example.com", {
+  userInfo: {
+    name: "Marc",
+    avatar: "https://example.com/marc.png",
+
+    // Your custom metadata
+    // ...
+  },
+});
+```
 
 ## Adding users to Comments
 
