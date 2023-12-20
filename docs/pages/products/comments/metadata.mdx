@@ -84,8 +84,9 @@ export const {
 
 ### Composer component
 
-The `<Composer />` component is used to create threads and comments, and by
-default it create a new thread when its form is submitted.
+The [`<Composer />`](/docs/api-reference/liveblocks-react-comments#Composer)
+component is used to create threads and comments, and by default it’ll create a
+new thread, with optional metadata, when its form is submitted.
 
 <Figure>
   <Image
@@ -96,11 +97,12 @@ default it create a new thread when its form is submitted.
   />
 </Figure>
 
-When using it to create a thread, you can pass custom metadata, which will be
-attached to the thread. You can also import your `ThreadMetadata` type from your
-config file to help you prevent mistakes.
+When using it to create a thread, you can
+[pass custom metadata](/docs/api-reference/liveblocks-react-comments#Adding-thread-metadata),
+which will be attached to the thread. You can also import your `ThreadMetadata`
+type from your config file to take advantage of TypeScript.
 
-```tsx
+```tsx highlight="7-14"
 import { Composer } from "@liveblocks/react-comments";
 import { ThreadMetadata } from "../liveblocks.config";
 
@@ -109,7 +111,7 @@ function Component() {
   return (
     <Composer<ThreadMetadata>
       metadata={{
-        // Custom metadata goes here
+        // Custom metadata here
         priority: "URGENT",
         resolved: false,
         timestamp: 1703073188013,
@@ -119,17 +121,47 @@ function Component() {
 }
 ```
 
-### Hooks
+### Mutation hooks
 
-[show various hooks]
+Two [mutation hooks](/docs/products/comments/hooks#mutation-hooks) allow you to
+edit thread metadata:
+[`useEditThreadMetadata`](/docs/api-reference/liveblocks-react#useEditThreadMetadata)
+and
+[`useCreateThread`](http://localhost:3001/docs/api-reference/liveblocks-react#useCreateThread).
+Here’s one way to create a button that sets the `resolved` metadata property to
+`true`.
+
+```tsx highlight="5,10-13"
+import { useEditThreadMetadata } from "../liveblocks.config";
+
+// Button that sets `resolved` metadata to `true`
+function Component() {
+  const editThreadMetadata = useEditThreadMetadata();
+
+  return (
+    <button
+      onClick={() =>
+        editThreadMetadata({
+          threadId: "th_d75sF3...",
+          metadata: { resolved: true },
+        })
+      }
+    >
+      Resolve thread
+    </button>
+  );
+}
+```
+
+These hooks are exported from your config file and provide full typing.
 
 ### REST APIs
 
 It’s possible to modify metadata from our REST APIs using the
 [`@liveblocks/node`]() package. Here’s an example using
-[`editThreadMetadata`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-metadata).
+[`liveblocks.editThreadMetadata`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-metadata).
 
-```ts
+```ts highlight="12-14"
 import { Liveblocks } from "@liveblocks/node";
 
 // Create a Node.js client
