@@ -1,11 +1,5 @@
 import type { AuthManager, AuthValue } from "./auth-manager";
 import { getAuthBearerHeaderFromAuthValue } from "./client";
-import {
-  convertToCommentData,
-  convertToCommentUserReaction,
-  convertToPartialInboxNotificationData,
-  convertToThreadData,
-} from "./convert-plain-data";
 import type {
   Delegates,
   LegacyConnectionStatus,
@@ -13,6 +7,12 @@ import type {
   Status,
 } from "./connection";
 import { ManagedSocket, newToLegacyStatus, StopRetrying } from "./connection";
+import {
+  convertToCommentData,
+  convertToCommentUserReaction,
+  convertToPartialInboxNotificationData,
+  convertToThreadData,
+} from "./convert-plain-data";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { OpSource } from "./crdts/AbstractCrdt";
 import {
@@ -78,6 +78,7 @@ import type {
 } from "./types/IWebSocket";
 import type { NodeMap } from "./types/NodeMap";
 import type { InternalOthersEvent, OthersEvent } from "./types/Others";
+import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 import type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
 import type { User } from "./types/User";
 import { PKG_VERSION } from "./version";
@@ -726,6 +727,14 @@ export type Room<
     readonly comments: Observable<CommentsEventServerMsg>;
   };
 
+  // [comments-unread] TODO: JSDoc
+  getRoomNotificationSettings(): Promise<RoomNotificationSettings>;
+
+  // [comments-unread] TODO: JSDoc
+  updateRoomNotificationSettings(
+    settings: Partial<RoomNotificationSettings>
+  ): Promise<RoomNotificationSettings>;
+
   /**
    * Batches modifications made during the given function.
    * All the modifications are sent to other clients in a single message.
@@ -1038,34 +1047,28 @@ export class CommentsApiError extends Error {
 function createCommentsApi<TThreadMetadata extends BaseMetadata>(
   roomId: string,
   getAuthValue: () => Promise<AuthValue>,
-  config: Pick<RoomConfig, "baseUrl" | "polyfills">
-): CommentsApi<TThreadMetadata> {
-  async function fetchClientApi(
+  fetchClientApi: (
     roomId: string,
+    endpoint: string,
+    authValue: AuthValue,
+    options?: RequestInit
+  ) => Promise<Response>
+): CommentsApi<TThreadMetadata> {
+  async function fetchCommentsApi(
     endpoint: string,
     options?: RequestInit
   ): Promise<Response> {
     // TODO: Use the right scope
     const authValue = await getAuthValue();
-    const url = new URL(
-      `/v2/c/rooms/${encodeURIComponent(roomId)}${endpoint}`,
-      config.baseUrl
-    );
-    const fetcher = config.polyfills?.fetch || /* istanbul ignore next */ fetch;
-    return await fetcher(url.toString(), {
-      ...options,
-      headers: {
-        ...options?.headers,
-        Authorization: `Bearer ${getAuthBearerHeaderFromAuthValue(authValue)}`,
-      },
-    });
+
+    return fetchClientApi(roomId, endpoint, authValue, options);
   }
 
   async function fetchJson<T>(
     endpoint: string,
     options?: RequestInit
   ): Promise<T> {
-    const response = await fetchClientApi(roomId, endpoint, options);
+    const response = await fetchCommentsApi(endpoint, options);
 
     if (!response.ok) {
       if (response.status >= 400 && response.status < 600) {
@@ -1099,7 +1102,7 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
   }
 
   async function getThreads(options?: GetThreadsOptions<TThreadMetadata>) {
-    const response = await fetchClientApi(roomId, "/threads/search", {
+    const response = await fetchCommentsApi("/threads/search", {
       body: JSON.stringify({
         ...(options?.query?.metadata && { metadata: options.query.metadata }),
       }),
@@ -1610,25 +1613,40 @@ export function createRoom<
     comments: makeEventSource<CommentsEventServerMsg>(),
   };
 
+  async function fetchClientApi(
+    roomId: string,
+    endpoint: string,
+    authValue: AuthValue,
+    options?: RequestInit
+  ) {
+    {
+      const url = new URL(
+        `/v2/c/rooms/${encodeURIComponent(roomId)}${endpoint}`,
+        config.baseUrl
+      );
+      const fetcher =
+        config.polyfills?.fetch || /* istanbul ignore next */ fetch;
+      return await fetcher(url.toString(), {
+        ...options,
+        headers: {
+          ...options?.headers,
+          Authorization: `Bearer ${getAuthBearerHeaderFromAuthValue(
+            authValue
+          )}`,
+        },
+      });
+    }
+  }
+
   async function httpPostToRoom(endpoint: "/send-message", body: JsonObject) {
     if (!managedSocket.authValue) {
       throw new Error("Not authorized");
     }
 
-    const authTokenOrPublicApiKey = getAuthBearerHeaderFromAuthValue(
-      managedSocket.authValue
-    );
-
-    const url = new URL(
-      `/v2/c/rooms/${encodeURIComponent(config.roomId)}${endpoint}`,
-      config.baseUrl
-    ).toString();
-    const fetcher = config.polyfills?.fetch || /* istanbul ignore next */ fetch;
-    return fetcher(url, {
+    return fetchClientApi(config.roomId, endpoint, managedSocket.authValue, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${authTokenOrPublicApiKey}`,
       },
       body: JSON.stringify(body),
     });
@@ -2711,10 +2729,66 @@ export function createRoom<
     comments: eventHub.comments.observable,
   };
 
-  const commentsApi = createCommentsApi(config.roomId, delegates.authenticate, {
-    baseUrl: config.baseUrl,
-    polyfills: config.polyfills,
-  });
+  const commentsApi = createCommentsApi(
+    config.roomId,
+    delegates.authenticate,
+    fetchClientApi
+  );
+
+  async function fetchJson<T>(
+    endpoint: string,
+    options?: RequestInit
+  ): Promise<T> {
+    const authValue = await delegates.authenticate();
+    const response = await fetchClientApi(
+      config.roomId,
+      endpoint,
+      authValue,
+      options
+    );
+
+    if (!response.ok) {
+      if (response.status >= 400 && response.status < 600) {
+        let errorMessage = "";
+        try {
+          const errorBody = (await response.json()) as { message: string };
+          errorMessage = errorBody.message;
+        } catch (error) {
+          errorMessage = response.statusText;
+        }
+        throw new Error(
+          `Request failed with status ${response.status}: ${errorMessage}`
+        );
+      }
+    }
+
+    let body;
+
+    try {
+      body = (await response.json()) as T;
+    } catch {
+      body = {} as T;
+    }
+
+    return body;
+  }
+
+  function getRoomNotificationSettings(): Promise<RoomNotificationSettings> {
+    return fetchJson<RoomNotificationSettings>("/notification-settings");
+  }
+
+  function updateRoomNotificationSettings(
+    settings: Partial<RoomNotificationSettings>
+  ): Promise<RoomNotificationSettings> {
+    // [comments-unread] TODO: Verify that the endpoint returns the updated settings
+    return fetchJson<RoomNotificationSettings>("/notification-settings", {
+      method: "POST",
+      body: JSON.stringify(settings),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  }
 
   return Object.defineProperty(
     {
@@ -2781,7 +2855,12 @@ export function createRoom<
       getPresence: () => context.myPresence.current,
       getOthers: () => context.others.current,
 
+      // Comments
       ...commentsApi,
+
+      // Notifications
+      getRoomNotificationSettings,
+      updateRoomNotificationSettings,
     },
 
     // Explictly make the __internal field non-enumerable, to avoid aggressive

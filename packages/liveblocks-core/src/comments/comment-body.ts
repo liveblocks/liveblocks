@@ -581,8 +581,8 @@ export async function stringifyCommentBody<
     ...(format === "html"
       ? stringifyCommentBodyHtmlElements
       : format === "markdown"
-      ? stringifyCommentBodyMarkdownElements
-      : stringifyCommentBodyPlainElements),
+        ? stringifyCommentBodyMarkdownElements
+        : stringifyCommentBodyPlainElements),
     ...options?.elements,
   };
   const resolvedUsers = await resolveUsersInCommentBody(

@@ -1,11 +1,11 @@
 import type { AuthValue } from "./auth-manager";
 import { createAuthManager } from "./auth-manager";
+import { isIdle } from "./connection";
+import { DEFAULT_BASE_URL } from "./constants";
 import {
   convertToPartialInboxNotificationData,
   convertToThreadData,
 } from "./convert-plain-data";
-import { isIdle } from "./connection";
-import { DEFAULT_BASE_URL } from "./constants";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import { Batch } from "./lib/batch";

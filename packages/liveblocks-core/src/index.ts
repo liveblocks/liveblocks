@@ -18,12 +18,30 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 export type { Client, EnterOptions } from "./client";
 export { createClient } from "./client";
+export type {
+  CommentBodyLinkElementArgs,
+  CommentBodyMentionElementArgs,
+  CommentBodyParagraphElementArgs,
+  CommentBodyResolveUsersArgs,
+  CommentBodyTextElementArgs,
+  StringifyCommentBodyElements,
+  StringifyCommentBodyOptions,
+} from "./comments/comment-body";
+export {
+  getMentionedIdsFromCommentBody,
+  stringifyCommentBody,
+} from "./comments/comment-body";
 export type { BaseAuthResult, Delegates } from "./connection";
 export type {
   LegacyConnectionStatus,
   LostConnectionEvent,
   Status,
 } from "./connection";
+export {
+  convertToCommentData,
+  convertToCommentUserReaction,
+  convertToThreadData,
+} from "./convert-plain-data";
 export { cloneLson, isLiveNode } from "./crdts/liveblocks-helpers";
 export { LiveList } from "./crdts/LiveList";
 export { LiveMap } from "./crdts/LiveMap";
@@ -143,7 +161,34 @@ export type {
   RoomInitializers,
   StorageStatus,
 } from "./room";
+export type { GetThreadsOptions } from "./room";
+export { CommentsApiError } from "./room";
+export type { BaseMetadata } from "./types/BaseMetadata";
+export type {
+  CommentBody,
+  CommentBodyBlockElement,
+  CommentBodyElement,
+  CommentBodyInlineElement,
+  CommentBodyLink,
+  CommentBodyMention,
+  CommentBodyParagraph,
+  CommentBodyText,
+} from "./types/CommentBody";
+export type {
+  CommentData,
+  CommentDataPlain,
+  CommentReaction,
+} from "./types/CommentData";
+export type {
+  CommentUserReaction,
+  CommentUserReactionPlain,
+} from "./types/CommentReaction";
 export type { Immutable } from "./types/Immutable";
+export type {
+  InboxNotificationData,
+  PartialInboxNotificationData,
+  PartialInboxNotificationDataPlain,
+} from "./types/InboxNotificationData";
 export type {
   IWebSocket,
   IWebSocketCloseEvent,
@@ -161,6 +206,8 @@ export type {
   PlainLsonMap,
   PlainLsonObject,
 } from "./types/PlainLson";
+export type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
+export type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
 export type { User } from "./types/User";
 export { detectDupes };
 
@@ -184,51 +231,3 @@ import type * as DevToolsMsg from "./devtools/protocol";
 export type { DevToolsMsg };
 import type * as DevTools from "./types/DevToolsTreeNode";
 export type { DevTools };
-
-// Comments
-export type {
-  CommentBodyLinkElementArgs,
-  CommentBodyMentionElementArgs,
-  CommentBodyParagraphElementArgs,
-  CommentBodyResolveUsersArgs,
-  CommentBodyTextElementArgs,
-  StringifyCommentBodyElements,
-  StringifyCommentBodyOptions,
-} from "./comments/comment-body";
-export {
-  getMentionedIdsFromCommentBody,
-  stringifyCommentBody,
-} from "./comments/comment-body";
-export {
-  convertToCommentData,
-  convertToCommentUserReaction,
-  convertToThreadData,
-} from "./convert-plain-data";
-export type { GetThreadsOptions } from "./room";
-export { CommentsApiError } from "./room";
-export type { BaseMetadata } from "./types/BaseMetadata";
-export type {
-  CommentBody,
-  CommentBodyBlockElement,
-  CommentBodyElement,
-  CommentBodyInlineElement,
-  CommentBodyLink,
-  CommentBodyMention,
-  CommentBodyParagraph,
-  CommentBodyText,
-} from "./types/CommentBody";
-export type {
-  CommentData,
-  CommentDataPlain,
-  CommentReaction,
-} from "./types/CommentData";
-export type {
-  CommentUserReaction,
-  CommentUserReactionPlain,
-} from "./types/CommentReaction";
-export type {
-  InboxNotificationData,
-  PartialInboxNotificationData,
-  PartialInboxNotificationDataPlain,
-} from "./types/InboxNotificationData";
-export type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
