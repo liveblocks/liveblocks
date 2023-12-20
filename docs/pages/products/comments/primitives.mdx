@@ -5,9 +5,38 @@ meta:
   description: "..."
 ---
 
-Primitives
+The primitive component included in Comments are a great way to build complex,
+completely custom components. These are headless and unstyled, and can be used
+to construct a fully styled comment body and rich-text comment composer.
+
+- Liveblocks functionality, but your own fully custom styles.
+- Build custom components for mentions, suggestions, links, and more.
+- Composable components that work similarly to
+  [Radix UI](https://www.radix-ui.com/) and
+  [Headless UI](https://headlessui.com/).
+- Can be used alongside the
+  [default components](/docs/products/comments/default-components).
 
 ## Concepts
+
+[show commentbody]
+
+[show adding mentions to commentbody]
+
+All primitives are composable; they forward their props and refs, merge their
+classes and styles, and chain their event handlers.
+
+```tsx
+import { Button } from "@/my-design-system";
+
+// Use the default <button> element
+<Composer.Submit disabled>Send</Composer.Submit>;
+
+// Use an existing custom <Button> component
+<Composer.Submit disabled asChild>
+  <Button variant="primary">Send</Button>
+</Composer.Submit>;
+```
 
 [explain about composition]
 
