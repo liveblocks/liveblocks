@@ -741,11 +741,11 @@ const yDoc = new Y.Doc();
 const yText = yDoc.getText("text");
 yText.insert(0, "Hello world");
 
-// Encode the document state as a base64 state update
-const state = Y.encodeStateAsUpdate(yDoc);
+// Encode the document state as an update
+const update = Y.encodeStateAsUpdate(yDoc);
 
 // Send update to Liveblocks
-await liveblocks.sendYjsBinaryUpdate("my-room-id", state);
+await liveblocks.sendYjsBinaryUpdate("my-room-id", update);
 ```
 
 To create a new room and initialize its Yjs document, call
@@ -786,11 +786,11 @@ export async function POST() {
   const insertDelta = slateNodesToInsertDelta(slateDoc);
   (yDoc.get("content", Y.XmlText) as Y.XmlText).applyDelta(insertDelta);
 
-  // Encode the document state as a base64 state update
-  const state = Y.encodeStateAsUpdate(yDoc);
+  // Encode the document state as an update
+  const update = Y.encodeStateAsUpdate(yDoc);
 
   // Send update to Liveblocks
-  await liveblocks.sendYjsBinaryUpdate("my-room-id", state);
+  await liveblocks.sendYjsBinaryUpdate("my-room-id", update);
 }
 ```
 
