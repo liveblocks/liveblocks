@@ -5,18 +5,157 @@ meta:
   description: "..."
 ---
 
-Metadata
+In Comments, each thread can be given custom metadata. This is helpful for
+integrating Comments into various applications, for example it can be used to
+store:
 
-## Uses for metadata
+- The priority, status, or category of a thread.
+- Coordinates or timestamps related to the thread.
+- Quoted text in a text editor.
 
-[canvas coords, video time, quoted text]
+## Allowed metadata
+
+You can store any `string`, `boolean`, or `number` in thread metadata, for
+example:
+
+```ts
+metadata: {
+  priority: "URGENT",
+  resolved: false,
+  timestamp: 1703073188013,
+}
+```
+
+Setting a property to `null` will remove it.
+
+```ts
+metadata: {
+  timestamp: null,
+}
+```
+
+You can store up to 10 metadata properties per thread, and each property can be
+4000 characters long.
 
 ## Setting metadata
 
-### Default components
+Metadata can be set using the default components, React hooks, or by editing
+thread using the REST APIs. But before making any changes, it’s recommended to
+set your metadata type in your config file.
 
-[show metadata prop]
+```ts file="liveblocks.config.ts" highlight="13-18,28"
+import { createClient } from "@liveblocks/client";
+import { createRoomContext } from "@liveblocks/react";
+
+const client = createClient({
+  // ...
+});
+
+type Presence = {};
+type Storage = {};
+type UserMeta = {};
+type RoomEvent = {};
+
+// Set your custom metadata properties
+export type ThreadMetadata = {
+  priority: string;
+  resolved: boolean;
+  timestamp: number;
+};
+
+export const {
+  RoomProvider,
+  // ...
+} = createRoomContext<
+  Presence,
+  Storage
+  UserMeta,
+  RoomEvent,
+  ThreadMetadata,
+>(client, {
+  resolveUsers({ userIds }) {
+    // ...
+  },
+  resolveMentionSuggestions({ text, roomId }) {
+    // ...
+  },
+});
+```
+
+### Composer component
+
+The `<Composer />` component is used to create threads and comments, and by
+default it create a new thread when its form is submitted.
+
+<Figure>
+  <Image
+    src="/assets/comments/composer.png"
+    alt="Composer"
+    width={768}
+    height={446}
+  />
+</Figure>
+
+When using it to create a thread, you can pass custom metadata, which will be
+attached to the thread. You can also import your `ThreadMetadata` type from your
+config file to help you prevent mistakes.
+
+```tsx
+import { Composer } from "@liveblocks/react-comments";
+import { ThreadMetadata } from "../liveblocks.config";
+
+// Creates a new thread with custom metadata
+function Component() {
+  return (
+    <Composer<ThreadMetadata>
+      metadata={{
+        // Custom metadata goes here
+        priority: "URGENT",
+        resolved: false,
+        timestamp: 1703073188013,
+      }}
+    />
+  );
+}
+```
 
 ### Hooks
 
 [show various hooks]
+
+### REST APIs
+
+It’s possible to modify metadata from our REST APIs using the
+[`@liveblocks/node`]() package. Here’s an example using
+[`editThreadMetadata`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-metadata).
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+// Create a Node.js client
+const liveblocks = new Liveblocks({ secret: "{{SECRET_KEY}}" });
+
+// Edit a thread's `priority` metadata, passing the user ID that made the change
+await liveblocks.editThreadMetadata({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+
+  data: {
+    metadata: {
+      priority: "IMPORTANT",
+    },
+    userId: "florent@example.com",
+  },
+});
+```
+
+The same result can also be achieved directly through our
+[edit thread metadata](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-metadata)
+REST API.
+
+```bash
+curl -X POST https://api.liveblocks.io/v2/rooms/my-room-id/threads/th_d75sF3.../metadata \
+  -H "Authorization: Bearer YOUR_SECRET_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"metadata": {"priority": "IMPORTANT"}, "userId": "florent@example.com"}'
+```
