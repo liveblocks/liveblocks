@@ -13,7 +13,7 @@
     "/rooms": {
       "get": {
         "summary": "Get rooms",
-        "description": "This endpoint returns a list of your rooms. The rooms are returned sorted by creation date, from newest to oldest. You can filter rooms by metadata, users accesses and groups accesses.\n\nThere is a pagination system where the next page URL is returned in the response as `nextPage`.\nYou can also limit the number of rooms by query.\n\nFiltering by metadata works by giving key values like `metadata.color=red`. Of course you can combine multiple metadata clauses to refine the response like `metadata.color=red&metadata.type=text`. Notice here the operator AND is applied between each clauses.\n\nFiltering by groups or userId works by giving a list of groups like `groupIds=marketing,GZo7tQ,product` or/and a userId like `userId=user1`.\nNotice here the operator OR is applied between each `groupIds` and the `userId`.\n",
+        "description": "This endpoint returns a list of your rooms. The rooms are returned sorted by creation date, from newest to oldest. You can filter rooms by metadata, users accesses and groups accesses. Corresponds to [`liveblocks.getRooms`](/docs/api-reference/liveblocks-node#get-rooms).\n\nThere is a pagination system where the next page URL is returned in the response as `nextPage`.\nYou can also limit the number of rooms by query.\n\nFiltering by metadata works by giving key values like `metadata.color=red`. Of course you can combine multiple metadata clauses to refine the response like `metadata.color=red&metadata.type=text`. Notice here the operator AND is applied between each clauses.\n\nFiltering by groups or userId works by giving a list of groups like `groupIds=marketing,GZo7tQ,product` or/and a userId like `userId=user1`.\nNotice here the operator OR is applied between each `groupIds` and the `userId`.\n",
         "tags": ["Room"],
         "parameters": [
           {
@@ -114,7 +114,7 @@
       },
       "post": {
         "summary": "Create room",
-        "description": "This endpoint creates a new room. `id` and `defaultAccesses` are required. \n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 40 characters. `usersAccesses` is optional field.\n- `groupsAccesses` are optional fields.\n",
+        "description": "This endpoint creates a new room. `id` and `defaultAccesses` are required. Corresponds to [`liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms). \n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 40 characters. `usersAccesses` is optional field.\n- `groupsAccesses` are optional fields.\n",
         "tags": ["Room"],
         "parameters": [],
         "responses": {
@@ -239,7 +239,7 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "description": "This endpoint returns a room by its ID.",
+        "description": "This endpoint returns a room by its ID. Corresponds to [`liveblocks.getRoom`](/docs/api-reference/liveblocks-node#get-rooms-roomid).",
         "parameters": []
       },
       "post": {
@@ -293,7 +293,7 @@
           }
         },
         "operationId": "post-rooms-roomId",
-        "description": "This endpoint updates specific properties of a room. It’s not necessary to provide the entire room’s information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccessess`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.\n\n",
+        "description": "This endpoint updates specific properties of a room. Corresponds to [`liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#post-rooms-roomid). \n\nIt’s not necessary to provide the entire room’s information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccessess`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.\n\n",
         "requestBody": {
           "content": {
             "application/json": {
@@ -354,7 +354,7 @@
           }
         },
         "operationId": "delete-rooms-roomId",
-        "description": "This endpoint deletes a room. A deleted room is no longer accessible from the API or the dashboard and it cannot be restored. \n\n"
+        "description": "This endpoint deletes a room. A deleted room is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.deleteRoom`](/docs/api-reference/liveblocks-node#delete-rooms-roomid)."
       }
     },
     "/rooms/{roomId}/active_users": {
@@ -362,7 +362,7 @@
         "summary": "Get active users",
         "tags": ["Room"],
         "operationId": "get-rooms-roomId-active-users",
-        "description": "This endpoint returns a list of users currently present in the requested room. For better performance, we recommand to call this endpoint every 10 seconds maximum. \nDuplicates can happen if a user is in the requested room with multiple browser tabs opened.",
+        "description": "This endpoint returns a list of users currently present in the requested room. Corresponds to [`liveblocks.getActiveUsers`](/docs/api-reference/liveblocks-node#get-rooms-roomid-active-users). \n\nFor optimal performance, we recommend calling this endpoint no more than once every 10 seconds. \nDuplicates can occur if a user is in the requested room with multiple browser tabs opened.",
         "responses": {
           "200": {
             "description": "Success. Returns the list of active users for the specified room.",
@@ -409,7 +409,7 @@
     "/rooms/{roomId}/broadcast_event": {
       "post": {
         "summary": "Broadcast event to a room",
-        "description": "This endpoint enables the broadcast of an event to a room without having to connect to it via the `client` from `@liveblocks/client`. It takes any valid JSON as a request body. The `connectionId` passed to event listeners is `-1` when using this API.",
+        "description": "This endpoint enables the broadcast of an event to a room without having to connect to it via the `client` from `@liveblocks/client`. It takes any valid JSON as a request body. The `connectionId` passed to event listeners is `-1` when using this API. Corresponds to [`liveblocks.broadcastEvent`](/docs/api-reference/liveblocks-node#post-broadcast-event).",
         "tags": ["Room"],
         "parameters": [
           {
@@ -461,7 +461,7 @@
     "/rooms/{roomId}/storage": {
       "get": {
         "summary": "Get Storage document",
-        "description": "Returns the contents of the room’s Storage tree.\n\nThe default outputted format is called “plain LSON”, which includes information on the Live data structures in the tree. These nodes show up in the output as objects with two properties, for example:\n\n```json\n{\n  \"liveblocksType\": \"LiveObject\",\n  \"data\": ...\n}\n```\n\nIf you’re not interested in this information, you can use the simpler `?format=json` query param, see below.",
+        "description": "Returns the contents of the room’s Storage tree.  Corresponds to [`liveblocks.getStorageDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-storage). \n\nThe default outputted format is called “plain LSON”, which includes information on the Live data structures in the tree. These nodes show up in the output as objects with two properties, for example:\n\n```json\n{\n  \"liveblocksType\": \"LiveObject\",\n  \"data\": ...\n}\n```\n\nIf you’re not interested in this information, you can use the simpler `?format=json` query param, see below.",
         "tags": ["Storage"],
         "parameters": [
           {
@@ -600,7 +600,7 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "description": "This endpoint initializes a room’s Storage. The room must already exist and have an empty Storage. Calling this endpoint will disconnect all users from the room if there are any.\n\nThe format of the request body is the same as what’s returned by the get Storage endpoint.\n\nFor each Liveblocks data structure that you want to create, you need a JSON element having two properties:\n- `\"liveblocksType\"` => `\"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n- `\"data\"` => contains the nested data structures (children) and data.\n\nThe root’s type can only be LiveObject.\n\nA utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.",
+        "description": "This endpoint initializes a room’s Storage. The room must already exist and have an empty Storage. Calling this endpoint will disconnect all users from the room if there are any. Corresponds to [`liveblocks.initializeStorageDocument`](/docs/api-reference/liveblocks-node#post-rooms-roomId-storage).\n\nThe format of the request body is the same as what’s returned by the get Storage endpoint.\n\nFor each Liveblocks data structure that you want to create, you need a JSON element having two properties:\n- `\"liveblocksType\"` => `\"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n- `\"data\"` => contains the nested data structures (children) and data.\n\nThe root’s type can only be LiveObject.\n\nA utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -663,13 +663,13 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "description": "This endpoint deletes all of the room’s Storage data. Calling this endpoint will disconnect all users from the room if there are any.\n"
+        "description": "This endpoint deletes all of the room’s Storage data. Calling this endpoint will disconnect all users from the room if there are any. Corresponds to [`liveblocks.deleteStorageDocument`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-storage).\n"
       }
     },
     "/rooms/{roomId}/ydoc": {
       "get": {
         "summary": "Get Yjs document",
-        "description": "This endpoint returns a JSON representation of the room’s Yjs document.",
+        "description": "This endpoint returns a JSON representation of the room’s Yjs document. Corresponds to [`liveblocks.getYjsDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc).",
         "tags": ["Yjs"],
         "parameters": [
           {
@@ -765,7 +765,7 @@
           }
         },
         "operationId": "put-rooms-roomId-ydoc",
-        "description": "This endpoint is used to send a Yjs binary update to the room’s Yjs document. You can use this endpoint to initialize Yjs data for the room or to update the room’s Yjs document. Read the [Yjs documentation](https://docs.yjs.dev/api/document-updates) to learn how to create a binary update.",
+        "description": "This endpoint is used to send a Yjs binary update to the room’s Yjs document. You can use this endpoint to initialize Yjs data for the room or to update the room’s Yjs document. Read the [Yjs documentation](https://docs.yjs.dev/api/document-updates) to learn how to create a binary update. Corresponds to [`liveblocks.sendYjsBinaryUpdate`](/docs/api-reference/liveblocks-node#put-rooms-roomId-ydoc).",
         "requestBody": {
           "content": {
             "application/octet-stream": {
@@ -778,7 +778,7 @@
     "/rooms/{roomId}/ydoc-binary": {
       "get": {
         "summary": "Get Yjs document encoded as a binary Yjs update",
-        "description": "This endpoint returns the room’s Yjs document encoded as a single binary update. This can be used by `Y.applyUpdate(responseBody)` to get a copy of the document in your back end. See [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more information on working with updates.",
+        "description": "This endpoint returns the room’s Yjs document encoded as a single binary update. This can be used by `Y.applyUpdate(responseBody)` to get a copy of the document in your back end. See [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more information on working with updates. Corresponds to [`liveblocks.getYjsDocumentAsBinaryUpdate`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc-binary).",
         "tags": ["Yjs"],
         "parameters": [
           {
@@ -817,7 +817,7 @@
     "/schemas": {
       "post": {
         "summary": "Create schema",
-        "description": "This endpoint creates a new schema which can be referenced later to enforce a room’s Storage data structure. The schema consists of a name (for referencing it), and a body, which specifies the exact allowed shape of data in the room. This body is a multi-line string written in the Liveblocks [schema syntax](/docs/platform/schema-validation/syntax).",
+        "description": "This endpoint creates a new schema which can be referenced later to enforce a room’s Storage data structure. Corresponds to [`liveblocks.createSchema`](/docs/api-reference/liveblocks-node#post-create-new-schema). \n\nThe schema consists of a name (for referencing it), and a body, which specifies the exact allowed shape of data in the room. This body is a multi-line string written in the Liveblocks [schema syntax](/docs/platform/schema-validation/syntax).",
         "tags": ["Schema validation"],
         "parameters": [],
         "operationId": "post-create-new-schema",
@@ -873,7 +873,7 @@
     "/schemas/{id}": {
       "get": {
         "summary": "Get schema",
-        "description": "This endpoint retrieves a schema by its id. The id is a combination of the schema name and version. For example, `my-schema@1`.",
+        "description": "This endpoint retrieves a schema by its id. The id is a combination of the schema name and version. For example, `my-schema@1`. Corresponds to [`liveblocks.getSchema`](/docs/api-reference/liveblocks-node#get-create-new-schema).",
         "tags": ["Schema validation"],
         "parameters": [
           {
@@ -920,7 +920,7 @@
       },
       "put": {
         "summary": "Update schema",
-        "description": "This endpoint updates the body for the schema. A schema can only be updated if it is not used by any room.",
+        "description": "This endpoint updates the body for the schema. A schema can only be updated if it is not used by any room. Corresponds to [`liveblocks.updateSchema`](/docs/api-reference/liveblocks-node#put-update-new-schema).",
         "tags": ["Schema validation"],
         "parameters": [
           {
@@ -986,7 +986,7 @@
       },
       "delete": {
         "summary": "Delete schema",
-        "description": "This endpoint deletes a schema by its ID. The ID is a combination of the schema name and version. For example, `my-schema@1`. A schema can only be deleted if it is not attached to a room.",
+        "description": "This endpoint deletes a schema by its ID. The ID is a combination of the schema name and version. For example, `my-schema@1`. A schema can only be deleted if it is not attached to a room. Corresponds to [`liveblocks.deleteSchema`](/docs/api-reference/liveblocks-node#delete-a-schema).",
         "tags": ["Schema validation"],
         "parameters": [
           {
@@ -1016,7 +1016,7 @@
     "/rooms/{roomId}/schema": {
       "get": {
         "summary": "Get schema by room ID",
-        "description": "This endpoint retrieves the schema attached to a room.",
+        "description": "This endpoint retrieves the schema attached to a room.  Corresponds to [`liveblocks.getSchemaByRoomId`](/docs/api-reference/liveblocks-node#get-new-schema).",
         "tags": ["Schema validation"],
         "parameters": [
           {
@@ -1066,7 +1066,7 @@
       },
       "post": {
         "summary": "Attach schema to room",
-        "description": "This endpoint attachs a schema to a room, and instantly enables runtime schema validation for the room. If the current contents of the room’s Storage do not match the schema, attaching will fail and the error message will give details on why the schema failed to attach.",
+        "description": "This endpoint attaches a schema to a room, and instantly enables runtime schema validation for the room. Corresponds to [`liveblocks.attachSchemaToRoom`](/docs/api-reference/liveblocks-node#post-attach-schema-to-room).\n\nIf the current contents of the room’s Storage do not match the schema, attaching will fail and the error message will give details on why the schema failed to attach.",
         "tags": ["Schema validation"],
         "parameters": [
           {
@@ -1127,7 +1127,7 @@
       },
       "delete": {
         "summary": "Detach schema from room",
-        "description": "This endpoint detaches the schema from a room.",
+        "description": "This endpoint detaches the schema from a room. Corresponds to [`liveblocks.detachSchemaFromRoom`](/docs/api-reference/liveblocks-node#delete-detach-schema-to-room).",
         "tags": ["Schema validation"],
         "parameters": [
           {
@@ -1160,7 +1160,7 @@
     "/rooms/{roomId}/threads": {
       "get": {
         "summary": "Get room threads",
-        "description": "This endpoint returns the threads in the requested room.",
+        "description": "This endpoint returns the threads in the requested room. Corresponds to [`liveblocks.getThreads`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads).",
         "tags": ["Comments"],
         "parameters": [
           {
@@ -1169,10 +1169,11 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "ID of the room"
           }
         ],
-        "operationId": "get-threads",
+        "operationId": "get-rooms-roomId-threads",
         "responses": {
           "200": {
             "description": "Success. Returns list of threads in a room.",
@@ -1221,14 +1222,106 @@
               }
             }
           },
+          "404": {
+            "$ref": "#/components/responses/404-thread"
+          },
           "401": {
             "$ref": "#/components/responses/401"
           },
           "403": {
             "$ref": "#/components/responses/403"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create thread",
+        "x-badge": "Beta",
+        "description": "This endpoint creates a new thread and the first comment in the thread. Corresponds to [`liveblocks.createThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads).\n\nA comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to construct a comment’s body, which can be submitted under `comment.body`.\n\n```json\n\"version\": 1,\n\"content\": [\n  {\n    \"type\": \"paragraph\",\n    \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]\n  }\n]\n```",
+        "tags": ["Comments"],
+        "operationId": "post-rooms-roomId-threads",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the created thread.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Thread"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "type": "thread",
+                      "id": "thread-id",
+                      "roomId": "room-id",
+                      "comments": [
+                        {
+                          "type": "comment",
+                          "threadId": "thread-id",
+                          "roomId": "room-id",
+                          "id": "comment-id",
+                          "userId": "alice",
+                          "createdAt": "2022-07-13T14:32:50.697Z",
+                          "body": {
+                            "version": 1,
+                            "content": []
+                          }
+                        }
+                      ],
+                      "createdAt": "2022-07-13T14:32:50.697Z",
+                      "metadata": {
+                        "color": "blue"
+                      }
+                    }
+                  }
+                }
+              }
+            }
           },
-          "404": {
-            "$ref": "#/components/responses/404"
+          "409": {
+            "$ref": "#/components/responses/409-thread"
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateThread"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "comment": {
+                      "userId": "alice",
+                      "createdAt": "2022-07-13T14:32:50.697Z",
+                      "body": {
+                        "version": 1,
+                        "content": []
+                      }
+                    },
+                    "metadata": {
+                      "color": "blue"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -1237,8 +1330,8 @@
       "get": {
         "summary": "Get thread",
         "tags": ["Comments"],
-        "description": "This endpoint returns a thread by its ID.",
-        "operationId": "get-thread",
+        "description": "This endpoint returns a thread by its ID. Corresponds to [`liveblocks.getThread`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId).",
+        "operationId": "get-rooms-roomId-threads-threadId",
         "parameters": [
           {
             "name": "roomId",
@@ -1246,7 +1339,8 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "ID of the room"
           },
           {
             "name": "threadId",
@@ -1254,7 +1348,8 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "ID of the thread"
           }
         ],
         "responses": {
@@ -1300,77 +1395,7 @@
             "$ref": "#/components/responses/403"
           },
           "404": {
-            "$ref": "#/components/responses/404"
-          }
-        }
-      }
-    },
-    "/rooms/{roomId}/threads/{threadId}/comments/{commentId}": {
-      "get": {
-        "summary": "Get comment",
-        "tags": ["Comments"],
-        "description": "This endpoint returns a comment by its ID.",
-        "operationId": "get-comment",
-        "parameters": [
-          {
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "threadId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "commentId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success. Returns the requested comment.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Comment"
-                },
-                "examples": {
-                  "Success": {
-                    "value": {
-                      "type": "comment",
-                      "threadId": "thread-id",
-                      "roomId": "room-id",
-                      "id": "comment-id",
-                      "userId": "string",
-                      "createdAt": "2019-08-24T14:15:22Z",
-                      "editedAt": "2019-08-24T14:15:22Z",
-                      "deletedAt": "2019-08-24T14:15:22Z",
-                      "body": {}
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404"
+            "$ref": "#/components/responses/404-thread"
           }
         }
       }
@@ -1379,8 +1404,8 @@
       "get": {
         "summary": "Get thread participants",
         "tags": ["Comments"],
-        "description": "This endpoint returns the list of thread participants. It is a list of unique user IDs representing all the thread comment authors and mentioned users in comments.",
-        "operationId": "get-thread-participants",
+        "description": "This endpoint returns the list of thread participants. It is a list of unique user IDs representing all the thread comment authors and mentioned users in comments. Corresponds to [`liveblocks.getThreadParticipants`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-participants).",
+        "operationId": "get-rooms-roomId-threads-threadId-participants",
         "parameters": [
           {
             "name": "roomId",
@@ -1388,7 +1413,8 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "ID of the room"
           },
           {
             "name": "threadId",
@@ -1396,7 +1422,8 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "ID of the thread"
           }
         ],
         "responses": {
@@ -1432,7 +1459,520 @@
             "$ref": "#/components/responses/403"
           },
           "404": {
-            "$ref": "#/components/responses/404"
+            "$ref": "#/components/responses/404-thread"
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/threads/{threadId}/metadata": {
+      "post": {
+        "summary": "Edit thread metadata",
+        "x-badge": "Beta",
+        "tags": ["Comments"],
+        "description": "This endpoint edits the metadata of a thread. The metadata is a JSON object that can be used to store any information you want about the thread, in `string`, `number`, or `boolean` form. Set a property to `null` to remove it. Corresponds to [`liveblocks.editThreadMetadata`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-metadata).",
+        "operationId": "post-rooms-roomId-threads-threadId-metadata",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the thread"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the updated metadata.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThreadMetadata"
+                },
+                "examples": {
+                  "Success": {
+                    "value": {
+                      "color": "yellow"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/404-thread"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateThread"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "metadata": {
+                      "color": "yellow"
+                    },
+                    "userId": "alice",
+                    "createdAt": "2023-07-13T14:32:50.697Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/threads/{threadId}/comments": {
+      "post": {
+        "summary": "Create comment",
+        "x-badge": "Beta",
+        "description": "This endpoint creates a new comment, adding it as a reply to a thread. Corresponds to [`liveblocks.createComment`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments).\n\nA comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to construct a comment’s body, which can be submitted under `body`.\n\n```json\n\"version\": 1,\n\"content\": [\n  {\n    \"type\": \"paragraph\",\n    \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]\n  }\n]\n",
+        "tags": ["Comments"],
+        "operationId": "post-rooms-roomId-threads-threadId-comments",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the thread"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the created comment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Comment"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "type": "comment",
+                      "threadId": "thread-id",
+                      "roomId": "room-id",
+                      "id": "comment-id",
+                      "userId": "alice",
+                      "createdAt": "2022-07-13T14:32:50.697Z",
+                      "body": {
+                        "version": 1,
+                        "content": []
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "$ref": "#/components/responses/409-comment"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-thread"
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateComment"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "userId": "alice",
+                    "createdAt": "2022-07-13T14:32:50.697Z",
+                    "body": {
+                      "version": 1,
+                      "content": []
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/threads/{threadId}/comments/{commentId}": {
+      "get": {
+        "summary": "Get comment",
+        "tags": ["Comments"],
+        "description": "This endpoint returns a comment by its ID. Corresponds to [`liveblocks.getComment`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-comments-commentId).",
+        "operationId": "get-rooms-roomId-threads-threadId-comments-commentId",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the thread"
+          },
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the comment"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the requested comment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Comment"
+                },
+                "examples": {
+                  "Success": {
+                    "value": {
+                      "type": "comment",
+                      "threadId": "thread-id",
+                      "roomId": "room-id",
+                      "id": "comment-id",
+                      "userId": "alice",
+                      "createdAt": "2019-08-24T14:15:22Z",
+                      "editedAt": "2019-08-24T14:15:22Z",
+                      "deletedAt": "2019-08-24T14:15:22Z",
+                      "body": {}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/404-thread"
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          }
+        }
+      },
+      "post": {
+        "summary": "Edit comment",
+        "x-badge": "Beta",
+        "description": "This endpoint edits the specified comment. Corresponds to [`liveblocks.editComment`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId).\n\nA comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to construct a comment’s body, which can be submitted under `body`.\n\n```json\n\"version\": 1,\n\"content\": [\n  {\n    \"type\": \"paragraph\",\n    \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]\n  }\n]\n",
+        "tags": ["Comments"],
+        "operationId": "post-rooms-roomId-threads-threadId-comments-commentId",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the thread"
+          },
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the comment"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the edited comment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateComment"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "type": "comment",
+                      "threadId": "thread-id",
+                      "roomId": "room-id",
+                      "id": "comment-id",
+                      "userId": "alice",
+                      "createdAt": "2023-07-13T14:32:50.697Z",
+                      "body": {
+                        "version": 1,
+                        "content": []
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "$ref": "#/components/responses/409-comment"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-thread"
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateComment"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "editedAt": "2023-07-13T14:32:50.697Z",
+                    "body": {
+                      "version": 1,
+                      "content": []
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete comment",
+        "x-badge": "Beta",
+        "tags": ["Comments"],
+        "responses": {
+          "204": {
+            "description": "Success. The comment was deleted"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-comment"
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          }
+        },
+        "operationId": "delete-rooms-roomId-threads-threadId-comments-commentId",
+        "description": "This endpoint deletes a comment. A deleted comment is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.deleteComment`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId).\n\n"
+      }
+    },
+    "/rooms/{roomId}/threads/{threadId}/comments/{commentId}/add-reaction": {
+      "post": {
+        "x-badge": "Beta",
+        "summary": "Add comment reaction",
+        "description": "This endpoint adds a reaction to a comment. Corresponds to [`liveblocks.addCommentReaction`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction).",
+        "tags": ["Comments"],
+        "operationId": "post-rooms-roomId-threads-threadId-comments-commentId-add-reaction",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the thread"
+          },
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the comment"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the created reaction.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentReaction"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "emoji": "👨‍👩‍👧",
+                      "createdAt": "2022-07-13T14:32:50.697Z",
+                      "userId": "alice"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "$ref": "#/components/responses/409-comment-reaction"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-comment"
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddCommentReaction"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "emoji": "👨‍👩‍👧",
+                    "createdAt": "2022-07-13T14:32:50.697Z",
+                    "userId": "alice"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/threads/{threadId}/comments/{commentId}/remove-reaction": {
+      "post": {
+        "summary": "Remove comment reaction",
+        "x-badge": "Beta",
+        "description": "This endpoint removes a comment reaction. A deleted comment reaction is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.removeCommentReaction]`(/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction) \n\n",
+        "tags": ["Comments"],
+        "operationId": "post-rooms-roomId-threads-threadId-comments-commentId-remove-reaction",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the thread"
+          },
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the comment"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success. The comment reaction was deleted"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-comment-reaction"
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveCommentReaction"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "emoji": "👨‍👩‍👧",
+                    "userId": "alice",
+                    "removedAt": "2022-07-13T14:32:50.697Z"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -1545,7 +2085,8 @@
     },
     "/rooms/{roomId}/authorize": {
       "post": {
-        "summary": "Get single-room token with secret key (deprecated)",
+        "summary": "Get single-room token with secret key",
+        "x-badge": "Deprecated",
         "description": "**Deprecated.** Prefer using [access tokens](#post-authorize-user) or [ID tokens](#post-identify-user) instead. Read more in our [migration guide](/docs/platform/upgrading/1.2).\n\nThis endpoint lets your application server (your back end) obtain a token that one of its clients (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When making this request, you’ll have to use your secret key.\n\nYou can pass the property `userId` in the request’s body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. Setting the `userId` is optional if you want to use public rooms, but it is required to enter a private room (because permissions are assigned to specific user IDs). In case you want to use the group permission system, you can also declare which `groupIds` this user belongs to.\n\nThe property userId is used by Liveblocks to calculate your account’s Monthly Active Users. One unique userId corresponds to one MAU. If you don’t pass a userId, we will create for you a new anonymous userId on each connection, but your MAUs will be higher.\n\nAdditionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name.",
         "tags": ["Deprecated"],
         "parameters": [],
@@ -1606,7 +2147,8 @@
     },
     "/rooms/{roomId}/public/authorize": {
       "post": {
-        "summary": "Get single-room token with public key (deprecated)",
+        "summary": "Get single-room token with public key",
+        "x-badge": "Deprecated",
         "tags": ["Deprecated"],
         "operationId": "post-public-authorize",
         "responses": {
@@ -2035,6 +2577,101 @@
         ],
         "description": ""
       },
+      "CreateThread": {
+        "title": "CreateThread",
+        "type": "object",
+        "properties": {
+          "comment": {
+            "type": "object",
+            "properties": {
+              "userId": {
+                "type": "string"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "body": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "number"
+                  },
+                  "content": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            },
+            "required": ["userId", "body"]
+          },
+          "metadata": {
+            "type": "object"
+          }
+        },
+        "required": ["comment"],
+        "examples": [
+          {
+            "comment": {
+              "userId": "alice",
+              "createdAt": "2022-07-13T14:32:50.697Z",
+              "body": {
+                "version": 1,
+                "content": []
+              }
+            },
+            "metadata": {
+              "color": "blue"
+            }
+          }
+        ],
+        "description": ""
+      },
+      "UpdateThread": {
+        "title": "UpdateThread",
+        "type": "object",
+        "properties": {
+          "metadata": {
+            "type": "object"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": ["metadata", "userId"],
+        "examples": [
+          {
+            "metadata": {
+              "color": "blue"
+            },
+            "userId": "alice",
+            "createdAt": "2023-07-13T14:32:50.697Z"
+          }
+        ],
+        "description": ""
+      },
+      "ThreadMetadata": {
+        "type": "object",
+        "title": "ThreadMetadata",
+        "properties": {
+          "type": "object"
+        },
+        "required": [],
+        "examples": [
+          {
+            "color": "blue",
+            "age": 25
+          }
+        ],
+        "description": ""
+      },
       "Comment": {
         "type": "object",
         "title": "Comment",
@@ -2085,6 +2722,152 @@
             "editedAt": "2019-08-24T14:15:22Z",
             "deletedAt": "2019-08-24T14:15:22Z",
             "body": {}
+          }
+        ]
+      },
+      "CreateComment": {
+        "title": "CreateComment",
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "body": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "number"
+              },
+              "content": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "required": ["userId", "body"],
+        "examples": [
+          {
+            "userId": "alice",
+            "createdAt": "2022-07-13T14:32:50.697Z",
+            "body": {
+              "version": 1,
+              "content": []
+            }
+          }
+        ],
+        "description": ""
+      },
+      "UpdateComment": {
+        "title": "UpdateComment",
+        "type": "object",
+        "properties": {
+          "editedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "body": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "number"
+              },
+              "content": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "required": ["body"],
+        "examples": [
+          {
+            "editedAt": "2022-07-13T14:32:50.697Z",
+            "body": {
+              "version": 1,
+              "content": []
+            }
+          }
+        ],
+        "description": ""
+      },
+      "CommentReaction": {
+        "type": "object",
+        "title": "CommentReaction",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "emoji": {
+            "type": "string"
+          }
+        },
+        "required": ["userId", "emoji"],
+        "examples": [
+          {
+            "emoji": "👨‍👩‍👧",
+            "createdAt": "2022-07-13T14:32:50.697Z",
+            "userId": "alice"
+          }
+        ]
+      },
+      "AddCommentReaction": {
+        "type": "object",
+        "title": "AddCommentReaction",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "emoji": {
+            "type": "string"
+          }
+        },
+        "required": ["userId", "emoji"],
+        "examples": [
+          {
+            "emoji": "👨‍👩‍👧",
+            "createdAt": "2022-07-13T14:32:50.697Z",
+            "userId": "alice"
+          }
+        ]
+      },
+      "RemoveCommentReaction": {
+        "type": "object",
+        "title": "RemoveCommentReaction",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "removedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "emoji": {
+            "type": "string"
+          }
+        },
+        "required": ["userId", "emoji"],
+        "examples": [
+          {
+            "emoji": "👨‍👩‍👧",
+            "removedAt": "2022-07-13T14:32:50.697Z",
+            "userId": "alice"
           }
         ]
       }
@@ -2340,6 +3123,150 @@
                   "docs": ""
                 }
               }
+            }
+          }
+        }
+      },
+      "409-thread": {
+        "description": "Thread already exists.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "RESOURCE_ALREADY_EXISTS": {
+                "value": {
+                  "error": "RESOURCE_ALREADY_EXISTS",
+                  "message": "Thread already exists"
+                }
+              }
+            }
+          },
+          "application/xml": {
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          }
+        }
+      },
+      "404-thread": {
+        "description": "Thread not found.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "RESOURCE_NOT_FOUND": {
+                "value": {
+                  "error": "RESOURCE_NOT_FOUND",
+                  "message": "Thread not found"
+                }
+              }
+            }
+          },
+          "application/xml": {
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          }
+        }
+      },
+      "409-comment": {
+        "description": "Comment already exists.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "RESOURCE_ALREADY_EXISTS": {
+                "value": {
+                  "error": "RESOURCE_ALREADY_EXISTS",
+                  "message": "Comment already exists"
+                }
+              }
+            }
+          },
+          "application/xml": {
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          }
+        }
+      },
+      "404-comment": {
+        "description": "Comment not found.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "RESOURCE_NOT_FOUND": {
+                "value": {
+                  "error": "RESOURCE_NOT_FOUND",
+                  "message": "Comment not found"
+                }
+              }
+            }
+          },
+          "application/xml": {
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          }
+        }
+      },
+      "409-comment-reaction": {
+        "description": "Reaction already exists.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "RESOURCE_ALREADY_EXISTS": {
+                "value": {
+                  "error": "RESOURCE_ALREADY_EXISTS",
+                  "message": "Reaction already exists"
+                }
+              }
+            }
+          },
+          "application/xml": {
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          }
+        }
+      },
+      "404-comment-reaction": {
+        "description": "Comment not found.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "RESOURCE_NOT_FOUND": {
+                "value": {
+                  "error": "RESOURCE_NOT_FOUND",
+                  "message": "Comment reaction not found"
+                }
+              }
+            }
+          },
+          "application/xml": {
+            "schema": {
+              "type": "object",
+              "properties": {}
             }
           }
         }

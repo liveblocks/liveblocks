@@ -127,7 +127,7 @@ export type {
   SetParentKeyOp,
   UpdateObjectOp,
 } from "./protocol/Op";
-export { OpCode } from "./protocol/Op";
+export { ackOp, OpCode } from "./protocol/Op";
 export type {
   IdTuple,
   SerializedChild,
