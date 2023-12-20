@@ -20,6 +20,7 @@ import type {
   CommentData,
   EnterOptions,
   RoomEventMessage,
+  RoomNotificationSettings,
   ToImmutable,
 } from "@liveblocks/core";
 import {
@@ -52,6 +53,8 @@ import type {
   ResolveMentionSuggestionsArgs,
   ResolveUsersArgs,
   RoomContextBundle,
+  RoomNotificationSettingsState,
+  RoomNotificationSettingsStateSuccess,
   RoomProviderProps,
   ThreadsState,
   UserState,
@@ -1031,6 +1034,56 @@ export function createRoomContext<
     return data;
   }
 
+  // [comments-unread] TODO: Finalize API: Loading? Differientate between "no read status" and "all read"?
+  // [comments-unread] TODO: Implement
+  function useThreadUnreadSince(threadId: string): Date | null {
+    // [comments-unread] TODO: Find inbox notification for this thread locally and compute `unreadSince` based on its `readAt` and `notifiedAt` values.
+    console.log(threadId);
+    return null;
+  }
+
+  // [comments-unread] TODO: Implement
+  function useMarkThreadAsRead() {
+    return React.useCallback((threadId: string) => {
+      // [comments-unread] TODO: Find inbox notification for this thread locally and mark it as read
+      console.log(threadId);
+    }, []);
+  }
+
+  // [comments-unread] TODO: Implement using `room.getRoomNotificationSettings`
+  // [comments-unread] TODO: Cache and optimistically update settings?
+  function useRoomNotificationSettings(): [
+    RoomNotificationSettingsState,
+    (settings: Partial<RoomNotificationSettings>) => void,
+  ] {
+    const room = useRoom();
+
+    return [
+      { isLoading: false, settings: { threads: "replies_and_mentions" } },
+      room.updateRoomNotificationSettings,
+    ];
+  }
+
+  // [comments-unread] TODO: Implement using `room.getRoomNotificationSettings`
+  // [comments-unread] TODO: Cache and optimistically update settings?
+  function useRoomNotificationSettingsSuspense(): [
+    RoomNotificationSettingsStateSuccess,
+    (settings: Partial<RoomNotificationSettings>) => void,
+  ] {
+    const room = useRoom();
+
+    return [
+      { isLoading: false, settings: { threads: "replies_and_mentions" } },
+      room.updateRoomNotificationSettings,
+    ];
+  }
+
+  // [comments-unread] TODO: Optimistically update settings in cache?
+  function useUpdateRoomNotificationSettings() {
+    const room = useRoom();
+    return room.updateRoomNotificationSettings;
+  }
+
   const bundle: RoomContextBundle<
     TPresence,
     TStorage,
@@ -1085,6 +1138,11 @@ export function createRoomContext<
     useDeleteComment,
     useAddReaction,
     useRemoveReaction,
+    useMarkThreadAsRead,
+    useThreadUnreadSince,
+
+    useRoomNotificationSettings,
+    useUpdateRoomNotificationSettings,
 
     suspense: {
       RoomContext,
@@ -1134,6 +1192,11 @@ export function createRoomContext<
       useDeleteComment,
       useAddReaction,
       useRemoveReaction,
+      useMarkThreadAsRead,
+      useThreadUnreadSince,
+
+      useRoomNotificationSettings: useRoomNotificationSettingsSuspense,
+      useUpdateRoomNotificationSettings,
     },
   };
 

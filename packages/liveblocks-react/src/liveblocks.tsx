@@ -59,7 +59,7 @@ export function createLiveblocksContext<
     } as const;
   }
 
-  // [comments-unread] TODO: Implement
+  // [comments-unread] TODO: Implement using `client.getInboxNotifications`
   function useInboxNotifications() {
     return {
       inboxNotifications: [] as InboxNotificationData[],
@@ -68,7 +68,7 @@ export function createLiveblocksContext<
     } as const;
   }
 
-  // [comments-unread] TODO: Implement
+  // [comments-unread] TODO: Implement using `client.getInboxNotifications`
   function useInboxNotificationsSuspense() {
     return {
       inboxNotifications: [] as InboxNotificationData[],
@@ -77,9 +77,15 @@ export function createLiveblocksContext<
     } as const;
   }
 
-  function useUnreadInboxNotificationsCount() {}
+  // [comments-unread] TODO: Implement using `client.getUnreadInboxNotificationsCount`
+  function useUnreadInboxNotificationsCount() {
+    return 0;
+  }
 
-  function useUnreadInboxNotificationsCountSuspense() {}
+  // [comments-unread] TODO: Implement using `client.getUnreadInboxNotificationsCount`
+  function useUnreadInboxNotificationsCountSuspense() {
+    return 0;
+  }
 
   function useMarkInboxNotificationAsRead() {
     // [comments-unread] TODO: Optimistically update the cached notification and the unread count
@@ -102,7 +108,7 @@ export function createLiveblocksContext<
     return markAllInboxNotificationsAsRead;
   }
 
-  const bundle = {
+  const bundle: LiveblocksContextBundle<TUserMeta, TThreadMetadata> = {
     LiveblocksProvider,
 
     useUser,

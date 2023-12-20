@@ -9,6 +9,7 @@ import type {
   LsonObject,
   OthersEvent,
   Room,
+  RoomNotificationSettings,
   Status,
   User,
 } from "@liveblocks/client";
@@ -137,6 +138,29 @@ export type InboxNotificationsStateSuccess<
 export type InboxNotificationsState<TThreadMetadata extends BaseMetadata> =
   | InboxNotificationsStateLoading
   | InboxNotificationsStateResolved<TThreadMetadata>;
+
+export type RoomNotificationSettingsStateLoading = {
+  isLoading: true;
+  settings?: never;
+  error?: never;
+};
+
+export type RoomNotificationSettingsStateError = {
+  isLoading: false;
+  settings?: never;
+  error: Error;
+};
+
+export type RoomNotificationSettingsStateSuccess = {
+  isLoading: false;
+  settings: RoomNotificationSettings;
+  error?: never;
+};
+
+export type RoomNotificationSettingsState =
+  | RoomNotificationSettingsStateLoading
+  | RoomNotificationSettingsStateError
+  | RoomNotificationSettingsStateSuccess;
 
 export type RoomProviderProps<
   TPresence extends JsonObject,
@@ -638,6 +662,17 @@ type RoomContextBundleShared<
    * removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" })
    */
   useRemoveReaction(): (options: CommentReactionOptions) => void;
+
+  // [comments-unread] TODO: JSDoc
+  useUpdateRoomNotificationSettings(): (
+    settings: Partial<RoomNotificationSettings>
+  ) => void;
+
+  // [comments-unread] TODO: JSDoc
+  useMarkThreadAsRead(): (threadId: string) => void;
+
+  // [comments-unread] TODO: JSDoc
+  useThreadUnreadSince(threadId: string): Date | null;
 };
 
 export type RoomContextBundle<
@@ -736,6 +771,12 @@ export type RoomContextBundle<
      * const { user, error, isLoading } = useUser("user-id");
      */
     useUser(userId: string): UserState<TUserMeta["info"]>;
+
+    // [comments-unread] TODO: JSDoc
+    useRoomNotificationSettings(): [
+      RoomNotificationSettingsState,
+      (settings: Partial<RoomNotificationSettings>) => void,
+    ];
 
     //
     // Legacy hooks
@@ -889,6 +930,12 @@ export type RoomContextBundle<
          */
         useUser(userId: string): UserStateSuccess<TUserMeta["info"]>;
 
+        // [comments-unread] TODO: JSDoc
+        useRoomNotificationSettings(): [
+          RoomNotificationSettingsStateSuccess,
+          (settings: Partial<RoomNotificationSettings>) => void,
+        ];
+
         //
         // Legacy hooks
         //
@@ -999,6 +1046,9 @@ export type LiveblocksContextBundle<
      */
     useInboxNotifications(): InboxNotificationsState<TThreadMetadata>;
 
+    // [comments-unread] TODO: JSDoc
+    useUnreadInboxNotificationsCount(): number | null;
+
     /**
      * @beta
      *
@@ -1020,6 +1070,9 @@ export type LiveblocksContextBundle<
          * const { inboxNotifications, error, isLoading, loadMore } = useInboxNotifications();
          */
         useInboxNotifications(): InboxNotificationsStateSuccess<TThreadMetadata>;
+
+        // [comments-unread] TODO: JSDoc
+        useUnreadInboxNotificationsCount(): number;
 
         /**
          * @beta

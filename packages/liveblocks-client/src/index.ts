@@ -42,6 +42,7 @@ export type {
   OthersEvent,
   PlainLsonObject,
   Room,
+  RoomNotificationSettings,
   Status,
   StorageStatus,
   StorageUpdate,
