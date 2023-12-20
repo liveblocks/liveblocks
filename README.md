@@ -86,7 +86,7 @@ You can read our release notes
 
 ## Community and support
 
-- [GitHub issues](./issues) to file bugs and errors you encounter using
+- [GitHub issues](https://github.com/liveblocks/liveblocks/issues) to file bugs and errors you encounter using
   Liveblocks.
 - [Discord](https://liveblocks.io/discord) to get involved with the Liveblocks
   community, ask questions and share tips.
