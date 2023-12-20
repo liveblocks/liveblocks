@@ -726,17 +726,13 @@ This is a wrapper around the
 and returns no response.
 
 ```ts
-await liveblocks.sendYjsBinaryUpdate("my-room-id", {
-  // Your yDoc in a base64 binary update string
-  update: yUpdate,
-});
+await liveblocks.sendYjsBinaryUpdate("my-room-id", update);
 ```
 
 Here’s an example of how to update a room’s Yjs document with your changes.
 
 ```ts
 import * as Y from "yjs";
-import { fromUint8Array } from "js-base64";
 
 // Create a Yjs document
 const yDoc = new Y.Doc();
@@ -745,13 +741,11 @@ const yDoc = new Y.Doc();
 const yText = yDoc.getText("text");
 yText.insert(0, "Hello world");
 
-// Encode the document state as a base64 update string
-const yUpdate = fromUint8Array(Y.encodeStateAsUpdate(yDoc));
+// Encode the document state as an update
+const update = Y.encodeStateAsUpdate(yDoc);
 
 // Send update to Liveblocks
-await liveblocks.sendYjsBinaryUpdate("my-room-id", {
-  update: yUpdate,
-});
+await liveblocks.sendYjsBinaryUpdate("my-room-id", update);
 ```
 
 To create a new room and initialize its Yjs document, call
@@ -762,19 +756,16 @@ To create a new room and initialize its Yjs document, call
 const room = await liveblocks.createRoom("my-room-id");
 
 // Set initial Yjs document value
-await liveblocks.sendYjsBinaryUpdate("my-room-id", {
-  update: yUpdate,
-});
+await liveblocks.sendYjsBinaryUpdate("my-room-id", state);
 ```
 
 Note that each text and code editor handles binary updates in a different way.
 For example, this is how to create a binary update with
 [Slate](https://www.slatejs.org/).
 
-```ts title="Slate binary update" highlight="4,14-18,20-22" isCollapsed isCollapsable
+```ts title="Slate binary update" highlight="3,13-17,19-21" isCollapsed isCollapsable
 import { Liveblocks } from "@liveblocks/node";
 import * as Y from "yjs";
-import { fromUint8Array } from "js-base64";
 import { slateNodesToInsertDelta } from "@slate-yjs/core";
 
 const liveblocks = new Liveblocks({
@@ -795,13 +786,11 @@ export async function POST() {
   const insertDelta = slateNodesToInsertDelta(slateDoc);
   (yDoc.get("content", Y.XmlText) as Y.XmlText).applyDelta(insertDelta);
 
-  // Encode the document state as a base64 update string
-  const yUpdate = fromUint8Array(Y.encodeStateAsUpdate(yDoc));
+  // Encode the document state as an update
+  const update = Y.encodeStateAsUpdate(yDoc);
 
   // Send update to Liveblocks
-  await liveblocks.sendYjsBinaryUpdate("my-room-id", {
-    update: yUpdate,
-  });
+  await liveblocks.sendYjsBinaryUpdate("my-room-id", update);
 }
 ```
 
