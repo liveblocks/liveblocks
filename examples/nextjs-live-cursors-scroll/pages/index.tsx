@@ -35,7 +35,6 @@ function useLiveCursors() {
     }
 
     function onPointerMove(event: PointerEvent) {
-      event.preventDefault();
       const position = {
         x: event.pageX,
         y: event.pageY,
@@ -102,7 +101,7 @@ function Example() {
   return (
     <>
       <main>
-        <div className="mx-auto max-w-xl py-32 px-6 font-serif text-lg leading-loose">
+        <div className="mx-auto max-w-xl px-6 py-32 font-serif text-lg leading-loose">
           <h2 className="text-4xl font-bold">Hello world</h2>
           <p className="mt-10">
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. In non odio
