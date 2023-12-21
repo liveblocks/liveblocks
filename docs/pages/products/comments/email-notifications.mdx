@@ -5,7 +5,10 @@ meta:
   description: "Send notifications with webhooks"
 ---
 
-Email notifications
+Using Liveblocks webhooks, it’s possible to trigger your API endpoints when
+certain events occur, such as a thread being created, or a comment being
+modified. One use for these events is sending new comment notifications, for
+example via email or Slack.
 
 <Banner title="Step-by-step tutorial">
 
@@ -15,7 +18,155 @@ prefer a full step-by-step tutorial, make sure to read
 
 </Banner>
 
-## Listening for Comments events
+## Sending notifications to particpating users
+
+Using [Liveblocks webhooks](/docs/platform/webhooks#Liveblocks-events) you can
+listen to a range of events such as comments being deleted, or reactions being
+added. On the dashboard you can create a webhook for a project, and select which
+events you’d like to listen to.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source src="/assets/webhooks/edit-events.mp4" type="video/mp4" />
+  </video>
+</Figure>
+
+The endpoint URL will be sent a request with relevant data when the event
+occurs. Here’s an example of an event object that’s sent when a thread is
+created.
+
+```ts
+const event = {
+  type: "threadCreated",
+  data: {
+    projectId: "my-project-id",
+    roomId: "my-room-id",
+    threadId: "th_sf8s6sh...",
+    createdAt: "2021-10-06T01:45:56.558Z",
+    createdBy: "my-user-id",
+  },
+};
+```
+
+In your endpoint, you can use this `event` object with functions such as
+[`liveblocks.getThread`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId)
+and
+[`stringifyCommentBody`](/docs/api-reference/liveblocks-node#stringify-comment-body),
+which will return the thread that’s just been created, and the text from the
+first comment.
+
+```ts
+const thread = await liveblocks.getThread({
+  roomId: event.data.roomId,
+  threadId: event.data.threadId,
+});
+
+// { type: "thread", id: "th_d75sF3...", ... }
+console.log(thread);
+
+const commentText = await stringifyCommentBody(thread.comments[0].body);
+
+// "Hello world!"
+console.log(commentText);
+```
+
+You could then call [`liveblocks.getParticipants`]() to find a list of user IDs
+mentioned in the thread, and send an email to each user.
+
+```ts
+const { participantIds } = await liveblocks.getThreadParticipants({
+  roomId: event.data.roomId,
+  threadId: event.data.threadId,
+});
+
+// ["adri@example.com", "florent@example.com"]
+console.log(participantIds);
+
+// Send email notifications
+for (const userId of participantIds) {
+  const emailAddress = __getUserEmail__(userId);
+
+  // Send email to the user using your setup
+  __sendEmail__({
+    from: "hello@my-company.com",
+    to: emailAddress,
+    title: "New thread",
+    text: `New thread created: ${commentText}`,
+  });
+}
+```
+
+### Full example
+
+Here’s an example with every step linked together, along with the code necessary
+to verify a webhook request is valid.
+
+```ts
+import { Liveblocks, WebhookHandler } from "@liveblocks/node";
+
+// Add your webhook secret key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+// Add your secret key from a project's API keys dashboard
+const API_SECRET = "{{SECRET_KEY}}";
+const liveblocks = new Liveblocks({ secret: API_SECRET });
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // When a thread has been created
+  if (event.type === "threadCreated") {
+    // Get thread data
+    const thread = await liveblocks.getThread({
+      roomId: event.data.roomId,
+      threadId: event.data.threadId,
+    });
+
+    // Get comment text
+    const commentText = await stringifyCommentBody(thread.comments[0].body);
+
+    // Get participating userIds
+    const { participantIds } = await liveblocks.getThreadParticipants({
+      roomId: event.data.roomId,
+      threadId: event.data.threadId,
+    });
+
+    // Send email notifications
+    for (const userId of participantIds) {
+      const emailAddress = __getUserEmail__(userId);
+
+      // Send email to the user using your setup
+      __sendEmail__({
+        from: "hello@my-company.com",
+        to: emailAddress,
+        title: "New thread",
+        text: `New thread created: ${commentText}`,
+      });
+    }
+  }
+
+  return new Response(null, { status: 200 });
+}
+```
+
+### Webhook events
+
+There’s more than just the `ThreadCreatedEvent` event—a number of different
+Comments events are available to use.
 
 - [`CommentCreatedEvent`](/docs/platform/webhooks#CommentCreatedEvent)
 - [`CommentEditedEvent`](/docs/platform/webhooks#CommentEditedEvent)
@@ -24,6 +175,11 @@ prefer a full step-by-step tutorial, make sure to read
 - [`CommentReactionRemovedEvent`](/docs/platform/webhooks#CommentReactionRemovedEvent)
 - [`ThreadCreatedEvent`](/docs/platform/webhooks#ThreadCreatedEvent)
 - [`ThreadMetadataUpdatedEvent`](/docs/platform/webhooks#ThreadMetadataUpdatedEvent)
+
+There are also more events, for example you can trigger events when users enter
+or leave rooms. We recommend reading our guide on
+[testing webhooks locally](/docs/guides/how-to-test-webhooks-on-localhost) to
+get started.
 
 ## Retrieving Comments data
 
