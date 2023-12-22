@@ -18,7 +18,7 @@ prefer a full step-by-step tutorial, make sure to read
 
 </Banner>
 
-## Sending notifications to particpating users
+## Sending notifications to participating users
 
 Using [Liveblocks webhooks](/docs/platform/webhooks#Liveblocks-events) you can
 listen to a range of events such as comments being deleted, or reactions being
@@ -96,12 +96,10 @@ for (const userId of participantIds) {
 }
 ```
 
-### Full example
-
 Here’s an example with every step linked together, along with the code necessary
 to verify a webhook request is valid.
 
-```ts
+```ts title="Full example" isCollapsable isCollapsed
 import { Liveblocks, WebhookHandler } from "@liveblocks/node";
 
 // Add your webhook secret key from a project's webhooks dashboard
@@ -163,10 +161,14 @@ export async function POST(request: Request) {
 }
 ```
 
-### Webhook events
+Learn more about building this in our
+[how to send email notifications](/docs/guides/how-to-send-email-notifications-when-comments-are-created)
+guide.
 
-There’s more than just the `ThreadCreatedEvent` event—a number of different
-Comments events are available to use.
+## Webhook events
+
+There are more webhook events than just the `ThreadCreatedEvent` event used
+above—a number related to Comments are available to use.
 
 - [`CommentCreatedEvent`](/docs/platform/webhooks#CommentCreatedEvent)
 - [`CommentEditedEvent`](/docs/platform/webhooks#CommentEditedEvent)
@@ -181,18 +183,20 @@ or leave rooms. We recommend reading our guide on
 [testing webhooks locally](/docs/guides/how-to-test-webhooks-on-localhost) to
 get started.
 
-## Retrieving Comments data
+## Retrieving and modifying Comments data
 
-- [`getThreads`](/docs/api-reference/liveblocks-node#get-threads)
-- [`getThread`](/docs/api-reference/liveblocks-node#get-thread)
+Here’s every Comments-related
+[`@liveblocks/node`](/docs/api-reference/liveblocks-node) function. Each also
+has a corresponding REST API, you can find more info by following the links.
+
+- [`getThreads`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads)
+- [`createThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads)
+- [`getThread`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId)
 - [`getThreadParticipants`](/docs/api-reference/liveblocks-node#get-thread-participants)
-- [`getComment`](/docs/api-reference/liveblocks-node#get-comment)
-
-### Using the REST API
-
-[you can also use the REST API directly]
-
-- [Get room threads API](/docs/api-reference/rest-api-endpoints#get-threads)
-- [Get thread API](/docs/api-reference/rest-api-endpoints#get-thread)
-- [Get thread participants API](/docs/api-reference/rest-api-endpoints#get-thread-participants)
-- [Get comment API](/docs/api-reference/rest-api-endpoints#get-comment)
+- [`editThreadMetadata`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-metadata)
+- [`createComment`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments)
+- [`getComment`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-comments-commentId)
+- [`editComment`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId)
+- [`deleteComment`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-threads-threadId-comments-commentId)
+- [`addCommentReaction`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction)
+- [`removeCommentReaction`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-remove-reaction)
