@@ -1400,13 +1400,40 @@ function MyComments({ thread }: { thread: ThreadData }) {
 
 ### useComposer
 
-Returns states and methods related to the composer. Can only be used within
-`Composer.Form`.
+Returns states and methods related to the composer. Can only be used within the
+[`Composer.Form`](#primitives-Composer.Form) primitive.
 
 ```tsx
 import { useComposer } from "@liveblocks/react-comments/primitives";
 
 const { isEmpty, submit } = useComposer();
+```
+
+This hook has a number of uses, for example constructing a custom button that
+submits threads, and disabling it when the composer input is empty.
+
+```tsx highlight="14,17-19"
+import { Composer, useComposer } from "@liveblocks/react-comments/primitives";
+
+function MyComposer() {
+  return (
+    <Composer.Form onComposerSubmit={/* handle submit */}>
+      <Composer.Editor components={/* Your custom component parts */} />
+      <MyComposerButton />
+    </Composer.Form>
+  );
+}
+
+// Button that submits the form, and is disabled when the input is empty
+function MyComposerButton() {
+  const { isEmpty, submit } = useComposer();
+
+  return (
+    <button onClick={submit} disabled={isEmpty}>
+      Create thread
+    </button>
+  );
+}
 ```
 
 ### Other hooks
