@@ -165,6 +165,12 @@ function MyComposer() {
 }
 ```
 
+Custom component parts can be used to render custom
+[mentions](/docs/api-reference/liveblocks-react-comments#primitives-Composer.Editor-Mention),
+[links](/docs/api-reference/liveblocks-react-comments#primitives-Composer.Link),
+and a
+[suggestions selection popover](/docs/api-reference/liveblocks-react-comments#primitives-Composer.Suggestions).
+
 ### useComposer
 
 The [`useComposer`](/docs/api-reference/liveblocks-react-comments#useComposer)
@@ -198,4 +204,80 @@ function MyComposerButton() {
 
 ## Comment
 
+The
+[`Comment`](/docs/api-reference/liveblocks-react-comments#primitives-Comment)
+primitive is used to render a `comment.body` object as text, mentions, and
+links.
+
+```tsx
+import { Comment } from "@liveblocks/react-comments/primitives";
+import { CommentData } from "@liveblocks/client";
+
+// Render custom comments in a thread.
+function MyComments({ comments }: { comments: CommentData[] }) {
+  return (
+    <>
+      {comments.map((comment) => (
+        <Comment.Body
+          key={comment.id}
+          body={comment.body}
+          components={/* Your custom component parts */}
+        />
+      ))}
+    </>
+  );
+}
+```
+
+The component above would typically be combined with
+[`useThreads`](/docs/api-reference/liveblocks-react#useThreads).
+
+```tsx
+import { useThreads } from "../liveblocks.config";
+
+function MyThreads() {
+  const { threads } = useThreads();
+
+  return (
+    <>
+      {threads.map((thread) => (
+        <MyComments key={thread.id} comments={thread.comments} />
+      ))}
+    </>
+  );
+}
+```
+
+Custom component parts can be used to render
+[mentions](/docs/api-reference/liveblocks-react-comments#primitives-Comment.Mention)
+and
+[links](http://localhost:3001/docs/api-reference/liveblocks-react-comments#primitives-Comment.Link).
+
 ## Timestamp
+
+The
+[`Timestamp`](/docs/api-reference/liveblocks-react-comments#primitives-Timestamp)
+primitive is a quick helper that will convert a date object, or timestamp, into
+a friendly format. For example, it’ll render a format similar to “5 minutes ago”
+for a recent comment, and “22 Dec” for an older comment.
+
+```tsx highlight="12"
+import { Timestamp } from "@liveblocks/react-comments";
+import { useThreads } from "../liveblocks.config";
+
+// Render threads with friendly datetime messages above
+function Component() {
+  const { threads } = useThreads();
+
+  return (
+    <>
+      {threads.map((thread) => (
+        <div key={thread.id}>
+          Thread posted at: <Timestamp date={thread.createdAt} />
+          {/* Render `thread` ... */}
+        </div>
+      ))}
+    </>
+  );
+}
+```
