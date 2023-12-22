@@ -19,26 +19,104 @@ to construct a fully styled comment body and rich-text comment composer.
 
 ## Concepts
 
-[show commentbody]
+Each primitive is made up of one or more components, for example
+[`Comment`](/docs/api-reference/liveblocks-react-comments#primitives-Comment)
+only needs `Comment.Body`. This component takes a comment’s body, and turns it
+into readable text, with links and mentions.
 
-[show adding mentions to commentbody]
+```tsx highlight="6"
+import { CommentData } from "@liveblocks/client";
+import { Comment } from "@liveblocks/react-comments/primitives";
 
-All primitives are composable; they forward their props and refs, merge their
-classes and styles, and chain their event handlers.
-
-```tsx
-import { Button } from "@/my-design-system";
-
-// Use the default <button> element
-<Composer.Submit disabled>Send</Composer.Submit>;
-
-// Use an existing custom <Button> component
-<Composer.Submit disabled asChild>
-  <Button variant="primary">Send</Button>
-</Composer.Submit>;
+// Render a custom comment body
+function MyComment({ comment }: { comment: CommentData }) {
+  return <Comment.Body body={comment.body} />;
+}
 ```
 
-[explain about composition]
+### Use custom component parts
+
+Many primitives allow you to customize their parts by passing a `components`
+property. In this example, we’re modifying links in the comment, so that they’re
+purple and bold.
+
+```tsx highlight="13-15,21-28"
+import { CommentData } from "@liveblocks/client";
+import {
+  Comment,
+  CommentBodyLinkProps,
+} from "@liveblocks/react-comments/primitives";
+
+// Render a custom comment body
+function MyComment({ comment }: { comment: CommentData }) {
+  return (
+    <div>
+      <Comment.Body
+        body={comment.body}
+        components={{
+          Link,
+        }}
+      />
+    </div>
+  );
+}
+
+// Render a purple link in the comment, e.g. "https://liveblocks.io"
+function Link({ href, children }: CommentBodyLinkProps) {
+  return (
+    <Comment.Link href={href} style={{ color: "purple", fontWeight: 700 }}>
+      {children}
+    </Comment.Link>
+  );
+}
+```
+
+### Merge with your design system components
+
+You can also add components directly from your design system. Let’s say you have
+a `DesignSystemLink` that looks like this.
+
+```tsx
+function DesignSystemLink({ url, children }) {
+  return (
+    <a href={url} target="_blank">
+      {children}
+    </a>
+  );
+}
+```
+
+If you were to place this inside `Comment.Link`, you’d end up with two `<a>`
+elements, which is not valid.
+
+```tsx
+<Comment.Link href={href} style={{ color: "purple " }}>
+  <DesignSystemLink url={href}>{children}</DesignSystemLink>
+</Comment.Link>
+
+// ❌ Renders two separate <a> tags
+<a href="https://liveblocks.io" style="color: purple">
+  <a href="https://liveblocks.io" target="_blank">https://liveblocks.io</a>
+</a>
+```
+
+However, if you add the `asChild` property to `Comment.Link`, you can merge the
+two components together, and only render a single `<a>` element.
+
+```tsx highlight="1"
+<Comment.Link href={href} style={{ color: "purple " }} asChild>
+  <DesignSystemLink url={href}>{children}</DesignSystemLink>
+</Comment.Link>
+
+// ✅ Renders one combined <a> tag
+<a href="https://liveblocks.io" style="color: purple" target="_blank">
+  https://liveblocks.io
+</a>
+```
+
+This is called composability, and almost all Comments primitives are composable
+with `asChild`; they forward their props and refs, merge their classes and
+styles, and chain their event handlers.
 
 ## Composer
 
