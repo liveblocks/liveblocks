@@ -1015,7 +1015,7 @@ export function createRoomContext<
   /**
    * Creates a new revalidation manager for the given filter options and room manager. If a revalidation manager already exists for the given filter options, it will be returned instead.
    */
-  function getRevalidationManager(
+  function getUseThreadsRevalidationManager(
     options: NormalizedFilterOptions<TThreadMetadata>,
     roomManager: RoomRevalidationManager<TThreadMetadata>
   ) {
@@ -1246,15 +1246,18 @@ export function createRoomContext<
 
   function _useThreads(options: NormalizedFilterOptions<TThreadMetadata>) {
     const room = useRoom();
-    const roomManager = useRoomRevalidationManager();
-    const revalidationManager = getRevalidationManager(options, roomManager);
+    const roomRevalidationManager = useRoomRevalidationManager();
+    const useThreadsRevalidationManager = getUseThreadsRevalidationManager(
+      options,
+      roomRevalidationManager
+    );
 
     const fetcher = React.useCallback(async () => {
-      const threads = getFetcher(room, roomManager);
+      const threads = getFetcher(room, roomRevalidationManager);
       return threads;
-    }, [room, roomManager]);
+    }, [room, roomRevalidationManager]);
 
-    const revalidate = useRevalidateCache(roomManager, fetcher);
+    const revalidate = useRevalidateCache(roomRevalidationManager, fetcher);
 
     const status = useStatus();
 
@@ -1271,7 +1274,7 @@ export function createRoomContext<
     );
 
     // Automatically revalidate the cache when the window gains focus or when the connection is restored. Also poll the server based on the connection status.
-    useAutomaticRevalidation(roomManager, revalidate, {
+    useAutomaticRevalidation(roomRevalidationManager, revalidate, {
       revalidateOnFocus: true,
       revalidateOnReconnect: true,
       refreshInterval: interval,
@@ -1297,15 +1300,15 @@ export function createRoomContext<
       () => manager.getThreadsCache(),
       () => manager.getThreadsCache(),
       (state) => {
-        const isLoading = revalidationManager.getIsLoading();
+        const isLoading = useThreadsRevalidationManager.getIsLoading();
         if (isLoading) {
           return {
             isLoading: true,
           };
         }
 
-        const options = revalidationManager.getOptions();
-        const error = revalidationManager.getError();
+        const options = useThreadsRevalidationManager.getOptions();
+        const error = useThreadsRevalidationManager.getError();
 
         // Filter the cache to only include threads that match the current query
         const filtered = state.filter((thread) => {
@@ -1351,22 +1354,28 @@ export function createRoomContext<
       [key, room]
     );
 
-    const roomManager = useRoomRevalidationManager();
+    const roomRevalidationManager = useRoomRevalidationManager();
 
-    const revalidationManager = getRevalidationManager(normalized, roomManager);
+    const useThreadsRevalidationManager = getUseThreadsRevalidationManager(
+      normalized,
+      roomRevalidationManager
+    );
 
-    const revalidateCache = useRevalidateCache(revalidationManager, fetcher);
+    const revalidateCache = useRevalidateCache(
+      useThreadsRevalidationManager,
+      fetcher
+    );
 
     React.useEffect(() => {
       void revalidateCache({ shouldDedupe: true });
     }, [revalidateCache]);
 
     React.useEffect(() => {
-      roomManager.incrementReferenceCount(key);
+      roomRevalidationManager.incrementReferenceCount(key);
       return () => {
-        roomManager.decrementReferenceCount(key);
+        roomRevalidationManager.decrementReferenceCount(key);
       };
-    }, [key, roomManager]);
+    }, [key, roomRevalidationManager]);
 
     return _useThreads(normalized);
   }
@@ -1393,18 +1402,24 @@ export function createRoomContext<
       [key, room]
     );
 
-    const roomManager = useRoomRevalidationManager();
+    const roomRevalidationManager = useRoomRevalidationManager();
 
-    const revalidationManager = getRevalidationManager(normalized, roomManager);
+    const useThreadsRevalidationManager = getUseThreadsRevalidationManager(
+      normalized,
+      roomRevalidationManager
+    );
 
-    const revalidateCache = useRevalidateCache(revalidationManager, fetcher);
+    const revalidateCache = useRevalidateCache(
+      useThreadsRevalidationManager,
+      fetcher
+    );
 
     React.useEffect(() => {
-      roomManager.incrementReferenceCount(key);
+      roomRevalidationManager.incrementReferenceCount(key);
       return () => {
-        roomManager.decrementReferenceCount(key);
+        roomRevalidationManager.decrementReferenceCount(key);
       };
-    }, [roomManager, key]);
+    }, [roomRevalidationManager, key]);
 
     const cache = _useThreads(normalized);
 
