@@ -1,9 +1,3 @@
-# v1.9.1
-
-### `@liveblocks/react`
-
-- Minor improvements to `useThreads` with filter options.
-
 # v1.9.0
 
 ### `@liveblocks/node`

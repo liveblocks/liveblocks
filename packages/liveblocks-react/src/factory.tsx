@@ -36,20 +36,31 @@ import {
   makeEventSource,
   stringify,
 } from "@liveblocks/core";
+import { nanoid } from "nanoid";
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import {
   AddReactionError,
-  EditThreadMetadataError,
   type CommentsError,
-  RemoveReactionError,
-  CreateThreadError,
-  EditCommentError,
-  DeleteCommentError,
   CreateCommentError,
+  CreateThreadError,
+  DeleteCommentError,
+  EditCommentError,
+  EditThreadMetadataError,
+  RemoveReactionError,
 } from "./comments/errors";
+import {
+  type CacheManager,
+  type MutationInfo,
+  type RequestInfo,
+  useAutomaticRevalidation,
+  useMutate,
+  useRevalidateCache,
+} from "./comments/lib/revalidation";
 import { useDebounce } from "./comments/lib/use-debounce";
+import useIsDocumentVisible from "./comments/lib/use-is-document-visible";
+import useIsOnline from "./comments/lib/use-is-online";
 import { useAsyncCache } from "./lib/use-async-cache";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
@@ -66,14 +77,9 @@ import type {
   UserState,
   UserStateSuccess,
 } from "./types";
-import {
-  type RequestInfo,
-  type MutationInfo,
-  type CacheManager,
-  useRevalidateCache,
-  useMutate,
-} from "./comments/lib/revalidation";
-import { nanoid } from "nanoid";
+
+const POLLING_INTERVAL_REALTIME = 30000;
+const POLLING_INTERVAL = 5000;
 
 const THREAD_ID_PREFIX = "th";
 const COMMENT_ID_PREFIX = "cm";
@@ -1166,6 +1172,10 @@ export function createRoomContext<
   const RoomRevalidationManagerContext =
     React.createContext<RoomRevalidationManager<TThreadMetadata> | null>(null);
 
+  const CommentsEventSubscriptionContext = React.createContext<
+    () => () => void
+  >(() => () => {});
+
   function CommentsRoomProvider({
     children,
     room,
@@ -1173,13 +1183,54 @@ export function createRoomContext<
     children: React.ReactNode;
     room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
   }) {
+    const commentsEventSubscribersCountRef = React.useRef(0); // Reference count for the number of components with a subscription (via the `subscribe` function) to the comments event source.
+    const commentsEventDisposerRef = React.useRef<() => void>(); // Disposer function for the `comments` event listener
+
     const manager = React.useMemo(() => {
       return createRoomRevalidationManager(room.id);
     }, [room.id]);
 
+    const fetcher = React.useCallback(async () => {
+      const threads = getFetcher(room, manager);
+      return threads;
+    }, [room, manager]);
+
+    const revalidate = useRevalidateCache(manager, fetcher);
+
+    const subscribeToCommentEvents = React.useCallback(() => {
+      const commentsEventSubscribersCount =
+        commentsEventSubscribersCountRef.current;
+
+      // Only subscribe to the `comments` event if the reference count is 0 (meaning that there are no components with a subscription)
+      if (commentsEventSubscribersCount === 0) {
+        const unsubscribe = room.events.comments.subscribe(() => {
+          console.log("comments event received");
+          void revalidate({ shouldDedupe: true });
+        });
+        commentsEventDisposerRef.current = unsubscribe;
+      }
+
+      commentsEventSubscribersCountRef.current =
+        commentsEventSubscribersCount + 1;
+
+      return () => {
+        // Only unsubscribe from the `comments` event if the reference count is 0 (meaning that there are no components with a subscription)
+        commentsEventSubscribersCountRef.current =
+          commentsEventSubscribersCountRef.current - 1;
+        if (commentsEventSubscribersCountRef.current > 0) return;
+
+        commentsEventDisposerRef.current?.();
+        commentsEventDisposerRef.current = undefined;
+      };
+    }, [revalidate, room]);
+
     return (
       <RoomRevalidationManagerContext.Provider value={manager}>
-        {children}
+        <CommentsEventSubscriptionContext.Provider
+          value={subscribeToCommentEvents}
+        >
+          {children}
+        </CommentsEventSubscriptionContext.Provider>
       </RoomRevalidationManagerContext.Provider>
     );
   }
@@ -1194,31 +1245,43 @@ export function createRoomContext<
     return manager;
   }
 
-  function useThreads(options?: ThreadsFilterOptions<TThreadMetadata>) {
+  function _useThreads(options: NormalizedFilterOptions<TThreadMetadata>) {
     const room = useRoom();
+    const roomManager = useRoomRevalidationManager();
+    const revalidationManager = getRevalidationManager(options, roomManager);
 
-    const normalized = React.useMemo(
-      () => normalizeFilterOptions(options),
-      [options]
+    const fetcher = React.useCallback(async () => {
+      const threads = getFetcher(room, roomManager);
+      return threads;
+    }, [room, roomManager]);
+
+    const revalidate = useRevalidateCache(roomManager, fetcher);
+
+    const status = useStatus();
+
+    const isOnline = useIsOnline();
+    const isDocumentVisible = useIsDocumentVisible();
+    const subscribeToCommentEvents = React.useContext(
+      CommentsEventSubscriptionContext
     );
 
-    const key = React.useMemo(() => {
-      return stringify(normalized);
-    }, [room.id, normalized]);
+    const interval = getPollingInterval(
+      isOnline,
+      isDocumentVisible,
+      status === "connected"
+    );
 
-    const fetcher = React.useCallback(() => {
-      return room.getThreads(normalized);
-    }, [key, room]);
+    // Automatically revalidate the cache when the window gains focus or when the connection is restored. Also poll the server based on the connection status.
+    useAutomaticRevalidation(roomManager, revalidate, {
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      refreshInterval: interval,
+    });
 
-    const roomManager = useRoomRevalidationManager();
-
-    const revalidationManager = getRevalidationManager(normalized, roomManager);
-
-    const revalidateCache = useRevalidateCache(revalidationManager, fetcher);
-
-    React.useEffect(() => {
-      void revalidateCache({ shouldDedupe: true });
-    }, [revalidateCache]);
+    /**
+     * Subscribe to comment events in the room to trigger a revalidation when a comment is added, edited or deleted.
+     */
+    React.useEffect(subscribeToCommentEvents, [subscribeToCommentEvents]);
 
     const subscribe = React.useCallback((callback: () => void) => {
       const unsub = manager.subscribe("threads", callback);
@@ -1226,13 +1289,6 @@ export function createRoomContext<
         unsub();
       };
     }, []);
-
-    React.useEffect(() => {
-      roomManager.incrementReferenceCount(key);
-      return () => {
-        roomManager.decrementReferenceCount(key);
-      };
-    }, [key]);
 
     const cache = useSyncExternalStoreWithSelector<
       ThreadData<TThreadMetadata>[],
@@ -1268,12 +1324,52 @@ export function createRoomContext<
         return {
           isLoading: false,
           threads: filtered,
-          error: error,
+          error,
         };
       }
     );
 
     return cache;
+  }
+
+  function useThreads(options?: ThreadsFilterOptions<TThreadMetadata>) {
+    const room = useRoom();
+
+    const normalized = React.useMemo(
+      () => normalizeFilterOptions(options),
+      [options]
+    );
+
+    const key = React.useMemo(() => {
+      return stringify(normalized);
+    }, [normalized]);
+
+    const fetcher = React.useCallback(
+      () => {
+        return room.getThreads(normalized);
+      },
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- The missing dependency is `normalized` (derived from options) but `key` and `normalized` are analogous, so we only include `key` as dependency. This helps minimize the number of re-renders as `options` can change on each render
+      [key, room]
+    );
+
+    const roomManager = useRoomRevalidationManager();
+
+    const revalidationManager = getRevalidationManager(normalized, roomManager);
+
+    const revalidateCache = useRevalidateCache(revalidationManager, fetcher);
+
+    React.useEffect(() => {
+      void revalidateCache({ shouldDedupe: true });
+    }, [revalidateCache]);
+
+    React.useEffect(() => {
+      roomManager.incrementReferenceCount(key);
+      return () => {
+        roomManager.decrementReferenceCount(key);
+      };
+    }, [key, roomManager]);
+
+    return _useThreads(normalized);
   }
 
   function useThreadsSuspense(
@@ -1288,11 +1384,15 @@ export function createRoomContext<
 
     const key = React.useMemo(() => {
       return stringify(normalized);
-    }, [room.id, normalized]);
+    }, [normalized]);
 
-    const fetcher = React.useCallback(() => {
-      return room.getThreads(normalized);
-    }, [key, room]);
+    const fetcher = React.useCallback(
+      () => {
+        return room.getThreads(normalized);
+      },
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- The missing dependency is `normalized` (derived from options) but `key` and `normalized` are analogous, so we only include `key` as dependency. This helps minimize the number of re-renders as `options` can change on each render
+      [key, room]
+    );
 
     const roomManager = useRoomRevalidationManager();
 
@@ -1300,58 +1400,14 @@ export function createRoomContext<
 
     const revalidateCache = useRevalidateCache(revalidationManager, fetcher);
 
-    const subscribe = React.useCallback((callback: () => void) => {
-      const unsub = manager.subscribe("threads", callback);
-      return () => {
-        unsub();
-      };
-    }, []);
-
     React.useEffect(() => {
       roomManager.incrementReferenceCount(key);
       return () => {
         roomManager.decrementReferenceCount(key);
       };
-    }, [key]);
+    }, [roomManager, key]);
 
-    const cache = useSyncExternalStoreWithSelector<
-      ThreadData<TThreadMetadata>[],
-      ThreadsState<TThreadMetadata>
-    >(
-      subscribe,
-      () => manager.getThreadsCache(),
-      () => manager.getThreadsCache(),
-      (state) => {
-        const isLoading = revalidationManager.getIsLoading();
-        if (isLoading) {
-          return {
-            isLoading: true,
-          };
-        }
-
-        const options = revalidationManager.getOptions();
-        const error = revalidationManager.getError();
-
-        // Filter the cache to only include threads that match the current query
-        const filtered = state.filter((thread) => {
-          if (thread.roomId !== room.id) return false;
-
-          const query = options.query;
-          for (const key in query.metadata) {
-            if (thread.metadata[key] !== query.metadata[key]) {
-              return false;
-            }
-          }
-          return true;
-        });
-
-        return {
-          isLoading: false,
-          threads: filtered,
-          error: error,
-        };
-      }
-    );
+    const cache = _useThreads(normalized);
 
     if (cache.error) {
       throw cache.error;
@@ -1377,7 +1433,7 @@ export function createRoomContext<
     const fetcher = React.useCallback(async () => {
       const threads = getFetcher(room, manager);
       return threads;
-    }, [room]);
+    }, [room, manager]);
 
     const revalidate = useRevalidateCache(manager, fetcher);
     const mutate = useMutate(manager, revalidate);
@@ -1440,7 +1496,7 @@ export function createRoomContext<
 
         return newThread;
       },
-      [room, mutate]
+      [room, mutate, manager]
     );
 
     return createThread;
@@ -1453,7 +1509,7 @@ export function createRoomContext<
     const fetcher = React.useCallback(async () => {
       const threads = getFetcher(room, manager);
       return threads;
-    }, [room]);
+    }, [room, manager]);
 
     const revalidate = useRevalidateCache(manager, fetcher);
     const mutate = useMutate(manager, revalidate);
@@ -1499,7 +1555,7 @@ export function createRoomContext<
           );
         });
       },
-      [room, mutate]
+      [room, mutate, manager]
     );
 
     return editThreadMetadata;
@@ -1512,7 +1568,7 @@ export function createRoomContext<
     const fetcher = React.useCallback(async () => {
       const threads = getFetcher(room, manager);
       return threads;
-    }, [room]);
+    }, [room, manager]);
 
     const revalidate = useRevalidateCache(manager, fetcher);
     const mutate = useMutate(manager, revalidate);
@@ -1590,7 +1646,7 @@ export function createRoomContext<
           );
         });
       },
-      [room, mutate]
+      [room, mutate, manager]
     );
 
     return addReaction;
@@ -1603,7 +1659,7 @@ export function createRoomContext<
     const fetcher = React.useCallback(async () => {
       const threads = getFetcher(room, manager);
       return threads;
-    }, [room]);
+    }, [room, manager]);
 
     const revalidate = useRevalidateCache(manager, fetcher);
     const mutate = useMutate(manager, revalidate);
@@ -1678,7 +1734,7 @@ export function createRoomContext<
           );
         });
       },
-      [room, mutate]
+      [room, mutate, manager]
     );
 
     return removeReaction;
@@ -1706,7 +1762,7 @@ export function createRoomContext<
     const fetcher = React.useCallback(async () => {
       const threads = getFetcher(room, manager);
       return threads;
-    }, [room]);
+    }, [room, manager]);
 
     const revalidate = useRevalidateCache(manager, fetcher);
     const mutate = useMutate(manager, revalidate);
@@ -1775,7 +1831,7 @@ export function createRoomContext<
     const fetcher = React.useCallback(async () => {
       const threads = getFetcher(room, manager);
       return threads;
-    }, [room]);
+    }, [room, manager]);
 
     const revalidate = useRevalidateCache(manager, fetcher);
     const mutate = useMutate(manager, revalidate);
@@ -1825,7 +1881,7 @@ export function createRoomContext<
           );
         });
       },
-      [room, mutate]
+      [room, mutate, manager]
     );
 
     return editComment;
@@ -1838,7 +1894,7 @@ export function createRoomContext<
     const fetcher = React.useCallback(async () => {
       const threads = getFetcher(room, manager);
       return threads;
-    }, [room]);
+    }, [room, manager]);
 
     const revalidate = useRevalidateCache(manager, fetcher);
     const mutate = useMutate(manager, revalidate);
@@ -1899,7 +1955,7 @@ export function createRoomContext<
           );
         });
       },
-      [room, mutate]
+      [room, mutate, manager]
     );
 
     return deleteComment;
@@ -2225,10 +2281,6 @@ function createUseThreadsRevalidationManager<
           }
         }
 
-        // If the thread already exists in the cache, only update if the newly fetched thread is newer than the existing one (based on updatedAt date)
-        if (existingThread && existingThread.updatedAt && thread.updatedAt) {
-        }
-
         cache.set(thread.id, thread);
       }
       manager.setCache(Array.from(cache.values()));
@@ -2342,4 +2394,26 @@ function compareThreads<TThreadMetadata extends BaseMetadata>(
 
   // If all dates are equal, return 0
   return 0;
+}
+
+/**
+ * Returns the polling interval based on the room connection status, the browser online status and the document visibility.
+ * @param isBrowserOnline Whether the browser is online.
+ * @param isDocumentVisible Whether the document is visible.
+ * @param isRoomConnected Whether the room is connected.
+ * @returns The polling interval in milliseconds or undefined if we don't poll the server.
+ */
+function getPollingInterval(
+  isBrowserOnline: boolean,
+  isDocumentVisible: boolean,
+  isRoomConnected: boolean
+): number | undefined {
+  // If the browser is offline or the document is not visible, we don't poll the server.
+  if (!isBrowserOnline || !isDocumentVisible) return;
+
+  // If the room is connected, we poll the server in real-time.
+  if (isRoomConnected) return POLLING_INTERVAL_REALTIME;
+
+  // (Otherwise) If the room is not connected, we poll the server at POLLING_INTERVAL rate.
+  return POLLING_INTERVAL;
 }
