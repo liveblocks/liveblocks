@@ -1204,7 +1204,6 @@ export function createRoomContext<
       // Only subscribe to the `comments` event if the reference count is 0 (meaning that there are no components with a subscription)
       if (commentsEventSubscribersCount === 0) {
         const unsubscribe = room.events.comments.subscribe(() => {
-          console.log("comments event received");
           void revalidate({ shouldDedupe: true });
         });
         commentsEventDisposerRef.current = unsubscribe;
