@@ -1540,6 +1540,8 @@ export function createRoomContext<
           );
         }
 
+        const now = new Date();
+
         const optimisticData = threads.map((thread) =>
           thread.id === threadId
             ? {
@@ -1548,6 +1550,7 @@ export function createRoomContext<
                   ...thread.metadata,
                   ...metadata,
                 },
+                updatedAt: now,
               }
             : thread
         );
@@ -1638,6 +1641,7 @@ export function createRoomContext<
                     reactions,
                   };
                 }),
+                updatedAt: now,
               }
             : thread
         );
@@ -1687,6 +1691,7 @@ export function createRoomContext<
           );
         }
         const userId = getCurrentUserId(room);
+        const now = new Date();
 
         const optimisticData = threads.map((thread) =>
           thread.id === threadId
@@ -1726,6 +1731,7 @@ export function createRoomContext<
                     reactions,
                   };
                 }),
+                updatedAt: now,
               }
             : thread
         );
@@ -1809,6 +1815,7 @@ export function createRoomContext<
             ? {
                 ...thread,
                 comments: [...thread.comments, comment],
+                updatedAt: now,
               }
             : thread
         );
@@ -1873,6 +1880,7 @@ export function createRoomContext<
                       } as CommentData)
                     : comment
                 ),
+                updatedAt: now,
               }
             : thread
         );
@@ -1938,6 +1946,7 @@ export function createRoomContext<
                     }
                   : comment
               ),
+              updatedAt: now,
             };
 
             if (
@@ -2289,6 +2298,7 @@ function createUseThreadsRevalidationManager<
         const existingThread = cache.get(thread.id);
         if (existingThread) {
           const result = compareThreads(existingThread, thread);
+
           if (result === 1) {
             // If the existing thread is newer than the fetched thread, skip it
             continue;
