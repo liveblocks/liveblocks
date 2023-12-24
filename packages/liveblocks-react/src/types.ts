@@ -22,7 +22,6 @@ import type {
   ThreadsFilterOptions,
   ToImmutable,
 } from "@liveblocks/core";
-
 import type {
   CommentReactionOptions,
   CreateCommentOptions,
@@ -32,7 +31,7 @@ import type {
   EditThreadMetadataOptions,
   ThreadsState,
   ThreadsStateSuccess,
-} from "./comments/CommentsRoom";
+} from "./factory";
 
 export type PromiseOrNot<T> = T | Promise<T>;
 

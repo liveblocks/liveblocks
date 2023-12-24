@@ -17,13 +17,18 @@ import { shallow } from "@liveblocks/client";
 import type {
   AsyncCache,
   BaseMetadata,
+  CommentBody,
   CommentData,
+  CommentReaction,
   EnterOptions,
+  Resolve,
   RoomEventMessage,
+  ThreadData,
   ThreadsFilterOptions,
   ToImmutable,
 } from "@liveblocks/core";
 import {
+  CommentsApiError,
   createAsyncCache,
   deprecateIf,
   errorIf,
@@ -34,13 +39,16 @@ import {
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
-import type {
-  CreateCommentOptions,
-  EditCommentOptions,
-  ThreadsState,
-} from "./comments/CommentsRoom";
-import { createCommentsRoom } from "./comments/CommentsRoom";
-import type { CommentsError } from "./comments/errors";
+import {
+  AddReactionError,
+  EditThreadMetadataError,
+  type CommentsError,
+  RemoveReactionError,
+  CreateThreadError,
+  EditCommentError,
+  DeleteCommentError,
+  CreateCommentError,
+} from "./comments/errors";
 import { useDebounce } from "./comments/lib/use-debounce";
 import { useAsyncCache } from "./lib/use-async-cache";
 import { useInitial } from "./lib/use-initial";
@@ -58,6 +66,17 @@ import type {
   UserState,
   UserStateSuccess,
 } from "./types";
+import {
+  type RequestInfo,
+  type MutationInfo,
+  type CacheManager,
+  useRevalidateCache,
+  useMutate,
+} from "./comments/lib/revalidation";
+import { nanoid } from "nanoid";
+
+const THREAD_ID_PREFIX = "th";
+const COMMENT_ID_PREFIX = "cm";
 
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
@@ -169,6 +188,91 @@ type Options<TUserMeta extends BaseUserMeta> = {
   baseUrl?: string;
 };
 
+type PartialNullable<T> = {
+  [P in keyof T]?: T[P] | null | undefined;
+};
+
+export type CreateThreadOptions<TMetadata extends BaseMetadata> = [
+  TMetadata,
+] extends [never]
+  ? {
+      body: CommentBody;
+    }
+  : { body: CommentBody; metadata: TMetadata };
+
+export type EditThreadMetadataOptions<TMetadata extends BaseMetadata> = [
+  TMetadata,
+] extends [never]
+  ? {
+      threadId: string;
+    }
+  : { threadId: string; metadata: Resolve<PartialNullable<TMetadata>> };
+
+export type CreateCommentOptions = {
+  threadId: string;
+  body: CommentBody;
+};
+
+export type EditCommentOptions = {
+  threadId: string;
+  commentId: string;
+  body: CommentBody;
+};
+
+export type DeleteCommentOptions = {
+  threadId: string;
+  commentId: string;
+};
+
+export type CommentReactionOptions = {
+  threadId: string;
+  commentId: string;
+  emoji: string;
+};
+
+export type ThreadsStateLoading = {
+  isLoading: true;
+  threads?: never;
+  error?: never;
+};
+
+export type ThreadsStateResolved<TThreadMetadata extends BaseMetadata> = {
+  isLoading: false;
+  threads: ThreadData<TThreadMetadata>[];
+  error?: Error;
+};
+
+export type ThreadsStateSuccess<TThreadMetadata extends BaseMetadata> = {
+  isLoading: false;
+  threads: ThreadData<TThreadMetadata>[];
+  error?: never;
+};
+
+export type ThreadsState<TThreadMetadata extends BaseMetadata> =
+  | ThreadsStateLoading
+  | ThreadsStateResolved<TThreadMetadata>;
+
+interface RoomRevalidationManager<TThreadMetadata extends BaseMetadata>
+  extends CacheManager<ThreadData<TThreadMetadata>[]> {
+  getRoomId(): string;
+
+  getRevalidationManagers(): [
+    string,
+    UseThreadsRevalidationManager<TThreadMetadata>,
+  ][];
+  getRevalidationManager(
+    key: string
+  ): UseThreadsRevalidationManager<TThreadMetadata> | undefined;
+  setRevalidationmanager(
+    key: string,
+    manager: UseThreadsRevalidationManager<TThreadMetadata>
+  ): void;
+
+  incrementReferenceCount(key: string): void;
+  decrementReferenceCount(key: string): void;
+  getReferenceCount(key: string): number | undefined;
+}
+
 let hasWarnedIfNoResolveUsers = false;
 
 function warnIfNoResolveUsers(usersCache?: AsyncCache<unknown, unknown>) {
@@ -226,11 +330,10 @@ export function createRoomContext<
 
   const RoomContext = React.createContext<TRoom | null>(null);
 
+  const manager = createClientCacheManager<TThreadMetadata>();
+
   const commentsErrorEventSource =
     makeEventSource<CommentsError<TThreadMetadata>>();
-
-  const { CommentsRoomProvider, ...commentsRoom } =
-    createCommentsRoom<TThreadMetadata>(commentsErrorEventSource);
 
   /**
    * RATIONALE:
@@ -903,51 +1006,903 @@ export function createRoomContext<
     return useLegacyKey(key) as TStorage[TKey];
   }
 
-  function useThreads(
-    options?: ThreadsFilterOptions<TThreadMetadata>
-  ): ThreadsState<TThreadMetadata> {
-    const room = useRoom();
-    return commentsRoom.useThreads(room, options);
+  /**
+   * Creates a new revalidation manager for the given filter options and room manager. If a revalidation manager already exists for the given filter options, it will be returned instead.
+   */
+  function getRevalidationManager(
+    options: NormalizedFilterOptions<TThreadMetadata>,
+    roomManager: RoomRevalidationManager<TThreadMetadata>
+  ) {
+    const key = stringify(options);
+    const revalidationManager = roomManager.getRevalidationManager(key);
+
+    if (!revalidationManager) {
+      const useThreadsRevalidationManager =
+        createUseThreadsRevalidationManager<TThreadMetadata>(
+          options,
+          roomManager
+        );
+      roomManager.setRevalidationmanager(key, useThreadsRevalidationManager);
+      return useThreadsRevalidationManager;
+    }
+
+    return revalidationManager;
   }
 
-  function useThreadsSuspense(options?: ThreadsFilterOptions<TThreadMetadata>) {
+  function createRoomRevalidationManager(
+    roomId: string
+  ): RoomRevalidationManager<TThreadMetadata> {
+    let request: RequestInfo<ThreadData<TThreadMetadata>[]> | undefined; // Stores the currently active revalidation request
+    let error: Error | undefined; // Stores any error that occurred during the last revalidation request
+    let mutation: MutationInfo | undefined; // Stores the currently active mutation
+
+    // Each `useThreads` with unique filter options creates its own revalidation manager that is used during the initial revalidation.
+    const revalidationManagerByOptions = new Map<
+      string,
+      UseThreadsRevalidationManager<TThreadMetadata>
+    >();
+
+    // Keep track of how many times each revalidation manager is used.
+    const referenceCountByOptions = new Map<string, number>();
+
+    return {
+      // Cache
+      getCache() {
+        const threads = manager.getThreadsCache();
+        // Filter the cache to only include threads that are in the current room
+        const filtered = threads.filter((thread) => thread.roomId === roomId);
+        return filtered;
+      },
+      setCache(value: ThreadData<TThreadMetadata>[]) {
+        // Delete any revalidation managers that are no longer used by any `useThreads` hooks
+        for (const key of revalidationManagerByOptions.keys()) {
+          if (referenceCountByOptions.get(key) === 0) {
+            revalidationManagerByOptions.delete(key);
+            referenceCountByOptions.delete(key);
+          }
+        }
+
+        // Sort the threads by createdAt date before updating the cache
+        const sorted = value.sort(
+          (a, b) =>
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
+
+        const threads = manager.getThreadsCache();
+        const newThreads = threads
+          .filter((thread) => thread.roomId !== roomId)
+          .concat(sorted);
+
+        manager.setThreadsCache(newThreads);
+      },
+
+      // Request
+      getRequest() {
+        return request;
+      },
+      setRequest(
+        value: RequestInfo<ThreadData<TThreadMetadata>[]> | undefined
+      ) {
+        request = value;
+      },
+
+      // Error
+      getError() {
+        return error;
+      },
+      setError(err: Error) {
+        error = err;
+        for (const manager of revalidationManagerByOptions.values()) {
+          manager.setError(err);
+        }
+      },
+
+      // Mutation
+      getMutation() {
+        return mutation;
+      },
+      setMutation(info: MutationInfo) {
+        mutation = info;
+      },
+
+      // Room Id
+      getRoomId() {
+        return roomId;
+      },
+
+      getRevalidationManagers() {
+        return Array.from(revalidationManagerByOptions.entries());
+      },
+
+      getRevalidationManager(key: string) {
+        return revalidationManagerByOptions.get(key);
+      },
+
+      setRevalidationmanager(
+        key: string,
+        manager: UseThreadsRevalidationManager<TThreadMetadata>
+      ) {
+        revalidationManagerByOptions.set(key, manager);
+      },
+
+      incrementReferenceCount(key: string) {
+        const count = referenceCountByOptions.get(key) ?? 0;
+        referenceCountByOptions.set(key, count + 1);
+      },
+
+      decrementReferenceCount(key: string) {
+        const count = referenceCountByOptions.get(key) ?? 0;
+        referenceCountByOptions.set(key, count - 1);
+      },
+
+      getReferenceCount(key: string) {
+        return referenceCountByOptions.get(key);
+      },
+    };
+  }
+
+  async function getFetcher(
+    room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>,
+    roomManager: RoomRevalidationManager<TThreadMetadata>
+  ) {
+    const options = roomManager
+      .getRevalidationManagers()
+      .filter(([key]) => roomManager.getReferenceCount(key) !== 0)
+      .map(([_, manager]) => manager.getOptions());
+
+    const responses = await Promise.all(
+      options.map(async (option) => {
+        return await room.getThreads(option);
+      })
+    );
+
+    const threads = Array.from(
+      new Map(responses.flat().map((thread) => [thread.id, thread])).values()
+    );
+
+    return threads;
+  }
+
+  const RoomRevalidationManagerContext =
+    React.createContext<RoomRevalidationManager<TThreadMetadata> | null>(null);
+
+  function CommentsRoomProvider({
+    children,
+    room,
+  }: {
+    children: React.ReactNode;
+    room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
+  }) {
+    const manager = React.useMemo(() => {
+      return createRoomRevalidationManager(room.id);
+    }, [room.id]);
+
+    return (
+      <RoomRevalidationManagerContext.Provider value={manager}>
+        {children}
+      </RoomRevalidationManagerContext.Provider>
+    );
+  }
+
+  function useRoomRevalidationManager() {
+    const manager = React.useContext(RoomRevalidationManagerContext);
+    if (manager === null) {
+      throw new Error(
+        "CommentsRoomProvider is missing from the React tree. Make sure to wrap your app in a <CommentsRoomProvider>."
+      );
+    }
+    return manager;
+  }
+
+  function useThreads(options?: ThreadsFilterOptions<TThreadMetadata>) {
     const room = useRoom();
-    return commentsRoom.useThreadsSuspense(room, options);
+
+    const normalized = React.useMemo(
+      () => normalizeFilterOptions(options),
+      [options]
+    );
+
+    const key = React.useMemo(() => {
+      return stringify(normalized);
+    }, [room.id, normalized]);
+
+    const fetcher = React.useCallback(() => {
+      return room.getThreads(normalized);
+    }, [key, room]);
+
+    const roomManager = useRoomRevalidationManager();
+
+    const revalidationManager = getRevalidationManager(normalized, roomManager);
+
+    const revalidateCache = useRevalidateCache(revalidationManager, fetcher);
+
+    React.useEffect(() => {
+      void revalidateCache({ shouldDedupe: true });
+    }, [revalidateCache]);
+
+    const subscribe = React.useCallback((callback: () => void) => {
+      const unsub = manager.subscribe("threads", callback);
+      return () => {
+        unsub();
+      };
+    }, []);
+
+    React.useEffect(() => {
+      roomManager.incrementReferenceCount(key);
+      return () => {
+        roomManager.decrementReferenceCount(key);
+      };
+    }, [key]);
+
+    const cache = useSyncExternalStoreWithSelector<
+      ThreadData<TThreadMetadata>[],
+      ThreadsState<TThreadMetadata>
+    >(
+      subscribe,
+      () => manager.getThreadsCache(),
+      () => manager.getThreadsCache(),
+      (state) => {
+        const isLoading = revalidationManager.getIsLoading();
+        if (isLoading) {
+          return {
+            isLoading: true,
+          };
+        }
+
+        const options = revalidationManager.getOptions();
+        const error = revalidationManager.getError();
+
+        // Filter the cache to only include threads that match the current query
+        const filtered = state.filter((thread) => {
+          if (thread.roomId !== room.id) return false;
+
+          const query = options.query;
+          for (const key in query.metadata) {
+            if (thread.metadata[key] !== query.metadata[key]) {
+              return false;
+            }
+          }
+          return true;
+        });
+
+        return {
+          isLoading: false,
+          threads: filtered,
+          error: error,
+        };
+      }
+    );
+
+    return cache;
+  }
+
+  function useThreadsSuspense(
+    options?: ThreadsFilterOptions<TThreadMetadata>
+  ): ThreadsStateSuccess<TThreadMetadata> {
+    const room = useRoom();
+
+    const normalized = React.useMemo(
+      () => normalizeFilterOptions(options),
+      [options]
+    );
+
+    const key = React.useMemo(() => {
+      return stringify(normalized);
+    }, [room.id, normalized]);
+
+    const fetcher = React.useCallback(() => {
+      return room.getThreads(normalized);
+    }, [key, room]);
+
+    const roomManager = useRoomRevalidationManager();
+
+    const revalidationManager = getRevalidationManager(normalized, roomManager);
+
+    const revalidateCache = useRevalidateCache(revalidationManager, fetcher);
+
+    const subscribe = React.useCallback((callback: () => void) => {
+      const unsub = manager.subscribe("threads", callback);
+      return () => {
+        unsub();
+      };
+    }, []);
+
+    React.useEffect(() => {
+      roomManager.incrementReferenceCount(key);
+      return () => {
+        roomManager.decrementReferenceCount(key);
+      };
+    }, [key]);
+
+    const cache = useSyncExternalStoreWithSelector<
+      ThreadData<TThreadMetadata>[],
+      ThreadsState<TThreadMetadata>
+    >(
+      subscribe,
+      () => manager.getThreadsCache(),
+      () => manager.getThreadsCache(),
+      (state) => {
+        const isLoading = revalidationManager.getIsLoading();
+        if (isLoading) {
+          return {
+            isLoading: true,
+          };
+        }
+
+        const options = revalidationManager.getOptions();
+        const error = revalidationManager.getError();
+
+        // Filter the cache to only include threads that match the current query
+        const filtered = state.filter((thread) => {
+          if (thread.roomId !== room.id) return false;
+
+          const query = options.query;
+          for (const key in query.metadata) {
+            if (thread.metadata[key] !== query.metadata[key]) {
+              return false;
+            }
+          }
+          return true;
+        });
+
+        return {
+          isLoading: false,
+          threads: filtered,
+          error: error,
+        };
+      }
+    );
+
+    if (cache.error) {
+      throw cache.error;
+    }
+
+    if (cache.isLoading || !cache.threads) {
+      throw revalidateCache({
+        shouldDedupe: true,
+      });
+    }
+
+    return {
+      isLoading: false,
+      threads: cache.threads,
+      error: cache.error,
+    };
   }
 
   function useCreateThread() {
     const room = useRoom();
-    return commentsRoom.useCreateThread(room);
+    const manager = useRoomRevalidationManager();
+
+    const fetcher = React.useCallback(async () => {
+      const threads = getFetcher(room, manager);
+      return threads;
+    }, [room]);
+
+    const revalidate = useRevalidateCache(manager, fetcher);
+    const mutate = useMutate(manager, revalidate);
+
+    const createThread = React.useCallback(
+      (
+        options: CreateThreadOptions<TThreadMetadata>
+      ): ThreadData<TThreadMetadata> => {
+        const body = options.body;
+        const metadata: TThreadMetadata =
+          "metadata" in options ? options.metadata : ({} as TThreadMetadata);
+        const threads = manager.getCache();
+        if (!threads) {
+          throw new Error(
+            "Cannot update threads or comments before they are loaded."
+          );
+        }
+
+        const threadId = createOptimisticId(THREAD_ID_PREFIX);
+        const commentId = createOptimisticId(COMMENT_ID_PREFIX);
+        const now = new Date();
+
+        const newComment: CommentData = {
+          id: commentId,
+          threadId,
+          roomId: room.id,
+          createdAt: now,
+          type: "comment",
+          userId: getCurrentUserId(room),
+          body,
+          reactions: [],
+        };
+        const newThread = {
+          id: threadId,
+          type: "thread",
+          createdAt: now,
+          roomId: room.id,
+          metadata,
+          comments: [newComment],
+        } as ThreadData<TThreadMetadata>;
+
+        mutate(room.createThread({ threadId, commentId, body, metadata }), {
+          optimisticData: [...threads, newThread],
+        }).catch((err: unknown) => {
+          if (!(err instanceof CommentsApiError)) {
+            throw err;
+          }
+
+          const error = handleCommentsApiError(err);
+          commentsErrorEventSource.notify(
+            new CreateThreadError(error, {
+              roomId: room.id,
+              threadId,
+              commentId,
+              body,
+              metadata,
+            })
+          );
+        });
+
+        return newThread;
+      },
+      [room, mutate]
+    );
+
+    return createThread;
   }
 
   function useEditThreadMetadata() {
     const room = useRoom();
-    return commentsRoom.useEditThreadMetadata(room);
+    const manager = useRoomRevalidationManager();
+
+    const fetcher = React.useCallback(async () => {
+      const threads = getFetcher(room, manager);
+      return threads;
+    }, [room]);
+
+    const revalidate = useRevalidateCache(manager, fetcher);
+    const mutate = useMutate(manager, revalidate);
+
+    const editThreadMetadata = React.useCallback(
+      (options: EditThreadMetadataOptions<TThreadMetadata>): void => {
+        const threadId = options.threadId;
+        const metadata: PartialNullable<TThreadMetadata> =
+          "metadata" in options ? options.metadata : {};
+        const threads = manager.getCache();
+        if (!threads) {
+          throw new Error(
+            "Cannot update threads or comments before they are loaded."
+          );
+        }
+
+        const optimisticData = threads.map((thread) =>
+          thread.id === threadId
+            ? {
+                ...thread,
+                metadata: {
+                  ...thread.metadata,
+                  ...metadata,
+                },
+              }
+            : thread
+        );
+
+        mutate(room.editThreadMetadata({ metadata, threadId }), {
+          optimisticData,
+        }).catch((err: unknown) => {
+          if (!(err instanceof CommentsApiError)) {
+            throw err;
+          }
+
+          const error = handleCommentsApiError(err);
+          commentsErrorEventSource.notify(
+            new EditThreadMetadataError(error, {
+              roomId: room.id,
+              threadId,
+              metadata,
+            })
+          );
+        });
+      },
+      [room, mutate]
+    );
+
+    return editThreadMetadata;
   }
 
   function useAddReaction() {
     const room = useRoom();
-    return commentsRoom.useAddReaction(room);
+    const manager = useRoomRevalidationManager();
+
+    const fetcher = React.useCallback(async () => {
+      const threads = getFetcher(room, manager);
+      return threads;
+    }, [room]);
+
+    const revalidate = useRevalidateCache(manager, fetcher);
+    const mutate = useMutate(manager, revalidate);
+
+    const addReaction = React.useCallback(
+      ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
+        const threads = manager.getCache();
+        if (!threads) {
+          throw new Error(
+            "Cannot update threads or comments before they are loaded."
+          );
+        }
+        const now = new Date();
+        const userId = getCurrentUserId(room);
+
+        const optimisticData = threads.map((thread) =>
+          thread.id === threadId
+            ? {
+                ...thread,
+                comments: thread.comments.map((comment) => {
+                  if (comment.id !== commentId) {
+                    return comment;
+                  }
+
+                  let reactions: CommentReaction[];
+
+                  if (
+                    comment.reactions.some(
+                      (reaction) => reaction.emoji === emoji
+                    )
+                  ) {
+                    reactions = comment.reactions.map((reaction) =>
+                      reaction.emoji === emoji
+                        ? {
+                            ...reaction,
+                            users: [...reaction.users, { id: userId }],
+                          }
+                        : reaction
+                    );
+                  } else {
+                    reactions = [
+                      ...comment.reactions,
+                      {
+                        emoji,
+                        createdAt: now,
+                        users: [{ id: userId }],
+                      },
+                    ];
+                  }
+
+                  return {
+                    ...comment,
+                    reactions,
+                  };
+                }),
+              }
+            : thread
+        );
+
+        mutate(room.addReaction({ threadId, commentId, emoji }), {
+          optimisticData,
+        }).catch((err: unknown) => {
+          if (!(err instanceof CommentsApiError)) {
+            throw err;
+          }
+
+          const error = handleCommentsApiError(err);
+          commentsErrorEventSource.notify(
+            new AddReactionError(error, {
+              roomId: room.id,
+              threadId,
+              commentId,
+              emoji,
+            })
+          );
+        });
+      },
+      [room, mutate]
+    );
+
+    return addReaction;
   }
 
   function useRemoveReaction() {
     const room = useRoom();
-    return commentsRoom.useRemoveReaction(room);
+    const manager = useRoomRevalidationManager();
+
+    const fetcher = React.useCallback(async () => {
+      const threads = getFetcher(room, manager);
+      return threads;
+    }, [room]);
+
+    const revalidate = useRevalidateCache(manager, fetcher);
+    const mutate = useMutate(manager, revalidate);
+
+    const removeReaction = React.useCallback(
+      ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
+        const threads = manager.getCache();
+        if (!threads) {
+          throw new Error(
+            "Cannot update threads or comments before they are loaded."
+          );
+        }
+        const userId = getCurrentUserId(room);
+
+        const optimisticData = threads.map((thread) =>
+          thread.id === threadId
+            ? {
+                ...thread,
+                comments: thread.comments.map((comment) => {
+                  if (comment.id !== commentId) {
+                    return comment;
+                  }
+
+                  const reactionIndex = comment.reactions.findIndex(
+                    (reaction) => reaction.emoji === emoji
+                  );
+                  let reactions: CommentReaction[] = comment.reactions;
+
+                  if (
+                    reactionIndex >= 0 &&
+                    comment.reactions[reactionIndex].users.some(
+                      (user) => user.id === userId
+                    )
+                  ) {
+                    if (comment.reactions[reactionIndex].users.length <= 1) {
+                      reactions = [...comment.reactions];
+                      reactions.splice(reactionIndex, 1);
+                    } else {
+                      reactions[reactionIndex] = {
+                        ...reactions[reactionIndex],
+                        users: reactions[reactionIndex].users.filter(
+                          (user) => user.id !== userId
+                        ),
+                      };
+                    }
+                  }
+
+                  return {
+                    ...comment,
+                    reactions,
+                  };
+                }),
+              }
+            : thread
+        );
+
+        mutate(room.removeReaction({ threadId, commentId, emoji }), {
+          optimisticData,
+        }).catch((err: unknown) => {
+          if (!(err instanceof CommentsApiError)) {
+            throw err;
+          }
+
+          const error = handleCommentsApiError(err);
+          commentsErrorEventSource.notify(
+            new RemoveReactionError(error, {
+              roomId: room.id,
+              threadId,
+              commentId,
+              emoji,
+            })
+          );
+        });
+      },
+      [room, mutate]
+    );
+
+    return removeReaction;
+  }
+
+  function createOptimisticId(prefix: string) {
+    return `${prefix}_${nanoid()}`;
+  }
+
+  function getCurrentUserId(
+    room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
+  ): string {
+    const self = room.getSelf();
+    if (self === null || self.id === undefined) {
+      return "anonymous";
+    } else {
+      return self.id;
+    }
   }
 
   function useCreateComment(): (options: CreateCommentOptions) => CommentData {
     const room = useRoom();
-    return commentsRoom.useCreateComment(room);
+    const manager = useRoomRevalidationManager();
+
+    const fetcher = React.useCallback(async () => {
+      const threads = getFetcher(room, manager);
+      return threads;
+    }, [room]);
+
+    const revalidate = useRevalidateCache(manager, fetcher);
+    const mutate = useMutate(manager, revalidate);
+
+    const createComment = React.useCallback(
+      ({ threadId, body }: CreateCommentOptions): CommentData => {
+        const threads = manager.getCache();
+        if (!threads) {
+          throw new Error(
+            "Cannot update threads or comments before they are loaded."
+          );
+        }
+
+        const commentId = createOptimisticId(COMMENT_ID_PREFIX);
+        const now = new Date();
+
+        const comment: CommentData = {
+          id: commentId,
+          threadId,
+          roomId: room.id,
+          type: "comment",
+          createdAt: now,
+          userId: getCurrentUserId(room),
+          body,
+          reactions: [],
+        };
+
+        const optimisticData = threads.map((thread) =>
+          thread.id === threadId
+            ? {
+                ...thread,
+                comments: [...thread.comments, comment],
+              }
+            : thread
+        );
+
+        mutate(room.createComment({ threadId, commentId, body }), {
+          optimisticData,
+        }).catch((err: unknown) => {
+          if (!(err instanceof CommentsApiError)) {
+            throw err;
+          }
+
+          const error = handleCommentsApiError(err);
+          commentsErrorEventSource.notify(
+            new CreateCommentError(error, {
+              roomId: room.id,
+              threadId,
+              commentId,
+              body,
+            })
+          );
+        });
+        return comment;
+      },
+      [manager, room, mutate]
+    );
+
+    return createComment;
   }
 
   function useEditComment(): (options: EditCommentOptions) => void {
     const room = useRoom();
-    return commentsRoom.useEditComment(room);
+    const manager = useRoomRevalidationManager();
+
+    const fetcher = React.useCallback(async () => {
+      const threads = getFetcher(room, manager);
+      return threads;
+    }, [room]);
+
+    const revalidate = useRevalidateCache(manager, fetcher);
+    const mutate = useMutate(manager, revalidate);
+
+    const editComment = React.useCallback(
+      ({ threadId, commentId, body }: EditCommentOptions): void => {
+        const threads = manager.getCache();
+        if (!threads) {
+          throw new Error(
+            "Cannot update threads or comments before they are loaded."
+          );
+        }
+        const now = new Date();
+
+        const optimisticData = threads.map((thread) =>
+          thread.id === threadId
+            ? {
+                ...thread,
+                comments: thread.comments.map((comment) =>
+                  comment.id === commentId
+                    ? ({
+                        ...comment,
+                        editedAt: now,
+                        body,
+                      } as CommentData)
+                    : comment
+                ),
+              }
+            : thread
+        );
+
+        mutate(room.editComment({ threadId, commentId, body }), {
+          optimisticData,
+        }).catch((err: unknown) => {
+          if (!(err instanceof CommentsApiError)) {
+            throw err;
+          }
+
+          const error = handleCommentsApiError(err);
+          commentsErrorEventSource.notify(
+            new EditCommentError(error, {
+              roomId: room.id,
+              threadId,
+              commentId,
+              body,
+            })
+          );
+        });
+      },
+      [room, mutate]
+    );
+
+    return editComment;
   }
 
   function useDeleteComment() {
     const room = useRoom();
-    return commentsRoom.useDeleteComment(room);
+    const manager = useRoomRevalidationManager();
+
+    const fetcher = React.useCallback(async () => {
+      const threads = getFetcher(room, manager);
+      return threads;
+    }, [room]);
+
+    const revalidate = useRevalidateCache(manager, fetcher);
+    const mutate = useMutate(manager, revalidate);
+
+    const deleteComment = React.useCallback(
+      ({ threadId, commentId }: DeleteCommentOptions): void => {
+        const threads = manager.getCache();
+        if (!threads) {
+          throw new Error(
+            "Cannot update threads or comments before they are loaded."
+          );
+        }
+        const now = new Date();
+
+        const newThreads: ThreadData<TThreadMetadata>[] = [];
+
+        for (const thread of threads) {
+          if (thread.id === threadId) {
+            const newThread: ThreadData<TThreadMetadata> = {
+              ...thread,
+              comments: thread.comments.map((comment) =>
+                comment.id === commentId
+                  ? {
+                      ...comment,
+                      deletedAt: now,
+                      body: undefined,
+                    }
+                  : comment
+              ),
+            };
+
+            if (
+              newThread.comments.some(
+                (comment) => comment.deletedAt === undefined
+              )
+            ) {
+              newThreads.push(newThread);
+            }
+          } else {
+            newThreads.push(thread);
+          }
+        }
+
+        mutate(room.deleteComment({ threadId, commentId }), {
+          optimisticData: newThreads,
+        }).catch((err: unknown) => {
+          if (!(err instanceof CommentsApiError)) {
+            throw err;
+          }
+
+          const error = handleCommentsApiError(err);
+          commentsErrorEventSource.notify(
+            new DeleteCommentError(error, {
+              roomId: room.id,
+              threadId,
+              commentId,
+            })
+          );
+        });
+      },
+      [room, mutate]
+    );
+
+    return deleteComment;
   }
 
   const { resolveUsers, resolveMentionSuggestions } = options ?? {};
@@ -1149,4 +2104,242 @@ export function createRoomContext<
   };
 
   return bundle;
+}
+
+type ThreadInboxNotificationData = {
+  kind: "thread";
+  id: string;
+  threadId: string;
+  notifiedAt: Date;
+  readAt: Date | null;
+};
+
+interface ClientCacheManager<TThreadMetadata extends BaseMetadata> {
+  getThreadsCache(): ThreadData<TThreadMetadata>[];
+  setThreadsCache(value: ThreadData<TThreadMetadata>[]): void;
+
+  getInboxNotificationsCache(): ThreadInboxNotificationData[];
+  setInboxNotificationsCache(value: ThreadInboxNotificationData[]): void;
+
+  subscribe(
+    type: "threads",
+    callback: (state: ThreadData<TThreadMetadata>[]) => void
+  ): () => void;
+  subscribe(
+    type: "notifications",
+    callback: (state: ThreadInboxNotificationData[]) => void
+  ): () => void;
+}
+
+function createClientCacheManager<
+  TThreadMetadata extends BaseMetadata,
+>(): ClientCacheManager<TThreadMetadata> {
+  let threadsCache: ThreadData<TThreadMetadata>[] = []; // Stores the current threads cache state
+  let inboxNotificationsCache: ThreadInboxNotificationData[] = []; // Stores the current inbox notifications cache state
+
+  // Create an event source to notify subscribers when the cache is updated
+  const threadsCacheEventSource =
+    makeEventSource<ThreadData<TThreadMetadata>[]>();
+
+  const inboxNotificationsCacheEventSource =
+    makeEventSource<ThreadInboxNotificationData[]>();
+
+  return {
+    getThreadsCache() {
+      return threadsCache;
+    },
+    setThreadsCache(value: ThreadData<TThreadMetadata>[]) {
+      threadsCache = value;
+      // Notify subscribers that the threads cache has been updated
+      threadsCacheEventSource.notify(threadsCache);
+    },
+
+    getInboxNotificationsCache() {
+      return inboxNotificationsCache;
+    },
+
+    setInboxNotificationsCache(value: ThreadInboxNotificationData[]) {
+      inboxNotificationsCache = value;
+      // Notify subscribers that the notifications cache has been updated
+      inboxNotificationsCacheEventSource.notify(inboxNotificationsCache);
+    },
+
+    // Subscription
+    subscribe(
+      type: "threads" | "notifications",
+      callback:
+        | ((state: ThreadData<TThreadMetadata>[]) => void)
+        | ((error: ThreadInboxNotificationData[]) => void)
+    ) {
+      switch (type) {
+        case "threads":
+          return threadsCacheEventSource.subscribe(
+            callback as (state: ThreadData<TThreadMetadata>[]) => void
+          );
+        case "notifications":
+          return inboxNotificationsCacheEventSource.subscribe(
+            callback as (state: ThreadInboxNotificationData[]) => void
+          );
+      }
+    },
+  };
+}
+
+interface UseThreadsRevalidationManager<TThreadMetadata extends BaseMetadata>
+  extends CacheManager<ThreadData<TThreadMetadata>[]> {
+  getOptions(): NormalizedFilterOptions<TThreadMetadata>;
+  getIsLoading(): boolean;
+  setIsLoading(value: boolean): void;
+}
+
+function createUseThreadsRevalidationManager<
+  TThreadMetadata extends BaseMetadata,
+>(
+  options: NormalizedFilterOptions<TThreadMetadata>,
+  manager: RoomRevalidationManager<TThreadMetadata> // Room threads revalidation manager
+): UseThreadsRevalidationManager<TThreadMetadata> {
+  let isLoading: boolean = true;
+  let request: RequestInfo<ThreadData<TThreadMetadata>[]> | undefined; // Stores the currently active revalidation request
+  let error: Error | undefined; // Stores any error that occurred during the last revalidation request
+
+  // Create an event source to notify subscribers when there is an error
+  const errorEventSource = makeEventSource<Error>();
+
+  return {
+    // Cache
+    getCache() {
+      return undefined;
+    },
+    setCache(value: ThreadData<TThreadMetadata>[]) {
+      const cache = new Map(
+        (manager.getCache() ?? []).map((thread) => [thread.id, thread])
+      );
+
+      for (const thread of value) {
+        const existingThread = cache.get(thread.id);
+        if (existingThread) {
+          const result = compareThreads(existingThread, thread);
+          if (result === 1) {
+            // If the existing thread is newer than the fetched thread, skip it
+            continue;
+          }
+        }
+
+        // If the thread already exists in the cache, only update if the newly fetched thread is newer than the existing one (based on updatedAt date)
+        if (existingThread && existingThread.updatedAt && thread.updatedAt) {
+        }
+
+        cache.set(thread.id, thread);
+      }
+      manager.setCache(Array.from(cache.values()));
+
+      isLoading = false;
+    },
+
+    // Request
+    getRequest() {
+      return request;
+    },
+    setRequest(value: RequestInfo<ThreadData<TThreadMetadata>[]> | undefined) {
+      request = value;
+    },
+
+    // Error
+    getError() {
+      return error;
+    },
+    setError(err: Error) {
+      error = err;
+      // Notify subscribers that there was an error
+      errorEventSource.notify(err);
+    },
+
+    // Mutation
+    getMutation() {
+      // useThreads revalidation manager need not get the current mutation
+      return undefined;
+    },
+    setMutation(_: MutationInfo) {
+      // useThreads revalidation manager need not set mutations
+      return;
+    },
+
+    getOptions() {
+      return options;
+    },
+
+    getIsLoading() {
+      return isLoading;
+    },
+
+    setIsLoading(value: boolean) {
+      isLoading = value;
+    },
+  };
+}
+
+type NormalizedFilterOptions<TThreadMetadata extends BaseMetadata> = {
+  query: { metadata: Partial<TThreadMetadata> };
+};
+
+function normalizeFilterOptions<TThreadMetadata extends BaseMetadata>({
+  query: { metadata = {} } = {},
+}: ThreadsFilterOptions<TThreadMetadata> = {}): NormalizedFilterOptions<TThreadMetadata> {
+  return {
+    query: {
+      metadata,
+    },
+  };
+}
+
+function handleCommentsApiError(err: CommentsApiError): Error {
+  const message = `Request failed with status ${err.status}: ${err.message}`;
+
+  // Log details about FORBIDDEN errors
+  if (err.details?.error === "FORBIDDEN") {
+    const detailedMessage = [message, err.details.suggestion, err.details.docs]
+      .filter(Boolean)
+      .join("\n");
+
+    console.error(detailedMessage);
+  }
+
+  return new Error(message);
+}
+
+/**
+ * Compares two threads to determine which one is newer.
+ * @param threadA The first thread to compare.
+ * @param threadB The second thread to compare.
+ * @returns 1 if threadA is newer, -1 if threadB is newer, or 0 if they are the same age or can't be compared.
+ */
+function compareThreads<TThreadMetadata extends BaseMetadata>(
+  thread1: ThreadData<TThreadMetadata>,
+  thread2: ThreadData<TThreadMetadata>
+): number {
+  // Assuming both threads have the same ID, as mentioned in the question.
+  if (thread1.id !== thread2.id) {
+    throw new Error("Threads should have the same ID to be comparable");
+  }
+
+  // Compare updatedAt if available
+  if (thread1.updatedAt && thread2.updatedAt) {
+    return thread1.updatedAt > thread2.updatedAt
+      ? 1
+      : thread1.updatedAt < thread2.updatedAt
+        ? -1
+        : 0;
+  } else if (thread1.updatedAt || thread2.updatedAt) {
+    return thread1.updatedAt ? 1 : -1;
+  }
+
+  // Finally, compare createdAt
+  if (thread1.createdAt > thread2.createdAt) {
+    return 1;
+  } else if (thread1.createdAt < thread2.createdAt) {
+    return -1;
+  }
+
+  // If all dates are equal, return 0
+  return 0;
 }

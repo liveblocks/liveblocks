@@ -74,23 +74,6 @@ export function useRevalidateCache<Data>(
     errorRetryCount?: number;
   } = {}
 ) {
-  const revalidateCache = _useRevalidateCache(options);
-
-  return useCallback(
-    ({ shouldDedupe }: { shouldDedupe: boolean }) => {
-      return revalidateCache(manager, fetcher, { shouldDedupe });
-    },
-    [manager, fetcher, revalidateCache]
-  );
-}
-
-export function _useRevalidateCache<Data>(
-  options: {
-    dedupingInterval?: number;
-    errorRetryInterval?: number;
-    errorRetryCount?: number;
-  } = {}
-) {
   const isOnlineRef = useRef(true); // Stores the current online status of the browser
 
   const {
@@ -105,17 +88,13 @@ export function _useRevalidateCache<Data>(
    * @param retryCount - The number of times the request has been retried (used for exponential backoff)
    */
   const _revalidateCache = useCallback(
-    async (
-      manager: CacheManager<Data>,
-      fetcher: () => Promise<Data>,
-      {
-        shouldDedupe,
-        retryCount = 0,
-      }: {
-        shouldDedupe: boolean;
-        retryCount: number;
-      }
-    ) => {
+    async ({
+      shouldDedupe,
+      retryCount = 0,
+    }: {
+      shouldDedupe: boolean;
+      retryCount: number;
+    }) => {
       let startAt: number;
 
       // A new request should be started if there is no ongoing request OR if `shouldDedupe` is false
@@ -138,7 +117,7 @@ export function _useRevalidateCache<Data>(
         if (retryCount > errorRetryCount) return;
 
         setTimeout(() => {
-          void _revalidateCache(manager, fetcher, {
+          void _revalidateCache({
             shouldDedupe: false,
             retryCount: retryCount + 1,
           });
@@ -193,7 +172,7 @@ export function _useRevalidateCache<Data>(
       }
       return;
     },
-    [dedupingInterval, errorRetryInterval, errorRetryCount]
+    [dedupingInterval, errorRetryInterval, errorRetryCount, manager, fetcher]
   );
 
   /**
@@ -218,12 +197,8 @@ export function _useRevalidateCache<Data>(
   }, []);
 
   const revalidateCache = useCallback(
-    (
-      manager: CacheManager<Data>,
-      fetcher: () => Promise<Data>,
-      { shouldDedupe }: { shouldDedupe: boolean }
-    ) => {
-      return _revalidateCache(manager, fetcher, {
+    ({ shouldDedupe }: { shouldDedupe: boolean }) => {
+      return _revalidateCache({
         shouldDedupe,
         retryCount: 0,
       });
