@@ -253,6 +253,10 @@
         "path": "/products/comments",
         "routes": [
           {
+            "title": "Concepts",
+            "path": "/products/comments/concepts"
+          },
+          {
             "title": "Users and mentions",
             "path": "/products/comments/users-and-mentions"
           },
@@ -273,8 +277,8 @@
             "path": "/products/comments/primitives"
           },
           {
-            "title": "Styling",
-            "path": "/products/comments/styling"
+            "title": "Styling and customization",
+            "path": "/products/comments/styling-and-customization"
           },
           {
             "title": "Notification inbox",
