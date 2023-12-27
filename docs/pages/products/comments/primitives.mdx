@@ -95,10 +95,12 @@ elements, which is not valid HTML. This occurs because both `<Comment.Link>` and
   <DesignSystemLink url={href}>{children}</DesignSystemLink>
 </Comment.Link>
 
+// ===================================================================
+
 // ❌ Renders two separate <a> tags
-<a href="https://liveblocks.io" style="color: purple">
-  <a href="https://liveblocks.io" target="_blank">https://liveblocks.io</a>
-</a>
+ <a href="https://liveblocks.io" style="color: purple">
+   <a href="https://liveblocks.io" target="_blank">https://liveblocks.io</a>
+ </a>
 ```
 
 However, if you add the `asChild` property to `Comment.Link` it won’t render any
@@ -109,6 +111,8 @@ a link element from your design system, and only render a single `<a>` element.
 <Comment.Link href={href} style={{ color: "purple " }} asChild>
   <DesignSystemLink url={href}>{children}</DesignSystemLink>
 </Comment.Link>
+
+// ===================================================================
 
 // ✅ Renders one combined <a> tag
 <a href="https://liveblocks.io" style="color: purple" target="_blank">
