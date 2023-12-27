@@ -282,7 +282,8 @@
           },
           {
             "title": "Notification inbox",
-            "path": "/products/comments/notification-inbox"
+            "path": "/products/comments/notification-inbox",
+            "hidden": true
           },
           {
             "title": "Email notifications",
