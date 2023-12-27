@@ -111,17 +111,38 @@ function Component() {
 
 ## Primitives
 
-Primitives are
-[composable](/docs/products/comments/primitives#Merge-with-your-design-system-components)
-and can be styled like any other element in your React application. Each
-component passes down props to its root element, meaning you can use regular
-HTML props.
+Primitives
+[can be styled like any other element](/docs/products/comments/primitives#Use-regular-props)
+in your React application—each component passes down props to its root element,
+meaning you can use regular HTML props.
 
 ```tsx
 import { Composer } from "@liveblocks/react-comments/primitives";
 
 function Component() {
-  return <Composer.Submit style={{ color: "#ffffff" }}>Reply</Composer.Submit>;
+  return (
+    <Composer.Submit className="btn-primary" style={{ color: "#ffffff" }}>
+      Reply
+    </Composer.Submit>
+  );
+}
+```
+
+You can use your custom design system components with primitives by using the
+`asChild` property, which will
+[merge the primitive’s props](/docs/products/comments/primitives#Merge-with-your-design-system-components)
+into your component’s.
+
+```tsx highlight="6"
+import { Composer } from "@liveblocks/react-comments/primitives";
+import { Button } from "@/my-design-system";
+
+function Component() {
+  return (
+    <Composer.Submit asChild>
+      <Button variant="primary">Reply</Button>
+    </Composer.Submit>
+  );
 }
 ```
 
@@ -133,7 +154,9 @@ Style primitives with [Tailwind](https://tailwindcss.com) by adding class names.
 import { Composer } from "@liveblocks/react-comments/primitives";
 
 function Component() {
-  return <Composer.Submit className="text-white">Reply</Composer.Submit>;
+  return (
+    <Composer.Submit className="bg-black text-white">Reply</Composer.Submit>
+  );
 }
 ```
 
@@ -143,6 +166,7 @@ Style primitives with [CSS modules](https://github.com/css-modules/css-modules)
 as you would any other component.
 
 ```tsx
+import { Composer } from "@liveblocks/react-comments";
 import styles from "./Component.module.css";
 
 function Component() {

@@ -34,6 +34,35 @@ function MyComment({ comment }: { comment: CommentData }) {
 }
 ```
 
+### Use regular props
+
+Each primitive accepts regular HTML props, and passes them down to it’s root
+component. For example a `style` prop on `Comment.Body` will be passed down to
+its root `div` component. This means you can use regular `div` properties with
+your component.
+
+```tsx highlight="9-11"
+import { CommentData } from "@liveblocks/client";
+import { Comment } from "@liveblocks/react-comments/primitives";
+
+// Render a custom comment body
+function MyComment({ comment }: { comment: CommentData }) {
+  return (
+    <Comment.Body
+      body={comment.body}
+      className="text-gray-500"
+      style={{ width: "300px" }}
+      onPointerEnter={() => {}}
+    />
+  );
+}
+```
+
+By default, each component uses an appropriate root element, for example
+`Composer.Submit` is a `button`, and `Composer.Form` is a `form`. You can use a
+custom component with
+[`asChild`](/docs/products/comments/primitives#Merge-with-your-design-system-components).
+
 ### Use custom component parts
 
 Many primitives allow you to customize their parts by passing a `components`
