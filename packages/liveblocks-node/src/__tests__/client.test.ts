@@ -6,7 +6,6 @@ import type {
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
-import type { InboxNotification} from "../client";
 import { Liveblocks, LiveblocksError } from "../client";
 import { DEFAULT_BASE_URL } from "../utils";
 
@@ -544,7 +543,7 @@ describe("client", () => {
     const userId = "user1";
     const inboxNotificationId = "notification1";
 
-    const notification: InboxNotification = {
+    const notification = {
       id: inboxNotificationId,
       kind: "thread",
       notifiedAt: new Date().toISOString(),
@@ -568,7 +567,11 @@ describe("client", () => {
         userId,
         inboxNotificationId,
       })
-    ).resolves.toEqual(notification);
+    ).resolves.toEqual({
+      ...notification,
+      notifiedAt: new Date(notification.notifiedAt),
+      readAt: notification.readAt ? new Date(notification.readAt) : null,
+    });
   });
 
   test("should throw a LiveblocksError when getUserInboxNotification receives an error response", async () => {

@@ -118,9 +118,17 @@ export type Schema = {
 
 type SchemaPlain = DateToString<Schema>;
 
-export type InboxNotification = {
+type InboxNotificationResponse = {
   readAt: string | null;
   notifiedAt: string;
+  id: string;
+  threadId: string;
+  kind: "thread";
+};
+
+export type InboxNotification = {
+  readAt: Date | null;
+  notifiedAt: Date;
   id: string;
   threadId: string;
   kind: "thread";
@@ -1227,7 +1235,14 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
-    return (await res.json()) as Promise<InboxNotification>;
+
+    const data = (await res.json()) as InboxNotificationResponse;
+
+    return {
+      ...data,
+      notifiedAt: new Date(data.notifiedAt),
+      readAt: data.readAt ? new Date(data.readAt) : null,
+    };
   }
 }
 
