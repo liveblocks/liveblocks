@@ -6,7 +6,7 @@ import type {
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
-import { Liveblocks, LiveblocksError } from "../client";
+import { InboxNotification, Liveblocks, LiveblocksError } from "../client";
 import { DEFAULT_BASE_URL } from "../utils";
 
 describe("client", () => {
@@ -537,5 +537,75 @@ describe("client", () => {
     await expect(
       client.sendYjsBinaryUpdate("roomId", update)
     ).resolves.not.toThrow();
+  });
+
+  test("should return the specified inbox notification when getUserInboxNotification receives a successful response", async () => {
+    const userId = "user1";
+    const inboxNotificationId = "notification1";
+
+    const notification: InboxNotification = {
+      id: inboxNotificationId,
+      kind: "thread",
+      notifiedAt: new Date().toISOString(),
+      readAt: null,
+      threadId: "thread1",
+    };
+
+    server.use(
+      http.get(
+        `${DEFAULT_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
+        () => {
+          return HttpResponse.json(notification, { status: 200 });
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    await expect(
+      client.getUserInboxNotification({
+        userId,
+        inboxNotificationId,
+      })
+    ).resolves.toEqual(notification);
+  });
+
+  test("should throw a LiveblocksError when getUserInboxNotification receives an error response", async () => {
+    const userId = "user1";
+    const inboxNotificationId = "notification1";
+
+    const error = {
+      error: "INBOX_NOTIFICATION_NOT_FOUND",
+      message: "Inbox notification not found",
+    };
+
+    server.use(
+      http.get(
+        `${DEFAULT_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
+        () => {
+          return HttpResponse.json(error, { status: 404 });
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    // This should throw a LiveblocksError
+    try {
+      // Attempt to get, which should fail and throw an error.
+      await client.getUserInboxNotification({
+        userId,
+        inboxNotificationId,
+      });
+      // If it doesn't throw, fail the test.
+      expect(true).toBe(false);
+    } catch (err) {
+      expect(err instanceof LiveblocksError).toBe(true);
+      if (err instanceof LiveblocksError) {
+        expect(err.status).toBe(404);
+        expect(err.message).toBe(JSON.stringify(error));
+        expect(err.name).toBe("LiveblocksError");
+      }
+    }
   });
 });

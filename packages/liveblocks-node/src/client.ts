@@ -118,6 +118,14 @@ export type Schema = {
 
 type SchemaPlain = DateToString<Schema>;
 
+export type InboxNotification = {
+  readAt: string | null;
+  notifiedAt: string;
+  id: string;
+  threadId: string;
+  kind: "thread";
+};
+
 /**
  * Interact with the Liveblocks API from your Node.js backend.
  */
@@ -1204,6 +1212,22 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
+  }
+
+  public async getUserInboxNotification(params: {
+    userId: string;
+    inboxNotificationId: string;
+  }): Promise<InboxNotification> {
+    const { userId, inboxNotificationId } = params;
+
+    const res = await this.get(
+      url`/v2/users/${userId}/inbox-notifications/${inboxNotificationId}`
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+    return (await res.json()) as Promise<InboxNotification>;
   }
 }
 
