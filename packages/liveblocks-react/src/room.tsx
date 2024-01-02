@@ -35,20 +35,27 @@ import {
   makeEventSource,
   stringify,
 } from "@liveblocks/core";
+import { nanoid } from "nanoid";
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import {
-  EditThreadMetadataError,
-  type CommentsError,
-  CreateThreadError,
-  CreateCommentError,
-  EditCommentError,
   AddReactionError,
+  type CommentsError,
+  CreateCommentError,
+  CreateThreadError,
   DeleteCommentError,
+  EditCommentError,
+  EditThreadMetadataError,
   RemoveReactionError,
 } from "./comments/errors";
+import { createCommentId, createThreadId } from "./comments/lib/createIds";
 import { useDebounce } from "./comments/lib/use-debounce";
+import {
+  createClientStore,
+  selectedThreads,
+  upsertComment,
+} from "./comments/store";
 import { useAsyncCache } from "./lib/use-async-cache";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
@@ -76,13 +83,6 @@ import type {
   UserStateSuccess,
   UseThreadsOptions,
 } from "./types";
-import {
-  createClientStore,
-  selectedThreads,
-  upsertComment,
-} from "./comments/store";
-import { nanoid } from "nanoid";
-import { createCommentId, createThreadId } from "./comments/lib/createIds";
 
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
@@ -963,7 +963,7 @@ export function createRoomContext<
       return requestCache.promise;
     }
 
-    let initialPromise = room.getThreads(options);
+    const initialPromise = room.getThreads(options);
 
     requestsCache.set(queryKey, {
       promise: initialPromise,
@@ -1010,8 +1010,8 @@ export function createRoomContext<
     const queryKey = React.useMemo(() => stringify(options), [options]);
 
     React.useEffect(() => {
-      getThreadsAndInboxNotifications(room, queryKey, options);
-    }, [room, queryKey]); // TODO
+      void getThreadsAndInboxNotifications(room, queryKey, options);
+    }, [room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
     return useSyncExternalStoreWithSelector(
       store.subscribe,
@@ -1115,7 +1115,7 @@ export function createRoomContext<
               ),
             }));
           },
-          (err) =>
+          (err: Error) =>
             onMutationFailure(
               err,
               optimisticUpdateId,
@@ -1175,7 +1175,7 @@ export function createRoomContext<
               ),
             }));
           },
-          (err) => {
+          (err: Error) =>
             onMutationFailure(
               err,
               optimisticUpdateId,
@@ -1185,8 +1185,7 @@ export function createRoomContext<
                   threadId,
                   metadata,
                 })
-            );
-          }
+            )
         );
       },
       [room]
@@ -1256,7 +1255,7 @@ export function createRoomContext<
               ),
             }));
           },
-          (err) =>
+          (err: Error) =>
             onMutationFailure(
               err,
               optimisticUpdateId,
@@ -1340,7 +1339,7 @@ export function createRoomContext<
               ),
             }));
           },
-          (err) =>
+          (err: Error) =>
             onMutationFailure(
               err,
               optimisticUpdateId,
@@ -1394,7 +1393,7 @@ export function createRoomContext<
               ),
             }));
           },
-          (err) =>
+          (err: Error) =>
             onMutationFailure(
               err,
               optimisticUpdateId,
@@ -1440,7 +1439,7 @@ export function createRoomContext<
               ),
             }));
           },
-          (err) =>
+          (err: Error) =>
             onMutationFailure(
               err,
               optimisticUpdateId,
@@ -1498,7 +1497,7 @@ export function createRoomContext<
               ),
             }));
           },
-          (err) =>
+          (err: Error) =>
             onMutationFailure(
               err,
               optimisticUpdateId,

@@ -1,17 +1,14 @@
-import {
-  BaseMetadata,
-  convertToThreadData,
-  createClient,
-} from "@liveblocks/core";
-import { waitFor, renderHook, act } from "@testing-library/react";
+import type { BaseMetadata, CommentBody, JsonObject } from "@liveblocks/core";
+import { convertToThreadData, createClient } from "@liveblocks/core";
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { addMinutes } from "date-fns";
+import { setupServer } from "msw/node";
 import React from "react";
 
 import { createRoomContext } from "../room";
+import { dummyCommentDataPlain, dummyThreadDataPlain } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import { mockCreateComment, mockGetThreads } from "./_restMocks";
-import { dummyCommentDataPlain, dummyThreadDataPlain } from "./_dummies";
-import { addMinutes } from "date-fns";
-import { setupServer } from "msw/node";
 
 const server = setupServer();
 
@@ -39,7 +36,9 @@ function createRoomContextForTest<
     },
   });
 
-  return createRoomContext<{}, never, never, never, TThreadMetadata>(client);
+  return createRoomContext<JsonObject, never, never, never, TThreadMetadata>(
+    client
+  );
 }
 
 describe("useCreateComment", () => {
@@ -59,7 +58,7 @@ describe("useCreateComment", () => {
       mockCreateComment(
         { threadId: initialThread.id },
         async (req, res, ctx) => {
-          const json = await req.json();
+          const json = await req.json<{ id: string; body: CommentBody }>();
 
           const comment = dummyCommentDataPlain();
           comment.id = json.id;

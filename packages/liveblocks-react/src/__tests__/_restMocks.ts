@@ -1,10 +1,11 @@
 import type { CommentDataPlain, ThreadDataPlain } from "@liveblocks/core";
-import {
-  rest,
-  type RestRequest,
-  type RestContext,
+import type {
   ResponseResolver,
+  type RestContext,
+  type RestRequest,
 } from "msw";
+import {
+  rest} from "msw";
 
 export function mockGetThreads(
   resolver: ResponseResolver<
@@ -30,7 +31,7 @@ export function mockCreateThread(
   >
 ) {
   return rest.post(
-    `https://api.liveblocks.io/v2/c/rooms/room-id/threads`,
+    "https://api.liveblocks.io/v2/c/rooms/room-id/threads",
     resolver
   );
 }

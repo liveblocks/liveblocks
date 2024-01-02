@@ -3,6 +3,7 @@ import type {
   CommentDataPlain,
   ThreadDataPlain,
 } from "@liveblocks/core";
+
 import { createCommentId, createThreadId } from "../comments/lib/createIds";
 
 export function dummyThreadDataPlain<
@@ -18,7 +19,7 @@ export function dummyThreadDataPlain<
     id: threadId,
     type: "thread",
     roomId: "room-id",
-    createdAt: createdAt,
+    createdAt,
     metadata: {}, // TODO Fix type
     updatedAt: undefined,
     comments: [comment],

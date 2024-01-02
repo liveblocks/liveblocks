@@ -3,12 +3,13 @@ import type {
   CommentBody,
   CommentData,
   CommentReaction,
+  PartialInboxNotificationData,
   Resolve,
   ThreadData,
-  PartialInboxNotificationData,
 } from "@liveblocks/core";
-import { createStore } from "./lib/createStore";
+
 import type { UseThreadsOptions } from "../types";
+import { createStore } from "./lib/createStore";
 
 type PartialNullable<T> = {
   [P in keyof T]?: T[P] | null | undefined;

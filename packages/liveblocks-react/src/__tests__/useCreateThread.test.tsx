@@ -1,14 +1,15 @@
-import { ThreadDataPlain, createClient } from "@liveblocks/core";
-import { waitFor, renderHook, act } from "@testing-library/react";
+import type { CommentBody, ThreadDataPlain } from "@liveblocks/core";
+import { createClient } from "@liveblocks/core";
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { addMinutes } from "date-fns";
 import type { ResponseComposition, RestContext, RestRequest } from "msw";
+import { setupServer } from "msw/node";
 import React from "react";
 
 import { createRoomContext } from "../room";
+import { dummyCommentDataPlain, dummyThreadDataPlain } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import { mockCreateThread, mockGetThreads } from "./_restMocks";
-import { setupServer } from "msw/node";
-import { dummyCommentDataPlain, dummyThreadDataPlain } from "./_dummies";
-import { addMinutes } from "date-fns";
 
 const server = setupServer();
 
@@ -56,7 +57,10 @@ describe("useCreateThread", () => {
           res: ResponseComposition<ThreadDataPlain<any>>,
           ctx: RestContext
         ) => {
-          const json = await req.json();
+          const json = await req.json<{
+            id: string;
+            comment: { id: string; body: CommentBody };
+          }>();
 
           const comment = dummyCommentDataPlain();
           comment.threadId = json.id;

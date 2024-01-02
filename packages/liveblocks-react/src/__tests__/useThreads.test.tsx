@@ -1,16 +1,13 @@
-import {
-  BaseMetadata,
-  convertToThreadData,
-  createClient,
-} from "@liveblocks/core";
+import type { BaseMetadata, JsonObject } from "@liveblocks/core";
+import { convertToThreadData, createClient } from "@liveblocks/core";
 import { renderHook, waitFor } from "@testing-library/react";
+import { setupServer } from "msw/node";
 import React, { Suspense } from "react";
 
 import { createRoomContext } from "../room";
+import { dummyThreadDataPlain } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import { mockGetThreads } from "./_restMocks";
-import { dummyThreadDataPlain } from "./_dummies";
-import { setupServer } from "msw/node";
 
 const server = setupServer();
 
@@ -38,7 +35,9 @@ function createRoomContextForTest<
     },
   });
 
-  return createRoomContext<{}, never, never, never, TThreadMetadata>(client);
+  return createRoomContext<JsonObject, never, never, never, TThreadMetadata>(
+    client
+  );
 }
 
 describe("useThreads", () => {
@@ -133,7 +132,7 @@ describe("useThreads", () => {
 
     server.use(
       mockGetThreads(async (req, res, ctx) => {
-        const { metadata } = await req.json();
+        const { metadata } = await req.json<{ metadata: BaseMetadata }>();
         return res(
           ctx.json({
             data: [resolvedThread, unresolvedThread].filter(
@@ -224,7 +223,7 @@ describe("useThreads", () => {
 
     server.use(
       mockGetThreads(async (req, res, ctx) => {
-        const { metadata } = await req.json();
+        const { metadata } = await req.json<{ metadata: BaseMetadata }>();
         return res(
           ctx.json({
             data: [resolvedThread, unresolvedThread].filter(
