@@ -508,4 +508,34 @@ describe("client", () => {
       expect(err instanceof LiveblocksError).toBe(false);
     }
   });
+
+  test("should successfully send a Yjs update", async () => {
+    const update = new Uint8Array([21, 31]);
+    server.use(
+      http.put(
+        `${DEFAULT_BASE_URL}/v2/rooms/:roomId/ydoc`,
+        async ({ request }) => {
+          const buffer = await request.arrayBuffer();
+          const data = new Uint8Array(buffer);
+
+          // Return void if the data is the same as the update.
+          if (data.length === update.length) {
+            for (let i = 0; i < data.length; i++) {
+              if (data[i] !== update[i]) {
+                return HttpResponse.error();
+              }
+            }
+          }
+
+          return HttpResponse.json(null);
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    await expect(
+      client.sendYjsBinaryUpdate("roomId", update)
+    ).resolves.not.toThrow();
+  });
 });
