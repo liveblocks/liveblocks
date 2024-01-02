@@ -32,6 +32,7 @@ export async function POST() {
   const yDoc = new Y.Doc();
 
   // Create your data structures and make your update
+  // Each editor is different, you probably need to change these two lines
   const yText = yDoc.getText("text");
   yText.insert(0, "Hello world");
 
@@ -45,6 +46,15 @@ export async function POST() {
 }
 ```
 
+Note that if you’re using a text editor,
+[each one works differently](#each-editor-works-differently), so you’ll most
+likely need to modify these two lines to use a format your editor defines.
+
+```ts
+const yText = yDoc.getText("text");
+yText.insert(0, "Hello world");
+```
+
 ## Initializing a Yjs document
 
 It’s also possible to create a new room with an initial Yjs document. To do
@@ -52,7 +62,7 @@ this, call
 [`Liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms), then
 send the update as before.
 
-```ts highlight="20-23"
+```ts highlight="21-24"
 import * as Y from "yjs";
 import { Liveblocks } from "@liveblocks/node";
 
@@ -66,6 +76,7 @@ export async function POST() {
   const yDoc = new Y.Doc();
 
   // Create your data structures and make your update
+  // Each editor is different, you probably need to change these two lines
   const yText = yDoc.getText("text");
   yText.insert(0, "Hello world");
 
@@ -84,11 +95,17 @@ export async function POST() {
 }
 ```
 
-## Each editor works differently
+## Each editor works differently [#each-editor-works-differently]
 
 Note that each text and code editor may work differently, and may include
-specific functions for creating binary updates. For example, this is how to
-initialize a [Slate](/docs/get-started/yjs-slate-react) document.
+specific functions for creating binary updates, or use different shared types.
+Slate and Tiptap use
+[`Y.XmlFragment`](https://docs.yjs.dev/api/shared-types/y.xmlfragment) instead
+of [`Y.Text`](https://docs.yjs.dev/api/shared-types/y.text).
+
+### Slate
+
+This is how to initialize a [Slate](/docs/get-started/yjs-slate-react) document.
 
 ```ts highlight="3,14-18,20-22"
 import * as Y from "yjs";
@@ -113,6 +130,47 @@ export async function POST() {
   // Create your data structures and make your update
   const insertDelta = slateNodesToInsertDelta(slateDoc);
   (yDoc.get("content", Y.XmlText) as Y.XmlText).applyDelta(insertDelta);
+
+  // Encode the document state as an update message
+  const yUpdate = Y.encodeStateAsUpdate(yDoc);
+
+  // Create the new room
+  const room = await liveblocks.createRoom(roomId, {
+    defaultAccesses: ["room:write"],
+  });
+
+  // Initialize the Yjs document with the update
+  await liveblocks.sendYjsBinaryUpdate(roomId, {
+    update: yUpdate,
+  });
+}
+```
+
+### Tiptap
+
+This is how to initialize a
+[Tiptap](https://tiptap.dev/docs/editor/api/extensions/collaboration) document.
+
+```ts highlight="13-15,17-19"
+import * as Y from "yjs";
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+const roomId = "my-room-name";
+
+export async function POST() {
+  // Create a Yjs document
+  const yDoc = new Y.Doc();
+
+  // The Tiptap Yjs state we're creating
+  const yXmlElement = new Y.XmlElement("paragraph");
+  yXmlElement.insert(0, [new Y.XmlText("Hello world")]);
+
+  // Create your data structures and make your update
+  const yXmlFragment = yDoc.getXmlFragment("default");
+  yXmlFragment.insert(0, [yXmlElement]);
 
   // Encode the document state as an update message
   const yUpdate = Y.encodeStateAsUpdate(yDoc);
