@@ -1,11 +1,6 @@
 import type { CommentDataPlain, ThreadDataPlain } from "@liveblocks/core";
-import type {
-  ResponseResolver,
-  type RestContext,
-  type RestRequest,
-} from "msw";
-import {
-  rest} from "msw";
+import type { ResponseResolver, RestContext, RestRequest } from "msw";
+import { rest } from "msw";
 
 export function mockGetThreads(
   resolver: ResponseResolver<
