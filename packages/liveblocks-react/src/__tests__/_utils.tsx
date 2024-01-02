@@ -1,4 +1,9 @@
-import { LiveList, LiveObject } from "@liveblocks/client";
+import {
+  BaseMetadata,
+  LiveList,
+  LiveObject,
+  createClient,
+} from "@liveblocks/client";
 import type { RenderHookResult, RenderOptions } from "@testing-library/react";
 import { render, renderHook } from "@testing-library/react";
 import type { ReactElement } from "react";
@@ -10,6 +15,8 @@ import type {
   RequestInfo,
 } from "../comments/lib/revalidation";
 import { RoomProvider } from "./_liveblocks.config";
+import MockWebSocket from "./_MockWebSocket";
+import { createRoomContext } from "../room";
 
 /**
  * Testing context for all tests. Sets up a default RoomProvider to wrap all
@@ -52,6 +59,19 @@ function customRenderHook<Result, Props>(
   }
 ): RenderHookResult<Result, Props> {
   return renderHook(render, { wrapper: AllTheProviders, ...options });
+}
+
+export function createRoomContextForTest<
+  TThreadMetadata extends BaseMetadata = BaseMetadata,
+>() {
+  const client = createClient({
+    publicApiKey: "pk_xxx",
+    polyfills: {
+      WebSocket: MockWebSocket as any,
+    },
+  });
+
+  return createRoomContext<{}, never, never, never, TThreadMetadata>(client);
 }
 
 export function createCacheManager<Data>(
