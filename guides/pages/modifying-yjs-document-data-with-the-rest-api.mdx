@@ -36,13 +36,11 @@ export async function POST() {
   const yText = yDoc.getText("text");
   yText.insert(0, "Hello world");
 
-  // Encode the document state as an update message
+  // Encode the document state as an update
   const yUpdate = Y.encodeStateAsUpdate(yDoc);
 
   // Insert the update
-  await liveblocks.sendYjsBinaryUpdate(roomId, {
-    update: yUpdate,
-  });
+  await liveblocks.sendYjsBinaryUpdate(roomId, yUpdate);
 }
 ```
 
@@ -80,7 +78,7 @@ export async function POST() {
   const yText = yDoc.getText("text");
   yText.insert(0, "Hello world");
 
-  // Encode the document state as an update message
+  // Encode the document state as an update
   const yUpdate = Y.encodeStateAsUpdate(yDoc);
 
   // Create the new room
@@ -89,9 +87,7 @@ export async function POST() {
   });
 
   // Initialize the Yjs document with the update
-  await liveblocks.sendYjsBinaryUpdate(roomId, {
-    update: yUpdate,
-  });
+  await liveblocks.sendYjsBinaryUpdate(roomId, yUpdate);
 }
 ```
 
@@ -131,7 +127,7 @@ export async function POST() {
   const insertDelta = slateNodesToInsertDelta(slateDoc);
   (yDoc.get("content", Y.XmlText) as Y.XmlText).applyDelta(insertDelta);
 
-  // Encode the document state as an update message
+  // Encode the document state as an update
   const yUpdate = Y.encodeStateAsUpdate(yDoc);
 
   // Create the new room
@@ -140,9 +136,7 @@ export async function POST() {
   });
 
   // Initialize the Yjs document with the update
-  await liveblocks.sendYjsBinaryUpdate(roomId, {
-    update: yUpdate,
-  });
+  await liveblocks.sendYjsBinaryUpdate(roomId, yUpdate);
 }
 ```
 
