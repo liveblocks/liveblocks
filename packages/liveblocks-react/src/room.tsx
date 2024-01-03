@@ -18,34 +18,56 @@ import type {
   AsyncCache,
   BaseMetadata,
   CommentData,
+  CommentReaction,
   EnterOptions,
+  GetThreadsOptions,
   RoomEventMessage,
   RoomNotificationSettings,
+  ThreadData,
   ToImmutable,
 } from "@liveblocks/core";
 import {
+  CommentsApiError,
   createAsyncCache,
   deprecateIf,
   errorIf,
   isLiveNode,
   makeEventSource,
+  makePoller,
   stringify,
 } from "@liveblocks/core";
+import { nanoid } from "nanoid";
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
-import type {
-  CreateCommentOptions,
-  EditCommentOptions,
-} from "./comments/CommentsRoom";
-import { createCommentsRoom } from "./comments/CommentsRoom";
-import type { CommentsError } from "./comments/errors";
+import {
+  AddReactionError,
+  type CommentsError,
+  CreateCommentError,
+  CreateThreadError,
+  DeleteCommentError,
+  EditCommentError,
+  EditThreadMetadataError,
+  RemoveReactionError,
+} from "./comments/errors";
+import { createCommentId, createThreadId } from "./comments/lib/createIds";
 import { useDebounce } from "./comments/lib/use-debounce";
+import {
+  createClientStore,
+  selectedThreads,
+  upsertComment,
+} from "./comments/store";
 import { useAsyncCache } from "./lib/use-async-cache";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { useRerender } from "./lib/use-rerender";
 import type {
+  CommentReactionOptions,
+  CreateCommentOptions,
+  CreateThreadOptions,
+  DeleteCommentOptions,
+  EditCommentOptions,
+  EditThreadMetadataOptions,
   InternalRoomContextBundle,
   MutationContext,
   OmitFirstArg,
@@ -57,6 +79,7 @@ import type {
   RoomNotificationSettingsStateSuccess,
   RoomProviderProps,
   ThreadsState,
+  ThreadsStateSuccess,
   UserState,
   UserStateSuccess,
   UseThreadsOptions,
@@ -93,6 +116,8 @@ function useSyncExternalStore<Snapshot>(
 }
 
 const STABLE_EMPTY_LIST = Object.freeze([]);
+
+export const POLLING_INTERVAL = 5 * 60 * 1000;
 
 // Don't try to inline this. This function is intended to be a stable
 // reference, to avoid a React.useCallback() wrapper.
@@ -232,10 +257,6 @@ export function createRoomContext<
   const commentsErrorEventSource =
     makeEventSource<CommentsError<TThreadMetadata>>();
 
-  // [comments-unread] TODO: Merge CommentsRoom within room.tsx to simplify things? CommentsRoom dates from when they were separate from rooms, but now 1 room = 1 CommentRoom.
-  const { CommentsRoomProvider, ...commentsRoom } =
-    createCommentsRoom<TThreadMetadata>(commentsErrorEventSource);
-
   /**
    * RATIONALE:
    * At the "Outer" RoomProvider level, we keep a cache and produce
@@ -367,21 +388,19 @@ export function createRoomContext<
 
     return (
       <RoomContext.Provider value={room}>
-        <CommentsRoomProvider room={room}>
-          <ContextBundle.Provider
-            value={
-              internalBundle as unknown as InternalRoomContextBundle<
-                JsonObject,
-                LsonObject,
-                BaseUserMeta,
-                never,
-                BaseMetadata
-              >
-            }
-          >
-            {props.children}
-          </ContextBundle.Provider>
-        </CommentsRoomProvider>
+        <ContextBundle.Provider
+          value={
+            internalBundle as unknown as InternalRoomContextBundle<
+              JsonObject,
+              LsonObject,
+              BaseUserMeta,
+              never,
+              BaseMetadata
+            >
+          }
+        >
+          {props.children}
+        </ContextBundle.Provider>
       </RoomContext.Provider>
     );
   }
@@ -907,51 +926,660 @@ export function createRoomContext<
     return useLegacyKey(key) as TStorage[TKey];
   }
 
-  function useThreads(
-    options?: UseThreadsOptions<TThreadMetadata>
-  ): ThreadsState<TThreadMetadata> {
-    const room = useRoom();
-    return commentsRoom.useThreads(room, options);
+  const store = createClientStore<TThreadMetadata>();
+
+  function onMutationFailure(
+    innerError: Error,
+    optimisticUpdateId: string,
+    createPublicError: (error: Error) => CommentsError<TThreadMetadata>
+  ) {
+    store.set((state) => ({
+      ...state,
+      optimisticUpdates: state.optimisticUpdates.filter(
+        (update) => update.id !== optimisticUpdateId
+      ),
+    }));
+
+    if (!(innerError instanceof CommentsApiError)) {
+      throw innerError;
+    }
+
+    const error = handleCommentsApiError(innerError);
+    commentsErrorEventSource.notify(createPublicError(error));
   }
 
-  function useThreadsSuspense(options?: UseThreadsOptions<TThreadMetadata>) {
+  const requestsCache: Map<
+    string,
+    {
+      promise: Promise<any> | null;
+      subscribers: number;
+      query: GetThreadsOptions<TThreadMetadata>;
+      roomId: string;
+    }
+  > = new Map();
+
+  const poller = makePoller(refreshThreadsAndNotifications);
+
+  async function refreshThreadsAndNotifications() {
+    await Promise.allSettled(
+      Array.from(requestsCache.values())
+        .filter((requestCache) => requestCache.subscribers > 0)
+        .map(async (requestCache) => {
+          const room = client.getRoom(requestCache.roomId);
+
+          if (room === null) {
+            return;
+          }
+
+          // TODO: Error handling
+          const { threads, inboxNotifications } = await room.getThreads(
+            requestCache.query
+          );
+
+          store.updateThreadsAndNotifications(threads, inboxNotifications);
+        })
+    );
+  }
+
+  function incrementQuerySubscribers(queryKey: string) {
+    console.log("increment", queryKey);
+    const requestCache = requestsCache.get(queryKey);
+
+    if (requestCache === undefined) {
+      console.warn(
+        `Internal unexpected behavior. Cannot increase subscriber count for query "${queryKey}"`
+      );
+      return;
+    }
+
+    requestCache.subscribers++;
+
+    poller.start(POLLING_INTERVAL);
+  }
+
+  function decrementQuerySubscribers(queryKey: string) {
+    console.log("decrement", queryKey);
+    const requestCache = requestsCache.get(queryKey);
+
+    if (requestCache === undefined || requestCache.subscribers <= 0) {
+      console.warn(
+        `Internal unexpected behavior. Cannot decrease subscriber count for query "${queryKey}"`
+      );
+      return;
+    }
+
+    requestCache.subscribers--;
+
+    let totalSubscribers = 0;
+    for (const requestCache of requestsCache.values()) {
+      totalSubscribers += requestCache.subscribers;
+    }
+
+    if (totalSubscribers <= 0) {
+      poller.stop();
+    }
+  }
+
+  async function getThreadsAndInboxNotifications(
+    room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
+    queryKey: string,
+    options: GetThreadsOptions<TThreadMetadata>
+  ) {
+    const requestCache = requestsCache.get(queryKey);
+
+    if (requestCache !== undefined) {
+      return requestCache.promise;
+    }
+
+    const initialPromise = room.getThreads(options);
+
+    requestsCache.set(queryKey, {
+      promise: initialPromise,
+      subscribers: 0,
+      query: options,
+      roomId: room.id,
+    });
+
+    store.set((state) => ({
+      ...state,
+      threadsQueries: {
+        ...state.threadsQueries,
+        [queryKey]: {
+          isLoading: true,
+        },
+      },
+    }));
+
+    // TODO: Error handling
+    const { threads, inboxNotifications } = await initialPromise;
+
+    store.updateThreadsAndNotifications(threads, inboxNotifications, queryKey);
+
+    poller.start(POLLING_INTERVAL);
+  }
+
+  function useThreads(
+    options: UseThreadsOptions<TThreadMetadata> = { query: { metadata: {} } }
+  ): ThreadsState<TThreadMetadata> {
     const room = useRoom();
-    return commentsRoom.useThreadsSuspense(room, options);
+    const queryKey = React.useMemo(() => stringify(options), [options]);
+
+    React.useEffect(() => {
+      void getThreadsAndInboxNotifications(room, queryKey, options);
+      incrementQuerySubscribers(queryKey);
+
+      return () => decrementQuerySubscribers(queryKey);
+    }, [room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    return useSyncExternalStoreWithSelector(
+      store.subscribe,
+      store.get,
+      store.get,
+      (state) => {
+        if (
+          state.threadsQueries[queryKey] === undefined ||
+          state.threadsQueries[queryKey].isLoading
+        ) {
+          return {
+            isLoading: true,
+          };
+        }
+
+        return {
+          threads: selectedThreads(state, options),
+          isLoading: false,
+        };
+      }
+    );
+  }
+
+  function useThreadsSuspense(
+    options: UseThreadsOptions<TThreadMetadata> = { query: { metadata: {} } }
+  ): ThreadsStateSuccess<TThreadMetadata> {
+    const room = useRoom();
+    const queryKey = React.useMemo(() => stringify(options), [options]);
+
+    if (
+      store.get().threadsQueries[queryKey] === undefined ||
+      store.get().threadsQueries[queryKey].isLoading
+    ) {
+      throw getThreadsAndInboxNotifications(room, queryKey, options);
+    }
+
+    React.useEffect(() => {
+      console.log("Effect");
+      incrementQuerySubscribers(queryKey);
+
+      return () => {
+        console.log("Cleanup");
+        decrementQuerySubscribers(queryKey);
+      };
+    }, [room, queryKey]);
+
+    return useSyncExternalStoreWithSelector(
+      store.subscribe,
+      store.get,
+      store.get,
+      (state) => {
+        return {
+          threads: selectedThreads(state, options),
+          isLoading: false,
+        };
+      }
+    );
   }
 
   function useCreateThread() {
     const room = useRoom();
-    return commentsRoom.useCreateThread(room);
+    return React.useCallback(
+      (
+        options: CreateThreadOptions<TThreadMetadata>
+      ): ThreadData<TThreadMetadata> => {
+        const body = options.body;
+        const metadata: TThreadMetadata =
+          "metadata" in options ? options.metadata : ({} as TThreadMetadata);
+
+        const threadId = createThreadId();
+        const commentId = createCommentId();
+        const now = new Date();
+
+        const newComment: CommentData = {
+          id: commentId,
+          threadId,
+          roomId: room.id,
+          createdAt: now,
+          type: "comment",
+          userId: getCurrentUserId(room),
+          body,
+          reactions: [],
+        };
+        const newThread: ThreadData<TThreadMetadata> = {
+          id: threadId,
+          type: "thread",
+          createdAt: now,
+          roomId: room.id,
+          metadata: metadata as ThreadData<TThreadMetadata>["metadata"],
+          comments: [newComment],
+        };
+
+        const optimisticUpdateId = nanoid();
+
+        store.pushOptimisticUpdate({
+          type: "create-thread",
+          thread: newThread,
+          id: optimisticUpdateId,
+        });
+
+        room.createThread({ threadId, commentId, body, metadata }).then(
+          (thread) => {
+            store.set((state) => ({
+              ...state,
+              threads: {
+                ...state.threads,
+                [threadId]: thread,
+              },
+              optimisticUpdates: state.optimisticUpdates.filter(
+                (update) => update.id !== optimisticUpdateId
+              ),
+            }));
+          },
+          (err: Error) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (err) =>
+                new CreateThreadError(err, {
+                  roomId: room.id,
+                  threadId,
+                  commentId,
+                  body,
+                  metadata,
+                })
+            )
+        );
+
+        return newThread;
+      },
+      [room]
+    );
   }
 
   function useEditThreadMetadata() {
     const room = useRoom();
-    return commentsRoom.useEditThreadMetadata(room);
+    return React.useCallback(
+      (options: EditThreadMetadataOptions<TThreadMetadata>): void => {
+        if (!("metadata" in options)) {
+          return;
+        }
+
+        const threadId = options.threadId;
+        const metadata = options.metadata;
+
+        const optimisticUpdateId = nanoid();
+
+        store.pushOptimisticUpdate({
+          type: "edit-thread-metadata",
+          metadata,
+          id: optimisticUpdateId,
+          threadId,
+        });
+
+        room.editThreadMetadata({ metadata, threadId }).then(
+          (metadata: TThreadMetadata) => {
+            store.set((state) => ({
+              ...state,
+              threads: {
+                ...state.threads,
+                [threadId]: {
+                  ...state.threads[threadId],
+                  metadata: {
+                    ...state.threads[threadId].metadata,
+                    ...metadata,
+                  },
+                },
+              },
+              optimisticUpdates: state.optimisticUpdates.filter(
+                (update) => update.id !== optimisticUpdateId
+              ),
+            }));
+          },
+          (err: Error) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (error) =>
+                new EditThreadMetadataError(error, {
+                  roomId: room.id,
+                  threadId,
+                  metadata,
+                })
+            )
+        );
+      },
+      [room]
+    );
   }
 
   function useAddReaction() {
     const room = useRoom();
-    return commentsRoom.useAddReaction(room);
+    return React.useCallback(
+      ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
+        const now = new Date();
+        const userId = getCurrentUserId(room);
+
+        const optimisticUpdateId = nanoid();
+
+        store.pushOptimisticUpdate({
+          type: "add-reaction",
+          threadId,
+          commentId,
+          emoji,
+          userId,
+          createdAt: now,
+          id: optimisticUpdateId,
+        });
+
+        room.addReaction({ threadId, commentId, emoji }).then(
+          (addedReaction) => {
+            store.set((state) => ({
+              ...state,
+              threads: {
+                ...state.threads,
+                [threadId]: {
+                  ...state.threads[threadId],
+                  comments: state.threads[threadId].comments.map((comment) =>
+                    comment.id === commentId
+                      ? {
+                          ...comment,
+                          reactions: comment.reactions.some(
+                            (reaction) => reaction.emoji === addedReaction.emoji
+                          )
+                            ? comment.reactions.map((reaction) =>
+                                reaction.emoji === addedReaction.emoji
+                                  ? {
+                                      ...reaction,
+                                      users: [
+                                        ...reaction.users,
+                                        { id: addedReaction.userId },
+                                      ],
+                                    }
+                                  : reaction
+                              )
+                            : [
+                                ...comment.reactions,
+                                {
+                                  emoji: addedReaction.emoji,
+                                  createdAt: addedReaction.createdAt,
+                                  users: [{ id: addedReaction.userId }],
+                                },
+                              ],
+                        }
+                      : comment
+                  ),
+                },
+              },
+              optimisticUpdates: state.optimisticUpdates.filter(
+                (update) => update.id !== optimisticUpdateId
+              ),
+            }));
+          },
+          (err: Error) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (error) =>
+                new AddReactionError(error, {
+                  roomId: room.id,
+                  threadId,
+                  commentId,
+                  emoji,
+                })
+            )
+        );
+      },
+      [room]
+    );
   }
 
   function useRemoveReaction() {
     const room = useRoom();
-    return commentsRoom.useRemoveReaction(room);
+    return React.useCallback(
+      ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
+        const userId = getCurrentUserId(room);
+
+        const optimisticUpdateId = nanoid();
+
+        store.pushOptimisticUpdate({
+          type: "remove-reaction",
+          threadId,
+          commentId,
+          emoji,
+          userId,
+          id: optimisticUpdateId,
+        });
+
+        room.removeReaction({ threadId, commentId, emoji }).then(
+          () => {
+            store.set((state) => ({
+              ...state,
+              threads: {
+                ...state.threads,
+                [threadId]: {
+                  ...state.threads[threadId],
+                  comments: state.threads[threadId].comments.map((comment) => {
+                    if (comment.id !== commentId) {
+                      return comment;
+                    }
+
+                    const reactionIndex = comment.reactions.findIndex(
+                      (reaction) => reaction.emoji === emoji
+                    );
+                    let reactions: CommentReaction[] = comment.reactions;
+
+                    if (
+                      reactionIndex >= 0 &&
+                      comment.reactions[reactionIndex].users.some(
+                        (user) => user.id === userId
+                      )
+                    ) {
+                      if (comment.reactions[reactionIndex].users.length <= 1) {
+                        reactions = [...comment.reactions];
+                        reactions.splice(reactionIndex, 1);
+                      } else {
+                        reactions[reactionIndex] = {
+                          ...reactions[reactionIndex],
+                          users: reactions[reactionIndex].users.filter(
+                            (user) => user.id !== userId
+                          ),
+                        };
+                      }
+                    }
+
+                    return {
+                      ...comment,
+                      reactions,
+                    };
+                  }),
+                },
+              },
+              optimisticUpdates: state.optimisticUpdates.filter(
+                (update) => update.id !== optimisticUpdateId
+              ),
+            }));
+          },
+          (err: Error) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (error) =>
+                new RemoveReactionError(error, {
+                  roomId: room.id,
+                  threadId,
+                  commentId,
+                  emoji,
+                })
+            )
+        );
+      },
+      [room]
+    );
   }
 
   function useCreateComment(): (options: CreateCommentOptions) => CommentData {
     const room = useRoom();
-    return commentsRoom.useCreateComment(room);
+    return React.useCallback(
+      ({ threadId, body }: CreateCommentOptions): CommentData => {
+        const commentId = createCommentId();
+        const now = new Date();
+
+        const comment: CommentData = {
+          id: commentId,
+          threadId,
+          roomId: room.id,
+          type: "comment",
+          createdAt: now,
+          userId: getCurrentUserId(room),
+          body,
+          reactions: [],
+        };
+
+        const optimisticUpdateId = nanoid();
+
+        store.pushOptimisticUpdate({
+          type: "create-comment",
+          comment,
+          id: optimisticUpdateId,
+        });
+
+        room.createComment({ threadId, commentId, body }).then(
+          (newComment) => {
+            store.set((state) => ({
+              ...state,
+              threads: upsertComment(state.threads, newComment),
+              optimisticUpdates: state.optimisticUpdates.filter(
+                (update) => update.id !== optimisticUpdateId
+              ),
+            }));
+          },
+          (err: Error) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (err) =>
+                new CreateCommentError(err, {
+                  roomId: room.id,
+                  threadId,
+                  commentId,
+                  body,
+                })
+            )
+        );
+
+        return comment;
+      },
+      [room]
+    );
   }
 
   function useEditComment(): (options: EditCommentOptions) => void {
     const room = useRoom();
-    return commentsRoom.useEditComment(room);
+    return React.useCallback(
+      ({ threadId, commentId, body }: EditCommentOptions): void => {
+        const now = new Date();
+        const optimisticUpdateId = nanoid();
+
+        store.pushOptimisticUpdate({
+          type: "edit-comment",
+          threadId,
+          commentId,
+          body,
+          editedAt: now,
+          id: optimisticUpdateId,
+        });
+
+        room.editComment({ threadId, commentId, body }).then(
+          (editedComment) => {
+            store.set((state) => ({
+              ...state,
+              threads: upsertComment(state.threads, editedComment),
+              optimisticUpdates: state.optimisticUpdates.filter(
+                (update) => update.id !== optimisticUpdateId
+              ),
+            }));
+          },
+          (err: Error) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (error) =>
+                new EditCommentError(error, {
+                  roomId: room.id,
+                  threadId,
+                  commentId,
+                  body,
+                })
+            )
+        );
+      },
+      [room]
+    );
   }
 
   function useDeleteComment() {
     const room = useRoom();
-    return commentsRoom.useDeleteComment(room);
+    return React.useCallback(
+      ({ threadId, commentId }: DeleteCommentOptions): void => {
+        const now = new Date();
+
+        const optimisticUpdateId = nanoid();
+
+        store.pushOptimisticUpdate({
+          type: "delete-comment",
+          threadId,
+          commentId,
+          deletedAt: now,
+          id: optimisticUpdateId,
+        });
+
+        room.deleteComment({ threadId, commentId }).then(
+          () => {
+            store.set((state) => ({
+              ...state,
+              threads: {
+                ...state.threads,
+                [threadId]: {
+                  ...state.threads[threadId],
+                  comments: state.threads[threadId].comments.map((comment) =>
+                    comment.id === commentId
+                      ? {
+                          ...comment,
+                          deletedAt: now,
+                          body: undefined,
+                        }
+                      : comment
+                  ),
+                },
+              },
+              optimisticUpdates: state.optimisticUpdates.filter(
+                (update) => update.id !== optimisticUpdateId
+              ),
+            }));
+          },
+          (err: Error) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (error) =>
+                new DeleteCommentError(error, {
+                  roomId: room.id,
+                  threadId,
+                  commentId,
+                })
+            )
+        );
+      },
+      [room]
+    );
   }
 
   const { resolveUsers, resolveMentionSuggestions } = options ?? {};
@@ -1038,8 +1666,22 @@ export function createRoomContext<
   // [comments-unread] TODO: Implement
   function useThreadUnreadSince(threadId: string): Date | null {
     // [comments-unread] TODO: Find inbox notification for this thread locally and compute `unreadSince` based on its `readAt` and `notifiedAt` values.
-    console.log(threadId);
-    return null;
+    return useSyncExternalStoreWithSelector(
+      store.subscribe,
+      store.get,
+      store.get,
+      (state) => {
+        const inboxNotification = Object.values(state.inboxNotifications).find(
+          (inboxNotif) => inboxNotif.threadId === threadId
+        );
+
+        if (inboxNotification === undefined) {
+          return null;
+        }
+
+        return inboxNotification?.readAt;
+      }
+    );
   }
 
   // [comments-unread] TODO: Implement
@@ -1213,4 +1855,30 @@ export function createRoomContext<
   };
 
   return bundle;
+}
+
+function getCurrentUserId(
+  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
+): string {
+  const self = room.getSelf();
+  if (self === null || self.id === undefined) {
+    return "anonymous";
+  } else {
+    return self.id;
+  }
+}
+
+function handleCommentsApiError(err: CommentsApiError): Error {
+  const message = `Request failed with status ${err.status}: ${err.message}`;
+
+  // Log details about FORBIDDEN errors
+  if (err.details?.error === "FORBIDDEN") {
+    const detailedMessage = [message, err.details.suggestion, err.details.docs]
+      .filter(Boolean)
+      .join("\n");
+
+    console.error(detailedMessage);
+  }
+
+  return new Error(message);
 }

@@ -15,6 +15,7 @@ import type {
 } from "@liveblocks/client";
 import type {
   BaseMetadata,
+  CommentBody,
   CommentData,
   GetThreadsOptions,
   InboxNotificationData,
@@ -29,15 +30,6 @@ export type UseThreadsOptions<TThreadMetadata extends BaseMetadata> =
   GetThreadsOptions<TThreadMetadata>;
 
 import type { PropsWithChildren } from "react";
-
-import type {
-  CommentReactionOptions,
-  CreateCommentOptions,
-  CreateThreadOptions,
-  DeleteCommentOptions,
-  EditCommentOptions,
-  EditThreadMetadataOptions,
-} from "./comments/CommentsRoom";
 
 export type PromiseOrNot<T> = T | Promise<T>;
 
@@ -87,6 +79,48 @@ export type UserState<T> =
   | UserStateLoading
   | UserStateError
   | UserStateSuccess<T>;
+
+export type PartialNullable<T> = {
+  [P in keyof T]?: T[P] | null | undefined;
+};
+
+export type CreateThreadOptions<TMetadata extends BaseMetadata> = [
+  TMetadata,
+] extends [never]
+  ? {
+      body: CommentBody;
+    }
+  : { body: CommentBody; metadata: TMetadata };
+
+export type EditThreadMetadataOptions<TMetadata extends BaseMetadata> = [
+  TMetadata,
+] extends [never]
+  ? {
+      threadId: string;
+    }
+  : { threadId: string; metadata: Resolve<PartialNullable<TMetadata>> };
+
+export type CreateCommentOptions = {
+  threadId: string;
+  body: CommentBody;
+};
+
+export type EditCommentOptions = {
+  threadId: string;
+  commentId: string;
+  body: CommentBody;
+};
+
+export type DeleteCommentOptions = {
+  threadId: string;
+  commentId: string;
+};
+
+export type CommentReactionOptions = {
+  threadId: string;
+  commentId: string;
+  emoji: string;
+};
 
 export type ThreadsStateLoading = {
   isLoading: true;

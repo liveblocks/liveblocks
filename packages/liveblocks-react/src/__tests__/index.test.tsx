@@ -1,5 +1,4 @@
 import { createClient, shallow } from "@liveblocks/client";
-import type { ThreadData } from "@liveblocks/core";
 import { ClientMsgCode, CrdtType, ServerMsgCode } from "@liveblocks/core";
 import { render } from "@testing-library/react";
 import { rest } from "msw";
@@ -16,7 +15,6 @@ import {
   useOthers,
   useRoom,
   useStorage,
-  useThreads,
   useUndo,
 } from "./_liveblocks.config";
 import MockWebSocket, { websocketSimulator } from "./_MockWebSocket";
@@ -423,45 +421,5 @@ describe("useCanUndo / useCanRedo", () => {
 
     expect(canUndo.result.current).toEqual(false);
     expect(canRedo.result.current).toEqual(true);
-  });
-});
-
-describe("useThreads", () => {
-  test("should return { isLoading: true } as initial state", () => {
-    const { result } = renderHook(() => useThreads());
-
-    expect(result.current).toEqual({ isLoading: true });
-  });
-
-  test("should load threads on mount", async () => {
-    const threads: ThreadData[] = [
-      {
-        id: "th_xxx",
-        metadata: {},
-        roomId: "room",
-        type: "thread",
-        createdAt: new Date("2021-10-06T01:45:56.558Z"),
-        comments: [],
-      },
-    ];
-
-    server.use(
-      rest.post(
-        "https://api.liveblocks.io/v2/c/rooms/room/threads/search",
-        (_, res, ctx) => {
-          return res(
-            ctx.json({
-              data: threads,
-            })
-          );
-        }
-      )
-    );
-
-    const { result } = renderHook(() => useThreads());
-
-    await websocketSimulator();
-
-    expect(result.current).toEqual({ isLoading: false, threads });
   });
 });
