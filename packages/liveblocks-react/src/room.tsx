@@ -967,7 +967,7 @@ export function createRoomContext<
         .map(async (requestCache) => {
           const room = client.getRoom(requestCache.roomId);
 
-          if (room == null) {
+          if (room === null) {
             return;
           }
 
@@ -985,7 +985,7 @@ export function createRoomContext<
     console.log("increment", queryKey);
     const requestCache = requestsCache.get(queryKey);
 
-    if (requestCache == undefined) {
+    if (requestCache === undefined) {
       console.warn(
         `Internal unexpected behavior. Cannot increase subscriber count for query "${queryKey}"`
       );
@@ -1001,7 +1001,7 @@ export function createRoomContext<
     console.log("decrement", queryKey);
     const requestCache = requestsCache.get(queryKey);
 
-    if (requestCache == undefined || requestCache.subscribers <= 0) {
+    if (requestCache === undefined || requestCache.subscribers <= 0) {
       console.warn(
         `Internal unexpected behavior. Cannot decrease subscriber count for query "${queryKey}"`
       );
