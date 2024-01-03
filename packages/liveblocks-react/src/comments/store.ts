@@ -112,8 +112,54 @@ export function createClientStore<TThreadMetadata extends BaseMetadata>() {
     inboxNotifications: {},
   });
 
+  function mergeThreads(
+    existingThreads: Record<string, ThreadData<TThreadMetadata>>,
+    newThreads: ThreadData<TThreadMetadata>[]
+  ) {
+    // TODO: Do not replace existing thread if it has been updated more recently than the incoming thread
+    return {
+      ...existingThreads,
+      ...Object.fromEntries(newThreads.map((thread) => [thread.id, thread])),
+    };
+  }
+
+  function mergeNotifications(
+    existingInboxNotifications: Record<string, PartialInboxNotificationData>,
+    newInboxNotifications: PartialInboxNotificationData[]
+  ) {
+    // TODO: Do not replace existing inboxNotifications if it has been updated more recently than the incoming inbox notifications
+    return {
+      ...existingInboxNotifications,
+      ...Object.fromEntries(newInboxNotifications.map((ibn) => [ibn.id, ibn])),
+    };
+  }
+
   return {
     ...store,
+
+    updateThreadsAndNotifications(
+      threads: ThreadData<TThreadMetadata>[],
+      inboxNotifications: PartialInboxNotificationData[],
+      queryKey?: string
+    ) {
+      store.set((state) => ({
+        ...state,
+        threads: mergeThreads(state.threads, threads),
+        inboxNotifications: mergeNotifications(
+          state.inboxNotifications,
+          inboxNotifications
+        ),
+        threadsQueries:
+          queryKey !== undefined
+            ? {
+                ...state.threadsQueries,
+                [queryKey]: {
+                  isLoading: false,
+                },
+              }
+            : state.threadsQueries,
+      }));
+    },
 
     pushOptimisticUpdate(optimisticUpdate: OptimisticUpdate<TThreadMetadata>) {
       store.set((state) => ({

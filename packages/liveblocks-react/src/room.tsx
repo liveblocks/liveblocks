@@ -33,6 +33,7 @@ import {
   errorIf,
   isLiveNode,
   makeEventSource,
+  makePoller,
   stringify,
 } from "@liveblocks/core";
 import { nanoid } from "nanoid";
@@ -115,6 +116,8 @@ function useSyncExternalStore<Snapshot>(
 }
 
 const STABLE_EMPTY_LIST = Object.freeze([]);
+
+export const POLLING_INTERVAL = 10 * 1000;
 
 // Don't try to inline this. This function is intended to be a stable
 // reference, to avoid a React.useCallback() wrapper.
@@ -949,8 +952,73 @@ export function createRoomContext<
     string,
     {
       promise: Promise<any> | null;
+      subscribers: number;
+      query: GetThreadsOptions<TThreadMetadata>;
+      roomId: string;
     }
   > = new Map();
+
+  const poller = makePoller(refreshThreadsAndNotifications);
+
+  async function refreshThreadsAndNotifications() {
+    await Promise.allSettled(
+      Array.from(requestsCache.values())
+        .filter((requestCache) => requestCache.subscribers > 0)
+        .map(async (requestCache) => {
+          const room = client.getRoom(requestCache.roomId);
+
+          if (room == null) {
+            return;
+          }
+
+          // TODO: Error handling
+          const { threads, inboxNotifications } = await room.getThreads(
+            requestCache.query
+          );
+
+          store.updateThreadsAndNotifications(threads, inboxNotifications);
+        })
+    );
+  }
+
+  function incrementQuerySubscribers(queryKey: string) {
+    console.log("increment", queryKey);
+    const requestCache = requestsCache.get(queryKey);
+
+    if (requestCache == undefined) {
+      console.warn(
+        `Internal unexpected behavior. Cannot increase subscriber count for query "${queryKey}"`
+      );
+      return;
+    }
+
+    requestCache.subscribers++;
+
+    poller.start(POLLING_INTERVAL);
+  }
+
+  function decrementQuerySubscribers(queryKey: string) {
+    console.log("decrement", queryKey);
+    const requestCache = requestsCache.get(queryKey);
+
+    if (requestCache == undefined || requestCache.subscribers <= 0) {
+      console.warn(
+        `Internal unexpected behavior. Cannot decrease subscriber count for query "${queryKey}"`
+      );
+      return;
+    }
+
+    requestCache.subscribers--;
+
+    let totalSubscribers = 0;
+    for (const requestCache of requestsCache.values()) {
+      totalSubscribers += requestCache.subscribers;
+    }
+
+    if (totalSubscribers <= 0) {
+      poller.stop();
+    }
+  }
 
   async function getThreadsAndInboxNotifications(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
@@ -967,6 +1035,9 @@ export function createRoomContext<
 
     requestsCache.set(queryKey, {
       promise: initialPromise,
+      subscribers: 0,
+      query: options,
+      roomId: room.id,
     });
 
     store.set((state) => ({
@@ -982,25 +1053,9 @@ export function createRoomContext<
     // TODO: Error handling
     const { threads, inboxNotifications } = await initialPromise;
 
-    store.set((state) => ({
-      ...state,
-      threads: {
-        ...state.threads,
-        ...Object.fromEntries(threads.map((thread) => [thread.id, thread])),
-      },
-      threadsQueries: {
-        ...state.threadsQueries,
-        [queryKey]: {
-          isLoading: false,
-        },
-      },
-      inboxNotifications: {
-        ...state.inboxNotifications,
-        ...Object.fromEntries(
-          inboxNotifications.map((inboxNotif) => [inboxNotif.id, inboxNotif])
-        ),
-      },
-    }));
+    store.updateThreadsAndNotifications(threads, inboxNotifications, queryKey);
+
+    poller.start(POLLING_INTERVAL);
   }
 
   function useThreads(
@@ -1011,6 +1066,9 @@ export function createRoomContext<
 
     React.useEffect(() => {
       void getThreadsAndInboxNotifications(room, queryKey, options);
+      incrementQuerySubscribers(queryKey);
+
+      return () => decrementQuerySubscribers(queryKey);
     }, [room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
     return useSyncExternalStoreWithSelector(
@@ -1047,6 +1105,16 @@ export function createRoomContext<
     ) {
       throw getThreadsAndInboxNotifications(room, queryKey, options);
     }
+
+    React.useEffect(() => {
+      console.log("Effect");
+      incrementQuerySubscribers(queryKey);
+
+      return () => {
+        console.log("Cleanup");
+        decrementQuerySubscribers(queryKey);
+      };
+    }, [room, queryKey]);
 
     return useSyncExternalStoreWithSelector(
       store.subscribe,
