@@ -14,8 +14,15 @@ In Liveblocks Comments, everything revolves around _threads_. In each
 number of threads. Each individual thread contains a list of _comments_ written
 by your users.
 
-[image outlining a multiplayer room, with outlined threads on a whiteboard and
-outlined comments in a thread]
+<Figure>
+  <Image
+    src="/assets/comments/comment-thread-room-relation.png"
+    srcDark="/assets/comments/comment-thread-room-relation-dark.png"
+    alt="Diagram showing a comment, inside a thread, inside a room"
+    width={800}
+    height={500}
+  />
+</Figure>
 
 Threads can be retrieved by
 [React hook](/docs/products/comments/hooks#threads-hook) or
@@ -48,7 +55,15 @@ Each comment is created by a user, referenced by their
 [user ID](/docs/products/comments/users-and-mentions), and is part of a thread.
 The first comment in a thread is displayed at the top.
 
-[Image of thread with thread.comments[0] comment at top]
+<Figure>
+  <Image
+    src="/assets/comments/first-comment-in-thread.png"
+    srcDark="/assets/comments/first-comment-in-thread-dark.png"
+    alt="thread.comments[0] is the first comment in a thread"
+    width={800}
+    height={500}
+  />
+</Figure>
 
 Here’s an example of a single comment inside a thread object.
 
@@ -98,6 +113,14 @@ comment in whichever way you see fit, for example you may like to create a
 “message deleted” placeholder for the comment. Alternatively, the comment can be
 hidden completely.
 
-[Image of a thread with one comment saying "[Comment deleted]"]
+<Figure>
+  <Image
+    src="/assets/comments/comment-deleted.png"
+    srcDark="/assets/comments/comment-deleted-dark.png"
+    alt="Image of a thread with one comment saying [Comment deleted]"
+    width={800}
+    height={500}
+  />
+</Figure>
 
 A thread is only deleted after all its comments have been deleted.
