@@ -144,6 +144,8 @@
   outline: none;
   cursor: pointer;
   user-select: none;
+  transition-timing-function: var(--lb-transition-easing);
+  transition-duration: var(--lb-transition-duration);
   transition-property: background, color, opacity;
   -webkit-tap-highlight-color: transparent;
 
