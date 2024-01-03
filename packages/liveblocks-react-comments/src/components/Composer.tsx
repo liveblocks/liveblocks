@@ -139,11 +139,6 @@ export type ComposerProps<
     /**
      * @internal
      */
-    root?: boolean;
-
-    /**
-     * @internal
-     */
     actions?: ReactNode;
 
     /**
@@ -286,7 +281,6 @@ const ComposerWithContext = forwardRef<
       actions,
       overrides,
       showAttribution,
-      root = true,
       onFocus,
       onBlur,
       className,
@@ -361,8 +355,7 @@ const ComposerWithContext = forwardRef<
     return (
       <form
         className={classNames(
-          root && "lb-root",
-          "lb-composer lb-composer-form",
+          "lb-root lb-composer lb-composer-form",
           className
         )}
         dir={$.dir}

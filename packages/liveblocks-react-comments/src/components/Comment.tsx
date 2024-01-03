@@ -117,11 +117,6 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   /**
    * @internal
    */
-  root?: boolean;
-
-  /**
-   * @internal
-   */
   markThreadAsReadWhenVisible?: string;
 
   /**
@@ -296,7 +291,6 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       onCommentEdit,
       onCommentDelete,
       overrides,
-      root = true,
       className,
       additionalActions,
       additionalActionsClassName,
@@ -426,8 +420,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       <TooltipProvider>
         <div
           className={classNames(
-            root && "lb-root",
-            "lb-comment",
+            "lb-root lb-comment",
             indentContent && "lb-comment:indent-content",
             showActions === "hover" && "lb-comment:show-actions-hover",
             (isMoreActionOpen || isReactionActionOpen) &&
@@ -435,6 +428,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
             className
           )}
           data-deleted={!comment.body ? "" : undefined}
+          data-editing={isEditing ? "" : undefined}
           dir={$.dir}
           {...props}
           ref={mergedRefs}
@@ -540,7 +534,6 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
             {isEditing ? (
               <Composer
                 className="lb-comment-composer"
-                root={false}
                 onComposerSubmit={handleEditSubmit}
                 defaultValue={comment.body}
                 autoFocus

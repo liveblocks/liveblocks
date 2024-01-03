@@ -305,7 +305,6 @@ export const Thread = forwardRef(
                   key={comment.id}
                   className="lb-thread-comment"
                   // data-unread={isUnread ? "" : undefined}
-                  root={false}
                   comment={comment}
                   indentContent={indentCommentContent}
                   showDeleted={showDeletedComments}
@@ -374,7 +373,6 @@ export const Thread = forwardRef(
           {showComposer && (
             <Composer
               className="lb-thread-composer"
-              root={false}
               threadId={thread.id}
               defaultCollapsed={showComposer === "collapsed" ? true : undefined}
               overrides={{

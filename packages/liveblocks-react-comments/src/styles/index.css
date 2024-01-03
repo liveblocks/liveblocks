@@ -32,66 +32,61 @@
   --lb-background-subtle: color-mix(
     in srgb,
     var(--lb-foreground),
-    var(--lb-background) calc(100% - var(--lb-foreground-contrast))
+    var(--lb-background) calc(100% - var(--lb-foreground-contrast) / 2)
   );
   --lb-background-accent-subtle: color-mix(
     in srgb,
     var(--lb-accent),
-    var(--lb-background) calc(100% - var(--lb-accent-contrast))
+    var(--lb-background) calc(100% - var(--lb-accent-contrast) / 2)
   );
   --lb-accent-subtle: color-mix-scale(
-    var(--lb-background-compound),
+    var(--lb-compound-background),
     var(--lb-accent),
     var(--lb-accent-contrast),
     100
   );
   --lb-accent-moderate: color-mix-scale(
-    var(--lb-background-compound),
+    var(--lb-compound-background),
     var(--lb-accent),
     var(--lb-accent-contrast),
     400
   );
   --lb-accent-tertiary: color-mix-scale(
-    var(--lb-background-compound),
+    var(--lb-compound-background),
     var(--lb-accent),
     var(--lb-accent-contrast),
     600
   );
   --lb-accent-secondary: color-mix-scale(
-    var(--lb-background-compound),
+    var(--lb-compound-background),
     var(--lb-accent),
     var(--lb-accent-contrast),
     800
   );
   --lb-foreground-subtle: color-mix-scale(
-    var(--lb-background-compound),
+    var(--lb-compound-background),
     var(--lb-foreground),
     var(--lb-foreground-contrast),
     100
   );
   --lb-foreground-moderate: color-mix-scale(
-    var(--lb-background-compound),
+    var(--lb-compound-background),
     var(--lb-foreground),
     var(--lb-foreground-contrast),
     400
   );
   --lb-foreground-tertiary: color-mix-scale(
-    var(--lb-background-compound),
+    var(--lb-compound-background),
     var(--lb-foreground),
     var(--lb-foreground-contrast),
     600
   );
   --lb-foreground-secondary: color-mix-scale(
-    var(--lb-background-compound),
+    var(--lb-compound-background),
     var(--lb-foreground),
     var(--lb-foreground-contrast),
     800
   );
-
-  /** 
-   * Internal
-   */
-  --lb-background-compound: var(--lb-background);
 
   overflow-wrap: break-word;
   accent-color: var(--lb-accent);
@@ -104,6 +99,12 @@
   ::before,
   ::after {
     box-sizing: border-box;
+    transition: none var(--lb-transition-duration) var(--lb-transition-easing);
+  }
+
+  /* Define default compound variables only on first .lb-root instance */
+  &:where(:not(& &)) {
+    --lb-compound-background: var(--lb-background);
   }
 }
 
@@ -112,7 +113,7 @@
  *************************************/
 
 .lb-icon {
-  --lb-icon-background: var(--lb-background-compound);
+  --lb-icon-background: var(--lb-compound-background);
 
   inline-size: var(--lb-icon-size);
   block-size: var(--lb-icon-size);
@@ -128,7 +129,7 @@
  *************************************/
 
 .lb-button {
-  --lb-button-background: var(--lb-background-compound);
+  --lb-button-background: var(--lb-compound-background);
 
   all: unset;
   position: relative;
@@ -143,8 +144,6 @@
   outline: none;
   cursor: pointer;
   user-select: none;
-  transition-timing-function: var(--lb-transition-easing);
-  transition-duration: var(--lb-transition-duration);
   transition-property: background, color, opacity;
   -webkit-tap-highlight-color: transparent;
 
@@ -154,8 +153,6 @@
     inset: 0;
     border-radius: inherit;
     pointer-events: none;
-    transition-timing-function: var(--lb-transition-easing);
-    transition-duration: var(--lb-transition-duration);
     transition-property: box-shadow;
   }
 
@@ -164,7 +161,7 @@
 
     &::after {
       box-shadow:
-        var(--lb-background-compound) 0 0 0 2px,
+        var(--lb-compound-background) 0 0 0 2px,
         var(--lb-accent) 0 0 0 4px;
     }
   }
@@ -233,8 +230,6 @@
   margin-inline-start: calc(-0.125 * var(--lb-spacing));
   margin-inline-end: calc(0.375 * var(--lb-spacing));
   color: var(--lb-foreground-moderate);
-  transition-timing-function: var(--lb-transition-easing);
-  transition-duration: var(--lb-transition-duration);
   transition-property: color;
 }
 
@@ -393,7 +388,7 @@
 
 .lb-emoji-picker-category-header {
   padding: var(--lb-emoji-picker-padding) var(--lb-emoji-picker-offset-padding);
-  background: var(--lb-background-compound);
+  background: var(--lb-compound-background);
 }
 
 .lb-emoji-picker-category-header-title {
@@ -448,7 +443,7 @@
   );
   padding-inline: $lb-tooltip-horizontal-padding;
   border-radius: var(--lb-radius);
-  background: var(--lb-background-compound);
+  background: var(--lb-compound-background);
   color: var(--lb-foreground);
   box-shadow: var(--lb-tooltip-shadow);
   font-size: 0.75rem;
@@ -625,8 +620,6 @@
   color: var(--lb-foreground);
   outline: none;
   font-weight: 500;
-  transition-timing-function: var(--lb-transition-easing);
-  transition-duration: var(--lb-transition-duration);
   transition-property: color, text-decoration-color;
   text-decoration-line: underline;
   text-decoration-color: var(--lb-foreground-moderate);
@@ -650,8 +643,9 @@
  *************************************/
 
 .lb-composer {
-  background: var(--lb-background-compound);
+  background: var(--lb-compound-background);
   color: var(--lb-foreground);
+  transition-property: background;
 }
 
 .lb-composer-form {
@@ -733,8 +727,6 @@
 .lb-composer-attribution {
   color: var(--lb-foreground-moderate);
   outline: none;
-  transition-timing-function: var(--lb-transition-easing);
-  transition-duration: var(--lb-transition-duration);
   transition-property: color;
 
   &:where(:hover, :focus-visible) {
@@ -761,7 +753,7 @@
 
   position: relative;
   padding: var(--lb-spacing);
-  background: var(--lb-background-compound);
+  background: var(--lb-compound-background);
   color: var(--lb-foreground);
   font-weight: 400;
 
@@ -830,13 +822,12 @@
   display: flex;
   gap: calc(0.125 * var(--lb-spacing));
   margin-inline-start: auto;
-  transition-timing-function: var(--lb-transition-easing);
-  transition-duration: var(--lb-transition-duration);
   transition-property: opacity;
 }
 
 .lb-comment-composer {
   margin: calc(-1 * var(--lb-spacing));
+  background: unset;
 }
 
 .lb-comment-body {
@@ -925,8 +916,9 @@
  *************************************/
 
 .lb-thread {
-  background: var(--lb-background-compound);
+  background: var(--lb-compound-background);
   color: var(--lb-foreground);
+  transition-property: background;
 
   @media (hover: hover) {
     &:where(.lb-thread\:show-actions-hover :is(:hover, :focus-within)) {
@@ -947,6 +939,13 @@
 .lb-thread-comment {
   z-index: 0;
   padding-block: calc(0.6 * var(--lb-spacing));
+  transition-property: background;
+
+  &:where([data-editing]) {
+    --lb-compound-background: var(--lb-background-subtle);
+
+    background: var(--lb-compound-background);
+  }
 
   &:where(.lb-comment\:indent-content) {
     min-block-size: calc(var(--lb-comment-avatar-size) + var(--lb-spacing));
@@ -989,8 +988,6 @@
     inline-size: 100%;
     block-size: 0;
     border-block-start: 1px solid var(--lb-foreground-subtle);
-    transition-timing-function: var(--lb-transition-easing);
-    transition-duration: var(--lb-transition-duration);
     transition-property: border;
   }
 }
@@ -1007,7 +1004,7 @@
   gap: calc(0.325 * var(--lb-spacing));
   align-items: center;
   padding: calc(0.25 * var(--lb-spacing)) var(--lb-spacing);
-  background: var(--lb-background-compound);
+  background: var(--lb-compound-background);
   color: var(--lb-accent);
   font-weight: 600;
   font-size: 0.675em;
@@ -1031,6 +1028,7 @@
     block-size: 100%;
     border-block-start: 1px solid var(--lb-foreground-subtle);
     pointer-events: none;
+    transition-property: border;
   }
 }
 
@@ -1042,7 +1040,7 @@
   position: relative;
   overflow: hidden;
   border-radius: var(--lb-radius);
-  background: var(--lb-background-compound);
+  background: var(--lb-compound-background);
   box-shadow: var(--lb-elevation-shadow);
 
   &::after {
@@ -1083,8 +1081,6 @@
   outline: none;
   cursor: pointer;
   user-select: none;
-  transition-timing-function: var(--lb-transition-easing);
-  transition-duration: var(--lb-transition-duration);
   transition-property: background, color, opacity;
 }
 
