@@ -539,7 +539,7 @@ describe("client", () => {
     ).resolves.not.toThrow();
   });
 
-  test("should return the specified inbox notification when getUserInboxNotification receives a successful response", async () => {
+  test("should return the specified inbox notification when getInboxNotification receives a successful response", async () => {
     const userId = "user1";
     const inboxNotificationId = "notification1";
 
@@ -563,7 +563,7 @@ describe("client", () => {
     const client = new Liveblocks({ secret: "sk_xxx" });
 
     await expect(
-      client.getUserInboxNotification({
+      client.getInboxNotification({
         userId,
         inboxNotificationId,
       })
@@ -574,7 +574,7 @@ describe("client", () => {
     });
   });
 
-  test("should throw a LiveblocksError when getUserInboxNotification receives an error response", async () => {
+  test("should throw a LiveblocksError when getInboxNotification receives an error response", async () => {
     const userId = "user1";
     const inboxNotificationId = "notification1";
 
@@ -597,7 +597,7 @@ describe("client", () => {
     // This should throw a LiveblocksError
     try {
       // Attempt to get, which should fail and throw an error.
-      await client.getUserInboxNotification({
+      await client.getInboxNotification({
         userId,
         inboxNotificationId,
       });

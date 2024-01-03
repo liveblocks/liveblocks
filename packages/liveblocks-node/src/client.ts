@@ -1222,7 +1222,7 @@ export class Liveblocks {
     }
   }
 
-  public async getUserInboxNotification(params: {
+  public async getInboxNotification(params: {
     userId: string;
     inboxNotificationId: string;
   }): Promise<InboxNotification> {
