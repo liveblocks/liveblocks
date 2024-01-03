@@ -982,7 +982,6 @@ export function createRoomContext<
   }
 
   function incrementQuerySubscribers(queryKey: string) {
-    console.log("increment", queryKey);
     const requestCache = requestsCache.get(queryKey);
 
     if (requestCache === undefined) {
@@ -998,7 +997,6 @@ export function createRoomContext<
   }
 
   function decrementQuerySubscribers(queryKey: string) {
-    console.log("decrement", queryKey);
     const requestCache = requestsCache.get(queryKey);
 
     if (requestCache === undefined || requestCache.subscribers <= 0) {
@@ -1107,11 +1105,9 @@ export function createRoomContext<
     }
 
     React.useEffect(() => {
-      console.log("Effect");
       incrementQuerySubscribers(queryKey);
 
       return () => {
-        console.log("Cleanup");
         decrementQuerySubscribers(queryKey);
       };
     }, [room, queryKey]);
