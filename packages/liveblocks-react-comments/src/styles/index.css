@@ -436,6 +436,7 @@
   --lb-foreground: #fff;
   --lb-foreground-contrast: 10%;
 
+  position: relative;
   display: flex;
   align-items: center;
   min-block-size: calc(
@@ -449,6 +450,16 @@
   font-size: 0.75rem;
   line-height: 1;
   pointer-events: none;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    box-shadow: var(--lb-inset-shadow);
+    pointer-events: none;
+  }
 }
 
 .lb-tooltip\:multiline {
