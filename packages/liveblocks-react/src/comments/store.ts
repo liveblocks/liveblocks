@@ -114,16 +114,11 @@ export function createClientStore<TThreadMetadata extends BaseMetadata>() {
 
   function mergeThreads(
     existingThreads: Record<string, ThreadData<TThreadMetadata>>,
-    newThreads: Record<string, ThreadData<TThreadMetadata> | undefined>
+    newThreads: Record<string, ThreadData<TThreadMetadata>>
   ): Record<string, ThreadData<TThreadMetadata>> {
     const updatedThreads = { ...existingThreads };
 
     Object.entries(newThreads).forEach(([id, thread]) => {
-      if (thread === undefined) {
-        delete updatedThreads[id];
-        return;
-      }
-
       const existingThread = updatedThreads[id];
 
       // If the thread already exists, we need to compare the two threads to determine which one is newer.
@@ -140,18 +135,13 @@ export function createClientStore<TThreadMetadata extends BaseMetadata>() {
 
   function mergeNotifications(
     existingInboxNotifications: Record<string, PartialInboxNotificationData>,
-    newInboxNotifications: Record<
-      string,
-      PartialInboxNotificationData | undefined
-    >
+    newInboxNotifications: Record<string, PartialInboxNotificationData>
   ) {
     // TODO: Do not replace existing inboxNotifications if it has been updated more recently than the incoming inbox notifications
     const inboxNotifications = Object.values({
       ...existingInboxNotifications,
       ...newInboxNotifications,
-    }).filter(
-      (notification) => notification !== undefined
-    ) as PartialInboxNotificationData[];
+    });
 
     return Object.fromEntries(
       inboxNotifications.map((notification) => [notification.id, notification])
@@ -175,12 +165,34 @@ export function createClientStore<TThreadMetadata extends BaseMetadata>() {
       });
     },
 
+    updateThreadAndNotification(
+      thread: ThreadData<TThreadMetadata>,
+      inboxNotification?: PartialInboxNotificationData
+    ) {
+      store.set((state) => {
+        const existingThread = state.threads[thread.id];
+
+        return {
+          ...state,
+          threads:
+            existingThread === undefined ||
+            compareThreads(thread, existingThread) === 1
+              ? { ...state.threads, [thread.id]: thread }
+              : state.threads,
+          inboxNotifications:
+            inboxNotification === undefined // TODO: Compare notification dates to make sure it's not stale
+              ? state.inboxNotifications
+              : {
+                  ...state.inboxNotifications,
+                  [inboxNotification.id]: inboxNotification,
+                },
+        };
+      });
+    },
+
     updateThreadsAndNotifications(
-      threads: Record<string, ThreadData<TThreadMetadata> | undefined>,
-      inboxNotifications: Record<
-        string,
-        PartialInboxNotificationData | undefined
-      >,
+      threads: Record<string, ThreadData<TThreadMetadata>>,
+      inboxNotifications: Record<string, PartialInboxNotificationData>,
       queryKey?: string
     ) {
       store.set((state) => ({

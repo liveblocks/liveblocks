@@ -389,28 +389,10 @@ export function createRoomContext<
             // If the thread doesn't exist in the local cache, we do not update it with the server data as an optimistic update could have deleted the thread locally.
             if (!existingThread) break;
 
-            store.updateThreadsAndNotifications(
-              {
-                [thread.id]: thread,
-              },
-              {
-                ...(inboxNotification && {
-                  [inboxNotification.id]: inboxNotification,
-                }),
-              }
-            );
+            store.updateThreadAndNotification(thread, inboxNotification);
             break;
           case ServerMsgCode.COMMENT_CREATED:
-            store.updateThreadsAndNotifications(
-              {
-                [thread.id]: thread,
-              },
-              {
-                ...(inboxNotification && {
-                  [inboxNotification.id]: inboxNotification,
-                }),
-              }
-            );
+            store.updateThreadAndNotification(thread, inboxNotification);
             break;
           default:
             break;
