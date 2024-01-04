@@ -470,6 +470,30 @@ function Component({ thread }: { thread: ThreadData }) {
 
 {/* TODO: Document classes and data attributes */}
 
+### CommentsConfig
+
+Set configuration options for all Comments components, such as
+[overrides](#overrides).
+
+```tsx
+<CommentsConfig overrides={{ locale: "fr", UNKNOWN_USER: "Anonyme" }} />
+```
+
+#### Props [#commentsconfig-props]
+
+<PropertiesList>
+  <PropertiesListItem name="overrides" type="Partial<Overrides>">
+    Override the components’ strings.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="portalContainer"
+    type="HTMLElement"
+    defaultValue="document.body"
+  >
+    The container to render the portal into.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### Styling and customization
 
 #### Default styles

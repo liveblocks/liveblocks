@@ -7,7 +7,14 @@ import type { Overrides } from "./overrides";
 import { OverridesProvider } from "./overrides";
 
 type CommentsConfigProps = PropsWithChildren<{
+  /**
+   * Override the components' strings.
+   */
   overrides?: Partial<Overrides>;
+
+  /**
+   * The container to render the portal into.
+   */
   portalContainer?: HTMLElement;
 }>;
 
