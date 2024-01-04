@@ -142,6 +142,7 @@ export { CrdtType } from "./protocol/SerializedCrdt";
 export { isChildCrdt, isRootCrdt } from "./protocol/SerializedCrdt";
 export type {
   BroadcastedEventServerMsg,
+  CommentsEventServerMsg,
   InitialDocumentStateServerMsg,
   RejectedStorageOpServerMsg,
   RoomStateServerMsg,
@@ -151,7 +152,6 @@ export type {
   UserJoinServerMsg,
   UserLeftServerMsg,
   YDocUpdateServerMsg,
-  CommentsEventServerMsg,
 } from "./protocol/ServerMsg";
 export { ServerMsgCode } from "./protocol/ServerMsg";
 export type {
