@@ -1142,14 +1142,8 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     }
   }
 
-  async function getThread({
-    roomId,
-    threadId,
-  }: {
-    roomId: string;
-    threadId: string;
-  }) {
-    const response = await fetchCommentsApi(`/threads/${roomId}/${threadId}`);
+  async function getThread({ threadId }: { threadId: string }) {
+    const response = await fetchCommentsApi(`/threads/${threadId}`);
 
     if (response.ok) {
       const json = await (response.json() as Promise<
@@ -1157,7 +1151,6 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
           inboxNotification?: PartialInboxNotificationDataPlain;
         }
       >);
-
       const inboxNotification = json.inboxNotification
         ? convertToPartialInboxNotificationData(json.inboxNotification)
         : undefined;
@@ -1169,7 +1162,7 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     } else if (response.status === 404) {
       return;
     } else {
-      throw new Error("There was an error while getting threads.");
+      throw new Error(`There was an error while getting thread ${threadId}.`);
     }
   }
 

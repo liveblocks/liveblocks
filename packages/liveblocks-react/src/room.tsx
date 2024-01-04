@@ -19,6 +19,7 @@ import type {
   BaseMetadata,
   CommentData,
   CommentReaction,
+  CommentsEventServerMsg,
   EnterOptions,
   GetThreadsOptions,
   RoomEventMessage,
@@ -28,6 +29,7 @@ import type {
 } from "@liveblocks/core";
 import {
   CommentsApiError,
+  ServerMsgCode,
   createAsyncCache,
   deprecateIf,
   errorIf,
@@ -364,6 +366,60 @@ export function createRoomContext<
         autoConnect: false, // Deliberately using false here on the first render, see below
       })
     );
+
+    React.useEffect(() => {
+      function handleThreadDelete(threadId: string) {
+        const notifications = Object.values(
+          store.get().inboxNotifications
+        ).filter((notification) => notification.threadId === threadId);
+        store.updateThreadsAndNotifications(
+          {
+            [threadId]: undefined,
+          },
+          Object.fromEntries(notifications.map((n) => [n.id, undefined]))
+        );
+      }
+
+      async function handleCommentEvent(message: CommentsEventServerMsg) {
+        // TODO: Error handling
+        const info = await room.getThread({ threadId: message.threadId });
+
+        // If no thread info was returned (i.e., 404), we remove the thread and relevant inbox notifications from local cache.
+        if (!info) {
+          handleThreadDelete(message.threadId);
+          return;
+        }
+
+        switch (message.type) {
+          case ServerMsgCode.COMMENT_EDITED:
+          case ServerMsgCode.THREAD_METADATA_UPDATED:
+          case ServerMsgCode.COMMENT_REACTION_ADDED:
+          case ServerMsgCode.COMMENT_REACTION_REMOVED:
+            // If the thread doesn't exist in the local cache, we do not update it with the server data as an optimistic update could have deleted the thread locally.
+            const existingThread = store.get().threads[message.threadId];
+            if (!existingThread) break;
+          case ServerMsgCode.COMMENT_CREATED:
+            const { thread, inboxNotification } = info;
+            store.updateThreadsAndNotifications(
+              {
+                [thread.id]: thread,
+              },
+              {
+                ...(inboxNotification && {
+                  [inboxNotification.id]: inboxNotification,
+                }),
+              }
+            );
+          default:
+            break;
+        }
+      }
+
+      const unsub = room.events.comments.subscribe(handleCommentEvent);
+      return () => {
+        unsub();
+      };
+    }, [room]);
 
     React.useEffect(() => {
       const pair = stableEnterRoom(roomId, frozenProps);
@@ -976,7 +1032,15 @@ export function createRoomContext<
             requestCache.query
           );
 
-          store.updateThreadsAndNotifications(threads, inboxNotifications);
+          store.updateThreadsAndNotifications(
+            Object.fromEntries(threads.map((thread) => [thread.id, thread])),
+            Object.fromEntries(
+              inboxNotifications.map((notification) => [
+                notification.id,
+                notification,
+              ])
+            )
+          );
         })
     );
   }
@@ -1051,7 +1115,16 @@ export function createRoomContext<
     // TODO: Error handling
     const { threads, inboxNotifications } = await initialPromise;
 
-    store.updateThreadsAndNotifications(threads, inboxNotifications, queryKey);
+    store.updateThreadsAndNotifications(
+      Object.fromEntries(threads.map((thread) => [thread.id, thread])),
+      Object.fromEntries(
+        inboxNotifications.map((notification) => [
+          notification.id,
+          notification,
+        ])
+      ),
+      queryKey
+    );
 
     poller.start(POLLING_INTERVAL);
   }

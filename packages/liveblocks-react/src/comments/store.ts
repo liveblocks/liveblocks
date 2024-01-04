@@ -114,32 +114,48 @@ export function createClientStore<TThreadMetadata extends BaseMetadata>() {
 
   function mergeThreads(
     existingThreads: Record<string, ThreadData<TThreadMetadata>>,
-    newThreads: ThreadData<TThreadMetadata>[]
-  ) {
+    newThreads: Record<string, ThreadData<TThreadMetadata> | undefined>
+  ): Record<string, ThreadData<TThreadMetadata>> {
     // TODO: Do not replace existing thread if it has been updated more recently than the incoming thread
-    return {
+    const threads = Object.values({
       ...existingThreads,
-      ...Object.fromEntries(newThreads.map((thread) => [thread.id, thread])),
-    };
+      ...newThreads,
+    }).filter(
+      (thread) => thread !== undefined
+    ) as ThreadData<TThreadMetadata>[];
+
+    return Object.fromEntries(threads.map((thread) => [thread.id, thread]));
   }
 
   function mergeNotifications(
     existingInboxNotifications: Record<string, PartialInboxNotificationData>,
-    newInboxNotifications: PartialInboxNotificationData[]
+    newInboxNotifications: Record<
+      string,
+      PartialInboxNotificationData | undefined
+    >
   ) {
     // TODO: Do not replace existing inboxNotifications if it has been updated more recently than the incoming inbox notifications
-    return {
+    const inboxNotifications = Object.values({
       ...existingInboxNotifications,
-      ...Object.fromEntries(newInboxNotifications.map((ibn) => [ibn.id, ibn])),
-    };
+      ...newInboxNotifications,
+    }).filter(
+      (notification) => notification !== undefined
+    ) as PartialInboxNotificationData[];
+
+    return Object.fromEntries(
+      inboxNotifications.map((notification) => [notification.id, notification])
+    );
   }
 
   return {
     ...store,
 
     updateThreadsAndNotifications(
-      threads: ThreadData<TThreadMetadata>[],
-      inboxNotifications: PartialInboxNotificationData[],
+      threads: Record<string, ThreadData<TThreadMetadata> | undefined>,
+      inboxNotifications: Record<
+        string,
+        PartialInboxNotificationData | undefined
+      >,
       queryKey?: string
     ) {
       store.set((state) => ({
