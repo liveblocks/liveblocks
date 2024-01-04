@@ -4,6 +4,7 @@ import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import type { ReactNode } from "react";
 import React, { forwardRef } from "react";
 
+import { useCommentsConfig } from "../../config";
 import {
   FLOATING_ELEMENT_COLLISION_PADDING,
   FLOATING_ELEMENT_SIDE_OFFSET,
@@ -31,6 +32,7 @@ export function Dropdown({
   ...props
 }: DropdownProps) {
   const $ = useOverrides();
+  const { portalContainer } = useCommentsConfig();
 
   return (
     <DropdownMenuPrimitive.Root
@@ -40,7 +42,7 @@ export function Dropdown({
       dir={$.dir}
     >
       {children}
-      <DropdownMenuPrimitive.Portal>
+      <DropdownMenuPrimitive.Portal container={portalContainer}>
         <DropdownMenuPrimitive.Content
           className={classNames(
             "lb-root lb-portal lb-elevation lb-dropdown",

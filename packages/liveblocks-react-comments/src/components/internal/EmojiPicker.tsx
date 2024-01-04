@@ -2,6 +2,7 @@ import * as PopoverPrimitive from "@radix-ui/react-popover";
 import type { ComponentPropsWithoutRef } from "react";
 import React, { forwardRef, useCallback, useMemo, useState } from "react";
 
+import { useCommentsConfig } from "../../config";
 import {
   FLOATING_ELEMENT_COLLISION_PADDING,
   FLOATING_ELEMENT_SIDE_OFFSET,
@@ -143,6 +144,7 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(
     forwardedRef
   ) => {
     const [isOpen, setOpen] = useState(false);
+    const { portalContainer } = useCommentsConfig();
     const $ = useOverrides();
 
     const handleOpenChange = useCallback(
@@ -164,7 +166,7 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(
     return (
       <PopoverPrimitive.Root open={isOpen} onOpenChange={handleOpenChange}>
         {children}
-        <PopoverPrimitive.Portal>
+        <PopoverPrimitive.Portal container={portalContainer}>
           <PopoverPrimitive.Content
             side="top"
             align="center"

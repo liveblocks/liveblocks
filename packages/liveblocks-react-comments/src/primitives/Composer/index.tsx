@@ -58,6 +58,7 @@ import {
   withReact,
 } from "slate-react";
 
+import { useCommentsConfig } from "../../config";
 import { FLOATING_ELEMENT_COLLISION_PADDING } from "../../constants";
 import { withAutoFormatting } from "../../slate/plugins/auto-formatting";
 import { withAutoLinks } from "../../slate/plugins/auto-links";
@@ -198,6 +199,7 @@ function ComposerEditorMentionSuggestionsWrapper({
   const [content, setContent] = useState<HTMLDivElement | null>(null);
   const [contentZIndex, setContentZIndex] = useState<string>();
   const contentRef = useCallback(setContent, [setContent]);
+  const { portalContainer } = useCommentsConfig();
   const floatingOptions: UseFloatingOptions = useMemo(() => {
     const detectOverflowOptions: DetectOverflowOptions = {
       padding: FLOATING_ELEMENT_COLLISION_PADDING,
@@ -279,6 +281,7 @@ function ComposerEditorMentionSuggestionsWrapper({
         >
           <Portal
             ref={setFloating}
+            container={portalContainer}
             style={{
               position: strategy,
               top: 0,
