@@ -286,8 +286,10 @@ describe("useThreads", () => {
 
     unmount();
   });
+});
 
-  test("should refresh thread after getting a COMMENT_CREATED event", async () => {
+describe("WebSocket events", () => {
+  test("COMMENT_CREATED event should refresh thread", async () => {
     const newThread = dummyThreadDataPlain();
 
     server.use(
@@ -344,7 +346,7 @@ describe("useThreads", () => {
     unmount();
   });
 
-  test("should delete thread if getThread return 404 after getting a COMMENT_DELETED event", async () => {
+  test("COMMENT_DELETED event should delete thread if getThread return 404", async () => {
     const newThread = dummyThreadDataPlain();
 
     server.use(
