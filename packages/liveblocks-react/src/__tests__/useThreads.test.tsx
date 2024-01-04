@@ -5,6 +5,7 @@ import {
   ServerMsgCode,
 } from "@liveblocks/core";
 import { renderHook, waitFor } from "@testing-library/react";
+import { addSeconds } from "date-fns";
 import { setupServer } from "msw/node";
 import React, { Suspense } from "react";
 
@@ -12,7 +13,6 @@ import { createRoomContext } from "../room";
 import { dummyThreadDataPlain } from "./_dummies";
 import MockWebSocket, { websocketSimulator } from "./_MockWebSocket";
 import { mockGetThread, mockGetThreads } from "./_restMocks";
-import { addSeconds } from "date-fns";
 
 const server = setupServer();
 

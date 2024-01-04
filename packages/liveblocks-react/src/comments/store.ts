@@ -227,7 +227,7 @@ function deleteKeyImmutable<TKey extends string | number | symbol, TValue>(
   record: Record<TKey, TValue>,
   key: TKey
 ) {
-  if (record.hasOwnProperty(key)) {
+  if (Object.prototype.hasOwnProperty.call(record, key)) {
     const { [key]: _toDelete, ...rest } = record;
     return rest;
   }

@@ -399,10 +399,9 @@ export function createRoomContext<
         }
       }
 
-      const unsub = room.events.comments.subscribe(handleCommentEvent);
-      return () => {
-        unsub();
-      };
+      return room.events.comments.subscribe(
+        (message) => void handleCommentEvent(message)
+      );
     }, [room]);
 
     React.useEffect(() => {
