@@ -151,6 +151,7 @@ export type {
   UserJoinServerMsg,
   UserLeftServerMsg,
   YDocUpdateServerMsg,
+  CommentsEventServerMsg,
 } from "./protocol/ServerMsg";
 export { ServerMsgCode } from "./protocol/ServerMsg";
 export type {
