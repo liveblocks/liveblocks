@@ -317,7 +317,6 @@ describe("useThreads", () => {
           {children}
         </RoomProvider>
       ),
-      initialProps: { resolved: true },
     });
 
     const sim = await websocketSimulator();
@@ -339,6 +338,59 @@ describe("useThreads", () => {
       expect(result.current).toEqual({
         isLoading: false,
         threads: [convertToThreadData(newThread)],
+      })
+    );
+
+    unmount();
+  });
+
+  test("should delete thread if getThread return 404 after getting a COMMENT_DELETED event", async () => {
+    const newThread = dummyThreadDataPlain();
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            data: [newThread],
+            inboxNotifications: [],
+          })
+        );
+      }),
+      mockGetThread({ threadId: newThread.id }, async (_req, res, ctx) => {
+        return res(ctx.status(404));
+      })
+    );
+
+    const { RoomProvider, useThreads } = createRoomContextForTest();
+
+    const { result, unmount } = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          {children}
+        </RoomProvider>
+      ),
+    });
+
+    const sim = await websocketSimulator();
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [newThread].map(convertToThreadData),
+      })
+    );
+
+    // This should refresh the thread and get a 404
+    sim.simulateIncomingMessage({
+      type: ServerMsgCode.COMMENT_DELETED,
+      threadId: newThread.id,
+      commentId: newThread.comments[0].id,
+    });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [],
       })
     );
 

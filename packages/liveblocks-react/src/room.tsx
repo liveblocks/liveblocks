@@ -368,25 +368,13 @@ export function createRoomContext<
     );
 
     React.useEffect(() => {
-      function handleThreadDelete(threadId: string) {
-        const notifications = Object.values(
-          store.get().inboxNotifications
-        ).filter((notification) => notification.threadId === threadId);
-        store.updateThreadsAndNotifications(
-          {
-            [threadId]: undefined,
-          },
-          Object.fromEntries(notifications.map((n) => [n.id, undefined]))
-        );
-      }
-
       async function handleCommentEvent(message: CommentsEventServerMsg) {
         // TODO: Error handling
         const info = await room.getThread({ threadId: message.threadId });
 
         // If no thread info was returned (i.e., 404), we remove the thread and relevant inbox notifications from local cache.
         if (!info) {
-          handleThreadDelete(message.threadId);
+          store.deleteThread(message.threadId);
           return;
         }
         const { thread, inboxNotification } = info;

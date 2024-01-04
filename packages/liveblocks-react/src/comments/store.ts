@@ -161,6 +161,20 @@ export function createClientStore<TThreadMetadata extends BaseMetadata>() {
   return {
     ...store,
 
+    deleteThread(threadId: string) {
+      store.set((state) => {
+        return {
+          ...state,
+          threads: deleteKeyImmutable(state.threads, threadId),
+          inboxNotifications: Object.fromEntries(
+            Object.entries(state.inboxNotifications).filter(
+              ([_id, notification]) => notification.threadId !== threadId
+            )
+          ),
+        };
+      });
+    },
+
     updateThreadsAndNotifications(
       threads: Record<string, ThreadData<TThreadMetadata> | undefined>,
       inboxNotifications: Record<
@@ -195,6 +209,18 @@ export function createClientStore<TThreadMetadata extends BaseMetadata>() {
       }));
     },
   };
+}
+
+function deleteKeyImmutable<TKey extends string | number | symbol, TValue>(
+  record: Record<TKey, TValue>,
+  key: TKey
+) {
+  if (record.hasOwnProperty(key)) {
+    const { [key]: _toDelete, ...rest } = record;
+    return rest;
+  }
+
+  return record;
 }
 
 export function upsertComment<TThreadMetadata extends BaseMetadata>(
@@ -443,8 +469,8 @@ function compareThreads<TThreadMetadata extends BaseMetadata>(
     return thread1.updatedAt > thread2.updatedAt
       ? 1
       : thread1.updatedAt < thread2.updatedAt
-        ? -1
-        : 0;
+      ? -1
+      : 0;
   } else if (thread1.updatedAt || thread2.updatedAt) {
     return thread1.updatedAt ? 1 : -1;
   }
