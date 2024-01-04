@@ -12,6 +12,7 @@ import { createRoomContext } from "../room";
 import { dummyThreadDataPlain } from "./_dummies";
 import MockWebSocket, { websocketSimulator } from "./_MockWebSocket";
 import { mockGetThread, mockGetThreads } from "./_restMocks";
+import { addSeconds } from "date-fns";
 
 const server = setupServer();
 
@@ -393,6 +394,99 @@ describe("WebSocket events", () => {
       expect(result.current).toEqual({
         isLoading: false,
         threads: [],
+      })
+    );
+
+    unmount();
+  });
+
+  test("Websocket event should not refresh thread if updatedAt is earlier than the cached updatedAt", async () => {
+    const now = new Date();
+    const initialThread = dummyThreadDataPlain();
+    initialThread.updatedAt = now.toISOString();
+    initialThread.metadata = { counter: 0 };
+
+    const delayedThread = {
+      ...initialThread,
+      updatedAt: addSeconds(now, 1).toISOString(),
+      metadata: { counter: 1 },
+    };
+
+    const latestThread = {
+      ...initialThread,
+      updatedAt: addSeconds(now, 2).toISOString(),
+      metadata: { counter: 2 },
+    };
+
+    let callIndex = 0;
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            data: [initialThread],
+            inboxNotifications: [],
+          })
+        );
+      }),
+      mockGetThread({ threadId: initialThread.id }, async (_req, res, ctx) => {
+        if (callIndex === 0) {
+          callIndex++;
+          return res(
+            ctx.json({
+              ...latestThread,
+              inboxNotification: undefined,
+            })
+          );
+        } else if (callIndex === 1) {
+          callIndex++;
+          return res(
+            ctx.json({
+              ...delayedThread,
+              inboxNotification: undefined,
+            })
+          );
+        } else {
+          throw new Error("Only two calls to getThreads are expected");
+        }
+      })
+    );
+
+    const { RoomProvider, useThreads } = createRoomContextForTest();
+
+    const { result, unmount } = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          {children}
+        </RoomProvider>
+      ),
+    });
+
+    const sim = await websocketSimulator();
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [convertToThreadData(initialThread)],
+      })
+    );
+
+    // First thread metadata updated event returns the most recent thread
+    sim.simulateIncomingMessage({
+      type: ServerMsgCode.THREAD_METADATA_UPDATED,
+      threadId: initialThread.id,
+    });
+
+    // Second thread metadata updated event returns an old thread
+    sim.simulateIncomingMessage({
+      type: ServerMsgCode.THREAD_METADATA_UPDATED,
+      threadId: initialThread.id,
+    });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [convertToThreadData(latestThread)],
       })
     );
 
