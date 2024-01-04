@@ -1,13 +1,17 @@
 import type { BaseMetadata, JsonObject } from "@liveblocks/core";
-import { convertToThreadData, createClient } from "@liveblocks/core";
+import {
+  convertToThreadData,
+  createClient,
+  ServerMsgCode,
+} from "@liveblocks/core";
 import { renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
 import React, { Suspense } from "react";
 
 import { createRoomContext } from "../room";
 import { dummyThreadDataPlain } from "./_dummies";
-import MockWebSocket from "./_MockWebSocket";
-import { mockGetThreads } from "./_restMocks";
+import MockWebSocket, { websocketSimulator } from "./_MockWebSocket";
+import { mockGetThread, mockGetThreads } from "./_restMocks";
 
 const server = setupServer();
 
@@ -279,6 +283,64 @@ describe("useThreads", () => {
       isLoading: false,
       threads: [resolvedThread].map(convertToThreadData),
     });
+
+    unmount();
+  });
+
+  test("should refresh thread after getting a COMMENT_CREATED event", async () => {
+    const newThread = dummyThreadDataPlain();
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            data: [],
+            inboxNotifications: [],
+          })
+        );
+      }),
+      mockGetThread({ threadId: newThread.id }, async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            ...newThread,
+            inboxNotification: undefined,
+          })
+        );
+      })
+    );
+
+    const { RoomProvider, useThreads } = createRoomContextForTest();
+
+    const { result, unmount } = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          {children}
+        </RoomProvider>
+      ),
+      initialProps: { resolved: true },
+    });
+
+    const sim = await websocketSimulator();
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [],
+      })
+    );
+
+    sim.simulateIncomingMessage({
+      type: ServerMsgCode.COMMENT_CREATED,
+      threadId: newThread.id,
+      commentId: newThread.comments[0].id,
+    });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [convertToThreadData(newThread)],
+      })
+    );
 
     unmount();
   });

@@ -1,4 +1,8 @@
-import type { CommentDataPlain, ThreadDataPlain } from "@liveblocks/core";
+import type {
+  CommentDataPlain,
+  PartialInboxNotificationDataPlain,
+  ThreadDataPlain,
+} from "@liveblocks/core";
 import type { ResponseResolver, RestContext, RestRequest } from "msw";
 import { rest } from "msw";
 
@@ -14,6 +18,22 @@ export function mockGetThreads(
 ) {
   return rest.post(
     "https://api.liveblocks.io/v2/c/rooms/room-id/threads/search",
+    resolver
+  );
+}
+
+export function mockGetThread(
+  params: { threadId: string },
+  resolver: ResponseResolver<
+    RestRequest<never, never>,
+    RestContext,
+    ThreadDataPlain<any> & {
+      inboxNotification?: PartialInboxNotificationDataPlain;
+    }
+  >
+) {
+  return rest.get(
+    `https://api.liveblocks.io/v2/c/rooms/room-id/threads/${params.threadId}`,
     resolver
   );
 }
