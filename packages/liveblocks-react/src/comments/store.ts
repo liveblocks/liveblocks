@@ -116,15 +116,24 @@ export function createClientStore<TThreadMetadata extends BaseMetadata>() {
     existingThreads: Record<string, ThreadData<TThreadMetadata>>,
     newThreads: Record<string, ThreadData<TThreadMetadata> | undefined>
   ): Record<string, ThreadData<TThreadMetadata>> {
-    // TODO: Do not replace existing thread if it has been updated more recently than the incoming thread
-    const threads = Object.values({
-      ...existingThreads,
-      ...newThreads,
-    }).filter(
-      (thread) => thread !== undefined
-    ) as ThreadData<TThreadMetadata>[];
+    Object.entries(newThreads).forEach(([id, thread]) => {
+      if (thread === undefined) {
+        delete existingThreads[id];
+        return;
+      }
 
-    return Object.fromEntries(threads.map((thread) => [thread.id, thread]));
+      const existingThread = existingThreads[id];
+
+      // If the thread already exists, we need to compare the two threads to determine which one is newer.
+      if (existingThread) {
+        const result = compareThreads(existingThread, thread);
+        // If the existing thread is newer than the new thread, we do not update the existing thread.
+        if (result === 1) return;
+      }
+      existingThreads[id] = thread;
+    });
+
+    return existingThreads;
   }
 
   function mergeNotifications(
@@ -415,4 +424,36 @@ export function selectedThreads<TThreadMetadata extends BaseMetadata>(
     }
     return true;
   });
+}
+
+/**
+ * Compares two threads to determine which one is newer.
+ * @param threadA The first thread to compare.
+ * @param threadB The second thread to compare.
+ * @returns 1 if threadA is newer, -1 if threadB is newer, or 0 if they are the same age or can't be compared.
+ */
+function compareThreads<TThreadMetadata extends BaseMetadata>(
+  thread1: ThreadData<TThreadMetadata>,
+  thread2: ThreadData<TThreadMetadata>
+): number {
+  // Compare updatedAt if available
+  if (thread1.updatedAt && thread2.updatedAt) {
+    return thread1.updatedAt > thread2.updatedAt
+      ? 1
+      : thread1.updatedAt < thread2.updatedAt
+        ? -1
+        : 0;
+  } else if (thread1.updatedAt || thread2.updatedAt) {
+    return thread1.updatedAt ? 1 : -1;
+  }
+
+  // Finally, compare createdAt
+  if (thread1.createdAt > thread2.createdAt) {
+    return 1;
+  } else if (thread1.createdAt < thread2.createdAt) {
+    return -1;
+  }
+
+  // If all dates are equal, return 0
+  return 0;
 }
