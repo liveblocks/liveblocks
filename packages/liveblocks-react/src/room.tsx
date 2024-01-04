@@ -29,13 +29,13 @@ import type {
 } from "@liveblocks/core";
 import {
   CommentsApiError,
-  ServerMsgCode,
   createAsyncCache,
   deprecateIf,
   errorIf,
   isLiveNode,
   makeEventSource,
   makePoller,
+  ServerMsgCode,
   stringify,
 } from "@liveblocks/core";
 import { nanoid } from "nanoid";
@@ -389,6 +389,9 @@ export function createRoomContext<
           handleThreadDelete(message.threadId);
           return;
         }
+        const { thread, inboxNotification } = info;
+
+        const existingThread = store.get().threads[message.threadId];
 
         switch (message.type) {
           case ServerMsgCode.COMMENT_EDITED:
@@ -396,10 +399,8 @@ export function createRoomContext<
           case ServerMsgCode.COMMENT_REACTION_ADDED:
           case ServerMsgCode.COMMENT_REACTION_REMOVED:
             // If the thread doesn't exist in the local cache, we do not update it with the server data as an optimistic update could have deleted the thread locally.
-            const existingThread = store.get().threads[message.threadId];
             if (!existingThread) break;
-          case ServerMsgCode.COMMENT_CREATED:
-            const { thread, inboxNotification } = info;
+
             store.updateThreadsAndNotifications(
               {
                 [thread.id]: thread,
@@ -410,6 +411,19 @@ export function createRoomContext<
                 }),
               }
             );
+            break;
+          case ServerMsgCode.COMMENT_CREATED:
+            store.updateThreadsAndNotifications(
+              {
+                [thread.id]: thread,
+              },
+              {
+                ...(inboxNotification && {
+                  [inboxNotification.id]: inboxNotification,
+                }),
+              }
+            );
+            break;
           default:
             break;
         }

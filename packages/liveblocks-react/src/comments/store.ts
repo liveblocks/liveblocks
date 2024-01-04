@@ -116,13 +116,15 @@ export function createClientStore<TThreadMetadata extends BaseMetadata>() {
     existingThreads: Record<string, ThreadData<TThreadMetadata>>,
     newThreads: Record<string, ThreadData<TThreadMetadata> | undefined>
   ): Record<string, ThreadData<TThreadMetadata>> {
+    const updatedThreads = { ...existingThreads };
+
     Object.entries(newThreads).forEach(([id, thread]) => {
       if (thread === undefined) {
-        delete existingThreads[id];
+        delete updatedThreads[id];
         return;
       }
 
-      const existingThread = existingThreads[id];
+      const existingThread = updatedThreads[id];
 
       // If the thread already exists, we need to compare the two threads to determine which one is newer.
       if (existingThread) {
@@ -130,10 +132,10 @@ export function createClientStore<TThreadMetadata extends BaseMetadata>() {
         // If the existing thread is newer than the new thread, we do not update the existing thread.
         if (result === 1) return;
       }
-      existingThreads[id] = thread;
+      updatedThreads[id] = thread;
     });
 
-    return existingThreads;
+    return updatedThreads;
   }
 
   function mergeNotifications(
