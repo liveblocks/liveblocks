@@ -346,6 +346,15 @@ export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
               : comment
           ),
         };
+
+        if (
+          !result[thread.id].comments.some(
+            (comment) => comment.deletedAt === undefined
+          )
+        ) {
+          delete result[thread.id];
+        }
+
         break;
       }
       case "add-reaction": {
@@ -481,8 +490,8 @@ function compareThreads<TThreadMetadata extends BaseMetadata>(
     return thread1.updatedAt > thread2.updatedAt
       ? 1
       : thread1.updatedAt < thread2.updatedAt
-      ? -1
-      : 0;
+        ? -1
+        : 0;
   } else if (thread1.updatedAt || thread2.updatedAt) {
     return thread1.updatedAt ? 1 : -1;
   }

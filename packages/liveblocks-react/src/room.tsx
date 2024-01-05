@@ -1595,23 +1595,34 @@ export function createRoomContext<
 
         room.deleteComment({ threadId, commentId }).then(
           () => {
+            const newThreads = { ...store.get().threads };
+            const thread = newThreads[threadId];
+            if (thread === undefined) return;
+
+            newThreads[thread.id] = {
+              ...thread,
+              comments: thread.comments.map((comment) =>
+                comment.id === commentId
+                  ? {
+                      ...comment,
+                      deletedAt: now,
+                      body: undefined,
+                    }
+                  : comment
+              ),
+            };
+
+            if (
+              !newThreads[thread.id].comments.some(
+                (comment) => comment.deletedAt === undefined
+              )
+            ) {
+              delete newThreads[thread.id];
+            }
+
             store.set((state) => ({
               ...state,
-              threads: {
-                ...state.threads,
-                [threadId]: {
-                  ...state.threads[threadId],
-                  comments: state.threads[threadId].comments.map((comment) =>
-                    comment.id === commentId
-                      ? {
-                          ...comment,
-                          deletedAt: now,
-                          body: undefined,
-                        }
-                      : comment
-                  ),
-                },
-              },
+              threads: newThreads,
               optimisticUpdates: state.optimisticUpdates.filter(
                 (update) => update.id !== optimisticUpdateId
               ),
