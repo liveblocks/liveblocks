@@ -1160,6 +1160,10 @@ export function createRoomContext<
       throw getThreadsAndInboxNotifications(room, queryKey, options);
     }
 
+    if (store.get().threadsQueries[queryKey].error) {
+      throw store.get().threadsQueries[queryKey].error;
+    }
+
     React.useEffect(() => {
       incrementQuerySubscribers(queryKey);
 

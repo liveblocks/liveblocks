@@ -1,10 +1,12 @@
+import "@testing-library/jest-dom";
+
 import type { BaseMetadata, JsonObject } from "@liveblocks/core";
 import {
   convertToThreadData,
   createClient,
   ServerMsgCode,
 } from "@liveblocks/core";
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook, waitFor, screen } from "@testing-library/react";
 import { addSeconds } from "date-fns";
 import { setupServer } from "msw/node";
 import React, { Suspense } from "react";
@@ -12,6 +14,7 @@ import React, { Suspense } from "react";
 import { createRoomContext } from "../room";
 import { dummyThreadDataPlain } from "./_dummies";
 import MockWebSocket, { websocketSimulator } from "./_MockWebSocket";
+import { ErrorBoundary } from "react-error-boundary";
 import { mockGetThread, mockGetThreads } from "./_restMocks";
 
 const server = setupServer();
@@ -288,7 +291,7 @@ describe("useThreads", () => {
     unmount();
   });
 
-  test("should update the cache with an error on failed initial fetch", async () => {
+  test("should include any error object in the returned value if initial fetch throws an error", async () => {
     server.use(
       mockGetThreads((_req, res, ctx) => {
         return res(ctx.status(500));
@@ -560,6 +563,42 @@ describe("useThreadsSuspense", () => {
         threads: threads.map(convertToThreadData),
       })
     );
+
+    unmount();
+  });
+
+  test("should trigger error boundary if initial fetch throws an error", async () => {
+    server.use(
+      mockGetThreads((_req, res, ctx) => {
+        return res(ctx.status(500));
+      })
+    );
+
+    const {
+      RoomProvider,
+      suspense: { useThreads },
+    } = createRoomContextForTest();
+
+    const { result, unmount } = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          <ErrorBoundary
+            fallback={<div>There was an error while getting threads.</div>}
+          >
+            <Suspense fallback={<div>Loading</div>}>{children}</Suspense>
+          </ErrorBoundary>
+        </RoomProvider>
+      ),
+    });
+
+    expect(result.current).toEqual(null);
+
+    await waitFor(() => {
+      // Check if the error boundary's fallback UI is displayed
+      expect(
+        screen.getByText("There was an error while getting threads.")
+      ).toBeInTheDocument();
+    });
 
     unmount();
   });
