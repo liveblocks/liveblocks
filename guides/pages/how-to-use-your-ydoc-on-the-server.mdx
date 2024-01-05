@@ -1,0 +1,84 @@
+---
+meta:
+  title: "How to use your Y.Doc on the server"
+  description: "Learn how to retrieve your Yjs document’s Y.Doc on the server"
+---
+
+Using [`@liveblocks/node`](/docs/api-reference/liveblocks-node), it’s possible
+to retrieve your Yjs document and use it as a
+[`Y.Doc`](https://docs.yjs.dev/api/y.doc) on the server. This is often helpful
+for retrieving text editor state, and we have some specific guides for this:
+
+- [Getting Tiptap state on the server](/docs/guides/getting-tiptap-state-on-the-server)
+- [Getting ProseMirror state on the server](/docs/guides/getting-prosemirror-state-on-the-server).
+
+## Getting your Y.Doc
+
+Using
+[`Liveblocks.getYjsDocumentAsBinaryUpdate`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc-binary)
+you can fetch your Yjs data, and place it inside a `Y.Doc`.
+
+```ts
+import * as Y from "yjs";
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+export async function POST() {
+  // Get your Yjs data as a binary update
+  const update = await liveblocks.getYjsDocumentAsBinaryUpdate("my-room-name");
+
+  // Create a Yjs document
+  const yDoc = new Y.Doc();
+
+  // Apply the binary update to `yDoc`
+  Y.applyUpdate(yDoc, new Uint8Array(update));
+
+  // `yDoc` can now be used as you like
+  // ...
+}
+```
+
+Note that any changes you make will not be applied to other users, as the
+`Y.Doc` is not connected to any providers.
+
+## Applying changes
+
+Should you wish to send any changes to your document to other users, you can
+encode `yDoc` as a binary update, and use
+[`Liveblocks.sendYjsBinaryUpdate`](/docs/api-reference/liveblocks-node#put-rooms-roomId-ydoc)
+to apply the change.
+
+```ts highlight="18-20,22-23,25-26"
+import * as Y from "yjs";
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+export async function POST() {
+  // Get your Yjs data as a binary update
+  const update = await liveblocks.getYjsDocumentAsBinaryUpdate("my-room-name");
+
+  // Create a Yjs document
+  const yDoc = new Y.Doc();
+
+  // Apply the binary update to `yDoc`
+  Y.applyUpdate(yDoc, new Uint8Array(update));
+
+  // An example of a `yDoc` modification
+  const yText = yDoc.getText("text");
+  yText.insert(0, "Hello world");
+
+  // Encode the document state as an update
+  const yUpdate = Y.encodeStateAsUpdate(yDoc);
+
+  // Send the update to Liveblocks
+  await liveblocks.sendYjsBinaryUpdate(roomId, yUpdate);
+}
+```
+
+These changes will be immediately applied to all connected users.
