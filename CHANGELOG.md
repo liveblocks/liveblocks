@@ -1,3 +1,10 @@
+# v1.9.2
+
+### `@liveblocks/react-comments`
+
+- Add `portalContainer` prop to `CommentsConfig` to customize where floating
+  elements (e.g. tooltips, dropdowns, etc) are portaled into.
+
 # v1.9.1
 
 ### `@liveblocks/node`
