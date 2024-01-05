@@ -287,6 +287,36 @@ describe("useThreads", () => {
 
     unmount();
   });
+
+  test("should update the cache with an error on failed initial fetch", async () => {
+    server.use(
+      mockGetThreads((_req, res, ctx) => {
+        return res(ctx.status(500));
+      })
+    );
+
+    const { RoomProvider, useThreads } = createRoomContextForTest();
+
+    const { result, unmount } = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          {children}
+        </RoomProvider>
+      ),
+    });
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        threads: [],
+        isLoading: false,
+        error: expect.any(Error),
+      })
+    );
+
+    unmount();
+  });
 });
 
 describe("WebSocket events", () => {
