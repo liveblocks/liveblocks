@@ -104,7 +104,7 @@ function Component() {
 }
 ```
 
-## Resolving user mentions
+## Resolving user mentions suggestions
 
 Comments allows you to search for a user after typing the `"@"` character.
 
@@ -147,21 +147,19 @@ const {
     // "mar"
     console.log(text);
 
-    // Fetch all users from your back end
-    let users = await __fetchAllUsers__();
+    // Return an array of user IDs for the query "mar"
+    let userIds;
 
-    // If there's a query, filter for the relevant users
     if (text) {
-      // Filter any way you'd like, e.g. checking if the name matches
-      users = users.filter((user) => user.name.includes(text));
+      // If there's a query, get user IDs from your back end that match
+      userIds = await __queryUserIds__(text);
+    } else {
+      // If there's no query, get all of the room's user IDs
+      userIds = await __getAllUserIds__();
     }
-
-    // Only return the user IDs
-    const userIds = users.map((user) => user.id);
 
     // ["marc@example.com", "marissa@example.com"]
     console.log(userIds);
-
     return userIds;
   },
 });
