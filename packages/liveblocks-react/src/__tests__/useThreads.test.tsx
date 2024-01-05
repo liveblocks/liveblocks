@@ -6,15 +6,15 @@ import {
   createClient,
   ServerMsgCode,
 } from "@liveblocks/core";
-import { renderHook, waitFor, screen } from "@testing-library/react";
+import { renderHook, screen, waitFor } from "@testing-library/react";
 import { addSeconds } from "date-fns";
 import { setupServer } from "msw/node";
 import React, { Suspense } from "react";
+import { ErrorBoundary } from "react-error-boundary";
 
 import { createRoomContext } from "../room";
 import { dummyThreadDataPlain } from "./_dummies";
 import MockWebSocket, { websocketSimulator } from "./_MockWebSocket";
-import { ErrorBoundary } from "react-error-boundary";
 import { mockGetThread, mockGetThreads } from "./_restMocks";
 
 const server = setupServer();
