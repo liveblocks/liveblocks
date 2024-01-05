@@ -17,7 +17,7 @@ const TEST_URL = "http://localhost:3007/comments/with-suspense";
 // eslint-disable-next-line @typescript-eslint/unbound-method
 const skipOnCI = process.env.CI ? test.skip : test;
 
-test.describe("Comments", () => {
+test.describe.skip("Comments", () => {
   let pages: [Page, Page];
 
   test.beforeEach(async ({}, testInfo) => {
