@@ -43,7 +43,7 @@
     "@liveblocks/jest-config": "*",
     "@reduxjs/toolkit": "^1.7.2",
     "@testing-library/jest-dom": "^5.16.5",
-    "msw": "^0.36.4",
+    "msw": "^2.0.12",
     "redux": "^4.1.2"
   },
   "sideEffects": false,
