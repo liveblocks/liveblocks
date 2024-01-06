@@ -1,8 +1,7 @@
 import type { ThreadData } from "@liveblocks/core";
 import { createClient } from "@liveblocks/core";
 import { render, renderHook, screen, waitFor } from "@testing-library/react";
-import type { ResponseComposition, RestContext, RestRequest } from "msw";
-import { rest } from "msw";
+import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import React, { Suspense } from "react";
 
@@ -34,7 +33,7 @@ const threads: ThreadData[] = [
 const fetchThreadsMock = jest.fn();
 
 const server = setupServer(
-  rest.post(
+  http.post(
     "https://api.liveblocks.io/v2/c/rooms/room-id/threads/search",
     fetchThreadsMock
   )
@@ -44,15 +43,11 @@ beforeAll(() => server.listen());
 
 beforeEach(() => {
   fetchThreadsMock.mockReset();
-  fetchThreadsMock.mockImplementation(
-    (_: RestRequest, res: ResponseComposition, ctx: RestContext) => {
-      return res(
-        ctx.json({
-          data: threads,
-        })
-      );
-    }
-  );
+  fetchThreadsMock.mockImplementation(() => {
+    return HttpResponse.json({
+      data: threads,
+    });
+  });
   jest.useFakeTimers();
   MockWebSocket.instances = [];
 });
