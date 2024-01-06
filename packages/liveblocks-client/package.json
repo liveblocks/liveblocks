@@ -40,7 +40,7 @@
     "@liveblocks/jest-config": "*",
     "@types/ws": "^8.5.3",
     "dotenv": "^16.0.3",
-    "msw": "^0.39.1",
+    "msw": "^2.0.12",
     "ws": "^8.5.0"
   },
   "sideEffects": false,
