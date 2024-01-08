@@ -17,21 +17,12 @@ export interface InboxNotificationProps
   inboxNotification: InboxNotificationData;
 }
 
-interface InboxNotificationLayoutProps extends ComponentPropsWithoutRef<"div"> {
-  /**
-   * TODO: JSDoc
-   */
+interface InboxNotificationLayoutProps
+  extends Omit<ComponentPropsWithoutRef<"div">, "title"> {
   aside: ReactNode;
-
-  /**
-   * TODO: JSDoc
-   */
-  description: ReactNode;
-
-  /**
-   * TODO: JSDoc
-   */
+  title: ReactNode;
   date: Date | string | number;
+  unread?: boolean;
 }
 
 const InboxNotificationLayout = forwardRef<
@@ -39,7 +30,7 @@ const InboxNotificationLayout = forwardRef<
   InboxNotificationLayoutProps
 >(
   (
-    { children, aside, description, date, className, ...props },
+    { children, aside, title, date, unread, className, ...props },
     forwardedRef
   ) => {
     const $ = useOverrides();
@@ -48,20 +39,24 @@ const InboxNotificationLayout = forwardRef<
       <div
         className={classNames("lb-root lb-inbox-notification", className)}
         dir={$.dir}
+        data-unread={unread ? "" : undefined}
         {...props}
         ref={forwardedRef}
       >
         <div className="lb-inbox-notification-aside">{aside}</div>
         <div className="lb-inbox-notification-content">
           <div className="lb-inbox-notification-header">
-            <span className="lb-inbox-notification-description">
-              {description}
-            </span>
-            <div className="lb-inbox-notification-date">
-              <Timestamp
-                date={date}
-                className="lb-inbox-notification-date-timestamp"
-              />
+            <span className="lb-inbox-notification-title">{title}</span>
+            <div className="lb-inbox-notification-details">
+              <span className="lb-inbox-notification-details-labels">
+                <Timestamp date={date} className="lb-inbox-notification-date" />
+                {unread && (
+                  <span
+                    className="lb-inbox-notification-unread-indicator"
+                    role="presentation"
+                  />
+                )}
+              </span>
             </div>
           </div>
           <div className="lb-inbox-notification-body">{children}</div>
@@ -97,8 +92,8 @@ export const InboxNotification = forwardRef<
   return (
     <InboxNotificationLayout
       aside={<InboxNotificationAvatar userId="TODO" />}
-      description="TODO"
-      date="TODO"
+      title="Lorem Ipsum commented on Lorem Ipsum"
+      date="01-01-01"
       {...props}
       ref={forwardedRef}
     >

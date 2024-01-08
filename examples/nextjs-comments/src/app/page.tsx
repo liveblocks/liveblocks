@@ -4,10 +4,15 @@ import { useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { RoomProvider, useThreads } from "../../liveblocks.config";
 import { Loading } from "../components/Loading";
-import { Composer, Thread } from "@liveblocks/react-comments";
+import {
+  Composer,
+  Thread,
+  InboxNotification,
+} from "@liveblocks/react-comments";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
 import { setCookie } from "tiny-cookie";
+import { InboxNotificationData } from "@liveblocks/client";
 
 /**
  * Displays a list of threads, along with a composer for creating
@@ -19,6 +24,7 @@ function Example() {
 
   return (
     <main>
+      <InboxNotification inboxNotification={{} as InboxNotificationData} />
       {threads.map((thread) => (
         <Thread key={thread.id} thread={thread} className="thread" />
       ))}

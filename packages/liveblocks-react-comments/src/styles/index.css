@@ -810,7 +810,7 @@
   font-size: 0.875em;
 }
 
-.lb-comment-date-timestamp,
+.lb-comment-date-created,
 .lb-comment-date-edited {
   display: contents;
 }
@@ -1021,6 +1021,80 @@
     pointer-events: none;
     transition-property: border;
   }
+}
+
+/*************************************
+ *        Inbox Notification         *
+ *************************************/
+
+.lb-inbox-notification {
+  --lb-inbox-notification-aside-size: 36px;
+
+  position: relative;
+  display: flex;
+  gap: calc(0.75 * var(--lb-spacing));
+  overflow: hidden;
+  padding: var(--lb-spacing);
+  background: var(--lb-internal-background);
+  color: var(--lb-foreground);
+  font-weight: 400;
+  transition-property: background;
+
+  &:where([data-unread]) {
+    --lb-internal-background: var(--lb-background-accent-subtle);
+  }
+}
+
+.lb-inbox-notification-aside {
+  flex: none;
+  inline-size: var(--lb-inbox-notification-aside-size);
+}
+
+.lb-inbox-notification-content {
+  flex: 1;
+}
+
+.lb-inbox-notification-header {
+  display: flex;
+  gap: calc(0.75 * var(--lb-spacing));
+  align-items: center;
+  margin-block-start: calc(0.25 * var(--lb-spacing));
+  margin-block-end: calc(0.5 * var(--lb-spacing));
+}
+
+.lb-inbox-notification-title {
+  font-weight: 500;
+}
+
+.lb-inbox-notification-details {
+  flex: none;
+  align-self: start;
+  min-inline-size: 0;
+  margin-inline-start: auto;
+}
+
+.lb-inbox-notification-details-labels {
+  display: flex;
+  align-items: baseline;
+  min-inline-size: 0;
+
+  &::before {
+    content: "\FEFF";
+  }
+}
+
+.lb-inbox-notification-date {
+  color: var(--lb-foreground-tertiary);
+  font-size: 0.875em;
+}
+
+.lb-inbox-notification-unread-indicator {
+  align-self: center;
+  inline-size: 10px;
+  block-size: 10px;
+  margin-inline-start: calc(0.5 * var(--lb-spacing));
+  border-radius: 50%;
+  background: var(--lb-accent);
 }
 
 /*************************************
