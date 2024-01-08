@@ -2,6 +2,7 @@ import type { Page } from "@playwright/test";
 import { test } from "@playwright/test";
 
 import {
+  expectJson,
   genRoomId,
   getJson,
   preparePages,
@@ -11,13 +12,7 @@ import {
 
 const TEST_URL = "http://localhost:3007/comments/with-suspense";
 
-// These tests sometimes fail on CI, because some operations aren't coming
-// through timely enough (or not at all) on the other end. We're still figuring
-// out what's the cause of this.
-// eslint-disable-next-line @typescript-eslint/unbound-method
-const skipOnCI = process.env.CI ? test.skip : test;
-
-test.describe.skip("Comments", () => {
+test.describe("Comments", () => {
   let pages: [Page, Page];
 
   test.beforeEach(async ({}, testInfo) => {
@@ -27,32 +22,36 @@ test.describe.skip("Comments", () => {
 
   test.afterEach(() => Promise.all(pages.map((page) => page.close())));
 
-  skipOnCI(
-    "verify A and B display same number of threads after threads are loaded",
-    async () => {
-      await waitForJson(pages, "#isLoading", false, { timeout: 15_000 });
-      await waitUntilEqualOnAllPages(pages, "#numOfThreads", { interval: 250 });
-    }
-  );
+  test("verify A and B display same number of threads after threads are loaded", async () => {
+    await waitForJson(pages, "#isLoading", false, { timeout: 15_000 });
+    await waitUntilEqualOnAllPages(pages, "#numOfThreads", { interval: 250 });
+  });
 
-  skipOnCI(
-    "verify thread creation on B is broadcasted correctly to A",
-    async () => {
-      const [page1, page2] = pages;
+  test("verify thread creation and deletion on B is broadcasted correctly to A", async () => {
+    const [page1] = pages;
 
-      await waitForJson(pages, "#isLoading", false, { timeout: 15_000 });
-      await waitUntilEqualOnAllPages(pages, "#numOfThreads", { interval: 250 });
+    await waitForJson(pages, "#isLoading", false, { timeout: 15_000 });
+    await waitUntilEqualOnAllPages(pages, "#numOfThreads", { interval: 250 });
 
-      // Read starting value n
-      const n = (await getJson(page1, "#numOfThreads")) as number;
+    // Read starting value n
+    const n = (await getJson(page1, "#numOfThreads")) as number;
 
-      await page1.click("#create-thread");
-      await page2.click("#create-thread");
-      await page2.click("#create-thread");
-      await waitForJson(pages, "#numOfThreads", n + 3, { timeout: 15_000 });
+    // Create a new thread on page1
+    await page1.click("#create-thread");
 
-      await page2.click("#delete-comment");
-      await waitForJson(pages, "#numOfThreads", n + 3 - 1, { timeout: 15_000 });
-    }
-  );
+    // Verify that the number of threads on page1 is updated optimistically (and immediately)
+    expectJson(page1, "#numOfThreads", n + 1);
+
+    // Verify that the number of threads on both pages are updated
+    await waitForJson(pages, "#numOfThreads", n + 1, { timeout: 30_000 });
+
+    // Delete the newly created thread on page1
+    await page1.click("#delete-comment");
+
+    // // Verify that the number of threads on page1 is updated optimistically (and immediately)
+    expectJson(page1, "#numOfThreads", n + 1 - 1);
+
+    // Verify that the number of threads on page2 is also updated (after comment websocket message is received)
+    await waitForJson(pages, "#numOfThreads", n + 1 - 1, { timeout: 30_000 });
+  });
 });
