@@ -481,7 +481,7 @@ export function selectedThreads<TThreadMetadata extends BaseMetadata>(
  * @param threadB The second thread to compare.
  * @returns 1 if threadA is newer, -1 if threadB is newer, or 0 if they are the same age or can't be compared.
  */
-function compareThreads<TThreadMetadata extends BaseMetadata>(
+export function compareThreads<TThreadMetadata extends BaseMetadata>(
   thread1: ThreadData<TThreadMetadata>,
   thread2: ThreadData<TThreadMetadata>
 ): number {
