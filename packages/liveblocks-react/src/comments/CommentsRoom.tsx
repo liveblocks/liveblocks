@@ -42,9 +42,6 @@ import type {
 } from "./lib/revalidation";
 import { useMutate, useRevalidateCache } from "./lib/revalidation";
 
-const POLLING_INTERVAL_REALTIME = 30000;
-const POLLING_INTERVAL = 5000;
-
 const THREAD_ID_PREFIX = "th";
 const COMMENT_ID_PREFIX = "cm";
 
@@ -947,30 +944,6 @@ function handleCommentsApiError(err: CommentsApiError): Error {
 
   return new Error(message);
 }
-
-/**
- * Returns the polling interval based on the room connection status, the browser online status and the document visibility.
- * @param isBrowserOnline Whether the browser is online.
- * @param isDocumentVisible Whether the document is visible.
- * @param isRoomConnected Whether the room is connected.
- * @returns The polling interval in milliseconds or undefined if we don't poll the server.
- */
-function getPollingInterval(
-  isBrowserOnline: boolean,
-  isDocumentVisible: boolean,
-  isRoomConnected: boolean
-): number | undefined {
-  // If the browser is offline or the document is not visible, we don't poll the server.
-  if (!isBrowserOnline || !isDocumentVisible) return;
-
-  // If the room is connected, we poll the server in real-time.
-  if (isRoomConnected) return POLLING_INTERVAL_REALTIME;
-
-  // (Otherwise) If the room is not connected, we poll the server at POLLING_INTERVAL rate.
-  return POLLING_INTERVAL;
-}
-
-getPollingInterval;
 
 interface ThreadsCacheManager<TThreadMetadata extends BaseMetadata>
   extends CacheManager<ThreadData<TThreadMetadata>[]> {

@@ -73,7 +73,7 @@ const {
 } = createRoomContext(client);
 
 describe("useThreads", () => {
-  test("should poll threads every 30sec", async () => {
+  test.skip("should poll threads every 30sec", async () => {
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
         <RoomProvider id="room-id" initialPresence={{}}>
@@ -95,7 +95,7 @@ describe("useThreads", () => {
     unmount();
   });
 
-  test("should stop polling threads on unmount", async () => {
+  test.skip("should stop polling threads on unmount", async () => {
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
         <RoomProvider id="room-id" initialPresence={{}}>
@@ -117,7 +117,7 @@ describe("useThreads", () => {
     await waitFor(() => expect(fetchThreadsMock).toHaveBeenCalledTimes(1));
   });
 
-  test("should stop polling threads on unmount", async () => {
+  test.skip("should stop polling threads on unmount", async () => {
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
         <RoomProvider id="room-id" initialPresence={{}}>
@@ -139,7 +139,6 @@ describe("useThreads", () => {
     await waitFor(() => expect(fetchThreadsMock).toHaveBeenCalledTimes(1));
   });
 
-  // This isn't true anymore, multiple instances of useThreads with different filters won't dedupe requests
   test.skip("multiple instances of useThreads should not fetch threads multiple times (dedupe requests)", async () => {
     function MultipleUseThreads() {
       useThreads();
@@ -231,7 +230,7 @@ describe("useThreads", () => {
 });
 
 describe("useThreadsSuspense", () => {
-  test("should poll threads", async () => {
+  test.skip("should poll threads", async () => {
     function Threads() {
       const { threads } = useThreadsSuspense();
 
