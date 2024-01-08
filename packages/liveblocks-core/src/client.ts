@@ -132,6 +132,7 @@ export type ClientOptions = {
   backgroundKeepAliveTimeout?: number; // in milliseconds
   polyfills?: Polyfills;
   unstable_fallbackToHTTP?: boolean;
+  unstable_streamData?: boolean;
 
   /**
    * @deprecated Use `polyfills: { fetch: ... }` instead.
@@ -320,6 +321,7 @@ export function createClient(options: ClientOptions): Client {
         unstable_batchedUpdates: options?.unstable_batchedUpdates,
         baseUrl,
         unstable_fallbackToHTTP: !!clientOptions.unstable_fallbackToHTTP,
+        unstable_streamData: !!clientOptions.unstable_streamData,
       }
     );
 
