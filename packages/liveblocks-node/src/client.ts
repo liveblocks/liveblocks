@@ -347,6 +347,11 @@ export class Liveblocks {
 
     const res = await this.get(path, queryParams);
 
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
     const data = (await res.json()) as {
       nextPage: string | null;
       data: RoomInfoPlain[];
