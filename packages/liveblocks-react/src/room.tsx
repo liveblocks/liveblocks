@@ -1140,7 +1140,7 @@ export function createRoomContext<
         }
 
         return {
-          threads: selectedThreads(state, options),
+          threads: selectedThreads(room.id, state, options),
           isLoading: false,
         };
       }
@@ -1174,7 +1174,7 @@ export function createRoomContext<
       store.get,
       (state) => {
         return {
-          threads: selectedThreads(state, options),
+          threads: selectedThreads(room.id, state, options),
           isLoading: false,
         };
       }

@@ -457,12 +457,15 @@ export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
 }
 
 export function selectedThreads<TThreadMetadata extends BaseMetadata>(
+  roomId: string,
   state: State<TThreadMetadata>,
   options: UseThreadsOptions<TThreadMetadata>
 ) {
   const result = applyOptimisticUpdates(state);
 
   return Object.values(result).filter((thread) => {
+    if (thread.roomId !== roomId) return false;
+
     const query = options.query;
     if (!query) return true;
 
