@@ -119,6 +119,10 @@
       "name": "Slate"
     },
     {
+      "id": "prosemirror",
+      "name": "ProseMirror"
+    },
+    {
       "id": "tiptap",
       "name": "Tiptap"
     },

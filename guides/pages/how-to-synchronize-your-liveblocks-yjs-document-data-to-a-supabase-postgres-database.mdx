@@ -118,69 +118,74 @@ document data has changed.
       </Figure>
     </StepContent>
   </Step>
-  
-  <Step>
-    <StepTitle>Go to the webhooks dashboard</StepTitle>
-    <StepContent>
-      Click on the **“Webhooks”** tab on the menu at the left.
-      <Figure>
-        <Image
-          src="/assets/tutorials/webhooks/liveblocks-click-webhooks.png"
-          alt="Click webhooks"
-          width={712}
-          height={445}
-        />
-      </Figure>
-    </StepContent>
-  </Step>
-  
-  <Step>
-    <StepTitle>Create an endpoint</StepTitle>
-    <StepContent>
-      Click the **“Create endpoint…”** button on the webhooks dashboard to start setting up your webhook.
-      <Figure>
-        <Image
-          src="/assets/tutorials/webhooks/liveblocks-add-endpoint.png"
-          alt="Click add endpoint"
-          width={712}
-          height={445}
-        />
-      </Figure>
-    </StepContent>
-  </Step>
-  
-  <Step>
-    <StepTitle>Add your endpoint URL</StepTitle>
-    <StepContent>
-      Enter the URL of the endpoint. In a production app this will be the real
-      endpoint, but for now enter your `localtunnel` URL from earlier.
-      <Figure>
-        <Image
-          src="/assets/tutorials/webhooks/liveblocks-add-endpoint-url.png"
-          alt="Add endpoint URL"
-          width={712}
-          height={445}
-        />
-      </Figure>
-    </StepContent>
-  </Step>
-  
-  <Step>
-    <StepTitle>Get your webhook secret key</StepTitle>>
-    <StepContent>
-      Click **“Create endpoint”** at the bottom, then find your **“Webhook secret key”** on the next
-      page, and copy it.
-      <Figure>
-        <Image
-          src="/assets/tutorials/webhooks/liveblocks-get-secret-key.png"
-          alt="Copy your webhook secret key"
-          width={712}
-          height={445}
-        />
-      </Figure>
-    </StepContent>
-  </Step>
-  
+
+{" "}
+<Step>
+  <StepTitle>Go to the webhooks dashboard</StepTitle>
+  <StepContent>
+    Click on the **“Webhooks”** tab on the menu at the left.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-click-webhooks.png"
+        alt="Click webhooks"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+{" "}
+<Step>
+  <StepTitle>Create an endpoint</StepTitle>
+  <StepContent>
+    Click the **“Create endpoint…”** button on the webhooks dashboard to start
+    setting up your webhook.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-add-endpoint.png"
+        alt="Click add endpoint"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+{" "}
+<Step>
+  <StepTitle>Add your endpoint URL</StepTitle>
+  <StepContent>
+    Enter the URL of the endpoint. In a production app this will be the real
+    endpoint, but for now enter your `localtunnel` URL from earlier.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-add-endpoint-url.png"
+        alt="Add endpoint URL"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+{" "}
+<Step>
+  <StepTitle>Get your webhook secret key</StepTitle>
+  <StepContent>
+    Click **“Create endpoint”** at the bottom, then find your **“Webhook secret
+    key”** on the next page, and copy it.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-get-secret-key.png"
+        alt="Copy your webhook secret key"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
   <Step lastStep>
     <StepTitle>Webhooks dashboard is set up!</StepTitle>
 
@@ -360,59 +365,62 @@ We’re ready to set up our Supabase database! We’ll be creating a simple
       </Figure>
     </StepContent>
   </Step>
-  
-  <Step>
-    <StepTitle>Create a database</StepTitle>
-    <StepContent>
-      Give your database a name and password, then click “Create new project” at
-      the bottom. Make sure to save your password, because you won’t be able to
-      view it again.
-      <Figure>
-        <Image
-          src="/assets/tutorials/webhooks/supabase-new-project-details.png"
-          alt="Create a new project"
-          width={1517}
-          height={1203}
-        />
-      </Figure>
-    </StepContent>
-  </Step>
-  
-  <Step>
-    <StepTitle>Create your table</StepTitle>
-    <StepContent>
-      Click the SQL Editor icon in the left bar, enter the following code into the
-      console, and click “Run” at the bottom right to create the table. ```sql
-      CREATE TABLE documents ( roomId VARCHAR(255) PRIMARY KEY, yDocData TEXT NOT
-      NULL ); ```
-      <Figure>
-        <Image
-          src="/assets/tutorials/webhooks/supabase-create-schema.png"
-          alt="Create your table schema"
-          width={1635}
-          height={984}
-        />
-      </Figure>
-    </StepContent>
-  </Step>
-  
-  <Step>
-    <StepTitle>Get your credentials</StepTitle>
-    <StepContent>
-      Click the Settings icon in the left bar, click “API” at the left and find
-      two items: 1. Your “URL”, under “Project URL”. 2. Your `anon``public` key,
-      under “Project API key”. Make a note of these, or add them as environment
-      variables in your project.
-      <Figure>
-        <Image
-          src="/assets/tutorials/webhooks/supabase-get-credentials.png"
-          alt="Create your table schema"
-          width={2053}
-          height={972}
-        />
-      </Figure>
-    </StepContent>
-  </Step>
+
+{" "}
+<Step>
+  <StepTitle>Create a database</StepTitle>
+  <StepContent>
+    Give your database a name and password, then click “Create new project” at
+    the bottom. Make sure to save your password, because you won’t be able to
+    view it again.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/supabase-new-project-details.png"
+        alt="Create a new project"
+        width={1517}
+        height={1203}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+{" "}
+<Step>
+  <StepTitle>Create your table</StepTitle>
+  <StepContent>
+    Click the SQL Editor icon in the left bar, enter the following code into the
+    console, and click “Run” at the bottom right to create the table. ```sql
+    CREATE TABLE documents ( roomId VARCHAR(255) PRIMARY KEY, yDocData TEXT NOT
+    NULL ); ```
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/supabase-create-schema.png"
+        alt="Create your table schema"
+        width={1635}
+        height={984}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+{" "}
+<Step>
+  <StepTitle>Get your credentials</StepTitle>
+  <StepContent>
+    Click the Settings icon in the left bar, click “API” at the left and find
+    two items: 1. Your “URL”, under “Project URL”. 2. Your `anon``public` key,
+    under “Project API key”. Make a note of these, or add them as environment
+    variables in your project.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/supabase-get-credentials.png"
+        alt="Create your table schema"
+        width={2053}
+        height={972}
+      />
+    </Figure>
+  </StepContent>
+</Step>
 
   <Step lastStep>
     <StepTitle>Database ready!</StepTitle>

@@ -706,13 +706,10 @@ const unsubscribe = room.subscribe("storage-status", (status) => {
 
 ### Room.batch
 
-Batches modifications made during the given function.
-
-All the modifications are sent to other clients in a single message.
-
-All the subscribers are called only after the batch is over.
-
-All the modifications are merged in a single history item (undo/redo).
+Batches Storage and Presence modifications made during the given function. Each
+modification is grouped together, which means that other clients receive the
+changes as a single message after the batch function has run. Every modification
+made during the batch is merged into a single history item (undo/redo).
 
 ```ts
 const { root } = await room.getStorage();
@@ -720,6 +717,16 @@ room.batch(() => {
   root.set("x", 0);
   room.updatePresence({ cursor: { x: 100, y: 100 } });
 });
+```
+
+Note that `room.batch` cannot take an `async` function.
+
+```tsx
+// ❌ Won't work
+room.batch(async () => /* ... */);
+
+// ✅ Will work
+room.batch(() => /*... */);
 ```
 
 ### Room.history

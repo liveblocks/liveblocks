@@ -62,9 +62,10 @@ We’d love to hear from you.
           initialPresence: {},
         });
 
-        // Set up Yjs document, shared text, and Liveblocks Yjs provider
+        // Set up Yjs document, shared text, undo manager, and Liveblocks Yjs provider
         const yDoc = new Y.Doc();
         const yText = yDoc.getText("codemirror");
+        const undoManager = new Y.UndoManager(yText);
         const yProvider = new LiveblocksProvider(room, yDoc);
 
         // Set up CodeMirror and extensions
@@ -73,7 +74,7 @@ We’d love to hear from you.
           extensions: [
             basicSetup,
             javascript(),
-            yCollab(ytext, yProvider.awareness, { undoManager }),
+            yCollab(yText, yProvider.awareness, { undoManager }),
           ],
         });
 

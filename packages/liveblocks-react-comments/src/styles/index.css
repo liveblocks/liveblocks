@@ -993,10 +993,6 @@
   &:where(:last-of-type) {
     padding-block-end: var(--lb-spacing);
 
-    :where(.lb-comment-body) {
-      margin-block-end: calc(0.25 * var(--lb-spacing));
-    }
-
     &:where(.lb-comment\:indent-content) {
       min-block-size: calc(
         var(--lb-comment-avatar-size) + 1.75 * var(--lb-spacing)
@@ -1112,7 +1108,8 @@
     .lb-dropdown,
     .lb-emoji-picker,
     .lb-quick-emoji-picker,
-    .lb-tooltip:where([data-state="delayed-open"])
+    .lb-tooltip:where([data-state="delayed-open"]),
+    .lb-composer-suggestions
   ) {
   &:where([data-side="top"]) {
     animation-name: lb-animation-slide-up;
@@ -1123,22 +1120,15 @@
   }
 }
 
-:is(.lb-dropdown, .lb-emoji-picker, .lb-quick-emoji-picker, .lb-tooltip) {
+:is(
+    .lb-dropdown,
+    .lb-emoji-picker,
+    .lb-quick-emoji-picker,
+    .lb-tooltip,
+    .lb-composer-suggestions
+  ) {
   &:where([data-state="closed"]) {
     animation-name: lb-animation-disappear;
-  }
-}
-
-/**
- * TODO: Support exit animations like Radix' Dropdown and Tooltip with data-state="closed"
- */
-.lb-composer-suggestions {
-  &:where([data-side="top"]) {
-    animation-name: lb-animation-slide-up;
-  }
-
-  &:where([data-side="bottom"]) {
-    animation-name: lb-animation-slide-down;
   }
 }
 
@@ -1147,7 +1137,7 @@
   .lb-emoji-picker:where(:not([data-state="closed"])),
   .lb-quick-emoji-picker:where(:not([data-state="closed"])),
   .lb-tooltip:where([data-state="delayed-open"]:not([data-state="closed"])),
-  .lb-composer-suggestions {
+  .lb-composer-suggestions:where(:not([data-state="closed"])) {
     animation-name: lb-animation-appear;
   }
 }

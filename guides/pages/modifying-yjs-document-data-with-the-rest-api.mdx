@@ -7,19 +7,24 @@ meta:
 
 Liveblocks allows you to update your Yjs document data, or `yDoc`, from the REST
 API, helpful for sending updates from the server. This is made possible through
-the
-[Send a binary Yjs update API](/docs/api-reference/rest-api-endpoints#put-rooms-roomId-ydoc).
+[`Liveblocks.sendYjsBinaryUpdate`](/docs/api-reference/liveblocks-node#put-rooms-roomId-ydoc)
+in [`@liveblocks/node`](/docs/api-reference/liveblocks-node).
 
 ## Updating a Yjs document
 
 Updating a Yjs document requires you to create a
 [binary update](https://docs.yjs.dev/api/document-updates), before sending it to
-the REST API. Here’s an example in a serverless endpoint.
+Liveblocks using
+[`Liveblocks.sendYjsBinaryUpdate`](/docs/api-reference/liveblocks-node#put-rooms-roomId-ydoc).
+Here’s an example in a serverless endpoint.
 
 ```ts
 import * as Y from "yjs";
+import { Liveblocks } from "@liveblocks/node";
 
-const SECRET_KEY = "{{SECRET_KEY}}";
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
 const roomId = "my-room-name";
 
 export async function POST() {
@@ -27,34 +32,41 @@ export async function POST() {
   const yDoc = new Y.Doc();
 
   // Create your data structures and make your update
+  // Each editor is different, you probably need to change these two lines
   const yText = yDoc.getText("text");
   yText.insert(0, "Hello world");
 
-  // Encode the document state as an update message
+  // Encode the document state as an update
   const yUpdate = Y.encodeStateAsUpdate(yDoc);
 
   // Insert the update
-  await fetch(`https://api.liveblocks.io/v2/rooms/${roomId}/ydoc`, {
-    method: "PUT",
-    headers: {
-      "Authorization:": `Bearer ${SECRET_KEY}`,
-    },
-    body: yUpdate,
-  });
+  await liveblocks.sendYjsBinaryUpdate(roomId, yUpdate);
 }
+```
+
+Note that if you’re using a text editor,
+[each one works differently](#each-editor-works-differently), so you’ll most
+likely need to modify these two lines to use a format your editor defines.
+
+```ts
+const yText = yDoc.getText("text");
+yText.insert(0, "Hello world");
 ```
 
 ## Initializing a Yjs document
 
 It’s also possible to create a new room with an initial Yjs document. To do
-this, call the
-[Create room API](/docs/api-reference/rest-api-endpoints#post-rooms), then send
-the update as before.
+this, call
+[`Liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms), then
+send the update as before.
 
-```ts highlight="17-27"
+```ts highlight="21-24"
 import * as Y from "yjs";
+import { Liveblocks } from "@liveblocks/node";
 
-const SECRET_KEY = "{{SECRET_KEY}}";
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
 const roomId = "my-room-name";
 
 export async function POST() {
@@ -62,46 +74,43 @@ export async function POST() {
   const yDoc = new Y.Doc();
 
   // Create your data structures and make your update
+  // Each editor is different, you probably need to change these two lines
   const yText = yDoc.getText("text");
   yText.insert(0, "Hello world");
 
-  // Encode the document state as an update message
+  // Encode the document state as an update
   const yUpdate = Y.encodeStateAsUpdate(yDoc);
 
   // Create the new room
-  await fetch(`https://api.liveblocks.io/v2/rooms/`, {
-    method: "POST",
-    headers: {
-      "Authorization:": `Bearer ${SECRET_KEY}`,
-    },
-    body: JSON.stringify({
-      id: roomId,
-      defaultAccesses: ["room:write"],
-    }),
+  const room = await liveblocks.createRoom(roomId, {
+    defaultAccesses: ["room:write"],
   });
 
   // Initialize the Yjs document with the update
-  await fetch(`https://api.liveblocks.io/v2/rooms/${roomId}/ydoc`, {
-    method: "PUT",
-    headers: {
-      "Authorization:": `Bearer ${SECRET_KEY}`,
-    },
-    body: yUpdate,
-  });
+  await liveblocks.sendYjsBinaryUpdate(roomId, yUpdate);
 }
 ```
 
-## Each editor works differently
+## Each editor works differently [#each-editor-works-differently]
 
 Note that each text and code editor may work differently, and may include
-specific functions for creating binary updates. For example, this is how to
-initialize a [Slate](/docs/get-started/yjs-slate-react) document:
+specific functions for creating binary updates, or use different shared types.
+Slate and Tiptap use
+[`Y.XmlFragment`](https://docs.yjs.dev/api/shared-types/y.xmlfragment) instead
+of [`Y.Text`](https://docs.yjs.dev/api/shared-types/y.text).
 
-```ts highlight="2,11-15,17-19"
+### Slate
+
+This is how to initialize a [Slate](/docs/get-started/yjs-slate-react) document.
+
+```ts highlight="3,14-18,20-22"
 import * as Y from "yjs";
+import { Liveblocks } from "@liveblocks/node";
 import { slateNodesToInsertDelta } from "@slate-yjs/core";
 
-const SECRET_KEY = "{{SECRET_KEY}}";
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
 const roomId = "my-room-name";
 
 export async function POST() {
@@ -118,28 +127,54 @@ export async function POST() {
   const insertDelta = slateNodesToInsertDelta(slateDoc);
   (yDoc.get("content", Y.XmlText) as Y.XmlText).applyDelta(insertDelta);
 
+  // Encode the document state as an update
+  const yUpdate = Y.encodeStateAsUpdate(yDoc);
+
+  // Create the new room
+  const room = await liveblocks.createRoom(roomId, {
+    defaultAccesses: ["room:write"],
+  });
+
+  // Initialize the Yjs document with the update
+  await liveblocks.sendYjsBinaryUpdate(roomId, yUpdate);
+}
+```
+
+### Tiptap
+
+This is how to initialize a
+[Tiptap](https://tiptap.dev/docs/editor/api/extensions/collaboration) document.
+
+```ts highlight="13-15,17-19"
+import * as Y from "yjs";
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+const roomId = "my-room-name";
+
+export async function POST() {
+  // Create a Yjs document
+  const yDoc = new Y.Doc();
+
+  // The Tiptap Yjs state we're creating
+  const yXmlElement = new Y.XmlElement("paragraph");
+  yXmlElement.insert(0, [new Y.XmlText("Hello world")]);
+
+  // Create your data structures and make your update
+  const yXmlFragment = yDoc.getXmlFragment("default");
+  yXmlFragment.insert(0, [yXmlElement]);
+
   // Encode the document state as an update message
   const yUpdate = Y.encodeStateAsUpdate(yDoc);
 
   // Create the new room
-  await fetch(`https://api.liveblocks.io/v2/rooms/`, {
-    method: "POST",
-    headers: {
-      "Authorization:": `Bearer ${SECRET_KEY}`,
-    },
-    body: JSON.stringify({
-      id: roomId,
-      defaultAccesses: ["room:write"],
-    }),
+  const room = await liveblocks.createRoom(roomId, {
+    defaultAccesses: ["room:write"],
   });
 
   // Initialize the Yjs document with the update
-  await fetch(`https://api.liveblocks.io/v2/rooms/${roomId}/ydoc`, {
-    method: "PUT",
-    headers: {
-      "Authorization:": `Bearer ${SECRET_KEY}`,
-    },
-    body: yUpdate,
-  });
+  await liveblocks.sendYjsBinaryUpdate(roomId, yUpdate);
 }
 ```

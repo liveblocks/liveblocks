@@ -4,12 +4,23 @@
  * @liveblocks/core has browser-specific code.
  */
 import type {
+  BaseMetadata,
+  CommentBody,
   CommentData,
+  CommentDataPlain,
+  CommentUserReaction,
+  CommentUserReactionPlain,
   IUserInfo,
   Json,
   JsonObject,
   PlainLsonObject,
   ThreadData,
+  ThreadDataPlain,
+} from "@liveblocks/core";
+import {
+  convertToCommentData,
+  convertToCommentUserReaction,
+  convertToThreadData,
 } from "@liveblocks/core";
 
 import { Session } from "./Session";
@@ -37,6 +48,14 @@ export type LiveblocksOptions = {
    * useful for Liveblocks developers. Not for end users.
    */
   baseUrl?: string;
+};
+
+type Nullable<T> = {
+  [P in keyof T]: T[P] | null;
+};
+
+type DateToString<T> = {
+  [P in keyof T]: T[P] extends Date ? string : T[P];
 };
 
 export type CreateSessionOptions = {
@@ -79,10 +98,7 @@ export type RoomInfo = {
   createdAt?: Date;
 };
 
-type RoomInfoOriginal = Omit<RoomInfo, "lastConnectionAt" | "createdAt"> & {
-  lastConnectionAt?: string;
-  createdAt?: string;
-};
+type RoomInfoPlain = DateToString<RoomInfo>;
 
 export type RoomUser<Info> = {
   type: "user";
@@ -100,10 +116,7 @@ export type Schema = {
   updatedAt: Date;
 };
 
-type SchemaOriginal = Omit<Schema, "createdAt" | "updatedAt"> & {
-  createdAt: string;
-  updatedAt: string;
-};
+type SchemaPlain = DateToString<Schema>;
 
 /**
  * Interact with the Liveblocks API from your Node.js backend.
@@ -149,12 +162,25 @@ export class Liveblocks {
       "Content-Type": "application/json",
     };
     const fetch = await fetchPolyfill();
-    const res = await fetch(url, {
+    return await fetch(url, {
       method: "PUT",
       headers,
       body: JSON.stringify(json),
     });
-    return res;
+  }
+
+  /** @internal */
+  private async putBinary(
+    path: URLSafeString,
+    body: Uint8Array
+  ): Promise<Response> {
+    const url = urljoin(this._baseUrl, path);
+    const headers = {
+      Authorization: `Bearer ${this._secret}`,
+      "Content-Type": "application/octet-stream",
+    };
+    const fetch = await fetchPolyfill();
+    return await fetch(url, { method: "PUT", headers, body });
   }
 
   /** @internal */
@@ -321,9 +347,14 @@ export class Liveblocks {
 
     const res = await this.get(path, queryParams);
 
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
     const data = (await res.json()) as {
       nextPage: string | null;
-      data: RoomInfoOriginal[];
+      data: RoomInfoPlain[];
     };
 
     const rooms = data.data.map((room) => {
@@ -380,7 +411,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    const data = (await res.json()) as RoomInfoOriginal;
+    const data = (await res.json()) as RoomInfoPlain;
 
     // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
     const lastConnectionAt = data.lastConnectionAt
@@ -409,7 +440,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    const data = (await res.json()) as RoomInfoOriginal;
+    const data = (await res.json()) as RoomInfoPlain;
 
     // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
     const lastConnectionAt = data.lastConnectionAt
@@ -464,7 +495,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    const data = (await res.json()) as RoomInfoOriginal;
+    const data = (await res.json()) as RoomInfoPlain;
 
     // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
     const lastConnectionAt = data.lastConnectionAt
@@ -646,18 +677,13 @@ export class Liveblocks {
   /**
    * Send a Yjs binary update to the room’s Yjs document. You can use this endpoint to initialize Yjs data for the room or to update the room’s Yjs document.
    * @param roomId The id of the room to send the Yjs binary update to.
-   * @param params The Yjs binary update to send. Read the [Yjs documentation](https://docs.yjs.dev/api/document-updates) to learn how to create a binary update.
+   * @param update The Yjs update to send. Typically the result of calling `Yjs.encodeStateAsUpdate(doc)`. Read the [Yjs documentation](https://docs.yjs.dev/api/document-updates) to learn how to create a binary update.
    */
   public async sendYjsBinaryUpdate(
     roomId: string,
-    params: {
-      update: string;
-    }
+    update: Uint8Array
   ): Promise<void> {
-    const { update } = params;
-    const res = await this.put(url`/v2/rooms/${roomId}/ydoc`, {
-      update,
-    });
+    const res = await this.putBinary(url`/v2/rooms/${roomId}/ydoc`, update);
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -700,7 +726,7 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
-    const data = (await res.json()) as SchemaOriginal;
+    const data = (await res.json()) as SchemaPlain;
 
     // Convert createdAt and updatedAt from ISO date strings to Date objects
     const createdAt = new Date(data.createdAt);
@@ -724,7 +750,7 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
-    const data = (await res.json()) as SchemaOriginal;
+    const data = (await res.json()) as SchemaPlain;
 
     // Convert createdAt and updatedAt from ISO date strings to Date objects
     const createdAt = new Date(data.createdAt);
@@ -752,7 +778,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    const data = (await res.json()) as SchemaOriginal;
+    const data = (await res.json()) as SchemaPlain;
 
     // Convert createdAt and updatedAt from ISO date strings to Date objects
     const createdAt = new Date(data.createdAt);
@@ -789,7 +815,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    const data = (await res.json()) as SchemaOriginal;
+    const data = (await res.json()) as SchemaPlain;
 
     // Convert createdAt and updatedAt from ISO date strings to Date objects
     const createdAt = new Date(data.createdAt);
@@ -850,12 +876,17 @@ export class Liveblocks {
   }): Promise<{ data: ThreadData[] }> {
     const { roomId } = params;
 
-    const res = await this.get(url`/v2/rooms/${roomId}/threads`);
+    const res = await this.get(url`/v2/rooms/${roomId}/threads`, {
+      "metadata.resolved": "false",
+    });
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
-    return (await res.json()) as Promise<{ data: ThreadData[] }>;
+    const { data } = (await res.json()) as { data: ThreadDataPlain[] };
+    return {
+      data: data.map((thread) => convertToThreadData(thread)),
+    };
   }
 
   /**
@@ -865,10 +896,10 @@ export class Liveblocks {
    * @param params.threadId The thread ID.
    * @returns A thread.
    */
-  public async getThread(params: {
+  public async getThread<TThreadMetadata extends BaseMetadata = never>(params: {
     roomId: string;
     threadId: string;
-  }): Promise<ThreadData> {
+  }): Promise<ThreadData<TThreadMetadata>> {
     const { roomId, threadId } = params;
 
     const res = await this.get(url`/v2/rooms/${roomId}/threads/${threadId}`);
@@ -876,7 +907,9 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
-    return (await res.json()) as Promise<ThreadData>;
+    return convertToThreadData(
+      (await res.json()) as ThreadDataPlain<TThreadMetadata>
+    );
   }
 
   /**
@@ -927,7 +960,255 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
-    return (await res.json()) as Promise<CommentData>;
+    return convertToCommentData((await res.json()) as CommentDataPlain);
+  }
+
+  /**
+   * Creates a comment.
+   *
+   * @param params.roomId The room ID to create the comment in.
+   * @param params.threadId The thread ID to create the comment in.
+   * @param params.data.userId The user ID of the user who is set to create the comment.
+   * @param params.data.createdAt (optional) The date the comment is set to be created.
+   * @param params.data.body The body of the comment.
+   * @returns The created comment.
+   */
+  public async createComment(params: {
+    roomId: string;
+    threadId: string;
+    data: {
+      userId: string;
+      createdAt?: Date;
+      body: CommentBody;
+    };
+  }): Promise<CommentData> {
+    const { roomId, threadId, data } = params;
+
+    const res = await this.post(
+      url`/v2/rooms/${roomId}/threads/${threadId}/comments`,
+      {
+        ...data,
+        createdAt: data.createdAt?.toISOString(),
+      }
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+    return convertToCommentData((await res.json()) as CommentDataPlain);
+  }
+
+  /**
+   * Edits a comment.
+   * @param params.roomId The room ID to edit the comment in.
+   * @param params.threadId The thread ID to edit the comment in.
+   * @param params.commentId The comment ID to edit.
+   * @param params.data.body The body of the comment.
+   * @param params.data.editedAt (optional) The date the comment was edited.
+   * @returns The edited comment.
+   */
+  public async editComment(params: {
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    data: {
+      body: CommentBody;
+      editedAt?: Date;
+    };
+  }): Promise<CommentData> {
+    const { roomId, threadId, commentId, data } = params;
+
+    const res = await this.post(
+      url`/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`,
+      {
+        ...data,
+        editedAt: data.editedAt?.toISOString(),
+      }
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    return convertToCommentData((await res.json()) as CommentDataPlain);
+  }
+
+  /**
+   * Deletes a comment. Deletes a comment. If there are no remaining comments in the thread, the thread is also deleted.
+   * @param params.roomId The room ID to delete the comment in.
+   * @param params.threadId The thread ID to delete the comment in.
+   * @param params.commentId The comment ID to delete.
+   */
+  public async deleteComment(params: {
+    roomId: string;
+    threadId: string;
+    commentId: string;
+  }): Promise<void> {
+    const { roomId, threadId, commentId } = params;
+
+    const res = await this.delete(
+      url`/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+  }
+
+  /**
+   * Creates a new thread. The thread will be created with the specified comment as its first comment.
+   * If the thread already exists, a `LiveblocksError` will be thrown with status code 409.
+   * @param params.roomId The room ID to create the thread in.
+   * @param params.thread.metadata (optional) The metadata for the thread. Supports upto a maximum of 10 entries. Value must be a string, boolean or number
+   * @param params.thread.comment.userId The user ID of the user who created the comment.
+   * @param params.thread.comment.createdAt (optional) The date the comment was created.
+   * @param params.thread.comment.body The body of the comment.
+   * @returns The created thread. The thread will be created with the specified comment as its first comment.
+   */
+  public async createThread<
+    TThreadMetadata extends BaseMetadata = never,
+  >(params: {
+    roomId: string;
+    data: {
+      metadata?: [TThreadMetadata] extends [never]
+        ? Record<string, never>
+        : TThreadMetadata;
+      comment: {
+        userId: string;
+        createdAt?: Date;
+        body: CommentBody;
+      };
+    };
+  }): Promise<ThreadData<TThreadMetadata>> {
+    const { roomId, data } = params;
+
+    const res = await this.post(url`/v2/rooms/${roomId}/threads`, {
+      ...data,
+      comment: {
+        ...data.comment,
+        createdAt: data.comment.createdAt?.toISOString(),
+      },
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    return convertToThreadData(
+      (await res.json()) as ThreadDataPlain<TThreadMetadata>
+    );
+  }
+
+  /**
+   * Updates the metadata of the specified thread in a room.
+   * @param params.roomId The room ID to update the thread in.
+   * @param params.threadId The thread ID to update.
+   * @param params.data.metadata The metadata for the thread. Value must be a string, boolean or number
+   * @param params.data.userId The user ID of the user who updated the thread.
+   * @param params.data.updatedAt (optional) The date the thread is set to be updated.
+   * @returns The updated thread.
+   */
+  public async editThreadMetadata<
+    TThreadMetadata extends BaseMetadata = never,
+  >(params: {
+    roomId: string;
+    threadId: string;
+    data: {
+      metadata: Nullable<BaseMetadata>;
+      userId: string;
+      updatedAt?: Date;
+    };
+  }): Promise<TThreadMetadata> {
+    const { roomId, threadId, data } = params;
+
+    const res = await this.post(
+      url`/v2/rooms/${roomId}/threads/${threadId}/metadata`,
+      {
+        ...data,
+        updatedAt: data.updatedAt?.toISOString(),
+      }
+    );
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    return (await res.json()) as TThreadMetadata;
+  }
+
+  /**
+   * Adds a new comment reaction to a comment.
+   * @param params.roomId The room ID to add the comment reaction in.
+   * @param params.threadId The thread ID to add the comment reaction in.
+   * @param params.commentId The comment ID to add the reaction in.
+   * @param params.data.emoji The (emoji) reaction to add.
+   * @param params.data.userId The user ID of the user associated with the reaction.
+   * @param params.data.createdAt (optional) The date the reaction is set to be created.
+   * @returns The created comment reaction.
+   */
+  public async addCommentReaction(params: {
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    data: {
+      emoji: string;
+      userId: string;
+      createdAt?: Date;
+    };
+  }): Promise<CommentUserReaction> {
+    const { roomId, threadId, commentId, data } = params;
+    const res = await this.post(
+      url`/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}/add-reaction`,
+      {
+        ...data,
+        createdAt: data.createdAt?.toISOString(),
+      }
+    );
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    const reaction = (await res.json()) as CommentUserReactionPlain;
+    return convertToCommentUserReaction(reaction);
+  }
+
+  /**
+   * Removes a reaction from a comment.
+   * @param params.roomId The room ID to remove the comment reaction from.
+   * @param params.threadId The thread ID to remove the comment reaction from.
+   * @param params.commentId The comment ID to remove the reaction from.
+   * @param params.data.emoji The (emoji) reaction to remove.
+   * @param params.data.userId The user ID of the user associated with the reaction.
+   * @param params.data.removedAt (optional) The date the reaction is set to be removed.
+   */
+  public async removeCommentReaction(params: {
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    data: {
+      emoji: string;
+      userId: string;
+      removedAt?: Date;
+    };
+  }): Promise<void> {
+    const { roomId, threadId, data } = params;
+
+    const res = await this.post(
+      url`/v2/rooms/${roomId}/threads/${threadId}/comments/${params.commentId}/remove-reaction`,
+      {
+        ...data,
+        removedAt: data.removedAt?.toISOString(),
+      }
+    );
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
   }
 }
 

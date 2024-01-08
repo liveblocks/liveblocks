@@ -12,6 +12,9 @@ function MyApp({ Component, pageProps }: AppProps) {
 
   return (
     <React.StrictMode>
+      <div style={{ float: "right", fontSize: 10, color: "gray" }}>
+        Server: {process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
+      </div>
       <Component {...pageProps} />
     </React.StrictMode>
   );

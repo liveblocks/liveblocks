@@ -18,13 +18,16 @@ usage () {
     err
     err "Options:"
     err "-c    Create Git commit with these changes (intended to be removed later)"
+    err "-f    Proceed even if there are uncommitted Git changes"
     err "-h    Show this help"
 }
 
 commit=0
-while getopts ch flag; do
+force=0
+while getopts cfh flag; do
     case "$flag" in
         c) commit=1 ;;
+        f) force=1 ;;
         *) usage; exit 2;;
     esac
 done
@@ -36,7 +39,9 @@ if [[ "$reldir" != "examples/"* || ! -f ../../package.json ]]; then
 fi
 
 # Step 1: First make sure there are no local changes in the worktree
-git is-clean -v
+if [ "$force" -ne 1 ]; then
+  git is-clean -v
+fi
 
 # Step 2: Wipe local example's node_modules and package-lock. We're going to
 # make it a workspace project after all, and those don't have them

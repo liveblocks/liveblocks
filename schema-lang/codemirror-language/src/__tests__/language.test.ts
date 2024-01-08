@@ -33,9 +33,9 @@ function declareJestTest(filename: string) {
   return /\bskip\b/i.test(basename)
     ? it.skip
     : /\bfail\b/i.test(basename)
-    ? it.failing
-    : // TODO: Improve syntax.grammar and enable tests again
-      it.skip;
+      ? it.failing
+      : // TODO: Improve syntax.grammar and enable tests again
+        it.skip;
 }
 
 type TestSrc = readonly [string, string, string];

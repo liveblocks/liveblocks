@@ -279,8 +279,8 @@ function log(level: LogLevel, message: string) {
     level === LogLevel.ERROR
       ? console.error
       : level === LogLevel.WARN
-      ? console.warn
-      : /* black hole */ () => {};
+        ? console.warn
+        : /* black hole */ () => {};
   return () => {
     logger(message);
   };

@@ -20,7 +20,7 @@ describe("useRevalidation", () => {
     const manager = createCacheManager<number>();
     renderHook(() => useRevalidateCache(manager, mockFetcher));
 
-    expect(manager.cache).toBeUndefined();
+    expect(manager.getCache()).toBeUndefined();
   });
 
   test("should update the cache on successful revalidation", async () => {
@@ -32,9 +32,9 @@ describe("useRevalidation", () => {
     );
     const revalidateCache = result.current;
 
-    await act(() => revalidateCache(true));
+    await act(() => revalidateCache({ shouldDedupe: true }));
 
-    expect(manager.cache).toEqual({ isLoading: false, data: 42 });
+    expect(manager.getCache()).toEqual(42);
   });
 
   test("should update the cache with an error on failed revalidation", async () => {
@@ -46,12 +46,9 @@ describe("useRevalidation", () => {
     );
     const revalidateCache = result.current;
 
-    await act(() => revalidateCache(true));
+    await act(() => revalidateCache({ shouldDedupe: true }));
 
-    expect(manager.cache).toEqual({
-      isLoading: false,
-      error: new Error("Fetch failed"),
-    });
+    expect(manager.getError()).toEqual(new Error("Fetch failed"));
   });
 
   test("should dedupe multiple revalidations within the deduping interval", () => {
@@ -64,8 +61,8 @@ describe("useRevalidation", () => {
     );
     const revalidateCache = result.current;
 
-    act(() => revalidateCache(true));
-    act(() => revalidateCache(true));
+    act(() => revalidateCache({ shouldDedupe: true }));
+    act(() => revalidateCache({ shouldDedupe: true }));
 
     jest.advanceTimersByTime(1000); // within deduping interval
     expect(mockFetcher).toHaveBeenCalledTimes(1);

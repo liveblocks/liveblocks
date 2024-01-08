@@ -119,8 +119,8 @@ export function cloneLson<L extends Lson | undefined>(value: L): L {
   return value === undefined
     ? (undefined as L)
     : isLiveStructure(value)
-    ? (value.clone() as L)
-    : (deepClone(value) as L);
+      ? (value.clone() as L)
+      : (deepClone(value) as L);
 }
 
 export function liveNodeToLson(obj: LiveNode): Lson {

@@ -4,10 +4,10 @@ const g = (
   typeof globalThis !== "undefined"
     ? globalThis
     : typeof window !== "undefined"
-    ? window
-    : typeof global !== "undefined"
-    ? global
-    : {}
+      ? window
+      : typeof global !== "undefined"
+        ? global
+        : {}
 ) as { [key: symbol]: string };
 
 const crossLinkedDocs = "https://liveblocks.io/docs/errors/cross-linked";

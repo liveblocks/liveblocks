@@ -1,9 +1,34 @@
-# v1.8.3 (Unreleased)
+# v1.9.2
+
+### `@liveblocks/react-comments`
+
+- Add `portalContainer` prop to `CommentsConfig` to customize where floating
+  elements (e.g. tooltips, dropdowns, etc) are portaled into.
+
+# v1.9.1
 
 ### `@liveblocks/node`
 
-- Fixes the return type of `getActiveUsers` to match the data returned from the
+- Fixes the signature and behavior of the `Liveblocks.sendYjsBinaryUpdate()`
+  API. It now takes a Yjs encoded update (`Uint8Array`) directly.
+
+# v1.9.0
+
+### `@liveblocks/node`
+
+- Add the Comments write REST APIs as fully typed methods. (includes
+  `createThread`, `editThreadMetadata`, `createComment`, `editComment`,
+  `deleteComment`, `addCommentReaction`, and `removeCommentReaction` methods)
+- Fix the return type of `getActiveUsers` to match the data returned from the
   endpoint.
+
+### `@liveblocks/react`
+
+- Add `query` option to `useThreads` to filter threads based on their metadata.
+
+### `@liveblocks/react-comments`
+
+- Add support for exit animations to `ComposerSuggestions`.
 
 # v1.8.2
 

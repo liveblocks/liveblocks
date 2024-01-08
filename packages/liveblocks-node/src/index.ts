@@ -47,6 +47,7 @@ export type {
   CommentBodyText,
   CommentBodyTextElementArgs,
   CommentData,
+  CommentUserReaction,
   IUserInfo,
   Json,
   JsonArray,

@@ -138,7 +138,7 @@ const comment: CommentData = {
   threadId: "th_1",
   roomId: "room",
   userId: "user",
-  createdAt: "2023-08-14T12:41:50.243Z",
+  createdAt: new Date("2023-08-14T12:41:50.243Z"),
   reactions: [],
   body: {
     version: 1,
@@ -196,8 +196,8 @@ const editedComment: CommentData = {
   threadId: "th_1",
   roomId: "room",
   userId: "user",
-  createdAt: "2023-08-14T12:41:50.243Z",
-  editedAt: "2023-08-14T12:41:50.243Z",
+  createdAt: new Date("2023-08-14T12:41:50.243Z"),
+  editedAt: new Date("2023-08-14T12:41:50.243Z"),
   reactions: [],
   body: {
     version: 1,
@@ -221,17 +221,17 @@ const deletedComment: CommentData = {
   roomId: "room",
   userId: "user",
   reactions: [],
-  createdAt: "2023-08-14T12:41:50.243Z",
-  editedAt: "2023-08-14T12:41:50.243Z",
-  deletedAt: "2023-08-14T12:41:50.243Z",
+  createdAt: new Date("2023-08-14T12:41:50.243Z"),
+  editedAt: new Date("2023-08-14T12:41:50.243Z"),
+  deletedAt: new Date("2023-08-14T12:41:50.243Z"),
 };
 
 const thread: ThreadData = {
   type: "thread",
   id: "th_1",
   roomId: "room",
-  createdAt: "2023-08-14T12:41:50.243Z",
-  updatedAt: "2023-08-14T12:41:50.243Z",
+  createdAt: new Date("2023-08-14T12:41:50.243Z"),
+  updatedAt: new Date("2023-08-14T12:41:50.243Z"),
   comments: [comment, editedComment, deletedComment],
   metadata: {},
 };

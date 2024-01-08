@@ -1,13 +1,12 @@
 import type { CommentBody } from "./CommentBody";
-
-type CommentReactionUser = {
-  id: string;
-};
+import type { DateToString } from "./DateToString";
 
 export type CommentReaction = {
   emoji: string;
-  createdAt: string;
-  users: CommentReactionUser[];
+  createdAt: Date;
+  users: {
+    id: string;
+  }[];
 };
 
 /**
@@ -19,10 +18,20 @@ export type CommentData = {
   threadId: string;
   roomId: string;
   userId: string;
-  createdAt: string;
-  editedAt?: string;
+  createdAt: Date;
+  editedAt?: Date;
   reactions: CommentReaction[];
 } & (
   | { body: CommentBody; deletedAt?: never }
-  | { body?: never; deletedAt: string }
+  | { body?: never; deletedAt: Date }
 );
+
+export type CommentDataPlain = Omit<
+  DateToString<CommentData>,
+  "reaction" | "body"
+> & {
+  reactions: DateToString<CommentReaction[]>;
+} & (
+    | { body: CommentBody; deletedAt?: never }
+    | { body?: never; deletedAt: string }
+  );

@@ -4,7 +4,11 @@ import { render, renderHook } from "@testing-library/react";
 import type { ReactElement } from "react";
 import * as React from "react";
 
-import type { CacheManager } from "../comments/lib/revalidation";
+import type {
+  CacheManager,
+  MutationInfo,
+  RequestInfo,
+} from "../comments/lib/revalidation";
 import { RoomProvider } from "./_liveblocks.config";
 
 /**
@@ -53,10 +57,43 @@ function customRenderHook<Result, Props>(
 export function createCacheManager<Data>(
   initialCache?: Data | undefined
 ): CacheManager<Data> {
+  let cache: Data | undefined = initialCache; // Stores the current cache state
+  let request: RequestInfo<Data> | undefined; // Stores the currently active revalidation request
+  let error: Error | undefined; // Stores any error that occurred during the last revalidation request
+  let mutation: MutationInfo | undefined; // Stores the start and end time of the currently active mutation
+
   return {
-    cache: initialCache ? { isLoading: false, data: initialCache } : undefined,
-    request: undefined,
-    mutation: undefined,
+    // Cache
+    getCache() {
+      return cache;
+    },
+    setCache(value: Data) {
+      cache = value;
+    },
+
+    // Request
+    getRequest() {
+      return request;
+    },
+    setRequest(value: RequestInfo<Data> | undefined) {
+      request = value;
+    },
+
+    // Error
+    getError() {
+      return error;
+    },
+    setError(err: Error) {
+      error = err;
+    },
+
+    // Mutation
+    getMutation() {
+      return mutation;
+    },
+    setMutation(info: MutationInfo) {
+      mutation = info;
+    },
   };
 }
 
