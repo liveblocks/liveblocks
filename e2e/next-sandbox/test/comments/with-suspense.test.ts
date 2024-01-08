@@ -39,7 +39,7 @@ test.describe("Comments", () => {
     // Create a new thread on page1
     await page1.click("#create-thread");
 
-    // Verify that the number of threads on page1 is updated optimistically (and immediately)
+    // Verify that the number of threads on page1 is updated optimistically
     expectJson(page1, "#numOfThreads", n + 1);
 
     // Verify that the number of threads on both pages are updated
@@ -48,10 +48,10 @@ test.describe("Comments", () => {
     // Delete the newly created thread on page1
     await page1.click("#delete-comment");
 
-    // // Verify that the number of threads on page1 is updated optimistically (and immediately)
+    // // Verify that the number of threads on page1 is updated optimistically
     expectJson(page1, "#numOfThreads", n + 1 - 1);
 
-    // Verify that the number of threads on page2 is also updated (after comment websocket message is received)
+    // Verify that the number of threads on both pages are updated
     await waitForJson(pages, "#numOfThreads", n + 1 - 1, { timeout: 30_000 });
   });
 });

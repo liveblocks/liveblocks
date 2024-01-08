@@ -22,7 +22,7 @@ test.describe("Comments", () => {
 
   test.afterEach(() => Promise.all(pages.map((page) => page.close())));
 
-  test.skip("verify A and B display same number of threads after threads are loaded", async () => {
+  test("verify A and B display same number of threads after threads are loaded", async () => {
     await waitForJson(pages, "#isLoading", false, { timeout: 15_000 });
     await waitUntilEqualOnAllPages(pages, "#numOfThreads", { interval: 250 });
   });
@@ -39,7 +39,7 @@ test.describe("Comments", () => {
     // Create a new thread on page1
     await page1.click("#create-thread");
 
-    // Verify that the number of threads on page1 is updated optimistically (and immediately)
+    // Verify that the number of threads on page1 is updated optimistically
     expectJson(page1, "#numOfThreads", n + 1);
 
     // Verify that the number of threads on both pages are updated
@@ -48,10 +48,10 @@ test.describe("Comments", () => {
     // Delete the newly created thread on page1
     await page1.click("#delete-comment");
 
-    // // Verify that the number of threads on page1 is updated optimistically (and immediately)
+    // // Verify that the number of threads on page1 is updated optimistically
     expectJson(page1, "#numOfThreads", n + 1 - 1);
 
-    // Verify that the number of threads on page2 is also updated (after comment websocket message is received)
+    // Verify that the number of threads on both pages are updated
     await waitForJson(pages, "#numOfThreads", n + 1 - 1, { timeout: 30_000 });
   });
 });
