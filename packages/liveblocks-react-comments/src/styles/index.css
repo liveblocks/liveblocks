@@ -288,23 +288,6 @@
 }
 
 /*************************************
- *           Emoji pickers           *
- *************************************/
-
-.lb-emoji-picker-emoji,
-.lb-quick-emoji-picker-emoji {
-  all: unset;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden;
-  box-sizing: inherit;
-  aspect-ratio: 1;
-  padding: calc(0.375 * var(--lb-spacing));
-  text-align: center;
-}
-
-/*************************************
  *           Emoji picker            *
  *************************************/
 
@@ -418,15 +401,16 @@
 }
 
 .lb-emoji-picker-emoji {
-  border-radius: calc(var(--lb-radius) - 0.75 * $lb-emoji-picker-padding);
-}
-
-/*************************************
- *        Quick emoji picker         *
- *************************************/
-
-.lb-quick-emoji-picker {
+  all: unset;
   display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  box-sizing: inherit;
+  aspect-ratio: 1;
+  padding: calc(0.375 * var(--lb-spacing));
+  border-radius: calc(var(--lb-radius) - 0.75 * $lb-emoji-picker-padding);
+  text-align: center;
 }
 
 /*************************************
@@ -1066,8 +1050,7 @@
  *************************************/
 
 .lb-dropdown,
-.lb-composer-suggestions,
-.lb-quick-emoji-picker {
+.lb-composer-suggestions {
   padding: $lb-elevation-list-padding;
 }
 
@@ -1081,8 +1064,7 @@
 
 .lb-dropdown-item,
 .lb-composer-suggestions-list-item,
-.lb-emoji-picker-emoji,
-.lb-quick-emoji-picker-emoji {
+.lb-emoji-picker-emoji {
   border-radius: calc(var(--lb-radius) - 0.75 * $lb-elevation-list-padding);
   color: var(--lb-foreground-secondary);
   outline: none;
@@ -1102,16 +1084,6 @@
   }
 }
 
-/**
- * TODO: Unify with above when QuickEmojiPicker uses @radix-ui/react-dropdown-menu
- */
-.lb-quick-emoji-picker-emoji {
-  &:where(:enabled:hover, :enabled:focus-visible) {
-    background: var(--lb-foreground-subtle);
-    transition-duration: calc(var(--lb-transition-duration) / 2);
-  }
-}
-
 /*************************************
  *        Floating animations        *
  *************************************/
@@ -1119,8 +1091,7 @@
 .lb-dropdown,
 .lb-composer-suggestions,
 .lb-tooltip,
-.lb-emoji-picker,
-.lb-quick-emoji-picker {
+.lb-emoji-picker {
   animation-duration: var(--lb-transition-duration);
   animation-timing-function: var(--lb-transition-easing);
   will-change: transform, opacity;
@@ -1129,7 +1100,6 @@
 :is(
     .lb-dropdown,
     .lb-emoji-picker,
-    .lb-quick-emoji-picker,
     .lb-tooltip:where([data-state="delayed-open"]),
     .lb-composer-suggestions
   ) {
@@ -1142,13 +1112,7 @@
   }
 }
 
-:is(
-    .lb-dropdown,
-    .lb-emoji-picker,
-    .lb-quick-emoji-picker,
-    .lb-tooltip,
-    .lb-composer-suggestions
-  ) {
+:is(.lb-dropdown, .lb-emoji-picker, .lb-tooltip, .lb-composer-suggestions) {
   &:where([data-state="closed"]) {
     animation-name: lb-animation-disappear;
   }
@@ -1157,7 +1121,6 @@
 @media (prefers-reduced-motion) {
   .lb-dropdown:where(:not([data-state="closed"])),
   .lb-emoji-picker:where(:not([data-state="closed"])),
-  .lb-quick-emoji-picker:where(:not([data-state="closed"])),
   .lb-tooltip:where([data-state="delayed-open"]:not([data-state="closed"])),
   .lb-composer-suggestions:where(:not([data-state="closed"])) {
     animation-name: lb-animation-appear;
