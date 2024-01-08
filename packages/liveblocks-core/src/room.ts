@@ -1146,16 +1146,17 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     const response = await fetchCommentsApi(`/threads/${threadId}`);
 
     if (response.ok) {
-      const json = await (response.json() as Promise<{
-        thread: ThreadDataPlain<TThreadMetadata>;
-        inboxNotification?: PartialInboxNotificationDataPlain;
-      }>);
+      const json = await (response.json() as Promise<
+        ThreadDataPlain<TThreadMetadata> & {
+          inboxNotification?: PartialInboxNotificationDataPlain;
+        }
+      >);
       const inboxNotification = json.inboxNotification
         ? convertToPartialInboxNotificationData(json.inboxNotification)
         : undefined;
 
       return {
-        thread: convertToThreadData(json.thread),
+        thread: convertToThreadData(json),
         inboxNotification,
       };
     } else if (response.status === 404) {
