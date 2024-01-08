@@ -1,3 +1,14 @@
+# v1.9.3
+
+### `@liveblocks/react-comments`
+
+- Fix a bug that prevented comments from being be used across multiple rooms.
+
+### `@liveblocks/node`
+
+- Fix `getRooms()` not throwing `LiveblocksError` when invalid response was
+  received.
+
 # v1.9.2
 
 ### `@liveblocks/react-comments`
