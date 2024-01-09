@@ -175,8 +175,6 @@ export async function POST() {
   });
 
   // Initialize the Yjs document with the update
-  await liveblocks.sendYjsBinaryUpdate(roomId, {
-    update: yUpdate,
-  });
+  await liveblocks.sendYjsBinaryUpdate(roomId, yUpdate);
 }
 ```

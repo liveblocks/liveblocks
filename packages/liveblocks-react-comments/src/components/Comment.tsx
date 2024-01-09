@@ -518,7 +518,6 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                 root={false}
                 onComposerSubmit={handleEditSubmit}
                 defaultValue={comment.body}
-                placeholder={$.COMMENT_EDIT_COMPOSER_PLACEHOLDER}
                 autoFocus
                 showAttribution={false}
                 actions={

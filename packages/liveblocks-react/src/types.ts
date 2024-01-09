@@ -19,7 +19,6 @@ import type {
   RoomEventMessage,
   RoomInitializers,
   ThreadData,
-  ThreadsFilterOptions,
   ToImmutable,
 } from "@liveblocks/core";
 
@@ -32,6 +31,7 @@ import type {
   EditThreadMetadataOptions,
   ThreadsState,
   ThreadsStateSuccess,
+  UseThreadsOptions,
 } from "./comments/CommentsRoom";
 
 export type PromiseOrNot<T> = T | Promise<T>;
@@ -669,7 +669,7 @@ export type RoomContextBundle<
      * const { threads, error, isLoading } = useThreads();
      */
     useThreads(
-      options?: ThreadsFilterOptions<TThreadMetadata>
+      options?: UseThreadsOptions<TThreadMetadata>
     ): ThreadsState<TThreadMetadata>;
 
     /**
@@ -821,7 +821,7 @@ export type RoomContextBundle<
          * const { threads } = useThreads();
          */
         useThreads(
-          options?: ThreadsFilterOptions<TThreadMetadata>
+          options?: UseThreadsOptions<TThreadMetadata>
         ): ThreadsStateSuccess<TThreadMetadata>;
 
         /**
