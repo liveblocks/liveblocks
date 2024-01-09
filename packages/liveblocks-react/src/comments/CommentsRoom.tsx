@@ -409,7 +409,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
       return () => {
         manager.decrementReferenceCount(key);
       };
-    });
+    }, [manager, key]);
 
     const cache = _useThreads(room, options);
 
@@ -450,7 +450,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
       return () => {
         manager.decrementReferenceCount(key);
       };
-    });
+    }, [manager, key]);
 
     const cache = _useThreads(room, options);
 
