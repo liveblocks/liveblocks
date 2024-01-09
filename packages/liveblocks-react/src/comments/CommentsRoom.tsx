@@ -23,6 +23,7 @@ import React, {
   useEffect,
   useMemo,
 } from "react";
+import { useSyncExternalStore } from "use-sync-external-store/shim";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import {
@@ -40,10 +41,19 @@ import type {
   MutationInfo,
   RequestInfo,
 } from "./lib/revalidation";
-import { useMutate, useRevalidateCache } from "./lib/revalidation";
+import {
+  useAutomaticRevalidation,
+  useMutate,
+  useRevalidateCache,
+} from "./lib/revalidation";
+import useIsDocumentVisible from "./lib/use-is-document-visible";
+import useIsOnline from "./lib/use-is-online";
 
 const THREAD_ID_PREFIX = "th";
 const COMMENT_ID_PREFIX = "cm";
+
+export const POLLING_INTERVAL_REALTIME = 30000;
+export const POLLING_INTERVAL = 5000;
 
 type PartialNullable<T> = {
   [P in keyof T]?: T[P] | null | undefined;
@@ -211,6 +221,100 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
     const revalidateCache = useRevalidateCache(manager, fetcher);
 
+    const status = useSyncExternalStore(
+      room.events.status.subscribe,
+      room.getStatus,
+      room.getStatus
+    );
+
+    const isOnline = useIsOnline();
+    const isDocumentVisible = useIsDocumentVisible();
+
+    const refreshInterval = getPollingInterval(
+      isOnline,
+      isDocumentVisible,
+      status === "connected"
+    );
+
+    /**
+     * Periodically revalidate the cache. The revalidation is skipped if the browser is offline or if the document is not visible.
+     */
+    useEffect(() => {
+      let revalidationTimerId: number;
+
+      function scheduleRevalidation() {
+        if (refreshInterval === 0) return;
+
+        revalidationTimerId = window.setTimeout(() => {
+          // Only revalidate if the browser is online AND document is visible AND there are currently no errors AND there is at least one `useThreads` hook that is using the cache, otherwise schedule the next revalidation
+          if (
+            isOnline &&
+            isDocumentVisible &&
+            !manager.getError() &&
+            manager.getTotalReferenceCount() > 0
+          ) {
+            // Revalidate cache and then schedule the next revalidation
+            void revalidateCache({ shouldDedupe: true }).then(
+              scheduleRevalidation
+            );
+            return;
+          }
+
+          scheduleRevalidation();
+        }, refreshInterval);
+      }
+
+      // Schedule the first revalidation
+      scheduleRevalidation();
+
+      return () => {
+        window.clearTimeout(revalidationTimerId);
+      };
+    }, [
+      revalidateCache,
+      refreshInterval,
+      isOnline,
+      isDocumentVisible,
+      manager,
+    ]);
+
+    /**
+     * Subscribe to the 'online' event to trigger a revalidation when the browser comes back online.
+     * Note: There is a 'navigator.onLine' property that can be used to determine the online status of the browser, but it is not reliable (see https://bugs.chromium.org/p/chromium/issues/detail?id=678075).
+     */
+    useEffect(() => {
+      function handleIsOnline() {
+        if (isDocumentVisible) {
+          void revalidateCache({ shouldDedupe: true });
+        }
+      }
+
+      window.addEventListener("online", handleIsOnline);
+      return () => {
+        window.removeEventListener("online", handleIsOnline);
+      };
+    }, [revalidateCache, isDocumentVisible]);
+
+    /**
+     * Subscribe to visibility change events to trigger a revalidation when the document becomes visible.
+     */
+    useEffect(() => {
+      function handleVisibilityChange() {
+        const isVisible = document.visibilityState === "visible";
+        if (isVisible && isOnline) {
+          void revalidateCache({ shouldDedupe: true });
+        }
+      }
+
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+      return () => {
+        document.removeEventListener(
+          "visibilitychange",
+          handleVisibilityChange
+        );
+      };
+    }, [revalidateCache, isOnline]);
+
     useEffect(() => {
       const unsubscribe = room.events.comments.subscribe(() => {
         void revalidateCache({ shouldDedupe: false });
@@ -275,40 +379,39 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     return fetcher;
   }
 
-  function useThreads(
+  function _useThreads(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-    options: UseThreadsOptions<TThreadMetadata> = { query: { metadata: {} } }
+    options: GetThreadsOptions<TThreadMetadata>
   ): ThreadsState<TThreadMetadata> {
-    const key = useMemo(() => stringify(options), [options]);
     const manager = useRoomManager();
-
     const useThreadsRevalidationManager = getUseThreadsRevalidationManager(
       options,
       manager
     );
 
-    const fetcher = React.useCallback(
-      () => {
-        return room.getThreads(options);
-      },
-      // eslint-disable-next-line react-hooks/exhaustive-deps -- The missing dependency is `options` but `key` and `normalized` are analogous, so we only include `key` as dependency. This helps minimize the number of re-renders as `options` can change on each render
-      [key, room]
+    const fetcher = useThreadsFetcher();
+    const revalidateCache = useRevalidateCache(manager, fetcher);
+
+    const status = useSyncExternalStore(
+      room.events.status.subscribe,
+      room.getStatus,
+      room.getStatus
     );
 
-    const revalidateCache = useRevalidateCache(
-      useThreadsRevalidationManager,
-      fetcher
+    const isOnline = useIsOnline();
+    const isDocumentVisible = useIsDocumentVisible();
+
+    const interval = getPollingInterval(
+      isOnline,
+      isDocumentVisible,
+      status === "connected"
     );
 
-    useEffect(() => {
-      void revalidateCache({ shouldDedupe: true });
-    }, [revalidateCache]);
-
-    useEffect(() => {
-      manager.incrementReferenceCount(key);
-      return () => {
-        manager.decrementReferenceCount(key);
-      };
+    // Automatically revalidate the cache when the window gains focus or when the connection is restored. Also poll the server based on the connection status.
+    useAutomaticRevalidation(manager, revalidateCache, {
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      refreshInterval: interval,
     });
 
     return useSyncExternalStoreWithSelector(
@@ -348,6 +451,47 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     );
   }
 
+  function useThreads(
+    room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
+    options: UseThreadsOptions<TThreadMetadata> = { query: { metadata: {} } }
+  ): ThreadsState<TThreadMetadata> {
+    const key = useMemo(() => stringify(options), [options]);
+    const manager = useRoomManager();
+
+    const useThreadsRevalidationManager = getUseThreadsRevalidationManager(
+      options,
+      manager
+    );
+
+    const fetcher = React.useCallback(
+      () => {
+        return room.getThreads(options);
+      },
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- The missing dependency is `options` but `key` and `normalized` are analogous, so we only include `key` as dependency. This helps minimize the number of re-renders as `options` can change on each render
+      [key, room]
+    );
+
+    const revalidateCache = useRevalidateCache(
+      useThreadsRevalidationManager,
+      fetcher
+    );
+
+    useEffect(() => {
+      void revalidateCache({ shouldDedupe: true });
+    }, [revalidateCache]);
+
+    useEffect(() => {
+      manager.incrementReferenceCount(key);
+      return () => {
+        manager.decrementReferenceCount(key);
+      };
+    });
+
+    const cache = _useThreads(room, options);
+
+    return cache;
+  }
+
   function useThreadsSuspense(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
     options: UseThreadsOptions<TThreadMetadata> = { query: { metadata: {} } }
@@ -384,41 +528,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
       };
     });
 
-    const cache = useSyncExternalStoreWithSelector(
-      store.subscribe,
-      () => store.getThreads(),
-      () => store.getThreads(),
-      (state) => {
-        const isLoading = useThreadsRevalidationManager.getIsLoading();
-        if (isLoading) {
-          return {
-            isLoading: true,
-          };
-        }
-
-        const options = useThreadsRevalidationManager.getOptions();
-        const error = useThreadsRevalidationManager.getError();
-
-        // Filter the cache to only include threads that match the current query
-        const filtered = state.filter((thread) => {
-          if (thread.roomId !== room.id) return false;
-
-          const query = options.query ?? {};
-          for (const key in query.metadata) {
-            if (thread.metadata[key] !== query.metadata[key]) {
-              return false;
-            }
-          }
-          return true;
-        });
-
-        return {
-          isLoading: false,
-          threads: filtered,
-          error,
-        };
-      }
-    );
+    const cache = _useThreads(room, options);
 
     if (cache.error) {
       throw cache.error;
@@ -506,8 +616,8 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
           "metadata" in options ? options.metadata : ({} as TThreadMetadata);
         const threads = getThreads(manager);
 
-        const threadId = createOptimisticId(THREAD_ID_PREFIX);
-        const commentId = createOptimisticId(COMMENT_ID_PREFIX);
+        const threadId = createThreadId();
+        const commentId = createCommentId();
         const now = new Date();
 
         const newComment: CommentData = {
@@ -569,7 +679,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
       ({ threadId, body }: CreateCommentOptions): CommentData => {
         const threads = getThreads(manager);
 
-        const commentId = createOptimisticId(COMMENT_ID_PREFIX);
+        const commentId = createCommentId();
         const now = new Date();
 
         const comment: CommentData = {
@@ -919,6 +1029,14 @@ function createOptimisticId(prefix: string) {
   return `${prefix}_${nanoid()}`;
 }
 
+export function createThreadId() {
+  return createOptimisticId(THREAD_ID_PREFIX);
+}
+
+export function createCommentId() {
+  return createOptimisticId(COMMENT_ID_PREFIX);
+}
+
 function getCurrentUserId(
   room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
 ): string {
@@ -1056,6 +1174,13 @@ export function createRoomRevalidationManager<
       revalidationManagerByOptions.set(key, manager);
     },
 
+    getTotalReferenceCount() {
+      return Array.from(referenceCountByOptions.values()).reduce(
+        (acc, count) => acc + count,
+        0
+      );
+    },
+
     incrementReferenceCount(key: string) {
       const count = referenceCountByOptions.get(key) ?? 0;
       referenceCountByOptions.set(key, count + 1);
@@ -1180,9 +1305,6 @@ function createUseThreadsRevalidationManager<
   let request: RequestInfo<ThreadData<TThreadMetadata>[]> | undefined; // Stores the currently active revalidation request
   let error: Error | undefined; // Stores any error that occurred during the last revalidation request
 
-  // Create an event source to notify subscribers when there is an error
-  const errorEventSource = makeEventSource<Error>();
-
   return {
     // Cache
     getCache() {
@@ -1215,8 +1337,9 @@ function createUseThreadsRevalidationManager<
     },
     setError(err: Error) {
       error = err;
-      // Notify subscribers that there was an error
-      errorEventSource.notify(err);
+      isLoading = false;
+      const cache = manager.getCache();
+      manager.setCache(cache);
     },
 
     // Mutation
@@ -1241,4 +1364,26 @@ function createUseThreadsRevalidationManager<
       isLoading = value;
     },
   };
+}
+
+/**
+ * Returns the polling interval based on the room connection status, the browser online status and the document visibility.
+ * @param isBrowserOnline Whether the browser is online.
+ * @param isDocumentVisible Whether the document is visible.
+ * @param isRoomConnected Whether the room is connected.
+ * @returns The polling interval in milliseconds or undefined if we don't poll the server.
+ */
+function getPollingInterval(
+  isBrowserOnline: boolean,
+  isDocumentVisible: boolean,
+  isRoomConnected: boolean
+): number | undefined {
+  // If the browser is offline or the document is not visible, we don't poll the server.
+  if (!isBrowserOnline || !isDocumentVisible) return;
+
+  // If the room is connected, we poll the server in real-time.
+  if (isRoomConnected) return POLLING_INTERVAL_REALTIME;
+
+  // (Otherwise) If the room is not connected, we poll the server at POLLING_INTERVAL rate.
+  return POLLING_INTERVAL;
 }
