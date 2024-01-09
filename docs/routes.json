@@ -250,7 +250,46 @@
       },
       {
         "title": "Comments",
-        "path": "/products/comments"
+        "path": "/products/comments",
+        "routes": [
+          {
+            "title": "Concepts",
+            "path": "/products/comments/concepts"
+          },
+          {
+            "title": "Users and mentions",
+            "path": "/products/comments/users-and-mentions"
+          },
+          {
+            "title": "Default components",
+            "path": "/products/comments/default-components"
+          },
+          {
+            "title": "Hooks",
+            "path": "/products/comments/hooks"
+          },
+          {
+            "title": "Metadata",
+            "path": "/products/comments/metadata"
+          },
+          {
+            "title": "Primitives",
+            "path": "/products/comments/primitives"
+          },
+          {
+            "title": "Styling and customization",
+            "path": "/products/comments/styling-and-customization"
+          },
+          {
+            "title": "Notification inbox",
+            "path": "/products/comments/notification-inbox",
+            "hidden": true
+          },
+          {
+            "title": "Email notifications",
+            "path": "/products/comments/email-notifications"
+          }
+        ]
       }
     ]
   },
