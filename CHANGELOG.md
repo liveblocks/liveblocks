@@ -1,12 +1,18 @@
-# v1.9.4
+# v1.9.5
 
 ### `@liveblocks/react-comments`
+
+- Fix mention suggestions not appearing.
+
+# v1.9.4
+
+### `@liveblocks/react`
 
 - Fix polling on `useThreads` hook.
 
 # v1.9.3
 
-### `@liveblocks/react-comments`
+### `@liveblocks/react`
 
 - Fix a bug that prevented comments from being used across multiple rooms.
 
