@@ -29,15 +29,23 @@
   /** 
    * Colors
    */
-  --lb-background-subtle: color-mix(
-    in srgb,
+  --lb-background-foreground-faint: color-mix-scale(
+    var(--lb-background),
     var(--lb-foreground),
-    var(--lb-background) calc(100% - var(--lb-foreground-contrast) / 2)
+    var(--lb-foreground-contrast),
+    50
   );
-  --lb-background-accent-subtle: color-mix(
-    in srgb,
+  --lb-background-accent-faint: color-mix-scale(
+    var(--lb-background),
     var(--lb-accent),
-    var(--lb-background) calc(100% - var(--lb-accent-contrast) / 2)
+    var(--lb-accent-contrast),
+    50
+  );
+  --lb-background-accent-subtle: color-mix-scale(
+    var(--lb-background),
+    var(--lb-accent),
+    var(--lb-accent-contrast),
+    100
   );
   --lb-accent-subtle: color-mix-scale(
     var(--lb-internal-background),
@@ -1040,8 +1048,16 @@
   font-weight: 400;
   transition-property: background;
 
+  &:where(:hover) {
+    --lb-internal-background: var(--lb-background-foreground-faint);
+  }
+
   &:where([data-unread]) {
-    --lb-internal-background: var(--lb-background-accent-subtle);
+    --lb-internal-background: var(--lb-background-accent-faint);
+
+    &:where(:hover) {
+      --lb-internal-background: var(--lb-background-accent-subtle);
+    }
   }
 }
 
@@ -1064,6 +1080,7 @@
 
 .lb-inbox-notification-title {
   font-weight: 500;
+  text-wrap: pretty;
 }
 
 .lb-inbox-notification-details {

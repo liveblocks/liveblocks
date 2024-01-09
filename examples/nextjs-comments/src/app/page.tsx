@@ -207,17 +207,29 @@ export default function Page() {
   useOverrideUserIndex();
 
   return (
-    <RoomProvider id={roomId} initialPresence={{}}>
-      <ErrorBoundary
-        fallback={
-          <div className="error">There was an error while getting threads.</div>
-        }
-      >
-        <ClientSideSuspense fallback={<Loading />}>
-          {() => <Example />}
-        </ClientSideSuspense>
-      </ErrorBoundary>
-    </RoomProvider>
+    <>
+      {/* <ClientSideSuspense fallback={<Loading />}>
+        {() => (
+          <>
+            <InboxNotification inboxNotification={inboxNotificationA} />
+            <InboxNotification inboxNotification={inboxNotificationB} />
+          </>
+        )}
+      </ClientSideSuspense> */}
+      <RoomProvider id={roomId} initialPresence={{}}>
+        <ErrorBoundary
+          fallback={
+            <div className="error">
+              There was an error while getting threads.
+            </div>
+          }
+        >
+          <ClientSideSuspense fallback={<Loading />}>
+            {() => <Example />}
+          </ClientSideSuspense>
+        </ErrorBoundary>
+      </RoomProvider>
+    </>
   );
 }
 
