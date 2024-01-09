@@ -12,6 +12,8 @@ import { createRoomContext } from "../factory";
 import { dummyThreadDataPlain } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 
+const mockVisibility = jest.spyOn(document, "visibilityState", "get");
+
 const server = setupServer();
 
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
@@ -19,6 +21,8 @@ beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 beforeEach(() => {
   MockWebSocket.instances = [];
   jest.useFakeTimers();
+  // Initial state is online (by default) and visible
+  mockVisibility.mockReturnValue("visible");
 });
 
 afterEach(() => {
@@ -374,6 +378,81 @@ describe("useThreads", () => {
     );
 
     unmount();
+  });
+
+  test("should render threads correctly for multiple RoomProvider", async () => {
+    const room1Threads = [dummyThreadDataPlain()];
+    room1Threads.map((thread) => (thread.roomId = "room1"));
+
+    const room2Threads = [dummyThreadDataPlain()];
+    room2Threads.map((thread) => (thread.roomId = "room2"));
+
+    server.use(
+      rest.post(
+        "https://api.liveblocks.io/v2/c/rooms/room1/threads/search",
+        async (_req, res, ctx) => {
+          return res(
+            ctx.json({
+              data: room1Threads,
+            })
+          );
+        }
+      ),
+      rest.post(
+        "https://api.liveblocks.io/v2/c/rooms/room2/threads/search",
+        async (_req, res, ctx) => {
+          return res(
+            ctx.json({
+              data: room2Threads,
+            })
+          );
+        }
+      )
+    );
+
+    const { RoomProvider, useThreads } = createRoomContextForTest();
+
+    const { result: room1Result, unmount: unmountRoom1 } = renderHook(
+      () => useThreads(),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id="room1" initialPresence={{}}>
+            {children}
+          </RoomProvider>
+        ),
+      }
+    );
+
+    const { result: room2Result, unmount: unmountRoom2 } = renderHook(
+      () => useThreads(),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id="room2" initialPresence={{}}>
+            {children}
+          </RoomProvider>
+        ),
+      }
+    );
+
+    expect(room1Result.current).toEqual({ isLoading: true });
+    expect(room2Result.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(room1Result.current).toEqual({
+        isLoading: false,
+        threads: room1Threads.map(convertToThreadData),
+      })
+    );
+
+    await waitFor(() =>
+      expect(room2Result.current).toEqual({
+        isLoading: false,
+        threads: room2Threads.map(convertToThreadData),
+      })
+    );
+
+    unmountRoom1();
+    unmountRoom2();
   });
 });
 

@@ -54,7 +54,6 @@ describe("useThreads: Polling", () => {
       rest.post(
         "https://api.liveblocks.io/v2/c/rooms/room-id/threads/search",
         async (_req, res, ctx) => {
-          console.log("HI", getThreadsReqCount);
           getThreadsReqCount++;
           return res(
             ctx.json({

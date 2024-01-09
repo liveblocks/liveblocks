@@ -473,7 +473,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
   function _useThreads(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-    options: GetThreadsOptions<TThreadMetadata>
+    options: UseThreadsOptions<TThreadMetadata>
   ): ThreadsState<TThreadMetadata> {
     const manager = useRoomManager();
     const useThreadsRevalidationManager = getUseThreadsRevalidationManager(

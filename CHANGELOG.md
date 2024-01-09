@@ -2,7 +2,7 @@
 
 ### `@liveblocks/react-comments`
 
-- Implement polling on `useThreads` hook.
+- Fix polling on useThreads hook.
 
 # v1.9.3
 
