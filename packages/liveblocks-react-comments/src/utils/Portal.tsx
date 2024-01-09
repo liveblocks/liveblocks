@@ -16,13 +16,13 @@ interface PortalProps extends ComponentPropsWithSlot<"div"> {
 }
 
 const Portal = forwardRef<HTMLDivElement, PortalProps>(
-  ({ container, asChild, ...props }, forwardedRef) => {
+  ({ container = document?.body, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
 
     return container
       ? createPortal(
           <Component data-liveblocks-portal="" {...props} ref={forwardedRef} />,
-          container ?? document?.body
+          container
         )
       : null;
   }
