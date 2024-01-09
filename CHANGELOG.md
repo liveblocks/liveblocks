@@ -1,3 +1,10 @@
+# v1.9.6
+
+### `@liveblocks/react`
+
+- Fix certain Next.js sites not building correctly due to improper
+  `useSyncExternalStore` import
+
 # v1.9.5
 
 ### `@liveblocks/react-comments`
