@@ -3,14 +3,14 @@ import "@testing-library/jest-dom";
 import type { BaseMetadata, JsonObject } from "@liveblocks/core";
 import { createClient } from "@liveblocks/core";
 import { render, renderHook, waitFor } from "@testing-library/react";
+import { rest } from "msw";
 import { setupServer } from "msw/node";
 import React from "react";
 
+import { POLLING_INTERVAL_REALTIME } from "../comments/CommentsRoom";
+import { createRoomContext } from "../factory";
 import { dummyThreadDataPlain } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
-import { createRoomContext } from "../factory";
-import { rest } from "msw";
-import { POLLING_INTERVAL_REALTIME } from "../comments/CommentsRoom";
 
 const server = setupServer();
 
