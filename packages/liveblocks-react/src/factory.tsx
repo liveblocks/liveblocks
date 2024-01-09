@@ -81,7 +81,7 @@ Why? Please see https://liveblocks.io/docs/platform/troubleshooting#stale-props-
 const superfluous_unstable_batchedUpdates =
   "You don’t need to pass unstable_batchedUpdates to RoomProvider anymore, since you’re on React 18+ already.";
 
-function useSyncExternalStore<Snapshot>(
+export function useSyncExternalStore<Snapshot>(
   s: (onStoreChange: () => void) => () => void,
   gs: () => Snapshot,
   gss: undefined | null | (() => Snapshot)

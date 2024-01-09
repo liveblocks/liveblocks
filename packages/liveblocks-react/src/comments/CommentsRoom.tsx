@@ -23,9 +23,9 @@ import React, {
   useEffect,
   useMemo,
 } from "react";
-import { useSyncExternalStore } from "use-sync-external-store/shim";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
+import { useSyncExternalStore } from "../factory";
 import {
   AddReactionError,
   type CommentsError,
