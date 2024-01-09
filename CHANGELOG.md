@@ -2,13 +2,13 @@
 
 ### `@liveblocks/react-comments`
 
-- Fix polling on useThreads hook.
+- Fix polling on `useThreads` hook.
 
 # v1.9.3
 
 ### `@liveblocks/react-comments`
 
-- Fix a bug that prevented comments from being be used across multiple rooms.
+- Fix a bug that prevented comments from being used across multiple rooms.
 
 ### `@liveblocks/node`
 
