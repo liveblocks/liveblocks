@@ -41,11 +41,7 @@ import type {
   MutationInfo,
   RequestInfo,
 } from "./lib/revalidation";
-import {
-  useAutomaticRevalidation,
-  useMutate,
-  useRevalidateCache,
-} from "./lib/revalidation";
+import { useMutate, useRevalidateCache } from "./lib/revalidation";
 import useIsDocumentVisible from "./lib/use-is-document-visible";
 import useIsOnline from "./lib/use-is-online";
 
@@ -379,78 +375,6 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     return fetcher;
   }
 
-  function _useThreads(
-    room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-    options: GetThreadsOptions<TThreadMetadata>
-  ): ThreadsState<TThreadMetadata> {
-    const manager = useRoomManager();
-    const useThreadsRevalidationManager = getUseThreadsRevalidationManager(
-      options,
-      manager
-    );
-
-    const fetcher = useThreadsFetcher();
-    const revalidateCache = useRevalidateCache(manager, fetcher);
-
-    const status = useSyncExternalStore(
-      room.events.status.subscribe,
-      room.getStatus,
-      room.getStatus
-    );
-
-    const isOnline = useIsOnline();
-    const isDocumentVisible = useIsDocumentVisible();
-
-    const interval = getPollingInterval(
-      isOnline,
-      isDocumentVisible,
-      status === "connected"
-    );
-
-    // Automatically revalidate the cache when the window gains focus or when the connection is restored. Also poll the server based on the connection status.
-    useAutomaticRevalidation(manager, revalidateCache, {
-      revalidateOnFocus: true,
-      revalidateOnReconnect: true,
-      refreshInterval: interval,
-    });
-
-    return useSyncExternalStoreWithSelector(
-      store.subscribe,
-      () => store.getThreads(),
-      () => store.getThreads(),
-      (state) => {
-        const isLoading = useThreadsRevalidationManager.getIsLoading();
-        if (isLoading) {
-          return {
-            isLoading: true,
-          };
-        }
-
-        const options = useThreadsRevalidationManager.getOptions();
-        const error = useThreadsRevalidationManager.getError();
-
-        // Filter the cache to only include threads that match the current query
-        const filtered = state.filter((thread) => {
-          if (thread.roomId !== room.id) return false;
-
-          const query = options.query ?? {};
-          for (const key in query.metadata) {
-            if (thread.metadata[key] !== query.metadata[key]) {
-              return false;
-            }
-          }
-          return true;
-        });
-
-        return {
-          isLoading: false,
-          threads: filtered,
-          error,
-        };
-      }
-    );
-  }
-
   function useThreads(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
     options: UseThreadsOptions<TThreadMetadata> = { query: { metadata: {} } }
@@ -545,6 +469,53 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
       threads: cache.threads,
       error: cache.error,
     };
+  }
+
+  function _useThreads(
+    room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
+    options: GetThreadsOptions<TThreadMetadata>
+  ): ThreadsState<TThreadMetadata> {
+    const manager = useRoomManager();
+    const useThreadsRevalidationManager = getUseThreadsRevalidationManager(
+      options,
+      manager
+    );
+
+    return useSyncExternalStoreWithSelector(
+      store.subscribe,
+      () => store.getThreads(),
+      () => store.getThreads(),
+      (state) => {
+        const isLoading = useThreadsRevalidationManager.getIsLoading();
+        if (isLoading) {
+          return {
+            isLoading: true,
+          };
+        }
+
+        const options = useThreadsRevalidationManager.getOptions();
+        const error = useThreadsRevalidationManager.getError();
+
+        // Filter the cache to only include threads that match the current query
+        const filtered = state.filter((thread) => {
+          if (thread.roomId !== room.id) return false;
+
+          const query = options.query ?? {};
+          for (const key in query.metadata) {
+            if (thread.metadata[key] !== query.metadata[key]) {
+              return false;
+            }
+          }
+          return true;
+        });
+
+        return {
+          isLoading: false,
+          threads: filtered,
+          error,
+        };
+      }
+    );
   }
 
   function useEditThreadMetadata(
