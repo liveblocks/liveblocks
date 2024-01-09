@@ -1,4 +1,4 @@
-import { rest } from "msw";
+import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
 import { createAuthManager } from "../auth-manager";
@@ -46,34 +46,34 @@ describe("auth-manager - secret auth", () => {
     "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2NjQ1NjY0MTAsImV4cCI6MTY2NDU3MDAxMCwicGlkIjoiNjA1YTRmZDMxYTM2ZDVlYTdhMmUwOGYxIiwidWlkIjoidXNlcjEiLCJrIjoiaWQifQ.MhjHg2udkBivX7cW8Q1jmgc4DOZ1YnMoUnP61O32JLVJlIsc0zmHWA__DItsO3vBbRS8doG98cOzSE2qQ-5rKoX2l19k5Mr7gk6M75u1kOAzppV_3YQAGeZ8PfsUUPUBGOF5O6msLnha-HcAywvBuoUmcqP0CF_xhBBx0CLbFeuaWVJqndPKe8LJk9EYcB29HEwFaIzrOSarU1iLxRhsa8FCB910GTDcaApaUTPM9ZRadmf33ypSn3c6by0BWI54vx4O2p-hFsmJ71R38ifRRVq3ETXn78ftwbu1pp6hMTqyYn5YLlnZPPM-JAck_OsarGvE9cxg_Z3Y8bMTOlA5E";
 
   const server = setupServer(
-    rest.post("/mocked-api/legacy-auth", (_req, res, ctx) => {
-      return res(
-        ctx.json({ token: legacyTokens[requestCount++ % legacyTokens.length] })
-      );
+    http.post("/mocked-api/legacy-auth", () => {
+      return HttpResponse.json({
+        token: legacyTokens[requestCount++ % legacyTokens.length],
+      });
     }),
-    rest.post("/mocked-api/legacy-auth-that-caches", (_req, res, ctx) => {
+    http.post("/mocked-api/legacy-auth-that-caches", () => {
       requestCount++;
-      return res(ctx.json({ token: legacyTokens[0] }));
+      return HttpResponse.json({ token: legacyTokens[0] });
     }),
-    rest.post("/mocked-api/access-auth", (_req, res, ctx) => {
+    http.post("/mocked-api/access-auth", () => {
       requestCount++;
-      return res(ctx.json({ token: accessToken }));
+      return HttpResponse.json({ token: accessToken });
     }),
-    rest.post("/mocked-api/id-auth", (_req, res, ctx) => {
+    http.post("/mocked-api/id-auth", () => {
       requestCount++;
-      return res(ctx.json({ token: idToken }));
+      return HttpResponse.json({ token: idToken });
     }),
-    rest.post("/mocked-api/403", (_req, res, ctx) => {
-      return res(ctx.status(403));
+    http.post("/mocked-api/403", () => {
+      return new HttpResponse(null, { status: 403 });
     }),
-    rest.post("/mocked-api/401-with-details", (_req, res, ctx) => {
-      return res(ctx.status(401), ctx.text("wrong key type"));
+    http.post("/mocked-api/401-with-details", () => {
+      return HttpResponse.text("wrong key type", { status: 401 });
     }),
-    rest.post("/mocked-api/not-json", (_req, res, ctx) => {
-      return res(ctx.status(202), ctx.text("this is not json"));
+    http.post("/mocked-api/not-json", () => {
+      return HttpResponse.text("this is not json", { status: 202 });
     }),
-    rest.post("/mocked-api/missing-token", (_req, res, ctx) => {
-      return res(ctx.status(202), ctx.json({}));
+    http.post("/mocked-api/missing-token", () => {
+      return HttpResponse.json({}, { status: 202 });
     })
   );
 
