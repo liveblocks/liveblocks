@@ -1,11 +1,7 @@
 import "@testing-library/jest-dom";
 
 import type { BaseMetadata, JsonObject } from "@liveblocks/core";
-import {
-  convertToThreadData,
-  createClient,
-  ServerMsgCode,
-} from "@liveblocks/core";
+import { createClient, ServerMsgCode } from "@liveblocks/core";
 import { renderHook, screen, waitFor } from "@testing-library/react";
 import { addSeconds } from "date-fns";
 import { setupServer } from "msw/node";
@@ -13,7 +9,7 @@ import React, { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
 import { createRoomContext } from "../room";
-import { dummyThreadDataPlain } from "./_dummies";
+import { dummyThreadData } from "./_dummies";
 import MockWebSocket, { websocketSimulator } from "./_MockWebSocket";
 import { mockGetThread, mockGetThreads } from "./_restMocks";
 
@@ -50,7 +46,7 @@ function createRoomContextForTest<
 
 describe("useThreads", () => {
   test("should fetch threads", async () => {
-    const threads = [dummyThreadDataPlain()];
+    const threads = [dummyThreadData()];
 
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
@@ -78,7 +74,7 @@ describe("useThreads", () => {
     await waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
-        threads: threads.map(convertToThreadData),
+        threads,
       })
     );
 
@@ -88,7 +84,7 @@ describe("useThreads", () => {
   test("multiple instances of useThreads should not fetch threads multiple times (dedupe requests)", async () => {
     let getThreadsReqCount = 0;
 
-    const threads = [dummyThreadDataPlain()];
+    const threads = [dummyThreadData()];
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
         getThreadsReqCount++;
@@ -128,12 +124,12 @@ describe("useThreads", () => {
   });
 
   test("should fetch threads for a given query", async () => {
-    const resolvedThread = dummyThreadDataPlain();
+    const resolvedThread = dummyThreadData();
     resolvedThread.metadata = {
       resolved: true,
     };
 
-    const unresolvedThread = dummyThreadDataPlain();
+    const unresolvedThread = dummyThreadData();
     unresolvedThread.metadata = {
       resolved: false,
     };
@@ -172,7 +168,7 @@ describe("useThreads", () => {
     await waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
-        threads: [resolvedThread].map(convertToThreadData),
+        threads: [resolvedThread],
       })
     );
 
@@ -182,7 +178,7 @@ describe("useThreads", () => {
   test("should dedupe fetch threads for a given query", async () => {
     let getThreadsReqCount = 0;
 
-    const threads = [dummyThreadDataPlain()];
+    const threads = [dummyThreadData()];
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
         getThreadsReqCount++;
@@ -219,12 +215,12 @@ describe("useThreads", () => {
   });
 
   test("should refetch threads if query changed dynamically and should display threads instantly if query already been done in the past", async () => {
-    const resolvedThread = dummyThreadDataPlain();
+    const resolvedThread = dummyThreadData();
     resolvedThread.metadata = {
       resolved: true,
     };
 
-    const unresolvedThread = dummyThreadDataPlain();
+    const unresolvedThread = dummyThreadData();
     unresolvedThread.metadata = {
       resolved: false,
     };
@@ -265,7 +261,7 @@ describe("useThreads", () => {
     await waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
-        threads: [resolvedThread].map(convertToThreadData),
+        threads: [resolvedThread],
       })
     );
 
@@ -276,7 +272,7 @@ describe("useThreads", () => {
     await waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
-        threads: [unresolvedThread].map(convertToThreadData),
+        threads: [unresolvedThread],
       })
     );
 
@@ -285,7 +281,7 @@ describe("useThreads", () => {
     // Resolved threads are displayed instantly because we already fetched them previously
     expect(result.current).toEqual({
       isLoading: false,
-      threads: [resolvedThread].map(convertToThreadData),
+      threads: [resolvedThread],
     });
 
     unmount();
@@ -324,7 +320,7 @@ describe("useThreads", () => {
 
 describe("WebSocket events", () => {
   test("COMMENT_CREATED event should refresh thread", async () => {
-    const newThread = dummyThreadDataPlain();
+    const newThread = dummyThreadData();
 
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
@@ -373,7 +369,7 @@ describe("WebSocket events", () => {
     await waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
-        threads: [convertToThreadData(newThread)],
+        threads: [newThread],
       })
     );
 
@@ -381,7 +377,7 @@ describe("WebSocket events", () => {
   });
 
   test("COMMENT_DELETED event should delete thread if getThread return 404", async () => {
-    const newThread = dummyThreadDataPlain();
+    const newThread = dummyThreadData();
 
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
@@ -412,7 +408,7 @@ describe("WebSocket events", () => {
     await waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
-        threads: [newThread].map(convertToThreadData),
+        threads: [newThread],
       })
     );
 
@@ -435,19 +431,19 @@ describe("WebSocket events", () => {
 
   test("Websocket event should not refresh thread if updatedAt is earlier than the cached updatedAt", async () => {
     const now = new Date();
-    const initialThread = dummyThreadDataPlain();
-    initialThread.updatedAt = now.toISOString();
+    const initialThread = dummyThreadData();
+    initialThread.updatedAt = now;
     initialThread.metadata = { counter: 0 };
 
     const delayedThread = {
       ...initialThread,
-      updatedAt: addSeconds(now, 1).toISOString(),
+      updatedAt: addSeconds(now, 1),
       metadata: { counter: 1 },
     };
 
     const latestThread = {
       ...initialThread,
-      updatedAt: addSeconds(now, 2).toISOString(),
+      updatedAt: addSeconds(now, 2),
       metadata: { counter: 2 },
     };
 
@@ -500,7 +496,7 @@ describe("WebSocket events", () => {
     await waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
-        threads: [convertToThreadData(initialThread)],
+        threads: [initialThread],
       })
     );
 
@@ -519,7 +515,7 @@ describe("WebSocket events", () => {
     await waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
-        threads: [convertToThreadData(latestThread)],
+        threads: [latestThread],
       })
     );
 
@@ -529,7 +525,7 @@ describe("WebSocket events", () => {
 
 describe("useThreadsSuspense", () => {
   test("should fetch threads", async () => {
-    const threads = [dummyThreadDataPlain()];
+    const threads = [dummyThreadData()];
 
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
@@ -560,7 +556,7 @@ describe("useThreadsSuspense", () => {
     await waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
-        threads: threads.map(convertToThreadData),
+        threads,
       })
     );
 
