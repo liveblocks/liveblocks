@@ -21,7 +21,6 @@ import type {
   CommentReaction,
   EnterOptions,
   GetThreadsOptions,
-  ResolveMentionSuggestionsArgs,
   RoomEventMessage,
   RoomNotificationSettings,
   ThreadData,
@@ -29,6 +28,7 @@ import type {
 } from "@liveblocks/core";
 import {
   CommentsApiError,
+  console,
   createAsyncCache,
   deprecateIf,
   errorIf,
@@ -52,7 +52,6 @@ import {
   RemoveReactionError,
 } from "./comments/errors";
 import { createCommentId, createThreadId } from "./comments/lib/createIds";
-import { useDebounce } from "./comments/lib/use-debounce";
 import {
   createClientStore,
   selectedThreads,
@@ -118,6 +117,8 @@ function useSyncExternalStore<Snapshot>(
 const STABLE_EMPTY_LIST = Object.freeze([]);
 
 export const POLLING_INTERVAL = 5 * 60 * 1000;
+
+const MENTION_SUGGESTIONS_DEBOUNCE = 500;
 
 // Don't try to inline this. This function is intended to be a stable
 // reference, to avoid a React.useCallback() wrapper.
@@ -1623,32 +1624,74 @@ export function createRoomContext<
   }
 
   const resolveMentionSuggestions = client.__internal.resolveMentionSuggestions;
+  const mentionSuggestionsCache = new Map<string, string[]>();
 
-  const mentionSuggestionsCache = createAsyncCache<string[], unknown>(
-    resolveMentionSuggestions
-      ? (stringifiedOptions: string) => {
-          return resolveMentionSuggestions(
-            JSON.parse(stringifiedOptions) as ResolveMentionSuggestionsArgs
-          );
-        }
-      : () => Promise.resolve([])
-  );
-
+  // Simplistic debounced search, we don't need to worry too much about
+  // deduping and race conditions as there can only be one search at a time.
   function useMentionSuggestions(search?: string) {
     const room = useRoom();
-    const debouncedSearch = useDebounce(search, 500);
-    const resolverKey = React.useMemo(
-      () =>
-        debouncedSearch !== undefined
-          ? stringify({ text: debouncedSearch, roomId: room.id })
-          : null,
-      [debouncedSearch, room.id]
-    );
-    const { data } = useAsyncCache(mentionSuggestionsCache, resolverKey, {
-      keepPreviousDataWhileLoading: true,
-    });
+    const [mentionSuggestions, setMentionSuggestions] =
+      React.useState<string[]>();
+    const lastInvokedAt = React.useRef<number>();
 
-    return data;
+    React.useEffect(() => {
+      if (search === undefined || !resolveMentionSuggestions) {
+        return;
+      }
+
+      const resolveMentionSuggestionsArgs = { text: search, roomId: room.id };
+      const mentionSuggestionsCacheKey = stringify(
+        resolveMentionSuggestionsArgs
+      );
+      let debounceTimeout: number | undefined;
+      let canceled = false;
+
+      const getMentionSuggestions = async () => {
+        try {
+          lastInvokedAt.current = performance.now();
+          const mentionSuggestions = await resolveMentionSuggestions(
+            resolveMentionSuggestionsArgs
+          );
+
+          if (!canceled) {
+            setMentionSuggestions(mentionSuggestions);
+            mentionSuggestionsCache.set(
+              mentionSuggestionsCacheKey,
+              mentionSuggestions
+            );
+          }
+        } catch (error) {
+          console.error((error as Error)?.message);
+        }
+      };
+
+      if (mentionSuggestionsCache.has(mentionSuggestionsCacheKey)) {
+        // If there are already cached mention suggestions, use them immediately.
+        setMentionSuggestions(
+          mentionSuggestionsCache.get(mentionSuggestionsCacheKey)
+        );
+      } else if (
+        !lastInvokedAt.current ||
+        Math.abs(performance.now() - lastInvokedAt.current) >
+          MENTION_SUGGESTIONS_DEBOUNCE
+      ) {
+        // If on the debounce's leading edge (either because it's the first invokation or enough
+        // time has passed since the last debounce), get mention suggestions immediately.
+        void getMentionSuggestions();
+      } else {
+        // Otherwise, wait for the debounce delay.
+        debounceTimeout = window.setTimeout(() => {
+          void getMentionSuggestions();
+        }, MENTION_SUGGESTIONS_DEBOUNCE);
+      }
+
+      return () => {
+        canceled = true;
+        window.clearTimeout(debounceTimeout);
+      };
+    }, [room.id, search]);
+
+    return mentionSuggestions;
   }
 
   // [comments-unread] TODO: Finalize API: Loading? Differientate between "no read status" and "all read"?
@@ -1677,7 +1720,7 @@ export function createRoomContext<
   function useMarkThreadAsRead() {
     return React.useCallback((threadId: string) => {
       // [comments-unread] TODO: Find inbox notification for this thread locally and mark it as read
-      console.log(threadId);
+      console.warn(threadId);
     }, []);
   }
 
