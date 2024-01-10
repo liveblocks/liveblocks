@@ -1,7 +1,7 @@
 import type {
-  CommentDataPlain,
-  PartialInboxNotificationDataPlain,
-  ThreadDataPlain,
+  CommentData,
+  PartialInboxNotificationData,
+  ThreadData,
 } from "@liveblocks/core";
 import type { ResponseResolver, RestContext, RestRequest } from "msw";
 import { rest } from "msw";
@@ -11,7 +11,7 @@ export function mockGetThreads(
     RestRequest<never, never>,
     RestContext,
     {
-      data: ThreadDataPlain<any>[];
+      data: ThreadData<any>[];
       inboxNotifications: any[];
     }
   >
@@ -27,8 +27,8 @@ export function mockGetThread(
   resolver: ResponseResolver<
     RestRequest<never, never>,
     RestContext,
-    ThreadDataPlain<any> & {
-      inboxNotification?: PartialInboxNotificationDataPlain;
+    ThreadData<any> & {
+      inboxNotification?: PartialInboxNotificationData;
     }
   >
 ) {
@@ -42,7 +42,7 @@ export function mockCreateThread(
   resolver: ResponseResolver<
     RestRequest<never, never>,
     RestContext,
-    ThreadDataPlain<any>
+    ThreadData<any>
   >
 ) {
   return rest.post(
@@ -56,7 +56,7 @@ export function mockCreateComment(
   resolver: ResponseResolver<
     RestRequest<never, never>,
     RestContext,
-    CommentDataPlain
+    CommentData
   >
 ) {
   return rest.post(

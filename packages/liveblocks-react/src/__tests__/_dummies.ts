@@ -1,35 +1,32 @@
-import type {
-  BaseMetadata,
-  CommentDataPlain,
-  ThreadDataPlain,
-} from "@liveblocks/core";
+import type { BaseMetadata, CommentData, ThreadData } from "@liveblocks/core";
 
 import { createCommentId, createThreadId } from "../comments/lib/createIds";
 
-export function dummyThreadDataPlain<
+export function dummyThreadData<
   TThreadMetadata extends BaseMetadata = BaseMetadata,
->(): ThreadDataPlain<TThreadMetadata> {
-  const createdAt = new Date().toISOString();
+>(): ThreadData<TThreadMetadata> {
+  const now = new Date();
   const threadId = createThreadId();
 
-  const comment = dummyCommentDataPlain();
-  (comment.threadId = threadId), (comment.createdAt = createdAt);
+  const comment = dummyCommentData();
+  comment.threadId = threadId;
+  comment.createdAt = now;
 
   return {
     id: threadId,
     type: "thread",
     roomId: "room-id",
-    createdAt,
+    createdAt: now,
     metadata: {}, // TODO Fix type
     updatedAt: undefined,
     comments: [comment],
-  } as ThreadDataPlain<TThreadMetadata>;
+  } as ThreadData<TThreadMetadata>;
 }
 
-export function dummyCommentDataPlain(): CommentDataPlain {
+export function dummyCommentData(): CommentData {
   const id = createCommentId();
   const threadId = createThreadId();
-  const now = new Date().toISOString();
+  const now = new Date();
 
   return {
     id,
