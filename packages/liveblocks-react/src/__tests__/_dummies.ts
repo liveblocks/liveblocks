@@ -43,5 +43,3 @@ export function dummyCommentData(): CommentData {
     reactions: [],
   };
 }
-
-export function dummyInboxNotificationDataPlain() {}
