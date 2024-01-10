@@ -471,12 +471,15 @@ export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
 }
 
 export function selectedThreads<TThreadMetadata extends BaseMetadata>(
+  roomId: string,
   state: State<TThreadMetadata>,
   options: UseThreadsOptions<TThreadMetadata>
 ) {
   const result = applyOptimisticUpdates(state);
 
   return Object.values(result).filter((thread) => {
+    if (thread.roomId !== roomId) return false;
+
     const query = options.query;
     if (!query) return true;
 
@@ -495,7 +498,7 @@ export function selectedThreads<TThreadMetadata extends BaseMetadata>(
  * @param threadB The second thread to compare.
  * @returns 1 if threadA is newer, -1 if threadB is newer, or 0 if they are the same age or can't be compared.
  */
-function compareThreads<TThreadMetadata extends BaseMetadata>(
+export function compareThreads<TThreadMetadata extends BaseMetadata>(
   thread1: ThreadData<TThreadMetadata>,
   thread2: ThreadData<TThreadMetadata>
 ): number {
