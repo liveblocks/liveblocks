@@ -1,4 +1,4 @@
-import type { CommentBody, ThreadDataPlain } from "@liveblocks/core";
+import type { CommentBody, ThreadData } from "@liveblocks/core";
 import { createClient } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { addMinutes } from "date-fns";
@@ -7,7 +7,7 @@ import { setupServer } from "msw/node";
 import React from "react";
 
 import { createRoomContext } from "../room";
-import { dummyCommentDataPlain, dummyThreadDataPlain } from "./_dummies";
+import { dummyCommentData, dummyThreadData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import { mockCreateThread, mockGetThreads } from "./_restMocks";
 
@@ -54,7 +54,7 @@ describe("useCreateThread", () => {
       mockCreateThread(
         async (
           req: RestRequest,
-          res: ResponseComposition<ThreadDataPlain<any>>,
+          res: ResponseComposition<ThreadData<any>>,
           ctx: RestContext
         ) => {
           const json = await req.json<{
@@ -62,16 +62,16 @@ describe("useCreateThread", () => {
             comment: { id: string; body: CommentBody };
           }>();
 
-          const comment = dummyCommentDataPlain();
+          const comment = dummyCommentData();
           comment.threadId = json.id;
           comment.id = json.comment.id;
           comment.body = json.comment.body;
-          comment.createdAt = fakeCreatedAt.toISOString();
+          comment.createdAt = fakeCreatedAt;
 
-          const thread = dummyThreadDataPlain();
+          const thread = dummyThreadData();
           thread.id = json.id;
           thread.comments = [comment];
-          thread.createdAt = fakeCreatedAt.toISOString();
+          thread.createdAt = fakeCreatedAt;
 
           return res(ctx.json(thread));
         }
