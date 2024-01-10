@@ -4,9 +4,11 @@ import {
   createClient,
   ServerMsgCode,
 } from "@liveblocks/core";
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { addSeconds } from "date-fns";
+import { rest } from "msw";
 import { setupServer } from "msw/node";
+import type { ReactNode } from "react";
 import React, { Suspense } from "react";
 
 import { createRoomContext } from "../room";
@@ -284,6 +286,179 @@ describe("useThreads", () => {
       isLoading: false,
       threads: [resolvedThread].map(convertToThreadData),
     });
+
+    unmount();
+  });
+
+  test("multiple instances of RoomProvider should render their corresponding threads correctly", async () => {
+    const room1Threads = [dummyThreadDataPlain()];
+    room1Threads.map((thread) => (thread.roomId = "room1"));
+
+    const room2Threads = [dummyThreadDataPlain()];
+    room2Threads.map((thread) => (thread.roomId = "room2"));
+
+    server.use(
+      rest.post(
+        "https://api.liveblocks.io/v2/c/rooms/room1/threads/search",
+        async (_req, res, ctx) => {
+          return res(
+            ctx.json({
+              data: room1Threads,
+              inboxNotifications: [],
+            })
+          );
+        }
+      ),
+      rest.post(
+        "https://api.liveblocks.io/v2/c/rooms/room2/threads/search",
+        async (_req, res, ctx) => {
+          return res(
+            ctx.json({
+              data: room2Threads,
+              inboxNotifications: [],
+            })
+          );
+        }
+      )
+    );
+
+    const { RoomProvider, useThreads } = createRoomContextForTest();
+
+    const { result: room1Result, unmount: unmountRoom1 } = renderHook(
+      () => useThreads(),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id="room1" initialPresence={{}}>
+            {children}
+          </RoomProvider>
+        ),
+      }
+    );
+
+    const { result: room2Result, unmount: unmountRoom2 } = renderHook(
+      () => useThreads(),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id="room2" initialPresence={{}}>
+            {children}
+          </RoomProvider>
+        ),
+      }
+    );
+
+    expect(room1Result.current).toEqual({ isLoading: true });
+    expect(room2Result.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(room1Result.current).toEqual({
+        isLoading: false,
+        threads: room1Threads.map(convertToThreadData),
+      })
+    );
+
+    await waitFor(() =>
+      expect(room2Result.current).toEqual({
+        isLoading: false,
+        threads: room2Threads.map(convertToThreadData),
+      })
+    );
+
+    unmountRoom1();
+    unmountRoom2();
+  });
+
+  test("should correctly display threads if room id changed dynamically and should display threads instantly if query for the room already been done in the past", async () => {
+    const room1Threads = [dummyThreadDataPlain()];
+    room1Threads.map((thread) => (thread.roomId = "room1"));
+
+    const room2Threads = [dummyThreadDataPlain()];
+    room2Threads.map((thread) => (thread.roomId = "room2"));
+
+    server.use(
+      rest.post(
+        "https://api.liveblocks.io/v2/c/rooms/room1/threads/search",
+        async (_req, res, ctx) => {
+          return res(
+            ctx.json({
+              data: room1Threads,
+              inboxNotifications: [],
+            })
+          );
+        }
+      ),
+      rest.post(
+        "https://api.liveblocks.io/v2/c/rooms/room2/threads/search",
+        async (_req, res, ctx) => {
+          return res(
+            ctx.json({
+              data: room2Threads,
+              inboxNotifications: [],
+            })
+          );
+        }
+      )
+    );
+
+    const { RoomProvider, useThreads } = createRoomContextForTest();
+
+    const RoomIdDispatchContext = React.createContext<
+      ((value: string) => void) | null
+    >(null);
+
+    const wrapper = ({ children }: { children: ReactNode }) => {
+      const [roomId, setRoomId] = React.useState("room1");
+
+      return (
+        <RoomIdDispatchContext.Provider value={setRoomId}>
+          <RoomProvider id={roomId} initialPresence={{}}>
+            {children}
+          </RoomProvider>
+        </RoomIdDispatchContext.Provider>
+      );
+    };
+
+    const useThreadsContainer = () => {
+      const setRoomId = React.useContext(RoomIdDispatchContext);
+      const state = useThreads();
+      return { state, setRoomId };
+    };
+
+    const { result, unmount } = renderHook(() => useThreadsContainer(), {
+      wrapper,
+    });
+
+    expect(result.current.state).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result.current.state).toEqual({
+        isLoading: false,
+        threads: room1Threads.map(convertToThreadData),
+      })
+    );
+
+    act(() => {
+      result.current.setRoomId?.("room2");
+    });
+
+    expect(result.current.state).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result.current.state).toEqual({
+        isLoading: false,
+        threads: room2Threads.map(convertToThreadData),
+      })
+    );
+
+    act(() => {
+      result.current.setRoomId?.("room1");
+    });
+
+    await waitFor(() =>
+      expect(result.current.state).toEqual({
+        isLoading: false,
+        threads: room1Threads.map(convertToThreadData),
+      })
+    );
 
     unmount();
   });
