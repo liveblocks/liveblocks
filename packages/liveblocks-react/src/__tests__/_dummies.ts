@@ -1,6 +1,15 @@
-import type { BaseMetadata, CommentData, ThreadData } from "@liveblocks/core";
+import type {
+  BaseMetadata,
+  CommentData,
+  PartialInboxNotificationData,
+  ThreadData,
+} from "@liveblocks/core";
 
-import { createCommentId, createThreadId } from "../comments/lib/createIds";
+import {
+  createCommentId,
+  createInboxNotificationId,
+  createThreadId,
+} from "../comments/lib/createIds";
 
 export function dummyThreadData<
   TThreadMetadata extends BaseMetadata = BaseMetadata,
@@ -41,5 +50,19 @@ export function dummyCommentData(): CommentData {
     deletedAt: undefined,
     createdAt: now,
     reactions: [],
+  };
+}
+
+export function dummyInboxNoficationData(): PartialInboxNotificationData {
+  const id = createInboxNotificationId();
+  const threadId = createThreadId();
+  const now = new Date();
+
+  return {
+    kind: "thread",
+    id,
+    notifiedAt: now,
+    threadId,
+    readAt: null,
   };
 }
