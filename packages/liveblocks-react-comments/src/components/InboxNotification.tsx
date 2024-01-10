@@ -32,6 +32,7 @@ interface InboxNotificationLayoutProps
   title: ReactNode;
   date: Date | string | number;
   unread?: boolean;
+  interactive?: boolean;
 }
 
 const InboxNotificationLayout = forwardRef<
@@ -39,7 +40,16 @@ const InboxNotificationLayout = forwardRef<
   InboxNotificationLayoutProps
 >(
   (
-    { children, aside, title, date, unread, className, ...props },
+    {
+      children,
+      aside,
+      title,
+      date,
+      unread,
+      interactive = true,
+      className,
+      ...props
+    },
     forwardedRef
   ) => {
     const $ = useOverrides();
@@ -49,6 +59,7 @@ const InboxNotificationLayout = forwardRef<
         className={classNames("lb-root lb-inbox-notification", className)}
         dir={$.dir}
         data-unread={unread ? "" : undefined}
+        data-interactive={interactive ? "" : undefined}
         {...props}
         ref={forwardedRef}
       >

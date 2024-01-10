@@ -1048,15 +1048,19 @@
   font-weight: 400;
   transition-property: background;
 
-  &:where(:hover) {
-    --lb-internal-background: var(--lb-background-foreground-faint);
-  }
-
-  &:where([data-unread]) {
-    --lb-internal-background: var(--lb-background-accent-faint);
+  &:where([data-interactive]) {
+    cursor: pointer;
 
     &:where(:hover) {
-      --lb-internal-background: var(--lb-background-accent-subtle);
+      --lb-internal-background: var(--lb-background-foreground-faint);
+    }
+
+    &:where([data-unread]) {
+      --lb-internal-background: var(--lb-background-accent-faint);
+
+      &:where(:hover) {
+        --lb-internal-background: var(--lb-background-accent-subtle);
+      }
     }
   }
 }
