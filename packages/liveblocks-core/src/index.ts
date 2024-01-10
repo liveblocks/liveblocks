@@ -16,7 +16,11 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
  * https://join.team/liveblocks ;)
  */
 
-export type { Client, EnterOptions } from "./client";
+export type {
+  Client,
+  EnterOptions,
+  ResolveMentionSuggestionsArgs,
+} from "./client";
 export { createClient } from "./client";
 export type {
   CommentBodyLinkElementArgs,

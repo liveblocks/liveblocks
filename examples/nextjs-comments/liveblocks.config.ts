@@ -7,6 +7,21 @@ export const client = createClient({
   authEndpoint: "/api/liveblocks-auth",
   // @ts-expect-error: dev
   baseUrl: "https://dev.dev-liveblocks5948.workers.dev/",
+
+  // Find a list of users that match the current search term
+  resolveMentionSuggestions: async ({ text }) => {
+    const searchParams = new URLSearchParams({ text });
+
+    try {
+      const response = await fetch(`/api/users/search?${searchParams}`);
+
+      return response.json();
+    } catch (error) {
+      console.error(456, error);
+
+      return [];
+    }
+  },
 });
 
 const {
@@ -24,21 +39,6 @@ const {
       return response.json();
     } catch (error) {
       console.error(123, error);
-    }
-  },
-
-  // Find a list of users that match the current search term
-  resolveMentionSuggestions: async ({ text }) => {
-    const searchParams = new URLSearchParams({ text });
-
-    try {
-      const response = await fetch(`/api/users/search?${searchParams}`);
-
-      return response.json();
-    } catch (error) {
-      console.error(456, error);
-
-      return [];
     }
   },
 });

@@ -31,7 +31,7 @@ export type UseThreadsOptions<TThreadMetadata extends BaseMetadata> =
 
 import type { PropsWithChildren } from "react";
 
-export type PromiseOrNot<T> = T | Promise<T>;
+export type OptionalPromise<T> = T | Promise<T>;
 
 export type ResolveUsersArgs = {
   /**
@@ -43,18 +43,6 @@ export type ResolveUsersArgs = {
    * The IDs of the users to resolve.
    */
   userIds: string[];
-};
-
-export type ResolveMentionSuggestionsArgs = {
-  /**
-   * The ID of the current room.
-   */
-  roomId: string;
-
-  /**
-   * The text to search for.
-   */
-  text: string;
 };
 
 export type UserStateLoading = {

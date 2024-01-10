@@ -21,6 +21,7 @@ import type {
   CommentReaction,
   EnterOptions,
   GetThreadsOptions,
+  ResolveMentionSuggestionsArgs,
   RoomEventMessage,
   RoomNotificationSettings,
   ThreadData,
@@ -71,8 +72,7 @@ import type {
   InternalRoomContextBundle,
   MutationContext,
   OmitFirstArg,
-  PromiseOrNot,
-  ResolveMentionSuggestionsArgs,
+  OptionalPromise,
   ResolveUsersArgs,
   RoomContextBundle,
   RoomNotificationSettingsState,
@@ -179,16 +179,7 @@ type Options<TUserMeta extends BaseUserMeta> = {
    */
   resolveUsers?: (
     args: ResolveUsersArgs
-  ) => PromiseOrNot<(TUserMeta["info"] | undefined)[] | undefined>;
-
-  /**
-   * @beta
-   *
-   * A function that returns a list of user IDs matching a string.
-   */
-  resolveMentionSuggestions?: (
-    args: ResolveMentionSuggestionsArgs
-  ) => PromiseOrNot<string[]>;
+  ) => OptionalPromise<(TUserMeta["info"] | undefined)[] | undefined>;
 
   /**
    * @internal To point the client to a different Liveblocks server. Only
@@ -1578,7 +1569,7 @@ export function createRoomContext<
     );
   }
 
-  const { resolveUsers, resolveMentionSuggestions } = options ?? {};
+  const { resolveUsers } = options ?? {};
 
   const usersCache = resolveUsers
     ? createAsyncCache(async (stringifiedOptions: string) => {
@@ -1630,6 +1621,8 @@ export function createRoomContext<
       isLoading: false,
     } as UserStateSuccess<TUserMeta["info"]>;
   }
+
+  const resolveMentionSuggestions = client.__internal.resolveMentionSuggestions;
 
   const mentionSuggestionsCache = createAsyncCache<string[], unknown>(
     resolveMentionSuggestions

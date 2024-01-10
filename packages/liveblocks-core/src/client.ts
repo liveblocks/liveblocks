@@ -26,6 +26,7 @@ import type {
   PartialInboxNotificationData,
   PartialInboxNotificationDataPlain,
 } from "./types/InboxNotificationData";
+import type { OptionalPromise } from "./types/OptionalPromise";
 import type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
 
 const MIN_THROTTLE = 16;
@@ -39,6 +40,18 @@ const MAX_LOST_CONNECTION_TIMEOUT = 30_000;
 const DEFAULT_LOST_CONNECTION_TIMEOUT = 5_000;
 
 const MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY = 50;
+
+export type ResolveMentionSuggestionsArgs = {
+  /**
+   * The ID of the current room.
+   */
+  roomId: string;
+
+  /**
+   * The text to search for.
+   */
+  text: string;
+};
 
 export type EnterOptions<
   TPresence extends JsonObject,
@@ -57,6 +70,17 @@ export type EnterOptions<
     unstable_batchedUpdates?: (cb: () => void) => void;
   }
 >;
+
+/**
+ * @private
+ *
+ * Private methods and variables used in the core internals, but as a user
+ * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
+ * will probably happen if you do.
+ */
+type PrivateClientApi = {
+  resolveMentionSuggestions: ClientOptions["resolveMentionSuggestions"];
+};
 
 type InboxNotificationsApi<TThreadMetadata extends BaseMetadata = never> = {
   /**
@@ -155,6 +179,15 @@ export type Client = InboxNotificationsApi & {
    * Call this whenever you log out a user in your application.
    */
   logout(): void;
+
+  /**
+   * @private
+   *
+   * Private methods and variables used in the core internals, but as a user
+   * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
+   * will probably happen if you do.
+   */
+  readonly __internal: PrivateClientApi;
 };
 
 export type AuthEndpoint =
@@ -183,6 +216,15 @@ export type ClientOptions = {
    * This option will be removed in a future release.
    */
   WebSocketPolyfill?: Polyfills["WebSocket"];
+
+  /**
+   * @beta
+   *
+   * A function that returns a list of user IDs matching a string.
+   */
+  resolveMentionSuggestions?: (
+    args: ResolveMentionSuggestionsArgs
+  ) => OptionalPromise<string[]>;
 
   /**
    * @internal To point the client to a different Liveblocks server. Only
@@ -575,6 +617,11 @@ export function createClient(options: ClientOptions): Client {
 
     // New, preferred API
     enterRoom,
+
+    // Internal
+    __internal: {
+      resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,
+    },
   };
 }
 

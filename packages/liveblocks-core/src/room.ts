@@ -564,17 +564,19 @@ export type Room<
 > = CommentsApi<any /* TODO: Remove this any by adding a proper thread metadata on the Room type */> & {
   /**
    * @internal
+   *
    * Private methods to directly control the underlying state machine for this
    * room. Used in the core internals and for unit testing, but as a user of
    * Liveblocks, NEVER USE ANY OF THESE METHODS DIRECTLY, because bad things
    * will probably happen if you do.
    */
-  readonly __internal: PrivateRoomAPI; // prettier-ignore
+  readonly __internal: PrivateRoomApi; // prettier-ignore
 
   /**
    * The id of the room.
    */
   readonly id: string;
+
   /**
    * @deprecated This API will be removed in a future version of Liveblocks.
    * Prefer using `.getStatus()` instead.
@@ -594,6 +596,7 @@ export type Room<
    *     failed          -->  disconnected
    */
   getConnectionState(): LegacyConnectionStatus;
+
   /**
    * Return the current connection status for this room. Can be used to display
    * a status badge for your Liveblocks connection.
@@ -796,12 +799,13 @@ export type Room<
 
 /**
  * @internal
+ *
  * Private methods to directly control the underlying state machine for this
  * room. Used in the core internals and for unit testing, but as a user of
  * Liveblocks, NEVER USE ANY OF THESE METHODS DIRECTLY, because bad things
  * will probably happen if you do.
  */
-type PrivateRoomAPI = {
+type PrivateRoomApi = {
   // For introspection in unit tests only
   presenceBuffer: Json | undefined;
   undoStack: readonly (readonly Readonly<HistoryOp<JsonObject>>[])[];
