@@ -378,7 +378,8 @@ If you visit the page `localtunnel` links you to, and correctly input your IP
 address, the URL it generates can be placed into the Liveblocks webhooks
 dashboard for quick testing.
 
-For a full step-by-step guide on testing with `localtunnel` and `ngrok`, read the guide on
+For a full step-by-step guide on testing with `localtunnel` and `ngrok`, read
+the guide on
 [how to test webhooks on localhost](/docs/guides/how-to-test-webhooks-on-localhost#Use-your-webhook-event).
 
 ## Liveblocks events
@@ -822,6 +823,39 @@ const threadMetadataUpdatedEvent = {
 };
 ```
 
+#### ThreadEmailNotificationEvent
+
+An event after 30 minutes after a user received a notification on a thread and
+the user still has not read it. This event is not throttled.
+
+```ts
+// Schema
+type ThreadEmailNotificationEvent = {
+  type: "threadEmailNotification";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    inboxNotificationId: string;
+    userId: string;
+    createdAt: string;
+  };
+};
+
+// Example
+const threadEmailNotificationEvent = {
+  type: "threadEmailNotification",
+  data: {
+    projectId: "my-project-id",
+    roomId: "my-room-id",
+    threadId: "my-thread-id",
+    inboxNotificationId: "my-inbox-notification-id",
+    userId: "my-user-id",
+    createdAt: "2021-10-06T01:45:56.558Z",
+  },
+};
+```
+
 ## Use Cases
 
 With webhooks, you can subscribe to the events you are interested in, and be
@@ -839,3 +873,7 @@ configure, subscribe to, secure, and replay webhook events with Liveblocks.
 If you have any questions or need help using webhooks, please let us know
 [by email](mailto:support@liveblocks.io) or by joining our
 [Discord community](/discord)! We’re here to help!
+
+```
+
+```
