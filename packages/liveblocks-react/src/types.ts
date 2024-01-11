@@ -33,18 +33,6 @@ import type { PropsWithChildren } from "react";
 
 export type OptionalPromise<T> = T | Promise<T>;
 
-export type ResolveUsersArgs = {
-  /**
-   * The ID of the current room.
-   */
-  roomId: string;
-
-  /**
-   * The IDs of the users to resolve.
-   */
-  userIds: string[];
-};
-
 export type UserStateLoading = {
   isLoading: true;
   user?: never;

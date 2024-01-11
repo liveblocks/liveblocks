@@ -6,7 +6,7 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 export { ClientSideSuspense } from "./ClientSideSuspense";
 export { createRoomContext, useRoomContextBundle } from "./room";
-export type { MutationContext, ResolveUsersArgs } from "./types";
+export type { MutationContext } from "./types";
 
 // Re-exports from @liveblocks/client, for convenience
 export type { Json, JsonObject } from "@liveblocks/client";

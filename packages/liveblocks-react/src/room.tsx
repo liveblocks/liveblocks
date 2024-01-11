@@ -21,6 +21,7 @@ import type {
   CommentReaction,
   EnterOptions,
   GetThreadsOptions,
+  ResolveUsersArgs,
   RoomEventMessage,
   RoomNotificationSettings,
   ThreadData,
@@ -71,8 +72,6 @@ import type {
   InternalRoomContextBundle,
   MutationContext,
   OmitFirstArg,
-  OptionalPromise,
-  ResolveUsersArgs,
   RoomContextBundle,
   RoomNotificationSettingsState,
   RoomNotificationSettingsStateSuccess,
@@ -172,23 +171,6 @@ function makeMutationContext<
   };
 }
 
-type Options<TUserMeta extends BaseUserMeta> = {
-  /**
-   * @beta
-   *
-   * A function that returns user info from user IDs.
-   */
-  resolveUsers?: (
-    args: ResolveUsersArgs
-  ) => OptionalPromise<(TUserMeta["info"] | undefined)[] | undefined>;
-
-  /**
-   * @internal To point the client to a different Liveblocks server. Only
-   * useful for Liveblocks developers. Not for end users.
-   */
-  baseUrl?: string;
-};
-
 let hasWarnedIfNoResolveUsers = false;
 
 function warnIfNoResolveUsers(usersCache?: AsyncCache<unknown, unknown>) {
@@ -232,8 +214,7 @@ export function createRoomContext<
   TRoomEvent extends Json = never,
   TThreadMetadata extends BaseMetadata = never,
 >(
-  client: Client,
-  options?: Options<TUserMeta>
+  client: Client
 ): RoomContextBundle<
   TPresence,
   TStorage,
@@ -1570,7 +1551,7 @@ export function createRoomContext<
     );
   }
 
-  const { resolveUsers } = options ?? {};
+  const resolveUsers = client.__internal.resolveUsers;
 
   const usersCache = resolveUsers
     ? createAsyncCache(async (stringifiedOptions: string) => {

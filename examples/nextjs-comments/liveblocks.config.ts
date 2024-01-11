@@ -8,6 +8,21 @@ export const client = createClient({
   // @ts-expect-error: dev
   baseUrl: "https://dev.dev-liveblocks5948.workers.dev/",
 
+  // Get users' info from their ID
+  resolveUsers: async ({ userIds }) => {
+    const searchParams = new URLSearchParams(
+      userIds.map((userId) => ["userIds", userId])
+    );
+
+    try {
+      const response = await fetch(`/api/users?${searchParams}`);
+
+      return response.json();
+    } catch (error) {
+      console.error(123, error);
+    }
+  },
+
   // Find a list of users that match the current search term
   resolveMentionSuggestions: async ({ text }) => {
     const searchParams = new URLSearchParams({ text });
@@ -26,21 +41,6 @@ export const client = createClient({
 
 const {
   suspense: { RoomProvider, useThreads },
-} = createRoomContext(client, {
-  // Get users' info from their ID
-  resolveUsers: async ({ userIds }) => {
-    const searchParams = new URLSearchParams(
-      userIds.map((userId) => ["userIds", userId])
-    );
-
-    try {
-      const response = await fetch(`/api/users?${searchParams}`);
-
-      return response.json();
-    } catch (error) {
-      console.error(123, error);
-    }
-  },
-});
+} = createRoomContext(client);
 
 export { RoomProvider, useThreads };

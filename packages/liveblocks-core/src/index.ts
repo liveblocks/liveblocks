@@ -20,6 +20,7 @@ export type {
   Client,
   EnterOptions,
   ResolveMentionSuggestionsArgs,
+  ResolveUsersArgs,
 } from "./client";
 export { createClient } from "./client";
 export type {

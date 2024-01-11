@@ -53,6 +53,18 @@ export type ResolveMentionSuggestionsArgs = {
   text: string;
 };
 
+export type ResolveUsersArgs = {
+  /**
+   * The ID of the current room.
+   */
+  roomId: string;
+
+  /**
+   * The IDs of the users to resolve.
+   */
+  userIds: string[];
+};
+
 export type EnterOptions<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
@@ -79,6 +91,7 @@ export type EnterOptions<
  * will probably happen if you do.
  */
 type PrivateClientApi = {
+  resolveUsers: ClientOptions["resolveUsers"];
   resolveMentionSuggestions: ClientOptions["resolveMentionSuggestions"];
 };
 
@@ -198,7 +211,7 @@ export type AuthEndpoint =
  * The authentication endpoint that is called to ensure that the current user has access to a room.
  * Can be an url or a callback if you need to add additional headers.
  */
-export type ClientOptions = {
+export type ClientOptions<TUserMeta extends BaseUserMeta = BaseUserMeta> = {
   throttle?: number; // in milliseconds
   lostConnectionTimeout?: number; // in milliseconds
   backgroundKeepAliveTimeout?: number; // in milliseconds
@@ -225,6 +238,15 @@ export type ClientOptions = {
   resolveMentionSuggestions?: (
     args: ResolveMentionSuggestionsArgs
   ) => OptionalPromise<string[]>;
+
+  /**
+   * @beta
+   *
+   * A function that returns user info from user IDs.
+   */
+  resolveUsers?: (
+    args: ResolveUsersArgs
+  ) => OptionalPromise<(TUserMeta["info"] | undefined)[] | undefined>;
 
   /**
    * @internal To point the client to a different Liveblocks server. Only
@@ -306,7 +328,9 @@ export function getAuthBearerHeaderFromAuthValue(authValue: AuthValue): string {
  *   }
  * });
  */
-export function createClient(options: ClientOptions): Client {
+export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
+  options: ClientOptions<TUserMeta>
+): Client {
   type OpaqueRoom = Room<JsonObject, LsonObject, BaseUserMeta, Json>;
 
   const clientOptions = options;
@@ -620,6 +644,7 @@ export function createClient(options: ClientOptions): Client {
 
     // Internal
     __internal: {
+      resolveUsers: clientOptions.resolveUsers,
       resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,
     },
   };
