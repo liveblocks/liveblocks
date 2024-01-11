@@ -1,5 +1,5 @@
 import { LiveList } from "@liveblocks/client";
-import { INTERNAL, type IWebSocketCloseEvent } from "@liveblocks/core";
+import { INTERNAL } from "@liveblocks/core";
 import { createRoomContext } from "@liveblocks/react";
 import React from "react";
 
