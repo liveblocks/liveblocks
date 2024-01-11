@@ -21,6 +21,7 @@ import {
   makeAuthDelegateForRoom,
   makeCreateSocketDelegateForRoom,
 } from "./room";
+import type { CacheStore } from "./store";
 import { createClientStore } from "./store";
 import type { BaseMetadata } from "./types/BaseMetadata";
 import type {
@@ -287,7 +288,7 @@ export function createClient(options: ClientOptions): Client {
 
   const roomsById = new Map<string, RoomInfo>();
 
-  const notificationsApi = createNotificationsApi(fetchClientApi);
+  const notificationsApi = createInboxNotificationsApi(fetchClientApi);
 
   function teardownRoom(room: OpaqueRoom) {
     unlinkDevTools(room.id);
@@ -499,9 +500,9 @@ export class NotificationsApiError extends Error {
   }
 }
 
-function createNotificationsApi(
+function createInboxNotificationsApi(
   fetchClientApi: (endpoint: string, options?: RequestInit) => Promise<Response>
-) {
+): InboxNotificationsApi {
   async function fetchJson<T>(
     endpoint: string,
     options?: RequestInit
@@ -686,14 +687,11 @@ function toURLSearchParams(
   return result;
 }
 
-const CacheStoreMap = new WeakMap<
-  Client,
-  ReturnType<typeof createClientStore<any>>
->();
+const CacheStoreMap = new WeakMap<Client, CacheStore<any>>();
 
 export function getCacheStore<TThreadMetadata extends BaseMetadata>(
   client: Client
-) {
+): CacheStore<TThreadMetadata> {
   let store = CacheStoreMap.get(client);
 
   if (store === undefined) {
@@ -701,5 +699,5 @@ export function getCacheStore<TThreadMetadata extends BaseMetadata>(
     CacheStoreMap.set(client, store);
   }
 
-  return store as ReturnType<typeof createClientStore<TThreadMetadata>>;
+  return store as CacheStore<TThreadMetadata>;
 }

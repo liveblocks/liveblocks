@@ -1,3 +1,4 @@
+import type { Store } from "./comments/createStore";
 import { createStore } from "./comments/createStore";
 import type { Resolve } from "./lib/Resolve";
 import type { BaseMetadata } from "./types/BaseMetadata";
@@ -103,11 +104,30 @@ export type CacheState<TThreadMetadata extends BaseMetadata> = {
   inboxNotifications: Record<string, PartialInboxNotificationData>;
 };
 
+export interface CacheStore<TThreadMetadata extends BaseMetadata>
+  extends Store<CacheState<TThreadMetadata>> {
+  deleteThread(threadId: string): void;
+  updateThreadAndNotification(
+    thread: ThreadData<TThreadMetadata>,
+    inboxNotification?: PartialInboxNotificationData
+  ): void;
+  updateThreadsAndNotifications(
+    threads: Record<string, ThreadData<TThreadMetadata>>,
+    inboxNotifications: Record<string, PartialInboxNotificationData>,
+    queryKey?: string
+  ): void;
+  pushOptimisticUpdate(
+    optimisticUpdate: OptimisticUpdate<TThreadMetadata>
+  ): void;
+}
+
 /**
  * Create internal immtuable store for comments and notifications.
  * Keep all the state required to return data from our hooks.
  */
-export function createClientStore<TThreadMetadata extends BaseMetadata>() {
+export function createClientStore<
+  TThreadMetadata extends BaseMetadata,
+>(): CacheStore<TThreadMetadata> {
   const store = createStore<CacheState<TThreadMetadata>>({
     threads: {},
     threadsQueries: {},
