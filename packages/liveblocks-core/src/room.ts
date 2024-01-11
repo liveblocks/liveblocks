@@ -26,6 +26,7 @@ import {
 import { LiveObject } from "./crdts/LiveObject";
 import type { LiveNode, LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
+import { INTERNAL } from "./internal";
 import { assertNever, nn } from "./lib/assert";
 import { captureStackTrace } from "./lib/debug";
 import type { Callback, Observable } from "./lib/EventSource";
@@ -563,14 +564,14 @@ export type Room<
   TRoomEvent extends Json,
 > = CommentsApi<any /* TODO: Remove this any by adding a proper thread metadata on the Room type */> & {
   /**
-   * @internal
+   * @private
    *
    * Private methods to directly control the underlying state machine for this
    * room. Used in the core internals and for unit testing, but as a user of
    * Liveblocks, NEVER USE ANY OF THESE METHODS DIRECTLY, because bad things
    * will probably happen if you do.
    */
-  readonly __internal: PrivateRoomApi; // prettier-ignore
+  readonly [INTERNAL]: PrivateRoomApi;
 
   /**
    * The id of the room.
@@ -798,7 +799,7 @@ export type Room<
 };
 
 /**
- * @internal
+ * @private
  *
  * Private methods to directly control the underlying state machine for this
  * room. Used in the core internals and for unit testing, but as a user of
@@ -2795,8 +2796,8 @@ export function createRoom<
 
   return Object.defineProperty(
     {
-      /* NOTE: Exposing __internal here only to allow testing implementation details in unit tests */
-      __internal: {
+      /* NOTE: Exposing internals here only to allow testing implementation details in unit tests */
+      [INTERNAL]: {
         get presenceBuffer() { return deepClone(context.buffer.presenceUpdates?.data ?? null) }, // prettier-ignore
         get undoStack() { return deepClone(context.undoStack) }, // prettier-ignore
         get nodeCount() { return context.nodes.size }, // prettier-ignore
@@ -2866,9 +2867,9 @@ export function createRoom<
       updateRoomNotificationSettings,
     },
 
-    // Explictly make the __internal field non-enumerable, to avoid aggressive
+    // Explictly make the internal field non-enumerable, to avoid aggressive
     // freezing when used with Immer
-    "__internal",
+    INTERNAL,
     { enumerable: false }
   );
 }

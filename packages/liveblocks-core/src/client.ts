@@ -8,6 +8,7 @@ import {
 } from "./convert-plain-data";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
+import { INTERNAL } from "./internal";
 import { Batch } from "./lib/batch";
 import { deprecateIf } from "./lib/deprecation";
 import * as console from "./lib/fancy-console";
@@ -70,8 +71,6 @@ export type EnterOptions<
     unstable_batchedUpdates?: (cb: () => void) => void;
   }
 >;
-
-export const privateClientApiSymbol = Symbol("PrivateClientApi");
 
 /**
  * @private
@@ -189,7 +188,7 @@ export type Client = InboxNotificationsApi & {
    * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
    * will probably happen if you do.
    */
-  readonly [privateClientApiSymbol]: PrivateClientApi;
+  readonly [INTERNAL]: PrivateClientApi;
 };
 
 export type AuthEndpoint =
@@ -622,11 +621,11 @@ export function createClient(options: ClientOptions): Client {
       enterRoom,
 
       // Internal
-      [privateClientApiSymbol]: {
+      [INTERNAL]: {
         resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,
       },
     },
-    privateClientApiSymbol,
+    INTERNAL,
     {
       enumerable: false,
     }

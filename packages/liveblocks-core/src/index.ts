@@ -21,7 +21,7 @@ export type {
   EnterOptions,
   ResolveMentionSuggestionsArgs,
 } from "./client";
-export { createClient, privateClientApiSymbol } from "./client";
+export { createClient } from "./client";
 export type {
   CommentBodyLinkElementArgs,
   CommentBodyMentionElementArgs,
@@ -70,6 +70,7 @@ export {
   lsonToJson,
   patchLiveObjectKey,
 } from "./immutable";
+export { INTERNAL } from "./internal";
 export { assert, assertNever, nn } from "./lib/assert";
 export type {
   AsyncCache,

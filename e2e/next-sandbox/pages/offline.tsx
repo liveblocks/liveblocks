@@ -1,5 +1,5 @@
 import { LiveList } from "@liveblocks/client";
-import type { IWebSocketCloseEvent } from "@liveblocks/core";
+import { INTERNAL, type IWebSocketCloseEvent } from "@liveblocks/core";
 import { createRoomContext } from "@liveblocks/react";
 import React from "react";
 
@@ -31,18 +31,6 @@ const {
   useUndo,
 } = createRoomContext<never, { items: LiveList<string> }>(client);
 
-type Internal = {
-  simulate: {
-    explicitClose(event: IWebSocketCloseEvent): void;
-    rawSend(data: string): void;
-  };
-};
-
-type PrivateRoom = ReturnType<typeof useRoom> & {
-  // Private APIs that aren't officially published (yet)
-  __internal: Internal;
-};
-
 export default function Home() {
   const roomId = getRoomFromUrl();
   return (
@@ -61,8 +49,8 @@ let item = "A";
 function Sandbox(_props: { roomId: string }) {
   const renderCount = useRenderCount();
   const status = useStatus();
-  const room = useRoom() as PrivateRoom;
-  const internals = room.__internal;
+  const room = useRoom();
+  const internals = room[INTERNAL];
   const items = useStorage((root) => root.items);
   const me = useSelf();
   const others = useOthers();

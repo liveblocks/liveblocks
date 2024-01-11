@@ -32,10 +32,10 @@ import {
   createAsyncCache,
   deprecateIf,
   errorIf,
+  INTERNAL,
   isLiveNode,
   makeEventSource,
   makePoller,
-  privateClientApiSymbol,
   stringify,
 } from "@liveblocks/core";
 import { nanoid } from "nanoid";
@@ -249,8 +249,6 @@ export function createRoomContext<
 
   const commentsErrorEventSource =
     makeEventSource<CommentsError<TThreadMetadata>>();
-
-  const privateClientApi = client[privateClientApiSymbol];
 
   /**
    * RATIONALE:
@@ -1626,7 +1624,7 @@ export function createRoomContext<
     } as UserStateSuccess<TUserMeta["info"]>;
   }
 
-  const resolveMentionSuggestions = privateClientApi.resolveMentionSuggestions;
+  const resolveMentionSuggestions = client[INTERNAL].resolveMentionSuggestions;
   const mentionSuggestionsCache = new Map<string, string[]>();
 
   // Simplistic debounced search, we don't need to worry too much about
