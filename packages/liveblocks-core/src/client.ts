@@ -21,6 +21,7 @@ import {
   makeAuthDelegateForRoom,
   makeCreateSocketDelegateForRoom,
 } from "./room";
+import { createClientStore } from "./store";
 import type { BaseMetadata } from "./types/BaseMetadata";
 import type {
   PartialInboxNotificationData,
@@ -653,4 +654,22 @@ function toURLSearchParams(
     }
   }
   return result;
+}
+
+const CacheStoreMap = new WeakMap<
+  Client,
+  ReturnType<typeof createClientStore<any>>
+>();
+
+export function getCacheStore<TThreadMetadata extends BaseMetadata>(
+  client: Client
+) {
+  let store = CacheStoreMap.get(client);
+
+  if (store === undefined) {
+    store = createClientStore<TThreadMetadata>();
+    CacheStoreMap.set(client, store);
+  }
+
+  return store as ReturnType<typeof createClientStore<TThreadMetadata>>;
 }

@@ -32,6 +32,7 @@ import {
   createAsyncCache,
   deprecateIf,
   errorIf,
+  getCacheStore,
   isLiveNode,
   makeEventSource,
   makePoller,
@@ -53,12 +54,9 @@ import {
   RemoveReactionError,
 } from "./comments/errors";
 import { createCommentId, createThreadId } from "./comments/lib/createIds";
+import { selectedThreads } from "./comments/lib/selected-threads";
+import { upsertComment } from "./comments/lib/upsert-comment";
 import { useDebounce } from "./comments/lib/use-debounce";
-import {
-  createClientStore,
-  selectedThreads,
-  upsertComment,
-} from "./comments/store";
 import { useAsyncCache } from "./lib/use-async-cache";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
@@ -965,7 +963,7 @@ export function createRoomContext<
     return useLegacyKey(key) as TStorage[TKey];
   }
 
-  const store = createClientStore<TThreadMetadata>();
+  const store = getCacheStore<TThreadMetadata>(client);
 
   function onMutationFailure(
     innerError: Error,
