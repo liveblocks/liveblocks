@@ -1001,9 +1001,9 @@ export function createRoomContext<
 
   async function refreshThreadsAndNotifications() {
     await Promise.allSettled(
-      Array.from(requestsCache.values())
-        .filter((requestCache) => requestCache.subscribers > 0)
-        .map(async (requestCache) => {
+      Array.from(requestsCache.entries())
+        .filter(([_, requestCache]) => requestCache.subscribers > 0)
+        .map(async ([queryKey, requestCache]) => {
           const room = client.getRoom(requestCache.roomId);
 
           if (room === null) {
@@ -1022,7 +1022,8 @@ export function createRoomContext<
                 notification.id,
                 notification,
               ])
-            )
+            ),
+            queryKey
           );
         })
     );
@@ -1101,14 +1102,13 @@ export function createRoomContext<
         ),
         queryKey
       );
-
-      poller.start(POLLING_INTERVAL);
     } catch (err) {
       store.setThreadsQueryState(queryKey, {
         isLoading: false,
         error: err as Error,
       });
     }
+    poller.start(POLLING_INTERVAL);
   }
 
   function useThreads(

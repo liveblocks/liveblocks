@@ -8,7 +8,7 @@ import { setupServer } from "msw/node";
 import React, { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
-import { createRoomContext } from "../room";
+import { createRoomContext, POLLING_INTERVAL } from "../room";
 import { dummyThreadData } from "./_dummies";
 import MockWebSocket, { websocketSimulator } from "./_MockWebSocket";
 import { mockGetThread, mockGetThreads } from "./_restMocks";
@@ -19,11 +19,13 @@ beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 
 beforeEach(() => {
   MockWebSocket.instances = [];
+  jest.useFakeTimers();
 });
 
 afterEach(() => {
   MockWebSocket.instances = [];
   server.resetHandlers();
+  jest.useRealTimers();
 });
 
 afterAll(() => server.close());
@@ -287,9 +289,10 @@ describe("useThreads", () => {
     unmount();
   });
 
-  test("should include any error object in the returned value if initial fetch throws an error", async () => {
+  test("should include an error object in the returned value if initial fetch throws an error", async () => {
     server.use(
       mockGetThreads((_req, res, ctx) => {
+        // Mock an error response from the server for the initial fetch
         return res(ctx.status(500));
       })
     );
@@ -311,6 +314,62 @@ describe("useThreads", () => {
         threads: [],
         isLoading: false,
         error: expect.any(Error),
+      })
+    );
+
+    unmount();
+  });
+
+  test("should include an error object in the returned value if initial fetch throws an error but should clear the error if polling is successful", async () => {
+    let getThreadsReqCount = 0;
+    const threads = [dummyThreadData()];
+
+    server.use(
+      mockGetThreads((_req, res, ctx) => {
+        getThreadsReqCount++;
+
+        // Mock an error response from the server for the initial fetch
+        if (getThreadsReqCount === 1) {
+          return res(ctx.status(500));
+        }
+
+        // Mock a successful response for all subsequent requests (polling, etc)
+        return res(
+          ctx.json({
+            data: threads,
+            inboxNotifications: [],
+          })
+        );
+      })
+    );
+
+    const { RoomProvider, useThreads } = createRoomContextForTest();
+
+    const { result, unmount } = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          {children}
+        </RoomProvider>
+      ),
+    });
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        threads: [],
+        isLoading: false,
+        error: expect.any(Error),
+      })
+    );
+
+    jest.advanceTimersByTime(POLLING_INTERVAL);
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        threads: threads,
+        isLoading: false,
+        error: undefined,
       })
     );
 

@@ -81,8 +81,8 @@ type RemoveReactionOptimisticUpdate = {
 };
 
 type ThreadsQueryState =
-  | { isLoading: boolean; error?: never }
-  | { isLoading: false; error: Error };
+  | { isLoading: true; error?: never }
+  | { isLoading: false; error?: Error };
 
 export type State<TThreadMetadata extends BaseMetadata> = {
   /**
