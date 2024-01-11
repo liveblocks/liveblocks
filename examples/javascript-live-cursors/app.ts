@@ -68,10 +68,9 @@ room.subscribe("others", (others, event) => {
   }
 });
 
-document.addEventListener("pointermove", (e) => {
-  e.preventDefault();
+document.addEventListener("pointermove", (event) => {
   room.updatePresence({
-    cursor: { x: Math.round(e.clientX), y: Math.round(e.clientY) },
+    cursor: { x: Math.round(event.clientX), y: Math.round(event.clientY) },
   });
 });
 
