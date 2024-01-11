@@ -605,26 +605,32 @@ export function createClient(options: ClientOptions): Client {
     await batchedMarkInboxNotificationsAsRead.add(inboxNotificationId);
   }
 
-  return {
-    logout,
-    getInboxNotifications,
-    getUnreadInboxNotificationsCount,
-    markAllInboxNotificationsAsRead,
-    markInboxNotificationAsRead,
+  return Object.defineProperty(
+    {
+      logout,
+      getInboxNotifications,
+      getUnreadInboxNotificationsCount,
+      markAllInboxNotificationsAsRead,
+      markInboxNotificationAsRead,
 
-    // Old, deprecated APIs
-    enter,
-    getRoom,
-    leave: forceLeave,
+      // Old, deprecated APIs
+      enter,
+      getRoom,
+      leave: forceLeave,
 
-    // New, preferred API
-    enterRoom,
+      // New, preferred API
+      enterRoom,
 
-    // Internal
-    [privateClientApiSymbol]: {
-      resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,
+      // Internal
+      [privateClientApiSymbol]: {
+        resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,
+      },
     },
-  };
+    privateClientApiSymbol,
+    {
+      enumerable: false,
+    }
+  );
 }
 
 function checkBounds(
