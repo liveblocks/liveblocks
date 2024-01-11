@@ -114,32 +114,85 @@ export function createClientStore<TThreadMetadata extends BaseMetadata>() {
 
   function mergeThreads(
     existingThreads: Record<string, ThreadData<TThreadMetadata>>,
-    newThreads: ThreadData<TThreadMetadata>[]
-  ) {
-    // TODO: Do not replace existing thread if it has been updated more recently than the incoming thread
-    return {
-      ...existingThreads,
-      ...Object.fromEntries(newThreads.map((thread) => [thread.id, thread])),
-    };
+    newThreads: Record<string, ThreadData<TThreadMetadata>>
+  ): Record<string, ThreadData<TThreadMetadata>> {
+    const updatedThreads = { ...existingThreads };
+
+    Object.entries(newThreads).forEach(([id, thread]) => {
+      const existingThread = updatedThreads[id];
+
+      // If the thread already exists, we need to compare the two threads to determine which one is newer.
+      if (existingThread) {
+        const result = compareThreads(existingThread, thread);
+        // If the existing thread is newer than the new thread, we do not update the existing thread.
+        if (result === 1) return;
+      }
+      updatedThreads[id] = thread;
+    });
+
+    return updatedThreads;
   }
 
   function mergeNotifications(
     existingInboxNotifications: Record<string, PartialInboxNotificationData>,
-    newInboxNotifications: PartialInboxNotificationData[]
+    newInboxNotifications: Record<string, PartialInboxNotificationData>
   ) {
     // TODO: Do not replace existing inboxNotifications if it has been updated more recently than the incoming inbox notifications
-    return {
+    const inboxNotifications = Object.values({
       ...existingInboxNotifications,
-      ...Object.fromEntries(newInboxNotifications.map((ibn) => [ibn.id, ibn])),
-    };
+      ...newInboxNotifications,
+    });
+
+    return Object.fromEntries(
+      inboxNotifications.map((notification) => [notification.id, notification])
+    );
   }
 
   return {
     ...store,
 
+    deleteThread(threadId: string) {
+      store.set((state) => {
+        return {
+          ...state,
+          threads: deleteKeyImmutable(state.threads, threadId),
+          inboxNotifications: Object.fromEntries(
+            Object.entries(state.inboxNotifications).filter(
+              ([_id, notification]) => notification.threadId !== threadId
+            )
+          ),
+        };
+      });
+    },
+
+    updateThreadAndNotification(
+      thread: ThreadData<TThreadMetadata>,
+      inboxNotification?: PartialInboxNotificationData
+    ) {
+      store.set((state) => {
+        const existingThread = state.threads[thread.id];
+
+        return {
+          ...state,
+          threads:
+            existingThread === undefined ||
+            compareThreads(thread, existingThread) === 1
+              ? { ...state.threads, [thread.id]: thread }
+              : state.threads,
+          inboxNotifications:
+            inboxNotification === undefined // TODO: Compare notification dates to make sure it's not stale
+              ? state.inboxNotifications
+              : {
+                  ...state.inboxNotifications,
+                  [inboxNotification.id]: inboxNotification,
+                },
+        };
+      });
+    },
+
     updateThreadsAndNotifications(
-      threads: ThreadData<TThreadMetadata>[],
-      inboxNotifications: PartialInboxNotificationData[],
+      threads: Record<string, ThreadData<TThreadMetadata>>,
+      inboxNotifications: Record<string, PartialInboxNotificationData>,
       queryKey?: string
     ) {
       store.set((state) => ({
@@ -168,6 +221,18 @@ export function createClientStore<TThreadMetadata extends BaseMetadata>() {
       }));
     },
   };
+}
+
+function deleteKeyImmutable<TKey extends string | number | symbol, TValue>(
+  record: Record<TKey, TValue>,
+  key: TKey
+) {
+  if (Object.prototype.hasOwnProperty.call(record, key)) {
+    const { [key]: _toDelete, ...rest } = record;
+    return rest;
+  }
+
+  return record;
 }
 
 export function upsertComment<TThreadMetadata extends BaseMetadata>(
@@ -281,6 +346,15 @@ export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
               : comment
           ),
         };
+
+        if (
+          !result[thread.id].comments.some(
+            (comment) => comment.deletedAt === undefined
+          )
+        ) {
+          delete result[thread.id];
+        }
+
         break;
       }
       case "add-reaction": {
@@ -383,12 +457,15 @@ export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
 }
 
 export function selectedThreads<TThreadMetadata extends BaseMetadata>(
+  roomId: string,
   state: State<TThreadMetadata>,
   options: UseThreadsOptions<TThreadMetadata>
 ) {
   const result = applyOptimisticUpdates(state);
 
   return Object.values(result).filter((thread) => {
+    if (thread.roomId !== roomId) return false;
+
     const query = options.query;
     if (!query) return true;
 
@@ -399,4 +476,36 @@ export function selectedThreads<TThreadMetadata extends BaseMetadata>(
     }
     return true;
   });
+}
+
+/**
+ * Compares two threads to determine which one is newer.
+ * @param threadA The first thread to compare.
+ * @param threadB The second thread to compare.
+ * @returns 1 if threadA is newer, -1 if threadB is newer, or 0 if they are the same age or can't be compared.
+ */
+export function compareThreads<TThreadMetadata extends BaseMetadata>(
+  thread1: ThreadData<TThreadMetadata>,
+  thread2: ThreadData<TThreadMetadata>
+): number {
+  // Compare updatedAt if available
+  if (thread1.updatedAt && thread2.updatedAt) {
+    return thread1.updatedAt > thread2.updatedAt
+      ? 1
+      : thread1.updatedAt < thread2.updatedAt
+        ? -1
+        : 0;
+  } else if (thread1.updatedAt || thread2.updatedAt) {
+    return thread1.updatedAt ? 1 : -1;
+  }
+
+  // Finally, compare createdAt
+  if (thread1.createdAt > thread2.createdAt) {
+    return 1;
+  } else if (thread1.createdAt < thread2.createdAt) {
+    return -1;
+  }
+
+  // If all dates are equal, return 0
+  return 0;
 }

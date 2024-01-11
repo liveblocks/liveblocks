@@ -19,6 +19,7 @@ import type {
   BaseMetadata,
   CommentData,
   CommentReaction,
+  CommentsEventServerMsg,
   EnterOptions,
   GetThreadsOptions,
   RoomEventMessage,
@@ -34,6 +35,7 @@ import {
   isLiveNode,
   makeEventSource,
   makePoller,
+  ServerMsgCode,
   stringify,
 } from "@liveblocks/core";
 import { nanoid } from "nanoid";
@@ -364,6 +366,43 @@ export function createRoomContext<
         autoConnect: false, // Deliberately using false here on the first render, see below
       })
     );
+
+    React.useEffect(() => {
+      async function handleCommentEvent(message: CommentsEventServerMsg) {
+        // TODO: Error handling
+        const info = await room.getThread({ threadId: message.threadId });
+
+        // If no thread info was returned (i.e., 404), we remove the thread and relevant inbox notifications from local cache.
+        if (!info) {
+          store.deleteThread(message.threadId);
+          return;
+        }
+        const { thread, inboxNotification } = info;
+
+        const existingThread = store.get().threads[message.threadId];
+
+        switch (message.type) {
+          case ServerMsgCode.COMMENT_EDITED:
+          case ServerMsgCode.THREAD_METADATA_UPDATED:
+          case ServerMsgCode.COMMENT_REACTION_ADDED:
+          case ServerMsgCode.COMMENT_REACTION_REMOVED:
+            // If the thread doesn't exist in the local cache, we do not update it with the server data as an optimistic update could have deleted the thread locally.
+            if (!existingThread) break;
+
+            store.updateThreadAndNotification(thread, inboxNotification);
+            break;
+          case ServerMsgCode.COMMENT_CREATED:
+            store.updateThreadAndNotification(thread, inboxNotification);
+            break;
+          default:
+            break;
+        }
+      }
+
+      return room.events.comments.subscribe(
+        (message) => void handleCommentEvent(message)
+      );
+    }, [room]);
 
     React.useEffect(() => {
       const pair = stableEnterRoom(roomId, frozenProps);
@@ -976,7 +1015,15 @@ export function createRoomContext<
             requestCache.query
           );
 
-          store.updateThreadsAndNotifications(threads, inboxNotifications);
+          store.updateThreadsAndNotifications(
+            Object.fromEntries(threads.map((thread) => [thread.id, thread])),
+            Object.fromEntries(
+              inboxNotifications.map((notification) => [
+                notification.id,
+                notification,
+              ])
+            )
+          );
         })
     );
   }
@@ -1051,7 +1098,16 @@ export function createRoomContext<
     // TODO: Error handling
     const { threads, inboxNotifications } = await initialPromise;
 
-    store.updateThreadsAndNotifications(threads, inboxNotifications, queryKey);
+    store.updateThreadsAndNotifications(
+      Object.fromEntries(threads.map((thread) => [thread.id, thread])),
+      Object.fromEntries(
+        inboxNotifications.map((notification) => [
+          notification.id,
+          notification,
+        ])
+      ),
+      queryKey
+    );
 
     poller.start(POLLING_INTERVAL);
   }
@@ -1084,7 +1140,7 @@ export function createRoomContext<
         }
 
         return {
-          threads: selectedThreads(state, options),
+          threads: selectedThreads(room.id, state, options),
           isLoading: false,
         };
       }
@@ -1118,7 +1174,7 @@ export function createRoomContext<
       store.get,
       (state) => {
         return {
-          threads: selectedThreads(state, options),
+          threads: selectedThreads(room.id, state, options),
           isLoading: false,
         };
       }
@@ -1539,23 +1595,34 @@ export function createRoomContext<
 
         room.deleteComment({ threadId, commentId }).then(
           () => {
+            const newThreads = { ...store.get().threads };
+            const thread = newThreads[threadId];
+            if (thread === undefined) return;
+
+            newThreads[thread.id] = {
+              ...thread,
+              comments: thread.comments.map((comment) =>
+                comment.id === commentId
+                  ? {
+                      ...comment,
+                      deletedAt: now,
+                      body: undefined,
+                    }
+                  : comment
+              ),
+            };
+
+            if (
+              !newThreads[thread.id].comments.some(
+                (comment) => comment.deletedAt === undefined
+              )
+            ) {
+              delete newThreads[thread.id];
+            }
+
             store.set((state) => ({
               ...state,
-              threads: {
-                ...state.threads,
-                [threadId]: {
-                  ...state.threads[threadId],
-                  comments: state.threads[threadId].comments.map((comment) =>
-                    comment.id === commentId
-                      ? {
-                          ...comment,
-                          deletedAt: now,
-                          body: undefined,
-                        }
-                      : comment
-                  ),
-                },
-              },
+              threads: newThreads,
               optimisticUpdates: state.optimisticUpdates.filter(
                 (update) => update.id !== optimisticUpdateId
               ),
