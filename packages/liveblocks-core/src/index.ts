@@ -17,7 +17,7 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
  */
 
 export type { Client, EnterOptions } from "./client";
-export { createClient, getCacheStore } from "./client";
+export { createClient, getCacheStore, NotificationsApiError } from "./client";
 export type {
   CommentBodyLinkElementArgs,
   CommentBodyMentionElementArgs,
