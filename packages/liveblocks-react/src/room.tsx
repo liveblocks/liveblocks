@@ -36,6 +36,7 @@ import {
   isLiveNode,
   makeEventSource,
   makePoller,
+  NotificationsApiError,
   ServerMsgCode,
   stringify,
 } from "@liveblocks/core";
@@ -51,6 +52,7 @@ import {
   DeleteCommentError,
   EditCommentError,
   EditThreadMetadataError,
+  MarkInboxNotificationAsReadError,
   RemoveReactionError,
 } from "./comments/errors";
 import { createCommentId, createThreadId } from "./comments/lib/createIds";
@@ -977,12 +979,19 @@ export function createRoomContext<
       ),
     }));
 
-    if (!(innerError instanceof CommentsApiError)) {
-      throw innerError;
+    if (innerError instanceof CommentsApiError) {
+      const error = handleApiError(innerError);
+      commentsErrorEventSource.notify(createPublicError(error));
+      return;
     }
 
-    const error = handleCommentsApiError(innerError);
-    commentsErrorEventSource.notify(createPublicError(error));
+    if (innerError instanceof NotificationsApiError) {
+      handleApiError(innerError);
+      // [comments-unread] TODO: Create public error and notify via notificationsErrorEventSource?
+      return;
+    }
+
+    throw innerError;
   }
 
   const requestsCache: Map<
@@ -1745,11 +1754,52 @@ export function createRoomContext<
     );
   }
 
-  // [comments-unread] TODO: Implement
   function useMarkThreadAsRead() {
     return React.useCallback((threadId: string) => {
-      // [comments-unread] TODO: Find inbox notification for this thread locally and mark it as read
-      console.log(threadId);
+      const inboxNotification = Object.values(
+        store.get().inboxNotifications
+      ).find((inboxNotification) => inboxNotification.threadId === threadId);
+
+      if (!inboxNotification) return;
+
+      const optimisticUpdateId = nanoid();
+      const now = new Date();
+
+      store.pushOptimisticUpdate({
+        type: "mark-inbox-notification-as-read",
+        id: optimisticUpdateId,
+        inboxNotificationId: inboxNotification.id,
+        readAt: now,
+      });
+
+      client.markInboxNotificationAsRead(inboxNotification.id).then(
+        () => {
+          store.set((state) => ({
+            ...state,
+            inboxNotifications: {
+              ...state.inboxNotifications,
+              [inboxNotification.id]: {
+                ...inboxNotification,
+                readAt: now,
+              },
+            },
+            optimisticUpdates: state.optimisticUpdates.filter(
+              (update) => update.id !== optimisticUpdateId
+            ),
+          }));
+        },
+        (err: Error) => {
+          onMutationFailure(
+            err,
+            optimisticUpdateId,
+            (error) =>
+              new MarkInboxNotificationAsReadError(error, {
+                inboxNotificationId: inboxNotification.id,
+              })
+          );
+          return;
+        }
+      );
     }, []);
   }
 
@@ -1929,7 +1979,7 @@ function getCurrentUserId(
   }
 }
 
-function handleCommentsApiError(err: CommentsApiError): Error {
+function handleApiError(err: CommentsApiError | NotificationsApiError): Error {
   const message = `Request failed with status ${err.status}: ${err.message}`;
 
   // Log details about FORBIDDEN errors
