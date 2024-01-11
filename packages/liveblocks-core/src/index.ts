@@ -21,7 +21,7 @@ export type {
   EnterOptions,
   ResolveMentionSuggestionsArgs,
 } from "./client";
-export { createClient } from "./client";
+export { createClient, privateClientApiSymbol } from "./client";
 export type {
   CommentBodyLinkElementArgs,
   CommentBodyMentionElementArgs,

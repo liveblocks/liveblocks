@@ -71,6 +71,8 @@ export type EnterOptions<
   }
 >;
 
+export const privateClientApiSymbol = Symbol("PrivateClientApi");
+
 /**
  * @private
  *
@@ -187,7 +189,7 @@ export type Client = InboxNotificationsApi & {
    * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
    * will probably happen if you do.
    */
-  readonly __internal: PrivateClientApi;
+  readonly [privateClientApiSymbol]: PrivateClientApi;
 };
 
 export type AuthEndpoint =
@@ -619,7 +621,7 @@ export function createClient(options: ClientOptions): Client {
     enterRoom,
 
     // Internal
-    __internal: {
+    [privateClientApiSymbol]: {
       resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,
     },
   };
