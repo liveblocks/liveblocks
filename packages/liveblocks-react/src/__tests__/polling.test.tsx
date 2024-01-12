@@ -93,7 +93,7 @@ describe("useThreads: polling", () => {
 
     await waitFor(() =>
       expect(result.current).toEqual({
-        threads: threads,
+        threads,
         isLoading: false,
         error: undefined,
       })
