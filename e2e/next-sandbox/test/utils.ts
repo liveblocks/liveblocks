@@ -237,7 +237,7 @@ export async function waitUntilEqualOnAllPages(
   await expectJsonEqualOnAllPages(pages, selector);
 }
 
-function sleep(ms: number) {
+export function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 

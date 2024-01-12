@@ -29,60 +29,68 @@
   /** 
    * Colors
    */
-  --lb-background-subtle: color-mix(
-    in srgb,
+  --lb-background-foreground-faint: color-mix-scale(
+    var(--lb-background),
     var(--lb-foreground),
-    var(--lb-background) calc(100% - var(--lb-foreground-contrast) / 2)
+    var(--lb-foreground-contrast),
+    50
   );
-  --lb-background-accent-subtle: color-mix(
-    in srgb,
+  --lb-background-accent-faint: color-mix-scale(
+    var(--lb-background),
     var(--lb-accent),
-    var(--lb-background) calc(100% - var(--lb-accent-contrast) / 2)
+    var(--lb-accent-contrast),
+    50
+  );
+  --lb-background-accent-subtle: color-mix-scale(
+    var(--lb-background),
+    var(--lb-accent),
+    var(--lb-accent-contrast),
+    100
   );
   --lb-accent-subtle: color-mix-scale(
-    var(--lb-compound-background),
+    var(--lb-internal-background),
     var(--lb-accent),
     var(--lb-accent-contrast),
     100
   );
   --lb-accent-moderate: color-mix-scale(
-    var(--lb-compound-background),
+    var(--lb-internal-background),
     var(--lb-accent),
     var(--lb-accent-contrast),
     400
   );
   --lb-accent-tertiary: color-mix-scale(
-    var(--lb-compound-background),
+    var(--lb-internal-background),
     var(--lb-accent),
     var(--lb-accent-contrast),
     600
   );
   --lb-accent-secondary: color-mix-scale(
-    var(--lb-compound-background),
+    var(--lb-internal-background),
     var(--lb-accent),
     var(--lb-accent-contrast),
     800
   );
   --lb-foreground-subtle: color-mix-scale(
-    var(--lb-compound-background),
+    var(--lb-internal-background),
     var(--lb-foreground),
     var(--lb-foreground-contrast),
     100
   );
   --lb-foreground-moderate: color-mix-scale(
-    var(--lb-compound-background),
+    var(--lb-internal-background),
     var(--lb-foreground),
     var(--lb-foreground-contrast),
     400
   );
   --lb-foreground-tertiary: color-mix-scale(
-    var(--lb-compound-background),
+    var(--lb-internal-background),
     var(--lb-foreground),
     var(--lb-foreground-contrast),
     600
   );
   --lb-foreground-secondary: color-mix-scale(
-    var(--lb-compound-background),
+    var(--lb-internal-background),
     var(--lb-foreground),
     var(--lb-foreground-contrast),
     800
@@ -102,9 +110,9 @@
     transition: none var(--lb-transition-duration) var(--lb-transition-easing);
   }
 
-  /* Define default compound variables only on first .lb-root instance */
+  /* Define some variables only on first .lb-root instances */
   &:where(:not(& &)) {
-    --lb-compound-background: var(--lb-background);
+    --lb-internal-background: var(--lb-background);
   }
 }
 
@@ -113,7 +121,7 @@
  *************************************/
 
 .lb-icon {
-  --lb-icon-background: var(--lb-compound-background);
+  --lb-icon-background: var(--lb-internal-background);
 
   inline-size: var(--lb-icon-size);
   block-size: var(--lb-icon-size);
@@ -129,7 +137,7 @@
  *************************************/
 
 .lb-button {
-  --lb-button-background: var(--lb-compound-background);
+  --lb-button-background: var(--lb-internal-background);
 
   all: unset;
   position: relative;
@@ -163,7 +171,7 @@
 
     &::after {
       box-shadow:
-        var(--lb-compound-background) 0 0 0 2px,
+        var(--lb-internal-background) 0 0 0 2px,
         var(--lb-accent) 0 0 0 4px;
     }
   }
@@ -288,23 +296,6 @@
 }
 
 /*************************************
- *           Emoji pickers           *
- *************************************/
-
-.lb-emoji-picker-emoji,
-.lb-quick-emoji-picker-emoji {
-  all: unset;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden;
-  box-sizing: inherit;
-  aspect-ratio: 1;
-  padding: calc(0.375 * var(--lb-spacing));
-  text-align: center;
-}
-
-/*************************************
  *           Emoji picker            *
  *************************************/
 
@@ -390,7 +381,7 @@
 
 .lb-emoji-picker-category-header {
   padding: var(--lb-emoji-picker-padding) var(--lb-emoji-picker-offset-padding);
-  background: var(--lb-compound-background);
+  background: var(--lb-internal-background);
 }
 
 .lb-emoji-picker-category-header-title {
@@ -418,15 +409,16 @@
 }
 
 .lb-emoji-picker-emoji {
-  border-radius: calc(var(--lb-radius) - 0.75 * $lb-emoji-picker-padding);
-}
-
-/*************************************
- *        Quick emoji picker         *
- *************************************/
-
-.lb-quick-emoji-picker {
+  all: unset;
   display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  box-sizing: inherit;
+  aspect-ratio: 1;
+  padding: calc(0.375 * var(--lb-spacing));
+  border-radius: calc(var(--lb-radius) - 0.75 * $lb-emoji-picker-padding);
+  text-align: center;
 }
 
 /*************************************
@@ -446,7 +438,7 @@
   );
   padding-inline: $lb-tooltip-horizontal-padding;
   border-radius: var(--lb-radius);
-  background: var(--lb-compound-background);
+  background: var(--lb-internal-background);
   color: var(--lb-foreground);
   box-shadow: var(--lb-tooltip-shadow);
   font-size: 0.75rem;
@@ -656,7 +648,7 @@
  *************************************/
 
 .lb-composer {
-  background: var(--lb-compound-background);
+  background: var(--lb-internal-background);
   color: var(--lb-foreground);
   transition-property: background;
 }
@@ -766,7 +758,7 @@
 
   position: relative;
   padding: var(--lb-spacing);
-  background: var(--lb-compound-background);
+  background: var(--lb-internal-background);
   color: var(--lb-foreground);
   font-weight: 400;
 
@@ -826,7 +818,7 @@
   font-size: 0.875em;
 }
 
-.lb-comment-date-timestamp,
+.lb-comment-date-created,
 .lb-comment-date-edited {
   display: contents;
 }
@@ -929,7 +921,7 @@
  *************************************/
 
 .lb-thread {
-  background: var(--lb-compound-background);
+  background: var(--lb-internal-background);
   color: var(--lb-foreground);
   transition-property: background;
 
@@ -953,12 +945,6 @@
   z-index: 0;
   padding-block: calc(0.6 * var(--lb-spacing));
   transition-property: background;
-
-  &:where([data-editing]) {
-    --lb-compound-background: var(--lb-background-subtle);
-
-    background: var(--lb-compound-background);
-  }
 
   &:where(.lb-comment\:indent-content) {
     min-block-size: calc(var(--lb-comment-avatar-size) + var(--lb-spacing));
@@ -1017,7 +1003,7 @@
   gap: calc(0.325 * var(--lb-spacing));
   align-items: center;
   padding: calc(0.25 * var(--lb-spacing)) var(--lb-spacing);
-  background: var(--lb-compound-background);
+  background: var(--lb-internal-background);
   color: var(--lb-accent);
   font-weight: 600;
   font-size: 0.675em;
@@ -1046,6 +1032,93 @@
 }
 
 /*************************************
+ *        Inbox Notification         *
+ *************************************/
+
+.lb-inbox-notification {
+  --lb-inbox-notification-aside-size: 36px;
+
+  position: relative;
+  display: flex;
+  gap: calc(0.75 * var(--lb-spacing));
+  overflow: hidden;
+  padding: var(--lb-spacing);
+  background: var(--lb-internal-background);
+  color: var(--lb-foreground);
+  font-weight: 400;
+  transition-property: background;
+
+  &:where([data-interactive]) {
+    cursor: pointer;
+
+    &:where(:hover) {
+      --lb-internal-background: var(--lb-background-foreground-faint);
+    }
+
+    &:where([data-unread]) {
+      --lb-internal-background: var(--lb-background-accent-faint);
+
+      &:where(:hover) {
+        --lb-internal-background: var(--lb-background-accent-subtle);
+      }
+    }
+  }
+}
+
+.lb-inbox-notification-aside {
+  flex: none;
+  inline-size: var(--lb-inbox-notification-aside-size);
+}
+
+.lb-inbox-notification-content {
+  flex: 1;
+}
+
+.lb-inbox-notification-header {
+  display: flex;
+  gap: calc(0.75 * var(--lb-spacing));
+  align-items: center;
+  margin-block-start: calc(0.25 * var(--lb-spacing));
+  margin-block-end: calc(0.5 * var(--lb-spacing));
+}
+
+.lb-inbox-notification-title {
+  font-weight: 500;
+  text-wrap: pretty;
+}
+
+.lb-inbox-notification-details {
+  flex: none;
+  align-self: start;
+  min-inline-size: 0;
+  margin-inline-start: auto;
+}
+
+.lb-inbox-notification-details-labels {
+  display: flex;
+  align-items: baseline;
+  min-inline-size: 0;
+
+  &::before {
+    content: "\FEFF";
+  }
+}
+
+.lb-inbox-notification-date {
+  color: var(--lb-foreground-tertiary);
+  font-size: 0.875em;
+}
+
+.lb-inbox-notification-unread-indicator {
+  align-self: center;
+  inline-size: 10px;
+  block-size: 10px;
+  margin-inline-start: calc(0.5 * var(--lb-spacing));
+  border-radius: 50%;
+  background: var(--lb-accent);
+}
+
+/*************************************
  *             Elevation             *
  *************************************/
 
@@ -1053,7 +1126,7 @@
   position: relative;
   overflow: hidden;
   border-radius: var(--lb-radius);
-  background: var(--lb-compound-background);
+  background: var(--lb-internal-background);
   box-shadow: var(--lb-elevation-shadow);
 
   &::after {
@@ -1072,8 +1145,7 @@
  *************************************/
 
 .lb-dropdown,
-.lb-composer-suggestions,
-.lb-quick-emoji-picker {
+.lb-composer-suggestions {
   padding: $lb-elevation-list-padding;
 }
 
@@ -1087,8 +1159,7 @@
 
 .lb-dropdown-item,
 .lb-composer-suggestions-list-item,
-.lb-emoji-picker-emoji,
-.lb-quick-emoji-picker-emoji {
+.lb-emoji-picker-emoji {
   border-radius: calc(var(--lb-radius) - 0.75 * $lb-elevation-list-padding);
   color: var(--lb-foreground-secondary);
   outline: none;
@@ -1108,16 +1179,6 @@
   }
 }
 
-/**
- * TODO: Unify with above when QuickEmojiPicker uses @radix-ui/react-dropdown-menu
- */
-.lb-quick-emoji-picker-emoji {
-  &:where(:enabled:hover, :enabled:focus-visible) {
-    background: var(--lb-foreground-subtle);
-    transition-duration: calc(var(--lb-transition-duration) / 2);
-  }
-}
-
 /*************************************
  *        Floating animations        *
  *************************************/
@@ -1125,8 +1186,7 @@
 .lb-dropdown,
 .lb-composer-suggestions,
 .lb-tooltip,
-.lb-emoji-picker,
-.lb-quick-emoji-picker {
+.lb-emoji-picker {
   animation-duration: var(--lb-transition-duration);
   animation-timing-function: var(--lb-transition-easing);
   will-change: transform, opacity;
@@ -1135,7 +1195,6 @@
 :is(
     .lb-dropdown,
     .lb-emoji-picker,
-    .lb-quick-emoji-picker,
     .lb-tooltip:where([data-state="delayed-open"]),
     .lb-composer-suggestions
   ) {
@@ -1148,13 +1207,7 @@
   }
 }
 
-:is(
-    .lb-dropdown,
-    .lb-emoji-picker,
-    .lb-quick-emoji-picker,
-    .lb-tooltip,
-    .lb-composer-suggestions
-  ) {
+:is(.lb-dropdown, .lb-emoji-picker, .lb-tooltip, .lb-composer-suggestions) {
   &:where([data-state="closed"]) {
     animation-name: lb-animation-disappear;
   }
@@ -1163,7 +1216,6 @@
 @media (prefers-reduced-motion) {
   .lb-dropdown:where(:not([data-state="closed"])),
   .lb-emoji-picker:where(:not([data-state="closed"])),
-  .lb-quick-emoji-picker:where(:not([data-state="closed"])),
   .lb-tooltip:where([data-state="delayed-open"]:not([data-state="closed"])),
   .lb-composer-suggestions:where(:not([data-state="closed"])) {
     animation-name: lb-animation-appear;

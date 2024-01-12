@@ -29,7 +29,7 @@
   "dependencies": {
     "@liveblocks/core": "^1.0.0",
     "@liveblocks/schema": "0.0.13-beta1",
-    "decoders": "^2.0.3",
+    "decoders": "^2.2.0",
     "pluralize": "^8.0.0"
   },
   "devDependencies": {

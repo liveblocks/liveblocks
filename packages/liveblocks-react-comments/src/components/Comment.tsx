@@ -450,7 +450,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                   <Timestamp
                     locale={$.locale}
                     date={comment.createdAt}
-                    className="lb-comment-date-timestamp"
+                    className="lb-comment-date-created"
                   />
                   {comment.editedAt && comment.body && (
                     <>
