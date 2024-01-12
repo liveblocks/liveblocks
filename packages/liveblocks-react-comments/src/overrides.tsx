@@ -6,6 +6,7 @@ import * as React from "react";
 
 import { Emoji } from "./components/internal/Emoji";
 import type { Direction } from "./types";
+import { pluralize } from "./utils/pluralize";
 
 export interface LocalizationOverrides {
   locale: string;
@@ -93,9 +94,9 @@ export const defaultOverrides: Overrides = {
     </>
   ),
   COMMENT_REACTION_REMAINING: (others) =>
-    `${others} other${others > 1 ? "s" : ""}`,
+    `${others} ${pluralize(others, "other")}`,
   COMMENT_REACTION_DESCRIPTION: (emoji, count) =>
-    `${count} reaction${count > 1 ? "s" : ""}, react with ${emoji}`,
+    `${count} ${pluralize(count, "reaction")}, react with ${emoji}`,
   THREAD_RESOLVE: "Resolve thread",
   THREAD_UNRESOLVE: "Re-open thread",
   THREAD_COMPOSER_PLACEHOLDER: "Reply to thread…",

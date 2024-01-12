@@ -726,10 +726,7 @@ This is a wrapper around the
 and returns no response.
 
 ```ts
-await liveblocks.sendYjsBinaryUpdate("my-room-id", {
-  // Your yDoc in binary update format
-  update: Y.encodeStateAsUpdate(yDoc),
-});
+await liveblocks.sendYjsBinaryUpdate("my-room-id", update);
 ```
 
 Here’s an example of how to update a room’s Yjs document with your changes.
@@ -741,13 +738,15 @@ import * as Y from "yjs";
 const yDoc = new Y.Doc();
 
 // Create your data structures and make your update
+// If you're using a text editor, you need to match its format
 const yText = yDoc.getText("text");
 yText.insert(0, "Hello world");
 
-// Encode your yDoc state as a binary update message and send to Liveblocks
-await liveblocks.sendYjsBinaryUpdate("my-room-id", {
-  update: Y.encodeStateAsUpdate(yDoc),
-});
+// Encode the document state as an update
+const update = Y.encodeStateAsUpdate(yDoc);
+
+// Send update to Liveblocks
+await liveblocks.sendYjsBinaryUpdate("my-room-id", update);
 ```
 
 To create a new room and initialize its Yjs document, call
@@ -758,14 +757,17 @@ To create a new room and initialize its Yjs document, call
 const room = await liveblocks.createRoom("my-room-id");
 
 // Set initial Yjs document value
-await liveblocks.sendYjsBinaryUpdate("my-room-id", {
-  update: Y.encodeStateAsUpdate(yDoc),
-});
+await liveblocks.sendYjsBinaryUpdate("my-room-id", state);
 ```
 
-Note that each text and code editor handles binary updates in a different way.
-For example, this is how to create a binary update with
-[Slate](https://www.slatejs.org/).
+##### Different editors
+
+Note that each text and code editor handles binary updates in a different way,
+and may use a different Yjs shared type, for example
+[`Y.XmlFragment`](https://docs.yjs.dev/api/shared-types/y.xmlfragment) instead
+of [`Y.Text`](https://docs.yjs.dev/api/shared-types/y.text).
+
+Create a binary update with [Slate](https://www.slatejs.org/):
 
 ```ts title="Slate binary update" highlight="3,13-17,19-21" isCollapsed isCollapsable
 import { Liveblocks } from "@liveblocks/node";
@@ -790,9 +792,43 @@ export async function POST() {
   const insertDelta = slateNodesToInsertDelta(slateDoc);
   (yDoc.get("content", Y.XmlText) as Y.XmlText).applyDelta(insertDelta);
 
-  // Update Yjs document value
+  // Encode the document state as an update
+  const update = Y.encodeStateAsUpdate(yDoc);
+
+  // Send update to Liveblocks
+  await liveblocks.sendYjsBinaryUpdate("my-room-id", update);
+}
+```
+
+Create a binary update with
+[Tiptap](https://tiptap.dev/docs/editor/api/extensions/collaboration):
+
+```ts title="Tiptap binary update" highlight="12-14,16-18" isCollapsed isCollapsable
+import * as Y from "yjs";
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+export async function POST() {
+  // Create a Yjs document
+  const yDoc = new Y.Doc();
+
+  // Create Tiptap Yjs state
+  const yXmlElement = new Y.XmlElement("paragraph");
+  yXmlElement.insert(0, [new Y.XmlText("Hello world")]);
+
+  // Create your data structures and make your update
+  const yXmlFragment = yDoc.getXmlFragment("default");
+  yXmlFragment.insert(0, [yXmlElement]);
+
+  // Encode the document state as an update message
+  const yUpdate = Y.encodeStateAsUpdate(yDoc);
+
+  // Initialize the Yjs document with the update
   await liveblocks.sendYjsBinaryUpdate("my-room-id", {
-    update: Y.encodeStateAsUpdate(yDoc),
+    update: yUpdate,
   });
 }
 ```
