@@ -118,6 +118,22 @@ export type Schema = {
 
 type SchemaPlain = DateToString<Schema>;
 
+type InboxNotificationResponse = {
+  readAt: string | null;
+  notifiedAt: string;
+  id: string;
+  threadId: string;
+  kind: "thread";
+};
+
+export type InboxNotification = {
+  readAt: Date | null;
+  notifiedAt: Date;
+  id: string;
+  threadId: string;
+  kind: "thread";
+};
+
 /**
  * Interact with the Liveblocks API from your Node.js backend.
  */
@@ -162,12 +178,25 @@ export class Liveblocks {
       "Content-Type": "application/json",
     };
     const fetch = await fetchPolyfill();
-    const res = await fetch(url, {
+    return await fetch(url, {
       method: "PUT",
       headers,
       body: JSON.stringify(json),
     });
-    return res;
+  }
+
+  /** @internal */
+  private async putBinary(
+    path: URLSafeString,
+    body: Uint8Array
+  ): Promise<Response> {
+    const url = urljoin(this._baseUrl, path);
+    const headers = {
+      Authorization: `Bearer ${this._secret}`,
+      "Content-Type": "application/octet-stream",
+    };
+    const fetch = await fetchPolyfill();
+    return await fetch(url, { method: "PUT", headers, body });
   }
 
   /** @internal */
@@ -659,18 +688,13 @@ export class Liveblocks {
   /**
    * Send a Yjs binary update to the room’s Yjs document. You can use this endpoint to initialize Yjs data for the room or to update the room’s Yjs document.
    * @param roomId The id of the room to send the Yjs binary update to.
-   * @param params The Yjs binary update to send. Read the [Yjs documentation](https://docs.yjs.dev/api/document-updates) to learn how to create a binary update.
+   * @param update The Yjs update to send. Typically the result of calling `Yjs.encodeStateAsUpdate(doc)`. Read the [Yjs documentation](https://docs.yjs.dev/api/document-updates) to learn how to create a binary update.
    */
   public async sendYjsBinaryUpdate(
     roomId: string,
-    params: {
-      update: string;
-    }
+    update: Uint8Array
   ): Promise<void> {
-    const { update } = params;
-    const res = await this.put(url`/v2/rooms/${roomId}/ydoc`, {
-      update,
-    });
+    const res = await this.putBinary(url`/v2/rooms/${roomId}/ydoc`, update);
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -1196,6 +1220,29 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
+  }
+
+  public async getInboxNotification(params: {
+    userId: string;
+    inboxNotificationId: string;
+  }): Promise<InboxNotification> {
+    const { userId, inboxNotificationId } = params;
+
+    const res = await this.get(
+      url`/v2/users/${userId}/inbox-notifications/${inboxNotificationId}`
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    const data = (await res.json()) as InboxNotificationResponse;
+
+    return {
+      ...data,
+      notifiedAt: new Date(data.notifiedAt),
+      readAt: data.readAt ? new Date(data.readAt) : null,
+    };
   }
 }
 
