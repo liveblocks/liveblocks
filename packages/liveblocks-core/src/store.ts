@@ -1,5 +1,5 @@
-import type { Store } from "./comments/createStore";
-import { createStore } from "./comments/createStore";
+import type { Store } from "./comments/create-store";
+import { createStore } from "./comments/create-store";
 import type { Resolve } from "./lib/Resolve";
 import type { BaseMetadata } from "./types/BaseMetadata";
 import type { CommentBody } from "./types/CommentBody";
