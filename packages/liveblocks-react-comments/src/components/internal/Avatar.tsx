@@ -20,6 +20,10 @@ export function Avatar({ userId, className, ...props }: AvatarProps) {
     () => (resolvedUserName ? getInitials(resolvedUserName) : undefined),
     [resolvedUserName]
   );
+  const resolvedUserIdInitials = useMemo(
+    () => (!isLoading && !user ? getInitials(userId) : undefined),
+    [isLoading, user, userId]
+  );
 
   return (
     <div
@@ -34,11 +38,15 @@ export function Avatar({ userId, className, ...props }: AvatarProps) {
           alt={resolvedUserName}
         />
       )}
-      {resolvedUserInitials && (
+      {resolvedUserInitials ? (
         <span className="lb-avatar-fallback" aria-hidden>
           {resolvedUserInitials}
         </span>
-      )}
+      ) : resolvedUserIdInitials ? (
+        <span className="lb-avatar-fallback" aria-label={userId} title={userId}>
+          {resolvedUserIdInitials}
+        </span>
+      ) : null}
     </div>
   );
 }
