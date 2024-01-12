@@ -1,5 +1,5 @@
 import type { LsonObject } from "../crdts/Lson";
-import { INTERNAL } from "../internal";
+import { kInternal } from "../internal";
 import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { UpdateYDocClientMsg } from "../protocol/ClientMsg";
@@ -181,7 +181,7 @@ function partialSyncStorage(
 }
 
 function partialSyncMe(room: Room<JsonObject, LsonObject, BaseUserMeta, Json>) {
-  const me = room[INTERNAL].getSelf_forDevTools();
+  const me = room[kInternal].getSelf_forDevTools();
   if (me) {
     sendToPanel({
       msg: "room::sync::partial",
@@ -195,7 +195,7 @@ function partialSyncOthers(
   room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
 ) {
   // Any time others updates, send the new storage root to the dev panel
-  const others = room[INTERNAL].getOthers_forDevTools();
+  const others = room[kInternal].getOthers_forDevTools();
   if (others) {
     sendToPanel({
       msg: "room::sync::partial",
@@ -207,8 +207,8 @@ function partialSyncOthers(
 
 function fullSync(room: Room<JsonObject, LsonObject, BaseUserMeta, Json>) {
   const root = room.getStorageSnapshot();
-  const me = room[INTERNAL].getSelf_forDevTools();
-  const others = room[INTERNAL].getOthers_forDevTools();
+  const me = room[kInternal].getSelf_forDevTools();
+  const others = room[kInternal].getOthers_forDevTools();
   // Because the room doesn't have access to the YJS doc, we must tell it to go get the full doc
   // sending an empty vector will return the whole document and then devtools will be up to date
   room.fetchYDoc("");

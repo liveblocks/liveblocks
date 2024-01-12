@@ -22,7 +22,7 @@ import {
   waitUntilStatus,
   waitUntilStorageUpdate,
 } from "../../__tests__/_waitUtils";
-import { INTERNAL } from "../../internal";
+import { kInternal } from "../../internal";
 import { Permission } from "../../protocol/AuthToken";
 import { OpCode } from "../../protocol/Op";
 import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
@@ -404,7 +404,7 @@ describe("LiveList", () => {
       });
 
       // Ensure that LiveStructure are deleted properly
-      expect(room[INTERNAL].nodeCount).toBe(2);
+      expect(room[kInternal].nodeCount).toBe(2);
 
       assertUndoRedo();
     });

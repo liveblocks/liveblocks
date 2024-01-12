@@ -70,7 +70,7 @@ export {
   lsonToJson,
   patchLiveObjectKey,
 } from "./immutable";
-export { INTERNAL } from "./internal";
+export { kInternal } from "./internal";
 export { assert, assertNever, nn } from "./lib/assert";
 export type {
   AsyncCache,

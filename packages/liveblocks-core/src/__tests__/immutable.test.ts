@@ -9,7 +9,7 @@ import {
   patchLiveObject,
   patchLiveObjectKey,
 } from "../immutable";
-import { INTERNAL } from "../internal";
+import { kInternal } from "../internal";
 import * as console from "../lib/fancy-console";
 import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
@@ -90,7 +90,7 @@ export async function prepareStorageImmutableTest<
     expectStorageInBothClients(data);
 
     if (itemsCount !== undefined) {
-      expect(subject.room[INTERNAL].nodeCount).toBe(itemsCount);
+      expect(subject.room[kInternal].nodeCount).toBe(itemsCount);
     }
     expect(state).toEqual(refState);
     expect(state).toEqual(data);

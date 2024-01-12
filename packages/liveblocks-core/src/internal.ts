@@ -5,14 +5,14 @@
  * Object.defineProperty(
  *   {
  *     public,
- *     [INTERNAL]: {
+ *     [kInternal]: {
  *       private
  *     },
  *   },
- *   INTERNAL,
+ *   kInternal,
  *   {
  *     enumerable: false,
  *   }
  * );
  */
-export const INTERNAL = Symbol("kInternal");
+export const kInternal = Symbol();

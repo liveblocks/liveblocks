@@ -1,5 +1,5 @@
 import { LiveList } from "@liveblocks/client";
-import { INTERNAL } from "@liveblocks/core";
+import { kInternal } from "@liveblocks/core";
 import { createRoomContext } from "@liveblocks/react";
 import React from "react";
 
@@ -50,7 +50,7 @@ function Sandbox(_props: { roomId: string }) {
   const renderCount = useRenderCount();
   const status = useStatus();
   const room = useRoom();
-  const internals = room[INTERNAL];
+  const internals = room[kInternal];
   const items = useStorage((root) => root.items);
   const me = useSelf();
   const others = useOthers();

@@ -8,7 +8,7 @@ import {
 } from "./convert-plain-data";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
-import { INTERNAL } from "./internal";
+import { kInternal } from "./internal";
 import { Batch } from "./lib/batch";
 import { deprecateIf } from "./lib/deprecation";
 import * as console from "./lib/fancy-console";
@@ -188,7 +188,7 @@ export type Client = InboxNotificationsApi & {
    * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
    * will probably happen if you do.
    */
-  readonly [INTERNAL]: PrivateClientApi;
+  readonly [kInternal]: PrivateClientApi;
 };
 
 export type AuthEndpoint =
@@ -621,11 +621,11 @@ export function createClient(options: ClientOptions): Client {
       enterRoom,
 
       // Internal
-      [INTERNAL]: {
+      [kInternal]: {
         resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,
       },
     },
-    INTERNAL,
+    kInternal,
     {
       enumerable: false,
     }

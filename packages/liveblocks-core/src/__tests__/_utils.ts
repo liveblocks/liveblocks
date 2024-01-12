@@ -2,7 +2,7 @@ import { DEFAULT_BASE_URL } from "../constants";
 import type { LiveObject } from "../crdts/LiveObject";
 import type { LsonObject } from "../crdts/Lson";
 import type { ToImmutable } from "../crdts/utils";
-import { INTERNAL } from "../internal";
+import { kInternal } from "../internal";
 import type { Json, JsonObject } from "../lib/Json";
 import { makePosition } from "../lib/position";
 import { deepClone } from "../lib/utils";
@@ -309,7 +309,9 @@ export async function prepareStorageTest<
   function expectBothClientStoragesToEqual(data: ToImmutable<TStorage>) {
     expect(subject.storage.root.toImmutable()).toEqual(data);
     expect(ref.storage.root.toImmutable()).toEqual(data);
-    expect(subject.room[INTERNAL].nodeCount).toBe(ref.room[INTERNAL].nodeCount);
+    expect(subject.room[kInternal].nodeCount).toBe(
+      ref.room[kInternal].nodeCount
+    );
   }
 
   function expectStorage(data: ToImmutable<TStorage>) {
@@ -321,8 +323,8 @@ export async function prepareStorageTest<
     // this is what the last undo item looked like before we undo
 
     const before = deepCloneWithoutOpId(
-      subject.room[INTERNAL].undoStack[
-        subject.room[INTERNAL].undoStack.length - 1
+      subject.room[kInternal].undoStack[
+        subject.room[kInternal].undoStack.length - 1
       ]
     );
 
@@ -340,8 +342,8 @@ export async function prepareStorageTest<
 
     // this is what the last undo item looks like after redoing everything
     const after = deepCloneWithoutOpId(
-      subject.room[INTERNAL].undoStack[
-        subject.room[INTERNAL].undoStack.length - 1
+      subject.room[kInternal].undoStack[
+        subject.room[kInternal].undoStack.length - 1
       ]
     );
 

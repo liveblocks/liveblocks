@@ -26,7 +26,7 @@ import {
 import { LiveObject } from "./crdts/LiveObject";
 import type { LiveNode, LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
-import { INTERNAL } from "./internal";
+import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
 import { captureStackTrace } from "./lib/debug";
 import type { Callback, Observable } from "./lib/EventSource";
@@ -571,7 +571,7 @@ export type Room<
    * Liveblocks, NEVER USE ANY OF THESE METHODS DIRECTLY, because bad things
    * will probably happen if you do.
    */
-  readonly [INTERNAL]: PrivateRoomApi;
+  readonly [kInternal]: PrivateRoomApi;
 
   /**
    * The id of the room.
@@ -2797,7 +2797,7 @@ export function createRoom<
   return Object.defineProperty(
     {
       /* NOTE: Exposing internals here only to allow testing implementation details in unit tests */
-      [INTERNAL]: {
+      [kInternal]: {
         get presenceBuffer() { return deepClone(context.buffer.presenceUpdates?.data ?? null) }, // prettier-ignore
         get undoStack() { return deepClone(context.undoStack) }, // prettier-ignore
         get nodeCount() { return context.nodes.size }, // prettier-ignore
@@ -2869,7 +2869,7 @@ export function createRoom<
 
     // Explictly make the internal field non-enumerable, to avoid aggressive
     // freezing when used with Immer
-    INTERNAL,
+    kInternal,
     { enumerable: false }
   );
 }

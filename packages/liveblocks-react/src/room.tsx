@@ -32,8 +32,8 @@ import {
   createAsyncCache,
   deprecateIf,
   errorIf,
-  INTERNAL,
   isLiveNode,
+  kInternal,
   makeEventSource,
   makePoller,
   stringify,
@@ -1624,7 +1624,7 @@ export function createRoomContext<
     } as UserStateSuccess<TUserMeta["info"]>;
   }
 
-  const resolveMentionSuggestions = client[INTERNAL].resolveMentionSuggestions;
+  const resolveMentionSuggestions = client[kInternal].resolveMentionSuggestions;
   const mentionSuggestionsCache = new Map<string, string[]>();
 
   // Simplistic debounced search, we don't need to worry too much about

@@ -8,7 +8,7 @@ import {
   replaceRemoteStorageAndReconnect,
 } from "../../__tests__/_utils";
 import { waitUntilStorageUpdate } from "../../__tests__/_waitUtils";
-import { INTERNAL } from "../../internal";
+import { kInternal } from "../../internal";
 import { Permission } from "../../protocol/AuthToken";
 import { OpCode } from "../../protocol/Op";
 import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
@@ -282,9 +282,9 @@ describe("LiveMap", () => {
       const root = storage.root;
       const map = root.toObject().map;
 
-      expect(room[INTERNAL].nodeCount).toBe(3);
+      expect(room[kInternal].nodeCount).toBe(3);
       expect(map.delete("first")).toBe(true);
-      expect(room[INTERNAL].nodeCount).toBe(2);
+      expect(room[kInternal].nodeCount).toBe(2);
 
       expectStorage({
         map: new Map(),
@@ -312,9 +312,9 @@ describe("LiveMap", () => {
       const root = storage.root;
       const map = root.toObject().map;
 
-      expect(room[INTERNAL].nodeCount).toBe(4);
+      expect(room[kInternal].nodeCount).toBe(4);
       expect(map.delete("first")).toBe(true);
-      expect(room[INTERNAL].nodeCount).toBe(2);
+      expect(room[kInternal].nodeCount).toBe(2);
 
       expectStorage({
         map: new Map(),
