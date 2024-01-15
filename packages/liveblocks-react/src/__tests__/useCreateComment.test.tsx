@@ -116,6 +116,8 @@ describe("useCreateComment", () => {
     unmount();
   });
 
+  test.todo("should mark thread as read optimistically", async () => {});
+
   test("should rollback optimistic update", async () => {
     const initialThread = dummyThreadData();
 

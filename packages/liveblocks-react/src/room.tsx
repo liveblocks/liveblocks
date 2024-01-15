@@ -1514,10 +1514,15 @@ export function createRoomContext<
 
         const optimisticUpdateId = nanoid();
 
+        const inboxNotification = Object.values(
+          store.get().inboxNotifications
+        ).find((inboxNotification) => inboxNotification.threadId === threadId);
+
         store.pushOptimisticUpdate({
           type: "create-comment",
           comment,
           id: optimisticUpdateId,
+          inboxNotificationId: inboxNotification?.id,
         });
 
         room.createComment({ threadId, commentId, body }).then(
@@ -1525,6 +1530,16 @@ export function createRoomContext<
             store.set((state) => ({
               ...state,
               threads: upsertComment(state.threads, newComment),
+              inboxNotifications: inboxNotification
+                ? {
+                    ...state.inboxNotifications,
+                    [inboxNotification.id]: {
+                      ...inboxNotification,
+                      notifiedAt: now,
+                      readAt: now,
+                    },
+                  }
+                : state.inboxNotifications,
               optimisticUpdates: state.optimisticUpdates.filter(
                 (update) => update.id !== optimisticUpdateId
               ),

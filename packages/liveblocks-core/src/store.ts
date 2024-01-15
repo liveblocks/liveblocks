@@ -39,6 +39,7 @@ type CreateCommentOptimisticUpdate = {
   type: "create-comment";
   id: string;
   comment: CommentData;
+  inboxNotificationId?: string;
 };
 
 type EditCommentOptimisticUpdate = {
@@ -345,6 +346,16 @@ export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
         result.threads[thread.id] = {
           ...thread,
           comments: [...thread.comments, optimisticUpdate.comment], // TODO: Handle replace comment
+        };
+        if (!optimisticUpdate.inboxNotificationId) {
+          break;
+        }
+        const inboxNotification =
+          result.inboxNotifications[optimisticUpdate.inboxNotificationId];
+        result.inboxNotifications[optimisticUpdate.inboxNotificationId] = {
+          ...inboxNotification,
+          notifiedAt: optimisticUpdate.comment.createdAt,
+          readAt: optimisticUpdate.comment.createdAt,
         };
         break;
       }
