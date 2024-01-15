@@ -2,7 +2,9 @@ import http, { IncomingMessage, ServerResponse } from "http";
 import { AddressInfo } from "net";
 import { LIVEBLOCKS_URL } from "../constants";
 
-export async function server(callback: (origin: string) => void) {
+export async function server(
+  callback: (origin: string, resolver: (data: any) => void) => void
+) {
   return new Promise((resolve) => {
     const server = http.createServer(async (req, res) => {
       res.setHeader("Access-Control-Allow-Origin", LIVEBLOCKS_URL);
@@ -49,7 +51,7 @@ export async function server(callback: (origin: string) => void) {
       }
       const { address = "127.0.0.1", port = 0 } =
         server.address() as AddressInfo;
-      callback(`http://${address}:${port}`);
+      callback(`http://${address}:${port}`, resolve);
     });
   });
 }

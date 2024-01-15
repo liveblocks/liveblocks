@@ -29,12 +29,14 @@ import {
 } from "./auth-provider-code";
 import {
   LIVEBLOCKS_GENERAL_INTEGRATION_URL,
+  LIVEBLOCKS_GENERAL_INTEGRATION_URL_DEV,
   NEXTJS_STARTER_KIT_AUTH_PROVIDERS,
   NEXTJS_STARTER_KIT_GUIDE_URL,
   NEXTJS_STARTER_KIT_REPO_DIRECTORY,
   NEXTJS_STARTER_KIT_VERCEL_DEPLOYMENT_URL,
 } from "../../constants";
 import { nextjsStarterKitPrompts } from "./nextjs-starter-kit-prompts";
+import { pasteCodePrompt } from "../../utils/paste-code-prompt";
 
 export async function create(flags: Record<string, any>) {
   const packageManager = flags.packageManager || getPackageManager();
@@ -119,7 +121,7 @@ export async function create(flags: Record<string, any>) {
       )
     );
 
-    const liveblocksData = (await server((origin) => {
+    const liveblocksData = (await server((origin, earlyResolve) => {
       const data: GeneralIntegrationData = {
         env: [{ name: "LIVEBLOCKS_SECRET_KEY", type: "secret" }],
         callbackUrls: [origin],
@@ -130,16 +132,21 @@ export async function create(flags: Record<string, any>) {
         "base64url"
       );
 
-      const liveblocksUrl = LIVEBLOCKS_GENERAL_INTEGRATION_URL(encodedData);
-      // const liveblocksUrl = LIVEBLOCKS_GENERAL_INTEGRATION_URL_DEV(encodedData);
+      // TODO switch back
+      // const liveblocksUrl = LIVEBLOCKS_GENERAL_INTEGRATION_URL(encodedData);
+      const liveblocksUrl = LIVEBLOCKS_GENERAL_INTEGRATION_URL_DEV(encodedData);
+
       open(liveblocksUrl);
+      setTimeout(async () => {
+        liveblocksSpinner.succeed(c.green("Liveblocks opened!"));
+        // In case getting the code automatically from `server` fails, allow pasting in the code
+        pasteCodePrompt(earlyResolve);
+      }, 1500);
     })) as GeneralIntegrationCallback;
 
     if (liveblocksData?.env?.LIVEBLOCKS_SECRET_KEY) {
       liveblocksSecretKeyValue = liveblocksData.env.LIVEBLOCKS_SECRET_KEY;
     }
-
-    liveblocksSpinner.succeed(c.green("Liveblocks secret key added!"));
   }
 
   const envVariables = [
@@ -272,7 +279,7 @@ export async function create(flags: Record<string, any>) {
 
 // Get environment variables required for your auth solution
 function getAuthEnvVariables(
-  auth: typeof NEXTJS_STARTER_KIT_AUTH_PROVIDERS[number]
+  auth: (typeof NEXTJS_STARTER_KIT_AUTH_PROVIDERS)[number]
 ) {
   const envVariables = {
     demo: [],
@@ -292,7 +299,7 @@ function getAuthEnvVariables(
 
 // Add the selected auth provider code to a `[...nextauth].ts` file
 function addAuthProviderSetup(
-  auth: typeof NEXTJS_STARTER_KIT_AUTH_PROVIDERS[number],
+  auth: (typeof NEXTJS_STARTER_KIT_AUTH_PROVIDERS)[number],
   nextauthTs: string
 ): string {
   let newFileContent = nextauthTs;
@@ -319,7 +326,7 @@ function addAuthProviderSetup(
 
 // Get the selected auth provider initialization code
 function getAuthProvider(
-  auth: typeof NEXTJS_STARTER_KIT_AUTH_PROVIDERS[number]
+  auth: (typeof NEXTJS_STARTER_KIT_AUTH_PROVIDERS)[number]
 ): string {
   const providers = {
     demo: demoAuthProvider,
@@ -332,7 +339,7 @@ function getAuthProvider(
 
 // Get the select auth provider import code
 function getAuthProviderImport(
-  auth: typeof NEXTJS_STARTER_KIT_AUTH_PROVIDERS[number]
+  auth: (typeof NEXTJS_STARTER_KIT_AUTH_PROVIDERS)[number]
 ): string {
   const imports = {
     demo: 'import CredentialsProvider from "next-auth/providers/credentials";',
