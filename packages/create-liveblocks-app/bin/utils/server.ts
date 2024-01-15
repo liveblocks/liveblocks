@@ -5,10 +5,15 @@ import { LIVEBLOCKS_URL } from "../constants";
 export async function server(callback: (origin: string) => void) {
   return new Promise((resolve) => {
     const server = http.createServer(async (req, res) => {
-      res.setHeader("Access-Control-Allow-Origin", LIVEBLOCKS_URL);
+      res.setHeader("Access-Control-Allow-Origin", "*");
       res.setHeader("Access-Control-Allow-Methods", "OPTIONS, POST");
       res.setHeader("Access-Control-Allow-Headers", "Content-Type");
       res.setHeader("Content-Type", "text/plain");
+
+      // Not for security, just in case user has a local app that posts to localhost
+      if (req.headers.origin !== new URL(LIVEBLOCKS_URL).origin) {
+        return;
+      }
 
       if (req.method === "OPTIONS") {
         res.statusCode = 200;
