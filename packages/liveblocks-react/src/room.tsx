@@ -1735,10 +1735,7 @@ export function createRoomContext<
     return data;
   }
 
-  // [comments-unread] TODO: Finalize API: Loading? Differientate between "no read status" and "all read"?
-  // [comments-unread] TODO: Implement
   function useThreadUnreadSince(threadId: string): Date | null {
-    // [comments-unread] TODO: Find inbox notification for this thread locally and compute `unreadSince` based on its `readAt` and `notifiedAt` values.
     return useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
@@ -1748,11 +1745,19 @@ export function createRoomContext<
           (inboxNotif) => inboxNotif.threadId === threadId
         );
 
-        if (inboxNotification === undefined) {
+        const thread = state.threads[threadId];
+
+        if (inboxNotification === undefined || thread === undefined) {
           return null;
         }
 
-        return inboxNotification?.readAt;
+        // If the inbox notification wasn't read at all, the thread is unread since its creation, so we return its `createdAt` date.
+        if (inboxNotification.readAt === null) {
+          return thread.createdAt;
+        }
+
+        // If the inbox notification was read, we return the date at which it was last read.
+        return inboxNotification.readAt;
       }
     );
   }
