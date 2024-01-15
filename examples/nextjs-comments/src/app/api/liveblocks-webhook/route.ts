@@ -1,7 +1,5 @@
 import {
   CommentBody,
-  CommentBodyInlineElement,
-  CommentBodyText,
   CommentData,
   getMentionedIdsFromCommentBody,
   Liveblocks,
@@ -19,12 +17,9 @@ const liveblocks = new Liveblocks({
 });
 
 // Add your webhook secret key from a project's webhooks dashboard
-// Get this by setting up an endpoint with a `commentCreated` event
-console.log("WEBHOOK SECRET", process.env.WEBHOOK_SECRET)
-const webhookHandler = new WebhookHandler(
-  process.env.WEBHOOK_SECRET as string
-);
+const webhookHandler = new WebhookHandler(process.env.WEBHOOK_SECRET as string);
 
+// Add your Resend API key
 const resend = new Resend(process.env.RESEND_API_KEY as string);
 
 export async function POST(request: Request) {
@@ -92,13 +87,12 @@ export async function POST(request: Request) {
 
   const wasMentioned = mentionedUserIds.has(userId);
   const newCommentsNumber = comments.length;
-  const authorsNumber = authorIds.size;
 
   const url = `https://example.com/room/${roomId}?thread=${threadId}`;
 
   const linkToThread = `<a href="${url}">Go to thread</a>`;
 
-  // Thread + button html
+  // Email HTML
   const emailHtml = `
     ${htmlThread}
     ${linkToThread}
@@ -109,17 +103,17 @@ export async function POST(request: Request) {
   } participants`;
 
   if (wasMentioned) {
-    subject = "You were mentioned in a thread";
+    subject = `${authorIds.size} people added ${newCommentsNumber} comments and you were mentioned in a thread`;
   }
 
   // Send email
   await resend.emails.send({
     from: "Liveblocks <notifications@dev.notifications.liveblocks.io>",
-    to: ["florent.lefebvre@liveblocks.io"],
+    to: ["__INSERT_USER_EMAIL_HERE__"],
     subject,
     html: emailHtml,
   });
-  console.log("Email html", emailHtml)
+  console.log("Email html", emailHtml);
   return new Response("", { status: 200 });
 }
 
