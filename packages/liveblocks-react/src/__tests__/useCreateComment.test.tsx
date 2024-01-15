@@ -1,12 +1,12 @@
 import type { BaseMetadata, CommentBody, JsonObject } from "@liveblocks/core";
-import { convertToThreadData, createClient } from "@liveblocks/core";
+import { createClient } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { addMinutes } from "date-fns";
 import { setupServer } from "msw/node";
 import React from "react";
 
 import { createRoomContext } from "../room";
-import { dummyCommentDataPlain, dummyThreadDataPlain } from "./_dummies";
+import { dummyCommentData, dummyThreadData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import { mockCreateComment, mockGetThreads } from "./_restMocks";
 
@@ -44,7 +44,7 @@ function createRoomContextForTest<
 describe("useCreateComment", () => {
   test("should create a comment optimistically and override with thread coming from server", async () => {
     const fakeCreatedAt = addMinutes(new Date(), 5);
-    const initialThread = dummyThreadDataPlain();
+    const initialThread = dummyThreadData();
 
     server.use(
       mockGetThreads((_req, res, ctx) => {
@@ -60,10 +60,10 @@ describe("useCreateComment", () => {
         async (req, res, ctx) => {
           const json = await req.json<{ id: string; body: CommentBody }>();
 
-          const comment = dummyCommentDataPlain();
+          const comment = dummyCommentData();
           comment.id = json.id;
           comment.body = json.body;
-          comment.createdAt = fakeCreatedAt.toISOString();
+          comment.createdAt = fakeCreatedAt;
           comment.threadId = initialThread.id;
 
           return res(ctx.json(comment));
@@ -91,9 +91,7 @@ describe("useCreateComment", () => {
     expect(result.current.threads).toBeUndefined();
 
     await waitFor(() =>
-      expect(result.current.threads).toEqual(
-        [initialThread].map(convertToThreadData)
-      )
+      expect(result.current.threads).toEqual([initialThread])
     );
 
     const comment = await act(() =>
@@ -119,7 +117,7 @@ describe("useCreateComment", () => {
   });
 
   test("should rollback optimistic update", async () => {
-    const initialThread = dummyThreadDataPlain();
+    const initialThread = dummyThreadData();
 
     server.use(
       mockGetThreads((_req, res, ctx) => {
@@ -157,9 +155,7 @@ describe("useCreateComment", () => {
 
     expect(result.current.threads).toBeUndefined();
     await waitFor(() =>
-      expect(result.current.threads).toEqual(
-        [initialThread].map(convertToThreadData)
-      )
+      expect(result.current.threads).toEqual([initialThread])
     );
 
     const comment = await act(() =>
@@ -176,9 +172,7 @@ describe("useCreateComment", () => {
 
     // Wait for optimistic update to be rolled back
     await waitFor(() =>
-      expect(result.current.threads).toEqual(
-        [initialThread].map(convertToThreadData)
-      )
+      expect(result.current.threads).toEqual([initialThread])
     );
 
     unmount();

@@ -110,9 +110,22 @@ export class RemoveReactionError extends Error {
   }
 }
 
+export class MarkInboxNotificationAsReadError extends Error {
+  constructor(
+    public cause: Error,
+    public context: {
+      inboxNotificationId: string;
+    }
+  ) {
+    super("Mark inbox notification as read failed.");
+    this.name = "MarkInboxNotificationAsReadError";
+  }
+}
+
 export type CommentsError<TThreadMetadata extends BaseMetadata> =
   | CreateThreadError<TThreadMetadata>
   | EditThreadMetadataError<TThreadMetadata>
   | CreateCommentError
   | EditCommentError
-  | DeleteCommentError;
+  | DeleteCommentError
+  | MarkInboxNotificationAsReadError;
