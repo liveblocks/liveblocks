@@ -1636,7 +1636,7 @@ export function createRoomContext<
     );
   }
 
-  const resolveUsers = client.__internal.resolveUsers;
+  const resolveUsers = client[kInternal].resolveUsers;
 
   const usersCache = resolveUsers
     ? createAsyncCache(async (stringifiedOptions: string) => {
