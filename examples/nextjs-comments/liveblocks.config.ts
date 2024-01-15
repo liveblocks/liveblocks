@@ -5,7 +5,7 @@ import { createRoomContext } from "@liveblocks/react";
 
 export const client = createClient({
   authEndpoint: "/api/liveblocks-auth",
-  // @ts-expect-error: dev
+  // @ts-expect-error - Hidden config option
   baseUrl: "https://dev.dev-liveblocks5948.workers.dev/",
 });
 
