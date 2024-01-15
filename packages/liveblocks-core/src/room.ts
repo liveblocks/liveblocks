@@ -497,6 +497,17 @@ type CommentsApi<TThreadMetadata extends BaseMetadata = never> = {
   /**
    * @private
    */
+  getThread(options: { threadId: string }): Promise<
+    | {
+        thread: ThreadData<TThreadMetadata>;
+        inboxNotification?: PartialInboxNotificationData;
+      }
+    | undefined
+  >;
+
+  /**
+   * @private
+   */
   createThread(options: {
     threadId: string;
     commentId: string;
@@ -1135,6 +1146,30 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     }
   }
 
+  async function getThread({ threadId }: { threadId: string }) {
+    const response = await fetchCommentsApi(`/threads/${threadId}`);
+
+    if (response.ok) {
+      const json = await (response.json() as Promise<
+        ThreadDataPlain<TThreadMetadata> & {
+          inboxNotification?: PartialInboxNotificationDataPlain;
+        }
+      >);
+      const inboxNotification = json.inboxNotification
+        ? convertToPartialInboxNotificationData(json.inboxNotification)
+        : undefined;
+
+      return {
+        thread: convertToThreadData(json),
+        inboxNotification,
+      };
+    } else if (response.status === 404) {
+      return;
+    } else {
+      throw new Error(`There was an error while getting thread ${threadId}.`);
+    }
+  }
+
   async function createThread({
     metadata,
     body,
@@ -1305,6 +1340,7 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
 
   return {
     getThreads,
+    getThread,
     createThread,
     editThreadMetadata,
     createComment,

@@ -538,4 +538,78 @@ describe("client", () => {
       client.sendYjsBinaryUpdate("roomId", update)
     ).resolves.not.toThrow();
   });
+
+  test("should return the specified inbox notification when getInboxNotification receives a successful response", async () => {
+    const userId = "user1";
+    const inboxNotificationId = "notification1";
+
+    const notification = {
+      id: inboxNotificationId,
+      kind: "thread",
+      notifiedAt: new Date().toISOString(),
+      readAt: null,
+      threadId: "thread1",
+    };
+
+    server.use(
+      http.get(
+        `${DEFAULT_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
+        () => {
+          return HttpResponse.json(notification, { status: 200 });
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    await expect(
+      client.getInboxNotification({
+        userId,
+        inboxNotificationId,
+      })
+    ).resolves.toEqual({
+      ...notification,
+      notifiedAt: new Date(notification.notifiedAt),
+      readAt: notification.readAt ? new Date(notification.readAt) : null,
+    });
+  });
+
+  test("should throw a LiveblocksError when getInboxNotification receives an error response", async () => {
+    const userId = "user1";
+    const inboxNotificationId = "notification1";
+
+    const error = {
+      error: "INBOX_NOTIFICATION_NOT_FOUND",
+      message: "Inbox notification not found",
+    };
+
+    server.use(
+      http.get(
+        `${DEFAULT_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
+        () => {
+          return HttpResponse.json(error, { status: 404 });
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    // This should throw a LiveblocksError
+    try {
+      // Attempt to get, which should fail and throw an error.
+      await client.getInboxNotification({
+        userId,
+        inboxNotificationId,
+      });
+      // If it doesn't throw, fail the test.
+      expect(true).toBe(false);
+    } catch (err) {
+      expect(err instanceof LiveblocksError).toBe(true);
+      if (err instanceof LiveblocksError) {
+        expect(err.status).toBe(404);
+        expect(err.message).toBe(JSON.stringify(error));
+        expect(err.name).toBe("LiveblocksError");
+      }
+    }
+  });
 });

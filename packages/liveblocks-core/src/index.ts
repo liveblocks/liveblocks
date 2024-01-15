@@ -21,7 +21,7 @@ export type {
   EnterOptions,
   ResolveMentionSuggestionsArgs,
 } from "./client";
-export { createClient } from "./client";
+export { createClient, getCacheStore, NotificationsApiError } from "./client";
 export type {
   CommentBodyLinkElementArgs,
   CommentBodyMentionElementArgs,
@@ -147,6 +147,7 @@ export { CrdtType } from "./protocol/SerializedCrdt";
 export { isChildCrdt, isRootCrdt } from "./protocol/SerializedCrdt";
 export type {
   BroadcastedEventServerMsg,
+  CommentsEventServerMsg,
   InitialDocumentStateServerMsg,
   RejectedStorageOpServerMsg,
   RoomStateServerMsg,
@@ -236,3 +237,6 @@ import type * as DevToolsMsg from "./devtools/protocol";
 export type { DevToolsMsg };
 import type * as DevTools from "./types/DevToolsTreeNode";
 export type { DevTools };
+
+// Cache store
+export { applyOptimisticUpdates, type CacheState } from "./store";
