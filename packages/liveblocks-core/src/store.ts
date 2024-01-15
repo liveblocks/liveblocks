@@ -84,15 +84,19 @@ type MarkInboxNotificationAsReadOptimisticUpdate = {
   readAt: Date;
 };
 
+type ThreadsQueryState =
+  | { isLoading: true; error?: never }
+  | { isLoading: false; error?: Error };
+
 export type CacheState<TThreadMetadata extends BaseMetadata> = {
   /**
    * Threads by id
    */
   threads: Record<string, ThreadData<TThreadMetadata>>;
   /**
-   * Keep tracks of loading status of the threads queries
+   * Keep tracks of loading and error status of the threads queries
    */
-  threadsQueries: Record<string, { isLoading: boolean }>;
+  threadsQueries: Record<string, ThreadsQueryState>;
   /**
    * Optimistic updates that have not been acknowledged by the server yet.
    * They are applied on top of the threads in selectors
@@ -119,6 +123,7 @@ export interface CacheStore<TThreadMetadata extends BaseMetadata>
   pushOptimisticUpdate(
     optimisticUpdate: OptimisticUpdate<TThreadMetadata>
   ): void;
+  setThreadsQueryState(queryKey: string, queryState: ThreadsQueryState): void;
 }
 
 /**
@@ -241,6 +246,16 @@ export function createClientStore<
       store.set((state) => ({
         ...state,
         optimisticUpdates: [...state.optimisticUpdates, optimisticUpdate],
+      }));
+    },
+
+    setThreadsQueryState(queryKey: string, queryState: ThreadsQueryState) {
+      store.set((state) => ({
+        ...state,
+        threadsQueries: {
+          ...state.threadsQueries,
+          [queryKey]: queryState,
+        },
       }));
     },
   };

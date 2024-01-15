@@ -1008,9 +1008,9 @@ export function createRoomContext<
 
   async function refreshThreadsAndNotifications() {
     await Promise.allSettled(
-      Array.from(requestsCache.values())
-        .filter((requestCache) => requestCache.subscribers > 0)
-        .map(async (requestCache) => {
+      Array.from(requestsCache.entries())
+        .filter(([_, requestCache]) => requestCache.subscribers > 0)
+        .map(async ([queryKey, requestCache]) => {
           const room = client.getRoom(requestCache.roomId);
 
           if (room === null) {
@@ -1029,7 +1029,8 @@ export function createRoomContext<
                 notification.id,
                 notification,
               ])
-            )
+            ),
+            queryKey
           );
         })
     );
@@ -1092,30 +1093,28 @@ export function createRoomContext<
       roomId: room.id,
     });
 
-    store.set((state) => ({
-      ...state,
-      threadsQueries: {
-        ...state.threadsQueries,
-        [queryKey]: {
-          isLoading: true,
-        },
-      },
-    }));
+    store.setThreadsQueryState(queryKey, {
+      isLoading: true,
+    });
 
-    // TODO: Error handling
-    const { threads, inboxNotifications } = await initialPromise;
-
-    store.updateThreadsAndNotifications(
-      Object.fromEntries(threads.map((thread) => [thread.id, thread])),
-      Object.fromEntries(
-        inboxNotifications.map((notification) => [
-          notification.id,
-          notification,
-        ])
-      ),
-      queryKey
-    );
-
+    try {
+      const { threads, inboxNotifications } = await initialPromise;
+      store.updateThreadsAndNotifications(
+        Object.fromEntries(threads.map((thread) => [thread.id, thread])),
+        Object.fromEntries(
+          inboxNotifications.map((notification) => [
+            notification.id,
+            notification,
+          ])
+        ),
+        queryKey
+      );
+    } catch (err) {
+      store.setThreadsQueryState(queryKey, {
+        isLoading: false,
+        error: err as Error,
+      });
+    }
     poller.start(POLLING_INTERVAL);
   }
 
@@ -1123,7 +1122,10 @@ export function createRoomContext<
     options: UseThreadsOptions<TThreadMetadata> = { query: { metadata: {} } }
   ): ThreadsState<TThreadMetadata> {
     const room = useRoom();
-    const queryKey = React.useMemo(() => stringify(options), [options]);
+    const queryKey = React.useMemo(
+      () => generateQueryKey(room.id, options),
+      [room, options]
+    );
 
     React.useEffect(() => {
       void getThreadsAndInboxNotifications(room, queryKey, options);
@@ -1149,6 +1151,7 @@ export function createRoomContext<
         return {
           threads: selectedThreads(room.id, state, options),
           isLoading: false,
+          error: state.threadsQueries[queryKey].error,
         };
       }
     );
@@ -1158,13 +1161,20 @@ export function createRoomContext<
     options: UseThreadsOptions<TThreadMetadata> = { query: { metadata: {} } }
   ): ThreadsStateSuccess<TThreadMetadata> {
     const room = useRoom();
-    const queryKey = React.useMemo(() => stringify(options), [options]);
 
+    const queryKey = React.useMemo(
+      () => generateQueryKey(room.id, options),
+      [room, options]
+    );
     if (
       store.get().threadsQueries[queryKey] === undefined ||
       store.get().threadsQueries[queryKey].isLoading
     ) {
       throw getThreadsAndInboxNotifications(room, queryKey, options);
+    }
+
+    if (store.get().threadsQueries[queryKey].error) {
+      throw store.get().threadsQueries[queryKey].error;
     }
 
     React.useEffect(() => {
@@ -1732,10 +1742,7 @@ export function createRoomContext<
     return data;
   }
 
-  // [comments-unread] TODO: Finalize API: Loading? Differientate between "no read status" and "all read"?
-  // [comments-unread] TODO: Implement
   function useThreadUnreadSince(threadId: string): Date | null {
-    // [comments-unread] TODO: Find inbox notification for this thread locally and compute `unreadSince` based on its `readAt` and `notifiedAt` values.
     return useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
@@ -1745,11 +1752,19 @@ export function createRoomContext<
           (inboxNotif) => inboxNotif.threadId === threadId
         );
 
-        if (inboxNotification === undefined) {
+        const thread = state.threads[threadId];
+
+        if (inboxNotification === undefined || thread === undefined) {
           return null;
         }
 
-        return inboxNotification?.readAt;
+        // If the inbox notification wasn't read at all, the thread is unread since its creation, so we return its `createdAt` date.
+        if (inboxNotification.readAt === null) {
+          return thread.createdAt;
+        }
+
+        // If the inbox notification was read, we return the date at which it was last read.
+        return inboxNotification.readAt;
       }
     );
   }
@@ -1992,4 +2007,11 @@ function handleApiError(err: CommentsApiError | NotificationsApiError): Error {
   }
 
   return new Error(message);
+}
+
+function generateQueryKey<TThreadMetadata extends BaseMetadata>(
+  roomId: string,
+  options: GetThreadsOptions<TThreadMetadata>
+) {
+  return `${roomId}-${stringify(options)}`;
 }
