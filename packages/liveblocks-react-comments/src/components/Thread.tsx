@@ -9,8 +9,16 @@ import type {
   RefAttributes,
   SyntheticEvent,
 } from "react";
-import React, { forwardRef, useCallback, useMemo } from "react";
+import React, {
+  forwardRef,
+  Fragment,
+  useCallback,
+  useMemo,
+  useState,
+} from "react";
 
+import { ArrowDownIcon } from "../icons/ArrowDown";
+import { CheckIcon } from "../icons/Check";
 import { ResolveIcon } from "../icons/Resolve";
 import { ResolvedIcon } from "../icons/Resolved";
 import {
@@ -27,9 +35,9 @@ import { Composer } from "./Composer";
 import { Button } from "./internal/Button";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";
 
-// interface UnreadIndicatorProps extends ComponentPropsWithoutRef<"div"> {
-//   threadId: string;
-// }
+interface UnreadIndicatorProps extends ComponentPropsWithoutRef<"div"> {
+  threadId: string;
+}
 
 export interface ThreadProps<
   TThreadMetadata extends BaseMetadata = ThreadMetadata,
@@ -106,69 +114,69 @@ export interface ThreadProps<
   overrides?: Partial<ThreadOverrides & CommentOverrides & ComposerOverrides>;
 }
 
-// function UnreadIndicator({
-//   threadId,
-//   className,
-//   ...props
-// }: UnreadIndicatorProps) {
-//   const [isHovered, setHovered] = useState(false);
-//   const [isFocused, setFocused] = useState(false);
-//   const showMarkAsRead = isHovered || isFocused;
+function UnreadIndicator({
+  threadId,
+  className,
+  ...props
+}: UnreadIndicatorProps) {
+  const [isHovered, setHovered] = useState(false);
+  const [isFocused, setFocused] = useState(false);
+  const showMarkAsRead = isHovered || isFocused;
 
-//   const handleClick = useCallback(() => {
-//     // [comments-unread] TODO: Mark thread as read
-//     console.log("Mark thread as read", threadId);
-//   }, [threadId]);
+  const handleClick = useCallback(() => {
+    // [comments-unread] TODO: Mark thread as read
+    console.log("Mark thread as read", threadId);
+  }, [threadId]);
 
-//   const handleHoverStart = useCallback(() => {
-//     setHovered(true);
-//   }, []);
+  const handleHoverStart = useCallback(() => {
+    setHovered(true);
+  }, []);
 
-//   const handleHoverEnd = useCallback(() => {
-//     setHovered(false);
-//   }, []);
+  const handleHoverEnd = useCallback(() => {
+    setHovered(false);
+  }, []);
 
-//   const handleFocusStart = useCallback(() => {
-//     setFocused(true);
-//   }, []);
+  const handleFocusStart = useCallback(() => {
+    setFocused(true);
+  }, []);
 
-//   const handleFocusEnd = useCallback(() => {
-//     setFocused(false);
-//   }, []);
+  const handleFocusEnd = useCallback(() => {
+    setFocused(false);
+  }, []);
 
-//   return (
-//     <div
-//       className={classNames(
-//         "lb-thread-unread-separator",
-//         showMarkAsRead && "lb-thread-unread-separator:mark-as-read",
-//         className
-//       )}
-//       {...props}
-//     >
-//       <button
-//         className="lb-thread-unread-indicator"
-//         onClick={handleClick}
-//         onPointerEnter={handleHoverStart}
-//         onPointerLeave={handleHoverEnd}
-//         onPointerCancel={handleHoverEnd}
-//         onFocus={handleFocusStart}
-//         onBlur={handleFocusEnd}
-//       >
-//         {showMarkAsRead ? (
-//           <>
-//             <CheckIcon className="lb-thread-unread-indicator-icon" />
-//             Mark as read
-//           </>
-//         ) : (
-//           <>
-//             <ArrowDownIcon className="lb-thread-unread-indicator-icon" />
-//             New
-//           </>
-//         )}
-//       </button>
-//     </div>
-//   );
-// }
+  return (
+    <div
+      className={classNames(
+        "lb-thread-unread-separator",
+        showMarkAsRead && "lb-thread-unread-separator:mark-as-read",
+        className
+      )}
+      {...props}
+    >
+      <button
+        className="lb-thread-unread-indicator"
+        onClick={handleClick}
+        onPointerEnter={handleHoverStart}
+        onPointerLeave={handleHoverEnd}
+        onPointerCancel={handleHoverEnd}
+        onFocus={handleFocusStart}
+        onBlur={handleFocusEnd}
+      >
+        {showMarkAsRead ? (
+          <>
+            <CheckIcon className="lb-thread-unread-indicator-icon" />
+            Mark as read
+          </>
+        ) : (
+          <>
+            <ArrowDownIcon className="lb-thread-unread-indicator-icon" />
+            New
+          </>
+        )}
+      </button>
+    </div>
+  );
+}
 
 /**
  * Displays a thread of comments, with a composer to reply
@@ -203,7 +211,8 @@ export const Thread = forwardRef(
     }: ThreadProps<TThreadMetadata>,
     forwardedRef: ForwardedRef<HTMLDivElement>
   ) => {
-    const { useEditThreadMetadata } = useRoomContextBundle();
+    const { useEditThreadMetadata, useThreadUnreadSince } =
+      useRoomContextBundle();
     const editThreadMetadata = useEditThreadMetadata();
     const $ = useOverrides(overrides);
     const firstCommentIndex = useMemo(() => {
@@ -216,39 +225,18 @@ export const Thread = forwardRef(
     //     ? thread.comments.length - 1
     //     : findLastIndex(thread.comments, (comment) => comment.body);
     // }, [showDeletedComments, thread.comments]);
-    // const unreadCommentIndex = useMemo(() => {
-    //   // If not subscribed to the thread, return nothing
-    //   if (!thread.notificationInfo) {
-    //     return;
-    //   }
+    const unreadSince = useThreadUnreadSince(thread.id);
+    const firstUnreadCommentIndex = useMemo(() => {
+      if (!unreadSince) {
+        return;
+      }
 
-    //   if (!thread.notificationInfo.readAt) {
-    //     // If subscribed to the thread but not read yet, return first visible comment?
-    //     if (showDeletedComments) {
-    //       return 0;
-    //     } else {
-    //       return thread.comments.findIndex((comment) => comment.body);
-    //     }
-    //   } else {
-    //     const readAt = new Date(thread.notificationInfo.readAt);
-    //     const notifiedAt = new Date(thread.notificationInfo.notifiedAt);
-
-    //     // If subscribed to the thread and not fully read, return first visible unread comment
-    //     if (readAt < notifiedAt) {
-    //       if (showDeletedComments) {
-    //         return thread.comments.findIndex(
-    //           (comment) => new Date(comment.createdAt) > readAt
-    //         );
-    //       } else {
-    //         return thread.comments.findIndex(
-    //           (comment) => comment.body && new Date(comment.createdAt) > readAt
-    //         );
-    //       }
-    //     }
-    //   }
-
-    //   return;
-    // }, [showDeletedComments, thread]);
+      return thread.comments.findIndex(
+        (comment) =>
+          (showDeletedComments ? true : comment.body) &&
+          comment.createdAt >= unreadSince
+      );
+    }, [showDeletedComments, thread, unreadSince]);
 
     const stopPropagation = useCallback((event: SyntheticEvent) => {
       event.stopPropagation();
@@ -289,7 +277,7 @@ export const Thread = forwardRef(
           data-resolved={
             (thread.metadata as ThreadMetadata).resolved ? "" : undefined
           }
-          // data-unread={unreadCommentIndex !== undefined ? "" : undefined}
+          data-unread={firstUnreadCommentIndex !== undefined ? "" : undefined}
           dir={$.dir}
           {...props}
           ref={forwardedRef}
@@ -297,14 +285,15 @@ export const Thread = forwardRef(
           <div className="lb-thread-comments">
             {thread.comments.map((comment, index) => {
               const isFirstComment = index === firstCommentIndex;
-              // const isUnread =
-              //   unreadCommentIndex !== undefined && index >= unreadCommentIndex;
+              const isUnread =
+                firstUnreadCommentIndex !== undefined &&
+                index >= firstUnreadCommentIndex;
 
               const children = (
                 <Comment
                   key={comment.id}
                   className="lb-thread-comment"
-                  // data-unread={isUnread ? "" : undefined}
+                  data-unread={isUnread ? "" : undefined}
                   comment={comment}
                   indentContent={indentCommentContent}
                   showDeleted={showDeletedComments}
@@ -358,16 +347,15 @@ export const Thread = forwardRef(
                 />
               );
 
-              // return index === unreadCommentIndex ? (
-              //   <Fragment key={comment.id}>
-              //     <UnreadIndicator threadId={thread.id} />
-              //     {children}
-              //   </Fragment>
-              // ) : (
-              //   children
-              // );
-
-              return children;
+              return index === firstUnreadCommentIndex &&
+                firstUnreadCommentIndex !== firstCommentIndex ? (
+                <Fragment key={comment.id}>
+                  <UnreadIndicator threadId={thread.id} />
+                  {children}
+                </Fragment>
+              ) : (
+                children
+              );
             })}
           </div>
           {showComposer && (
