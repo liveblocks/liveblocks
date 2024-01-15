@@ -48,49 +48,49 @@
     100
   );
   --lb-accent-subtle: color-mix-scale(
-    var(--lb-internal-background),
+    var(--lb-dynamic-background),
     var(--lb-accent),
     var(--lb-accent-contrast),
     100
   );
   --lb-accent-moderate: color-mix-scale(
-    var(--lb-internal-background),
+    var(--lb-dynamic-background),
     var(--lb-accent),
     var(--lb-accent-contrast),
     400
   );
   --lb-accent-tertiary: color-mix-scale(
-    var(--lb-internal-background),
+    var(--lb-dynamic-background),
     var(--lb-accent),
     var(--lb-accent-contrast),
     600
   );
   --lb-accent-secondary: color-mix-scale(
-    var(--lb-internal-background),
+    var(--lb-dynamic-background),
     var(--lb-accent),
     var(--lb-accent-contrast),
     800
   );
   --lb-foreground-subtle: color-mix-scale(
-    var(--lb-internal-background),
+    var(--lb-dynamic-background),
     var(--lb-foreground),
     var(--lb-foreground-contrast),
     100
   );
   --lb-foreground-moderate: color-mix-scale(
-    var(--lb-internal-background),
+    var(--lb-dynamic-background),
     var(--lb-foreground),
     var(--lb-foreground-contrast),
     400
   );
   --lb-foreground-tertiary: color-mix-scale(
-    var(--lb-internal-background),
+    var(--lb-dynamic-background),
     var(--lb-foreground),
     var(--lb-foreground-contrast),
     600
   );
   --lb-foreground-secondary: color-mix-scale(
-    var(--lb-internal-background),
+    var(--lb-dynamic-background),
     var(--lb-foreground),
     var(--lb-foreground-contrast),
     800
@@ -112,7 +112,7 @@
 
   /* Define some variables only on first .lb-root instances */
   &:where(:not(& &)) {
-    --lb-internal-background: var(--lb-background);
+    --lb-dynamic-background: var(--lb-background);
   }
 }
 
@@ -121,7 +121,7 @@
  *************************************/
 
 .lb-icon {
-  --lb-icon-background: var(--lb-internal-background);
+  --lb-icon-background: var(--lb-dynamic-background);
 
   inline-size: var(--lb-icon-size);
   block-size: var(--lb-icon-size);
@@ -137,7 +137,7 @@
  *************************************/
 
 .lb-button {
-  --lb-button-background: var(--lb-internal-background);
+  --lb-button-background: var(--lb-dynamic-background);
 
   all: unset;
   position: relative;
@@ -171,7 +171,7 @@
 
     &::after {
       box-shadow:
-        var(--lb-internal-background) 0 0 0 2px,
+        var(--lb-dynamic-background) 0 0 0 2px,
         var(--lb-accent) 0 0 0 4px;
     }
   }
@@ -381,7 +381,7 @@
 
 .lb-emoji-picker-category-header {
   padding: var(--lb-emoji-picker-padding) var(--lb-emoji-picker-offset-padding);
-  background: var(--lb-internal-background);
+  background: var(--lb-dynamic-background);
 }
 
 .lb-emoji-picker-category-header-title {
@@ -438,7 +438,7 @@
   );
   padding-inline: $lb-tooltip-horizontal-padding;
   border-radius: var(--lb-radius);
-  background: var(--lb-internal-background);
+  background: var(--lb-dynamic-background);
   color: var(--lb-foreground);
   box-shadow: var(--lb-tooltip-shadow);
   font-size: 0.75rem;
@@ -648,7 +648,7 @@
  *************************************/
 
 .lb-composer {
-  background: var(--lb-internal-background);
+  background: var(--lb-dynamic-background);
   color: var(--lb-foreground);
   transition-property: background;
 }
@@ -758,7 +758,7 @@
 
   position: relative;
   padding: var(--lb-spacing);
-  background: var(--lb-internal-background);
+  background: var(--lb-dynamic-background);
   color: var(--lb-foreground);
   font-weight: 400;
 
@@ -921,7 +921,7 @@
  *************************************/
 
 .lb-thread {
-  background: var(--lb-internal-background);
+  background: var(--lb-dynamic-background);
   color: var(--lb-foreground);
   transition-property: background;
 
@@ -1003,7 +1003,7 @@
   gap: calc(0.325 * var(--lb-spacing));
   align-items: center;
   padding: calc(0.25 * var(--lb-spacing)) var(--lb-spacing);
-  background: var(--lb-internal-background);
+  background: var(--lb-dynamic-background);
   color: var(--lb-accent);
   font-weight: 600;
   font-size: 0.675em;
@@ -1043,7 +1043,7 @@
   gap: calc(0.75 * var(--lb-spacing));
   overflow: hidden;
   padding: var(--lb-spacing);
-  background: var(--lb-internal-background);
+  background: var(--lb-dynamic-background);
   color: var(--lb-foreground);
   font-weight: 400;
   transition-property: background;
@@ -1052,14 +1052,14 @@
     cursor: pointer;
 
     &:where(:hover) {
-      --lb-internal-background: var(--lb-background-foreground-faint);
+      --lb-dynamic-background: var(--lb-background-foreground-faint);
     }
 
     &:where([data-unread]) {
-      --lb-internal-background: var(--lb-background-accent-faint);
+      --lb-dynamic-background: var(--lb-background-accent-faint);
 
       &:where(:hover) {
-        --lb-internal-background: var(--lb-background-accent-subtle);
+        --lb-dynamic-background: var(--lb-background-accent-subtle);
       }
     }
   }
@@ -1126,7 +1126,7 @@
   position: relative;
   overflow: hidden;
   border-radius: var(--lb-radius);
-  background: var(--lb-internal-background);
+  background: var(--lb-dynamic-background);
   box-shadow: var(--lb-elevation-shadow);
 
   &::after {
