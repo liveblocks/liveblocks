@@ -1001,9 +1001,9 @@ export function createRoomContext<
 
   async function refreshThreadsAndNotifications() {
     await Promise.allSettled(
-      Array.from(requestsCache.values())
-        .filter((requestCache) => requestCache.subscribers > 0)
-        .map(async (requestCache) => {
+      Array.from(requestsCache.entries())
+        .filter(([_, requestCache]) => requestCache.subscribers > 0)
+        .map(async ([queryKey, requestCache]) => {
           const room = client.getRoom(requestCache.roomId);
 
           if (room === null) {
@@ -1022,7 +1022,8 @@ export function createRoomContext<
                 notification.id,
                 notification,
               ])
-            )
+            ),
+            queryKey
           );
         })
     );
@@ -1085,30 +1086,28 @@ export function createRoomContext<
       roomId: room.id,
     });
 
-    store.set((state) => ({
-      ...state,
-      threadsQueries: {
-        ...state.threadsQueries,
-        [queryKey]: {
-          isLoading: true,
-        },
-      },
-    }));
+    store.setThreadsQueryState(queryKey, {
+      isLoading: true,
+    });
 
-    // TODO: Error handling
-    const { threads, inboxNotifications } = await initialPromise;
-
-    store.updateThreadsAndNotifications(
-      Object.fromEntries(threads.map((thread) => [thread.id, thread])),
-      Object.fromEntries(
-        inboxNotifications.map((notification) => [
-          notification.id,
-          notification,
-        ])
-      ),
-      queryKey
-    );
-
+    try {
+      const { threads, inboxNotifications } = await initialPromise;
+      store.updateThreadsAndNotifications(
+        Object.fromEntries(threads.map((thread) => [thread.id, thread])),
+        Object.fromEntries(
+          inboxNotifications.map((notification) => [
+            notification.id,
+            notification,
+          ])
+        ),
+        queryKey
+      );
+    } catch (err) {
+      store.setThreadsQueryState(queryKey, {
+        isLoading: false,
+        error: err as Error,
+      });
+    }
     poller.start(POLLING_INTERVAL);
   }
 
@@ -1145,6 +1144,7 @@ export function createRoomContext<
         return {
           threads: selectedThreads(room.id, state, options),
           isLoading: false,
+          error: state.threadsQueries[queryKey].error,
         };
       }
     );
@@ -1164,6 +1164,10 @@ export function createRoomContext<
       store.get().threadsQueries[queryKey].isLoading
     ) {
       throw getThreadsAndInboxNotifications(room, queryKey, options);
+    }
+
+    if (store.get().threadsQueries[queryKey].error) {
+      throw store.get().threadsQueries[queryKey].error;
     }
 
     React.useEffect(() => {
