@@ -1,15 +1,11 @@
-import type {
-  BaseMetadata,
-  CommentBody,
-  CommentData,
-  CommentReaction,
-  PartialInboxNotificationData,
-  Resolve,
-  ThreadData,
-} from "@liveblocks/core";
-
-import type { UseThreadsOptions } from "../types";
-import { createStore } from "./lib/createStore";
+import type { Store } from "./comments/create-store";
+import { createStore } from "./comments/create-store";
+import type { Resolve } from "./lib/Resolve";
+import type { BaseMetadata } from "./types/BaseMetadata";
+import type { CommentBody } from "./types/CommentBody";
+import type { CommentData, CommentReaction } from "./types/CommentData";
+import type { PartialInboxNotificationData } from "./types/InboxNotificationData";
+import type { ThreadData } from "./types/ThreadData";
 
 type PartialNullable<T> = {
   [P in keyof T]?: T[P] | null | undefined;
@@ -22,7 +18,8 @@ type OptimisticUpdate<TThreadMetadata extends BaseMetadata> =
   | EditCommentOptimisticUpdate
   | DeleteCommentOptimisticUpdate
   | AddReactionOptimisticUpdate
-  | RemoveReactionOptimisticUpdate;
+  | RemoveReactionOptimisticUpdate
+  | MarkInboxNotificationAsReadOptimisticUpdate;
 
 type CreateThreadOptimisticUpdate<TThreadMetadata extends BaseMetadata> = {
   type: "create-thread";
@@ -80,11 +77,18 @@ type RemoveReactionOptimisticUpdate = {
   userId: string;
 };
 
+type MarkInboxNotificationAsReadOptimisticUpdate = {
+  type: "mark-inbox-notification-as-read";
+  id: string;
+  inboxNotificationId: string;
+  readAt: Date;
+};
+
 type ThreadsQueryState =
   | { isLoading: true; error?: never }
   | { isLoading: false; error?: Error };
 
-export type State<TThreadMetadata extends BaseMetadata> = {
+export type CacheState<TThreadMetadata extends BaseMetadata> = {
   /**
    * Threads by id
    */
@@ -104,12 +108,32 @@ export type State<TThreadMetadata extends BaseMetadata> = {
   inboxNotifications: Record<string, PartialInboxNotificationData>;
 };
 
+export interface CacheStore<TThreadMetadata extends BaseMetadata>
+  extends Store<CacheState<TThreadMetadata>> {
+  deleteThread(threadId: string): void;
+  updateThreadAndNotification(
+    thread: ThreadData<TThreadMetadata>,
+    inboxNotification?: PartialInboxNotificationData
+  ): void;
+  updateThreadsAndNotifications(
+    threads: Record<string, ThreadData<TThreadMetadata>>,
+    inboxNotifications: Record<string, PartialInboxNotificationData>,
+    queryKey?: string
+  ): void;
+  pushOptimisticUpdate(
+    optimisticUpdate: OptimisticUpdate<TThreadMetadata>
+  ): void;
+  setThreadsQueryState(queryKey: string, queryState: ThreadsQueryState): void;
+}
+
 /**
  * Create internal immtuable store for comments and notifications.
  * Keep all the state required to return data from our hooks.
  */
-export function createClientStore<TThreadMetadata extends BaseMetadata>() {
-  const store = createStore<State<TThreadMetadata>>({
+export function createClientStore<
+  TThreadMetadata extends BaseMetadata,
+>(): CacheStore<TThreadMetadata> {
+  const store = createStore<CacheState<TThreadMetadata>>({
     threads: {},
     threadsQueries: {},
     optimisticUpdates: [],
@@ -249,60 +273,62 @@ function deleteKeyImmutable<TKey extends string | number | symbol, TValue>(
   return record;
 }
 
-export function upsertComment<TThreadMetadata extends BaseMetadata>(
-  threads: Record<string, ThreadData<TThreadMetadata>>,
-  newComment: CommentData
-): Record<string, ThreadData<TThreadMetadata>> {
-  const thread = threads[newComment.threadId];
-
-  if (thread === undefined) {
-    return threads;
+/**
+ * Compares two threads to determine which one is newer.
+ * @param threadA The first thread to compare.
+ * @param threadB The second thread to compare.
+ * @returns 1 if threadA is newer, -1 if threadB is newer, or 0 if they are the same age or can't be compared.
+ */
+export function compareThreads<TThreadMetadata extends BaseMetadata>(
+  thread1: ThreadData<TThreadMetadata>,
+  thread2: ThreadData<TThreadMetadata>
+): number {
+  // Compare updatedAt if available
+  if (thread1.updatedAt && thread2.updatedAt) {
+    return thread1.updatedAt > thread2.updatedAt
+      ? 1
+      : thread1.updatedAt < thread2.updatedAt
+        ? -1
+        : 0;
+  } else if (thread1.updatedAt || thread2.updatedAt) {
+    return thread1.updatedAt ? 1 : -1;
   }
 
-  const newComments: CommentData[] = [];
-  let updated = false;
-
-  for (const comment of thread.comments) {
-    if (comment.id === newComment.id) {
-      updated = true;
-      newComments.push(newComment);
-    } else {
-      newComments.push(comment);
-    }
+  // Finally, compare createdAt
+  if (thread1.createdAt > thread2.createdAt) {
+    return 1;
+  } else if (thread1.createdAt < thread2.createdAt) {
+    return -1;
   }
 
-  if (!updated) {
-    newComments.push(newComment);
-  }
-
-  return {
-    ...threads,
-    [thread.id]: {
-      ...thread,
-      comments: newComments,
-    },
-  };
+  // If all dates are equal, return 0
+  return 0;
 }
 
 export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
-  state: State<TThreadMetadata>
-): Record<string, ThreadData<TThreadMetadata>> {
+  state: CacheState<TThreadMetadata>
+): Pick<CacheState<TThreadMetadata>, "threads" | "inboxNotifications"> {
   const result = {
-    ...state.threads,
+    threads: {
+      ...state.threads,
+    },
+    inboxNotifications: {
+      ...state.inboxNotifications,
+    },
   };
 
   for (const optimisticUpdate of state.optimisticUpdates) {
     switch (optimisticUpdate.type) {
       case "create-thread": {
-        result[optimisticUpdate.thread.id] = optimisticUpdate.thread;
+        result.threads[optimisticUpdate.thread.id] = optimisticUpdate.thread;
         break;
       }
       case "edit-thread-metadata": {
-        const thread = result[optimisticUpdate.threadId];
+        const thread = result.threads[optimisticUpdate.threadId];
         if (thread === undefined) {
           break;
         }
-        result[thread.id] = {
+        result.threads[thread.id] = {
           ...thread,
           metadata: {
             ...thread.metadata,
@@ -312,23 +338,23 @@ export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
         break;
       }
       case "create-comment": {
-        const thread = result[optimisticUpdate.comment.threadId];
+        const thread = result.threads[optimisticUpdate.comment.threadId];
         if (thread === undefined) {
           break;
         }
-        result[thread.id] = {
+        result.threads[thread.id] = {
           ...thread,
           comments: [...thread.comments, optimisticUpdate.comment], // TODO: Handle replace comment
         };
         break;
       }
       case "edit-comment": {
-        const thread = result[optimisticUpdate.threadId];
+        const thread = result.threads[optimisticUpdate.threadId];
         if (thread === undefined) {
           break;
         }
 
-        result[thread.id] = {
+        result.threads[thread.id] = {
           ...thread,
           comments: thread.comments.map((comment) =>
             comment.id === optimisticUpdate.commentId
@@ -343,12 +369,12 @@ export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
         break;
       }
       case "delete-comment": {
-        const thread = result[optimisticUpdate.threadId];
+        const thread = result.threads[optimisticUpdate.threadId];
         if (thread === undefined) {
           break;
         }
 
-        result[thread.id] = {
+        result.threads[thread.id] = {
           ...thread,
           comments: thread.comments.map((comment) =>
             comment.id === optimisticUpdate.commentId
@@ -362,22 +388,22 @@ export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
         };
 
         if (
-          !result[thread.id].comments.some(
+          !result.threads[thread.id].comments.some(
             (comment) => comment.deletedAt === undefined
           )
         ) {
-          delete result[thread.id];
+          delete result.threads[thread.id];
         }
 
         break;
       }
       case "add-reaction": {
-        const thread = result[optimisticUpdate.threadId];
+        const thread = result.threads[optimisticUpdate.threadId];
         if (thread === undefined) {
           break;
         }
 
-        result[thread.id] = {
+        result.threads[thread.id] = {
           ...thread,
           comments: thread.comments.map((comment) => {
             if (comment.id === optimisticUpdate.commentId) {
@@ -421,12 +447,12 @@ export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
         break;
       }
       case "remove-reaction": {
-        const thread = result[optimisticUpdate.threadId];
+        const thread = result.threads[optimisticUpdate.threadId];
         if (thread === undefined) {
           break;
         }
 
-        result[thread.id] = {
+        result.threads[thread.id] = {
           ...thread,
           comments: thread.comments.map((comment) => {
             if (comment.id !== optimisticUpdate.commentId) {
@@ -463,63 +489,17 @@ export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
             };
           }),
         };
+        break;
+      }
+      case "mark-inbox-notification-as-read": {
+        result.inboxNotifications[optimisticUpdate.inboxNotificationId] = {
+          ...state.inboxNotifications[optimisticUpdate.inboxNotificationId],
+          readAt: optimisticUpdate.readAt,
+        };
+        break;
       }
     }
   }
 
   return result;
-}
-
-export function selectedThreads<TThreadMetadata extends BaseMetadata>(
-  roomId: string,
-  state: State<TThreadMetadata>,
-  options: UseThreadsOptions<TThreadMetadata>
-) {
-  const result = applyOptimisticUpdates(state);
-
-  return Object.values(result).filter((thread) => {
-    if (thread.roomId !== roomId) return false;
-
-    const query = options.query;
-    if (!query) return true;
-
-    for (const key in query.metadata) {
-      if (thread.metadata[key] !== query.metadata[key]) {
-        return false;
-      }
-    }
-    return true;
-  });
-}
-
-/**
- * Compares two threads to determine which one is newer.
- * @param threadA The first thread to compare.
- * @param threadB The second thread to compare.
- * @returns 1 if threadA is newer, -1 if threadB is newer, or 0 if they are the same age or can't be compared.
- */
-export function compareThreads<TThreadMetadata extends BaseMetadata>(
-  thread1: ThreadData<TThreadMetadata>,
-  thread2: ThreadData<TThreadMetadata>
-): number {
-  // Compare updatedAt if available
-  if (thread1.updatedAt && thread2.updatedAt) {
-    return thread1.updatedAt > thread2.updatedAt
-      ? 1
-      : thread1.updatedAt < thread2.updatedAt
-        ? -1
-        : 0;
-  } else if (thread1.updatedAt || thread2.updatedAt) {
-    return thread1.updatedAt ? 1 : -1;
-  }
-
-  // Finally, compare createdAt
-  if (thread1.createdAt > thread2.createdAt) {
-    return 1;
-  } else if (thread1.createdAt < thread2.createdAt) {
-    return -1;
-  }
-
-  // If all dates are equal, return 0
-  return 0;
 }

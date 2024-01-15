@@ -17,7 +17,7 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
  */
 
 export type { Client, EnterOptions } from "./client";
-export { createClient } from "./client";
+export { createClient, getCacheStore, NotificationsApiError } from "./client";
 export type {
   CommentBodyLinkElementArgs,
   CommentBodyMentionElementArgs,
@@ -232,3 +232,6 @@ import type * as DevToolsMsg from "./devtools/protocol";
 export type { DevToolsMsg };
 import type * as DevTools from "./types/DevToolsTreeNode";
 export type { DevTools };
+
+// Cache store
+export { applyOptimisticUpdates, type CacheState } from "./store";

@@ -1,7 +1,13 @@
+export type Store<T> = {
+  get: () => T;
+  set: (callback: (currentState: T) => T) => void;
+  subscribe: (callback: (state: T) => void) => () => void;
+};
+
 /**
  * Create a store for an immutable state. Close to Zustand vanilla store conceptually but with less features
  */
-export function createStore<T>(initialState: T) {
+export function createStore<T>(initialState: T): Store<T> {
   let state = initialState;
   const subscribers = new Set<(state: T) => void>();
 

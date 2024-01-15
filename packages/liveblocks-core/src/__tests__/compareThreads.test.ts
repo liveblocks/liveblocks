@@ -1,6 +1,6 @@
 import type { ThreadData } from "@liveblocks/core";
 
-import { compareThreads } from "../comments/store";
+import { compareThreads } from "../store";
 
 describe("compareThreads", () => {
   const thread1: ThreadData = {

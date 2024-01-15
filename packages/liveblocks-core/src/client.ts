@@ -21,6 +21,8 @@ import {
   makeAuthDelegateForRoom,
   makeCreateSocketDelegateForRoom,
 } from "./room";
+import type { CacheStore } from "./store";
+import { createClientStore } from "./store";
 import type { BaseMetadata } from "./types/BaseMetadata";
 import type {
   PartialInboxNotificationData,
@@ -286,6 +288,8 @@ export function createClient(options: ClientOptions): Client {
 
   const roomsById = new Map<string, RoomInfo>();
 
+  const notificationsApi = createInboxNotificationsApi(fetchClientApi);
+
   function teardownRoom(room: OpaqueRoom) {
     unlinkDevTools(room.id);
     roomsById.delete(room.id);
@@ -470,6 +474,35 @@ export function createClient(options: ClientOptions): Client {
     });
   }
 
+  return {
+    logout,
+
+    // Old, deprecated APIs
+    enter,
+    getRoom,
+    leave: forceLeave,
+
+    // New, preferred API
+    enterRoom,
+
+    // Notifications API
+    ...notificationsApi,
+  };
+}
+
+export class NotificationsApiError extends Error {
+  constructor(
+    public message: string,
+    public status: number,
+    public details?: JsonObject
+  ) {
+    super(message);
+  }
+}
+
+function createInboxNotificationsApi(
+  fetchClientApi: (endpoint: string, options?: RequestInit) => Promise<Response>
+): InboxNotificationsApi {
   async function fetchJson<T>(
     endpoint: string,
     options?: RequestInit
@@ -478,16 +511,24 @@ export function createClient(options: ClientOptions): Client {
 
     if (!response.ok) {
       if (response.status >= 400 && response.status < 600) {
-        let errorMessage = "";
+        let error: NotificationsApiError;
+
         try {
           const errorBody = (await response.json()) as { message: string };
-          errorMessage = errorBody.message;
-        } catch (error) {
-          errorMessage = response.statusText;
+
+          error = new NotificationsApiError(
+            errorBody.message,
+            response.status,
+            errorBody
+          );
+        } catch {
+          error = new NotificationsApiError(
+            response.statusText,
+            response.status
+          );
         }
-        throw new Error(
-          `Request failed with status ${response.status}: ${errorMessage}`
-        );
+
+        throw error;
       }
     }
 
@@ -562,19 +603,10 @@ export function createClient(options: ClientOptions): Client {
   }
 
   return {
-    logout,
     getInboxNotifications,
     getUnreadInboxNotificationsCount,
     markAllInboxNotificationsAsRead,
     markInboxNotificationAsRead,
-
-    // Old, deprecated APIs
-    enter,
-    getRoom,
-    leave: forceLeave,
-
-    // New, preferred API
-    enterRoom,
   };
 }
 
@@ -653,4 +685,19 @@ function toURLSearchParams(
     }
   }
   return result;
+}
+
+const CacheStoreMap = new WeakMap<Client, CacheStore<any>>();
+
+export function getCacheStore<TThreadMetadata extends BaseMetadata>(
+  client: Client
+): CacheStore<TThreadMetadata> {
+  let store = CacheStoreMap.get(client);
+
+  if (store === undefined) {
+    store = createClientStore<TThreadMetadata>();
+    CacheStoreMap.set(client, store);
+  }
+
+  return store as CacheStore<TThreadMetadata>;
 }
