@@ -74,6 +74,10 @@ so from within the webhooks dashboard for your project.
   </video>
 </Figure>
 
+Your endpoint must return a `2xx` (status code `200-299`) to indicate that the event was successfully received. If your endpoint returns anything else, the event will be retried, see [replaying events](#replaying-events) for more details.
+
+If all events fail to be delivered to your endpoint for 5 consecutive days, your endpoint will automatically be disabled. You can always re-enable it from the dashboard.
+
 ### Edit endpoint events [#edit-endpoint-events]
 
 You can easily edit the events you want to subscribe to after creating an
@@ -396,6 +400,10 @@ Events available for use include:
 - `StorageUpdated`
 - `UserEntered/UserLeft`
 - `RoomCreated/RoomDeleted`
+- `YDocUpdated`
+- `CommentCreated/CommentEdited/CommentDeleted`
+- `CommentReactionAdded/CommentReactionRemoved`
+- `ThreadCreated/ThreadMetadataUpdated`
 
 More events will come later, such as:
 
