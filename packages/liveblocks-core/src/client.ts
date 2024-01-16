@@ -539,6 +539,7 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
   }
 
   const resolveUsers = clientOptions.resolveUsers;
+  let hasWarnedIfNoResolveUsers = false;
   let resolveUser:
     | ((userId: string) => Promise<TUserMeta["info"] | undefined>)
     | undefined;
@@ -555,6 +556,17 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
     );
 
     resolveUser = (userId: string) => {
+      if (
+        !hasWarnedIfNoResolveUsers &&
+        !resolveUsers &&
+        process.env.NODE_ENV !== "production"
+      ) {
+        console.warn(
+          "Set the resolveUsers option in createClient to specify user info."
+        );
+        hasWarnedIfNoResolveUsers = true;
+      }
+
       return batchedResolveUsers.get(userId);
     };
   }

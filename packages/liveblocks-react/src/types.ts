@@ -1097,3 +1097,25 @@ export type LiveblocksContextBundle<
     >;
   }
 >;
+
+/**
+ * @private
+ */
+type SharedContextBundleShared = {
+  SharedProvider(props: PropsWithChildren): JSX.Element;
+};
+
+/**
+ * @private
+ */
+export type SharedContextBundle<TUserMeta extends BaseUserMeta> = Resolve<
+  SharedContextBundleShared & {
+    useUser(userId: string): UserState<TUserMeta["info"]>;
+
+    suspense: Resolve<
+      SharedContextBundleShared & {
+        useUser(userId: string): UserStateSuccess<TUserMeta["info"]>;
+      }
+    >;
+  }
+>;

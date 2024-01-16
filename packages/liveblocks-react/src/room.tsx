@@ -61,6 +61,7 @@ import { upsertComment } from "./comments/lib/upsert-comment";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { useRerender } from "./lib/use-rerender";
+import { createSharedContext } from "./shared";
 import type {
   CommentReactionOptions,
   CreateCommentOptions,
@@ -77,8 +78,6 @@ import type {
   RoomProviderProps,
   ThreadsState,
   ThreadsStateSuccess,
-  UserState,
-  UserStateSuccess,
   UseThreadsOptions,
 } from "./types";
 
@@ -213,6 +212,12 @@ export function createRoomContext<
 
   const commentsErrorEventSource =
     makeEventSource<CommentsError<TThreadMetadata>>();
+
+  const {
+    SharedProvider,
+    useUser,
+    suspense: { useUser: useUserSuspense },
+  } = createSharedContext<TUserMeta>(client);
 
   /**
    * RATIONALE:
@@ -381,21 +386,23 @@ export function createRoomContext<
     }, [roomId, frozenProps, stableEnterRoom]);
 
     return (
-      <RoomContext.Provider value={room}>
-        <ContextBundle.Provider
-          value={
-            internalBundle as unknown as InternalRoomContextBundle<
-              JsonObject,
-              LsonObject,
-              BaseUserMeta,
-              never,
-              BaseMetadata
-            >
-          }
-        >
-          {props.children}
-        </ContextBundle.Provider>
-      </RoomContext.Provider>
+      <SharedProvider>
+        <RoomContext.Provider value={room}>
+          <ContextBundle.Provider
+            value={
+              internalBundle as unknown as InternalRoomContextBundle<
+                JsonObject,
+                LsonObject,
+                BaseUserMeta,
+                never,
+                BaseMetadata
+              >
+            }
+          >
+            {props.children}
+          </ContextBundle.Provider>
+        </RoomContext.Provider>
+      </SharedProvider>
     );
   }
 
@@ -1615,91 +1622,6 @@ export function createRoomContext<
       },
       [room]
     );
-  }
-
-  const resolveUser = client[kInternal].resolveUser;
-  let hasWarnedIfNoResolveUsers = false;
-
-  function warnIfNoResolveUsers() {
-    if (
-      !hasWarnedIfNoResolveUsers &&
-      !resolveUser &&
-      process.env.NODE_ENV !== "production"
-    ) {
-      console.warn(
-        "Set the resolveUsers option in createRoomContext to specify user info."
-      );
-      hasWarnedIfNoResolveUsers = true;
-    }
-  }
-
-  function useUser(userId: string) {
-    const [state, setState] = React.useState<UserState<TUserMeta["info"]>>({
-      isLoading: true,
-    });
-
-    React.useEffect(() => warnIfNoResolveUsers(), []);
-
-    React.useEffect(() => {
-      const getUser = async () => {
-        setState({ isLoading: true });
-
-        if (resolveUser) {
-          try {
-            const user = await resolveUser(userId);
-
-            setState({ isLoading: false, user });
-          } catch (error) {
-            setState({ isLoading: false, error: error as Error });
-          }
-        } else {
-          setState({ isLoading: false, user: undefined });
-        }
-      };
-
-      void getUser();
-    }, [userId]);
-
-    return state;
-  }
-
-  function useUserSuspense(userId: string) {
-    const [state, setState] = React.useState<UserState<TUserMeta["info"]>>({
-      isLoading: true,
-    });
-    const promiseRef = React.useRef<Promise<void>>();
-
-    React.useEffect(() => warnIfNoResolveUsers(), []);
-
-    React.useEffect(() => {
-      const getUser = async () => {
-        setState({ isLoading: true });
-
-        if (resolveUser) {
-          try {
-            const user = await resolveUser(userId);
-
-            setState({ isLoading: false, user });
-          } catch (error) {
-            setState({ isLoading: false, error: error as Error });
-          }
-        } else {
-          setState({ isLoading: false, user: undefined });
-        }
-      };
-
-      promiseRef.current = getUser();
-    }, [userId]);
-
-    if (state.isLoading) {
-      throw promiseRef.current ?? new Promise(() => {});
-    }
-
-    if (state.error) {
-      throw state.error;
-    }
-
-    return state;
   }
 
   const resolveMentionSuggestions = client[kInternal].resolveMentionSuggestions;

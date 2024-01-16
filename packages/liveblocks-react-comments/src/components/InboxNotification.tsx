@@ -179,8 +179,12 @@ const ThreadInboxNotification = forwardRef<
     const title = (
       <>
         <List
-          values={reversedComments.map((users, index) => (
-            <User key={users.id} userId={users.id} capitalize={index === 0} />
+          values={reversedComments.map((comment, index) => (
+            <User
+              key={comment.userId}
+              userId={comment.userId}
+              capitalize={index === 0}
+            />
           ))}
           // formatRemaining={$.COMMENT_REACTION_REMAINING}
           truncate={THREAD_INBOX_NOTIFICATION_MAX_COMMENTS}
