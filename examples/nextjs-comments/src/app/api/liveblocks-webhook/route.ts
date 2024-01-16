@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     return new Response("Event type not used", { status: 200 });
   }
 
-  // Get thread and comment
+  // Get thread, notification, participants
   const { roomId, threadId, inboxNotificationId, userId } = event.data;
   const [thread, inboxNotification, participants] = await Promise.all([
     liveblocks.getThread({ roomId, threadId }),
