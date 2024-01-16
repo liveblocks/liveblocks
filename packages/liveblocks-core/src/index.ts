@@ -73,16 +73,6 @@ export {
 } from "./immutable";
 export { kInternal } from "./internal";
 export { assert, assertNever, nn } from "./lib/assert";
-export type {
-  AsyncCache,
-  AsyncState,
-  AsyncStateError,
-  AsyncStateInitial,
-  AsyncStateLoading,
-  AsyncStateResolved,
-  AsyncStateSuccess,
-} from "./lib/AsyncCache";
-export { createAsyncCache } from "./lib/AsyncCache";
 export {
   deprecate,
   deprecateIf,
