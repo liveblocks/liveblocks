@@ -15,14 +15,12 @@ import type {
 } from "@liveblocks/client";
 import { shallow } from "@liveblocks/client";
 import type {
-  AsyncCache,
   BaseMetadata,
   CommentData,
   CommentReaction,
   CommentsEventServerMsg,
   EnterOptions,
   GetThreadsOptions,
-  ResolveUsersArgs,
   RoomEventMessage,
   RoomNotificationSettings,
   ThreadData,
@@ -31,7 +29,6 @@ import type {
 import {
   CommentsApiError,
   console,
-  createAsyncCache,
   deprecateIf,
   errorIf,
   getCacheStore,
@@ -61,7 +58,6 @@ import {
 import { createCommentId, createThreadId } from "./comments/lib/createIds";
 import { selectedThreads } from "./comments/lib/selected-threads";
 import { upsertComment } from "./comments/lib/upsert-comment";
-import { useAsyncCache } from "./lib/use-async-cache";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { useRerender } from "./lib/use-rerender";
@@ -172,21 +168,6 @@ function makeMutationContext<
 
     setMyPresence: room.updatePresence,
   };
-}
-
-let hasWarnedIfNoResolveUsers = false;
-
-function warnIfNoResolveUsers(usersCache?: AsyncCache<unknown, unknown>) {
-  if (
-    !hasWarnedIfNoResolveUsers &&
-    !usersCache &&
-    process.env.NODE_ENV !== "production"
-  ) {
-    console.warn(
-      "Set the resolveUsers option in createRoomContext to specify user info."
-    );
-    hasWarnedIfNoResolveUsers = true;
-  }
 }
 
 const ContextBundle = React.createContext<InternalRoomContextBundle<
@@ -1636,57 +1617,89 @@ export function createRoomContext<
     );
   }
 
-  const resolveUsers = client[kInternal].resolveUsers;
+  const resolveUser = client[kInternal].resolveUser;
+  let hasWarnedIfNoResolveUsers = false;
 
-  const usersCache = resolveUsers
-    ? createAsyncCache(async (stringifiedOptions: string) => {
-        const users = await resolveUsers(
-          JSON.parse(stringifiedOptions) as ResolveUsersArgs
-        );
-
-        return users?.[0];
-      })
-    : undefined;
-
-  function useUser(userId: string) {
-    const room = useRoom();
-    const resolverKey = React.useMemo(
-      () => stringify({ userIds: [userId], roomId: room.id }),
-      [userId, room.id]
-    );
-    const state = useAsyncCache(usersCache, resolverKey);
-
-    React.useEffect(() => warnIfNoResolveUsers(usersCache), []);
-
-    if (state.isLoading) {
-      return {
-        isLoading: true,
-      } as UserState<TUserMeta["info"]>;
-    } else {
-      return {
-        user: state.data,
-        error: state.error,
-        isLoading: false,
-      } as UserState<TUserMeta["info"]>;
+  function warnIfNoResolveUsers() {
+    if (
+      !hasWarnedIfNoResolveUsers &&
+      !resolveUser &&
+      process.env.NODE_ENV !== "production"
+    ) {
+      console.warn(
+        "Set the resolveUsers option in createRoomContext to specify user info."
+      );
+      hasWarnedIfNoResolveUsers = true;
     }
   }
 
-  function useUserSuspense(userId: string) {
-    const room = useRoom();
-    const resolverKey = React.useMemo(
-      () => stringify({ userIds: [userId], roomId: room.id }),
-      [userId, room.id]
-    );
-    const state = useAsyncCache(usersCache, resolverKey, {
-      suspense: true,
+  function useUser(userId: string) {
+    const [state, setState] = React.useState<UserState<TUserMeta["info"]>>({
+      isLoading: true,
     });
 
-    React.useEffect(() => warnIfNoResolveUsers(usersCache), []);
+    React.useEffect(() => warnIfNoResolveUsers(), []);
 
-    return {
-      user: state.data,
-      isLoading: false,
-    } as UserStateSuccess<TUserMeta["info"]>;
+    React.useEffect(() => {
+      const getUser = async () => {
+        setState({ isLoading: true });
+
+        if (resolveUser) {
+          try {
+            const user = await resolveUser(userId);
+
+            setState({ isLoading: false, user });
+          } catch (error) {
+            setState({ isLoading: false, error: error as Error });
+          }
+        } else {
+          setState({ isLoading: false, user: undefined });
+        }
+      };
+
+      void getUser();
+    }, [userId]);
+
+    return state;
+  }
+
+  function useUserSuspense(userId: string) {
+    const [state, setState] = React.useState<UserState<TUserMeta["info"]>>({
+      isLoading: true,
+    });
+    const promiseRef = React.useRef<Promise<void>>();
+
+    React.useEffect(() => warnIfNoResolveUsers(), []);
+
+    React.useEffect(() => {
+      const getUser = async () => {
+        setState({ isLoading: true });
+
+        if (resolveUser) {
+          try {
+            const user = await resolveUser(userId);
+
+            setState({ isLoading: false, user });
+          } catch (error) {
+            setState({ isLoading: false, error: error as Error });
+          }
+        } else {
+          setState({ isLoading: false, user: undefined });
+        }
+      };
+
+      promiseRef.current = getUser();
+    }, [userId]);
+
+    if (state.isLoading) {
+      throw promiseRef.current ?? new Promise(() => {});
+    }
+
+    if (state.error) {
+      throw state.error;
+    }
+
+    return state;
   }
 
   const resolveMentionSuggestions = client[kInternal].resolveMentionSuggestions;

@@ -116,7 +116,7 @@ export class Batch<Result, Args extends unknown[] = []> {
     }
   }
 
-  add(...args: Args): Promise<Result> {
+  get(...args: Args): Promise<Result> {
     // Check if there's already an identical call in the queue.
     const existingCall = this.queue.find(
       (call) => stringify(call.args) === stringify(args)
@@ -149,7 +149,7 @@ export class Batch<Result, Args extends unknown[] = []> {
 /**
  * Batch calls to a function, either by number of calls or by a maximum delay, and cache the results.
  */
-export class BatchCache<Result, Args extends unknown[] = []> {
+export class CachedBatch<Result, Args extends unknown[] = []> {
   private batch: Batch<Result, Args>;
   private cache: Map<string, Result | Error> = new Map();
 
@@ -161,7 +161,7 @@ export class BatchCache<Result, Args extends unknown[] = []> {
     return stringify(args);
   }
 
-  async add(...args: Args): Promise<Result> {
+  async get(...args: Args): Promise<Result> {
     const cacheKey = this.getCacheKey(args);
 
     // If already cached, return the result.
@@ -178,7 +178,7 @@ export class BatchCache<Result, Args extends unknown[] = []> {
 
     try {
       // If not cached, add to the current batch.
-      const result = await this.batch.add(...args);
+      const result = await this.batch.get(...args);
 
       // Cache the result.
       this.cache.set(cacheKey, result);
