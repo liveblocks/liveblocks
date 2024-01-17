@@ -42,8 +42,7 @@
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
-    "@testing-library/jest-dom": "^5.16.5",
-    "shx": "^0.3.4"
+    "@testing-library/jest-dom": "^5.16.5"
   },
   "sideEffects": false,
   "bugs": {
