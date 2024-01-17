@@ -327,6 +327,7 @@ export class Liveblocks {
     } = {}
   ): Promise<{
     nextPage: string | null;
+    nextCursor: string | null;
     data: RoomInfo[];
   }> {
     const path = url`/v2/rooms`;
@@ -354,6 +355,7 @@ export class Liveblocks {
 
     const data = (await res.json()) as {
       nextPage: string | null;
+      nextCursor: string | null;
       data: RoomInfoPlain[];
     };
 
