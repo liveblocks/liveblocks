@@ -95,7 +95,7 @@ export type CacheState<TThreadMetadata extends BaseMetadata> = {
    */
   threads: Record<string, ThreadData<TThreadMetadata>>;
   /**
-   * Keep track of loading and error status of the threads queries.
+   * Keep track of loading and error status of all the queries made by the client.
    */
   queries: Record<string, QueryState>;
   /**
