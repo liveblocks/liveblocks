@@ -60,19 +60,19 @@ To implement your back end, follow these steps:
 
 <Steps>
   <Step>
-    <StepTitle>Create a `Session`</StepTitle>
+    <StepTitle>Create a session</StepTitle>
 
     <StepContent>
       ```ts showLineNumbers={false}
       const session = liveblocks.prepareSession(
-      "marie@example.com",   // Required, user ID from your DB
-      {
-        // Optional, custom static metadata for the session
-        userInfo: {
-        name: "Marie",
-        avatar: "https://example.com/avatar/marie.jpg",
-      },
-      }
+        "marie@example.com",   // Required, user ID from your DB
+        {
+          // Optional, custom static metadata for the session
+          userInfo: {
+            name: "Marie",
+            avatar: "https://example.com/avatar/marie.jpg",
+          },
+        }
       );
       ```
 
