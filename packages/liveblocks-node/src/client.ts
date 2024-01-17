@@ -55,7 +55,7 @@ type Nullable<T> = {
 };
 
 type DateToString<T> = {
-  [P in keyof T]: T[P] extends Date ? string : T[P];
+  [P in keyof T]: Date extends T[P] ? string : T[P];
 };
 
 export type CreateSessionOptions = {
