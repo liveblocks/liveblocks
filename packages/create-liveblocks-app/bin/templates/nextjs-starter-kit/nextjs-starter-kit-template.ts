@@ -29,12 +29,10 @@ import {
 } from "./auth-provider-code";
 import {
   LIVEBLOCKS_GENERAL_INTEGRATION_URL,
-  LIVEBLOCKS_GENERAL_INTEGRATION_URL_DEV,
   NEXTJS_STARTER_KIT_AUTH_PROVIDERS,
   NEXTJS_STARTER_KIT_GUIDE_URL,
   NEXTJS_STARTER_KIT_REPO_DIRECTORY,
   NEXTJS_STARTER_KIT_VERCEL_DEPLOYMENT_URL,
-  NEXTJS_STARTER_KIT_VERCEL_DEPLOYMENT_URL_DEV,
 } from "../../constants";
 import { nextjsStarterKitPrompts } from "./nextjs-starter-kit-prompts";
 import { pasteCodePrompt } from "../../utils/paste-code-prompt";
@@ -73,16 +71,10 @@ export async function create(flags: Record<string, any>) {
           "base64url"
         );
 
-        // TODO switch back
-        // const deployUrl = NEXTJS_STARTER_KIT_VERCEL_DEPLOYMENT_URL(
-        //   encodedData,
-        //   name
-        // );
-        const deployUrl = NEXTJS_STARTER_KIT_VERCEL_DEPLOYMENT_URL_DEV(
+        const deployUrl = NEXTJS_STARTER_KIT_VERCEL_DEPLOYMENT_URL(
           encodedData,
           name
         );
-
         open(deployUrl);
 
         setTimeout(async () => {
@@ -140,11 +132,9 @@ export async function create(flags: Record<string, any>) {
         "base64url"
       );
 
-      // TODO switch back
-      // const liveblocksUrl = LIVEBLOCKS_GENERAL_INTEGRATION_URL(encodedData);
-      const liveblocksUrl = LIVEBLOCKS_GENERAL_INTEGRATION_URL_DEV(encodedData);
-
+      const liveblocksUrl = LIVEBLOCKS_GENERAL_INTEGRATION_URL(encodedData);
       open(liveblocksUrl);
+
       setTimeout(async () => {
         liveblocksSpinner.succeed(c.green("Liveblocks opened!"));
         // In case getting the code automatically from `server` fails, allow pasting in the code
