@@ -2,13 +2,13 @@ import { type BaseUserMeta, type Client, kInternal } from "@liveblocks/core";
 import type { PropsWithChildren } from "react";
 import React, {
   createContext,
+  useCallback,
   useContext,
   useEffect,
-  useRef,
-  useState,
 } from "react";
+import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
-import type { SharedContextBundle, UserState } from "./types";
+import type { SharedContextBundle, UserState, UserStateSuccess } from "./types";
 
 const ContextBundle = createContext<SharedContextBundle<BaseUserMeta> | null>(
   null
@@ -53,75 +53,57 @@ export function createSharedContext<
     );
   }
 
-  const resolveUser = client[kInternal].resolveUser;
+  const usersStore = client[kInternal].usersStore;
 
-  // The `resolveUser` function is already batched, cached, and deduped
-  // so we don't need to think about that at the hook level.
-  function useUser(userId: string) {
-    const [state, setState] = useState<UserState<TUserMeta["info"]>>({
-      isLoading: true,
-    });
+  function useUser(userId: string): UserState<TUserMeta["info"]> {
+    const getUserState = useCallback(
+      () => usersStore.getState(userId),
+      [userId]
+    );
 
     useEffect(() => {
-      const getUser = async () => {
-        setState({ isLoading: true });
-
-        if (resolveUser) {
-          try {
-            const user = await resolveUser(userId);
-
-            setState({ isLoading: false, user });
-          } catch (error) {
-            setState({ isLoading: false, error: error as Error });
-          }
-        } else {
-          setState({ isLoading: false, user: undefined });
-        }
-      };
-
-      void getUser();
+      void usersStore.get(userId);
     }, [userId]);
 
-    return state;
+    const state = useSyncExternalStore(
+      usersStore.subscribe,
+      getUserState,
+      getUserState
+    );
+
+    return state
+      ? ({
+          ...state,
+          user: state.data,
+        } as UserState<TUserMeta["info"]>)
+      : { isLoading: true };
   }
 
-  // The `resolveUser` function is already batched, cached, and deduped
-  // so we don't need to think about that at the hook level.
   function useUserSuspense(userId: string) {
-    const [state, setState] = useState<UserState<TUserMeta["info"]>>({
-      isLoading: true,
-    });
-    const promiseRef = useRef<Promise<void>>();
+    const getUserState = useCallback(
+      () => usersStore.getState(userId),
+      [userId]
+    );
+    const userState = getUserState();
 
-    useEffect(() => {
-      const getUser = async () => {
-        setState({ isLoading: true });
-
-        if (resolveUser) {
-          try {
-            const user = await resolveUser(userId);
-
-            setState({ isLoading: false, user });
-          } catch (error) {
-            setState({ isLoading: false, error: error as Error });
-          }
-        } else {
-          setState({ isLoading: false, user: undefined });
-        }
-      };
-
-      promiseRef.current = getUser();
-    }, [userId]);
-
-    if (state.isLoading) {
-      throw promiseRef.current ?? new Promise(() => {});
+    if (!userState || userState.isLoading) {
+      throw usersStore.get(userId);
     }
 
-    if (state.error) {
-      throw state.error;
+    if (userState.error) {
+      throw userState.error;
     }
 
-    return state;
+    const state = useSyncExternalStore(
+      usersStore.subscribe,
+      getUserState,
+      getUserState
+    );
+
+    return {
+      ...state,
+      user: state?.data,
+    } as UserStateSuccess<TUserMeta["info"]>;
   }
 
   const bundle: SharedContextBundle<TUserMeta> = {

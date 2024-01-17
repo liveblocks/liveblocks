@@ -9,7 +9,8 @@ import {
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import { kInternal } from "./internal";
-import { Batch, CachedBatch } from "./lib/batch";
+import type { BatchStore } from "./lib/batch";
+import { Batch, createBatchStore } from "./lib/batch";
 import { deprecateIf } from "./lib/deprecation";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
@@ -91,7 +92,7 @@ export type EnterOptions<
  */
 type PrivateClientApi<TUserMeta extends BaseUserMeta> = {
   resolveMentionSuggestions: ClientOptions["resolveMentionSuggestions"];
-  resolveUser?: (userId: string) => Promise<TUserMeta["info"] | undefined>;
+  usersStore: BatchStore<TUserMeta["info"] | undefined, [string]>;
 };
 
 type InboxNotificationsApi<TThreadMetadata extends BaseMetadata = never> = {
@@ -540,22 +541,11 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
 
   const resolveUsers = clientOptions.resolveUsers;
   let hasWarnedIfNoResolveUsers = false;
-  let resolveUser:
-    | ((userId: string) => Promise<TUserMeta["info"] | undefined>)
-    | undefined;
 
-  if (resolveUsers) {
-    const batchedResolveUsers = new CachedBatch(
-      async (batchedUserIds: [string][]) => {
-        const userIds = batchedUserIds.flat();
-        const users = await resolveUsers({ userIds });
+  const usersStore = createBatchStore(
+    async (batchedUserIds: [string][]) => {
+      const userIds = batchedUserIds.flat();
 
-        return users ?? [];
-      },
-      { delay: RESOLVE_USERS_BATCH_DELAY }
-    );
-
-    resolveUser = (userId: string) => {
       if (
         !hasWarnedIfNoResolveUsers &&
         !resolveUsers &&
@@ -567,9 +557,12 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
         hasWarnedIfNoResolveUsers = true;
       }
 
-      return batchedResolveUsers.get(userId);
-    };
-  }
+      const users = await resolveUsers?.({ userIds });
+
+      return users ?? userIds.map(() => undefined);
+    },
+    { delay: RESOLVE_USERS_BATCH_DELAY }
+  );
 
   return Object.defineProperty(
     {
@@ -589,7 +582,7 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
       // Internal
       [kInternal]: {
         resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,
-        resolveUser,
+        usersStore,
       },
     },
     kInternal,

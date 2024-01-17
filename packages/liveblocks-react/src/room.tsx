@@ -1123,11 +1123,11 @@ export function createRoomContext<
     options: UseThreadsOptions<TThreadMetadata> = { query: { metadata: {} } }
   ): ThreadsStateSuccess<TThreadMetadata> {
     const room = useRoom();
-
     const queryKey = React.useMemo(
       () => generateQueryKey(room.id, options),
       [room, options]
     );
+
     if (
       store.get().threadsQueries[queryKey] === undefined ||
       store.get().threadsQueries[queryKey].isLoading
