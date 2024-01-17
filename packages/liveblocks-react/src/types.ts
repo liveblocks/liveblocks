@@ -33,18 +33,6 @@ import type { PropsWithChildren } from "react";
 
 export type OptionalPromise<T> = T | Promise<T>;
 
-export type ResolveUsersArgs = {
-  /**
-   * The ID of the current room.
-   */
-  roomId: string;
-
-  /**
-   * The IDs of the users to resolve.
-   */
-  userIds: string[];
-};
-
 export type UserStateLoading = {
   isLoading: true;
   user?: never;
@@ -1104,6 +1092,28 @@ export type LiveblocksContextBundle<
          * @example
          * const { user } = useUser("user-id");
          */
+        useUser(userId: string): UserStateSuccess<TUserMeta["info"]>;
+      }
+    >;
+  }
+>;
+
+/**
+ * @private
+ */
+type SharedContextBundleShared = {
+  SharedProvider(props: PropsWithChildren): JSX.Element;
+};
+
+/**
+ * @private
+ */
+export type SharedContextBundle<TUserMeta extends BaseUserMeta> = Resolve<
+  SharedContextBundleShared & {
+    useUser(userId: string): UserState<TUserMeta["info"]>;
+
+    suspense: Resolve<
+      SharedContextBundleShared & {
         useUser(userId: string): UserStateSuccess<TUserMeta["info"]>;
       }
     >;

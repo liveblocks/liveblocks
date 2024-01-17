@@ -1,12 +1,28 @@
 "use client";
 
 import { createClient } from "@liveblocks/client";
+import { createLiveblocksContext } from "@liveblocks/react";
 import { createRoomContext } from "@liveblocks/react";
 
 export const client = createClient({
   authEndpoint: "/api/liveblocks-auth",
   // @ts-expect-error: dev
   baseUrl: "https://dev.dev-liveblocks5948.workers.dev/",
+
+  // Get users' info from their ID
+  resolveUsers: async ({ userIds }) => {
+    const searchParams = new URLSearchParams(
+      userIds.map((userId) => ["userIds", userId])
+    );
+
+    try {
+      const response = await fetch(`/api/users?${searchParams}`);
+
+      return response.json();
+    } catch (error) {
+      console.error(123, error);
+    }
+  },
 
   // Find a list of users that match the current search term
   resolveMentionSuggestions: async ({ text }) => {
@@ -26,21 +42,10 @@ export const client = createClient({
 
 const {
   suspense: { RoomProvider, useThreads },
-} = createRoomContext(client, {
-  // Get users' info from their ID
-  resolveUsers: async ({ userIds }) => {
-    const searchParams = new URLSearchParams(
-      userIds.map((userId) => ["userIds", userId])
-    );
+} = createRoomContext(client);
 
-    try {
-      const response = await fetch(`/api/users?${searchParams}`);
+const {
+  suspense: { LiveblocksProvider },
+} = createLiveblocksContext(client);
 
-      return response.json();
-    } catch (error) {
-      console.error(123, error);
-    }
-  },
-});
-
-export { RoomProvider, useThreads };
+export { RoomProvider, LiveblocksProvider, useThreads };

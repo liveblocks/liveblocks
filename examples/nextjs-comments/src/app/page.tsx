@@ -2,7 +2,11 @@
 
 import { useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import { RoomProvider, useThreads } from "../../liveblocks.config";
+import {
+  LiveblocksProvider,
+  RoomProvider,
+  useThreads,
+} from "../../liveblocks.config";
 import { Loading } from "../components/Loading";
 import {
   Composer,
@@ -52,7 +56,7 @@ const inboxNotificationA: InboxNotificationData = {
         threadId: "th_5ssRcW7YInDt6nbU_xr4D",
         roomId: "nextjs-comments",
         id: "cm_5iocqEdxNx-HG3m-ZBJwd",
-        userId: "user-8",
+        userId: "user-1",
         createdAt: new Date("2023-12-08T10:07:15.201Z"),
         reactions: [],
         body: {
@@ -74,7 +78,7 @@ const inboxNotificationA: InboxNotificationData = {
         threadId: "th_5ssRcW7YInDt6nbU_xr4D",
         roomId: "nextjs-comments",
         id: "cm_5iocqEdxNx-HG3m-ZBJwa",
-        userId: "user-9",
+        userId: "user-2",
         createdAt: new Date("2023-12-10T10:07:15.201Z"),
         reactions: [],
         body: {
@@ -114,7 +118,7 @@ const inboxNotificationB: InboxNotificationData = {
         threadId: "th_5ssRcW7YInDt6nbU_xr4D",
         roomId: "nextjs-comments",
         id: "cm_5iocqEdxNx-HG3m-ZBJwo",
-        userId: "user-7",
+        userId: "user-6",
         createdAt: new Date("2023-12-06T10:07:15.201Z"),
         reactions: [],
         body: {
@@ -136,30 +140,8 @@ const inboxNotificationB: InboxNotificationData = {
         threadId: "th_5ssRcW7YInDt6nbU_xr4D",
         roomId: "nextjs-comments",
         id: "cm_5iocqEdxNx-HG3m-ZBJwd",
-        userId: "user-8",
+        userId: "user-4",
         createdAt: new Date("2023-12-08T10:07:15.201Z"),
-        reactions: [],
-        body: {
-          version: 1,
-          content: [
-            {
-              type: "paragraph",
-              children: [
-                {
-                  text: "Hello world",
-                },
-              ],
-            },
-          ],
-        },
-      },
-      {
-        type: "comment",
-        threadId: "th_5ssRcW7YInDt6nbU_xr4D",
-        roomId: "nextjs-comments",
-        id: "cm_5iocqEdxNx-HG3m-ZBJwa",
-        userId: "user-9",
-        createdAt: new Date("2023-12-10T10:07:15.201Z"),
         reactions: [],
         body: {
           version: 1,
@@ -192,8 +174,6 @@ function Example() {
 
   return (
     <main>
-      <InboxNotification inboxNotification={inboxNotificationA} />
-      <InboxNotification inboxNotification={inboxNotificationB} />
       {threads.map((thread) => (
         <Thread key={thread.id} thread={thread} className="thread" />
       ))}
@@ -208,14 +188,16 @@ export default function Page() {
 
   return (
     <>
-      {/* <ClientSideSuspense fallback={<Loading />}>
-        {() => (
-          <>
-            <InboxNotification inboxNotification={inboxNotificationA} />
-            <InboxNotification inboxNotification={inboxNotificationB} />
-          </>
-        )}
-      </ClientSideSuspense> */}
+      <LiveblocksProvider>
+        <ClientSideSuspense fallback={<Loading />}>
+          {() => (
+            <>
+              <InboxNotification inboxNotification={inboxNotificationA} />
+              <InboxNotification inboxNotification={inboxNotificationB} />
+            </>
+          )}
+        </ClientSideSuspense>
+      </LiveblocksProvider>
       <RoomProvider id={roomId} initialPresence={{}}>
         <ErrorBoundary
           fallback={

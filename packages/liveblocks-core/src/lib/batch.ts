@@ -1,3 +1,5 @@
+import type { EventSource } from "./EventSource";
+import { makeEventSource } from "./EventSource";
 import { stringify } from "./stringify";
 
 const DEFAULT_SIZE = 50;
@@ -7,9 +9,39 @@ type Resolve<T> = (value: T | Promise<T>) => void;
 
 type Reject = (reason?: unknown) => void;
 
-type BatchCallback<Result, Args extends unknown[]> = (
-  args: Args[]
-) => (Result | Error)[] | Promise<(Result | Error)[]>;
+export type BatchCallback<T, A extends unknown[]> = (
+  args: A[]
+) => (T | Error)[] | Promise<(T | Error)[]>;
+
+export type BatchStoreStateLoading = {
+  isLoading: true;
+  data?: never;
+  error?: never;
+};
+
+export type BatchStoreStateError = {
+  isLoading: false;
+  data?: never;
+  error: Error;
+};
+
+export type BatchStoreStateSuccess<T> = {
+  isLoading: false;
+  data: T;
+  error?: never;
+};
+
+export type BatchStoreState<T> =
+  | BatchStoreStateLoading
+  | BatchStoreStateError
+  | BatchStoreStateSuccess<T>;
+
+export type BatchStore<T, A extends unknown[]> = EventSource<
+  BatchStoreState<T> | undefined
+> & {
+  get: (...args: A) => Promise<void>;
+  getState: (...args: A) => BatchStoreState<T> | undefined;
+};
 
 interface Options {
   /**
@@ -25,13 +57,13 @@ interface Options {
 
 const noop = () => {};
 
-class BatchCall<Result, Args extends unknown[]> {
-  readonly args: Args;
-  resolve: Resolve<Result> = noop;
+class BatchCall<T, A extends unknown[]> {
+  readonly args: A;
+  resolve: Resolve<T> = noop;
   reject: Reject = noop;
-  promise: Promise<Result> = new Promise(noop);
+  promise: Promise<T> = new Promise(noop);
 
-  constructor(args: Args) {
+  constructor(args: A) {
     this.args = args;
   }
 }
@@ -39,15 +71,15 @@ class BatchCall<Result, Args extends unknown[]> {
 /**
  * Batch calls to a function, either by number of calls or by a maximum delay.
  */
-export class Batch<Result, Args extends unknown[] = []> {
-  private queue: BatchCall<Result, Args>[] = [];
-  private callback: BatchCallback<Result, Args>;
+export class Batch<T, A extends unknown[] = []> {
+  private queue: BatchCall<T, A>[] = [];
+  private callback: BatchCallback<T, A>;
   private size: number;
   private delay: number;
   private delayTimeoutId?: ReturnType<typeof setTimeout>;
   public error = false;
 
-  constructor(callback: BatchCallback<Result, Args>, options?: Options) {
+  constructor(callback: BatchCallback<T, A>, options?: Options) {
     this.callback = callback;
     this.size = options?.size ?? DEFAULT_SIZE;
     this.delay = options?.delay ?? DEFAULT_DELAY;
@@ -116,7 +148,7 @@ export class Batch<Result, Args extends unknown[] = []> {
     }
   }
 
-  add(...args: Args): Promise<Result> {
+  get(...args: A): Promise<T> {
     // Check if there's already an identical call in the queue.
     const existingCall = this.queue.find(
       (call) => stringify(call.args) === stringify(args)
@@ -128,8 +160,8 @@ export class Batch<Result, Args extends unknown[] = []> {
     }
 
     // If no existing call exists, add the call to the queue and schedule a flush.
-    const call = new BatchCall<Result, Args>(args);
-    call.promise = new Promise<Result>((resolve, reject) => {
+    const call = new BatchCall<T, A>(args);
+    call.promise = new Promise<T>((resolve, reject) => {
       call.resolve = resolve;
       call.reject = reject;
     });
@@ -147,63 +179,85 @@ export class Batch<Result, Args extends unknown[] = []> {
 }
 
 /**
- * Batch calls to a function, either by number of calls or by a maximum delay, and cache the results.
+ * Create a store based on a batch callback.
+ * Each call will be cached and get its own state in addition to being batched.
  */
-export class BatchCache<Result, Args extends unknown[] = []> {
-  private batch: Batch<Result, Args>;
-  private cache: Map<string, Result | Error> = new Map();
+export function createBatchStore<T, A extends unknown[]>(
+  callback: BatchCallback<T, A>,
+  options?: Options
+): BatchStore<T, A> {
+  const batch = new Batch(callback, options);
+  const cache = new Map<string, BatchStoreState<T>>();
+  const eventSource = makeEventSource<BatchStoreState<T> | undefined>();
 
-  constructor(callback: BatchCallback<Result, Args>, options?: Options) {
-    this.batch = new Batch(callback, options);
-  }
-
-  private getCacheKey(args: Args): string {
+  function getCacheKey(args: A): string {
     return stringify(args);
   }
 
-  async add(...args: Args): Promise<Result> {
-    const cacheKey = this.getCacheKey(args);
+  function setStateAndNotify(
+    cacheKey: string,
+    state: BatchStoreState<T> | undefined
+  ) {
+    // Set or delete the state.
+    if (state) {
+      cache.set(cacheKey, state);
+    } else {
+      cache.delete(cacheKey);
+    }
 
-    // If already cached, return the result.
-    if (this.cache.has(cacheKey)) {
-      const cachedResult = this.cache.get(cacheKey);
+    // Notify subscribers.
+    eventSource.notify(state);
+  }
 
-      // Unless it was an error, in that case rethrow it.
-      if (cachedResult instanceof Error) {
-        throw cachedResult;
-      }
+  async function get(...args: A) {
+    const cacheKey = getCacheKey(args);
 
-      return cachedResult as Result;
+    // If this call already has a state, return early.
+    if (cache.has(cacheKey)) {
+      return;
     }
 
     try {
-      // If not cached, add to the current batch.
-      const result = await this.batch.add(...args);
+      // Set the state to loading.
+      setStateAndNotify(cacheKey, { isLoading: true });
 
-      // Cache the result.
-      this.cache.set(cacheKey, result);
+      // Wait for the batch to process this call.
+      const result = await batch.get(...args);
 
-      return result;
+      // Set the state to the result.
+      setStateAndNotify(cacheKey, { isLoading: false, data: result });
     } catch (error) {
-      // If the whole batch errored, rethrow the error.
-      if (this.batch.error) {
-        throw error;
-      }
+      // // TODO: Differentiate whole batch errors from individual errors.
+      // if (batch.error) {
+      //   // If the whole batch errored, clear the state.
+      //   // TODO: Keep track of retries and only clear the state a few times because it will be retried each time.
+      //   //       Also implement exponential backoff to delay retries to avoid hammering `resolveUsers`.
+      //   setStateAndNotify(cacheKey, undefined);
+      // } else {
+      //   // Otherwise, keep individual errors to avoid repeatedly loading the same error.
+      //   setStateAndNotify(cacheKey, {
+      //     isLoading: false,
+      //     error: error as Error,
+      //   });
+      // }
 
-      // Cache individual errors to avoid repeatedly loading the same error.
-      this.cache.set(cacheKey, error as Error);
-
-      throw error;
+      // If there was an error (for various reasons), set the state to the error.
+      setStateAndNotify(cacheKey, {
+        isLoading: false,
+        error: error as Error,
+      });
     }
   }
 
-  remove(...args: Args): void {
-    const cacheKey = this.getCacheKey(args);
-    this.cache.delete(cacheKey);
+  function getState(...args: A) {
+    const cacheKey = getCacheKey(args);
+
+    return cache.get(cacheKey);
   }
 
-  clear(): void {
-    this.batch.clear();
-    this.cache.clear();
-  }
+  return {
+    ...eventSource,
+    get,
+    getState,
+  };
 }

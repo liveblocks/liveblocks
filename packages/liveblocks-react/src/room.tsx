@@ -15,7 +15,6 @@ import type {
 } from "@liveblocks/client";
 import { shallow } from "@liveblocks/client";
 import type {
-  AsyncCache,
   BaseMetadata,
   CommentData,
   CommentReaction,
@@ -30,7 +29,6 @@ import type {
 import {
   CommentsApiError,
   console,
-  createAsyncCache,
   deprecateIf,
   errorIf,
   getCacheStore,
@@ -60,10 +58,10 @@ import {
 import { createCommentId, createThreadId } from "./comments/lib/createIds";
 import { selectedThreads } from "./comments/lib/selected-threads";
 import { upsertComment } from "./comments/lib/upsert-comment";
-import { useAsyncCache } from "./lib/use-async-cache";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { useRerender } from "./lib/use-rerender";
+import { createSharedContext } from "./shared";
 import type {
   CommentReactionOptions,
   CreateCommentOptions,
@@ -74,16 +72,12 @@ import type {
   InternalRoomContextBundle,
   MutationContext,
   OmitFirstArg,
-  OptionalPromise,
-  ResolveUsersArgs,
   RoomContextBundle,
   RoomNotificationSettingsState,
   RoomNotificationSettingsStateSuccess,
   RoomProviderProps,
   ThreadsState,
   ThreadsStateSuccess,
-  UserState,
-  UserStateSuccess,
   UseThreadsOptions,
 } from "./types";
 
@@ -175,38 +169,6 @@ function makeMutationContext<
   };
 }
 
-type Options<TUserMeta extends BaseUserMeta> = {
-  /**
-   * @beta
-   *
-   * A function that returns user info from user IDs.
-   */
-  resolveUsers?: (
-    args: ResolveUsersArgs
-  ) => OptionalPromise<(TUserMeta["info"] | undefined)[] | undefined>;
-
-  /**
-   * @internal To point the client to a different Liveblocks server. Only
-   * useful for Liveblocks developers. Not for end users.
-   */
-  baseUrl?: string;
-};
-
-let hasWarnedIfNoResolveUsers = false;
-
-function warnIfNoResolveUsers(usersCache?: AsyncCache<unknown, unknown>) {
-  if (
-    !hasWarnedIfNoResolveUsers &&
-    !usersCache &&
-    process.env.NODE_ENV !== "production"
-  ) {
-    console.warn(
-      "Set the resolveUsers option in createRoomContext to specify user info."
-    );
-    hasWarnedIfNoResolveUsers = true;
-  }
-}
-
 const ContextBundle = React.createContext<InternalRoomContextBundle<
   JsonObject,
   LsonObject,
@@ -235,8 +197,7 @@ export function createRoomContext<
   TRoomEvent extends Json = never,
   TThreadMetadata extends BaseMetadata = never,
 >(
-  client: Client,
-  options?: Options<TUserMeta>
+  client: Client
 ): RoomContextBundle<
   TPresence,
   TStorage,
@@ -251,6 +212,12 @@ export function createRoomContext<
 
   const commentsErrorEventSource =
     makeEventSource<CommentsError<TThreadMetadata>>();
+
+  const {
+    SharedProvider,
+    useUser,
+    suspense: { useUser: useUserSuspense },
+  } = createSharedContext<TUserMeta>(client);
 
   /**
    * RATIONALE:
@@ -419,21 +386,23 @@ export function createRoomContext<
     }, [roomId, frozenProps, stableEnterRoom]);
 
     return (
-      <RoomContext.Provider value={room}>
-        <ContextBundle.Provider
-          value={
-            internalBundle as unknown as InternalRoomContextBundle<
-              JsonObject,
-              LsonObject,
-              BaseUserMeta,
-              never,
-              BaseMetadata
-            >
-          }
-        >
-          {props.children}
-        </ContextBundle.Provider>
-      </RoomContext.Provider>
+      <SharedProvider>
+        <RoomContext.Provider value={room}>
+          <ContextBundle.Provider
+            value={
+              internalBundle as unknown as InternalRoomContextBundle<
+                JsonObject,
+                LsonObject,
+                BaseUserMeta,
+                never,
+                BaseMetadata
+              >
+            }
+          >
+            {props.children}
+          </ContextBundle.Provider>
+        </RoomContext.Provider>
+      </SharedProvider>
     );
   }
 
@@ -1154,11 +1123,11 @@ export function createRoomContext<
     options: UseThreadsOptions<TThreadMetadata> = { query: { metadata: {} } }
   ): ThreadsStateSuccess<TThreadMetadata> {
     const room = useRoom();
-
     const queryKey = React.useMemo(
       () => generateQueryKey(room.id, options),
       [room, options]
     );
+
     if (
       store.get().threadsQueries[queryKey] === undefined ||
       store.get().threadsQueries[queryKey].isLoading
@@ -1653,59 +1622,6 @@ export function createRoomContext<
       },
       [room]
     );
-  }
-
-  const { resolveUsers } = options ?? {};
-
-  const usersCache = resolveUsers
-    ? createAsyncCache(async (stringifiedOptions: string) => {
-        const users = await resolveUsers(
-          JSON.parse(stringifiedOptions) as ResolveUsersArgs
-        );
-
-        return users?.[0];
-      })
-    : undefined;
-
-  function useUser(userId: string) {
-    const room = useRoom();
-    const resolverKey = React.useMemo(
-      () => stringify({ userIds: [userId], roomId: room.id }),
-      [userId, room.id]
-    );
-    const state = useAsyncCache(usersCache, resolverKey);
-
-    React.useEffect(() => warnIfNoResolveUsers(usersCache), []);
-
-    if (state.isLoading) {
-      return {
-        isLoading: true,
-      } as UserState<TUserMeta["info"]>;
-    } else {
-      return {
-        user: state.data,
-        error: state.error,
-        isLoading: false,
-      } as UserState<TUserMeta["info"]>;
-    }
-  }
-
-  function useUserSuspense(userId: string) {
-    const room = useRoom();
-    const resolverKey = React.useMemo(
-      () => stringify({ userIds: [userId], roomId: room.id }),
-      [userId, room.id]
-    );
-    const state = useAsyncCache(usersCache, resolverKey, {
-      suspense: true,
-    });
-
-    React.useEffect(() => warnIfNoResolveUsers(usersCache), []);
-
-    return {
-      user: state.data,
-      isLoading: false,
-    } as UserStateSuccess<TUserMeta["info"]>;
   }
 
   const resolveMentionSuggestions = client[kInternal].resolveMentionSuggestions;
