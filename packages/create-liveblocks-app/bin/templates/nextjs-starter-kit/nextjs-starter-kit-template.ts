@@ -34,6 +34,7 @@ import {
   NEXTJS_STARTER_KIT_GUIDE_URL,
   NEXTJS_STARTER_KIT_REPO_DIRECTORY,
   NEXTJS_STARTER_KIT_VERCEL_DEPLOYMENT_URL,
+  NEXTJS_STARTER_KIT_VERCEL_DEPLOYMENT_URL_DEV,
 } from "../../constants";
 import { nextjsStarterKitPrompts } from "./nextjs-starter-kit-prompts";
 import { pasteCodePrompt } from "../../utils/paste-code-prompt";
@@ -60,7 +61,7 @@ export async function create(flags: Record<string, any>) {
       c.whiteBright.bold("Opening Vercel, continue deploying then check back…")
     );
     const vercelData: VercelIntegrationCallback = (await server(
-      async (origin) => {
+      async (origin, earlyResolve) => {
         const data: VercelIntegrationData = {
           env: [{ name: "LIVEBLOCKS_SECRET_KEY", type: "secret" }],
           envReady: [{ name: "NEXTAUTH_SECRET", value: nextAuthSecretValue }],
@@ -72,16 +73,23 @@ export async function create(flags: Record<string, any>) {
           "base64url"
         );
 
-        const deployUrl = NEXTJS_STARTER_KIT_VERCEL_DEPLOYMENT_URL(
-          encodedData,
-          name
-        );
-        // const deployUrl = NEXTJS_STARTER_KIT_VERCEL_DEPLOYMENT_URL_DEV(
+        // TODO switch back
+        // const deployUrl = NEXTJS_STARTER_KIT_VERCEL_DEPLOYMENT_URL(
         //   encodedData,
         //   name
         // );
+        const deployUrl = NEXTJS_STARTER_KIT_VERCEL_DEPLOYMENT_URL_DEV(
+          encodedData,
+          name
+        );
 
-        await open(deployUrl);
+        open(deployUrl);
+
+        setTimeout(async () => {
+          vercelSpinner.succeed(c.green("Vercel opened!"));
+          // In case getting the code automatically from `server` fails, allow pasting in the code
+          pasteCodePrompt(earlyResolve);
+        }, 1500);
       }
     )) as VercelIntegrationCallback;
 
