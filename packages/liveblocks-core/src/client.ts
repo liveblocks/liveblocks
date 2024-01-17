@@ -527,7 +527,7 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
     options?: RequestInit
   ): Promise<Response> {
     const authValue = await authManager.getAuthValue();
-    const url = new URL(`/v2/c/${endpoint}`, baseUrl);
+    const url = new URL(`/v2/c${endpoint}`, baseUrl);
     const fetcher =
       clientOptions.polyfills?.fetch || /* istanbul ignore next */ fetch;
     return await fetcher(url.toString(), {

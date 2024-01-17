@@ -1055,7 +1055,7 @@ export function createRoomContext<
       roomId: room.id,
     });
 
-    store.setThreadsQueryState(queryKey, {
+    store.setQueryState(queryKey, {
       isLoading: true,
     });
 
@@ -1072,7 +1072,7 @@ export function createRoomContext<
         queryKey
       );
     } catch (err) {
-      store.setThreadsQueryState(queryKey, {
+      store.setQueryState(queryKey, {
         isLoading: false,
         error: err as Error,
       });
@@ -1102,8 +1102,8 @@ export function createRoomContext<
       store.get,
       (state) => {
         if (
-          state.threadsQueries[queryKey] === undefined ||
-          state.threadsQueries[queryKey].isLoading
+          state.queries[queryKey] === undefined ||
+          state.queries[queryKey].isLoading
         ) {
           return {
             isLoading: true,
@@ -1113,7 +1113,7 @@ export function createRoomContext<
         return {
           threads: selectedThreads(room.id, state, options),
           isLoading: false,
-          error: state.threadsQueries[queryKey].error,
+          error: state.queries[queryKey].error,
         };
       }
     );
@@ -1129,14 +1129,14 @@ export function createRoomContext<
     );
 
     if (
-      store.get().threadsQueries[queryKey] === undefined ||
-      store.get().threadsQueries[queryKey].isLoading
+      store.get().queries[queryKey] === undefined ||
+      store.get().queries[queryKey].isLoading
     ) {
       throw getThreadsAndInboxNotifications(room, queryKey, options);
     }
 
-    if (store.get().threadsQueries[queryKey].error) {
-      throw store.get().threadsQueries[queryKey].error;
+    if (store.get().queries[queryKey].error) {
+      throw store.get().queries[queryKey].error;
     }
 
     React.useEffect(() => {

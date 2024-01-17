@@ -9,8 +9,6 @@ import { NextRequest, NextResponse } from "next/server";
 
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
-  // @ts-expect-error: dev
-  baseUrl: "https://dev.dev-liveblocks5948.workers.dev/",
 });
 
 export async function POST(request: NextRequest) {
@@ -30,6 +28,7 @@ export async function POST(request: NextRequest) {
 
   // Give the user access to the room
   const { room } = await request.json();
+
   session.allow(room, session.FULL_ACCESS);
 
   // Authorize the user and return the result
