@@ -28,6 +28,7 @@ import {
   VercelIntegrationCallback,
   VercelIntegrationData,
 } from "../../types";
+import { pasteCodePrompt } from "../../utils/paste-code-prompt";
 
 export async function create(flags: Record<string, any>) {
   const packageManager = flags.packageManager || getPackageManager();
@@ -50,7 +51,7 @@ export async function create(flags: Record<string, any>) {
       c.whiteBright.bold("Opening Vercel, continue deploying then check back…")
     );
     const vercelData: VercelIntegrationCallback = (await server(
-      async (origin) => {
+      async (origin, earlyResolve) => {
         const data: VercelIntegrationData = {
           env: [],
           envReady: [],
@@ -68,13 +69,13 @@ export async function create(flags: Record<string, any>) {
           name,
           example
         );
-        // const deployUrl = EXAMPLE_VERCEL_DEPLOYMENT_URL_DEV(
-        //   encodedData,
-        //   name,
-        //   example
-        // );
+        open(deployUrl);
 
-        await open(deployUrl);
+        setTimeout(async () => {
+          vercelSpinner.succeed(c.green("Vercel opened!"));
+          // In case getting the code automatically from `server` fails, allow pasting in the code
+          pasteCodePrompt(earlyResolve);
+        }, 1500);
       }
     )) as VercelIntegrationCallback;
 
@@ -114,7 +115,7 @@ export async function create(flags: Record<string, any>) {
       )
     );
 
-    const liveblocksData = (await server((origin) => {
+    const liveblocksData = (await server((origin, earlyResolve) => {
       const data: GeneralIntegrationData = {
         env: [],
         exampleNames: [example],
@@ -127,15 +128,18 @@ export async function create(flags: Record<string, any>) {
       );
 
       const liveblocksUrl = LIVEBLOCKS_GENERAL_INTEGRATION_URL(encodedData);
-      // const liveblocksUrl = LIVEBLOCKS_GENERAL_INTEGRATION_URL_DEV(encodedData);
       open(liveblocksUrl);
+
+      setTimeout(async () => {
+        liveblocksSpinner.succeed(c.green("Liveblocks opened!"));
+        // In case getting the code automatically from `server` fails, allow pasting in the code
+        pasteCodePrompt(earlyResolve);
+      }, 1500);
     })) as GeneralIntegrationCallback;
 
     Object.entries(liveblocksData.env).forEach(([key, value]) => {
       envVariables.push({ key, value });
     });
-
-    liveblocksSpinner.succeed(c.green("Liveblocks API key added"));
   }
 
   // === Clone example repo ==============================================
