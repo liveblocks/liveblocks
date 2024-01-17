@@ -24,7 +24,7 @@
   ],
   "scripts": {
     "dev": "tsup --watch",
-    "build": "tsup && shx cp dist/index.d.ts dist/index.d.mts",
+    "build": "tsup",
     "format": "eslint --fix src/; prettier --write src/",
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack --ignore-rules cjs-only-exports-default",
