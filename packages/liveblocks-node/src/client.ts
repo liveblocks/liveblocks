@@ -90,7 +90,7 @@ export type RoomMetadata = Record<string, string | string[]>;
 export type RoomInfo = {
   type: "room";
   id: string;
-  createdAt?: Date;
+  createdAt: Date;
   lastConnectionAt?: Date;
   defaultAccesses: RoomPermission;
   usersAccesses: RoomAccesses;
@@ -365,11 +365,18 @@ export class Liveblocks {
         ? new Date(room.lastConnectionAt)
         : undefined;
 
-      const createdAt = room.createdAt ? new Date(room.createdAt) : undefined;
-      return { ...room, createdAt, lastConnectionAt };
+      const createdAt = new Date(room.createdAt);
+      return {
+        ...room,
+        createdAt,
+        lastConnectionAt,
+      };
     });
 
-    return { ...data, data: rooms };
+    return {
+      ...data,
+      data: rooms,
+    };
   }
 
   /**
@@ -412,8 +419,7 @@ export class Liveblocks {
       ? new Date(data.lastConnectionAt)
       : undefined;
 
-    const createdAt = data.createdAt ? new Date(data.createdAt) : undefined;
-
+    const createdAt = new Date(data.createdAt);
     return {
       ...data,
       lastConnectionAt,
@@ -441,12 +447,11 @@ export class Liveblocks {
       ? new Date(data.lastConnectionAt)
       : undefined;
 
-    const createdAt = data.createdAt ? new Date(data.createdAt) : undefined;
-
+    const createdAt = new Date(data.createdAt);
     return {
       ...data,
-      lastConnectionAt,
       createdAt,
+      lastConnectionAt,
     };
   }
 
@@ -496,8 +501,7 @@ export class Liveblocks {
       ? new Date(data.lastConnectionAt)
       : undefined;
 
-    const createdAt = data.createdAt ? new Date(data.createdAt) : undefined;
-
+    const createdAt = new Date(data.createdAt);
     return {
       ...data,
       lastConnectionAt,
