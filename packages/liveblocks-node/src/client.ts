@@ -364,18 +364,10 @@ export class Liveblocks {
         : undefined;
 
       const createdAt = room.createdAt ? new Date(room.createdAt) : undefined;
-
-      return {
-        ...room,
-        lastConnectionAt,
-        createdAt,
-      };
+      return { ...room, createdAt, lastConnectionAt };
     });
 
-    return {
-      ...data,
-      data: rooms,
-    };
+    return { ...data, data: rooms };
   }
 
   /**
