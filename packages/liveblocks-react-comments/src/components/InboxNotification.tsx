@@ -173,16 +173,22 @@ const ThreadInboxNotification = forwardRef<
   const { avatarUserId, title } = useMemo(() => {
     const reversedComments = [...comments].reverse();
 
-    const avatarUserId = comments[0]?.userId;
+    const avatarUserId = reversedComments[0]?.userId;
     // TODO: Support overrides via $ instead of hard-coding English (look at CommentReaction)
     // TODO: Don't show self in title?
+    // TODO: Don't show the same user twice in title?
     const title = (
       <>
         <List
-          values={reversedComments.map((users, index) => (
-            <User key={users.id} userId={users.id} capitalize={index === 0} />
+          values={reversedComments.map((comment, index) => (
+            <User
+              key={comment.userId}
+              userId={comment.userId}
+              capitalize={index === 0}
+            />
           ))}
           // formatRemaining={$.COMMENT_REACTION_REMAINING}
+          // [comments-unread] TODO: Differientate truncation and max number of comments (e.g. we show max 3 comments but if there are 10 unread comments we want the list of names to reflect 10)
           truncate={THREAD_INBOX_NOTIFICATION_MAX_COMMENTS}
         />{" "}
         commented on <span>Document</span>

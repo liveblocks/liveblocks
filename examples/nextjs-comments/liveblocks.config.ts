@@ -1,17 +1,14 @@
 "use client";
 
 import { createClient } from "@liveblocks/client";
+import { createLiveblocksContext } from "@liveblocks/react";
 import { createRoomContext } from "@liveblocks/react";
 
 export const client = createClient({
   authEndpoint: "/api/liveblocks-auth",
   // @ts-expect-error: dev
   baseUrl: "https://dev.dev-liveblocks5948.workers.dev/",
-});
 
-const {
-  suspense: { RoomProvider, useThreads },
-} = createRoomContext(client, {
   // Get users' info from their ID
   resolveUsers: async ({ userIds }) => {
     const searchParams = new URLSearchParams(
@@ -43,4 +40,12 @@ const {
   },
 });
 
-export { RoomProvider, useThreads };
+const {
+  suspense: { RoomProvider, useThreads },
+} = createRoomContext(client);
+
+const {
+  suspense: { LiveblocksProvider },
+} = createLiveblocksContext(client);
+
+export { RoomProvider, LiveblocksProvider, useThreads };

@@ -5,21 +5,21 @@ export type Store<T> = {
 };
 
 /**
- * Create a store for an immutable state. Close to Zustand vanilla store conceptually but with less features
+ * Create a store for an immutable state. Close to Zustand's vanilla store conceptually but with less features.
  */
 export function createStore<T>(initialState: T): Store<T> {
   let state = initialState;
   const subscribers = new Set<(state: T) => void>();
 
   /**
-   * Return the current state
+   * Return the current state.
    */
   function get() {
     return state;
   }
 
   /**
-   * Update the current state and notify all the subscribers of the update
+   * Update the current state and notify all the subscribers of the update.
    */
   function set(callback: (currentState: T) => T) {
     state = callback(state);
@@ -30,8 +30,9 @@ export function createStore<T>(initialState: T): Store<T> {
   }
 
   /**
-   * Subscribe to any store updates
-   * @returns Unsubscribe function
+   * Subscribe to any store updates.
+   *
+   * @returns A function to unsubscribe
    */
   function subscribe(callback: (state: T) => void): () => void {
     subscribers.add(callback);

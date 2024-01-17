@@ -1,5 +1,5 @@
-import type { Store } from "./comments/create-store";
-import { createStore } from "./comments/create-store";
+import type { Store } from "./lib/create-store";
+import { createStore } from "./lib/create-store";
 import type { Resolve } from "./lib/Resolve";
 import type { BaseMetadata } from "./types/BaseMetadata";
 import type { CommentBody } from "./types/CommentBody";
@@ -91,20 +91,20 @@ type ThreadsQueryState =
 
 export type CacheState<TThreadMetadata extends BaseMetadata> = {
   /**
-   * Threads by id
+   * Threads by ID.
    */
   threads: Record<string, ThreadData<TThreadMetadata>>;
   /**
-   * Keep tracks of loading and error status of the threads queries
+   * Keep track of loading and error status of the threads queries.
    */
   threadsQueries: Record<string, ThreadsQueryState>;
   /**
    * Optimistic updates that have not been acknowledged by the server yet.
-   * They are applied on top of the threads in selectors
+   * They are applied on top of the threads in selectors.
    */
   optimisticUpdates: OptimisticUpdate<TThreadMetadata>[];
   /**
-   * InboxNotifications by id
+   * Inbox notifications by ID.
    */
   inboxNotifications: Record<string, PartialInboxNotificationData>;
 };

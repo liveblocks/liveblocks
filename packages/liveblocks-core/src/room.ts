@@ -26,6 +26,7 @@ import {
 import { LiveObject } from "./crdts/LiveObject";
 import type { LiveNode, LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
+import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
 import { captureStackTrace } from "./lib/debug";
 import type { Callback, Observable } from "./lib/EventSource";
@@ -574,18 +575,20 @@ export type Room<
   TRoomEvent extends Json,
 > = CommentsApi<any /* TODO: Remove this any by adding a proper thread metadata on the Room type */> & {
   /**
-   * @internal
+   * @private
+   *
    * Private methods to directly control the underlying state machine for this
    * room. Used in the core internals and for unit testing, but as a user of
    * Liveblocks, NEVER USE ANY OF THESE METHODS DIRECTLY, because bad things
    * will probably happen if you do.
    */
-  readonly __internal: PrivateRoomAPI; // prettier-ignore
+  readonly [kInternal]: PrivateRoomApi;
 
   /**
    * The id of the room.
    */
   readonly id: string;
+
   /**
    * @deprecated This API will be removed in a future version of Liveblocks.
    * Prefer using `.getStatus()` instead.
@@ -605,6 +608,7 @@ export type Room<
    *     failed          -->  disconnected
    */
   getConnectionState(): LegacyConnectionStatus;
+
   /**
    * Return the current connection status for this room. Can be used to display
    * a status badge for your Liveblocks connection.
@@ -806,13 +810,14 @@ export type Room<
 };
 
 /**
- * @internal
+ * @private
+ *
  * Private methods to directly control the underlying state machine for this
  * room. Used in the core internals and for unit testing, but as a user of
  * Liveblocks, NEVER USE ANY OF THESE METHODS DIRECTLY, because bad things
  * will probably happen if you do.
  */
-type PrivateRoomAPI = {
+type PrivateRoomApi = {
   // For introspection in unit tests only
   presenceBuffer: Json | undefined;
   undoStack: readonly (readonly Readonly<HistoryOp<JsonObject>>[])[];
@@ -2827,8 +2832,8 @@ export function createRoom<
 
   return Object.defineProperty(
     {
-      /* NOTE: Exposing __internal here only to allow testing implementation details in unit tests */
-      __internal: {
+      /* NOTE: Exposing internals here only to allow testing implementation details in unit tests */
+      [kInternal]: {
         get presenceBuffer() { return deepClone(context.buffer.presenceUpdates?.data ?? null) }, // prettier-ignore
         get undoStack() { return deepClone(context.undoStack) }, // prettier-ignore
         get nodeCount() { return context.nodes.size }, // prettier-ignore
@@ -2898,9 +2903,9 @@ export function createRoom<
       updateRoomNotificationSettings,
     },
 
-    // Explictly make the __internal field non-enumerable, to avoid aggressive
+    // Explictly make the internal field non-enumerable, to avoid aggressive
     // freezing when used with Immer
-    "__internal",
+    kInternal,
     { enumerable: false }
   );
 }

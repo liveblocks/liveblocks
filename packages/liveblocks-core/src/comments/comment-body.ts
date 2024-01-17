@@ -11,7 +11,7 @@ import type {
   CommentBodyText,
 } from "../types/CommentBody";
 
-type PromiseOrNot<T> = T | Promise<T>;
+type OptionalPromise<T> = T | Promise<T>;
 
 export type CommentBodyResolveUsersArgs = {
   /**
@@ -145,7 +145,7 @@ export type StringifyCommentBodyOptions<
    */
   resolveUsers?: (
     args: CommentBodyResolveUsersArgs
-  ) => PromiseOrNot<(TUserMeta["info"] | undefined)[] | undefined>;
+  ) => OptionalPromise<(TUserMeta["info"] | undefined)[] | undefined>;
 };
 
 function isCommentBodyParagraph(
@@ -248,7 +248,7 @@ async function resolveUsersInCommentBody<TUserMeta extends BaseUserMeta>(
   body: CommentBody,
   resolveUsers?: (
     args: CommentBodyResolveUsersArgs
-  ) => PromiseOrNot<(TUserMeta["info"] | undefined)[] | undefined>
+  ) => OptionalPromise<(TUserMeta["info"] | undefined)[] | undefined>
 ) {
   const resolvedUsers = new Map<string, TUserMeta["info"]>();
 

@@ -15,7 +15,6 @@ import type {
 } from "@liveblocks/client";
 import { shallow } from "@liveblocks/client";
 import type {
-  AsyncCache,
   BaseMetadata,
   CommentData,
   CommentReaction,
@@ -29,11 +28,12 @@ import type {
 } from "@liveblocks/core";
 import {
   CommentsApiError,
-  createAsyncCache,
+  console,
   deprecateIf,
   errorIf,
   getCacheStore,
   isLiveNode,
+  kInternal,
   makeEventSource,
   makePoller,
   NotificationsApiError,
@@ -58,11 +58,10 @@ import {
 import { createCommentId, createThreadId } from "./comments/lib/createIds";
 import { selectedThreads } from "./comments/lib/selected-threads";
 import { upsertComment } from "./comments/lib/upsert-comment";
-import { useDebounce } from "./comments/lib/use-debounce";
-import { useAsyncCache } from "./lib/use-async-cache";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { useRerender } from "./lib/use-rerender";
+import { createSharedContext } from "./shared";
 import type {
   CommentReactionOptions,
   CreateCommentOptions,
@@ -73,17 +72,12 @@ import type {
   InternalRoomContextBundle,
   MutationContext,
   OmitFirstArg,
-  PromiseOrNot,
-  ResolveMentionSuggestionsArgs,
-  ResolveUsersArgs,
   RoomContextBundle,
   RoomNotificationSettingsState,
   RoomNotificationSettingsStateSuccess,
   RoomProviderProps,
   ThreadsState,
   ThreadsStateSuccess,
-  UserState,
-  UserStateSuccess,
   UseThreadsOptions,
 } from "./types";
 
@@ -120,6 +114,8 @@ function useSyncExternalStore<Snapshot>(
 const STABLE_EMPTY_LIST = Object.freeze([]);
 
 export const POLLING_INTERVAL = 5 * 60 * 1000;
+
+const MENTION_SUGGESTIONS_DEBOUNCE = 500;
 
 // Don't try to inline this. This function is intended to be a stable
 // reference, to avoid a React.useCallback() wrapper.
@@ -173,47 +169,6 @@ function makeMutationContext<
   };
 }
 
-type Options<TUserMeta extends BaseUserMeta> = {
-  /**
-   * @beta
-   *
-   * A function that returns user info from user IDs.
-   */
-  resolveUsers?: (
-    args: ResolveUsersArgs
-  ) => PromiseOrNot<(TUserMeta["info"] | undefined)[] | undefined>;
-
-  /**
-   * @beta
-   *
-   * A function that returns a list of user IDs matching a string.
-   */
-  resolveMentionSuggestions?: (
-    args: ResolveMentionSuggestionsArgs
-  ) => PromiseOrNot<string[]>;
-
-  /**
-   * @internal To point the client to a different Liveblocks server. Only
-   * useful for Liveblocks developers. Not for end users.
-   */
-  baseUrl?: string;
-};
-
-let hasWarnedIfNoResolveUsers = false;
-
-function warnIfNoResolveUsers(usersCache?: AsyncCache<unknown, unknown>) {
-  if (
-    !hasWarnedIfNoResolveUsers &&
-    !usersCache &&
-    process.env.NODE_ENV !== "production"
-  ) {
-    console.warn(
-      "Set the resolveUsers option in createRoomContext to specify user info."
-    );
-    hasWarnedIfNoResolveUsers = true;
-  }
-}
-
 const ContextBundle = React.createContext<InternalRoomContextBundle<
   JsonObject,
   LsonObject,
@@ -242,8 +197,7 @@ export function createRoomContext<
   TRoomEvent extends Json = never,
   TThreadMetadata extends BaseMetadata = never,
 >(
-  client: Client,
-  options?: Options<TUserMeta>
+  client: Client
 ): RoomContextBundle<
   TPresence,
   TStorage,
@@ -258,6 +212,12 @@ export function createRoomContext<
 
   const commentsErrorEventSource =
     makeEventSource<CommentsError<TThreadMetadata>>();
+
+  const {
+    SharedProvider,
+    useUser,
+    suspense: { useUser: useUserSuspense },
+  } = createSharedContext<TUserMeta>(client);
 
   /**
    * RATIONALE:
@@ -426,21 +386,23 @@ export function createRoomContext<
     }, [roomId, frozenProps, stableEnterRoom]);
 
     return (
-      <RoomContext.Provider value={room}>
-        <ContextBundle.Provider
-          value={
-            internalBundle as unknown as InternalRoomContextBundle<
-              JsonObject,
-              LsonObject,
-              BaseUserMeta,
-              never,
-              BaseMetadata
-            >
-          }
-        >
-          {props.children}
-        </ContextBundle.Provider>
-      </RoomContext.Provider>
+      <SharedProvider>
+        <RoomContext.Provider value={room}>
+          <ContextBundle.Provider
+            value={
+              internalBundle as unknown as InternalRoomContextBundle<
+                JsonObject,
+                LsonObject,
+                BaseUserMeta,
+                never,
+                BaseMetadata
+              >
+            }
+          >
+            {props.children}
+          </ContextBundle.Provider>
+        </RoomContext.Provider>
+      </SharedProvider>
     );
   }
 
@@ -1161,11 +1123,11 @@ export function createRoomContext<
     options: UseThreadsOptions<TThreadMetadata> = { query: { metadata: {} } }
   ): ThreadsStateSuccess<TThreadMetadata> {
     const room = useRoom();
-
     const queryKey = React.useMemo(
       () => generateQueryKey(room.id, options),
       [room, options]
     );
+
     if (
       store.get().threadsQueries[queryKey] === undefined ||
       store.get().threadsQueries[queryKey].isLoading
@@ -1677,84 +1639,75 @@ export function createRoomContext<
     );
   }
 
-  const { resolveUsers, resolveMentionSuggestions } = options ?? {};
+  const resolveMentionSuggestions = client[kInternal].resolveMentionSuggestions;
+  const mentionSuggestionsCache = new Map<string, string[]>();
 
-  const usersCache = resolveUsers
-    ? createAsyncCache(async (stringifiedOptions: string) => {
-        const users = await resolveUsers(
-          JSON.parse(stringifiedOptions) as ResolveUsersArgs
-        );
-
-        return users?.[0];
-      })
-    : undefined;
-
-  function useUser(userId: string) {
-    const room = useRoom();
-    const resolverKey = React.useMemo(
-      () => stringify({ userIds: [userId], roomId: room.id }),
-      [userId, room.id]
-    );
-    const state = useAsyncCache(usersCache, resolverKey);
-
-    React.useEffect(() => warnIfNoResolveUsers(usersCache), []);
-
-    if (state.isLoading) {
-      return {
-        isLoading: true,
-      } as UserState<TUserMeta["info"]>;
-    } else {
-      return {
-        user: state.data,
-        error: state.error,
-        isLoading: false,
-      } as UserState<TUserMeta["info"]>;
-    }
-  }
-
-  function useUserSuspense(userId: string) {
-    const room = useRoom();
-    const resolverKey = React.useMemo(
-      () => stringify({ userIds: [userId], roomId: room.id }),
-      [userId, room.id]
-    );
-    const state = useAsyncCache(usersCache, resolverKey, {
-      suspense: true,
-    });
-
-    React.useEffect(() => warnIfNoResolveUsers(usersCache), []);
-
-    return {
-      user: state.data,
-      isLoading: false,
-    } as UserStateSuccess<TUserMeta["info"]>;
-  }
-
-  const mentionSuggestionsCache = createAsyncCache<string[], unknown>(
-    resolveMentionSuggestions
-      ? (stringifiedOptions: string) => {
-          return resolveMentionSuggestions(
-            JSON.parse(stringifiedOptions) as ResolveMentionSuggestionsArgs
-          );
-        }
-      : () => Promise.resolve([])
-  );
-
+  // Simplistic debounced search, we don't need to worry too much about
+  // deduping and race conditions as there can only be one search at a time.
   function useMentionSuggestions(search?: string) {
     const room = useRoom();
-    const debouncedSearch = useDebounce(search, 500);
-    const resolverKey = React.useMemo(
-      () =>
-        debouncedSearch !== undefined
-          ? stringify({ text: debouncedSearch, roomId: room.id })
-          : null,
-      [debouncedSearch, room.id]
-    );
-    const { data } = useAsyncCache(mentionSuggestionsCache, resolverKey, {
-      keepPreviousDataWhileLoading: true,
-    });
+    const [mentionSuggestions, setMentionSuggestions] =
+      React.useState<string[]>();
+    const lastInvokedAt = React.useRef<number>();
 
-    return data;
+    React.useEffect(() => {
+      if (search === undefined || !resolveMentionSuggestions) {
+        return;
+      }
+
+      const resolveMentionSuggestionsArgs = { text: search, roomId: room.id };
+      const mentionSuggestionsCacheKey = stringify(
+        resolveMentionSuggestionsArgs
+      );
+      let debounceTimeout: number | undefined;
+      let canceled = false;
+
+      const getMentionSuggestions = async () => {
+        try {
+          lastInvokedAt.current = performance.now();
+          const mentionSuggestions = await resolveMentionSuggestions(
+            resolveMentionSuggestionsArgs
+          );
+
+          if (!canceled) {
+            setMentionSuggestions(mentionSuggestions);
+            mentionSuggestionsCache.set(
+              mentionSuggestionsCacheKey,
+              mentionSuggestions
+            );
+          }
+        } catch (error) {
+          console.error((error as Error)?.message);
+        }
+      };
+
+      if (mentionSuggestionsCache.has(mentionSuggestionsCacheKey)) {
+        // If there are already cached mention suggestions, use them immediately.
+        setMentionSuggestions(
+          mentionSuggestionsCache.get(mentionSuggestionsCacheKey)
+        );
+      } else if (
+        !lastInvokedAt.current ||
+        Math.abs(performance.now() - lastInvokedAt.current) >
+          MENTION_SUGGESTIONS_DEBOUNCE
+      ) {
+        // If on the debounce's leading edge (either because it's the first invokation or enough
+        // time has passed since the last debounce), get mention suggestions immediately.
+        void getMentionSuggestions();
+      } else {
+        // Otherwise, wait for the debounce delay.
+        debounceTimeout = window.setTimeout(() => {
+          void getMentionSuggestions();
+        }, MENTION_SUGGESTIONS_DEBOUNCE);
+      }
+
+      return () => {
+        canceled = true;
+        window.clearTimeout(debounceTimeout);
+      };
+    }, [room.id, search]);
+
+    return mentionSuggestions;
   }
 
   function useThreadUnreadSince(threadId: string): Date | null {

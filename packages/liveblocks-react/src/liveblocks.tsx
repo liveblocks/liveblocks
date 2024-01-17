@@ -3,6 +3,7 @@ import type { InboxNotificationData } from "@liveblocks/core";
 import type { PropsWithChildren } from "react";
 import React, { createContext, useCallback, useContext } from "react";
 
+import { createSharedContext } from "./shared";
 import type { LiveblocksContextBundle } from "./types";
 
 const ContextBundle = createContext<LiveblocksContextBundle<
@@ -27,36 +28,30 @@ export function useLiveblocksContextBundle() {
 export function createLiveblocksContext<
   TUserMeta extends BaseUserMeta = BaseUserMeta,
   TThreadMetadata extends BaseMetadata = never,
->(client: Client): LiveblocksContextBundle<TUserMeta, TThreadMetadata> {
+>(
+  client: Client<TUserMeta>
+): LiveblocksContextBundle<TUserMeta, TThreadMetadata> {
+  const {
+    SharedProvider,
+    useUser,
+    suspense: { useUser: useUserSuspense },
+  } = createSharedContext<TUserMeta>(client);
+
   function LiveblocksProvider(props: PropsWithChildren) {
     return (
-      <ContextBundle.Provider
-        value={
-          bundle as unknown as LiveblocksContextBundle<
-            BaseUserMeta,
-            BaseMetadata
-          >
-        }
-      >
-        {props.children}
-      </ContextBundle.Provider>
+      <SharedProvider>
+        <ContextBundle.Provider
+          value={
+            bundle as unknown as LiveblocksContextBundle<
+              BaseUserMeta,
+              BaseMetadata
+            >
+          }
+        >
+          {props.children}
+        </ContextBundle.Provider>
+      </SharedProvider>
     );
-  }
-
-  // [comments-unread] TODO: Share with room.ts' `useUser`
-  function useUser() {
-    return {
-      user: {} as TUserMeta,
-      isLoading: false,
-    } as const;
-  }
-
-  // [comments-unread] TODO: Share with room.ts' `useUserSuspense`
-  function useUserSuspense() {
-    return {
-      user: {} as TUserMeta,
-      isLoading: false,
-    } as const;
   }
 
   // [comments-unread] TODO: Implement using `client.getInboxNotifications`
