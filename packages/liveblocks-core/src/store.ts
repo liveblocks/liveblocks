@@ -117,8 +117,8 @@ export interface CacheStore<TThreadMetadata extends BaseMetadata>
     inboxNotification?: PartialInboxNotificationData
   ): void;
   updateThreadsAndNotifications(
-    threads: Record<string, ThreadData<TThreadMetadata>>,
-    inboxNotifications: Record<string, PartialInboxNotificationData>,
+    threads: ThreadData<TThreadMetadata>[],
+    inboxNotifications: PartialInboxNotificationData[],
     queryKey?: string
   ): void;
   pushOptimisticUpdate(
@@ -220,16 +220,24 @@ export function createClientStore<
     },
 
     updateThreadsAndNotifications(
-      threads: Record<string, ThreadData<TThreadMetadata>>,
-      inboxNotifications: Record<string, PartialInboxNotificationData>,
+      threads: ThreadData<TThreadMetadata>[],
+      inboxNotifications: PartialInboxNotificationData[],
       queryKey?: string
     ) {
       store.set((state) => ({
         ...state,
-        threads: mergeThreads(state.threads, threads),
+        threads: mergeThreads(
+          state.threads,
+          Object.fromEntries(threads.map((thread) => [thread.id, thread]))
+        ),
         inboxNotifications: mergeNotifications(
           state.inboxNotifications,
-          inboxNotifications
+          Object.fromEntries(
+            inboxNotifications.map((notification) => [
+              notification.id,
+              notification,
+            ])
+          )
         ),
         queries:
           queryKey !== undefined

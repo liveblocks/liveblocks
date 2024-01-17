@@ -73,6 +73,7 @@ export function createLiveblocksContext<
     );
   }
 
+  // TODO: Unify request cache
   let fetchInboxNotificationsRequest: Promise<{
     inboxNotifications: PartialInboxNotificationData[];
     threads: ThreadData<never>[];
@@ -96,13 +97,8 @@ export function createLiveblocksContext<
         await fetchInboxNotificationsRequest!;
 
       getCacheStore(client).updateThreadsAndNotifications(
-        Object.fromEntries(threads.map((thread) => [thread.id, thread])),
-        Object.fromEntries(
-          inboxNotifications.map((inboxNotification) => [
-            inboxNotification.id,
-            inboxNotification,
-          ])
-        ),
+        threads,
+        inboxNotifications,
         INBOX_NOTIFICATIONS_QUERY
       );
     } catch (er) {
@@ -111,7 +107,6 @@ export function createLiveblocksContext<
         error: er as Error,
       });
     }
-
     return;
   }
 

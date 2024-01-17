@@ -985,13 +985,8 @@ export function createRoomContext<
           );
 
           store.updateThreadsAndNotifications(
-            Object.fromEntries(threads.map((thread) => [thread.id, thread])),
-            Object.fromEntries(
-              inboxNotifications.map((notification) => [
-                notification.id,
-                notification,
-              ])
-            ),
+            threads,
+            inboxNotifications,
             queryKey
           );
         })
@@ -1062,13 +1057,8 @@ export function createRoomContext<
     try {
       const { threads, inboxNotifications } = await initialPromise;
       store.updateThreadsAndNotifications(
-        Object.fromEntries(threads.map((thread) => [thread.id, thread])),
-        Object.fromEntries(
-          inboxNotifications.map((notification) => [
-            notification.id,
-            notification,
-          ])
-        ),
+        threads,
+        inboxNotifications,
         queryKey
       );
     } catch (err) {

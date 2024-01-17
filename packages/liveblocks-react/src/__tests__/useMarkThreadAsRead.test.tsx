@@ -66,15 +66,7 @@ describe("useMarkThreadAsRead", () => {
 
     const store = getCacheStore(client);
 
-    store.updateThreadsAndNotifications(
-      Object.fromEntries(threads.map((thread) => [thread.id, thread])),
-      Object.fromEntries(
-        inboxNotifications.map((inboxNotification) => [
-          inboxNotification.id,
-          inboxNotification,
-        ])
-      )
-    );
+    store.updateThreadsAndNotifications(threads, inboxNotifications);
 
     const {
       result: { current: markThreadAsRead },
