@@ -90,12 +90,12 @@ export type RoomMetadata = Record<string, string | string[]>;
 export type RoomInfo = {
   type: "room";
   id: string;
-  metadata: RoomMetadata;
-  groupsAccesses: RoomAccesses;
-  usersAccesses: RoomAccesses;
-  defaultAccesses: RoomPermission;
-  lastConnectionAt?: Date;
   createdAt?: Date;
+  lastConnectionAt?: Date;
+  defaultAccesses: RoomPermission;
+  usersAccesses: RoomAccesses;
+  groupsAccesses: RoomAccesses;
+  metadata: RoomMetadata;
 };
 
 type RoomInfoPlain = DateToString<RoomInfo>;
