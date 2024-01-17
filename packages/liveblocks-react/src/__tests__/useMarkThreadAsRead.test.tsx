@@ -51,7 +51,7 @@ describe("useMarkThreadAsRead", () => {
 
     server.use(
       rest.post(
-        "https://api.liveblocks.io/v2/c//inbox-notifications/read",
+        "https://api.liveblocks.io/v2/c/inbox-notifications/read",
         (_req, res, ctx) => {
           // Mock a successful response from the server with the inbox notification marked as read
           return res(ctx.status(200));
@@ -123,7 +123,7 @@ describe("useMarkThreadAsRead", () => {
 
     server.use(
       rest.post(
-        "https://api.liveblocks.io/v2/c//inbox-notifications/read",
+        "https://api.liveblocks.io/v2/c/inbox-notifications/read",
         (_req, res, ctx) => {
           // Mock an error response from the server
           return res(ctx.status(500));
