@@ -2,7 +2,7 @@ import type { BaseMetadata } from "./BaseMetadata";
 import type { DateToString } from "./DateToString";
 import type { ThreadData } from "./ThreadData";
 
-type PartialThreadInboxNotificationData = {
+export type PartialThreadInboxNotificationData = {
   kind: "thread";
   id: string;
   threadId: string;
@@ -15,10 +15,11 @@ export type PartialInboxNotificationData = PartialThreadInboxNotificationData;
 export type PartialInboxNotificationDataPlain =
   DateToString<PartialInboxNotificationData>;
 
-type ThreadInboxNotificationData<TThreadMetadata extends BaseMetadata = never> =
-  PartialThreadInboxNotificationData & {
-    thread: ThreadData<TThreadMetadata>;
-  };
+export type ThreadInboxNotificationData<
+  TThreadMetadata extends BaseMetadata = never,
+> = PartialThreadInboxNotificationData & {
+  thread: ThreadData<TThreadMetadata>;
+};
 
 export type InboxNotificationData<
   TThreadMetadata extends BaseMetadata = never,

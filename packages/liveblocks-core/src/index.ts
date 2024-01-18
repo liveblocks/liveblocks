@@ -185,6 +185,8 @@ export type {
   InboxNotificationData,
   PartialInboxNotificationData,
   PartialInboxNotificationDataPlain,
+  PartialThreadInboxNotificationData,
+  ThreadInboxNotificationData,
 } from "./types/InboxNotificationData";
 export type {
   IWebSocket,

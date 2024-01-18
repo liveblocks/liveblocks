@@ -1,10 +1,11 @@
 "use client";
 
-import {
-  type CommentData,
-  getMentionedIdsFromCommentBody,
-  type InboxNotificationData,
+import type {
+  CommentData,
+  InboxNotificationData,
+  ThreadInboxNotificationData,
 } from "@liveblocks/core";
+import { assertNever, getMentionedIdsFromCommentBody } from "@liveblocks/core";
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import React, { forwardRef, useMemo } from "react";
 
@@ -17,7 +18,26 @@ import { User } from "./internal/User";
 
 const THREAD_INBOX_NOTIFICATION_MAX_COMMENTS = 3;
 
-// TODO: showDeletedComments option?
+type ThreadInboxNotificationCommentsContents = {
+  type: "comments";
+  unread: boolean;
+  comments: CommentData[];
+  userIds: string[];
+  date: Date;
+};
+
+type ThreadInboxNotificationMentionContents = {
+  type: "mention";
+  unread: boolean;
+  comments: CommentData[];
+  userIds: string[];
+  date: Date;
+};
+
+type ThreadInboxNotificationContents =
+  | ThreadInboxNotificationCommentsContents
+  | ThreadInboxNotificationMentionContents;
+
 export interface InboxNotificationProps
   extends ComponentPropsWithoutRef<"div"> {
   /**
@@ -114,24 +134,36 @@ function findLastCommentWithMentionedId(
   return;
 }
 
-function generateThreadInboxNotificationContent(
-  inboxNotification: InboxNotificationData,
+function getUserIdsFromComments(comments: CommentData[]) {
+  return Array.from(new Set(comments.map((comment) => comment.userId)));
+}
+
+function generateThreadInboxNotificationContents(
+  inboxNotification: ThreadInboxNotificationData,
   userId: string
-) {
-  const unreadComments = inboxNotification.thread.comments.filter((comment) =>
-    inboxNotification.readAt
+): ThreadInboxNotificationContents {
+  const unreadComments = inboxNotification.thread.comments.filter((comment) => {
+    if (!comment.body) {
+      return false;
+    }
+
+    return inboxNotification.readAt
       ? comment.createdAt > inboxNotification.readAt &&
-        comment.createdAt <= inboxNotification.notifiedAt
-      : comment.createdAt <= inboxNotification.notifiedAt
-  );
+          comment.createdAt <= inboxNotification.notifiedAt
+      : comment.createdAt <= inboxNotification.notifiedAt;
+  });
 
   // If the thread is read, show the last comments.
   if (unreadComments.length === 0) {
+    const lastComments = inboxNotification.thread.comments
+      .filter((comment) => comment.body)
+      .slice(-THREAD_INBOX_NOTIFICATION_MAX_COMMENTS);
+
     return {
+      type: "comments",
       unread: false,
-      comments: inboxNotification.thread.comments.slice(
-        -THREAD_INBOX_NOTIFICATION_MAX_COMMENTS
-      ),
+      comments: lastComments,
+      userIds: getUserIdsFromComments(lastComments),
       date: inboxNotification.notifiedAt,
     };
   }
@@ -144,19 +176,24 @@ function generateThreadInboxNotificationContent(
   // If the thread contains one or more mentions for the current user, show the last comment with a mention.
   if (commentWithMention) {
     return {
+      type: "mention",
       unread: true,
       comments: [commentWithMention],
+      userIds: [commentWithMention.userId],
       date: commentWithMention.createdAt,
-      userId: commentWithMention.userId,
     };
   }
 
-  // Otherwise, show the last comments.
+  const lastUnreadComments = unreadComments.slice(
+    -THREAD_INBOX_NOTIFICATION_MAX_COMMENTS
+  );
+
+  // Otherwise, show the last unread comments.
   return {
+    type: "comments",
     unread: true,
-    comments: inboxNotification.thread.comments.slice(
-      -THREAD_INBOX_NOTIFICATION_MAX_COMMENTS
-    ),
+    comments: lastUnreadComments,
+    userIds: getUserIdsFromComments(unreadComments),
     date: inboxNotification.notifiedAt,
   };
 }
@@ -166,53 +203,91 @@ const ThreadInboxNotification = forwardRef<
   InboxNotificationProps
 >(({ inboxNotification, ...props }, forwardedRef) => {
   // TODO: How do we get the current user ID?
-  const { unread, comments, date } = useMemo(
-    () => generateThreadInboxNotificationContent(inboxNotification, "TODO"),
-    [inboxNotification]
-  );
-  const { avatarUserId, title } = useMemo(() => {
-    const reversedComments = [...comments].reverse();
-
-    const avatarUserId = reversedComments[0]?.userId;
-    // TODO: Support overrides via $ instead of hard-coding English (look at CommentReaction)
-    // TODO: Don't show self in title?
-    // TODO: Don't show the same user twice in title?
-    const title = (
-      <>
-        <List
-          values={reversedComments.map((comment, index) => (
-            <User
-              key={comment.userId}
-              userId={comment.userId}
-              capitalize={index === 0}
-            />
-          ))}
-          // formatRemaining={$.COMMENT_REACTION_REMAINING}
-          // [comments-unread] TODO: Differientate truncation and max number of comments (e.g. we show max 3 comments but if there are 10 unread comments we want the list of names to reflect 10)
-          truncate={THREAD_INBOX_NOTIFICATION_MAX_COMMENTS}
-        />{" "}
-        commented on <span>Document</span>
-      </>
+  const { unread, date, aside, title, content } = useMemo(() => {
+    const contents = generateThreadInboxNotificationContents(
+      inboxNotification,
+      "TODO: get current user's ID"
     );
 
-    return {
-      avatarUserId,
-      title,
-    };
-  }, [comments]);
+    switch (contents.type) {
+      case "comments": {
+        const reversedComments = [...contents.comments].reverse();
+        const reversedUserIds = [...contents.userIds].reverse();
+
+        const firstUserId = reversedUserIds[0];
+
+        const aside = <InboxNotificationAvatar userId={firstUserId} />;
+        // TODO: Support overrides via $ instead of hard-coding English (look at CommentReaction)
+        const title = (
+          <>
+            <List
+              values={reversedUserIds.map((userId, index) => (
+                <User key={userId} userId={userId} capitalize={index === 0} />
+              ))}
+              // formatRemaining={$.COMMENT_REACTION_REMAINING}
+              truncate={THREAD_INBOX_NOTIFICATION_MAX_COMMENTS - 1}
+            />{" "}
+            commented on <span>Document</span>
+          </>
+        );
+        const content = (
+          <>
+            {reversedComments.map((comment) => (
+              <p key={comment.id}>comment.id</p>
+            ))}
+          </>
+        );
+
+        return {
+          unread: contents.unread,
+          date: contents.date,
+          aside,
+          title,
+          content,
+        };
+      }
+
+      case "mention": {
+        const mentionUserId = contents.userIds[0];
+        const mentionComment = contents.comments[0];
+
+        const aside = <InboxNotificationAvatar userId={mentionUserId} />;
+        // TODO: Support overrides via $ instead of hard-coding English (look at CommentReaction)
+        const title = (
+          <>
+            <User key={mentionUserId} userId={mentionUserId} capitalize />{" "}
+            mentioned you on <span>Document</span>
+          </>
+        );
+        const content = <p key={mentionComment.id}>mentionComment.id</p>;
+
+        return {
+          unread: contents.unread,
+          date: contents.date,
+          aside,
+          title,
+          content,
+        };
+      }
+
+      default:
+        return assertNever(
+          contents,
+          "Unexpected thread inbox notification type"
+        );
+    }
+  }, [inboxNotification]);
 
   return (
     <InboxNotificationLayout
-      aside={<InboxNotificationAvatar userId={avatarUserId} />}
+      aside={aside}
       title={title}
       date={date}
       unread={unread}
       {...props}
       ref={forwardedRef}
     >
-      {comments.map((comment) => (
-        <p key={comment.id}>comment.id</p>
-      ))}
+      {content}
     </InboxNotificationLayout>
   );
 });
