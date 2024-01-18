@@ -1,4 +1,4 @@
-# Unreleased
+# v1.9.7
 
 ### `@liveblocks/node`
 
