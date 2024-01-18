@@ -5,9 +5,10 @@ import type {
   ThreadData,
 } from "@liveblocks/client";
 import {
-  getCacheStore,
   PartialInboxNotificationData,
   type InboxNotificationData,
+  CacheStore,
+  kInternal,
 } from "@liveblocks/core";
 import type { PropsWithChildren } from "react";
 import React, {
@@ -56,6 +57,9 @@ export function createLiveblocksContext<
     suspense: { useUser: useUserSuspense },
   } = createSharedContext<TUserMeta>(client);
 
+  const store = client[kInternal]
+    .cacheStore as unknown as CacheStore<TThreadMetadata>;
+
   function LiveblocksProvider(props: PropsWithChildren) {
     return (
       <SharedProvider>
@@ -86,7 +90,7 @@ export function createLiveblocksContext<
       return fetchInboxNotificationsRequest;
     }
 
-    getCacheStore(client).setQueryState(INBOX_NOTIFICATIONS_QUERY, {
+    store.setQueryState(INBOX_NOTIFICATIONS_QUERY, {
       isLoading: true,
     });
 
@@ -96,13 +100,13 @@ export function createLiveblocksContext<
       const { inboxNotifications, threads } =
         await fetchInboxNotificationsRequest!;
 
-      getCacheStore(client).updateThreadsAndNotifications(
+      store.updateThreadsAndNotifications(
         threads,
         inboxNotifications,
         INBOX_NOTIFICATIONS_QUERY
       );
     } catch (er) {
-      getCacheStore(client).setQueryState(INBOX_NOTIFICATIONS_QUERY, {
+      store.setQueryState(INBOX_NOTIFICATIONS_QUERY, {
         isLoading: false,
         error: er as Error,
       });
@@ -115,7 +119,6 @@ export function createLiveblocksContext<
       void fetchInboxNotifications();
     });
 
-    const store = getCacheStore(client);
     return useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
@@ -146,8 +149,6 @@ export function createLiveblocksContext<
   }
 
   function useInboxNotificationsSuspense(): InboxNotificationsStateSuccess<TThreadMetadata> {
-    const store = getCacheStore(client);
-
     if (
       store.get().queries[INBOX_NOTIFICATIONS_QUERY] === undefined ||
       store.get().queries[INBOX_NOTIFICATIONS_QUERY].isLoading
