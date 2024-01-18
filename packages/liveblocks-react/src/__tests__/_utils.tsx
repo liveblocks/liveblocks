@@ -5,11 +5,6 @@ import { render, renderHook } from "@testing-library/react";
 import type { ReactElement } from "react";
 import * as React from "react";
 
-import type {
-  CacheManager,
-  MutationInfo,
-  RequestInfo,
-} from "../comments/lib/revalidation";
 import { createRoomContext } from "../room";
 import { RoomProvider } from "./_liveblocks.config";
 import MockWebSocket from "./_MockWebSocket";
@@ -70,49 +65,6 @@ export function createRoomContextForTest<
   return createRoomContext<JsonObject, never, never, never, TThreadMetadata>(
     client
   );
-}
-
-export function createCacheManager<Data>(
-  initialCache?: Data | undefined
-): CacheManager<Data> {
-  let cache: Data | undefined = initialCache; // Stores the current cache state
-  let request: RequestInfo<Data> | undefined; // Stores the currently active revalidation request
-  let error: Error | undefined; // Stores any error that occurred during the last revalidation request
-  let mutation: MutationInfo | undefined; // Stores the start and end time of the currently active mutation
-
-  return {
-    // Cache
-    getCache() {
-      return cache;
-    },
-    setCache(value: Data) {
-      cache = value;
-    },
-
-    // Request
-    getRequest() {
-      return request;
-    },
-    setRequest(value: RequestInfo<Data> | undefined) {
-      request = value;
-    },
-
-    // Error
-    getError() {
-      return error;
-    },
-    setError(err: Error) {
-      error = err;
-    },
-
-    // Mutation
-    getMutation() {
-      return mutation;
-    },
-    setMutation(info: MutationInfo) {
-      mutation = info;
-    },
-  };
 }
 
 export const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
