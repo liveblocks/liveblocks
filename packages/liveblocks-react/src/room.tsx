@@ -21,7 +21,6 @@ import type {
   CommentReaction,
   CommentsEventServerMsg,
   EnterOptions,
-  GetThreadsOptions,
   RoomEventMessage,
   RoomNotificationSettings,
   ThreadData,
@@ -962,7 +961,7 @@ export function createRoomContext<
     {
       promise: Promise<any> | null;
       subscribers: number;
-      query: GetThreadsOptions<TThreadMetadata>;
+      query: UseThreadsOptions<TThreadMetadata>["query"];
       roomId: string;
     }
   > = new Map();
@@ -981,9 +980,9 @@ export function createRoomContext<
           }
 
           // TODO: Error handling
-          const { threads, inboxNotifications } = await room.getThreads(
-            requestCache.query
-          );
+          const { threads, inboxNotifications } = await room.getThreads({
+            query: requestCache.query,
+          });
 
           store.updateThreadsAndNotifications(
             Object.fromEntries(threads.map((thread) => [thread.id, thread])),
@@ -1039,7 +1038,7 @@ export function createRoomContext<
   async function getThreadsAndInboxNotifications(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
     queryKey: string,
-    options: GetThreadsOptions<TThreadMetadata>
+    options: UseThreadsOptions<TThreadMetadata>
   ) {
     const requestCache = requestsCache.get(queryKey);
 
@@ -1052,7 +1051,7 @@ export function createRoomContext<
     requestsCache.set(queryKey, {
       promise: initialPromise,
       subscribers: 0,
-      query: options,
+      query: options.query,
       roomId: room.id,
     });
 
@@ -1086,7 +1085,7 @@ export function createRoomContext<
   ): ThreadsState<TThreadMetadata> {
     const room = useRoom();
     const queryKey = React.useMemo(
-      () => generateQueryKey(room.id, options),
+      () => generateQueryKey(room.id, options.query),
       [room, options]
     );
 
@@ -1125,7 +1124,7 @@ export function createRoomContext<
   ): ThreadsStateSuccess<TThreadMetadata> {
     const room = useRoom();
     const queryKey = React.useMemo(
-      () => generateQueryKey(room.id, options),
+      () => generateQueryKey(room.id, options?.query),
       [room, options]
     );
 
@@ -1980,7 +1979,7 @@ function handleApiError(err: CommentsApiError | NotificationsApiError): Error {
 
 function generateQueryKey<TThreadMetadata extends BaseMetadata>(
   roomId: string,
-  options: GetThreadsOptions<TThreadMetadata>
+  options: UseThreadsOptions<TThreadMetadata>["query"]
 ) {
-  return `${roomId}-${stringify(options)}`;
+  return `${roomId}-${stringify(options ?? {})}`;
 }
