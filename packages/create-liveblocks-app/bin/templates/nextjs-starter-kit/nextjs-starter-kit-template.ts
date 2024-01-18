@@ -36,6 +36,7 @@ import {
 } from "../../constants";
 import { nextjsStarterKitPrompts } from "./nextjs-starter-kit-prompts";
 import { pasteCodePrompt } from "../../utils/paste-code-prompt";
+import { encodeIntegrationData } from "../../utils/encodeIntegrationData";
 
 export async function create(flags: Record<string, any>) {
   const packageManager = flags.packageManager || getPackageManager();
@@ -67,9 +68,7 @@ export async function create(flags: Record<string, any>) {
           origin:
             IntegrationOrigin.NEXTJS_STARTER_KIT_FROM_CREATE_LIVEBLOCKS_APP_VERCEL_INTEGRATION,
         };
-        const encodedData = Buffer.from(JSON.stringify(data)).toString(
-          "base64url"
-        );
+        const encodedData = encodeIntegrationData(data);
 
         const deployUrl = NEXTJS_STARTER_KIT_VERCEL_DEPLOYMENT_URL(
           encodedData,
@@ -128,9 +127,7 @@ export async function create(flags: Record<string, any>) {
         origin:
           IntegrationOrigin.NEXTJS_STARTER_KIT_FROM_CREATE_LIVEBLOCKS_APP_GENERAL_INTEGRATION,
       };
-      const encodedData = Buffer.from(JSON.stringify(data)).toString(
-        "base64url"
-      );
+      const encodedData = encodeIntegrationData(data);
 
       const liveblocksUrl = LIVEBLOCKS_GENERAL_INTEGRATION_URL(encodedData);
       open(liveblocksUrl);

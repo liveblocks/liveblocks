@@ -29,6 +29,7 @@ import {
   VercelIntegrationData,
 } from "../../types";
 import { pasteCodePrompt } from "../../utils/paste-code-prompt";
+import { encodeIntegrationData } from "../../utils/encodeIntegrationData";
 
 export async function create(flags: Record<string, any>) {
   const packageManager = flags.packageManager || getPackageManager();
@@ -60,9 +61,7 @@ export async function create(flags: Record<string, any>) {
           origin:
             IntegrationOrigin.EXAMPLE_FROM_CREATE_LIVEBLOCKS_APP_VERCEL_INTEGRATION,
         };
-        const encodedData = Buffer.from(JSON.stringify(data)).toString(
-          "base64url"
-        );
+        const encodedData = encodeIntegrationData(data);
 
         const deployUrl = EXAMPLE_VERCEL_DEPLOYMENT_URL(
           encodedData,
@@ -123,9 +122,7 @@ export async function create(flags: Record<string, any>) {
         origin:
           IntegrationOrigin.EXAMPLE_FROM_CREATE_LIVEBLOCKS_APP_GENERAL_INTEGRATION,
       };
-      const encodedData = Buffer.from(JSON.stringify(data)).toString(
-        "base64url"
-      );
+      const encodedData = encodeIntegrationData(data);
 
       const liveblocksUrl = LIVEBLOCKS_GENERAL_INTEGRATION_URL(encodedData);
       open(liveblocksUrl);
