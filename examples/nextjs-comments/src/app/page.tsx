@@ -13,6 +13,7 @@ import {
   Composer,
   Thread,
   InboxNotification,
+  InboxNotificationList,
 } from "@liveblocks/react-comments";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
@@ -40,14 +41,14 @@ function Inbox() {
   const { inboxNotifications } = useInboxNotifications();
 
   return (
-    <>
+    <InboxNotificationList>
       {inboxNotifications.map((inboxNotification) => (
         <InboxNotification
           key={inboxNotification.id}
           inboxNotification={inboxNotification}
         />
       ))}
-    </>
+    </InboxNotificationList>
   );
 }
 

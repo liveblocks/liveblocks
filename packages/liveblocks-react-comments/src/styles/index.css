@@ -1120,6 +1120,22 @@
 }
 
 /*************************************
+ *      Inbox Notification List      *
+ *************************************/
+
+.lb-inbox-notification-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lb-inbox-notification-list-item {
+  &:where(:not(:last-of-type)) {
+    border-block-end: 1px solid var(--lb-foreground-subtle);
+  }
+}
+
+/*************************************
  *             Elevation             *
  *************************************/
 
