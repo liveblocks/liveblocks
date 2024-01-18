@@ -259,8 +259,8 @@ type RoomContextBundleShared<
 
   /**
    * Makes a Room available in the component hierarchy below.
-   * When this component is unmounted, the current user leave the room.
-   * That means that you can't have 2 RoomProvider with the same room id in your react tree.
+   * Joins the room when the component is mounted, and automatically leaves
+   * the room when the component is unmounted.
    */
   RoomProvider(props: RoomProviderProps<TPresence, TStorage>): JSX.Element;
 
@@ -673,15 +673,41 @@ type RoomContextBundleShared<
    */
   useRemoveReaction(): (options: CommentReactionOptions) => void;
 
-  // [comments-unread] TODO: JSDoc
+  /**
+   * @beta
+   *
+   * Returns a function that updates the user's notification settings
+   * for the current room.
+   *
+   * @example
+   * const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
+   * updateRoomNotificationSettings({ threads: "all" });
+   */
   useUpdateRoomNotificationSettings(): (
     settings: Partial<RoomNotificationSettings>
   ) => void;
 
-  // [comments-unread] TODO: JSDoc
+  /**
+   * @beta
+   *
+   * Returns a function that marks a thread as read.
+   *
+   * @example
+   * const markThreadAsRead = useMarkThreadAsRead();
+   * markThreadAsRead("th_xxx");
+   */
   useMarkThreadAsRead(): (threadId: string) => void;
 
-  // [comments-unread] TODO: JSDoc
+  /**
+   * @beta
+   *
+   * Returns the date at which the thread was last read.
+   * If the thread was never read yet, the thread's creation date is returned.
+   * If the user isn't subscribed to the thread, `null` is returned.
+   *
+   * @example
+   * const unreadSince = useThreadUnreadSince("th_xxx");
+   */
   useThreadUnreadSince(threadId: string): Date | null;
 };
 
@@ -782,7 +808,15 @@ export type RoomContextBundle<
      */
     useUser(userId: string): UserState<TUserMeta["info"]>;
 
-    // [comments-unread] TODO: JSDoc
+    /**
+     * @beta
+     *
+     * Returns the user's notification settings for the current room
+     * and a function to update them.
+     *
+     * @example
+     * const [{ settings }, updateSettings] = useRoomNotificationSettings();
+     */
     useRoomNotificationSettings(): [
       RoomNotificationSettingsState,
       (settings: Partial<RoomNotificationSettings>) => void,
@@ -940,7 +974,15 @@ export type RoomContextBundle<
          */
         useUser(userId: string): UserStateSuccess<TUserMeta["info"]>;
 
-        // [comments-unread] TODO: JSDoc
+        /**
+         * @beta
+         *
+         * Returns the user's notification settings for the current room
+         * and a function to update them.
+         *
+         * @example
+         * const [{ settings }, updateSettings] = useRoomNotificationSettings();
+         */
         useRoomNotificationSettings(): [
           RoomNotificationSettingsStateSuccess,
           (settings: Partial<RoomNotificationSettings>) => void,
@@ -1031,13 +1073,34 @@ export type InternalRoomContextBundle<
 >;
 
 type LiveblocksContextBundleShared = {
-  // [comments-unread] TODO: JSDoc
+  /**
+   * @beta
+   *
+   * Makes Liveblocks non-Room features (e.g. Notifications) available
+   * in the component hierarchy below.
+   */
   LiveblocksProvider(props: PropsWithChildren): JSX.Element;
 
-  // [comments-unread] TODO: JSDoc
+  /**
+   * @beta
+   *
+   * Returns a function that marks an inbox notification as read.
+   *
+   * @example
+   * const markInboxNotificationAsRead = useMarkInboxNotificationAsRead();
+   * markInboxNotificationAsRead("in_xxx");
+   */
   useMarkInboxNotificationAsRead(): (inboxNotificationId: string) => void;
 
-  // [comments-unread] TODO: JSDoc
+  /**
+   * @beta
+   *
+   * Returns a function that marks all inbox notifications as read.
+   *
+   * @example
+   * const markAllInboxNotificationsAsRead = useMarkAllInboxNotificationsAsRead();
+   * markAllInboxNotificationsAsRead();
+   */
   useMarkAllInboxNotificationsAsRead(): () => void;
 };
 
@@ -1056,7 +1119,14 @@ export type LiveblocksContextBundle<
      */
     useInboxNotifications(): InboxNotificationsState<TThreadMetadata>;
 
-    // [comments-unread] TODO: JSDoc
+    /**
+     * @beta
+     *
+     * Returns the number of unread inbox notifications for the current user.
+     *
+     * @example
+     * const unreadCount = useUnreadInboxNotificationsCount();
+     */
     useUnreadInboxNotificationsCount(): number | null;
 
     /**
@@ -1081,7 +1151,14 @@ export type LiveblocksContextBundle<
          */
         useInboxNotifications(): InboxNotificationsStateSuccess<TThreadMetadata>;
 
-        // [comments-unread] TODO: JSDoc
+        /**
+         * @beta
+         *
+         * Returns the number of unread inbox notifications for the current user.
+         *
+         * @example
+         * const unreadCount = useUnreadInboxNotificationsCount();
+         */
         useUnreadInboxNotificationsCount(): number;
 
         /**

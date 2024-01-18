@@ -741,10 +741,14 @@ export type Room<
     readonly comments: Observable<CommentsEventServerMsg>;
   };
 
-  // [comments-unread] TODO: JSDoc
+  /**
+   * @private
+   */
   getRoomNotificationSettings(): Promise<RoomNotificationSettings>;
 
-  // [comments-unread] TODO: JSDoc
+  /**
+   * @private
+   */
   updateRoomNotificationSettings(
     settings: Partial<RoomNotificationSettings>
   ): Promise<RoomNotificationSettings>;
