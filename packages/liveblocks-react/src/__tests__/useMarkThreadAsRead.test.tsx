@@ -1,5 +1,5 @@
 import type { BaseMetadata, JsonObject } from "@liveblocks/core";
-import { createClient, getCacheStore } from "@liveblocks/core";
+import { createClient, kInternal } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
@@ -64,7 +64,7 @@ describe("useMarkThreadAsRead", () => {
       client,
     } = createRoomContextForTest();
 
-    const store = getCacheStore(client);
+    const store = client[kInternal].cacheStore;
 
     store.updateThreadsAndNotifications(
       Object.fromEntries(threads.map((thread) => [thread.id, thread])),
@@ -136,7 +136,7 @@ describe("useMarkThreadAsRead", () => {
       client,
     } = createRoomContextForTest();
 
-    const store = getCacheStore(client);
+    const store = client[kInternal].cacheStore;
 
     store.updateThreadsAndNotifications(
       Object.fromEntries(threads.map((thread) => [thread.id, thread])),

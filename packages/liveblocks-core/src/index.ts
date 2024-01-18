@@ -22,7 +22,7 @@ export type {
   ResolveMentionSuggestionsArgs,
   ResolveUsersArgs,
 } from "./client";
-export { createClient, getCacheStore, NotificationsApiError } from "./client";
+export { createClient, NotificationsApiError } from "./client";
 export type {
   CommentBodyLinkElementArgs,
   CommentBodyMentionElementArgs,
@@ -232,4 +232,8 @@ import type * as DevTools from "./types/DevToolsTreeNode";
 export type { DevTools };
 
 // Cache store
-export { applyOptimisticUpdates, type CacheState } from "./store";
+export {
+  applyOptimisticUpdates,
+  type CacheState,
+  type CacheStore,
+} from "./store";

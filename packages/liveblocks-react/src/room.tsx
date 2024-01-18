@@ -16,6 +16,7 @@ import type {
 import { shallow } from "@liveblocks/client";
 import type {
   BaseMetadata,
+  CacheStore,
   CommentData,
   CommentReaction,
   CommentsEventServerMsg,
@@ -31,7 +32,6 @@ import {
   console,
   deprecateIf,
   errorIf,
-  getCacheStore,
   isLiveNode,
   kInternal,
   makeEventSource,
@@ -927,7 +927,8 @@ export function createRoomContext<
     return useLegacyKey(key) as TStorage[TKey];
   }
 
-  const store = getCacheStore<TThreadMetadata>(client);
+  const store = client[kInternal]
+    .cacheStore as unknown as CacheStore<TThreadMetadata>;
 
   function onMutationFailure(
     innerError: Error,

@@ -92,6 +92,8 @@ export type EnterOptions<
  */
 type PrivateClientApi<TUserMeta extends BaseUserMeta> = {
   resolveMentionSuggestions: ClientOptions["resolveMentionSuggestions"];
+  // TODO: Add generic for ThreadMetadata to Client, it could be used here and for inbox notifications too
+  cacheStore: CacheStore<BaseMetadata>;
   usersStore: BatchStore<TUserMeta["info"] | undefined, [string]>;
 };
 
@@ -539,6 +541,8 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
     });
   }
 
+  const cacheStore = createClientStore();
+
   const resolveUsers = clientOptions.resolveUsers;
   let hasWarnedIfNoResolveUsers = false;
 
@@ -582,6 +586,7 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
       // Internal
       [kInternal]: {
         resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,
+        cacheStore,
         usersStore,
       },
     },
@@ -787,19 +792,4 @@ function toURLSearchParams(
     }
   }
   return result;
-}
-
-const CacheStoreMap = new WeakMap<Client, CacheStore<any>>();
-
-export function getCacheStore<TThreadMetadata extends BaseMetadata>(
-  client: Client
-): CacheStore<TThreadMetadata> {
-  let store = CacheStoreMap.get(client);
-
-  if (store === undefined) {
-    store = createClientStore<TThreadMetadata>();
-    CacheStoreMap.set(client, store);
-  }
-
-  return store as CacheStore<TThreadMetadata>;
 }

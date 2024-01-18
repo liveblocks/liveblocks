@@ -128,7 +128,7 @@ export interface CacheStore<TThreadMetadata extends BaseMetadata>
 }
 
 /**
- * Create internal immtuable store for comments and notifications.
+ * Create internal immutable store for comments and notifications.
  * Keep all the state required to return data from our hooks.
  */
 export function createClientStore<
