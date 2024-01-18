@@ -1,3 +1,12 @@
+# Unreleased
+
+### `@liveblocks/node`
+
+- Expose new `nextCursor` field in
+  [Get Rooms](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms)
+  API responses, to make pagination easier to work with
+- Update TypeScript types for some responses
+
 # v1.9.6
 
 ### `@liveblocks/react`
