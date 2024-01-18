@@ -1602,7 +1602,7 @@ await stringifyCommentBody(comment.body);
 
 // "Hello @Marc from https://liveblocks.io"
 await stringifyCommentBody(comment.body, {
-  resolveUser({ userIds }) {
+  resolveUsers({ userIds }) {
     return [{ name: "Marc" }];
   },
 });
@@ -1611,7 +1611,7 @@ await stringifyCommentBody(comment.body, {
 await stringifyCommentBody(comment.body, {
   format: "markdown",
 
-  resolveUser() {
+  resolveUsers() {
     return [{ name: "Marc" }];
   },
 });
@@ -1621,7 +1621,7 @@ await stringifyCommentBody(comment.body, {
 await stringifyCommentBody(comment.body, {
   format: "html",
 
-  resolveUser() {
+  resolveUsers() {
     return [{ name: "Marc" }];
   },
 });
@@ -1634,7 +1634,7 @@ await stringifyCommentBody(comment.body, {
   mention: ({ element, user }) =>
     `<a href="${user.profileUrl}" data-id="${element.id}">${user.name}</a>`,
 
-  resolveUser() {
+  resolveUsers() {
     return [{ name: "Marc", profileUrl: "https://example.com" }];
   },
 });
