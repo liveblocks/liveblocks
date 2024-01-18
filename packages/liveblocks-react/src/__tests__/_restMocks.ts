@@ -64,3 +64,12 @@ export function mockCreateComment(
     resolver
   );
 }
+
+export function mockMarkInboxNotificationsAsRead(
+  resolver: ResponseResolver<RestRequest<never, never>, RestContext, any>
+) {
+  return rest.post(
+    "https://api.liveblocks.io/v2/c/inbox-notifications/read",
+    resolver
+  );
+}

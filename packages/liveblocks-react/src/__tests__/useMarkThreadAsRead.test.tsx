@@ -1,13 +1,13 @@
 import type { BaseMetadata, JsonObject } from "@liveblocks/core";
 import { createClient, kInternal } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { rest } from "msw";
 import { setupServer } from "msw/node";
 import React from "react";
 
 import { createRoomContext } from "../room";
 import { dummyInboxNoficationData, dummyThreadData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
+import { mockMarkInboxNotificationsAsRead } from "./_restMocks";
 
 const server = setupServer();
 
@@ -42,6 +42,7 @@ function createRoomContextForTest<
   };
 }
 
+// TODO: Refactor test to not assert based on the internal store
 describe("useMarkThreadAsRead", () => {
   test("should mark thread as read optimistically and keep the updates if successful response from server", async () => {
     const threads = [dummyThreadData()];
@@ -50,13 +51,7 @@ describe("useMarkThreadAsRead", () => {
     inboxNotifications[0].readAt = null;
 
     server.use(
-      rest.post(
-        "https://api.liveblocks.io/v2/c//inbox-notifications/read",
-        (_req, res, ctx) => {
-          // Mock a successful response from the server with the inbox notification marked as read
-          return res(ctx.status(200));
-        }
-      )
+      mockMarkInboxNotificationsAsRead((_req, res, ctx) => res(ctx.status(200)))
     );
 
     const {
@@ -66,15 +61,7 @@ describe("useMarkThreadAsRead", () => {
 
     const store = client[kInternal].cacheStore;
 
-    store.updateThreadsAndNotifications(
-      Object.fromEntries(threads.map((thread) => [thread.id, thread])),
-      Object.fromEntries(
-        inboxNotifications.map((inboxNotification) => [
-          inboxNotification.id,
-          inboxNotification,
-        ])
-      )
-    );
+    store.updateThreadsAndNotifications(threads, inboxNotifications);
 
     const {
       result: { current: markThreadAsRead },
@@ -122,13 +109,7 @@ describe("useMarkThreadAsRead", () => {
     inboxNotifications[0].readAt = null;
 
     server.use(
-      rest.post(
-        "https://api.liveblocks.io/v2/c//inbox-notifications/read",
-        (_req, res, ctx) => {
-          // Mock an error response from the server
-          return res(ctx.status(500));
-        }
-      )
+      mockMarkInboxNotificationsAsRead((_req, res, ctx) => res(ctx.status(500)))
     );
 
     const {
@@ -138,15 +119,7 @@ describe("useMarkThreadAsRead", () => {
 
     const store = client[kInternal].cacheStore;
 
-    store.updateThreadsAndNotifications(
-      Object.fromEntries(threads.map((thread) => [thread.id, thread])),
-      Object.fromEntries(
-        inboxNotifications.map((inboxNotification) => [
-          inboxNotification.id,
-          inboxNotification,
-        ])
-      )
-    );
+    store.updateThreadsAndNotifications(threads, inboxNotifications);
 
     const {
       result: { current: markThreadAsRead },

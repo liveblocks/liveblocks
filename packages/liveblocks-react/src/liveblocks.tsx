@@ -1,10 +1,29 @@
-import type { BaseMetadata, BaseUserMeta, Client } from "@liveblocks/client";
-import type { InboxNotificationData } from "@liveblocks/core";
+import type {
+  BaseMetadata,
+  BaseUserMeta,
+  Client,
+  ThreadData,
+} from "@liveblocks/client";
+import {
+  getCacheStore,
+  PartialInboxNotificationData,
+  type InboxNotificationData,
+} from "@liveblocks/core";
 import type { PropsWithChildren } from "react";
-import React, { createContext, useCallback, useContext } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+} from "react";
 
 import { createSharedContext } from "./shared";
-import type { LiveblocksContextBundle } from "./types";
+import type {
+  InboxNotificationsState,
+  InboxNotificationsStateSuccess,
+  LiveblocksContextBundle,
+} from "./types";
+import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 const ContextBundle = createContext<LiveblocksContextBundle<
   BaseUserMeta,
@@ -54,22 +73,105 @@ export function createLiveblocksContext<
     );
   }
 
-  // [comments-unread] TODO: Implement using `client.getInboxNotifications`
-  function useInboxNotifications() {
-    return {
-      inboxNotifications: [] as InboxNotificationData[],
-      isLoading: false,
-      loadMore: () => {},
-    } as const;
+  // TODO: Unify request cache
+  let fetchInboxNotificationsRequest: Promise<{
+    inboxNotifications: PartialInboxNotificationData[];
+    threads: ThreadData<never>[];
+  }> | null = null;
+
+  const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
+
+  async function fetchInboxNotifications() {
+    if (fetchInboxNotificationsRequest) {
+      return fetchInboxNotificationsRequest;
+    }
+
+    getCacheStore(client).setQueryState(INBOX_NOTIFICATIONS_QUERY, {
+      isLoading: true,
+    });
+
+    fetchInboxNotificationsRequest = client.getInboxNotifications();
+
+    try {
+      const { inboxNotifications, threads } =
+        await fetchInboxNotificationsRequest!;
+
+      getCacheStore(client).updateThreadsAndNotifications(
+        threads,
+        inboxNotifications,
+        INBOX_NOTIFICATIONS_QUERY
+      );
+    } catch (er) {
+      getCacheStore(client).setQueryState(INBOX_NOTIFICATIONS_QUERY, {
+        isLoading: false,
+        error: er as Error,
+      });
+    }
+    return;
   }
 
-  // [comments-unread] TODO: Implement using `client.getInboxNotifications`
-  function useInboxNotificationsSuspense() {
-    return {
-      inboxNotifications: [] as InboxNotificationData[],
-      isLoading: false,
-      loadMore: () => {},
-    } as const;
+  function useInboxNotifications(): InboxNotificationsState<TThreadMetadata> {
+    useEffect(() => {
+      void fetchInboxNotifications();
+    });
+
+    const store = getCacheStore(client);
+    return useSyncExternalStoreWithSelector(
+      store.subscribe,
+      store.get,
+      store.get,
+      (state) => {
+        if (
+          state.queries[INBOX_NOTIFICATIONS_QUERY] === undefined ||
+          state.queries[INBOX_NOTIFICATIONS_QUERY].isLoading
+        ) {
+          return {
+            isLoading: true,
+            loadMore: () => {}, // TODO
+          };
+        }
+
+        return {
+          inboxNotifications: Array.from(
+            Object.values(state.inboxNotifications)
+          ).map((notif) => ({
+            ...notif,
+            thread: state.threads[notif.threadId],
+          })) as InboxNotificationData[],
+          isLoading: false,
+          loadMore: () => {}, // TODO
+        };
+      }
+    );
+  }
+
+  function useInboxNotificationsSuspense(): InboxNotificationsStateSuccess<TThreadMetadata> {
+    const store = getCacheStore(client);
+
+    if (
+      store.get().queries[INBOX_NOTIFICATIONS_QUERY] === undefined ||
+      store.get().queries[INBOX_NOTIFICATIONS_QUERY].isLoading
+    ) {
+      throw fetchInboxNotifications();
+    }
+
+    return useSyncExternalStoreWithSelector(
+      store.subscribe,
+      store.get,
+      store.get,
+      (state) => {
+        return {
+          inboxNotifications: Array.from(
+            Object.values(state.inboxNotifications)
+          ).map((notif) => ({
+            ...notif,
+            thread: state.threads[notif.threadId],
+          })) as InboxNotificationData[],
+          isLoading: false,
+          loadMore: () => {},
+        };
+      }
+    );
   }
 
   // [comments-unread] TODO: Implement using `client.getUnreadInboxNotificationsCount`

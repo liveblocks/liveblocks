@@ -85,7 +85,7 @@ type MarkInboxNotificationAsReadOptimisticUpdate = {
   readAt: Date;
 };
 
-type ThreadsQueryState =
+type QueryState =
   | { isLoading: true; error?: never }
   | { isLoading: false; error?: Error };
 
@@ -95,9 +95,9 @@ export type CacheState<TThreadMetadata extends BaseMetadata> = {
    */
   threads: Record<string, ThreadData<TThreadMetadata>>;
   /**
-   * Keep track of loading and error status of the threads queries.
+   * Keep track of loading and error status of all the queries made by the client.
    */
-  threadsQueries: Record<string, ThreadsQueryState>;
+  queries: Record<string, QueryState>;
   /**
    * Optimistic updates that have not been acknowledged by the server yet.
    * They are applied on top of the threads in selectors.
@@ -117,14 +117,14 @@ export interface CacheStore<TThreadMetadata extends BaseMetadata>
     inboxNotification?: PartialInboxNotificationData
   ): void;
   updateThreadsAndNotifications(
-    threads: Record<string, ThreadData<TThreadMetadata>>,
-    inboxNotifications: Record<string, PartialInboxNotificationData>,
+    threads: ThreadData<TThreadMetadata>[],
+    inboxNotifications: PartialInboxNotificationData[],
     queryKey?: string
   ): void;
   pushOptimisticUpdate(
     optimisticUpdate: OptimisticUpdate<TThreadMetadata>
   ): void;
-  setThreadsQueryState(queryKey: string, queryState: ThreadsQueryState): void;
+  setQueryState(queryKey: string, queryState: QueryState): void;
 }
 
 /**
@@ -136,7 +136,7 @@ export function createClientStore<
 >(): CacheStore<TThreadMetadata> {
   const store = createStore<CacheState<TThreadMetadata>>({
     threads: {},
-    threadsQueries: {},
+    queries: {},
     optimisticUpdates: [],
     inboxNotifications: {},
   });
@@ -220,26 +220,34 @@ export function createClientStore<
     },
 
     updateThreadsAndNotifications(
-      threads: Record<string, ThreadData<TThreadMetadata>>,
-      inboxNotifications: Record<string, PartialInboxNotificationData>,
+      threads: ThreadData<TThreadMetadata>[],
+      inboxNotifications: PartialInboxNotificationData[],
       queryKey?: string
     ) {
       store.set((state) => ({
         ...state,
-        threads: mergeThreads(state.threads, threads),
+        threads: mergeThreads(
+          state.threads,
+          Object.fromEntries(threads.map((thread) => [thread.id, thread]))
+        ),
         inboxNotifications: mergeNotifications(
           state.inboxNotifications,
-          inboxNotifications
+          Object.fromEntries(
+            inboxNotifications.map((notification) => [
+              notification.id,
+              notification,
+            ])
+          )
         ),
-        threadsQueries:
+        queries:
           queryKey !== undefined
             ? {
-                ...state.threadsQueries,
+                ...state.queries,
                 [queryKey]: {
                   isLoading: false,
                 },
               }
-            : state.threadsQueries,
+            : state.queries,
       }));
     },
 
@@ -250,11 +258,11 @@ export function createClientStore<
       }));
     },
 
-    setThreadsQueryState(queryKey: string, queryState: ThreadsQueryState) {
+    setQueryState(queryKey: string, queryState: QueryState) {
       store.set((state) => ({
         ...state,
-        threadsQueries: {
-          ...state.threadsQueries,
+        queries: {
+          ...state.queries,
           [queryKey]: queryState,
         },
       }));
