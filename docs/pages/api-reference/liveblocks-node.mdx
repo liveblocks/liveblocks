@@ -60,7 +60,7 @@ To implement your back end, follow these steps:
 
 <Steps>
   <Step>
-    <StepTitle>Create a `Session`</StepTitle>
+    <StepTitle>Create a session</StepTitle>
 
     <StepContent>
       ```ts showLineNumbers={false}
@@ -85,27 +85,28 @@ To implement your back end, follow these steps:
       publicly visible to all other people in the room. Useful for
       metadata like the user’s full name, or their avatar URL.
 
-      </StepContent>
+    </StepContent>
 
-    </Step>
+  </Step>
 
-    <Step>
-      <StepTitle>Decide which permissions to allow this session</StepTitle>
-      <StepContent>
-        ```ts showLineNumbers={false}
-        session.allow("my-room-1", session.FULL_ACCESS);
-        session.allow("my-room-2", session.FULL_ACCESS);
-        session.allow("my-room-3", session.FULL_ACCESS);
-        session.allow("my-team:*", session.READ_ACCESS);
-        ```
+  <Step>
+    <StepTitle>Decide which permissions to allow this session</StepTitle>
+    <StepContent>
+      ```ts showLineNumbers={false}
+      session.allow("my-room-1", session.FULL_ACCESS);
+      session.allow("my-room-2", session.FULL_ACCESS);
+      session.allow("my-room-3", session.FULL_ACCESS);
+      session.allow("my-team:*", session.READ_ACCESS);
+      ```
 
-        <Banner title="Be diligent" type="warning">
-          You’re specifying what’s going to be allowed so be careful what
-          permissions you’re giving your users. You’re responsible for this
-          part.
-        </Banner>
-      </StepContent>
-    </Step>
+      <Banner title="Be diligent" type="warning">
+        You’re specifying what’s going to be allowed so be careful what
+        permissions you’re giving your users. You’re responsible for this
+        part.
+      </Banner>
+    </StepContent>
+
+  </Step>
 
   <Step lastStep>
     <StepTitle>Authorize the session</StepTitle>
@@ -121,7 +122,7 @@ To implement your back end, follow these steps:
       ```
     </StepContent>
 
-    </Step>
+  </Step>
 
 </Steps>
 
@@ -286,14 +287,18 @@ with the newest room at index `0`. This is a wrapper around the
 the same response.
 
 ```ts
-const { data: rooms, nextPage } = await liveblocks.getRooms();
+const { data: rooms, nextCursor, nextPage } = await liveblocks.getRooms();
 
 // A list of rooms
 // [{ type: "room", id: "my-room-id", ... }, ...]
 console.log(rooms);
 
-// A pagination value used for retrieving the next page of results
+// A pagination cursor used for retrieving the next page of results with `startingAfter`
 // "L3YyL3Jvb21z..."
+console.log(nextCursor);
+
+// A pagination URL used for retrieving the next page of results with the REST API
+// "/v2/rooms?startingAfter=L3YyL3Jvb21z..."
 console.log(nextPage);
 ```
 
@@ -301,7 +306,11 @@ A number of options are also available, enabling you to filter for certain
 rooms.
 
 ```ts
-const { data: rooms, nextPage } = await liveblocks.getRooms({
+const {
+  data: rooms,
+  nextCursor,
+  nextPage,
+} = await liveblocks.getRooms({
   // Optional, the amount of rooms to load, between 1 and 100, defaults to 20
   limit: 20,
 
@@ -316,13 +325,13 @@ const { data: rooms, nextPage } = await liveblocks.getRooms({
     myRoomType: "whiteboard",
   },
 
-  // Optional, cursor used for pagination, use `nextPage` from the previous page's response
+  // Optional, cursor used for pagination, use `nextCursor` from the previous page's response
   startingAfter: "L3YyL3Jvb21z...",
 });
 ```
 
-You can use `nextPage` to paginate rooms. In this example, when `getNextPage` is
-called, the next set of rooms is added to `pages`.
+You can use `nextCursor` to paginate rooms. In this example, when `getNextPage`
+is called, the next set of rooms is added to `pages`.
 
 ```ts
 import { RoomInfo } from "@liveblocks/node";
@@ -335,9 +344,9 @@ let startingAfter;
 
 // Call to get the next page of rooms
 async function getNextPage() {
-  const { data, nextPage } = await liveblocks.getRooms({ startingAfter });
+  const { data, nextCursor } = await liveblocks.getRooms({ startingAfter });
   pages.push(data);
-  startingAfter = nextPage;
+  startingAfter = nextCursor;
 }
 ```
 
