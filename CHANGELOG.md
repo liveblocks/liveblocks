@@ -1,3 +1,9 @@
+# Unreleased
+
+### `create-liveblocks-app`
+
+- Adds a fallback for passing data from Safari to the console.
+
 # v1.9.6
 
 ### `@liveblocks/react`
