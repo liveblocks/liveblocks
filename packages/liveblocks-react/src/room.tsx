@@ -68,7 +68,6 @@ import type {
   DeleteCommentOptions,
   EditCommentOptions,
   EditThreadMetadataOptions,
-  InternalRoomContextBundle,
   MutationContext,
   OmitFirstArg,
   RoomContextBundle,
@@ -168,7 +167,7 @@ function makeMutationContext<
   };
 }
 
-export const ContextBundle = React.createContext<InternalRoomContextBundle<
+export const ContextBundle = React.createContext<RoomContextBundle<
   JsonObject,
   LsonObject,
   BaseUserMeta,
@@ -387,7 +386,7 @@ export function createRoomContext<
       <RoomContext.Provider value={room}>
         <ContextBundle.Provider
           value={
-            internalBundle as unknown as InternalRoomContextBundle<
+            bundle as unknown as RoomContextBundle<
               JsonObject,
               LsonObject,
               BaseUserMeta,
@@ -1923,21 +1922,16 @@ export function createRoomContext<
       useRoomNotificationSettings: useRoomNotificationSettingsSuspense,
       useUpdateRoomNotificationSettings,
     },
+
+    [kInternal]: {
+      hasResolveMentionSuggestions: resolveMentionSuggestions !== undefined,
+      useMentionSuggestions,
+    },
   };
 
-  const internalBundle: InternalRoomContextBundle<
-    TPresence,
-    TStorage,
-    TUserMeta,
-    TRoomEvent,
-    TThreadMetadata
-  > = {
-    ...bundle,
-    hasResolveMentionSuggestions: resolveMentionSuggestions !== undefined,
-    useMentionSuggestions,
-  };
-
-  return bundle;
+  return Object.defineProperty(bundle, kInternal, {
+    enumerable: false,
+  });
 }
 
 function getCurrentUserId(

@@ -13,7 +13,7 @@ import {
   size,
   useFloating,
 } from "@floating-ui/react-dom";
-import type { CommentBody } from "@liveblocks/core";
+import { type CommentBody, kInternal } from "@liveblocks/core";
 import { useRoomContextBundle } from "@liveblocks/react";
 import { Slot } from "@radix-ui/react-slot";
 import type {
@@ -621,7 +621,10 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     },
     forwardedRef
   ) => {
-    const { useMentionSuggestions, useSelf } = useRoomContextBundle();
+    const {
+      [kInternal]: { useMentionSuggestions },
+      useSelf,
+    } = useRoomContextBundle();
     const self = useSelf();
     const isDisabled = useMemo(
       () => disabled || !self?.canComment,

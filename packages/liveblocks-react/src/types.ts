@@ -19,6 +19,7 @@ import type {
   CommentData,
   GetThreadsOptions,
   InboxNotificationData,
+  kInternal,
   Resolve,
   RoomEventMessage,
   RoomInitializers,
@@ -738,6 +739,18 @@ type RoomContextBundleCommon<
   useThreadUnreadSince(threadId: string): Date | null;
 };
 
+/**
+ * @private
+ *
+ * Private methods and variables used in the core internals, but as a user
+ * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
+ * will probably happen if you do.
+ */
+type PrivateRoomContextApi = {
+  hasResolveMentionSuggestions: boolean;
+  useMentionSuggestions(search?: string): string[] | undefined;
+};
+
 export type RoomContextBundle<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
@@ -1060,26 +1073,16 @@ export type RoomContextBundle<
           }
       >;
     }
->;
-
-export type InternalRoomContextBundle<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json,
-  TThreadMetadata extends BaseMetadata,
-> = Resolve<
-  RoomContextBundle<
-    TPresence,
-    TStorage,
-    TUserMeta,
-    TRoomEvent,
-    TThreadMetadata
-  > & {
-    hasResolveMentionSuggestions: boolean;
-    useMentionSuggestions(search?: string): string[] | undefined;
-  }
->;
+> & {
+  /**
+   * @private
+   *
+   * Private methods and variables used in the core internals, but as a user
+   * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
+   * will probably happen if you do.
+   */
+  readonly [kInternal]: PrivateRoomContextApi;
+};
 
 /**
  * Properties that are the same in LiveblocksContext and LiveblocksContext["suspense"].

@@ -577,9 +577,8 @@ export type Room<
   /**
    * @private
    *
-   * Private methods to directly control the underlying state machine for this
-   * room. Used in the core internals and for unit testing, but as a user of
-   * Liveblocks, NEVER USE ANY OF THESE METHODS DIRECTLY, because bad things
+   * Private methods and variables used in the core internals, but as a user
+   * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
    * will probably happen if you do.
    */
   readonly [kInternal]: PrivateRoomApi;
