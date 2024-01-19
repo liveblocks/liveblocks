@@ -5,10 +5,11 @@ import { BlockNoteView, useBlockNote } from "@blocknote/react";
 import * as Y from "yjs";
 import LiveblocksProvider from "@liveblocks/yjs";
 import { useRoom, useSelf } from "@/liveblocks.config";
-import { useEffect, useState } from "react";
-import { Toolbar } from "./Toolbar";
-import styles from "./CollaborativeEditor.module.css";
+import { useCallback, useEffect, useState } from "react";
 import { Avatars } from "@/components/Avatars";
+import styles from "./CollaborativeEditor.module.css";
+import { MoonIcon, SunIcon } from "@/icons";
+import { Button } from "@/primitives/Button";
 
 // Collaborative text editor with simple rich text, live cursors, and live avatars
 export function CollaborativeEditor() {
@@ -60,15 +61,38 @@ function BlockNote({ doc, provider }: EditorProps) {
     },
   });
 
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  const changeTheme = useCallback(() => {
+    const newTheme = theme === "light" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", newTheme);
+    setTheme(newTheme);
+  }, [theme]);
+
   return (
     <div className={styles.container}>
       <div className={styles.editorHeader}>
-        <Toolbar editor={editor} />
+        <Button
+          className={styles.button}
+          variant="subtle"
+          onClick={changeTheme}
+          aria-label="Switch Theme"
+        >
+          {theme === "dark" ? (
+            <SunIcon style={{ width: "18px" }} />
+          ) : (
+            <MoonIcon style={{ width: "18px" }} />
+          )}
+        </Button>
         <Avatars />
       </div>
-      <BlockNoteView editor={editor} className={styles.editorContainer}>
-        <div />
-      </BlockNoteView>
+      <div className={styles.editorPanel}>
+        <BlockNoteView
+          editor={editor}
+          className={styles.editorContainer}
+          theme={theme}
+        />
+      </div>
     </div>
   );
 }
