@@ -273,9 +273,7 @@ const ThreadInboxNotification = forwardRef<
 
     switch (contents.type) {
       case "comments": {
-        const reversedComments = [...contents.comments].reverse();
         const reversedUserIds = [...contents.userIds].reverse();
-
         const firstUserId = reversedUserIds[0];
 
         const aside = <InboxNotificationAvatar userId={firstUserId} />;
@@ -294,7 +292,7 @@ const ThreadInboxNotification = forwardRef<
         );
         const content = (
           <div className="lb-inbox-notification-comments">
-            {reversedComments.map((comment) => (
+            {contents.comments.map((comment) => (
               <InboxNotificationComment key={comment.id} comment={comment} />
             ))}
           </div>
