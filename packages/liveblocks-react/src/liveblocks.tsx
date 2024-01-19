@@ -4,11 +4,8 @@ import type {
   Client,
   ThreadData,
 } from "@liveblocks/client";
-import {
-  type InboxNotificationData,
-  CacheStore,
-  kInternal,
-} from "@liveblocks/core";
+import type { CacheStore, InboxNotificationData } from "@liveblocks/core";
+import { kInternal } from "@liveblocks/core";
 import type { PropsWithChildren } from "react";
 import React, {
   createContext,
@@ -16,6 +13,7 @@ import React, {
   useContext,
   useEffect,
 } from "react";
+import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import { createSharedContext } from "./shared";
 import type {
@@ -23,9 +21,8 @@ import type {
   InboxNotificationsStateSuccess,
   LiveblocksContextBundle,
 } from "./types";
-import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
-const ContextBundle =
+export const ContextBundle =
   createContext<LiveblocksContextBundle<BaseUserMeta> | null>(null);
 
 /**
@@ -46,7 +43,6 @@ export function createLiveblocksContext<
   TThreadMetadata extends BaseMetadata = never,
 >(client: Client<TUserMeta>): LiveblocksContextBundle<TUserMeta> {
   const {
-    SharedProvider,
     useUser,
     suspense: { useUser: useUserSuspense },
   } = createSharedContext<TUserMeta>(client);
@@ -56,13 +52,11 @@ export function createLiveblocksContext<
 
   function LiveblocksProvider(props: PropsWithChildren) {
     return (
-      <SharedProvider>
-        <ContextBundle.Provider
-          value={bundle as unknown as LiveblocksContextBundle<BaseUserMeta>}
-        >
-          {props.children}
-        </ContextBundle.Provider>
-      </SharedProvider>
+      <ContextBundle.Provider
+        value={bundle as unknown as LiveblocksContextBundle<BaseUserMeta>}
+      >
+        {props.children}
+      </ContextBundle.Provider>
     );
   }
 
@@ -87,7 +81,7 @@ export function createLiveblocksContext<
 
     try {
       const { inboxNotifications, threads } =
-        await fetchInboxNotificationsRequest!;
+        await fetchInboxNotificationsRequest;
 
       store.updateThreadsAndNotifications(
         threads,
@@ -219,8 +213,6 @@ export function createLiveblocksContext<
     useMarkInboxNotificationAsRead,
     useMarkAllInboxNotificationsAsRead,
 
-    useThreadFromCache,
-
     suspense: {
       LiveblocksProvider,
 
@@ -233,7 +225,13 @@ export function createLiveblocksContext<
       useMarkInboxNotificationAsRead,
       useMarkAllInboxNotificationsAsRead,
     },
+
+    [kInternal]: {
+      useThreadFromCache,
+    },
   };
 
-  return bundle;
+  return Object.defineProperty(bundle, kInternal, {
+    enumerable: false,
+  });
 }

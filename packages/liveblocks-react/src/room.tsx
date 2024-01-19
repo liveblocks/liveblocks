@@ -68,7 +68,6 @@ import type {
   DeleteCommentOptions,
   EditCommentOptions,
   EditThreadMetadataOptions,
-  InternalRoomContextBundle,
   MutationContext,
   OmitFirstArg,
   RoomContextBundle,
@@ -168,7 +167,7 @@ function makeMutationContext<
   };
 }
 
-const ContextBundle = React.createContext<InternalRoomContextBundle<
+export const ContextBundle = React.createContext<RoomContextBundle<
   JsonObject,
   LsonObject,
   BaseUserMeta,
@@ -213,7 +212,6 @@ export function createRoomContext<
     makeEventSource<CommentsError<TThreadMetadata>>();
 
   const {
-    SharedProvider,
     useUser,
     suspense: { useUser: useUserSuspense },
   } = createSharedContext<TUserMeta>(client);
@@ -385,23 +383,21 @@ export function createRoomContext<
     }, [roomId, frozenProps, stableEnterRoom]);
 
     return (
-      <SharedProvider>
-        <RoomContext.Provider value={room}>
-          <ContextBundle.Provider
-            value={
-              internalBundle as unknown as InternalRoomContextBundle<
-                JsonObject,
-                LsonObject,
-                BaseUserMeta,
-                never,
-                BaseMetadata
-              >
-            }
-          >
-            {props.children}
-          </ContextBundle.Provider>
-        </RoomContext.Provider>
-      </SharedProvider>
+      <RoomContext.Provider value={room}>
+        <ContextBundle.Provider
+          value={
+            bundle as unknown as RoomContextBundle<
+              JsonObject,
+              LsonObject,
+              BaseUserMeta,
+              never,
+              BaseMetadata
+            >
+          }
+        >
+          {props.children}
+        </ContextBundle.Provider>
+      </RoomContext.Provider>
     );
   }
 
@@ -1926,21 +1922,16 @@ export function createRoomContext<
       useRoomNotificationSettings: useRoomNotificationSettingsSuspense,
       useUpdateRoomNotificationSettings,
     },
+
+    [kInternal]: {
+      hasResolveMentionSuggestions: resolveMentionSuggestions !== undefined,
+      useMentionSuggestions,
+    },
   };
 
-  const internalBundle: InternalRoomContextBundle<
-    TPresence,
-    TStorage,
-    TUserMeta,
-    TRoomEvent,
-    TThreadMetadata
-  > = {
-    ...bundle,
-    hasResolveMentionSuggestions: resolveMentionSuggestions !== undefined,
-    useMentionSuggestions,
-  };
-
-  return bundle;
+  return Object.defineProperty(bundle, kInternal, {
+    enumerable: false,
+  });
 }
 
 function getCurrentUserId(

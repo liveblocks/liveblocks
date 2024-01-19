@@ -83,12 +83,12 @@ export function convertToCommentUserReaction(
 }
 
 /**
- * Converts a plain partial inbox notification data object (usually returned by the API) to a partial inbox notification data object that can be used by the client.
+ * Converts a plain inbox notification data object (usually returned by the API) to an inbox notification data object that can be used by the client.
  * This is necessary because the plain data object stores dates as ISO strings, but the client expects them as Date objects.
- * @param data The plain partial inbox notification data object (usually returned by the API)
- * @returns The rich partial inbox notification data object that can be used by the client.
+ * @param data The plain inbox notification data object (usually returned by the API)
+ * @returns The rich inbox notification data object that can be used by the client.
  */
-export function convertToPartialInboxNotificationData(
+export function convertToInboxNotificationData(
   data: InboxNotificationDataPlain
 ): InboxNotificationData {
   const notifiedAt = new Date(data.notifiedAt);

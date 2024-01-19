@@ -10,7 +10,7 @@ import { ManagedSocket, newToLegacyStatus, StopRetrying } from "./connection";
 import {
   convertToCommentData,
   convertToCommentUserReaction,
-  convertToPartialInboxNotificationData,
+  convertToInboxNotificationData,
   convertToThreadData,
 } from "./convert-plain-data";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
@@ -577,9 +577,8 @@ export type Room<
   /**
    * @private
    *
-   * Private methods to directly control the underlying state machine for this
-   * room. Used in the core internals and for unit testing, but as a user of
-   * Liveblocks, NEVER USE ANY OF THESE METHODS DIRECTLY, because bad things
+   * Private methods and variables used in the core internals, but as a user
+   * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
    * will probably happen if you do.
    */
   readonly [kInternal]: PrivateRoomApi;
@@ -1140,7 +1139,7 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
       return {
         threads: json.data.map((thread) => convertToThreadData(thread)),
         inboxNotifications: json.inboxNotifications.map((notification) =>
-          convertToPartialInboxNotificationData(notification)
+          convertToInboxNotificationData(notification)
         ),
       };
     } else if (response.status === 404) {
@@ -1160,7 +1159,7 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
         }
       >);
       const inboxNotification = json.inboxNotification
-        ? convertToPartialInboxNotificationData(json.inboxNotification)
+        ? convertToInboxNotificationData(json.inboxNotification)
         : undefined;
 
       return {

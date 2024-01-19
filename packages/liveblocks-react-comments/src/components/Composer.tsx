@@ -1,6 +1,6 @@
 "use client";
 
-import type { BaseMetadata } from "@liveblocks/core";
+import { type BaseMetadata, kInternal } from "@liveblocks/core";
 import { useRoomContextBundle } from "@liveblocks/react";
 import type {
   ComponentPropsWithoutRef,
@@ -288,7 +288,9 @@ const ComposerWithContext = forwardRef<
     },
     forwardedRef
   ) => {
-    const { hasResolveMentionSuggestions } = useRoomContextBundle();
+    const {
+      [kInternal]: { hasResolveMentionSuggestions },
+    } = useRoomContextBundle();
     const { isEmpty } = useComposer();
     const $ = useOverrides(overrides);
     const [isEmojiPickerOpen, setEmojiPickerOpen] = useState(false);

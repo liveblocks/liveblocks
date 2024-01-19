@@ -1,7 +1,7 @@
 import type {
   BaseMetadata,
   CommentData,
-  PartialInboxNotificationData,
+  InboxNotificationData,
   ThreadData,
 } from "@liveblocks/core";
 
@@ -53,7 +53,7 @@ export function dummyCommentData(): CommentData {
   };
 }
 
-export function dummyInboxNoficationData(): PartialInboxNotificationData {
+export function dummyInboxNoficationData(): InboxNotificationData {
   const id = createInboxNotificationId();
   const threadId = createThreadId();
   const now = new Date();

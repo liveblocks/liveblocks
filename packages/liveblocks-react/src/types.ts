@@ -19,6 +19,7 @@ import type {
   CommentData,
   GetThreadsOptions,
   InboxNotificationData,
+  kInternal,
   Resolve,
   RoomEventMessage,
   RoomInitializers,
@@ -234,7 +235,34 @@ export type MutationContext<
   ) => void;
 };
 
-type RoomContextBundleShared<
+export type SharedContextBundle<TUserMeta extends BaseUserMeta> = {
+  /**
+   * @beta
+   *
+   * Returns user info from a given user ID.
+   *
+   * @example
+   * const { user, error, isLoading } = useUser("user-id");
+   */
+  useUser(userId: string): UserState<TUserMeta["info"]>;
+
+  suspense: {
+    /**
+     * @beta
+     *
+     * Returns user info from a given user ID.
+     *
+     * @example
+     * const { user } = useUser("user-id");
+     */
+    useUser(userId: string): UserStateSuccess<TUserMeta["info"]>;
+  };
+};
+
+/**
+ * Properties that are the same in RoomContext and RoomContext["suspense"].
+ */
+type RoomContextBundleCommon<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
@@ -707,6 +735,18 @@ type RoomContextBundleShared<
   useThreadUnreadSince(threadId: string): Date | null;
 };
 
+/**
+ * @private
+ *
+ * Private methods and variables used in the core internals, but as a user
+ * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
+ * will probably happen if you do.
+ */
+type PrivateRoomContextApi = {
+  hasResolveMentionSuggestions: boolean;
+  useMentionSuggestions(search?: string): string[] | undefined;
+};
+
 export type RoomContextBundle<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
@@ -714,361 +754,336 @@ export type RoomContextBundle<
   TRoomEvent extends Json,
   TThreadMetadata extends BaseMetadata,
 > = Resolve<
-  RoomContextBundleShared<
+  RoomContextBundleCommon<
     TPresence,
     TStorage,
     TUserMeta,
     TRoomEvent,
     TThreadMetadata
-  > & {
-    /**
-     * Extract arbitrary data from the Liveblocks Storage state, using an
-     * arbitrary selector function.
-     *
-     * The selector function will get re-evaluated any time something changes in
-     * Storage. The value returned by your selector function will also be the
-     * value returned by the hook.
-     *
-     * The `root` value that gets passed to your selector function is
-     * a immutable/readonly version of your Liveblocks storage root.
-     *
-     * The component that uses this hook will automatically re-render if the
-     * returned value changes.
-     *
-     * By default `useStorage()` uses strict `===` to check for equality. Take
-     * extra care when returning a computed object or list, for example when you
-     * return the result of a .map() or .filter() call from the selector. In
-     * those cases, you'll probably want to use a `shallow` comparison check.
-     */
-    useStorage<T>(
-      selector: (root: ToImmutable<TStorage>) => T,
-      isEqual?: (prev: T | null, curr: T | null) => boolean
-    ): T | null;
+  > &
+    Omit<SharedContextBundle<TUserMeta>, "suspense"> & {
+      /**
+       * Extract arbitrary data from the Liveblocks Storage state, using an
+       * arbitrary selector function.
+       *
+       * The selector function will get re-evaluated any time something changes in
+       * Storage. The value returned by your selector function will also be the
+       * value returned by the hook.
+       *
+       * The `root` value that gets passed to your selector function is
+       * a immutable/readonly version of your Liveblocks storage root.
+       *
+       * The component that uses this hook will automatically re-render if the
+       * returned value changes.
+       *
+       * By default `useStorage()` uses strict `===` to check for equality. Take
+       * extra care when returning a computed object or list, for example when you
+       * return the result of a .map() or .filter() call from the selector. In
+       * those cases, you'll probably want to use a `shallow` comparison check.
+       */
+      useStorage<T>(
+        selector: (root: ToImmutable<TStorage>) => T,
+        isEqual?: (prev: T | null, curr: T | null) => boolean
+      ): T | null;
 
-    /**
-     * Gets the current user once it is connected to the room.
-     *
-     * @example
-     * const me = useSelf();
-     * const { x, y } = me.presence.cursor;
-     */
-    useSelf(): User<TPresence, TUserMeta> | null;
+      /**
+       * Gets the current user once it is connected to the room.
+       *
+       * @example
+       * const me = useSelf();
+       * const { x, y } = me.presence.cursor;
+       */
+      useSelf(): User<TPresence, TUserMeta> | null;
 
-    /**
-     * Extract arbitrary data based on the current user.
-     *
-     * The selector function will get re-evaluated any time your presence data
-     * changes.
-     *
-     * The component that uses this hook will automatically re-render if your
-     * selector function returns a different value from its previous run.
-     *
-     * By default `useSelf()` uses strict `===` to check for equality. Take extra
-     * care when returning a computed object or list, for example when you return
-     * the result of a .map() or .filter() call from the selector. In those
-     * cases, you'll probably want to use a `shallow` comparison check.
-     *
-     * Will return `null` while Liveblocks isn't connected to a room yet.
-     *
-     * @example
-     * const cursor = useSelf(me => me.presence.cursor);
-     * if (cursor !== null) {
-     *   const { x, y } = cursor;
-     * }
-     *
-     */
-    useSelf<T>(
-      selector: (me: User<TPresence, TUserMeta>) => T,
-      isEqual?: (prev: T, curr: T) => boolean
-    ): T | null;
+      /**
+       * Extract arbitrary data based on the current user.
+       *
+       * The selector function will get re-evaluated any time your presence data
+       * changes.
+       *
+       * The component that uses this hook will automatically re-render if your
+       * selector function returns a different value from its previous run.
+       *
+       * By default `useSelf()` uses strict `===` to check for equality. Take extra
+       * care when returning a computed object or list, for example when you return
+       * the result of a .map() or .filter() call from the selector. In those
+       * cases, you'll probably want to use a `shallow` comparison check.
+       *
+       * Will return `null` while Liveblocks isn't connected to a room yet.
+       *
+       * @example
+       * const cursor = useSelf(me => me.presence.cursor);
+       * if (cursor !== null) {
+       *   const { x, y } = cursor;
+       * }
+       *
+       */
+      useSelf<T>(
+        selector: (me: User<TPresence, TUserMeta>) => T,
+        isEqual?: (prev: T, curr: T) => boolean
+      ): T | null;
 
-    /**
-     * @beta
-     *
-     * Returns the threads within the current room.
-     *
-     * @example
-     * const { threads, error, isLoading } = useThreads();
-     */
-    useThreads(
-      options?: UseThreadsOptions<TThreadMetadata>
-    ): ThreadsState<TThreadMetadata>;
+      /**
+       * @beta
+       *
+       * Returns the threads within the current room.
+       *
+       * @example
+       * const { threads, error, isLoading } = useThreads();
+       */
+      useThreads(
+        options?: UseThreadsOptions<TThreadMetadata>
+      ): ThreadsState<TThreadMetadata>;
 
-    /**
-     * @beta
-     *
-     * Returns user info from a given user ID.
-     *
-     * @example
-     * const { user, error, isLoading } = useUser("user-id");
-     */
-    useUser(userId: string): UserState<TUserMeta["info"]>;
+      /**
+       * @beta
+       *
+       * Returns the user's notification settings for the current room
+       * and a function to update them.
+       *
+       * @example
+       * const [{ settings }, updateSettings] = useRoomNotificationSettings();
+       */
+      useRoomNotificationSettings(): [
+        RoomNotificationSettingsState,
+        (settings: Partial<RoomNotificationSettings>) => void,
+      ];
 
-    /**
-     * @beta
-     *
-     * Returns the user's notification settings for the current room
-     * and a function to update them.
-     *
-     * @example
-     * const [{ settings }, updateSettings] = useRoomNotificationSettings();
-     */
-    useRoomNotificationSettings(): [
-      RoomNotificationSettingsState,
-      (settings: Partial<RoomNotificationSettings>) => void,
-    ];
+      //
+      // Legacy hooks
+      //
 
-    //
-    // Legacy hooks
-    //
+      /**
+       * Returns the LiveList associated with the provided key. The hook triggers
+       * a re-render if the LiveList is updated, however it does not triggers
+       * a re-render if a nested CRDT is updated.
+       *
+       * @param key The top-level storage key associated with the LiveList
+       * @returns null while storage is still loading, otherwise, returns the LiveList instance at the storage key
+       *
+       * @example
+       * const animals = useList("animals");  // e.g. [] or ["🦁", "🐍", "🦍"]  // ❌ No longer recommended
+       * const animals = useStorage((root) => root.animals);                    // ✅ Do this instead
+       *
+       * @deprecated We no longer recommend using `useList`. Prefer `useStorage`
+       * for reading and `useMutation` for writing.
+       */
+      useList<TKey extends Extract<keyof TStorage, string>>(
+        key: TKey
+      ): TStorage[TKey] | null;
 
-    /**
-     * Returns the LiveList associated with the provided key. The hook triggers
-     * a re-render if the LiveList is updated, however it does not triggers
-     * a re-render if a nested CRDT is updated.
-     *
-     * @param key The top-level storage key associated with the LiveList
-     * @returns null while storage is still loading, otherwise, returns the LiveList instance at the storage key
-     *
-     * @example
-     * const animals = useList("animals");  // e.g. [] or ["🦁", "🐍", "🦍"]  // ❌ No longer recommended
-     * const animals = useStorage((root) => root.animals);                    // ✅ Do this instead
-     *
-     * @deprecated We no longer recommend using `useList`. Prefer `useStorage`
-     * for reading and `useMutation` for writing.
-     */
-    useList<TKey extends Extract<keyof TStorage, string>>(
-      key: TKey
-    ): TStorage[TKey] | null;
+      /**
+       * Returns the LiveMap associated with the provided key. If the LiveMap
+       * does not exist, a new empty LiveMap will be created. The hook triggers
+       * a re-render if the LiveMap is updated, however it does not triggers
+       * a re-render if a nested CRDT is updated.
+       *
+       * @param key The top-level storage key associated with the LiveMap
+       * @returns null while storage is still loading, otherwise, returns the LiveMap instance at the storage key
+       *
+       * @example
+       * const shapesById = useMap("shapes");                   // ❌ No longer recommended
+       * const shapesById = useStorage((root) => root.shapes);  // ✅ Do this instead
+       *
+       * @deprecated We no longer recommend using `useMap`. Prefer `useStorage`
+       * for reading and `useMutation` for writing.
+       */
+      useMap<TKey extends Extract<keyof TStorage, string>>(
+        key: TKey
+      ): TStorage[TKey] | null;
 
-    /**
-     * Returns the LiveMap associated with the provided key. If the LiveMap
-     * does not exist, a new empty LiveMap will be created. The hook triggers
-     * a re-render if the LiveMap is updated, however it does not triggers
-     * a re-render if a nested CRDT is updated.
-     *
-     * @param key The top-level storage key associated with the LiveMap
-     * @returns null while storage is still loading, otherwise, returns the LiveMap instance at the storage key
-     *
-     * @example
-     * const shapesById = useMap("shapes");                   // ❌ No longer recommended
-     * const shapesById = useStorage((root) => root.shapes);  // ✅ Do this instead
-     *
-     * @deprecated We no longer recommend using `useMap`. Prefer `useStorage`
-     * for reading and `useMutation` for writing.
-     */
-    useMap<TKey extends Extract<keyof TStorage, string>>(
-      key: TKey
-    ): TStorage[TKey] | null;
+      /**
+       * Returns the LiveObject associated with the provided key.
+       * The hook triggers a re-render if the LiveObject is updated, however it does not triggers a re-render if a nested CRDT is updated.
+       *
+       * @param key The top-level storage key associated with the LiveObject
+       * @returns null while storage is still loading, otherwise, returns the LiveObject instance at the storage key
+       *
+       * @example
+       * const object = useObject("obj");                // ❌ No longer recommended
+       * const object = useStorage((root) => root.obj);  // ✅ Do this instead
+       *
+       * @deprecated We no longer recommend using `useObject`. Prefer `useStorage`
+       * for reading and `useMutation` for writing.
+       */
+      useObject<TKey extends Extract<keyof TStorage, string>>(
+        key: TKey
+      ): TStorage[TKey] | null;
 
-    /**
-     * Returns the LiveObject associated with the provided key.
-     * The hook triggers a re-render if the LiveObject is updated, however it does not triggers a re-render if a nested CRDT is updated.
-     *
-     * @param key The top-level storage key associated with the LiveObject
-     * @returns null while storage is still loading, otherwise, returns the LiveObject instance at the storage key
-     *
-     * @example
-     * const object = useObject("obj");                // ❌ No longer recommended
-     * const object = useStorage((root) => root.obj);  // ✅ Do this instead
-     *
-     * @deprecated We no longer recommend using `useObject`. Prefer `useStorage`
-     * for reading and `useMutation` for writing.
-     */
-    useObject<TKey extends Extract<keyof TStorage, string>>(
-      key: TKey
-    ): TStorage[TKey] | null;
+      suspense: Resolve<
+        RoomContextBundleCommon<
+          TPresence,
+          TStorage,
+          TUserMeta,
+          TRoomEvent,
+          TThreadMetadata
+        > &
+          SharedContextBundle<TUserMeta>["suspense"] & {
+            /**
+             * Extract arbitrary data from the Liveblocks Storage state, using an
+             * arbitrary selector function.
+             *
+             * The selector function will get re-evaluated any time something changes in
+             * Storage. The value returned by your selector function will also be the
+             * value returned by the hook.
+             *
+             * The `root` value that gets passed to your selector function is
+             * a immutable/readonly version of your Liveblocks storage root.
+             *
+             * The component that uses this hook will automatically re-render if the
+             * returned value changes.
+             *
+             * By default `useStorage()` uses strict `===` to check for equality. Take
+             * extra care when returning a computed object or list, for example when you
+             * return the result of a .map() or .filter() call from the selector. In
+             * those cases, you'll probably want to use a `shallow` comparison check.
+             */
+            useStorage<T>(
+              selector: (root: ToImmutable<TStorage>) => T,
+              isEqual?: (prev: T, curr: T) => boolean
+            ): T;
 
-    suspense: Resolve<
-      RoomContextBundleShared<
-        TPresence,
-        TStorage,
-        TUserMeta,
-        TRoomEvent,
-        TThreadMetadata
-      > & {
-        /**
-         * Extract arbitrary data from the Liveblocks Storage state, using an
-         * arbitrary selector function.
-         *
-         * The selector function will get re-evaluated any time something changes in
-         * Storage. The value returned by your selector function will also be the
-         * value returned by the hook.
-         *
-         * The `root` value that gets passed to your selector function is
-         * a immutable/readonly version of your Liveblocks storage root.
-         *
-         * The component that uses this hook will automatically re-render if the
-         * returned value changes.
-         *
-         * By default `useStorage()` uses strict `===` to check for equality. Take
-         * extra care when returning a computed object or list, for example when you
-         * return the result of a .map() or .filter() call from the selector. In
-         * those cases, you'll probably want to use a `shallow` comparison check.
-         */
-        useStorage<T>(
-          selector: (root: ToImmutable<TStorage>) => T,
-          isEqual?: (prev: T, curr: T) => boolean
-        ): T;
+            /**
+             * Gets the current user once it is connected to the room.
+             *
+             * @example
+             * const me = useSelf();
+             * const { x, y } = me.presence.cursor;
+             */
+            useSelf(): User<TPresence, TUserMeta>;
 
-        /**
-         * Gets the current user once it is connected to the room.
-         *
-         * @example
-         * const me = useSelf();
-         * const { x, y } = me.presence.cursor;
-         */
-        useSelf(): User<TPresence, TUserMeta>;
+            /**
+             * Extract arbitrary data based on the current user.
+             *
+             * The selector function will get re-evaluated any time your presence data
+             * changes.
+             *
+             * The component that uses this hook will automatically re-render if your
+             * selector function returns a different value from its previous run.
+             *
+             * By default `useSelf()` uses strict `===` to check for equality. Take extra
+             * care when returning a computed object or list, for example when you return
+             * the result of a .map() or .filter() call from the selector. In those
+             * cases, you'll probably want to use a `shallow` comparison check.
+             *
+             * Will return `null` while Liveblocks isn't connected to a room yet.
+             *
+             * @example
+             * const cursor = useSelf(me => me.presence.cursor);
+             * if (cursor !== null) {
+             *   const { x, y } = cursor;
+             * }
+             *
+             */
+            useSelf<T>(
+              selector: (me: User<TPresence, TUserMeta>) => T,
+              isEqual?: (prev: T, curr: T) => boolean
+            ): T;
 
-        /**
-         * Extract arbitrary data based on the current user.
-         *
-         * The selector function will get re-evaluated any time your presence data
-         * changes.
-         *
-         * The component that uses this hook will automatically re-render if your
-         * selector function returns a different value from its previous run.
-         *
-         * By default `useSelf()` uses strict `===` to check for equality. Take extra
-         * care when returning a computed object or list, for example when you return
-         * the result of a .map() or .filter() call from the selector. In those
-         * cases, you'll probably want to use a `shallow` comparison check.
-         *
-         * Will return `null` while Liveblocks isn't connected to a room yet.
-         *
-         * @example
-         * const cursor = useSelf(me => me.presence.cursor);
-         * if (cursor !== null) {
-         *   const { x, y } = cursor;
-         * }
-         *
-         */
-        useSelf<T>(
-          selector: (me: User<TPresence, TUserMeta>) => T,
-          isEqual?: (prev: T, curr: T) => boolean
-        ): T;
+            /**
+             * @beta
+             *
+             * Returns the threads within the current room.
+             *
+             * @example
+             * const { threads } = useThreads();
+             */
+            useThreads(
+              options?: UseThreadsOptions<TThreadMetadata>
+            ): ThreadsStateSuccess<TThreadMetadata>;
 
-        /**
-         * @beta
-         *
-         * Returns the threads within the current room.
-         *
-         * @example
-         * const { threads } = useThreads();
-         */
-        useThreads(
-          options?: UseThreadsOptions<TThreadMetadata>
-        ): ThreadsStateSuccess<TThreadMetadata>;
+            /**
+             * @beta
+             *
+             * Returns the user's notification settings for the current room
+             * and a function to update them.
+             *
+             * @example
+             * const [{ settings }, updateSettings] = useRoomNotificationSettings();
+             */
+            useRoomNotificationSettings(): [
+              RoomNotificationSettingsStateSuccess,
+              (settings: Partial<RoomNotificationSettings>) => void,
+            ];
 
-        /**
-         * @beta
-         *
-         * Returns user info from a given user ID.
-         *
-         * @example
-         * const { user } = useUser("user-id");
-         */
-        useUser(userId: string): UserStateSuccess<TUserMeta["info"]>;
+            //
+            // Legacy hooks
+            //
 
-        /**
-         * @beta
-         *
-         * Returns the user's notification settings for the current room
-         * and a function to update them.
-         *
-         * @example
-         * const [{ settings }, updateSettings] = useRoomNotificationSettings();
-         */
-        useRoomNotificationSettings(): [
-          RoomNotificationSettingsStateSuccess,
-          (settings: Partial<RoomNotificationSettings>) => void,
-        ];
+            /**
+             * Returns the LiveList associated with the provided key. The hook triggers
+             * a re-render if the LiveList is updated, however it does not triggers
+             * a re-render if a nested CRDT is updated.
+             *
+             * @param key The top-level storage key associated with the LiveList
+             * @returns Returns the LiveList instance at the storage key
+             *
+             * @example
+             * const animals = useList("animals");  // e.g. [] or ["🦁", "🐍", "🦍"]  // ❌ No longer recommended
+             * const animals = useStorage((root) => root.animals);                    // ✅ Do this instead
+             *
+             * @deprecated We no longer recommend using `useList`. Prefer `useStorage`
+             * for reading and `useMutation` for writing.
+             */
+            useList<TKey extends Extract<keyof TStorage, string>>(
+              key: TKey
+            ): TStorage[TKey];
 
-        //
-        // Legacy hooks
-        //
+            /**
+             * Returns the LiveMap associated with the provided key. If the LiveMap
+             * does not exist, a new empty LiveMap will be created. The hook triggers
+             * a re-render if the LiveMap is updated, however it does not triggers
+             * a re-render if a nested CRDT is updated.
+             *
+             * @param key The top-level storage key associated with the LiveMap
+             * @returns Returns the LiveMap instance at the storage key
+             *
+             * @example
+             * const shapesById = useMap("shapes");                   // ❌ No longer recommended
+             * const shapesById = useStorage((root) => root.shapes);  // ✅ Do this instead
+             *
+             * @deprecated We no longer recommend using `useMap`. Prefer `useStorage`
+             * for reading and `useMutation` for writing.
+             */
+            useMap<TKey extends Extract<keyof TStorage, string>>(
+              key: TKey
+            ): TStorage[TKey];
 
-        /**
-         * Returns the LiveList associated with the provided key. The hook triggers
-         * a re-render if the LiveList is updated, however it does not triggers
-         * a re-render if a nested CRDT is updated.
-         *
-         * @param key The top-level storage key associated with the LiveList
-         * @returns Returns the LiveList instance at the storage key
-         *
-         * @example
-         * const animals = useList("animals");  // e.g. [] or ["🦁", "🐍", "🦍"]  // ❌ No longer recommended
-         * const animals = useStorage((root) => root.animals);                    // ✅ Do this instead
-         *
-         * @deprecated We no longer recommend using `useList`. Prefer `useStorage`
-         * for reading and `useMutation` for writing.
-         */
-        useList<TKey extends Extract<keyof TStorage, string>>(
-          key: TKey
-        ): TStorage[TKey];
+            /**
+             * Returns the LiveObject associated with the provided key.
+             * The hook triggers a re-render if the LiveObject is updated, however it does not triggers a re-render if a nested CRDT is updated.
+             *
+             * @param key The top-level storage key associated with the LiveObject
+             * @returns Returns the LiveObject instance at the storage key
+             *
+             * @example
+             * const object = useObject("obj");                // ❌ No longer recommended
+             * const object = useStorage((root) => root.obj);  // ✅ Do this instead
+             *
+             * @deprecated We no longer recommend using `useObject`. Prefer `useStorage`
+             * for reading and `useMutation` for writing.
+             */
+            useObject<TKey extends Extract<keyof TStorage, string>>(
+              key: TKey
+            ): TStorage[TKey];
+          }
+      >;
+    }
+> & {
+  /**
+   * @private
+   *
+   * Private methods and variables used in the core internals, but as a user
+   * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
+   * will probably happen if you do.
+   */
+  readonly [kInternal]: PrivateRoomContextApi;
+};
 
-        /**
-         * Returns the LiveMap associated with the provided key. If the LiveMap
-         * does not exist, a new empty LiveMap will be created. The hook triggers
-         * a re-render if the LiveMap is updated, however it does not triggers
-         * a re-render if a nested CRDT is updated.
-         *
-         * @param key The top-level storage key associated with the LiveMap
-         * @returns Returns the LiveMap instance at the storage key
-         *
-         * @example
-         * const shapesById = useMap("shapes");                   // ❌ No longer recommended
-         * const shapesById = useStorage((root) => root.shapes);  // ✅ Do this instead
-         *
-         * @deprecated We no longer recommend using `useMap`. Prefer `useStorage`
-         * for reading and `useMutation` for writing.
-         */
-        useMap<TKey extends Extract<keyof TStorage, string>>(
-          key: TKey
-        ): TStorage[TKey];
-
-        /**
-         * Returns the LiveObject associated with the provided key.
-         * The hook triggers a re-render if the LiveObject is updated, however it does not triggers a re-render if a nested CRDT is updated.
-         *
-         * @param key The top-level storage key associated with the LiveObject
-         * @returns Returns the LiveObject instance at the storage key
-         *
-         * @example
-         * const object = useObject("obj");                // ❌ No longer recommended
-         * const object = useStorage((root) => root.obj);  // ✅ Do this instead
-         *
-         * @deprecated We no longer recommend using `useObject`. Prefer `useStorage`
-         * for reading and `useMutation` for writing.
-         */
-        useObject<TKey extends Extract<keyof TStorage, string>>(
-          key: TKey
-        ): TStorage[TKey];
-      }
-    >;
-  }
->;
-
-export type InternalRoomContextBundle<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json,
-  TThreadMetadata extends BaseMetadata,
-> = Resolve<
-  RoomContextBundle<
-    TPresence,
-    TStorage,
-    TUserMeta,
-    TRoomEvent,
-    TThreadMetadata
-  > & {
-    hasResolveMentionSuggestions: boolean;
-    useMentionSuggestions(search?: string): string[] | undefined;
-  }
->;
-
-type LiveblocksContextBundleShared = {
+/**
+ * Properties that are the same in LiveblocksContext and LiveblocksContext["suspense"].
+ */
+type LiveblocksContextBundleCommon = {
   /**
    * @beta
    *
@@ -1100,102 +1115,78 @@ type LiveblocksContextBundleShared = {
   useMarkAllInboxNotificationsAsRead(): () => void;
 };
 
-export type LiveblocksContextBundle<TUserMeta extends BaseUserMeta> = Resolve<
-  LiveblocksContextBundleShared & {
-    /**
-     * @beta
-     *
-     * Returns the inbox notifications for the current user.
-     *
-     * @example
-     * const { inboxNotifications, error, isLoading, loadMore } = useInboxNotifications();
-     */
-    useInboxNotifications(): InboxNotificationsState;
-
-    /**
-     * @beta
-     *
-     * Returns the number of unread inbox notifications for the current user.
-     *
-     * @example
-     * const unreadCount = useUnreadInboxNotificationsCount();
-     */
-    useUnreadInboxNotificationsCount(): number | null;
-
-    /**
-     * @beta
-     *
-     * Returns user info from a given user ID.
-     *
-     * @example
-     * const { user, error, isLoading } = useUser("user-id");
-     */
-    useUser(userId: string): UserState<TUserMeta["info"]>;
-
-    /**
-     * @internal
-     *
-     * Returns thread from cache.
-     *
-     * @example
-     * const thread = useThreadFromCache("th_xxx");
-     */
-    useThreadFromCache(threadId: string): ThreadData<BaseMetadata>;
-
-    suspense: Resolve<
-      LiveblocksContextBundleShared & {
-        /**
-         * @beta
-         *
-         * Returns the inbox notifications for the current user.
-         *
-         * @example
-         * const { inboxNotifications, error, isLoading, loadMore } = useInboxNotifications();
-         */
-        useInboxNotifications(): InboxNotificationsStateSuccess;
-
-        /**
-         * @beta
-         *
-         * Returns the number of unread inbox notifications for the current user.
-         *
-         * @example
-         * const unreadCount = useUnreadInboxNotificationsCount();
-         */
-        useUnreadInboxNotificationsCount(): number;
-
-        /**
-         * @beta
-         *
-         * Returns user info from a given user ID.
-         *
-         * @example
-         * const { user } = useUser("user-id");
-         */
-        useUser(userId: string): UserStateSuccess<TUserMeta["info"]>;
-      }
-    >;
-  }
->;
-
 /**
  * @private
+ *
+ * Private methods and variables used in the core internals, but as a user
+ * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
+ * will probably happen if you do.
  */
-type SharedContextBundleShared = {
-  SharedProvider(props: PropsWithChildren): JSX.Element;
+type PrivateLiveblocksContextApi = {
+  /**
+   * Returns thread from cache.
+   *
+   * @example
+   * const thread = useThreadFromCache("th_xxx");
+   */
+  useThreadFromCache(threadId: string): ThreadData<BaseMetadata>;
 };
 
-/**
- * @private
- */
-export type SharedContextBundle<TUserMeta extends BaseUserMeta> = Resolve<
-  SharedContextBundleShared & {
-    useUser(userId: string): UserState<TUserMeta["info"]>;
+export type LiveblocksContextBundle<TUserMeta extends BaseUserMeta> = Resolve<
+  LiveblocksContextBundleCommon &
+    Omit<SharedContextBundle<TUserMeta>, "suspense"> & {
+      /**
+       * @beta
+       *
+       * Returns the inbox notifications for the current user.
+       *
+       * @example
+       * const { inboxNotifications, error, isLoading, loadMore } = useInboxNotifications();
+       */
+      useInboxNotifications(): InboxNotificationsState;
 
-    suspense: Resolve<
-      SharedContextBundleShared & {
-        useUser(userId: string): UserStateSuccess<TUserMeta["info"]>;
-      }
-    >;
-  }
->;
+      /**
+       * @beta
+       *
+       * Returns the number of unread inbox notifications for the current user.
+       *
+       * @example
+       * const unreadCount = useUnreadInboxNotificationsCount();
+       */
+      useUnreadInboxNotificationsCount(): number | null;
+
+      suspense: Resolve<
+        LiveblocksContextBundleCommon &
+          SharedContextBundle<TUserMeta>["suspense"] & {
+            /**
+             * @beta
+             *
+             * Returns the inbox notifications for the current user.
+             *
+             * @example
+             * const { inboxNotifications, error, isLoading, loadMore } = useInboxNotifications();
+             */
+            useInboxNotifications(): InboxNotificationsStateSuccess;
+
+            /**
+             * @beta
+             *
+             * Returns the number of unread inbox notifications for the current user.
+             *
+             * @example
+             * const unreadCount = useUnreadInboxNotificationsCount();
+             */
+            useUnreadInboxNotificationsCount(): number;
+          }
+      >;
+    }
+> & {
+  /**
+   * @private
+   *
+   * Private methods and variables used in the core internals, but as a user
+   * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
+   * will probably happen if you do.
+   */
+  readonly [kInternal]: PrivateLiveblocksContextApi;
+};

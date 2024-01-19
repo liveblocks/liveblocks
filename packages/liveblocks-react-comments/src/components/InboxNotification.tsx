@@ -7,7 +7,11 @@ import type {
   ThreadData,
   ThreadInboxNotificationData,
 } from "@liveblocks/core";
-import { assertNever, getMentionedIdsFromCommentBody } from "@liveblocks/core";
+import {
+  assertNever,
+  getMentionedIdsFromCommentBody,
+  kInternal,
+} from "@liveblocks/core";
 import { useLiveblocksContextBundle } from "@liveblocks/react";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import type {
@@ -280,8 +284,9 @@ const ThreadInboxNotification = forwardRef<
   HTMLDivElement,
   InboxNotificationProps
 >(({ inboxNotification, ...props }, forwardedRef) => {
-  const { useThreadFromCache } = useLiveblocksContextBundle();
-
+  const {
+    [kInternal]: { useThreadFromCache },
+  } = useLiveblocksContextBundle();
   const thread = useThreadFromCache(inboxNotification.threadId);
 
   // [comments-unread] TODO: How do we get the current user ID?
