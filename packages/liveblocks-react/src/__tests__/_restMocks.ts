@@ -1,6 +1,6 @@
 import type {
   CommentData,
-  PartialInboxNotificationData,
+  InboxNotificationData,
   ThreadData,
 } from "@liveblocks/core";
 import type { ResponseResolver, RestContext, RestRequest } from "msw";
@@ -12,7 +12,7 @@ export function mockGetThreads(
     RestContext,
     {
       data: ThreadData<any>[];
-      inboxNotifications: any[];
+      inboxNotifications: InboxNotificationData[];
     }
   >
 ) {
@@ -28,7 +28,7 @@ export function mockGetThread(
     RestRequest<never, never>,
     RestContext,
     ThreadData<any> & {
-      inboxNotification?: PartialInboxNotificationData;
+      inboxNotification?: InboxNotificationData;
     }
   >
 ) {
@@ -70,6 +70,22 @@ export function mockMarkInboxNotificationsAsRead(
 ) {
   return rest.post(
     "https://api.liveblocks.io/v2/c/inbox-notifications/read",
+    resolver
+  );
+}
+
+export function mockGetInboxNotifications(
+  resolver: ResponseResolver<
+    RestRequest<never, never>,
+    RestContext,
+    {
+      threads: ThreadData<any>[];
+      inboxNotifications: InboxNotificationData[];
+    }
+  >
+) {
+  return rest.get(
+    "https://api.liveblocks.io/v2/c/inbox-notifications",
     resolver
   );
 }

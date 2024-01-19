@@ -68,8 +68,8 @@ import type {
 } from "./types/CommentReaction";
 import type * as DevTools from "./types/DevToolsTreeNode";
 import type {
-  PartialInboxNotificationData,
-  PartialInboxNotificationDataPlain,
+  InboxNotificationData,
+  InboxNotificationDataPlain,
 } from "./types/InboxNotificationData";
 import type {
   IWebSocket,
@@ -491,7 +491,7 @@ type CommentsApi<TThreadMetadata extends BaseMetadata = never> = {
    */
   getThreads(options?: GetThreadsOptions<TThreadMetadata>): Promise<{
     threads: ThreadData<TThreadMetadata>[];
-    inboxNotifications: PartialInboxNotificationData[];
+    inboxNotifications: InboxNotificationData[];
   }>;
 
   /**
@@ -500,7 +500,7 @@ type CommentsApi<TThreadMetadata extends BaseMetadata = never> = {
   getThread(options: { threadId: string }): Promise<
     | {
         thread: ThreadData<TThreadMetadata>;
-        inboxNotification?: PartialInboxNotificationData;
+        inboxNotification?: InboxNotificationData;
       }
     | undefined
   >;
@@ -1134,7 +1134,7 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     if (response.ok) {
       const json = await (response.json() as Promise<{
         data: ThreadDataPlain<TThreadMetadata>[];
-        inboxNotifications: PartialInboxNotificationDataPlain[];
+        inboxNotifications: InboxNotificationDataPlain[];
       }>);
 
       return {
@@ -1156,7 +1156,7 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     if (response.ok) {
       const json = await (response.json() as Promise<
         ThreadDataPlain<TThreadMetadata> & {
-          inboxNotification?: PartialInboxNotificationDataPlain;
+          inboxNotification?: InboxNotificationDataPlain;
         }
       >);
       const inboxNotification = json.inboxNotification

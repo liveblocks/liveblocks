@@ -127,27 +127,23 @@ export type InboxNotificationsStateLoading = {
   loadMore: () => void;
 };
 
-export type InboxNotificationsStateResolved<
-  TThreadMetadata extends BaseMetadata,
-> = {
+export type InboxNotificationsStateResolved = {
   isLoading: false;
-  inboxNotifications: InboxNotificationData<TThreadMetadata>[];
+  inboxNotifications: InboxNotificationData[];
   error?: Error;
   loadMore: () => void;
 };
 
-export type InboxNotificationsStateSuccess<
-  TThreadMetadata extends BaseMetadata,
-> = {
+export type InboxNotificationsStateSuccess = {
   isLoading: false;
-  inboxNotifications: InboxNotificationData<TThreadMetadata>[];
+  inboxNotifications: InboxNotificationData[];
   error?: never;
   loadMore: () => void;
 };
 
-export type InboxNotificationsState<TThreadMetadata extends BaseMetadata> =
+export type InboxNotificationsState =
   | InboxNotificationsStateLoading
-  | InboxNotificationsStateResolved<TThreadMetadata>;
+  | InboxNotificationsStateResolved;
 
 export type RoomNotificationSettingsStateLoading = {
   isLoading: true;
@@ -1104,10 +1100,7 @@ type LiveblocksContextBundleShared = {
   useMarkAllInboxNotificationsAsRead(): () => void;
 };
 
-export type LiveblocksContextBundle<
-  TUserMeta extends BaseUserMeta,
-  TThreadMetadata extends BaseMetadata,
-> = Resolve<
+export type LiveblocksContextBundle<TUserMeta extends BaseUserMeta> = Resolve<
   LiveblocksContextBundleShared & {
     /**
      * @beta
@@ -1117,7 +1110,7 @@ export type LiveblocksContextBundle<
      * @example
      * const { inboxNotifications, error, isLoading, loadMore } = useInboxNotifications();
      */
-    useInboxNotifications(): InboxNotificationsState<TThreadMetadata>;
+    useInboxNotifications(): InboxNotificationsState;
 
     /**
      * @beta
@@ -1139,6 +1132,16 @@ export type LiveblocksContextBundle<
      */
     useUser(userId: string): UserState<TUserMeta["info"]>;
 
+    /**
+     * @internal
+     *
+     * Returns thread from cache.
+     *
+     * @example
+     * const thread = useThreadFromCache("th_xxx");
+     */
+    useThreadFromCache(threadId: string): ThreadData<BaseMetadata>;
+
     suspense: Resolve<
       LiveblocksContextBundleShared & {
         /**
@@ -1149,7 +1152,7 @@ export type LiveblocksContextBundle<
          * @example
          * const { inboxNotifications, error, isLoading, loadMore } = useInboxNotifications();
          */
-        useInboxNotifications(): InboxNotificationsStateSuccess<TThreadMetadata>;
+        useInboxNotifications(): InboxNotificationsStateSuccess;
 
         /**
          * @beta

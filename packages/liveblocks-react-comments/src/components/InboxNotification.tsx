@@ -1,11 +1,14 @@
 "use client";
 
 import type {
+  BaseMetadata,
   CommentData,
   InboxNotificationData,
+  ThreadData,
   ThreadInboxNotificationData,
 } from "@liveblocks/core";
 import { assertNever, getMentionedIdsFromCommentBody } from "@liveblocks/core";
+import { useLiveblocksContextBundle } from "@liveblocks/react";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import type {
   ComponentProps,
@@ -210,9 +213,10 @@ function getUserIdsFromComments(comments: CommentData[]) {
 
 function generateThreadInboxNotificationContents(
   inboxNotification: ThreadInboxNotificationData,
+  thread: ThreadData<BaseMetadata>,
   userId: string
 ): ThreadInboxNotificationContents {
-  const unreadComments = inboxNotification.thread.comments.filter((comment) => {
+  const unreadComments = thread.comments.filter((comment) => {
     if (!comment.body) {
       return false;
     }
@@ -225,7 +229,7 @@ function generateThreadInboxNotificationContents(
 
   // If the thread is read, show the last comments.
   if (unreadComments.length === 0) {
-    const lastComments = inboxNotification.thread.comments
+    const lastComments = thread.comments
       .filter((comment) => comment.body)
       .slice(-THREAD_INBOX_NOTIFICATION_MAX_COMMENTS);
 
@@ -272,10 +276,15 @@ const ThreadInboxNotification = forwardRef<
   HTMLDivElement,
   InboxNotificationProps
 >(({ inboxNotification, ...props }, forwardedRef) => {
+  const { useThreadFromCache } = useLiveblocksContextBundle();
+
+  const thread = useThreadFromCache(inboxNotification.threadId);
+
   // [comments-unread] TODO: How do we get the current user ID?
   const { unread, date, aside, title, content } = useMemo(() => {
     const contents = generateThreadInboxNotificationContents(
       inboxNotification,
+      thread,
       "[comments-unread] TODO: get current user's ID"
     );
 
