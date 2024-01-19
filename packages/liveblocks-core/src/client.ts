@@ -3,7 +3,7 @@ import { createAuthManager } from "./auth-manager";
 import { isIdle } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
 import {
-  convertToPartialInboxNotificationData,
+  convertToInboxNotificationData,
   convertToThreadData,
 } from "./convert-plain-data";
 import type { LsonObject } from "./crdts/Lson";
@@ -661,7 +661,7 @@ function createInboxNotificationsApi(
     return {
       threads: json.threads.map((thread) => convertToThreadData(thread)),
       inboxNotifications: json.inboxNotifications.map((notification) =>
-        convertToPartialInboxNotificationData(notification)
+        convertToInboxNotificationData(notification)
       ),
     };
   }

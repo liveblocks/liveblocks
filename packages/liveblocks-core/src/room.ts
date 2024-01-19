@@ -10,7 +10,7 @@ import { ManagedSocket, newToLegacyStatus, StopRetrying } from "./connection";
 import {
   convertToCommentData,
   convertToCommentUserReaction,
-  convertToPartialInboxNotificationData,
+  convertToInboxNotificationData,
   convertToThreadData,
 } from "./convert-plain-data";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
@@ -1139,7 +1139,7 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
       return {
         threads: json.data.map((thread) => convertToThreadData(thread)),
         inboxNotifications: json.inboxNotifications.map((notification) =>
-          convertToPartialInboxNotificationData(notification)
+          convertToInboxNotificationData(notification)
         ),
       };
     } else if (response.status === 404) {
@@ -1159,7 +1159,7 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
         }
       >);
       const inboxNotification = json.inboxNotification
-        ? convertToPartialInboxNotificationData(json.inboxNotification)
+        ? convertToInboxNotificationData(json.inboxNotification)
         : undefined;
 
       return {
