@@ -135,18 +135,19 @@ interface CommentReactionProps extends ComponentPropsWithoutRef<"button"> {
   reaction: CommentReactionData;
 }
 
-function CommentMention({
+export function CommentMention({
   userId,
   className,
   ...props
 }: CommentBodyMentionProps & CommentMentionProps) {
-  const { useSelf } = useRoomContextBundle();
-  const self = useSelf();
+  // [comments-unread] TODO: Bring back `useSelf` once it can be used both in RoomProvider and LiveblocksProvider
+  // const { useSelf } = useRoomContextBundle();
+  // const self = useSelf();
 
   return (
     <CommentPrimitive.Mention
       className={classNames("lb-comment-mention", className)}
-      data-self={userId === self?.id ? "" : undefined}
+      // data-self={userId === self?.id ? "" : undefined}
       {...props}
     >
       {MENTION_CHARACTER}
@@ -155,7 +156,7 @@ function CommentMention({
   );
 }
 
-function CommentLink({
+export function CommentLink({
   href,
   children,
   className,

@@ -6,12 +6,19 @@ import type {
   ThreadInboxNotificationData,
 } from "@liveblocks/core";
 import { assertNever, getMentionedIdsFromCommentBody } from "@liveblocks/core";
-import type { ComponentPropsWithoutRef, ReactNode } from "react";
+import { TooltipProvider } from "@radix-ui/react-tooltip";
+import type {
+  ComponentProps,
+  ComponentPropsWithoutRef,
+  ReactNode,
+} from "react";
 import React, { forwardRef, useMemo } from "react";
 
 import { useOverrides } from "../overrides";
+import * as CommentPrimitive from "../primitives/Comment";
 import { Timestamp } from "../primitives/Timestamp";
 import { classNames } from "../utils/class-names";
+import { CommentLink, CommentMention } from "./Comment";
 import { Avatar, type AvatarProps } from "./internal/Avatar";
 import { List } from "./internal/List";
 import { User } from "./internal/User";
@@ -55,6 +62,12 @@ interface InboxNotificationLayoutProps
   interactive?: boolean;
 }
 
+type InboxNotificationAvatarProps = AvatarProps;
+
+interface InboxNotificationCommentProps extends ComponentProps<"div"> {
+  comment: CommentData;
+}
+
 const InboxNotificationLayout = forwardRef<
   HTMLDivElement,
   InboxNotificationLayoutProps
@@ -75,43 +88,92 @@ const InboxNotificationLayout = forwardRef<
     const $ = useOverrides();
 
     return (
-      <div
-        className={classNames("lb-root lb-inbox-notification", className)}
-        dir={$.dir}
-        data-unread={unread ? "" : undefined}
-        data-interactive={interactive ? "" : undefined}
-        {...props}
-        ref={forwardedRef}
-      >
-        <div className="lb-inbox-notification-aside">{aside}</div>
-        <div className="lb-inbox-notification-content">
-          <div className="lb-inbox-notification-header">
-            <span className="lb-inbox-notification-title">{title}</span>
-            <div className="lb-inbox-notification-details">
-              <span className="lb-inbox-notification-details-labels">
-                <Timestamp date={date} className="lb-inbox-notification-date" />
-                {unread && (
-                  <span
-                    className="lb-inbox-notification-unread-indicator"
-                    role="presentation"
+      <TooltipProvider>
+        <div
+          className={classNames("lb-root lb-inbox-notification", className)}
+          dir={$.dir}
+          data-unread={unread ? "" : undefined}
+          data-interactive={interactive ? "" : undefined}
+          {...props}
+          ref={forwardedRef}
+        >
+          <div className="lb-inbox-notification-aside">{aside}</div>
+          <div className="lb-inbox-notification-content">
+            <div className="lb-inbox-notification-header">
+              <span className="lb-inbox-notification-title">{title}</span>
+              <div className="lb-inbox-notification-details">
+                <span className="lb-inbox-notification-details-labels">
+                  <Timestamp
+                    date={date}
+                    className="lb-inbox-notification-date"
                   />
-                )}
-              </span>
+                  {unread && (
+                    <span
+                      className="lb-inbox-notification-unread-indicator"
+                      role="presentation"
+                    />
+                  )}
+                </span>
+              </div>
             </div>
+            <div className="lb-inbox-notification-body">{children}</div>
           </div>
-          <div className="lb-inbox-notification-body">{children}</div>
         </div>
-      </div>
+      </TooltipProvider>
     );
   }
 );
 
-function InboxNotificationAvatar({ className, ...props }: AvatarProps) {
+function InboxNotificationAvatar({
+  className,
+  ...props
+}: InboxNotificationAvatarProps) {
   return (
     <Avatar
       className={classNames("lb-inbox-notification-avatar", className)}
       {...props}
     />
+  );
+}
+
+function InboxNotificationComment({
+  comment,
+  className,
+  ...props
+}: InboxNotificationCommentProps) {
+  const $ = useOverrides();
+
+  return (
+    <div
+      className={classNames(
+        "lb-root lb-inbox-notification-comment lb-comment",
+        className
+      )}
+      {...props}
+    >
+      <div className="lb-comment-header">
+        <User className="lb-comment-author" userId={comment.userId} />
+      </div>
+      <div className="lb-comment-content">
+        {comment.body ? (
+          <>
+            <CommentPrimitive.Body
+              className="lb-comment-body"
+              body={comment.body}
+              components={{
+                Mention: CommentMention,
+                Link: CommentLink,
+              }}
+            />
+            {/* [comments-unread] TODO: Add reactions */}
+          </>
+        ) : (
+          <div className="lb-comment-body">
+            <p className="lb-comment-deleted">{$.COMMENT_DELETED}</p>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -231,11 +293,11 @@ const ThreadInboxNotification = forwardRef<
           </>
         );
         const content = (
-          <>
+          <div className="lb-inbox-notification-comments">
             {reversedComments.map((comment) => (
-              <p key={comment.id}>comment.id</p>
+              <InboxNotificationComment key={comment.id} comment={comment} />
             ))}
-          </>
+          </div>
         );
 
         return {
@@ -259,7 +321,14 @@ const ThreadInboxNotification = forwardRef<
             mentioned you on <span>Document</span>
           </>
         );
-        const content = <p key={mentionComment.id}>mentionComment.id</p>;
+        const content = (
+          <div className="lb-inbox-notification-comments">
+            <InboxNotificationComment
+              key={mentionComment.id}
+              comment={mentionComment}
+            />
+          </div>
+        );
 
         return {
           unread: contents.unread,

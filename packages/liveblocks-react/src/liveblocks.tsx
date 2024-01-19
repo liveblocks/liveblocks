@@ -44,7 +44,6 @@ export function useLiveblocksContextBundle() {
   return bundle;
 }
 
-// [comments-unread] TODO: Add `resolveUsers` option (share cache/deduplication with the room-based `resolveUsers` option)
 export function createLiveblocksContext<
   TUserMeta extends BaseUserMeta = BaseUserMeta,
   TThreadMetadata extends BaseMetadata = never,
