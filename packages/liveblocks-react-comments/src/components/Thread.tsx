@@ -231,11 +231,16 @@ export const Thread = forwardRef(
         return;
       }
 
-      return thread.comments.findIndex(
+      const firstUnreadCommentIndex = thread.comments.findIndex(
         (comment) =>
           (showDeletedComments ? true : comment.body) &&
-          comment.createdAt >= unreadSince
+          comment.createdAt > unreadSince
       );
+
+      return firstUnreadCommentIndex >= 0 &&
+        firstUnreadCommentIndex < thread.comments.length
+        ? firstUnreadCommentIndex
+        : undefined;
     }, [showDeletedComments, thread, unreadSince]);
 
     const stopPropagation = useCallback((event: SyntheticEvent) => {
