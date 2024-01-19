@@ -84,9 +84,11 @@ export type FetchStorageClientMsg = {
 export type FetchYDocClientMsg = {
   readonly type: ClientMsgCode.FETCH_YDOC;
   readonly vector: string; // base64 encoded stateVector a from yjs doc
+  readonly guid?: string; // an optional guid to identify a subdoc
 };
 
 export type UpdateYDocClientMsg = {
   readonly type: ClientMsgCode.UPDATE_YDOC;
   readonly update: string; // base64 encoded update from a yjs doc
+  readonly guid?: string; // an optional guid to identify a subdoc
 };

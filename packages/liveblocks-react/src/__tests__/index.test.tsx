@@ -53,7 +53,7 @@ afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 
 describe("RoomProvider", () => {
-  test("shouldInitiallyConnect equals false should not call the auth endpoint", () => {
+  test("autoConnect equals false should not call the auth endpoint", () => {
     const authEndpointMock = jest.fn();
     const client = createClient({
       authEndpoint: authEndpointMock,
@@ -62,11 +62,7 @@ describe("RoomProvider", () => {
     const { RoomProvider } = createRoomContext(client);
 
     render(
-      <RoomProvider
-        id="room"
-        initialPresence={{}}
-        shouldInitiallyConnect={false}
-      >
+      <RoomProvider id="room" initialPresence={{}} autoConnect={false}>
         <></>
       </RoomProvider>
     );
@@ -74,7 +70,7 @@ describe("RoomProvider", () => {
     expect(authEndpointMock).not.toBeCalled();
   });
 
-  test("shouldInitiallyConnect equals true should call the auth endpoint", () => {
+  test("autoConnect equals true should call the auth endpoint", () => {
     const authEndpointMock = jest.fn();
     const client = createClient({
       authEndpoint: authEndpointMock,
@@ -83,11 +79,7 @@ describe("RoomProvider", () => {
     const { RoomProvider } = createRoomContext(client);
 
     render(
-      <RoomProvider
-        id="room"
-        initialPresence={{}}
-        shouldInitiallyConnect={true}
-      >
+      <RoomProvider id="room" initialPresence={{}} autoConnect={true}>
         <></>
       </RoomProvider>
     );
@@ -448,14 +440,14 @@ describe("useThreads", () => {
         metadata: {},
         roomId: "room",
         type: "thread",
-        createdAt: "2021-10-06T01:45:56.558Z",
+        createdAt: new Date("2021-10-06T01:45:56.558Z"),
         comments: [],
       },
     ];
 
     server.use(
-      rest.get(
-        "https://api.liveblocks.io/v2/c/rooms/room/threads",
+      rest.post(
+        "https://api.liveblocks.io/v2/c/rooms/room/threads/search",
         (_, res, ctx) => {
           return res(
             ctx.json({

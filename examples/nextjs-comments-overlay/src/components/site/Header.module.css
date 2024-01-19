@@ -1,0 +1,45 @@
+.Header {
+  position: relative;
+  z-index: 1;
+  color: white;
+}
+
+.Header > div {
+  margin: 0 auto;
+  padding: 20px 16px;
+  max-width: 1200px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.HeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.HeaderLeft ul {
+  display: flex;
+  gap: 20px;
+}
+
+@media (max-width: 640px) {
+  .HeaderLeft ul {
+    display: none;
+  }
+}
+
+.HeaderLeft ul > li > a {
+  font-weight: 500;
+}
+
+.Header button {
+  background-color: #7af167;
+  color: black;
+  border-radius: 9999px;
+  height: 2.5rem;
+  padding: 0 16px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+}

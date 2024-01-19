@@ -1,10 +1,19 @@
-import React from "react";
-import Link from "next/link";
 import { createClient } from "@liveblocks/client";
+import { nn } from "@liveblocks/core";
 import { createRoomContext } from "@liveblocks/react";
+import Link from "next/link";
+import React from "react";
+
+import { getRoomFromUrl } from "../../utils";
 
 const client = createClient({
   authEndpoint: "/api/auth/access-token",
+
+  // @ts-expect-error - Hidden setting
+  baseUrl: nn(
+    process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
+    "Please specify NEXT_PUBLIC_LIVEBLOCKS_BASE_URL env var"
+  ),
 });
 
 const { RoomProvider, useMyPresence, useSelf, useOthers, useStatus } =
@@ -12,13 +21,7 @@ const { RoomProvider, useMyPresence, useSelf, useOthers, useStatus } =
 
 export default function Home() {
   React.useEffect(() => {
-    setText("e2e-modern-auth");
-    if (typeof window !== "undefined") {
-      const queryParam = window.location.search;
-      if (queryParam.split("room=").length > 1) {
-        setText(queryParam.split("room=")[1]);
-      }
-    }
+    setText(getRoomFromUrl());
   }, []);
 
   const [text, setText] = React.useState("");
@@ -29,8 +32,9 @@ export default function Home() {
       <h1>Auth sandbox</h1>
       <p>
         This page connects to a room using an <strong>access token</strong> with
-        permissions <code>session.allow("e2e-*", session.FULL_ACCESS)</code>{" "}
-        (see <code>/api/auth/acc-token</code> backend implementation).
+        permissions{" "}
+        <code>session.allow(&quot;e2e-*&quot;, session.FULL_ACCESS)</code> (see{" "}
+        <code>/api/auth/acc-token</code> backend implementation).
       </p>
       <hr />
       <div>

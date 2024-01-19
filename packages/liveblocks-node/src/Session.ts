@@ -1,5 +1,12 @@
+import type { IUserInfo, Json, JsonObject } from "@liveblocks/core";
+
 import type { AuthResponse } from "./client";
-import { assertNonEmpty, normalizeStatusCode } from "./utils";
+import {
+  assertNonEmpty,
+  normalizeStatusCode,
+  url,
+  type URLSafeString,
+} from "./utils";
 
 // As defined in the source of truth in ApiScope in
 // https://github.com/liveblocks/liveblocks-cloudflare/blob/main/src/security.ts
@@ -38,10 +45,7 @@ const FULL_ACCESS = Object.freeze(["room:write", "comments:write"] as const);
 
 const roomPatternRegex = /^[^*]{1,128}[*]?$/;
 
-type PostFn = (
-  path: `/${string}`,
-  json: Record<string, unknown>
-) => Promise<Response>;
+type PostFn = (path: URLSafeString, json: Json) => Promise<Response>;
 
 /**
  * Class to help you construct the exact permission set to grant a user, used
@@ -87,14 +91,14 @@ export class Session {
   /** @internal */
   private _userId: string;
   /** @internal */
-  private _userInfo?: unknown;
+  private _userInfo?: IUserInfo;
   /** @internal */
   private _sealed = false;
   /** @internal */
   private readonly _permissions: Map<string, Set<Permission>> = new Map();
 
   /** @internal */
-  constructor(postFn: PostFn, userId: string, userInfo?: unknown) {
+  constructor(postFn: PostFn, userId: string, userInfo?: IUserInfo) {
     assertNonEmpty(userId, "userId"); // TODO: Check if this is a legal userId value too
 
     this._postFn = postFn;
@@ -159,7 +163,7 @@ export class Session {
   }
 
   /** @internal - For unit tests only */
-  public serializePermissions(): Record<string, unknown> {
+  public serializePermissions(): JsonObject {
     return Object.fromEntries(
       Array.from(this._permissions.entries()).map(([pat, perms]) => [
         pat,
@@ -183,7 +187,7 @@ export class Session {
     }
 
     try {
-      const resp = await this._postFn("/v2/authorize-user", {
+      const resp = await this._postFn(url`/v2/authorize-user`, {
         // Required
         userId: this._userId,
         permissions: this.serializePermissions(),

@@ -3,8 +3,8 @@
   import { onDestroy, onMount } from "svelte";
   import App from "../components/App.svelte";
 
-  let client: Client;
   let room: Room;
+  let leave: () => void;
   let roomId = "sveltekit-live-avatars";
 
   // Presence represents the properties that will exist on every User in the
@@ -37,24 +37,25 @@
   // type RoomEvent = {};
 
   // Set up the client on load
-  // Check inside src/routes/api/auth.ts for the serverless function
+  // Check inside src/routes/api/liveblocks-auth.ts for the serverless function
   onMount(() => {
     overrideRoomId();
 
-    client = createClient({
-      authEndpoint: "/api/auth",
+    const client = createClient({
+      authEndpoint: "/api/liveblocks-auth",
     });
 
-    room = client.enter<Presence, Storage /* UserMeta, RoomEvent */>(roomId, {
+    const info = client.enterRoom<Presence, Storage /* UserMeta, RoomEvent */>(roomId, {
       initialPresence: {},
       initialStorage: {},
     });
+
+    room = info.room;
+    leave = info.leave;
   });
 
   onDestroy(() => {
-    if (client && room) {
-      client.leave(roomId);
-    }
+    leave?.();
   });
 
   /**

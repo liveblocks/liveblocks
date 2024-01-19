@@ -61,8 +61,6 @@ jobs:
         run: npm run lint:package -- --filter ${{ matrix.pkg }}
 
   e2e-tests:
-    # TODO(nvie) Re-enable these soon, after making these more robust
-    if: ${{ false }}
     runs-on: ubuntu-latest
 
     strategy:
@@ -73,10 +71,10 @@ jobs:
 
     env:
       LIVEBLOCKS_SECRET_KEY: ${{ secrets.E2E_TEST_LIVEBLOCKS_SECRET_KEY }}
-      LIVEBLOCKS_SERVER: ${{ secrets.E2E_TEST_LIVEBLOCKS_SERVER }}
-      LIVEBLOCKS_AUTHORIZE_ENDPOINT:
-        ${{ secrets.E2E_TEST_LIVEBLOCKS_AUTHORIZE_ENDPOINT }}
       NEXT_PUBLIC_GITHUB_SHA: ${{ github.sha }}
+      NEXT_PUBLIC_LIVEBLOCKS_BASE_URL: ${{ vars.E2E_TEST_LIVEBLOCKS_BASE_URL }}
+      NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY:
+        ${{ secrets.E2E_TEST_LIVEBLOCKS_PUBLIC_KEY }}
 
     steps:
       - name: Checkout
@@ -99,7 +97,7 @@ jobs:
         run: npm run test -- --filter @liveblocks/next-sandbox
 
       - uses: actions/upload-artifact@v2
-        if: always()
+        if: failure()
         with:
           name: playwright-report
           path: e2e/next-sandbox/playwright-report

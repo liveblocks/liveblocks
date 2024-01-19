@@ -16,7 +16,7 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
  * https://join.team/liveblocks ;)
  */
 
-export type { Client } from "./client";
+export type { Client, EnterOptions } from "./client";
 export { createClient } from "./client";
 export type { BaseAuthResult, Delegates } from "./connection";
 export type {
@@ -24,7 +24,7 @@ export type {
   LostConnectionEvent,
   Status,
 } from "./connection";
-export { isLiveNode } from "./crdts/liveblocks-helpers";
+export { cloneLson, isLiveNode } from "./crdts/liveblocks-helpers";
 export { LiveList } from "./crdts/LiveList";
 export { LiveMap } from "./crdts/LiveMap";
 export { LiveObject } from "./crdts/LiveObject";
@@ -75,14 +75,17 @@ export { makePoller } from "./lib/Poller";
 export { asPos, makePosition } from "./lib/position";
 export type { Resolve } from "./lib/Resolve";
 export { shallow } from "./lib/shallow";
+export { stringify } from "./lib/stringify";
+export type { Brand } from "./lib/utils";
 export {
   b64decode,
   isPlainObject,
+  raise,
   tryParseJson,
   withTimeout,
 } from "./lib/utils";
 export type { CustomAuthenticationResult } from "./protocol/Authentication";
-export type { BaseUserMeta } from "./protocol/BaseUserMeta";
+export type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 export type {
   BroadcastEventClientMsg,
   ClientMsg,
@@ -95,20 +98,18 @@ export type {
 export { ClientMsgCode } from "./protocol/ClientMsg";
 export type {
   AckOp,
-  CreateChildOp,
   CreateListOp,
   CreateMapOp,
   CreateObjectOp,
   CreateOp,
   CreateRegisterOp,
-  CreateRootObjectOp,
   DeleteCrdtOp,
   DeleteObjectKeyOp,
   Op,
   SetParentKeyOp,
   UpdateObjectOp,
 } from "./protocol/Op";
-export { OpCode } from "./protocol/Op";
+export { ackOp, OpCode } from "./protocol/Op";
 export type {
   IdTuple,
   SerializedChild,
@@ -152,7 +153,7 @@ export type {
 } from "./types/IWebSocket";
 export { WebsocketCloseCodes } from "./types/IWebSocket";
 export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
-export type { Others } from "./types/Others";
+export type { Others, OthersEvent } from "./types/Others";
 export type {
   PlainLson,
   PlainLsonFields,
@@ -185,12 +186,30 @@ import type * as DevTools from "./types/DevToolsTreeNode";
 export type { DevTools };
 
 // Comments
-export type { CommentsApi } from "./comments";
-export { createCommentsApi } from "./comments";
+export type { CommentsApi, GetThreadsOptions } from "./comments";
+export { CommentsApiError, createCommentsApi } from "./comments";
+export type {
+  CommentBodyLinkElementArgs,
+  CommentBodyMentionElementArgs,
+  CommentBodyParagraphElementArgs,
+  CommentBodyResolveUsersArgs,
+  CommentBodyTextElementArgs,
+  StringifyCommentBodyElements,
+  StringifyCommentBodyOptions,
+} from "./comments/comment-body";
+export {
+  convertToCommentData,
+  convertToCommentUserReaction,
+  convertToThreadData,
+  getMentionedIdsFromCommentBody,
+  stringifyCommentBody,
+} from "./comments/comment-body";
 export type { BaseMetadata } from "./comments/types/BaseMetadata";
 export type {
   CommentBody,
+  CommentBodyBlockElement,
   CommentBodyElement,
+  CommentBodyInlineElement,
   CommentBodyLink,
   CommentBodyMention,
   CommentBodyParagraph,
@@ -198,6 +217,11 @@ export type {
 } from "./comments/types/CommentBody";
 export type {
   CommentData,
+  CommentDataPlain,
   CommentReaction,
 } from "./comments/types/CommentData";
-export type { ThreadData } from "./comments/types/ThreadData";
+export type {
+  CommentUserReaction,
+  CommentUserReactionPlain,
+} from "./comments/types/CommentReaction";
+export type { ThreadData, ThreadDataPlain } from "./comments/types/ThreadData";

@@ -1,0 +1,97 @@
+.threadList {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.thread, .composer {
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.composer {
+  margin-bottom: var(--space-8);
+}
+
+.thread[data-active="true"], .composer {
+  box-shadow: var(--shadow-sm), var(--shadow-lg);
+  transform: translateX(-30px);
+}
+
+.threadQuote {
+  display: inline-block;
+  margin: var(--space-8) var(--space-8) var(--space-1);
+  background: var(--comment-highlight-complete);
+  border-left: 2px solid var(--comment-highlight-complete-border);
+  padding: var(--space-1) var(--space-4);
+}
+
+.noComments {
+  color: var(--color-text-lighter);
+  padding-top: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  user-select: none;
+  margin-left: var(--space-4);
+}
+
+.noCommentsHeader {
+  color: var(--color-text-light);
+  font-weight: 600;
+  font-size: var(--size-lg);
+}
+
+.noCommentsButton {
+  float: left;
+  border: 1px solid var(--color-border-contrasted);
+  padding: var(--space-4);
+  margin-top: 5px;
+  margin-right: var(--space-6);
+  border-radius: var(--radius-sm);
+}
+
+.noCommentsButton svg {
+  opacity: 0.8;
+}
+
+@media (max-width: 1279px) {
+  .thread {
+    border: 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .thread[data-active="true"] {
+    transform: none;
+  }
+
+  .composer {
+    position: fixed;
+    right: 0;
+    top: var(--space-22);
+    width: 310px;
+  }
+
+  .noComments {
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+    border-radius: var(--radius-sm);
+    padding: var(--space-8);
+    margin-left: 0;
+  }
+
+  .noComments p {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .noCommentsButton {
+    margin-top: 0;
+  }
+}

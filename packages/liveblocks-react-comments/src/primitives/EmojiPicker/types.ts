@@ -11,6 +11,7 @@ export type Emoji = {
   category: number;
   name: string;
   version: number;
+  countryFlag?: true;
   tags?: string[];
 };
 

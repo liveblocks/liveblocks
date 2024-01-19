@@ -23,7 +23,6 @@ import styles from "./index.module.css";
 import Header from "../src/components/Header";
 import Card from "../src/components/Card";
 
-
 export default function Example() {
   const [myPresence, updateMyPresence] = useMyPresence();
   const others = useOthersMapped((user) => user.presence.selectedDataset);
@@ -254,4 +253,3 @@ export async function getStaticProps() {
 
   return { props: {} };
 }
-

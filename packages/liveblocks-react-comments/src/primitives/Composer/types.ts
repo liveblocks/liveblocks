@@ -81,14 +81,14 @@ export interface ComposerEditorComponents {
   Mention: ComponentType<ComposerEditorMentionProps>;
 
   /**
-   * The component used to display links.
-   */
-  Link: ComponentType<ComposerEditorLinkProps>;
-
-  /**
    * The component used to display mention suggestions.
    */
   MentionSuggestions: ComponentType<ComposerEditorMentionSuggestionsProps>;
+
+  /**
+   * The component used to display links.
+   */
+  Link: ComponentType<ComposerEditorLinkProps>;
 }
 
 export interface ComposerEditorProps
@@ -152,7 +152,7 @@ export interface ComposerEditorMentionSuggestionsWrapperProps {
   dir?: ComposerEditorProps["dir"];
   id: string;
   itemId: (userId?: string) => string | undefined;
-  mentionDraft: MentionDraft;
+  mentionDraft?: MentionDraft;
   userIds?: string[];
   selectedUserId?: string;
   setSelectedUserId: (userId: string) => void;

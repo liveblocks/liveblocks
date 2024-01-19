@@ -1,0 +1,27 @@
+.lb-root {
+  --lb-accent: rgb(var(--color-brand));
+}
+
+.lb-thread,
+.lb-composer {
+  border-radius: var(--radius);
+}
+
+.lb-composer {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.lb-tooltip,
+.lb-dropdown-item,
+.lb-composer-suggestions {
+  z-index: var(--z-above-comments-sidemenu);
+}
+
+.lb-portal {
+  z-index: var(--z-above-comments-sidemenu);
+}
+
+.lb-composer .lb-composer-editor {
+  outline: none;
+}

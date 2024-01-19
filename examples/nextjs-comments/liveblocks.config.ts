@@ -10,10 +10,14 @@ export const client = createClient({
 const {
   suspense: { RoomProvider, useThreads },
 } = createRoomContext(client, {
-  // Get the current user's info from their ID
-  resolveUser: async ({ userId }) => {
+  // Get users' info from their ID
+  resolveUsers: async ({ userIds }) => {
+    const searchParams = new URLSearchParams(
+      userIds.map((userId) => ["userIds", userId])
+    );
+
     try {
-      const response = await fetch(`/api/users?userId=${userId}`);
+      const response = await fetch(`/api/users?${searchParams}`);
 
       return response.json();
     } catch (error) {
@@ -23,8 +27,10 @@ const {
 
   // Find a list of users that match the current search term
   resolveMentionSuggestions: async ({ text }) => {
+    const searchParams = new URLSearchParams({ text });
+
     try {
-      const response = await fetch(`/api/users/search?text=${text}`);
+      const response = await fetch(`/api/users/search?${searchParams}`);
 
       return response.json();
     } catch (error) {

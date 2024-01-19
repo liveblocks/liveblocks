@@ -25,7 +25,7 @@ import {
 } from "../../utils/request-idle-callback";
 import { useTransition } from "../../utils/use-transition";
 import { visuallyHidden } from "../../utils/visually-hidden";
-import { Emoji as AccessibleEmoji } from "../internal/Emoji";
+import { Emoji as EmojiPrimitive } from "../internal/Emoji";
 import { EmojiPickerContext, useEmojiPicker } from "./contexts";
 import type {
   EmojiData,
@@ -346,7 +346,7 @@ const defaultContentComponents: EmojiPickerContentComponents = {
   Row: ({ children, attributes, ...props }) => <div {...props}>{children}</div>,
   Emoji: ({ emoji, ...props }) => (
     <button {...props}>
-      <AccessibleEmoji emoji={emoji} />
+      <EmojiPrimitive emoji={emoji} />
     </button>
   ),
   Loading: (props) => <div {...props} />,

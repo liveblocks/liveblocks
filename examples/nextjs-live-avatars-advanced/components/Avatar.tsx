@@ -127,7 +127,7 @@ function PictureCircle({
 }: Pick<PictureProps, "name" | "src" | "size" | "borderRadius">) {
   return (
     <Image
-      alt={name}
+      alt={name ?? ""}
       src={src}
       height={size}
       width={size}

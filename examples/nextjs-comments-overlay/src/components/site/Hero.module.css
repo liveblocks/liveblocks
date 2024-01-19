@@ -1,0 +1,96 @@
+.Hero {
+  height: 100vh;
+  background-color: black;
+  background-image: url("data:image/svg+xml,%3Csvg width='56' height='56' viewBox='0 0 256 256' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='248' y='248' width='8' height='8' fill='white' fill-opacity='0.4'/%3E%3C/svg%3E%0A");
+  margin-top: -80px;
+}
+
+.HeroWrapper {
+  max-width: 1200px;
+  padding: 240px 40px 0;
+  position: relative;
+  width: 100%;
+  color: white;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.HeroSubtitle {
+  border-radius: 9999px;
+  backdrop-filter: blur(10px);
+  background: linear-gradient(
+    115deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  justify-content: center;
+  margin-bottom: var(--space-6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: var(--space-2) var(--space-6);
+}
+
+.HeroSubtitle [data-editable] {
+  font-size: var(--size-sm);
+  text-align: center;
+  max-width: 600px;
+  opacity: 0.7;
+}
+
+.HeroSubtitle svg path {
+  fill: currentColor;
+  opacity: 0.7;
+}
+
+.HeroTitle {
+  position: relative;
+  max-width: 860px;
+  font-size: 80px;
+  font-weight: 700;
+  font-family: var(--font-archivo);
+  text-align: center;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+}
+
+.HeroTitleOverlay {
+  position: absolute;
+  top: -5px;
+  bottom: -2px;
+  left: -14px;
+  right: -14px;
+  background: #7af167;
+  opacity: 0.3;
+}
+
+.HeroDescription {
+  font-size: var(--size-2xl);
+  opacity: 0.7;
+  text-align: center;
+  max-width: 600px;
+  margin-top: var(--space-4);
+}
+
+.HeroButtons {
+  margin-top: var(--space-10);
+  display: flex;
+  gap: var(--space-6);
+}
+
+.HeroScreenshot {
+  width: 100%;
+  aspect-ratio: 1/1;
+  background: linear-gradient(
+    115deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  margin-top: var(--space-18);
+  border-radius: 1rem;
+}

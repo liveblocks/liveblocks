@@ -33,7 +33,7 @@ function guessType(item: Y.Item): YType {
 }
 
 function getFormattedText(value: Y.Item): (object | string)[] {
-  const formatted = [];
+  const formatted: (object | string)[] = [];
   let n: Y.Item | null = value;
   while (n !== null) {
     if (!n.deleted) {

@@ -1,0 +1,43 @@
+.wrapper {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  flex: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  height: 60px;
+  background-color: var(--gray2);
+  font-size: 24px;
+  border-bottom: 1px solid var(--gray4);
+}
+
+.header > h1 {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.main {
+  flex: 1 1;
+  display: flex;
+  min-height: 0;
+}
+
+.videoPanel {
+  flex: 1 1;
+  overflow-y: auto;
+}
+
+.threadsPanel {
+  flex: 0 0;
+  min-width: 350px;
+  max-width: 100%;
+  background-color: var(--gray2);
+  border-left: 1px solid var(--gray4);
+  overflow-y: auto;
+}

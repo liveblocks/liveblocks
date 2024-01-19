@@ -9,7 +9,7 @@ import { AnimatePresence, motion } from "framer-motion";
  * The users avatar and name are not set via the `useMyPresence` hook like the cursors.
  * They are set from the authentication endpoint.
  *
- * See pages/api/auth.ts and https://liveblocks.io/docs/api-reference/liveblocks-node#authorize for more information
+ * See pages/api/liveblocks-auth.ts and https://liveblocks.io/docs/api-reference/liveblocks-node#authorize for more information
  */
 
 const MAX_OTHERS = 3;

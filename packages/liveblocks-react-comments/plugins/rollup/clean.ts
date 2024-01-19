@@ -6,13 +6,19 @@ interface Options {
   directory: string;
 }
 
+let hasRun = false;
+
 export function clean({ directory }: Options): Plugin {
   return {
     name: "clean",
     buildStart: {
       order: "pre",
       handler() {
-        fs.rmSync(path.resolve(directory), { recursive: true, force: true });
+        if (!hasRun) {
+          fs.rmSync(path.resolve(directory), { recursive: true, force: true });
+        }
+
+        hasRun = true;
       },
     },
   };

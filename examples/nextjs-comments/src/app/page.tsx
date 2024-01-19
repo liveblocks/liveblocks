@@ -6,6 +6,7 @@ import { RoomProvider, useThreads } from "../../liveblocks.config";
 import { Loading } from "../components/Loading";
 import { Composer, Thread } from "@liveblocks/react-comments";
 import { ClientSideSuspense } from "@liveblocks/react";
+import { ErrorBoundary } from "react-error-boundary";
 
 /**
  * Displays a list of threads, along with a composer for creating
@@ -30,9 +31,15 @@ export default function Page() {
 
   return (
     <RoomProvider id={roomId} initialPresence={{}}>
-      <ClientSideSuspense fallback={<Loading />}>
-        {() => <Example />}
-      </ClientSideSuspense>
+      <ErrorBoundary
+        fallback={
+          <div className="error">There was an error while getting threads.</div>
+        }
+      >
+        <ClientSideSuspense fallback={<Loading />}>
+          {() => <Example />}
+        </ClientSideSuspense>
+      </ErrorBoundary>
     </RoomProvider>
   );
 }

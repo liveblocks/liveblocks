@@ -24,7 +24,9 @@ type Presence = {
   } | null;
 };
 
-const room = client.enter<Presence>(roomId, {
+// If you no longer need the room (for example when you unmount your
+// component), make sure to call leave()
+const { room, leave } = client.enterRoom<Presence>(roomId, {
   initialPresence: { cursor: null },
 });
 
@@ -66,10 +68,9 @@ room.subscribe("others", (others, event) => {
   }
 });
 
-document.addEventListener("pointermove", (e) => {
-  e.preventDefault();
+document.addEventListener("pointermove", (event) => {
   room.updatePresence({
-    cursor: { x: Math.round(e.clientX), y: Math.round(e.clientY) },
+    cursor: { x: Math.round(event.clientX), y: Math.round(event.clientY) },
   });
 });
 

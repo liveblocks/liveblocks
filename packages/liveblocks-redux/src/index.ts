@@ -121,10 +121,12 @@ const internalEnhancer = <TState>(options: {
 
   return (createStore: any) => {
     return (reducer: any, initialState: any, enhancer: any) => {
-      let room: OpaqueRoom | null = null;
+      let maybeRoom: OpaqueRoom | null = null;
       let isPatching: boolean = false;
       let storageRoot: LiveObject<LsonObject> | null = null;
       let unsubscribeCallbacks: Array<() => void> = [];
+      let lastRoomId: string | null = null;
+      let lastLeaveFn: (() => void) | null = null;
 
       const newReducer = (state: any, action: any) => {
         switch (action.type) {
@@ -172,11 +174,16 @@ const internalEnhancer = <TState>(options: {
           default: {
             const newState = reducer(state, action);
 
-            if (room) {
+            if (maybeRoom) {
               isPatching = true;
-              updatePresence(room, state, newState, presenceMapping as any);
+              updatePresence(
+                maybeRoom,
+                state,
+                newState,
+                presenceMapping as any
+              );
 
-              room.batch(() => {
+              maybeRoom.batch(() => {
                 if (storageRoot) {
                   patchLiveblocksStorage(
                     storageRoot,
@@ -207,9 +214,15 @@ const internalEnhancer = <TState>(options: {
 
       const store = createStore(newReducer, initialState, enhancer);
 
-      function enterRoom(roomId: string) {
-        if (storageRoot) {
+      function enterRoom(newRoomId: string): void {
+        if (lastRoomId === newRoomId) {
           return;
+        }
+
+        lastRoomId = newRoomId;
+        if (lastLeaveFn !== null) {
+          // First leave the old room before entering a potential new one
+          lastLeaveFn();
         }
 
         const initialPresence = selectFields(
@@ -217,14 +230,17 @@ const internalEnhancer = <TState>(options: {
           presenceMapping
         ) as any;
 
-        room = client.enter(roomId, { initialPresence });
+        const { room, leave } = client.enterRoom(newRoomId, {
+          initialPresence,
+        });
+        maybeRoom = room as OpaqueRoom;
 
         unsubscribeCallbacks.push(
-          room.events.connection.subscribe(() => {
+          room.events.status.subscribe((status) => {
             store.dispatch({
               type: ACTION_TYPES.UPDATE_CONNECTION,
-              connection: room!.getConnectionState(),
-              status: room!.getStatus(),
+              status,
+              connection: room.getConnectionState(), // For backward-compatibility
             });
           })
         );
@@ -243,7 +259,7 @@ const internalEnhancer = <TState>(options: {
             if (isPatching === false) {
               store.dispatch({
                 type: ACTION_TYPES.PATCH_REDUX_STATE,
-                state: selectFields(room!.getPresence(), presenceMapping),
+                state: selectFields(room.getPresence(), presenceMapping),
               });
             }
           })
@@ -256,7 +272,7 @@ const internalEnhancer = <TState>(options: {
         void room.getStorage().then(({ root }) => {
           const updates: any = {};
 
-          room!.batch(() => {
+          maybeRoom!.batch(() => {
             for (const key in mapping) {
               const liveblocksStatePart = root.get(key);
 
@@ -276,7 +292,7 @@ const internalEnhancer = <TState>(options: {
 
           storageRoot = root;
           unsubscribeCallbacks.push(
-            room!.subscribe(
+            maybeRoom!.subscribe(
               root,
               (updates) => {
                 if (isPatching === false) {
@@ -294,26 +310,32 @@ const internalEnhancer = <TState>(options: {
             )
           );
         });
+
+        lastLeaveFn = () => {
+          for (const unsubscribe of unsubscribeCallbacks) {
+            unsubscribe();
+          }
+          unsubscribeCallbacks = [];
+
+          storageRoot = null;
+          maybeRoom = null;
+          isPatching = false;
+
+          lastRoomId = null;
+          lastLeaveFn = null;
+          leave();
+        };
       }
 
-      function leaveRoom(roomId: string) {
-        for (const unsubscribe of unsubscribeCallbacks) {
-          unsubscribe();
-        }
-
-        storageRoot = null;
-        room = null;
-        isPatching = false;
-        unsubscribeCallbacks = [];
-
-        client.leave(roomId);
+      function leaveRoom() {
+        lastLeaveFn?.();
       }
 
       function newDispatch(action: any) {
         if (action.type === ACTION_TYPES.ENTER) {
           enterRoom(action.roomId);
         } else if (action.type === ACTION_TYPES.LEAVE) {
-          leaveRoom(action.roomId);
+          leaveRoom();
         } else {
           store.dispatch(action);
         }
@@ -337,8 +359,7 @@ export const actions = {
    */
   enterRoom,
   /**
-   * Leaves a room and stops sync it with Redux state.
-   * @param roomId The id of the room
+   * Leaves the currently entered room and stops sync it with Redux state.
    */
   leaveRoom,
 };
@@ -353,14 +374,10 @@ function enterRoom(roomId: string): {
   };
 }
 
-function leaveRoom(roomId: string): {
+function leaveRoom(): {
   type: string;
-  roomId: string;
 } {
-  return {
-    type: ACTION_TYPES.LEAVE,
-    roomId,
-  };
+  return { type: ACTION_TYPES.LEAVE };
 }
 
 /**

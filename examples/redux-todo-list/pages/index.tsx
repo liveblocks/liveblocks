@@ -43,7 +43,7 @@ export default function TodoApp() {
     dispatch(actions.enterRoom(roomId));
 
     return () => {
-      dispatch(actions.leaveRoom(roomId));
+      dispatch(actions.leaveRoom());
     };
   }, [dispatch]);
 

@@ -37,5 +37,6 @@ export function toAbsoluteUrl(url: string): string | undefined {
     // If the URL starts with "www.", prepend "https://"
     return "https://" + url;
   }
+
   return;
 }

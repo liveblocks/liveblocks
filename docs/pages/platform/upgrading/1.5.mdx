@@ -1,0 +1,93 @@
+---
+meta:
+  title: "Upgrading to 1.5"
+  parentTitle: "Upgrading"
+  description: "Guide to upgrade to Liveblocks version 1.5"
+---
+
+There’s a small breaking changes in this update, as we’re introducing a better
+API to enter and leave rooms. If you’re calling `client.enter()` or
+`client.leave()` in your application, or using our Zustand or Redux packages, we
+recommend you read on.
+
+## How to upgrade? [#how]
+
+You can upgrade to 1.5 by downloading the latest version of each Liveblocks
+package you’re using, for example in a React app:
+
+```bash
+npm install @liveblocks/client@latest @liveblocks/node@latest @liveblocks/react@latest
+```
+
+<Banner title="Update every Liveblocks package">
+
+If you’re using any other Liveblocks packages make sure to update those too.
+
+</Banner>
+
+## Recommended: new enter/leave API
+
+Until now, the API to manually enter a Room using the client looked like the
+following:
+
+```tsx
+// ❌ We recommend you stop using this API
+const room = client.enter("my-room", options);
+
+// Then later, when unmounting
+client.leave("my-room");
+```
+
+These APIs will remain supported and unchanged, but starting with Liveblocks
+1.5, there is a new preferred API, which we recommend you switch to:
+
+```tsx
+// ✅ Prefer this API instead
+const { room, leave } = client.enterRoom("my-room", options);
+
+// Then later, when unmounting
+leave();
+```
+
+We’ve changed this API to return a new “leave” function every time a room
+reference is requested. This allows sharing the same room connection with two or
+more parts of your application, without those parts competing for control of the
+room connection. The room connection will only be terminated after every `leave`
+function has been called.
+
+This enables more advanced use cases such as supporting multiple `RoomProvider`
+instances for the same room ID, in different parts of your application, or using
+our React package for one part of your application, while using a Zustand store
+for another.
+
+## Upgrading for Zustand users
+
+If you’re using our Zustand package, there’s a breaking change—you no longer
+need to pass the room ID to leave the room:
+
+```tsx
+const {
+  liveblocks: { leaveRoom },
+} = useStore();
+
+// ❌ Before
+leaveRoom("my-room-name");
+
+// ✅ After
+leaveRoom();
+```
+
+## Upgrading for Redux users
+
+If you’re using our Redux package, there’s a similar breaking change—you no
+longer need to pass the room ID to leave the room:
+
+```tsx
+const dispatch = useDispatch();
+
+// ❌ Before
+dispatch(actions.leaveRoom("my-room-name"));
+
+// ✅ After
+dispatch(actions.leaveRoom());
+```

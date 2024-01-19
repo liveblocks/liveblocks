@@ -49,7 +49,7 @@ collaboration to your JavaScript application using the APIs from the
       To create a real-time experience, multiple users must be connected to the same room.
 
       ```js file="room.js"
-      const room = client.enter("my-room", { initialPresence: {} });
+      const { room, leave } = client.enterRoom("my-room", { initialPresence: {} });
       ```
 
     </StepContent>

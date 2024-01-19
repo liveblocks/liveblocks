@@ -142,6 +142,7 @@ function makeRoom(roomId: string): Room {
     others: [],
     customEvents: [],
     clearCustomEvents() {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- `this` is inferred as "any" here
       this.customEvents = [];
     },
     ydoc: new Y.Doc(),
@@ -417,7 +418,7 @@ export function useCustomEvents(): [
   const clearEvents = useCallback(() => {
     getRoom(currentRoomId)?.clearCustomEvents();
     getRoomHub(currentRoomId)?.onCustomEvent.notify();
-  }, []);
+  }, [currentRoomId]);
   return [events, clearEvents];
 }
 

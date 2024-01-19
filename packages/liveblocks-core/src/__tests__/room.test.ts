@@ -1,7 +1,9 @@
 import { nn } from "..";
 import type { AuthValue } from "../auth-manager";
 import { StopRetrying } from "../connection";
+import { DEFAULT_BASE_URL } from "../constants";
 import { LiveList } from "../crdts/LiveList";
+import { LiveMap } from "../crdts/LiveMap";
 import { LiveObject } from "../crdts/LiveObject";
 import type { LsonObject } from "../crdts/Lson";
 import type { StorageUpdate } from "../crdts/StorageUpdates";
@@ -58,7 +60,7 @@ const defaultRoomConfig: RoomConfig = {
   roomId: "room-id",
   throttleDelay: THROTTLE_DELAY,
   lostConnectionTimeout: 99999,
-  liveblocksServer: "wss://live.liveblocks.io/v7",
+  baseUrl: DEFAULT_BASE_URL,
   delegates: {
     authenticate: () => {
       return Promise.resolve({ publicApiKey: "pk_123", type: "public" });
@@ -953,6 +955,56 @@ describe("room", () => {
     expect(room.history.canUndo()).toBe(false);
   });
 
+  test("missing storage keys are properly initialized using initialStorage, even when they are already part of the storage tree", async () => {
+    const initialPresence = {};
+    const initialStorage = {
+      list: new LiveList([13, 42]),
+      map: new LiveMap([["a" as string, 1 as number]]),
+      obj: new LiveObject({ x: 0 }),
+    };
+
+    // Create the same room instance twice (using the same, global,
+    // initialStorage instance)
+    for (let i = 0; i < 2; i++) {
+      const { room, wss } = createTestableRoom(
+        initialPresence,
+        undefined,
+        undefined,
+        undefined,
+        initialStorage
+      );
+      wss.onConnection((conn) => {
+        conn.server.send(
+          serverMessage({
+            type: ServerMsgCode.INITIAL_STORAGE_STATE,
+            items: [["root", { type: CrdtType.OBJECT, data: {} }]],
+            //                                              ^^
+            //                                   NOTE: Storage is initially
+            //                                   empty, so initialStorage keys
+            //                                   will get added
+          })
+        );
+      });
+      room.connect();
+      try {
+        const { root } = await room.getStorage();
+        expect(root.toImmutable()).toEqual({
+          list: [13, 42],
+          map: new Map([["a", 1]]),
+          obj: { x: 0 },
+        });
+
+        // Now start mutating these Live structures (the point being that those
+        // mutations should not be observable in the second loop)
+        root.get("list").push(13);
+        root.get("map").set("b", 2);
+        root.get("obj").set("x", 42);
+      } finally {
+        room.destroy();
+      }
+    }
+  });
+
   test("storage should be initialized properly", async () => {
     const { room, wss } = createTestableRoom({});
 
@@ -990,6 +1042,40 @@ describe("room", () => {
 
     expect(room.__internal.presenceBuffer).toEqual({ x: 1 });
     expect(room.getPresence()).toEqual({ x: 1 });
+  });
+
+  test("pausing history twice is a no-op", async () => {
+    const { room, root } = await prepareDisconnectedStorageUpdateTest<{
+      items: LiveList<LiveObject<Record<string, number>>>;
+    }>([
+      createSerializedObject("0:0", {}),
+      createSerializedList("0:1", "0:0", "items"),
+      createSerializedObject("0:2", {}, "0:1", FIRST_POSITION),
+    ]);
+
+    const items = root.get("items");
+
+    room.history.pause();
+    nn(items.get(0)).set("a", 1);
+    room.history.pause(); // Pausing again should be a no-op!
+    nn(items.get(0)).set("b", 2);
+    room.history.pause(); // Pausing again should be a no-op!
+    room.history.resume();
+    room.history.resume(); // Resuming again should also be a no-op!
+
+    expect(items.toImmutable()).toEqual([{ a: 1, b: 2 }]);
+    expect(room.history.canUndo()).toBe(true);
+    expect(room.history.canRedo()).toBe(false);
+    room.history.undo();
+
+    expect(items.toImmutable()).toEqual([{}]);
+    expect(room.history.canUndo()).toBe(false);
+    expect(room.history.canRedo()).toBe(true);
+    room.history.redo();
+
+    expect(items.toImmutable()).toEqual([{ a: 1, b: 2 }]);
+    expect(room.history.canUndo()).toBe(true);
+    expect(room.history.canRedo()).toBe(false);
   });
 
   test("undo redo batch", async () => {

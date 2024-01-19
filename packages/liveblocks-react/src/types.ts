@@ -7,7 +7,7 @@ import type {
   LiveObject,
   LostConnectionEvent,
   LsonObject,
-  Others,
+  OthersEvent,
   Room,
   Status,
   User,
@@ -31,14 +31,32 @@ import type {
   EditThreadMetadataOptions,
   ThreadsState,
   ThreadsStateSuccess,
+  UseThreadsOptions,
 } from "./comments/CommentsRoom";
 
-export type ResolveUserOptions = {
-  userId: string;
+export type PromiseOrNot<T> = T | Promise<T>;
+
+export type ResolveUsersArgs = {
+  /**
+   * The ID of the current room.
+   */
+  roomId: string;
+
+  /**
+   * The IDs of the users to resolve.
+   */
+  userIds: string[];
 };
 
-export type ResolveMentionSuggestionsOptions = {
+export type ResolveMentionSuggestionsArgs = {
+  /**
+   * The ID of the current room.
+   */
   roomId: string;
+
+  /**
+   * The text to search for.
+   */
   text: string;
 };
 
@@ -84,6 +102,8 @@ export type RoomProviderProps<
      * meaning the RoomProvider tries to connect to Liveblocks servers
      * only on the client side.
      */
+    autoConnect?: boolean;
+    /** @deprecated Renamed to `autoConnect` */
     shouldInitiallyConnect?: boolean;
 
     /**
@@ -122,7 +142,7 @@ export type MutationContext<
 > = {
   storage: LiveObject<TStorage>;
   self: User<TPresence, TUserMeta>;
-  others: Others<TPresence, TUserMeta>;
+  others: readonly User<TPresence, TUserMeta>[];
   setMyPresence: (
     patch: Partial<TPresence>,
     options?: { addToHistory: boolean }
@@ -186,6 +206,22 @@ type RoomContextBundleShared<
   useBroadcastEvent(): (event: TRoomEvent, options?: BroadcastOptions) => void;
 
   /**
+   * Get informed when users enter or leave the room, as an event.
+   *
+   * @example
+   * useOthersListener({ type, user, others }) => {
+   *   if (type === 'enter') {
+   *     // `user` has joined the room
+   *   } else if (type === 'leave') {
+   *     // `user` has left the room
+   *   }
+   * })
+   */
+  useOthersListener(
+    callback: (event: OthersEvent<TPresence, TUserMeta>) => void
+  ): void;
+
+  /**
    * Get informed when reconnecting to the Liveblocks servers is taking
    * longer than usual. This typically is a sign of a client that has lost
    * internet connectivity.
@@ -210,7 +246,8 @@ type RoomContextBundleShared<
   ): void;
 
   /**
-   * useErrorListener is a react hook that lets you react to potential room connection errors.
+   * useErrorListener is a React hook that allows you to respond to potential room
+   * connection errors.
    *
    * @example
    * useErrorListener(er => {
@@ -220,7 +257,8 @@ type RoomContextBundleShared<
   useErrorListener(callback: (err: Error) => void): void;
 
   /**
-   * useEventListener is a react hook that lets you react to event broadcasted by other users in the room.
+   * useEventListener is a React hook that allows you to respond to events broadcast
+   * by other users in the room.
    *
    * @example
    * useEventListener(({ connectionId, event }) => {
@@ -375,7 +413,7 @@ type RoomContextBundleShared<
    *   </>
    * )
    */
-  useOthers(): Others<TPresence, TUserMeta>;
+  useOthers(): readonly User<TPresence, TUserMeta>[];
 
   /**
    * Extract arbitrary data based on all the users currently connected in the
@@ -399,7 +437,7 @@ type RoomContextBundleShared<
    *
    */
   useOthers<T>(
-    selector: (others: Others<TPresence, TUserMeta>) => T,
+    selector: (others: readonly User<TPresence, TUserMeta>[]) => T,
     isEqual?: (prev: T, curr: T) => boolean
   ): T;
 
@@ -480,6 +518,7 @@ type RoomContextBundleShared<
    * @beta
    *
    * Returns a function that edits a thread's metadata.
+   * To delete an existing metadata property, set its value to `null`.
    *
    * @example
    * const editThreadMetadata = useEditThreadMetadata();
@@ -524,7 +563,6 @@ type RoomContextBundleShared<
   useDeleteComment(): (options: DeleteCommentOptions) => void;
 
   /**
-   * @internal
    * @beta
    *
    * Returns a function that adds a reaction from a comment.
@@ -536,7 +574,6 @@ type RoomContextBundleShared<
   useAddReaction(): (options: CommentReactionOptions) => void;
 
   /**
-   * @internal
    * @beta
    *
    * Returns a function that removes a reaction on a comment.
@@ -631,7 +668,9 @@ export type RoomContextBundle<
      * @example
      * const { threads, error, isLoading } = useThreads();
      */
-    useThreads(): ThreadsState<TThreadMetadata>;
+    useThreads(
+      options?: UseThreadsOptions<TThreadMetadata>
+    ): ThreadsState<TThreadMetadata>;
 
     /**
      * @beta
@@ -781,7 +820,9 @@ export type RoomContextBundle<
          * @example
          * const { threads } = useThreads();
          */
-        useThreads(): ThreadsStateSuccess<TThreadMetadata>;
+        useThreads(
+          options?: UseThreadsOptions<TThreadMetadata>
+        ): ThreadsStateSuccess<TThreadMetadata>;
 
         /**
          * @beta

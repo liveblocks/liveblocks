@@ -57,6 +57,7 @@ const CACHE_EMOJI_SESSION_METADATA_KEY = "lb-emoji-metadata";
 
 const EMOJI_DETECTION_CANVAS_WIDTH = 20;
 const EMOJI_DETECTION_CANVAS_HEIGHT = 25;
+const EMOJI_DETECTION_COUNTRY_FLAG = "🇫🇷";
 
 type EmojiMetadata = {
   emojisEtag: string | null;
@@ -65,6 +66,7 @@ type EmojiMetadata = {
 
 type EmojiSessionMetadata = {
   emojiVersion: number;
+  countryFlags: boolean;
 };
 
 function generateRangeIndices(start: number, end: number) {
@@ -143,6 +145,9 @@ async function fetchEmojibaseEtags(locale: EmojibaseLocale) {
 async function fetchEmojiData(locale: EmojibaseLocale): Promise<EmojiData> {
   const { emojis, emojisEtag, messages, messagesEtag } =
     await fetchEmojibaseData(locale);
+  const countryFlagsSubgroup = messages.subgroups.find(
+    (subgroup) => subgroup.key === "subdivision-flag"
+  );
 
   // Filter out component/modifier category and emojis
   const filteredGroups = messages.groups.filter(
@@ -161,13 +166,21 @@ async function fetchEmojiData(locale: EmojibaseLocale): Promise<EmojiData> {
     key: skinTone.key,
     name: capitalize(skinTone.message),
   }));
-  const compactEmojis = filteredEmojis.map((emoji) => ({
-    emoji: emoji.emoji,
-    category: emoji.group!,
-    version: emoji.version,
-    name: capitalize(emoji.label),
-    tags: emoji.tags,
-  }));
+  const compactEmojis = filteredEmojis.map((emoji) => {
+    const compactEmoji: Emoji = {
+      emoji: emoji.emoji,
+      category: emoji.group!,
+      version: emoji.version,
+      name: capitalize(emoji.label),
+      tags: emoji.tags,
+    };
+
+    if (countryFlagsSubgroup && emoji.subgroup === countryFlagsSubgroup.order) {
+      compactEmoji.countryFlag = true;
+    }
+
+    return compactEmoji;
+  });
 
   const emojiData = {
     emojis: compactEmojis,
@@ -249,7 +262,25 @@ function detectEmojiSupport(
   return true;
 }
 
-function detectEmojiVersion(emojis: Emoji[]): number {
+function getEmojiFontFamily() {
+  try {
+    const element = document.createElement("span");
+    element.style.display = "none";
+    element.dataset.emoji = "";
+
+    document.body.appendChild(element);
+
+    const computedFontFamily = window.getComputedStyle(element).fontFamily;
+
+    document.body.removeChild(element);
+
+    return computedFontFamily;
+  } catch {
+    return EMOJI_FONT_FAMILY;
+  }
+}
+
+function getEmojiSessionMetadata(emojis: Emoji[]): EmojiSessionMetadata {
   const versions = new Map<number, string>();
 
   for (const emoji of emojis) {
@@ -265,26 +296,37 @@ function detectEmojiVersion(emojis: Emoji[]): number {
     .getContext("2d", { willReadFrequently: true });
 
   if (!canvasContext) {
-    return descendingVersions[0];
+    return { emojiVersion: descendingVersions[0], countryFlags: true };
   }
 
   canvasContext.font = `${Math.floor(
     EMOJI_DETECTION_CANVAS_HEIGHT / 2
-  )}px ${EMOJI_FONT_FAMILY}`;
+  )}px ${getEmojiFontFamily()}`;
   canvasContext.textBaseline = "top";
   canvasContext.canvas.width = EMOJI_DETECTION_CANVAS_WIDTH * 2;
   canvasContext.canvas.height = EMOJI_DETECTION_CANVAS_HEIGHT;
+
+  const supportsCountryFlags = detectEmojiSupport(
+    canvasContext,
+    EMOJI_DETECTION_COUNTRY_FLAG
+  );
 
   for (const version of descendingVersions) {
     const emoji = versions.get(version)!;
     const isSupported = detectEmojiSupport(canvasContext, emoji);
 
     if (isSupported) {
-      return version;
+      return {
+        emojiVersion: version,
+        countryFlags: supportsCountryFlags,
+      };
     }
   }
 
-  return descendingVersions[0];
+  return {
+    emojiVersion: descendingVersions[0],
+    countryFlags: supportsCountryFlags,
+  };
 }
 
 export async function getEmojiData(locale: string): Promise<EmojiData> {
@@ -328,17 +370,22 @@ export async function getEmojiData(locale: string): Promise<EmojiData> {
     data = await fetchEmojiData(emojibaseLocale);
   }
 
-  const emojiVersion =
-    sessionMetadata?.emojiVersion ?? detectEmojiVersion(data.emojis);
-  setStorageItem(sessionStorage, CACHE_EMOJI_SESSION_METADATA_KEY, {
-    ...sessionMetadata,
-    emojiVersion,
-  });
+  const newSessionMetadata =
+    sessionMetadata ?? getEmojiSessionMetadata(data.emojis);
+  setStorageItem(
+    sessionStorage,
+    CACHE_EMOJI_SESSION_METADATA_KEY,
+    newSessionMetadata
+  );
 
   // Filter out unsupported emojis
-  const filteredEmojis = data.emojis.filter(
-    (emoji) => emoji.version <= emojiVersion
-  );
+  const filteredEmojis = data.emojis.filter((emoji) => {
+    const isSupportedVersion = emoji.version <= newSessionMetadata.emojiVersion;
+
+    return emoji.countryFlag
+      ? isSupportedVersion && newSessionMetadata.countryFlags
+      : isSupportedVersion;
+  });
 
   return {
     emojis: filteredEmojis,

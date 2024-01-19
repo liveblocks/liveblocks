@@ -56,7 +56,7 @@ We’d love to hear from you.
 
       onMount(() => {
         // Enter a multiplayer room
-        const room = client.enter(roomId, {
+        const { room, leave } = client.enterRoom(roomId, {
           initialPresence: {},
         });
 
@@ -82,12 +82,10 @@ We’d love to hear from you.
         return () => {
           binding.destroy();
           editor.dispose();
+          leave();
         };
       });
 
-      onDestroy(() => {
-        client.leave(roomId);
-      });
       </script>
 
       <div bind:this={element}></div>

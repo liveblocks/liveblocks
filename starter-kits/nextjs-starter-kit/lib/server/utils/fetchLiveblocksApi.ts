@@ -1,5 +1,5 @@
 import {
-  API_BASE_URL,
+  DEFAULT_BASE_URL,
   SECRET_API_KEY,
 } from "../../../liveblocks.server.config";
 import { ErrorData, FetchApiResult } from "../../../types";
@@ -29,7 +29,7 @@ export async function fetchLiveblocksApi<T = unknown>(
     };
   }
 
-  const url = `${API_BASE_URL}${urlEnd}`;
+  const url = new URL(urlEnd, DEFAULT_BASE_URL).toString();
 
   try {
     const response = await fetch(url, {

@@ -1,6 +1,12 @@
-import { LiveMap, LiveObject, createClient } from "@liveblocks/client";
+import {
+  LiveMap,
+  LiveObject,
+  ThreadData,
+  createClient,
+} from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 import Router from "next/router";
+import { getUsers } from "./lib/client";
 import { User } from "./types";
 
 // The location of the liveblocks custom API endpoints
@@ -78,12 +84,18 @@ export type UserMeta = {
   info: UserInfo;
 };
 
-// Optionally, the type of custom events broadcasted and listened for in this
+// Optionally, the type of custom events broadcast and listened for in this
 // room. Must be JSON-serializable.
 type RoomEvent = {
   type: "SHARE_DIALOG_UPDATE";
 };
 
+type ThreadMetadata = {
+  resolved: boolean;
+  highlightId: string;
+};
+
+export type CustomThreadData = ThreadData<ThreadMetadata>;
 export const {
   suspense: {
     RoomProvider,
@@ -92,12 +104,27 @@ export const {
     useHistory,
     useCanUndo,
     useCanRedo,
+    useCreateThread,
     useMutation,
     useOthers,
     useRoom,
     useSelf,
     useStorage,
+    useThreads,
     useUpdateMyPresence,
+    useUser,
   },
   /* ...all the other hooks you’re using... */
-} = createRoomContext<Presence, Storage, UserMeta, RoomEvent>(client);
+} = createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(
+  client,
+  {
+    async resolveUsers({ userIds }) {
+      const users = await getUsers({ userIds });
+      return users;
+    },
+    async resolveMentionSuggestions({ text }) {
+      const users = await getUsers({ search: text });
+      return users.map((user) => user.id);
+    },
+  }
+);

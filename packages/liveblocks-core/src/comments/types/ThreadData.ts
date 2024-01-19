@@ -1,17 +1,26 @@
 import type { BaseMetadata } from "./BaseMetadata";
-import type { CommentData } from "./CommentData";
+import type { CommentData, CommentDataPlain } from "./CommentData";
+import type { DateToString } from "./DateToString";
 
 /**
  * Represents a thread of comments.
  */
-export type ThreadData<ThreadMetadata extends BaseMetadata = never> = {
+export type ThreadData<TThreadMetadata extends BaseMetadata = never> = {
   type: "thread";
   id: string;
   roomId: string;
-  createdAt: string;
-  updatedAt?: string;
+  createdAt: Date;
+  updatedAt?: Date;
   comments: CommentData[];
-  metadata: [ThreadMetadata] extends [never]
+  metadata: [TThreadMetadata] extends [never]
     ? Record<string, never>
-    : ThreadMetadata;
+    : TThreadMetadata;
 };
+
+export type ThreadDataPlain<TThreadMetadata extends BaseMetadata = never> =
+  Omit<DateToString<ThreadData<TThreadMetadata>>, "comments" | "metadata"> & {
+    comments: CommentDataPlain[];
+    metadata: [TThreadMetadata] extends [never]
+      ? Record<string, never>
+      : TThreadMetadata;
+  };

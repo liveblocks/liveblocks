@@ -2,11 +2,10 @@ import type { LiveNode, Lson, LsonObject } from "../crdts/Lson";
 import { nn } from "../lib/assert";
 import type { JsonObject } from "../lib/Json";
 import { nanoid } from "../lib/nanoid";
+import { deepClone } from "../lib/utils";
 import type {
-  CreateChildOp,
   CreateObjectOp,
   CreateOp,
-  CreateRootObjectOp,
   DeleteObjectKeyOp,
   Op,
   UpdateObjectOp,
@@ -119,23 +118,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   }
 
   /** @internal */
-  _toOps(
-    parentId: string,
-    parentKey: string,
-    pool?: ManagedPool
-  ): CreateChildOp[];
-  /** @internal */
-  _toOps(
-    parentId?: undefined,
-    parentKey?: undefined,
-    pool?: ManagedPool
-  ): CreateOp[];
-  /** @internal */
-  _toOps(
-    parentId?: string,
-    parentKey?: string,
-    pool?: ManagedPool
-  ): CreateOp[] {
+  _toOps(parentId: string, parentKey: string, pool?: ManagedPool): CreateOp[] {
     if (this._id === undefined) {
       throw new Error("Cannot serialize item is not attached");
     }
@@ -143,18 +126,14 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     const opId = pool?.generateOpId();
 
     const ops: CreateOp[] = [];
-    const op: CreateObjectOp | CreateRootObjectOp =
-      parentId !== undefined && parentKey !== undefined
-        ? {
-            type: OpCode.CREATE_OBJECT,
-            id: this._id,
-            opId,
-            parentId,
-            parentKey,
-            data: {},
-          }
-        : // Root object
-          { type: OpCode.CREATE_OBJECT, id: this._id, opId, data: {} };
+    const op: CreateObjectOp = {
+      type: OpCode.CREATE_OBJECT,
+      id: this._id,
+      opId,
+      parentId,
+      parentKey,
+      data: {},
+    };
 
     ops.push(op);
 
@@ -215,7 +194,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   }
 
   /** @internal */
-  _attachChild(op: CreateChildOp, source: OpSource): ApplyResult {
+  _attachChild(op: CreateOp, source: OpSource): ApplyResult {
     if (this._pool === undefined) {
       throw new Error("Can't attach child if managed pool is not present");
     }
@@ -716,5 +695,16 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     return (
       process.env.NODE_ENV === "production" ? result : Object.freeze(result)
     ) as ToImmutable<O>;
+  }
+
+  clone(): LiveObject<O> {
+    return new LiveObject(
+      Object.fromEntries(
+        Array.from(this._map).map(([key, value]) => [
+          key,
+          isLiveStructure(value) ? value.clone() : deepClone(value),
+        ])
+      ) as O
+    );
   }
 }

@@ -12,12 +12,12 @@ const liveblocks = new Liveblocks({
 
 export async function POST(request: NextRequest) {
   // Get the current user's unique id from your database
-  const userId = Math.floor(Math.random() * 10000);
+  const userId = Math.floor(Math.random() * 10) % USER_INFO.length;
 
   // Create a session for the current user
   // userInfo is made available in Liveblocks presence hooks, e.g. useOthers
   const session = liveblocks.prepareSession(`user-${userId}`, {
-    userInfo: USER_INFO[Math.floor(Math.random() * 10) % USER_INFO.length],
+    userInfo: USER_INFO[userId],
   });
 
   // Give the user access to the room

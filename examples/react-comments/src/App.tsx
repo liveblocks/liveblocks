@@ -2,8 +2,7 @@ import { Suspense } from "react";
 import { Composer, Thread } from "@liveblocks/react-comments";
 import { RoomProvider, useThreads } from "../liveblocks.config";
 import { Loading } from "./components/Loading";
-import "@liveblocks/react-comments/styles.css";
-import "@liveblocks/react-comments/styles/dark/media-query.css";
+import { ErrorBoundary } from "react-error-boundary";
 
 /**
  * Displays a list of threads, along with a composer for creating
@@ -26,9 +25,15 @@ function Example() {
 export default function App({ roomId }: { roomId: string }) {
   return (
     <RoomProvider id={roomId} initialPresence={{}}>
-      <Suspense fallback={<Loading />}>
-        <Example />
-      </Suspense>
+      <ErrorBoundary
+        fallback={
+          <div className="error">There was an error while getting threads.</div>
+        }
+      >
+        <Suspense fallback={<Loading />}>
+          <Example />
+        </Suspense>
+      </ErrorBoundary>
     </RoomProvider>
   );
 }

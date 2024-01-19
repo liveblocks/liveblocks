@@ -29,12 +29,12 @@ function atobPolyfillMock(data: string): string {
 
 function enterAndLeave(options: ClientOptions) {
   const client = createClient(options);
-  client.enter("room", { initialPresence: {} });
+  const { room: _, leave } = client.enterRoom("room", { initialPresence: {} });
 
   // Entering starts asynchronous jobs in the background (timers, promises,
   // etc). Not leaving the room would leave those open handles dangling which
   // doesn't make Jest happy.
-  client.leave("room");
+  leave();
 }
 
 describe("createClient", () => {
@@ -89,7 +89,28 @@ describe("createClient", () => {
     }
   );
 
-  test("should not try to connect if withoutInitiallyConnecting is false", () => {
+  test("should not try to connect if autoConnect is false (new style)", () => {
+    const authMock = jest.fn();
+
+    const client = createClient({
+      authEndpoint: authMock,
+      polyfills: {
+        atob: atobPolyfillMock,
+      },
+    });
+
+    const { room: _, leave } = client.enterRoom("room", {
+      initialPresence: {},
+      autoConnect: false,
+    });
+    try {
+      expect(authMock).not.toHaveBeenCalled();
+    } finally {
+      leave();
+    }
+  });
+
+  test("should not try to connect if autoConnect is false (old style)", () => {
     const authMock = jest.fn();
 
     const client = createClient({
@@ -101,10 +122,76 @@ describe("createClient", () => {
 
     client.enter("room", {
       initialPresence: {},
-      shouldInitiallyConnect: false,
+      autoConnect: false,
     });
+    try {
+      expect(authMock).not.toHaveBeenCalled();
+    } finally {
+      client.leave("room");
+    }
+  });
 
-    expect(authMock).not.toHaveBeenCalled();
+  test("entering twice returns the same room (new style)", () => {
+    const authMock = jest.fn();
+
+    const client = createClient({
+      authEndpoint: authMock,
+      polyfills: {
+        atob: atobPolyfillMock,
+      },
+    });
+    const options = { initialPresence: {}, autoConnect: false };
+
+    const view1 = client.enterRoom("room", options);
+    const view2 = client.enterRoom("room", options);
+
+    // The returned room instance is the same one...
+    expect(view1.room).toBe(view2.room);
+
+    // Leaving once is not enough to tear down the room instance!
+    view1.leave();
+
+    // So entering it again will return the same room instance!
+    const view3 = client.enterRoom("room", options);
+    expect(view1.room).toBe(view3.room);
+
+    // Only once all the leave functions are called, the room is released
+    view1.leave();
+    view2.leave();
+    view3.leave();
+    view3.leave(); // Can be called multiple times, and is a no-op
+
+    // Meaning entering it again will create a new room instance
+    const view4 = client.enterRoom("room", options);
+    expect(view1.room).not.toBe(view4.room);
+
+    // Clean things up nicely before ending the test
+    view4.leave();
+  });
+
+  test("entering twice returns the same room (old style)", () => {
+    const authMock = jest.fn();
+
+    const client = createClient({
+      authEndpoint: authMock,
+      polyfills: {
+        atob: atobPolyfillMock,
+      },
+    });
+    const options = { initialPresence: {}, autoConnect: false };
+
+    const room1 = client.enter("room", options);
+    const room2 = client.enter("room", options);
+
+    expect(room1).toBe(room2);
+
+    // In the old style API, leaving once destroys the room instance
+    client.leave("room");
+
+    const room3 = client.enter("room", options);
+    expect(room1).not.toBe(room3);
+
+    client.leave("room");
   });
 
   test("should not throw if authEndpoint is string and fetch polyfill is defined", () => {
@@ -155,118 +242,164 @@ describe("createClient", () => {
         atob: atobPolyfillMock,
       },
     });
-    const room = client.enter("room", { initialPresence: {} });
 
-    // Room will fail to connect, and move to "closed" state, basically giving up reconnecting
-    await waitUntilStatus(room, "disconnected");
+    const { room, leave } = client.enterRoom("room", { initialPresence: {} });
+    try {
+      // Room will fail to connect, and move to "closed" state, basically giving up reconnecting
+      await waitUntilStatus(room, "disconnected");
 
-    expect(spy).toHaveBeenCalledWith(
-      "To use Liveblocks client in a non-dom environment with a url as auth endpoint, you need to provide a fetch polyfill."
-    );
-
-    // Clean things up
-    client.leave("room");
+      expect(spy).toHaveBeenCalledWith(
+        "To use Liveblocks client in a non-DOM environment with a url as auth endpoint, you need to provide a fetch polyfill."
+      );
+    } finally {
+      // Clean things up
+      leave();
+    }
   });
 
   test("should fail to connect and stop retrying if WebSocketPolyfill is not set", async () => {
     const spy = jest.spyOn(console, "error");
 
     const client = createClient({ authEndpoint: authEndpointCallback });
-    const room = client.enter("room", { initialPresence: {} });
+    const { room, leave } = client.enterRoom("room", { initialPresence: {} });
+    try {
+      // Room will fail to connect, and move to "closed" state, basically giving up reconnecting
+      await waitUntilStatus(room, "disconnected");
 
-    // Room will fail to connect, and move to "closed" state, basically giving up reconnecting
-    await waitUntilStatus(room, "disconnected");
-
-    expect(spy).toHaveBeenCalledWith(
-      "To use Liveblocks client in a non-dom environment, you need to provide a WebSocket polyfill."
-    );
-
-    // Clean things up
-    client.leave("room");
+      expect(spy).toHaveBeenCalledWith(
+        "To use Liveblocks client in a non-DOM environment, you need to provide a WebSocket polyfill."
+      );
+    } finally {
+      // Clean things up
+      leave();
+    }
   });
+});
+
+describe("createClient bounds checks", () => {
+  const defaults = {
+    authEndpoint: "api/auth",
+    polyfills: { WebSocket: MockWebSocket, fetch: fetchMock },
+  };
 
   test("should throw if throttle is not a number", () => {
     expect(() =>
       enterAndLeave({
+        ...defaults,
         throttle: "invalid" as unknown as number, // Deliberately use wrong type at runtime
-        authEndpoint: "api/auth",
-        polyfills: {
-          WebSocket: MockWebSocket,
-          fetch: fetchMock,
-        },
       })
-    ).toThrow("throttle should be a number between 16 and 1000.");
+    ).toThrow("throttle should be between 16 and 1000.");
   });
 
-  test("should throw if throttle is less than 16", () => {
-    expect(() =>
-      enterAndLeave({
-        throttle: 15,
-        authEndpoint: "api/auth",
-        polyfills: {
-          WebSocket: MockWebSocket,
-          fetch: fetchMock,
-        },
-      })
-    ).toThrow("throttle should be a number between 16 and 1000.");
-  });
+  test("should check bounds correctly for throttle option", () => {
+    expect(() => enterAndLeave({ ...defaults, throttle: -5_000 })).toThrow(
+      "throttle should be between 16 and 1000."
+    );
 
-  test("should throw if throttle is more than 1000", () => {
-    expect(() =>
-      enterAndLeave({
-        throttle: 1001,
-        authEndpoint: "api/auth",
-        polyfills: {
-          WebSocket: MockWebSocket,
-          fetch: fetchMock,
-        },
-      })
-    ).toThrow("throttle should be a number between 16 and 1000.");
+    expect(() => enterAndLeave({ ...defaults, throttle: 0 })).toThrow(
+      "throttle should be between 16 and 1000."
+    );
+
+    expect(() => enterAndLeave({ ...defaults, throttle: Math.PI })).toThrow(
+      "throttle should be between 16 and 1000."
+    );
+
+    expect(() => enterAndLeave({ ...defaults, throttle: 15 })).toThrow(
+      "throttle should be between 16 and 1000."
+    );
+
+    expect(() => enterAndLeave({ ...defaults, throttle: 16 })).not.toThrow();
+
+    expect(() => enterAndLeave({ ...defaults, throttle: 1_000 })).not.toThrow();
+
+    expect(() => enterAndLeave({ ...defaults, throttle: 1_001 })).toThrow(
+      "throttle should be between 16 and 1000."
+    );
   });
 
   test("should throw if lostConnectionTimeout is not a number", () => {
     expect(() =>
       enterAndLeave({
+        ...defaults,
         lostConnectionTimeout: "invalid" as unknown as number, // Deliberately use wrong type at runtime
-        authEndpoint: "api/auth",
-        polyfills: {
-          WebSocket: MockWebSocket,
-          fetch: fetchMock,
-        },
       })
-    ).toThrow(
-      "lostConnectionTimeout should be a number between 1000 and 30000."
-    );
+    ).toThrow("lostConnectionTimeout should be between 1000 and 30000.");
   });
 
-  test("should throw if lostConnectionTimeout is less than 1000", () => {
+  test("should check bounds correctly for lostConnectionTimeout option", () => {
     expect(() =>
-      enterAndLeave({
-        lostConnectionTimeout: 15,
-        authEndpoint: "api/auth",
-        polyfills: {
-          WebSocket: MockWebSocket,
-          fetch: fetchMock,
-        },
-      })
-    ).toThrow(
-      "lostConnectionTimeout should be a number between 1000 and 30000."
-    );
+      enterAndLeave({ ...defaults, lostConnectionTimeout: -5_000 })
+    ).toThrow("lostConnectionTimeout should be between 1000 and 30000.");
+
+    expect(() =>
+      enterAndLeave({ ...defaults, lostConnectionTimeout: 0 })
+    ).toThrow("lostConnectionTimeout should be between 1000 and 30000.");
+
+    expect(() =>
+      enterAndLeave({ ...defaults, lostConnectionTimeout: Math.PI })
+    ).toThrow("lostConnectionTimeout should be between 1000 and 30000.");
+
+    expect(() =>
+      enterAndLeave({ ...defaults, lostConnectionTimeout: 199 })
+    ).toThrow("lostConnectionTimeout should be between 1000 and 30000.");
+
+    // There is a soft cap on the lower bound of lostConnectionTimeout. We
+    // recommend setting a 1_000 minimum, but the real 200 minimum only exists
+    // for unit testing purposes.
+    expect(() =>
+      enterAndLeave({ ...defaults, lostConnectionTimeout: 200 })
+    ).not.toThrow();
+
+    expect(() =>
+      enterAndLeave({ ...defaults, lostConnectionTimeout: 1_000 })
+    ).not.toThrow();
+
+    expect(() =>
+      enterAndLeave({ ...defaults, lostConnectionTimeout: 30_000 })
+    ).not.toThrow();
+
+    expect(() =>
+      enterAndLeave({ ...defaults, lostConnectionTimeout: 30_001 })
+    ).toThrow("lostConnectionTimeout should be between 1000 and 30000.");
   });
 
-  test("should throw if lostConnectionTimeout is more than 30000", () => {
+  test("should throw if backgroundKeepAliveTimeout is not a number", () => {
     expect(() =>
       enterAndLeave({
-        lostConnectionTimeout: 30001,
-        authEndpoint: "api/auth",
-        polyfills: {
-          WebSocket: MockWebSocket,
-          fetch: fetchMock,
-        },
+        ...defaults,
+        backgroundKeepAliveTimeout: "invalid" as unknown as number, // Deliberately use wrong type at runtime
       })
-    ).toThrow(
-      "lostConnectionTimeout should be a number between 1000 and 30000."
-    );
+    ).toThrow("backgroundKeepAliveTimeout should be at least 15000.");
+  });
+
+  test("should check bounds correctly for backgroundKeepAliveTimeout option", () => {
+    expect(() =>
+      enterAndLeave({ ...defaults, backgroundKeepAliveTimeout: -5_000 })
+    ).toThrow("backgroundKeepAliveTimeout should be at least 15000.");
+
+    expect(() =>
+      enterAndLeave({ ...defaults, backgroundKeepAliveTimeout: 0 })
+    ).toThrow("backgroundKeepAliveTimeout should be at least 15000.");
+
+    expect(() =>
+      enterAndLeave({ ...defaults, backgroundKeepAliveTimeout: Math.PI })
+    ).toThrow("backgroundKeepAliveTimeout should be at least 15000.");
+
+    expect(() =>
+      enterAndLeave({ ...defaults, backgroundKeepAliveTimeout: 14_999 })
+    ).toThrow("backgroundKeepAliveTimeout should be at least 15000.");
+
+    expect(() =>
+      enterAndLeave({ ...defaults, backgroundKeepAliveTimeout: 15_000 })
+    ).not.toThrow();
+
+    expect(() =>
+      enterAndLeave({ ...defaults, backgroundKeepAliveTimeout: 15_001 })
+    ).not.toThrow();
+
+    expect(() =>
+      enterAndLeave({ ...defaults, backgroundKeepAliveTimeout: 60_000 })
+    ).not.toThrow();
   });
 });
 

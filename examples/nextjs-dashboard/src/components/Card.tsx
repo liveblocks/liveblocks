@@ -1,8 +1,5 @@
 import styles from "./Card.module.css";
-import {
-  useUpdateMyPresence,
-  useOthers
-} from "../liveblocks.config";
+import { useUpdateMyPresence, useOthers } from "../liveblocks.config";
 import { useEffect, useRef, useState } from "react";
 import { COLORS_PRESENCE } from "../constants";
 import Cursor from "./Cursor";
@@ -18,7 +15,6 @@ type BoundingRect = {
   width: number;
   height: number;
 };
-
 
 export default function Card({ id, children }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);

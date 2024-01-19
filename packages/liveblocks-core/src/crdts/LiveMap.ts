@@ -1,7 +1,7 @@
 import { nn } from "../lib/assert";
 import { freeze } from "../lib/freeze";
 import { nanoid } from "../lib/nanoid";
-import type { CreateChildOp, CreateMapOp, Op } from "../protocol/Op";
+import type { CreateMapOp, CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedMap } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
@@ -52,13 +52,12 @@ export class LiveMap<
     this.unacknowledgedSet = new Map<TKey, string>();
 
     if (entries) {
-      const mappedEntries: Array<[TKey, LiveNode]> = [];
-      for (const entry of entries) {
-        const value = lsonToLiveNode(entry[1]);
-        value._setParentLink(this, entry[0]);
-        mappedEntries.push([entry[0], value]);
+      const mappedEntries: [TKey, LiveNode][] = [];
+      for (const [key, value] of entries) {
+        const node = lsonToLiveNode(value);
+        node._setParentLink(this, key);
+        mappedEntries.push([key, node]);
       }
-
       this._map = new Map(mappedEntries);
     } else {
       this._map = new Map();
@@ -68,16 +67,12 @@ export class LiveMap<
   /**
    * @internal
    */
-  _toOps(
-    parentId: string,
-    parentKey: string,
-    pool?: ManagedPool
-  ): CreateChildOp[] {
+  _toOps(parentId: string, parentKey: string, pool?: ManagedPool): CreateOp[] {
     if (this._id === undefined) {
       throw new Error("Cannot serialize item is not attached");
     }
 
-    const ops: CreateChildOp[] = [];
+    const ops: CreateOp[] = [];
     const op: CreateMapOp = {
       id: this._id,
       opId: pool?.generateOpId(),
@@ -137,7 +132,7 @@ export class LiveMap<
   /**
    * @internal
    */
-  _attachChild(op: CreateChildOp, source: OpSource): ApplyResult {
+  _attachChild(op: CreateOp, source: OpSource): ApplyResult {
     if (this._pool === undefined) {
       throw new Error("Can't attach child if managed pool is not present");
     }
@@ -476,5 +471,11 @@ export class LiveMap<
       result.set(key, value.toImmutable() as ToImmutable<TValue>);
     }
     return freeze(result);
+  }
+
+  clone(): LiveMap<TKey, TValue> {
+    return new LiveMap(
+      Array.from(this._map).map(([key, node]) => [key, node.clone() as TValue])
+    );
   }
 }

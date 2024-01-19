@@ -1,0 +1,335 @@
+---
+meta:
+  title: "How to add users to Liveblocks Comments"
+  description:
+    "Learn how to add your user’s avatars and names to Liveblocks Comments using
+    the resolver functions."
+---
+
+After following the get started guide for Comments, you’ll notice that each user
+is currently “Anonymous”, and that there’s no way to mention or tag other users.
+To enable these features, we need to tell Comments where to find your users’
+information.
+
+<Figure>
+  <Image
+    src="/assets/tutorials/comments/thread.png"
+    alt="Thread with resolved users"
+    width={1291}
+    height={892}
+  />
+</Figure>
+
+## What we’re learning
+
+In this guide we’ll be modifying
+[`createRoomContext`](/docs/api-reference/liveblocks-react#createRoomContext) in
+our config file, learning how to:
+
+- Add names and avatars to threads and comments with
+  [`resolveUsers`](/docs/api-reference/liveblocks-react#resolveUsers).
+- Create user mention suggestions in the composer using
+  [`resolveMentionSuggestions`](/docs/api-reference/liveblocks-react#resolveMentionSuggestions).
+
+## Authenticate your application
+
+The first step is to find an
+[authentication guide for your framework](/docs/rooms/authentication) and
+authenticate your app, as this is necessary for Comments.
+
+Make sure to follow the metadata step in the guide, and attach the name of your
+user, along with the URL of their avatar, as these properties will both be used
+in the [default components](/docs/products/comments#Components). Here’s an
+example using access token authentication, with an email address as a user’s ID.
+
+```ts title="Metadata in access tokens"
+const session = liveblocks.prepareSession("marc@example.com", {
+  userInfo: {
+    name: "Marc",
+    avatar: "https://example.com/marc.png",
+
+    // Your custom metadata
+    // ...
+  },
+});
+```
+
+If you’re using ID token authentication, it’ll look a little different.
+
+```ts title="Metadata in ID tokens" isCollapsed isCollapsable
+const { status, body } = await liveblocks.identifyUser(
+  {
+    userId: "marc@example.com",
+    groupIds: [], // Optional
+  },
+  {
+    userInfo: {
+      name: "Marc",
+      avatar: "https://example.com/marc.png",
+
+      // Your custom metadata
+      // ...
+    },
+  }
+);
+```
+
+Don’t forget to modify your `UserMeta` type in `liveblocks.config.ts` to match
+the metadata format, adding type hints to your editor.
+
+```ts file="liveblocks.config.ts"
+type UserMeta = {
+  id: string;
+
+  info: {
+    name: string;
+    avatar: string;
+
+    // Your custom metadata
+    // ...
+  };
+};
+```
+
+## Resolving users
+
+To show each user’s name and avatar in threads and comments, we need to use
+[`resolveUsers`](https://liveblocks.io/docs/api-reference/liveblocks-react#resolveUsers).
+
+<Figure>
+  <Image
+    src="/assets/tutorials/comments/thread.png"
+    alt="Thread with resolved users"
+    width={1291}
+    height={892}
+  />
+</Figure>
+
+<Steps>
+  <Step>
+    <StepTitle>Add the function to your config file</StepTitle>
+    <StepContent>
+      The `resolveUsers` function is passed as an option to
+      [`createRoomContext`](/docs/api-reference/liveblocks-react#createRoomContext)
+      at the bottom of your `liveblocks.config.ts` file—let’s add it. This function
+      provides you with `userIds`, an array of user IDs that have interacted with Comments.
+      These `userIds` match the IDs set when authenticating users in your app.
+      
+      ```ts highlight="7-13" file="liveblocks.config.ts"
+      // ...
+      
+      const {
+        RoomProvider,
+        // ...
+      } = createRoomContext(client, {
+        async resolveUsers({ userIds }) {
+          // ["marc@example.com", ...]
+          console.log(userIds);
+          
+          // Return a list of users
+          // ...
+        },
+      });
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Return your users</StepTitle>
+    <StepContent>
+      `resolveUsers` requires you to return a list of users in
+      the `UserMeta["info"]` format we set earlier. Remember
+      that _name_ and _avatar_ are required for the default components,
+      but you can also use any other metadata in your app.
+      
+      ```ts highlight="12-21" file="liveblocks.config.ts"
+      // ...
+      
+      const {
+        RoomProvider,
+        // ...
+      } = createRoomContext(client, {
+        async resolveUsers({ userIds }) {
+          // ["marc@example.com", ...]
+          console.log(userIds);
+          
+          // Return a list of users
+          return [
+            {
+              name: "Marc",
+              avatar: "https://example.com/marc.png",
+              
+              // Your custom metadata
+              // ...
+            },
+            // ...
+          ];
+        },
+      });
+      ```
+      
+      We’re only returning one user here, but make sure to return an
+      array containing  each user, in the same order you received the IDs.
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Real-world example</StepTitle>
+    <StepContent>
+      In your real application you’ll probably be getting users from your
+      API endpoint and database via `fetch`. This is how we’d recommend
+      building out this function.
+
+      ```ts highlight="8-13" file="liveblocks.config.ts"
+      // ...
+
+      const {
+        RoomProvider,
+        // ...
+      } = createRoomContext(client, {
+        async resolveUsers({ userIds }) {
+          // Get users from your back end
+          const users = await __fetchUsers__(userIds);
+
+          // Return a list of users
+          return users;
+        },
+      });
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+    <StepTitle>Users are now visible</StepTitle>
+    <StepContent>
+      After adding this, you should now be able to see your users in threads!
+      
+      <Figure>
+        <Image
+          src="/assets/tutorials/comments/thread.png"
+          alt="Thread with resolved users"
+          width={1291}
+          height={892}
+        />
+      </Figure>
+
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## Resolving mention suggestions
+
+We can see the users that have commented, but we don’t have a way to search for
+users to mention, for example after typing the `@` character. We can create a
+simple search that resolves this data with
+[`resolveMentionSuggestions`](/docs/api-reference/liveblocks-react#resolveMentionSuggestions).
+
+<Figure>
+  <Image
+    src="/assets/tutorials/comments/mentions.png"
+    alt="Working Comments mentions"
+    width={1297}
+    height={781}
+  />
+</Figure>
+
+<Steps>
+  <Step>
+    <StepTitle>Add the function to your config file</StepTitle>
+    <StepContent>
+      `resolveMentionSuggestions` is placed alongside `resolveUsers`, and
+      provides you with `text`, which is the string that the user is searching for.
+      You can use this string to return a list of matching user IDs.
+      
+      ```ts highlight="10-17" file="liveblocks.config.ts"
+      // ...
+      
+      const {
+        RoomProvider,
+        // ...
+      } = createRoomContext(client, {
+        async resolveUsers({ userIds }) {
+          // ...
+        },
+        async resolveMentionSuggestions({ text, roomId }) {
+          // The text the user is searching for, e.g. "mar"
+          console.log(text);
+          
+          // Return a list of user IDs that match the query
+          return ["marc@example.com", "marissa@example.com"];
+        },
+      });
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Real-world example</StepTitle>
+    <StepContent>
+    
+      In a real application, you’ll most likely be getting a list of each user,
+      before filtering the list by the user’s names or IDs. If `text` is an empty
+      string, then you need to return a list of every user, instead of a filtered list.
+      
+      ```ts highlight="11-21" file="liveblocks.config.ts"
+      // ...
+      
+      const {
+        RoomProvider,
+        // ...
+      } = createRoomContext(client, {
+        async resolveUsers({ userIds }) {
+          // ...
+        },
+        async resolveMentionSuggestions({ text, roomId }) {
+          // Fetch all users from your back end
+          let users = await __fetchAllUsers__();
+          
+          // If there's a query, filter for the relevant users
+          if (text) {
+            // Filter any way you'd like, e.g. checking if the name matches
+            users = users.filter((user) => user.name.includes(text));
+          }
+          
+          // Return the filtered `userIds`
+          return users.map((user) => user.id);
+        },
+      });
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+    <StepTitle>Mention suggestions now appear</StepTitle>
+    <StepContent>
+    
+      Now we’ve found and returned the correct users, Comments can display
+      a list of mention suggestions!
+      
+      <Figure>
+        <Image
+          src="/assets/tutorials/comments/mentions.png"
+          alt="Working Comments mentions"
+          width={1297}
+          height={781}
+        />
+      </Figure>
+
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## Next steps
+
+You’re now ready to start building your Comments application! Here’s where you
+can learn more:
+
+- [API reference](/docs/api-reference/liveblocks-react-comments)
+- [Examples](/examples/browse/comments)

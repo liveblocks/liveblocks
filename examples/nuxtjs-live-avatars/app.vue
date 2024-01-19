@@ -65,7 +65,7 @@
 import { createClient } from "@liveblocks/client";
 
 const client = createClient({
-  authEndpoint: "/api/auth",
+  authEndpoint: "/api/liveblocks-auth",
 });
 
 // Presence not used in this example
@@ -83,18 +83,19 @@ export default {
   mounted() {
     overrideRoomId();
 
-    const room = client.enter(roomId, { initialPresence });
+    const { room, leave } = client.enterRoom(roomId, { initialPresence });
+    this._room = room;
+    this._leave = leave;
     this._unsubscribeOthers = room.subscribe("others", this.onOthersChange);
     this._unsubscribeConnection = room.subscribe(
       "connection",
       this.onConnectionChange
     );
-    this._room = room;
   },
   destroyed() {
     this._unsubscribeOthers();
     this._unsubscribeConnection();
-    client.leave(roomId);
+    this._leave();
   },
   methods: {
     onOthersChange(others) {

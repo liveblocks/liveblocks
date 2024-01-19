@@ -65,7 +65,7 @@ We’d love to hear from you.
       });
 
       // Enter a multiplayer room
-      const room = client.enter("my-room", {
+      const { room, leave } = client.enterRoom("my-room", {
         initialPresence: {},
       });
 

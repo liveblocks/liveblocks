@@ -1,6 +1,6 @@
 {
   "name": "create-liveblocks-app",
-  "version": "1.4.2",
+  "version": "1.9.7",
   "description": "An installer for Liveblocks projects, including various examples and a Next.js starter kit. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
   "bin": "dist/index.cjs",
@@ -8,13 +8,15 @@
   "scripts": {
     "dev": "node scripts/dev.js",
     "build": "node scripts/build.js",
-    "demo": "node scripts/demo.js"
+    "demo": "node scripts/demo.js",
+    "demo-localhost": "cross-env LOCALHOST_DEMO=true node scripts/demo.js"
   },
   "devDependencies": {
     "@types/command-line-args": "^5.2.0",
     "@types/degit": "^2.8.3",
     "@types/node": "^17.0.39",
     "@types/prompts": "^2.4.1",
+    "cross-env": "^7.0.3",
     "esbuild": "^0.15.12"
   },
   "dependencies": {

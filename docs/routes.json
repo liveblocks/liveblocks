@@ -27,6 +27,11 @@
             "hidden": true
           },
           {
+            "title": "Comments",
+            "path": "/get-started/nextjs-comments",
+            "hidden": true
+          },
+          {
             "title": "Redux",
             "path": "/get-started/redux",
             "hidden": true
@@ -245,7 +250,46 @@
       },
       {
         "title": "Comments",
-        "path": "/products/comments"
+        "path": "/products/comments",
+        "routes": [
+          {
+            "title": "Concepts",
+            "path": "/products/comments/concepts"
+          },
+          {
+            "title": "Users and mentions",
+            "path": "/products/comments/users-and-mentions"
+          },
+          {
+            "title": "Default components",
+            "path": "/products/comments/default-components"
+          },
+          {
+            "title": "Hooks",
+            "path": "/products/comments/hooks"
+          },
+          {
+            "title": "Metadata",
+            "path": "/products/comments/metadata"
+          },
+          {
+            "title": "Primitives",
+            "path": "/products/comments/primitives"
+          },
+          {
+            "title": "Styling and customization",
+            "path": "/products/comments/styling-and-customization"
+          },
+          {
+            "title": "Notification inbox",
+            "path": "/products/comments/notification-inbox",
+            "hidden": true
+          },
+          {
+            "title": "Email notifications",
+            "path": "/products/comments/email-notifications"
+          }
+        ]
       }
     ]
   },
@@ -491,26 +535,13 @@
         "path": "/platform/upgrading",
         "sort": "descending",
         "routes": [
-          {
-            "title": "Upgrading to 0.17",
-            "path": "/platform/upgrading/0.17"
-          },
-          {
-            "title": "Upgrading to 0.18",
-            "path": "/platform/upgrading/0.18"
-          },
-          {
-            "title": "Upgrading to 0.19",
-            "path": "/platform/upgrading/0.19"
-          },
-          {
-            "title": "Upgrading to 1.0",
-            "path": "/platform/upgrading/1.0"
-          },
-          {
-            "title": "Upgrading to 1.2",
-            "path": "/platform/upgrading/1.2"
-          }
+          { "title": "Upgrading to 0.17", "path": "/platform/upgrading/0.17" },
+          { "title": "Upgrading to 0.18", "path": "/platform/upgrading/0.18" },
+          { "title": "Upgrading to 0.19", "path": "/platform/upgrading/0.19" },
+          { "title": "Upgrading to 1.0", "path": "/platform/upgrading/1.0" },
+          { "title": "Upgrading to 1.2", "path": "/platform/upgrading/1.2" },
+          { "title": "Upgrading to 1.5", "path": "/platform/upgrading/1.5" },
+          { "title": "Upgrading to 1.9", "path": "/platform/upgrading/1.9" }
         ]
       },
       {

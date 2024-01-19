@@ -1,30 +1,31 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { getUser } from "../../../lib/server";
+import { getUsers } from "../../../lib/server";
 
 /**
- * GET User
+ * GET Users
  *
- * Get a user from your database
+ * Get users from your database
  *
  * @param req
- * @param req.query.userId - The user's id
+ * @param req.query.userId - The users ids
+ * @param req.query.search - The search term
  * @param res
  */
 async function GET(req: NextApiRequest, res: NextApiResponse) {
-  const userId = req.query.userId as string;
-  const user = await getUser(decodeURIComponent(userId));
+  const userParam = req.query.userId;
+  const searchParam = req.query.search;
 
-  if (!user) {
-    return res.status(400).json({
-      error: {
-        code: 400,
-        message: "User Not Found",
-        suggestion: `Check that the user "${userId}" exists in the system`,
-      },
-    });
-  }
+  const userIds: string[] | undefined = Array.isArray(userParam)
+    ? userParam
+    : userParam
+    ? [userParam]
+    : undefined;
+  const search: string | undefined = Array.isArray(searchParam)
+    ? searchParam[0]
+    : searchParam;
 
-  return res.status(200).json(user);
+  const users = await getUsers({ userIds, search });
+  return res.status(200).json(users);
 }
 
 export default async function users(req: NextApiRequest, res: NextApiResponse) {

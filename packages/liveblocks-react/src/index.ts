@@ -5,11 +5,12 @@ import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 export { ClientSideSuspense } from "./ClientSideSuspense";
+export type { UseThreadsOptions } from "./comments/CommentsRoom";
 export { createRoomContext, useRoomContextBundle } from "./factory";
 export type {
   MutationContext,
-  ResolveMentionSuggestionsOptions,
-  ResolveUserOptions,
+  ResolveMentionSuggestionsArgs,
+  ResolveUsersArgs,
 } from "./types";
 
 // Re-exports from @liveblocks/client, for convenience

@@ -21,7 +21,7 @@
   </a>
 </p>
 
-`@liveblocks/redux` provides a
+`@liveblocks/zustand` provides a
 [middleware](https://github.com/pmndrs/zustand#middleware) to make
 [Zustand](https://github.com/pmndrs/zustand) stores collaborative with
 Liveblocks—a platform to build, host, and scale collaborative applications with

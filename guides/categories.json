@@ -1,6 +1,10 @@
 {
   "topics": [
     {
+      "id": "comments",
+      "name": "Comments"
+    },
+    {
       "id": "data-fetching",
       "name": "Data fetching"
     },
@@ -39,6 +43,10 @@
     {
       "id": "databases",
       "name": "Databases"
+    },
+    {
+      "id": "notifications",
+      "name": "Notifications"
     },
     {
       "id": "errors",
@@ -91,8 +99,16 @@
       "name": "Zustand"
     },
     {
+      "id": "storage",
+      "name": "Storage"
+    },
+    {
       "id": "yjs",
       "name": "Yjs"
+    },
+    {
+      "id": "react-comments",
+      "name": "React Comments"
     },
     {
       "id": "lexical",
@@ -101,6 +117,10 @@
     {
       "id": "slate",
       "name": "Slate"
+    },
+    {
+      "id": "prosemirror",
+      "name": "ProseMirror"
     },
     {
       "id": "tiptap",

@@ -1,17 +1,22 @@
-import React from "react";
-import Link from "next/link";
-import { nn } from "@liveblocks/core";
 import { createClient } from "@liveblocks/client";
+import { nn } from "@liveblocks/core";
 import { createRoomContext } from "@liveblocks/react";
+import Link from "next/link";
+import React from "react";
+
+import { getRoomFromUrl } from "../../utils";
 
 const client = createClient({
   publicApiKey: nn(
     process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY,
-    "Please set NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY in the env"
+    "Please specify NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY env var"
   ),
 
   // @ts-expect-error - Hidden setting
-  liveblocksServer: process.env.NEXT_PUBLIC_LIVEBLOCKS_SERVER,
+  baseUrl: nn(
+    process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
+    "Please specify NEXT_PUBLIC_LIVEBLOCKS_BASE_URL env var"
+  ),
 });
 
 const { RoomProvider, useMyPresence, useSelf, useOthers, useStatus } =
@@ -19,13 +24,7 @@ const { RoomProvider, useMyPresence, useSelf, useOthers, useStatus } =
 
 export default function Home() {
   React.useEffect(() => {
-    setText("e2e-modern-auth");
-    if (typeof window !== "undefined") {
-      const queryParam = window.location.search;
-      if (queryParam.split("room=").length > 1) {
-        setText(queryParam.split("room=")[1]);
-      }
-    }
+    setText(getRoomFromUrl());
   }, []);
 
   const [text, setText] = React.useState("");

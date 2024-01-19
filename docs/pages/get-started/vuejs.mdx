@@ -58,7 +58,7 @@ please let us know about it on this
       To create a real-time experience, multiple users must be connected to the same room.
 
       ```js
-      const room = client.enter("my-room", { initialPresence: {} });
+      const { room, leave } = client.enterRoom("my-room", { initialPresence: {} });
       ```
 
     </StepContent>

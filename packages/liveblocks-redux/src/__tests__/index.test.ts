@@ -360,7 +360,7 @@ describe("middleware", () => {
         },
       ]);
 
-      store.dispatch(leaveRoom("room"));
+      store.dispatch(leaveRoom());
 
       store.dispatch({ type: "SET_CURSOR", cursor: { x: 1, y: 1 } });
 

@@ -66,9 +66,3 @@ main {
   user-select: none;
   z-index: 1000;
 }
-
-/* Move the editor down so cursors aren't hidden by overflow */
-.monaco-editor .overflow-guard > .margin,
-.monaco-editor .lines-content > * {
-  top: 20px !important;
-}

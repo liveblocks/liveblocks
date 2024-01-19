@@ -30,7 +30,7 @@ export function Composer({
     >
       <ComposerPrimitive.Editor
         placeholder={placeholder}
-        className="prose prose-sm min-h-[theme(spacing.9)] flex-1 rounded-md px-3 py-1.5 outline outline-1 -outline-offset-1 outline-gray-200 ring-blue-300 ring-offset-2 focus-visible:ring-2"
+        className="prose prose-sm min-h-[theme(spacing.9)] flex-1 rounded-md px-3 py-1.5 outline outline-1 -outline-offset-1 outline-gray-200 ring-blue-300 ring-offset-2 focus-visible:ring-2 [&_[data-placeholder]]:opacity-50"
         components={{
           Mention: ({ userId }) => {
             return (

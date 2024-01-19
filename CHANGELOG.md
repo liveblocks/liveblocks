@@ -1,3 +1,338 @@
+# v1.9.7
+
+### `@liveblocks/node`
+
+- Expose new `nextCursor` field in
+  [Get Rooms](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms)
+  API responses, to make pagination easier to work with
+- Update TypeScript types for some responses
+
+### `create-liveblocks-app`
+
+- Adds a fallback for passing data from Safari to the console.
+
+# v1.9.6
+
+### `@liveblocks/react`
+
+- Fix certain Next.js sites not building correctly due to improper
+  `useSyncExternalStore` import
+
+# v1.9.5
+
+### `@liveblocks/react-comments`
+
+- Fix mention suggestions not appearing.
+
+# v1.9.4
+
+### `@liveblocks/react`
+
+- Fix polling on `useThreads` hook.
+
+# v1.9.3
+
+### `@liveblocks/react`
+
+- Fix a bug that prevented comments from being used across multiple rooms.
+
+### `@liveblocks/node`
+
+- Fix `getRooms()` not throwing `LiveblocksError` when invalid response was
+  received.
+
+# v1.9.2
+
+### `@liveblocks/react-comments`
+
+- Add `portalContainer` prop to `CommentsConfig` to customize where floating
+  elements (e.g. tooltips, dropdowns, etc) are portaled into.
+
+# v1.9.1
+
+### `@liveblocks/node`
+
+- Fixes the signature and behavior of the `Liveblocks.sendYjsBinaryUpdate()`
+  API. It now takes a Yjs encoded update (`Uint8Array`) directly.
+
+# v1.9.0
+
+### `@liveblocks/node`
+
+- Add the Comments write REST APIs as fully typed methods. (includes
+  `createThread`, `editThreadMetadata`, `createComment`, `editComment`,
+  `deleteComment`, `addCommentReaction`, and `removeCommentReaction` methods)
+- Fix the return type of `getActiveUsers` to match the data returned from the
+  endpoint.
+
+### `@liveblocks/react`
+
+- Add `query` option to `useThreads` to filter threads based on their metadata.
+
+### `@liveblocks/react-comments`
+
+- Add support for exit animations to `ComposerSuggestions`.
+
+# v1.8.2
+
+### `@liveblocks/react`
+
+- Improve Comments revalidation when losing network or staying in the
+  background.
+- Improve error handling of Comments mutations. (e.g. thread creation, comment
+  creation, etc.)
+
+### `@liveblocks/client`
+
+- Export the `CommentBody` utilities added to `@liveblocks/node` in v1.8.0.
+- Harmonize exports with `@liveblocks/node`. (added `IUserInfo` and
+  `PlainLsonObject`)
+
+### `@liveblocks/node`
+
+- Harmonize exports with `@liveblocks/client`. (added `CommentBody`,
+  `CommentBodyBlockElement`, `CommentBodyElement`, `CommentBodyInlineElement`,
+  `CommentBodyLink`, `CommentBodyMention`, `CommentBodyParagraph`,
+  `CommentBodyText`, `JsonArray`, `JsonScalar`, `Lson`, `LsonObject`, and
+  `User`)
+
+# v1.8.1
+
+- Fix a bug in `toPlainLson` helper
+- Fix a bug where pausing history more than once could lead to history loss
+
+# v1.8.0
+
+This release adds all the REST APIs as fully typed methods, and utilities to
+transform comments, to `@liveblocks/node`.
+
+### `@liveblocks/node`
+
+- Add all the REST APIs as fully typed methods to `Liveblocks` client. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#Liveblocks-client).
+- Add utilities to work with the `CommentBody` format from Comments:
+  - `getMentionedIdsFromCommentBody(body)` - Get a list of all mentioned IDs
+    from a `CommentBody`. See
+    [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#get-mentioned-ids-from-comment-body).
+  - `stringifyCommentBody(body, options)` - Convert a `CommentBody` to a string,
+    either as plain text, HTML, or Markdown. It supports resolving mention IDs
+    similarly to `@liveblocks/react` and overriding each element to control the
+    formatting. See
+    [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#stringify-comment-body).
+
+# 1.7.1
+
+### `@liveblocks/react-comments`
+
+- Fix `Composer` focus issues.
+- Improve relative date formatting for some locales. (e.g. the `"fr"`` locale
+  formatted “1h ago” as “-1 h” instead of “il y a 1 h”)
+- Improve default monospace font for inline code blocks.
+
+# v1.7.0
+
+[Liveblocks Comments](https://liveblocks.io/comments) is now available for
+everyone as a public beta, learn more about this
+[in the announcement](https://liveblocks.io/blog/liveblocks-comments-is-available-for-everyone).
+
+### `@liveblocks/client`
+
+- Improve some internal logging.
+
+### `@liveblocks/react`
+
+- Improve Comments-specific error logging.
+
+### `@liveblocks/react-comments`
+
+- Improve default relative date formatting. (e.g. “2 hours ago” → “2h ago”)
+
+### `create-liveblocks-app`
+
+- Add `ThreadMetadata` type to `--init` command.
+
+# v1.6.0
+
+### `@liveblocks/yjs`
+
+- Add support for subdocs.
+
+# v1.5.2
+
+### `@liveblocks/react`
+
+- Fix return type of `resolveUsers`.
+
+# v1.5.1
+
+- Fixes a bug in the bounds check of the `backgroundKeepAliveTimeout` option.
+
+# v1.5.0
+
+Support multiple RoomProviders, or mixing and matching our React package in the
+same app with a Redux and/or Zustand instance.
+
+At the client level, there is a new API for entering/leaving rooms, which we’re
+now recommending over the old APIs. (The old APIs remain working exactly how
+they are today, however.)
+
+```ts
+// Old APIs we'll no longer be recommending (but that will remain working)
+const room = client.enter("my-room", options);
+client.getRoom("my-room");
+client.leave("my-room");
+```
+
+```ts
+// New API we'll be recommending instead
+const { room, leave } = client.enterRoom("my-room", options);
+leave();
+```
+
+### `@liveblocks/client`
+
+- New client config option: `backgroundKeepAliveTimeout` (a numeric value in
+  milliseconds). See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-client#createClientBackgroundKeepAliveTimeout).
+- New APIs:
+  - `Client.enterRoom(roomId, options)` – enters the room and return both the
+    room and an "unsubscribe function" to leave that room again. This newer API
+    supports entering/leaving the same room multiple times, making it possible
+    to connect to the same room from different parts of your application. See
+    [docs](https://liveblocks.io/docs/api-reference/liveblocks-client#Client.enterRoom).
+  - `Client.logout()` – Call this on the Liveblocks client when you log out a
+    user in your application. It will purge all auth tokens and force-leave any
+    rooms, if any are still connected. See
+    [docs](https://liveblocks.io/docs/api-reference/liveblocks-client#Client.logout).
+  - `LiveList.clone()` – see
+    [docs](https://liveblocks.io/docs/api-reference/liveblocks-client#LiveList.clone).
+  - `LiveMap.clone()` – see
+    [docs](https://liveblocks.io/docs/api-reference/liveblocks-client#LiveMap.clone).
+  - `LiveObject.clone()` – see
+    [docs](https://liveblocks.io/docs/api-reference/liveblocks-client#LiveObject.clone).
+- Deprecated APIs:
+  - `client.enter(roomId, options)`
+  - `client.leave(roomId)`
+- Renamed enter option: `shouldInitiallyConnect` → `autoConnect`. Its meaning or
+  working did not change.
+- Fixes a potential `Cannot set parent: node already has a parent` error when
+  initializing storage with Live datastructures that are already tied to a
+  Storage tree.
+
+### `@liveblocks/react`
+
+- Support using multiple `RoomProvider` components in your component tree for
+  the same room ID.
+- Renamed `RoomProvider` prop: `shouldInitiallyConnect` → `autoConnect`. Its
+  meaning or working did not change.
+- New hook:
+  - `useOthersListener({ type, user, others })`, see
+    [docs](https://liveblocks.io/docs/api-reference/liveblocks-react#useOthersListener)
+
+### `@liveblocks/redux`
+
+- **Breaking:** The `leaveRoom()` function no longer accepts a `roomId`. It will
+  always leave the currently joined room.
+
+### `@liveblocks/zustand`
+
+- The `enterRoom()` function will now return a leave callback function.
+- **Breaking:** The `leaveRoom()` function no longer accepts a `roomId`. It will
+  always leave the currently joined room.
+
+# v1.4.8
+
+### `create-liveblocks-app`
+
+- Add Comments hooks and options to `--init` command.
+
+### `@liveblocks/client`
+
+- Export all `CommentBody`-related types.
+
+### `@liveblocks/react-comments`
+
+- Improve default styles:
+  - Cap CSS selector specificity to improve overridability.
+  - Set tokens on `.lb-root` instead of `:root` to improve cascading tokens
+    (overriding `--lb-accent` on `body` for example, didn't create the expected
+    results), and to work within shadow DOMs.
+- Fix reactions and links styles on Safari.
+
+# v1.4.7
+
+### `@liveblocks/react`
+
+- Fix `userIds` type in `ResolveUsersArgs`.
+
+# v1.4.6
+
+### `@liveblocks/react`
+
+- Fix a race condition that could cause a Liveblocks client to hang during
+  loading when using Suspense.
+- Fix `useStatus` return value on SSR responses.
+- **Breaking (beta):** The `resolveUser` option in `createRoomContext` is now
+  called `resolveUsers` and it receives a list of user IDs (via the `userIds`
+  property, replacing `userId`) instead of a single one. Instead of returning
+  user info of a single user ID, this function will now expect a list of users'
+  info matching the provided list of user IDs.
+- **Breaking (beta):** The `ResolveUserOptions` and
+  `ResolveMentionSuggestionsOptions` types were renamed to `ResolveUsersArgs`
+  and `ResolveMentionSuggestionsArgs` respectively.
+- `resolveUsers` and `resolveMentionSuggestions` now accept synchronous
+  functions.
+- `resolveUsers` now also provides the current room ID.
+- `editThreadMetadata` now correctly allows `null` to be set on a property.
+  Doing so deletes existing metadata properties.
+
+### `@liveblocks/react-comments`
+
+- Export `ComposerSubmitComment` type from root too, in addition to
+  `/primitives`.
+- Add `onThreadDelete` to `Thread`.
+- Add `metadata` to `Composer` to attach custom metadata to new threads.
+- Add support for specifying a custom `ThreadMetadata` type on `Thread` and
+  `Composer`.
+- **Breaking (beta):** `Comment`’s `onEdit` and `onDelete` were renamed to
+  `onEditComment` and `onDeleteComment` respectively.
+
+# v1.4.5
+
+### `@liveblocks/react`
+
+- Fix `createThread` not creating valid comment.
+
+### `@liveblocks/node`
+
+- Fix URL encoding bug
+
+# v1.4.4
+
+### `@liveblocks/react`
+
+- Fix `removeReaction` not removing reactions which led to reactions displaying
+  a count of 0.
+
+### `@liveblocks/react-comments`
+
+- Fix reactions list (and its add button) showing on all comments.
+- Improve emoji rendering on Windows.
+- Hide country flag emojis when unsupported. (e.g. on Windows)
+
+# v1.4.3
+
+### `@liveblocks/react`
+
+- Add new Comments hooks to add/remove reactions.
+- Fix a bug in `useOthers()` that could lead to the warning "The result of
+  getServerSnapshot should be cached to avoid an infinite loop"
+
+### `@liveblocks/react-comments`
+
+- Add support for reactions. (👍)
+- Add keyboard navigation to emoji picker.
+
 # v1.4.2
 
 ### `@liveblocks/client`

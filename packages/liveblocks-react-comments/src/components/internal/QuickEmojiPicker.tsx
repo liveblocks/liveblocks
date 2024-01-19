@@ -2,12 +2,13 @@ import * as PopoverPrimitive from "@radix-ui/react-popover";
 import type { ComponentPropsWithoutRef } from "react";
 import React, { forwardRef, useCallback, useState } from "react";
 
+import { useCommentsConfig } from "../../config";
 import {
   FLOATING_ELEMENT_COLLISION_PADDING,
   FLOATING_ELEMENT_SIDE_OFFSET,
 } from "../../constants";
-import { Emoji } from "../../primitives/internal/Emoji";
 import { classNames } from "../../utils/class-names";
+import { Emoji } from "../internal/Emoji";
 
 export interface QuickEmojiPickerProps extends ComponentPropsWithoutRef<"div"> {
   onOpenChange?: (open: boolean) => void;
@@ -27,6 +28,7 @@ export const QuickEmojiPicker = forwardRef<
     forwardedRef
   ) => {
     const [isOpen, setOpen] = useState(false);
+    const { portalContainer } = useCommentsConfig();
 
     const handleOpenChange = useCallback(
       (isOpen: boolean) => {
@@ -39,14 +41,14 @@ export const QuickEmojiPicker = forwardRef<
     return (
       <PopoverPrimitive.Root open={isOpen} onOpenChange={handleOpenChange}>
         {children}
-        <PopoverPrimitive.Portal>
+        <PopoverPrimitive.Portal container={portalContainer}>
           <PopoverPrimitive.Content
             side="top"
             align="center"
             sideOffset={FLOATING_ELEMENT_SIDE_OFFSET}
             collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
             className={classNames(
-              "lb-root lb-elevation lb-quick-emoji-picker",
+              "lb-root lb-portal lb-elevation lb-quick-emoji-picker",
               className
             )}
             {...props}

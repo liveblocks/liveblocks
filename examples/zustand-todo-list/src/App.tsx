@@ -40,7 +40,7 @@ export default function App() {
     enterRoom(roomId);
 
     return () => {
-      leaveRoom(roomId);
+      leaveRoom();
     };
   }, [enterRoom, leaveRoom]);
 

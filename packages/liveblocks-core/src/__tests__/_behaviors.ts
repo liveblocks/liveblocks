@@ -9,10 +9,10 @@
  */
 
 import type { AuthValue } from "../auth-manager";
+import type { Delegates } from "../connection";
 import { StopRetrying } from "../connection";
 import type { AuthToken, ParsedAuthToken } from "../protocol/AuthToken";
 import { ServerMsgCode } from "../protocol/ServerMsg";
-import type { RoomDelegates } from "../room";
 import type { WebsocketCloseCodes } from "../types/IWebSocket";
 import type { MockWebSocket } from "./_MockWebSocketServer";
 import { MockWebSocketServer } from "./_MockWebSocketServer";
@@ -47,7 +47,7 @@ export function defineBehavior(
   socketBehavior: SocketBehavior
 ): {
   wss: MockWebSocketServer;
-  delegates: RoomDelegates;
+  delegates: Delegates<AuthValue>;
 } {
   const authenticate = () => {
     try {
@@ -59,11 +59,13 @@ export function defineBehavior(
 
   const wss = new MockWebSocketServer();
   const createSocket = () => socketBehavior(wss);
+  const canZombie = () => false;
 
-  const delegates: RoomDelegates = {
+  const delegates: Delegates<AuthValue> = {
     authenticate: jest.fn(authenticate),
     createSocket: jest.fn(createSocket),
-    //            ^^^^^^^ Allow observing these calls in tests
+    canZombie: jest.fn(canZombie),
+    //         ^^^^^^^ Allow observing these calls in tests
   };
 
   return { wss, delegates };

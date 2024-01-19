@@ -27,6 +27,11 @@ export type ComposerContext = {
   clear: () => void;
 
   /**
+   * Select the editor programmatically.
+   */
+  select: () => void;
+
+  /**
    * Focus the editor programmatically.
    */
   focus: () => void;

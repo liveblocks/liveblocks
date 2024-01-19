@@ -48,7 +48,6 @@ We’d love to hear from you.
       import QuillCursors from "quill-cursors";
 
       let element;
-      const roomId = "my-room";
 
       // Set up Liveblocks client
       const client = createClient({
@@ -57,7 +56,7 @@ We’d love to hear from you.
 
       onMount(() => {
         // Enter a multiplayer room
-        const room = client.enter(roomId, {
+        const { room, leave } = client.enterRoom("my-room", {
           initialPresence: {},
         });
 
@@ -92,11 +91,8 @@ We’d love to hear from you.
 
         return () => {
           binding.destroy();
+          leave();
         };
-      });
-
-      onDestroy(() => {
-        client.leave(roomId);
       });
       </script>
 

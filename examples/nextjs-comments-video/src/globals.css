@@ -1,0 +1,137 @@
+:root {
+  --accent: #bdee63;
+  --accent-hover: #d4ff70;
+  --accent-background: #96ff3b1a;
+  --accent-background-hover: #a5ff5329;
+  --accent-contrast: #1d211c;
+  --gray1: #111210;
+  --gray2: #181917;
+  --gray3: #212220;
+  --gray4: #282a27;
+  --gray5: #2f312e;
+  --gray6: #383a36;
+  --gray7: #454843;
+  --gray8: #5c625b;
+  --gray9: #687066;
+  --gray10: #767d74;
+  --gray11: #afb5ad;
+  --gray12: #eceeec;
+  --spacing: 1em;
+  --border-radius: 0.375em;
+  --font-sans: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont,
+    Segoe UI, Roboto, Helvetica Neue, Arial, Noto Sans, sans-serif,
+    Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
+  --shadow: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 1px 0 0 rgba(0, 0, 0, 0.08),
+    0 2px 2px 0 rgba(0, 0, 0, 0.04), 0 3px 3px 0 rgba(0, 0, 0, 0.02),
+    0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+* {
+  touch-action: manipulation;
+}
+
+html,
+body {
+  position: fixed;
+  inset: 0;
+  padding: 0;
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  background: var(--gray1);
+  color: var(--gray12);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+blockquote,
+dl,
+dd,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+hr,
+figure,
+p,
+pre {
+  margin: 0;
+}
+
+ol,
+ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+h1 {
+  all: unset;
+}
+
+button {
+  background: none;
+  appearance: none;
+  border: none;
+  font: inherit;
+}
+
+.button {
+  padding: 8px 12px;
+  margin: 0;
+  background-color: var(--accent);
+  white-space: nowrap;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  color: var(--accent-contrast);
+  transition:
+    background 150ms ease-out,
+    color 150ms ease-out;
+}
+
+.button:not(:disabled):hover {
+  background: var(--accent-hover);
+}
+
+.button:disabled {
+  background-color: var(--gray3);
+  color: var(--gray8);
+  cursor: not-allowed;
+}
+
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+  display: block;
+}
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Show outline on selected emoji in picker */
+.lb-emoji-picker-emoji[data-selected] {
+  outline: 2px solid var(--lb-accent);
+  z-index: 1;
+}

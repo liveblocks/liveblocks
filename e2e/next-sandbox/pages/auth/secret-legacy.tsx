@@ -1,10 +1,19 @@
-import React from "react";
-import Link from "next/link";
 import { createClient } from "@liveblocks/client";
+import { nn } from "@liveblocks/core";
 import { createRoomContext } from "@liveblocks/react";
+import Link from "next/link";
+import React from "react";
+
+import { getRoomFromUrl } from "../../utils";
 
 const client = createClient({
   authEndpoint: "/api/auth/legacy-token",
+
+  // @ts-expect-error - Hidden setting
+  baseUrl: nn(
+    process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
+    "Please specify NEXT_PUBLIC_LIVEBLOCKS_BASE_URL env var"
+  ),
 });
 
 const { RoomProvider, useMyPresence, useSelf, useOthers, useStatus } =
@@ -12,13 +21,7 @@ const { RoomProvider, useMyPresence, useSelf, useOthers, useStatus } =
 
 export default function Home() {
   React.useEffect(() => {
-    setText("e2e-modern-auth");
-    if (typeof window !== "undefined") {
-      const queryParam = window.location.search;
-      if (queryParam.split("room=").length > 1) {
-        setText(queryParam.split("room=")[1]);
-      }
-    }
+    setText(getRoomFromUrl());
   }, []);
 
   const [text, setText] = React.useState("");

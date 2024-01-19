@@ -1,0 +1,660 @@
+---
+meta:
+  title: "How to send email notifications when comments are created"
+  description:
+    "Learn how to automatically send email notifications when a comment or
+    thread is created with Liveblocks Comments."
+---
+
+Liveblocks allows you to build a commenting experience with
+[Comments](/docs/products/comments). Using our webhooks and REST API, it’s
+possible to send email notifications to users when they’re mentioned in
+comments.
+
+## What we’re building
+
+In this guide we’ll be learning how to send comments notifications, and more
+specifically, we’ll be looking at how to:
+
+- Trigger events when comments are created using the
+  [CommentCreated](/docs/platform/webhooks#CommentCreatedEvent) webhook event.
+- Fetch a comment’s data using the
+  [@liveblocks/node](/docs/api-reference/liveblocks-node) package.
+- Create notifications containing the comment’s
+  [formatted text](/docs/guides/how-to-send-email-notifications-when-comments-are-created#Formatting-a-comment's-body).
+- Send an email notification with [Resend](https://resend.com/).
+
+<Banner title="Have a project ready">
+
+This guide assumes you already have a Liveblocks Comments project set up. If you
+haven’t already got one, you can
+[get started with Comments](/docs/get-started/comments), and come back after
+you’re set up. You could also use our
+[basic Comments example](/examples/comments/nextjs-comments).
+
+</Banner>
+
+## Create an endpoint in your project
+
+When a webhook event is triggered, it can send a POST request to the back end in
+your project, and from within there we can update the database. In this guide,
+we’ll be using a Next.js route handler (API endpoint) as an example, but other
+frameworks work similarly.
+
+In order to use webhooks, we’ll need to retrieve the `headers` and `body` from
+the request. Here’s the basic endpoint we’ll be starting from:
+
+```ts
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Handle webhooks and notifications
+  // ...
+
+  return new Response(null, { status: 200 });
+}
+```
+
+Create this endpoint in your project, and make it available on `localhost` at
+the following URL:
+
+```
+/api/liveblocks-database-sync
+```
+
+### Testing webhooks locally
+
+Running webhooks locally can be difficult, but one way to do this is to use a
+tool such as [`localtunnel`](https://www.npmjs.com/package/localtunnel) or
+[`ngrok`](https://www.npmjs.com/package/ngrok) which allow you to temporarily
+put your localhost server online.
+
+If your project is running on `localhost:3000`, you can run the following
+command to generate a temporary URL that’s available while your localhost server
+is running:
+
+```bash
+npx localtunnel --port 3000
+```
+
+If you correctly input your IP address, the URL `localtunnel` generates can be
+placed into the Liveblocks webhooks dashboard for quick testing.
+
+## Set up webhooks on the Liveblocks dashboard
+
+To use webhooks, you need to pass your endpoint URL to the webhooks dashboard
+inside your Liveblocks project, and tell the webhook to trigger when a comment
+has been created.
+
+<Steps>
+  <Step>
+    <StepTitle>Select your project</StepTitle>
+    <StepContent>
+      From the [Liveblocks dashboard](/dashboard), navigate to the project you’d
+      like to use with webhooks, or create a new project.
+      <Figure>
+        <Image
+          src="/assets/tutorials/webhooks/liveblocks-create-project.png"
+          alt="Create a Liveblocks project"
+          width={712}
+          height={445}
+        />
+      </Figure>
+    </StepContent>
+  </Step>
+
+{" "}
+<Step>
+  <StepTitle>Go to the webhooks dashboard</StepTitle>
+  <StepContent>
+    Click on the **“Webhooks”** tab on the menu at the left.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-click-webhooks.png"
+        alt="Click webhooks"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+{" "}
+<Step>
+  <StepTitle>Create an endpoint</StepTitle>
+  <StepContent>
+    Click the **“Create endpoint…”** button on the webhooks dashboard to start
+    setting up your webhook.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-add-endpoint.png"
+        alt="Click add endpoint"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+{" "}
+<Step>
+  <StepTitle>Add your endpoint URL</StepTitle>
+  <StepContent>
+    Enter the URL of the endpoint. In a production app this will be the real
+    endpoint, but for now enter your `localtunnel` URL from earlier.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-add-endpoint-url.png"
+        alt="Add endpoint URL"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+{" "}
+<Step>
+  <StepTitle>Get your webhook secret key</StepTitle>
+  <StepContent>
+    Click **“Create endpoint”** at the bottom, then find your **“Webhook secret
+    key”** on the next page, and copy it.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-get-secret-key.png"
+        alt="Copy your webhook secret key"
+        width={710}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+  <Step lastStep>
+    <StepTitle>Webhooks dashboard is set up!</StepTitle>
+
+    <StepContent>
+      Note that you can filter specifically for `commentCreated` events, but we’re
+      ignoring this for now so we can test more easily. Let’s go back to the
+      code.
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## Verify the webhook request
+
+The [`@liveblocks/node`](/docs/api-reference/liveblocks-node) package provides
+you with a function that verifies whether the current request is a real webhook
+request from Liveblocks. You can set this up by setting up a
+[`WebhookHandler`](/docs/api-reference/liveblocks-node#WebhookHandler) and
+running [`verifyRequest`](/docs/api-reference/liveblocks-node#verifyRequest).
+
+Make sure to add your “Webhook secret key” from the Liveblocks dashboard—in a
+real project we’d recommend using an environment variable for this.
+
+```ts highlight="1,3-5,11-21"
+import { WebhookHandler } from "@liveblocks/node";
+
+// Add your webhook secret key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // Send notifications
+  // ...
+
+  return new Response(null, { status: 200 });
+}
+```
+
+We can then check we’re receiving the correct type of event, get the data from
+the webhook, and handle sending the notification inside there.
+
+```ts highlight="23-29"
+import { WebhookHandler } from "@liveblocks/node";
+
+// Add your webhook secret key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // When a comment has been created
+  if (event.type === "commentCreated") {
+    const { roomId, threadId, commentId } = event.data;
+
+    // Send notifications
+    // ...
+  }
+
+  return new Response(null, { status: 200 });
+}
+```
+
+We now have the `roomId`, `threadId`, and `commentId` of the created comment,
+along with some
+[other information](/docs/platform/webhooks#CommentCreatedEvent).
+
+## Get comment and thread data
+
+<Banner title="Threads vs comments">
+  Note that a thread is different to a comment—a thread is “top-level”, and each
+  thread contains a list of comments. When you create a thread with
+  [`useCreateThread`](/docs/api-reference/liveblocks-react#useCreateThread), you
+  also create the first comment in the thread.
+</Banner>
+
+The next step is to use the
+[Liveblocks client](/docs/api-reference/liveblocks-node#Liveblocks-client) from
+`@liveblocks/node` to retrieve the entire comment’s data, along with the thread
+participants. In Liveblocks Comments, a participant refers to a user that has
+commented or been mentioned in a thread—we’ll be sending a notification to each
+of these users.
+
+To do this we’ll need to add our project’s secret key to the Liveblocks client,
+before awaiting the following functions:
+[`getComment`](/docs/api-reference/liveblocks-node#get-comment) and
+[`getThreadParticipants`](/docs/api-reference/liveblocks-node#get-thread-participants).
+
+```ts highlight="1,7-9,31-43"
+import { Liveblocks, WebhookHandler } from "@liveblocks/node";
+
+// Add your webhook secret key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+// Add your secret key from a project's API keys dashboard
+const API_SECRET = "{{SECRET_KEY}}";
+const liveblocks = new Liveblocks({ secret: API_SECRET });
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // When a comment has been created
+  if (event.type === "commentCreated") {
+    const { roomId, threadId, commentId } = event.data;
+
+    try {
+      // Get comment data and participants
+      const [comment, { participantIds }] = await Promise.all([
+        liveblocks.getComment({ roomId, threadId, commentId }),
+        liveblocks.getThreadParticipants({ roomId, threadId }),
+      ]);
+
+      // Send notifications
+      // ...
+    } catch (err) {
+      console.log(err);
+      return new Response("Could not fetch comment data", { status: 500 });
+    }
+  }
+
+  return new Response(null, { status: 200 });
+}
+```
+
+## Formatting a comment’s body
+
+Now that we have the comment data and a list of participants, we have one more
+step before sending the notifications—formatting the comment’s text, found
+inside `comment.body`. Let’s take a look at how it works for an example comment,
+using
+[`stringifyCommentBody`](/docs/api-reference/liveblocks-node#stringify-comment-body)
+to transform `comment.body`.
+
+<Figure>
+  <Image
+    src="/assets/comments/comment-body.png"
+    alt="Comment with example body: 'Thank you so much @Emil Joyce!', with 'so much' in bold"
+    width={1289}
+    height={390}
+  />
+</Figure>
+
+```ts
+import { stringifyCommentBody } from "@liveblocks/node";
+
+// Format comment text into a string
+const stringComment = await stringifyCommentBody(comment.body);
+
+// "Thank you so much emil.joyce@example.com!"
+console.log(stringComment);
+```
+
+As you can see on line 6, we’re converting the body into a plain string, which
+means we lose the formatting. We’re also seeing the user’s ID, instead of the
+name—this is because we need to provide the user’s information, as the comment
+only stores the user’s ID.
+
+By providing two options, we can transform the comment into HTML, keeping the
+formatting, and add the user information.
+
+```ts
+import { stringifyCommentBody } from "@liveblocks/node";
+
+// Format comment text into an HTML string
+const htmlComment = await stringifyCommentBody(comment.body, {
+  // Transform into HTML
+  format: "html",
+
+  // Provider user information
+  async resolveUsers({ userIds }) {
+    // ["emil.joyce@example.com", ...]
+    console.log(userIds);
+
+    // Return each user's name
+    [{ name: "Emil Joyce" } /*, ... */];
+  },
+});
+
+// "<p>Thank you <b>so much</b> <span data-mention>@Emil Joyce</span>!</p>"
+console.log(stringComment);
+```
+
+On line 18, you can now see that we’re creating an HTML string, and using the
+mentioned user’s name. Note that you can also easily transform your comment into
+Markdown, or a completely custom format, learn more under
+[`stringifyCommentBody`](/docs/api-reference/liveblocks-node#stringify-comment-body).
+
+Let’s use this HTML formatting function in our endpoint, getting user
+information from your database.
+
+```ts highlight="1,38-50"
+import { Liveblocks, WebhookHandler, stringifyCommentBody } from "@liveblocks/node";
+
+// Add your webhook secret key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+// Add your secret key from a project's API keys dashboard
+const API_SECRET = "{{SECRET_KEY}}";
+const liveblocks = new Liveblocks({ secret: API_SECRET });
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // When a comment has been created
+  if (event.type === "commentCreated") {
+    const { roomId, threadId, commentId } = event.data;
+
+    try {
+      // Get comment data and participants
+      const [comment, { participantIds }] = await Promise.all([
+        liveblocks.getComment({ roomId, threadId, commentId }),
+        liveblocks.getThreadParticipants({ roomId, threadId }),
+      ]);
+
+      // HTML comment body
+      const htmlComment = await stringifyCommentBody(comment.body, {
+        format: "html",
+
+        async resolveUsers({ userIds }) {
+          // Get the correct users from your database
+          const users = await __getUsers__(userIds);
+
+          return users.map((user) => ({
+            name: user.name,
+          });
+        },
+      });
+
+      // Send notifications
+      // ...
+    } catch (err) {
+      console.log(err);
+      return new Response("Could not fetch comment data", { status: 500 });
+    }
+  }
+
+  return new Response(null, { status: 200 });
+}
+```
+
+## Send notifications
+
+Now that the comment’s body is in our preferred format, we can send the
+notifications. Earlier we retrieved `participants`, a list of `userIds` that
+have been mentioned in the thread. You most likely have user information in your
+database, which you can retrieve from these `userIds`.
+
+<Banner title="userIds">
+  These are the same `userIds` that are passed to
+  [`resolveUsers`](/docs/api-reference/liveblocks-react#resolveUsers) in your
+  `liveblocks.config.ts` file.
+</Banner>
+
+After getting each user’s email, simply loop through and send the formatted
+comment.
+
+```ts highlight="52-64"
+import { Liveblocks, WebhookHandler, stringifyCommentBody } from "@liveblocks/node";
+
+// Add your webhook secret key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+// Add your secret key from a project's API keys dashboard
+const API_SECRET = "{{SECRET_KEY}}";
+const liveblocks = new Liveblocks({ secret: API_SECRET });
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // When a comment has been created
+  if (event.type === "commentCreated") {
+    const { roomId, threadId, commentId } = event.data;
+
+    try {
+      // Get comment data and participants
+      const [comment, { participantIds }] = await Promise.all([
+        liveblocks.getComment({ roomId, threadId, commentId }),
+        liveblocks.getThreadParticipants({ roomId, threadId }),
+      ]);
+
+      // HTML comment body
+      const htmlComment = await stringifyCommentBody(comment.body, {
+        format: "html",
+
+        async resolveUsers({ userIds }) {
+          // Get the correct users from your database
+          const users = await __getUsers__(userIds);
+
+          return users.map((user) => ({
+            name: user.name,
+          });
+        },
+      });
+
+      // Get participating users from your database
+      const users = await __getUsers__(participantIds);
+
+      // Send notifications
+      for (const user of users) {
+        // Send email to the user's email address
+        // send({
+        //   from: "hello@my-company.com",
+        //   to: user.email,
+        //   title: "New comment",
+        //   html: htmlComment
+        // });
+      }
+    } catch (err) {
+      console.log(err);
+      return new Response("Could not fetch comment data", { status: 500 });
+    }
+  }
+
+  return new Response(null, { status: 200 });
+}
+```
+
+## Sending emails with Resend
+
+[Resend](https://resend.com) is a great tool for easily sending emails, and in
+this code example, we’re using it to send the notifications to each user. Make
+sure to add your API key from the
+[Resend dashboard](https://resend.com/overview) before running the code.
+
+```ts highlight="2,4-5,59-69" file="route.ts"
+import { Liveblocks, WebhookHandler, stringifyCommentBody } from "@liveblocks/node";
+import { Resend } from "resend";
+
+// Create Resend client (add your API key)
+const resend = new Resend("re_123456789");
+
+// Add your webhook secret key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+// Add your secret key from a project's API keys dashboard
+const API_SECRET = "{{SECRET_KEY}}";
+const liveblocks = new Liveblocks({ secret: API_SECRET });
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // When a comment has been created
+  if (event.type === "commentCreated") {
+    const { roomId, threadId, commentId } = event.data;
+
+    try {
+      // Get comment data and participants
+      const [comment, { participantIds }] = await Promise.all([
+        liveblocks.getComment({ roomId, threadId, commentId }),
+        liveblocks.getThreadParticipants({ roomId, threadId }),
+      ]);
+
+      // HTML comment body
+      const htmlComment = stringifyCommentBody(comment.body, {
+        format: "html",
+
+        async resolveUsers({ userIds }) {
+          // Get the correct users from your database
+          const users = await __getUsers__(userIds);
+
+          return users.map((user) => ({
+            name: user.name,
+          });
+        },
+      });
+
+      // Get participating users from your database
+      const users = await __getUsers__(participantIds);
+
+      // Send email to the users' email addresses
+      try {
+        const data = await resend.emails.send({
+          from: "My company <hello@my-company.com>",
+          to: [users.map((user) => user.email)],
+          subject: "New comment",
+          html: htmlComment,
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    } catch (err) {
+      console.log(err);
+      return new Response("Could not fetch comment data", { status: 500 });
+    }
+  }
+
+  return new Response(null, { status: 200 });
+}
+```
+
+## Recap
+
+Great, we’re successfully sending email notifications after new comments are
+created! In this guide we’ve learned:
+
+- How to use [webhooks](/docs/platform/webhooks) and the
+  [`CommentCreatedEvent`](/docs/platform/webhooks#CommentCreatedEvent).
+- How to use the `@liveblocks/node` package to get
+  [comment data](/docs/api-reference/liveblocks-node#get-comment) and
+  [thread participants](/docs/api-reference/liveblocks-node#get-thread-participants).
+- How to shape a comment’s body into HTML with
+  [`stringifyCommentBody`](/docs/api-reference/liveblocks-node#stringify-comment-body).
+- How to send email notifications with [Resend](https://resend.com).

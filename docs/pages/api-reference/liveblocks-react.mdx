@@ -22,10 +22,12 @@ import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
 const client = createClient({
-  /* client options */
+  // publicApiKey: "",
+  // authEndpoint: "/api/auth",
+  // throttle: 100,
 });
 
-// Presence represents the properties that will exist on every User in the Room
+// Presence represents the properties that exist on every user in the Room
 // and that will automatically be kept in sync. Accessible through the
 // `user.presence` property. Must be JSON-serializable.
 type Presence = {
@@ -34,7 +36,7 @@ type Presence = {
 };
 
 // Optionally, Storage represents the shared document that persists in the
-// Room, even after all Users leave. Fields under Storage typically are
+// Room, even after all users leave. Fields under Storage typically are
 // LiveList, LiveMap, LiveObject instances, for which updates are
 // automatically persisted and synced to all connected clients.
 type Storage = {
@@ -42,28 +44,30 @@ type Storage = {
   // ...
 };
 
-// Optionally, UserMeta represents static/readonly metadata on each User, as
-// provided by your own custom auth backend (if used). Useful for data that
-// will not change during a session, like a User's name or avatar.
+// Optionally, UserMeta represents static/readonly metadata on each user, as
+// provided by your own custom auth back end (if used). Useful for data that
+// will not change during a session, like a user's name or avatar.
 // type UserMeta = {
 //   id?: string,  // Accessible through `user.id`
 //   info?: Json,  // Accessible through `user.info`
 // };
 
-// Optionally, the type of custom events broadcasted and listened for in this
-// room. Must be JSON-serializable.
+// Optionally, the type of custom events broadcast and listened to in this
+// room. Use a union for multiple events. Must be JSON-serializable.
 // type RoomEvent = {};
 
-// Optionally, ThreadMetadata represents metadata on each thread.
-// Must only contain scalar values.
-// type ThreadMetadata = {
-//   resolved?: boolean;
+// Optionally, when using Comments, ThreadMetadata represents metadata on
+// each thread. Can only contain booleans, strings, and numbers.
+// export type ThreadMetadata = {
+//   resolved: boolean;
+//   quote: string;
+//   time: number;
 // };
 
 export const {
   RoomProvider,
   useMyPresence,
-  useObject,
+  useStorage,
   /* ...all the other hooks you’re using... */
 } = createRoomContext<
   Presence,
@@ -72,23 +76,24 @@ export const {
 >(client);
 ```
 
-#### resolveUser
+#### resolveUsers
 
-<Banner title="Private beta">
+<Banner title="Public beta">
 
-Comments is currently in private beta.
-[Sign up for the waitlist](https://forms.gle/xgp54aTMsoH8hrjU9) to get access in
-the near future.
+Comments is currently in beta. If you have any questions or feedback, please
+reach out to us via the dedicated Discord channel,
+[#comments-beta](https://discord.com/channels/913109211746009108/1126614905160749097).
+We’d love to hear from you.
 
 </Banner>
 
 When using [Comments](/docs/products/comments), anything that is linked to a
 user (comments, mentions, etc.) will reference their ID. To display user
 information based on IDs, you can provide a resolver function to the
-`resolveUser` option in [`createRoomContext`](#createRoomContext).
+`resolveUsers` option in [`createRoomContext`](#createRoomContext).
 
-This resolver function will receive a user ID and should return a user object
-asynchronously.
+This resolver function will receive a list of user IDs and should return a list
+of user objects of the same size and in the same order.
 
 ```tsx file="liveblocks.config.ts"
 // ...
@@ -96,13 +101,13 @@ asynchronously.
 export const {
   /* ... */
 } = createRoomContext(client, {
-  resolveUser: async ({ userId }) => {
-    const userData = __getUserFromDB__(userId);
+  resolveUsers: async ({ userIds }) => {
+    const usersData = await __getUsersFromDB__(userIds);
 
-    return {
+    return usersData.map((userData) => ({
       name: userData.name,
       avatar: userData.avatar.src,
-    };
+    }));
   },
 });
 ```
@@ -125,11 +130,12 @@ Once that’s done, components will show user names and avatars accordingly.
 
 #### resolveMentionSuggestions
 
-<Banner title="Private beta">
+<Banner title="Public beta">
 
-Comments is currently in private beta.
-[Sign up for the waitlist](https://forms.gle/xgp54aTMsoH8hrjU9) to get access in
-the near future.
+Comments is currently in beta. If you have any questions or feedback, please
+reach out to us via the dedicated Discord channel,
+[#comments-beta](https://discord.com/channels/913109211746009108/1126614905160749097).
+We’d love to hear from you.
 
 </Banner>
 
@@ -148,8 +154,8 @@ but with some debouncing.
 export const {
   /* ... */
 } = createRoomContext(client, {
-  resolveMentionSuggestions: ({ text, roomId }) => {
-    const workspaceUsers = __getWorkspaceUsersFromDB__(roomId);
+  resolveMentionSuggestions: async ({ text, roomId }) => {
+    const workspaceUsers = await __getWorkspaceUsersFromDB__(roomId);
 
     if (!text) {
       // Show all workspace users by default
@@ -166,9 +172,9 @@ export const {
 
 ### RoomProvider
 
-Makes a [`Room`] available in the component hierarchy below. When this component
-is unmounted, the current user leaves the room. That means that you can’t use
-two RoomProviders with the same room ID in your React tree.
+Makes a [`Room`] available in the component hierarchy below. Joins the room when
+the component is mounted, and automatically leaves the room when the component
+is unmounted.
 
 - `initialPresence` - The initial Presence to use for the User currently
   entering the Room. Presence data belongs to the current User and is readable
@@ -180,14 +186,14 @@ two RoomProviders with the same room ID in your React tree.
   mutable by every client. Must either contain Live structures (e.g.
   `new LiveList()`, `new LiveObject({ a: 1 })`, etc.) or be serializable to
   JSON.
-- `shouldInitiallyConnect` (optional) - Whether or not the room should connect
-  to Liveblocks servers when the RoomProvider is rendered. By default equals to
-  `typeof window !== "undefined"`, meaning the RoomProvider tries to connect to
-  Liveblocks servers only on the client side.
+- `autoConnect` (optional) - Whether or not the room should automatically
+  connect to Liveblocks servers when the RoomProvider is mounted. By default
+  it’s set to `typeof window !== "undefined"`, meaning the RoomProvider attempts
+  to connect to Liveblocks servers only on the client side.
 
-The `initialPresence`, `initialStorage` and `shouldInitiallyConnect` props are
-ignored after the first render, so changes to the initial value argument won’t
-have an observable effect.
+The `initialPresence`, `initialStorage` and `autoConnect` props are ignored
+after the first render, so changes to the initial value argument won’t have an
+effect.
 
 ```tsx
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
@@ -274,6 +280,42 @@ const status = useStatus();
 The possible value are: `initial`, `connecting`, `connected`, `reconnecting`, or
 `disconnected`.
 
+### useOthersListener
+
+Calls the given callback when an “others” event occurs. Possible event types
+are:
+
+- `enter` – A user has entered the room.
+- `leave` – A user has left the room.
+- `reset` – The others list has been emptied. This is the first event that
+  occurs when the room is entered. It also occurs when you’ve lost connection to
+  the room.
+- `update` – A user’s presence data has been updated.
+
+```ts
+function App() {
+  useOthersListener(({ type, user, others }) => {
+    switch (type) {
+      case "enter":
+        // `user` has entered the room
+        break;
+
+      case "leave":
+        // `user` has left the room
+        break;
+
+      case "update":
+        // Presence for `user` has updated
+        break;
+
+      case "reset":
+        // Others list has been emptied
+        break;
+    }
+  });
+}
+```
+
 ### useLostConnectionListener
 
 Calls the given callback in the exceptional situation that a connection is lost
@@ -354,6 +396,13 @@ const myPresence = useSelf((me) => me.presence);
 const updateMyPresence = useUpdateMyPresence();
 ```
 
+`updateMyPresence` accepts an optional argument to add a new item to the
+undo/redo stack. See [`room.history`][] for more information.
+
+```ts
+updateMyPresence({ selectedId: "xxx" }, { addToHistory: true });
+```
+
 ### useUpdateMyPresence
 
 Returns a setter function to update the current user’s presence.
@@ -374,6 +423,13 @@ import { useUpdateMyPresence } from "./liveblocks.config";
 const updateMyPresence = useUpdateMyPresence();
 
 updateMyPresence({ y: 0 });
+```
+
+`updateMyPresence` accepts an optional argument to add a new item to the
+undo/redo stack. See [`room.history`][] for more information.
+
+```ts
+updateMyPresence({ selectedId: "xxx" }, { addToHistory: true });
 ```
 
 ### useSelf
@@ -925,10 +981,11 @@ which will automatically batch all mutations.
 
 </Banner>
 
-Returns a function that batches modifications made during the given function.
-All the modifications are sent to other clients in a single message. All the
-modifications are merged in a single history item (undo/redo). All the
-subscribers are called only after the batch is over.
+Returns a function that batches Storage and Presence modifications made during
+the given function. Each modification is grouped together, which means that
+other clients receive the changes as a single message after the batch function
+has run. Every modification made during the batch is merged into a single
+history item (undo/redo).
 
 ```tsx
 import { useBatch } from "./liveblocks.config";
@@ -937,6 +994,16 @@ const batch = useBatch();
 batch(() => {
   // All modifications made in this callback are batched
 });
+```
+
+Note that `batch` cannot take an `async` function.
+
+```tsx
+// ❌ Won't work
+batch(async () => /* ... */);
+
+// ✅ Will work
+batch(() => /*... */);
 ```
 
 ### useHistory
@@ -1131,11 +1198,12 @@ the dependency arrays of your `useMutation` calls:
 
 ## Comments
 
-<Banner title="Private beta">
+<Banner title="Public beta">
 
-Comments is currently in private beta.
-[Sign up for the waitlist](https://forms.gle/xgp54aTMsoH8hrjU9) to get access in
-the near future.
+Comments is currently in beta. If you have any questions or feedback, please
+reach out to us via the dedicated Discord channel,
+[#comments-beta](https://discord.com/channels/913109211746009108/1126614905160749097).
+We’d love to hear from you.
 
 </Banner>
 
@@ -1149,8 +1217,24 @@ import { useThreads } from "./liveblocks.config";
 const { threads, error, isLoading } = useThreads();
 ```
 
+`useThreads` can also take an optional `query` parameter, to filter threads
+based on their metadata.
+
+```tsx
+// Returns the threads with `metadata.color === "blue"` and `metadata.resolved === true`
+const { threads } = useThreads({
+  query: {
+    metadata: {
+      // Custom metadata query goes here
+      color: "blue",
+      resolved: true,
+    },
+  },
+});
+```
+
 👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there's an error.
+return a loading state and will throw when there’s an error.
 
 ### useUser
 
@@ -1163,12 +1247,12 @@ const { user, error, isLoading } = useUser("user-id");
 ```
 
 👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there's an error.
+return a loading state and will throw when there’s an error.
 
 <Banner title="Providing a resolver function">
 
 To use `useUser`, you should provide a resolver function to the
-[`resolveUser`](#resolveUser) option in
+[`resolveUsers`](#resolveUsers) option in
 [`createRoomContext`](#createRoomContext).
 
 </Banner>
@@ -1186,6 +1270,12 @@ const thread = createThread({ body: {}, metadata: {} });
 ### useEditThreadMetadata
 
 Returns a function that edits a thread’s metadata.
+
+<Banner title="Deleting properties">
+
+To delete an existing metadata property, set its value to `null`.
+
+</Banner>
 
 ```tsx
 const editThreadMetadata = useEditThreadMetadata();
@@ -1222,6 +1312,24 @@ comment, the thread also gets deleted.
 ```tsx
 const deleteComment = useDeleteComment();
 deleteComment({ threadId: "th_xxx", commentId: "cm_xxx" });
+```
+
+### useAddReaction
+
+Returns a function that adds a reaction to a comment.
+
+```tsx
+const addReaction = useAddReaction();
+addReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
+```
+
+### useRemoveReaction
+
+Returns a function that removes a reaction from a comment.
+
+```tsx
+const removeReaction = useRemoveReaction();
+removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
 ```
 
 ## Helpers
@@ -1578,7 +1686,7 @@ function Page() {
 
 ## Deprecated
 
-### LiveblocksProvider
+### LiveblocksProvider [@badge=Deprecated]
 
 <Banner type="error" title="Deprecated in 0.17, removed in 0.18">
 

@@ -2,6 +2,7 @@ import * as PopoverPrimitive from "@radix-ui/react-popover";
 import type { ComponentPropsWithoutRef } from "react";
 import React, { forwardRef, useCallback, useMemo, useState } from "react";
 
+import { useCommentsConfig } from "../../config";
 import {
   FLOATING_ELEMENT_COLLISION_PADDING,
   FLOATING_ELEMENT_SIDE_OFFSET,
@@ -19,8 +20,8 @@ import type {
   EmojiPickerContentLoadingProps,
   EmojiPickerContentRowProps,
 } from "../../primitives/EmojiPicker/types";
-import { Emoji } from "../../primitives/internal/Emoji";
 import { classNames } from "../../utils/class-names";
+import { Emoji } from "../internal/Emoji";
 
 export interface EmojiPickerProps extends ComponentPropsWithoutRef<"div"> {
   onOpenChange?: (open: boolean) => void;
@@ -143,6 +144,7 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(
     forwardedRef
   ) => {
     const [isOpen, setOpen] = useState(false);
+    const { portalContainer } = useCommentsConfig();
     const $ = useOverrides();
 
     const handleOpenChange = useCallback(
@@ -164,14 +166,14 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(
     return (
       <PopoverPrimitive.Root open={isOpen} onOpenChange={handleOpenChange}>
         {children}
-        <PopoverPrimitive.Portal>
+        <PopoverPrimitive.Portal container={portalContainer}>
           <PopoverPrimitive.Content
             side="top"
             align="center"
             sideOffset={FLOATING_ELEMENT_SIDE_OFFSET}
             collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
             className={classNames(
-              "lb-root lb-elevation lb-emoji-picker",
+              "lb-root lb-portal lb-elevation lb-emoji-picker",
               className
             )}
             {...props}

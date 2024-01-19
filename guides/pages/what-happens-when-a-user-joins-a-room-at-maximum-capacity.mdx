@@ -80,7 +80,7 @@ join.
 
 ```ts highlight="17-19"
 // No error is thrown when the room is full
-const room = client.enter("my-room", {
+const { room, leave } = client.enterRoom("my-room", {
   /* ... */
 });
 

@@ -43,7 +43,7 @@ install Liveblocks package and `esbuild`:
 npm install @liveblocks/client esbuild
 ```
 
-[`@liveblocks/client`][] lets you interact with Liveblocks servers.  
+[`@liveblocks/client`][] lets you interact with Liveblocks servers.
 [`esbuild`](https://esbuild.github.io/) lets your bundle your app with
 `@liveblocks/client`.
 
@@ -98,7 +98,7 @@ const client = createClient({
 });
 
 function run() {
-  const room = client.enter("javascript-todo-app", {
+  const { room, leave } = client.enterRoom("javascript-todo-app", {
     initialPresence: { isTyping: false },
   });
 }
@@ -132,7 +132,7 @@ to show who’s currently inside the room.
 Create a file `static/index.html` with the following content:
 
 ```html file="static/index.html"
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -159,7 +159,7 @@ const client = createClient({
 });
 
 function run() {
-  const room = client.enter("javascript-todo-app", {
+  const { room, leave } = client.enterRoom("javascript-todo-app", {
     initialPresence: { isTyping: false },
   });
 
@@ -201,7 +201,11 @@ input {
   margin: 0.5rem 0;
   width: 100%;
   background-color: white;
-  box-shadow: 0 0 #000, 0 0 #000, 0 0 #000, 0 0 #000,
+  box-shadow:
+    0 0 #000,
+    0 0 #000,
+    0 0 #000,
+    0 0 #000,
     0 1px 2px 0 rgba(0, 0, 0, 0.05);
   border-radius: 0.5rem;
   color: black;
@@ -210,8 +214,13 @@ input {
 }
 
 input:hover {
-  box-shadow: 0 0 #000, 0 0 #000, 0 0 #000, 0 0 #000,
-    0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 0 #000,
+    0 0 #000,
+    0 0 #000,
+    0 0 #000,
+    0 1px 3px 0 rgba(0, 0, 0, 0.1),
+    0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
 input:focus {
@@ -278,7 +287,7 @@ current user.
 First, add an input to `static/index.html`
 
 ```html file="static/index.html" highlight="11"
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -305,7 +314,7 @@ const client = createClient({
 });
 
 function run() {
-  const room = client.enter("javascript-todo-app", {
+  const { room, leave } = client.enterRoom("javascript-todo-app", {
     initialPresence: { isTyping: false },
   });
 
@@ -339,7 +348,7 @@ Now that we set the `isTyping` state when necessary, add a new `div` to display
 a message when at least one other user has `isTyping` equals to `true`.
 
 ```html file="static/index.html" highlight="12"
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -365,7 +374,7 @@ const client = createClient({
 });
 
 function run() {
-  const room = client.enter("javascript-todo-app", {
+  const { room, leave } = client.enterRoom("javascript-todo-app", {
     initialPresence: { isTyping: false },
   });
 
@@ -453,7 +462,7 @@ const client = createClient({
 });
 
 async function run() {
-  const room = client.enter("javascript-todo-app", {
+  const { room, leave } = client.enterRoom("javascript-todo-app", {
     initialPresence: { isTyping: false },
     initialStorage: { todos: new LiveList() },
   });
@@ -493,7 +502,7 @@ a container for our todos and use [`room.subscribe(todos)`][] to get rerender
 the app whenever the todos are updated.
 
 ```html file="static/index.html" highlight="13"
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -520,7 +529,7 @@ const client = createClient({
 });
 
 async function run() {
-  const room = client.enter("javascript-todo-app", {
+  const { room, leave } = client.enterRoom("javascript-todo-app", {
     initialPresence: { isTyping: false },
     initialStorage: { todos: new LiveList() },
   });
@@ -585,7 +594,7 @@ const client = createClient({
 });
 
 async function run() {
-  const room = client.enter("javascript-todo-app", {
+  const { room, leave } = client.enterRoom("javascript-todo-app", {
     initialPresence: { isTyping: false },
     initialStorage: { todos: new LiveList() },
   });

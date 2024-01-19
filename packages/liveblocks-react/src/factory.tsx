@@ -8,6 +8,7 @@ import type {
   LiveObject,
   LostConnectionEvent,
   LsonObject,
+  OthersEvent,
   Room,
   Status,
   User,
@@ -17,6 +18,8 @@ import type {
   AsyncCache,
   BaseMetadata,
   CommentData,
+  EnterOptions,
+  GetThreadsOptions,
   RoomEventMessage,
   ToImmutable,
 } from "@liveblocks/core";
@@ -26,33 +29,30 @@ import {
   errorIf,
   isLiveNode,
   makeEventSource,
+  stringify,
 } from "@liveblocks/core";
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import type {
-  CommentReactionOptions,
-  CommentsRoom,
   CreateCommentOptions,
-  CreateThreadOptions,
-  DeleteCommentOptions,
   EditCommentOptions,
-  EditThreadMetadataOptions,
   ThreadsState,
 } from "./comments/CommentsRoom";
 import { createCommentsRoom } from "./comments/CommentsRoom";
-import type { CommentsApiError } from "./comments/errors";
+import type { CommentsError } from "./comments/errors";
 import { useDebounce } from "./comments/lib/use-debounce";
-import { stableStringify } from "./lib/stable-stringify";
 import { useAsyncCache } from "./lib/use-async-cache";
 import { useInitial } from "./lib/use-initial";
+import { useLatest } from "./lib/use-latest";
 import { useRerender } from "./lib/use-rerender";
 import type {
   InternalRoomContextBundle,
   MutationContext,
   OmitFirstArg,
-  ResolveMentionSuggestionsOptions,
-  ResolveUserOptions,
+  PromiseOrNot,
+  ResolveMentionSuggestionsArgs,
+  ResolveUsersArgs,
   RoomContextBundle,
   RoomProviderProps,
   UserState,
@@ -76,12 +76,12 @@ const missing_unstable_batchedUpdates = (
       ...
     </RoomProvider>
 
-Why? Please see https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child for more information`;
+Why? Please see https://liveblocks.io/docs/platform/troubleshooting#stale-props-zombie-child for more information`;
 
 const superfluous_unstable_batchedUpdates =
   "You don’t need to pass unstable_batchedUpdates to RoomProvider anymore, since you’re on React 18+ already.";
 
-function useSyncExternalStore<Snapshot>(
+export function useSyncExternalStore<Snapshot>(
   s: (onStoreChange: () => void) => () => void,
   gs: () => Snapshot,
   gss: undefined | null | (() => Snapshot)
@@ -89,9 +89,18 @@ function useSyncExternalStore<Snapshot>(
   return useSyncExternalStoreWithSelector(s, gs, gss, identity);
 }
 
-// Don't try to inline this. This function itself must be a stable reference.
-function getEmptyOthers() {
-  return [];
+const STABLE_EMPTY_LIST = Object.freeze([]);
+
+// Don't try to inline this. This function is intended to be a stable
+// reference, to avoid a React.useCallback() wrapper.
+function alwaysEmptyList() {
+  return STABLE_EMPTY_LIST;
+}
+
+// Don't try to inline this. This function is intended to be a stable
+// reference, to avoid a React.useCallback() wrapper.
+function alwaysNull() {
+  return null;
 }
 
 function makeMutationContext<
@@ -138,50 +147,40 @@ type Options<TUserMeta extends BaseUserMeta> = {
   /**
    * @beta
    *
-   * An asynchronous function that returns user info from a user ID.
+   * A function that returns user info from user IDs.
    */
-  resolveUser?: (
-    options: ResolveUserOptions
-  ) => Promise<TUserMeta["info"] | undefined>;
+  resolveUsers?: (
+    args: ResolveUsersArgs
+  ) => PromiseOrNot<(TUserMeta["info"] | undefined)[] | undefined>;
 
   /**
    * @beta
    *
-   * An asynchronous function that returns a list of user IDs matching a string.
+   * A function that returns a list of user IDs matching a string.
    */
   resolveMentionSuggestions?: (
-    options: ResolveMentionSuggestionsOptions
-  ) => Promise<string[]>;
+    args: ResolveMentionSuggestionsArgs
+  ) => PromiseOrNot<string[]>;
 
   /**
-   * @internal Internal endpoint
+   * @internal To point the client to a different Liveblocks server. Only
+   * useful for Liveblocks developers. Not for end users.
    */
-  serverEndpoint?: string;
+  baseUrl?: string;
 };
 
-let hasWarnedIfNoResolveUser = false;
+let hasWarnedIfNoResolveUsers = false;
 
-function warnIfNoResolveUser(usersCache?: AsyncCache<unknown, unknown>) {
+function warnIfNoResolveUsers(usersCache?: AsyncCache<unknown, unknown>) {
   if (
-    !hasWarnedIfNoResolveUser &&
+    !hasWarnedIfNoResolveUsers &&
     !usersCache &&
     process.env.NODE_ENV !== "production"
   ) {
     console.warn(
-      "Set the resolveUser option in createRoomContext to specify user info."
+      "Set the resolveUsers option in createRoomContext to specify user info."
     );
-    hasWarnedIfNoResolveUser = true;
-  }
-}
-
-// TODO: Remove after beta
-let hasWarnedAboutCommentsBeta = false;
-function warnIfBetaCommentsHook() {
-  if (!hasWarnedAboutCommentsBeta && process.env.NODE_ENV !== "production") {
-    console.warn(
-      "Comments is currently in private beta. Learn more at https://liveblocks.io/docs/products/comments."
-    );
-    hasWarnedAboutCommentsBeta = true;
+    hasWarnedIfNoResolveUsers = true;
   }
 }
 
@@ -222,21 +221,82 @@ export function createRoomContext<
   TRoomEvent,
   TThreadMetadata
 > {
-  const RoomContext = React.createContext<Room<
-    TPresence,
-    TStorage,
-    TUserMeta,
-    TRoomEvent
-  > | null>(null);
+  type TRoom = Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
+  type TRoomLeavePair = { room: TRoom; leave: () => void };
 
-  function RoomProvider(props: RoomProviderProps<TPresence, TStorage>) {
-    const {
-      id: roomId,
-      initialPresence,
-      initialStorage,
-      unstable_batchedUpdates,
-      shouldInitiallyConnect,
-    } = props;
+  const RoomContext = React.createContext<TRoom | null>(null);
+
+  const commentsErrorEventSource =
+    makeEventSource<CommentsError<TThreadMetadata>>();
+
+  const { CommentsRoomProvider, ...commentsRoom } =
+    createCommentsRoom<TThreadMetadata>(commentsErrorEventSource);
+
+  /**
+   * RATIONALE:
+   * At the "Outer" RoomProvider level, we keep a cache and produce
+   * a stableEnterRoom function, which we pass down to the real "Inner"
+   * RoomProvider level.
+   *
+   * The purpose is to ensure that if `stableEnterRoom("my-room")` is called
+   * multiple times for the same room ID, it will always return the exact same
+   * (cached) value, so that in total only a single "leave" function gets
+   * produced and registered in the client.
+   *
+   * If we didn't use this cache, then in React StrictMode
+   * stableEnterRoom("my-room") might get called multiple (at least 4) times,
+   * causing more leave functions to be produced in the client, some of which
+   * we cannot get a hold on (because StrictMode would discard those results by
+   * design). This would make it appear to the Client that the Room is still in
+   * use by some party that hasn't called `leave()` on it yet, thus causing the
+   * Room to not be freed and destroyed when the component unmounts later.
+   */
+  function RoomProviderOuter(props: RoomProviderProps<TPresence, TStorage>) {
+    const [cache] = React.useState<Map<string, TRoomLeavePair>>(
+      () => new Map()
+    );
+
+    // Produce a version of client.enterRoom() that when called for the same
+    // room ID multiple times, will not keep producing multiple leave
+    // functions, but instead return the cached one.
+    const stableEnterRoom = React.useCallback(
+      (
+        roomId: string,
+        options: EnterOptions<TPresence, TStorage>
+      ): TRoomLeavePair => {
+        const cached = cache.get(roomId);
+        if (cached) return cached;
+
+        const rv = client.enterRoom<TPresence, TStorage, TUserMeta, TRoomEvent>(
+          roomId,
+          options
+        );
+
+        // Wrap the leave function to also delete the cached value
+        const origLeave = rv.leave;
+        rv.leave = () => {
+          origLeave();
+          cache.delete(roomId);
+        };
+
+        cache.set(roomId, rv);
+        return rv;
+      },
+      [cache]
+    );
+
+    return <RoomProviderInner {...props} stableEnterRoom={stableEnterRoom} />;
+  }
+
+  function RoomProviderInner(
+    props: RoomProviderProps<TPresence, TStorage> & {
+      stableEnterRoom: (
+        roomId: string,
+        options: EnterOptions<TPresence, TStorage>
+      ) => TRoomLeavePair;
+    }
+  ) {
+    const { id: roomId, stableEnterRoom } = props;
 
     if (process.env.NODE_ENV !== "production") {
       if (!roomId) {
@@ -263,64 +323,61 @@ export function createRoomContext<
 
     // Note: We'll hold on to the initial value given here, and ignore any
     // changes to this argument in subsequent renders
-    const frozen = useInitial({
-      initialPresence,
-      initialStorage,
-      unstable_batchedUpdates,
-      shouldInitiallyConnect:
-        shouldInitiallyConnect === undefined
-          ? typeof window !== "undefined"
-          : shouldInitiallyConnect,
+    const frozenProps = useInitial({
+      initialPresence: props.initialPresence,
+      initialStorage: props.initialStorage,
+      unstable_batchedUpdates: props.unstable_batchedUpdates,
+      autoConnect:
+        props.autoConnect ??
+        props.shouldInitiallyConnect ??
+        typeof window !== "undefined",
     });
 
-    const [room, setRoom] = React.useState<
-      Room<TPresence, TStorage, TUserMeta, TRoomEvent>
-    >(() =>
-      client.enter(roomId, {
-        initialPresence: frozen.initialPresence,
-        initialStorage: frozen.initialStorage,
-        shouldInitiallyConnect: frozen.shouldInitiallyConnect,
-        unstable_batchedUpdates: frozen.unstable_batchedUpdates,
+    const [{ room }, setRoomLeavePair] = React.useState(() =>
+      stableEnterRoom(roomId, {
+        ...frozenProps,
+        autoConnect: false, // Deliberately using false here on the first render, see below
       })
     );
 
     React.useEffect(() => {
-      const room = client.enter<TPresence, TStorage, TUserMeta, TRoomEvent>(
-        roomId,
-        {
-          initialPresence: frozen.initialPresence,
-          initialStorage: frozen.initialStorage,
-          shouldInitiallyConnect: frozen.shouldInitiallyConnect,
-          unstable_batchedUpdates: frozen.unstable_batchedUpdates,
-        }
-      );
+      const pair = stableEnterRoom(roomId, frozenProps);
 
-      setRoom(room);
+      setRoomLeavePair(pair);
+      const { room, leave } = pair;
+
+      // In React, it's important to start connecting to the room as an effect,
+      // rather than doing this during the initial render. This means that
+      // during the initial render (both on the server-side, and on the first
+      // hydration on the client-side), the value of the `useStatus()` hook
+      // will correctly be "initial", and transition to "connecting" as an
+      // effect.
+      if (frozenProps.autoConnect) {
+        room.connect();
+      }
 
       return () => {
-        const commentsRoom = commentsRooms.get(room);
-        if (commentsRoom) {
-          commentsRooms.delete(room);
-        }
-        client.leave(roomId);
+        leave();
       };
-    }, [roomId, frozen]);
+    }, [roomId, frozenProps, stableEnterRoom]);
 
     return (
       <RoomContext.Provider value={room}>
-        <ContextBundle.Provider
-          value={
-            internalBundle as unknown as InternalRoomContextBundle<
-              JsonObject,
-              LsonObject,
-              BaseUserMeta,
-              never,
-              BaseMetadata
-            >
-          }
-        >
-          {props.children}
-        </ContextBundle.Provider>
+        <CommentsRoomProvider room={room}>
+          <ContextBundle.Provider
+            value={
+              internalBundle as unknown as InternalRoomContextBundle<
+                JsonObject,
+                LsonObject,
+                BaseUserMeta,
+                never,
+                BaseMetadata
+              >
+            }
+          >
+            {props.children}
+          </ContextBundle.Provider>
+        </CommentsRoomProvider>
       </RoomContext.Provider>
     );
   }
@@ -331,7 +388,7 @@ export function createRoomContext<
     return others.map((user) => user.connectionId);
   }
 
-  function useRoom(): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
+  function useRoom(): TRoom {
     const room = React.useContext(RoomContext);
     if (room === null) {
       throw new Error("RoomProvider is missing from the React tree.");
@@ -343,7 +400,8 @@ export function createRoomContext<
     const room = useRoom();
     const subscribe = room.events.status.subscribe;
     const getSnapshot = room.getStatus;
-    return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+    const getServerSnapshot = room.getStatus;
+    return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   }
 
   function useMyPresence(): [
@@ -377,7 +435,7 @@ export function createRoomContext<
     const room = useRoom();
     const subscribe = room.events.others.subscribe;
     const getSnapshot = room.getOthers;
-    const getServerSnapshot = getEmptyOthers;
+    const getServerSnapshot = alwaysEmptyList;
     return useSyncExternalStoreWithSelector(
       subscribe,
       getSnapshot,
@@ -483,36 +541,41 @@ export function createRoomContext<
     );
   }
 
+  function useOthersListener(
+    callback: (event: OthersEvent<TPresence, TUserMeta>) => void
+  ) {
+    const room = useRoom();
+    const savedCallback = useLatest(callback);
+
+    React.useEffect(
+      () =>
+        room.events.others.subscribe((event) => savedCallback.current(event)),
+      [room, savedCallback]
+    );
+  }
+
   function useLostConnectionListener(
     callback: (event: LostConnectionEvent) => void
   ): void {
     const room = useRoom();
-    const savedCallback = React.useRef(callback);
-
-    React.useEffect(() => {
-      savedCallback.current = callback;
-    });
+    const savedCallback = useLatest(callback);
 
     React.useEffect(
       () =>
-        room.events.lostConnection.subscribe((event: LostConnectionEvent) =>
+        room.events.lostConnection.subscribe((event) =>
           savedCallback.current(event)
         ),
-      [room]
+      [room, savedCallback]
     );
   }
 
   function useErrorListener(callback: (err: Error) => void): void {
     const room = useRoom();
-    const savedCallback = React.useRef(callback);
-
-    React.useEffect(() => {
-      savedCallback.current = callback;
-    });
+    const savedCallback = useLatest(callback);
 
     React.useEffect(
-      () => room.events.error.subscribe((e: Error) => savedCallback.current(e)),
-      [room]
+      () => room.events.error.subscribe((e) => savedCallback.current(e)),
+      [room, savedCallback]
     );
   }
 
@@ -520,11 +583,7 @@ export function createRoomContext<
     callback: (data: RoomEventMessage<TPresence, TUserMeta, TRoomEvent>) => void
   ): void {
     const room = useRoom();
-    const savedCallback = React.useRef(callback);
-
-    React.useEffect(() => {
-      savedCallback.current = callback;
-    });
+    const savedCallback = useLatest(callback);
 
     React.useEffect(() => {
       const listener = (
@@ -534,7 +593,7 @@ export function createRoomContext<
       };
 
       return room.events.customEvent.subscribe(listener);
-    }, [room]);
+    }, [room, savedCallback]);
   }
 
   function useSelf(): User<TPresence, TUserMeta> | null;
@@ -560,7 +619,7 @@ export function createRoomContext<
       [selector]
     );
 
-    const getServerSnapshot = React.useCallback((): Snapshot => null, []);
+    const getServerSnapshot = alwaysNull;
 
     return useSyncExternalStoreWithSelector(
       subscribe,
@@ -572,11 +631,10 @@ export function createRoomContext<
   }
 
   function useMutableStorageRoot(): LiveObject<TStorage> | null {
-    type Snapshot = LiveObject<TStorage> | null;
     const room = useRoom();
     const subscribe = room.events.storageDidLoad.subscribeOnce;
     const getSnapshot = room.getStorageSnapshot;
-    const getServerSnapshot = React.useCallback((): Snapshot => null, []);
+    const getServerSnapshot = alwaysNull;
     return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   }
 
@@ -698,7 +756,7 @@ export function createRoomContext<
       }
     }, [rootOrNull]);
 
-    const getServerSnapshot = React.useCallback((): Snapshot => null, []);
+    const getServerSnapshot = alwaysNull;
 
     return useSyncExternalStoreWithSelector(
       subscribe,
@@ -742,10 +800,13 @@ export function createRoomContext<
 
     ensureNotServerSide();
 
-    // Throw a _promise_. Suspense will suspend the component tree until this
-    // promise resolves (aka until storage has loaded). After that, it will
-    // render this component tree again.
+    // Throw a _promise_. Suspense will suspend the component tree until either
+    // until either a presence update event, or a connection status change has
+    // happened. After that, it will render this component tree again and
+    // re-evaluate the .getSelf() condition above, or re-suspend again until
+    // such event happens.
     throw new Promise<void>((res) => {
+      room.events.self.subscribeOnce(() => res());
       room.events.status.subscribeOnce(() => res());
     });
   }
@@ -842,160 +903,74 @@ export function createRoomContext<
     return useLegacyKey(key) as TStorage[TKey];
   }
 
-  const commentsErrorEventSource =
-    makeEventSource<CommentsApiError<TThreadMetadata>>();
-  const commentsRooms = new Map<
-    Room<TPresence, TStorage, TUserMeta, TRoomEvent>,
-    CommentsRoom<TThreadMetadata>
-  >();
-
-  function getCommentsRoom(
-    room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>
-  ) {
-    let commentsRoom = commentsRooms.get(room);
-    if (commentsRoom === undefined) {
-      commentsRoom = createCommentsRoom(room, commentsErrorEventSource);
-      commentsRooms.set(room, commentsRoom);
-    }
-    return commentsRoom;
+  function useThreads(
+    options?: GetThreadsOptions<TThreadMetadata>
+  ): ThreadsState<TThreadMetadata> {
+    const room = useRoom();
+    return commentsRoom.useThreads(room, options);
   }
 
-  function useThreads(): ThreadsState<TThreadMetadata> {
+  function useThreadsSuspense(options?: GetThreadsOptions<TThreadMetadata>) {
     const room = useRoom();
-
-    React.useEffect(() => {
-      warnIfBetaCommentsHook();
-    }, []);
-
-    return getCommentsRoom(room).useThreads();
-  }
-
-  function useThreadsSuspense() {
-    const room = useRoom();
-
-    React.useEffect(() => {
-      warnIfBetaCommentsHook();
-    }, []);
-
-    return getCommentsRoom(room).useThreadsSuspense();
+    return commentsRoom.useThreadsSuspense(room, options);
   }
 
   function useCreateThread() {
     const room = useRoom();
-
-    React.useEffect(() => {
-      warnIfBetaCommentsHook();
-    }, []);
-
-    return React.useCallback(
-      (options: CreateThreadOptions<TThreadMetadata>) =>
-        getCommentsRoom(room).createThread(options),
-      [room]
-    );
+    return commentsRoom.useCreateThread(room);
   }
 
   function useEditThreadMetadata() {
     const room = useRoom();
-
-    React.useEffect(() => {
-      warnIfBetaCommentsHook();
-    }, []);
-
-    return React.useCallback(
-      (options: EditThreadMetadataOptions<TThreadMetadata>) =>
-        getCommentsRoom(room).editThreadMetadata(options),
-      [room]
-    );
+    return commentsRoom.useEditThreadMetadata(room);
   }
 
   function useAddReaction() {
     const room = useRoom();
-
-    React.useEffect(() => {
-      warnIfBetaCommentsHook();
-    }, []);
-
-    return React.useCallback(
-      (options: CommentReactionOptions) =>
-        getCommentsRoom(room).addReaction(options),
-      [room]
-    );
+    return commentsRoom.useAddReaction(room);
   }
 
   function useRemoveReaction() {
     const room = useRoom();
-
-    React.useEffect(() => {
-      warnIfBetaCommentsHook();
-    }, []);
-
-    return React.useCallback(
-      (options: CommentReactionOptions) =>
-        getCommentsRoom(room).removeReaction(options),
-      [room]
-    );
+    return commentsRoom.useRemoveReaction(room);
   }
 
   function useCreateComment(): (options: CreateCommentOptions) => CommentData {
     const room = useRoom();
-
-    React.useEffect(() => {
-      warnIfBetaCommentsHook();
-    }, []);
-
-    return React.useCallback(
-      (options: CreateCommentOptions) =>
-        getCommentsRoom(room).createComment(options),
-      [room]
-    );
+    return commentsRoom.useCreateComment(room);
   }
 
   function useEditComment(): (options: EditCommentOptions) => void {
     const room = useRoom();
-
-    React.useEffect(() => {
-      warnIfBetaCommentsHook();
-    }, []);
-
-    return React.useCallback(
-      (options: EditCommentOptions) =>
-        getCommentsRoom(room).editComment(options),
-      [room]
-    );
+    return commentsRoom.useEditComment(room);
   }
 
   function useDeleteComment() {
     const room = useRoom();
-
-    React.useEffect(() => {
-      warnIfBetaCommentsHook();
-    }, []);
-
-    return React.useCallback(
-      (options: DeleteCommentOptions) =>
-        getCommentsRoom(room).deleteComment(options),
-      [room]
-    );
+    return commentsRoom.useDeleteComment(room);
   }
 
-  const { resolveUser, resolveMentionSuggestions } = options ?? {};
+  const { resolveUsers, resolveMentionSuggestions } = options ?? {};
 
-  const usersCache = resolveUser
-    ? createAsyncCache((stringifiedOptions: string) => {
-        return resolveUser(
-          JSON.parse(stringifiedOptions) as ResolveUserOptions
+  const usersCache = resolveUsers
+    ? createAsyncCache(async (stringifiedOptions: string) => {
+        const users = await resolveUsers(
+          JSON.parse(stringifiedOptions) as ResolveUsersArgs
         );
+
+        return users?.[0];
       })
     : undefined;
 
   function useUser(userId: string) {
+    const room = useRoom();
     const resolverKey = React.useMemo(
-      () => stableStringify({ userId }),
-      [userId]
+      () => stringify({ userIds: [userId], roomId: room.id }),
+      [userId, room.id]
     );
     const state = useAsyncCache(usersCache, resolverKey);
 
-    React.useEffect(() => warnIfNoResolveUser(usersCache), []);
+    React.useEffect(() => warnIfNoResolveUsers(usersCache), []);
 
     if (state.isLoading) {
       return {
@@ -1011,15 +986,16 @@ export function createRoomContext<
   }
 
   function useUserSuspense(userId: string) {
+    const room = useRoom();
     const resolverKey = React.useMemo(
-      () => stableStringify({ userId }),
-      [userId]
+      () => stringify({ userIds: [userId], roomId: room.id }),
+      [userId, room.id]
     );
     const state = useAsyncCache(usersCache, resolverKey, {
       suspense: true,
     });
 
-    React.useEffect(() => warnIfNoResolveUser(usersCache), []);
+    React.useEffect(() => warnIfNoResolveUsers(usersCache), []);
 
     return {
       user: state.data,
@@ -1031,7 +1007,7 @@ export function createRoomContext<
     resolveMentionSuggestions
       ? (stringifiedOptions: string) => {
           return resolveMentionSuggestions(
-            JSON.parse(stringifiedOptions) as ResolveMentionSuggestionsOptions
+            JSON.parse(stringifiedOptions) as ResolveMentionSuggestionsArgs
           );
         }
       : () => Promise.resolve([])
@@ -1043,7 +1019,7 @@ export function createRoomContext<
     const resolverKey = React.useMemo(
       () =>
         debouncedSearch !== undefined
-          ? stableStringify({ text: debouncedSearch, roomId: room.id })
+          ? stringify({ text: debouncedSearch, roomId: room.id })
           : null,
       [debouncedSearch, room.id]
     );
@@ -1062,13 +1038,14 @@ export function createRoomContext<
     TThreadMetadata
   > = {
     RoomContext,
-    RoomProvider,
+    RoomProvider: RoomProviderOuter,
 
     useRoom,
     useStatus,
 
     useBatch,
     useBroadcastEvent,
+    useOthersListener,
     useLostConnectionListener,
     useErrorListener,
     useEventListener,
@@ -1110,13 +1087,14 @@ export function createRoomContext<
 
     suspense: {
       RoomContext,
-      RoomProvider,
+      RoomProvider: RoomProviderOuter,
 
       useRoom,
       useStatus,
 
       useBatch,
       useBroadcastEvent,
+      useOthersListener,
       useLostConnectionListener,
       useErrorListener,
       useEventListener,

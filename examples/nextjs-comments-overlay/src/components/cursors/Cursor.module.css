@@ -1,0 +1,31 @@
+.Cursor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  user-select: none;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.Cursor > svg {
+  height: 16px;
+  width: auto;
+}
+
+.Cursor > svg path {
+  box-shadow: var(--shadow);
+}
+
+.Cursor > span {
+  box-shadow: var(--shadow);
+  margin-left: -2px;
+  margin-top: 14px;
+  border-radius: 4px;
+  padding: 0 8px;
+  font-size: 14px;
+  font-weight: 500;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+}
