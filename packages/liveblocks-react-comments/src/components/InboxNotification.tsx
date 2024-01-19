@@ -177,12 +177,20 @@ function InboxNotificationComment({
   );
 }
 
+/**
+ * Find the last comment with a mention for the given user ID,
+ * unless the comment was created by the user themselves.
+ */
 function findLastCommentWithMentionedId(
   comments: CommentData[],
   mentionedId: string
 ) {
   for (let i = comments.length - 1; i >= 0; i--) {
     const comment = comments[i];
+
+    if (comment.userId === mentionedId) {
+      continue;
+    }
 
     if (comment.body) {
       const mentionedIds = getMentionedIdsFromCommentBody(comment.body);
@@ -264,11 +272,11 @@ const ThreadInboxNotification = forwardRef<
   HTMLDivElement,
   InboxNotificationProps
 >(({ inboxNotification, ...props }, forwardedRef) => {
-  // TODO: How do we get the current user ID?
+  // [comments-unread] TODO: How do we get the current user ID?
   const { unread, date, aside, title, content } = useMemo(() => {
     const contents = generateThreadInboxNotificationContents(
       inboxNotification,
-      "TODO: get current user's ID"
+      "[comments-unread] TODO: get current user's ID"
     );
 
     switch (contents.type) {
@@ -277,7 +285,7 @@ const ThreadInboxNotification = forwardRef<
         const firstUserId = reversedUserIds[0];
 
         const aside = <InboxNotificationAvatar userId={firstUserId} />;
-        // TODO: Support overrides via $ instead of hard-coding English (look at CommentReaction)
+        // [comments-unread] TODO: Support overrides via $ instead of hard-coding English (look at CommentReaction)
         const title = (
           <>
             <List
@@ -312,7 +320,7 @@ const ThreadInboxNotification = forwardRef<
         const mentionComment = contents.comments[0];
 
         const aside = <InboxNotificationAvatar userId={mentionUserId} />;
-        // TODO: Support overrides via $ instead of hard-coding English (look at CommentReaction)
+        // [comments-unread] TODO: Support overrides via $ instead of hard-coding English (look at CommentReaction)
         const title = (
           <>
             <User key={mentionUserId} userId={mentionUserId} capitalize />{" "}
