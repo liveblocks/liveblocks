@@ -72,6 +72,8 @@ We’d love to hear from you.
       connected to the same room.
 
       ```tsx file="index.tsx" highlight="7-11"
+      "use client";
+
       import { RoomProvider } from "./liveblocks.config";
       import { Editor } from "./Editor";
       import { ClientSideSuspense } from "@liveblocks/react";
@@ -98,6 +100,8 @@ We’d love to hear from you.
       To make the editor collaborative, we can rely on the `yCollab` from `y-codemirror.next`.
 
       ```tsx
+      "use client";
+
       import * as Y from "yjs";
       import { yCollab } from "y-codemirror.next";
       import { EditorView, basicSetup } from "codemirror";
@@ -166,7 +170,7 @@ We’d love to hear from you.
   <Step lastStep>
     <StepTitle>Next: set up authentication</StepTitle>
     <StepContent>
-    
+
       By default, Liveblocks is configured to work without an authentication endpoint
       where everyone automatically has access to rooms. This approach is great for
       prototyping and marketing pages where setting up your own security isn’t always
