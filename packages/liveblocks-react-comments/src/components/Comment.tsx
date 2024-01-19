@@ -384,7 +384,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
         );
 
         if (
-          reactionIndex > 0 &&
+          reactionIndex >= 0 &&
           self?.id &&
           comment.reactions[reactionIndex].users.some(
             (user) => user.id === self?.id
