@@ -1,58 +1,36 @@
 import { type BaseUserMeta, type Client, kInternal } from "@liveblocks/core";
-import type { PropsWithChildren } from "react";
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-} from "react";
+import { useCallback, useContext, useEffect } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
+import { ContextBundle as LiveblocksContextBundle } from "./liveblocks";
+import { ContextBundle as RoomContextBundle } from "./room";
 import type { SharedContextBundle, UserState, UserStateSuccess } from "./types";
-
-const ContextBundle = createContext<SharedContextBundle<BaseUserMeta> | null>(
-  null
-);
 
 /**
  * @private
  *
- * Private context used in the core internals, but as a user
- * of Liveblocks, NEVER USE THIS DIRECTLY, because bad things
- * will probably happen if you do.
+ * This is an internal API, use `createLiveblocksContext` or `createRoomContext` instead.
  */
-export function useSharedContextBundle() {
-  const bundle = useContext(ContextBundle);
-  if (bundle === null) {
+export function useSharedContextBundle<
+  TUserMeta extends BaseUserMeta = BaseUserMeta,
+>(): SharedContextBundle<TUserMeta> {
+  const liveblocksContextBundle = useContext(LiveblocksContextBundle);
+  const roomContextBundle = useContext(RoomContextBundle);
+
+  if (liveblocksContextBundle !== null) {
+    return liveblocksContextBundle;
+  } else if (roomContextBundle !== null) {
+    return roomContextBundle;
+  } else {
     throw new Error(
       "LiveblocksProvider or RoomProvider are missing from the React tree."
     );
   }
-  return bundle;
 }
 
-/**
- * @private
- *
- * This shared context is meant to be used both within the global
- * `LiveblocksContext` and the room-based `RoomContext`.
- *
- * It can be used to offer APIs that are accessible from both contexts
- * without requiring both contexts' providers to be present.
- */
 export function createSharedContext<
   TUserMeta extends BaseUserMeta = BaseUserMeta,
 >(client: Client): SharedContextBundle<TUserMeta> {
-  function SharedProvider(props: PropsWithChildren) {
-    return (
-      <ContextBundle.Provider
-        value={bundle as unknown as SharedContextBundle<BaseUserMeta>}
-      >
-        {props.children}
-      </ContextBundle.Provider>
-    );
-  }
-
   const usersStore = client[kInternal].usersStore;
 
   function useUser(userId: string): UserState<TUserMeta["info"]> {
@@ -107,13 +85,9 @@ export function createSharedContext<
   }
 
   const bundle: SharedContextBundle<TUserMeta> = {
-    SharedProvider,
-
     useUser,
 
     suspense: {
-      SharedProvider,
-
       useUser: useUserSuspense,
     },
   };

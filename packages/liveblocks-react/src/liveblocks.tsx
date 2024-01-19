@@ -4,12 +4,12 @@ import type {
   Client,
   ThreadData,
 } from "@liveblocks/client";
-import {
-  PartialInboxNotificationData,
-  type InboxNotificationData,
+import type {
   CacheStore,
-  kInternal,
+  InboxNotificationData,
+  PartialInboxNotificationData,
 } from "@liveblocks/core";
+import { kInternal } from "@liveblocks/core";
 import type { PropsWithChildren } from "react";
 import React, {
   createContext,
@@ -17,6 +17,7 @@ import React, {
   useContext,
   useEffect,
 } from "react";
+import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import { createSharedContext } from "./shared";
 import type {
@@ -24,9 +25,8 @@ import type {
   InboxNotificationsStateSuccess,
   LiveblocksContextBundle,
 } from "./types";
-import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
-const ContextBundle = createContext<LiveblocksContextBundle<
+export const ContextBundle = createContext<LiveblocksContextBundle<
   BaseUserMeta,
   BaseMetadata
 > | null>(null);
@@ -51,7 +51,6 @@ export function createLiveblocksContext<
   client: Client<TUserMeta>
 ): LiveblocksContextBundle<TUserMeta, TThreadMetadata> {
   const {
-    SharedProvider,
     useUser,
     suspense: { useUser: useUserSuspense },
   } = createSharedContext<TUserMeta>(client);
@@ -61,18 +60,16 @@ export function createLiveblocksContext<
 
   function LiveblocksProvider(props: PropsWithChildren) {
     return (
-      <SharedProvider>
-        <ContextBundle.Provider
-          value={
-            bundle as unknown as LiveblocksContextBundle<
-              BaseUserMeta,
-              BaseMetadata
-            >
-          }
-        >
-          {props.children}
-        </ContextBundle.Provider>
-      </SharedProvider>
+      <ContextBundle.Provider
+        value={
+          bundle as unknown as LiveblocksContextBundle<
+            BaseUserMeta,
+            BaseMetadata
+          >
+        }
+      >
+        {props.children}
+      </ContextBundle.Provider>
     );
   }
 
@@ -97,7 +94,7 @@ export function createLiveblocksContext<
 
     try {
       const { inboxNotifications, threads } =
-        await fetchInboxNotificationsRequest!;
+        await fetchInboxNotificationsRequest;
 
       store.updateThreadsAndNotifications(
         threads,
