@@ -66,6 +66,7 @@ type InboxNotificationAvatarProps = AvatarProps;
 
 interface InboxNotificationCommentProps extends ComponentProps<"div"> {
   comment: CommentData;
+  showHeader?: boolean;
 }
 
 const InboxNotificationLayout = forwardRef<
@@ -138,6 +139,7 @@ function InboxNotificationAvatar({
 
 function InboxNotificationComment({
   comment,
+  showHeader = true,
   className,
   ...props
 }: InboxNotificationCommentProps) {
@@ -151,9 +153,11 @@ function InboxNotificationComment({
       )}
       {...props}
     >
-      <div className="lb-comment-header">
-        <User className="lb-comment-author" userId={comment.userId} />
-      </div>
+      {showHeader && (
+        <div className="lb-comment-header">
+          <User className="lb-comment-author" userId={comment.userId} />
+        </div>
+      )}
       <div className="lb-comment-content">
         {comment.body ? (
           <>
@@ -301,7 +305,11 @@ const ThreadInboxNotification = forwardRef<
         const content = (
           <div className="lb-inbox-notification-comments">
             {contents.comments.map((comment) => (
-              <InboxNotificationComment key={comment.id} comment={comment} />
+              <InboxNotificationComment
+                key={comment.id}
+                comment={comment}
+                showHeader={contents.comments.length > 1}
+              />
             ))}
           </div>
         );
@@ -332,6 +340,7 @@ const ThreadInboxNotification = forwardRef<
             <InboxNotificationComment
               key={mentionComment.id}
               comment={mentionComment}
+              showHeader={false}
             />
           </div>
         );
