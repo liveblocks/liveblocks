@@ -73,6 +73,8 @@ We’d love to hear from you.
       connected to the same room.
 
       ```tsx file="index.tsx" highlight="7-11"
+      "use client";
+
       import { RoomProvider } from "./liveblocks.config";
       import { Editor } from "./Editor";
       import { ClientSideSuspense } from "@liveblocks/react";
@@ -98,10 +100,12 @@ We’d love to hear from you.
       Now that we set up Liveblocks, we can start integrating BlockNote and Yjs in the `Editor.tsx` file.
 
       ```tsx file="Editor.tsx"
+      import { useEffect, useState } from "react";
       import { BlockNoteEditor } from "@blocknote/core";
       import { BlockNoteView, useBlockNote } from "@blocknote/react";
       import * as Y from "yjs";
       import LiveblocksProvider from "@liveblocks/yjs";
+      import { useRoom } from "../liveblocks.config";
 
       type EditorProps = {
         doc: Y.Doc,
@@ -130,11 +134,11 @@ We’d love to hear from you.
           return null;
         }
 
-        return <BlockNoteEditor doc={doc} provider={provider} />;
+        return <BlockNote doc={doc} provider={provider} />;
       }
 
 
-      function BlockNoteEditor({ doc, provider }: EditorProps) {
+      function BlockNote({ doc, provider }: EditorProps) {
         const editor: BlockNoteEditor = useBlockNote({
           collaboration: {
             provider,
