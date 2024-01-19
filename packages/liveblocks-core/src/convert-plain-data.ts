@@ -5,8 +5,8 @@ import type {
   CommentUserReactionPlain,
 } from "./types/CommentReaction";
 import type {
-  PartialInboxNotificationData,
-  PartialInboxNotificationDataPlain,
+  InboxNotificationData,
+  InboxNotificationDataPlain,
 } from "./types/InboxNotificationData";
 import type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
 
@@ -89,8 +89,8 @@ export function convertToCommentUserReaction(
  * @returns The rich partial inbox notification data object that can be used by the client.
  */
 export function convertToPartialInboxNotificationData(
-  data: PartialInboxNotificationDataPlain
-): PartialInboxNotificationData {
+  data: InboxNotificationDataPlain
+): InboxNotificationData {
   const notifiedAt = new Date(data.notifiedAt);
   const readAt = data.readAt ? new Date(data.readAt) : null;
 

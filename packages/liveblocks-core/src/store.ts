@@ -4,7 +4,7 @@ import type { Resolve } from "./lib/Resolve";
 import type { BaseMetadata } from "./types/BaseMetadata";
 import type { CommentBody } from "./types/CommentBody";
 import type { CommentData, CommentReaction } from "./types/CommentData";
-import type { PartialInboxNotificationData } from "./types/InboxNotificationData";
+import type { InboxNotificationData } from "./types/InboxNotificationData";
 import type { ThreadData } from "./types/ThreadData";
 
 type PartialNullable<T> = {
@@ -106,7 +106,7 @@ export type CacheState<TThreadMetadata extends BaseMetadata> = {
   /**
    * Inbox notifications by ID.
    */
-  inboxNotifications: Record<string, PartialInboxNotificationData>;
+  inboxNotifications: Record<string, InboxNotificationData>;
 };
 
 export interface CacheStore<TThreadMetadata extends BaseMetadata>
@@ -114,11 +114,11 @@ export interface CacheStore<TThreadMetadata extends BaseMetadata>
   deleteThread(threadId: string): void;
   updateThreadAndNotification(
     thread: ThreadData<TThreadMetadata>,
-    inboxNotification?: PartialInboxNotificationData
+    inboxNotification?: InboxNotificationData
   ): void;
   updateThreadsAndNotifications(
     threads: ThreadData<TThreadMetadata>[],
-    inboxNotifications: PartialInboxNotificationData[],
+    inboxNotifications: InboxNotificationData[],
     queryKey?: string
   ): void;
   pushOptimisticUpdate(
@@ -163,8 +163,8 @@ export function createClientStore<
   }
 
   function mergeNotifications(
-    existingInboxNotifications: Record<string, PartialInboxNotificationData>,
-    newInboxNotifications: Record<string, PartialInboxNotificationData>
+    existingInboxNotifications: Record<string, InboxNotificationData>,
+    newInboxNotifications: Record<string, InboxNotificationData>
   ) {
     // TODO: Do not replace existing inboxNotifications if it has been updated more recently than the incoming inbox notifications
     const inboxNotifications = Object.values({
@@ -196,7 +196,7 @@ export function createClientStore<
 
     updateThreadAndNotification(
       thread: ThreadData<TThreadMetadata>,
-      inboxNotification?: PartialInboxNotificationData
+      inboxNotification?: InboxNotificationData
     ) {
       store.set((state) => {
         const existingThread = state.threads[thread.id];
@@ -221,7 +221,7 @@ export function createClientStore<
 
     updateThreadsAndNotifications(
       threads: ThreadData<TThreadMetadata>[],
-      inboxNotifications: PartialInboxNotificationData[],
+      inboxNotifications: InboxNotificationData[],
       queryKey?: string
     ) {
       store.set((state) => ({

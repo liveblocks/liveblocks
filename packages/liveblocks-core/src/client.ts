@@ -27,8 +27,8 @@ import type { CacheStore } from "./store";
 import { createClientStore } from "./store";
 import type { BaseMetadata } from "./types/BaseMetadata";
 import type {
-  PartialInboxNotificationData,
-  PartialInboxNotificationDataPlain,
+  InboxNotificationData,
+  InboxNotificationDataPlain,
 } from "./types/InboxNotificationData";
 import type { OptionalPromise } from "./types/OptionalPromise";
 import type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
@@ -102,7 +102,7 @@ type InboxNotificationsApi<TThreadMetadata extends BaseMetadata = never> = {
    * @private
    */
   getInboxNotifications(): Promise<{
-    inboxNotifications: PartialInboxNotificationData[];
+    inboxNotifications: InboxNotificationData[];
     threads: ThreadData<TThreadMetadata>[];
   }>;
 
@@ -655,7 +655,7 @@ function createInboxNotificationsApi(
     const json = await fetchJson<{
       // [comments-unread] TODO: How do we type ThreadMetadata?
       threads: ThreadDataPlain[];
-      inboxNotifications: PartialInboxNotificationDataPlain[];
+      inboxNotifications: InboxNotificationDataPlain[];
     }>(`/inbox-notifications?${queryParams.toString()}`);
 
     return {
