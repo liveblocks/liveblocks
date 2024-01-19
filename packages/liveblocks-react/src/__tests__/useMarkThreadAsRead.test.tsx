@@ -1,5 +1,5 @@
 import type { BaseMetadata, JsonObject } from "@liveblocks/core";
-import { createClient, kInternal } from "@liveblocks/core";
+import { createClient } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
 import React from "react";
@@ -7,7 +7,12 @@ import React from "react";
 import { createRoomContext } from "../room";
 import { dummyInboxNoficationData, dummyThreadData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
-import { mockMarkInboxNotificationsAsRead } from "./_restMocks";
+import {
+  mockGetInboxNotifications,
+  mockGetThreads,
+  mockMarkInboxNotificationsAsRead,
+} from "./_restMocks";
+import { createLiveblocksContext } from "../liveblocks";
 
 const server = setupServer();
 
@@ -31,130 +36,145 @@ function createRoomContextForTest<
   });
 
   return {
-    context: createRoomContext<
+    roomCtx: createRoomContext<
       JsonObject,
       never,
       never,
       never,
       TThreadMetadata
     >(client),
-    client,
+    liveblocksCtx: createLiveblocksContext(client),
   };
 }
 
-// TODO: Refactor test to not assert based on the internal store
 describe("useMarkThreadAsRead", () => {
-  test("should mark thread as read optimistically and keep the updates if successful response from server", async () => {
+  test("should mark notification as read optimistically", async () => {
     const threads = [dummyThreadData()];
     const inboxNotifications = [dummyInboxNoficationData()];
     inboxNotifications[0].threadId = threads[0].id;
     inboxNotifications[0].readAt = null;
 
     server.use(
+      mockGetThreads((_req, res, ctx) =>
+        res(
+          ctx.status(200),
+          ctx.json({
+            data: threads,
+            inboxNotifications,
+          })
+        )
+      ),
+      mockGetInboxNotifications((_req, res, ctx) =>
+        res(
+          ctx.status(200),
+          ctx.json({
+            inboxNotifications,
+            threads,
+          })
+        )
+      ),
       mockMarkInboxNotificationsAsRead((_req, res, ctx) => res(ctx.status(200)))
     );
 
     const {
-      context: { RoomProvider, useMarkThreadAsRead },
-      client,
+      roomCtx: { RoomProvider, useMarkThreadAsRead },
+      liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
     } = createRoomContextForTest();
 
-    const store = client[kInternal].cacheStore;
+    const { result, unmount } = renderHook(
+      () => ({
+        markThreadAsRead: useMarkThreadAsRead(),
+        inboxNotifications: useInboxNotifications().inboxNotifications,
+      }),
+      {
+        wrapper: ({ children }) => (
+          <LiveblocksProvider>
+            <RoomProvider id="room-id" initialPresence={{}}>
+              {children}
+            </RoomProvider>
+          </LiveblocksProvider>
+        ),
+      }
+    );
 
-    store.updateThreadsAndNotifications(threads, inboxNotifications);
-
-    const {
-      result: { current: markThreadAsRead },
-      unmount,
-    } = renderHook(() => useMarkThreadAsRead(), {
-      wrapper: ({ children }) => (
-        <RoomProvider id="room-id" initialPresence={{}}>
-          {children}
-        </RoomProvider>
-      ),
-    });
+    await waitFor(() =>
+      expect(result.current.inboxNotifications).toEqual(inboxNotifications)
+    );
 
     // Mark the first thread in our threads list as read
     act(() => {
-      markThreadAsRead(threads[0].id);
+      result.current.markThreadAsRead(threads[0].id);
     });
 
-    // An optimistic update should have been added to the store
-    const optimisticUpdates = store.get().optimisticUpdates;
-    expect(optimisticUpdates.length).toEqual(1);
-    expect(optimisticUpdates[0]).toEqual({
-      type: "mark-inbox-notification-as-read",
-      id: expect.any(String),
-      inboxNotificationId: inboxNotifications[0].id,
-      readAt: expect.any(Date),
-    });
-
-    await waitFor(() => {
-      // The optimistic update should have been removed
-      expect(store.get().optimisticUpdates.length).toEqual(0);
-
-      // The readAt field should have been updated in the inbox notification cache
-      expect(
-        store.get().inboxNotifications[inboxNotifications[0].id].readAt
-      ).toEqual((optimisticUpdates[0] as { readAt: Date }).readAt);
-    });
+    expect(result.current.inboxNotifications![0].readAt).not.toBe(null);
 
     unmount();
   });
 
-  test("should mark thread as read optimistically and revert the updates if error response from server", async () => {
+  test("should mark inbox notification as read optimistically and revert the updates if error response from server", async () => {
     const threads = [dummyThreadData()];
     const inboxNotifications = [dummyInboxNoficationData()];
     inboxNotifications[0].threadId = threads[0].id;
     inboxNotifications[0].readAt = null;
 
     server.use(
+      mockGetThreads((_req, res, ctx) =>
+        res(
+          ctx.status(200),
+          ctx.json({
+            data: threads,
+            inboxNotifications,
+          })
+        )
+      ),
+      mockGetInboxNotifications((_req, res, ctx) =>
+        res(
+          ctx.status(200),
+          ctx.json({
+            inboxNotifications,
+            threads,
+          })
+        )
+      ),
       mockMarkInboxNotificationsAsRead((_req, res, ctx) => res(ctx.status(500)))
     );
 
     const {
-      context: { RoomProvider, useMarkThreadAsRead },
-      client,
+      roomCtx: { RoomProvider, useMarkThreadAsRead },
+      liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
     } = createRoomContextForTest();
 
-    const store = client[kInternal].cacheStore;
+    const { result, unmount } = renderHook(
+      () => ({
+        markThreadAsRead: useMarkThreadAsRead(),
+        ibxNotifications: useInboxNotifications().inboxNotifications,
+      }),
+      {
+        wrapper: ({ children }) => (
+          <LiveblocksProvider>
+            <RoomProvider id="room-id" initialPresence={{}}>
+              {children}
+            </RoomProvider>
+          </LiveblocksProvider>
+        ),
+      }
+    );
 
-    store.updateThreadsAndNotifications(threads, inboxNotifications);
-
-    const {
-      result: { current: markThreadAsRead },
-      unmount,
-    } = renderHook(() => useMarkThreadAsRead(), {
-      wrapper: ({ children }) => (
-        <RoomProvider id="room-id" initialPresence={{}}>
-          {children}
-        </RoomProvider>
-      ),
-    });
+    await waitFor(() =>
+      expect(result.current.ibxNotifications).toEqual(inboxNotifications)
+    );
 
     // Mark the first thread in our threads list as read
     act(() => {
-      markThreadAsRead(threads[0].id);
+      result.current.markThreadAsRead(threads[0].id);
     });
 
-    // An optimistic update should have been added to the store
-    const optimisticUpdates = store.get().optimisticUpdates;
-    expect(optimisticUpdates.length).toEqual(1);
-    expect(optimisticUpdates[0]).toEqual({
-      type: "mark-inbox-notification-as-read",
-      id: expect.any(String),
-      inboxNotificationId: inboxNotifications[0].id,
-      readAt: expect.any(Date),
-    });
+    // We mark the notification as read optimitiscally
+    expect(result.current.ibxNotifications![0].readAt).not.toBe(null);
 
     await waitFor(() => {
-      // The optimistic update should have been removed
-      expect(store.get().optimisticUpdates.length).toEqual(0);
-
       // The readAt field should have been updated in the inbox notification cache
-      expect(
-        store.get().inboxNotifications[inboxNotifications[0].id].readAt
-      ).toEqual(null);
+      expect(result.current.ibxNotifications![0].readAt).toEqual(null);
     });
 
     unmount();

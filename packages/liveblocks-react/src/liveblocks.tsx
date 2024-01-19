@@ -21,6 +21,7 @@ import type {
   InboxNotificationsStateSuccess,
   LiveblocksContextBundle,
 } from "./types";
+import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 
 export const ContextBundle =
   createContext<LiveblocksContextBundle<BaseUserMeta> | null>(null);
@@ -118,9 +119,7 @@ export function createLiveblocksContext<
         }
 
         return {
-          inboxNotifications: Array.from(
-            Object.values(state.inboxNotifications)
-          ), // TODO: Optimistic update
+          inboxNotifications: selectedInboxNotifications(state),
           isLoading: false,
           loadMore: () => {}, // TODO
         };
@@ -142,9 +141,7 @@ export function createLiveblocksContext<
       store.get,
       (state) => {
         return {
-          inboxNotifications: Array.from(
-            Object.values(state.inboxNotifications)
-          ), // TODO: Optimistic update
+          inboxNotifications: selectedInboxNotifications(state), // TODO: Optimistic update
           isLoading: false,
           loadMore: () => {},
         };
