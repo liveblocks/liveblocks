@@ -128,27 +128,23 @@ export type InboxNotificationsStateLoading = {
   loadMore: () => void;
 };
 
-export type InboxNotificationsStateResolved<
-  TThreadMetadata extends BaseMetadata,
-> = {
+export type InboxNotificationsStateResolved = {
   isLoading: false;
-  inboxNotifications: InboxNotificationData<TThreadMetadata>[];
+  inboxNotifications: InboxNotificationData[];
   error?: Error;
   loadMore: () => void;
 };
 
-export type InboxNotificationsStateSuccess<
-  TThreadMetadata extends BaseMetadata,
-> = {
+export type InboxNotificationsStateSuccess = {
   isLoading: false;
-  inboxNotifications: InboxNotificationData<TThreadMetadata>[];
+  inboxNotifications: InboxNotificationData[];
   error?: never;
   loadMore: () => void;
 };
 
-export type InboxNotificationsState<TThreadMetadata extends BaseMetadata> =
+export type InboxNotificationsState =
   | InboxNotificationsStateLoading
-  | InboxNotificationsStateResolved<TThreadMetadata>;
+  | InboxNotificationsStateResolved;
 
 export type RoomNotificationSettingsStateLoading = {
   isLoading: true;
@@ -1119,10 +1115,24 @@ type LiveblocksContextBundleCommon = {
   useMarkAllInboxNotificationsAsRead(): () => void;
 };
 
-export type LiveblocksContextBundle<
-  TUserMeta extends BaseUserMeta,
-  TThreadMetadata extends BaseMetadata,
-> = Resolve<
+/**
+ * @private
+ *
+ * Private methods and variables used in the core internals, but as a user
+ * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
+ * will probably happen if you do.
+ */
+type PrivateLiveblocksContextApi = {
+  /**
+   * Returns thread from cache.
+   *
+   * @example
+   * const thread = useThreadFromCache("th_xxx");
+   */
+  useThreadFromCache(threadId: string): ThreadData<BaseMetadata>;
+};
+
+export type LiveblocksContextBundle<TUserMeta extends BaseUserMeta> = Resolve<
   LiveblocksContextBundleCommon &
     Omit<SharedContextBundle<TUserMeta>, "suspense"> & {
       /**
@@ -1133,7 +1143,7 @@ export type LiveblocksContextBundle<
        * @example
        * const { inboxNotifications, error, isLoading, loadMore } = useInboxNotifications();
        */
-      useInboxNotifications(): InboxNotificationsState<TThreadMetadata>;
+      useInboxNotifications(): InboxNotificationsState;
 
       /**
        * @beta
@@ -1156,7 +1166,7 @@ export type LiveblocksContextBundle<
              * @example
              * const { inboxNotifications, error, isLoading, loadMore } = useInboxNotifications();
              */
-            useInboxNotifications(): InboxNotificationsStateSuccess<TThreadMetadata>;
+            useInboxNotifications(): InboxNotificationsStateSuccess;
 
             /**
              * @beta
@@ -1170,4 +1180,13 @@ export type LiveblocksContextBundle<
           }
       >;
     }
->;
+> & {
+  /**
+   * @private
+   *
+   * Private methods and variables used in the core internals, but as a user
+   * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
+   * will probably happen if you do.
+   */
+  readonly [kInternal]: PrivateLiveblocksContextApi;
+};

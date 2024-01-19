@@ -183,9 +183,7 @@ export type {
 export type { Immutable } from "./types/Immutable";
 export type {
   InboxNotificationData,
-  PartialInboxNotificationData,
-  PartialInboxNotificationDataPlain,
-  PartialThreadInboxNotificationData,
+  InboxNotificationDataPlain,
   ThreadInboxNotificationData,
 } from "./types/InboxNotificationData";
 export type {
