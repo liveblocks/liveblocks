@@ -34,6 +34,8 @@ Zustand store multiplayer by using the middleware from the
       our Presence and Storage APIs.
 
       ```ts file="store.ts" highlight="10-12,15-20"
+      "use client";
+
       import create from "zustand";
       import { createClient } from "@liveblocks/client";
       import { liveblocks } from "@liveblocks/zustand";
@@ -70,6 +72,8 @@ Zustand store multiplayer by using the middleware from the
       To create a real-time experience, multiple users must be connected to the same room.
 
       ```tsx file="App.tsx" highlight="11,13"
+      "use client";
+
       import React, { useEffect } from "react";
       import useStore from "./store";
       import "./App.css";
@@ -102,6 +106,8 @@ Zustand store multiplayer by using the middleware from the
       Now that we’re connected to a room, we can start using the Liveblocks data from the Zustand store.
 
       ```tsx file="Room.tsx" highlight="4"
+      "use client";
+
       import useStore from "./store";
 
       export function Room() {
