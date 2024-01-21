@@ -1,0 +1,128 @@
+.audioWrapper {
+  background: #fff;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  position: relative;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.sliderAndComments {
+  position: relative;
+  height: 70px;
+}
+
+.sliderComments {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.sliderRoot {
+  position: relative;
+  bottom: -8px;
+  flex: 1 1;
+  display: flex;
+  align-items: center;
+  user-select: none;
+  touch-action: none;
+  width: 100%;
+  height: 100%;
+  --track-height: 2px;
+  z-index: 1;
+  overflow: hidden;
+  background: white;
+}
+
+.waveformWrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  /*z-index: -1;*/
+}
+
+.sliderTrack {
+  top: 15px;
+  position: relative;
+  background-color: white;
+  backdrop-filter: blur(10px);
+  flex-grow: 1;
+  height: var(--track-height);
+  cursor: pointer;
+  mix-blend-mode: color;
+}
+
+.sliderRange {
+  top: 15px;
+  position: absolute;
+  background-color: var(--accent);
+  height: 100%;
+}
+
+.sliderThumb {
+  display: block;
+  width: 0;
+  height: 0;
+  background-color: var(--accent);
+  box-shadow:
+  0 1px 5px rgba(0, 0, 0, 0.1),
+  0 2px 10px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease-out;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.sliderThumb:hover {
+  transform: scale(1.1);
+}
+
+.sliderThumb:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.2);
+}
+
+.controls {
+  position: absolute;
+  height: var(--controls-height);
+  padding: 0 var(--spacing);
+  top: 100%;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--gray12);
+}
+
+.controls > * {
+  color: var(--gray12);
+}
+
+
+.playButton,
+.fullscreenButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.time {
+  font-size: 14px;
+  user-select: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.time > time:nth-child(2) {
+  color: var(--gray10);
+}

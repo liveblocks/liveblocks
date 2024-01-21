@@ -1,0 +1,28 @@
+.suggestions {
+  --padding: 4px;
+  background-color: var(--gray1);
+  box-shadow: var(--shadow);
+  border-radius: var(--border-radius);
+  padding: var(--padding);
+}
+
+.mentionSuggestion {
+  background-color: var(--gray1);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: var(--padding) calc(var(--padding) * 2) var(--padding) var(--padding);
+  font-size: 14px;
+  border-radius: calc(0.75 * var(--border-radius));
+  cursor: pointer;
+  min-height: calc(20px + 2 * var(--padding));
+  min-width: 120px;
+}
+
+.mentionSuggestion > img {
+  border-radius: 9999px;
+}
+
+.mentionSuggestion[data-selected] {
+  background: var(--gray3);
+}

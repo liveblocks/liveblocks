@@ -1,0 +1,72 @@
+.wrapper {
+  width: 100%;
+  margin: 32px auto;
+  max-width: 680px;
+  background-color: var(--gray2);
+  padding: 16px;
+  border: 1px solid var(--gray4);
+  border-radius: var(--border-radius);
+}
+
+.composer {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.composerAvatar {
+  flex-shrink: 0;
+  border-radius: 99999px;
+}
+
+.composerEditor {
+  width: 100%;
+  padding-top: 4px;
+}
+
+.composerEditor [data-placeholder] {
+  color: var(--gray9);
+}
+
+.composerEditor {
+  outline: none;
+}
+
+.options {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.optionsTime {
+  height: 28px;
+  background-color: var(--accent-background);
+  color: var(--accent);
+  display: inline-flex;
+  gap: 4px;
+  padding: 0 6px;
+  align-items: center;
+  font-size: 13px;
+  border-radius: 4px;
+  font-variant-numeric: tabular-nums;
+  transition: background-color 150ms ease-out;
+  cursor: pointer;
+  user-select: none;
+}
+
+.optionsTime:hover {
+  background-color: var(--accent-background-hover);
+}
+
+.optionsTime > span {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.checkbox {
+  accent-color: var(--accent);
+  cursor: pointer;
+}
