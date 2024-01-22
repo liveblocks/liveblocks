@@ -52,6 +52,8 @@ export interface ComposerOverrides {
 export interface ThreadOverrides {
   THREAD_RESOLVE: string;
   THREAD_UNRESOLVE: string;
+  THREAD_UNREAD_INDICATOR: string;
+  THREAD_UNREAD_INDICATOR_DESCRIPTION: string;
   THREAD_COMPOSER_PLACEHOLDER: string;
   THREAD_COMPOSER_SEND: string;
 }
@@ -116,6 +118,8 @@ export const defaultOverrides: Overrides = {
     `${count} ${pluralize(count, "reaction")}, react with ${emoji}`,
   THREAD_RESOLVE: "Resolve thread",
   THREAD_UNRESOLVE: "Re-open thread",
+  THREAD_UNREAD_INDICATOR: "New",
+  THREAD_UNREAD_INDICATOR_DESCRIPTION: "All comments below are unread",
   THREAD_COMPOSER_PLACEHOLDER: "Reply to thread…",
   THREAD_COMPOSER_SEND: "Reply",
   INBOX_NOTIFICATION_MORE: "More",
