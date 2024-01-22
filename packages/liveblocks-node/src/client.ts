@@ -10,6 +10,8 @@ import type {
   CommentDataPlain,
   CommentUserReaction,
   CommentUserReactionPlain,
+  InboxNotificationData,
+  InboxNotificationDataPlain,
   IUserInfo,
   Json,
   JsonObject,
@@ -117,22 +119,6 @@ export type Schema = {
 };
 
 type SchemaPlain = DateToString<Schema>;
-
-type InboxNotificationResponse = {
-  readAt: string | null;
-  notifiedAt: string;
-  id: string;
-  threadId: string;
-  kind: "thread";
-};
-
-export type InboxNotification = {
-  readAt: Date | null;
-  notifiedAt: Date;
-  id: string;
-  threadId: string;
-  kind: "thread";
-};
 
 /**
  * Interact with the Liveblocks API from your Node.js backend.
@@ -1225,7 +1211,7 @@ export class Liveblocks {
   public async getInboxNotification(params: {
     userId: string;
     inboxNotificationId: string;
-  }): Promise<InboxNotification> {
+  }): Promise<InboxNotificationData> {
     const { userId, inboxNotificationId } = params;
 
     const res = await this.get(
@@ -1236,7 +1222,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    const data = (await res.json()) as InboxNotificationResponse;
+    const data = (await res.json()) as InboxNotificationDataPlain;
 
     return {
       ...data,

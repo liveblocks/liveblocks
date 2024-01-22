@@ -4,8 +4,8 @@ import type {
   BaseMetadata,
   CommentData,
   InboxNotificationData,
+  InboxNotificationThreadData,
   ThreadData,
-  ThreadInboxNotificationData,
 } from "@liveblocks/core";
 import {
   assertNever,
@@ -36,7 +36,7 @@ import { User } from "./internal/User";
 
 const THREAD_INBOX_NOTIFICATION_MAX_COMMENTS = 3;
 
-type ThreadInboxNotificationCommentsContents = {
+type InboxNotificationThreadCommentsContents = {
   type: "comments";
   unread: boolean;
   comments: CommentData[];
@@ -44,7 +44,7 @@ type ThreadInboxNotificationCommentsContents = {
   date: Date;
 };
 
-type ThreadInboxNotificationMentionContents = {
+type InboxNotificationThreadMentionContents = {
   type: "mention";
   unread: boolean;
   comments: CommentData[];
@@ -52,9 +52,9 @@ type ThreadInboxNotificationMentionContents = {
   date: Date;
 };
 
-type ThreadInboxNotificationContents =
-  | ThreadInboxNotificationCommentsContents
-  | ThreadInboxNotificationMentionContents;
+type InboxNotificationThreadContents =
+  | InboxNotificationThreadCommentsContents
+  | InboxNotificationThreadMentionContents;
 
 export interface InboxNotificationProps
   extends ComponentPropsWithoutRef<"div"> {
@@ -232,11 +232,11 @@ function getUserIdsFromComments(comments: CommentData[]) {
   return Array.from(new Set(comments.map((comment) => comment.userId)));
 }
 
-function generateThreadInboxNotificationContents(
-  inboxNotification: ThreadInboxNotificationData,
+function generateInboxNotificationThreadContents(
+  inboxNotification: InboxNotificationThreadData,
   thread: ThreadData<BaseMetadata>,
   userId: string
-): ThreadInboxNotificationContents {
+): InboxNotificationThreadContents {
   const unreadComments = thread.comments.filter((comment) => {
     if (!comment.body) {
       return false;
@@ -293,7 +293,7 @@ function generateThreadInboxNotificationContents(
   };
 }
 
-const ThreadInboxNotification = forwardRef<
+const InboxNotificationThread = forwardRef<
   HTMLDivElement,
   InboxNotificationProps
 >(({ inboxNotification, overrides, ...props }, forwardedRef) => {
@@ -305,7 +305,7 @@ const ThreadInboxNotification = forwardRef<
 
   // [comments-unread] TODO: How do we get the current user ID?
   const { unread, date, aside, title, content } = useMemo(() => {
-    const contents = generateThreadInboxNotificationContents(
+    const contents = generateInboxNotificationThreadContents(
       inboxNotification,
       thread,
       "[comments-unread] TODO: get current user's ID"
@@ -425,7 +425,7 @@ export const InboxNotification = forwardRef<
   switch (inboxNotification.kind) {
     case "thread":
       return (
-        <ThreadInboxNotification
+        <InboxNotificationThread
           inboxNotification={inboxNotification}
           {...props}
           ref={forwardedRef}
