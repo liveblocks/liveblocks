@@ -14,7 +14,7 @@ type CommentsConfigProps = PropsWithChildren<{
  * Set configuration options for all Comments components.
  *
  * @example
- * <CommentsConfig overrides={{ locale: "fr", UNKNOWN_USER: "Anonyme", ... }}>
+ * <CommentsConfig overrides={{ locale: "fr", USER_UNKNOWN: "Anonyme", ... }}>
  *   <App />
  * </CommentsConfig>
  */

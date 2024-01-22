@@ -29,13 +29,13 @@ export function User({
   // const resolvedUserName = useMemo(() => {
   //   const name =
   //     replaceSelf && self?.id === userId
-  //       ? $.SELF
-  //       : user?.name ?? $.UNKNOWN_USER;
+  //       ? $.USER_SELF
+  //       : user?.name ?? $.USER_UNKNOWN;
 
   //   return shouldCapitalize ? capitalize(name) : name;
   // }, [
-  //   $.SELF,
-  //   $.UNKNOWN_USER,
+  //   $.USER_SELF,
+  //   $.USER_UNKNOWN,
   //   shouldCapitalize,
   //   replaceSelf,
   //   self?.id,
@@ -47,10 +47,10 @@ export function User({
   const { user, isLoading } = useUser(userId);
   const $ = useOverrides();
   const resolvedUserName = useMemo(() => {
-    const name = user?.name ?? $.UNKNOWN_USER;
+    const name = user?.name ?? $.USER_UNKNOWN;
 
     return shouldCapitalize ? capitalize(name) : name;
-  }, [$.UNKNOWN_USER, shouldCapitalize, user?.name]);
+  }, [$.USER_UNKNOWN, shouldCapitalize, user?.name]);
 
   return (
     <span

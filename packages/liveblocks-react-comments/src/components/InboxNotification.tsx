@@ -21,6 +21,10 @@ import type {
 } from "react";
 import React, { forwardRef, useMemo } from "react";
 
+import type {
+  CommentOverrides,
+  InboxNotificationOverrides,
+} from "../overrides";
 import { useOverrides } from "../overrides";
 import * as CommentPrimitive from "../primitives/Comment";
 import { Timestamp } from "../primitives/Timestamp";
@@ -58,6 +62,11 @@ export interface InboxNotificationProps
    * The inbox notification to display.
    */
   inboxNotification: InboxNotificationData;
+
+  /**
+   * Override the component's strings.
+   */
+  overrides?: Partial<InboxNotificationOverrides & CommentOverrides>;
 }
 
 interface InboxNotificationLayoutProps
@@ -67,6 +76,7 @@ interface InboxNotificationLayoutProps
   date: Date | string | number;
   unread?: boolean;
   interactive?: boolean;
+  overrides?: Partial<InboxNotificationOverrides>;
 }
 
 type InboxNotificationAvatarProps = AvatarProps;
@@ -74,6 +84,7 @@ type InboxNotificationAvatarProps = AvatarProps;
 interface InboxNotificationCommentProps extends ComponentProps<"div"> {
   comment: CommentData;
   showHeader?: boolean;
+  overrides?: Partial<CommentOverrides>;
 }
 
 const InboxNotificationLayout = forwardRef<
@@ -88,12 +99,13 @@ const InboxNotificationLayout = forwardRef<
       date,
       unread,
       interactive = true,
+      overrides,
       className,
       ...props
     },
     forwardedRef
   ) => {
-    const $ = useOverrides();
+    const $ = useOverrides(overrides);
 
     return (
       <TooltipProvider>
@@ -147,10 +159,11 @@ function InboxNotificationAvatar({
 function InboxNotificationComment({
   comment,
   showHeader = true,
+  overrides,
   className,
   ...props
 }: InboxNotificationCommentProps) {
-  const $ = useOverrides();
+  const $ = useOverrides(overrides);
 
   return (
     <div
@@ -283,7 +296,8 @@ function generateInboxNotificationThreadContents(
 const InboxNotificationThread = forwardRef<
   HTMLDivElement,
   InboxNotificationProps
->(({ inboxNotification, ...props }, forwardedRef) => {
+>(({ inboxNotification, overrides, ...props }, forwardedRef) => {
+  const $ = useOverrides(overrides);
   const {
     [kInternal]: { useThreadFromCache },
   } = useLiveblocksContextBundle();
@@ -303,18 +317,22 @@ const InboxNotificationThread = forwardRef<
         const firstUserId = reversedUserIds[0];
 
         const aside = <InboxNotificationAvatar userId={firstUserId} />;
-        // [comments-unread] TODO: Support overrides via $ instead of hard-coding English (look at CommentReaction)
-        const title = (
-          <>
-            <List
-              values={reversedUserIds.map((userId, index) => (
-                <User key={userId} userId={userId} capitalize={index === 0} />
-              ))}
-              // formatRemaining={$.COMMENT_REACTION_REMAINING}
-              truncate={THREAD_INBOX_NOTIFICATION_MAX_COMMENTS - 1}
-            />{" "}
-            commented on <span>Document</span>
-          </>
+        // [comments-unread] TODO: Use room name instead of "Document"
+        const title = $.INBOX_NOTIFICATION_THREAD_COMMENTS_LIST(
+          <List
+            values={reversedUserIds.map((userId, index) => (
+              <User
+                key={userId}
+                userId={userId}
+                capitalize={index === 0}
+                replaceSelf
+              />
+            ))}
+            formatRemaining={$.LIST_REMAINING_USERS}
+            truncate={THREAD_INBOX_NOTIFICATION_MAX_COMMENTS - 1}
+          />,
+          <span>Document</span>,
+          reversedUserIds.length
         );
         const content = (
           <div className="lb-inbox-notification-comments">
@@ -323,6 +341,7 @@ const InboxNotificationThread = forwardRef<
                 key={comment.id}
                 comment={comment}
                 showHeader={contents.comments.length > 1}
+                overrides={overrides}
               />
             ))}
           </div>
@@ -342,12 +361,10 @@ const InboxNotificationThread = forwardRef<
         const mentionComment = contents.comments[0];
 
         const aside = <InboxNotificationAvatar userId={mentionUserId} />;
-        // [comments-unread] TODO: Support overrides via $ instead of hard-coding English (look at CommentReaction)
-        const title = (
-          <>
-            <User key={mentionUserId} userId={mentionUserId} capitalize />{" "}
-            mentioned you on <span>Document</span>
-          </>
+        // [comments-unread] TODO: Use room name instead of "Document"
+        const title = $.INBOX_NOTIFICATION_THREAD_MENTION(
+          <User key={mentionUserId} userId={mentionUserId} capitalize />,
+          <span>Document</span>
         );
         const content = (
           <div className="lb-inbox-notification-comments">
@@ -374,7 +391,7 @@ const InboxNotificationThread = forwardRef<
           "Unexpected thread inbox notification type"
         );
     }
-  }, [inboxNotification, thread]);
+  }, [$, inboxNotification, overrides, thread]);
 
   return (
     <InboxNotificationLayout
@@ -382,6 +399,7 @@ const InboxNotificationThread = forwardRef<
       title={title}
       date={date}
       unread={unread}
+      overrides={overrides}
       {...props}
       ref={forwardedRef}
     >

@@ -280,10 +280,13 @@ export const Thread = forwardRef(
               return index === firstUnreadCommentIndex &&
                 firstUnreadCommentIndex !== firstCommentIndex ? (
                 <Fragment key={comment.id}>
-                  <div className="lb-thread-unread-indicator">
+                  <div
+                    className="lb-thread-unread-indicator"
+                    aria-label={$.THREAD_UNREAD_INDICATOR_DESCRIPTION}
+                  >
                     <span className="lb-thread-unread-indicator-label">
                       <ArrowDownIcon className="lb-thread-unread-indicator-label-icon" />
-                      New
+                      {$.THREAD_UNREAD_INDICATOR}
                     </span>
                   </div>
                   {children}
