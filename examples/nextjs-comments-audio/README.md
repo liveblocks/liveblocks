@@ -22,7 +22,7 @@
   <img src="https://img.shields.io/badge/tiptap-message?style=flat&color=07f" alt="Tiptap" />
 </p>
 
-This example shows how to build a audio editor with comments using
+This example shows how to build a audio player with comments using
 [Liveblocks](https://liveblocks.io), and [Next.js](https://nextjs.org/).
 
 Users can place comments at certain times on the audio, and also see a summary
