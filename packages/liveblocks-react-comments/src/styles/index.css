@@ -971,7 +971,7 @@
   }
 }
 
-.lb-thread-unread-separator {
+.lb-thread-unread-indicator {
   position: relative;
   z-index: 1;
   display: flex;
@@ -990,15 +990,7 @@
   }
 }
 
-.lb-thread-unread-separator\:mark-as-read {
-  &::before,
-  &::after {
-    border-block-start: 1px solid var(--lb-accent-moderate);
-  }
-}
-
-.lb-thread-unread-indicator {
-  all: unset;
+.lb-thread-unread-indicator-label {
   z-index: 1;
   display: flex;
   flex: none;
@@ -1009,10 +1001,9 @@
   font-weight: 600;
   font-size: 0.675em;
   text-transform: uppercase;
-  cursor: pointer;
 }
 
-.lb-thread-unread-indicator-icon {
+.lb-thread-unread-indicator-label-icon {
   inline-size: calc(0.6 * var(--lb-icon-size));
   block-size: calc(0.6 * var(--lb-icon-size));
 }

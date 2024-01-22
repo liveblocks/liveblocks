@@ -9,16 +9,9 @@ import type {
   RefAttributes,
   SyntheticEvent,
 } from "react";
-import React, {
-  forwardRef,
-  Fragment,
-  useCallback,
-  useMemo,
-  useState,
-} from "react";
+import React, { forwardRef, Fragment, useCallback, useMemo } from "react";
 
 import { ArrowDownIcon } from "../icons/ArrowDown";
-import { CheckIcon } from "../icons/Check";
 import { ResolveIcon } from "../icons/Resolve";
 import { ResolvedIcon } from "../icons/Resolved";
 import {
@@ -34,10 +27,6 @@ import { Comment } from "./Comment";
 import { Composer } from "./Composer";
 import { Button } from "./internal/Button";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";
-
-interface UnreadIndicatorProps extends ComponentPropsWithoutRef<"div"> {
-  threadId: string;
-}
 
 export interface ThreadProps<
   TThreadMetadata extends BaseMetadata = ThreadMetadata,
@@ -112,70 +101,6 @@ export interface ThreadProps<
    * Override the component's strings.
    */
   overrides?: Partial<ThreadOverrides & CommentOverrides & ComposerOverrides>;
-}
-
-function UnreadIndicator({
-  threadId,
-  className,
-  ...props
-}: UnreadIndicatorProps) {
-  const [isHovered, setHovered] = useState(false);
-  const [isFocused, setFocused] = useState(false);
-  const showMarkAsRead = isHovered || isFocused;
-
-  const handleClick = useCallback(() => {
-    // [comments-unread] TODO: Mark thread as read
-    console.log("Mark thread as read", threadId);
-  }, [threadId]);
-
-  const handleHoverStart = useCallback(() => {
-    setHovered(true);
-  }, []);
-
-  const handleHoverEnd = useCallback(() => {
-    setHovered(false);
-  }, []);
-
-  const handleFocusStart = useCallback(() => {
-    setFocused(true);
-  }, []);
-
-  const handleFocusEnd = useCallback(() => {
-    setFocused(false);
-  }, []);
-
-  return (
-    <div
-      className={classNames(
-        "lb-thread-unread-separator",
-        showMarkAsRead && "lb-thread-unread-separator:mark-as-read",
-        className
-      )}
-      {...props}
-    >
-      <button
-        className="lb-thread-unread-indicator"
-        onClick={handleClick}
-        onPointerEnter={handleHoverStart}
-        onPointerLeave={handleHoverEnd}
-        onPointerCancel={handleHoverEnd}
-        onFocus={handleFocusStart}
-        onBlur={handleFocusEnd}
-      >
-        {showMarkAsRead ? (
-          <>
-            <CheckIcon className="lb-thread-unread-indicator-icon" />
-            Mark as read
-          </>
-        ) : (
-          <>
-            <ArrowDownIcon className="lb-thread-unread-indicator-icon" />
-            New
-          </>
-        )}
-      </button>
-    </div>
-  );
 }
 
 /**
@@ -355,7 +280,12 @@ export const Thread = forwardRef(
               return index === firstUnreadCommentIndex &&
                 firstUnreadCommentIndex !== firstCommentIndex ? (
                 <Fragment key={comment.id}>
-                  <UnreadIndicator threadId={thread.id} />
+                  <div className="lb-thread-unread-indicator">
+                    <span className="lb-thread-unread-indicator-label">
+                      <ArrowDownIcon className="lb-thread-unread-indicator-label-icon" />
+                      New
+                    </span>
+                  </div>
                   {children}
                 </Fragment>
               ) : (
