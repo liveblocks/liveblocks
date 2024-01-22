@@ -5,15 +5,25 @@ import { ThreadsTimeline } from "@/components/ThreadsTimeline";
 import * as Slider from "@radix-ui/react-slider";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { WaveForm } from "@/components/WaveForm";
+import { NewThreadComposer } from "@/components/NewThreadComposer";
+import { ClientSideSuspense } from "@liveblocks/react";
+import { useUpdateMyPresence } from "@/liveblocks.config";
+import { useSkipToListener } from "@/utils";
 
 const audioSrc = "/titanium-170190.mp3";
 
 export default function AudioPlayer() {
+  const updateMyPresence = useUpdateMyPresence();
   const audioRef = useRef<HTMLAudioElement>(null);
   const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(false);
   const seeking = useRef(false);
   const [duration, setDuration] = useState(0);
+
+  // Update multiplayer presence to show current state
+  useEffect(() => {
+    updateMyPresence({ state: playing ? "playing" : "paused" });
+  }, [playing]);
 
   useEffect(() => {
     if (!audioRef.current) {
@@ -71,37 +81,36 @@ export default function AudioPlayer() {
     setTime(value);
     setPlaying(true);
     audioRef.current.currentTime = value;
+    audioRef.current.play();
   }, []);
+
+  // Listen to skip events from other parts of app
+  useSkipToListener((newTime) => {
+    if (!audioRef.current) {
+      return;
+    }
+
+    seeking.current = false;
+    setPlaying(true);
+    setTime(newTime);
+    audioRef.current.currentTime = newTime;
+    audioRef.current.play();
+  });
 
   return (
     <div className={styles.audioWrapper}>
-      <audio ref={audioRef} src={audioSrc} preload="true"></audio>
-      <button onClick={togglePlay}>{playing ? "Pause" : "Play"}</button> | song
-      name
+      <div>
+        <audio ref={audioRef} src={audioSrc} preload="true"></audio>
+        <button onClick={togglePlay}>{playing ? "Pause" : "Play"}</button> |
+        song name
+      </div>
       <div className={styles.sliderAndComments}>
-        {/* Comments on audio timeline */}
-        <div className={styles.sliderComments}>
-          <ThreadsTimeline />
-        </div>
-        {/*<div className={styles.sliderRoot}>*/}
-        {/*  <div className={styles.waveformWrapper}>*/}
-        {/*    <WaveForm time={time} src={audioSrc} />*/}
-        {/*  </div>*/}
-        {/*  <input*/}
-        {/*    onChange={(e) => handleSliderChange([e.target.value])}*/}
-        {/*    type="range"*/}
-        {/*    min={0}*/}
-        {/*    max={duration}*/}
-        {/*    step={0.001}*/}
-        {/*  />*/}
-        {/*</div>*/}
-
-        {/*Range slider for audio time*/}
+        {/* Range slider for audio time and waveform */}
         <Slider.Root
           className={styles.sliderRoot}
           min={0}
           max={duration}
-          step={0.001}
+          step={1}
           value={[time]}
           onValueChange={handleSliderChange}
           onValueCommit={handleSliderCommit}
@@ -112,9 +121,18 @@ export default function AudioPlayer() {
           <Slider.Track className={styles.sliderTrack}>
             <Slider.Range className={styles.sliderRange} />
           </Slider.Track>
-          <Slider.Thumb className={styles.sliderThumb} />
         </Slider.Root>
+
+        {/* Comments on audio timeline */}
+        <div className={styles.sliderComments}>
+          <ThreadsTimeline />
+        </div>
       </div>
+
+      {/* Write a comment input */}
+      <ClientSideSuspense fallback={null}>
+        {() => <NewThreadComposer duration={duration} time={time} />}
+      </ClientSideSuspense>
     </div>
   );
 }

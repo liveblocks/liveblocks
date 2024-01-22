@@ -28,36 +28,51 @@ export function WaveForm({ percentage, src }: Props) {
     const height = parseInt(
       getComputedStyle(root).getPropertyValue("--wave-height")
     );
+    const timelineHeight = parseFloat(
+      getComputedStyle(root).getPropertyValue("--wave-timeline-modifier")
+    );
 
     // Define the waveform gradient
     const gradient = ctx.createLinearGradient(0, 0, 0, height);
     gradient.addColorStop(0, "#807f7f"); // Top color
-    gradient.addColorStop((canvas.height * 0.5) / canvas.height, "#807f7f"); // Top color
-    gradient.addColorStop((canvas.height * 0.5 + 1) / canvas.height, "white"); // White line
-    gradient.addColorStop((canvas.height * 0.5 + 2) / canvas.height, "white"); // White line
-    gradient.addColorStop((canvas.height * 0.5 + 3) / canvas.height, "#B1B1B1"); // Bottom color
+    gradient.addColorStop(
+      (canvas.height * timelineHeight) / canvas.height,
+      "#807f7f"
+    ); // Top color
+    gradient.addColorStop(
+      (canvas.height * timelineHeight + 1) / canvas.height,
+      "white"
+    ); // White line
+    gradient.addColorStop(
+      (canvas.height * timelineHeight + 2) / canvas.height,
+      "white"
+    ); // White line
+    gradient.addColorStop(
+      (canvas.height * timelineHeight + 3) / canvas.height,
+      "#B1B1B1"
+    ); // Bottom color
     gradient.addColorStop(1, "#B1B1B1"); // Bottom color
 
     // Define the progress gradient
     const progressGradient = ctx.createLinearGradient(0, 0, 0, height);
-    progressGradient.addColorStop(0, "#EE772F"); // Top color
+    progressGradient.addColorStop(0, "#652df1"); // Top color
     progressGradient.addColorStop(
-      (canvas.height * 0.5) / canvas.height,
-      "#ff0000"
+      (canvas.height * timelineHeight) / canvas.height,
+      "#e807e4"
     ); // Top color
     progressGradient.addColorStop(
-      (canvas.height * 0.5 + 1) / canvas.height,
+      (canvas.height * timelineHeight + 1) / canvas.height,
       "#ffffff"
     ); // White line
     progressGradient.addColorStop(
-      (canvas.height * 0.5 + 2) / canvas.height,
+      (canvas.height * timelineHeight + 2) / canvas.height,
       "#ffffff"
     ); // White line
     progressGradient.addColorStop(
-      (canvas.height * 0.5 + 3) / canvas.height,
-      "#F6B094"
+      (canvas.height * timelineHeight + 3) / canvas.height,
+      "#f58dcd"
     ); // Bottom color
-    progressGradient.addColorStop(1, "#F6B094"); // Bottom color
+    progressGradient.addColorStop(1, "#fcbfe3"); // Bottom color
 
     // Create the waveform
     wavesurfer.current = WaveSurfer.create({

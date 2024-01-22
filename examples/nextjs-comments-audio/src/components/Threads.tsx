@@ -3,14 +3,9 @@
 import { ThreadMetadata, useThreads } from "@/liveblocks.config";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { Thread } from "@liveblocks/react-comments";
-import { FormEvent, useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import styles from "./Threads.module.css";
-import {
-  resetAllHighlights,
-  useHighlightPin,
-  useHighlightThreadListener,
-  useSkipTo,
-} from "@/utils";
+import { useSkipTo } from "@/utils";
 import { ThreadData } from "@liveblocks/core";
 import { formatTime } from "@/components/Duration";
 import { TimeIcon } from "@/icons/Time";
@@ -43,46 +38,21 @@ function CustomThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
   const ref = useRef<HTMLDivElement>(null);
   const threadHasTime = thread.metadata.timePercentage !== -1;
   const skipTo = useSkipTo();
-  const highlightPin = useHighlightPin(thread.id);
-
   const [highlightedThread, setHighlightedThread] = useState(false);
-
-  // Send highlight event to thread timeline
-  useHighlightThreadListener((threadId) => {
-    if (thread.id !== threadId) {
-      setHighlightedThread(false);
-      return;
-    }
-
-    ref.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-      inline: "nearest",
-    });
-    setHighlightedThread(false);
-    setTimeout(() => setHighlightedThread(true));
-  });
 
   // Skip to metadata time
   const handleButtonClick = useCallback(() => {
-    if (!thread.metadata.timePercentage) {
+    if (!thread.metadata.time) {
       return;
     }
 
-    skipTo(thread.metadata.timePercentage);
+    skipTo(thread.metadata.time);
   }, [skipTo]);
-
-  // Stop keyboard events firing on window when typing (i.e. prevent fullscreen with `f`)
-  const handleKeyDown = useCallback((event: FormEvent<HTMLDivElement>) => {
-    event.stopPropagation();
-  }, []);
 
   return (
     <div
       ref={ref}
       className={styles.threadWrapper}
-      onPointerEnter={highlightPin}
-      onPointerLeave={resetAllHighlights}
       data-highlight={highlightedThread || undefined}
     >
       {threadHasTime ? (
@@ -95,7 +65,6 @@ function CustomThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
         className={styles.thread}
         thread={thread}
         indentCommentContent={true}
-        onKeyDown={handleKeyDown}
       />
     </div>
   );

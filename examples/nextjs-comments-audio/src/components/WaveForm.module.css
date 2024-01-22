@@ -3,10 +3,12 @@
   width: 100%;
   height: var(--wave-height);
   --hover-percentage: 0%;
+  overflow: hidden;
+  isolation: isolate;
 }
 
 .waveform:hover .waveformHover {
-  opacity: 1;
+  opacity: 0.8;
 }
 
 .waveformHover {
@@ -15,7 +17,7 @@
   inset: 0;
   transform: translateX(calc(-100% + var(--hover-amount)));
   pointer-events: none;
-  mix-blend-mode: overlay;
+  mix-blend-mode: lighten;
   background: rgba(255, 255, 255, 0.5);
   opacity: 0;
   transition: opacity 0.2s ease;

@@ -4,29 +4,21 @@ import {
   Composer,
   ComposerSubmitComment,
 } from "@liveblocks/react-comments/primitives";
-import { ChangeEvent, FormEvent, useCallback, useState } from "react";
+import { FormEvent, KeyboardEvent, useCallback } from "react";
 import { useCreateThread, useSelf } from "@/liveblocks.config";
-import { formatTime } from "@/components/Duration";
 import { Mention } from "@/components/Mention";
 import { MentionSuggestions } from "@/components/MentionSuggestions";
 import { Link } from "@/components/Link";
 import styles from "./NewThreadComposer.module.css";
-import { TimeIcon } from "@/icons/Time";
 
 type Props = {
-  getCurrentPercentage: () => number;
-  setPlaying: (vale: boolean) => void;
+  duration: number;
   time: number;
 };
 
-export function NewThreadComposer({
-  getCurrentPercentage,
-  setPlaying,
-  time,
-}: Props) {
+export function NewThreadComposer({ duration, time }: Props) {
   const currentUser = useSelf();
   const createThread = useCreateThread();
-  const [attachTime, setAttachTime] = useState(true);
 
   // Submit thread with current time
   const handleSubmit = useCallback(
@@ -37,30 +29,20 @@ export function NewThreadComposer({
         body,
         metadata: {
           resolved: false,
-          time: attachTime ? time : -1,
-          timePercentage: attachTime ? getCurrentPercentage() : -1,
+          time,
+          timePercentage: (time / duration) * 100,
         },
       });
     },
-    [attachTime, getCurrentPercentage, time]
+    [duration, time]
   );
 
-  // Pause video on focus
-  const handleFocus = useCallback(() => {
-    setPlaying(false);
+  // Prevent multiple lines with `shift` + `enter`
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    if (event.shiftKey && event.key === "Enter") {
+      event.preventDefault();
+    }
   }, []);
-
-  // Stop keyboard events firing on window when typing (i.e. prevent fullscreen with `f`)
-  const handleKeyDown = useCallback((event: FormEvent<HTMLDivElement>) => {
-    event.stopPropagation();
-  }, []);
-
-  const handleCheckboxChecked = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      setAttachTime(event.target.checked);
-    },
-    []
-  );
 
   return (
     <Composer.Form onComposerSubmit={handleSubmit} className={styles.wrapper}>
@@ -68,16 +50,15 @@ export function NewThreadComposer({
         {currentUser && (
           <img
             className={styles.composerAvatar}
-            width={24}
-            height={24}
+            width={42}
+            height={42}
             src={currentUser.info.avatar}
             alt={currentUser.info.name}
           />
         )}
         <Composer.Editor
           className={styles.composerEditor}
-          placeholder="Add comment…"
-          onFocus={handleFocus}
+          placeholder="Write a comment…"
           onKeyDown={handleKeyDown}
           components={{
             Mention: (props) => (
@@ -93,21 +74,6 @@ export function NewThreadComposer({
             ),
           }}
         />
-      </div>
-      <div className={styles.options}>
-        <label htmlFor="attach-time" className={styles.optionsTime}>
-          <span>
-            <TimeIcon />
-            {formatTime(time)}
-          </span>
-          <input
-            id="attach-time"
-            className={styles.checkbox}
-            type="checkbox"
-            checked={attachTime}
-            onChange={handleCheckboxChecked}
-          />
-        </label>
         <Composer.Submit className="button">Comment</Composer.Submit>
       </div>
     </Composer.Form>

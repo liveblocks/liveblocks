@@ -7,11 +7,6 @@ import styles from "./ThreadsTimeline.module.css";
 import { ThreadData } from "@liveblocks/core";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { Comment } from "@liveblocks/react-comments/primitives";
-import {
-  resetAllHighlights,
-  useHighlightPinListener,
-  useHighlightThread,
-} from "@/utils";
 import { formatTime } from "@/components/Duration";
 import { Mention } from "@/components/Mention";
 import { Link } from "@/components/Link";
@@ -42,31 +37,16 @@ function PinnedThreads() {
 
 function PinnedThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
   const { user } = useUser(thread.comments?.[0].userId || "");
-  const highlightThread = useHighlightThread(thread.id);
   const [highlightedPin, setHighlightedPin] = useState(false);
 
-  // On highlight event, highlight this pin
-  useHighlightPinListener((threadId) => {
-    if (thread.id !== threadId) {
-      setHighlightedPin(false);
-      return;
-    }
-
-    setHighlightedPin(false);
-    setTimeout(() => setHighlightedPin(true));
-  });
-
-  // Not intended to be on the timeline, or all comments deleted
-  if (thread.metadata.time === -1 || !thread.comments.length) {
+  // All comments deleted
+  if (!thread.comments.length) {
     return null;
   }
 
   return (
     <div
       className={styles.pinnedThread}
-      onClick={highlightThread}
-      onPointerEnter={highlightThread}
-      onPointerLeave={resetAllHighlights}
       style={{ left: `${thread.metadata.timePercentage}%` }}
       data-highlight={highlightedPin || undefined}
     >

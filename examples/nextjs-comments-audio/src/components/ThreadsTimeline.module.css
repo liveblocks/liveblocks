@@ -5,7 +5,7 @@
 
 .pinnedThread {
   position: absolute;
-  bottom: 100%;
+  top: 0;
   cursor: pointer;
   transform: translateX(-50%);
   transform-origin: center bottom;
