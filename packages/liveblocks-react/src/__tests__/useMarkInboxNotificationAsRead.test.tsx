@@ -10,7 +10,6 @@ import { dummyInboxNoficationData, dummyThreadData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import {
   mockGetInboxNotifications,
-  mockGetThreads,
   mockMarkInboxNotificationsAsRead,
 } from "./_restMocks";
 
@@ -47,7 +46,7 @@ function createRoomContextForTest<
   };
 }
 
-describe("useMarkThreadAsRead", () => {
+describe("useMarkInboxNotificationAsRead", () => {
   test("should mark notification as read optimistically", async () => {
     const threads = [dummyThreadData()];
     const inboxNotifications = [dummyInboxNoficationData()];
@@ -55,15 +54,6 @@ describe("useMarkThreadAsRead", () => {
     inboxNotifications[0].readAt = null;
 
     server.use(
-      mockGetThreads((_req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
-            data: threads,
-            inboxNotifications,
-          })
-        )
-      ),
       mockGetInboxNotifications((_req, res, ctx) =>
         res(
           ctx.status(200),
@@ -77,22 +67,21 @@ describe("useMarkThreadAsRead", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useMarkThreadAsRead },
-      liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
+      liveblocksCtx: {
+        LiveblocksProvider,
+        useInboxNotifications,
+        useMarkInboxNotificationAsRead,
+      },
     } = createRoomContextForTest();
 
     const { result, unmount } = renderHook(
       () => ({
-        markThreadAsRead: useMarkThreadAsRead(),
+        markInboxNotificationAsRead: useMarkInboxNotificationAsRead(),
         inboxNotifications: useInboxNotifications().inboxNotifications,
       }),
       {
         wrapper: ({ children }) => (
-          <LiveblocksProvider>
-            <RoomProvider id="room-id" initialPresence={{}}>
-              {children}
-            </RoomProvider>
-          </LiveblocksProvider>
+          <LiveblocksProvider>{children}</LiveblocksProvider>
         ),
       }
     );
@@ -103,7 +92,7 @@ describe("useMarkThreadAsRead", () => {
 
     // Mark the first thread in our threads list as read
     act(() => {
-      result.current.markThreadAsRead(threads[0].id);
+      result.current.markInboxNotificationAsRead(inboxNotifications[0].id);
     });
 
     expect(result.current.inboxNotifications![0].readAt).not.toBe(null);
@@ -118,15 +107,6 @@ describe("useMarkThreadAsRead", () => {
     inboxNotifications[0].readAt = null;
 
     server.use(
-      mockGetThreads((_req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
-            data: threads,
-            inboxNotifications,
-          })
-        )
-      ),
       mockGetInboxNotifications((_req, res, ctx) =>
         res(
           ctx.status(200),
@@ -140,22 +120,21 @@ describe("useMarkThreadAsRead", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useMarkThreadAsRead },
-      liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
+      liveblocksCtx: {
+        LiveblocksProvider,
+        useInboxNotifications,
+        useMarkInboxNotificationAsRead,
+      },
     } = createRoomContextForTest();
 
     const { result, unmount } = renderHook(
       () => ({
-        markThreadAsRead: useMarkThreadAsRead(),
+        markInboxNotificationAsRead: useMarkInboxNotificationAsRead(),
         inboxNotifications: useInboxNotifications().inboxNotifications,
       }),
       {
         wrapper: ({ children }) => (
-          <LiveblocksProvider>
-            <RoomProvider id="room-id" initialPresence={{}}>
-              {children}
-            </RoomProvider>
-          </LiveblocksProvider>
+          <LiveblocksProvider>{children}</LiveblocksProvider>
         ),
       }
     );
@@ -166,7 +145,7 @@ describe("useMarkThreadAsRead", () => {
 
     // Mark the first thread in our threads list as read
     act(() => {
-      result.current.markThreadAsRead(threads[0].id);
+      result.current.markInboxNotificationAsRead(inboxNotifications[0].id);
     });
 
     // We mark the notification as read optimitiscally
