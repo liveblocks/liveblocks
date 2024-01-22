@@ -18,6 +18,7 @@ export interface GlobalOverrides {
   USER_UNKNOWN: string;
   LIST_REMAINING: (count: number) => string;
   LIST_REMAINING_USERS: (count: number) => string;
+  LIST_REMAINING_COMMENTS: (count: number) => string;
   EMOJI_PICKER_SEARCH_PLACEHOLDER: string;
   EMOJI_PICKER_EMPTY: ReactNode;
   EMOJI_PICKER_ERROR: (error: Error) => ReactNode;
@@ -34,8 +35,8 @@ export interface CommentOverrides {
   COMMENT_DELETE: string;
   COMMENT_ADD_REACTION: string;
   COMMENT_REACTION_LIST: (
-    emoji: string,
     list: ReactNode,
+    emoji: string,
     count: number
   ) => ReactNode;
   COMMENT_REACTION_DESCRIPTION: (emoji: string, count: number) => string;
@@ -55,11 +56,26 @@ export interface ThreadOverrides {
   THREAD_COMPOSER_SEND: string;
 }
 
+export interface InboxNotificationOverrides {
+  INBOX_NOTIFICATION_MORE: string;
+  INBOX_NOTIFICATION_MARK_AS_READ: string;
+  INBOX_NOTIFICATION_THREAD_COMMENTS_LIST: (
+    list: ReactNode,
+    room: ReactNode,
+    count: number
+  ) => ReactNode;
+  INBOX_NOTIFICATION_THREAD_MENTION: (
+    user: ReactNode,
+    room: ReactNode
+  ) => ReactNode;
+}
+
 export type Overrides = LocalizationOverrides &
   GlobalOverrides &
   ComposerOverrides &
   CommentOverrides &
-  ThreadOverrides;
+  ThreadOverrides &
+  InboxNotificationOverrides;
 
 type OverridesProviderProps = PropsWithChildren<{
   overrides?: Partial<Overrides>;
@@ -71,7 +87,9 @@ export const defaultOverrides: Overrides = {
   USER_SELF: "you",
   USER_UNKNOWN: "Anonymous",
   LIST_REMAINING: (count) => `${count} more`,
-  LIST_REMAINING_USERS: (others) => `${others} ${pluralize(others, "other")}`,
+  LIST_REMAINING_USERS: (count) => `${count} ${pluralize(count, "other")}`,
+  LIST_REMAINING_COMMENTS: (count) =>
+    `${count} more ${pluralize(count, "comment")}`,
   EMOJI_PICKER_SEARCH_PLACEHOLDER: "Search…",
   EMOJI_PICKER_EMPTY: "No emoji found.",
   EMOJI_PICKER_ERROR: () =>
@@ -89,7 +107,7 @@ export const defaultOverrides: Overrides = {
   COMMENT_EDIT_COMPOSER_SAVE: "Save",
   COMMENT_DELETE: "Delete comment",
   COMMENT_ADD_REACTION: "Add reaction",
-  COMMENT_REACTION_LIST: (emoji, list) => (
+  COMMENT_REACTION_LIST: (list, emoji) => (
     <>
       {list} reacted with <Emoji emoji={emoji} />
     </>
@@ -100,6 +118,21 @@ export const defaultOverrides: Overrides = {
   THREAD_UNRESOLVE: "Re-open thread",
   THREAD_COMPOSER_PLACEHOLDER: "Reply to thread…",
   THREAD_COMPOSER_SEND: "Reply",
+  INBOX_NOTIFICATION_MORE: "More",
+  INBOX_NOTIFICATION_MARK_AS_READ: "Mark as read",
+  INBOX_NOTIFICATION_THREAD_COMMENTS_LIST: (
+    list: ReactNode,
+    room: ReactNode
+  ) => (
+    <>
+      {list} commented on {room}
+    </>
+  ),
+  INBOX_NOTIFICATION_THREAD_MENTION: (user: ReactNode, room: ReactNode) => (
+    <>
+      {user} mentioned you in {room}
+    </>
+  ),
 };
 
 export const OverridesContext = createContext<Overrides | undefined>(undefined);

@@ -188,7 +188,6 @@ const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
       () => (
         <span>
           {$.COMMENT_REACTION_LIST(
-            reaction.emoji,
             <List
               values={reaction.users.map((users, index) => (
                 <User
@@ -201,6 +200,7 @@ const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
               formatRemaining={$.LIST_REMAINING_USERS}
               truncate={REACTIONS_TRUNCATE}
             />,
+            reaction.emoji,
             reaction.users.length
           )}
         </span>
