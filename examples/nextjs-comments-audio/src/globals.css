@@ -1,6 +1,10 @@
 @import "@liveblocks/react-comments/styles.css";
 @import "@liveblocks/react-comments/styles/dark/media-query.css";
 
+:root {
+  --wave-height: 80px;
+}
+
 html,
 body {
   background: #f3f3f3;

@@ -16,7 +16,7 @@
 
 .sliderAndComments {
   position: relative;
-  height: 70px;
+  height: var(--wave-height);
 }
 
 .sliderComments {

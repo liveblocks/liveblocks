@@ -107,7 +107,7 @@ export default function AudioPlayer() {
           onValueCommit={handleSliderCommit}
         >
           <div className={styles.waveformWrapper}>
-            <WaveForm time={time / 100} src={audioSrc} />
+            <WaveForm percentage={time / duration} src={audioSrc} />
           </div>
           <Slider.Track className={styles.sliderTrack}>
             <Slider.Range className={styles.sliderRange} />
