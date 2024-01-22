@@ -14,9 +14,10 @@ export interface LocalizationOverrides {
 }
 
 export interface GlobalOverrides {
-  SELF: string;
-  UNKNOWN_USER: string;
+  USER_SELF: string;
+  USER_UNKNOWN: string;
   LIST_REMAINING: (count: number) => string;
+  LIST_REMAINING_USERS: (count: number) => string;
   EMOJI_PICKER_SEARCH_PLACEHOLDER: string;
   EMOJI_PICKER_EMPTY: ReactNode;
   EMOJI_PICKER_ERROR: (error: Error) => ReactNode;
@@ -32,8 +33,7 @@ export interface CommentOverrides {
   COMMENT_EDIT_COMPOSER_SAVE: string;
   COMMENT_DELETE: string;
   COMMENT_ADD_REACTION: string;
-  COMMENT_REACTION_REMAINING: (others: number) => string;
-  COMMENT_REACTION_TOOLTIP: (
+  COMMENT_REACTION_LIST: (
     emoji: string,
     list: ReactNode,
     count: number
@@ -68,9 +68,10 @@ type OverridesProviderProps = PropsWithChildren<{
 export const defaultOverrides: Overrides = {
   locale: "en",
   dir: "ltr",
-  SELF: "you",
-  UNKNOWN_USER: "Anonymous",
+  USER_SELF: "you",
+  USER_UNKNOWN: "Anonymous",
   LIST_REMAINING: (count) => `${count} more`,
+  LIST_REMAINING_USERS: (others) => `${others} ${pluralize(others, "other")}`,
   EMOJI_PICKER_SEARCH_PLACEHOLDER: "Search…",
   EMOJI_PICKER_EMPTY: "No emoji found.",
   EMOJI_PICKER_ERROR: () =>
@@ -88,13 +89,11 @@ export const defaultOverrides: Overrides = {
   COMMENT_EDIT_COMPOSER_SAVE: "Save",
   COMMENT_DELETE: "Delete comment",
   COMMENT_ADD_REACTION: "Add reaction",
-  COMMENT_REACTION_TOOLTIP: (emoji, list) => (
+  COMMENT_REACTION_LIST: (emoji, list) => (
     <>
       {list} reacted with <Emoji emoji={emoji} />
     </>
   ),
-  COMMENT_REACTION_REMAINING: (others) =>
-    `${others} ${pluralize(others, "other")}`,
   COMMENT_REACTION_DESCRIPTION: (emoji, count) =>
     `${count} ${pluralize(count, "reaction")}, react with ${emoji}`,
   THREAD_RESOLVE: "Resolve thread",

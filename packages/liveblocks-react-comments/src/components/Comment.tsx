@@ -187,7 +187,7 @@ const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
     const tooltipContent = useMemo(
       () => (
         <span>
-          {$.COMMENT_REACTION_TOOLTIP(
+          {$.COMMENT_REACTION_LIST(
             reaction.emoji,
             <List
               values={reaction.users.map((users, index) => (
@@ -198,7 +198,7 @@ const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
                   replaceSelf
                 />
               ))}
-              formatRemaining={$.COMMENT_REACTION_REMAINING}
+              formatRemaining={$.LIST_REMAINING_USERS}
               truncate={REACTIONS_TRUNCATE}
             />,
             reaction.users.length

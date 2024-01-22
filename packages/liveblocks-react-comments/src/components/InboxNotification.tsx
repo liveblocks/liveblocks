@@ -284,6 +284,7 @@ const ThreadInboxNotification = forwardRef<
   HTMLDivElement,
   InboxNotificationProps
 >(({ inboxNotification, ...props }, forwardedRef) => {
+  const $ = useOverrides();
   const {
     [kInternal]: { useThreadFromCache },
   } = useLiveblocksContextBundle();
@@ -310,7 +311,7 @@ const ThreadInboxNotification = forwardRef<
               values={reversedUserIds.map((userId, index) => (
                 <User key={userId} userId={userId} capitalize={index === 0} />
               ))}
-              // formatRemaining={$.COMMENT_REACTION_REMAINING}
+              formatRemaining={$.LIST_REMAINING_USERS}
               truncate={THREAD_INBOX_NOTIFICATION_MAX_COMMENTS - 1}
             />{" "}
             commented on <span>Document</span>
@@ -374,7 +375,7 @@ const ThreadInboxNotification = forwardRef<
           "Unexpected thread inbox notification type"
         );
     }
-  }, [inboxNotification]);
+  }, [$.LIST_REMAINING_USERS, inboxNotification, thread]);
 
   return (
     <InboxNotificationLayout
