@@ -202,12 +202,43 @@ export function createLiveblocksContext<
   }
 
   function useMarkAllInboxNotificationsAsRead() {
-    // [comments-unread] TODO: Optimistically update all cached notifications and the unread count
-    const markAllInboxNotificationsAsRead = useCallback(() => {
-      void client.markAllInboxNotificationsAsRead();
-    }, []);
+    return useCallback(() => {
+      const optimisticUpdateId = nanoid();
+      const readAt = new Date();
+      store.pushOptimisticUpdate({
+        type: "mark-inbox-notifications-as-read",
+        id: optimisticUpdateId,
+        readAt,
+      });
 
-    return markAllInboxNotificationsAsRead;
+      client.markAllInboxNotificationsAsRead().then(
+        () => {
+          store.set((state) => ({
+            ...state,
+            inboxNotifications: Object.fromEntries(
+              Array.from(Object.entries(state.inboxNotifications)).map(
+                ([id, inboxNotification]) => [
+                  id,
+                  { ...inboxNotification, readAt },
+                ]
+              )
+            ),
+            optimisticUpdates: state.optimisticUpdates.filter(
+              (update) => update.id !== optimisticUpdateId
+            ),
+          }));
+        },
+        () => {
+          // TODO: Broadcast errors to client
+          store.set((state) => ({
+            ...state,
+            optimisticUpdates: state.optimisticUpdates.filter(
+              (update) => update.id !== optimisticUpdateId
+            ),
+          }));
+        }
+      );
+    }, []);
   }
 
   function useThreadFromCache(threadId: string): ThreadData<BaseMetadata> {
