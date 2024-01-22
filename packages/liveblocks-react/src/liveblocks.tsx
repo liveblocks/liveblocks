@@ -4,7 +4,11 @@ import type {
   Client,
   ThreadData,
 } from "@liveblocks/client";
-import type { CacheStore, InboxNotificationData } from "@liveblocks/core";
+import type {
+  CacheStore,
+  InboxNotificationData,
+  ResolveUrlsResource,
+} from "@liveblocks/core";
 import { kInternal } from "@liveblocks/core";
 import type { PropsWithChildren } from "react";
 import React, {
@@ -13,6 +17,7 @@ import React, {
   useContext,
   useEffect,
 } from "react";
+import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import { createSharedContext } from "./shared";
@@ -20,6 +25,8 @@ import type {
   InboxNotificationsState,
   InboxNotificationsStateSuccess,
   LiveblocksContextBundle,
+  UrlState,
+  UrlStateSuccess,
 } from "./types";
 
 export const ContextBundle =
@@ -197,6 +204,59 @@ export function createLiveblocksContext<
         return thread;
       }
     );
+  }
+
+  const urlsStore = client[kInternal].urlsStore;
+
+  function useUrl(resource: ResolveUrlsResource): UrlState {
+    const getUrlState = useCallback(
+      () => urlsStore.getState(resource),
+      [resource]
+    );
+
+    useEffect(() => {
+      void urlsStore.get(resource);
+    }, [resource]);
+
+    const state = useSyncExternalStore(
+      urlsStore.subscribe,
+      getUrlState,
+      getUrlState
+    );
+
+    return state
+      ? ({
+          ...state,
+          url: state.data,
+        } as UrlState)
+      : { isLoading: true };
+  }
+
+  function useUrlSuspense(resource: ResolveUrlsResource) {
+    const getUrlState = useCallback(
+      () => urlsStore.getState(resource),
+      [resource]
+    );
+    const urlState = getUrlState();
+
+    if (!urlState || urlState.isLoading) {
+      throw urlsStore.get(resource);
+    }
+
+    if (urlState.error) {
+      throw urlState.error;
+    }
+
+    const state = useSyncExternalStore(
+      urlsStore.subscribe,
+      getUrlState,
+      getUrlState
+    );
+
+    return {
+      ...state,
+      url: state?.data,
+    } as UrlStateSuccess;
   }
 
   const bundle: LiveblocksContextBundle<TUserMeta> = {

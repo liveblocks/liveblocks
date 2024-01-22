@@ -46,6 +46,7 @@ const DEFAULT_LOST_CONNECTION_TIMEOUT = 5_000;
 
 const RESOLVE_USERS_BATCH_DELAY = 50;
 const RESOLVE_ROOMS_DETAILS_BATCH_DELAY = 50;
+const RESOLVE_URLS_BATCH_DELAY = 50;
 const MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY = 50;
 
 export type ResolveMentionSuggestionsArgs = {
@@ -72,6 +73,25 @@ export type ResolveRoomsDetailsArgs = {
    * The IDs of the rooms to resolve.
    */
   roomIds: string[];
+};
+
+/**
+ * A thread, and optionally a specific comment from it.
+ */
+type ResolveUrlsResourceThread = {
+  type: "thread";
+  roomId: string;
+  threadId: string;
+  commentId?: string;
+};
+
+export type ResolveUrlsResource = ResolveUrlsResourceThread;
+
+export type ResolveUrlsArgs = {
+  /**
+   * The resources to resolve URLs for.
+   */
+  resources: ResolveUrlsResource[];
 };
 
 export type EnterOptions<
@@ -105,6 +125,7 @@ type PrivateClientApi<TUserMeta extends BaseUserMeta> = {
   cacheStore: CacheStore<BaseMetadata>;
   usersStore: BatchStore<TUserMeta["info"] | undefined, [string]>;
   roomsDetailsStore: BatchStore<RoomDetails | undefined, [string]>;
+  urlsStore: BatchStore<string | undefined, [ResolveUrlsResource]>;
 };
 
 type InboxNotificationsApi<TThreadMetadata extends BaseMetadata = never> = {
@@ -269,6 +290,15 @@ export type ClientOptions<TUserMeta extends BaseUserMeta = BaseUserMeta> = {
   resolveRoomsDetails?: (
     args: ResolveRoomsDetailsArgs
   ) => OptionalPromise<(RoomDetails | undefined)[] | undefined>;
+
+  /**
+   * @beta
+   *
+   * A function that returns URLs from resources.
+   */
+  resolveUrls?: (
+    args: ResolveUrlsArgs
+  ) => OptionalPromise<(string | undefined)[] | undefined>;
 
   /**
    * @internal To point the client to a different Liveblocks server. Only
@@ -598,6 +628,24 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
     { delay: RESOLVE_ROOMS_DETAILS_BATCH_DELAY }
   );
 
+  const resolveUrls = clientOptions.resolveUrls;
+  const warnIfNoResolveUrls = createDevelopmentWarning(
+    () => !resolveUrls,
+    "Set the resolveUrls option in createClient to specify room details."
+  );
+
+  const urlsStore = createBatchStore(
+    async (batchedResources: [ResolveUrlsResource][]) => {
+      const resources = batchedResources.flat();
+      const urls = await resolveUrls?.({ resources });
+
+      warnIfNoResolveUrls();
+
+      return urls ?? batchedResources.map(() => undefined);
+    },
+    { delay: RESOLVE_URLS_BATCH_DELAY }
+  );
+
   return Object.defineProperty(
     {
       logout,
@@ -619,6 +667,7 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
         cacheStore,
         usersStore,
         roomsDetailsStore,
+        urlsStore,
       },
     },
     kInternal,

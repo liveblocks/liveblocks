@@ -79,6 +79,26 @@ export type RoomDetailsState =
   | RoomDetailsStateError
   | RoomDetailsStateSuccess;
 
+export type UrlStateLoading = {
+  isLoading: true;
+  url?: never;
+  error?: never;
+};
+
+export type UrlStateError = {
+  isLoading: false;
+  url?: never;
+  error: Error;
+};
+
+export type UrlStateSuccess = {
+  isLoading: false;
+  url: string;
+  error?: never;
+};
+
+export type UrlState = UrlStateLoading | UrlStateError | UrlStateSuccess;
+
 export type PartialNullable<T> = {
   [P in keyof T]?: T[P] | null | undefined;
 };
