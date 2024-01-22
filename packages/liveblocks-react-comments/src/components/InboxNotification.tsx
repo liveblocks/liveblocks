@@ -28,6 +28,7 @@ import { classNames } from "../utils/class-names";
 import { CommentLink, CommentMention } from "./Comment";
 import { Avatar, type AvatarProps } from "./internal/Avatar";
 import { List } from "./internal/List";
+import { Room } from "./internal/Room";
 import { User } from "./internal/User";
 
 const THREAD_INBOX_NOTIFICATION_MAX_COMMENTS = 3;
@@ -313,7 +314,7 @@ const ThreadInboxNotification = forwardRef<
               // formatRemaining={$.COMMENT_REACTION_REMAINING}
               truncate={THREAD_INBOX_NOTIFICATION_MAX_COMMENTS - 1}
             />{" "}
-            commented on <span>Document</span>
+            commented on <Room roomId={thread.roomId} />
           </>
         );
         const content = (
@@ -346,7 +347,7 @@ const ThreadInboxNotification = forwardRef<
         const title = (
           <>
             <User key={mentionUserId} userId={mentionUserId} capitalize />{" "}
-            mentioned you on <span>Document</span>
+            mentioned you on <Room roomId={thread.roomId} />
           </>
         );
         const content = (

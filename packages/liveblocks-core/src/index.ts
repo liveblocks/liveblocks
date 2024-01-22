@@ -20,6 +20,7 @@ export type {
   Client,
   EnterOptions,
   ResolveMentionSuggestionsArgs,
+  ResolveRoomsDetailsArgs,
   ResolveUsersArgs,
 } from "./client";
 export { createClient, NotificationsApiError } from "./client";
@@ -203,6 +204,7 @@ export type {
   PlainLsonMap,
   PlainLsonObject,
 } from "./types/PlainLson";
+export type { RoomDetails } from "./types/RoomDetails";
 export type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 export type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
 export type { User } from "./types/User";

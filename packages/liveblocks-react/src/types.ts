@@ -21,6 +21,7 @@ import type {
   InboxNotificationData,
   kInternal,
   Resolve,
+  RoomDetails,
   RoomEventMessage,
   RoomInitializers,
   ThreadData,
@@ -31,8 +32,6 @@ export type UseThreadsOptions<TThreadMetadata extends BaseMetadata> =
   GetThreadsOptions<TThreadMetadata>;
 
 import type { PropsWithChildren } from "react";
-
-export type OptionalPromise<T> = T | Promise<T>;
 
 export type UserStateLoading = {
   isLoading: true;
@@ -56,6 +55,29 @@ export type UserState<T> =
   | UserStateLoading
   | UserStateError
   | UserStateSuccess<T>;
+
+export type RoomDetailsStateLoading = {
+  isLoading: true;
+  details?: never;
+  error?: never;
+};
+
+export type RoomDetailsStateError = {
+  isLoading: false;
+  details?: never;
+  error: Error;
+};
+
+export type RoomDetailsStateSuccess = {
+  isLoading: false;
+  details: RoomDetails;
+  error?: never;
+};
+
+export type RoomDetailsState =
+  | RoomDetailsStateLoading
+  | RoomDetailsStateError
+  | RoomDetailsStateSuccess;
 
 export type PartialNullable<T> = {
   [P in keyof T]?: T[P] | null | undefined;
@@ -246,6 +268,16 @@ export type SharedContextBundle<TUserMeta extends BaseUserMeta> = {
    */
   useUser(userId: string): UserState<TUserMeta["info"]>;
 
+  /**
+   * @beta
+   *
+   * Returns room details from a given room ID.
+   *
+   * @example
+   * const { details, error, isLoading } = useRoomDetails("room-id");
+   */
+  useRoomDetails(roomId: string): RoomDetailsState;
+
   suspense: {
     /**
      * @beta
@@ -256,6 +288,16 @@ export type SharedContextBundle<TUserMeta extends BaseUserMeta> = {
      * const { user } = useUser("user-id");
      */
     useUser(userId: string): UserStateSuccess<TUserMeta["info"]>;
+
+    /**
+     * @beta
+     *
+     * Returns room details from a given room ID.
+     *
+     * @example
+     * const { details } = useRoomDetails("room-id");
+     */
+    useRoomDetails(roomId: string): RoomDetailsStateSuccess;
   };
 };
 
@@ -1124,7 +1166,7 @@ type LiveblocksContextBundleCommon = {
  */
 type PrivateLiveblocksContextApi = {
   /**
-   * Returns thread from cache.
+   * Returns a thread directly from the cache.
    *
    * @example
    * const thread = useThreadFromCache("th_xxx");

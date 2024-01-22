@@ -54,7 +54,7 @@ export function User({
 
   return (
     <span
-      className={classNames("lb-user", className)}
+      className={classNames("lb-name lb-user", className)}
       data-loading={isLoading ? "" : undefined}
       {...props}
     >

@@ -211,10 +211,7 @@ export function createRoomContext<
   const commentsErrorEventSource =
     makeEventSource<CommentsError<TThreadMetadata>>();
 
-  const {
-    useUser,
-    suspense: { useUser: useUserSuspense },
-  } = createSharedContext<TUserMeta>(client);
+  const shared = createSharedContext<TUserMeta>(client);
 
   /**
    * RATIONALE:
@@ -1646,7 +1643,7 @@ export function createRoomContext<
         resolveMentionSuggestionsArgs
       );
       let debounceTimeout: number | undefined;
-      let canceled = false;
+      let isCanceled = false;
 
       const getMentionSuggestions = async () => {
         try {
@@ -1655,7 +1652,7 @@ export function createRoomContext<
             resolveMentionSuggestionsArgs
           );
 
-          if (!canceled) {
+          if (!isCanceled) {
             setMentionSuggestions(mentionSuggestions);
             mentionSuggestionsCache.set(
               mentionSuggestionsCacheKey,
@@ -1688,7 +1685,7 @@ export function createRoomContext<
       }
 
       return () => {
-        canceled = true;
+        isCanceled = true;
         window.clearTimeout(debounceTimeout);
       };
     }, [room.id, search]);
@@ -1853,7 +1850,6 @@ export function createRoomContext<
     useMutation,
 
     useThreads,
-    useUser,
 
     useCreateThread,
     useEditThreadMetadata,
@@ -1867,6 +1863,8 @@ export function createRoomContext<
 
     useRoomNotificationSettings,
     useUpdateRoomNotificationSettings,
+
+    ...shared,
 
     suspense: {
       RoomContext,
@@ -1907,7 +1905,6 @@ export function createRoomContext<
       useMutation,
 
       useThreads: useThreadsSuspense,
-      useUser: useUserSuspense,
 
       useCreateThread,
       useEditThreadMetadata,
@@ -1921,6 +1918,8 @@ export function createRoomContext<
 
       useRoomNotificationSettings: useRoomNotificationSettingsSuspense,
       useUpdateRoomNotificationSettings,
+
+      ...shared.suspense,
     },
 
     [kInternal]: {

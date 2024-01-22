@@ -42,10 +42,7 @@ export function createLiveblocksContext<
   TUserMeta extends BaseUserMeta = BaseUserMeta,
   TThreadMetadata extends BaseMetadata = never,
 >(client: Client<TUserMeta>): LiveblocksContextBundle<TUserMeta> {
-  const {
-    useUser,
-    suspense: { useUser: useUserSuspense },
-  } = createSharedContext<TUserMeta>(client);
+  const shared = createSharedContext<TUserMeta>(client);
 
   const store = client[kInternal]
     .cacheStore as unknown as CacheStore<TThreadMetadata>;
@@ -205,18 +202,16 @@ export function createLiveblocksContext<
   const bundle: LiveblocksContextBundle<TUserMeta> = {
     LiveblocksProvider,
 
-    useUser,
-
     useInboxNotifications,
     useUnreadInboxNotificationsCount,
 
     useMarkInboxNotificationAsRead,
     useMarkAllInboxNotificationsAsRead,
 
+    ...shared,
+
     suspense: {
       LiveblocksProvider,
-
-      useUser: useUserSuspense,
 
       useInboxNotifications: useInboxNotificationsSuspense,
       useUnreadInboxNotificationsCount:
@@ -224,6 +219,8 @@ export function createLiveblocksContext<
 
       useMarkInboxNotificationAsRead,
       useMarkAllInboxNotificationsAsRead,
+
+      ...shared.suspense,
     },
 
     [kInternal]: {
