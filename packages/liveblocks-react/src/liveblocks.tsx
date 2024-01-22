@@ -23,6 +23,7 @@ import type {
   InboxNotificationsStateSuccess,
   LiveblocksContextBundle,
 } from "./types";
+import { makePoller } from "@liveblocks/core";
 
 export const ContextBundle =
   createContext<LiveblocksContextBundle<BaseUserMeta> | null>(null);
@@ -67,8 +68,48 @@ export function createLiveblocksContext<
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<never>[];
   }> | null = null;
+  let inboxNotificationsSubscribers = 0;
 
   const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
+
+  const POLLING_INTERVAL = 5 * 60 * 1000;
+  const poller = makePoller(refreshThreadsAndNotifications);
+
+  function refreshThreadsAndNotifications() {
+    return client.getInboxNotifications().then(
+      ({ threads, inboxNotifications }) => {
+        store.updateThreadsAndNotifications(
+          threads,
+          inboxNotifications,
+          INBOX_NOTIFICATIONS_QUERY
+        );
+      },
+      () => {
+        // TODO: Error handling
+      }
+    );
+  }
+
+  function incrementInboxNotificationsSubscribers() {
+    inboxNotificationsSubscribers++;
+
+    poller.start(POLLING_INTERVAL);
+  }
+
+  function decrementInboxNotificationsSubscribers() {
+    if (inboxNotificationsSubscribers <= 0) {
+      console.warn(
+        `Internal unexpected behavior. Cannot decrease subscriber count for query "${INBOX_NOTIFICATIONS_QUERY}"`
+      );
+      return;
+    }
+
+    inboxNotificationsSubscribers--;
+
+    if (inboxNotificationsSubscribers <= 0) {
+      poller.stop();
+    }
+  }
 
   async function fetchInboxNotifications() {
     if (fetchInboxNotificationsRequest) {
@@ -102,6 +143,9 @@ export function createLiveblocksContext<
   function useInboxNotifications(): InboxNotificationsState {
     useEffect(() => {
       void fetchInboxNotifications();
+      incrementInboxNotificationsSubscribers();
+
+      return () => decrementInboxNotificationsSubscribers();
     });
 
     return useSyncExternalStoreWithSelector(
@@ -135,6 +179,14 @@ export function createLiveblocksContext<
     ) {
       throw fetchInboxNotifications();
     }
+
+    React.useEffect(() => {
+      incrementInboxNotificationsSubscribers();
+
+      return () => {
+        decrementInboxNotificationsSubscribers();
+      };
+    }, []);
 
     return useSyncExternalStoreWithSelector(
       store.subscribe,
