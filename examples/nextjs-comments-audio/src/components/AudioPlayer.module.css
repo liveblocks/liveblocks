@@ -5,20 +5,23 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 1.25rem;
 }
 
-@keyframes fadeIn {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
+.playAndInfo {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 1rem;
+}
+
+.songName {
+  font-weight: 600;
+  font-size: 18px;
 }
 
 .sliderAndComments {
-  margin: 1rem 0;
+  margin-bottom: 0.5rem;
   position: relative;
   height: var(--wave-height);
 }
@@ -48,24 +51,6 @@
   top: 0;
   left: 0;
   right: 0;
-}
-
-.sliderTrack {
-  top: 15px;
-  position: relative;
-  background-color: white;
-  backdrop-filter: blur(10px);
-  flex-grow: 1;
-  height: var(--track-height);
-  cursor: pointer;
-  mix-blend-mode: color;
-}
-
-.sliderRange {
-  top: 15px;
-  position: absolute;
-  background-color: var(--accent);
-  height: 100%;
 }
 
 .controls {

@@ -18,11 +18,8 @@
   font-weight: 500;
 }
 
-.threadsPanel {
-  flex: 0 0;
-  min-width: 350px;
-  max-width: 100%;
-  background-color: var(--gray2);
-  border-left: 1px solid var(--gray4);
-  overflow-y: auto;
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }

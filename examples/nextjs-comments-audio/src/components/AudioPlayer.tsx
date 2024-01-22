@@ -8,11 +8,15 @@ import { WaveForm } from "@/components/WaveForm";
 import { NewThreadComposer } from "@/components/NewThreadComposer";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { useUpdateMyPresence } from "@/liveblocks.config";
-import { useSkipToListener } from "@/utils";
+import { useKeyDownListener, useSkipToListener } from "@/utils";
+import { CircularButton } from "@/components/CircularButton";
+import { PauseIcon } from "@/icons/Pause";
+import { PlayIcon } from "@/icons/Play";
+import { Threads } from "@/components/Threads";
 
 const audioSrc = "/titanium-170190.mp3";
 
-export default function AudioPlayer() {
+export function AudioPlayer() {
   const updateMyPresence = useUpdateMyPresence();
   const audioRef = useRef<HTMLAudioElement>(null);
   const [time, setTime] = useState(0);
@@ -39,10 +43,18 @@ export default function AudioPlayer() {
       }
     }
 
+    function reset() {
+      setPlaying(false);
+      audio.currentTime = 0;
+      audio.pause();
+    }
+
     audio.addEventListener("timeupdate", updateTime);
+    audio.addEventListener("ended", reset);
 
     return () => {
       audio.removeEventListener("timeupdate", updateTime);
+      audio.removeEventListener("ended", reset);
     };
   }, []);
 
@@ -99,11 +111,24 @@ export default function AudioPlayer() {
 
   return (
     <div className={styles.audioWrapper}>
-      <div>
+      <div className={styles.playAndInfo}>
         <audio ref={audioRef} src={audioSrc} preload="true"></audio>
-        <button onClick={togglePlay}>{playing ? "Pause" : "Play"}</button> |
-        song name
+        <CircularButton onClick={togglePlay}>
+          {playing ? (
+            <>
+              <span className="sr-only">Pause</span>
+              <PauseIcon />
+            </>
+          ) : (
+            <>
+              <span className="sr-only">Play</span>
+              <PlayIcon />
+            </>
+          )}
+        </CircularButton>{" "}
+        <span className={styles.songName}>Song name</span>
       </div>
+
       <div className={styles.sliderAndComments}>
         {/* Range slider for audio time and waveform */}
         <Slider.Root
@@ -118,8 +143,9 @@ export default function AudioPlayer() {
           <div className={styles.waveformWrapper}>
             <WaveForm percentage={time / duration} src={audioSrc} />
           </div>
-          <Slider.Track className={styles.sliderTrack}>
-            <Slider.Range className={styles.sliderRange} />
+          <Slider.Track>
+            <Slider.Range />
+            <Slider.Thumb />
           </Slider.Track>
         </Slider.Root>
 

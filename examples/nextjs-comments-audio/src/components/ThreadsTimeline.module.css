@@ -1,19 +1,20 @@
 .pinnedThreads {
   width: 100%;
-  margin-bottom: 10px;
 }
 
 .pinnedThread {
+  opacity: 0.8;
   position: absolute;
   top: 0;
+  bottom: 0;
   cursor: pointer;
   transform: translateX(-50%);
   transform-origin: center bottom;
-  transition: transform 0.1s ease-out;
+  transition: opacity 0.1s ease;
 }
 
-.pinnedThread[data-highlight] {
-  transform: translateX(-50%) scale(1.2);
+.pinnedThread:hover {
+  opacity: 1;
 }
 
 .avatarPin {
@@ -22,50 +23,47 @@
 }
 
 .avatarPin > img {
-  width: 20px;
-  height: 20px;
-  border-radius: 9999px;
+  width: 24px;
+  height: 24px;
+  border-radius: 0;
 }
 
 .tooltip {
+  position: absolute;
+  top: 100%;
+  margin-top: 0.25rem;
   user-select: none;
-  background: var(--gray2);
-  color: var(--gray12);
-  padding: 8px 12px 12px 8px;
-  border-radius: var(--border-radius);
-  margin-bottom: 8px;
   white-space: nowrap;
-  max-width: 200px;
   font-size: 13px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.375rem;
+  max-width: 500px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tooltipHeader {
   display: flex;
+  flex: 0 0;
   gap: 6px;
   align-items: center;
   font-weight: 500;
 }
 
-.tooltipHeader > img {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-}
-
 .tooltipBody {
-  margin-top: 8px;
-}
-
-.tooltipBody > span {
-  color: var(--accent);
+  flex: 1 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tooltipBody > div {
   display: inline-block;
 }
 
-.tooltipBody > p {
+.tooltipBody p {
   overflow: hidden;
   text-overflow: ellipsis;
-  margin: 0;
+  margin: 0 !important;
 }

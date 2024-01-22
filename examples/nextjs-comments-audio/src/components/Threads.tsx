@@ -26,11 +26,11 @@ function ThreadList() {
   }
 
   return (
-    <>
+    <div className={styles.threadList}>
       {threads.sort(sortThreads).map((thread) => (
         <CustomThread key={thread.id} thread={thread} />
       ))}
-    </>
+    </div>
   );
 }
 

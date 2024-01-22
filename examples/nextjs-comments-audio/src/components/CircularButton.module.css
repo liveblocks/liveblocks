@@ -1,0 +1,9 @@
+.circularButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1em;
+  border-radius: 99999rem;
+  appearance: none;
+  border: 0;
+}

@@ -4,12 +4,14 @@ import {
   Composer,
   ComposerSubmitComment,
 } from "@liveblocks/react-comments/primitives";
-import { FormEvent, KeyboardEvent, useCallback } from "react";
+import React, { FormEvent, KeyboardEvent, useCallback } from "react";
 import { useCreateThread, useSelf } from "@/liveblocks.config";
 import { Mention } from "@/components/Mention";
 import { MentionSuggestions } from "@/components/MentionSuggestions";
 import { Link } from "@/components/Link";
 import styles from "./NewThreadComposer.module.css";
+import { CircularButton } from "@/components/CircularButton";
+import { SendIcon } from "@/icons/Send";
 
 type Props = {
   duration: number;
@@ -74,7 +76,11 @@ export function NewThreadComposer({ duration, time }: Props) {
             ),
           }}
         />
-        <Composer.Submit className="button">Comment</Composer.Submit>
+        <Composer.Submit asChild>
+          <CircularButton>
+            <SendIcon />
+          </CircularButton>
+        </Composer.Submit>
       </div>
     </Composer.Form>
   );
