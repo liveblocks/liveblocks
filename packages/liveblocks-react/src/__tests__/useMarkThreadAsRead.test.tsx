@@ -147,7 +147,7 @@ describe("useMarkThreadAsRead", () => {
     const { result, unmount } = renderHook(
       () => ({
         markThreadAsRead: useMarkThreadAsRead(),
-        ibxNotifications: useInboxNotifications().inboxNotifications,
+        inboxNotifications: useInboxNotifications().inboxNotifications,
       }),
       {
         wrapper: ({ children }) => (
@@ -161,7 +161,7 @@ describe("useMarkThreadAsRead", () => {
     );
 
     await waitFor(() =>
-      expect(result.current.ibxNotifications).toEqual(inboxNotifications)
+      expect(result.current.inboxNotifications).toEqual(inboxNotifications)
     );
 
     // Mark the first thread in our threads list as read
@@ -170,11 +170,11 @@ describe("useMarkThreadAsRead", () => {
     });
 
     // We mark the notification as read optimitiscally
-    expect(result.current.ibxNotifications![0].readAt).not.toBe(null);
+    expect(result.current.inboxNotifications![0].readAt).not.toBe(null);
 
     await waitFor(() => {
       // The readAt field should have been updated in the inbox notification cache
-      expect(result.current.ibxNotifications![0].readAt).toEqual(null);
+      expect(result.current.inboxNotifications![0].readAt).toEqual(null);
     });
 
     unmount();
