@@ -6,6 +6,7 @@ import type {
 } from "@liveblocks/client";
 import type { CacheStore, InboxNotificationData } from "@liveblocks/core";
 import { kInternal } from "@liveblocks/core";
+import { nanoid } from "nanoid";
 import type { PropsWithChildren } from "react";
 import React, {
   createContext,
@@ -15,14 +16,13 @@ import React, {
 } from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
+import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 import { createSharedContext } from "./shared";
 import type {
   InboxNotificationsState,
   InboxNotificationsStateSuccess,
   LiveblocksContextBundle,
 } from "./types";
-import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
-import { nanoid } from "nanoid";
 
 export const ContextBundle =
   createContext<LiveblocksContextBundle<BaseUserMeta> | null>(null);

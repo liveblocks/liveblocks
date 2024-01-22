@@ -1,9 +1,9 @@
-import {
-  applyOptimisticUpdates,
+import type {
+  BaseMetadata,
+  CacheState,
   InboxNotificationData,
-  type BaseMetadata,
-  type CacheState,
 } from "@liveblocks/core";
+import { applyOptimisticUpdates } from "@liveblocks/core";
 
 export function selectedInboxNotifications<
   TThreadMetadata extends BaseMetadata,

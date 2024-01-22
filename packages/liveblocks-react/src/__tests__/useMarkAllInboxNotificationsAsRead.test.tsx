@@ -4,6 +4,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
 import React from "react";
 
+import { createLiveblocksContext } from "../liveblocks";
 import { createRoomContext } from "../room";
 import { dummyInboxNoficationData, dummyThreadData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
@@ -11,7 +12,6 @@ import {
   mockGetInboxNotifications,
   mockMarkInboxNotificationsAsRead,
 } from "./_restMocks";
-import { createLiveblocksContext } from "../liveblocks";
 
 const server = setupServer();
 
