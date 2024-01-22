@@ -133,6 +133,7 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
 interface CommentReactionProps extends ComponentPropsWithoutRef<"button"> {
   comment: CommentData;
   reaction: CommentReactionData;
+  overrides?: Partial<CommentOverrides>;
 }
 
 export function CommentMention({
@@ -174,7 +175,7 @@ export function CommentLink({
 }
 
 const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
-  ({ comment, reaction, className, ...props }, forwardedRef) => {
+  ({ comment, reaction, overrides, className, ...props }, forwardedRef) => {
     const { useAddReaction, useRemoveReaction, useSelf } =
       useRoomContextBundle();
     const self = useSelf();
@@ -183,7 +184,7 @@ const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
     const isActive = useMemo(() => {
       return reaction.users.some((users) => users.id === self?.id);
     }, [reaction, self?.id]);
-    const $ = useOverrides();
+    const $ = useOverrides(overrides);
     const tooltipContent = useMemo(
       () => (
         <span>
@@ -595,6 +596,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                         key={reaction.emoji}
                         comment={comment}
                         reaction={reaction}
+                        overrides={overrides}
                       />
                     ))}
                     <EmojiPicker onEmojiSelect={handleReactionSelect}>

@@ -76,6 +76,7 @@ interface InboxNotificationLayoutProps
   date: Date | string | number;
   unread?: boolean;
   interactive?: boolean;
+  overrides?: Partial<InboxNotificationOverrides>;
 }
 
 type InboxNotificationAvatarProps = AvatarProps;
@@ -83,6 +84,7 @@ type InboxNotificationAvatarProps = AvatarProps;
 interface InboxNotificationCommentProps extends ComponentProps<"div"> {
   comment: CommentData;
   showHeader?: boolean;
+  overrides?: Partial<CommentOverrides>;
 }
 
 const InboxNotificationLayout = forwardRef<
@@ -97,12 +99,13 @@ const InboxNotificationLayout = forwardRef<
       date,
       unread,
       interactive = true,
+      overrides,
       className,
       ...props
     },
     forwardedRef
   ) => {
-    const $ = useOverrides();
+    const $ = useOverrides(overrides);
 
     return (
       <TooltipProvider>
@@ -156,10 +159,11 @@ function InboxNotificationAvatar({
 function InboxNotificationComment({
   comment,
   showHeader = true,
+  overrides,
   className,
   ...props
 }: InboxNotificationCommentProps) {
-  const $ = useOverrides();
+  const $ = useOverrides(overrides);
 
   return (
     <div
@@ -337,6 +341,7 @@ const ThreadInboxNotification = forwardRef<
                 key={comment.id}
                 comment={comment}
                 showHeader={contents.comments.length > 1}
+                overrides={overrides}
               />
             ))}
           </div>
@@ -386,7 +391,7 @@ const ThreadInboxNotification = forwardRef<
           "Unexpected thread inbox notification type"
         );
     }
-  }, [$, inboxNotification, thread]);
+  }, [$, inboxNotification, overrides, thread]);
 
   return (
     <InboxNotificationLayout
@@ -394,6 +399,7 @@ const ThreadInboxNotification = forwardRef<
       title={title}
       date={date}
       unread={unread}
+      overrides={overrides}
       {...props}
       ref={forwardedRef}
     >
