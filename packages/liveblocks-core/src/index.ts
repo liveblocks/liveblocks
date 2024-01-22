@@ -184,7 +184,7 @@ export type { Immutable } from "./types/Immutable";
 export type {
   InboxNotificationData,
   InboxNotificationDataPlain,
-  ThreadInboxNotificationData,
+  InboxNotificationThreadData,
 } from "./types/InboxNotificationData";
 export type {
   IWebSocket,

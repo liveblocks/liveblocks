@@ -1,6 +1,6 @@
 import type { DateToString } from "./DateToString";
 
-export type ThreadInboxNotificationData = {
+export type InboxNotificationThreadData = {
   kind: "thread";
   id: string;
   threadId: string;
@@ -8,6 +8,6 @@ export type ThreadInboxNotificationData = {
   readAt: Date | null;
 };
 
-export type InboxNotificationData = ThreadInboxNotificationData;
+export type InboxNotificationData = InboxNotificationThreadData;
 
 export type InboxNotificationDataPlain = DateToString<InboxNotificationData>;
