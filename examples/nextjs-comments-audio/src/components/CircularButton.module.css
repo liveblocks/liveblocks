@@ -7,3 +7,14 @@
   appearance: none;
   border: 0;
 }
+
+.circularButton[data-type="primary"] {
+  background: #652df1;
+  color: #ffffff;
+}
+
+.circularButton[data-type="secondary"] {
+  background: #ffffff;
+  border: 2px solid #adadad;
+  color: #424242;
+}

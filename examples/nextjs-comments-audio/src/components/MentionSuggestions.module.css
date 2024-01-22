@@ -1,19 +1,19 @@
 .suggestions {
   --padding: 4px;
-  background-color: var(--gray1);
+  background: #ffffff;
   box-shadow: var(--shadow);
-  border-radius: var(--border-radius);
+  border-radius: 1rem;
   padding: var(--padding);
 }
 
 .mentionSuggestion {
-  background-color: var(--gray1);
+  background: #ffffff;
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: var(--padding) calc(var(--padding) * 2) var(--padding) var(--padding);
+  padding: 0.375rem 0.5rem;
   font-size: 14px;
-  border-radius: calc(0.75 * var(--border-radius));
+  border-radius: calc(0.75 * 1rem);
   cursor: pointer;
   min-height: calc(20px + 2 * var(--padding));
   min-width: 120px;
@@ -24,5 +24,5 @@
 }
 
 .mentionSuggestion[data-selected] {
-  background: var(--gray3);
+  background: #f1f1f1;
 }

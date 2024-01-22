@@ -77,7 +77,7 @@ export function NewThreadComposer({ duration, time }: Props) {
           }}
         />
         <Composer.Submit asChild>
-          <CircularButton>
+          <CircularButton appearance="secondary">
             <SendIcon />
           </CircularButton>
         </Composer.Submit>

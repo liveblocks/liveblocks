@@ -113,7 +113,7 @@ export function AudioPlayer() {
     <div className={styles.audioWrapper}>
       <div className={styles.playAndInfo}>
         <audio ref={audioRef} src={audioSrc} preload="true"></audio>
-        <CircularButton onClick={togglePlay}>
+        <CircularButton onClick={togglePlay} appearance="primary">
           {playing ? (
             <>
               <span className="sr-only">Pause</span>
