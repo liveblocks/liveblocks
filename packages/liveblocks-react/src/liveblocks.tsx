@@ -4,8 +4,8 @@ import type {
   Client,
   ThreadData,
 } from "@liveblocks/client";
-import type { CacheStore, InboxNotificationData } from "@liveblocks/core";
-import { kInternal } from "@liveblocks/core";
+import type { CacheStore, InboxNotificationData , Store } from "@liveblocks/core";
+import { kInternal , makePoller } from "@liveblocks/core";
 import { nanoid } from "nanoid";
 import type { PropsWithChildren } from "react";
 import React, {
@@ -23,8 +23,6 @@ import type {
   InboxNotificationsStateSuccess,
   LiveblocksContextBundle,
 } from "./types";
-import { makePoller } from "@liveblocks/core";
-import type { Store } from "@liveblocks/core";
 
 export const ContextBundle =
   createContext<LiveblocksContextBundle<BaseUserMeta> | null>(null);

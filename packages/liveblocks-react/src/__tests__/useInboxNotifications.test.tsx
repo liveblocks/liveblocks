@@ -9,6 +9,7 @@ import { createLiveblocksContext } from "../liveblocks";
 import { dummyInboxNoficationData, dummyThreadData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import { mockGetInboxNotifications } from "./_restMocks";
+import { generateFakeJwt } from "./_utils";
 
 const server = setupServer();
 
@@ -28,7 +29,11 @@ afterAll(() => server.close());
 // TODO: Dry up and create utils that wrap renderHook
 function createLiveblocksContextForTest() {
   const client = createClient({
-    publicApiKey: "pk_xxx",
+    async authEndpoint() {
+      return {
+        token: await generateFakeJwt({ userId: "userId" }),
+      };
+    },
     polyfills: {
       WebSocket: MockWebSocket as any,
     },
