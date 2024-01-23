@@ -39,19 +39,15 @@ export function createInboxNotificationsApi({
 
     if (authValue.type === "public") {
       // We return a promise here to make sure we not throw synchronously
-      return Promise.reject(
-        new Error(
-          "Notifications cannot be used with anonymous users. Implement your own authentication endpoint following this guide: https://liveblocks.io/docs/rooms/authentication"
-        )
+      throw new Error(
+        "Notifications cannot be used with anonymous users. Implement your own authentication endpoint following this guide: https://liveblocks.io/docs/rooms/authentication"
       );
     }
 
     const parsedToken = authValue.token.parsed;
     if (parsedToken.k === TokenKind.SECRET_LEGACY) {
-      return Promise.reject(
-        new Error(
-          "Notifications are not supported with legacy token. Please upgrade your authentication endpoint following this guide: https://liveblocks.io/docs/platform/upgrading/1.2#private-auth-changes"
-        )
+      throw new Error(
+        "Notifications are not supported with legacy token. Please upgrade your authentication endpoint following this guide: https://liveblocks.io/docs/platform/upgrading/1.2#private-auth-changes"
       );
     }
 
