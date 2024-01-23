@@ -1,9 +1,10 @@
 "use client";
 
-import { ReactNode, useMemo } from "react";
 import { RoomProvider } from "@/liveblocks.config";
-import { useSearchParams } from "next/navigation";
 import * as Tooltip from "@radix-ui/react-tooltip";
+import { useSearchParams } from "next/navigation";
+import { ReactNode, useMemo } from "react";
+import { Toaster } from "sonner";
 
 export function Room({ children }: { children: ReactNode }) {
   const roomId = useOverrideRoomId("nextjs-comments-audio");
@@ -18,6 +19,7 @@ export function Room({ children }: { children: ReactNode }) {
         }}
       >
         {children}
+        <Toaster position="bottom-center" />
       </RoomProvider>
     </Tooltip.Provider>
   );

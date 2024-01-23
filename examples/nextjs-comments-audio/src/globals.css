@@ -1,13 +1,6 @@
-html,
-body {
-  background: #f3f3f3;
-  padding: 0;
-  margin: 0;
-}
-
-* {
-  box-sizing: border-box;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   /* Waveform total height */
@@ -18,23 +11,9 @@ body {
 }
 
 .lb-root {
-  --lb-accent: #44f;
-  --accent: #44f;
-}
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
-}
-
-ul {
-  margin: 0;
-  padding: 0;
+  --accent: theme("colors.accent");
+  --lb-accent: theme("colors.accent");
+  --lb-background: theme("backgroundColor.primary");
+  --lb-foreground: theme("textColor.primary");
+  --lb-foreground-subtle: theme("borderColor.primary");
 }

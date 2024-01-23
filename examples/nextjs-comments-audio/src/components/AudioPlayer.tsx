@@ -1,18 +1,21 @@
 "use client";
 
-import styles from "./AudioPlayer.module.css";
-import { ThreadsTimeline } from "@/components/ThreadsTimeline";
-import * as Slider from "@radix-ui/react-slider";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { WaveForm } from "@/components/WaveForm";
-import { NewThreadComposer } from "@/components/NewThreadComposer";
-import { ClientSideSuspense } from "@liveblocks/react";
-import { useUpdateMyPresence } from "@/liveblocks.config";
-import { useKeyDownListener, useSkipToListener } from "@/utils";
 import { CircularButton } from "@/components/CircularButton";
-import { PauseIcon } from "@/icons/Pause";
-import { PlayIcon } from "@/icons/Play";
-import { Threads } from "@/components/Threads";
+import { NewThreadComposer } from "@/components/NewThreadComposer";
+import { ThreadsTimeline } from "@/components/ThreadsTimeline";
+import { WaveForm } from "@/components/WaveForm";
+import { useUpdateMyPresence } from "@/liveblocks.config";
+import { useSkipToListener } from "@/utils";
+import { ClientSideSuspense } from "@liveblocks/react";
+import * as Slider from "@radix-ui/react-slider";
+import cx from "classnames";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  MessageSquare as MessageSquareIcon,
+  Pause as PauseIcon,
+  Play as PlayIcon,
+} from "react-feather";
+import SidebarThreads from "./SidebarThreads";
 
 const audioSrc = "/titanium-170190.mp3";
 
@@ -110,29 +113,60 @@ export function AudioPlayer() {
   });
 
   return (
-    <div className={styles.audioWrapper}>
-      <div className={styles.playAndInfo}>
-        <audio ref={audioRef} src={audioSrc} preload="true"></audio>
-        <CircularButton onClick={togglePlay} appearance="primary">
-          {playing ? (
-            <>
-              <span className="sr-only">Pause</span>
-              <PauseIcon />
-            </>
-          ) : (
-            <>
-              <span className="sr-only">Play</span>
-              <PlayIcon />
-            </>
-          )}
-        </CircularButton>{" "}
-        <span className={styles.songName}>Song name</span>
+    <div className="flex flex-col gap-8">
+      <div className="flex items-center gap-3">
+        <audio ref={audioRef} src={audioSrc} preload="true" />
+        <div className="w-2/3 sm:w-full max-sm:mx-auto flex max-sm:flex-col items-center max-sm:justify-center gap-3 sm:gap-5">
+          <div className="relative sm:w-40 w-full aspect-square">
+            <span
+              className={cx(
+                "bg-black rounded-2xl sm:rounded-lg absolute inset-0 shadow-popover transition-transform ease-out-back duration-500",
+                {
+                  ["scale-90"]: !playing,
+                }
+              )}
+            />
+            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+              <CircularButton
+                onClick={togglePlay}
+                size="lg"
+                appearance="primary"
+              >
+                {playing ? (
+                  <>
+                    <span className="sr-only">Pause</span>
+                    <PauseIcon className="text-transparent fill-black" />
+                  </>
+                ) : (
+                  <>
+                    <span className="sr-only">Play</span>
+                    <PlayIcon className="text-transparent fill-black translate-x-0.5" />
+                  </>
+                )}
+              </CircularButton>
+            </span>
+          </div>
+          <div className="flex flex-col max-sm:items-center">
+            <span className="font-medium text-lg">Midnight Echoes</span>
+            <span className="text-secondary">Sophie de Silva & Marco Loom</span>
+          </div>
+          <div className="shrink-0 sm:ml-auto">
+            <SidebarThreads>
+              <button
+                className="bg-white/5 inline-flex items-center px-3 rounded-md h-9 text-primary transition-colors duration-150 ease-out font-medium text-sm gap-2 hover:bg-white/10 focus:bg-white/10"
+                type="button"
+              >
+                <MessageSquareIcon className="size-4" />
+                See all comments
+              </button>
+            </SidebarThreads>
+          </div>
+        </div>
       </div>
-
-      <div className={styles.sliderAndComments}>
+      <div className="relative h-[--wave-height]">
         {/* Range slider for audio time and waveform */}
         <Slider.Root
-          className={styles.sliderRoot}
+          className="relative flex-1 flex items-center select-none touch-none w-full h-full"
           min={0}
           max={duration}
           step={1}
@@ -140,7 +174,7 @@ export function AudioPlayer() {
           onValueChange={handleSliderChange}
           onValueCommit={handleSliderCommit}
         >
-          <div className={styles.waveformWrapper}>
+          <div className="absolute inset-0">
             <WaveForm percentage={time / duration} src={audioSrc} />
           </div>
           <Slider.Track>
@@ -150,7 +184,7 @@ export function AudioPlayer() {
         </Slider.Root>
 
         {/* Comments on audio timeline */}
-        <div className={styles.sliderComments}>
+        <div className="absolute top-[calc(100%*var(--wave-timeline-modifier))] bottom-0 inset-x-0 ">
           <ThreadsTimeline />
         </div>
       </div>

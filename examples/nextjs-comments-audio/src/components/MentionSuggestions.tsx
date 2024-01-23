@@ -4,16 +4,15 @@ import {
   Composer,
   ComposerEditorMentionSuggestionsProps,
 } from "@liveblocks/react-comments/primitives";
-import styles from "./MentionSuggestions.module.css";
-import { Avatar } from "./Avatar";
 import { Suspense } from "react";
+import { Avatar } from "./Avatar";
 import { User } from "./User";
 
 export function MentionSuggestions({
   userIds,
 }: ComposerEditorMentionSuggestionsProps) {
   return (
-    <Composer.Suggestions className={styles.suggestions}>
+    <Composer.Suggestions className="p-1 bg-inverse shadow-popover rounded-lg border-[.5px] border-primary">
       <Composer.SuggestionsList>
         {userIds.map((userId) => (
           <MentionSuggestion key={userId} userId={userId} />
@@ -27,7 +26,7 @@ function MentionSuggestion({ userId }: { userId: string }) {
   return (
     <Composer.SuggestionsListItem
       value={userId}
-      className={styles.mentionSuggestion}
+      className="bg-inverse flex items-center gap-2 py-1 px-2 text-sm rounded cursor-pointer min-h-6 min-w-32 [&>img]:rounded-full data-[selected]:bg-neutral-100"
     >
       <Suspense>
         <Avatar userId={userId} width={20} height={20} />

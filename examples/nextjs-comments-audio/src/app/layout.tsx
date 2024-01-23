@@ -1,13 +1,5 @@
-import { Inter } from "next/font/google";
-
-import "../globals.css";
 import "@liveblocks/react-comments/styles.css";
-
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  display: "swap",
-});
+import "../globals.css";
 
 export const metadata = {
   title: "Liveblocks",
@@ -19,7 +11,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.className}>
+    <html lang="en">
       <head>
         <link
           href="https://liveblocks.io/favicon-32x32.png"
@@ -34,8 +26,7 @@ export default function RootLayout({
           type="image/png"
         />
       </head>
-
-      <body>{children}</body>
+      <body className="bg-primary text-primary antialiased">{children}</body>
     </html>
   );
 }
