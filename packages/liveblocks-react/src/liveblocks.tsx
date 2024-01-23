@@ -24,6 +24,7 @@ import type {
   LiveblocksContextBundle,
 } from "./types";
 import { makePoller } from "@liveblocks/core";
+import type { Store } from "@liveblocks/core";
 
 export const ContextBundle =
   createContext<LiveblocksContextBundle<BaseUserMeta> | null>(null);
@@ -72,7 +73,7 @@ export function createLiveblocksContext<
 
   const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
 
-  const POLLING_INTERVAL = 5 * 60 * 1000;
+  const POLLING_INTERVAL = 60 * 1000;
   const poller = makePoller(refreshThreadsAndNotifications);
 
   function refreshThreadsAndNotifications() {
@@ -312,6 +313,24 @@ export function createLiveblocksContext<
     );
   }
 
+  const currentUserIdStore = client[kInternal]
+    .currentUserIdStore as unknown as Store<string | null>;
+
+  function useCurrentUserId() {
+    return useSyncExternalStoreWithSelector(
+      currentUserIdStore.subscribe,
+      currentUserIdStore.get,
+      currentUserIdStore.get,
+      (currentUserId) => {
+        if (currentUserId === null) {
+          throw new Error("Internal error: CurrentUserId has not been set yet");
+        }
+
+        return currentUserId;
+      }
+    );
+  }
+
   const bundle: LiveblocksContextBundle<TUserMeta> = {
     LiveblocksProvider,
 
@@ -338,6 +357,7 @@ export function createLiveblocksContext<
 
     [kInternal]: {
       useThreadFromCache,
+      useCurrentUserId,
     },
   };
 

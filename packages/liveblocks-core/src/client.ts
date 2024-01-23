@@ -11,11 +11,13 @@ import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import { kInternal } from "./internal";
 import type { BatchStore } from "./lib/batch";
 import { Batch, createBatchStore } from "./lib/batch";
+import { createStore, Store } from "./lib/create-store";
 import { deprecateIf } from "./lib/deprecation";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import type { Resolve } from "./lib/Resolve";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
+import { TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { Polyfills, Room, RoomDelegates, RoomInitializers } from "./room";
 import {
@@ -91,6 +93,7 @@ export type EnterOptions<
  * will probably happen if you do.
  */
 type PrivateClientApi<TUserMeta extends BaseUserMeta> = {
+  currentUserIdStore: Store<string | null>;
   resolveMentionSuggestions: ClientOptions["resolveMentionSuggestions"];
   // TODO: Add generic for ThreadMetadata to Client, it could be used here and for inbox notifications too
   cacheStore: CacheStore<BaseMetadata>;
@@ -524,11 +527,24 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
     }
   }
 
+  const currentUserIdStore = createStore<string | null>(null);
+
   async function fetchClientApi(
     endpoint: string,
     options?: RequestInit
   ): Promise<Response> {
     const authValue = await authManager.getAuthValue();
+
+    if (
+      authValue.type !== "secret" ||
+      authValue.token.parsed.k === TokenKind.SECRET_LEGACY
+    ) {
+      throw new Error("TODO");
+    }
+
+    const userId = authValue.token.parsed.uid;
+    currentUserIdStore.set(() => userId);
+
     const url = new URL(`/v2/c${endpoint}`, baseUrl);
     const fetcher =
       clientOptions.polyfills?.fetch || /* istanbul ignore next */ fetch;
@@ -585,6 +601,7 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
 
       // Internal
       [kInternal]: {
+        currentUserIdStore,
         resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,
         cacheStore,
         usersStore,

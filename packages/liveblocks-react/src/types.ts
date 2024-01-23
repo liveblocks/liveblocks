@@ -1124,12 +1124,21 @@ type LiveblocksContextBundleCommon = {
  */
 type PrivateLiveblocksContextApi = {
   /**
+   * @private
+   *
    * Returns thread from cache.
    *
    * @example
    * const thread = useThreadFromCache("th_xxx");
    */
   useThreadFromCache(threadId: string): ThreadData<BaseMetadata>;
+
+  /**
+   * @private
+   *
+   * Returns current user id. Can only be used after make a call to a notification API.
+   */
+  useCurrentUserId(): string;
 };
 
 export type LiveblocksContextBundle<TUserMeta extends BaseUserMeta> = Resolve<
