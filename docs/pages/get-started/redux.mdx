@@ -35,6 +35,8 @@ from the [`@liveblocks/redux`](/docs/api-reference/liveblocks-redux) package.
       you to interact with our Presence and Storage APIs.
 
       ```ts file="store.ts" highlight="5-7,23-25"
+      "use client";
+
       import { createClient } from "@liveblocks/client";
       import { liveblocksEnhancer } from "@liveblocks/redux";
       import { configureStore, createSlice } from "@reduxjs/toolkit";
@@ -80,6 +82,8 @@ from the [`@liveblocks/redux`](/docs/api-reference/liveblocks-redux) package.
       To create a real-time experience, multiple users must be connected to the same room.
 
       ```tsx file="App.tsx" highlight="3,9,12"
+      "use client";
+
       import { useEffect } from "react";
       import { useDispatch } from "react-redux";
       import { actions } from "@liveblocks/redux";
@@ -109,6 +113,8 @@ from the [`@liveblocks/redux`](/docs/api-reference/liveblocks-redux) package.
       Now that we’re connected to a room, we can start using the Liveblocks data from the Redux store.
 
       ```tsx file="Room.tsx" highlight="4"
+      "use client";
+
       import { useSelector } from "react-redux";
 
       export function Room() {
@@ -124,7 +130,7 @@ from the [`@liveblocks/redux`](/docs/api-reference/liveblocks-redux) package.
   <Step lastStep>
     <StepTitle>Next: set up authentication</StepTitle>
     <StepContent>
-    
+
       By default, Liveblocks is configured to work without an authentication endpoint
       where everyone automatically has access to rooms. This approach is great for
       prototyping and marketing pages where setting up your own security isn’t always

@@ -73,6 +73,8 @@ We’d love to hear from you.
       connected to the same room.
 
       ```tsx file="index.tsx" highlight="7-11"
+      "use client";
+
       import { RoomProvider } from "./liveblocks.config";
       import { CollaborativeEditor } from "./CollaborativeEditor";
       import { ClientSideSuspense } from "@liveblocks/react";
@@ -99,6 +101,8 @@ We’d love to hear from you.
       To make the editor collaborative, we can rely on `withYjs` from `@slate-yjs/core`.
 
       ```tsx file="Editor.tsx"
+      "use client";
+
       import LiveblocksProvider from "@liveblocks/yjs";
       import { useEffect, useMemo, useState } from "react";
       import { createEditor, Editor, Transforms } from "slate";
