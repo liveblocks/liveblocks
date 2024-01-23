@@ -9,7 +9,14 @@ import type {
   RefAttributes,
   SyntheticEvent,
 } from "react";
-import React, { forwardRef, Fragment, useCallback, useMemo } from "react";
+import React, {
+  forwardRef,
+  Fragment,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+} from "react";
 
 import { ArrowDownIcon } from "../icons/ArrowDown";
 import { ResolveIcon } from "../icons/Resolve";
@@ -22,6 +29,7 @@ import {
 } from "../overrides";
 import type { ThreadMetadata } from "../types";
 import { classNames } from "../utils/class-names";
+import { findLastIndex } from "../utils/find-last-index";
 import type { CommentProps } from "./Comment";
 import { Comment } from "./Comment";
 import { Composer } from "./Composer";
@@ -145,11 +153,11 @@ export const Thread = forwardRef(
         ? 0
         : thread.comments.findIndex((comment) => comment.body);
     }, [showDeletedComments, thread.comments]);
-    // const lastCommentIndex = useMemo(() => {
-    //   return showDeletedComments
-    //     ? thread.comments.length - 1
-    //     : findLastIndex(thread.comments, (comment) => comment.body);
-    // }, [showDeletedComments, thread.comments]);
+    const lastCommentIndex = useMemo(() => {
+      return showDeletedComments
+        ? thread.comments.length - 1
+        : findLastIndex(thread.comments, (comment) => comment.body);
+    }, [showDeletedComments, thread.comments]);
     const unreadSince = useThreadUnreadSince(thread.id);
     const firstUnreadCommentIndex = useMemo(() => {
       if (!unreadSince) {
@@ -167,6 +175,24 @@ export const Thread = forwardRef(
         ? firstUnreadCommentIndex
         : undefined;
     }, [showDeletedComments, thread, unreadSince]);
+    const previousFirstUnreadCommentIndex = useRef<number>();
+
+    useEffect(() => {
+      previousFirstUnreadCommentIndex.current = firstUnreadCommentIndex;
+    }, [firstUnreadCommentIndex]);
+
+    // Keep track of the first unread comment index to persist the
+    // unread indicator while still marking the thread as read instantly.
+    const persistedFirstUnreadCommentIndex = useMemo(() => {
+      if (
+        previousFirstUnreadCommentIndex.current !== undefined &&
+        firstUnreadCommentIndex === undefined
+      ) {
+        return previousFirstUnreadCommentIndex.current;
+      } else {
+        return firstUnreadCommentIndex;
+      }
+    }, [firstUnreadCommentIndex]);
 
     const stopPropagation = useCallback((event: SyntheticEvent) => {
       event.stopPropagation();
@@ -212,6 +238,17 @@ export const Thread = forwardRef(
           {...props}
           ref={forwardedRef}
         >
+          {/* Debug */}
+          <div>
+            <p>Thread creation date: {thread.createdAt.toISOString()}</p>
+            <p>Thread unread since: {unreadSince?.toISOString() ?? "-"}</p>
+            <p>First unread comment index: {firstUnreadCommentIndex ?? "-"}</p>
+            <p>
+              First unread comment index (persisted):{" "}
+              {persistedFirstUnreadCommentIndex ?? "-"}
+            </p>
+            <p>Last comment index: {lastCommentIndex}</p>
+          </div>
           <div className="lb-thread-comments">
             {thread.comments.map((comment, index) => {
               const isFirstComment = index === firstCommentIndex;
@@ -233,11 +270,11 @@ export const Thread = forwardRef(
                   onCommentDelete={handleCommentDelete}
                   onAuthorClick={onAuthorClick}
                   onMentionClick={onMentionClick}
-                  // markThreadAsReadWhenVisible={
-                  //   index === lastCommentIndex && isUnread
-                  //     ? thread.id
-                  //     : undefined
-                  // }
+                  markThreadAsReadWhenVisible={
+                    index === lastCommentIndex && isUnread
+                      ? thread.id
+                      : undefined
+                  }
                   additionalActionsClassName={
                     isFirstComment ? "lb-thread-actions" : undefined
                   }
@@ -277,8 +314,8 @@ export const Thread = forwardRef(
                 />
               );
 
-              return index === firstUnreadCommentIndex &&
-                firstUnreadCommentIndex !== firstCommentIndex ? (
+              return index === persistedFirstUnreadCommentIndex &&
+                persistedFirstUnreadCommentIndex !== firstCommentIndex ? (
                 <Fragment key={comment.id}>
                   <div
                     className="lb-thread-unread-indicator"

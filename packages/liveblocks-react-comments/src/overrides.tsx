@@ -119,7 +119,7 @@ export const defaultOverrides: Overrides = {
   THREAD_RESOLVE: "Resolve thread",
   THREAD_UNRESOLVE: "Re-open thread",
   THREAD_UNREAD_INDICATOR: "New",
-  THREAD_UNREAD_INDICATOR_DESCRIPTION: "All comments below are unread",
+  THREAD_UNREAD_INDICATOR_DESCRIPTION: "New comments",
   THREAD_COMPOSER_PLACEHOLDER: "Reply to thread…",
   THREAD_COMPOSER_SEND: "Reply",
   INBOX_NOTIFICATION_MORE: "More",
