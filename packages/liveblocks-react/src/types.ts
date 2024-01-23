@@ -749,6 +749,7 @@ type RoomContextBundleCommon<
 type PrivateRoomContextApi = {
   hasResolveMentionSuggestions: boolean;
   useMentionSuggestions(search?: string): string[] | undefined;
+  useCurrentUserId(): string | null;
 };
 
 export type RoomContextBundle<
@@ -1142,7 +1143,7 @@ type PrivateLiveblocksContextApi = {
    *
    * Returns current user id. Can only be used after make a call to a notification API.
    */
-  useCurrentUserId(): string;
+  useCurrentUserId(): string | null;
 };
 
 export type LiveblocksContextBundle<TUserMeta extends BaseUserMeta> = Resolve<

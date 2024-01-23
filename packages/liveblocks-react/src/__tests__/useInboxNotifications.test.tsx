@@ -167,32 +167,4 @@ describe("useInboxNotifications", () => {
 
     unmount();
   });
-
-  test.skip("should throw error if public key", async () => {
-    const { LiveblocksProvider, useInboxNotifications } =
-      createLiveblocksContext(
-        createClient({
-          publicApiKey: "pk_xxx",
-        })
-      );
-
-    const { result, unmount } = renderHook(() => useInboxNotifications(), {
-      wrapper: ({ children }) => (
-        <LiveblocksProvider>{children}</LiveblocksProvider>
-      ),
-    });
-
-    expect(result.current).toEqual({
-      isLoading: true,
-    });
-
-    await waitFor(() =>
-      expect(result.current).toEqual({
-        isLoading: false,
-        error: expect.any(Error),
-      })
-    );
-
-    unmount();
-  });
 });

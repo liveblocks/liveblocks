@@ -18,6 +18,7 @@ import React, {
   useContext,
   useEffect,
 } from "react";
+import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
@@ -324,17 +325,10 @@ export function createLiveblocksContext<
     .currentUserIdStore as unknown as Store<string | null>;
 
   function useCurrentUserId() {
-    return useSyncExternalStoreWithSelector(
+    return useSyncExternalStore(
       currentUserIdStore.subscribe,
       currentUserIdStore.get,
-      currentUserIdStore.get,
-      (currentUserId) => {
-        if (currentUserId === null) {
-          throw new Error("Internal error: CurrentUserId has not been set yet");
-        }
-
-        return currentUserId;
-      }
+      currentUserIdStore.get
     );
   }
 

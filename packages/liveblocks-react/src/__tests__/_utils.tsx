@@ -72,16 +72,18 @@ export const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 export * from "@testing-library/react";
 export { customRender as render, customRenderHook as renderHook };
 
-export async function generateFakeJwt(options: { userId: string }) {
+export function generateFakeJwt(options: { userId: string }) {
   // I tried to generate tokens with jose lib, but couldn't because of jest
-  return `${btoa(JSON.stringify({ alg: "HS256" }))}.${btoa(
-    JSON.stringify({
-      k: "acc",
-      pid: "test_pid",
-      uid: options.userId,
-      perms: {},
-      iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000 + 3600),
-    })
-  )}.${btoa("fake_signature")}`;
+  return Promise.resolve(
+    `${btoa(JSON.stringify({ alg: "HS256" }))}.${btoa(
+      JSON.stringify({
+        k: "acc",
+        pid: "test_pid",
+        uid: options.userId,
+        perms: {},
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000 + 3600),
+      })
+    )}.${btoa("fake_signature")}`
+  );
 }

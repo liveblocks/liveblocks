@@ -37,22 +37,13 @@ export function createInboxNotificationsApi({
   ): Promise<T> {
     const authValue = await authManager.getAuthValue();
 
-    if (authValue.type === "public") {
-      // We return a promise here to make sure we not throw synchronously
-      throw new Error(
-        "Notifications cannot be used with anonymous users. Implement your own authentication endpoint following this guide: https://liveblocks.io/docs/rooms/authentication"
-      );
+    if (
+      authValue.type === "secret" &&
+      authValue.token.parsed.k === TokenKind.ACCESS_TOKEN
+    ) {
+      const userId = authValue.token.parsed.uid;
+      currentUserIdStore.set(() => userId);
     }
-
-    const parsedToken = authValue.token.parsed;
-    if (parsedToken.k === TokenKind.SECRET_LEGACY) {
-      throw new Error(
-        "Notifications are not supported with legacy token. Please upgrade your authentication endpoint following this guide: https://liveblocks.io/docs/platform/upgrading/1.2#private-auth-changes"
-      );
-    }
-
-    const userId = parsedToken.uid;
-    currentUserIdStore.set(() => userId);
 
     const url = new URL(`/v2/c${endpoint}`, baseUrl);
     const response = await fetcher(url.toString(), {
