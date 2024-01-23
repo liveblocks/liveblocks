@@ -73,7 +73,7 @@ We’d love to hear from you.
       collaborate. To create a real-time experience, multiple users must be
       connected to the same room.
 
-      ```tsx file="App.tsx" highlight="7-11"
+      ```tsx file="App.tsx" highlight="9-13"
       "use client";
 
       import { RoomProvider } from "./liveblocks.config";
@@ -102,7 +102,7 @@ We’d love to hear from you.
       We’ll add `useThreads` to get the threads in the room, then we’ll use the `Thread` component
       to render them. Finally, we’ll add a way to create threads by adding a `Composer`.
 
-      ```tsx file="Room.tsx" highlight="5,9-12"
+      ```tsx file="Room.tsx" highlight="7,11-14"
       "use client";
 
       import { useThreads } from "./liveblocks.config";

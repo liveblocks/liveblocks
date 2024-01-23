@@ -61,7 +61,7 @@ collaboration to your React application using the hooks from the
       collaborate. To create a real-time experience, multiple users must be
       connected to the same room.
 
-      ```tsx file="App.tsx" highlight="7-11"
+      ```tsx file="App.tsx" highlight="9-13"
       "use client";
 
       import { RoomProvider } from "./liveblocks.config";
@@ -90,7 +90,7 @@ collaboration to your React application using the hooks from the
       The first we’ll add is `useOthers`, a hook that provides information about
       which other users are connected to the room.
 
-      ```tsx file="Room.tsx" highlight="4"
+      ```tsx file="Room.tsx" highlight="6"
       "use client";
 
       import { useOthers } from "./liveblocks.config";
