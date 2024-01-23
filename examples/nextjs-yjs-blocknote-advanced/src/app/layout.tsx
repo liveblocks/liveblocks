@@ -1,6 +1,7 @@
 import "@blocknote/react/style.css";
 import "../styles/globals.css";
 import "../styles/text-editor.css";
+import { Suspense } from "react";
 
 export const metadata = {
   title: "Liveblocks",
@@ -27,7 +28,9 @@ export default function RootLayout({
           type="image/png"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <Suspense>{children}</Suspense>
+      </body>
     </html>
   );
 }
