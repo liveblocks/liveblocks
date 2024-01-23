@@ -27,7 +27,6 @@ export type {
   CommentBodyLinkElementArgs,
   CommentBodyMentionElementArgs,
   CommentBodyParagraphElementArgs,
-  CommentBodyResolveUsersArgs,
   CommentBodyTextElementArgs,
   StringifyCommentBodyElements,
   StringifyCommentBodyOptions,
@@ -195,7 +194,9 @@ export type {
 } from "./types/IWebSocket";
 export { WebsocketCloseCodes } from "./types/IWebSocket";
 export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
+export type { OptionalPromise } from "./types/OptionalPromise";
 export type { Others, OthersEvent } from "./types/Others";
+export type { PartialNullable } from "./types/PartialNullable";
 export type {
   PlainLson,
   PlainLsonFields,

@@ -79,14 +79,11 @@ import type {
 } from "./types/IWebSocket";
 import type { NodeMap } from "./types/NodeMap";
 import type { InternalOthersEvent, OthersEvent } from "./types/Others";
+import type { PartialNullable } from "./types/PartialNullable";
 import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 import type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
 import type { User } from "./types/User";
 import { PKG_VERSION } from "./version";
-
-type PartialNullable<T> = {
-  [P in keyof T]?: T[P] | null | undefined;
-};
 
 type TimeoutID = ReturnType<typeof setTimeout>;
 

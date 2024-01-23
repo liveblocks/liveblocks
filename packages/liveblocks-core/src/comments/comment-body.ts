@@ -1,3 +1,4 @@
+import type { ResolveUsersArgs } from "../client";
 import { nn } from "../lib/assert";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type {
@@ -10,15 +11,7 @@ import type {
   CommentBodyParagraph,
   CommentBodyText,
 } from "../types/CommentBody";
-
-type OptionalPromise<T> = T | Promise<T>;
-
-export type CommentBodyResolveUsersArgs = {
-  /**
-   * The ID of the users to resolve.
-   */
-  userIds: string[];
-};
+import type { OptionalPromise } from "../types/OptionalPromise";
 
 type CommentBodyBlockElementName = Exclude<
   CommentBodyBlockElement,
@@ -144,7 +137,7 @@ export type StringifyCommentBodyOptions<
    * A function that returns user info from user IDs.
    */
   resolveUsers?: (
-    args: CommentBodyResolveUsersArgs
+    args: ResolveUsersArgs
   ) => OptionalPromise<(TUserMeta["info"] | undefined)[] | undefined>;
 };
 
@@ -247,7 +240,7 @@ export function getMentionedIdsFromCommentBody(body: CommentBody): string[] {
 async function resolveUsersInCommentBody<TUserMeta extends BaseUserMeta>(
   body: CommentBody,
   resolveUsers?: (
-    args: CommentBodyResolveUsersArgs
+    args: ResolveUsersArgs
   ) => OptionalPromise<(TUserMeta["info"] | undefined)[] | undefined>
 ) {
   const resolvedUsers = new Map<string, TUserMeta["info"]>();

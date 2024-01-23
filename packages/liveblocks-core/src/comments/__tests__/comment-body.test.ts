@@ -1,5 +1,5 @@
+import type { ResolveUsersArgs } from "../../client";
 import type { CommentBody } from "../../types/CommentBody";
-import type { CommentBodyResolveUsersArgs } from "../comment-body";
 import {
   getMentionedIdsFromCommentBody,
   stringifyCommentBody,
@@ -140,7 +140,7 @@ const commentBodyWithMentions: CommentBody = {
   ],
 };
 
-function resolveUsers({ userIds }: CommentBodyResolveUsersArgs) {
+function resolveUsers({ userIds }: ResolveUsersArgs) {
   return userIds.map((userId) => {
     return {
       name: capitalize(userId),

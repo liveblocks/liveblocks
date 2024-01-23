@@ -20,6 +20,7 @@ import type {
   GetThreadsOptions,
   InboxNotificationData,
   kInternal,
+  PartialNullable,
   Resolve,
   RoomEventMessage,
   RoomInitializers,
@@ -31,8 +32,6 @@ export type UseThreadsOptions<TThreadMetadata extends BaseMetadata> =
   GetThreadsOptions<TThreadMetadata>;
 
 import type { PropsWithChildren } from "react";
-
-export type OptionalPromise<T> = T | Promise<T>;
 
 export type UserStateLoading = {
   isLoading: true;
@@ -56,10 +55,6 @@ export type UserState<T> =
   | UserStateLoading
   | UserStateError
   | UserStateSuccess<T>;
-
-export type PartialNullable<T> = {
-  [P in keyof T]?: T[P] | null | undefined;
-};
 
 export type CreateThreadOptions<TMetadata extends BaseMetadata> = [
   TMetadata,
