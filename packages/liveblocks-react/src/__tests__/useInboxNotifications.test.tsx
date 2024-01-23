@@ -71,14 +71,12 @@ describe("useInboxNotifications", () => {
 
     expect(result.current).toEqual({
       isLoading: true,
-      loadMore: expect.anything(),
     });
 
     await waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications,
-        loadMore: expect.anything(),
       })
     );
 
@@ -136,6 +134,64 @@ describe("useInboxNotifications", () => {
     rerender();
 
     expect(getInboxNotificationsReqCount).toBe(1);
+
+    unmount();
+  });
+
+  test.skip("should return an error if initial call if failing", async () => {
+    server.use(
+      mockGetInboxNotifications(async (_req, res, ctx) => {
+        return res(ctx.status(500));
+      })
+    );
+
+    const { LiveblocksProvider, useInboxNotifications } =
+      createLiveblocksContextForTest();
+
+    const { result, unmount } = renderHook(() => useInboxNotifications(), {
+      wrapper: ({ children }) => (
+        <LiveblocksProvider>{children}</LiveblocksProvider>
+      ),
+    });
+
+    expect(result.current).toEqual({
+      isLoading: true,
+    });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        error: expect.any(Error),
+      })
+    );
+
+    unmount();
+  });
+
+  test.skip("should throw error if public key", async () => {
+    const { LiveblocksProvider, useInboxNotifications } =
+      createLiveblocksContext(
+        createClient({
+          publicApiKey: "pk_xxx",
+        })
+      );
+
+    const { result, unmount } = renderHook(() => useInboxNotifications(), {
+      wrapper: ({ children }) => (
+        <LiveblocksProvider>{children}</LiveblocksProvider>
+      ),
+    });
+
+    expect(result.current).toEqual({
+      isLoading: true,
+    });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        error: expect.any(Error),
+      })
+    );
 
     unmount();
   });

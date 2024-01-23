@@ -4,8 +4,12 @@ import type {
   Client,
   ThreadData,
 } from "@liveblocks/client";
-import type { CacheStore, InboxNotificationData , Store } from "@liveblocks/core";
-import { kInternal , makePoller } from "@liveblocks/core";
+import type {
+  CacheStore,
+  InboxNotificationData,
+  Store,
+} from "@liveblocks/core";
+import { kInternal, makePoller } from "@liveblocks/core";
 import { nanoid } from "nanoid";
 import type { PropsWithChildren } from "react";
 import React, {
@@ -119,9 +123,9 @@ export function createLiveblocksContext<
       isLoading: true,
     });
 
-    fetchInboxNotificationsRequest = client.getInboxNotifications();
-
     try {
+      fetchInboxNotificationsRequest = client.getInboxNotifications();
+
       const { inboxNotifications, threads } =
         await fetchInboxNotificationsRequest;
 
@@ -147,28 +151,34 @@ export function createLiveblocksContext<
       return () => decrementInboxNotificationsSubscribers();
     });
 
-    return useSyncExternalStoreWithSelector(
+    const result = useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
       store.get,
-      (state) => {
-        if (
-          state.queries[INBOX_NOTIFICATIONS_QUERY] === undefined ||
-          state.queries[INBOX_NOTIFICATIONS_QUERY].isLoading
-        ) {
+      (state): InboxNotificationsState => {
+        const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
+
+        if (query === undefined || query.isLoading) {
           return {
             isLoading: true,
-            loadMore: () => {}, // TODO
+          };
+        }
+
+        if (query.error !== undefined) {
+          return {
+            error: query.error,
+            isLoading: false,
           };
         }
 
         return {
           inboxNotifications: selectedInboxNotifications(state),
           isLoading: false,
-          loadMore: () => {}, // TODO
         };
       }
     );
+
+    return result;
   }
 
   function useInboxNotificationsSuspense(): InboxNotificationsStateSuccess {
@@ -195,7 +205,6 @@ export function createLiveblocksContext<
         return {
           inboxNotifications: selectedInboxNotifications(state),
           isLoading: false,
-          loadMore: () => {},
         };
       }
     );

@@ -125,26 +125,30 @@ export type InboxNotificationsStateLoading = {
   isLoading: true;
   inboxNotifications?: never;
   error?: never;
-  loadMore: () => void;
 };
 
 export type InboxNotificationsStateResolved = {
   isLoading: false;
   inboxNotifications: InboxNotificationData[];
   error?: Error;
-  loadMore: () => void;
 };
 
 export type InboxNotificationsStateSuccess = {
   isLoading: false;
   inboxNotifications: InboxNotificationData[];
   error?: never;
-  loadMore: () => void;
+};
+
+export type InboxNotificationsStateError = {
+  isLoading: false;
+  inboxNotifications?: never;
+  error: Error;
 };
 
 export type InboxNotificationsState =
   | InboxNotificationsStateLoading
-  | InboxNotificationsStateResolved;
+  | InboxNotificationsStateResolved
+  | InboxNotificationsStateError;
 
 export type RoomNotificationSettingsStateLoading = {
   isLoading: true;
@@ -1150,7 +1154,7 @@ export type LiveblocksContextBundle<TUserMeta extends BaseUserMeta> = Resolve<
        * Returns the inbox notifications for the current user.
        *
        * @example
-       * const { inboxNotifications, error, isLoading, loadMore } = useInboxNotifications();
+       * const { inboxNotifications, error, isLoading } = useInboxNotifications();
        */
       useInboxNotifications(): InboxNotificationsState;
 
@@ -1173,7 +1177,7 @@ export type LiveblocksContextBundle<TUserMeta extends BaseUserMeta> = Resolve<
              * Returns the inbox notifications for the current user.
              *
              * @example
-             * const { inboxNotifications, error, isLoading, loadMore } = useInboxNotifications();
+             * const { inboxNotifications, error, isLoading } = useInboxNotifications();
              */
             useInboxNotifications(): InboxNotificationsStateSuccess;
 
