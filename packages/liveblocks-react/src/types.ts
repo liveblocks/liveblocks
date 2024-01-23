@@ -722,7 +722,7 @@ type RoomContextBundleCommon<
    *
    * Returns the date at which the thread was last read.
    * If the thread was never read yet, the thread's creation date is returned.
-   * If the user isn't subscribed to the thread, `null` is returned.
+   * If the user isn't subscribed to the thread (or it doesn't exist), `null` is returned.
    *
    * @example
    * const unreadSince = useThreadUnreadSince("th_xxx");
