@@ -1147,21 +1147,18 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
   }
 
   async function getThread({ threadId }: { threadId: string }) {
-    const response = await fetchCommentsApi(`/threads/${threadId}`);
+    const response = await fetchCommentsApi(
+      `/thread-with-notification/${threadId}`
+    );
 
     if (response.ok) {
-      const json = await (response.json() as Promise<
-        ThreadDataPlain<TThreadMetadata> & {
-          inboxNotification?: InboxNotificationDataPlain;
-        }
-      >);
-      const inboxNotification = json.inboxNotification
-        ? convertToInboxNotificationData(json.inboxNotification)
-        : undefined;
+      const json = await response.json();
 
       return {
-        thread: convertToThreadData(json),
-        inboxNotification,
+        thread: convertToThreadData(json.thread),
+        inboxNotification: json.inboxNotification
+          ? convertToInboxNotificationData(json.inboxNotification)
+          : undefined,
       };
     } else if (response.status === 404) {
       return;
