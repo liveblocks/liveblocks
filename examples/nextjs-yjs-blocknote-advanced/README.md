@@ -24,7 +24,7 @@
 
 This example shows how to build a collaborative text editor with
 [Liveblocks](https://liveblocks.io), [Yjs](https://docs.yjs.dev),
-[BlockNote](https://blocknote.dev), and [Next.js](https://nextjs.org/).
+[BlockNote](https://www.blocknotejs.org/), and [Next.js](https://nextjs.org/).
 
 As users edit the document, changes will be automatically persisted and
 synced—allowing for an editor that updates in real-time across clients. Users
