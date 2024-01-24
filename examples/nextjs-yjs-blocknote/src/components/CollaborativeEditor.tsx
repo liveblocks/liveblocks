@@ -66,6 +66,10 @@ function BlockNote({ doc, provider }: EditorProps) {
         <Toolbar editor={editor} />
         <Avatars />
       </div>
+      {/*
+        // Removing children from `BlockNoteView` will result in a zero-config editor with many more features
+        <BlockNoteView editor={editor} className={styles.editorContainer} />
+      */}
       <BlockNoteView editor={editor} className={styles.editorContainer}>
         <div />
       </BlockNoteView>
