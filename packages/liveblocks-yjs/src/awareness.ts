@@ -111,7 +111,7 @@ export class Awareness extends Observable<unknown> {
         // if presence is already undefined, we don't need to change anything here
         return;
       }
-      const { __yjs, ...withoutYjs } = presence;
+      const { [Y_PRESENCE_KEY]: _, ...withoutYjs } = presence;
       this.room.updatePresence(withoutYjs);
       this.emit("update", [
         { added: [], updated: [], removed: [this.clientID] },
@@ -124,7 +124,10 @@ export class Awareness extends Observable<unknown> {
     const added = yPresence === undefined ? [this.clientID] : [];
     const updated = yPresence === undefined ? [] : [this.clientID];
     this.room.updatePresence({
-      __yjs: { ...((yPresence as JsonObject) || {}), ...(state || {}) },
+      [Y_PRESENCE_KEY]: {
+        ...((yPresence as JsonObject) || {}),
+        ...(state || {}),
+      },
     });
     this.emit("update", [{ added, updated, removed: [] }, "local"]);
   }
@@ -133,7 +136,7 @@ export class Awareness extends Observable<unknown> {
     const presence = this.room.getSelf()?.presence[Y_PRESENCE_KEY];
     const update = { [field]: value } as Partial<JsonObject>;
     this.room.updatePresence({
-      __yjs: { ...((presence as JsonObject) || {}), ...update },
+      [Y_PRESENCE_KEY]: { ...((presence as JsonObject) || {}), ...update },
     });
   }
 
