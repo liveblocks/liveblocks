@@ -259,11 +259,11 @@ export const Thread = forwardRef(
                   onCommentDelete={handleCommentDelete}
                   onAuthorClick={onAuthorClick}
                   onMentionClick={onMentionClick}
-                  // markThreadAsReadWhenVisible={
-                  //   index === lastCommentIndex && isUnread
-                  //     ? thread.id
-                  //     : undefined
-                  // }
+                  markThreadAsReadWhenVisible={
+                    index === lastCommentIndex && isUnread
+                      ? thread.id
+                      : undefined
+                  }
                   additionalActionsClassName={
                     isFirstComment ? "lb-thread-actions" : undefined
                   }
