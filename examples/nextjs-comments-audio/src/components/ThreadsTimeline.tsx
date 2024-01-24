@@ -1,15 +1,14 @@
 "use client";
 
-import { ThreadMetadata, useThreads, useUser } from "@/liveblocks.config";
-import { ClientSideSuspense } from "@liveblocks/react";
-import { ErrorBoundary } from "react-error-boundary";
-import styles from "./ThreadsTimeline.module.css";
-import { ThreadData } from "@liveblocks/core";
-import { Comment } from "@liveblocks/react-comments/primitives";
-import { Mention } from "@/components/Mention";
 import { Link } from "@/components/Link";
-import { CSSProperties, useCallback, useState } from "react";
+import { Mention } from "@/components/Mention";
+import { ThreadMetadata, useThreads, useUser } from "@/liveblocks.config";
 import { useSkipTo } from "@/utils";
+import { ThreadData } from "@liveblocks/core";
+import { ClientSideSuspense } from "@liveblocks/react";
+import { Comment } from "@liveblocks/react-comments/primitives";
+import { CSSProperties, useCallback, useState } from "react";
+import { ErrorBoundary } from "react-error-boundary";
 
 export function ThreadsTimeline() {
   return (
@@ -26,7 +25,7 @@ function PinnedThreads() {
   const { threads } = useThreads();
 
   return (
-    <div className={styles.pinnedThreads}>
+    <div className="w-full">
       {threads.map((thread) => (
         <PinnedThread key={thread.id} thread={thread} />
       ))}
@@ -60,7 +59,6 @@ function PinnedThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
     thread.metadata.timePercentage > 50
       ? {
           right: 0,
-          flexDirection: "row-reverse",
           justifyContent: "flex-start",
         }
       : {
@@ -70,22 +68,28 @@ function PinnedThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
         };
 
   return (
-    <div
+    <button
+      type="button"
       onClick={handleClick}
       onPointerEnter={handlePointerEnter}
       onPointerLeave={handlePointerLeave}
-      className={styles.pinnedThread}
+      className="absolute inset-y-0 -translate-x-1/2 origin-[center_bottom] pointer-events-auto"
       style={{ left: `${thread.metadata.timePercentage}%` }}
       data-highlight={highlighted || undefined}
     >
-      <div className={styles.avatarPin}>
-        <img src={user.avatar} alt={user.name} />
-      </div>
+      <img
+        className="select-none size-6 rounded-sm"
+        src={user.avatar}
+        alt={user.name}
+      />
       {highlighted ? (
-        <div className={styles.tooltip} style={tooltipStyles}>
-          <div className={styles.tooltipHeader}>{user.name}</div>
+        <div
+          className="absolute top-full mt-1 select-none whitespace-nowrap flex justify-center items-start gap-1 max-w-96 overflow-hidden"
+          style={tooltipStyles}
+        >
+          <div className="font-medium text-xs">{user.name}</div>
           <Comment.Body
-            className={styles.tooltipBody}
+            className="flex-1 overflow-hidden text-ellipsis [&>div]:inline-block text-secondary text-left text-xs line-clamp-1"
             body={thread.comments[0].body}
             components={{
               Mention: (props) => (
@@ -102,6 +106,6 @@ function PinnedThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
           />
         </div>
       ) : null}
-    </div>
+    </button>
   );
 }

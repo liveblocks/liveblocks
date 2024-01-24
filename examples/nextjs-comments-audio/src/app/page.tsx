@@ -1,22 +1,29 @@
+"use client";
+
 import { Room } from "@/app/Room";
-import { Threads } from "@/components/Threads";
-import { Presence } from "@/components/Presence";
 import { AudioPlayer } from "@/components/AudioPlayer";
-import styles from "./page.module.css";
+import { Logo } from "@/components/Logo";
+import { Presence } from "@/components/Presence";
+import RoomErrors from "@/components/RoomErrors";
+import { Threads } from "@/components/Threads";
 
 export default function Home() {
   return (
     <Room>
-      <div className={styles.wrapper}>
-        <header className={styles.header}>
-          <h1>Currently listening</h1>
+      <div className="relative py-4 px-5 sm:p-6 mx-auto max-w-screen-lg flex flex-col">
+        <header className="flex justify-between items-center">
+          <h1>
+            <span className="sr-only">SoundBlocks</span>
+            <Logo className="h-4 sm:h-5 w-auto fill-current" />
+          </h1>
           <Presence />
         </header>
-        <main className={styles.main}>
+        <main className="pt-20 pb-16">
           <AudioPlayer />
           <Threads />
         </main>
       </div>
+      <RoomErrors />
     </Room>
   );
 }

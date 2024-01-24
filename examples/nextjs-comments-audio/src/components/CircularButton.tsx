@@ -1,17 +1,22 @@
+import cx from "classnames";
 import { ComponentProps, ReactNode } from "react";
-import styles from "./CircularButton.module.css";
 
 type Props = {
   children: ReactNode;
-  appearance: "primary" | "secondary";
+  size: "md" | "lg";
 } & ComponentProps<"button">;
 
 export function CircularButton(props: Props) {
   return (
     <button
-      className={styles.circularButton}
+      className={cx(
+        "group rounded-full shrink-0 flex items-center justify-center transition-opacity duration-150 ease-out disabled:pointer-events-none bg-inverse disabled:bg-quaternary",
+        {
+          ["size-10"]: props.size === "md",
+          ["size-14 sm:size-16"]: props.size === "lg",
+        }
+      )}
       {...props}
-      data-type={props.appearance}
     >
       {props.children}
     </button>

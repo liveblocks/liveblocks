@@ -1,17 +1,18 @@
+import { Metadata } from "next";
 import { Inter } from "next/font/google";
-
 import "../globals.css";
-import "@liveblocks/react-comments/styles.css";
+
+export const metadata: Metadata = {
+  title: "Soundblocks | Liveblocks example",
+  description:
+    "This example shows how to build a audio player with comments using Liveblocks, and Next.js.",
+};
 
 const inter = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
   display: "swap",
 });
-
-export const metadata = {
-  title: "Liveblocks",
-};
 
 export default function RootLayout({
   children,
@@ -34,8 +35,7 @@ export default function RootLayout({
           type="image/png"
         />
       </head>
-
-      <body>{children}</body>
+      <body className="bg-primary text-primary antialiased">{children}</body>
     </html>
   );
 }

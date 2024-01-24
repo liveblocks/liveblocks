@@ -1,5 +1,4 @@
 "use client";
-import styles from "./WaveForm.module.css";
 
 import { useEffect, useRef } from "react";
 import WaveSurfer from "wavesurfer.js";
@@ -34,45 +33,29 @@ export function WaveForm({ percentage, src }: Props) {
 
     // Define the waveform gradient
     const gradient = ctx.createLinearGradient(0, 0, 0, height);
-    gradient.addColorStop(0, "#807f7f"); // Top color
+    gradient.addColorStop(0, "#59595B"); // Top color
     gradient.addColorStop(
       (canvas.height * timelineHeight) / canvas.height,
-      "#807f7f"
+      "#59595B"
     ); // Top color
     gradient.addColorStop(
-      (canvas.height * timelineHeight + 1) / canvas.height,
-      "white"
-    ); // White line
-    gradient.addColorStop(
-      (canvas.height * timelineHeight + 2) / canvas.height,
-      "white"
-    ); // White line
-    gradient.addColorStop(
       (canvas.height * timelineHeight + 3) / canvas.height,
-      "#B1B1B1"
+      "#59595B"
     ); // Bottom color
-    gradient.addColorStop(1, "#B1B1B1"); // Bottom color
+    gradient.addColorStop(1, "#59595B"); // Bottom color
 
     // Define the progress gradient
     const progressGradient = ctx.createLinearGradient(0, 0, 0, height);
-    progressGradient.addColorStop(0, "#652df1"); // Top color
+    progressGradient.addColorStop(0, "#FA233B"); // Top color
     progressGradient.addColorStop(
       (canvas.height * timelineHeight) / canvas.height,
-      "#e807e4"
+      "#FA233B"
     ); // Top color
     progressGradient.addColorStop(
-      (canvas.height * timelineHeight + 1) / canvas.height,
-      "#ffffff"
-    ); // White line
-    progressGradient.addColorStop(
-      (canvas.height * timelineHeight + 2) / canvas.height,
-      "#ffffff"
-    ); // White line
-    progressGradient.addColorStop(
       (canvas.height * timelineHeight + 3) / canvas.height,
-      "#f58dcd"
+      "#FA233B"
     ); // Bottom color
-    progressGradient.addColorStop(1, "#fcbfe3"); // Bottom color
+    progressGradient.addColorStop(1, "#FA233B"); // Bottom color
 
     // Create the waveform
     wavesurfer.current = WaveSurfer.create({
@@ -119,8 +102,11 @@ export function WaveForm({ percentage, src }: Props) {
   }, [percentage]);
 
   return (
-    <div ref={containerRef} className={styles.waveform}>
-      <div className={styles.waveformHover} />
+    <div
+      ref={containerRef}
+      className="[--hover-percentage:0%] group relative w-full h-[--wave-height] overflow-hidden isolate"
+    >
+      <div className="absolute inset-0 h-full opacity-0 lg:group-hover:opacity-80 transition-opacity duration-150 ease-out translate-x-[calc(-100%+var(--hover-amount))] pointer-events-none bg-primary/50 z-10" />
     </div>
   );
 }

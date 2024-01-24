@@ -4,65 +4,73 @@ const USER_INFO: UserMeta[] = [
   {
     id: "charlie.layne@example.com",
     info: {
-      name: "Charlie Layne",
+      name: "Adrien Gaudon",
       color: "#D583F0",
-      avatar: "https://liveblocks.io/avatars/avatar-1.png",
+      avatar:
+        "https://liveblocks.io/_next/image?url=%2Fimages%2Fpeople%2Fadrien-gaudon.jpg&w=256&q=75",
     },
   },
   {
     id: "mislav.abha@example.com",
     info: {
-      name: "Mislav Abha",
+      name: "Alicia Henríquez",
       color: "#F08385",
-      avatar: "https://liveblocks.io/avatars/avatar-2.png",
+      avatar:
+        "https://liveblocks.io/_next/image?url=%2Fimages%2Fpeople%2Falicia-henriquez.jpg&w=256&q=75",
     },
   },
   {
     id: "tatum-paolo@example.com",
     info: {
-      name: "Tatum Paolo",
+      name: "Chris Nicholas",
       color: "#F0D885",
-      avatar: "https://liveblocks.io/avatars/avatar-3.png",
+      avatar:
+        "https://liveblocks.io/_next/image?url=%2Fimages%2Fpeople%2Fchris-nicholas.jpg&w=256&q=75",
     },
   },
   {
     id: "anjali-wanda@example.com",
     info: {
-      name: "Anjali Wanda",
+      name: "Florent Lefebvre",
       color: "#85EED6",
-      avatar: "https://liveblocks.io/avatars/avatar-4.png",
+      avatar:
+        "https://liveblocks.io/_next/image?url=%2Fimages%2Fpeople%2Fflorent-lefebvre.jpg&w=256&q=75",
     },
   },
   {
     id: "jody-hekla@example.com",
     info: {
-      name: "Jody Hekla",
+      name: "Guillaume Salles",
       color: "#85BBF0",
-      avatar: "https://liveblocks.io/avatars/avatar-5.png",
+      avatar:
+        "https://liveblocks.io/_next/image?url=%2Fimages%2Fpeople%2Fguillaume-salles.jpg&w=256&q=75",
     },
   },
   {
     id: "emil-joyce@example.com",
     info: {
-      name: "Emil Joyce",
+      name: "Olivier Foucherot",
       color: "#8594F0",
-      avatar: "https://liveblocks.io/avatars/avatar-6.png",
+      avatar:
+        "https://liveblocks.io/_next/image?url=%2Fimages%2Fpeople%2Folivier-foucherot.jpg&w=256&q=75",
     },
   },
   {
     id: "jory-quispe@example.com",
     info: {
-      name: "Jory Quispe",
+      name: "Jonathan Rowny",
       color: "#85DBF0",
-      avatar: "https://liveblocks.io/avatars/avatar-7.png",
+      avatar:
+        "https://liveblocks.io/_next/image?url=%2Fimages%2Fpeople%2Fjonathan-rowny.jpg&w=256&q=75",
     },
   },
   {
     id: "quinn-elton@example.com",
     info: {
-      name: "Quinn Elton",
+      name: "Steven Fabre",
       color: "#87EE85",
-      avatar: "https://liveblocks.io/avatars/avatar-8.png",
+      avatar:
+        "https://liveblocks.io/_next/image?url=%2Fimages%2Fpeople%2Fsteven-fabre.jpg&w=256&q=75",
     },
   },
 ];

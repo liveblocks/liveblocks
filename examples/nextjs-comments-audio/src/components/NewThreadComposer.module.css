@@ -1,36 +1,3 @@
-.wrapper {
-  width: 100%;
-}
-
-.composer {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-}
-
-.composerAvatar {
-  flex-shrink: 0;
-  border-radius: 99999px;
-}
-
-.composerEditor {
-  height: 42px;
-  width: 100%;
-  padding: 0 1.125rem;
-  background: #f1f1f1;
-  border-radius: 2rem;
-  outline: none;
-  white-space: pre !important;
-  overflow: hidden;
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-}
-
-.composerEditor > * {
-  flex-grow: 1;
-}
-
 .composerEditor [data-placeholder] {
-  color: #707070
+  color: theme("textColor.secondary");
 }
