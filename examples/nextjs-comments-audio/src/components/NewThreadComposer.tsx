@@ -45,7 +45,7 @@ export function NewThreadComposer({ duration, time }: Props) {
 
   return (
     <Composer.Form onComposerSubmit={handleSubmit} className="w-full">
-      <div className="flex gap-4 items-end">
+      <div className="flex gap-3 sm:gap-4 items-end">
         {currentUser && (
           <div className="shrink-0 mb-0.5">
             <img

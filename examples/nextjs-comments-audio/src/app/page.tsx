@@ -10,7 +10,7 @@ import { Threads } from "@/components/Threads";
 export default function Home() {
   return (
     <Room>
-      <div className="relative max-sm:py-4 p-6 mx-auto max-w-screen-lg flex flex-col">
+      <div className="relative py-4 px-5 sm:p-6 mx-auto max-w-screen-lg flex flex-col">
         <header className="flex justify-between items-center">
           <h1>
             <span className="sr-only">SoundBlocks</span>

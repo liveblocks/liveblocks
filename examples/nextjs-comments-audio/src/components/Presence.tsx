@@ -46,10 +46,7 @@ type AvatarProps = { src: string; name: string; state: PresenceStates };
 
 function Avatar({ src, name, state }: AvatarProps) {
   return (
-    <div
-      className="shrink-0 relative rounded-full border-2 border-background"
-      data-tooltip={name}
-    >
+    <div className="shrink-0 relative rounded-full border-2 border-background">
       <img
         src={src}
         className="w-8 h-8 sm:w-10 sm:h-10 rounded-full"
