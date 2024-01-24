@@ -46,16 +46,16 @@ export function WaveForm({ percentage, src }: Props) {
 
     // Define the progress gradient
     const progressGradient = ctx.createLinearGradient(0, 0, 0, height);
-    progressGradient.addColorStop(0, "#9D9D9F"); // Top color
+    progressGradient.addColorStop(0, "#FA233B"); // Top color
     progressGradient.addColorStop(
       (canvas.height * timelineHeight) / canvas.height,
-      "#9D9D9F"
+      "#FA233B"
     ); // Top color
     progressGradient.addColorStop(
       (canvas.height * timelineHeight + 3) / canvas.height,
-      "#9D9D9F"
+      "#FA233B"
     ); // Bottom color
-    progressGradient.addColorStop(1, "#9D9D9F"); // Bottom color
+    progressGradient.addColorStop(1, "#FA233B"); // Bottom color
 
     // Create the waveform
     wavesurfer.current = WaveSurfer.create({

@@ -10,12 +10,7 @@ import { ClientSideSuspense } from "@liveblocks/react";
 import * as Slider from "@radix-ui/react-slider";
 import cx from "classnames";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  MessageSquare as MessageSquareIcon,
-  Pause as PauseIcon,
-  Play as PlayIcon,
-} from "react-feather";
-import SidebarThreads from "./SidebarThreads";
+import { Pause as PauseIcon, Play as PlayIcon } from "react-feather";
 
 const audioSrc = "/titanium-170190.mp3";
 
@@ -116,22 +111,18 @@ export function AudioPlayer() {
     <div className="flex flex-col gap-8">
       <div className="flex items-center gap-3">
         <audio ref={audioRef} src={audioSrc} preload="true" />
-        <div className="w-2/3 sm:w-full max-sm:mx-auto flex max-sm:flex-col items-center max-sm:justify-center gap-3 sm:gap-5">
-          <div className="relative sm:w-40 w-full aspect-square">
+        <div className="w-2/3 md:w-96 mx-auto flex flex-col items-center justify-center gap-4">
+          <div className="relative w-full aspect-square">
             <span
               className={cx(
-                "bg-black rounded-2xl sm:rounded-lg absolute inset-0 shadow-popover transition-transform ease-out-back duration-500",
+                "bg-black rounded-3xl absolute inset-0 shadow-popover transition-transform ease-out-back duration-500",
                 {
-                  ["scale-90"]: !playing,
+                  ["scale-95"]: !playing,
                 }
               )}
             />
             <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-              <CircularButton
-                onClick={togglePlay}
-                size="lg"
-                appearance="primary"
-              >
+              <CircularButton onClick={togglePlay} size="lg">
                 {playing ? (
                   <>
                     <span className="sr-only">Pause</span>
@@ -146,20 +137,9 @@ export function AudioPlayer() {
               </CircularButton>
             </span>
           </div>
-          <div className="flex flex-col max-sm:items-center">
+          <div className="flex flex-col items-center">
             <span className="font-medium text-lg">Midnight Echoes</span>
             <span className="text-secondary">Sophie de Silva & Marco Loom</span>
-          </div>
-          <div className="shrink-0 sm:ml-auto">
-            <SidebarThreads>
-              <button
-                className="bg-white/5 inline-flex items-center px-3 rounded-md h-9 text-primary transition-colors duration-150 ease-out font-medium text-sm gap-2 hover:bg-white/10 focus:bg-white/10"
-                type="button"
-              >
-                <MessageSquareIcon className="size-4" />
-                See all comments
-              </button>
-            </SidebarThreads>
           </div>
         </div>
       </div>

@@ -4,7 +4,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        accent: "#F3F3F3",
+        accent: "#FA233B",
         icon: "#242527",
       },
       textColor: {
@@ -15,6 +15,9 @@ module.exports = {
       },
       backgroundColor: {
         primary: "#242527",
+        secondary: "#2A2B2D",
+        tertiary: "#343537",
+        quaternary: "#3B3C3F",
         inverse: "#F3F3F3",
       },
       borderColor: {

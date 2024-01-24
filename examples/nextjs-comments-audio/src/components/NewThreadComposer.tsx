@@ -10,7 +10,7 @@ import {
   ComposerSubmitComment,
 } from "@liveblocks/react-comments/primitives";
 import cx from "classnames";
-import { FormEvent, KeyboardEvent, useCallback } from "react";
+import { FormEvent, useCallback } from "react";
 import { Send as SendIcon } from "react-feather";
 import { toast } from "sonner";
 import styles from "./NewThreadComposer.module.css";
@@ -43,32 +43,26 @@ export function NewThreadComposer({ duration, time }: Props) {
     [duration, time]
   );
 
-  // Prevent multiple lines with `shift` + `enter`
-  const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    if (event.shiftKey && event.key === "Enter") {
-      event.preventDefault();
-    }
-  }, []);
-
   return (
     <Composer.Form onComposerSubmit={handleSubmit} className="w-full">
-      <div className="flex gap-3 items-center">
+      <div className="flex gap-3 items-end">
         {currentUser && (
-          <img
-            className="shrink-0 rounded-full size-9"
-            width={40}
-            height={40}
-            src={currentUser.info.avatar}
-            alt={currentUser.info.name}
-          />
+          <div className="shrink-0 mb-0.5">
+            <img
+              className="rounded-full size-9"
+              width={40}
+              height={40}
+              src={currentUser.info.avatar}
+              alt={currentUser.info.name}
+            />
+          </div>
         )}
         <Composer.Editor
           className={cx(
             styles.composerEditor,
-            "h-10 text-sm w-full px-3 bg-white/10 data-[focused]:bg-white/15 hover:bg-white/15 transition-colors duration-150 ease-out rounded-lg outline-none !whitespace-pre overflow-hidden flex justify-start items-center"
+            "!min-h-10 px-3 py-2 w-full bg-secondary border border-primary rounded-md outline-none shadow"
           )}
-          placeholder="Write a comment…"
-          onKeyDown={handleKeyDown}
+          placeholder="Write a reaction…"
           components={{
             Mention: (props) => (
               <Composer.Mention asChild>

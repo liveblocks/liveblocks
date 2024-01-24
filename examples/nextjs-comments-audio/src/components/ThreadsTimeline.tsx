@@ -59,7 +59,6 @@ function PinnedThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
     thread.metadata.timePercentage > 50
       ? {
           right: 0,
-          flexDirection: "row-reverse",
           justifyContent: "flex-start",
         }
       : {
@@ -78,15 +77,19 @@ function PinnedThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
       style={{ left: `${thread.metadata.timePercentage}%` }}
       data-highlight={highlighted || undefined}
     >
-      <img className="select-none size-6" src={user.avatar} alt={user.name} />
+      <img
+        className="select-none size-6 rounded-sm"
+        src={user.avatar}
+        alt={user.name}
+      />
       {highlighted ? (
         <div
-          className="absolute top-full mt-1 select-none whitespace-nowrap text-xs flex justify-center items-center gap-1.5 max-w-96 overflow-hidden text-ellipsis"
+          className="absolute top-full mt-1 select-none whitespace-nowrap flex justify-center items-start gap-1 max-w-96 overflow-hidden"
           style={tooltipStyles}
         >
-          <div className="font-medium">{user.name}</div>
+          <div className="font-medium text-xs">{user.name}</div>
           <Comment.Body
-            className="flex-1 overflow-hidden text-ellipsis [&>div]:inline-block text-secondary"
+            className="flex-1 overflow-hidden text-ellipsis [&>div]:inline-block text-secondary text-left text-xs line-clamp-1"
             body={thread.comments[0].body}
             components={{
               Mention: (props) => (

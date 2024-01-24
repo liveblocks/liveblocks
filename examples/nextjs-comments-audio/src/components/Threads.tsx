@@ -7,7 +7,10 @@ import { ThreadData } from "@liveblocks/core";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { Thread } from "@liveblocks/react-comments";
 import { useCallback, useRef, useState } from "react";
-import { Clock as ClockIcon } from "react-feather";
+import {
+  Clock as ClockIcon,
+  MessageSquare as MessageSquareIcon,
+} from "react-feather";
 
 export function Threads() {
   return (
@@ -21,15 +24,15 @@ function ThreadList() {
   const { threads } = useThreads();
 
   if (threads.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-full text-sm text-secondary">
-        No comments yet!
-      </div>
-    );
+    return;
   }
 
   return (
-    <div className="flex flex-col divide-y divide-primary">
+    <div className="border border-primary mt-12 sm:mt-16 rounded-lg overflow-hidden shadow bg-secondary flex flex-col divide-y divide-primary max-w-screen-md mx-auto">
+      <div className="p-4 font-medium flex gap-2 items-center">
+        <MessageSquareIcon className="size-4 text-secondary" />
+        {threads.length} reactions
+      </div>
       {threads.sort(sortThreads).map((thread) => (
         <CustomThread key={thread.id} thread={thread} />
       ))}
@@ -63,7 +66,7 @@ function CustomThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
       {threadHasTime ? (
         <button
           type="button"
-          className="ml-4 mt-4 inline-flex gap-2 h-7 px-2 rounded items-center text-xs tabular-nums bg-accent/5 hover:bg-accent/10 focus:bg-neutral-200 font-medium text-accent"
+          className="ml-4 mt-4 inline-flex gap-1.5 h-7 px-2 rounded items-center text-xs tabular-nums bg-tertiary hover:bg-quaternary focus:bg-quaternary font-medium"
           onClick={handleButtonClick}
           title={`Go to: ${formatTime(thread.metadata.time)}`}
         >

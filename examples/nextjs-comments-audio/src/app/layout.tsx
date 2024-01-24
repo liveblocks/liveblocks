@@ -1,9 +1,16 @@
-import "@liveblocks/react-comments/styles.css";
+import cx from "classnames";
+import { Inter } from "next/font/google";
 import "../globals.css";
 
 export const metadata = {
   title: "Liveblocks",
 };
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  display: "swap",
+});
 
 export default function RootLayout({
   children,
@@ -26,7 +33,11 @@ export default function RootLayout({
           type="image/png"
         />
       </head>
-      <body className="bg-primary text-primary antialiased">{children}</body>
+      <body
+        className={cx("bg-primary text-primary antialiased", inter.className)}
+      >
+        {children}
+      </body>
     </html>
   );
 }
