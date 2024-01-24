@@ -1,4 +1,3 @@
-import cx from "classnames";
 import { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "../globals.css";
@@ -21,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={inter.className}>
       <head>
         <link
           href="https://liveblocks.io/favicon-32x32.png"
@@ -36,11 +35,7 @@ export default function RootLayout({
           type="image/png"
         />
       </head>
-      <body
-        className={cx("bg-primary text-primary antialiased", inter.className)}
-      >
-        {children}
-      </body>
+      <body className="bg-primary text-primary antialiased">{children}</body>
     </html>
   );
 }
