@@ -5,14 +5,17 @@ import {
   InboxNotificationList,
 } from "@liveblocks/react-comments";
 import * as Popover from "@radix-ui/react-popover";
-import { useInboxNotifications } from "../../liveblocks.config";
+import {
+  useInboxNotifications,
+  useUnreadInboxNotificationsCount,
+} from "../../liveblocks.config";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { Loading } from "./Loading";
 import { ComponentPropsWithoutRef } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import clsx from "clsx";
 
-export function InboxList(props: ComponentPropsWithoutRef<"ol">) {
+function InboxList(props: ComponentPropsWithoutRef<"ol">) {
   const { inboxNotifications } = useInboxNotifications();
 
   return inboxNotifications.length === 0 ? (
@@ -29,6 +32,12 @@ export function InboxList(props: ComponentPropsWithoutRef<"ol">) {
   );
 }
 
+function InboxPopoverUnreadCount() {
+  const { count } = useUnreadInboxNotificationsCount();
+
+  return count ? <div className="inbox-unread-count">{count}</div> : null;
+}
+
 export function InboxPopover({
   className,
   ...props
@@ -36,6 +45,11 @@ export function InboxPopover({
   return (
     <Popover.Root>
       <Popover.Trigger className="button">
+        <ErrorBoundary fallback={null}>
+          <ClientSideSuspense fallback={null}>
+            {() => <InboxPopoverUnreadCount />}
+          </ClientSideSuspense>
+        </ErrorBoundary>
         <svg
           width="20"
           height="20"

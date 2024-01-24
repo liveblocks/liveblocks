@@ -43,7 +43,17 @@ const {
 } = createRoomContext(client);
 
 const {
-  suspense: { LiveblocksProvider, useInboxNotifications },
+  suspense: {
+    LiveblocksProvider,
+    useInboxNotifications,
+    useUnreadInboxNotificationsCount,
+  },
 } = createLiveblocksContext(client);
 
-export { RoomProvider, LiveblocksProvider, useThreads, useInboxNotifications };
+export {
+  RoomProvider,
+  LiveblocksProvider,
+  useThreads,
+  useInboxNotifications,
+  useUnreadInboxNotificationsCount,
+};

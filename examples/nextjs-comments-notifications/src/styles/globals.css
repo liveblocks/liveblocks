@@ -130,6 +130,7 @@ body {
 
 .button {
   all: unset;
+  position: relative;
   display: flex;
   place-items: center;
   place-content: center;
@@ -200,4 +201,22 @@ body {
     0 0 0 1px rgb(0 0 0 / 4%),
     0 2px 6px rgb(0 0 0 / 8%),
     0 8px 26px rgb(0 0 0 / 12%);
+}
+
+.inbox-unread-count {
+  position: absolute;
+  top: 0;
+  right: 0;
+  transform: translate(50%, -50%);
+  display: flex;
+  place-content: center;
+  place-items: center;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.675rem;
+  font-weight: 500;
+  height: 1rem;
+  min-width: 1rem;
+  padding: 0 0.25rem;
+  border-radius: 9999px;
 }

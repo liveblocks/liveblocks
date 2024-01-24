@@ -1,8 +1,8 @@
 import type { AuthManager } from "./auth-manager";
+import type { InboxNotificationsApi } from "./client";
 import {
-  InboxNotificationsApi,
-  NotificationsApiError,
   getAuthBearerHeaderFromAuthValue,
+  NotificationsApiError,
 } from "./client";
 import {
   convertToInboxNotificationData,
@@ -91,7 +91,6 @@ export function createInboxNotificationsApi({
   async function getInboxNotifications(options?: GetInboxNotificationsOptions) {
     const queryParams = toURLSearchParams({ limit: options?.limit });
     const json = await fetchJson<{
-      // [comments-unread] TODO: How do we type ThreadMetadata?
       threads: ThreadDataPlain[];
       inboxNotifications: InboxNotificationDataPlain[];
     }>(`/inbox-notifications?${queryParams.toString()}`);
