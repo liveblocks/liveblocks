@@ -31,7 +31,7 @@ function ThreadList() {
     <div className="border border-primary mt-12 sm:mt-16 rounded-lg overflow-hidden shadow bg-secondary flex flex-col divide-y divide-primary max-w-screen-md mx-auto">
       <div className="p-4 font-medium flex gap-2 items-center">
         <MessageSquareIcon className="size-4 text-secondary" />
-        {threads.length} reactions
+        {threads.length} reaction{threads.length > 1 ? "s" : ""}
       </div>
       {threads.sort(sortThreads).map((thread) => (
         <CustomThread key={thread.id} thread={thread} />
