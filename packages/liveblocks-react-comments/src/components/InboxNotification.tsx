@@ -29,7 +29,7 @@ import { useOverrides } from "../overrides";
 import * as CommentPrimitive from "../primitives/Comment";
 import { Timestamp } from "../primitives/Timestamp";
 import { classNames } from "../utils/class-names";
-import { CommentLink, CommentMention } from "./Comment";
+import { CommentLink, CommentMention, CommentReactionShared } from "./Comment";
 import { Avatar, type AvatarProps } from "./internal/Avatar";
 import { List } from "./internal/List";
 import { User } from "./internal/User";
@@ -176,7 +176,17 @@ function InboxNotificationComment({
                 Link: CommentLink,
               }}
             />
-            {/* [comments-unread] TODO: Add reactions */}
+            {comment.reactions.length > 0 && (
+              <div className="lb-comment-reactions">
+                {comment.reactions.map((reaction) => (
+                  <CommentReactionShared
+                    key={reaction.emoji}
+                    reaction={reaction}
+                    overrides={overrides}
+                  />
+                ))}
+              </div>
+            )}
           </>
         ) : (
           <div className="lb-comment-body">

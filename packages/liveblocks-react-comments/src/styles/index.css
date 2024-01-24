@@ -880,6 +880,10 @@
       color: var(--lb-accent);
     }
   }
+
+  &:where([data-disabled]) {
+    cursor: unset;
+  }
 }
 
 .lb-comment-reaction-count {

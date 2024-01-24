@@ -134,10 +134,20 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   additionalActionsClassName?: string;
 }
 
-interface CommentReactionProps extends ComponentPropsWithoutRef<"button"> {
-  comment: CommentData;
+interface CommentReactionSharedProps
+  extends ComponentPropsWithoutRef<"button"> {
   reaction: CommentReactionData;
   overrides?: Partial<CommentOverrides>;
+
+  /**
+   * @internal
+   */
+  onPressedChange?: (isPressed: boolean) => void;
+}
+
+interface CommentReactionProps
+  extends Omit<CommentReactionSharedProps, "onPressedChange"> {
+  comment: CommentData;
 }
 
 export function CommentMention({
@@ -180,39 +190,10 @@ export function CommentLink({
 }
 
 const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
-  ({ comment, reaction, overrides, className, ...props }, forwardedRef) => {
-    const { useAddReaction, useRemoveReaction, useSelf } =
-      useRoomContextBundle();
-    const self = useSelf();
+  ({ comment, reaction, ...props }, forwardedRef) => {
+    const { useAddReaction, useRemoveReaction } = useRoomContextBundle();
     const addReaction = useAddReaction();
     const removeReaction = useRemoveReaction();
-    const isActive = useMemo(() => {
-      return reaction.users.some((users) => users.id === self?.id);
-    }, [reaction, self?.id]);
-    const $ = useOverrides(overrides);
-    const tooltipContent = useMemo(
-      () => (
-        <span>
-          {$.COMMENT_REACTION_LIST(
-            <List
-              values={reaction.users.map((users, index) => (
-                <User
-                  key={users.id}
-                  userId={users.id}
-                  capitalize={index === 0}
-                  replaceSelf
-                />
-              ))}
-              formatRemaining={$.LIST_REMAINING_USERS}
-              truncate={REACTIONS_TRUNCATE}
-            />,
-            reaction.emoji,
-            reaction.users.length
-          )}
-        </span>
-      ),
-      [$, reaction]
-    );
 
     const handlePressedChange = useCallback(
       (isPressed: boolean) => {
@@ -240,6 +221,57 @@ const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
     );
 
     return (
+      <CommentReactionShared
+        onPressedChange={handlePressedChange}
+        reaction={reaction}
+        {...props}
+        ref={forwardedRef}
+      />
+    );
+  }
+);
+
+export const CommentReactionShared = forwardRef<
+  HTMLButtonElement,
+  CommentReactionSharedProps
+>(
+  (
+    { reaction, overrides, disabled, onPressedChange, className, ...props },
+    forwardedRef
+  ) => {
+    const {
+      [kInternal]: { useCurrentUserId },
+    } = useSharedContextBundle();
+    const currentId = useCurrentUserId();
+    const isActive = useMemo(() => {
+      return reaction.users.some((users) => users.id === currentId);
+    }, [currentId, reaction]);
+    const $ = useOverrides(overrides);
+    const tooltipContent = useMemo(
+      () => (
+        <span>
+          {$.COMMENT_REACTION_LIST(
+            <List
+              values={reaction.users.map((users, index) => (
+                <User
+                  key={users.id}
+                  userId={users.id}
+                  capitalize={index === 0}
+                  replaceSelf
+                />
+              ))}
+              formatRemaining={$.LIST_REMAINING_USERS}
+              truncate={REACTIONS_TRUNCATE}
+            />,
+            reaction.emoji,
+            reaction.users.length
+          )}
+        </span>
+      ),
+      [$, reaction]
+    );
+
+    return (
       <Tooltip
         content={tooltipContent}
         multiline
@@ -248,17 +280,20 @@ const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
         <TogglePrimitive.Root
           asChild
           pressed={isActive}
-          onPressedChange={handlePressedChange}
+          onPressedChange={onPressedChange}
+          disabled={disabled}
           ref={forwardedRef}
         >
           <Button
             className={classNames("lb-comment-reaction", className)}
             variant="outline"
+            disabled={disabled}
             aria-label={$.COMMENT_REACTION_DESCRIPTION(
               reaction.emoji,
               reaction.users.length
             )}
             data-self={isActive ? "" : undefined}
+            data-disabled={disabled ? "" : undefined}
             {...props}
           >
             <Emoji

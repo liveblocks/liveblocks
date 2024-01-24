@@ -61,6 +61,8 @@ export function InboxPopover({
           className={clsx(className, "inbox")}
           collisionPadding={16}
           sideOffset={8}
+          // Keep the popover open when interacting outside to debug some scenarios
+          onInteractOutside={(event) => event.preventDefault()}
           {...props}
         >
           <ErrorBoundary
