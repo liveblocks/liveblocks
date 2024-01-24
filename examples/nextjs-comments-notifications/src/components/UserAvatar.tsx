@@ -10,6 +10,10 @@ export function UserAvatar({ className, ...props }: ComponentProps<"div">) {
   const isHydrated = useHydrated();
   const [cookies] = useCookies<"userId", { userId: string }>(["userId"]);
   const src = useMemo(() => {
+    if (!cookies.userId) {
+      return undefined;
+    }
+
     const userIndex = getUserIndexFromUserId(cookies.userId);
 
     return userIndex !== undefined

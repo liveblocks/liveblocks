@@ -1126,7 +1126,7 @@ type PrivateLiveblocksContextApi = {
   /**
    * @private
    *
-   * Returns thread from cache.
+   * Returns a thread from the cache.
    *
    * @example
    * const thread = useThreadFromCache("th_xxx");
@@ -1136,7 +1136,7 @@ type PrivateLiveblocksContextApi = {
   /**
    * @private
    *
-   * Returns current user id. Can only be used after make a call to a notification API.
+   * Returns the current user ID. Can only be used after making a call to a Notifications API.
    */
   useCurrentUserId(): string | null;
 };

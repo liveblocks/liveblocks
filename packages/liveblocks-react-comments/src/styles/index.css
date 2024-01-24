@@ -1052,6 +1052,14 @@
   &:where(:hover) {
     --lb-dynamic-background: var(--lb-background-foreground-faint);
   }
+
+  &:where([data-unread]) {
+    --lb-dynamic-background: var(--lb-background-accent-faint);
+
+    &:where(:hover) {
+      --lb-dynamic-background: var(--lb-background-accent-subtle);
+    }
+  }
 }
 
 .lb-inbox-notification-aside {

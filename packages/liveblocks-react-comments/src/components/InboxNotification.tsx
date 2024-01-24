@@ -286,16 +286,15 @@ const InboxNotificationThread = forwardRef<
 >(({ inboxNotification, overrides, ...props }, forwardedRef) => {
   const $ = useOverrides(overrides);
   const {
-    [kInternal]: { useThreadFromCache },
+    [kInternal]: { useThreadFromCache, useCurrentUserId },
   } = useLiveblocksContextBundle();
   const thread = useThreadFromCache(inboxNotification.threadId);
-
-  // [comments-unread] TODO: How do we get the current user ID?
+  const currentUserId = useCurrentUserId();
   const { unread, date, aside, title, content } = useMemo(() => {
     const contents = generateInboxNotificationThreadContents(
       inboxNotification,
       thread,
-      "[comments-unread] TODO: get current user's ID"
+      currentUserId ?? ""
     );
 
     switch (contents.type) {
@@ -378,7 +377,7 @@ const InboxNotificationThread = forwardRef<
           "Unexpected thread inbox notification type"
         );
     }
-  }, [$, inboxNotification, overrides, thread]);
+  }, [$, currentUserId, inboxNotification, overrides, thread]);
 
   return (
     <InboxNotificationLayout

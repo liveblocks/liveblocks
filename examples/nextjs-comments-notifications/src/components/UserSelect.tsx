@@ -20,14 +20,14 @@ export function UserSelect({ users, className, ...props }: UserSelectProps) {
   const roomIdParam = params?.get("roomId");
 
   useEffect(() => {
-    const currentRoomId = getRoomIdFromUserId(cookies.userId);
+    const roomIdFromUserId = getRoomIdFromUserId(cookies.userId);
+    const roomIdHasChanged =
+      roomIdParam === null
+        ? roomIdFromUserId !== undefined
+        : roomIdParam !== roomIdFromUserId;
 
     // If there's no userId cookie or the roomId parameter has changed, set a default userId cookie.
-    if (
-      !cookies.userId ||
-      roomIdParam !== currentRoomId ||
-      (!roomIdParam && !currentRoomId)
-    ) {
+    if (!cookies.userId || roomIdHasChanged) {
       setCookie("userId", getUserId(0, roomIdParam));
     }
   }, [cookies, roomIdParam]);
@@ -39,7 +39,7 @@ export function UserSelect({ users, className, ...props }: UserSelectProps) {
     location.reload();
   }, []);
 
-  return isHydrated ? (
+  return isHydrated && cookies.userId ? (
     <select
       className={clsx(className, "select")}
       onChange={handleChange}
