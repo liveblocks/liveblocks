@@ -55,6 +55,7 @@ import {
   RemoveReactionError,
 } from "./comments/errors";
 import { createCommentId, createThreadId } from "./comments/lib/createIds";
+import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 import { selectedThreads } from "./comments/lib/selected-threads";
 import { upsertComment } from "./comments/lib/upsert-comment";
 import { useInitial } from "./lib/use-initial";
@@ -1483,8 +1484,8 @@ export function createRoomContext<
                     ...state.inboxNotifications,
                     [inboxNotification.id]: {
                       ...inboxNotification,
-                      notifiedAt: now,
-                      readAt: now,
+                      notifiedAt: newComment.createdAt,
+                      readAt: newComment.createdAt,
                     },
                   }
                 : state.inboxNotifications,
@@ -1702,7 +1703,7 @@ export function createRoomContext<
       store.get,
       store.get,
       (state) => {
-        const inboxNotification = Object.values(state.inboxNotifications).find(
+        const inboxNotification = selectedInboxNotifications(state).find(
           (inboxNotification) => inboxNotification.threadId === threadId
         );
 

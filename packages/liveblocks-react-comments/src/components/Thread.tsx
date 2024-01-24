@@ -315,7 +315,8 @@ export const Thread = forwardRef(
               );
 
               return index === persistedFirstUnreadCommentIndex &&
-                persistedFirstUnreadCommentIndex !== firstCommentIndex ? (
+                persistedFirstUnreadCommentIndex !== firstCommentIndex &&
+                persistedFirstUnreadCommentIndex <= lastCommentIndex ? (
                 <Fragment key={comment.id}>
                   <div
                     className="lb-thread-unread-indicator"
