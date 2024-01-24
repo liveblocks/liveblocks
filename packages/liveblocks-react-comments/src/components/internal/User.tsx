@@ -1,5 +1,6 @@
 "use client";
 
+import { kInternal } from "@liveblocks/core";
 import { useSharedContextBundle } from "@liveblocks/react";
 import type { ComponentProps } from "react";
 import React, { useMemo } from "react";
@@ -16,41 +17,34 @@ export interface UserProps extends ComponentProps<"span"> {
 
 export function User({
   userId,
-  replaceSelf: _replaceSelf,
+  replaceSelf,
   capitalize: shouldCapitalize,
   className,
   ...props
 }: UserProps) {
-  // [comments-unread] TODO: Bring back `replaceSelf` option by adding `useSelf` hook to `useSharedContextBundle`
-  // const { useUser, useSelf } = useRoomContextBundle();
-  // const { user, isLoading } = useUser(userId);
-  // const self = useSelf();
-  // const $ = useOverrides();
-  // const resolvedUserName = useMemo(() => {
-  //   const name =
-  //     replaceSelf && self?.id === userId
-  //       ? $.USER_SELF
-  //       : user?.name ?? $.USER_UNKNOWN;
-
-  //   return shouldCapitalize ? capitalize(name) : name;
-  // }, [
-  //   $.USER_SELF,
-  //   $.USER_UNKNOWN,
-  //   shouldCapitalize,
-  //   replaceSelf,
-  //   self?.id,
-  //   user?.name,
-  //   userId,
-  // ]);
-
-  const { useUser } = useSharedContextBundle();
+  const {
+    useUser,
+    [kInternal]: { useCurrentUserId },
+  } = useSharedContextBundle();
+  const currentId = useCurrentUserId();
   const { user, isLoading } = useUser(userId);
   const $ = useOverrides();
   const resolvedUserName = useMemo(() => {
-    const name = user?.name ?? $.USER_UNKNOWN;
+    const name =
+      replaceSelf && currentId === userId
+        ? $.USER_SELF
+        : user?.name ?? $.USER_UNKNOWN;
 
     return shouldCapitalize ? capitalize(name) : name;
-  }, [$.USER_UNKNOWN, shouldCapitalize, user?.name]);
+  }, [
+    replaceSelf,
+    currentId,
+    userId,
+    $.USER_SELF,
+    $.USER_UNKNOWN,
+    user?.name,
+    shouldCapitalize,
+  ]);
 
   return (
     <span

@@ -1,10 +1,14 @@
 "use client";
 
-import type {
-  CommentData,
-  CommentReaction as CommentReactionData,
+import {
+  type CommentData,
+  type CommentReaction as CommentReactionData,
+  kInternal,
 } from "@liveblocks/core";
-import { useRoomContextBundle } from "@liveblocks/react";
+import {
+  useRoomContextBundle,
+  useSharedContextBundle,
+} from "@liveblocks/react";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
   ComponentPropsWithoutRef,
@@ -141,14 +145,15 @@ export function CommentMention({
   className,
   ...props
 }: CommentBodyMentionProps & CommentMentionProps) {
-  // [comments-unread] TODO: Bring back `useSelf` once it can be used both in RoomProvider and LiveblocksProvider
-  // const { useSelf } = useRoomContextBundle();
-  // const self = useSelf();
+  const {
+    [kInternal]: { useCurrentUserId },
+  } = useSharedContextBundle();
+  const currentId = useCurrentUserId();
 
   return (
     <CommentPrimitive.Mention
       className={classNames("lb-comment-mention", className)}
-      // data-self={userId === self?.id ? "" : undefined}
+      data-self={userId === currentId ? "" : undefined}
       {...props}
     >
       {MENTION_CHARACTER}

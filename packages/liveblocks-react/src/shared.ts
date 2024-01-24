@@ -11,16 +11,14 @@ import type { SharedContextBundle, UserState, UserStateSuccess } from "./types";
  *
  * This is an internal API, use `createLiveblocksContext` or `createRoomContext` instead.
  */
-export function useSharedContextBundle<
-  TUserMeta extends BaseUserMeta = BaseUserMeta,
->(): SharedContextBundle<TUserMeta> {
-  const liveblocksContextBundle = useContext(LiveblocksContextBundle);
+export function useSharedContextBundle() {
   const roomContextBundle = useContext(RoomContextBundle);
+  const liveblocksContextBundle = useContext(LiveblocksContextBundle);
 
-  if (liveblocksContextBundle !== null) {
-    return liveblocksContextBundle;
-  } else if (roomContextBundle !== null) {
+  if (roomContextBundle !== null) {
     return roomContextBundle;
+  } else if (liveblocksContextBundle !== null) {
+    return liveblocksContextBundle;
   } else {
     throw new Error(
       "LiveblocksProvider or RoomProvider are missing from the React tree."
