@@ -53,8 +53,11 @@ function CustomThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
     }
 
     skipTo(thread.metadata.time);
-    // Hack to close the drawer (TODO @Chris: find a better solution)
-    hitEscapeKey();
+    // Scroll to the top
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   }, [skipTo]);
 
   return (
@@ -93,17 +96,4 @@ function sortThreads(
   }
 
   return 0;
-}
-
-function hitEscapeKey() {
-  const event = new KeyboardEvent("keydown", {
-    key: "Escape",
-    code: "Escape",
-    keyCode: 27,
-    which: 27,
-    bubbles: true,
-    cancelable: true,
-  });
-
-  document.dispatchEvent(event);
 }

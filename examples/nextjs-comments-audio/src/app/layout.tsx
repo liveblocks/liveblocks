@@ -1,9 +1,12 @@
 import cx from "classnames";
+import { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "../globals.css";
 
-export const metadata = {
-  title: "Liveblocks",
+export const metadata: Metadata = {
+  title: "Soundblocks | Liveblocks example",
+  description:
+    "This example shows how to build a audio player with comments using Liveblocks, and Next.js.",
 };
 
 const inter = Inter({
