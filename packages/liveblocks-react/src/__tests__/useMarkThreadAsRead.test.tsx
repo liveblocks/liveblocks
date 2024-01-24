@@ -13,6 +13,7 @@ import {
   mockGetThreads,
   mockMarkInboxNotificationsAsRead,
 } from "./_restMocks";
+import { generateFakeJwt } from "./_utils";
 
 const server = setupServer();
 
@@ -29,7 +30,11 @@ function createRoomContextForTest<
   TThreadMetadata extends BaseMetadata = BaseMetadata,
 >() {
   const client = createClient({
-    publicApiKey: "pk_xxx",
+    async authEndpoint() {
+      return {
+        token: await generateFakeJwt({ userId: "userId" }),
+      };
+    },
     polyfills: {
       WebSocket: MockWebSocket as any,
     },

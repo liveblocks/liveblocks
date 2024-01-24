@@ -230,6 +230,8 @@ export type { DevToolsMsg };
 import type * as DevTools from "./types/DevToolsTreeNode";
 export type { DevTools };
 
+export type { Store } from "./lib/create-store";
+
 // Cache store
 export {
   applyOptimisticUpdates,

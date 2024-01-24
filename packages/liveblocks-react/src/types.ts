@@ -120,26 +120,30 @@ export type InboxNotificationsStateLoading = {
   isLoading: true;
   inboxNotifications?: never;
   error?: never;
-  loadMore: () => void;
 };
 
 export type InboxNotificationsStateResolved = {
   isLoading: false;
   inboxNotifications: InboxNotificationData[];
   error?: Error;
-  loadMore: () => void;
 };
 
 export type InboxNotificationsStateSuccess = {
   isLoading: false;
   inboxNotifications: InboxNotificationData[];
   error?: never;
-  loadMore: () => void;
+};
+
+export type InboxNotificationsStateError = {
+  isLoading: false;
+  inboxNotifications?: never;
+  error: Error;
 };
 
 export type InboxNotificationsState =
   | InboxNotificationsStateLoading
-  | InboxNotificationsStateResolved;
+  | InboxNotificationsStateResolved
+  | InboxNotificationsStateError;
 
 export type RoomNotificationSettingsStateLoading = {
   isLoading: true;
@@ -740,6 +744,7 @@ type RoomContextBundleCommon<
 type PrivateRoomContextApi = {
   hasResolveMentionSuggestions: boolean;
   useMentionSuggestions(search?: string): string[] | undefined;
+  useCurrentUserId(): string | null;
 };
 
 export type RoomContextBundle<
@@ -1119,12 +1124,21 @@ type LiveblocksContextBundleCommon = {
  */
 type PrivateLiveblocksContextApi = {
   /**
+   * @private
+   *
    * Returns thread from cache.
    *
    * @example
    * const thread = useThreadFromCache("th_xxx");
    */
   useThreadFromCache(threadId: string): ThreadData<BaseMetadata>;
+
+  /**
+   * @private
+   *
+   * Returns current user id. Can only be used after make a call to a notification API.
+   */
+  useCurrentUserId(): string | null;
 };
 
 export type LiveblocksContextBundle<TUserMeta extends BaseUserMeta> = Resolve<
@@ -1136,7 +1150,7 @@ export type LiveblocksContextBundle<TUserMeta extends BaseUserMeta> = Resolve<
        * Returns the inbox notifications for the current user.
        *
        * @example
-       * const { inboxNotifications, error, isLoading, loadMore } = useInboxNotifications();
+       * const { inboxNotifications, error, isLoading } = useInboxNotifications();
        */
       useInboxNotifications(): InboxNotificationsState;
 
@@ -1159,7 +1173,7 @@ export type LiveblocksContextBundle<TUserMeta extends BaseUserMeta> = Resolve<
              * Returns the inbox notifications for the current user.
              *
              * @example
-             * const { inboxNotifications, error, isLoading, loadMore } = useInboxNotifications();
+             * const { inboxNotifications, error, isLoading } = useInboxNotifications();
              */
             useInboxNotifications(): InboxNotificationsStateSuccess;
 

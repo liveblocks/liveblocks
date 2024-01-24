@@ -1806,6 +1806,10 @@ export function createRoomContext<
     return room.updateRoomNotificationSettings;
   }
 
+  function useCurrentUserId() {
+    return useSelf((user) => (typeof user.id === "string" ? user.id : null));
+  }
+
   const bundle: RoomContextBundle<
     TPresence,
     TStorage,
@@ -1922,6 +1926,7 @@ export function createRoomContext<
     },
 
     [kInternal]: {
+      useCurrentUserId,
       hasResolveMentionSuggestions: resolveMentionSuggestions !== undefined,
       useMentionSuggestions,
     },

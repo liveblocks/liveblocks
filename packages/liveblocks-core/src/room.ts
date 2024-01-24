@@ -1152,7 +1152,10 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     );
 
     if (response.ok) {
-      const json = await response.json();
+      const json: {
+        thread: ThreadDataPlain;
+        inboxNotification?: InboxNotificationDataPlain;
+      } = await response.json();
 
       return {
         thread: convertToThreadData(json.thread),

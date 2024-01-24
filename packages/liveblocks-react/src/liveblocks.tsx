@@ -4,8 +4,12 @@ import type {
   Client,
   ThreadData,
 } from "@liveblocks/client";
-import type { CacheStore, InboxNotificationData } from "@liveblocks/core";
-import { kInternal } from "@liveblocks/core";
+import type {
+  CacheStore,
+  InboxNotificationData,
+  Store,
+} from "@liveblocks/core";
+import { kInternal, makePoller } from "@liveblocks/core";
 import { nanoid } from "nanoid";
 import type { PropsWithChildren } from "react";
 import React, {
@@ -14,6 +18,7 @@ import React, {
   useContext,
   useEffect,
 } from "react";
+import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
@@ -23,7 +28,6 @@ import type {
   InboxNotificationsStateSuccess,
   LiveblocksContextBundle,
 } from "./types";
-import { makePoller } from "@liveblocks/core";
 
 export const ContextBundle =
   createContext<LiveblocksContextBundle<BaseUserMeta> | null>(null);
@@ -72,7 +76,7 @@ export function createLiveblocksContext<
 
   const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
 
-  const POLLING_INTERVAL = 5 * 60 * 1000;
+  const POLLING_INTERVAL = 60 * 1000;
   const poller = makePoller(refreshThreadsAndNotifications);
 
   function refreshThreadsAndNotifications() {
@@ -120,9 +124,9 @@ export function createLiveblocksContext<
       isLoading: true,
     });
 
-    fetchInboxNotificationsRequest = client.getInboxNotifications();
-
     try {
+      fetchInboxNotificationsRequest = client.getInboxNotifications();
+
       const { inboxNotifications, threads } =
         await fetchInboxNotificationsRequest;
 
@@ -148,28 +152,34 @@ export function createLiveblocksContext<
       return () => decrementInboxNotificationsSubscribers();
     });
 
-    return useSyncExternalStoreWithSelector(
+    const result = useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
       store.get,
-      (state) => {
-        if (
-          state.queries[INBOX_NOTIFICATIONS_QUERY] === undefined ||
-          state.queries[INBOX_NOTIFICATIONS_QUERY].isLoading
-        ) {
+      (state): InboxNotificationsState => {
+        const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
+
+        if (query === undefined || query.isLoading) {
           return {
             isLoading: true,
-            loadMore: () => {}, // TODO
+          };
+        }
+
+        if (query.error !== undefined) {
+          return {
+            error: query.error,
+            isLoading: false,
           };
         }
 
         return {
           inboxNotifications: selectedInboxNotifications(state),
           isLoading: false,
-          loadMore: () => {}, // TODO
         };
       }
     );
+
+    return result;
   }
 
   function useInboxNotificationsSuspense(): InboxNotificationsStateSuccess {
@@ -196,7 +206,6 @@ export function createLiveblocksContext<
         return {
           inboxNotifications: selectedInboxNotifications(state),
           isLoading: false,
-          loadMore: () => {},
         };
       }
     );
@@ -312,6 +321,17 @@ export function createLiveblocksContext<
     );
   }
 
+  const currentUserIdStore = client[kInternal]
+    .currentUserIdStore as unknown as Store<string | null>;
+
+  function useCurrentUserId() {
+    return useSyncExternalStore(
+      currentUserIdStore.subscribe,
+      currentUserIdStore.get,
+      currentUserIdStore.get
+    );
+  }
+
   const bundle: LiveblocksContextBundle<TUserMeta> = {
     LiveblocksProvider,
 
@@ -338,6 +358,7 @@ export function createLiveblocksContext<
 
     [kInternal]: {
       useThreadFromCache,
+      useCurrentUserId,
     },
   };
 

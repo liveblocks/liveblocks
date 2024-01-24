@@ -9,6 +9,7 @@ import { createLiveblocksContext } from "../liveblocks";
 import { dummyInboxNoficationData, dummyThreadData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import { mockGetInboxNotifications } from "./_restMocks";
+import { generateFakeJwt } from "./_utils";
 
 const server = setupServer();
 
@@ -28,7 +29,11 @@ afterAll(() => server.close());
 // TODO: Dry up and create utils that wrap renderHook
 function createLiveblocksContextForTest() {
   const client = createClient({
-    publicApiKey: "pk_xxx",
+    async authEndpoint() {
+      return {
+        token: await generateFakeJwt({ userId: "userId" }),
+      };
+    },
     polyfills: {
       WebSocket: MockWebSocket as any,
     },
@@ -66,14 +71,12 @@ describe("useInboxNotifications", () => {
 
     expect(result.current).toEqual({
       isLoading: true,
-      loadMore: expect.anything(),
     });
 
     await waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications,
-        loadMore: expect.anything(),
       })
     );
 
@@ -131,6 +134,36 @@ describe("useInboxNotifications", () => {
     rerender();
 
     expect(getInboxNotificationsReqCount).toBe(1);
+
+    unmount();
+  });
+
+  test.skip("should return an error if initial call if failing", async () => {
+    server.use(
+      mockGetInboxNotifications(async (_req, res, ctx) => {
+        return res(ctx.status(500));
+      })
+    );
+
+    const { LiveblocksProvider, useInboxNotifications } =
+      createLiveblocksContextForTest();
+
+    const { result, unmount } = renderHook(() => useInboxNotifications(), {
+      wrapper: ({ children }) => (
+        <LiveblocksProvider>{children}</LiveblocksProvider>
+      ),
+    });
+
+    expect(result.current).toEqual({
+      isLoading: true,
+    });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        error: expect.any(Error),
+      })
+    );
 
     unmount();
   });
