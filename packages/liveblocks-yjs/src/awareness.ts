@@ -105,20 +105,26 @@ export class Awareness extends Observable<unknown> {
   }
 
   setLocalState(state: Partial<JsonObject> | null): void {
+    const presence = this.room.getSelf()?.presence;
     if (state === null) {
-      this.room.updatePresence({ __yjs: {} });
+      if (presence === undefined) {
+        // if presence is already undefined, we don't need to change anything here
+        return;
+      }
+      const { __yjs, ...withoutYjs } = presence;
+      this.room.updatePresence(withoutYjs);
       this.emit("update", [
         { added: [], updated: [], removed: [this.clientID] },
         "local",
       ]);
       return;
     }
-    const presence = this.room.getSelf()?.presence[Y_PRESENCE_KEY];
     // if presence was undefined, it's added, if not, it's updated
-    const added = presence === undefined ? [this.clientID] : [];
-    const updated = presence === undefined ? [] : [this.clientID];
+    const yPresence = presence?.[Y_PRESENCE_KEY];
+    const added = yPresence === undefined ? [this.clientID] : [];
+    const updated = yPresence === undefined ? [] : [this.clientID];
     this.room.updatePresence({
-      __yjs: { ...((presence as JsonObject) || {}), ...(state || {}) },
+      __yjs: { ...((yPresence as JsonObject) || {}), ...(state || {}) },
     });
     this.emit("update", [{ added, updated, removed: [] }, "local"]);
   }
