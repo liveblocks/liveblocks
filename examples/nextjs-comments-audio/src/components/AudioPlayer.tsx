@@ -174,7 +174,7 @@ export function AudioPlayer() {
         </Slider.Root>
 
         {/* Comments on audio timeline */}
-        <div className="absolute top-[calc(100%*var(--wave-timeline-modifier))] bottom-0 inset-x-0 ">
+        <div className="absolute top-[calc(100%*var(--wave-timeline-modifier))] bottom-0 inset-x-0 pointer-events-none">
           <ThreadsTimeline />
         </div>
       </div>

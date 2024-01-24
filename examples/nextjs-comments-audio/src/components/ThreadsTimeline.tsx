@@ -73,7 +73,7 @@ function PinnedThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
       onClick={handleClick}
       onPointerEnter={handlePointerEnter}
       onPointerLeave={handlePointerLeave}
-      className="absolute inset-y-0 -translate-x-1/2 origin-[center_bottom]"
+      className="absolute inset-y-0 -translate-x-1/2 origin-[center_bottom] pointer-events-auto"
       style={{ left: `${thread.metadata.timePercentage}%` }}
       data-highlight={highlighted || undefined}
     >
