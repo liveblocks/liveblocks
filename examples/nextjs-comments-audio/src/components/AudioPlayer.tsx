@@ -111,11 +111,11 @@ export function AudioPlayer() {
     <div className="flex flex-col gap-8">
       <div className="flex items-center gap-3">
         <audio ref={audioRef} src={audioSrc} preload="true" />
-        <div className="w-2/3 md:w-96 mx-auto flex flex-col items-center justify-center gap-4">
-          <div className="relative w-full aspect-square">
+        <div className="w-full flex flex-col items-center justify-center gap-4">
+          <div className="w-2/3 md:w-96 relative aspect-square">
             <span
               className={cx(
-                "bg-black rounded-3xl absolute inset-0 shadow-popover transition-transform ease-out-back duration-500",
+                "bg-black rounded-3xl absolute inset-0 shadow-xl transition-transform ease-out-back duration-500",
                 {
                   ["scale-95"]: !playing,
                 }
@@ -137,7 +137,7 @@ export function AudioPlayer() {
               </CircularButton>
             </span>
           </div>
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center text-center">
             <span className="font-medium text-lg">Midnight Echoes</span>
             <span className="text-secondary">Sophie de Silva & Marco Loom</span>
           </div>
