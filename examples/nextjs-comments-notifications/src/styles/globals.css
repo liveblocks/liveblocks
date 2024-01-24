@@ -102,7 +102,7 @@ body * {
   margin: 0;
 }
 
-.sidebar-room {
+.sidebar-document {
   all: unset;
   display: flex;
   place-items: center;
@@ -112,18 +112,18 @@ body * {
   cursor: pointer;
 }
 
-.sidebar-room:hover,
-.sidebar-room:focus-visible {
+.sidebar-document:hover,
+.sidebar-document:focus-visible {
   background: #f3f3f3;
 }
 
-.sidebar-room[data-active] {
+.sidebar-document[data-active] {
   background: var(--accent);
   color: #fff;
   font-weight: 500;
 }
 
-.sidebar-room svg {
+.sidebar-document svg {
   margin-right: 0.375rem;
 }
 

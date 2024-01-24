@@ -9,4 +9,4 @@ export const NAMES = [
   "Quinn Elton",
 ];
 
-export const ROOMS = ["general", "engineering", "design"];
+export const DOCUMENTS = ["general", "engineering", "design"];

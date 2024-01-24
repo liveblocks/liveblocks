@@ -1,7 +1,7 @@
 import { LiveblocksProvider } from "../../liveblocks.config";
 import { Sidebar } from "../components/Sidebar";
 import { Header } from "../components/Header";
-import { ROOMS } from "../database";
+import { DOCUMENTS } from "../database";
 import "../styles/globals.css";
 
 export default function RootLayout({
@@ -33,7 +33,7 @@ export default function RootLayout({
           />
         </head>
         <body>
-          <Sidebar rooms={ROOMS} />
+          <Sidebar documents={DOCUMENTS} />
           <Header />
           <main className="content">{children}</main>
         </body>

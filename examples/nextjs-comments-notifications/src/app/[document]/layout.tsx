@@ -1,8 +1,8 @@
 import { ReactNode } from "react";
-import { ROOMS } from "../../database";
+import { DOCUMENTS } from "../../database";
 
 export async function generateStaticParams() {
-  return ROOMS.map((room) => ({ room }));
+  return DOCUMENTS.map((document) => ({ document }));
 }
 
 export default function Layout({ children }: { children: ReactNode }) {

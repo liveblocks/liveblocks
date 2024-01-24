@@ -21,9 +21,9 @@ function Example() {
   );
 }
 
-export default function Page({ params }: { params: { room: string } }) {
+export default function Page({ params }: { params: { document: string } }) {
   const roomId = useOverrideRoomId(
-    `nextjs-comments-notifications-${params.room}`
+    `nextjs-comments-notifications-${params.document}`
   );
 
   return (
