@@ -238,17 +238,6 @@ export const Thread = forwardRef(
           {...props}
           ref={forwardedRef}
         >
-          {/* Debug */}
-          <div>
-            <p>Thread creation date: {thread.createdAt.toISOString()}</p>
-            <p>Thread unread since: {unreadSince?.toISOString() ?? "-"}</p>
-            <p>First unread comment index: {firstUnreadCommentIndex ?? "-"}</p>
-            <p>
-              First unread comment index (persisted):{" "}
-              {persistedFirstUnreadCommentIndex ?? "-"}
-            </p>
-            <p>Last comment index: {lastCommentIndex}</p>
-          </div>
           <div className="lb-thread-comments">
             {thread.comments.map((comment, index) => {
               const isFirstComment = index === firstCommentIndex;

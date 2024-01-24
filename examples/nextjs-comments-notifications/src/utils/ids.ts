@@ -13,8 +13,8 @@ export function getUserIndexFromUserId(userId: string) {
   return userIndex === undefined ? undefined : Number(userIndex);
 }
 
-export function getRoomIdFromUserId(userId: string): string | undefined {
-  const [, , roomId] = userId.match(/^user-(\d+)-(.+)$/) ?? [];
+export function getRoomIdFromUserId(userId?: string): string | undefined {
+  const [, , roomId] = userId?.match(/^user-(\d+)-(.+)$/) ?? [];
 
   return roomId;
 }
