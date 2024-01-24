@@ -1,8 +1,8 @@
-import type { BaseMetadata, CommentBody } from "@liveblocks/core";
-
-type PartialNullable<T> = {
-  [P in keyof T]?: T[P] | null | undefined;
-};
+import type {
+  BaseMetadata,
+  CommentBody,
+  PartialNullable,
+} from "@liveblocks/core";
 
 export class CreateThreadError<TMetadata extends BaseMetadata> extends Error {
   constructor(

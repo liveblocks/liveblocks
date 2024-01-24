@@ -306,6 +306,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       useEditComment,
       useAddReaction,
       useRemoveReaction,
+      useMarkThreadAsRead,
       useSelf,
     } = useRoomContextBundle();
     const ref = useRef<HTMLDivElement>(null);
@@ -315,17 +316,19 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     const editComment = useEditComment();
     const addReaction = useAddReaction();
     const removeReaction = useRemoveReaction();
+    const markThreadAsRead = useMarkThreadAsRead();
     const $ = useOverrides(overrides);
     const [isEditing, setEditing] = useState(false);
     const [isMoreActionOpen, setMoreActionOpen] = useState(false);
     const [isReactionActionOpen, setReactionActionOpen] = useState(false);
 
-    const markThreadAsRead = useCallback(() => {
-      // [comments-unread] TODO: Mark thread as read
-      console.log("Mark thread as read", markThreadAsReadWhenVisible);
-    }, [markThreadAsReadWhenVisible]);
+    const markVisibleThreadAsRead = useCallback(() => {
+      if (markThreadAsReadWhenVisible) {
+        markThreadAsRead(markThreadAsReadWhenVisible);
+      }
+    }, [markThreadAsRead, markThreadAsReadWhenVisible]);
 
-    useVisibleCallback(ref, markThreadAsRead, {
+    useVisibleCallback(ref, markVisibleThreadAsRead, {
       enabled: Boolean(markThreadAsReadWhenVisible),
     });
 

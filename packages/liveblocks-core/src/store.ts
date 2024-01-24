@@ -5,11 +5,8 @@ import type { BaseMetadata } from "./types/BaseMetadata";
 import type { CommentBody } from "./types/CommentBody";
 import type { CommentData, CommentReaction } from "./types/CommentData";
 import type { InboxNotificationData } from "./types/InboxNotificationData";
+import type { PartialNullable } from "./types/PartialNullable";
 import type { ThreadData } from "./types/ThreadData";
-
-type PartialNullable<T> = {
-  [P in keyof T]?: T[P] | null | undefined;
-};
 
 type OptimisticUpdate<TThreadMetadata extends BaseMetadata> =
   | CreateThreadOptimisticUpdate<TThreadMetadata>

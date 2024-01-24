@@ -20,6 +20,7 @@ import type {
   GetThreadsOptions,
   InboxNotificationData,
   kInternal,
+  PartialNullable,
   Resolve,
   RoomEventMessage,
   RoomInitializers,
@@ -31,8 +32,6 @@ export type UseThreadsOptions<TThreadMetadata extends BaseMetadata> =
   GetThreadsOptions<TThreadMetadata>;
 
 import type { PropsWithChildren } from "react";
-
-export type OptionalPromise<T> = T | Promise<T>;
 
 export type UserStateLoading = {
   isLoading: true;
@@ -56,10 +55,6 @@ export type UserState<T> =
   | UserStateLoading
   | UserStateError
   | UserStateSuccess<T>;
-
-export type PartialNullable<T> = {
-  [P in keyof T]?: T[P] | null | undefined;
-};
 
 export type CreateThreadOptions<TMetadata extends BaseMetadata> = [
   TMetadata,
@@ -731,7 +726,7 @@ type RoomContextBundleCommon<
    *
    * Returns the date at which the thread was last read.
    * If the thread was never read yet, the thread's creation date is returned.
-   * If the user isn't subscribed to the thread, `null` is returned.
+   * If the user isn't subscribed to the thread (or it doesn't exist), `null` is returned.
    *
    * @example
    * const unreadSince = useThreadUnreadSince("th_xxx");

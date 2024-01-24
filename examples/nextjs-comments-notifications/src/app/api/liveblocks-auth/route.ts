@@ -1,6 +1,7 @@
 import { Liveblocks } from "@liveblocks/node";
 import { NAMES } from "../../../database";
 import { NextRequest, NextResponse } from "next/server";
+import { getUserIndexFromUserId } from "../../../utils/ids";
 
 /**
  * Authenticating your Liveblocks application
@@ -16,11 +17,22 @@ export async function POST(request: NextRequest) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
   }
 
-  // Get the current user's unique id from your database
-  const userIndex = Math.floor(Math.random() * NAMES.length);
+  const userIdCookie = request.cookies.get("userId");
+  const userId = userIdCookie?.value;
+
+  if (!userId) {
+    return new NextResponse("Missing userId cookie", { status: 403 });
+  }
+
+  // Make sure that the user is valid
+  const userIndex = getUserIndexFromUserId(userId);
+
+  if (userIndex === undefined || !NAMES[Number(userIndex)]) {
+    return new NextResponse("Invalid userId", { status: 403 });
+  }
 
   // Create a session for the current user
-  const session = liveblocks.prepareSession(`user-${userIndex}`);
+  const session = liveblocks.prepareSession(userId);
 
   // Give the user access to the room
   const { room } = await request.json();

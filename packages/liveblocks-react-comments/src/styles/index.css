@@ -542,10 +542,10 @@
 }
 
 /*************************************
- *               User                *
+ *               Name                *
  *************************************/
 
-.lb-user:where([data-loading]) {
+.lb-name:where([data-loading]) {
   &::before {
     content: "\FEFF";
     display: inline-block;
@@ -563,7 +563,7 @@
  *              Loading              *
  *************************************/
 
-:is(.lb-avatar, .lb-user):where([data-loading]) {
+:is(.lb-avatar, .lb-name):where([data-loading]) {
   animation: lb-animation-shimmer 8s linear infinite;
 }
 
@@ -1046,22 +1046,11 @@
   background: var(--lb-dynamic-background);
   color: var(--lb-foreground);
   font-weight: 400;
+  cursor: pointer;
   transition-property: background;
 
-  &:where([data-interactive]) {
-    cursor: pointer;
-
-    &:where(:hover) {
-      --lb-dynamic-background: var(--lb-background-foreground-faint);
-    }
-
-    &:where([data-unread]) {
-      --lb-dynamic-background: var(--lb-background-accent-faint);
-
-      &:where(:hover) {
-        --lb-dynamic-background: var(--lb-background-accent-subtle);
-      }
-    }
+  &:where(:hover) {
+    --lb-dynamic-background: var(--lb-background-foreground-faint);
   }
 }
 
@@ -1083,8 +1072,11 @@
 }
 
 .lb-inbox-notification-title {
-  font-weight: 500;
   text-wrap: pretty;
+
+  :where(.lb-list, .lb-name) {
+    font-weight: 500;
+  }
 }
 
 .lb-inbox-notification-details {

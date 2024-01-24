@@ -19,7 +19,6 @@ export type {
   CommentBodyMentionElementArgs,
   CommentBodyParagraph,
   CommentBodyParagraphElementArgs,
-  CommentBodyResolveUsersArgs,
   CommentBodyText,
   CommentBodyTextElementArgs,
   CommentData,

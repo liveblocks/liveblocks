@@ -1696,8 +1696,6 @@ export function createRoomContext<
     return mentionSuggestions;
   }
 
-  // [comments-unread] TODO: Differientate loading state from "not subscribed" state
-  // [comments-unread] TODO: Suspense version?
   function useThreadUnreadSince(threadId: string): Date | null {
     return useSyncExternalStoreWithSelector(
       store.subscribe,
@@ -1705,7 +1703,7 @@ export function createRoomContext<
       store.get,
       (state) => {
         const inboxNotification = Object.values(state.inboxNotifications).find(
-          (inboxNotif) => inboxNotif.threadId === threadId
+          (inboxNotification) => inboxNotification.threadId === threadId
         );
 
         const thread = state.threads[threadId];

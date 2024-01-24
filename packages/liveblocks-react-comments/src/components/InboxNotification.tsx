@@ -56,8 +56,7 @@ type InboxNotificationThreadContents =
   | InboxNotificationThreadCommentsContents
   | InboxNotificationThreadMentionContents;
 
-export interface InboxNotificationProps
-  extends ComponentPropsWithoutRef<"div"> {
+export interface InboxNotificationProps extends ComponentPropsWithoutRef<"a"> {
   /**
    * The inbox notification to display.
    */
@@ -70,12 +69,11 @@ export interface InboxNotificationProps
 }
 
 interface InboxNotificationLayoutProps
-  extends Omit<ComponentPropsWithoutRef<"div">, "title"> {
+  extends Omit<ComponentPropsWithoutRef<"a">, "title"> {
   aside: ReactNode;
   title: ReactNode;
   date: Date | string | number;
   unread?: boolean;
-  interactive?: boolean;
   overrides?: Partial<InboxNotificationOverrides>;
 }
 
@@ -88,32 +86,21 @@ interface InboxNotificationCommentProps extends ComponentProps<"div"> {
 }
 
 const InboxNotificationLayout = forwardRef<
-  HTMLDivElement,
+  HTMLAnchorElement,
   InboxNotificationLayoutProps
 >(
   (
-    {
-      children,
-      aside,
-      title,
-      date,
-      unread,
-      interactive = true,
-      overrides,
-      className,
-      ...props
-    },
+    { children, aside, title, date, unread, overrides, className, ...props },
     forwardedRef
   ) => {
     const $ = useOverrides(overrides);
 
     return (
       <TooltipProvider>
-        <div
+        <a
           className={classNames("lb-root lb-inbox-notification", className)}
           dir={$.dir}
           data-unread={unread ? "" : undefined}
-          data-interactive={interactive ? "" : undefined}
           {...props}
           ref={forwardedRef}
         >
@@ -138,7 +125,7 @@ const InboxNotificationLayout = forwardRef<
             </div>
             <div className="lb-inbox-notification-body">{children}</div>
           </div>
-        </div>
+        </a>
       </TooltipProvider>
     );
   }
@@ -294,7 +281,7 @@ function generateInboxNotificationThreadContents(
 }
 
 const InboxNotificationThread = forwardRef<
-  HTMLDivElement,
+  HTMLAnchorElement,
   InboxNotificationProps
 >(({ inboxNotification, overrides, ...props }, forwardedRef) => {
   const $ = useOverrides(overrides);
@@ -331,7 +318,7 @@ const InboxNotificationThread = forwardRef<
             formatRemaining={$.LIST_REMAINING_USERS}
             truncate={THREAD_INBOX_NOTIFICATION_MAX_COMMENTS - 1}
           />,
-          <span>Document</span>,
+          <span className="lb-name lb-room">Document</span>,
           reversedUserIds.length
         );
         const content = (
@@ -364,7 +351,7 @@ const InboxNotificationThread = forwardRef<
         // [comments-unread] TODO: Use room name instead of "Document"
         const title = $.INBOX_NOTIFICATION_THREAD_MENTION(
           <User key={mentionUserId} userId={mentionUserId} capitalize />,
-          <span>Document</span>
+          <span className="lb-name lb-room">Document</span>
         );
         const content = (
           <div className="lb-inbox-notification-comments">
@@ -419,7 +406,7 @@ const InboxNotificationThread = forwardRef<
  * </>
  */
 export const InboxNotification = forwardRef<
-  HTMLDivElement,
+  HTMLAnchorElement,
   InboxNotificationProps
 >(({ inboxNotification, ...props }, forwardedRef) => {
   switch (inboxNotification.kind) {
