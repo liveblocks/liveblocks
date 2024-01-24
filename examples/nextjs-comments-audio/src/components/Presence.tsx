@@ -16,7 +16,7 @@ function Avatars() {
 
   return (
     <div className="flex">
-      <div className="flex [&>div]:-ml-1.5 [&>div]:border-2 [&>div]:border-background">
+      <div className="flex [&>div]:-ml-1.5">
         {users.map(({ connectionId, info, presence }) => {
           return (
             <Avatar
@@ -46,7 +46,10 @@ type AvatarProps = { src: string; name: string; state: PresenceStates };
 
 function Avatar({ src, name, state }: AvatarProps) {
   return (
-    <div className="shrink-0 relative rounded-full" data-tooltip={name}>
+    <div
+      className="shrink-0 relative rounded-full border-2 border-background"
+      data-tooltip={name}
+    >
       <img
         src={src}
         className="w-8 h-8 sm:w-10 sm:h-10 rounded-full"

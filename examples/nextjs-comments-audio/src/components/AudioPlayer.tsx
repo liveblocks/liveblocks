@@ -115,7 +115,7 @@ export function AudioPlayer() {
           <div className="w-2/3 md:w-96 relative aspect-square">
             <span
               className={cx(
-                "bg-black rounded-3xl absolute inset-0 shadow-xl transition-transform ease-out-back duration-500",
+                "bg-black rounded-3xl lg:rounded-4xl absolute inset-0 shadow-xl transition-transform ease-out-back duration-500",
                 {
                   ["scale-95"]: !playing,
                 }

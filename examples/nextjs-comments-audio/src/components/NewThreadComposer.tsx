@@ -45,7 +45,7 @@ export function NewThreadComposer({ duration, time }: Props) {
 
   return (
     <Composer.Form onComposerSubmit={handleSubmit} className="w-full">
-      <div className="flex gap-3 items-end">
+      <div className="flex gap-4 items-end">
         {currentUser && (
           <div className="shrink-0 mb-0.5">
             <img
@@ -62,7 +62,7 @@ export function NewThreadComposer({ duration, time }: Props) {
             styles.composerEditor,
             "!min-h-10 px-3 py-2 w-full bg-secondary border border-primary rounded-md outline-none shadow"
           )}
-          placeholder="Write a reaction…"
+          placeholder="Write a comment…"
           components={{
             Mention: (props) => (
               <Composer.Mention asChild>
@@ -78,7 +78,7 @@ export function NewThreadComposer({ duration, time }: Props) {
           }}
         />
         <Composer.Submit asChild>
-          <CircularButton appearance="primary" size="md">
+          <CircularButton size="md">
             <SendIcon className="size-4 text-inverse" />
           </CircularButton>
         </Composer.Submit>
