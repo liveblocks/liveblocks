@@ -27,7 +27,10 @@ import type {
   InboxNotificationsState,
   InboxNotificationsStateSuccess,
   LiveblocksContextBundle,
+  UnreadInboxNotificationsCountState,
+  UnreadInboxNotificationsCountStateSuccess,
 } from "./types";
+import type { CacheState } from "@liveblocks/core";
 
 export const ContextBundle =
   createContext<LiveblocksContextBundle<BaseUserMeta> | null>(null);
@@ -211,14 +214,86 @@ export function createLiveblocksContext<
     );
   }
 
-  // [comments-unread] TODO: Implement using `client.getUnreadInboxNotificationsCount`
-  function useUnreadInboxNotificationsCount() {
-    return 0;
+  function selectUnreadInboxNotificationsCount(
+    state: CacheState<BaseMetadata>
+  ) {
+    let count = 0;
+
+    for (const notification of selectedInboxNotifications(state)) {
+      if (
+        notification.readAt === null ||
+        notification.readAt < notification.notifiedAt
+      ) {
+        count++;
+      }
+    }
+
+    return count;
   }
 
-  // [comments-unread] TODO: Implement using `client.getUnreadInboxNotificationsCount`
-  function useUnreadInboxNotificationsCountSuspense() {
-    return 0;
+  function useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountState {
+    useEffect(() => {
+      void fetchInboxNotifications();
+      incrementInboxNotificationsSubscribers();
+
+      return () => decrementInboxNotificationsSubscribers();
+    });
+
+    return useSyncExternalStoreWithSelector(
+      store.subscribe,
+      store.get,
+      store.get,
+      (state) => {
+        const query = store.get().queries[INBOX_NOTIFICATIONS_QUERY];
+
+        if (query === undefined || query.isLoading) {
+          return {
+            isLoading: true,
+          };
+        }
+
+        if (query.error !== undefined) {
+          return {
+            error: query.error,
+            isLoading: false,
+          };
+        }
+
+        return {
+          isLoading: false,
+          count: selectUnreadInboxNotificationsCount(state),
+        };
+      }
+    );
+  }
+
+  function useUnreadInboxNotificationsCountSuspense(): UnreadInboxNotificationsCountStateSuccess {
+    if (
+      store.get().queries[INBOX_NOTIFICATIONS_QUERY] === undefined ||
+      store.get().queries[INBOX_NOTIFICATIONS_QUERY].isLoading
+    ) {
+      throw fetchInboxNotifications();
+    }
+
+    React.useEffect(() => {
+      incrementInboxNotificationsSubscribers();
+
+      return () => {
+        decrementInboxNotificationsSubscribers();
+      };
+    }, []);
+
+    return useSyncExternalStoreWithSelector(
+      store.subscribe,
+      store.get,
+      store.get,
+      (state) => {
+        return {
+          isLoading: false,
+          count: selectUnreadInboxNotificationsCount(state),
+        };
+      }
+    );
   }
 
   function useMarkInboxNotificationAsRead() {

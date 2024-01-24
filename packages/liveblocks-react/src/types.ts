@@ -145,6 +145,29 @@ export type InboxNotificationsState =
   | InboxNotificationsStateResolved
   | InboxNotificationsStateError;
 
+export type UnreadInboxNotificationsCountStateLoading = {
+  isLoading: true;
+  count?: never;
+  error?: never;
+};
+
+export type UnreadInboxNotificationsCountStateSuccess = {
+  isLoading: false;
+  count: number;
+  error?: never;
+};
+
+export type UnreadInboxNotificationsCountStateError = {
+  isLoading: false;
+  count?: never;
+  error: Error;
+};
+
+export type UnreadInboxNotificationsCountState =
+  | UnreadInboxNotificationsCountStateLoading
+  | UnreadInboxNotificationsCountStateSuccess
+  | UnreadInboxNotificationsCountStateError;
+
 export type RoomNotificationSettingsStateLoading = {
   isLoading: true;
   settings?: never;
@@ -1162,7 +1185,7 @@ export type LiveblocksContextBundle<TUserMeta extends BaseUserMeta> = Resolve<
        * @example
        * const unreadCount = useUnreadInboxNotificationsCount();
        */
-      useUnreadInboxNotificationsCount(): number | null;
+      useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountState;
 
       suspense: Resolve<
         LiveblocksContextBundleCommon &
@@ -1185,7 +1208,7 @@ export type LiveblocksContextBundle<TUserMeta extends BaseUserMeta> = Resolve<
              * @example
              * const unreadCount = useUnreadInboxNotificationsCount();
              */
-            useUnreadInboxNotificationsCount(): number;
+            useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountStateSuccess;
           }
       >;
     }
