@@ -26,6 +26,7 @@ module.exports = {
       },
       transitionTimingFunction: {
         "out-back": "cubic-bezier(0.34, 1.56, 0.64, 1)",
+        "out-expo": "cubic-bezier(0.19, 1, 0.22, 1)",
       },
     },
   },

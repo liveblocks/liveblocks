@@ -122,18 +122,28 @@ export function AudioPlayer() {
               )}
             />
             <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-              <CircularButton onClick={togglePlay} size="lg">
-                {playing ? (
-                  <>
-                    <span className="sr-only">Pause</span>
-                    <PauseIcon className="text-transparent fill-black" />
-                  </>
-                ) : (
-                  <>
-                    <span className="sr-only">Play</span>
-                    <PlayIcon className="text-transparent fill-black translate-x-0.5" />
-                  </>
-                )}
+              <CircularButton
+                onClick={togglePlay}
+                size="lg"
+                title={playing ? "Pause" : "Play"}
+              >
+                <span className="sr-only">{playing ? "Pause" : "Play"}</span>
+                <PauseIcon
+                  className={cx(
+                    "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-transparent fill-black transition duration-300 ease-out-expo",
+                    {
+                      ["scale-50 opacity-0"]: !playing,
+                    }
+                  )}
+                />
+                <PlayIcon
+                  className={cx(
+                    "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-transparent fill-black ml-0.5 transition duration-300 ease-out-expo",
+                    {
+                      ["scale-50 opacity-0"]: playing,
+                    }
+                  )}
+                />
               </CircularButton>
             </span>
           </div>
