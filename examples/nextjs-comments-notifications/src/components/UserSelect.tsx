@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { ChangeEvent, ComponentProps, useCallback, useEffect } from "react";
 import { useCookies } from "react-cookie";
 import { useHydrated } from "../utils/use-hydrated";
-import { getUserId } from "../utils/ids";
+import { getRoomIdFromUserId, getUserId } from "../utils/ids";
 
 interface UserSelectProps extends ComponentProps<"select"> {
   users: string[];
@@ -20,9 +20,13 @@ export function UserSelect({ users, className, ...props }: UserSelectProps) {
   const roomIdParam = params?.get("roomId");
 
   useEffect(() => {
+    const currentRoomId = getRoomIdFromUserId(cookies.userId);
+
+    // If there's no userId cookie or the roomId parameter has changed, set a default userId cookie.
     if (
       !cookies.userId ||
-      (roomIdParam && !cookies.userId.includes(roomIdParam))
+      roomIdParam !== currentRoomId ||
+      (!roomIdParam && !currentRoomId)
     ) {
       setCookie("userId", getUserId(0, roomIdParam));
     }
