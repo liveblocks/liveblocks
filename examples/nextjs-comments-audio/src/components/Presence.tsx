@@ -46,17 +46,17 @@ type AvatarProps = { src: string; name: string; state: PresenceStates };
 
 function Avatar({ src, name, state }: AvatarProps) {
   return (
-    <div className="shrink-0 relative rounded-full border-2 border-background">
+    <div className="shrink-0 relative rounded-full border-2 border-neutral-50">
       <img
         src={src}
         className="w-8 h-8 sm:w-10 sm:h-10 rounded-full"
         alt={name}
       />
-      <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 flex items-center justify-center bg-inverse shadow rounded-full size-5">
+      <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 flex items-center justify-center bg-white shadow rounded-full size-5">
         {state === "playing" ? (
-          <PlayIcon className="size-2.5 text-transparent fill-icon" />
+          <PlayIcon className="size-2.5 text-transparent fill-neutral-900 ml-0.5" />
         ) : (
-          <PauseIcon className="size-2.5 text-transparent fill-icon" />
+          <PauseIcon className="size-2.5 text-transparent fill-neutral-900" />
         )}
       </span>
     </div>

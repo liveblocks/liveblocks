@@ -35,7 +35,9 @@ export default function RootLayout({
           type="image/png"
         />
       </head>
-      <body className="bg-primary text-primary antialiased">{children}</body>
+      <body className="bg-neutral-50 text-neutral-900 antialiased">
+        {children}
+      </body>
     </html>
   );
 }

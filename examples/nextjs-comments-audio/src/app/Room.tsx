@@ -19,7 +19,7 @@ export function Room({ children }: { children: ReactNode }) {
         }}
       >
         {children}
-        <Toaster position="bottom-center" />
+        <Toaster position="bottom-center" theme="dark" />
       </RoomProvider>
     </Tooltip.Provider>
   );

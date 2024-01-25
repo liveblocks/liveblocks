@@ -14,8 +14,7 @@
 
 .lb-root {
   --lb-accent: theme("colors.accent");
-  --lb-background: theme("backgroundColor.secondary");
-  --lb-foreground: theme("textColor.primary");
-  --lb-foreground-subtle: theme("borderColor.primary");
-  --lb-tooltip-background: theme("backgroundColor.quaternary");
+  --lb-background: theme("colors.white");
+  --lb-foreground: theme("colors.neutral[900]");
+  --lb-foreground-subtle: theme("colors.neutral[200]");
 }

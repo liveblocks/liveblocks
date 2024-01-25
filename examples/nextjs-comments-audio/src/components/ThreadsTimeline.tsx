@@ -78,18 +78,18 @@ function PinnedThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
       data-highlight={highlighted || undefined}
     >
       <img
-        className="select-none size-6 rounded-sm"
+        className="select-none size-6 rounded-sm shadow-md"
         src={user.avatar}
         alt={user.name}
       />
       {highlighted ? (
         <div
-          className="absolute top-full mt-1 select-none whitespace-nowrap flex justify-center items-start gap-1 max-w-96 overflow-hidden"
+          className="absolute top-full mt-1.5 select-none whitespace-nowrap flex justify-center items-start gap-1 max-w-96 overflow-hidden"
           style={tooltipStyles}
         >
           <div className="font-medium text-xs">{user.name}</div>
           <Comment.Body
-            className="flex-1 overflow-hidden text-ellipsis [&>div]:inline-block text-secondary text-left text-xs line-clamp-1"
+            className="flex-1 overflow-hidden text-ellipsis [&>div]:inline-block text-neutral-600 text-left text-xs line-clamp-1"
             body={thread.comments[0].body}
             components={{
               Mention: (props) => (

@@ -1,6 +1,5 @@
 "use client";
 
-import { CircularButton } from "@/components/CircularButton";
 import { NewThreadComposer } from "@/components/NewThreadComposer";
 import { ThreadsTimeline } from "@/components/ThreadsTimeline";
 import { WaveForm } from "@/components/WaveForm";
@@ -9,6 +8,7 @@ import { useSkipToListener } from "@/utils";
 import { ClientSideSuspense } from "@liveblocks/react";
 import * as Slider from "@radix-ui/react-slider";
 import cx from "classnames";
+import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pause as PauseIcon, Play as PlayIcon } from "react-feather";
 
@@ -110,7 +110,7 @@ export function AudioPlayer() {
   });
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 sm:gap-10">
       <div className="flex items-center gap-3">
         <audio
           ref={audioRef}
@@ -120,25 +120,35 @@ export function AudioPlayer() {
           onEnded={handleEnded}
         />
         <div className="w-full flex flex-col items-center justify-center gap-4">
-          <div className="w-2/3 md:w-96 relative aspect-square">
-            <span
-              className={cx(
-                "bg-black rounded-3xl lg:rounded-4xl absolute inset-0 shadow-xl transition-transform ease-out-back duration-500",
-                {
-                  ["scale-95"]: !playing,
-                }
-              )}
+          <div
+            className={cx(
+              "relative bg-neutral-900 p-16 w-2/3 md:w-96 aspect-square rounded-3xl overflow-hidden transition-transform ease-out-back duration-300 shadow-2xl after:absolute after:inset-0 after:rounded-[inherit] after:bg-gradient-to-br after:from-transparent after:via-white/5 after:pointer-events-none after:to-transparent",
+              {
+                ["scale-95"]: !playing,
+              }
+            )}
+          >
+            <Image
+              className="rounded-full animate-spin-slow select-none"
+              style={{
+                animationPlayState: playing ? "running" : "paused",
+              }}
+              src="/cover.jpeg"
+              width={384}
+              height={384}
+              alt=""
             />
             <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-              <CircularButton
+              <button
+                type="button"
+                className="size-14 sm:size-16 bg-white shadow-xl rounded-full"
                 onClick={togglePlay}
-                size="lg"
                 title={playing ? "Pause" : "Play"}
               >
                 <span className="sr-only">{playing ? "Pause" : "Play"}</span>
                 <PauseIcon
                   className={cx(
-                    "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-transparent fill-black transition duration-300 ease-out-expo",
+                    "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-transparent fill-neutral-900 transition duration-300 ease-out-expo",
                     {
                       ["scale-50 opacity-0"]: !playing,
                     }
@@ -146,18 +156,18 @@ export function AudioPlayer() {
                 />
                 <PlayIcon
                   className={cx(
-                    "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-transparent fill-black ml-0.5 transition duration-300 ease-out-expo",
+                    "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-transparent fill-neutral-900 ml-0.5 transition duration-300 ease-out-expo",
                     {
                       ["scale-50 opacity-0"]: playing,
                     }
                   )}
                 />
-              </CircularButton>
+              </button>
             </span>
           </div>
           <div className="flex flex-col items-center text-center">
-            <span className="font-medium text-lg">Midnight Echoes</span>
-            <span className="text-secondary">Sophie de Silva & Marco Loom</span>
+            <span className="font-medium text-lg">The Velvet Whispers</span>
+            <span className="text-neutral-600">Ephemeral Echoes</span>
           </div>
         </div>
       </div>

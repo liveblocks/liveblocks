@@ -2,12 +2,12 @@
 
 import dynamic from "next/dynamic";
 import {
+  CSSProperties,
+  PointerEvent,
   useCallback,
   useEffect,
   useRef,
-  PointerEvent,
   useState,
-  CSSProperties,
 } from "react";
 
 const WavesurferPlayer = dynamic(() => import("@wavesurfer/react"), {
@@ -54,8 +54,8 @@ export function WaveForm({ percentage, src }: Props) {
     >
       {/* @ts-ignore */}
       <WavesurferPlayer
-        waveColor="#59595B"
-        progressColor="#FA233B"
+        waveColor="#A8A8A8"
+        progressColor="#FB233B"
         height={getHeight()}
         barWidth={2}
         barGap={0}
@@ -64,7 +64,7 @@ export function WaveForm({ percentage, src }: Props) {
         backend="WebAudio"
         onReady={(ws) => (wavesurferRef.current = ws)}
       />
-      <div className="absolute inset-0 h-full opacity-0 lg:group-hover:opacity-80 transition-opacity duration-150 ease-out translate-x-[calc(-100%+var(--hover-amount))] pointer-events-none bg-primary/50 z-10" />
+      <div className="absolute inset-0 h-full opacity-0 lg:group-hover:opacity-100 transition-opacity duration-150 ease-out translate-x-[calc(-100%+var(--hover-amount))] pointer-events-none bg-neutral-50/30 z-10" />
     </div>
   );
 }
