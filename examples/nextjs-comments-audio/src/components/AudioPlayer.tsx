@@ -143,7 +143,7 @@ export function AudioPlayer() {
             <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
               <button
                 type="button"
-                className="size-14 sm:size-16 bg-white shadow-xl rounded-full"
+                className="size-14 sm:size-16 bg-white shadow-xl rounded-full hover:scale-105 transition-transform ease-out-expo duration-500"
                 onClick={togglePlay}
                 title={playing ? "Pause" : "Play"}
               >
