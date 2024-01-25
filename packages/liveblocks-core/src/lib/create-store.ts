@@ -22,7 +22,12 @@ export function createStore<T>(initialState: T): Store<T> {
    * Update the current state and notify all the subscribers of the update.
    */
   function set(callback: (currentState: T) => T) {
-    state = callback(state);
+    const newState = callback(state);
+    if (state === newState) {
+      return;
+    }
+
+    state = newState;
 
     for (const subscriber of subscribers) {
       subscriber(state);
