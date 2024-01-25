@@ -1211,13 +1211,9 @@ type LiveblocksContextBundleCommon = {
  */
 type PrivateLiveblocksContextApi = {
   /**
-<<<<<<< HEAD
-   * Returns a thread directly from the cache.
-=======
    * @private
    *
    * Returns a thread from the cache.
->>>>>>> comments-unread
    *
    * @example
    * const thread = useThreadFromCache("th_xxx");
