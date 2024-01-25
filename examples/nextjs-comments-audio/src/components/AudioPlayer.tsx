@@ -122,22 +122,24 @@ export function AudioPlayer() {
         <div className="w-full flex flex-col items-center justify-center gap-4">
           <div
             className={cx(
-              "relative bg-neutral-900 p-16 w-2/3 md:w-96 aspect-square rounded-3xl overflow-hidden transition-transform ease-out-back duration-300 shadow-2xl after:absolute after:inset-0 after:rounded-[inherit] after:bg-gradient-to-br after:from-transparent after:via-white/5 after:pointer-events-none after:to-transparent",
+              "relative bg-neutral-900 w-2/3 md:w-96 aspect-square rounded-3xl overflow-hidden transition-transform ease-out-back duration-300 shadow-2xl after:absolute after:inset-0 after:rounded-[inherit] after:bg-gradient-to-br after:from-transparent after:via-white/5 after:pointer-events-none after:to-transparent",
               {
                 ["scale-95"]: !playing,
               }
             )}
           >
-            <Image
-              className="rounded-full animate-spin-slow select-none"
-              style={{
-                animationPlayState: playing ? "running" : "paused",
-              }}
-              src="/cover.jpeg"
-              width={384}
-              height={384}
-              alt=""
-            />
+            <div className="scale-75">
+              <Image
+                className="rounded-full animate-spin-slow select-none"
+                style={{
+                  animationPlayState: playing ? "running" : "paused",
+                }}
+                src="/cover.jpeg"
+                width={384}
+                height={384}
+                alt=""
+              />
+            </div>
             <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
               <button
                 type="button"
