@@ -1243,7 +1243,6 @@ export function createRoom<
     });
   }
 
-
   async function httpPostToRoom(endpoint: "/send-message", body: JsonObject) {
     if (!managedSocket.authValue) {
       throw new Error("Not authorized");
