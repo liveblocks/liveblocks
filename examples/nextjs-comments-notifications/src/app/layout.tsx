@@ -33,9 +33,9 @@ export default function RootLayout({
           />
         </head>
         <body>
+          <main className="content">{children}</main>
           <Sidebar documents={DOCUMENTS} />
           <Header />
-          <main className="content">{children}</main>
         </body>
       </html>
     </LiveblocksProvider>
