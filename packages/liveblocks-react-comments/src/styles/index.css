@@ -176,7 +176,7 @@
     }
   }
 
-  &:where(:disabled) {
+  &:where(:not(.lb-button\:non-disableable):disabled) {
     opacity: 0.5;
     cursor: not-allowed;
   }
@@ -879,10 +879,6 @@
       ) {
       color: var(--lb-accent);
     }
-  }
-
-  &:where([data-disabled]) {
-    cursor: unset;
   }
 }
 

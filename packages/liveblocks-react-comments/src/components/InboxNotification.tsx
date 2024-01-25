@@ -183,6 +183,7 @@ function InboxNotificationComment({
                     key={reaction.emoji}
                     reaction={reaction}
                     overrides={overrides}
+                    disabled
                   />
                 ))}
               </div>
