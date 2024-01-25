@@ -27,33 +27,35 @@ export function AudioPlayer() {
     updateMyPresence({ state: playing ? "playing" : "paused" });
   }, [playing]);
 
+  // Get audio duration
   useEffect(() => {
     if (!audioRef.current) {
       return;
     }
 
-    const audio = audioRef.current;
-    setDuration(audio.duration);
+    setDuration(audioRef.current.duration);
+  }, []);
 
-    function updateTime(e: Event) {
-      if (!seeking.current) {
-        setTime(audio.currentTime);
-      }
+  // Update `time` as audio progresses, but not when seeking
+  const handleTimeUpdate = useCallback(() => {
+    if (!audioRef.current) {
+      return;
     }
 
-    function reset() {
-      setPlaying(false);
-      audio.currentTime = 0;
-      audio.pause();
+    if (!seeking.current) {
+      setTime(audioRef.current.currentTime);
+    }
+  }, []);
+
+  // On audio end, reset
+  const handleEnded = useCallback(() => {
+    if (!audioRef.current) {
+      return;
     }
 
-    audio.addEventListener("timeupdate", updateTime);
-    audio.addEventListener("ended", reset);
-
-    return () => {
-      audio.removeEventListener("timeupdate", updateTime);
-      audio.removeEventListener("ended", reset);
-    };
+    setPlaying(false);
+    audioRef.current.currentTime = 0;
+    audioRef.current.pause();
   }, []);
 
   // Toggle play/pause
@@ -110,7 +112,13 @@ export function AudioPlayer() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center gap-3">
-        <audio ref={audioRef} src={audioSrc} preload="true" />
+        <audio
+          ref={audioRef}
+          src={audioSrc}
+          preload="true"
+          onTimeUpdate={handleTimeUpdate}
+          onEnded={handleEnded}
+        />
         <div className="w-full flex flex-col items-center justify-center gap-4">
           <div className="w-2/3 md:w-96 relative aspect-square">
             <span

@@ -24,7 +24,7 @@ function ThreadList() {
   const { threads } = useThreads();
 
   if (threads.length === 0) {
-    return;
+    return null;
   }
 
   return (
