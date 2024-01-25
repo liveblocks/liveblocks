@@ -287,13 +287,12 @@ export const CommentReactionShared = forwardRef<
           <Button
             className={classNames("lb-comment-reaction", className)}
             variant="outline"
-            disabled={disabled}
+            disableable={false}
             aria-label={$.COMMENT_REACTION_DESCRIPTION(
               reaction.emoji,
               reaction.users.length
             )}
             data-self={isActive ? "" : undefined}
-            data-disabled={disabled ? "" : undefined}
             {...props}
           >
             <Emoji
