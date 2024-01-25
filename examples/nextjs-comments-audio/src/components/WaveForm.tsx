@@ -1,112 +1,82 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import WaveSurfer from "wavesurfer.js";
+import dynamic from "next/dynamic";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  PointerEvent,
+  useState,
+  CSSProperties,
+} from "react";
+
+const WavesurferPlayer = dynamic(() => import("@wavesurfer/react"), {
+  ssr: false,
+  loading: () => <div style={{ height: getHeight() }} />,
+});
 
 type Props = {
   percentage: number;
   src: string;
 };
 
-const height = 70;
-
 export function WaveForm({ percentage, src }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const wavesurfer = useRef<WaveSurfer>();
+  const wavesurferRef = useRef<any>(null);
+  const [hoverOffset, setHoverOffset] = useState(0);
 
   useEffect(() => {
-    const container = containerRef.current;
-    const root = document.querySelector(":root");
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-
-    if (!root || !ctx || !container) {
+    if (!wavesurferRef.current) {
       return;
     }
 
-    const height = parseInt(
-      getComputedStyle(root).getPropertyValue("--wave-height")
-    );
-    const timelineHeight = parseFloat(
-      getComputedStyle(root).getPropertyValue("--wave-timeline-modifier")
-    );
+    wavesurferRef.current.seekTo(percentage);
+  }, [percentage]);
 
-    // Define the waveform gradient
-    const gradient = ctx.createLinearGradient(0, 0, 0, height);
-    gradient.addColorStop(0, "#59595B"); // Top color
-    gradient.addColorStop(
-      (canvas.height * timelineHeight) / canvas.height,
-      "#59595B"
-    ); // Top color
-    gradient.addColorStop(
-      (canvas.height * timelineHeight + 3) / canvas.height,
-      "#59595B"
-    ); // Bottom color
-    gradient.addColorStop(1, "#59595B"); // Bottom color
-
-    // Define the progress gradient
-    const progressGradient = ctx.createLinearGradient(0, 0, 0, height);
-    progressGradient.addColorStop(0, "#FA233B"); // Top color
-    progressGradient.addColorStop(
-      (canvas.height * timelineHeight) / canvas.height,
-      "#FA233B"
-    ); // Top color
-    progressGradient.addColorStop(
-      (canvas.height * timelineHeight + 3) / canvas.height,
-      "#FA233B"
-    ); // Bottom color
-    progressGradient.addColorStop(1, "#FA233B"); // Bottom color
-
-    // Create the waveform
-    wavesurfer.current = WaveSurfer.create({
-      container,
-      waveColor: gradient,
-      progressColor: progressGradient,
-      height,
-      barWidth: 2,
-      barGap: 0,
-      barRadius: 1,
-      url: src,
-      backend: "WebAudio",
-    });
-
-    function hover(e: PointerEvent) {
+  const handlePointerMove = useCallback(
+    (event: PointerEvent<HTMLDivElement>) => {
       if (!containerRef.current) {
         return;
       }
 
-      containerRef.current.style.setProperty(
-        "--hover-amount",
-        `${e.offsetX}px`
-      );
-    }
-
-    container.addEventListener("pointermove", hover);
-
-    return () => {
-      if (!wavesurfer.current || !container) {
-        return;
-      }
-
-      container.removeEventListener("pointermove", hover);
-      wavesurfer.current.destroy();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!wavesurfer.current) {
-      return;
-    }
-
-    wavesurfer.current?.seekTo(percentage);
-  }, [percentage]);
+      const left = containerRef.current.getBoundingClientRect().left;
+      setHoverOffset(event.clientX - left);
+    },
+    []
+  );
 
   return (
     <div
       ref={containerRef}
       className="[--hover-percentage:0%] group relative w-full h-[--wave-height] overflow-hidden isolate"
+      style={{ "--hover-amount": `${hoverOffset}px` } as CSSProperties}
+      onPointerMove={handlePointerMove}
     >
+      {/* @ts-ignore */}
+      <WavesurferPlayer
+        waveColor="#59595B"
+        progressColor="#FA233B"
+        height={getHeight()}
+        barWidth={2}
+        barGap={0}
+        barRadius={1}
+        url={src}
+        backend="WebAudio"
+        onReady={(ws) => (wavesurferRef.current = ws)}
+      />
       <div className="absolute inset-0 h-full opacity-0 lg:group-hover:opacity-80 transition-opacity duration-150 ease-out translate-x-[calc(-100%+var(--hover-amount))] pointer-events-none bg-primary/50 z-10" />
     </div>
+  );
+}
+
+function getHeight() {
+  if (typeof window === "undefined") {
+    return 0;
+  }
+
+  return parseInt(
+    getComputedStyle(
+      document.querySelector(":root") as HTMLElement
+    ).getPropertyValue("--wave-height")
   );
 }
