@@ -344,6 +344,7 @@ export function createRoomContext<
           case ServerMsgCode.THREAD_METADATA_UPDATED:
           case ServerMsgCode.COMMENT_REACTION_ADDED:
           case ServerMsgCode.COMMENT_REACTION_REMOVED:
+          case ServerMsgCode.COMMENT_DELETED:
             // If the thread doesn't exist in the local cache, we do not update it with the server data as an optimistic update could have deleted the thread locally.
             if (!existingThread) break;
 
