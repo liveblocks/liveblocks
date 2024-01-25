@@ -176,7 +176,7 @@
     }
   }
 
-  &:where(:disabled) {
+  &:where(:not(.lb-button\:non-disableable):disabled) {
     opacity: 0.5;
     cursor: not-allowed;
   }
@@ -1046,21 +1046,18 @@
   background: var(--lb-dynamic-background);
   color: var(--lb-foreground);
   font-weight: 400;
+  cursor: pointer;
   transition-property: background;
 
-  &:where([data-interactive]) {
-    cursor: pointer;
+  &:where(:hover) {
+    --lb-dynamic-background: var(--lb-background-foreground-faint);
+  }
+
+  &:where([data-unread]) {
+    --lb-dynamic-background: var(--lb-background-accent-faint);
 
     &:where(:hover) {
-      --lb-dynamic-background: var(--lb-background-foreground-faint);
-    }
-
-    &:where([data-unread]) {
-      --lb-dynamic-background: var(--lb-background-accent-faint);
-
-      &:where(:hover) {
-        --lb-dynamic-background: var(--lb-background-accent-subtle);
-      }
+      --lb-dynamic-background: var(--lb-background-accent-subtle);
     }
   }
 }
@@ -1083,8 +1080,11 @@
 }
 
 .lb-inbox-notification-title {
-  font-weight: 500;
   text-wrap: pretty;
+
+  :where(.lb-list, .lb-name) {
+    font-weight: 500;
+  }
 }
 
 .lb-inbox-notification-details {

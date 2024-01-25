@@ -27,13 +27,14 @@ export function mockGetThread(
   resolver: ResponseResolver<
     RestRequest<never, never>,
     RestContext,
-    ThreadData<any> & {
+    {
+      thread: ThreadData<any>;
       inboxNotification?: InboxNotificationData;
     }
   >
 ) {
   return rest.get(
-    `https://api.liveblocks.io/v2/c/rooms/room-id/threads/${params.threadId}`,
+    `https://api.liveblocks.io/v2/c/rooms/room-id/thread-with-notification/${params.threadId}`,
     resolver
   );
 }

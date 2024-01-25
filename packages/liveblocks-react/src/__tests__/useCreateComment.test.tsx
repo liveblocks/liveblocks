@@ -6,7 +6,11 @@ import { setupServer } from "msw/node";
 import React from "react";
 
 import { createRoomContext } from "../room";
-import { dummyCommentData, dummyThreadData } from "./_dummies";
+import {
+  dummyCommentData,
+  dummyInboxNoficationData,
+  dummyThreadData,
+} from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import { mockCreateComment, mockGetThreads } from "./_restMocks";
 
@@ -116,7 +120,82 @@ describe("useCreateComment", () => {
     unmount();
   });
 
-  test.todo("should mark thread as read optimistically");
+  test("should mark thread as read optimistically", async () => {
+    const initialThread = dummyThreadData();
+    const initialInboxNotification = dummyInboxNoficationData();
+    const fakeCreatedAt = addMinutes(new Date(), 5);
+    initialInboxNotification.threadId = initialThread.id;
+
+    server.use(
+      mockGetThreads((_req, res, ctx) => {
+        return res(
+          ctx.json({
+            data: [initialThread],
+            inboxNotifications: [initialInboxNotification],
+          })
+        );
+      }),
+      mockCreateComment(
+        { threadId: initialThread.id },
+        async (req, res, ctx) => {
+          const json = await req.json<{ id: string; body: CommentBody }>();
+
+          const comment = dummyCommentData();
+          comment.id = json.id;
+          comment.body = json.body;
+          comment.createdAt = fakeCreatedAt;
+          comment.threadId = initialThread.id;
+
+          return res(ctx.json(comment));
+        }
+      )
+    );
+
+    const { RoomProvider, useThreadUnreadSince, useCreateComment, useThreads } =
+      createRoomContextForTest();
+
+    const { result, unmount } = renderHook(
+      () => ({
+        threads: useThreads().threads,
+        unreadSince: useThreadUnreadSince(initialThread.id),
+        createComment: useCreateComment(),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id="room-id" initialPresence={{}}>
+            {children}
+          </RoomProvider>
+        ),
+      }
+    );
+
+    expect(result.current.unreadSince).toBeNull();
+
+    await waitFor(() =>
+      expect(result.current.unreadSince).toEqual(
+        initialInboxNotification.notifiedAt
+      )
+    );
+
+    const comment = await act(() =>
+      result.current.createComment({
+        threadId: initialThread.id,
+        body: {
+          version: 1,
+          content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
+        },
+      })
+    );
+
+    expect(result.current.unreadSince).toEqual(comment.createdAt);
+
+    // We're using the createdDate overriden by the server to ensure the optimistic update have been properly deleted
+    await waitFor(() =>
+      expect(result.current.unreadSince).toEqual(fakeCreatedAt)
+    );
+
+    unmount();
+  });
 
   test("should rollback optimistic update", async () => {
     const initialThread = dummyThreadData();

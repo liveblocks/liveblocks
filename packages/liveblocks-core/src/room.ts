@@ -79,14 +79,11 @@ import type {
 } from "./types/IWebSocket";
 import type { NodeMap } from "./types/NodeMap";
 import type { InternalOthersEvent, OthersEvent } from "./types/Others";
+import type { PartialNullable } from "./types/PartialNullable";
 import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 import type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
 import type { User } from "./types/User";
 import { PKG_VERSION } from "./version";
-
-type PartialNullable<T> = {
-  [P in keyof T]?: T[P] | null | undefined;
-};
 
 type TimeoutID = ReturnType<typeof setTimeout>;
 
@@ -1150,21 +1147,21 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
   }
 
   async function getThread({ threadId }: { threadId: string }) {
-    const response = await fetchCommentsApi(`/threads/${threadId}`);
+    const response = await fetchCommentsApi(
+      `/thread-with-notification/${threadId}`
+    );
 
     if (response.ok) {
-      const json = await (response.json() as Promise<
-        ThreadDataPlain<TThreadMetadata> & {
-          inboxNotification?: InboxNotificationDataPlain;
-        }
-      >);
-      const inboxNotification = json.inboxNotification
-        ? convertToInboxNotificationData(json.inboxNotification)
-        : undefined;
+      const json: {
+        thread: ThreadDataPlain;
+        inboxNotification?: InboxNotificationDataPlain;
+      } = await response.json();
 
       return {
-        thread: convertToThreadData(json),
-        inboxNotification,
+        thread: convertToThreadData(json.thread),
+        inboxNotification: json.inboxNotification
+          ? convertToInboxNotificationData(json.inboxNotification)
+          : undefined,
       };
     } else if (response.status === 404) {
       return;

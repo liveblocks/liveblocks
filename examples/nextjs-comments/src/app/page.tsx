@@ -1,23 +1,12 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import {
-  LiveblocksProvider,
-  RoomProvider,
-  useInboxNotifications,
-  useThreads,
-} from "../../liveblocks.config";
+import { RoomProvider, useThreads } from "../../liveblocks.config";
 import { Loading } from "../components/Loading";
-import {
-  Composer,
-  Thread,
-  InboxNotification,
-  InboxNotificationList,
-} from "@liveblocks/react-comments";
+import { Composer, Thread } from "@liveblocks/react-comments";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
-import { setCookie } from "tiny-cookie";
 
 /**
  * Displays a list of threads, along with a composer for creating
@@ -37,46 +26,21 @@ function Example() {
   );
 }
 
-function Inbox() {
-  const { inboxNotifications } = useInboxNotifications();
-
-  return (
-    <InboxNotificationList>
-      {inboxNotifications.map((inboxNotification) => (
-        <InboxNotification
-          key={inboxNotification.id}
-          inboxNotification={inboxNotification}
-        />
-      ))}
-    </InboxNotificationList>
-  );
-}
-
 export default function Page() {
   const roomId = useOverrideRoomId("nextjs-comments");
-  useOverrideUserIndex();
 
   return (
-    <>
-      <LiveblocksProvider>
+    <RoomProvider id={roomId} initialPresence={{}}>
+      <ErrorBoundary
+        fallback={
+          <div className="error">There was an error while getting threads.</div>
+        }
+      >
         <ClientSideSuspense fallback={<Loading />}>
-          {() => <Inbox />}
+          {() => <Example />}
         </ClientSideSuspense>
-      </LiveblocksProvider>
-      <RoomProvider id={roomId} initialPresence={{}}>
-        <ErrorBoundary
-          fallback={
-            <div className="error">
-              There was an error while getting threads.
-            </div>
-          }
-        >
-          <ClientSideSuspense fallback={<Loading />}>
-            {() => <Example />}
-          </ClientSideSuspense>
-        </ErrorBoundary>
-      </RoomProvider>
-    </>
+      </ErrorBoundary>
+    </RoomProvider>
   );
 }
 
@@ -93,17 +57,4 @@ function useOverrideRoomId(roomId: string) {
   }, [roomId, roomIdParam]);
 
   return overrideRoomId;
-}
-
-function useOverrideUserIndex() {
-  const params = useSearchParams();
-  const userIndexParam = params?.get("userIndex");
-
-  useEffect(() => {
-    if (!userIndexParam) {
-      return;
-    }
-
-    setCookie("userIndex", userIndexParam, { expires: "1M" });
-  }, [userIndexParam]);
 }

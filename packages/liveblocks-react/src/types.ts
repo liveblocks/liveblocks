@@ -20,6 +20,7 @@ import type {
   GetThreadsOptions,
   InboxNotificationData,
   kInternal,
+  PartialNullable,
   Resolve,
   RoomDetails,
   RoomEventMessage,
@@ -99,10 +100,6 @@ export type UrlStateSuccess = {
 
 export type UrlState = UrlStateLoading | UrlStateError | UrlStateSuccess;
 
-export type PartialNullable<T> = {
-  [P in keyof T]?: T[P] | null | undefined;
-};
-
 export type CreateThreadOptions<TMetadata extends BaseMetadata> = [
   TMetadata,
 ] extends [never]
@@ -167,26 +164,53 @@ export type InboxNotificationsStateLoading = {
   isLoading: true;
   inboxNotifications?: never;
   error?: never;
-  loadMore: () => void;
 };
 
 export type InboxNotificationsStateResolved = {
   isLoading: false;
   inboxNotifications: InboxNotificationData[];
   error?: Error;
-  loadMore: () => void;
 };
 
 export type InboxNotificationsStateSuccess = {
   isLoading: false;
   inboxNotifications: InboxNotificationData[];
   error?: never;
-  loadMore: () => void;
+};
+
+export type InboxNotificationsStateError = {
+  isLoading: false;
+  inboxNotifications?: never;
+  error: Error;
 };
 
 export type InboxNotificationsState =
   | InboxNotificationsStateLoading
-  | InboxNotificationsStateResolved;
+  | InboxNotificationsStateResolved
+  | InboxNotificationsStateError;
+
+export type UnreadInboxNotificationsCountStateLoading = {
+  isLoading: true;
+  count?: never;
+  error?: never;
+};
+
+export type UnreadInboxNotificationsCountStateSuccess = {
+  isLoading: false;
+  count: number;
+  error?: never;
+};
+
+export type UnreadInboxNotificationsCountStateError = {
+  isLoading: false;
+  count?: never;
+  error: Error;
+};
+
+export type UnreadInboxNotificationsCountState =
+  | UnreadInboxNotificationsCountStateLoading
+  | UnreadInboxNotificationsCountStateSuccess
+  | UnreadInboxNotificationsCountStateError;
 
 export type RoomNotificationSettingsStateLoading = {
   isLoading: true;
@@ -789,7 +813,7 @@ type RoomContextBundleCommon<
    *
    * Returns the date at which the thread was last read.
    * If the thread was never read yet, the thread's creation date is returned.
-   * If the user isn't subscribed to the thread, `null` is returned.
+   * If the user isn't subscribed to the thread (or it doesn't exist), `null` is returned.
    *
    * @example
    * const unreadSince = useThreadUnreadSince("th_xxx");
@@ -807,6 +831,7 @@ type RoomContextBundleCommon<
 type PrivateRoomContextApi = {
   hasResolveMentionSuggestions: boolean;
   useMentionSuggestions(search?: string): string[] | undefined;
+  useCurrentUserId(): string | null;
 };
 
 export type RoomContextBundle<
@@ -1186,12 +1211,25 @@ type LiveblocksContextBundleCommon = {
  */
 type PrivateLiveblocksContextApi = {
   /**
+<<<<<<< HEAD
    * Returns a thread directly from the cache.
+=======
+   * @private
+   *
+   * Returns a thread from the cache.
+>>>>>>> comments-unread
    *
    * @example
    * const thread = useThreadFromCache("th_xxx");
    */
   useThreadFromCache(threadId: string): ThreadData<BaseMetadata>;
+
+  /**
+   * @private
+   *
+   * Returns the current user ID. Can only be used after making a call to a Notifications API.
+   */
+  useCurrentUserId(): string | null;
 };
 
 export type LiveblocksContextBundle<TUserMeta extends BaseUserMeta> = Resolve<
@@ -1203,7 +1241,7 @@ export type LiveblocksContextBundle<TUserMeta extends BaseUserMeta> = Resolve<
        * Returns the inbox notifications for the current user.
        *
        * @example
-       * const { inboxNotifications, error, isLoading, loadMore } = useInboxNotifications();
+       * const { inboxNotifications, error, isLoading } = useInboxNotifications();
        */
       useInboxNotifications(): InboxNotificationsState;
 
@@ -1215,7 +1253,7 @@ export type LiveblocksContextBundle<TUserMeta extends BaseUserMeta> = Resolve<
        * @example
        * const unreadCount = useUnreadInboxNotificationsCount();
        */
-      useUnreadInboxNotificationsCount(): number | null;
+      useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountState;
 
       suspense: Resolve<
         LiveblocksContextBundleCommon &
@@ -1226,7 +1264,7 @@ export type LiveblocksContextBundle<TUserMeta extends BaseUserMeta> = Resolve<
              * Returns the inbox notifications for the current user.
              *
              * @example
-             * const { inboxNotifications, error, isLoading, loadMore } = useInboxNotifications();
+             * const { inboxNotifications, error, isLoading } = useInboxNotifications();
              */
             useInboxNotifications(): InboxNotificationsStateSuccess;
 
@@ -1238,7 +1276,7 @@ export type LiveblocksContextBundle<TUserMeta extends BaseUserMeta> = Resolve<
              * @example
              * const unreadCount = useUnreadInboxNotificationsCount();
              */
-            useUnreadInboxNotificationsCount(): number;
+            useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountStateSuccess;
           }
       >;
     }

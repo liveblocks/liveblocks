@@ -1,7 +1,6 @@
 "use client";
 
 import { createClient } from "@liveblocks/client";
-import { createLiveblocksContext } from "@liveblocks/react";
 import { createRoomContext } from "@liveblocks/react";
 
 export const client = createClient({
@@ -42,8 +41,4 @@ const {
   suspense: { RoomProvider, useThreads },
 } = createRoomContext(client);
 
-const {
-  suspense: { LiveblocksProvider, useInboxNotifications },
-} = createLiveblocksContext(client);
-
-export { RoomProvider, LiveblocksProvider, useThreads, useInboxNotifications };
+export { RoomProvider, useThreads };

@@ -2,19 +2,18 @@ import type { AuthValue } from "./auth-manager";
 import { createAuthManager } from "./auth-manager";
 import { isIdle } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
-import {
-  convertToInboxNotificationData,
-  convertToThreadData,
-} from "./convert-plain-data";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import { kInternal } from "./internal";
 import type { BatchStore } from "./lib/batch";
-import { Batch, createBatchStore } from "./lib/batch";
+import { createBatchStore } from "./lib/batch";
+import type { Store } from "./lib/create-store";
+import { createStore } from "./lib/create-store";
 import { deprecateIf } from "./lib/deprecation";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import type { Resolve } from "./lib/Resolve";
+import { createInboxNotificationsApi } from "./notifications";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { Polyfills, Room, RoomDelegates, RoomInitializers } from "./room";
@@ -26,13 +25,10 @@ import {
 import type { CacheStore } from "./store";
 import { createClientStore } from "./store";
 import type { BaseMetadata } from "./types/BaseMetadata";
-import type {
-  InboxNotificationData,
-  InboxNotificationDataPlain,
-} from "./types/InboxNotificationData";
+import type { InboxNotificationData } from "./types/InboxNotificationData";
 import type { OptionalPromise } from "./types/OptionalPromise";
 import type { RoomDetails } from "./types/RoomDetails";
-import type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
+import type { ThreadData } from "./types/ThreadData";
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1_000;
@@ -47,7 +43,6 @@ const DEFAULT_LOST_CONNECTION_TIMEOUT = 5_000;
 const RESOLVE_USERS_BATCH_DELAY = 50;
 const RESOLVE_ROOMS_DETAILS_BATCH_DELAY = 50;
 const RESOLVE_URLS_BATCH_DELAY = 50;
-const MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY = 50;
 
 export type ResolveMentionSuggestionsArgs = {
   /**
@@ -120,6 +115,7 @@ export type EnterOptions<
  * will probably happen if you do.
  */
 type PrivateClientApi<TUserMeta extends BaseUserMeta> = {
+  currentUserIdStore: Store<string | null>;
   resolveMentionSuggestions: ClientOptions["resolveMentionSuggestions"];
   // TODO: Add generic for ThreadMetadata to Client, it could be used here and for inbox notifications too
   cacheStore: CacheStore<BaseMetadata>;
@@ -128,7 +124,9 @@ type PrivateClientApi<TUserMeta extends BaseUserMeta> = {
   urlsStore: BatchStore<string | undefined, [ResolveUrlsResource]>;
 };
 
-type InboxNotificationsApi<TThreadMetadata extends BaseMetadata = never> = {
+export type InboxNotificationsApi<
+  TThreadMetadata extends BaseMetadata = never,
+> = {
   /**
    * @private
    */
@@ -329,10 +327,6 @@ export type ClientOptions<TUserMeta extends BaseUserMeta = BaseUserMeta> = {
 //     | ((room: string) => Promise<{ token: string }>);
 //
 
-export type GetInboxNotificationsOptions = {
-  limit?: number;
-};
-
 function getBaseUrlFromClientOptions(clientOptions: ClientOptions) {
   if ("liveblocksServer" in clientOptions) {
     throw new Error("Client option no longer supported");
@@ -403,8 +397,6 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
   };
 
   const roomsById = new Map<string, RoomInfo>();
-
-  const notificationsApi = createInboxNotificationsApi(fetchClientApi);
 
   function teardownRoom(room: OpaqueRoom) {
     unlinkDevTools(room.id);
@@ -573,22 +565,19 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
     }
   }
 
-  async function fetchClientApi(
-    endpoint: string,
-    options?: RequestInit
-  ): Promise<Response> {
-    const authValue = await authManager.getAuthValue();
-    const url = new URL(`/v2/c${endpoint}`, baseUrl);
-    const fetcher =
-      clientOptions.polyfills?.fetch || /* istanbul ignore next */ fetch;
-    return await fetcher(url.toString(), {
-      ...options,
-      headers: {
-        ...options?.headers,
-        Authorization: `Bearer ${getAuthBearerHeaderFromAuthValue(authValue)}`,
-      },
-    });
-  }
+  const currentUserIdStore = createStore<string | null>(null);
+
+  const {
+    getInboxNotifications,
+    getUnreadInboxNotificationsCount,
+    markAllInboxNotificationsAsRead,
+    markInboxNotificationAsRead,
+  } = createInboxNotificationsApi({
+    baseUrl,
+    fetcher: clientOptions.polyfills?.fetch || /* istanbul ignore next */ fetch,
+    authManager,
+    currentUserIdStore,
+  });
 
   const cacheStore = createClientStore();
 
@@ -659,10 +648,14 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
       enterRoom,
 
       // Notifications API
-      ...notificationsApi,
+      getInboxNotifications,
+      getUnreadInboxNotificationsCount,
+      markAllInboxNotificationsAsRead,
+      markInboxNotificationAsRead,
 
       // Internal
       [kInternal]: {
+        currentUserIdStore,
         resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,
         cacheStore,
         usersStore,
@@ -685,116 +678,6 @@ export class NotificationsApiError extends Error {
   ) {
     super(message);
   }
-}
-
-function createInboxNotificationsApi(
-  fetchClientApi: (endpoint: string, options?: RequestInit) => Promise<Response>
-): InboxNotificationsApi {
-  async function fetchJson<T>(
-    endpoint: string,
-    options?: RequestInit
-  ): Promise<T> {
-    const response = await fetchClientApi(endpoint, options);
-
-    if (!response.ok) {
-      if (response.status >= 400 && response.status < 600) {
-        let error: NotificationsApiError;
-
-        try {
-          const errorBody = (await response.json()) as { message: string };
-
-          error = new NotificationsApiError(
-            errorBody.message,
-            response.status,
-            errorBody
-          );
-        } catch {
-          error = new NotificationsApiError(
-            response.statusText,
-            response.status
-          );
-        }
-
-        throw error;
-      }
-    }
-
-    let body;
-
-    try {
-      body = (await response.json()) as T;
-    } catch {
-      body = {} as T;
-    }
-
-    return body;
-  }
-
-  async function getInboxNotifications(options?: GetInboxNotificationsOptions) {
-    const queryParams = toURLSearchParams({ limit: options?.limit });
-    const json = await fetchJson<{
-      // [comments-unread] TODO: How do we type ThreadMetadata?
-      threads: ThreadDataPlain[];
-      inboxNotifications: InboxNotificationDataPlain[];
-    }>(`/inbox-notifications?${queryParams.toString()}`);
-
-    return {
-      threads: json.threads.map((thread) => convertToThreadData(thread)),
-      inboxNotifications: json.inboxNotifications.map((notification) =>
-        convertToInboxNotificationData(notification)
-      ),
-    };
-  }
-
-  async function getUnreadInboxNotificationsCount() {
-    const { count } = await fetchJson<{
-      count: number;
-    }>("/inbox-notifications/count");
-
-    return count;
-  }
-
-  async function markAllInboxNotificationsAsRead() {
-    await fetchJson("/inbox-notifications/read", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ inboxNotificationIds: "all" }),
-    });
-  }
-
-  async function markInboxNotificationsAsRead(inboxNotificationIds: string[]) {
-    await fetchJson("/inbox-notifications/read", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ inboxNotificationIds }),
-    });
-  }
-
-  const batchedMarkInboxNotificationsAsRead = new Batch(
-    async (batchedInboxNotificationIds: [string][]) => {
-      const inboxNotificationIds = batchedInboxNotificationIds.flat();
-
-      await markInboxNotificationsAsRead(inboxNotificationIds);
-
-      return inboxNotificationIds;
-    },
-    { delay: MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY }
-  );
-
-  async function markInboxNotificationAsRead(inboxNotificationId: string) {
-    await batchedMarkInboxNotificationsAsRead.get(inboxNotificationId);
-  }
-
-  return {
-    getInboxNotifications,
-    getUnreadInboxNotificationsCount,
-    markAllInboxNotificationsAsRead,
-    markInboxNotificationAsRead,
-  };
 }
 
 function checkBounds(
@@ -866,35 +749,4 @@ function createDevelopmentWarning(
   } else {
     return () => {};
   }
-}
-
-/**
- * Safely but conveniently build a URLSearchParams instance from a given
- * dictionary of values. For example:
- *
- *   {
- *     "foo": "bar+qux/baz",
- *     "empty": "",
- *     "n": 42,
- *     "nope": undefined,
- *     "alsonope": null,
- *   }
- *
- * Will produce a value that will get serialized as
- * `foo=bar%2Bqux%2Fbaz&empty=&n=42`.
- *
- * Notice how the number is converted to its string representation
- * automatically and the `null`/`undefined` values simply don't end up in the
- * URL.
- */
-function toURLSearchParams(
-  params: Record<string, string | number | null | undefined>
-): URLSearchParams {
-  const result = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) {
-    if (value !== undefined && value !== null) {
-      result.set(key, value.toString());
-    }
-  }
-  return result;
 }

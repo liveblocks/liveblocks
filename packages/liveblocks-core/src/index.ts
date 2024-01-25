@@ -30,7 +30,6 @@ export type {
   CommentBodyLinkElementArgs,
   CommentBodyMentionElementArgs,
   CommentBodyParagraphElementArgs,
-  CommentBodyResolveUsersArgs,
   CommentBodyTextElementArgs,
   StringifyCommentBodyElements,
   StringifyCommentBodyOptions,
@@ -187,7 +186,7 @@ export type { Immutable } from "./types/Immutable";
 export type {
   InboxNotificationData,
   InboxNotificationDataPlain,
-  ThreadInboxNotificationData,
+  InboxNotificationThreadData,
 } from "./types/InboxNotificationData";
 export type {
   IWebSocket,
@@ -198,7 +197,9 @@ export type {
 } from "./types/IWebSocket";
 export { WebsocketCloseCodes } from "./types/IWebSocket";
 export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
+export type { OptionalPromise } from "./types/OptionalPromise";
 export type { Others, OthersEvent } from "./types/Others";
+export type { PartialNullable } from "./types/PartialNullable";
 export type {
   PlainLson,
   PlainLsonFields,
@@ -232,6 +233,8 @@ import type * as DevToolsMsg from "./devtools/protocol";
 export type { DevToolsMsg };
 import type * as DevTools from "./types/DevToolsTreeNode";
 export type { DevTools };
+
+export type { Store } from "./lib/create-store";
 
 // Cache store
 export {

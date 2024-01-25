@@ -510,7 +510,7 @@ describe("WebSocket events", () => {
       mockGetThread({ threadId: newThread.id }, async (_req, res, ctx) => {
         return res(
           ctx.json({
-            ...newThread,
+            thread: newThread,
             inboxNotification: undefined,
           })
         );
@@ -639,7 +639,7 @@ describe("WebSocket events", () => {
           callIndex++;
           return res(
             ctx.json({
-              ...latestThread,
+              thread: latestThread,
               inboxNotification: undefined,
             })
           );
@@ -647,7 +647,7 @@ describe("WebSocket events", () => {
           callIndex++;
           return res(
             ctx.json({
-              ...delayedThread,
+              thread: delayedThread,
               inboxNotification: undefined,
             })
           );

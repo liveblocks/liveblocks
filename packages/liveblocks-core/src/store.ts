@@ -5,11 +5,8 @@ import type { BaseMetadata } from "./types/BaseMetadata";
 import type { CommentBody } from "./types/CommentBody";
 import type { CommentData, CommentReaction } from "./types/CommentData";
 import type { InboxNotificationData } from "./types/InboxNotificationData";
+import type { PartialNullable } from "./types/PartialNullable";
 import type { ThreadData } from "./types/ThreadData";
-
-type PartialNullable<T> = {
-  [P in keyof T]?: T[P] | null | undefined;
-};
 
 type OptimisticUpdate<TThreadMetadata extends BaseMetadata> =
   | CreateThreadOptimisticUpdate<TThreadMetadata>
@@ -19,7 +16,8 @@ type OptimisticUpdate<TThreadMetadata extends BaseMetadata> =
   | DeleteCommentOptimisticUpdate
   | AddReactionOptimisticUpdate
   | RemoveReactionOptimisticUpdate
-  | MarkInboxNotificationAsReadOptimisticUpdate;
+  | MarkInboxNotificationAsReadOptimisticUpdate
+  | MarkAllInboxNotificationsAsReadOptimisticUpdate;
 
 type CreateThreadOptimisticUpdate<TThreadMetadata extends BaseMetadata> = {
   type: "create-thread";
@@ -82,6 +80,12 @@ type MarkInboxNotificationAsReadOptimisticUpdate = {
   type: "mark-inbox-notification-as-read";
   id: string;
   inboxNotificationId: string;
+  readAt: Date;
+};
+
+type MarkAllInboxNotificationsAsReadOptimisticUpdate = {
+  type: "mark-inbox-notifications-as-read";
+  id: string;
   readAt: Date;
 };
 
@@ -516,6 +520,14 @@ export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
           readAt: optimisticUpdate.readAt,
         };
         break;
+      }
+      case "mark-inbox-notifications-as-read": {
+        for (const id in result.inboxNotifications) {
+          result.inboxNotifications[id] = {
+            ...result.inboxNotifications[id],
+            readAt: optimisticUpdate.readAt,
+          };
+        }
       }
     }
   }
