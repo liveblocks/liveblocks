@@ -28,7 +28,7 @@ export function AudioPlayer() {
   }, [playing]);
 
   // Get audio duration
-  useEffect(() => {
+  const handleLoadedMetadata = useCallback(() => {
     if (!audioRef.current) {
       return;
     }
@@ -116,6 +116,7 @@ export function AudioPlayer() {
           ref={audioRef}
           src={audioSrc}
           preload="true"
+          onLoadedMetadata={handleLoadedMetadata}
           onTimeUpdate={handleTimeUpdate}
           onEnded={handleEnded}
         />
@@ -175,23 +176,25 @@ export function AudioPlayer() {
       </div>
       <div className="relative h-[--wave-height]">
         {/* Range slider for audio time and waveform */}
-        <Slider.Root
-          className="relative flex-1 flex items-center select-none touch-none w-full h-full"
-          min={0}
-          max={duration}
-          step={1}
-          value={[time]}
-          onValueChange={handleSliderChange}
-          onValueCommit={handleSliderCommit}
-        >
-          <div className="absolute inset-0">
-            <WaveForm percentage={time / duration} src={audioSrc} />
-          </div>
-          <Slider.Track>
-            <Slider.Range />
-            <Slider.Thumb />
-          </Slider.Track>
-        </Slider.Root>
+        {duration ? (
+          <Slider.Root
+            className="relative flex-1 flex items-center select-none touch-none w-full h-full"
+            min={0}
+            max={duration}
+            step={1}
+            value={[time]}
+            onValueChange={handleSliderChange}
+            onValueCommit={handleSliderCommit}
+          >
+            <div className="absolute inset-0">
+              <WaveForm percentage={time / duration} src={audioSrc} />
+            </div>
+            <Slider.Track>
+              <Slider.Range />
+              <Slider.Thumb />
+            </Slider.Track>
+          </Slider.Root>
+        ) : null}
 
         {/* Comments on audio timeline */}
         <div className="absolute top-[calc(100%*var(--wave-timeline-modifier))] bottom-0 inset-x-0 pointer-events-none">
