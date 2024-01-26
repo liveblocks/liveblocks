@@ -163,10 +163,17 @@ export const Thread = forwardRef(
     }, [showDeletedComments, thread.comments]);
     const unreadSince = useThreadUnreadSince(thread.id);
     const unreadIndex = useMemo(() => {
-      if (!unreadSince) {
+      // The user is not subscribed to this thread.
+      if (unreadSince === undefined) {
         return;
       }
 
+      // The user hasn't read the thread yet, so all comments are unread.
+      if (unreadSince === null) {
+        return firstCommentIndex;
+      }
+
+      // The user has read the thread, so we find the first unread comment.
       const unreadIndex = thread.comments.findIndex(
         (comment) =>
           (showDeletedComments ? true : comment.body) &&
@@ -176,15 +183,14 @@ export const Thread = forwardRef(
       return unreadIndex >= 0 && unreadIndex < thread.comments.length
         ? unreadIndex
         : undefined;
-    }, [showDeletedComments, thread, unreadSince]);
-    const [persistedUnreadIndex, setPersistedUnreadIndex] = useState<number>();
-    const unreadIndicatorIndex =
-      persistedUnreadIndex === undefined ? unreadIndex : persistedUnreadIndex;
+    }, [firstCommentIndex, showDeletedComments, thread.comments, unreadSince]);
+    const [newIndex, setNewIndex] = useState<number>();
+    const newIndicatorIndex = newIndex === undefined ? unreadIndex : newIndex;
 
     useEffect(() => {
       if (unreadIndex) {
-        // Only update the persisted index if the new one is lower.
-        setPersistedUnreadIndex((persistedUnreadIndex) =>
+        // Keep the "new" indicator at the lowest unread index.
+        setNewIndex((persistedUnreadIndex) =>
           Math.min(persistedUnreadIndex ?? Infinity, unreadIndex)
         );
       }
@@ -298,17 +304,17 @@ export const Thread = forwardRef(
                 />
               );
 
-              return index === unreadIndicatorIndex &&
-                unreadIndicatorIndex !== firstCommentIndex &&
-                unreadIndicatorIndex <= lastCommentIndex ? (
+              return index === newIndicatorIndex &&
+                newIndicatorIndex !== firstCommentIndex &&
+                newIndicatorIndex <= lastCommentIndex ? (
                 <Fragment key={comment.id}>
                   <div
-                    className="lb-thread-unread-indicator"
-                    aria-label={$.THREAD_UNREAD_INDICATOR_DESCRIPTION}
+                    className="lb-thread-new-indicator"
+                    aria-label={$.THREAD_NEW_INDICATOR_DESCRIPTION}
                   >
-                    <span className="lb-thread-unread-indicator-label">
-                      <ArrowDownIcon className="lb-thread-unread-indicator-label-icon" />
-                      {$.THREAD_UNREAD_INDICATOR}
+                    <span className="lb-thread-new-indicator-label">
+                      <ArrowDownIcon className="lb-thread-new-indicator-label-icon" />
+                      {$.THREAD_NEW_INDICATOR}
                     </span>
                   </div>
                   {children}

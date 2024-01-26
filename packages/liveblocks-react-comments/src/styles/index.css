@@ -979,7 +979,7 @@
   }
 }
 
-.lb-thread-unread-indicator {
+.lb-thread-new-indicator {
   position: relative;
   z-index: 1;
   display: flex;
@@ -998,7 +998,7 @@
   }
 }
 
-.lb-thread-unread-indicator-label {
+.lb-thread-new-indicator-label {
   z-index: 1;
   display: flex;
   flex: none;
@@ -1011,7 +1011,7 @@
   text-transform: uppercase;
 }
 
-.lb-thread-unread-indicator-label-icon {
+.lb-thread-new-indicator-label-icon {
   inline-size: calc(0.6 * var(--lb-icon-size));
   block-size: calc(0.6 * var(--lb-icon-size));
 }

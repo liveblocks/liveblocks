@@ -41,7 +41,7 @@ function createRoomContextForTest<
 }
 
 describe("useThreadUnreadSince", () => {
-  test("should return the thread's `createdAt` date if the associated inbox notification hasn't been read at all", async () => {
+  test("should return `null` if the associated inbox notification hasn't been read at all", async () => {
     const threads = [dummyThreadData()];
     const inboxNotifications = [dummyInboxNoficationData()];
     inboxNotifications[0].threadId = threads[0].id;
@@ -75,7 +75,7 @@ describe("useThreadUnreadSince", () => {
     );
 
     expect(result.current.threads).toEqual({ isLoading: true });
-    expect(result.current.unreadSince).toEqual(null);
+    expect(result.current.unreadSince).toEqual(undefined);
 
     await waitFor(() =>
       expect(result.current.threads).toEqual({
@@ -84,7 +84,7 @@ describe("useThreadUnreadSince", () => {
       })
     );
 
-    expect(result.current.unreadSince).toEqual(threads[0].createdAt);
+    expect(result.current.unreadSince).toEqual(null);
 
     unmount();
   });
@@ -124,7 +124,7 @@ describe("useThreadUnreadSince", () => {
     );
 
     expect(result.current.threads).toEqual({ isLoading: true });
-    expect(result.current.unreadSince).toEqual(null);
+    expect(result.current.unreadSince).toEqual(undefined);
 
     await waitFor(() =>
       expect(result.current.threads).toEqual({
@@ -138,7 +138,7 @@ describe("useThreadUnreadSince", () => {
     unmount();
   });
 
-  test("should return null if the thread doesn't have any inbox notification associated with it", async () => {
+  test("should return `undefined` if the thread doesn't have any inbox notification associated with it", async () => {
     const threads = [dummyThreadData()];
 
     server.use(
@@ -170,7 +170,7 @@ describe("useThreadUnreadSince", () => {
     );
 
     expect(result.current.threads).toEqual({ isLoading: true });
-    expect(result.current.unreadSince).toEqual(null);
+    expect(result.current.unreadSince).toEqual(undefined);
 
     await waitFor(() =>
       expect(result.current.threads).toEqual({
@@ -179,7 +179,7 @@ describe("useThreadUnreadSince", () => {
       })
     );
 
-    expect(result.current.unreadSince).toEqual(null);
+    expect(result.current.unreadSince).toEqual(undefined);
 
     unmount();
   });

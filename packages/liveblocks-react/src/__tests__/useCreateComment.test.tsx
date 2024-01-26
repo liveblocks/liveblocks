@@ -169,13 +169,9 @@ describe("useCreateComment", () => {
       }
     );
 
-    expect(result.current.unreadSince).toBeNull();
+    expect(result.current.unreadSince).toBeUndefined();
 
-    await waitFor(() =>
-      expect(result.current.unreadSince).toEqual(
-        initialInboxNotification.notifiedAt
-      )
-    );
+    await waitFor(() => expect(result.current.unreadSince).toBeNull());
 
     const comment = await act(() =>
       result.current.createComment({

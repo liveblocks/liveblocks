@@ -1695,7 +1695,7 @@ export function createRoomContext<
     return mentionSuggestions;
   }
 
-  function useThreadUnreadSince(threadId: string): Date | null {
+  function useThreadUnreadSince(threadId: string): Date | null | undefined {
     return useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
@@ -1707,16 +1707,12 @@ export function createRoomContext<
 
         const thread = state.threads[threadId];
 
+        // If the user isn't subscribed to the thread (or it doesn't exist), return `undefined`.
         if (inboxNotification === undefined || thread === undefined) {
-          return null;
+          return undefined;
         }
 
-        // If the inbox notification wasn't read at all, the thread is unread since its creation, so we return its `createdAt` date.
-        if (inboxNotification.readAt === null) {
-          return thread.createdAt;
-        }
-
-        // If the inbox notification was read, we return the date at which it was last read.
+        // Otherwise, return the notification's `readAt` value, which could be null if the user hasn't read a thread yet.
         return inboxNotification.readAt;
       }
     );
