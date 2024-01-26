@@ -31,11 +31,12 @@ import { DeleteIcon } from "../icons/Delete";
 import { EditIcon } from "../icons/Edit";
 import { EllipsisIcon } from "../icons/Ellipsis";
 import { EmojiAddIcon } from "../icons/EmojiAdd";
-import {
-  type CommentOverrides,
-  type ComposerOverrides,
-  useOverrides,
+import type {
+  CommentOverrides,
+  ComposerOverrides,
+  GlobalOverrides,
 } from "../overrides";
+import { useOverrides } from "../overrides";
 import type { ComposerSubmitComment } from "../primitives";
 import * as CommentPrimitive from "../primitives/Comment";
 import type {
@@ -116,7 +117,7 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   /**
    * Override the component's strings.
    */
-  overrides?: Partial<CommentOverrides & ComposerOverrides>;
+  overrides?: Partial<GlobalOverrides & CommentOverrides & ComposerOverrides>;
 
   /**
    * @internal
@@ -137,7 +138,7 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
 interface CommentReactionSharedProps
   extends ComponentPropsWithoutRef<"button"> {
   reaction: CommentReactionData;
-  overrides?: Partial<CommentOverrides>;
+  overrides?: Partial<GlobalOverrides & CommentOverrides>;
 
   /**
    * @internal

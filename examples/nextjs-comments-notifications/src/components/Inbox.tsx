@@ -14,6 +14,7 @@ import { Loading } from "./Loading";
 import { ComponentPropsWithoutRef } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import clsx from "clsx";
+import { Link } from "./Link";
 
 function InboxList(props: ComponentPropsWithoutRef<"ol">) {
   const { inboxNotifications } = useInboxNotifications();
@@ -26,6 +27,7 @@ function InboxList(props: ComponentPropsWithoutRef<"ol">) {
         <InboxNotification
           key={inboxNotification.id}
           inboxNotification={inboxNotification}
+          components={{ Anchor: Link }}
         />
       ))}
     </InboxNotificationList>

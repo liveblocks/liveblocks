@@ -21,12 +21,13 @@ import React, {
 import { ArrowDownIcon } from "../icons/ArrowDown";
 import { ResolveIcon } from "../icons/Resolve";
 import { ResolvedIcon } from "../icons/Resolved";
-import {
-  type CommentOverrides,
-  type ComposerOverrides,
-  type ThreadOverrides,
-  useOverrides,
+import type {
+  CommentOverrides,
+  ComposerOverrides,
+  GlobalOverrides,
+  ThreadOverrides,
 } from "../overrides";
+import { useOverrides } from "../overrides";
 import type { ThreadMetadata } from "../types";
 import { classNames } from "../utils/class-names";
 import { findLastIndex } from "../utils/find-last-index";
@@ -108,7 +109,9 @@ export interface ThreadProps<
   /**
    * Override the component's strings.
    */
-  overrides?: Partial<ThreadOverrides & CommentOverrides & ComposerOverrides>;
+  overrides?: Partial<
+    GlobalOverrides & ThreadOverrides & CommentOverrides & ComposerOverrides
+  >;
 }
 
 /**

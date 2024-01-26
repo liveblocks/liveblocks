@@ -17,7 +17,8 @@ import React, { forwardRef, useCallback, useState } from "react";
 import { EmojiIcon } from "../icons/Emoji";
 import { MentionIcon } from "../icons/Mention";
 import { SendIcon } from "../icons/Send";
-import { type ComposerOverrides, useOverrides } from "../overrides";
+import type { ComposerOverrides, GlobalOverrides } from "../overrides";
+import { useOverrides } from "../overrides";
 import * as ComposerPrimitive from "../primitives/Composer";
 import { useComposer } from "../primitives/Composer/contexts";
 import type {
@@ -134,7 +135,7 @@ export type ComposerProps<
     /**
      * Override the component's strings.
      */
-    overrides?: Partial<ComposerOverrides>;
+    overrides?: Partial<GlobalOverrides & ComposerOverrides>;
 
     /**
      * @internal

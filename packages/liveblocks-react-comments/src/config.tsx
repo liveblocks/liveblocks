@@ -3,11 +3,13 @@
 import type { PropsWithChildren } from "react";
 import React from "react";
 
+import { type Components, ComponentsProvider } from "./components";
 import type { Overrides } from "./overrides";
 import { OverridesProvider } from "./overrides";
 
 type CommentsConfigProps = PropsWithChildren<{
   overrides?: Partial<Overrides>;
+  components?: Partial<Components>;
 }>;
 
 /**
@@ -18,8 +20,16 @@ type CommentsConfigProps = PropsWithChildren<{
  *   <App />
  * </CommentsConfig>
  */
-export function CommentsConfig({ overrides, children }: CommentsConfigProps) {
+export function CommentsConfig({
+  overrides,
+  components,
+  children,
+}: CommentsConfigProps) {
   return (
-    <OverridesProvider overrides={overrides}>{children}</OverridesProvider>
+    <OverridesProvider overrides={overrides}>
+      <ComponentsProvider components={components}>
+        {children}
+      </ComponentsProvider>
+    </OverridesProvider>
   );
 }

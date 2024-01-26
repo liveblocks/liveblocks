@@ -21,8 +21,11 @@ import type {
 } from "react";
 import React, { forwardRef, useMemo } from "react";
 
+import type { GlobalComponents } from "../components";
+import { useComponents } from "../components";
 import type {
   CommentOverrides,
+  GlobalOverrides,
   InboxNotificationOverrides,
 } from "../overrides";
 import { useOverrides } from "../overrides";
@@ -66,7 +69,14 @@ export interface InboxNotificationProps extends ComponentPropsWithoutRef<"a"> {
   /**
    * Override the component's strings.
    */
-  overrides?: Partial<InboxNotificationOverrides & CommentOverrides>;
+  overrides?: Partial<
+    GlobalOverrides & InboxNotificationOverrides & CommentOverrides
+  >;
+
+  /**
+   * Override the component's components.
+   */
+  components?: Partial<GlobalComponents>;
 }
 
 interface InboxNotificationLayoutProps
@@ -75,7 +85,8 @@ interface InboxNotificationLayoutProps
   title: ReactNode;
   date: Date | string | number;
   unread?: boolean;
-  overrides?: Partial<InboxNotificationOverrides>;
+  overrides?: Partial<GlobalOverrides & InboxNotificationOverrides>;
+  components?: Partial<GlobalComponents>;
 }
 
 type InboxNotificationAvatarProps = AvatarProps;
@@ -83,7 +94,7 @@ type InboxNotificationAvatarProps = AvatarProps;
 interface InboxNotificationCommentProps extends ComponentProps<"div"> {
   comment: CommentData;
   showHeader?: boolean;
-  overrides?: Partial<CommentOverrides>;
+  overrides?: Partial<GlobalOverrides & CommentOverrides>;
 }
 
 const InboxNotificationLayout = forwardRef<
@@ -91,17 +102,31 @@ const InboxNotificationLayout = forwardRef<
   InboxNotificationLayoutProps
 >(
   (
-    { children, aside, title, date, unread, overrides, className, ...props },
+    {
+      children,
+      aside,
+      title,
+      date,
+      unread,
+      overrides,
+      components,
+      className,
+      ...props
+    },
     forwardedRef
   ) => {
     const $ = useOverrides(overrides);
+    const { Anchor } = useComponents(components);
 
     return (
       <TooltipProvider>
-        <a
+        <Anchor
           className={classNames("lb-root lb-inbox-notification", className)}
           dir={$.dir}
           data-unread={unread ? "" : undefined}
+          // [comments-unread] TODO: Differentiate between no href, href is loading, etc. (Next.js' Link will throw if href is undefined)
+          // [comments-unread] TODO: Make the component non-interactive (functionally and visually, e.g. no hover state) if href isn't provided or is loading
+          href=""
           {...props}
           ref={forwardedRef}
         >
@@ -126,7 +151,7 @@ const InboxNotificationLayout = forwardRef<
             </div>
             <div className="lb-inbox-notification-body">{children}</div>
           </div>
-        </a>
+        </Anchor>
       </TooltipProvider>
     );
   }
