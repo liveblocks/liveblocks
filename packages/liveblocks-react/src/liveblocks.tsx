@@ -29,10 +29,10 @@ import type {
   InboxNotificationsState,
   InboxNotificationsStateSuccess,
   LiveblocksContextBundle,
+  RoomDetailsState,
   UnreadInboxNotificationsCountState,
   UnreadInboxNotificationsCountStateSuccess,
   UrlState,
-  UrlStateSuccess,
 } from "./types";
 
 export const ContextBundle =
@@ -407,6 +407,32 @@ export function createLiveblocksContext<
     );
   }
 
+  const roomsDetailsStore = client[kInternal].roomsDetailsStore;
+
+  function useRoomDetails(roomId: string): RoomDetailsState {
+    const getRoomDetailsState = useCallback(
+      () => roomsDetailsStore.getState(roomId),
+      [roomId]
+    );
+
+    useEffect(() => {
+      void roomsDetailsStore.get(roomId);
+    }, [roomId]);
+
+    const state = useSyncExternalStore(
+      roomsDetailsStore.subscribe,
+      getRoomDetailsState,
+      getRoomDetailsState
+    );
+
+    return state
+      ? ({
+          ...state,
+          details: state.data,
+        } as RoomDetailsState)
+      : { isLoading: true };
+  }
+
   const urlsStore = client[kInternal].urlsStore;
 
   function useUrl(resource: ResolveUrlsResource): UrlState {
@@ -432,35 +458,6 @@ export function createLiveblocksContext<
         } as UrlState)
       : { isLoading: true };
   }
-
-  function useUrlSuspense(resource: ResolveUrlsResource) {
-    const getUrlState = useCallback(
-      () => urlsStore.getState(resource),
-      [resource]
-    );
-    const urlState = getUrlState();
-
-    if (!urlState || urlState.isLoading) {
-      throw urlsStore.get(resource);
-    }
-
-    if (urlState.error) {
-      throw urlState.error;
-    }
-
-    const state = useSyncExternalStore(
-      urlsStore.subscribe,
-      getUrlState,
-      getUrlState
-    );
-
-    return {
-      ...state,
-      url: state?.data,
-    } as UrlStateSuccess;
-  }
-
-  console.log(useUrl, useUrlSuspense);
 
   const bundle: LiveblocksContextBundle<TUserMeta> = {
     LiveblocksProvider,
@@ -489,6 +486,8 @@ export function createLiveblocksContext<
     [kInternal]: {
       useThreadFromCache,
       useCurrentUserId,
+      useRoomDetails,
+      useUrl,
     },
   };
 

@@ -1046,18 +1046,24 @@
   background: var(--lb-dynamic-background);
   color: var(--lb-foreground);
   font-weight: 400;
-  cursor: pointer;
+  text-decoration: inherit;
   transition-property: background;
-
-  &:where(:hover) {
-    --lb-dynamic-background: var(--lb-background-foreground-faint);
-  }
 
   &:where([data-unread]) {
     --lb-dynamic-background: var(--lb-background-accent-faint);
+  }
 
-    &:where(:hover) {
-      --lb-dynamic-background: var(--lb-background-accent-subtle);
+  &:where([href]) {
+    cursor: pointer;
+
+    &:where(:hover, :focus-visible, :focus-within) {
+      --lb-dynamic-background: var(--lb-background-foreground-faint);
+    }
+
+    &:where([data-unread]) {
+      &:where(:hover, :focus-visible, :focus-within) {
+        --lb-dynamic-background: var(--lb-background-accent-subtle);
+      }
     }
   }
 }

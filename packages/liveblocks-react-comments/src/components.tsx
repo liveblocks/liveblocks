@@ -8,12 +8,8 @@ import type {
 import { createContext, useContext, useMemo } from "react";
 import * as React from "react";
 
-type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
-
 export interface GlobalComponents {
-  Anchor:
-    | ComponentType<WithRequired<ComponentPropsWithoutRef<"a">, "href">>
-    | "a";
+  Anchor: ComponentType<ComponentPropsWithoutRef<"a">> | "a";
 }
 
 export type Components = GlobalComponents;

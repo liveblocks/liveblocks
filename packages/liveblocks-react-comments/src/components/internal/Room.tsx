@@ -1,6 +1,7 @@
 "use client";
 
-import { useSharedContextBundle } from "@liveblocks/react";
+import { kInternal } from "@liveblocks/core";
+import { useLiveblocksContextBundle } from "@liveblocks/react";
 import type { ComponentProps } from "react";
 import React, { useMemo } from "react";
 
@@ -11,7 +12,9 @@ export interface RoomProps extends ComponentProps<"span"> {
 }
 
 export function Room({ roomId, className, ...props }: RoomProps) {
-  const { useRoomDetails } = useSharedContextBundle();
+  const {
+    [kInternal]: { useRoomDetails },
+  } = useLiveblocksContextBundle();
   const { details, isLoading } = useRoomDetails(roomId);
   const resolvedRoomName = useMemo(() => {
     return details?.name ?? roomId;

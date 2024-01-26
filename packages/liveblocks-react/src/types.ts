@@ -22,6 +22,7 @@ import type {
   kInternal,
   PartialNullable,
   Resolve,
+  ResolveUrlsResource,
   RoomDetails,
   RoomEventMessage,
   RoomInitializers,
@@ -312,16 +313,6 @@ export type SharedContextBundle<TUserMeta extends BaseUserMeta> = {
    */
   useUser(userId: string): UserState<TUserMeta["info"]>;
 
-  /**
-   * @beta
-   *
-   * Returns room details from a given room ID.
-   *
-   * @example
-   * const { details, error, isLoading } = useRoomDetails("room-id");
-   */
-  useRoomDetails(roomId: string): RoomDetailsState;
-
   suspense: {
     /**
      * @beta
@@ -332,16 +323,6 @@ export type SharedContextBundle<TUserMeta extends BaseUserMeta> = {
      * const { user } = useUser("user-id");
      */
     useUser(userId: string): UserStateSuccess<TUserMeta["info"]>;
-
-    /**
-     * @beta
-     *
-     * Returns room details from a given room ID.
-     *
-     * @example
-     * const { details } = useRoomDetails("room-id");
-     */
-    useRoomDetails(roomId: string): RoomDetailsStateSuccess;
   };
 };
 
@@ -1226,6 +1207,26 @@ type PrivateLiveblocksContextApi = {
    * Returns the current user ID. Can only be used after making a call to a Notifications API.
    */
   useCurrentUserId(): string | null;
+
+  /**
+   * @private
+   *
+   * Returns room details from a given room ID.
+   *
+   * @example
+   * const { details, error, isLoading } = useRoomDetails("room-id");
+   */
+  useRoomDetails(roomId: string): RoomDetailsState;
+
+  /**
+   * @private
+   *
+   * Returns a URL details from a given room ID.
+   *
+   * @example
+   * const { url, error, isLoading } = useUrl("room-id");
+   */
+  useUrl(resource: ResolveUrlsResource): UrlState;
 };
 
 export type LiveblocksContextBundle<TUserMeta extends BaseUserMeta> = Resolve<

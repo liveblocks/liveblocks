@@ -4,13 +4,7 @@ import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
 import { ContextBundle as LiveblocksContextBundle } from "./liveblocks";
 import { ContextBundle as RoomContextBundle } from "./room";
-import type {
-  RoomDetailsState,
-  RoomDetailsStateSuccess,
-  SharedContextBundle,
-  UserState,
-  UserStateSuccess,
-} from "./types";
+import type { SharedContextBundle, UserState, UserStateSuccess } from "./types";
 
 /**
  * @private
@@ -36,7 +30,6 @@ export function createSharedContext<
   TUserMeta extends BaseUserMeta = BaseUserMeta,
 >(client: Client): SharedContextBundle<TUserMeta> {
   const usersStore = client[kInternal].usersStore;
-  const roomsDetailsStore = client[kInternal].roomsDetailsStore;
 
   function useUser(userId: string): UserState<TUserMeta["info"]> {
     const getUserState = useCallback(
@@ -89,64 +82,11 @@ export function createSharedContext<
     } as UserStateSuccess<TUserMeta["info"]>;
   }
 
-  function useRoomDetails(roomId: string): RoomDetailsState {
-    const getRoomDetailsState = useCallback(
-      () => roomsDetailsStore.getState(roomId),
-      [roomId]
-    );
-
-    useEffect(() => {
-      void roomsDetailsStore.get(roomId);
-    }, [roomId]);
-
-    const state = useSyncExternalStore(
-      roomsDetailsStore.subscribe,
-      getRoomDetailsState,
-      getRoomDetailsState
-    );
-
-    return state
-      ? ({
-          ...state,
-          details: state.data,
-        } as RoomDetailsState)
-      : { isLoading: true };
-  }
-
-  function useRoomDetailsSuspense(roomId: string) {
-    const getRoomDetailsState = useCallback(
-      () => roomsDetailsStore.getState(roomId),
-      [roomId]
-    );
-    const roomDetailsState = getRoomDetailsState();
-
-    if (!roomDetailsState || roomDetailsState.isLoading) {
-      throw roomsDetailsStore.get(roomId);
-    }
-
-    if (roomDetailsState.error) {
-      throw roomDetailsState.error;
-    }
-
-    const state = useSyncExternalStore(
-      roomsDetailsStore.subscribe,
-      getRoomDetailsState,
-      getRoomDetailsState
-    );
-
-    return {
-      ...state,
-      details: state?.data,
-    } as RoomDetailsStateSuccess;
-  }
-
   const bundle: SharedContextBundle<TUserMeta> = {
     useUser,
-    useRoomDetails,
 
     suspense: {
       useUser: useUserSuspense,
-      useRoomDetails: useRoomDetailsSuspense,
     },
   };
 

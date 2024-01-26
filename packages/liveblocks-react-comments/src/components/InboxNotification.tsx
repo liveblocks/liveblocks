@@ -5,6 +5,7 @@ import type {
   CommentData,
   InboxNotificationData,
   InboxNotificationThreadData,
+  ResolveUrlsResource,
   ThreadData,
 } from "@liveblocks/core";
 import {
@@ -118,15 +119,14 @@ const InboxNotificationLayout = forwardRef<
     const $ = useOverrides(overrides);
     const { Anchor } = useComponents(components);
 
+    console.log("render", title);
+
     return (
       <TooltipProvider>
         <Anchor
           className={classNames("lb-root lb-inbox-notification", className)}
           dir={$.dir}
           data-unread={unread ? "" : undefined}
-          // [comments-unread] TODO: Differentiate between no href, href is loading, etc. (Next.js' Link will throw if href is undefined)
-          // [comments-unread] TODO: Make the component non-interactive (functionally and visually, e.g. no hover state) if href isn't provided or is loading
-          href=""
           {...props}
           ref={forwardedRef}
         >
@@ -323,11 +323,11 @@ const InboxNotificationThread = forwardRef<
 >(({ inboxNotification, overrides, ...props }, forwardedRef) => {
   const $ = useOverrides(overrides);
   const {
-    [kInternal]: { useThreadFromCache, useCurrentUserId },
+    [kInternal]: { useThreadFromCache, useCurrentUserId, useUrl },
   } = useLiveblocksContextBundle();
   const thread = useThreadFromCache(inboxNotification.threadId);
   const currentUserId = useCurrentUserId();
-  const { unread, date, aside, title, content } = useMemo(() => {
+  const { unread, date, aside, title, content, resource } = useMemo(() => {
     const contents = generateInboxNotificationThreadContents(
       inboxNotification,
       thread,
@@ -368,6 +368,12 @@ const InboxNotificationThread = forwardRef<
             ))}
           </div>
         );
+        const resource: ResolveUrlsResource = {
+          type: "thread",
+          roomId: thread.roomId,
+          threadId: thread.id,
+          commentId: contents.comments[contents.comments.length - 1]?.id,
+        };
 
         return {
           unread: contents.unread,
@@ -375,6 +381,7 @@ const InboxNotificationThread = forwardRef<
           aside,
           title,
           content,
+          resource,
         };
       }
 
@@ -396,6 +403,12 @@ const InboxNotificationThread = forwardRef<
             />
           </div>
         );
+        const resource: ResolveUrlsResource = {
+          type: "thread",
+          roomId: thread.roomId,
+          threadId: thread.id,
+          commentId: mentionComment.id,
+        };
 
         return {
           unread: contents.unread,
@@ -403,6 +416,7 @@ const InboxNotificationThread = forwardRef<
           aside,
           title,
           content,
+          resource,
         };
       }
 
@@ -413,6 +427,7 @@ const InboxNotificationThread = forwardRef<
         );
     }
   }, [$, currentUserId, inboxNotification, overrides, thread]);
+  const { url } = useUrl(resource);
 
   return (
     <InboxNotificationLayout
@@ -421,6 +436,7 @@ const InboxNotificationThread = forwardRef<
       date={date}
       unread={unread}
       overrides={overrides}
+      href={url}
       {...props}
       ref={forwardedRef}
     >
