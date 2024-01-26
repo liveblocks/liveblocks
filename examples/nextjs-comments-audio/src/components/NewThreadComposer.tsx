@@ -77,10 +77,7 @@ export function NewThreadComposer({ duration, time }: Props) {
           }}
         />
         <Composer.Submit asChild>
-          <button
-            type="button"
-            className="bg-neutral-900 shrink-0 size-10 rounded-full flex items-center justify-center disabled:bg-neutral-200 transition-colors duration-150 ease-out hover:bg-neutral-800 focus:bg-neutral-800"
-          >
+          <button className="bg-neutral-900 shrink-0 size-10 rounded-full flex items-center justify-center disabled:bg-neutral-200 transition-colors duration-150 ease-out hover:bg-neutral-800 focus:bg-neutral-800">
             <SendIcon className="size-4 text-white" />
           </button>
         </Composer.Submit>

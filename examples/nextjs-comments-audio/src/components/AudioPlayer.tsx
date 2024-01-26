@@ -27,13 +27,20 @@ export function AudioPlayer() {
     updateMyPresence({ state: playing ? "playing" : "paused" });
   }, [playing]);
 
-  // Get audio duration
-  const handleLoadedMetadata = useCallback(() => {
+  // Set duration if audio has loaded
+  const setAudioDuration = useCallback(() => {
     if (!audioRef.current) {
       return;
     }
 
-    setDuration(audioRef.current.duration);
+    if (!Number.isNaN(audioRef.current.duration)) {
+      setDuration(audioRef.current.duration);
+    }
+  }, []);
+
+  // If audio loaded before component, set duration immediately
+  useEffect(() => {
+    setAudioDuration();
   }, []);
 
   // Update `time` as audio progresses, but not when seeking
@@ -116,7 +123,7 @@ export function AudioPlayer() {
           ref={audioRef}
           src={audioSrc}
           preload="true"
-          onLoadedMetadata={handleLoadedMetadata}
+          onLoadedMetadata={setAudioDuration}
           onTimeUpdate={handleTimeUpdate}
           onEnded={handleEnded}
         />
