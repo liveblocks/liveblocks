@@ -111,8 +111,7 @@ export class Awareness extends Observable<unknown> {
         // if presence is already undefined, we don't need to change anything here
         return;
       }
-      const { [Y_PRESENCE_KEY]: _, ...withoutYjs } = presence;
-      this.room.updatePresence(withoutYjs);
+      this.room.updatePresence({ ...presence, [Y_PRESENCE_KEY]: null });
       this.emit("update", [
         { added: [], updated: [], removed: [this.clientID] },
         "local",
