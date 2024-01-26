@@ -134,7 +134,7 @@ export function AudioPlayer() {
                 style={{
                   animationPlayState: playing ? "running" : "paused",
                 }}
-                src="/cover.jpeg"
+                src="/cover.svg"
                 width={384}
                 height={384}
                 alt=""
