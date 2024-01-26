@@ -77,6 +77,7 @@ import type {
   RoomProviderProps,
   ThreadsState,
   ThreadsStateSuccess,
+  ThreadUnreadSince,
   UseThreadsOptions,
 } from "./types";
 
@@ -1695,7 +1696,7 @@ export function createRoomContext<
     return mentionSuggestions;
   }
 
-  function useThreadUnreadSince(threadId: string): Date | null | undefined {
+  function useThreadUnreadSince(threadId: string): ThreadUnreadSince {
     return useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
@@ -1707,13 +1708,16 @@ export function createRoomContext<
 
         const thread = state.threads[threadId];
 
-        // If the user isn't subscribed to the thread (or it doesn't exist), return `undefined`.
         if (inboxNotification === undefined || thread === undefined) {
-          return undefined;
+          return {
+            isSubscribed: false,
+          };
         }
 
-        // Otherwise, return the notification's `readAt` value, which could be null if the user hasn't read a thread yet.
-        return inboxNotification.readAt;
+        return {
+          isSubscribed: true,
+          unreadSince: inboxNotification.readAt,
+        };
       }
     );
   }

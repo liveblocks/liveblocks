@@ -161,10 +161,10 @@ export const Thread = forwardRef(
         ? thread.comments.length - 1
         : findLastIndex(thread.comments, (comment) => comment.body);
     }, [showDeletedComments, thread.comments]);
-    const unreadSince = useThreadUnreadSince(thread.id);
+    const { isSubscribed, unreadSince } = useThreadUnreadSince(thread.id);
     const unreadIndex = useMemo(() => {
       // The user is not subscribed to this thread.
-      if (unreadSince === undefined) {
+      if (!isSubscribed) {
         return;
       }
 
@@ -183,7 +183,13 @@ export const Thread = forwardRef(
       return unreadIndex >= 0 && unreadIndex < thread.comments.length
         ? unreadIndex
         : undefined;
-    }, [firstCommentIndex, showDeletedComments, thread.comments, unreadSince]);
+    }, [
+      firstCommentIndex,
+      isSubscribed,
+      showDeletedComments,
+      thread.comments,
+      unreadSince,
+    ]);
     const [newIndex, setNewIndex] = useState<number>();
     const newIndicatorIndex = newIndex === undefined ? unreadIndex : newIndex;
 

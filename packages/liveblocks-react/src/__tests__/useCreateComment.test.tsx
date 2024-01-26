@@ -157,7 +157,7 @@ describe("useCreateComment", () => {
     const { result, unmount } = renderHook(
       () => ({
         threads: useThreads().threads,
-        unreadSince: useThreadUnreadSince(initialThread.id),
+        unreadSince: useThreadUnreadSince(initialThread.id).unreadSince,
         createComment: useCreateComment(),
       }),
       {

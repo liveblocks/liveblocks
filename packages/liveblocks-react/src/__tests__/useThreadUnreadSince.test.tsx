@@ -75,7 +75,7 @@ describe("useThreadUnreadSince", () => {
     );
 
     expect(result.current.threads).toEqual({ isLoading: true });
-    expect(result.current.unreadSince).toEqual(undefined);
+    expect(result.current.unreadSince).toEqual({ isSubscribed: false });
 
     await waitFor(() =>
       expect(result.current.threads).toEqual({
@@ -84,7 +84,10 @@ describe("useThreadUnreadSince", () => {
       })
     );
 
-    expect(result.current.unreadSince).toEqual(null);
+    expect(result.current.unreadSince).toEqual({
+      isSubscribed: true,
+      unreadSince: null,
+    });
 
     unmount();
   });
@@ -124,7 +127,7 @@ describe("useThreadUnreadSince", () => {
     );
 
     expect(result.current.threads).toEqual({ isLoading: true });
-    expect(result.current.unreadSince).toEqual(undefined);
+    expect(result.current.unreadSince).toEqual({ isSubscribed: false });
 
     await waitFor(() =>
       expect(result.current.threads).toEqual({
@@ -133,12 +136,15 @@ describe("useThreadUnreadSince", () => {
       })
     );
 
-    expect(result.current.unreadSince).toEqual(inboxNotifications[0].readAt);
+    expect(result.current.unreadSince).toEqual({
+      isSubscribed: true,
+      unreadSince: inboxNotifications[0].readAt,
+    });
 
     unmount();
   });
 
-  test("should return `undefined` if the thread doesn't have any inbox notification associated with it", async () => {
+  test("should not return a value if the thread doesn't have any inbox notification associated with it", async () => {
     const threads = [dummyThreadData()];
 
     server.use(
@@ -170,7 +176,7 @@ describe("useThreadUnreadSince", () => {
     );
 
     expect(result.current.threads).toEqual({ isLoading: true });
-    expect(result.current.unreadSince).toEqual(undefined);
+    expect(result.current.unreadSince).toEqual({ isSubscribed: false });
 
     await waitFor(() =>
       expect(result.current.threads).toEqual({
@@ -179,7 +185,7 @@ describe("useThreadUnreadSince", () => {
       })
     );
 
-    expect(result.current.unreadSince).toEqual(undefined);
+    expect(result.current.unreadSince).toEqual({ isSubscribed: false });
 
     unmount();
   });
