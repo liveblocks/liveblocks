@@ -217,6 +217,7 @@ export type ClientOptions<TUserMeta extends BaseUserMeta = BaseUserMeta> = {
   backgroundKeepAliveTimeout?: number; // in milliseconds
   polyfills?: Polyfills;
   unstable_fallbackToHTTP?: boolean;
+  unstable_streamData?: boolean;
 
   /**
    * @deprecated Use `polyfills: { fetch: ... }` instead.
@@ -433,6 +434,7 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
         unstable_batchedUpdates: options?.unstable_batchedUpdates,
         baseUrl,
         unstable_fallbackToHTTP: !!clientOptions.unstable_fallbackToHTTP,
+        unstable_streamData: !!clientOptions.unstable_streamData,
       }
     );
 

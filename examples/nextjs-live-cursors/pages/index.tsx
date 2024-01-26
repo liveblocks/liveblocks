@@ -37,7 +37,6 @@ function Example() {
     <main
       className={styles.container}
       onPointerMove={(event) => {
-        event.preventDefault();
         // Update the user cursor position on every pointer move
         updateMyPresence({
           cursor: {

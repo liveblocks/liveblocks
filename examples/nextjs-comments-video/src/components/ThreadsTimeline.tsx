@@ -20,7 +20,7 @@ import { useState } from "react";
 export function ThreadsTimeline() {
   return (
     // @ts-ignore
-    <ErrorBoundary fallback={<div>error</div>}>
+    <ErrorBoundary fallback={<div>Error</div>}>
       <ClientSideSuspense fallback={null}>
         {() => <PinnedThreads />}
       </ClientSideSuspense>

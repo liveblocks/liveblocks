@@ -985,6 +985,7 @@ export type RoomConfig = {
   backgroundKeepAliveTimeout?: number;
 
   unstable_fallbackToHTTP?: boolean;
+  unstable_streamData?: boolean;
 
   polyfills?: Polyfills;
 
@@ -1659,23 +1660,27 @@ export function createRoom<
     authValue: AuthValue,
     options?: RequestInit
   ) {
-    {
-      const url = new URL(
-        `/v2/c/rooms/${encodeURIComponent(roomId)}${endpoint}`,
-        config.baseUrl
-      );
-      const fetcher =
-        config.polyfills?.fetch || /* istanbul ignore next */ fetch;
-      return await fetcher(url.toString(), {
-        ...options,
-        headers: {
-          ...options?.headers,
-          Authorization: `Bearer ${getAuthBearerHeaderFromAuthValue(
-            authValue
-          )}`,
-        },
-      });
-    }
+    const url = new URL(
+      `/v2/c/rooms/${encodeURIComponent(roomId)}${endpoint}`,
+      config.baseUrl
+    );
+    const fetcher = config.polyfills?.fetch || /* istanbul ignore next */ fetch;
+    return await fetcher(url.toString(), {
+      ...options,
+      headers: {
+        ...options?.headers,
+        Authorization: `Bearer ${getAuthBearerHeaderFromAuthValue(authValue)}`,
+      },
+    });
+  }
+
+  async function streamFetch(authValue: AuthValue, roomId: string) {
+    return fetchClientApi(roomId, "/storage", authValue, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
   }
 
   async function httpPostToRoom(endpoint: "/send-message", body: JsonObject) {
@@ -2327,12 +2332,7 @@ export function createRoom<
           case ServerMsgCode.INITIAL_STORAGE_STATE: {
             // createOrUpdateRootFromMessage function could add ops to offlineOperations.
             // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
-            const unacknowledgedOps = new Map(context.unacknowledgedOps);
-            createOrUpdateRootFromMessage(message, doNotBatchUpdates);
-            applyAndSendOps(unacknowledgedOps, doNotBatchUpdates);
-            _resolveStoragePromise?.();
-            notifyStorageStatus();
-            eventHub.storageDidLoad.notify();
+            processInitialStorage(message);
             break;
           }
           // Write event
@@ -2515,11 +2515,35 @@ export function createRoom<
   let _getStorage$: Promise<void> | null = null;
   let _resolveStoragePromise: (() => void) | null = null;
 
+  function processInitialStorage(message: InitialDocumentStateServerMsg) {
+    const unacknowledgedOps = new Map(context.unacknowledgedOps);
+    createOrUpdateRootFromMessage(message, doNotBatchUpdates);
+    applyAndSendOps(unacknowledgedOps, doNotBatchUpdates);
+    _resolveStoragePromise?.();
+    notifyStorageStatus();
+    eventHub.storageDidLoad.notify();
+  }
+
+  async function streamStorage() {
+    if (!managedSocket.authValue) {
+      return;
+    }
+    // TODO: Handle potential race conditions where the room get disconnected while the request is pending
+    const result = await streamFetch(managedSocket.authValue, config.roomId);
+    const items = (await result.json()) as IdTuple<SerializedCrdt>[];
+    processInitialStorage({ type: ServerMsgCode.INITIAL_STORAGE_STATE, items });
+  }
+
   function refreshStorage(options: { flush: boolean }) {
-    // Only add the fetch message to the outgoing message queue if it isn't
-    // already there
     const messages = context.buffer.messages;
-    if (!messages.some((msg) => msg.type === ClientMsgCode.FETCH_STORAGE)) {
+    if (config.unstable_streamData) {
+      // instead of sending a fetch message over WS, stream over HTTP
+      void streamStorage();
+    } else if (
+      !messages.some((msg) => msg.type === ClientMsgCode.FETCH_STORAGE)
+    ) {
+      // Only add the fetch message to the outgoing message queue if it isn't
+      // already there
       messages.push({ type: ClientMsgCode.FETCH_STORAGE });
     }
 

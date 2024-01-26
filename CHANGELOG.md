@@ -1,3 +1,53 @@
+# v1.9.7
+
+### `@liveblocks/node`
+
+- Expose new `nextCursor` field in
+  [Get Rooms](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms)
+  API responses, to make pagination easier to work with
+- Update TypeScript types for some responses
+
+### `create-liveblocks-app`
+
+- Adds a fallback for passing data from Safari to the console.
+
+# v1.9.6
+
+### `@liveblocks/react`
+
+- Fix certain Next.js sites not building correctly due to improper
+  `useSyncExternalStore` import
+
+# v1.9.5
+
+### `@liveblocks/react-comments`
+
+- Fix mention suggestions not appearing.
+
+# v1.9.4
+
+### `@liveblocks/react`
+
+- Fix polling on `useThreads` hook.
+
+# v1.9.3
+
+### `@liveblocks/react`
+
+- Fix a bug that prevented comments from being used across multiple rooms.
+
+### `@liveblocks/node`
+
+- Fix `getRooms()` not throwing `LiveblocksError` when invalid response was
+  received.
+
+# v1.9.2
+
+### `@liveblocks/react-comments`
+
+- Add `portalContainer` prop to `CommentsConfig` to customize where floating
+  elements (e.g. tooltips, dropdowns, etc) are portaled into.
+
 # v1.9.1
 
 ### `@liveblocks/node`

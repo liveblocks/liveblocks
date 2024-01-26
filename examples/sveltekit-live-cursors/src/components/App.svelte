@@ -31,7 +31,6 @@
 
   // Update cursor presence to current pointer location
   function handlePointerMove(event: PointerEvent) {
-    event.preventDefault();
     room.updatePresence({
       cursor: {
         x: Math.round(event.clientX),

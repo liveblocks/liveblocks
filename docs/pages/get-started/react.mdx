@@ -61,7 +61,9 @@ collaboration to your React application using the hooks from the
       collaborate. To create a real-time experience, multiple users must be
       connected to the same room.
 
-      ```tsx file="App.tsx" highlight="7-11"
+      ```tsx file="App.tsx" highlight="9-13"
+      "use client";
+
       import { RoomProvider } from "./liveblocks.config";
       import { Room } from "./Room";
       import { ClientSideSuspense } from "@liveblocks/react";
@@ -88,7 +90,9 @@ collaboration to your React application using the hooks from the
       The first we’ll add is `useOthers`, a hook that provides information about
       which other users are connected to the room.
 
-      ```tsx file="Room.tsx" highlight="4"
+      ```tsx file="Room.tsx" highlight="6"
+      "use client";
+
       import { useOthers } from "./liveblocks.config";
 
       export function Room() {
@@ -105,7 +109,7 @@ collaboration to your React application using the hooks from the
   <Step lastStep>
     <StepTitle>Next: set up authentication</StepTitle>
     <StepContent>
-    
+
       By default, Liveblocks is configured to work without an authentication endpoint
       where everyone automatically has access to rooms. This approach is great for
       prototyping and marketing pages where setting up your own security isn’t always

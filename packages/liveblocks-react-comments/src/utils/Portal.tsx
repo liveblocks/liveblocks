@@ -8,10 +8,16 @@ import type { ComponentPropsWithSlot } from "../types";
 
 const PORTAL_NAME = "Portal";
 
-export const Portal = forwardRef<HTMLDivElement, ComponentPropsWithSlot<"div">>(
-  ({ asChild, ...props }, forwardedRef) => {
+interface PortalProps extends ComponentPropsWithSlot<"div"> {
+  /**
+   * The container to render the portal into.
+   */
+  container?: HTMLElement | null;
+}
+
+const Portal = forwardRef<HTMLDivElement, PortalProps>(
+  ({ container = document?.body, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
-    const container = document?.body;
 
     return container
       ? createPortal(
