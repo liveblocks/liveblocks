@@ -119,8 +119,6 @@ const InboxNotificationLayout = forwardRef<
     const $ = useOverrides(overrides);
     const { Anchor } = useComponents(components);
 
-    console.log("render", title);
-
     return (
       <TooltipProvider>
         <Anchor

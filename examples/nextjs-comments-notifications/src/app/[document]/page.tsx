@@ -13,7 +13,12 @@ function Example() {
   return (
     <div className="threads">
       {threads.map((thread) => (
-        <Thread key={thread.id} thread={thread} className="thread" />
+        <Thread
+          key={thread.id}
+          thread={thread}
+          className="thread"
+          id={thread.id}
+        />
       ))}
       <Composer className="composer" />
     </div>

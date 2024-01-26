@@ -3,6 +3,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useMemo } from "react";
+import { DOCUMENTS } from "../database";
 
 export function getUserId(
   userIndex: number,
@@ -23,6 +24,19 @@ export function getRoomIdFromUserId(userId?: string): string | undefined {
   const [, , roomId] = userId?.match(/^user-(\d+)-(.+)$/) ?? [];
 
   return roomId;
+}
+
+export function getDocumentFromRoomId(roomId?: string): string | undefined {
+  if (!roomId) {
+    return;
+  }
+
+  for (const document of DOCUMENTS) {
+    if (roomId.includes(document)) {
+      return document;
+    }
+  }
+  return undefined;
 }
 
 export function useOverrideRoomId(roomId: string) {

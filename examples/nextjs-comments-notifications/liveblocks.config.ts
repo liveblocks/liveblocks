@@ -3,6 +3,7 @@
 import { createClient } from "@liveblocks/client";
 import { createLiveblocksContext } from "@liveblocks/react";
 import { createRoomContext } from "@liveblocks/react";
+import { getDocumentFromRoomId } from "./src/utils/ids";
 
 export const client = createClient({
   authEndpoint: "/api/liveblocks-auth",
@@ -35,6 +36,19 @@ export const client = createClient({
 
       return [];
     }
+  },
+
+  // Get the URL for a thread
+  resolveUrls: ({ resources }) => {
+    return resources.map((resource) => {
+      if (resource.type === "thread") {
+        const document = getDocumentFromRoomId(resource.roomId);
+
+        return document ? `/${document}#${resource.threadId}` : undefined;
+      } else {
+        return;
+      }
+    });
   },
 });
 
