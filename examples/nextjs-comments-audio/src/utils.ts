@@ -15,25 +15,15 @@ export function useSkipTo() {
 
 export function useSkipToListener(callback: (timePercentage: number) => void) {
   useEffect(() => {
-    function handler(event: SkipToEvent) {
-      callback(event.detail.timePercentage);
+    function handler(event: Event | SkipToEvent) {
+      const customEvent = event as SkipToEvent;
+      callback(customEvent.detail.timePercentage);
     }
 
-    window.addEventListener(SKIP_TO_EVENT_NAME, handler as any);
+    window.addEventListener(SKIP_TO_EVENT_NAME, handler);
 
     return () => {
-      window.removeEventListener(SKIP_TO_EVENT_NAME, handler as any);
-    };
-  }, [callback]);
-}
-
-export function useKeyDownListener(
-  callback: (keyboardEvent: KeyboardEvent) => void
-) {
-  useEffect(() => {
-    window.addEventListener("keydown", callback);
-    return () => {
-      window.removeEventListener("keydown", callback);
+      window.removeEventListener(SKIP_TO_EVENT_NAME, handler);
     };
   }, [callback]);
 }
