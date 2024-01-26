@@ -4,6 +4,7 @@ import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import type { ComponentProps, ReactNode } from "react";
 import React, { forwardRef, useMemo } from "react";
 
+import { useCommentsConfig } from "../../config";
 import {
   FLOATING_ELEMENT_COLLISION_PADDING,
   FLOATING_ELEMENT_SIDE_OFFSET,
@@ -40,12 +41,14 @@ export interface ShortcutTooltipKeyProps extends ComponentProps<"abbr"> {
 
 export const Tooltip = forwardRef<HTMLButtonElement, TooltipProps>(
   ({ children, content, multiline, className, ...props }, forwardedRef) => {
+    const { portalContainer } = useCommentsConfig();
+
     return (
       <TooltipPrimitive.Root disableHoverableContent>
         <TooltipPrimitive.Trigger asChild ref={forwardedRef}>
           {children}
         </TooltipPrimitive.Trigger>
-        <TooltipPrimitive.Portal>
+        <TooltipPrimitive.Portal container={portalContainer}>
           <TooltipPrimitive.Content
             className={classNames(
               "lb-root lb-portal lb-tooltip",

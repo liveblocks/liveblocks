@@ -286,5 +286,27 @@
     "topics": ["webhooks"],
     "technologies": ["nodejs"],
     "date": "2023-12-14"
+  },
+  {
+    "title": "How to use your Y.Doc on the server",
+    "path": "/how-to-use-your-ydoc-on-the-server",
+    "topics": ["data-fetching", "state", "rest-api"],
+    "technologies": ["yjs", "nodejs"],
+    "date": "2024-01-04",
+    "featured": true
+  },
+  {
+    "title": "Getting Tiptap state on the server",
+    "path": "/getting-tiptap-state-on-the-server",
+    "topics": ["text-editors", "data-fetching", "state", "rest-api"],
+    "technologies": ["tiptap", "yjs", "nodejs"],
+    "date": "2024-01-04"
+  },
+  {
+    "title": "Getting ProseMirror state on the server",
+    "path": "/getting-prosemirror-state-on-the-server",
+    "topics": ["text-editors", "data-fetching", "state", "rest-api"],
+    "technologies": ["prosemirror", "yjs", "nodejs"],
+    "date": "2024-01-04"
   }
 ]

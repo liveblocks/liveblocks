@@ -1,0 +1,48 @@
+---
+meta:
+  title: "Getting ProseMirror state on the server"
+  description:
+    "Learn how to retrieve your Yjs document’s ProseMirror state on the server"
+---
+
+Using [`@liveblocks/node`](/docs/api-reference/liveblocks-node), it’s possible
+to retrieve the state of your ProseMirror document, and its
+[`Y.Doc`](https://docs.yjs.dev/api/y.doc), on the server.
+
+## Getting Tiptap document state
+
+Using
+[`Liveblocks.getYjsDocumentAsBinaryUpdate`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc-binary)
+you can fetch your Yjs data, and place it inside a `Y.Doc`. We can then call
+`yDocToProseMirror` from [`y-prosemirror`](https://github.com/yjs/y-prosemirror)
+to retrieve the ProseMirror editor’s state.
+
+```ts
+import * as Y from "yjs";
+import { Liveblocks } from "@liveblocks/node";
+import { yDocToProsemirrorJSON } from "y-prosemirror";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+export async function POST() {
+  // Get your Yjs data as a binary update
+  const update = await liveblocks.getYjsDocumentAsBinaryUpdate("my-room-name");
+
+  // Create a Yjs document
+  const yDoc = new Y.Doc();
+
+  // Apply the binary update to `yDoc`
+  Y.applyUpdate(yDoc, new Uint8Array(update));
+
+  // Get ProseMirror state from the default Yjs property it uses, "prosemirror"
+  const tiptapState = yDocToProsemirrorJSON(yDoc, "prosemirror");
+
+  // { type: "doc", content: [{ type: "paragraph", content: [...] }] }
+  console.log(tiptapState);
+}
+```
+
+If you’d like to edit your document, make sure to read
+[how to use your `Y.Doc` on the server](/docs/guides/how-to-use-your-ydoc-on-the-server).

@@ -189,6 +189,41 @@ describe("client", () => {
     });
   });
 
+  test("should throw a LiveblocksError when getRooms receives an error response", async () => {
+    const error = {
+      error: "InvalidSecretKey",
+      message: "Invalid secret key",
+    };
+
+    server.use(
+      http.get(`${DEFAULT_BASE_URL}/v2/rooms`, () => {
+        return HttpResponse.json(error, { status: 404 });
+      })
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    // This should throw a LiveblocksError
+    try {
+      // Attempt to get, which should fail and throw an error.
+      await client.getRooms({
+        limit: 10,
+        metadata: {
+          color: "blue",
+        },
+      });
+      // If it doesn't throw, fail the test.
+      expect(true).toBe(false);
+    } catch (err) {
+      expect(err instanceof LiveblocksError).toBe(true);
+      if (err instanceof LiveblocksError) {
+        expect(err.status).toBe(404);
+        expect(err.message).toBe(JSON.stringify(error));
+        expect(err.name).toBe("LiveblocksError");
+      }
+    }
+  });
+
   test("should return room data when getRoom receives a successful response", async () => {
     const client = new Liveblocks({ secret: "sk_xxx" });
     await expect(client.getRoom("123")).resolves.toEqual(room);

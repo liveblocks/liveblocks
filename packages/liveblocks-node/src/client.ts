@@ -57,7 +57,7 @@ type Nullable<T> = {
 };
 
 type DateToString<T> = {
-  [P in keyof T]: T[P] extends Date ? string : T[P];
+  [P in keyof T]: Date extends T[P] ? string : T[P];
 };
 
 export type CreateSessionOptions = {
@@ -92,12 +92,12 @@ export type RoomMetadata = Record<string, string | string[]>;
 export type RoomInfo = {
   type: "room";
   id: string;
-  metadata: RoomMetadata;
-  groupsAccesses: RoomAccesses;
-  usersAccesses: RoomAccesses;
-  defaultAccesses: RoomPermission;
+  createdAt: Date;
   lastConnectionAt?: Date;
-  createdAt?: Date;
+  defaultAccesses: RoomPermission;
+  usersAccesses: RoomAccesses;
+  groupsAccesses: RoomAccesses;
+  metadata: RoomMetadata;
 };
 
 type RoomInfoPlain = DateToString<RoomInfo>;
@@ -329,6 +329,7 @@ export class Liveblocks {
     } = {}
   ): Promise<{
     nextPage: string | null;
+    nextCursor: string | null;
     data: RoomInfo[];
   }> {
     const path = url`/v2/rooms`;
@@ -349,8 +350,14 @@ export class Liveblocks {
 
     const res = await this.get(path, queryParams);
 
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
     const data = (await res.json()) as {
       nextPage: string | null;
+      nextCursor: string | null;
       data: RoomInfoPlain[];
     };
 
@@ -360,12 +367,11 @@ export class Liveblocks {
         ? new Date(room.lastConnectionAt)
         : undefined;
 
-      const createdAt = room.createdAt ? new Date(room.createdAt) : undefined;
-
+      const createdAt = new Date(room.createdAt);
       return {
         ...room,
-        lastConnectionAt,
         createdAt,
+        lastConnectionAt,
       };
     });
 
@@ -415,8 +421,7 @@ export class Liveblocks {
       ? new Date(data.lastConnectionAt)
       : undefined;
 
-    const createdAt = data.createdAt ? new Date(data.createdAt) : undefined;
-
+    const createdAt = new Date(data.createdAt);
     return {
       ...data,
       lastConnectionAt,
@@ -444,12 +449,11 @@ export class Liveblocks {
       ? new Date(data.lastConnectionAt)
       : undefined;
 
-    const createdAt = data.createdAt ? new Date(data.createdAt) : undefined;
-
+    const createdAt = new Date(data.createdAt);
     return {
       ...data,
-      lastConnectionAt,
       createdAt,
+      lastConnectionAt,
     };
   }
 
@@ -499,8 +503,7 @@ export class Liveblocks {
       ? new Date(data.lastConnectionAt)
       : undefined;
 
-    const createdAt = data.createdAt ? new Date(data.createdAt) : undefined;
-
+    const createdAt = new Date(data.createdAt);
     return {
       ...data,
       lastConnectionAt,

@@ -72,7 +72,9 @@ We’d love to hear from you.
       collaborate. To create a real-time experience, multiple users must be
       connected to the same room.
 
-      ```tsx file="index.tsx" highlight="7-11"
+      ```tsx file="index.tsx" highlight="9-13"
+      "use client";
+
       import { RoomProvider } from "./liveblocks.config";
       import { Editor } from "./Editor";
       import { ClientSideSuspense } from "@liveblocks/react";
@@ -100,12 +102,16 @@ We’d love to hear from you.
       from `@tiptap/extension-collaboration` and `@tiptap/extension-collaboration-cursor`.
 
       ```tsx file="Editor.tsx"
+      "use client";
+
+      import { useEffect, useState } from "react";
       import { useEditor, EditorContent } from "@tiptap/react";
       import StarterKit from "@tiptap/starter-kit";
       import Collaboration from "@tiptap/extension-collaboration";
       import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
       import * as Y from "yjs";
       import LiveblocksProvider from "@liveblocks/yjs";
+      import { useRoom } from "../liveblocks.config";
 
       type EditorProps = {
         doc: Y.Doc,
