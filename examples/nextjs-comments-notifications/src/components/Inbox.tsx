@@ -12,10 +12,11 @@ import {
 } from "../../liveblocks.config";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { Loading } from "./Loading";
-import { ComponentPropsWithoutRef } from "react";
+import { ComponentPropsWithoutRef, useEffect, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import clsx from "clsx";
 import { Link } from "./Link";
+import { usePathname, useRouter } from "next/navigation";
 
 function InboxList(props: ComponentPropsWithoutRef<"ol">) {
   const { inboxNotifications } = useInboxNotifications();
@@ -45,10 +46,17 @@ export function InboxPopover({
   className,
   ...props
 }: Popover.PopoverContentProps) {
+  const pathname = usePathname();
+  const [isOpen, setOpen] = useState(false);
   const markAllInboxNotificationsAsRead = useMarkAllInboxNotificationsAsRead();
 
+  // Close the popover when navigating
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
   return (
-    <Popover.Root>
+    <Popover.Root open={isOpen} onOpenChange={setOpen}>
       <Popover.Trigger className="button square">
         <ErrorBoundary fallback={null}>
           <ClientSideSuspense fallback={null}>
