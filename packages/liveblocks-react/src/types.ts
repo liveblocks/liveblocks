@@ -302,20 +302,20 @@ export type MutationContext<
   ) => void;
 };
 
-export type ThreadUnreadSince =
+export type ThreadSubscription =
   // The user is not subscribed to the thread
   | {
-      isSubscribed: false;
+      status: "not-subscribed";
       unreadSince?: never;
     }
   // The user is subscribed to the thread but has never read it
   | {
-      isSubscribed: true;
+      status: "subscribed";
       unreadSince: null;
     }
   // The user is subscribed to the thread and has read it
   | {
-      isSubscribed: true;
+      status: "subscribed";
       unreadSince: Date;
     };
 
@@ -809,12 +809,12 @@ type RoomContextBundleCommon<
   /**
    * @beta
    *
-   * Returns the date at which the thread was last read, if the user is subscribed to it.
+   * Returns the subscription status of a thread.
    *
    * @example
-   * const { unreadSince } = useThreadUnreadSince("th_xxx");
+   * const { status, unreadSince } = useThreadSubscription("th_xxx");
    */
-  useThreadUnreadSince(threadId: string): ThreadUnreadSince;
+  useThreadSubscription(threadId: string): ThreadSubscription;
 };
 
 /**

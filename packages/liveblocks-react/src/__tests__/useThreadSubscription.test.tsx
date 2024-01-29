@@ -40,8 +40,8 @@ function createRoomContextForTest<
   );
 }
 
-describe("useThreadUnreadSince", () => {
-  test("should return `null` if the associated inbox notification hasn't been read at all", async () => {
+describe("useThreadSubscription", () => {
+  test("should return the expected object if the associated inbox notification hasn't been read at all", async () => {
     const threads = [dummyThreadData()];
     const inboxNotifications = [dummyInboxNoficationData()];
     inboxNotifications[0].threadId = threads[0].id;
@@ -57,13 +57,13 @@ describe("useThreadUnreadSince", () => {
       })
     );
 
-    const { RoomProvider, useThreads, useThreadUnreadSince } =
+    const { RoomProvider, useThreads, useThreadSubscription } =
       createRoomContextForTest();
 
     const { result, unmount } = renderHook(
       () => ({
         threads: useThreads(),
-        unreadSince: useThreadUnreadSince(threads[0].id),
+        subscription: useThreadSubscription(threads[0].id),
       }),
       {
         wrapper: ({ children }) => (
@@ -75,7 +75,7 @@ describe("useThreadUnreadSince", () => {
     );
 
     expect(result.current.threads).toEqual({ isLoading: true });
-    expect(result.current.unreadSince).toEqual({ isSubscribed: false });
+    expect(result.current.subscription).toEqual({ status: "not-subscribed" });
 
     await waitFor(() =>
       expect(result.current.threads).toEqual({
@@ -84,15 +84,15 @@ describe("useThreadUnreadSince", () => {
       })
     );
 
-    expect(result.current.unreadSince).toEqual({
-      isSubscribed: true,
+    expect(result.current.subscription).toEqual({
+      status: "subscribed",
       unreadSince: null,
     });
 
     unmount();
   });
 
-  test("should return the inbox notification's `readAt` date if it has been read", async () => {
+  test("should return the expected object if the associated inbox notification has been read", async () => {
     const threads = [dummyThreadData()];
     const inboxNotifications = [dummyInboxNoficationData()];
     inboxNotifications[0].threadId = threads[0].id;
@@ -109,13 +109,13 @@ describe("useThreadUnreadSince", () => {
       })
     );
 
-    const { RoomProvider, useThreads, useThreadUnreadSince } =
+    const { RoomProvider, useThreads, useThreadSubscription } =
       createRoomContextForTest();
 
     const { result, unmount } = renderHook(
       () => ({
         threads: useThreads(),
-        unreadSince: useThreadUnreadSince(threads[0].id),
+        subscription: useThreadSubscription(threads[0].id),
       }),
       {
         wrapper: ({ children }) => (
@@ -127,7 +127,7 @@ describe("useThreadUnreadSince", () => {
     );
 
     expect(result.current.threads).toEqual({ isLoading: true });
-    expect(result.current.unreadSince).toEqual({ isSubscribed: false });
+    expect(result.current.subscription).toEqual({ status: "not-subscribed" });
 
     await waitFor(() =>
       expect(result.current.threads).toEqual({
@@ -136,15 +136,15 @@ describe("useThreadUnreadSince", () => {
       })
     );
 
-    expect(result.current.unreadSince).toEqual({
-      isSubscribed: true,
+    expect(result.current.subscription).toEqual({
+      status: "subscribed",
       unreadSince: inboxNotifications[0].readAt,
     });
 
     unmount();
   });
 
-  test("should not return a value if the thread doesn't have any inbox notification associated with it", async () => {
+  test("should return the expected object if the thread doesn't have any inbox notification associated with it", async () => {
     const threads = [dummyThreadData()];
 
     server.use(
@@ -158,13 +158,13 @@ describe("useThreadUnreadSince", () => {
       })
     );
 
-    const { RoomProvider, useThreads, useThreadUnreadSince } =
+    const { RoomProvider, useThreads, useThreadSubscription } =
       createRoomContextForTest();
 
     const { result, unmount } = renderHook(
       () => ({
         threads: useThreads(),
-        unreadSince: useThreadUnreadSince(threads[0].id),
+        subscription: useThreadSubscription(threads[0].id),
       }),
       {
         wrapper: ({ children }) => (
@@ -176,7 +176,7 @@ describe("useThreadUnreadSince", () => {
     );
 
     expect(result.current.threads).toEqual({ isLoading: true });
-    expect(result.current.unreadSince).toEqual({ isSubscribed: false });
+    expect(result.current.subscription).toEqual({ status: "not-subscribed" });
 
     await waitFor(() =>
       expect(result.current.threads).toEqual({
@@ -185,7 +185,7 @@ describe("useThreadUnreadSince", () => {
       })
     );
 
-    expect(result.current.unreadSince).toEqual({ isSubscribed: false });
+    expect(result.current.subscription).toEqual({ status: "not-subscribed" });
 
     unmount();
   });

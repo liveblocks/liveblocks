@@ -77,7 +77,7 @@ import type {
   RoomProviderProps,
   ThreadsState,
   ThreadsStateSuccess,
-  ThreadUnreadSince,
+  ThreadSubscription,
   UseThreadsOptions,
 } from "./types";
 
@@ -1696,7 +1696,7 @@ export function createRoomContext<
     return mentionSuggestions;
   }
 
-  function useThreadUnreadSince(threadId: string): ThreadUnreadSince {
+  function useThreadSubscription(threadId: string): ThreadSubscription {
     return useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
@@ -1710,12 +1710,12 @@ export function createRoomContext<
 
         if (inboxNotification === undefined || thread === undefined) {
           return {
-            isSubscribed: false,
+            status: "not-subscribed",
           };
         }
 
         return {
-          isSubscribed: true,
+          status: "subscribed",
           unreadSince: inboxNotification.readAt,
         };
       }
@@ -1863,7 +1863,7 @@ export function createRoomContext<
     useAddReaction,
     useRemoveReaction,
     useMarkThreadAsRead,
-    useThreadUnreadSince,
+    useThreadSubscription,
 
     useRoomNotificationSettings,
     useUpdateRoomNotificationSettings,
@@ -1918,7 +1918,7 @@ export function createRoomContext<
       useAddReaction,
       useRemoveReaction,
       useMarkThreadAsRead,
-      useThreadUnreadSince,
+      useThreadSubscription,
 
       useRoomNotificationSettings: useRoomNotificationSettingsSuspense,
       useUpdateRoomNotificationSettings,

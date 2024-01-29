@@ -147,7 +147,7 @@ export const Thread = forwardRef(
     }: ThreadProps<TThreadMetadata>,
     forwardedRef: ForwardedRef<HTMLDivElement>
   ) => {
-    const { useEditThreadMetadata, useThreadUnreadSince } =
+    const { useEditThreadMetadata, useThreadSubscription } =
       useRoomContextBundle();
     const editThreadMetadata = useEditThreadMetadata();
     const $ = useOverrides(overrides);
@@ -161,10 +161,12 @@ export const Thread = forwardRef(
         ? thread.comments.length - 1
         : findLastIndex(thread.comments, (comment) => comment.body);
     }, [showDeletedComments, thread.comments]);
-    const { isSubscribed, unreadSince } = useThreadUnreadSince(thread.id);
+    const { status: subscriptionStatus, unreadSince } = useThreadSubscription(
+      thread.id
+    );
     const unreadIndex = useMemo(() => {
       // The user is not subscribed to this thread.
-      if (!isSubscribed) {
+      if (subscriptionStatus !== "subscribed") {
         return;
       }
 
@@ -185,8 +187,8 @@ export const Thread = forwardRef(
         : undefined;
     }, [
       firstCommentIndex,
-      isSubscribed,
       showDeletedComments,
+      subscriptionStatus,
       thread.comments,
       unreadSince,
     ]);

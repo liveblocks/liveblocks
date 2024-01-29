@@ -16,7 +16,7 @@ import { ComponentPropsWithoutRef, useEffect, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import clsx from "clsx";
 import { Link } from "./Link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 function InboxList(props: ComponentPropsWithoutRef<"ol">) {
   const { inboxNotifications } = useInboxNotifications();
