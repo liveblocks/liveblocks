@@ -42,8 +42,6 @@ export type {
   PlainLsonObject,
   ResolveMentionSuggestionsArgs,
   ResolveRoomsDetailsArgs,
-  ResolveUrlsArgs,
-  ResolveUrlsResource,
   ResolveUsersArgs,
   Room,
   RoomNotificationSettings,

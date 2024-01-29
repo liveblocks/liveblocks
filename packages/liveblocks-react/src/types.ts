@@ -22,7 +22,6 @@ import type {
   kInternal,
   PartialNullable,
   Resolve,
-  ResolveUrlsResource,
   RoomDetails,
   RoomEventMessage,
   RoomInitializers,
@@ -80,26 +79,6 @@ export type RoomDetailsState =
   | RoomDetailsStateLoading
   | RoomDetailsStateError
   | RoomDetailsStateSuccess;
-
-export type UrlStateLoading = {
-  isLoading: true;
-  url?: never;
-  error?: never;
-};
-
-export type UrlStateError = {
-  isLoading: false;
-  url?: never;
-  error: Error;
-};
-
-export type UrlStateSuccess = {
-  isLoading: false;
-  url: string;
-  error?: never;
-};
-
-export type UrlState = UrlStateLoading | UrlStateError | UrlStateSuccess;
 
 export type CreateThreadOptions<TMetadata extends BaseMetadata> = [
   TMetadata,
@@ -1232,16 +1211,6 @@ type PrivateLiveblocksContextApi = {
    * const { details, error, isLoading } = useRoomDetails("room-id");
    */
   useRoomDetails(roomId: string): RoomDetailsState;
-
-  /**
-   * @private
-   *
-   * Returns a URL details from a given room ID.
-   *
-   * @example
-   * const { url, error, isLoading } = useUrl("room-id");
-   */
-  useUrl(resource: ResolveUrlsResource): UrlState;
 };
 
 export type LiveblocksContextBundle<TUserMeta extends BaseUserMeta> = Resolve<

@@ -21,8 +21,6 @@ export type {
   EnterOptions,
   ResolveMentionSuggestionsArgs,
   ResolveRoomsDetailsArgs,
-  ResolveUrlsArgs,
-  ResolveUrlsResource,
   ResolveUsersArgs,
 } from "./client";
 export { createClient, NotificationsApiError } from "./client";

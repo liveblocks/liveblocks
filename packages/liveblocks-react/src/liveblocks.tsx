@@ -8,7 +8,6 @@ import type {
   CacheState,
   CacheStore,
   InboxNotificationData,
-  ResolveUrlsResource,
   Store,
 } from "@liveblocks/core";
 import { kInternal, makePoller } from "@liveblocks/core";
@@ -32,7 +31,6 @@ import type {
   RoomDetailsState,
   UnreadInboxNotificationsCountState,
   UnreadInboxNotificationsCountStateSuccess,
-  UrlState,
 } from "./types";
 
 export const ContextBundle =
@@ -433,32 +431,6 @@ export function createLiveblocksContext<
       : { isLoading: true };
   }
 
-  const urlsStore = client[kInternal].urlsStore;
-
-  function useUrl(resource: ResolveUrlsResource): UrlState {
-    const getUrlState = useCallback(
-      () => urlsStore.getState(resource),
-      [resource]
-    );
-
-    useEffect(() => {
-      void urlsStore.get(resource);
-    }, [resource]);
-
-    const state = useSyncExternalStore(
-      urlsStore.subscribe,
-      getUrlState,
-      getUrlState
-    );
-
-    return state
-      ? ({
-          ...state,
-          url: state.data,
-        } as UrlState)
-      : { isLoading: true };
-  }
-
   const bundle: LiveblocksContextBundle<TUserMeta> = {
     LiveblocksProvider,
 
@@ -487,7 +459,6 @@ export function createLiveblocksContext<
       useThreadFromCache,
       useCurrentUserId,
       useRoomDetails,
-      useUrl,
     },
   };
 

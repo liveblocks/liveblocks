@@ -38,19 +38,6 @@ export const client = createClient({
     }
   },
 
-  // Create URLs for notifications to link to threads
-  resolveUrls: ({ resources }) => {
-    return resources.map((resource) => {
-      if (resource.type === "thread") {
-        const document = getDocumentFromRoomId(resource.roomId);
-
-        return document ? `/${document}#${resource.threadId}` : undefined;
-      } else {
-        return;
-      }
-    });
-  },
-
   // Get the names of the rooms
   resolveRoomsDetails: ({ roomIds }) => {
     return roomIds.map((roomId) => {

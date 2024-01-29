@@ -5,7 +5,6 @@ import type {
   CommentData,
   InboxNotificationData,
   InboxNotificationThreadData,
-  ResolveUrlsResource,
   ThreadData,
 } from "@liveblocks/core";
 import {
@@ -332,11 +331,11 @@ const InboxNotificationThread = forwardRef<
   ) => {
     const $ = useOverrides(overrides);
     const {
-      [kInternal]: { useThreadFromCache, useCurrentUserId, useUrl },
+      [kInternal]: { useThreadFromCache, useCurrentUserId },
     } = useLiveblocksContextBundle();
     const thread = useThreadFromCache(inboxNotification.threadId);
     const currentUserId = useCurrentUserId();
-    const { unread, date, aside, title, content, resource } = useMemo(() => {
+    const { unread, date, aside, title, content } = useMemo(() => {
       const contents = generateInboxNotificationThreadContents(
         inboxNotification,
         thread,
@@ -377,12 +376,6 @@ const InboxNotificationThread = forwardRef<
               ))}
             </div>
           );
-          const resource: ResolveUrlsResource = {
-            type: "thread",
-            roomId: thread.roomId,
-            threadId: thread.id,
-            commentId: contents.comments[contents.comments.length - 1]?.id,
-          };
 
           return {
             unread: contents.unread,
@@ -390,7 +383,6 @@ const InboxNotificationThread = forwardRef<
             aside,
             title,
             content,
-            resource,
           };
         }
 
@@ -412,12 +404,6 @@ const InboxNotificationThread = forwardRef<
               />
             </div>
           );
-          const resource: ResolveUrlsResource = {
-            type: "thread",
-            roomId: thread.roomId,
-            threadId: thread.id,
-            commentId: mentionComment.id,
-          };
 
           return {
             unread: contents.unread,
@@ -425,7 +411,6 @@ const InboxNotificationThread = forwardRef<
             aside,
             title,
             content,
-            resource,
           };
         }
 
@@ -436,7 +421,6 @@ const InboxNotificationThread = forwardRef<
           );
       }
     }, [$, currentUserId, inboxNotification, overrides, showRoomName, thread]);
-    const { url } = useUrl(resource);
 
     return (
       <InboxNotificationLayout
@@ -445,7 +429,8 @@ const InboxNotificationThread = forwardRef<
         date={date}
         unread={unread}
         overrides={overrides}
-        href={url}
+        // TODO: href
+        href=""
         {...props}
         ref={forwardedRef}
       >
