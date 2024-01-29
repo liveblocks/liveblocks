@@ -7,6 +7,7 @@ import {
 import * as Popover from "@radix-ui/react-popover";
 import {
   useInboxNotifications,
+  useMarkAllInboxNotificationsAsRead,
   useUnreadInboxNotificationsCount,
 } from "../../liveblocks.config";
 import { ClientSideSuspense } from "@liveblocks/react";
@@ -44,9 +45,11 @@ export function InboxPopover({
   className,
   ...props
 }: Popover.PopoverContentProps) {
+  const markAllInboxNotificationsAsRead = useMarkAllInboxNotificationsAsRead();
+
   return (
     <Popover.Root>
-      <Popover.Trigger className="button">
+      <Popover.Trigger className="button square">
         <ErrorBoundary fallback={null}>
           <ClientSideSuspense fallback={null}>
             {() => <InboxPopoverUnreadCount />}
@@ -81,6 +84,15 @@ export function InboxPopover({
           onInteractOutside={(event) => event.preventDefault()}
           {...props}
         >
+          <div className="inbox-header">
+            <span className="inbox-title">Notifications</span>
+            <button
+              className="button"
+              onClick={markAllInboxNotificationsAsRead}
+            >
+              Mark all as read
+            </button>
+          </div>
           <ErrorBoundary
             fallback={
               <div className="error">

@@ -70,6 +70,7 @@ const {
     LiveblocksProvider,
     useInboxNotifications,
     useUnreadInboxNotificationsCount,
+    useMarkAllInboxNotificationsAsRead,
   },
 } = createLiveblocksContext(client);
 
@@ -79,4 +80,5 @@ export {
   useThreads,
   useInboxNotifications,
   useUnreadInboxNotificationsCount,
+  useMarkAllInboxNotificationsAsRead,
 };
