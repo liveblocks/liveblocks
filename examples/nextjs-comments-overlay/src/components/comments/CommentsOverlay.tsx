@@ -137,12 +137,14 @@ function OverlayThread({ thread, maxZIndex }: OverlayThreadProps) {
       updateCoords();
 
       function updateCoords() {
+        // Your canvas element
         const overlayPanel = document.querySelector("#comments-overlay");
 
         if (!threadRef.current || !overlayPanel) {
           return;
         }
 
+        // Set coords relative to top left of your canvas. Offset is for where you clicked on the element
         const { top, left } = overlayPanel.getBoundingClientRect();
         const x = e.clientX - left - dragOffset.current.x;
         const y = e.clientY - top - dragOffset.current.y;

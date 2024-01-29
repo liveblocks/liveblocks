@@ -190,12 +190,15 @@ export function NewThread({ children }: Props) {
   const handleComposerSubmit = useCallback(
     ({ body }: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
+
+      // Get your canvas element
       const overlayPanel = document.querySelector("#comments-overlay");
 
       if (!composerCoords || !lastPointerEvent.current || !overlayPanel) {
         return;
       }
 
+      // Set coords relative to the top left of your canvas
       const { top, left } = overlayPanel.getBoundingClientRect();
       const x = lastPointerEvent.current.clientX - left;
       const y = lastPointerEvent.current.clientY - top;
