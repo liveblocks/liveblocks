@@ -164,6 +164,7 @@ body {
   place-content: center;
   place-items: center;
   padding: 1rem;
+  flex: 1 0 auto;
 }
 
 .loading img {
