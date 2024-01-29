@@ -56,6 +56,7 @@ import {
   UpdateNotificationSettingsError,
 } from "./comments/errors";
 import { createCommentId, createThreadId } from "./comments/lib/createIds";
+import { selectNotificationSettings } from "./comments/lib/select-notification-settings";
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 import { selectedThreads } from "./comments/lib/selected-threads";
 import { upsertComment } from "./comments/lib/upsert-comment";
@@ -80,7 +81,6 @@ import type {
   ThreadsStateSuccess,
   UseThreadsOptions,
 } from "./types";
-import { selectNotificationSettings } from "./comments/lib/select-notification-settings";
 
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
@@ -1941,7 +1941,7 @@ export function createRoomContext<
               ),
             }));
           },
-          (err) =>
+          (err: Error) =>
             onMutationFailure(
               err,
               optimisticUpdateId,

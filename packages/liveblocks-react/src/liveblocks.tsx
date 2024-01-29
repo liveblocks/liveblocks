@@ -5,6 +5,7 @@ import type {
   ThreadData,
 } from "@liveblocks/client";
 import type {
+  CacheState,
   CacheStore,
   InboxNotificationData,
   Store,
@@ -30,7 +31,6 @@ import type {
   UnreadInboxNotificationsCountState,
   UnreadInboxNotificationsCountStateSuccess,
 } from "./types";
-import type { CacheState } from "@liveblocks/core";
 
 export const ContextBundle =
   createContext<LiveblocksContextBundle<BaseUserMeta> | null>(null);

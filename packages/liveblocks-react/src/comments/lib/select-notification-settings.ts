@@ -1,8 +1,8 @@
 import {
   applyOptimisticUpdates,
-  type RoomNotificationSettings,
   type BaseMetadata,
   type CacheState,
+  type RoomNotificationSettings,
 } from "@liveblocks/core";
 
 export function selectNotificationSettings<
