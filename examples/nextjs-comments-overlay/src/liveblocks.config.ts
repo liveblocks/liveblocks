@@ -54,11 +54,8 @@ type RoomEvent = {};
 export type ThreadMetadata = {
   resolved: boolean;
   zIndex: number;
-
-  // AccurateCursorPositions["cursorSelectors"].toString()
-  cursorSelectors: string;
-  cursorX: AccurateCursorPositions["cursorX"];
-  cursorY: AccurateCursorPositions["cursorY"];
+  x: number;
+  y: number;
 };
 
 export const {

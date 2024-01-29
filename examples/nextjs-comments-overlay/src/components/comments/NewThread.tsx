@@ -190,26 +190,21 @@ export function NewThread({ children }: Props) {
   const handleComposerSubmit = useCallback(
     ({ body }: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
+      const overlayPanel = document.querySelector("#comments-overlay");
 
-      if (!composerCoords || !lastPointerEvent.current) {
+      if (!composerCoords || !lastPointerEvent.current || !overlayPanel) {
         return;
       }
 
-      const {
-        cursorSelectors = [],
-        cursorX = -10000,
-        cursorY = -10000,
-      } = getCoordsFromPointerEvent(lastPointerEvent.current, {
-        x: 0,
-        y: 0,
-      }) || {};
+      const { top, left } = overlayPanel.getBoundingClientRect();
+      const x = lastPointerEvent.current.clientX - left;
+      const y = lastPointerEvent.current.clientY - top;
 
       createThread({
         body,
         metadata: {
-          cursorSelectors: cursorSelectors.join(","),
-          cursorX,
-          cursorY,
+          x,
+          y,
           resolved: false,
           zIndex: maxZIndex + 1,
         },

@@ -9,22 +9,24 @@ import {
 import { ThreadData } from "@liveblocks/client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import styles from "./CommentsOverlay.module.css";
-import {
-  getCoordsFromAccurateCursorPositions,
-  getCoordsFromElement,
-  getElementBeneath,
-} from "@/lib/coords";
 import { PinnedThread } from "@/components/comments/PinnedThread";
 import { useMaxZIndex } from "@/lib/useMaxZIndex";
 
 export function CommentsOverlay() {
   const { threads } = useThreads();
-  const [beingDragged, setBeingDragged] = useState(false);
   const maxZIndex = useMaxZIndex();
 
   return (
     <div
-      style={{ pointerEvents: beingDragged ? "none" : "auto" }}
+      id="comments-overlay"
+      style={{
+        pointerEvents: "none",
+        position: "absolute",
+        top: 0,
+        left: 0,
+        bottom: 0,
+        right: 0,
+      }}
       data-hide-cursors
     >
       {threads
@@ -34,7 +36,6 @@ export function CommentsOverlay() {
             key={thread.id}
             thread={thread}
             maxZIndex={maxZIndex}
-            onDragChange={setBeingDragged}
           />
         ))}
     </div>
@@ -44,14 +45,9 @@ export function CommentsOverlay() {
 type OverlayThreadProps = {
   thread: ThreadData<ThreadMetadata>;
   maxZIndex: number;
-  onDragChange: (dragging: boolean) => void;
 };
 
-function OverlayThread({
-  thread,
-  maxZIndex,
-  onDragChange,
-}: OverlayThreadProps) {
+function OverlayThread({ thread, maxZIndex }: OverlayThreadProps) {
   const editThreadMetadata = useEditThreadMetadata();
   const { user, isLoading } = useUser(thread.comments[0].userId);
 
@@ -70,23 +66,8 @@ function OverlayThread({
       return;
     }
     function updateCoords() {
-      const { cursorSelectors, cursorX, cursorY } = thread.metadata;
-      if (!cursorSelectors) {
-        return;
-      }
-
-      const fromAccurateCoords = getCoordsFromAccurateCursorPositions({
-        cursorSelectors: cursorSelectors.split(","),
-        cursorX,
-        cursorY,
-      });
-
-      if (!fromAccurateCoords) {
-        setCoords({ x: -10000, y: -10000 });
-        return;
-      }
-
-      setCoords({ x: fromAccurateCoords?.x, y: fromAccurateCoords.y });
+      const { x, y } = thread.metadata;
+      setCoords({ x, y });
     }
 
     updateCoords();
@@ -119,9 +100,8 @@ function OverlayThread({
         y: e.pageY,
       };
       draggingRef.current = true;
-      onDragChange(true);
     },
-    [onDragChange]
+    []
   );
 
   // Update locally on drag with easy coords
@@ -150,7 +130,6 @@ function OverlayThread({
       // If no cursor movement and clicked, toggle minimized
       if (e.pageX === dragStart.current.x && e.pageY === dragStart.current.y) {
         draggingRef.current = false;
-        onDragChange(false);
         e.currentTarget.releasePointerCapture(e.pointerId);
         return;
       }
@@ -158,37 +137,19 @@ function OverlayThread({
       updateCoords();
 
       function updateCoords() {
-        if (!threadRef.current) {
+        const overlayPanel = document.querySelector("#comments-overlay");
+
+        if (!threadRef.current || !overlayPanel) {
           return;
         }
 
-        const elementUnder = getElementBeneath(
-          threadRef.current,
-          e.clientX - dragOffset.current.x,
-          e.clientY - dragOffset.current.y
-        );
-
-        if (!elementUnder) {
-          return;
-        }
-
-        const accurateCoords = getCoordsFromElement(
-          elementUnder as HTMLElement,
-          e.clientX,
-          e.clientY,
-          dragOffset.current
-        );
-
-        if (!accurateCoords) {
-          return;
-        }
-
-        const { cursorSelectors, cursorX, cursorY } = accurateCoords;
+        const { top, left } = overlayPanel.getBoundingClientRect();
+        const x = e.clientX - left - dragOffset.current.x;
+        const y = e.clientY - top - dragOffset.current.y;
 
         const metadata = {
-          cursorSelectors: cursorSelectors.join(","),
-          cursorX,
-          cursorY,
+          x,
+          y,
           zIndex: maxZIndex + 1,
         };
 
@@ -200,10 +161,9 @@ function OverlayThread({
 
       // End drag
       draggingRef.current = false;
-      onDragChange(false);
       e.currentTarget.releasePointerCapture(e.pointerId);
     },
-    [editThreadMetadata, maxZIndex, thread, onDragChange]
+    [editThreadMetadata, maxZIndex, thread]
   );
 
   // If other thread(s) above, increase z-index on last element updated
@@ -232,6 +192,7 @@ function OverlayThread({
       style={{
         transform: `translate(${coords.x}px, ${coords.y}px)`,
         zIndex: draggingRef.current ? 9999999 : thread.metadata.zIndex,
+        pointerEvents: "auto",
       }}
     >
       <PinnedThread
