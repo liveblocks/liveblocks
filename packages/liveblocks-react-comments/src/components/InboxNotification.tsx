@@ -80,6 +80,13 @@ export interface InboxNotificationProps extends ComponentPropsWithoutRef<"a"> {
   components?: Partial<GlobalComponents>;
 }
 
+interface InboxNotificationThreadProps extends InboxNotificationProps {
+  /**
+   * Whether to show the room name in the title.
+   */
+  showRoomName?: boolean;
+}
+
 interface InboxNotificationLayoutProps
   extends Omit<ComponentPropsWithoutRef<"a">, "title"> {
   aside: ReactNode;
@@ -317,131 +324,136 @@ function generateInboxNotificationThreadContents(
 
 const InboxNotificationThread = forwardRef<
   HTMLAnchorElement,
-  InboxNotificationProps
->(({ inboxNotification, overrides, ...props }, forwardedRef) => {
-  const $ = useOverrides(overrides);
-  const {
-    [kInternal]: { useThreadFromCache, useCurrentUserId, useUrl },
-  } = useLiveblocksContextBundle();
-  const thread = useThreadFromCache(inboxNotification.threadId);
-  const currentUserId = useCurrentUserId();
-  const { unread, date, aside, title, content, resource } = useMemo(() => {
-    const contents = generateInboxNotificationThreadContents(
-      inboxNotification,
-      thread,
-      currentUserId ?? ""
-    );
+  InboxNotificationThreadProps
+>(
+  (
+    { inboxNotification, showRoomName = true, overrides, ...props },
+    forwardedRef
+  ) => {
+    const $ = useOverrides(overrides);
+    const {
+      [kInternal]: { useThreadFromCache, useCurrentUserId, useUrl },
+    } = useLiveblocksContextBundle();
+    const thread = useThreadFromCache(inboxNotification.threadId);
+    const currentUserId = useCurrentUserId();
+    const { unread, date, aside, title, content, resource } = useMemo(() => {
+      const contents = generateInboxNotificationThreadContents(
+        inboxNotification,
+        thread,
+        currentUserId ?? ""
+      );
 
-    switch (contents.type) {
-      case "comments": {
-        const reversedUserIds = [...contents.userIds].reverse();
-        const firstUserId = reversedUserIds[0];
+      switch (contents.type) {
+        case "comments": {
+          const reversedUserIds = [...contents.userIds].reverse();
+          const firstUserId = reversedUserIds[0];
 
-        const aside = <InboxNotificationAvatar userId={firstUserId} />;
-        const title = $.INBOX_NOTIFICATION_THREAD_COMMENTS_LIST(
-          <List
-            values={reversedUserIds.map((userId, index) => (
-              <User
-                key={userId}
-                userId={userId}
-                capitalize={index === 0}
-                replaceSelf
-              />
-            ))}
-            formatRemaining={$.LIST_REMAINING_USERS}
-            truncate={THREAD_INBOX_NOTIFICATION_MAX_COMMENTS - 1}
-          />,
-          <Room roomId={thread.roomId} />,
-          reversedUserIds.length
-        );
-        const content = (
-          <div className="lb-inbox-notification-comments">
-            {contents.comments.map((comment) => (
+          const aside = <InboxNotificationAvatar userId={firstUserId} />;
+          const title = $.INBOX_NOTIFICATION_THREAD_COMMENTS_LIST(
+            <List
+              values={reversedUserIds.map((userId, index) => (
+                <User
+                  key={userId}
+                  userId={userId}
+                  capitalize={index === 0}
+                  replaceSelf
+                />
+              ))}
+              formatRemaining={$.LIST_REMAINING_USERS}
+              truncate={THREAD_INBOX_NOTIFICATION_MAX_COMMENTS - 1}
+            />,
+            showRoomName ? <Room roomId={thread.roomId} /> : undefined,
+            reversedUserIds.length
+          );
+          const content = (
+            <div className="lb-inbox-notification-comments">
+              {contents.comments.map((comment) => (
+                <InboxNotificationComment
+                  key={comment.id}
+                  comment={comment}
+                  showHeader={contents.comments.length > 1}
+                  overrides={overrides}
+                />
+              ))}
+            </div>
+          );
+          const resource: ResolveUrlsResource = {
+            type: "thread",
+            roomId: thread.roomId,
+            threadId: thread.id,
+            commentId: contents.comments[contents.comments.length - 1]?.id,
+          };
+
+          return {
+            unread: contents.unread,
+            date: contents.date,
+            aside,
+            title,
+            content,
+            resource,
+          };
+        }
+
+        case "mention": {
+          const mentionUserId = contents.userIds[0];
+          const mentionComment = contents.comments[0];
+
+          const aside = <InboxNotificationAvatar userId={mentionUserId} />;
+          const title = $.INBOX_NOTIFICATION_THREAD_MENTION(
+            <User key={mentionUserId} userId={mentionUserId} capitalize />,
+            <Room roomId={thread.roomId} />
+          );
+          const content = (
+            <div className="lb-inbox-notification-comments">
               <InboxNotificationComment
-                key={comment.id}
-                comment={comment}
-                showHeader={contents.comments.length > 1}
-                overrides={overrides}
+                key={mentionComment.id}
+                comment={mentionComment}
+                showHeader={false}
               />
-            ))}
-          </div>
-        );
-        const resource: ResolveUrlsResource = {
-          type: "thread",
-          roomId: thread.roomId,
-          threadId: thread.id,
-          commentId: contents.comments[contents.comments.length - 1]?.id,
-        };
+            </div>
+          );
+          const resource: ResolveUrlsResource = {
+            type: "thread",
+            roomId: thread.roomId,
+            threadId: thread.id,
+            commentId: mentionComment.id,
+          };
 
-        return {
-          unread: contents.unread,
-          date: contents.date,
-          aside,
-          title,
-          content,
-          resource,
-        };
+          return {
+            unread: contents.unread,
+            date: contents.date,
+            aside,
+            title,
+            content,
+            resource,
+          };
+        }
+
+        default:
+          return assertNever(
+            contents,
+            "Unexpected thread inbox notification type"
+          );
       }
+    }, [$, currentUserId, inboxNotification, overrides, showRoomName, thread]);
+    const { url } = useUrl(resource);
 
-      case "mention": {
-        const mentionUserId = contents.userIds[0];
-        const mentionComment = contents.comments[0];
-
-        const aside = <InboxNotificationAvatar userId={mentionUserId} />;
-        const title = $.INBOX_NOTIFICATION_THREAD_MENTION(
-          <User key={mentionUserId} userId={mentionUserId} capitalize />,
-          <Room roomId={thread.roomId} />
-        );
-        const content = (
-          <div className="lb-inbox-notification-comments">
-            <InboxNotificationComment
-              key={mentionComment.id}
-              comment={mentionComment}
-              showHeader={false}
-            />
-          </div>
-        );
-        const resource: ResolveUrlsResource = {
-          type: "thread",
-          roomId: thread.roomId,
-          threadId: thread.id,
-          commentId: mentionComment.id,
-        };
-
-        return {
-          unread: contents.unread,
-          date: contents.date,
-          aside,
-          title,
-          content,
-          resource,
-        };
-      }
-
-      default:
-        return assertNever(
-          contents,
-          "Unexpected thread inbox notification type"
-        );
-    }
-  }, [$, currentUserId, inboxNotification, overrides, thread]);
-  const { url } = useUrl(resource);
-
-  return (
-    <InboxNotificationLayout
-      aside={aside}
-      title={title}
-      date={date}
-      unread={unread}
-      overrides={overrides}
-      href={url}
-      {...props}
-      ref={forwardedRef}
-    >
-      {content}
-    </InboxNotificationLayout>
-  );
-});
+    return (
+      <InboxNotificationLayout
+        aside={aside}
+        title={title}
+        date={date}
+        unread={unread}
+        overrides={overrides}
+        href={url}
+        {...props}
+        ref={forwardedRef}
+      >
+        {content}
+      </InboxNotificationLayout>
+    );
+  }
+);
 
 /**
  * Displays a single inbox notification.

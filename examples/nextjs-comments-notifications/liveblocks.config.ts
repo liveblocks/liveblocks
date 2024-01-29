@@ -38,7 +38,7 @@ export const client = createClient({
     }
   },
 
-  // Get the URL for a thread
+  // Create URLs for notifications to link to threads
   resolveUrls: ({ resources }) => {
     return resources.map((resource) => {
       if (resource.type === "thread") {
@@ -48,6 +48,15 @@ export const client = createClient({
       } else {
         return;
       }
+    });
+  },
+
+  // Get the names of the rooms
+  resolveRoomsDetails: ({ roomIds }) => {
+    return roomIds.map((roomId) => {
+      const document = getDocumentFromRoomId(roomId);
+
+      return document ? { name: document } : undefined;
     });
   },
 });

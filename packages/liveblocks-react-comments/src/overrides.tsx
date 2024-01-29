@@ -63,12 +63,12 @@ export interface InboxNotificationOverrides {
   INBOX_NOTIFICATION_MARK_AS_READ: string;
   INBOX_NOTIFICATION_THREAD_COMMENTS_LIST: (
     list: ReactNode,
-    room: ReactNode,
+    room: ReactNode | undefined,
     count: number
   ) => ReactNode;
   INBOX_NOTIFICATION_THREAD_MENTION: (
     user: ReactNode,
-    room: ReactNode
+    room: ReactNode | undefined
   ) => ReactNode;
 }
 
@@ -129,12 +129,13 @@ export const defaultOverrides: Overrides = {
     room: ReactNode
   ) => (
     <>
-      {list} commented on {room}
+      {list} commented
+      {room ? <> in {room}</> : <> in a thread</>}
     </>
   ),
   INBOX_NOTIFICATION_THREAD_MENTION: (user: ReactNode, room: ReactNode) => (
     <>
-      {user} mentioned you in {room}
+      {user} mentioned you{room ? <> in {room}</> : null}
     </>
   ),
 };

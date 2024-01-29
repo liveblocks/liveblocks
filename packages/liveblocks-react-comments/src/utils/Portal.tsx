@@ -31,3 +31,5 @@ const Portal = forwardRef<HTMLDivElement, PortalProps>(
 if (process.env.NODE_ENV !== "production") {
   Portal.displayName = PORTAL_NAME;
 }
+
+export { Portal };
