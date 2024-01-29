@@ -6,6 +6,7 @@ import type { CommentBody } from "./types/CommentBody";
 import type { CommentData, CommentReaction } from "./types/CommentData";
 import type { InboxNotificationData } from "./types/InboxNotificationData";
 import type { PartialNullable } from "./types/PartialNullable";
+import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 import type { ThreadData } from "./types/ThreadData";
 
 type OptimisticUpdate<TThreadMetadata extends BaseMetadata> =
@@ -17,7 +18,8 @@ type OptimisticUpdate<TThreadMetadata extends BaseMetadata> =
   | AddReactionOptimisticUpdate
   | RemoveReactionOptimisticUpdate
   | MarkInboxNotificationAsReadOptimisticUpdate
-  | MarkAllInboxNotificationsAsReadOptimisticUpdate;
+  | MarkAllInboxNotificationsAsReadOptimisticUpdate
+  | UpdateNotificationSettingsOptimisticUpdate;
 
 type CreateThreadOptimisticUpdate<TThreadMetadata extends BaseMetadata> = {
   type: "create-thread";
@@ -89,6 +91,13 @@ type MarkAllInboxNotificationsAsReadOptimisticUpdate = {
   readAt: Date;
 };
 
+type UpdateNotificationSettingsOptimisticUpdate = {
+  type: "update-notification-settings";
+  id: string;
+  roomId: string;
+  settings: Partial<RoomNotificationSettings>;
+};
+
 type QueryState =
   | { isLoading: true; error?: never }
   | { isLoading: false; error?: Error };
@@ -111,6 +120,10 @@ export type CacheState<TThreadMetadata extends BaseMetadata> = {
    * Inbox notifications by ID.
    */
   inboxNotifications: Record<string, InboxNotificationData>;
+  /**
+   * Notification settings per room id
+   */
+  notificationSettings: Record<string, RoomNotificationSettings>;
 };
 
 export interface CacheStore<TThreadMetadata extends BaseMetadata>
@@ -143,6 +156,7 @@ export function createClientStore<
     queries: {},
     optimisticUpdates: [],
     inboxNotifications: {},
+    notificationSettings: {},
   });
 
   function mergeThreads(
@@ -320,13 +334,19 @@ export function compareThreads<TThreadMetadata extends BaseMetadata>(
 
 export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
   state: CacheState<TThreadMetadata>
-): Pick<CacheState<TThreadMetadata>, "threads" | "inboxNotifications"> {
+): Pick<
+  CacheState<TThreadMetadata>,
+  "threads" | "inboxNotifications" | "notificationSettings"
+> {
   const result = {
     threads: {
       ...state.threads,
     },
     inboxNotifications: {
       ...state.inboxNotifications,
+    },
+    notificationSettings: {
+      ...state.notificationSettings,
     },
   };
 
@@ -528,6 +548,13 @@ export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
             readAt: optimisticUpdate.readAt,
           };
         }
+        break;
+      }
+      case "update-notification-settings": {
+        result.notificationSettings[optimisticUpdate.roomId] = {
+          ...result.notificationSettings[optimisticUpdate.roomId],
+          ...optimisticUpdate.settings,
+        };
       }
     }
   }

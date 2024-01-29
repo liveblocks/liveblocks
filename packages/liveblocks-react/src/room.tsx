@@ -53,6 +53,7 @@ import {
   EditThreadMetadataError,
   MarkInboxNotificationAsReadError,
   RemoveReactionError,
+  UpdateNotificationSettingsError,
 } from "./comments/errors";
 import { createCommentId, createThreadId } from "./comments/lib/createIds";
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
@@ -79,6 +80,7 @@ import type {
   ThreadsStateSuccess,
   UseThreadsOptions,
 } from "./types";
+import { selectNotificationSettings } from "./comments/lib/select-notification-settings";
 
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
@@ -959,8 +961,8 @@ export function createRoomContext<
     {
       promise: Promise<any> | null;
       subscribers: number;
-      query: UseThreadsOptions<TThreadMetadata>["query"];
-      roomId: string;
+      requestFactory: () => Promise<any>;
+      onSuccess: (result: any) => void;
     }
   > = new Map();
 
@@ -970,22 +972,12 @@ export function createRoomContext<
     await Promise.allSettled(
       Array.from(requestsCache.entries())
         .filter(([_, requestCache]) => requestCache.subscribers > 0)
-        .map(async ([queryKey, requestCache]) => {
-          const room = client.getRoom(requestCache.roomId);
-
-          if (room === null) {
-            return;
-          }
-
-          // TODO: Error handling
-          const { threads, inboxNotifications } = await room.getThreads({
-            query: requestCache.query,
-          });
-
-          store.updateThreadsAndNotifications(
-            threads,
-            inboxNotifications,
-            queryKey
+        .map(async ([_, requestCache]) => {
+          return requestCache.requestFactory().then(
+            (result) => requestCache.onSuccess(result),
+            () => {
+              // Ignore errors during polling
+            }
           );
         })
     );
@@ -1028,24 +1020,24 @@ export function createRoomContext<
     }
   }
 
-  async function getThreadsAndInboxNotifications(
-    room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
+  async function getOrInitRequest<TRequestResult>(
     queryKey: string,
-    options: UseThreadsOptions<TThreadMetadata>
-  ) {
-    const requestCache = requestsCache.get(queryKey);
+    requestFactory: () => Promise<TRequestResult>,
+    onSuccess: (requestResult: TRequestResult) => void
+  ): Promise<any> {
+    const requestInfo = requestsCache.get(queryKey);
 
-    if (requestCache !== undefined) {
-      return requestCache.promise;
+    if (requestInfo !== undefined) {
+      return requestInfo.promise;
     }
 
-    const initialPromise = room.getThreads(options);
+    const promise = requestFactory();
 
     requestsCache.set(queryKey, {
-      promise: initialPromise,
+      promise,
+      requestFactory,
+      onSuccess,
       subscribers: 0,
-      query: options.query,
-      roomId: room.id,
     });
 
     store.setQueryState(queryKey, {
@@ -1053,19 +1045,45 @@ export function createRoomContext<
     });
 
     try {
-      const { threads, inboxNotifications } = await initialPromise;
-      store.updateThreadsAndNotifications(
-        threads,
-        inboxNotifications,
-        queryKey
-      );
-    } catch (err) {
+      const result = await promise;
+      onSuccess(result);
+    } catch (er) {
       store.setQueryState(queryKey, {
         isLoading: false,
-        error: err as Error,
+        error: er as Error,
       });
     }
+
     poller.start(POLLING_INTERVAL);
+  }
+
+  async function getThreadsAndInboxNotifications(
+    room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
+    queryKey: string,
+    options: UseThreadsOptions<TThreadMetadata>
+  ) {
+    const roomId = room.id;
+    return getOrInitRequest(
+      queryKey,
+      async () => {
+        const room = client.getRoom(roomId);
+
+        if (room === null) {
+          return;
+        }
+
+        return room.getThreads(options);
+      },
+      (result) => {
+        if (result !== undefined) {
+          store.updateThreadsAndNotifications(
+            result.threads,
+            result.inboxNotifications,
+            queryKey
+          );
+        }
+      }
+    );
   }
 
   function useThreads(
@@ -1116,15 +1134,14 @@ export function createRoomContext<
       [room, options]
     );
 
-    if (
-      store.get().queries[queryKey] === undefined ||
-      store.get().queries[queryKey].isLoading
-    ) {
+    const query = store.get().queries[queryKey];
+
+    if (query === undefined || query.isLoading) {
       throw getThreadsAndInboxNotifications(room, queryKey, options);
     }
 
-    if (store.get().queries[queryKey].error) {
-      throw store.get().queries[queryKey].error;
+    if (query.error) {
+      throw query.error;
     }
 
     React.useEffect(() => {
@@ -1774,38 +1791,170 @@ export function createRoomContext<
     }, []);
   }
 
-  // [comments-unread] TODO: Implement using `room.getRoomNotificationSettings`
-  // [comments-unread] TODO: Cache and optimistically update settings?
+  function makeNotificationSettingsQueryKey(roomId: string) {
+    return `${roomId}:NOTIFICATION_SETTINGS`;
+  }
+
+  async function getInboxNotificationSettings(
+    room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
+    queryKey: string
+  ) {
+    const roomId = room.id;
+    return getOrInitRequest(
+      queryKey,
+      async () => {
+        const room = client.getRoom(roomId);
+
+        if (room === null) {
+          return;
+        }
+
+        return room.getRoomNotificationSettings();
+      },
+      (settings) => {
+        if (settings !== undefined) {
+          store.set((state) => ({
+            ...state,
+            notificationSettings: {
+              ...state.notificationSettings,
+              [room.id]: settings,
+            },
+            queries: {
+              ...state.queries,
+              [queryKey]: {
+                isLoading: false,
+              },
+            },
+          }));
+        }
+      }
+    );
+  }
+
   function useRoomNotificationSettings(): [
     RoomNotificationSettingsState,
     (settings: Partial<RoomNotificationSettings>) => void,
   ] {
     const room = useRoom();
 
+    React.useEffect(() => {
+      const queryKey = makeNotificationSettingsQueryKey(room.id);
+      void getInboxNotificationSettings(room, queryKey);
+
+      incrementQuerySubscribers(queryKey);
+
+      return () => decrementQuerySubscribers(queryKey);
+    }, [room]);
+
+    const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
+
     return [
-      { isLoading: false, settings: { threads: "replies_and_mentions" } },
-      room.updateRoomNotificationSettings,
+      useSyncExternalStoreWithSelector(
+        store.subscribe,
+        store.get,
+        store.get,
+        (state) => {
+          const query =
+            state.queries[makeNotificationSettingsQueryKey(room.id)];
+
+          if (query === undefined || query.isLoading) {
+            return { isLoading: true };
+          }
+
+          if (query.error !== undefined) {
+            return { isLoading: false, error: query.error };
+          }
+
+          return {
+            isLoading: false,
+            settings: selectNotificationSettings(room.id, state),
+          };
+        }
+      ),
+      updateRoomNotificationSettings,
     ];
   }
 
-  // [comments-unread] TODO: Implement using `room.getRoomNotificationSettings`
   // [comments-unread] TODO: Cache and optimistically update settings?
   function useRoomNotificationSettingsSuspense(): [
     RoomNotificationSettingsStateSuccess,
     (settings: Partial<RoomNotificationSettings>) => void,
   ] {
+    const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
     const room = useRoom();
+    const queryKey = makeNotificationSettingsQueryKey(room.id);
+    const query = store.get().queries[queryKey];
+
+    if (query === undefined || query.isLoading) {
+      throw getInboxNotificationSettings(room, queryKey);
+    }
+
+    if (query.error) {
+      throw query.error;
+    }
+
+    React.useEffect(() => {
+      const queryKey = makeNotificationSettingsQueryKey(room.id);
+
+      incrementQuerySubscribers(queryKey);
+
+      return () => decrementQuerySubscribers(queryKey);
+    }, [room]);
 
     return [
-      { isLoading: false, settings: { threads: "replies_and_mentions" } },
-      room.updateRoomNotificationSettings,
+      useSyncExternalStoreWithSelector(
+        store.subscribe,
+        store.get,
+        store.get,
+        (state) => {
+          return {
+            isLoading: false,
+            settings: selectNotificationSettings(room.id, state),
+          };
+        }
+      ),
+      updateRoomNotificationSettings,
     ];
   }
 
-  // [comments-unread] TODO: Optimistically update settings in cache?
   function useUpdateRoomNotificationSettings() {
     const room = useRoom();
-    return room.updateRoomNotificationSettings;
+    return React.useCallback(
+      (settings: Partial<RoomNotificationSettings>) => {
+        const optimisticUpdateId = nanoid();
+
+        store.pushOptimisticUpdate({
+          id: optimisticUpdateId,
+          type: "update-notification-settings",
+          roomId: room.id,
+          settings,
+        });
+
+        room.updateRoomNotificationSettings(settings).then(
+          (settings) => {
+            store.set((state) => ({
+              ...state,
+              notificationSettings: {
+                [room.id]: settings,
+              },
+              optimisticUpdates: state.optimisticUpdates.filter(
+                (update) => update.id !== optimisticUpdateId
+              ),
+            }));
+          },
+          (err) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (error) =>
+                new UpdateNotificationSettingsError(error, {
+                  roomId: room.id,
+                })
+            )
+        );
+      },
+      [room]
+    );
   }
 
   function useCurrentUserId() {

@@ -122,10 +122,23 @@ export class MarkInboxNotificationAsReadError extends Error {
   }
 }
 
+export class UpdateNotificationSettingsError extends Error {
+  constructor(
+    public cause: Error,
+    public context: {
+      roomId: string;
+    }
+  ) {
+    super("Update notification settings failed.");
+    this.name = "UpdateNotificationSettingsError";
+  }
+}
+
 export type CommentsError<TThreadMetadata extends BaseMetadata> =
   | CreateThreadError<TThreadMetadata>
   | EditThreadMetadataError<TThreadMetadata>
   | CreateCommentError
   | EditCommentError
   | DeleteCommentError
-  | MarkInboxNotificationAsReadError;
+  | MarkInboxNotificationAsReadError
+  | UpdateNotificationSettingsError;
