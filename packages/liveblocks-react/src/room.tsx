@@ -1875,7 +1875,6 @@ export function createRoomContext<
     ];
   }
 
-  // [comments-unread] TODO: Cache and optimistically update settings?
   function useRoomNotificationSettingsSuspense(): [
     RoomNotificationSettingsStateSuccess,
     (settings: Partial<RoomNotificationSettings>) => void,
