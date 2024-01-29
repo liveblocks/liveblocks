@@ -309,6 +309,16 @@ export type SharedContextBundle<TUserMeta extends BaseUserMeta> = {
    */
   useUser(userId: string): UserState<TUserMeta["info"]>;
 
+  /**
+   * @private
+   *
+   * Returns room info from a given room ID.
+   *
+   * @example
+   * const { info, error, isLoading } = useRoomInfo("room-id");
+   */
+  useRoomInfo(roomId: string): RoomInfoState;
+
   suspense: {
     /**
      * @beta
@@ -319,6 +329,16 @@ export type SharedContextBundle<TUserMeta extends BaseUserMeta> = {
      * const { user } = useUser("user-id");
      */
     useUser(userId: string): UserStateSuccess<TUserMeta["info"]>;
+
+    /**
+     * @private
+     *
+     * Returns room info from a given room ID.
+     *
+     * @example
+     * const { info } = useRoomInfo("room-id");
+     */
+    useRoomInfo(roomId: string): RoomInfoStateSuccess;
   };
 };
 
@@ -1201,16 +1221,6 @@ type PrivateLiveblocksContextApi = {
    * Returns the current user ID. Can only be used after making a call to a Notifications API.
    */
   useCurrentUserId(): string | null;
-
-  /**
-   * @private
-   *
-   * Returns room info from a given room ID.
-   *
-   * @example
-   * const { info, error, isLoading } = useRoomInfo("room-id");
-   */
-  useRoomInfo(roomId: string): RoomInfoState;
 };
 
 export type LiveblocksContextBundle<TUserMeta extends BaseUserMeta> = Resolve<

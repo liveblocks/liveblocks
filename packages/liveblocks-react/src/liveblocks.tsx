@@ -28,7 +28,6 @@ import type {
   InboxNotificationsState,
   InboxNotificationsStateSuccess,
   LiveblocksContextBundle,
-  RoomInfoState,
   UnreadInboxNotificationsCountState,
   UnreadInboxNotificationsCountStateSuccess,
 } from "./types";
@@ -405,32 +404,6 @@ export function createLiveblocksContext<
     );
   }
 
-  const roomsInfoStore = client[kInternal].roomsInfoStore;
-
-  function useRoomInfo(roomId: string): RoomInfoState {
-    const getRoomInfoState = useCallback(
-      () => roomsInfoStore.getState(roomId),
-      [roomId]
-    );
-
-    useEffect(() => {
-      void roomsInfoStore.get(roomId);
-    }, [roomId]);
-
-    const state = useSyncExternalStore(
-      roomsInfoStore.subscribe,
-      getRoomInfoState,
-      getRoomInfoState
-    );
-
-    return state
-      ? ({
-          ...state,
-          info: state.data,
-        } as RoomInfoState)
-      : { isLoading: true };
-  }
-
   const bundle: LiveblocksContextBundle<TUserMeta> = {
     LiveblocksProvider,
 
@@ -458,7 +431,6 @@ export function createLiveblocksContext<
     [kInternal]: {
       useThreadFromCache,
       useCurrentUserId,
-      useRoomInfo,
     },
   };
 
