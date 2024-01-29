@@ -17,6 +17,7 @@ import { TooltipProvider } from "@radix-ui/react-tooltip";
 import type {
   ComponentProps,
   ComponentPropsWithoutRef,
+  ComponentType,
   ReactNode,
 } from "react";
 import React, { forwardRef, useMemo } from "react";
@@ -38,7 +39,7 @@ import { List } from "./internal/List";
 import { Room } from "./internal/Room";
 import { User } from "./internal/User";
 
-const THREAD_INBOX_NOTIFICATION_MAX_COMMENTS = 3;
+const INBOX_NOTIFICATION_THREAD_MAX_COMMENTS = 3;
 
 type InboxNotificationThreadCommentsContents = {
   type: "comments";
@@ -60,11 +61,31 @@ type InboxNotificationThreadContents =
   | InboxNotificationThreadCommentsContents
   | InboxNotificationThreadMentionContents;
 
+export type InboxNotificationKinds = {
+  thread: ComponentType<InboxNotificationThreadProps>;
+};
+
+export type AddRefToComponents<T, R> = {
+  [K in keyof T]: T[K] extends ComponentType<infer P>
+    ? ComponentType<P & { ref: R }>
+    : T[K];
+};
+
+type InboxNotificationKindsWithRef = AddRefToComponents<
+  InboxNotificationKinds,
+  ComponentProps<"a">["ref"]
+>;
+
 export interface InboxNotificationProps extends ComponentPropsWithoutRef<"a"> {
   /**
    * The inbox notification to display.
    */
   inboxNotification: InboxNotificationData;
+
+  /**
+   * Override specific kinds of inbox notifications.
+   */
+  kinds?: Partial<InboxNotificationKinds>;
 
   /**
    * Override the component's strings.
@@ -79,7 +100,8 @@ export interface InboxNotificationProps extends ComponentPropsWithoutRef<"a"> {
   components?: Partial<GlobalComponents>;
 }
 
-interface InboxNotificationThreadProps extends InboxNotificationProps {
+export interface InboxNotificationThreadProps
+  extends Omit<InboxNotificationProps, "kinds"> {
   /**
    * Whether to show the room name in the title.
    */
@@ -280,7 +302,7 @@ function generateInboxNotificationThreadContents(
   if (unreadComments.length === 0) {
     const lastComments = thread.comments
       .filter((comment) => comment.body)
-      .slice(-THREAD_INBOX_NOTIFICATION_MAX_COMMENTS);
+      .slice(-INBOX_NOTIFICATION_THREAD_MAX_COMMENTS);
 
     return {
       type: "comments",
@@ -308,7 +330,7 @@ function generateInboxNotificationThreadContents(
   }
 
   const lastUnreadComments = unreadComments.slice(
-    -THREAD_INBOX_NOTIFICATION_MAX_COMMENTS
+    -INBOX_NOTIFICATION_THREAD_MAX_COMMENTS
   );
 
   // Otherwise, show the last unread comments.
@@ -359,7 +381,7 @@ const InboxNotificationThread = forwardRef<
                 />
               ))}
               formatRemaining={$.LIST_REMAINING_USERS}
-              truncate={THREAD_INBOX_NOTIFICATION_MAX_COMMENTS - 1}
+              truncate={INBOX_NOTIFICATION_THREAD_MAX_COMMENTS - 1}
             />,
             showRoomName ? <Room roomId={thread.roomId} /> : undefined,
             reversedUserIds.length
@@ -429,8 +451,6 @@ const InboxNotificationThread = forwardRef<
         date={date}
         unread={unread}
         overrides={overrides}
-        // TODO: href
-        href=""
         {...props}
         ref={forwardedRef}
       >
@@ -439,6 +459,10 @@ const InboxNotificationThread = forwardRef<
     );
   }
 );
+
+const defaultInboxNotificationKinds: InboxNotificationKinds = {
+  thread: InboxNotificationThread,
+};
 
 /**
  * Displays a single inbox notification.
@@ -450,18 +474,31 @@ const InboxNotificationThread = forwardRef<
  *   ))}
  * </>
  */
-export const InboxNotification = forwardRef<
-  HTMLAnchorElement,
-  InboxNotificationProps
->(({ inboxNotification, ...props }, forwardedRef) => {
-  switch (inboxNotification.kind) {
-    case "thread":
-      return (
-        <InboxNotificationThread
-          inboxNotification={inboxNotification}
-          {...props}
-          ref={forwardedRef}
-        />
+export const InboxNotification = Object.assign(
+  forwardRef<HTMLAnchorElement, InboxNotificationProps>(
+    ({ inboxNotification, kinds, ...props }, forwardedRef) => {
+      const { thread: InboxNotificationThread } = useMemo(
+        () =>
+          ({
+            ...defaultInboxNotificationKinds,
+            ...kinds,
+          }) as InboxNotificationKindsWithRef,
+        [kinds]
       );
+
+      switch (inboxNotification.kind) {
+        case "thread":
+          return (
+            <InboxNotificationThread
+              inboxNotification={inboxNotification}
+              {...props}
+              ref={forwardedRef}
+            />
+          );
+      }
+    }
+  ),
+  {
+    Thread: InboxNotificationThread,
   }
-});
+);
