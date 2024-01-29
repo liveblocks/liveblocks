@@ -22,8 +22,8 @@ import type {
   kInternal,
   PartialNullable,
   Resolve,
-  RoomDetails,
   RoomEventMessage,
+  RoomInfo,
   RoomInitializers,
   ThreadData,
   ToImmutable,
@@ -57,28 +57,28 @@ export type UserState<T> =
   | UserStateError
   | UserStateSuccess<T>;
 
-export type RoomDetailsStateLoading = {
+export type RoomInfoStateLoading = {
   isLoading: true;
-  details?: never;
+  info?: never;
   error?: never;
 };
 
-export type RoomDetailsStateError = {
+export type RoomInfoStateError = {
   isLoading: false;
-  details?: never;
+  info?: never;
   error: Error;
 };
 
-export type RoomDetailsStateSuccess = {
+export type RoomInfoStateSuccess = {
   isLoading: false;
-  details: RoomDetails;
+  info: RoomInfo;
   error?: never;
 };
 
-export type RoomDetailsState =
-  | RoomDetailsStateLoading
-  | RoomDetailsStateError
-  | RoomDetailsStateSuccess;
+export type RoomInfoState =
+  | RoomInfoStateLoading
+  | RoomInfoStateError
+  | RoomInfoStateSuccess;
 
 export type CreateThreadOptions<TMetadata extends BaseMetadata> = [
   TMetadata,
@@ -1205,12 +1205,12 @@ type PrivateLiveblocksContextApi = {
   /**
    * @private
    *
-   * Returns room details from a given room ID.
+   * Returns room info from a given room ID.
    *
    * @example
-   * const { details, error, isLoading } = useRoomDetails("room-id");
+   * const { info, error, isLoading } = useRoomInfo("room-id");
    */
-  useRoomDetails(roomId: string): RoomDetailsState;
+  useRoomInfo(roomId: string): RoomInfoState;
 };
 
 export type LiveblocksContextBundle<TUserMeta extends BaseUserMeta> = Resolve<

@@ -27,7 +27,7 @@ import { createClientStore } from "./store";
 import type { BaseMetadata } from "./types/BaseMetadata";
 import type { InboxNotificationData } from "./types/InboxNotificationData";
 import type { OptionalPromise } from "./types/OptionalPromise";
-import type { RoomDetails } from "./types/RoomDetails";
+import type { RoomInfo } from "./types/RoomInfo";
 import type { ThreadData } from "./types/ThreadData";
 
 const MIN_THROTTLE = 16;
@@ -41,7 +41,7 @@ const MAX_LOST_CONNECTION_TIMEOUT = 30_000;
 const DEFAULT_LOST_CONNECTION_TIMEOUT = 5_000;
 
 const RESOLVE_USERS_BATCH_DELAY = 50;
-const RESOLVE_ROOMS_DETAILS_BATCH_DELAY = 50;
+const RESOLVE_ROOMS_INFO_BATCH_DELAY = 50;
 
 export type ResolveMentionSuggestionsArgs = {
   /**
@@ -62,7 +62,7 @@ export type ResolveUsersArgs = {
   userIds: string[];
 };
 
-export type ResolveRoomsDetailsArgs = {
+export type ResolveRoomsInfoArgs = {
   /**
    * The IDs of the rooms to resolve.
    */
@@ -100,7 +100,7 @@ type PrivateClientApi<TUserMeta extends BaseUserMeta> = {
   // TODO: Add generic for ThreadMetadata to Client, it could be used here and for inbox notifications too
   cacheStore: CacheStore<BaseMetadata>;
   usersStore: BatchStore<TUserMeta["info"] | undefined, [string]>;
-  roomsDetailsStore: BatchStore<RoomDetails | undefined, [string]>;
+  roomsInfoStore: BatchStore<RoomInfo | undefined, [string]>;
 };
 
 export type InboxNotificationsApi<
@@ -263,11 +263,11 @@ export type ClientOptions<TUserMeta extends BaseUserMeta = BaseUserMeta> = {
   /**
    * @beta
    *
-   * A function that returns room details from room IDs.
+   * A function that returns room info from room IDs.
    */
-  resolveRoomsDetails?: (
-    args: ResolveRoomsDetailsArgs
-  ) => OptionalPromise<(RoomDetails | undefined)[] | undefined>;
+  resolveRoomsInfo?: (
+    args: ResolveRoomsInfoArgs
+  ) => OptionalPromise<(RoomInfo | undefined)[] | undefined>;
 
   /**
    * @internal To point the client to a different Liveblocks server. Only
@@ -571,22 +571,22 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
     { delay: RESOLVE_USERS_BATCH_DELAY }
   );
 
-  const resolveRoomsDetails = clientOptions.resolveRoomsDetails;
-  const warnIfNoResolveRoomsDetails = createDevelopmentWarning(
-    () => !resolveRoomsDetails,
-    "Set the resolveRoomsDetails option in createClient to specify room details."
+  const resolveRoomsInfo = clientOptions.resolveRoomsInfo;
+  const warnIfNoResolveRoomsInfo = createDevelopmentWarning(
+    () => !resolveRoomsInfo,
+    "Set the resolveRoomsInfo option in createClient to specify room info."
   );
 
-  const roomsDetailsStore = createBatchStore(
+  const roomsInfoStore = createBatchStore(
     async (batchedRoomIds: [string][]) => {
       const roomIds = batchedRoomIds.flat();
-      const roomsDetails = await resolveRoomsDetails?.({ roomIds });
+      const roomsInfo = await resolveRoomsInfo?.({ roomIds });
 
-      warnIfNoResolveRoomsDetails();
+      warnIfNoResolveRoomsInfo();
 
-      return roomsDetails ?? roomIds.map(() => undefined);
+      return roomsInfo ?? roomIds.map(() => undefined);
     },
-    { delay: RESOLVE_ROOMS_DETAILS_BATCH_DELAY }
+    { delay: RESOLVE_ROOMS_INFO_BATCH_DELAY }
   );
 
   return Object.defineProperty(
@@ -613,7 +613,7 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
         resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,
         cacheStore,
         usersStore,
-        roomsDetailsStore,
+        roomsInfoStore,
       },
     },
     kInternal,

@@ -41,7 +41,7 @@ export type {
   OthersEvent,
   PlainLsonObject,
   ResolveMentionSuggestionsArgs,
-  ResolveRoomsDetailsArgs,
+  ResolveRoomsInfoArgs,
   ResolveUsersArgs,
   Room,
   RoomNotificationSettings,

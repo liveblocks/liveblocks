@@ -13,12 +13,12 @@ export interface RoomProps extends ComponentProps<"span"> {
 
 export function Room({ roomId, className, ...props }: RoomProps) {
   const {
-    [kInternal]: { useRoomDetails },
+    [kInternal]: { useRoomInfo },
   } = useLiveblocksContextBundle();
-  const { details, isLoading } = useRoomDetails(roomId);
+  const { info, isLoading } = useRoomInfo(roomId);
   const resolvedRoomName = useMemo(() => {
-    return details?.name ?? roomId;
-  }, [details?.name, roomId]);
+    return info?.name ?? roomId;
+  }, [info?.name, roomId]);
 
   return (
     <span

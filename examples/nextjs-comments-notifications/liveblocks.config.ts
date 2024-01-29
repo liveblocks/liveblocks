@@ -39,7 +39,7 @@ export const client = createClient({
   },
 
   // Get the names of the rooms
-  resolveRoomsDetails: ({ roomIds }) => {
+  resolveRoomsInfo: ({ roomIds }) => {
     return roomIds.map((roomId) => {
       const document = getDocumentFromRoomId(roomId);
 

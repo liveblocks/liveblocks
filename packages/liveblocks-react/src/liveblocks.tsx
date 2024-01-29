@@ -28,7 +28,7 @@ import type {
   InboxNotificationsState,
   InboxNotificationsStateSuccess,
   LiveblocksContextBundle,
-  RoomDetailsState,
+  RoomInfoState,
   UnreadInboxNotificationsCountState,
   UnreadInboxNotificationsCountStateSuccess,
 } from "./types";
@@ -405,29 +405,29 @@ export function createLiveblocksContext<
     );
   }
 
-  const roomsDetailsStore = client[kInternal].roomsDetailsStore;
+  const roomsInfoStore = client[kInternal].roomsInfoStore;
 
-  function useRoomDetails(roomId: string): RoomDetailsState {
-    const getRoomDetailsState = useCallback(
-      () => roomsDetailsStore.getState(roomId),
+  function useRoomInfo(roomId: string): RoomInfoState {
+    const getRoomInfoState = useCallback(
+      () => roomsInfoStore.getState(roomId),
       [roomId]
     );
 
     useEffect(() => {
-      void roomsDetailsStore.get(roomId);
+      void roomsInfoStore.get(roomId);
     }, [roomId]);
 
     const state = useSyncExternalStore(
-      roomsDetailsStore.subscribe,
-      getRoomDetailsState,
-      getRoomDetailsState
+      roomsInfoStore.subscribe,
+      getRoomInfoState,
+      getRoomInfoState
     );
 
     return state
       ? ({
           ...state,
-          details: state.data,
-        } as RoomDetailsState)
+          info: state.data,
+        } as RoomInfoState)
       : { isLoading: true };
   }
 
@@ -458,7 +458,7 @@ export function createLiveblocksContext<
     [kInternal]: {
       useThreadFromCache,
       useCurrentUserId,
-      useRoomDetails,
+      useRoomInfo,
     },
   };
 
