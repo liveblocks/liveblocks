@@ -1,3 +1,60 @@
+# v1.10.0
+
+This release introduces Notifications (and unread indicators) for Comments.
+
+### `@liveblocks/client`
+
+- Add options to `createClient`: `resolveUsers`, `resolveMentionSuggestions`
+  (both were previously defined on `createRoomContext` from
+  `@liveblocks/react`), and the new `resolveRoomsInfo`.
+- **Breaking (beta):** When using `createClient` with a callback, the `room`
+  argument is now optional.
+- **Breaking (beta):** The `CommentBodyResolveUsersArgs` type doesn't exist
+  anymore, use `ResolveUsersArgs` instead.
+
+### `@liveblocks/react`
+
+- Add new `LiveblocksContext` accessible with `createLiveblocksContext`,
+  similarly to `createRoomContext`. This context is meant to live at the root
+  since it handles things outside of rooms, like notifications. It contains
+  `LiveblocksProvider`, `useUser`, `useRoomInfo`, `useInboxNotifications`,
+  `useUnreadInboxNotificationsCount`, `useMarkInboxNotificationAsRead`, and
+  `useMarkAllInboxNotificationsAsRead`.
+- Add new hooks to `createRoomContext`: `useMarkThreadAsRead`,
+  `useThreadSubscription`, `useRoomInfo`, `useRoomNotificationSettings`, and
+  `useUpdateRoomNotificationSettings`.
+- Make some hooks usable interchangeably between `createLiveblocksContext` and
+  `createRoomContext`: `useUser`, and `useRoomInfo`.
+- **Breaking (beta):** The `resolveUsers` and `resolveMentionSuggestions`
+  options are no longer defined on `createRoomContext` but on `createClient`
+  from `@liveblocks/client`. And the `resolveUsers` option no longer receives a
+  `roomId` argument.
+- **Breaking (beta):** The `ResolveUsersArgs` and
+  `ResolveMentionSuggestionsArgs` types are now exported from
+  `@liveblocks/client`.
+
+### `@liveblocks/react-comments`
+
+- Add new default components: `InboxNotification` and `InboxNotificationList`.
+- Add unread indicators to the default `Thread` component.
+- **Breaking (beta):** Some advanced CSS variables have been removed:
+  `--lb-elevation-*` and `--lb-tooltip-*` no longer exist, instead use the basic
+  variables on `.lb-elevation` or `.lb-tooltip` directly. (e.g. instead of
+  defining `--lb-elevation-background` on `.lb-root`, define `--lb-background`
+  on `.lb-elevation`)
+- **Breaking (beta):** Some overrides have been updated and/or renamed: `SELF`
+  is now `USER_SELF`, `UNKNOWN_USER` is now `USER_UNKNOWN`,
+  `COMMENT_REACTION_REMAINING` doesn't exist anymore (use the general
+  `LIST_REMAINING_USERS` instead), and `COMMENT_REACTION_TOOLTIP` is now
+  `COMMENT_REACTION_LIST` (with its arguments ordered as `list`, `emoji`, and
+  `count`).
+
+### `@liveblocks/node`
+
+- Add `getInboxNotification` method.
+- **Breaking (beta):** The `CommentBodyResolveUsersArgs` type doesn't exist
+  anymore, use `ResolveUsersArgs` instead.
+
 # v1.9.7
 
 ### `@liveblocks/node`
