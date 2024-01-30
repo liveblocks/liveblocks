@@ -55,6 +55,8 @@ export interface IWebSocket {
  *
  */
 export enum WebsocketCloseCodes {
+  /** Normal close of connection, the connection fulfilled its purpose. */
+  CLOSE_NORMAL = 1000,
   /** Unexpected error happened with the network/infra level. In spirit akin to HTTP 503 */
   CLOSE_ABNORMAL = 1006,
   /** Unexpected error happened. In spirit akin to HTTP 500 */
