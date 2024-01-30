@@ -1,0 +1,14 @@
+.stack {
+  display: flex;
+  flex-direction: row-reverse;
+  place-items: center;
+}
+
+.avatar {
+  box-shadow: 0 0 0 6px var(--color-surface-elevated);
+}
+
+.avatar:not(:last-child),
+.ellipsis {
+  margin-left: -4%;
+}

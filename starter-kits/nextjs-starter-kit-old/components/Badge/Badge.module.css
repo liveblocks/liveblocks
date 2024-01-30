@@ -1,0 +1,18 @@
+.badge {
+  position: fixed;
+  z-index: var(--z-badge);
+  right: var(--space-6);
+  bottom: var(--space-6);
+  transition: opacity var(--transition);
+  outline: none;
+}
+
+.badge:hover,
+.badge:focus-visible {
+  opacity: var(--opacity-hover);
+}
+
+.image {
+  max-width: 100%;
+  min-width: 100%;
+}

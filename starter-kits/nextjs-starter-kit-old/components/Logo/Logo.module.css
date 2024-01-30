@@ -1,0 +1,17 @@
+.logo {
+  display: flex;
+  font-size: var(--size-lg);
+  font-weight: 700;
+  place-content: center;
+  place-items: center;
+}
+
+.mark {
+  width: 1.35em;
+  height: 1.35em;
+  margin-right: 0.35em;
+}
+
+.wordmark {
+  white-space: nowrap;
+}

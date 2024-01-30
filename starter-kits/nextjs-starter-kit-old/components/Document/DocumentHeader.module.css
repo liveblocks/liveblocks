@@ -1,0 +1,43 @@
+.header {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  padding: 0 var(--space-8);
+  gap: var(--space-6);
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.logo,
+.document,
+.collaboration {
+  display: flex;
+  place-items: center;
+}
+
+.logo {
+  place-content: flex-start;
+}
+
+.logoLink {
+  transition: opacity var(--transition);
+  outline: none;
+}
+
+.logoLink:hover,
+.logoLink:focus-visible {
+  opacity: var(--opacity-hover);
+}
+
+.document {
+  min-width: 0;
+  font-weight: 500;
+  place-content: center;
+}
+
+.collaboration {
+  place-content: flex-end;
+}
+
+.presence {
+  margin-right: var(--space-8);
+}

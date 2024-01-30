@@ -1,0 +1,34 @@
+.error,
+.note {
+  padding: var(--space-5) var(--space-6);
+  border-radius: var(--radius-sm);
+  font-size: var(--size-sm);
+}
+
+.error {
+  background: rgb(var(--color-red) / 10%);
+  color: rgb(var(--color-red));
+}
+
+.note {
+  background: var(--color-surface);
+  color: var(--color-text-light);
+}
+
+.inviteForm {
+  display: flex;
+  gap: var(--space-8);
+}
+
+.inviteInput,
+.inviteSelect {
+  flex: 1 0 auto;
+}
+
+.inviteButton {
+  flex: none;
+}
+
+.inviteFormMessage {
+  margin-top: var(--space-8);
+}
