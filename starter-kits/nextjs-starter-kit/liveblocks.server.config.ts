@@ -1,5 +1,4 @@
 // Liveblocks API base url
-import { getProviders } from "next-auth/react";
 
 export const DEFAULT_BASE_URL = "https://api.liveblocks.io";
 
@@ -28,17 +27,18 @@ Follow the full starter kit guide on https://liveblocks.io/docs/guides/nextjs-st
 `);
 }
 
+/* TODO fix
 (async () => {
   const providers = await getProviders();
 
   if (providers?.github) {
     if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
       console.log(`Your GitHub secrets are missing from .env.local
-      
+
 Example .env.local file:
 GITHUB_CLIENT_ID=sk_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 GITHUB_CLIENT_SECRET=sk_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-      
+
 Follow the full starter kit guide to learn how to get them:
 https://liveblocks.io/docs/guides/nextjs-starter-kit#github-authentication
       `);
@@ -52,15 +52,16 @@ https://liveblocks.io/docs/guides/nextjs-starter-kit#github-authentication
       !process.env.AUTH0_ISSUER_BASE_URL
     ) {
       throw new Error(`Your Auth0 secrets are missing from .env.local
-      
+
 Example .env.local file:
 AUTH0_CLIENT_ID=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 AUTH0_CLIENT_SECRET=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 AUTH0_ISSUER_BASE_URL=https://XXXXXXXXXXXXXXXXXX.com
-      
+
 Follow the full starter kit guide to learn how to get them:
 https://liveblocks.io/docs/guides/nextjs-starter-kit#auth0-authentication
       `);
     }
   }
 })();
+*/

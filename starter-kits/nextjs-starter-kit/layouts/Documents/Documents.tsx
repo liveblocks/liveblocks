@@ -1,3 +1,5 @@
+"use client";
+
 import clsx from "clsx";
 import { useSession } from "next-auth/react";
 import { ComponentProps, useMemo, useState } from "react";

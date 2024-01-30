@@ -1,3 +1,5 @@
+"use client";
+
 import clsx from "clsx";
 import { ComponentProps, useCallback, useState } from "react";
 import { DashboardHeader, DashboardSidebar } from "../../components/Dashboard";

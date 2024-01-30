@@ -28,6 +28,9 @@ export function DocumentCreatePopover({
   children,
   ...props
 }: Props) {
+  // TODO fix
+  return <div>popover</div>;
+
   const router = useRouter();
 
   // Create a new document, then navigate to the document's URL location
