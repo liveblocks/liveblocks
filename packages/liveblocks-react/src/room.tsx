@@ -947,7 +947,7 @@ export function createRoomContext<
 
     if (innerError instanceof NotificationsApiError) {
       handleApiError(innerError);
-      // [comments-unread] TODO: Create public error and notify via notificationsErrorEventSource?
+      // TODO: Create public error and notify via notificationsErrorEventSource?
       return;
     }
 

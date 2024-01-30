@@ -2844,7 +2844,6 @@ export function createRoom<
   function updateRoomNotificationSettings(
     settings: Partial<RoomNotificationSettings>
   ): Promise<RoomNotificationSettings> {
-    // [comments-unread] TODO: Verify that the endpoint returns the updated settings
     return fetchJson<RoomNotificationSettings>("/notification-settings", {
       method: "POST",
       body: JSON.stringify(settings),
