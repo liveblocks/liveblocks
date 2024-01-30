@@ -9,10 +9,10 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.9.6",
-    "@liveblocks/node": "^1.9.6",
-    "@liveblocks/react": "^1.9.6",
-    "@liveblocks/react-comments": "^1.9.6",
+    "@liveblocks/client": "*",
+    "@liveblocks/node": "*",
+    "@liveblocks/react": "*",
+    "@liveblocks/react-comments": "*",
     "next": "^13.4.16",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRoomContextBundle } from "@liveblocks/react";
+import { useSharedContextBundle } from "@liveblocks/react";
 import type { ComponentProps } from "react";
 import React, { useMemo } from "react";
 
@@ -12,13 +12,17 @@ export interface AvatarProps extends ComponentProps<"div"> {
 }
 
 export function Avatar({ userId, className, ...props }: AvatarProps) {
-  const { useUser } = useRoomContextBundle();
+  const { useUser } = useSharedContextBundle();
   const { user, isLoading } = useUser(userId);
   const resolvedUserName = useMemo(() => user?.name, [user]);
   const resolvedUserAvatar = useMemo(() => user?.avatar, [user]);
   const resolvedUserInitials = useMemo(
     () => (resolvedUserName ? getInitials(resolvedUserName) : undefined),
     [resolvedUserName]
+  );
+  const resolvedUserIdInitials = useMemo(
+    () => (!isLoading && !user ? getInitials(userId) : undefined),
+    [isLoading, user, userId]
   );
 
   return (
@@ -34,11 +38,15 @@ export function Avatar({ userId, className, ...props }: AvatarProps) {
           alt={resolvedUserName}
         />
       )}
-      {resolvedUserInitials && (
+      {resolvedUserInitials ? (
         <span className="lb-avatar-fallback" aria-hidden>
           {resolvedUserInitials}
         </span>
-      )}
+      ) : resolvedUserIdInitials ? (
+        <span className="lb-avatar-fallback" aria-label={userId} title={userId}>
+          {resolvedUserIdInitials}
+        </span>
+      ) : null}
     </div>
   );
 }

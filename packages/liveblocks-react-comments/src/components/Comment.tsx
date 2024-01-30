@@ -1,10 +1,14 @@
 "use client";
 
-import type {
-  CommentData,
-  CommentReaction as CommentReactionData,
+import {
+  type CommentData,
+  type CommentReaction as CommentReactionData,
+  kInternal,
 } from "@liveblocks/core";
-import { useRoomContextBundle } from "@liveblocks/react";
+import {
+  useRoomContextBundle,
+  useSharedContextBundle,
+} from "@liveblocks/react";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
   ComponentPropsWithoutRef,
@@ -13,7 +17,13 @@ import type {
   ReactNode,
   SyntheticEvent,
 } from "react";
-import React, { forwardRef, useCallback, useMemo, useState } from "react";
+import React, {
+  forwardRef,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { CheckIcon } from "../icons/Check";
 import { CrossIcon } from "../icons/Cross";
@@ -21,11 +31,12 @@ import { DeleteIcon } from "../icons/Delete";
 import { EditIcon } from "../icons/Edit";
 import { EllipsisIcon } from "../icons/Ellipsis";
 import { EmojiAddIcon } from "../icons/EmojiAdd";
-import {
-  type CommentOverrides,
-  type ComposerOverrides,
-  useOverrides,
+import type {
+  CommentOverrides,
+  ComposerOverrides,
+  GlobalOverrides,
 } from "../overrides";
+import { useOverrides } from "../overrides";
 import type { ComposerSubmitComment } from "../primitives";
 import * as CommentPrimitive from "../primitives/Comment";
 import type {
@@ -38,6 +49,8 @@ import * as ComposerPrimitive from "../primitives/Composer";
 import { Timestamp } from "../primitives/Timestamp";
 import { MENTION_CHARACTER } from "../slate/plugins/mentions";
 import { classNames } from "../utils/class-names";
+import { useRefs } from "../utils/use-refs";
+import { useVisibleCallback } from "../utils/use-visible";
 import { Composer } from "./Composer";
 import { Avatar } from "./internal/Avatar";
 import { Button } from "./internal/Button";
@@ -104,12 +117,12 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   /**
    * Override the component's strings.
    */
-  overrides?: Partial<CommentOverrides & ComposerOverrides>;
+  overrides?: Partial<GlobalOverrides & CommentOverrides & ComposerOverrides>;
 
   /**
    * @internal
    */
-  root?: boolean;
+  markThreadAsReadWhenVisible?: string;
 
   /**
    * @internal
@@ -122,23 +135,36 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   additionalActionsClassName?: string;
 }
 
-interface CommentReactionProps extends ComponentPropsWithoutRef<"button"> {
-  comment: CommentData;
+interface CommentReactionSharedProps
+  extends ComponentPropsWithoutRef<"button"> {
   reaction: CommentReactionData;
+  overrides?: Partial<GlobalOverrides & CommentOverrides>;
+
+  /**
+   * @internal
+   */
+  onPressedChange?: (isPressed: boolean) => void;
 }
 
-function CommentMention({
+interface CommentReactionProps
+  extends Omit<CommentReactionSharedProps, "onPressedChange"> {
+  comment: CommentData;
+}
+
+export function CommentMention({
   userId,
   className,
   ...props
 }: CommentBodyMentionProps & CommentMentionProps) {
-  const { useSelf } = useRoomContextBundle();
-  const self = useSelf();
+  const {
+    [kInternal]: { useCurrentUserId },
+  } = useSharedContextBundle();
+  const currentId = useCurrentUserId();
 
   return (
     <CommentPrimitive.Mention
       className={classNames("lb-comment-mention", className)}
-      data-self={userId === self?.id ? "" : undefined}
+      data-self={userId === currentId ? "" : undefined}
       {...props}
     >
       {MENTION_CHARACTER}
@@ -147,7 +173,7 @@ function CommentMention({
   );
 }
 
-function CommentLink({
+export function CommentLink({
   href,
   children,
   className,
@@ -165,39 +191,10 @@ function CommentLink({
 }
 
 const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
-  ({ comment, reaction, className, ...props }, forwardedRef) => {
-    const { useAddReaction, useRemoveReaction, useSelf } =
-      useRoomContextBundle();
-    const self = useSelf();
+  ({ comment, reaction, ...props }, forwardedRef) => {
+    const { useAddReaction, useRemoveReaction } = useRoomContextBundle();
     const addReaction = useAddReaction();
     const removeReaction = useRemoveReaction();
-    const isActive = useMemo(() => {
-      return reaction.users.some((users) => users.id === self?.id);
-    }, [reaction, self?.id]);
-    const $ = useOverrides();
-    const tooltipContent = useMemo(
-      () => (
-        <span>
-          {$.COMMENT_REACTION_TOOLTIP(
-            reaction.emoji,
-            <List
-              values={reaction.users.map((users, index) => (
-                <User
-                  key={users.id}
-                  userId={users.id}
-                  capitalize={index === 0}
-                  replaceSelf
-                />
-              ))}
-              formatRemaining={$.COMMENT_REACTION_REMAINING}
-              truncate={REACTIONS_TRUNCATE}
-            />,
-            reaction.users.length
-          )}
-        </span>
-      ),
-      [$, reaction]
-    );
 
     const handlePressedChange = useCallback(
       (isPressed: boolean) => {
@@ -225,6 +222,57 @@ const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
     );
 
     return (
+      <CommentReactionShared
+        onPressedChange={handlePressedChange}
+        reaction={reaction}
+        {...props}
+        ref={forwardedRef}
+      />
+    );
+  }
+);
+
+export const CommentReactionShared = forwardRef<
+  HTMLButtonElement,
+  CommentReactionSharedProps
+>(
+  (
+    { reaction, overrides, disabled, onPressedChange, className, ...props },
+    forwardedRef
+  ) => {
+    const {
+      [kInternal]: { useCurrentUserId },
+    } = useSharedContextBundle();
+    const currentId = useCurrentUserId();
+    const isActive = useMemo(() => {
+      return reaction.users.some((users) => users.id === currentId);
+    }, [currentId, reaction]);
+    const $ = useOverrides(overrides);
+    const tooltipContent = useMemo(
+      () => (
+        <span>
+          {$.COMMENT_REACTION_LIST(
+            <List
+              values={reaction.users.map((users, index) => (
+                <User
+                  key={users.id}
+                  userId={users.id}
+                  capitalize={index === 0}
+                  replaceSelf
+                />
+              ))}
+              formatRemaining={$.LIST_REMAINING_USERS}
+              truncate={REACTIONS_TRUNCATE}
+            />,
+            reaction.emoji,
+            reaction.users.length
+          )}
+        </span>
+      ),
+      [$, reaction]
+    );
+
+    return (
       <Tooltip
         content={tooltipContent}
         multiline
@@ -233,12 +281,14 @@ const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
         <TogglePrimitive.Root
           asChild
           pressed={isActive}
-          onPressedChange={handlePressedChange}
+          onPressedChange={onPressedChange}
+          disabled={disabled}
           ref={forwardedRef}
         >
           <Button
             className={classNames("lb-comment-reaction", className)}
             variant="outline"
+            disableable={false}
             aria-label={$.COMMENT_REACTION_DESCRIPTION(
               reaction.emoji,
               reaction.users.length
@@ -283,10 +333,10 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       onCommentEdit,
       onCommentDelete,
       overrides,
-      root = true,
+      className,
       additionalActions,
       additionalActionsClassName,
-      className,
+      markThreadAsReadWhenVisible,
       ...props
     },
     forwardedRef
@@ -296,17 +346,31 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       useEditComment,
       useAddReaction,
       useRemoveReaction,
+      useMarkThreadAsRead,
       useSelf,
     } = useRoomContextBundle();
+    const ref = useRef<HTMLDivElement>(null);
+    const mergedRefs = useRefs(forwardedRef, ref);
     const self = useSelf();
     const deleteComment = useDeleteComment();
     const editComment = useEditComment();
     const addReaction = useAddReaction();
     const removeReaction = useRemoveReaction();
+    const markThreadAsRead = useMarkThreadAsRead();
     const $ = useOverrides(overrides);
     const [isEditing, setEditing] = useState(false);
     const [isMoreActionOpen, setMoreActionOpen] = useState(false);
     const [isReactionActionOpen, setReactionActionOpen] = useState(false);
+
+    const markVisibleThreadAsRead = useCallback(() => {
+      if (markThreadAsReadWhenVisible) {
+        markThreadAsRead(markThreadAsReadWhenVisible);
+      }
+    }, [markThreadAsRead, markThreadAsReadWhenVisible]);
+
+    useVisibleCallback(ref, markVisibleThreadAsRead, {
+      enabled: Boolean(markThreadAsReadWhenVisible),
+    });
 
     const stopPropagation = useCallback((event: SyntheticEvent) => {
       event.stopPropagation();
@@ -364,7 +428,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
         );
 
         if (
-          reactionIndex > 0 &&
+          reactionIndex >= 0 &&
           self?.id &&
           comment.reactions[reactionIndex].users.some(
             (user) => user.id === self?.id
@@ -401,8 +465,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       <TooltipProvider>
         <div
           className={classNames(
-            root && "lb-root",
-            "lb-comment",
+            "lb-root lb-comment",
             indentContent && "lb-comment:indent-content",
             showActions === "hover" && "lb-comment:show-actions-hover",
             (isMoreActionOpen || isReactionActionOpen) &&
@@ -410,9 +473,10 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
             className
           )}
           data-deleted={!comment.body ? "" : undefined}
+          data-editing={isEditing ? "" : undefined}
           dir={$.dir}
           {...props}
-          ref={forwardedRef}
+          ref={mergedRefs}
         >
           <div className="lb-comment-header">
             <div className="lb-comment-details">
@@ -431,7 +495,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                   <Timestamp
                     locale={$.locale}
                     date={comment.createdAt}
-                    className="lb-comment-date-timestamp"
+                    className="lb-comment-date-created"
                   />
                   {comment.editedAt && comment.body && (
                     <>
@@ -515,7 +579,6 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
             {isEditing ? (
               <Composer
                 className="lb-comment-composer"
-                root={false}
                 onComposerSubmit={handleEditSubmit}
                 defaultValue={comment.body}
                 autoFocus
@@ -576,6 +639,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                         key={reaction.emoji}
                         comment={comment}
                         reaction={reaction}
+                        overrides={overrides}
                       />
                     ))}
                     <EmojiPicker onEmojiSelect={handleReactionSelect}>

@@ -8,6 +8,7 @@ import {
   replaceRemoteStorageAndReconnect,
 } from "../../__tests__/_utils";
 import { waitUntilStorageUpdate } from "../../__tests__/_waitUtils";
+import { kInternal } from "../../internal";
 import { Permission } from "../../protocol/AuthToken";
 import { OpCode } from "../../protocol/Op";
 import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
@@ -178,7 +179,7 @@ describe("LiveObject", () => {
         a: 0,
       },
     });
-    expect(room.__internal.undoStack[0]).toEqual([
+    expect(room[kInternal].undoStack[0]).toEqual([
       {
         type: OpCode.UPDATE_OBJECT,
         id: "0:0",
@@ -205,7 +206,7 @@ describe("LiveObject", () => {
     expectStorage({
       child: null,
     });
-    expect(room.__internal.undoStack[1]).toEqual([
+    expect(room[kInternal].undoStack[1]).toEqual([
       {
         type: OpCode.CREATE_OBJECT,
         id: "1:0",
@@ -248,7 +249,7 @@ describe("LiveObject", () => {
       a: 0,
       child: null,
     });
-    expect(room.__internal.nodeCount).toBe(1);
+    expect(room[kInternal].nodeCount).toBe(1);
 
     assertUndoRedo();
   });
@@ -276,7 +277,7 @@ describe("LiveObject", () => {
       a: 0,
       child: null,
     });
-    expect(room.__internal.nodeCount).toBe(1);
+    expect(room[kInternal].nodeCount).toBe(1);
 
     assertUndoRedo();
   });
@@ -297,7 +298,7 @@ describe("LiveObject", () => {
       },
     });
 
-    expect(room.__internal.nodeCount).toBe(2);
+    expect(room[kInternal].nodeCount).toBe(2);
 
     assertUndoRedo();
   });
@@ -328,7 +329,7 @@ describe("LiveObject", () => {
       },
     });
 
-    expect(room.__internal.nodeCount).toBe(2);
+    expect(room[kInternal].nodeCount).toBe(2);
 
     assertUndoRedo();
   });

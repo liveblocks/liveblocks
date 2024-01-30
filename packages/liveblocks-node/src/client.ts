@@ -10,6 +10,8 @@ import type {
   CommentDataPlain,
   CommentUserReaction,
   CommentUserReactionPlain,
+  InboxNotificationData,
+  InboxNotificationDataPlain,
   IUserInfo,
   Json,
   JsonObject,
@@ -1207,6 +1209,29 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
+  }
+
+  public async getInboxNotification(params: {
+    userId: string;
+    inboxNotificationId: string;
+  }): Promise<InboxNotificationData> {
+    const { userId, inboxNotificationId } = params;
+
+    const res = await this.get(
+      url`/v2/users/${userId}/inbox-notifications/${inboxNotificationId}`
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    const data = (await res.json()) as InboxNotificationDataPlain;
+
+    return {
+      ...data,
+      notifiedAt: new Date(data.notifiedAt),
+      readAt: data.readAt ? new Date(data.readAt) : null,
+    };
   }
 }
 

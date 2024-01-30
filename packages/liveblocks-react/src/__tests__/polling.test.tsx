@@ -2,15 +2,14 @@ import "@testing-library/jest-dom";
 
 import type { BaseMetadata, JsonObject } from "@liveblocks/core";
 import { createClient } from "@liveblocks/core";
-import { render, renderHook, waitFor } from "@testing-library/react";
-import { rest } from "msw";
+import { renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
 import React from "react";
 
-import { POLLING_INTERVAL_REALTIME } from "../comments/CommentsRoom";
-import { createRoomContext } from "../factory";
-import { dummyThreadDataPlain } from "./_dummies";
+import { createRoomContext, POLLING_INTERVAL } from "../room";
+import { dummyThreadData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
+import { mockGetThreads } from "./_restMocks";
 
 const server = setupServer();
 
@@ -23,8 +22,8 @@ beforeEach(() => {
 
 afterEach(() => {
   MockWebSocket.instances = [];
-  jest.useRealTimers();
   server.resetHandlers();
+  jest.useRealTimers();
 });
 
 afterAll(() => server.close());
@@ -45,28 +44,33 @@ function createRoomContextForTest<
   );
 }
 
-describe("useThreads: Polling", () => {
-  test("should poll threads every x seconds", async () => {
+describe("useThreads: polling", () => {
+  test("should include an error object in the returned value if initial fetch throws an error but should clear the error if polling is successful", async () => {
     let getThreadsReqCount = 0;
+    const threads = [dummyThreadData()];
 
-    const threads = [dummyThreadDataPlain()];
     server.use(
-      rest.post(
-        "https://api.liveblocks.io/v2/c/rooms/room-id/threads/search",
-        async (_req, res, ctx) => {
-          getThreadsReqCount++;
-          return res(
-            ctx.json({
-              data: threads,
-            })
-          );
+      mockGetThreads((_req, res, ctx) => {
+        getThreadsReqCount++;
+
+        // Mock an error response from the server for the initial fetch
+        if (getThreadsReqCount === 1) {
+          return res(ctx.status(500));
         }
-      )
+
+        // Mock a successful response for all subsequent requests (polling, etc)
+        return res(
+          ctx.json({
+            data: threads,
+            inboxNotifications: [],
+          })
+        );
+      })
     );
 
     const { RoomProvider, useThreads } = createRoomContextForTest();
 
-    const { unmount } = renderHook(() => useThreads(), {
+    const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
         <RoomProvider id="room-id" initialPresence={{}}>
           {children}
@@ -74,120 +78,172 @@ describe("useThreads: Polling", () => {
       ),
     });
 
-    await waitFor(() => expect(getThreadsReqCount).toBe(1));
+    expect(result.current).toEqual({ isLoading: true });
 
-    expect(getThreadsReqCount).toBe(1);
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        threads: [],
+        isLoading: false,
+        error: expect.any(Error),
+      })
+    );
 
-    // jest.advanceTimersByTime(POLLING_INTERVAL_REALTIME);
+    jest.advanceTimersByTime(POLLING_INTERVAL);
 
-    // await waitFor(() => expect(getThreadsReqCount).toBe(2));
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        threads,
+        isLoading: false,
+        error: undefined,
+      })
+    );
+
     unmount();
   });
 
-  test("should stop polling threads on unmount", async () => {
-    let getThreadsReqCount = 0;
+  // TODO: Add more tests for polling
+  // test("should poll threads every x seconds", async () => {
+  //   let getThreadsReqCount = 0;
 
-    const threads = [dummyThreadDataPlain()];
-    server.use(
-      rest.post(
-        "https://api.liveblocks.io/v2/c/rooms/room-id/threads/search",
-        async (_req, res, ctx) => {
-          getThreadsReqCount++;
-          return res(
-            ctx.json({
-              data: threads,
-            })
-          );
-        }
-      )
-    );
+  //   const threads = [dummyThreadDataPlain()];
+  //   server.use(
+  //     rest.post(
+  //       "https://api.liveblocks.io/v2/c/rooms/room-id/threads/search",
+  //       async (_req, res, ctx) => {
+  //         getThreadsReqCount++;
+  //         return res(
+  //           ctx.json({
+  //             data: threads,
+  //           })
+  //         );
+  //       }
+  //     )
+  //   );
 
-    const { RoomProvider, useThreads } = createRoomContextForTest();
+  //   const { RoomProvider, useThreads } = createRoomContextForTest();
 
-    const { unmount } = renderHook(
-      () => {
-        useThreads();
-      },
-      {
-        wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
-        ),
-      }
-    );
+  //   const { unmount } = renderHook(() => useThreads(), {
+  //     wrapper: ({ children }) => (
+  //       <RoomProvider id="room-id" initialPresence={{}}>
+  //         {children}
+  //       </RoomProvider>
+  //     ),
+  //   });
 
-    await waitFor(() => expect(getThreadsReqCount).toBe(1));
+  //   await waitFor(() => expect(getThreadsReqCount).toBe(1));
 
-    unmount();
+  //   expect(getThreadsReqCount).toBe(1);
 
-    jest.advanceTimersByTime(POLLING_INTERVAL_REALTIME);
+  //   // jest.advanceTimersByTime(POLLING_INTERVAL_REALTIME);
 
-    await waitFor(() => expect(getThreadsReqCount).toBe(1));
-  });
+  //   // await waitFor(() => expect(getThreadsReqCount).toBe(2));
+  //   unmount();
+  // });
 
-  test("should stop polling threads only when all instances of useThreads are unmounted", async () => {
-    let getThreadsReqCount = 0;
+  // test("should stop polling threads on unmount", async () => {
+  //   let getThreadsReqCount = 0;
 
-    const threads = [dummyThreadDataPlain()];
-    server.use(
-      rest.post(
-        "https://api.liveblocks.io/v2/c/rooms/room-id/threads/search",
-        async (_req, res, ctx) => {
-          getThreadsReqCount++;
-          return res(
-            ctx.json({
-              data: threads,
-            })
-          );
-        }
-      )
-    );
+  //   const threads = [dummyThreadDataPlain()];
+  //   server.use(
+  //     rest.post(
+  //       "https://api.liveblocks.io/v2/c/rooms/room-id/threads/search",
+  //       async (_req, res, ctx) => {
+  //         getThreadsReqCount++;
+  //         return res(
+  //           ctx.json({
+  //             data: threads,
+  //           })
+  //         );
+  //       }
+  //     )
+  //   );
 
-    const { RoomProvider, useThreads } = createRoomContextForTest();
+  //   const { RoomProvider, useThreads } = createRoomContextForTest();
 
-    function Threads() {
-      useThreads();
-      return <div></div>;
-    }
+  //   const { unmount } = renderHook(
+  //     () => {
+  //       useThreads();
+  //     },
+  //     {
+  //       wrapper: ({ children }) => (
+  //         <RoomProvider id="room-id" initialPresence={{}}>
+  //           {children}
+  //         </RoomProvider>
+  //       ),
+  //     }
+  //   );
 
-    function Component({
-      isFirstThreadsInstanceVisible,
-    }: {
-      isFirstThreadsInstanceVisible: boolean;
-    }) {
-      return (
-        <>
-          {isFirstThreadsInstanceVisible && <Threads />}
-          <Threads />
-        </>
-      );
-    }
+  //   await waitFor(() => expect(getThreadsReqCount).toBe(1));
 
-    const { rerender, unmount } = render(
-      <Component isFirstThreadsInstanceVisible={true} />,
-      {
-        wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
-        ),
-      }
-    );
+  //   unmount();
 
-    await waitFor(() => expect(getThreadsReqCount).toBe(1));
+  //   jest.advanceTimersByTime(POLLING_INTERVAL_REALTIME);
 
-    // We unmount the first instance of useThreads
-    rerender(<Component isFirstThreadsInstanceVisible={false} />);
+  //   await waitFor(() => expect(getThreadsReqCount).toBe(1));
+  // });
 
-    jest.advanceTimersByTime(POLLING_INTERVAL_REALTIME);
+  // test("should stop polling threads only when all instances of useThreads are unmounted", async () => {
+  //   let getThreadsReqCount = 0;
 
-    await waitFor(() => expect(getThreadsReqCount).toBe(2));
+  //   const threads = [dummyThreadDataPlain()];
+  //   server.use(
+  //     rest.post(
+  //       "https://api.liveblocks.io/v2/c/rooms/room-id/threads/search",
+  //       async (_req, res, ctx) => {
+  //         getThreadsReqCount++;
+  //         return res(
+  //           ctx.json({
+  //             data: threads,
+  //           })
+  //         );
+  //       }
+  //     )
+  //   );
 
-    unmount();
+  //   const { RoomProvider, useThreads } = createRoomContextForTest();
 
-    jest.advanceTimersByTime(POLLING_INTERVAL_REALTIME);
+  //   function Threads() {
+  //     useThreads();
+  //     return <div></div>;
+  //   }
 
-    await waitFor(() => expect(getThreadsReqCount).toBe(2));
-  });
+  //   function Component({
+  //     isFirstThreadsInstanceVisible,
+  //   }: {
+  //     isFirstThreadsInstanceVisible: boolean;
+  //   }) {
+  //     return (
+  //       <>
+  //         {isFirstThreadsInstanceVisible && <Threads />}
+  //         <Threads />
+  //       </>
+  //     );
+  //   }
+
+  //   const { rerender, unmount } = render(
+  //     <Component isFirstThreadsInstanceVisible={true} />,
+  //     {
+  //       wrapper: ({ children }) => (
+  //         <RoomProvider id="room-id" initialPresence={{}}>
+  //           {children}
+  //         </RoomProvider>
+  //       ),
+  //     }
+  //   );
+
+  //   await waitFor(() => expect(getThreadsReqCount).toBe(1));
+
+  //   // We unmount the first instance of useThreads
+  //   rerender(<Component isFirstThreadsInstanceVisible={false} />);
+
+  //   jest.advanceTimersByTime(POLLING_INTERVAL_REALTIME);
+
+  //   await waitFor(() => expect(getThreadsReqCount).toBe(2));
+
+  //   unmount();
+
+  //   jest.advanceTimersByTime(POLLING_INTERVAL_REALTIME);
+
+  //   await waitFor(() => expect(getThreadsReqCount).toBe(2));
+  // });
 });

@@ -1,6 +1,7 @@
 "use client";
 
-import { useRoomContextBundle } from "@liveblocks/react";
+import { kInternal } from "@liveblocks/core";
+import { useSharedContextBundle } from "@liveblocks/react";
 import type { ComponentProps } from "react";
 import React, { useMemo } from "react";
 
@@ -21,30 +22,33 @@ export function User({
   className,
   ...props
 }: UserProps) {
-  const { useUser, useSelf } = useRoomContextBundle();
+  const {
+    useUser,
+    [kInternal]: { useCurrentUserId },
+  } = useSharedContextBundle();
+  const currentId = useCurrentUserId();
   const { user, isLoading } = useUser(userId);
-  const self = useSelf();
   const $ = useOverrides();
   const resolvedUserName = useMemo(() => {
     const name =
-      replaceSelf && self?.id === userId
-        ? $.SELF
-        : user?.name ?? $.UNKNOWN_USER;
+      replaceSelf && currentId === userId
+        ? $.USER_SELF
+        : user?.name ?? $.USER_UNKNOWN;
 
     return shouldCapitalize ? capitalize(name) : name;
   }, [
-    $.SELF,
-    $.UNKNOWN_USER,
-    shouldCapitalize,
     replaceSelf,
-    self?.id,
-    user?.name,
+    currentId,
     userId,
+    $.USER_SELF,
+    $.USER_UNKNOWN,
+    user?.name,
+    shouldCapitalize,
   ]);
 
   return (
     <span
-      className={classNames("lb-user", className)}
+      className={classNames("lb-name lb-user", className)}
       data-loading={isLoading ? "" : undefined}
       {...props}
     >
