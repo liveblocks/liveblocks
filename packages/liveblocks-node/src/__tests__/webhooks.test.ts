@@ -163,6 +163,17 @@ describe("WebhookHandler", () => {
           createdAt: "2023-01-27T20:33:23.737Z",
         },
       ],
+      [
+        "threadEmailNotification",
+        {
+          projectId: "605a50b01a36d5ea7a2e9104",
+          roomId: "examples-hero-21-07-2022",
+          inboxNotificationId: "605a50b01a36d5ea7a2e9104",
+          threadId: "605a50b01a36d5ea7a2e9104",
+          userId: "userId",
+          createdAt: "2023-01-27T20:33:23.737Z",
+        },
+      ],
     ])('should verify a "%s" event', (type, data) => {
       const now = 1674851609000;
       jest.useFakeTimers({

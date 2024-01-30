@@ -26,6 +26,7 @@ export type {
   StorageUpdatedEvent,
   ThreadCreatedEvent,
   ThreadMetadataUpdatedEvent,
+  ThreadEmailNotificationEvent,
   UserEnteredEvent,
   UserLeftEvent,
   WebhookEvent,
