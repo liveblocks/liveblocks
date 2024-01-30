@@ -17,24 +17,32 @@ import { TooltipProvider } from "@radix-ui/react-tooltip";
 import type {
   ComponentProps,
   ComponentPropsWithoutRef,
+  ComponentType,
   ReactNode,
 } from "react";
 import React, { forwardRef, useMemo } from "react";
 
+import type { GlobalComponents } from "../components";
+import { useComponents } from "../components";
 import type {
   CommentOverrides,
+  GlobalOverrides,
   InboxNotificationOverrides,
 } from "../overrides";
 import { useOverrides } from "../overrides";
 import * as CommentPrimitive from "../primitives/Comment";
 import { Timestamp } from "../primitives/Timestamp";
 import { classNames } from "../utils/class-names";
+import { setQueryParams } from "../utils/query-params";
 import { CommentLink, CommentMention, CommentReactionShared } from "./Comment";
 import { Avatar, type AvatarProps } from "./internal/Avatar";
 import { List } from "./internal/List";
+import { Room } from "./internal/Room";
 import { User } from "./internal/User";
 
-const THREAD_INBOX_NOTIFICATION_MAX_COMMENTS = 3;
+const INBOX_NOTIFICATION_THREAD_MAX_COMMENTS = 3;
+const THREAD_ID_QUERY_PARAM = "thread";
+const COMMENT_ID_QUERY_PARAM = "comment";
 
 type InboxNotificationThreadCommentsContents = {
   type: "comments";
@@ -56,6 +64,21 @@ type InboxNotificationThreadContents =
   | InboxNotificationThreadCommentsContents
   | InboxNotificationThreadMentionContents;
 
+export type InboxNotificationKinds = {
+  thread: ComponentType<InboxNotificationThreadProps>;
+};
+
+export type AddRefToComponents<T, R> = {
+  [K in keyof T]: T[K] extends ComponentType<infer P>
+    ? ComponentType<P & { ref: R }>
+    : T[K];
+};
+
+type InboxNotificationKindsWithRef = AddRefToComponents<
+  InboxNotificationKinds,
+  ComponentProps<"a">["ref"]
+>;
+
 export interface InboxNotificationProps extends ComponentPropsWithoutRef<"a"> {
   /**
    * The inbox notification to display.
@@ -63,9 +86,29 @@ export interface InboxNotificationProps extends ComponentPropsWithoutRef<"a"> {
   inboxNotification: InboxNotificationData;
 
   /**
+   * Override specific kinds of inbox notifications.
+   */
+  kinds?: Partial<InboxNotificationKinds>;
+
+  /**
    * Override the component's strings.
    */
-  overrides?: Partial<InboxNotificationOverrides & CommentOverrides>;
+  overrides?: Partial<
+    GlobalOverrides & InboxNotificationOverrides & CommentOverrides
+  >;
+
+  /**
+   * Override the component's components.
+   */
+  components?: Partial<GlobalComponents>;
+}
+
+export interface InboxNotificationThreadProps
+  extends Omit<InboxNotificationProps, "kinds"> {
+  /**
+   * Whether to show the room name in the title.
+   */
+  showRoomName?: boolean;
 }
 
 interface InboxNotificationLayoutProps
@@ -74,7 +117,8 @@ interface InboxNotificationLayoutProps
   title: ReactNode;
   date: Date | string | number;
   unread?: boolean;
-  overrides?: Partial<InboxNotificationOverrides>;
+  overrides?: Partial<GlobalOverrides & InboxNotificationOverrides>;
+  components?: Partial<GlobalComponents>;
 }
 
 type InboxNotificationAvatarProps = AvatarProps;
@@ -82,7 +126,7 @@ type InboxNotificationAvatarProps = AvatarProps;
 interface InboxNotificationCommentProps extends ComponentProps<"div"> {
   comment: CommentData;
   showHeader?: boolean;
-  overrides?: Partial<CommentOverrides>;
+  overrides?: Partial<GlobalOverrides & CommentOverrides>;
 }
 
 const InboxNotificationLayout = forwardRef<
@@ -90,14 +134,25 @@ const InboxNotificationLayout = forwardRef<
   InboxNotificationLayoutProps
 >(
   (
-    { children, aside, title, date, unread, overrides, className, ...props },
+    {
+      children,
+      aside,
+      title,
+      date,
+      unread,
+      overrides,
+      components,
+      className,
+      ...props
+    },
     forwardedRef
   ) => {
     const $ = useOverrides(overrides);
+    const { Anchor } = useComponents(components);
 
     return (
       <TooltipProvider>
-        <a
+        <Anchor
           className={classNames("lb-root lb-inbox-notification", className)}
           dir={$.dir}
           data-unread={unread ? "" : undefined}
@@ -125,7 +180,7 @@ const InboxNotificationLayout = forwardRef<
             </div>
             <div className="lb-inbox-notification-body">{children}</div>
           </div>
-        </a>
+        </Anchor>
       </TooltipProvider>
     );
   }
@@ -250,7 +305,7 @@ function generateInboxNotificationThreadContents(
   if (unreadComments.length === 0) {
     const lastComments = thread.comments
       .filter((comment) => comment.body)
-      .slice(-THREAD_INBOX_NOTIFICATION_MAX_COMMENTS);
+      .slice(-INBOX_NOTIFICATION_THREAD_MAX_COMMENTS);
 
     return {
       type: "comments",
@@ -278,7 +333,7 @@ function generateInboxNotificationThreadContents(
   }
 
   const lastUnreadComments = unreadComments.slice(
-    -THREAD_INBOX_NOTIFICATION_MAX_COMMENTS
+    -INBOX_NOTIFICATION_THREAD_MAX_COMMENTS
   );
 
   // Otherwise, show the last unread comments.
@@ -293,117 +348,145 @@ function generateInboxNotificationThreadContents(
 
 const InboxNotificationThread = forwardRef<
   HTMLAnchorElement,
-  InboxNotificationProps
->(({ inboxNotification, overrides, ...props }, forwardedRef) => {
-  const $ = useOverrides(overrides);
-  const {
-    [kInternal]: { useThreadFromCache, useCurrentUserId },
-  } = useLiveblocksContextBundle();
-  const thread = useThreadFromCache(inboxNotification.threadId);
-  const currentUserId = useCurrentUserId();
-  const { unread, date, aside, title, content } = useMemo(() => {
-    const contents = generateInboxNotificationThreadContents(
-      inboxNotification,
-      thread,
-      currentUserId ?? ""
+  InboxNotificationThreadProps
+>(
+  (
+    { inboxNotification, href, showRoomName = true, overrides, ...props },
+    forwardedRef
+  ) => {
+    const $ = useOverrides(overrides);
+    const {
+      [kInternal]: { useThreadFromCache, useCurrentUserId },
+    } = useLiveblocksContextBundle();
+    const thread = useThreadFromCache(inboxNotification.threadId);
+    const currentUserId = useCurrentUserId();
+    const { unread, date, aside, title, content, threadId, commentId } =
+      useMemo(() => {
+        const contents = generateInboxNotificationThreadContents(
+          inboxNotification,
+          thread,
+          currentUserId ?? ""
+        );
+
+        switch (contents.type) {
+          case "comments": {
+            const reversedUserIds = [...contents.userIds].reverse();
+            const firstUserId = reversedUserIds[0];
+
+            const aside = <InboxNotificationAvatar userId={firstUserId} />;
+            const title = $.INBOX_NOTIFICATION_THREAD_COMMENTS_LIST(
+              <List
+                values={reversedUserIds.map((userId, index) => (
+                  <User
+                    key={userId}
+                    userId={userId}
+                    capitalize={index === 0}
+                    replaceSelf
+                  />
+                ))}
+                formatRemaining={$.LIST_REMAINING_USERS}
+                truncate={INBOX_NOTIFICATION_THREAD_MAX_COMMENTS - 1}
+              />,
+              showRoomName ? <Room roomId={thread.roomId} /> : undefined,
+              reversedUserIds.length
+            );
+            const content = (
+              <div className="lb-inbox-notification-comments">
+                {contents.comments.map((comment) => (
+                  <InboxNotificationComment
+                    key={comment.id}
+                    comment={comment}
+                    showHeader={contents.comments.length > 1}
+                    overrides={overrides}
+                  />
+                ))}
+              </div>
+            );
+
+            return {
+              unread: contents.unread,
+              date: contents.date,
+              aside,
+              title,
+              content,
+              threadId: thread.id,
+              commentId: contents.comments[contents.comments.length - 1].id,
+            };
+          }
+
+          case "mention": {
+            const mentionUserId = contents.userIds[0];
+            const mentionComment = contents.comments[0];
+
+            const aside = <InboxNotificationAvatar userId={mentionUserId} />;
+            const title = $.INBOX_NOTIFICATION_THREAD_MENTION(
+              <User key={mentionUserId} userId={mentionUserId} capitalize />,
+              <Room roomId={thread.roomId} />
+            );
+            const content = (
+              <div className="lb-inbox-notification-comments">
+                <InboxNotificationComment
+                  key={mentionComment.id}
+                  comment={mentionComment}
+                  showHeader={false}
+                />
+              </div>
+            );
+
+            return {
+              unread: contents.unread,
+              date: contents.date,
+              aside,
+              title,
+              content,
+              threadId: thread.id,
+              commentId: mentionComment.id,
+            };
+          }
+
+          default:
+            return assertNever(
+              contents,
+              "Unexpected thread inbox notification type"
+            );
+        }
+      }, [
+        $,
+        currentUserId,
+        inboxNotification,
+        overrides,
+        showRoomName,
+        thread,
+      ]);
+    const resolvedHref = useMemo(() => {
+      return href
+        ? setQueryParams(href, {
+            [THREAD_ID_QUERY_PARAM]: threadId,
+            [COMMENT_ID_QUERY_PARAM]: commentId,
+          })
+        : undefined;
+    }, [commentId, href, threadId]);
+
+    return (
+      <InboxNotificationLayout
+        aside={aside}
+        title={title}
+        date={date}
+        unread={unread}
+        overrides={overrides}
+        href={resolvedHref}
+        {...props}
+        ref={forwardedRef}
+      >
+        {content}
+      </InboxNotificationLayout>
     );
+  }
+);
 
-    switch (contents.type) {
-      case "comments": {
-        const reversedUserIds = [...contents.userIds].reverse();
-        const firstUserId = reversedUserIds[0];
-
-        const aside = <InboxNotificationAvatar userId={firstUserId} />;
-        // [comments-unread] TODO: Use room name instead of "Document"
-        const title = $.INBOX_NOTIFICATION_THREAD_COMMENTS_LIST(
-          <List
-            values={reversedUserIds.map((userId, index) => (
-              <User
-                key={userId}
-                userId={userId}
-                capitalize={index === 0}
-                replaceSelf
-              />
-            ))}
-            formatRemaining={$.LIST_REMAINING_USERS}
-            truncate={THREAD_INBOX_NOTIFICATION_MAX_COMMENTS - 1}
-          />,
-          <span className="lb-name lb-room">Document</span>,
-          reversedUserIds.length
-        );
-        const content = (
-          <div className="lb-inbox-notification-comments">
-            {contents.comments.map((comment) => (
-              <InboxNotificationComment
-                key={comment.id}
-                comment={comment}
-                showHeader={contents.comments.length > 1}
-                overrides={overrides}
-              />
-            ))}
-          </div>
-        );
-
-        return {
-          unread: contents.unread,
-          date: contents.date,
-          aside,
-          title,
-          content,
-        };
-      }
-
-      case "mention": {
-        const mentionUserId = contents.userIds[0];
-        const mentionComment = contents.comments[0];
-
-        const aside = <InboxNotificationAvatar userId={mentionUserId} />;
-        // [comments-unread] TODO: Use room name instead of "Document"
-        const title = $.INBOX_NOTIFICATION_THREAD_MENTION(
-          <User key={mentionUserId} userId={mentionUserId} capitalize />,
-          <span className="lb-name lb-room">Document</span>
-        );
-        const content = (
-          <div className="lb-inbox-notification-comments">
-            <InboxNotificationComment
-              key={mentionComment.id}
-              comment={mentionComment}
-              showHeader={false}
-            />
-          </div>
-        );
-
-        return {
-          unread: contents.unread,
-          date: contents.date,
-          aside,
-          title,
-          content,
-        };
-      }
-
-      default:
-        return assertNever(
-          contents,
-          "Unexpected thread inbox notification type"
-        );
-    }
-  }, [$, currentUserId, inboxNotification, overrides, thread]);
-
-  return (
-    <InboxNotificationLayout
-      aside={aside}
-      title={title}
-      date={date}
-      unread={unread}
-      overrides={overrides}
-      {...props}
-      ref={forwardedRef}
-    >
-      {content}
-    </InboxNotificationLayout>
-  );
-});
+const defaultInboxNotificationKinds: InboxNotificationKinds = {
+  thread: InboxNotificationThread,
+};
 
 /**
  * Displays a single inbox notification.
@@ -411,22 +494,45 @@ const InboxNotificationThread = forwardRef<
  * @example
  * <>
  *   {inboxNotifications.map((inboxNotification) => (
- *     <InboxNotification key={inboxNotification.id} inboxNotification={inboxNotification} />
+ *     <InboxNotification
+ *       key={inboxNotification.id}
+ *       inboxNotification={inboxNotification}
+ *       href={`/rooms/${inboxNotification.roomId}`
+ *     />
  *   ))}
  * </>
  */
-export const InboxNotification = forwardRef<
-  HTMLAnchorElement,
-  InboxNotificationProps
->(({ inboxNotification, ...props }, forwardedRef) => {
-  switch (inboxNotification.kind) {
-    case "thread":
-      return (
-        <InboxNotificationThread
-          inboxNotification={inboxNotification}
-          {...props}
-          ref={forwardedRef}
-        />
+export const InboxNotification = Object.assign(
+  forwardRef<HTMLAnchorElement, InboxNotificationProps>(
+    ({ inboxNotification, kinds, ...props }, forwardedRef) => {
+      const { thread: InboxNotificationThread } = useMemo(
+        () =>
+          ({
+            ...defaultInboxNotificationKinds,
+            ...kinds,
+          }) as InboxNotificationKindsWithRef,
+        [kinds]
       );
+
+      switch (inboxNotification.kind) {
+        case "thread":
+          return (
+            <InboxNotificationThread
+              inboxNotification={inboxNotification}
+              {...props}
+              ref={forwardedRef}
+            />
+          );
+
+        default:
+          return assertNever(
+            inboxNotification.kind,
+            "Unexpected inbox notification kind"
+          );
+      }
+    }
+  ),
+  {
+    Thread: InboxNotificationThread,
   }
-});
+);

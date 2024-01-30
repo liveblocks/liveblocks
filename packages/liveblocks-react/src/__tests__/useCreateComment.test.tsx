@@ -151,13 +151,17 @@ describe("useCreateComment", () => {
       )
     );
 
-    const { RoomProvider, useThreadUnreadSince, useCreateComment, useThreads } =
-      createRoomContextForTest();
+    const {
+      RoomProvider,
+      useThreadSubscription,
+      useCreateComment,
+      useThreads,
+    } = createRoomContextForTest();
 
     const { result, unmount } = renderHook(
       () => ({
         threads: useThreads().threads,
-        unreadSince: useThreadUnreadSince(initialThread.id),
+        subscription: useThreadSubscription(initialThread.id),
         createComment: useCreateComment(),
       }),
       {
@@ -169,12 +173,12 @@ describe("useCreateComment", () => {
       }
     );
 
-    expect(result.current.unreadSince).toBeNull();
+    expect(result.current.subscription).toEqual({
+      status: "not-subscribed",
+    });
 
     await waitFor(() =>
-      expect(result.current.unreadSince).toEqual(
-        initialInboxNotification.notifiedAt
-      )
+      expect(result.current.subscription.unreadSince).toBeNull()
     );
 
     const comment = await act(() =>
@@ -187,11 +191,14 @@ describe("useCreateComment", () => {
       })
     );
 
-    expect(result.current.unreadSince).toEqual(comment.createdAt);
+    expect(result.current.subscription).toEqual({
+      status: "subscribed",
+      unreadSince: comment.createdAt,
+    });
 
     // We're using the createdDate overriden by the server to ensure the optimistic update have been properly deleted
     await waitFor(() =>
-      expect(result.current.unreadSince).toEqual(fakeCreatedAt)
+      expect(result.current.subscription.unreadSince).toEqual(fakeCreatedAt)
     );
 
     unmount();

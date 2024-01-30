@@ -23,6 +23,7 @@ import type {
   PartialNullable,
   Resolve,
   RoomEventMessage,
+  RoomInfo,
   RoomInitializers,
   ThreadData,
   ToImmutable,
@@ -55,6 +56,29 @@ export type UserState<T> =
   | UserStateLoading
   | UserStateError
   | UserStateSuccess<T>;
+
+export type RoomInfoStateLoading = {
+  isLoading: true;
+  info?: never;
+  error?: never;
+};
+
+export type RoomInfoStateError = {
+  isLoading: false;
+  info?: never;
+  error: Error;
+};
+
+export type RoomInfoStateSuccess = {
+  isLoading: false;
+  info: RoomInfo;
+  error?: never;
+};
+
+export type RoomInfoState =
+  | RoomInfoStateLoading
+  | RoomInfoStateError
+  | RoomInfoStateSuccess;
 
 export type CreateThreadOptions<TMetadata extends BaseMetadata> = [
   TMetadata,
@@ -257,6 +281,23 @@ export type MutationContext<
   ) => void;
 };
 
+export type ThreadSubscription =
+  // The user is not subscribed to the thread
+  | {
+      status: "not-subscribed";
+      unreadSince?: never;
+    }
+  // The user is subscribed to the thread but has never read it
+  | {
+      status: "subscribed";
+      unreadSince: null;
+    }
+  // The user is subscribed to the thread and has read it
+  | {
+      status: "subscribed";
+      unreadSince: Date;
+    };
+
 export type SharedContextBundle<TUserMeta extends BaseUserMeta> = {
   /**
    * @beta
@@ -268,6 +309,16 @@ export type SharedContextBundle<TUserMeta extends BaseUserMeta> = {
    */
   useUser(userId: string): UserState<TUserMeta["info"]>;
 
+  /**
+   * @private
+   *
+   * Returns room info from a given room ID.
+   *
+   * @example
+   * const { info, error, isLoading } = useRoomInfo("room-id");
+   */
+  useRoomInfo(roomId: string): RoomInfoState;
+
   suspense: {
     /**
      * @beta
@@ -278,6 +329,16 @@ export type SharedContextBundle<TUserMeta extends BaseUserMeta> = {
      * const { user } = useUser("user-id");
      */
     useUser(userId: string): UserStateSuccess<TUserMeta["info"]>;
+
+    /**
+     * @private
+     *
+     * Returns room info from a given room ID.
+     *
+     * @example
+     * const { info } = useRoomInfo("room-id");
+     */
+    useRoomInfo(roomId: string): RoomInfoStateSuccess;
   };
 };
 
@@ -747,14 +808,12 @@ type RoomContextBundleCommon<
   /**
    * @beta
    *
-   * Returns the date at which the thread was last read.
-   * If the thread was never read yet, the thread's creation date is returned.
-   * If the user isn't subscribed to the thread (or it doesn't exist), `null` is returned.
+   * Returns the subscription status of a thread.
    *
    * @example
-   * const unreadSince = useThreadUnreadSince("th_xxx");
+   * const { status, unreadSince } = useThreadSubscription("th_xxx");
    */
-  useThreadUnreadSince(threadId: string): Date | null;
+  useThreadSubscription(threadId: string): ThreadSubscription;
 };
 
 /**

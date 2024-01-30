@@ -79,6 +79,7 @@ import type {
   RoomProviderProps,
   ThreadsState,
   ThreadsStateSuccess,
+  ThreadSubscription,
   UseThreadsOptions,
 } from "./types";
 
@@ -214,10 +215,7 @@ export function createRoomContext<
   const commentsErrorEventSource =
     makeEventSource<CommentsError<TThreadMetadata>>();
 
-  const {
-    useUser,
-    suspense: { useUser: useUserSuspense },
-  } = createSharedContext<TUserMeta>(client);
+  const shared = createSharedContext<TUserMeta>(client);
 
   /**
    * RATIONALE:
@@ -1665,7 +1663,7 @@ export function createRoomContext<
         resolveMentionSuggestionsArgs
       );
       let debounceTimeout: number | undefined;
-      let canceled = false;
+      let isCanceled = false;
 
       const getMentionSuggestions = async () => {
         try {
@@ -1674,7 +1672,7 @@ export function createRoomContext<
             resolveMentionSuggestionsArgs
           );
 
-          if (!canceled) {
+          if (!isCanceled) {
             setMentionSuggestions(mentionSuggestions);
             mentionSuggestionsCache.set(
               mentionSuggestionsCacheKey,
@@ -1707,7 +1705,7 @@ export function createRoomContext<
       }
 
       return () => {
-        canceled = true;
+        isCanceled = true;
         window.clearTimeout(debounceTimeout);
       };
     }, [room.id, search]);
@@ -1715,7 +1713,7 @@ export function createRoomContext<
     return mentionSuggestions;
   }
 
-  function useThreadUnreadSince(threadId: string): Date | null {
+  function useThreadSubscription(threadId: string): ThreadSubscription {
     return useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
@@ -1728,16 +1726,15 @@ export function createRoomContext<
         const thread = state.threads[threadId];
 
         if (inboxNotification === undefined || thread === undefined) {
-          return null;
+          return {
+            status: "not-subscribed",
+          };
         }
 
-        // If the inbox notification wasn't read at all, the thread is unread since its creation, so we return its `createdAt` date.
-        if (inboxNotification.readAt === null) {
-          return thread.createdAt;
-        }
-
-        // If the inbox notification was read, we return the date at which it was last read.
-        return inboxNotification.readAt;
+        return {
+          status: "subscribed",
+          unreadSince: inboxNotification.readAt,
+        };
       }
     );
   }
@@ -2005,7 +2002,6 @@ export function createRoomContext<
     useMutation,
 
     useThreads,
-    useUser,
 
     useCreateThread,
     useEditThreadMetadata,
@@ -2015,10 +2011,12 @@ export function createRoomContext<
     useAddReaction,
     useRemoveReaction,
     useMarkThreadAsRead,
-    useThreadUnreadSince,
+    useThreadSubscription,
 
     useRoomNotificationSettings,
     useUpdateRoomNotificationSettings,
+
+    ...shared,
 
     suspense: {
       RoomContext,
@@ -2059,7 +2057,6 @@ export function createRoomContext<
       useMutation,
 
       useThreads: useThreadsSuspense,
-      useUser: useUserSuspense,
 
       useCreateThread,
       useEditThreadMetadata,
@@ -2069,10 +2066,12 @@ export function createRoomContext<
       useAddReaction,
       useRemoveReaction,
       useMarkThreadAsRead,
-      useThreadUnreadSince,
+      useThreadSubscription,
 
       useRoomNotificationSettings: useRoomNotificationSettingsSuspense,
       useUpdateRoomNotificationSettings,
+
+      ...shared.suspense,
     },
 
     [kInternal]: {

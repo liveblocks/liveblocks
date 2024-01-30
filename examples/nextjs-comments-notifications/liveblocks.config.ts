@@ -3,6 +3,7 @@
 import { createClient } from "@liveblocks/client";
 import { createLiveblocksContext } from "@liveblocks/react";
 import { createRoomContext } from "@liveblocks/react";
+import { getDocumentFromRoomId } from "./src/utils/ids";
 
 export const client = createClient({
   authEndpoint: "/api/liveblocks-auth",
@@ -36,6 +37,15 @@ export const client = createClient({
       return [];
     }
   },
+
+  // Get the names of the rooms
+  resolveRoomsInfo: ({ roomIds }) => {
+    return roomIds.map((roomId) => {
+      const document = getDocumentFromRoomId(roomId);
+
+      return document ? { name: document } : undefined;
+    });
+  },
 });
 
 const {
@@ -47,6 +57,7 @@ const {
     LiveblocksProvider,
     useInboxNotifications,
     useUnreadInboxNotificationsCount,
+    useMarkAllInboxNotificationsAsRead,
   },
 } = createLiveblocksContext(client);
 
@@ -56,4 +67,5 @@ export {
   useThreads,
   useInboxNotifications,
   useUnreadInboxNotificationsCount,
+  useMarkAllInboxNotificationsAsRead,
 };

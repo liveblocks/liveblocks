@@ -52,8 +52,8 @@ export interface ComposerOverrides {
 export interface ThreadOverrides {
   THREAD_RESOLVE: string;
   THREAD_UNRESOLVE: string;
-  THREAD_UNREAD_INDICATOR: string;
-  THREAD_UNREAD_INDICATOR_DESCRIPTION: string;
+  THREAD_NEW_INDICATOR: string;
+  THREAD_NEW_INDICATOR_DESCRIPTION: string;
   THREAD_COMPOSER_PLACEHOLDER: string;
   THREAD_COMPOSER_SEND: string;
 }
@@ -63,12 +63,12 @@ export interface InboxNotificationOverrides {
   INBOX_NOTIFICATION_MARK_AS_READ: string;
   INBOX_NOTIFICATION_THREAD_COMMENTS_LIST: (
     list: ReactNode,
-    room: ReactNode,
+    room: ReactNode | undefined,
     count: number
   ) => ReactNode;
   INBOX_NOTIFICATION_THREAD_MENTION: (
     user: ReactNode,
-    room: ReactNode
+    room: ReactNode | undefined
   ) => ReactNode;
 }
 
@@ -118,8 +118,8 @@ export const defaultOverrides: Overrides = {
     `${count} ${pluralize(count, "reaction")}, react with ${emoji}`,
   THREAD_RESOLVE: "Resolve thread",
   THREAD_UNRESOLVE: "Re-open thread",
-  THREAD_UNREAD_INDICATOR: "New",
-  THREAD_UNREAD_INDICATOR_DESCRIPTION: "New comments",
+  THREAD_NEW_INDICATOR: "New",
+  THREAD_NEW_INDICATOR_DESCRIPTION: "New comments",
   THREAD_COMPOSER_PLACEHOLDER: "Reply to thread…",
   THREAD_COMPOSER_SEND: "Reply",
   INBOX_NOTIFICATION_MORE: "More",
@@ -129,12 +129,13 @@ export const defaultOverrides: Overrides = {
     room: ReactNode
   ) => (
     <>
-      {list} commented on {room}
+      {list} commented
+      {room ? <> in {room}</> : <> in a thread</>}
     </>
   ),
   INBOX_NOTIFICATION_THREAD_MENTION: (user: ReactNode, room: ReactNode) => (
     <>
-      {user} mentioned you in {room}
+      {user} mentioned you{room ? <> in {room}</> : null}
     </>
   ),
 };

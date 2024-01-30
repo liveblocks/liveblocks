@@ -979,7 +979,7 @@
   }
 }
 
-.lb-thread-unread-indicator {
+.lb-thread-new-indicator {
   position: relative;
   z-index: 1;
   display: flex;
@@ -998,7 +998,7 @@
   }
 }
 
-.lb-thread-unread-indicator-label {
+.lb-thread-new-indicator-label {
   z-index: 1;
   display: flex;
   flex: none;
@@ -1011,7 +1011,7 @@
   text-transform: uppercase;
 }
 
-.lb-thread-unread-indicator-label-icon {
+.lb-thread-new-indicator-label-icon {
   inline-size: calc(0.6 * var(--lb-icon-size));
   block-size: calc(0.6 * var(--lb-icon-size));
 }
@@ -1046,18 +1046,24 @@
   background: var(--lb-dynamic-background);
   color: var(--lb-foreground);
   font-weight: 400;
-  cursor: pointer;
+  text-decoration: inherit;
   transition-property: background;
-
-  &:where(:hover) {
-    --lb-dynamic-background: var(--lb-background-foreground-faint);
-  }
 
   &:where([data-unread]) {
     --lb-dynamic-background: var(--lb-background-accent-faint);
+  }
 
-    &:where(:hover) {
-      --lb-dynamic-background: var(--lb-background-accent-subtle);
+  &:where([href]) {
+    cursor: pointer;
+
+    &:where(:hover, :focus-visible, :focus-within) {
+      --lb-dynamic-background: var(--lb-background-foreground-faint);
+    }
+
+    &:where([data-unread]) {
+      &:where(:hover, :focus-visible, :focus-within) {
+        --lb-dynamic-background: var(--lb-background-accent-subtle);
+      }
     }
   }
 }

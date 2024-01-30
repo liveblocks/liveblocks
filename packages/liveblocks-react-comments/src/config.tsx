@@ -3,6 +3,7 @@
 import type { PropsWithChildren } from "react";
 import React, { createContext, useContext, useMemo } from "react";
 
+import { type Components, ComponentsProvider } from "./components";
 import type { Overrides } from "./overrides";
 import { OverridesProvider } from "./overrides";
 
@@ -11,6 +12,11 @@ type CommentsConfigProps = PropsWithChildren<{
    * Override the components' strings.
    */
   overrides?: Partial<Overrides>;
+
+  /**
+   * Override the components' components.
+   */
+  components?: Partial<Components>;
 
   /**
    * The container to render the portal into.
@@ -38,6 +44,7 @@ export function useCommentsConfig() {
  */
 export function CommentsConfig({
   overrides,
+  components,
   portalContainer,
   children,
 }: CommentsConfigProps) {
@@ -48,7 +55,11 @@ export function CommentsConfig({
 
   return (
     <CommentsConfigContext.Provider value={commentsConfig}>
-      <OverridesProvider overrides={overrides}>{children}</OverridesProvider>
+      <OverridesProvider overrides={overrides}>
+        <ComponentsProvider components={components}>
+          {children}
+        </ComponentsProvider>
+      </OverridesProvider>
     </CommentsConfigContext.Provider>
   );
 }

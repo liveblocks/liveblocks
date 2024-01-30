@@ -7,13 +7,17 @@ import {
 import * as Popover from "@radix-ui/react-popover";
 import {
   useInboxNotifications,
+  useMarkAllInboxNotificationsAsRead,
   useUnreadInboxNotificationsCount,
 } from "../../liveblocks.config";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { Loading } from "./Loading";
-import { ComponentPropsWithoutRef } from "react";
+import { ComponentPropsWithoutRef, useEffect, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import clsx from "clsx";
+import { Link } from "./Link";
+import { usePathname } from "next/navigation";
+import { getDocumentFromRoomId } from "../utils/ids";
 
 function InboxList(props: ComponentPropsWithoutRef<"ol">) {
   const { inboxNotifications } = useInboxNotifications();
@@ -22,12 +26,18 @@ function InboxList(props: ComponentPropsWithoutRef<"ol">) {
     <div className="empty">There aren’t any notifications yet.</div>
   ) : (
     <InboxNotificationList {...props}>
-      {inboxNotifications.map((inboxNotification) => (
-        <InboxNotification
-          key={inboxNotification.id}
-          inboxNotification={inboxNotification}
-        />
-      ))}
+      {inboxNotifications.map((inboxNotification) => {
+        const href = getDocumentFromRoomId(inboxNotification.roomId);
+
+        return (
+          <InboxNotification
+            key={inboxNotification.id}
+            inboxNotification={inboxNotification}
+            components={{ Anchor: Link }}
+            href={href}
+          />
+        );
+      })}
     </InboxNotificationList>
   );
 }
@@ -42,9 +52,18 @@ export function InboxPopover({
   className,
   ...props
 }: Popover.PopoverContentProps) {
+  const pathname = usePathname();
+  const [isOpen, setOpen] = useState(false);
+  const markAllInboxNotificationsAsRead = useMarkAllInboxNotificationsAsRead();
+
+  // Close the popover when navigating
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
   return (
-    <Popover.Root>
-      <Popover.Trigger className="button">
+    <Popover.Root open={isOpen} onOpenChange={setOpen}>
+      <Popover.Trigger className="button square">
         <ErrorBoundary fallback={null}>
           <ClientSideSuspense fallback={null}>
             {() => <InboxPopoverUnreadCount />}
@@ -79,6 +98,15 @@ export function InboxPopover({
           onInteractOutside={(event) => event.preventDefault()}
           {...props}
         >
+          <div className="inbox-header">
+            <span className="inbox-title">Notifications</span>
+            <button
+              className="button"
+              onClick={markAllInboxNotificationsAsRead}
+            >
+              Mark all as read
+            </button>
+          </div>
           <ErrorBoundary
             fallback={
               <div className="error">

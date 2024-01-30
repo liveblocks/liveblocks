@@ -136,11 +136,17 @@ body {
   display: flex;
   place-items: center;
   place-content: center;
-  width: 2rem;
-  height: 2rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
   border-radius: 0.5rem;
   background: #f3f3f3;
   color: #555;
+}
+
+.button.square {
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
 }
 
 .button:hover,
@@ -158,6 +164,7 @@ body {
   place-content: center;
   place-items: center;
   padding: 1rem;
+  flex: 1 0 auto;
 }
 
 .loading img {
@@ -198,6 +205,7 @@ body {
   width: 460px;
   height: 560px;
   display: flex;
+  flex-direction: column;
   outline: none;
   overflow-y: auto;
   border-radius: 0.75rem;
@@ -205,6 +213,26 @@ body {
     0 0 0 1px rgb(0 0 0 / 4%),
     0 2px 6px rgb(0 0 0 / 8%),
     0 8px 26px rgb(0 0 0 / 12%);
+}
+
+.inbox-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  place-items: center;
+  justify-content: space-between;
+  background: #fff;
+  width: 100%;
+  padding: 0.5rem 0.5rem 0.5rem 1rem;
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 4%),
+    0 2px 6px rgb(0 0 0 / 4%),
+    0 8px 26px rgb(0 0 0 / 6%);
+}
+
+.inbox-title {
+  font-weight: 500;
 }
 
 .inbox-unread-count {

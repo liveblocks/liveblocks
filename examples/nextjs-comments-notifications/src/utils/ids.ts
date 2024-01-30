@@ -25,13 +25,26 @@ export function getRoomIdFromUserId(userId?: string): string | undefined {
   return roomId;
 }
 
-export function useOverrideRoomId(roomId: string) {
+export function getDocumentFromRoomId(roomId?: string): string | undefined {
+  if (!roomId) {
+    return;
+  }
+
+  const [, document] =
+    roomId.match(/^nextjs-comments-notifications-([^-]*)/) ?? [];
+
+  return document;
+}
+
+export function useRoomIdWithDocument(document: string) {
   const params = useSearchParams();
   const roomIdParam = params?.get("roomId");
 
   const overrideRoomId = useMemo(() => {
+    const roomId = `nextjs-comments-notifications-${document}`;
+
     return roomIdParam ? `${roomId}-${roomIdParam}` : roomId;
-  }, [roomId, roomIdParam]);
+  }, [roomIdParam, document]);
 
   return overrideRoomId;
 }

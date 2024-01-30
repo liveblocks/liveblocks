@@ -27,6 +27,7 @@ import { createClientStore } from "./store";
 import type { BaseMetadata } from "./types/BaseMetadata";
 import type { InboxNotificationData } from "./types/InboxNotificationData";
 import type { OptionalPromise } from "./types/OptionalPromise";
+import type { RoomInfo } from "./types/RoomInfo";
 import type { ThreadData } from "./types/ThreadData";
 
 const MIN_THROTTLE = 16;
@@ -40,6 +41,7 @@ const MAX_LOST_CONNECTION_TIMEOUT = 30_000;
 const DEFAULT_LOST_CONNECTION_TIMEOUT = 5_000;
 
 const RESOLVE_USERS_BATCH_DELAY = 50;
+const RESOLVE_ROOMS_INFO_BATCH_DELAY = 50;
 
 export type ResolveMentionSuggestionsArgs = {
   /**
@@ -58,6 +60,13 @@ export type ResolveUsersArgs = {
    * The IDs of the users to resolve.
    */
   userIds: string[];
+};
+
+export type ResolveRoomsInfoArgs = {
+  /**
+   * The IDs of the rooms to resolve.
+   */
+  roomIds: string[];
 };
 
 export type EnterOptions<
@@ -91,6 +100,7 @@ type PrivateClientApi<TUserMeta extends BaseUserMeta> = {
   // TODO: Add generic for ThreadMetadata to Client, it could be used here and for inbox notifications too
   cacheStore: CacheStore<BaseMetadata>;
   usersStore: BatchStore<TUserMeta["info"] | undefined, [string]>;
+  roomsInfoStore: BatchStore<RoomInfo | undefined, [string]>;
 };
 
 export type InboxNotificationsApi<
@@ -249,6 +259,15 @@ export type ClientOptions<TUserMeta extends BaseUserMeta = BaseUserMeta> = {
   resolveUsers?: (
     args: ResolveUsersArgs
   ) => OptionalPromise<(TUserMeta["info"] | undefined)[] | undefined>;
+
+  /**
+   * @beta
+   *
+   * A function that returns room info from room IDs.
+   */
+  resolveRoomsInfo?: (
+    args: ResolveRoomsInfoArgs
+  ) => OptionalPromise<(RoomInfo | undefined)[] | undefined>;
 
   /**
    * @internal To point the client to a different Liveblocks server. Only
@@ -535,28 +554,39 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
   const cacheStore = createClientStore();
 
   const resolveUsers = clientOptions.resolveUsers;
-  let hasWarnedIfNoResolveUsers = false;
+  const warnIfNoResolveUsers = createDevelopmentWarning(
+    () => !resolveUsers,
+    "Set the resolveUsers option in createClient to specify user info."
+  );
 
   const usersStore = createBatchStore(
     async (batchedUserIds: [string][]) => {
       const userIds = batchedUserIds.flat();
-
-      if (
-        !hasWarnedIfNoResolveUsers &&
-        !resolveUsers &&
-        process.env.NODE_ENV !== "production"
-      ) {
-        console.warn(
-          "Set the resolveUsers option in createClient to specify user info."
-        );
-        hasWarnedIfNoResolveUsers = true;
-      }
-
       const users = await resolveUsers?.({ userIds });
+
+      warnIfNoResolveUsers();
 
       return users ?? userIds.map(() => undefined);
     },
     { delay: RESOLVE_USERS_BATCH_DELAY }
+  );
+
+  const resolveRoomsInfo = clientOptions.resolveRoomsInfo;
+  const warnIfNoResolveRoomsInfo = createDevelopmentWarning(
+    () => !resolveRoomsInfo,
+    "Set the resolveRoomsInfo option in createClient to specify room info."
+  );
+
+  const roomsInfoStore = createBatchStore(
+    async (batchedRoomIds: [string][]) => {
+      const roomIds = batchedRoomIds.flat();
+      const roomsInfo = await resolveRoomsInfo?.({ roomIds });
+
+      warnIfNoResolveRoomsInfo();
+
+      return roomsInfo ?? roomIds.map(() => undefined);
+    },
+    { delay: RESOLVE_ROOMS_INFO_BATCH_DELAY }
   );
 
   return Object.defineProperty(
@@ -583,6 +613,7 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
         resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,
         cacheStore,
         usersStore,
+        roomsInfoStore,
       },
     },
     kInternal,
@@ -646,4 +677,29 @@ function getLostConnectionTimeout(value: number): number {
     MAX_LOST_CONNECTION_TIMEOUT,
     RECOMMENDED_MIN_LOST_CONNECTION_TIMEOUT
   );
+}
+
+/**
+ * Emit a warning only once if a condition is met, in development only.
+ */
+function createDevelopmentWarning(
+  condition: boolean | (() => boolean),
+  ...args: Parameters<typeof console.warn>
+) {
+  let hasWarned = false;
+
+  if (process.env.NODE_ENV !== "production") {
+    return () => {
+      if (
+        !hasWarned &&
+        (typeof condition === "function" ? condition() : condition)
+      ) {
+        console.warn(...args);
+
+        hasWarned = true;
+      }
+    };
+  } else {
+    return () => {};
+  }
 }
