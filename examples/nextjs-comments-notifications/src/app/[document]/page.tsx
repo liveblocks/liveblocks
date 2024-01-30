@@ -5,7 +5,7 @@ import { Loading } from "../../components/Loading";
 import { Composer, Thread } from "@liveblocks/react-comments";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
-import { useOverrideRoomId } from "../../utils/ids";
+import { useRoomIdWithDocument } from "../../utils/ids";
 
 function Example() {
   const { threads } = useThreads();
@@ -26,9 +26,7 @@ function Example() {
 }
 
 export default function Page({ params }: { params: { document: string } }) {
-  const roomId = useOverrideRoomId(
-    `nextjs-comments-notifications-${params.document}`
-  );
+  const roomId = useRoomIdWithDocument(params.document);
 
   return (
     <RoomProvider id={roomId} initialPresence={{}}>

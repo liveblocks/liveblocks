@@ -3,7 +3,6 @@
 
 import { useSearchParams } from "next/navigation";
 import { useMemo } from "react";
-import { DOCUMENTS } from "../database";
 
 export function getUserId(
   userIndex: number,
@@ -31,21 +30,21 @@ export function getDocumentFromRoomId(roomId?: string): string | undefined {
     return;
   }
 
-  for (const document of DOCUMENTS) {
-    if (roomId.includes(document)) {
-      return document;
-    }
-  }
-  return undefined;
+  const [, document] =
+    roomId.match(/^nextjs-comments-notifications-([^-]*)/) ?? [];
+
+  return document;
 }
 
-export function useOverrideRoomId(roomId: string) {
+export function useRoomIdWithDocument(document: string) {
   const params = useSearchParams();
   const roomIdParam = params?.get("roomId");
 
   const overrideRoomId = useMemo(() => {
+    const roomId = `nextjs-comments-notifications-${document}`;
+
     return roomIdParam ? `${roomId}-${roomIdParam}` : roomId;
-  }, [roomId, roomIdParam]);
+  }, [roomIdParam, document]);
 
   return overrideRoomId;
 }

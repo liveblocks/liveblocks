@@ -17,6 +17,7 @@ import { ErrorBoundary } from "react-error-boundary";
 import clsx from "clsx";
 import { Link } from "./Link";
 import { usePathname } from "next/navigation";
+import { getDocumentFromRoomId } from "../utils/ids";
 
 function InboxList(props: ComponentPropsWithoutRef<"ol">) {
   const { inboxNotifications } = useInboxNotifications();
@@ -25,13 +26,18 @@ function InboxList(props: ComponentPropsWithoutRef<"ol">) {
     <div className="empty">There aren’t any notifications yet.</div>
   ) : (
     <InboxNotificationList {...props}>
-      {inboxNotifications.map((inboxNotification) => (
-        <InboxNotification
-          key={inboxNotification.id}
-          inboxNotification={inboxNotification}
-          components={{ Anchor: Link }}
-        />
-      ))}
+      {inboxNotifications.map((inboxNotification) => {
+        const href = getDocumentFromRoomId(inboxNotification.roomId);
+
+        return (
+          <InboxNotification
+            key={inboxNotification.id}
+            inboxNotification={inboxNotification}
+            components={{ Anchor: Link }}
+            href={href}
+          />
+        );
+      })}
     </InboxNotificationList>
   );
 }
