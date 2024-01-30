@@ -1,14 +1,13 @@
 import clsx from "clsx";
-import { GetServerSideProps } from "next";
-import { signIn } from "next-auth/react";
+import { redirect } from "next/navigation";
 import { ComponentProps, ReactNode } from "react";
 import { DASHBOARD_URL } from "../constants";
 import { SignInIcon } from "../icons";
 import { MarketingLayout } from "../layouts/Marketing";
-import * as Server from "../lib/server";
 import { Button, LinkButton } from "../primitives/Button";
 import { Container } from "../primitives/Container";
-import styles from "./index.module.css";
+import { auth, signIn } from "@/auth";
+import styles from "./page.module.css";
 
 interface FeatureProps extends Omit<ComponentProps<"div">, "title"> {
   description: ReactNode;
@@ -24,7 +23,14 @@ function Feature({ title, description, className, ...props }: FeatureProps) {
   );
 }
 
-export default function Index() {
+export default async function Index() {
+  const session = await auth();
+
+  // If logged in, go to dashboard
+  if (session) {
+    redirect(DASHBOARD_URL);
+  }
+
   return (
     <MarketingLayout>
       <Container className={styles.section}>
@@ -38,9 +44,14 @@ export default function Index() {
           </p>
         </div>
         <div className={styles.heroActions}>
-          <Button icon={<SignInIcon />} onClick={() => signIn()}>
-            Sign in
-          </Button>
+          <form
+            action={async () => {
+              "use server";
+              await signIn();
+            }}
+          >
+            <Button icon={<SignInIcon />}>Sign in</Button>
+          </form>
           <LinkButton
             href="https://liveblocks.io/docs/guides/nextjs-starter-kit"
             target="_blank"
@@ -111,21 +122,3 @@ export default function Index() {
     </MarketingLayout>
   );
 }
-
-// If logged in, redirect to dashboard
-export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
-  const session = await Server.getServerSession(req, res);
-
-  if (session) {
-    return {
-      redirect: {
-        permanent: false,
-        destination: DASHBOARD_URL,
-      },
-    };
-  }
-
-  return {
-    props: {},
-  };
-};

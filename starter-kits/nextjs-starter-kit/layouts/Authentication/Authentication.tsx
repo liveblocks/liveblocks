@@ -1,3 +1,5 @@
+"use client";
+
 import clsx from "clsx";
 import { getProviders, signIn } from "next-auth/react";
 import { ComponentProps } from "react";
