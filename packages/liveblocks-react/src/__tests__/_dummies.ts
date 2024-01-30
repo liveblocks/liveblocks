@@ -60,6 +60,7 @@ export function dummyInboxNoficationData(): InboxNotificationData {
 
   return {
     kind: "thread",
+    roomId: "room-id",
     id,
     notifiedAt: now,
     threadId,
