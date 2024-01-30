@@ -48,6 +48,7 @@ export interface IWebSocket {
 /**
  * The following ranges will be respected by the client:
  *
+ *   10xx: client will reauthorize (just like 41xx)
  *   40xx: client will disconnect
  *   41xx: client will reauthorize
  *   42xx: client will retry without reauthorizing (currently not used)
@@ -72,6 +73,8 @@ export enum WebsocketCloseCodes {
   MAX_NUMBER_OF_MESSAGES_PER_DAY_PER_APP = 4004,
   /** Room is full, disconnect */
   MAX_NUMBER_OF_CONCURRENT_CONNECTIONS_PER_ROOM = 4005,
+  /** The server kicked the connection from the room. */
+  KICKED = 4100,
   /** The auth token is expired, reauthorize to get a fresh one. In spirit akin to HTTP 401 */
   TOKEN_EXPIRED = 4109,
   /** Disconnect immediately */
