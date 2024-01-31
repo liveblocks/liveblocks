@@ -1236,6 +1236,14 @@ const { threads } = useThreads({
 👉 A [Suspense version][] of this hook is also available, which will never
 return a loading state and will throw when there’s an error.
 
+### useThreadSubscription
+
+Returns the subscription status of a thread.
+
+```tsx
+const { status, unreadSince } = useThreadSubscription("th_xxx");
+```
+
 ### useUser
 
 Returns user info from a given user ID.
@@ -1360,6 +1368,28 @@ Returns a function that removes a reaction from a comment.
 ```tsx
 const removeReaction = useRemoveReaction();
 removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
+```
+
+### useRoomNotificationSettings
+
+Returns the user’s notification settings for the current room and a function to
+update them.
+
+```tsx
+const [{ settings }, updateSettings] = useRoomNotificationSettings();
+```
+
+### useUpdateRoomNotificationSettings
+
+Returns a function that updates the user’s notification settings for the current
+room.
+
+Use this if you don’t need the current user’s notification settings in your
+component, but you need to update them (e.g. an unsubscribe button).
+
+```tsx
+const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
+updateRoomNotificationSettings({ threads: "all" });
 ```
 
 ## Helpers
