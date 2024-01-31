@@ -16,6 +16,7 @@ import type {
   Json,
   JsonObject,
   PlainLsonObject,
+  RoomNotificationSettings,
   ThreadData,
   ThreadDataPlain,
 } from "@liveblocks/core";
@@ -119,16 +120,6 @@ export type Schema = {
 };
 
 type SchemaPlain = DateToString<Schema>;
-
-export enum ThreadsNotificationSettings {
-  ALL = "all",
-  REPLIES_AND_MENTIONS = "replies_and_mentions",
-  NONE = "none",
-}
-
-export type UserRoomNotificationSettings = {
-  threads: ThreadsNotificationSettings;
-};
 
 /**
  * Interact with the Liveblocks API from your Node.js backend.
@@ -1256,7 +1247,7 @@ export class Liveblocks {
   public async getRoomNotificationSettings(params: {
     userId: string;
     roomId: string;
-  }): Promise<UserRoomNotificationSettings> {
+  }): Promise<RoomNotificationSettings> {
     const { userId, roomId } = params;
 
     const res = await this.get(
@@ -1267,7 +1258,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    return (await res.json()) as UserRoomNotificationSettings;
+    return (await res.json()) as RoomNotificationSettings;
   }
 
   /**
@@ -1279,8 +1270,8 @@ export class Liveblocks {
   public async updateRoomNotificationSettings(params: {
     userId: string;
     roomId: string;
-    data: UserRoomNotificationSettings;
-  }): Promise<UserRoomNotificationSettings> {
+    data: RoomNotificationSettings;
+  }): Promise<RoomNotificationSettings> {
     const { userId, roomId, data } = params;
 
     const res = await this.post(
@@ -1292,7 +1283,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    return (await res.json()) as UserRoomNotificationSettings;
+    return (await res.json()) as RoomNotificationSettings;
   }
 
   /**
