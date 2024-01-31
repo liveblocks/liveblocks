@@ -134,6 +134,16 @@ export type InboxNotification = {
   kind: "thread";
 };
 
+export enum ThreadsNotificationSettings {
+  ALL = "all",
+  REPLIES_AND_MENTIONS = "replies_and_mentions",
+  NONE = "none",
+}
+
+export type UserRoomNotificationSettings = {
+  threads: ThreadsNotificationSettings;
+};
+
 /**
  * Interact with the Liveblocks API from your Node.js backend.
  */
@@ -1252,6 +1262,71 @@ export class Liveblocks {
       notifiedAt: new Date(data.notifiedAt),
       readAt: data.readAt ? new Date(data.readAt) : null,
     };
+  }
+
+  /**
+   * Gets the user's room notification settings.
+   */
+  public async getRoomNotificationSettings(params: {
+    userId: string;
+    roomId: string;
+  }): Promise<UserRoomNotificationSettings> {
+    const { userId, roomId } = params;
+
+    const res = await this.get(
+      url`/v2/rooms/${roomId}/users/${userId}/notification-settings`
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    return (await res.json()) as UserRoomNotificationSettings;
+  }
+
+  /**
+   * Updates the user's room notification settings.
+   * @param userId The user ID to update the room notification settings for.
+   * @param roomId The room ID to update the room notification settings for.
+   * @param data The new room notification settings for the user.
+   */
+  public async updateRoomNotificationSettings(params: {
+    userId: string;
+    roomId: string;
+    data: UserRoomNotificationSettings;
+  }): Promise<UserRoomNotificationSettings> {
+    const { userId, roomId, data } = params;
+
+    const res = await this.post(
+      url`/v2/rooms/${roomId}/users/${userId}/notification-settings`,
+      data
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    return (await res.json()) as UserRoomNotificationSettings;
+  }
+
+  /**
+   * Delete the user's room notification settings.
+   * @param userId The user ID to delete the room notification settings from.
+   * @param roomId The room ID to delete the room notification settings from.
+   */
+  public async deleteRoomNotificationSettings(params: {
+    userId: string;
+    roomId: string;
+  }): Promise<void> {
+    const { userId, roomId } = params;
+
+    const res = await this.delete(
+      url`/v2/rooms/${roomId}/users/${userId}/notification-settings`
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
   }
 }
 

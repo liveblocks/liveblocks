@@ -1477,6 +1477,55 @@ const inboxNotification = await liveblocks.getInboxNotification({
 console.log(inboxNotification);
 ```
 
+#### Liveblocks.getRoomNotificationSettings [#get-rooms-roomId-users-userId-notification-settings]
+
+Returns a user's notification settings for a specific room. This is a wrapper
+around the
+[Get Room Notification Settings API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-users-userId-notification-settings).
+
+```ts
+const notificationSettings = await liveblocks.getRoomNotificationSettings({
+  roomId: "my-room-id",
+  userId: "steven@example.com",
+});
+
+// { threads: "all", ... }
+console.log(notificationSettings);
+```
+
+#### Liveblocks.updateRoomNotificationSettings [#post-rooms-roomId-users-userId-notification-settings]
+
+Updates a user's notification settings for a specific room. This is a wrapper
+around the
+[Update Room Notification Settings API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-users-userId-notification-settings).
+
+```ts
+const updatedNotificationSettings =
+  await liveblocks.updateRoomNotificationSettings({
+    roomId: "my-room-id",
+    userId: "steven@example.com",
+    data: {
+      threads: "replies_and_mentions",
+    },
+  });
+
+// { threads: "replies_and_mentions", ... }
+console.log(updatedNotificationSettings);
+```
+
+#### Liveblocks.deleteRoomNotificationSettings [#delete-rooms-roomId-users-userId-notification-settings]
+
+Deletes a user's notification settings for a specific room. This is a wrapper
+around the
+[Delete Room Notification Settings API](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId-users-userId-notification-settings).
+
+```ts
+await liveblocks.deleteRoomNotificationSettings({
+  roomId: "my-room-id",
+  userId: "steven@example.com",
+});
+```
+
 ### Error handling [#error-handling]
 
 Errors in our API methods, such as network failures, invalid arguments, or

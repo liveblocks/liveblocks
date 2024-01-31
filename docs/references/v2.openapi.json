@@ -2234,13 +2234,149 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
           }
         },
         "operationId": "get-users-userId-inboxNotifications-inboxNotificationId",
         "x-stoplight": {
-          "id": "kqc1j6oww02cp"
+          "id": "ppc6s0lo203g4"
         },
         "description": "Get a user's inbox notification"
+      }
+    },
+    "/rooms/{roomId}/users/{userId}/notification-settings": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "roomId",
+          "in": "path",
+          "required": true
+        },
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "userId",
+          "in": "path",
+          "required": true
+        },
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "roomId",
+          "in": "path",
+          "required": true
+        },
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "userId",
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get a user's room notification settings",
+        "tags": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRoomNotificationSettings"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        },
+        "operationId": "get-rooms-roomId-users-userId-notification-settings",
+        "x-stoplight": {
+          "id": "z5okdg5cbvw3a"
+        }
+      },
+      "delete": {
+        "summary": "Delete a user's room notification settings",
+        "tags": [],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        },
+        "operationId": "delete-rooms-roomId-users-userId-notification-settings",
+        "x-stoplight": {
+          "id": "shrke1l3xjyjy"
+        }
+      },
+      "post": {
+        "summary": "Update a user's room notification settings",
+        "operationId": "post-rooms-roomId-users-userId-notification-settings",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRoomNotificationSettings"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        },
+        "x-stoplight": {
+          "id": "1iurguf1gutkv"
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRoomNotificationSettings"
+              }
+            }
+          }
+        }
       }
     }
   },
@@ -2919,42 +3055,57 @@
       "InboxNotification": {
         "title": "InboxNotification",
         "x-stoplight": {
-          "id": "9le8ta8f8yar2"
+          "id": "fe9i28sucjj3y"
         },
         "type": "object",
         "properties": {
           "id": {
             "type": "string",
             "x-stoplight": {
-              "id": "ulqhruzyyeqr7"
+              "id": "38jpkkj4wzkmx"
             }
           },
           "kind": {
             "type": "string",
             "x-stoplight": {
-              "id": "81kkyb5oz7bna"
+              "id": "pe5gyxw3s2ncl"
             },
             "default": "thread"
           },
           "threadId": {
             "type": "string",
             "x-stoplight": {
-              "id": "kddxns1xf0qrx"
+              "id": "uts88q69j0c94"
             }
           },
           "readAt": {
             "type": "string",
             "x-stoplight": {
-              "id": "2iwawhhqiutzm"
+              "id": "vae9tuxcypmy0"
             },
             "format": "date-time"
           },
           "notifiedAt": {
             "type": "string",
             "x-stoplight": {
-              "id": "i4dcsxdqavp7l"
+              "id": "kzr7s6o1ln3l5"
             },
             "format": "date-time"
+          }
+        }
+      },
+      "UserRoomNotificationSettings": {
+        "title": "UserRoomNotificationSettings",
+        "x-stoplight": {
+          "id": "3yuuabnnypkpj"
+        },
+        "type": "object",
+        "properties": {
+          "threads": {
+            "x-stoplight": {
+              "id": "0spyvj14knxep"
+            },
+            "enum": ["all", "replies_and_mentions", "none"]
           }
         }
       }
