@@ -141,7 +141,7 @@ export function DocumentsLayout({
             initialValue="all"
             items={[
               { value: "all", title: "All" },
-              { value: "text", title: "Text", disabled: true },
+              { value: "text", title: "Text" },
               { value: "whiteboard", title: "Whiteboard" },
               { value: "spreadsheet", title: "Spreadsheet", disabled: true },
             ]}
@@ -161,7 +161,7 @@ export function DocumentsLayout({
             <>
               {documentsPages.map((documentPage) => (
                 <DocumentRowGroup
-                  key={documentPage.nextPage}
+                  key={documentPage.nextCursor}
                   documents={documentPage.documents}
                   revalidateDocuments={revalidateDocuments}
                 />
