@@ -2222,7 +2222,7 @@
         }
       ],
       "get": {
-        "summary": "Your GET endpoint",
+        "summary": "Get a user's inbox notification",
         "tags": [],
         "responses": {
           "200": {
