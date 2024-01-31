@@ -597,7 +597,7 @@ describe("useThreads", () => {
       }),
       mockGetInboxNotifications(async (_req, res, ctx) => {
         // Mock a delay in response so that GET THREADS request is resolved before GET NOTIFICATIONS request
-        ctx.delay(10);
+        ctx.delay(100);
         return res(
           ctx.json({
             threads: [oldThread],
@@ -629,7 +629,7 @@ describe("useThreads", () => {
     expect(result.current.threads).toEqual({ isLoading: true });
     expect(result.current.inboxNotifications).toEqual({ isLoading: true });
 
-    jest.advanceTimersByTime(10);
+    jest.advanceTimersByTime(100);
 
     await waitFor(() =>
       expect(result.current.threads).toEqual({
