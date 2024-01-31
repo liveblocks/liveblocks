@@ -1303,6 +1303,15 @@ const editThreadMetadata = useEditThreadMetadata();
 const thread = editThreadMetadata({ threadId: "th_xxx", metadata: {} });
 ```
 
+### useMarkThreadAsRead
+
+Returns a function that marks a thread as read.
+
+```tsx
+const markThreadAsRead = useMarkThreadAsRead();
+markThreadAsRead("th_xxx");
+```
+
 ### useCreateComment
 
 Returns a function that adds a comment to a thread.
