@@ -10,6 +10,7 @@ import type { ReactNode } from "react";
 import React, { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
+import { createLiveblocksContext } from "../liveblocks";
 import { createRoomContext } from "../room";
 import { dummyInboxNoficationData, dummyThreadData } from "./_dummies";
 import MockWebSocket, { websocketSimulator } from "./_MockWebSocket";
@@ -18,7 +19,6 @@ import {
   mockGetThread,
   mockGetThreads,
 } from "./_restMocks";
-import { createLiveblocksContext } from "../liveblocks";
 import { wait } from "./_utils";
 
 const server = setupServer();
@@ -516,6 +516,53 @@ describe("useThreads", () => {
         threads: [],
         isLoading: false,
         error: expect.any(Error),
+      })
+    );
+
+    unmount();
+  });
+
+  test("should sort threads by creation date before returning", async () => {
+    const oldThread = dummyThreadData();
+    oldThread.createdAt = new Date("2021-01-01T00:00:00Z");
+
+    const newThread = dummyThreadData();
+    newThread.createdAt = new Date("2021-01-02T00:00:00Z");
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            data: [newThread, oldThread], // The order is intentionally reversed to test if the hook sorts the threads by creation date
+            inboxNotifications: [],
+          })
+        );
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
+
+    const { result, unmount } = renderHook(
+      () => ({
+        threads: useThreads(),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id="room-id" initialPresence={{}}>
+            {children}
+          </RoomProvider>
+        ),
+      }
+    );
+
+    expect(result.current.threads).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result.current.threads).toEqual({
+        isLoading: false,
+        threads: [oldThread, newThread],
       })
     );
 
