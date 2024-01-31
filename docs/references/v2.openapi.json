@@ -770,7 +770,10 @@
         "requestBody": {
           "content": {
             "application/octet-stream": {
-              "schema": { "format": "binary", "type": "array" }
+              "schema": {
+                "format": "binary",
+                "type": "array"
+              }
             }
           }
         }
@@ -1223,14 +1226,14 @@
               }
             }
           },
-          "404": {
-            "$ref": "#/components/responses/404-thread"
-          },
           "401": {
             "$ref": "#/components/responses/401"
           },
           "403": {
             "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-thread"
           }
         }
       },
@@ -1289,14 +1292,14 @@
               }
             }
           },
-          "409": {
-            "$ref": "#/components/responses/409-thread"
-          },
           "401": {
             "$ref": "#/components/responses/401"
           },
           "403": {
             "$ref": "#/components/responses/403"
+          },
+          "409": {
+            "$ref": "#/components/responses/409-thread"
           }
         },
         "requestBody": {
@@ -1510,11 +1513,11 @@
               }
             }
           },
-          "404": {
-            "$ref": "#/components/responses/404-thread"
-          },
           "403": {
             "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-thread"
           }
         },
         "requestBody": {
@@ -1593,17 +1596,17 @@
               }
             }
           },
-          "409": {
-            "$ref": "#/components/responses/409-comment"
-          },
-          "404": {
-            "$ref": "#/components/responses/404-thread"
-          },
           "401": {
             "$ref": "#/components/responses/401"
           },
           "403": {
             "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-thread"
+          },
+          "409": {
+            "$ref": "#/components/responses/409-comment"
           }
         },
         "requestBody": {
@@ -1690,14 +1693,14 @@
               }
             }
           },
-          "404": {
-            "$ref": "#/components/responses/404-thread"
-          },
           "401": {
             "$ref": "#/components/responses/401"
           },
           "403": {
             "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-thread"
           }
         }
       },
@@ -1763,17 +1766,17 @@
               }
             }
           },
-          "409": {
-            "$ref": "#/components/responses/409-comment"
-          },
-          "404": {
-            "$ref": "#/components/responses/404-thread"
-          },
           "401": {
             "$ref": "#/components/responses/401"
           },
           "403": {
             "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-thread"
+          },
+          "409": {
+            "$ref": "#/components/responses/409-comment"
           }
         },
         "requestBody": {
@@ -1805,14 +1808,14 @@
           "204": {
             "description": "Success. The comment was deleted"
           },
-          "404": {
-            "$ref": "#/components/responses/404-comment"
-          },
           "401": {
             "$ref": "#/components/responses/401"
           },
           "403": {
             "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-comment"
           }
         },
         "operationId": "delete-rooms-roomId-threads-threadId-comments-commentId",
@@ -1875,17 +1878,17 @@
               }
             }
           },
-          "409": {
-            "$ref": "#/components/responses/409-comment-reaction"
-          },
-          "404": {
-            "$ref": "#/components/responses/404-comment"
-          },
           "401": {
             "$ref": "#/components/responses/401"
           },
           "403": {
             "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-comment"
+          },
+          "409": {
+            "$ref": "#/components/responses/409-comment-reaction"
           }
         },
         "requestBody": {
@@ -1948,14 +1951,14 @@
           "204": {
             "description": "Success. The comment reaction was deleted"
           },
-          "404": {
-            "$ref": "#/components/responses/404-comment-reaction"
-          },
           "401": {
             "$ref": "#/components/responses/401"
           },
           "403": {
             "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-comment-reaction"
           }
         },
         "requestBody": {
@@ -2197,6 +2200,47 @@
             }
           }
         }
+      }
+    },
+    "/users/{userId}/inboxNotifications/{inboxNotificationId}": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "userId",
+          "in": "path",
+          "required": true
+        },
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "inboxNotificationId",
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Your GET endpoint",
+        "tags": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxNotification"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get-users-userId-inboxNotifications-inboxNotificationId",
+        "x-stoplight": {
+          "id": "kqc1j6oww02cp"
+        },
+        "description": "Get a user's inbox notification"
       }
     }
   },
@@ -2871,6 +2915,48 @@
             "userId": "alice"
           }
         ]
+      },
+      "InboxNotification": {
+        "title": "InboxNotification",
+        "x-stoplight": {
+          "id": "9le8ta8f8yar2"
+        },
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "ulqhruzyyeqr7"
+            }
+          },
+          "kind": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "81kkyb5oz7bna"
+            },
+            "default": "thread"
+          },
+          "threadId": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "kddxns1xf0qrx"
+            }
+          },
+          "readAt": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "2iwawhhqiutzm"
+            },
+            "format": "date-time"
+          },
+          "notifiedAt": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "i4dcsxdqavp7l"
+            },
+            "format": "date-time"
+          }
+        }
       }
     },
     "securitySchemes": {
