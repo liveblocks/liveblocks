@@ -12,8 +12,6 @@ export default async function DashboardPage({}) {
     redirect("/");
   }
 
-  console.log(session);
-
   const groups = await getGroups(session?.user.info.groupIds ?? []);
 
   return (

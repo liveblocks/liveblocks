@@ -1,9 +1,13 @@
 // Liveblocks API base url
 
+import { Liveblocks } from "@liveblocks/node";
+
 export const DEFAULT_BASE_URL = "https://api.liveblocks.io";
 
 // Your Liveblocks secret key
 export const SECRET_API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
+
+export const liveblocks = new Liveblocks({ secret: SECRET_API_KEY as string });
 
 // ============================================================================
 if (typeof window !== "undefined") {
