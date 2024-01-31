@@ -12,10 +12,10 @@ describe("auth-manager - public api key", () => {
   test("should return public api key", async () => {
     const authManager = createAuthManager({ publicApiKey: "pk_123" });
 
-    const authValue = (await authManager.getAuthValue(
-      "room:read",
-      "room1"
-    )) as { type: "public"; publicApiKey: string };
+    const authValue = (await authManager.getAuthValue({
+      requestedScope: "room:read",
+      roomId: "room1",
+    })) as { type: "public"; publicApiKey: string };
 
     expect(authValue.type).toEqual("public");
     expect(authValue.publicApiKey).toEqual("pk_123");
@@ -87,10 +87,10 @@ describe("auth-manager - secret auth", () => {
       authEndpoint: "/mocked-api/legacy-auth",
     });
 
-    const authValue = (await authManager.getAuthValue(
-      "room:read",
-      "room1"
-    )) as { type: "secret"; token: ParsedAuthToken };
+    const authValue = (await authManager.getAuthValue({
+      requestedScope: "room:read",
+      roomId: "room1",
+    })) as { type: "secret"; token: ParsedAuthToken };
 
     expect(authValue.type).toEqual("secret");
     expect(authValue.token.raw).toEqual(legacyTokens[0]);
@@ -103,8 +103,14 @@ describe("auth-manager - secret auth", () => {
     });
 
     const results = await Promise.all([
-      authManager.getAuthValue("room:read", "room1"),
-      authManager.getAuthValue("room:read", "room1"),
+      authManager.getAuthValue({
+        requestedScope: "room:read",
+        roomId: "room1",
+      }),
+      authManager.getAuthValue({
+        requestedScope: "room:read",
+        roomId: "room1",
+      }),
     ]);
 
     expect(results[0].type).toEqual("secret");
@@ -118,8 +124,14 @@ describe("auth-manager - secret auth", () => {
     });
 
     const results = await Promise.all([
-      authManager.getAuthValue("room:read", "room1"),
-      authManager.getAuthValue("room:read", "room2"),
+      authManager.getAuthValue({
+        requestedScope: "room:read",
+        roomId: "room1",
+      }),
+      authManager.getAuthValue({
+        requestedScope: "room:read",
+        roomId: "room2",
+      }),
     ]);
 
     expect(results[0].type).toEqual("secret");
@@ -132,15 +144,15 @@ describe("auth-manager - secret auth", () => {
       authEndpoint: "/mocked-api/legacy-auth",
     });
 
-    const authValueReq1 = (await authManager.getAuthValue(
-      "room:read",
-      "room1"
-    )) as { type: "secret"; token: ParsedAuthToken };
+    const authValueReq1 = (await authManager.getAuthValue({
+      requestedScope: "room:read",
+      roomId: "room1",
+    })) as { type: "secret"; token: ParsedAuthToken };
 
-    const authValueReq2 = (await authManager.getAuthValue(
-      "room:read",
-      "room1"
-    )) as { type: "secret"; token: ParsedAuthToken };
+    const authValueReq2 = (await authManager.getAuthValue({
+      requestedScope: "room:read",
+      roomId: "room1",
+    })) as { type: "secret"; token: ParsedAuthToken };
 
     expect(authValueReq1.token.raw).toEqual(legacyTokens[0]);
     expect(authValueReq2.token.raw).toEqual(legacyTokens[1]);
@@ -152,10 +164,10 @@ describe("auth-manager - secret auth", () => {
       authEndpoint: "/mocked-api/legacy-auth-that-caches",
     });
 
-    const authValueReq1 = (await authManager.getAuthValue(
-      "room:read",
-      "room1"
-    )) as { type: "secret"; token: ParsedAuthToken };
+    const authValueReq1 = (await authManager.getAuthValue({
+      requestedScope: "room:read",
+      roomId: "room1",
+    })) as { type: "secret"; token: ParsedAuthToken };
 
     expect(authValueReq1.token.raw).toEqual(legacyTokens[0]);
     expect(requestCount).toBe(1);
@@ -165,7 +177,10 @@ describe("auth-manager - secret auth", () => {
     jest.setSystemTime(Date.now() + 5 * HOURS);
     try {
       const $promise = expect(
-        authManager.getAuthValue("room:read", "room1")
+        authManager.getAuthValue({
+          requestedScope: "room:read",
+          roomId: "room1",
+        })
       ).rejects.toThrow(
         "The same Liveblocks auth token was issued from the backend before. Caching Liveblocks tokens is not supported."
       );
@@ -185,15 +200,15 @@ describe("auth-manager - secret auth", () => {
       authEndpoint: "/mocked-api/access-auth",
     });
 
-    const authValueReq1 = (await authManager.getAuthValue(
-      "room:read",
-      "org1.room1"
-    )) as { type: "secret"; token: ParsedAuthToken };
+    const authValueReq1 = (await authManager.getAuthValue({
+      requestedScope: "room:read",
+      roomId: "org1.room1",
+    })) as { type: "secret"; token: ParsedAuthToken };
 
-    const authValueReq2 = (await authManager.getAuthValue(
-      "room:read",
-      "org1.room2"
-    )) as { type: "secret"; token: ParsedAuthToken };
+    const authValueReq2 = (await authManager.getAuthValue({
+      requestedScope: "room:read",
+      roomId: "org1.room2",
+    })) as { type: "secret"; token: ParsedAuthToken };
 
     expect(authValueReq1.token.raw).toEqual(accessToken);
     expect(authValueReq2.token.raw).toEqual(accessToken);
@@ -205,15 +220,15 @@ describe("auth-manager - secret auth", () => {
       authEndpoint: "/mocked-api/access-auth",
     });
 
-    const authValueReq1 = (await authManager.getAuthValue(
-      "room:read",
-      "org1.room1"
-    )) as { type: "secret"; token: ParsedAuthToken };
+    const authValueReq1 = (await authManager.getAuthValue({
+      requestedScope: "room:read",
+      roomId: "org1.room1",
+    })) as { type: "secret"; token: ParsedAuthToken };
 
-    const authValueReq2 = (await authManager.getAuthValue(
-      "room:read",
-      "org1.room2"
-    )) as { type: "secret"; token: ParsedAuthToken };
+    const authValueReq2 = (await authManager.getAuthValue({
+      requestedScope: "room:read",
+      roomId: "org1.room2",
+    })) as { type: "secret"; token: ParsedAuthToken };
 
     expect(authValueReq1.token.raw).toEqual(accessToken);
     expect(authValueReq2.token.raw).toEqual(accessToken);
@@ -226,7 +241,10 @@ describe("auth-manager - secret auth", () => {
     try {
       // Should throw because this mock will return the exact same (expired) token
       const $promise = expect(
-        authManager.getAuthValue("room:read", "org1.room1")
+        authManager.getAuthValue({
+          requestedScope: "room:read",
+          roomId: "org1.room1",
+        })
       ).rejects.toThrow(
         "The same Liveblocks auth token was issued from the backend before. Caching Liveblocks tokens is not supported."
       );
@@ -246,15 +264,15 @@ describe("auth-manager - secret auth", () => {
       authEndpoint: "/mocked-api/id-auth",
     });
 
-    const authValueReq1 = (await authManager.getAuthValue(
-      "room:read",
-      "room1"
-    )) as { type: "secret"; token: ParsedAuthToken };
+    const authValueReq1 = (await authManager.getAuthValue({
+      requestedScope: "room:read",
+      roomId: "room1",
+    })) as { type: "secret"; token: ParsedAuthToken };
 
-    const authValueReq2 = (await authManager.getAuthValue(
-      "room:read",
-      "room2"
-    )) as { type: "secret"; token: ParsedAuthToken };
+    const authValueReq2 = (await authManager.getAuthValue({
+      requestedScope: "room:read",
+      roomId: "room2",
+    })) as { type: "secret"; token: ParsedAuthToken };
 
     expect(authValueReq1.token.raw).toEqual(idToken);
     expect(authValueReq2.token.raw).toEqual(idToken);
@@ -266,15 +284,15 @@ describe("auth-manager - secret auth", () => {
       authEndpoint: "/mocked-api/id-auth",
     });
 
-    const authValueReq1 = (await authManager.getAuthValue(
-      "room:read",
-      "room1"
-    )) as { type: "secret"; token: ParsedAuthToken };
+    const authValueReq1 = (await authManager.getAuthValue({
+      requestedScope: "room:read",
+      roomId: "room1",
+    })) as { type: "secret"; token: ParsedAuthToken };
 
-    const authValueReq2 = (await authManager.getAuthValue(
-      "room:read",
-      "room2"
-    )) as { type: "secret"; token: ParsedAuthToken };
+    const authValueReq2 = (await authManager.getAuthValue({
+      requestedScope: "room:read",
+      roomId: "room2",
+    })) as { type: "secret"; token: ParsedAuthToken };
 
     expect(authValueReq1.token.raw).toEqual(idToken);
     expect(authValueReq2.token.raw).toEqual(idToken);
@@ -287,7 +305,10 @@ describe("auth-manager - secret auth", () => {
     try {
       // Should throw because this mock will return the exact same (expired) token
       const $promise = expect(
-        authManager.getAuthValue("room:read", "room1")
+        authManager.getAuthValue({
+          requestedScope: "room:read",
+          roomId: "room1",
+        })
       ).rejects.toThrow(
         "The same Liveblocks auth token was issued from the backend before. Caching Liveblocks tokens is not supported."
       );
@@ -314,7 +335,10 @@ describe("auth-manager - secret auth", () => {
       });
 
       await expect(
-        authManager.getAuthValue("room:read", "room1")
+        authManager.getAuthValue({
+          requestedScope: "room:read",
+          roomId: "room1",
+        })
       ).rejects.toThrow(
         'Your authentication callback function should return a token, but it did not. Hint: the return value should look like: { token: "..." }'
       );
@@ -328,7 +352,10 @@ describe("auth-manager - secret auth", () => {
     });
 
     await expect(
-      authManager.getAuthValue("room:read", "room1")
+      authManager.getAuthValue({
+        requestedScope: "room:read",
+        roomId: "room1",
+      })
     ).rejects.toThrow("Authentication failed: Nope");
   });
 
@@ -338,7 +365,10 @@ describe("auth-manager - secret auth", () => {
     });
 
     await expect(
-      authManager.getAuthValue("room:read", "room1")
+      authManager.getAuthValue({
+        requestedScope: "room:read",
+        roomId: "room1",
+      })
     ).rejects.toThrow("Huh?");
   });
 
@@ -348,7 +378,10 @@ describe("auth-manager - secret auth", () => {
     });
 
     await expect(
-      authManager.getAuthValue("room:read", "room1")
+      authManager.getAuthValue({
+        requestedScope: "room:read",
+        roomId: "room1",
+      })
     ).rejects.toThrow(
       "Unauthorized: reason not provided in auth response (403 returned by POST /mocked-api/403)"
     );
@@ -360,7 +393,10 @@ describe("auth-manager - secret auth", () => {
     });
 
     await expect(
-      authManager.getAuthValue("room:read", "room1")
+      authManager.getAuthValue({
+        requestedScope: "room:read",
+        roomId: "room1",
+      })
     ).rejects.toThrow(
       "Unauthorized: wrong key type (401 returned by POST /mocked-api/401-with-details)"
     );
@@ -372,7 +408,10 @@ describe("auth-manager - secret auth", () => {
     });
 
     await expect(
-      authManager.getAuthValue("room:read", "room1")
+      authManager.getAuthValue({
+        requestedScope: "room:read",
+        roomId: "room1",
+      })
     ).rejects.toThrow(
       'Expected a JSON response when doing a POST request on "/mocked-api/not-json". SyntaxError: Unexpected token h in JSON at position 1'
     );
@@ -384,7 +423,10 @@ describe("auth-manager - secret auth", () => {
     });
 
     await expect(
-      authManager.getAuthValue("room:read", "room1")
+      authManager.getAuthValue({
+        requestedScope: "room:read",
+        roomId: "room1",
+      })
     ).rejects.toThrow(
       'Expected a JSON response of the form `{ token: "..." }` when doing a POST request on "/mocked-api/missing-token", but got {}'
     );

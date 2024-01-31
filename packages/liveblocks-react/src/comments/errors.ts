@@ -1,8 +1,8 @@
-import type { BaseMetadata, CommentBody } from "@liveblocks/core";
-
-type PartialNullable<T> = {
-  [P in keyof T]?: T[P] | null | undefined;
-};
+import type {
+  BaseMetadata,
+  CommentBody,
+  PartialNullable,
+} from "@liveblocks/core";
 
 export class CreateThreadError<TMetadata extends BaseMetadata> extends Error {
   constructor(
@@ -110,9 +110,35 @@ export class RemoveReactionError extends Error {
   }
 }
 
+export class MarkInboxNotificationAsReadError extends Error {
+  constructor(
+    public cause: Error,
+    public context: {
+      inboxNotificationId: string;
+    }
+  ) {
+    super("Mark inbox notification as read failed.");
+    this.name = "MarkInboxNotificationAsReadError";
+  }
+}
+
+export class UpdateNotificationSettingsError extends Error {
+  constructor(
+    public cause: Error,
+    public context: {
+      roomId: string;
+    }
+  ) {
+    super("Update notification settings failed.");
+    this.name = "UpdateNotificationSettingsError";
+  }
+}
+
 export type CommentsError<TThreadMetadata extends BaseMetadata> =
   | CreateThreadError<TThreadMetadata>
   | EditThreadMetadataError<TThreadMetadata>
   | CreateCommentError
   | EditCommentError
-  | DeleteCommentError;
+  | DeleteCommentError
+  | MarkInboxNotificationAsReadError
+  | UpdateNotificationSettingsError;

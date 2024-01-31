@@ -5,11 +5,7 @@ import { createRoomContext } from "@liveblocks/react";
 
 export const client = createClient({
   authEndpoint: "/api/liveblocks-auth",
-});
 
-const {
-  suspense: { RoomProvider, useThreads },
-} = createRoomContext(client, {
   // Get users' info from their ID
   resolveUsers: async ({ userIds }) => {
     const searchParams = new URLSearchParams(
@@ -40,5 +36,9 @@ const {
     }
   },
 });
+
+const {
+  suspense: { RoomProvider, useThreads },
+} = createRoomContext(client);
 
 export { RoomProvider, useThreads };

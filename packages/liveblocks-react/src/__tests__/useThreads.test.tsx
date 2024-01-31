@@ -1,18 +1,24 @@
 import "@testing-library/jest-dom";
 
 import type { BaseMetadata, JsonObject } from "@liveblocks/core";
-import { convertToThreadData, createClient } from "@liveblocks/core";
-import { renderHook, screen, waitFor } from "@testing-library/react";
+import { createClient, ServerMsgCode } from "@liveblocks/core";
+import { act, renderHook, screen, waitFor } from "@testing-library/react";
+import { addSeconds } from "date-fns";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
+import type { ReactNode } from "react";
 import React, { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
-import { createRoomContext } from "../factory";
-import { dummyThreadDataPlain } from "./_dummies";
-import MockWebSocket from "./_MockWebSocket";
-
-const mockVisibility = jest.spyOn(document, "visibilityState", "get");
+import { createLiveblocksContext } from "../liveblocks";
+import { createRoomContext } from "../room";
+import { dummyInboxNoficationData, dummyThreadData } from "./_dummies";
+import MockWebSocket, { websocketSimulator } from "./_MockWebSocket";
+import {
+  mockGetInboxNotifications,
+  mockGetThread,
+  mockGetThreads,
+} from "./_restMocks";
 
 const server = setupServer();
 
@@ -20,14 +26,10 @@ beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 
 beforeEach(() => {
   MockWebSocket.instances = [];
-  jest.useFakeTimers();
-  // Initial state is online (by default) and visible
-  mockVisibility.mockReturnValue("visible");
 });
 
 afterEach(() => {
   MockWebSocket.instances = [];
-  jest.useRealTimers();
   server.resetHandlers();
 });
 
@@ -44,29 +46,44 @@ function createRoomContextForTest<
     },
   });
 
-  return createRoomContext<JsonObject, never, never, never, TThreadMetadata>(
-    client
-  );
+  return {
+    roomCtx: createRoomContext<
+      JsonObject,
+      never,
+      never,
+      never,
+      TThreadMetadata
+    >(client),
+    liveblocksCtx: createLiveblocksContext(client),
+  };
 }
 
 describe("useThreads", () => {
+  beforeAll(() => {
+    jest.useFakeTimers();
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
+  });
+
   test("should fetch threads", async () => {
-    const threads = [dummyThreadDataPlain()];
+    const threads = [dummyThreadData()];
 
     server.use(
-      rest.post(
-        "https://api.liveblocks.io/v2/c/rooms/room-id/threads/search",
-        async (_req, res, ctx) => {
-          return res(
-            ctx.json({
-              data: threads,
-            })
-          );
-        }
-      )
+      mockGetThreads(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            data: threads,
+            inboxNotifications: [],
+          })
+        );
+      })
     );
 
-    const { RoomProvider, useThreads } = createRoomContextForTest();
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
@@ -81,7 +98,7 @@ describe("useThreads", () => {
     await waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
-        threads: threads.map(convertToThreadData),
+        threads,
       })
     );
 
@@ -91,22 +108,22 @@ describe("useThreads", () => {
   test("multiple instances of useThreads should not fetch threads multiple times (dedupe requests)", async () => {
     let getThreadsReqCount = 0;
 
-    const threads = [dummyThreadDataPlain()];
+    const threads = [dummyThreadData()];
     server.use(
-      rest.post(
-        "https://api.liveblocks.io/v2/c/rooms/room-id/threads/search",
-        async (_req, res, ctx) => {
-          getThreadsReqCount++;
-          return res(
-            ctx.json({
-              data: threads,
-            })
-          );
-        }
-      )
+      mockGetThreads(async (_req, res, ctx) => {
+        getThreadsReqCount++;
+        return res(
+          ctx.json({
+            data: threads,
+            inboxNotifications: [],
+          })
+        );
+      })
     );
 
-    const { RoomProvider, useThreads } = createRoomContextForTest();
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
 
     const { unmount, rerender } = renderHook(
       () => {
@@ -127,40 +144,39 @@ describe("useThreads", () => {
 
     rerender();
 
-    await waitFor(() => expect(getThreadsReqCount).toBe(1));
+    expect(getThreadsReqCount).toBe(1);
 
     unmount();
   });
 
   test("should fetch threads for a given query", async () => {
-    const resolvedThread = dummyThreadDataPlain();
+    const resolvedThread = dummyThreadData();
     resolvedThread.metadata = {
       resolved: true,
     };
 
-    const unresolvedThread = dummyThreadDataPlain();
+    const unresolvedThread = dummyThreadData();
     unresolvedThread.metadata = {
       resolved: false,
     };
 
     server.use(
-      rest.post(
-        "https://api.liveblocks.io/v2/c/rooms/room-id/threads/search",
-        async (req, res, ctx) => {
-          const { metadata } = await req.json<{ metadata: BaseMetadata }>();
-
-          return res(
-            ctx.json({
-              data: [resolvedThread, unresolvedThread].filter(
-                (thread) => thread.metadata.resolved === metadata.resolved
-              ),
-            })
-          );
-        }
-      )
+      mockGetThreads(async (req, res, ctx) => {
+        const { metadata } = await req.json<{ metadata: BaseMetadata }>();
+        return res(
+          ctx.json({
+            data: [resolvedThread, unresolvedThread].filter(
+              (thread) => thread.metadata.resolved === metadata.resolved
+            ),
+            inboxNotifications: [],
+          })
+        );
+      })
     );
 
-    const { RoomProvider, useThreads } = createRoomContextForTest<{
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest<{
       resolved: boolean;
     }>();
 
@@ -180,7 +196,7 @@ describe("useThreads", () => {
     await waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
-        threads: [resolvedThread].map(convertToThreadData),
+        threads: [resolvedThread],
       })
     );
 
@@ -190,22 +206,22 @@ describe("useThreads", () => {
   test("should dedupe fetch threads for a given query", async () => {
     let getThreadsReqCount = 0;
 
-    const threads = [dummyThreadDataPlain()];
+    const threads = [dummyThreadData()];
     server.use(
-      rest.post(
-        "https://api.liveblocks.io/v2/c/rooms/room-id/threads/search",
-        async (_req, res, ctx) => {
-          getThreadsReqCount++;
-          return res(
-            ctx.json({
-              data: threads,
-            })
-          );
-        }
-      )
+      mockGetThreads(async (_req, res, ctx) => {
+        getThreadsReqCount++;
+        return res(
+          ctx.json({
+            data: threads,
+            inboxNotifications: [],
+          })
+        );
+      })
     );
 
-    const { RoomProvider, useThreads } = createRoomContextForTest<{
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest<{
       resolved: boolean;
     }>();
 
@@ -229,33 +245,33 @@ describe("useThreads", () => {
   });
 
   test("should refetch threads if query changed dynamically and should display threads instantly if query already been done in the past", async () => {
-    const resolvedThread = dummyThreadDataPlain();
+    const resolvedThread = dummyThreadData();
     resolvedThread.metadata = {
       resolved: true,
     };
 
-    const unresolvedThread = dummyThreadDataPlain();
+    const unresolvedThread = dummyThreadData();
     unresolvedThread.metadata = {
       resolved: false,
     };
 
     server.use(
-      rest.post(
-        "https://api.liveblocks.io/v2/c/rooms/room-id/threads/search",
-        async (req, res, ctx) => {
-          const { metadata } = await req.json<{ metadata: BaseMetadata }>();
-          return res(
-            ctx.json({
-              data: [resolvedThread, unresolvedThread].filter(
-                (thread) => thread.metadata.resolved === metadata.resolved
-              ),
-            })
-          );
-        }
-      )
+      mockGetThreads(async (req, res, ctx) => {
+        const { metadata } = await req.json<{ metadata: BaseMetadata }>();
+        return res(
+          ctx.json({
+            data: [resolvedThread, unresolvedThread].filter(
+              (thread) => thread.metadata.resolved === metadata.resolved
+            ),
+            inboxNotifications: [],
+          })
+        );
+      })
     );
 
-    const { RoomProvider, useThreads } = createRoomContextForTest<{
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest<{
       resolved: boolean;
     }>();
 
@@ -277,7 +293,7 @@ describe("useThreads", () => {
     await waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
-        threads: [resolvedThread].map(convertToThreadData),
+        threads: [resolvedThread],
       })
     );
 
@@ -288,7 +304,7 @@ describe("useThreads", () => {
     await waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
-        threads: [unresolvedThread].map(convertToThreadData),
+        threads: [unresolvedThread],
       })
     );
 
@@ -296,95 +312,18 @@ describe("useThreads", () => {
 
     // Resolved threads are displayed instantly because we already fetched them previously
     expect(result.current).toEqual({
-      isLoading: true,
+      isLoading: false,
+      threads: [resolvedThread],
     });
 
-    await waitFor(() =>
-      expect(result.current).toEqual({
-        isLoading: false,
-        threads: [resolvedThread].map(convertToThreadData),
-      })
-    );
-
     unmount();
   });
 
-  test("mounting the RoomProvider without using useThreads should not fetch threads", async () => {
-    let getThreadsReqCount = 0;
-
-    const threads = [dummyThreadDataPlain()];
-    server.use(
-      rest.post(
-        "https://api.liveblocks.io/v2/c/rooms/room-id/threads/search",
-        async (_req, res, ctx) => {
-          getThreadsReqCount++;
-          return res(
-            ctx.json({
-              data: threads,
-            })
-          );
-        }
-      )
-    );
-
-    const { RoomProvider, useMyPresence } = createRoomContextForTest();
-
-    const { unmount } = renderHook(
-      () => {
-        useMyPresence();
-      },
-      {
-        wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
-        ),
-      }
-    );
-
-    await waitFor(() => expect(getThreadsReqCount).toBe(0));
-
-    unmount();
-  });
-
-  test("should include any error object in the returned value if initial fetch throws an error", async () => {
-    server.use(
-      rest.post(
-        "https://api.liveblocks.io/v2/c/rooms/room-id/threads/search",
-        async (_req, res, ctx) => {
-          return res(ctx.status(500));
-        }
-      )
-    );
-
-    const { RoomProvider, useThreads } = createRoomContextForTest();
-
-    const { result, unmount } = renderHook(() => useThreads(), {
-      wrapper: ({ children }) => (
-        <RoomProvider id="room-id" initialPresence={{}}>
-          {children}
-        </RoomProvider>
-      ),
-    });
-
-    expect(result.current).toEqual({ isLoading: true });
-
-    await waitFor(() =>
-      expect(result.current).toEqual({
-        threads: [],
-        isLoading: false,
-        error: expect.any(Error),
-      })
-    );
-
-    unmount();
-  });
-
-  test("should render threads correctly for multiple RoomProvider", async () => {
-    const room1Threads = [dummyThreadDataPlain()];
+  test("multiple instances of RoomProvider should render their corresponding threads correctly", async () => {
+    const room1Threads = [dummyThreadData()];
     room1Threads.map((thread) => (thread.roomId = "room1"));
 
-    const room2Threads = [dummyThreadDataPlain()];
+    const room2Threads = [dummyThreadData()];
     room2Threads.map((thread) => (thread.roomId = "room2"));
 
     server.use(
@@ -394,6 +333,7 @@ describe("useThreads", () => {
           return res(
             ctx.json({
               data: room1Threads,
+              inboxNotifications: [],
             })
           );
         }
@@ -404,13 +344,16 @@ describe("useThreads", () => {
           return res(
             ctx.json({
               data: room2Threads,
+              inboxNotifications: [],
             })
           );
         }
       )
     );
 
-    const { RoomProvider, useThreads } = createRoomContextForTest();
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
 
     const { result: room1Result, unmount: unmountRoom1 } = renderHook(
       () => useThreads(),
@@ -440,33 +383,47 @@ describe("useThreads", () => {
     await waitFor(() =>
       expect(room1Result.current).toEqual({
         isLoading: false,
-        threads: room1Threads.map(convertToThreadData),
+        threads: room1Threads,
       })
     );
 
     await waitFor(() =>
       expect(room2Result.current).toEqual({
         isLoading: false,
-        threads: room2Threads.map(convertToThreadData),
+        threads: room2Threads,
       })
     );
 
     unmountRoom1();
     unmountRoom2();
   });
-});
 
-describe("useThreadsSuspense", () => {
-  test("should fetch threads", async () => {
-    const threads = [dummyThreadDataPlain()];
+  test("should correctly display threads if room id changed dynamically and should display threads instantly if query for the room already been done in the past", async () => {
+    const room1Threads = [dummyThreadData()];
+    room1Threads.map((thread) => (thread.roomId = "room1"));
+
+    const room2Threads = [dummyThreadData()];
+    room2Threads.map((thread) => (thread.roomId = "room2"));
 
     server.use(
       rest.post(
-        "https://api.liveblocks.io/v2/c/rooms/room-id/threads/search",
+        "https://api.liveblocks.io/v2/c/rooms/room1/threads/search",
         async (_req, res, ctx) => {
           return res(
             ctx.json({
-              data: threads,
+              data: room1Threads,
+              inboxNotifications: [],
+            })
+          );
+        }
+      ),
+      rest.post(
+        "https://api.liveblocks.io/v2/c/rooms/room2/threads/search",
+        async (_req, res, ctx) => {
+          return res(
+            ctx.json({
+              data: room2Threads,
+              inboxNotifications: [],
             })
           );
         }
@@ -474,8 +431,513 @@ describe("useThreadsSuspense", () => {
     );
 
     const {
-      RoomProvider,
-      suspense: { useThreads },
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
+
+    const RoomIdDispatchContext = React.createContext<
+      ((value: string) => void) | null
+    >(null);
+
+    const Wrapper = ({ children }: { children: ReactNode }) => {
+      const [roomId, setRoomId] = React.useState("room1");
+
+      return (
+        <RoomIdDispatchContext.Provider value={setRoomId}>
+          <RoomProvider id={roomId} initialPresence={{}}>
+            {children}
+          </RoomProvider>
+        </RoomIdDispatchContext.Provider>
+      );
+    };
+
+    const useThreadsContainer = () => {
+      const setRoomId = React.useContext(RoomIdDispatchContext);
+      const state = useThreads();
+      return { state, setRoomId };
+    };
+
+    const { result, unmount } = renderHook(() => useThreadsContainer(), {
+      wrapper: Wrapper,
+    });
+
+    expect(result.current.state).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result.current.state).toEqual({
+        isLoading: false,
+        threads: room1Threads,
+      })
+    );
+
+    act(() => {
+      result.current.setRoomId?.("room2");
+    });
+
+    expect(result.current.state).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result.current.state).toEqual({
+        isLoading: false,
+        threads: room2Threads,
+      })
+    );
+
+    act(() => {
+      result.current.setRoomId?.("room1");
+    });
+
+    await waitFor(() =>
+      expect(result.current.state).toEqual({
+        isLoading: false,
+        threads: room1Threads,
+      })
+    );
+
+    unmount();
+  });
+
+  test("should include an error object in the returned value if initial fetch throws an error", async () => {
+    server.use(
+      mockGetThreads((_req, res, ctx) => {
+        // Mock an error response from the server for the initial fetch
+        return res(ctx.status(500));
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
+
+    const { result, unmount } = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          {children}
+        </RoomProvider>
+      ),
+    });
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        threads: [],
+        isLoading: false,
+        error: expect.any(Error),
+      })
+    );
+
+    unmount();
+  });
+
+  test("should sort threads by creation date before returning", async () => {
+    const oldThread = dummyThreadData();
+    oldThread.createdAt = new Date("2021-01-01T00:00:00Z");
+
+    const newThread = dummyThreadData();
+    newThread.createdAt = new Date("2021-01-02T00:00:00Z");
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            data: [newThread, oldThread], // The order is intentionally reversed to test if the hook sorts the threads by creation date
+            inboxNotifications: [],
+          })
+        );
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
+
+    const { result, unmount } = renderHook(
+      () => ({
+        threads: useThreads(),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id="room-id" initialPresence={{}}>
+            {children}
+          </RoomProvider>
+        ),
+      }
+    );
+
+    expect(result.current.threads).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result.current.threads).toEqual({
+        isLoading: false,
+        threads: [oldThread, newThread],
+      })
+    );
+
+    unmount();
+  });
+
+  test("should sort threads by creation date before returning (when GET THREADS resolves before GET INBOX NOTIFICATIONS request)", async () => {
+    const oldThread = dummyThreadData();
+    oldThread.createdAt = new Date("2021-01-01T00:00:00Z");
+
+    const newThread = dummyThreadData();
+    newThread.createdAt = new Date("2021-01-02T00:00:00Z");
+
+    const inboxNotification = dummyInboxNoficationData();
+    inboxNotification.threadId = oldThread.id;
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            data: [newThread],
+            inboxNotifications: [],
+          })
+        );
+      }),
+      mockGetInboxNotifications(async (_req, res, ctx) => {
+        // Mock a delay in response so that GET THREADS request is resolved before GET NOTIFICATIONS request
+        ctx.delay(100);
+        return res(
+          ctx.json({
+            threads: [oldThread],
+            inboxNotifications: [inboxNotification],
+          })
+        );
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+      liveblocksCtx: { useInboxNotifications },
+    } = createRoomContextForTest();
+
+    const { result, unmount } = renderHook(
+      () => ({
+        threads: useThreads(),
+        inboxNotifications: useInboxNotifications(),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id="room-id" initialPresence={{}}>
+            {children}
+          </RoomProvider>
+        ),
+      }
+    );
+
+    expect(result.current.threads).toEqual({ isLoading: true });
+    expect(result.current.inboxNotifications).toEqual({ isLoading: true });
+
+    jest.advanceTimersByTime(100);
+
+    await waitFor(() =>
+      expect(result.current.threads).toEqual({
+        isLoading: false,
+        threads: [oldThread, newThread],
+      })
+    );
+
+    unmount();
+  });
+
+  test("should sort threads by creation date before returning (when GET THREADS resolves after GET INBOX NOTIFICATIONS request)", async () => {
+    const oldThread = dummyThreadData();
+    oldThread.createdAt = new Date("2021-01-01T00:00:00Z");
+
+    const newThread = dummyThreadData();
+    newThread.createdAt = new Date("2021-01-02T00:00:00Z");
+
+    const inboxNotification = dummyInboxNoficationData();
+    inboxNotification.threadId = newThread.id;
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        // Mock a delay in response so that GET THREADS request is resolved after GET NOTIFICATIONS request
+        ctx.delay(100);
+        return res(
+          ctx.json({
+            data: [oldThread],
+            inboxNotifications: [],
+          })
+        );
+      }),
+      mockGetInboxNotifications(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            threads: [newThread],
+            inboxNotifications: [inboxNotification],
+          })
+        );
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+      liveblocksCtx: { useInboxNotifications },
+    } = createRoomContextForTest();
+
+    const { result, unmount } = renderHook(
+      () => ({
+        threads: useThreads(),
+        inboxNotifications: useInboxNotifications(),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id="room-id" initialPresence={{}}>
+            {children}
+          </RoomProvider>
+        ),
+      }
+    );
+
+    expect(result.current.threads).toEqual({ isLoading: true });
+    expect(result.current.inboxNotifications).toEqual({ isLoading: true });
+
+    jest.advanceTimersByTime(100);
+
+    await waitFor(() =>
+      expect(result.current.threads).toEqual({
+        isLoading: false,
+        threads: [oldThread, newThread],
+      })
+    );
+
+    unmount();
+  });
+});
+
+describe("WebSocket events", () => {
+  test("COMMENT_CREATED event should refresh thread", async () => {
+    const newThread = dummyThreadData();
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            data: [],
+            inboxNotifications: [],
+          })
+        );
+      }),
+      mockGetThread({ threadId: newThread.id }, async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            thread: newThread,
+            inboxNotification: undefined,
+          })
+        );
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
+
+    const { result, unmount } = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          {children}
+        </RoomProvider>
+      ),
+    });
+
+    const sim = await websocketSimulator();
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [],
+      })
+    );
+
+    sim.simulateIncomingMessage({
+      type: ServerMsgCode.COMMENT_CREATED,
+      threadId: newThread.id,
+      commentId: newThread.comments[0].id,
+    });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [newThread],
+      })
+    );
+
+    unmount();
+  });
+
+  test("COMMENT_DELETED event should delete thread if getThread return 404", async () => {
+    const newThread = dummyThreadData();
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            data: [newThread],
+            inboxNotifications: [],
+          })
+        );
+      }),
+      mockGetThread({ threadId: newThread.id }, async (_req, res, ctx) => {
+        return res(ctx.status(404));
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
+
+    const { result, unmount } = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          {children}
+        </RoomProvider>
+      ),
+    });
+
+    const sim = await websocketSimulator();
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [newThread],
+      })
+    );
+
+    // This should refresh the thread and get a 404
+    sim.simulateIncomingMessage({
+      type: ServerMsgCode.COMMENT_DELETED,
+      threadId: newThread.id,
+      commentId: newThread.comments[0].id,
+    });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [],
+      })
+    );
+
+    unmount();
+  });
+
+  test("Websocket event should not refresh thread if updatedAt is earlier than the cached updatedAt", async () => {
+    const now = new Date();
+    const initialThread = dummyThreadData();
+    initialThread.updatedAt = now;
+    initialThread.metadata = { counter: 0 };
+
+    const delayedThread = {
+      ...initialThread,
+      updatedAt: addSeconds(now, 1),
+      metadata: { counter: 1 },
+    };
+
+    const latestThread = {
+      ...initialThread,
+      updatedAt: addSeconds(now, 2),
+      metadata: { counter: 2 },
+    };
+
+    let callIndex = 0;
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            data: [initialThread],
+            inboxNotifications: [],
+          })
+        );
+      }),
+      mockGetThread({ threadId: initialThread.id }, async (_req, res, ctx) => {
+        if (callIndex === 0) {
+          callIndex++;
+          return res(
+            ctx.json({
+              thread: latestThread,
+              inboxNotification: undefined,
+            })
+          );
+        } else if (callIndex === 1) {
+          callIndex++;
+          return res(
+            ctx.json({
+              thread: delayedThread,
+              inboxNotification: undefined,
+            })
+          );
+        } else {
+          throw new Error("Only two calls to getThreads are expected");
+        }
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
+
+    const { result, unmount } = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          {children}
+        </RoomProvider>
+      ),
+    });
+
+    const sim = await websocketSimulator();
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [initialThread],
+      })
+    );
+
+    // First thread metadata updated event returns the most recent thread
+    sim.simulateIncomingMessage({
+      type: ServerMsgCode.THREAD_METADATA_UPDATED,
+      threadId: initialThread.id,
+    });
+
+    // Second thread metadata updated event returns an old thread
+    sim.simulateIncomingMessage({
+      type: ServerMsgCode.THREAD_METADATA_UPDATED,
+      threadId: initialThread.id,
+    });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [latestThread],
+      })
+    );
+
+    unmount();
+  });
+});
+
+describe("useThreadsSuspense", () => {
+  test("should fetch threads", async () => {
+    const threads = [dummyThreadData()];
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            data: threads,
+            inboxNotifications: [],
+          })
+        );
+      })
+    );
+
+    const {
+      roomCtx: {
+        RoomProvider,
+        suspense: { useThreads },
+      },
     } = createRoomContextForTest();
 
     const { result, unmount } = renderHook(() => useThreads(), {
@@ -491,7 +953,7 @@ describe("useThreadsSuspense", () => {
     await waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
-        threads: threads.map(convertToThreadData),
+        threads,
       })
     );
 
@@ -500,17 +962,16 @@ describe("useThreadsSuspense", () => {
 
   test("should trigger error boundary if initial fetch throws an error", async () => {
     server.use(
-      rest.post(
-        "https://api.liveblocks.io/v2/c/rooms/room-id/threads/search",
-        async (_req, res, ctx) => {
-          return res(ctx.status(500));
-        }
-      )
+      mockGetThreads((_req, res, ctx) => {
+        return res(ctx.status(500));
+      })
     );
 
     const {
-      RoomProvider,
-      suspense: { useThreads },
+      roomCtx: {
+        RoomProvider,
+        suspense: { useThreads },
+      },
     } = createRoomContextForTest();
 
     const { result, unmount } = renderHook(() => useThreads(), {

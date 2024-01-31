@@ -1,6 +1,5 @@
 import type { AuthManager, AuthValue } from "./auth-manager";
-import type { CommentsApi } from "./comments";
-import { createCommentsApi } from "./comments";
+import { getAuthBearerHeaderFromAuthValue } from "./client";
 import type {
   Delegates,
   LegacyConnectionStatus,
@@ -8,6 +7,12 @@ import type {
   Status,
 } from "./connection";
 import { ManagedSocket, newToLegacyStatus, StopRetrying } from "./connection";
+import {
+  convertToCommentData,
+  convertToCommentUserReaction,
+  convertToInboxNotificationData,
+  convertToThreadData,
+} from "./convert-plain-data";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { OpSource } from "./crdts/AbstractCrdt";
 import {
@@ -21,6 +26,7 @@ import {
 import { LiveObject } from "./crdts/LiveObject";
 import type { LiveNode, LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
+import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
 import { captureStackTrace } from "./lib/debug";
 import type { Callback, Observable } from "./lib/EventSource";
@@ -53,7 +59,18 @@ import type { ImmutableRef } from "./refs/ImmutableRef";
 import { OthersRef } from "./refs/OthersRef";
 import { PatchableRef } from "./refs/PatchableRef";
 import { DerivedRef, ValueRef } from "./refs/ValueRef";
+import type { BaseMetadata } from "./types/BaseMetadata";
+import type { CommentBody } from "./types/CommentBody";
+import type { CommentData, CommentDataPlain } from "./types/CommentData";
+import type {
+  CommentUserReaction,
+  CommentUserReactionPlain,
+} from "./types/CommentReaction";
 import type * as DevTools from "./types/DevToolsTreeNode";
+import type {
+  InboxNotificationData,
+  InboxNotificationDataPlain,
+} from "./types/InboxNotificationData";
 import type {
   IWebSocket,
   IWebSocketCloseEvent,
@@ -62,6 +79,9 @@ import type {
 } from "./types/IWebSocket";
 import type { NodeMap } from "./types/NodeMap";
 import type { InternalOthersEvent, OthersEvent } from "./types/Others";
+import type { PartialNullable } from "./types/PartialNullable";
+import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
+import type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
 import type { User } from "./types/User";
 import { PKG_VERSION } from "./version";
 
@@ -456,6 +476,95 @@ type SubscribeFn<
   (type: "storage-status", listener: Callback<StorageStatus>): () => void;
 };
 
+export type GetThreadsOptions<TThreadMetadata extends BaseMetadata> = {
+  query?: {
+    metadata?: Partial<TThreadMetadata>;
+  };
+};
+
+type CommentsApi<TThreadMetadata extends BaseMetadata = never> = {
+  /**
+   * @private
+   */
+  getThreads(options?: GetThreadsOptions<TThreadMetadata>): Promise<{
+    threads: ThreadData<TThreadMetadata>[];
+    inboxNotifications: InboxNotificationData[];
+  }>;
+
+  /**
+   * @private
+   */
+  getThread(options: { threadId: string }): Promise<
+    | {
+        thread: ThreadData<TThreadMetadata>;
+        inboxNotification?: InboxNotificationData;
+      }
+    | undefined
+  >;
+
+  /**
+   * @private
+   */
+  createThread(options: {
+    threadId: string;
+    commentId: string;
+    metadata: TThreadMetadata | undefined;
+    body: CommentBody;
+  }): Promise<ThreadData<TThreadMetadata>>;
+
+  /**
+   * @private
+   */
+  editThreadMetadata(options: {
+    metadata: PartialNullable<TThreadMetadata>;
+    threadId: string;
+  }): Promise<TThreadMetadata>;
+
+  /**
+   * @private
+   */
+  createComment(options: {
+    threadId: string;
+    commentId: string;
+    body: CommentBody;
+  }): Promise<CommentData>;
+
+  /**
+   * @private
+   */
+  editComment(options: {
+    threadId: string;
+    commentId: string;
+    body: CommentBody;
+  }): Promise<CommentData>;
+
+  /**
+   * @private
+   */
+  deleteComment(options: {
+    threadId: string;
+    commentId: string;
+  }): Promise<void>;
+
+  /**
+   * @private
+   */
+  addReaction(options: {
+    threadId: string;
+    commentId: string;
+    emoji: string;
+  }): Promise<CommentUserReaction>;
+
+  /**
+   * @private
+   */
+  removeReaction(options: {
+    threadId: string;
+    commentId: string;
+    emoji: string;
+  }): Promise<void>;
+};
+
 export type Room<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
@@ -463,18 +572,19 @@ export type Room<
   TRoomEvent extends Json,
 > = CommentsApi<any /* TODO: Remove this any by adding a proper thread metadata on the Room type */> & {
   /**
-   * @internal
-   * Private methods to directly control the underlying state machine for this
-   * room. Used in the core internals and for unit testing, but as a user of
-   * Liveblocks, NEVER USE ANY OF THESE METHODS DIRECTLY, because bad things
+   * @private
+   *
+   * Private methods and variables used in the core internals, but as a user
+   * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
    * will probably happen if you do.
    */
-  readonly __internal: PrivateRoomAPI; // prettier-ignore
+  readonly [kInternal]: PrivateRoomApi;
 
   /**
    * The id of the room.
    */
   readonly id: string;
+
   /**
    * @deprecated This API will be removed in a future version of Liveblocks.
    * Prefer using `.getStatus()` instead.
@@ -494,6 +604,7 @@ export type Room<
    *     failed          -->  disconnected
    */
   getConnectionState(): LegacyConnectionStatus;
+
   /**
    * Return the current connection status for this room. Can be used to display
    * a status badge for your Liveblocks connection.
@@ -627,6 +738,18 @@ export type Room<
   };
 
   /**
+   * @private
+   */
+  getRoomNotificationSettings(): Promise<RoomNotificationSettings>;
+
+  /**
+   * @private
+   */
+  updateRoomNotificationSettings(
+    settings: Partial<RoomNotificationSettings>
+  ): Promise<RoomNotificationSettings>;
+
+  /**
    * Batches modifications made during the given function.
    * All the modifications are sent to other clients in a single message.
    * All the subscribers are called only after the batch is over.
@@ -687,13 +810,14 @@ export type Room<
 };
 
 /**
- * @internal
+ * @private
+ *
  * Private methods to directly control the underlying state machine for this
  * room. Used in the core internals and for unit testing, but as a user of
  * Liveblocks, NEVER USE ANY OF THESE METHODS DIRECTLY, because bad things
  * will probably happen if you do.
  */
-type PrivateRoomAPI = {
+type PrivateRoomApi = {
   // For introspection in unit tests only
   presenceBuffer: Json | undefined;
   undoStack: readonly (readonly Readonly<HistoryOp<JsonObject>>[])[];
@@ -923,6 +1047,311 @@ function installBackgroundTabSpy(): [
   return [inBackgroundSince, unsub];
 }
 
+export class CommentsApiError extends Error {
+  constructor(
+    public message: string,
+    public status: number,
+    public details?: JsonObject
+  ) {
+    super(message);
+  }
+}
+
+/**
+ * Handles all Comments-related API calls.
+ */
+function createCommentsApi<TThreadMetadata extends BaseMetadata>(
+  roomId: string,
+  getAuthValue: () => Promise<AuthValue>,
+  fetchClientApi: (
+    roomId: string,
+    endpoint: string,
+    authValue: AuthValue,
+    options?: RequestInit
+  ) => Promise<Response>
+): CommentsApi<TThreadMetadata> {
+  async function fetchCommentsApi(
+    endpoint: string,
+    options?: RequestInit
+  ): Promise<Response> {
+    // TODO: Use the right scope
+    const authValue = await getAuthValue();
+
+    return fetchClientApi(roomId, endpoint, authValue, options);
+  }
+
+  async function fetchJson<T>(
+    endpoint: string,
+    options?: RequestInit
+  ): Promise<T> {
+    const response = await fetchCommentsApi(endpoint, options);
+
+    if (!response.ok) {
+      if (response.status >= 400 && response.status < 600) {
+        let error: CommentsApiError;
+
+        try {
+          const errorBody = (await response.json()) as { message: string };
+
+          error = new CommentsApiError(
+            errorBody.message,
+            response.status,
+            errorBody
+          );
+        } catch {
+          error = new CommentsApiError(response.statusText, response.status);
+        }
+
+        throw error;
+      }
+    }
+
+    let body;
+
+    try {
+      body = (await response.json()) as T;
+    } catch {
+      body = {} as T;
+    }
+
+    return body;
+  }
+
+  async function getThreads(options?: GetThreadsOptions<TThreadMetadata>) {
+    const response = await fetchCommentsApi("/threads/search", {
+      body: JSON.stringify({
+        ...(options?.query?.metadata && { metadata: options.query.metadata }),
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    });
+
+    if (response.ok) {
+      const json = await (response.json() as Promise<{
+        data: ThreadDataPlain<TThreadMetadata>[];
+        inboxNotifications: InboxNotificationDataPlain[];
+      }>);
+
+      return {
+        threads: json.data.map((thread) => convertToThreadData(thread)),
+        inboxNotifications: json.inboxNotifications.map((notification) =>
+          convertToInboxNotificationData(notification)
+        ),
+      };
+    } else if (response.status === 404) {
+      return { threads: [], inboxNotifications: [] };
+    } else {
+      throw new Error("There was an error while getting threads.");
+    }
+  }
+
+  async function getThread({ threadId }: { threadId: string }) {
+    const response = await fetchCommentsApi(
+      `/thread-with-notification/${threadId}`
+    );
+
+    if (response.ok) {
+      const json = (await response.json()) as {
+        thread: ThreadDataPlain;
+        inboxNotification?: InboxNotificationDataPlain;
+      };
+
+      return {
+        thread: convertToThreadData(json.thread),
+        inboxNotification: json.inboxNotification
+          ? convertToInboxNotificationData(json.inboxNotification)
+          : undefined,
+      };
+    } else if (response.status === 404) {
+      return;
+    } else {
+      throw new Error(`There was an error while getting thread ${threadId}.`);
+    }
+  }
+
+  async function createThread({
+    metadata,
+    body,
+    commentId,
+    threadId,
+  }: {
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    metadata: TThreadMetadata | undefined;
+    body: CommentBody;
+  }) {
+    const thread = await fetchJson<ThreadDataPlain<TThreadMetadata>>(
+      "/threads",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: threadId,
+          comment: {
+            id: commentId,
+            body,
+          },
+          metadata,
+        }),
+      }
+    );
+
+    return convertToThreadData(thread);
+  }
+
+  async function editThreadMetadata({
+    metadata,
+    threadId,
+  }: {
+    roomId: string;
+    metadata: PartialNullable<TThreadMetadata>;
+    threadId: string;
+  }) {
+    return await fetchJson<TThreadMetadata>(
+      `/threads/${encodeURIComponent(threadId)}/metadata`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(metadata),
+      }
+    );
+  }
+
+  async function createComment({
+    threadId,
+    commentId,
+    body,
+  }: {
+    threadId: string;
+    commentId: string;
+    body: CommentBody;
+  }) {
+    const comment = await fetchJson<CommentDataPlain>(
+      `/threads/${encodeURIComponent(threadId)}/comments`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: commentId,
+          body,
+        }),
+      }
+    );
+
+    return convertToCommentData(comment);
+  }
+
+  async function editComment({
+    threadId,
+    commentId,
+    body,
+  }: {
+    threadId: string;
+    commentId: string;
+    body: CommentBody;
+  }) {
+    const comment = await fetchJson<CommentDataPlain>(
+      `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
+        commentId
+      )}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          body,
+        }),
+      }
+    );
+
+    return convertToCommentData(comment);
+  }
+
+  async function deleteComment({
+    threadId,
+    commentId,
+  }: {
+    roomId: string;
+    threadId: string;
+    commentId: string;
+  }) {
+    await fetchJson(
+      `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
+        commentId
+      )}`,
+      {
+        method: "DELETE",
+      }
+    );
+  }
+
+  async function addReaction({
+    threadId,
+    commentId,
+    emoji,
+  }: {
+    threadId: string;
+    commentId: string;
+    emoji: string;
+  }) {
+    const reaction = await fetchJson<CommentUserReactionPlain>(
+      `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
+        commentId
+      )}/reactions`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ emoji }),
+      }
+    );
+
+    return convertToCommentUserReaction(reaction);
+  }
+
+  async function removeReaction({
+    threadId,
+    commentId,
+    emoji,
+  }: {
+    threadId: string;
+    commentId: string;
+    emoji: string;
+  }) {
+    await fetchJson<CommentData>(
+      `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
+        commentId
+      )}/reactions/${encodeURIComponent(emoji)}`,
+      {
+        method: "DELETE",
+      }
+    );
+  }
+
+  return {
+    getThreads,
+    getThread,
+    createThread,
+    editThreadMetadata,
+    createComment,
+    editComment,
+    deleteComment,
+    addReaction,
+    removeReaction,
+  };
+}
+
 /**
  * @internal
  * Initializes a new Room, and returns its public API.
@@ -1028,10 +1457,7 @@ export function createRoom<
   function onStatusDidChange(newStatus: Status) {
     const authValue = managedSocket.authValue;
     if (authValue !== null) {
-      const tokenKey =
-        authValue.type === "secret"
-          ? authValue.token.raw
-          : authValue.publicApiKey;
+      const tokenKey = getAuthBearerHeaderFromAuthValue(authValue);
 
       if (tokenKey !== lastTokenKey) {
         lastTokenKey = tokenKey;
@@ -1228,17 +1654,31 @@ export function createRoom<
     comments: makeEventSource<CommentsEventServerMsg>(),
   };
 
-  async function streamFetch(authTokenOrPublicApiKey: string, roomId: string) {
+  async function fetchClientApi(
+    roomId: string,
+    endpoint: string,
+    authValue: AuthValue,
+    options?: RequestInit
+  ) {
     const url = new URL(
-      `/v2/c/rooms/${encodeURIComponent(roomId)}/storage`,
+      `/v2/c/rooms/${encodeURIComponent(roomId)}${endpoint}`,
       config.baseUrl
-    ).toString();
+    );
     const fetcher = config.polyfills?.fetch || /* istanbul ignore next */ fetch;
-    return fetcher(url.toString(), {
+    return await fetcher(url.toString(), {
+      ...options,
+      headers: {
+        ...options?.headers,
+        Authorization: `Bearer ${getAuthBearerHeaderFromAuthValue(authValue)}`,
+      },
+    });
+  }
+
+  async function streamFetch(authValue: AuthValue, roomId: string) {
+    return fetchClientApi(roomId, "/storage", authValue, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${authTokenOrPublicApiKey}`,
       },
     });
   }
@@ -1248,21 +1688,10 @@ export function createRoom<
       throw new Error("Not authorized");
     }
 
-    const authTokenOrPublicApiKey =
-      managedSocket.authValue.type === "public"
-        ? managedSocket.authValue.publicApiKey
-        : managedSocket.authValue.token.raw;
-
-    const url = new URL(
-      `/v2/c/rooms/${encodeURIComponent(config.roomId)}${endpoint}`,
-      config.baseUrl
-    ).toString();
-    const fetcher = config.polyfills?.fetch || /* istanbul ignore next */ fetch;
-    return fetcher(url, {
+    return fetchClientApi(config.roomId, endpoint, managedSocket.authValue, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${authTokenOrPublicApiKey}`,
       },
       body: JSON.stringify(body),
     });
@@ -2100,12 +2529,7 @@ export function createRoom<
       return;
     }
     // TODO: Handle potential race conditions where the room get disconnected while the request is pending
-    const result = await streamFetch(
-      managedSocket.authValue.type === "public"
-        ? managedSocket.authValue.publicApiKey
-        : managedSocket.authValue.token.raw,
-      config.roomId
-    );
+    const result = await streamFetch(managedSocket.authValue, config.roomId);
     const items = (await result.json()) as IdTuple<SerializedCrdt>[];
     processInitialStorage({ type: ServerMsgCode.INITIAL_STORAGE_STATE, items });
   }
@@ -2369,14 +2793,70 @@ export function createRoom<
     comments: eventHub.comments.observable,
   };
 
-  const commentsApi = createCommentsApi(config.roomId, delegates.authenticate, {
-    baseUrl: config.baseUrl,
-  });
+  const commentsApi = createCommentsApi(
+    config.roomId,
+    delegates.authenticate,
+    fetchClientApi
+  );
+
+  async function fetchJson<T>(
+    endpoint: string,
+    options?: RequestInit
+  ): Promise<T> {
+    const authValue = await delegates.authenticate();
+    const response = await fetchClientApi(
+      config.roomId,
+      endpoint,
+      authValue,
+      options
+    );
+
+    if (!response.ok) {
+      if (response.status >= 400 && response.status < 600) {
+        let errorMessage = "";
+        try {
+          const errorBody = (await response.json()) as { message: string };
+          errorMessage = errorBody.message;
+        } catch (error) {
+          errorMessage = response.statusText;
+        }
+        throw new Error(
+          `Request failed with status ${response.status}: ${errorMessage}`
+        );
+      }
+    }
+
+    let body;
+
+    try {
+      body = (await response.json()) as T;
+    } catch {
+      body = {} as T;
+    }
+
+    return body;
+  }
+
+  function getRoomNotificationSettings(): Promise<RoomNotificationSettings> {
+    return fetchJson<RoomNotificationSettings>("/notification-settings");
+  }
+
+  function updateRoomNotificationSettings(
+    settings: Partial<RoomNotificationSettings>
+  ): Promise<RoomNotificationSettings> {
+    return fetchJson<RoomNotificationSettings>("/notification-settings", {
+      method: "POST",
+      body: JSON.stringify(settings),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  }
 
   return Object.defineProperty(
     {
-      /* NOTE: Exposing __internal here only to allow testing implementation details in unit tests */
-      __internal: {
+      /* NOTE: Exposing internals here only to allow testing implementation details in unit tests */
+      [kInternal]: {
         get presenceBuffer() { return deepClone(context.buffer.presenceUpdates?.data ?? null) }, // prettier-ignore
         get undoStack() { return deepClone(context.undoStack) }, // prettier-ignore
         get nodeCount() { return context.nodes.size }, // prettier-ignore
@@ -2438,12 +2918,17 @@ export function createRoom<
       getPresence: () => context.myPresence.current,
       getOthers: () => context.others.current,
 
+      // Comments
       ...commentsApi,
+
+      // Notifications
+      getRoomNotificationSettings,
+      updateRoomNotificationSettings,
     },
 
-    // Explictly make the __internal field non-enumerable, to avoid aggressive
+    // Explictly make the internal field non-enumerable, to avoid aggressive
     // freezing when used with Immer
-    "__internal",
+    kInternal,
     { enumerable: false }
   );
 }
@@ -2617,7 +3102,7 @@ export function makeAuthDelegateForRoom(
   authManager: AuthManager
 ): () => Promise<AuthValue> {
   return async () => {
-    return authManager.getAuthValue("room:read", roomId);
+    return authManager.getAuthValue({ requestedScope: "room:read", roomId });
   };
 }
 

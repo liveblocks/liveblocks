@@ -17,15 +17,15 @@ export type RequestedScope = "room:read" | "comments:read";
 
 export type AuthManager = {
   reset(): void;
-  getAuthValue(
-    requestedScope: RequestedScope,
-    roomId: string
-  ): Promise<AuthValue>;
+  getAuthValue(roomOptions?: {
+    requestedScope: RequestedScope;
+    roomId: string;
+  }): Promise<AuthValue>;
 };
 
 type AuthEndpoint =
   | string
-  | ((room: string) => Promise<CustomAuthenticationResult>);
+  | ((room?: string) => Promise<CustomAuthenticationResult>);
 
 export type AuthenticationOptions = {
   polyfills?: Polyfills;
@@ -73,10 +73,10 @@ export function createAuthManager(
     return false;
   }
 
-  function getCachedToken(
-    requestedScope: RequestedScope,
-    roomId: string
-  ): ParsedAuthToken | undefined {
+  function getCachedToken(roomOptions?: {
+    requestedScope: RequestedScope;
+    roomId: string;
+  }): ParsedAuthToken | undefined {
     const now = Math.ceil(Date.now() / 1000);
 
     for (let i = tokens.length - 1; i >= 0; i--) {
@@ -95,12 +95,19 @@ export function createAuthManager(
         // When ID token method is used, only one token per user should be used and cached at the same time.
         return token;
       } else if (token.parsed.k === TokenKind.ACCESS_TOKEN) {
+        // If the requester didn't pass a roomId,
+        // it means they need the token to access the user's resources (inbox notifications for example).
+        // Any access token, even if it's for a specific room, will work.
+        if (!roomOptions) {
+          return token;
+        }
+
         for (const [resource, scopes] of Object.entries(token.parsed.perms)) {
           if (
             (resource.includes("*") &&
-              roomId.startsWith(resource.replace("*", ""))) ||
-            (roomId === resource &&
-              hasCorrespondingScopes(requestedScope, scopes))
+              roomOptions.roomId.startsWith(resource.replace("*", ""))) ||
+            (roomOptions.roomId === resource &&
+              hasCorrespondingScopes(roomOptions.requestedScope, scopes))
           ) {
             return token;
           }
@@ -110,7 +117,7 @@ export function createAuthManager(
     return undefined;
   }
 
-  async function makeAuthRequest(roomId: string): Promise<ParsedAuthToken> {
+  async function makeAuthRequest(roomId?: string): Promise<ParsedAuthToken> {
     const fetcher =
       authOptions.polyfills?.fetch ??
       (typeof window === "undefined" ? undefined : window.fetch);
@@ -168,24 +175,34 @@ export function createAuthManager(
     );
   }
 
-  async function getAuthValue(
-    requestedScope: RequestedScope,
-    roomId: string
-  ): Promise<AuthValue> {
+  async function getAuthValue(roomOptions?: {
+    requestedScope: RequestedScope;
+    roomId: string;
+  }): Promise<AuthValue> {
     if (authentication.type === "public") {
       return { type: "public", publicApiKey: authentication.publicApiKey };
     }
 
-    const cachedToken = getCachedToken(requestedScope, roomId);
+    const cachedToken = getCachedToken(roomOptions);
     if (cachedToken !== undefined) {
       return { type: "secret", token: cachedToken };
     }
 
-    let currentPromise = requestPromises.get(roomId);
-    if (currentPromise === undefined) {
-      currentPromise = makeAuthRequest(roomId);
-      requestPromises.set(roomId, currentPromise);
+    let currentPromise;
+    if (roomOptions) {
+      currentPromise = requestPromises.get(roomOptions.roomId);
+      if (currentPromise === undefined) {
+        currentPromise = makeAuthRequest(roomOptions.roomId);
+        requestPromises.set(roomOptions.roomId, currentPromise);
+      }
+    } else {
+      currentPromise = requestPromises.get("liveblocks-user-token");
+      if (currentPromise === undefined) {
+        currentPromise = makeAuthRequest();
+        requestPromises.set("liveblocks-user-token", currentPromise);
+      }
     }
+
     try {
       const token = await currentPromise;
       // Translate "server timestamps" to "local timestamps" in case clocks aren't in sync
@@ -205,7 +222,11 @@ export function createAuthManager(
 
       return { type: "secret", token };
     } finally {
-      requestPromises.delete(roomId);
+      if (roomOptions) {
+        requestPromises.delete(roomOptions.roomId);
+      } else {
+        requestPromises.delete("liveblocks-user-token");
+      }
     }
   }
 
