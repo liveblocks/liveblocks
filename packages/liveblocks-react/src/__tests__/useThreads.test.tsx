@@ -10,10 +10,15 @@ import type { ReactNode } from "react";
 import React, { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
+import { createLiveblocksContext } from "../liveblocks";
 import { createRoomContext } from "../room";
-import { dummyThreadData } from "./_dummies";
+import { dummyInboxNoficationData, dummyThreadData } from "./_dummies";
 import MockWebSocket, { websocketSimulator } from "./_MockWebSocket";
-import { mockGetThread, mockGetThreads } from "./_restMocks";
+import {
+  mockGetInboxNotifications,
+  mockGetThread,
+  mockGetThreads,
+} from "./_restMocks";
 
 const server = setupServer();
 
@@ -41,12 +46,27 @@ function createRoomContextForTest<
     },
   });
 
-  return createRoomContext<JsonObject, never, never, never, TThreadMetadata>(
-    client
-  );
+  return {
+    roomCtx: createRoomContext<
+      JsonObject,
+      never,
+      never,
+      never,
+      TThreadMetadata
+    >(client),
+    liveblocksCtx: createLiveblocksContext(client),
+  };
 }
 
 describe("useThreads", () => {
+  beforeAll(() => {
+    jest.useFakeTimers();
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
+  });
+
   test("should fetch threads", async () => {
     const threads = [dummyThreadData()];
 
@@ -61,7 +81,9 @@ describe("useThreads", () => {
       })
     );
 
-    const { RoomProvider, useThreads } = createRoomContextForTest();
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
@@ -99,7 +121,9 @@ describe("useThreads", () => {
       })
     );
 
-    const { RoomProvider, useThreads } = createRoomContextForTest();
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
 
     const { unmount, rerender } = renderHook(
       () => {
@@ -150,7 +174,9 @@ describe("useThreads", () => {
       })
     );
 
-    const { RoomProvider, useThreads } = createRoomContextForTest<{
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest<{
       resolved: boolean;
     }>();
 
@@ -193,7 +219,9 @@ describe("useThreads", () => {
       })
     );
 
-    const { RoomProvider, useThreads } = createRoomContextForTest<{
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest<{
       resolved: boolean;
     }>();
 
@@ -241,7 +269,9 @@ describe("useThreads", () => {
       })
     );
 
-    const { RoomProvider, useThreads } = createRoomContextForTest<{
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest<{
       resolved: boolean;
     }>();
 
@@ -321,7 +351,9 @@ describe("useThreads", () => {
       )
     );
 
-    const { RoomProvider, useThreads } = createRoomContextForTest();
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
 
     const { result: room1Result, unmount: unmountRoom1 } = renderHook(
       () => useThreads(),
@@ -398,7 +430,9 @@ describe("useThreads", () => {
       )
     );
 
-    const { RoomProvider, useThreads } = createRoomContextForTest();
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
 
     const RoomIdDispatchContext = React.createContext<
       ((value: string) => void) | null
@@ -470,7 +504,9 @@ describe("useThreads", () => {
       })
     );
 
-    const { RoomProvider, useThreads } = createRoomContextForTest();
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
@@ -487,6 +523,183 @@ describe("useThreads", () => {
         threads: [],
         isLoading: false,
         error: expect.any(Error),
+      })
+    );
+
+    unmount();
+  });
+
+  test("should sort threads by creation date before returning", async () => {
+    const oldThread = dummyThreadData();
+    oldThread.createdAt = new Date("2021-01-01T00:00:00Z");
+
+    const newThread = dummyThreadData();
+    newThread.createdAt = new Date("2021-01-02T00:00:00Z");
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            data: [newThread, oldThread], // The order is intentionally reversed to test if the hook sorts the threads by creation date
+            inboxNotifications: [],
+          })
+        );
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
+
+    const { result, unmount } = renderHook(
+      () => ({
+        threads: useThreads(),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id="room-id" initialPresence={{}}>
+            {children}
+          </RoomProvider>
+        ),
+      }
+    );
+
+    expect(result.current.threads).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result.current.threads).toEqual({
+        isLoading: false,
+        threads: [oldThread, newThread],
+      })
+    );
+
+    unmount();
+  });
+
+  test("should sort threads by creation date before returning (when GET THREADS resolves before GET INBOX NOTIFICATIONS request)", async () => {
+    const oldThread = dummyThreadData();
+    oldThread.createdAt = new Date("2021-01-01T00:00:00Z");
+
+    const newThread = dummyThreadData();
+    newThread.createdAt = new Date("2021-01-02T00:00:00Z");
+
+    const inboxNotification = dummyInboxNoficationData();
+    inboxNotification.threadId = oldThread.id;
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            data: [newThread],
+            inboxNotifications: [],
+          })
+        );
+      }),
+      mockGetInboxNotifications(async (_req, res, ctx) => {
+        // Mock a delay in response so that GET THREADS request is resolved before GET NOTIFICATIONS request
+        ctx.delay(100);
+        return res(
+          ctx.json({
+            threads: [oldThread],
+            inboxNotifications: [inboxNotification],
+          })
+        );
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+      liveblocksCtx: { useInboxNotifications },
+    } = createRoomContextForTest();
+
+    const { result, unmount } = renderHook(
+      () => ({
+        threads: useThreads(),
+        inboxNotifications: useInboxNotifications(),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id="room-id" initialPresence={{}}>
+            {children}
+          </RoomProvider>
+        ),
+      }
+    );
+
+    expect(result.current.threads).toEqual({ isLoading: true });
+    expect(result.current.inboxNotifications).toEqual({ isLoading: true });
+
+    jest.advanceTimersByTime(100);
+
+    await waitFor(() =>
+      expect(result.current.threads).toEqual({
+        isLoading: false,
+        threads: [oldThread, newThread],
+      })
+    );
+
+    unmount();
+  });
+
+  test("should sort threads by creation date before returning (when GET THREADS resolves after GET INBOX NOTIFICATIONS request)", async () => {
+    const oldThread = dummyThreadData();
+    oldThread.createdAt = new Date("2021-01-01T00:00:00Z");
+
+    const newThread = dummyThreadData();
+    newThread.createdAt = new Date("2021-01-02T00:00:00Z");
+
+    const inboxNotification = dummyInboxNoficationData();
+    inboxNotification.threadId = newThread.id;
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        // Mock a delay in response so that GET THREADS request is resolved after GET NOTIFICATIONS request
+        ctx.delay(100);
+        return res(
+          ctx.json({
+            data: [oldThread],
+            inboxNotifications: [],
+          })
+        );
+      }),
+      mockGetInboxNotifications(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            threads: [newThread],
+            inboxNotifications: [inboxNotification],
+          })
+        );
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+      liveblocksCtx: { useInboxNotifications },
+    } = createRoomContextForTest();
+
+    const { result, unmount } = renderHook(
+      () => ({
+        threads: useThreads(),
+        inboxNotifications: useInboxNotifications(),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id="room-id" initialPresence={{}}>
+            {children}
+          </RoomProvider>
+        ),
+      }
+    );
+
+    expect(result.current.threads).toEqual({ isLoading: true });
+    expect(result.current.inboxNotifications).toEqual({ isLoading: true });
+
+    jest.advanceTimersByTime(100);
+
+    await waitFor(() =>
+      expect(result.current.threads).toEqual({
+        isLoading: false,
+        threads: [oldThread, newThread],
       })
     );
 
@@ -517,7 +730,9 @@ describe("WebSocket events", () => {
       })
     );
 
-    const { RoomProvider, useThreads } = createRoomContextForTest();
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
@@ -569,7 +784,9 @@ describe("WebSocket events", () => {
       })
     );
 
-    const { RoomProvider, useThreads } = createRoomContextForTest();
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
@@ -657,7 +874,9 @@ describe("WebSocket events", () => {
       })
     );
 
-    const { RoomProvider, useThreads } = createRoomContextForTest();
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
@@ -715,8 +934,10 @@ describe("useThreadsSuspense", () => {
     );
 
     const {
-      RoomProvider,
-      suspense: { useThreads },
+      roomCtx: {
+        RoomProvider,
+        suspense: { useThreads },
+      },
     } = createRoomContextForTest();
 
     const { result, unmount } = renderHook(() => useThreads(), {
@@ -747,8 +968,10 @@ describe("useThreadsSuspense", () => {
     );
 
     const {
-      RoomProvider,
-      suspense: { useThreads },
+      roomCtx: {
+        RoomProvider,
+        suspense: { useThreads },
+      },
     } = createRoomContextForTest();
 
     const { result, unmount } = renderHook(() => useThreads(), {

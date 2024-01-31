@@ -14,7 +14,7 @@ export function selectedThreads<TThreadMetadata extends BaseMetadata>(
 ): ThreadData<TThreadMetadata>[] {
   const result = applyOptimisticUpdates(state);
 
-  return Object.values(result.threads).filter((thread) => {
+  const threads = Object.values(result.threads).filter((thread) => {
     if (thread.roomId !== roomId) return false;
 
     const query = options.query;
@@ -27,4 +27,7 @@ export function selectedThreads<TThreadMetadata extends BaseMetadata>(
     }
     return true;
   });
+
+  // Sort threads by creation date (oldest first)
+  return threads.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 }
