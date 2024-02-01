@@ -21,6 +21,9 @@ import type {
   CommentReaction,
   CommentsEventServerMsg,
   EnterOptions,
+  OptionalPromise,
+  ResolveMentionSuggestionsArgs,
+  ResolveUsersArgs,
   RoomEventMessage,
   RoomNotificationSettings,
   ThreadData,
@@ -192,6 +195,26 @@ export function useRoomContextBundle() {
   return bundle;
 }
 
+type Options<TUserMeta extends BaseUserMeta> = {
+  /**
+   * @deprecated - Define 'resolveUsers' in 'createClient' from '@liveblocks/client' instead.
+   *
+   * A function that returns user info from user IDs.
+   */
+  resolveUsers?: (
+    args: ResolveUsersArgs
+  ) => OptionalPromise<(TUserMeta["info"] | undefined)[] | undefined>;
+
+  /**
+   * @deprecated - Define 'resolveMentionSuggestions' in 'createClient' from '@liveblocks/client' instead.
+   *
+   * A function that returns a list of user IDs matching a string.
+   */
+  resolveMentionSuggestions?: (
+    args: ResolveMentionSuggestionsArgs
+  ) => OptionalPromise<string[]>;
+};
+
 export function createRoomContext<
   TPresence extends JsonObject,
   TStorage extends LsonObject = LsonObject,
@@ -199,7 +222,8 @@ export function createRoomContext<
   TRoomEvent extends Json = never,
   TThreadMetadata extends BaseMetadata = never,
 >(
-  client: Client
+  client: Client,
+  options?: Options<TUserMeta>
 ): RoomContextBundle<
   TPresence,
   TStorage,
@@ -209,6 +233,20 @@ export function createRoomContext<
 > {
   type TRoom = Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
   type TRoomLeavePair = { room: TRoom; leave: () => void };
+
+  // Deprecated option
+  if (options?.resolveUsers) {
+    throw new Error(
+      "The 'resolveUsers' option has moved to 'createClient' from '@liveblocks/client'."
+    );
+  }
+
+  // Deprecated option
+  if (options?.resolveMentionSuggestions) {
+    throw new Error(
+      "The 'resolveMentionSuggestions' option has moved to 'createClient' from '@liveblocks/client'."
+    );
+  }
 
   const RoomContext = React.createContext<TRoom | null>(null);
 
