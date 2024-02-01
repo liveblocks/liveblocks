@@ -1,7 +1,9 @@
 .inboxPopover {
   display: flex;
   width: 460px;
+  max-height: calc(100vh - var(--header-height) - var(--space-8));
   flex-direction: column;
+  overflow-y: auto;
 }
 
 .inboxPopoverUnreadCount {
