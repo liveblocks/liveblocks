@@ -1213,7 +1213,6 @@ export class Liveblocks {
   }
 
   /**
-   *
    * Returns the inbox notifications for a user.
    * @param params.userId The user ID to get the inbox notifications from.
    * @param params.inboxNotificationId The ID of the inbox notification to get.
@@ -1243,6 +1242,8 @@ export class Liveblocks {
 
   /**
    * Gets the user's room notification settings.
+   * @param params.userId The user ID to get the room notifications from.
+   * @param params.roomId The room ID to get the room notification settings from.
    */
   public async getRoomNotificationSettings(params: {
     userId: string;
@@ -1263,9 +1264,9 @@ export class Liveblocks {
 
   /**
    * Updates the user's room notification settings.
-   * @param userId The user ID to update the room notification settings for.
-   * @param roomId The room ID to update the room notification settings for.
-   * @param data The new room notification settings for the user.
+   * @param params.userId The user ID to update the room notification settings for.
+   * @param params.roomId The room ID to update the room notification settings for.
+   * @param params.data The new room notification settings for the user.
    */
   public async updateRoomNotificationSettings(params: {
     userId: string;
@@ -1288,8 +1289,8 @@ export class Liveblocks {
 
   /**
    * Delete the user's room notification settings.
-   * @param userId The user ID to delete the room notification settings from.
-   * @param roomId The room ID to delete the room notification settings from.
+   * @param params.userId The user ID to delete the room notification settings from.
+   * @param params.roomId The room ID to delete the room notification settings from.
    */
   public async deleteRoomNotificationSettings(params: {
     userId: string;
