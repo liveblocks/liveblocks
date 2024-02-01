@@ -4,6 +4,31 @@ import { createRoomContext } from "@liveblocks/react";
 const client = createClient({
   authEndpoint: "/api/liveblocks-auth",
   throttle: 30,
+  async resolveUsers({ userIds }) {
+    const searchParams = new URLSearchParams(
+      userIds.map((userId) => ["userIds", userId])
+    );
+    const response = await fetch(`/api/users?${searchParams}`);
+
+    if (!response.ok) {
+      throw new Error("Problem resolving user");
+    }
+
+    const users = await response.json();
+    return users;
+  },
+  async resolveMentionSuggestions({ text }) {
+    const response = await fetch(
+      `/api/users/search?text=${encodeURIComponent(text)}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Problem resolving user");
+    }
+
+    const userIds = await response.json();
+    return userIds;
+  },
 });
 
 export type AccurateCursorPositions = {
@@ -97,32 +122,5 @@ export const {
     useLostConnectionListener,
   },
 } = createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(
-  client,
-  {
-    async resolveUsers({ userIds }) {
-      const searchParams = new URLSearchParams(
-        userIds.map((userId) => ["userIds", userId])
-      );
-      const response = await fetch(`/api/users?${searchParams}`);
-
-      if (!response.ok) {
-        throw new Error("Problem resolving user");
-      }
-
-      const users = await response.json();
-      return users;
-    },
-    async resolveMentionSuggestions({ text }) {
-      const response = await fetch(
-        `/api/users/search?text=${encodeURIComponent(text)}`
-      );
-
-      if (!response.ok) {
-        throw new Error("Problem resolving user");
-      }
-
-      const userIds = await response.json();
-      return userIds;
-    },
-  }
+  client
 );
