@@ -1,0 +1,84 @@
+---
+meta:
+  title: "Upgrading to 1.10"
+  parentTitle: "Upgrading"
+  description: "Guide to upgrade to Liveblocks version 1.10"
+---
+
+## How to upgrade? [#how]
+
+You can upgrade to 1.10 by downloading the latest version of each Liveblocks
+package you’re using, for example in a React app:
+
+```bash
+npm install @liveblocks/client@beta @liveblocks/react@beta @liveblocks/react-comments@beta @liveblocks/node@beta
+```
+
+<Banner title="Update every Liveblocks package">
+
+If you’re using any other Liveblocks packages make sure to update those too.
+
+</Banner>
+
+Notifications are the first APIs that work across multiple rooms. It forces us
+to introduce small breaking changes to
+
+## `resolveUsers` and `resolveMentionSuggestions`
+
+Notifications also need to resolve users and mentions, so we had to "lift" the
+resolver to `createClient`.
+
+Before
+
+```tsx liveblocks.config.ts
+// ❌ Before - Liveblocks 1.9
+const client = createClient({
+  /* ... */
+});
+
+const {} = createRoomContext({
+  resolveUsers: () => {
+    /* ... */
+  },
+  resolveMentionSuggestions: () => {
+    /* ... */
+  },
+});
+```
+
+After
+
+```tsx liveblocks.config.ts
+// ✅ After - Liveblocks 1.10
+const client = createClient({
+  resolveUsers: () => {
+    /* ... */
+  },
+  resolveMentionSuggestions: () => {
+    /* ... */
+  },
+});
+
+const {} = createRoomContext();
+```
+
+Additionally `resolveUsers` does not take a `roomId` anymore.
+
+## `CommentBodyResolveUsersArgs`
+
+The `CommentBodyResolveUsersArgs` type doesn't exist anymore, use
+`ResolveUsersArgs` instead.
+
+## `@liveblocks/react-comments`
+
+Some advanced CSS variables have been removed: `--lb-elevation-*` and
+`--lb-tooltip-*` no longer exist, instead use the basic variables on
+`.lb-elevation` or `.lb-tooltip directly`. (e.g. instead of defining
+`--lb-elevation-background` on `.lb-root`, define `--lb-background` on
+`.lb-elevation`)
+
+Some overrides have been updated and/or renamed: `SELF` is now `USER_SELF`,
+`UNKNOWN_USER` is now `USER_UNKNOWN`, `COMMENT_REACTION_REMAINING` doesn't exist
+anymore (use the general `LIST_REMAINING_USERS` instead), and
+`COMMENT_REACTION_TOOLTIP` is now `COMMENT_REACTION_LIST` (with its arguments
+ordered as `list`, `emoji`, and `count`).
