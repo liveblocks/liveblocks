@@ -18,6 +18,7 @@ export * from "./Folder";
 export * from "./GitHub";
 export * from "./Highlight";
 export * from "./Image";
+export * from "./Inbox";
 export * from "./Italic";
 export * from "./Link";
 export * from "./ListOrdered";

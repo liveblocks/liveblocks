@@ -4,7 +4,7 @@ import {
   ThreadData,
   createClient,
 } from "@liveblocks/client";
-import { createRoomContext } from "@liveblocks/react";
+import { createLiveblocksContext, createRoomContext } from "@liveblocks/react";
 import Router from "next/router";
 import { getUsers } from "./lib/client";
 import { User } from "./types";
@@ -18,7 +18,7 @@ export const ENDPOINT_BASE_URL = "/api/liveblocks";
 // (e.g. auth token, user id) send it in the body alongside `room`.
 // Check inside `/pages/${ENDPOINT_BASE_URL}/auth` for the endpoint
 const client = createClient({
-  authEndpoint: async (roomId: string) => {
+  authEndpoint: async (roomId) => {
     const payload = {
       roomId,
     };
@@ -47,6 +47,14 @@ const client = createClient({
 
     // Return token
     return result;
+  },
+  async resolveUsers({ userIds }) {
+    const users = await getUsers({ userIds });
+    return users;
+  },
+  async resolveMentionSuggestions({ text }) {
+    const users = await getUsers({ search: text });
+    return users.map((user) => user.id);
   },
 });
 
@@ -116,15 +124,14 @@ export const {
   },
   /* ...all the other hooks you’re using... */
 } = createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(
-  client,
-  {
-    async resolveUsers({ userIds }) {
-      const users = await getUsers({ userIds });
-      return users;
-    },
-    async resolveMentionSuggestions({ text }) {
-      const users = await getUsers({ search: text });
-      return users.map((user) => user.id);
-    },
-  }
+  client
 );
+
+export const {
+  suspense: {
+    LiveblocksProvider,
+    useInboxNotifications,
+    useUnreadInboxNotificationsCount,
+    useMarkAllInboxNotificationsAsRead,
+  },
+} = createLiveblocksContext(client);

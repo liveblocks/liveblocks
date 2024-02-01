@@ -42,6 +42,7 @@
 }
 
 .profile {
+  gap: var(--space-6);
   place-content: flex-end;
 }
 
