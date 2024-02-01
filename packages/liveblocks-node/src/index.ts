@@ -25,6 +25,7 @@ export type {
   RoomDeletedEvent,
   StorageUpdatedEvent,
   ThreadCreatedEvent,
+  ThreadEmailNotificationEvent,
   ThreadMetadataUpdatedEvent,
   UserEnteredEvent,
   UserLeftEvent,

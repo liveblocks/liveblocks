@@ -74,9 +74,14 @@ so from within the webhooks dashboard for your project.
   </video>
 </Figure>
 
-Your endpoint must return a `2xx` (status code `200-299`) to indicate that the event was successfully received. If your endpoint returns anything else, the event will be retried, see [replaying events](#replaying-events) for more details.
+Your endpoint must return a `2xx` (status code `200-299`) to indicate that the
+event was successfully received. If your endpoint returns anything else, the
+event will be retried, see [replaying events](#replaying-events) for more
+details.
 
-If all events fail to be delivered to your endpoint for 5 consecutive days, your endpoint will automatically be disabled. You can always re-enable it from the dashboard.
+If all events fail to be delivered to your endpoint for 5 consecutive days, your
+endpoint will automatically be disabled. You can always re-enable it from the
+dashboard.
 
 ### Edit endpoint events [#edit-endpoint-events]
 
@@ -382,7 +387,8 @@ If you visit the page `localtunnel` links you to, and correctly input your IP
 address, the URL it generates can be placed into the Liveblocks webhooks
 dashboard for quick testing.
 
-For a full step-by-step guide on testing with `localtunnel` and `ngrok`, read the guide on
+For a full step-by-step guide on testing with `localtunnel` and `ngrok`, read
+the guide on
 [how to test webhooks on localhost](/docs/guides/how-to-test-webhooks-on-localhost#Use-your-webhook-event).
 
 ## Liveblocks events
@@ -404,6 +410,7 @@ Events available for use include:
 - `CommentCreated/CommentEdited/CommentDeleted`
 - `CommentReactionAdded/CommentReactionRemoved`
 - `ThreadCreated/ThreadMetadataUpdated`
+- `ThreadEmailNotification`
 
 More events will come later, such as:
 
@@ -799,7 +806,7 @@ const threadCreatedEvent = {
 };
 ```
 
-#### ThreadMetadaUpdatedEvent
+#### ThreadMetadataUpdatedEvent
 
 An event is triggered when a thread metadata is updated. This event is not
 throttled.
@@ -826,6 +833,42 @@ const threadMetadataUpdatedEvent = {
     threadId: "my-thread-id",
     updatedAt: "2021-10-06T01:45:56.558Z",
     updatedBy: "my-user-id",
+  },
+};
+```
+
+#### ThreadEmailNotificationEvent
+
+An event is triggered 30 minutes after a user has been mentioned or replied to
+in a thread, and has not seen the thread. It will also be triggered if the user
+has subscribed to the thread and has not seen the thread. The event won’t be
+triggered if the user has seen the thread or unsubscribed from the room’s thread
+notifications.
+
+```ts
+// Schema
+type ThreadEmailNotificationEvent = {
+  type: "threadEmailNotification";
+  data: {
+    projectId: string;
+    roomId: string;
+    userId: string;
+    threadId: string;
+    inboxNotificationId: string;
+    createdAt: string;
+  };
+};
+
+// Example
+const threadEmailNotificationEvent = {
+  type: "threadEmailNotification",
+  data: {
+    projectId: "my-project-id",
+    roomId: "my-room-id",
+    userId: "my-user-id",
+    threadId: "my-thread-id",
+    inboxNotificationId: "my-inbox-notification-id",
+    createdAt: "2021-10-06T01:45:56.558Z",
   },
 };
 ```
