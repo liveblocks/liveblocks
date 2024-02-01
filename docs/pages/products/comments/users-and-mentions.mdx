@@ -62,16 +62,14 @@ here’s a `userIds` array and the information you need to return.
 ```
 
 In your Liveblocks config file, you’ll find a function named
-[`resolveUsers`](/docs/api-reference/liveblocks-react#resolveUsers) where you
+[`resolveUsers`](/docs/api-reference/liveblocks-client#resolveUsers) where you
 can return this information.
 
 ```ts file="liveblocks.config.ts"
 // ...
 
-const {
-  RoomProvider,
+const client = createClient({
   // ...
-} = createRoomContext(client, {
   async resolveUsers({ userIds }) {
     // ["marc@example.com", ...]
     console.log(userIds);
@@ -129,17 +127,15 @@ property which you can use to return matching user IDs.
 ```
 
 You can resolve these search results by editing a function named
-[`resolveMentionSuggestions`](/docs/api-reference/liveblocks-react#resolveMentionSuggestions)
+[`resolveMentionSuggestions`](/docs/api-reference/liveblocks-client#resolveMentionSuggestions)
 in your Liveblocks config file. Here’s what the function might look like if the
 user has typed `"@mar"` into the input.
 
 ```ts file="liveblocks.config.ts"
 // ...
 
-const {
-  RoomProvider,
+const client = createClient({
   // ...
-} = createRoomContext(client, {
   async resolveUsers({ userIds }) {
     // ...
   },

@@ -76,100 +76,6 @@ export const {
 >(client);
 ```
 
-#### resolveUsers
-
-<Banner title="Public beta">
-
-Comments is currently in beta. If you have any questions or feedback, please
-reach out to us via the dedicated Discord channel,
-[#comments-beta](https://discord.com/channels/913109211746009108/1126614905160749097).
-We’d love to hear from you.
-
-</Banner>
-
-When using [Comments](/docs/products/comments), anything that is linked to a
-user (comments, mentions, etc.) will reference their ID. To display user
-information based on IDs, you can provide a resolver function to the
-`resolveUsers` option in [`createRoomContext`](#createRoomContext).
-
-This resolver function will receive a list of user IDs and should return a list
-of user objects of the same size and in the same order.
-
-```tsx file="liveblocks.config.ts"
-// ...
-
-export const {
-  /* ... */
-} = createRoomContext(client, {
-  resolveUsers: async ({ userIds }) => {
-    const usersData = await __getUsersFromDB__(userIds);
-
-    return usersData.map((userData) => ({
-      name: userData.name,
-      avatar: userData.avatar.src,
-    }));
-  },
-});
-```
-
-<Banner title="User object">
-  The user object returned by the resolver function takes the shape of
-  `UserMeta["info"]`, which contains `name` and `avatar` (both optional) by
-  default. If you provided your own `UserMeta` type to `createRoomContext`, your
-  own `UserMeta["info"]` will be required here as well. But keep in mind that
-  the [default
-  components](/docs/api-reference/liveblocks-react-comments#Components) will
-  look specifically for the `name` and `avatar` properties to display user names
-  and avatars. If you use the
-  [primitives](/docs/api-reference/liveblocks-react-comments#Primitives)
-  instead, you’ll be able to use [`useUser`](#useUser) and decide what
-  properties to use within your custom components.
-</Banner>
-
-Once that’s done, components will show user names and avatars accordingly.
-
-#### resolveMentionSuggestions
-
-<Banner title="Public beta">
-
-Comments is currently in beta. If you have any questions or feedback, please
-reach out to us via the dedicated Discord channel,
-[#comments-beta](https://discord.com/channels/913109211746009108/1126614905160749097).
-We’d love to hear from you.
-
-</Banner>
-
-To enable creating mentions in [Comments](/docs/products/comments), you can
-provide a resolver function to the `resolveMentionSuggestions` option in
-[`createRoomContext`](#createRoomContext).
-
-This resolver function will receive the mention currently being written (e.g.
-when writing “@jane”, `text` will be `jane`) and should return a list of user
-IDs matching that text. This function will be called every time the text changes
-but with some debouncing.
-
-```tsx file="liveblocks.config.ts"
-// ...
-
-export const {
-  /* ... */
-} = createRoomContext(client, {
-  resolveMentionSuggestions: async ({ text, roomId }) => {
-    const workspaceUsers = await __getWorkspaceUsersFromDB__(roomId);
-
-    if (!text) {
-      // Show all workspace users by default
-
-      return __getUserIds__(workspaceUsers);
-    } else {
-      const matchingUsers = __findUsers__(workspaceUsers, text);
-
-      return __getUserIds__(matchingUsers);
-    }
-  },
-});
-```
-
 ### RoomProvider
 
 Makes a [`Room`] available in the component hierarchy below. Joins the room when
@@ -1260,8 +1166,7 @@ return a loading state and will throw when there’s an error.
 <Banner title="Providing a resolver function">
 
 To use `useUser`, you should provide a resolver function to the
-[`resolveUsers`](#resolveUsers) option in
-[`createRoomContext`](#createRoomContext).
+[`resolveUsers`][] option in [`createClient`][].
 
 </Banner>
 
@@ -1281,8 +1186,7 @@ return a loading state and will throw when there’s an error.
 <Banner title="Providing a resolver function">
 
 To use `useRoomInfo`, you should provide a resolver function to the
-[`resolveRoomsInfo`](#resolveRoomsInfo) option in
-[`createRoomContext`](#createRoomContext).
+[`resolveRoomsInfo`][] option in [`createClient`][].
 
 </Banner>
 
@@ -1773,6 +1677,7 @@ function AppRoot() {
 }
 ```
 
+[`createclient`]: /docs/api-reference/liveblocks-client#createClient
 [`livelist`]: /docs/api-reference/liveblocks-client#LiveList
 [`livemap`]: /docs/api-reference/liveblocks-client#LiveMap
 [`liveobject`]: /docs/api-reference/liveblocks-client#LiveObject
@@ -1791,6 +1696,8 @@ function AppRoot() {
 [`usebroadcastevent`]: /docs/api-reference/liveblocks-react#useBroadcastEvent
 [`room`]: /docs/api-reference/liveblocks-client#Room
 [`shallow`]: /docs/api-reference/liveblocks-react#shallow
+[`resolveusers`]: /docs/api-reference/liveblocks-client#resolveUsers
+[`resolveroomsinfo`]: /docs/api-reference/liveblocks-client#resolveRoomsInfo
 [selector]: /docs/api-reference/liveblocks-react#selectors
 [how selectors work]: /docs/api-reference/liveblocks-react#selectors
 [suspense version]: /docs/api-reference/liveblocks-react#suspense-hooks
