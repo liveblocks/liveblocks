@@ -65,6 +65,12 @@ const {} = createRoomContext();
 
 Additionally `resolveUsers` does not have a `roomId` argument anymore.
 
+### `ResolveUsersArgs` and `ResolveMentionSuggestionsArgs`
+
+Because the resolvers have moved to `@liveblocks/client`, the `ResolveUsersArgs`
+and `ResolveMentionSuggestionsArgs` types are now exported from
+`@liveblocks/client` as well, instead of `@liveblocks/react`.
+
 ## `CommentBodyResolveUsersArgs`
 
 The `CommentBodyResolveUsersArgs` type doesn't exist anymore, use
