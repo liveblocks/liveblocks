@@ -1462,9 +1462,9 @@ await liveblocks.removeCommentReaction({
 });
 ```
 
-#### Liveblocks.getInboxNotification [#get-users-userId-inboxNotifications-inboxNotificationId]
+#### Liveblocks.getInboxNotification [#get-users-userId-inboxNotifications-inboxNotificationId] [@badge=Beta]
 
-Returns a user's inbox notification. This is a wrapper around the
+Returns a user’s inbox notification. This is a wrapper around the
 [Get Inbox Notification API](/docs/api-reference/rest-api-endpoints#get-users-userId-inboxNotifications-inboxNotificationId).
 
 ```ts
@@ -1477,9 +1477,9 @@ const inboxNotification = await liveblocks.getInboxNotification({
 console.log(inboxNotification);
 ```
 
-#### Liveblocks.getRoomNotificationSettings [#get-rooms-roomId-users-userId-notification-settings]
+#### Liveblocks.getRoomNotificationSettings [#get-rooms-roomId-users-userId-notification-settings] [@badge=Beta]
 
-Returns a user's notification settings for a specific room. This is a wrapper
+Returns a user’s notification settings for a specific room. This is a wrapper
 around the
 [Get Room Notification Settings API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-users-userId-notification-settings).
 
@@ -1493,9 +1493,9 @@ const notificationSettings = await liveblocks.getRoomNotificationSettings({
 console.log(notificationSettings);
 ```
 
-#### Liveblocks.updateRoomNotificationSettings [#post-rooms-roomId-users-userId-notification-settings]
+#### Liveblocks.updateRoomNotificationSettings [#post-rooms-roomId-users-userId-notification-settings] [@badge=Beta]
 
-Updates a user's notification settings for a specific room. This is a wrapper
+Updates a user’s notification settings for a specific room. This is a wrapper
 around the
 [Update Room Notification Settings API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-users-userId-notification-settings).
 
@@ -1513,9 +1513,9 @@ const updatedNotificationSettings =
 console.log(updatedNotificationSettings);
 ```
 
-#### Liveblocks.deleteRoomNotificationSettings [#delete-rooms-roomId-users-userId-notification-settings]
+#### Liveblocks.deleteRoomNotificationSettings [#delete-rooms-roomId-users-userId-notification-settings] [@badge=Beta]
 
-Deletes a user's notification settings for a specific room. This is a wrapper
+Deletes a user’s notification settings for a specific room. This is a wrapper
 around the
 [Delete Room Notification Settings API](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId-users-userId-notification-settings).
 

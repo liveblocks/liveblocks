@@ -806,7 +806,7 @@ const threadCreatedEvent = {
 };
 ```
 
-#### ThreadMetadaUpdatedEvent
+#### ThreadMetadataUpdatedEvent
 
 An event is triggered when a thread metadata is updated. This event is not
 throttled.
@@ -839,11 +839,11 @@ const threadMetadataUpdatedEvent = {
 
 #### ThreadEmailNotificationEvent
 
-An event is triggered 30 minutes after when a user has been replied to or has
-been mentioned in a thread and has not seen the thread. It will also be
-triggered if the user has subscribed to the thread and has not seen the thread.
-The event won't be triggered if the user has seen the thread or unsubscribed
-from the room's thread notifications.
+An event is triggered 30 minutes after a user has been mentioned or replied to
+in a thread, and has not seen the thread. It will also be triggered if the user
+has subscribed to the thread and has not seen the thread. The event won’t be
+triggered if the user has seen the thread or unsubscribed from the room’s thread
+notifications.
 
 ```ts
 // Schema

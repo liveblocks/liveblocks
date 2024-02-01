@@ -2222,7 +2222,8 @@
         }
       ],
       "get": {
-        "summary": "Get a user's inbox notification",
+        "summary": "Get a user’s inbox notification",
+        "x-badge": "Beta",
         "tags": [],
         "responses": {
           "200": {
@@ -2249,7 +2250,7 @@
         "x-stoplight": {
           "id": "ppc6s0lo203g4"
         },
-        "description": "Get a user's inbox notification"
+        "description": "Get a user’s inbox notification"
       }
     },
     "/rooms/{roomId}/users/{userId}/notification-settings": {
@@ -2288,7 +2289,8 @@
         }
       ],
       "get": {
-        "summary": "Get a user's room notification settings",
+        "summary": "Get a user’s room notification settings",
+        "x-badge": "Beta",
         "tags": [],
         "responses": {
           "200": {
@@ -2317,7 +2319,7 @@
         }
       },
       "delete": {
-        "summary": "Delete a user's room notification settings",
+        "summary": "Delete a user’s room notification settings",
         "tags": [],
         "responses": {
           "204": {
@@ -2339,7 +2341,8 @@
         }
       },
       "post": {
-        "summary": "Update a user's room notification settings",
+        "summary": "Update a user’s room notification settings",
+        "x-badge": "Beta",
         "operationId": "post-rooms-roomId-users-userId-notification-settings",
         "responses": {
           "200": {
