@@ -197,7 +197,8 @@ export function useRoomContextBundle() {
 
 type Options<TUserMeta extends BaseUserMeta> = {
   /**
-   * @deprecated - Define 'resolveUsers' in 'createClient' from '@liveblocks/client' instead.
+   * @deprecated Define 'resolveUsers' in 'createClient' from '@liveblocks/client' instead.
+   * Please refer to our Upgrade Guide to learn more, see https://liveblocks.io/docs/platform/upgrading/1.10.
    *
    * A function that returns user info from user IDs.
    */
@@ -206,7 +207,8 @@ type Options<TUserMeta extends BaseUserMeta> = {
   ) => OptionalPromise<(TUserMeta["info"] | undefined)[] | undefined>;
 
   /**
-   * @deprecated - Define 'resolveMentionSuggestions' in 'createClient' from '@liveblocks/client' instead.
+   * @deprecated Define 'resolveMentionSuggestions' in 'createClient' from '@liveblocks/client' instead.
+   * Please refer to our Upgrade Guide to learn more, see https://liveblocks.io/docs/platform/upgrading/1.10.
    *
    * A function that returns a list of user IDs matching a string.
    */
@@ -237,14 +239,14 @@ export function createRoomContext<
   // Deprecated option
   if (options?.resolveUsers) {
     throw new Error(
-      "The 'resolveUsers' option has moved to 'createClient' from '@liveblocks/client'."
+      "The 'resolveUsers' option has moved to 'createClient' from '@liveblocks/client'. Please refer to our Upgrade Guide to learn more, see https://liveblocks.io/docs/platform/upgrading/1.10."
     );
   }
 
   // Deprecated option
   if (options?.resolveMentionSuggestions) {
     throw new Error(
-      "The 'resolveMentionSuggestions' option has moved to 'createClient' from '@liveblocks/client'."
+      "The 'resolveMentionSuggestions' option has moved to 'createClient' from '@liveblocks/client'. Please refer to our Upgrade Guide to learn more, see https://liveblocks.io/docs/platform/upgrading/1.10."
     );
   }
 
