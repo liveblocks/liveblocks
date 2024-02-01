@@ -31,7 +31,7 @@ resolvers to `createClient`.
 
 Before:
 
-```tsx liveblocks.config.ts
+```tsx file="liveblocks.config.ts"
 // ❌ Before - Liveblocks 1.9
 const client = createClient({
   /* ... */
@@ -49,7 +49,7 @@ const {} = createRoomContext({
 
 After:
 
-```tsx liveblocks.config.ts
+```tsx file="liveblocks.config.ts"
 // ✅ After - Liveblocks 1.10
 const client = createClient({
   resolveUsers: () => {
