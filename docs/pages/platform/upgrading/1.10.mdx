@@ -26,9 +26,9 @@ to introduce small breaking changes to
 ## `resolveUsers` and `resolveMentionSuggestions`
 
 Notifications also need to resolve users and mentions, so we had to "lift" the
-resolver to `createClient`.
+resolvers to `createClient`.
 
-Before
+Before:
 
 ```tsx liveblocks.config.ts
 // ❌ Before - Liveblocks 1.9
@@ -46,7 +46,7 @@ const {} = createRoomContext({
 });
 ```
 
-After
+After:
 
 ```tsx liveblocks.config.ts
 // ✅ After - Liveblocks 1.10
@@ -62,7 +62,7 @@ const client = createClient({
 const {} = createRoomContext();
 ```
 
-Additionally `resolveUsers` does not take a `roomId` anymore.
+Additionally `resolveUsers` does not have a `roomId` argument anymore.
 
 ## `CommentBodyResolveUsersArgs`
 
