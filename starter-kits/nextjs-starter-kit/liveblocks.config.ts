@@ -7,6 +7,7 @@ import {
 import { createLiveblocksContext, createRoomContext } from "@liveblocks/react";
 import Router from "next/router";
 import { getUsers } from "./lib/client";
+import { getSpecificDocuments } from "./lib/client/documents/getSpecificDocuments";
 import { User } from "./types";
 
 // The location of the liveblocks custom API endpoints
@@ -55,6 +56,12 @@ const client = createClient({
   async resolveMentionSuggestions({ text }) {
     const users = await getUsers({ search: text });
     return users.map((user) => user.id);
+  },
+  async resolveRoomsInfo({ roomIds }) {
+    const documents = await getSpecificDocuments({ documentIds: roomIds });
+    return documents.map((document, index) => ({
+      name: document ? document.name : roomIds[index],
+    }));
   },
 });
 
