@@ -6,8 +6,7 @@ import {
 } from "@liveblocks/client";
 import { createLiveblocksContext, createRoomContext } from "@liveblocks/react";
 import Router from "next/router";
-import { getUsers } from "./lib/client";
-import { getSpecificDocuments } from "./lib/client/documents/getSpecificDocuments";
+import { getSpecificDocuments, getUsers } from "./lib/client";
 import { User } from "./types";
 
 // The location of the liveblocks custom API endpoints
