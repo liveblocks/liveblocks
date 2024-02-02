@@ -266,6 +266,68 @@ Automatically unsubscribes when the component is unmounted.
 
 For a demonstration of this behavior, see our [connection status example][].
 
+## Liveblocks
+
+### createLiveblocksContext
+
+Creates a [`LiveblocksProvider`][] and a set of typed hooks. We recommend using
+it in `liveblocks.config.ts` and re-exporting your typed hooks like below.
+
+While [`createRoomContext`](#createRoomContext) offers APIs for interacting with
+rooms (e.g. Presence, Storage, and Comments),
+[`createLiveblocksContext`](#createLiveblocksContext) offers APIs for
+interacting with Liveblocks features that are not tied to a specific room (e.g.
+Notifications).
+
+```tsx file="liveblocks.config.ts"
+import { createClient } from "@liveblocks/client";
+import { createRoomContext, createLiveblocksContext } from "@liveblocks/react";
+
+const client = createClient({
+  // publicApiKey: "",
+  // authEndpoint: "/api/auth",
+  // throttle: 100,
+});
+
+// ...
+
+export const { RoomProvider } = createRoomContext(client);
+
+export const {
+  LiveblocksProvider,
+  useInboxNotifications,
+  /* ...all the other hooks you’re using... */
+} = createLiveblocksContext(client);
+```
+
+### LiveblocksProvider
+
+Makes Liveblocks non-Room features (e.g. Notifications) available in the
+component hierarchy below.
+
+Unlike [`RoomProvider`][], `LiveblocksProvider` does call Liveblocks servers
+when mounted, so it can (and should) live higher in the component tree of your
+app.
+
+```tsx
+import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
+import { LiveblocksProvider } from "./liveblocks.config";
+
+function AppRoot() {
+  return <LiveblocksProvider>{/* children */}</LiveblocksProvider>;
+}
+```
+
+<Banner title="Different API in 0.18 and earlier versions">
+
+In 0.18 and earlier versions, a different `LiveblocksProvider` API was
+available. It was exported from `@liveblocks/react` directly instead of
+`createLiveblocksContext`, and accepted the
+[`Client`](/docs/api-reference/liveblocks-client#Client) via the `client` prop.
+This previous API has been deprecated in 0.17 and removed in 0.18.
+
+</Banner>
+
 ## Presence
 
 <Banner title="Need help troubleshooting presence?">
@@ -1274,6 +1336,57 @@ const removeReaction = useRemoveReaction();
 removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
 ```
 
+## Notifications
+
+<Banner title="Public beta">
+
+Notifications is currently part of Comments, which is in beta. If you have any
+questions or feedback, please reach out to us via the dedicated Discord channel,
+[#comments-beta](https://discord.com/channels/913109211746009108/1126614905160749097).
+We’d love to hear from you.
+
+</Banner>
+
+### useInboxNotifications
+
+Returns the inbox notifications for the current user.
+
+```tsx
+const { inboxNotifications, error, isLoading } = useInboxNotifications();
+```
+
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw when there’s an error.
+
+### useUnreadInboxNotificationsCount
+
+Returns the number of unread inbox notifications for the current user.
+
+```tsx
+const { count, error, isLoading } = useUnreadInboxNotificationsCount();
+```
+
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw when there’s an error.
+
+### useMarkInboxNotificationAsRead
+
+Returns a function that marks an inbox notification as read.
+
+```tsx
+const markInboxNotificationAsRead = useMarkInboxNotificationAsRead();
+markInboxNotificationAsRead("in_xxx");
+```
+
+### useMarkAllInboxNotificationsAsRead
+
+Returns a function that marks all inbox notifications as read.
+
+```tsx
+const markAllInboxNotificationsAsRead = useMarkAllInboxNotificationsAsRead();
+markAllInboxNotificationsAsRead();
+```
+
 ### useRoomNotificationSettings
 
 Returns the user’s notification settings for the current room and a function to
@@ -1648,35 +1761,6 @@ function Page() {
 }
 ```
 
-## Deprecated
-
-### LiveblocksProvider [@badge=Deprecated]
-
-<Banner type="error" title="Deprecated in 0.17, removed in 0.18">
-
-For more information, see our
-[Upgrade Guide to 0.17](/docs/platform/upgrading/0.17#recommended-upgrade-steps).
-
-</Banner>
-
-React context provider that lets you use all the presence and storage hooks of
-`@liveblocks/react`.
-
-```tsx
-import { createClient } from "@liveblocks/client";
-import { LiveblocksProvider } from "@liveblocks/react";
-
-const client = createClient({
-  authEndpoint: "/api/liveblocks-auth",
-});
-
-function AppRoot() {
-  return (
-    <LiveblocksProvider client={client}>{/* children */}</LiveblocksProvider>
-  );
-}
-```
-
 [`createclient`]: /docs/api-reference/liveblocks-client#createClient
 [`livelist`]: /docs/api-reference/liveblocks-client#LiveList
 [`livemap`]: /docs/api-reference/liveblocks-client#LiveMap
@@ -1685,6 +1769,7 @@ function AppRoot() {
   /docs/api-reference/liveblocks-client#createClientLostConnectionTimeout
 [`room.history`]: /docs/api-reference/liveblocks-client#Room.history
 [`roomprovider`]: /docs/api-reference/liveblocks-react#RoomProvider
+[`liveblocksprovider`]: /docs/api-reference/liveblocks-react#LiveblocksProvider
 [`usemutation`]: /docs/api-reference/liveblocks-react#useMutation
 [`usestorage`]: /docs/api-reference/liveblocks-react#useStorage
 [`useself`]: /docs/api-reference/liveblocks-react#useSelf

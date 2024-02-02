@@ -1242,7 +1242,7 @@ export type LiveblocksContextBundle<TUserMeta extends BaseUserMeta> = Resolve<
        * Returns the number of unread inbox notifications for the current user.
        *
        * @example
-       * const unreadCount = useUnreadInboxNotificationsCount();
+       * const { count, error, isLoading } = useUnreadInboxNotificationsCount();
        */
       useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountState;
 
@@ -1255,7 +1255,7 @@ export type LiveblocksContextBundle<TUserMeta extends BaseUserMeta> = Resolve<
              * Returns the inbox notifications for the current user.
              *
              * @example
-             * const { inboxNotifications, error, isLoading } = useInboxNotifications();
+             * const { inboxNotifications } = useInboxNotifications();
              */
             useInboxNotifications(): InboxNotificationsStateSuccess;
 
@@ -1265,7 +1265,7 @@ export type LiveblocksContextBundle<TUserMeta extends BaseUserMeta> = Resolve<
              * Returns the number of unread inbox notifications for the current user.
              *
              * @example
-             * const unreadCount = useUnreadInboxNotificationsCount();
+             * const { count } = useUnreadInboxNotificationsCount();
              */
             useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountStateSuccess;
           }
