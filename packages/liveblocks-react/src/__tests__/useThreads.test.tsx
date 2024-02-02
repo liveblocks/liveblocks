@@ -105,6 +105,50 @@ describe("useThreads", () => {
     unmount();
   });
 
+  test("should be referentially stable after a re-render", async () => {
+    const threads = [dummyThreadData()];
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            data: threads,
+            inboxNotifications: [],
+          })
+        );
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
+
+    const { result, unmount, rerender } = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          {children}
+        </RoomProvider>
+      ),
+    });
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads,
+      })
+    );
+
+    const oldResult = result.current;
+
+    rerender();
+
+    expect(oldResult).toBe(result.current);
+
+    unmount();
+  });
+
   test("multiple instances of useThreads should not fetch threads multiple times (dedupe requests)", async () => {
     let getThreadsReqCount = 0;
 
@@ -956,6 +1000,53 @@ describe("useThreadsSuspense", () => {
         threads,
       })
     );
+
+    unmount();
+  });
+
+  test("should be referentially stable after a re-render", async () => {
+    const threads = [dummyThreadData()];
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            data: threads,
+            inboxNotifications: [],
+          })
+        );
+      })
+    );
+
+    const {
+      roomCtx: {
+        RoomProvider,
+        suspense: { useThreads },
+      },
+    } = createRoomContextForTest();
+
+    const { result, unmount, rerender } = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          <Suspense fallback={<div>Loading</div>}>{children}</Suspense>
+        </RoomProvider>
+      ),
+    });
+
+    expect(result.current).toEqual(null);
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads,
+      })
+    );
+
+    const oldResult = result.current;
+
+    rerender();
+
+    expect(oldResult).toBe(result.current);
 
     unmount();
   });
