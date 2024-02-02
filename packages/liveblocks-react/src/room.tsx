@@ -1143,10 +1143,8 @@ export function createRoomContext<
 
     const selector = React.useCallback(
       (state: CacheState<TThreadMetadata>): ThreadsState<TThreadMetadata> => {
-        if (
-          state.queries[queryKey] === undefined ||
-          state.queries[queryKey].isLoading
-        ) {
+        const query = state.queries[queryKey];
+        if (query === undefined || query.isLoading) {
           return {
             isLoading: true,
           };
@@ -1155,7 +1153,7 @@ export function createRoomContext<
         return {
           threads: selectedThreads(room.id, state, options),
           isLoading: false,
-          error: state.queries[queryKey].error,
+          error: query.error,
         };
       },
       [room, queryKey] // eslint-disable-line react-hooks/exhaustive-deps
