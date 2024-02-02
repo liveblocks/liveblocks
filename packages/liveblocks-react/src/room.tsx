@@ -16,6 +16,7 @@ import type {
 import { shallow } from "@liveblocks/client";
 import type {
   BaseMetadata,
+  CacheState,
   CacheStore,
   CommentData,
   CommentReaction,
@@ -1140,11 +1141,8 @@ export function createRoomContext<
       return () => decrementQuerySubscribers(queryKey);
     }, [room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    return useSyncExternalStoreWithSelector(
-      store.subscribe,
-      store.get,
-      store.get,
-      (state) => {
+    const selector = React.useCallback(
+      (state: CacheState<TThreadMetadata>): ThreadsState<TThreadMetadata> => {
         if (
           state.queries[queryKey] === undefined ||
           state.queries[queryKey].isLoading
@@ -1159,7 +1157,15 @@ export function createRoomContext<
           isLoading: false,
           error: state.queries[queryKey].error,
         };
-      }
+      },
+      [room, queryKey] // eslint-disable-line react-hooks/exhaustive-deps
+    );
+
+    return useSyncExternalStoreWithSelector(
+      store.subscribe,
+      store.get,
+      store.get,
+      selector
     );
   }
 
@@ -1182,6 +1188,18 @@ export function createRoomContext<
       throw query.error;
     }
 
+    const selector = React.useCallback(
+      (
+        state: CacheState<TThreadMetadata>
+      ): ThreadsStateSuccess<TThreadMetadata> => {
+        return {
+          threads: selectedThreads(room.id, state, options),
+          isLoading: false,
+        };
+      },
+      [room, queryKey] // eslint-disable-line react-hooks/exhaustive-deps
+    );
+
     React.useEffect(() => {
       incrementQuerySubscribers(queryKey);
 
@@ -1194,12 +1212,7 @@ export function createRoomContext<
       store.subscribe,
       store.get,
       store.get,
-      (state) => {
-        return {
-          threads: selectedThreads(room.id, state, options),
-          isLoading: false,
-        };
-      }
+      selector
     );
   }
 
