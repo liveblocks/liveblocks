@@ -83,6 +83,51 @@ describe("useInboxNotifications", () => {
     unmount();
   });
 
+  test("should be referentially stable after rerendering", async () => {
+    const threads = [dummyThreadData()];
+    const inboxNotification = dummyInboxNoficationData();
+    inboxNotification.threadId = threads[0].id;
+    const inboxNotifications = [inboxNotification];
+
+    server.use(
+      mockGetInboxNotifications(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            threads,
+            inboxNotifications,
+          })
+        );
+      })
+    );
+
+    const { LiveblocksProvider, useInboxNotifications } =
+      createLiveblocksContextForTest();
+
+    const { result, unmount, rerender } = renderHook(
+      () => useInboxNotifications(),
+      {
+        wrapper: ({ children }) => (
+          <LiveblocksProvider>{children}</LiveblocksProvider>
+        ),
+      }
+    );
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        inboxNotifications,
+      })
+    );
+
+    const oldResult = result.current;
+
+    rerender();
+
+    expect(result.current).toBe(oldResult);
+
+    unmount();
+  });
+
   test("multiple instances of useInboxNotifications should dedupe requests", async () => {
     const threads = [dummyThreadData()];
     const inboxNotification = dummyInboxNoficationData();
