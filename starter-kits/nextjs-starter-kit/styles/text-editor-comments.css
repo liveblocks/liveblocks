@@ -4,6 +4,10 @@
   --lb-background: var(--color-surface-elevated);
 }
 
+.lb-tooltip {
+  background: rgb(var(--color-gray-800));
+}
+
 .comment-highlight {
   display: inline-block;
   position: relative;
