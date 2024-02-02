@@ -346,6 +346,9 @@ function generateInboxNotificationThreadContents(
   };
 }
 
+/**
+ * Displays a thread inbox notification.
+ */
 const InboxNotificationThread = forwardRef<
   HTMLAnchorElement,
   InboxNotificationThreadProps

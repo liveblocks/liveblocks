@@ -84,7 +84,7 @@ export type ThreadMetadata = {
 };
 ```
 
-#### Props [#thread-props]
+#### Props [#Thread-props]
 
 <PropertiesList>
   <PropertiesListItem name="thread" type="ThreadData" required>
@@ -323,7 +323,7 @@ function Component({ threadId, commentId }) {
 Learn more about mutation hooks under
 [`@liveblocks/react`](/docs/api-reference/liveblocks-react#Comments).
 
-#### Props [#composer-props]
+#### Props [#Composer-props]
 
 <PropertiesList>
   <PropertiesListItem name="threadId" type="string">
@@ -449,7 +449,7 @@ function Component() {
 }
 ```
 
-#### Props [#comment-props]
+#### Props [#Comment-props]
 
 <PropertiesList>
   <PropertiesListItem name="comment" type="CommentData" required>
@@ -514,7 +514,7 @@ function Component() {
 
 Displays a single inbox notification.
 
-#### Props [#inboxnotification-props]
+#### Props [#InboxNotification-props]
 
 <PropertiesList>
   <PropertiesListItem
@@ -541,11 +541,45 @@ Displays a single inbox notification.
   </PropertiesListItem>
 </PropertiesList>
 
+##### kinds [#InboxNotification-kinds]
+
+Override specific kinds of inbox notifications.
+
+<PropertiesList>
+  <PropertiesListItem
+    name="thread"
+    type="ComponentType<InboxNotificationThreadProps>"
+  >
+    The component used to display thread inbox notifications. Defaults to
+    `InboxNotification.Thread`.
+  </PropertiesListItem>
+</PropertiesList>
+
+###### InboxNotification.Thread [#InboxNotification.Thread]
+
+Displays a thread inbox notification.
+
+```tsx
+<InboxNotification
+  kinds={{
+    thread: (props) => (
+      <InboxNotification.Thread {...props} showRoomName={false} />
+    ),
+  }}
+/>
+```
+
+<PropertiesList>
+  <PropertiesListItem name="showRoomName" type="boolean">
+    Whether to show the room name in the title.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### InboxNotificationList
 
 Displays inbox notifications as a list.
 
-#### Props [#inboxnotificationlist-props]
+#### Props [#InboxNotificationList-props]
 
 <PropertiesList>
   <PropertiesListItem name="children" type="ReactNode">
@@ -562,7 +596,7 @@ Set configuration options for all Comments components, such as
 <CommentsConfig overrides={{ locale: "fr", USER_UNKNOWN: "Anonyme" }} />
 ```
 
-#### Props [#commentsconfig-props]
+#### Props [#CommentsConfig-props]
 
 <PropertiesList>
   <PropertiesListItem name="overrides" type="Partial<Overrides>">
