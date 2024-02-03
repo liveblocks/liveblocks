@@ -1311,22 +1311,32 @@ export function createRoomContext<
 
         room.editThreadMetadata({ metadata, threadId }).then(
           (metadata: TThreadMetadata) => {
-            store.set((state) => ({
-              ...state,
-              threads: {
-                ...state.threads,
-                [threadId]: {
-                  ...state.threads[threadId],
-                  metadata: {
-                    ...state.threads[threadId].metadata,
-                    ...metadata,
+            store.set((state) => {
+              const existingThread = state.threads[threadId];
+
+              // If the thread has been deleted while edit thread metadata was processed
+              // We do not update the state
+              if (existingThread === undefined) {
+                return state;
+              }
+
+              return {
+                ...state,
+                threads: {
+                  ...state.threads,
+                  [threadId]: {
+                    ...existingThread,
+                    metadata: {
+                      ...existingThread.metadata,
+                      ...metadata,
+                    },
                   },
                 },
-              },
-              optimisticUpdates: state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              ),
-            }));
+                optimisticUpdates: state.optimisticUpdates.filter(
+                  (update) => update.id !== optimisticUpdateId
+                ),
+              };
+            });
           },
           (err: Error) =>
             onMutationFailure(
