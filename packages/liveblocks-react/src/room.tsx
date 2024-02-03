@@ -1376,47 +1376,58 @@ export function createRoomContext<
 
         room.addReaction({ threadId, commentId, emoji }).then(
           (addedReaction) => {
-            store.set((state) => ({
-              ...state,
-              threads: {
-                ...state.threads,
-                [threadId]: {
-                  ...state.threads[threadId],
-                  comments: state.threads[threadId].comments.map((comment) =>
-                    comment.id === commentId
-                      ? {
-                          ...comment,
-                          reactions: comment.reactions.some(
-                            (reaction) => reaction.emoji === addedReaction.emoji
-                          )
-                            ? comment.reactions.map((reaction) =>
+            store.set((state): CacheState<TThreadMetadata> => {
+              const existingThread = state.threads[threadId];
+
+              // If the thread has been deleted while add reaction was processed
+              // We do not update the state
+              if (existingThread === undefined) {
+                return state;
+              }
+
+              return {
+                ...state,
+                threads: {
+                  ...state.threads,
+                  [threadId]: {
+                    ...existingThread,
+                    comments: existingThread.comments.map((comment) =>
+                      comment.id === commentId
+                        ? {
+                            ...comment,
+                            reactions: comment.reactions.some(
+                              (reaction) =>
                                 reaction.emoji === addedReaction.emoji
-                                  ? {
-                                      ...reaction,
-                                      users: [
-                                        ...reaction.users,
-                                        { id: addedReaction.userId },
-                                      ],
-                                    }
-                                  : reaction
-                              )
-                            : [
-                                ...comment.reactions,
-                                {
-                                  emoji: addedReaction.emoji,
-                                  createdAt: addedReaction.createdAt,
-                                  users: [{ id: addedReaction.userId }],
-                                },
-                              ],
-                        }
-                      : comment
-                  ),
+                            )
+                              ? comment.reactions.map((reaction) =>
+                                  reaction.emoji === addedReaction.emoji
+                                    ? {
+                                        ...reaction,
+                                        users: [
+                                          ...reaction.users,
+                                          { id: addedReaction.userId },
+                                        ],
+                                      }
+                                    : reaction
+                                )
+                              : [
+                                  ...comment.reactions,
+                                  {
+                                    emoji: addedReaction.emoji,
+                                    createdAt: addedReaction.createdAt,
+                                    users: [{ id: addedReaction.userId }],
+                                  },
+                                ],
+                          }
+                        : comment
+                    ),
+                  },
                 },
-              },
-              optimisticUpdates: state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              ),
-            }));
+                optimisticUpdates: state.optimisticUpdates.filter(
+                  (update) => update.id !== optimisticUpdateId
+                ),
+              };
+            });
           },
           (err: Error) =>
             onMutationFailure(
