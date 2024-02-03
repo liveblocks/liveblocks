@@ -1,5 +1,6 @@
 import {
   applyOptimisticUpdates,
+  nn,
   type BaseMetadata,
   type CacheState,
   type RoomNotificationSettings,
@@ -12,5 +13,5 @@ export function selectNotificationSettings<
   state: CacheState<TThreadMetadata>
 ): RoomNotificationSettings {
   const { notificationSettings } = applyOptimisticUpdates(state);
-  return notificationSettings[roomId];
+  return nn(notificationSettings[roomId]);
 }
