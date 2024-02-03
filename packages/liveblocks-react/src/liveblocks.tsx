@@ -310,20 +310,34 @@ export function createLiveblocksContext<
 
       client.markInboxNotificationAsRead(inboxNotificationId).then(
         () => {
-          store.set((state) => ({
-            ...state,
-            inboxNotifications: {
-              ...state.inboxNotifications,
-              [inboxNotificationId]: {
-                // TODO: Handle potential deleted inbox notification
-                ...state.inboxNotifications[inboxNotificationId],
-                readAt,
+          store.set((state) => {
+            const existingNotification =
+              state.inboxNotifications[inboxNotificationId];
+
+            // If existing notification has been deleted, we return the existing state
+            if (existingNotification === undefined) {
+              return {
+                ...state,
+                optimisticUpdates: state.optimisticUpdates.filter(
+                  (update) => update.id !== optimisticUpdateId
+                ),
+              };
+            }
+
+            return {
+              ...state,
+              inboxNotifications: {
+                ...state.inboxNotifications,
+                [inboxNotificationId]: {
+                  ...existingNotification,
+                  readAt,
+                },
               },
-            },
-            optimisticUpdates: state.optimisticUpdates.filter(
-              (update) => update.id !== optimisticUpdateId
-            ),
-          }));
+              optimisticUpdates: state.optimisticUpdates.filter(
+                (update) => update.id !== optimisticUpdateId
+              ),
+            };
+          });
         },
         () => {
           // TODO: Broadcast errors to client
