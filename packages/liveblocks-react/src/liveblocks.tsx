@@ -188,10 +188,9 @@ export function createLiveblocksContext<
   }
 
   function useInboxNotificationsSuspense(): InboxNotificationsStateSuccess {
-    if (
-      store.get().queries[INBOX_NOTIFICATIONS_QUERY] === undefined ||
-      store.get().queries[INBOX_NOTIFICATIONS_QUERY].isLoading
-    ) {
+    const query = store.get().queries[INBOX_NOTIFICATIONS_QUERY];
+
+    if (query === undefined || query.isLoading) {
       throw fetchInboxNotifications();
     }
 
