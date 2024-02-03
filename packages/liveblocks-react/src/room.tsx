@@ -1317,7 +1317,12 @@ export function createRoomContext<
               // If the thread has been deleted while edit thread metadata was processed
               // We do not update the state
               if (existingThread === undefined) {
-                return state;
+                return {
+                  ...state,
+                  optimisticUpdates: state.optimisticUpdates.filter(
+                    (update) => update.id !== optimisticUpdateId
+                  ),
+                };
               }
 
               return {
@@ -1382,7 +1387,12 @@ export function createRoomContext<
               // If the thread has been deleted while add reaction was processed
               // We do not update the state
               if (existingThread === undefined) {
-                return state;
+                return {
+                  ...state,
+                  optimisticUpdates: state.optimisticUpdates.filter(
+                    (update) => update.id !== optimisticUpdateId
+                  ),
+                };
               }
 
               return {
@@ -1472,7 +1482,12 @@ export function createRoomContext<
               // If the thread has been deleted while remove reaction was processed
               // We do not update the state
               if (existingThread === undefined) {
-                return state;
+                return {
+                  ...state,
+                  optimisticUpdates: state.optimisticUpdates.filter(
+                    (update) => update.id !== optimisticUpdateId
+                  ),
+                };
               }
 
               return {
@@ -1695,7 +1710,12 @@ export function createRoomContext<
 
               // If thread does not exist, we return the existing state
               if (existingThread === undefined) {
-                return state;
+                return {
+                  ...state,
+                  optimisticUpdates: state.optimisticUpdates.filter(
+                    (update) => update.id !== optimisticUpdateId
+                  ),
+                };
               }
 
               const newThread = {
