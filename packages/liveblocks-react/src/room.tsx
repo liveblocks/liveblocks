@@ -533,7 +533,8 @@ export function createRoomContext<
         return (
           a.length === b.length &&
           a.every((atuple, index) => {
-            const btuple = b[index];
+            // We know btuple always exist because we checked the array length on the previous line
+            const btuple = b[index]!;
             return atuple[0] === btuple[0] && eq(atuple[1], btuple[1]);
           })
         );
