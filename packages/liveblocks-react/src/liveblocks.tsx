@@ -202,6 +202,7 @@ export function createLiveblocksContext<
       };
     }, []);
 
+    // TODO: Make selector referentially stable
     return useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
@@ -240,6 +241,7 @@ export function createLiveblocksContext<
       return () => decrementInboxNotificationsSubscribers();
     });
 
+    // TODO: Make selector referentially stable
     return useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
@@ -283,6 +285,7 @@ export function createLiveblocksContext<
       };
     }, []);
 
+    // TODO: Make selector referentially stable
     return useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
@@ -392,6 +395,7 @@ export function createLiveblocksContext<
   }
 
   function useThreadFromCache(threadId: string): ThreadData<BaseMetadata> {
+    // TODO: Make selector referentially stable
     return useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
