@@ -1466,52 +1466,78 @@ export function createRoomContext<
 
         room.removeReaction({ threadId, commentId, emoji }).then(
           () => {
-            store.set((state) => ({
-              ...state,
-              threads: {
-                ...state.threads,
-                [threadId]: {
-                  ...state.threads[threadId],
-                  comments: state.threads[threadId].comments.map((comment) => {
-                    if (comment.id !== commentId) {
-                      return comment;
-                    }
+            store.set((state) => {
+              const existingThread = state.threads[threadId];
 
-                    const reactionIndex = comment.reactions.findIndex(
-                      (reaction) => reaction.emoji === emoji
-                    );
-                    let reactions: CommentReaction[] = comment.reactions;
+              // If the thread has been deleted while remove reaction was processed
+              // We do not update the state
+              if (existingThread === undefined) {
+                return state;
+              }
 
-                    if (
-                      reactionIndex >= 0 &&
-                      comment.reactions[reactionIndex].users.some(
-                        (user) => user.id === userId
-                      )
-                    ) {
-                      if (comment.reactions[reactionIndex].users.length <= 1) {
-                        reactions = [...comment.reactions];
-                        reactions.splice(reactionIndex, 1);
-                      } else {
-                        reactions[reactionIndex] = {
-                          ...reactions[reactionIndex],
-                          users: reactions[reactionIndex].users.filter(
-                            (user) => user.id !== userId
+              return {
+                ...state,
+                threads: {
+                  ...state.threads,
+                  [threadId]: {
+                    ...existingThread,
+                    comments: existingThread.comments.map((comment) => {
+                      if (comment.id !== commentId) {
+                        return comment;
+                      }
+
+                      const existingReaction = comment.reactions.find(
+                        (reaction) => reaction.emoji === emoji
+                      );
+
+                      // If existing reaction does not exists, we return existing comment
+                      if (existingReaction === undefined) {
+                        return comment;
+                      }
+
+                      let reactions: CommentReaction[] = comment.reactions;
+
+                      // If existing reaction has not been added by current user, we return existing comment
+                      if (
+                        !existingReaction.users.some(
+                          (user) => user.id === userId
+                        )
+                      ) {
+                        return comment;
+                      }
+
+                      // If only current user has reacted with this emoji, we remove the reaction
+                      if (existingReaction.users.length <= 1) {
+                        return {
+                          ...comment,
+                          reactions: reactions.filter(
+                            (reaction) => reaction.emoji !== emoji
                           ),
                         };
                       }
-                    }
 
-                    return {
-                      ...comment,
-                      reactions,
-                    };
-                  }),
+                      // If multiple users have reacted with this emoji, we remove the current user from the reaction
+                      return {
+                        ...comment,
+                        reactions: reactions.map((reaction) =>
+                          reaction.emoji !== emoji
+                            ? reaction
+                            : {
+                                ...reaction,
+                                users: reaction.users.filter(
+                                  (user) => user.id !== userId
+                                ),
+                              }
+                        ),
+                      };
+                    }),
+                  },
                 },
-              },
-              optimisticUpdates: state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              ),
-            }));
+                optimisticUpdates: state.optimisticUpdates.filter(
+                  (update) => update.id !== optimisticUpdateId
+                ),
+              };
+            });
           },
           (err: Error) =>
             onMutationFailure(
