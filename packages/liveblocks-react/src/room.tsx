@@ -1690,38 +1690,46 @@ export function createRoomContext<
 
         room.deleteComment({ threadId, commentId }).then(
           () => {
-            const newThreads = { ...store.get().threads };
-            const thread = newThreads[threadId];
-            if (thread === undefined) return;
+            store.set((state) => {
+              const existingThread = state.threads[threadId];
 
-            newThreads[thread.id] = {
-              ...thread,
-              comments: thread.comments.map((comment) =>
-                comment.id === commentId
-                  ? {
-                      ...comment,
-                      deletedAt: now,
-                      body: undefined,
-                    }
-                  : comment
-              ),
-            };
+              // If thread does not exist, we return the existing state
+              if (existingThread === undefined) {
+                return state;
+              }
 
-            if (
-              !newThreads[thread.id].comments.some(
-                (comment) => comment.deletedAt === undefined
-              )
-            ) {
-              delete newThreads[thread.id];
-            }
+              const newThread = {
+                ...existingThread,
+                comments: existingThread.comments.map((comment) =>
+                  comment.id === commentId
+                    ? {
+                        ...comment,
+                        deletedAt: now,
+                        body: undefined,
+                      }
+                    : comment
+                ),
+              };
 
-            store.set((state) => ({
-              ...state,
-              threads: newThreads,
-              optimisticUpdates: state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              ),
-            }));
+              const newThreads = { ...state.threads, [threadId]: newThread };
+
+              // If all the comments have been deleted, we delete the thread from the cache
+              if (
+                !newThread.comments.some(
+                  (comment) => comment.deletedAt === undefined
+                )
+              ) {
+                delete newThreads[threadId];
+              }
+
+              return {
+                ...state,
+                threads: newThreads,
+                optimisticUpdates: state.optimisticUpdates.filter(
+                  (update) => update.id !== optimisticUpdateId
+                ),
+              };
+            });
           },
           (err: Error) =>
             onMutationFailure(
