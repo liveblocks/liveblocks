@@ -1511,7 +1511,7 @@ export function createRoomContext<
                         return comment;
                       }
 
-                      let reactions: CommentReaction[] = comment.reactions;
+                      const reactions: CommentReaction[] = comment.reactions;
 
                       // If existing reaction has not been added by current user, we return existing comment
                       if (

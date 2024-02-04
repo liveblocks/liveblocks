@@ -1,8 +1,8 @@
 import {
   applyOptimisticUpdates,
-  nn,
   type BaseMetadata,
   type CacheState,
+  nn,
   type RoomNotificationSettings,
 } from "@liveblocks/core";
 
