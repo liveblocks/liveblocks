@@ -188,10 +188,9 @@ export function createLiveblocksContext<
   }
 
   function useInboxNotificationsSuspense(): InboxNotificationsStateSuccess {
-    if (
-      store.get().queries[INBOX_NOTIFICATIONS_QUERY] === undefined ||
-      store.get().queries[INBOX_NOTIFICATIONS_QUERY].isLoading
-    ) {
+    const query = store.get().queries[INBOX_NOTIFICATIONS_QUERY];
+
+    if (query === undefined || query.isLoading) {
       throw fetchInboxNotifications();
     }
 
@@ -203,6 +202,7 @@ export function createLiveblocksContext<
       };
     }, []);
 
+    // TODO: Make selector referentially stable
     return useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
@@ -241,6 +241,7 @@ export function createLiveblocksContext<
       return () => decrementInboxNotificationsSubscribers();
     });
 
+    // TODO: Make selector referentially stable
     return useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
@@ -270,10 +271,9 @@ export function createLiveblocksContext<
   }
 
   function useUnreadInboxNotificationsCountSuspense(): UnreadInboxNotificationsCountStateSuccess {
-    if (
-      store.get().queries[INBOX_NOTIFICATIONS_QUERY] === undefined ||
-      store.get().queries[INBOX_NOTIFICATIONS_QUERY].isLoading
-    ) {
+    const query = store.get().queries[INBOX_NOTIFICATIONS_QUERY];
+
+    if (query === undefined || query.isLoading) {
       throw fetchInboxNotifications();
     }
 
@@ -285,6 +285,7 @@ export function createLiveblocksContext<
       };
     }, []);
 
+    // TODO: Make selector referentially stable
     return useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
@@ -311,20 +312,34 @@ export function createLiveblocksContext<
 
       client.markInboxNotificationAsRead(inboxNotificationId).then(
         () => {
-          store.set((state) => ({
-            ...state,
-            inboxNotifications: {
-              ...state.inboxNotifications,
-              [inboxNotificationId]: {
-                // TODO: Handle potential deleted inbox notification
-                ...state.inboxNotifications[inboxNotificationId],
-                readAt,
+          store.set((state) => {
+            const existingNotification =
+              state.inboxNotifications[inboxNotificationId];
+
+            // If existing notification has been deleted, we return the existing state
+            if (existingNotification === undefined) {
+              return {
+                ...state,
+                optimisticUpdates: state.optimisticUpdates.filter(
+                  (update) => update.id !== optimisticUpdateId
+                ),
+              };
+            }
+
+            return {
+              ...state,
+              inboxNotifications: {
+                ...state.inboxNotifications,
+                [inboxNotificationId]: {
+                  ...existingNotification,
+                  readAt,
+                },
               },
-            },
-            optimisticUpdates: state.optimisticUpdates.filter(
-              (update) => update.id !== optimisticUpdateId
-            ),
-          }));
+              optimisticUpdates: state.optimisticUpdates.filter(
+                (update) => update.id !== optimisticUpdateId
+              ),
+            };
+          });
         },
         () => {
           // TODO: Broadcast errors to client
@@ -380,6 +395,7 @@ export function createLiveblocksContext<
   }
 
   function useThreadFromCache(threadId: string): ThreadData<BaseMetadata> {
+    // TODO: Make selector referentially stable
     return useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
