@@ -1,4 +1,5 @@
 import type {
+  BaseMetadata,
   CommentData,
   InboxNotificationData,
   ThreadData,
@@ -62,6 +63,20 @@ export function mockCreateComment(
 ) {
   return rest.post(
     `https://api.liveblocks.io/v2/c/rooms/room-id/threads/${params.threadId}/comments`,
+    resolver
+  );
+}
+
+export function mockEditThreadMetadata<ThreadMetadata extends BaseMetadata>(
+  params: { threadId: string },
+  resolver: ResponseResolver<
+    RestRequest<never, never>,
+    RestContext,
+    ThreadMetadata
+  >
+) {
+  return rest.post(
+    `https://api.liveblocks.io/v2/c/rooms/room-id/threads/${params.threadId}/metadata`,
     resolver
   );
 }
