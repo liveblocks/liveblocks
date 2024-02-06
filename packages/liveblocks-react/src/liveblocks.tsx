@@ -174,7 +174,7 @@ export function createLiveblocksContext<
       incrementInboxNotificationsSubscribers();
 
       return () => decrementInboxNotificationsSubscribers();
-    });
+    }, []);
 
     const result = useSyncExternalStoreWithSelector(
       store.subscribe,
