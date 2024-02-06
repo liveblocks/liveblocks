@@ -275,6 +275,15 @@ export function createLiveblocksContext<
     );
   }
 
+  function useUnreadInboxNotificationsCountSuspenseSelector(
+    state: CacheState<BaseMetadata>
+  ): UnreadInboxNotificationsCountStateSuccess {
+    return {
+      isLoading: false,
+      count: selectUnreadInboxNotificationsCount(state),
+    };
+  }
+
   function useUnreadInboxNotificationsCountSuspense(): UnreadInboxNotificationsCountStateSuccess {
     const query = store.get().queries[INBOX_NOTIFICATIONS_QUERY];
 
@@ -290,17 +299,11 @@ export function createLiveblocksContext<
       };
     }, []);
 
-    // TODO: Make selector referentially stable
     return useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
       store.get,
-      (state) => {
-        return {
-          isLoading: false,
-          count: selectUnreadInboxNotificationsCount(state),
-        };
-      }
+      useUnreadInboxNotificationsCountSuspenseSelector
     );
   }
 
