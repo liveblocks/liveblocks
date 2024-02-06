@@ -1,4 +1,7 @@
-import { useCreateComment } from "../../liveblocks.config";
+import {
+  useCreateComment,
+  useThreadSubscription,
+} from "../../liveblocks.config";
 import clsx from "clsx";
 import { Comment } from "./Comment";
 import { Composer } from "./Composer";
@@ -16,9 +19,11 @@ interface ThreadProps extends ComponentProps<"div"> {
 
 export function Thread({ thread, className, ...props }: ThreadProps) {
   const createComment = useCreateComment();
+  const { status, unreadSince } = useThreadSubscription(thread.id);
 
   return (
     <div className={clsx(className, "")} {...props}>
+      Status: {status}, unreadSince: {unreadSince?.toString()}
       <div className="-space-y-4">
         {thread.comments.map((comment) => (
           <Comment key={comment.id} comment={comment} />

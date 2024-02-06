@@ -2,58 +2,38 @@
 
 import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import {
-  RoomProvider,
-  useCreateThread,
-  useThreads,
-  useRoomNotificationSettings,
-} from "../../liveblocks.config";
+import { RoomProvider, useThreads } from "../liveblocks.config";
 import { Loading } from "../components/Loading";
-import { Composer } from "../components/Composer";
-import { Thread } from "../components/Thread";
+import { Composer, Thread } from "@liveblocks/react-comments";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
 
 /**
- * Displays a list of threads, each allowing comment replies, along
- * with a composer for creating new threads.
+ * Displays a list of threads, along with a composer for creating
+ * new threads.
  */
 
 function Example() {
   const { threads } = useThreads();
-  const createThread = useCreateThread();
-  const [read, write] = useRoomNotificationSettings();
-  console.log(read);
 
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-4 px-4 py-16">
+    <main>
       {threads.map((thread) => (
-        <Thread
-          key={thread.id}
-          thread={thread}
-          className="rounded-xl bg-white shadow-md"
-        />
+        <Thread key={thread.id} thread={thread} className="thread" />
       ))}
-      <Composer
-        onComposerSubmit={({ body }) => {
-          createThread({ body });
-        }}
-        className="rounded-xl bg-white shadow-md"
-      />
+      <Composer className="composer" />
     </main>
   );
 }
 
 export default function Page() {
-  const roomId = useOverrideRoomId("nextjs-comments-primitives");
+  const roomId = useOverrideRoomId("nextjs-comments-emails");
 
   return (
     <RoomProvider id={roomId} initialPresence={{}}>
       <ErrorBoundary
         fallback={
-          <div className="absolute flex h-screen w-screen place-content-center items-center">
-            There was an error while getting threads.
-          </div>
+          <div className="error">There was an error while getting threads.</div>
         }
       >
         <ClientSideSuspense fallback={<Loading />}>
