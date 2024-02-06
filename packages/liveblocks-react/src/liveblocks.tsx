@@ -144,6 +144,30 @@ export function createLiveblocksContext<
     return;
   }
 
+  function useInboxNotificationsSelectorCallback(
+    state: CacheState<BaseMetadata>
+  ): InboxNotificationsState {
+    const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
+
+    if (query === undefined || query.isLoading) {
+      return {
+        isLoading: true,
+      };
+    }
+
+    if (query.error !== undefined) {
+      return {
+        error: query.error,
+        isLoading: false,
+      };
+    }
+
+    return {
+      inboxNotifications: selectedInboxNotifications(state),
+      isLoading: false,
+    };
+  }
+
   function useInboxNotifications(): InboxNotificationsState {
     useEffect(() => {
       void fetchInboxNotifications();
@@ -152,36 +176,11 @@ export function createLiveblocksContext<
       return () => decrementInboxNotificationsSubscribers();
     });
 
-    const selector = useCallback(
-      (state: CacheState<BaseMetadata>): InboxNotificationsState => {
-        const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
-
-        if (query === undefined || query.isLoading) {
-          return {
-            isLoading: true,
-          };
-        }
-
-        if (query.error !== undefined) {
-          return {
-            error: query.error,
-            isLoading: false,
-          };
-        }
-
-        return {
-          inboxNotifications: selectedInboxNotifications(state),
-          isLoading: false,
-        };
-      },
-      []
-    );
-
     const result = useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
       store.get,
-      selector
+      useInboxNotificationsSelectorCallback
     );
 
     return result;
