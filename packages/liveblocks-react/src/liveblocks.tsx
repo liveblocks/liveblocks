@@ -403,12 +403,8 @@ export function createLiveblocksContext<
   }
 
   function useThreadFromCache(threadId: string): ThreadData<BaseMetadata> {
-    // TODO: Make selector referentially stable
-    return useSyncExternalStoreWithSelector(
-      store.subscribe,
-      store.get,
-      store.get,
-      (state) => {
+    const selector = useCallback(
+      (state: CacheState<BaseMetadata>) => {
         const thread = state.threads[threadId];
 
         if (thread === undefined) {
@@ -418,7 +414,15 @@ export function createLiveblocksContext<
         }
 
         return thread;
-      }
+      },
+      [threadId]
+    );
+
+    return useSyncExternalStoreWithSelector(
+      store.subscribe,
+      store.get,
+      store.get,
+      selector
     );
   }
 
