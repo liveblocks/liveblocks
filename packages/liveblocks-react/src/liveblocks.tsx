@@ -241,7 +241,7 @@ export function createLiveblocksContext<
       incrementInboxNotificationsSubscribers();
 
       return () => decrementInboxNotificationsSubscribers();
-    });
+    }, []);
 
     // TODO: Make selector referentially stable
     return useSyncExternalStoreWithSelector(
@@ -249,7 +249,7 @@ export function createLiveblocksContext<
       store.get,
       store.get,
       (state) => {
-        const query = store.get().queries[INBOX_NOTIFICATIONS_QUERY];
+        const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
 
         if (query === undefined || query.isLoading) {
           return {
