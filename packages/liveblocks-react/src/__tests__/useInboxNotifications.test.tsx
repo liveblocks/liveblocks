@@ -3,7 +3,7 @@ import "@testing-library/jest-dom";
 import { createClient } from "@liveblocks/core";
 import { renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
-import React from "react";
+import React, { Suspense } from "react";
 
 import { createLiveblocksContext } from "../liveblocks";
 import { dummyInboxNoficationData, dummyThreadData } from "./_dummies";
@@ -209,6 +209,58 @@ describe("useInboxNotifications", () => {
         error: expect.any(Error),
       })
     );
+
+    unmount();
+  });
+});
+
+describe("useInboxNotifications - Suspense", () => {
+  test("should be referentially stable after rerendering", async () => {
+    const threads = [dummyThreadData()];
+    const inboxNotification = dummyInboxNoficationData();
+    inboxNotification.threadId = threads[0].id;
+    const inboxNotifications = [inboxNotification];
+
+    server.use(
+      mockGetInboxNotifications(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            threads,
+            inboxNotifications,
+          })
+        );
+      })
+    );
+
+    const {
+      suspense: { LiveblocksProvider, useInboxNotifications },
+    } = createLiveblocksContextForTest();
+
+    const { result, unmount, rerender } = renderHook(
+      () => useInboxNotifications(),
+      {
+        wrapper: ({ children }) => (
+          <LiveblocksProvider>
+            <Suspense>{children}</Suspense>
+          </LiveblocksProvider>
+        ),
+      }
+    );
+
+    expect(result.current).toEqual(null);
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        inboxNotifications,
+      })
+    );
+
+    const oldResult = result.current;
+
+    rerender();
+
+    expect(result.current).toBe(oldResult);
 
     unmount();
   });

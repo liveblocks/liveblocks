@@ -187,6 +187,15 @@ export function createLiveblocksContext<
     return result;
   }
 
+  function useInboxNotificationsSuspenseSelector(
+    state: CacheState<BaseMetadata>
+  ): InboxNotificationsStateSuccess {
+    return {
+      inboxNotifications: selectedInboxNotifications(state),
+      isLoading: false,
+    };
+  }
+
   function useInboxNotificationsSuspense(): InboxNotificationsStateSuccess {
     const query = store.get().queries[INBOX_NOTIFICATIONS_QUERY];
 
@@ -202,17 +211,11 @@ export function createLiveblocksContext<
       };
     }, []);
 
-    // TODO: Make selector referentially stable
     return useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
       store.get,
-      (state) => {
-        return {
-          inboxNotifications: selectedInboxNotifications(state),
-          isLoading: false,
-        };
-      }
+      useInboxNotificationsSuspenseSelector
     );
   }
 
