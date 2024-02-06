@@ -1841,11 +1841,8 @@ export function createRoomContext<
   }
 
   function useThreadSubscription(threadId: string): ThreadSubscription {
-    return useSyncExternalStoreWithSelector(
-      store.subscribe,
-      store.get,
-      store.get,
-      (state) => {
+    const selector = React.useCallback(
+      (state: CacheState<BaseMetadata>): ThreadSubscription => {
         const inboxNotification = selectedInboxNotifications(state).find(
           (inboxNotification) => inboxNotification.threadId === threadId
         );
@@ -1862,7 +1859,15 @@ export function createRoomContext<
           status: "subscribed",
           unreadSince: inboxNotification.readAt,
         };
-      }
+      },
+      [threadId]
+    );
+
+    return useSyncExternalStoreWithSelector(
+      store.subscribe,
+      store.get,
+      store.get,
+      selector
     );
   }
 
