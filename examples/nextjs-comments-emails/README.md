@@ -36,6 +36,8 @@ This will download the example and ask permission to open your browser, enabling
 you to automatically get your API key from your
 [liveblocks.io](https://liveblocks.io) account.
 
+`npm run dev:email` will open live previews of your emails, and `npm run dev` will run the Comments app.
+
 ### Manual setup
 
 <details><summary>Read more</summary>
@@ -50,7 +52,8 @@ Alternatively, you can set up your project manually:
   [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Create an `.env.local` file and add your **secret** key as the
   `LIVEBLOCKS_SECRET_KEY` environment variable
-- Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
+- Run `npm run dev:email` and go to [http://localhost:3000](http://localhost:3000)
+- Run `npm run dev` and go to [http://localhost:3001](http://localhost:3001)
 
 </details>
 

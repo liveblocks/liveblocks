@@ -98,6 +98,7 @@ export default function NewComments(props: Props) {
   );
 }
 
+// Demo props for when viewing React Email
 const exampleProps: Props = {
   title: "Jory Quispe replied in Your App",
   href: "https://example.com/room/my-room",
