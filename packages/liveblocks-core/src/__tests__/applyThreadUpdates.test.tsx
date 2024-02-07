@@ -1,7 +1,6 @@
-import type { BaseMetadata, ThreadData } from "@liveblocks/client";
-
 import { applyThreadUpdates } from "../store";
-import type { ThreadDataWithDeleteInfo } from "../types/ThreadData";
+import type { BaseMetadata } from "../types/BaseMetadata";
+import type { ThreadData, ThreadDataWithDeleteInfo } from "../types/ThreadData";
 import type { ThreadDeleteInfo } from "../types/ThreadDeleteInfo";
 
 describe("applyThreadUpdates", () => {
