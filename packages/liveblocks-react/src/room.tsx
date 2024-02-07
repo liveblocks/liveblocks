@@ -2034,20 +2034,28 @@ export function createRoomContext<
       return () => decrementQuerySubscribers(queryKey);
     }, [room]);
 
-    return [
-      useSyncExternalStoreWithSelector(
-        store.subscribe,
-        store.get,
-        store.get,
-        (state) => {
-          return {
-            isLoading: false,
-            settings: selectNotificationSettings(room.id, state),
-          };
-        }
-      ),
-      updateRoomNotificationSettings,
-    ];
+    const selector = React.useCallback(
+      (
+        state: CacheState<BaseMetadata>
+      ): RoomNotificationSettingsStateSuccess => {
+        return {
+          isLoading: false,
+          settings: selectNotificationSettings(room.id, state),
+        };
+      },
+      [room]
+    );
+
+    const settings = useSyncExternalStoreWithSelector(
+      store.subscribe,
+      store.get,
+      store.get,
+      selector
+    );
+
+    return React.useMemo(() => {
+      return [settings, updateRoomNotificationSettings];
+    }, [settings, updateRoomNotificationSettings]);
   }
 
   function useUpdateRoomNotificationSettings() {

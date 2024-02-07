@@ -4,7 +4,7 @@ import type { BaseMetadata, JsonObject } from "@liveblocks/core";
 import { createClient } from "@liveblocks/core";
 import { renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
-import React from "react";
+import React, { Suspense } from "react";
 
 import { createLiveblocksContext } from "../liveblocks";
 import { createRoomContext } from "../room";
@@ -77,6 +77,54 @@ describe("useRoomNotificationSettings", () => {
     );
 
     expect(result.current[0]).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result.current[0]).toEqual({
+        isLoading: false,
+        settings: {
+          threads: "all",
+        },
+      })
+    );
+
+    const oldResult = result.current;
+
+    rerender();
+
+    expect(result.current).toBe(oldResult);
+
+    unmount();
+  });
+});
+
+describe("useRoomNotificationSettings suspense", () => {
+  test("should be referentially stable", async () => {
+    server.use(
+      mockGetRoomNotificationSettings(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            threads: "all",
+          })
+        );
+      })
+    );
+
+    const {
+      roomCtx: {
+        suspense: { RoomProvider, useRoomNotificationSettings },
+      },
+    } = createRoomContextForTest();
+
+    const { result, unmount, rerender } = renderHook(
+      () => useRoomNotificationSettings(),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id="room-id" initialPresence={{}}>
+            <Suspense>{children}</Suspense>
+          </RoomProvider>
+        ),
+      }
+    );
 
     await waitFor(() =>
       expect(result.current[0]).toEqual({
