@@ -2201,7 +2201,7 @@ function handleApiError(err: CommentsApiError | NotificationsApiError): Error {
   return new Error(message);
 }
 
-function generateQueryKey<TThreadMetadata extends BaseMetadata>(
+export function generateQueryKey<TThreadMetadata extends BaseMetadata>(
   roomId: string,
   options: UseThreadsOptions<TThreadMetadata>["query"]
 ) {
