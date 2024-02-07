@@ -41,20 +41,10 @@ const {
   suspense: {
     RoomProvider,
     useThreads,
-    useThreadSubscription,
     useUser,
     useCreateComment,
     useCreateThread,
-    useRoomNotificationSettings,
   },
 } = createRoomContext(client);
 
-export {
-  RoomProvider,
-  useThreads,
-  useThreadSubscription,
-  useUser,
-  useCreateThread,
-  useCreateComment,
-  useRoomNotificationSettings,
-};
+export { RoomProvider, useThreads, useUser, useCreateThread, useCreateComment };

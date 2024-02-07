@@ -6,7 +6,6 @@ import {
   RoomProvider,
   useCreateThread,
   useThreads,
-  useRoomNotificationSettings,
 } from "../../liveblocks.config";
 import { Loading } from "../components/Loading";
 import { Composer } from "../components/Composer";
@@ -22,8 +21,6 @@ import { ErrorBoundary } from "react-error-boundary";
 function Example() {
   const { threads } = useThreads();
   const createThread = useCreateThread();
-  const [read, write] = useRoomNotificationSettings();
-  console.log(read);
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-4 px-4 py-16">
