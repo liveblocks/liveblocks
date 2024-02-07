@@ -853,8 +853,8 @@ type PrivateRoomApi = {
 
   // Used to store metadata related to comments
   comments: {
-    lastRequestedAt: Date | null;
-    readonly queries: Set<string>;
+    lastRequestedAt: Date | null; // Stores the timestamp when threads and notifications were last requested for the room
+    readonly queries: Set<string>; // Stores queries that have been made in the room
   };
 };
 

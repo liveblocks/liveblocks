@@ -85,6 +85,8 @@ export function createLiveblocksContext<
         store.updateThreadsAndNotifications(
           threads,
           inboxNotifications,
+          [],
+          [],
           INBOX_NOTIFICATIONS_QUERY
         );
       },
@@ -133,6 +135,8 @@ export function createLiveblocksContext<
       store.updateThreadsAndNotifications(
         threads,
         inboxNotifications,
+        [],
+        [],
         INBOX_NOTIFICATIONS_QUERY
       );
     } catch (er) {
