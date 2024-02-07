@@ -26,9 +26,11 @@ import type { CacheStore } from "./store";
 import { createClientStore } from "./store";
 import type { BaseMetadata } from "./types/BaseMetadata";
 import type { InboxNotificationData } from "./types/InboxNotificationData";
+import type { InboxNotificationDeleteInfo } from "./types/InboxNotificationDeleteInfo";
 import type { OptionalPromise } from "./types/OptionalPromise";
 import type { RoomInfo } from "./types/RoomInfo";
 import type { ThreadData } from "./types/ThreadData";
+import type { ThreadDeleteInfo } from "./types/ThreadDeleteInfo";
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1_000;
@@ -113,6 +115,11 @@ export type InboxNotificationsApi<
   getInboxNotifications(): Promise<{
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<TThreadMetadata>[];
+    deletedThreads: ThreadDeleteInfo[];
+    deletedInboxNotifications: InboxNotificationDeleteInfo[];
+    meta: {
+      requestedAt: Date;
+    };
   }>;
 
   /**
