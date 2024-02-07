@@ -1,9 +1,10 @@
 import "@testing-library/jest-dom";
 
 import type { BaseMetadata, JsonObject } from "@liveblocks/core";
-import { createClient, ServerMsgCode } from "@liveblocks/core";
+import { createClient, kInternal, ServerMsgCode } from "@liveblocks/core";
 import {
   act,
+  render,
   renderHook,
   screen,
   waitFor,
@@ -16,7 +17,7 @@ import React, { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
 import { createLiveblocksContext } from "../liveblocks";
-import { createRoomContext } from "../room";
+import { createRoomContext, generateQueryKey, POLLING_INTERVAL } from "../room";
 import { dummyInboxNoficationData, dummyThreadData } from "./_dummies";
 import MockWebSocket, { websocketSimulator } from "./_MockWebSocket";
 import {
@@ -60,6 +61,7 @@ function createRoomContextForTest<
       TThreadMetadata
     >(client),
     liveblocksCtx: createLiveblocksContext(client),
+    client,
   };
 }
 
@@ -816,6 +818,166 @@ describe("useThreads", () => {
         threads: [oldThread, newThread],
       })
     );
+
+    unmount();
+  });
+
+  test("should not return deleted threads", () => {
+    const thread1 = dummyThreadData();
+    const thread2WithDeleteAt = { ...dummyThreadData(), deletedAt: new Date() };
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+      client,
+    } = createRoomContextForTest();
+
+    const store = client[kInternal].cacheStore;
+    store.set((state) => ({
+      ...state,
+      threads: {
+        [thread1.id]: thread1,
+        [thread2WithDeleteAt.id]: thread2WithDeleteAt,
+      },
+      queries: {
+        [generateQueryKey("room-id", { metadata: {} })]: {
+          isLoading: false,
+        },
+      },
+    }));
+
+    const { result, unmount } = renderHook(
+      () => useThreads({ query: { metadata: {} } }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id="room-id" initialPresence={{}}>
+            {children}
+          </RoomProvider>
+        ),
+      }
+    );
+
+    expect(result.current).toEqual({
+      isLoading: false,
+      threads: [thread1], // thread2WithDeleteAt should not be returned
+    });
+
+    unmount();
+  });
+});
+
+describe("useThreads: polling", () => {
+  beforeAll(() => {
+    jest.useFakeTimers();
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
+  });
+  test("should poll threads every x seconds", async () => {
+    let getThreadsReqCount = 0;
+
+    const threads = [dummyThreadData()];
+
+    const now = new Date().toISOString();
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        getThreadsReqCount++;
+        return res(
+          ctx.json({
+            data: threads,
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: now,
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
+
+    const Room = () => {
+      return (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          <Threads />
+        </RoomProvider>
+      );
+    };
+
+    const Threads = () => {
+      useThreads();
+      return null;
+    };
+
+    const { unmount } = render(<Room />);
+
+    // A new fetch request for the threads should have been made after the initial render
+    await waitFor(() => expect(getThreadsReqCount).toBe(1));
+
+    // Wait for the first polling to occur after the initial render
+    jest.advanceTimersByTime(POLLING_INTERVAL);
+    await waitFor(() => expect(getThreadsReqCount).toBe(2));
+
+    // Advance time to simulate the polling interval
+    jest.advanceTimersByTime(POLLING_INTERVAL);
+    // Wait for the second polling to occur
+    await waitFor(() => expect(getThreadsReqCount).toBe(3));
+
+    unmount();
+  });
+
+  test("should not poll if useThreads or useRoomNotificationSettings isn't used", async () => {
+    let hasCalledGetThreads = false;
+
+    const threads = [dummyThreadData()];
+
+    const now = new Date().toISOString();
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        hasCalledGetThreads = true;
+        return res(
+          ctx.json({
+            data: threads,
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: now,
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider },
+    } = createRoomContextForTest();
+
+    const Room = () => {
+      return (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          <NoThreads />
+        </RoomProvider>
+      );
+    };
+
+    const NoThreads = () => {
+      return null;
+    };
+
+    const { unmount } = render(<Room />);
+
+    jest.advanceTimersByTime(POLLING_INTERVAL);
+    await waitFor(() => expect(hasCalledGetThreads).toBe(false));
+
+    jest.advanceTimersByTime(POLLING_INTERVAL);
+    await waitFor(() => expect(hasCalledGetThreads).toBe(false));
 
     unmount();
   });

@@ -168,61 +168,6 @@ export function createClientStore<
     notificationSettings: {},
   });
 
-  function applyThreadUpdates(
-    existingThreads: Record<string, ThreadDataWithDeleteInfo<TThreadMetadata>>,
-    updates: {
-      newThreads: Record<string, ThreadData<TThreadMetadata>>;
-      deletedThreads: ThreadDeleteInfo[];
-    }
-  ): Record<string, ThreadData<TThreadMetadata>> {
-    const updatedThreads = { ...existingThreads };
-
-    // Add new threads or update existing threads if the existing thread is older than the new thread.
-    Object.entries(updates.newThreads).forEach(([id, thread]) => {
-      const existingThread = updatedThreads[id];
-
-      // If the thread already exists, we need to compare the two threads to determine which one is newer.
-      if (existingThread) {
-        const result = compareThreads(existingThread, thread);
-        // If the existing thread is newer than the new thread, we do not update the existing thread.
-        if (result === 1) return;
-      }
-      updatedThreads[id] = thread;
-    });
-
-    // Mark threads in the deletedThreads list as deleted
-    updates.deletedThreads.forEach(({ id, deletedAt }) => {
-      const existingThread = updatedThreads[id];
-      if (existingThread === undefined) return;
-
-      existingThread.deletedAt = deletedAt;
-      existingThread.updatedAt = deletedAt;
-      existingThread.comments = [];
-    });
-
-    return updatedThreads;
-  }
-
-  function applyNotificationsUpdates(
-    existingInboxNotifications: Record<string, InboxNotificationData>,
-    updates: {
-      newInboxNotifications: Record<string, InboxNotificationData>;
-      deletedNotifications: InboxNotificationDeleteInfo[];
-    }
-  ) {
-    // TODO: Do not replace existing inboxNotifications if it has been updated more recently than the incoming inbox notifications (including checking for deleted notifications)
-    const updatedInboxNotifications = {
-      ...existingInboxNotifications,
-      ...updates.newInboxNotifications,
-    };
-
-    updates.deletedNotifications.forEach(
-      ({ id }) => delete updatedInboxNotifications[id]
-    );
-
-    return updatedInboxNotifications;
-  }
-
   return {
     ...store,
 
@@ -275,20 +220,13 @@ export function createClientStore<
       store.set((state) => ({
         ...state,
         threads: applyThreadUpdates(state.threads, {
-          newThreads: Object.fromEntries(
-            threads.map((thread) => [thread.id, thread])
-          ),
+          newThreads: threads,
           deletedThreads,
         }),
         inboxNotifications: applyNotificationsUpdates(
           state.inboxNotifications,
           {
-            newInboxNotifications: Object.fromEntries(
-              inboxNotifications.map((notification) => [
-                notification.id,
-                notification,
-              ])
-            ),
+            newInboxNotifications: inboxNotifications,
             deletedNotifications: deletedInboxNotifications,
           }
         ),
@@ -615,4 +553,64 @@ export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
   }
 
   return result;
+}
+
+export function applyThreadUpdates<TThreadMetadata extends BaseMetadata>(
+  existingThreads: Record<string, ThreadDataWithDeleteInfo<TThreadMetadata>>,
+  updates: {
+    newThreads: ThreadData<TThreadMetadata>[];
+    deletedThreads: ThreadDeleteInfo[];
+  }
+): Record<string, ThreadData<TThreadMetadata>> {
+  const updatedThreads = { ...existingThreads };
+
+  // Add new threads or update existing threads if the existing thread is older than the new thread.
+  updates.newThreads.forEach((thread) => {
+    const existingThread = updatedThreads[thread.id];
+
+    // If the thread already exists, we need to compare the two threads to determine which one is newer.
+    if (existingThread) {
+      const result = compareThreads(existingThread, thread);
+      // If the existing thread is newer than the new thread, we do not update the existing thread.
+      if (result === 1) return;
+    }
+    updatedThreads[thread.id] = thread;
+  });
+
+  // Mark threads in the deletedThreads list as deleted
+  updates.deletedThreads.forEach(({ id, deletedAt }) => {
+    const existingThread = updatedThreads[id];
+    if (existingThread === undefined) return;
+
+    existingThread.deletedAt = deletedAt;
+    existingThread.updatedAt = deletedAt;
+    existingThread.comments = [];
+  });
+
+  return updatedThreads;
+}
+
+export function applyNotificationsUpdates(
+  existingInboxNotifications: Record<string, InboxNotificationData>,
+  updates: {
+    newInboxNotifications: InboxNotificationData[];
+    deletedNotifications: InboxNotificationDeleteInfo[];
+  }
+): Record<string, InboxNotificationData> {
+  // TODO: Do not replace existing inboxNotifications if it has been updated more recently than the incoming inbox notifications (including checking for deleted notifications)
+  const updatedInboxNotifications = {
+    ...existingInboxNotifications,
+    ...Object.fromEntries(
+      updates.newInboxNotifications.map((notification) => [
+        notification.id,
+        notification,
+      ])
+    ),
+  };
+
+  updates.deletedNotifications.forEach(
+    ({ id }) => delete updatedInboxNotifications[id]
+  );
+
+  return updatedInboxNotifications;
 }
