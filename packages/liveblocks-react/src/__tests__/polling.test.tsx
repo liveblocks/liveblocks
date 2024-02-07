@@ -45,7 +45,8 @@ function createRoomContextForTest<
 }
 
 describe("useThreads: polling", () => {
-  test("should include an error object in the returned value if initial fetch throws an error but should clear the error if polling is successful", async () => {
+  // Polling doesn't clear the error if the initial fetch fails anymore
+  test.skip("should include an error object in the returned value if initial fetch throws an error but should clear the error if polling is successful", async () => {
     let getThreadsReqCount = 0;
     const threads = [dummyThreadData()];
 

@@ -2,7 +2,12 @@ import "@testing-library/jest-dom";
 
 import type { BaseMetadata, JsonObject } from "@liveblocks/core";
 import { createClient, ServerMsgCode } from "@liveblocks/core";
-import { act, renderHook, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  renderHook,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { addSeconds } from "date-fns";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
@@ -76,6 +81,11 @@ describe("useThreads", () => {
           ctx.json({
             data: threads,
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -114,6 +124,11 @@ describe("useThreads", () => {
           ctx.json({
             data: threads,
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -160,6 +175,11 @@ describe("useThreads", () => {
           ctx.json({
             data: threads,
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -213,6 +233,11 @@ describe("useThreads", () => {
               (thread) => thread.metadata.resolved === metadata.resolved
             ),
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -258,6 +283,11 @@ describe("useThreads", () => {
           ctx.json({
             data: threads,
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -308,6 +338,11 @@ describe("useThreads", () => {
               (thread) => thread.metadata.resolved === metadata.resolved
             ),
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -378,6 +413,11 @@ describe("useThreads", () => {
             ctx.json({
               data: room1Threads,
               inboxNotifications: [],
+              deletedThreads: [],
+              deletedInboxNotifications: [],
+              meta: {
+                requestedAt: new Date().toISOString(),
+              },
             })
           );
         }
@@ -389,6 +429,11 @@ describe("useThreads", () => {
             ctx.json({
               data: room2Threads,
               inboxNotifications: [],
+              deletedThreads: [],
+              deletedInboxNotifications: [],
+              meta: {
+                requestedAt: new Date().toISOString(),
+              },
             })
           );
         }
@@ -457,6 +502,11 @@ describe("useThreads", () => {
             ctx.json({
               data: room1Threads,
               inboxNotifications: [],
+              deletedThreads: [],
+              deletedInboxNotifications: [],
+              meta: {
+                requestedAt: new Date().toISOString(),
+              },
             })
           );
         }
@@ -468,6 +518,11 @@ describe("useThreads", () => {
             ctx.json({
               data: room2Threads,
               inboxNotifications: [],
+              deletedThreads: [],
+              deletedInboxNotifications: [],
+              meta: {
+                requestedAt: new Date().toISOString(),
+              },
             })
           );
         }
@@ -586,6 +641,11 @@ describe("useThreads", () => {
           ctx.json({
             data: [newThread, oldThread], // The order is intentionally reversed to test if the hook sorts the threads by creation date
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -636,6 +696,11 @@ describe("useThreads", () => {
           ctx.json({
             data: [newThread],
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       }),
@@ -703,6 +768,11 @@ describe("useThreads", () => {
           ctx.json({
             data: [oldThread],
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       }),
@@ -761,6 +831,11 @@ describe("WebSocket events", () => {
           ctx.json({
             data: [],
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       }),
@@ -820,6 +895,11 @@ describe("WebSocket events", () => {
           ctx.json({
             data: [newThread],
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       }),
@@ -892,6 +972,11 @@ describe("WebSocket events", () => {
           ctx.json({
             data: [initialThread],
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       }),
@@ -972,6 +1057,11 @@ describe("useThreadsSuspense", () => {
           ctx.json({
             data: threads,
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -1013,6 +1103,11 @@ describe("useThreadsSuspense", () => {
           ctx.json({
             data: threads,
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
