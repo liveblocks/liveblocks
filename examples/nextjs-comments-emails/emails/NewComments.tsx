@@ -39,8 +39,10 @@ export default function NewComments(props: Props) {
     >
       <Body
         style={{
-          maxWidth: "600px",
+          minWidth: "0",
+          maxWidth: "500px",
           margin: "40px auto 0",
+          padding: "0 16px",
         }}
       >
         <Container>
