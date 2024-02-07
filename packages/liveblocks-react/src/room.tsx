@@ -1841,11 +1841,8 @@ export function createRoomContext<
   }
 
   function useThreadSubscription(threadId: string): ThreadSubscription {
-    return useSyncExternalStoreWithSelector(
-      store.subscribe,
-      store.get,
-      store.get,
-      (state) => {
+    const selector = React.useCallback(
+      (state: CacheState<BaseMetadata>): ThreadSubscription => {
         const inboxNotification = selectedInboxNotifications(state).find(
           (inboxNotification) => inboxNotification.threadId === threadId
         );
@@ -1862,7 +1859,15 @@ export function createRoomContext<
           status: "subscribed",
           unreadSince: inboxNotification.readAt,
         };
-      }
+      },
+      [threadId]
+    );
+
+    return useSyncExternalStoreWithSelector(
+      store.subscribe,
+      store.get,
+      store.get,
+      selector
     );
   }
 
@@ -1972,31 +1977,36 @@ export function createRoomContext<
 
     const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
 
-    return [
-      useSyncExternalStoreWithSelector(
-        store.subscribe,
-        store.get,
-        store.get,
-        (state) => {
-          const query =
-            state.queries[makeNotificationSettingsQueryKey(room.id)];
+    const selector = React.useCallback(
+      (state: CacheState<BaseMetadata>): RoomNotificationSettingsState => {
+        const query = state.queries[makeNotificationSettingsQueryKey(room.id)];
 
-          if (query === undefined || query.isLoading) {
-            return { isLoading: true };
-          }
-
-          if (query.error !== undefined) {
-            return { isLoading: false, error: query.error };
-          }
-
-          return {
-            isLoading: false,
-            settings: selectNotificationSettings(room.id, state),
-          };
+        if (query === undefined || query.isLoading) {
+          return { isLoading: true };
         }
-      ),
-      updateRoomNotificationSettings,
-    ];
+
+        if (query.error !== undefined) {
+          return { isLoading: false, error: query.error };
+        }
+
+        return {
+          isLoading: false,
+          settings: selectNotificationSettings(room.id, state),
+        };
+      },
+      [room]
+    );
+
+    const settings = useSyncExternalStoreWithSelector(
+      store.subscribe,
+      store.get,
+      store.get,
+      selector
+    );
+
+    return React.useMemo(() => {
+      return [settings, updateRoomNotificationSettings];
+    }, [settings, updateRoomNotificationSettings]);
   }
 
   function useRoomNotificationSettingsSuspense(): [
@@ -2024,20 +2034,28 @@ export function createRoomContext<
       return () => decrementQuerySubscribers(queryKey);
     }, [room]);
 
-    return [
-      useSyncExternalStoreWithSelector(
-        store.subscribe,
-        store.get,
-        store.get,
-        (state) => {
-          return {
-            isLoading: false,
-            settings: selectNotificationSettings(room.id, state),
-          };
-        }
-      ),
-      updateRoomNotificationSettings,
-    ];
+    const selector = React.useCallback(
+      (
+        state: CacheState<BaseMetadata>
+      ): RoomNotificationSettingsStateSuccess => {
+        return {
+          isLoading: false,
+          settings: selectNotificationSettings(room.id, state),
+        };
+      },
+      [room]
+    );
+
+    const settings = useSyncExternalStoreWithSelector(
+      store.subscribe,
+      store.get,
+      store.get,
+      selector
+    );
+
+    return React.useMemo(() => {
+      return [settings, updateRoomNotificationSettings];
+    }, [settings, updateRoomNotificationSettings]);
   }
 
   function useUpdateRoomNotificationSettings() {
