@@ -2,7 +2,9 @@ import { WebhookHandler } from "@liveblocks/node";
 import { threadEmailNotification } from "./threadEmailNotification";
 
 // Add your webhook secret key from a project's webhooks dashboard
-const webhookHandler = new WebhookHandler(process.env.WEBHOOK_SECRET as string);
+const webhookHandler = new WebhookHandler(
+  process.env.LIVEBLOCKS_WEBHOOK_SECRET_KEY as string
+);
 
 export async function POST(request: Request) {
   const body = await request.json();

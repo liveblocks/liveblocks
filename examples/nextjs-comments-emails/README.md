@@ -38,6 +38,22 @@ you to automatically get your API key from your
 
 `npm run dev:email` will open live previews of your emails, and `npm run dev` will run the Comments app.
 
+### Setting up webhooks
+
+You need to set up webhooks to make this example run.
+
+- Follow our guide on [testing webhooks locally](https://liveblocks.io/docs/guides/how-to-test-webhooks-on-localhost), making sure to [check the “**threadEmailNotification**” event](https://liveblocks.io/docs/platform/webhooks#edit-endpoint-events) when creating the webhook
+- Copy your **webhook secret key** from the webhooks dashboard
+- Add your webhook secret key to `.env.local` as the `LIVEBLOCKS_WEBHOOK_SECRET_KEY` environment variable
+
+### Setting up Resend
+
+You need your own Resend API key to run the AI agent.
+
+- Create an account on [Resend](https://resend.com)
+- Create a new API key from the [Resend Dashboard](https://resend.com/api-keys)
+- Add your OpenAI API key to `.env.local` as the `RESEND_API_KEY` environment variable
+
 ### Manual setup
 
 <details><summary>Read more</summary>
