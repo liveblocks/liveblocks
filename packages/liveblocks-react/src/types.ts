@@ -29,8 +29,10 @@ import type {
   ToImmutable,
 } from "@liveblocks/core";
 
-export type UseThreadsOptions<TThreadMetadata extends BaseMetadata> =
-  GetThreadsOptions<TThreadMetadata>;
+export type UseThreadsOptions<TThreadMetadata extends BaseMetadata> = Omit<
+  GetThreadsOptions<TThreadMetadata>,
+  "since"
+>;
 
 import type { PropsWithChildren } from "react";
 

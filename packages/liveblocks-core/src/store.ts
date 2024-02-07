@@ -142,6 +142,11 @@ export interface CacheStore<TThreadMetadata extends BaseMetadata>
     deletedInboxNotifications: InboxNotificationDeleteInfo[],
     queryKey?: string
   ): void;
+  updateRoomInboxNotificationSettings(
+    roomId: string,
+    settings: RoomNotificationSettings,
+    queryKey: string
+  ): void;
   pushOptimisticUpdate(
     optimisticUpdate: OptimisticUpdate<TThreadMetadata>
   ): void;
@@ -296,6 +301,26 @@ export function createClientStore<
                 },
               }
             : state.queries,
+      }));
+    },
+
+    updateRoomInboxNotificationSettings(
+      roomId: string,
+      settings: RoomNotificationSettings,
+      queryKey: string
+    ) {
+      store.set((state) => ({
+        ...state,
+        notificationSettings: {
+          ...state.notificationSettings,
+          [roomId]: settings,
+        },
+        queries: {
+          ...state.queries,
+          [queryKey]: {
+            isLoading: false,
+          },
+        },
       }));
     },
 

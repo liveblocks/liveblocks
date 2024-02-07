@@ -850,6 +850,12 @@ type PrivateRoomApi = {
     explicitClose(event: IWebSocketCloseEvent): void;
     rawSend(data: string): void;
   };
+
+  // Used to store metadata related to comments
+  comments: {
+    lastRequestedAt: Date | null;
+    readonly queries: Set<string>;
+  };
 };
 
 // The maximum message size on websockets is 1MB. We'll set the threshold
@@ -931,6 +937,11 @@ type RoomState<
 
   readonly undoStack: HistoryOp<TPresence>[][];
   readonly redoStack: HistoryOp<TPresence>[][];
+
+  readonly comments: {
+    lastRequestedAt: Date | null;
+    readonly queries: Set<string>;
+  };
 
   /**
    * When history is paused, all operations will get queued up here. When
@@ -1484,6 +1495,11 @@ export function createRoom<
     opClock: 0,
     nodes: new Map<string, LiveNode>(),
     root: undefined,
+
+    comments: {
+      lastRequestedAt: null,
+      queries: new Set(),
+    },
 
     undoStack: [],
     redoStack: [],
@@ -2922,6 +2938,17 @@ export function createRoom<
           // These exist only for our E2E testing app
           explicitClose: (event) => managedSocket._privateSendMachineEvent({ type: "EXPLICIT_SOCKET_CLOSE", event }),
           rawSend: (data) => managedSocket.send(data),
+        },
+
+        comments: {
+          get lastRequestedAt() {
+            return context.comments.lastRequestedAt;
+          },
+          set lastRequestedAt(value: Date | null) {
+            context.comments.lastRequestedAt = value;
+          },
+
+          queries: context.comments.queries,
         },
       },
 
