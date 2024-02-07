@@ -1,5 +1,5 @@
 import { WebhookHandler } from "@liveblocks/node";
-import { threadEmailNotification } from "@/app/api/liveblocks-notifications/threadEmailNotification";
+import { threadEmailNotification } from "./threadEmailNotification";
 
 // Add your webhook secret key from a project's webhooks dashboard
 const webhookHandler = new WebhookHandler(process.env.WEBHOOK_SECRET as string);
@@ -19,8 +19,6 @@ export async function POST(request: Request) {
     console.error(err);
     return new Response("Could not verify webhook call", { status: 400 });
   }
-
-  console.log("type", event.type);
 
   if (event.type !== "threadEmailNotification") {
     return new Response("Event type not used", { status: 200 });

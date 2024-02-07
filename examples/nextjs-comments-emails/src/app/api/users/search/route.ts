@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAllUsers } from "@/database";
+import { getAllUsers } from "../../../../database";
 
 /**
  * Returns a list of user IDs from a partial search input

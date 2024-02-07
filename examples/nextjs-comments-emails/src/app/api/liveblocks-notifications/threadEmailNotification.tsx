@@ -6,9 +6,9 @@ import {
   ThreadData,
   ThreadEmailNotificationEvent,
 } from "@liveblocks/node";
-import { getUser, getUsers } from "@/database";
+import { getUser, getUsers } from "../../../database";
 import NewComments, { CommentEmailInfo } from "../../../../emails/NewComments";
-import { ThreadMetadata } from "@/liveblocks.config";
+import { ThreadMetadata } from "../../../liveblocks.config";
 
 // Add your Resend API key from https://resend.com/api-keys
 const resend = new Resend(process.env.RESEND_API_KEY as string);

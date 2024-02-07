@@ -5,14 +5,13 @@ import {
   Section,
   Row,
   Column,
-  Text,
   Body,
   Img,
   Container,
   Hr,
 } from "@react-email/components";
 import * as React from "react";
-import { UserMeta } from "@/liveblocks.config";
+import { UserMeta } from "../src/liveblocks.config";
 
 export type CommentEmailInfo = {
   user: UserMeta | null;
@@ -29,6 +28,7 @@ type Props = {
 export default function NewComments(props: Props) {
   const { title, href, comments } = getProps(props);
 
+  // @ts-ignore
   return (
     <Html
       style={{
