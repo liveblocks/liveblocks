@@ -36,17 +36,19 @@ export const client = createClient({
   },
 });
 
+// We're reusing this type in multiple places for consistency.
 export type UserMeta = {
-  id: string; // Accessible through `user.id`
+  id: string;
   info: {
     name: string;
     color: string;
     avatar: string;
-  }; // Accessible through `user.info`
+  };
 };
 
 export type ThreadMetadata = {
-  resolved: boolean;
+  // The URL is for the page with the thread, and is used for email notifications
+  url: string;
 };
 
 const {
