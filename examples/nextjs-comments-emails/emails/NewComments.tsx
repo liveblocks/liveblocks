@@ -28,7 +28,6 @@ type Props = {
 export default function NewComments(props: Props) {
   const { title, href, comments } = getProps(props);
 
-  // @ts-ignore
   return (
     <Html
       style={{
@@ -65,13 +64,7 @@ export default function NewComments(props: Props) {
                   </Column>
                 ) : null}
                 <Column>
-                  {user ? (
-                    <>
-                      <strong>{user.info.name}</strong>
-                    </>
-                  ) : (
-                    <>Someone</>
-                  )}{" "}
+                  <strong>{user ? user.info.name : "Someone"}</strong>
                   <small> at {date.toLocaleTimeString()}</small>
                 </Column>
               </Row>
