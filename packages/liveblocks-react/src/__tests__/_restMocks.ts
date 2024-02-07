@@ -1,6 +1,8 @@
 import type {
+  BaseMetadata,
   CommentData,
   InboxNotificationData,
+  RoomNotificationSettings,
   ThreadData,
 } from "@liveblocks/core";
 import type { ResponseResolver, RestContext, RestRequest } from "msw";
@@ -66,6 +68,20 @@ export function mockCreateComment(
   );
 }
 
+export function mockEditThreadMetadata<ThreadMetadata extends BaseMetadata>(
+  params: { threadId: string },
+  resolver: ResponseResolver<
+    RestRequest<never, never>,
+    RestContext,
+    ThreadMetadata
+  >
+) {
+  return rest.post(
+    `https://api.liveblocks.io/v2/c/rooms/room-id/threads/${params.threadId}/metadata`,
+    resolver
+  );
+}
+
 export function mockMarkInboxNotificationsAsRead(
   resolver: ResponseResolver<RestRequest<never, never>, RestContext, any>
 ) {
@@ -87,6 +103,19 @@ export function mockGetInboxNotifications(
 ) {
   return rest.get(
     "https://api.liveblocks.io/v2/c/inbox-notifications",
+    resolver
+  );
+}
+
+export function mockGetRoomNotificationSettings(
+  resolver: ResponseResolver<
+    RestRequest<never, never>,
+    RestContext,
+    RoomNotificationSettings
+  >
+) {
+  return rest.get(
+    "https://api.liveblocks.io/v2/c/rooms/room-id/notification-settings",
     resolver
   );
 }

@@ -533,7 +533,8 @@ export function createRoomContext<
         return (
           a.length === b.length &&
           a.every((atuple, index) => {
-            const btuple = b[index];
+            // We know btuple always exist because we checked the array length on the previous line
+            const btuple = b[index]!;
             return atuple[0] === btuple[0] && eq(atuple[1], btuple[1]);
           })
         );
@@ -1118,10 +1119,8 @@ export function createRoomContext<
 
     const selector = React.useCallback(
       (state: CacheState<TThreadMetadata>): ThreadsState<TThreadMetadata> => {
-        if (
-          state.queries[queryKey] === undefined ||
-          state.queries[queryKey].isLoading
-        ) {
+        const query = state.queries[queryKey];
+        if (query === undefined || query.isLoading) {
           return {
             isLoading: true,
           };
@@ -1130,7 +1129,7 @@ export function createRoomContext<
         return {
           threads: selectedThreads(room.id, state, options),
           isLoading: false,
-          error: state.queries[queryKey].error,
+          error: query.error,
         };
       },
       [room, queryKey] // eslint-disable-line react-hooks/exhaustive-deps
@@ -1280,22 +1279,37 @@ export function createRoomContext<
 
         room.editThreadMetadata({ metadata, threadId }).then(
           (metadata: TThreadMetadata) => {
-            store.set((state) => ({
-              ...state,
-              threads: {
-                ...state.threads,
-                [threadId]: {
-                  ...state.threads[threadId],
-                  metadata: {
-                    ...state.threads[threadId].metadata,
-                    ...metadata,
+            store.set((state) => {
+              const existingThread = state.threads[threadId];
+
+              // If the thread has been deleted while edit thread metadata was processed
+              // We do not update the state
+              if (existingThread === undefined) {
+                return {
+                  ...state,
+                  optimisticUpdates: state.optimisticUpdates.filter(
+                    (update) => update.id !== optimisticUpdateId
+                  ),
+                };
+              }
+
+              return {
+                ...state,
+                threads: {
+                  ...state.threads,
+                  [threadId]: {
+                    ...existingThread,
+                    metadata: {
+                      ...existingThread.metadata,
+                      ...metadata,
+                    },
                   },
                 },
-              },
-              optimisticUpdates: state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              ),
-            }));
+                optimisticUpdates: state.optimisticUpdates.filter(
+                  (update) => update.id !== optimisticUpdateId
+                ),
+              };
+            });
           },
           (err: Error) =>
             onMutationFailure(
@@ -1335,47 +1349,63 @@ export function createRoomContext<
 
         room.addReaction({ threadId, commentId, emoji }).then(
           (addedReaction) => {
-            store.set((state) => ({
-              ...state,
-              threads: {
-                ...state.threads,
-                [threadId]: {
-                  ...state.threads[threadId],
-                  comments: state.threads[threadId].comments.map((comment) =>
-                    comment.id === commentId
-                      ? {
-                          ...comment,
-                          reactions: comment.reactions.some(
-                            (reaction) => reaction.emoji === addedReaction.emoji
-                          )
-                            ? comment.reactions.map((reaction) =>
-                                reaction.emoji === addedReaction.emoji
-                                  ? {
-                                      ...reaction,
-                                      users: [
-                                        ...reaction.users,
-                                        { id: addedReaction.userId },
-                                      ],
-                                    }
-                                  : reaction
-                              )
-                            : [
-                                ...comment.reactions,
-                                {
-                                  emoji: addedReaction.emoji,
-                                  createdAt: addedReaction.createdAt,
-                                  users: [{ id: addedReaction.userId }],
-                                },
-                              ],
-                        }
-                      : comment
+            store.set((state): CacheState<TThreadMetadata> => {
+              const existingThread = state.threads[threadId];
+
+              // If the thread has been deleted while add reaction was processed
+              // We do not update the state
+              if (existingThread === undefined) {
+                return {
+                  ...state,
+                  optimisticUpdates: state.optimisticUpdates.filter(
+                    (update) => update.id !== optimisticUpdateId
                   ),
+                };
+              }
+
+              return {
+                ...state,
+                threads: {
+                  ...state.threads,
+                  [threadId]: {
+                    ...existingThread,
+                    comments: existingThread.comments.map((comment) =>
+                      comment.id === commentId
+                        ? {
+                            ...comment,
+                            reactions: comment.reactions.some(
+                              (reaction) =>
+                                reaction.emoji === addedReaction.emoji
+                            )
+                              ? comment.reactions.map((reaction) =>
+                                  reaction.emoji === addedReaction.emoji
+                                    ? {
+                                        ...reaction,
+                                        users: [
+                                          ...reaction.users,
+                                          { id: addedReaction.userId },
+                                        ],
+                                      }
+                                    : reaction
+                                )
+                              : [
+                                  ...comment.reactions,
+                                  {
+                                    emoji: addedReaction.emoji,
+                                    createdAt: addedReaction.createdAt,
+                                    users: [{ id: addedReaction.userId }],
+                                  },
+                                ],
+                          }
+                        : comment
+                    ),
+                  },
                 },
-              },
-              optimisticUpdates: state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              ),
-            }));
+                optimisticUpdates: state.optimisticUpdates.filter(
+                  (update) => update.id !== optimisticUpdateId
+                ),
+              };
+            });
           },
           (err: Error) =>
             onMutationFailure(
@@ -1414,52 +1444,83 @@ export function createRoomContext<
 
         room.removeReaction({ threadId, commentId, emoji }).then(
           () => {
-            store.set((state) => ({
-              ...state,
-              threads: {
-                ...state.threads,
-                [threadId]: {
-                  ...state.threads[threadId],
-                  comments: state.threads[threadId].comments.map((comment) => {
-                    if (comment.id !== commentId) {
-                      return comment;
-                    }
+            store.set((state) => {
+              const existingThread = state.threads[threadId];
 
-                    const reactionIndex = comment.reactions.findIndex(
-                      (reaction) => reaction.emoji === emoji
-                    );
-                    let reactions: CommentReaction[] = comment.reactions;
+              // If the thread has been deleted while remove reaction was processed
+              // We do not update the state
+              if (existingThread === undefined) {
+                return {
+                  ...state,
+                  optimisticUpdates: state.optimisticUpdates.filter(
+                    (update) => update.id !== optimisticUpdateId
+                  ),
+                };
+              }
 
-                    if (
-                      reactionIndex >= 0 &&
-                      comment.reactions[reactionIndex].users.some(
-                        (user) => user.id === userId
-                      )
-                    ) {
-                      if (comment.reactions[reactionIndex].users.length <= 1) {
-                        reactions = [...comment.reactions];
-                        reactions.splice(reactionIndex, 1);
-                      } else {
-                        reactions[reactionIndex] = {
-                          ...reactions[reactionIndex],
-                          users: reactions[reactionIndex].users.filter(
-                            (user) => user.id !== userId
+              return {
+                ...state,
+                threads: {
+                  ...state.threads,
+                  [threadId]: {
+                    ...existingThread,
+                    comments: existingThread.comments.map((comment) => {
+                      if (comment.id !== commentId) {
+                        return comment;
+                      }
+
+                      const existingReaction = comment.reactions.find(
+                        (reaction) => reaction.emoji === emoji
+                      );
+
+                      // If existing reaction does not exists, we return existing comment
+                      if (existingReaction === undefined) {
+                        return comment;
+                      }
+
+                      const reactions: CommentReaction[] = comment.reactions;
+
+                      // If existing reaction has not been added by current user, we return existing comment
+                      if (
+                        !existingReaction.users.some(
+                          (user) => user.id === userId
+                        )
+                      ) {
+                        return comment;
+                      }
+
+                      // If only current user has reacted with this emoji, we remove the reaction
+                      if (existingReaction.users.length <= 1) {
+                        return {
+                          ...comment,
+                          reactions: reactions.filter(
+                            (reaction) => reaction.emoji !== emoji
                           ),
                         };
                       }
-                    }
 
-                    return {
-                      ...comment,
-                      reactions,
-                    };
-                  }),
+                      // If multiple users have reacted with this emoji, we remove the current user from the reaction
+                      return {
+                        ...comment,
+                        reactions: reactions.map((reaction) =>
+                          reaction.emoji !== emoji
+                            ? reaction
+                            : {
+                                ...reaction,
+                                users: reaction.users.filter(
+                                  (user) => user.id !== userId
+                                ),
+                              }
+                        ),
+                      };
+                    }),
+                  },
                 },
-              },
-              optimisticUpdates: state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              ),
-            }));
+                optimisticUpdates: state.optimisticUpdates.filter(
+                  (update) => update.id !== optimisticUpdateId
+                ),
+              };
+            });
           },
           (err: Error) =>
             onMutationFailure(
@@ -1612,38 +1673,51 @@ export function createRoomContext<
 
         room.deleteComment({ threadId, commentId }).then(
           () => {
-            const newThreads = { ...store.get().threads };
-            const thread = newThreads[threadId];
-            if (thread === undefined) return;
+            store.set((state) => {
+              const existingThread = state.threads[threadId];
 
-            newThreads[thread.id] = {
-              ...thread,
-              comments: thread.comments.map((comment) =>
-                comment.id === commentId
-                  ? {
-                      ...comment,
-                      deletedAt: now,
-                      body: undefined,
-                    }
-                  : comment
-              ),
-            };
+              // If thread does not exist, we return the existing state
+              if (existingThread === undefined) {
+                return {
+                  ...state,
+                  optimisticUpdates: state.optimisticUpdates.filter(
+                    (update) => update.id !== optimisticUpdateId
+                  ),
+                };
+              }
 
-            if (
-              !newThreads[thread.id].comments.some(
-                (comment) => comment.deletedAt === undefined
-              )
-            ) {
-              delete newThreads[thread.id];
-            }
+              const newThread = {
+                ...existingThread,
+                comments: existingThread.comments.map((comment) =>
+                  comment.id === commentId
+                    ? {
+                        ...comment,
+                        deletedAt: now,
+                        body: undefined,
+                      }
+                    : comment
+                ),
+              };
 
-            store.set((state) => ({
-              ...state,
-              threads: newThreads,
-              optimisticUpdates: state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              ),
-            }));
+              const newThreads = { ...state.threads, [threadId]: newThread };
+
+              // If all the comments have been deleted, we delete the thread from the cache
+              if (
+                !newThread.comments.some(
+                  (comment) => comment.deletedAt === undefined
+                )
+              ) {
+                delete newThreads[threadId];
+              }
+
+              return {
+                ...state,
+                threads: newThreads,
+                optimisticUpdates: state.optimisticUpdates.filter(
+                  (update) => update.id !== optimisticUpdateId
+                ),
+              };
+            });
           },
           (err: Error) =>
             onMutationFailure(
@@ -1734,11 +1808,8 @@ export function createRoomContext<
   }
 
   function useThreadSubscription(threadId: string): ThreadSubscription {
-    return useSyncExternalStoreWithSelector(
-      store.subscribe,
-      store.get,
-      store.get,
-      (state) => {
+    const selector = React.useCallback(
+      (state: CacheState<BaseMetadata>): ThreadSubscription => {
         const inboxNotification = selectedInboxNotifications(state).find(
           (inboxNotification) => inboxNotification.threadId === threadId
         );
@@ -1755,7 +1826,15 @@ export function createRoomContext<
           status: "subscribed",
           unreadSince: inboxNotification.readAt,
         };
-      }
+      },
+      [threadId]
+    );
+
+    return useSyncExternalStoreWithSelector(
+      store.subscribe,
+      store.get,
+      store.get,
+      selector
     );
   }
 
@@ -1850,31 +1929,36 @@ export function createRoomContext<
 
     const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
 
-    return [
-      useSyncExternalStoreWithSelector(
-        store.subscribe,
-        store.get,
-        store.get,
-        (state) => {
-          const query =
-            state.queries[makeNotificationSettingsQueryKey(room.id)];
+    const selector = React.useCallback(
+      (state: CacheState<BaseMetadata>): RoomNotificationSettingsState => {
+        const query = state.queries[makeNotificationSettingsQueryKey(room.id)];
 
-          if (query === undefined || query.isLoading) {
-            return { isLoading: true };
-          }
-
-          if (query.error !== undefined) {
-            return { isLoading: false, error: query.error };
-          }
-
-          return {
-            isLoading: false,
-            settings: selectNotificationSettings(room.id, state),
-          };
+        if (query === undefined || query.isLoading) {
+          return { isLoading: true };
         }
-      ),
-      updateRoomNotificationSettings,
-    ];
+
+        if (query.error !== undefined) {
+          return { isLoading: false, error: query.error };
+        }
+
+        return {
+          isLoading: false,
+          settings: selectNotificationSettings(room.id, state),
+        };
+      },
+      [room]
+    );
+
+    const settings = useSyncExternalStoreWithSelector(
+      store.subscribe,
+      store.get,
+      store.get,
+      selector
+    );
+
+    return React.useMemo(() => {
+      return [settings, updateRoomNotificationSettings];
+    }, [settings, updateRoomNotificationSettings]);
   }
 
   function useRoomNotificationSettingsSuspense(): [
@@ -1894,20 +1978,28 @@ export function createRoomContext<
       throw query.error;
     }
 
-    return [
-      useSyncExternalStoreWithSelector(
-        store.subscribe,
-        store.get,
-        store.get,
-        (state) => {
-          return {
-            isLoading: false,
-            settings: selectNotificationSettings(room.id, state),
-          };
-        }
-      ),
-      updateRoomNotificationSettings,
-    ];
+    const selector = React.useCallback(
+      (
+        state: CacheState<BaseMetadata>
+      ): RoomNotificationSettingsStateSuccess => {
+        return {
+          isLoading: false,
+          settings: selectNotificationSettings(room.id, state),
+        };
+      },
+      [room]
+    );
+
+    const settings = useSyncExternalStoreWithSelector(
+      store.subscribe,
+      store.get,
+      store.get,
+      selector
+    );
+
+    return React.useMemo(() => {
+      return [settings, updateRoomNotificationSettings];
+    }, [settings, updateRoomNotificationSettings]);
   }
 
   function useUpdateRoomNotificationSettings() {
