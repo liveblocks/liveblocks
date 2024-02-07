@@ -8,7 +8,15 @@ import type {
   InboxNotificationData,
   InboxNotificationDataPlain,
 } from "./types/InboxNotificationData";
+import type {
+  InboxNotificationDeleteInfo,
+  InboxNotificationDeleteInfoPlain,
+} from "./types/InboxNotificationDeleteInfo";
 import type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
+import type {
+  ThreadDeleteInfo,
+  ThreadDeleteInfoPlain,
+} from "./types/ThreadDeleteInfo";
 
 /**
  * Converts a plain comment data object (usually returned by the API) to a comment data object that can be used by the client.
@@ -54,6 +62,7 @@ export function convertToThreadData<
 >(data: ThreadDataPlain<TThreadMetadata>): ThreadData<TThreadMetadata> {
   const updatedAt = data.updatedAt ? new Date(data.updatedAt) : undefined;
   const createdAt = new Date(data.createdAt);
+  const deletedAt = data.deletedAt ? new Date(data.deletedAt) : undefined;
 
   const comments = data.comments.map((comment) =>
     convertToCommentData(comment)
@@ -63,6 +72,7 @@ export function convertToThreadData<
     ...data,
     createdAt,
     updatedAt,
+    deletedAt,
     comments,
   };
 }
@@ -98,5 +108,27 @@ export function convertToInboxNotificationData(
     ...data,
     notifiedAt,
     readAt,
+  };
+}
+
+export function convertToThreadDeleteInfo(
+  data: ThreadDeleteInfoPlain
+): ThreadDeleteInfo {
+  const deletedAt = new Date(data.deletedAt);
+
+  return {
+    ...data,
+    deletedAt,
+  };
+}
+
+export function convertToInboxNotificationDeleteInfo(
+  data: InboxNotificationDeleteInfoPlain
+): InboxNotificationDeleteInfo {
+  const deletedAt = new Date(data.deletedAt);
+
+  return {
+    ...data,
+    deletedAt,
   };
 }
