@@ -5,9 +5,11 @@ import type { BaseMetadata } from "./types/BaseMetadata";
 import type { CommentBody } from "./types/CommentBody";
 import type { CommentData, CommentReaction } from "./types/CommentData";
 import type { InboxNotificationData } from "./types/InboxNotificationData";
+import type { InboxNotificationDeleteInfo } from "./types/InboxNotificationDeleteInfo";
 import type { PartialNullable } from "./types/PartialNullable";
 import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
-import type { ThreadData } from "./types/ThreadData";
+import type { ThreadData, ThreadDataWithDeleteInfo } from "./types/ThreadData";
+import type { ThreadDeleteInfo } from "./types/ThreadDeleteInfo";
 
 type OptimisticUpdate<TThreadMetadata extends BaseMetadata> =
   | CreateThreadOptimisticUpdate<TThreadMetadata>
@@ -106,7 +108,7 @@ export type CacheState<TThreadMetadata extends BaseMetadata> = {
   /**
    * Threads by ID.
    */
-  threads: Record<string, ThreadData<TThreadMetadata>>;
+  threads: Record<string, ThreadDataWithDeleteInfo<TThreadMetadata>>;
   /**
    * Keep track of loading and error status of all the queries made by the client.
    */
@@ -136,6 +138,8 @@ export interface CacheStore<TThreadMetadata extends BaseMetadata>
   updateThreadsAndNotifications(
     threads: ThreadData<TThreadMetadata>[],
     inboxNotifications: InboxNotificationData[],
+    deletedThreads: ThreadDeleteInfo[],
+    deletedInboxNotifications: InboxNotificationDeleteInfo[],
     queryKey?: string
   ): void;
   pushOptimisticUpdate(
@@ -159,13 +163,17 @@ export function createClientStore<
     notificationSettings: {},
   });
 
-  function mergeThreads(
-    existingThreads: Record<string, ThreadData<TThreadMetadata>>,
-    newThreads: Record<string, ThreadData<TThreadMetadata>>
+  function applyThreadUpdates(
+    existingThreads: Record<string, ThreadDataWithDeleteInfo<TThreadMetadata>>,
+    updates: {
+      newThreads: Record<string, ThreadData<TThreadMetadata>>;
+      deletedThreads: ThreadDeleteInfo[];
+    }
   ): Record<string, ThreadData<TThreadMetadata>> {
     const updatedThreads = { ...existingThreads };
 
-    Object.entries(newThreads).forEach(([id, thread]) => {
+    // Add new threads or update existing threads if the existing thread is older than the new thread.
+    Object.entries(updates.newThreads).forEach(([id, thread]) => {
       const existingThread = updatedThreads[id];
 
       // If the thread already exists, we need to compare the two threads to determine which one is newer.
@@ -177,22 +185,37 @@ export function createClientStore<
       updatedThreads[id] = thread;
     });
 
+    // Mark threads in the deletedThreads list as deleted
+    updates.deletedThreads.forEach(({ id, deletedAt }) => {
+      const existingThread = updatedThreads[id];
+      if (existingThread === undefined) return;
+
+      existingThread.deletedAt = deletedAt;
+      existingThread.updatedAt = deletedAt;
+      existingThread.comments = [];
+    });
+
     return updatedThreads;
   }
 
-  function mergeNotifications(
+  function applyNotificationsUpdates(
     existingInboxNotifications: Record<string, InboxNotificationData>,
-    newInboxNotifications: Record<string, InboxNotificationData>
+    updates: {
+      newInboxNotifications: Record<string, InboxNotificationData>;
+      deletedNotifications: InboxNotificationDeleteInfo[];
+    }
   ) {
-    // TODO: Do not replace existing inboxNotifications if it has been updated more recently than the incoming inbox notifications
-    const inboxNotifications = Object.values({
+    // TODO: Do not replace existing inboxNotifications if it has been updated more recently than the incoming inbox notifications (including checking for deleted notifications)
+    const updatedInboxNotifications = {
       ...existingInboxNotifications,
-      ...newInboxNotifications,
-    });
+      ...updates.newInboxNotifications,
+    };
 
-    return Object.fromEntries(
-      inboxNotifications.map((notification) => [notification.id, notification])
+    updates.deletedNotifications.forEach(
+      ({ id }) => delete updatedInboxNotifications[id]
     );
+
+    return updatedInboxNotifications;
   }
 
   return {
@@ -240,22 +263,29 @@ export function createClientStore<
     updateThreadsAndNotifications(
       threads: ThreadData<TThreadMetadata>[],
       inboxNotifications: InboxNotificationData[],
+      deletedThreads: ThreadDeleteInfo[],
+      deletedInboxNotifications: InboxNotificationDeleteInfo[],
       queryKey?: string
     ) {
       store.set((state) => ({
         ...state,
-        threads: mergeThreads(
-          state.threads,
-          Object.fromEntries(threads.map((thread) => [thread.id, thread]))
-        ),
-        inboxNotifications: mergeNotifications(
+        threads: applyThreadUpdates(state.threads, {
+          newThreads: Object.fromEntries(
+            threads.map((thread) => [thread.id, thread])
+          ),
+          deletedThreads,
+        }),
+        inboxNotifications: applyNotificationsUpdates(
           state.inboxNotifications,
-          Object.fromEntries(
-            inboxNotifications.map((notification) => [
-              notification.id,
-              notification,
-            ])
-          )
+          {
+            newInboxNotifications: Object.fromEntries(
+              inboxNotifications.map((notification) => [
+                notification.id,
+                notification,
+              ])
+            ),
+            deletedNotifications: deletedInboxNotifications,
+          }
         ),
         queries:
           queryKey !== undefined

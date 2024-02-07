@@ -62,7 +62,6 @@ export function convertToThreadData<
 >(data: ThreadDataPlain<TThreadMetadata>): ThreadData<TThreadMetadata> {
   const updatedAt = data.updatedAt ? new Date(data.updatedAt) : undefined;
   const createdAt = new Date(data.createdAt);
-  const deletedAt = data.deletedAt ? new Date(data.deletedAt) : undefined;
 
   const comments = data.comments.map((comment) =>
     convertToCommentData(comment)
@@ -72,7 +71,6 @@ export function convertToThreadData<
     ...data,
     createdAt,
     updatedAt,
-    deletedAt,
     comments,
   };
 }

@@ -14,8 +14,16 @@ export function selectedThreads<TThreadMetadata extends BaseMetadata>(
 ): ThreadData<TThreadMetadata>[] {
   const result = applyOptimisticUpdates(state);
 
-  const threads = Object.values(result.threads).filter((thread) => {
+  // Filter threads to only include the non-deleted threads from the specified room and that match the specified filter options
+  const threads = Object.values(result.threads).filter<
+    ThreadData<TThreadMetadata>
+  >((thread): thread is ThreadData<TThreadMetadata> => {
     if (thread.roomId !== roomId) return false;
+
+    // We do not want to include threads that have been marked as deleted
+    if (thread.deletedAt !== undefined) {
+      return false;
+    }
 
     const query = options.query;
     if (!query) return true;
@@ -25,6 +33,7 @@ export function selectedThreads<TThreadMetadata extends BaseMetadata>(
         return false;
       }
     }
+
     return true;
   });
 
