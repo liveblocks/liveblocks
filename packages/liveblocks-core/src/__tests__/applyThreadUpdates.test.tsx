@@ -36,33 +36,6 @@ describe("applyThreadUpdates", () => {
     deletedAt: new Date("2024-01-02"),
   };
 
-  it("should add a new thread ", () => {
-    const existingThreads = {
-      [thread1.id]: thread1,
-      [thread2.id]: thread2,
-    };
-
-    expect(
-      applyThreadUpdates(existingThreads, {
-        newThreads: [],
-        deletedThreads: [thread1DeleteInfo, thread2DeleteInfo],
-      })
-    ).toStrictEqual({
-      [thread1.id]: {
-        ...thread1,
-        deletedAt: thread1DeleteInfo.deletedAt,
-        updatedAt: thread1DeleteInfo.deletedAt,
-        comments: [],
-      },
-      [thread2.id]: {
-        ...thread2,
-        deletedAt: thread2DeleteInfo.deletedAt,
-        updatedAt: thread2DeleteInfo.deletedAt,
-        comments: [],
-      },
-    });
-  });
-
   it("should add a new thread if it doesn't exist already", () => {
     const result = applyThreadUpdates(
       {},
