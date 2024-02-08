@@ -280,7 +280,7 @@ describe("auth-manager - secret auth", () => {
     expect(requestCount).toBe(1);
   });
 
-  test.only("when no roomId, should throw when access token has no wildcard", async () => {
+  test("when no roomId, should throw when access token has no wildcard", async () => {
     const authManager = createAuthManager({
       authEndpoint: "/mocked-api/access-auth-one-room-comments-read",
     });
