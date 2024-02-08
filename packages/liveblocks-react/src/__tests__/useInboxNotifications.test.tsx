@@ -55,6 +55,11 @@ describe("useInboxNotifications", () => {
           ctx.json({
             threads,
             inboxNotifications,
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -95,6 +100,11 @@ describe("useInboxNotifications", () => {
           ctx.json({
             threads,
             inboxNotifications,
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -140,6 +150,11 @@ describe("useInboxNotifications", () => {
           ctx.json({
             threads,
             inboxNotifications,
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -153,6 +168,11 @@ describe("useInboxNotifications", () => {
           ctx.json({
             threads,
             inboxNotifications,
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -227,6 +247,11 @@ describe("useInboxNotifications - Suspense", () => {
           ctx.json({
             threads,
             inboxNotifications,
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })

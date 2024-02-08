@@ -56,6 +56,11 @@ describe("useUnreadInboxNotificationsCount", () => {
           ctx.json({
             threads,
             inboxNotifications,
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -102,6 +107,11 @@ describe("useUnreadInboxNotificationsCount - Suspense", () => {
           ctx.json({
             threads,
             inboxNotifications,
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })

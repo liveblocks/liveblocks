@@ -1069,11 +1069,11 @@ export function createRoomContext<
     // If the query has already been recorded in the room, we do not make another fetch request
     if (queries.has(queryKey)) return;
 
+    // Add the query to the room's queries set to prevent duplicate fetch requests
+    queries.add(queryKey);
+
     try {
       const result = await room.getThreads(options);
-
-      // Add the query to the room's queries set to prevent duplicate fetch requests
-      queries.add(queryKey);
 
       store.updateThreadsAndNotifications(
         result.threads,

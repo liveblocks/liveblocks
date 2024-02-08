@@ -13,10 +13,8 @@ import { deprecateIf } from "./lib/deprecation";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import type { Resolve } from "./lib/Resolve";
-import {
-  createInboxNotificationsApi,
-  GetInboxNotificationsOptions,
-} from "./notifications";
+import type { GetInboxNotificationsOptions } from "./notifications";
+import { createInboxNotificationsApi } from "./notifications";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { Polyfills, Room, RoomDelegates, RoomInitializers } from "./room";

@@ -12,7 +12,7 @@ import {
 } from "./convert-plain-data";
 import { Batch } from "./lib/batch";
 import type { Store } from "./lib/create-store";
-import { urljoin, type QueryParams } from "./lib/url";
+import { type QueryParams, urljoin } from "./lib/url";
 import { TokenKind } from "./protocol/AuthToken";
 import type { InboxNotificationDataPlain } from "./types/InboxNotificationData";
 import type { InboxNotificationDeleteInfoPlain } from "./types/InboxNotificationDeleteInfo";
@@ -104,7 +104,7 @@ export function createInboxNotificationsApi({
       meta: {
         requestedAt: string;
       };
-    }>(`/inbox-notifications`, undefined, {
+    }>("/inbox-notifications", undefined, {
       limit: options?.limit,
       since: options?.since?.toISOString(),
     });

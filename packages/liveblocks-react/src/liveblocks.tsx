@@ -4,7 +4,14 @@ import type {
   Client,
   ThreadData,
 } from "@liveblocks/client";
-import type { CacheState, CacheStore, Store } from "@liveblocks/core";
+import type {
+  CacheState,
+  CacheStore,
+  InboxNotificationData,
+  InboxNotificationDeleteInfo,
+  Store,
+  ThreadDeleteInfo,
+} from "@liveblocks/core";
 import { kInternal, makePoller } from "@liveblocks/core";
 import { nanoid } from "nanoid";
 import type { PropsWithChildren } from "react";
@@ -62,18 +69,30 @@ export function createLiveblocksContext<
     );
   }
 
+  // TODO: Unify request cache
+  let fetchInboxNotificationsRequest: Promise<{
+    inboxNotifications: InboxNotificationData[];
+    threads: ThreadData<TThreadMetadata>[];
+    deletedThreads: ThreadDeleteInfo[];
+    deletedInboxNotifications: InboxNotificationDeleteInfo[];
+    meta: {
+      requestedAt: Date;
+    };
+  }> | null = null;
   let inboxNotificationsSubscribers = 0;
   let lastRequestedAt: Date | undefined;
-  let hasFetchedInboxNotifications = false; // Stores whether we have fetched inbox notifications at least once or not
 
   const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
 
   const POLLING_INTERVAL = 60 * 1000; // 1 minute
+
   const poller = makePoller(refreshThreadsAndNotifications);
 
   function refreshThreadsAndNotifications() {
     return client.getInboxNotifications({ since: lastRequestedAt }).then(
       (result) => {
+        lastRequestedAt = result.meta.requestedAt;
+
         store.updateThreadsAndNotifications(
           result.threads,
           result.inboxNotifications,
@@ -106,18 +125,22 @@ export function createLiveblocksContext<
 
     if (inboxNotificationsSubscribers <= 0) {
       poller.stop();
-      lastRequestedAt = undefined;
-      hasFetchedInboxNotifications = false;
     }
   }
 
   async function fetchInboxNotifications() {
-    if (hasFetchedInboxNotifications) return;
+    if (fetchInboxNotificationsRequest) {
+      return fetchInboxNotificationsRequest;
+    }
+
+    store.setQueryState(INBOX_NOTIFICATIONS_QUERY, {
+      isLoading: true,
+    });
 
     try {
-      const result = await client.getInboxNotifications();
+      fetchInboxNotificationsRequest = client.getInboxNotifications();
 
-      hasFetchedInboxNotifications = true;
+      const result = await fetchInboxNotificationsRequest;
 
       store.updateThreadsAndNotifications(
         result.threads,
@@ -126,6 +149,19 @@ export function createLiveblocksContext<
         result.deletedInboxNotifications,
         INBOX_NOTIFICATIONS_QUERY
       );
+
+      /**
+       * We set the `lastRequestedAt` to the timestamp returned by the current request if:
+       * 1. The `lastRequestedAt`has not been set
+       * OR
+       * 2. The current `lastRequestedAt` is older than the timestamp returned by the current request
+       */
+      if (
+        lastRequestedAt === undefined ||
+        lastRequestedAt > result.meta.requestedAt
+      ) {
+        lastRequestedAt = result.meta.requestedAt;
+      }
     } catch (er) {
       // TODO: Implement error retry mechanism
       store.setQueryState(INBOX_NOTIFICATIONS_QUERY, {
@@ -133,6 +169,7 @@ export function createLiveblocksContext<
         error: er as Error,
       });
     }
+    return;
   }
 
   function useInboxNotificationsSelectorCallback(

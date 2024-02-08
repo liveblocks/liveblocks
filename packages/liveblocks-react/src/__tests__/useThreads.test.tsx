@@ -713,6 +713,11 @@ describe("useThreads", () => {
           ctx.json({
             threads: [oldThread],
             inboxNotifications: [inboxNotification],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -783,6 +788,11 @@ describe("useThreads", () => {
           ctx.json({
             threads: [newThread],
             inboxNotifications: [inboxNotification],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
