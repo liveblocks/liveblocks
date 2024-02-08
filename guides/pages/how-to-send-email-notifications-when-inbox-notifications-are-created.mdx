@@ -1,37 +1,33 @@
 ---
 meta:
-  title: "How to send email notifications when comments are created"
+  title: "How to send email notifications when inbox notifications are created"
   description:
-    "Learn how to automatically send email notifications when a comment or
-    thread is created with Liveblocks Comments."
+    "Learn how to automatically send email notifications when an inbox
+    notification is created."
 ---
 
-Liveblocks allows you to build a commenting experience with
-[Comments](/docs/products/comments). Using our webhooks and REST API, it’s
-possible to send email notifications to users when they’re mentioned in
-comments.
-
-<Banner title="You’re probably looking for a different guide" type="warning">
-
-This guide is about sending an email immediately after every comment is posted.
-If you’d prefer aggregate multiple notifications into one email, and only notify
-users about unread comments, you should read this guide on
-[sending emails when inbox notifications are created](/docs/guides/how-to-send-email-notifications-when-inbox-notifications-are-created).
-
-</Banner>
+Liveblocks [Comments](/docs/products/comments) allows you to build a commenting
+experience, along with inbox notifications using
+[InboxNotification](/docs/api-reference/liveblocks-react-comments#InboxNotification).
+Using our webhooks and REST API, it’s possible to aggregate a list of unread
+notifications, and send these in an emails to your users, so they can stay up to
+date.
 
 ## What we’re building
 
-In this guide we’ll be learning how to send comments notifications, and more
+In this guide we’ll be learning how to send inbox notifications, and more
 specifically, we’ll be looking at how to:
 
-- Trigger events when comments are created using the
-  [CommentCreated](/docs/platform/webhooks#CommentCreatedEvent) webhook event.
-- Fetch a comment’s data using the
+- Trigger events when inbox notifications are created using the
+  [ThreadEmailNotificationEvent](/docs/platform/webhooks#ThreadEmailNotificationEvent)
+  webhook event.
+- Fetch unread thread data using the
   [@liveblocks/node](/docs/api-reference/liveblocks-node) package.
-- Create notifications containing the comment’s
+- Build an email containing correctly
   [formatted text](/docs/guides/how-to-send-email-notifications-when-comments-are-created#Formatting-a-comment's-body).
-- Send an email notification with [Resend](https://resend.com/).
+  (TODO fix link)
+- Send an email notification containing a list of unread comments in thread
+  format with [Resend](https://resend.com/).
 
 <Banner title="Have a project ready">
 
@@ -65,8 +61,8 @@ export async function POST(request: Request) {
 }
 ```
 
-Create this endpoint in your project, and make it available on `localhost`, for
-example at the following URL:
+Create this endpoint in your project, and make it available on `localhost` at
+the following URL:
 
 ```
 /api/liveblocks-notifications
@@ -190,7 +186,7 @@ has been created.
     <StepTitle>Webhooks dashboard is set up!</StepTitle>
 
     <StepContent>
-      Note that you can filter specifically for `commentCreated` events, but we’re
+      Note that you can filter specifically for `threadEmailNotification` events, but we’re
       ignoring this for now so we can test more easily. Let’s go back to the
       code.
     </StepContent>
@@ -265,9 +261,9 @@ export async function POST(request: Request) {
     return new Response("Could not verify webhook call", { status: 400 });
   }
 
-  // When a comment has been created
-  if (event.type === "commentCreated") {
-    const { roomId, threadId, commentId } = event.data;
+  // When an inbox notification has been created
+  if (event.type === "threadEmailNotification") {
+    const { roomId, threadId, inboxNotificationId, userId } = event.data;
 
     // Send notifications
     // ...
@@ -277,9 +273,9 @@ export async function POST(request: Request) {
 }
 ```
 
-We now have the `roomId`, `threadId`, and `commentId` of the created comment,
-along with some
-[other information](/docs/platform/webhooks#CommentCreatedEvent).
+We now have the `roomId`, `threadId`, `inboxNotificationId`. and `userId` of the
+created notification, along with some
+[other information](/docs/platform/webhooks#ThreadEmailNotificationEvent).
 
 ## Get comment and thread data
 
@@ -329,9 +325,9 @@ export async function POST(request: Request) {
     return new Response("Could not verify webhook call", { status: 400 });
   }
 
-  // When a comment has been created
-  if (event.type === "commentCreated") {
-    const { roomId, threadId, commentId } = event.data;
+  // When an inbox notification has been created
+  if (event.type === "threadEmailNotification") {
+    const { roomId, threadId, inboxNotificationId, userId } = event.data;
 
     try {
       // Get comment data and participants
@@ -445,9 +441,9 @@ export async function POST(request: Request) {
     return new Response("Could not verify webhook call", { status: 400 });
   }
 
-  // When a comment has been created
-  if (event.type === "commentCreated") {
-    const { roomId, threadId, commentId } = event.data;
+  // When an inbox notification has been created
+  if (event.type === "threadEmailNotification") {
+    const { roomId, threadId, inboxNotificationId, userId } = event.data;
 
     try {
       // Get comment data and participants
@@ -525,9 +521,9 @@ export async function POST(request: Request) {
     return new Response("Could not verify webhook call", { status: 400 });
   }
 
-  // When a comment has been created
-  if (event.type === "commentCreated") {
-    const { roomId, threadId, commentId } = event.data;
+  // When an inbox notification has been created
+  if (event.type === "threadEmailNotification") {
+    const { roomId, threadId, inboxNotificationId, userId } = event.data;
 
     try {
       // Get comment data and participants
@@ -611,9 +607,9 @@ export async function POST(request: Request) {
     return new Response("Could not verify webhook call", { status: 400 });
   }
 
-  // When a comment has been created
-  if (event.type === "commentCreated") {
-    const { roomId, threadId, commentId } = event.data;
+  // When an inbox notification has been created
+  if (event.type === "threadEmailNotification") {
+    const { roomId, threadId, inboxNotificationId, userId } = event.data;
 
     try {
       // Get comment data and participants
