@@ -129,6 +129,9 @@ export class Session {
   }
 
   public allow(roomIdOrPattern: string, newPerms: readonly Permission[]): this {
+    if (roomIdOrPattern === undefined) {
+      throw new Error("Room name or pattern must be defined");
+    }
     if (!roomPatternRegex.test(roomIdOrPattern)) {
       throw new Error("Invalid room name or pattern");
     }

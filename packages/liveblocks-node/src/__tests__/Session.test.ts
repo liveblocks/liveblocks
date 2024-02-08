@@ -87,6 +87,14 @@ describe("authorization (new API)", () => {
     ).toThrow("Invalid room name or pattern");
   });
 
+  test("throws when room or pattern is undefined", () => {
+    const session = makeSession();
+    expect(() =>
+      // @ts-expect-error - Deliberate incorrect undefined value
+      session.allow(undefined, session.FULL_ACCESS).serializePermissions()
+    ).toThrow("Room name or pattern must be defined");
+  });
+
   test("allows prefixes when room name contains asterisk", () => {
     expect(makeSession().allow("foobar*", [P1]).serializePermissions()).toEqual(
       {
