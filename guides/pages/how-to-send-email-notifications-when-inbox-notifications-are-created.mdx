@@ -330,11 +330,23 @@ export async function POST(request: Request) {
     const { roomId, threadId, inboxNotificationId, userId } = event.data;
 
     try {
-      // Get comment data and participants
-      const [comment, { participantIds }] = await Promise.all([
-        liveblocks.getComment({ roomId, threadId, commentId }),
+      // Get thread, notification, participants
+      const [thread, inboxNotification, participants] = await Promise.all([
+        liveblocks.getThread({ roomId, threadId }),
+        liveblocks.getInboxNotification({ inboxNotificationId, userId }),
         liveblocks.getThreadParticipants({ roomId, threadId }),
       ]);
+
+      // Get unread comments (and filter out deleted comments)
+      const readAt = inboxNotification.readAt;
+      const unreadComments = thread.comments
+        .filter((comment) => (readAt ? comment.createdAt > readAt : true))
+        .filter((comment) => comment.body !== undefined);
+
+      // No unread comments, therefore notification needed
+      if (unreadComments.length === 0) {
+        return new Response(null, { status: 200 });
+      }
 
       // Send notifications
       // ...
@@ -415,7 +427,11 @@ Let’s use this HTML formatting function in our endpoint, getting user
 information from your database.
 
 ```ts highlight="1,38-50"
-import { Liveblocks, WebhookHandler, stringifyCommentBody } from "@liveblocks/node";
+import {
+  Liveblocks,
+  WebhookHandler,
+  stringifyCommentBody,
+} from "@liveblocks/node";
 
 // Add your webhook secret key from a project's webhooks dashboard
 const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
@@ -446,25 +462,44 @@ export async function POST(request: Request) {
     const { roomId, threadId, inboxNotificationId, userId } = event.data;
 
     try {
-      // Get comment data and participants
-      const [comment, { participantIds }] = await Promise.all([
-        liveblocks.getComment({ roomId, threadId, commentId }),
+      // Get thread, notification, participants
+      const { roomId, threadId, inboxNotificationId, userId } = event.data;
+      const [thread, inboxNotification, participants] = await Promise.all([
+        liveblocks.getThread({ roomId, threadId }),
+        liveblocks.getInboxNotification({ inboxNotificationId, userId }),
         liveblocks.getThreadParticipants({ roomId, threadId }),
       ]);
 
-      // HTML comment body
-      const htmlComment = await stringifyCommentBody(comment.body, {
-        format: "html",
+      // Get unread comments (and filter out deleted comments)
+      const readAt = inboxNotification.readAt;
+      const unreadComments = thread.comments
+        .filter((comment) => (readAt ? comment.createdAt > readAt : true))
+        .filter((comment) => comment.body !== undefined);
 
-        async resolveUsers({ userIds }) {
-          // Get the correct users from your database
-          const users = await __getUsers__(userIds);
+      // No unread comments, therefore notification needed
+      if (unreadComments.length === 0) {
+        return new Response(null, { status: 200 });
+      }
 
-          return users.map((user) => ({
-            name: user.name,
-          });
-        },
-      });
+      // Convert comments to plain HTML and return in { body: "<p>...</p>", ...comment } format
+      const htmlComments = await Promise.all(
+        unreadComments.map((comment) => ({
+          body: stringifyCommentBody(comment.body, { format: "html" }),
+          ...comment,
+        }))
+      );
+
+      // Create final HTML for email
+      let html = `<h1>New notifications</h1>`;
+      for (const comment of htmlComments) {
+        html += `
+          <div>Comment by ${comment.userId} at ${comment.createdAt}</div>
+          ${comment.body}
+        `;
+      }
+      html += `
+        <a href="https://my-company.com/room/${roomId}">Go to thread</a>
+      `;
 
       // Send notifications
       // ...
@@ -495,7 +530,11 @@ After getting each user’s email, simply loop through and send the formatted
 comment.
 
 ```ts highlight="52-64"
-import { Liveblocks, WebhookHandler, stringifyCommentBody } from "@liveblocks/node";
+import {
+  Liveblocks,
+  WebhookHandler,
+  stringifyCommentBody,
+} from "@liveblocks/node";
 
 // Add your webhook secret key from a project's webhooks dashboard
 const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
@@ -526,28 +565,46 @@ export async function POST(request: Request) {
     const { roomId, threadId, inboxNotificationId, userId } = event.data;
 
     try {
-      // Get comment data and participants
-      const [comment, { participantIds }] = await Promise.all([
-        liveblocks.getComment({ roomId, threadId, commentId }),
+      // Get thread, notification, participants
+      const [thread, inboxNotification, participants] = await Promise.all([
+        liveblocks.getThread({ roomId, threadId }),
+        liveblocks.getInboxNotification({ inboxNotificationId, userId }),
         liveblocks.getThreadParticipants({ roomId, threadId }),
       ]);
 
-      // HTML comment body
-      const htmlComment = await stringifyCommentBody(comment.body, {
-        format: "html",
+      // Get unread comments (and filter out deleted comments)
+      const readAt = inboxNotification.readAt;
+      const unreadComments = thread.comments
+        .filter((comment) => (readAt ? comment.createdAt > readAt : true))
+        .filter((comment) => comment.body !== undefined);
 
-        async resolveUsers({ userIds }) {
-          // Get the correct users from your database
-          const users = await __getUsers__(userIds);
+      // No unread comments, therefore notification needed
+      if (unreadComments.length === 0) {
+        return new Response(null, { status: 200 });
+      }
 
-          return users.map((user) => ({
-            name: user.name,
-          });
-        },
-      });
+      // Convert comments to plain HTML and return in { body: "<p>...</p>", ...comment } format
+      const htmlComments = await Promise.all(
+        unreadComments.map((comment) => ({
+          body: stringifyCommentBody(comment.body, { format: "html" }),
+          ...comment,
+        }))
+      );
+
+      // Create final HTML for email
+      let html = `<h1>New notifications</h1>`;
+      for (const comment of htmlComments) {
+        html += `
+          <div>Comment by ${comment.userId} at ${comment.createdAt}</div>
+          ${comment.body}
+        `;
+      }
+      html += `
+        <a href="https://my-company.com/room/${roomId}">Go to thread</a>
+      `;
 
       // Get participating users from your database
-      const users = await __getUsers__(participantIds);
+      const users = await __getUsers__(participants.participantIds);
 
       // Send notifications
       for (const user of users) {
@@ -617,7 +674,6 @@ export async function POST(request: Request) {
 
     try {
       // Get thread, notification, participants
-      const { roomId, threadId, inboxNotificationId, userId } = event.data;
       const [thread, inboxNotification, participants] = await Promise.all([
         liveblocks.getThread({ roomId, threadId }),
         liveblocks.getInboxNotification({ inboxNotificationId, userId }),
