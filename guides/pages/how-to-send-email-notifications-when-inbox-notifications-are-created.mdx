@@ -22,9 +22,9 @@ specifically, we’ll be looking at how to:
   [ThreadEmailNotificationEvent](/docs/platform/webhooks#ThreadEmailNotificationEvent)
   webhook event.
 - Fetch unread thread data using the
-  [@liveblocks/node](/docs/api-reference/liveblocks-node) package.
+  [`@liveblocks/node`](/docs/api-reference/liveblocks-node) package.
 - Build an email containing correctly
-  [formatted text](/docs/guides/how-to-send-email-notifications-when-comments-are-created#Formatting-a-comment's-body).
+  [formatted text](/docs/guides/how-to-send-email-notifications-when-comments-are-created#Generating-HTML-for-the-email).
   (TODO fix link)
 - Send an email notification containing a list of unread comments in thread
   format with [Resend](https://resend.com/).
@@ -288,15 +288,73 @@ created notification, along with some
 
 The next step is to use the
 [Liveblocks client](/docs/api-reference/liveblocks-node#Liveblocks-client) from
-`@liveblocks/node` to retrieve the entire comment’s data, along with the thread
-participants. In Liveblocks Comments, a participant refers to a user that has
-commented or been mentioned in a thread—we’ll be sending a notification to each
-of these users.
+`@liveblocks/node` to retrieve the inbox notification, the corresponding
+thread’s data, and a list of each thread participant. In Liveblocks Comments, a
+participant refers to a user that has commented or been mentioned in a
+thread—we’ll be sending a notification to each of these users.
 
 To do this we’ll need to add our project’s secret key to the Liveblocks client,
 before awaiting the following functions:
-[`getComment`](/docs/api-reference/liveblocks-node#get-comment) and
+[`getInboxNotification`](/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications-inboxNotificationId),
+[`getThread`](/docs/api-reference/liveblocks-node#get-thread), and
 [`getThreadParticipants`](/docs/api-reference/liveblocks-node#get-thread-participants).
+
+```ts highlight="1,7-9,31-43"
+import { Liveblocks, WebhookHandler } from "@liveblocks/node";
+
+// Add your webhook secret key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+// Add your secret key from a project's API keys dashboard
+const API_SECRET = "{{SECRET_KEY}}";
+const liveblocks = new Liveblocks({ secret: API_SECRET });
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // When an inbox notification has been created
+  if (event.type === "threadEmailNotification") {
+    const { roomId, threadId, inboxNotificationId, userId } = event.data;
+
+    try {
+      // Get thread, notification, participants
+      const [thread, inboxNotification, participants] = await Promise.all([
+        liveblocks.getThread({ roomId, threadId }),
+        liveblocks.getInboxNotification({ inboxNotificationId, userId }),
+        liveblocks.getThreadParticipants({ roomId, threadId }),
+      ]);
+
+      // Send notifications
+      // ...
+    } catch (err) {
+      console.log(err);
+      return new Response("Could not fetch comment data", { status: 500 });
+    }
+  }
+
+  return new Response(null, { status: 200 });
+}
+```
+
+## Get the unread comments
+
+The next step is to get each unread comment by comparing the `readAt` time in
+the inbox notification with the `createAt` time on each comment. We’re also
+filtering out each comment with no body, which represents a deleted comment.
 
 ```ts highlight="1,7-9,31-43"
 import { Liveblocks, WebhookHandler } from "@liveblocks/node";
@@ -360,71 +418,17 @@ export async function POST(request: Request) {
 }
 ```
 
-## Formatting a comment’s body
+## Generating HTML for the email
 
 Now that we have the comment data and a list of participants, we have one more
-step before sending the notifications—formatting the comment’s text, found
-inside `comment.body`. Let’s take a look at how it works for an example comment,
-using
-[`stringifyCommentBody`](/docs/api-reference/liveblocks-node#stringify-comment-body)
-to transform `comment.body`.
+step before sending the notifications—formatting each comment’s text, found
+inside `comment.body`.
 
-<Figure>
-  <Image
-    src="/assets/comments/comment-body.png"
-    alt="Comment with example body: 'Thank you so much @Emil Joyce!', with 'so much' in bold"
-    width={1289}
-    height={390}
-  />
-</Figure>
-
-```ts
-import { stringifyCommentBody } from "@liveblocks/node";
-
-// Format comment text into a string
-const stringComment = await stringifyCommentBody(comment.body);
-
-// "Thank you so much emil.joyce@example.com!"
-console.log(stringComment);
-```
-
-As you can see on line 6, we’re converting the body into a plain string, which
-means we lose the formatting. We’re also seeing the user’s ID, instead of the
-name—this is because we need to provide the user’s information, as the comment
-only stores the user’s ID.
-
-By providing two options, we can transform the comment into HTML, keeping the
-formatting, and add the user information.
-
-```ts
-import { stringifyCommentBody } from "@liveblocks/node";
-
-// Format comment text into an HTML string
-const htmlComment = await stringifyCommentBody(comment.body, {
-  // Transform into HTML
-  format: "html",
-
-  // Provider user information
-  async resolveUsers({ userIds }) {
-    // ["emil.joyce@example.com", ...]
-    console.log(userIds);
-
-    // Return each user's name
-    [{ name: "Emil Joyce" } /*, ... */];
-  },
-});
-
-// "<p>Thank you <b>so much</b> <span data-mention>@Emil Joyce</span>!</p>"
-console.log(stringComment);
-```
-
-On line 18, you can now see that we’re creating an HTML string, and using the
-mentioned user’s name. Note that you can also easily transform your comment into
-Markdown, or a completely custom format, learn more under
-[`stringifyCommentBody`](/docs/api-reference/liveblocks-node#stringify-comment-body).
-
-Let’s use this HTML formatting function in our endpoint, getting user
-information from your database.
+By using
+[`await stringifyCommentBody`](/docs/api-reference/liveblocks-node#stringify-comment-body),
+we can convert each comment into plain HTML. In this code snippet, you can see
+we’re looping through each comment, and replacing `comment.body` with an HTML
+string.
 
 ```ts highlight="1,38-50"
 import {
@@ -513,12 +517,18 @@ export async function POST(request: Request) {
 }
 ```
 
+This snippet outputs fairly simple formatting, for example it renders a user IDs
+(e.g. `@jory.quispe`) instead of a names (e.g. `@Jory Quispe`), but you can
+create more complex formatting easily by using more complex
+[`stringifyCommentBody`](/docs/api-reference/liveblocks-node#stringify-comment-body)
+options.
+
 ## Send notifications
 
-Now that the comment’s body is in our preferred format, we can send the
-notifications. Earlier we retrieved `participants`, a list of `userIds` that
-have been mentioned in the thread. You most likely have user information in your
-database, which you can retrieve from these `userIds`.
+Now that the HTML’s been generated, we can send the notifications. Earlier we
+retrieved `participants`, a list of `userIds` that have been mentioned in the
+thread. You most likely have user information in your database, which you can
+retrieve from these `userIds`.
 
 <Banner title="userIds">
   These are the same `userIds` that are passed to
@@ -741,10 +751,9 @@ Great, we’re successfully sending email notifications after new comments are
 created! In this guide we’ve learned:
 
 - How to use [webhooks](/docs/platform/webhooks) and the
-  [`CommentCreatedEvent`](/docs/platform/webhooks#CommentCreatedEvent).
-- How to use the `@liveblocks/node` package to get
-  [comment data](/docs/api-reference/liveblocks-node#get-comment) and
-  [thread participants](/docs/api-reference/liveblocks-node#get-thread-participants).
-- How to shape a comment’s body into HTML with
+  [`ThreadEmailNotiticationEvent`](/docs/platform/webhooks#ThreadEmailNotiticationEvent).
+- How to use the [`@liveblocks/node`](/docs/api-reference/liveblocks-node)
+  package to unread thread data.
+- How to shape a threads into HTML with
   [`stringifyCommentBody`](/docs/api-reference/liveblocks-node#stringify-comment-body).
 - How to send email notifications with [Resend](https://resend.com).
