@@ -1,11 +1,15 @@
 import "@testing-library/jest-dom";
 
-import { createClient } from "@liveblocks/core";
-import { renderHook, waitFor } from "@testing-library/react";
+import { createClient, kInternal } from "@liveblocks/core";
+import { render, renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
 import React, { Suspense } from "react";
 
-import { createLiveblocksContext } from "../liveblocks";
+import {
+  createLiveblocksContext,
+  INBOX_NOTIFICATIONS_QUERY,
+  POLLING_INTERVAL,
+} from "../liveblocks";
 import { dummyInboxNoficationData, dummyThreadData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import { mockGetInboxNotifications } from "./_restMocks";
@@ -236,6 +240,51 @@ describe("useInboxNotifications", () => {
 
     unmount();
   });
+
+  test("sort inbox notifications by notified at date before returning", () => {
+    const thread1 = dummyThreadData();
+    const oldInboxNotification = dummyInboxNoficationData();
+    oldInboxNotification.threadId = thread1.id;
+    oldInboxNotification.notifiedAt = new Date("2021-01-01");
+
+    const thread2 = dummyThreadData();
+    const newInboxNotification = dummyInboxNoficationData();
+    newInboxNotification.threadId = thread2.id;
+    newInboxNotification.notifiedAt = new Date("2021-01-02");
+
+    const {
+      liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
+      client,
+    } = createLiveblocksContextForTest();
+
+    const store = client[kInternal].cacheStore;
+    store.set((state) => ({
+      ...state,
+      inboxNotifications: {
+        // Explicitly set the order to be reversed to test that the hook sorts the notifications
+        [oldInboxNotification.id]: oldInboxNotification,
+        [newInboxNotification.id]: newInboxNotification,
+      },
+      queries: {
+        [INBOX_NOTIFICATIONS_QUERY]: {
+          isLoading: false,
+        },
+      },
+    }));
+
+    const { result, unmount } = renderHook(() => useInboxNotifications(), {
+      wrapper: ({ children }) => (
+        <LiveblocksProvider>{children}</LiveblocksProvider>
+      ),
+    });
+
+    expect(result.current).toEqual({
+      isLoading: false,
+      inboxNotifications: [newInboxNotification, oldInboxNotification],
+    });
+
+    unmount();
+  });
 });
 
 describe("useInboxNotifications - Suspense", () => {
@@ -263,7 +312,8 @@ describe("useInboxNotifications - Suspense", () => {
 
     const {
       liveblocksCtx: {
-      suspense: { LiveblocksProvider, useInboxNotifications },
+        suspense: { LiveblocksProvider, useInboxNotifications },
+      },
     } = createLiveblocksContextForTest();
 
     const { result, unmount, rerender } = renderHook(
