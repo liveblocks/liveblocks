@@ -873,6 +873,127 @@ describe("useThreads", () => {
 
     unmount();
   });
+
+  test("should refetch threads if room has been mounted after being unmounted", async () => {
+    const threads = [dummyThreadData()];
+    let getThreadsReqCount = 0;
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        getThreadsReqCount++;
+        return res(
+          ctx.json({
+            data: threads,
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
+
+    const Room = () => {
+      return (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          <Threads />
+        </RoomProvider>
+      );
+    };
+
+    const Threads = () => {
+      useThreads();
+      return null;
+    };
+
+    const { unmount } = render(<Room />);
+
+    // A new fetch request for the threads should have been made
+    await waitFor(() => expect(getThreadsReqCount).toBe(1));
+
+    unmount();
+
+    // Render the RoomProvider again and verify a new fetch request is initiated
+    const result = render(<Room />);
+
+    await waitFor(() => expect(getThreadsReqCount).toBe(2));
+
+    result.unmount();
+  });
+
+  test("should not refetch threads if room has been mounted after being unmounted if another RoomProvider for the same id is still mounted", async () => {
+    const threads = [dummyThreadData()];
+    let getThreadsReqCount = 0;
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        getThreadsReqCount++;
+        return res(
+          ctx.json({
+            data: threads,
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+      client,
+    } = createRoomContextForTest();
+
+    const Room = () => {
+      return (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          <Threads />
+        </RoomProvider>
+      );
+    };
+
+    const FirstRoom = Room;
+    const SecondRoom = Room;
+
+    const Threads = () => {
+      useThreads();
+      return null;
+    };
+
+    // Render a RoomProvider for the room id
+    const { rerender, unmount: unmountFirstRoom } = render(<FirstRoom />);
+
+    // Render another RoomProvider for the same room id
+    const { unmount: unmountSecondRoom } = render(<SecondRoom />);
+
+    // A new fetch request for the threads should have been made
+    await waitFor(() => expect(getThreadsReqCount).toBe(1));
+
+    const room = client.getRoom("room-id");
+    expect(room).not.toBeNull();
+    if (room === null) return;
+
+    // Mock the getThreads method so we can verify it wasn't called
+    room.getThreads = jest.fn();
+
+    // Rerender the first RoomProvider and verify a new fetch request wasn't initiated
+    rerender(<FirstRoom />);
+
+    // A new fetch request for the threads should not have been made
+    expect(room.getThreads).not.toHaveBeenCalled();
+
+    unmountFirstRoom();
+    unmountSecondRoom();
+  });
 });
 
 describe("useThreads: polling", () => {
