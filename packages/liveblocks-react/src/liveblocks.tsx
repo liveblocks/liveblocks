@@ -4,12 +4,7 @@ import type {
   Client,
   ThreadData,
 } from "@liveblocks/client";
-import type {
-  CacheState,
-  CacheStore,
-  InboxNotificationData,
-  Store,
-} from "@liveblocks/core";
+import type { CacheState, CacheStore, Store } from "@liveblocks/core";
 import { kInternal, makePoller } from "@liveblocks/core";
 import { nanoid } from "nanoid";
 import type { PropsWithChildren } from "react";

@@ -1057,19 +1057,23 @@ export function createRoomContext<
   }
 
   async function getThreadsAndInboxNotifications(
-    room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
+    roomId: string,
     queryKey: string,
     options: UseThreadsOptions<TThreadMetadata>
   ) {
+    const room = client.getRoom(roomId);
+    if (room === null) return;
+
     const queries = room[kInternal].comments.queries;
 
     // If the query has already been recorded in the room, we do not make another fetch request
     if (queries.has(queryKey)) return;
 
-    queries.add(queryKey);
-
     try {
       const result = await room.getThreads(options);
+
+      // Add the query to the room's queries set to prevent duplicate fetch requests
+      queries.add(queryKey);
 
       store.updateThreadsAndNotifications(
         result.threads,
@@ -1114,8 +1118,8 @@ export function createRoomContext<
     );
 
     React.useEffect(() => {
-      void getThreadsAndInboxNotifications(room, queryKey, options);
-    }, [room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
+      void getThreadsAndInboxNotifications(room.id, queryKey, options);
+    }, [room.id, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const selector = React.useCallback(
       (state: CacheState<TThreadMetadata>): ThreadsState<TThreadMetadata> => {
@@ -1155,7 +1159,7 @@ export function createRoomContext<
     const query = store.get().queries[queryKey];
 
     if (query === undefined || query.isLoading) {
-      throw getThreadsAndInboxNotifications(room, queryKey, options);
+      throw getThreadsAndInboxNotifications(room.id, queryKey, options);
     }
 
     if (query.error) {
