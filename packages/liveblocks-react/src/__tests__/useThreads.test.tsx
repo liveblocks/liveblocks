@@ -37,6 +37,8 @@ beforeEach(() => {
 afterEach(() => {
   MockWebSocket.instances = [];
   server.resetHandlers();
+  jest.clearAllTimers();
+  jest.clearAllMocks();
 });
 
 afterAll(() => server.close());
