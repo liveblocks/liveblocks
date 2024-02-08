@@ -597,20 +597,60 @@ export function applyNotificationsUpdates(
     deletedNotifications: InboxNotificationDeleteInfo[];
   }
 ): Record<string, InboxNotificationData> {
-  // TODO: Do not replace existing inboxNotifications if it has been updated more recently than the incoming inbox notifications (including checking for deleted notifications)
-  const updatedInboxNotifications = {
-    ...existingInboxNotifications,
-    ...Object.fromEntries(
-      updates.newInboxNotifications.map((notification) => [
-        notification.id,
-        notification,
-      ])
-    ),
-  };
+  const updatedInboxNotifications = { ...existingInboxNotifications };
+
+  // Add new notifications or update existing notifications if the existing notification is older than the new notification.
+  updates.newInboxNotifications.forEach((notification) => {
+    const existingNotification = updatedInboxNotifications[notification.id];
+    // If the notification already exists, we need to compare the two notifications to determine which one is newer.
+    if (existingNotification) {
+      const result = compareInboxNotifications(
+        existingNotification,
+        notification
+      );
+
+      // If the existing notification is newer than the new notification, we do not update the existing notification.
+      if (result === 1) return;
+    }
+
+    // If the new notification is newer than the existing notification, we update the existing notification.
+    updatedInboxNotifications[notification.id] = notification;
+  });
 
   updates.deletedNotifications.forEach(
     ({ id }) => delete updatedInboxNotifications[id]
   );
 
   return updatedInboxNotifications;
+}
+
+/**
+ * Compares two inbox notifications to determine which one is newer.
+ * @param inboxNotificationA The first inbox notification to compare.
+ * @param inboxNotificationB The second inbox notification to compare.
+ * @returns 1 if inboxNotificationA is newer, -1 if inboxNotificationB is newer, or 0 if they are the same age or can't be compared.
+ */
+export function compareInboxNotifications(
+  inboxNotificationA: InboxNotificationData,
+  inboxNotificationB: InboxNotificationData
+): number {
+  if (inboxNotificationA.notifiedAt > inboxNotificationB.notifiedAt) {
+    return 1;
+  } else if (inboxNotificationA.notifiedAt < inboxNotificationB.notifiedAt) {
+    return -1;
+  }
+
+  // notifiedAt times are the same, compare readAt times if both are not null
+  if (inboxNotificationA.readAt && inboxNotificationB.readAt) {
+    return inboxNotificationA.readAt > inboxNotificationB.readAt
+      ? 1
+      : inboxNotificationA.readAt < inboxNotificationB.readAt
+        ? -1
+        : 0;
+  } else if (inboxNotificationA.readAt || inboxNotificationB.readAt) {
+    return inboxNotificationA.readAt ? 1 : -1;
+  }
+
+  // If all dates are equal, return 0
+  return 0;
 }
