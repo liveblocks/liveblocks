@@ -39,6 +39,12 @@ const READ_ACCESS = Object.freeze([
 
 /**
  * Assign this to a room (or wildcard pattern) if you want to grant the user
+ * read permissions to comments and comments' notifications for this room/wildcard.
+ */
+const COMMENTS_READ_ACCESS = Object.freeze(["comments:read"] as const);
+
+/**
+ * Assign this to a room (or wildcard pattern) if you want to grant the user
  * permissions to read and write to the room's storage and comments.
  */
 const FULL_ACCESS = Object.freeze(["room:write", "comments:write"] as const);
@@ -61,6 +67,7 @@ type PostFn = (path: URLSafeString, json: Json) => Promise<Response>;
  *
  *    session.allow('my-room', session.FULL_ACCESS)  // Read + write access to room storage and comments
  *    session.allow('my-room', session.READ_ACCESS)  // Read-only access to room storage and comments
+ *    session.allow('my-room', session.COMMENTS_READ_ACCESS)  // Read-only access to comments
  *
  * Rooms can be specified with a prefix match, if the name ends in an asterisk.
  * In that case, access is granted to *all* rooms that start with that prefix:
@@ -85,6 +92,7 @@ type PostFn = (path: URLSafeString, json: Json) => Promise<Response>;
 export class Session {
   public readonly FULL_ACCESS = FULL_ACCESS;
   public readonly READ_ACCESS = READ_ACCESS;
+  public readonly COMMENTS_READ_ACCESS = COMMENTS_READ_ACCESS;
 
   /** @internal */
   private _postFn: PostFn;
