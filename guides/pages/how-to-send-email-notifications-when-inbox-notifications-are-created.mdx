@@ -25,7 +25,6 @@ specifically, we’ll be looking at how to:
   [`@liveblocks/node`](/docs/api-reference/liveblocks-node) package.
 - Build an email containing correctly
   [formatted text](/docs/guides/how-to-send-email-notifications-when-comments-are-created#Generating-HTML-for-the-email).
-  (TODO fix link)
 - Send an email notification containing a list of unread comments in thread
   format with [Resend](https://resend.com/).
 
@@ -235,10 +234,14 @@ export async function POST(request: Request) {
 }
 ```
 
-We can then check we’re receiving the correct type of event, get the data from
-the webhook, and handle sending the notification inside there.
+## Check the event and notification permissions
 
-```ts highlight="23-29"
+After verifying the request, we can then check we’re receiving the correct type
+of event, and check if the user should receive a notification. Liveblocks
+doesn’t have knowledge of your permissions system on the back end, so it’s your
+responsibility to check if this user should receive a notification.
+
+```ts highlight="23-34"
 import { WebhookHandler } from "@liveblocks/node";
 
 // Add your webhook secret key from a project's webhooks dashboard
@@ -265,6 +268,11 @@ export async function POST(request: Request) {
   if (event.type === "threadEmailNotification") {
     const { roomId, threadId, inboxNotificationId, userId } = event.data;
 
+    // Check if user has access to room
+    if (!__hasRoomAccess__(userId, roomId)) {
+      return new Response(null, { status: 200 });
+    }
+
     // Send notifications
     // ...
   }
@@ -288,18 +296,13 @@ created notification, along with some
 
 The next step is to use the
 [Liveblocks client](/docs/api-reference/liveblocks-node#Liveblocks-client) from
-`@liveblocks/node` to retrieve the inbox notification, the corresponding
-thread’s data, and a list of each thread participant. In Liveblocks Comments, a
-participant refers to a user that has commented or been mentioned in a
-thread—we’ll be sending a notification to each of these users.
+`@liveblocks/node` to retrieve the inbox notification, and the corresponding
+thread’s data. To do this we’ll need to add our project’s secret key to the
+Liveblocks client, before awaiting the following functions:
+[`getInboxNotification`](/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications-inboxNotificationId)
+and [`getThread`](/docs/api-reference/liveblocks-node#get-thread).
 
-To do this we’ll need to add our project’s secret key to the Liveblocks client,
-before awaiting the following functions:
-[`getInboxNotification`](/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications-inboxNotificationId),
-[`getThread`](/docs/api-reference/liveblocks-node#get-thread), and
-[`getThreadParticipants`](/docs/api-reference/liveblocks-node#get-thread-participants).
-
-```ts highlight="1,7-9,31-43"
+```ts highlight="1,7-9,36-48"
 import { Liveblocks, WebhookHandler } from "@liveblocks/node";
 
 // Add your webhook secret key from a project's webhooks dashboard
@@ -330,19 +333,23 @@ export async function POST(request: Request) {
   if (event.type === "threadEmailNotification") {
     const { roomId, threadId, inboxNotificationId, userId } = event.data;
 
+    // Check if user has access to room
+    if (!__hasRoomAccess__(userId, roomId)) {
+      return new Response(null, { status: 200 });
+    }
+
     try {
-      // Get thread, notification, participants
-      const [thread, inboxNotification, participants] = await Promise.all([
+      // Get thread and notification
+      const [thread, inboxNotification] = await Promise.all([
         liveblocks.getThread({ roomId, threadId }),
         liveblocks.getInboxNotification({ inboxNotificationId, userId }),
-        liveblocks.getThreadParticipants({ roomId, threadId }),
       ]);
 
       // Send notifications
       // ...
     } catch (err) {
       console.log(err);
-      return new Response("Could not fetch comment data", { status: 500 });
+      return new Response("Could not fetch notification data", { status: 500 });
     }
   }
 
@@ -356,7 +363,7 @@ The next step is to get each unread comment by comparing the `readAt` time in
 the inbox notification with the `createAt` time on each comment. We’re also
 filtering out each comment with no body, which represents a deleted comment.
 
-```ts highlight="1,7-9,31-43"
+```ts highlight="43-52"
 import { Liveblocks, WebhookHandler } from "@liveblocks/node";
 
 // Add your webhook secret key from a project's webhooks dashboard
@@ -387,12 +394,16 @@ export async function POST(request: Request) {
   if (event.type === "threadEmailNotification") {
     const { roomId, threadId, inboxNotificationId, userId } = event.data;
 
+    // Check if user has access to room
+    if (!__hasRoomAccess__(userId, roomId)) {
+      return new Response(null, { status: 200 });
+    }
+
     try {
-      // Get thread, notification, participants
-      const [thread, inboxNotification, participants] = await Promise.all([
+      // Get thread and notification
+      const [thread, inboxNotification] = await Promise.all([
         liveblocks.getThread({ roomId, threadId }),
         liveblocks.getInboxNotification({ inboxNotificationId, userId }),
-        liveblocks.getThreadParticipants({ roomId, threadId }),
       ]);
 
       // Get unread comments (and filter out deleted comments)
@@ -410,7 +421,7 @@ export async function POST(request: Request) {
       // ...
     } catch (err) {
       console.log(err);
-      return new Response("Could not fetch comment data", { status: 500 });
+      return new Response("Could not fetch notification data", { status: 500 });
     }
   }
 
@@ -418,11 +429,12 @@ export async function POST(request: Request) {
 }
 ```
 
+If there are no unread notifications, then we’re choosing not to send an email.
+
 ## Generating HTML for the email
 
-Now that we have the comment data and a list of participants, we have one more
-step before sending the notifications—formatting each comment’s text, found
-inside `comment.body`.
+Now that we have the comment data, we have one more step before sending the
+notifications—formatting each comment’s text, found inside `comment.body`.
 
 By using
 [`await stringifyCommentBody`](/docs/api-reference/liveblocks-node#stringify-comment-body),
@@ -430,7 +442,7 @@ we can convert each comment into plain HTML. In this code snippet, you can see
 we’re looping through each comment, and replacing `comment.body` with an HTML
 string.
 
-```ts highlight="1,38-50"
+```ts highlight="4,58-76"
 import {
   Liveblocks,
   WebhookHandler,
@@ -465,13 +477,16 @@ export async function POST(request: Request) {
   if (event.type === "threadEmailNotification") {
     const { roomId, threadId, inboxNotificationId, userId } = event.data;
 
+    // Check if user has access to room
+    if (!__hasRoomAccess__(userId, roomId)) {
+      return new Response(null, { status: 200 });
+    }
+
     try {
-      // Get thread, notification, participants
-      const { roomId, threadId, inboxNotificationId, userId } = event.data;
-      const [thread, inboxNotification, participants] = await Promise.all([
+      // Get thread and notification
+      const [thread, inboxNotification] = await Promise.all([
         liveblocks.getThread({ roomId, threadId }),
         liveblocks.getInboxNotification({ inboxNotificationId, userId }),
-        liveblocks.getThreadParticipants({ roomId, threadId }),
       ]);
 
       // Get unread comments (and filter out deleted comments)
@@ -485,7 +500,7 @@ export async function POST(request: Request) {
         return new Response(null, { status: 200 });
       }
 
-      // Convert comments to plain HTML and return in { body: "<p>...</p>", ...comment } format
+      // Convert comments to plain HTML and return { body: "<p>...</p>", ...comment } format
       const htmlComments = await Promise.all(
         unreadComments.map((comment) => ({
           body: stringifyCommentBody(comment.body, { format: "html" }),
@@ -509,7 +524,7 @@ export async function POST(request: Request) {
       // ...
     } catch (err) {
       console.log(err);
-      return new Response("Could not fetch comment data", { status: 500 });
+      return new Response("Could not fetch notification data", { status: 500 });
     }
   }
 
@@ -526,20 +541,16 @@ options.
 ## Send notifications
 
 Now that the HTML’s been generated, we can send the notifications. Earlier we
-retrieved `participants`, a list of `userIds` that have been mentioned in the
-thread. You most likely have user information in your database, which you can
-retrieve from these `userIds`.
+retrieved `userId`, the ID of the user that’s receiving the notification. You
+can use this to get the user’s email address, before sending the email itself.
 
 <Banner title="userIds">
-  These are the same `userIds` that are passed to
+  This is the same `userId` that you passed to
   [`resolveUsers`](/docs/api-reference/liveblocks-client#resolveUsers) in your
   `liveblocks.config.ts` file.
 </Banner>
 
-After getting each user’s email, simply loop through and send the formatted
-comment.
-
-```ts highlight="52-64"
+```ts highlight="78-87"
 import {
   Liveblocks,
   WebhookHandler,
@@ -574,12 +585,16 @@ export async function POST(request: Request) {
   if (event.type === "threadEmailNotification") {
     const { roomId, threadId, inboxNotificationId, userId } = event.data;
 
+    // Check if user has access to room
+    if (!__hasRoomAccess__(userId, roomId)) {
+      return new Response(null, { status: 200 });
+    }
+
     try {
-      // Get thread, notification, participants
-      const [thread, inboxNotification, participants] = await Promise.all([
+      // Get thread and notification
+      const [thread, inboxNotification] = await Promise.all([
         liveblocks.getThread({ roomId, threadId }),
         liveblocks.getInboxNotification({ inboxNotificationId, userId }),
-        liveblocks.getThreadParticipants({ roomId, threadId }),
       ]);
 
       // Get unread comments (and filter out deleted comments)
@@ -593,7 +608,7 @@ export async function POST(request: Request) {
         return new Response(null, { status: 200 });
       }
 
-      // Convert comments to plain HTML and return in { body: "<p>...</p>", ...comment } format
+      // Convert comments to plain HTML and return { body: "<p>...</p>", ...comment } format
       const htmlComments = await Promise.all(
         unreadComments.map((comment) => ({
           body: stringifyCommentBody(comment.body, { format: "html" }),
@@ -613,22 +628,19 @@ export async function POST(request: Request) {
         <a href="https://my-company.com/room/${roomId}">Go to thread</a>
       `;
 
-      // Get participating users from your database
-      const users = await __getUsers__(participants.participantIds);
+      // Get the user's email address from your database
+      const emailAddress = await __getUsersEmail__(userId);
 
-      // Send notifications
-      for (const user of users) {
-        // Send email to the user's email address
-        // send({
-        //   from: "hello@my-company.com",
-        //   to: user.email,
-        //   title: "New comment",
-        //   html: htmlComment
-        // });
-      }
+      // Send email to the user's email address
+      // send({
+      //   from: "hello@my-company.com",
+      //   to: emailAddress,
+      //   title: "New comment",
+      //   html,
+      // });
     } catch (err) {
       console.log(err);
-      return new Response("Could not fetch comment data", { status: 500 });
+      return new Response("Could not fetch notification data", { status: 500 });
     }
   }
 
@@ -643,7 +655,7 @@ this code example, we’re using it to send the notifications to each user. Make
 sure to add your API key from the
 [Resend dashboard](https://resend.com/overview) before running the code.
 
-```ts highlight="2,4-5,59-69" file="route.ts"
+```ts highlight="6,8-9,85-95" file="route.ts"
 import {
   Liveblocks,
   WebhookHandler,
@@ -682,12 +694,16 @@ export async function POST(request: Request) {
   if (event.type === "threadEmailNotification") {
     const { roomId, threadId, inboxNotificationId, userId } = event.data;
 
+    // Check if user has access to room
+    if (!__hasRoomAccess__(userId, roomId)) {
+      return new Response(null, { status: 200 });
+    }
+
     try {
-      // Get thread, notification, participants
-      const [thread, inboxNotification, participants] = await Promise.all([
+      // Get thread and notification
+      const [thread, inboxNotification] = await Promise.all([
         liveblocks.getThread({ roomId, threadId }),
         liveblocks.getInboxNotification({ inboxNotificationId, userId }),
-        liveblocks.getThreadParticipants({ roomId, threadId }),
       ]);
 
       // Get unread comments (and filter out deleted comments)
@@ -701,7 +717,7 @@ export async function POST(request: Request) {
         return new Response(null, { status: 200 });
       }
 
-      // Convert comments to plain HTML and return in { body: "<p>...</p>", ...comment } format
+      // Convert comments to plain HTML and return { body: "<p>...</p>", ...comment } format
       const htmlComments = await Promise.all(
         unreadComments.map((comment) => ({
           body: stringifyCommentBody(comment.body, { format: "html" }),
@@ -721,14 +737,14 @@ export async function POST(request: Request) {
         <a href="https://my-company.com/room/${roomId}">Go to thread</a>
       `;
 
-      // Get participating users from your database
-      const users = await __getUsers__(participants.participantIds);
+      // Get the user's email address from your database
+      const emailAddress = await __getUsersEmail__(userId);
 
       // Send email to the users' email addresses
       try {
         const data = await resend.emails.send({
           from: "My company <hello@my-company.com>",
-          to: [users.map((user) => user.email)],
+          to: emailAddress,
           subject: "New comment",
           html,
         });
@@ -737,7 +753,7 @@ export async function POST(request: Request) {
       }
     } catch (err) {
       console.log(err);
-      return new Response("Could not fetch comment data", { status: 500 });
+      return new Response("Could not fetch notification data", { status: 500 });
     }
   }
 
