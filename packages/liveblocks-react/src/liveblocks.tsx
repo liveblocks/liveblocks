@@ -50,6 +50,9 @@ export function useLiveblocksContextBundle() {
   return bundle;
 }
 
+export const POLLING_INTERVAL = 60 * 1000; // 1 minute
+export const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
+
 export function createLiveblocksContext<
   TUserMeta extends BaseUserMeta = BaseUserMeta,
   TThreadMetadata extends BaseMetadata = never,
@@ -81,10 +84,6 @@ export function createLiveblocksContext<
   }> | null = null;
   let inboxNotificationsSubscribers = 0;
   let lastRequestedAt: Date | undefined;
-
-  const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
-
-  const POLLING_INTERVAL = 60 * 1000; // 1 minute
 
   const poller = makePoller(refreshThreadsAndNotifications);
 
@@ -132,10 +131,6 @@ export function createLiveblocksContext<
     if (fetchInboxNotificationsRequest) {
       return fetchInboxNotificationsRequest;
     }
-
-    store.setQueryState(INBOX_NOTIFICATIONS_QUERY, {
-      isLoading: true,
-    });
 
     try {
       fetchInboxNotificationsRequest = client.getInboxNotifications();

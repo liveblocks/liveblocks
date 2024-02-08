@@ -39,7 +39,7 @@ function createLiveblocksContextForTest() {
     },
   });
 
-  return createLiveblocksContext(client);
+  return { liveblocksCtx: createLiveblocksContext(client), client };
 }
 
 describe("useInboxNotifications", () => {
@@ -65,8 +65,9 @@ describe("useInboxNotifications", () => {
       })
     );
 
-    const { LiveblocksProvider, useInboxNotifications } =
-      createLiveblocksContextForTest();
+    const {
+      liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
+    } = createLiveblocksContextForTest();
 
     const { result, unmount } = renderHook(() => useInboxNotifications(), {
       wrapper: ({ children }) => (
@@ -110,8 +111,9 @@ describe("useInboxNotifications", () => {
       })
     );
 
-    const { LiveblocksProvider, useInboxNotifications } =
-      createLiveblocksContextForTest();
+    const {
+      liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
+    } = createLiveblocksContextForTest();
 
     const { result, unmount, rerender } = renderHook(
       () => useInboxNotifications(),
@@ -178,8 +180,9 @@ describe("useInboxNotifications", () => {
       })
     );
 
-    const { LiveblocksProvider, useInboxNotifications } =
-      createLiveblocksContextForTest();
+    const {
+      liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
+    } = createLiveblocksContextForTest();
 
     const { rerender, unmount } = renderHook(
       () => {
@@ -203,15 +206,16 @@ describe("useInboxNotifications", () => {
     unmount();
   });
 
-  test.skip("should return an error if initial call if failing", async () => {
+  test("should return an error if initial call if failing", async () => {
     server.use(
       mockGetInboxNotifications(async (_req, res, ctx) => {
         return res(ctx.status(500));
       })
     );
 
-    const { LiveblocksProvider, useInboxNotifications } =
-      createLiveblocksContextForTest();
+    const {
+      liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
+    } = createLiveblocksContextForTest();
 
     const { result, unmount } = renderHook(() => useInboxNotifications(), {
       wrapper: ({ children }) => (
@@ -258,6 +262,7 @@ describe("useInboxNotifications - Suspense", () => {
     );
 
     const {
+      liveblocksCtx: {
       suspense: { LiveblocksProvider, useInboxNotifications },
     } = createLiveblocksContextForTest();
 
@@ -286,6 +291,74 @@ describe("useInboxNotifications - Suspense", () => {
     rerender();
 
     expect(result.current).toBe(oldResult);
+
+    unmount();
+  });
+});
+
+describe("useInboxNotifications: polling", () => {
+  beforeAll(() => {
+    jest.useFakeTimers();
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
+  });
+  test("should poll threads every x seconds", async () => {
+    let getInboxNotificationsReqCount = 0;
+
+    const threads = [dummyThreadData()];
+    const inboxNotification = dummyInboxNoficationData();
+    inboxNotification.threadId = threads[0].id;
+    const inboxNotifications = [inboxNotification];
+
+    server.use(
+      mockGetInboxNotifications(async (_req, res, ctx) => {
+        getInboxNotificationsReqCount++;
+        return res(
+          ctx.json({
+            threads,
+            inboxNotifications,
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
+    } = createLiveblocksContextForTest();
+
+    const Room = () => {
+      return (
+        <LiveblocksProvider>
+          <InboxNotifications />
+        </LiveblocksProvider>
+      );
+    };
+
+    const InboxNotifications = () => {
+      useInboxNotifications();
+      return null;
+    };
+
+    const { unmount } = render(<Room />);
+
+    // A new fetch request for the threads should have been made after the initial render
+    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(1));
+
+    // Wait for the first polling to occur after the initial render
+    jest.advanceTimersByTime(POLLING_INTERVAL);
+    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(2));
+
+    // Advance time to simulate the polling interval
+    jest.advanceTimersByTime(POLLING_INTERVAL);
+    // Wait for the second polling to occur
+    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(3));
 
     unmount();
   });
