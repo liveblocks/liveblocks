@@ -11,6 +11,15 @@ Liveblocks allows you to build a commenting experience with
 possible to send email notifications to users when they’re mentioned in
 comments.
 
+<Banner title="You’re probably looking for a different guide" type="warning">
+
+This guide is about sending an email immediately after every comment is posted.
+If you’d prefer aggregate multiple notifications into one email, and only notify
+users about unread comments, you should read this guide on
+[sending emails when inbox notifications are created](/docs/guides/how-to-send-email-notifications-when-inbox-notifications-are-created).
+
+</Banner>
+
 ## What we’re building
 
 In this guide we’ll be learning how to send comments notifications, and more
@@ -56,12 +65,14 @@ export async function POST(request: Request) {
 }
 ```
 
-Create this endpoint in your project, and make it available on `localhost` at
-the following URL:
+Create this endpoint in your project, and make it available on `localhost`, for
+example at the following URL:
 
 ```
-/api/liveblocks-database-sync
+/api/liveblocks-notifications
 ```
+
+Make a note of this endpoint URL, as you’ll be using it later.
 
 ### Testing webhooks locally
 
