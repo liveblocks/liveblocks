@@ -26,11 +26,10 @@ export async function threadEmailNotification({
   projectId,
   createdAt,
 }: ThreadEmailNotificationEvent["data"]): Promise<Response> {
-  // Get info on the thread involved, the current inbox notification, and the thread participants
-  const [thread, inboxNotification, participants] = await Promise.all([
+  // Get info on the thread involved and the current inbox notification
+  const [thread, inboxNotification] = await Promise.all([
     liveblocks.getThread<ThreadMetadata>({ roomId, threadId }),
     liveblocks.getInboxNotification({ inboxNotificationId, userId }),
-    liveblocks.getThreadParticipants({ roomId, threadId }),
   ]);
 
   const unreadComments = getUnreadComments(thread, inboxNotification.readAt);
@@ -66,7 +65,7 @@ export async function threadEmailNotification({
   // Send email with Resend
   const { data, error } = await resend.emails.send({
     from: "Your App <yourapp@example.com>",
-    to: participants.participantIds, // In this example, user IDs are email addresses
+    to: userId, // In this example, user IDs are email addresses
     subject: title,
     react: newCommentsEmail,
   });
