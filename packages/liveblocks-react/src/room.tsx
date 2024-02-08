@@ -1168,6 +1168,13 @@ export function createRoomContext<
       [room, options]
     );
 
+    React.useEffect(() => {
+      void getThreadsAndInboxNotifications(room, queryKey, options);
+      incrementQuerySubscribers(queryKey);
+
+      return () => decrementQuerySubscribers(queryKey);
+    }, [room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
     const selector = React.useCallback(
       (state: CacheState<TThreadMetadata>): ThreadsState<TThreadMetadata> => {
         const query = state.queries[queryKey];
@@ -1185,13 +1192,6 @@ export function createRoomContext<
       },
       [room, queryKey] // eslint-disable-line react-hooks/exhaustive-deps
     );
-
-    React.useEffect(() => {
-      void getThreadsAndInboxNotifications(room, queryKey, options);
-      incrementQuerySubscribers(queryKey);
-
-      return () => decrementQuerySubscribers(queryKey);
-    }, [room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
     return useSyncExternalStoreWithSelector(
       store.subscribe,
@@ -1220,14 +1220,6 @@ export function createRoomContext<
       throw query.error;
     }
 
-    React.useEffect(() => {
-      incrementQuerySubscribers(queryKey);
-
-      return () => {
-        decrementQuerySubscribers(queryKey);
-      };
-    }, [queryKey]);
-
     const selector = React.useCallback(
       (
         state: CacheState<TThreadMetadata>
@@ -1239,6 +1231,14 @@ export function createRoomContext<
       },
       [room, queryKey] // eslint-disable-line react-hooks/exhaustive-deps
     );
+
+    React.useEffect(() => {
+      incrementQuerySubscribers(queryKey);
+
+      return () => {
+        decrementQuerySubscribers(queryKey);
+      };
+    }, [queryKey]);
 
     return useSyncExternalStoreWithSelector(
       store.subscribe,
