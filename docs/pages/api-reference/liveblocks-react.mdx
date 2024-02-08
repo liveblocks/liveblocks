@@ -1329,7 +1329,7 @@ const { count, error, isLoading } = useUnreadInboxNotificationsCount();
 👉 A [Suspense version][] of this hook is also available, which will never
 return a loading state and will throw when there’s an error.
 
-### useMarkInboxNotificationAsRead [@badge=&lt;RoomProvider&gt;]
+### useMarkInboxNotificationAsRead
 
 Returns a function that marks an inbox notification as read.
 
@@ -1338,7 +1338,7 @@ const markInboxNotificationAsRead = useMarkInboxNotificationAsRead();
 markInboxNotificationAsRead("in_xxx");
 ```
 
-### useMarkAllInboxNotificationsAsRead [@badge=&lt;LiveblocksProvider&gt;]
+### useMarkAllInboxNotificationsAsRead
 
 Returns a function that marks all inbox notifications as read.
 
