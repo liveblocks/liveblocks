@@ -1166,6 +1166,10 @@ export function createRoomContext<
       throw query.error;
     }
 
+    React.useEffect(() => {
+      void getThreadsAndInboxNotifications(room.id, queryKey, options);
+    }, [room.id, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
     const selector = React.useCallback(
       (
         state: CacheState<TThreadMetadata>
