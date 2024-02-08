@@ -35,7 +35,9 @@ export function createInboxNotificationsApi({
     endpoint: string,
     options?: RequestInit
   ): Promise<T> {
-    const authValue = await authManager.getAuthValue();
+    const authValue = await authManager.getAuthValue({
+      requestedScope: "comments:read",
+    });
 
     if (
       authValue.type === "secret" &&
