@@ -132,6 +132,10 @@ export function createLiveblocksContext<
       return fetchInboxNotificationsRequest;
     }
 
+    store.setQueryState(INBOX_NOTIFICATIONS_QUERY, {
+      isLoading: true,
+    });
+
     try {
       fetchInboxNotificationsRequest = client.getInboxNotifications();
 

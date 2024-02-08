@@ -104,7 +104,7 @@ type PrivateClientApi<TUserMeta extends BaseUserMeta> = {
   cacheStore: CacheStore<BaseMetadata>;
   usersStore: BatchStore<TUserMeta["info"] | undefined, [string]>;
   roomsInfoStore: BatchStore<RoomInfo | undefined, [string]>;
-  rooms: string[];
+  getRoomIds: () => string[];
 };
 
 export type InboxNotificationsApi<
@@ -623,7 +623,7 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
         cacheStore,
         usersStore,
         roomsInfoStore,
-        get rooms() {
+        getRoomIds() {
           return Array.from(roomsById.keys());
         },
       },

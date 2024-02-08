@@ -996,12 +996,20 @@ export function createRoomContext<
     throw innerError;
   }
 
+  const requestsCache: Map<
+    string,
+    {
+      promise: Promise<any> | null;
+      subscribers: number;
+    }
+  > = new Map();
+
   const poller = makePoller(refreshThreadsAndNotifications);
 
   async function refreshThreadsAndNotifications() {
     const requests: Promise<any>[] = [];
 
-    client[kInternal].rooms.map((roomId) => {
+    client[kInternal].getRoomIds().map((roomId) => {
       const room = client.getRoom(roomId);
       if (room === null) return;
 
@@ -1009,7 +1017,7 @@ export function createRoomContext<
         room.id
       );
 
-      if (room[kInternal].comments.queries.has(notificationSettingsQuery)) {
+      if (requestsCache.has(notificationSettingsQuery)) {
         requests.push(
           room
             .getRoomNotificationSettings()
@@ -1056,24 +1064,67 @@ export function createRoomContext<
     await Promise.allSettled(requests);
   }
 
+  function incrementQuerySubscribers(queryKey: string) {
+    const requestCache = requestsCache.get(queryKey);
+
+    if (requestCache === undefined) {
+      console.warn(
+        `Internal unexpected behavior. Cannot increase subscriber count for query "${queryKey}"`
+      );
+      return;
+    }
+
+    requestCache.subscribers++;
+
+    poller.start(POLLING_INTERVAL);
+  }
+
+  function decrementQuerySubscribers(queryKey: string) {
+    const requestCache = requestsCache.get(queryKey);
+
+    if (requestCache === undefined || requestCache.subscribers <= 0) {
+      console.warn(
+        `Internal unexpected behavior. Cannot decrease subscriber count for query "${queryKey}"`
+      );
+      return;
+    }
+
+    requestCache.subscribers--;
+
+    let totalSubscribers = 0;
+    for (const requestCache of requestsCache.values()) {
+      totalSubscribers += requestCache.subscribers;
+    }
+
+    if (totalSubscribers <= 0) {
+      poller.stop();
+    }
+  }
+
   async function getThreadsAndInboxNotifications(
-    roomId: string,
+    room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
     queryKey: string,
     options: UseThreadsOptions<TThreadMetadata>
   ) {
-    const room = client.getRoom(roomId);
-    if (room === null) return;
+    const requestInfo = requestsCache.get(queryKey);
 
-    const queries = room[kInternal].comments.queries;
+    if (requestInfo !== undefined) {
+      return requestInfo.promise;
+    }
 
-    // If the query has already been recorded in the room, we do not make another fetch request
-    if (queries.has(queryKey)) return;
+    const promise = room.getThreads(options);
 
-    // Add the query to the room's queries set to prevent duplicate fetch requests
-    queries.add(queryKey);
+    requestsCache.set(queryKey, {
+      promise,
+      subscribers: 0,
+    });
+
+    store.setQueryState(queryKey, {
+      isLoading: true,
+    });
 
     try {
-      const result = await room.getThreads(options);
+      const result = await promise;
 
       store.updateThreadsAndNotifications(
         result.threads,
@@ -1118,8 +1169,11 @@ export function createRoomContext<
     );
 
     React.useEffect(() => {
-      void getThreadsAndInboxNotifications(room.id, queryKey, options);
-    }, [room.id, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
+      void getThreadsAndInboxNotifications(room, queryKey, options);
+      incrementQuerySubscribers(queryKey);
+
+      return () => decrementQuerySubscribers(queryKey);
+    }, [room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const selector = React.useCallback(
       (state: CacheState<TThreadMetadata>): ThreadsState<TThreadMetadata> => {
@@ -1159,7 +1213,7 @@ export function createRoomContext<
     const query = store.get().queries[queryKey];
 
     if (query === undefined || query.isLoading) {
-      throw getThreadsAndInboxNotifications(room.id, queryKey, options);
+      throw getThreadsAndInboxNotifications(room, queryKey, options);
     }
 
     if (query.error) {
@@ -1167,8 +1221,12 @@ export function createRoomContext<
     }
 
     React.useEffect(() => {
-      void getThreadsAndInboxNotifications(room.id, queryKey, options);
-    }, [room.id, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
+      incrementQuerySubscribers(queryKey);
+
+      return () => {
+        decrementQuerySubscribers(queryKey);
+      };
+    }, [queryKey]);
 
     const selector = React.useCallback(
       (
@@ -1903,15 +1961,25 @@ export function createRoomContext<
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
     queryKey: string
   ) {
-    const queries = room[kInternal].comments.queries;
+    const requestInfo = requestsCache.get(queryKey);
 
-    // If the query has already been recorded in the room, we do not make another fetch request
-    if (queries.has(queryKey)) return;
+    if (requestInfo !== undefined) {
+      return requestInfo.promise;
+    }
 
-    queries.add(queryKey);
+    const promise = room.getRoomNotificationSettings();
+
+    requestsCache.set(queryKey, {
+      promise,
+      subscribers: 0,
+    });
+
+    store.setQueryState(queryKey, {
+      isLoading: true,
+    });
 
     try {
-      const settings = await room.getRoomNotificationSettings();
+      const settings = await promise;
       store.updateRoomInboxNotificationSettings(room.id, settings, queryKey);
     } catch (err) {
       // TODO: Implement error retry mechanism

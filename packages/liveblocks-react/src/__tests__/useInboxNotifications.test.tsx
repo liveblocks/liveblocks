@@ -241,7 +241,7 @@ describe("useInboxNotifications", () => {
     unmount();
   });
 
-  test("sort inbox notifications by notified at date before returning", () => {
+  test("sort inbox notifications by notified at date before returning", async () => {
     const thread1 = dummyThreadData();
     const oldInboxNotification = dummyInboxNoficationData();
     oldInboxNotification.threadId = thread1.id;
@@ -251,6 +251,22 @@ describe("useInboxNotifications", () => {
     const newInboxNotification = dummyInboxNoficationData();
     newInboxNotification.threadId = thread2.id;
     newInboxNotification.notifiedAt = new Date("2021-01-02");
+
+    server.use(
+      mockGetInboxNotifications(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            threads: [],
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
+      })
+    );
 
     const {
       liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
@@ -279,9 +295,15 @@ describe("useInboxNotifications", () => {
     });
 
     expect(result.current).toEqual({
-      isLoading: false,
-      inboxNotifications: [newInboxNotification, oldInboxNotification],
+      isLoading: true,
     });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        inboxNotifications: [newInboxNotification, oldInboxNotification],
+      })
+    );
 
     unmount();
   });

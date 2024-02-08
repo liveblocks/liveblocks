@@ -854,7 +854,6 @@ type PrivateRoomApi = {
   // Used to store metadata related to comments
   comments: {
     lastRequestedAt: Date | null; // Stores the timestamp when threads and notifications were last requested for the room
-    readonly queries: Set<string>; // Stores queries that have been made in the room
   };
 };
 
@@ -940,7 +939,6 @@ type RoomState<
 
   readonly comments: {
     lastRequestedAt: Date | null;
-    readonly queries: Set<string>;
   };
 
   /**
@@ -1498,7 +1496,6 @@ export function createRoom<
 
     comments: {
       lastRequestedAt: null,
-      queries: new Set(),
     },
 
     undoStack: [],
@@ -2947,8 +2944,6 @@ export function createRoom<
           set lastRequestedAt(value: Date | null) {
             context.comments.lastRequestedAt = value;
           },
-
-          queries: context.comments.queries,
         },
       },
 
