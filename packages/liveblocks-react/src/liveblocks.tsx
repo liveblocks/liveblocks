@@ -67,26 +67,23 @@ export function createLiveblocksContext<
     );
   }
 
-  // TODO: Unify request cache
-  let fetchInboxNotificationsRequest: Promise<{
-    inboxNotifications: InboxNotificationData[];
-    threads: ThreadData<never>[];
-  }> | null = null;
   let inboxNotificationsSubscribers = 0;
+  let lastRequestedAt: Date | undefined;
+  let hasFetchedInboxNotifications = false; // Stores whether we have fetched inbox notifications at least once or not
 
   const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
 
-  const POLLING_INTERVAL = 60 * 1000;
+  const POLLING_INTERVAL = 60 * 1000; // 1 minute
   const poller = makePoller(refreshThreadsAndNotifications);
 
   function refreshThreadsAndNotifications() {
-    return client.getInboxNotifications().then(
-      ({ threads, inboxNotifications }) => {
+    return client.getInboxNotifications({ since: lastRequestedAt }).then(
+      (result) => {
         store.updateThreadsAndNotifications(
-          threads,
-          inboxNotifications,
-          [],
-          [],
+          result.threads,
+          result.inboxNotifications,
+          result.deletedThreads,
+          result.deletedInboxNotifications,
           INBOX_NOTIFICATIONS_QUERY
         );
       },
@@ -114,38 +111,33 @@ export function createLiveblocksContext<
 
     if (inboxNotificationsSubscribers <= 0) {
       poller.stop();
+      lastRequestedAt = undefined;
+      hasFetchedInboxNotifications = false;
     }
   }
 
   async function fetchInboxNotifications() {
-    if (fetchInboxNotificationsRequest) {
-      return fetchInboxNotificationsRequest;
-    }
-
-    store.setQueryState(INBOX_NOTIFICATIONS_QUERY, {
-      isLoading: true,
-    });
+    if (hasFetchedInboxNotifications) return;
 
     try {
-      fetchInboxNotificationsRequest = client.getInboxNotifications();
+      const result = await client.getInboxNotifications();
 
-      const { inboxNotifications, threads } =
-        await fetchInboxNotificationsRequest;
+      hasFetchedInboxNotifications = true;
 
       store.updateThreadsAndNotifications(
-        threads,
-        inboxNotifications,
-        [],
-        [],
+        result.threads,
+        result.inboxNotifications,
+        result.deletedThreads,
+        result.deletedInboxNotifications,
         INBOX_NOTIFICATIONS_QUERY
       );
     } catch (er) {
+      // TODO: Implement error retry mechanism
       store.setQueryState(INBOX_NOTIFICATIONS_QUERY, {
         isLoading: false,
         error: er as Error,
       });
     }
-    return;
   }
 
   function useInboxNotificationsSelectorCallback(

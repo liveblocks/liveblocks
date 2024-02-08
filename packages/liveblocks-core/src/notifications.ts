@@ -176,34 +176,3 @@ export function createInboxNotificationsApi({
     markInboxNotificationAsRead,
   };
 }
-
-/**
- * Safely but conveniently build a URLSearchParams instance from a given
- * dictionary of values. For example:
- *
- *   {
- *     "foo": "bar+qux/baz",
- *     "empty": "",
- *     "n": 42,
- *     "nope": undefined,
- *     "alsonope": null,
- *   }
- *
- * Will produce a value that will get serialized as
- * `foo=bar%2Bqux%2Fbaz&empty=&n=42`.
- *
- * Notice how the number is converted to its string representation
- * automatically and the `null`/`undefined` values simply don't end up in the
- * URL.
- */
-function toURLSearchParams(
-  params: Record<string, string | number | null | undefined>
-): URLSearchParams {
-  const result = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) {
-    if (value !== undefined && value !== null) {
-      result.set(key, value.toString());
-    }
-  }
-  return result;
-}
