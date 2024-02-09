@@ -89,8 +89,20 @@ is running:
 npx localtunnel --port 3000
 ```
 
-If you correctly input your IP address, the URL `localtunnel` generates can be
-placed into the Liveblocks webhooks dashboard for quick testing.
+`localtunnel` generates a base URL that can be placed into the Liveblocks
+webhooks dashboard for quick testing. To use this, take the full address of your
+webhook endpoint, and replace the domain in your `localhost` address with the
+generated URL.
+
+```shell
+# Take your local URL
+http://localhost:3000/api/liveblocks-notifications
+
+# Replace localhost with the generated domain, then copy it
+https://my-localtunnel-url.loca.lt/api/liveblocks-notifications
+```
+
+You now have a URL that can be used in the webhook dashboard.
 
 ## Set up webhooks on the Liveblocks dashboard
 
