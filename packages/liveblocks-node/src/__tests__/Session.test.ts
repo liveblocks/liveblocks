@@ -64,9 +64,10 @@ describe("authorization (new API)", () => {
   });
 
   test("throws when no room name", () => {
-    expect(() => makeSession().allow("", []).serializePermissions()).toThrow(
-      "Invalid room name or pattern"
-    );
+    const session = makeSession();
+    expect(() =>
+      session.allow("", session.READ_ACCESS).serializePermissions()
+    ).toThrow("Invalid room name or pattern");
   });
 
   test("throws when room name too long", () => {
@@ -101,6 +102,12 @@ describe("authorization (new API)", () => {
         "foobar*": [P1],
       }
     );
+  });
+
+  test("allows asterisk as pattern", () => {
+    expect(makeSession().allow("*", [P1]).serializePermissions()).toEqual({
+      "*": [P1],
+    });
   });
 
   test("setting invalid permissions will throw", () => {

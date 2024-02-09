@@ -43,7 +43,7 @@ const READ_ACCESS = Object.freeze([
  */
 const FULL_ACCESS = Object.freeze(["room:write", "comments:write"] as const);
 
-const roomPatternRegex = /^[^*]{1,128}[*]?$/;
+const roomPatternRegex = /^(?=.+)[^*]{0,128}[*]?$/;
 
 type PostFn = (path: URLSafeString, json: Json) => Promise<Response>;
 
