@@ -13,7 +13,7 @@ ${reactLiveblocksContextExports(args)}
 function imports({ framework, typescript }: InitQuestions) {
   if (framework === "react") {
     return `import { createClient } from "@liveblocks/client";
-import { createRoomContext } from "@liveblocks/react";`;
+import { createRoomContext, createLiveblocksContext } from "@liveblocks/react";`;
   }
 
   if (typescript) {
@@ -105,7 +105,7 @@ function reactRoomContextExports({
 }: InitQuestions) {
   if (framework !== "react") {
     if (typescript) {
-      return `export type TypedRoom = Room<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>;`;
+      return `export type TypedRoom = Room<Presence, Storage, UserMeta, RoomEvent>;`;
     }
     return "";
   }
@@ -127,9 +127,11 @@ function reactRoomContextExports({
   let end;
 
   if (typescript) {
-    end = `createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(client);`;
+    end = `createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(client);
+`;
   } else {
-    end = `createRoomContext(client);`;
+    end = `createRoomContext(client);
+`;
   }
 
   return start + end;
@@ -208,8 +210,7 @@ function resolvers() {
     // }));
     
     return [];
-  },
-  `;
+  },`;
 }
 
 function roomContextHooks() {
