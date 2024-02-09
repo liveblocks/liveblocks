@@ -27,8 +27,9 @@ function createClient({ framework, comments }: InitQuestions) {
   const options = comments
     ? `{
   // publicApiKey: "",
-  // authEndpoint: "/api/auth",
+  // authEndpoint: "/api/liveblocks-auth",
   // throttle: 100,
+  ${resolvers()}
 }`
     : `{}`;
   return `${
@@ -97,7 +98,11 @@ export type ThreadMetadata = {
 `;
 }
 
-function reactExports({ framework, suspense, typescript }: InitQuestions) {
+function reactRoomContextExports({
+  framework,
+  suspense,
+  typescript,
+}: InitQuestions) {
   if (framework !== "react") {
     if (typescript) {
       return `export type TypedRoom = Room<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>;`;
@@ -149,24 +154,23 @@ function reactLiveblocksContextExports({
 } = `;
   } else {
     start = `export const {
-  ${allHooks()} 
+  ${liveblocksContextHooks()} 
 } = `;
   }
 
   let end;
 
   if (typescript) {
-    end = `createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(client, ${reactExportsOptions()});`;
+    end = `createLiveblocksContext<UserMeta, ThreadMetadata>(client);`;
   } else {
-    end = `createRoomContext(client, ${reactExportsOptions()});`;
+    end = `createLiveblocksContext(client);`;
   }
 
   return start + end;
 }
 
-function reactExportsOptions() {
-  return `{
-  async resolveUsers({ userIds }) {
+function resolvers() {
+  return `async resolveUsers({ userIds }) {
     // Used only for Comments. Return a list of user information retrieved
     // from \`userIds\`. This info is used in comments, mentions etc.
     
@@ -179,7 +183,7 @@ function reactExportsOptions() {
     
     return [];
   },
-  async resolveMentionSuggestions({ text, roomId }) {
+  async resolveMentionSuggestions({ text }) {
     // Used only for Comments. Return a list of userIds that match \`text\`.
     // These userIds are used to create a mention list when typing in the
     // composer. 
@@ -187,22 +191,25 @@ function reactExportsOptions() {
     // For example when you type "@jo", \`text\` will be \`"jo"\`, and 
     // you should to return an array with John and Joanna's userIds:
     // ["john@example.com", "joanna@example.com"]
+
+    // const users = await getUsers({ search: text });
+    // return users.map((user) => user.id);
+
+    return [];
+  },
+  async resolveRoomsInfo({ roomIds }) {
+    // Used only for Comments. Return a list of room information retrieved
+    // from \`roomIds\`.
     
-    // const userIds = await __fetchAllUserIdsFromDB__(roomId);
-    //
-    // Return all userIds if no \`text\`
-    // if (!text) {
-    //   return userIds;
-    // }
-    //
-    // Otherwise, filter userIds for the search \`text\` and return
-    // return userIds.filter((userId) => 
-    //   userId.toLowerCase().includes(text.toLowerCase())  
-    // );
+    // const roomsData = await __fetchRoomsFromDB__(roomIds);
+    // 
+    // return roomsData.map((roomData) => ({
+    //   name: roomData.name,
+    // }));
     
     return [];
   },
-}`;
+  `;
 }
 
 function roomContextHooks() {
