@@ -5,7 +5,8 @@ export function configGeneration(args: InitQuestions) {
   
 ${createClient(args)}
 ${typeDefinitions(args)}
-${reactExports(args)}
+${reactRoomContextExports(args)}
+${reactLiveblocksContextExports(args)}
 `;
 }
 
@@ -109,7 +110,41 @@ function reactExports({ framework, suspense, typescript }: InitQuestions) {
   if (suspense) {
     start = `export const {
   suspense: {
-    ${indentString(allHooks())}
+    ${indentString(roomContextHooks())}
+  }
+} = `;
+  } else {
+    start = `export const {
+  ${roomContextHooks()} 
+} = `;
+  }
+
+  let end;
+
+  if (typescript) {
+    end = `createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(client);`;
+  } else {
+    end = `createRoomContext(client);`;
+  }
+
+  return start + end;
+}
+
+function reactLiveblocksContextExports({
+  framework,
+  suspense,
+  typescript,
+}: InitQuestions) {
+  if (framework !== "react") {
+    return "";
+  }
+
+  let start;
+
+  if (suspense) {
+    start = `export const {
+  suspense: {
+    ${indentString(liveblocksContextHooks())}
   }
 } = `;
   } else {
@@ -170,7 +205,7 @@ function reactExportsOptions() {
 }`;
 }
 
-function allHooks() {
+function roomContextHooks() {
   return `RoomProvider,
   useRoom,
   useMyPresence,
@@ -204,7 +239,20 @@ function allHooks() {
   useEditComment,
   useDeleteComment,
   useAddReaction,
-  useRemoveReaction,`;
+  useRemoveReaction,
+  useThreadSubscription,
+  useMarkThreadAsRead,
+  useRoomNotificationSettings,
+  useUpdateRoomNotificationSettings,`;
+}
+
+function liveblocksContextHooks() {
+  return `LiveblocksProvider,
+  useRoomInfo,
+  useMarkInboxNotificationAsRead,
+  useMarkAllInboxNotificationsAsRead,
+  useInboxNotifications,
+  useUnreadInboxNotificationsCount,`;
 }
 
 function indentString(str: string) {
