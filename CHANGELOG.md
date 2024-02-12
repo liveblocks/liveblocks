@@ -1,3 +1,10 @@
+# Unreleased
+
+### `@liveblocks/react`
+
+- Fix type definitions of `useOthersListener` hook
+- Fix type definitions of `useErrorListener` hook
+
 # v1.9.7
 
 ### `@liveblocks/node`
