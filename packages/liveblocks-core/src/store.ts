@@ -421,30 +421,16 @@ export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
       }
       case "delete-comment": {
         const thread = result.threads[optimisticUpdate.threadId];
+        // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
         }
 
-        result.threads[thread.id] = {
-          ...thread,
-          comments: thread.comments.map((comment) =>
-            comment.id === optimisticUpdate.commentId
-              ? {
-                  ...comment,
-                  deletedAt: optimisticUpdate.deletedAt,
-                  body: undefined,
-                }
-              : comment
-          ),
-        };
-
-        if (
-          !result.threads[thread.id].comments.some(
-            (comment) => comment.deletedAt === undefined
-          )
-        ) {
-          delete result.threads[thread.id];
-        }
+        result.threads[thread.id] = deleteComment(
+          thread,
+          optimisticUpdate.commentId,
+          optimisticUpdate.deletedAt
+        );
 
         break;
       }
@@ -713,5 +699,56 @@ export function upsertComment<TThreadMetadata extends BaseMetadata>(
   return {
     ...thread,
     comments: newComments,
+  };
+}
+
+export function deleteComment<TThreadMetadata extends BaseMetadata>(
+  thread: ThreadDataWithDeleteInfo<TThreadMetadata>,
+  commentId: string,
+  deletedAt: Date
+): ThreadDataWithDeleteInfo<TThreadMetadata> {
+  // If the thread has been deleted, we do not delete the comment
+  if (thread.deletedAt !== undefined) {
+    return thread;
+  }
+
+  // If the thread has been updated since the deletion request, we do not delete the comment
+  if (thread.updatedAt !== undefined && thread.updatedAt > deletedAt) {
+    return thread;
+  }
+
+  const comment = thread.comments.find((comment) => comment.id === commentId);
+
+  // If the comment doesn't exist in the thread, we do not delete the comment
+  if (comment === undefined) {
+    return thread;
+  }
+
+  // If the comment has been deleted since the deletion request, we do not delete the comment
+  if (comment.deletedAt !== undefined && comment.deletedAt > deletedAt) {
+    return thread;
+  }
+
+  const updatedComments = thread.comments.map((comment) =>
+    comment.id === commentId
+      ? {
+          ...comment,
+          deletedAt,
+          body: undefined,
+        }
+      : comment
+  );
+
+  if (!updatedComments.some((comment) => comment.deletedAt === undefined)) {
+    return {
+      ...thread,
+      deletedAt,
+      comments: [],
+    };
+  }
+
+  return {
+    ...thread,
+    comments: updatedComments,
   };
 }
