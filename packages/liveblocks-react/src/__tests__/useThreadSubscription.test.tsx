@@ -52,6 +52,11 @@ describe("useThreadSubscription", () => {
           ctx.json({
             data: threads,
             inboxNotifications,
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -104,6 +109,11 @@ describe("useThreadSubscription", () => {
           ctx.json({
             data: threads,
             inboxNotifications,
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -153,6 +163,11 @@ describe("useThreadSubscription", () => {
           ctx.json({
             data: threads,
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -201,6 +216,11 @@ describe("useThreadSubscription", () => {
           ctx.json({
             data: threads,
             inboxNotifications,
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })

@@ -6,18 +6,24 @@ import {
 } from "./client";
 import {
   convertToInboxNotificationData,
+  convertToInboxNotificationDeleteInfo,
   convertToThreadData,
+  convertToThreadDeleteInfo,
 } from "./convert-plain-data";
 import { Batch } from "./lib/batch";
 import type { Store } from "./lib/create-store";
+import { type QueryParams, urljoin } from "./lib/url";
 import { TokenKind } from "./protocol/AuthToken";
 import type { InboxNotificationDataPlain } from "./types/InboxNotificationData";
+import type { InboxNotificationDeleteInfoPlain } from "./types/InboxNotificationDeleteInfo";
 import type { ThreadDataPlain } from "./types/ThreadData";
+import type { ThreadDeleteInfoPlain } from "./types/ThreadDeleteInfo";
 
 const MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY = 50;
 
 export type GetInboxNotificationsOptions = {
   limit?: number;
+  since?: Date;
 };
 
 export function createInboxNotificationsApi({
@@ -33,7 +39,8 @@ export function createInboxNotificationsApi({
 }): InboxNotificationsApi {
   async function fetchJson<T>(
     endpoint: string,
-    options?: RequestInit
+    options?: RequestInit,
+    params?: QueryParams
   ): Promise<T> {
     const authValue = await authManager.getAuthValue();
 
@@ -45,7 +52,7 @@ export function createInboxNotificationsApi({
       currentUserIdStore.set(() => userId);
     }
 
-    const url = new URL(`/v2/c${endpoint}`, baseUrl);
+    const url = urljoin(baseUrl, `/v2/c${endpoint}`, params);
     const response = await fetcher(url.toString(), {
       ...options,
       headers: {
@@ -89,17 +96,33 @@ export function createInboxNotificationsApi({
   }
 
   async function getInboxNotifications(options?: GetInboxNotificationsOptions) {
-    const queryParams = toURLSearchParams({ limit: options?.limit });
     const json = await fetchJson<{
       threads: ThreadDataPlain[];
       inboxNotifications: InboxNotificationDataPlain[];
-    }>(`/inbox-notifications?${queryParams.toString()}`);
+      deletedThreads: ThreadDeleteInfoPlain[];
+      deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+      meta: {
+        requestedAt: string;
+      };
+    }>("/inbox-notifications", undefined, {
+      limit: options?.limit,
+      since: options?.since?.toISOString(),
+    });
 
     return {
       threads: json.threads.map((thread) => convertToThreadData(thread)),
       inboxNotifications: json.inboxNotifications.map((notification) =>
         convertToInboxNotificationData(notification)
       ),
+      deletedThreads: json.deletedThreads.map((info) =>
+        convertToThreadDeleteInfo(info)
+      ),
+      deletedInboxNotifications: json.deletedInboxNotifications.map((info) =>
+        convertToInboxNotificationDeleteInfo(info)
+      ),
+      meta: {
+        requestedAt: new Date(json.meta.requestedAt),
+      },
     };
   }
 
@@ -152,35 +175,4 @@ export function createInboxNotificationsApi({
     markAllInboxNotificationsAsRead,
     markInboxNotificationAsRead,
   };
-}
-
-/**
- * Safely but conveniently build a URLSearchParams instance from a given
- * dictionary of values. For example:
- *
- *   {
- *     "foo": "bar+qux/baz",
- *     "empty": "",
- *     "n": 42,
- *     "nope": undefined,
- *     "alsonope": null,
- *   }
- *
- * Will produce a value that will get serialized as
- * `foo=bar%2Bqux%2Fbaz&empty=&n=42`.
- *
- * Notice how the number is converted to its string representation
- * automatically and the `null`/`undefined` values simply don't end up in the
- * URL.
- */
-function toURLSearchParams(
-  params: Record<string, string | number | null | undefined>
-): URLSearchParams {
-  const result = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) {
-    if (value !== undefined && value !== null) {
-      result.set(key, value.toString());
-    }
-  }
-  return result;
 }

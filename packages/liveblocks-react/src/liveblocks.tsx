@@ -8,7 +8,9 @@ import type {
   CacheState,
   CacheStore,
   InboxNotificationData,
+  InboxNotificationDeleteInfo,
   Store,
+  ThreadDeleteInfo,
 } from "@liveblocks/core";
 import { kInternal, makePoller } from "@liveblocks/core";
 import { nanoid } from "nanoid";
@@ -48,6 +50,9 @@ export function useLiveblocksContextBundle() {
   return bundle;
 }
 
+export const POLLING_INTERVAL = 60 * 1000; // 1 minute
+export const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
+
 export function createLiveblocksContext<
   TUserMeta extends BaseUserMeta = BaseUserMeta,
   TThreadMetadata extends BaseMetadata = never,
@@ -70,21 +75,28 @@ export function createLiveblocksContext<
   // TODO: Unify request cache
   let fetchInboxNotificationsRequest: Promise<{
     inboxNotifications: InboxNotificationData[];
-    threads: ThreadData<never>[];
+    threads: ThreadData<TThreadMetadata>[];
+    deletedThreads: ThreadDeleteInfo[];
+    deletedInboxNotifications: InboxNotificationDeleteInfo[];
+    meta: {
+      requestedAt: Date;
+    };
   }> | null = null;
   let inboxNotificationsSubscribers = 0;
+  let lastRequestedAt: Date | undefined;
 
-  const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
-
-  const POLLING_INTERVAL = 60 * 1000;
   const poller = makePoller(refreshThreadsAndNotifications);
 
   function refreshThreadsAndNotifications() {
-    return client.getInboxNotifications().then(
-      ({ threads, inboxNotifications }) => {
+    return client.getInboxNotifications({ since: lastRequestedAt }).then(
+      (result) => {
+        lastRequestedAt = result.meta.requestedAt;
+
         store.updateThreadsAndNotifications(
-          threads,
-          inboxNotifications,
+          result.threads,
+          result.inboxNotifications,
+          result.deletedThreads,
+          result.deletedInboxNotifications,
           INBOX_NOTIFICATIONS_QUERY
         );
       },
@@ -127,15 +139,30 @@ export function createLiveblocksContext<
     try {
       fetchInboxNotificationsRequest = client.getInboxNotifications();
 
-      const { inboxNotifications, threads } =
-        await fetchInboxNotificationsRequest;
+      const result = await fetchInboxNotificationsRequest;
 
       store.updateThreadsAndNotifications(
-        threads,
-        inboxNotifications,
+        result.threads,
+        result.inboxNotifications,
+        result.deletedThreads,
+        result.deletedInboxNotifications,
         INBOX_NOTIFICATIONS_QUERY
       );
+
+      /**
+       * We set the `lastRequestedAt` to the timestamp returned by the current request if:
+       * 1. The `lastRequestedAt`has not been set
+       * OR
+       * 2. The current `lastRequestedAt` is older than the timestamp returned by the current request
+       */
+      if (
+        lastRequestedAt === undefined ||
+        lastRequestedAt > result.meta.requestedAt
+      ) {
+        lastRequestedAt = result.meta.requestedAt;
+      }
     } catch (er) {
+      // TODO: Implement error retry mechanism
       store.setQueryState(INBOX_NOTIFICATIONS_QUERY, {
         isLoading: false,
         error: er as Error,

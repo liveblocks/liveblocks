@@ -51,6 +51,11 @@ describe("useEditThreadMetadata", () => {
           ctx.json({
             data: [initialThread],
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       }),

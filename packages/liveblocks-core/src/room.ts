@@ -11,7 +11,9 @@ import {
   convertToCommentData,
   convertToCommentUserReaction,
   convertToInboxNotificationData,
+  convertToInboxNotificationDeleteInfo,
   convertToThreadData,
+  convertToThreadDeleteInfo,
 } from "./convert-plain-data";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { OpSource } from "./crdts/AbstractCrdt";
@@ -36,6 +38,8 @@ import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
 import { asPos } from "./lib/position";
 import type { Resolve } from "./lib/Resolve";
+import type { QueryParams } from "./lib/url";
+import { urljoin } from "./lib/url";
 import { compact, deepClone, tryParseJson } from "./lib/utils";
 import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
@@ -72,6 +76,10 @@ import type {
   InboxNotificationDataPlain,
 } from "./types/InboxNotificationData";
 import type {
+  InboxNotificationDeleteInfo,
+  InboxNotificationDeleteInfoPlain,
+} from "./types/InboxNotificationDeleteInfo";
+import type {
   IWebSocket,
   IWebSocketCloseEvent,
   IWebSocketInstance,
@@ -82,6 +90,10 @@ import type { InternalOthersEvent, OthersEvent } from "./types/Others";
 import type { PartialNullable } from "./types/PartialNullable";
 import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 import type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
+import type {
+  ThreadDeleteInfo,
+  ThreadDeleteInfoPlain,
+} from "./types/ThreadDeleteInfo";
 import type { User } from "./types/User";
 import { PKG_VERSION } from "./version";
 
@@ -480,6 +492,7 @@ export type GetThreadsOptions<TThreadMetadata extends BaseMetadata> = {
   query?: {
     metadata?: Partial<TThreadMetadata>;
   };
+  since?: Date;
 };
 
 type CommentsApi<TThreadMetadata extends BaseMetadata = never> = {
@@ -489,6 +502,11 @@ type CommentsApi<TThreadMetadata extends BaseMetadata = never> = {
   getThreads(options?: GetThreadsOptions<TThreadMetadata>): Promise<{
     threads: ThreadData<TThreadMetadata>[];
     inboxNotifications: InboxNotificationData[];
+    deletedThreads: ThreadDeleteInfo[];
+    deletedInboxNotifications: InboxNotificationDeleteInfo[];
+    meta: {
+      requestedAt: Date;
+    };
   }>;
 
   /**
@@ -832,6 +850,11 @@ type PrivateRoomApi = {
     explicitClose(event: IWebSocketCloseEvent): void;
     rawSend(data: string): void;
   };
+
+  // Used to store metadata related to comments
+  comments: {
+    lastRequestedAt: Date | null; // Stores the timestamp when threads and notifications were last requested for the room
+  };
 };
 
 // The maximum message size on websockets is 1MB. We'll set the threshold
@@ -913,6 +936,10 @@ type RoomState<
 
   readonly undoStack: HistoryOp<TPresence>[][];
   readonly redoStack: HistoryOp<TPresence>[][];
+
+  readonly comments: {
+    lastRequestedAt: Date | null;
+  };
 
   /**
    * When history is paused, all operations will get queued up here. When
@@ -1067,24 +1094,27 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     roomId: string,
     endpoint: string,
     authValue: AuthValue,
-    options?: RequestInit
+    options?: RequestInit,
+    params?: QueryParams
   ) => Promise<Response>
 ): CommentsApi<TThreadMetadata> {
   async function fetchCommentsApi(
     endpoint: string,
+    params?: QueryParams,
     options?: RequestInit
   ): Promise<Response> {
     // TODO: Use the right scope
     const authValue = await getAuthValue();
 
-    return fetchClientApi(roomId, endpoint, authValue, options);
+    return fetchClientApi(roomId, endpoint, authValue, options, params);
   }
 
   async function fetchJson<T>(
     endpoint: string,
-    options?: RequestInit
+    options?: RequestInit,
+    params?: QueryParams
   ): Promise<T> {
-    const response = await fetchCommentsApi(endpoint, options);
+    const response = await fetchCommentsApi(endpoint, params, options);
 
     if (!response.ok) {
       if (response.status >= 400 && response.status < 600) {
@@ -1118,20 +1148,31 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
   }
 
   async function getThreads(options?: GetThreadsOptions<TThreadMetadata>) {
-    const response = await fetchCommentsApi("/threads/search", {
-      body: JSON.stringify({
-        ...(options?.query?.metadata && { metadata: options.query.metadata }),
-      }),
-      headers: {
-        "Content-Type": "application/json",
+    const response = await fetchCommentsApi(
+      "/threads/search",
+      {
+        since: options?.since?.toISOString(),
       },
-      method: "POST",
-    });
+      {
+        body: JSON.stringify({
+          ...(options?.query?.metadata && { metadata: options.query.metadata }),
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      }
+    );
 
     if (response.ok) {
       const json = await (response.json() as Promise<{
         data: ThreadDataPlain<TThreadMetadata>[];
         inboxNotifications: InboxNotificationDataPlain[];
+        deletedThreads: ThreadDeleteInfoPlain[];
+        deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+        meta: {
+          requestedAt: string;
+        };
       }>);
 
       return {
@@ -1139,9 +1180,26 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
         inboxNotifications: json.inboxNotifications.map((notification) =>
           convertToInboxNotificationData(notification)
         ),
+        deletedThreads: json.deletedThreads.map((info) =>
+          convertToThreadDeleteInfo(info)
+        ),
+        deletedInboxNotifications: json.deletedInboxNotifications.map((info) =>
+          convertToInboxNotificationDeleteInfo(info)
+        ),
+        meta: {
+          requestedAt: new Date(json.meta.requestedAt),
+        },
       };
     } else if (response.status === 404) {
-      return { threads: [], inboxNotifications: [] };
+      return {
+        threads: [],
+        inboxNotifications: [],
+        deletedThreads: [],
+        deletedInboxNotifications: [],
+        meta: {
+          requestedAt: new Date(),
+        },
+      };
     } else {
       throw new Error("There was an error while getting threads.");
     }
@@ -1436,6 +1494,10 @@ export function createRoom<
     nodes: new Map<string, LiveNode>(),
     root: undefined,
 
+    comments: {
+      lastRequestedAt: null,
+    },
+
     undoStack: [],
     redoStack: [],
     pausedHistory: null,
@@ -1658,14 +1720,16 @@ export function createRoom<
     roomId: string,
     endpoint: string,
     authValue: AuthValue,
-    options?: RequestInit
+    options?: RequestInit,
+    params?: QueryParams
   ) {
-    const url = new URL(
+    const url = urljoin(
+      config.baseUrl,
       `/v2/c/rooms/${encodeURIComponent(roomId)}${endpoint}`,
-      config.baseUrl
+      params
     );
     const fetcher = config.polyfills?.fetch || /* istanbul ignore next */ fetch;
-    return await fetcher(url.toString(), {
+    return await fetcher(url, {
       ...options,
       headers: {
         ...options?.headers,
@@ -2871,6 +2935,15 @@ export function createRoom<
           // These exist only for our E2E testing app
           explicitClose: (event) => managedSocket._privateSendMachineEvent({ type: "EXPLICIT_SOCKET_CLOSE", event }),
           rawSend: (data) => managedSocket.send(data),
+        },
+
+        comments: {
+          get lastRequestedAt() {
+            return context.comments.lastRequestedAt;
+          },
+          set lastRequestedAt(value: Date | null) {
+            context.comments.lastRequestedAt = value;
+          },
         },
       },
 

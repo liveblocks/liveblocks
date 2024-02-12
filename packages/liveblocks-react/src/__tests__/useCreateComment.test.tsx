@@ -56,6 +56,11 @@ describe("useCreateComment", () => {
           ctx.json({
             data: [initialThread],
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       }),
@@ -132,6 +137,11 @@ describe("useCreateComment", () => {
           ctx.json({
             data: [initialThread],
             inboxNotifications: [initialInboxNotification],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       }),
@@ -213,6 +223,11 @@ describe("useCreateComment", () => {
           ctx.json({
             data: [initialThread],
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       }),
