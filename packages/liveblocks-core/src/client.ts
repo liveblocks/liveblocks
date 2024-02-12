@@ -13,6 +13,7 @@ import { deprecateIf } from "./lib/deprecation";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import type { Resolve } from "./lib/Resolve";
+import type { GetInboxNotificationsOptions } from "./notifications";
 import { createInboxNotificationsApi } from "./notifications";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
@@ -26,9 +27,11 @@ import type { CacheStore } from "./store";
 import { createClientStore } from "./store";
 import type { BaseMetadata } from "./types/BaseMetadata";
 import type { InboxNotificationData } from "./types/InboxNotificationData";
+import type { InboxNotificationDeleteInfo } from "./types/InboxNotificationDeleteInfo";
 import type { OptionalPromise } from "./types/OptionalPromise";
 import type { RoomInfo } from "./types/RoomInfo";
 import type { ThreadData } from "./types/ThreadData";
+import type { ThreadDeleteInfo } from "./types/ThreadDeleteInfo";
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1_000;
@@ -101,6 +104,7 @@ type PrivateClientApi<TUserMeta extends BaseUserMeta> = {
   cacheStore: CacheStore<BaseMetadata>;
   usersStore: BatchStore<TUserMeta["info"] | undefined, [string]>;
   roomsInfoStore: BatchStore<RoomInfo | undefined, [string]>;
+  getRoomIds: () => string[];
 };
 
 export type InboxNotificationsApi<
@@ -109,9 +113,14 @@ export type InboxNotificationsApi<
   /**
    * @private
    */
-  getInboxNotifications(): Promise<{
+  getInboxNotifications(options?: GetInboxNotificationsOptions): Promise<{
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<TThreadMetadata>[];
+    deletedThreads: ThreadDeleteInfo[];
+    deletedInboxNotifications: InboxNotificationDeleteInfo[];
+    meta: {
+      requestedAt: Date;
+    };
   }>;
 
   /**
@@ -614,6 +623,9 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
         cacheStore,
         usersStore,
         roomsInfoStore,
+        getRoomIds() {
+          return Array.from(roomsById.keys());
+        },
       },
     },
     kInternal,

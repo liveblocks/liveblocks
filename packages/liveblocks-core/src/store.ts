@@ -5,9 +5,11 @@ import type { BaseMetadata } from "./types/BaseMetadata";
 import type { CommentBody } from "./types/CommentBody";
 import type { CommentData, CommentReaction } from "./types/CommentData";
 import type { InboxNotificationData } from "./types/InboxNotificationData";
+import type { InboxNotificationDeleteInfo } from "./types/InboxNotificationDeleteInfo";
 import type { PartialNullable } from "./types/PartialNullable";
 import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
-import type { ThreadData } from "./types/ThreadData";
+import type { ThreadData, ThreadDataWithDeleteInfo } from "./types/ThreadData";
+import type { ThreadDeleteInfo } from "./types/ThreadDeleteInfo";
 
 type OptimisticUpdate<TThreadMetadata extends BaseMetadata> =
   | CreateThreadOptimisticUpdate<TThreadMetadata>
@@ -106,7 +108,7 @@ export type CacheState<TThreadMetadata extends BaseMetadata> = {
   /**
    * Threads by ID.
    */
-  threads: Record<string, ThreadData<TThreadMetadata>>;
+  threads: Record<string, ThreadDataWithDeleteInfo<TThreadMetadata>>;
   /**
    * Keep track of loading and error status of all the queries made by the client.
    */
@@ -136,7 +138,14 @@ export interface CacheStore<TThreadMetadata extends BaseMetadata>
   updateThreadsAndNotifications(
     threads: ThreadData<TThreadMetadata>[],
     inboxNotifications: InboxNotificationData[],
+    deletedThreads: ThreadDeleteInfo[],
+    deletedInboxNotifications: InboxNotificationDeleteInfo[],
     queryKey?: string
+  ): void;
+  updateRoomInboxNotificationSettings(
+    roomId: string,
+    settings: RoomNotificationSettings,
+    queryKey: string
   ): void;
   pushOptimisticUpdate(
     optimisticUpdate: OptimisticUpdate<TThreadMetadata>
@@ -158,42 +167,6 @@ export function createClientStore<
     inboxNotifications: {},
     notificationSettings: {},
   });
-
-  function mergeThreads(
-    existingThreads: Record<string, ThreadData<TThreadMetadata>>,
-    newThreads: Record<string, ThreadData<TThreadMetadata>>
-  ): Record<string, ThreadData<TThreadMetadata>> {
-    const updatedThreads = { ...existingThreads };
-
-    Object.entries(newThreads).forEach(([id, thread]) => {
-      const existingThread = updatedThreads[id];
-
-      // If the thread already exists, we need to compare the two threads to determine which one is newer.
-      if (existingThread) {
-        const result = compareThreads(existingThread, thread);
-        // If the existing thread is newer than the new thread, we do not update the existing thread.
-        if (result === 1) return;
-      }
-      updatedThreads[id] = thread;
-    });
-
-    return updatedThreads;
-  }
-
-  function mergeNotifications(
-    existingInboxNotifications: Record<string, InboxNotificationData>,
-    newInboxNotifications: Record<string, InboxNotificationData>
-  ) {
-    // TODO: Do not replace existing inboxNotifications if it has been updated more recently than the incoming inbox notifications
-    const inboxNotifications = Object.values({
-      ...existingInboxNotifications,
-      ...newInboxNotifications,
-    });
-
-    return Object.fromEntries(
-      inboxNotifications.map((notification) => [notification.id, notification])
-    );
-  }
 
   return {
     ...store,
@@ -240,22 +213,22 @@ export function createClientStore<
     updateThreadsAndNotifications(
       threads: ThreadData<TThreadMetadata>[],
       inboxNotifications: InboxNotificationData[],
+      deletedThreads: ThreadDeleteInfo[],
+      deletedInboxNotifications: InboxNotificationDeleteInfo[],
       queryKey?: string
     ) {
       store.set((state) => ({
         ...state,
-        threads: mergeThreads(
-          state.threads,
-          Object.fromEntries(threads.map((thread) => [thread.id, thread]))
-        ),
-        inboxNotifications: mergeNotifications(
+        threads: applyThreadUpdates(state.threads, {
+          newThreads: threads,
+          deletedThreads,
+        }),
+        inboxNotifications: applyNotificationsUpdates(
           state.inboxNotifications,
-          Object.fromEntries(
-            inboxNotifications.map((notification) => [
-              notification.id,
-              notification,
-            ])
-          )
+          {
+            newInboxNotifications: inboxNotifications,
+            deletedNotifications: deletedInboxNotifications,
+          }
         ),
         queries:
           queryKey !== undefined
@@ -266,6 +239,26 @@ export function createClientStore<
                 },
               }
             : state.queries,
+      }));
+    },
+
+    updateRoomInboxNotificationSettings(
+      roomId: string,
+      settings: RoomNotificationSettings,
+      queryKey: string
+    ) {
+      store.set((state) => ({
+        ...state,
+        notificationSettings: {
+          ...state.notificationSettings,
+          [roomId]: settings,
+        },
+        queries: {
+          ...state.queries,
+          [queryKey]: {
+            isLoading: false,
+          },
+        },
       }));
     },
 
@@ -560,4 +553,104 @@ export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
   }
 
   return result;
+}
+
+export function applyThreadUpdates<TThreadMetadata extends BaseMetadata>(
+  existingThreads: Record<string, ThreadDataWithDeleteInfo<TThreadMetadata>>,
+  updates: {
+    newThreads: ThreadData<TThreadMetadata>[];
+    deletedThreads: ThreadDeleteInfo[];
+  }
+): Record<string, ThreadData<TThreadMetadata>> {
+  const updatedThreads = { ...existingThreads };
+
+  // Add new threads or update existing threads if the existing thread is older than the new thread.
+  updates.newThreads.forEach((thread) => {
+    const existingThread = updatedThreads[thread.id];
+
+    // If the thread already exists, we need to compare the two threads to determine which one is newer.
+    if (existingThread) {
+      const result = compareThreads(existingThread, thread);
+      // If the existing thread is newer than the new thread, we do not update the existing thread.
+      if (result === 1) return;
+    }
+    updatedThreads[thread.id] = thread;
+  });
+
+  // Mark threads in the deletedThreads list as deleted
+  updates.deletedThreads.forEach(({ id, deletedAt }) => {
+    const existingThread = updatedThreads[id];
+    if (existingThread === undefined) return;
+
+    existingThread.deletedAt = deletedAt;
+    existingThread.updatedAt = deletedAt;
+    existingThread.comments = [];
+  });
+
+  return updatedThreads;
+}
+
+export function applyNotificationsUpdates(
+  existingInboxNotifications: Record<string, InboxNotificationData>,
+  updates: {
+    newInboxNotifications: InboxNotificationData[];
+    deletedNotifications: InboxNotificationDeleteInfo[];
+  }
+): Record<string, InboxNotificationData> {
+  const updatedInboxNotifications = { ...existingInboxNotifications };
+
+  // Add new notifications or update existing notifications if the existing notification is older than the new notification.
+  updates.newInboxNotifications.forEach((notification) => {
+    const existingNotification = updatedInboxNotifications[notification.id];
+    // If the notification already exists, we need to compare the two notifications to determine which one is newer.
+    if (existingNotification) {
+      const result = compareInboxNotifications(
+        existingNotification,
+        notification
+      );
+
+      // If the existing notification is newer than the new notification, we do not update the existing notification.
+      if (result === 1) return;
+    }
+
+    // If the new notification is newer than the existing notification, we update the existing notification.
+    updatedInboxNotifications[notification.id] = notification;
+  });
+
+  updates.deletedNotifications.forEach(
+    ({ id }) => delete updatedInboxNotifications[id]
+  );
+
+  return updatedInboxNotifications;
+}
+
+/**
+ * Compares two inbox notifications to determine which one is newer.
+ * @param inboxNotificationA The first inbox notification to compare.
+ * @param inboxNotificationB The second inbox notification to compare.
+ * @returns 1 if inboxNotificationA is newer, -1 if inboxNotificationB is newer, or 0 if they are the same age or can't be compared.
+ */
+export function compareInboxNotifications(
+  inboxNotificationA: InboxNotificationData,
+  inboxNotificationB: InboxNotificationData
+): number {
+  if (inboxNotificationA.notifiedAt > inboxNotificationB.notifiedAt) {
+    return 1;
+  } else if (inboxNotificationA.notifiedAt < inboxNotificationB.notifiedAt) {
+    return -1;
+  }
+
+  // notifiedAt times are the same, compare readAt times if both are not null
+  if (inboxNotificationA.readAt && inboxNotificationB.readAt) {
+    return inboxNotificationA.readAt > inboxNotificationB.readAt
+      ? 1
+      : inboxNotificationA.readAt < inboxNotificationB.readAt
+        ? -1
+        : 0;
+  } else if (inboxNotificationA.readAt || inboxNotificationB.readAt) {
+    return inboxNotificationA.readAt ? 1 : -1;
+  }
+
+  // If all dates are equal, return 0
+  return 0;
 }

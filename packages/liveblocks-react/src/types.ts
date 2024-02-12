@@ -17,7 +17,6 @@ import type {
   BaseMetadata,
   CommentBody,
   CommentData,
-  GetThreadsOptions,
   InboxNotificationData,
   kInternal,
   PartialNullable,
@@ -29,8 +28,11 @@ import type {
   ToImmutable,
 } from "@liveblocks/core";
 
-export type UseThreadsOptions<TThreadMetadata extends BaseMetadata> =
-  GetThreadsOptions<TThreadMetadata>;
+export type UseThreadsOptions<TThreadMetadata extends BaseMetadata> = {
+  query?: {
+    metadata?: Partial<TThreadMetadata>;
+  };
+};
 
 import type { PropsWithChildren } from "react";
 

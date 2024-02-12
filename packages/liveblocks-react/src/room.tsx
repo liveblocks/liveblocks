@@ -119,7 +119,7 @@ function useSyncExternalStore<Snapshot>(
 
 const STABLE_EMPTY_LIST = Object.freeze([]);
 
-export const POLLING_INTERVAL = 5 * 60 * 1000;
+export const POLLING_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
 const MENTION_SUGGESTIONS_DEBOUNCE = 500;
 
@@ -1001,26 +1001,67 @@ export function createRoomContext<
     {
       promise: Promise<any> | null;
       subscribers: number;
-      requestFactory: () => Promise<any>;
-      onSuccess: (result: any) => void;
     }
   > = new Map();
 
   const poller = makePoller(refreshThreadsAndNotifications);
 
   async function refreshThreadsAndNotifications() {
-    await Promise.allSettled(
-      Array.from(requestsCache.entries())
-        .filter(([_, requestCache]) => requestCache.subscribers > 0)
-        .map(async ([_, requestCache]) => {
-          return requestCache.requestFactory().then(
-            (result) => requestCache.onSuccess(result),
-            () => {
-              // Ignore errors during polling
-            }
-          );
-        })
-    );
+    const requests: Promise<any>[] = [];
+
+    client[kInternal].getRoomIds().map((roomId) => {
+      const room = client.getRoom(roomId);
+      if (room === null) return;
+
+      const notificationSettingsQuery = makeNotificationSettingsQueryKey(
+        room.id
+      );
+
+      if (requestsCache.has(notificationSettingsQuery)) {
+        requests.push(
+          room
+            .getRoomNotificationSettings()
+            .then((settings) => {
+              store.updateRoomInboxNotificationSettings(
+                room.id,
+                settings,
+                notificationSettingsQuery
+              );
+            })
+            .catch(() => {
+              // TODO: Handle error
+            })
+        );
+      }
+
+      const lastRequestedAt = room[kInternal].comments.lastRequestedAt;
+      if (lastRequestedAt === null) return;
+
+      // Retrieve threads that have been updated/deleted since the last requestedAt value
+      requests.push(
+        room
+          .getThreads({ since: lastRequestedAt })
+          .then((result) => {
+            store.updateThreadsAndNotifications(
+              result.threads,
+              result.inboxNotifications,
+              result.deletedThreads,
+              result.deletedInboxNotifications
+            );
+
+            // If this query finished after the room was unmounted, we do not want to update the `lastRequestedAt` value
+            const room = client.getRoom(roomId);
+            if (room === null) return;
+
+            room[kInternal].comments.lastRequestedAt = result.meta.requestedAt;
+          })
+          .catch(() => {
+            // TODO: Handle error
+          })
+      );
+    });
+
+    await Promise.allSettled(requests);
   }
 
   function incrementQuerySubscribers(queryKey: string) {
@@ -1060,23 +1101,21 @@ export function createRoomContext<
     }
   }
 
-  async function getOrInitRequest<TRequestResult>(
+  async function getThreadsAndInboxNotifications(
+    room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
     queryKey: string,
-    requestFactory: () => Promise<TRequestResult>,
-    onSuccess: (requestResult: TRequestResult) => void
-  ): Promise<any> {
+    options: UseThreadsOptions<TThreadMetadata>
+  ) {
     const requestInfo = requestsCache.get(queryKey);
 
     if (requestInfo !== undefined) {
       return requestInfo.promise;
     }
 
-    const promise = requestFactory();
+    const promise = room.getThreads(options);
 
     requestsCache.set(queryKey, {
       promise,
-      requestFactory,
-      onSuccess,
       subscribers: 0,
     });
 
@@ -1086,44 +1125,38 @@ export function createRoomContext<
 
     try {
       const result = await promise;
-      onSuccess(result);
-    } catch (er) {
+
+      store.updateThreadsAndNotifications(
+        result.threads,
+        result.inboxNotifications,
+        result.deletedThreads,
+        result.deletedInboxNotifications,
+        queryKey
+      );
+
+      const lastRequestedAt = room[kInternal].comments.lastRequestedAt;
+
+      /**
+       * We set the `lastRequestedAt` value for the room to the timestamp returned by the current request if:
+       * 1. The `lastRequestedAt` value for the room has not been set
+       * OR
+       * 2. The `lastRequestedAt` value for the room is older than the timestamp returned by the current request
+       */
+      if (
+        lastRequestedAt === null ||
+        lastRequestedAt > result.meta.requestedAt
+      ) {
+        room[kInternal].comments.lastRequestedAt = result.meta.requestedAt;
+      }
+    } catch (err) {
+      // TODO: Implement error retry mechanism
       store.setQueryState(queryKey, {
         isLoading: false,
-        error: er as Error,
+        error: err as Error,
       });
     }
 
     poller.start(POLLING_INTERVAL);
-  }
-
-  async function getThreadsAndInboxNotifications(
-    room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-    queryKey: string,
-    options: UseThreadsOptions<TThreadMetadata>
-  ) {
-    const roomId = room.id;
-    return getOrInitRequest(
-      queryKey,
-      async () => {
-        const room = client.getRoom(roomId);
-
-        if (room === null) {
-          return;
-        }
-
-        return room.getThreads(options);
-      },
-      (result) => {
-        if (result !== undefined) {
-          store.updateThreadsAndNotifications(
-            result.threads,
-            result.inboxNotifications,
-            queryKey
-          );
-        }
-      }
-    );
   }
 
   function useThreads(
@@ -1205,7 +1238,7 @@ export function createRoomContext<
       return () => {
         decrementQuerySubscribers(queryKey);
       };
-    }, [room, queryKey]);
+    }, [queryKey]);
 
     return useSyncExternalStoreWithSelector(
       store.subscribe,
@@ -1928,36 +1961,35 @@ export function createRoomContext<
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
     queryKey: string
   ) {
-    const roomId = room.id;
-    return getOrInitRequest(
-      queryKey,
-      async () => {
-        const room = client.getRoom(roomId);
+    const requestInfo = requestsCache.get(queryKey);
 
-        if (room === null) {
-          return;
-        }
+    if (requestInfo !== undefined) {
+      return requestInfo.promise;
+    }
 
-        return room.getRoomNotificationSettings();
-      },
-      (settings) => {
-        if (settings !== undefined) {
-          store.set((state) => ({
-            ...state,
-            notificationSettings: {
-              ...state.notificationSettings,
-              [room.id]: settings,
-            },
-            queries: {
-              ...state.queries,
-              [queryKey]: {
-                isLoading: false,
-              },
-            },
-          }));
-        }
-      }
-    );
+    const promise = room.getRoomNotificationSettings();
+
+    requestsCache.set(queryKey, {
+      promise,
+      subscribers: 0,
+    });
+
+    store.setQueryState(queryKey, {
+      isLoading: true,
+    });
+
+    try {
+      const settings = await promise;
+      store.updateRoomInboxNotificationSettings(room.id, settings, queryKey);
+    } catch (err) {
+      // TODO: Implement error retry mechanism
+      store.setQueryState(queryKey, {
+        isLoading: false,
+        error: err as Error,
+      });
+    }
+
+    poller.start(POLLING_INTERVAL);
   }
 
   function useRoomNotificationSettings(): [
@@ -2257,7 +2289,7 @@ function handleApiError(err: CommentsApiError | NotificationsApiError): Error {
   return new Error(message);
 }
 
-function generateQueryKey<TThreadMetadata extends BaseMetadata>(
+export function generateQueryKey<TThreadMetadata extends BaseMetadata>(
   roomId: string,
   options: UseThreadsOptions<TThreadMetadata>["query"]
 ) {

@@ -186,6 +186,7 @@ export type {
   InboxNotificationDataPlain,
   InboxNotificationThreadData,
 } from "./types/InboxNotificationData";
+export type { InboxNotificationDeleteInfo } from "./types/InboxNotificationDeleteInfo";
 export type {
   IWebSocket,
   IWebSocketCloseEvent,
@@ -208,6 +209,7 @@ export type {
 export type { RoomInfo } from "./types/RoomInfo";
 export type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 export type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
+export type { ThreadDeleteInfo } from "./types/ThreadDeleteInfo";
 export type { User } from "./types/User";
 export { detectDupes };
 

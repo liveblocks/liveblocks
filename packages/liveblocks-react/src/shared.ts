@@ -121,7 +121,7 @@ export function createSharedContext<
     const roomInfoState = getRoomInfoState();
 
     if (!roomInfoState || roomInfoState.isLoading) {
-      throw usersStore.get(roomId);
+      throw roomsInfoStore.get(roomId);
     }
 
     if (roomInfoState.error) {
@@ -129,7 +129,7 @@ export function createSharedContext<
     }
 
     const state = useSyncExternalStore(
-      usersStore.subscribe,
+      roomsInfoStore.subscribe,
       getRoomInfoState,
       getRoomInfoState
     );

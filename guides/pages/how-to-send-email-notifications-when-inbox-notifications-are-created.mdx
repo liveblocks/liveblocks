@@ -9,17 +9,35 @@ meta:
 Liveblocks [Comments](/docs/products/comments) allows you to build a commenting
 experience, along with inbox notifications using
 [InboxNotification](/docs/api-reference/liveblocks-react-comments#InboxNotification).
-Using our webhooks and REST API, it’s possible to aggregate a list of unread
-notifications, and send these in an emails to your users, so they can stay up to
-date.
+With our webhooks and REST API, it’s possible to aggregate a list of unread
+comments from the last 30 minutes into a single email, and send this to your
+user.
+
+<Figure>
+  <Image
+    src="/assets/comments/email-notification.png"
+    alt="An email titled 'New notifications' showing two comments and a link to the thread"
+    width={1500}
+    height={1000}
+  />
+</Figure>
+
+<Banner title="Just in case">
+
+If you’re looking for a guide on sending an email containing one comment,
+immediately after every single comment is created, then
+[sending emails when comments are created](/docs/guides/how-to-send-email-notifications-when-comments-are-created)
+is for you.
+
+</Banner>
 
 ## What we’re building
 
-In this guide we’ll be learning how to send inbox notifications, and more
-specifically, we’ll be looking at how to:
+In this guide we’ll be learning how to send emails notifying users about unread
+comments, and more specifically, we’ll be looking at how to:
 
 - Trigger events when inbox notifications are created using the
-  [ThreadEmailNotificationEvent](/docs/platform/webhooks#ThreadEmailNotificationEvent)
+  [`ThreadEmailNotificationEvent`](/docs/platform/webhooks#ThreadEmailNotificationEvent)
   webhook event.
 - Fetch unread thread data using the
   [`@liveblocks/node`](/docs/api-reference/liveblocks-node) package.
@@ -33,17 +51,53 @@ specifically, we’ll be looking at how to:
 This guide assumes you already have a Liveblocks Comments project set up. If you
 haven’t already got one, you can
 [get started with Comments](/docs/get-started/comments), and come back after
-you’re set up. You could also use our
-[basic Comments example](/examples/comments/nextjs-comments).
+you’re set up. You could also use our [Next.js Starter Kit](/starter-kit) which
+has this set up already.
 
 </Banner>
+
+## What are inbox notifications?
+
+First, we need to understand how inbox notifications work in
+[Comments](/docs/products/comments). When a user mentions you in a thread, or if
+you’ve previously participated in it, then you will receive an inbox
+notification for it. For example, in the image below, _Quinn Elton_ and _Emil
+Joyce_ are both participants.
+
+<Figure highlight={35}>
+  <Image
+    src="/assets/comments/comment-body.png"
+    alt="Comment with example body: 'Thank you so much @Emil Joyce!', with 'so much' in bold"
+    width={1289}
+    height={390}
+  />
+</Figure>
+
+The
+[InboxNotification](/docs/api-reference/liveblocks-react-comments#InboxNotification)
+component allows you to create a UI component that displays a live list of these
+notifications across your rooms, which is very helpful. But how do you send
+emails to your users letting them know they have unread notifications in their
+inbox?
+
+## Using webhooks
+
+Liveblocks provides a number of [webhooks](/docs/platform/webhooks) that can
+send requests to your API endpoint when certain events occurs. One webhook we
+provide is the
+[`ThreadEmailNotificationEvent`](/docs/platform/webhooks#ThreadEmailNotificationEvent)
+webhook, which is triggered for each participating user in a thread, 30 minutes
+after activity has occurred, and this can be used to send emails to your users.
+
+The information it returns allows you to retrieve comments that have not yet
+been read by the user, making it possible to aggregate multiple unread comments
+into a single notification email. Let’s take a look at how to set this up.
 
 ## Create an endpoint in your project
 
 When a webhook event is triggered, it can send a POST request to the back end in
-your project, and from within there we can update the database. In this guide,
-we’ll be using a Next.js route handler (API endpoint) as an example, but other
-frameworks work similarly.
+your project. In this guide, we’ll be using a Next.js route handler (API
+endpoint) as an example, but other frameworks work similarly.
 
 In order to use webhooks, we’ll need to retrieve the `headers` and `body` from
 the request. Here’s the basic endpoint we’ll be starting from:
@@ -84,8 +138,20 @@ is running:
 npx localtunnel --port 3000
 ```
 
-If you correctly input your IP address, the URL `localtunnel` generates can be
-placed into the Liveblocks webhooks dashboard for quick testing.
+`localtunnel` generates a base URL that can be placed into the Liveblocks
+webhooks dashboard for quick testing. To use this, take the full address of your
+webhook endpoint, and replace the domain in your `localhost` address with the
+generated URL.
+
+```shell
+# Take your local URL
+http://localhost:3000/api/liveblocks-notifications
+
+# Replace localhost with the generated domain, then copy it
+https://my-localtunnel-url.loca.lt/api/liveblocks-notifications
+```
+
+You now have a URL that can be used in the webhook dashboard.
 
 ## Set up webhooks on the Liveblocks dashboard
 
@@ -434,7 +500,17 @@ If there are no unread notifications, then we’re choosing not to send an email
 ## Generating HTML for the email
 
 Now that we have the comment data, we have one more step before sending the
-notifications—formatting each comment’s text, found inside `comment.body`.
+notifications—formatting each comment’s text, found inside `comment.body`, and
+generating the HTML for our email.
+
+<Figure>
+  <Image
+    src="/assets/comments/email-notification.png"
+    alt="An email titled 'New notifications' showing two comments and a link to the thread"
+    width={1500}
+    height={1000}
+  />
+</Figure>
 
 By using
 [`await stringifyCommentBody`](/docs/api-reference/liveblocks-node#stringify-comment-body),
@@ -538,10 +614,10 @@ create more complex formatting easily by using more complex
 [`stringifyCommentBody`](/docs/api-reference/liveblocks-node#stringify-comment-body)
 options.
 
-## Send notifications
+## Send notification emails
 
-Now that the HTML’s been generated, we can send the notifications. Earlier we
-retrieved `userId`, the ID of the user that’s receiving the notification. You
+Now that the HTML’s been generated, we can send the notification emails. Earlier
+we retrieved `userId`, the ID of the user that’s receiving the notification. You
 can use this to get the user’s email address, before sending the email itself.
 
 <Banner title="userIds">
@@ -767,7 +843,7 @@ Great, we’re successfully sending email notifications after new comments are
 created! In this guide we’ve learned:
 
 - How to use [webhooks](/docs/platform/webhooks) and the
-  [`ThreadEmailNotiticationEvent`](/docs/platform/webhooks#ThreadEmailNotiticationEvent).
+  [`ThreadEmailNotificationEvent`](/docs/platform/webhooks#ThreadEmailNotificationEvent).
 - How to use the [`@liveblocks/node`](/docs/api-reference/liveblocks-node)
   package to unread thread data.
 - How to shape a threads into HTML with
