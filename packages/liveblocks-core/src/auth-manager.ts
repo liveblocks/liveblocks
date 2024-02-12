@@ -212,7 +212,7 @@ export function createAuthManager(
         }
       }
       throw new StopRetrying(
-        "The issued Liveblocks auth token doesn't grant enough permissions."
+        "The issued Access Token doesn't grant enough permissions. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/access-tokens-not-enough-permissions"
       );
     }
   }
