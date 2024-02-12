@@ -55,3 +55,32 @@ ctx.useOthersListener((event) => {
       expectType<never>(event);
   }
 });
+
+// The useOthersListener() hook with inline unpacking
+ctx.useOthersListener(({ user, type }) => {
+  expectType<User<P, U> | undefined>(user);
+  expectType<"enter" | "leave" | "update" | "reset">(type);
+  switch (type) {
+    case "enter":
+      expectType<User<P, U>>(user);
+      return;
+    case "leave":
+      expectType<User<P, U>>(user);
+      return;
+    case "update":
+      expectType<User<P, U>>(user);
+      return;
+    case "reset":
+      // No extra fields on reset
+      expectType<undefined>(user);
+      return;
+    default:
+      expectType<never>(type);
+  }
+});
+
+ctx.useErrorListener((err) => {
+  expectType<string>(err.message);
+  expectType<string | undefined>(err.stack);
+  expectType<number>(err.code);
+});
