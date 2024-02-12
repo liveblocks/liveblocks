@@ -1717,27 +1717,62 @@ export function createRoomContext<
     const room = useRoom();
     return React.useCallback(
       ({ threadId, commentId, body }: EditCommentOptions): void => {
-        const now = new Date();
+        const editedAt = new Date();
         const optimisticUpdateId = nanoid();
+
+        const thread = store.get().threads[threadId];
+        if (thread === undefined) {
+          console.warn(
+            `Internal unexpected behavior. Cannot edit comment in thread "${threadId}" because the thread does not exist in the cache.`
+          );
+          return;
+        }
+
+        const comment = thread.comments.find(
+          (comment) => comment.id === commentId
+        );
+
+        if (comment === undefined || comment.deletedAt !== undefined) {
+          console.warn(
+            `Internal unexpected behavior. Cannot edit comment "${commentId}" in thread "${threadId}" because the comment does not exist in the cache.`
+          );
+          return;
+        }
 
         store.pushOptimisticUpdate({
           type: "edit-comment",
-          threadId,
-          commentId,
-          body,
-          editedAt: now,
+          editedAt,
+          comment: {
+            ...comment,
+            body,
+          },
           id: optimisticUpdateId,
         });
 
         room.editComment({ threadId, commentId, body }).then(
           (editedComment) => {
-            store.set((state) => ({
-              ...state,
-              threads: upsertComment(state.threads, editedComment),
-              optimisticUpdates: state.optimisticUpdates.filter(
+            store.set((state) => {
+              const existingThread = state.threads[threadId];
+              const updatedOptimisticUpdates = state.optimisticUpdates.filter(
                 (update) => update.id !== optimisticUpdateId
-              ),
-            }));
+              );
+
+              if (existingThread === undefined) {
+                return {
+                  ...state,
+                  optimisticUpdates: updatedOptimisticUpdates,
+                };
+              }
+
+              return {
+                ...state,
+                threads: {
+                  ...state.threads,
+                  [threadId]: upsertComment(existingThread, editedComment), // Upsert the edited comment into the thread comments list (if applicable)
+                },
+                optimisticUpdates: updatedOptimisticUpdates,
+              };
+            });
           },
           (err: Error) =>
             onMutationFailure(

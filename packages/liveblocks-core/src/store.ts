@@ -2,7 +2,6 @@ import type { Store } from "./lib/create-store";
 import { createStore } from "./lib/create-store";
 import type { Resolve } from "./lib/Resolve";
 import type { BaseMetadata } from "./types/BaseMetadata";
-import type { CommentBody } from "./types/CommentBody";
 import type { CommentData, CommentReaction } from "./types/CommentData";
 import type { InboxNotificationData } from "./types/InboxNotificationData";
 import type { InboxNotificationDeleteInfo } from "./types/InboxNotificationDeleteInfo";
@@ -47,10 +46,8 @@ type CreateCommentOptimisticUpdate = {
 type EditCommentOptimisticUpdate = {
   type: "edit-comment";
   id: string;
-  threadId: string;
   editedAt: Date;
-  commentId: string;
-  body: CommentBody;
+  comment: CommentData;
 };
 
 type DeleteCommentOptimisticUpdate = {
@@ -409,23 +406,17 @@ export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
         break;
       }
       case "edit-comment": {
-        const thread = result.threads[optimisticUpdate.threadId];
+        const thread = result.threads[optimisticUpdate.comment.threadId];
+        // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
         }
 
-        result.threads[thread.id] = {
-          ...thread,
-          comments: thread.comments.map((comment) =>
-            comment.id === optimisticUpdate.commentId
-              ? ({
-                  ...comment,
-                  editedAt: optimisticUpdate.editedAt,
-                  body: optimisticUpdate.body,
-                } as CommentData) // TODO: Should we handle deleted CommentData?
-              : comment
-          ),
-        };
+        result.threads[thread.id] = upsertComment(
+          thread,
+          optimisticUpdate.comment
+        );
+
         break;
       }
       case "delete-comment": {
