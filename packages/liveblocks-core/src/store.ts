@@ -35,6 +35,7 @@ type EditThreadMetadataOptimisticUpdate<TThreadMetadata extends BaseMetadata> =
     id: string;
     threadId: string;
     metadata: Resolve<PartialNullable<TThreadMetadata>>;
+    updatedAt: Date;
   };
 
 type CreateCommentOptimisticUpdate = {
@@ -351,16 +352,30 @@ export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
       }
       case "edit-thread-metadata": {
         const thread = result.threads[optimisticUpdate.threadId];
+        // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
         }
+
+        // If the thread has been deleted, we do not apply the update
+        if (thread.deletedAt !== undefined) {
+          break;
+        }
+
+        // If the thread has been updated since the optimistic update, we do not apply the update
+        if (thread.updatedAt && thread.updatedAt > optimisticUpdate.updatedAt) {
+          break;
+        }
+
         result.threads[thread.id] = {
           ...thread,
+          updatedAt: optimisticUpdate.updatedAt,
           metadata: {
             ...thread.metadata,
             ...optimisticUpdate.metadata,
           },
         };
+
         break;
       }
       case "create-comment": {

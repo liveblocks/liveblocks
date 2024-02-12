@@ -1333,6 +1333,7 @@ export function createRoomContext<
 
         const threadId = options.threadId;
         const metadata = options.metadata;
+        const updatedAt = new Date();
 
         const optimisticUpdateId = nanoid();
 
@@ -1341,21 +1342,40 @@ export function createRoomContext<
           metadata,
           id: optimisticUpdateId,
           threadId,
+          updatedAt,
         });
 
         room.editThreadMetadata({ metadata, threadId }).then(
           (metadata: TThreadMetadata) => {
             store.set((state) => {
               const existingThread = state.threads[threadId];
+              const updatedOptimisticUpdates = state.optimisticUpdates.filter(
+                (update) => update.id !== optimisticUpdateId
+              );
 
-              // If the thread has been deleted while edit thread metadata was processed
-              // We do not update the state
+              // If the thread doesn't exist in the cache, we do not update the metadata
               if (existingThread === undefined) {
                 return {
                   ...state,
-                  optimisticUpdates: state.optimisticUpdates.filter(
-                    (update) => update.id !== optimisticUpdateId
-                  ),
+                  optimisticUpdates: updatedOptimisticUpdates,
+                };
+              }
+
+              // If the thread has been deleted, we do not update the metadata
+              if (existingThread.deletedAt !== undefined) {
+                return {
+                  ...state,
+                  optimisticUpdates: updatedOptimisticUpdates,
+                };
+              }
+
+              if (
+                existingThread.updatedAt &&
+                existingThread.updatedAt > updatedAt
+              ) {
+                return {
+                  ...state,
+                  optimisticUpdates: updatedOptimisticUpdates,
                 };
               }
 
@@ -1371,9 +1391,7 @@ export function createRoomContext<
                     },
                   },
                 },
-                optimisticUpdates: state.optimisticUpdates.filter(
-                  (update) => update.id !== optimisticUpdateId
-                ),
+                optimisticUpdates: updatedOptimisticUpdates,
               };
             });
           },
