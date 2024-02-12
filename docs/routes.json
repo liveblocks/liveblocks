@@ -421,6 +421,10 @@
       {
         "title": "Multiple copies of Liveblocks are being loaded in your project",
         "path": "/errors/dupes"
+      },
+      {
+        "title": "Access Token doesn't grant enough permissions",
+        "path": "/errors/liveblocks-client/access-tokens-not-enough-permissions"
       }
     ]
   },
