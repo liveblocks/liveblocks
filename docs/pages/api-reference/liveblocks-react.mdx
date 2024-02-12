@@ -133,7 +133,7 @@ function AppRoot() {
 }
 ```
 
-### useRoom
+### useRoom [@badge=RoomProvider]
 
 Returns the [`Room`][] of the nearest [`RoomProvider`][] above in the React
 component tree.
@@ -144,7 +144,7 @@ import { useRoom } from "./liveblocks.config";
 const room = useRoom();
 ```
 
-### useErrorListener
+### useErrorListener [@badge=RoomProvider]
 
 Listen to potential room connection errors.
 
@@ -172,7 +172,7 @@ useErrorListener((error) => {
 });
 ```
 
-### useStatus
+### useStatus [@badge=RoomProvider]
 
 Returns the current WebSocket connection status of the room, and will re-render
 your component whenever it changes.
@@ -186,7 +186,7 @@ const status = useStatus();
 The possible value are: `initial`, `connecting`, `connected`, `reconnecting`, or
 `disconnected`.
 
-### useOthersListener
+### useOthersListener [@badge=RoomProvider]
 
 Calls the given callback when an “others” event occurs. Possible event types
 are:
@@ -222,7 +222,7 @@ function App() {
 }
 ```
 
-### useLostConnectionListener
+### useLostConnectionListener [@badge=RoomProvider]
 
 Calls the given callback in the exceptional situation that a connection is lost
 and reconnecting does not happen quickly enough.
@@ -337,7 +337,7 @@ collaborative experiences as you build them, in real-time.
 
 </Banner>
 
-### useMyPresence
+### useMyPresence [@badge=RoomProvider]
 
 Return the presence of the current user, and a function to update it.
 Automatically subscribes to updates to the current user’s presence.
@@ -371,7 +371,7 @@ undo/redo stack. See [`room.history`][] for more information.
 updateMyPresence({ selectedId: "xxx" }, { addToHistory: true });
 ```
 
-### useUpdateMyPresence
+### useUpdateMyPresence [@badge=RoomProvider]
 
 Returns a setter function to update the current user’s presence.
 
@@ -400,7 +400,7 @@ undo/redo stack. See [`room.history`][] for more information.
 updateMyPresence({ selectedId: "xxx" }, { addToHistory: true });
 ```
 
-### useSelf
+### useSelf [@badge=RoomProvider]
 
 Returns the current user once it is connected to the room, and automatically
 subscribes to updates to the current user.
@@ -424,7 +424,7 @@ that particular selection changes. For full details, see [how selectors work][].
 👉 A [Suspense version][] of this hook is also available, which will never
 return `null`.
 
-### useOthers
+### useOthers [@badge=RoomProvider]
 
 Extracts data from the list of other users currently in the same Room, and
 automatically subscribes to updates on the selected data. For full details, see
@@ -486,7 +486,7 @@ arguments.
 
 </Banner>
 
-### useOthersMapped
+### useOthersMapped [@badge=RoomProvider]
 
 Extract data using a [selector][] for every user in the room, and subscribe to
 all changes to the selected data. A [Suspense version][] of this hook is also
@@ -537,7 +537,7 @@ return (
 );
 ```
 
-### useOthersConnectionIds
+### useOthersConnectionIds [@badge=RoomProvider]
 
 Returns an array of connection IDs (numbers), and rerenders automatically when
 users join or leave. This hook is useful in particular in combination with the
@@ -557,7 +557,7 @@ useOthers((others) => others.map((other) => other.connectionId), shallow);
 
 👉 A [Suspense version][] of this hook is also available.
 
-### useOther
+### useOther [@badge=RoomProvider]
 
 Extract data using a [selector][] for one specific user in the room, and
 subscribe to all changes to the selected data. A [Suspense version][] of this
@@ -611,7 +611,7 @@ return `null`.
 
 ## Broadcast
 
-### useBroadcastEvent
+### useBroadcastEvent [@badge=RoomProvider]
 
 Returns a callback that lets you broadcast custom events to other users in the
 room.
@@ -632,7 +632,7 @@ useEventListener(({ event, user, connectionId }) => {
 });
 ```
 
-### useEventListener
+### useEventListener [@badge=RoomProvider]
 
 Listen to custom events sent by other people in the room via
 [`useBroadcastEvent`][]. Provides the `event` along with the `connectionId` of
@@ -696,7 +696,7 @@ same time. It persists even after everyone leaves the room. Liveblocks provides
 `@liveblocks/react` provides a set of hooks that let you interact with the
 room’s storage.
 
-### useStorage
+### useStorage [@badge=RoomProvider]
 
 Extracts data from Liveblocks Storage state and automatically subscribes to
 updates to that selected data. For full details, see [how selectors work][].
@@ -755,7 +755,7 @@ const myTodos = useStorage(
 
 </Banner>
 
-### useObject
+### useObject [@badge=RoomProvider]
 
 <Banner title="No longer recommended">
 
@@ -819,7 +819,7 @@ function Component() {
 👉 A [Suspense version][] of this hook is also available, which will never
 return `null`.
 
-### useMap
+### useMap [@badge=RoomProvider]
 
 <Banner title="No longer recommended">
 
@@ -880,7 +880,7 @@ function Component() {
 }
 ```
 
-### useList
+### useList [@badge=RoomProvider]
 
 <Banner title="No longer recommended">
 
@@ -940,7 +940,7 @@ function Component() {
 👉 A [Suspense version][] of this hook is also available, which will never
 return `null`.
 
-### useBatch
+### useBatch [@badge=RoomProvider]
 
 <Banner title={<>You may not need <code>useBatch</code></>}>
 
@@ -974,7 +974,7 @@ batch(async () => /* ... */);
 batch(() => /*... */);
 ```
 
-### useHistory
+### useHistory [@badge=RoomProvider]
 
 Returns the room’s history. See [`Room.history`][] for more information.
 
@@ -984,7 +984,7 @@ import { useHistory } from "./liveblocks.config";
 const { undo, redo, pause, resume } = useHistory();
 ```
 
-### useUndo
+### useUndo [@badge=RoomProvider]
 
 Returns a function that undoes the last operation executed by the current
 client. It does not impact operations made by other clients.
@@ -995,7 +995,7 @@ import { useUndo } from "./liveblocks.config";
 const undo = useUndo();
 ```
 
-### useRedo
+### useRedo [@badge=RoomProvider]
 
 Returns a function that redoes the last operation executed by the current
 client. It does not impact operations made by other clients.
@@ -1006,7 +1006,7 @@ import { useRedo } from "./liveblocks.config";
 const redo = useRedo();
 ```
 
-### useCanUndo
+### useCanUndo [@badge=RoomProvider]
 
 Returns whether there are any operations to undo.
 
@@ -1021,7 +1021,7 @@ updateMyPresence({ y: 0 });
 // At the next render, "canUndo" will be true
 ```
 
-### useCanRedo
+### useCanRedo [@badge=RoomProvider]
 
 Returns whether there are any operations to redo.
 
@@ -1038,7 +1038,7 @@ undo();
 // At the next render, "canRedo" will be true
 ```
 
-### useMutation
+### useMutation [@badge=RoomProvider]
 
 Creates a callback function that lets you mutate Liveblocks state.
 
@@ -1175,7 +1175,7 @@ We’d love to hear from you.
 
 </Banner>
 
-### useThreads
+### useThreads [@badge=RoomProvider]
 
 Returns the threads within the current room.
 
@@ -1204,7 +1204,7 @@ const { threads } = useThreads({
 👉 A [Suspense version][] of this hook is also available, which will never
 return a loading state and will throw when there’s an error.
 
-### useThreadSubscription
+### useThreadSubscription [@badge=RoomProvider]
 
 Returns the subscription status of a thread.
 
@@ -1212,7 +1212,7 @@ Returns the subscription status of a thread.
 const { status, unreadSince } = useThreadSubscription("th_xxx");
 ```
 
-### useCreateThread
+### useCreateThread [@badge=RoomProvider]
 
 Returns a function that creates a thread with an initial comment, and optionally
 some metadata.
@@ -1237,7 +1237,7 @@ const editThreadMetadata = useEditThreadMetadata();
 const thread = editThreadMetadata({ threadId: "th_xxx", metadata: {} });
 ```
 
-### useMarkThreadAsRead
+### useMarkThreadAsRead [@badge=RoomProvider]
 
 Returns a function that marks a thread as read.
 
@@ -1246,7 +1246,7 @@ const markThreadAsRead = useMarkThreadAsRead();
 markThreadAsRead("th_xxx");
 ```
 
-### useCreateComment
+### useCreateComment [@badge=RoomProvider]
 
 Returns a function that adds a comment to a thread.
 
@@ -1255,7 +1255,7 @@ const createComment = useCreateComment();
 const comment = createComment({ threadId: "th_xxx", body: {} });
 ```
 
-### useEditComment
+### useEditComment[@badge=RoomProvider]
 
 Returns a function that edits a comment’s body.
 
@@ -1268,7 +1268,7 @@ const comment = editComment({
 });
 ```
 
-### useDeleteComment
+### useDeleteComment [@badge=RoomProvider]
 
 Returns a function that deletes a comment. If it is the last non-deleted
 comment, the thread also gets deleted.
@@ -1278,7 +1278,7 @@ const deleteComment = useDeleteComment();
 deleteComment({ threadId: "th_xxx", commentId: "cm_xxx" });
 ```
 
-### useAddReaction
+### useAddReaction [@badge=RoomProvider]
 
 Returns a function that adds a reaction to a comment.
 
@@ -1287,7 +1287,7 @@ const addReaction = useAddReaction();
 addReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
 ```
 
-### useRemoveReaction
+### useRemoveReaction [@badge=RoomProvider]
 
 Returns a function that removes a reaction from a comment.
 
@@ -1307,7 +1307,7 @@ We’d love to hear from you.
 
 </Banner>
 
-### useInboxNotifications
+### useInboxNotifications [@badge=LiveblocksProvider]
 
 Returns the inbox notifications for the current user.
 
@@ -1318,7 +1318,7 @@ const { inboxNotifications, error, isLoading } = useInboxNotifications();
 👉 A [Suspense version][] of this hook is also available, which will never
 return a loading state and will throw when there’s an error.
 
-### useUnreadInboxNotificationsCount
+### useUnreadInboxNotificationsCount [@badge=LiveblocksProvider]
 
 Returns the number of unread inbox notifications for the current user.
 
@@ -1329,7 +1329,7 @@ const { count, error, isLoading } = useUnreadInboxNotificationsCount();
 👉 A [Suspense version][] of this hook is also available, which will never
 return a loading state and will throw when there’s an error.
 
-### useMarkInboxNotificationAsRead
+### useMarkInboxNotificationAsRead [@badge=LiveblocksProvider]
 
 Returns a function that marks an inbox notification as read.
 
@@ -1338,7 +1338,7 @@ const markInboxNotificationAsRead = useMarkInboxNotificationAsRead();
 markInboxNotificationAsRead("in_xxx");
 ```
 
-### useMarkAllInboxNotificationsAsRead
+### useMarkAllInboxNotificationsAsRead [@badge=LiveblocksProvider]
 
 Returns a function that marks all inbox notifications as read.
 
@@ -1347,7 +1347,7 @@ const markAllInboxNotificationsAsRead = useMarkAllInboxNotificationsAsRead();
 markAllInboxNotificationsAsRead();
 ```
 
-### useRoomNotificationSettings
+### useRoomNotificationSettings [@badge=RoomProvider]
 
 Returns the user’s notification settings for the current room and a function to
 update them.
@@ -1356,7 +1356,7 @@ update them.
 const [{ settings }, updateSettings] = useRoomNotificationSettings();
 ```
 
-### useUpdateRoomNotificationSettings
+### useUpdateRoomNotificationSettings [@badge=RoomProvider]
 
 Returns a function that updates the user’s notification settings for the current
 room.
@@ -1371,7 +1371,7 @@ updateRoomNotificationSettings({ threads: "all" });
 
 ## Miscellaneous
 
-### useUser
+### useUser [@badge=Both]
 
 Returns user info from a given user ID.
 
@@ -1391,7 +1391,7 @@ To use `useUser`, you should provide a resolver function to the
 
 </Banner>
 
-### useRoomInfo
+### useRoomInfo [@badge=Both]
 
 Returns room info from a given room ID.
 
