@@ -113,13 +113,15 @@ function reactRoomContextExports({
   let start;
 
   if (suspense) {
-    start = `export const {
+    start = `// Room-level hooks, use inside \`RoomProvider\`
+export const {
   suspense: {
     ${indentString(roomContextHooks())}
   }
 } = `;
   } else {
-    start = `export const {
+    start = `// Room-level hooks, use inside \`RoomProvider\`
+export const {
   ${roomContextHooks()} 
 } = `;
   }
@@ -149,13 +151,15 @@ function reactLiveblocksContextExports({
   let start;
 
   if (suspense) {
-    start = `export const {
+    start = `// Project-level hooks, use inside \`LiveblocksProvider\`
+export const {
   suspense: {
     ${indentString(liveblocksContextHooks())}
   }
 } = `;
   } else {
-    start = `export const {
+    start = `// Project-level hooks, use inside \`LiveblocksProvider\`
+export const {
   ${liveblocksContextHooks()} 
 } = `;
   }
@@ -241,7 +245,6 @@ function roomContextHooks() {
   useStatus,
   useLostConnectionListener,
   useThreads,
-  useUser,
   useCreateThread,
   useEditThreadMetadata,
   useCreateComment,
@@ -252,16 +255,23 @@ function roomContextHooks() {
   useThreadSubscription,
   useMarkThreadAsRead,
   useRoomNotificationSettings,
-  useUpdateRoomNotificationSettings,`;
+  useUpdateRoomNotificationSettings,
+
+  // These hooks can be exported from either context
+  // useUser,
+  // useRoomInfo`;
 }
 
 function liveblocksContextHooks() {
   return `LiveblocksProvider,
-  useRoomInfo,
   useMarkInboxNotificationAsRead,
   useMarkAllInboxNotificationsAsRead,
   useInboxNotifications,
-  useUnreadInboxNotificationsCount,`;
+  useUnreadInboxNotificationsCount,
+
+  // These hooks can be exported from either context
+  useUser,
+  useRoomInfo,`;
 }
 
 function indentString(str: string) {
