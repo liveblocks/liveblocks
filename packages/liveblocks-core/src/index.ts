@@ -210,8 +210,8 @@ export type { RoomInfo } from "./types/RoomInfo";
 export type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 export type {
   ThreadData,
-  ThreadDataWithDeleteInfo,
   ThreadDataPlain,
+  ThreadDataWithDeleteInfo,
 } from "./types/ThreadData";
 export type { ThreadDeleteInfo } from "./types/ThreadDeleteInfo";
 export type { User } from "./types/User";
@@ -242,8 +242,8 @@ export type { DevTools };
 export type { Store } from "./lib/create-store";
 export {
   applyOptimisticUpdates,
-  upsertComment,
-  deleteComment,
   type CacheState,
   type CacheStore,
+  deleteComment,
+  upsertComment,
 } from "./store";
