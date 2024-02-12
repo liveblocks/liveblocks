@@ -22,7 +22,7 @@ export type InternalOthersEvent<
       user: User<TPresence, TUserMeta>;
       updates: Partial<TPresence>;
     }
-  | { type: "reset" };
+  | { type: "reset"; user?: never };
 
 export type OthersEvent<
   TPresence extends JsonObject,

@@ -233,7 +233,8 @@ export class StopRetrying extends Error {
   }
 }
 
-class LiveblocksError extends Error {
+export class LiveblocksError extends Error {
+  /** @internal */
   constructor(
     message: string,
     public code: number
