@@ -221,6 +221,7 @@ function roomContextHooks() {
   useSelf,
   useOthers,
   useOthersMapped,
+  useOthersListener,
   useOthersConnectionIds,
   useOther,
   useBroadcastEvent,
