@@ -5,14 +5,15 @@ export function configGeneration(args: InitQuestions) {
   
 ${createClient(args)}
 ${typeDefinitions(args)}
-${reactExports(args)}
+${reactRoomContextExports(args)}
+${reactLiveblocksContextExports(args)}
 `;
 }
 
 function imports({ framework, typescript }: InitQuestions) {
   if (framework === "react") {
     return `import { createClient } from "@liveblocks/client";
-import { createRoomContext } from "@liveblocks/react";`;
+import { createRoomContext, createLiveblocksContext } from "@liveblocks/react";`;
   }
 
   if (typescript) {
@@ -26,8 +27,9 @@ function createClient({ framework, comments }: InitQuestions) {
   const options = comments
     ? `{
   // publicApiKey: "",
-  // authEndpoint: "/api/auth",
+  // authEndpoint: "/api/liveblocks-auth",
   // throttle: 100,
+  ${resolvers()}
 }`
     : `{}`;
   return `${
@@ -96,10 +98,14 @@ export type ThreadMetadata = {
 `;
 }
 
-function reactExports({ framework, suspense, typescript }: InitQuestions) {
+function reactRoomContextExports({
+  framework,
+  suspense,
+  typescript,
+}: InitQuestions) {
   if (framework !== "react") {
     if (typescript) {
-      return `export type TypedRoom = Room<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>;`;
+      return `export type TypedRoom = Room<Presence, Storage, UserMeta, RoomEvent>;`;
     }
     return "";
   }
@@ -107,31 +113,70 @@ function reactExports({ framework, suspense, typescript }: InitQuestions) {
   let start;
 
   if (suspense) {
-    start = `export const {
+    start = `// Room-level hooks, use inside \`RoomProvider\`
+export const {
   suspense: {
-    ${indentString(allHooks())}
+    ${indentString(roomContextHooks())}
   }
 } = `;
   } else {
-    start = `export const {
-  ${allHooks()} 
+    start = `// Room-level hooks, use inside \`RoomProvider\`
+export const {
+  ${roomContextHooks()} 
 } = `;
   }
 
   let end;
 
   if (typescript) {
-    end = `createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(client, ${reactExportsOptions()});`;
+    end = `createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(client);
+`;
   } else {
-    end = `createRoomContext(client, ${reactExportsOptions()});`;
+    end = `createRoomContext(client);
+`;
   }
 
   return start + end;
 }
 
-function reactExportsOptions() {
-  return `{
-  async resolveUsers({ userIds }) {
+function reactLiveblocksContextExports({
+  framework,
+  suspense,
+  typescript,
+}: InitQuestions) {
+  if (framework !== "react") {
+    return "";
+  }
+
+  let start;
+
+  if (suspense) {
+    start = `// Project-level hooks, use inside \`LiveblocksProvider\`
+export const {
+  suspense: {
+    ${indentString(liveblocksContextHooks())}
+  }
+} = `;
+  } else {
+    start = `// Project-level hooks, use inside \`LiveblocksProvider\`
+export const {
+  ${liveblocksContextHooks()} 
+} = `;
+  }
+
+  let end;
+
+  if (typescript) {
+    end = `createLiveblocksContext<UserMeta, ThreadMetadata>(client);`;
+  } else {
+    end = `createLiveblocksContext(client);`;
+  }
+
+  return start + end;
+}
+
+function resolvers() {
+  return `async resolveUsers({ userIds }) {
     // Used only for Comments. Return a list of user information retrieved
     // from \`userIds\`. This info is used in comments, mentions etc.
     
@@ -144,7 +189,7 @@ function reactExportsOptions() {
     
     return [];
   },
-  async resolveMentionSuggestions({ text, roomId }) {
+  async resolveMentionSuggestions({ text }) {
     // Used only for Comments. Return a list of userIds that match \`text\`.
     // These userIds are used to create a mention list when typing in the
     // composer. 
@@ -152,25 +197,27 @@ function reactExportsOptions() {
     // For example when you type "@jo", \`text\` will be \`"jo"\`, and 
     // you should to return an array with John and Joanna's userIds:
     // ["john@example.com", "joanna@example.com"]
-    
-    // const userIds = await __fetchAllUserIdsFromDB__(roomId);
-    //
-    // Return all userIds if no \`text\`
-    // if (!text) {
-    //   return userIds;
-    // }
-    //
-    // Otherwise, filter userIds for the search \`text\` and return
-    // return userIds.filter((userId) => 
-    //   userId.toLowerCase().includes(text.toLowerCase())  
-    // );
-    
+
+    // const users = await getUsers({ search: text });
+    // return users.map((user) => user.id);
+
     return [];
   },
-}`;
+  async resolveRoomsInfo({ roomIds }) {
+    // Used only for Comments. Return a list of room information retrieved
+    // from \`roomIds\`.
+    
+    // const roomsData = await __fetchRoomsFromDB__(roomIds);
+    // 
+    // return roomsData.map((roomData) => ({
+    //   name: roomData.name,
+    // }));
+    
+    return [];
+  },`;
 }
 
-function allHooks() {
+function roomContextHooks() {
   return `RoomProvider,
   useRoom,
   useMyPresence,
@@ -178,6 +225,7 @@ function allHooks() {
   useSelf,
   useOthers,
   useOthersMapped,
+  useOthersListener,
   useOthersConnectionIds,
   useOther,
   useBroadcastEvent,
@@ -197,14 +245,33 @@ function allHooks() {
   useStatus,
   useLostConnectionListener,
   useThreads,
-  useUser,
   useCreateThread,
   useEditThreadMetadata,
   useCreateComment,
   useEditComment,
   useDeleteComment,
   useAddReaction,
-  useRemoveReaction,`;
+  useRemoveReaction,
+  useThreadSubscription,
+  useMarkThreadAsRead,
+  useRoomNotificationSettings,
+  useUpdateRoomNotificationSettings,
+
+  // These hooks can be exported from either context
+  // useUser,
+  // useRoomInfo`;
+}
+
+function liveblocksContextHooks() {
+  return `LiveblocksProvider,
+  useMarkInboxNotificationAsRead,
+  useMarkAllInboxNotificationsAsRead,
+  useInboxNotifications,
+  useUnreadInboxNotificationsCount,
+
+  // These hooks can be exported from either context
+  useUser,
+  useRoomInfo,`;
 }
 
 function indentString(str: string) {
