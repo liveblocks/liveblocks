@@ -48,11 +48,11 @@ You need to set up webhooks to make this example run.
 
 ### Setting up Resend
 
-You need your own Resend API key to run the AI agent.
+You need your own Resend API key to send the emails.
 
 - Create an account on [Resend](https://resend.com)
 - Create a new API key from the [Resend Dashboard](https://resend.com/api-keys)
-- Add your OpenAI API key to `.env.local` as the `RESEND_API_KEY` environment variable
+- Add your Resend API key to `.env.local` as the `RESEND_API_KEY` environment variable
 
 ### Manual setup
 
