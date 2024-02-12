@@ -3,6 +3,7 @@ import { createStore } from "./lib/create-store";
 import type { Resolve } from "./lib/Resolve";
 import type { BaseMetadata } from "./types/BaseMetadata";
 import type { CommentData, CommentReaction } from "./types/CommentData";
+import type { CommentUserReaction } from "./types/CommentReaction";
 import type { InboxNotificationData } from "./types/InboxNotificationData";
 import type { InboxNotificationDeleteInfo } from "./types/InboxNotificationDeleteInfo";
 import type { PartialNullable } from "./types/PartialNullable";
@@ -63,9 +64,7 @@ type AddReactionOptimisticUpdate = {
   id: string;
   threadId: string;
   commentId: string;
-  emoji: string;
-  createdAt: Date;
-  userId: string;
+  reaction: CommentUserReaction;
 };
 
 type RemoveReactionOptimisticUpdate = {
@@ -436,96 +435,33 @@ export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
       }
       case "add-reaction": {
         const thread = result.threads[optimisticUpdate.threadId];
+        // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
         }
 
-        result.threads[thread.id] = {
-          ...thread,
-          comments: thread.comments.map((comment) => {
-            if (comment.id === optimisticUpdate.commentId) {
-              if (
-                comment.reactions.some(
-                  (reaction) => reaction.emoji === optimisticUpdate.emoji
-                )
-              ) {
-                return {
-                  ...comment,
-                  reactions: comment.reactions.map((reaction) =>
-                    reaction.emoji === optimisticUpdate.emoji
-                      ? {
-                          ...reaction,
-                          users: [
-                            ...reaction.users,
-                            { id: optimisticUpdate.userId },
-                          ],
-                        }
-                      : reaction
-                  ),
-                };
-              } else {
-                return {
-                  ...comment,
-                  reactions: [
-                    ...comment.reactions,
-                    {
-                      emoji: optimisticUpdate.emoji,
-                      createdAt: optimisticUpdate.createdAt,
-                      users: [{ id: optimisticUpdate.userId }],
-                    },
-                  ],
-                };
-              }
-            } else {
-              return comment;
-            }
-          }),
-        };
+        result.threads[thread.id] = addReaction(
+          thread,
+          optimisticUpdate.commentId,
+          optimisticUpdate.reaction
+        );
+
         break;
       }
       case "remove-reaction": {
         const thread = result.threads[optimisticUpdate.threadId];
+        // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
         }
 
-        result.threads[thread.id] = {
-          ...thread,
-          comments: thread.comments.map((comment) => {
-            if (comment.id !== optimisticUpdate.commentId) {
-              return comment;
-            }
+        result.threads[thread.id] = removeReaction(
+          thread,
+          optimisticUpdate.commentId,
+          optimisticUpdate.emoji,
+          optimisticUpdate.userId
+        );
 
-            const reactionIndex = comment.reactions.findIndex(
-              (reaction) => reaction.emoji === optimisticUpdate.emoji
-            );
-            let reactions: CommentReaction[] = comment.reactions;
-
-            if (
-              reactionIndex >= 0 &&
-              comment.reactions[reactionIndex].users.some(
-                (user) => user.id === optimisticUpdate.userId
-              )
-            ) {
-              if (comment.reactions[reactionIndex].users.length <= 1) {
-                reactions = [...comment.reactions];
-                reactions.splice(reactionIndex, 1);
-              } else {
-                reactions[reactionIndex] = {
-                  ...reactions[reactionIndex],
-                  users: reactions[reactionIndex].users.filter(
-                    (user) => user.id !== optimisticUpdate.userId
-                  ),
-                };
-              }
-            }
-
-            return {
-              ...comment,
-              reactions,
-            };
-          }),
-        };
         break;
       }
       case "mark-inbox-notification-as-read": {
@@ -751,4 +687,135 @@ export function deleteComment<TThreadMetadata extends BaseMetadata>(
     ...thread,
     comments: updatedComments,
   };
+}
+
+export function addReaction<TThreadMetadata extends BaseMetadata>(
+  thread: ThreadDataWithDeleteInfo<TThreadMetadata>,
+  commentId: string,
+  reaction: CommentUserReaction
+): ThreadDataWithDeleteInfo<TThreadMetadata> {
+  // If the thread has been deleted, we do not delete the comment
+  if (thread.deletedAt !== undefined) {
+    return thread;
+  }
+
+  // If the thread has been updated since the reaction addition request, we do not add the reaction
+  if (thread.updatedAt !== undefined && thread.updatedAt > reaction.createdAt) {
+    return thread;
+  }
+
+  const comment = thread.comments.find((comment) => comment.id === commentId);
+
+  // If the comment doesn't exist in the thread, we do not add the reaction
+  if (comment === undefined) {
+    return thread;
+  }
+
+  // If the comment has been deleted since the reaction addition request, we do not add the reaction
+  if (comment.deletedAt !== undefined) {
+    return thread;
+  }
+
+  const updatedComments = thread.comments.map((comment) =>
+    comment.id === commentId
+      ? {
+          ...comment,
+          reactions: upsertReaction(comment.reactions, reaction),
+        }
+      : comment
+  );
+
+  return {
+    ...thread,
+    comments: updatedComments,
+  };
+}
+
+export function removeReaction<TThreadMetadata extends BaseMetadata>(
+  thread: ThreadDataWithDeleteInfo<TThreadMetadata>,
+  commentId: string,
+  emoji: string,
+  userId: string
+): ThreadDataWithDeleteInfo<TThreadMetadata> {
+  // If the thread has been deleted, we do not remove the reaction
+  if (thread.deletedAt !== undefined) {
+    return thread;
+  }
+
+  // If the thread has been updated since the reaction removal request, we do not remove the reaction
+  if (thread.updatedAt !== undefined) {
+    return thread;
+  }
+
+  const comment = thread.comments.find((comment) => comment.id === commentId);
+
+  // If the comment doesn't exist in the thread, we do not remove the reaction
+  if (comment === undefined) {
+    return thread;
+  }
+
+  // If the comment has been deleted since the reaction removal request, we do not remove the reaction
+  if (comment.deletedAt !== undefined) {
+    return thread;
+  }
+
+  const updatedComments = thread.comments.map((comment) =>
+    comment.id === commentId
+      ? {
+          ...comment,
+          reactions: comment.reactions
+            .map((reaction) =>
+              reaction.emoji === emoji
+                ? {
+                    ...reaction,
+                    users: reaction.users.filter((user) => user.id !== userId),
+                  }
+                : reaction
+            )
+            .filter((reaction) => reaction.users.length > 0), // Remove reactions with no users left
+        }
+      : comment
+  );
+
+  return {
+    ...thread,
+    comments: updatedComments,
+  };
+}
+
+function upsertReaction(
+  reactions: CommentReaction[],
+  reaction: CommentUserReaction
+): CommentReaction[] {
+  const existingReaction = reactions.find(
+    (existingReaction) => existingReaction.emoji === reaction.emoji
+  );
+
+  // If the reaction doesn't exist in the comment, we add it
+  if (existingReaction === undefined) {
+    return [
+      ...reactions,
+      {
+        emoji: reaction.emoji,
+        createdAt: reaction.createdAt,
+        users: [{ id: reaction.userId }],
+      },
+    ];
+  }
+
+  // If the reaction exists in the comment, we add the user to the reaction if they are not already in it
+  if (
+    existingReaction.users.some((user) => user.id === reaction.userId) === false
+  ) {
+    return reactions.map((existingReaction) =>
+      existingReaction.emoji === reaction.emoji
+        ? {
+            ...existingReaction,
+            users: [...existingReaction.users, { id: reaction.userId }],
+          }
+        : existingReaction
+    );
+  }
+
+  return reactions;
 }

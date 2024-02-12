@@ -19,7 +19,6 @@ import type {
   CacheState,
   CacheStore,
   CommentData,
-  CommentReaction,
   CommentsEventServerMsg,
   EnterOptions,
   OptionalPromise,
@@ -31,6 +30,7 @@ import type {
   ToImmutable,
 } from "@liveblocks/core";
 import {
+  addReaction,
   CommentsApiError,
   console,
   deleteComment,
@@ -41,6 +41,7 @@ import {
   makeEventSource,
   makePoller,
   NotificationsApiError,
+  removeReaction,
   ServerMsgCode,
   stringify,
   upsertComment,
@@ -1417,7 +1418,7 @@ export function createRoomContext<
     const room = useRoom();
     return React.useCallback(
       ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
-        const now = new Date();
+        const createdAt = new Date();
         const userId = getCurrentUserId(room);
 
         const optimisticUpdateId = nanoid();
@@ -1426,9 +1427,11 @@ export function createRoomContext<
           type: "add-reaction",
           threadId,
           commentId,
-          emoji,
-          userId,
-          createdAt: now,
+          reaction: {
+            emoji,
+            userId,
+            createdAt,
+          },
           id: optimisticUpdateId,
         });
 
@@ -1436,15 +1439,15 @@ export function createRoomContext<
           (addedReaction) => {
             store.set((state): CacheState<TThreadMetadata> => {
               const existingThread = state.threads[threadId];
+              const updatedOptimisticUpdates = state.optimisticUpdates.filter(
+                (update) => update.id !== optimisticUpdateId
+              );
 
-              // If the thread has been deleted while add reaction was processed
-              // We do not update the state
+              // If the thread doesn't exist in the cache, we do not update the metadata
               if (existingThread === undefined) {
                 return {
                   ...state,
-                  optimisticUpdates: state.optimisticUpdates.filter(
-                    (update) => update.id !== optimisticUpdateId
-                  ),
+                  optimisticUpdates: updatedOptimisticUpdates,
                 };
               }
 
@@ -1452,43 +1455,13 @@ export function createRoomContext<
                 ...state,
                 threads: {
                   ...state.threads,
-                  [threadId]: {
-                    ...existingThread,
-                    comments: existingThread.comments.map((comment) =>
-                      comment.id === commentId
-                        ? {
-                            ...comment,
-                            reactions: comment.reactions.some(
-                              (reaction) =>
-                                reaction.emoji === addedReaction.emoji
-                            )
-                              ? comment.reactions.map((reaction) =>
-                                  reaction.emoji === addedReaction.emoji
-                                    ? {
-                                        ...reaction,
-                                        users: [
-                                          ...reaction.users,
-                                          { id: addedReaction.userId },
-                                        ],
-                                      }
-                                    : reaction
-                                )
-                              : [
-                                  ...comment.reactions,
-                                  {
-                                    emoji: addedReaction.emoji,
-                                    createdAt: addedReaction.createdAt,
-                                    users: [{ id: addedReaction.userId }],
-                                  },
-                                ],
-                          }
-                        : comment
-                    ),
-                  },
+                  [threadId]: addReaction(
+                    existingThread,
+                    commentId,
+                    addedReaction
+                  ),
                 },
-                optimisticUpdates: state.optimisticUpdates.filter(
-                  (update) => update.id !== optimisticUpdateId
-                ),
+                optimisticUpdates: updatedOptimisticUpdates,
               };
             });
           },
@@ -1531,15 +1504,15 @@ export function createRoomContext<
           () => {
             store.set((state) => {
               const existingThread = state.threads[threadId];
+              const updatedOptimisticUpdates = state.optimisticUpdates.filter(
+                (update) => update.id !== optimisticUpdateId
+              );
 
-              // If the thread has been deleted while remove reaction was processed
-              // We do not update the state
+              // If the thread doesn't exist in the cache, we do not update the metadata
               if (existingThread === undefined) {
                 return {
                   ...state,
-                  optimisticUpdates: state.optimisticUpdates.filter(
-                    (update) => update.id !== optimisticUpdateId
-                  ),
+                  optimisticUpdates: updatedOptimisticUpdates,
                 };
               }
 
@@ -1547,63 +1520,14 @@ export function createRoomContext<
                 ...state,
                 threads: {
                   ...state.threads,
-                  [threadId]: {
-                    ...existingThread,
-                    comments: existingThread.comments.map((comment) => {
-                      if (comment.id !== commentId) {
-                        return comment;
-                      }
-
-                      const existingReaction = comment.reactions.find(
-                        (reaction) => reaction.emoji === emoji
-                      );
-
-                      // If existing reaction does not exists, we return existing comment
-                      if (existingReaction === undefined) {
-                        return comment;
-                      }
-
-                      const reactions: CommentReaction[] = comment.reactions;
-
-                      // If existing reaction has not been added by current user, we return existing comment
-                      if (
-                        !existingReaction.users.some(
-                          (user) => user.id === userId
-                        )
-                      ) {
-                        return comment;
-                      }
-
-                      // If only current user has reacted with this emoji, we remove the reaction
-                      if (existingReaction.users.length <= 1) {
-                        return {
-                          ...comment,
-                          reactions: reactions.filter(
-                            (reaction) => reaction.emoji !== emoji
-                          ),
-                        };
-                      }
-
-                      // If multiple users have reacted with this emoji, we remove the current user from the reaction
-                      return {
-                        ...comment,
-                        reactions: reactions.map((reaction) =>
-                          reaction.emoji !== emoji
-                            ? reaction
-                            : {
-                                ...reaction,
-                                users: reaction.users.filter(
-                                  (user) => user.id !== userId
-                                ),
-                              }
-                        ),
-                      };
-                    }),
-                  },
+                  [threadId]: removeReaction(
+                    existingThread,
+                    commentId,
+                    emoji,
+                    userId
+                  ),
                 },
-                optimisticUpdates: state.optimisticUpdates.filter(
-                  (update) => update.id !== optimisticUpdateId
-                ),
+                optimisticUpdates: updatedOptimisticUpdates,
               };
             });
           },
