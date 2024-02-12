@@ -18,7 +18,7 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 export type { Client, EnterOptions } from "./client";
 export { createClient } from "./client";
-export type { BaseAuthResult, Delegates } from "./connection";
+export type { BaseAuthResult, Delegates, LiveblocksError } from "./connection";
 export type {
   LegacyConnectionStatus,
   LostConnectionEvent,

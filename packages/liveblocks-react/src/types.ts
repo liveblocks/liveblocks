@@ -15,6 +15,7 @@ import type {
 import type {
   BaseMetadata,
   CommentData,
+  LiveblocksError,
   Resolve,
   RoomEventMessage,
   RoomInitializers,
@@ -254,7 +255,7 @@ type RoomContextBundleShared<
    *   console.error(er);
    * })
    */
-  useErrorListener(callback: (err: Error) => void): void;
+  useErrorListener(callback: (err: LiveblocksError) => void): void;
 
   /**
    * useEventListener is a React hook that allows you to respond to events broadcast
