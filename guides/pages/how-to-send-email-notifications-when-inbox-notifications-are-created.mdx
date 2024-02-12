@@ -13,6 +13,15 @@ With our webhooks and REST API, it’s possible to aggregate a list of unread
 comments from the last 30 minutes into a single email, and send this to your
 user.
 
+<Figure>
+  <Image
+    src="/assets/tutorials/comments/email-notification.png"
+    alt="An email titled 'New notifications' showing two comments and a link to the thread"
+    width={1500}
+    height={1000}
+  />
+</Figure>
+
 <Banner title="Just in case">
 
 If you’re looking for a guide on sending an email containing one comment,
@@ -491,7 +500,17 @@ If there are no unread notifications, then we’re choosing not to send an email
 ## Generating HTML for the email
 
 Now that we have the comment data, we have one more step before sending the
-notifications—formatting each comment’s text, found inside `comment.body`.
+notifications—formatting each comment’s text, found inside `comment.body`, and
+generating the HTML for our email.
+
+<Figure>
+  <Image
+    src="/assets/tutorials/comments/email-notification.png"
+    alt="An email titled 'New notifications' showing two comments and a link to the thread"
+    width={1500}
+    height={1000}
+  />
+</Figure>
 
 By using
 [`await stringifyCommentBody`](/docs/api-reference/liveblocks-node#stringify-comment-body),
@@ -824,7 +843,7 @@ Great, we’re successfully sending email notifications after new comments are
 created! In this guide we’ve learned:
 
 - How to use [webhooks](/docs/platform/webhooks) and the
-  [`ThreadEmailNotiticationEvent`](/docs/platform/webhooks#ThreadEmailNotiticationEvent).
+  [`ThreadEmailNotificationEvent`](/docs/platform/webhooks#ThreadEmailNotificationEvent).
 - How to use the [`@liveblocks/node`](/docs/api-reference/liveblocks-node)
   package to unread thread data.
 - How to shape a threads into HTML with
