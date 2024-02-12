@@ -42,7 +42,6 @@ type CreateCommentOptimisticUpdate = {
   type: "create-comment";
   id: string;
   comment: CommentData;
-  inboxNotificationId?: string;
 };
 
 type EditCommentOptimisticUpdate = {
@@ -363,7 +362,10 @@ export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
         }
 
         // If the thread has been updated since the optimistic update, we do not apply the update
-        if (thread.updatedAt && thread.updatedAt > optimisticUpdate.updatedAt) {
+        if (
+          thread.updatedAt !== undefined &&
+          thread.updatedAt > optimisticUpdate.updatedAt
+        ) {
           break;
         }
 
@@ -380,23 +382,30 @@ export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
       }
       case "create-comment": {
         const thread = result.threads[optimisticUpdate.comment.threadId];
+        // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
         }
-        result.threads[thread.id] = {
-          ...thread,
-          comments: [...thread.comments, optimisticUpdate.comment], // TODO: Handle replace comment
-        };
-        if (!optimisticUpdate.inboxNotificationId) {
+
+        result.threads[thread.id] = upsertComment(
+          thread,
+          optimisticUpdate.comment
+        );
+
+        const inboxNotification = Object.values(result.inboxNotifications).find(
+          (notification) => notification.threadId === thread.id
+        );
+
+        if (inboxNotification === undefined) {
           break;
         }
-        const inboxNotification =
-          result.inboxNotifications[optimisticUpdate.inboxNotificationId];
-        result.inboxNotifications[optimisticUpdate.inboxNotificationId] = {
+
+        result.inboxNotifications[inboxNotification.id] = {
           ...inboxNotification,
           notifiedAt: optimisticUpdate.comment.createdAt,
           readAt: optimisticUpdate.comment.createdAt,
         };
+
         break;
       }
       case "edit-comment": {
@@ -668,4 +677,50 @@ export function compareInboxNotifications(
 
   // If all dates are equal, return 0
   return 0;
+}
+
+export function upsertComment<TThreadMetadata extends BaseMetadata>(
+  thread: ThreadDataWithDeleteInfo<TThreadMetadata>,
+  comment: CommentData
+): ThreadDataWithDeleteInfo<TThreadMetadata> {
+  // If the thread has been deleted, we do not apply the update
+  if (thread.deletedAt !== undefined) {
+    return thread;
+  }
+
+  // If the thread has been updated since the optimistic update, we do not apply the update
+  if (thread.updatedAt !== undefined && thread.updatedAt > comment.createdAt) {
+    return thread;
+  }
+
+  const existingComment = thread.comments.find(
+    (existingComment) => existingComment.id === comment.id
+  );
+
+  if (existingComment === undefined) {
+    return {
+      ...thread,
+      comments: [...thread.comments, comment],
+    };
+  }
+
+  if (existingComment.deletedAt !== undefined) {
+    return thread;
+  }
+
+  if (
+    existingComment.editedAt !== undefined &&
+    existingComment.editedAt > comment.createdAt
+  ) {
+    return thread;
+  }
+
+  const newComments = thread.comments.map((existingComment) =>
+    existingComment.id === comment.id ? comment : existingComment
+  );
+
+  return {
+    ...thread,
+    comments: newComments,
+  };
 }

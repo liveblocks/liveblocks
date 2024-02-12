@@ -42,6 +42,7 @@ import {
   NotificationsApiError,
   ServerMsgCode,
   stringify,
+  upsertComment,
 } from "@liveblocks/core";
 import { nanoid } from "nanoid";
 import * as React from "react";
@@ -63,7 +64,6 @@ import { createCommentId, createThreadId } from "./comments/lib/createIds";
 import { selectNotificationSettings } from "./comments/lib/select-notification-settings";
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 import { selectedThreads } from "./comments/lib/selected-threads";
-import { upsertComment } from "./comments/lib/upsert-comment";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { useRerender } from "./lib/use-rerender";
@@ -1629,14 +1629,14 @@ export function createRoomContext<
     return React.useCallback(
       ({ threadId, body }: CreateCommentOptions): CommentData => {
         const commentId = createCommentId();
-        const now = new Date();
+        const createdAt = new Date();
 
         const comment: CommentData = {
           id: commentId,
           threadId,
           roomId: room.id,
           type: "comment",
-          createdAt: now,
+          createdAt,
           userId: getCurrentUserId(room),
           body,
           reactions: [],
@@ -1644,36 +1644,54 @@ export function createRoomContext<
 
         const optimisticUpdateId = nanoid();
 
-        const inboxNotification = Object.values(
-          store.get().inboxNotifications
-        ).find((inboxNotification) => inboxNotification.threadId === threadId);
-
         store.pushOptimisticUpdate({
           type: "create-comment",
           comment,
           id: optimisticUpdateId,
-          inboxNotificationId: inboxNotification?.id,
         });
 
         room.createComment({ threadId, commentId, body }).then(
           (newComment) => {
-            store.set((state) => ({
-              ...state,
-              threads: upsertComment(state.threads, newComment),
-              inboxNotifications: inboxNotification
-                ? {
-                    ...state.inboxNotifications,
-                    [inboxNotification.id]: {
-                      ...inboxNotification,
-                      notifiedAt: newComment.createdAt,
-                      readAt: newComment.createdAt,
-                    },
-                  }
-                : state.inboxNotifications,
-              optimisticUpdates: state.optimisticUpdates.filter(
+            store.set((state) => {
+              const existingThread = state.threads[threadId];
+              const updatedOptimisticUpdates = state.optimisticUpdates.filter(
                 (update) => update.id !== optimisticUpdateId
-              ),
-            }));
+              );
+
+              if (existingThread === undefined) {
+                return {
+                  ...state,
+                  optimisticUpdates: updatedOptimisticUpdates,
+                };
+              }
+
+              const inboxNotification = Object.values(
+                state.inboxNotifications
+              ).find((notification) => notification.threadId === threadId);
+
+              // If the thread has an inbox notification associated with it, we update the notification's `notifiedAt` and `readAt` values
+              const updatedInboxNotifications =
+                inboxNotification !== undefined
+                  ? {
+                      ...state.inboxNotifications,
+                      [inboxNotification.id]: {
+                        ...inboxNotification,
+                        notifiedAt: newComment.createdAt,
+                        readAt: newComment.createdAt,
+                      },
+                    }
+                  : state.inboxNotifications;
+
+              return {
+                ...state,
+                threads: {
+                  ...state.threads,
+                  [threadId]: upsertComment(existingThread, newComment), // Upsert the new comment into the thread comments list (if applicable)
+                },
+                inboxNotifications: updatedInboxNotifications,
+                optimisticUpdates: updatedOptimisticUpdates,
+              };
+            });
           },
           (err: Error) =>
             onMutationFailure(
