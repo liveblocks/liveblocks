@@ -440,7 +440,9 @@ export function createRoomContext<
             >
           }
         >
-          {props.children}
+          <CommentsRoomProvider room={room}>
+            {props.children}
+          </CommentsRoomProvider>
         </ContextBundle.Provider>
       </RoomContext.Provider>
     );
@@ -1006,68 +1008,18 @@ export function createRoomContext<
     }
   > = new Map();
 
-  const poller = makePoller(refreshThreadsAndNotifications);
-
-  async function refreshThreadsAndNotifications() {
-    const requests: Promise<any>[] = [];
-
-    client[kInternal].getRoomIds().map((roomId) => {
-      const room = client.getRoom(roomId);
-      if (room === null) return;
-
-      const notificationSettingsQuery = makeNotificationSettingsQueryKey(
-        room.id
-      );
-
-      if (requestsCache.has(notificationSettingsQuery)) {
-        requests.push(
-          room
-            .getRoomNotificationSettings()
-            .then((settings) => {
-              store.updateRoomInboxNotificationSettings(
-                room.id,
-                settings,
-                notificationSettingsQuery
-              );
-            })
-            .catch(() => {
-              // TODO: Handle error
-            })
-        );
-      }
-
-      const lastRequestedAt = room[kInternal].comments.lastRequestedAt;
-      if (lastRequestedAt === null) return;
-
-      // Retrieve threads that have been updated/deleted since the last requestedAt value
-      requests.push(
-        room
-          .getThreads({ since: lastRequestedAt })
-          .then((result) => {
-            store.updateThreadsAndNotifications(
-              result.threads,
-              result.inboxNotifications,
-              result.deletedThreads,
-              result.deletedInboxNotifications
-            );
-
-            // If this query finished after the room was unmounted, we do not want to update the `lastRequestedAt` value
-            const room = client.getRoom(roomId);
-            if (room === null) return;
-
-            room[kInternal].comments.lastRequestedAt = result.meta.requestedAt;
-          })
-          .catch(() => {
-            // TODO: Handle error
-          })
-      );
-    });
-
-    await Promise.allSettled(requests);
+  function getPoller(roomId: string) {
+    let poller = pollerByRoom.get(roomId);
+    if (poller === undefined) {
+      poller = makePoller(() => getThreadsUpdates(roomId));
+      pollerByRoom.set(roomId, poller);
+    }
+    return poller;
   }
 
-  function incrementQuerySubscribers(queryKey: string) {
-    const requestCache = requestsCache.get(queryKey);
+  function incrementQuerySubscribers(roomId: string, queryKey: string) {
+    const requestsCache = requestsCacheByRoom.get(roomId);
+    const requestCache = requestsCache?.get(queryKey);
 
     if (requestCache === undefined) {
       console.warn(
@@ -1078,13 +1030,19 @@ export function createRoomContext<
 
     requestCache.subscribers++;
 
+    const poller = getPoller(roomId);
     poller.start(POLLING_INTERVAL);
   }
 
-  function decrementQuerySubscribers(queryKey: string) {
-    const requestCache = requestsCache.get(queryKey);
+  function decrementQuerySubscribers(roomId: string, queryKey: string) {
+    const requestsCache = requestsCacheByRoom.get(roomId);
+    const requestCache = requestsCache?.get(queryKey);
 
-    if (requestCache === undefined || requestCache.subscribers <= 0) {
+    if (
+      requestsCache === undefined ||
+      requestCache === undefined ||
+      requestCache.subscribers <= 0
+    ) {
       console.warn(
         `Internal unexpected behavior. Cannot decrease subscriber count for query "${queryKey}"`
       );
@@ -1098,7 +1056,9 @@ export function createRoomContext<
       totalSubscribers += requestCache.subscribers;
     }
 
+    // If there are no more subscribers for the room, we stop the poller
     if (totalSubscribers <= 0) {
+      const poller = getPoller(roomId);
       poller.stop();
     }
   }
@@ -1108,8 +1068,17 @@ export function createRoomContext<
     queryKey: string,
     options: UseThreadsOptions<TThreadMetadata>
   ) {
+    let requestsCache = requestsCacheByRoom.get(room.id);
+
+    // Initialize requests cache for the room if it doesn't exist
+    if (requestsCache === undefined) {
+      requestsCache = new Map();
+      requestsCacheByRoom.set(room.id, requestsCache);
+    }
+
     const requestInfo = requestsCache.get(queryKey);
 
+    // If a request for the same query key was already made, we do not make another request and return early
     if (requestInfo !== undefined) {
       return requestInfo.promise;
     }
@@ -1136,7 +1105,7 @@ export function createRoomContext<
         queryKey
       );
 
-      const lastRequestedAt = room[kInternal].comments.lastRequestedAt;
+      const lastRequestedAt = lastRequestedAtByRoom.get(room.id);
 
       /**
        * We set the `lastRequestedAt` value for the room to the timestamp returned by the current request if:
@@ -1145,10 +1114,10 @@ export function createRoomContext<
        * 2. The `lastRequestedAt` value for the room is older than the timestamp returned by the current request
        */
       if (
-        lastRequestedAt === null ||
+        lastRequestedAt === undefined ||
         lastRequestedAt > result.meta.requestedAt
       ) {
-        room[kInternal].comments.lastRequestedAt = result.meta.requestedAt;
+        lastRequestedAtByRoom.set(room.id, result.meta.requestedAt);
       }
     } catch (err) {
       // TODO: Implement error retry mechanism
@@ -1157,8 +1126,70 @@ export function createRoomContext<
         error: err as Error,
       });
     }
+  }
 
-    poller.start(POLLING_INTERVAL);
+  const DEFAULT_DEDUPING_INTERVAL = 2000; // 2 seconds
+
+  const lastRequestedAtByRoom = new Map<string, Date>();
+
+  const pollerByRoom = new Map<string, ReturnType<typeof makePoller>>();
+
+  const requestsCacheByRoom = new Map<
+    string,
+    Map<
+      string,
+      {
+        promise: Promise<any> | null;
+        subscribers: number;
+      }
+    >
+  >();
+
+  let isFetchingThreadsUpdates: boolean = false;
+
+  async function getThreadsUpdates(roomId: string) {
+    const room = client.getRoom(roomId);
+    if (room === null) return;
+
+    const since = lastRequestedAtByRoom.get(room.id);
+    if (since === undefined) return;
+
+    if (isFetchingThreadsUpdates) return;
+
+    try {
+      isFetchingThreadsUpdates = true;
+      const updates = await room.getThreads({ since });
+
+      setTimeout(() => {
+        isFetchingThreadsUpdates = false;
+      }, DEFAULT_DEDUPING_INTERVAL);
+
+      store.updateThreadsAndNotifications(
+        updates.threads,
+        updates.inboxNotifications,
+        updates.deletedThreads,
+        updates.deletedInboxNotifications
+      );
+
+      lastRequestedAtByRoom.set(room.id, updates.meta.requestedAt);
+    } catch (err) {
+      isFetchingThreadsUpdates = false;
+      // TODO: Implement error handling
+    }
+  }
+
+  function CommentsRoomProvider({
+    room,
+    children,
+  }: React.PropsWithChildren<{
+    room: Room<JsonObject, LsonObject, BaseUserMeta, Json>;
+  }>) {
+    React.useEffect(() => {
+      // Retrieve threads that have been updated/deleted since the last requestedAt value for the room
+      void getThreadsUpdates(room.id);
+    }, [room.id]);
+
+    return <>{children}</>;
   }
 
   function useThreads(
@@ -1172,9 +1203,9 @@ export function createRoomContext<
 
     React.useEffect(() => {
       void getThreadsAndInboxNotifications(room, queryKey, options);
-      incrementQuerySubscribers(queryKey);
+      incrementQuerySubscribers(room.id, queryKey);
 
-      return () => decrementQuerySubscribers(queryKey);
+      return () => decrementQuerySubscribers(room.id, queryKey);
     }, [room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const selector = React.useCallback(
@@ -1235,12 +1266,11 @@ export function createRoomContext<
     );
 
     React.useEffect(() => {
-      incrementQuerySubscribers(queryKey);
-
+      incrementQuerySubscribers(room.id, queryKey);
       return () => {
-        decrementQuerySubscribers(queryKey);
+        decrementQuerySubscribers(room.id, queryKey);
       };
-    }, [queryKey]);
+    }, [room.id, queryKey]);
 
     return useSyncExternalStoreWithSelector(
       store.subscribe,
@@ -1970,8 +2000,6 @@ export function createRoomContext<
         error: err as Error,
       });
     }
-
-    poller.start(POLLING_INTERVAL);
   }
 
   function useRoomNotificationSettings(): [
@@ -1983,10 +2011,6 @@ export function createRoomContext<
     React.useEffect(() => {
       const queryKey = makeNotificationSettingsQueryKey(room.id);
       void getInboxNotificationSettings(room, queryKey);
-
-      incrementQuerySubscribers(queryKey);
-
-      return () => decrementQuerySubscribers(queryKey);
     }, [room]);
 
     const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
@@ -2039,14 +2063,6 @@ export function createRoomContext<
     if (query.error) {
       throw query.error;
     }
-
-    React.useEffect(() => {
-      const queryKey = makeNotificationSettingsQueryKey(room.id);
-
-      incrementQuerySubscribers(queryKey);
-
-      return () => decrementQuerySubscribers(queryKey);
-    }, [room]);
 
     const selector = React.useCallback(
       (
