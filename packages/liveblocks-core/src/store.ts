@@ -47,7 +47,6 @@ type CreateCommentOptimisticUpdate = {
 type EditCommentOptimisticUpdate = {
   type: "edit-comment";
   id: string;
-  editedAt: Date;
   comment: CommentData;
 };
 
@@ -74,6 +73,7 @@ type RemoveReactionOptimisticUpdate = {
   commentId: string;
   emoji: string;
   userId: string;
+  removedAt: Date;
 };
 
 type MarkInboxNotificationAsReadOptimisticUpdate = {
@@ -459,7 +459,8 @@ export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
           thread,
           optimisticUpdate.commentId,
           optimisticUpdate.emoji,
-          optimisticUpdate.userId
+          optimisticUpdate.userId,
+          optimisticUpdate.removedAt
         );
 
         break;
@@ -601,8 +602,11 @@ export function upsertComment<TThreadMetadata extends BaseMetadata>(
     return thread;
   }
 
-  // If the thread has been updated since the optimistic update, we do not apply the update
-  if (thread.updatedAt !== undefined && thread.updatedAt > comment.createdAt) {
+  // Validate that the comment belongs to the thread
+  if (comment.threadId !== thread.id) {
+    console.warn(
+      `Comment ${comment.id} does not belong to thread ${thread.id}`
+    );
     return thread;
   }
 
@@ -610,32 +614,53 @@ export function upsertComment<TThreadMetadata extends BaseMetadata>(
     (existingComment) => existingComment.id === comment.id
   );
 
+  // If the comment doesn't exist in the thread, add the comment
   if (existingComment === undefined) {
-    return {
+    const updatedAt = new Date(
+      Math.max(thread.updatedAt?.getTime() || 0, comment.createdAt.getTime())
+    );
+
+    const updatedThread = {
       ...thread,
+      updatedAt,
       comments: [...thread.comments, comment],
     };
+
+    return updatedThread;
   }
 
+  // If the comment exists in the thread and has been deleted, do not apply the update
   if (existingComment.deletedAt !== undefined) {
     return thread;
   }
 
+  // Proceed to update the comment if:
+  // 1. The existing comment has not been edited
+  // 2. The incoming comment has not been edited (i.e. it's a new comment)
+  // 3. The incoming comment has been edited more recently than the existing comment
   if (
-    existingComment.editedAt !== undefined &&
-    existingComment.editedAt > comment.createdAt
+    existingComment.editedAt === undefined ||
+    comment.editedAt === undefined ||
+    existingComment.editedAt <= comment.editedAt
   ) {
-    return thread;
+    const updatedComments = thread.comments.map((existingComment) =>
+      existingComment.id === comment.id ? comment : existingComment
+    );
+
+    const updatedThread = {
+      ...thread,
+      updatedAt: new Date(
+        Math.max(
+          thread.updatedAt?.getTime() || 0,
+          comment.editedAt?.getTime() || comment.createdAt.getTime()
+        )
+      ),
+      comments: updatedComments,
+    };
+    return updatedThread;
   }
 
-  const newComments = thread.comments.map((existingComment) =>
-    existingComment.id === comment.id ? comment : existingComment
-  );
-
-  return {
-    ...thread,
-    comments: newComments,
-  };
+  return thread;
 }
 
 export function deleteComment<TThreadMetadata extends BaseMetadata>(
@@ -648,20 +673,17 @@ export function deleteComment<TThreadMetadata extends BaseMetadata>(
     return thread;
   }
 
-  // If the thread has been updated since the deletion request, we do not delete the comment
-  if (thread.updatedAt !== undefined && thread.updatedAt > deletedAt) {
-    return thread;
-  }
+  const existingComment = thread.comments.find(
+    (comment) => comment.id === commentId
+  );
 
-  const comment = thread.comments.find((comment) => comment.id === commentId);
-
-  // If the comment doesn't exist in the thread, we do not delete the comment
-  if (comment === undefined) {
+  // If the comment doesn't exist in the thread, we cannot perform the deletion
+  if (existingComment === undefined) {
     return thread;
   }
 
   // If the comment has been deleted since the deletion request, we do not delete the comment
-  if (comment.deletedAt !== undefined && comment.deletedAt > deletedAt) {
+  if (existingComment.deletedAt !== undefined) {
     return thread;
   }
 
@@ -675,16 +697,19 @@ export function deleteComment<TThreadMetadata extends BaseMetadata>(
       : comment
   );
 
+  // If all comments have been deleted, we mark the thread as deleted
   if (!updatedComments.some((comment) => comment.deletedAt === undefined)) {
     return {
       ...thread,
       deletedAt,
+      updatedAt: deletedAt,
       comments: [],
     };
   }
 
   return {
     ...thread,
+    updatedAt: deletedAt,
     comments: updatedComments,
   };
 }
@@ -694,25 +719,22 @@ export function addReaction<TThreadMetadata extends BaseMetadata>(
   commentId: string,
   reaction: CommentUserReaction
 ): ThreadDataWithDeleteInfo<TThreadMetadata> {
-  // If the thread has been deleted, we do not delete the comment
+  // If the thread has been deleted, we do not add the reaction
   if (thread.deletedAt !== undefined) {
     return thread;
   }
 
-  // If the thread has been updated since the reaction addition request, we do not add the reaction
-  if (thread.updatedAt !== undefined && thread.updatedAt > reaction.createdAt) {
-    return thread;
-  }
-
-  const comment = thread.comments.find((comment) => comment.id === commentId);
+  const existingComment = thread.comments.find(
+    (comment) => comment.id === commentId
+  );
 
   // If the comment doesn't exist in the thread, we do not add the reaction
-  if (comment === undefined) {
+  if (existingComment === undefined) {
     return thread;
   }
 
   // If the comment has been deleted since the reaction addition request, we do not add the reaction
-  if (comment.deletedAt !== undefined) {
+  if (existingComment.deletedAt !== undefined) {
     return thread;
   }
 
@@ -727,6 +749,9 @@ export function addReaction<TThreadMetadata extends BaseMetadata>(
 
   return {
     ...thread,
+    updatedAt: new Date(
+      Math.max(reaction.createdAt.getTime(), thread.updatedAt?.getTime() || 0)
+    ),
     comments: updatedComments,
   };
 }
@@ -735,27 +760,25 @@ export function removeReaction<TThreadMetadata extends BaseMetadata>(
   thread: ThreadDataWithDeleteInfo<TThreadMetadata>,
   commentId: string,
   emoji: string,
-  userId: string
+  userId: string,
+  removedAt: Date
 ): ThreadDataWithDeleteInfo<TThreadMetadata> {
   // If the thread has been deleted, we do not remove the reaction
   if (thread.deletedAt !== undefined) {
     return thread;
   }
 
-  // If the thread has been updated since the reaction removal request, we do not remove the reaction
-  if (thread.updatedAt !== undefined) {
-    return thread;
-  }
-
-  const comment = thread.comments.find((comment) => comment.id === commentId);
+  const existingComment = thread.comments.find(
+    (comment) => comment.id === commentId
+  );
 
   // If the comment doesn't exist in the thread, we do not remove the reaction
-  if (comment === undefined) {
+  if (existingComment === undefined) {
     return thread;
   }
 
   // If the comment has been deleted since the reaction removal request, we do not remove the reaction
-  if (comment.deletedAt !== undefined) {
+  if (existingComment.deletedAt !== undefined) {
     return thread;
   }
 
@@ -779,6 +802,9 @@ export function removeReaction<TThreadMetadata extends BaseMetadata>(
 
   return {
     ...thread,
+    updatedAt: new Date(
+      Math.max(removedAt.getTime(), thread.updatedAt?.getTime() || 0)
+    ),
     comments: updatedComments,
   };
 }

@@ -1490,6 +1490,7 @@ export function createRoomContext<
       ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
         const userId = getCurrentUserId(room);
 
+        const removedAt = new Date();
         const optimisticUpdateId = nanoid();
 
         store.pushOptimisticUpdate({
@@ -1498,6 +1499,7 @@ export function createRoomContext<
           commentId,
           emoji,
           userId,
+          removedAt,
           id: optimisticUpdateId,
         });
 
@@ -1525,7 +1527,8 @@ export function createRoomContext<
                     existingThread,
                     commentId,
                     emoji,
-                    userId
+                    userId,
+                    removedAt
                   ),
                 },
                 optimisticUpdates: updatedOptimisticUpdates,
@@ -1667,9 +1670,9 @@ export function createRoomContext<
 
         store.pushOptimisticUpdate({
           type: "edit-comment",
-          editedAt,
           comment: {
             ...comment,
+            editedAt,
             body,
           },
           id: optimisticUpdateId,
