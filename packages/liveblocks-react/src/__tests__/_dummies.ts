@@ -3,7 +3,6 @@ import type {
   CommentData,
   InboxNotificationData,
   ThreadData,
-  ThreadDataWithDeleteInfo,
 } from "@liveblocks/core";
 
 import {
@@ -14,7 +13,7 @@ import {
 
 export function dummyThreadData<
   TThreadMetadata extends BaseMetadata = BaseMetadata,
->(): ThreadDataWithDeleteInfo<TThreadMetadata> {
+>(): ThreadData<TThreadMetadata> {
   const now = new Date();
   const threadId = createThreadId();
 
@@ -28,7 +27,7 @@ export function dummyThreadData<
     roomId: "room-id",
     createdAt: now,
     metadata: {}, // TODO Fix type
-    updatedAt: now,
+    updatedAt: undefined,
     comments: [comment],
   } as ThreadData<TThreadMetadata>;
 }

@@ -208,11 +208,7 @@ export type {
 } from "./types/PlainLson";
 export type { RoomInfo } from "./types/RoomInfo";
 export type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
-export type {
-  ThreadData,
-  ThreadDataPlain,
-  ThreadDataWithDeleteInfo,
-} from "./types/ThreadData";
+export type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
 export type { ThreadDeleteInfo } from "./types/ThreadDeleteInfo";
 export type { User } from "./types/User";
 export { detectDupes };
