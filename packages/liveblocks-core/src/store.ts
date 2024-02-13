@@ -1,5 +1,6 @@
 import type { Store } from "./lib/create-store";
 import { createStore } from "./lib/create-store";
+import * as console from "./lib/fancy-console";
 import type { Resolve } from "./lib/Resolve";
 import type { BaseMetadata } from "./types/BaseMetadata";
 import type { CommentData, CommentReaction } from "./types/CommentData";
