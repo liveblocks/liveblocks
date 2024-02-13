@@ -1262,13 +1262,13 @@ export function createRoomContext<
 
         const threadId = createThreadId();
         const commentId = createCommentId();
-        const now = new Date();
+        const createdAt = new Date();
 
         const newComment: CommentData = {
           id: commentId,
           threadId,
           roomId: room.id,
-          createdAt: now,
+          createdAt,
           type: "comment",
           userId: getCurrentUserId(room),
           body,
@@ -1277,7 +1277,8 @@ export function createRoomContext<
         const newThread: ThreadData<TThreadMetadata> = {
           id: threadId,
           type: "thread",
-          createdAt: now,
+          createdAt,
+          updatedAt: createdAt,
           roomId: room.id,
           metadata: metadata as ThreadData<TThreadMetadata>["metadata"],
           comments: [newComment],
