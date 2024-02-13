@@ -22,7 +22,7 @@
 
 This example shows how to send comments notifications emails with [Liveblocks](https://liveblocks.io), [React Email](https://react.email/), [Resend](https://resend.com/), and [Next.js](https://nextjs.org/).
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/comments.png" width="536" alt="Comments" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/comments-emails.png" width="536" alt="Comments Notification Emails" />
 
 ## Getting started
 
