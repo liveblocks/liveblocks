@@ -8,10 +8,11 @@ meta:
 Liveblocks [Comments](/docs/products/comments) allows you to build a commenting
 experience. With our webhooks and REST API, it’s possible to aggregate a list of
 unread comments from the last 30 minutes into a single email, and send it to
-your users. Notifications can also be surfaced in your app using
+your users. Notifications can also be displayed in your app using
 [`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications)
-and
-[`InboxNotification`](/docs/api-reference/liveblocks-react-comments#InboxNotification).
+and the
+[`InboxNotification`](/docs/api-reference/liveblocks-react-comments#InboxNotification)
+component.
 
 <Figure>
   <Image
@@ -73,12 +74,12 @@ Joyce_ are both participants.
   />
 </Figure>
 
-The
-[InboxNotification](/docs/api-reference/liveblocks-react-comments#InboxNotification)
-component allows you to create a UI component that displays a live list of these
-notifications across your rooms, which is very helpful. But how do you send
-emails to your users letting them know they have unread notifications in their
-inbox?
+Inbox notifications can be displayed in your app using
+[`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications)
+and the
+[`InboxNotification`](/docs/api-reference/liveblocks-react-comments#InboxNotification)
+component. But how do you send emails to your users letting them know they have
+unread notifications in their inbox?
 
 ## Using webhooks
 
