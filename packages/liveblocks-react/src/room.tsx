@@ -1000,14 +1000,6 @@ export function createRoomContext<
     throw innerError;
   }
 
-  const requestsCache: Map<
-    string,
-    {
-      promise: Promise<any> | null;
-      subscribers: number;
-    }
-  > = new Map();
-
   function getPoller(roomId: string) {
     let poller = pollerByRoom.get(roomId);
     if (poller === undefined) {
@@ -1965,6 +1957,11 @@ export function createRoomContext<
     }, []);
   }
 
+  const notificationSettingsFetchers: Map<
+    string,
+    Promise<RoomNotificationSettings>
+  > = new Map();
+
   function makeNotificationSettingsQueryKey(roomId: string) {
     return `${roomId}:NOTIFICATION_SETTINGS`;
   }
@@ -1973,18 +1970,15 @@ export function createRoomContext<
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
     queryKey: string
   ) {
-    const requestInfo = requestsCache.get(queryKey);
+    const fetcher = notificationSettingsFetchers.get(queryKey);
 
-    if (requestInfo !== undefined) {
-      return requestInfo.promise;
+    if (fetcher !== undefined) {
+      return fetcher;
     }
 
     const promise = room.getRoomNotificationSettings();
 
-    requestsCache.set(queryKey, {
-      promise,
-      subscribers: 0,
-    });
+    notificationSettingsFetchers.set(queryKey, promise);
 
     store.setQueryState(queryKey, {
       isLoading: true,
@@ -2000,6 +1994,8 @@ export function createRoomContext<
         error: err as Error,
       });
     }
+
+    return;
   }
 
   function useRoomNotificationSettings(): [
