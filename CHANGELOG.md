@@ -857,7 +857,7 @@ Liveblocks account.
 
 - Adds a `WebhookHandler` class
   - `new WebhookHandler(secret).verifyRequest({ rawBody, headers })` can be used
-    to verify event requests from Liveblock's Webhook functionality. It also
+    to verify event requests from Liveblock's webhook functionality. It also
     provides fully typed `WebhookEvents`.
   - Check out our [Webhooks guide](https://liveblocks.io/docs/guides/webhooks)
     for more details
