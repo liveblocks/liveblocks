@@ -1,17 +1,17 @@
 ---
 meta:
-  title: "How to send email notifications when inbox notifications are created"
+  title: "How to send email notifications of unread comments"
   description:
-    "Learn how to automatically send email notifications when an inbox
-    notification is created."
+    "Learn how to automatically send email notifications of unread comments."
 ---
 
 Liveblocks [Comments](/docs/products/comments) allows you to build a commenting
-experience, along with inbox notifications using
-[InboxNotification](/docs/api-reference/liveblocks-react-comments#InboxNotification).
-With our webhooks and REST API, it’s possible to aggregate a list of unread
-comments from the last 30 minutes into a single email, and send this to your
-users.
+experience. With our webhooks and REST API, it’s possible to aggregate a list of
+unread comments from the last 30 minutes into a single email, and send it to
+your users. Notifications can also be surfaced in your app using
+[`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications)
+and
+[`InboxNotification`](/docs/api-reference/liveblocks-react-comments#InboxNotification).
 
 <Figure>
   <Image
@@ -36,7 +36,7 @@ is for you.
 In this guide we’ll be learning how to send emails notifying users about unread
 comments, and more specifically, we’ll be looking at how to:
 
-- Trigger events when inbox notifications are created using the
+- Trigger events based on unread comments using the
   [`ThreadEmailNotificationEvent`](/docs/platform/webhooks#ThreadEmailNotificationEvent)
   webhook event.
 - Fetch unread thread data using the
