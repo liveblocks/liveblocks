@@ -11,7 +11,7 @@ experience, along with inbox notifications using
 [InboxNotification](/docs/api-reference/liveblocks-react-comments#InboxNotification).
 With our webhooks and REST API, it’s possible to aggregate a list of unread
 comments from the last 30 minutes into a single email, and send this to your
-user.
+users.
 
 <Figure>
   <Image
@@ -58,7 +58,7 @@ has this set up already.
 
 ## What are inbox notifications?
 
-First, we need to understand how inbox notifications work in
+First, we need to understand how inbox notifications work with
 [Comments](/docs/products/comments). When a user mentions you in a thread, or if
 you’ve previously participated in it, then you will receive an inbox
 notification for it. For example, in the image below, _Quinn Elton_ and _Emil
@@ -616,9 +616,10 @@ options.
 
 ## Send notification emails
 
-Now that the HTML’s been generated, we can send the notification emails. Earlier
-we retrieved `userId`, the ID of the user that’s receiving the notification. You
-can use this to get the user’s email address, before sending the email itself.
+Now that the HTML has been generated, we can send the notification emails.
+Earlier we retrieved `userId`, the ID of the user that’s receiving the
+notification. You can use this to get the user’s email address, before sending
+the email itself.
 
 <Banner title="userIds">
   This is the same `userId` that you passed to

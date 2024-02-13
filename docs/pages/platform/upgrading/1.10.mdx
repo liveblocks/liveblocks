@@ -95,31 +95,31 @@ import {
 } from "@liveblocks/client";
 ```
 
-Because of this change, `CommentBodyResolveUsersArgs` no longer exists, and you
-should use `ResolveUsersArgs` instead.
+Relatedly,
+[`stringifyCommentBody`](/docs/api-reference/liveblocks-node#stringify-comment-body)’s
+`CommentBodyResolveUsersArgs` no longer exists, and you should use
+`ResolveUsersArgs` instead.
 
 ```tsx highlight="5,11"
 // ❌ Before - Liveblocks 1.9
-import { CommentBodyResolveUsersArgs } from "@liveblocks/client";
+import { CommentBodyResolveUsersArgs } from "@liveblocks/node";
 
 // ✅ After - Liveblocks 1.10
-import { ResolveUsersArgs } from "@liveblocks/client";
+import { ResolveUsersArgs } from "@liveblocks/node";
 ```
 
 ## Comments CSS variables
 
-All `elevation` and `tooltip`
+Some `elevation` and `tooltip`
 [CSS variables](/docs/api-reference/liveblocks-react-comments#CSS-variables)
 have been removed:
 
 - `--lb-tooltip-background`
 - `--lb-tooltip-foreground`
 - `--lb-tooltip-foreground-contrast`
-- `--lb-tooltip-shadow`
 - `--lb-elevation-background`
 - `--lb-elevation-foreground`
 - `--lb-elevation-foreground-contrast`
-- `--lb-elevation-shadow`
 
 Because these no longer exist, we recommend using the basic `--lb-*` variables
 directly on `.lb-elevation` or `.lb-tooltip `.
@@ -131,7 +131,6 @@ Before:
 :root {
   --lb-tooltip-foreground: white;
   --lb-elevation-background: red;
-  --lb-tooltip-shadow: 5px 5px 5px black;
 }
 ```
 
@@ -140,17 +139,13 @@ After:
 ```css
 /* ✅ After - Liveblocks 1.10 */
 .lb-tooltip {
-  --lb-fireground: white;
+  --lb-foreground: white;
 }
 
 .lb-elevation {
   --lb-background: red;
-  box-shadow: 5px 5px 5px black;
 }
 ```
-
-Also note that you’re now required to use `box-shadow` to replace the two
-`shadow` variables.
 
 ## Comments overrides
 
