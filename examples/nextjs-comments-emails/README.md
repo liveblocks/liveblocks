@@ -18,6 +18,8 @@
   </a>
   <img src="https://img.shields.io/badge/react-message?style=flat&logo=react&color=0bd&logoColor=fff" alt="React" />
   <img src="https://img.shields.io/badge/next.js-message?style=flat&logo=next.js&color=07f&logoColor=fff" alt="Next.js" />
+  <img src="https://img.shields.io/badge/resend-message?style=flat&logo=resend&color=333&logoColor=fff" alt="Resend" />
+  <img src="https://img.shields.io/badge/react%20email-message?style=flat&color=2cf&logoColor=fff" alt="React Email" />
 </p>
 
 This example shows how to send comments notifications emails with [Liveblocks](https://liveblocks.io), [React Email](https://react.email/), [Resend](https://resend.com/), and [Next.js](https://nextjs.org/).
