@@ -237,7 +237,11 @@ export type { DevTools };
 // Store
 export type { Store } from "./lib/create-store";
 export {
+  addReaction,
   applyOptimisticUpdates,
   type CacheState,
   type CacheStore,
+  deleteComment,
+  removeReaction,
+  upsertComment,
 } from "./store";

@@ -19,7 +19,6 @@ import type {
   CacheState,
   CacheStore,
   CommentData,
-  CommentReaction,
   CommentsEventServerMsg,
   EnterOptions,
   OptionalPromise,
@@ -31,8 +30,10 @@ import type {
   ToImmutable,
 } from "@liveblocks/core";
 import {
+  addReaction,
   CommentsApiError,
   console,
+  deleteComment,
   deprecateIf,
   errorIf,
   isLiveNode,
@@ -40,8 +41,10 @@ import {
   makeEventSource,
   makePoller,
   NotificationsApiError,
+  removeReaction,
   ServerMsgCode,
   stringify,
+  upsertComment,
 } from "@liveblocks/core";
 import { nanoid } from "nanoid";
 import * as React from "react";
@@ -63,7 +66,6 @@ import { createCommentId, createThreadId } from "./comments/lib/createIds";
 import { selectNotificationSettings } from "./comments/lib/select-notification-settings";
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 import { selectedThreads } from "./comments/lib/selected-threads";
-import { upsertComment } from "./comments/lib/upsert-comment";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { useRerender } from "./lib/use-rerender";
@@ -1260,13 +1262,13 @@ export function createRoomContext<
 
         const threadId = createThreadId();
         const commentId = createCommentId();
-        const now = new Date();
+        const createdAt = new Date();
 
         const newComment: CommentData = {
           id: commentId,
           threadId,
           roomId: room.id,
-          createdAt: now,
+          createdAt,
           type: "comment",
           userId: getCurrentUserId(room),
           body,
@@ -1275,7 +1277,8 @@ export function createRoomContext<
         const newThread: ThreadData<TThreadMetadata> = {
           id: threadId,
           type: "thread",
-          createdAt: now,
+          createdAt,
+          updatedAt: createdAt,
           roomId: room.id,
           metadata: metadata as ThreadData<TThreadMetadata>["metadata"],
           comments: [newComment],
@@ -1333,6 +1336,7 @@ export function createRoomContext<
 
         const threadId = options.threadId;
         const metadata = options.metadata;
+        const updatedAt = new Date();
 
         const optimisticUpdateId = nanoid();
 
@@ -1341,21 +1345,40 @@ export function createRoomContext<
           metadata,
           id: optimisticUpdateId,
           threadId,
+          updatedAt,
         });
 
         room.editThreadMetadata({ metadata, threadId }).then(
           (metadata: TThreadMetadata) => {
             store.set((state) => {
               const existingThread = state.threads[threadId];
+              const updatedOptimisticUpdates = state.optimisticUpdates.filter(
+                (update) => update.id !== optimisticUpdateId
+              );
 
-              // If the thread has been deleted while edit thread metadata was processed
-              // We do not update the state
+              // If the thread doesn't exist in the cache, we do not update the metadata
               if (existingThread === undefined) {
                 return {
                   ...state,
-                  optimisticUpdates: state.optimisticUpdates.filter(
-                    (update) => update.id !== optimisticUpdateId
-                  ),
+                  optimisticUpdates: updatedOptimisticUpdates,
+                };
+              }
+
+              // If the thread has been deleted, we do not update the metadata
+              if (existingThread.deletedAt !== undefined) {
+                return {
+                  ...state,
+                  optimisticUpdates: updatedOptimisticUpdates,
+                };
+              }
+
+              if (
+                existingThread.updatedAt &&
+                existingThread.updatedAt > updatedAt
+              ) {
+                return {
+                  ...state,
+                  optimisticUpdates: updatedOptimisticUpdates,
                 };
               }
 
@@ -1371,9 +1394,7 @@ export function createRoomContext<
                     },
                   },
                 },
-                optimisticUpdates: state.optimisticUpdates.filter(
-                  (update) => update.id !== optimisticUpdateId
-                ),
+                optimisticUpdates: updatedOptimisticUpdates,
               };
             });
           },
@@ -1398,7 +1419,7 @@ export function createRoomContext<
     const room = useRoom();
     return React.useCallback(
       ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
-        const now = new Date();
+        const createdAt = new Date();
         const userId = getCurrentUserId(room);
 
         const optimisticUpdateId = nanoid();
@@ -1407,9 +1428,11 @@ export function createRoomContext<
           type: "add-reaction",
           threadId,
           commentId,
-          emoji,
-          userId,
-          createdAt: now,
+          reaction: {
+            emoji,
+            userId,
+            createdAt,
+          },
           id: optimisticUpdateId,
         });
 
@@ -1417,15 +1440,15 @@ export function createRoomContext<
           (addedReaction) => {
             store.set((state): CacheState<TThreadMetadata> => {
               const existingThread = state.threads[threadId];
+              const updatedOptimisticUpdates = state.optimisticUpdates.filter(
+                (update) => update.id !== optimisticUpdateId
+              );
 
-              // If the thread has been deleted while add reaction was processed
-              // We do not update the state
+              // If the thread doesn't exist in the cache, we do not update the metadata
               if (existingThread === undefined) {
                 return {
                   ...state,
-                  optimisticUpdates: state.optimisticUpdates.filter(
-                    (update) => update.id !== optimisticUpdateId
-                  ),
+                  optimisticUpdates: updatedOptimisticUpdates,
                 };
               }
 
@@ -1433,43 +1456,13 @@ export function createRoomContext<
                 ...state,
                 threads: {
                   ...state.threads,
-                  [threadId]: {
-                    ...existingThread,
-                    comments: existingThread.comments.map((comment) =>
-                      comment.id === commentId
-                        ? {
-                            ...comment,
-                            reactions: comment.reactions.some(
-                              (reaction) =>
-                                reaction.emoji === addedReaction.emoji
-                            )
-                              ? comment.reactions.map((reaction) =>
-                                  reaction.emoji === addedReaction.emoji
-                                    ? {
-                                        ...reaction,
-                                        users: [
-                                          ...reaction.users,
-                                          { id: addedReaction.userId },
-                                        ],
-                                      }
-                                    : reaction
-                                )
-                              : [
-                                  ...comment.reactions,
-                                  {
-                                    emoji: addedReaction.emoji,
-                                    createdAt: addedReaction.createdAt,
-                                    users: [{ id: addedReaction.userId }],
-                                  },
-                                ],
-                          }
-                        : comment
-                    ),
-                  },
+                  [threadId]: addReaction(
+                    existingThread,
+                    commentId,
+                    addedReaction
+                  ),
                 },
-                optimisticUpdates: state.optimisticUpdates.filter(
-                  (update) => update.id !== optimisticUpdateId
-                ),
+                optimisticUpdates: updatedOptimisticUpdates,
               };
             });
           },
@@ -1497,6 +1490,7 @@ export function createRoomContext<
       ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
         const userId = getCurrentUserId(room);
 
+        const removedAt = new Date();
         const optimisticUpdateId = nanoid();
 
         store.pushOptimisticUpdate({
@@ -1505,6 +1499,7 @@ export function createRoomContext<
           commentId,
           emoji,
           userId,
+          removedAt,
           id: optimisticUpdateId,
         });
 
@@ -1512,15 +1507,15 @@ export function createRoomContext<
           () => {
             store.set((state) => {
               const existingThread = state.threads[threadId];
+              const updatedOptimisticUpdates = state.optimisticUpdates.filter(
+                (update) => update.id !== optimisticUpdateId
+              );
 
-              // If the thread has been deleted while remove reaction was processed
-              // We do not update the state
+              // If the thread doesn't exist in the cache, we do not update the metadata
               if (existingThread === undefined) {
                 return {
                   ...state,
-                  optimisticUpdates: state.optimisticUpdates.filter(
-                    (update) => update.id !== optimisticUpdateId
-                  ),
+                  optimisticUpdates: updatedOptimisticUpdates,
                 };
               }
 
@@ -1528,63 +1523,15 @@ export function createRoomContext<
                 ...state,
                 threads: {
                   ...state.threads,
-                  [threadId]: {
-                    ...existingThread,
-                    comments: existingThread.comments.map((comment) => {
-                      if (comment.id !== commentId) {
-                        return comment;
-                      }
-
-                      const existingReaction = comment.reactions.find(
-                        (reaction) => reaction.emoji === emoji
-                      );
-
-                      // If existing reaction does not exists, we return existing comment
-                      if (existingReaction === undefined) {
-                        return comment;
-                      }
-
-                      const reactions: CommentReaction[] = comment.reactions;
-
-                      // If existing reaction has not been added by current user, we return existing comment
-                      if (
-                        !existingReaction.users.some(
-                          (user) => user.id === userId
-                        )
-                      ) {
-                        return comment;
-                      }
-
-                      // If only current user has reacted with this emoji, we remove the reaction
-                      if (existingReaction.users.length <= 1) {
-                        return {
-                          ...comment,
-                          reactions: reactions.filter(
-                            (reaction) => reaction.emoji !== emoji
-                          ),
-                        };
-                      }
-
-                      // If multiple users have reacted with this emoji, we remove the current user from the reaction
-                      return {
-                        ...comment,
-                        reactions: reactions.map((reaction) =>
-                          reaction.emoji !== emoji
-                            ? reaction
-                            : {
-                                ...reaction,
-                                users: reaction.users.filter(
-                                  (user) => user.id !== userId
-                                ),
-                              }
-                        ),
-                      };
-                    }),
-                  },
+                  [threadId]: removeReaction(
+                    existingThread,
+                    commentId,
+                    emoji,
+                    userId,
+                    removedAt
+                  ),
                 },
-                optimisticUpdates: state.optimisticUpdates.filter(
-                  (update) => update.id !== optimisticUpdateId
-                ),
+                optimisticUpdates: updatedOptimisticUpdates,
               };
             });
           },
@@ -1611,14 +1558,14 @@ export function createRoomContext<
     return React.useCallback(
       ({ threadId, body }: CreateCommentOptions): CommentData => {
         const commentId = createCommentId();
-        const now = new Date();
+        const createdAt = new Date();
 
         const comment: CommentData = {
           id: commentId,
           threadId,
           roomId: room.id,
           type: "comment",
-          createdAt: now,
+          createdAt,
           userId: getCurrentUserId(room),
           body,
           reactions: [],
@@ -1626,36 +1573,54 @@ export function createRoomContext<
 
         const optimisticUpdateId = nanoid();
 
-        const inboxNotification = Object.values(
-          store.get().inboxNotifications
-        ).find((inboxNotification) => inboxNotification.threadId === threadId);
-
         store.pushOptimisticUpdate({
           type: "create-comment",
           comment,
           id: optimisticUpdateId,
-          inboxNotificationId: inboxNotification?.id,
         });
 
         room.createComment({ threadId, commentId, body }).then(
           (newComment) => {
-            store.set((state) => ({
-              ...state,
-              threads: upsertComment(state.threads, newComment),
-              inboxNotifications: inboxNotification
-                ? {
-                    ...state.inboxNotifications,
-                    [inboxNotification.id]: {
-                      ...inboxNotification,
-                      notifiedAt: newComment.createdAt,
-                      readAt: newComment.createdAt,
-                    },
-                  }
-                : state.inboxNotifications,
-              optimisticUpdates: state.optimisticUpdates.filter(
+            store.set((state) => {
+              const existingThread = state.threads[threadId];
+              const updatedOptimisticUpdates = state.optimisticUpdates.filter(
                 (update) => update.id !== optimisticUpdateId
-              ),
-            }));
+              );
+
+              if (existingThread === undefined) {
+                return {
+                  ...state,
+                  optimisticUpdates: updatedOptimisticUpdates,
+                };
+              }
+
+              const inboxNotification = Object.values(
+                state.inboxNotifications
+              ).find((notification) => notification.threadId === threadId);
+
+              // If the thread has an inbox notification associated with it, we update the notification's `notifiedAt` and `readAt` values
+              const updatedInboxNotifications =
+                inboxNotification !== undefined
+                  ? {
+                      ...state.inboxNotifications,
+                      [inboxNotification.id]: {
+                        ...inboxNotification,
+                        notifiedAt: newComment.createdAt,
+                        readAt: newComment.createdAt,
+                      },
+                    }
+                  : state.inboxNotifications;
+
+              return {
+                ...state,
+                threads: {
+                  ...state.threads,
+                  [threadId]: upsertComment(existingThread, newComment), // Upsert the new comment into the thread comments list (if applicable)
+                },
+                inboxNotifications: updatedInboxNotifications,
+                optimisticUpdates: updatedOptimisticUpdates,
+              };
+            });
           },
           (err: Error) =>
             onMutationFailure(
@@ -1681,27 +1646,62 @@ export function createRoomContext<
     const room = useRoom();
     return React.useCallback(
       ({ threadId, commentId, body }: EditCommentOptions): void => {
-        const now = new Date();
+        const editedAt = new Date();
         const optimisticUpdateId = nanoid();
+
+        const thread = store.get().threads[threadId];
+        if (thread === undefined) {
+          console.warn(
+            `Internal unexpected behavior. Cannot edit comment in thread "${threadId}" because the thread does not exist in the cache.`
+          );
+          return;
+        }
+
+        const comment = thread.comments.find(
+          (comment) => comment.id === commentId
+        );
+
+        if (comment === undefined || comment.deletedAt !== undefined) {
+          console.warn(
+            `Internal unexpected behavior. Cannot edit comment "${commentId}" in thread "${threadId}" because the comment does not exist in the cache.`
+          );
+          return;
+        }
 
         store.pushOptimisticUpdate({
           type: "edit-comment",
-          threadId,
-          commentId,
-          body,
-          editedAt: now,
+          comment: {
+            ...comment,
+            editedAt,
+            body,
+          },
           id: optimisticUpdateId,
         });
 
         room.editComment({ threadId, commentId, body }).then(
           (editedComment) => {
-            store.set((state) => ({
-              ...state,
-              threads: upsertComment(state.threads, editedComment),
-              optimisticUpdates: state.optimisticUpdates.filter(
+            store.set((state) => {
+              const existingThread = state.threads[threadId];
+              const updatedOptimisticUpdates = state.optimisticUpdates.filter(
                 (update) => update.id !== optimisticUpdateId
-              ),
-            }));
+              );
+
+              if (existingThread === undefined) {
+                return {
+                  ...state,
+                  optimisticUpdates: updatedOptimisticUpdates,
+                };
+              }
+
+              return {
+                ...state,
+                threads: {
+                  ...state.threads,
+                  [threadId]: upsertComment(existingThread, editedComment), // Upsert the edited comment into the thread comments list (if applicable)
+                },
+                optimisticUpdates: updatedOptimisticUpdates,
+              };
+            });
           },
           (err: Error) =>
             onMutationFailure(
@@ -1725,7 +1725,7 @@ export function createRoomContext<
     const room = useRoom();
     return React.useCallback(
       ({ threadId, commentId }: DeleteCommentOptions): void => {
-        const now = new Date();
+        const deletedAt = new Date();
 
         const optimisticUpdateId = nanoid();
 
@@ -1733,7 +1733,7 @@ export function createRoomContext<
           type: "delete-comment",
           threadId,
           commentId,
-          deletedAt: now,
+          deletedAt,
           id: optimisticUpdateId,
         });
 
@@ -1741,47 +1741,29 @@ export function createRoomContext<
           () => {
             store.set((state) => {
               const existingThread = state.threads[threadId];
+              const updatedOptimisticUpdates = state.optimisticUpdates.filter(
+                (update) => update.id !== optimisticUpdateId
+              );
 
               // If thread does not exist, we return the existing state
               if (existingThread === undefined) {
                 return {
                   ...state,
-                  optimisticUpdates: state.optimisticUpdates.filter(
-                    (update) => update.id !== optimisticUpdateId
-                  ),
+                  optimisticUpdates: updatedOptimisticUpdates,
                 };
-              }
-
-              const newThread = {
-                ...existingThread,
-                comments: existingThread.comments.map((comment) =>
-                  comment.id === commentId
-                    ? {
-                        ...comment,
-                        deletedAt: now,
-                        body: undefined,
-                      }
-                    : comment
-                ),
-              };
-
-              const newThreads = { ...state.threads, [threadId]: newThread };
-
-              // If all the comments have been deleted, we delete the thread from the cache
-              if (
-                !newThread.comments.some(
-                  (comment) => comment.deletedAt === undefined
-                )
-              ) {
-                delete newThreads[threadId];
               }
 
               return {
                 ...state,
-                threads: newThreads,
-                optimisticUpdates: state.optimisticUpdates.filter(
-                  (update) => update.id !== optimisticUpdateId
-                ),
+                threads: {
+                  ...state.threads,
+                  [threadId]: deleteComment(
+                    existingThread,
+                    commentId,
+                    deletedAt
+                  ),
+                },
+                optimisticUpdates: updatedOptimisticUpdates,
               };
             });
           },
