@@ -31,6 +31,7 @@ import type { LiveNode, LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
 import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
+import { Batch } from "./lib/batch";
 import { captureStackTrace } from "./lib/debug";
 import type { Callback, Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
@@ -819,6 +820,7 @@ type PrivateRoomApi = {
     updateRoomNotificationSettings(
       settings: Partial<RoomNotificationSettings>
     ): Promise<RoomNotificationSettings>;
+    markInboxNotificationAsRead(notificationId: string): Promise<void>;
   };
 };
 
@@ -1378,6 +1380,8 @@ function createCommentsApi(
     removeReaction,
   };
 }
+
+const MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY = 50;
 
 /**
  * @internal
@@ -2886,6 +2890,31 @@ export function createRoom<
     });
   }
 
+  async function markInboxNotificationsAsRead(inboxNotificationIds: string[]) {
+    await fetchJson("/inbox-notifications/read", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ inboxNotificationIds }),
+    });
+  }
+
+  const batchedMarkInboxNotificationsAsRead = new Batch(
+    async (batchedInboxNotificationIds: [string][]) => {
+      const inboxNotificationIds = batchedInboxNotificationIds.flat();
+
+      await markInboxNotificationsAsRead(inboxNotificationIds);
+
+      return inboxNotificationIds;
+    },
+    { delay: MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY }
+  );
+
+  async function markInboxNotificationAsRead(inboxNotificationId: string) {
+    await batchedMarkInboxNotificationsAsRead.get(inboxNotificationId);
+  }
+
   return Object.defineProperty(
     {
       [kInternal]: {
@@ -2918,6 +2947,7 @@ export function createRoom<
         notifications: {
           getRoomNotificationSettings,
           updateRoomNotificationSettings,
+          markInboxNotificationAsRead,
         },
       },
 

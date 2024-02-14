@@ -1902,6 +1902,8 @@ export function createRoomContext<
   }
 
   function useMarkThreadAsRead() {
+    const room = useRoom();
+
     return React.useCallback((threadId: string) => {
       const inboxNotification = Object.values(
         store.get().inboxNotifications
@@ -1919,7 +1921,7 @@ export function createRoomContext<
         readAt: now,
       });
 
-      client[kInternal].notifications
+      room[kInternal].notifications
         .markInboxNotificationAsRead(inboxNotification.id)
         .then(
           () => {
