@@ -1,5 +1,5 @@
 import type { AuthManager } from "./auth-manager";
-import type { InboxNotificationsApi } from "./client";
+import type { NotificationsApi } from "./client";
 import {
   getAuthBearerHeaderFromAuthValue,
   NotificationsApiError,
@@ -26,7 +26,7 @@ export type GetInboxNotificationsOptions = {
   since?: Date;
 };
 
-export function createInboxNotificationsApi({
+export function createNotificationsApi({
   baseUrl,
   authManager,
   currentUserIdStore,
@@ -36,7 +36,7 @@ export function createInboxNotificationsApi({
   authManager: AuthManager;
   currentUserIdStore: Store<string | null>;
   fetcher: (url: string, init?: RequestInit) => Promise<Response>;
-}): InboxNotificationsApi {
+}): NotificationsApi {
   async function fetchJson<T>(
     endpoint: string,
     options?: RequestInit,

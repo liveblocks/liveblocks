@@ -62,6 +62,8 @@ export function createLiveblocksContext<
   const store = client[kInternal]
     .cacheStore as unknown as CacheStore<TThreadMetadata>;
 
+  const notifications = client[kInternal].notifications;
+
   function LiveblocksProvider(props: PropsWithChildren) {
     return (
       <ContextBundle.Provider
@@ -88,7 +90,7 @@ export function createLiveblocksContext<
   const poller = makePoller(refreshThreadsAndNotifications);
 
   function refreshThreadsAndNotifications() {
-    return client.getInboxNotifications({ since: lastRequestedAt }).then(
+    return notifications.getInboxNotifications({ since: lastRequestedAt }).then(
       (result) => {
         lastRequestedAt = result.meta.requestedAt;
 
@@ -137,7 +139,7 @@ export function createLiveblocksContext<
     });
 
     try {
-      fetchInboxNotificationsRequest = client.getInboxNotifications();
+      fetchInboxNotificationsRequest = notifications.getInboxNotifications();
 
       const result = await fetchInboxNotificationsRequest;
 
@@ -345,7 +347,7 @@ export function createLiveblocksContext<
         readAt,
       });
 
-      client.markInboxNotificationAsRead(inboxNotificationId).then(
+      notifications.markInboxNotificationAsRead(inboxNotificationId).then(
         () => {
           store.set((state) => {
             const existingNotification =
@@ -399,7 +401,7 @@ export function createLiveblocksContext<
         readAt,
       });
 
-      client.markAllInboxNotificationsAsRead().then(
+      notifications.markAllInboxNotificationsAsRead().then(
         () => {
           store.set((state) => ({
             ...state,

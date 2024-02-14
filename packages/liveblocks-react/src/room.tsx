@@ -371,7 +371,9 @@ export function createRoomContext<
     React.useEffect(() => {
       async function handleCommentEvent(message: CommentsEventServerMsg) {
         // TODO: Error handling
-        const info = await room.getThread({ threadId: message.threadId });
+        const info = await room[kInternal].comments.getThread({
+          threadId: message.threadId,
+        });
 
         // If no thread info was returned (i.e., 404), we remove the thread and relevant inbox notifications from local cache.
         if (!info) {
@@ -1021,7 +1023,7 @@ export function createRoomContext<
 
       if (requestsCache.has(notificationSettingsQuery)) {
         requests.push(
-          room
+          room[kInternal].notifications
             .getRoomNotificationSettings()
             .then((settings) => {
               store.updateRoomInboxNotificationSettings(
@@ -1041,7 +1043,7 @@ export function createRoomContext<
 
       // Retrieve threads that have been updated/deleted since the last requestedAt value
       requests.push(
-        room
+        room[kInternal].comments
           .getThreads({ since: lastRequestedAt })
           .then((result) => {
             store.updateThreadsAndNotifications(
@@ -1114,7 +1116,7 @@ export function createRoomContext<
       return requestInfo.promise;
     }
 
-    const promise = room.getThreads(options);
+    const promise = room[kInternal].comments.getThreads(options);
 
     requestsCache.set(queryKey, {
       promise,
@@ -1292,33 +1294,35 @@ export function createRoomContext<
           id: optimisticUpdateId,
         });
 
-        room.createThread({ threadId, commentId, body, metadata }).then(
-          (thread) => {
-            store.set((state) => ({
-              ...state,
-              threads: {
-                ...state.threads,
-                [threadId]: thread,
-              },
-              optimisticUpdates: state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              ),
-            }));
-          },
-          (err: Error) =>
-            onMutationFailure(
-              err,
-              optimisticUpdateId,
-              (err) =>
-                new CreateThreadError(err, {
-                  roomId: room.id,
-                  threadId,
-                  commentId,
-                  body,
-                  metadata,
-                })
-            )
-        );
+        room[kInternal].comments
+          .createThread({ threadId, commentId, body, metadata })
+          .then(
+            (thread) => {
+              store.set((state) => ({
+                ...state,
+                threads: {
+                  ...state.threads,
+                  [threadId]: thread,
+                },
+                optimisticUpdates: state.optimisticUpdates.filter(
+                  (update) => update.id !== optimisticUpdateId
+                ),
+              }));
+            },
+            (err: Error) =>
+              onMutationFailure(
+                err,
+                optimisticUpdateId,
+                (err) =>
+                  new CreateThreadError(err, {
+                    roomId: room.id,
+                    threadId,
+                    commentId,
+                    body,
+                    metadata,
+                  })
+              )
+          );
 
         return newThread;
       },
@@ -1348,68 +1352,70 @@ export function createRoomContext<
           updatedAt,
         });
 
-        room.editThreadMetadata({ metadata, threadId }).then(
-          (metadata: TThreadMetadata) => {
-            store.set((state) => {
-              const existingThread = state.threads[threadId];
-              const updatedOptimisticUpdates = state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              );
+        room[kInternal].comments
+          .editThreadMetadata({ metadata, threadId })
+          .then(
+            (metadata: TThreadMetadata) => {
+              store.set((state) => {
+                const existingThread = state.threads[threadId];
+                const updatedOptimisticUpdates = state.optimisticUpdates.filter(
+                  (update) => update.id !== optimisticUpdateId
+                );
 
-              // If the thread doesn't exist in the cache, we do not update the metadata
-              if (existingThread === undefined) {
+                // If the thread doesn't exist in the cache, we do not update the metadata
+                if (existingThread === undefined) {
+                  return {
+                    ...state,
+                    optimisticUpdates: updatedOptimisticUpdates,
+                  };
+                }
+
+                // If the thread has been deleted, we do not update the metadata
+                if (existingThread.deletedAt !== undefined) {
+                  return {
+                    ...state,
+                    optimisticUpdates: updatedOptimisticUpdates,
+                  };
+                }
+
+                if (
+                  existingThread.updatedAt &&
+                  existingThread.updatedAt > updatedAt
+                ) {
+                  return {
+                    ...state,
+                    optimisticUpdates: updatedOptimisticUpdates,
+                  };
+                }
+
                 return {
                   ...state,
-                  optimisticUpdates: updatedOptimisticUpdates,
-                };
-              }
-
-              // If the thread has been deleted, we do not update the metadata
-              if (existingThread.deletedAt !== undefined) {
-                return {
-                  ...state,
-                  optimisticUpdates: updatedOptimisticUpdates,
-                };
-              }
-
-              if (
-                existingThread.updatedAt &&
-                existingThread.updatedAt > updatedAt
-              ) {
-                return {
-                  ...state,
-                  optimisticUpdates: updatedOptimisticUpdates,
-                };
-              }
-
-              return {
-                ...state,
-                threads: {
-                  ...state.threads,
-                  [threadId]: {
-                    ...existingThread,
-                    metadata: {
-                      ...existingThread.metadata,
-                      ...metadata,
+                  threads: {
+                    ...state.threads,
+                    [threadId]: {
+                      ...existingThread,
+                      metadata: {
+                        ...existingThread.metadata,
+                        ...metadata,
+                      },
                     },
                   },
-                },
-                optimisticUpdates: updatedOptimisticUpdates,
-              };
-            });
-          },
-          (err: Error) =>
-            onMutationFailure(
-              err,
-              optimisticUpdateId,
-              (error) =>
-                new EditThreadMetadataError(error, {
-                  roomId: room.id,
-                  threadId,
-                  metadata,
-                })
-            )
-        );
+                  optimisticUpdates: updatedOptimisticUpdates,
+                };
+              });
+            },
+            (err: Error) =>
+              onMutationFailure(
+                err,
+                optimisticUpdateId,
+                (error) =>
+                  new EditThreadMetadataError(error, {
+                    roomId: room.id,
+                    threadId,
+                    metadata,
+                  })
+              )
+          );
       },
       [room]
     );
@@ -1436,49 +1442,51 @@ export function createRoomContext<
           id: optimisticUpdateId,
         });
 
-        room.addReaction({ threadId, commentId, emoji }).then(
-          (addedReaction) => {
-            store.set((state): CacheState<TThreadMetadata> => {
-              const existingThread = state.threads[threadId];
-              const updatedOptimisticUpdates = state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              );
+        room[kInternal].comments
+          .addReaction({ threadId, commentId, emoji })
+          .then(
+            (addedReaction) => {
+              store.set((state): CacheState<TThreadMetadata> => {
+                const existingThread = state.threads[threadId];
+                const updatedOptimisticUpdates = state.optimisticUpdates.filter(
+                  (update) => update.id !== optimisticUpdateId
+                );
 
-              // If the thread doesn't exist in the cache, we do not update the metadata
-              if (existingThread === undefined) {
+                // If the thread doesn't exist in the cache, we do not update the metadata
+                if (existingThread === undefined) {
+                  return {
+                    ...state,
+                    optimisticUpdates: updatedOptimisticUpdates,
+                  };
+                }
+
                 return {
                   ...state,
+                  threads: {
+                    ...state.threads,
+                    [threadId]: addReaction(
+                      existingThread,
+                      commentId,
+                      addedReaction
+                    ),
+                  },
                   optimisticUpdates: updatedOptimisticUpdates,
                 };
-              }
-
-              return {
-                ...state,
-                threads: {
-                  ...state.threads,
-                  [threadId]: addReaction(
-                    existingThread,
+              });
+            },
+            (err: Error) =>
+              onMutationFailure(
+                err,
+                optimisticUpdateId,
+                (error) =>
+                  new AddReactionError(error, {
+                    roomId: room.id,
+                    threadId,
                     commentId,
-                    addedReaction
-                  ),
-                },
-                optimisticUpdates: updatedOptimisticUpdates,
-              };
-            });
-          },
-          (err: Error) =>
-            onMutationFailure(
-              err,
-              optimisticUpdateId,
-              (error) =>
-                new AddReactionError(error, {
-                  roomId: room.id,
-                  threadId,
-                  commentId,
-                  emoji,
-                })
-            )
-        );
+                    emoji,
+                  })
+              )
+          );
       },
       [room]
     );
@@ -1503,51 +1511,53 @@ export function createRoomContext<
           id: optimisticUpdateId,
         });
 
-        room.removeReaction({ threadId, commentId, emoji }).then(
-          () => {
-            store.set((state) => {
-              const existingThread = state.threads[threadId];
-              const updatedOptimisticUpdates = state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              );
+        room[kInternal].comments
+          .removeReaction({ threadId, commentId, emoji })
+          .then(
+            () => {
+              store.set((state) => {
+                const existingThread = state.threads[threadId];
+                const updatedOptimisticUpdates = state.optimisticUpdates.filter(
+                  (update) => update.id !== optimisticUpdateId
+                );
 
-              // If the thread doesn't exist in the cache, we do not update the metadata
-              if (existingThread === undefined) {
+                // If the thread doesn't exist in the cache, we do not update the metadata
+                if (existingThread === undefined) {
+                  return {
+                    ...state,
+                    optimisticUpdates: updatedOptimisticUpdates,
+                  };
+                }
+
                 return {
                   ...state,
+                  threads: {
+                    ...state.threads,
+                    [threadId]: removeReaction(
+                      existingThread,
+                      commentId,
+                      emoji,
+                      userId,
+                      removedAt
+                    ),
+                  },
                   optimisticUpdates: updatedOptimisticUpdates,
                 };
-              }
-
-              return {
-                ...state,
-                threads: {
-                  ...state.threads,
-                  [threadId]: removeReaction(
-                    existingThread,
+              });
+            },
+            (err: Error) =>
+              onMutationFailure(
+                err,
+                optimisticUpdateId,
+                (error) =>
+                  new RemoveReactionError(error, {
+                    roomId: room.id,
+                    threadId,
                     commentId,
                     emoji,
-                    userId,
-                    removedAt
-                  ),
-                },
-                optimisticUpdates: updatedOptimisticUpdates,
-              };
-            });
-          },
-          (err: Error) =>
-            onMutationFailure(
-              err,
-              optimisticUpdateId,
-              (error) =>
-                new RemoveReactionError(error, {
-                  roomId: room.id,
-                  threadId,
-                  commentId,
-                  emoji,
-                })
-            )
-        );
+                  })
+              )
+          );
       },
       [room]
     );
@@ -1579,62 +1589,64 @@ export function createRoomContext<
           id: optimisticUpdateId,
         });
 
-        room.createComment({ threadId, commentId, body }).then(
-          (newComment) => {
-            store.set((state) => {
-              const existingThread = state.threads[threadId];
-              const updatedOptimisticUpdates = state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              );
+        room[kInternal].comments
+          .createComment({ threadId, commentId, body })
+          .then(
+            (newComment) => {
+              store.set((state) => {
+                const existingThread = state.threads[threadId];
+                const updatedOptimisticUpdates = state.optimisticUpdates.filter(
+                  (update) => update.id !== optimisticUpdateId
+                );
 
-              if (existingThread === undefined) {
+                if (existingThread === undefined) {
+                  return {
+                    ...state,
+                    optimisticUpdates: updatedOptimisticUpdates,
+                  };
+                }
+
+                const inboxNotification = Object.values(
+                  state.inboxNotifications
+                ).find((notification) => notification.threadId === threadId);
+
+                // If the thread has an inbox notification associated with it, we update the notification's `notifiedAt` and `readAt` values
+                const updatedInboxNotifications =
+                  inboxNotification !== undefined
+                    ? {
+                        ...state.inboxNotifications,
+                        [inboxNotification.id]: {
+                          ...inboxNotification,
+                          notifiedAt: newComment.createdAt,
+                          readAt: newComment.createdAt,
+                        },
+                      }
+                    : state.inboxNotifications;
+
                 return {
                   ...state,
+                  threads: {
+                    ...state.threads,
+                    [threadId]: upsertComment(existingThread, newComment), // Upsert the new comment into the thread comments list (if applicable)
+                  },
+                  inboxNotifications: updatedInboxNotifications,
                   optimisticUpdates: updatedOptimisticUpdates,
                 };
-              }
-
-              const inboxNotification = Object.values(
-                state.inboxNotifications
-              ).find((notification) => notification.threadId === threadId);
-
-              // If the thread has an inbox notification associated with it, we update the notification's `notifiedAt` and `readAt` values
-              const updatedInboxNotifications =
-                inboxNotification !== undefined
-                  ? {
-                      ...state.inboxNotifications,
-                      [inboxNotification.id]: {
-                        ...inboxNotification,
-                        notifiedAt: newComment.createdAt,
-                        readAt: newComment.createdAt,
-                      },
-                    }
-                  : state.inboxNotifications;
-
-              return {
-                ...state,
-                threads: {
-                  ...state.threads,
-                  [threadId]: upsertComment(existingThread, newComment), // Upsert the new comment into the thread comments list (if applicable)
-                },
-                inboxNotifications: updatedInboxNotifications,
-                optimisticUpdates: updatedOptimisticUpdates,
-              };
-            });
-          },
-          (err: Error) =>
-            onMutationFailure(
-              err,
-              optimisticUpdateId,
-              (err) =>
-                new CreateCommentError(err, {
-                  roomId: room.id,
-                  threadId,
-                  commentId,
-                  body,
-                })
-            )
-        );
+              });
+            },
+            (err: Error) =>
+              onMutationFailure(
+                err,
+                optimisticUpdateId,
+                (err) =>
+                  new CreateCommentError(err, {
+                    roomId: room.id,
+                    threadId,
+                    commentId,
+                    body,
+                  })
+              )
+          );
 
         return comment;
       },
@@ -1678,44 +1690,46 @@ export function createRoomContext<
           id: optimisticUpdateId,
         });
 
-        room.editComment({ threadId, commentId, body }).then(
-          (editedComment) => {
-            store.set((state) => {
-              const existingThread = state.threads[threadId];
-              const updatedOptimisticUpdates = state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              );
+        room[kInternal].comments
+          .editComment({ threadId, commentId, body })
+          .then(
+            (editedComment) => {
+              store.set((state) => {
+                const existingThread = state.threads[threadId];
+                const updatedOptimisticUpdates = state.optimisticUpdates.filter(
+                  (update) => update.id !== optimisticUpdateId
+                );
 
-              if (existingThread === undefined) {
+                if (existingThread === undefined) {
+                  return {
+                    ...state,
+                    optimisticUpdates: updatedOptimisticUpdates,
+                  };
+                }
+
                 return {
                   ...state,
+                  threads: {
+                    ...state.threads,
+                    [threadId]: upsertComment(existingThread, editedComment), // Upsert the edited comment into the thread comments list (if applicable)
+                  },
                   optimisticUpdates: updatedOptimisticUpdates,
                 };
-              }
-
-              return {
-                ...state,
-                threads: {
-                  ...state.threads,
-                  [threadId]: upsertComment(existingThread, editedComment), // Upsert the edited comment into the thread comments list (if applicable)
-                },
-                optimisticUpdates: updatedOptimisticUpdates,
-              };
-            });
-          },
-          (err: Error) =>
-            onMutationFailure(
-              err,
-              optimisticUpdateId,
-              (error) =>
-                new EditCommentError(error, {
-                  roomId: room.id,
-                  threadId,
-                  commentId,
-                  body,
-                })
-            )
-        );
+              });
+            },
+            (err: Error) =>
+              onMutationFailure(
+                err,
+                optimisticUpdateId,
+                (error) =>
+                  new EditCommentError(error, {
+                    roomId: room.id,
+                    threadId,
+                    commentId,
+                    body,
+                  })
+              )
+          );
       },
       [room]
     );
@@ -1737,7 +1751,7 @@ export function createRoomContext<
           id: optimisticUpdateId,
         });
 
-        room.deleteComment({ threadId, commentId }).then(
+        room[kInternal].comments.deleteComment({ threadId, commentId }).then(
           () => {
             store.set((state) => {
               const existingThread = state.threads[threadId];
@@ -1904,34 +1918,36 @@ export function createRoomContext<
         readAt: now,
       });
 
-      client.markInboxNotificationAsRead(inboxNotification.id).then(
-        () => {
-          store.set((state) => ({
-            ...state,
-            inboxNotifications: {
-              ...state.inboxNotifications,
-              [inboxNotification.id]: {
-                ...inboxNotification,
-                readAt: now,
+      client[kInternal].notifications
+        .markInboxNotificationAsRead(inboxNotification.id)
+        .then(
+          () => {
+            store.set((state) => ({
+              ...state,
+              inboxNotifications: {
+                ...state.inboxNotifications,
+                [inboxNotification.id]: {
+                  ...inboxNotification,
+                  readAt: now,
+                },
               },
-            },
-            optimisticUpdates: state.optimisticUpdates.filter(
-              (update) => update.id !== optimisticUpdateId
-            ),
-          }));
-        },
-        (err: Error) => {
-          onMutationFailure(
-            err,
-            optimisticUpdateId,
-            (error) =>
-              new MarkInboxNotificationAsReadError(error, {
-                inboxNotificationId: inboxNotification.id,
-              })
-          );
-          return;
-        }
-      );
+              optimisticUpdates: state.optimisticUpdates.filter(
+                (update) => update.id !== optimisticUpdateId
+              ),
+            }));
+          },
+          (err: Error) => {
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (error) =>
+                new MarkInboxNotificationAsReadError(error, {
+                  inboxNotificationId: inboxNotification.id,
+                })
+            );
+            return;
+          }
+        );
     }, []);
   }
 
@@ -1949,7 +1965,7 @@ export function createRoomContext<
       return requestInfo.promise;
     }
 
-    const promise = room.getRoomNotificationSettings();
+    const promise = room[kInternal].notifications.getRoomNotificationSettings();
 
     requestsCache.set(queryKey, {
       promise,
@@ -2085,28 +2101,30 @@ export function createRoomContext<
           settings,
         });
 
-        room.updateRoomNotificationSettings(settings).then(
-          (settings) => {
-            store.set((state) => ({
-              ...state,
-              notificationSettings: {
-                [room.id]: settings,
-              },
-              optimisticUpdates: state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              ),
-            }));
-          },
-          (err: Error) =>
-            onMutationFailure(
-              err,
-              optimisticUpdateId,
-              (error) =>
-                new UpdateNotificationSettingsError(error, {
-                  roomId: room.id,
-                })
-            )
-        );
+        room[kInternal].notifications
+          .updateRoomNotificationSettings(settings)
+          .then(
+            (settings) => {
+              store.set((state) => ({
+                ...state,
+                notificationSettings: {
+                  [room.id]: settings,
+                },
+                optimisticUpdates: state.optimisticUpdates.filter(
+                  (update) => update.id !== optimisticUpdateId
+                ),
+              }));
+            },
+            (err: Error) =>
+              onMutationFailure(
+                err,
+                optimisticUpdateId,
+                (error) =>
+                  new UpdateNotificationSettingsError(error, {
+                    roomId: room.id,
+                  })
+              )
+          );
       },
       [room]
     );

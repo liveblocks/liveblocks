@@ -495,11 +495,10 @@ export type GetThreadsOptions<TThreadMetadata extends BaseMetadata> = {
   since?: Date;
 };
 
-type CommentsApi<TThreadMetadata extends BaseMetadata = never> = {
-  /**
-   * @private
-   */
-  getThreads(options?: GetThreadsOptions<TThreadMetadata>): Promise<{
+type CommentsApi = {
+  getThreads<TThreadMetadata extends BaseMetadata = never>(
+    options?: GetThreadsOptions<TThreadMetadata>
+  ): Promise<{
     threads: ThreadData<TThreadMetadata>[];
     inboxNotifications: InboxNotificationData[];
     deletedThreads: ThreadDeleteInfo[];
@@ -508,74 +507,44 @@ type CommentsApi<TThreadMetadata extends BaseMetadata = never> = {
       requestedAt: Date;
     };
   }>;
-
-  /**
-   * @private
-   */
-  getThread(options: { threadId: string }): Promise<
+  getThread<TThreadMetadata extends BaseMetadata = never>(options: {
+    threadId: string;
+  }): Promise<
     | {
         thread: ThreadData<TThreadMetadata>;
         inboxNotification?: InboxNotificationData;
       }
     | undefined
   >;
-
-  /**
-   * @private
-   */
-  createThread(options: {
+  createThread<TThreadMetadata extends BaseMetadata = never>(options: {
     threadId: string;
     commentId: string;
     metadata: TThreadMetadata | undefined;
     body: CommentBody;
   }): Promise<ThreadData<TThreadMetadata>>;
-
-  /**
-   * @private
-   */
-  editThreadMetadata(options: {
+  editThreadMetadata<TThreadMetadata extends BaseMetadata = never>(options: {
     metadata: PartialNullable<TThreadMetadata>;
     threadId: string;
   }): Promise<TThreadMetadata>;
-
-  /**
-   * @private
-   */
   createComment(options: {
     threadId: string;
     commentId: string;
     body: CommentBody;
   }): Promise<CommentData>;
-
-  /**
-   * @private
-   */
   editComment(options: {
     threadId: string;
     commentId: string;
     body: CommentBody;
   }): Promise<CommentData>;
-
-  /**
-   * @private
-   */
   deleteComment(options: {
     threadId: string;
     commentId: string;
   }): Promise<void>;
-
-  /**
-   * @private
-   */
   addReaction(options: {
     threadId: string;
     commentId: string;
     emoji: string;
   }): Promise<CommentUserReaction>;
-
-  /**
-   * @private
-   */
   removeReaction(options: {
     threadId: string;
     commentId: string;
@@ -583,12 +552,13 @@ type CommentsApi<TThreadMetadata extends BaseMetadata = never> = {
   }): Promise<void>;
 };
 
+// TODO: Add TThreadMetadata
 export type Room<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json,
-> = CommentsApi<any /* TODO: Remove this any by adding a proper thread metadata on the Room type */> & {
+> = {
   /**
    * @private
    *
@@ -756,18 +726,6 @@ export type Room<
   };
 
   /**
-   * @private
-   */
-  getRoomNotificationSettings(): Promise<RoomNotificationSettings>;
-
-  /**
-   * @private
-   */
-  updateRoomNotificationSettings(
-    settings: Partial<RoomNotificationSettings>
-  ): Promise<RoomNotificationSettings>;
-
-  /**
    * Batches modifications made during the given function.
    * All the modifications are sent to other clients in a single message.
    * All the subscribers are called only after the batch is over.
@@ -851,9 +809,15 @@ type PrivateRoomApi = {
     rawSend(data: string): void;
   };
 
-  // Used to store metadata related to comments
-  comments: {
+  comments: CommentsApi & {
     lastRequestedAt: Date | null; // Stores the timestamp when threads and notifications were last requested for the room
+  };
+
+  notifications: {
+    getRoomNotificationSettings(): Promise<RoomNotificationSettings>;
+    updateRoomNotificationSettings(
+      settings: Partial<RoomNotificationSettings>
+    ): Promise<RoomNotificationSettings>;
   };
 };
 
@@ -1087,7 +1051,7 @@ export class CommentsApiError extends Error {
 /**
  * Handles all Comments-related API calls.
  */
-function createCommentsApi<TThreadMetadata extends BaseMetadata>(
+function createCommentsApi(
   roomId: string,
   getAuthValue: () => Promise<AuthValue>,
   fetchClientApi: (
@@ -1097,7 +1061,7 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     options?: RequestInit,
     params?: QueryParams
   ) => Promise<Response>
-): CommentsApi<TThreadMetadata> {
+): CommentsApi {
   async function fetchCommentsApi(
     endpoint: string,
     params?: QueryParams,
@@ -1147,7 +1111,9 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     return body;
   }
 
-  async function getThreads(options?: GetThreadsOptions<TThreadMetadata>) {
+  async function getThreads<TThreadMetadata extends BaseMetadata = never>(
+    options?: GetThreadsOptions<TThreadMetadata>
+  ) {
     const response = await fetchCommentsApi(
       "/threads/search",
       {
@@ -1229,7 +1195,7 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     }
   }
 
-  async function createThread({
+  async function createThread<TThreadMetadata extends BaseMetadata = never>({
     metadata,
     body,
     commentId,
@@ -1262,7 +1228,9 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     return convertToThreadData(thread);
   }
 
-  async function editThreadMetadata({
+  async function editThreadMetadata<
+    TThreadMetadata extends BaseMetadata = never,
+  >({
     metadata,
     threadId,
   }: {
@@ -2919,7 +2887,6 @@ export function createRoom<
 
   return Object.defineProperty(
     {
-      /* NOTE: Exposing internals here only to allow testing implementation details in unit tests */
       [kInternal]: {
         get presenceBuffer() { return deepClone(context.buffer.presenceUpdates?.data ?? null) }, // prettier-ignore
         get undoStack() { return deepClone(context.undoStack) }, // prettier-ignore
@@ -2938,12 +2905,18 @@ export function createRoom<
         },
 
         comments: {
+          ...commentsApi,
           get lastRequestedAt() {
             return context.comments.lastRequestedAt;
           },
           set lastRequestedAt(value: Date | null) {
             context.comments.lastRequestedAt = value;
           },
+        },
+
+        notifications: {
+          getRoomNotificationSettings,
+          updateRoomNotificationSettings,
         },
       },
 
@@ -2990,13 +2963,6 @@ export function createRoom<
       // Presence
       getPresence: () => context.myPresence.current,
       getOthers: () => context.others.current,
-
-      // Comments
-      ...commentsApi,
-
-      // Notifications
-      getRoomNotificationSettings,
-      updateRoomNotificationSettings,
     },
 
     // Explictly make the internal field non-enumerable, to avoid aggressive
