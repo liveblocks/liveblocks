@@ -190,6 +190,19 @@ export function CommentLink({
   );
 }
 
+export function CommentNonInteractiveLink({
+  href: _href,
+  children,
+  className,
+  ...props
+}: CommentBodyLinkProps & CommentLinkProps) {
+  return (
+    <span className={classNames("lb-comment-link", className)} {...props}>
+      {children}
+    </span>
+  );
+}
+
 const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
   ({ comment, reaction, ...props }, forwardedRef) => {
     const { useAddReaction, useRemoveReaction } = useRoomContextBundle();

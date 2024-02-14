@@ -34,7 +34,11 @@ import * as CommentPrimitive from "../primitives/Comment";
 import { Timestamp } from "../primitives/Timestamp";
 import { classNames } from "../utils/class-names";
 import { setQueryParams } from "../utils/query-params";
-import { CommentLink, CommentMention, CommentReactionShared } from "./Comment";
+import {
+  CommentMention,
+  CommentNonInteractiveLink,
+  CommentReactionShared,
+} from "./Comment";
 import { Avatar, type AvatarProps } from "./internal/Avatar";
 import { List } from "./internal/List";
 import { Room } from "./internal/Room";
@@ -228,7 +232,7 @@ function InboxNotificationComment({
               body={comment.body}
               components={{
                 Mention: CommentMention,
-                Link: CommentLink,
+                Link: CommentNonInteractiveLink,
               }}
             />
             {comment.reactions.length > 0 && (
