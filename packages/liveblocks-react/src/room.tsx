@@ -1042,17 +1042,6 @@ export function createRoomContext<
     }
 
     requestCache.subscribers--;
-
-    let totalSubscribers = 0;
-    for (const requestCache of requestsCache.values()) {
-      totalSubscribers += requestCache.subscribers;
-    }
-
-    // If there are no more subscribers for the room, we stop the poller
-    if (totalSubscribers <= 0) {
-      const poller = getPoller(roomId);
-      poller.stop();
-    }
   }
 
   async function getThreadsAndInboxNotifications(
