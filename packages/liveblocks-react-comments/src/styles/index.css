@@ -176,6 +176,10 @@
     }
   }
 
+  &:where(.lb-button\:non-disableable:disabled) {
+    cursor: default;
+  }
+
   &:where(:not(.lb-button\:non-disableable):disabled) {
     opacity: 0.5;
     cursor: not-allowed;

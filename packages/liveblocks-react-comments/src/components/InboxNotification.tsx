@@ -37,7 +37,7 @@ import { setQueryParams } from "../utils/query-params";
 import {
   CommentMention,
   CommentNonInteractiveLink,
-  CommentReactionShared,
+  CommentNonInteractiveReaction,
 } from "./Comment";
 import { Avatar, type AvatarProps } from "./internal/Avatar";
 import { List } from "./internal/List";
@@ -238,7 +238,7 @@ function InboxNotificationComment({
             {comment.reactions.length > 0 && (
               <div className="lb-comment-reactions">
                 {comment.reactions.map((reaction) => (
-                  <CommentReactionShared
+                  <CommentNonInteractiveReaction
                     key={reaction.emoji}
                     reaction={reaction}
                     overrides={overrides}
