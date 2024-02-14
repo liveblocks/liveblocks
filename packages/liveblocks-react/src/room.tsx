@@ -1168,10 +1168,14 @@ export function createRoomContext<
 
   const DEFAULT_DEDUPING_INTERVAL = 2000; // 2 seconds
 
-  const lastRequestedAtByRoom = new Map<string, Date>();
+  const lastRequestedAtByRoom = new Map<string, Date>(); // A map of room ids to the timestamp when the last request for threads updates was made
 
-  let isFetchingThreadsUpdates: boolean = false;
+  let isFetchingThreadsUpdates: boolean = false; // A flag to prevent multiple requests to retrieve threads updates from being made at the same time
 
+  /**
+   * Retrieve threads that have been updated/deleted since the last time the room requested threads updates and update the local cache with the new data
+   * @param roomId The id of the room for which to retrieve threads updates
+   */
   async function getThreadsUpdates(roomId: string) {
     const room = client.getRoom(roomId);
     if (room === null) return;
@@ -1179,12 +1183,14 @@ export function createRoomContext<
     const since = lastRequestedAtByRoom.get(room.id);
     if (since === undefined) return;
 
+    // If another request to retrieve threads updates is in progress, we do not start a new one
     if (isFetchingThreadsUpdates) return;
 
     try {
       isFetchingThreadsUpdates = true;
       const updates = await room[kInternal].comments.getThreads({ since });
 
+      // Set the isFetchingThreadsUpdates flag to false after a certain interval to prevent multiple requests from being made at the same time
       setTimeout(() => {
         isFetchingThreadsUpdates = false;
       }, DEFAULT_DEDUPING_INTERVAL);
@@ -1196,6 +1202,7 @@ export function createRoomContext<
         updates.deletedInboxNotifications
       );
 
+      // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
       lastRequestedAtByRoom.set(room.id, updates.meta.requestedAt);
     } catch (err) {
       isFetchingThreadsUpdates = false;
@@ -1210,7 +1217,7 @@ export function createRoomContext<
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>;
   }>) {
     React.useEffect(() => {
-      // Retrieve threads that have been updated/deleted since the last requestedAt value for the room
+      // Retrieve threads that have been updated/deleted since the last time the room requested threads updates
       void getThreadsUpdates(room.id);
     }, [room.id]);
 
