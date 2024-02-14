@@ -21,6 +21,8 @@ This release introduces Notifications (and unread indicators) for Comments.
   `useUpdateRoomNotificationSettings`.
 - Make some hooks usable interchangeably between `createLiveblocksContext` and
   `createRoomContext`: `useUser`, and `useRoomInfo`.
+- Fix type definitions of `useOthersListener` hook.
+- Fix type definitions of `useErrorListener` hook.
 
 ### `@liveblocks/react-comments`
 

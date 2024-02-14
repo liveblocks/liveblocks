@@ -36,7 +36,7 @@ export {
   getMentionedIdsFromCommentBody,
   stringifyCommentBody,
 } from "./comments/comment-body";
-export type { BaseAuthResult, Delegates } from "./connection";
+export type { BaseAuthResult, Delegates, LiveblocksError } from "./connection";
 export type {
   LegacyConnectionStatus,
   LostConnectionEvent,
