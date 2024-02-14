@@ -810,9 +810,7 @@ type PrivateRoomApi = {
     rawSend(data: string): void;
   };
 
-  comments: CommentsApi & {
-    lastRequestedAt: Date | null; // Stores the timestamp when threads and notifications were last requested for the room
-  };
+  comments: CommentsApi;
 
   notifications: {
     getRoomNotificationSettings(): Promise<RoomNotificationSettings>;
@@ -901,10 +899,6 @@ type RoomState<
 
   readonly undoStack: HistoryOp<TPresence>[][];
   readonly redoStack: HistoryOp<TPresence>[][];
-
-  readonly comments: {
-    lastRequestedAt: Date | null;
-  };
 
   /**
    * When history is paused, all operations will get queued up here. When
@@ -1462,10 +1456,6 @@ export function createRoom<
     opClock: 0,
     nodes: new Map<string, LiveNode>(),
     root: undefined,
-
-    comments: {
-      lastRequestedAt: null,
-    },
 
     undoStack: [],
     redoStack: [],
@@ -2907,12 +2897,6 @@ export function createRoom<
 
         comments: {
           ...commentsApi,
-          get lastRequestedAt() {
-            return context.comments.lastRequestedAt;
-          },
-          set lastRequestedAt(value: Date | null) {
-            context.comments.lastRequestedAt = value;
-          },
         },
 
         notifications: {

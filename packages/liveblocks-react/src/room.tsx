@@ -443,7 +443,9 @@ export function createRoomContext<
             >
           }
         >
-          {props.children}
+          <CommentsRoomProvider room={room}>
+            {props.children}
+          </CommentsRoomProvider>
         </ContextBundle.Provider>
       </RoomContext.Provider>
     );
@@ -1039,8 +1041,8 @@ export function createRoomContext<
         );
       }
 
-      const lastRequestedAt = room[kInternal].comments.lastRequestedAt;
-      if (lastRequestedAt === null) return;
+      const lastRequestedAt = lastRequestedAtByRoom.get(room.id);
+      if (lastRequestedAt === undefined) return;
 
       // Retrieve threads that have been updated/deleted since the last requestedAt value
       requests.push(
@@ -1058,7 +1060,7 @@ export function createRoomContext<
             const room = client.getRoom(roomId);
             if (room === null) return;
 
-            room[kInternal].comments.lastRequestedAt = result.meta.requestedAt;
+            lastRequestedAtByRoom.set(room.id, result.meta.requestedAt);
           })
           .catch(() => {
             // TODO: Handle error
@@ -1139,7 +1141,7 @@ export function createRoomContext<
         queryKey
       );
 
-      const lastRequestedAt = room[kInternal].comments.lastRequestedAt;
+      const lastRequestedAt = lastRequestedAtByRoom.get(room.id);
 
       /**
        * We set the `lastRequestedAt` value for the room to the timestamp returned by the current request if:
@@ -1148,10 +1150,10 @@ export function createRoomContext<
        * 2. The `lastRequestedAt` value for the room is older than the timestamp returned by the current request
        */
       if (
-        lastRequestedAt === null ||
+        lastRequestedAt === undefined ||
         lastRequestedAt > result.meta.requestedAt
       ) {
-        room[kInternal].comments.lastRequestedAt = result.meta.requestedAt;
+        lastRequestedAtByRoom.set(room.id, result.meta.requestedAt);
       }
     } catch (err) {
       // TODO: Implement error retry mechanism
@@ -1162,6 +1164,57 @@ export function createRoomContext<
     }
 
     poller.start(POLLING_INTERVAL);
+  }
+
+  const DEFAULT_DEDUPING_INTERVAL = 2000; // 2 seconds
+
+  const lastRequestedAtByRoom = new Map<string, Date>();
+
+  let isFetchingThreadsUpdates: boolean = false;
+
+  async function getThreadsUpdates(roomId: string) {
+    const room = client.getRoom(roomId);
+    if (room === null) return;
+
+    const since = lastRequestedAtByRoom.get(room.id);
+    if (since === undefined) return;
+
+    if (isFetchingThreadsUpdates) return;
+
+    try {
+      isFetchingThreadsUpdates = true;
+      const updates = await room[kInternal].comments.getThreads({ since });
+
+      setTimeout(() => {
+        isFetchingThreadsUpdates = false;
+      }, DEFAULT_DEDUPING_INTERVAL);
+
+      store.updateThreadsAndNotifications(
+        updates.threads,
+        updates.inboxNotifications,
+        updates.deletedThreads,
+        updates.deletedInboxNotifications
+      );
+
+      lastRequestedAtByRoom.set(room.id, updates.meta.requestedAt);
+    } catch (err) {
+      isFetchingThreadsUpdates = false;
+      // TODO: Implement error handling
+    }
+  }
+
+  function CommentsRoomProvider({
+    room,
+    children,
+  }: React.PropsWithChildren<{
+    room: Room<JsonObject, LsonObject, BaseUserMeta, Json>;
+  }>) {
+    React.useEffect(() => {
+      // Retrieve threads that have been updated/deleted since the last requestedAt value for the room
+      void getThreadsUpdates(room.id);
+    }, [room.id]);
+
+    return <>{children}</>;
   }
 
   function useThreads(
