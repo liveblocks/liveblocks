@@ -21,6 +21,7 @@ import type {
   CommentData,
   CommentsEventServerMsg,
   EnterOptions,
+  LiveblocksError,
   OptionalPromise,
   ResolveMentionSuggestionsArgs,
   ResolveUsersArgs,
@@ -636,7 +637,7 @@ export function createRoomContext<
     );
   }
 
-  function useErrorListener(callback: (err: Error) => void): void {
+  function useErrorListener(callback: (err: LiveblocksError) => void): void {
     const room = useRoom();
     const savedCallback = useLatest(callback);
 
