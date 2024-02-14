@@ -514,6 +514,19 @@ function Component() {
 
 Displays a single inbox notification.
 
+```tsx
+<InboxNotification inboxNotification={inboxNotification} />
+```
+
+<Figure>
+  <Image
+    src="/assets/comments/inbox-notification.png"
+    alt="InboxNotification"
+    width={768}
+    height={446}
+  />
+</Figure>
+
 #### Props [#InboxNotification-props]
 
 <PropertiesList>
@@ -577,7 +590,26 @@ Displays a thread inbox notification.
 
 ### InboxNotificationList
 
-Displays inbox notifications as a list.
+Displays inbox notifications as a list. Each
+[`InboxNotification`](#InboxNotification) component will be wrapped in a `li`
+element.
+
+```tsx
+<InboxNotificationList>
+  <InboxNotification />
+  <InboxNotification />
+  <InboxNotification />
+</InboxNotificationList>
+```
+
+<Figure>
+  <Image
+    src="/assets/comments/inbox-notification-list.png"
+    alt="InboxNotificationList"
+    width={768}
+    height={446}
+  />
+</Figure>
 
 #### Props [#InboxNotificationList-props]
 
