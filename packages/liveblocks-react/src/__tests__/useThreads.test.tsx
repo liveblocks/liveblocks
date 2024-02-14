@@ -68,11 +68,12 @@ function createRoomContextForTest<
 }
 
 describe("useThreads", () => {
-  beforeAll(() => {
+  beforeEach(() => {
     jest.useFakeTimers();
   });
 
-  afterAll(() => {
+  afterEach(() => {
+    jest.runOnlyPendingTimers();
     jest.useRealTimers();
   });
 
@@ -1428,6 +1429,210 @@ describe("useThreads: polling", () => {
     });
 
     unmount();
+  });
+
+  test("should only have one poller for multiple instances of RoomProvider for the same room id", async () => {
+    let getThreadsReqCount = 0;
+
+    const threads = [dummyThreadData()];
+
+    const now = new Date().toISOString();
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        getThreadsReqCount++;
+        return res(
+          ctx.json({
+            data: threads,
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: now,
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
+
+    const Room = () => {
+      return (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          <Threads />
+        </RoomProvider>
+      );
+    };
+
+    const Threads = () => {
+      useThreads();
+      return null;
+    };
+
+    const FirstRoom = Room;
+    const SecondRoom = Room;
+
+    // Render a RoomProvider for the room id
+    const { unmount: unmountFirstRoom } = render(<FirstRoom />);
+
+    // Render another RoomProvider for the same room id
+    const { unmount: unmountSecondRoom } = render(<SecondRoom />);
+
+    // A new fetch request for the threads should have been made after the initial render
+    await waitFor(() => expect(getThreadsReqCount).toBe(1));
+
+    // Wait for the first polling to occur after the initial render
+    jest.advanceTimersByTime(POLLING_INTERVAL);
+    await waitFor(() => expect(getThreadsReqCount).toBe(2));
+
+    // Advance time to simulate the polling interval
+    jest.advanceTimersByTime(POLLING_INTERVAL);
+    // Wait for the second polling to occur
+    await waitFor(() => expect(getThreadsReqCount).toBe(3));
+
+    unmountFirstRoom();
+    unmountSecondRoom();
+  });
+
+  test("should stop polling if all instances of RoomProvider for the room id are unmounted", async () => {
+    let getThreadsReqCount = 0;
+
+    const threads = [dummyThreadData()];
+
+    const now = new Date().toISOString();
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        getThreadsReqCount++;
+        return res(
+          ctx.json({
+            data: threads,
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: now,
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
+
+    const Room = () => {
+      return (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          <Threads />
+        </RoomProvider>
+      );
+    };
+
+    const Threads = () => {
+      useThreads();
+      return null;
+    };
+
+    const FirstRoom = Room;
+    const SecondRoom = Room;
+
+    // Render a RoomProvider for the room id
+    const { unmount: unmountFirstRoom } = render(<FirstRoom />);
+
+    // Render another RoomProvider for the same room id
+    const { unmount: unmountSecondRoom } = render(<SecondRoom />);
+
+    // A new fetch request for the threads should have been made after the initial render
+    await waitFor(() => expect(getThreadsReqCount).toBe(1));
+
+    // Wait for the first polling to occur after the initial render
+    jest.advanceTimersByTime(POLLING_INTERVAL);
+    await waitFor(() => expect(getThreadsReqCount).toBe(2));
+
+    // Advance time to simulate the polling interval
+    jest.advanceTimersByTime(POLLING_INTERVAL);
+    // Wait for the second polling to occur
+    await waitFor(() => expect(getThreadsReqCount).toBe(3));
+
+    unmountFirstRoom();
+    unmountSecondRoom();
+
+    // Advance time to simulate the polling interval
+    jest.advanceTimersByTime(POLLING_INTERVAL);
+    await waitFor(() => expect(getThreadsReqCount).toBe(3));
+  });
+
+  test("should not stop polling if at least one instance of RoomProvider for the room id is still mounted", async () => {
+    let getThreadsReqCount = 0;
+
+    const threads = [dummyThreadData()];
+
+    const now = new Date().toISOString();
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        getThreadsReqCount++;
+        return res(
+          ctx.json({
+            data: threads,
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: now,
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
+
+    const Room = () => {
+      return (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          <Threads />
+        </RoomProvider>
+      );
+    };
+
+    const Threads = () => {
+      useThreads();
+      return null;
+    };
+
+    const FirstRoom = Room;
+    const SecondRoom = Room;
+
+    // Render a RoomProvider for the room id
+    const { unmount: unmountFirstRoom } = render(<FirstRoom />);
+
+    // Render another RoomProvider for the same room id
+    const { unmount: unmountSecondRoom } = render(<SecondRoom />);
+
+    // A new fetch request for the threads should have been made after the initial render
+    await waitFor(() => expect(getThreadsReqCount).toBe(1));
+
+    // Wait for the first polling to occur after the initial render
+    jest.advanceTimersByTime(POLLING_INTERVAL);
+    await waitFor(() => expect(getThreadsReqCount).toBe(2));
+
+    // Unmount the first RoomProvider (but keep the second one mounted) and verify that polling still occurs
+    unmountFirstRoom();
+
+    // Advance time to simulate the polling interval
+    jest.advanceTimersByTime(POLLING_INTERVAL);
+    // Wait for the second polling to occur
+    await waitFor(() => expect(getThreadsReqCount).toBe(3));
+
+    unmountSecondRoom();
   });
 });
 

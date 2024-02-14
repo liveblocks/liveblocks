@@ -1126,6 +1126,8 @@ export function createRoomContext<
     >
   >();
 
+  const roomCountByRoomId = new Map<string, number>();
+
   let isFetchingThreadsUpdates: boolean = false;
 
   async function getThreadsUpdates(roomId: string) {
@@ -1168,6 +1170,26 @@ export function createRoomContext<
     React.useEffect(() => {
       // Retrieve threads that have been updated/deleted since the last requestedAt value for the room
       void getThreadsUpdates(room.id);
+    }, [room.id]);
+
+    React.useEffect(() => {
+      const roomCount = roomCountByRoomId.get(room.id) ?? 0;
+      roomCountByRoomId.set(room.id, roomCount + 1);
+
+      return () => {
+        const roomCount = roomCountByRoomId.get(room.id) ?? 0;
+
+        // Stop (and remove) the poller for the room only if there are no more instances of `CommentRoomProvider` for the room
+        if (roomCount === 1) {
+          roomCountByRoomId.delete(room.id);
+
+          const poller = getPoller(room.id);
+          poller.stop();
+          pollerByRoom.delete(room.id);
+        } else {
+          roomCountByRoomId.set(room.id, roomCount - 1);
+        }
+      };
     }, [room.id]);
 
     return <>{children}</>;
