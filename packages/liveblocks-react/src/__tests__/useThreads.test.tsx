@@ -899,19 +899,39 @@ describe("useThreads", () => {
     unmount();
   });
 
-  // TODO: This test fails because of the way we handle request cache after room is unmounted
-  test.skip("should refetch threads if room has been mounted after being unmounted", async () => {
-    const threads = [dummyThreadData()];
-    let getThreadsReqCount = 0;
+  test("should update threads if room has been mounted after being unmounted", async () => {
+    let threads = [dummyThreadData(), dummyThreadData()];
+    const originalThreads = [...threads];
 
     server.use(
-      mockGetThreads(async (_req, res, ctx) => {
-        getThreadsReqCount++;
+      mockGetThreads(async (req, res, ctx) => {
+        const url = new URL(req.url);
+        const since = url.searchParams.get("since");
+
+        if (since) {
+          const updatedThreads = threads.filter((thread) => {
+            if (thread.updatedAt === undefined) return false;
+            return new Date(thread.updatedAt) >= new Date(since);
+          });
+
+          return res(
+            ctx.json({
+              data: updatedThreads,
+              deletedThreads: [],
+              inboxNotifications: [],
+              deletedInboxNotifications: [],
+              meta: {
+                requestedAt: new Date().toISOString(),
+              },
+            })
+          );
+        }
+
         return res(
           ctx.json({
             data: threads,
-            inboxNotifications: [],
             deletedThreads: [],
+            inboxNotifications: [],
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
@@ -925,32 +945,53 @@ describe("useThreads", () => {
       roomCtx: { RoomProvider, useThreads },
     } = createRoomContextForTest();
 
-    const Room = () => {
-      return (
+    const firstRenderResult = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
         <RoomProvider id="room-id" initialPresence={{}}>
-          <Threads />
+          {children}
         </RoomProvider>
-      );
-    };
+      ),
+    });
 
-    const Threads = () => {
-      useThreads();
-      return null;
-    };
+    expect(firstRenderResult.result.current).toEqual({ isLoading: true });
 
-    const { unmount } = render(<Room />);
+    // Threads should be displayed after the server responds with the threads
+    await waitFor(() =>
+      expect(firstRenderResult.result.current).toEqual({
+        isLoading: false,
+        threads,
+      })
+    );
 
-    // A new fetch request for the threads should have been made
-    await waitFor(() => expect(getThreadsReqCount).toBe(1));
+    firstRenderResult.unmount();
 
-    unmount();
+    // Add a new thread to the threads array to simulate a new thread being added to the room
+    threads = [...originalThreads, dummyThreadData()];
 
-    // Render the RoomProvider again and verify a new fetch request is initiated
-    const result = render(<Room />);
+    // Render the RoomProvider again and verify the threads are updated
+    const secondRenderResult = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          {children}
+        </RoomProvider>
+      ),
+    });
 
-    await waitFor(() => expect(getThreadsReqCount).toBe(2));
+    // Threads (outdated ones) should be displayed instantly because we already fetched them previously
+    expect(secondRenderResult.result.current).toEqual({
+      isLoading: false,
+      threads: originalThreads,
+    });
 
-    result.unmount();
+    // The updated threads should be displayed after the server responds with the updated threads (either due to a fetch request to get all threads or just the updated threads)
+    await waitFor(() => {
+      expect(secondRenderResult.result.current).toEqual({
+        isLoading: false,
+        threads,
+      });
+    });
+
+    secondRenderResult.unmount();
   });
 
   test("should not refetch threads if room has been mounted after being unmounted if another RoomProvider for the same id is still mounted", async () => {
@@ -1030,6 +1071,7 @@ describe("useThreads: polling", () => {
   afterAll(() => {
     jest.useRealTimers();
   });
+
   test("should poll threads every x seconds", async () => {
     let getThreadsReqCount = 0;
 
@@ -1135,6 +1177,255 @@ describe("useThreads: polling", () => {
 
     jest.advanceTimersByTime(POLLING_INTERVAL);
     await waitFor(() => expect(hasCalledGetThreads).toBe(false));
+
+    unmount();
+  });
+
+  test("should set the lastRequestedAt timestamp to the timestamp returned by the initial fetch request", async () => {
+    let getThreadsReqCount = 0;
+
+    const threads = [dummyThreadData()];
+
+    const requestedAt = new Date("2021-01-02").toISOString();
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        getThreadsReqCount++;
+        return res(
+          ctx.json({
+            data: threads,
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt,
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+      client,
+    } = createRoomContextForTest();
+
+    const Room = () => {
+      return (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          <Threads />
+        </RoomProvider>
+      );
+    };
+
+    const Threads = () => {
+      useThreads();
+      return null;
+    };
+
+    const { unmount } = render(<Room />);
+
+    // A new fetch request for the threads should have been made after the initial render
+    await waitFor(() => expect(getThreadsReqCount).toBe(1));
+
+    const room = client.getRoom("room-id");
+    expect(room).not.toBeNull();
+    if (room === null) return;
+
+    // Mock the getThreads method so we can verify it wasn't called
+    room.getThreads = jest.fn().mockResolvedValue({
+      data: [],
+      inboxNotifications: [],
+      deletedThreads: [],
+      deletedInboxNotifications: [],
+      meta: {
+        requestedAt: new Date("2021-01-03").toISOString(),
+      },
+    });
+
+    // Wait for the first polling to occur after the initial render
+    jest.advanceTimersByTime(POLLING_INTERVAL);
+
+    // Verify that a request was made to the server to get the updated threads with the since timestamp
+    expect(room.getThreads).toHaveBeenNthCalledWith(1, {
+      since: new Date(requestedAt),
+    });
+
+    unmount();
+  });
+
+  test("should set the lastRequestedAt timestamp to an older timestamp if the current timestamp is newer", async () => {
+    let getThreadsReqCount = 0;
+
+    const resolvedThread = {
+      ...dummyThreadData(),
+      metadata: { resolved: true },
+    };
+    const unresolvedThread = {
+      ...dummyThreadData(),
+      metadata: { resolved: false },
+    };
+
+    const oldRequestedAt = new Date("2021-01-01").toISOString();
+    const newRequestedAt = new Date("2021-01-02").toISOString();
+
+    server.use(
+      mockGetThreads(async (req, res, ctx) => {
+        getThreadsReqCount++;
+        const { metadata } = await req.json<{ metadata: BaseMetadata }>();
+        if (metadata.resolved) {
+          return res(
+            ctx.json({
+              data: [resolvedThread],
+              inboxNotifications: [],
+              deletedThreads: [],
+              deletedInboxNotifications: [],
+              meta: {
+                requestedAt: newRequestedAt,
+              },
+            })
+          );
+        } else {
+          // Mock a delay in response so that GET THREADS (resolved: false) request is resolved after GET THREADS (resolved: true) request
+          ctx.delay(100);
+
+          return res(
+            ctx.json({
+              data: [unresolvedThread],
+              inboxNotifications: [],
+              deletedThreads: [],
+              deletedInboxNotifications: [],
+              meta: {
+                requestedAt: oldRequestedAt,
+              },
+            })
+          );
+        }
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+      client,
+    } = createRoomContextForTest();
+
+    const Room = () => {
+      return (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          <Threads />
+        </RoomProvider>
+      );
+    };
+
+    const Threads = () => {
+      useThreads({ query: { metadata: { resolved: true } } });
+      useThreads({ query: { metadata: { resolved: false } } });
+      return null;
+    };
+
+    const { unmount } = render(<Room />);
+
+    // A new fetch request for the threads should have been made after the initial render
+    await waitFor(() => expect(getThreadsReqCount).toBe(2));
+
+    const room = client.getRoom("room-id");
+    expect(room).not.toBeNull();
+    if (room === null) return;
+
+    // Mock the getThreads method so we can verify it wasn't called
+    room.getThreads = jest.fn().mockResolvedValue({
+      data: [],
+      inboxNotifications: [],
+      deletedThreads: [],
+      deletedInboxNotifications: [],
+      meta: {
+        requestedAt: new Date("2021-01-03").toISOString(),
+      },
+    });
+
+    // Wait for the first polling to occur after the initial render
+    jest.advanceTimersByTime(POLLING_INTERVAL);
+
+    // Verify that a request was made to the server to get the updated threads with the since timestamp
+    expect(room.getThreads).toHaveBeenNthCalledWith(1, {
+      since: new Date(oldRequestedAt),
+    });
+
+    unmount();
+  });
+
+  test("should apply thread updates from polling", async () => {
+    let getThreadsReqCount = 0;
+
+    const threads = [dummyThreadData()];
+    const updatedThread = dummyThreadData();
+
+    server.use(
+      mockGetThreads(async (req, res, ctx) => {
+        getThreadsReqCount++;
+        const url = new URL(req.url);
+        const since = url.searchParams.get("since");
+
+        if (since) {
+          return res(
+            ctx.json({
+              data: [updatedThread],
+              inboxNotifications: [],
+              deletedThreads: [],
+              deletedInboxNotifications: [],
+              meta: {
+                requestedAt: new Date().toISOString(),
+              },
+            })
+          );
+        }
+
+        return res(
+          ctx.json({
+            data: threads,
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest<{
+      resolved: boolean;
+    }>();
+
+    const { result, unmount } = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          {children}
+        </RoomProvider>
+      ),
+    });
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    // A new fetch request for the threads should have been made after the initial render
+    await waitFor(() => expect(getThreadsReqCount).toBe(1));
+    expect(result.current).toEqual({
+      isLoading: false,
+      threads,
+    });
+
+    // Wait for the first polling to occur after the initial render
+    jest.advanceTimersByTime(POLLING_INTERVAL);
+    // Verify that a request was made to the server to get the updated threads
+    await waitFor(() => expect(getThreadsReqCount).toBe(2));
+
+    // Cache should now contain the updated thread returned from the server after the first polling
+    expect(result.current).toEqual({
+      isLoading: false,
+      threads: [...threads, updatedThread],
+    });
 
     unmount();
   });
