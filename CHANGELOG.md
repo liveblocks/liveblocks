@@ -2,6 +2,12 @@
 
 This release introduces Notifications (and unread indicators) for Comments.
 
+### `create-liveblocks-app`
+
+- Add `createLiveblocksContext` and Notifications to `--init`.
+- Move resolver options from `createRoomContext` to `createClient` and add
+  `resolveRoomsInfo` to the list of resolvers.
+
 ### `@liveblocks/client`
 
 - Add options to `createClient`: `resolveUsers`, `resolveMentionSuggestions`
