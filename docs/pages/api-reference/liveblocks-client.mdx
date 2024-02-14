@@ -277,10 +277,22 @@ const client = createClient({
 
     return documentsData.map((documentData) => ({
       name: documentData.name,
+      // url: documentData.url,
     }));
   },
 });
 ```
+
+In addition to the room’s name, you can also provide a room’s URL as the `url`
+property. If you do so, the
+[`InboxNotification`](/docs/api-reference/liveblocks-react-comments#InboxNotification)
+component will automatically use it. It’s possible to use an inbox
+notification’s `roomId` property to construct a room’s URL directly in React and
+set it on
+[`InboxNotification`](/docs/api-reference/liveblocks-react-comments#InboxNotification)
+via `href`, but the room ID might not be enough for you to construct the URL ,
+you might need to call your backend for example. In that case, providing it via
+`resolveRoomsInfo` is the preferred way.
 
 ### resolveMentionSuggestions
 

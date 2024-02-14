@@ -177,8 +177,8 @@ export const {
 
 function resolvers() {
   return `async resolveUsers({ userIds }) {
-    // Used only for Comments. Return a list of user information retrieved
-    // from \`userIds\`. This info is used in comments, mentions etc.
+    // Used only for Comments and Notifications. Return a list of user information
+    // retrieved from \`userIds\`. This info is used in comments, mentions etc.
     
     // const usersData = await __fetchUsersFromDB__(userIds);
     // 
@@ -204,13 +204,14 @@ function resolvers() {
     return [];
   },
   async resolveRoomsInfo({ roomIds }) {
-    // Used only for Comments. Return a list of room information retrieved
-    // from \`roomIds\`.
+    // Used only for Comments and Notifications. Return a list of room information
+    // retrieved from \`roomIds\`.
     
     // const roomsData = await __fetchRoomsFromDB__(roomIds);
     // 
     // return roomsData.map((roomData) => ({
     //   name: roomData.name,
+    //   url: roomData.url,
     // }));
     
     return [];
