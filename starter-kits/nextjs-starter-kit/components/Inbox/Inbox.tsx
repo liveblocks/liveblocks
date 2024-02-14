@@ -1,13 +1,10 @@
-import { InboxNotificationThreadData } from "@liveblocks/core";
 import { ClientSideSuspense } from "@liveblocks/react";
 import {
   InboxNotification,
   InboxNotificationList,
 } from "@liveblocks/react-comments";
 import clsx from "clsx";
-import { ComponentProps, useEffect, useState } from "react";
-import { DOCUMENT_URL } from "../../constants";
-import { getDocument } from "../../lib/client";
+import { ComponentProps } from "react";
 import {
   useInboxNotifications,
   useMarkAllInboxNotificationsAsRead,
@@ -30,49 +27,16 @@ function InboxContent(props: ComponentProps<"div">) {
         <InboxNotificationList>
           {inboxNotifications.map((inboxNotification) => {
             return (
-              <InboxNotificationLine
+              <InboxNotification
                 key={inboxNotification.id}
                 inboxNotification={inboxNotification}
+                components={{ Anchor: Link }}
               />
             );
           })}
         </InboxNotificationList>
       )}
     </div>
-  );
-}
-
-function InboxNotificationLine({
-  inboxNotification,
-}: {
-  inboxNotification: InboxNotificationThreadData;
-}) {
-  const [href, setHref] = useState<string>();
-
-  useEffect(() => {
-    get();
-
-    async function get() {
-      const { data, error } = await getDocument({
-        documentId: inboxNotification.roomId,
-      });
-
-      if (error || !data) {
-        console.log(error);
-        return;
-      }
-
-      setHref(DOCUMENT_URL(data.type, data.id));
-    }
-  }, [inboxNotification]);
-
-  return (
-    <InboxNotification
-      key={inboxNotification.id}
-      inboxNotification={inboxNotification}
-      components={{ Anchor: Link }}
-      href={href}
-    />
   );
 }
 

@@ -6,6 +6,7 @@ import {
 } from "@liveblocks/client";
 import { createLiveblocksContext, createRoomContext } from "@liveblocks/react";
 import Router from "next/router";
+import { DOCUMENT_URL } from "./constants";
 import { getSpecificDocuments, getUsers } from "./lib/client";
 import { User } from "./types";
 
@@ -58,8 +59,9 @@ const client = createClient({
   },
   async resolveRoomsInfo({ roomIds }) {
     const documents = await getSpecificDocuments({ documentIds: roomIds });
-    return documents.map((document, index) => ({
-      name: document ? document.name : roomIds[index],
+    return documents.map((document) => ({
+      name: document ? document.name : undefined,
+      url: document ? DOCUMENT_URL(document.type, document.id) : undefined,
     }));
   },
 });
