@@ -199,7 +199,7 @@ export function createAuthManager(
   ) {
     // If the requester didn't pass a roomId,
     // it means they need the token to access the user's resources (inbox notifications for example).
-    // If the token is Access token, it needs to have a wildcard permission.
+    // If the token is access token, it needs to have a wildcard permission.
     if (!options.roomId && parsedToken.parsed.k === TokenKind.ACCESS_TOKEN) {
       for (const [resource, scopes] of Object.entries(
         parsedToken.parsed.perms
@@ -212,7 +212,7 @@ export function createAuthManager(
         }
       }
       throw new StopRetrying(
-        "The issued Access Token doesn't grant enough permissions. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/access-tokens-not-enough-permissions"
+        "The issued access token doesn't grant enough permissions. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/access-tokens-not-enough-permissions"
       );
     }
   }

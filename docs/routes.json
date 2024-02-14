@@ -423,7 +423,7 @@
         "path": "/errors/dupes"
       },
       {
-        "title": "Access Token doesn't grant enough permissions",
+        "title": "Access token doesn't grant enough permissions",
         "path": "/errors/liveblocks-client/access-tokens-not-enough-permissions"
       }
     ]

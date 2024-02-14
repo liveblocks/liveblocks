@@ -201,7 +201,7 @@ describe("auth-manager - secret auth", () => {
     expect(authValueReq1.token.raw).toEqual(legacyTokens[0]);
     expect(requestCount).toBe(1);
 
-    // Five hours later, this token should be expired. For ID and Access tokens, that mweans
+    // Five hours later, this token should be expired. For ID and access tokens, that mweans
     jest.useFakeTimers();
     jest.setSystemTime(Date.now() + 5 * HOURS);
     try {
@@ -290,7 +290,7 @@ describe("auth-manager - secret auth", () => {
         requestedScope: "comments:read",
       })
     ).rejects.toThrow(
-      "The issued Access Token doesn't grant enough permissions. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/access-tokens-not-enough-permissions"
+      "The issued access token doesn't grant enough permissions. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/access-tokens-not-enough-permissions"
     );
 
     await $promise;
