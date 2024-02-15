@@ -583,7 +583,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       // When the "open" event happens, we're ready to transition to the
       // OK state. This is done by resolving the Promise.
       //
-      async (ctx) => {
+      async (ctx, signal) => {
         let capturedPrematureEvent: IWebSocketEvent | null = null;
         let unconfirmedSocket: IWebSocketInstance | null = null;
 
@@ -703,8 +703,15 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
             ([socket, unsub]) => {
               unsub();
 
+              if (signal.aborted) {
+                // Trigger cleanup logic in .catch() below. At this point, the
+                // promise is already cancelled, so none of the ok/err
+                // transitions will take place.
+                throw new Error("Aborted");
+              }
+
               if (capturedPrematureEvent) {
-                throw capturedPrematureEvent;
+                throw capturedPrematureEvent; // Take failure transition
               }
 
               return socket;
