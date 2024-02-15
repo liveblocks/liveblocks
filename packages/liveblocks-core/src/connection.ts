@@ -585,6 +585,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       //
       async (ctx) => {
         let capturedPrematureEvent: IWebSocketEvent | null = null;
+        let unconfirmedSocket: IWebSocketInstance | null = null;
 
         const connect$ = new Promise<[IWebSocketInstance, () => void]>(
           (resolve, rej) => {
@@ -594,6 +595,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
             }
 
             const socket = delegates.createSocket(ctx.authValue as T);
+            unconfirmedSocket = socket;
 
             function reject(event: IWebSocketEvent) {
               capturedPrematureEvent = event;
@@ -709,6 +711,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
             }
           )
           .catch((e) => {
+            teardownSocket(unconfirmedSocket);
             throw e;
           });
       },
