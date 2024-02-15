@@ -641,7 +641,9 @@ describe("finite state machine", () => {
   });
 
   describe("promise-based transitions", () => {
-    function makeFSM(promiseFn: () => Promise<unknown>) {
+    function makeFSM(
+      promiseFn: (context: unknown, signal: AbortSignal) => Promise<unknown>
+    ) {
       const fsm = new FSM({})
         .addState("waiting.one")
         .addState("waiting.two")
@@ -736,6 +738,193 @@ describe("finite state machine", () => {
 
       await jest.runAllTimersAsync();
       expect(fsm.currentState).toEqual("bad"); // ...will ignore the returned promise transition
+    });
+
+    test("promise-based transitions abort with signal handler (when aborted)", async () => {
+      jest.useFakeTimers();
+
+      let gotAborted = false;
+
+      const fsm = makeFSM(async (_, signal: AbortSignal) => {
+        function f() {
+          gotAborted = true;
+        }
+        signal.addEventListener("abort", f);
+        try {
+          await sleep(2000);
+        } finally {
+          signal.removeEventListener("abort", f);
+        }
+      });
+
+      fsm.start();
+
+      expect(fsm.currentState).toEqual("waiting.one");
+      await jest.advanceTimersByTimeAsync(1000);
+      expect(fsm.currentState).toEqual("waiting.one");
+      expect(gotAborted).toEqual(false);
+      fsm.send({ type: "FAIL" }); // Manually failing first...
+      expect(gotAborted).toEqual(true);
+      expect(fsm.currentState).toEqual("bad");
+      await jest.runAllTimersAsync();
+      expect(fsm.currentState).toEqual("bad"); // ...will ignore the returned promise transition
+      expect(gotAborted).toEqual(true);
+    });
+
+    test("promise-based transitions abort with signal handler (when not aborted)", async () => {
+      jest.useFakeTimers();
+
+      let hijackedSignal: AbortSignal | undefined;
+
+      const fsm = makeFSM(async (_, signal: AbortSignal) => {
+        hijackedSignal = signal;
+        await sleep(2000);
+      });
+
+      fsm.start();
+
+      expect(fsm.currentState).toEqual("waiting.one");
+      await jest.runAllTimersAsync();
+      expect(fsm.currentState).toEqual("good");
+      expect(hijackedSignal?.aborted).toEqual(false);
+    });
+
+    test("promise-based transitions abort with signal inspection (when aborted)", async () => {
+      jest.useFakeTimers();
+
+      let gotAborted = false;
+
+      const fsm = makeFSM(async (_, signal: AbortSignal) => {
+        await sleep(2000);
+        gotAborted = signal.aborted;
+      });
+
+      fsm.start();
+
+      expect(fsm.currentState).toEqual("waiting.one");
+      await jest.advanceTimersByTimeAsync(1000);
+      expect(fsm.currentState).toEqual("waiting.one");
+      expect(gotAborted).toEqual(false);
+      fsm.send({ type: "FAIL" }); // Manually failing first...
+      expect(gotAborted).toEqual(false); // not yet visible before promise has run
+      expect(fsm.currentState).toEqual("bad");
+      await jest.runAllTimersAsync();
+      expect(gotAborted).toEqual(true);
+      expect(fsm.currentState).toEqual("bad"); // ...will ignore the returned promise transition
+    });
+
+    test("promise-based transitions abort with signal inspection (when not aborted)", async () => {
+      jest.useFakeTimers();
+
+      let hijackedSignal: AbortSignal | undefined;
+
+      const fsm = makeFSM(async (_, signal: AbortSignal) => {
+        hijackedSignal = signal;
+        await sleep(2000);
+      });
+
+      fsm.start();
+
+      expect(fsm.currentState).toEqual("waiting.one");
+      await jest.runAllTimersAsync();
+      expect(fsm.currentState).toEqual("good");
+      expect(hijackedSignal?.aborted).toEqual(false);
+    });
+
+    test("promise-based transitions abort failing promise with signal handler (when aborted)", async () => {
+      jest.useFakeTimers();
+
+      let gotAborted = false;
+
+      const fsm = makeFSM(async (_, signal: AbortSignal) => {
+        function f() {
+          gotAborted = true;
+        }
+        signal.addEventListener("abort", f);
+        try {
+          await failAfter(2000);
+        } finally {
+          signal.removeEventListener("abort", f);
+        }
+      });
+
+      fsm.start();
+
+      expect(fsm.currentState).toEqual("waiting.one");
+      await jest.advanceTimersByTimeAsync(1000);
+      expect(fsm.currentState).toEqual("waiting.one");
+      expect(gotAborted).toEqual(false);
+      fsm.send({ type: "OK" }); // Manually move to good...
+      expect(gotAborted).toEqual(true);
+      expect(fsm.currentState).toEqual("good");
+      await jest.runAllTimersAsync();
+      expect(fsm.currentState).toEqual("good"); // ...will ignore the returned promise transition
+      expect(gotAborted).toEqual(true);
+    });
+
+    test("promise-based transitions abort failing promise with signal handler (when not aborted)", async () => {
+      jest.useFakeTimers();
+
+      let gotAborted = false;
+
+      const fsm = makeFSM(async (_, signal: AbortSignal) => {
+        function f() {
+          gotAborted = true;
+        }
+        signal.addEventListener("abort", f);
+        try {
+          await failAfter(2000);
+        } finally {
+          signal.removeEventListener("abort", f);
+        }
+      });
+
+      fsm.start();
+
+      expect(fsm.currentState).toEqual("waiting.one");
+      await jest.runAllTimersAsync();
+      expect(fsm.currentState).toEqual("bad");
+      expect(gotAborted).toEqual(false);
+    });
+
+    test("promise-based transitions abort failing promise with signal inspection (when aborted)", async () => {
+      jest.useFakeTimers();
+
+      let hijackedSignal: AbortSignal | undefined;
+
+      const fsm = makeFSM(async (_, signal: AbortSignal) => {
+        hijackedSignal = signal;
+        await failAfter(2000);
+      });
+
+      fsm.start();
+
+      expect(fsm.currentState).toEqual("waiting.one");
+      await jest.advanceTimersByTimeAsync(1000);
+      expect(fsm.currentState).toEqual("waiting.one");
+      expect(hijackedSignal?.aborted).toEqual(false);
+      fsm.send({ type: "OK" }); // Manually move to good...
+      expect(hijackedSignal?.aborted).toEqual(true);
+      expect(fsm.currentState).toEqual("good");
+      expect(hijackedSignal?.aborted).toEqual(true);
+    });
+
+    test("promise-based transitions abort failing promise with signal inspection (when not aborted)", async () => {
+      jest.useFakeTimers();
+
+      let hijackedSignal: AbortSignal | undefined;
+
+      const fsm = makeFSM(async (_, signal: AbortSignal) => {
+        hijackedSignal = signal;
+        await failAfter(2000);
+      });
+
+      fsm.start();
+
+      expect(fsm.currentState).toEqual("waiting.one");
+      await jest.runAllTimersAsync();
+      expect(fsm.currentState).toEqual("bad");
+      expect(hijackedSignal?.aborted).toEqual(false);
     });
   });
 

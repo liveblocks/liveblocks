@@ -583,8 +583,9 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       // When the "open" event happens, we're ready to transition to the
       // OK state. This is done by resolving the Promise.
       //
-      async (ctx) => {
+      async (ctx, signal) => {
         let capturedPrematureEvent: IWebSocketEvent | null = null;
+        let unconfirmedSocket: IWebSocketInstance | null = null;
 
         const connect$ = new Promise<[IWebSocketInstance, () => void]>(
           (resolve, rej) => {
@@ -594,6 +595,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
             }
 
             const socket = delegates.createSocket(ctx.authValue as T);
+            unconfirmedSocket = socket;
 
             function reject(event: IWebSocketEvent) {
               capturedPrematureEvent = event;
@@ -683,30 +685,42 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
           connect$,
           SOCKET_CONNECT_TIMEOUT,
           "Timed out during websocket connection"
-        ).then(
-          //
-          // Part 3:
-          // By now, our "open" event has fired, and the promise has been
-          // resolved. Two possible scenarios:
-          //
-          // 1. The happy path. Most likely.
-          // 2. Uh-oh. A premature close/error event has been observed. Let's
-          //    reject the promise after all.
-          //
-          // Any close/error event that will get scheduled after this point
-          // onwards, will be caught in the OK state, and dealt with
-          // accordingly.
-          //
-          ([socket, unsub]) => {
-            unsub();
+        )
+          .then(
+            //
+            // Part 3:
+            // By now, our "open" event has fired, and the promise has been
+            // resolved. Two possible scenarios:
+            //
+            // 1. The happy path. Most likely.
+            // 2. Uh-oh. A premature close/error event has been observed. Let's
+            //    reject the promise after all.
+            //
+            // Any close/error event that will get scheduled after this point
+            // onwards, will be caught in the OK state, and dealt with
+            // accordingly.
+            //
+            ([socket, unsub]) => {
+              unsub();
 
-            if (capturedPrematureEvent) {
-              throw capturedPrematureEvent;
+              if (signal.aborted) {
+                // Trigger cleanup logic in .catch() below. At this point, the
+                // promise is already cancelled, so none of the ok/err
+                // transitions will take place.
+                throw new Error("Aborted");
+              }
+
+              if (capturedPrematureEvent) {
+                throw capturedPrematureEvent; // Take failure transition
+              }
+
+              return socket;
             }
-
-            return socket;
-          }
-        );
+          )
+          .catch((e) => {
+            teardownSocket(unconfirmedSocket);
+            throw e;
+          });
       },
 
       // Only transition to OK state after a successfully opened WebSocket connection
