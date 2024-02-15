@@ -244,15 +244,8 @@ example.
 
 ### Permissions
 
-When receiving a `threadEmailNotification` webhook event, you have to verify if
-the user has access to the room before sending an email.
-
-Liveblocks doesn't have enough information to know if a user has access to a
-room. For example, when a user is mentioned in a comment, we will create an
-inbox notification. In the context of this user client, thanks to the token
-generated for that user, we will be able to know if they have access or not the
-notification. But when we send a `threadEmailNotification` webhook event, we
-don't have that information.
+When you receive a `threadEmailNotification` webhook event, it's essential to verify if the user has access to the room before sending an email.
+Liveblocks lacks the necessary information to determine if a user has access to a room. For instance, we create an inbox notification when a user is mentioned in a comment. In this user client's context, we can determine if they have access to the notification thanks to the token generated for that user. However, when we send a `threadEmailNotification` webhook event, we lack this information.
 
 #### Access token authentication
 
