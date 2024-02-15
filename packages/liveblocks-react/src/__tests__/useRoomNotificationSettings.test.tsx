@@ -99,75 +99,72 @@ describe("useRoomNotificationSettings", () => {
     unmount();
   });
 
-  test.failing(
-    "should update room notification settings optimistically and revert the updates if error response from server",
-    async () => {
-      server.use(
-        mockGetRoomNotificationSettings(async (_req, res, ctx) => {
-          return res(
-            ctx.json({
-              threads: "all",
-            })
-          );
-        }),
-        mockUpdateRoomNotificationSettings((_req, res, ctx) =>
-          res(ctx.status(500))
-        )
-      );
-
-      const {
-        roomCtx: { RoomProvider, useRoomNotificationSettings },
-      } = createRoomContextForTest();
-
-      const { result, unmount } = renderHook(
-        () => useRoomNotificationSettings(),
-        {
-          wrapper: ({ children }) => (
-            <RoomProvider id="room-id" initialPresence={{}}>
-              {children}
-            </RoomProvider>
-          ),
-        }
-      );
-
-      expect(result.current[0]).toEqual({ isLoading: true });
-
-      await waitFor(() =>
-        expect(result.current[0]).toEqual({
-          isLoading: false,
-          settings: {
+  test("should update room notification settings optimistically and revert the updates if error response from server", async () => {
+    server.use(
+      mockGetRoomNotificationSettings(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
             threads: "all",
-          },
-        })
-      );
+          })
+        );
+      }),
+      mockUpdateRoomNotificationSettings((_req, res, ctx) =>
+        res(ctx.status(500))
+      )
+    );
 
-      const updateRoomNotificationSettings = result.current[1];
-      // Update the room notification settings to none
-      await act(() => {
-        updateRoomNotificationSettings({ threads: "none" });
-      });
+    const {
+      roomCtx: { RoomProvider, useRoomNotificationSettings },
+    } = createRoomContextForTest();
 
-      // Notification settings should be updated optimistically
+    const { result, unmount } = renderHook(
+      () => useRoomNotificationSettings(),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id="room-id" initialPresence={{}}>
+            {children}
+          </RoomProvider>
+        ),
+      }
+    );
+
+    expect(result.current[0]).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result.current[0]).toEqual({
+        isLoading: false,
+        settings: {
+          threads: "all",
+        },
+      })
+    );
+
+    const updateRoomNotificationSettings = result.current[1];
+    // Update the room notification settings to none
+    await act(() => {
+      updateRoomNotificationSettings({ threads: "none" });
+    });
+
+    // Notification settings should be updated optimistically
+    expect(result.current[0]).toEqual({
+      isLoading: false,
+      settings: {
+        threads: "none",
+      },
+    });
+
+    await waitFor(() => {
+      // The readAt field should have been updated in the inbox notification cache
       expect(result.current[0]).toEqual({
         isLoading: false,
         settings: {
           threads: "none",
         },
       });
+    });
 
-      await waitFor(() => {
-        // The readAt field should have been updated in the inbox notification cache
-        expect(result.current[0]).toEqual({
-          isLoading: false,
-          settings: {
-            threads: "none",
-          },
-        });
-      });
-
-      unmount();
-    }
-  );
+    unmount();
+  });
 });
 
 describe("useRoomNotificationSettings suspense", () => {
