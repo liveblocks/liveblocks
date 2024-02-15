@@ -27,11 +27,28 @@ prefer a full step-by-step tutorial, make sure to read
 
 </Banner>
 
+<Banner title="Show notifications in your app">
+
+If you want to show
+[notifications in your app](/docs/products/comments/notification-inbox), you can
+use
+[`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications)
+and the
+[`InboxNotification`](/docs/api-reference/liveblocks-react-comments#InboxNotification)
+component.
+
+</Banner>
+
 ## Inbox notifications
 
+Inbox notifications are different from “normal” notifications in the sense that
+they group multiple notifications together.
+
 When a user mentions you in a thread, or if you’ve previously participated in
-it, then you will receive an _inbox notification_ for it. For example, in the
-image below, Quinn Elton and Emil Joyce are both participants.
+it, then you will have an _inbox notification_ for it. For example, in the image
+below, Quinn Elton and Emil Joyce are both participants. As new activities
+happen on a thread, the same inbox notification will be updated to always
+reflect the thread’s latest state.
 
 <Figure highlight={35}>
   <Image
@@ -41,12 +58,6 @@ image below, Quinn Elton and Emil Joyce are both participants.
     height={390}
   />
 </Figure>
-
-Inbox notifications can be displayed in your app using
-[`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications)
-and the
-[`InboxNotification`](/docs/api-reference/liveblocks-react-comments#InboxNotification)
-component.
 
 ## Sending email notifications with webhooks
 
