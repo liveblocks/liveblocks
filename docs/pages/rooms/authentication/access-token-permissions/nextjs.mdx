@@ -29,7 +29,14 @@ start building your own security logic in Next.js’ `/app` directory.
       configure permission access in an `api/liveblocks-auth` endpoint by
       creating the `app/api/liveblocks-auth/route.ts` file with the
       following code. This is where you will implement your security and
-      define if the current user has access to a specific room.
+      define the rooms that the user has access to.
+
+      The client will either request a token for a specific room, in that case, the request body property `room` will be defined,
+      or for resources outside a specific room (Notifications for example), in that case, `room` will be undefined.
+
+      See
+      [permissions with access token](/docs/rooms/permissions/access-token)
+      to understand how to grant access to multiple rooms with an access token.
 
       ```ts file="app/api/liveblocks-auth/route.ts"
       import { Liveblocks } from "@liveblocks/node";
@@ -48,49 +55,19 @@ start building your own security logic in Next.js’ `/app` directory.
           { userInfo: user.metadata } // Optional
         );
 
-        // Implement your own security, and give the user access to the room
-        const { room } = await request.json();
+        // Implement your own security, and give the user access to the room/organization.
+        // Note: Even if room is defined, you could choose to always use wildcards.
+        const { room } = request.body;
         if (room && __shouldUserHaveAccess__(user, room)) {
           session.allow(room, session.FULL_ACCESS);
+        }
+        else {
+          session.allow(`${user.organization}*`, session.READ_ACCESS)
         }
 
         // Authorize the user and return the result
         const { status, body } = await session.authorize();
         return new Response(body, { status });
-      }
-      ```
-
-      Here’s an example using the older API routes format in `/pages`.
-
-      ```ts file="pages/api/liveblocks-auth.ts" isCollapsed isCollapsable
-      import { Liveblocks } from "@liveblocks/node";
-      import type { NextApiRequest, NextApiResponse } from "next";
-
-      const API_KEY = "{{SECRET_KEY}}";
-
-      const liveblocks = new Liveblocks({
-        secret: API_KEY!,
-      });
-
-      export default async function handler(request: NextApiRequest, response: NextApiResponse) {
-        // Get the current user from your database
-        const user = __getUserFromDB__(request);
-
-        // Start an auth session inside your endpoint
-        const session = liveblocks.prepareSession(
-          user.id,
-          { userInfo: user.metadata } // Optional
-        );
-
-        // Implement your own security, and give the user access to the room
-        const { room } = request.body;
-        if (room && __shouldUserHaveAccess__(user, room)) {
-          session.allow(room, session.FULL_ACCESS);
-        }
-
-        // Authorize the user and return the result
-        const { status, body } = await session.authorize();
-        response.status(status).send(body);
       }
       ```
 
