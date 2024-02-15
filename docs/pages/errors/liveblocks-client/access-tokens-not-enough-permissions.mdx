@@ -9,10 +9,7 @@ meta:
 
 ### Why this error occured
 
-The client can request an access token to access resources outside a specific
-room, this is the case for Notifications for example. When it happens, your auth
-endpoint has to issue an access token that grants access to more than one room
-using wildcards (`*`).
+The client may request an access token to access resources beyond a specific room, like Notifications. In such cases, your auth endpoint should issue an access token that grants access to multiple rooms using wildcards (`*`).
 
 ### Possible ways to fix it
 
