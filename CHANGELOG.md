@@ -1,9 +1,6 @@
 # Unreleased
 
-### `@liveblocks/yjs`
-
-- Emit update events from awareness
-- Fix several awareness bugs
+# v1.9.8
 
 ### `@liveblocks/client`
 
@@ -14,6 +11,11 @@
 
 - Fix type definitions of `useOthersListener` hook
 - Fix type definitions of `useErrorListener` hook
+
+### `@liveblocks/yjs`
+
+- Emit update events from awareness
+- Fix several awareness bugs
 
 # v1.9.7
 
