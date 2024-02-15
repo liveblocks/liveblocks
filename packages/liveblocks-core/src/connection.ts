@@ -706,7 +706,10 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
 
             return socket;
           }
-        );
+        )
+        .catch((e) => {
+          throw e;
+        });
       },
 
       // Only transition to OK state after a successfully opened WebSocket connection
