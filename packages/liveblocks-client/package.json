@@ -33,11 +33,7 @@
     "test:watch": "jest --silent --verbose --color=always --passWithNoTests --watch"
   },
   "dependencies": {
-<<<<<<< HEAD
-    "@liveblocks/core": "1.9.7-awareness"
-=======
     "@liveblocks/core": "1.9.8-pre1"
->>>>>>> main
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
