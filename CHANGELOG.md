@@ -1,5 +1,7 @@
 # Unreleased
 
+# v1.9.8
+
 ### `@liveblocks/client`
 
 - Fix race condition in client that could leave zombie websockets open
