@@ -20,6 +20,7 @@ import type {
   CommentData,
   EnterOptions,
   GetThreadsOptions,
+  LiveblocksError,
   RoomEventMessage,
   ToImmutable,
 } from "@liveblocks/core";
@@ -569,7 +570,7 @@ export function createRoomContext<
     );
   }
 
-  function useErrorListener(callback: (err: Error) => void): void {
+  function useErrorListener(callback: (err: LiveblocksError) => void): void {
     const room = useRoom();
     const savedCallback = useLatest(callback);
 

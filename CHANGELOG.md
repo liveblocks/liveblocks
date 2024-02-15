@@ -1,3 +1,15 @@
+# Unreleased
+
+### `@liveblocks/client`
+
+- Fix race condition in client that could leave zombie websockets open
+  indefinitely in a small edge case (thanks for reporting, @dev-badace)
+
+### `@liveblocks/react`
+
+- Fix type definitions of `useOthersListener` hook
+- Fix type definitions of `useErrorListener` hook
+
 # v1.9.7
 
 ### `@liveblocks/node`

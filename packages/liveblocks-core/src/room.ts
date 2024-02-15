@@ -4,6 +4,7 @@ import { createCommentsApi } from "./comments";
 import type {
   Delegates,
   LegacyConnectionStatus,
+  LiveblocksError,
   LostConnectionEvent,
   Status,
 } from "./connection";
@@ -331,7 +332,7 @@ type SubscribeFn<
    * @returns Unsubscribe function.
    *
    */
-  (type: "error", listener: ErrorCallback): () => void;
+  (type: "error", listener: Callback<LiveblocksError>): () => void;
 
   /**
    * @deprecated This API will be removed in a future version of Liveblocks.
@@ -610,7 +611,7 @@ export type Room<
     readonly self: Observable<User<TPresence, TUserMeta>>;
     readonly myPresence: Observable<TPresence>;
     readonly others: Observable<OthersEvent<TPresence, TUserMeta>>;
-    readonly error: Observable<Error>;
+    readonly error: Observable<LiveblocksError>;
     readonly storage: Observable<StorageUpdate[]>;
     readonly history: Observable<HistoryEvent>;
 
@@ -1218,7 +1219,7 @@ export function createRoom<
     self: makeEventSource<User<TPresence, TUserMeta>>(),
     myPresence: makeEventSource<TPresence>(),
     others: makeEventSource<OthersEvent<TPresence, TUserMeta>>(),
-    error: makeEventSource<Error>(),
+    error: makeEventSource<LiveblocksError>(),
     storage: makeEventSource<StorageUpdate[]>(),
     history: makeEventSource<HistoryEvent>(),
     storageDidLoad: makeEventSource<void>(),
@@ -1242,7 +1243,6 @@ export function createRoom<
       },
     });
   }
-
 
   async function httpPostToRoom(endpoint: "/send-message", body: JsonObject) {
     if (!managedSocket.authValue) {

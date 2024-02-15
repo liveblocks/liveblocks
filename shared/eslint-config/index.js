@@ -43,7 +43,11 @@ module.exports = {
     // Customized default rules
     // ------------------------
     eqeqeq: ["error", "always"],
-    quotes: ["error", "double", "avoid-escape"],
+    quotes: [
+      "error",
+      "double",
+      { avoidEscape: true, allowTemplateLiterals: false },
+    ],
     "object-shorthand": "error",
     "@typescript-eslint/explicit-module-boundary-types": "error",
     "@typescript-eslint/no-unused-vars": [
