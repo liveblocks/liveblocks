@@ -410,6 +410,11 @@ export function createRoomContext<
     }, [room]);
 
     React.useEffect(() => {
+      // Retrieve threads that have been updated/deleted since the last time the room requested threads updates
+      void getThreadsUpdates(room.id);
+    }, [room.id]);
+
+    React.useEffect(() => {
       const pair = stableEnterRoom(roomId, frozenProps);
 
       setRoomLeavePair(pair);
@@ -1039,8 +1044,8 @@ export function createRoomContext<
         );
       }
 
-      const lastRequestedAt = room[kInternal].comments.lastRequestedAt;
-      if (lastRequestedAt === null) return;
+      const lastRequestedAt = lastRequestedAtByRoom.get(room.id);
+      if (lastRequestedAt === undefined) return;
 
       // Retrieve threads that have been updated/deleted since the last requestedAt value
       requests.push(
@@ -1058,7 +1063,7 @@ export function createRoomContext<
             const room = client.getRoom(roomId);
             if (room === null) return;
 
-            room[kInternal].comments.lastRequestedAt = result.meta.requestedAt;
+            lastRequestedAtByRoom.set(room.id, result.meta.requestedAt);
           })
           .catch(() => {
             // TODO: Handle error
@@ -1139,7 +1144,7 @@ export function createRoomContext<
         queryKey
       );
 
-      const lastRequestedAt = room[kInternal].comments.lastRequestedAt;
+      const lastRequestedAt = lastRequestedAtByRoom.get(room.id);
 
       /**
        * We set the `lastRequestedAt` value for the room to the timestamp returned by the current request if:
@@ -1148,10 +1153,10 @@ export function createRoomContext<
        * 2. The `lastRequestedAt` value for the room is older than the timestamp returned by the current request
        */
       if (
-        lastRequestedAt === null ||
+        lastRequestedAt === undefined ||
         lastRequestedAt > result.meta.requestedAt
       ) {
-        room[kInternal].comments.lastRequestedAt = result.meta.requestedAt;
+        lastRequestedAtByRoom.set(room.id, result.meta.requestedAt);
       }
     } catch (err) {
       // TODO: Implement error retry mechanism
@@ -1162,6 +1167,50 @@ export function createRoomContext<
     }
 
     poller.start(POLLING_INTERVAL);
+  }
+
+  const DEFAULT_DEDUPING_INTERVAL = 2000; // 2 seconds
+
+  const lastRequestedAtByRoom = new Map<string, Date>(); // A map of room ids to the timestamp when the last request for threads updates was made
+
+  let isFetchingThreadsUpdates: boolean = false; // A flag to prevent multiple requests to retrieve threads updates from being made at the same time
+
+  /**
+   * Retrieve threads that have been updated/deleted since the last time the room requested threads updates and update the local cache with the new data
+   * @param roomId The id of the room for which to retrieve threads updates
+   */
+  async function getThreadsUpdates(roomId: string) {
+    const room = client.getRoom(roomId);
+    if (room === null) return;
+
+    const since = lastRequestedAtByRoom.get(room.id);
+    if (since === undefined) return;
+
+    // If another request to retrieve threads updates is in progress, we do not start a new one
+    if (isFetchingThreadsUpdates) return;
+
+    try {
+      isFetchingThreadsUpdates = true;
+      const updates = await room[kInternal].comments.getThreads({ since });
+
+      // Set the isFetchingThreadsUpdates flag to false after a certain interval to prevent multiple requests from being made at the same time
+      setTimeout(() => {
+        isFetchingThreadsUpdates = false;
+      }, DEFAULT_DEDUPING_INTERVAL);
+
+      store.updateThreadsAndNotifications(
+        updates.threads,
+        updates.inboxNotifications,
+        updates.deletedThreads,
+        updates.deletedInboxNotifications
+      );
+
+      // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
+      lastRequestedAtByRoom.set(room.id, updates.meta.requestedAt);
+    } catch (err) {
+      isFetchingThreadsUpdates = false;
+      // TODO: Implement error handling
+    }
   }
 
   function useThreads(

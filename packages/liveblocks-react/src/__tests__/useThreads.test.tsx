@@ -899,19 +899,39 @@ describe("useThreads", () => {
     unmount();
   });
 
-  // TODO: This test fails because of the way we handle request cache after room is unmounted
-  test.skip("should refetch threads if room has been mounted after being unmounted", async () => {
-    const threads = [dummyThreadData()];
-    let getThreadsReqCount = 0;
+  test("should update threads if room has been mounted after being unmounted", async () => {
+    let threads = [dummyThreadData(), dummyThreadData()];
+    const originalThreads = [...threads];
 
     server.use(
-      mockGetThreads(async (_req, res, ctx) => {
-        getThreadsReqCount++;
+      mockGetThreads(async (req, res, ctx) => {
+        const url = new URL(req.url);
+        const since = url.searchParams.get("since");
+
+        if (since) {
+          const updatedThreads = threads.filter((thread) => {
+            if (thread.updatedAt === undefined) return false;
+            return new Date(thread.updatedAt) >= new Date(since);
+          });
+
+          return res(
+            ctx.json({
+              data: updatedThreads,
+              deletedThreads: [],
+              inboxNotifications: [],
+              deletedInboxNotifications: [],
+              meta: {
+                requestedAt: new Date().toISOString(),
+              },
+            })
+          );
+        }
+
         return res(
           ctx.json({
             data: threads,
-            inboxNotifications: [],
             deletedThreads: [],
+            inboxNotifications: [],
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
@@ -925,32 +945,53 @@ describe("useThreads", () => {
       roomCtx: { RoomProvider, useThreads },
     } = createRoomContextForTest();
 
-    const Room = () => {
-      return (
+    const firstRenderResult = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
         <RoomProvider id="room-id" initialPresence={{}}>
-          <Threads />
+          {children}
         </RoomProvider>
-      );
-    };
+      ),
+    });
 
-    const Threads = () => {
-      useThreads();
-      return null;
-    };
+    expect(firstRenderResult.result.current).toEqual({ isLoading: true });
 
-    const { unmount } = render(<Room />);
+    // Threads should be displayed after the server responds with the threads
+    await waitFor(() =>
+      expect(firstRenderResult.result.current).toEqual({
+        isLoading: false,
+        threads,
+      })
+    );
 
-    // A new fetch request for the threads should have been made
-    await waitFor(() => expect(getThreadsReqCount).toBe(1));
+    firstRenderResult.unmount();
 
-    unmount();
+    // Add a new thread to the threads array to simulate a new thread being added to the room
+    threads = [...originalThreads, dummyThreadData()];
 
-    // Render the RoomProvider again and verify a new fetch request is initiated
-    const result = render(<Room />);
+    // Render the RoomProvider again and verify the threads are updated
+    const secondRenderResult = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          {children}
+        </RoomProvider>
+      ),
+    });
 
-    await waitFor(() => expect(getThreadsReqCount).toBe(2));
+    // Threads (outdated ones) should be displayed instantly because we already fetched them previously
+    expect(secondRenderResult.result.current).toEqual({
+      isLoading: false,
+      threads: originalThreads,
+    });
 
-    result.unmount();
+    // The updated threads should be displayed after the server responds with the updated threads (either due to a fetch request to get all threads or just the updated threads)
+    await waitFor(() => {
+      expect(secondRenderResult.result.current).toEqual({
+        isLoading: false,
+        threads,
+      });
+    });
+
+    secondRenderResult.unmount();
   });
 
   test("should not refetch threads if room has been mounted after being unmounted if another RoomProvider for the same id is still mounted", async () => {
