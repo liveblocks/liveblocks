@@ -1,5 +1,8 @@
 import type { AuthManager, AuthValue } from "./auth-manager";
-import { getAuthBearerHeaderFromAuthValue } from "./client";
+import {
+  getAuthBearerHeaderFromAuthValue,
+  NotificationsApiError,
+} from "./client";
 import type {
   Delegates,
   LegacyConnectionStatus,
@@ -2836,7 +2839,7 @@ export function createRoom<
     fetchClientApi
   );
 
-  async function fetchJson<T>(
+  async function fetchInboxNotificationJson<T>(
     endpoint: string,
     options?: RequestInit
   ): Promise<T> {
@@ -2850,16 +2853,24 @@ export function createRoom<
 
     if (!response.ok) {
       if (response.status >= 400 && response.status < 600) {
-        let errorMessage = "";
+        let error: NotificationsApiError;
+
         try {
           const errorBody = (await response.json()) as { message: string };
-          errorMessage = errorBody.message;
-        } catch (error) {
-          errorMessage = response.statusText;
+
+          error = new NotificationsApiError(
+            errorBody.message,
+            response.status,
+            errorBody
+          );
+        } catch {
+          error = new NotificationsApiError(
+            response.statusText,
+            response.status
+          );
         }
-        throw new Error(
-          `Request failed with status ${response.status}: ${errorMessage}`
-        );
+
+        throw error;
       }
     }
 
@@ -2875,19 +2886,24 @@ export function createRoom<
   }
 
   function getRoomNotificationSettings(): Promise<RoomNotificationSettings> {
-    return fetchJson<RoomNotificationSettings>("/notification-settings");
+    return fetchInboxNotificationJson<RoomNotificationSettings>(
+      "/notification-settings"
+    );
   }
 
   function updateRoomNotificationSettings(
     settings: Partial<RoomNotificationSettings>
   ): Promise<RoomNotificationSettings> {
-    return fetchJson<RoomNotificationSettings>("/notification-settings", {
-      method: "POST",
-      body: JSON.stringify(settings),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    return fetchInboxNotificationJson<RoomNotificationSettings>(
+      "/notification-settings",
+      {
+        method: "POST",
+        body: JSON.stringify(settings),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
   }
 
   async function markInboxNotificationsAsRead(inboxNotificationIds: string[]) {
