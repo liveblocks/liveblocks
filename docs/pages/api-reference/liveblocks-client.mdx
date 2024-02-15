@@ -53,9 +53,7 @@ Your async function should return either of the following values:
 Any other error will be treated as an unexpected error, after which the client
 will retry making the request until it gets either (1) or (2).
 
-Note that when using Notifications, the param `room` can be undefined. This
-means that the client requests a token that grants access to multiple rooms
-instead of a specific room.
+Note that when using Notifications, the parameter `room` can be undefined. This implies that the client is requesting a token that grants access to multiple rooms, rather than a specific room.
 
 You’re responsible for making the fetch to your own backend. Example
 implementation:
