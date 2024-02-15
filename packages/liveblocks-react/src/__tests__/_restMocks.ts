@@ -119,3 +119,16 @@ export function mockGetRoomNotificationSettings(
     resolver
   );
 }
+
+export function mockUpdateRoomNotificationSettings(
+  resolver: ResponseResolver<
+    RestRequest<never, never>,
+    RestContext,
+    RoomNotificationSettings
+  >
+) {
+  return rest.post(
+    "https://api.liveblocks.io/v2/c/rooms/room-id/notification-settings",
+    resolver
+  );
+}
