@@ -1902,54 +1902,59 @@ export function createRoomContext<
   }
 
   function useMarkThreadAsRead() {
-    return React.useCallback((threadId: string) => {
-      const inboxNotification = Object.values(
-        store.get().inboxNotifications
-      ).find((inboxNotification) => inboxNotification.threadId === threadId);
+    const room = useRoom();
 
-      if (!inboxNotification) return;
+    return React.useCallback(
+      (threadId: string) => {
+        const inboxNotification = Object.values(
+          store.get().inboxNotifications
+        ).find((inboxNotification) => inboxNotification.threadId === threadId);
 
-      const optimisticUpdateId = nanoid();
-      const now = new Date();
+        if (!inboxNotification) return;
 
-      store.pushOptimisticUpdate({
-        type: "mark-inbox-notification-as-read",
-        id: optimisticUpdateId,
-        inboxNotificationId: inboxNotification.id,
-        readAt: now,
-      });
+        const optimisticUpdateId = nanoid();
+        const now = new Date();
 
-      client[kInternal].notifications
-        .markInboxNotificationAsRead(inboxNotification.id)
-        .then(
-          () => {
-            store.set((state) => ({
-              ...state,
-              inboxNotifications: {
-                ...state.inboxNotifications,
-                [inboxNotification.id]: {
-                  ...inboxNotification,
-                  readAt: now,
+        store.pushOptimisticUpdate({
+          type: "mark-inbox-notification-as-read",
+          id: optimisticUpdateId,
+          inboxNotificationId: inboxNotification.id,
+          readAt: now,
+        });
+
+        room[kInternal].notifications
+          .markInboxNotificationAsRead(inboxNotification.id)
+          .then(
+            () => {
+              store.set((state) => ({
+                ...state,
+                inboxNotifications: {
+                  ...state.inboxNotifications,
+                  [inboxNotification.id]: {
+                    ...inboxNotification,
+                    readAt: now,
+                  },
                 },
-              },
-              optimisticUpdates: state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              ),
-            }));
-          },
-          (err: Error) => {
-            onMutationFailure(
-              err,
-              optimisticUpdateId,
-              (error) =>
-                new MarkInboxNotificationAsReadError(error, {
-                  inboxNotificationId: inboxNotification.id,
-                })
-            );
-            return;
-          }
-        );
-    }, []);
+                optimisticUpdates: state.optimisticUpdates.filter(
+                  (update) => update.id !== optimisticUpdateId
+                ),
+              }));
+            },
+            (err: Error) => {
+              onMutationFailure(
+                err,
+                optimisticUpdateId,
+                (error) =>
+                  new MarkInboxNotificationAsReadError(error, {
+                    inboxNotificationId: inboxNotification.id,
+                  })
+              );
+              return;
+            }
+          );
+      },
+      [room]
+    );
   }
 
   function makeNotificationSettingsQueryKey(roomId: string) {

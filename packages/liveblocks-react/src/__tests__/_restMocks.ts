@@ -86,7 +86,7 @@ export function mockMarkInboxNotificationsAsRead(
   resolver: ResponseResolver<RestRequest<never, never>, RestContext, any>
 ) {
   return rest.post(
-    "https://api.liveblocks.io/v2/c/inbox-notifications/read",
+    "https://api.liveblocks.io/v2/c/rooms/room-id/inbox-notifications/read",
     resolver
   );
 }
