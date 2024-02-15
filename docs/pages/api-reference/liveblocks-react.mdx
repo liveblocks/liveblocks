@@ -23,7 +23,7 @@ import { createRoomContext } from "@liveblocks/react";
 
 const client = createClient({
   // publicApiKey: "",
-  // authEndpoint: "/api/auth",
+  // authEndpoint: "/api/liveblocks-auth",
   // throttle: 100,
 });
 
@@ -285,7 +285,7 @@ import { createRoomContext, createLiveblocksContext } from "@liveblocks/react";
 
 const client = createClient({
   // publicApiKey: "",
-  // authEndpoint: "/api/auth",
+  // authEndpoint: "/api/liveblocks-auth",
   // throttle: 100,
 });
 
@@ -305,7 +305,7 @@ export const {
 Makes Liveblocks non-Room features (e.g. Notifications) available in the
 component hierarchy below.
 
-Unlike [`RoomProvider`][], `LiveblocksProvider` does call Liveblocks servers
+Unlike [`RoomProvider`][], `LiveblocksProvider` doesn’t call Liveblocks servers
 when mounted, so it can (and should) live higher in the component tree of your
 app.
 
