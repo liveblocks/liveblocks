@@ -2907,7 +2907,7 @@ export function createRoom<
   }
 
   async function markInboxNotificationsAsRead(inboxNotificationIds: string[]) {
-    await fetchJson("/inbox-notifications/read", {
+    await fetchInboxNotificationJson("/inbox-notifications/read", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
