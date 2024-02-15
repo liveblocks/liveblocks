@@ -410,6 +410,11 @@ export function createRoomContext<
     }, [room]);
 
     React.useEffect(() => {
+      // Retrieve threads that have been updated/deleted since the last time the room requested threads updates
+      void getThreadsUpdates(room.id);
+    }, [room.id]);
+
+    React.useEffect(() => {
       const pair = stableEnterRoom(roomId, frozenProps);
 
       setRoomLeavePair(pair);
@@ -443,9 +448,7 @@ export function createRoomContext<
             >
           }
         >
-          <CommentsRoomProvider room={room}>
-            {props.children}
-          </CommentsRoomProvider>
+          {props.children}
         </ContextBundle.Provider>
       </RoomContext.Provider>
     );
@@ -1208,20 +1211,6 @@ export function createRoomContext<
       isFetchingThreadsUpdates = false;
       // TODO: Implement error handling
     }
-  }
-
-  function CommentsRoomProvider({
-    room,
-    children,
-  }: React.PropsWithChildren<{
-    room: Room<JsonObject, LsonObject, BaseUserMeta, Json>;
-  }>) {
-    React.useEffect(() => {
-      // Retrieve threads that have been updated/deleted since the last time the room requested threads updates
-      void getThreadsUpdates(room.id);
-    }, [room.id]);
-
-    return <>{children}</>;
   }
 
   function useThreads(
