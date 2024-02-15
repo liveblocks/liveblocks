@@ -2835,7 +2835,7 @@ export function createRoom<
     fetchClientApi
   );
 
-  async function fetchInboxNotificationJson<T>(
+  async function fetchNotificationsJson<T>(
     endpoint: string,
     options?: RequestInit
   ): Promise<T> {
@@ -2882,7 +2882,7 @@ export function createRoom<
   }
 
   function getRoomNotificationSettings(): Promise<RoomNotificationSettings> {
-    return fetchInboxNotificationJson<RoomNotificationSettings>(
+    return fetchNotificationsJson<RoomNotificationSettings>(
       "/notification-settings"
     );
   }
@@ -2890,7 +2890,7 @@ export function createRoom<
   function updateRoomNotificationSettings(
     settings: Partial<RoomNotificationSettings>
   ): Promise<RoomNotificationSettings> {
-    return fetchInboxNotificationJson<RoomNotificationSettings>(
+    return fetchNotificationsJson<RoomNotificationSettings>(
       "/notification-settings",
       {
         method: "POST",
