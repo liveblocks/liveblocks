@@ -2,14 +2,17 @@ import "@testing-library/jest-dom";
 
 import type { BaseMetadata, JsonObject } from "@liveblocks/core";
 import { createClient } from "@liveblocks/core";
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
 import React, { Suspense } from "react";
 
 import { createLiveblocksContext } from "../liveblocks";
 import { createRoomContext } from "../room";
 import MockWebSocket from "./_MockWebSocket";
-import { mockGetRoomNotificationSettings } from "./_restMocks";
+import {
+  mockGetRoomNotificationSettings,
+  mockUpdateRoomNotificationSettings,
+} from "./_restMocks";
 
 const server = setupServer();
 
@@ -92,6 +95,73 @@ describe("useRoomNotificationSettings", () => {
     rerender();
 
     expect(result.current).toBe(oldResult);
+
+    unmount();
+  });
+
+  test("should update room notification settings optimistically and revert the updates if error response from server", async () => {
+    server.use(
+      mockGetRoomNotificationSettings(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            threads: "all",
+          })
+        );
+      }),
+      mockUpdateRoomNotificationSettings((_req, res, ctx) =>
+        res(ctx.status(500))
+      )
+    );
+
+    const {
+      roomCtx: { RoomProvider, useRoomNotificationSettings },
+    } = createRoomContextForTest();
+
+    const { result, unmount } = renderHook(
+      () => useRoomNotificationSettings(),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id="room-id" initialPresence={{}}>
+            {children}
+          </RoomProvider>
+        ),
+      }
+    );
+
+    expect(result.current[0]).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result.current[0]).toEqual({
+        isLoading: false,
+        settings: {
+          threads: "all",
+        },
+      })
+    );
+
+    const updateRoomNotificationSettings = result.current[1];
+    // Update the room notification settings to none
+    await act(() => {
+      updateRoomNotificationSettings({ threads: "none" });
+    });
+
+    // Notification settings should be updated optimistically
+    expect(result.current[0]).toEqual({
+      isLoading: false,
+      settings: {
+        threads: "none",
+      },
+    });
+
+    await waitFor(() => {
+      // Notification settings should be reverted to the original value ("all") after the error response from the server
+      expect(result.current[0]).toEqual({
+        isLoading: false,
+        settings: {
+          threads: "all",
+        },
+      });
+    });
 
     unmount();
   });
