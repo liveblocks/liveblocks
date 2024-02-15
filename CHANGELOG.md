@@ -1,5 +1,10 @@
 # Unreleased
 
+### `@liveblocks/yjs`
+
+- Emit update events from awareness
+- Fix several awareness bugs
+
 ### `@liveblocks/client`
 
 - Fix race condition in client that could leave zombie websockets open
