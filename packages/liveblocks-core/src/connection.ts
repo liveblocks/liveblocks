@@ -683,33 +683,34 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
           connect$,
           SOCKET_CONNECT_TIMEOUT,
           "Timed out during websocket connection"
-        ).then(
-          //
-          // Part 3:
-          // By now, our "open" event has fired, and the promise has been
-          // resolved. Two possible scenarios:
-          //
-          // 1. The happy path. Most likely.
-          // 2. Uh-oh. A premature close/error event has been observed. Let's
-          //    reject the promise after all.
-          //
-          // Any close/error event that will get scheduled after this point
-          // onwards, will be caught in the OK state, and dealt with
-          // accordingly.
-          //
-          ([socket, unsub]) => {
-            unsub();
-
-            if (capturedPrematureEvent) {
-              throw capturedPrematureEvent;
-            }
-
-            return socket;
-          }
         )
-        .catch((e) => {
-          throw e;
-        });
+          .then(
+            //
+            // Part 3:
+            // By now, our "open" event has fired, and the promise has been
+            // resolved. Two possible scenarios:
+            //
+            // 1. The happy path. Most likely.
+            // 2. Uh-oh. A premature close/error event has been observed. Let's
+            //    reject the promise after all.
+            //
+            // Any close/error event that will get scheduled after this point
+            // onwards, will be caught in the OK state, and dealt with
+            // accordingly.
+            //
+            ([socket, unsub]) => {
+              unsub();
+
+              if (capturedPrematureEvent) {
+                throw capturedPrematureEvent;
+              }
+
+              return socket;
+            }
+          )
+          .catch((e) => {
+            throw e;
+          });
       },
 
       // Only transition to OK state after a successfully opened WebSocket connection
