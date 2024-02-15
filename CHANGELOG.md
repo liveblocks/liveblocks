@@ -1,5 +1,7 @@
 # Unreleased
 
+# v1.9.8
+
 ### `@liveblocks/client`
 
 - Fix race condition in client that could leave zombie websockets open
@@ -9,6 +11,11 @@
 
 - Fix type definitions of `useOthersListener` hook
 - Fix type definitions of `useErrorListener` hook
+
+### `@liveblocks/yjs`
+
+- Emit update events from awareness
+- Fix several awareness bugs
 
 # v1.9.7
 

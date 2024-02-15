@@ -52,7 +52,11 @@ export class Awareness extends Observable<unknown> {
         // REMOVED
         this.emit("change", [
           { added: [], updated: [], removed: [event.user.connectionId] },
-          "local",
+          "presence",
+        ]);
+        this.emit("update", [
+          { added: [], updated: [], removed: [event.user.connectionId] },
+          "presence",
         ]);
       }
 
@@ -60,7 +64,11 @@ export class Awareness extends Observable<unknown> {
         // ADDED
         this.emit("change", [
           { added: [event.user.connectionId], updated: [], removed: [] },
-          "local",
+          "presence",
+        ]);
+        this.emit("update", [
+          { added: [event.user.connectionId], updated: [], removed: [] },
+          "presence",
         ]);
       }
 
@@ -68,7 +76,11 @@ export class Awareness extends Observable<unknown> {
         // UPDATED
         this.emit("change", [
           { added: [], updated: [event.user.connectionId], removed: [] },
-          "local",
+          "presence",
+        ]);
+        this.emit("update", [
+          { added: [], updated: [event.user.connectionId], removed: [] },
+          "presence",
         ]);
       }
     });
@@ -93,25 +105,49 @@ export class Awareness extends Observable<unknown> {
   }
 
   setLocalState(state: Partial<JsonObject> | null): void {
-    const presence = this.room.getSelf()?.presence[Y_PRESENCE_KEY];
+    const presence = this.room.getSelf()?.presence;
+    if (state === null) {
+      if (presence === undefined) {
+        // if presence is already undefined, we don't need to change anything here
+        return;
+      }
+      this.room.updatePresence({ ...presence, [Y_PRESENCE_KEY]: null });
+      this.emit("update", [
+        { added: [], updated: [], removed: [this.clientID] },
+        "local",
+      ]);
+      return;
+    }
+    // if presence was undefined, it's added, if not, it's updated
+    const yPresence = presence?.[Y_PRESENCE_KEY];
+    const added = yPresence === undefined ? [this.clientID] : [];
+    const updated = yPresence === undefined ? [] : [this.clientID];
     this.room.updatePresence({
-      __yjs: { ...((presence as JsonObject) || {}), ...(state || {}) },
+      [Y_PRESENCE_KEY]: {
+        ...((yPresence as JsonObject) || {}),
+        ...(state || {}),
+      },
     });
+    this.emit("update", [{ added, updated, removed: [] }, "local"]);
   }
 
   setLocalStateField(field: string, value: JsonObject | null): void {
     const presence = this.room.getSelf()?.presence[Y_PRESENCE_KEY];
     const update = { [field]: value } as Partial<JsonObject>;
     this.room.updatePresence({
-      __yjs: { ...((presence as JsonObject) || {}), ...update },
+      [Y_PRESENCE_KEY]: { ...((presence as JsonObject) || {}), ...update },
     });
   }
 
   // Translate liveblocks presence to yjs awareness
   getStates(): Map<number, unknown> {
     const others = this.room.getOthers();
+    const presence = this.room.getSelf()?.presence[Y_PRESENCE_KEY];
     const states = others.reduce((acc: Map<number, unknown>, currentValue) => {
-      if (currentValue.connectionId) {
+      if (
+        currentValue.connectionId &&
+        currentValue.presence[Y_PRESENCE_KEY] !== undefined
+      ) {
         // connectionId == actorId == yjs.clientId
         acc.set(
           currentValue.connectionId,
@@ -120,6 +156,9 @@ export class Awareness extends Observable<unknown> {
       }
       return acc;
     }, new Map());
+    if (presence !== undefined) {
+      states.set(this.clientID, presence);
+    }
     return states;
   }
 }
