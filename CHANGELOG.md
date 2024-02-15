@@ -2,6 +2,12 @@
 
 This release introduces Notifications (and unread indicators) for Comments.
 
+### `create-liveblocks-app`
+
+- Add `createLiveblocksContext` and Notifications to `--init`.
+- Move resolver options from `createRoomContext` to `createClient` and add
+  `resolveRoomsInfo` to the list of resolvers.
+
 ### `@liveblocks/client`
 
 - Add options to `createClient`: `resolveUsers`, `resolveMentionSuggestions`
@@ -21,6 +27,8 @@ This release introduces Notifications (and unread indicators) for Comments.
   `useUpdateRoomNotificationSettings`.
 - Make some hooks usable interchangeably between `createLiveblocksContext` and
   `createRoomContext`: `useUser`, and `useRoomInfo`.
+- Fix type definitions of `useOthersListener` hook.
+- Fix type definitions of `useErrorListener` hook.
 
 ### `@liveblocks/react-comments`
 
@@ -857,7 +865,7 @@ Liveblocks account.
 
 - Adds a `WebhookHandler` class
   - `new WebhookHandler(secret).verifyRequest({ rawBody, headers })` can be used
-    to verify event requests from Liveblock's Webhook functionality. It also
+    to verify event requests from Liveblock's webhook functionality. It also
     provides fully typed `WebhookEvents`.
   - Check out our [Webhooks guide](https://liveblocks.io/docs/guides/webhooks)
     for more details

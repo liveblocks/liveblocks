@@ -80,7 +80,7 @@ export function generateFakeJwt(options: { userId: string }) {
         k: "acc",
         pid: "test_pid",
         uid: options.userId,
-        perms: {},
+        perms: { "*": ["room:write"] },
         iat: Math.floor(Date.now() / 1000),
         exp: Math.floor(Date.now() / 1000 + 3600),
       })

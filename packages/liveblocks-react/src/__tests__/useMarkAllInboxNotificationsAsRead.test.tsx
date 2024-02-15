@@ -70,6 +70,11 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
           ctx.json({
             inboxNotifications,
             threads,
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         )
       ),
@@ -88,6 +93,11 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
       () => ({
         markAllInboxNotificationsAsRead: useMarkAllInboxNotificationsAsRead(),
         inboxNotifications: useInboxNotifications().inboxNotifications,
+        deletedThreads: [],
+        deletedInboxNotifications: [],
+        meta: {
+          requestedAt: new Date().toISOString(),
+        },
       }),
       {
         wrapper: ({ children }) => (
@@ -128,6 +138,11 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
           ctx.json({
             inboxNotifications,
             threads,
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         )
       ),

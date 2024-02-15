@@ -34,7 +34,11 @@ import * as CommentPrimitive from "../primitives/Comment";
 import { Timestamp } from "../primitives/Timestamp";
 import { classNames } from "../utils/class-names";
 import { setQueryParams } from "../utils/query-params";
-import { CommentLink, CommentMention, CommentReactionShared } from "./Comment";
+import {
+  CommentMention,
+  CommentNonInteractiveLink,
+  CommentNonInteractiveReaction,
+} from "./Comment";
 import { Avatar, type AvatarProps } from "./internal/Avatar";
 import { List } from "./internal/List";
 import { Room } from "./internal/Room";
@@ -228,13 +232,13 @@ function InboxNotificationComment({
               body={comment.body}
               components={{
                 Mention: CommentMention,
-                Link: CommentLink,
+                Link: CommentNonInteractiveLink,
               }}
             />
             {comment.reactions.length > 0 && (
               <div className="lb-comment-reactions">
                 {comment.reactions.map((reaction) => (
-                  <CommentReactionShared
+                  <CommentNonInteractiveReaction
                     key={reaction.emoji}
                     reaction={reaction}
                     overrides={overrides}
@@ -359,10 +363,16 @@ const InboxNotificationThread = forwardRef<
   ) => {
     const $ = useOverrides(overrides);
     const {
+      useRoomInfo,
       [kInternal]: { useThreadFromCache, useCurrentUserId },
     } = useLiveblocksContextBundle();
     const thread = useThreadFromCache(inboxNotification.threadId);
     const currentUserId = useCurrentUserId();
+    // TODO: If you provide `href` (or plan to), we shouldn't run this hook. We should find a way to conditionally run it.
+    //       Because of batching and the fact that the same hook will be called within <Room /> in the notification's title,
+    //       it's not a big deal, the only scenario where it would be superfluous would be if the user provides their own
+    //       `href` AND disables room names in the title via `showRoomName={false}`.
+    const { info } = useRoomInfo(inboxNotification.roomId);
     const { unread, date, aside, title, content, threadId, commentId } =
       useMemo(() => {
         const contents = generateInboxNotificationThreadContents(
@@ -461,14 +471,18 @@ const InboxNotificationThread = forwardRef<
         showRoomName,
         thread,
       ]);
+    // Add the thread ID and comment ID to the `href`.
+    // And use URL from `resolveRoomsInfo` if `href` isn't set.
     const resolvedHref = useMemo(() => {
-      return href
-        ? setQueryParams(href, {
+      const resolvedHref = href ?? info?.url;
+
+      return resolvedHref
+        ? setQueryParams(resolvedHref, {
             [THREAD_ID_QUERY_PARAM]: threadId,
             [COMMENT_ID_QUERY_PARAM]: commentId,
           })
         : undefined;
-    }, [commentId, href, threadId]);
+    }, [commentId, href, threadId, info?.url]);
 
     return (
       <InboxNotificationLayout

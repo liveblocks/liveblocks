@@ -40,6 +40,24 @@ describe("auth-manager - secret auth", () => {
     "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2NjQ1NjY0MTAsImV4cCI6MTY2NDU3MDAxMCwicGlkIjoiNjA1YTRmZDMxYTM2ZDVlYTdhMmUwOGYxIiwidWlkIjoidXNlcjEiLCJwZXJtcyI6eyJvcmcxKiI6WyJyb29tOndyaXRlIl19LCJrIjoiYWNjIn0.H9EpvO91L5R20ACSIXoJgjmTUeWJRHt91yCxgZ7J0km_FsjaqhYmlyD-ln3N9HpIXnei2y7shyoVTsSKwuYandwVQYLbPXP0tnZSlyp7WbTVcXEz--5ngDj0ePDw5OkDHcDiY243DGJconYZrbru9J86BpgBLsO0d4zJfnmF4hgyGXD7nm7TdJ0DudT_2_gUDECYXcgCT7cRUFfYtkFvC2IYJK0MeFKd3OX06u3k5tw9umUTDRdGs42BAWs6lvUxU4SPkjy24gQVmRK0FCf2sYmtKYA6WmRebp2Y4wR_NLV7GVznZY4-jy8AxmPhzB3GgXj3-uOz_3KC04XHQv8wxg";
 
   /*
+    Access token with those permissions:
+        perms: {
+          "org1*": ["comments:read"],
+        }
+  */
+  const accessTokenWildcardCommentsRead =
+    "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJrIjoiYWNjIiwicGlkIjoiNjVjNTI3OGY4M2NlMGY4MGYyYjhlYzY1IiwidWlkIjoidXNlcjEiLCJwZXJtcyI6eyJvcmcxKiI6WyJjb21tZW50czpyZWFkIl19LCJtY3ByIjoyMCwiaWF0IjoxNzA3NDE5NTM2LCJleHAiOjE3MDc0MjMxMzYsImp0aSI6InRnWS1TdVdkdEN2VCJ9.4G4gPwZ9tUGXaNX7G3rTf67tCLMGoiBm0-R1DiVkqSjfycxidzqyv4wAQqKFO3-QqvDuIqeuN95xd5ZmO8984qDReTNZXxYMa6D1qpWkwbqmC-wmSg9LXEVaT2odJ9ZV8XHvdePc0L9BcpsUJteiZfjrjwyql8kPqDAkRxpXcn-4wnLFmqDXFhKWFfbSqSR1DJW6071zZWd-IUdVELEtp6Tbc0HhCR_qnAsfEPyqf1Rl2DCGtDAbaY8lFLYNu2KUxw_OKtxBXOTBzEjMnwOQoEqc5y_Sd8zL1izr2Ze5az7cPecN8VqGPAyVZRtmVVIAEuvtC7xf1QhQ4OaQ8YVRWA";
+
+  /*
+    Access token with those permissions:
+        perms: {
+          "room1": ["comments:read"],
+        }
+  */
+  const accessTokenOneRoomCommentsRead =
+    "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJrIjoiYWNjIiwicGlkIjoiNjVjNTI5MjU4M2NlMGY4MGYyYjhlYzZiIiwidWlkIjoidXNlcjEiLCJwZXJtcyI6eyJyb29tMSI6WyJjb21tZW50czpyZWFkIl19LCJtY3ByIjoyMCwiaWF0IjoxNzA3NDE5OTQxLCJleHAiOjE3MDc0MjM1NDEsImp0aSI6ImVHZEhYd0l6eVF2NyJ9.ZQVQMwLaZzFzqp6fEN9pGz4IrTkkM1vMRBCzPomyIBnEnANNGKFMkfEQb9nMFXl7IftUvUTy7rU6VwBCXnu-O3PyUdhx5HA1TsYyODjnEvYfG-eaXryFGVleSX-6x2xIxLpdwV_e4yG7zcx16hMO6xEBYdzHZ4F8CqTjekAx6wTKLElQdnoV0yW8pQV8MDTc8t8Gn_3owVMS5wN11xvfaSgvQsbJL86VZzCyjdyTdlc5vaFGA6R_GVzwro_bhUDZxIcN1Kqvg6TQTdf5TPRL4-PzrOKxXc41PQfHn3318q6N10zQZH9xFjtEy-iUf-cGKv-LICJsD-M8M7WKcDo7tg;";
+
+  /*
     ID token that gives access to user "user1"
   */
   const idToken =
@@ -59,6 +77,17 @@ describe("auth-manager - secret auth", () => {
       requestCount++;
       return res(ctx.json({ token: accessToken }));
     }),
+    rest.post("/mocked-api/access-auth-comments-read", (_req, res, ctx) => {
+      requestCount++;
+      return res(ctx.json({ token: accessTokenWildcardCommentsRead }));
+    }),
+    rest.post(
+      "/mocked-api/access-auth-one-room-comments-read",
+      (_req, res, ctx) => {
+        requestCount++;
+        return res(ctx.json({ token: accessTokenOneRoomCommentsRead }));
+      }
+    ),
     rest.post("/mocked-api/id-auth", (_req, res, ctx) => {
       requestCount++;
       return res(ctx.json({ token: idToken }));
@@ -172,7 +201,7 @@ describe("auth-manager - secret auth", () => {
     expect(authValueReq1.token.raw).toEqual(legacyTokens[0]);
     expect(requestCount).toBe(1);
 
-    // Five hours later, this token should be expired. For ID and Access tokens, that mweans
+    // Five hours later, this token should be expired. For ID and access tokens, that mweans
     jest.useFakeTimers();
     jest.setSystemTime(Date.now() + 5 * HOURS);
     try {
@@ -213,6 +242,58 @@ describe("auth-manager - secret auth", () => {
     expect(authValueReq1.token.raw).toEqual(accessToken);
     expect(authValueReq2.token.raw).toEqual(accessToken);
     expect(requestCount).toBe(1);
+  });
+
+  test("when no roomId, should use cache when access token has correct permissions", async () => {
+    const authManager = createAuthManager({
+      authEndpoint: "/mocked-api/access-auth-comments-read",
+    });
+
+    const authValueReq1 = (await authManager.getAuthValue({
+      requestedScope: "comments:read",
+    })) as { type: "secret"; token: ParsedAuthToken };
+
+    const authValueReq2 = (await authManager.getAuthValue({
+      requestedScope: "comments:read",
+    })) as { type: "secret"; token: ParsedAuthToken };
+
+    expect(authValueReq1.token.raw).toEqual(accessTokenWildcardCommentsRead);
+    expect(authValueReq2.token.raw).toEqual(accessTokenWildcardCommentsRead);
+    expect(requestCount).toBe(1);
+  });
+
+  test("when no roomId, should use cache when access token has correct permissions (higher level)", async () => {
+    const authManager = createAuthManager({
+      authEndpoint: "/mocked-api/access-auth",
+    });
+
+    const authValueReq1 = (await authManager.getAuthValue({
+      requestedScope: "comments:read",
+    })) as { type: "secret"; token: ParsedAuthToken };
+
+    const authValueReq2 = (await authManager.getAuthValue({
+      requestedScope: "comments:read",
+    })) as { type: "secret"; token: ParsedAuthToken };
+
+    expect(authValueReq1.token.raw).toEqual(accessToken);
+    expect(authValueReq2.token.raw).toEqual(accessToken);
+    expect(requestCount).toBe(1);
+  });
+
+  test("when no roomId, should throw when access token has no wildcard", async () => {
+    const authManager = createAuthManager({
+      authEndpoint: "/mocked-api/access-auth-one-room-comments-read",
+    });
+
+    const $promise = expect(
+      authManager.getAuthValue({
+        requestedScope: "comments:read",
+      })
+    ).rejects.toThrow(
+      "The issued access token doesn't grant enough permissions. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/access-tokens-not-enough-permissions"
+    );
+
+    await $promise;
   });
 
   test("should throw if access token is expired but the next fetch from the backend returns the same (expired) token", async () => {

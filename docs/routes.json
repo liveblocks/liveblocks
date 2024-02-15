@@ -292,8 +292,7 @@
           },
           {
             "title": "Notification inbox",
-            "path": "/products/comments/notification-inbox",
-            "hidden": true
+            "path": "/products/comments/notification-inbox"
           },
           {
             "title": "Email notifications",
@@ -421,6 +420,10 @@
       {
         "title": "Multiple copies of Liveblocks are being loaded in your project",
         "path": "/errors/dupes"
+      },
+      {
+        "title": "Access token doesn't grant enough permissions",
+        "path": "/errors/liveblocks-client/access-tokens-not-enough-permissions"
       }
     ]
   },

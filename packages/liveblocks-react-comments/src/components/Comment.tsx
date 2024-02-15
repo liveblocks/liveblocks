@@ -135,21 +135,19 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   additionalActionsClassName?: string;
 }
 
-interface CommentReactionSharedProps
-  extends ComponentPropsWithoutRef<"button"> {
+interface CommentReactionButtonProps
+  extends ComponentPropsWithoutRef<typeof Button> {
   reaction: CommentReactionData;
   overrides?: Partial<GlobalOverrides & CommentOverrides>;
-
-  /**
-   * @internal
-   */
-  onPressedChange?: (isPressed: boolean) => void;
 }
 
-interface CommentReactionProps
-  extends Omit<CommentReactionSharedProps, "onPressedChange"> {
+interface CommentReactionProps extends ComponentPropsWithoutRef<"button"> {
   comment: CommentData;
+  reaction: CommentReactionData;
+  overrides?: Partial<GlobalOverrides & CommentOverrides>;
 }
+
+type CommentNonInteractiveReactionProps = Omit<CommentReactionProps, "comment">;
 
 export function CommentMention({
   userId,
@@ -190,125 +188,146 @@ export function CommentLink({
   );
 }
 
-const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
-  ({ comment, reaction, ...props }, forwardedRef) => {
-    const { useAddReaction, useRemoveReaction } = useRoomContextBundle();
-    const addReaction = useAddReaction();
-    const removeReaction = useRemoveReaction();
+export function CommentNonInteractiveLink({
+  href: _href,
+  children,
+  className,
+  ...props
+}: CommentBodyLinkProps & CommentLinkProps) {
+  return (
+    <span className={classNames("lb-comment-link", className)} {...props}>
+      {children}
+    </span>
+  );
+}
 
-    const handlePressedChange = useCallback(
-      (isPressed: boolean) => {
-        if (isPressed) {
-          addReaction({
-            threadId: comment.threadId,
-            commentId: comment.id,
-            emoji: reaction.emoji,
-          });
-        } else {
-          removeReaction({
-            threadId: comment.threadId,
-            commentId: comment.id,
-            emoji: reaction.emoji,
-          });
-        }
-      },
-      [
-        addReaction,
-        comment.threadId,
-        comment.id,
-        reaction.emoji,
-        removeReaction,
-      ]
-    );
-
-    return (
-      <CommentReactionShared
-        onPressedChange={handlePressedChange}
-        reaction={reaction}
-        {...props}
-        ref={forwardedRef}
-      />
-    );
-  }
-);
-
-export const CommentReactionShared = forwardRef<
+const CommentReactionButton = forwardRef<
   HTMLButtonElement,
-  CommentReactionSharedProps
->(
-  (
-    { reaction, overrides, disabled, onPressedChange, className, ...props },
-    forwardedRef
-  ) => {
-    const {
-      [kInternal]: { useCurrentUserId },
-    } = useSharedContextBundle();
-    const currentId = useCurrentUserId();
-    const isActive = useMemo(() => {
-      return reaction.users.some((users) => users.id === currentId);
-    }, [currentId, reaction]);
-    const $ = useOverrides(overrides);
-    const tooltipContent = useMemo(
-      () => (
-        <span>
-          {$.COMMENT_REACTION_LIST(
-            <List
-              values={reaction.users.map((users, index) => (
-                <User
-                  key={users.id}
-                  userId={users.id}
-                  capitalize={index === 0}
-                  replaceSelf
-                />
-              ))}
-              formatRemaining={$.LIST_REMAINING_USERS}
-              truncate={REACTIONS_TRUNCATE}
-            />,
-            reaction.emoji,
-            reaction.users.length
-          )}
-        </span>
-      ),
-      [$, reaction]
-    );
+  CommentReactionButtonProps
+>(({ reaction, overrides, className, ...props }, forwardedRef) => {
+  const $ = useOverrides(overrides);
+  return (
+    <Button
+      className={classNames("lb-comment-reaction", className)}
+      variant="outline"
+      aria-label={$.COMMENT_REACTION_DESCRIPTION(
+        reaction.emoji,
+        reaction.users.length
+      )}
+      {...props}
+      ref={forwardedRef}
+    >
+      <Emoji className="lb-comment-reaction-emoji" emoji={reaction.emoji} />
+      <span className="lb-comment-reaction-count">{reaction.users.length}</span>
+    </Button>
+  );
+});
 
-    return (
-      <Tooltip
-        content={tooltipContent}
-        multiline
-        className="lb-comment-reaction-tooltip"
+export const CommentReaction = forwardRef<
+  HTMLButtonElement,
+  CommentReactionProps
+>(({ comment, reaction, overrides, disabled, ...props }, forwardedRef) => {
+  const { useAddReaction, useRemoveReaction } = useRoomContextBundle();
+  const addReaction = useAddReaction();
+  const removeReaction = useRemoveReaction();
+  const {
+    [kInternal]: { useCurrentUserId },
+  } = useSharedContextBundle();
+  const currentId = useCurrentUserId();
+  const isActive = useMemo(() => {
+    return reaction.users.some((users) => users.id === currentId);
+  }, [currentId, reaction]);
+  const $ = useOverrides(overrides);
+  const tooltipContent = useMemo(
+    () => (
+      <span>
+        {$.COMMENT_REACTION_LIST(
+          <List
+            values={reaction.users.map((users, index) => (
+              <User
+                key={users.id}
+                userId={users.id}
+                capitalize={index === 0}
+                replaceSelf
+              />
+            ))}
+            formatRemaining={$.LIST_REMAINING_USERS}
+            truncate={REACTIONS_TRUNCATE}
+          />,
+          reaction.emoji,
+          reaction.users.length
+        )}
+      </span>
+    ),
+    [$, reaction]
+  );
+
+  const handlePressedChange = useCallback(
+    (isPressed: boolean) => {
+      if (isPressed) {
+        addReaction({
+          threadId: comment.threadId,
+          commentId: comment.id,
+          emoji: reaction.emoji,
+        });
+      } else {
+        removeReaction({
+          threadId: comment.threadId,
+          commentId: comment.id,
+          emoji: reaction.emoji,
+        });
+      }
+    },
+    [addReaction, comment.threadId, comment.id, reaction.emoji, removeReaction]
+  );
+
+  return (
+    <Tooltip
+      content={tooltipContent}
+      multiline
+      className="lb-comment-reaction-tooltip"
+    >
+      <TogglePrimitive.Root
+        asChild
+        pressed={isActive}
+        onPressedChange={handlePressedChange}
+        disabled={disabled}
+        ref={forwardedRef}
       >
-        <TogglePrimitive.Root
-          asChild
-          pressed={isActive}
-          onPressedChange={onPressedChange}
-          disabled={disabled}
-          ref={forwardedRef}
-        >
-          <Button
-            className={classNames("lb-comment-reaction", className)}
-            variant="outline"
-            disableable={false}
-            aria-label={$.COMMENT_REACTION_DESCRIPTION(
-              reaction.emoji,
-              reaction.users.length
-            )}
-            data-self={isActive ? "" : undefined}
-            {...props}
-          >
-            <Emoji
-              className="lb-comment-reaction-emoji"
-              emoji={reaction.emoji}
-            />
-            <span className="lb-comment-reaction-count">
-              {reaction.users.length}
-            </span>
-          </Button>
-        </TogglePrimitive.Root>
-      </Tooltip>
-    );
-  }
-);
+        <CommentReactionButton
+          data-self={isActive ? "" : undefined}
+          reaction={reaction}
+          overrides={overrides}
+          {...props}
+        />
+      </TogglePrimitive.Root>
+    </Tooltip>
+  );
+});
+
+export const CommentNonInteractiveReaction = forwardRef<
+  HTMLButtonElement,
+  CommentNonInteractiveReactionProps
+>(({ reaction, overrides, ...props }, forwardedRef) => {
+  const {
+    [kInternal]: { useCurrentUserId },
+  } = useSharedContextBundle();
+  const currentId = useCurrentUserId();
+  const isActive = useMemo(() => {
+    return reaction.users.some((users) => users.id === currentId);
+  }, [currentId, reaction]);
+
+  return (
+    <CommentReactionButton
+      disableable={false}
+      data-self={isActive ? "" : undefined}
+      reaction={reaction}
+      overrides={overrides}
+      {...props}
+      ref={forwardedRef}
+    />
+  );
+});
 
 /**
  * Displays a single comment.

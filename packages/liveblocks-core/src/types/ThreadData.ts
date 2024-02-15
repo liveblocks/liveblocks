@@ -17,6 +17,12 @@ export type ThreadData<TThreadMetadata extends BaseMetadata = never> = {
     : TThreadMetadata;
 };
 
+export interface ThreadDataWithDeleteInfo<
+  TThreadMetadata extends BaseMetadata = never,
+> extends ThreadData<TThreadMetadata> {
+  deletedAt?: Date;
+}
+
 export type ThreadDataPlain<TThreadMetadata extends BaseMetadata = never> =
   Omit<DateToString<ThreadData<TThreadMetadata>>, "comments" | "metadata"> & {
     comments: CommentDataPlain[];

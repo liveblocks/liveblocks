@@ -17,9 +17,9 @@ import type {
   BaseMetadata,
   CommentBody,
   CommentData,
-  GetThreadsOptions,
   InboxNotificationData,
   kInternal,
+  LiveblocksError,
   PartialNullable,
   Resolve,
   RoomEventMessage,
@@ -29,8 +29,11 @@ import type {
   ToImmutable,
 } from "@liveblocks/core";
 
-export type UseThreadsOptions<TThreadMetadata extends BaseMetadata> =
-  GetThreadsOptions<TThreadMetadata>;
+export type UseThreadsOptions<TThreadMetadata extends BaseMetadata> = {
+  query?: {
+    metadata?: Partial<TThreadMetadata>;
+  };
+};
 
 import type { PropsWithChildren } from "react";
 
@@ -450,7 +453,7 @@ type RoomContextBundleCommon<
    *   console.error(er);
    * })
    */
-  useErrorListener(callback: (err: Error) => void): void;
+  useErrorListener(callback: (err: LiveblocksError) => void): void;
 
   /**
    * useEventListener is a React hook that allows you to respond to events broadcast

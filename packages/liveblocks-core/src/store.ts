@@ -1,13 +1,16 @@
 import type { Store } from "./lib/create-store";
 import { createStore } from "./lib/create-store";
+import * as console from "./lib/fancy-console";
 import type { Resolve } from "./lib/Resolve";
 import type { BaseMetadata } from "./types/BaseMetadata";
-import type { CommentBody } from "./types/CommentBody";
 import type { CommentData, CommentReaction } from "./types/CommentData";
+import type { CommentUserReaction } from "./types/CommentReaction";
 import type { InboxNotificationData } from "./types/InboxNotificationData";
+import type { InboxNotificationDeleteInfo } from "./types/InboxNotificationDeleteInfo";
 import type { PartialNullable } from "./types/PartialNullable";
 import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
-import type { ThreadData } from "./types/ThreadData";
+import type { ThreadData, ThreadDataWithDeleteInfo } from "./types/ThreadData";
+import type { ThreadDeleteInfo } from "./types/ThreadDeleteInfo";
 
 type OptimisticUpdate<TThreadMetadata extends BaseMetadata> =
   | CreateThreadOptimisticUpdate<TThreadMetadata>
@@ -33,22 +36,19 @@ type EditThreadMetadataOptimisticUpdate<TThreadMetadata extends BaseMetadata> =
     id: string;
     threadId: string;
     metadata: Resolve<PartialNullable<TThreadMetadata>>;
+    updatedAt: Date;
   };
 
 type CreateCommentOptimisticUpdate = {
   type: "create-comment";
   id: string;
   comment: CommentData;
-  inboxNotificationId?: string;
 };
 
 type EditCommentOptimisticUpdate = {
   type: "edit-comment";
   id: string;
-  threadId: string;
-  editedAt: Date;
-  commentId: string;
-  body: CommentBody;
+  comment: CommentData;
 };
 
 type DeleteCommentOptimisticUpdate = {
@@ -64,9 +64,7 @@ type AddReactionOptimisticUpdate = {
   id: string;
   threadId: string;
   commentId: string;
-  emoji: string;
-  createdAt: Date;
-  userId: string;
+  reaction: CommentUserReaction;
 };
 
 type RemoveReactionOptimisticUpdate = {
@@ -76,6 +74,7 @@ type RemoveReactionOptimisticUpdate = {
   commentId: string;
   emoji: string;
   userId: string;
+  removedAt: Date;
 };
 
 type MarkInboxNotificationAsReadOptimisticUpdate = {
@@ -106,7 +105,7 @@ export type CacheState<TThreadMetadata extends BaseMetadata> = {
   /**
    * Threads by ID.
    */
-  threads: Record<string, ThreadData<TThreadMetadata>>;
+  threads: Record<string, ThreadDataWithDeleteInfo<TThreadMetadata>>;
   /**
    * Keep track of loading and error status of all the queries made by the client.
    */
@@ -136,7 +135,14 @@ export interface CacheStore<TThreadMetadata extends BaseMetadata>
   updateThreadsAndNotifications(
     threads: ThreadData<TThreadMetadata>[],
     inboxNotifications: InboxNotificationData[],
+    deletedThreads: ThreadDeleteInfo[],
+    deletedInboxNotifications: InboxNotificationDeleteInfo[],
     queryKey?: string
+  ): void;
+  updateRoomInboxNotificationSettings(
+    roomId: string,
+    settings: RoomNotificationSettings,
+    queryKey: string
   ): void;
   pushOptimisticUpdate(
     optimisticUpdate: OptimisticUpdate<TThreadMetadata>
@@ -158,42 +164,6 @@ export function createClientStore<
     inboxNotifications: {},
     notificationSettings: {},
   });
-
-  function mergeThreads(
-    existingThreads: Record<string, ThreadData<TThreadMetadata>>,
-    newThreads: Record<string, ThreadData<TThreadMetadata>>
-  ): Record<string, ThreadData<TThreadMetadata>> {
-    const updatedThreads = { ...existingThreads };
-
-    Object.entries(newThreads).forEach(([id, thread]) => {
-      const existingThread = updatedThreads[id];
-
-      // If the thread already exists, we need to compare the two threads to determine which one is newer.
-      if (existingThread) {
-        const result = compareThreads(existingThread, thread);
-        // If the existing thread is newer than the new thread, we do not update the existing thread.
-        if (result === 1) return;
-      }
-      updatedThreads[id] = thread;
-    });
-
-    return updatedThreads;
-  }
-
-  function mergeNotifications(
-    existingInboxNotifications: Record<string, InboxNotificationData>,
-    newInboxNotifications: Record<string, InboxNotificationData>
-  ) {
-    // TODO: Do not replace existing inboxNotifications if it has been updated more recently than the incoming inbox notifications
-    const inboxNotifications = Object.values({
-      ...existingInboxNotifications,
-      ...newInboxNotifications,
-    });
-
-    return Object.fromEntries(
-      inboxNotifications.map((notification) => [notification.id, notification])
-    );
-  }
 
   return {
     ...store,
@@ -240,22 +210,22 @@ export function createClientStore<
     updateThreadsAndNotifications(
       threads: ThreadData<TThreadMetadata>[],
       inboxNotifications: InboxNotificationData[],
+      deletedThreads: ThreadDeleteInfo[],
+      deletedInboxNotifications: InboxNotificationDeleteInfo[],
       queryKey?: string
     ) {
       store.set((state) => ({
         ...state,
-        threads: mergeThreads(
-          state.threads,
-          Object.fromEntries(threads.map((thread) => [thread.id, thread]))
-        ),
-        inboxNotifications: mergeNotifications(
+        threads: applyThreadUpdates(state.threads, {
+          newThreads: threads,
+          deletedThreads,
+        }),
+        inboxNotifications: applyNotificationsUpdates(
           state.inboxNotifications,
-          Object.fromEntries(
-            inboxNotifications.map((notification) => [
-              notification.id,
-              notification,
-            ])
-          )
+          {
+            newInboxNotifications: inboxNotifications,
+            deletedNotifications: deletedInboxNotifications,
+          }
         ),
         queries:
           queryKey !== undefined
@@ -266,6 +236,26 @@ export function createClientStore<
                 },
               }
             : state.queries,
+      }));
+    },
+
+    updateRoomInboxNotificationSettings(
+      roomId: string,
+      settings: RoomNotificationSettings,
+      queryKey: string
+    ) {
+      store.set((state) => ({
+        ...state,
+        notificationSettings: {
+          ...state.notificationSettings,
+          [roomId]: settings,
+        },
+        queries: {
+          ...state.queries,
+          [queryKey]: {
+            isLoading: false,
+          },
+        },
       }));
     },
 
@@ -358,180 +348,122 @@ export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
       }
       case "edit-thread-metadata": {
         const thread = result.threads[optimisticUpdate.threadId];
+        // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
         }
+
+        // If the thread has been deleted, we do not apply the update
+        if (thread.deletedAt !== undefined) {
+          break;
+        }
+
+        // If the thread has been updated since the optimistic update, we do not apply the update
+        if (
+          thread.updatedAt !== undefined &&
+          thread.updatedAt > optimisticUpdate.updatedAt
+        ) {
+          break;
+        }
+
         result.threads[thread.id] = {
           ...thread,
+          updatedAt: optimisticUpdate.updatedAt,
           metadata: {
             ...thread.metadata,
             ...optimisticUpdate.metadata,
           },
         };
+
         break;
       }
       case "create-comment": {
         const thread = result.threads[optimisticUpdate.comment.threadId];
+        // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
         }
-        result.threads[thread.id] = {
-          ...thread,
-          comments: [...thread.comments, optimisticUpdate.comment], // TODO: Handle replace comment
-        };
-        if (!optimisticUpdate.inboxNotificationId) {
+
+        result.threads[thread.id] = upsertComment(
+          thread,
+          optimisticUpdate.comment
+        );
+
+        const inboxNotification = Object.values(result.inboxNotifications).find(
+          (notification) => notification.threadId === thread.id
+        );
+
+        if (inboxNotification === undefined) {
           break;
         }
-        const inboxNotification =
-          result.inboxNotifications[optimisticUpdate.inboxNotificationId];
-        result.inboxNotifications[optimisticUpdate.inboxNotificationId] = {
+
+        result.inboxNotifications[inboxNotification.id] = {
           ...inboxNotification,
           notifiedAt: optimisticUpdate.comment.createdAt,
           readAt: optimisticUpdate.comment.createdAt,
         };
+
         break;
       }
       case "edit-comment": {
-        const thread = result.threads[optimisticUpdate.threadId];
+        const thread = result.threads[optimisticUpdate.comment.threadId];
+        // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
         }
 
-        result.threads[thread.id] = {
-          ...thread,
-          comments: thread.comments.map((comment) =>
-            comment.id === optimisticUpdate.commentId
-              ? ({
-                  ...comment,
-                  editedAt: optimisticUpdate.editedAt,
-                  body: optimisticUpdate.body,
-                } as CommentData) // TODO: Should we handle deleted CommentData?
-              : comment
-          ),
-        };
+        result.threads[thread.id] = upsertComment(
+          thread,
+          optimisticUpdate.comment
+        );
+
         break;
       }
       case "delete-comment": {
         const thread = result.threads[optimisticUpdate.threadId];
+        // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
         }
 
-        result.threads[thread.id] = {
-          ...thread,
-          comments: thread.comments.map((comment) =>
-            comment.id === optimisticUpdate.commentId
-              ? {
-                  ...comment,
-                  deletedAt: optimisticUpdate.deletedAt,
-                  body: undefined,
-                }
-              : comment
-          ),
-        };
-
-        if (
-          !result.threads[thread.id].comments.some(
-            (comment) => comment.deletedAt === undefined
-          )
-        ) {
-          delete result.threads[thread.id];
-        }
+        result.threads[thread.id] = deleteComment(
+          thread,
+          optimisticUpdate.commentId,
+          optimisticUpdate.deletedAt
+        );
 
         break;
       }
       case "add-reaction": {
         const thread = result.threads[optimisticUpdate.threadId];
+        // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
         }
 
-        result.threads[thread.id] = {
-          ...thread,
-          comments: thread.comments.map((comment) => {
-            if (comment.id === optimisticUpdate.commentId) {
-              if (
-                comment.reactions.some(
-                  (reaction) => reaction.emoji === optimisticUpdate.emoji
-                )
-              ) {
-                return {
-                  ...comment,
-                  reactions: comment.reactions.map((reaction) =>
-                    reaction.emoji === optimisticUpdate.emoji
-                      ? {
-                          ...reaction,
-                          users: [
-                            ...reaction.users,
-                            { id: optimisticUpdate.userId },
-                          ],
-                        }
-                      : reaction
-                  ),
-                };
-              } else {
-                return {
-                  ...comment,
-                  reactions: [
-                    ...comment.reactions,
-                    {
-                      emoji: optimisticUpdate.emoji,
-                      createdAt: optimisticUpdate.createdAt,
-                      users: [{ id: optimisticUpdate.userId }],
-                    },
-                  ],
-                };
-              }
-            } else {
-              return comment;
-            }
-          }),
-        };
+        result.threads[thread.id] = addReaction(
+          thread,
+          optimisticUpdate.commentId,
+          optimisticUpdate.reaction
+        );
+
         break;
       }
       case "remove-reaction": {
         const thread = result.threads[optimisticUpdate.threadId];
+        // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
         }
 
-        result.threads[thread.id] = {
-          ...thread,
-          comments: thread.comments.map((comment) => {
-            if (comment.id !== optimisticUpdate.commentId) {
-              return comment;
-            }
+        result.threads[thread.id] = removeReaction(
+          thread,
+          optimisticUpdate.commentId,
+          optimisticUpdate.emoji,
+          optimisticUpdate.userId,
+          optimisticUpdate.removedAt
+        );
 
-            const reactionIndex = comment.reactions.findIndex(
-              (reaction) => reaction.emoji === optimisticUpdate.emoji
-            );
-            let reactions: CommentReaction[] = comment.reactions;
-
-            if (
-              reactionIndex >= 0 &&
-              comment.reactions[reactionIndex].users.some(
-                (user) => user.id === optimisticUpdate.userId
-              )
-            ) {
-              if (comment.reactions[reactionIndex].users.length <= 1) {
-                reactions = [...comment.reactions];
-                reactions.splice(reactionIndex, 1);
-              } else {
-                reactions[reactionIndex] = {
-                  ...reactions[reactionIndex],
-                  users: reactions[reactionIndex].users.filter(
-                    (user) => user.id !== optimisticUpdate.userId
-                  ),
-                };
-              }
-            }
-
-            return {
-              ...comment,
-              reactions,
-            };
-          }),
-        };
         break;
       }
       case "mark-inbox-notification-as-read": {
@@ -560,4 +492,357 @@ export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
   }
 
   return result;
+}
+
+export function applyThreadUpdates<TThreadMetadata extends BaseMetadata>(
+  existingThreads: Record<string, ThreadDataWithDeleteInfo<TThreadMetadata>>,
+  updates: {
+    newThreads: ThreadData<TThreadMetadata>[];
+    deletedThreads: ThreadDeleteInfo[];
+  }
+): Record<string, ThreadData<TThreadMetadata>> {
+  const updatedThreads = { ...existingThreads };
+
+  // Add new threads or update existing threads if the existing thread is older than the new thread.
+  updates.newThreads.forEach((thread) => {
+    const existingThread = updatedThreads[thread.id];
+
+    // If the thread already exists, we need to compare the two threads to determine which one is newer.
+    if (existingThread) {
+      const result = compareThreads(existingThread, thread);
+      // If the existing thread is newer than the new thread, we do not update the existing thread.
+      if (result === 1) return;
+    }
+    updatedThreads[thread.id] = thread;
+  });
+
+  // Mark threads in the deletedThreads list as deleted
+  updates.deletedThreads.forEach(({ id, deletedAt }) => {
+    const existingThread = updatedThreads[id];
+    if (existingThread === undefined) return;
+
+    existingThread.deletedAt = deletedAt;
+    existingThread.updatedAt = deletedAt;
+    existingThread.comments = [];
+  });
+
+  return updatedThreads;
+}
+
+export function applyNotificationsUpdates(
+  existingInboxNotifications: Record<string, InboxNotificationData>,
+  updates: {
+    newInboxNotifications: InboxNotificationData[];
+    deletedNotifications: InboxNotificationDeleteInfo[];
+  }
+): Record<string, InboxNotificationData> {
+  const updatedInboxNotifications = { ...existingInboxNotifications };
+
+  // Add new notifications or update existing notifications if the existing notification is older than the new notification.
+  updates.newInboxNotifications.forEach((notification) => {
+    const existingNotification = updatedInboxNotifications[notification.id];
+    // If the notification already exists, we need to compare the two notifications to determine which one is newer.
+    if (existingNotification) {
+      const result = compareInboxNotifications(
+        existingNotification,
+        notification
+      );
+
+      // If the existing notification is newer than the new notification, we do not update the existing notification.
+      if (result === 1) return;
+    }
+
+    // If the new notification is newer than the existing notification, we update the existing notification.
+    updatedInboxNotifications[notification.id] = notification;
+  });
+
+  updates.deletedNotifications.forEach(
+    ({ id }) => delete updatedInboxNotifications[id]
+  );
+
+  return updatedInboxNotifications;
+}
+
+/**
+ * Compares two inbox notifications to determine which one is newer.
+ * @param inboxNotificationA The first inbox notification to compare.
+ * @param inboxNotificationB The second inbox notification to compare.
+ * @returns 1 if inboxNotificationA is newer, -1 if inboxNotificationB is newer, or 0 if they are the same age or can't be compared.
+ */
+export function compareInboxNotifications(
+  inboxNotificationA: InboxNotificationData,
+  inboxNotificationB: InboxNotificationData
+): number {
+  if (inboxNotificationA.notifiedAt > inboxNotificationB.notifiedAt) {
+    return 1;
+  } else if (inboxNotificationA.notifiedAt < inboxNotificationB.notifiedAt) {
+    return -1;
+  }
+
+  // notifiedAt times are the same, compare readAt times if both are not null
+  if (inboxNotificationA.readAt && inboxNotificationB.readAt) {
+    return inboxNotificationA.readAt > inboxNotificationB.readAt
+      ? 1
+      : inboxNotificationA.readAt < inboxNotificationB.readAt
+        ? -1
+        : 0;
+  } else if (inboxNotificationA.readAt || inboxNotificationB.readAt) {
+    return inboxNotificationA.readAt ? 1 : -1;
+  }
+
+  // If all dates are equal, return 0
+  return 0;
+}
+
+export function upsertComment<TThreadMetadata extends BaseMetadata>(
+  thread: ThreadDataWithDeleteInfo<TThreadMetadata>,
+  comment: CommentData
+): ThreadDataWithDeleteInfo<TThreadMetadata> {
+  // If the thread has been deleted, we do not apply the update
+  if (thread.deletedAt !== undefined) {
+    return thread;
+  }
+
+  // Validate that the comment belongs to the thread
+  if (comment.threadId !== thread.id) {
+    console.warn(
+      `Comment ${comment.id} does not belong to thread ${thread.id}`
+    );
+    return thread;
+  }
+
+  const existingComment = thread.comments.find(
+    (existingComment) => existingComment.id === comment.id
+  );
+
+  // If the comment doesn't exist in the thread, add the comment
+  if (existingComment === undefined) {
+    const updatedAt = new Date(
+      Math.max(thread.updatedAt?.getTime() || 0, comment.createdAt.getTime())
+    );
+
+    const updatedThread = {
+      ...thread,
+      updatedAt,
+      comments: [...thread.comments, comment],
+    };
+
+    return updatedThread;
+  }
+
+  // If the comment exists in the thread and has been deleted, do not apply the update
+  if (existingComment.deletedAt !== undefined) {
+    return thread;
+  }
+
+  // Proceed to update the comment if:
+  // 1. The existing comment has not been edited
+  // 2. The incoming comment has not been edited (i.e. it's a new comment)
+  // 3. The incoming comment has been edited more recently than the existing comment
+  if (
+    existingComment.editedAt === undefined ||
+    comment.editedAt === undefined ||
+    existingComment.editedAt <= comment.editedAt
+  ) {
+    const updatedComments = thread.comments.map((existingComment) =>
+      existingComment.id === comment.id ? comment : existingComment
+    );
+
+    const updatedThread = {
+      ...thread,
+      updatedAt: new Date(
+        Math.max(
+          thread.updatedAt?.getTime() || 0,
+          comment.editedAt?.getTime() || comment.createdAt.getTime()
+        )
+      ),
+      comments: updatedComments,
+    };
+    return updatedThread;
+  }
+
+  return thread;
+}
+
+export function deleteComment<TThreadMetadata extends BaseMetadata>(
+  thread: ThreadDataWithDeleteInfo<TThreadMetadata>,
+  commentId: string,
+  deletedAt: Date
+): ThreadDataWithDeleteInfo<TThreadMetadata> {
+  // If the thread has been deleted, we do not delete the comment
+  if (thread.deletedAt !== undefined) {
+    return thread;
+  }
+
+  const existingComment = thread.comments.find(
+    (comment) => comment.id === commentId
+  );
+
+  // If the comment doesn't exist in the thread, we cannot perform the deletion
+  if (existingComment === undefined) {
+    return thread;
+  }
+
+  // If the comment has been deleted since the deletion request, we do not delete the comment
+  if (existingComment.deletedAt !== undefined) {
+    return thread;
+  }
+
+  const updatedComments = thread.comments.map((comment) =>
+    comment.id === commentId
+      ? {
+          ...comment,
+          deletedAt,
+          body: undefined,
+        }
+      : comment
+  );
+
+  // If all comments have been deleted, we mark the thread as deleted
+  if (!updatedComments.some((comment) => comment.deletedAt === undefined)) {
+    return {
+      ...thread,
+      deletedAt,
+      updatedAt: deletedAt,
+      comments: [],
+    };
+  }
+
+  return {
+    ...thread,
+    updatedAt: deletedAt,
+    comments: updatedComments,
+  };
+}
+
+export function addReaction<TThreadMetadata extends BaseMetadata>(
+  thread: ThreadDataWithDeleteInfo<TThreadMetadata>,
+  commentId: string,
+  reaction: CommentUserReaction
+): ThreadDataWithDeleteInfo<TThreadMetadata> {
+  // If the thread has been deleted, we do not add the reaction
+  if (thread.deletedAt !== undefined) {
+    return thread;
+  }
+
+  const existingComment = thread.comments.find(
+    (comment) => comment.id === commentId
+  );
+
+  // If the comment doesn't exist in the thread, we do not add the reaction
+  if (existingComment === undefined) {
+    return thread;
+  }
+
+  // If the comment has been deleted since the reaction addition request, we do not add the reaction
+  if (existingComment.deletedAt !== undefined) {
+    return thread;
+  }
+
+  const updatedComments = thread.comments.map((comment) =>
+    comment.id === commentId
+      ? {
+          ...comment,
+          reactions: upsertReaction(comment.reactions, reaction),
+        }
+      : comment
+  );
+
+  return {
+    ...thread,
+    updatedAt: new Date(
+      Math.max(reaction.createdAt.getTime(), thread.updatedAt?.getTime() || 0)
+    ),
+    comments: updatedComments,
+  };
+}
+
+export function removeReaction<TThreadMetadata extends BaseMetadata>(
+  thread: ThreadDataWithDeleteInfo<TThreadMetadata>,
+  commentId: string,
+  emoji: string,
+  userId: string,
+  removedAt: Date
+): ThreadDataWithDeleteInfo<TThreadMetadata> {
+  // If the thread has been deleted, we do not remove the reaction
+  if (thread.deletedAt !== undefined) {
+    return thread;
+  }
+
+  const existingComment = thread.comments.find(
+    (comment) => comment.id === commentId
+  );
+
+  // If the comment doesn't exist in the thread, we do not remove the reaction
+  if (existingComment === undefined) {
+    return thread;
+  }
+
+  // If the comment has been deleted since the reaction removal request, we do not remove the reaction
+  if (existingComment.deletedAt !== undefined) {
+    return thread;
+  }
+
+  const updatedComments = thread.comments.map((comment) =>
+    comment.id === commentId
+      ? {
+          ...comment,
+          reactions: comment.reactions
+            .map((reaction) =>
+              reaction.emoji === emoji
+                ? {
+                    ...reaction,
+                    users: reaction.users.filter((user) => user.id !== userId),
+                  }
+                : reaction
+            )
+            .filter((reaction) => reaction.users.length > 0), // Remove reactions with no users left
+        }
+      : comment
+  );
+
+  return {
+    ...thread,
+    updatedAt: new Date(
+      Math.max(removedAt.getTime(), thread.updatedAt?.getTime() || 0)
+    ),
+    comments: updatedComments,
+  };
+}
+
+function upsertReaction(
+  reactions: CommentReaction[],
+  reaction: CommentUserReaction
+): CommentReaction[] {
+  const existingReaction = reactions.find(
+    (existingReaction) => existingReaction.emoji === reaction.emoji
+  );
+
+  // If the reaction doesn't exist in the comment, we add it
+  if (existingReaction === undefined) {
+    return [
+      ...reactions,
+      {
+        emoji: reaction.emoji,
+        createdAt: reaction.createdAt,
+        users: [{ id: reaction.userId }],
+      },
+    ];
+  }
+
+  // If the reaction exists in the comment, we add the user to the reaction if they are not already in it
+  if (
+    existingReaction.users.some((user) => user.id === reaction.userId) === false
+  ) {
+    return reactions.map((existingReaction) =>
+      existingReaction.emoji === reaction.emoji
+        ? {
+            ...existingReaction,
+            users: [...existingReaction.users, { id: reaction.userId }],
+          }
+        : existingReaction
+    );
+  }
+
+  return reactions;
 }

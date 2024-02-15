@@ -27,7 +27,7 @@ export function dummyThreadData<
     roomId: "room-id",
     createdAt: now,
     metadata: {}, // TODO Fix type
-    updatedAt: undefined,
+    updatedAt: now,
     comments: [comment],
   } as ThreadData<TThreadMetadata>;
 }

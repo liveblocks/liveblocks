@@ -43,7 +43,7 @@ const READ_ACCESS = Object.freeze([
  */
 const FULL_ACCESS = Object.freeze(["room:write", "comments:write"] as const);
 
-const roomPatternRegex = /^[^*]{1,128}[*]?$/;
+const roomPatternRegex = /^([*]|[^*]{1,128}[*]?)$/;
 
 type PostFn = (path: URLSafeString, json: Json) => Promise<Response>;
 
@@ -129,6 +129,9 @@ export class Session {
   }
 
   public allow(roomIdOrPattern: string, newPerms: readonly Permission[]): this {
+    if (typeof roomIdOrPattern !== "string") {
+      throw new Error("Room name or pattern must be a string");
+    }
     if (!roomPatternRegex.test(roomIdOrPattern)) {
       throw new Error("Invalid room name or pattern");
     }

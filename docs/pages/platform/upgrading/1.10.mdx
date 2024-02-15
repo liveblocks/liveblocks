@@ -5,13 +5,17 @@ meta:
   description: "Guide to upgrade to Liveblocks version 1.10"
 ---
 
+Notifications is the first Liveblocks product that works across multiple rooms,
+and this has required us to introduce breaking changes to ensure a consistent
+API for Comments and Notifications.
+
 ## How to upgrade? [#how]
 
 You can upgrade to 1.10 by downloading the latest version of each Liveblocks
 package you’re using, for example in a React app:
 
 ```bash
-npm install @liveblocks/client@beta @liveblocks/react@beta @liveblocks/react-comments@beta @liveblocks/node@beta
+npm install @liveblocks/client@latest @liveblocks/react@latest @liveblocks/react-comments@latest @liveblocks/node@latest
 ```
 
 <Banner title="Update every Liveblocks package">
@@ -20,72 +24,175 @@ If you’re using any other Liveblocks packages make sure to update those too.
 
 </Banner>
 
-Notifications are the first APIs that work across multiple rooms. It forces us
-to introduce small breaking changes to ensure a consistent API for Comments and
-Notifications.
+## All changes are for Comments and Notifications
 
-## `resolveUsers` and `resolveMentionSuggestions`
+If you’re not using Comments or Notifications, there are no breaking changes for
+you! However, if you are using these, or intend to use them in future, keep
+reading.
 
-Notifications also need to resolve users and mentions, so we had to "lift" the
-resolvers to `createClient`.
+## Comments resolver functions
+
+Notifications needs to resolve users, as well as Comments, so we’ve lifted the
+resolver functions from `createRoomContext` to `createClient`.
 
 Before:
 
-```tsx file="liveblocks.config.ts"
+```tsx file="liveblocks.config.ts" highlight="7-12"
 // ❌ Before - Liveblocks 1.9
 const client = createClient({
-  /* ... */
+  authEndpoint: "/api/liveblocks-auth",
 });
 
-const {} = createRoomContext({
-  resolveUsers: () => {
-    /* ... */
+const { RoomProvider } = createRoomContext({
+  async resolveUsers({ userIds, roomId }) {
+    // ...
   },
-  resolveMentionSuggestions: () => {
-    /* ... */
+  async resolveMentionSuggestions({ text, roomId }) {
+    // ...
   },
 });
 ```
 
 After:
 
-```tsx file="liveblocks.config.ts"
+```tsx file="liveblocks.config.ts" highlight="4-9"
 // ✅ After - Liveblocks 1.10
 const client = createClient({
-  resolveUsers: () => {
-    /* ... */
+  authEndpoint: "/api/auth/liveblocks-auth",
+  async resolveUsers({ userIds }) {
+    // ...
   },
-  resolveMentionSuggestions: () => {
-    /* ... */
+  async resolveMentionSuggestions({ text }) {
+    // ...
   },
 });
 
-const {} = createRoomContext();
+const { RoomProvider } = createRoomContext();
 ```
 
-Additionally `resolveUsers` does not have a `roomId` argument anymore.
+Because the resolvers are no longer room-based, you’ll notice that `roomId` is
+no longer in the parameters.
 
-### `ResolveUsersArgs` and `ResolveMentionSuggestionsArgs`
+### Resolver types
 
-Because the resolvers have moved to `@liveblocks/client`, the `ResolveUsersArgs`
-and `ResolveMentionSuggestionsArgs` types are now exported from
-`@liveblocks/client` as well, instead of `@liveblocks/react`.
+Because the resolvers have moved to the `client`, the `ResolveUsersArgs` and
+`ResolveMentionSuggestionsArgs` types are now exported from `@liveblocks/client`
+instead of `@liveblocks/react`.
 
-## `CommentBodyResolveUsersArgs`
+```tsx highlight="5,11"
+// ❌ Before - Liveblocks 1.9
+import {
+  ResolveUsersArgs,
+  ResolveMentionSuggestionsArgs,
+} from "@liveblocks/react";
 
-The `CommentBodyResolveUsersArgs` type doesn't exist anymore, use
+// ✅ After - Liveblocks 1.10
+import {
+  ResolveUsersArgs,
+  ResolveMentionSuggestionsArgs,
+} from "@liveblocks/client";
+```
+
+Relatedly,
+[`stringifyCommentBody`](/docs/api-reference/liveblocks-node#stringify-comment-body)’s
+`CommentBodyResolveUsersArgs` no longer exists, and you should use
 `ResolveUsersArgs` instead.
 
-## `@liveblocks/react-comments`
+```tsx highlight="5,11"
+// ❌ Before - Liveblocks 1.9
+import { CommentBodyResolveUsersArgs } from "@liveblocks/node";
 
-Some advanced CSS variables have been removed: `--lb-elevation-*` and
-`--lb-tooltip-*` no longer exist, instead use the basic variables on
-`.lb-elevation` or `.lb-tooltip directly`. (e.g. instead of defining
-`--lb-elevation-background` on `.lb-root`, define `--lb-background` on
-`.lb-elevation`)
+// ✅ After - Liveblocks 1.10
+import { ResolveUsersArgs } from "@liveblocks/node";
+```
 
-Some overrides have been updated and/or renamed: `SELF` is now `USER_SELF`,
-`UNKNOWN_USER` is now `USER_UNKNOWN`, `COMMENT_REACTION_REMAINING` doesn't exist
-anymore (use the general `LIST_REMAINING_USERS` instead), and
-`COMMENT_REACTION_TOOLTIP` is now `COMMENT_REACTION_LIST` (with its arguments
-ordered as `list`, `emoji`, and `count`).
+## Comments CSS variables
+
+Some `elevation` and `tooltip`
+[CSS variables](/docs/api-reference/liveblocks-react-comments#CSS-variables)
+have been removed:
+
+- `--lb-tooltip-background`
+- `--lb-tooltip-foreground`
+- `--lb-tooltip-foreground-contrast`
+- `--lb-elevation-background`
+- `--lb-elevation-foreground`
+- `--lb-elevation-foreground-contrast`
+
+Because these no longer exist, we recommend using the basic `--lb-*` variables
+directly on `.lb-elevation` or `.lb-tooltip `.
+
+Before:
+
+```css
+/* ❌ Before - Liveblocks 1.9 */
+:root {
+  --lb-tooltip-foreground: white;
+  --lb-elevation-background: red;
+}
+```
+
+After:
+
+```css
+/* ✅ After - Liveblocks 1.10 */
+.lb-tooltip {
+  --lb-foreground: white;
+}
+
+.lb-elevation {
+  --lb-background: red;
+}
+```
+
+## Comments overrides
+
+Comments overrides allows you to replace a string or node in default components,
+with another that you’ve specified. Some overrides have been changed.
+
+- `SELF` is now `USER_SELF`.
+- `UNKNOWN_USER` is now `USER_UNKNOWN`.
+- `COMMENT_REACTION_REMAINING` no longer exists, and you should use the
+  `LIST_REMAINING_USERS` instead.
+- `COMMENT_REACTION_TOOLTIP` is now `COMMENT_REACTION_LIST`, and its arguments
+  have been changed to `(list, emoji, count)`.
+
+Before:
+
+```tsx highlight="4-7"
+// ❌ Before - Liveblocks 1.9
+<CommentsConfig
+  overrides={{
+    SELF: "you",
+    UNKNOWN_USER: "Anon",
+    COMMENT_REACTION_REMAINING: (others) => `${others} people`,
+    COMMENT_REACTION_TOOLTIP: (emoji, list) => (
+      <>
+        {list} reacted with {emoji}
+      </>
+    ),
+  }}
+/>
+```
+
+After:
+
+```tsx highlight="4-7"
+// ✅ After - Liveblocks 1.10
+<CommentsConfig
+  overrides={{
+    USER_SELF: "you",
+    USER_UNKNOWN: "Anon",
+    LIST_REMAINING_USERS: (others) => `${others} people`,
+    COMMENT_REACTION_LIST: (list, emoji, count) => (
+      <>
+        {list} reacted with {emoji}
+      </>
+    ),
+  }}
+/>
+```
+
+When upgrading, remember that overrides can be applied both globally with
+`<CommentsConfig>`, and per component, e.g. `<Composer>`. Learn more in the
+[overrides API reference](/docs/api-reference/liveblocks-react-comments#Overrides).

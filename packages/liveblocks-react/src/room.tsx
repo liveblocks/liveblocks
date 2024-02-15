@@ -19,9 +19,9 @@ import type {
   CacheState,
   CacheStore,
   CommentData,
-  CommentReaction,
   CommentsEventServerMsg,
   EnterOptions,
+  LiveblocksError,
   OptionalPromise,
   ResolveMentionSuggestionsArgs,
   ResolveUsersArgs,
@@ -31,8 +31,10 @@ import type {
   ToImmutable,
 } from "@liveblocks/core";
 import {
+  addReaction,
   CommentsApiError,
   console,
+  deleteComment,
   deprecateIf,
   errorIf,
   isLiveNode,
@@ -40,8 +42,10 @@ import {
   makeEventSource,
   makePoller,
   NotificationsApiError,
+  removeReaction,
   ServerMsgCode,
   stringify,
+  upsertComment,
 } from "@liveblocks/core";
 import { nanoid } from "nanoid";
 import * as React from "react";
@@ -63,7 +67,6 @@ import { createCommentId, createThreadId } from "./comments/lib/createIds";
 import { selectNotificationSettings } from "./comments/lib/select-notification-settings";
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 import { selectedThreads } from "./comments/lib/selected-threads";
-import { upsertComment } from "./comments/lib/upsert-comment";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { useRerender } from "./lib/use-rerender";
@@ -119,7 +122,7 @@ function useSyncExternalStore<Snapshot>(
 
 const STABLE_EMPTY_LIST = Object.freeze([]);
 
-export const POLLING_INTERVAL = 5 * 60 * 1000;
+export const POLLING_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
 const MENTION_SUGGESTIONS_DEBOUNCE = 500;
 
@@ -369,7 +372,9 @@ export function createRoomContext<
     React.useEffect(() => {
       async function handleCommentEvent(message: CommentsEventServerMsg) {
         // TODO: Error handling
-        const info = await room.getThread({ threadId: message.threadId });
+        const info = await room[kInternal].comments.getThread({
+          threadId: message.threadId,
+        });
 
         // If no thread info was returned (i.e., 404), we remove the thread and relevant inbox notifications from local cache.
         if (!info) {
@@ -403,6 +408,11 @@ export function createRoomContext<
         (message) => void handleCommentEvent(message)
       );
     }, [room]);
+
+    React.useEffect(() => {
+      // Retrieve threads that have been updated/deleted since the last time the room requested threads updates
+      void getThreadsUpdates(room.id);
+    }, [room.id]);
 
     React.useEffect(() => {
       const pair = stableEnterRoom(roomId, frozenProps);
@@ -632,7 +642,7 @@ export function createRoomContext<
     );
   }
 
-  function useErrorListener(callback: (err: Error) => void): void {
+  function useErrorListener(callback: (err: LiveblocksError) => void): void {
     const room = useRoom();
     const savedCallback = useLatest(callback);
 
@@ -1001,26 +1011,67 @@ export function createRoomContext<
     {
       promise: Promise<any> | null;
       subscribers: number;
-      requestFactory: () => Promise<any>;
-      onSuccess: (result: any) => void;
     }
   > = new Map();
 
   const poller = makePoller(refreshThreadsAndNotifications);
 
   async function refreshThreadsAndNotifications() {
-    await Promise.allSettled(
-      Array.from(requestsCache.entries())
-        .filter(([_, requestCache]) => requestCache.subscribers > 0)
-        .map(async ([_, requestCache]) => {
-          return requestCache.requestFactory().then(
-            (result) => requestCache.onSuccess(result),
-            () => {
-              // Ignore errors during polling
-            }
-          );
-        })
-    );
+    const requests: Promise<any>[] = [];
+
+    client[kInternal].getRoomIds().map((roomId) => {
+      const room = client.getRoom(roomId);
+      if (room === null) return;
+
+      const notificationSettingsQuery = makeNotificationSettingsQueryKey(
+        room.id
+      );
+
+      if (requestsCache.has(notificationSettingsQuery)) {
+        requests.push(
+          room[kInternal].notifications
+            .getRoomNotificationSettings()
+            .then((settings) => {
+              store.updateRoomInboxNotificationSettings(
+                room.id,
+                settings,
+                notificationSettingsQuery
+              );
+            })
+            .catch(() => {
+              // TODO: Handle error
+            })
+        );
+      }
+
+      const lastRequestedAt = lastRequestedAtByRoom.get(room.id);
+      if (lastRequestedAt === undefined) return;
+
+      // Retrieve threads that have been updated/deleted since the last requestedAt value
+      requests.push(
+        room[kInternal].comments
+          .getThreads({ since: lastRequestedAt })
+          .then((result) => {
+            store.updateThreadsAndNotifications(
+              result.threads,
+              result.inboxNotifications,
+              result.deletedThreads,
+              result.deletedInboxNotifications
+            );
+
+            // If this query finished after the room was unmounted, we do not want to update the `lastRequestedAt` value
+            const room = client.getRoom(roomId);
+            if (room === null) return;
+
+            lastRequestedAtByRoom.set(room.id, result.meta.requestedAt);
+          })
+          .catch(() => {
+            // TODO: Handle error
+          })
+      );
+    });
+
+    await Promise.allSettled(requests);
   }
 
   function incrementQuerySubscribers(queryKey: string) {
@@ -1060,23 +1111,21 @@ export function createRoomContext<
     }
   }
 
-  async function getOrInitRequest<TRequestResult>(
+  async function getThreadsAndInboxNotifications(
+    room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
     queryKey: string,
-    requestFactory: () => Promise<TRequestResult>,
-    onSuccess: (requestResult: TRequestResult) => void
-  ): Promise<any> {
+    options: UseThreadsOptions<TThreadMetadata>
+  ) {
     const requestInfo = requestsCache.get(queryKey);
 
     if (requestInfo !== undefined) {
       return requestInfo.promise;
     }
 
-    const promise = requestFactory();
+    const promise = room[kInternal].comments.getThreads(options);
 
     requestsCache.set(queryKey, {
       promise,
-      requestFactory,
-      onSuccess,
       subscribers: 0,
     });
 
@@ -1086,44 +1135,82 @@ export function createRoomContext<
 
     try {
       const result = await promise;
-      onSuccess(result);
-    } catch (er) {
+
+      store.updateThreadsAndNotifications(
+        result.threads,
+        result.inboxNotifications,
+        result.deletedThreads,
+        result.deletedInboxNotifications,
+        queryKey
+      );
+
+      const lastRequestedAt = lastRequestedAtByRoom.get(room.id);
+
+      /**
+       * We set the `lastRequestedAt` value for the room to the timestamp returned by the current request if:
+       * 1. The `lastRequestedAt` value for the room has not been set
+       * OR
+       * 2. The `lastRequestedAt` value for the room is older than the timestamp returned by the current request
+       */
+      if (
+        lastRequestedAt === undefined ||
+        lastRequestedAt > result.meta.requestedAt
+      ) {
+        lastRequestedAtByRoom.set(room.id, result.meta.requestedAt);
+      }
+    } catch (err) {
+      // TODO: Implement error retry mechanism
       store.setQueryState(queryKey, {
         isLoading: false,
-        error: er as Error,
+        error: err as Error,
       });
     }
 
     poller.start(POLLING_INTERVAL);
   }
 
-  async function getThreadsAndInboxNotifications(
-    room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-    queryKey: string,
-    options: UseThreadsOptions<TThreadMetadata>
-  ) {
-    const roomId = room.id;
-    return getOrInitRequest(
-      queryKey,
-      async () => {
-        const room = client.getRoom(roomId);
+  const DEFAULT_DEDUPING_INTERVAL = 2000; // 2 seconds
 
-        if (room === null) {
-          return;
-        }
+  const lastRequestedAtByRoom = new Map<string, Date>(); // A map of room ids to the timestamp when the last request for threads updates was made
 
-        return room.getThreads(options);
-      },
-      (result) => {
-        if (result !== undefined) {
-          store.updateThreadsAndNotifications(
-            result.threads,
-            result.inboxNotifications,
-            queryKey
-          );
-        }
-      }
-    );
+  let isFetchingThreadsUpdates: boolean = false; // A flag to prevent multiple requests to retrieve threads updates from being made at the same time
+
+  /**
+   * Retrieve threads that have been updated/deleted since the last time the room requested threads updates and update the local cache with the new data
+   * @param roomId The id of the room for which to retrieve threads updates
+   */
+  async function getThreadsUpdates(roomId: string) {
+    const room = client.getRoom(roomId);
+    if (room === null) return;
+
+    const since = lastRequestedAtByRoom.get(room.id);
+    if (since === undefined) return;
+
+    // If another request to retrieve threads updates is in progress, we do not start a new one
+    if (isFetchingThreadsUpdates) return;
+
+    try {
+      isFetchingThreadsUpdates = true;
+      const updates = await room[kInternal].comments.getThreads({ since });
+
+      // Set the isFetchingThreadsUpdates flag to false after a certain interval to prevent multiple requests from being made at the same time
+      setTimeout(() => {
+        isFetchingThreadsUpdates = false;
+      }, DEFAULT_DEDUPING_INTERVAL);
+
+      store.updateThreadsAndNotifications(
+        updates.threads,
+        updates.inboxNotifications,
+        updates.deletedThreads,
+        updates.deletedInboxNotifications
+      );
+
+      // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
+      lastRequestedAtByRoom.set(room.id, updates.meta.requestedAt);
+    } catch (err) {
+      isFetchingThreadsUpdates = false;
+      // TODO: Implement error handling
+    }
   }
 
   function useThreads(
@@ -1205,7 +1292,7 @@ export function createRoomContext<
       return () => {
         decrementQuerySubscribers(queryKey);
       };
-    }, [room, queryKey]);
+    }, [queryKey]);
 
     return useSyncExternalStoreWithSelector(
       store.subscribe,
@@ -1227,13 +1314,13 @@ export function createRoomContext<
 
         const threadId = createThreadId();
         const commentId = createCommentId();
-        const now = new Date();
+        const createdAt = new Date();
 
         const newComment: CommentData = {
           id: commentId,
           threadId,
           roomId: room.id,
-          createdAt: now,
+          createdAt,
           type: "comment",
           userId: getCurrentUserId(room),
           body,
@@ -1242,7 +1329,8 @@ export function createRoomContext<
         const newThread: ThreadData<TThreadMetadata> = {
           id: threadId,
           type: "thread",
-          createdAt: now,
+          createdAt,
+          updatedAt: createdAt,
           roomId: room.id,
           metadata: metadata as ThreadData<TThreadMetadata>["metadata"],
           comments: [newComment],
@@ -1256,33 +1344,35 @@ export function createRoomContext<
           id: optimisticUpdateId,
         });
 
-        room.createThread({ threadId, commentId, body, metadata }).then(
-          (thread) => {
-            store.set((state) => ({
-              ...state,
-              threads: {
-                ...state.threads,
-                [threadId]: thread,
-              },
-              optimisticUpdates: state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              ),
-            }));
-          },
-          (err: Error) =>
-            onMutationFailure(
-              err,
-              optimisticUpdateId,
-              (err) =>
-                new CreateThreadError(err, {
-                  roomId: room.id,
-                  threadId,
-                  commentId,
-                  body,
-                  metadata,
-                })
-            )
-        );
+        room[kInternal].comments
+          .createThread({ threadId, commentId, body, metadata })
+          .then(
+            (thread) => {
+              store.set((state) => ({
+                ...state,
+                threads: {
+                  ...state.threads,
+                  [threadId]: thread,
+                },
+                optimisticUpdates: state.optimisticUpdates.filter(
+                  (update) => update.id !== optimisticUpdateId
+                ),
+              }));
+            },
+            (err: Error) =>
+              onMutationFailure(
+                err,
+                optimisticUpdateId,
+                (err) =>
+                  new CreateThreadError(err, {
+                    roomId: room.id,
+                    threadId,
+                    commentId,
+                    body,
+                    metadata,
+                  })
+              )
+          );
 
         return newThread;
       },
@@ -1300,6 +1390,7 @@ export function createRoomContext<
 
         const threadId = options.threadId;
         const metadata = options.metadata;
+        const updatedAt = new Date();
 
         const optimisticUpdateId = nanoid();
 
@@ -1308,54 +1399,73 @@ export function createRoomContext<
           metadata,
           id: optimisticUpdateId,
           threadId,
+          updatedAt,
         });
 
-        room.editThreadMetadata({ metadata, threadId }).then(
-          (metadata: TThreadMetadata) => {
-            store.set((state) => {
-              const existingThread = state.threads[threadId];
+        room[kInternal].comments
+          .editThreadMetadata({ metadata, threadId })
+          .then(
+            (metadata: TThreadMetadata) => {
+              store.set((state) => {
+                const existingThread = state.threads[threadId];
+                const updatedOptimisticUpdates = state.optimisticUpdates.filter(
+                  (update) => update.id !== optimisticUpdateId
+                );
 
-              // If the thread has been deleted while edit thread metadata was processed
-              // We do not update the state
-              if (existingThread === undefined) {
+                // If the thread doesn't exist in the cache, we do not update the metadata
+                if (existingThread === undefined) {
+                  return {
+                    ...state,
+                    optimisticUpdates: updatedOptimisticUpdates,
+                  };
+                }
+
+                // If the thread has been deleted, we do not update the metadata
+                if (existingThread.deletedAt !== undefined) {
+                  return {
+                    ...state,
+                    optimisticUpdates: updatedOptimisticUpdates,
+                  };
+                }
+
+                if (
+                  existingThread.updatedAt &&
+                  existingThread.updatedAt > updatedAt
+                ) {
+                  return {
+                    ...state,
+                    optimisticUpdates: updatedOptimisticUpdates,
+                  };
+                }
+
                 return {
                   ...state,
-                  optimisticUpdates: state.optimisticUpdates.filter(
-                    (update) => update.id !== optimisticUpdateId
-                  ),
-                };
-              }
-
-              return {
-                ...state,
-                threads: {
-                  ...state.threads,
-                  [threadId]: {
-                    ...existingThread,
-                    metadata: {
-                      ...existingThread.metadata,
-                      ...metadata,
+                  threads: {
+                    ...state.threads,
+                    [threadId]: {
+                      ...existingThread,
+                      metadata: {
+                        ...existingThread.metadata,
+                        ...metadata,
+                      },
                     },
                   },
-                },
-                optimisticUpdates: state.optimisticUpdates.filter(
-                  (update) => update.id !== optimisticUpdateId
-                ),
-              };
-            });
-          },
-          (err: Error) =>
-            onMutationFailure(
-              err,
-              optimisticUpdateId,
-              (error) =>
-                new EditThreadMetadataError(error, {
-                  roomId: room.id,
-                  threadId,
-                  metadata,
-                })
-            )
-        );
+                  optimisticUpdates: updatedOptimisticUpdates,
+                };
+              });
+            },
+            (err: Error) =>
+              onMutationFailure(
+                err,
+                optimisticUpdateId,
+                (error) =>
+                  new EditThreadMetadataError(error, {
+                    roomId: room.id,
+                    threadId,
+                    metadata,
+                  })
+              )
+          );
       },
       [room]
     );
@@ -1365,7 +1475,7 @@ export function createRoomContext<
     const room = useRoom();
     return React.useCallback(
       ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
-        const now = new Date();
+        const createdAt = new Date();
         const userId = getCurrentUserId(room);
 
         const optimisticUpdateId = nanoid();
@@ -1374,85 +1484,59 @@ export function createRoomContext<
           type: "add-reaction",
           threadId,
           commentId,
-          emoji,
-          userId,
-          createdAt: now,
+          reaction: {
+            emoji,
+            userId,
+            createdAt,
+          },
           id: optimisticUpdateId,
         });
 
-        room.addReaction({ threadId, commentId, emoji }).then(
-          (addedReaction) => {
-            store.set((state): CacheState<TThreadMetadata> => {
-              const existingThread = state.threads[threadId];
+        room[kInternal].comments
+          .addReaction({ threadId, commentId, emoji })
+          .then(
+            (addedReaction) => {
+              store.set((state): CacheState<TThreadMetadata> => {
+                const existingThread = state.threads[threadId];
+                const updatedOptimisticUpdates = state.optimisticUpdates.filter(
+                  (update) => update.id !== optimisticUpdateId
+                );
 
-              // If the thread has been deleted while add reaction was processed
-              // We do not update the state
-              if (existingThread === undefined) {
+                // If the thread doesn't exist in the cache, we do not update the metadata
+                if (existingThread === undefined) {
+                  return {
+                    ...state,
+                    optimisticUpdates: updatedOptimisticUpdates,
+                  };
+                }
+
                 return {
                   ...state,
-                  optimisticUpdates: state.optimisticUpdates.filter(
-                    (update) => update.id !== optimisticUpdateId
-                  ),
-                };
-              }
-
-              return {
-                ...state,
-                threads: {
-                  ...state.threads,
-                  [threadId]: {
-                    ...existingThread,
-                    comments: existingThread.comments.map((comment) =>
-                      comment.id === commentId
-                        ? {
-                            ...comment,
-                            reactions: comment.reactions.some(
-                              (reaction) =>
-                                reaction.emoji === addedReaction.emoji
-                            )
-                              ? comment.reactions.map((reaction) =>
-                                  reaction.emoji === addedReaction.emoji
-                                    ? {
-                                        ...reaction,
-                                        users: [
-                                          ...reaction.users,
-                                          { id: addedReaction.userId },
-                                        ],
-                                      }
-                                    : reaction
-                                )
-                              : [
-                                  ...comment.reactions,
-                                  {
-                                    emoji: addedReaction.emoji,
-                                    createdAt: addedReaction.createdAt,
-                                    users: [{ id: addedReaction.userId }],
-                                  },
-                                ],
-                          }
-                        : comment
+                  threads: {
+                    ...state.threads,
+                    [threadId]: addReaction(
+                      existingThread,
+                      commentId,
+                      addedReaction
                     ),
                   },
-                },
-                optimisticUpdates: state.optimisticUpdates.filter(
-                  (update) => update.id !== optimisticUpdateId
-                ),
-              };
-            });
-          },
-          (err: Error) =>
-            onMutationFailure(
-              err,
-              optimisticUpdateId,
-              (error) =>
-                new AddReactionError(error, {
-                  roomId: room.id,
-                  threadId,
-                  commentId,
-                  emoji,
-                })
-            )
-        );
+                  optimisticUpdates: updatedOptimisticUpdates,
+                };
+              });
+            },
+            (err: Error) =>
+              onMutationFailure(
+                err,
+                optimisticUpdateId,
+                (error) =>
+                  new AddReactionError(error, {
+                    roomId: room.id,
+                    threadId,
+                    commentId,
+                    emoji,
+                  })
+              )
+          );
       },
       [room]
     );
@@ -1464,6 +1548,7 @@ export function createRoomContext<
       ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
         const userId = getCurrentUserId(room);
 
+        const removedAt = new Date();
         const optimisticUpdateId = nanoid();
 
         store.pushOptimisticUpdate({
@@ -1472,102 +1557,57 @@ export function createRoomContext<
           commentId,
           emoji,
           userId,
+          removedAt,
           id: optimisticUpdateId,
         });
 
-        room.removeReaction({ threadId, commentId, emoji }).then(
-          () => {
-            store.set((state) => {
-              const existingThread = state.threads[threadId];
+        room[kInternal].comments
+          .removeReaction({ threadId, commentId, emoji })
+          .then(
+            () => {
+              store.set((state) => {
+                const existingThread = state.threads[threadId];
+                const updatedOptimisticUpdates = state.optimisticUpdates.filter(
+                  (update) => update.id !== optimisticUpdateId
+                );
 
-              // If the thread has been deleted while remove reaction was processed
-              // We do not update the state
-              if (existingThread === undefined) {
+                // If the thread doesn't exist in the cache, we do not update the metadata
+                if (existingThread === undefined) {
+                  return {
+                    ...state,
+                    optimisticUpdates: updatedOptimisticUpdates,
+                  };
+                }
+
                 return {
                   ...state,
-                  optimisticUpdates: state.optimisticUpdates.filter(
-                    (update) => update.id !== optimisticUpdateId
-                  ),
-                };
-              }
-
-              return {
-                ...state,
-                threads: {
-                  ...state.threads,
-                  [threadId]: {
-                    ...existingThread,
-                    comments: existingThread.comments.map((comment) => {
-                      if (comment.id !== commentId) {
-                        return comment;
-                      }
-
-                      const existingReaction = comment.reactions.find(
-                        (reaction) => reaction.emoji === emoji
-                      );
-
-                      // If existing reaction does not exists, we return existing comment
-                      if (existingReaction === undefined) {
-                        return comment;
-                      }
-
-                      const reactions: CommentReaction[] = comment.reactions;
-
-                      // If existing reaction has not been added by current user, we return existing comment
-                      if (
-                        !existingReaction.users.some(
-                          (user) => user.id === userId
-                        )
-                      ) {
-                        return comment;
-                      }
-
-                      // If only current user has reacted with this emoji, we remove the reaction
-                      if (existingReaction.users.length <= 1) {
-                        return {
-                          ...comment,
-                          reactions: reactions.filter(
-                            (reaction) => reaction.emoji !== emoji
-                          ),
-                        };
-                      }
-
-                      // If multiple users have reacted with this emoji, we remove the current user from the reaction
-                      return {
-                        ...comment,
-                        reactions: reactions.map((reaction) =>
-                          reaction.emoji !== emoji
-                            ? reaction
-                            : {
-                                ...reaction,
-                                users: reaction.users.filter(
-                                  (user) => user.id !== userId
-                                ),
-                              }
-                        ),
-                      };
-                    }),
+                  threads: {
+                    ...state.threads,
+                    [threadId]: removeReaction(
+                      existingThread,
+                      commentId,
+                      emoji,
+                      userId,
+                      removedAt
+                    ),
                   },
-                },
-                optimisticUpdates: state.optimisticUpdates.filter(
-                  (update) => update.id !== optimisticUpdateId
-                ),
-              };
-            });
-          },
-          (err: Error) =>
-            onMutationFailure(
-              err,
-              optimisticUpdateId,
-              (error) =>
-                new RemoveReactionError(error, {
-                  roomId: room.id,
-                  threadId,
-                  commentId,
-                  emoji,
-                })
-            )
-        );
+                  optimisticUpdates: updatedOptimisticUpdates,
+                };
+              });
+            },
+            (err: Error) =>
+              onMutationFailure(
+                err,
+                optimisticUpdateId,
+                (error) =>
+                  new RemoveReactionError(error, {
+                    roomId: room.id,
+                    threadId,
+                    commentId,
+                    emoji,
+                  })
+              )
+          );
       },
       [room]
     );
@@ -1578,14 +1618,14 @@ export function createRoomContext<
     return React.useCallback(
       ({ threadId, body }: CreateCommentOptions): CommentData => {
         const commentId = createCommentId();
-        const now = new Date();
+        const createdAt = new Date();
 
         const comment: CommentData = {
           id: commentId,
           threadId,
           roomId: room.id,
           type: "comment",
-          createdAt: now,
+          createdAt,
           userId: getCurrentUserId(room),
           body,
           reactions: [],
@@ -1593,50 +1633,70 @@ export function createRoomContext<
 
         const optimisticUpdateId = nanoid();
 
-        const inboxNotification = Object.values(
-          store.get().inboxNotifications
-        ).find((inboxNotification) => inboxNotification.threadId === threadId);
-
         store.pushOptimisticUpdate({
           type: "create-comment",
           comment,
           id: optimisticUpdateId,
-          inboxNotificationId: inboxNotification?.id,
         });
 
-        room.createComment({ threadId, commentId, body }).then(
-          (newComment) => {
-            store.set((state) => ({
-              ...state,
-              threads: upsertComment(state.threads, newComment),
-              inboxNotifications: inboxNotification
-                ? {
-                    ...state.inboxNotifications,
-                    [inboxNotification.id]: {
-                      ...inboxNotification,
-                      notifiedAt: newComment.createdAt,
-                      readAt: newComment.createdAt,
-                    },
-                  }
-                : state.inboxNotifications,
-              optimisticUpdates: state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              ),
-            }));
-          },
-          (err: Error) =>
-            onMutationFailure(
-              err,
-              optimisticUpdateId,
-              (err) =>
-                new CreateCommentError(err, {
-                  roomId: room.id,
-                  threadId,
-                  commentId,
-                  body,
-                })
-            )
-        );
+        room[kInternal].comments
+          .createComment({ threadId, commentId, body })
+          .then(
+            (newComment) => {
+              store.set((state) => {
+                const existingThread = state.threads[threadId];
+                const updatedOptimisticUpdates = state.optimisticUpdates.filter(
+                  (update) => update.id !== optimisticUpdateId
+                );
+
+                if (existingThread === undefined) {
+                  return {
+                    ...state,
+                    optimisticUpdates: updatedOptimisticUpdates,
+                  };
+                }
+
+                const inboxNotification = Object.values(
+                  state.inboxNotifications
+                ).find((notification) => notification.threadId === threadId);
+
+                // If the thread has an inbox notification associated with it, we update the notification's `notifiedAt` and `readAt` values
+                const updatedInboxNotifications =
+                  inboxNotification !== undefined
+                    ? {
+                        ...state.inboxNotifications,
+                        [inboxNotification.id]: {
+                          ...inboxNotification,
+                          notifiedAt: newComment.createdAt,
+                          readAt: newComment.createdAt,
+                        },
+                      }
+                    : state.inboxNotifications;
+
+                return {
+                  ...state,
+                  threads: {
+                    ...state.threads,
+                    [threadId]: upsertComment(existingThread, newComment), // Upsert the new comment into the thread comments list (if applicable)
+                  },
+                  inboxNotifications: updatedInboxNotifications,
+                  optimisticUpdates: updatedOptimisticUpdates,
+                };
+              });
+            },
+            (err: Error) =>
+              onMutationFailure(
+                err,
+                optimisticUpdateId,
+                (err) =>
+                  new CreateCommentError(err, {
+                    roomId: room.id,
+                    threadId,
+                    commentId,
+                    body,
+                  })
+              )
+          );
 
         return comment;
       },
@@ -1648,41 +1708,78 @@ export function createRoomContext<
     const room = useRoom();
     return React.useCallback(
       ({ threadId, commentId, body }: EditCommentOptions): void => {
-        const now = new Date();
+        const editedAt = new Date();
         const optimisticUpdateId = nanoid();
+
+        const thread = store.get().threads[threadId];
+        if (thread === undefined) {
+          console.warn(
+            `Internal unexpected behavior. Cannot edit comment in thread "${threadId}" because the thread does not exist in the cache.`
+          );
+          return;
+        }
+
+        const comment = thread.comments.find(
+          (comment) => comment.id === commentId
+        );
+
+        if (comment === undefined || comment.deletedAt !== undefined) {
+          console.warn(
+            `Internal unexpected behavior. Cannot edit comment "${commentId}" in thread "${threadId}" because the comment does not exist in the cache.`
+          );
+          return;
+        }
 
         store.pushOptimisticUpdate({
           type: "edit-comment",
-          threadId,
-          commentId,
-          body,
-          editedAt: now,
+          comment: {
+            ...comment,
+            editedAt,
+            body,
+          },
           id: optimisticUpdateId,
         });
 
-        room.editComment({ threadId, commentId, body }).then(
-          (editedComment) => {
-            store.set((state) => ({
-              ...state,
-              threads: upsertComment(state.threads, editedComment),
-              optimisticUpdates: state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              ),
-            }));
-          },
-          (err: Error) =>
-            onMutationFailure(
-              err,
-              optimisticUpdateId,
-              (error) =>
-                new EditCommentError(error, {
-                  roomId: room.id,
-                  threadId,
-                  commentId,
-                  body,
-                })
-            )
-        );
+        room[kInternal].comments
+          .editComment({ threadId, commentId, body })
+          .then(
+            (editedComment) => {
+              store.set((state) => {
+                const existingThread = state.threads[threadId];
+                const updatedOptimisticUpdates = state.optimisticUpdates.filter(
+                  (update) => update.id !== optimisticUpdateId
+                );
+
+                if (existingThread === undefined) {
+                  return {
+                    ...state,
+                    optimisticUpdates: updatedOptimisticUpdates,
+                  };
+                }
+
+                return {
+                  ...state,
+                  threads: {
+                    ...state.threads,
+                    [threadId]: upsertComment(existingThread, editedComment), // Upsert the edited comment into the thread comments list (if applicable)
+                  },
+                  optimisticUpdates: updatedOptimisticUpdates,
+                };
+              });
+            },
+            (err: Error) =>
+              onMutationFailure(
+                err,
+                optimisticUpdateId,
+                (error) =>
+                  new EditCommentError(error, {
+                    roomId: room.id,
+                    threadId,
+                    commentId,
+                    body,
+                  })
+              )
+          );
       },
       [room]
     );
@@ -1692,7 +1789,7 @@ export function createRoomContext<
     const room = useRoom();
     return React.useCallback(
       ({ threadId, commentId }: DeleteCommentOptions): void => {
-        const now = new Date();
+        const deletedAt = new Date();
 
         const optimisticUpdateId = nanoid();
 
@@ -1700,55 +1797,37 @@ export function createRoomContext<
           type: "delete-comment",
           threadId,
           commentId,
-          deletedAt: now,
+          deletedAt,
           id: optimisticUpdateId,
         });
 
-        room.deleteComment({ threadId, commentId }).then(
+        room[kInternal].comments.deleteComment({ threadId, commentId }).then(
           () => {
             store.set((state) => {
               const existingThread = state.threads[threadId];
+              const updatedOptimisticUpdates = state.optimisticUpdates.filter(
+                (update) => update.id !== optimisticUpdateId
+              );
 
               // If thread does not exist, we return the existing state
               if (existingThread === undefined) {
                 return {
                   ...state,
-                  optimisticUpdates: state.optimisticUpdates.filter(
-                    (update) => update.id !== optimisticUpdateId
-                  ),
+                  optimisticUpdates: updatedOptimisticUpdates,
                 };
-              }
-
-              const newThread = {
-                ...existingThread,
-                comments: existingThread.comments.map((comment) =>
-                  comment.id === commentId
-                    ? {
-                        ...comment,
-                        deletedAt: now,
-                        body: undefined,
-                      }
-                    : comment
-                ),
-              };
-
-              const newThreads = { ...state.threads, [threadId]: newThread };
-
-              // If all the comments have been deleted, we delete the thread from the cache
-              if (
-                !newThread.comments.some(
-                  (comment) => comment.deletedAt === undefined
-                )
-              ) {
-                delete newThreads[threadId];
               }
 
               return {
                 ...state,
-                threads: newThreads,
-                optimisticUpdates: state.optimisticUpdates.filter(
-                  (update) => update.id !== optimisticUpdateId
-                ),
+                threads: {
+                  ...state.threads,
+                  [threadId]: deleteComment(
+                    existingThread,
+                    commentId,
+                    deletedAt
+                  ),
+                },
+                optimisticUpdates: updatedOptimisticUpdates,
               };
             });
           },
@@ -1841,11 +1920,8 @@ export function createRoomContext<
   }
 
   function useThreadSubscription(threadId: string): ThreadSubscription {
-    return useSyncExternalStoreWithSelector(
-      store.subscribe,
-      store.get,
-      store.get,
-      (state) => {
+    const selector = React.useCallback(
+      (state: CacheState<BaseMetadata>): ThreadSubscription => {
         const inboxNotification = selectedInboxNotifications(state).find(
           (inboxNotification) => inboxNotification.threadId === threadId
         );
@@ -1862,57 +1938,72 @@ export function createRoomContext<
           status: "subscribed",
           unreadSince: inboxNotification.readAt,
         };
-      }
+      },
+      [threadId]
+    );
+
+    return useSyncExternalStoreWithSelector(
+      store.subscribe,
+      store.get,
+      store.get,
+      selector
     );
   }
 
   function useMarkThreadAsRead() {
-    return React.useCallback((threadId: string) => {
-      const inboxNotification = Object.values(
-        store.get().inboxNotifications
-      ).find((inboxNotification) => inboxNotification.threadId === threadId);
+    const room = useRoom();
 
-      if (!inboxNotification) return;
+    return React.useCallback(
+      (threadId: string) => {
+        const inboxNotification = Object.values(
+          store.get().inboxNotifications
+        ).find((inboxNotification) => inboxNotification.threadId === threadId);
 
-      const optimisticUpdateId = nanoid();
-      const now = new Date();
+        if (!inboxNotification) return;
 
-      store.pushOptimisticUpdate({
-        type: "mark-inbox-notification-as-read",
-        id: optimisticUpdateId,
-        inboxNotificationId: inboxNotification.id,
-        readAt: now,
-      });
+        const optimisticUpdateId = nanoid();
+        const now = new Date();
 
-      client.markInboxNotificationAsRead(inboxNotification.id).then(
-        () => {
-          store.set((state) => ({
-            ...state,
-            inboxNotifications: {
-              ...state.inboxNotifications,
-              [inboxNotification.id]: {
-                ...inboxNotification,
-                readAt: now,
-              },
+        store.pushOptimisticUpdate({
+          type: "mark-inbox-notification-as-read",
+          id: optimisticUpdateId,
+          inboxNotificationId: inboxNotification.id,
+          readAt: now,
+        });
+
+        room[kInternal].notifications
+          .markInboxNotificationAsRead(inboxNotification.id)
+          .then(
+            () => {
+              store.set((state) => ({
+                ...state,
+                inboxNotifications: {
+                  ...state.inboxNotifications,
+                  [inboxNotification.id]: {
+                    ...inboxNotification,
+                    readAt: now,
+                  },
+                },
+                optimisticUpdates: state.optimisticUpdates.filter(
+                  (update) => update.id !== optimisticUpdateId
+                ),
+              }));
             },
-            optimisticUpdates: state.optimisticUpdates.filter(
-              (update) => update.id !== optimisticUpdateId
-            ),
-          }));
-        },
-        (err: Error) => {
-          onMutationFailure(
-            err,
-            optimisticUpdateId,
-            (error) =>
-              new MarkInboxNotificationAsReadError(error, {
-                inboxNotificationId: inboxNotification.id,
-              })
+            (err: Error) => {
+              onMutationFailure(
+                err,
+                optimisticUpdateId,
+                (error) =>
+                  new MarkInboxNotificationAsReadError(error, {
+                    inboxNotificationId: inboxNotification.id,
+                  })
+              );
+              return;
+            }
           );
-          return;
-        }
-      );
-    }, []);
+      },
+      [room]
+    );
   }
 
   function makeNotificationSettingsQueryKey(roomId: string) {
@@ -1923,36 +2014,35 @@ export function createRoomContext<
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
     queryKey: string
   ) {
-    const roomId = room.id;
-    return getOrInitRequest(
-      queryKey,
-      async () => {
-        const room = client.getRoom(roomId);
+    const requestInfo = requestsCache.get(queryKey);
 
-        if (room === null) {
-          return;
-        }
+    if (requestInfo !== undefined) {
+      return requestInfo.promise;
+    }
 
-        return room.getRoomNotificationSettings();
-      },
-      (settings) => {
-        if (settings !== undefined) {
-          store.set((state) => ({
-            ...state,
-            notificationSettings: {
-              ...state.notificationSettings,
-              [room.id]: settings,
-            },
-            queries: {
-              ...state.queries,
-              [queryKey]: {
-                isLoading: false,
-              },
-            },
-          }));
-        }
-      }
-    );
+    const promise = room[kInternal].notifications.getRoomNotificationSettings();
+
+    requestsCache.set(queryKey, {
+      promise,
+      subscribers: 0,
+    });
+
+    store.setQueryState(queryKey, {
+      isLoading: true,
+    });
+
+    try {
+      const settings = await promise;
+      store.updateRoomInboxNotificationSettings(room.id, settings, queryKey);
+    } catch (err) {
+      // TODO: Implement error retry mechanism
+      store.setQueryState(queryKey, {
+        isLoading: false,
+        error: err as Error,
+      });
+    }
+
+    poller.start(POLLING_INTERVAL);
   }
 
   function useRoomNotificationSettings(): [
@@ -1972,31 +2062,36 @@ export function createRoomContext<
 
     const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
 
-    return [
-      useSyncExternalStoreWithSelector(
-        store.subscribe,
-        store.get,
-        store.get,
-        (state) => {
-          const query =
-            state.queries[makeNotificationSettingsQueryKey(room.id)];
+    const selector = React.useCallback(
+      (state: CacheState<BaseMetadata>): RoomNotificationSettingsState => {
+        const query = state.queries[makeNotificationSettingsQueryKey(room.id)];
 
-          if (query === undefined || query.isLoading) {
-            return { isLoading: true };
-          }
-
-          if (query.error !== undefined) {
-            return { isLoading: false, error: query.error };
-          }
-
-          return {
-            isLoading: false,
-            settings: selectNotificationSettings(room.id, state),
-          };
+        if (query === undefined || query.isLoading) {
+          return { isLoading: true };
         }
-      ),
-      updateRoomNotificationSettings,
-    ];
+
+        if (query.error !== undefined) {
+          return { isLoading: false, error: query.error };
+        }
+
+        return {
+          isLoading: false,
+          settings: selectNotificationSettings(room.id, state),
+        };
+      },
+      [room]
+    );
+
+    const settings = useSyncExternalStoreWithSelector(
+      store.subscribe,
+      store.get,
+      store.get,
+      selector
+    );
+
+    return React.useMemo(() => {
+      return [settings, updateRoomNotificationSettings];
+    }, [settings, updateRoomNotificationSettings]);
   }
 
   function useRoomNotificationSettingsSuspense(): [
@@ -2024,20 +2119,28 @@ export function createRoomContext<
       return () => decrementQuerySubscribers(queryKey);
     }, [room]);
 
-    return [
-      useSyncExternalStoreWithSelector(
-        store.subscribe,
-        store.get,
-        store.get,
-        (state) => {
-          return {
-            isLoading: false,
-            settings: selectNotificationSettings(room.id, state),
-          };
-        }
-      ),
-      updateRoomNotificationSettings,
-    ];
+    const selector = React.useCallback(
+      (
+        state: CacheState<BaseMetadata>
+      ): RoomNotificationSettingsStateSuccess => {
+        return {
+          isLoading: false,
+          settings: selectNotificationSettings(room.id, state),
+        };
+      },
+      [room]
+    );
+
+    const settings = useSyncExternalStoreWithSelector(
+      store.subscribe,
+      store.get,
+      store.get,
+      selector
+    );
+
+    return React.useMemo(() => {
+      return [settings, updateRoomNotificationSettings];
+    }, [settings, updateRoomNotificationSettings]);
   }
 
   function useUpdateRoomNotificationSettings() {
@@ -2053,28 +2156,30 @@ export function createRoomContext<
           settings,
         });
 
-        room.updateRoomNotificationSettings(settings).then(
-          (settings) => {
-            store.set((state) => ({
-              ...state,
-              notificationSettings: {
-                [room.id]: settings,
-              },
-              optimisticUpdates: state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              ),
-            }));
-          },
-          (err: Error) =>
-            onMutationFailure(
-              err,
-              optimisticUpdateId,
-              (error) =>
-                new UpdateNotificationSettingsError(error, {
-                  roomId: room.id,
-                })
-            )
-        );
+        room[kInternal].notifications
+          .updateRoomNotificationSettings(settings)
+          .then(
+            (settings) => {
+              store.set((state) => ({
+                ...state,
+                notificationSettings: {
+                  [room.id]: settings,
+                },
+                optimisticUpdates: state.optimisticUpdates.filter(
+                  (update) => update.id !== optimisticUpdateId
+                ),
+              }));
+            },
+            (err: Error) =>
+              onMutationFailure(
+                err,
+                optimisticUpdateId,
+                (error) =>
+                  new UpdateNotificationSettingsError(error, {
+                    roomId: room.id,
+                  })
+              )
+          );
       },
       [room]
     );
@@ -2239,7 +2344,7 @@ function handleApiError(err: CommentsApiError | NotificationsApiError): Error {
   return new Error(message);
 }
 
-function generateQueryKey<TThreadMetadata extends BaseMetadata>(
+export function generateQueryKey<TThreadMetadata extends BaseMetadata>(
   roomId: string,
   options: UseThreadsOptions<TThreadMetadata>["query"]
 ) {

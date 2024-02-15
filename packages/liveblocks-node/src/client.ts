@@ -877,9 +877,7 @@ export class Liveblocks {
   }): Promise<{ data: ThreadData[] }> {
     const { roomId } = params;
 
-    const res = await this.get(url`/v2/rooms/${roomId}/threads`, {
-      "metadata.resolved": "false",
-    });
+    const res = await this.get(url`/v2/rooms/${roomId}/threads`);
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);

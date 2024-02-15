@@ -94,8 +94,20 @@ is running:
 npx localtunnel --port 3000
 ```
 
-If you correctly input your IP address, the URL `localtunnel` generates can be
-placed into the Liveblocks webhooks dashboard for quick testing.
+`localtunnel` generates a base URL that can be placed into the Liveblocks
+webhooks dashboard for quick testing. To use this, take the full address of your
+webhook endpoint, and replace the domain in your `localhost` address with the
+generated URL.
+
+```shell
+# Take your local URL
+http://localhost:3000/api/liveblocks-database-sync
+
+# Replace localhost with the generated domain, then copy it
+https://my-localtunnel-url.loca.lt/api/liveblocks-database-sync
+```
+
+You now have a URL that can be used in the webhooks dashboard.
 
 ## Set up webhooks on the Liveblocks dashboard
 
@@ -109,7 +121,7 @@ document data has changed.
     <StepContent>
       From the [Liveblocks dashboard](/dashboard), navigate to the project you’d
       like to use with webhooks, or create a new project.
-      
+
       <Figure>
         <Image
           src="/assets/tutorials/webhooks/liveblocks-create-project.png"
@@ -119,6 +131,7 @@ document data has changed.
         />
       </Figure>
     </StepContent>
+
   </Step>
 
 {" "}
@@ -194,14 +207,15 @@ document data has changed.
     <StepTitle>
       Webhooks dashboard is set up!
     </StepTitle>
-    
+
     <StepContent>
       Note that you can filter specifically for `ydocUpdated`
       events, but we’re ignoring this for now so we can test more easily. Let’s go
       back to the code.
     </StepContent>
+
   </Step>
-  
+
 </Steps>
 
 ## Verify the webhook request
@@ -355,14 +369,14 @@ Postgres:
     dashboard.
   </StepCompact>
 
-  <StepCompact>
-    Click "Create Database", then select “Postgres”.
-  </StepCompact>
-  
-  <StepCompact>
-    Give the database a name and click “Create”.
-  </StepCompact>
-  
+{" "}
+
+<StepCompact>Click "Create Database", then select “Postgres”.</StepCompact>
+
+{" "}
+
+<StepCompact>Give the database a name and click “Create”.</StepCompact>
+
   <StepCompact lastStep>
     Follow the getting started guide to connect the database to
     your Vercel project, link your environment variables, and install the packages.

@@ -1,8 +1,14 @@
 import "@testing-library/jest-dom";
 
 import type { BaseMetadata, JsonObject } from "@liveblocks/core";
-import { createClient, ServerMsgCode } from "@liveblocks/core";
-import { act, renderHook, screen, waitFor } from "@testing-library/react";
+import { createClient, kInternal, ServerMsgCode } from "@liveblocks/core";
+import {
+  act,
+  render,
+  renderHook,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { addSeconds } from "date-fns";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
@@ -11,7 +17,7 @@ import React, { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
 import { createLiveblocksContext } from "../liveblocks";
-import { createRoomContext } from "../room";
+import { createRoomContext, generateQueryKey, POLLING_INTERVAL } from "../room";
 import { dummyInboxNoficationData, dummyThreadData } from "./_dummies";
 import MockWebSocket, { websocketSimulator } from "./_MockWebSocket";
 import {
@@ -31,6 +37,8 @@ beforeEach(() => {
 afterEach(() => {
   MockWebSocket.instances = [];
   server.resetHandlers();
+  jest.clearAllTimers();
+  jest.clearAllMocks();
 });
 
 afterAll(() => server.close());
@@ -55,6 +63,7 @@ function createRoomContextForTest<
       TThreadMetadata
     >(client),
     liveblocksCtx: createLiveblocksContext(client),
+    client,
   };
 }
 
@@ -76,6 +85,11 @@ describe("useThreads", () => {
           ctx.json({
             data: threads,
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -114,6 +128,11 @@ describe("useThreads", () => {
           ctx.json({
             data: threads,
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -160,6 +179,11 @@ describe("useThreads", () => {
           ctx.json({
             data: threads,
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -213,6 +237,11 @@ describe("useThreads", () => {
               (thread) => thread.metadata.resolved === metadata.resolved
             ),
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -258,6 +287,11 @@ describe("useThreads", () => {
           ctx.json({
             data: threads,
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -308,6 +342,11 @@ describe("useThreads", () => {
               (thread) => thread.metadata.resolved === metadata.resolved
             ),
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -378,6 +417,11 @@ describe("useThreads", () => {
             ctx.json({
               data: room1Threads,
               inboxNotifications: [],
+              deletedThreads: [],
+              deletedInboxNotifications: [],
+              meta: {
+                requestedAt: new Date().toISOString(),
+              },
             })
           );
         }
@@ -389,6 +433,11 @@ describe("useThreads", () => {
             ctx.json({
               data: room2Threads,
               inboxNotifications: [],
+              deletedThreads: [],
+              deletedInboxNotifications: [],
+              meta: {
+                requestedAt: new Date().toISOString(),
+              },
             })
           );
         }
@@ -457,6 +506,11 @@ describe("useThreads", () => {
             ctx.json({
               data: room1Threads,
               inboxNotifications: [],
+              deletedThreads: [],
+              deletedInboxNotifications: [],
+              meta: {
+                requestedAt: new Date().toISOString(),
+              },
             })
           );
         }
@@ -468,6 +522,11 @@ describe("useThreads", () => {
             ctx.json({
               data: room2Threads,
               inboxNotifications: [],
+              deletedThreads: [],
+              deletedInboxNotifications: [],
+              meta: {
+                requestedAt: new Date().toISOString(),
+              },
             })
           );
         }
@@ -586,6 +645,11 @@ describe("useThreads", () => {
           ctx.json({
             data: [newThread, oldThread], // The order is intentionally reversed to test if the hook sorts the threads by creation date
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -636,6 +700,11 @@ describe("useThreads", () => {
           ctx.json({
             data: [newThread],
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       }),
@@ -646,6 +715,11 @@ describe("useThreads", () => {
           ctx.json({
             threads: [oldThread],
             inboxNotifications: [inboxNotification],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -703,6 +777,11 @@ describe("useThreads", () => {
           ctx.json({
             data: [oldThread],
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       }),
@@ -711,6 +790,11 @@ describe("useThreads", () => {
           ctx.json({
             threads: [newThread],
             inboxNotifications: [inboxNotification],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -749,6 +833,352 @@ describe("useThreads", () => {
 
     unmount();
   });
+
+  test("should not return deleted threads", async () => {
+    const thread1 = dummyThreadData();
+    const thread2WithDeletedAt = {
+      ...dummyThreadData(),
+      deletedAt: new Date(),
+    };
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            data: [],
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+      client,
+    } = createRoomContextForTest();
+
+    const store = client[kInternal].cacheStore;
+    store.set((state) => ({
+      ...state,
+      threads: {
+        [thread1.id]: thread1,
+        [thread2WithDeletedAt.id]: thread2WithDeletedAt,
+      },
+      queries: {
+        [generateQueryKey("room-id", { metadata: {} })]: {
+          isLoading: false,
+        },
+      },
+    }));
+
+    const { result, unmount } = renderHook(
+      () => useThreads({ query: { metadata: {} } }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id="room-id" initialPresence={{}}>
+            {children}
+          </RoomProvider>
+        ),
+      }
+    );
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [thread1], // thread2WithDeleteAt should not be returned
+      })
+    );
+
+    unmount();
+  });
+
+  test("should update threads if room has been mounted after being unmounted", async () => {
+    let threads = [dummyThreadData(), dummyThreadData()];
+    const originalThreads = [...threads];
+
+    server.use(
+      mockGetThreads(async (req, res, ctx) => {
+        const url = new URL(req.url);
+        const since = url.searchParams.get("since");
+
+        if (since) {
+          const updatedThreads = threads.filter((thread) => {
+            if (thread.updatedAt === undefined) return false;
+            return new Date(thread.updatedAt) >= new Date(since);
+          });
+
+          return res(
+            ctx.json({
+              data: updatedThreads,
+              deletedThreads: [],
+              inboxNotifications: [],
+              deletedInboxNotifications: [],
+              meta: {
+                requestedAt: new Date().toISOString(),
+              },
+            })
+          );
+        }
+
+        return res(
+          ctx.json({
+            data: threads,
+            deletedThreads: [],
+            inboxNotifications: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
+
+    const firstRenderResult = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          {children}
+        </RoomProvider>
+      ),
+    });
+
+    expect(firstRenderResult.result.current).toEqual({ isLoading: true });
+
+    // Threads should be displayed after the server responds with the threads
+    await waitFor(() =>
+      expect(firstRenderResult.result.current).toEqual({
+        isLoading: false,
+        threads,
+      })
+    );
+
+    firstRenderResult.unmount();
+
+    // Add a new thread to the threads array to simulate a new thread being added to the room
+    threads = [...originalThreads, dummyThreadData()];
+
+    // Render the RoomProvider again and verify the threads are updated
+    const secondRenderResult = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          {children}
+        </RoomProvider>
+      ),
+    });
+
+    // Threads (outdated ones) should be displayed instantly because we already fetched them previously
+    expect(secondRenderResult.result.current).toEqual({
+      isLoading: false,
+      threads: originalThreads,
+    });
+
+    // The updated threads should be displayed after the server responds with the updated threads (either due to a fetch request to get all threads or just the updated threads)
+    await waitFor(() => {
+      expect(secondRenderResult.result.current).toEqual({
+        isLoading: false,
+        threads,
+      });
+    });
+
+    secondRenderResult.unmount();
+  });
+
+  test("should not refetch threads if room has been mounted after being unmounted if another RoomProvider for the same id is still mounted", async () => {
+    const threads = [dummyThreadData()];
+    let getThreadsReqCount = 0;
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        getThreadsReqCount++;
+        return res(
+          ctx.json({
+            data: threads,
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+      client,
+    } = createRoomContextForTest();
+
+    const Room = () => {
+      return (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          <Threads />
+        </RoomProvider>
+      );
+    };
+
+    const FirstRoom = Room;
+    const SecondRoom = Room;
+
+    const Threads = () => {
+      useThreads();
+      return null;
+    };
+
+    // Render a RoomProvider for the room id
+    const { rerender, unmount: unmountFirstRoom } = render(<FirstRoom />);
+
+    // Render another RoomProvider for the same room id
+    const { unmount: unmountSecondRoom } = render(<SecondRoom />);
+
+    // A new fetch request for the threads should have been made
+    await waitFor(() => expect(getThreadsReqCount).toBe(1));
+
+    const room = client.getRoom("room-id");
+    expect(room).not.toBeNull();
+    if (room === null) return;
+
+    // Mock the getThreads method so we can verify it wasn't called
+    room[kInternal].comments.getThreads = jest.fn();
+
+    // Rerender the first RoomProvider and verify a new fetch request wasn't initiated
+    rerender(<FirstRoom />);
+
+    // A new fetch request for the threads should not have been made
+    expect(room[kInternal].comments.getThreads).not.toHaveBeenCalled();
+
+    unmountFirstRoom();
+    unmountSecondRoom();
+  });
+});
+
+describe("useThreads: polling", () => {
+  beforeAll(() => {
+    jest.useFakeTimers();
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
+  });
+  test("should poll threads every x seconds", async () => {
+    let getThreadsReqCount = 0;
+
+    const threads = [dummyThreadData()];
+
+    const now = new Date().toISOString();
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        getThreadsReqCount++;
+        return res(
+          ctx.json({
+            data: threads,
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: now,
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
+
+    const Room = () => {
+      return (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          <Threads />
+        </RoomProvider>
+      );
+    };
+
+    const Threads = () => {
+      useThreads();
+      return null;
+    };
+
+    const { unmount } = render(<Room />);
+
+    // A new fetch request for the threads should have been made after the initial render
+    await waitFor(() => expect(getThreadsReqCount).toBe(1));
+
+    // Wait for the first polling to occur after the initial render
+    jest.advanceTimersByTime(POLLING_INTERVAL);
+    await waitFor(() => expect(getThreadsReqCount).toBe(2));
+
+    // Advance time to simulate the polling interval
+    jest.advanceTimersByTime(POLLING_INTERVAL);
+    // Wait for the second polling to occur
+    await waitFor(() => expect(getThreadsReqCount).toBe(3));
+
+    unmount();
+  });
+
+  test("should not poll if useThreads or useRoomNotificationSettings isn't used", async () => {
+    let hasCalledGetThreads = false;
+
+    const threads = [dummyThreadData()];
+
+    const now = new Date().toISOString();
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        hasCalledGetThreads = true;
+        return res(
+          ctx.json({
+            data: threads,
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: now,
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider },
+    } = createRoomContextForTest();
+
+    const Room = () => {
+      return (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          <NoThreads />
+        </RoomProvider>
+      );
+    };
+
+    const NoThreads = () => {
+      return null;
+    };
+
+    const { unmount } = render(<Room />);
+
+    jest.advanceTimersByTime(POLLING_INTERVAL);
+    await waitFor(() => expect(hasCalledGetThreads).toBe(false));
+
+    jest.advanceTimersByTime(POLLING_INTERVAL);
+    await waitFor(() => expect(hasCalledGetThreads).toBe(false));
+
+    unmount();
+  });
 });
 
 describe("WebSocket events", () => {
@@ -761,6 +1191,11 @@ describe("WebSocket events", () => {
           ctx.json({
             data: [],
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       }),
@@ -820,6 +1255,11 @@ describe("WebSocket events", () => {
           ctx.json({
             data: [newThread],
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       }),
@@ -892,6 +1332,11 @@ describe("WebSocket events", () => {
           ctx.json({
             data: [initialThread],
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       }),
@@ -972,6 +1417,11 @@ describe("useThreadsSuspense", () => {
           ctx.json({
             data: threads,
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -1013,6 +1463,11 @@ describe("useThreadsSuspense", () => {
           ctx.json({
             data: threads,
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })

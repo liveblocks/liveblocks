@@ -52,6 +52,11 @@ describe("useThreadSubscription", () => {
           ctx.json({
             data: threads,
             inboxNotifications,
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -104,6 +109,11 @@ describe("useThreadSubscription", () => {
           ctx.json({
             data: threads,
             inboxNotifications,
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -153,6 +163,11 @@ describe("useThreadSubscription", () => {
           ctx.json({
             data: threads,
             inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -186,6 +201,63 @@ describe("useThreadSubscription", () => {
     );
 
     expect(result.current.subscription).toEqual({ status: "not-subscribed" });
+
+    unmount();
+  });
+
+  test("should be referentially stable", async () => {
+    const threads = [dummyThreadData()];
+    const inboxNotifications = [dummyInboxNoficationData()];
+    inboxNotifications[0].threadId = threads[0].id;
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            data: threads,
+            inboxNotifications,
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
+      })
+    );
+
+    const { RoomProvider, useThreads, useThreadSubscription } =
+      createRoomContextForTest();
+
+    const { result, unmount, rerender } = renderHook(
+      () => ({
+        threads: useThreads(),
+        subscription: useThreadSubscription(threads[0].id),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id="room-id" initialPresence={{}}>
+            {children}
+          </RoomProvider>
+        ),
+      }
+    );
+
+    expect(result.current.threads).toEqual({ isLoading: true });
+    expect(result.current.subscription).toEqual({ status: "not-subscribed" });
+
+    await waitFor(() =>
+      expect(result.current.threads).toEqual({
+        isLoading: false,
+        threads,
+      })
+    );
+
+    const oldResult = result.current.subscription;
+
+    rerender();
+
+    expect(result.current.subscription).toBe(oldResult);
 
     unmount();
   });

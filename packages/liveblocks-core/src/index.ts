@@ -36,7 +36,7 @@ export {
   getMentionedIdsFromCommentBody,
   stringifyCommentBody,
 } from "./comments/comment-body";
-export type { BaseAuthResult, Delegates } from "./connection";
+export type { BaseAuthResult, Delegates, LiveblocksError } from "./connection";
 export type {
   LegacyConnectionStatus,
   LostConnectionEvent,
@@ -186,6 +186,7 @@ export type {
   InboxNotificationDataPlain,
   InboxNotificationThreadData,
 } from "./types/InboxNotificationData";
+export type { InboxNotificationDeleteInfo } from "./types/InboxNotificationDeleteInfo";
 export type {
   IWebSocket,
   IWebSocketCloseEvent,
@@ -208,6 +209,7 @@ export type {
 export type { RoomInfo } from "./types/RoomInfo";
 export type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 export type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
+export type { ThreadDeleteInfo } from "./types/ThreadDeleteInfo";
 export type { User } from "./types/User";
 export { detectDupes };
 
@@ -235,7 +237,11 @@ export type { DevTools };
 // Store
 export type { Store } from "./lib/create-store";
 export {
+  addReaction,
   applyOptimisticUpdates,
   type CacheState,
   type CacheStore,
+  deleteComment,
+  removeReaction,
+  upsertComment,
 } from "./store";

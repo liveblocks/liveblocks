@@ -10,5 +10,8 @@ export function selectedInboxNotifications<
 >(state: CacheState<TThreadMetadata>): InboxNotificationData[] {
   const result = applyOptimisticUpdates(state);
 
-  return Object.values(result.inboxNotifications);
+  return Object.values(result.inboxNotifications).sort(
+    // Sort so that the most recent notifications are first
+    (a, b) => b.notifiedAt.getTime() - a.notifiedAt.getTime()
+  );
 }

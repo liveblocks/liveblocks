@@ -1,8 +1,12 @@
 import type { AuthManager, AuthValue } from "./auth-manager";
-import { getAuthBearerHeaderFromAuthValue } from "./client";
+import {
+  getAuthBearerHeaderFromAuthValue,
+  NotificationsApiError,
+} from "./client";
 import type {
   Delegates,
   LegacyConnectionStatus,
+  LiveblocksError,
   LostConnectionEvent,
   Status,
 } from "./connection";
@@ -11,7 +15,9 @@ import {
   convertToCommentData,
   convertToCommentUserReaction,
   convertToInboxNotificationData,
+  convertToInboxNotificationDeleteInfo,
   convertToThreadData,
+  convertToThreadDeleteInfo,
 } from "./convert-plain-data";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { OpSource } from "./crdts/AbstractCrdt";
@@ -28,6 +34,7 @@ import type { LiveNode, LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
 import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
+import { Batch } from "./lib/batch";
 import { captureStackTrace } from "./lib/debug";
 import type { Callback, Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
@@ -36,6 +43,8 @@ import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
 import { asPos } from "./lib/position";
 import type { Resolve } from "./lib/Resolve";
+import type { QueryParams } from "./lib/url";
+import { urljoin } from "./lib/url";
 import { compact, deepClone, tryParseJson } from "./lib/utils";
 import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
@@ -72,6 +81,10 @@ import type {
   InboxNotificationDataPlain,
 } from "./types/InboxNotificationData";
 import type {
+  InboxNotificationDeleteInfo,
+  InboxNotificationDeleteInfoPlain,
+} from "./types/InboxNotificationDeleteInfo";
+import type {
   IWebSocket,
   IWebSocketCloseEvent,
   IWebSocketInstance,
@@ -82,6 +95,10 @@ import type { InternalOthersEvent, OthersEvent } from "./types/Others";
 import type { PartialNullable } from "./types/PartialNullable";
 import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 import type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
+import type {
+  ThreadDeleteInfo,
+  ThreadDeleteInfoPlain,
+} from "./types/ThreadDeleteInfo";
 import type { User } from "./types/User";
 import { PKG_VERSION } from "./version";
 
@@ -351,7 +368,7 @@ type SubscribeFn<
    * @returns Unsubscribe function.
    *
    */
-  (type: "error", listener: ErrorCallback): () => void;
+  (type: "error", listener: Callback<LiveblocksError>): () => void;
 
   /**
    * @deprecated This API will be removed in a future version of Liveblocks.
@@ -480,84 +497,59 @@ export type GetThreadsOptions<TThreadMetadata extends BaseMetadata> = {
   query?: {
     metadata?: Partial<TThreadMetadata>;
   };
+  since?: Date;
 };
 
-type CommentsApi<TThreadMetadata extends BaseMetadata = never> = {
-  /**
-   * @private
-   */
-  getThreads(options?: GetThreadsOptions<TThreadMetadata>): Promise<{
+type CommentsApi = {
+  getThreads<TThreadMetadata extends BaseMetadata = never>(
+    options?: GetThreadsOptions<TThreadMetadata>
+  ): Promise<{
     threads: ThreadData<TThreadMetadata>[];
     inboxNotifications: InboxNotificationData[];
+    deletedThreads: ThreadDeleteInfo[];
+    deletedInboxNotifications: InboxNotificationDeleteInfo[];
+    meta: {
+      requestedAt: Date;
+    };
   }>;
-
-  /**
-   * @private
-   */
-  getThread(options: { threadId: string }): Promise<
+  getThread<TThreadMetadata extends BaseMetadata = never>(options: {
+    threadId: string;
+  }): Promise<
     | {
         thread: ThreadData<TThreadMetadata>;
         inboxNotification?: InboxNotificationData;
       }
     | undefined
   >;
-
-  /**
-   * @private
-   */
-  createThread(options: {
+  createThread<TThreadMetadata extends BaseMetadata = never>(options: {
     threadId: string;
     commentId: string;
     metadata: TThreadMetadata | undefined;
     body: CommentBody;
   }): Promise<ThreadData<TThreadMetadata>>;
-
-  /**
-   * @private
-   */
-  editThreadMetadata(options: {
+  editThreadMetadata<TThreadMetadata extends BaseMetadata = never>(options: {
     metadata: PartialNullable<TThreadMetadata>;
     threadId: string;
   }): Promise<TThreadMetadata>;
-
-  /**
-   * @private
-   */
   createComment(options: {
     threadId: string;
     commentId: string;
     body: CommentBody;
   }): Promise<CommentData>;
-
-  /**
-   * @private
-   */
   editComment(options: {
     threadId: string;
     commentId: string;
     body: CommentBody;
   }): Promise<CommentData>;
-
-  /**
-   * @private
-   */
   deleteComment(options: {
     threadId: string;
     commentId: string;
   }): Promise<void>;
-
-  /**
-   * @private
-   */
   addReaction(options: {
     threadId: string;
     commentId: string;
     emoji: string;
   }): Promise<CommentUserReaction>;
-
-  /**
-   * @private
-   */
   removeReaction(options: {
     threadId: string;
     commentId: string;
@@ -565,12 +557,13 @@ type CommentsApi<TThreadMetadata extends BaseMetadata = never> = {
   }): Promise<void>;
 };
 
+// TODO: Add TThreadMetadata
 export type Room<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json,
-> = CommentsApi<any /* TODO: Remove this any by adding a proper thread metadata on the Room type */> & {
+> = {
   /**
    * @private
    *
@@ -721,7 +714,7 @@ export type Room<
     readonly self: Observable<User<TPresence, TUserMeta>>;
     readonly myPresence: Observable<TPresence>;
     readonly others: Observable<OthersEvent<TPresence, TUserMeta>>;
-    readonly error: Observable<Error>;
+    readonly error: Observable<LiveblocksError>;
     readonly storage: Observable<StorageUpdate[]>;
     readonly history: Observable<HistoryEvent>;
 
@@ -736,18 +729,6 @@ export type Room<
     readonly ydoc: Observable<YDocUpdateServerMsg | UpdateYDocClientMsg>;
     readonly comments: Observable<CommentsEventServerMsg>;
   };
-
-  /**
-   * @private
-   */
-  getRoomNotificationSettings(): Promise<RoomNotificationSettings>;
-
-  /**
-   * @private
-   */
-  updateRoomNotificationSettings(
-    settings: Partial<RoomNotificationSettings>
-  ): Promise<RoomNotificationSettings>;
 
   /**
    * Batches modifications made during the given function.
@@ -831,6 +812,16 @@ type PrivateRoomApi = {
   simulate: {
     explicitClose(event: IWebSocketCloseEvent): void;
     rawSend(data: string): void;
+  };
+
+  comments: CommentsApi;
+
+  notifications: {
+    getRoomNotificationSettings(): Promise<RoomNotificationSettings>;
+    updateRoomNotificationSettings(
+      settings: Partial<RoomNotificationSettings>
+    ): Promise<RoomNotificationSettings>;
+    markInboxNotificationAsRead(notificationId: string): Promise<void>;
   };
 };
 
@@ -1060,31 +1051,34 @@ export class CommentsApiError extends Error {
 /**
  * Handles all Comments-related API calls.
  */
-function createCommentsApi<TThreadMetadata extends BaseMetadata>(
+function createCommentsApi(
   roomId: string,
   getAuthValue: () => Promise<AuthValue>,
   fetchClientApi: (
     roomId: string,
     endpoint: string,
     authValue: AuthValue,
-    options?: RequestInit
+    options?: RequestInit,
+    params?: QueryParams
   ) => Promise<Response>
-): CommentsApi<TThreadMetadata> {
+): CommentsApi {
   async function fetchCommentsApi(
     endpoint: string,
+    params?: QueryParams,
     options?: RequestInit
   ): Promise<Response> {
     // TODO: Use the right scope
     const authValue = await getAuthValue();
 
-    return fetchClientApi(roomId, endpoint, authValue, options);
+    return fetchClientApi(roomId, endpoint, authValue, options, params);
   }
 
   async function fetchJson<T>(
     endpoint: string,
-    options?: RequestInit
+    options?: RequestInit,
+    params?: QueryParams
   ): Promise<T> {
-    const response = await fetchCommentsApi(endpoint, options);
+    const response = await fetchCommentsApi(endpoint, params, options);
 
     if (!response.ok) {
       if (response.status >= 400 && response.status < 600) {
@@ -1117,21 +1111,34 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     return body;
   }
 
-  async function getThreads(options?: GetThreadsOptions<TThreadMetadata>) {
-    const response = await fetchCommentsApi("/threads/search", {
-      body: JSON.stringify({
-        ...(options?.query?.metadata && { metadata: options.query.metadata }),
-      }),
-      headers: {
-        "Content-Type": "application/json",
+  async function getThreads<TThreadMetadata extends BaseMetadata = never>(
+    options?: GetThreadsOptions<TThreadMetadata>
+  ) {
+    const response = await fetchCommentsApi(
+      "/threads/search",
+      {
+        since: options?.since?.toISOString(),
       },
-      method: "POST",
-    });
+      {
+        body: JSON.stringify({
+          ...(options?.query?.metadata && { metadata: options.query.metadata }),
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      }
+    );
 
     if (response.ok) {
       const json = await (response.json() as Promise<{
         data: ThreadDataPlain<TThreadMetadata>[];
         inboxNotifications: InboxNotificationDataPlain[];
+        deletedThreads: ThreadDeleteInfoPlain[];
+        deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+        meta: {
+          requestedAt: string;
+        };
       }>);
 
       return {
@@ -1139,9 +1146,26 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
         inboxNotifications: json.inboxNotifications.map((notification) =>
           convertToInboxNotificationData(notification)
         ),
+        deletedThreads: json.deletedThreads.map((info) =>
+          convertToThreadDeleteInfo(info)
+        ),
+        deletedInboxNotifications: json.deletedInboxNotifications.map((info) =>
+          convertToInboxNotificationDeleteInfo(info)
+        ),
+        meta: {
+          requestedAt: new Date(json.meta.requestedAt),
+        },
       };
     } else if (response.status === 404) {
-      return { threads: [], inboxNotifications: [] };
+      return {
+        threads: [],
+        inboxNotifications: [],
+        deletedThreads: [],
+        deletedInboxNotifications: [],
+        meta: {
+          requestedAt: new Date(),
+        },
+      };
     } else {
       throw new Error("There was an error while getting threads.");
     }
@@ -1171,7 +1195,7 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     }
   }
 
-  async function createThread({
+  async function createThread<TThreadMetadata extends BaseMetadata = never>({
     metadata,
     body,
     commentId,
@@ -1204,7 +1228,9 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     return convertToThreadData(thread);
   }
 
-  async function editThreadMetadata({
+  async function editThreadMetadata<
+    TThreadMetadata extends BaseMetadata = never,
+  >({
     metadata,
     threadId,
   }: {
@@ -1351,6 +1377,8 @@ function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     removeReaction,
   };
 }
+
+const MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY = 50;
 
 /**
  * @internal
@@ -1644,7 +1672,7 @@ export function createRoom<
     self: makeEventSource<User<TPresence, TUserMeta>>(),
     myPresence: makeEventSource<TPresence>(),
     others: makeEventSource<OthersEvent<TPresence, TUserMeta>>(),
-    error: makeEventSource<Error>(),
+    error: makeEventSource<LiveblocksError>(),
     storage: makeEventSource<StorageUpdate[]>(),
     history: makeEventSource<HistoryEvent>(),
     storageDidLoad: makeEventSource<void>(),
@@ -1658,14 +1686,16 @@ export function createRoom<
     roomId: string,
     endpoint: string,
     authValue: AuthValue,
-    options?: RequestInit
+    options?: RequestInit,
+    params?: QueryParams
   ) {
-    const url = new URL(
+    const url = urljoin(
+      config.baseUrl,
       `/v2/c/rooms/${encodeURIComponent(roomId)}${endpoint}`,
-      config.baseUrl
+      params
     );
     const fetcher = config.polyfills?.fetch || /* istanbul ignore next */ fetch;
-    return await fetcher(url.toString(), {
+    return await fetcher(url, {
       ...options,
       headers: {
         ...options?.headers,
@@ -2799,7 +2829,7 @@ export function createRoom<
     fetchClientApi
   );
 
-  async function fetchJson<T>(
+  async function fetchNotificationsJson<T>(
     endpoint: string,
     options?: RequestInit
   ): Promise<T> {
@@ -2813,16 +2843,24 @@ export function createRoom<
 
     if (!response.ok) {
       if (response.status >= 400 && response.status < 600) {
-        let errorMessage = "";
+        let error: NotificationsApiError;
+
         try {
           const errorBody = (await response.json()) as { message: string };
-          errorMessage = errorBody.message;
-        } catch (error) {
-          errorMessage = response.statusText;
+
+          error = new NotificationsApiError(
+            errorBody.message,
+            response.status,
+            errorBody
+          );
+        } catch {
+          error = new NotificationsApiError(
+            response.statusText,
+            response.status
+          );
         }
-        throw new Error(
-          `Request failed with status ${response.status}: ${errorMessage}`
-        );
+
+        throw error;
       }
     }
 
@@ -2838,24 +2876,53 @@ export function createRoom<
   }
 
   function getRoomNotificationSettings(): Promise<RoomNotificationSettings> {
-    return fetchJson<RoomNotificationSettings>("/notification-settings");
+    return fetchNotificationsJson<RoomNotificationSettings>(
+      "/notification-settings"
+    );
   }
 
   function updateRoomNotificationSettings(
     settings: Partial<RoomNotificationSettings>
   ): Promise<RoomNotificationSettings> {
-    return fetchJson<RoomNotificationSettings>("/notification-settings", {
+    return fetchNotificationsJson<RoomNotificationSettings>(
+      "/notification-settings",
+      {
+        method: "POST",
+        body: JSON.stringify(settings),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  }
+
+  async function markInboxNotificationsAsRead(inboxNotificationIds: string[]) {
+    await fetchNotificationsJson("/inbox-notifications/read", {
       method: "POST",
-      body: JSON.stringify(settings),
       headers: {
         "Content-Type": "application/json",
       },
+      body: JSON.stringify({ inboxNotificationIds }),
     });
+  }
+
+  const batchedMarkInboxNotificationsAsRead = new Batch(
+    async (batchedInboxNotificationIds: [string][]) => {
+      const inboxNotificationIds = batchedInboxNotificationIds.flat();
+
+      await markInboxNotificationsAsRead(inboxNotificationIds);
+
+      return inboxNotificationIds;
+    },
+    { delay: MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY }
+  );
+
+  async function markInboxNotificationAsRead(inboxNotificationId: string) {
+    await batchedMarkInboxNotificationsAsRead.get(inboxNotificationId);
   }
 
   return Object.defineProperty(
     {
-      /* NOTE: Exposing internals here only to allow testing implementation details in unit tests */
       [kInternal]: {
         get presenceBuffer() { return deepClone(context.buffer.presenceUpdates?.data ?? null) }, // prettier-ignore
         get undoStack() { return deepClone(context.undoStack) }, // prettier-ignore
@@ -2871,6 +2938,16 @@ export function createRoom<
           // These exist only for our E2E testing app
           explicitClose: (event) => managedSocket._privateSendMachineEvent({ type: "EXPLICIT_SOCKET_CLOSE", event }),
           rawSend: (data) => managedSocket.send(data),
+        },
+
+        comments: {
+          ...commentsApi,
+        },
+
+        notifications: {
+          getRoomNotificationSettings,
+          updateRoomNotificationSettings,
+          markInboxNotificationAsRead,
         },
       },
 
@@ -2917,13 +2994,6 @@ export function createRoom<
       // Presence
       getPresence: () => context.myPresence.current,
       getOthers: () => context.others.current,
-
-      // Comments
-      ...commentsApi,
-
-      // Notifications
-      getRoomNotificationSettings,
-      updateRoomNotificationSettings,
     },
 
     // Explictly make the internal field non-enumerable, to avoid aggressive
