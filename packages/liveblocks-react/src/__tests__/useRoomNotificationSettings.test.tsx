@@ -154,11 +154,11 @@ describe("useRoomNotificationSettings", () => {
     });
 
     await waitFor(() => {
-      // The readAt field should have been updated in the inbox notification cache
+      // Notification settings should be reverted to the original value ("all") after the error response from the server
       expect(result.current[0]).toEqual({
         isLoading: false,
         settings: {
-          threads: "none",
+          threads: "all",
         },
       });
     });
