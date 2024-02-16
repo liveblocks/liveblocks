@@ -17,22 +17,27 @@ enum WebSocketErrorCodes {
 }
 
 export default class MockWebSocket {
-  readyState: number;
-  static instances: MockWebSocket[] = [];
+  public readyState: number;
 
-  isMock = true;
+  private static nextActor = 0;
+  public static readonly instances: MockWebSocket[] = [];
 
-  callbacks = {
+  public readonly isMock = true;
+
+  // Registered event listeners
+  public readonly callbacks = {
     open: [] as Array<(event?: WebSocketEventMap["open"]) => void>,
     close: [] as Array<(event?: WebSocketEventMap["close"]) => void>,
     error: [] as Array<(event?: WebSocketEventMap["error"]) => void>,
     message: [] as Array<(event?: WebSocketEventMap["message"]) => void>,
   };
 
-  sentMessages: string[] = [];
+  public readonly sentMessages: string[] = [];
 
   constructor(public url: string) {
-    const actor = MockWebSocket.instances.push(this) - 1;
+    MockWebSocket.instances.push(this);
+    const actor = MockWebSocket.nextActor++;
+
     this.readyState = 0 /* CONNECTING */;
 
     // Fake the server accepting the new connection
@@ -54,6 +59,11 @@ export default class MockWebSocket {
         msgCb({ data: JSON.stringify(msg) } as MessageEvent);
       }
     }, 0);
+  }
+
+  public static reset() {
+    MockWebSocket.instances.length = 0;
+    MockWebSocket.nextActor = 0;
   }
 
   addEventListener(event: "open", callback: (event: Event) => void): void;
