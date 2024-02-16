@@ -4,7 +4,11 @@ import { nn } from "@liveblocks/core";
 
 export const DEFAULT_THROTTLE = 100;
 
-export function createLiveblocksClient(options: Partial<ClientOptions> = {}) {
+export function createLiveblocksClient(
+  options: Omit<Partial<ClientOptions>, "publicApiKey"> & {
+    publicApiKey?: string;
+  } = {}
+) {
   const defaultAuthEndpoint = "/api/auth/access-token";
 
   if (
