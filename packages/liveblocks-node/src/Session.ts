@@ -183,10 +183,9 @@ export class Session {
   public async authorize(): Promise<AuthResponse> {
     this.seal();
     if (!this.hasPermissions()) {
-      return {
-        status: 403,
-        body: "Forbidden",
-      };
+      console.warn(
+        "Access tokens without any permission will not be supported soon, you should use wildcards when the client requests a token for resources outside a room. See https://liveblocks.io/docs/errors/liveblocks-client/access-tokens-not-enough-permissions"
+      );
     }
 
     try {
