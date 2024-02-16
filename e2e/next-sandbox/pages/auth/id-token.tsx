@@ -1,4 +1,3 @@
-import { nn } from "@liveblocks/core";
 import { createRoomContext } from "@liveblocks/react";
 import Link from "next/link";
 import React from "react";
@@ -8,12 +7,6 @@ import { createLiveblocksClient } from "../../utils/createClient";
 
 const client = createLiveblocksClient({
   authEndpoint: "/api/auth/id-token",
-
-  // @ts-expect-error - Hidden setting
-  baseUrl: nn(
-    process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
-    "Please specify NEXT_PUBLIC_LIVEBLOCKS_BASE_URL env var"
-  ),
 });
 
 const { RoomProvider, useMyPresence, useSelf, useOthers, useStatus } =

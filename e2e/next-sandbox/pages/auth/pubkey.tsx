@@ -11,12 +11,6 @@ const client = createLiveblocksClient({
     process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY,
     "Please specify NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY env var"
   ),
-
-  // @ts-expect-error - Hidden setting
-  baseUrl: nn(
-    process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
-    "Please specify NEXT_PUBLIC_LIVEBLOCKS_BASE_URL env var"
-  ),
 });
 
 const { RoomProvider, useMyPresence, useSelf, useOthers, useStatus } =

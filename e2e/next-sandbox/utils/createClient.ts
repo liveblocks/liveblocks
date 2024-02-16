@@ -2,37 +2,29 @@ import type { ClientOptions } from "@liveblocks/client";
 import { createClient as realCreateClient } from "@liveblocks/client";
 import { nn } from "@liveblocks/core";
 
+const DEFAULT_E2E_OPTIONS = {
+  authEndpoint: "/api/auth/access-token",
+};
+
 export const DEFAULT_THROTTLE = 100;
 
+/**
+ * Like your regular createClient(), but will override the base URL, and use
+ * a faster-than-normal throttle.
+ */
 export function createLiveblocksClient(
-  options: Omit<Partial<ClientOptions>, "publicApiKey"> & {
-    publicApiKey?: string;
-  } = {}
+  options: ClientOptions = DEFAULT_E2E_OPTIONS
 ) {
-  const defaultAuthEndpoint = "/api/auth/access-token";
-
-  if (
-    options.publicApiKey === undefined &&
-    options.authEndpoint === undefined
-  ) {
-    options = {
-      ...options,
-      publicApiKey: undefined,
-      authEndpoint: defaultAuthEndpoint,
-    };
-  }
+  options.throttle ??= DEFAULT_THROTTLE;
 
   return realCreateClient({
-    throttle: DEFAULT_THROTTLE,
+    ...options,
 
     // @ts-expect-error - Hidden settings
+    enableDebugLogging: true,
     baseUrl: nn(
       process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
       "Please specify NEXT_PUBLIC_LIVEBLOCKS_BASE_URL env var"
     ),
-
-    enableDebugLogging: true,
-
-    ...options,
   });
 }
