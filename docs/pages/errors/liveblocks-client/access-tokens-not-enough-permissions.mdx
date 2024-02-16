@@ -9,7 +9,19 @@ meta:
 
 ### Why this error occured
 
-The client may request an access token to access resources beyond a specific room, like Notifications. In such cases, your auth endpoint should issue an access token that grants access to multiple rooms using wildcards (`*`).
+The client may request an access token to access resources beyond a specific
+room, like Notifications. In such cases, your auth endpoint should issue an
+access token that grants access to multiple rooms using wildcards (`*`).
+
+#### 1.10 warning
+
+If you saw this warning in your auth endpoint, it's because the version 1.10
+allows you to create an access token with no permission, even though it's not
+recommended. When doing so, Notifications will work with an access token without
+permission, and Liveblocks will return all the user's notifications (mentions
+for example) even if the user doesn't have access to the room. You should move
+to use wildcards or use ID tokens, and note that this will not be allowed in
+later versions.
 
 ### Possible ways to fix it
 
