@@ -1,0 +1,227 @@
+---
+meta:
+  title: "Notifications"
+  parentTitle: "Comments"
+  description: "Notify users about new comments"
+---
+
+Notifications are a key part of a commenting experience, learn how to add them
+to your product in different ways:
+[by adding a notifications inbox to your app](#notifications-inbox),
+[by differentiating unread comments in threads](#unread-indicators), and
+[by also notifying users via email](#email-notifications).
+
+## Notifications inbox
+
+Add a notifications inbox to your app to keep users informed about the threads
+they are participating in with unread comments, mentions, and more.
+
+<Figure>
+  <Image
+    src="/assets/comments/notifications-inbox.png"
+    alt="A notifications inbox"
+    width={1256}
+    height={846}
+  />
+</Figure>
+
+An inbox as shown above can be built (and customized) using a combination of
+hooks and components.
+
+### LiveblocksContext
+
+Comments—as many other Liveblocks features—takes place inside rooms.
+Notifications on the other hand, are global and accessible without entering
+rooms. This means that Notifications isn’t available on
+[`createRoomContext`](/docs/api-reference/liveblocks-react#createRoomContext)
+and within [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider),
+but instead on
+[`createLiveblocksContext`](/docs/api-reference/liveblocks-react#createLiveblocksContext)
+and within
+[`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider).
+
+```tsx file="liveblocks.config.ts" highlight="2,10-11"
+import { createClient } from "@liveblocks/client";
+import { createRoomContext, createLiveblocksContext } from "@liveblocks/react";
+
+const client = createClient({
+  authEndpoint: "/api/liveblocks-auth",
+});
+
+export const { RoomProvider, useThreads } = createRoomContext(client);
+
+export const { LiveblocksProvider, useInboxNotifications } =
+  createLiveblocksContext(client);
+```
+
+Unlike [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider),
+[`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider)
+doesn’t call Liveblocks servers when mounted, so it can (and should) live higher
+in the component tree of your app. Features outside of rooms like Notifications
+can now be used anywhere in your app, without entering rooms.
+
+```tsx
+import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
+import { LiveblocksProvider } from "./liveblocks.config";
+
+function AppRoot() {
+  return <LiveblocksProvider>{/* children */}</LiveblocksProvider>;
+}
+```
+
+### useInboxNotifications
+
+To get a list of a user’s notifications, we can use
+[`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications).
+
+```tsx
+import { useInboxNotifications } from "./liveblocks.config";
+
+const { inboxNotifications } = useInboxNotifications();
+```
+
+Inbox notifications are different from “normal” notifications in the sense that
+they can group multiple activities together and evolve over time, which makes
+more sense when building a notifications inbox. In the case of Comments, inbox
+notifications are grouped per thread, which means that if there are 4 new
+comments in a thread you’re participating in, you will have a single inbox
+notification for it, instead of 4 “normal” notifications.
+
+By default, you receive inbox notifications for threads you are participating
+in: if you create it, comment in it, or if someone mentions you in it. For
+example, in the image below, Quinn Elton and Emil Joyce are both participants.
+
+<Figure highlight={35}>
+  <Image
+    src="/assets/comments/comment-body.png"
+    alt="Comment with example body: 'Thank you so much @Emil Joyce!', with 'so much' in bold"
+    width={1289}
+    height={390}
+  />
+</Figure>
+
+This behavior can be customized per room, learn more about it in the
+[Notifications settings](#notifications-settings) section.
+
+### Components
+
+To display inbox notifications,
+[`@liveblocks/react-comments`](/docs/api-reference/liveblocks-react-comments)
+comes with two default components:
+[`InboxNotification`](/docs/api-reference/liveblocks-react-comments#InboxNotification)
+and
+[`InboxNotificationList`](/docs/api-reference/liveblocks-react-comments#InboxNotification).
+
+```tsx
+import {
+  InboxNotification,
+  InboxNotificationList,
+} from "@liveblocks/react-comments";
+import { useInboxNotifications } from "./liveblocks.config";
+
+function Inbox() {
+  const { inboxNotifications } = useInboxNotifications();
+
+  return (
+    <InboxNotificationList>
+      {inboxNotifications.map((inboxNotification) => (
+        <InboxNotification
+          key={inboxNotification.id}
+          inboxNotification={inboxNotification}
+        />
+      ))}
+    </InboxNotificationList>
+  );
+}
+```
+
+<Figure>
+  <Image
+    src="/assets/comments/inbox-notification-list.png"
+    alt="Inbox notifications displayed with InboxNotification and InboxNotificationList"
+    width={768}
+    height={446}
+  />
+</Figure>
+
+You can then decide to display this list of notifications in a popover, a
+dedicated page, etc.
+
+### Missing pieces
+
+We now have a list of notifications, but we’re missing a few things:
+
+- Display the number of unread notifications (or just a dot) outside of the
+  inbox
+- Allow users to mark all notifications as read at once
+
+To display the number of unread notifications, you can use
+[`useUnreadInboxNotificationsCount`](/docs/api-reference/liveblocks-react#useUnreadInboxNotificationsCount).
+
+```tsx
+const { count } = useUnreadInboxNotificationsCount();
+
+<span className="notifications-inbox-badge">{count}</span>;
+```
+
+To mark all notifications as read, you can use
+[`useMarkAllInboxNotificationsAsRead`](/docs/api-reference/liveblocks-react#useMarkAllInboxNotificationsAsRead).
+
+```tsx
+const markAllInboxNotificationsAsRead = useMarkAllInboxNotificationsAsRead();
+
+<button onClick={markAllInboxNotificationsAsRead}>Mark all as read</button>;
+```
+
+That’s it! You now have a fully functional notifications inbox in your app.
+
+## Unread indicators
+
+Threads leverage Notifications behind-the-scenes to keep track of unread
+comments so viewing a thread will also mark its inbox notification as read, and
+vice versa.
+
+If you use the default
+[`Thread`](/docs/api-reference/liveblocks-react-comments#Thread) component, it
+will automatically handle marking threads as read when they are viewed and show
+unread indicators when there are unread comments in threads you are
+participating in.
+
+<Figure>
+  <Image
+    src="/assets/comments/thread-unread-indicator.png"
+    alt="Unread indicator in Thread component"
+    width={1456}
+    height={896}
+  />
+</Figure>
+
+If you’re building your own custom `Thread` component, you can use
+[`useMarkThreadAsRead`](/docs/api-reference/liveblocks-react#useMarkThreadAsRead)
+and
+[`useThreadSubscription`](/docs/api-reference/liveblocks-react#useThreadSubscription)
+to replicate (or customize) this behavior.
+
+## Notifications settings
+
+As we’ve seen earlier, by default you receive inbox notifications for threads
+you are participating in. This setting can be customized for each user and per
+room:
+
+- `"all"` to be notified about everything
+- `"replies_and_mentions"` for the default setting
+- `"none"` to mute the room
+
+You can use
+[`useRoomNotificationSettings`](/docs/api-reference/liveblocks-react#useRoomNotificationSettings)
+to build a settings picker in your app and allow users to change their own
+notification settings for the current room, or use
+[`updateRoomNotificationSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-notification-settings)
+server-side to control them yourself: for example, to automatically make a
+document’s author notified about everything in their document.
+
+## Email notifications
+
+Using webhooks, it’s also possible to send updates about a user’s inbox
+notifications via email. Learn more about it in the
+[dedicated page](/docs/products/comments/email-notifications).

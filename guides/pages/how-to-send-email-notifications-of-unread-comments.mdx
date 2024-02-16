@@ -59,27 +59,16 @@ has this set up already.
 
 ## What are inbox notifications?
 
-First, we need to understand how inbox notifications work with
-[Comments](/docs/products/comments). When a user mentions you in a thread, or if
-you’ve previously participated in it, then you will receive an inbox
-notification for it. For example, in the image below, _Quinn Elton_ and _Emil
-Joyce_ are both participants.
+Email notifications are built around the concept of inbox notifications, which
+are different from “normal” notifications in the sense that they can group
+multiple activities together and evolve over time, which makes more sense when
+sending email notifications because it helps to avoid sending too many emails.
+In the case of Comments, inbox notifications are grouped per thread, which means
+that if there are 4 new comments in a thread you’re participating in, you will
+have a single inbox notification for it, instead of 4 “normal” notifications.
 
-<Figure highlight={35}>
-  <Image
-    src="/assets/comments/comment-body.png"
-    alt="Comment with example body: 'Thank you so much @Emil Joyce!', with 'so much' in bold"
-    width={1289}
-    height={390}
-  />
-</Figure>
-
-Inbox notifications can be displayed in your app using
-[`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications)
-and the
-[`InboxNotification`](/docs/api-reference/liveblocks-react-comments#InboxNotification)
-component. But how do you send emails to your users letting them know they have
-unread notifications in their inbox?
+Learn more about Notifications for Comments in the
+[overview page](/docs/products/comments/notifications).
 
 ## Using webhooks
 
