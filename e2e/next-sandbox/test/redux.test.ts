@@ -9,6 +9,7 @@ import {
   preparePages,
   waitForJson,
   waitUntilEqualOnAllPages,
+  waitUntilFlushed,
 } from "./utils";
 
 test.describe.configure({ mode: "parallel" });
@@ -33,20 +34,25 @@ test.describe("Redux", () => {
     await waitForJson(pages, "#socketStatus", "connected");
 
     await page1.click("#clear");
+    await waitUntilFlushed();
     await expectJson(page1, "#numItems", 0);
     await waitForJson(pages, "#numOthers", 1);
 
     await page1.click("#push");
+    await waitUntilFlushed();
     await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#push");
+    await waitUntilFlushed();
     await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#push");
+    await waitUntilFlushed();
     await waitForJson(pages, "#numItems", 3);
     await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#clear");
+    await waitUntilFlushed();
     await waitForJson(pages, "#numItems", 0);
     await waitForJson(page2, "#theirPresence", { counter: 0 });
   });
@@ -65,18 +71,22 @@ test.describe("Redux", () => {
     await page1.click("#set-name");
     await page1.click("#inc-counter");
     await page1.click("#inc-counter");
+    await waitUntilFlushed();
     await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#push");
+    await waitUntilFlushed();
     await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#push");
     await page1.click("#set-name");
     await page1.click("#inc-counter");
+    await waitUntilFlushed();
     await waitForJson(pages, "#numItems", 3);
     await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#clear");
+    await waitUntilFlushed();
     await waitForJson(pages, "#numItems", 0);
     await waitForJson(page2, "#theirPresence", { counter: 3, name: "Vincent" });
   });
