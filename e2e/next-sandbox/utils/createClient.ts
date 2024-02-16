@@ -6,7 +6,7 @@ const DEFAULT_E2E_OPTIONS = {
   authEndpoint: "/api/auth/access-token",
 };
 
-export const DEFAULT_THROTTLE = 100;
+export const DEFAULT_THROTTLE = 16;
 
 /**
  * Like your regular createClient(), but will override the base URL, and use
