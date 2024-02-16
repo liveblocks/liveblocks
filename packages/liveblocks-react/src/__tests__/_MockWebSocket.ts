@@ -113,8 +113,8 @@ export async function waitForSocketToBeConnected() {
   await waitFor(() => expect(MockWebSocket.instances.length).toBe(1));
 
   const socket = MockWebSocket.instances[0];
-  expect(socket.callbacks.open.length).toBe(1); // Got open callback
-  expect(socket.callbacks.message.length).toBe(1); // Got ROOM_STATE message callback
+  expect(socket.callbacks.open).toEqual([expect.any(Function)]); // Got open callback
+  expect(socket.callbacks.message).toEqual([expect.any(Function)]); // Got ROOM_STATE message callback
 
   // Give open callback (scheduled for next tick) a chance to finish before returning
   await wait(0);
