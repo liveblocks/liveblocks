@@ -1,12 +1,12 @@
-import { createClient } from "@liveblocks/client";
 import { nn } from "@liveblocks/core";
 import { createRoomContext } from "@liveblocks/react";
 import Link from "next/link";
 import React from "react";
 
 import { getRoomFromUrl } from "../../utils";
+import { createLiveblocksClient } from "../../utils/createClient";
 
-const client = createClient({
+const client = createLiveblocksClient({
   authEndpoint: "/api/auth/id-token",
 
   // @ts-expect-error - Hidden setting
