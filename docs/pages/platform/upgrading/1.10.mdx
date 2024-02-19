@@ -30,6 +30,29 @@ If you’re not using Comments or Notifications, there are no breaking changes f
 you! However, if you are using these, or intend to use them in future, keep
 reading.
 
+## Security
+
+Users must see the notifications across multiple rooms when they open their
+inbox. This is the first time we must expose an API not associated with a single
+room. It forced us to introduce a minor breaking change in our authentication
+mechanism. Using
+[`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications)
+will call your authentication endpoint without a `room`.
+
+### createClient with callback
+
+If you use `createClient` with `authEndpoint`
+[as a callback](/docs/api-reference/liveblocks-client#createClientCallback),
+`room` is now optional.
+
+```typescript
+const client = createClient({
+  authEndpoint: (room) => {
+    // room is null if you're using `useInboxNotifications`
+  },
+});
+```
+
 ## Comments resolver functions
 
 Notifications needs to resolve users, as well as Comments, so we’ve lifted the
