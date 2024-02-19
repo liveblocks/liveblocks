@@ -59,7 +59,7 @@ export async function threadEmailNotification({
   const newCommentsEmail = (
     <NewComments title={title} href={roomUrl} comments={htmlCommentBodies} />
   );
-  console.log("Sending email", newCommentsEmail);
+
   // Send email with Resend
   const { data, error } = await resend.emails.send({
     from: "Your App <yourapp@example.com>",
