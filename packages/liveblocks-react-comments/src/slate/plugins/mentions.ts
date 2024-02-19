@@ -28,8 +28,8 @@ export function getMentionDraftAtSelection(
     return;
   }
 
-  // Match the word at the current selection by walking back until
-  // a terminator is found (whitespace, special characters like "!", etc)
+  // Match the word at the current selection by walking back
+  // until a whitespace character is found
   const match = getMatchRange(editor, selection);
 
   if (!match) {
