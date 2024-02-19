@@ -21,43 +21,24 @@ example via email or Slack.
 
 <Banner title="Step-by-step tutorial">
 
-This page is an overview of creating email notifications with Comments. If you’d
+This page is an overview of creating email notifications for Comments. If you’d
 prefer a full step-by-step tutorial, make sure to read
 [how to send email notifications of unread comments](/docs/guides/how-to-send-email-notifications-of-unread-comments).
 
 </Banner>
 
-<Banner title="Show notifications in your app">
-
-If you want to show
-[notifications in your app](/docs/products/comments/notification-inbox), you can
-use
-[`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications)
-and the
-[`InboxNotification`](/docs/api-reference/liveblocks-react-comments#InboxNotification)
-component.
-
-</Banner>
-
 ## Inbox notifications
 
-Inbox notifications are different from “normal” notifications in the sense that
-they group multiple notifications together.
+Email notifications are built around the concept of inbox notifications, which
+are different from “normal” notifications in the sense that they can group
+multiple activities together and evolve over time, which makes more sense when
+sending email notifications because it helps to avoid sending too many emails.
+In the case of Comments, inbox notifications are grouped per thread, which means
+that if there are 4 new comments in a thread you’re participating in, you will
+have a single inbox notification for it, instead of 4 “normal” notifications.
 
-When a user mentions you in a thread, or if you’ve previously participated in
-it, then you will have an _inbox notification_ for it. For example, in the image
-below, Quinn Elton and Emil Joyce are both participants. As new activities
-happen on a thread, the same inbox notification will be updated to always
-reflect the thread’s latest state.
-
-<Figure highlight={35}>
-  <Image
-    src="/assets/comments/comment-body.png"
-    alt="Comment with example body: 'Thank you so much @Emil Joyce!', with 'so much' in bold"
-    width={1289}
-    height={390}
-  />
-</Figure>
+Learn more about Notifications for Comments in the
+[overview page](/docs/products/comments/notifications).
 
 ## Sending email notifications with webhooks
 
@@ -76,8 +57,8 @@ The endpoint URL you pass will receive request with relevant data when the event
 occurs. The webhook event built for creating these unread notification emails is
 called `"threadEmailNotification"`, and by default is sent up to every 30
 minutes to each user, though this can be customized in the webhooks dashboard.
-Here’s an example of an event object that’s sent when a user receives a new
-inbox notification.
+Here’s an example of an event object that’s sent when a user receives a new (or
+updated) inbox notification.
 
 ```ts
 const event = {

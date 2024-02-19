@@ -1172,7 +1172,7 @@ type LiveblocksContextBundleCommon = {
   /**
    * @beta
    *
-   * Makes Liveblocks non-Room features (e.g. Notifications) available
+   * Makes Liveblocks features outside of rooms (e.g. Notifications) available
    * in the component hierarchy below.
    */
   LiveblocksProvider(props: PropsWithChildren): JSX.Element;
