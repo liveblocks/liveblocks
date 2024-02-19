@@ -58,6 +58,13 @@ describe("auth-manager - secret auth", () => {
     "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJrIjoiYWNjIiwicGlkIjoiNjVjNTI5MjU4M2NlMGY4MGYyYjhlYzZiIiwidWlkIjoidXNlcjEiLCJwZXJtcyI6eyJyb29tMSI6WyJjb21tZW50czpyZWFkIl19LCJtY3ByIjoyMCwiaWF0IjoxNzA3NDE5OTQxLCJleHAiOjE3MDc0MjM1NDEsImp0aSI6ImVHZEhYd0l6eVF2NyJ9.ZQVQMwLaZzFzqp6fEN9pGz4IrTkkM1vMRBCzPomyIBnEnANNGKFMkfEQb9nMFXl7IftUvUTy7rU6VwBCXnu-O3PyUdhx5HA1TsYyODjnEvYfG-eaXryFGVleSX-6x2xIxLpdwV_e4yG7zcx16hMO6xEBYdzHZ4F8CqTjekAx6wTKLElQdnoV0yW8pQV8MDTc8t8Gn_3owVMS5wN11xvfaSgvQsbJL86VZzCyjdyTdlc5vaFGA6R_GVzwro_bhUDZxIcN1Kqvg6TQTdf5TPRL4-PzrOKxXc41PQfHn3318q6N10zQZH9xFjtEy-iUf-cGKv-LICJsD-M8M7WKcDo7tg;";
 
   /*
+    Access token with those permissions:
+        perms: {}
+  */
+  const accessTokenWithNoPermission =
+    "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJrIjoiYWNjIiwicGlkIjoiNjVjZmMxNzliNzQ5ZjQyNjZhMjIzZTM5IiwidWlkIjoidXNlcjEiLCJwZXJtcyI6e30sIm1jcHIiOjMwLCJpYXQiOjE3MDgxMTQyOTcsImV4cCI6MTcwODExNzg5NywianRpIjoiaUFvQmt6ZU5CVDlEIn0.KvD3ECrEx9-35jQM1lg-qoREigegQkNInMclGs99_Jz2TUVK-zPJvZX0l4px3VE1dTF71O-i1nDwLIoScTobjRgR999hMTR1l2PnPVgiTn2V56j6sRQMJsKmsk8_XSQvwe1brKFaRK-8T0l6Pe2VsImIjo0opZfRBiPXPpVxyq0GunTr16pp_Jdfxrzp9xw5-Vc4LmUUKlviFp5cNeeh-whF6IKKZ0AD1JRIlVI_o9QCyzmJd930ef-w4yh5YOTlq8ekT80J_UdpiJHe47Bb8JsJAFcSHPCf8ciet_qSzkMHknPq78XfKilx4aCcDyJUYS1QvhToF0GJFYrmNBeECQ";
+
+  /*
     ID token that gives access to user "user1"
   */
   const idToken =
@@ -88,6 +95,10 @@ describe("auth-manager - secret auth", () => {
         return res(ctx.json({ token: accessTokenOneRoomCommentsRead }));
       }
     ),
+    rest.post("/mocked-api/access-auth-no-permission", (_req, res, ctx) => {
+      requestCount++;
+      return res(ctx.json({ token: accessTokenWithNoPermission }));
+    }),
     rest.post("/mocked-api/id-auth", (_req, res, ctx) => {
       requestCount++;
       return res(ctx.json({ token: idToken }));
@@ -277,6 +288,24 @@ describe("auth-manager - secret auth", () => {
 
     expect(authValueReq1.token.raw).toEqual(accessToken);
     expect(authValueReq2.token.raw).toEqual(accessToken);
+    expect(requestCount).toBe(1);
+  });
+
+  test("when no roomId, should use cache when access token has no permission", async () => {
+    const authManager = createAuthManager({
+      authEndpoint: "/mocked-api/access-auth-no-permission",
+    });
+
+    const authValueReq1 = (await authManager.getAuthValue({
+      requestedScope: "comments:read",
+    })) as { type: "secret"; token: ParsedAuthToken };
+
+    const authValueReq2 = (await authManager.getAuthValue({
+      requestedScope: "comments:read",
+    })) as { type: "secret"; token: ParsedAuthToken };
+
+    expect(authValueReq1.token.raw).toEqual(accessTokenWithNoPermission);
+    expect(authValueReq2.token.raw).toEqual(accessTokenWithNoPermission);
     expect(requestCount).toBe(1);
   });
 

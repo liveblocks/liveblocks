@@ -95,6 +95,14 @@ export function createAuthManager(
         // When ID token method is used, only one token per user should be used and cached at the same time.
         return token;
       } else if (token.parsed.k === TokenKind.ACCESS_TOKEN) {
+        // In this version, we accept access tokens with zero permission when issuing token for resources outside a room.
+        if (
+          !requestOptions.roomId &&
+          Object.entries(token.parsed.perms).length === 0
+        ) {
+          return token;
+        }
+
         for (const [resource, scopes] of Object.entries(token.parsed.perms)) {
           // If the requester didn't pass a roomId,
           // it means they need the token to access the user's resources (inbox notifications for example).
@@ -199,8 +207,12 @@ export function createAuthManager(
   ) {
     // If the requester didn't pass a roomId,
     // it means they need the token to access the user's resources (inbox notifications for example).
-    // If the token is access token, it needs to have a wildcard permission.
+    // If the token is access token, it needs to have a wildcard permission (or to have zero permission).
     if (!options.roomId && parsedToken.parsed.k === TokenKind.ACCESS_TOKEN) {
+      // In this version, we accept access tokens with zero permission when issuing token for resources outside a room.
+      if (Object.entries(parsedToken.parsed.perms).length === 0) {
+        return;
+      }
       for (const [resource, scopes] of Object.entries(
         parsedToken.parsed.perms
       )) {
