@@ -17,12 +17,12 @@ const server = setupServer();
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 
 beforeEach(() => {
-  MockWebSocket.instances = [];
+  MockWebSocket.reset();
   jest.useFakeTimers();
 });
 
 afterEach(() => {
-  MockWebSocket.instances = [];
+  MockWebSocket.reset();
   jest.useRealTimers();
   server.resetHandlers();
 });

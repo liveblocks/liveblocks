@@ -4,6 +4,7 @@ import { chromium, expect } from "@playwright/test";
 import _ from "lodash";
 
 import { randomInt } from "../utils";
+import { DEFAULT_THROTTLE } from "../utils/createClient";
 
 export type IDSelector = `#${string}`;
 
@@ -171,6 +172,13 @@ export async function waitForTextContains(
       })
     )
   );
+}
+
+export async function waitUntilFlushed() {
+  // This isn't a fancy implementation. It just waits for <default throttle>
+  // millis, so by the time the test continues, the messages have been sent to
+  // the server ¯\_(ツ)_/¯
+  await sleep(DEFAULT_THROTTLE);
 }
 
 export async function expectJson(
