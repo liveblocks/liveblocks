@@ -9,18 +9,28 @@ meta:
 
 ### Why this error occured
 
-Your auth endpoint issued an access token that doesn't grant enough permissions
-for the requested usage (Notifications). The token grants access to only one
-room which is not enough when the request is made outside a room.
+The client may request an access token to access resources beyond a specific
+room, like Notifications. In such cases, your auth endpoint should issue an
+access token that grants access to multiple rooms using wildcards (`*`).
+
+#### 1.10 warning
+
+If you saw this warning in your auth endpoint, it's because the version 1.10
+allows you to create an access token with no permission, even though it's not
+recommended. When doing so, Notifications will work with an access token without
+permissions, and Liveblocks will return all the user's notifications (mentions
+for example) even if the user doesn't have access to the room. You should move
+to use wildcards or use ID tokens, and note that this will not be allowed in
+later versions.
 
 ### Possible ways to fix it
 
-In your auth endpoint, when the request's room ID is undefined, you should
-create a token that grants access to multiple rooms. Example:
+In your auth endpoint, when the request's property `room` is undefined, you
+should create a token that grants access to multiple rooms. Example:
 
 ```
 session.allow("orga1*", session.FULL_ACCESS);
 ```
 
 Learn more about
-[`access tokens`](https://liveblocks.io/docs/rooms/permissions/access-token).
+[`permissions with access tokens`](https://liveblocks.io/docs/rooms/permissions/access-token).
