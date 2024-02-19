@@ -31,7 +31,9 @@ start building your own security logic.
       following code. This is where you will implement your security and
       define the rooms that the user has access to.
 
-The client will request a token either for a specific `room`, in which case the request body property room will be defined, or for resources outside a specific room (like notifications), in which case, `room` will be undefined.
+The client will request a token either for a specific `room`, in which case the
+request body property room will be defined, or for resources outside a specific
+room (like notifications), in which case, `room` will be undefined.
 
       See
       [permissions with access token](/docs/rooms/permissions/access-token)
@@ -57,7 +59,7 @@ The client will request a token either for a specific `room`, in which case the 
         );
 
         // Implement your own security, and give the user access to the room/organization.
-        // Note: Even if room is defined, you could choose to always use wildcards.
+        // Note: Even if room is defined, we recommend to always use wildcards.
         const { room } = request.body;
         if (room && __shouldUserHaveAccess__(user, room)) {
           session.allow(room, session.FULL_ACCESS);
