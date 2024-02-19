@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import { RoomProvider, ThreadMetadata, useThreads } from "../liveblocks.config";
+import { RoomProvider, useThreads } from "../liveblocks.config";
 import { Loading } from "../components/Loading";
 import { Composer, Thread } from "@liveblocks/react-comments";
 import { ClientSideSuspense } from "@liveblocks/react";
@@ -13,7 +13,7 @@ import { ErrorBoundary } from "react-error-boundary";
  * new threads.
  */
 
-function Example({ roomUrl }: { roomUrl: string }) {
+function Example() {
   const { threads } = useThreads();
 
   return (
@@ -21,20 +21,13 @@ function Example({ roomUrl }: { roomUrl: string }) {
       {threads.map((thread) => (
         <Thread key={thread.id} thread={thread} className="thread" />
       ))}
-      <Composer<ThreadMetadata>
-        className="composer"
-        // Add link to the room for email notifications
-        metadata={{ url: roomUrl }}
-      />
+      <Composer className="composer" />
     </main>
   );
 }
 
 export default function Page() {
   const roomId = useOverrideRoomId("nextjs-comments-emails");
-
-  // The URL of this page in your app. We're using this in email notification links.
-  const roomUrl = `http://example.com?roomId=${roomId}`;
 
   return (
     <RoomProvider id={roomId} initialPresence={{}}>
@@ -44,7 +37,7 @@ export default function Page() {
         }
       >
         <ClientSideSuspense fallback={<Loading />}>
-          {() => <Example roomUrl={roomUrl} />}
+          {() => <Example />}
         </ClientSideSuspense>
       </ErrorBoundary>
     </RoomProvider>

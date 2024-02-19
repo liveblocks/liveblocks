@@ -46,13 +46,8 @@ export type UserMeta = {
   };
 };
 
-export type ThreadMetadata = {
-  // The URL is for the page with the thread, and is used for email notifications
-  url: string;
-};
-
 const {
   suspense: { RoomProvider, useThreads },
-} = createRoomContext<{}, {}, UserMeta, {}, ThreadMetadata>(client);
+} = createRoomContext<{}, {}, UserMeta, {}>(client);
 
 export { RoomProvider, useThreads };

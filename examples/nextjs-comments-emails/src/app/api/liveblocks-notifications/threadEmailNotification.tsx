@@ -8,7 +8,6 @@ import {
 } from "@liveblocks/node";
 import { getUser, getUsers } from "../../../database";
 import NewComments, { CommentEmailInfo } from "../../../../emails/NewComments";
-import { ThreadMetadata } from "../../../liveblocks.config";
 
 // Add your Resend API key from https://resend.com/api-keys
 const resend = new Resend(process.env.RESEND_API_KEY as string);
@@ -28,7 +27,7 @@ export async function threadEmailNotification({
 }: ThreadEmailNotificationEvent["data"]): Promise<Response> {
   // Get info on the thread involved and the current inbox notification
   const [thread, inboxNotification] = await Promise.all([
-    liveblocks.getThread<ThreadMetadata>({ roomId, threadId }),
+    liveblocks.getThread({ roomId, threadId }),
     liveblocks.getInboxNotification({ inboxNotificationId, userId }),
   ]);
 
@@ -53,15 +52,14 @@ export async function threadEmailNotification({
     ? `${lastCommenter.info.name} replied in Your App`
     : "New comments in Your App";
 
+  // The URL of the page in your app. We're using this for email notification links.
+  const roomUrl = `http://example.com?roomId=${roomId}`;
+
   // Generate an email with React Email
   const newCommentsEmail = (
-    <NewComments
-      title={title}
-      href={thread.metadata.url}
-      comments={htmlCommentBodies}
-    />
+    <NewComments title={title} href={roomUrl} comments={htmlCommentBodies} />
   );
-
+  console.log("Sending email", newCommentsEmail);
   // Send email with Resend
   const { data, error } = await resend.emails.send({
     from: "Your App <yourapp@example.com>",
@@ -99,10 +97,7 @@ async function convertCommentToEmailFormat(
 }
 
 // Returns any unread comments
-function getUnreadComments(
-  thread: ThreadData<ThreadMetadata>,
-  readAt: Date | null
-) {
+function getUnreadComments(thread: ThreadData, readAt: Date | null) {
   return (
     thread.comments
       // Deleted comments
