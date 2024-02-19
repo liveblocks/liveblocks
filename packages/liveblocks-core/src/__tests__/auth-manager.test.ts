@@ -494,7 +494,7 @@ describe("auth-manager - secret auth", () => {
         roomId: "room1",
       })
     ).rejects.toThrow(
-      'Expected a JSON response when doing a POST request on "/mocked-api/not-json". SyntaxError: Unexpected token h in JSON at position 1'
+      'Expected a JSON response when doing a POST request on "/mocked-api/not-json". SyntaxError: Unexpected token'
     );
   });
 

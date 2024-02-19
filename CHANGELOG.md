@@ -14,6 +14,13 @@ This release introduces Notifications (and unread indicators) for Comments.
   (both were previously defined on `createRoomContext` from
   `@liveblocks/react`), and the new `resolveRoomsInfo`.
 
+# v1.9.8
+
+### `@liveblocks/client`
+
+- Fix race condition in client that could leave zombie websockets open
+  indefinitely in a small edge case (thanks for reporting, @dev-badace)
+
 ### `@liveblocks/react`
 
 - Add new `LiveblocksContext` accessible with `createLiveblocksContext`,
@@ -43,6 +50,11 @@ This release introduces Notifications (and unread indicators) for Comments.
   methods)
 - Add email notification webhook event for threads:
   `ThreadEmailNotificationEvent`.
+
+### `@liveblocks/yjs`
+
+- Emit update events from awareness
+- Fix several awareness bugs
 
 # v1.9.7
 

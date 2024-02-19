@@ -362,31 +362,37 @@ export class FSM<
 
   public onEnterAsync<T>(
     nameOrPattern: TState | Wildcard<TState>,
-    promiseFn: (context: Readonly<TContext>) => Promise<T>,
+    promiseFn: (context: Readonly<TContext>, signal: AbortSignal) => Promise<T>,
     onOK: Target<TContext, AsyncOKEvent<T>, TState>,
     onError: Target<TContext, AsyncErrorEvent, TState>
   ): this {
     return this.onEnter(nameOrPattern, () => {
-      let cancelled = false;
+      const abortController = new AbortController();
+      const signal = abortController.signal;
 
-      void promiseFn(this.currentContext.current).then(
+      let done = false;
+      void promiseFn(this.currentContext.current, signal).then(
         // On OK
         (data: T) => {
-          if (!cancelled) {
+          if (!signal.aborted) {
+            done = true;
             this.transition({ type: "ASYNC_OK", data }, onOK);
           }
         },
 
         // On Error
         (reason: unknown) => {
-          if (!cancelled) {
+          if (!signal.aborted) {
+            done = true;
             this.transition({ type: "ASYNC_ERROR", reason }, onError);
           }
         }
       );
 
       return () => {
-        cancelled = true;
+        if (!done) {
+          abortController.abort();
+        }
       };
     });
   }
