@@ -4,7 +4,7 @@ import {
   Liveblocks,
   stringifyCommentBody,
   ThreadData,
-  ThreadEmailNotificationEvent,
+  Notification,
 } from "@liveblocks/node";
 import { getUser, getUsers } from "../../../database";
 import NewComments, { CommentEmailInfo } from "../../../../emails/NewComments";
@@ -17,14 +17,16 @@ const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
 });
 
-export async function threadEmailNotification({
+export async function notification({
+  kind,
+  target,
   roomId,
   threadId,
   inboxNotificationId,
   userId,
   projectId,
   createdAt,
-}: ThreadEmailNotificationEvent["data"]): Promise<Response> {
+}: Notification["data"]): Promise<Response> {
   // Get info on the thread involved and the current inbox notification
   const [thread, inboxNotification] = await Promise.all([
     liveblocks.getThread({ roomId, threadId }),
