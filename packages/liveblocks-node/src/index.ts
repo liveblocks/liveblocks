@@ -21,6 +21,7 @@ export type {
   CommentEditedEvent,
   CommentReactionAdded,
   CommentReactionRemoved,
+  NotificationEvent,
   RoomCreatedEvent,
   RoomDeletedEvent,
   StorageUpdatedEvent,
@@ -28,7 +29,6 @@ export type {
   ThreadMetadataUpdatedEvent,
   UserEnteredEvent,
   UserLeftEvent,
-  NotificationEvent,
   WebhookEvent,
   WebhookRequest,
 } from "./webhooks";
