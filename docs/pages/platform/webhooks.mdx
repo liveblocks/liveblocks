@@ -69,14 +69,19 @@ so from within the webhooks dashboard for your project.
 </Steps>
 
 <Figure>
-  <video autoPlay loop muted playsInline>
+  <video width={1512} height={982} autoPlay loop muted playsInline>
     <source src="/assets/webhooks/create-endpoint.mp4" type="video/mp4" />
   </video>
 </Figure>
 
-Your endpoint must return a `2xx` (status code `200-299`) to indicate that the event was successfully received. If your endpoint returns anything else, the event will be retried, see [replaying events](#replaying-events) for more details.
+Your endpoint must return a `2xx` (status code `200-299`) to indicate that the
+event was successfully received. If your endpoint returns anything else, the
+event will be retried, see [replaying events](#replaying-events) for more
+details.
 
-If all events fail to be delivered to your endpoint for 5 consecutive days, your endpoint will automatically be disabled. You can always re-enable it from the dashboard.
+If all events fail to be delivered to your endpoint for 5 consecutive days, your
+endpoint will automatically be disabled. You can always re-enable it from the
+dashboard.
 
 ### Edit endpoint events [#edit-endpoint-events]
 
@@ -106,7 +111,7 @@ endpoint.
 </Steps>
 
 <Figure>
-  <video autoPlay loop muted playsInline>
+  <video width={1512} height={982} autoPlay loop muted playsInline>
     <source src="/assets/webhooks/edit-events.mp4" type="video/mp4" />
   </video>
 </Figure>
@@ -382,7 +387,8 @@ If you visit the page `localtunnel` links you to, and correctly input your IP
 address, the URL it generates can be placed into the Liveblocks webhooks
 dashboard for quick testing.
 
-For a full step-by-step guide on testing with `localtunnel` and `ngrok`, read the guide on
+For a full step-by-step guide on testing with `localtunnel` and `ngrok`, read
+the guide on
 [how to test webhooks on localhost](/docs/guides/how-to-test-webhooks-on-localhost#Use-your-webhook-event).
 
 ## Liveblocks events
