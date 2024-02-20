@@ -41,6 +41,8 @@ This release introduces Notifications (and unread indicators) for Comments.
 
 - Add new default components: `InboxNotification` and `InboxNotificationList`.
 - Add unread indicators to the default `Thread` component.
+- Support "@" in mentions. (e.g. `@user@email.com` is now a valid mention and
+  will trigger `resolveMentionSuggestions` with `"user@email.com"`)
 
 ### `@liveblocks/node`
 
