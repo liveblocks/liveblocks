@@ -410,7 +410,7 @@ Events available for use include:
 - `CommentCreated/CommentEdited/CommentDeleted`
 - `CommentReactionAdded/CommentReactionRemoved`
 - `ThreadCreated/ThreadMetadataUpdated`
-- `ThreadEmailNotification`
+- `Notification`
 
 More events will come later, such as:
 
@@ -837,7 +837,7 @@ const threadMetadataUpdatedEvent = {
 };
 ```
 
-#### ThreadEmailNotificationEvent
+#### NotificationEvent
 
 An event is triggered 30 minutes after a user has been mentioned or replied to
 in a thread, and has not seen the thread. It will also be triggered if the user
@@ -847,9 +847,11 @@ notifications.
 
 ```ts
 // Schema
-type ThreadEmailNotificationEvent = {
-  type: "threadEmailNotification";
+type NotificationEvent = {
+  type: "notification";
   data: {
+    target: "email";
+    kind: "thread";
     projectId: string;
     roomId: string;
     userId: string;
@@ -860,16 +862,18 @@ type ThreadEmailNotificationEvent = {
 };
 
 // Example
-const threadEmailNotificationEvent = {
-  type: "threadEmailNotification",
+const notificationEvent = {
+  type: "notification",
   data: {
+    target: "email",
+    kind: "thread",
     projectId: "my-project-id",
     roomId: "my-room-id",
-    userId: "my-user-id",
+    userId: "my-user-id
     threadId: "my-thread-id",
     inboxNotificationId: "my-inbox-notification-id",
     createdAt: "2021-10-06T01:45:56.558Z",
-  },
+    },
 };
 ```
 
@@ -890,3 +894,7 @@ configure, subscribe to, secure, and replay webhook events with Liveblocks.
 If you have any questions or need help using webhooks, please let us know
 [by email](mailto:support@liveblocks.io) or by joining our
 [Discord community](/discord)! We’re here to help!
+
+```
+
+```

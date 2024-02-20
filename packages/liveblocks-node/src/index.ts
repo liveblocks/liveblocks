@@ -25,10 +25,10 @@ export type {
   RoomDeletedEvent,
   StorageUpdatedEvent,
   ThreadCreatedEvent,
-  ThreadEmailNotificationEvent,
   ThreadMetadataUpdatedEvent,
   UserEnteredEvent,
   UserLeftEvent,
+  NotificationEvent,
   WebhookEvent,
   WebhookRequest,
 } from "./webhooks";
