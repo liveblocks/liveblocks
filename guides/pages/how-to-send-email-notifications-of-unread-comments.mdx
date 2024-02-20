@@ -241,7 +241,7 @@ has been created.
     <StepTitle>Webhooks dashboard is set up!</StepTitle>
 
     <StepContent>
-      Note that you can filter specifically for `threadEmailNotification` events, but we’re
+      Note that you can filter specifically for `notification` events, but we’re
       ignoring this for now so we can test more easily. Let’s go back to the
       code.
     </StepContent>
@@ -321,7 +321,7 @@ export async function POST(request: Request) {
   }
 
   // When an inbox notification has been created
-  if (event.type === "threadEmailNotification") {
+  if (event.type === "notification") {
     const { roomId, threadId, inboxNotificationId, userId } = event.data;
 
     // Check if user has access to room
@@ -386,7 +386,7 @@ export async function POST(request: Request) {
   }
 
   // When an inbox notification has been created
-  if (event.type === "threadEmailNotification") {
+  if (event.type === "notification") {
     const { roomId, threadId, inboxNotificationId, userId } = event.data;
 
     // Check if user has access to room
@@ -447,7 +447,7 @@ export async function POST(request: Request) {
   }
 
   // When an inbox notification has been created
-  if (event.type === "threadEmailNotification") {
+  if (event.type === "notification") {
     const { roomId, threadId, inboxNotificationId, userId } = event.data;
 
     // Check if user has access to room
@@ -540,7 +540,7 @@ export async function POST(request: Request) {
   }
 
   // When an inbox notification has been created
-  if (event.type === "threadEmailNotification") {
+  if (event.type === "notification") {
     const { roomId, threadId, inboxNotificationId, userId } = event.data;
 
     // Check if user has access to room
@@ -649,7 +649,7 @@ export async function POST(request: Request) {
   }
 
   // When an inbox notification has been created
-  if (event.type === "threadEmailNotification") {
+  if (event.type === "notification") {
     const { roomId, threadId, inboxNotificationId, userId } = event.data;
 
     // Check if user has access to room
@@ -758,7 +758,7 @@ export async function POST(request: Request) {
   }
 
   // When an inbox notification has been created
-  if (event.type === "threadEmailNotification") {
+  if (event.type === "notification") {
     const { roomId, threadId, inboxNotificationId, userId } = event.data;
 
     // Check if user has access to room
