@@ -148,9 +148,9 @@ export class WebhookHandler {
         "commentReactionAdded",
         "commentReactionRemoved",
         "threadMetadataUpdated",
-        "threadEmailNotification",
         "threadCreated",
         "ydocUpdated",
+        "notification",
       ].includes(event.type)
     )
       return;
@@ -202,7 +202,7 @@ type WebhookEvent =
   | CommentReactionAdded
   | CommentReactionRemoved
   | ThreadMetadataUpdatedEvent
-  | ThreadEmailNotificationEvent
+  | NotificationEvent
   | ThreadCreatedEvent
   | YDocUpdatedEvent;
 
@@ -399,9 +399,11 @@ type ThreadCreatedEvent = {
   };
 };
 
-type ThreadEmailNotificationEvent = {
-  type: "threadEmailNotification";
+type NotificationEvent = {
+  type: "notification";
   data: {
+    channel: "email";
+    kind: "thread";
     projectId: string;
     roomId: string;
     userId: string;
@@ -421,11 +423,11 @@ export type {
   CommentEditedEvent,
   CommentReactionAdded,
   CommentReactionRemoved,
+  NotificationEvent,
   RoomCreatedEvent,
   RoomDeletedEvent,
   StorageUpdatedEvent,
   ThreadCreatedEvent,
-  ThreadEmailNotificationEvent,
   ThreadMetadataUpdatedEvent,
   UserEnteredEvent,
   UserLeftEvent,
