@@ -850,7 +850,7 @@ notifications.
 type NotificationEvent = {
   type: "notification";
   data: {
-    target: "email";
+    channel: "email";
     kind: "thread";
     projectId: string;
     roomId: string;
@@ -865,7 +865,7 @@ type NotificationEvent = {
 const notificationEvent = {
   type: "notification",
   data: {
-    target: "email",
+    channel: "email",
     kind: "thread",
     projectId: "my-project-id",
     roomId: "my-room-id",
@@ -894,4 +894,3 @@ configure, subscribe to, secure, and replay webhook events with Liveblocks.
 If you have any questions or need help using webhooks, please let us know
 [by email](mailto:support@liveblocks.io) or by joining our
 [Discord community](/discord)! We’re here to help!
-

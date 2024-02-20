@@ -402,7 +402,7 @@ type ThreadCreatedEvent = {
 type NotificationEvent = {
   type: "notification";
   data: {
-    target: "email";
+    channel: "email";
     kind: "thread";
     projectId: string;
     roomId: string;

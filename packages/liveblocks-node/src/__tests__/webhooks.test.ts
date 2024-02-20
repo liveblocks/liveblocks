@@ -167,7 +167,7 @@ describe("WebhookHandler", () => {
         "notification",
         {
           kind: "thread",
-          target: "email",
+          channel: "email",
           projectId: "605a50b01a36d5ea7a2e9104",
           roomId: "examples-hero-21-07-2022",
           inboxNotificationId: "605a50b01a36d5ea7a2e9104",
