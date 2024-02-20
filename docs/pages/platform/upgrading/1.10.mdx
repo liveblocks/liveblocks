@@ -48,7 +48,7 @@ If you use `createClient` with `authEndpoint`
 ```typescript
 const client = createClient({
   authEndpoint: (room) => {
-    // room is null if you're using `useInboxNotifications`
+    // The `room` argument will be `undefined` if you're using `useInboxNotifications`
   },
 });
 ```
