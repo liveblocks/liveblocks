@@ -31,11 +31,11 @@ const server = setupServer();
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 
 beforeEach(() => {
-  MockWebSocket.instances = [];
+  MockWebSocket.reset();
 });
 
 afterEach(() => {
-  MockWebSocket.instances = [];
+  MockWebSocket.reset();
   server.resetHandlers();
   jest.clearAllTimers();
   jest.clearAllMocks();

@@ -4,7 +4,7 @@ import React from "react";
 
 import { getRoomFromUrl, Row, styles, useRenderCount } from "../../utils";
 import Button from "../../utils/Button";
-import createLiveblocksClient from "../../utils/createClient";
+import { createLiveblocksClient } from "../../utils/createClient";
 
 const client = createLiveblocksClient();
 

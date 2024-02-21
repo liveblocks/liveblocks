@@ -7,9 +7,9 @@ import {
   nanoSleep,
   pickFrom,
   preparePages,
-  sleep,
   waitForJson,
   waitUntilEqualOnAllPages,
+  waitUntilFlushed,
 } from "./utils";
 
 test.describe.configure({ mode: "parallel" });
@@ -106,6 +106,7 @@ test.describe("Offline", () => {
     await waitForJson(pages, "#socketStatus", "connected");
 
     await page1.click("#clear");
+    await waitUntilFlushed();
     await waitForJson(pages, "#numItems", 0);
 
     // Page 1 loses network connectivity
@@ -209,15 +210,22 @@ test.describe("Offline", () => {
   test("forced disconnect (via invalid message)", async () => {
     const [page1, page2] = pages;
     await waitForJson(pages, "#socketStatus", "connected");
+
     await page1.click("#clear");
+    await waitUntilFlushed();
     await waitForJson(pages, "#numItems", 0);
     await waitForJson(pages, "#numOthers", 1);
 
     await page1.click("#push");
+    await waitUntilFlushed();
+    await waitForJson(pages, "#numItems", 1);
+
     await page1.click("#send-invalid-data");
-    await sleep(300); // give the server a few millis to disconnect
+    await waitUntilFlushed();
+
     await page1.click("#push");
     await page1.click("#push");
+    await waitUntilFlushed();
     await waitForJson(page1, "#socketStatus", "disconnected");
 
     // Client A will see the local push, but client B will never receive it
@@ -231,14 +239,22 @@ test.describe("Offline", () => {
   test("forced disconnect (via not allowed)", async () => {
     const [page1, page2] = pages;
     await waitForJson(pages, "#socketStatus", "connected");
+
     await page1.click("#clear");
+    await waitUntilFlushed();
     await waitForJson(pages, "#numItems", 0);
     await waitForJson(pages, "#numOthers", 1);
 
     await page1.click("#push");
+    await waitUntilFlushed();
+    await waitForJson(pages, "#numItems", 1);
+
     await page1.click("#close-with-not-allowed");
+    await waitUntilFlushed();
+
     await page1.click("#push");
     await page1.click("#push");
+    await waitUntilFlushed();
     await waitForJson(page1, "#socketStatus", "disconnected");
 
     // Client A will see the local push, but client B will never receive it
@@ -252,14 +268,22 @@ test.describe("Offline", () => {
   test("forced disconnect (via room full)", async () => {
     const [page1, page2] = pages;
     await waitForJson(pages, "#socketStatus", "connected");
+
     await page1.click("#clear");
+    await waitUntilFlushed();
     await waitForJson(pages, "#numItems", 0);
     await waitForJson(pages, "#numOthers", 1);
 
     await page1.click("#push");
+    await waitUntilFlushed();
+    await waitForJson(pages, "#numItems", 1);
+
     await page1.click("#close-with-room-full");
+    await waitUntilFlushed();
+
     await page1.click("#push");
     await page1.click("#push");
+    await waitUntilFlushed();
     await waitForJson(page1, "#socketStatus", "disconnected");
 
     // Client A will see the local push, but client B will never receive it
@@ -273,14 +297,22 @@ test.describe("Offline", () => {
   test("forced disconnect (via explicit ask to not retry)", async () => {
     const [page1, page2] = pages;
     await waitForJson(pages, "#socketStatus", "connected");
+
     await page1.click("#clear");
+    await waitUntilFlushed();
     await waitForJson(pages, "#numItems", 0);
     await waitForJson(pages, "#numOthers", 1);
 
     await page1.click("#push");
+    await waitUntilFlushed();
+    await waitForJson(pages, "#numItems", 1);
+
     await page1.click("#close-with-dont-retry");
+    await waitUntilFlushed();
+
     await page1.click("#push");
     await page1.click("#push");
+    await waitUntilFlushed();
     await waitForJson(page1, "#socketStatus", "disconnected");
 
     // Client A will see the local push, but client B will never receive it

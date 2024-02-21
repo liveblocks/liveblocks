@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import { test } from "@playwright/test";
 
-import type { IDSelector } from "./utils";
+import { IDSelector, waitUntilFlushed } from "./utils";
 import {
   expectJson,
   genRoomId,
@@ -38,19 +38,23 @@ test.describe("Zustand", () => {
 
     await page1.click("#push");
     await page1.click("#push");
+    await waitUntilFlushed();
     await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#push");
     await page1.click("#push");
+    await waitUntilFlushed();
     await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#push");
     await page1.click("#push");
     await page1.click("#push");
+    await waitUntilFlushed();
     await waitUntilEqualOnAllPages(pages, "#items");
     await expectJson(page2, "#numItems", 7);
 
     await page1.click("#clear");
+    await waitUntilFlushed();
     await waitForJson(pages, "#numItems", 0);
   });
 
