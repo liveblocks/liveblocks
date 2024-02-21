@@ -55,15 +55,17 @@ a webhook for a project, and select which events you’d like to listen to.
 
 The endpoint URL you pass will receive request with relevant data when the event
 occurs. The webhook event built for creating these unread notification emails is
-called `"threadEmailNotification"`, and by default is sent up to every 30
-minutes to each user, though this can be customized in the webhooks dashboard.
-Here’s an example of an event object that’s sent when a user receives a new (or
-updated) inbox notification.
+called `"notification"`, and by default is sent up to every 30 minutes to each
+user, though this can be customized in the webhooks dashboard. Here’s an example
+of an event object that’s sent when a user receives a new (or updated) inbox
+notification.
 
 ```ts
 const event = {
-  type: "threadEmailNotification",
+  type: "notification",
   data: {
+    channel: "email",
+    type: "thread",
     projectId: "my-project-id",
     roomId: "my-room-id",
     threadId: "th_d75sF3...",
@@ -83,7 +85,7 @@ and
 which will return the thread and inbox notification for the event.
 
 ```ts
-// Data from the `threadEmailNotification` event
+// Data from the `notification` event
 const { roomId, threadId, inboxNotificationId, userId } = event.data;
 
 // Get the thread with the unread comments inside
@@ -225,8 +227,13 @@ example.
 
 ### Permissions
 
-When you receive a `threadEmailNotification` webhook event, it's essential to verify if the user has access to the room before sending an email.
-Liveblocks lacks the necessary information to determine if a user has access to a room. For instance, we create an inbox notification when a user is mentioned in a comment. In this user's client context, we can determine if they have access to the notification thanks to the token generated for that user. However, when we send a `threadEmailNotification` webhook event, we lack this information.
+When you receive a `notification` webhook event, it's essential to verify if the
+user has access to the room before sending an email. Liveblocks lacks the
+necessary information to determine if a user has access to a room. For instance,
+we create an inbox notification when a user is mentioned in a comment. In this
+user's client context, we can determine if they have access to the notification
+thanks to the token generated for that user. However, when we send a
+`notification` webhook event, we lack this information.
 
 #### Access token authentication
 
@@ -235,13 +242,18 @@ have the information.
 
 #### ID token authentication
 
-If you are using ID tokens, Liveblocks already possesses certain information about the permissions you have configured for each room, specifying which users and groups have access. However, what we currently lack is the relationship between a user and a group.
-At present, you need to verify user access before sending an email. We do, however, plan to include full permissions info in Liveblocks in our future updates. If you're interested in learning more about this feature, please feel free to reach out to us.
+If you are using ID tokens, Liveblocks already possesses certain information
+about the permissions you have configured for each room, specifying which users
+and groups have access. However, what we currently lack is the relationship
+between a user and a group. At present, you need to verify user access before
+sending an email. We do, however, plan to include full permissions info in
+Liveblocks in our future updates. If you're interested in learning more about
+this feature, please feel free to reach out to us.
 
 ## Webhook events
 
-There are more webhook events than just the `ThreadEmailNotificationEvent` event
-used above—a number related to Comments are available to use.
+There are more webhook events than just the `NotificationEvent` event used
+above—a number related to Comments are available to use.
 
 - [`CommentCreatedEvent`](/docs/platform/webhooks#CommentCreatedEvent)
 - [`CommentEditedEvent`](/docs/platform/webhooks#CommentEditedEvent)

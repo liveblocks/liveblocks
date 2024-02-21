@@ -44,7 +44,7 @@ you to automatically get your API key from your
 
 You need to set up webhooks to make this example run.
 
-- Follow our guide on [testing webhooks locally](https://liveblocks.io/docs/guides/how-to-test-webhooks-on-localhost), making sure to [check the “**threadEmailNotification**” event](https://liveblocks.io/docs/platform/webhooks#edit-endpoint-events) when creating the webhook
+- Follow our guide on [testing webhooks locally](https://liveblocks.io/docs/guides/how-to-test-webhooks-on-localhost), making sure to [check the “**notification**” event](https://liveblocks.io/docs/platform/webhooks#edit-endpoint-events) when creating the webhook
 - Copy your **webhook secret key** from the webhooks dashboard
 - Add your webhook secret key to `.env.local` as the `LIVEBLOCKS_WEBHOOK_SECRET_KEY` environment variable
 
