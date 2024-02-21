@@ -42,10 +42,10 @@ const server = setupServer(
 
 beforeAll(() => server.listen());
 afterEach(() => {
-  MockWebSocket.instances = [];
+  MockWebSocket.reset();
 });
 beforeEach(() => {
-  MockWebSocket.instances = [];
+  MockWebSocket.reset();
 });
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
