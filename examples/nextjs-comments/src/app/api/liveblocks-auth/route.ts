@@ -24,6 +24,7 @@ export async function POST(request: NextRequest) {
 
   // Give the user access to the room
   const { room } = await request.json();
+
   session.allow(room, session.FULL_ACCESS);
 
   // Authorize the user and return the result

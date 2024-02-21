@@ -14,5 +14,5 @@ export type Authentication =
     }
   | {
       type: "custom";
-      callback: (room: string) => Promise<CustomAuthenticationResult>;
+      callback: (room?: string) => Promise<CustomAuthenticationResult>;
     };

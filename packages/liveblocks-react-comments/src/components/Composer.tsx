@@ -1,6 +1,6 @@
 "use client";
 
-import type { BaseMetadata } from "@liveblocks/core";
+import { type BaseMetadata, kInternal } from "@liveblocks/core";
 import { useRoomContextBundle } from "@liveblocks/react";
 import type {
   ComponentPropsWithoutRef,
@@ -17,7 +17,8 @@ import React, { forwardRef, useCallback, useState } from "react";
 import { EmojiIcon } from "../icons/Emoji";
 import { MentionIcon } from "../icons/Mention";
 import { SendIcon } from "../icons/Send";
-import { type ComposerOverrides, useOverrides } from "../overrides";
+import type { ComposerOverrides, GlobalOverrides } from "../overrides";
+import { useOverrides } from "../overrides";
 import * as ComposerPrimitive from "../primitives/Composer";
 import { useComposer } from "../primitives/Composer/contexts";
 import type {
@@ -134,12 +135,7 @@ export type ComposerProps<
     /**
      * Override the component's strings.
      */
-    overrides?: Partial<ComposerOverrides>;
-
-    /**
-     * @internal
-     */
-    root?: boolean;
+    overrides?: Partial<GlobalOverrides & ComposerOverrides>;
 
     /**
      * @internal
@@ -286,7 +282,6 @@ const ComposerWithContext = forwardRef<
       actions,
       overrides,
       showAttribution,
-      root = true,
       onFocus,
       onBlur,
       className,
@@ -294,7 +289,9 @@ const ComposerWithContext = forwardRef<
     },
     forwardedRef
   ) => {
-    const { hasResolveMentionSuggestions } = useRoomContextBundle();
+    const {
+      [kInternal]: { hasResolveMentionSuggestions },
+    } = useRoomContextBundle();
     const { isEmpty } = useComposer();
     const $ = useOverrides(overrides);
     const [isEmojiPickerOpen, setEmojiPickerOpen] = useState(false);
@@ -361,8 +358,7 @@ const ComposerWithContext = forwardRef<
     return (
       <form
         className={classNames(
-          root && "lb-root",
-          "lb-composer lb-composer-form",
+          "lb-root lb-composer lb-composer-form",
           className
         )}
         dir={$.dir}

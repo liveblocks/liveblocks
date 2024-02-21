@@ -1,35 +1,41 @@
 import type {
   BaseMetadata,
-  CommentDataPlain,
-  ThreadDataPlain,
+  CommentData,
+  InboxNotificationData,
+  ThreadData,
 } from "@liveblocks/core";
 
-import { createCommentId, createThreadId } from "../comments/CommentsRoom";
+import {
+  createCommentId,
+  createInboxNotificationId,
+  createThreadId,
+} from "../comments/lib/createIds";
 
-export function dummyThreadDataPlain<
+export function dummyThreadData<
   TThreadMetadata extends BaseMetadata = BaseMetadata,
->(): ThreadDataPlain<TThreadMetadata> {
-  const createdAt = new Date().toISOString();
+>(): ThreadData<TThreadMetadata> {
+  const now = new Date();
   const threadId = createThreadId();
 
-  const comment = dummyCommentDataPlain();
-  (comment.threadId = threadId), (comment.createdAt = createdAt);
+  const comment = dummyCommentData();
+  comment.threadId = threadId;
+  comment.createdAt = now;
 
   return {
     id: threadId,
     type: "thread",
     roomId: "room-id",
-    createdAt,
+    createdAt: now,
     metadata: {}, // TODO Fix type
-    updatedAt: undefined,
+    updatedAt: now,
     comments: [comment],
-  } as ThreadDataPlain<TThreadMetadata>;
+  } as ThreadData<TThreadMetadata>;
 }
 
-export function dummyCommentDataPlain(): CommentDataPlain {
+export function dummyCommentData(): CommentData {
   const id = createCommentId();
   const threadId = createThreadId();
-  const now = new Date().toISOString();
+  const now = new Date();
 
   return {
     id,
@@ -44,5 +50,20 @@ export function dummyCommentDataPlain(): CommentDataPlain {
     deletedAt: undefined,
     createdAt: now,
     reactions: [],
+  };
+}
+
+export function dummyInboxNoficationData(): InboxNotificationData {
+  const id = createInboxNotificationId();
+  const threadId = createThreadId();
+  const now = new Date();
+
+  return {
+    kind: "thread",
+    roomId: "room-id",
+    id,
+    notifiedAt: now,
+    threadId,
+    readAt: null,
   };
 }

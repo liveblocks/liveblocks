@@ -11,6 +11,15 @@ Liveblocks allows you to build a commenting experience with
 possible to send email notifications to users when they’re mentioned in
 comments.
 
+<Banner title="You’re probably looking for a different guide" type="warning">
+
+This guide is about sending an email immediately after every comment is posted.
+If you’d prefer aggregate multiple notifications into one email, and only notify
+users about unread comments, you should read this guide on
+[how to send email notifications of unread comments](/docs/guides/how-to-send-email-notifications-of-unread-comments).
+
+</Banner>
+
 ## What we’re building
 
 In this guide we’ll be learning how to send comments notifications, and more
@@ -37,8 +46,8 @@ you’re set up. You could also use our
 ## Create an endpoint in your project
 
 When a webhook event is triggered, it can send a POST request to the back end in
-your project, and from within there we can update the database. In this guide,
-we’ll be using a Next.js route handler (API endpoint) as an example, but other
+your project, and from within there we can send the email. In this guide, we’ll
+be using a Next.js route handler (API endpoint) as an example, but other
 frameworks work similarly.
 
 In order to use webhooks, we’ll need to retrieve the `headers` and `body` from
@@ -56,12 +65,14 @@ export async function POST(request: Request) {
 }
 ```
 
-Create this endpoint in your project, and make it available on `localhost` at
-the following URL:
+Create this endpoint in your project, and make it available on `localhost`, for
+example at the following URL:
 
 ```
-/api/liveblocks-database-sync
+/api/liveblocks-notifications
 ```
+
+Make a note of this endpoint URL, as you’ll be using it later.
 
 ### Testing webhooks locally
 
@@ -78,8 +89,20 @@ is running:
 npx localtunnel --port 3000
 ```
 
-If you correctly input your IP address, the URL `localtunnel` generates can be
-placed into the Liveblocks webhooks dashboard for quick testing.
+`localtunnel` generates a base URL that can be placed into the Liveblocks
+webhooks dashboard for quick testing. To use this, take the full address of your
+webhook endpoint, and replace the domain in your `localhost` address with the
+generated URL.
+
+```shell
+# Take your local URL
+http://localhost:3000/api/liveblocks-notifications
+
+# Replace localhost with the generated domain, then copy it
+https://my-localtunnel-url.loca.lt/api/liveblocks-notifications
+```
+
+You now have a URL that can be used in the webhooks dashboard.
 
 ## Set up webhooks on the Liveblocks dashboard
 
@@ -105,6 +128,7 @@ has been created.
   </Step>
 
 {" "}
+
 <Step>
   <StepTitle>Go to the webhooks dashboard</StepTitle>
   <StepContent>
@@ -121,6 +145,7 @@ has been created.
 </Step>
 
 {" "}
+
 <Step>
   <StepTitle>Create an endpoint</StepTitle>
   <StepContent>
@@ -138,6 +163,7 @@ has been created.
 </Step>
 
 {" "}
+
 <Step>
   <StepTitle>Add your endpoint URL</StepTitle>
   <StepContent>
@@ -155,6 +181,7 @@ has been created.
 </Step>
 
 {" "}
+
 <Step>
   <StepTitle>Get your webhook secret key</StepTitle>
   <StepContent>
@@ -476,7 +503,7 @@ database, which you can retrieve from these `userIds`.
 
 <Banner title="userIds">
   These are the same `userIds` that are passed to
-  [`resolveUsers`](/docs/api-reference/liveblocks-react#resolveUsers) in your
+  [`resolveUsers`](/docs/api-reference/liveblocks-client#resolveUsers) in your
   `liveblocks.config.ts` file.
 </Banner>
 

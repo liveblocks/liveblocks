@@ -4,6 +4,7 @@ import Head from "next/head";
 import { Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
 import { Badge } from "../components/Badge";
+import { LiveblocksProvider } from "../liveblocks.config";
 import "../styles/globals.css";
 import "../styles/text-editor.css";
 import "@liveblocks/react-comments/styles.css";
@@ -20,12 +21,14 @@ export default function App({
         <title>Starter Kit</title>
         <link href="/favicon.svg" rel="icon" type="image/svg" />
       </Head>
-      <TooltipProvider>
+      <LiveblocksProvider>
         <SessionProvider session={pageProps.session}>
-          <Component {...pageProps} />
-          <Badge />
+          <TooltipProvider>
+            <Component {...pageProps} />
+            <Badge />
+          </TooltipProvider>
         </SessionProvider>
-      </TooltipProvider>
+      </LiveblocksProvider>
     </>
   );
 }

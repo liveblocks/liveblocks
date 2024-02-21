@@ -171,7 +171,7 @@ prioritize verification in your integration. We recommend using the
     <StepTitle>Set up the webhook handler</StepTitle>
     <StepContent>
 
-      Set up your webhook handler, inserting your secret key from the webhook dashboard you
+      Set up your webhook handler, inserting your secret key from the webhooks dashboard you
       set up earlier into [`WebhookHandler`](/docs/api-reference/liveblocks-node#WebhookHandler).
 
       ```ts
@@ -410,6 +410,7 @@ Events available for use include:
 - `CommentCreated/CommentEdited/CommentDeleted`
 - `CommentReactionAdded/CommentReactionRemoved`
 - `ThreadCreated/ThreadMetadataUpdated`
+- `Notification`
 
 More events will come later, such as:
 
@@ -805,7 +806,7 @@ const threadCreatedEvent = {
 };
 ```
 
-#### ThreadMetadaUpdatedEvent
+#### ThreadMetadataUpdatedEvent
 
 An event is triggered when a thread metadata is updated. This event is not
 throttled.
@@ -833,6 +834,46 @@ const threadMetadataUpdatedEvent = {
     updatedAt: "2021-10-06T01:45:56.558Z",
     updatedBy: "my-user-id",
   },
+};
+```
+
+#### NotificationEvent
+
+An event is triggered 30 minutes after a user has been mentioned or replied to
+in a thread, and has not seen the thread. It will also be triggered if the user
+has subscribed to the thread and has not seen the thread. The event won’t be
+triggered if the user has seen the thread or unsubscribed from the room’s thread
+notifications.
+
+```ts
+// Schema
+type NotificationEvent = {
+  type: "notification";
+  data: {
+    channel: "email";
+    kind: "thread";
+    projectId: string;
+    roomId: string;
+    userId: string;
+    threadId: string;
+    inboxNotificationId: string;
+    createdAt: string;
+  };
+};
+
+// Example
+const notificationEvent = {
+  type: "notification",
+  data: {
+    channel: "email",
+    kind: "thread",
+    projectId: "my-project-id",
+    roomId: "my-room-id",
+    userId: "my-user-id
+    threadId: "my-thread-id",
+    inboxNotificationId: "my-inbox-notification-id",
+    createdAt: "2021-10-06T01:45:56.558Z",
+    },
 };
 ```
 

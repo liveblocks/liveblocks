@@ -1,0 +1,25 @@
+.inboxPopover {
+  display: flex;
+  width: 460px;
+  max-height: calc(100vh - var(--header-height) - var(--space-8));
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.inboxPopoverUnreadCount {
+  position: absolute;
+  top: 0;
+  right: 0;
+  transform: translate(50%, -50%);
+  display: flex;
+  place-content: center;
+  place-items: center;
+  background: var(--color-accent);
+  color: var(--color-surface-elevated);
+  font-size: 0.675rem;
+  font-weight: 500;
+  height: 1rem;
+  min-width: 1rem;
+  padding: 0 var(--space-2);
+  border-radius: 9999px;
+}

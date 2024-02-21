@@ -1,9 +1,9 @@
-import type { CommentBodyResolveUsersArgs } from "../comment-body";
+import type { ResolveUsersArgs } from "../../client";
+import type { CommentBody } from "../../types/CommentBody";
 import {
   getMentionedIdsFromCommentBody,
   stringifyCommentBody,
 } from "../comment-body";
-import type { CommentBody } from "../types/CommentBody";
 
 function capitalize(string: string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
@@ -140,7 +140,7 @@ const commentBodyWithMentions: CommentBody = {
   ],
 };
 
-function resolveUsers({ userIds }: CommentBodyResolveUsersArgs) {
+function resolveUsers({ userIds }: ResolveUsersArgs) {
   return userIds.map((userId) => {
     return {
       name: capitalize(userId),

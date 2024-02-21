@@ -1,4 +1,5 @@
 .button {
+  position: relative;
   display: flex;
   height: var(--space-13);
   padding: 0 var(--space-7);

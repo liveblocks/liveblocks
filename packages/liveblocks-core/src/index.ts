@@ -16,14 +16,38 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
  * https://join.team/liveblocks ;)
  */
 
-export type { Client, ClientOptions, EnterOptions } from "./client";
-export { createClient } from "./client";
+export type {
+  Client,
+  ClientOptions,
+  EnterOptions,
+  ResolveMentionSuggestionsArgs,
+  ResolveRoomsInfoArgs,
+  ResolveUsersArgs,
+} from "./client";
+export { createClient, NotificationsApiError } from "./client";
+export type {
+  CommentBodyLinkElementArgs,
+  CommentBodyMentionElementArgs,
+  CommentBodyParagraphElementArgs,
+  CommentBodyTextElementArgs,
+  StringifyCommentBodyElements,
+  StringifyCommentBodyOptions,
+} from "./comments/comment-body";
+export {
+  getMentionedIdsFromCommentBody,
+  stringifyCommentBody,
+} from "./comments/comment-body";
 export type { BaseAuthResult, Delegates, LiveblocksError } from "./connection";
 export type {
   LegacyConnectionStatus,
   LostConnectionEvent,
   Status,
 } from "./connection";
+export {
+  convertToCommentData,
+  convertToCommentUserReaction,
+  convertToThreadData,
+} from "./convert-plain-data";
 export { cloneLson, isLiveNode } from "./crdts/liveblocks-helpers";
 export { LiveList } from "./crdts/LiveList";
 export { LiveMap } from "./crdts/LiveMap";
@@ -48,17 +72,8 @@ export {
   lsonToJson,
   patchLiveObjectKey,
 } from "./immutable";
+export { kInternal } from "./internal";
 export { assert, assertNever, nn } from "./lib/assert";
-export type {
-  AsyncCache,
-  AsyncState,
-  AsyncStateError,
-  AsyncStateInitial,
-  AsyncStateLoading,
-  AsyncStateResolved,
-  AsyncStateSuccess,
-} from "./lib/AsyncCache";
-export { createAsyncCache } from "./lib/AsyncCache";
 export {
   deprecate,
   deprecateIf,
@@ -124,6 +139,7 @@ export { CrdtType } from "./protocol/SerializedCrdt";
 export { isChildCrdt, isRootCrdt } from "./protocol/SerializedCrdt";
 export type {
   BroadcastedEventServerMsg,
+  CommentsEventServerMsg,
   InitialDocumentStateServerMsg,
   RejectedStorageOpServerMsg,
   RoomStateServerMsg,
@@ -143,7 +159,35 @@ export type {
   RoomInitializers,
   StorageStatus,
 } from "./room";
+export type { GetThreadsOptions } from "./room";
+export { CommentsApiError } from "./room";
+export type { BaseMetadata } from "./types/BaseMetadata";
+export type {
+  CommentBody,
+  CommentBodyBlockElement,
+  CommentBodyElement,
+  CommentBodyInlineElement,
+  CommentBodyLink,
+  CommentBodyMention,
+  CommentBodyParagraph,
+  CommentBodyText,
+} from "./types/CommentBody";
+export type {
+  CommentData,
+  CommentDataPlain,
+  CommentReaction,
+} from "./types/CommentData";
+export type {
+  CommentUserReaction,
+  CommentUserReactionPlain,
+} from "./types/CommentReaction";
 export type { Immutable } from "./types/Immutable";
+export type {
+  InboxNotificationData,
+  InboxNotificationDataPlain,
+  InboxNotificationThreadData,
+} from "./types/InboxNotificationData";
+export type { InboxNotificationDeleteInfo } from "./types/InboxNotificationDeleteInfo";
 export type {
   IWebSocket,
   IWebSocketCloseEvent,
@@ -153,7 +197,9 @@ export type {
 } from "./types/IWebSocket";
 export { WebsocketCloseCodes } from "./types/IWebSocket";
 export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
+export type { OptionalPromise } from "./types/OptionalPromise";
 export type { Others, OthersEvent } from "./types/Others";
+export type { PartialNullable } from "./types/PartialNullable";
 export type {
   PlainLson,
   PlainLsonFields,
@@ -161,6 +207,10 @@ export type {
   PlainLsonMap,
   PlainLsonObject,
 } from "./types/PlainLson";
+export type { RoomInfo } from "./types/RoomInfo";
+export type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
+export type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
+export type { ThreadDeleteInfo } from "./types/ThreadDeleteInfo";
 export type { User } from "./types/User";
 export { detectDupes };
 
@@ -185,43 +235,14 @@ export type { DevToolsMsg };
 import type * as DevTools from "./types/DevToolsTreeNode";
 export type { DevTools };
 
-// Comments
-export type { CommentsApi, GetThreadsOptions } from "./comments";
-export { CommentsApiError, createCommentsApi } from "./comments";
-export type {
-  CommentBodyLinkElementArgs,
-  CommentBodyMentionElementArgs,
-  CommentBodyParagraphElementArgs,
-  CommentBodyResolveUsersArgs,
-  CommentBodyTextElementArgs,
-  StringifyCommentBodyElements,
-  StringifyCommentBodyOptions,
-} from "./comments/comment-body";
+// Store
+export type { Store } from "./lib/create-store";
 export {
-  convertToCommentData,
-  convertToCommentUserReaction,
-  convertToThreadData,
-  getMentionedIdsFromCommentBody,
-  stringifyCommentBody,
-} from "./comments/comment-body";
-export type { BaseMetadata } from "./comments/types/BaseMetadata";
-export type {
-  CommentBody,
-  CommentBodyBlockElement,
-  CommentBodyElement,
-  CommentBodyInlineElement,
-  CommentBodyLink,
-  CommentBodyMention,
-  CommentBodyParagraph,
-  CommentBodyText,
-} from "./comments/types/CommentBody";
-export type {
-  CommentData,
-  CommentDataPlain,
-  CommentReaction,
-} from "./comments/types/CommentData";
-export type {
-  CommentUserReaction,
-  CommentUserReactionPlain,
-} from "./comments/types/CommentReaction";
-export type { ThreadData, ThreadDataPlain } from "./comments/types/ThreadData";
+  addReaction,
+  applyOptimisticUpdates,
+  type CacheState,
+  type CacheStore,
+  deleteComment,
+  removeReaction,
+  upsertComment,
+} from "./store";

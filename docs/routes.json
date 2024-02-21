@@ -291,9 +291,8 @@
             "path": "/products/comments/styling-and-customization"
           },
           {
-            "title": "Notification inbox",
-            "path": "/products/comments/notification-inbox",
-            "hidden": true
+            "title": "Notifications",
+            "path": "/products/comments/notifications"
           },
           {
             "title": "Email notifications",
@@ -421,6 +420,10 @@
       {
         "title": "Multiple copies of Liveblocks are being loaded in your project",
         "path": "/errors/dupes"
+      },
+      {
+        "title": "Access token doesn't grant enough permissions",
+        "path": "/errors/liveblocks-client/access-tokens-not-enough-permissions"
       }
     ]
   },
@@ -551,7 +554,8 @@
           { "title": "Upgrading to 1.0", "path": "/platform/upgrading/1.0" },
           { "title": "Upgrading to 1.2", "path": "/platform/upgrading/1.2" },
           { "title": "Upgrading to 1.5", "path": "/platform/upgrading/1.5" },
-          { "title": "Upgrading to 1.9", "path": "/platform/upgrading/1.9" }
+          { "title": "Upgrading to 1.9", "path": "/platform/upgrading/1.9" },
+          { "title": "Upgrading to 1.10", "path": "/platform/upgrading/1.10" }
         ]
       },
       {

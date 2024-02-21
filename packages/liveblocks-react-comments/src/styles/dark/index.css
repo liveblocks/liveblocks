@@ -7,12 +7,8 @@
   --lb-accent: #4af;
   --lb-background: #222;
   --lb-foreground: #fff;
-  --lb-elevation-background: #333;
-  --lb-tooltip-background: #333;
   --lb-accent-contrast: 16%;
   --lb-foreground-contrast: 10%;
-  --lb-elevation-foreground-contrast: 10%;
-  --lb-tooltip-foreground-contrast: 10%;
 
   /**
    * Shadows
@@ -22,4 +18,10 @@
   --lb-tooltip-shadow: $lb-tooltip-shadow;
 
   color-scheme: dark;
+
+  &.lb-elevation,
+  &.lb-tooltip {
+    --lb-background: #333;
+    --lb-foreground-contrast: 10%;
+  }
 }

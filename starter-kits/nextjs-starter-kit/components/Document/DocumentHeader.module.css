@@ -36,8 +36,9 @@
 
 .collaboration {
   place-content: flex-end;
+  gap: var(--space-6);
 }
 
 .presence {
-  margin-right: var(--space-8);
+  margin-right: var(--space-2);
 }

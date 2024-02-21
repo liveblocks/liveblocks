@@ -84,7 +84,7 @@ export type ThreadMetadata = {
 };
 ```
 
-#### Props [#thread-props]
+#### Props [#Thread-props]
 
 <PropertiesList>
   <PropertiesListItem name="thread" type="ThreadData" required>
@@ -173,7 +173,7 @@ export type ThreadMetadata = {
   </PropertiesListItem>
   <PropertiesListItem
     name="overrides"
-    type="Partial<ThreadOverrides & CommentOverrides & ComposerOverrides>"
+    type="Partial<GlobalOverrides & ThreadOverrides & CommentOverrides & ComposerOverrides>"
   >
     Override the component’s strings.
   </PropertiesListItem>
@@ -323,7 +323,7 @@ function Component({ threadId, commentId }) {
 Learn more about mutation hooks under
 [`@liveblocks/react`](/docs/api-reference/liveblocks-react#Comments).
 
-#### Props [#composer-props]
+#### Props [#Composer-props]
 
 <PropertiesList>
   <PropertiesListItem name="threadId" type="string">
@@ -366,7 +366,10 @@ Learn more about mutation hooks under
   <PropertiesListItem name="autoFocus" type="boolean">
     Whether to focus the composer on mount.
   </PropertiesListItem>
-  <PropertiesListItem name="overrides" type="Partial<ComposerOverrides>">
+  <PropertiesListItem
+    name="overrides"
+    type="Partial<GlobalOverrides & ComposerOverrides>"
+  >
     Override the component’s strings.
   </PropertiesListItem>
 </PropertiesList>
@@ -446,7 +449,7 @@ function Component() {
 }
 ```
 
-#### Props [#comment-props]
+#### Props [#Comment-props]
 
 <PropertiesList>
   <PropertiesListItem name="comment" type="CommentData" required>
@@ -499,7 +502,7 @@ function Component() {
   </PropertiesListItem>
   <PropertiesListItem
     name="overrides"
-    type="Partial<CommentOverrides & ComposerOverrides>"
+    type="Partial<GlobalOverrides & CommentOverrides & ComposerOverrides>"
   >
     Override the component’s strings.
   </PropertiesListItem>
@@ -507,20 +510,132 @@ function Component() {
 
 {/* TODO: Document classes and data attributes */}
 
+### InboxNotification
+
+Displays a single inbox notification.
+
+```tsx
+<InboxNotification inboxNotification={inboxNotification} />
+```
+
+<Figure>
+  <Image
+    src="/assets/comments/inbox-notification.png"
+    alt="InboxNotification"
+    width={768}
+    height={446}
+  />
+</Figure>
+
+#### Props [#InboxNotification-props]
+
+<PropertiesList>
+  <PropertiesListItem
+    name="inboxNotification"
+    type="InboxNotification"
+    required
+  >
+    The inbox notification to display.
+  </PropertiesListItem>
+  <PropertiesListItem name="href" type="string">
+    The URL which the inbox notification links to.
+  </PropertiesListItem>
+  <PropertiesListItem name="kinds" type="Partial<InboxNotificationKinds>">
+    Override specific kinds of inbox notifications.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="overrides"
+    type="Partial<GlobalOverrides & InboxNotificationOverrides & CommentOverrides>"
+  >
+    Override the component’s strings.
+  </PropertiesListItem>
+  <PropertiesListItem name="components" type="Partial<GlobalComponents>">
+    Override the component’s components.
+  </PropertiesListItem>
+</PropertiesList>
+
+##### kinds [#InboxNotification-kinds]
+
+Override specific kinds of inbox notifications.
+
+<PropertiesList>
+  <PropertiesListItem
+    name="thread"
+    type="ComponentType<InboxNotificationThreadProps>"
+  >
+    The component used to display thread inbox notifications. Defaults to
+    `InboxNotification.Thread`.
+  </PropertiesListItem>
+</PropertiesList>
+
+###### InboxNotification.Thread [#InboxNotification.Thread]
+
+Displays a thread inbox notification.
+
+```tsx
+<InboxNotification
+  kinds={{
+    thread: (props) => (
+      <InboxNotification.Thread {...props} showRoomName={false} />
+    ),
+  }}
+/>
+```
+
+<PropertiesList>
+  <PropertiesListItem name="showRoomName" type="boolean">
+    Whether to show the room name in the title.
+  </PropertiesListItem>
+</PropertiesList>
+
+### InboxNotificationList
+
+Displays inbox notifications as a list. Each
+[`InboxNotification`](#InboxNotification) component will be wrapped in a `li`
+element.
+
+```tsx
+<InboxNotificationList>
+  <InboxNotification />
+  <InboxNotification />
+  <InboxNotification />
+</InboxNotificationList>
+```
+
+<Figure>
+  <Image
+    src="/assets/comments/inbox-notification-list.png"
+    alt="InboxNotificationList"
+    width={768}
+    height={446}
+  />
+</Figure>
+
+#### Props [#InboxNotificationList-props]
+
+<PropertiesList>
+  <PropertiesListItem name="children" type="ReactNode">
+    The inbox notifications to display.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### CommentsConfig
 
 Set configuration options for all Comments components, such as
 [overrides](#overrides).
 
 ```tsx
-<CommentsConfig overrides={{ locale: "fr", UNKNOWN_USER: "Anonyme" }} />
+<CommentsConfig overrides={{ locale: "fr", USER_UNKNOWN: "Anonyme" }} />
 ```
 
-#### Props [#commentsconfig-props]
+#### Props [#CommentsConfig-props]
 
 <PropertiesList>
   <PropertiesListItem name="overrides" type="Partial<Overrides>">
     Override the components’ strings.
+  </PropertiesListItem>
+  <PropertiesListItem name="components" type="Partial<Components>">
+    Override the components’ components.
   </PropertiesListItem>
   <PropertiesListItem
     name="portalContainer"
@@ -631,42 +746,11 @@ these variables within `.lb-root` to globally style your components.
   >
     The box shadow added to tooltips.
   </PropertiesListItem>
-  <PropertiesListItem
-    name="--lb-elevation-background"
-    defaultValue="var(--lb-background)"
-  >
-    The background color used for elevated elements.
-  </PropertiesListItem>
-  <PropertiesListItem
-    name="--lb-elevation-foreground"
-    defaultValue="var(--lb-foreground)"
-  >
-    The foreground color used for elevated elements.
-  </PropertiesListItem>
-  <PropertiesListItem name="--lb-tooltip-background" defaultValue="#222222">
-    The background color used for tooltips.
-  </PropertiesListItem>
-  <PropertiesListItem name="--lb-tooltip-foreground" defaultValue="#ffffff">
-    The foreground color used for tooltips.
-  </PropertiesListItem>
   <PropertiesListItem name="--lb-accent-contrast" defaultValue="8%">
     Affects the lightness of accent colors. `%` value required.
   </PropertiesListItem>
   <PropertiesListItem name="--lb-foreground-contrast" defaultValue="6%">
     Affects the lightness of foreground colors. `%` value required.
-  </PropertiesListItem>
-  <PropertiesListItem
-    name="--lb-elevation-foreground-contrast"
-    defaultValue="6%"
-  >
-    Affects the lightness of foreground colors in elevated elements. `%` value
-    required.
-  </PropertiesListItem>
-  <PropertiesListItem
-    name="--lb-tooltip-foreground-contrast"
-    defaultValue="10%"
-  >
-    Affects the lightness of foreground colors in tooltips. `%` value required.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -749,7 +833,7 @@ import { CommentsConfig } from "@liveblocks/react-comments";
 export function App() {
   return (
     <CommentsConfig
-      overrides={{ locale: "fr", UNKNOWN_USER: "Anonyme" /* ... */ }}
+      overrides={{ locale: "fr", USER_UNKNOWN: "Anonyme" /* ... */ }}
     >
       {/* ... */}
     </CommentsConfig>
@@ -1468,7 +1552,6 @@ on the
 [React API reference page](/docs/api-reference/liveblocks-react#Comments).
 
 - [`useThreads`](/docs/api-reference/liveblocks-react#useThreads)
-- [`useUser`](/docs/api-reference/liveblocks-react#useUser)
 - [`useCreateThread`](/docs/api-reference/liveblocks-react#useCreateThread)
 - [`useEditThreadMetadata`](/docs/api-reference/liveblocks-react#useEditThreadMetadata)
 - [`useCreateComment`](/docs/api-reference/liveblocks-react#useCreateComment)

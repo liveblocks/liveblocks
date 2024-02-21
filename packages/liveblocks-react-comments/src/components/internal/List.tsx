@@ -4,6 +4,7 @@ import React, { forwardRef, useMemo } from "react";
 
 import { useOverrides } from "../../overrides";
 import type { ComponentPropsWithSlot } from "../../types";
+import { classNames } from "../../utils/class-names";
 import { listFormat } from "../../utils/intl";
 
 export interface ListProps extends ComponentPropsWithSlot<"span"> {
@@ -15,7 +16,7 @@ export interface ListProps extends ComponentPropsWithSlot<"span"> {
 
 export const List = forwardRef<HTMLSpanElement, ListProps>(
   (
-    { values, formatRemaining, truncate, locale, asChild, ...props },
+    { values, formatRemaining, truncate, locale, className, asChild, ...props },
     forwardedRef
   ) => {
     const Component = asChild ? Slot : "span";
@@ -38,7 +39,11 @@ export const List = forwardRef<HTMLSpanElement, ListProps>(
     }, [formatRemainingWithDefault, locale, truncate, values]);
 
     return (
-      <Component {...props} ref={forwardedRef}>
+      <Component
+        className={classNames("lb-list", className)}
+        {...props}
+        ref={forwardedRef}
+      >
         {formattedList}
       </Component>
     );

@@ -23,7 +23,7 @@ import { createRoomContext } from "@liveblocks/react";
 
 const client = createClient({
   // publicApiKey: "",
-  // authEndpoint: "/api/auth",
+  // authEndpoint: "/api/liveblocks-auth",
   // throttle: 100,
 });
 
@@ -74,100 +74,6 @@ export const {
   Storage
   /* UserMeta, RoomEvent, ThreadMetadata */
 >(client);
-```
-
-#### resolveUsers
-
-<Banner title="Public beta">
-
-Comments is currently in beta. If you have any questions or feedback, please
-reach out to us via the dedicated Discord channel,
-[#comments-beta](https://discord.com/channels/913109211746009108/1126614905160749097).
-We’d love to hear from you.
-
-</Banner>
-
-When using [Comments](/docs/products/comments), anything that is linked to a
-user (comments, mentions, etc.) will reference their ID. To display user
-information based on IDs, you can provide a resolver function to the
-`resolveUsers` option in [`createRoomContext`](#createRoomContext).
-
-This resolver function will receive a list of user IDs and should return a list
-of user objects of the same size and in the same order.
-
-```tsx file="liveblocks.config.ts"
-// ...
-
-export const {
-  /* ... */
-} = createRoomContext(client, {
-  resolveUsers: async ({ userIds }) => {
-    const usersData = await __getUsersFromDB__(userIds);
-
-    return usersData.map((userData) => ({
-      name: userData.name,
-      avatar: userData.avatar.src,
-    }));
-  },
-});
-```
-
-<Banner title="User object">
-  The user object returned by the resolver function takes the shape of
-  `UserMeta["info"]`, which contains `name` and `avatar` (both optional) by
-  default. If you provided your own `UserMeta` type to `createRoomContext`, your
-  own `UserMeta["info"]` will be required here as well. But keep in mind that
-  the [default
-  components](/docs/api-reference/liveblocks-react-comments#Components) will
-  look specifically for the `name` and `avatar` properties to display user names
-  and avatars. If you use the
-  [primitives](/docs/api-reference/liveblocks-react-comments#Primitives)
-  instead, you’ll be able to use [`useUser`](#useUser) and decide what
-  properties to use within your custom components.
-</Banner>
-
-Once that’s done, components will show user names and avatars accordingly.
-
-#### resolveMentionSuggestions
-
-<Banner title="Public beta">
-
-Comments is currently in beta. If you have any questions or feedback, please
-reach out to us via the dedicated Discord channel,
-[#comments-beta](https://discord.com/channels/913109211746009108/1126614905160749097).
-We’d love to hear from you.
-
-</Banner>
-
-To enable creating mentions in [Comments](/docs/products/comments), you can
-provide a resolver function to the `resolveMentionSuggestions` option in
-[`createRoomContext`](#createRoomContext).
-
-This resolver function will receive the mention currently being written (e.g.
-when writing “@jane”, `text` will be `jane`) and should return a list of user
-IDs matching that text. This function will be called every time the text changes
-but with some debouncing.
-
-```tsx file="liveblocks.config.ts"
-// ...
-
-export const {
-  /* ... */
-} = createRoomContext(client, {
-  resolveMentionSuggestions: async ({ text, roomId }) => {
-    const workspaceUsers = await __getWorkspaceUsersFromDB__(roomId);
-
-    if (!text) {
-      // Show all workspace users by default
-
-      return __getUserIds__(workspaceUsers);
-    } else {
-      const matchingUsers = __findUsers__(workspaceUsers, text);
-
-      return __getUserIds__(matchingUsers);
-    }
-  },
-});
 ```
 
 ### RoomProvider
@@ -227,7 +133,7 @@ function AppRoot() {
 }
 ```
 
-### useRoom
+### useRoom [@badge=RoomProvider]
 
 Returns the [`Room`][] of the nearest [`RoomProvider`][] above in the React
 component tree.
@@ -238,7 +144,7 @@ import { useRoom } from "./liveblocks.config";
 const room = useRoom();
 ```
 
-### useErrorListener
+### useErrorListener [@badge=RoomProvider]
 
 Listen to potential room connection errors.
 
@@ -266,7 +172,7 @@ useErrorListener((error) => {
 });
 ```
 
-### useStatus
+### useStatus [@badge=RoomProvider]
 
 Returns the current WebSocket connection status of the room, and will re-render
 your component whenever it changes.
@@ -280,7 +186,7 @@ const status = useStatus();
 The possible value are: `initial`, `connecting`, `connected`, `reconnecting`, or
 `disconnected`.
 
-### useOthersListener
+### useOthersListener [@badge=RoomProvider]
 
 Calls the given callback when an “others” event occurs. Possible event types
 are:
@@ -316,7 +222,7 @@ function App() {
 }
 ```
 
-### useLostConnectionListener
+### useLostConnectionListener [@badge=RoomProvider]
 
 Calls the given callback in the exceptional situation that a connection is lost
 and reconnecting does not happen quickly enough.
@@ -360,6 +266,68 @@ Automatically unsubscribes when the component is unmounted.
 
 For a demonstration of this behavior, see our [connection status example][].
 
+## Liveblocks
+
+### createLiveblocksContext
+
+Creates a [`LiveblocksProvider`][] and a set of typed hooks. We recommend using
+it in `liveblocks.config.ts` and re-exporting your typed hooks like below.
+
+While [`createRoomContext`](#createRoomContext) offers APIs for interacting with
+rooms (e.g. Presence, Storage, and Comments),
+[`createLiveblocksContext`](#createLiveblocksContext) offers APIs for
+interacting with Liveblocks features that are not tied to a specific room (e.g.
+Notifications).
+
+```tsx file="liveblocks.config.ts"
+import { createClient } from "@liveblocks/client";
+import { createRoomContext, createLiveblocksContext } from "@liveblocks/react";
+
+const client = createClient({
+  // publicApiKey: "",
+  // authEndpoint: "/api/liveblocks-auth",
+  // throttle: 100,
+});
+
+// ...
+
+export const { RoomProvider } = createRoomContext(client);
+
+export const {
+  LiveblocksProvider,
+  useInboxNotifications,
+  /* ...all the other hooks you’re using... */
+} = createLiveblocksContext(client);
+```
+
+### LiveblocksProvider
+
+Makes Liveblocks features outside of rooms (e.g. Notifications) available in the
+component hierarchy below.
+
+Unlike [`RoomProvider`][], `LiveblocksProvider` doesn’t call Liveblocks servers
+when mounted, so it can (and should) live higher in the component tree of your
+app.
+
+```tsx
+import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
+import { LiveblocksProvider } from "./liveblocks.config";
+
+function AppRoot() {
+  return <LiveblocksProvider>{/* children */}</LiveblocksProvider>;
+}
+```
+
+<Banner title="Different API in 0.18 and earlier versions">
+
+In 0.18 and earlier versions, a different `LiveblocksProvider` API was
+available. It was exported from `@liveblocks/react` directly instead of
+`createLiveblocksContext`, and accepted the
+[`Client`](/docs/api-reference/liveblocks-client#Client) via the `client` prop.
+This previous API has been deprecated in 0.17 and removed in 0.18.
+
+</Banner>
+
 ## Presence
 
 <Banner title="Need help troubleshooting presence?">
@@ -369,7 +337,7 @@ collaborative experiences as you build them, in real-time.
 
 </Banner>
 
-### useMyPresence
+### useMyPresence [@badge=RoomProvider]
 
 Return the presence of the current user, and a function to update it.
 Automatically subscribes to updates to the current user’s presence.
@@ -403,7 +371,7 @@ undo/redo stack. See [`room.history`][] for more information.
 updateMyPresence({ selectedId: "xxx" }, { addToHistory: true });
 ```
 
-### useUpdateMyPresence
+### useUpdateMyPresence [@badge=RoomProvider]
 
 Returns a setter function to update the current user’s presence.
 
@@ -432,7 +400,7 @@ undo/redo stack. See [`room.history`][] for more information.
 updateMyPresence({ selectedId: "xxx" }, { addToHistory: true });
 ```
 
-### useSelf
+### useSelf [@badge=RoomProvider]
 
 Returns the current user once it is connected to the room, and automatically
 subscribes to updates to the current user.
@@ -456,7 +424,7 @@ that particular selection changes. For full details, see [how selectors work][].
 👉 A [Suspense version][] of this hook is also available, which will never
 return `null`.
 
-### useOthers
+### useOthers [@badge=RoomProvider]
 
 Extracts data from the list of other users currently in the same Room, and
 automatically subscribes to updates on the selected data. For full details, see
@@ -518,7 +486,7 @@ arguments.
 
 </Banner>
 
-### useOthersMapped
+### useOthersMapped [@badge=RoomProvider]
 
 Extract data using a [selector][] for every user in the room, and subscribe to
 all changes to the selected data. A [Suspense version][] of this hook is also
@@ -569,7 +537,7 @@ return (
 );
 ```
 
-### useOthersConnectionIds
+### useOthersConnectionIds [@badge=RoomProvider]
 
 Returns an array of connection IDs (numbers), and rerenders automatically when
 users join or leave. This hook is useful in particular in combination with the
@@ -589,7 +557,7 @@ useOthers((others) => others.map((other) => other.connectionId), shallow);
 
 👉 A [Suspense version][] of this hook is also available.
 
-### useOther
+### useOther [@badge=RoomProvider]
 
 Extract data using a [selector][] for one specific user in the room, and
 subscribe to all changes to the selected data. A [Suspense version][] of this
@@ -643,7 +611,7 @@ return `null`.
 
 ## Broadcast
 
-### useBroadcastEvent
+### useBroadcastEvent [@badge=RoomProvider]
 
 Returns a callback that lets you broadcast custom events to other users in the
 room.
@@ -664,7 +632,7 @@ useEventListener(({ event, user, connectionId }) => {
 });
 ```
 
-### useEventListener
+### useEventListener [@badge=RoomProvider]
 
 Listen to custom events sent by other people in the room via
 [`useBroadcastEvent`][]. Provides the `event` along with the `connectionId` of
@@ -728,7 +696,7 @@ same time. It persists even after everyone leaves the room. Liveblocks provides
 `@liveblocks/react` provides a set of hooks that let you interact with the
 room’s storage.
 
-### useStorage
+### useStorage [@badge=RoomProvider]
 
 Extracts data from Liveblocks Storage state and automatically subscribes to
 updates to that selected data. For full details, see [how selectors work][].
@@ -787,7 +755,7 @@ const myTodos = useStorage(
 
 </Banner>
 
-### useObject
+### useObject [@badge=RoomProvider]
 
 <Banner title="No longer recommended">
 
@@ -851,7 +819,7 @@ function Component() {
 👉 A [Suspense version][] of this hook is also available, which will never
 return `null`.
 
-### useMap
+### useMap [@badge=RoomProvider]
 
 <Banner title="No longer recommended">
 
@@ -912,7 +880,7 @@ function Component() {
 }
 ```
 
-### useList
+### useList [@badge=RoomProvider]
 
 <Banner title="No longer recommended">
 
@@ -972,7 +940,7 @@ function Component() {
 👉 A [Suspense version][] of this hook is also available, which will never
 return `null`.
 
-### useBatch
+### useBatch [@badge=RoomProvider]
 
 <Banner title={<>You may not need <code>useBatch</code></>}>
 
@@ -1006,7 +974,7 @@ batch(async () => /* ... */);
 batch(() => /*... */);
 ```
 
-### useHistory
+### useHistory [@badge=RoomProvider]
 
 Returns the room’s history. See [`Room.history`][] for more information.
 
@@ -1016,7 +984,7 @@ import { useHistory } from "./liveblocks.config";
 const { undo, redo, pause, resume } = useHistory();
 ```
 
-### useUndo
+### useUndo [@badge=RoomProvider]
 
 Returns a function that undoes the last operation executed by the current
 client. It does not impact operations made by other clients.
@@ -1027,7 +995,7 @@ import { useUndo } from "./liveblocks.config";
 const undo = useUndo();
 ```
 
-### useRedo
+### useRedo [@badge=RoomProvider]
 
 Returns a function that redoes the last operation executed by the current
 client. It does not impact operations made by other clients.
@@ -1038,7 +1006,7 @@ import { useRedo } from "./liveblocks.config";
 const redo = useRedo();
 ```
 
-### useCanUndo
+### useCanUndo [@badge=RoomProvider]
 
 Returns whether there are any operations to undo.
 
@@ -1053,7 +1021,7 @@ updateMyPresence({ y: 0 });
 // At the next render, "canUndo" will be true
 ```
 
-### useCanRedo
+### useCanRedo [@badge=RoomProvider]
 
 Returns whether there are any operations to redo.
 
@@ -1070,7 +1038,7 @@ undo();
 // At the next render, "canRedo" will be true
 ```
 
-### useMutation
+### useMutation [@badge=RoomProvider]
 
 Creates a callback function that lets you mutate Liveblocks state.
 
@@ -1207,7 +1175,7 @@ We’d love to hear from you.
 
 </Banner>
 
-### useThreads
+### useThreads [@badge=RoomProvider]
 
 Returns the threads within the current room.
 
@@ -1236,28 +1204,15 @@ const { threads } = useThreads({
 👉 A [Suspense version][] of this hook is also available, which will never
 return a loading state and will throw when there’s an error.
 
-### useUser
+### useThreadSubscription [@badge=RoomProvider]
 
-Returns user info from a given user ID.
+Returns the subscription status of a thread.
 
 ```tsx
-import { useUser } from "./liveblocks.config";
-
-const { user, error, isLoading } = useUser("user-id");
+const { status, unreadSince } = useThreadSubscription("th_xxx");
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there’s an error.
-
-<Banner title="Providing a resolver function">
-
-To use `useUser`, you should provide a resolver function to the
-[`resolveUsers`](#resolveUsers) option in
-[`createRoomContext`](#createRoomContext).
-
-</Banner>
-
-### useCreateThread
+### useCreateThread [@badge=RoomProvider]
 
 Returns a function that creates a thread with an initial comment, and optionally
 some metadata.
@@ -1282,7 +1237,16 @@ const editThreadMetadata = useEditThreadMetadata();
 const thread = editThreadMetadata({ threadId: "th_xxx", metadata: {} });
 ```
 
-### useCreateComment
+### useMarkThreadAsRead [@badge=RoomProvider]
+
+Returns a function that marks a thread as read.
+
+```tsx
+const markThreadAsRead = useMarkThreadAsRead();
+markThreadAsRead("th_xxx");
+```
+
+### useCreateComment [@badge=RoomProvider]
 
 Returns a function that adds a comment to a thread.
 
@@ -1291,7 +1255,7 @@ const createComment = useCreateComment();
 const comment = createComment({ threadId: "th_xxx", body: {} });
 ```
 
-### useEditComment
+### useEditComment[@badge=RoomProvider]
 
 Returns a function that edits a comment’s body.
 
@@ -1304,7 +1268,7 @@ const comment = editComment({
 });
 ```
 
-### useDeleteComment
+### useDeleteComment [@badge=RoomProvider]
 
 Returns a function that deletes a comment. If it is the last non-deleted
 comment, the thread also gets deleted.
@@ -1314,7 +1278,7 @@ const deleteComment = useDeleteComment();
 deleteComment({ threadId: "th_xxx", commentId: "cm_xxx" });
 ```
 
-### useAddReaction
+### useAddReaction [@badge=RoomProvider]
 
 Returns a function that adds a reaction to a comment.
 
@@ -1323,7 +1287,7 @@ const addReaction = useAddReaction();
 addReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
 ```
 
-### useRemoveReaction
+### useRemoveReaction [@badge=RoomProvider]
 
 Returns a function that removes a reaction from a comment.
 
@@ -1331,6 +1295,121 @@ Returns a function that removes a reaction from a comment.
 const removeReaction = useRemoveReaction();
 removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
 ```
+
+## Notifications
+
+<Banner title="Public beta">
+
+Notifications is currently part of Comments, which is in beta. If you have any
+questions or feedback, please reach out to us via the dedicated Discord channel,
+[#comments-beta](https://discord.com/channels/913109211746009108/1126614905160749097).
+We’d love to hear from you.
+
+</Banner>
+
+### useInboxNotifications [@badge=LiveblocksProvider]
+
+Returns the inbox notifications for the current user.
+
+```tsx
+const { inboxNotifications, error, isLoading } = useInboxNotifications();
+```
+
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw when there’s an error.
+
+### useUnreadInboxNotificationsCount [@badge=LiveblocksProvider]
+
+Returns the number of unread inbox notifications for the current user.
+
+```tsx
+const { count, error, isLoading } = useUnreadInboxNotificationsCount();
+```
+
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw when there’s an error.
+
+### useMarkInboxNotificationAsRead [@badge=LiveblocksProvider]
+
+Returns a function that marks an inbox notification as read.
+
+```tsx
+const markInboxNotificationAsRead = useMarkInboxNotificationAsRead();
+markInboxNotificationAsRead("in_xxx");
+```
+
+### useMarkAllInboxNotificationsAsRead [@badge=LiveblocksProvider]
+
+Returns a function that marks all inbox notifications as read.
+
+```tsx
+const markAllInboxNotificationsAsRead = useMarkAllInboxNotificationsAsRead();
+markAllInboxNotificationsAsRead();
+```
+
+### useRoomNotificationSettings [@badge=RoomProvider]
+
+Returns the user’s notification settings for the current room and a function to
+update them.
+
+```tsx
+const [{ settings }, updateSettings] = useRoomNotificationSettings();
+```
+
+### useUpdateRoomNotificationSettings [@badge=RoomProvider]
+
+Returns a function that updates the user’s notification settings for the current
+room.
+
+Use this if you don’t need the current user’s notification settings in your
+component, but you need to update them (e.g. an unsubscribe button).
+
+```tsx
+const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
+updateRoomNotificationSettings({ threads: "all" });
+```
+
+## Miscellaneous
+
+### useUser [@badge=Both]
+
+Returns user info from a given user ID.
+
+```tsx
+import { useUser } from "./liveblocks.config";
+
+const { user, error, isLoading } = useUser("user-id");
+```
+
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw when there’s an error.
+
+<Banner title="Providing a resolver function">
+
+To use `useUser`, you should provide a resolver function to the
+[`resolveUsers`][] option in [`createClient`][].
+
+</Banner>
+
+### useRoomInfo [@badge=Both]
+
+Returns room info from a given room ID.
+
+```tsx
+import { useRoomInfo } from "./liveblocks.config";
+
+const { info, error, isLoading } = useRoomInfo("room-id");
+```
+
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw when there’s an error.
+
+<Banner title="Providing a resolver function">
+
+To use `useRoomInfo`, you should provide a resolver function to the
+[`resolveRoomsInfo`][] option in [`createClient`][].
+
+</Banner>
 
 ## Helpers
 
@@ -1684,35 +1763,7 @@ function Page() {
 }
 ```
 
-## Deprecated
-
-### LiveblocksProvider [@badge=Deprecated]
-
-<Banner type="error" title="Deprecated in 0.17, removed in 0.18">
-
-For more information, see our
-[Upgrade Guide to 0.17](/docs/platform/upgrading/0.17#recommended-upgrade-steps).
-
-</Banner>
-
-React context provider that lets you use all the presence and storage hooks of
-`@liveblocks/react`.
-
-```tsx
-import { createClient } from "@liveblocks/client";
-import { LiveblocksProvider } from "@liveblocks/react";
-
-const client = createClient({
-  authEndpoint: "/api/liveblocks-auth",
-});
-
-function AppRoot() {
-  return (
-    <LiveblocksProvider client={client}>{/* children */}</LiveblocksProvider>
-  );
-}
-```
-
+[`createclient`]: /docs/api-reference/liveblocks-client#createClient
 [`livelist`]: /docs/api-reference/liveblocks-client#LiveList
 [`livemap`]: /docs/api-reference/liveblocks-client#LiveMap
 [`liveobject`]: /docs/api-reference/liveblocks-client#LiveObject
@@ -1720,6 +1771,7 @@ function AppRoot() {
   /docs/api-reference/liveblocks-client#createClientLostConnectionTimeout
 [`room.history`]: /docs/api-reference/liveblocks-client#Room.history
 [`roomprovider`]: /docs/api-reference/liveblocks-react#RoomProvider
+[`liveblocksprovider`]: /docs/api-reference/liveblocks-react#LiveblocksProvider
 [`usemutation`]: /docs/api-reference/liveblocks-react#useMutation
 [`usestorage`]: /docs/api-reference/liveblocks-react#useStorage
 [`useself`]: /docs/api-reference/liveblocks-react#useSelf
@@ -1731,6 +1783,8 @@ function AppRoot() {
 [`usebroadcastevent`]: /docs/api-reference/liveblocks-react#useBroadcastEvent
 [`room`]: /docs/api-reference/liveblocks-client#Room
 [`shallow`]: /docs/api-reference/liveblocks-react#shallow
+[`resolveusers`]: /docs/api-reference/liveblocks-client#resolveUsers
+[`resolveroomsinfo`]: /docs/api-reference/liveblocks-client#resolveRoomsInfo
 [selector]: /docs/api-reference/liveblocks-react#selectors
 [how selectors work]: /docs/api-reference/liveblocks-react#selectors
 [suspense version]: /docs/api-reference/liveblocks-react#suspense-hooks
