@@ -1006,13 +1006,7 @@ export function createRoomContext<
     throw innerError;
   }
 
-  const requestsCache: Map<
-    string,
-    {
-      promise: Promise<any> | null;
-      subscribers: number;
-    }
-  > = new Map();
+  const subscribersByQuery: Map<string, number> = new Map();
 
   const poller = makePoller(refreshThreadsAndNotifications);
 
@@ -1027,7 +1021,7 @@ export function createRoomContext<
         room.id
       );
 
-      if (requestsCache.has(notificationSettingsQuery)) {
+      if (subscribersByQuery.has(notificationSettingsQuery)) {
         requests.push(
           room[kInternal].notifications
             .getRoomNotificationSettings()
@@ -1075,35 +1069,35 @@ export function createRoomContext<
   }
 
   function incrementQuerySubscribers(queryKey: string) {
-    const requestCache = requestsCache.get(queryKey);
+    const subscribers = subscribersByQuery.get(queryKey);
 
-    if (requestCache === undefined) {
+    if (subscribers === undefined) {
       console.warn(
         `Internal unexpected behavior. Cannot increase subscriber count for query "${queryKey}"`
       );
       return;
     }
 
-    requestCache.subscribers++;
+    subscribersByQuery.set(queryKey, subscribers + 1);
 
     poller.start(POLLING_INTERVAL);
   }
 
   function decrementQuerySubscribers(queryKey: string) {
-    const requestCache = requestsCache.get(queryKey);
+    const subscribers = subscribersByQuery.get(queryKey);
 
-    if (requestCache === undefined || requestCache.subscribers <= 0) {
+    if (subscribers === undefined || subscribers <= 0) {
       console.warn(
         `Internal unexpected behavior. Cannot decrease subscriber count for query "${queryKey}"`
       );
       return;
     }
 
-    requestCache.subscribers--;
+    subscribersByQuery.set(queryKey, subscribers - 1);
 
     let totalSubscribers = 0;
-    for (const requestCache of requestsCache.values()) {
-      totalSubscribers += requestCache.subscribers;
+    for (const subscribers of subscribersByQuery.values()) {
+      totalSubscribers += subscribers;
     }
 
     if (totalSubscribers <= 0) {
@@ -1116,18 +1110,13 @@ export function createRoomContext<
     queryKey: string,
     options: UseThreadsOptions<TThreadMetadata>
   ) {
-    const requestInfo = requestsCache.get(queryKey);
+    const requestInfo = subscribersByQuery.get(queryKey);
 
-    if (requestInfo !== undefined) {
-      return requestInfo.promise;
-    }
+    if (requestInfo !== undefined) return;
 
     const promise = room[kInternal].comments.getThreads(options);
 
-    requestsCache.set(queryKey, {
-      promise,
-      subscribers: 0,
-    });
+    subscribersByQuery.set(queryKey, 0);
 
     store.setQueryState(queryKey, {
       isLoading: true,
@@ -2014,18 +2003,13 @@ export function createRoomContext<
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
     queryKey: string
   ) {
-    const requestInfo = requestsCache.get(queryKey);
+    const subscribers = subscribersByQuery.get(queryKey);
 
-    if (requestInfo !== undefined) {
-      return requestInfo.promise;
-    }
+    if (subscribers !== undefined) return;
 
     const promise = room[kInternal].notifications.getRoomNotificationSettings();
 
-    requestsCache.set(queryKey, {
-      promise,
-      subscribers: 0,
-    });
+    subscribersByQuery.set(queryKey, 0);
 
     store.setQueryState(queryKey, {
       isLoading: true,
