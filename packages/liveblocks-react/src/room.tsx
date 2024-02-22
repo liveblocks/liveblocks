@@ -1128,14 +1128,14 @@ export function createRoomContext<
     // If a request was already made for the query, we do not make another request and return the existing promise of the request
     if (existingRequest !== undefined) return existingRequest;
 
-    store.setQueryState(queryKey, {
-      isLoading: true,
-    });
-
     const request = room[kInternal].comments.getThreads(options);
 
     // Store the promise of the request for the query so that we do not make another request for the same query
     requestsByQuery.set(queryKey, request);
+
+    store.setQueryState(queryKey, {
+      isLoading: true,
+    });
 
     try {
       const result = await request;
@@ -2034,14 +2034,16 @@ export function createRoomContext<
     // If a request was already made for the notifications query, we do not make another request and return the existing promise
     if (existingRequest !== undefined) return existingRequest;
 
-    const promise = room[kInternal].notifications.getRoomNotificationSettings();
+    const request = room[kInternal].notifications.getRoomNotificationSettings();
+
+    requestsByQuery.set(queryKey, request);
 
     store.setQueryState(queryKey, {
       isLoading: true,
     });
 
     try {
-      const settings = await promise;
+      const settings = await request;
       store.updateRoomInboxNotificationSettings(room.id, settings, queryKey);
     } catch (err) {
       // TODO: Implement error retry mechanism
