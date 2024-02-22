@@ -19,13 +19,7 @@ import type { FallbackProps } from "react-error-boundary";
 import { ErrorBoundary } from "react-error-boundary";
 
 import { createLiveblocksContext } from "../liveblocks";
-import {
-  createRoomContext,
-  ERROR_RETRY_INTERVAL,
-  generateQueryKey,
-  MAX_ERROR_RETRY_COUNT,
-  POLLING_INTERVAL,
-} from "../room";
+import { createRoomContext, generateQueryKey, POLLING_INTERVAL } from "../room";
 import { dummyInboxNoficationData, dummyThreadData } from "./_dummies";
 import MockWebSocket, { websocketSimulator } from "./_MockWebSocket";
 import {
@@ -1114,21 +1108,21 @@ describe("useThreads: error", () => {
       error: expect.any(Error),
     });
 
-    // The first retry should be made after ERROR_RETRY_INTERVAL * 2^0
-    jest.advanceTimersByTime(ERROR_RETRY_INTERVAL);
+    // The first retry should be made after 5000ms * 2^0 (5000ms is the currently set error retry interval)
+    jest.advanceTimersByTime(5000);
     // A new fetch request for the threads should have been made after the first retry
     await waitFor(() => expect(getThreadsReqCount).toBe(2));
 
-    // The second retry should be made after ERROR_RETRY_INTERVAL * 2^1
-    jest.advanceTimersByTime(ERROR_RETRY_INTERVAL * Math.pow(2, 1));
+    // The second retry should be made after 5000ms * 2^1
+    jest.advanceTimersByTime(5000 * Math.pow(2, 1));
     await waitFor(() => expect(getThreadsReqCount).toBe(3));
 
-    // The third retry should be made after ERROR_RETRY_INTERVAL * 2^2
-    jest.advanceTimersByTime(ERROR_RETRY_INTERVAL * Math.pow(2, 2));
+    // The third retry should be made after 5000ms * 2^2
+    jest.advanceTimersByTime(5000 * Math.pow(2, 2));
     await waitFor(() => expect(getThreadsReqCount).toBe(4));
 
-    // The fourth retry should be made after ERROR_RETRY_INTERVAL * 2^3
-    jest.advanceTimersByTime(ERROR_RETRY_INTERVAL * Math.pow(2, 3));
+    // The fourth retry should be made after 5000ms * 2^3
+    jest.advanceTimersByTime(5000 * Math.pow(2, 3));
     await waitFor(() => expect(getThreadsReqCount).toBe(5));
 
     // and so on...
@@ -1170,22 +1164,20 @@ describe("useThreads: error", () => {
       error: expect.any(Error),
     });
 
-    // Simulate retries up to MAX_RETRY_COUNT
-    for (let i = 0; i < MAX_ERROR_RETRY_COUNT; i++) {
-      const interval = ERROR_RETRY_INTERVAL * Math.pow(2, i);
+    // Simulate retries up to maximum retry count (currently set to 5)
+    for (let i = 0; i < 5; i++) {
+      const interval = 5000 * Math.pow(2, i); // 5000ms is the currently set error retry interval
       jest.advanceTimersByTime(interval);
       await waitFor(() => expect(getThreadsReqCount).toBe(i + 2));
     }
 
-    expect(getThreadsReqCount).toBe(MAX_ERROR_RETRY_COUNT + 1); // initial request + MAX_ERROR_RETRY_COUNT retries
+    expect(getThreadsReqCount).toBe(1 + 5); // initial request + 5 retries
 
     // No more retries should be made after the maximum number of retries
-    await jest.advanceTimersByTimeAsync(
-      ERROR_RETRY_INTERVAL * Math.pow(2, MAX_ERROR_RETRY_COUNT)
-    );
+    await jest.advanceTimersByTimeAsync(5 * Math.pow(2, 5));
 
     // The number of requests should not have increased after the maximum number of retries
-    expect(getThreadsReqCount).toBe(MAX_ERROR_RETRY_COUNT + 1);
+    expect(getThreadsReqCount).toBe(5 + 1);
 
     unmount();
   });
@@ -1240,8 +1232,8 @@ describe("useThreads: error", () => {
       error: expect.any(Error),
     });
 
-    // The first retry should be made after ERROR_RETRY_INTERVAL * 2^0
-    jest.advanceTimersByTime(ERROR_RETRY_INTERVAL);
+    // The first retry should be made after 5000ms * 2^0 (5000ms is the currently set error retry interval)
+    jest.advanceTimersByTime(5000);
     // A new fetch request for the threads should have been made after the first retry
     await waitFor(() => expect(getThreadsReqCount).toBe(2));
 
@@ -1251,7 +1243,7 @@ describe("useThreads: error", () => {
     });
 
     // No more retries should be made after successful retry
-    await jest.advanceTimersByTimeAsync(ERROR_RETRY_INTERVAL * Math.pow(2, 1));
+    await jest.advanceTimersByTimeAsync(5000 * Math.pow(2, 1));
     expect(getThreadsReqCount).toBe(2);
 
     unmount();
@@ -1811,8 +1803,8 @@ describe("useThreadsSuspense: error", () => {
       screen.getByText("There was an error while getting threads.")
     ).toBeInTheDocument();
 
-    // The first retry should be made after ERROR_RETRY_INTERVAL * 2^0
-    jest.advanceTimersByTime(ERROR_RETRY_INTERVAL);
+    // The first retry should be made after 5000ms * 2^0 (5000ms is the currently set error retry interval)
+    jest.advanceTimersByTime(5000);
     // A new fetch request for the threads should have been made after the first retry
     await waitFor(() => expect(getThreadsReqCount).toBe(2));
 
