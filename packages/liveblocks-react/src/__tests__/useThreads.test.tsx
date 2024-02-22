@@ -4,6 +4,7 @@ import type { BaseMetadata, JsonObject } from "@liveblocks/core";
 import { createClient, kInternal, ServerMsgCode } from "@liveblocks/core";
 import {
   act,
+  fireEvent,
   render,
   renderHook,
   screen,
@@ -14,7 +15,7 @@ import { rest } from "msw";
 import { setupServer } from "msw/node";
 import type { ReactNode } from "react";
 import React, { Suspense } from "react";
-import { ErrorBoundary } from "react-error-boundary";
+import { ErrorBoundary, FallbackProps } from "react-error-boundary";
 
 import { createLiveblocksContext } from "../liveblocks";
 import {
@@ -1732,6 +1733,98 @@ describe("useThreadsSuspense", () => {
       expect(
         screen.getByText("There was an error while getting threads.")
       ).toBeInTheDocument();
+    });
+
+    unmount();
+  });
+});
+
+describe("useThreadsSuspense: error", () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.clearAllTimers();
+    jest.useRealTimers(); // Restores the real timers
+  });
+
+  test("should retry with exponential backoff on error and clear error boundary", async () => {
+    let getThreadsReqCount = 0;
+    server.use(
+      mockGetThreads((_req, res, ctx) => {
+        getThreadsReqCount++;
+
+        if (getThreadsReqCount === 1) {
+          // Mock an error response from the server
+          return res(ctx.status(500));
+        } else {
+          // Mock a successful response from the server for the subsequent fetches
+          return res(
+            ctx.json({
+              data: [],
+              inboxNotifications: [],
+              deletedThreads: [],
+              deletedInboxNotifications: [],
+              meta: {
+                requestedAt: new Date().toISOString(),
+              },
+            })
+          );
+        }
+      })
+    );
+
+    const {
+      roomCtx: {
+        RoomProvider,
+        suspense: { useThreads },
+      },
+    } = createRoomContextForTest();
+
+    function Fallback({ resetErrorBoundary }: FallbackProps) {
+      return (
+        <div>
+          <p>There was an error while getting threads.</p>
+          <button onClick={resetErrorBoundary}>Retry</button>
+        </div>
+      );
+    }
+
+    const { result, unmount } = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          <ErrorBoundary FallbackComponent={Fallback}>
+            <Suspense fallback={<div>Loading</div>}>{children}</Suspense>
+          </ErrorBoundary>
+        </RoomProvider>
+      ),
+    });
+
+    expect(result.current).toEqual(null);
+
+    // A new fetch request for the threads should have been made after the initial render
+    await waitFor(() => expect(getThreadsReqCount).toBe(1));
+    // Check if the error boundary's fallback UI is displayed
+    expect(
+      screen.getByText("There was an error while getting threads.")
+    ).toBeInTheDocument();
+
+    // The first retry should be made after ERROR_RETRY_INTERVAL * 2^0
+    jest.advanceTimersByTime(ERROR_RETRY_INTERVAL);
+    // A new fetch request for the threads should have been made after the first retry
+    await waitFor(() => expect(getThreadsReqCount).toBe(2));
+
+    // Simulate clicking the retry button
+    act(() => {
+      fireEvent.click(screen.getByText("Retry"));
+    });
+
+    await waitFor(() => {
+      // The error boundary's fallback UI should be cleared
+      expect(
+        screen.queryByText("There was an error while getting threads.")
+      ).not.toBeInTheDocument();
     });
 
     unmount();
