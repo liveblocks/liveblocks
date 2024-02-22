@@ -1026,9 +1026,7 @@ export function createRoomContext<
         room.id
       );
 
-      const subscribers = subscribersByQuery.get(notificationSettingsQuery);
-      // If there are subscribers for the notification settings query, we retrieve the notification settings for the room
-      if (subscribers !== undefined && subscribers > 0) {
+      if (requestsByQuery.has(notificationSettingsQuery)) {
         requests.push(
           room[kInternal].notifications
             .getRoomNotificationSettings()
