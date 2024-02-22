@@ -43,7 +43,7 @@ export function Cursors({ yProvider }: Props) {
         cursorStyles += `
           .yRemoteSelection-${clientId}, 
           .yRemoteSelectionHead-${clientId}  {
-            --user-color: ${client.user.color};
+            --user-color: ${client.user.color || "orangered"};
           }
           
           .yRemoteSelectionHead-${clientId}::after {
