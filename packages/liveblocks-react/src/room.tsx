@@ -414,6 +414,20 @@ export function createRoomContext<
       void getThreadsUpdates(room.id);
     }, [room.id]);
 
+    /**
+     * Subscribe to the 'online' event to fetch threads/notifications updates when the browser goes back online.
+     */
+    React.useEffect(() => {
+      function handleIsOnline() {
+        void getThreadsUpdates(room.id);
+      }
+
+      window.addEventListener("online", handleIsOnline);
+      return () => {
+        window.removeEventListener("online", handleIsOnline);
+      };
+    }, []);
+
     React.useEffect(() => {
       const pair = stableEnterRoom(roomId, frozenProps);
 
