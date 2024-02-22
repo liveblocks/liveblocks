@@ -5,7 +5,7 @@ import * as Y from "yjs";
 
 import { getRoomFromUrl, Row, styles, useRenderCount } from "../../utils";
 import Button from "../../utils/Button";
-import createLiveblocksClient from "../../utils/createClient";
+import { createLiveblocksClient } from "../../utils/createClient";
 
 const client = createLiveblocksClient();
 

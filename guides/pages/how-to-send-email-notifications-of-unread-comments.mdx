@@ -38,8 +38,8 @@ In this guide we’ll be learning how to send emails notifying users about unrea
 comments, and more specifically, we’ll be looking at how to:
 
 - Trigger events based on unread comments using the
-  [`ThreadEmailNotificationEvent`](/docs/platform/webhooks#ThreadEmailNotificationEvent)
-  webhook event.
+  [`NotificationEvent`](/docs/platform/webhooks#NotificationEvent) webhook
+  event.
 - Fetch unread thread data using the
   [`@liveblocks/node`](/docs/api-reference/liveblocks-node) package.
 - Build an email containing correctly
@@ -74,8 +74,7 @@ Learn more about Notifications for Comments in the
 
 Liveblocks provides a number of [webhooks](/docs/platform/webhooks) that can
 send requests to your API endpoint when certain events occurs. One webhook we
-provide is the
-[`ThreadEmailNotificationEvent`](/docs/platform/webhooks#ThreadEmailNotificationEvent)
+provide is the [`NotificationEvent`](/docs/platform/webhooks#NotificationEvent)
 webhook, which is triggered for each participating user in a thread, 30 minutes
 after activity has occurred, and this can be used to send emails to your users.
 
@@ -241,7 +240,7 @@ has been created.
     <StepTitle>Webhooks dashboard is set up!</StepTitle>
 
     <StepContent>
-      Note that you can filter specifically for `threadEmailNotification` events, but we’re
+      Note that you can filter specifically for `notification` events, but we’re
       ignoring this for now so we can test more easily. Let’s go back to the
       code.
     </StepContent>
@@ -321,7 +320,7 @@ export async function POST(request: Request) {
   }
 
   // When an inbox notification has been created
-  if (event.type === "threadEmailNotification") {
+  if (event.type === "notification") {
     const { roomId, threadId, inboxNotificationId, userId } = event.data;
 
     // Check if user has access to room
@@ -339,7 +338,7 @@ export async function POST(request: Request) {
 
 We now have the `roomId`, `threadId`, `inboxNotificationId`. and `userId` of the
 created notification, along with some
-[other information](/docs/platform/webhooks#ThreadEmailNotificationEvent).
+[other information](/docs/platform/webhooks#NotificationEvent).
 
 ## Get comment and thread data
 
@@ -386,7 +385,7 @@ export async function POST(request: Request) {
   }
 
   // When an inbox notification has been created
-  if (event.type === "threadEmailNotification") {
+  if (event.type === "notification") {
     const { roomId, threadId, inboxNotificationId, userId } = event.data;
 
     // Check if user has access to room
@@ -447,7 +446,7 @@ export async function POST(request: Request) {
   }
 
   // When an inbox notification has been created
-  if (event.type === "threadEmailNotification") {
+  if (event.type === "notification") {
     const { roomId, threadId, inboxNotificationId, userId } = event.data;
 
     // Check if user has access to room
@@ -540,7 +539,7 @@ export async function POST(request: Request) {
   }
 
   // When an inbox notification has been created
-  if (event.type === "threadEmailNotification") {
+  if (event.type === "notification") {
     const { roomId, threadId, inboxNotificationId, userId } = event.data;
 
     // Check if user has access to room
@@ -649,7 +648,7 @@ export async function POST(request: Request) {
   }
 
   // When an inbox notification has been created
-  if (event.type === "threadEmailNotification") {
+  if (event.type === "notification") {
     const { roomId, threadId, inboxNotificationId, userId } = event.data;
 
     // Check if user has access to room
@@ -758,7 +757,7 @@ export async function POST(request: Request) {
   }
 
   // When an inbox notification has been created
-  if (event.type === "threadEmailNotification") {
+  if (event.type === "notification") {
     const { roomId, threadId, inboxNotificationId, userId } = event.data;
 
     // Check if user has access to room
@@ -834,7 +833,7 @@ Great, we’re successfully sending email notifications after new comments are
 created! In this guide we’ve learned:
 
 - How to use [webhooks](/docs/platform/webhooks) and the
-  [`ThreadEmailNotificationEvent`](/docs/platform/webhooks#ThreadEmailNotificationEvent).
+  [`NotificationEvent`](/docs/platform/webhooks#NotificationEvent).
 - How to use the [`@liveblocks/node`](/docs/api-reference/liveblocks-node)
   package to unread thread data.
 - How to shape a threads into HTML with

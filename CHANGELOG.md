@@ -50,8 +50,7 @@ This release introduces Notifications (and unread indicators) for Comments.
   `getInboxNotification`, `getRoomNotificationSettings`,
   `updateRoomNotificationSettings`, and `deleteRoomNotificationSettings`
   methods)
-- Add email notification webhook event for threads:
-  `ThreadEmailNotificationEvent`.
+- Add notification webhook event: `NotificationEvent`.
 
 ### `@liveblocks/yjs`
 

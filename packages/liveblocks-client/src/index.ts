@@ -9,6 +9,7 @@ export type {
   BaseUserMeta,
   BroadcastOptions,
   Client,
+  ClientOptions,
   CommentBody,
   CommentBodyBlockElement,
   CommentBodyElement,
