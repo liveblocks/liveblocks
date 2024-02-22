@@ -1063,7 +1063,7 @@ describe("useThreads", () => {
   });
 
   test("should update threads for a room when the browser comes back online", async () => {
-    let threads = [dummyThreadData(), dummyThreadData()];
+    const threads = [dummyThreadData(), dummyThreadData()];
 
     server.use(
       mockGetThreads(async (req, res, ctx) => {

@@ -426,7 +426,7 @@ export function createRoomContext<
       return () => {
         window.removeEventListener("online", handleIsOnline);
       };
-    }, []);
+    }, [room.id]);
 
     React.useEffect(() => {
       const pair = stableEnterRoom(roomId, frozenProps);
