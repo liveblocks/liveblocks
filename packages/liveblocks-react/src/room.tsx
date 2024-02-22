@@ -124,6 +124,10 @@ const STABLE_EMPTY_LIST = Object.freeze([]);
 
 export const POLLING_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
+export const ERROR_RETRY_INTERVAL = 5000; // 5 seconds
+
+export const MAX_ERROR_RETRY_COUNT = 5;
+
 const MENTION_SUGGESTIONS_DEBOUNCE = 500;
 
 // Don't try to inline this. This function is intended to be a stable
@@ -1105,6 +1109,21 @@ export function createRoomContext<
     }
   }
 
+  /**
+   * Retries an action using the exponential backoff algorithm
+   * @param action The action to retry
+   * @param retryCount The number of times the action has been retried
+   */
+  function handleError(action: () => void, retryCount: number) {
+    if (retryCount >= MAX_ERROR_RETRY_COUNT) return;
+
+    const timeout = Math.pow(2, retryCount) * ERROR_RETRY_INTERVAL;
+
+    setTimeout(() => {
+      void action();
+    }, timeout);
+  }
+
   async function getThreadsAndInboxNotifications(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
     queryKey: string,
@@ -1114,16 +1133,25 @@ export function createRoomContext<
 
     if (requestInfo !== undefined) return;
 
-    const promise = room[kInternal].comments.getThreads(options);
-
     subscribersByQuery.set(queryKey, 0);
 
     store.setQueryState(queryKey, {
       isLoading: true,
     });
 
+    await _getThreadsAndInboxNotifications(room, queryKey, options);
+
+    poller.start(POLLING_INTERVAL);
+  }
+
+  async function _getThreadsAndInboxNotifications(
+    room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
+    queryKey: string,
+    options: UseThreadsOptions<TThreadMetadata>,
+    { retryCount }: { retryCount: number } = { retryCount: 0 }
+  ) {
     try {
-      const result = await promise;
+      const result = await room[kInternal].comments.getThreads(options);
 
       store.updateThreadsAndNotifications(
         result.threads,
@@ -1148,14 +1176,19 @@ export function createRoomContext<
         lastRequestedAtByRoom.set(room.id, result.meta.requestedAt);
       }
     } catch (err) {
-      // TODO: Implement error retry mechanism
+      handleError(() => {
+        void _getThreadsAndInboxNotifications(room, queryKey, options, {
+          retryCount: retryCount + 1,
+        });
+      }, retryCount);
+
       store.setQueryState(queryKey, {
         isLoading: false,
         error: err as Error,
       });
-    }
 
-    poller.start(POLLING_INTERVAL);
+      return;
+    }
   }
 
   const DEFAULT_DEDUPING_INTERVAL = 2000; // 2 seconds
