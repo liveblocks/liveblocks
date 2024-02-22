@@ -170,6 +170,7 @@ const InboxNotificationLayout = forwardRef<
               <div className="lb-inbox-notification-details">
                 <span className="lb-inbox-notification-details-labels">
                   <Timestamp
+                    locale={$.locale}
                     date={date}
                     className="lb-inbox-notification-date"
                   />
