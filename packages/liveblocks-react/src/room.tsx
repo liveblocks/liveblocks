@@ -1010,7 +1010,8 @@ export function createRoomContext<
     throw innerError;
   }
 
-  const subscribersByQuery: Map<string, number> = new Map();
+  const subscribersByQuery: Map<string, number> = new Map(); // A map of query keys to the number of subscribers for that query
+  const requestsByQuery: Map<string, Promise<any>> = new Map(); // A map of query keys to the promise of the request for that query
 
   const poller = makePoller(refreshThreadsAndNotifications);
 
@@ -1025,7 +1026,9 @@ export function createRoomContext<
         room.id
       );
 
-      if (subscribersByQuery.has(notificationSettingsQuery)) {
+      const subscribers = subscribersByQuery.get(notificationSettingsQuery);
+      // If there are subscribers for the notification settings query, we retrieve the notification settings for the room
+      if (subscribers !== undefined && subscribers > 0) {
         requests.push(
           room[kInternal].notifications
             .getRoomNotificationSettings()
@@ -1073,15 +1076,7 @@ export function createRoomContext<
   }
 
   function incrementQuerySubscribers(queryKey: string) {
-    const subscribers = subscribersByQuery.get(queryKey);
-
-    if (subscribers === undefined) {
-      console.warn(
-        `Internal unexpected behavior. Cannot increase subscriber count for query "${queryKey}"`
-      );
-      return;
-    }
-
+    const subscribers = subscribersByQuery.get(queryKey) ?? 0;
     subscribersByQuery.set(queryKey, subscribers + 1);
 
     poller.start(POLLING_INTERVAL);
@@ -1114,7 +1109,7 @@ export function createRoomContext<
    * @param action The action to retry
    * @param retryCount The number of times the action has been retried
    */
-  function handleError(action: () => void, retryCount: number) {
+  function retryError(action: () => void, retryCount: number) {
     if (retryCount >= MAX_ERROR_RETRY_COUNT) return;
 
     const timeout = Math.pow(2, retryCount) * ERROR_RETRY_INTERVAL;
@@ -1127,31 +1122,25 @@ export function createRoomContext<
   async function getThreadsAndInboxNotifications(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
     queryKey: string,
-    options: UseThreadsOptions<TThreadMetadata>
+    options: UseThreadsOptions<TThreadMetadata>,
+    { retryCount }: { retryCount: number } = { retryCount: 0 }
   ) {
-    const requestInfo = subscribersByQuery.get(queryKey);
+    const existingRequest = requestsByQuery.get(queryKey);
 
-    if (requestInfo !== undefined) return;
-
-    subscribersByQuery.set(queryKey, 0);
+    // If a request was already made for the query, we do not make another request and return the existing promise of the request
+    if (existingRequest !== undefined) return existingRequest;
 
     store.setQueryState(queryKey, {
       isLoading: true,
     });
 
-    await _getThreadsAndInboxNotifications(room, queryKey, options);
+    const request = room[kInternal].comments.getThreads(options);
 
-    poller.start(POLLING_INTERVAL);
-  }
+    // Store the promise of the request for the query so that we do not make another request for the same query
+    requestsByQuery.set(queryKey, request);
 
-  async function _getThreadsAndInboxNotifications(
-    room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-    queryKey: string,
-    options: UseThreadsOptions<TThreadMetadata>,
-    { retryCount }: { retryCount: number } = { retryCount: 0 }
-  ) {
     try {
-      const result = await room[kInternal].comments.getThreads(options);
+      const result = await request;
 
       store.updateThreadsAndNotifications(
         result.threads,
@@ -1175,13 +1164,19 @@ export function createRoomContext<
       ) {
         lastRequestedAtByRoom.set(room.id, result.meta.requestedAt);
       }
+
+      poller.start(POLLING_INTERVAL);
     } catch (err) {
-      handleError(() => {
-        void _getThreadsAndInboxNotifications(room, queryKey, options, {
+      requestsByQuery.delete(queryKey);
+
+      // Retry the action using the exponential backoff algorithm
+      retryError(() => {
+        void getThreadsAndInboxNotifications(room, queryKey, options, {
           retryCount: retryCount + 1,
         });
       }, retryCount);
 
+      // Set the query state to the error state
       store.setQueryState(queryKey, {
         isLoading: false,
         error: err as Error,
@@ -2036,13 +2031,12 @@ export function createRoomContext<
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
     queryKey: string
   ) {
-    const subscribers = subscribersByQuery.get(queryKey);
+    const existingRequest = requestsByQuery.get(queryKey);
 
-    if (subscribers !== undefined) return;
+    // If a request was already made for the notifications query, we do not make another request and return the existing promise
+    if (existingRequest !== undefined) return existingRequest;
 
     const promise = room[kInternal].notifications.getRoomNotificationSettings();
-
-    subscribersByQuery.set(queryKey, 0);
 
     store.setQueryState(queryKey, {
       isLoading: true,
