@@ -1,3 +1,9 @@
+# v1.10.1
+
+### `@liveblocks/react-comments`
+
+- Fix date localization in `InboxNotification`.
+
 # v1.10.0
 
 This release introduces Notifications (and unread indicators) for Comments.
