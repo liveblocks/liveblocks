@@ -8,6 +8,7 @@ import type {
   JsonObject,
   LsonObject,
   Room,
+  User,
 } from "@liveblocks/client";
 import { Observable } from "lib0/observable";
 import type * as Y from "yjs";
@@ -30,6 +31,7 @@ export class Awareness extends Observable<unknown> {
   public doc: Y.Doc;
   public clientID: number;
   public states: Map<number, unknown> = new Map();
+  public actorToClientMap: Map<number, number> = new Map();
   // Meta is used to keep track and timeout users who disconnect. Liveblocks provides this for us, so we don't need to
   // manage it here. Unfortunately, it's expected to exist by various integrations, so it's an empty map.
   public meta: Map<number, MetaClientState> = new Map();
@@ -46,16 +48,29 @@ export class Awareness extends Observable<unknown> {
     this.doc = doc;
     this.room = room;
     this.clientID = doc.clientID;
+    // Add the clientId to presence so we can map it to connectionId later
+    this.room.updatePresence({
+      [Y_PRESENCE_KEY]: { clientID: this.clientID },
+    });
     this.othersUnsub = this.room.events.others.subscribe((event) => {
+      this.rebuildActorToClientMap(event.others);
       // When others are changed, we emit an event that contains arrays added/updated/removed.
       if (event.type === "leave") {
         // REMOVED
         this.emit("change", [
-          { added: [], updated: [], removed: [event.user.connectionId] },
+          {
+            added: [],
+            updated: [],
+            removed: [this.actorToClientMap.get(event.user.connectionId)],
+          },
           "presence",
         ]);
         this.emit("update", [
-          { added: [], updated: [], removed: [event.user.connectionId] },
+          {
+            added: [],
+            updated: [],
+            removed: [this.actorToClientMap.get(event.user.connectionId)],
+          },
           "presence",
         ]);
       }
@@ -63,11 +78,19 @@ export class Awareness extends Observable<unknown> {
       if (event.type === "enter") {
         // ADDED
         this.emit("change", [
-          { added: [event.user.connectionId], updated: [], removed: [] },
+          {
+            added: [this.actorToClientMap.get(event.user.connectionId)],
+            updated: [],
+            removed: [],
+          },
           "presence",
         ]);
         this.emit("update", [
-          { added: [event.user.connectionId], updated: [], removed: [] },
+          {
+            added: [this.actorToClientMap.get(event.user.connectionId)],
+            updated: [],
+            removed: [],
+          },
           "presence",
         ]);
       }
@@ -75,13 +98,39 @@ export class Awareness extends Observable<unknown> {
       if (event.type === "update") {
         // UPDATED
         this.emit("change", [
-          { added: [], updated: [event.user.connectionId], removed: [] },
+          {
+            added: [],
+            updated: [this.actorToClientMap.get(event.user.connectionId)],
+            removed: [],
+          },
           "presence",
         ]);
         this.emit("update", [
-          { added: [], updated: [event.user.connectionId], removed: [] },
+          {
+            added: [],
+            updated: [this.actorToClientMap.get(event.user.connectionId)],
+            removed: [],
+          },
           "presence",
         ]);
+      }
+    });
+  }
+
+  rebuildActorToClientMap(
+    others: readonly User<JsonObject, BaseUserMeta>[]
+  ): void {
+    this.actorToClientMap.clear();
+    others.forEach((user) => {
+      if (
+        user.presence[Y_PRESENCE_KEY] !== undefined &&
+        (user.presence[Y_PRESENCE_KEY] as { clientID?: number }).clientID !==
+          undefined
+      ) {
+        this.actorToClientMap.set(
+          user.connectionId,
+          (user.presence[Y_PRESENCE_KEY] as { clientID: number }).clientID
+        );
       }
     });
   }
@@ -144,15 +193,14 @@ export class Awareness extends Observable<unknown> {
     const others = this.room.getOthers();
     const presence = this.room.getSelf()?.presence[Y_PRESENCE_KEY];
     const states = others.reduce((acc: Map<number, unknown>, currentValue) => {
-      if (
-        currentValue.connectionId &&
-        currentValue.presence[Y_PRESENCE_KEY] !== undefined
-      ) {
-        // connectionId == actorId == yjs.clientId
-        acc.set(
-          currentValue.connectionId,
-          currentValue.presence[Y_PRESENCE_KEY] || {}
-        );
+      if (currentValue.presence[Y_PRESENCE_KEY] !== undefined) {
+        const { clientID } = currentValue.presence[Y_PRESENCE_KEY] as {
+          clientID?: number;
+        };
+        if (clientID) {
+          // yjs client id
+          acc.set(clientID, currentValue.presence[Y_PRESENCE_KEY] || {});
+        }
       }
       return acc;
     }, new Map());
