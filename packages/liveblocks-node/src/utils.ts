@@ -2,7 +2,7 @@ import type { Brand } from "@liveblocks/core";
 
 const DEFAULT_BASE_URL = "https://api.liveblocks.io";
 
-export function getBaseUrl(baseUrl?: string | undefined) {
+export function getBaseUrl(baseUrl?: string | undefined): string {
   baseUrl ||=
     process.env.LIVEBLOCKS_BASE_URL ||
     process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL ||

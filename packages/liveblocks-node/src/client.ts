@@ -31,12 +31,12 @@ import {
   assertNonEmpty,
   assertSecretKey,
   fetchPolyfill,
+  getBaseUrl,
   normalizeStatusCode,
   type QueryParams,
   url,
   urljoin,
   type URLSafeString,
-  getBaseUrl,
 } from "./utils";
 
 export type LiveblocksOptions = {
