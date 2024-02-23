@@ -1,8 +1,9 @@
-# v1.10.1
+# v1.10.1 (Unpublished)
 
 ### `@liveblocks/react-comments`
 
 - Fix date localization in `InboxNotification`.
+- Add vendor prefixes to more CSS properties within the default styles.
 
 # v1.10.0
 
