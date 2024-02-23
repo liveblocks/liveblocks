@@ -1036,30 +1036,6 @@ export function createRoomContext<
       const room = client.getRoom(roomId);
       if (room === null) return;
 
-      const notificationSettingsQuery = makeNotificationSettingsQueryKey(
-        room.id
-      );
-
-      if (requestsByQuery.has(notificationSettingsQuery)) {
-        requests.push(
-          room[kInternal].notifications
-            .getRoomNotificationSettings()
-            .then((settings) => {
-              store.updateRoomInboxNotificationSettings(
-                room.id,
-                settings,
-                notificationSettingsQuery
-              );
-            })
-            .catch(() => {
-              // TODO: Handle error
-            })
-        );
-      }
-
-      const lastRequestedAt = lastRequestedAtByRoom.get(room.id);
-      if (lastRequestedAt === undefined) return;
-
       // Retrieve threads that have been updated/deleted since the last requestedAt value
       requests.push(getThreadsUpdates(room.id));
     });
@@ -2043,8 +2019,6 @@ export function createRoomContext<
 
       const settings = await request;
       store.updateRoomInboxNotificationSettings(room.id, settings, queryKey);
-
-      poller.start(POLLING_INTERVAL);
     } catch (err) {
       requestsByQuery.delete(queryKey);
 
@@ -2072,10 +2046,6 @@ export function createRoomContext<
     React.useEffect(() => {
       const queryKey = makeNotificationSettingsQueryKey(room.id);
       void getInboxNotificationSettings(room, queryKey);
-
-      incrementQuerySubscribers(queryKey);
-
-      return () => decrementQuerySubscribers(queryKey);
     }, [room]);
 
     const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
@@ -2128,14 +2098,6 @@ export function createRoomContext<
     if (query.error) {
       throw query.error;
     }
-
-    React.useEffect(() => {
-      const queryKey = makeNotificationSettingsQueryKey(room.id);
-
-      incrementQuerySubscribers(queryKey);
-
-      return () => decrementQuerySubscribers(queryKey);
-    }, [room]);
 
     const selector = React.useCallback(
       (
