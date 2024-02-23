@@ -25,6 +25,7 @@ import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
+import { retryError } from "./lib/retry-error";
 import { createSharedContext } from "./shared";
 import type {
   InboxNotificationsState,
@@ -90,6 +91,7 @@ export function createLiveblocksContext<
   const poller = makePoller(refreshThreadsAndNotifications);
 
   function refreshThreadsAndNotifications() {
+    console.log("Refreshing threads and notifications");
     return notifications.getInboxNotifications({ since: lastRequestedAt }).then(
       (result) => {
         lastRequestedAt = result.meta.requestedAt;
@@ -129,8 +131,10 @@ export function createLiveblocksContext<
     }
   }
 
-  async function fetchInboxNotifications() {
-    if (fetchInboxNotificationsRequest) {
+  async function fetchInboxNotifications(
+    { retryCount }: { retryCount: number } = { retryCount: 0 }
+  ) {
+    if (fetchInboxNotificationsRequest !== null) {
       return fetchInboxNotificationsRequest;
     }
 
@@ -163,8 +167,18 @@ export function createLiveblocksContext<
       ) {
         lastRequestedAt = result.meta.requestedAt;
       }
+
+      poller.start(POLLING_INTERVAL);
     } catch (er) {
-      // TODO: Implement error retry mechanism
+      fetchInboxNotificationsRequest = null;
+
+      // Retry the action using the exponential backoff algorithm
+      retryError(() => {
+        void fetchInboxNotifications({
+          retryCount: retryCount + 1,
+        });
+      }, retryCount);
+
       store.setQueryState(INBOX_NOTIFICATIONS_QUERY, {
         isLoading: false,
         error: er as Error,

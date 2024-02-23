@@ -67,6 +67,7 @@ import { createCommentId, createThreadId } from "./comments/lib/createIds";
 import { selectNotificationSettings } from "./comments/lib/select-notification-settings";
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 import { selectedThreads } from "./comments/lib/selected-threads";
+import { retryError } from "./lib/retry-error";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { useRerender } from "./lib/use-rerender";
@@ -123,10 +124,6 @@ function useSyncExternalStore<Snapshot>(
 const STABLE_EMPTY_LIST = Object.freeze([]);
 
 export const POLLING_INTERVAL = 5 * 60 * 1000; // 5 minutes
-
-export const ERROR_RETRY_INTERVAL = 5000; // 5 seconds
-
-export const MAX_ERROR_RETRY_COUNT = 5;
 
 const MENTION_SUGGESTIONS_DEBOUNCE = 500;
 
@@ -1070,21 +1067,6 @@ export function createRoomContext<
     if (totalSubscribers <= 0) {
       poller.stop();
     }
-  }
-
-  /**
-   * Retries an action using the exponential backoff algorithm
-   * @param action The action to retry
-   * @param retryCount The number of times the action has been retried
-   */
-  function retryError(action: () => void, retryCount: number) {
-    if (retryCount >= MAX_ERROR_RETRY_COUNT) return;
-
-    const timeout = Math.pow(2, retryCount) * ERROR_RETRY_INTERVAL;
-
-    setTimeout(() => {
-      void action();
-    }, timeout);
   }
 
   async function getThreadsAndInboxNotifications(
