@@ -124,6 +124,10 @@ const STABLE_EMPTY_LIST = Object.freeze([]);
 
 export const POLLING_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
+export const ERROR_RETRY_INTERVAL = 5000; // 5 seconds
+
+export const MAX_ERROR_RETRY_COUNT = 5;
+
 const MENTION_SUGGESTIONS_DEBOUNCE = 500;
 
 // Don't try to inline this. This function is intended to be a stable
@@ -1006,13 +1010,8 @@ export function createRoomContext<
     throw innerError;
   }
 
-  const requestsCache: Map<
-    string,
-    {
-      promise: Promise<any> | null;
-      subscribers: number;
-    }
-  > = new Map();
+  const subscribersByQuery: Map<string, number> = new Map(); // A map of query keys to the number of subscribers for that query
+  const requestsByQuery: Map<string, Promise<any>> = new Map(); // A map of query keys to the promise of the request for that query
 
   const poller = makePoller(refreshThreadsAndNotifications);
 
@@ -1027,7 +1026,7 @@ export function createRoomContext<
         room.id
       );
 
-      if (requestsCache.has(notificationSettingsQuery)) {
+      if (requestsByQuery.has(notificationSettingsQuery)) {
         requests.push(
           room[kInternal].notifications
             .getRoomNotificationSettings()
@@ -1075,35 +1074,27 @@ export function createRoomContext<
   }
 
   function incrementQuerySubscribers(queryKey: string) {
-    const requestCache = requestsCache.get(queryKey);
-
-    if (requestCache === undefined) {
-      console.warn(
-        `Internal unexpected behavior. Cannot increase subscriber count for query "${queryKey}"`
-      );
-      return;
-    }
-
-    requestCache.subscribers++;
+    const subscribers = subscribersByQuery.get(queryKey) ?? 0;
+    subscribersByQuery.set(queryKey, subscribers + 1);
 
     poller.start(POLLING_INTERVAL);
   }
 
   function decrementQuerySubscribers(queryKey: string) {
-    const requestCache = requestsCache.get(queryKey);
+    const subscribers = subscribersByQuery.get(queryKey);
 
-    if (requestCache === undefined || requestCache.subscribers <= 0) {
+    if (subscribers === undefined || subscribers <= 0) {
       console.warn(
         `Internal unexpected behavior. Cannot decrease subscriber count for query "${queryKey}"`
       );
       return;
     }
 
-    requestCache.subscribers--;
+    subscribersByQuery.set(queryKey, subscribers - 1);
 
     let totalSubscribers = 0;
-    for (const requestCache of requestsCache.values()) {
-      totalSubscribers += requestCache.subscribers;
+    for (const subscribers of subscribersByQuery.values()) {
+      totalSubscribers += subscribers;
     }
 
     if (totalSubscribers <= 0) {
@@ -1111,30 +1102,43 @@ export function createRoomContext<
     }
   }
 
+  /**
+   * Retries an action using the exponential backoff algorithm
+   * @param action The action to retry
+   * @param retryCount The number of times the action has been retried
+   */
+  function retryError(action: () => void, retryCount: number) {
+    if (retryCount >= MAX_ERROR_RETRY_COUNT) return;
+
+    const timeout = Math.pow(2, retryCount) * ERROR_RETRY_INTERVAL;
+
+    setTimeout(() => {
+      void action();
+    }, timeout);
+  }
+
   async function getThreadsAndInboxNotifications(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
     queryKey: string,
-    options: UseThreadsOptions<TThreadMetadata>
+    options: UseThreadsOptions<TThreadMetadata>,
+    { retryCount }: { retryCount: number } = { retryCount: 0 }
   ) {
-    const requestInfo = requestsCache.get(queryKey);
+    const existingRequest = requestsByQuery.get(queryKey);
 
-    if (requestInfo !== undefined) {
-      return requestInfo.promise;
-    }
+    // If a request was already made for the query, we do not make another request and return the existing promise of the request
+    if (existingRequest !== undefined) return existingRequest;
 
-    const promise = room[kInternal].comments.getThreads(options);
+    const request = room[kInternal].comments.getThreads(options);
 
-    requestsCache.set(queryKey, {
-      promise,
-      subscribers: 0,
-    });
+    // Store the promise of the request for the query so that we do not make another request for the same query
+    requestsByQuery.set(queryKey, request);
 
     store.setQueryState(queryKey, {
       isLoading: true,
     });
 
     try {
-      const result = await promise;
+      const result = await request;
 
       store.updateThreadsAndNotifications(
         result.threads,
@@ -1158,15 +1162,26 @@ export function createRoomContext<
       ) {
         lastRequestedAtByRoom.set(room.id, result.meta.requestedAt);
       }
+
+      poller.start(POLLING_INTERVAL);
     } catch (err) {
-      // TODO: Implement error retry mechanism
+      requestsByQuery.delete(queryKey);
+
+      // Retry the action using the exponential backoff algorithm
+      retryError(() => {
+        void getThreadsAndInboxNotifications(room, queryKey, options, {
+          retryCount: retryCount + 1,
+        });
+      }, retryCount);
+
+      // Set the query state to the error state
       store.setQueryState(queryKey, {
         isLoading: false,
         error: err as Error,
       });
-    }
 
-    poller.start(POLLING_INTERVAL);
+      return;
+    }
   }
 
   const DEFAULT_DEDUPING_INTERVAL = 2000; // 2 seconds
@@ -2014,25 +2029,21 @@ export function createRoomContext<
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
     queryKey: string
   ) {
-    const requestInfo = requestsCache.get(queryKey);
+    const existingRequest = requestsByQuery.get(queryKey);
 
-    if (requestInfo !== undefined) {
-      return requestInfo.promise;
-    }
+    // If a request was already made for the notifications query, we do not make another request and return the existing promise
+    if (existingRequest !== undefined) return existingRequest;
 
-    const promise = room[kInternal].notifications.getRoomNotificationSettings();
+    const request = room[kInternal].notifications.getRoomNotificationSettings();
 
-    requestsCache.set(queryKey, {
-      promise,
-      subscribers: 0,
-    });
+    requestsByQuery.set(queryKey, request);
 
     store.setQueryState(queryKey, {
       isLoading: true,
     });
 
     try {
-      const settings = await promise;
+      const settings = await request;
       store.updateRoomInboxNotificationSettings(room.id, settings, queryKey);
     } catch (err) {
       // TODO: Implement error retry mechanism

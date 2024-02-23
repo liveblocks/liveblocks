@@ -4,6 +4,7 @@ import type { BaseMetadata, JsonObject } from "@liveblocks/core";
 import { createClient, kInternal, ServerMsgCode } from "@liveblocks/core";
 import {
   act,
+  fireEvent,
   render,
   renderHook,
   screen,
@@ -14,6 +15,7 @@ import { rest } from "msw";
 import { setupServer } from "msw/node";
 import type { ReactNode } from "react";
 import React, { Suspense } from "react";
+import type { FallbackProps } from "react-error-boundary";
 import { ErrorBoundary } from "react-error-boundary";
 
 import { createLiveblocksContext } from "../liveblocks";
@@ -1063,6 +1065,191 @@ describe("useThreads", () => {
   });
 });
 
+describe("useThreads: error", () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.clearAllTimers();
+    jest.useRealTimers(); // Restores the real timers
+  });
+
+  test("should retry with exponential backoff on error", async () => {
+    let getThreadsReqCount = 0;
+    server.use(
+      mockGetThreads((_req, res, ctx) => {
+        getThreadsReqCount++;
+        // Mock an error response from the server for the initial fetch
+        return res(ctx.status(500));
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
+
+    const { result, unmount } = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          {children}
+        </RoomProvider>
+      ),
+    });
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    // A new fetch request for the threads should have been made after the initial render
+    await waitFor(() => expect(getThreadsReqCount).toBe(1));
+
+    expect(result.current).toEqual({
+      threads: [],
+      isLoading: false,
+      error: expect.any(Error),
+    });
+
+    // The first retry should be made after 5000ms * 2^0 (5000ms is the currently set error retry interval)
+    jest.advanceTimersByTime(5000);
+    // A new fetch request for the threads should have been made after the first retry
+    await waitFor(() => expect(getThreadsReqCount).toBe(2));
+
+    // The second retry should be made after 5000ms * 2^1
+    jest.advanceTimersByTime(5000 * Math.pow(2, 1));
+    await waitFor(() => expect(getThreadsReqCount).toBe(3));
+
+    // The third retry should be made after 5000ms * 2^2
+    jest.advanceTimersByTime(5000 * Math.pow(2, 2));
+    await waitFor(() => expect(getThreadsReqCount).toBe(4));
+
+    // The fourth retry should be made after 5000ms * 2^3
+    jest.advanceTimersByTime(5000 * Math.pow(2, 3));
+    await waitFor(() => expect(getThreadsReqCount).toBe(5));
+
+    // and so on...
+
+    unmount();
+  });
+
+  test("should retry with exponential backoff with a maximum retry limit", async () => {
+    let getThreadsReqCount = 0;
+
+    server.use(
+      mockGetThreads((_req, res, ctx) => {
+        getThreadsReqCount++;
+        // Mock an error response from the server
+        return res(ctx.status(500));
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
+
+    const { result, unmount } = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          {children}
+        </RoomProvider>
+      ),
+    });
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    // A new fetch request for the threads should have been made after the initial render
+    await waitFor(() => expect(getThreadsReqCount).toBe(1));
+
+    expect(result.current).toEqual({
+      threads: [],
+      isLoading: false,
+      error: expect.any(Error),
+    });
+
+    // Simulate retries up to maximum retry count (currently set to 5)
+    for (let i = 0; i < 5; i++) {
+      const interval = 5000 * Math.pow(2, i); // 5000ms is the currently set error retry interval
+      jest.advanceTimersByTime(interval);
+      await waitFor(() => expect(getThreadsReqCount).toBe(i + 2));
+    }
+
+    expect(getThreadsReqCount).toBe(1 + 5); // initial request + 5 retries
+
+    // No more retries should be made after the maximum number of retries
+    await jest.advanceTimersByTimeAsync(5 * Math.pow(2, 5));
+
+    // The number of requests should not have increased after the maximum number of retries
+    expect(getThreadsReqCount).toBe(5 + 1);
+
+    unmount();
+  });
+
+  test("should clear error state after a successful error retry", async () => {
+    let getThreadsReqCount = 0;
+    server.use(
+      mockGetThreads((_req, res, ctx) => {
+        getThreadsReqCount++;
+
+        console.log("getThreadsReqCount", getThreadsReqCount);
+        if (getThreadsReqCount === 1) {
+          // Mock an error response from the server for the initial fetch
+          return res(ctx.status(500));
+        } else {
+          // Mock a successful response from the server for the subsequent fetches
+          return res(
+            ctx.json({
+              data: [],
+              inboxNotifications: [],
+              deletedThreads: [],
+              deletedInboxNotifications: [],
+              meta: {
+                requestedAt: new Date().toISOString(),
+              },
+            })
+          );
+        }
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
+
+    const { result, unmount } = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          {children}
+        </RoomProvider>
+      ),
+    });
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    // A new fetch request for the threads should have been made after the initial render
+    await waitFor(() => expect(getThreadsReqCount).toBe(1));
+
+    expect(result.current).toEqual({
+      threads: [],
+      isLoading: false,
+      error: expect.any(Error),
+    });
+
+    // The first retry should be made after 5000ms * 2^0 (5000ms is the currently set error retry interval)
+    jest.advanceTimersByTime(5000);
+    // A new fetch request for the threads should have been made after the first retry
+    await waitFor(() => expect(getThreadsReqCount).toBe(2));
+
+    expect(result.current).toEqual({
+      threads: [],
+      isLoading: false,
+    });
+
+    // No more retries should be made after successful retry
+    await jest.advanceTimersByTimeAsync(5000 * Math.pow(2, 1));
+    expect(getThreadsReqCount).toBe(2);
+
+    unmount();
+  });
+});
+
 describe("useThreads: polling", () => {
   beforeAll(() => {
     jest.useFakeTimers();
@@ -1540,6 +1727,94 @@ describe("useThreadsSuspense", () => {
         screen.getByText("There was an error while getting threads.")
       ).toBeInTheDocument();
     });
+
+    unmount();
+  });
+});
+
+describe("useThreadsSuspense: error", () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.clearAllTimers();
+    jest.useRealTimers(); // Restores the real timers
+  });
+
+  test("should retry with exponential backoff on error and clear error boundary", async () => {
+    let getThreadsReqCount = 0;
+    server.use(
+      mockGetThreads((_req, res, ctx) => {
+        getThreadsReqCount++;
+
+        if (getThreadsReqCount === 1) {
+          // Mock an error response from the server
+          return res(ctx.status(500));
+        } else {
+          // Mock a successful response from the server for the subsequent fetches
+          return res(
+            ctx.json({
+              data: [],
+              inboxNotifications: [],
+              deletedThreads: [],
+              deletedInboxNotifications: [],
+              meta: {
+                requestedAt: new Date().toISOString(),
+              },
+            })
+          );
+        }
+      })
+    );
+
+    const {
+      roomCtx: {
+        RoomProvider,
+        suspense: { useThreads },
+      },
+    } = createRoomContextForTest();
+
+    function Fallback({ resetErrorBoundary }: FallbackProps) {
+      return (
+        <div>
+          <p>There was an error while getting threads.</p>
+          <button onClick={resetErrorBoundary}>Retry</button>
+        </div>
+      );
+    }
+
+    const { result, unmount } = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          <ErrorBoundary FallbackComponent={Fallback}>
+            <Suspense fallback={<div>Loading</div>}>{children}</Suspense>
+          </ErrorBoundary>
+        </RoomProvider>
+      ),
+    });
+
+    expect(result.current).toEqual(null);
+
+    // A new fetch request for the threads should have been made after the initial render
+    await waitFor(() => expect(getThreadsReqCount).toBe(1));
+    // Check if the error boundary's fallback UI is displayed
+    expect(
+      screen.getByText("There was an error while getting threads.")
+    ).toBeInTheDocument();
+
+    // The first retry should be made after 5000ms * 2^0 (5000ms is the currently set error retry interval)
+    jest.advanceTimersByTime(5000);
+    // A new fetch request for the threads should have been made after the first retry
+    await waitFor(() => expect(getThreadsReqCount).toBe(2));
+
+    // Simulate clicking the retry button
+    fireEvent.click(screen.getByText("Retry"));
+
+    // The error boundary's fallback UI should be cleared
+    expect(
+      screen.queryByText("There was an error while getting threads.")
+    ).not.toBeInTheDocument();
 
     unmount();
   });
