@@ -1,6 +1,21 @@
 import type { Brand } from "@liveblocks/core";
 
-export const DEFAULT_BASE_URL = "https://api.liveblocks.io";
+const DEFAULT_BASE_URL = "https://api.liveblocks.io";
+
+export function getBaseUrl(baseUrl: string | undefined) {
+  baseUrl ||=
+    process.env.LIVEBLOCKS_BASE_URL ||
+    process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL ||
+    undefined;
+  if (
+    typeof baseUrl === "string" &&
+    baseUrl.startsWith("http") // Must be http or https URL
+  ) {
+    return baseUrl;
+  } else {
+    return DEFAULT_BASE_URL;
+  }
+}
 
 export async function fetchPolyfill(): Promise<typeof fetch> {
   return typeof globalThis.fetch !== "undefined"
