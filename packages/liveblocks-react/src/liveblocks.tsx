@@ -91,7 +91,6 @@ export function createLiveblocksContext<
   const poller = makePoller(refreshThreadsAndNotifications);
 
   function refreshThreadsAndNotifications() {
-    console.log("Refreshing threads and notifications");
     return notifications.getInboxNotifications({ since: lastRequestedAt }).then(
       (result) => {
         lastRequestedAt = result.meta.requestedAt;
