@@ -1063,6 +1063,88 @@ describe("useThreads", () => {
     unmountFirstRoom();
     unmountSecondRoom();
   });
+
+  test("should update threads for a room when the browser comes back online", async () => {
+    const threads = [dummyThreadData(), dummyThreadData()];
+
+    server.use(
+      mockGetThreads(async (req, res, ctx) => {
+        const url = new URL(req.url);
+        const since = url.searchParams.get("since");
+
+        if (since) {
+          const updatedThreads = threads.filter((thread) => {
+            if (thread.updatedAt === undefined) return false;
+            return new Date(thread.updatedAt) >= new Date(since);
+          });
+
+          return res(
+            ctx.json({
+              data: updatedThreads,
+              deletedThreads: [],
+              inboxNotifications: [],
+              deletedInboxNotifications: [],
+              meta: {
+                requestedAt: new Date().toISOString(),
+              },
+            })
+          );
+        }
+
+        return res(
+          ctx.json({
+            data: threads,
+            deletedThreads: [],
+            inboxNotifications: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
+
+    const { result, unmount } = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          {children}
+        </RoomProvider>
+      ),
+    });
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    // Threads should be displayed after the server responds with the threads
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads,
+      })
+    );
+
+    // Add a new thread to the threads array to simulate a new thread being added to the room
+    threads.push(dummyThreadData());
+
+    // Simulate browser going online
+    act(() => {
+      window.dispatchEvent(new Event("online"));
+    });
+
+    // The updated threads should be displayed after the server responds with the updated threads (either due to a fetch request to get all threads or just the updated threads)
+    await waitFor(() => {
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads,
+      });
+    });
+
+    unmount();
+  });
 });
 
 describe("useThreads: error", () => {

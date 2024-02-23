@@ -418,6 +418,20 @@ export function createRoomContext<
       void getThreadsUpdates(room.id);
     }, [room.id]);
 
+    /**
+     * Subscribe to the 'online' event to fetch threads/notifications updates when the browser goes back online.
+     */
+    React.useEffect(() => {
+      function handleIsOnline() {
+        void getThreadsUpdates(room.id);
+      }
+
+      window.addEventListener("online", handleIsOnline);
+      return () => {
+        window.removeEventListener("online", handleIsOnline);
+      };
+    }, [room.id]);
+
     React.useEffect(() => {
       const pair = stableEnterRoom(roomId, frozenProps);
 
@@ -1047,27 +1061,7 @@ export function createRoomContext<
       if (lastRequestedAt === undefined) return;
 
       // Retrieve threads that have been updated/deleted since the last requestedAt value
-      requests.push(
-        room[kInternal].comments
-          .getThreads({ since: lastRequestedAt })
-          .then((result) => {
-            store.updateThreadsAndNotifications(
-              result.threads,
-              result.inboxNotifications,
-              result.deletedThreads,
-              result.deletedInboxNotifications
-            );
-
-            // If this query finished after the room was unmounted, we do not want to update the `lastRequestedAt` value
-            const room = client.getRoom(roomId);
-            if (room === null) return;
-
-            lastRequestedAtByRoom.set(room.id, result.meta.requestedAt);
-          })
-          .catch(() => {
-            // TODO: Handle error
-          })
-      );
+      requests.push(getThreadsUpdates(room.id));
     });
 
     await Promise.allSettled(requests);
@@ -1187,8 +1181,7 @@ export function createRoomContext<
   const DEFAULT_DEDUPING_INTERVAL = 2000; // 2 seconds
 
   const lastRequestedAtByRoom = new Map<string, Date>(); // A map of room ids to the timestamp when the last request for threads updates was made
-
-  let isFetchingThreadsUpdates: boolean = false; // A flag to prevent multiple requests to retrieve threads updates from being made at the same time
+  const requestStatusByRoom = new Map<string, boolean>(); // A map of room ids to a boolean indicating whether a request to retrieve threads updates is in progress
 
   /**
    * Retrieve threads that have been updated/deleted since the last time the room requested threads updates and update the local cache with the new data
@@ -1201,16 +1194,18 @@ export function createRoomContext<
     const since = lastRequestedAtByRoom.get(room.id);
     if (since === undefined) return;
 
-    // If another request to retrieve threads updates is in progress, we do not start a new one
-    if (isFetchingThreadsUpdates) return;
+    const isFetchingThreadsUpdates = requestStatusByRoom.get(room.id) ?? false;
+    // If another request to retrieve threads updates for the room is in progress, we do not start a new one
+    if (isFetchingThreadsUpdates === true) return;
 
     try {
-      isFetchingThreadsUpdates = true;
+      // Set the isFetchingThreadsUpdates flag to true to prevent multiple requests to fetch threads updates for the room from being made at the same time
+      requestStatusByRoom.set(room.id, true);
       const updates = await room[kInternal].comments.getThreads({ since });
 
       // Set the isFetchingThreadsUpdates flag to false after a certain interval to prevent multiple requests from being made at the same time
       setTimeout(() => {
-        isFetchingThreadsUpdates = false;
+        requestStatusByRoom.set(room.id, false);
       }, DEFAULT_DEDUPING_INTERVAL);
 
       store.updateThreadsAndNotifications(
@@ -1223,8 +1218,9 @@ export function createRoomContext<
       // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
       lastRequestedAtByRoom.set(room.id, updates.meta.requestedAt);
     } catch (err) {
-      isFetchingThreadsUpdates = false;
+      requestStatusByRoom.set(room.id, false);
       // TODO: Implement error handling
+      return;
     }
   }
 
