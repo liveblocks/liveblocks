@@ -46,7 +46,7 @@ export function styles({ files }: Options): Plugin {
         require("postcss-nesting"),
         require("postcss-combine-duplicated-selectors"),
         require("postcss-sort-media-queries"),
-        require("postcss-lightningcss"),
+        require("postcss-lightningcss")({ browsers: ">= 1%" }),
         require("postcss-reporter")({
           clearReportedMessages: true,
           plugins: ["stylelint"],
