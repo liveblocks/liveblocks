@@ -247,7 +247,7 @@ describe("useRoomNotificationSettings: error", () => {
 
     expect(result.current[0]).toEqual({ isLoading: true });
 
-    // A new fetch request for the threads should have been made after the initial render
+    // A new fetch request for the room notification settings should have been made after the initial render
     await waitFor(() => expect(getRoomNotificationSettingsReqCount).toBe(1));
 
     expect(result.current[0]).toEqual({
@@ -257,7 +257,7 @@ describe("useRoomNotificationSettings: error", () => {
 
     // The first retry should be made after 5000ms * 2^0 (5000ms is the currently set error retry interval)
     jest.advanceTimersByTime(5000);
-    // A new fetch request for the threads should have been made after the first retry
+    // A new fetch request for the room notification settings should have been made after the first retry
     await waitFor(() => expect(getRoomNotificationSettingsReqCount).toBe(2));
 
     // The second retry should be made after 5000ms * 2^1
@@ -305,7 +305,7 @@ describe("useRoomNotificationSettings: error", () => {
 
     expect(result.current[0]).toEqual({ isLoading: true });
 
-    // A new fetch request for the threads should have been made after the initial render
+    // A new fetch request for the room notification settings should have been made after the initial render
     await waitFor(() => expect(getRoomNotificationSettingsReqCount).toBe(1));
 
     expect(result.current[0]).toEqual({
@@ -370,7 +370,7 @@ describe("useRoomNotificationSettings: error", () => {
 
     expect(result.current[0]).toEqual({ isLoading: true });
 
-    // A new fetch request for the threads should have been made after the initial render
+    // A new fetch request for the room notification settings should have been made after the initial render
     await waitFor(() => expect(getRoomNotificationSettingsReqCount).toBe(1));
 
     expect(result.current[0]).toEqual({
@@ -380,7 +380,7 @@ describe("useRoomNotificationSettings: error", () => {
 
     // The first retry should be made after 5000ms * 2^0 (5000ms is the currently set error retry interval)
     jest.advanceTimersByTime(5000);
-    // A new fetch request for the threads should have been made after the first retry
+    // A new fetch request for the room notification settings should have been made after the first retry
     await waitFor(() => expect(getRoomNotificationSettingsReqCount).toBe(2));
 
     expect(result.current[0]).toEqual({
