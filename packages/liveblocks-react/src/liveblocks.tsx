@@ -245,6 +245,10 @@ export function createLiveblocksContext<
       throw fetchInboxNotifications();
     }
 
+    if (query.error !== undefined) {
+      throw query.error;
+    }
+
     React.useEffect(() => {
       incrementInboxNotificationsSubscribers();
 
