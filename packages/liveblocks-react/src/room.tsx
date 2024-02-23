@@ -2023,33 +2023,44 @@ export function createRoomContext<
 
   async function getInboxNotificationSettings(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-    queryKey: string
+    queryKey: string,
+    { retryCount }: { retryCount: number } = { retryCount: 0 }
   ) {
     const existingRequest = requestsByQuery.get(queryKey);
 
     // If a request was already made for the notifications query, we do not make another request and return the existing promise
     if (existingRequest !== undefined) return existingRequest;
 
-    const request = room[kInternal].notifications.getRoomNotificationSettings();
-
-    requestsByQuery.set(queryKey, request);
-
-    store.setQueryState(queryKey, {
-      isLoading: true,
-    });
-
     try {
+      const request =
+        room[kInternal].notifications.getRoomNotificationSettings();
+
+      requestsByQuery.set(queryKey, request);
+
+      store.setQueryState(queryKey, {
+        isLoading: true,
+      });
+
       const settings = await request;
       store.updateRoomInboxNotificationSettings(room.id, settings, queryKey);
+
+      poller.start(POLLING_INTERVAL);
     } catch (err) {
-      // TODO: Implement error retry mechanism
+      requestsByQuery.delete(queryKey);
+
+      retryError(() => {
+        void getInboxNotificationSettings(room, queryKey, {
+          retryCount: retryCount + 1,
+        });
+      }, retryCount);
+
       store.setQueryState(queryKey, {
         isLoading: false,
         error: err as Error,
       });
-    }
 
-    poller.start(POLLING_INTERVAL);
+      return;
+    }
   }
 
   function useRoomNotificationSettings(): [
