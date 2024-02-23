@@ -30,7 +30,7 @@ export type CommentDataPlain = Omit<
   DateToString<CommentData>,
   "reactions" | "body"
 > & {
-  reactions: DateToString<CommentReaction[]>;
+  reactions: DateToString<CommentReaction>[];
 } & (
     | { body: CommentBody; deletedAt?: never }
     | { body?: never; deletedAt: string }
