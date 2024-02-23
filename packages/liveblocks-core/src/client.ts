@@ -289,7 +289,7 @@ export type ClientOptions<TUserMeta extends BaseUserMeta = BaseUserMeta> = {
 //     | ((room: string) => Promise<{ token: string }>);
 //
 
-function getBaseUrl(baseUrl: string | undefined) {
+function getBaseUrl(baseUrl?: string | undefined): string {
   baseUrl ||=
     process.env.LIVEBLOCKS_BASE_URL ||
     process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL ||
