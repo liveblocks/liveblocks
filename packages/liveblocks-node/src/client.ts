@@ -30,8 +30,8 @@ import { Session } from "./Session";
 import {
   assertNonEmpty,
   assertSecretKey,
-  DEFAULT_BASE_URL,
   fetchPolyfill,
+  getBaseUrl,
   normalizeStatusCode,
   type QueryParams,
   url,
@@ -138,7 +138,7 @@ export class Liveblocks {
     const secret = options_.secret;
     assertSecretKey(secret, "secret");
     this._secret = secret;
-    this._baseUrl = new URL(options.baseUrl ?? DEFAULT_BASE_URL);
+    this._baseUrl = new URL(getBaseUrl(options.baseUrl));
   }
 
   /** @internal */

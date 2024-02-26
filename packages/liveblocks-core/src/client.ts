@@ -289,15 +289,17 @@ export type ClientOptions<TUserMeta extends BaseUserMeta = BaseUserMeta> = {
 //     | ((room: string) => Promise<{ token: string }>);
 //
 
-function getBaseUrlFromClientOptions(clientOptions: ClientOptions) {
-  if ("liveblocksServer" in clientOptions) {
-    throw new Error("Client option no longer supported");
-  }
+function getBaseUrl(baseUrl?: string | undefined): string {
+  baseUrl ||=
+    process.env.LIVEBLOCKS_BASE_URL ||
+    process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL ||
+    process.env.VITE_LIVEBLOCKS_BASE_URL ||
+    undefined;
   if (
-    typeof clientOptions.baseUrl === "string" &&
-    clientOptions.baseUrl.startsWith("http") // Must be http or https URL
+    typeof baseUrl === "string" &&
+    baseUrl.startsWith("http") // Must be http or https URL
   ) {
-    return clientOptions.baseUrl;
+    return baseUrl;
   } else {
     return DEFAULT_BASE_URL;
   }
@@ -349,7 +351,7 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
   const backgroundKeepAliveTimeout = getBackgroundKeepAliveTimeout(
     clientOptions.backgroundKeepAliveTimeout
   );
-  const baseUrl = getBaseUrlFromClientOptions(clientOptions);
+  const baseUrl = getBaseUrl(clientOptions.baseUrl);
 
   const authManager = createAuthManager(options);
 

@@ -8,7 +8,9 @@ import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
 import { Liveblocks, LiveblocksError } from "../client";
-import { DEFAULT_BASE_URL } from "../utils";
+import { getBaseUrl } from "../utils";
+
+const DEFAULT_BASE_URL = getBaseUrl();
 
 describe("client", () => {
   const room = {
