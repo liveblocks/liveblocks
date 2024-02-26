@@ -33,5 +33,5 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   liveblocksSession.allow(req.body.room, liveblocksSession.FULL_ACCESS);
 
   const { status, body } = await liveblocksSession.authorize();
-  return res.status(status).end(body);
+  res.status(status).end(body);
 }
