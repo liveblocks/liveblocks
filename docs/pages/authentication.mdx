@@ -1,0 +1,90 @@
+---
+meta:
+  title: "Authentication"
+  description: "Learn more about authenticating your Liveblocks application"
+---
+
+Liveblocks provides different methods to authenticate your application using
+your public and secret API keys. For any production application, you should use
+your secret key to enable access token or ID token authentication. These methods
+can be used to control access to your rooms and data.
+
+<Banner title="Public key is for prototyping" type="warning">
+
+We don’t recommend using your public API key in production, as it’s difficult
+for us to accurately measure your MCUs without any user information. We
+recommend using your secret key instead, see below.
+
+</Banner>
+
+## Authentication methods
+
+Secret key authentication in Liveblocks relies on generating JSON Web Tokens
+(JWTs), and then passing these to your client. There are different ways to do
+this, and it may depend on your framework, but first, it’s important to learn
+the difference between _access tokens_ and _ID tokens_.
+
+### Access tokens
+
+[Access token](/docs/authentication/access-token) authentication allows you to
+handle permissions yourself. When a user authenticates, it’s up to you to tell
+Liveblocks which rooms they should be allowed inside. This means that you need
+to manually keep track of which users should be allowed in which rooms, and
+apply these permissions yourself each time a user connects.
+
+[image]
+
+In the diagram above, you can see an access token is allowing “Olivier” into the
+“my-team/sf8s7f9sf7s9f6s” room.
+
+### ID tokens
+
+[ID tokens](/docs/authentication/id-token) authentication allows Liveblocks to
+handle permissions for you. This means that when you create or modify a room,
+you can set a user’s permissions on the room itself, this acting as a source of
+truth. Later, when a user tries to enter a room, Liveblocks will automatically
+check if the user has permission, and deny them access if the permissions aren’t
+set.
+
+[image]
+
+In the diagram above, a room is created giving “Alicia” permission to enter.
+Later, when “Alicia” authenticates, her identity is confirmed, and when she
+tries to enter a room, her permissions are then checked.
+
+## Next steps
+
+Learn how to use your chosen authentication method.
+
+<ListGrid columns={2}>
+  <DocsCard
+    title="Access token permissions"
+    href="/docs/authentication/access-token"
+    type="image"
+    description="Simple and flexible global permission rules"
+    center={false}
+    visual={
+      <Image
+        src="/assets/authentication-access-token-permissions.png"
+        alt="Access token permissions"
+        width={498}
+        height={280}
+      />
+    }
+  />
+  <DocsCard
+    title="ID token permissions"
+    href="/docs/authentication/id-token"
+    type="image"
+    description="Fine grained permissions at the room level"
+    center={false}
+    visual={
+      <Image
+        src="/assets/authentication-id-token-permissions.png"
+        alt="ID token permissions"
+        width={498}
+        height={280}
+      />
+    }
+  />
+</ListGrid>
