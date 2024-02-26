@@ -502,7 +502,6 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         target: "@connecting.busy",
         effect: assign({
           authValue: okEvent.data,
-          backoffDelay: RESET_DELAY,
         }),
       }),
 
