@@ -10,6 +10,7 @@ import {
 } from "@testing-library/react";
 import { setupServer } from "msw/node";
 import React, { Suspense } from "react";
+import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 
 import {
   createLiveblocksContext,
@@ -20,7 +21,6 @@ import { dummyInboxNoficationData, dummyThreadData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import { mockGetInboxNotifications } from "./_restMocks";
 import { generateFakeJwt } from "./_utils";
-import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 
 const server = setupServer();
 

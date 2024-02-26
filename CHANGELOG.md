@@ -5,6 +5,11 @@
 - Fix date localization in `InboxNotification`.
 - Add vendor prefixes to more CSS properties within the default styles.
 
+### `@liveblocks/react`
+
+- Implemented error retrying for `useThreads`, `useRoomNotificationSettings`,
+  and `useInboxNotifications` to handle initial fetching failures.
+
 # v1.10.0
 
 This release introduces Notifications (and unread indicators) for Comments.
