@@ -67,6 +67,7 @@ import { createCommentId, createThreadId } from "./comments/lib/createIds";
 import { selectNotificationSettings } from "./comments/lib/select-notification-settings";
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 import { selectedThreads } from "./comments/lib/selected-threads";
+import { retryError } from "./lib/retry-error";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { useRerender } from "./lib/use-rerender";
@@ -123,10 +124,6 @@ function useSyncExternalStore<Snapshot>(
 const STABLE_EMPTY_LIST = Object.freeze([]);
 
 export const POLLING_INTERVAL = 5 * 60 * 1000; // 5 minutes
-
-export const ERROR_RETRY_INTERVAL = 5000; // 5 seconds
-
-export const MAX_ERROR_RETRY_COUNT = 5;
 
 const MENTION_SUGGESTIONS_DEBOUNCE = 500;
 
@@ -1036,30 +1033,6 @@ export function createRoomContext<
       const room = client.getRoom(roomId);
       if (room === null) return;
 
-      const notificationSettingsQuery = makeNotificationSettingsQueryKey(
-        room.id
-      );
-
-      if (requestsByQuery.has(notificationSettingsQuery)) {
-        requests.push(
-          room[kInternal].notifications
-            .getRoomNotificationSettings()
-            .then((settings) => {
-              store.updateRoomInboxNotificationSettings(
-                room.id,
-                settings,
-                notificationSettingsQuery
-              );
-            })
-            .catch(() => {
-              // TODO: Handle error
-            })
-        );
-      }
-
-      const lastRequestedAt = lastRequestedAtByRoom.get(room.id);
-      if (lastRequestedAt === undefined) return;
-
       // Retrieve threads that have been updated/deleted since the last requestedAt value
       requests.push(getThreadsUpdates(room.id));
     });
@@ -1094,21 +1067,6 @@ export function createRoomContext<
     if (totalSubscribers <= 0) {
       poller.stop();
     }
-  }
-
-  /**
-   * Retries an action using the exponential backoff algorithm
-   * @param action The action to retry
-   * @param retryCount The number of times the action has been retried
-   */
-  function retryError(action: () => void, retryCount: number) {
-    if (retryCount >= MAX_ERROR_RETRY_COUNT) return;
-
-    const timeout = Math.pow(2, retryCount) * ERROR_RETRY_INTERVAL;
-
-    setTimeout(() => {
-      void action();
-    }, timeout);
   }
 
   async function getThreadsAndInboxNotifications(
@@ -2023,33 +1981,42 @@ export function createRoomContext<
 
   async function getInboxNotificationSettings(
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-    queryKey: string
+    queryKey: string,
+    { retryCount }: { retryCount: number } = { retryCount: 0 }
   ) {
     const existingRequest = requestsByQuery.get(queryKey);
 
     // If a request was already made for the notifications query, we do not make another request and return the existing promise
     if (existingRequest !== undefined) return existingRequest;
 
-    const request = room[kInternal].notifications.getRoomNotificationSettings();
-
-    requestsByQuery.set(queryKey, request);
-
-    store.setQueryState(queryKey, {
-      isLoading: true,
-    });
-
     try {
+      const request =
+        room[kInternal].notifications.getRoomNotificationSettings();
+
+      requestsByQuery.set(queryKey, request);
+
+      store.setQueryState(queryKey, {
+        isLoading: true,
+      });
+
       const settings = await request;
       store.updateRoomInboxNotificationSettings(room.id, settings, queryKey);
     } catch (err) {
-      // TODO: Implement error retry mechanism
+      requestsByQuery.delete(queryKey);
+
+      retryError(() => {
+        void getInboxNotificationSettings(room, queryKey, {
+          retryCount: retryCount + 1,
+        });
+      }, retryCount);
+
       store.setQueryState(queryKey, {
         isLoading: false,
         error: err as Error,
       });
-    }
 
-    poller.start(POLLING_INTERVAL);
+      return;
+    }
   }
 
   function useRoomNotificationSettings(): [
@@ -2061,10 +2028,6 @@ export function createRoomContext<
     React.useEffect(() => {
       const queryKey = makeNotificationSettingsQueryKey(room.id);
       void getInboxNotificationSettings(room, queryKey);
-
-      incrementQuerySubscribers(queryKey);
-
-      return () => decrementQuerySubscribers(queryKey);
     }, [room]);
 
     const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
@@ -2117,14 +2080,6 @@ export function createRoomContext<
     if (query.error) {
       throw query.error;
     }
-
-    React.useEffect(() => {
-      const queryKey = makeNotificationSettingsQueryKey(room.id);
-
-      incrementQuerySubscribers(queryKey);
-
-      return () => decrementQuerySubscribers(queryKey);
-    }, [room]);
 
     const selector = React.useCallback(
       (

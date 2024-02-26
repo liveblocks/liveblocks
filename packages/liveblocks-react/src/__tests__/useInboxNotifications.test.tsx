@@ -1,9 +1,16 @@
 import "@testing-library/jest-dom";
 
 import { createClient, kInternal } from "@liveblocks/core";
-import { render, renderHook, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { setupServer } from "msw/node";
 import React, { Suspense } from "react";
+import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 
 import {
   createLiveblocksContext,
@@ -309,6 +316,183 @@ describe("useInboxNotifications", () => {
   });
 });
 
+describe("useInboxNotifications: error", () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.clearAllTimers();
+    jest.useRealTimers(); // Restores the real timers
+  });
+
+  test("should retry with exponential backoff on error", async () => {
+    let getInboxNotificationsReqCount = 0;
+    server.use(
+      mockGetInboxNotifications(async (_req, res, ctx) => {
+        getInboxNotificationsReqCount++;
+        return res(ctx.status(500));
+      })
+    );
+
+    const {
+      liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
+    } = createLiveblocksContextForTest();
+
+    const { result, unmount } = renderHook(() => useInboxNotifications(), {
+      wrapper: ({ children }) => (
+        <LiveblocksProvider>{children}</LiveblocksProvider>
+      ),
+    });
+
+    expect(result.current).toEqual({
+      isLoading: true,
+    });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        error: expect.any(Error),
+      })
+    );
+
+    // Unmount so polling doesn't interfere with the test
+    unmount();
+
+    // The first retry should be made after 5000ms * 2^0 (5000ms is the currently set error retry interval)
+    jest.advanceTimersByTime(5000);
+    // A new fetch request for the inbox notifications should have been made after the first retry
+    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(2));
+
+    // The second retry should be made after 5000ms * 2^1
+    jest.advanceTimersByTime(5000 * Math.pow(2, 1));
+    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(3));
+
+    // The third retry should be made after 5000ms * 2^2
+    jest.advanceTimersByTime(5000 * Math.pow(2, 2));
+    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(4));
+
+    // The fourth retry should be made after 5000ms * 2^3
+    jest.advanceTimersByTime(5000 * Math.pow(2, 3));
+    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(5));
+
+    // and so on...
+  });
+
+  test("should retry with exponential backoff with a maximum retry limit", async () => {
+    let getInboxNotificationsReqCount = 0;
+    server.use(
+      mockGetInboxNotifications(async (_req, res, ctx) => {
+        getInboxNotificationsReqCount++;
+        return res(ctx.status(500));
+      })
+    );
+
+    const {
+      liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
+    } = createLiveblocksContextForTest();
+
+    const { result, unmount } = renderHook(() => useInboxNotifications(), {
+      wrapper: ({ children }) => (
+        <LiveblocksProvider>{children}</LiveblocksProvider>
+      ),
+    });
+
+    expect(result.current).toEqual({
+      isLoading: true,
+    });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        error: expect.any(Error),
+      })
+    );
+
+    // Unmount so polling doesn't interfere with the test
+    unmount();
+
+    // Simulate retries up to maximum retry count (currently set to 5)
+    for (let i = 0; i < 5; i++) {
+      const interval = 5000 * Math.pow(2, i); // 5000ms is the currently set error retry interval
+
+      jest.advanceTimersByTime(interval);
+
+      await waitFor(() => expect(getInboxNotificationsReqCount).toBe(i + 2));
+    }
+
+    expect(getInboxNotificationsReqCount).toBe(1 + 5); // initial request + 5 retries
+
+    // No more retries should be made after the maximum number of retries
+    await jest.advanceTimersByTimeAsync(5 * Math.pow(2, 5));
+
+    // The number of requests should not have increased after the maximum number of retries
+    expect(getInboxNotificationsReqCount).toBe(1 + 5);
+  });
+
+  test("should retry with exponential backoff with a maximum retry limit", async () => {
+    let getInboxNotificationsReqCount = 0;
+    server.use(
+      mockGetInboxNotifications(async (_req, res, ctx) => {
+        getInboxNotificationsReqCount++;
+        if (getInboxNotificationsReqCount === 1) {
+          return res(ctx.status(500));
+        } else {
+          return res(
+            ctx.json({
+              threads: [],
+              inboxNotifications: [],
+              deletedThreads: [],
+              deletedInboxNotifications: [],
+              meta: {
+                requestedAt: new Date().toISOString(),
+              },
+            })
+          );
+        }
+      })
+    );
+
+    const {
+      liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
+    } = createLiveblocksContextForTest();
+
+    const { result, unmount } = renderHook(() => useInboxNotifications(), {
+      wrapper: ({ children }) => (
+        <LiveblocksProvider>{children}</LiveblocksProvider>
+      ),
+    });
+
+    expect(result.current).toEqual({
+      isLoading: true,
+    });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        error: expect.any(Error),
+      })
+    );
+
+    // The first retry should be made after 5000ms * 2^0 (5000ms is the currently set error retry interval)
+    jest.advanceTimersByTime(5000);
+    // A new fetch request for inbox notifications should have been made after the first retry
+    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(2));
+
+    expect(result.current).toEqual({
+      inboxNotifications: [],
+      isLoading: false,
+    });
+
+    // No more retries should be made after successful retry
+    await jest.advanceTimersByTimeAsync(5000 * Math.pow(2, 1));
+    expect(getInboxNotificationsReqCount).toBe(2);
+
+    // Unmount so polling doesn't interfere with the test
+    unmount();
+  });
+});
+
 describe("useInboxNotifications - Suspense", () => {
   test("should be referentially stable after rerendering", async () => {
     const threads = [dummyThreadData()];
@@ -431,6 +615,152 @@ describe("useInboxNotifications: polling", () => {
     jest.advanceTimersByTime(POLLING_INTERVAL);
     // Wait for the second polling to occur
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(3));
+
+    unmount();
+  });
+});
+
+describe("useThreadsSuspense: error", () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.clearAllTimers();
+    jest.useRealTimers(); // Restores the real timers
+  });
+
+  test("should trigger error boundary if initial fetch throws an error", async () => {
+    server.use(
+      mockGetInboxNotifications((_req, res, ctx) => {
+        // Mock an error response from the server for the initial fetch
+        return res(ctx.status(500));
+      })
+    );
+
+    const {
+      liveblocksCtx: {
+        suspense: { LiveblocksProvider, useInboxNotifications },
+      },
+    } = createLiveblocksContextForTest();
+
+    function Fallback({ resetErrorBoundary }: FallbackProps) {
+      return (
+        <div>
+          <p>There was an error while getting inbox notifications.</p>
+          <button onClick={resetErrorBoundary}>Retry</button>
+        </div>
+      );
+    }
+
+    const { result, unmount } = renderHook(() => useInboxNotifications(), {
+      wrapper: ({ children }) => (
+        <LiveblocksProvider>
+          <ErrorBoundary FallbackComponent={Fallback}>
+            <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
+          </ErrorBoundary>
+        </LiveblocksProvider>
+      ),
+    });
+
+    expect(result.current).toEqual(null);
+
+    await waitFor(() =>
+      // Check if the error boundary's fallback UI is displayed
+      expect(
+        screen.getByText(
+          "There was an error while getting inbox notifications."
+        )
+      ).toBeInTheDocument()
+    );
+
+    unmount();
+  });
+
+  test("should retry with exponential backoff on error and clear error boundary", async () => {
+    const threads = [dummyThreadData()];
+    const inboxNotification = dummyInboxNoficationData();
+    inboxNotification.threadId = threads[0].id;
+    const inboxNotifications = [inboxNotification];
+
+    let getInboxNotificationsReqCount = 0;
+    server.use(
+      mockGetInboxNotifications((_req, res, ctx) => {
+        getInboxNotificationsReqCount++;
+
+        if (getInboxNotificationsReqCount === 1) {
+          // Mock an error response from the server
+          return res(ctx.status(500));
+        } else {
+          // Mock a successful response from the server for the subsequent fetches
+          return res(
+            ctx.json({
+              threads,
+              inboxNotifications,
+              deletedThreads: [],
+              deletedInboxNotifications: [],
+              meta: {
+                requestedAt: new Date().toISOString(),
+              },
+            })
+          );
+        }
+      })
+    );
+
+    const {
+      liveblocksCtx: {
+        suspense: { LiveblocksProvider, useInboxNotifications },
+      },
+    } = createLiveblocksContextForTest();
+
+    function Fallback({ resetErrorBoundary }: FallbackProps) {
+      return (
+        <div>
+          <p>There was an error while getting inbox notifications.</p>
+          <button onClick={resetErrorBoundary}>Retry</button>
+        </div>
+      );
+    }
+
+    const { result, unmount } = renderHook(() => useInboxNotifications(), {
+      wrapper: ({ children }) => (
+        <LiveblocksProvider>
+          <ErrorBoundary FallbackComponent={Fallback}>
+            <Suspense fallback={<div>Loading</div>}>{children}</Suspense>
+          </ErrorBoundary>
+        </LiveblocksProvider>
+      ),
+    });
+
+    expect(result.current).toEqual(null);
+
+    // A new fetch request for the threads should have been made after the initial render
+    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(1));
+    // Check if the error boundary's fallback UI is displayed
+    expect(
+      screen.getByText("There was an error while getting inbox notifications.")
+    ).toBeInTheDocument();
+
+    // The first retry should be made after 5000ms * 2^0 (5000ms is the currently set error retry interval)
+    jest.advanceTimersByTime(5000);
+    // A new fetch request for the threads should have been made after the first retry
+    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(2));
+
+    // Simulate clicking the retry button
+    fireEvent.click(screen.getByText("Retry"));
+
+    // The error boundary's fallback UI should be cleared
+    expect(
+      screen.queryByText(
+        "There was an error while getting inbox notifications."
+      )
+    ).not.toBeInTheDocument();
+
+    expect(result.current).toEqual({
+      isLoading: false,
+      inboxNotifications,
+    });
 
     unmount();
   });
