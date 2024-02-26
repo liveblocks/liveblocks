@@ -7,8 +7,8 @@
 
 ### `@liveblocks/react`
 
-- Implemented error retrying for `useThreads`, `useRoomNotificationSettings`,
-  and `useInboxNotifications` to handle initial fetching failures.
+- Added error retrying to `useThreads`, `useRoomNotificationSettings`, and
+  `useInboxNotifications` during initial fetching.
 
 # v1.10.0
 
