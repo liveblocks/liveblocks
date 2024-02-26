@@ -6,6 +6,7 @@ export function getBaseUrl(baseUrl?: string | undefined): string {
   baseUrl ||=
     process.env.LIVEBLOCKS_BASE_URL ||
     process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL ||
+    process.env.VITE_LIVEBLOCKS_BASE_URL ||
     undefined;
   if (
     typeof baseUrl === "string" &&
