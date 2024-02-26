@@ -245,7 +245,7 @@ export class LiveblocksError extends Error {
 
 function nextBackoffDelay(
   currentDelay: number,
-  delays: readonly number[] = BACKOFF_DELAYS
+  delays: readonly number[]
 ): number {
   return (
     delays.find((delay) => delay > currentDelay) ?? delays[delays.length - 1]
@@ -253,7 +253,9 @@ function nextBackoffDelay(
 }
 
 function increaseBackoffDelay(context: Patchable<Context>) {
-  context.patch({ backoffDelay: nextBackoffDelay(context.backoffDelay) });
+  context.patch({
+    backoffDelay: nextBackoffDelay(context.backoffDelay, BACKOFF_DELAYS),
+  });
 }
 
 function increaseBackoffDelayAggressively(context: Patchable<Context>) {
