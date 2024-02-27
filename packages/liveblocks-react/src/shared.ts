@@ -109,8 +109,9 @@ export function createSharedContext<
 
     return state
       ? ({
-          ...state,
+          isLoading: state.isLoading,
           info: state.data,
+          error: state.error,
         } as RoomInfoState)
       : { isLoading: true };
   }
@@ -137,8 +138,9 @@ export function createSharedContext<
     );
 
     return {
-      ...state,
+      isLoading: false,
       info: state?.data,
+      error: state?.error,
     } as RoomInfoStateSuccess;
   }
 
