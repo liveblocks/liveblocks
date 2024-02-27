@@ -14,6 +14,7 @@ import { Observable } from "lib0/observable";
 import type * as Y from "yjs";
 
 const Y_PRESENCE_KEY = "__yjs";
+const Y_PRESENCE_ID_KEY = "__yjs_clientid";
 
 type MetaClientState = {
   clock: number;
@@ -50,10 +51,9 @@ export class Awareness extends Observable<unknown> {
     this.clientID = doc.clientID;
     // Add the clientId to presence so we can map it to connectionId later
     this.room.updatePresence({
-      [Y_PRESENCE_KEY]: { clientID: this.clientID },
+      [Y_PRESENCE_ID_KEY]: this.clientID,
     });
     this.othersUnsub = this.room.events.others.subscribe((event) => {
-      this.rebuildActorToClientMap(event.others);
       // When others are changed, we emit an event that contains arrays added/updated/removed.
       if (event.type === "leave") {
         // REMOVED
@@ -73,9 +73,12 @@ export class Awareness extends Observable<unknown> {
           },
           "presence",
         ]);
+        // rebuild after the user leaves so we can get the ID of the user who left
+        this.rebuildActorToClientMap(event.others);
       }
 
       if (event.type === "enter") {
+        this.rebuildActorToClientMap(event.others);
         // ADDED
         this.emit("change", [
           {
@@ -96,6 +99,7 @@ export class Awareness extends Observable<unknown> {
       }
 
       if (event.type === "update") {
+        this.rebuildActorToClientMap(event.others);
         // UPDATED
         this.emit("change", [
           {
@@ -122,14 +126,10 @@ export class Awareness extends Observable<unknown> {
   ): void {
     this.actorToClientMap.clear();
     others.forEach((user) => {
-      if (
-        user.presence[Y_PRESENCE_KEY] !== undefined &&
-        (user.presence[Y_PRESENCE_KEY] as { clientID?: number }).clientID !==
-          undefined
-      ) {
+      if (user.presence[Y_PRESENCE_ID_KEY] !== undefined) {
         this.actorToClientMap.set(
           user.connectionId,
-          (user.presence[Y_PRESENCE_KEY] as { clientID: number }).clientID
+          user.presence[Y_PRESENCE_ID_KEY] as number
         );
       }
     });
@@ -194,9 +194,7 @@ export class Awareness extends Observable<unknown> {
     const presence = this.room.getSelf()?.presence[Y_PRESENCE_KEY];
     const states = others.reduce((acc: Map<number, unknown>, currentValue) => {
       if (currentValue.presence[Y_PRESENCE_KEY] !== undefined) {
-        const { clientID } = currentValue.presence[Y_PRESENCE_KEY] as {
-          clientID?: number;
-        };
+        const clientID = currentValue.presence[Y_PRESENCE_ID_KEY] as number;
         if (clientID) {
           // yjs client id
           acc.set(clientID, currentValue.presence[Y_PRESENCE_KEY] || {});
