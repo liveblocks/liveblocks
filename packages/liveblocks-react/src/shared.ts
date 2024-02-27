@@ -56,8 +56,9 @@ export function createSharedContext<
 
     return state
       ? ({
-          ...state,
+          isLoading: state.isLoading,
           user: state.data,
+          error: state.error,
         } as UserState<TUserMeta["info"]>)
       : { isLoading: true };
   }
@@ -84,8 +85,9 @@ export function createSharedContext<
     );
 
     return {
-      ...state,
+      isLoading: false,
       user: state?.data,
+      error: state?.error,
     } as UserStateSuccess<TUserMeta["info"]>;
   }
 
