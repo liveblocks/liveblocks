@@ -27,30 +27,46 @@ need before setting up your application.
 ### Access tokens
 
 [Access token](/docs/authentication/access-token) authentication allows you to
-handle permissions yourself. When a user authenticates, it’s up to you to tell
-Liveblocks which rooms they should be allowed inside. This means that you need
-to manually keep track of which users should be allowed in which rooms, and
+handle permissions yourself. When a user authenticates, it’s up to you to let
+Liveblocks know which rooms they should be allowed inside. This means that you
+need to manually keep track of which users should be allowed in which rooms, and
 apply these permissions yourself each time a user connects.
 
-[image]
+<Figure>
+  <Image
+    src="/assets/authentication/access-token-enter-room.png"
+    alt="An access token granting entry to a room"
+    width={1494}
+    height={840}
+    quality={100}
+  />
+</Figure>
 
-In the diagram above, you can see an access token is allowing “Olivier” into the
-“my-team/sf8s7f9sf7s9f6s” room.
+In the diagram above, you can see that `olivier@example.com`’s access token is
+allowing him into the `Vu78Rt::design/9Hdu73` room.
 
 ### ID tokens
 
-[ID tokens](/docs/authentication/id-token) authentication allows Liveblocks to
+[ID token](/docs/authentication/id-token) authentication allows Liveblocks to
 handle permissions for you. This means that when you create or modify a room,
 you can set a user’s permissions on the room itself, this acting as a source of
 truth. Later, when a user tries to enter a room, Liveblocks will automatically
 check if the user has permission, and deny them access if the permissions aren’t
 set.
 
-[image]
+<Figure>
+  <Image
+    src="/assets/authentication/id-token-enter-room.png"
+    alt="An ID token granting entry to a room"
+    width={1494}
+    height={840}
+    quality={100}
+  />
+</Figure>
 
-In the diagram above, a room is created giving “Alicia” permission to enter.
-Later, when “Alicia” authenticates, her identity is confirmed, and when she
-tries to enter a room, her permissions are then checked.
+In the diagram above, `olivier@example.com`’s ID token verifies his identity,
+and when he tries to enter the `Vu78Rt::design/9Hdu73` room, his permissions are
+then checked on the room itself.
 
 ## Next steps
 
@@ -65,10 +81,11 @@ Learn how to use your chosen authentication method.
     center={false}
     visual={
       <Image
-        src="/assets/authentication-access-token-permissions.png"
-        alt="Access token permissions"
-        width={498}
-        height={280}
+        src="/assets/authentication/access-token-enter-room.png"
+        alt="An access token granting entry to a room"
+        width={1494}
+        height={840}
+        quality={100}
       />
     }
   />
@@ -80,10 +97,11 @@ Learn how to use your chosen authentication method.
     center={false}
     visual={
       <Image
-        src="/assets/authentication-id-token-permissions.png"
-        alt="ID token permissions"
-        width={498}
-        height={280}
+        src="/assets/authentication/id-token-enter-room.png"
+        alt="An ID token granting entry to a room"
+        width={1494}
+        height={840}
+        quality={100}
       />
     }
   />

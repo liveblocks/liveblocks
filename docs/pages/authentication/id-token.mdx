@@ -5,4 +5,24 @@ meta:
   description: "Learn more about ID token permissions"
 ---
 
+ID token authentication allows Liveblocks to handle permissions for you. This
+means that when you create or modify a room, you can set a user’s permissions on
+the room itself, this acting as a source of truth. Later, when a user tries to
+enter a room, Liveblocks will automatically check if the user has permission,
+and deny them access if the permissions aren’t set.
+
+<Figure>
+  <Image
+    src="/assets/authentication/id-token-enter-room.png"
+    alt="An ID token granting entry to a room"
+    width={1494}
+    height={840}
+    quality={100}
+  />
+</Figure>
+
+In the diagram above, `olivier@example.com`’s ID token verifies his identity,
+and when he tries to enter the `Vu78Rt::design/9Hdu73` room, his permissions are
+then checked on the room itself.
+
 [cards linking to technologies]

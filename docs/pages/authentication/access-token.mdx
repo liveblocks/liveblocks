@@ -5,4 +5,23 @@ meta:
   description: "Learn more about access token permissions"
 ---
 
+Access token authentication allows you to handle permissions yourself. When a
+user authenticates, it’s up to you to let Liveblocks know which rooms they
+should be allowed inside. This means that you need to manually keep track of
+which users should be allowed in which rooms, and apply these permissions
+yourself each time a user connects.
+
+<Figure>
+  <Image
+    src="/assets/authentication/access-token-enter-room.png"
+    alt="An access token granting entry to a room"
+    width={1494}
+    height={840}
+    quality={100}
+  />
+</Figure>
+
+In the diagram above, you can see that `olivier@example.com`’s access token is
+allowing him into the `Vu78Rt::design/9Hdu73` room.
+
 [cards linking to technologies]
