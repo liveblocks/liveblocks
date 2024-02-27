@@ -21,11 +21,302 @@ and deny them access if the permissions aren’t set.
   />
 </Figure>
 
-In the diagram above, `olivier@example.com`’s ID token verifies his identity,
-and when he tries to enter the `Vu78Rt::design/9Hdu73` room, his permissions are
-then checked on the room itself.
+<Banner title="Don’t need complex permissions?">
 
-[cards linking to technologies]
+If you don’t need fine-grained permissions, we recommend using simpler
+[access tokens](/docs/authentication/access-token) instead.
+
+</Banner>
+
+## Get started
+
+At its most basic, creating an ID token involves calling
+[`liveblocks.identifyUser`](/docs/api-reference/liveblocks-node#id-tokens)
+inside an API endpoint and returning the token, within `body`. For example, lets
+assume this is a POST endpoint at `/api/liveblocks-auth`.
+
+```ts
+export function POST() {
+  const { body, status } = await liveblocks.identifyUser({
+    userId: "olivier@example.com",
+  });
+
+  return new Response(body, { status });
+}
+```
+
+To retrieve the token on the front end, pass `/api/liveblocks-auth` to
+[`authEndpoint`](/docs/api-reference/liveblocks-client#createClientAuthEndpoint)
+in your client. This should be found in your config file.
+
+```ts file="liveblocks.config.ts"
+const client = createClient({ authEndpoint: "/api/liveblocks-auth" });
+```
+
+We recommend you continue reading to learn about permissions, but if you’d like
+to dive right in,
+[select your framework to get started](#select-your-framework).
+
+## Permissions
+
+ID token authentication allows you to set different permission types on rooms,
+assigned at three different levels: default, groups, and users. The system is
+flexible enough to enable you to build a permission system that’s helpful for
+building invite dialogs, workspaces, and more.
+
+<Figure>
+  <img
+    src="/assets/managing-rooms/rooms-share-dialog.png"
+    alt="Share dialog illustration"
+  />
+</Figure>
+
+To set room permissions, you can
+[create](/docs/api-reference/liveblocks-node#post-rooms) or
+[update](/docs/api-reference/liveblocks-node#post-rooms-roomId) a room, passing
+permission information in the options.
+
+```ts
+const room = await liveblocks.createRoom("Vu78Rt::design/9Hdu73", {
+  // This is a private room
+  defaultAccesses: [],
+
+  // But Olivier can enter
+  usersAccesses: {
+    "olivier@example.com": ["room:read"],
+  },
+});
+```
+
+### Permission types [#permission-types]
+
+There are three permission values that you can set on rooms.
+
+<dl>
+  <dt>`["room:write"]`</dt>
+  <dd>
+    Full access. Enables people to view and edit the room. `isReadOnly` is
+    `false`.
+  </dd>
+  <dt>`["room:read", "room:presence:write"]`</dt>
+  <dd>
+    Read access with presence. Enables people to edit their presence, but only
+    view the room&rsquo;s storage. `isReadOnly` is `true`.
+  </dd>
+  <dt>`[]`</dt>
+  <dd>Private. No one can enter the room.</dd>
+</dl>
+
+### Permission levels [#permission-types]
+
+Permission types can be applied at three different levels, enabling complex
+entry systems.
+
+<dl>
+  <dt>defaultAccesses</dt>
+  <dd>The default permission types to apply to the entire room.</dd>
+  <dt>groupsAccesses</dt>
+  <dd>Permission types to apply to specific groups of users.</dd>
+  <dt>usersAccesses</dt>
+  <dd>Permission types to apply to specific users.</dd>
+</dl>
+
+Each level further down will override access levels defined above, for example a
+room with private access will allow a user with `room:write` access to enter.
+
+### Default room permissions
+
+The `defaultAccesses` level is used to set the default permissions of the entire
+room.
+
+<Figure>
+  <Image
+    src="/assets/managing-rooms/rooms-access-denied.png"
+    alt="Access denied illustration"
+    width={820}
+    height={412}
+  />
+</Figure>
+
+When used in our APIs, this property takes an array, with an empty array `[]`
+signifying no access. Add permission types to this array to define the default
+access level to your room.
+
+```ts
+// Private - no one has access by default
+"defaultAccesses": []
+
+// Public - everyone can edit and view the room
+"defaultAccesses": ["room:write"]
+
+// Read-only - everyone can view the room, but only presence can be edited
+"defaultAccesses": ["room:read", "room:presence:write"]
+```
+
+#### Setting room access
+
+We can use the
+[`liveblocks.createRoom`](/docs/api-reference/rest-api-endpoints#post-rooms) to
+create a new room with public access levels:
+
+```ts highlight="2"
+const room = await liveblocks.createRoom("Vu78Rt::design/9Hdu73", {
+  defaultAccesses: ["room:write"],
+});
+```
+
+The default permission types can later be modified with
+[`liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#post-rooms-roomId),
+in this example turning the room private:
+
+```ts highlight="2"
+const room = await liveblocks.updateRoom("Vu78Rt::design/9Hdu73", {
+  defaultAccesses: [],
+});
+```
+
+### Groups permissions
+
+The `groupsAccesses` level is used to set the default permissions of any given
+group within room.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source src="/assets/managing-rooms/rooms-groups.mp4" type="video/mp4" />
+  </video>
+</Figure>
+
+Groups are represented by a `groupId`—a custom string that represents a
+selection of users in your app. Groups can be attached to a user by passing an
+array of `groupId` values in `groupIds`, during
+[authentication](/docs/rooms/authentication/id-token-permissions).
+
+```js highlight="10"
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+export async function POST(request: Request) {
+  const { status, body } = await liveblocks.identifyUser({
+    userId: "marie@example.com",
+    groupIds: ["engineering"]
+  });
+
+  return new Response(body, { status });
+}
+```
+
+In our APIs you can then set group accesses by using the `groupId` as the key,
+and an array of permissions as the value.
+
+```ts
+// "engineering" group has access to view and edit
+"groupsAccesses": {
+  "engineering": ["room:write"],
+}
+```
+
+#### Modifying group access [#permissions-levels-groups-accesses-example]
+
+To allow an "engineering" group access to view a room, and modify their
+presence, we can use
+[`liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#post-rooms-roomId)
+with `engineering` as a `groupId`:
+
+```ts highlight="3"
+const room = await liveblocks.updateRoom("Vu78Rt::design/9Hdu73", {
+  groupsAccesses: {
+    engineering: ["room:read", "room:presence:write"],
+  },
+});
+```
+
+To remove a group’s permissions, we can use
+[`liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#post-rooms-roomId)
+again, and set the permission type to `null`:
+
+```ts highlight="7"
+const room = await liveblocks.updateRoom("Vu78Rt::design/9Hdu73", {
+  groupsAccesses: {
+    engineering: null,
+  },
+});
+```
+
+### User permissions
+
+The `usersAccesses` level is used to set permissions of any give user within a
+room.
+
+<Figure>
+  <Image
+    src="/assets/managing-rooms/rooms-share-dialog.png"
+    alt="Share dialog illustration"
+    width={820}
+    height={412}
+  />
+</Figure>
+
+To use this, first a user is given a `userId` during
+[authentication](/docs/rooms/authentication).
+
+```js highlight="9"
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+export async function POST(request: Request) {
+  const { status, body } = await liveblocks.identifyUser({
+    userId: "ellen@acme.inc"
+  });
+
+  return new Response(body, { status });
+}
+```
+
+Then, if you want the user with the `userId` id to make edits, set `userId` to
+`["room:write"]` within `usersAccesses` when creating or updating a room.
+
+```ts
+// user with userId "ellen@acme.inc" has access to view and edit
+"usersAccesses": {
+  "ellen@acme.inc": ["room:write"]
+}
+```
+
+#### Checking user access [#permissions-levels-users-accesses-example]
+
+To give them room permission, we can use
+[`liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#post-rooms-roomId),
+setting write access on their `userId`:
+
+```ts highlight="3"
+const room = await liveblocks.updateRoom("Vu78Rt::design/9Hdu73", {
+  usersAccesses: {
+    "ellen@acme.inc": ["room:write"],
+  },
+});
+```
+
+To check a user’s assigned permission types for this room, we can then use
+[`liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#get-rooms-roomId)
+and check `usersAccesses`:
+
+```ts
+const room = await liveblocks.getRoom("Vu78Rt::design/9Hdu73");
+
+// { "ellen@acme.inc": ["room:write"] }
+console.log(room.data.usersAccesses);
+```
+
+## Select your framework [#select-your-framework]
+
+The next step is to select your framework for specific instructions on setting
+up.
 
 <ListGrid columns={3}>
   <DocsCard
