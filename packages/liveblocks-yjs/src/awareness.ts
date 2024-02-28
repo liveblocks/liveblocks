@@ -53,78 +53,38 @@ export class Awareness extends Observable<unknown> {
       [Y_PRESENCE_ID_KEY]: this.doc.clientID,
     });
     this.othersUnsub = this.room.events.others.subscribe((event) => {
+      let updates:
+        | { added: number[]; updated: number[]; removed: number[] }
+        | undefined;
+
+      this.rebuildActorToClientMap(event.others);
       // When others are changed, we emit an event that contains arrays added/updated/removed.
       if (event.type === "leave") {
         const targetClientId = this.actorToClientMap.get(
           event.user.connectionId
         );
-        // REMOVED
-        this.emit("change", [
-          {
-            added: [],
-            updated: [],
-            removed: [targetClientId],
-          },
-          "presence",
-        ]);
-        this.emit("update", [
-          {
-            added: [],
-            updated: [],
-            removed: [targetClientId],
-          },
-          "presence",
-        ]);
+        if (targetClientId !== undefined) {
+          updates = { added: [], updated: [], removed: [targetClientId] };
+        }
         // rebuild after the user leaves so we can get the ID of the user who left
         this.rebuildActorToClientMap(event.others);
       }
-
-      if (event.type === "enter") {
+      if (event.type === "enter" || event.type === "update") {
         this.rebuildActorToClientMap(event.others);
         const targetClientId = this.actorToClientMap.get(
           event.user.connectionId
         );
-        // ADDED
-        this.emit("change", [
-          {
-            added: [targetClientId],
-            updated: [],
+        if (targetClientId !== undefined) {
+          updates = {
+            added: event.type === "enter" ? [targetClientId] : [],
+            updated: event.type === "update" ? [targetClientId] : [],
             removed: [],
-          },
-          "presence",
-        ]);
-        this.emit("update", [
-          {
-            added: [targetClientId],
-            updated: [],
-            removed: [],
-          },
-          "presence",
-        ]);
+          };
+        }
       }
-
-      if (event.type === "update") {
-        this.rebuildActorToClientMap(event.others);
-        const targetClientId = this.actorToClientMap.get(
-          event.user.connectionId
-        );
-        // UPDATED
-        this.emit("change", [
-          {
-            added: [],
-            updated: [targetClientId],
-            removed: [],
-          },
-          "presence",
-        ]);
-        this.emit("update", [
-          {
-            added: [],
-            updated: [targetClientId],
-            removed: [],
-          },
-          "presence",
-        ]);
+      if (updates !== undefined) {
+        this.emit("change", [updates, "presence"]);
+        this.emit("update", [updates, "presence"]);
       }
     });
   }
