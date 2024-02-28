@@ -32,6 +32,7 @@ export class Awareness extends Observable<unknown> {
   public doc: Y.Doc;
   public clientID: number;
   public states: Map<number, unknown> = new Map();
+  // used to map liveblock's ActorId to Yjs ClientID, both unique numbers representing a client
   public actorToClientMap: Map<number, number> = new Map();
   // Meta is used to keep track and timeout users who disconnect. Liveblocks provides this for us, so we don't need to
   // manage it here. Unfortunately, it's expected to exist by various integrations, so it's an empty map.
@@ -56,12 +57,15 @@ export class Awareness extends Observable<unknown> {
     this.othersUnsub = this.room.events.others.subscribe((event) => {
       // When others are changed, we emit an event that contains arrays added/updated/removed.
       if (event.type === "leave") {
+        const targetClientId = this.actorToClientMap.get(
+          event.user.connectionId
+        );
         // REMOVED
         this.emit("change", [
           {
             added: [],
             updated: [],
-            removed: [this.actorToClientMap.get(event.user.connectionId)],
+            removed: [targetClientId],
           },
           "presence",
         ]);
@@ -69,7 +73,7 @@ export class Awareness extends Observable<unknown> {
           {
             added: [],
             updated: [],
-            removed: [this.actorToClientMap.get(event.user.connectionId)],
+            removed: [targetClientId],
           },
           "presence",
         ]);
@@ -79,10 +83,13 @@ export class Awareness extends Observable<unknown> {
 
       if (event.type === "enter") {
         this.rebuildActorToClientMap(event.others);
+        const targetClientId = this.actorToClientMap.get(
+          event.user.connectionId
+        );
         // ADDED
         this.emit("change", [
           {
-            added: [this.actorToClientMap.get(event.user.connectionId)],
+            added: [targetClientId],
             updated: [],
             removed: [],
           },
@@ -90,7 +97,7 @@ export class Awareness extends Observable<unknown> {
         ]);
         this.emit("update", [
           {
-            added: [this.actorToClientMap.get(event.user.connectionId)],
+            added: [targetClientId],
             updated: [],
             removed: [],
           },
@@ -100,11 +107,14 @@ export class Awareness extends Observable<unknown> {
 
       if (event.type === "update") {
         this.rebuildActorToClientMap(event.others);
+        const targetClientId = this.actorToClientMap.get(
+          event.user.connectionId
+        );
         // UPDATED
         this.emit("change", [
           {
             added: [],
-            updated: [this.actorToClientMap.get(event.user.connectionId)],
+            updated: [targetClientId],
             removed: [],
           },
           "presence",
@@ -112,7 +122,7 @@ export class Awareness extends Observable<unknown> {
         this.emit("update", [
           {
             added: [],
-            updated: [this.actorToClientMap.get(event.user.connectionId)],
+            updated: [targetClientId],
             removed: [],
           },
           "presence",
@@ -191,19 +201,22 @@ export class Awareness extends Observable<unknown> {
   // Translate liveblocks presence to yjs awareness
   getStates(): Map<number, unknown> {
     const others = this.room.getOthers();
-    const presence = this.room.getSelf()?.presence[Y_PRESENCE_KEY];
-    const states = others.reduce((acc: Map<number, unknown>, currentValue) => {
-      if (currentValue.presence[Y_PRESENCE_KEY] !== undefined) {
-        const clientID = currentValue.presence[Y_PRESENCE_ID_KEY] as number;
-        if (clientID) {
-          // yjs client id
-          acc.set(clientID, currentValue.presence[Y_PRESENCE_KEY] || {});
-        }
+    const states = others.reduce((acc: Map<number, unknown>, otherUser) => {
+      const otherPresence = otherUser.presence[Y_PRESENCE_KEY];
+      const otherClientId = otherUser.presence[Y_PRESENCE_ID_KEY] as
+        | number
+        | undefined;
+      if (otherPresence !== undefined && otherClientId !== undefined) {
+        // set states of map clientId to yjs presence
+        acc.set(otherClientId, otherPresence || {});
       }
       return acc;
     }, new Map());
-    if (presence !== undefined) {
-      states.set(this.clientID, presence);
+
+    // add this client's yjs presence to states (local client not represented in others)
+    const localPresence = this.room.getSelf()?.presence[Y_PRESENCE_KEY];
+    if (localPresence !== undefined) {
+      states.set(this.clientID, localPresence);
     }
     return states;
   }
