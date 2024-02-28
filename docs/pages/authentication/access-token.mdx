@@ -21,19 +21,113 @@ yourself each time a user connects.
   />
 </Figure>
 
-## Get started
+<Banner title="Don’t need complex permissions?">
 
-If permissions aren’t important for you, and you’d like to dive right in,
-[select your framework to get started](#get-started). If you’d prefer allowing
-Liveblocks to handle permissions, with the help of our REST API, consider using
-[ID tokens](/docs/authentication/id-token) instead.
+If you need fine-grained permissions, and you’d prefer Liveblocks handle them
+for you, we recommend using [ID tokens](/docs/authentication/id-token) instead.
 
-[rename API]
+</Banner>
 
-## Select your framework [#get-started]
+## Authenticating
 
-The next step is to select your framework, and set up authentication in your
-app.
+Authenticating with access tokens means creating a JSON Web Token (JWT) that
+allows the current user access to certain rooms when connecting to Liveblocks.
+This token is created by calling
+[`liveblocks.prepareSession`](/docs/api-reference/liveblocks-node#access-tokens)
+then by allowing access to certain rooms.
+
+```ts
+const session = liveblocks.prepareSession("olivier@example.com");
+
+// Giving write access to one room, then read access to multiple rooms with a wildcard
+session.allow("Vu78Rt::design/9Hdu73", session.FULL_ACCESS);
+session.allow("Vu78Rt::product/*", session.READ_ACCESS);
+
+const { body, status } = await session.authorize();
+
+// '{ token: "j6Fga7..." }'
+console.log(body);
+```
+
+For a full understanding of access token permissions, it’s recommended to read
+through this entire page. However, if you’d like to get set up now, you can
+select your framework and read more later.
+
+<ListGrid columns={3}>
+  <DocsCard
+    title="Next.js"
+    href="/docs/authentication/access-token/nextjs"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    title="Remix"
+    href="/docs/authentication/access-token/remix"
+    visual={<DocsRemixIcon />}
+  />
+  <DocsCard
+    title="SvelteKit"
+    href="/docs/authentication/access-token/sveltekit"
+    visual={<DocsSvelteIcon />}
+  />
+  <DocsCard
+    title="Nuxt.js"
+    href="/docs/authentication/access-token/nuxtjs"
+    visual={<DocsNuxtjsIcon />}
+  />
+  <DocsCard
+    title="Express"
+    href="/docs/authentication/access-token/express"
+    visual={<DocsExpressIcon />}
+  />
+  <DocsCard
+    title="Firebase"
+    href="/docs/authentication/access-token/firebase"
+    visual={<DocsFirebaseIcon />}
+  />
+</ListGrid>
+
+## Naming rooms
+
+When using access tokens, it’s recommended to use a naming pattern for your room
+IDs. The reason for this, is that you can use wildcards to authenticate access
+to multiple rooms at once, and a naming pattern makes this far easier.
+
+### Naming pattern
+
+### Wildcards
+
+<Figure>
+  <Image
+    src="/assets/authentication/access-token-room-naming.png"
+    alt="An access token using a wildcard to access multiple rooms"
+    width={1494}
+    height={840}
+    quality={100}
+  />
+</Figure>
+
+In the image above, you can see that _Olivier_ has access to multiple _product_
+rooms, thanks to the `Vu78Rt::product/*` wildcard rule. This is how he was
+authorized:
+
+```ts
+const session = liveblocks.prepareSession("olivier@example.com");
+
+// Giving full access to one room
+session.allow("Vu78Rt::design/9Hdu73", session.FULL_ACCESS);
+
+// Give full access to every room with an ID beginning with "Vu78Rt::product/"
+session.allow("Vu78Rt::product/*", session.FULL_ACCESS);
+
+const { body, status } = await session.authorize();
+```
+
+### Wildcard
+
+## Select your framework [#select-your-framework]
+
+Select your framework for specific instructions on setting up ID token
+authentication.
 
 <ListGrid columns={3}>
   <DocsCard
