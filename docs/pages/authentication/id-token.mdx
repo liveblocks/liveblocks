@@ -28,36 +28,60 @@ If you don’t need fine-grained permissions, we recommend using simpler
 
 </Banner>
 
-## Get started
+## Authenticating
 
-At its most basic, creating an ID token involves calling
-[`liveblocks.identifyUser`](/docs/api-reference/liveblocks-node#id-tokens)
-inside an API endpoint and returning the token, within `body`. For example, lets
-assume this is a POST endpoint at `/api/liveblocks-auth`.
+Authenticating with ID tokens means creating a JSON Web Token (JWT) that’s used
+to verify the identity of the current user when connecting to a Liveblocks room.
+This token is created using
+[`liveblocks.identifyUser`](/docs/api-reference/liveblocks-node#id-tokens).
 
 ```ts
-export function POST() {
-  const { body, status } = await liveblocks.identifyUser({
-    userId: "olivier@example.com",
-  });
+const { body, status } = await liveblocks.identifyUser({
+  userId: "olivier@example.com",
+});
 
-  return new Response(body, { status });
-}
+// '{ token: "j6Fga7..." }'
+console.log(body);
 ```
 
-To retrieve the token on the front end, pass `/api/liveblocks-auth` to
-[`authEndpoint`](/docs/api-reference/liveblocks-client#createClientAuthEndpoint)
-in your client. This should be found in your config file.
+For a full understanding of ID token permissions, it’s recommended to read
+through this entire page. However, if you’d like to get set up now, you can
+select your framework and read more later.
 
-```ts file="liveblocks.config.ts"
-const client = createClient({ authEndpoint: "/api/liveblocks-auth" });
-```
+<ListGrid columns={3}>
+  <DocsCard
+    title="Next.js"
+    href="/docs/authentication/id-token/nextjs"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    title="Remix"
+    href="/docs/authentication/id-token/remix"
+    visual={<DocsRemixIcon />}
+  />
+  <DocsCard
+    title="SvelteKit"
+    href="/docs/authentication/id-token/sveltekit"
+    visual={<DocsSvelteIcon />}
+  />
+  <DocsCard
+    title="Nuxt.js"
+    href="/docs/authentication/id-token/nuxtjs"
+    visual={<DocsNuxtjsIcon />}
+  />
+  <DocsCard
+    title="Express"
+    href="/docs/authentication/id-token/express"
+    visual={<DocsExpressIcon />}
+  />
+  <DocsCard
+    title="Firebase"
+    href="/docs/authentication/id-token/firebase"
+    visual={<DocsFirebaseIcon />}
+  />
+</ListGrid>
 
-We recommend you continue reading to learn about permissions, but if you’d like
-to dive right in,
-[select your framework to get started](#select-your-framework).
-
-## Permissions
+## Permissions [#permissions]
 
 ID token authentication allows you to set different permission types on rooms,
 assigned at three different levels: default, groups, and users. The system is
@@ -315,8 +339,8 @@ console.log(room.data.usersAccesses);
 
 ## Select your framework [#select-your-framework]
 
-The next step is to select your framework for specific instructions on setting
-up.
+Select your framework for specific instructions on setting up ID token
+authentication.
 
 <ListGrid columns={3}>
   <DocsCard
