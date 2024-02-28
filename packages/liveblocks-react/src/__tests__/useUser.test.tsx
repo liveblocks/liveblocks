@@ -45,6 +45,36 @@ describe("useUser", () => {
     jest.useRealTimers();
   });
 
+  test("should return an error if resolveUsers is not set", async () => {
+    const { RoomProvider, useUser } = createRoomContextForTest({
+      resolveUsers: undefined,
+    });
+
+    const { result, unmount } = renderHook(
+      () => ({
+        user: useUser("abc"),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id="room-id" initialPresence={{}}>
+            {children}
+          </RoomProvider>
+        ),
+      }
+    );
+
+    expect(result.current.user).toEqual({ isLoading: true });
+
+    await waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
+
+    expect(result.current.user).toEqual({
+      isLoading: false,
+      error: new Error("resolveUsers didn't return anything for this user ID."),
+    });
+
+    unmount();
+  });
+
   test("should return the results from resolveUsers", async () => {
     const { RoomProvider, useUser } = createRoomContextForTest();
 
@@ -270,89 +300,83 @@ describe("useUser", () => {
     unmount();
   });
 
-  // TODO: This behavior should be supported
-  test.failing(
-    "should support resolveUsers not returning results",
-    async () => {
-      const { RoomProvider, useUser } = createRoomContextForTest({
-        resolveUsers: () => {
+  test("should return an error if resolveUsers returns undefined", async () => {
+    const { RoomProvider, useUser } = createRoomContextForTest({
+      resolveUsers: () => {
+        return undefined;
+      },
+    });
+    const { result, unmount } = renderHook(
+      () => ({
+        user: useUser("abc"),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id="room-id" initialPresence={{}}>
+            {children}
+          </RoomProvider>
+        ),
+      }
+    );
+
+    expect(result.current.user).toEqual({ isLoading: true });
+
+    await waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
+
+    expect(result.current.user).toEqual({
+      isLoading: false,
+      error: new Error("resolveUsers didn't return anything for this user ID."),
+    });
+
+    unmount();
+  });
+
+  test("should return an error if resolveUsers returns undefined for a specifc user ID", async () => {
+    const resolveUsers = jest.fn(({ userIds }: ResolveUsersArgs) =>
+      userIds.map((userId) => {
+        if (userId === "abc") {
           return undefined;
-        },
-      });
-      const { result, unmount } = renderHook(
-        () => ({
-          user: useUser("abc"),
-        }),
-        {
-          wrapper: ({ children }) => (
-            <RoomProvider id="room-id" initialPresence={{}}>
-              {children}
-            </RoomProvider>
-          ),
         }
-      );
 
-      expect(result.current.user).toEqual({ isLoading: true });
+        return { name: userId };
+      })
+    );
+    const { RoomProvider, useUser } = createRoomContextForTest({
+      resolveUsers,
+    });
+    const { result, unmount } = renderHook(
+      () => ({
+        userAbc: useUser("abc"),
+        user123: useUser("123"),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id="room-id" initialPresence={{}}>
+            {children}
+          </RoomProvider>
+        ),
+      }
+    );
 
-      await waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
+    await waitFor(() => {
+      expect(result.current.userAbc.isLoading).toBeFalsy();
+      expect(result.current.user123.isLoading).toBeFalsy();
+    });
 
-      expect(result.current.user).toEqual({
-        isLoading: false,
-      });
+    expect(result.current.userAbc).toEqual({
+      isLoading: false,
+      error: new Error("resolveUsers didn't return anything for this user ID."),
+    });
 
-      unmount();
-    }
-  );
+    expect(result.current.user123).toEqual({
+      isLoading: false,
+      user: {
+        name: "123",
+      },
+    });
 
-  // TODO: This behavior should be supported
-  test.failing(
-    "should support resolveUsers not returning results for a specifc user ID",
-    async () => {
-      const resolveUsers = jest.fn(({ userIds }: ResolveUsersArgs) =>
-        userIds.map((userId) => {
-          if (userId === "abc") {
-            return undefined;
-          }
-
-          return { name: userId };
-        })
-      );
-      const { RoomProvider, useUser } = createRoomContextForTest({
-        resolveUsers,
-      });
-      const { result, unmount } = renderHook(
-        () => ({
-          userAbc: useUser("abc"),
-          user123: useUser("123"),
-        }),
-        {
-          wrapper: ({ children }) => (
-            <RoomProvider id="room-id" initialPresence={{}}>
-              {children}
-            </RoomProvider>
-          ),
-        }
-      );
-
-      await waitFor(() => {
-        expect(result.current.userAbc.isLoading).toBeFalsy();
-        expect(result.current.user123.isLoading).toBeFalsy();
-      });
-
-      expect(result.current.userAbc).toEqual({
-        isLoading: false,
-      });
-
-      expect(result.current.user123).toEqual({
-        isLoading: false,
-        user: {
-          name: "123",
-        },
-      });
-
-      unmount();
-    }
-  );
+    unmount();
+  });
 });
 
 describe("useUserSuspense", () => {

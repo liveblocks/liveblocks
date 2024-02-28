@@ -47,6 +47,38 @@ describe("useRoomInfo", () => {
     jest.useRealTimers();
   });
 
+  test("should return an error if resolveRoomsInfo is not set", async () => {
+    const { RoomProvider, useRoomInfo } = createRoomContextForTest({
+      resolveRoomsInfo: undefined,
+    });
+
+    const { result, unmount } = renderHook(
+      () => ({
+        roomInfo: useRoomInfo("abc"),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id="room-id" initialPresence={{}}>
+            {children}
+          </RoomProvider>
+        ),
+      }
+    );
+
+    expect(result.current.roomInfo).toEqual({ isLoading: true });
+
+    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+
+    expect(result.current.roomInfo).toEqual({
+      isLoading: false,
+      error: new Error(
+        "resolveRoomsInfo didn't return anything for this room ID."
+      ),
+    });
+
+    unmount();
+  });
+
   test("should return the results from resolveRoomsInfo", async () => {
     const { RoomProvider, useRoomInfo } = createRoomContextForTest();
 
@@ -272,91 +304,87 @@ describe("useRoomInfo", () => {
     unmount();
   });
 
-  // TODO: This behavior should be supported
-  test.failing(
-    "should support resolveRoomsInfo not returning results",
-    async () => {
-      const { RoomProvider, useRoomInfo } = createRoomContextForTest({
-        resolveRoomsInfo: () => {
+  test("should return an error if resolveRoomsInfo returns undefined", async () => {
+    const { RoomProvider, useRoomInfo } = createRoomContextForTest({
+      resolveRoomsInfo: () => {
+        return undefined;
+      },
+    });
+    const { result, unmount } = renderHook(
+      () => ({
+        roomInfo: useRoomInfo("abc"),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id="room-id" initialPresence={{}}>
+            {children}
+          </RoomProvider>
+        ),
+      }
+    );
+
+    expect(result.current.roomInfo).toEqual({ isLoading: true });
+
+    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+
+    expect(result.current.roomInfo).toEqual({
+      isLoading: false,
+      error: new Error(
+        "resolveRoomsInfo didn't return anything for this room ID."
+      ),
+    });
+
+    unmount();
+  });
+
+  test("should return an error if resolveRoomsInfo returns undefined for a specifc room ID", async () => {
+    const resolveRoomsInfo = jest.fn(({ roomIds }: ResolveRoomsInfoArgs) =>
+      roomIds.map((roomId) => {
+        if (roomId === "abc") {
           return undefined;
-        },
-      });
-      const { result, unmount } = renderHook(
-        () => ({
-          roomInfo: useRoomInfo("abc"),
-        }),
-        {
-          wrapper: ({ children }) => (
-            <RoomProvider id="room-id" initialPresence={{}}>
-              {children}
-            </RoomProvider>
-          ),
         }
-      );
 
-      expect(result.current.roomInfo).toEqual({ isLoading: true });
+        return { name: roomId };
+      })
+    );
+    const { RoomProvider, useRoomInfo } = createRoomContextForTest({
+      resolveRoomsInfo,
+    });
+    const { result, unmount } = renderHook(
+      () => ({
+        roomInfoAbc: useRoomInfo("abc"),
+        roomInfo123: useRoomInfo("123"),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id="room-id" initialPresence={{}}>
+            {children}
+          </RoomProvider>
+        ),
+      }
+    );
 
-      await waitFor(() =>
-        expect(result.current.roomInfo.isLoading).toBeFalsy()
-      );
+    await waitFor(() => {
+      expect(result.current.roomInfoAbc.isLoading).toBeFalsy();
+      expect(result.current.roomInfo123.isLoading).toBeFalsy();
+    });
 
-      expect(result.current.roomInfo).toEqual({
-        isLoading: false,
-      });
+    expect(result.current.roomInfoAbc).toEqual({
+      isLoading: false,
+      error: new Error(
+        "resolveRoomsInfo didn't return anything for this room ID."
+      ),
+    });
 
-      unmount();
-    }
-  );
+    expect(result.current.roomInfo123).toEqual({
+      isLoading: false,
+      info: {
+        name: "123",
+      },
+    });
 
-  // TODO: This behavior should be supported
-  test.failing(
-    "should support resolveRoomsInfo not returning results for a specifc room ID",
-    async () => {
-      const resolveRoomsInfo = jest.fn(({ roomIds }: ResolveRoomsInfoArgs) =>
-        roomIds.map((roomId) => {
-          if (roomId === "abc") {
-            return undefined;
-          }
-
-          return { name: roomId };
-        })
-      );
-      const { RoomProvider, useRoomInfo } = createRoomContextForTest({
-        resolveRoomsInfo,
-      });
-      const { result, unmount } = renderHook(
-        () => ({
-          roomInfoAbc: useRoomInfo("abc"),
-          roomInfo123: useRoomInfo("123"),
-        }),
-        {
-          wrapper: ({ children }) => (
-            <RoomProvider id="room-id" initialPresence={{}}>
-              {children}
-            </RoomProvider>
-          ),
-        }
-      );
-
-      await waitFor(() => {
-        expect(result.current.roomInfoAbc.isLoading).toBeFalsy();
-        expect(result.current.roomInfo123.isLoading).toBeFalsy();
-      });
-
-      expect(result.current.roomInfoAbc).toEqual({
-        isLoading: false,
-      });
-
-      expect(result.current.roomInfo123).toEqual({
-        isLoading: false,
-        info: {
-          name: "123",
-        },
-      });
-
-      unmount();
-    }
-  );
+    unmount();
+  });
 });
 
 describe("useRoomInfoSuspense", () => {

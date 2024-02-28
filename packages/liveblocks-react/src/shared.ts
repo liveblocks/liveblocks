@@ -32,6 +32,13 @@ export function useSharedContextBundle() {
   }
 }
 
+const missingUserError = new Error(
+  "resolveUsers didn't return anything for this user ID."
+);
+const missingRoomInfoError = new Error(
+  "resolveRoomsInfo didn't return anything for this room ID."
+);
+
 export function createSharedContext<
   TUserMeta extends BaseUserMeta = BaseUserMeta,
 >(client: Client): SharedContextBundle<TUserMeta> {
@@ -58,7 +65,11 @@ export function createSharedContext<
       ? ({
           isLoading: state.isLoading,
           user: state.data,
-          error: state.error,
+          // Return an error if `undefined` was returned by `resolveUsers` for this user ID
+          error:
+            !state.isLoading && !state.data && !state.error
+              ? missingUserError
+              : state.error,
         } as UserState<TUserMeta["info"]>)
       : { isLoading: true };
   }
@@ -76,6 +87,11 @@ export function createSharedContext<
 
     if (userState.error) {
       throw userState.error;
+    }
+
+    // Throw an error if `undefined` was returned by `resolveUsers` for this user ID
+    if (!userState.data) {
+      throw missingUserError;
     }
 
     const state = useSyncExternalStore(
@@ -111,7 +127,11 @@ export function createSharedContext<
       ? ({
           isLoading: state.isLoading,
           info: state.data,
-          error: state.error,
+          // Return an error if `undefined` was returned by `resolveRoomsInfo` for this room ID
+          error:
+            !state.isLoading && !state.data && !state.error
+              ? missingRoomInfoError
+              : state.error,
         } as RoomInfoState)
       : { isLoading: true };
   }
@@ -129,6 +149,11 @@ export function createSharedContext<
 
     if (roomInfoState.error) {
       throw roomInfoState.error;
+    }
+
+    // Throw an error if `undefined` was returned by `resolveRoomsInfo` for this room ID
+    if (!roomInfoState.data) {
+      throw missingRoomInfoError;
     }
 
     const state = useSyncExternalStore(
