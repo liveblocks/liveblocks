@@ -30,7 +30,6 @@ type MetaClientState = {
 export class Awareness extends Observable<unknown> {
   private room: Room<JsonObject, LsonObject, BaseUserMeta, Json>;
   public doc: Y.Doc;
-  public clientID: number;
   public states: Map<number, unknown> = new Map();
   // used to map liveblock's ActorId to Yjs ClientID, both unique numbers representing a client
   public actorToClientMap: Map<number, number> = new Map();
@@ -49,10 +48,9 @@ export class Awareness extends Observable<unknown> {
     super();
     this.doc = doc;
     this.room = room;
-    this.clientID = doc.clientID;
     // Add the clientId to presence so we can map it to connectionId later
     this.room.updatePresence({
-      [Y_PRESENCE_ID_KEY]: this.clientID,
+      [Y_PRESENCE_ID_KEY]: this.doc.clientID,
     });
     this.othersUnsub = this.room.events.others.subscribe((event) => {
       // When others are changed, we emit an event that contains arrays added/updated/removed.
@@ -172,15 +170,15 @@ export class Awareness extends Observable<unknown> {
       }
       this.room.updatePresence({ ...presence, [Y_PRESENCE_KEY]: null });
       this.emit("update", [
-        { added: [], updated: [], removed: [this.clientID] },
+        { added: [], updated: [], removed: [this.doc.clientID] },
         "local",
       ]);
       return;
     }
     // if presence was undefined, it's added, if not, it's updated
     const yPresence = presence?.[Y_PRESENCE_KEY];
-    const added = yPresence === undefined ? [this.clientID] : [];
-    const updated = yPresence === undefined ? [] : [this.clientID];
+    const added = yPresence === undefined ? [this.doc.clientID] : [];
+    const updated = yPresence === undefined ? [] : [this.doc.clientID];
     this.room.updatePresence({
       [Y_PRESENCE_KEY]: {
         ...((yPresence as JsonObject) || {}),
@@ -216,7 +214,7 @@ export class Awareness extends Observable<unknown> {
     // add this client's yjs presence to states (local client not represented in others)
     const localPresence = this.room.getSelf()?.presence[Y_PRESENCE_KEY];
     if (localPresence !== undefined) {
-      states.set(this.clientID, localPresence);
+      states.set(this.doc.clientID, localPresence);
     }
     return states;
   }
