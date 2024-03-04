@@ -23,7 +23,8 @@ and deny them access if the permissions aren’t set.
 
 <Banner title="Don’t need complex permissions?">
 
-If you don’t need fine-grained permissions, we recommend using simpler
+If you don’t need fine-grained permissions, or if you’d prefer storing
+individual room permissions in your own system, we recommend using simpler
 [access tokens](/docs/authentication/access-token) instead.
 
 </Banner>
@@ -44,9 +45,10 @@ const { body, status } = await liveblocks.identifyUser({
 console.log(body);
 ```
 
-For a full understanding of ID token permissions, it’s recommended to read
-through this entire page. However, if you’d like to get set up now, you can
-select your framework and read more later.
+**Before using ID tokens, it’s recommended to read this entire page**, as it
+explains how to set up permissions in your Liveblocks app. However, if you’d
+like to quickly set up Liveblocks, you can select your framework and read more
+later.
 
 <ListGrid columns={3}>
   <DocsCard
