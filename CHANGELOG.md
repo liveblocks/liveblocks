@@ -1,9 +1,9 @@
-# v1.10.1 (Unpublished)
+# v1.10.1
 
 ### `@liveblocks/client`
 
 - Fix bug where the client’s backoff delay would not be respected correctly in a
-  small edge case
+  small edge case.
 
 ### `@liveblocks/react-comments`
 
