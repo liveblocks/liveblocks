@@ -14,7 +14,7 @@ export type {
   Schema,
   ThreadParticipants,
 } from "./client";
-export { Liveblocks } from "./client";
+export { Liveblocks, LiveblocksError } from "./client";
 export type {
   CommentCreatedEvent,
   CommentDeletedEvent,
