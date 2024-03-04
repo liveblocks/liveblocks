@@ -1,5 +1,10 @@
 # v1.10.1 (Unpublished)
 
+### `@liveblocks/client`
+
+- Fix bug where the client’s backoff delay would not be respected correctly in a
+  small edge case
+
 ### `@liveblocks/react-comments`
 
 - Fix date localization in `InboxNotification`.
