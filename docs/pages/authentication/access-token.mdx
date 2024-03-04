@@ -165,7 +165,7 @@ session.allow("Vu78Rt::design/9Hdu73", session.FULL_ACCESS);
 // Give full access to every room with an ID beginning with "Vu78Rt::product/"
 session.allow("Vu78Rt::product/*", session.FULL_ACCESS);
 
-// Give read-only access to every room in the `Vu78Rt` organization.
+// Give read-only access to every room in the `Vu78Rt` organization
 session.allow("Vu78Rt::*", session.READ_ACCESS);
 
 const { body, status } = await session.authorize();
@@ -180,7 +180,7 @@ function].
 
 ## Select your framework [#select-your-framework]
 
-Select your framework for specific instructions on setting up ID token
+Select your framework for specific instructions on setting up acess token
 authentication.
 
 <ListGrid columns={3}>
