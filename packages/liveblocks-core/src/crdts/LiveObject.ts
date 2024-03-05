@@ -2,7 +2,7 @@ import type { LiveNode, Lson, LsonObject } from "../crdts/Lson";
 import { nn } from "../lib/assert";
 import type { JsonObject } from "../lib/Json";
 import { nanoid } from "../lib/nanoid";
-import { deepClone } from "../lib/utils";
+import { compactObject, deepClone } from "../lib/utils";
 import type {
   CreateObjectOp,
   CreateOp,
@@ -105,16 +105,15 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
     this._propToLastUpdate = new Map<string, string>();
 
-    for (const key in obj) {
-      const value = obj[key];
-      if (value === undefined) {
-        continue;
-      } else if (isLiveNode(value)) {
+    const o = compactObject(obj);
+    for (const key of Object.keys(o)) {
+      const value = o[key];
+      if (isLiveNode(value)) {
         value._setParentLink(this, key);
       }
     }
 
-    this._map = new Map(Object.entries(obj)) as Map<string, Lson>;
+    this._map = new Map(Object.entries(o));
   }
 
   /** @internal */
