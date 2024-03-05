@@ -1,3 +1,10 @@
+# v1.10.2
+
+### `@liveblocks/client`
+
+- Fix bug where calling `.clone()` immediately after creating a new `LiveObject`
+  could throw an error
+
 # v1.10.1
 
 ### `@liveblocks/client`
