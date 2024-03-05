@@ -177,11 +177,11 @@ start building your own security logic in Next.js’ `/app` directory.
         Optionally, you can attach static metadata to each user, which will
         be accessible in your app. First you need to define the types in
         your config file, under `UserMeta["info"]`.
-  
+
         ```ts file="liveblocks.config.ts" highlight="5-9"
         type UserMeta = {
           id: string;
-          
+
           // Example, use any JSON-compatible data in your metadata
           info: {
             name: string;
@@ -190,14 +190,14 @@ start building your own security logic in Next.js’ `/app` directory.
           }
         }
         ```
-        
+
         When authenticating, you can then pass the user’s metadata to
         `prepareSession` in the endpoint we’ve just created.
-        
+
         ```ts file="app/api/liveblocks-auth/route.ts" highlight="11-15"
         // Get the current user from your database
         const user = __getUserFromDB__(request);
-        
+
         // Identify the user and return the result
         const { status, body } = await liveblocks.identifyUser(
           {
@@ -208,28 +208,29 @@ start building your own security logic in Next.js’ `/app` directory.
             userInfo: {
               name: user.name,
               avatar: user.avatarUrl,
-              colors: users.colorArray,
+              colors: user.colorArray,
             }
           },
         );
         ```
-        
+
         User metadata has now been set! You can access this information in your app through
         [`useSelf`](/docs/api-reference/liveblocks-react#useSelf).
-        
+
         ```tsx highlight="4"
         export { useSelf } from "../liveblocks.config.ts";
-        
+
         function Component() {
           const { name, avatar, colors } = useSelf((me) => me.info);
         }
         ```
-        
+
         Bear in mind that if you’re using the [default Comments components](/docs/api-reference/liveblocks-react-comments#Components),
         you must specify a `name` and `avatar` in `userInfo`.
       </StepContent>
-  
+
     </Step>
+
 </Steps>
 
 ## More information
