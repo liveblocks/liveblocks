@@ -1,11 +1,16 @@
+# v1.10.2 (unreleased)
+
+### `@liveblocks/client`
+
+- Fix bug where calling `.clone()` immediately after creating a new `LiveObject`
+  could throw an error
+
 # v1.10.1
 
 ### `@liveblocks/client`
 
 - Fix bug where the client’s backoff delay would not be respected correctly in a
   small edge case.
-- Fix bug where calling `.clone()` immediately after creating a new `LiveObject`
-  could throw an error
 
 ### `@liveblocks/react-comments`
 
