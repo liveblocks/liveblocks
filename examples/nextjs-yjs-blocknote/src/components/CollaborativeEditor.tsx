@@ -68,10 +68,8 @@ function BlockNote({ doc, provider }: EditorProps) {
         <Toolbar editor={editor} />
         <Avatars />
       </div>
-      {/*
-        // Removing all menus & toolbars from `BlockNoteView` will result in a zero-config editor with many more features
-        <BlockNoteView editor={editor} className={styles.editorContainer} />
-      */}
+      {/* In the code below, we disabled BlockNote's built-in menus and toolbars to get a plain editor. */}
+      {/* Simply use <BlockNoteView editor={editor} className={styles.editorContainer} /> if you want a full-fledged editor experience. */}
       <BlockNoteView
         editor={editor}
         className={styles.editorContainer}
