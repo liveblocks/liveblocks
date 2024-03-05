@@ -1,3 +1,10 @@
+# v1.10.3 (Unpublished)
+
+### `@liveblocks/react-comments`
+
+- Fix bug where the `showRoomName` prop on `InboxNotification.Thread` wasn’t
+  applied to notifications about mentions.
+
 # v1.10.2
 
 ### `@liveblocks/client`
