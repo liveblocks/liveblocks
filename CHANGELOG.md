@@ -1,4 +1,4 @@
-# v1.10.2 (unreleased)
+# v1.10.2
 
 ### `@liveblocks/client`
 
