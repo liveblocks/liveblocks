@@ -2,6 +2,7 @@ import type { LiveNode, Lson, LsonObject } from "../crdts/Lson";
 import { nn } from "../lib/assert";
 import type { JsonObject } from "../lib/Json";
 import { nanoid } from "../lib/nanoid";
+import type { RemoveUndefinedValues } from "../lib/utils";
 import { compactObject, deepClone } from "../lib/utils";
 import type {
   CreateObjectOp,
@@ -105,7 +106,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
     this._propToLastUpdate = new Map<string, string>();
 
-    const o = compactObject(obj);
+    const o: RemoveUndefinedValues<LsonObject> = compactObject(obj);
     for (const key of Object.keys(o)) {
       const value = o[key];
       if (isLiveNode(value)) {

@@ -141,7 +141,7 @@ export function compact<T>(items: readonly T[]): NonNullable<T>[] {
   );
 }
 
-type RemoveUndefinedValues<T> = {
+export type RemoveUndefinedValues<T> = {
   [K in keyof T]-?: Exclude<T[K], undefined>;
 };
 
