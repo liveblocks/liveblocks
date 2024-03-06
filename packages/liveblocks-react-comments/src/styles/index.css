@@ -1121,7 +1121,7 @@
   gap: calc(0.75 * var(--lb-spacing));
   align-items: center;
   margin-block-start: calc(0.25 * var(--lb-spacing));
-  margin-block-end: var(--lb-spacing);
+  margin-block-end: calc(0.5 * var(--lb-spacing));
 }
 
 .lb-inbox-notification-title {
