@@ -1090,6 +1090,7 @@
 }
 
 .lb-inbox-notification-title {
+  min-block-size: $lb-button-size;
   text-wrap: pretty;
 
   :where(.lb-list, .lb-name) {
@@ -1101,6 +1102,7 @@
   flex: none;
   align-self: start;
   min-inline-size: 0;
+  block-size: $lb-button-size;
   margin-inline-start: auto;
 }
 
@@ -1112,6 +1114,13 @@
   &::before {
     content: "\FEFF";
   }
+}
+
+.lb-inbox-notification-actions {
+  display: flex;
+  gap: calc(0.125 * var(--lb-spacing));
+  align-self: start;
+  transition-property: opacity;
 }
 
 .lb-inbox-notification-comments {
