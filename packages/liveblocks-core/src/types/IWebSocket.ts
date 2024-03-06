@@ -75,6 +75,8 @@ export enum WebsocketCloseCodes {
   MAX_NUMBER_OF_MESSAGES_PER_DAY_PER_APP = 4004,
   /** Room is full, disconnect */
   MAX_NUMBER_OF_CONCURRENT_CONNECTIONS_PER_ROOM = 4005,
+  /** The room's roomId was updated, disconnect */
+  ROOM_ID_UPDATED = 4006,
   /** The server kicked the connection from the room. */
   KICKED = 4100,
   /** The auth token is expired, reauthorize to get a fresh one. In spirit akin to HTTP 401 */
