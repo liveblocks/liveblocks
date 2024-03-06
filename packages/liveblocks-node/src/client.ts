@@ -15,16 +15,24 @@ import type {
   IUserInfo,
   Json,
   JsonObject,
+  ManagedPool,
+  Op,
   PlainLsonObject,
   RoomNotificationSettings,
   ThreadData,
   ThreadDataPlain,
 } from "@liveblocks/core";
+import type { LiveNode } from "@liveblocks/core";
+import type { IdTuple } from "@liveblocks/core";
+import type { SerializedCrdt } from "@liveblocks/core";
+import type { LsonObject } from "@liveblocks/core";
 import {
   convertToCommentData,
   convertToCommentUserReaction,
   convertToThreadData,
 } from "@liveblocks/core";
+import { LiveObject } from "@liveblocks/core";
+import { ClientMsgCode } from "@liveblocks/core";
 
 import { Session } from "./Session";
 import {
@@ -634,6 +642,45 @@ export class Liveblocks {
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
+    }
+  }
+
+  public async modifyStorageDocument<T extends LsonObject>(
+    roomId: string,
+    mutation: (root: LiveObject<T>) => void | Promise<void>
+  ): Promise<void> {
+    const nodes = new Map<string, LiveNode>();
+    const result = await this.get(url`/v2/rooms/${roomId}/storage-stream`);
+    const items = (await result.json()) as IdTuple<SerializedCrdt>[];
+    let clock = 0;
+    let opClock = 0;
+    const storageOps: Op[] = [];
+    const pool: ManagedPool = {
+      roomId,
+      getNode: (id: string) => nodes.get(id),
+      addNode: (id: string, node: LiveNode) => void nodes.set(id, node),
+      deleteNode: (id: string) => void nodes.delete(id),
+      // We need a real actor ID...
+      generateId: () => `999:${clock++}`,
+      generateOpId: () => `999:${opClock++}`,
+      dispatch(ops: Op[]) {
+        storageOps.push(...ops);
+      },
+      assertStorageIsWritable: () => true,
+    };
+    // TODO: not exatly sure why this can't pull the types, may be beacuse I'm linked locally
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+    const root: LiveObject<T> = LiveObject._fromItems<T>(items, pool);
+    await mutation(root);
+    if (storageOps.length) {
+      await this.post(url`/v2/rooms/${roomId}/modify-storage`, {
+        messages: [
+          {
+            type: ClientMsgCode.UPDATE_STORAGE,
+            ops: storageOps,
+          },
+        ],
+      });
     }
   }
 
