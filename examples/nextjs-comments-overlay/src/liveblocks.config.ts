@@ -4,6 +4,8 @@ import { createRoomContext } from "@liveblocks/react";
 const client = createClient({
   authEndpoint: "/api/liveblocks-auth",
   throttle: 30,
+  // @ts-expect-error - Hidden config option
+  baseUrl: "https://dev.dev-liveblocks5948.workers.dev/",
   async resolveUsers({ userIds }) {
     const searchParams = new URLSearchParams(
       userIds.map((userId) => ["userIds", userId])

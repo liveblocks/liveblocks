@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
 
   // Give the user access to the room
   const { room } = await request.json();
-  session.allow("nextjs-comments-overlay-test", session.FULL_ACCESS);
+  session.allow(room, session.FULL_ACCESS);
 
   // Authorize the user and return the result
   const { body, status } = await session.authorize();

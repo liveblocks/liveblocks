@@ -1304,6 +1304,26 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
   }
+
+  /**
+   * Rename a room.
+   * @param params.roomId The ID of the room to rename.
+   * @param params.newRoomId The new room ID to rename to.
+   */
+  public async updateRoomId(params: {
+    roomId: string;
+    newRoomId: string;
+  }): Promise<void> {
+    const { roomId, newRoomId } = params;
+
+    const res = await this.post(url`/v2/rooms/${roomId}/update-room-id`, {
+      newRoomId,
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+  }
 }
 
 export class LiveblocksError extends Error {
