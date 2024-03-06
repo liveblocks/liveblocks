@@ -6,25 +6,28 @@ meta:
 
 Liveblocks provides different methods to authenticate your application using
 your public and secret API keys. For any production application, you should use
-your secret key to enable access token or ID token authentication. These methods
-can be used to control access to your rooms and data.
+your secret key to enable [access token](#access-tokens) or
+[ID token](#id-tokens) authentication. These methods can be used to control
+access to your rooms and data.
 
 <Banner title="Public key is for prototyping" type="warning">
 
-We don’t recommend using your public API key in production, as it’s difficult
-for us to accurately measure your MCUs without any user information. We
-recommend using your secret key instead, see below.
+We don’t recommend using your public API key in production, as it makes it
+possible for end users to access any room’s data. It’s also difficult for us to
+accurately measure your monthly collaborating users without any user
+information. We recommend using your secret key instead, see below.
 
 </Banner>
 
 ## Authentication methods
 
-Secret key authentication in Liveblocks relies on generating JSON Web Tokens
-(JWTs), and then passing these to your client. There are two different types of
-authentication tokens you can generate and it’s important to decide on which you
-need before setting up your application.
+Secret key authentication in Liveblocks relies on generating
+[JSON Web Tokens](https://en.wikipedia.org/wiki/JSON_Web_Token) (JWTs), and then
+passing these to your client. There are two different types of authentication
+tokens you can generate and it’s important to decide on which you need before
+setting up your application.
 
-### Access tokens
+### Access tokens [#access-tokens]
 
 [Access token](/docs/authentication/access-token) authentication allows you to
 handle permissions yourself. When a user authenticates, it’s up to you to let
@@ -43,9 +46,10 @@ apply these permissions yourself each time a user connects.
 </Figure>
 
 In the diagram above, you can see that `olivier@example.com`’s access token is
-allowing him into the `Vu78Rt::design/9Hdu73` room.
+allowing him into the `Vu78Rt:design:9Hdu73` room. A naming pattern like this is
+necessary for your rooms when using access tokens.
 
-### ID tokens
+### ID tokens [#id-tokens]
 
 [ID token](/docs/authentication/id-token) authentication allows Liveblocks to
 handle permissions for you. This means that when you create or modify a room,
@@ -65,12 +69,14 @@ set.
 </Figure>
 
 In the diagram above, `olivier@example.com`’s ID token verifies his identity,
-and when he tries to enter the `Vu78Rt::design/9Hdu73` room, his permissions are
-then checked on the room itself.
+and when he tries to enter the `a32wQXid4A9` room, his permissions are then
+checked on the room itself.
 
-## Next steps
+## Choose a method
 
-Learn how to use your chosen authentication method.
+The next step is to choose your authentication method. If you don’t need
+permission then access tokens are for you. ID tokens enable more powerful
+permissions but require you to manually create rooms yourself.
 
 <ListGrid columns={2}>
   <DocsCard

@@ -9,7 +9,9 @@ ID token authentication allows Liveblocks to handle permissions for you. This
 means that when you create or modify a room, you can set a user’s permissions on
 the room itself, this acting as a source of truth. Later, when a user tries to
 enter a room, Liveblocks will automatically check if the user has permission,
-and deny them access if the permissions aren’t set.
+and deny them access if the permissions aren’t set. Permissions aren’t just for
+individual users, but can also be set for groups of users, or for the whole
+room.
 
 <Figure>
   <Image
@@ -31,7 +33,8 @@ individual room permissions in your own system, we recommend using simpler
 
 ## Authenticating
 
-Authenticating with ID tokens means creating a JSON Web Token (JWT) that’s used
+Authenticating with ID tokens means creating a
+[JSON Web Token](https://en.wikipedia.org/wiki/JSON_Web_Token) (JWT) that’s used
 to verify the identity of the current user when connecting to a Liveblocks room.
 This token is created using
 [`liveblocks.identifyUser`](/docs/api-reference/liveblocks-node#id-tokens).
@@ -103,7 +106,7 @@ To set room permissions, you can
 permission information in the options.
 
 ```ts
-const room = await liveblocks.createRoom("Vu78Rt::design/9Hdu73", {
+const room = await liveblocks.createRoom("a32wQXid4A9", {
   // This is a private room
   defaultAccesses: [],
 
@@ -186,7 +189,7 @@ We can use the
 create a new room with public access levels:
 
 ```ts highlight="2"
-const room = await liveblocks.createRoom("Vu78Rt::design/9Hdu73", {
+const room = await liveblocks.createRoom("a32wQXid4A9", {
   defaultAccesses: ["room:write"],
 });
 ```
@@ -196,7 +199,7 @@ The default permission types can later be modified with
 in this example turning the room private:
 
 ```ts highlight="2"
-const room = await liveblocks.updateRoom("Vu78Rt::design/9Hdu73", {
+const room = await liveblocks.updateRoom("a32wQXid4A9", {
   defaultAccesses: [],
 });
 ```
@@ -252,7 +255,7 @@ presence, we can use
 with `engineering` as a `groupId`:
 
 ```ts highlight="3"
-const room = await liveblocks.updateRoom("Vu78Rt::design/9Hdu73", {
+const room = await liveblocks.updateRoom("a32wQXid4A9", {
   groupsAccesses: {
     engineering: ["room:read", "room:presence:write"],
   },
@@ -264,7 +267,7 @@ To remove a group’s permissions, we can use
 again, and set the permission type to `null`:
 
 ```ts highlight="7"
-const room = await liveblocks.updateRoom("Vu78Rt::design/9Hdu73", {
+const room = await liveblocks.updateRoom("a32wQXid4A9", {
   groupsAccesses: {
     engineering: null,
   },
@@ -321,7 +324,7 @@ To give them room permission, we can use
 setting write access on their `userId`:
 
 ```ts highlight="3"
-const room = await liveblocks.updateRoom("Vu78Rt::design/9Hdu73", {
+const room = await liveblocks.updateRoom("a32wQXid4A9", {
   usersAccesses: {
     "ellen@acme.inc": ["room:write"],
   },
@@ -333,7 +336,7 @@ To check a user’s assigned permission types for this room, we can then use
 and check `usersAccesses`:
 
 ```ts
-const room = await liveblocks.getRoom("Vu78Rt::design/9Hdu73");
+const room = await liveblocks.getRoom("a32wQXid4A9");
 
 // { "ellen@acme.inc": ["room:write"] }
 console.log(room.data.usersAccesses);

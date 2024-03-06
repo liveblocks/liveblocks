@@ -31,8 +31,9 @@ themselves, instead of in your system, we recommend using
 
 ## Authenticating
 
-Authenticating with access tokens means creating a JSON Web Token (JWT) that
-grants the current user permission to enter certain rooms when connecting to
+Authenticating with access tokens means creating a
+[JSON Web Token](https://en.wikipedia.org/wiki/JSON_Web_Token) (JWT) that grants
+the current user permission to enter certain rooms when connecting to
 Liveblocks. This token is created by calling
 [`liveblocks.prepareSession`](/docs/api-reference/liveblocks-node#access-tokens)
 then by allowing access to certain rooms.
@@ -41,8 +42,8 @@ then by allowing access to certain rooms.
 const session = liveblocks.prepareSession("olivier@example.com");
 
 // Giving write access to one room, then read access to multiple rooms with a wildcard
-session.allow("Vu78Rt::design/9Hdu73", session.FULL_ACCESS);
-session.allow("Vu78Rt::product/*", session.READ_ACCESS);
+session.allow("Vu78Rt:design:9Hdu73", session.FULL_ACCESS);
+session.allow("Vu78Rt:product:*", session.READ_ACCESS);
 
 const { body, status } = await session.authorize();
 
@@ -102,15 +103,15 @@ once.
 Let’s say that your application has a hierarchy of organizations (aka
 workspaces), groups, and rooms. Each room is in a group, each group is in an
 organization. An example of a naming pattern would be to combine the three of
-these into a unique room name separating them with symbols, such as
-`<ORGANIZATION_ID>::<GROUP_ID>/<DOCUMENT_ID>`. A room ID following this pattern
-may look like `Vu78Rt::design/9Hdu73`.
+these into a unique room ID separating them with symbols, such as
+`<ORGANIZATION_ID>:<GROUP_ID>:<DOCUMENT_ID>`. A room ID following this pattern
+may look like `Vu78Rt:design:9Hdu73`.
 
 <Figure>
   <Image
     src="/assets/authentication/room-name-pattern.png"
     srcDark="/assets/authentication/room-name-pattern-dark.png"
-    alt="Splitting a room name into the pattern detailed above"
+    alt="Splitting a room ID into the pattern detailed above"
     width={1536}
     height={864}
     quality={100}
@@ -136,17 +137,17 @@ access to multiple rooms at once using wildcards.
 </Figure>
 
 In the image above, you can see that _Olivier_ has access to multiple _product_
-rooms, thanks to the `Vu78Rt::product/*` wildcard rule. This is how he was
+rooms, thanks to the `Vu78Rt:product:*` wildcard rule. This is how he was
 authorized:
 
 ```ts
 const session = liveblocks.prepareSession("olivier@example.com");
 
 // Giving full access to one room
-session.allow("Vu78Rt::design/9Hdu73", session.FULL_ACCESS);
+session.allow("Vu78Rt:design:9Hdu73", session.FULL_ACCESS);
 
 // Give full access to every room with an ID beginning with "Vu78Rt::product/"
-session.allow("Vu78Rt::product/*", session.FULL_ACCESS);
+session.allow("Vu78Rt:product:*", session.FULL_ACCESS);
 
 const { body, status } = await session.authorize();
 ```
@@ -160,27 +161,20 @@ then add another line to enable this.
 const session = liveblocks.prepareSession("olivier@example.com");
 
 // Giving full access to one room
-session.allow("Vu78Rt::design/9Hdu73", session.FULL_ACCESS);
+session.allow("Vu78Rt:design:9Hdu73", session.FULL_ACCESS);
 
 // Give full access to every room with an ID beginning with "Vu78Rt::product/"
-session.allow("Vu78Rt::product/*", session.FULL_ACCESS);
+session.allow("Vu78Rt:product:*", session.FULL_ACCESS);
 
 // Give read-only access to every room in the `Vu78Rt` organization
-session.allow("Vu78Rt::*", session.READ_ACCESS);
+session.allow("Vu78Rt:*", session.READ_ACCESS);
 
 const { body, status } = await session.authorize();
 ```
 
-### Renaming rooms
-
-Should you wish to retroactively change room names, you can use [name of
-function].
-
-[This API has not been created yet]
-
 ## Select your framework [#select-your-framework]
 
-Select your framework for specific instructions on setting up acess token
+Select your framework for specific instructions on setting up access token
 authentication.
 
 <ListGrid columns={3}>
