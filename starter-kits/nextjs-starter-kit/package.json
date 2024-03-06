@@ -1,4 +1,5 @@
 {
+  "name": "@liveblocks-starter-kits/nextjs-starter-kit",
   "description": "This repository contains a collaborative starter kit using Liveblocks and Next.js.",
   "license": "Apache-2.0",
   "private": true,
@@ -10,11 +11,11 @@
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.10.0",
-    "@liveblocks/node": "^1.10.0",
-    "@liveblocks/react": "^1.10.0",
-    "@liveblocks/react-comments": "^1.10.0",
-    "@liveblocks/yjs": "^1.10.0",
+    "@liveblocks/client": "*",
+    "@liveblocks/node": "*",
+    "@liveblocks/react": "*",
+    "@liveblocks/react-comments": "*",
+    "@liveblocks/yjs": "*",
     "@radix-ui/react-dialog": "^1.0.2",
     "@radix-ui/react-popover": "^1.0.2",
     "@radix-ui/react-select": "^1.1.1",

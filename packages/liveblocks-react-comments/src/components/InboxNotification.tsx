@@ -18,6 +18,7 @@ import type {
   ComponentProps,
   ComponentPropsWithoutRef,
   ComponentType,
+  MouseEvent,
   ReactNode,
   SyntheticEvent,
 } from "react";
@@ -181,6 +182,20 @@ const InboxNotificationLayout = forwardRef<
       event.stopPropagation();
     }, []);
 
+    const preventDefaultAndStopPropagation = useCallback(
+      (event: SyntheticEvent) => {
+        event.preventDefault();
+        event.stopPropagation();
+      },
+      []
+    );
+
+    const handleMoreClick = useCallback((event: MouseEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setMoreActionOpen((open) => !open);
+    }, []);
+
     const handleMarkAsRead = useCallback(() => {
       markInboxNotificationAsRead(inboxNotificationId);
     }, [inboxNotificationId, markInboxNotificationAsRead]);
@@ -242,7 +257,9 @@ const InboxNotificationLayout = forwardRef<
                       <DropdownTrigger asChild>
                         <Button
                           className="lb-inbox-notification-action"
-                          onClick={stopPropagation}
+                          onClick={handleMoreClick}
+                          onPointerDown={preventDefaultAndStopPropagation}
+                          onPointerUp={preventDefaultAndStopPropagation}
                           aria-label={$.INBOX_NOTIFICATION_MORE}
                         >
                           <EllipsisIcon className="lb-button-icon" />

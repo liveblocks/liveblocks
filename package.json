@@ -5,7 +5,8 @@
     "shared/*",
     "packages/*",
     "schema-lang/*",
-    "e2e/next-sandbox"
+    "e2e/next-sandbox",
+    "starter-kits/nextjs-starter-kit"
   ],
   "scripts": {
     "build": "turbo run build",
