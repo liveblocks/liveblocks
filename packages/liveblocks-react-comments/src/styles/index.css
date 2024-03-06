@@ -777,12 +777,15 @@
   @media (hover: hover) {
     &:where(.lb-comment\:show-actions-hover) {
       :where(.lb-comment-actions) {
+        position: absolute;
+        inset-inline-end: 0;
         opacity: 0;
         transition-property: opacity;
       }
 
       &:where(:is(:hover, :focus-within, .lb-comment\:action-open)) {
         :where(.lb-comment-actions) {
+          position: relative;
           opacity: 1;
         }
       }
