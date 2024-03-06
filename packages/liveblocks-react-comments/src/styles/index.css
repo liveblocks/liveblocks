@@ -1073,6 +1073,11 @@
 
   @media (hover: hover) {
     &:where(.lb-inbox-notification\:show-actions-hover) {
+      :where(.lb-inbox-notification-header) {
+        display: grid;
+        grid-template: "title secondary" / 1fr max-content;
+      }
+
       :where(.lb-inbox-notification-details) {
         opacity: 1;
         transition-property: opacity;
@@ -1091,10 +1096,6 @@
         :where(.lb-inbox-notification-actions) {
           opacity: 1;
         }
-      }
-
-      :where(.lb-inbox-notification-header) {
-        grid-template: "title secondary" / 1fr max-content;
       }
 
       :where(.lb-inbox-notification-details),
@@ -1116,8 +1117,7 @@
 }
 
 .lb-inbox-notification-header {
-  display: grid;
-  grid-template: "title details actions" / 1fr max-content max-content;
+  display: flex;
   gap: calc(0.75 * var(--lb-spacing));
   align-items: center;
   margin-block-start: calc(0.25 * var(--lb-spacing));
@@ -1125,7 +1125,6 @@
 }
 
 .lb-inbox-notification-title {
-  grid-area: title;
   min-block-size: $lb-button-size;
   text-wrap: pretty;
 
@@ -1136,7 +1135,6 @@
 
 .lb-inbox-notification-details {
   flex: none;
-  grid-area: details;
   align-self: start;
   min-inline-size: 0;
   block-size: $lb-button-size;
