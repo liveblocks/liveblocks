@@ -1173,6 +1173,10 @@
     color: var(--lb-foreground-tertiary);
     font-size: 0.875rem;
   }
+
+  :where(.lb-comment-reaction) {
+    pointer-events: none;
+  }
 }
 
 .lb-inbox-notification-date {
