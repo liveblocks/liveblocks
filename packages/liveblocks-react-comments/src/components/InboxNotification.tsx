@@ -33,7 +33,7 @@ import { useOverrides } from "../overrides";
 import * as CommentPrimitive from "../primitives/Comment";
 import { Timestamp } from "../primitives/Timestamp";
 import { classNames } from "../utils/class-names";
-import { setQueryParams } from "../utils/query-params";
+import { generateURL } from "../utils/url";
 import {
   CommentMention,
   CommentNonInteractiveLink,
@@ -45,8 +45,6 @@ import { Room } from "./internal/Room";
 import { User } from "./internal/User";
 
 const INBOX_NOTIFICATION_THREAD_MAX_COMMENTS = 3;
-const THREAD_ID_QUERY_PARAM = "thread";
-const COMMENT_ID_QUERY_PARAM = "comment";
 
 type InboxNotificationThreadCommentsContents = {
   type: "comments";
@@ -374,116 +372,105 @@ const InboxNotificationThread = forwardRef<
     //       it's not a big deal, the only scenario where it would be superfluous would be if the user provides their own
     //       `href` AND disables room names in the title via `showRoomName={false}`.
     const { info } = useRoomInfo(inboxNotification.roomId);
-    const { unread, date, aside, title, content, threadId, commentId } =
-      useMemo(() => {
-        const contents = generateInboxNotificationThreadContents(
-          inboxNotification,
-          thread,
-          currentUserId ?? ""
-        );
-
-        switch (contents.type) {
-          case "comments": {
-            const reversedUserIds = [...contents.userIds].reverse();
-            const firstUserId = reversedUserIds[0];
-
-            const aside = <InboxNotificationAvatar userId={firstUserId} />;
-            const title = $.INBOX_NOTIFICATION_THREAD_COMMENTS_LIST(
-              <List
-                values={reversedUserIds.map((userId, index) => (
-                  <User
-                    key={userId}
-                    userId={userId}
-                    capitalize={index === 0}
-                    replaceSelf
-                  />
-                ))}
-                formatRemaining={$.LIST_REMAINING_USERS}
-                truncate={INBOX_NOTIFICATION_THREAD_MAX_COMMENTS - 1}
-              />,
-              showRoomName ? <Room roomId={thread.roomId} /> : undefined,
-              reversedUserIds.length
-            );
-            const content = (
-              <div className="lb-inbox-notification-comments">
-                {contents.comments.map((comment) => (
-                  <InboxNotificationComment
-                    key={comment.id}
-                    comment={comment}
-                    showHeader={contents.comments.length > 1}
-                    overrides={overrides}
-                  />
-                ))}
-              </div>
-            );
-
-            return {
-              unread: contents.unread,
-              date: contents.date,
-              aside,
-              title,
-              content,
-              threadId: thread.id,
-              commentId: contents.comments[contents.comments.length - 1].id,
-            };
-          }
-
-          case "mention": {
-            const mentionUserId = contents.userIds[0];
-            const mentionComment = contents.comments[0];
-
-            const aside = <InboxNotificationAvatar userId={mentionUserId} />;
-            const title = $.INBOX_NOTIFICATION_THREAD_MENTION(
-              <User key={mentionUserId} userId={mentionUserId} capitalize />,
-              <Room roomId={thread.roomId} />
-            );
-            const content = (
-              <div className="lb-inbox-notification-comments">
-                <InboxNotificationComment
-                  key={mentionComment.id}
-                  comment={mentionComment}
-                  showHeader={false}
-                />
-              </div>
-            );
-
-            return {
-              unread: contents.unread,
-              date: contents.date,
-              aside,
-              title,
-              content,
-              threadId: thread.id,
-              commentId: mentionComment.id,
-            };
-          }
-
-          default:
-            return assertNever(
-              contents,
-              "Unexpected thread inbox notification type"
-            );
-        }
-      }, [
-        $,
-        currentUserId,
+    const { unread, date, aside, title, content, commentId } = useMemo(() => {
+      const contents = generateInboxNotificationThreadContents(
         inboxNotification,
-        overrides,
-        showRoomName,
         thread,
-      ]);
+        currentUserId ?? ""
+      );
+
+      switch (contents.type) {
+        case "comments": {
+          const reversedUserIds = [...contents.userIds].reverse();
+          const firstUserId = reversedUserIds[0];
+
+          const aside = <InboxNotificationAvatar userId={firstUserId} />;
+          const title = $.INBOX_NOTIFICATION_THREAD_COMMENTS_LIST(
+            <List
+              values={reversedUserIds.map((userId, index) => (
+                <User
+                  key={userId}
+                  userId={userId}
+                  capitalize={index === 0}
+                  replaceSelf
+                />
+              ))}
+              formatRemaining={$.LIST_REMAINING_USERS}
+              truncate={INBOX_NOTIFICATION_THREAD_MAX_COMMENTS - 1}
+            />,
+            showRoomName ? <Room roomId={thread.roomId} /> : undefined,
+            reversedUserIds.length
+          );
+          const content = (
+            <div className="lb-inbox-notification-comments">
+              {contents.comments.map((comment) => (
+                <InboxNotificationComment
+                  key={comment.id}
+                  comment={comment}
+                  showHeader={contents.comments.length > 1}
+                  overrides={overrides}
+                />
+              ))}
+            </div>
+          );
+
+          return {
+            unread: contents.unread,
+            date: contents.date,
+            aside,
+            title,
+            content,
+            threadId: thread.id,
+            commentId: contents.comments[contents.comments.length - 1].id,
+          };
+        }
+
+        case "mention": {
+          const mentionUserId = contents.userIds[0];
+          const mentionComment = contents.comments[0];
+
+          const aside = <InboxNotificationAvatar userId={mentionUserId} />;
+          const title = $.INBOX_NOTIFICATION_THREAD_MENTION(
+            <User key={mentionUserId} userId={mentionUserId} capitalize />,
+            <Room roomId={thread.roomId} />
+          );
+          const content = (
+            <div className="lb-inbox-notification-comments">
+              <InboxNotificationComment
+                key={mentionComment.id}
+                comment={mentionComment}
+                showHeader={false}
+              />
+            </div>
+          );
+
+          return {
+            unread: contents.unread,
+            date: contents.date,
+            aside,
+            title,
+            content,
+            threadId: thread.id,
+            commentId: mentionComment.id,
+          };
+        }
+
+        default:
+          return assertNever(
+            contents,
+            "Unexpected thread inbox notification type"
+          );
+      }
+    }, [$, currentUserId, inboxNotification, overrides, showRoomName, thread]);
     // Add the thread ID and comment ID to the `href`.
     // And use URL from `resolveRoomsInfo` if `href` isn't set.
     const resolvedHref = useMemo(() => {
       const resolvedHref = href ?? info?.url;
 
       return resolvedHref
-        ? setQueryParams(resolvedHref, {
-            [THREAD_ID_QUERY_PARAM]: threadId,
-            [COMMENT_ID_QUERY_PARAM]: commentId,
-          })
+        ? generateURL(resolvedHref, {}, commentId)
         : undefined;
-    }, [commentId, href, threadId, info?.url]);
+    }, [commentId, href, info?.url]);
 
     return (
       <InboxNotificationLayout

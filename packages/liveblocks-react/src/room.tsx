@@ -33,7 +33,7 @@ import type {
 import {
   addReaction,
   CommentsApiError,
-  console,
+  // console,
   deleteComment,
   deprecateIf,
   errorIf,
@@ -1216,12 +1216,40 @@ export function createRoomContext<
       [room, queryKey] // eslint-disable-line react-hooks/exhaustive-deps
     );
 
-    return useSyncExternalStoreWithSelector(
+    const state = useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
       store.get,
       selector
     );
+
+    React.useEffect(
+      () => {
+        if (state.isLoading) return;
+
+        const hash = window.location.hash;
+        const commentId = hash.slice(1);
+
+        if (!commentId.startsWith("cm_")) return;
+
+        const comments = state.threads.flatMap((thread) => thread.comments);
+        const isCommentInThreads = comments.some(
+          (comment) => comment.id === commentId
+        );
+
+        // If the comment is not in the threads for this hook, we do not scroll to it
+        if (!isCommentInThreads) return;
+
+        const comment = document.getElementById(commentId);
+        if (comment === null) return;
+
+        comment.scrollIntoView();
+      },
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- We only want to run this effect once
+      [state.isLoading]
+    );
+
+    return state;
   }
 
   function useThreadsSuspense(
@@ -1263,12 +1291,38 @@ export function createRoomContext<
       };
     }, [queryKey]);
 
-    return useSyncExternalStoreWithSelector(
+    const state = useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
       store.get,
       selector
     );
+
+    React.useEffect(
+      () => {
+        const hash = window.location.hash;
+        const commentId = hash.slice(1);
+
+        if (!commentId.startsWith("cm_")) return;
+
+        const comments = state.threads.flatMap((thread) => thread.comments);
+        const isCommentInThreads = comments.some(
+          (comment) => comment.id === commentId
+        );
+
+        // If the comment is not in the threads for this hook, we do not scroll to it
+        if (!isCommentInThreads) return;
+
+        const comment = document.getElementById(commentId);
+        if (comment === null) return;
+
+        comment.scrollIntoView();
+      },
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- We only want to run this effect once
+      []
+    );
+
+    return state;
   }
 
   function useCreateThread() {
