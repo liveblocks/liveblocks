@@ -33,6 +33,7 @@ export type UseThreadsOptions<TThreadMetadata extends BaseMetadata> = {
   query?: {
     metadata?: Partial<TThreadMetadata>;
   };
+  scrollOnLoad?: boolean; // (optional) boolean flag to enable or disable automatic scrolling to a comment based on the URL hash when threads are loaded. Defaults to true.
 };
 
 import type { PropsWithChildren } from "react";

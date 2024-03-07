@@ -429,20 +429,20 @@ const InboxNotificationThread = forwardRef<
           const mentionUserId = contents.userIds[0];
           const mentionComment = contents.comments[0];
 
-            const aside = <InboxNotificationAvatar userId={mentionUserId} />;
-            const title = $.INBOX_NOTIFICATION_THREAD_MENTION(
-              <User key={mentionUserId} userId={mentionUserId} capitalize />,
-              showRoomName ? <Room roomId={thread.roomId} /> : undefined
-            );
-            const content = (
-              <div className="lb-inbox-notification-comments">
-                <InboxNotificationComment
-                  key={mentionComment.id}
-                  comment={mentionComment}
-                  showHeader={false}
-                />
-              </div>
-            );
+          const aside = <InboxNotificationAvatar userId={mentionUserId} />;
+          const title = $.INBOX_NOTIFICATION_THREAD_MENTION(
+            <User key={mentionUserId} userId={mentionUserId} capitalize />,
+            showRoomName ? <Room roomId={thread.roomId} /> : undefined
+          );
+          const content = (
+            <div className="lb-inbox-notification-comments">
+              <InboxNotificationComment
+                key={mentionComment.id}
+                comment={mentionComment}
+                showHeader={false}
+              />
+            </div>
+          );
 
           return {
             unread: contents.unread,
@@ -468,7 +468,7 @@ const InboxNotificationThread = forwardRef<
       const resolvedHref = href ?? info?.url;
 
       return resolvedHref
-        ? generateURL(resolvedHref, {}, commentId)
+        ? generateURL(resolvedHref, undefined, commentId)
         : undefined;
     }, [commentId, href, info?.url]);
 

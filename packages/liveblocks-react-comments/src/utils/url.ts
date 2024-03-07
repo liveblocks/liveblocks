@@ -3,8 +3,8 @@ const ABSOLUTE_URL_REGEX = /^[a-zA-Z][a-zA-Z\d+\-.]*?:/;
 
 export function generateURL(
   url: string,
-  params: Record<string, string | number | undefined>,
-  hash: string
+  params: Record<string, string | number | undefined> = {},
+  hash?: string
 ) {
   const isAbsolute = ABSOLUTE_URL_REGEX.test(url);
   const urlObject = new URL(url, isAbsolute ? undefined : PLACEHOLDER_BASE_URL);
@@ -15,7 +15,10 @@ export function generateURL(
     }
   }
 
-  urlObject.hash = `#${hash}`;
+  // Only add the new hash if the URL does not already have one
+  if (!urlObject.hash) {
+    urlObject.hash = `#${hash}`;
+  }
 
   return isAbsolute
     ? urlObject.href

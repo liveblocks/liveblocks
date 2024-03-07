@@ -86,6 +86,7 @@ import type {
   RoomNotificationSettingsStateSuccess,
   RoomProviderProps,
   ThreadsState,
+  ThreadsStateResolved,
   ThreadsStateSuccess,
   ThreadSubscription,
   UseThreadsOptions,
@@ -559,7 +560,7 @@ export function createRoomContext<
           a.length === b.length &&
           a.every((atuple, index) => {
             // We know btuple always exist because we checked the array length on the previous line
-            const btuple = b[index]!;
+            const btuple = b[index];
             return atuple[0] === btuple[0] && eq(atuple[1], btuple[1]);
           })
         );
@@ -1182,9 +1183,55 @@ export function createRoomContext<
     }
   }
 
+  /**
+   *
+   */
+  function handleScrollToCommentOnLoad(
+    isQueryLoading: boolean,
+    shouldScrollOnLoad: boolean,
+    state: ThreadsStateResolved<TThreadMetadata>
+  ) {
+    if (shouldScrollOnLoad === false) return;
+
+    if (isQueryLoading === true) return;
+
+    const isWindowDefined = typeof window !== "undefined";
+    if (!isWindowDefined) return;
+
+    const hash = window.location.hash;
+    const commentId = hash.slice(1);
+
+    // If the hash is not a comment id, we do not scroll to it
+    if (!commentId.startsWith("cm_")) return;
+
+    // If a comment with the id does not exist in the DOM, we do not scroll to it
+    const comment = document.getElementById(commentId);
+    if (comment === null) return;
+
+    const comments = state.threads.flatMap((thread) => thread.comments);
+    const isCommentInThreads = comments.some(
+      (comment) => comment.id === commentId
+    );
+
+    // If the comment is not in the threads for this hook, we do not scroll to it
+    if (!isCommentInThreads) return;
+
+    comment.scrollIntoView();
+
+    // Clear the hash from the URL after scrolling to the comment
+    window.history.pushState(
+      "",
+      document.title,
+      window.location.pathname + window.location.search
+    );
+  }
+
   function useThreads(
-    options: UseThreadsOptions<TThreadMetadata> = { query: { metadata: {} } }
+    options: UseThreadsOptions<TThreadMetadata> = {
+      query: { metadata: {} },
+    }
   ): ThreadsState<TThreadMetadata> {
+    const { scrollOnLoad = true } = options;
     const room = useRoom();
     const queryKey = React.useMemo(
       () => generateQueryKey(room.id, options.query),
@@ -1225,39 +1272,27 @@ export function createRoomContext<
 
     React.useEffect(
       () => {
-        if (state.isLoading) return;
+        if (state.isLoading === true) return;
 
-        const hash = window.location.hash;
-        const commentId = hash.slice(1);
-
-        if (!commentId.startsWith("cm_")) return;
-
-        const comments = state.threads.flatMap((thread) => thread.comments);
-        const isCommentInThreads = comments.some(
-          (comment) => comment.id === commentId
-        );
-
-        // If the comment is not in the threads for this hook, we do not scroll to it
-        if (!isCommentInThreads) return;
-
-        const comment = document.getElementById(commentId);
-        if (comment === null) return;
-
-        comment.scrollIntoView();
+        handleScrollToCommentOnLoad(state.isLoading, scrollOnLoad, state);
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps -- We only want to run this effect once
-      [state.isLoading]
+      [state.isLoading, scrollOnLoad]
     );
 
     return state;
   }
 
   function useThreadsSuspense(
-    options: UseThreadsOptions<TThreadMetadata> = { query: { metadata: {} } }
+    options: UseThreadsOptions<TThreadMetadata> = {
+      query: { metadata: {} },
+    }
   ): ThreadsStateSuccess<TThreadMetadata> {
+    const { scrollOnLoad = true } = options;
+
     const room = useRoom();
     const queryKey = React.useMemo(
-      () => generateQueryKey(room.id, options?.query),
+      () => generateQueryKey(room.id, options.query),
       [room, options]
     );
 
@@ -1300,26 +1335,10 @@ export function createRoomContext<
 
     React.useEffect(
       () => {
-        const hash = window.location.hash;
-        const commentId = hash.slice(1);
-
-        if (!commentId.startsWith("cm_")) return;
-
-        const comments = state.threads.flatMap((thread) => thread.comments);
-        const isCommentInThreads = comments.some(
-          (comment) => comment.id === commentId
-        );
-
-        // If the comment is not in the threads for this hook, we do not scroll to it
-        if (!isCommentInThreads) return;
-
-        const comment = document.getElementById(commentId);
-        if (comment === null) return;
-
-        comment.scrollIntoView();
+        handleScrollToCommentOnLoad(state.isLoading, scrollOnLoad, state);
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps -- We only want to run this effect once
-      []
+      [state.isLoading, scrollOnLoad]
     );
 
     return state;
