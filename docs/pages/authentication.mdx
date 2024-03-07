@@ -74,13 +74,16 @@ checked on the room itself.
 
 ## Choose a method
 
-The next step is to choose your authentication method. If you don’t need
-permission then access tokens are for you. ID tokens enable more powerful
-permissions but require you to manually create rooms yourself.
+- **Access token** authentication is best for prototyping, as it’s easy to set
+  up. It’s also ideal if you’d prefer handle permissions yourself, without
+  relying on Liveblocks.
+- **ID token** authentication is best if you’d like Liveblocks to automatically
+  prevent access to the wrong users. It allows you to set different levels of
+  permissions on different users and groups.
 
 <ListGrid columns={2}>
   <DocsCard
-    title="Access token permissions"
+    title="Access token authentication"
     href="/docs/authentication/access-token"
     type="image"
     description="Simple and flexible global permission rules"
@@ -96,7 +99,7 @@ permissions but require you to manually create rooms yourself.
     }
   />
   <DocsCard
-    title="ID token permissions"
+    title="ID token authentication"
     href="/docs/authentication/id-token"
     type="image"
     description="Fine grained permissions at the room level"
