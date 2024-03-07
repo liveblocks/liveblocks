@@ -33,7 +33,7 @@ import type {
 import {
   addReaction,
   CommentsApiError,
-  // console,
+  console,
   deleteComment,
   deprecateIf,
   errorIf,
