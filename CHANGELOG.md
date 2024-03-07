@@ -1,9 +1,33 @@
-# v1.10.1 (Unpublished)
+# v1.10.3 (Unpublished)
+
+### `@liveblocks/react-comments`
+
+- Fix bug where the `showRoomName` prop on `InboxNotification.Thread` wasn’t
+  applied to notifications about mentions.
+
+# v1.10.2
+
+### `@liveblocks/client`
+
+- Fix bug where calling `.clone()` immediately after creating a new `LiveObject`
+  could throw an error
+
+# v1.10.1
+
+### `@liveblocks/client`
+
+- Fix bug where the client’s backoff delay would not be respected correctly in a
+  small edge case.
 
 ### `@liveblocks/react-comments`
 
 - Fix date localization in `InboxNotification`.
 - Add vendor prefixes to more CSS properties within the default styles.
+
+### `@liveblocks/react`
+
+- Added error retrying to `useThreads`, `useRoomNotificationSettings`, and
+  `useInboxNotifications` during initial fetching.
 
 # v1.10.0
 
@@ -21,13 +45,6 @@ This release introduces Notifications (and unread indicators) for Comments.
   (both were previously defined on `createRoomContext` from
   `@liveblocks/react`), and the new `resolveRoomsInfo`.
 
-# v1.9.8
-
-### `@liveblocks/client`
-
-- Fix race condition in client that could leave zombie websockets open
-  indefinitely in a small edge case (thanks for reporting, @dev-badace)
-
 ### `@liveblocks/react`
 
 - Add new `LiveblocksContext` accessible with `createLiveblocksContext`,
@@ -41,8 +58,6 @@ This release introduces Notifications (and unread indicators) for Comments.
   `useUpdateRoomNotificationSettings`.
 - Make some hooks usable interchangeably between `createLiveblocksContext` and
   `createRoomContext`: `useUser`, and `useRoomInfo`.
-- Fix type definitions of `useOthersListener` hook.
-- Fix type definitions of `useErrorListener` hook.
 
 ### `@liveblocks/react-comments`
 
@@ -59,10 +74,23 @@ This release introduces Notifications (and unread indicators) for Comments.
   methods)
 - Add notification webhook event: `NotificationEvent`.
 
+# v1.9.8
+
+### `@liveblocks/client`
+
+- Fix race condition in client that could leave zombie WebSocket connections
+  open indefinitely in a small edge case. (thanks for reporting,
+  [@dev-badace](https://github.com/dev-badace))
+
+### `@liveblocks/react`
+
+- Fix type definitions of `useOthersListener` hook.
+- Fix type definitions of `useErrorListener` hook.
+
 ### `@liveblocks/yjs`
 
-- Emit update events from awareness
-- Fix several awareness bugs
+- Emit update events from awareness.
+- Fix several awareness bugs.
 
 # v1.9.7
 

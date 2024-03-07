@@ -85,7 +85,7 @@ describe("presence", () => {
     });
     yProvider.awareness.setLocalState({ test: "local state" });
     expect(updatesCalled).toBe(1);
-    expect(update?.added[0]).toBe(yProvider.awareness.clientID);
+    expect(update?.added[0]).toBe(yProvider.awareness.doc.clientID);
     leave();
   });
 

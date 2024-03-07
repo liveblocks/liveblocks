@@ -1398,7 +1398,7 @@ describe("useThreads: polling", () => {
     unmount();
   });
 
-  test("should not poll if useThreads or useRoomNotificationSettings isn't used", async () => {
+  test("should not poll if useThreads isn't used", async () => {
     let hasCalledGetThreads = false;
 
     const threads = [dummyThreadData()];
