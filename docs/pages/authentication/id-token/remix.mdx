@@ -118,25 +118,29 @@ start building your own security logic.
     <StepContent>
       A room can have `defaultAccesses`, `usersAccesses`, and `groupsAccesses` defined.
       Permissions are then checked when users try to connect to a room. For security purposes,
-      the [room permissions](/docs/rooms/permissions) can only be set on the back-end through a REST API.
-      For instance, you can use the [create room API](/docs/api-reference/rest-api-endpoints#post-rooms)
-      to create a new room with `read` public access levels while giving `write` access to specific users and groups.
+      [room permissions](/docs/authentication/id-token#permissions) can only be set on the back-end through `@liveblocks/node` or our REST API.
+      For instance, you can use [`liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms)
+      to create a new room with read-only public access levels while giving write access to specific groups and users.
 
-      ```ts
-      fetch("https://api.liveblocks.io/v2/rooms", {
-        method: "POST",
-        body: JSON.stringify({
-          id: "roomId",
-          defaultAccesses: ["room:read"],
-          usersAccesses: {
-            "userId": ["room:write"],
-          },
-          groupsAccesses: {
-            "groupId": ["room:write"],
-          },
-        }),
+      ```ts highlight="7-15"
+      import { Liveblocks } from "@liveblocks/node";
+
+      const liveblocks = new Liveblocks({
+        secret: "{{SECRET_KEY}}",
+      });
+
+      const room = await liveblocks.createRoom("my-room-id", {
+        defaultAccesses: ["room:read", "room:presence:write"],
+        groupsAccesses: {
+          "my-group-id": ["room:write"],
+        },
+        usersAccesses: {
+          "my-user-id": ["room:write"],
+        },
       });
       ```
+
+      For more information, make sure to read the section on [room permissions](/docs/authentication/id-token#permissions).
 
     </StepContent>
 
@@ -147,11 +151,11 @@ start building your own security logic.
         Optionally, you can attach static metadata to each user, which will
         be accessible in your app. First you need to define the types in
         your config file, under `UserMeta["info"]`.
-  
+
         ```ts file="liveblocks.config.ts" highlight="5-9"
         type UserMeta = {
           id: string;
-          
+
           // Example, use any JSON-compatible data in your metadata
           info: {
             name: string;
@@ -160,14 +164,14 @@ start building your own security logic.
           }
         }
         ```
-        
+
         When authenticating, you can then pass the user’s metadata to
         `prepareSession` in the endpoint we’ve just created.
-        
+
         ```ts file="app/routes/api/liveblocks-auth.ts" highlight="11-15"
         // Get the current user from your database
         const user = __getUserFromDB__(request);
-        
+
         // Identify the user and return the result
         const { status, body } = await liveblocks.identifyUser(
           {
@@ -183,23 +187,24 @@ start building your own security logic.
           },
         );
         ```
-        
+
         User metadata has now been set! You can access this information in your app through
         [`useSelf`](/docs/api-reference/liveblocks-react#useSelf).
-        
+
         ```tsx highlight="4"
         export { useSelf } from "../liveblocks.config.ts";
-        
+
         function Component() {
           const { name, avatar, colors } = useSelf((me) => me.info);
         }
         ```
-        
+
         Bear in mind that if you’re using the [default Comments components](/docs/api-reference/liveblocks-react-comments#Components),
         you must specify a `name` and `avatar` in `userInfo`.
       </StepContent>
-  
+
     </Step>
+
 </Steps>
 
 ## More information

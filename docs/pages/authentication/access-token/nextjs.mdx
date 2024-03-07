@@ -36,7 +36,7 @@ start building your own security logic in Next.js’ `/app` directory.
       specific room (like notifications), in which case, `room` will be undefined.
 
       See
-      [permissions with access token](/docs/rooms/permissions/access-token)
+      [permissions with access token](/docs/authentication/access-token#permissions)
       to understand how to grant access to multiple rooms with an access token.
 
       ```ts file="app/api/liveblocks-auth/route.ts"
@@ -135,11 +135,11 @@ start building your own security logic in Next.js’ `/app` directory.
         Optionally, you can attach static metadata to each user, which will
         be accessible in your app. First you need to define the types in
         your config file, under `UserMeta["info"]`.
-  
+
         ```ts file="liveblocks.config.ts" highlight="5-9"
         type User = {
           id: string;
-          
+
           // Example, use any JSON-compatible data in your metadata
           info: {
             name: string;
@@ -148,14 +148,14 @@ start building your own security logic in Next.js’ `/app` directory.
           }
         }
         ```
-        
+
         When authenticating, you can then pass the user’s metadata to
         `prepareSession` in the endpoint we’ve just created.
-        
+
         ```ts file="app/api/liveblocks-auth/route.ts" highlight="8-12"
         // Get the current user from your database
         const user = __getUserFromDB__(request);
-        
+
         // Start an auth session inside your endpoint
         const session = liveblocks.prepareSession(
           user.id,
@@ -168,23 +168,24 @@ start building your own security logic in Next.js’ `/app` directory.
           }
         );
         ```
-        
+
         User metadata has now been set! You can access this information in your app through
         [`useSelf`](/docs/api-reference/liveblocks-react#useSelf).
-        
+
         ```tsx highlight="4"
         export { useSelf } from "../liveblocks.config.ts";
-        
+
         function Component() {
           const { name, avatar, colors } = useSelf((me) => me.info);
         }
         ```
-        
+
         Bear in mind that if you’re using the [default Comments components](/docs/api-reference/liveblocks-react-comments#Components),
         you must specify a `name` and `avatar` in `userInfo`.
       </StepContent>
-  
+
     </Step>
+
 </Steps>
 
 ## More information
