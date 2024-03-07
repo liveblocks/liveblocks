@@ -95,22 +95,36 @@ When granting permissions using access tokens, it’s recommended to use a namin
 pattern for your room IDs. This makes it easy to use wildcard permissions,
 allowing you to authenticate access to multiple rooms at once. One scenario
 where this is helpful, is when rooms and users in your app are part of an
-organization, and you need to permit users entry to each organization room at
-once.
+organization (or workspace), and you need to permit users entry to each room
+that’s part of this.
+
+### Organization hierarchy
+
+Let’s picture an organization, a customer in your product. This organization has
+a number of groups (or teams), and each group can create documents that other
+members of the group can view.
+
+<Figure>
+  <Image
+    src="/assets/authentication/room-organization.png"
+    srcDark="/assets/authentication/room-organization-dark.png"
+    alt="An organization with documents in different teams"
+    width={1536}
+    height={864}
+    quality={100}
+  />
+</Figure>
+
+In your application, each organization, group, and document has a unique ID, and
+we can use these to create a naming pattern for your rooms. For example, in the
+diagram above, the Acme organization (`Vu78Rt`) has a Product group (`product`)
+with two documents inside (`6Dsw12`, `L2hr8p`).
 
 ### Naming pattern
 
-Let’s picture this organization. It has a number of teams, and each team can
-create documents that other members of the team can view.
-
-In Liveblocks, a team is a group, and a document is a room. We can take this
-hierarchy and turn it into a naming system for room IDs.
-
-Let’s say that your application has a hierarchy of organizations (aka
-workspaces), groups, and documents. Each document is in a group, each group is
-in an organization. An example of a naming pattern would be to combine the three
-of these into a unique room ID separating them with symbols, such as
-`<ORGANIZATION_ID>:<GROUP_ID>:<DOCUMENT_ID>`. A room ID following this pattern
+An example of a naming pattern would be to combine the three IDs into a unique
+room ID separating them with symbols, such as
+`<organization_id>:<group_id>:<document_id>`. A room ID following this pattern
 may look like `Vu78Rt:design:9Hdu73`.
 
 <Figure>
