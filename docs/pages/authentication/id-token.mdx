@@ -7,11 +7,11 @@ meta:
 
 ID token authentication allows Liveblocks to handle permissions for you. This
 means that when you create or modify a room, you can set a user’s permissions on
-the room itself, this acting as a source of truth. Later, when a user tries to
-enter a room, Liveblocks will automatically check if the user has permission,
-and deny them access if the permissions aren’t set. Permissions aren’t just for
-individual users, but can also be set for groups of users, or for the whole
-room.
+the room itself. This means the room acts as a source of truth. Later, when a
+user tries to enter a room, Liveblocks will automatically check if the user has
+permission, and deny them access if the permissions aren’t set. Permissions
+aren’t just for individual users, but can also be set for groups of users, or
+for the whole room.
 
 <Figure>
   <Image
@@ -44,7 +44,7 @@ const { body, status } = await liveblocks.identifyUser({
   userId: "olivier@example.com",
 });
 
-// '{ token: "j6Fga7..." }'
+// '{ token: "eyJga7..." }'
 console.log(body);
 ```
 
@@ -249,7 +249,7 @@ and an array of permissions as the value.
 
 #### Modifying group access [#permissions-levels-groups-accesses-example]
 
-To allow an "engineering" group access to view a room, and modify their
+To allow an “engineering” group access to view a room, and modify their
 presence, we can use
 [`liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#post-rooms-roomId)
 with `engineering` as a `groupId`:
@@ -262,7 +262,8 @@ const room = await liveblocks.updateRoom("a32wQXid4A9", {
 });
 ```
 
-To remove a group’s permissions, we can use
+After calling this, ever user in the “engineering” group will have read-only
+access. To remove a group’s permissions, we can use
 [`liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#post-rooms-roomId)
 again, and set the permission type to `null`:
 

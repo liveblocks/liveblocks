@@ -34,7 +34,7 @@ themselves, instead of in your system, we recommend using
 Authenticating with access tokens means creating a
 [JSON Web Token](https://en.wikipedia.org/wiki/JSON_Web_Token) (JWT) that grants
 the current user permission to enter certain rooms when connecting to
-Liveblocks. This token is created by calling
+Liveblocks. An access token is created by calling
 [`liveblocks.prepareSession`](/docs/api-reference/liveblocks-node#access-tokens)
 then by allowing access to certain rooms.
 
@@ -100,10 +100,16 @@ once.
 
 ### Naming pattern
 
+Let’s picture this organization. It has a number of teams, and each team can
+create documents that other members of the team can view.
+
+In Liveblocks, a team is a group, and a document is a room. We can take this
+hierarchy and turn it into a naming system for room IDs.
+
 Let’s say that your application has a hierarchy of organizations (aka
-workspaces), groups, and rooms. Each room is in a group, each group is in an
-organization. An example of a naming pattern would be to combine the three of
-these into a unique room ID separating them with symbols, such as
+workspaces), groups, and documents. Each document is in a group, each group is
+in an organization. An example of a naming pattern would be to combine the three
+of these into a unique room ID separating them with symbols, such as
 `<ORGANIZATION_ID>:<GROUP_ID>:<DOCUMENT_ID>`. A room ID following this pattern
 may look like `Vu78Rt:design:9Hdu73`.
 
@@ -118,8 +124,13 @@ may look like `Vu78Rt:design:9Hdu73`.
   />
 </Figure>
 
-This is not a strict naming pattern you must follow, and you can use any pattern
-you like.
+<Banner title="Example pattern">
+
+This example is not a strict naming pattern you must follow, and you can use any
+pattern you like. Take care to avoid using your separator character in any other
+part of the room ID.
+
+</Banner>
 
 ### Wildcard permissions
 
@@ -146,10 +157,20 @@ const session = liveblocks.prepareSession("olivier@example.com");
 // Giving full access to one room
 session.allow("Vu78Rt:design:9Hdu73", session.FULL_ACCESS);
 
-// Give full access to every room with an ID beginning with "Vu78Rt::product/"
+// Give full access to every room with an ID beginning with "Vu78Rt:product:"
 session.allow("Vu78Rt:product:*", session.FULL_ACCESS);
 
 const { body, status } = await session.authorize();
+```
+
+Note that you can only use a wildcard at the end of a room ID.
+
+```jsx
+// ❌ Wildcard must be at the end of the room ID
+session.allow("Vu78Rt:*:product", session.FULL_ACCESS);
+
+// ✅ Valid wildcard
+session.allow("Vu78Rt:product:*", session.FULL_ACCESS);
 ```
 
 ### Read-only access
@@ -163,7 +184,7 @@ const session = liveblocks.prepareSession("olivier@example.com");
 // Giving full access to one room
 session.allow("Vu78Rt:design:9Hdu73", session.FULL_ACCESS);
 
-// Give full access to every room with an ID beginning with "Vu78Rt::product/"
+// Give full access to every room with an ID beginning with "Vu78Rt:product:"
 session.allow("Vu78Rt:product:*", session.FULL_ACCESS);
 
 // Give read-only access to every room in the `Vu78Rt` organization
