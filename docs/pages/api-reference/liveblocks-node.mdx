@@ -38,7 +38,7 @@ different APIs.
 The purpose of this API is to help you implement your custom authentication back
 end (i.e. the _server_ part of the diagram). You use the
 `liveblocks.prepareSession()` API if you’d like to issue
-[access tokens](/docs/rooms/permissions/access-token) from your back end.
+[access tokens](/docs/authentication/access-token) from your back end.
 
 <Banner title="What are access tokens?">
   Issuing access tokens is like issuing _hotel key cards_ from a hotel’s front
@@ -130,7 +130,7 @@ To implement your back end, follow these steps:
 
 Here’s a real-world example of access tokens in a Next.js route
 handler/endpoint. You can find examples for other frameworks in our
-[authentication section](/docs/rooms/authentication/access-token-permissions).
+[authentication section](/docs/authentication/access-token).
 
 ```ts file="route.ts"
 import { Liveblocks } from "@liveblocks/node";
@@ -175,8 +175,8 @@ export async function POST(request: Request) {
 The purpose of this API is to help you implement your custom authentication back
 end (i.e. the _server_ part of the diagram). You use the
 `liveblocks.identifyUser()` API if you’d like to issue
-[ID tokens](/docs/rooms/permissions/id-token) from your back end. An ID token
-does not grant any permissions in the token directly. Instead, it only securely
+[ID tokens](/docs/authentication/id-token) from your back end. An ID token does
+not grant any permissions in the token directly. Instead, it only securely
 identifies your user, and then uses any permissions set via the [Permissions
 REST API][] to decide whether to allow the user on a room-by-room basis.
 
@@ -238,7 +238,7 @@ their avatar URL.
 
 Here’s a real-world example of ID tokens in a Next.js route handler/endpoint.
 You can find examples for other frameworks in our
-[authentication section](/docs/rooms/authentication/id-token-permissions).
+[authentication section](/docs/authentication/id-token).
 
 ```ts file="Next.js"
 import { Liveblocks } from "@liveblocks/node";
@@ -355,10 +355,9 @@ async function getNextPage() {
 Programmatically creates a new room from a room ID. The `defaultAccesses` option
 is required. Setting `defaultAccesses` to `["room:write"]` creates a public
 room, whereas setting it to `[]` will create a private room that needs
-[ID token permission to enter](/docs/rooms/permissions/id-token). This is a
-wrapper around the
-[Create Room API](/docs/api-reference/rest-api-endpoints#post-rooms) and returns
-the same response.
+[ID token permission to enter](/docs/authentication/id-token). This is a wrapper
+around the [Create Room API](/docs/api-reference/rest-api-endpoints#post-rooms)
+and returns the same response.
 
 ```ts
 const room = await liveblocks.createRoom("my-room-id", {
@@ -397,8 +396,7 @@ const room = await liveblocks.createRoom("my-room-id", {
 
 Group and user permissions are only used with
 [ID token authorization](/docs/api-reference/liveblocks-node#id-tokens), learn
-more about
-[managing permission with ID tokens](/docs/rooms/permissions/id-token).
+more about [managing permission with ID tokens](/docs/authentication/id-token).
 
 #### Liveblocks.getRoom [#get-rooms-roomId]
 
@@ -460,8 +458,7 @@ const room = await liveblocks.createRoom("my-room-id", {
 
 Group and user permissions are only used with
 [ID token authorization](/docs/api-reference/liveblocks-node#id-tokens), learn
-more about
-[managing permission with ID tokens](/docs/rooms/permissions/id-token).
+more about [managing permission with ID tokens](/docs/authentication/id-token).
 
 #### Liveblocks.deleteRoom [#delete-rooms-roomId]
 
@@ -1861,4 +1858,4 @@ using the `authorize` function in your back end. You should adopt
 [`Liveblocks.identifyUser`](#id-tokens) APIs instead.
 
 [`room.getothers`]: /docs/api-reference/liveblocks-client#Room.getOthers
-[Permissions REST API]: /docs/rooms/permissions/id-token
+[Permissions REST API]: /docs/authentication/id-token
