@@ -1,3 +1,12 @@
+# v1.11.0
+
+### `@liveblocks/react`
+
+- `useUser` and `useRoomInfo` no longer support returning nothing. Returning
+  `undefined` will now be treated as an error.
+- Fix bug where `useUser` and `useRoomInfo` returned an extra `data` superfluous
+  property.
+
 # v1.10.3 (Unpublished)
 
 ### `@liveblocks/react-comments`
