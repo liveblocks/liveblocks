@@ -141,11 +141,17 @@ export function compact<T>(items: readonly T[]): NonNullable<T>[] {
   );
 }
 
+export type RemoveUndefinedValues<T> = {
+  [K in keyof T]-?: Exclude<T[K], undefined>;
+};
+
 /**
  * Returns a new object instance where all explictly-undefined values are
  * removed.
  */
-export function compactObject<O extends Record<string, unknown>>(obj: O): O {
+export function compactObject<O extends Record<string, unknown>>(
+  obj: O
+): RemoveUndefinedValues<O> {
   const newObj = { ...obj };
   Object.keys(obj).forEach((k) => {
     const key = k as keyof O;
@@ -153,7 +159,7 @@ export function compactObject<O extends Record<string, unknown>>(obj: O): O {
       delete newObj[key];
     }
   });
-  return newObj;
+  return newObj as RemoveUndefinedValues<O>;
 }
 
 /**

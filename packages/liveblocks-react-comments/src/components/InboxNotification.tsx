@@ -435,7 +435,7 @@ const InboxNotificationThread = forwardRef<
             const aside = <InboxNotificationAvatar userId={mentionUserId} />;
             const title = $.INBOX_NOTIFICATION_THREAD_MENTION(
               <User key={mentionUserId} userId={mentionUserId} capitalize />,
-              <Room roomId={thread.roomId} />
+              showRoomName ? <Room roomId={thread.roomId} /> : undefined
             );
             const content = (
               <div className="lb-inbox-notification-comments">
