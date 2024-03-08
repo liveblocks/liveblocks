@@ -1,3 +1,11 @@
+# v1.11.0
+
+### `@liveblocks/react-comments`
+
+- Add actions to `InboxNotification` with a single action for now: marking as
+  read.
+- Improve actions hover behavior in `Comment`/`Thread`.
+
 # v1.10.2
 
 ### `@liveblocks/client`
