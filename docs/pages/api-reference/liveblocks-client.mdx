@@ -12,12 +12,192 @@ collaboration APIs, built on top of WebSockets. Read our
 
 ## createClient
 
-Create a client that will be responsible to communicate with Liveblocks servers.
+Creates a [client](#Client) that allows you to connect to Liveblocks servers.
+
+```tsx
+import { createClient } from "@liveblocks/client";
+
+const client = createClient({
+  authEndpoint: "/api/liveblocks-auth",
+
+  // Other options
+  // ...
+});
+```
+
+```tsx title="Every createClient option" isCollapsable isCollapsed
+import { createClient } from "@liveblocks/client";
+
+const client = createClient({
+  // Connect with authEndpoint
+  authEndpoint: "/api/liveblocks-auth",
+
+  // Alternatively, use an authEndpoint callback
+  // authEndpoint: async (room) => {
+  //   const response = await fetch("/api/liveblocks-auth", {
+  //   method: "POST",
+  //   headers: {
+  //     Authentication: "<your own headers here>",
+  //     "Content-Type": "application/json",
+  //   },
+  //   body: JSON.stringify({ room }),
+  // });
+  // return await response.json();
+  // },
+
+  // Alternatively, use a public key
+  // publicApiKey: "pk_...",
+
+  // Throttle time (ms) between WebSocket updates
+  throttle: 100,
+
+  // Throw lost-connection event after 5 seconds offline
+  lostConnectionTimeout: 5000,
+
+  // Disconnect users after X (ms) of inactivity, disabled by default
+  backgroundKeepAliveTimeout: undefined,
+
+  // Resolve user info for Comments and Notifications
+  resolveUsers: async ({ userIds }) => {
+    const usersData = await __getUsersFromDB__(userIds);
+
+    return usersData.map((userData) => ({
+      name: userData.name,
+      avatar: userData.avatar.src,
+    }));
+  },
+
+  // Resolve room info for Notifications
+  resolveRoomsInfo: async ({ roomIds }) => {
+    const documentsData = await __getDocumentsFromDB__(roomIds);
+
+    return documentsData.map((documentData) => ({
+      name: documentData.name,
+      // url: documentData.url,
+    }));
+  },
+
+  // Resolve mention suggestions for Comments
+  resolveMentionSuggestions: async ({ text, roomId }) => {
+    const workspaceUsers = await __getWorkspaceUsersFromDB__(roomId);
+
+    if (!text) {
+      // Show all workspace users by default
+      return __getUserIds__(workspaceUsers);
+    } else {
+      const matchingUsers = __findUsers__(workspaceUsers, text);
+      return __getUserIds__(matchingUsers);
+    }
+  },
+
+  // Polyfill options for non-browser environments
+  polyfills: {
+    // atob,
+    // fetch,
+    // WebSocket,
+  },
+});
+```
+
+### Returns
+
+<PropertiesList>
+  <PropertiesListItem name="client" type="Client">
+    Returns a [Client](#Client), used for connecting to Liveblocks.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Options
+
+<PropertiesList>
+  <PropertiesListItem
+    name="authEndpoint"
+    detailedType="string | async ((room?: string) => CustomAuthenticationResult)"
+  >
+    The URL of your authentication endpoint as a string, or an async callback
+    function that returns a Liveblocks token result. Either `authEndpoint` or
+    `publicApikey` are required. Learn more about [using a URL
+    string](#createClientAuthEndpoint) and [using a
+    callback](#createClientCallback).
+  </PropertiesListItem>
+  <PropertiesListItem name="publicApiKey" type="string">
+    The public API key taken from your project’s
+    [dashboard](/dashboard/apikeys). Generally not recommended for production
+    use. Either `authEndpoint` or `publicApikey` are required. [Learn
+    more](#createClientPublicKey).
+  </PropertiesListItem>
+  <PropertiesListItem name="throttle" type="number" defaultValue="100">
+    The throttle time between WebSocket messages in milliseconds, a number
+    between `16` and `1000` is allowed. Using `16` means your app will update 60
+    times per second. [Learn more](#createClientThrottle).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="lostConnectionTimeout"
+    type="number"
+    defaultValue="5000"
+  >
+    After a user disconnects, the time in milliseconds before a
+    [`"lost-connection"`](/docs/api-reference/liveblocks-client#Room.subscribe.lost-connection)
+    event is fired. [Learn more](#createClientLostConnectionTimeout).
+  </PropertiesListItem>
+  <PropertiesListItem name="backgroundKeepAliveTimeout" type="number">
+    The time before an inactive WebSocket connection is disconnected. This is
+    disabled by default, but setting a number will activate it. [Learn
+    more](#createClientBackgroundKeepAliveTimeout).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="resolveUsers"
+    detailedType='async? (args: ResolveUsersArgs) => (TUserMeta["info"] | undefined)[] | undefined'
+  >
+    A function that resolves user information in
+    [Comments](/docs/products/comments). Return an array of `TUserMeta["info"]`
+    objects in the same order they arrived. [Learn
+    more](#createClientResolveUsers).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="resolveRoomsInfo"
+    detailedType="async? (args: ResolveRoomsInfoArgs) => (RoomInfo | undefined)[] | undefined"
+  >
+    A function that resolves room information in
+    [Comments](/docs/products/comments). Return an array of `RoomInfo` objects
+    in the same order they arrived. [Learn more](#createClientResolveRoomsInfo).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="resolveMentionSuggestions"
+    detailedType="async? (args: ResolveMentionSuggestionsArgs) => string[]"
+  >
+    A function that resolves mention suggestions in
+    [Comments](/docs/products/comments). Return an array of user IDs. [Learn
+    more](#createClientResolveMentionSuggestions).
+  </PropertiesListItem>
+  <PropertiesListItem name="polyfills" type="Polyfills">
+    Place polyfills for `atob`, `fetch`, and `WebSocket` inside here. Useful
+    when using a non-browser environment, such as [Node.js](#createClientNode)
+    or [React Native](#createClientReactNative).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="unstable_fallbackToHTTP"
+    type="boolean"
+    defaultValue="false"
+  >
+    Automatically fall back to HTTP when a message is too large for WebSockets.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="unstable_streamData"
+    type="boolean"
+    defaultValue="false"
+  >
+    help???
+  </PropertiesListItem>
+</PropertiesList>
 
 ### createClient with public key [#createClientPublicKey]
 
 When creating a client with a public key, you don’t need to set up an
-authorization endpoint:
+authorization endpoint. We only recommend using a public key when prototyping,
+or on public landing pages, as it makes it possible for end users to access any
+room’s data. You should instead use an
+[auth endpoint](#createClientAuthEndpoint).
 
 ```ts
 import { createClient } from "@liveblocks/client";
@@ -30,7 +210,8 @@ const client = createClient({
 ### createClient with auth endpoint [#createClientAuthEndpoint]
 
 If you are not using a public key, you need to set up your own `authEndpoint`.
-Please refer to our [Authentication guide](/docs/rooms/authentication).
+Refer to our [authentication guide](/docs/rooms/authentication) for more
+information.
 
 ```ts
 import { createClient } from "@liveblocks/client";
@@ -38,27 +219,37 @@ import { createClient } from "@liveblocks/client";
 const client = createClient({ authEndpoint: "/api/liveblocks-auth" });
 ```
 
-### createClient with callback [#createClientCallback]
+### createClient with auth endpoint callback [#createClientCallback]
 
-If you need to add additional headers or use your own function to call the
-endpoint, `authEndpoint` can be provided as a custom callback.
+If you need to add additional headers or use your own function to call your
+endpoint, `authEndpoint` can be provided as a custom callback. You should return
+the token created with
+[`Liveblocks.prepareSession`](/docs/api-reference/liveblocks-node#access-tokens)
+or [`liveblocks.identifyUser`](/docs/api-reference/liveblocks-node#id-tokens),
+learn more in [authentication guide](/docs/rooms/authentication).
 
-Your async function should return either of the following values:
+```ts
+import { createClient } from "@liveblocks/client";
 
-1. **A valid token.** Return a `{ "token": "..." }` shaped response.
-1. **Explicitly forbid access.** Return an
-   `{ "error": "forbidden", "reason": "..." }` shaped response. If you return
-   this response, the client will disconnect and won't keep trying to authorize.
+const client = createClient({
+  authEndpoint: async (room) => {
+    // Fetch your authentication endpoint and retrieve your access or ID token
+    // ...
 
-Any other error will be treated as an unexpected error, after which the client
-will retry making the request until it gets either (1) or (2).
+    return '{ "token": "..." }';
+  },
+});
+```
 
-Note that when using Notifications, the parameter `room` can be undefined. This
-implies that the client is requesting a token that grants access to multiple
+`room` is the room ID that the user is connecting to. When using
+[Notifications](/docs/products/comments/notifications), `room` can be
+`undefined`, as the client is requesting a token that grants access to multiple
 rooms, rather than a specific room.
 
-You’re responsible for making the fetch to your own backend. Example
-implementation:
+#### Fetch your endpoint
+
+Here’s an example of fetching your API endpoint at `/api/liveblocks-auth` within
+the callback.
 
 ```ts
 import { createClient } from "@liveblocks/client";
@@ -71,8 +262,8 @@ const client = createClient({
         Authentication: "<your own headers here>",
         "Content-Type": "application/json",
       },
-      // Don't forget to pass `room` down,
-      // and note that in some cases, `room` can be undefined.
+      // Don't forget to pass `room` down. Note that it
+      // can be undefined when using Notifications.
       body: JSON.stringify({ room }),
     });
     return await response.json();
@@ -80,109 +271,78 @@ const client = createClient({
 });
 ```
 
-### createClient for React Native [#createClientReactNative]
+#### Token details
 
-If you want to use `@liveblocks/client` with
-[React Native](https://reactnative.dev/), you need to add an [`atob`][]
-polyfill.
+You should return the token created with
+[`Liveblocks.prepareSession`](/docs/api-reference/liveblocks-node#access-tokens)
+or [`liveblocks.identifyUser`](/docs/api-reference/liveblocks-node#id-tokens).
+These are the values the functions can return.
 
-As a polyfill, we recommend installing the package [`base-64`][].
+1. A valid token, it returns a `'{ "token": "..." }'` shaped response.
+1. A token that explicitly forbids access, it returns an
+   `'{ "error": "forbidden", "reason": "..." }'` shaped response. If this is
+   returned, the client will disconnect and won't keep trying to authorize.
 
-```bash
-npm install base-64
-```
-
-Then you can pass the `decode` function to our `atob` polyfill option when you
-create the client.
-
-```ts
-import { createClient } from "@liveblocks/client";
-import { decode } from "base-64";
-
-const client = createClient({
-  /* ... other options ... */
-  polyfills: {
-    atob: decode,
-  },
-});
-```
-
-### createClient for Node.js [#createClientNode]
-
-If you want to use `@liveblocks/client` in a Node.js environment, you need to
-provide [`WebSocket`][] and [`fetch`][] polyfills.
-
-As polyfills, we recommend installing the packages [`ws`][] and
-[`node-fetch`][].
-
-```bash
-npm install ws node-fetch
-```
-
-Then, pass them to the `createClient` function as below.
-
-```ts
-import { createClient } from "@liveblocks/client";
-import fetch from "node-fetch";
-import WebSocket from "ws";
-
-const client = createClient({
-  /* ... other options ... */
-  polyfills: {
-    fetch,
-    WebSocket,
-  },
-});
-```
-
-Note that `node-fetch` v3+
-[does not support CommonJS](https://github.com/node-fetch/node-fetch/blob/main/docs/v3-UPGRADE-GUIDE.md#converted-to-es-module).
-If you are using CommonJS, downgrade `node-fetch` to v2.
+Any other error will be treated as an unexpected error, after which the client
+will retry the request until it receives either 1. or 2.
 
 ### WebSocket throttle [#createClientThrottle]
 
-By default, the client throttles the WebSocket messages sent to 100
-milliseconds.
-
-It is possible to override that configuration with the `throttle` option.
-
-`throttle` should be between 16 and 1000 milliseconds.
+By default, the client throttles the WebSocket messages sent to one every 100
+milliseconds, which translates to 10 updates per second. It’s possible to
+override that configuration with the `throttle` option with a value between `16`
+and `1000` milliseconds.
 
 ```ts
 import { createClient } from "@liveblocks/client";
 
 const client = createClient({
-  /* ... other options ... */
   throttle: 16,
+
+  // Other options
+  // ...
 });
+```
+
+This option is helpful for smoothing out real-time animations in your
+application, as you can effectively increase the framerate without using any
+interpolation. Here are some examples with their approximate frames per second
+(FPS) values.
+
+```ts
+throttle:  16, // 60 FPS
+throttle:  32, // 30 FPS
+throttle: 200, //  5 FPS
 ```
 
 ### Lost connection timeout [#createClientLostConnectionTimeout]
 
-If you’re connected to a room and you briefly lose connection, Liveblocks will
-normally reconnect automatically and quickly. However, if this takes longer than
-usual (for example, your network is offline), then the room will emit an event
-informing you about such exceptional circumstances.
+If you’re connected to a room and briefly lose connection, Liveblocks will
+reconnect automatically and quickly. However, if reconnecting takes longer than
+usual, for example if your network is offline, then the room will emit an event
+informing you about this.
 
-How quickly this happens can be configured with the `lostConnectionTimeout`
-setting.
-
-`lostConnectionTimeout` can be set between 1000 (pedantic) and 30000 (very
-relaxed) milliseconds. The default is 5000, or 5 seconds.
+How quickly this event is triggered can be configured with the
+`lostConnectionTimeout` setting, and it takes a number in milliseconds.
+`lostConnectionTimeout` can be set between `1000` and `30000` milliseconds. The
+default is `5000`, or 5 seconds.
 
 ```ts
 import { createClient } from "@liveblocks/client";
 
 const client = createClient({
-  /* ... other options ... */
   lostConnectionTimeout: 5000,
+
+  // Other options
+  // ...
 });
 ```
 
 You can listen to the event with [`room.subscribe("lost-connection")`][]. Note
 that this also affects when `others` are reset to an empty array after a
-disconnection. For a demonstration of this behavior, see our [connection status
-example][].
+disconnection. This helps prevent temporary flashes in your application as a
+user quickly disconnects and reconnects. For a demonstration of this behavior,
+see our [connection status example][].
 
 ### Background keep-alive timeout [#createClientBackgroundKeepAliveTimeout]
 
@@ -200,15 +360,18 @@ immediately reconnect to the room and synchronize the document.
 import { createClient } from "@liveblocks/client";
 
 const client = createClient({
-  /* ... other options ... */
-  backgroundKeepAliveTimeout: 15 * 60 * 1000 /* 15 minutes */,
+  // Disconnect users after 15 minutes of inactivity
+  backgroundKeepAliveTimeout: 15 * 60 * 1000,
+
+  // Other options
+  // ...
 });
 ```
 
-`backgroundKeepAliveTimeout` accepts a numeric value in milliseconds—we advise
-using a value of at least a few minutes, to avoid unnecessary disconnections.
+`backgroundKeepAliveTimeout` accepts a number in milliseconds—we advise using a
+value of at least a few minutes, to avoid unnecessary disconnections.
 
-### resolveUsers
+### resolveUsers [#createClientResolveUsers]
 
 <Banner title="Public beta">
 
@@ -219,19 +382,16 @@ We’d love to hear from you.
 
 </Banner>
 
-When using [Comments](/docs/products/comments), anything that is linked to a
-user (comments, mentions, etc.) will reference their ID. To display user
-information based on IDs, you can provide a resolver function to the
-`resolveUsers` option in [`createClient`](#createClient).
-
-This resolver function will receive a list of user IDs and should return a list
-of user objects of the same size and in the same order.
+[Comments](/docs/products/comments) stores user IDs in its system, but no other
+user information. To display user information in Comments components, such as a
+user’s name or avatar, you need to resolve these IDs into user objects. This
+function receives a list of user IDs and you should return a list of user
+objects of the same size, in the same order.
 
 ```tsx
 import { createClient } from "@liveblocks/client";
 
 const client = createClient({
-  /* ... other options ... */
   resolveUsers: async ({ userIds }) => {
     const usersData = await __getUsersFromDB__(userIds);
 
@@ -240,19 +400,67 @@ const client = createClient({
       avatar: userData.avatar.src,
     }));
   },
+
+  // Other options
+  // ...
 });
 ```
 
-<Banner title="User object">
-  The user object returned by the resolver function takes the shape of
-  `UserMeta["info"]`, which contains `name` and `avatar` (both optional) by
-  default. The [default
-  components](/docs/api-reference/liveblocks-react-comments#Components) look
-  specifically for the `name` and `avatar` properties to display user names and
-  avatars.
-</Banner>
+#### User objects
 
-### resolveRoomsInfo
+The user objects returned by the resolver function take the shape of
+`UserMeta["info"]`, which contains `name` and `avatar` by default. These two
+values are optional, though if you’re using the
+[Comments default components](/docs/api-reference/liveblocks-react-comments#Components),
+they are necessary. Here’s an example of `userIds` and the exact values
+returned.
+
+```ts
+resolveUsers: async ({ userIds }) => {
+  // ["marc@example.com", "nimesh@example.com"];
+  console.log(userIds);
+
+  return [
+    { name: "Marc", avatar: "https://example.com/marc.png" },
+    { name: "Nimesh", avatar: "https://example.com/nimesh.png" },
+  ];
+};
+```
+
+You can also return custom information, for example, a user’s `color`:
+
+```ts highlight="9"
+resolveUsers: async ({ userIds }) => {
+  // ["marc@example.com"];
+  console.log(userIds);
+
+  return [
+    {
+      name: "Marc",
+      avatar: "https://example.com/marc.png",
+      color: "purple",
+    },
+  ];
+};
+```
+
+#### Acessing user data in React
+
+You can access any values set within `resolveUsers` with the
+[`useUser`](/docs/api-reference/liveblocks-react#useUser) hook.
+
+```tsx
+import { useUser } from "../liveblocks.config";
+
+function Component() {
+  const user = useUser("marc@example.com");
+
+  // { name: "Marc", avatar: "https://...", ... }
+  console.log(user);
+}
+```
+
+### resolveRoomsInfo [#createClientResolveRoomsInfo]
 
 <Banner title="Public beta">
 
@@ -300,7 +508,7 @@ via `href`, but the room ID might not be enough for you to construct the URL ,
 you might need to call your backend for example. In that case, providing it via
 `resolveRoomsInfo` is the preferred way.
 
-### resolveMentionSuggestions
+### resolveMentionSuggestions [#createClientResolveMentionSuggestions]
 
 <Banner title="Public beta">
 
@@ -338,6 +546,65 @@ const client = createClient({
       return __getUserIds__(matchingUsers);
     }
   },
+});
+```
+
+### createClient for Node.js [#createClientNode]
+
+To use `@liveblocks/client` in Node.js, you need to provide [`WebSocket`][] and
+[`fetch`][] polyfills. As polyfills, we recommend installing [`ws`][] and
+[`node-fetch`][].
+
+```bash
+npm install ws node-fetch
+```
+
+Then, pass them to the `createClient` polyfill option as below.
+
+```ts
+import { createClient } from "@liveblocks/client";
+import fetch from "node-fetch";
+import WebSocket from "ws";
+
+const client = createClient({
+  polyfills: {
+    fetch,
+    WebSocket,
+  },
+
+  // Other options
+  // ...
+});
+```
+
+Note that `node-fetch` v3+
+[does not support CommonJS](https://github.com/node-fetch/node-fetch/blob/main/docs/v3-UPGRADE-GUIDE.md#converted-to-es-module).
+If you are using CommonJS, downgrade `node-fetch` to v2.
+
+### createClient for React Native [#createClientReactNative]
+
+To use `@liveblocks/client` with [React Native](https://reactnative.dev/), you
+need to add an [`atob`][] polyfill. As a polyfill, we recommend installing
+[`base-64`][].
+
+```bash
+npm install base-64
+```
+
+Then you can pass the `decode` function to our `atob` polyfill option when you
+create the client.
+
+```ts
+import { createClient } from "@liveblocks/client";
+import { decode } from "base-64";
+
+const client = createClient({
+  polyfills: {
+    atob: decode,
+  },
+
+  // Other options
+  // ...
 });
 ```
 
