@@ -1184,7 +1184,7 @@ export function createRoomContext<
   }
 
   /**
-   *
+   * Scroll to the comment with the id in the hash of the URL based on whether the query is loading and whether the hook should scroll to the comment on load
    */
   function handleScrollToCommentOnLoad(
     isQueryLoading: boolean,
