@@ -863,17 +863,14 @@ describe("client", () => {
 
   test("should update a room's ID", async () => {
     server.use(
-      http.post(
-        `${DEFAULT_BASE_URL}/v2/rooms/:roomId/update-room-id`,
-        async () => {
-          console.log("HELLO");
-          // const data = await request.json();
+      http.post(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/update-room-id`, () => {
+        console.log("HELLO");
+        // const data = await request.json();
 
-          return HttpResponse.json(room, { status: 200 });
+        return HttpResponse.json(room, { status: 200 });
 
-          // return HttpResponse.error();
-        }
-      )
+        // return HttpResponse.error();
+      })
     );
 
     const client = new Liveblocks({ secret: "sk_xxx" });
