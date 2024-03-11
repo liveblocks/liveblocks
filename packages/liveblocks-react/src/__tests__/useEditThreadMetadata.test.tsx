@@ -110,4 +110,86 @@ describe("useEditThreadMetadata", () => {
 
     unmount();
   });
+
+  test.failing(
+    "should remove thread metadata optimistically and update it with the server response",
+    async () => {
+      const initialThread = dummyThreadData();
+      initialThread.metadata = { color: "blue", resolved: true };
+      let hasCalledEditThreadMetadata = false;
+
+      server.use(
+        mockGetThreads((_req, res, ctx) => {
+          return res(
+            ctx.json({
+              data: [initialThread],
+              inboxNotifications: [],
+              deletedThreads: [],
+              deletedInboxNotifications: [],
+              meta: {
+                requestedAt: new Date().toISOString(),
+              },
+            })
+          );
+        }),
+        mockEditThreadMetadata(
+          { threadId: initialThread.id },
+          async (_, res, ctx) => {
+            hasCalledEditThreadMetadata = true;
+            return res(ctx.json({}));
+          }
+        )
+      );
+
+      const { RoomProvider, useThreads, useEditThreadMetadata } =
+        createRoomContextForTest();
+
+      const { result, unmount } = renderHook(
+        () => ({
+          threads: useThreads().threads,
+          editThreadMetadata: useEditThreadMetadata(),
+        }),
+        {
+          wrapper: ({ children }) => (
+            <RoomProvider id="room-id" initialPresence={{}}>
+              {children}
+            </RoomProvider>
+          ),
+        }
+      );
+
+      expect(result.current.threads).toBeUndefined();
+
+      await waitFor(() =>
+        expect(result.current.threads).toEqual([initialThread])
+      );
+
+      await act(() =>
+        result.current.editThreadMetadata({
+          threadId: initialThread.id,
+          metadata: {
+            color: "yellow",
+            resolved: null,
+          },
+        })
+      );
+
+      expect(result.current.threads).toBeDefined();
+      expect(result.current.threads![0].metadata).toEqual({
+        resolved: null,
+        color: "yellow",
+      });
+
+      // Thread updatedAt is not updated by the server response so exceptionally,
+      // we need to check if mock has been called
+      await waitFor(() => expect(hasCalledEditThreadMetadata).toEqual(true));
+
+      await waitFor(() => {
+        expect(result.current.threads![0].metadata).toEqual({
+          color: "yellow",
+        });
+      });
+      unmount();
+    }
+  );
 });
