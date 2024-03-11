@@ -41,7 +41,7 @@ export type UseThreadsOptions<TThreadMetadata extends BaseMetadata> = {
   };
 
   /**
-   * - Optional. Boolean flag to enable enable or disable automatic scrolling to a comment based on the URL hash when threads are loaded. Defaults to `true`.
+   * - Optional. Boolean flag to enable or disable automatic scrolling to a comment based on the URL hash when threads are loaded. Defaults to `true`.
    */
   scrollOnLoad?: boolean;
 };
