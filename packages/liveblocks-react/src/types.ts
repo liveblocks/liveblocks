@@ -30,10 +30,20 @@ import type {
 } from "@liveblocks/core";
 
 export type UseThreadsOptions<TThreadMetadata extends BaseMetadata> = {
+  /**
+   * - Optional. The query (including metadata) to filter the threads by. If provided, only threads that match the query will be returned. If not provided, all threads will be returned.
+   */
   query?: {
+    /**
+     * - Optional. The metadata to filter the threads by. If provided, only threads with metadata that matches the provided metadata will be returned. If not provided, all threads will be returned.
+     */
     metadata?: Partial<TThreadMetadata>;
   };
-  scrollOnLoad?: boolean; // (optional) boolean flag to enable or disable automatic scrolling to a comment based on the URL hash when threads are loaded. Defaults to true.
+
+  /**
+   * - Optional. Boolean flag to enable enable or disable automatic scrolling to a comment based on the URL hash when threads are loaded. Defaults to `true`.
+   */
+  scrollOnLoad?: boolean;
 };
 
 import type { PropsWithChildren } from "react";

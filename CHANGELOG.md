@@ -5,6 +5,11 @@
 - Fix bug where the `showRoomName` prop on `InboxNotification.Thread` wasn’t
   applied to notifications about mentions.
 
+### `@liveblocks/react`
+
+- Add `scrollOnLoad` option to `useThreads` that indicates whether the view
+  should automatically scroll to a comment based on the URL hash.
+
 # v1.10.2
 
 ### `@liveblocks/client`
