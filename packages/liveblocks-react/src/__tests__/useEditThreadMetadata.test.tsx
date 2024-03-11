@@ -136,7 +136,11 @@ describe("useEditThreadMetadata", () => {
           { threadId: initialThread.id },
           async (_, res, ctx) => {
             hasCalledEditThreadMetadata = true;
-            return res(ctx.json({}));
+            return res(
+              ctx.json({
+                color: "yellow",
+              })
+            );
           }
         )
       );
