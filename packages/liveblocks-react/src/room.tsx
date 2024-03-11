@@ -1217,13 +1217,6 @@ export function createRoomContext<
     if (!isCommentInThreads) return;
 
     comment.scrollIntoView();
-
-    // Clear the hash from the URL after scrolling to the comment
-    window.history.pushState(
-      "",
-      document.title,
-      window.location.pathname + window.location.search
-    );
   }
 
   function useThreads(
