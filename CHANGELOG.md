@@ -7,6 +7,11 @@
 - Fix bug where the `showRoomName` prop on `InboxNotification.Thread` wasn’t
   applied to notifications about mentions.
 
+### `@liveblocks/react`
+
+- Fix bug where removing metadata via `useEditThreadMetadata` would result in a
+  brief flash of the old metadata after the metadata was removed optimistically.
+
 # v1.10.2
 
 ### `@liveblocks/client`
