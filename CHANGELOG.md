@@ -1,4 +1,4 @@
-# v1.10.3 (Unpublished)
+# v1.10.3
 
 ### `@liveblocks/react-comments`
 
