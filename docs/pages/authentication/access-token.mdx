@@ -21,11 +21,12 @@ yourself each time a user connects.
   />
 </Figure>
 
-<Banner title="Looking for more complex permissions?">
+<Banner title="Looking for more complex permissions?" type="warning">
 
-If you’d prefer using fine-grained permissions that are stored on the rooms
-themselves, instead of in your system, we recommend using
-[ID tokens](/docs/authentication/id-token) instead.
+If you’re looking to build an application with permissions at organization,
+group, and user levels, we recommend using
+[ID tokens](/docs/authentication/id-token) instead. Access tokens have
+limitations when granting nested permissions.
 
 </Banner>
 
@@ -206,6 +207,72 @@ session.allow("Vu78Rt:*", session.READ_ACCESS);
 
 const { body, status } = await session.authorize();
 ```
+
+### Limitations
+
+There’s a limitation with access tokens, and this is related to granting access
+to individual rooms that are part of groups. Let’s say a user has been given
+access to every `product` room in their organization.
+
+```tsx
+// Access to every `product` room
+session.allow("Vu78Rt:product:*", session.FULL_ACCESS);
+```
+
+This user is able to enter `product` rooms (e.g. `Vu78Rt:product:6Dsw12`), but
+has no access to any `design` rooms (e.g. `Vu78Rt:design:9Hdu73`).
+
+<Figure>
+  <Image
+    src="/assets/authentication/access-token-product-access.png"
+    alt="An access token using a wildcard to access product rooms"
+    width={1494}
+    height={840}
+    quality={100}
+  />
+</Figure>
+
+Let’s say the user is invited to this `design` room via a share menu—how would
+we grant them access?
+
+<Figure>
+  <Image
+    src="/assets/authentication/access-token-room-invite.png"
+    alt="Inviting Olivier to the `Vu78Rt:design:9Hdu73` room"
+    width={1494}
+    height={840}
+    quality={100}
+  />
+</Figure>
+
+We can’t give them access to _every_ `design` room with a wildcard, as they
+should only have permission for _one_.
+
+```tsx
+// ❌ Access to every `design` room
+session.allow("Vu78Rt:design:*", session.FULL_ACCESS);
+```
+
+Instead, we would have to manually find the exact room ID without a wildcard,
+and apply it ourselves—the naming pattern doesn’t work for this room.
+
+```tsx
+// Access to just this `design` room
+session.allow("Vu78Rt:design:9Hdu73", session.FULL_ACCESS);
+```
+
+To make this work you’d have to manually keep track of every room ID where the
+naming pattern doesn’t apply. However this also doesn’t scale, as the token will
+need to be refreshed whenever access is granted to new rooms for this to work
+correctly.
+
+### If you need complex permissions
+
+For this reason,
+**[we recommend using ID tokens for complex permissions](/docs/authentication/id-token)**.
+ID token authentication allows you to attach permissions to each room when it’s
+created or modified, which means you don’t need to check permissions yourself,
+and no naming pattern is required.
 
 ## Select your framework [#select-your-framework]
 

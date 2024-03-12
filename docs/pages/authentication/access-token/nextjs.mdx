@@ -27,10 +27,13 @@ start building your own security logic in Next.js’ `/app` directory.
     <StepContent>
       Users need permission to interact with rooms, and you can
       permit access in an `api/liveblocks-auth` endpoint by
-      creating the following `app/api/liveblocks-auth/route.ts` file. In here you can implement your security and define the rooms that your user can enter.
+      creating the following `app/api/liveblocks-auth/route.ts`
+      file. In here you can implement your security and define
+      the rooms that your user can enter.
 
-      With access tokens, you should always use a [naming pattern](/docs/authentication/access-token#permissions) for your room IDs, as this enables
-      you to easily allow access to a range of rooms at once.
+      With access tokens, you should always use a [naming pattern](/docs/authentication/access-token#permissions)
+      for your room IDs, as this enables you to easily allow
+      access to a range of rooms at once.
 
       In the code snippet below, we’re using a naming pattern and wildcard `*` to give the user access to every room in their organization, and every room in their group.
 
