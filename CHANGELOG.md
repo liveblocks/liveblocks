@@ -1,7 +1,9 @@
-# v1.10.3 (Unpublished)
+# v1.10.3
 
 ### `@liveblocks/react-comments`
 
+- Add support for Emoji v15.1 in emoji picker, along two additional locales:
+  Bengali (`bn`) and Hindi (`hi`).
 - Fix bug where the `showRoomName` prop on `InboxNotification.Thread` wasn’t
   applied to notifications about mentions.
 
