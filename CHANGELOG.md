@@ -1,3 +1,8 @@
+# v1.11.0 (Unpublished)
+
+- Add `scrollOnLoad` option to `useThreads` that indicates whether the view
+  should automatically scroll to a comment based on the URL hash.
+
 # v1.10.3
 
 ### `@liveblocks/react-comments`
@@ -9,8 +14,6 @@
 
 ### `@liveblocks/react`
 
-- Add `scrollOnLoad` option to `useThreads` that indicates whether the view
-  should automatically scroll to a comment based on the URL hash.
 - Fix bug where removing metadata via `useEditThreadMetadata` would result in a
   brief flash of the old metadata after the metadata was removed optimistically.
 
