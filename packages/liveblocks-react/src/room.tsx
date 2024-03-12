@@ -1270,7 +1270,7 @@ export function createRoomContext<
         handleScrollToCommentOnLoad(state.isLoading, scrollOnLoad, state);
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps -- We only want to run this effect once
-      [state.isLoading, scrollOnLoad]
+      [state.isLoading]
     );
 
     return state;
@@ -1331,7 +1331,7 @@ export function createRoomContext<
         handleScrollToCommentOnLoad(state.isLoading, scrollOnLoad, state);
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps -- We only want to run this effect once
-      [state.isLoading, scrollOnLoad]
+      [state.isLoading]
     );
 
     return state;
