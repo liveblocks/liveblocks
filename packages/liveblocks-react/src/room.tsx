@@ -1440,7 +1440,7 @@ export function createRoomContext<
         room[kInternal].comments
           .editThreadMetadata({ metadata, threadId })
           .then(
-            (metadata: TThreadMetadata) => {
+            (metadata) => {
               store.set((state) => {
                 const existingThread = state.threads[threadId];
                 const updatedOptimisticUpdates = state.optimisticUpdates.filter(
@@ -1479,10 +1479,9 @@ export function createRoomContext<
                     ...state.threads,
                     [threadId]: {
                       ...existingThread,
-                      metadata: {
-                        ...existingThread.metadata,
-                        ...metadata,
-                      },
+                      metadata: metadata as [TThreadMetadata] extends [never]
+                        ? Record<string, never>
+                        : TThreadMetadata,
                     },
                   },
                   optimisticUpdates: updatedOptimisticUpdates,

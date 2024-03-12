@@ -1,7 +1,9 @@
-# v1.10.3 (Unpublished)
+# v1.10.3
 
 ### `@liveblocks/react-comments`
 
+- Add support for Emoji v15.1 in emoji picker, along two additional locales:
+  Bengali (`bn`) and Hindi (`hi`).
 - Fix bug where the `showRoomName` prop on `InboxNotification.Thread` wasn’t
   applied to notifications about mentions.
 
@@ -9,6 +11,8 @@
 
 - Add `scrollOnLoad` option to `useThreads` that indicates whether the view
   should automatically scroll to a comment based on the URL hash.
+- Fix bug where removing metadata via `useEditThreadMetadata` would result in a
+  brief flash of the old metadata after the metadata was removed optimistically.
 
 # v1.10.2
 
