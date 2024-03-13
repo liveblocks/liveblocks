@@ -870,7 +870,7 @@ describe("client", () => {
 
     const client = new Liveblocks({ secret: "sk_xxx" });
     const res = await client.updateRoomId({
-      roomId: "room1",
+      currentRoomId: "room1",
       newRoomId: "newRoom1",
     });
 
@@ -895,7 +895,7 @@ describe("client", () => {
     try {
       // Attempt to get, which should fail and throw an error.
       await client.updateRoomId({
-        roomId: "room1",
+        currentRoomId: "room1",
         newRoomId: "newRoom1",
       });
       // If it doesn't throw, fail the test.
