@@ -1304,6 +1304,35 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
   }
+
+  /**
+   * Update a room ID.
+   * @param params.roomId The current ID of the room.
+   * @param params.newRoomId The new room ID.
+   */
+  public async updateRoomId(params: {
+    roomId: string;
+    newRoomId: string;
+  }): Promise<RoomInfo> {
+    const { roomId, newRoomId } = params;
+
+    const res = await this.post(url`/v2/rooms/${roomId}/update-room-id`, {
+      newRoomId,
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+    const data = (await res.json()) as RoomInfoPlain;
+    return {
+      ...data,
+      createdAt: new Date(data.createdAt),
+      lastConnectionAt: data.lastConnectionAt
+        ? new Date(data.lastConnectionAt)
+        : undefined,
+    };
+  }
 }
 
 export class LiveblocksError extends Error {
