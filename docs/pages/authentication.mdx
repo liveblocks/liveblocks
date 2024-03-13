@@ -33,8 +33,7 @@ setting up your application.
 handle permissions yourself. When a user authenticates, it’s up to you to let
 Liveblocks know which rooms they should be allowed inside. This means that you
 need to manually keep track of which users should be allowed in which rooms, and
-apply these permissions yourself each time a user connects. [mention complex
-permissions limitation]
+apply these permissions yourself each time a user connects.
 
 <Figure>
   <Image
@@ -48,7 +47,8 @@ permissions limitation]
 
 In the diagram above, you can see that `olivier@example.com`’s access token is
 allowing him into the `Vu78Rt:design:9Hdu73` room. A naming pattern like this is
-necessary for your rooms when using access tokens.
+necessary for your rooms when using access tokens, and it works well for simple
+permissions. However, if you need complex permissions, we recommend ID tokens.
 
 ### ID tokens [#id-tokens]
 
@@ -71,13 +71,14 @@ set.
 
 In the diagram above, `olivier@example.com`’s ID token verifies his identity,
 and when he tries to enter the `a32wQXid4A9` room, his permissions are then
-checked on the room itself.
+checked on the room itself. ID tokens are best if you need complex permissions
+set on different levels (e.g. workspace → team → user).
 
 ## Choose a method
 
 - **Access token authentication** is best for prototyping, as it’s easy to set
-  up. It’s also ideal if you’d prefer handle permissions yourself, without
-  relying on Liveblocks. [mention complex permissions limitation]
+  up. It’s also ideal if you only need simple permissions, and you’d prefer
+  handle these without relying on Liveblocks.
 - **ID token authentication** is best if you’d like Liveblocks to automatically
   prevent access to the wrong users. It allows you to set different levels of
   permissions on different users and groups.
