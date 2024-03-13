@@ -31,17 +31,23 @@ import type {
 
 export type UseThreadsOptions<TThreadMetadata extends BaseMetadata> = {
   /**
-   * - Optional. The query (including metadata) to filter the threads by. If provided, only threads that match the query will be returned. If not provided, all threads will be returned.
+   * The query (including metadata) to filter the threads by. If provided, only threads
+   * that match the query will be returned. If not provided, all threads will be returned.
    */
   query?: {
     /**
-     * - Optional. The metadata to filter the threads by. If provided, only threads with metadata that matches the provided metadata will be returned. If not provided, all threads will be returned.
+     * The metadata to filter the threads by. If provided, only threads with metadata that matches
+     * the provided metadata will be returned. If not provided, all threads will be returned.
      */
     metadata?: Partial<TThreadMetadata>;
   };
 
   /**
-   * - Optional. Boolean flag to enable or disable automatic scrolling to a comment based on the URL hash when threads are loaded. Defaults to `true`.
+   * Whether to scroll to a comment on load based on the URL hash. Defaults to `true`.
+   *
+   * @example
+   * Given the URL `https://example.com/my-room#cm_xxx`, the `cm_xxx` comment will be
+   * scrolled to on load if it exists in the page.
    */
   scrollOnLoad?: boolean;
 };
