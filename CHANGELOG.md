@@ -1,8 +1,10 @@
-# v1.10.4 (Unpublished)
+# v1.11.0 (Unpublished)
 
 ### `@liveblocks/node`
 
 - Add `updateRoomId` method that lets you update room id of the specified room.
+- Add `scrollOnLoad` option to `useThreads`: enabled by default, this option
+  controls whether to scroll to a comment on load based on the URL hash.
 
 # v1.10.3
 
