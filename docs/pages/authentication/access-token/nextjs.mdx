@@ -65,10 +65,11 @@ start building your own security logic in Next.js’ `/app` directory.
       }
       ```
 
-
-      If you cannot use patterns and you want to give permissions to one room at a time.
-      You can use the request's body property `room` to give access to the room requested by the client.
-      If `room` is undefined, it means the client requested a token for Notifications, you don't have to add any permissions to the token.
+      If patterns are not an option and you need to assign permissions to individual
+      rooms, you can utilize the `room` property in the request's body to grant access
+      to the specific room requested by the client. If the `room` property is undefined,
+      it indicates that the client is requesting a token for Notifications, and no
+      additional permissions need to be added to the token.
 
       ```ts file="app/api/liveblocks-auth/route.ts"
       import { Liveblocks } from "@liveblocks/node";

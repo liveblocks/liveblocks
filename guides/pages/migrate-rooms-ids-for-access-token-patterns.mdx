@@ -7,11 +7,11 @@ meta:
 
 ## How to handle active users connected to a room while its ID is updated
 
-In order to provide a smooth experience to the potential active users connected
-to a room while its ID is updated, we provided a custom error that says the room
-ID was updated and the error contains the new ID. You can use the new ID to
-redirect the user to the proper document. When the room ID is updated,
-Liveblocks will disconnect the active users and send a custom error code.
+To ensure a seamless experience for users actively connected to a room when its
+ID changes, we issue a custom error indicating that the room ID has been
+updated, which includes the new ID. You can leverage this new ID to redirect
+users to the correct document. Upon updating the room ID, Liveblocks will
+disconnect active users and issue this custom error code.
 
 ```ts
 useErrorListener((error) => {
