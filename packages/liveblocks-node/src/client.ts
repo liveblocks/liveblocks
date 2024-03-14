@@ -680,6 +680,7 @@ export class Liveblocks {
    * Send a Yjs binary update to the room’s Yjs document. You can use this endpoint to initialize Yjs data for the room or to update the room’s Yjs document.
    * @param roomId The id of the room to send the Yjs binary update to.
    * @param update The Yjs update to send. Typically the result of calling `Yjs.encodeStateAsUpdate(doc)`. Read the [Yjs documentation](https://docs.yjs.dev/api/document-updates) to learn how to create a binary update.
+   * @param params.guid (optional) If provided, the binary update will be applied to the Yjs subdocument with the given guid. If not provided, the binary update will be applied to the root Yjs document.
    */
   public async sendYjsBinaryUpdate(
     roomId: string,
@@ -701,6 +702,7 @@ export class Liveblocks {
    * Returns the room’s Yjs document encoded as a single binary update. This can be used by Y.applyUpdate(responseBody) to get a copy of the document in your backend.
    * See [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more information on working with updates.
    * @param roomId The id of the room to get the Yjs document from.
+   * @param params.guid (optional) If provided, returns the binary update of the Yjs subdocument with the given guid. If not provided, returns the binary update of the root Yjs document.
    * @returns The room’s Yjs document encoded as a single binary update.
    */
   public async getYjsDocumentAsBinaryUpdate(
