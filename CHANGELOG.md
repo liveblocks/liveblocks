@@ -1,9 +1,3 @@
-# v1.10.4 (Unpublished)
-
-### `@liveblocks/node`
-
-- Add `updateRoomId` method that lets you update room id of the specified room.
-
 # v1.10.3
 
 ### `@liveblocks/react-comments`
