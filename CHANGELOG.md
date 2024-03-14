@@ -1,5 +1,12 @@
 # v1.11.0
 
+### `@liveblocks/node`
+
+- Add `updateRoomId` method that lets you update room id of the specified room.
+- Add an optional `guid` parameter to `sendYjsBinaryUpdate` and
+  `getYjsDocumentAsBinaryUpdate` to point to a Yjs subdocument with the
+  specified guid.
+
 ### `@liveblocks/react`
 
 - Add `scrollOnLoad` option to `useThreads`: enabled by default, this option
@@ -14,11 +21,6 @@
 - Add actions to `InboxNotification` with a single action for now: marking as
   read.
 - Improve actions hover behavior in `Comment`/`Thread`.
-
-### `@liveblocks/node`
-
-- Add `updateRoomId` method that lets you update the room ID of the specified
-  room.
 
 # v1.10.4
 
