@@ -580,16 +580,13 @@ describe("client", () => {
   test("should successfully send a Yjs update for a subdocument", async () => {
     const update = new Uint8Array([21, 31]);
     server.use(
-      http.put(
-        `${DEFAULT_BASE_URL}/v2/rooms/:roomId/ydoc`,
-        async ({ request }) => {
-          const url = new URL(request.url);
-          if (url.searchParams.get("guid") === "subdoc") {
-            return HttpResponse.json(null);
-          }
-          return HttpResponse.error();
+      http.put(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/ydoc`, ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.get("guid") === "subdoc") {
+          return HttpResponse.json(null);
         }
-      )
+        return HttpResponse.error();
+      })
     );
 
     const client = new Liveblocks({ secret: "sk_xxx" });
