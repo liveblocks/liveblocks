@@ -7,6 +7,26 @@
   `getYjsDocumentAsBinaryUpdate` to point to a Yjs subdocument with the
   specified guid.
 
+### `@liveblocks/react`
+
+- Add `scrollOnLoad` option to `useThreads`: enabled by default, this option
+  controls whether to scroll to a comment on load based on the URL hash.
+- `useUser` and `useRoomInfo` no longer support returning nothing. Returning
+  `undefined` will now be treated as an error.
+- Fix bug where `useUser` and `useRoomInfo` returned an extra `data` superfluous
+  property.
+
+### `@liveblocks/react-comments`
+
+- Add actions to `InboxNotification` with a single action for now: marking as
+  read.
+- Improve actions hover behavior in `Comment`/`Thread`.
+
+# v1.10.4
+
+- Fix bundling issue in Vite projects, where `process is not defined` could
+  happen
+
 # v1.10.3
 
 ### `@liveblocks/react-comments`

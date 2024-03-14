@@ -483,6 +483,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     return (
       <TooltipProvider>
         <div
+          id={comment.id}
           className={classNames(
             "lb-root lb-comment",
             indentContent && "lb-comment:indent-content",

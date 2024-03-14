@@ -127,7 +127,7 @@ describe("Batch", () => {
     const batch = new Batch<string, [string]>(callback, { delay: SOME_TIME });
 
     await expect(batch.get("a")).rejects.toEqual(
-      new Error("Batch callback must return an array.")
+      new Error("Callback must return an array.")
     );
   });
 
@@ -137,7 +137,7 @@ describe("Batch", () => {
 
     await expect(batch.get("a")).rejects.toEqual(
       new Error(
-        "Batch callback must return an array of the same length as the number of calls in the batch. Expected 1, but got 0."
+        "Callback must return an array of the same length as the number of provided items. Expected 1, but got 0."
       )
     );
   });
