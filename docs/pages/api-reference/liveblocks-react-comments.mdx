@@ -540,6 +540,9 @@ Displays a single inbox notification.
   <PropertiesListItem name="href" type="string">
     The URL which the inbox notification links to.
   </PropertiesListItem>
+  <PropertiesListItem name="showActions" type='boolean | "hover"'>
+    How to show or hide the actions.
+  </PropertiesListItem>
   <PropertiesListItem name="kinds" type="Partial<InboxNotificationKinds>">
     Override specific kinds of inbox notifications.
   </PropertiesListItem>
@@ -583,6 +586,9 @@ Displays a thread inbox notification.
 ```
 
 <PropertiesList>
+  <PropertiesListItem name="showActions" type='boolean | "hover"'>
+    How to show or hide the actions.
+  </PropertiesListItem>
   <PropertiesListItem name="showRoomName" type="boolean">
     Whether to show the room name in the title.
   </PropertiesListItem>

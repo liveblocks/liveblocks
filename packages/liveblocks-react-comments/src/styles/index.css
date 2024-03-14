@@ -777,11 +777,15 @@
   @media (hover: hover) {
     &:where(.lb-comment\:show-actions-hover) {
       :where(.lb-comment-actions) {
+        position: absolute;
+        inset-inline-end: 0;
         opacity: 0;
+        transition-property: opacity;
       }
 
       &:where(:is(:hover, :focus-within, .lb-comment\:action-open)) {
         :where(.lb-comment-actions) {
+          position: relative;
           opacity: 1;
         }
       }
@@ -839,7 +843,6 @@
   display: flex;
   gap: calc(0.125 * var(--lb-spacing));
   margin-inline-start: auto;
-  transition-property: opacity;
 }
 
 .lb-comment-composer {
@@ -1070,6 +1073,41 @@
       }
     }
   }
+
+  @media (hover: hover) {
+    &:where(.lb-inbox-notification\:show-actions-hover) {
+      :where(.lb-inbox-notification-header) {
+        display: grid;
+        grid-template: "title secondary" / 1fr max-content;
+      }
+
+      :where(.lb-inbox-notification-details) {
+        opacity: 1;
+        transition-property: opacity;
+      }
+
+      :where(.lb-inbox-notification-actions) {
+        opacity: 0;
+        transition-property: opacity;
+      }
+
+      &:where(:is(:hover, :focus-within, .lb-inbox-notification\:action-open)) {
+        :where(.lb-inbox-notification-details) {
+          opacity: 0;
+        }
+
+        :where(.lb-inbox-notification-actions) {
+          opacity: 1;
+        }
+      }
+
+      :where(.lb-inbox-notification-details),
+      :where(.lb-inbox-notification-actions) {
+        grid-area: secondary;
+        justify-self: end;
+      }
+    }
+  }
 }
 
 .lb-inbox-notification-aside {
@@ -1086,10 +1124,11 @@
   gap: calc(0.75 * var(--lb-spacing));
   align-items: center;
   margin-block-start: calc(0.25 * var(--lb-spacing));
-  margin-block-end: var(--lb-spacing);
+  margin-block-end: calc(0.5 * var(--lb-spacing));
 }
 
 .lb-inbox-notification-title {
+  min-block-size: $lb-button-size;
   text-wrap: pretty;
 
   :where(.lb-list, .lb-name) {
@@ -1101,6 +1140,7 @@
   flex: none;
   align-self: start;
   min-inline-size: 0;
+  block-size: $lb-button-size;
   margin-inline-start: auto;
 }
 
@@ -1112,6 +1152,13 @@
   &::before {
     content: "\FEFF";
   }
+}
+
+.lb-inbox-notification-actions {
+  display: flex;
+  grid-area: actions;
+  gap: calc(0.125 * var(--lb-spacing));
+  align-self: start;
 }
 
 .lb-inbox-notification-comments {
@@ -1128,6 +1175,10 @@
     block-size: auto;
     color: var(--lb-foreground-tertiary);
     font-size: 0.875rem;
+  }
+
+  :where(.lb-comment-reaction) {
+    pointer-events: none;
   }
 }
 
@@ -1219,6 +1270,11 @@
   &:where([data-highlighted], [data-selected]) {
     background: var(--lb-foreground-subtle);
     transition-duration: calc(var(--lb-transition-duration) / 2);
+  }
+
+  &:where(:disabled, [data-disabled]) {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 }
 
