@@ -20,6 +20,11 @@
 - Add `updateRoomId` method that lets you update the room ID of the specified
   room.
 
+# v1.10.4
+
+- Fix bundling issue in Vite projects, where `process is not defined` could
+  happen
+
 # v1.10.3
 
 ### `@liveblocks/react-comments`
