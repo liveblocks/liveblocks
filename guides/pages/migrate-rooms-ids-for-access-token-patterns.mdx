@@ -1,0 +1,48 @@
+---
+meta:
+  title: "How to migrate your existing rooms IDs to use access token patterns"
+  description:
+    "Learn how to migrate your current rooms IDs to match access token patterns."
+---
+
+## How to handle active users connected to a room while its ID is updated
+
+In order to provide a smooth experience to the potential active users connected
+to a room while its ID is updated, we provided a custom error that says the room
+ID was updated and the error contains the new ID. You can use the new ID to
+redirect the user to the proper document. When the room ID is updated,
+Liveblocks will disconnect the active users and send a custom error code.
+
+```ts
+useErrorListener((error) => {
+  console.log("Error", error.message);
+  switch (error.code) {
+    case -1: // Authentication error break;
+
+    case 4001:
+      // Could not connect because you don't have access to this room
+      break;
+
+    case 4005:
+      // Could not connect because room was full
+      break;
+
+    case 4006:
+      // Could not connect because roomId was updated
+      console.log("roomId updated to:", error.message);
+      const newRoomId = error.message;
+      // TODO: implement redirect
+      break;
+
+    default:
+      // Unexpected error
+      break;
+  }
+});
+```
+
+## Use Liveblocks REST API to update your rooms IDs
+
+Use the
+[update room id](/docs/api-reference/rest-api-endpoints#post-rooms-update-roomId)
+endpoint to update a room id.

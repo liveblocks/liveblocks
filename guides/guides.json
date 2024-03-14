@@ -315,5 +315,12 @@
     "technologies": ["react-comments", "nodejs"],
     "date": "2024-02-08",
     "featured": true
+  },
+  {
+    "title": "How to migrate your existing rooms IDs to use access token patterns",
+    "path": "/migrate-rooms-ids-for-access-token-patterns",
+    "topics": ["rest-api"],
+    "technologies": ["nodejs", "javascript"],
+    "date": "2024-03-13"
   }
 ]

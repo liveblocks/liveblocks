@@ -390,6 +390,97 @@
         "description": "This endpoint deletes a room. A deleted room is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.deleteRoom`](/docs/api-reference/liveblocks-node#delete-rooms-roomid)."
       }
     },
+    "/rooms/{roomId}/update-room-id": {
+      "post": {
+        "summary": "Update room id",
+        "tags": ["Room"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the room"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the updated room with the new id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Room"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "type": "room",
+                      "id": "react-todo-list",
+                      "lastConnectionAt": "2022-08-04T21:07:09.380Z",
+                      "createdAt": "2022-07-13T14:32:50.697Z",
+                      "metadata": {
+                        "color": "blue",
+                        "size": "10",
+                        "target": ["abc", "def"]
+                      },
+                      "defaultAccesses": ["room:write"],
+                      "groupsAccesses": {
+                        "marketing": ["room:write"]
+                      },
+                      "usersAccesses": {
+                        "alice": ["room:write"],
+                        "vinod": ["room:write"]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "post-rooms-update-roomId",
+        "description": "This endpoint updates the room ID.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "example": {
+                  "value": {
+                    "newRoomId": "new-room-id"
+                  }
+                }
+              }
+            },
+            "application/xml": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        }
+      }
+    },
     "/rooms/{roomId}/active_users": {
       "get": {
         "summary": "Get active users",

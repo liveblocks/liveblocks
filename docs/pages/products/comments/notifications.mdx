@@ -220,6 +220,24 @@ notification settings for the current room, or use
 server-side to control them yourself: for example, to automatically make a
 document’s author notified about everything in their document.
 
+## Permissions
+
+### Access token
+
+When using the access token authentication method, Liveblocks will return all
+notifications created for the user, without taking into consideration the
+permissions contained in the access token. This means that if a user is
+mentioned in a comment in a room to which they don't have access, they will
+still see the notification.
+
+If you would like to have more control over the notifications permissions, we
+recommend using [IDs tokens](/docs/authentication/id-token).
+
+### ID token
+
+When using the ID token authentication method, Liveblocks will use the rooms
+accesses configured to return notifications that the user has access to.
+
 ## Email notifications
 
 Using webhooks, it’s also possible to send updates about a user’s inbox
