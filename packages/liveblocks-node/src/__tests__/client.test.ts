@@ -577,6 +577,69 @@ describe("client", () => {
     ).resolves.not.toThrow();
   });
 
+  test("should successfully send a Yjs update for a subdocument", async () => {
+    const update = new Uint8Array([21, 31]);
+    server.use(
+      http.put(
+        `${DEFAULT_BASE_URL}/v2/rooms/:roomId/ydoc`,
+        async ({ request }) => {
+          const url = new URL(request.url);
+          if (url.searchParams.get("guid") === "subdoc") {
+            return HttpResponse.json(null);
+          }
+          return HttpResponse.error();
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    await expect(
+      client.sendYjsBinaryUpdate("roomId", update, {
+        guid: "subdoc",
+      })
+    ).resolves.not.toThrow();
+  });
+
+  test("should successfully return the binary update for a Yjs document", async () => {
+    const update = new Uint8Array([21, 31]);
+    server.use(
+      http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/ydoc-binary`, () => {
+        return HttpResponse.arrayBuffer(update);
+      })
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    await expect(
+      client.getYjsDocumentAsBinaryUpdate("roomId")
+    ).resolves.toEqual(update.buffer);
+  });
+
+  test("should successfully return the binary update for a Yjs subdocument", async () => {
+    const update = new Uint8Array([21, 31]);
+    server.use(
+      http.get(
+        `${DEFAULT_BASE_URL}/v2/rooms/:roomId/ydoc-binary`,
+        ({ request }) => {
+          const url = new URL(request.url);
+          if (url.searchParams.get("guid") === "subdoc") {
+            return HttpResponse.arrayBuffer(update);
+          }
+          return HttpResponse.arrayBuffer(new Uint8Array([0]));
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    await expect(
+      client.getYjsDocumentAsBinaryUpdate("roomId", {
+        guid: "subdoc",
+      })
+    ).resolves.toEqual(update.buffer);
+  });
+
   test("should return the specified inbox notification when getInboxNotification receives a successful response", async () => {
     const userId = "user1";
     const inboxNotificationId = "notification1";
