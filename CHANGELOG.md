@@ -1,4 +1,4 @@
-# v1.10.4 (Unpublished)
+# v1.11.0
 
 ### `@liveblocks/node`
 
