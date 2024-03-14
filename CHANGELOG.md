@@ -1,4 +1,4 @@
-# v1.10.4 (Unpublished)
+# v1.10.4
 
 - Fix bundling issue in Vite projects, where `process is not defined` could
   happen
