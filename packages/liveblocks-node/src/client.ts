@@ -1311,17 +1311,14 @@ export class Liveblocks {
    * @param params.newRoomId The new room ID.
    */
   public async updateRoomId(params: {
-    currentRoomId: string;
+    roomId: string;
     newRoomId: string;
   }): Promise<RoomInfo> {
-    const { currentRoomId, newRoomId } = params;
+    const { roomId, newRoomId } = params;
 
-    const res = await this.post(
-      url`/v2/rooms/${currentRoomId}/update-room-id`,
-      {
-        newRoomId,
-      }
-    );
+    const res = await this.post(url`/v2/rooms/${roomId}/update-room-id`, {
+      newRoomId,
+    });
 
     if (!res.ok) {
       const text = await res.text();
