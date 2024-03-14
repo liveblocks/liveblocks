@@ -3,6 +3,9 @@
 ### `@liveblocks/node`
 
 - Add `updateRoomId` method that lets you update room id of the specified room.
+- Add an optional `guid` parameter to `sendYjsBinaryUpdate` and
+  `getYjsDocumentAsBinaryUpdate` to point to a Yjs subdocument with the
+  specified guid.
 
 # v1.10.3
 
