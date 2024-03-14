@@ -175,9 +175,10 @@ export class Liveblocks {
   /** @internal */
   private async putBinary(
     path: URLSafeString,
-    body: Uint8Array
+    body: Uint8Array,
+    params?: QueryParams
   ): Promise<Response> {
-    const url = urljoin(this._baseUrl, path);
+    const url = urljoin(this._baseUrl, path, params);
     const headers = {
       Authorization: `Bearer ${this._secret}`,
       "Content-Type": "application/octet-stream",
@@ -682,9 +683,14 @@ export class Liveblocks {
    */
   public async sendYjsBinaryUpdate(
     roomId: string,
-    update: Uint8Array
+    update: Uint8Array,
+    params: {
+      guid?: string;
+    } = {}
   ): Promise<void> {
-    const res = await this.putBinary(url`/v2/rooms/${roomId}/ydoc`, update);
+    const res = await this.putBinary(url`/v2/rooms/${roomId}/ydoc`, update, {
+      guid: params.guid,
+    });
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -698,9 +704,14 @@ export class Liveblocks {
    * @returns The room’s Yjs document encoded as a single binary update.
    */
   public async getYjsDocumentAsBinaryUpdate(
-    roomId: string
+    roomId: string,
+    params: {
+      guid?: string;
+    } = {}
   ): Promise<ArrayBuffer> {
-    const res = await this.get(url`/v2/rooms/${roomId}/ydoc-binary`);
+    const res = await this.get(url`/v2/rooms/${roomId}/ydoc-binary`, {
+      guid: params.guid,
+    });
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
