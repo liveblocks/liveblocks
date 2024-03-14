@@ -793,7 +793,7 @@
     }
   }
 
-  &:where(:target) {
+  &:where(:target, [data-target]) {
     --lb-dynamic-background: var(--lb-background-accent-faint);
   }
 
