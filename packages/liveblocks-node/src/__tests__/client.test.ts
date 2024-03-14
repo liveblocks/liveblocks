@@ -860,4 +860,53 @@ describe("client", () => {
       }
     }
   });
+
+  test("should update a room's ID", async () => {
+    server.use(
+      http.post(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/update-room-id`, () => {
+        return HttpResponse.json(room, { status: 200 });
+      })
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+    const res = await client.updateRoomId({
+      currentRoomId: "room1",
+      newRoomId: "newRoom1",
+    });
+
+    expect(res).toEqual(room);
+  });
+
+  test("should throw a LiveblocksError when updateRoomId receives an error response", async () => {
+    const error = {
+      error: "ROOM_NOT_FOUND",
+      message: "Room not found",
+    };
+
+    server.use(
+      http.post(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/update-room-id`, () => {
+        return HttpResponse.json(error, { status: 404 });
+      })
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    // This should throw a LiveblocksError
+    try {
+      // Attempt to get, which should fail and throw an error.
+      await client.updateRoomId({
+        currentRoomId: "room1",
+        newRoomId: "newRoom1",
+      });
+      // If it doesn't throw, fail the test.
+      expect(true).toBe(false);
+    } catch (err) {
+      expect(err instanceof LiveblocksError).toBe(true);
+      if (err instanceof LiveblocksError) {
+        expect(err.status).toBe(404);
+        expect(err.message).toBe(JSON.stringify(error));
+        expect(err.name).toBe("LiveblocksError");
+      }
+    }
+  });
 });

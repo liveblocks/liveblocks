@@ -122,20 +122,18 @@ export class Batch<T, A extends unknown[] = []> {
       calls.forEach((call, index) => {
         const result = results?.[index];
 
-        if (result instanceof Error) {
+        if (!Array.isArray(results)) {
+          call.reject(new Error("Callback must return an array."));
+        } else if (calls.length !== results.length) {
+          call.reject(
+            new Error(
+              `Callback must return an array of the same length as the number of provided items. Expected ${calls.length}, but got ${results.length}.`
+            )
+          );
+        } else if (result instanceof Error) {
           call.reject(result);
-        } else if (result !== undefined) {
-          call.resolve(result);
         } else {
-          if (Array.isArray(results)) {
-            call.reject(
-              new Error(
-                `Batch callback must return an array of the same length as the number of calls in the batch. Expected ${calls.length}, but got ${results.length}.`
-              )
-            );
-          } else {
-            call.reject(new Error("Batch callback must return an array."));
-          }
+          call.resolve(result);
         }
       });
     } catch (error) {

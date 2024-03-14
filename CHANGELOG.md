@@ -1,17 +1,38 @@
 # v1.11.0
 
+### `@liveblocks/react`
+
+- Add `scrollOnLoad` option to `useThreads`: enabled by default, this option
+  controls whether to scroll to a comment on load based on the URL hash.
+- `useUser` and `useRoomInfo` no longer support returning nothing. Returning
+  `undefined` will now be treated as an error.
+- Fix bug where `useUser` and `useRoomInfo` returned an extra `data` superfluous
+  property.
+
 ### `@liveblocks/react-comments`
 
 - Add actions to `InboxNotification` with a single action for now: marking as
   read.
 - Improve actions hover behavior in `Comment`/`Thread`.
 
-# v1.10.3 (Unpublished)
+### `@liveblocks/node`
+
+- Add `updateRoomId` method that lets you update the room ID of the specified
+  room.
+
+# v1.10.3
 
 ### `@liveblocks/react-comments`
 
+- Add support for Emoji v15.1 in emoji picker, along two additional locales:
+  Bengali (`bn`) and Hindi (`hi`).
 - Fix bug where the `showRoomName` prop on `InboxNotification.Thread` wasn’t
   applied to notifications about mentions.
+
+### `@liveblocks/react`
+
+- Fix bug where removing metadata via `useEditThreadMetadata` would result in a
+  brief flash of the old metadata after the metadata was removed optimistically.
 
 # v1.10.2
 
