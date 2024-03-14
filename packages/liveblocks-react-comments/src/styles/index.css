@@ -795,6 +795,10 @@
   &:where(:target) {
     --lb-dynamic-background: var(--lb-background-accent-faint);
   }
+
+  &:where([data-editing]) {
+    --lb-dynamic-background: var(--lb-background-foreground-faint);
+  }
 }
 
 .lb-comment-header {
