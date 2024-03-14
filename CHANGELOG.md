@@ -14,6 +14,7 @@
 - Add actions to `InboxNotification` with a single action for now: marking as
   read.
 - Improve actions hover behavior in `Comment`/`Thread`.
+- Change `Comment` background color when it’s linked to or being edited.
 
 ### `@liveblocks/node`
 
