@@ -71,7 +71,7 @@ const client = createClient({
 // Presence not used in this example
 const initialPresence = {};
 
-let roomId = "nuxtjs-live-avatars";
+let roomId = "liveblocks:examples:nuxtjs-live-avatars";
 
 export default {
   data() {

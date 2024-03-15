@@ -7,7 +7,7 @@ import { ClientSideSuspense } from "@liveblocks/react";
 import { Loading } from "@/components/Loading";
 
 export function Room({ children }: { children: ReactNode }) {
-  const roomId = useOverrideRoomId("nextjs-yjs-slate");
+  const roomId = useOverrideRoomId("liveblocks:examples:nextjs-yjs-slate");
 
   return (
     <RoomProvider

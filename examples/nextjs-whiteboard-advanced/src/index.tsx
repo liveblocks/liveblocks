@@ -45,7 +45,9 @@ import ToolsBar from "./components/ToolsBar";
 const MAX_LAYERS = 100;
 
 export default function Room() {
-  const roomId = useOverrideRoomId("nextjs-whiteboard-advanced");
+  const roomId = useOverrideRoomId(
+    "liveblocks:examples:nextjs-whiteboard-advanced"
+  );
 
   return (
     <RoomProvider

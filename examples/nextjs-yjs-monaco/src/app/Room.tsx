@@ -7,7 +7,7 @@ import { ClientSideSuspense } from "@liveblocks/react";
 import { Loading } from "@/components/Loading";
 
 export function Room({ children }: { children: ReactNode }) {
-  const roomId = useOverrideRoomId("nextjs-yjs-monaco");
+  const roomId = useOverrideRoomId("liveblocks:examples:nextjs-yjs-monaco");
 
   return (
     <RoomProvider

@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * Authenticating your Liveblocks application
- * https://liveblocks.io/docs/rooms/authentication/access-token-permissions/nextjs
+ * https://liveblocks.io/docs/authentication
  */
 
 const liveblocks = new Liveblocks({
@@ -22,9 +22,8 @@ export async function POST(request: NextRequest) {
   // Create a session for the current user
   const session = liveblocks.prepareSession(`user-${userIndex}`);
 
-  // Give the user access to the room
-  const { room } = await request.json();
-  session.allow(room, session.FULL_ACCESS);
+  // Use a naming pattern to allow access to rooms with a wildcard
+  session.allow(`liveblocks:examples:*`, session.FULL_ACCESS);
 
   // Authorize the user and return the result
   const { status, body } = await session.authorize();

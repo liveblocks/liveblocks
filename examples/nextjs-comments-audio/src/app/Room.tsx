@@ -7,7 +7,7 @@ import { ReactNode, useMemo } from "react";
 import { Toaster } from "sonner";
 
 export function Room({ children }: { children: ReactNode }) {
-  const roomId = useOverrideRoomId("nextjs-comments-audio");
+  const roomId = useOverrideRoomId("liveblocks:examples:nextjs-comments-audio");
 
   return (
     <Tooltip.Provider delayDuration={0}>
