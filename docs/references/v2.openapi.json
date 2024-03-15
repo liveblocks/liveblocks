@@ -392,17 +392,17 @@
     },
     "/rooms/{roomId}/update-room-id": {
       "post": {
-        "summary": "Update room id",
+        "summary": "Update room ID",
         "tags": ["Room"],
         "parameters": [
           {
             "schema": {
               "type": "string"
             },
-            "name": "roomId",
+            "name": "newRoomId",
             "in": "path",
             "required": true,
-            "description": "ID of the room"
+            "description": "The new ID for the room"
           }
         ],
         "responses": {
@@ -453,7 +453,7 @@
           }
         },
         "operationId": "post-rooms-update-roomId",
-        "description": "This endpoint updates the room ID.",
+        "description": "This endpoint permanently updates the room’s ID.",
         "requestBody": {
           "content": {
             "application/json": {

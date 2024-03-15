@@ -1,48 +1,64 @@
 ---
 meta:
-  title: "How to migrate your existing rooms IDs to use access token patterns"
+  title:
+    "How to migrate your existing rooms IDs to use access token naming patterns"
   description:
-    "Learn how to migrate your current rooms IDs to match access token patterns."
+    "Learn how to migrate your current rooms IDs to match access token naming
+    patterns."
 ---
 
-## How to handle active users connected to a room while its ID is updated
+When using [access token authentication](/docs/authentication/access-token) we
+recommend using a naming pattern for your room IDs. If you’ve already created
+rooms, it’s possible to rename them with `@liveblocks/node` or our REST API.
 
-To ensure a seamless experience for users actively connected to a room when its
-ID changes, we issue a custom error indicating that the room ID has been
-updated, which includes the new ID. You can leverage this new ID to redirect
-users to the correct document. Upon updating the room ID, Liveblocks will
-disconnect active users and issue this custom error code.
+## Update your room IDs
+
+To rename a room ID, you can use the
+[liveblocks.updateRoomId](/docs/api-reference/liveblocks-node#post-rooms-update-roomId)
+endpoint to update a room ID.
 
 ```ts
-useErrorListener((error) => {
-  console.log("Error", error.message);
-  switch (error.code) {
-    case -1: // Authentication error break;
+import { Liveblocks } from "@liveblocks/node";
 
-    case 4001:
-      // Could not connect because you don't have access to this room
-      break;
-
-    case 4005:
-      // Could not connect because room was full
-      break;
-
-    case 4006:
-      // Could not connect because roomId was updated
-      console.log("roomId updated to:", error.message);
-      const newRoomId = error.message;
-      // TODO: implement redirect
-      break;
-
-    default:
-      // Unexpected error
-      break;
-  }
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
 });
+
+const room = await liveblocks.updateRoomId({
+  roomId: "my-room-id",
+  newRoomId: "new-room-id",
+});
+
+// { type: "room", id: "new-room-id", ... }
+console.log(room);
 ```
 
-## Use Liveblocks REST API to update your rooms IDs
+When you change a room ID, currently connected users will disconnect, but there
+is a way around this.
 
-Use the
-[update room id](/docs/api-reference/rest-api-endpoints#post-rooms-update-roomId)
-endpoint to update a room id.
+## Handle active users connected to a room
+
+To avoid users disconnecting after the change, you can listen for a room ID
+changed error, `4006`, with
+[`useErrorListener`](/docs/api-reference/liveblocks-react#useErrorListener) or
+[`room.subscribe("error")`](/docs/api-reference/liveblocks-client#Room.subscribe.error).
+This error is sent immediately after the ID is changed, and it returns the new
+room ID inside `error.message`. You can use this the new ID to redirect users to
+the new location of the room in your application.
+
+```tsx
+import { useErrorListener } from "../liveblocks.config";
+
+function App() {
+  useErrorListener((error) => {
+    if (error.code === 4006) {
+      // Room ID has been changed, get the new ID and redirect
+      const newRoomId = error.message;
+      __redirect__(`https://example.com/document/${newRoomId}}`);
+    }
+  });
+}
+```
+
+After implementing this, you can safely update the room ID, and users will be
+immediately redirected to the new location.
