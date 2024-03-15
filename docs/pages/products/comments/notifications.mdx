@@ -224,18 +224,19 @@ document’s author notified about everything in their document.
 
 ### Access token
 
-When employing the access token authentication method, Liveblocks disregards the
-permissions specified in the access token and returns all notifications created
-for the user. Consequently, a user will receive notifications for mentions in
-comments within rooms they do not have access to.
+When using [access token authentication](/docs/authentication/access-token),
+Liveblocks disregards the permissions specified in the tokens and returns all
+notifications created for the user. Consequently, a user will receive
+notifications for mentions in comments within rooms they do not have access to.
 
 For greater control over notification permissions, we recommend utilizing
 [ID tokens](/docs/authentication/id-token).
 
 ### ID token
 
-With the ID token authentication method, Liveblocks respects the configured room
-access permissions to deliver notifications that the user is authorized to view.
+When using [ID token authentication](/docs/authentication/id-token), Liveblocks
+reads the permissions set on the room, and uses these to deliver notifications
+that the user is authorized to view.
 
 ## Email notifications
 

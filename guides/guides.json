@@ -317,10 +317,10 @@
     "featured": true
   },
   {
-    "title": "How to migrate your existing rooms IDs to use access token patterns",
+    "title": "How to migrate your existing rooms IDs to use access token naming patterns",
     "path": "/migrate-rooms-ids-for-access-token-patterns",
-    "topics": ["rest-api"],
-    "technologies": ["nodejs", "javascript"],
+    "topics": ["authentication", "rest-api"],
+    "technologies": ["nodejs"],
     "date": "2024-03-13"
   }
 ]
