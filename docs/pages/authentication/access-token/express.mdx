@@ -25,19 +25,16 @@ Follow the following steps to start configure your authentication endpoint where
     <StepTitle>Set up authentication endpoint</StepTitle>
     <StepContent>
 
-      Users can only interact with rooms they have access to. You can
-      configure permission access in an `api/liveblocks-auth` endpoint by
+      Users need permission to interact with rooms, and you can
+      permit access in an `api/liveblocks-auth` endpoint by
       creating the `liveblocks-auth.ts` file with the
-      following code. This is where you will implement your security and
-      define the rooms that the user has access to.
+      following code. In here you can implement your security and define
+      the rooms that your user can enter.
 
-      The client will request a token either for a specific room, in which case the
-      request body property `room` will be defined, or for resources outside a
-      specific room (like notifications), in which case, `room` will be undefined.
-
-      See
-      [permissions with access token](/docs/authentication/access-token#permissions)
-      to understand how to grant access to multiple rooms with an access token.
+      With access tokens, you should always use a [naming pattern](/docs/authentication/access-token#permissions)
+      for your room IDs, as this enables you to easily allow
+      access to a range of rooms at once. In the code snippet below, we’re using a naming pattern and wildcard `*`
+      to give the user access to every room in their organization, and every room in their group.
 
 
       ```ts file="liveblocks-auth.ts"
@@ -61,21 +58,23 @@ Follow the following steps to start configure your authentication endpoint where
           { userInfo: user.metadata },  // Optional
         );
 
-        // Implement your own security, and give the user access to the room/organization.
-        // Note: Even if room is defined, we recommend to always use wildcards.
-        const { room } = request.body;
-        if (room && __shouldUserHaveAccess__(user, room)) {
-          session.allow(room, session.FULL_ACCESS);
-        }
-        else {
-          session.allow(`${user.organization}*`, session.READ_ACCESS)
-        }
+        // Use a naming pattern to allow access to rooms with wildcards
+        // Giving the user read access on their org, and write access on their group
+        session.allow(`${user.organization}:*`, session.READ_ACCESS);
+        session.allow(`${user.organization}:${user.group}:*`, session.FULL_ACCESS);
 
         // Authorize the user and return the result
         const { status, body } = await session.authorize();
         return res.status(status).end(body);
       });
       ```
+
+      Read
+      [access token permission](/docs/authentication/access-token#permissions)
+      to learn more about naming rooms and granting permissions with wildcards.
+      Note that if a naming pattern doesn’t work for every room in your application, you can
+      [grant access to individual rooms too](/docs/guides/how-to-grant-access-to-individual-rooms-with-access-tokens).
+
     </StepContent>
 
   </Step>
