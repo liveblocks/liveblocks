@@ -798,6 +798,11 @@ const unsubscribe = room.subscribe("error", (error) => {
       // Could not connect because room was full
       break;
 
+    case 4006:
+      // The room ID has changed, get the new room ID (use this for redirecting)
+      const newRoomId = error.message;
+      break;
+
     default:
       // Unexpected error
       break;

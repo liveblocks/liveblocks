@@ -493,8 +493,9 @@ console.log(room);
 
 When a room’s ID is changed it disconnects all users that are currently
 connected. To redirect connected users to the new room you can use
-[`useErrorListener`](/docs/api-reference/liveblocks-react#useErrorListener) in
-your application to get the new room’s ID, and redirect users to the renamed
+[`useErrorListener`](/docs/api-reference/liveblocks-react#useErrorListener) or
+[`room.subscribe("error")`](/docs/api-reference/liveblocks-client#Room.subscribe.error)
+in your application to get the new room’s ID, and redirect users to the renamed
 room.
 
 ```tsx
