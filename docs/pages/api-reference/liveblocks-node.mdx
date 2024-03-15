@@ -471,6 +471,46 @@ and returns no response.
 await liveblocks.deleteRoom("my-room-id");
 ```
 
+#### Liveblocks.updateRoomId [#post-rooms-update-roomId]
+
+Permanently updates a room’s ID. `newRoomId` will replace `roomId`. Note that
+this will disconnect connected users from the room, but this can be worked
+around. Throws an error if the room isn’t found. This is a wrapper around the
+[Update Room API](/docs/api-reference/rest-api-endpoints#post-rooms-update-roomId)
+and returns the same response.
+
+```ts
+const room = await liveblocks.updateRoomId({
+  roomId: "my-room-id",
+  newRoomId: "new-room-id",
+});
+
+// { type: "room", id: "new-room-id", ... }
+console.log(room);
+```
+
+##### Redirect connected users to the new room
+
+When a room’s ID is changed it disconnects all users that are currently
+connected. To redirect connected users to the new room you can use
+[`useErrorListener`](/docs/api-reference/liveblocks-react#useErrorListener) in
+your application to get the new room’s ID, and redirect users to the renamed
+room.
+
+```tsx
+import { useErrorListener } from "../liveblocks.config";
+
+function App() {
+  useErrorListener((error) => {
+    if (error.code === 4006) {
+      // Room ID has been changed, get the new ID
+      const newRoomId = error.message;
+      __redirect__(`/document/${newRoomId}}`);
+    }
+  });
+}
+```
+
 #### Liveblocks.getActiveUsers [#get-rooms-roomId-active-users]
 
 Returns a list of users that are currently present in the room. Throws an error
