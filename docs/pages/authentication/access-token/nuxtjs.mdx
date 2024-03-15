@@ -1,11 +1,12 @@
 ---
 meta:
-  title: "Set up access token permissions with Express"
+  title: "Set up access token permissions with Nuxt.js"
   parentTitle: "Authentication"
-  description: "Learn how to setup access token permissions with Express."
+  description: "Learn how to setup access token permissions with Nuxt.js."
 ---
 
-Follow the following steps to start configure your authentication endpoint where
+Follow the following steps to start configure your authentication endpoint and
+start building your own security logic.
 
 ## Quickstart
 
@@ -24,36 +25,27 @@ Follow the following steps to start configure your authentication endpoint where
   <Step>
     <StepTitle>Set up authentication endpoint</StepTitle>
     <StepContent>
-
-      Users can only interact with rooms they have access to. You can
-      configure permission access in an `api/liveblocks-auth` endpoint by
-      creating the `liveblocks-auth.ts` file with the
+      Users need permission to interact with rooms, and you can
+      permit access in an `api/liveblocks-auth` endpoint by
+      creating the `server/api/liveblocks-auth.ts` file with the
       following code. This is where you will implement your security and
       define the rooms that the user has access to.
 
-The client will request a token either for a specific room, in which case the
-request body property `room` will be defined, or for resources outside a
-specific room (like notifications), in which case, `room` will be undefined.
+      With access tokens, you should always use a [naming pattern](/docs/authentication/access-token#permissions)
+      for your room IDs, as this enables you to easily allow
+      access to a range of rooms at once. In the code snippet below, we’re using a naming pattern and wildcard `*`
+      to give the user access to every room in their organization, and every room in their group.
 
-      See
-      [permissions with access token](/docs/rooms/permissions/access-token)
-      to understand how to grant access to multiple rooms with an access token.
-
-
-      ```ts file="liveblocks-auth.ts"
-      const express = require("express");
+      ```ts file="server/api/liveblocks-auth.ts"
       import { Liveblocks } from "@liveblocks/node";
 
       const liveblocks = new Liveblocks({
         secret: "{{SECRET_KEY}}",
       });
 
-      const app = express();
-      app.use(express.json());
-
-      app.post("/api/liveblocks-auth", (req, res) => {
-        // Get the current user from your database
-        const user = __getUserFromDB__(req);
+      export default defineEventHandler(async (event) => {
+      // Get the current user from your database
+        const user = __getUserFromDB__(event);
 
         // Start an auth session inside your endpoint
         const session = liveblocks.prepareSession(
@@ -61,21 +53,23 @@ specific room (like notifications), in which case, `room` will be undefined.
           { userInfo: user.metadata },  // Optional
         );
 
-        // Implement your own security, and give the user access to the room/organization.
-        // Note: Even if room is defined, we recommend to always use wildcards.
-        const { room } = request.body;
-        if (room && __shouldUserHaveAccess__(user, room)) {
-          session.allow(room, session.FULL_ACCESS);
-        }
-        else {
-          session.allow(`${user.organization}*`, session.READ_ACCESS)
-        }
+        // Use a naming pattern to allow access to rooms with wildcards
+        // Giving the user read access on their org, and write access on their group
+        session.allow(`${user.organization}:*`, session.READ_ACCESS);
+        session.allow(`${user.organization}:${user.group}:*`, session.FULL_ACCESS);
 
         // Authorize the user and return the result
         const { status, body } = await session.authorize();
-        return res.status(status).end(body);
-      });
+        return body;
+      })
       ```
+
+      Read
+      [access token permission](/docs/authentication/access-token#permissions)
+      to learn more about naming rooms and granting permissions with wildcards.
+      Note that if a naming pattern doesn’t work for every room in your application, you can
+      [grant access to individual rooms too](/docs/guides/how-to-grant-access-to-individual-rooms-with-access-tokens).
+
     </StepContent>
 
   </Step>
@@ -137,11 +131,11 @@ specific room (like notifications), in which case, `room` will be undefined.
 
 ## More information
 
-Both `userId` and `userInfo` can then be used in your JavaScript application as
+Both `userId` and `userInfo` can then be used in your Vue.js application as
 such:
 
 ```ts
-const self = room.getSelf(); // or useSelf() in React
+const self = ref(room.getSelf());
 console.log(self.id);
 console.log(self.info);
 ```

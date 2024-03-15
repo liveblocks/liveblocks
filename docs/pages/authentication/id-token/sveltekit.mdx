@@ -1,11 +1,12 @@
 ---
 meta:
-  title: "Set up ID token permissions with Express"
+  title: "Set up ID token permissions with SvelteKit"
   parentTitle: "Authentication"
-  description: "Learn how to setup ID token permissions with Express."
+  description: "Learn how to setup ID token permissions with SvelteKit."
 ---
 
-Follow the following steps to start configure your authentication endpoint where
+Follow the following steps to start configure your authentication endpoint and
+start building your own security logic.
 
 ## Quickstart
 
@@ -24,27 +25,23 @@ Follow the following steps to start configure your authentication endpoint where
   <Step>
     <StepTitle>Set up authentication endpoint</StepTitle>
     <StepContent>
-
       Users can only interact with rooms they have access to. You can
       configure permission access in an `api/liveblocks-auth` endpoint by
-      creating the `liveblocks-auth.ts` file with the
+      creating the `src/routes/api/liveblocks-auth/+server.ts` file with the
       following code. This is where you will implement your security and
       define if the current user has access to a specific room.
 
-      ```ts file="liveblocks-auth.ts"
-      const express = require("express");
+      ```ts file="src/routes/api/liveblocks-auth/+server.ts"
+      import { type RequestEvent } from "@sveltejs/kit";
       import { Liveblocks } from "@liveblocks/node";
 
       const liveblocks = new Liveblocks({
         secret: "{{SECRET_KEY}}",
       });
 
-      const app = express();
-      app.use(express.json());
-
-      app.post("/api/liveblocks-auth", (req, res) => {
+      export async function POST({ request }: RequestEvent) {
         // Get the current user from your database
-        const user = __getUserFromDB__(req);
+        const user = __getUserFromDB__(request);
 
         // Identify the user and return the result
         const { status, body } = await liveblocks.identifyUser(
@@ -55,9 +52,10 @@ Follow the following steps to start configure your authentication endpoint where
           { userInfo: user.metadata },
         );
 
-        return res.status(status).end(body);
-      });
+        return new Response(body, { status });
+      }
       ```
+
     </StepContent>
 
   </Step>
@@ -111,7 +109,7 @@ Follow the following steps to start configure your authentication endpoint where
         },
       });
       ```
-      
+
     </StepContent>
 
   </Step>
@@ -120,25 +118,29 @@ Follow the following steps to start configure your authentication endpoint where
     <StepContent>
       A room can have `defaultAccesses`, `usersAccesses`, and `groupsAccesses` defined.
       Permissions are then checked when users try to connect to a room. For security purposes,
-      the [room permissions](/docs/rooms/permissions) can only be set on the back-end through a REST API.
-      For instance, you can use the [create room API](/docs/api-reference/rest-api-endpoints#post-rooms)
-      to create a new room with `read` public access levels while giving `write` access to specific users and groups.
+      [room permissions](/docs/authentication/id-token#permissions) can only be set on the back-end through `@liveblocks/node` or our REST API.
+      For instance, you can use [`liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms)
+      to create a new room with read-only public access levels while giving write access to specific groups and users.
 
-      ```ts
-      fetch("https://api.liveblocks.io/v2/rooms", {
-        method: "POST",
-        body: JSON.stringify({
-          id: "roomId",
-          defaultAccesses: ["room:read"],
-          usersAccesses: {
-            "userId": ["room:write"],
-          },
-          groupsAccesses: {
-            "groupId": ["room:write"],
-          },
-        }),
+      ```ts highlight="7-15"
+      import { Liveblocks } from "@liveblocks/node";
+
+      const liveblocks = new Liveblocks({
+        secret: "{{SECRET_KEY}}",
+      });
+
+      const room = await liveblocks.createRoom("my-room-id", {
+        defaultAccesses: ["room:read", "room:presence:write"],
+        groupsAccesses: {
+          "my-group-id": ["room:write"],
+        },
+        usersAccesses: {
+          "my-user-id": ["room:write"],
+        },
       });
       ```
+
+      For more information, make sure to read the section on [room permissions](/docs/authentication/id-token#permissions).
 
     </StepContent>
 
@@ -147,13 +149,13 @@ Follow the following steps to start configure your authentication endpoint where
 
 ## More information
 
-Both `userId` and `userInfo` can then be used in your JavaScript application as
+Both `userId` and `userInfo` can then be used in your Svelte application as
 such:
 
 ```ts
-const self = room.getSelf(); // or useSelf() in React
+const self = room.getSelf();
 console.log(self.id);
-console.log(self.info);
+console.log(self.info.color);
 ```
 
 <Figure>
