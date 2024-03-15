@@ -317,9 +317,16 @@
     "featured": true
   },
   {
-    "title": "How to migrate your existing rooms IDs to use access token naming patterns",
-    "path": "/migrate-rooms-ids-for-access-token-patterns",
+    "title": "How to rename room IDs and successfully migrate users",
+    "path": "/how-to-rename-room-ids-and-successfully-migrate-users",
     "topics": ["authentication", "rest-api"],
+    "technologies": ["nodejs"],
+    "date": "2024-03-13"
+  },
+  {
+    "title": "How to grant access to individual rooms with access tokens",
+    "path": "/how-to-grant-access-to-individual-rooms-with-access-tokens",
+    "topics": ["authentication"],
     "technologies": ["nodejs"],
     "date": "2024-03-13"
   }

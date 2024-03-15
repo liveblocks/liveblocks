@@ -33,9 +33,8 @@ start building your own security logic in Next.js’ `/app` directory.
 
       With access tokens, you should always use a [naming pattern](/docs/authentication/access-token#permissions)
       for your room IDs, as this enables you to easily allow
-      access to a range of rooms at once.
-
-      In the code snippet below, we’re using a naming pattern and wildcard `*` to give the user access to every room in their organization, and every room in their group.
+      access to a range of rooms at once. In the code snippet below, we’re using a naming pattern and wildcard `*`
+      to give the user access to every room in their organization, and every room in their group.
 
       ```ts file="app/api/liveblocks-auth/route.ts"
       import { Liveblocks } from "@liveblocks/node";
@@ -65,44 +64,11 @@ start building your own security logic in Next.js’ `/app` directory.
       }
       ```
 
-      If patterns are not an option and you need to assign permissions to individual
-      rooms, you can utilize the `room` property in the request's body to grant access
-      to the specific room requested by the client. If the `room` property is undefined,
-      it indicates that the client is requesting a token for Notifications, and no
-      additional permissions need to be added to the token.
-
-      ```ts file="app/api/liveblocks-auth/route.ts"
-      import { Liveblocks } from "@liveblocks/node";
-
-      const liveblocks = new Liveblocks({
-        secret: "{{SECRET_KEY}}",
-      });
-
-      export async function POST(request: Request) {
-        // Get the current user from your database
-        const user = __getUserFromDB__(request);
-
-        // Start an auth session inside your endpoint
-        const session = liveblocks.prepareSession(
-          user.id,
-          { userInfo: user.metadata } // Optional
-        );
-
-        const { room } = request.body;
-
-        if (room && **shouldUserHaveAccess**(user, room)) {
-          session.allow(room, session.FULL_ACCESS);
-        }
-
-        // Authorize the user and return the result
-        const { status, body } = await session.authorize();
-        return new Response(body, { status });
-      }
-      ```
-
       Read
       [access token permission](/docs/authentication/access-token#permissions)
       to learn more about naming rooms and granting permissions with wildcards.
+      Note that if a naming pattern doesn’t work for every room in your application, you can
+      [grant access to individual rooms too](/docs/guides/how-to-grant-access-to-individual-rooms-with-access-tokens).
 
     </StepContent>
 

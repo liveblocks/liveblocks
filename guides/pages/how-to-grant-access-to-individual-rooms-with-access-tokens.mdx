@@ -1,0 +1,73 @@
+---
+meta:
+  title: "Grant access to individual rooms with access tokens"
+  description:
+    "Learn how to grant access to individual rooms with access tokens"
+---
+
+<Banner title="Looking for more complex permissions?" type="warning">
+
+If you’re looking to build an application with permissions at organization,
+group, and user levels, we recommend using
+[ID tokens](/docs/authentication/id-token) instead. Access tokens have
+[limitations when granting nested permissions](#limitations).
+
+</Banner>
+
+With [access tokens](/docs/authentication/access-token) we always recommend
+using a [naming pattern](/docs/authentication/access-token#Naming-pattern) to
+grant access to multiple rooms at once, for example every room in a user’s
+organization.
+
+```ts
+// ✅ Grants access to every `acme` organization room
+session.allow(`session.allow(`acme:*`, session.FULL_ACCESS);
+```
+
+However, it may not always be possible to grant access to every room with a
+wildcard and naming pattern. One example would be if a user is invited to _only
+one room_ in a _different_ organization. There’s a way to work around this
+limitation.
+
+## Grant access to individual rooms
+
+When using
+[`authEndpoint`](/docs/api-reference/liveblocks-client#createClientAuthEndpoint),
+Liveblocks provides the current room ID in the `request`. Below is a Next.js
+example, where the current room ID is taken from the body, and the user is
+allowed access to the room. Note that `room` is `undefined` when
+[Notifications](/docs/products/comments/notifications) is authenticating, which
+is why we’re checking if it exists. Notifications works across rooms, and it
+doesn’t require any permissions.
+
+```tsx highlight="17,19-21"
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
+});
+
+export async function POST(request: Request) {
+  // Get the current user from your database
+  const user = __getUserFromDB__(request);
+
+  // Start an auth session inside your endpoint
+  const session = liveblocks.prepareSession(
+    user.id,
+    { userInfo: user.metadata } // Optional
+  );
+
+  const { room } = request.body;
+
+  if (room && __shouldUserHaveAccess__(user, room)) {
+    session.allow(room, session.FULL_ACCESS);
+  }
+
+  // Authorize the user and return the result
+  const { status, body } = await session.authorize();
+  return new Response(body, { status });
+}
+```
+
+This approach relies on you creating the `__shouldUserHaveAccess__` function,
+and determining whether the user is allowed inside the room.
