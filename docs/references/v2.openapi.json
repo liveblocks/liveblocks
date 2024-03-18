@@ -407,7 +407,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Success. Returns the updated room with the new id.",
+            "description": "Success. Returns the updated room with the new ID.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1046,7 +1046,7 @@
     "/schemas/{id}": {
       "get": {
         "summary": "Get schema",
-        "description": "This endpoint retrieves a schema by its id. The id is a combination of the schema name and version. For example, `my-schema@1`. Corresponds to [`liveblocks.getSchema`](/docs/api-reference/liveblocks-node#get-create-new-schema).",
+        "description": "This endpoint retrieves a schema by its ID. The ID is a combination of the schema name and version. For example, `my-schema@1`. Corresponds to [`liveblocks.getSchema`](/docs/api-reference/liveblocks-node#get-create-new-schema).",
         "tags": ["Schema validation"],
         "parameters": [
           {
@@ -1271,7 +1271,7 @@
         },
         "responses": {
           "200": {
-            "description": "Success. Found the schema attached to the room. Returns the schema id as JSON.",
+            "description": "Success. Found the schema attached to the room. Returns the schema ID as JSON.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3469,7 +3469,7 @@
                 "value": {
                   "error": "ROOM_ALREADY_EXISTS",
                   "message": "The room already exists.",
-                  "suggestion": "Please use a different room id or update the existing room.",
+                  "suggestion": "Please use a different room ID or update the existing room.",
                   "doc": ""
                 }
               }
