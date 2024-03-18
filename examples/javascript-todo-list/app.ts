@@ -4,7 +4,7 @@ async function run() {
   let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
   let roomId = "javascript-todo-list";
 
-  overrideApiKeyAndRoomId();
+  applyExampleRoomIdAndApiKey();
 
   if (!/^pk_(live|test)/.test(PUBLIC_KEY)) {
     console.warn(
@@ -103,17 +103,21 @@ async function run() {
    * This function is used when deploying an example on liveblocks.io.
    * You can ignore it completely if you run the example locally.
    */
-  function overrideApiKeyAndRoomId() {
+  function applyExampleRoomIdAndApiKey() {
+    if (typeof window === "undefined") {
+      return;
+    }
+
     const query = new URLSearchParams(window?.location?.search);
+    const exampleId = query.get("exampleId");
     const apiKey = query.get("apiKey");
-    const roomIdSuffix = query.get("roomId");
+
+    if (exampleId) {
+      roomId = exampleId ? `${roomId}-${exampleId}` : roomId;
+    }
 
     if (apiKey) {
       PUBLIC_KEY = apiKey;
-    }
-
-    if (roomIdSuffix) {
-      roomId = `${roomId}-${roomIdSuffix}`;
     }
   }
 
