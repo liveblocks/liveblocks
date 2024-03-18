@@ -8,7 +8,7 @@ let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
 
 overrideApiKey();
 
-if (!/^pk_(live|test)/.test(PUBLIC_KEY)) {
+if (!/^pk_/.test(PUBLIC_KEY)) {
   console.warn(
     `Replace "${PUBLIC_KEY}" by your public key from https://liveblocks.io/dashboard/apikeys.\n` +
       `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/zustand-whiteboard#getting-started.`
