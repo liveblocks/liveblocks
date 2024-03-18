@@ -5,7 +5,7 @@
 
   let room: Room;
   let leave: () => void;
-  let roomId = "sveltekit-live-cursors";
+  let roomId = "liveblocks:examples:sveltekit-live-cursors";
 
   // Presence represents the properties that will exist on every User in the
   // Room and that will automatically be kept in sync. Accessible through the

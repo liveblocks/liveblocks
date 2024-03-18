@@ -5,7 +5,9 @@ import { useMemo, useRef } from "react";
 import styles from "../styles/Index.module.css";
 
 export default function Index() {
-  const roomId = useOverrideRoomId("nextjs-live-cursors-advanced");
+  const roomId = useOverrideRoomId(
+    "liveblocks:examples:nextjs-live-cursors-advanced"
+  );
 
   return (
     <RoomProvider
@@ -19,7 +21,7 @@ export default function Index() {
     >
       <Example />
     </RoomProvider>
-  )
+  );
 }
 
 function Example() {

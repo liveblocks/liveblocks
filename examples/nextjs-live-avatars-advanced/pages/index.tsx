@@ -5,7 +5,9 @@ import { useMemo } from "react";
 import styles from "../styles/Index.module.css";
 
 export default function Example() {
-  const roomId = useOverrideRoomId("nextjs-live-avatars-advanced");
+  const roomId = useOverrideRoomId(
+    "liveblocks:examples:nextjs-live-avatars-advanced"
+  );
 
   return (
     <RoomProvider id={roomId} initialPresence={{}}>

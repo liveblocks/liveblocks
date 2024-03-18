@@ -27,7 +27,7 @@ function Example() {
 }
 
 export default function Page() {
-  const roomId = useOverrideRoomId("nextjs-comments");
+  const roomId = useOverrideRoomId("liveblocks:examples:nextjs-comments");
 
   return (
     <RoomProvider id={roomId} initialPresence={{}}>

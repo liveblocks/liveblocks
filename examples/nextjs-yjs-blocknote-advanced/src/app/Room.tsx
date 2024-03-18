@@ -7,7 +7,9 @@ import { ClientSideSuspense } from "@liveblocks/react";
 import { Loading } from "@/components/Loading";
 
 export function Room({ children }: { children: ReactNode }) {
-  const roomId = useOverrideRoomId("nextjs-yjs-blocknote-advanced");
+  const roomId = useOverrideRoomId(
+    "liveblocks:examples:nextjs-yjs-blocknote-advanced"
+  );
 
   return (
     <RoomProvider

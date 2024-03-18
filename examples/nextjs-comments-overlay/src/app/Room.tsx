@@ -5,7 +5,9 @@ import { RoomProvider } from "@/liveblocks.config";
 import { useSearchParams } from "next/navigation";
 
 export function Room({ children }: PropsWithChildren) {
-  const roomId = useOverrideRoomId("nextjs-comments-overlay");
+  const roomId = useOverrideRoomId(
+    "liveblocks:examples:nextjs-comments-overlay"
+  );
 
   return (
     <RoomProvider
