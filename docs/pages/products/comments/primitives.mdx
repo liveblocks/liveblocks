@@ -251,11 +251,12 @@ function MyComments({ comments }: { comments: CommentData[] }) {
   return (
     <>
       {comments.map((comment) => (
-        <Comment.Body
-          key={comment.id}
-          body={comment.body}
-          components={/* Your custom component parts */}
-        />
+        <div key={comment.id}>
+          <Comment.Body
+            body={comment.body}
+            components={/* Your custom component parts */}
+          />
+        </div>
       ))}
     </>
   );

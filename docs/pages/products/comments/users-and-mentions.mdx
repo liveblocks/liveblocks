@@ -50,14 +50,15 @@ There are two different authentication methods—make sure to follow an
 ## Adding user information to Comments
 
 In Comments, user information is retrieved from a list of user IDs, for example
-here’s a `userIds` array and the information you need to return.
+here’s a `userIds` array and the information you need to return. You should
+return the same number of users as the number of user IDs, in the same order.
 
 ```shell
 # If this is `userIds`
-["marc@example.com"]
+["marc@example.com", "pierre@example.com"]
 
 # Return `users`
-[{ name: "Marc", avatar: "https://example.com/marc.png" }]
+[{ name: "Marc", avatar: "https://example.com/marc.png" }, { name: "Pierre", avatar: "https://example.com/pierre.png" }]
 ```
 
 In your Liveblocks config file, you’ll find a function named
