@@ -121,6 +121,19 @@ yProvider.on("sync", (sync: boolean) => /* ... */);
 yProvider.on("synced", (sync: boolean) => /* ... */);
 ```
 
+### LiveblocksProvider.on("subdocs") [#LiveblocksProvider.on.subdocs]
+
+Add an event listener for the `subdocs` event. The `subdocs` event is triggered
+when a [subdocument](https://docs.yjs.dev/api/subdocuments) has been added,
+removed, or loaded.
+
+```ts
+// Listen for the subdocs event
+yProvider.on("subdocs", ({ added, removed, loaded }) => {
+  // Subdocument change
+});
+```
+
 ### LiveblocksProvider.off("sync") [#LiveblocksProvider.off.sync]
 
 Remove an event listener for the `sync` event. The `sync` event is triggered
@@ -143,6 +156,26 @@ yProvider.off("sync", (sync: boolean) => /* ... */);
 yProvider.off("synced", (sync: boolean) => /* ... */);
 ```
 
+### LiveblocksProvider.off("subdocs") [#LiveblocksProvider.off.subdocs]
+
+Remove an event listener for the `subdocs` event. The `subdocs` event is
+triggered when a [subdocument](https://docs.yjs.dev/api/subdocuments) has been
+added, removed, or loaded.
+
+```ts
+const handleSubdocs = (params: {
+  added: Set<Y.Doc>;
+  removed: Set<Y.Doc>;
+  loaded: Set<Y.Doc>;
+}) => {
+  // Subdocument change
+};
+yProvider.on("subdocs", handleSubdocs);
+
+// Clean up subdocs event
+yProvider.off("subdocs", handleSubdocs);
+```
+
 ### LiveblocksProvider.once("sync") [#LiveblocksProvider.once.sync]
 
 Add a one-time event listener for the `sync` event. The `sync` event is
@@ -151,7 +184,7 @@ fire events when the document has loaded.
 
 ```ts
 // Listen for the sync event only once
-yProvider.on("sync", (isSynced: boolean) => {
+yProvider.once("sync", (isSynced: boolean) => {
   if (isSynced === true) {
     // Yjs content is synchronized and ready
   } else {
@@ -166,6 +199,19 @@ Aliased by `LiveblocksProvider.once("synced")`.
 // "sync" and "synced" both listen to the same event
 yProvider.once("sync", (sync: boolean) => /* ... */);
 yProvider.once("synced", (sync: boolean) => /* ... */);
+```
+
+### LiveblocksProvider.once("subdocs") [#LiveblocksProvider.once.subdocs]
+
+Add a one-time event listener for the `subdocs` event. The `subdocs` event is
+triggered when a [subdocument](https://docs.yjs.dev/api/subdocuments) has been
+added, removed, or loaded.
+
+```ts
+// Listen for the subdocs event only once
+yProvider.once("subdocs", ({ added, removed, loaded }) => {
+  // Subdocument change
+});
 ```
 
 ### LiveblocksProvider.emit("sync") [#LiveblocksProvider.emit.sync]
@@ -184,6 +230,20 @@ Aliased by `LiveblocksProvider.emit("synced")`.
 // "sync" and "synced" both listen to the same event
 yProvider.emit("sync" /* , ... */);
 yProvider.emit("synced" /* , ... */);
+```
+
+### LiveblocksProvider.emit("subdocs") [#LiveblocksProvider.emit.subdocs]
+
+Synchronously call each listener for the `subdocs` event in the order they were
+registered, passing arguments to each.
+
+```ts
+// Call each listener and pass arguments
+yProvider.emit("subdocs", {
+  added: new Y.Doc(),
+  removed: new Y.Doc(),
+  loaded: new Y.Doc(),
+});
 ```
 
 ### LiveblocksProvider.synced [#LiveblocksProvider.synced]
