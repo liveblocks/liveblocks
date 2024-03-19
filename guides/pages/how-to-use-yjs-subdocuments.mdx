@@ -192,7 +192,7 @@ export function POST() {
   Y.applyUpdate(subdoc, new Uint8Array(update));
 
   // Make changes to your `subdoc`, for example
-  subdoc.getText("my-text");
+  subdoc.getText("my-text").insert(0, "Hello world");
 
   // Convert `subdoc` into a binary update
   const subdocChanges = Y.encodeStateAsUpdate(subdoc);
