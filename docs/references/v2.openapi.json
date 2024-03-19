@@ -826,7 +826,7 @@
     "/rooms/{roomId}/ydoc": {
       "get": {
         "summary": "Get Yjs document",
-        "description": "This endpoint returns a JSON representation of the room’s Yjs document. To return a subdocument instead of the main document, pass its `guid`. Corresponds to [`liveblocks.getYjsDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc).",
+        "description": "This endpoint returns a JSON representation of the room’s Yjs document. Corresponds to [`liveblocks.getYjsDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc).",
         "tags": ["Yjs"],
         "parameters": [
           {
@@ -837,15 +837,6 @@
               "type": "string"
             },
             "description": "ID of the room"
-          },
-          {
-            "name": "guid",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            },
-            "description": "ID of the subdocument"
           },
           {
             "schema": {

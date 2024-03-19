@@ -109,19 +109,21 @@ yProvider.loadSubdoc("c4a755...");
 
 ### Listening for changes
 
-To keep track of subdocument changes, you can use
-[`docs.on("subdocs")`](/docs/api-reference/liveblocks-yjs#LiveblocksProvider.on.subdocs).
+To keep track of subdocument changes, you can use `Y.Doc.on("subdocs")`.
 
-```ts
+```ts highlight="10-13"
 import { LiveblocksProvider } from "@liveblocks/yjs";
 import * as Y from "yjs";
 
 // Create main document and connect, disabling auto-loading of subdocuments
 const yDoc = new Y.Doc();
-const yProvider = new LiveblocksProvider(room, doc, { autoloadSubdocs: false });
+const yProvider = new LiveblocksProvider(room, yDoc, {
+  autoloadSubdocs: false,
+});
 
-yProvider.on("subdocs", ({ added, removed, loaded }) => {
+yDoc.on("subdocs", ({ added, removed, loaded }) => {
   // Subdocument change
+  // ...
 });
 ```
 
