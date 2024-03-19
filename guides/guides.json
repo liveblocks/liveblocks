@@ -329,5 +329,12 @@
     "topics": ["authentication"],
     "technologies": ["nodejs"],
     "date": "2024-03-13"
+  },
+  {
+    "title": "How to use Yjs subdocuments",
+    "path": "/how-to-use-yjs-subdocuments",
+    "topics": ["data-fetching", "rest-api"],
+    "technologies": ["yjs", "nodejs", "javascript"],
+    "date": "2024-03-13"
   }
 ]

@@ -796,6 +796,15 @@ const update = Y.encodeStateAsUpdate(yDoc);
 await liveblocks.sendYjsBinaryUpdate("my-room-id", update);
 ```
 
+To update a subdocument instead of the main document, pass its `guid`.
+
+```ts
+await liveblocks.sendYjsBinaryUpdate("my-room-id", update, {
+  // Optional, update a subdocument instead. guid is its unique identifier
+  guid: "c4a755...",
+});
+```
+
 To create a new room and initialize its Yjs document, call
 [`liveblocks.createRoom`](#post-rooms) before sending the binary update.
 
@@ -894,6 +903,18 @@ and returns the same response.
 ```ts
 const binaryYjsUpdate =
   await liveblocks.getYjsDocumentAsBinaryUpdate("my-room-id");
+```
+
+To return a subdocument instead of the main document, pass its `guid`.
+
+```ts
+const binaryYjsUpdate = await liveblocks.getYjsDocumentAsBinaryUpdate(
+  "my-room-id",
+  {
+    // Optional, return a subdocument instead. guid is its unique identifier
+    guid: "c4a755...",
+  }
+);
 ```
 
 Read the [Yjs documentation](https://docs.yjs.dev/api/document-updates) to learn
