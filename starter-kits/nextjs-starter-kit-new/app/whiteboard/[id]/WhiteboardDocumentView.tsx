@@ -7,7 +7,7 @@ import { DocumentHeader, DocumentHeaderSkeleton } from "@/components/Document";
 import { Whiteboard } from "@/components/Whiteboard";
 import { DocumentLayout } from "@/layouts/Document";
 import { ErrorLayout } from "@/layouts/Error";
-import { InitialDocumentProvider, updateDocumentName } from "@/lib/client";
+import { InitialDocumentProvider } from "@/lib/client";
 import { RoomProvider } from "@/liveblocks.config";
 import { Document, ErrorData } from "@/types";
 
@@ -21,26 +21,7 @@ export default function WhiteboardDocumentView({
   initialError,
 }: Props) {
   const { id, error: queryError } = useParams<{ id: string; error: string }>();
-  const [document, setDocument] = useState<Document | null>(initialDocument);
   const [error, setError] = useState<ErrorData | null>(initialError);
-
-  // Update document with new name
-  async function updateName(name: string) {
-    if (!document) {
-      return;
-    }
-
-    const { data, error } = await updateDocumentName({
-      documentId: document.id,
-      name: name,
-    });
-
-    if (error) {
-      return;
-    }
-
-    setDocument(data);
-  }
 
   // If error object in params, retrieve it
   useEffect(() => {
@@ -53,7 +34,7 @@ export default function WhiteboardDocumentView({
     return <ErrorLayout error={error} />;
   }
 
-  if (!document) {
+  if (!initialDocument) {
     return <DocumentLayout header={<DocumentHeaderSkeleton />} />;
   }
 
@@ -63,8 +44,10 @@ export default function WhiteboardDocumentView({
       initialPresence={{ cursor: null }}
       initialStorage={{ notes: new LiveMap() }}
     >
-      <InitialDocumentProvider initialDocument={document}>
-        <DocumentLayout header={<DocumentHeader documentId={document.id} />}>
+      <InitialDocumentProvider initialDocument={initialDocument}>
+        <DocumentLayout
+          header={<DocumentHeader documentId={initialDocument.id} />}
+        >
           <Whiteboard />
         </DocumentLayout>
       </InitialDocumentProvider>

@@ -20,8 +20,8 @@ export const ENDPOINT_BASE_URL = "/api/liveblocks";
 // TODO change comment below
 // Check inside `/pages/${ENDPOINT_BASE_URL}/auth` for the endpoint
 const client = createClient({
-  authEndpoint: async (roomId: string) => {
-    const { data, error } = await authorizeLiveblocks(roomId);
+  authEndpoint: async () => {
+    const { data, error } = await authorizeLiveblocks();
 
     if (error) {
       Router.push({
@@ -34,6 +34,15 @@ const client = createClient({
     }
 
     return data;
+  },
+
+  async resolveUsers({ userIds }) {
+    const users = await getUsers({ userIds });
+    return users;
+  },
+  async resolveMentionSuggestions({ text }) {
+    const users = await getUsers({ search: text });
+    return users.map((user) => user.id);
   },
 });
 
@@ -103,15 +112,5 @@ export const {
   },
   /* ...all the other hooks you’re using... */
 } = createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(
-  client,
-  {
-    async resolveUsers({ userIds }) {
-      const users = await getUsers({ userIds });
-      return users;
-    },
-    async resolveMentionSuggestions({ text }) {
-      const users = await getUsers({ search: text });
-      return users.map((user) => user.id);
-    },
-  }
+  client
 );

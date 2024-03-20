@@ -5,7 +5,7 @@ import { getDraftsGroupName } from "@/lib/server/utils/getDraftsGroupName";
 import { liveblocks } from "@/liveblocks.server.config";
 import { User } from "@/types";
 
-export async function authorizeLiveblocks(roomId: string) {
+export async function authorizeLiveblocks() {
   // Get current session from NextAuth
   const session = await auth();
 
