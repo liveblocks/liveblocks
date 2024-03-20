@@ -2,9 +2,11 @@ import { ClientSideSuspense } from "@liveblocks/react";
 import clsx from "clsx";
 import Link from "next/link";
 import { ComponentProps } from "react";
-import { ShareIcon } from "../../icons";
-import { Button } from "../../primitives/Button";
-import { Skeleton } from "../../primitives/Skeleton";
+import { ShareIcon } from "@/icons";
+import { renameDocument } from "@/libnew/renameDocument";
+import { Button } from "@/primitives/Button";
+import { Skeleton } from "@/primitives/Skeleton";
+import { Document } from "@/types";
 import { Logo } from "../Logo";
 import { ShareDialog } from "../ShareDialog";
 import { DocumentHeaderAvatars } from "./DocumentHeaderAvatars";
@@ -12,14 +14,10 @@ import { DocumentHeaderName } from "./DocumentHeaderName";
 import styles from "./DocumentHeader.module.css";
 
 interface Props extends ComponentProps<"header"> {
-  onDocumentRename: (name: string) => void;
+  documentId: Document["id"];
 }
 
-export function DocumentHeader({
-  onDocumentRename,
-  className,
-  ...props
-}: Props) {
+export function DocumentHeader({ documentId, className, ...props }: Props) {
   return (
     <header className={clsx(className, styles.header)} {...props}>
       <div className={styles.logo}>
@@ -29,7 +27,11 @@ export function DocumentHeader({
       </div>
       <div className={styles.document}>
         <ClientSideSuspense fallback={null}>
-          {() => <DocumentHeaderName onDocumentRename={onDocumentRename} />}
+          {() => (
+            <DocumentHeaderName
+              onDocumentRename={(name) => renameDocument({ documentId, name })}
+            />
+          )}
         </ClientSideSuspense>
       </div>
       <div className={styles.collaboration}>

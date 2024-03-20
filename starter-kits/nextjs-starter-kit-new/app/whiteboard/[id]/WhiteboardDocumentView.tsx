@@ -64,9 +64,7 @@ export default function WhiteboardDocumentView({
       initialStorage={{ notes: new LiveMap() }}
     >
       <InitialDocumentProvider initialDocument={document}>
-        <DocumentLayout
-          header={<DocumentHeader onDocumentRename={updateName} />}
-        >
+        <DocumentLayout header={<DocumentHeader documentId={document.id} />}>
           <Whiteboard />
         </DocumentLayout>
       </InitialDocumentProvider>
