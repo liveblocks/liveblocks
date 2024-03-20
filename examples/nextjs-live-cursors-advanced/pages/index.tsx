@@ -5,7 +5,7 @@ import { useMemo, useRef } from "react";
 import styles from "../styles/Index.module.css";
 
 export default function Index() {
-  const roomId = useOverrideRoomId(
+  const roomId = useExampleRoomId(
     "liveblocks:examples:nextjs-live-cursors-advanced"
   );
 
@@ -44,11 +44,11 @@ function Example() {
  * This function is used when deploying an example on liveblocks.io.
  * You can ignore it completely if you run the example locally.
  */
-function useOverrideRoomId(roomId: string) {
+function useExampleRoomId(roomId: string) {
   const { query } = useRouter();
-  const overrideRoomId = useMemo(() => {
-    return query?.roomId ? `${roomId}-${query.roomId}` : roomId;
+  const exampleRoomId = useMemo(() => {
+    return query?.exampleId ? `${roomId}-${query.exampleId}` : roomId;
   }, [query, roomId]);
 
-  return overrideRoomId;
+  return exampleRoomId;
 }

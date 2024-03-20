@@ -41,7 +41,7 @@
   // Set up the client on load
   // Check inside src/routes/api/liveblocks-auth.ts for the serverless function
   onMount(() => {
-    overrideRoomId();
+    applyExampleRoomId();
 
     const client = createClient({
       authEndpoint: "/api/liveblocks-auth",
@@ -65,12 +65,16 @@
    * This function is used when deploying an example on liveblocks.io.
    * You can ignore it completely if you run the example locally.
    */
-  function overrideRoomId() {
+  function applyExampleRoomId() {
+    if (typeof window === "undefined") {
+      return;
+    }
+    
     const query = new URLSearchParams(window?.location?.search);
-    const roomIdSuffix = query.get("roomId");
+    const exampleId = query.get("exampleId");
 
-    if (roomIdSuffix) {
-      roomId = `${roomId}-${roomIdSuffix}`;
+    if (exampleId) {
+      roomId = exampleId ? `${roomId}-${exampleId}` : roomId;
     }
   }
 </script>

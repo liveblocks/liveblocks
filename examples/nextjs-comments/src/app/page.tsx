@@ -27,7 +27,7 @@ function Example() {
 }
 
 export default function Page() {
-  const roomId = useOverrideRoomId("liveblocks:examples:nextjs-comments");
+  const roomId = useExampleRoomId("liveblocks:examples:nextjs-comments");
 
   return (
     <RoomProvider id={roomId} initialPresence={{}}>
@@ -48,13 +48,13 @@ export default function Page() {
  * This function is used when deploying an example on liveblocks.io.
  * You can ignore it completely if you run the example locally.
  */
-function useOverrideRoomId(roomId: string) {
+function useExampleRoomId(roomId: string) {
   const params = useSearchParams();
-  const roomIdParam = params?.get("roomId");
+  const exampleId = params?.get("exampleId");
 
-  const overrideRoomId = useMemo(() => {
-    return roomIdParam ? `${roomId}-${roomIdParam}` : roomId;
-  }, [roomId, roomIdParam]);
+  const exampleRoomId = useMemo(() => {
+    return exampleId ? `${roomId}-${exampleId}` : roomId;
+  }, [roomId, exampleId]);
 
-  return overrideRoomId;
+  return exampleRoomId;
 }

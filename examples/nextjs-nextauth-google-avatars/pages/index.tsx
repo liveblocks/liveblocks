@@ -48,8 +48,8 @@ function Example() {
 }
 
 export default function Page() {
-  const roomId = useOverrideRoomId(
-    "liveblocks:examples:nextjs-live-avatars-google"
+  const roomId = useExampleRoomId(
+    "liveblocks:examples:nextjs-nextauth-google-avatars"
   );
 
   return (
@@ -57,19 +57,6 @@ export default function Page() {
       <Example />
     </RoomProvider>
   );
-}
-
-/**
- * This function is used when deploying an example on liveblocks.io.
- * You can ignore it completely if you run the example locally.
- */
-function useOverrideRoomId(roomId: string) {
-  const { query } = useRouter();
-  const overrideRoomId = useMemo(() => {
-    return query?.roomId ? `${roomId}-${query.roomId}` : roomId;
-  }, [query, roomId]);
-
-  return overrideRoomId;
 }
 
 export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
@@ -98,3 +85,16 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
     props: {},
   };
 };
+
+/**
+ * This function is used when deploying an example on liveblocks.io.
+ * You can ignore it completely if you run the example locally.
+ */
+function useExampleRoomId(roomId: string) {
+  const { query } = useRouter();
+  const exampleRoomId = useMemo(() => {
+    return query?.exampleId ? `${roomId}-${query.exampleId}` : roomId;
+  }, [query, roomId]);
+
+  return exampleRoomId;
+}

@@ -102,7 +102,7 @@ function Loading() {
 }
 
 export default function Page() {
-  const roomId = useOverrideRoomId("nextjs-todo-list-v2");
+  const roomId = useExampleRoomId("nextjs-todo-list");
 
   return (
     <RoomProvider
@@ -138,11 +138,11 @@ export async function getStaticProps() {
  * This function is used when deploying an example on liveblocks.io.
  * You can ignore it completely if you run the example locally.
  */
-function useOverrideRoomId(roomId: string) {
+function useExampleRoomId(roomId: string) {
   const { query } = useRouter();
-  const overrideRoomId = useMemo(() => {
-    return query?.roomId ? `${roomId}-${query.roomId}` : roomId;
+  const exampleRoomId = useMemo(() => {
+    return query?.exampleId ? `${roomId}-${query.exampleId}` : roomId;
   }, [query, roomId]);
 
-  return overrideRoomId;
+  return exampleRoomId;
 }

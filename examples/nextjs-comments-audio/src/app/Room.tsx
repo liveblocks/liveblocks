@@ -7,7 +7,7 @@ import { ReactNode, useMemo } from "react";
 import { Toaster } from "sonner";
 
 export function Room({ children }: { children: ReactNode }) {
-  const roomId = useOverrideRoomId("liveblocks:examples:nextjs-comments-audio");
+  const roomId = useExampleRoomId("liveblocks:examples:nextjs-comments-audio");
 
   return (
     <Tooltip.Provider delayDuration={0}>
@@ -29,13 +29,13 @@ export function Room({ children }: { children: ReactNode }) {
  * This function is used when deploying an example on liveblocks.io.
  * You can ignore it completely if you run the example locally.
  */
-function useOverrideRoomId(roomId: string) {
+function useExampleRoomId(roomId: string) {
   const params = useSearchParams();
-  const roomIdParam = params.get("roomId");
+  const exampleId = params?.get("exampleId");
 
-  const overrideRoomId = useMemo(() => {
-    return roomIdParam ? `${roomId}-${roomIdParam}` : roomId;
-  }, [roomId, roomIdParam]);
+  const exampleRoomId = useMemo(() => {
+    return exampleId ? `${roomId}-${exampleId}` : roomId;
+  }, [roomId, exampleId]);
 
-  return overrideRoomId;
+  return exampleRoomId;
 }
