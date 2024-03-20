@@ -1,21 +1,15 @@
-import { createClient } from "@liveblocks/client";
 import { nn } from "@liveblocks/core";
 import { createRoomContext } from "@liveblocks/react";
 import Link from "next/link";
 import React from "react";
 
 import { getRoomFromUrl } from "../../utils";
+import { createLiveblocksClient } from "../../utils/createClient";
 
-const client = createClient({
+const client = createLiveblocksClient({
   publicApiKey: nn(
     process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY,
     "Please specify NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY env var"
-  ),
-
-  // @ts-expect-error - Hidden setting
-  baseUrl: nn(
-    process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
-    "Please specify NEXT_PUBLIC_LIVEBLOCKS_BASE_URL env var"
   ),
 });
 

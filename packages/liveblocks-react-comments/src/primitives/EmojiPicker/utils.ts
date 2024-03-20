@@ -15,13 +15,14 @@ import type {
   EmojiPickerRow,
 } from "./types";
 
-const EMOJIBASE_VERSION = "15.0.0";
+const EMOJIBASE_VERSION = "15.3.0";
 const EMOJIBASE_CDN_URL = `https://cdn.jsdelivr.net/npm/emojibase-data@${EMOJIBASE_VERSION}`;
 const EMOJIBASE_EMOJIS_URL = (locale: EmojibaseLocale) =>
   `${EMOJIBASE_CDN_URL}/${locale}/data.json`;
 const EMOJIBASE_MESSAGES_URL = (locale: EmojibaseLocale) =>
   `${EMOJIBASE_CDN_URL}/${locale}/messages.json`;
 const EMOJIBASE_LOCALES: EmojibaseLocale[] = [
+  "bn",
   "da",
   "de",
   "en",
@@ -31,6 +32,7 @@ const EMOJIBASE_LOCALES: EmojibaseLocale[] = [
   "et",
   "fi",
   "fr",
+  "hi",
   "hu",
   "it",
   "ja",

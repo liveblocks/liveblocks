@@ -1,7 +1,7 @@
 import {
   assertNonEmpty,
-  DEFAULT_BASE_URL,
   fetchPolyfill,
+  getBaseUrl,
   normalizeStatusCode,
   urljoin,
 } from "./utils";
@@ -120,7 +120,7 @@ export async function authorize(
     url = buildLiveblocksAuthorizeEndpoint(options, room);
 
     const fetch = await fetchPolyfill();
-    const resp = await fetch(buildLiveblocksAuthorizeEndpoint(options, room), {
+    const resp = await fetch(url, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${secret}`,
@@ -153,5 +153,5 @@ function buildLiveblocksAuthorizeEndpoint(
   roomId: string
 ): string {
   const path = `/v2/rooms/${encodeURIComponent(roomId)}/authorize`;
-  return urljoin(options.baseUrl || DEFAULT_BASE_URL, path);
+  return urljoin(getBaseUrl(options.baseUrl), path);
 }

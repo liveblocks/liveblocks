@@ -8,11 +8,13 @@ import type {
   JsonObject,
   LsonObject,
   Room,
+  User,
 } from "@liveblocks/client";
 import { Observable } from "lib0/observable";
 import type * as Y from "yjs";
 
 const Y_PRESENCE_KEY = "__yjs";
+const Y_PRESENCE_ID_KEY = "__yjs_clientid";
 
 type MetaClientState = {
   clock: number;
@@ -28,8 +30,9 @@ type MetaClientState = {
 export class Awareness extends Observable<unknown> {
   private room: Room<JsonObject, LsonObject, BaseUserMeta, Json>;
   public doc: Y.Doc;
-  public clientID: number;
   public states: Map<number, unknown> = new Map();
+  // used to map liveblock's ActorId to Yjs ClientID, both unique numbers representing a client
+  public actorToClientMap: Map<number, number> = new Map();
   // Meta is used to keep track and timeout users who disconnect. Liveblocks provides this for us, so we don't need to
   // manage it here. Unfortunately, it's expected to exist by various integrations, so it's an empty map.
   public meta: Map<number, MetaClientState> = new Map();
@@ -45,31 +48,57 @@ export class Awareness extends Observable<unknown> {
     super();
     this.doc = doc;
     this.room = room;
-    this.clientID = doc.clientID;
+    // Add the clientId to presence so we can map it to connectionId later
+    this.room.updatePresence({
+      [Y_PRESENCE_ID_KEY]: this.doc.clientID,
+    });
     this.othersUnsub = this.room.events.others.subscribe((event) => {
+      let updates:
+        | { added: number[]; updated: number[]; removed: number[] }
+        | undefined;
+
+      this.rebuildActorToClientMap(event.others);
       // When others are changed, we emit an event that contains arrays added/updated/removed.
       if (event.type === "leave") {
-        // REMOVED
-        this.emit("change", [
-          { added: [], updated: [], removed: [event.user.connectionId] },
-          "local",
-        ]);
+        const targetClientId = this.actorToClientMap.get(
+          event.user.connectionId
+        );
+        if (targetClientId !== undefined) {
+          updates = { added: [], updated: [], removed: [targetClientId] };
+        }
+        // rebuild after the user leaves so we can get the ID of the user who left
+        this.rebuildActorToClientMap(event.others);
       }
-
-      if (event.type === "enter") {
-        // ADDED
-        this.emit("change", [
-          { added: [event.user.connectionId], updated: [], removed: [] },
-          "local",
-        ]);
+      if (event.type === "enter" || event.type === "update") {
+        this.rebuildActorToClientMap(event.others);
+        const targetClientId = this.actorToClientMap.get(
+          event.user.connectionId
+        );
+        if (targetClientId !== undefined) {
+          updates = {
+            added: event.type === "enter" ? [targetClientId] : [],
+            updated: event.type === "update" ? [targetClientId] : [],
+            removed: [],
+          };
+        }
       }
+      if (updates !== undefined) {
+        this.emit("change", [updates, "presence"]);
+        this.emit("update", [updates, "presence"]);
+      }
+    });
+  }
 
-      if (event.type === "update") {
-        // UPDATED
-        this.emit("change", [
-          { added: [], updated: [event.user.connectionId], removed: [] },
-          "local",
-        ]);
+  rebuildActorToClientMap(
+    others: readonly User<JsonObject, BaseUserMeta>[]
+  ): void {
+    this.actorToClientMap.clear();
+    others.forEach((user) => {
+      if (user.presence[Y_PRESENCE_ID_KEY] !== undefined) {
+        this.actorToClientMap.set(
+          user.connectionId,
+          user.presence[Y_PRESENCE_ID_KEY] as number
+        );
       }
     });
   }
@@ -93,33 +122,60 @@ export class Awareness extends Observable<unknown> {
   }
 
   setLocalState(state: Partial<JsonObject> | null): void {
-    const presence = this.room.getSelf()?.presence[Y_PRESENCE_KEY];
+    const presence = this.room.getSelf()?.presence;
+    if (state === null) {
+      if (presence === undefined) {
+        // if presence is already undefined, we don't need to change anything here
+        return;
+      }
+      this.room.updatePresence({ ...presence, [Y_PRESENCE_KEY]: null });
+      this.emit("update", [
+        { added: [], updated: [], removed: [this.doc.clientID] },
+        "local",
+      ]);
+      return;
+    }
+    // if presence was undefined, it's added, if not, it's updated
+    const yPresence = presence?.[Y_PRESENCE_KEY];
+    const added = yPresence === undefined ? [this.doc.clientID] : [];
+    const updated = yPresence === undefined ? [] : [this.doc.clientID];
     this.room.updatePresence({
-      __yjs: { ...((presence as JsonObject) || {}), ...(state || {}) },
+      [Y_PRESENCE_KEY]: {
+        ...((yPresence as JsonObject) || {}),
+        ...(state || {}),
+      },
     });
+    this.emit("update", [{ added, updated, removed: [] }, "local"]);
   }
 
   setLocalStateField(field: string, value: JsonObject | null): void {
     const presence = this.room.getSelf()?.presence[Y_PRESENCE_KEY];
     const update = { [field]: value } as Partial<JsonObject>;
     this.room.updatePresence({
-      __yjs: { ...((presence as JsonObject) || {}), ...update },
+      [Y_PRESENCE_KEY]: { ...((presence as JsonObject) || {}), ...update },
     });
   }
 
   // Translate liveblocks presence to yjs awareness
   getStates(): Map<number, unknown> {
     const others = this.room.getOthers();
-    const states = others.reduce((acc: Map<number, unknown>, currentValue) => {
-      if (currentValue.connectionId) {
-        // connectionId == actorId == yjs.clientId
-        acc.set(
-          currentValue.connectionId,
-          currentValue.presence[Y_PRESENCE_KEY] || {}
-        );
+    const states = others.reduce((acc: Map<number, unknown>, otherUser) => {
+      const otherPresence = otherUser.presence[Y_PRESENCE_KEY];
+      const otherClientId = otherUser.presence[Y_PRESENCE_ID_KEY] as
+        | number
+        | undefined;
+      if (otherPresence !== undefined && otherClientId !== undefined) {
+        // set states of map clientId to yjs presence
+        acc.set(otherClientId, otherPresence || {});
       }
       return acc;
     }, new Map());
+
+    // add this client's yjs presence to states (local client not represented in others)
+    const localPresence = this.room.getSelf()?.presence[Y_PRESENCE_KEY];
+    if (localPresence !== undefined) {
+      states.set(this.doc.clientID, localPresence);
+    }
     return states;
   }
 }

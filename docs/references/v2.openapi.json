@@ -196,6 +196,17 @@
         "summary": "Get room",
         "tags": ["Room"],
         "operationId": "get-rooms-roomId",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the room"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success. Returns the room.",
@@ -240,12 +251,22 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "description": "This endpoint returns a room by its ID. Corresponds to [`liveblocks.getRoom`](/docs/api-reference/liveblocks-node#get-rooms-roomid).",
-        "parameters": []
+        "description": "This endpoint returns a room by its ID. Corresponds to [`liveblocks.getRoom`](/docs/api-reference/liveblocks-node#get-rooms-roomid)."
       },
       "post": {
         "summary": "Update room",
         "tags": ["Room"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the room"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success. Returns the updated room.",
@@ -294,7 +315,7 @@
           }
         },
         "operationId": "post-rooms-roomId",
-        "description": "This endpoint updates specific properties of a room. Corresponds to [`liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#post-rooms-roomid). \n\nIt’s not necessary to provide the entire room’s information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccessess`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.\n\n",
+        "description": "This endpoint updates specific properties of a room. Corresponds to [`liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#post-rooms-roomid). \n\nIt’s not necessary to provide the entire room’s information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccessess`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -354,6 +375,17 @@
             "$ref": "#/components/responses/422"
           }
         },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the room"
+          }
+        ],
         "operationId": "delete-rooms-roomId",
         "description": "This endpoint deletes a room. A deleted room is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.deleteRoom`](/docs/api-reference/liveblocks-node#delete-rooms-roomid)."
       }
@@ -364,6 +396,17 @@
         "tags": ["Room"],
         "operationId": "get-rooms-roomId-active-users",
         "description": "This endpoint returns a list of users currently present in the requested room. Corresponds to [`liveblocks.getActiveUsers`](/docs/api-reference/liveblocks-node#get-rooms-roomid-active-users). \n\nFor optimal performance, we recommend calling this endpoint no more than once every 10 seconds. \nDuplicates can occur if a user is in the requested room with multiple browser tabs opened.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the room"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success. Returns the list of active users for the specified room.",
@@ -546,6 +589,17 @@
         "summary": "Initialize Storage document",
         "tags": ["Storage"],
         "operationId": "post-rooms-roomId-storage",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the room"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success. The Storage is initialized. Returns the room’s Storage as JSON.",
@@ -650,6 +704,17 @@
         "summary": "Delete Storage document",
         "tags": ["Storage"],
         "operationId": "delete-rooms-roomId-storage",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the room"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success. The room has no more Storage."
@@ -674,12 +739,13 @@
         "tags": ["Yjs"],
         "parameters": [
           {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
             "schema": {
               "type": "string"
             },
-            "name": "roomId",
-            "in": "path",
-            "required": true
+            "description": "ID of the room"
           },
           {
             "schema": {
@@ -744,6 +810,17 @@
       "put": {
         "summary": "Send a binary Yjs update",
         "tags": ["Yjs"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the room"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success. The given room’s Yjs doc has been updated.",
@@ -770,7 +847,10 @@
         "requestBody": {
           "content": {
             "application/octet-stream": {
-              "schema": { "format": "binary", "type": "array" }
+              "schema": {
+                "format": "binary",
+                "type": "array"
+              }
             }
           }
         }
@@ -783,12 +863,13 @@
         "tags": ["Yjs"],
         "parameters": [
           {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
             "schema": {
               "type": "string"
             },
-            "name": "roomId",
-            "in": "path",
-            "required": true
+            "description": "ID of the room"
           }
         ],
         "responses": {
@@ -1223,14 +1304,14 @@
               }
             }
           },
-          "404": {
-            "$ref": "#/components/responses/404-thread"
-          },
           "401": {
             "$ref": "#/components/responses/401"
           },
           "403": {
             "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-thread"
           }
         }
       },
@@ -1289,14 +1370,14 @@
               }
             }
           },
-          "409": {
-            "$ref": "#/components/responses/409-thread"
-          },
           "401": {
             "$ref": "#/components/responses/401"
           },
           "403": {
             "$ref": "#/components/responses/403"
+          },
+          "409": {
+            "$ref": "#/components/responses/409-thread"
           }
         },
         "requestBody": {
@@ -1510,11 +1591,11 @@
               }
             }
           },
-          "404": {
-            "$ref": "#/components/responses/404-thread"
-          },
           "403": {
             "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-thread"
           }
         },
         "requestBody": {
@@ -1593,17 +1674,17 @@
               }
             }
           },
-          "409": {
-            "$ref": "#/components/responses/409-comment"
-          },
-          "404": {
-            "$ref": "#/components/responses/404-thread"
-          },
           "401": {
             "$ref": "#/components/responses/401"
           },
           "403": {
             "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-thread"
+          },
+          "409": {
+            "$ref": "#/components/responses/409-comment"
           }
         },
         "requestBody": {
@@ -1690,14 +1771,14 @@
               }
             }
           },
-          "404": {
-            "$ref": "#/components/responses/404-thread"
-          },
           "401": {
             "$ref": "#/components/responses/401"
           },
           "403": {
             "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-thread"
           }
         }
       },
@@ -1763,17 +1844,17 @@
               }
             }
           },
-          "409": {
-            "$ref": "#/components/responses/409-comment"
-          },
-          "404": {
-            "$ref": "#/components/responses/404-thread"
-          },
           "401": {
             "$ref": "#/components/responses/401"
           },
           "403": {
             "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-thread"
+          },
+          "409": {
+            "$ref": "#/components/responses/409-comment"
           }
         },
         "requestBody": {
@@ -1801,22 +1882,51 @@
         "summary": "Delete comment",
         "x-badge": "Beta",
         "tags": ["Comments"],
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the thread"
+          },
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the comment"
+          }
+        ],
         "responses": {
           "204": {
             "description": "Success. The comment was deleted"
-          },
-          "404": {
-            "$ref": "#/components/responses/404-comment"
           },
           "401": {
             "$ref": "#/components/responses/401"
           },
           "403": {
             "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-comment"
           }
         },
         "operationId": "delete-rooms-roomId-threads-threadId-comments-commentId",
-        "description": "This endpoint deletes a comment. A deleted comment is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.deleteComment`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId).\n\n"
+        "description": "This endpoint deletes a comment. A deleted comment is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.deleteComment`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId)."
       }
     },
     "/rooms/{roomId}/threads/{threadId}/comments/{commentId}/add-reaction": {
@@ -1875,17 +1985,17 @@
               }
             }
           },
-          "409": {
-            "$ref": "#/components/responses/409-comment-reaction"
-          },
-          "404": {
-            "$ref": "#/components/responses/404-comment"
-          },
           "401": {
             "$ref": "#/components/responses/401"
           },
           "403": {
             "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-comment"
+          },
+          "409": {
+            "$ref": "#/components/responses/409-comment-reaction"
           }
         },
         "requestBody": {
@@ -1912,7 +2022,7 @@
       "post": {
         "summary": "Remove comment reaction",
         "x-badge": "Beta",
-        "description": "This endpoint removes a comment reaction. A deleted comment reaction is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.removeCommentReaction]`(/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction) \n\n",
+        "description": "This endpoint removes a comment reaction. A deleted comment reaction is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.removeCommentReaction`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction).",
         "tags": ["Comments"],
         "operationId": "post-rooms-roomId-threads-threadId-comments-commentId-remove-reaction",
         "parameters": [
@@ -1948,14 +2058,14 @@
           "204": {
             "description": "Success. The comment reaction was deleted"
           },
-          "404": {
-            "$ref": "#/components/responses/404-comment-reaction"
-          },
           "401": {
             "$ref": "#/components/responses/401"
           },
           "403": {
             "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-comment-reaction"
           }
         },
         "requestBody": {
@@ -2090,7 +2200,17 @@
         "x-badge": "Deprecated",
         "description": "**Deprecated.** Prefer using [access tokens](#post-authorize-user) or [ID tokens](#post-identify-user) instead. Read more in our [migration guide](/docs/platform/upgrading/1.2).\n\nThis endpoint lets your application server (your back end) obtain a token that one of its clients (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When making this request, you’ll have to use your secret key.\n\nYou can pass the property `userId` in the request’s body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. Setting the `userId` is optional if you want to use public rooms, but it is required to enter a private room (because permissions are assigned to specific user IDs). In case you want to use the group permission system, you can also declare which `groupIds` this user belongs to.\n\nThe property userId is used by Liveblocks to calculate your account’s Monthly Active Users. One unique userId corresponds to one MAU. If you don’t pass a userId, we will create for you a new anonymous userId on each connection, but your MAUs will be higher.\n\nAdditionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name.",
         "tags": ["Deprecated"],
-        "parameters": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the room"
+          }
+        ],
         "operationId": "post-authorize",
         "responses": {
           "200": {
@@ -2152,6 +2272,17 @@
         "x-badge": "Deprecated",
         "tags": ["Deprecated"],
         "operationId": "post-public-authorize",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the room"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success. Returns the JWT token.",
@@ -2195,6 +2326,243 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/users/{userId}/inboxNotifications/{inboxNotificationId}": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "userId",
+          "in": "path",
+          "required": true
+        },
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "inboxNotificationId",
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get inbox notification",
+        "x-badge": "Beta",
+        "tags": ["Notifications"],
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "inboxNotificationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the inbox notification"
+          }
+        ],
+        "operationId": "get-users-userId-inboxNotifications-inboxNotificationId",
+        "description": "This endpoint returns a user’s inbox notification by its ID. Corresponds to [`liveblocks.getInboxNotification`](/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications-inboxNotificationId).",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxNotification"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/users/{userId}/notification-settings": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "roomId",
+          "in": "path",
+          "required": true
+        },
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "userId",
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get room notification settings",
+        "x-badge": "Beta",
+        "tags": ["Notifications"],
+        "operationId": "get-rooms-roomId-users-userId-notification-settings",
+        "description": "This endpoint returns a user’s notification settings for a specific room. Corresponds to [`liveblocks.getRoomNotificationSettings`](/docs/api-reference/liveblocks-node#get-rooms-roomId-users-userId-notification-settings).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the room"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the user"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRoomNotificationSettings"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "post": {
+        "summary": "Update room notification settings",
+        "x-badge": "Beta",
+        "tags": ["Notifications"],
+        "operationId": "post-rooms-roomId-users-userId-notification-settings",
+        "description": "This endpoint updates a user’s notification settings for a specific room. Corresponds to [`liveblocks.updateRoomNotificationSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-notification-settings).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the room"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the user"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRoomNotificationSettings"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRoomNotificationSettings"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete room notification settings",
+        "x-badge": "Beta",
+        "tags": ["Notifications"],
+        "operationId": "delete-rooms-roomId-users-userId-notification-settings",
+        "description": "This endpoint deletes a user’s notification settings for a specific room. Corresponds to [`liveblocks.deleteRoomNotificationSettings`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-users-userId-notification-settings).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the room"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the user"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
           }
         }
       }
@@ -2871,6 +3239,39 @@
             "userId": "alice"
           }
         ]
+      },
+      "InboxNotification": {
+        "title": "InboxNotification",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "default": "thread"
+          },
+          "threadId": {
+            "type": "string"
+          },
+          "readAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "notifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UserRoomNotificationSettings": {
+        "title": "UserRoomNotificationSettings",
+        "type": "object",
+        "properties": {
+          "threads": {
+            "enum": ["all", "replies_and_mentions", "none"]
+          }
+        }
       }
     },
     "securitySchemes": {
@@ -3292,6 +3693,9 @@
     },
     {
       "name": "Comments"
+    },
+    {
+      "name": "Notifications"
     },
     {
       "name": "Deprecated"

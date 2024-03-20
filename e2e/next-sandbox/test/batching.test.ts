@@ -7,6 +7,7 @@ import {
   preparePages,
   waitForJson,
   waitUntilEqualOnAllPages,
+  waitUntilFlushed,
 } from "./utils";
 
 test.describe.configure({ mode: "parallel" });
@@ -31,9 +32,11 @@ test.describe("Storage - Batching", () => {
 
     await page1.click("#clear");
     await expectJson(page1, "#numItems", 0);
+    await waitUntilFlushed();
 
     await page1.click("#update-storage-presence-batch");
     await expectJson(page1, "#numItems", 1);
+    await waitUntilFlushed();
 
     await waitUntilEqualOnAllPages(pages, "#items");
 
@@ -41,6 +44,7 @@ test.describe("Storage - Batching", () => {
     await expectJson(page2, "#theirPresence", { count: 1 });
 
     await page1.click("#clear");
+    await waitUntilFlushed();
     await waitForJson(pages, "#numItems", 0);
   });
 

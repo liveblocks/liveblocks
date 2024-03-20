@@ -4,9 +4,10 @@ import {
   ThreadData,
   createClient,
 } from "@liveblocks/client";
-import { createRoomContext } from "@liveblocks/react";
+import { createLiveblocksContext, createRoomContext } from "@liveblocks/react";
 import Router from "next/router";
-import { getUsers } from "./lib/client";
+import { DOCUMENT_URL } from "./constants";
+import { getSpecificDocuments, getUsers } from "./lib/client";
 import { User } from "./types";
 
 // The location of the liveblocks custom API endpoints
@@ -18,7 +19,7 @@ export const ENDPOINT_BASE_URL = "/api/liveblocks";
 // (e.g. auth token, user id) send it in the body alongside `room`.
 // Check inside `/pages/${ENDPOINT_BASE_URL}/auth` for the endpoint
 const client = createClient({
-  authEndpoint: async (roomId: string) => {
+  authEndpoint: async (roomId) => {
     const payload = {
       roomId,
     };
@@ -47,6 +48,21 @@ const client = createClient({
 
     // Return token
     return result;
+  },
+  async resolveUsers({ userIds }) {
+    const users = await getUsers({ userIds });
+    return users;
+  },
+  async resolveMentionSuggestions({ text }) {
+    const users = await getUsers({ search: text });
+    return users.map((user) => user.id);
+  },
+  async resolveRoomsInfo({ roomIds }) {
+    const documents = await getSpecificDocuments({ documentIds: roomIds });
+    return documents.map((document) => ({
+      name: document ? document.name : undefined,
+      url: document ? DOCUMENT_URL(document.type, document.id) : undefined,
+    }));
   },
 });
 
@@ -116,15 +132,14 @@ export const {
   },
   /* ...all the other hooks you’re using... */
 } = createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(
-  client,
-  {
-    async resolveUsers({ userIds }) {
-      const users = await getUsers({ userIds });
-      return users;
-    },
-    async resolveMentionSuggestions({ text }) {
-      const users = await getUsers({ search: text });
-      return users.map((user) => user.id);
-    },
-  }
+  client
 );
+
+export const {
+  suspense: {
+    LiveblocksProvider,
+    useInboxNotifications,
+    useUnreadInboxNotificationsCount,
+    useMarkAllInboxNotificationsAsRead,
+  },
+} = createLiveblocksContext(client);

@@ -14,13 +14,14 @@ export type {
   Schema,
   ThreadParticipants,
 } from "./client";
-export { Liveblocks } from "./client";
+export { Liveblocks, LiveblocksError } from "./client";
 export type {
   CommentCreatedEvent,
   CommentDeletedEvent,
   CommentEditedEvent,
   CommentReactionAdded,
   CommentReactionRemoved,
+  NotificationEvent,
   RoomCreatedEvent,
   RoomDeletedEvent,
   StorageUpdatedEvent,
@@ -43,7 +44,6 @@ export type {
   CommentBodyMentionElementArgs,
   CommentBodyParagraph,
   CommentBodyParagraphElementArgs,
-  CommentBodyResolveUsersArgs,
   CommentBodyText,
   CommentBodyTextElementArgs,
   CommentData,
@@ -56,6 +56,7 @@ export type {
   Lson,
   LsonObject,
   PlainLsonObject,
+  ResolveUsersArgs,
   StringifyCommentBodyElements,
   StringifyCommentBodyOptions,
   ThreadData,

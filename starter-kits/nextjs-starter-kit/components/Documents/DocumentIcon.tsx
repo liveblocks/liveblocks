@@ -60,7 +60,7 @@ function WhiteboardDocumentIcon(props: ComponentProps<"svg">) {
       {...props}
     >
       <path
-        d="M15.5 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3Z"
+        d="M13.5 3H7a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2V8.5L13.5 3Z"
         stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
@@ -68,7 +68,7 @@ function WhiteboardDocumentIcon(props: ComponentProps<"svg">) {
         vectorEffect="non-scaling-stroke"
       />
       <path
-        d="M15 3v6h6"
+        d="M13 3v6h6"
         stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"

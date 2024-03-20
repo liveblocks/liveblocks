@@ -56,10 +56,6 @@ export default class LiveblocksProvider<
       fetchDoc: this.fetchDoc,
     });
     // if we have a connectionId already during construction, use that
-    const connectionId = this.room.getSelf()?.connectionId;
-    if (connectionId) {
-      this.rootDoc.clientID = connectionId;
-    }
     this.awareness = new Awareness(this.rootDoc, this.room);
 
     this.unsubscribers.push(
@@ -164,15 +160,6 @@ export default class LiveblocksProvider<
   };
 
   private syncDoc = () => {
-    /**
-     * If the connection changes, set the new id, this is used by awareness.
-     * yjs' only requirement for clientID is that it's truly unique and a number.
-     * Liveblock's connectionID satisfies those constraints
-     *  */
-    this.rootDoc.clientID =
-      this.room.getSelf()?.connectionId || this.rootDoc.clientID;
-    this.awareness.clientID = this.rootDoc.clientID; // tell our awareness provider the new ID
-
     this.rootDocHandler.syncDoc();
     for (const [_, handler] of this.subdocHandlers) {
       handler.syncDoc();

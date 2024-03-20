@@ -5,6 +5,7 @@ import { ComponentProps } from "react";
 import { ShareIcon } from "../../icons";
 import { Button } from "../../primitives/Button";
 import { Skeleton } from "../../primitives/Skeleton";
+import { InboxPopover } from "../Inbox";
 import { Logo } from "../Logo";
 import { ShareDialog } from "../ShareDialog";
 import { DocumentHeaderAvatars } from "./DocumentHeaderAvatars";
@@ -41,6 +42,7 @@ export function DocumentHeader({
         <ShareDialog>
           <Button icon={<ShareIcon />}>Share</Button>
         </ShareDialog>
+        <InboxPopover align="end" sideOffset={4} />
       </div>
     </header>
   );

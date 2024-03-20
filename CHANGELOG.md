@@ -1,3 +1,109 @@
+# v1.10.4
+
+- Fix bundling issue in Vite projects, where `process is not defined` could
+  happen
+
+# v1.10.3
+
+### `@liveblocks/react-comments`
+
+- Add support for Emoji v15.1 in emoji picker, along two additional locales:
+  Bengali (`bn`) and Hindi (`hi`).
+- Fix bug where the `showRoomName` prop on `InboxNotification.Thread` wasn’t
+  applied to notifications about mentions.
+
+### `@liveblocks/react`
+
+- Fix bug where removing metadata via `useEditThreadMetadata` would result in a
+  brief flash of the old metadata after the metadata was removed optimistically.
+
+# v1.10.2
+
+### `@liveblocks/client`
+
+- Fix bug where calling `.clone()` immediately after creating a new `LiveObject`
+  could throw an error
+
+# v1.10.1
+
+### `@liveblocks/client`
+
+- Fix bug where the client’s backoff delay would not be respected correctly in a
+  small edge case.
+
+### `@liveblocks/react-comments`
+
+- Fix date localization in `InboxNotification`.
+- Add vendor prefixes to more CSS properties within the default styles.
+
+### `@liveblocks/react`
+
+- Added error retrying to `useThreads`, `useRoomNotificationSettings`, and
+  `useInboxNotifications` during initial fetching.
+
+# v1.10.0
+
+This release introduces Notifications (and unread indicators) for Comments.
+
+### `create-liveblocks-app`
+
+- Add `createLiveblocksContext` and Notifications to `--init`.
+- Move resolver options from `createRoomContext` to `createClient` and add
+  `resolveRoomsInfo` to the list of resolvers.
+
+### `@liveblocks/client`
+
+- Add options to `createClient`: `resolveUsers`, `resolveMentionSuggestions`
+  (both were previously defined on `createRoomContext` from
+  `@liveblocks/react`), and the new `resolveRoomsInfo`.
+
+### `@liveblocks/react`
+
+- Add new `LiveblocksContext` accessible with `createLiveblocksContext`,
+  similarly to `createRoomContext`. This context is meant to live at the root
+  since it handles things outside of rooms, like notifications. It contains
+  `LiveblocksProvider`, `useUser`, `useRoomInfo`, `useInboxNotifications`,
+  `useUnreadInboxNotificationsCount`, `useMarkInboxNotificationAsRead`, and
+  `useMarkAllInboxNotificationsAsRead`.
+- Add new hooks to `createRoomContext`: `useMarkThreadAsRead`,
+  `useThreadSubscription`, `useRoomInfo`, `useRoomNotificationSettings`, and
+  `useUpdateRoomNotificationSettings`.
+- Make some hooks usable interchangeably between `createLiveblocksContext` and
+  `createRoomContext`: `useUser`, and `useRoomInfo`.
+
+### `@liveblocks/react-comments`
+
+- Add new default components: `InboxNotification` and `InboxNotificationList`.
+- Add unread indicators to the default `Thread` component.
+- Support "@" in mentions. (e.g. `@user@email.com` is now a valid mention and
+  will trigger `resolveMentionSuggestions` with `"user@email.com"`)
+
+### `@liveblocks/node`
+
+- Add the Notifications REST APIs as fully typed methods. (includes
+  `getInboxNotification`, `getRoomNotificationSettings`,
+  `updateRoomNotificationSettings`, and `deleteRoomNotificationSettings`
+  methods)
+- Add notification webhook event: `NotificationEvent`.
+
+# v1.9.8
+
+### `@liveblocks/client`
+
+- Fix race condition in client that could leave zombie WebSocket connections
+  open indefinitely in a small edge case. (thanks for reporting,
+  [@dev-badace](https://github.com/dev-badace))
+
+### `@liveblocks/react`
+
+- Fix type definitions of `useOthersListener` hook.
+- Fix type definitions of `useErrorListener` hook.
+
+### `@liveblocks/yjs`
+
+- Emit update events from awareness.
+- Fix several awareness bugs.
+
 # v1.9.7
 
 ### `@liveblocks/node`
@@ -819,7 +925,7 @@ Liveblocks account.
 
 - Adds a `WebhookHandler` class
   - `new WebhookHandler(secret).verifyRequest({ rawBody, headers })` can be used
-    to verify event requests from Liveblock's Webhook functionality. It also
+    to verify event requests from Liveblock's webhook functionality. It also
     provides fully typed `WebhookEvents`.
   - Check out our [Webhooks guide](https://liveblocks.io/docs/guides/webhooks)
     for more details

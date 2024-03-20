@@ -1,12 +1,20 @@
+import type { AuthValue } from "./auth-manager";
 import { createAuthManager } from "./auth-manager";
 import { isIdle } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
+import { kInternal } from "./internal";
+import type { BatchStore } from "./lib/batch";
+import { createBatchStore } from "./lib/batch";
+import type { Store } from "./lib/create-store";
+import { createStore } from "./lib/create-store";
 import { deprecateIf } from "./lib/deprecation";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import type { Resolve } from "./lib/Resolve";
+import type { GetInboxNotificationsOptions } from "./notifications";
+import { createNotificationsApi } from "./notifications";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { Polyfills, Room, RoomDelegates, RoomInitializers } from "./room";
@@ -15,6 +23,15 @@ import {
   makeAuthDelegateForRoom,
   makeCreateSocketDelegateForRoom,
 } from "./room";
+import type { CacheStore } from "./store";
+import { createClientStore } from "./store";
+import type { BaseMetadata } from "./types/BaseMetadata";
+import type { InboxNotificationData } from "./types/InboxNotificationData";
+import type { InboxNotificationDeleteInfo } from "./types/InboxNotificationDeleteInfo";
+import type { OptionalPromise } from "./types/OptionalPromise";
+import type { RoomInfo } from "./types/RoomInfo";
+import type { ThreadData } from "./types/ThreadData";
+import type { ThreadDeleteInfo } from "./types/ThreadDeleteInfo";
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1_000;
@@ -25,6 +42,35 @@ const MIN_LOST_CONNECTION_TIMEOUT = 200;
 const RECOMMENDED_MIN_LOST_CONNECTION_TIMEOUT = 1_000;
 const MAX_LOST_CONNECTION_TIMEOUT = 30_000;
 const DEFAULT_LOST_CONNECTION_TIMEOUT = 5_000;
+
+const RESOLVE_USERS_BATCH_DELAY = 50;
+const RESOLVE_ROOMS_INFO_BATCH_DELAY = 50;
+
+export type ResolveMentionSuggestionsArgs = {
+  /**
+   * The ID of the current room.
+   */
+  roomId: string;
+
+  /**
+   * The text to search for.
+   */
+  text: string;
+};
+
+export type ResolveUsersArgs = {
+  /**
+   * The IDs of the users to resolve.
+   */
+  userIds: string[];
+};
+
+export type ResolveRoomsInfoArgs = {
+  /**
+   * The IDs of the rooms to resolve.
+   */
+  roomIds: string[];
+};
 
 export type EnterOptions<
   TPresence extends JsonObject,
@@ -44,7 +90,39 @@ export type EnterOptions<
   }
 >;
 
-export type Client = {
+/**
+ * @private
+ *
+ * Private methods and variables used in the core internals, but as a user
+ * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
+ * will probably happen if you do.
+ */
+type PrivateClientApi<TUserMeta extends BaseUserMeta> = {
+  notifications: NotificationsApi;
+  currentUserIdStore: Store<string | null>;
+  resolveMentionSuggestions: ClientOptions["resolveMentionSuggestions"];
+  cacheStore: CacheStore<BaseMetadata>;
+  usersStore: BatchStore<TUserMeta["info"] | undefined, [string]>;
+  roomsInfoStore: BatchStore<RoomInfo | undefined, [string]>;
+  getRoomIds: () => string[];
+};
+
+export type NotificationsApi<TThreadMetadata extends BaseMetadata = never> = {
+  getInboxNotifications(options?: GetInboxNotificationsOptions): Promise<{
+    inboxNotifications: InboxNotificationData[];
+    threads: ThreadData<TThreadMetadata>[];
+    deletedThreads: ThreadDeleteInfo[];
+    deletedInboxNotifications: InboxNotificationDeleteInfo[];
+    meta: {
+      requestedAt: Date;
+    };
+  }>;
+  getUnreadInboxNotificationsCount(): Promise<number>;
+  markAllInboxNotificationsAsRead(): Promise<void>;
+  markInboxNotificationAsRead(inboxNotificationId: string): Promise<void>;
+};
+
+export type Client<TUserMeta extends BaseUserMeta = BaseUserMeta> = {
   /**
    * Gets a room. Returns null if {@link Client.enter} has not been called previously.
    *
@@ -116,17 +194,26 @@ export type Client = {
    * Call this whenever you log out a user in your application.
    */
   logout(): void;
+
+  /**
+   * @private
+   *
+   * Private methods and variables used in the core internals, but as a user
+   * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
+   * will probably happen if you do.
+   */
+  readonly [kInternal]: PrivateClientApi<TUserMeta>;
 };
 
 export type AuthEndpoint =
   | string
-  | ((room: string) => Promise<CustomAuthenticationResult>);
+  | ((room?: string) => Promise<CustomAuthenticationResult>);
 
 /**
  * The authentication endpoint that is called to ensure that the current user has access to a room.
  * Can be an url or a callback if you need to add additional headers.
  */
-export type ClientOptions = {
+export type ClientOptions<TUserMeta extends BaseUserMeta = BaseUserMeta> = {
   throttle?: number; // in milliseconds
   lostConnectionTimeout?: number; // in milliseconds
   backgroundKeepAliveTimeout?: number; // in milliseconds
@@ -145,6 +232,33 @@ export type ClientOptions = {
    * This option will be removed in a future release.
    */
   WebSocketPolyfill?: Polyfills["WebSocket"];
+
+  /**
+   * @beta
+   *
+   * A function that returns a list of user IDs matching a string.
+   */
+  resolveMentionSuggestions?: (
+    args: ResolveMentionSuggestionsArgs
+  ) => OptionalPromise<string[]>;
+
+  /**
+   * @beta
+   *
+   * A function that returns user info from user IDs.
+   */
+  resolveUsers?: (
+    args: ResolveUsersArgs
+  ) => OptionalPromise<(TUserMeta["info"] | undefined)[] | undefined>;
+
+  /**
+   * @beta
+   *
+   * A function that returns room info from room IDs.
+   */
+  resolveRoomsInfo?: (
+    args: ResolveRoomsInfoArgs
+  ) => OptionalPromise<(RoomInfo | undefined)[] | undefined>;
 
   /**
    * @internal To point the client to a different Liveblocks server. Only
@@ -175,17 +289,22 @@ export type ClientOptions = {
 //     | ((room: string) => Promise<{ token: string }>);
 //
 
-function getBaseUrlFromClientOptions(clientOptions: ClientOptions) {
-  if ("liveblocksServer" in clientOptions) {
-    throw new Error("Client option no longer supported");
-  }
+function getBaseUrl(baseUrl?: string | undefined): string {
   if (
-    typeof clientOptions.baseUrl === "string" &&
-    clientOptions.baseUrl.startsWith("http") // Must be http or https URL
+    typeof baseUrl === "string" &&
+    baseUrl.startsWith("http") // Must be http or https URL
   ) {
-    return clientOptions.baseUrl;
+    return baseUrl;
   } else {
     return DEFAULT_BASE_URL;
+  }
+}
+
+export function getAuthBearerHeaderFromAuthValue(authValue: AuthValue): string {
+  if (authValue.type === "public") {
+    return authValue.publicApiKey;
+  } else {
+    return authValue.token.raw;
   }
 }
 
@@ -200,7 +319,7 @@ function getBaseUrlFromClientOptions(clientOptions: ClientOptions) {
  * // It's also possible to use a function to call your authentication endpoint.
  * // Useful to add additional headers or use an API wrapper (like Firebase functions)
  * const client = createClient({
- *   authEndpoint: async (room) => {
+ *   authEndpoint: async (room?) => {
  *     const response = await fetch("/api/auth", {
  *       method: "POST",
  *       headers: {
@@ -214,7 +333,9 @@ function getBaseUrlFromClientOptions(clientOptions: ClientOptions) {
  *   }
  * });
  */
-export function createClient(options: ClientOptions): Client {
+export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
+  options: ClientOptions<TUserMeta>
+): Client<TUserMeta> {
   type OpaqueRoom = Room<JsonObject, LsonObject, BaseUserMeta, Json>;
 
   const clientOptions = options;
@@ -225,6 +346,7 @@ export function createClient(options: ClientOptions): Client {
   const backgroundKeepAliveTimeout = getBackgroundKeepAliveTimeout(
     clientOptions.backgroundKeepAliveTimeout
   );
+  const baseUrl = getBaseUrl(clientOptions.baseUrl);
 
   const authManager = createAuthManager(options);
 
@@ -297,7 +419,6 @@ export function createClient(options: ClientOptions): Client {
       "Please provide an initial presence value for the current user when entering the room."
     );
 
-    const baseUrl = getBaseUrlFromClientOptions(clientOptions);
     const newRoom = createRoom<TPresence, TStorage, TUserMeta, TRoomEvent>(
       {
         initialPresence: options.initialPresence ?? {},
@@ -404,17 +525,103 @@ export function createClient(options: ClientOptions): Client {
     }
   }
 
-  return {
-    logout,
+  const currentUserIdStore = createStore<string | null>(null);
 
-    // Old, deprecated APIs
-    enter,
-    getRoom,
-    leave: forceLeave,
+  const {
+    getInboxNotifications,
+    getUnreadInboxNotificationsCount,
+    markAllInboxNotificationsAsRead,
+    markInboxNotificationAsRead,
+  } = createNotificationsApi({
+    baseUrl,
+    fetcher: clientOptions.polyfills?.fetch || /* istanbul ignore next */ fetch,
+    authManager,
+    currentUserIdStore,
+  });
 
-    // New, preferred API
-    enterRoom,
-  };
+  const cacheStore = createClientStore();
+
+  const resolveUsers = clientOptions.resolveUsers;
+  const warnIfNoResolveUsers = createDevelopmentWarning(
+    () => !resolveUsers,
+    "Set the resolveUsers option in createClient to specify user info."
+  );
+
+  const usersStore = createBatchStore(
+    async (batchedUserIds: [string][]) => {
+      const userIds = batchedUserIds.flat();
+      const users = await resolveUsers?.({ userIds });
+
+      warnIfNoResolveUsers();
+
+      return users ?? userIds.map(() => undefined);
+    },
+    { delay: RESOLVE_USERS_BATCH_DELAY }
+  );
+
+  const resolveRoomsInfo = clientOptions.resolveRoomsInfo;
+  const warnIfNoResolveRoomsInfo = createDevelopmentWarning(
+    () => !resolveRoomsInfo,
+    "Set the resolveRoomsInfo option in createClient to specify room info."
+  );
+
+  const roomsInfoStore = createBatchStore(
+    async (batchedRoomIds: [string][]) => {
+      const roomIds = batchedRoomIds.flat();
+      const roomsInfo = await resolveRoomsInfo?.({ roomIds });
+
+      warnIfNoResolveRoomsInfo();
+
+      return roomsInfo ?? roomIds.map(() => undefined);
+    },
+    { delay: RESOLVE_ROOMS_INFO_BATCH_DELAY }
+  );
+
+  return Object.defineProperty(
+    {
+      logout,
+
+      // Old, deprecated APIs
+      enter,
+      getRoom,
+      leave: forceLeave,
+
+      // New, preferred API
+      enterRoom,
+
+      // Internal
+      [kInternal]: {
+        notifications: {
+          getInboxNotifications,
+          getUnreadInboxNotificationsCount,
+          markAllInboxNotificationsAsRead,
+          markInboxNotificationAsRead,
+        },
+        currentUserIdStore,
+        resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,
+        cacheStore,
+        usersStore,
+        roomsInfoStore,
+        getRoomIds() {
+          return Array.from(roomsById.keys());
+        },
+      },
+    },
+    kInternal,
+    {
+      enumerable: false,
+    }
+  );
+}
+
+export class NotificationsApiError extends Error {
+  constructor(
+    public message: string,
+    public status: number,
+    public details?: JsonObject
+  ) {
+    super(message);
+  }
 }
 
 function checkBounds(
@@ -461,4 +668,29 @@ function getLostConnectionTimeout(value: number): number {
     MAX_LOST_CONNECTION_TIMEOUT,
     RECOMMENDED_MIN_LOST_CONNECTION_TIMEOUT
   );
+}
+
+/**
+ * Emit a warning only once if a condition is met, in development only.
+ */
+function createDevelopmentWarning(
+  condition: boolean | (() => boolean),
+  ...args: Parameters<typeof console.warn>
+) {
+  let hasWarned = false;
+
+  if (process.env.NODE_ENV !== "production") {
+    return () => {
+      if (
+        !hasWarned &&
+        (typeof condition === "function" ? condition() : condition)
+      ) {
+        console.warn(...args);
+
+        hasWarned = true;
+      }
+    };
+  } else {
+    return () => {};
+  }
 }

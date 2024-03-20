@@ -1,7 +1,9 @@
 "use client";
 
 import { BlockNoteEditor } from "@blocknote/core";
-import { BlockNoteView, useBlockNote } from "@blocknote/react";
+import "@blocknote/core/fonts/inter.css";
+import { BlockNoteView, useCreateBlockNote } from "@blocknote/react";
+import "@blocknote/react/style.css";
 import * as Y from "yjs";
 import LiveblocksProvider from "@liveblocks/yjs";
 import { useRoom, useSelf } from "@/liveblocks.config";
@@ -46,7 +48,7 @@ function BlockNote({ doc, provider }: EditorProps) {
   // Get user info from Liveblocks authentication endpoint
   const userInfo = useSelf((me) => me.info);
 
-  const editor: BlockNoteEditor = useBlockNote({
+  const editor: BlockNoteEditor = useCreateBlockNote({
     collaboration: {
       provider,
 

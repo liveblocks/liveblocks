@@ -49,6 +49,12 @@ import { createRoomContext } from "@liveblocks/react";
 
 const client = createClient({
   // ...
+  resolveUsers({ userIds }) {
+    // ...
+  },
+  resolveMentionSuggestions({ text, roomId }) {
+    // ...
+  },
 });
 
 type Presence = {};
@@ -72,14 +78,7 @@ export const {
   UserMeta,
   RoomEvent,
   ThreadMetadata,
->(client, {
-  resolveUsers({ userIds }) {
-    // ...
-  },
-  resolveMentionSuggestions({ text, roomId }) {
-    // ...
-  },
-});
+>(client);
 ```
 
 ### Composer component

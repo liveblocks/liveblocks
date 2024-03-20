@@ -10,12 +10,12 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@blocknote/core": "^0.11.0",
-    "@blocknote/react": "^0.11.0",
-    "@liveblocks/client": "^1.4.2",
-    "@liveblocks/node": "^1.4.2",
-    "@liveblocks/react": "^1.4.2",
-    "@liveblocks/yjs": "^1.4.2",
+    "@blocknote/core": "^0.12.0",
+    "@blocknote/react": "^0.12.0",
+    "@liveblocks/client": "^1.10.0",
+    "@liveblocks/node": "^1.10.0",
+    "@liveblocks/react": "^1.10.0",
+    "@liveblocks/yjs": "^1.10.0",
     "@types/node": "20.3.1",
     "@types/react": "18.2.12",
     "@types/react-dom": "18.2.5",

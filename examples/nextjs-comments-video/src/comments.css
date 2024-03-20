@@ -1,5 +1,5 @@
 /* Liveblocks Comments */
-.lb-root, [data-theme="dark"] .lb-root {
+.lb-root {
   --lb-radius: var(--border-radius);
   --lb-spacing: var(--spacing);
   --lb-accent: var(--accent);
@@ -8,8 +8,10 @@
   --lb-accent-foreground: var(--accent-contrast);
   --lb-icon-weight: 1px;
   --lb-elevation-shadow: var(--shadow);
-  --lb-tooltip-background: var(--gray1);
-  --lb-tooltip-foreground: var(--gray12);
   --lb-foreground-contrast: 6%;
-  --lb-elevation-foreground-contrast: 6%;
+}
+
+.lb-tooltip {
+  --lb-background: var(--gray1);
+  --lb-foreground: var(--gray12);
 }

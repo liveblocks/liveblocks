@@ -16,9 +16,8 @@ it changes, and store it in your database.
 <Banner title="Public beta">
 
 Yjs support is currently in beta. If you have any questions or feedback, please
-reach out to us via the dedicated Discord channel,
-[#yjs-beta](https://discord.com/channels/913109211746009108/1123560088997728328).
-We’d love to hear from you.
+join us on our [Discord server](https://liveblocks.io/discord). We’d love to
+hear from you.
 
 </Banner>
 
@@ -93,8 +92,20 @@ is running:
 npx localtunnel --port 3000
 ```
 
-If you correctly input your IP address, the URL `localtunnel` generates can be
-placed into the Liveblocks webhooks dashboard for quick testing.
+`localtunnel` generates a base URL that can be placed into the Liveblocks
+webhooks dashboard for quick testing. To use this, take the full address of your
+webhook endpoint, and replace the domain in your `localhost` address with the
+generated URL.
+
+```shell
+# Take your local URL
+http://localhost:3000/api/liveblocks-database-sync
+
+# Replace localhost with the generated domain, then copy it
+https://my-localtunnel-url.loca.lt/api/liveblocks-database-sync
+```
+
+You now have a URL that can be used in the webhooks dashboard.
 
 ## Set up webhooks on the Liveblocks dashboard
 
@@ -358,7 +369,7 @@ We’re ready to set up our PlanetScale database! We’ll be creating a simple
     <StepContent>
       Navigate to PlanetScale’s [new database page](https://app.planetscale.com/new),
       give your database a name, and click “Create” at the bottom.
-      
+
       <Figure>
         <Image
           src="/assets/tutorials/webhooks/planetscale-create-db.png"
@@ -368,14 +379,15 @@ We’re ready to set up our PlanetScale database! We’ll be creating a simple
         />
       </Figure>
     </StepContent>
+
   </Step>
-  
+
   <Step>
     <StepTitle>Create a new branch</StepTitle>
     <StepContent>
       After the database has been created, click “New branch” at the top right to create
       a branch—this works like Git.
-      
+
       <Figure>
         <Image
           src="/assets/tutorials/webhooks/planetscale-create-new-branch.png"
@@ -385,20 +397,21 @@ We’re ready to set up our PlanetScale database! We’ll be creating a simple
         />
       </Figure>
     </StepContent>
+
   </Step>
-  
+
   <Step>
     <StepTitle>Set up your schema</StepTitle>
     <StepContent>
       Click “Console” at the top, select your branch, and enter the following to set up your table.
-      
+
       ```sql
       CREATE TABLE documents (
          roomId VARCHAR(255) PRIMARY KEY,
          yDocData TEXT NOT NULL
       );
       ```
-      
+
       <Figure>
         <Image
           src="/assets/tutorials/webhooks/planetscale-create-schema.png"
@@ -408,14 +421,15 @@ We’re ready to set up our PlanetScale database! We’ll be creating a simple
         />
       </Figure>
     </StepContent>
+
   </Step>
-  
+
   <Step>
     <StepTitle>Click “Connect”</StepTitle>
     <StepContent>
       After the database has been created, click “Connect” at the top right to create
       new credentials.
-      
+
       <Figure>
         <Image
           src="/assets/tutorials/webhooks/planetscale-connect.png"
@@ -425,13 +439,14 @@ We’re ready to set up our PlanetScale database! We’ll be creating a simple
         />
       </Figure>
     </StepContent>
+
   </Step>
 
   <Step>
     <StepTitle>Create credentials</StepTitle>
     <StepContent>
       Give your new credentials a name, then click “Create Password”.
-      
+
       <Figure>
         <Image
           src="/assets/tutorials/webhooks/planetscale-create-credentials.png"
@@ -441,13 +456,14 @@ We’re ready to set up our PlanetScale database! We’ll be creating a simple
         />
       </Figure>
     </StepContent>
+
   </Step>
-  
+
   <Step>
     <StepTitle>Add the credentials to your project</StepTitle>
     <StepContent>
     Select “Node.js” in the dropdown and copy the database URL (or add it as an environment variable).
-    
+
     <Figure>
       <Image
         src="/assets/tutorials/webhooks/planetscale-get-credentials.png"
@@ -457,16 +473,18 @@ We’re ready to set up our PlanetScale database! We’ll be creating a simple
       />
     </Figure>
     </StepContent>
+
   </Step>
-  
+
   <Step lastStep>
     <StepTitle>
       Database ready!
     </StepTitle>
-    
+
     <StepContent>
       Let’s take a look at the code.
     </StepContent>
+
   </Step>
 </Steps>
 

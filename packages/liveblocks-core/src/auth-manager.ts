@@ -17,15 +17,15 @@ export type RequestedScope = "room:read" | "comments:read";
 
 export type AuthManager = {
   reset(): void;
-  getAuthValue(
-    requestedScope: RequestedScope,
-    roomId: string
-  ): Promise<AuthValue>;
+  getAuthValue(requestOptions: {
+    requestedScope: RequestedScope;
+    roomId?: string;
+  }): Promise<AuthValue>;
 };
 
 type AuthEndpoint =
   | string
-  | ((room: string) => Promise<CustomAuthenticationResult>);
+  | ((room?: string) => Promise<CustomAuthenticationResult>);
 
 export type AuthenticationOptions = {
   polyfills?: Polyfills;
@@ -73,10 +73,10 @@ export function createAuthManager(
     return false;
   }
 
-  function getCachedToken(
-    requestedScope: RequestedScope,
-    roomId: string
-  ): ParsedAuthToken | undefined {
+  function getCachedToken(requestOptions: {
+    requestedScope: RequestedScope;
+    roomId?: string;
+  }): ParsedAuthToken | undefined {
     const now = Math.ceil(Date.now() / 1000);
 
     for (let i = tokens.length - 1; i >= 0; i--) {
@@ -95,22 +95,44 @@ export function createAuthManager(
         // When ID token method is used, only one token per user should be used and cached at the same time.
         return token;
       } else if (token.parsed.k === TokenKind.ACCESS_TOKEN) {
+        // In this version, we accept access tokens with zero permission when issuing token for resources outside a room.
+        if (
+          !requestOptions.roomId &&
+          Object.entries(token.parsed.perms).length === 0
+        ) {
+          return token;
+        }
+
         for (const [resource, scopes] of Object.entries(token.parsed.perms)) {
-          if (
+          // If the requester didn't pass a roomId,
+          // it means they need the token to access the user's resources (inbox notifications for example).
+          // We return any access token that contains a wildcard for the requested scope.
+          if (!requestOptions.roomId) {
+            if (
+              resource.includes("*") &&
+              hasCorrespondingScopes(requestOptions.requestedScope, scopes)
+            ) {
+              return token;
+            }
+          } else if (
             (resource.includes("*") &&
-              roomId.startsWith(resource.replace("*", ""))) ||
-            (roomId === resource &&
-              hasCorrespondingScopes(requestedScope, scopes))
+              requestOptions.roomId.startsWith(resource.replace("*", ""))) ||
+            (requestOptions.roomId === resource &&
+              hasCorrespondingScopes(requestOptions.requestedScope, scopes))
           ) {
             return token;
           }
         }
       }
     }
+
     return undefined;
   }
 
-  async function makeAuthRequest(roomId: string): Promise<ParsedAuthToken> {
+  async function makeAuthRequest(options: {
+    requestedScope: RequestedScope;
+    roomId?: string;
+  }): Promise<ParsedAuthToken> {
     const fetcher =
       authOptions.polyfills?.fetch ??
       (typeof window === "undefined" ? undefined : window.fetch);
@@ -123,9 +145,11 @@ export function createAuthManager(
       }
 
       const response = await fetchAuthEndpoint(fetcher, authentication.url, {
-        room: roomId,
+        room: options.roomId,
       });
       const parsed = parseAuthToken(response.token);
+
+      verifyTokenPermissions(parsed, options);
 
       if (seenTokens.has(parsed.raw)) {
         throw new StopRetrying(
@@ -137,10 +161,12 @@ export function createAuthManager(
     }
 
     if (authentication.type === "custom") {
-      const response = await authentication.callback(roomId);
+      const response = await authentication.callback(options.roomId);
       if (response && typeof response === "object") {
         if (typeof response.token === "string") {
-          return parseAuthToken(response.token);
+          const parsed = parseAuthToken(response.token);
+          verifyTokenPermissions(parsed, options);
+          return parsed;
         } else if (typeof response.error === "string") {
           const reason = `Authentication failed: ${
             "reason" in response && typeof response.reason === "string"
@@ -168,24 +194,69 @@ export function createAuthManager(
     );
   }
 
-  async function getAuthValue(
-    requestedScope: RequestedScope,
-    roomId: string
-  ): Promise<AuthValue> {
+  /**
+   * Throw an error and stops retrying if the issued token doesn't have enough
+   * permissions for the requested usage.
+   */
+  function verifyTokenPermissions(
+    parsedToken: ParsedAuthToken,
+    options: {
+      requestedScope: RequestedScope;
+      roomId?: string;
+    }
+  ) {
+    // If the requester didn't pass a roomId,
+    // it means they need the token to access the user's resources (inbox notifications for example).
+    // If the token is access token, it needs to have a wildcard permission (or to have zero permission).
+    if (!options.roomId && parsedToken.parsed.k === TokenKind.ACCESS_TOKEN) {
+      // In this version, we accept access tokens with zero permission when issuing token for resources outside a room.
+      if (Object.entries(parsedToken.parsed.perms).length === 0) {
+        return;
+      }
+      for (const [resource, scopes] of Object.entries(
+        parsedToken.parsed.perms
+      )) {
+        if (
+          resource.includes("*") &&
+          hasCorrespondingScopes(options.requestedScope, scopes)
+        ) {
+          return;
+        }
+      }
+      throw new StopRetrying(
+        "The issued access token doesn't grant enough permissions. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/access-tokens-not-enough-permissions"
+      );
+    }
+  }
+
+  async function getAuthValue(requestOptions: {
+    requestedScope: RequestedScope;
+    roomId?: string;
+  }): Promise<AuthValue> {
     if (authentication.type === "public") {
       return { type: "public", publicApiKey: authentication.publicApiKey };
     }
 
-    const cachedToken = getCachedToken(requestedScope, roomId);
+    const cachedToken = getCachedToken(requestOptions);
     if (cachedToken !== undefined) {
       return { type: "secret", token: cachedToken };
     }
 
-    let currentPromise = requestPromises.get(roomId);
-    if (currentPromise === undefined) {
-      currentPromise = makeAuthRequest(roomId);
-      requestPromises.set(roomId, currentPromise);
+    let currentPromise;
+    if (requestOptions.roomId) {
+      currentPromise = requestPromises.get(requestOptions.roomId);
+      if (currentPromise === undefined) {
+        currentPromise = makeAuthRequest(requestOptions);
+        requestPromises.set(requestOptions.roomId, currentPromise);
+      }
+    } else {
+      currentPromise = requestPromises.get("liveblocks-user-token");
+      if (currentPromise === undefined) {
+        currentPromise = makeAuthRequest(requestOptions);
+        requestPromises.set("liveblocks-user-token", currentPromise);
+      }
     }
+
     try {
       const token = await currentPromise;
       // Translate "server timestamps" to "local timestamps" in case clocks aren't in sync
@@ -205,7 +276,11 @@ export function createAuthManager(
 
       return { type: "secret", token };
     } finally {
-      requestPromises.delete(roomId);
+      if (requestOptions.roomId) {
+        requestPromises.delete(requestOptions.roomId);
+      } else {
+        requestPromises.delete("liveblocks-user-token");
+      }
     }
   }
 

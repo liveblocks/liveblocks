@@ -29,7 +29,16 @@ start building your own security logic.
       configure permission access in an `api/liveblocks-auth` endpoint by
       creating the `server/api/liveblocks-auth.ts` file with the
       following code. This is where you will implement your security and
-      define if the current user has access to a specific room.
+      define the rooms that the user has access to.
+
+The client will request a token either for a specific room, in which case the
+request body property room will be defined, or for resources outside a specific
+room (like notifications), in which case, `room` will be undefined.
+
+      See
+      [permissions with access token](/docs/rooms/permissions/access-token)
+      to understand how to grant access to multiple rooms with an access token.
+
 
       ```ts file="server/api/liveblocks-auth.ts"
       import { Liveblocks } from "@liveblocks/node";
@@ -48,10 +57,14 @@ start building your own security logic.
           { userInfo: user.metadata },  // Optional
         );
 
-        // Implement your own security, and give the user access to the room
-        const { room } = await readBody(event);
+        // Implement your own security, and give the user access to the room/organization.
+        // Note: Even if room is defined, we recommend to always use wildcards.
+        const { room } = request.body;
         if (room && __shouldUserHaveAccess__(user, room)) {
           session.allow(room, session.FULL_ACCESS);
+        }
+        else {
+          session.allow(`${user.organization}*`, session.READ_ACCESS)
         }
 
         // Authorize the user and return the result
@@ -113,7 +126,7 @@ start building your own security logic.
         },
       });
       ```
-      
+
     </StepContent>
 
   </Step>

@@ -56,9 +56,20 @@ stay online while your localhost server is running:
 npx localtunnel --port 3000
 ```
 
-Visit the URL that localtunnel creates, and correctly input your IP address as
-it requests. The URL `localtunnel` generates can be placed into the Liveblocks
-webhooks dashboard for quick testing.
+`localtunnel` generates a base URL that can be placed into the Liveblocks
+webhooks dashboard for quick testing. To use this, take the full address of your
+webhook endpoint, and replace the domain in your `localhost` address with the
+generated URL.
+
+```shell
+# Take your local URL
+http://localhost:3000/api/liveblocks-webhook
+
+# Replace localhost with the generated domain, then copy it
+https://my-localtunnel-url.loca.lt/api/liveblocks-webhook
+```
+
+You now have a URL that can be used in the webhooks dashboard.
 
 ### ngrok
 
@@ -72,13 +83,26 @@ your localhost server is running:
 ngrok http 3000
 ```
 
-The URL it generates can be placed into the Liveblocks webhooks dashboard for
-quick testing.
+`ngrok` generates a base URL that can be placed into the Liveblocks webhooks
+dashboard for quick testing. To use this, take the full address of your webhook
+endpoint, and replace the domain in your `localhost` address with the generated
+URL.
+
+```shell
+# Take your local URL
+http://localhost:3000/api/liveblocks-webhook
+
+# Replace localhost with the generated domain, then copy it
+https://my-localtunnel-url.loca.lt/api/liveblocks-webhook
+```
+
+You now have a URL that can be used in the webhooks dashboard.
 
 ## Set up webhooks on the Liveblocks dashboard
 
 To use webhooks, you need to pass your endpoint URL to the webhooks dashboard
-inside your Liveblocks project, and tell the webhook to trigger on any specific [webhook events](/docs/platform/webhooks#Liveblocks-events).
+inside your Liveblocks project, and tell the webhook to trigger on any specific
+[webhook events](/docs/platform/webhooks#Liveblocks-events).
 
 <Steps>
   <Step>
@@ -190,9 +214,8 @@ by creating a
 [`WebhookHandler`](/docs/api-reference/liveblocks-node#WebhookHandler) and
 running [`verifyRequest`](/docs/api-reference/liveblocks-node#verifyRequest).
 
-Make sure to add your "Webhook secret key" from the Liveblocks
-dashboard—in a real project we’d recommend using an environment variable for
-this.
+Make sure to add your "Webhook secret key" from the Liveblocks dashboard—in a
+real project we’d recommend using an environment variable for this.
 
 ```ts highlight="1,3-5,11-21"
 import { WebhookHandler } from "@liveblocks/node";

@@ -53,6 +53,10 @@ Your async function should return either of the following values:
 Any other error will be treated as an unexpected error, after which the client
 will retry making the request until it gets either (1) or (2).
 
+Note that when using Notifications, the parameter `room` can be undefined. This
+implies that the client is requesting a token that grants access to multiple
+rooms, rather than a specific room.
+
 You’re responsible for making the fetch to your own backend. Example
 implementation:
 
@@ -67,7 +71,9 @@ const client = createClient({
         Authentication: "<your own headers here>",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ room }), // Don't forget to pass `room` down
+      // Don't forget to pass `room` down,
+      // and note that in some cases, `room` can be undefined.
+      body: JSON.stringify({ room }),
     });
     return await response.json();
   },
@@ -201,6 +207,136 @@ const client = createClient({
 
 `backgroundKeepAliveTimeout` accepts a numeric value in milliseconds—we advise
 using a value of at least a few minutes, to avoid unnecessary disconnections.
+
+### resolveUsers
+
+<Banner title="Public beta">
+
+Comments is currently in beta. If you have any questions or feedback, please
+join us on our [Discord server](https://liveblocks.io/discord). We’d love to
+hear from you.
+
+</Banner>
+
+When using [Comments](/docs/products/comments), anything that is linked to a
+user (comments, mentions, etc.) will reference their ID. To display user
+information based on IDs, you can provide a resolver function to the
+`resolveUsers` option in [`createClient`](#createClient).
+
+This resolver function will receive a list of user IDs and should return a list
+of user objects of the same size and in the same order.
+
+```tsx
+import { createClient } from "@liveblocks/client";
+
+const client = createClient({
+  /* ... other options ... */
+  resolveUsers: async ({ userIds }) => {
+    const usersData = await __getUsersFromDB__(userIds);
+
+    return usersData.map((userData) => ({
+      name: userData.name,
+      avatar: userData.avatar.src,
+    }));
+  },
+});
+```
+
+<Banner title="User object">
+  The user object returned by the resolver function takes the shape of
+  `UserMeta["info"]`, which contains `name` and `avatar` (both optional) by
+  default. The [default
+  components](/docs/api-reference/liveblocks-react-comments#Components) look
+  specifically for the `name` and `avatar` properties to display user names and
+  avatars.
+</Banner>
+
+### resolveRoomsInfo
+
+<Banner title="Public beta">
+
+Comments is currently in beta. If you have any questions or feedback, please
+join us on our [Discord server](https://liveblocks.io/discord). We’d love to
+hear from you.
+
+</Banner>
+
+When using [Notifications](/docs/products/comments/notifications) with
+[Comments](/docs/products/comments), room IDs will be used to contextualize
+notifications (e.g. "Chris mentioned you in room-id"). To replace room IDs with
+more fitting names (e.g. document names, "Chris mentioned you in Document A"),
+you can provide a resolver function to the `resolveRoomsInfo` option in
+[`createClient`](#createClient).
+
+This resolver function will receive a list of room IDs and should return a list
+of room info objects of the same size and in the same order.
+
+```tsx
+import { createClient } from "@liveblocks/client";
+
+const client = createClient({
+  /* ... other options ... */
+  resolveRoomsInfo: async ({ roomIds }) => {
+    const documentsData = await __getDocumentsFromDB__(roomIds);
+
+    return documentsData.map((documentData) => ({
+      name: documentData.name,
+      // url: documentData.url,
+    }));
+  },
+});
+```
+
+In addition to the room’s name, you can also provide a room’s URL as the `url`
+property. If you do so, the
+[`InboxNotification`](/docs/api-reference/liveblocks-react-comments#InboxNotification)
+component will automatically use it. It’s possible to use an inbox
+notification’s `roomId` property to construct a room’s URL directly in React and
+set it on
+[`InboxNotification`](/docs/api-reference/liveblocks-react-comments#InboxNotification)
+via `href`, but the room ID might not be enough for you to construct the URL ,
+you might need to call your backend for example. In that case, providing it via
+`resolveRoomsInfo` is the preferred way.
+
+### resolveMentionSuggestions
+
+<Banner title="Public beta">
+
+Comments is currently in beta. If you have any questions or feedback, please
+join us on our [Discord server](https://liveblocks.io/discord). We’d love to
+hear from you.
+
+</Banner>
+
+To enable creating mentions in [Comments](/docs/products/comments), you can
+provide a resolver function to the `resolveMentionSuggestions` option in
+[`createClient`](#createClient).
+
+This resolver function will receive the mention currently being written (e.g.
+when writing “@jane”, `text` will be `jane`) and should return a list of user
+IDs matching that text. This function will be called every time the text changes
+but with some debouncing.
+
+```tsx
+import { createClient } from "@liveblocks/client";
+
+const client = createClient({
+  /* ... other options ... */
+  resolveMentionSuggestions: async ({ text, roomId }) => {
+    const workspaceUsers = await __getWorkspaceUsersFromDB__(roomId);
+
+    if (!text) {
+      // Show all workspace users by default
+
+      return __getUserIds__(workspaceUsers);
+    } else {
+      const matchingUsers = __findUsers__(workspaceUsers, text);
+
+      return __getUserIds__(matchingUsers);
+    }
+  },
+});
+```
 
 ## Client
 

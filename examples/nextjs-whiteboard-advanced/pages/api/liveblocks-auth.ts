@@ -19,5 +19,5 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   session.allow(req.body.room, session.FULL_ACCESS);
 
   const { status, body } = await session.authorize();
-  return res.status(status).end(body);
+  res.status(status).end(body);
 }

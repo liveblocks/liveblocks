@@ -28,26 +28,25 @@ export function getMentionDraftAtSelection(
     return;
   }
 
-  const match = getMatchRange(editor, selection, [MENTION_CHARACTER]);
+  // Match the word at the current selection by walking back
+  // until a whitespace character is found
+  const match = getMatchRange(editor, selection);
 
   if (!match) {
     return;
   }
 
-  const mentionCharacter = getCharacterBefore(editor, match);
+  const matchText = SlateEditor.string(editor, match);
 
-  // Check if the match is preceded by the mention character
-  if (!mentionCharacter || mentionCharacter.text !== MENTION_CHARACTER) {
+  // Check if the match starts with the mention character
+  if (!matchText.startsWith(MENTION_CHARACTER)) {
     return;
   }
 
   return {
-    range: SlateEditor.range(
-      editor,
-      mentionCharacter.range,
-      SlateRange.end(match)
-    ),
-    text: SlateEditor.string(editor, match),
+    range: match,
+    // Exclude the mention character from the text
+    text: matchText.substring(1),
   };
 }
 

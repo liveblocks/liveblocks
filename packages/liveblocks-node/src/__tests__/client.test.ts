@@ -1,13 +1,16 @@
 import type {
   CommentData,
   CommentUserReaction,
+  RoomNotificationSettings,
   ThreadData,
 } from "@liveblocks/core";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
 import { Liveblocks, LiveblocksError } from "../client";
-import { DEFAULT_BASE_URL } from "../utils";
+import { getBaseUrl } from "../utils";
+
+const DEFAULT_BASE_URL = getBaseUrl();
 
 describe("client", () => {
   const room = {
@@ -572,5 +575,289 @@ describe("client", () => {
     await expect(
       client.sendYjsBinaryUpdate("roomId", update)
     ).resolves.not.toThrow();
+  });
+
+  test("should return the specified inbox notification when getInboxNotification receives a successful response", async () => {
+    const userId = "user1";
+    const inboxNotificationId = "notification1";
+
+    const notification = {
+      id: inboxNotificationId,
+      kind: "thread",
+      notifiedAt: new Date().toISOString(),
+      readAt: null,
+      threadId: "thread1",
+    };
+
+    server.use(
+      http.get(
+        `${DEFAULT_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
+        () => {
+          return HttpResponse.json(notification, { status: 200 });
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    await expect(
+      client.getInboxNotification({
+        userId,
+        inboxNotificationId,
+      })
+    ).resolves.toEqual({
+      ...notification,
+      notifiedAt: new Date(notification.notifiedAt),
+      readAt: notification.readAt ? new Date(notification.readAt) : null,
+    });
+  });
+
+  test("should throw a LiveblocksError when getInboxNotification receives an error response", async () => {
+    const userId = "user1";
+    const inboxNotificationId = "notification1";
+
+    const error = {
+      error: "INBOX_NOTIFICATION_NOT_FOUND",
+      message: "Inbox notification not found",
+    };
+
+    server.use(
+      http.get(
+        `${DEFAULT_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
+        () => {
+          return HttpResponse.json(error, { status: 404 });
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    // This should throw a LiveblocksError
+    try {
+      // Attempt to get, which should fail and throw an error.
+      await client.getInboxNotification({
+        userId,
+        inboxNotificationId,
+      });
+      // If it doesn't throw, fail the test.
+      expect(true).toBe(false);
+    } catch (err) {
+      expect(err instanceof LiveblocksError).toBe(true);
+      if (err instanceof LiveblocksError) {
+        expect(err.status).toBe(404);
+        expect(err.message).toBe(JSON.stringify(error));
+        expect(err.name).toBe("LiveblocksError");
+      }
+    }
+  });
+
+  test("should get user's room notification settings", async () => {
+    const userId = "user1";
+    const roomId = "room1";
+
+    const settings = {
+      threads: "all",
+    };
+
+    server.use(
+      http.get(
+        `${DEFAULT_BASE_URL}/v2/rooms/:roomId/users/:userId/notification-settings`,
+        () => {
+          return HttpResponse.json(settings, { status: 200 });
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    await expect(
+      client.getRoomNotificationSettings({
+        userId,
+        roomId,
+      })
+    ).resolves.toEqual(settings);
+  });
+
+  test("should throw a LiveblocksError when getRoomNotificationSettings receives an error response", async () => {
+    const userId = "user1";
+    const roomId = "room1";
+
+    const error = {
+      error: "ROOM_NOT_FOUND",
+      message: "Room not found",
+    };
+
+    server.use(
+      http.get(
+        `${DEFAULT_BASE_URL}/v2/rooms/:roomId/users/:userId/notification-settings`,
+        () => {
+          return HttpResponse.json(error, { status: 404 });
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    // This should throw a LiveblocksError
+    try {
+      // Attempt to get, which should fail and throw an error.
+      await client.getRoomNotificationSettings({
+        userId,
+        roomId,
+      });
+      // If it doesn't throw, fail the test.
+      expect(true).toBe(false);
+    } catch (err) {
+      expect(err instanceof LiveblocksError).toBe(true);
+      if (err instanceof LiveblocksError) {
+        expect(err.status).toBe(404);
+        expect(err.message).toBe(JSON.stringify(error));
+        expect(err.name).toBe("LiveblocksError");
+      }
+    }
+  });
+
+  test("should update user's room notification settings", async () => {
+    const userId = "user1";
+    const roomId = "room1";
+    const settings: RoomNotificationSettings = {
+      threads: "all",
+    };
+
+    server.use(
+      http.post(
+        `${DEFAULT_BASE_URL}/v2/rooms/:roomId/users/:userId/notification-settings`,
+        async ({ request }) => {
+          const data = await request.json();
+
+          if (JSON.stringify(data) === JSON.stringify(settings)) {
+            return HttpResponse.json(settings, { status: 200 });
+          }
+
+          return HttpResponse.error();
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    await expect(
+      client.updateRoomNotificationSettings({
+        userId,
+        roomId,
+        data: settings,
+      })
+    ).resolves.toEqual(settings);
+  });
+
+  test("should throw a LiveblocksError when updateRoomNotificationSettings receives an error response", async () => {
+    const userId = "user1";
+    const roomId = "room1";
+    const settings: RoomNotificationSettings = {
+      threads: "all",
+    };
+
+    const error = {
+      error: "ROOM_NOT_FOUND",
+      message: "Room not found",
+    };
+
+    server.use(
+      http.post(
+        `${DEFAULT_BASE_URL}/v2/rooms/:roomId/users/:userId/notification-settings`,
+        async ({ request }) => {
+          const data = await request.json();
+
+          if (JSON.stringify(data) === JSON.stringify(settings)) {
+            return HttpResponse.json(error, { status: 404 });
+          }
+
+          return HttpResponse.error();
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    // This should throw a LiveblocksError
+    try {
+      // Attempt to get, which should fail and throw an error.
+      await client.updateRoomNotificationSettings({
+        userId,
+        roomId,
+        data: settings,
+      });
+      // If it doesn't throw, fail the test.
+      expect(true).toBe(false);
+    } catch (err) {
+      expect(err instanceof LiveblocksError).toBe(true);
+      if (err instanceof LiveblocksError) {
+        expect(err.status).toBe(404);
+        expect(err.message).toBe(JSON.stringify(error));
+        expect(err.name).toBe("LiveblocksError");
+      }
+    }
+  });
+
+  test("should delete user's room notification settings", async () => {
+    const userId = "user1";
+    const roomId = "room1";
+
+    server.use(
+      http.delete(
+        `${DEFAULT_BASE_URL}/v2/rooms/:roomId/users/:userId/notification-settings`,
+        () => {
+          return HttpResponse.json(undefined, { status: 204 });
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    await expect(
+      client.deleteRoomNotificationSettings({
+        userId,
+        roomId,
+      })
+    ).resolves.toBeUndefined();
+  });
+
+  test("should throw a LiveblocksError when deleteRoomNotificationSettings receives an error response", async () => {
+    const userId = "user1";
+    const roomId = "room1";
+
+    const error = {
+      error: "ROOM_NOT_FOUND",
+      message: "Room not found",
+    };
+
+    server.use(
+      http.delete(
+        `${DEFAULT_BASE_URL}/v2/rooms/:roomId/users/:userId/notification-settings`,
+        () => {
+          return HttpResponse.json(error, { status: 404 });
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    // This should throw a LiveblocksError
+    try {
+      // Attempt to get, which should fail and throw an error.
+      await client.deleteRoomNotificationSettings({
+        userId,
+        roomId,
+      });
+      // If it doesn't throw, fail the test.
+      expect(true).toBe(false);
+    } catch (err) {
+      expect(err instanceof LiveblocksError).toBe(true);
+      if (err instanceof LiveblocksError) {
+        expect(err.status).toBe(404);
+        expect(err.message).toBe(JSON.stringify(error));
+        expect(err.name).toBe("LiveblocksError");
+      }
+    }
   });
 });
