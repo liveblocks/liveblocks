@@ -12,13 +12,16 @@ import {
 } from "../../liveblocks.config";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { Loading } from "./Loading";
-import { ComponentPropsWithoutRef, useEffect, useState } from "react";
+import { ComponentPropsWithoutRef, useCallback, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import clsx from "clsx";
 import { Link } from "./Link";
-import { usePathname } from "next/navigation";
 
-function Inbox({ className, ...props }: ComponentPropsWithoutRef<"ol">) {
+interface InboxProps extends ComponentPropsWithoutRef<"ol"> {
+  onNotificationClick?: () => void;
+}
+
+function Inbox({ className, onNotificationClick, ...props }: InboxProps) {
   const { inboxNotifications } = useInboxNotifications();
 
   return inboxNotifications.length === 0 ? (
@@ -31,6 +34,7 @@ function Inbox({ className, ...props }: ComponentPropsWithoutRef<"ol">) {
             key={inboxNotification.id}
             inboxNotification={inboxNotification}
             components={{ Anchor: Link }}
+            onClick={onNotificationClick}
           />
         );
       })}
@@ -48,14 +52,12 @@ export function InboxPopover({
   className,
   ...props
 }: Popover.PopoverContentProps) {
-  const pathname = usePathname();
   const [isOpen, setOpen] = useState(false);
   const markAllInboxNotificationsAsRead = useMarkAllInboxNotificationsAsRead();
 
-  // Close the popover when navigating
-  useEffect(() => {
+  const closePopover = useCallback(() => {
     setOpen(false);
-  }, [pathname]);
+  }, []);
 
   return (
     <Popover.Root open={isOpen} onOpenChange={setOpen}>
@@ -109,7 +111,7 @@ export function InboxPopover({
             }
           >
             <ClientSideSuspense fallback={<Loading />}>
-              {() => <Inbox />}
+              {() => <Inbox onNotificationClick={closePopover} />}
             </ClientSideSuspense>
           </ErrorBoundary>
         </Popover.Content>

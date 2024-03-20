@@ -174,7 +174,7 @@ body {
 
 .threads {
   width: 100%;
-  max-width: 680px;
+  max-width: 620px;
   min-height: 100%;
   margin: 0 auto;
   display: flex;
