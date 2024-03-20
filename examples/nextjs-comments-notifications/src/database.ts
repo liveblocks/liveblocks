@@ -1,5 +1,5 @@
 import { Room, User } from "../liveblocks.config";
-import { createExampleRoomId } from "./example";
+import { capitalize, createExampleRoomId } from "./example";
 
 const USERS: User[] = [
   {
@@ -21,7 +21,7 @@ const USERS: User[] = [
 const ROOMS: Room[] = ["general", "engineering", "design"].map((room) => ({
   id: createExampleRoomId(room),
   info: {
-    name: room,
+    name: capitalize(room),
     url: `/${room}`,
   },
 }));

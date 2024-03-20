@@ -101,3 +101,7 @@ export function setQueryParams(
     ? absoluteUrl.href
     : absoluteUrl.href.replace(PLACEHOLDER_BASE_URL, "");
 }
+
+export function capitalize(string: string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}

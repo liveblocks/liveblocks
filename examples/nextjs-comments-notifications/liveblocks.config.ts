@@ -79,6 +79,7 @@ const {
   suspense: {
     LiveblocksProvider,
     useUser,
+    useRoomInfo,
     useInboxNotifications,
     useUnreadInboxNotificationsCount,
     useMarkAllInboxNotificationsAsRead,
@@ -90,6 +91,7 @@ export {
   LiveblocksProvider,
   useUser,
   useThreads,
+  useRoomInfo,
   useInboxNotifications,
   useUnreadInboxNotificationsCount,
   useMarkAllInboxNotificationsAsRead,

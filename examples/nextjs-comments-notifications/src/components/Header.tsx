@@ -1,12 +1,41 @@
+"use client";
+
 import clsx from "clsx";
-import { ComponentProps } from "react";
+import { ComponentProps, Suspense, useMemo } from "react";
+import { usePathname } from "next/navigation";
+import { ErrorBoundary } from "react-error-boundary";
 import { InboxPopover } from "./InboxPopover";
 import { User } from "./User";
+import { useRoomInfo } from "../../liveblocks.config";
+import { useExampleRoomId } from "../example";
+
+interface TitleRoomProps extends ComponentProps<"div"> {
+  room: string;
+}
+
+function TitleRoom({ room, ...props }: TitleRoomProps) {
+  const roomId = useExampleRoomId(room);
+  const { info } = useRoomInfo(roomId);
+
+  return <div {...props}>{info.name}</div>;
+}
 
 export function Header({ className, ...props }: ComponentProps<"header">) {
+  const pathname = usePathname();
+  const room = useMemo(() => pathname.substring(1), [pathname]);
+
   return (
     <header className={clsx(className, "header")} {...props}>
       <User />
+      {room ? (
+        <ErrorBoundary fallback={null}>
+          <Suspense fallback={null}>
+            <TitleRoom className="header-title" room={room} />
+          </Suspense>
+        </ErrorBoundary>
+      ) : (
+        <div className="header-title">Home</div>
+      )}
       <InboxPopover />
     </header>
   );
