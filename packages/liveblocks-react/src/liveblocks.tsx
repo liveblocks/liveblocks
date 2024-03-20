@@ -57,7 +57,7 @@ export const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
 export function createLiveblocksContext<
   TUserMeta extends BaseUserMeta = BaseUserMeta,
   TThreadMetadata extends BaseMetadata = never,
->(client: Client<TUserMeta>): LiveblocksContextBundle<TUserMeta> {
+>(client: Client): LiveblocksContextBundle<TUserMeta> {
   const shared = createSharedContext<TUserMeta>(client);
 
   const store = client[kInternal]
