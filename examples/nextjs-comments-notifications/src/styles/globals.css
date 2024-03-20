@@ -3,7 +3,7 @@
 html {
   --accent: #44f;
   --header-height: 60px;
-  --sidebar-width: 300px;
+  --sidebar-width: 260px;
 
   background: #f3f3f3;
   font-family:
@@ -35,6 +35,10 @@ body {
   --lb-accent: var(--accent);
 }
 
+.lb-comment {
+  scroll-margin-top: calc(var(--header-height) + 1rem);
+}
+
 .avatar {
   background: #f3f3f3;
   width: 2rem;
@@ -64,6 +68,10 @@ body {
     0 0 0 1px rgb(0 0 0 / 4%),
     0 2px 6px rgb(0 0 0 / 4%),
     0 8px 26px rgb(0 0 0 / 6%);
+}
+
+.header-title {
+  font-weight: 500;
 }
 
 .sidebar {
@@ -155,6 +163,7 @@ body {
   place-items: center;
   padding: 1rem;
   flex: 1 0 auto;
+  color: #555;
 }
 
 .loading img {
@@ -194,6 +203,7 @@ body {
   background: #fff;
   width: 460px;
   height: 560px;
+  max-height: calc(100vh - var(--header-height) - 10px);
   display: flex;
   flex-direction: column;
   outline: none;
