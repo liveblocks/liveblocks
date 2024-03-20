@@ -1,5 +1,5 @@
 import { getDocument } from "@/libnew/getDocument";
-import { WhiteboardDocumentView } from "./WhiteboardDocumentView";
+import { TextDocumentView } from "./TextDocumentView";
 
 export default async function Whiteboard({
   params: { id },
@@ -9,5 +9,5 @@ export default async function Whiteboard({
   const document = await getDocument({ documentId: id });
   const { data = null, error = null } = document;
 
-  return <WhiteboardDocumentView initialDocument={data} initialError={error} />;
+  return <TextDocumentView initialDocument={data} initialError={error} />;
 }

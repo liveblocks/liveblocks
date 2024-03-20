@@ -4,7 +4,7 @@ import { LiveMap } from "@liveblocks/client";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { DocumentHeader, DocumentHeaderSkeleton } from "@/components/Document";
-import { Whiteboard } from "@/components/Whiteboard";
+import { TextEditor } from "@/components/TextEditor";
 import { DocumentLayout } from "@/layouts/Document";
 import { ErrorLayout } from "@/layouts/Error";
 import { InitialDocumentProvider } from "@/lib/client";
@@ -16,10 +16,7 @@ type Props = {
   initialError: ErrorData | null;
 };
 
-export function WhiteboardDocumentView({
-  initialDocument,
-  initialError,
-}: Props) {
+export function TextDocumentView({ initialDocument, initialError }: Props) {
   const { id, error: queryError } = useParams<{ id: string; error: string }>();
   const [error, setError] = useState<ErrorData | null>(initialError);
 
@@ -48,7 +45,7 @@ export function WhiteboardDocumentView({
         <DocumentLayout
           header={<DocumentHeader documentId={initialDocument.id} />}
         >
-          <Whiteboard />
+          <TextEditor />
         </DocumentLayout>
       </InitialDocumentProvider>
     </RoomProvider>
