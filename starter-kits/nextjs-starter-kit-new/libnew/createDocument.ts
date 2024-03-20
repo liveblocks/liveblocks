@@ -92,7 +92,8 @@ export async function createDocument(
   const document: Document = buildDocument(room);
 
   if (redirectToDocument) {
-    redirect(DOCUMENT_URL(document.type, document.id));
+    // Has to return `undefined`
+    return redirect(DOCUMENT_URL(document.type, document.id));
   }
 
   return { data: document };

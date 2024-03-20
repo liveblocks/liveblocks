@@ -1,4 +1,4 @@
-import { ComponentProps } from "react";
+import { ComponentProps, useState } from "react";
 import { PlusIcon } from "@/icons";
 import { createDocument } from "@/libnew/createDocument";
 import { Button } from "@/primitives/Button";
@@ -20,9 +20,12 @@ export function DocumentCreatePopover({
   children,
   ...props
 }: Props) {
+  const [disableButtons, setDisableButtons] = useState(false);
+
   // Create a new document, then navigate to the document's URL location
   async function createNewDocument(name: string, type: DocumentType) {
-    const { data, error } = await createDocument(
+    setDisableButtons(true);
+    const result = await createDocument(
       {
         name,
         type,
@@ -33,7 +36,9 @@ export function DocumentCreatePopover({
       true
     );
 
-    if (error || !data) {
+    // If this runs, there's an error and the redirect failed
+    if (!result || result?.error || !result.data) {
+      setDisableButtons(false);
       return;
     }
   }
@@ -48,6 +53,7 @@ export function DocumentCreatePopover({
               createNewDocument("Untitled", "text");
             }}
             variant="subtle"
+            disabled={disableButtons}
           >
             Text
           </Button>
@@ -57,6 +63,7 @@ export function DocumentCreatePopover({
               createNewDocument("Untitled", "whiteboard");
             }}
             variant="subtle"
+            disabled={disableButtons}
           >
             Whiteboard
           </Button>
