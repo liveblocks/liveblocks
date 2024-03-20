@@ -16,6 +16,8 @@
   `undefined` will now be treated as an error.
 - Fix bug where `useUser` and `useRoomInfo` returned an extra `data` superfluous
   property.
+- Fix bug where customizing types on `createLiveblocksContext` would conflict
+  with the provided `Client`.
 
 ### `@liveblocks/react-comments`
 
