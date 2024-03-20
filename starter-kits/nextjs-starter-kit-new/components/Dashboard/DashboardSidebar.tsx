@@ -48,6 +48,9 @@ function SidebarLink({
 }
 
 export function DashboardSidebar({ className, groups, ...props }: Props) {
+  // TODO fix
+  return <div>sidebar</div>;
+
   return (
     <div className={clsx(className, styles.sidebar)} {...props}>
       <nav className={styles.navigation}>

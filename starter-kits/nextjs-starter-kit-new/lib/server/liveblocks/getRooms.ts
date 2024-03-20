@@ -1,8 +1,8 @@
 import { FetchApiResult, GetRoomsResponse, RoomMetadata } from "../../../types";
 import { fetchLiveblocksApi } from "../utils";
 
-interface Props {
-  groupIds?: string[] | string;
+export interface GetRoomsProps {
+  groupIds?: string[];
   limit?: number;
   metadata?: RoomMetadata;
   startingAfter?: string;
@@ -27,7 +27,7 @@ export async function getRooms({
   userId,
   groupIds,
   metadata,
-}: Props): Promise<FetchApiResult<GetRoomsResponse>> {
+}: GetRoomsProps): Promise<FetchApiResult<GetRoomsResponse>> {
   let url = `/v2/rooms?`;
 
   if (limit) {

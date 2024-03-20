@@ -13,7 +13,7 @@ import { Room, RoomActiveUser } from "./room";
 
 export type GetDocumentsResponse = {
   documents: Document[];
-  nextPage: string | null;
+  nextCursor: string | null;
 };
 
 export type GetStorageResponse = Record<string, unknown>;

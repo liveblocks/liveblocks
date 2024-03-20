@@ -1,5 +1,5 @@
+import { RoomMetadata } from "@/types/room";
 import { Group, User } from "./data";
-import { RoomMetadata } from "./room";
 
 /**
  * This is the main type of your Documents.

@@ -1,3 +1,4 @@
+import { RoomUser } from "@liveblocks/node";
 import { UserInfo } from "../liveblocks.config";
 import { DocumentRoomMetadata } from "./document";
 
@@ -34,9 +35,4 @@ export type RoomMetadata = Record<string, string | string[]>;
 
 export type RoomAccesses = Record<string, RoomAccess[] | null>;
 
-export type RoomActiveUser = {
-  type: "user";
-  id: string;
-  connectionId: number;
-  info: UserInfo;
-};
+export type RoomActiveUser = RoomUser<UserInfo>;

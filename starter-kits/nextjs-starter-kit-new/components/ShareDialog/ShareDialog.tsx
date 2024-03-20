@@ -2,7 +2,10 @@ import * as Tabs from "@radix-ui/react-tabs";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
 import { ComponentProps, useCallback, useEffect, useState } from "react";
-import { UserIcon, UsersIcon } from "../../icons";
+import { UserIcon, UsersIcon } from "@/icons";
+import { useBroadcastEvent, useEventListener } from "@/liveblocks.config";
+import { Dialog } from "@/primitives/Dialog";
+import { DocumentAccess } from "@/types";
 import {
   getDocument,
   getDocumentAccess,
@@ -11,9 +14,6 @@ import {
   useDocumentsFunctionSWR,
   useInitialDocument,
 } from "../../lib/client";
-import { useBroadcastEvent, useEventListener } from "../../liveblocks.config";
-import { Dialog } from "../../primitives/Dialog";
-import { DocumentAccess } from "../../types";
 import { ShareDialogDefault } from "./ShareDialogDefault";
 import { ShareDialogGroups } from "./ShareDialogGroups";
 import { ShareDialogInviteGroup } from "./ShareDialogInviteGroup";
@@ -24,6 +24,9 @@ import styles from "./ShareDialog.module.css";
 type Props = Omit<ComponentProps<typeof Dialog>, "content" | "title">;
 
 export function ShareDialog({ children, ...props }: Props) {
+  // TODO put share dialog back
+  return null;
+
   const { id: documentId, accesses: documentAccesses } = useInitialDocument();
   const router = useRouter();
 

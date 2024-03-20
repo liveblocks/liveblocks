@@ -1,16 +1,9 @@
-import { useRouter } from "next/router";
 import { ComponentProps } from "react";
-import { DOCUMENT_URL } from "../../constants";
-import { PlusIcon } from "../../icons";
-import { createDocument } from "../../lib/client";
-import { Button } from "../../primitives/Button";
-import { Popover } from "../../primitives/Popover";
-import {
-  Document,
-  DocumentGroup,
-  DocumentType,
-  DocumentUser,
-} from "../../types";
+import { PlusIcon } from "@/icons";
+import { createDocument } from "@/libnew/createDocument";
+import { Button } from "@/primitives/Button";
+import { Popover } from "@/primitives/Popover";
+import { Document, DocumentGroup, DocumentType, DocumentUser } from "@/types";
 import styles from "./DocumentCreatePopover.module.css";
 
 interface Props extends Omit<ComponentProps<typeof Popover>, "content"> {
@@ -21,31 +14,28 @@ interface Props extends Omit<ComponentProps<typeof Popover>, "content"> {
 }
 
 export function DocumentCreatePopover({
-  documentName = "Untitled",
   groupIds,
   userId,
   draft,
   children,
   ...props
 }: Props) {
-  const router = useRouter();
-
   // Create a new document, then navigate to the document's URL location
   async function createNewDocument(name: string, type: DocumentType) {
-    const { data, error } = await createDocument({
-      name: documentName,
-      type: type,
-      userId: userId,
-      draft: draft,
-      groupIds: draft ? undefined : groupIds,
-    });
+    const { data, error } = await createDocument(
+      {
+        name,
+        type,
+        userId,
+        draft,
+        groupIds: draft ? undefined : groupIds,
+      },
+      true
+    );
 
     if (error || !data) {
       return;
     }
-
-    const newDocument: Document = data;
-    router.push(DOCUMENT_URL(newDocument.type, newDocument.id));
   }
 
   return (
@@ -55,7 +45,7 @@ export function DocumentCreatePopover({
           <Button
             icon={<PlusIcon />}
             onClick={() => {
-              createNewDocument(documentName, "text");
+              createNewDocument("Untitled", "text");
             }}
             variant="subtle"
           >
@@ -64,7 +54,7 @@ export function DocumentCreatePopover({
           <Button
             icon={<PlusIcon />}
             onClick={() => {
-              createNewDocument(documentName, "whiteboard");
+              createNewDocument("Untitled", "whiteboard");
             }}
             variant="subtle"
           >
@@ -74,7 +64,7 @@ export function DocumentCreatePopover({
             disabled
             icon={<PlusIcon />}
             onClick={() => {
-              createNewDocument(documentName, "spreadsheet");
+              createNewDocument("Untitled", "spreadsheet");
             }}
             variant="subtle"
           >

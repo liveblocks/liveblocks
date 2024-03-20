@@ -6,6 +6,7 @@ import {
 } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 import Router from "next/router";
+import { authorizeLiveblocks } from "@/libnew/authorizeLiveblocks";
 import { getUsers } from "./lib/client";
 import { User } from "./types";
 
@@ -16,37 +17,23 @@ export const ENDPOINT_BASE_URL = "/api/liveblocks";
 // In this API we'll assign each user custom data, such as names, avatars
 // If any client side data is needed to get user info from your system,
 // (e.g. auth token, user id) send it in the body alongside `room`.
+// TODO change comment below
 // Check inside `/pages/${ENDPOINT_BASE_URL}/auth` for the endpoint
 const client = createClient({
   authEndpoint: async (roomId: string) => {
-    const payload = {
-      roomId,
-    };
+    const { data, error } = await authorizeLiveblocks(roomId);
 
-    // Call auth API route to get Liveblocks access token
-    const response = await fetch(ENDPOINT_BASE_URL + "/liveblocks-auth", {
-      method: "POST",
-      headers: {
-        Authentication: "token",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-    const result = await response.json();
-
-    // If auth not successful, add stringified error object to current URL params
-    if (!response.ok) {
+    if (error) {
       Router.push({
         query: {
           ...Router.query,
-          error: encodeURIComponent(JSON.stringify(result.error)),
+          error: encodeURIComponent(JSON.stringify(error)),
         },
       });
       return;
     }
 
-    // Return token
-    return result;
+    return data;
   },
 });
 

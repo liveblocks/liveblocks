@@ -1,3 +1,5 @@
+"use client";
+
 import clsx from "clsx";
 import Link from "next/link";
 import { ComponentProps, ReactNode, forwardRef } from "react";

@@ -67,7 +67,7 @@ export type RemoveUserAccessProps = {
 export type GetDocumentsProps = {
   groupIds?: DocumentGroup["id"][];
   userId?: DocumentUser["id"];
-  documentType?: DocumentType;
+  documentType: DocumentType;
   drafts?: boolean;
   limit?: number;
 };
@@ -77,7 +77,7 @@ export type GetLiveUsersProps = {
 };
 
 export type GetNextDocumentsProps = {
-  nextPage: string;
+  nextCursor: string;
 };
 
 export type DeleteDocumentProps = {

@@ -1,24 +1,26 @@
+"use client";
+
 import clsx from "clsx";
 import { useSession } from "next-auth/react";
 import { ComponentProps, useMemo, useState } from "react";
 import {
   DocumentCreatePopover,
   DocumentRowSkeleton,
-} from "../../components/Documents";
-import { DocumentRowGroup } from "../../components/Documents/DocumentRowGroup";
-import { PlusIcon } from "../../icons";
-import { usePaginatedDocumentsSWR } from "../../lib/client";
-import { Button } from "../../primitives/Button";
-import { Container } from "../../primitives/Container";
-import { Select } from "../../primitives/Select";
-import { Spinner } from "../../primitives/Spinner";
+} from "@/components/Documents";
+import { DocumentRowGroup } from "@/components/Documents/DocumentRowGroup";
+import { PlusIcon } from "@/icons";
+import { usePaginatedDocumentsSWR } from "@/libnew/usePaginatedDocumentsSWR";
+import { Button } from "@/primitives/Button";
+import { Container } from "@/primitives/Container";
+import { Select } from "@/primitives/Select";
+import { Spinner } from "@/primitives/Spinner";
 import {
   DocumentType,
   GetDocumentsProps,
   GetDocumentsResponse,
   Group,
-} from "../../types";
-import { capitalize } from "../../utils";
+} from "@/types";
+import { capitalize } from "@/utils";
 import styles from "./Documents.module.css";
 
 // Load `x` documents at a time
@@ -139,7 +141,7 @@ export function DocumentsLayout({
             initialValue="all"
             items={[
               { value: "all", title: "All" },
-              { value: "text", title: "Text", disabled: true },
+              { value: "text", title: "Text" },
               { value: "whiteboard", title: "Whiteboard" },
               { value: "spreadsheet", title: "Spreadsheet", disabled: true },
             ]}
@@ -159,7 +161,7 @@ export function DocumentsLayout({
             <>
               {documentsPages.map((documentPage) => (
                 <DocumentRowGroup
-                  key={documentPage.nextPage}
+                  key={documentPage.nextCursor}
                   documents={documentPage.documents}
                   revalidateDocuments={revalidateDocuments}
                 />
