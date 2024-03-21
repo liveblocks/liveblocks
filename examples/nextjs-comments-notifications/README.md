@@ -22,7 +22,7 @@
 
 This example shows how to build a notification inbox for comments with [Liveblocks](https://liveblocks.io) and [Next.js](https://nextjs.org/).
 
-<!-- TODO: <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/comments-notifications.png" width="536" alt="Comments Notifications" /> -->
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/comments-notifications.png" width="536" alt="Comments Notifications" />
 
 ## Getting started
 
