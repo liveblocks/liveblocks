@@ -14,7 +14,7 @@ export const client = createClient({
     const response = await fetch(`/api/users?${searchParams}`);
 
     if (!response.ok) {
-      throw new Error("Problem resolving user");
+      throw new Error("Problem resolving users");
     }
 
     const users = await response.json();
@@ -28,7 +28,7 @@ export const client = createClient({
     );
 
     if (!response.ok) {
-      throw new Error("Problem resolving user");
+      throw new Error("Problem resolving mention suggestions");
     }
 
     const userIds = await response.json();

@@ -11,29 +11,28 @@ export const client = createClient({
     const searchParams = new URLSearchParams(
       userIds.map((userId) => ["userIds", userId])
     );
+    const response = await fetch(`/api/users?${searchParams}`);
 
-    try {
-      const response = await fetch(`/api/users?${searchParams}`);
-
-      return response.json();
-    } catch (error) {
-      console.error(123, error);
+    if (!response.ok) {
+      throw new Error("Problem resolving users");
     }
+
+    const users = await response.json();
+    return users;
   },
 
   // Find a list of users that match the current search term
   resolveMentionSuggestions: async ({ text }) => {
-    const searchParams = new URLSearchParams({ text });
+    const response = await fetch(
+      `/api/users/search?text=${encodeURIComponent(text)}`
+    );
 
-    try {
-      const response = await fetch(`/api/users/search?${searchParams}`);
-
-      return response.json();
-    } catch (error) {
-      console.error(456, error);
-
-      return [];
+    if (!response.ok) {
+      throw new Error("Problem resolving mention suggestions");
     }
+
+    const userIds = await response.json();
+    return userIds;
   },
 });
 
