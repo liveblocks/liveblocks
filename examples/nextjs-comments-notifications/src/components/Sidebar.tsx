@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { ComponentProps } from "react";
+import { ComponentProps, Suspense } from "react";
 import { Link } from "./Link";
 import clsx from "clsx";
 import { Room } from "../../liveblocks.config";
@@ -21,27 +21,29 @@ export function Sidebar({ rooms, className, ...props }: SidebarProps) {
 
           return (
             <li key={room.id}>
-              <Link
-                href={isActive ? "/" : room.info.url}
-                className="sidebar-room"
-                data-active={isActive ? "" : undefined}
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
+              <Suspense fallback={null}>
+                <Link
+                  href={isActive ? "/" : room.info.url}
+                  className="sidebar-room"
+                  data-active={isActive ? "" : undefined}
                 >
-                  <path
-                    d="M4 8h12M4 12h12M8.5 3.5 7 16.5m6-13-1.5 13"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                {room.info.name}
-              </Link>
+                  <svg
+                    width="20"
+                    height="20"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M4 8h12M4 12h12M8.5 3.5 7 16.5m6-13-1.5 13"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  {room.info.name}
+                </Link>
+              </Suspense>
             </li>
           );
         })}

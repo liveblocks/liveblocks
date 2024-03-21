@@ -6,6 +6,7 @@ import { Composer, Thread } from "@liveblocks/react-comments";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useExampleRoomId } from "../../example";
+import { Suspense } from "react";
 
 /**
  * Displays a list of threads, along with a composer for creating
@@ -25,8 +26,8 @@ function Example() {
   );
 }
 
-export default function Page({ params }: { params: { room: string } }) {
-  const roomId = useExampleRoomId(params.room);
+function Room({ room }: { room: string }) {
+  const roomId = useExampleRoomId(room);
 
   return (
     <RoomProvider id={roomId} initialPresence={{}}>
@@ -40,5 +41,13 @@ export default function Page({ params }: { params: { room: string } }) {
         </ClientSideSuspense>
       </ErrorBoundary>
     </RoomProvider>
+  );
+}
+
+export default function Page({ params }: { params: { room: string } }) {
+  return (
+    <Suspense fallback={<Loading />}>
+      <Room room={params.room} />
+    </Suspense>
   );
 }

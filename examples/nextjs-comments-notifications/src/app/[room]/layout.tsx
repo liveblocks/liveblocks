@@ -7,7 +7,7 @@ import { getRooms } from "../../database";
 export async function generateStaticParams() {
   const rooms = await getRooms();
 
-  return rooms.map((room) => ({ room: room.name }));
+  return rooms.map((room) => ({ room: room.info.slug }));
 }
 
 export default function Layout({ children }: { children: ReactNode }) {
