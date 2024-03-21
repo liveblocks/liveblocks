@@ -1,10 +1,11 @@
 "use client";
 
 import clsx from "clsx";
-import { ComponentProps, Suspense } from "react";
+import { ComponentProps } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useUser } from "../../liveblocks.config";
 import { useExampleUserId } from "../example";
+import { ClientSideSuspense } from "@liveblocks/react";
 
 function Avatar({ className, ...props }: ComponentProps<"div">) {
   const userId = useExampleUserId();
@@ -22,9 +23,9 @@ export function User({ className, ...props }: ComponentProps<"div">) {
 
   return (
     <ErrorBoundary fallback={fallback}>
-      <Suspense fallback={fallback}>
-        <Avatar className={className} {...props} />
-      </Suspense>
+      <ClientSideSuspense fallback={fallback}>
+        {() => <Avatar className={className} {...props} />}
+      </ClientSideSuspense>
     </ErrorBoundary>
   );
 }
