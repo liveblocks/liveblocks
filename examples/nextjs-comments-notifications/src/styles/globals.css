@@ -80,7 +80,7 @@ body {
   left: 0;
   width: var(--sidebar-width);
   height: 100%;
-  padding: calc(var(--header-height) + 1rem) 1rem 1rem;
+  padding: calc(var(--header-height) + 0.5rem) 0.5rem 0.5rem;
   background: #fff;
   overflow-y: auto;
   box-shadow:
