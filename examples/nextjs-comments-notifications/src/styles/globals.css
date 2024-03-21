@@ -163,7 +163,7 @@ body {
   place-items: center;
   padding: 1rem;
   flex: 1 0 auto;
-  color: #555;
+  color: rgb(0 0 0 / 50%);
 }
 
 .loading img {
