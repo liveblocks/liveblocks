@@ -42,7 +42,9 @@ function Example() {
 }
 
 export default function Page() {
-  const roomId = useExampleRoomId("nextjs-comments-primitives");
+  const roomId = useExampleRoomId(
+    "liveblocks:examples:nextjs-comments-primitives"
+  );
 
   return (
     <RoomProvider id={roomId} initialPresence={{}}>
@@ -75,4 +77,3 @@ function useExampleRoomId(roomId: string) {
 
   return exampleRoomId;
 }
-

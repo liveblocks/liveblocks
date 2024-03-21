@@ -1,5 +1,10 @@
 import { Liveblocks, authorize } from "@liveblocks/node";
 
+/**
+ * Authenticating your Liveblocks application
+ * https://liveblocks.io/docs/authentication
+ */
+
 const config = useRuntimeConfig();
 const API_KEY = config.liveblocksSecretKey;
 const API_KEY_WARNING = config.codeSandboxSse
@@ -19,8 +24,6 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, statusMessage: API_KEY_WARNING });
   }
 
-  const body = await readBody(event);
-
   try {
     // For the avatar example, we're generating random users
     // and set their info from the authentication endpoint
@@ -36,9 +39,11 @@ export default defineEventHandler(async (event) => {
         },
       }
     );
-    session.allow(body.room, session.FULL_ACCESS);
-    const { status, body: authBody } = await session.authorize();
 
+    // Use a naming pattern to allow access to rooms with a wildcard
+    session.allow(`liveblocks:examples:*`, session.FULL_ACCESS);
+
+    const { status, body: authBody } = await session.authorize();
     setResponseStatus(event, status);
     return authBody;
   } catch (er) {

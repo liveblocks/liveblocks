@@ -7,7 +7,7 @@ import { ClientSideSuspense } from "@liveblocks/react";
 import { Loading } from "@/components/Loading";
 
 export function Room({ children }: { children: ReactNode }) {
-  const roomId = useExampleRoomId("nextjs-yjs-tiptap");
+  const roomId = useExampleRoomId("liveblocks:examples:nextjs-yjs-tiptap");
 
   return (
     <RoomProvider

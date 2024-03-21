@@ -1,12 +1,12 @@
 ---
 meta:
-  title: "Set up access token permissions with Next.js"
+  title: "Set up ID token permissions with Remix"
   parentTitle: "Authentication"
-  description: "Learn how to setup access token permissions with Next.js."
+  description: "Learn how to setup ID token permissions with Remix."
 ---
 
 Follow the following steps to start configure your authentication endpoint and
-start building your own security logic in Next.js’ `/app` directory.
+start building your own security logic.
 
 ## Quickstart
 
@@ -27,47 +27,31 @@ start building your own security logic in Next.js’ `/app` directory.
     <StepContent>
       Users can only interact with rooms they have access to. You can
       configure permission access in an `api/liveblocks-auth` endpoint by
-      creating the `app/api/liveblocks-auth/route.ts` file with the
+      creating the `app/routes/api/liveblocks-auth.ts` file with the
       following code. This is where you will implement your security and
-      define the rooms that the user has access to.
+      define if the current user has access to a specific room.
 
-      The client will request a token either for a specific room, in which case the
-      request body property `room` will be defined, or for resources outside a
-      specific room (like notifications), in which case, `room` will be undefined.
-
-      See
-      [permissions with access token](/docs/rooms/permissions/access-token)
-      to understand how to grant access to multiple rooms with an access token.
-
-      ```ts file="app/api/liveblocks-auth/route.ts"
+      ```ts file="app/routes/api/liveblocks-auth.ts"
+      import type { ActionFunction } from "@remix-run/node";
       import { Liveblocks } from "@liveblocks/node";
 
       const liveblocks = new Liveblocks({
         secret: "{{SECRET_KEY}}",
       });
 
-      export async function POST(request: Request) {
+      export const action: ActionFunction = async ({ request }) => {
         // Get the current user from your database
         const user = __getUserFromDB__(request);
 
-        // Start an auth session inside your endpoint
-        const session = liveblocks.prepareSession(
-          user.id,
-          { userInfo: user.metadata } // Optional
+        // Identify the user and return the result
+        const { status, body } = await liveblocks.identifyUser(
+          {
+            userId: user.id,
+            groupIds, // Optional
+          },
+          { userInfo: user.metadata },
         );
 
-        // Implement your own security, and give the user access to the room/organization.
-        // Note: Even if room is defined, we recommend to always use wildcards.
-        const { room } = request.body;
-        if (room && __shouldUserHaveAccess__(user, room)) {
-          session.allow(room, session.FULL_ACCESS);
-        }
-        else {
-          session.allow(`${user.organization}*`, session.READ_ACCESS)
-        }
-
-        // Authorize the user and return the result
-        const { status, body } = await session.authorize();
         return new Response(body, { status });
       }
       ```
@@ -129,17 +113,49 @@ start building your own security logic in Next.js’ `/app` directory.
     </StepContent>
 
   </Step>
+  <Step>
+    <StepTitle>Set permission accesses to a room</StepTitle>
+    <StepContent>
+      A room can have `defaultAccesses`, `usersAccesses`, and `groupsAccesses` defined.
+      Permissions are then checked when users try to connect to a room. For security purposes,
+      [room permissions](/docs/authentication/id-token#permissions) can only be set on the back-end through `@liveblocks/node` or our REST API.
+      For instance, you can use [`liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms)
+      to create a new room with read-only public access levels while giving write access to specific groups and users.
+
+      ```ts highlight="7-15"
+      import { Liveblocks } from "@liveblocks/node";
+
+      const liveblocks = new Liveblocks({
+        secret: "{{SECRET_KEY}}",
+      });
+
+      const room = await liveblocks.createRoom("my-room-id", {
+        defaultAccesses: ["room:read", "room:presence:write"],
+        groupsAccesses: {
+          "my-group-id": ["room:write"],
+        },
+        usersAccesses: {
+          "my-user-id": ["room:write"],
+        },
+      });
+      ```
+
+      For more information, make sure to read the section on [room permissions](/docs/authentication/id-token#permissions).
+
+    </StepContent>
+
+  </Step>
   <Step lastStep>
     <StepTitle>Attach metadata to users</StepTitle>
       <StepContent>
         Optionally, you can attach static metadata to each user, which will
         be accessible in your app. First you need to define the types in
         your config file, under `UserMeta["info"]`.
-  
+
         ```ts file="liveblocks.config.ts" highlight="5-9"
-        type User = {
+        type UserMeta = {
           id: string;
-          
+
           // Example, use any JSON-compatible data in your metadata
           info: {
             name: string;
@@ -148,43 +164,47 @@ start building your own security logic in Next.js’ `/app` directory.
           }
         }
         ```
-        
+
         When authenticating, you can then pass the user’s metadata to
         `prepareSession` in the endpoint we’ve just created.
-        
-        ```ts file="app/api/liveblocks-auth/route.ts" highlight="8-12"
+
+        ```ts file="app/routes/api/liveblocks-auth.ts" highlight="11-15"
         // Get the current user from your database
         const user = __getUserFromDB__(request);
-        
-        // Start an auth session inside your endpoint
-        const session = liveblocks.prepareSession(
-          user.id,
+
+        // Identify the user and return the result
+        const { status, body } = await liveblocks.identifyUser(
+          {
+            userId: user.id,
+            groupIds, // Optional
+          },
           {
             userInfo: {
               name: user.name,
               avatar: user.avatarUrl,
               colors: user.colorArray,
             }
-          }
+          },
         );
         ```
-        
+
         User metadata has now been set! You can access this information in your app through
         [`useSelf`](/docs/api-reference/liveblocks-react#useSelf).
-        
+
         ```tsx highlight="4"
         export { useSelf } from "../liveblocks.config.ts";
-        
+
         function Component() {
           const { name, avatar, colors } = useSelf((me) => me.info);
         }
         ```
-        
+
         Bear in mind that if you’re using the [default Comments components](/docs/api-reference/liveblocks-react-comments#Components),
         you must specify a `name` and `avatar` in `userInfo`.
       </StepContent>
-  
+
     </Step>
+
 </Steps>
 
 ## More information
@@ -199,7 +219,7 @@ console.log(self.info);
 
 <Figure>
   <Image
-    src="/assets/access-token-auth-diagram.png"
+    src="/assets/id-token-auth-diagram.png"
     alt="Auth diagram"
     width={768}
     height={576}

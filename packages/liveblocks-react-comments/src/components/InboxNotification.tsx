@@ -18,12 +18,16 @@ import type {
   ComponentProps,
   ComponentPropsWithoutRef,
   ComponentType,
+  MouseEvent,
   ReactNode,
+  SyntheticEvent,
 } from "react";
-import React, { forwardRef, useMemo } from "react";
+import React, { forwardRef, useCallback, useMemo, useState } from "react";
 
 import type { GlobalComponents } from "../components";
 import { useComponents } from "../components";
+import { CheckIcon } from "../icons/Check";
+import { EllipsisIcon } from "../icons/Ellipsis";
 import type {
   CommentOverrides,
   GlobalOverrides,
@@ -33,20 +37,21 @@ import { useOverrides } from "../overrides";
 import * as CommentPrimitive from "../primitives/Comment";
 import { Timestamp } from "../primitives/Timestamp";
 import { classNames } from "../utils/class-names";
-import { setQueryParams } from "../utils/query-params";
+import { generateURL } from "../utils/url";
 import {
   CommentMention,
   CommentNonInteractiveLink,
   CommentNonInteractiveReaction,
 } from "./Comment";
 import { Avatar, type AvatarProps } from "./internal/Avatar";
+import { Button } from "./internal/Button";
+import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
 import { List } from "./internal/List";
 import { Room } from "./internal/Room";
+import { Tooltip } from "./internal/Tooltip";
 import { User } from "./internal/User";
 
 const INBOX_NOTIFICATION_THREAD_MAX_COMMENTS = 3;
-const THREAD_ID_QUERY_PARAM = "thread";
-const COMMENT_ID_QUERY_PARAM = "comment";
 
 type InboxNotificationThreadCommentsContents = {
   type: "comments";
@@ -83,7 +88,16 @@ type InboxNotificationKindsWithRef = AddRefToComponents<
   ComponentProps<"a">["ref"]
 >;
 
-export interface InboxNotificationProps extends ComponentPropsWithoutRef<"a"> {
+interface InboxNotificationSharedProps {
+  /**
+   * How to show or hide the actions.
+   */
+  showActions?: boolean | "hover";
+}
+
+export interface InboxNotificationProps
+  extends ComponentPropsWithoutRef<"a">,
+    InboxNotificationSharedProps {
   /**
    * The inbox notification to display.
    */
@@ -108,7 +122,8 @@ export interface InboxNotificationProps extends ComponentPropsWithoutRef<"a"> {
 }
 
 export interface InboxNotificationThreadProps
-  extends Omit<InboxNotificationProps, "kinds"> {
+  extends Omit<InboxNotificationProps, "kinds">,
+    InboxNotificationSharedProps {
   /**
    * Whether to show the room name in the title.
    */
@@ -116,7 +131,9 @@ export interface InboxNotificationThreadProps
 }
 
 interface InboxNotificationLayoutProps
-  extends Omit<ComponentPropsWithoutRef<"a">, "title"> {
+  extends Omit<ComponentPropsWithoutRef<"a">, "title">,
+    InboxNotificationSharedProps {
+  inboxNotificationId: string;
   aside: ReactNode;
   title: ReactNode;
   date: Date | string | number;
@@ -139,11 +156,13 @@ const InboxNotificationLayout = forwardRef<
 >(
   (
     {
+      inboxNotificationId,
       children,
       aside,
       title,
       date,
       unread,
+      showActions,
       overrides,
       components,
       className,
@@ -153,11 +172,42 @@ const InboxNotificationLayout = forwardRef<
   ) => {
     const $ = useOverrides(overrides);
     const { Anchor } = useComponents(components);
+    const [isMoreActionOpen, setMoreActionOpen] = useState(false);
+    const { useMarkInboxNotificationAsRead } = useLiveblocksContextBundle();
+    const markInboxNotificationAsRead = useMarkInboxNotificationAsRead();
+
+    const stopPropagation = useCallback((event: SyntheticEvent) => {
+      event.stopPropagation();
+    }, []);
+
+    const preventDefaultAndStopPropagation = useCallback(
+      (event: SyntheticEvent) => {
+        event.preventDefault();
+        event.stopPropagation();
+      },
+      []
+    );
+
+    const handleMoreClick = useCallback((event: MouseEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setMoreActionOpen((open) => !open);
+    }, []);
+
+    const handleMarkAsRead = useCallback(() => {
+      markInboxNotificationAsRead(inboxNotificationId);
+    }, [inboxNotificationId, markInboxNotificationAsRead]);
 
     return (
       <TooltipProvider>
         <Anchor
-          className={classNames("lb-root lb-inbox-notification", className)}
+          className={classNames(
+            "lb-root lb-inbox-notification",
+            showActions === "hover" &&
+              "lb-inbox-notification:show-actions-hover",
+            isMoreActionOpen && "lb-inbox-notification:action-open",
+            className
+          )}
           dir={$.dir}
           data-unread={unread ? "" : undefined}
           {...props}
@@ -182,6 +232,41 @@ const InboxNotificationLayout = forwardRef<
                   )}
                 </span>
               </div>
+              {showActions && (
+                <div className="lb-inbox-notification-actions">
+                  <Dropdown
+                    open={isMoreActionOpen}
+                    onOpenChange={setMoreActionOpen}
+                    align="end"
+                    content={
+                      <>
+                        <DropdownItem
+                          onSelect={handleMarkAsRead}
+                          onClick={stopPropagation}
+                          disabled={!unread}
+                        >
+                          <CheckIcon className="lb-dropdown-item-icon" />
+                          {$.INBOX_NOTIFICATION_MARK_AS_READ}
+                        </DropdownItem>
+                      </>
+                    }
+                  >
+                    <Tooltip content={$.INBOX_NOTIFICATION_MORE}>
+                      <DropdownTrigger asChild>
+                        <Button
+                          className="lb-inbox-notification-action"
+                          onClick={handleMoreClick}
+                          onPointerDown={preventDefaultAndStopPropagation}
+                          onPointerUp={preventDefaultAndStopPropagation}
+                          aria-label={$.INBOX_NOTIFICATION_MORE}
+                        >
+                          <EllipsisIcon className="lb-button-icon" />
+                        </Button>
+                      </DropdownTrigger>
+                    </Tooltip>
+                  </Dropdown>
+                </div>
+              )}
             </div>
             <div className="lb-inbox-notification-body">{children}</div>
           </div>
@@ -359,7 +444,14 @@ const InboxNotificationThread = forwardRef<
   InboxNotificationThreadProps
 >(
   (
-    { inboxNotification, href, showRoomName = true, overrides, ...props },
+    {
+      inboxNotification,
+      href,
+      showRoomName = true,
+      showActions = "hover",
+      overrides,
+      ...props
+    },
     forwardedRef
   ) => {
     const $ = useOverrides(overrides);
@@ -374,125 +466,116 @@ const InboxNotificationThread = forwardRef<
     //       it's not a big deal, the only scenario where it would be superfluous would be if the user provides their own
     //       `href` AND disables room names in the title via `showRoomName={false}`.
     const { info } = useRoomInfo(inboxNotification.roomId);
-    const { unread, date, aside, title, content, threadId, commentId } =
-      useMemo(() => {
-        const contents = generateInboxNotificationThreadContents(
-          inboxNotification,
-          thread,
-          currentUserId ?? ""
-        );
-
-        switch (contents.type) {
-          case "comments": {
-            const reversedUserIds = [...contents.userIds].reverse();
-            const firstUserId = reversedUserIds[0];
-
-            const aside = <InboxNotificationAvatar userId={firstUserId} />;
-            const title = $.INBOX_NOTIFICATION_THREAD_COMMENTS_LIST(
-              <List
-                values={reversedUserIds.map((userId, index) => (
-                  <User
-                    key={userId}
-                    userId={userId}
-                    capitalize={index === 0}
-                    replaceSelf
-                  />
-                ))}
-                formatRemaining={$.LIST_REMAINING_USERS}
-                truncate={INBOX_NOTIFICATION_THREAD_MAX_COMMENTS - 1}
-              />,
-              showRoomName ? <Room roomId={thread.roomId} /> : undefined,
-              reversedUserIds.length
-            );
-            const content = (
-              <div className="lb-inbox-notification-comments">
-                {contents.comments.map((comment) => (
-                  <InboxNotificationComment
-                    key={comment.id}
-                    comment={comment}
-                    showHeader={contents.comments.length > 1}
-                    overrides={overrides}
-                  />
-                ))}
-              </div>
-            );
-
-            return {
-              unread: contents.unread,
-              date: contents.date,
-              aside,
-              title,
-              content,
-              threadId: thread.id,
-              commentId: contents.comments[contents.comments.length - 1].id,
-            };
-          }
-
-          case "mention": {
-            const mentionUserId = contents.userIds[0];
-            const mentionComment = contents.comments[0];
-
-            const aside = <InboxNotificationAvatar userId={mentionUserId} />;
-            const title = $.INBOX_NOTIFICATION_THREAD_MENTION(
-              <User key={mentionUserId} userId={mentionUserId} capitalize />,
-              showRoomName ? <Room roomId={thread.roomId} /> : undefined
-            );
-            const content = (
-              <div className="lb-inbox-notification-comments">
-                <InboxNotificationComment
-                  key={mentionComment.id}
-                  comment={mentionComment}
-                  showHeader={false}
-                />
-              </div>
-            );
-
-            return {
-              unread: contents.unread,
-              date: contents.date,
-              aside,
-              title,
-              content,
-              threadId: thread.id,
-              commentId: mentionComment.id,
-            };
-          }
-
-          default:
-            return assertNever(
-              contents,
-              "Unexpected thread inbox notification type"
-            );
-        }
-      }, [
-        $,
-        currentUserId,
+    const { unread, date, aside, title, content, commentId } = useMemo(() => {
+      const contents = generateInboxNotificationThreadContents(
         inboxNotification,
-        overrides,
-        showRoomName,
         thread,
-      ]);
+        currentUserId ?? ""
+      );
+
+      switch (contents.type) {
+        case "comments": {
+          const reversedUserIds = [...contents.userIds].reverse();
+          const firstUserId = reversedUserIds[0];
+
+          const aside = <InboxNotificationAvatar userId={firstUserId} />;
+          const title = $.INBOX_NOTIFICATION_THREAD_COMMENTS_LIST(
+            <List
+              values={reversedUserIds.map((userId, index) => (
+                <User
+                  key={userId}
+                  userId={userId}
+                  capitalize={index === 0}
+                  replaceSelf
+                />
+              ))}
+              formatRemaining={$.LIST_REMAINING_USERS}
+              truncate={INBOX_NOTIFICATION_THREAD_MAX_COMMENTS - 1}
+            />,
+            showRoomName ? <Room roomId={thread.roomId} /> : undefined,
+            reversedUserIds.length
+          );
+          const content = (
+            <div className="lb-inbox-notification-comments">
+              {contents.comments.map((comment) => (
+                <InboxNotificationComment
+                  key={comment.id}
+                  comment={comment}
+                  showHeader={contents.comments.length > 1}
+                  overrides={overrides}
+                />
+              ))}
+            </div>
+          );
+
+          return {
+            unread: contents.unread,
+            date: contents.date,
+            aside,
+            title,
+            content,
+            threadId: thread.id,
+            commentId: contents.comments[contents.comments.length - 1].id,
+          };
+        }
+
+        case "mention": {
+          const mentionUserId = contents.userIds[0];
+          const mentionComment = contents.comments[0];
+
+          const aside = <InboxNotificationAvatar userId={mentionUserId} />;
+          const title = $.INBOX_NOTIFICATION_THREAD_MENTION(
+            <User key={mentionUserId} userId={mentionUserId} capitalize />,
+            showRoomName ? <Room roomId={thread.roomId} /> : undefined
+          );
+          const content = (
+            <div className="lb-inbox-notification-comments">
+              <InboxNotificationComment
+                key={mentionComment.id}
+                comment={mentionComment}
+                showHeader={false}
+              />
+            </div>
+          );
+
+          return {
+            unread: contents.unread,
+            date: contents.date,
+            aside,
+            title,
+            content,
+            threadId: thread.id,
+            commentId: mentionComment.id,
+          };
+        }
+
+        default:
+          return assertNever(
+            contents,
+            "Unexpected thread inbox notification type"
+          );
+      }
+    }, [$, currentUserId, inboxNotification, overrides, showRoomName, thread]);
     // Add the thread ID and comment ID to the `href`.
     // And use URL from `resolveRoomsInfo` if `href` isn't set.
     const resolvedHref = useMemo(() => {
       const resolvedHref = href ?? info?.url;
 
       return resolvedHref
-        ? setQueryParams(resolvedHref, {
-            [THREAD_ID_QUERY_PARAM]: threadId,
-            [COMMENT_ID_QUERY_PARAM]: commentId,
-          })
+        ? generateURL(resolvedHref, undefined, commentId)
         : undefined;
-    }, [commentId, href, threadId, info?.url]);
+    }, [commentId, href, info?.url]);
 
     return (
       <InboxNotificationLayout
+        inboxNotificationId={inboxNotification.id}
         aside={aside}
         title={title}
         date={date}
         unread={unread}
         overrides={overrides}
         href={resolvedHref}
+        showActions={showActions}
         {...props}
         ref={forwardedRef}
       >

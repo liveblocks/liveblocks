@@ -20,6 +20,7 @@ import type {
 import React, {
   forwardRef,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -378,6 +379,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     const markThreadAsRead = useMarkThreadAsRead();
     const $ = useOverrides(overrides);
     const [isEditing, setEditing] = useState(false);
+    const [isTarget, setTarget] = useState(false);
     const [isMoreActionOpen, setMoreActionOpen] = useState(false);
     const [isReactionActionOpen, setReactionActionOpen] = useState(false);
 
@@ -476,6 +478,18 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       ]
     );
 
+    useEffect(() => {
+      const isWindowDefined = typeof window !== "undefined";
+      if (!isWindowDefined) return;
+
+      const hash = window.location.hash;
+      const commentId = hash.slice(1);
+
+      if (commentId === comment.id) {
+        setTarget(true);
+      }
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
     if (!showDeleted && !comment.body) {
       return null;
     }
@@ -483,6 +497,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     return (
       <TooltipProvider>
         <div
+          id={comment.id}
           className={classNames(
             "lb-root lb-comment",
             indentContent && "lb-comment:indent-content",
@@ -493,6 +508,8 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
           )}
           data-deleted={!comment.body ? "" : undefined}
           data-editing={isEditing ? "" : undefined}
+          // In some cases, `:target` doesn't work as expected so we also define it manually.
+          data-target={isTarget ? "" : undefined}
           dir={$.dir}
           {...props}
           ref={mergedRefs}

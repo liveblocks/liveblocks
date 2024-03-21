@@ -1,12 +1,12 @@
 ---
 meta:
-  title: "Set up access token permissions with Remix"
+  title: "Set up access token permissions with Next.js"
   parentTitle: "Authentication"
-  description: "Learn how to setup access token permissions with Remix."
+  description: "Learn how to setup access token permissions with Next.js."
 ---
 
 Follow the following steps to start configure your authentication endpoint and
-start building your own security logic.
+start building your own security logic in Next.js’ `/app` directory.
 
 ## Quickstart
 
@@ -25,54 +25,50 @@ start building your own security logic.
   <Step>
     <StepTitle>Set up authentication endpoint</StepTitle>
     <StepContent>
-      Users can only interact with rooms they have access to. You can
-      configure permission access in an `api/liveblocks-auth` endpoint by
-      creating the `app/routes/api/liveblocks-auth.ts` file with the
-      following code. This is where you will implement your security and
-      define the rooms that the user has access to.
+      Users need permission to interact with rooms, and you can
+      permit access in an `api/liveblocks-auth` endpoint by
+      creating the following `app/api/liveblocks-auth/route.ts`
+      file. In here you can implement your security and define
+      the rooms that your user can enter.
 
-The client will request a token either for a specific room, in which case the
-request body property room will be defined, or for resources outside a specific
-room (like notifications), in which case, `room` will be undefined.
+      With access tokens, you should always use a [naming pattern](/docs/authentication/access-token#permissions)
+      for your room IDs, as this enables you to easily allow
+      access to a range of rooms at once. In the code snippet below, we’re using a naming pattern and wildcard `*`
+      to give the user access to every room in their organization, and every room in their group.
 
-      See
-      [permissions with access token](/docs/rooms/permissions/access-token)
-      to understand how to grant access to multiple rooms with an access token.
-
-
-      ```ts file="app/routes/api/liveblocks-auth.ts"
-      import type { ActionFunction } from "@remix-run/node";
+      ```ts file="app/api/liveblocks-auth/route.ts"
       import { Liveblocks } from "@liveblocks/node";
 
       const liveblocks = new Liveblocks({
         secret: "{{SECRET_KEY}}",
       });
 
-      export const action: ActionFunction = async ({ request }) => {
+      export async function POST(request: Request) {
         // Get the current user from your database
         const user = __getUserFromDB__(request);
 
         // Start an auth session inside your endpoint
         const session = liveblocks.prepareSession(
           user.id,
-          { userInfo: user.metadata },  // Optional
+          { userInfo: user.metadata } // Optional
         );
 
-        // Implement your own security, and give the user access to the room/organization.
-        // Note: Even if room is defined, we recommend to always use wildcards.
-        const { room } = request.body;
-        if (room && __shouldUserHaveAccess__(user, room)) {
-          session.allow(room, session.FULL_ACCESS);
-        }
-        else {
-          session.allow(`${user.organization}*`, session.READ_ACCESS)
-        }
+        // Use a naming pattern to allow access to rooms with wildcards
+        // Giving the user read access on their org, and write access on their group
+        session.allow(`${user.organization}:*`, session.READ_ACCESS);
+        session.allow(`${user.organization}:${user.group}:*`, session.FULL_ACCESS);
 
         // Authorize the user and return the result
         const { status, body } = await session.authorize();
         return new Response(body, { status });
       }
       ```
+
+      Read
+      [access token permission](/docs/authentication/access-token#permissions)
+      to learn more about naming rooms and granting permissions with wildcards.
+      Note that if a naming pattern doesn’t work for every room in your application, you can
+      [grant access to individual rooms too](/docs/guides/how-to-grant-access-to-individual-rooms-with-access-tokens).
 
     </StepContent>
 
@@ -139,7 +135,7 @@ room (like notifications), in which case, `room` will be undefined.
         your config file, under `UserMeta["info"]`.
 
         ```ts file="liveblocks.config.ts" highlight="5-9"
-        type UserMeta = {
+        type User = {
           id: string;
 
           // Example, use any JSON-compatible data in your metadata
@@ -154,7 +150,7 @@ room (like notifications), in which case, `room` will be undefined.
         When authenticating, you can then pass the user’s metadata to
         `prepareSession` in the endpoint we’ve just created.
 
-        ```ts file="app/routes/api/liveblocks-auth.ts" highlight="8-12"
+        ```ts file="app/api/liveblocks-auth/route.ts" highlight="8-12"
         // Get the current user from your database
         const user = __getUserFromDB__(request);
 

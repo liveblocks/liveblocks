@@ -158,7 +158,9 @@ const initialStorage = createInitialStorage(
 );
 
 export default function Page() {
-  const roomId = useExampleRoomId("nextjs-spreadsheet-advanced");
+  const roomId = useExampleRoomId(
+    "liveblocks:examples:nextjs-spreadsheet-advanced"
+  );
 
   return (
     <RoomProvider

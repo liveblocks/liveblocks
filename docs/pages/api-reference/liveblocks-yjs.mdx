@@ -28,7 +28,7 @@ clients in the room.
 You can connect by creating a Yjs document, then passing it to
 `LiveblocksProvider` along with the currently connected Liveblocks room.
 
-```ts highlight="11-13"
+```ts highlight="13-15"
 import * as Y from "yjs";
 import { createClient } from "@liveblocks/client";
 import LiveblocksProvider from "@liveblocks/yjs";
@@ -150,7 +150,7 @@ fire events when the document has loaded.
 
 ```ts
 // Listen for the sync event only once
-yProvider.on("sync", (isSynced: boolean) => {
+yProvider.once("sync", (isSynced: boolean) => {
   if (isSynced === true) {
     // Yjs content is synchronized and ready
   } else {

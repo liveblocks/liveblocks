@@ -48,7 +48,9 @@ function Example() {
 }
 
 export default function Page() {
-  const roomId = useExampleRoomId("nextjs-nextauth-google-avatars");
+  const roomId = useExampleRoomId(
+    "liveblocks:examples:nextjs-nextauth-google-avatars"
+  );
 
   return (
     <RoomProvider id={roomId} initialPresence={{}}>

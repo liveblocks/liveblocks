@@ -107,7 +107,7 @@ start building your own security logic.
         },
       });
       ```
-      
+
     </StepContent>
 
   </Step>
@@ -116,25 +116,29 @@ start building your own security logic.
     <StepContent>
       A room can have `defaultAccesses`, `usersAccesses`, and `groupsAccesses` defined.
       Permissions are then checked when users try to connect to a room. For security purposes,
-      the [room permissions](/docs/rooms/permissions) can only be set on the back-end through a REST API.
-      For instance, you can use the [create room API](/docs/api-reference/rest-api-endpoints#post-rooms)
-      to create a new room with `read` public access levels while giving `write` access to specific users and groups.
+      [room permissions](/docs/authentication/id-token#permissions) can only be set on the back-end through `@liveblocks/node` or our REST API.
+      For instance, you can use [`liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms)
+      to create a new room with read-only public access levels while giving write access to specific groups and users.
 
-      ```ts
-      fetch("https://api.liveblocks.io/v2/rooms", {
-        method: "POST",
-        body: JSON.stringify({
-          id: "roomId",
-          defaultAccesses: ["room:read"],
-          usersAccesses: {
-            "userId": ["room:write"],
-          },
-          groupsAccesses: {
-            "groupId": ["room:write"],
-          },
-        }),
+      ```ts highlight="7-15"
+      import { Liveblocks } from "@liveblocks/node";
+
+      const liveblocks = new Liveblocks({
+        secret: "{{SECRET_KEY}}",
+      });
+
+      const room = await liveblocks.createRoom("my-room-id", {
+        defaultAccesses: ["room:read", "room:presence:write"],
+        groupsAccesses: {
+          "my-group-id": ["room:write"],
+        },
+        usersAccesses: {
+          "my-user-id": ["room:write"],
+        },
       });
       ```
+
+      For more information, make sure to read the section on [room permissions](/docs/authentication/id-token#permissions).
 
     </StepContent>
 

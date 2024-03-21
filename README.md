@@ -45,9 +45,8 @@ collaborative experiences you’re looking to build.
 ### Rooms
 
 A room is the digital space in which people collaborate. You can require your
-users to be [authenticated](https://liveblocks.io/docs/rooms/authentication) to
-interact with rooms, and each room can have specific
-[permissions](https://liveblocks.io/docs/rooms/permissions) and
+users to be [authenticated](https://liveblocks.io/docs/authentication) to
+interact with rooms, and each room can have specific permissions and
 [metadata](https://liveblocks.io/docs/rooms/metadata) associated with them.
 
 ### Integrations
@@ -86,8 +85,8 @@ You can read our release notes
 
 ## Community and support
 
-- [GitHub issues](https://github.com/liveblocks/liveblocks/issues) to file bugs and errors you encounter using
-  Liveblocks.
+- [GitHub issues](https://github.com/liveblocks/liveblocks/issues) to file bugs
+  and errors you encounter using Liveblocks.
 - [Discord](https://liveblocks.io/discord) to get involved with the Liveblocks
   community, ask questions and share tips.
 - [Email](https://liveblocks.io/contact) to contact us directly for support and
