@@ -21,6 +21,7 @@ const USERS: User[] = [
 const ROOMS: Room[] = ["general", "engineering", "design"].map((room) => ({
   id: createExampleRoomId(room),
   info: {
+    slug: room,
     name: capitalize(room),
     url: `/${room}`,
   },

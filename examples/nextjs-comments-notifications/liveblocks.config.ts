@@ -66,6 +66,7 @@ export type User = {
 export type Room = {
   id: string;
   info: {
+    slug: string;
     name: string;
     url: string;
   };
