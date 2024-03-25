@@ -5,7 +5,7 @@ import type {
   InboxNotificationData,
   InboxNotificationThreadData,
 } from "@liveblocks/core";
-import { assertNever, kInternal } from "@liveblocks/core";
+import { assertNever, console, kInternal } from "@liveblocks/core";
 import { useLiveblocksContextBundle } from "@liveblocks/react";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import type {
@@ -125,11 +125,6 @@ export interface InboxNotificationCustomProps
   /**
    * TODO: JSDoc
    */
-  body?: ReactNode;
-
-  /**
-   * TODO: JSDoc
-   */
   aside?: ReactNode;
 }
 
@@ -145,7 +140,7 @@ interface InboxNotificationLayoutProps
   components?: Partial<GlobalComponents>;
 }
 
-type InboxNotificationAvatarProps = AvatarProps;
+export type InboxNotificationAvatarProps = AvatarProps;
 
 const InboxNotificationLayout = forwardRef<
   HTMLAnchorElement,
@@ -434,6 +429,50 @@ const InboxNotificationThread = forwardRef<
   }
 );
 
+/**
+ * Displays a custom inbox notification.
+ */
+const InboxNotificationCustom = forwardRef<
+  HTMLAnchorElement,
+  InboxNotificationCustomProps
+>(
+  (
+    {
+      inboxNotification,
+      showActions = "hover",
+      title,
+      aside,
+      children,
+      overrides,
+      ...props
+    },
+    forwardedRef
+  ) => {
+    const unread = useMemo(() => {
+      return (
+        !inboxNotification.readAt ||
+        inboxNotification.notifiedAt > inboxNotification.readAt
+      );
+    }, [inboxNotification.notifiedAt, inboxNotification.readAt]);
+
+    return (
+      <InboxNotificationLayout
+        inboxNotificationId={inboxNotification.id}
+        aside={aside}
+        title={title}
+        date={inboxNotification.notifiedAt}
+        unread={unread}
+        overrides={overrides}
+        showActions={showActions}
+        {...props}
+        ref={forwardedRef}
+      >
+        {children}
+      </InboxNotificationLayout>
+    );
+  }
+);
+
 // TODO: Remove `as any`
 const defaultInboxNotificationKinds: InboxNotificationKinds = {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -479,17 +518,28 @@ export const InboxNotification = Object.assign(
           );
 
         default: {
-          const InboxNotificationCustom = resolvedKinds[inboxNotification.kind];
+          const ProvidedInboxNotificationCustom =
+            resolvedKinds[inboxNotification.kind];
 
-          if (!InboxNotificationCustom) {
-            // TODO: Don't render null, render an empty notification instead with just the time and dropdown.
-            // TODO: Warn in the console that this kind wasn't handled.
+          if (!ProvidedInboxNotificationCustom) {
+            // TODO: Add link to the docs
+            console.warn(
+              `Inbox notification of kind "${inboxNotification.kind}" was not customized. Custom notifications are empty by default given their custom nature, so you should customize them via the kinds prop to define their content.`
+            );
 
-            return null;
+            return (
+              <InboxNotificationCustom
+                inboxNotification={
+                  inboxNotification as InboxNotificationCustomData
+                }
+                {...props}
+                ref={forwardedRef}
+              />
+            );
           }
 
           return (
-            <InboxNotificationCustom
+            <ProvidedInboxNotificationCustom
               inboxNotification={
                 inboxNotification as InboxNotificationCustomData
               }
@@ -503,5 +553,7 @@ export const InboxNotification = Object.assign(
   ),
   {
     Thread: InboxNotificationThread,
+    Custom: InboxNotificationCustom,
+    Avatar: InboxNotificationAvatar,
   }
 );
