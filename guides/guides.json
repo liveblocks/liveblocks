@@ -336,5 +336,12 @@
     "topics": ["data-fetching", "rest-api"],
     "technologies": ["yjs", "nodejs", "javascript"],
     "date": "2024-03-13"
+  },
+  {
+    "title": "Setting an initial or default value in Tiptap",
+    "path": "/setting-an-initial-or-default-value-in-tiptap",
+    "topics": ["text-editors"],
+    "technologies": ["yjs", "tiptap", "react"],
+    "date": "2024-03-25"
   }
 ]
