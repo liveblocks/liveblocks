@@ -9,12 +9,12 @@ export type InboxNotificationThreadData = {
   readAt: Date | null;
 };
 
-// TODO: Move and expose? And find more fitting name.
-type Activity = {
+export type ActivityData = Record<string, string | boolean | number>;
+
+type InboxNotificationActivity = {
   id: string;
   createdAt: Date;
-  // TODO: Define `data` type
-  data: any;
+  data: ActivityData;
 };
 
 export type InboxNotificationCustomData = {
@@ -24,7 +24,7 @@ export type InboxNotificationCustomData = {
   subjectId?: string;
   notifiedAt: Date;
   readAt: Date | null;
-  activities: Activity[];
+  activities: InboxNotificationActivity[];
 };
 
 export type InboxNotificationData =
@@ -38,7 +38,7 @@ export type InboxNotificationCustomDataPlain = Omit<
   DateToString<InboxNotificationCustomData>,
   "activities"
 > & {
-  activities: DateToString<Activity>[];
+  activities: DateToString<InboxNotificationActivity>[];
 };
 
 export type InboxNotificationDataPlain =
