@@ -31,7 +31,7 @@ function Example() {
 }
 
 export default function Page() {
-  const roomId = useExampleRoomId("nextjs-live-avatars");
+  const roomId = useExampleRoomId("liveblocks:examples:nextjs-live-avatars");
 
   return (
     <RoomProvider id={roomId} initialPresence={{}}>

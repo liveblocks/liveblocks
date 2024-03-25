@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import * as Tooltip from "@radix-ui/react-tooltip";
 
 export function Room({ children }: { children: ReactNode }) {
-  const roomId = useExampleRoomId("nextjs-comments-video");
+  const roomId = useExampleRoomId("liveblocks:examples:nextjs-comments-video");
 
   return (
     <Tooltip.Provider delayDuration={0}>

@@ -175,9 +175,10 @@ export class Liveblocks {
   /** @internal */
   private async putBinary(
     path: URLSafeString,
-    body: Uint8Array
+    body: Uint8Array,
+    params?: QueryParams
   ): Promise<Response> {
-    const url = urljoin(this._baseUrl, path);
+    const url = urljoin(this._baseUrl, path, params);
     const headers = {
       Authorization: `Bearer ${this._secret}`,
       "Content-Type": "application/octet-stream",
@@ -679,12 +680,18 @@ export class Liveblocks {
    * Send a Yjs binary update to the room’s Yjs document. You can use this endpoint to initialize Yjs data for the room or to update the room’s Yjs document.
    * @param roomId The id of the room to send the Yjs binary update to.
    * @param update The Yjs update to send. Typically the result of calling `Yjs.encodeStateAsUpdate(doc)`. Read the [Yjs documentation](https://docs.yjs.dev/api/document-updates) to learn how to create a binary update.
+   * @param params.guid (optional) If provided, the binary update will be applied to the Yjs subdocument with the given guid. If not provided, the binary update will be applied to the root Yjs document.
    */
   public async sendYjsBinaryUpdate(
     roomId: string,
-    update: Uint8Array
+    update: Uint8Array,
+    params: {
+      guid?: string;
+    } = {}
   ): Promise<void> {
-    const res = await this.putBinary(url`/v2/rooms/${roomId}/ydoc`, update);
+    const res = await this.putBinary(url`/v2/rooms/${roomId}/ydoc`, update, {
+      guid: params.guid,
+    });
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -695,12 +702,18 @@ export class Liveblocks {
    * Returns the room’s Yjs document encoded as a single binary update. This can be used by Y.applyUpdate(responseBody) to get a copy of the document in your backend.
    * See [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more information on working with updates.
    * @param roomId The id of the room to get the Yjs document from.
+   * @param params.guid (optional) If provided, returns the binary update of the Yjs subdocument with the given guid. If not provided, returns the binary update of the root Yjs document.
    * @returns The room’s Yjs document encoded as a single binary update.
    */
   public async getYjsDocumentAsBinaryUpdate(
-    roomId: string
+    roomId: string,
+    params: {
+      guid?: string;
+    } = {}
   ): Promise<ArrayBuffer> {
-    const res = await this.get(url`/v2/rooms/${roomId}/ydoc-binary`);
+    const res = await this.get(url`/v2/rooms/${roomId}/ydoc-binary`, {
+      guid: params.guid,
+    });
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -1303,6 +1316,38 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
+  }
+
+  /**
+   * Update a room ID.
+   * @param params.roomId The current ID of the room.
+   * @param params.newRoomId The new room ID.
+   */
+  public async updateRoomId(params: {
+    currentRoomId: string;
+    newRoomId: string;
+  }): Promise<RoomInfo> {
+    const { currentRoomId, newRoomId } = params;
+
+    const res = await this.post(
+      url`/v2/rooms/${currentRoomId}/update-room-id`,
+      {
+        newRoomId,
+      }
+    );
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+    const data = (await res.json()) as RoomInfoPlain;
+    return {
+      ...data,
+      createdAt: new Date(data.createdAt),
+      lastConnectionAt: data.lastConnectionAt
+        ? new Date(data.lastConnectionAt)
+        : undefined,
+    };
   }
 }
 

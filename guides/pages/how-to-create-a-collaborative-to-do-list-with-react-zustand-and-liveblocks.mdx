@@ -54,7 +54,7 @@ npm install zustand @liveblocks/client @liveblocks/zustand
 ```
 
 [`@liveblocks/client`](/docs/api-reference/liveblocks-client) lets you interact
-with Liveblocks servers.  
+with Liveblocks servers.
 [`@liveblocks/zustand`](/docs/api-reference/liveblocks-zustand) contains a
 middleware for Zustand.
 
@@ -69,7 +69,7 @@ In order to use Liveblocks, we’ll need to sign up and get an API key.
 
 With a secret key, you can control who can access the room. it’s more secure but
 you need your own back-end endpoint. For this tutorial, we’ll go with a public
-key. For more info, see the [authentication guide](/docs/rooms/authentication).
+key. For more info, see the [authentication guide](/docs/authentication).
 
 </Banner>
 
@@ -222,7 +222,11 @@ input {
   margin: 0.5rem 0;
   width: 100%;
   background-color: white;
-  box-shadow: 0 0 #000, 0 0 #000, 0 0 #000, 0 0 #000,
+  box-shadow:
+    0 0 #000,
+    0 0 #000,
+    0 0 #000,
+    0 0 #000,
     0 1px 2px 0 rgba(0, 0, 0, 0.05);
   border-radius: 0.5rem;
   color: black;
@@ -231,8 +235,13 @@ input {
 }
 
 input:hover {
-  box-shadow: 0 0 #000, 0 0 #000, 0 0 #000, 0 0 #000,
-    0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 0 #000,
+    0 0 #000,
+    0 0 #000,
+    0 0 #000,
+    0 1px 3px 0 rgba(0, 0, 0, 0.1),
+    0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
 input:focus {
@@ -553,4 +562,4 @@ You can see some stats about the room you created in your
 ## Next steps
 
 - [API reference](/docs/api-reference/liveblocks-zustand)
-- [Authentication](/docs/rooms/authentication)
+- [Authentication](/docs/authentication)

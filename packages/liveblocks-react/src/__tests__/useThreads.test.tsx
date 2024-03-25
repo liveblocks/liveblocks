@@ -1804,7 +1804,7 @@ describe("useThreadsSuspense", () => {
     expect(result.current).toEqual(null);
 
     await waitFor(() => {
-      // Check if the error boundary's fallback UI is displayed
+      // Check if the error boundary's fallback is displayed
       expect(
         screen.getByText("There was an error while getting threads.")
       ).toBeInTheDocument();
@@ -1880,7 +1880,7 @@ describe("useThreadsSuspense: error", () => {
 
     // A new fetch request for the threads should have been made after the initial render
     await waitFor(() => expect(getThreadsReqCount).toBe(1));
-    // Check if the error boundary's fallback UI is displayed
+    // Check if the error boundary's fallback is displayed
     expect(
       screen.getByText("There was an error while getting threads.")
     ).toBeInTheDocument();
@@ -1893,7 +1893,7 @@ describe("useThreadsSuspense: error", () => {
     // Simulate clicking the retry button
     fireEvent.click(screen.getByText("Retry"));
 
-    // The error boundary's fallback UI should be cleared
+    // The error boundary's fallback should be cleared
     expect(
       screen.queryByText("There was an error while getting threads.")
     ).not.toBeInTheDocument();

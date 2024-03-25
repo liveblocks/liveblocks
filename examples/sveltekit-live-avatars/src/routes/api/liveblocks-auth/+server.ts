@@ -1,6 +1,11 @@
 import { json } from "@sveltejs/kit";
 import { Liveblocks, authorize } from "@liveblocks/node";
 
+/**
+ * Authenticating your Liveblocks application
+ * https://liveblocks.io/docs/authentication
+ */
+
 const API_KEY = import.meta.env.VITE_LIVEBLOCKS_SECRET_KEY as string;
 // @ts-ignore
 const API_KEY_WARNING = process.env.CODESANDBOX_SSE
@@ -33,7 +38,6 @@ export async function POST({ request }) {
 
   // For the avatar example, we're generating random users
   // and set their info from the authentication endpoint
-  // See https://liveblocks.io/docs/rooms/authentication for more information
   const session = liveblocks.prepareSession(
     `user-${Math.floor(Math.random() * NAMES.length)}`,
     {
@@ -46,7 +50,8 @@ export async function POST({ request }) {
     }
   );
 
-  session.allow(room, session.FULL_ACCESS);
+  // Use a naming pattern to allow access to rooms with a wildcard
+  session.allow(`liveblocks:examples:*`, session.FULL_ACCESS);
 
   const { status, body } = await session.authorize();
   return new Response(body, { status });

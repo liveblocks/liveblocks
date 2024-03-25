@@ -1,0 +1,128 @@
+---
+meta:
+  title: "Set up access token permissions with Firebase"
+  parentTitle: "Authentication"
+  description: "Learn how to setup access token permissions with Firebase."
+---
+
+Follow the following steps to start configure your authentication endpoint and
+start building your own security logic.
+
+## Quickstart
+
+<Steps>
+  <Step>
+    <StepTitle>Install the `liveblocks/node` package</StepTitle>
+    <StepContent>
+      Let’s first install the `@liveblocks/node` package in your
+      Firebase functions project.
+
+      ```bash
+      npm install @liveblocks/node
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Set up authentication endpoint</StepTitle>
+    <StepContent>
+
+      Users need permission to interact with rooms, and you can
+      permit access by creating a new Firebase [callable function](https://firebase.google.com/docs/functions/callable)
+      as shown below. In here you can implement your security and define
+      the rooms that your user can enter.
+
+      With access tokens, you should always use a [naming pattern](/docs/authentication/access-token#permissions)
+      for your room IDs, as this enables you to easily allow
+      access to a range of rooms at once. In the code snippet below, we’re using a naming pattern and wildcard `*`
+      to give the user access to every room in their organization, and every room in their group.
+
+
+      ```js
+      const functions = require("firebase-functions");
+      const { Liveblocks } = require("@liveblocks/node");
+
+      const liveblocks = new Liveblocks({
+        secret: "{{SECRET_KEY}}",
+      });
+
+      exports.auth = functions.https.onCall(async (data, context) => {
+        // Get the current user from your database
+        const user = __getUserFromDB__(data);
+
+        // Start an auth session inside your endpoint
+        const session = liveblocks.prepareSession(
+          user.id,
+          { userInfo: user.metadata },  // Optional
+        );
+
+        // Use a naming pattern to allow access to rooms with wildcards
+        // Giving the user read access on their org, and write access on their group
+        session.allow(`${user.organization}:*`, session.READ_ACCESS);
+        session.allow(`${user.organization}:${user.group}:*`, session.FULL_ACCESS);
+
+        // Authorize the user and return the result
+        const { status, body } = await session.authorize();
+        return JSON.parse(body);
+      });
+      ```
+
+      Read
+      [access token permission](/docs/authentication/access-token#permissions)
+      to learn more about naming rooms and granting permissions with wildcards.
+      Note that if a naming pattern doesn’t work for every room in your application, you can
+      [grant access to individual rooms too](/docs/guides/how-to-grant-access-to-individual-rooms-with-access-tokens).
+
+
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+    <StepTitle>Set up the client</StepTitle>
+    <StepContent>
+      On the front end, you can now replace the `publicApiKey`
+      option with `authEndpoint` pointing to the endpoint you
+      just created.
+
+      ```js
+      import { createClient } from "@liveblocks/client";
+      import firebase from "firebase";
+      import "firebase/functions";
+
+      firebase.initializeApp({
+        /* Firebase config */
+      });
+
+      const auth = firebase.functions().httpsCallable("liveblocks-auth");
+
+      // Create a Liveblocks client
+      const client = createClient({
+        authEndpoint: async (room) => (await auth({ room })).data,
+      });
+      ```
+
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## More information
+
+Both `userId` and `userInfo` can then be used in your JavaScript application as
+such:
+
+```ts
+const self = room.getSelf(); // or useSelf() in React
+console.log(self.id);
+console.log(self.info);
+```
+
+<Figure>
+  <Image
+    src="/assets/access-token-auth-diagram.png"
+    alt="Auth diagram"
+    width={768}
+    height={576}
+  />
+</Figure>

@@ -1,0 +1,64 @@
+---
+meta:
+  title:
+    "How to migrate your existing rooms IDs to use access token naming patterns"
+  description:
+    "Learn how to migrate your current rooms IDs to match access token naming
+    patterns."
+---
+
+When using [access token authentication](/docs/authentication/access-token) we
+recommend using a naming pattern for your room IDs. If you’ve already created
+rooms, it’s possible to rename them with `@liveblocks/node` or our REST API.
+
+## Update your room IDs
+
+To rename a room ID, you can use the
+[liveblocks.updateRoomId](/docs/api-reference/liveblocks-node#post-rooms-update-roomId)
+endpoint to update a room ID.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+const room = await liveblocks.updateRoomId({
+  roomId: "my-room-id",
+  newRoomId: "new-room-id",
+});
+
+// { type: "room", id: "new-room-id", ... }
+console.log(room);
+```
+
+When you change a room ID, currently connected users will disconnect, but there
+is a way around this.
+
+## Handle active users connected to a room
+
+To avoid users disconnecting after the change, you can listen for a room ID
+changed error, `4006`, with
+[`useErrorListener`](/docs/api-reference/liveblocks-react#useErrorListener) or
+[`room.subscribe("error")`](/docs/api-reference/liveblocks-client#Room.subscribe.error).
+This error is sent immediately after the ID is changed, and it returns the new
+room ID inside `error.message`. You can use this the new ID to redirect users to
+the new location of the room in your application.
+
+```tsx
+import { useErrorListener } from "../liveblocks.config";
+
+function App() {
+  useErrorListener((error) => {
+    if (error.code === 4006) {
+      // Room ID has been changed, get the new ID and redirect
+      const newRoomId = error.message;
+      __redirect__(`https://example.com/document/${newRoomId}}`);
+    }
+  });
+}
+```
+
+After implementing this, you can safely update the room ID, and users will be
+immediately redirected to the new location.

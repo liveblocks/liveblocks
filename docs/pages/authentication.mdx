@@ -1,0 +1,119 @@
+---
+meta:
+  title: "Authentication"
+  description: "Learn more about authenticating your Liveblocks application"
+---
+
+Liveblocks provides different methods to authenticate your application using
+your public and secret API keys. For any production application, you should use
+your secret key to enable [access token](#access-tokens) or
+[ID token](#id-tokens) authentication. These methods can be used to control
+access to your rooms and data.
+
+<Banner title="Public key is only for prototyping and landing pages" type="warning">
+
+We don’t recommend using your public API key in production, as it makes it
+possible for end users to access any room’s data. It’s also difficult for us to
+accurately measure your monthly collaborating users without any user
+information. We recommend using your secret key instead, see below.
+
+</Banner>
+
+## Authentication methods
+
+Secret key authentication in Liveblocks relies on generating
+[JSON Web Tokens](https://en.wikipedia.org/wiki/JSON_Web_Token) (JWTs), and then
+passing these to your client. There are two different types of authentication
+tokens you can generate and it’s important to decide on which you need before
+setting up your application.
+
+### Access tokens [#access-tokens]
+
+[Access token](/docs/authentication/access-token) authentication allows you to
+handle permissions yourself. When a user authenticates, it’s up to you to let
+Liveblocks know which rooms they should be allowed inside. This means that you
+need to manually keep track of which users should be allowed in which rooms, and
+apply these permissions yourself each time a user connects.
+
+<Figure>
+  <Image
+    src="/assets/authentication/access-token-enter-room.png"
+    alt="An access token granting entry to a room"
+    width={1494}
+    height={840}
+    quality={100}
+  />
+</Figure>
+
+In the diagram above, you can see that `olivier@example.com`’s access token is
+allowing him into the `Vu78Rt:design:9Hdu73` room. A naming pattern like this is
+necessary for your rooms when using access tokens, and it works well for simple
+permissions. However, if you need complex permissions, we recommend ID tokens.
+
+### ID tokens [#id-tokens]
+
+[ID token](/docs/authentication/id-token) authentication allows Liveblocks to
+handle permissions for you. This means that when you create or modify a room,
+you can set a user’s permissions on the room itself, this acting as a source of
+truth. Later, when a user tries to enter a room, Liveblocks will automatically
+check if the user has permission, and deny them access if the permissions aren’t
+set.
+
+<Figure>
+  <Image
+    src="/assets/authentication/id-token-enter-room.png"
+    alt="An ID token granting entry to a room"
+    width={1494}
+    height={840}
+    quality={100}
+  />
+</Figure>
+
+In the diagram above, `olivier@example.com`’s ID token verifies his identity,
+and when he tries to enter the `a32wQXid4A9` room, his permissions are then
+checked on the room itself. ID tokens are best if you need complex permissions
+set on different levels (e.g. workspace → team → user).
+
+## Choose a method
+
+- **Access token authentication** is best for prototyping, as it’s easy to set
+  up. It’s also ideal if you only need simple permissions, and you’d prefer
+  handle these without relying on Liveblocks.
+- **ID token authentication** is best if you’d like Liveblocks to automatically
+  prevent access to the wrong users. It allows you to set different levels of
+  permissions on different users and groups.
+
+<ListGrid columns={2}>
+  <DocsCard
+    title="Access token authentication"
+    href="/docs/authentication/access-token"
+    type="image"
+    description="Simple and flexible global permission rules"
+    center={false}
+    visual={
+      <Image
+        src="/assets/authentication/access-token-enter-room.png"
+        alt="An access token granting entry to a room"
+        width={1494}
+        height={840}
+        quality={100}
+      />
+    }
+  />
+  <DocsCard
+    title="ID token authentication"
+    href="/docs/authentication/id-token"
+    type="image"
+    description="Fine grained permissions at the room level"
+    center={false}
+    visual={
+      <Image
+        src="/assets/authentication/id-token-enter-room.png"
+        alt="An ID token granting entry to a room"
+        width={1494}
+        height={840}
+        quality={100}
+      />
+    }
+  />
+</ListGrid>
