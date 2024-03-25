@@ -31,10 +31,10 @@ export type InboxNotificationData =
   | InboxNotificationThreadData
   | InboxNotificationCustomData;
 
-type InboxNotificationThreadDataPlain =
+export type InboxNotificationThreadDataPlain =
   DateToString<InboxNotificationThreadData>;
 
-type InboxNotificationCustomDataPlain = Omit<
+export type InboxNotificationCustomDataPlain = Omit<
   DateToString<InboxNotificationCustomData>,
   "activities"
 > & {

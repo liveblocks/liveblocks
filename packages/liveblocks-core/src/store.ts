@@ -5,7 +5,10 @@ import type { Resolve } from "./lib/Resolve";
 import type { BaseMetadata } from "./types/BaseMetadata";
 import type { CommentData, CommentReaction } from "./types/CommentData";
 import type { CommentUserReaction } from "./types/CommentReaction";
-import type { InboxNotificationData } from "./types/InboxNotificationData";
+import type {
+  InboxNotificationData,
+  InboxNotificationThreadData,
+} from "./types/InboxNotificationData";
 import type { InboxNotificationDeleteInfo } from "./types/InboxNotificationDeleteInfo";
 import type { PartialNullable } from "./types/PartialNullable";
 import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
@@ -175,7 +178,11 @@ export function createClientStore<
           threads: deleteKeyImmutable(state.threads, threadId),
           inboxNotifications: Object.fromEntries(
             Object.entries(state.inboxNotifications).filter(
-              ([_id, notification]) => notification.threadId !== threadId
+              // TODO: Remove `as InboxNotificationThreadData`
+              ([_id, notification]) =>
+                notification.kind === "thread" &&
+                (notification as InboxNotificationThreadData).threadId !==
+                  threadId
             )
           ),
         };
@@ -390,7 +397,10 @@ export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
         );
 
         const inboxNotification = Object.values(result.inboxNotifications).find(
-          (notification) => notification.threadId === thread.id
+          // TODO: Remove `as InboxNotificationThreadData`
+          (notification) =>
+            notification.kind === "thread" &&
+            (notification as InboxNotificationThreadData).threadId !== thread.id
         );
 
         if (inboxNotification === undefined) {

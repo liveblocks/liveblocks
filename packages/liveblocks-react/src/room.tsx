@@ -21,6 +21,7 @@ import type {
   CommentData,
   CommentsEventServerMsg,
   EnterOptions,
+  InboxNotificationThreadData,
   LiveblocksError,
   OptionalPromise,
   ResolveMentionSuggestionsArgs,
@@ -1693,7 +1694,13 @@ export function createRoomContext<
 
                 const inboxNotification = Object.values(
                   state.inboxNotifications
-                ).find((notification) => notification.threadId === threadId);
+                ).find(
+                  // TODO: Remove `as InboxNotificationThreadData`
+                  (notification) =>
+                    notification.kind === "thread" &&
+                    (notification as InboxNotificationThreadData).threadId ===
+                      threadId
+                );
 
                 // If the thread has an inbox notification associated with it, we update the notification's `notifiedAt` and `readAt` values
                 const updatedInboxNotifications =
@@ -1958,7 +1965,11 @@ export function createRoomContext<
     const selector = React.useCallback(
       (state: CacheState<BaseMetadata>): ThreadSubscription => {
         const inboxNotification = selectedInboxNotifications(state).find(
-          (inboxNotification) => inboxNotification.threadId === threadId
+          // TODO: Remove `as InboxNotificationThreadData`
+          (inboxNotification) =>
+            inboxNotification.kind === "thread" &&
+            (inboxNotification as InboxNotificationThreadData).threadId ===
+              threadId
         );
 
         const thread = state.threads[threadId];
@@ -1992,7 +2003,13 @@ export function createRoomContext<
       (threadId: string) => {
         const inboxNotification = Object.values(
           store.get().inboxNotifications
-        ).find((inboxNotification) => inboxNotification.threadId === threadId);
+        ).find(
+          // TODO: Remove `as InboxNotificationThreadData`
+          (inboxNotification) =>
+            inboxNotification.kind === "thread" &&
+            (inboxNotification as InboxNotificationThreadData).threadId ===
+              threadId
+        );
 
         if (!inboxNotification) return;
 
