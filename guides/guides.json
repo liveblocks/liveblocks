@@ -117,7 +117,7 @@
     "title": "How to use Liveblocks Storage with Zustand",
     "path": "/how-to-use-liveblocks-storage-with-zustand",
     "topics": ["tutorials"],
-    "technologies": ["react", "zustand", "srorage"],
+    "technologies": ["react", "zustand", "storage"],
     "date": "2023-06-27"
   },
   {
