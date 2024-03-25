@@ -131,7 +131,7 @@ export interface InboxNotificationCustomProps
 interface InboxNotificationLayoutProps
   extends Omit<ComponentPropsWithoutRef<"a">, "title">,
     InboxNotificationSharedProps {
-  inboxNotificationId: string;
+  inboxNotification: InboxNotificationData;
   aside: ReactNode;
   title: ReactNode;
   date: Date | string | number;
@@ -148,7 +148,7 @@ const InboxNotificationLayout = forwardRef<
 >(
   (
     {
-      inboxNotificationId,
+      inboxNotification,
       children,
       aside,
       title,
@@ -187,8 +187,8 @@ const InboxNotificationLayout = forwardRef<
     }, []);
 
     const handleMarkAsRead = useCallback(() => {
-      markInboxNotificationAsRead(inboxNotificationId);
-    }, [inboxNotificationId, markInboxNotificationAsRead]);
+      markInboxNotificationAsRead(inboxNotification.id);
+    }, [inboxNotification.id, markInboxNotificationAsRead]);
 
     return (
       <TooltipProvider>
@@ -202,6 +202,7 @@ const InboxNotificationLayout = forwardRef<
           )}
           dir={$.dir}
           data-unread={unread ? "" : undefined}
+          data-kind={inboxNotification.kind}
           {...props}
           ref={forwardedRef}
         >
@@ -412,7 +413,7 @@ const InboxNotificationThread = forwardRef<
 
     return (
       <InboxNotificationLayout
-        inboxNotificationId={inboxNotification.id}
+        inboxNotification={inboxNotification}
         aside={aside}
         title={title}
         date={date}
@@ -457,7 +458,7 @@ const InboxNotificationCustom = forwardRef<
 
     return (
       <InboxNotificationLayout
-        inboxNotificationId={inboxNotification.id}
+        inboxNotification={inboxNotification}
         aside={aside}
         title={title}
         date={inboxNotification.notifiedAt}
