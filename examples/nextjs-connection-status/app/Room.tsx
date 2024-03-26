@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { ClientSideSuspense } from "@liveblocks/react";
 
 export function Room({ children }: { children: ReactNode }) {
-  const roomId = useOverrideRoomId("nextjs-connection-status");
+  const roomId = useExampleRoomId("nextjs-connection-status");
 
   return (
     <RoomProvider
@@ -36,13 +36,13 @@ function Loading() {
  * This function is used when deploying an example on liveblocks.io.
  * You can ignore it completely if you run the example locally.
  */
-function useOverrideRoomId(roomId: string) {
+function useExampleRoomId(roomId: string) {
   const params = useSearchParams();
-  const roomIdParam = params.get("roomId");
+  const exampleId = params?.get("exampleId");
 
-  const overrideRoomId = useMemo(() => {
-    return roomIdParam ? `${roomId}-${roomIdParam}` : roomId;
-  }, [roomId, roomIdParam]);
+  const exampleRoomId = useMemo(() => {
+    return exampleId ? `${roomId}-${exampleId}` : roomId;
+  }, [roomId, exampleId]);
 
-  return overrideRoomId;
+  return exampleRoomId;
 }

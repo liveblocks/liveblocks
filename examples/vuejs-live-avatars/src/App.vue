@@ -22,7 +22,8 @@ const initialPresence = {
 };
 
 let roomId = "vuejs-live-avatars";
-overrideRoomId();
+
+applyExampleRoomId();
 
 // Join a room
 const { room, leave } = client.enterRoom<Presence>(roomId, { initialPresence });
@@ -36,12 +37,16 @@ onUnmounted(() => {
  * This function is used when deploying an example on liveblocks.io.
  * You can ignore it completely if you run the example locally.
  */
-function overrideRoomId() {
-  const query = new URLSearchParams(window?.location?.search);
-  const roomIdSuffix = query.get("roomId");
+function applyExampleRoomId() {
+  if (typeof window === "undefined") {
+    return;
+  }
 
-  if (roomIdSuffix) {
-    roomId = `${roomId}-${roomIdSuffix}`;
+  const query = new URLSearchParams(window?.location?.search);
+  const exampleId = query.get("exampleId");
+
+  if (exampleId) {
+    roomId = exampleId ? `${roomId}-${exampleId}` : roomId;
   }
 }
 </script>

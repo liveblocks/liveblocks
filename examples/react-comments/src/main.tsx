@@ -4,7 +4,8 @@ import App from "./App";
 import "./styles/globals.css";
 
 let roomId = "react-comments";
-overrideRoomId();
+
+applyExampleRoomId();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -16,11 +17,15 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
  * This function is used when deploying an example on liveblocks.io.
  * You can ignore it completely if you run the example locally.
  */
-function overrideRoomId() {
-  const query = new URLSearchParams(window?.location?.search);
-  const roomIdSuffix = query.get("roomId");
+function applyExampleRoomId() {
+  if (typeof window === "undefined") {
+    return;
+  }
 
-  if (roomIdSuffix) {
-    roomId = `${roomId}-${roomIdSuffix}`;
+  const query = new URLSearchParams(window?.location?.search);
+  const exampleId = query.get("exampleId");
+
+  if (exampleId) {
+    roomId = exampleId ? `${roomId}-${exampleId}` : roomId;
   }
 }

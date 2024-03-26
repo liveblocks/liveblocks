@@ -96,7 +96,7 @@
     "title": "How to use Liveblocks Storage with React",
     "path": "/how-to-use-liveblocks-storage-with-react",
     "topics": ["tutorials"],
-    "technologies": ["react"],
+    "technologies": ["react", "storage"],
     "date": "2023-06-27"
   },
   {
@@ -117,7 +117,7 @@
     "title": "How to use Liveblocks Storage with Zustand",
     "path": "/how-to-use-liveblocks-storage-with-zustand",
     "topics": ["tutorials"],
-    "technologies": ["react", "zustand"],
+    "technologies": ["react", "zustand", "storage"],
     "date": "2023-06-27"
   },
   {
@@ -138,7 +138,7 @@
     "title": "How to use Liveblocks Storage with Redux",
     "path": "/how-to-use-liveblocks-storage-with-redux",
     "topics": ["tutorials"],
-    "technologies": ["react", "redux"],
+    "technologies": ["react", "redux", "storage"],
     "date": "2023-06-27"
   },
   {
@@ -166,7 +166,7 @@
     "title": "How to modify Liveblocks Storage from the server",
     "path": "/how-to-modify-liveblocks-storage-from-the-server",
     "topics": ["tutorials"],
-    "technologies": ["nodejs", "javascript"],
+    "technologies": ["nodejs", "javascript", "storage"],
     "date": "2023-08-04"
   },
   {
@@ -315,5 +315,33 @@
     "technologies": ["react-comments", "nodejs"],
     "date": "2024-02-08",
     "featured": true
+  },
+  {
+    "title": "How to rename room IDs and successfully migrate users",
+    "path": "/how-to-rename-room-ids-and-successfully-migrate-users",
+    "topics": ["authentication", "rest-api"],
+    "technologies": ["nodejs"],
+    "date": "2024-03-13"
+  },
+  {
+    "title": "How to grant access to individual rooms with access tokens",
+    "path": "/how-to-grant-access-to-individual-rooms-with-access-tokens",
+    "topics": ["authentication"],
+    "technologies": ["nodejs"],
+    "date": "2024-03-13"
+  },
+  {
+    "title": "How to use Yjs subdocuments",
+    "path": "/how-to-use-yjs-subdocuments",
+    "topics": ["data-fetching", "rest-api"],
+    "technologies": ["yjs", "nodejs", "javascript"],
+    "date": "2024-03-13"
+  },
+  {
+    "title": "Setting an initial or default value in Tiptap",
+    "path": "/setting-an-initial-or-default-value-in-tiptap",
+    "topics": ["text-editors"],
+    "technologies": ["yjs", "tiptap", "react"],
+    "date": "2024-03-25"
   }
 ]

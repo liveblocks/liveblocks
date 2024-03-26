@@ -69,19 +69,19 @@ from having issues.
   <StepCompact>
     Keep your existing back end endpoint (e.g. `/api/auth`).
   </StepCompact>
-  
-  <StepCompact>
-    Create a new authentication endpoint for the upgrade (e.g. `/api/liveblocks-auth`).
-  </StepCompact>
 
-  <StepCompact>
-    In your front end, point `createClient()`’s `authEndpoint` URL to the new endpoint.
-  </StepCompact>
-  
-  <StepCompact>
-    Done! You can deploy your application now.
-  </StepCompact>
-  
+<StepCompact>
+  Create a new authentication endpoint for the upgrade (e.g.
+  `/api/liveblocks-auth`).
+</StepCompact>
+
+<StepCompact>
+  In your front end, point `createClient()`’s `authEndpoint` URL to the new
+  endpoint.
+</StepCompact>
+
+<StepCompact>Done! You can deploy your application now.</StepCompact>
+
   <StepCompact lastStep>
     Later, when all your application’s clients have been upgraded to the latest version, you can safely remove the old endpoint.
   </StepCompact>
@@ -123,28 +123,29 @@ single-room token based setup.
     Create a Node.js client that allows you to interact with our REST API.
       ```tsx
       import { Liveblocks } from "@liveblocks/node";
-      
+
       const liveblocks = new Liveblocks({
         secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
       });
       ```
     </StepContent>
+
   </Step>
-  
+
   <Step>
     <StepTitle>Start an auth session inside your endpoint</StepTitle>
     <StepContent>
     Every session should have a unique user ID, which is typically the ID of the user in your database.
       ```tsx highlight="10-13"
       import { Liveblocks } from "@liveblocks/node";
-      
+
       const liveblocks = new Liveblocks({
         secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
       });
-      
+
       export async function POST(request) {
         const user = { id: "olivier@example.com", info: { name: "Olivier" }};
-  
+
         const session = liveblocks.prepareSession(
           user.id,
           { userInfo: user.info } // Optional
@@ -152,22 +153,23 @@ single-room token based setup.
       }
       ```
     </StepContent>
+
   </Step>
-  
+
   <Step>
     <StepTitle>Give the user access to the room</StepTitle>
     <StepContent>
     Give if the current user access to the room, with either `session.FULL_ACCESS`, or `session.READ_ACCESS`.
       ```tsx highlight="15,16"
       import { Liveblocks } from "@liveblocks/node";
-      
+
       const liveblocks = new Liveblocks({
         secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
       });
-      
+
       export async function POST(request) {
         const user = { id: "olivier@example.com", info: { name: "Olivier" }};
-  
+
         const session = liveblocks.prepareSession(
           user.id,
           { userInfo: user.info } // Optional
@@ -180,26 +182,26 @@ single-room token based setup.
     </StepContent>
 
   </Step>
-  
+
   <Step>
     <StepTitle>Authorize the user and return the result</StepTitle>
     <StepContent>
     Give if the current user access to the room, with either `session.FULL_ACCESS`, or `session.READ_ACCESS`.
       ```tsx highlight="18,19"
       import { Liveblocks } from "@liveblocks/node";
-      
+
       const liveblocks = new Liveblocks({
         secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
       });
-      
+
       export async function POST(request) {
         const user = { id: "olivier@example.com", info: { name: "Olivier" }};
-  
+
         const session = liveblocks.prepareSession(
           user.id,
           { userInfo: user.info } // Optional
         );
-        
+
         const { room } = await request.json();
         session.allow(room, session.FULL_ACCESS);
 
@@ -210,47 +212,49 @@ single-room token based setup.
     </StepContent>
 
   </Step>
-  
+
   <Step>
     <StepTitle>Point to the new endpoint</StepTitle>
     <StepContent>
     In the front end of your app, update your `liveblocks.config.ts` file to connect to the new endpoint.
     ```ts file="liveblocks.config.ts" highlight="4"
       import { createClient } from "@liveblocks/client";
-    
+
       const client = createClient({
         authEndpoint: "/api/liveblocks-auth",
       });
       ```
     </StepContent>
+
   </Step>
-  
-  <Step>
-    <StepTitle>You’re migrated!</StepTitle>
-    <StepContent>
-    You’ve successfully migrated, and now have a similar authentication set up as before! However, there are other new features we can take advantage of.
-    </StepContent>
-  </Step>
-  
+
+<Step>
+  <StepTitle>You’re migrated!</StepTitle>
+  <StepContent>
+    You’ve successfully migrated, and now have a similar authentication set up
+    as before! However, there are other new features we can take advantage of.
+  </StepContent>
+</Step>
+
   <Step lastStep>
     <StepTitle>Bonus: Issue access to multiple rooms</StepTitle>
     <StepContent>
-    With Liveblocks 1.2, you can also issue access to multiple rooms, or even use a prefix-based wildcard in the room name, enabling any amount of rooms! You can learn more about this in our [access token](/docs/rooms/permissions/access-token#patterns) guide.
+    With Liveblocks 1.2, you can also issue access to multiple rooms, or even use a prefix-based wildcard in the room name, enabling any amount of rooms! You can learn more about this in our [access token](/docs/authentication/access-token#permissions) guide.
       ```tsx highlight="15-18"
       import { Liveblocks } from "@liveblocks/node";
-      
+
       const liveblocks = new Liveblocks({
         secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
       });
-      
+
       export async function POST(request) {
         const user = { id: "olivier@example.com", info: { name: "Olivier" }};
-  
+
         const session = liveblocks.prepareSession(
           user.id,
           { userInfo: user.info } // Optional
         );
-        
+
         const { room } = await request.json();
         session.allow(room, session.FULL_ACCESS);
         session.allow("my-room-*", session.READ_ACCESS);
@@ -268,10 +272,8 @@ single-room token based setup.
 
 ### Learn more about access tokens
 
-You can find guides for your specific framework in our
-[access tokens authentication guides](/docs/rooms/authentication/access-token-permissions)
-section and learn more about permissions in our
-[access tokens permissions guide](/docs/rooms/permissions/access-token).
+You can find guides for your specific framework and learn more about permissions
+in our [access tokens authentication guides](/docs/authentication/access-token).
 
 Here’s a full working example of access tokens in a Next.js endpoint.
 
@@ -337,59 +339,60 @@ All you have to do now is implement it as follows:
     Create a Node.js client that allows you to interact with our REST API.
       ```tsx
       import { Liveblocks } from "@liveblocks/node";
-      
+
       const liveblocks = new Liveblocks({
         secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
       });
       ```
     </StepContent>
+
   </Step>
-  
+
   <Step>
     <StepTitle>Identify the user and return the result</StepTitle>
     <StepContent>
     Whichever `userId` (or `groupIds`) you pass will be used to check the permissions you configured in your Liveblocks account already.
       ```tsx highlight="10-15"
       import { Liveblocks } from "@liveblocks/node";
-      
+
       const liveblocks = new Liveblocks({
         secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
       });
-      
+
       export async function POST(request) {
         const user = { id: "olivier@example.com", info: { name: "Olivier" }};
-  
+
         const { status, body } = await liveblocks.identifyUser({
           userId: user.id,
           groupIds, // Optional
         });
-        
+
         return new Response(body, { status });
       }
       ```
     </StepContent>
+
   </Step>
-  
+
   <Step>
     <StepTitle>Point to the new endpoint</StepTitle>
     <StepContent>
     In the front end of your app, update your `liveblocks.config.ts` file to connect to the new endpoint.
     ```ts file="liveblocks.config.ts" highlight="4"
       import { createClient } from "@liveblocks/client";
-    
+
       const client = createClient({
         authEndpoint: "/api/liveblocks-auth",
       });
       ```
     </StepContent>
+
   </Step>
-  
-  <Step>
-    <StepTitle>You’re migrated!</StepTitle>
-    <StepContent>
-    You’ve successfully migrated to id tokens!
-    </StepContent>
-  </Step>
+
+<Step>
+  <StepTitle>You’re migrated!</StepTitle>
+  <StepContent>You’ve successfully migrated to id tokens!</StepContent>
+</Step>
 
   <Step lastStep>
     <StepTitle>Bonus: Use our REST API to handle permissions</StepTitle>
@@ -397,7 +400,7 @@ All you have to do now is implement it as follows:
     ID tokens use permissions set with our [REST API](/docs/api-reference/rest-api-endpoints).
     For example, this is how you [create a room](/docs/api-reference/rest-api-endpoints#post-rooms),
     and give a user full access.
-    
+
     ```ts highlight="6-8"
     fetch("https://api.liveblocks.io/v2/rooms", {
       method: "POST",
@@ -411,15 +414,14 @@ All you have to do now is implement it as follows:
     });
     ```
     </StepContent>
+
   </Step>
 </Steps>
 
 ### Learn more about ID tokens
 
-You can find guides for your specific framework in our
-[ID tokens authentication guides](/docs/rooms/authentication/id-token-permissions)
-and learn more about permissions in our
-[ID tokens permissions guide](/docs/rooms/permissions/id-token).
+You can find guides for your specific framework and learn more about permissions
+in our [ID tokens authentication guides](/docs/authentication/id-token).
 
 Here’s a full working example of ID tokens in a Next.js endpoint.
 

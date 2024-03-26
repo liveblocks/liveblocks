@@ -1,0 +1,155 @@
+---
+meta:
+  title: "Set up access token permissions with Express"
+  parentTitle: "Authentication"
+  description: "Learn how to setup access token permissions with Express."
+---
+
+Follow the following steps to start configure your authentication endpoint where
+
+## Quickstart
+
+<Steps>
+  <Step>
+    <StepTitle>Install the `liveblocks/node` package</StepTitle>
+    <StepContent>
+
+      ```bash
+      npm install @liveblocks/node
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Set up authentication endpoint</StepTitle>
+    <StepContent>
+
+      Users need permission to interact with rooms, and you can
+      permit access in an `api/liveblocks-auth` endpoint by
+      creating the `liveblocks-auth.ts` file with the
+      following code. In here you can implement your security and define
+      the rooms that your user can enter.
+
+      With access tokens, you should always use a [naming pattern](/docs/authentication/access-token#permissions)
+      for your room IDs, as this enables you to easily allow
+      access to a range of rooms at once. In the code snippet below, we’re using a naming pattern and wildcard `*`
+      to give the user access to every room in their organization, and every room in their group.
+
+
+      ```ts file="liveblocks-auth.ts"
+      const express = require("express");
+      import { Liveblocks } from "@liveblocks/node";
+
+      const liveblocks = new Liveblocks({
+        secret: "{{SECRET_KEY}}",
+      });
+
+      const app = express();
+      app.use(express.json());
+
+      app.post("/api/liveblocks-auth", (req, res) => {
+        // Get the current user from your database
+        const user = __getUserFromDB__(req);
+
+        // Start an auth session inside your endpoint
+        const session = liveblocks.prepareSession(
+          user.id,
+          { userInfo: user.metadata },  // Optional
+        );
+
+        // Use a naming pattern to allow access to rooms with wildcards
+        // Giving the user read access on their org, and write access on their group
+        session.allow(`${user.organization}:*`, session.READ_ACCESS);
+        session.allow(`${user.organization}:${user.group}:*`, session.FULL_ACCESS);
+
+        // Authorize the user and return the result
+        const { status, body } = await session.authorize();
+        return res.status(status).end(body);
+      });
+      ```
+
+      Read
+      [access token permission](/docs/authentication/access-token#permissions)
+      to learn more about naming rooms and granting permissions with wildcards.
+      Note that if a naming pattern doesn’t work for every room in your application, you can
+      [grant access to individual rooms too](/docs/guides/how-to-grant-access-to-individual-rooms-with-access-tokens).
+
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+    <StepTitle>Set up the client</StepTitle>
+    <StepContent>
+      On the front end, you can now replace the `publicApiKey`
+      option with `authEndpoint` pointing to the endpoint you
+      just created.
+
+      ```ts file="liveblocks.config.ts"
+      import { createClient } from "@liveblocks/client";
+
+      const client = createClient({
+        authEndpoint: "/api/liveblocks-auth",
+      });
+      ```
+
+      If you need to pass custom headers or data to your endpoint, you can
+      use
+      [authEndpoint as a callback](/docs/api-reference/liveblocks-client#createClientCallback)
+      instead.
+
+      ```ts file="liveblocks.config.ts" isCollapsed isCollapsable
+      import { createClient } from "@liveblocks/client";
+
+      // Passing custom headers and body to your endpoint
+      const client = createClient({
+        authEndpoint: async (room) => {
+          const headers = {
+            // Custom headers
+            // ...
+
+            "Content-Type": "application/json",
+          };
+
+          const body = JSON.stringify({
+            // Custom body
+            // ...
+
+            room,
+          });
+
+          const response = await fetch("/api/liveblocks-auth", {
+            method: "POST",
+            headers,
+            body,
+          });
+
+          return await response.json();
+        },
+      });
+      ```
+
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## More information
+
+Both `userId` and `userInfo` can then be used in your JavaScript application as
+such:
+
+```ts
+const self = room.getSelf(); // or useSelf() in React
+console.log(self.id);
+console.log(self.info);
+```
+
+<Figure>
+  <Image
+    src="/assets/access-token-auth-diagram.png"
+    alt="Auth diagram"
+    width={768}
+    height={576}
+  />
+</Figure>

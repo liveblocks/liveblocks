@@ -773,6 +773,7 @@
   background: var(--lb-dynamic-background);
   color: var(--lb-foreground);
   font-weight: 400;
+  scroll-margin: var(--lb-spacing);
 
   @media (hover: hover) {
     &:where(.lb-comment\:show-actions-hover) {
@@ -790,6 +791,14 @@
         }
       }
     }
+  }
+
+  &:where(:target, [data-target]) {
+    --lb-dynamic-background: var(--lb-background-accent-faint);
+  }
+
+  &:where([data-editing]) {
+    --lb-dynamic-background: var(--lb-background-foreground-faint);
   }
 }
 

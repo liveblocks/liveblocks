@@ -1,4 +1,19 @@
+# v1.11.1
+
+### `@liveblocks/react-comments`
+
+- Fix the composer’s placeholder to appear instantly instead of being initially
+  invisible.
+
 # v1.11.0
+
+### `@liveblocks/node`
+
+- Add `updateRoomId` method that lets you update the room ID of the specified
+  room.
+- Add an optional `guid` parameter to `sendYjsBinaryUpdate` and
+  `getYjsDocumentAsBinaryUpdate` to point to a Yjs subdocument with the
+  specified guid.
 
 ### `@liveblocks/react`
 
@@ -8,17 +23,15 @@
   `undefined` will now be treated as an error.
 - Fix bug where `useUser` and `useRoomInfo` returned an extra `data` superfluous
   property.
+- Fix bug where customizing types on `createLiveblocksContext` would conflict
+  with the provided `Client`.
 
 ### `@liveblocks/react-comments`
 
 - Add actions to `InboxNotification` with a single action for now: marking as
   read.
 - Improve actions hover behavior in `Comment`/`Thread`.
-
-### `@liveblocks/node`
-
-- Add `updateRoomId` method that lets you update the room ID of the specified
-  room.
+- Change `Comment` background color when it’s linked to or being edited.
 
 # v1.10.4
 

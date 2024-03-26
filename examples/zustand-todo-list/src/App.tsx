@@ -4,7 +4,7 @@ import "./App.css";
 
 let roomId = "zustand-todo-list";
 
-overrideRoomId();
+applyExampleRoomId();
 
 function WhoIsHere() {
   const othersUsersCount = useStore((state) => state.liveblocks.others.length);
@@ -91,11 +91,15 @@ export default function App() {
  * This function is used when deploying an example on liveblocks.io.
  * You can ignore it completely if you run the example locally.
  */
-function overrideRoomId() {
-  const query = new URLSearchParams(window?.location?.search);
-  const roomIdSuffix = query.get("roomId");
+function applyExampleRoomId() {
+  if (typeof window === "undefined") {
+    return;
+  }
 
-  if (roomIdSuffix) {
-    roomId = `${roomId}-${roomIdSuffix}`;
+  const query = new URLSearchParams(window?.location?.search);
+  const exampleId = query.get("exampleId");
+
+  if (exampleId) {
+    roomId = exampleId ? `${roomId}-${exampleId}` : roomId;
   }
 }

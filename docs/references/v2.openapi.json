@@ -390,6 +390,97 @@
         "description": "This endpoint deletes a room. A deleted room is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.deleteRoom`](/docs/api-reference/liveblocks-node#delete-rooms-roomid)."
       }
     },
+    "/rooms/{roomId}/update-room-id": {
+      "post": {
+        "summary": "Update room ID",
+        "tags": ["Room"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "newRoomId",
+            "in": "path",
+            "required": true,
+            "description": "The new ID for the room"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the updated room with the new ID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Room"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "type": "room",
+                      "id": "react-todo-list",
+                      "lastConnectionAt": "2022-08-04T21:07:09.380Z",
+                      "createdAt": "2022-07-13T14:32:50.697Z",
+                      "metadata": {
+                        "color": "blue",
+                        "size": "10",
+                        "target": ["abc", "def"]
+                      },
+                      "defaultAccesses": ["room:write"],
+                      "groupsAccesses": {
+                        "marketing": ["room:write"]
+                      },
+                      "usersAccesses": {
+                        "alice": ["room:write"],
+                        "vinod": ["room:write"]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "post-rooms-update-roomId",
+        "description": "This endpoint permanently updates the room’s ID.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "example": {
+                  "value": {
+                    "newRoomId": "new-room-id"
+                  }
+                }
+              }
+            },
+            "application/xml": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        }
+      }
+    },
     "/rooms/{roomId}/active_users": {
       "get": {
         "summary": "Get active users",
@@ -819,6 +910,15 @@
             "in": "path",
             "required": true,
             "description": "ID of the room"
+          },
+          {
+            "name": "guid",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the subdocument"
           }
         ],
         "responses": {
@@ -843,7 +943,7 @@
           }
         },
         "operationId": "put-rooms-roomId-ydoc",
-        "description": "This endpoint is used to send a Yjs binary update to the room’s Yjs document. You can use this endpoint to initialize Yjs data for the room or to update the room’s Yjs document.\n\nThe update is typically obtained by calling `Y.encodeStateAsUpdate(doc)`. See the [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more details. Corresponds to [`liveblocks.sendYjsBinaryUpdate`](/docs/api-reference/liveblocks-node#put-rooms-roomId-ydoc). When manually making this HTTP call, set the HTTP header `Content-Type` to `application/octet-stream`, and send the binary update (a `Uint8Array`) in the body of the HTTP request. This endpoint does not accept JSON, unlike most other endpoints.",
+        "description": "This endpoint is used to send a Yjs binary update to the room’s Yjs document. You can use this endpoint to initialize Yjs data for the room or to update the room’s Yjs document. To send an update to a subdocument instead of the main document, pass its `guid`. Corresponds to [`liveblocks.sendYjsBinaryUpdate`](/docs/api-reference/liveblocks-node#put-rooms-roomId-ydoc).\n\nThe update is typically obtained by calling `Y.encodeStateAsUpdate(doc)`. See the [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more details. When manually making this HTTP call, set the HTTP header `Content-Type` to `application/octet-stream`, and send the binary update (a `Uint8Array`) in the body of the HTTP request. This endpoint does not accept JSON, unlike most other endpoints.",
         "requestBody": {
           "content": {
             "application/octet-stream": {
@@ -859,7 +959,7 @@
     "/rooms/{roomId}/ydoc-binary": {
       "get": {
         "summary": "Get Yjs document encoded as a binary Yjs update",
-        "description": "This endpoint returns the room’s Yjs document encoded as a single binary update. This can be used by `Y.applyUpdate(responseBody)` to get a copy of the document in your back end. See [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more information on working with updates. Corresponds to [`liveblocks.getYjsDocumentAsBinaryUpdate`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc-binary).",
+        "description": "This endpoint returns the room’s Yjs document encoded as a single binary update. This can be used by `Y.applyUpdate(responseBody)` to get a copy of the document in your back end. See [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more information on working with updates. To return a subdocument instead of the main document, pass its `guid`. Corresponds to [`liveblocks.getYjsDocumentAsBinaryUpdate`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc-binary).",
         "tags": ["Yjs"],
         "parameters": [
           {
@@ -870,6 +970,15 @@
               "type": "string"
             },
             "description": "ID of the room"
+          },
+          {
+            "name": "guid",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the subdocument"
           }
         ],
         "responses": {
@@ -955,7 +1064,7 @@
     "/schemas/{id}": {
       "get": {
         "summary": "Get schema",
-        "description": "This endpoint retrieves a schema by its id. The id is a combination of the schema name and version. For example, `my-schema@1`. Corresponds to [`liveblocks.getSchema`](/docs/api-reference/liveblocks-node#get-create-new-schema).",
+        "description": "This endpoint retrieves a schema by its ID. The ID is a combination of the schema name and version. For example, `my-schema@1`. Corresponds to [`liveblocks.getSchema`](/docs/api-reference/liveblocks-node#get-create-new-schema).",
         "tags": ["Schema validation"],
         "parameters": [
           {
@@ -1180,7 +1289,7 @@
         },
         "responses": {
           "200": {
-            "description": "Success. Found the schema attached to the room. Returns the schema id as JSON.",
+            "description": "Success. Found the schema attached to the room. Returns the schema ID as JSON.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2140,7 +2249,7 @@
             }
           }
         },
-        "description": "This endpoint lets your application server (your back end) obtain a token that one of its clients (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When making this request, you’ll have to use your secret key.\n\n**Important:** The difference with an [ID token](#post-identify-user) is that an access token holds all the permissions, and is the source of truth. With ID tokens, permissions are set in the Liveblocks back end (through REST API calls) and \"checked at the door\" every time they are used to enter a room.\n\n**Note:** When using the `@liveblocks/node` package, you can use [`Liveblocks.prepareSession`](/docs/api-reference/liveblocks-node#access-tokens) in your back end to build this request.\n\nYou can pass the property `userId` in the request’s body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. The property `userId` is used by Liveblocks to calculate your account’s Monthly Active Users. One unique `userId` corresponds to one MAU.\n\nAdditionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name.\n\nLastly, you’ll specify the exact permissions to give to the user using the `permissions` field. This is done in an object where the keys are room names, or room name patterns (ending in a `*`), and a list of permissions to assign the user for any room that matches that name exactly (or starts with the pattern’s prefix). For tips, see [Manage permissions with access tokens](/docs/rooms/permissions/access-token)."
+        "description": "This endpoint lets your application server (your back end) obtain a token that one of its clients (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When making this request, you’ll have to use your secret key.\n\n**Important:** The difference with an [ID token](#post-identify-user) is that an access token holds all the permissions, and is the source of truth. With ID tokens, permissions are set in the Liveblocks back end (through REST API calls) and \"checked at the door\" every time they are used to enter a room.\n\n**Note:** When using the `@liveblocks/node` package, you can use [`Liveblocks.prepareSession`](/docs/api-reference/liveblocks-node#access-tokens) in your back end to build this request.\n\nYou can pass the property `userId` in the request’s body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. The property `userId` is used by Liveblocks to calculate your account’s Monthly Active Users. One unique `userId` corresponds to one MAU.\n\nAdditionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name.\n\nLastly, you’ll specify the exact permissions to give to the user using the `permissions` field. This is done in an object where the keys are room names, or room name patterns (ending in a `*`), and a list of permissions to assign the user for any room that matches that name exactly (or starts with the pattern’s prefix). For tips, see [Manage permissions with access tokens](/docs/authentication/access-token)."
       }
     },
     "/identify-user": {
@@ -2191,7 +2300,7 @@
             }
           }
         },
-        "description": "This endpoint lets your application server (your back end) obtain a token that one of its clients (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When using this endpoint to obtain ID tokens, you should manage your permissions by assigning user and/or group permissions to rooms explicitly, see our [Manage permissions with ID tokens](/docs/rooms/permissions/id-token) section.\n\n**Important:** The difference with an [access token](#post-authorize-user) is that an ID token doesn’t hold any permissions itself. With ID tokens, permissions are set in the Liveblocks back end (through REST API calls) and \"checked at the door\" every time they are used to enter a room. With access tokens, all permissions are set in the token itself, and thus controlled from your back end entirely.\n\n**Note:** When using the `@liveblocks/node` package, you can use [`Liveblocks.identifyUser`](/docs/api-reference/liveblocks-node) in your back end to build this request.\n\nYou can pass the property `userId` in the request’s body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. The property `userId` is used by Liveblocks to calculate your account’s Monthly Active Users. One unique `userId` corresponds to one MAU.\n\nIf you want to use group permissions, you can also declare which `groupIds` this user belongs to. The group ID values are yours, but they will have to match the group IDs you assign permissions to when assigning permissions to rooms, see [Manage permissions with ID tokens](/docs/rooms/permissions/id-token)).\n\nAdditionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name."
+        "description": "This endpoint lets your application server (your back end) obtain a token that one of its clients (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When using this endpoint to obtain ID tokens, you should manage your permissions by assigning user and/or group permissions to rooms explicitly, see our [Manage permissions with ID tokens](/docs/authentication/id-token) section.\n\n**Important:** The difference with an [access token](#post-authorize-user) is that an ID token doesn’t hold any permissions itself. With ID tokens, permissions are set in the Liveblocks back end (through REST API calls) and \"checked at the door\" every time they are used to enter a room. With access tokens, all permissions are set in the token itself, and thus controlled from your back end entirely.\n\n**Note:** When using the `@liveblocks/node` package, you can use [`Liveblocks.identifyUser`](/docs/api-reference/liveblocks-node) in your back end to build this request.\n\nYou can pass the property `userId` in the request’s body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. The property `userId` is used by Liveblocks to calculate your account’s Monthly Active Users. One unique `userId` corresponds to one MAU.\n\nIf you want to use group permissions, you can also declare which `groupIds` this user belongs to. The group ID values are yours, but they will have to match the group IDs you assign permissions to when assigning permissions to rooms, see [Manage permissions with ID tokens](/docs/authentication/id-token)).\n\nAdditionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name."
       }
     },
     "/rooms/{roomId}/authorize": {
@@ -3378,7 +3487,7 @@
                 "value": {
                   "error": "ROOM_ALREADY_EXISTS",
                   "message": "The room already exists.",
-                  "suggestion": "Please use a different room id or update the existing room.",
+                  "suggestion": "Please use a different room ID or update the existing room.",
                   "doc": ""
                 }
               }
