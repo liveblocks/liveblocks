@@ -1,7 +1,7 @@
 import { ComponentProps } from "react";
-import { deleteDocument } from "../../lib/client";
-import { Button } from "../../primitives/Button";
-import { Dialog } from "../../primitives/Dialog";
+import { deleteDocument } from "@/libnew/deleteDocument";
+import { Button } from "@/primitives/Button";
+import { Dialog } from "@/primitives/Dialog";
 import styles from "./DocumentDeleteDialog.module.css";
 
 interface Props

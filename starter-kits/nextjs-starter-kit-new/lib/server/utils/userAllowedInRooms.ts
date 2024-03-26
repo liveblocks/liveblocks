@@ -1,4 +1,4 @@
-import { Room, RoomAccess, RoomAccessLevels } from "../../../types";
+import { Room, RoomAccess, RoomAccessLevels } from "@/types";
 
 interface UserAccessProps {
   accessesAllowed: RoomAccess[];
