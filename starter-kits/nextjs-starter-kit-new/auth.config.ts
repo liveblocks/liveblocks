@@ -3,7 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { getUser } from "@/lib/server/database/getUser";
 import { User } from "@/types";
 
-export const authConfig = {
+export const authConfig: NextAuthConfig = {
   // Configure one or more authentication providers
   // More info: https://next-auth.js.org/providers/
   providers: [
@@ -18,11 +18,9 @@ export const authConfig = {
         },
       },
       async authorize(credentials) {
-        if (!credentials) {
-          return null;
+        if (!credentials || typeof credentials.email !== "string") {
+          throw new Error("No credentials or email");
         }
-
-        console.log("CREDENTIALs", credentials);
 
         const user: User | null = await getUser(credentials.email);
 
@@ -60,4 +58,4 @@ export const authConfig = {
 
     // ...add more providers here
   ],
-} satisfies NextAuthConfig;
+};
