@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { SessionProvider } from "next-auth/react";
-import { ClientProviders } from "@/app/ClientProviders";
+import { Providers } from "@/app/Providers";
 import { auth } from "@/auth";
 import "../styles/globals.css";
 import "../styles/text-editor.css";
@@ -22,15 +21,13 @@ export default async function RootLayout({
 }) {
   const session = await auth();
   return (
-    <SessionProvider session={session}>
-      <ClientProviders>
-        <html lang="en">
-          <head>
-            <link href="/favicon.svg" rel="icon" type="image/svg" />
-          </head>
-          <body className={inter.className}>{children}</body>
-        </html>
-      </ClientProviders>
-    </SessionProvider>
+    <html lang="en">
+      <head>
+        <link href="/favicon.svg" rel="icon" type="image/svg" />
+      </head>
+      <Providers session={session}>
+        <body className={inter.className}>{children}</body>
+      </Providers>
+    </html>
   );
 }
