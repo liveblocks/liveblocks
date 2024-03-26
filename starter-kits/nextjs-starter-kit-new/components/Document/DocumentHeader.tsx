@@ -50,9 +50,20 @@ export function DocumentHeader({ documentId, className, ...props }: Props) {
             {() => <DocumentHeaderAvatars />}
           </ClientSideSuspense>
         </div>
-        <ShareDialog>
-          <Button icon={<ShareIcon />}>Share</Button>
-        </ShareDialog>
+        <ClientSideSuspense
+          fallback={
+            <Button icon={<ShareIcon />} disabled={true}>
+              Share
+            </Button>
+          }
+        >
+          {() => (
+            <ShareDialog>
+              <Button icon={<ShareIcon />}>Share</Button>
+            </ShareDialog>
+          )}
+        </ClientSideSuspense>
+
         <InboxPopover align="end" sideOffset={4} />
       </div>
     </header>
