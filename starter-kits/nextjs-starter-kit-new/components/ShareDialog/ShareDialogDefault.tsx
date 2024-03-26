@@ -6,13 +6,13 @@ import {
   useRef,
   useState,
 } from "react";
-import { CheckIcon, CopyIcon, EditIcon, LinkIcon } from "../../icons";
-import { updateDefaultAccess } from "../../lib/client";
-import { Button } from "../../primitives/Button";
-import { Checkbox } from "../../primitives/Checkbox";
-import { Input } from "../../primitives/Input";
-import { Spinner } from "../../primitives/Spinner";
-import { Document, DocumentAccess } from "../../types";
+import { CheckIcon, CopyIcon, EditIcon, LinkIcon } from "@/icons";
+import { updateDefaultAccess } from "@/libnew/updateDefaultAccess";
+import { Button } from "@/primitives/Button";
+import { Checkbox } from "@/primitives/Checkbox";
+import { Input } from "@/primitives/Input";
+import { Spinner } from "@/primitives/Spinner";
+import { Document, DocumentAccess } from "@/types";
 import styles from "./ShareDialogDefault.module.css";
 
 interface Props extends ComponentProps<"div"> {

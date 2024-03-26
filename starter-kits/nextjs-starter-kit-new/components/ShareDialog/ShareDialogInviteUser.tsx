@@ -1,11 +1,11 @@
 import clsx from "clsx";
 import { ComponentProps, FormEvent, useState } from "react";
-import { PlusIcon } from "../../icons";
-import { updateUserAccess } from "../../lib/client";
-import { Button } from "../../primitives/Button";
-import { Input } from "../../primitives/Input";
-import { Spinner } from "../../primitives/Spinner";
-import { Document, DocumentAccess, DocumentUser } from "../../types";
+import { PlusIcon } from "@/icons";
+import { updateUserAccess } from "@/libnew/updateUserAccess";
+import { Button } from "@/primitives/Button";
+import { Input } from "@/primitives/Input";
+import { Spinner } from "@/primitives/Spinner";
+import { Document, DocumentAccess, DocumentUser } from "@/types";
 import styles from "./ShareDialogInvite.module.css";
 
 interface Props extends ComponentProps<"div"> {

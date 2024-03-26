@@ -69,6 +69,7 @@ export async function renameDocument({
     };
   }
 
+  // Update room name metadata
   try {
     await liveblocks.updateRoom(documentId, {
       metadata: { name },

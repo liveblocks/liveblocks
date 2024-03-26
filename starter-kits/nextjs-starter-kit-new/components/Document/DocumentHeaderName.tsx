@@ -6,10 +6,10 @@ import {
   useCallback,
   useState,
 } from "react";
-import { EditIcon } from "../../icons";
-import { useInitialDocument } from "../../lib/client";
-import { useSelf } from "../../liveblocks.config";
-import { Tooltip } from "../../primitives/Tooltip";
+import { EditIcon } from "@/icons";
+import { useInitialDocument } from "@/libnew/useInitialDocument";
+import { useSelf } from "@/liveblocks.config";
+import { Tooltip } from "@/primitives/Tooltip";
 import styles from "./DocumentHeaderName.module.css";
 
 interface Props extends ComponentProps<"div"> {

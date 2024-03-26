@@ -1,19 +1,16 @@
 import * as Tabs from "@radix-ui/react-tabs";
-import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
 import { ComponentProps, useCallback, useEffect, useState } from "react";
 import { UserIcon, UsersIcon } from "@/icons";
+import { getDocument } from "@/libnew/getDocument";
+import { getDocumentAccess } from "@/libnew/getDocumentAccess";
+import { getDocumentGroups } from "@/libnew/getDocumentGroups";
+import { getDocumentUsers } from "@/libnew/getDocumentUsers";
+import { useDocumentsFunctionSWR } from "@/libnew/useDocumentsFunctionSWR";
+import { useInitialDocument } from "@/libnew/useInitialDocument";
 import { useBroadcastEvent, useEventListener } from "@/liveblocks.config";
 import { Dialog } from "@/primitives/Dialog";
 import { DocumentAccess } from "@/types";
-import {
-  getDocument,
-  getDocumentAccess,
-  getDocumentGroups,
-  getDocumentUsers,
-  useDocumentsFunctionSWR,
-  useInitialDocument,
-} from "../../lib/client";
 import { ShareDialogDefault } from "./ShareDialogDefault";
 import { ShareDialogGroups } from "./ShareDialogGroups";
 import { ShareDialogInviteGroup } from "./ShareDialogInviteGroup";
@@ -24,11 +21,7 @@ import styles from "./ShareDialog.module.css";
 type Props = Omit<ComponentProps<typeof Dialog>, "content" | "title">;
 
 export function ShareDialog({ children, ...props }: Props) {
-  // TODO put share dialog back
-  return null;
-
   const { id: documentId, accesses: documentAccesses } = useInitialDocument();
-  const router = useRouter();
 
   const { data: session } = useSession();
   const [currentUserAccess, setCurrentUserAccess] = useState(
@@ -69,24 +62,24 @@ export function ShareDialog({ children, ...props }: Props) {
 
   // If you have no access to this room, refresh
   if (defaultAccessError && defaultAccessError.code === 403) {
-    router.reload();
+    window.location.reload();
   }
 
   // Refresh the current user's access level
   const revalidateCurrentUserAccess = useCallback(() => {
-    if (!session || !document) {
+    if (!document) {
       return;
     }
 
     const accessLevel = getDocumentAccess({
       documentAccesses: document.accesses,
-      userId: session.user?.info.id,
-      groupIds: session.user?.info.groupIds,
+      userId: session?.user?.info.id ?? "",
+      groupIds: session?.user?.info.groupIds ?? [],
     });
 
     // Reload if current user has no access (will show error page)
     if (accessLevel === DocumentAccess.NONE) {
-      router.reload();
+      window.location.reload();
       return;
     }
 
@@ -97,12 +90,12 @@ export function ShareDialog({ children, ...props }: Props) {
       (accessChanges.has(DocumentAccess.EDIT) ||
         accessChanges.has(DocumentAccess.FULL))
     ) {
-      router.reload();
+      window.location.reload();
       return;
     }
 
     setCurrentUserAccess(accessLevel);
-  }, [document, session, currentUserAccess, router]);
+  }, [document, session, currentUserAccess]);
 
   useEffect(() => {
     revalidateCurrentUserAccess();
