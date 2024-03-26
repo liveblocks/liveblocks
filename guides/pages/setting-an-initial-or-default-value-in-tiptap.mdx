@@ -34,7 +34,7 @@ function Editor({ doc, provider }: EditorProps) {
 To avoid this problem, you can instead wait for Liveblocks Yjs to connect, check
 if the editor’s content is empty, and _then_ set a default value.
 
-```tsx highlight="7-26"
+```tsx highlight="7-27"
 function Editor({ doc, provider }: EditorProps) {
   const editor = useEditor({
     // Options
@@ -57,8 +57,9 @@ function Editor({ doc, provider }: EditorProps) {
         `);
       }
     }
-    provider.on("sync", setDefault);
 
+    setDefault();
+    provider.on("sync", setDefault);
     return () => provider.off("sync", setDefault);
   }, [provider, editor]);
 
