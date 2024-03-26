@@ -22,7 +22,7 @@ export function DocumentHeaderName({
   ...props
 }: Props) {
   const initialDocument = useInitialDocument();
-  const isReadOnly = useSelf((me) => me.isReadOnly);
+  const isReadOnly = useSelf((me) => !me.canWrite);
   const [draftName, setDraftName] = useState(initialDocument.name);
   const [isRenaming, setRenaming] = useState(false);
 

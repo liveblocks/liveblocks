@@ -5,6 +5,7 @@ import { ComponentProps } from "react";
 import { InboxPopover } from "@/components/Inbox";
 import { ShareIcon } from "@/icons";
 import { renameDocument } from "@/libnew/actions/renameDocument";
+import { useInitialDocument } from "@/libnew/hooks/useInitialDocument";
 import { Button } from "@/primitives/Button";
 import { Skeleton } from "@/primitives/Skeleton";
 import { Document } from "@/types";
@@ -19,6 +20,8 @@ interface Props extends ComponentProps<"header"> {
 }
 
 export function DocumentHeader({ documentId, className, ...props }: Props) {
+  const initialDocument = useInitialDocument();
+
   return (
     <header className={clsx(className, styles.header)} {...props}>
       <div className={styles.logo}>
@@ -27,7 +30,13 @@ export function DocumentHeader({ documentId, className, ...props }: Props) {
         </Link>
       </div>
       <div className={styles.document}>
-        <ClientSideSuspense fallback={null}>
+        <ClientSideSuspense
+          fallback={
+            <span className={styles.documentNameFallback}>
+              {initialDocument.name}
+            </span>
+          }
+        >
           {() => (
             <DocumentHeaderName
               onDocumentRename={(name) => renameDocument({ documentId, name })}
