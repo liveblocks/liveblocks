@@ -1,3 +1,10 @@
+# v1.11.1
+
+### `@liveblocks/react-comments`
+
+- Fix the composer’s placeholder to appear instantly instead of being initially
+  invisible.
+
 # v1.11.0
 
 ### `@liveblocks/node`
