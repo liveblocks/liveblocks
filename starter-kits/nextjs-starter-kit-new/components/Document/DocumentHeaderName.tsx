@@ -7,7 +7,7 @@ import {
   useState,
 } from "react";
 import { EditIcon } from "@/icons";
-import { useInitialDocument } from "@/libnew/useInitialDocument";
+import { useInitialDocument } from "@/libnew/hooks/useInitialDocument";
 import { useSelf } from "@/liveblocks.config";
 import { Tooltip } from "@/primitives/Tooltip";
 import styles from "./DocumentHeaderName.module.css";

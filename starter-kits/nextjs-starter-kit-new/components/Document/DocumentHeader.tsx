@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ComponentProps } from "react";
 import { InboxPopover } from "@/components/Inbox";
 import { ShareIcon } from "@/icons";
-import { renameDocument } from "@/libnew/renameDocument";
+import { renameDocument } from "@/libnew/actions/renameDocument";
 import { Button } from "@/primitives/Button";
 import { Skeleton } from "@/primitives/Skeleton";
 import { Document } from "@/types";

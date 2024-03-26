@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { SWRConfiguration } from "swr";
 import useSWRInfinite, { SWRInfiniteKeyLoader } from "swr/infinite";
-import { getDocuments } from "@/libnew/getDocuments";
-import { getNextDocuments } from "@/libnew/getNextDocuments";
+import { getDocuments } from "@/libnew/actions/getDocuments";
+import { getNextDocuments } from "@/libnew/actions/getNextDocuments";
 import { GetDocumentsProps, GetDocumentsResponse } from "@/types";
 
 /**

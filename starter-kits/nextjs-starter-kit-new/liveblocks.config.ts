@@ -6,7 +6,7 @@ import {
 } from "@liveblocks/client";
 import { createLiveblocksContext, createRoomContext } from "@liveblocks/react";
 import Router from "next/router";
-import { authorizeLiveblocks } from "@/libnew/authorizeLiveblocks";
+import { authorizeLiveblocks } from "@/libnew/actions/authorizeLiveblocks";
 import { getUsers } from "./lib/client";
 import { User } from "./types";
 

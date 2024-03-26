@@ -6,7 +6,7 @@ import { ComponentProps, useCallback, useEffect, useState } from "react";
 import { DOCUMENT_URL } from "@/constants";
 import { DeleteIcon, MoreIcon } from "@/icons";
 import { getDocumentAccess } from "@/lib/client/utils/getDocumentAccess";
-import { getGroups } from "@/libnew/getGroups";
+import { getGroups } from "@/libnew/actions/getGroups";
 import { AvatarStack } from "@/primitives/AvatarStack";
 import { Button } from "@/primitives/Button";
 import { Popover } from "@/primitives/Popover";

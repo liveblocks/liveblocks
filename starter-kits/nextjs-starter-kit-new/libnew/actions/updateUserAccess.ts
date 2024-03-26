@@ -2,9 +2,9 @@
 
 import { auth } from "@/auth";
 import { buildDocumentUsers, userAllowedInRoom } from "@/lib/server";
-import { documentAccessToRoomAccesses } from "@/libnew/convertAccessType";
 import { getUser } from "@/libnew/database/getUser";
-import { isUserDocumentOwner } from "@/libnew/isUserDocumentOwner";
+import { documentAccessToRoomAccesses } from "@/libnew/utils/convertAccessType";
+import { isUserDocumentOwner } from "@/libnew/utils/isUserDocumentOwner";
 import { liveblocks } from "@/liveblocks.server.config";
 import {
   DocumentUser,

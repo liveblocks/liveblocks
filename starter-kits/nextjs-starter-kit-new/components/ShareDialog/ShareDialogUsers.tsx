@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import { ComponentProps } from "react";
-import { removeUserAccess } from "@/libnew/removeUserAccess";
-import { updateUserAccess } from "@/libnew/updateUserAccess";
+import { removeUserAccess } from "@/libnew/actions/removeUserAccess";
+import { updateUserAccess } from "@/libnew/actions/updateUserAccess";
 import { Avatar } from "@/primitives/Avatar";
 import { Select } from "@/primitives/Select";
 import { Document, DocumentAccess, DocumentUser } from "@/types";

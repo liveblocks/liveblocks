@@ -1,5 +1,5 @@
-import { roomAccessesToDocumentAccess } from "@/libnew/convertAccessType";
 import { getUser } from "@/libnew/database/getUser";
+import { roomAccessesToDocumentAccess } from "@/libnew/utils/convertAccessType";
 import { DocumentUser, Room } from "@/types";
 
 /**

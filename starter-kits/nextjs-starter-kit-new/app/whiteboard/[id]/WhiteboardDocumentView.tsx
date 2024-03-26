@@ -7,7 +7,7 @@ import { DocumentHeader, DocumentHeaderSkeleton } from "@/components/Document";
 import { Whiteboard } from "@/components/Whiteboard";
 import { DocumentLayout } from "@/layouts/Document";
 import { ErrorLayout } from "@/layouts/Error";
-import { InitialDocumentProvider } from "@/libnew/useInitialDocument";
+import { InitialDocumentProvider } from "@/libnew/hooks/useInitialDocument";
 import { RoomProvider } from "@/liveblocks.config";
 import { Document, ErrorData } from "@/types";
 

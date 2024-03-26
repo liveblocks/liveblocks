@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 import { buildDocument } from "@/lib/server/utils/buildDocuments";
 import { userAllowedInRoom } from "@/lib/server/utils/userAllowedInRooms";
-import { documentAccessToRoomAccesses } from "@/libnew/convertAccessType";
+import { documentAccessToRoomAccesses } from "@/libnew/utils/convertAccessType";
 import { liveblocks } from "@/liveblocks.server.config";
 import {
   Document,

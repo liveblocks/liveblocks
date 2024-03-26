@@ -1,49 +1,46 @@
 "use server";
 
 import { auth } from "@/auth";
-import { buildDocumentGroups, userAllowedInRoom } from "@/lib/server";
-import { documentAccessToRoomAccesses } from "@/libnew/convertAccessType";
-import { getGroup } from "@/libnew/database/getGroup";
+import { userAllowedInRoom } from "@/lib/server";
+import { getUser } from "@/libnew/database/getUser";
+import { buildDocumentUsers } from "@/libnew/utils/buildDocumentUsers";
+import { isUserDocumentOwner } from "@/libnew/utils/isUserDocumentOwner";
 import { liveblocks } from "@/liveblocks.server.config";
 import {
-  DocumentGroup,
+  DocumentUser,
   FetchApiResult,
+  RemoveUserAccessProps,
   Room,
   RoomAccess,
   RoomAccessLevels,
-  RoomAccesses,
-  UpdateGroupAccessProps,
 } from "@/types";
-import { getDraftsGroupName } from "./getDraftsGroupName";
 
 /**
- * Update Group Access
+ * Remove User Access
  *
- * Add a group to a given document with their groupId
+ * Remove a user from a given document with their userId
  * Uses custom API endpoint
  *
- * @param groupId - The id of the group
+ * @param userId - The id of the removed user
  * @param documentId - The document id
- * @param access - The access level of the user
  */
-export async function updateGroupAccess({
-  groupId,
+export async function removeUserAccess({
+  userId,
   documentId,
-  access,
-}: UpdateGroupAccessProps): Promise<FetchApiResult<DocumentGroup[]>> {
+}: RemoveUserAccessProps): Promise<FetchApiResult<DocumentUser[]>> {
   let session;
   let room;
-  let group;
+  let user;
   try {
     // Get session and room
     const result = await Promise.all([
       auth(),
       liveblocks.getRoom(documentId),
-      getGroup(groupId),
+      getUser(userId),
     ]);
     session = result[0];
     room = result[1];
-    group = result[2];
+    user = result[2];
   } catch (err) {
     console.error(err);
     return {
@@ -66,13 +63,13 @@ export async function updateGroupAccess({
     };
   }
 
-  // Check current logged-in user has edit access to the room
+  // Check current logged-in user is set as a user with id, ignoring groupIds and default access
   if (
     !userAllowedInRoom({
       accessesAllowed: [RoomAccess.RoomWrite],
       checkAccessLevels: [RoomAccessLevels.USER],
       userId: session.user.info.id,
-      groupIds: session.user.info.groupIds,
+      groupIds: [],
       room: room as unknown as Room,
     })
   ) {
@@ -96,41 +93,44 @@ export async function updateGroupAccess({
     };
   }
 
-  // Check group exists in system
-  if (!group) {
+  // Check user exists in system
+  if (!user) {
     return {
       error: {
         code: 400,
-        message: "Group does not exist",
-        suggestion: `Check that that group ${groupId} exists in the system`,
+        message: "User not found",
+        suggestion: "Check that you've used the correct user id",
       },
     };
   }
 
-  // If room exists, create groupsAccesses element for new collaborator with passed access level
-  const groupsAccesses: RoomAccesses = {
-    [groupId]: documentAccessToRoomAccesses(access),
-  };
-
-  // If draft and adding a group, remove drafts group
-  const draftGroupId = getDraftsGroupName(session.user.info.id);
-  if (groupId !== draftGroupId && draftGroupId in room.groupsAccesses) {
-    groupsAccesses[draftGroupId] = null;
+  // If user exists, check that they are not the owner
+  if (isUserDocumentOwner({ room: room as unknown as Room, userId: userId })) {
+    return {
+      error: {
+        code: 400,
+        message: "User is owner",
+        suggestion: `User ${userId} is the document owner and cannot be edited`,
+      },
+    };
   }
 
-  // Update the room with the new collaborators
+  // If room exists, create userAccesses element for removing the current collaborator
+  const usersAccesses = {
+    [userId]: null,
+  };
+
+  // Send userAccesses to room and remove user
   let updatedRoom;
   try {
     updatedRoom = await liveblocks.updateRoom(documentId, {
-      // TODO fix
-      // @ts-ignore
-      groupsAccesses,
+      usersAccesses,
     });
   } catch (err) {
     return {
       error: {
         code: 401,
-        message: "Can't edit group in room",
+        message: "Can't remove user from room",
         suggestion: "Please refresh the page and try again",
       },
     };
@@ -146,9 +146,9 @@ export async function updateGroupAccess({
     };
   }
 
-  // If successful, convert room to a list of groups and send
-  const result: DocumentGroup[] = await buildDocumentGroups(
-    updatedRoom as unknown as Room
+  const result: DocumentUser[] = await buildDocumentUsers(
+    updatedRoom as unknown as Room,
+    session.user.info.id
   );
   return { data: result };
 }
