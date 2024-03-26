@@ -67,7 +67,7 @@ export type RemoveUserAccessProps = {
 export type GetDocumentsProps = {
   groupIds?: DocumentGroup["id"][];
   userId?: DocumentUser["id"];
-  documentType: DocumentType;
+  documentType?: DocumentType;
   drafts?: boolean;
   limit?: number;
 };
