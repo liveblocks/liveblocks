@@ -4,7 +4,7 @@ import {
   ThreadData,
   createClient,
 } from "@liveblocks/client";
-import { createRoomContext } from "@liveblocks/react";
+import { createLiveblocksContext, createRoomContext } from "@liveblocks/react";
 import Router from "next/router";
 import { authorizeLiveblocks } from "@/libnew/authorizeLiveblocks";
 import { getUsers } from "./lib/client";
@@ -114,3 +114,12 @@ export const {
 } = createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(
   client
 );
+
+export const {
+  suspense: {
+    LiveblocksProvider,
+    useInboxNotifications,
+    useUnreadInboxNotificationsCount,
+    useMarkAllInboxNotificationsAsRead,
+  },
+} = createLiveblocksContext(client);

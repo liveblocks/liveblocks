@@ -1,0 +1,26 @@
+.inboxHeader {
+  display: flex;
+  place-items: center;
+  place-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: var(--z-above);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-elevated);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-8);
+}
+
+.inboxHeader h2 {
+  font-weight: 500;
+}
+
+.emptyState {
+  display: flex;
+  min-height: 320px;
+  flex-direction: column;
+  color: var(--color-text-lighter);
+  gap: var(--space-6);
+  place-content: center;
+  place-items: center;
+  text-align: center;
+}

@@ -2,6 +2,7 @@ import { ClientSideSuspense } from "@liveblocks/react";
 import clsx from "clsx";
 import Link from "next/link";
 import { ComponentProps } from "react";
+import { InboxPopover } from "@/components/Inbox";
 import { ShareIcon } from "@/icons";
 import { renameDocument } from "@/libnew/renameDocument";
 import { Button } from "@/primitives/Button";
@@ -43,6 +44,7 @@ export function DocumentHeader({ documentId, className, ...props }: Props) {
         <ShareDialog>
           <Button icon={<ShareIcon />}>Share</Button>
         </ShareDialog>
+        <InboxPopover align="end" sideOffset={4} />
       </div>
     </header>
   );

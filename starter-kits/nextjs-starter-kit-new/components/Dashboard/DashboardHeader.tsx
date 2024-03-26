@@ -6,6 +6,7 @@ import { CrossIcon, MenuIcon, SignOutIcon } from "@/icons";
 import { Avatar } from "@/primitives/Avatar";
 import { Button } from "@/primitives/Button";
 import { Popover } from "@/primitives/Popover";
+import { InboxPopover } from "../Inbox";
 import { Logo } from "../Logo";
 import styles from "./DashboardHeader.module.css";
 
@@ -73,6 +74,9 @@ export function DashboardHeader({
             </button>
           </Popover>
         )}
+        <div className={styles.profileInbox}>
+          <InboxPopover align="end" sideOffset={4} />
+        </div>
       </div>
     </header>
   );
