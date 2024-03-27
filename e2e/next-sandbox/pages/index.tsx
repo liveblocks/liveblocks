@@ -114,6 +114,12 @@ export default function Home() {
                 <a>Subdocs</a>
               </Link>
             </li>
+
+            <li>
+              <Link href="/ydoc/ymap?room=e2e-yjs-ymap">
+                <a>YMaps</a>
+              </Link>
+            </li>
           </ul>
         </li>
       </ul>
