@@ -39,7 +39,7 @@ export function usePaginatedDocumentsSWR(
     }
 
     // Current page is a later page, get next documents from `nextPage`
-    return [getNextDocuments, { nextPage: previousPageData.nextCursor }];
+    return [getNextDocuments, { nextCursor: previousPageData.nextCursor }];
   };
 
   const fetcher = async <T extends (...args: any) => any>([func, ...args]: [

@@ -22,6 +22,7 @@ import {
 export async function getNextDocuments({
   nextCursor,
 }: GetNextDocumentsProps): Promise<FetchApiResult<GetDocumentsResponse>> {
+  console.log("NEXT DOCS", nextCursor);
   let session;
   let rooms;
   try {
@@ -33,7 +34,6 @@ export async function getNextDocuments({
     session = result[0];
     rooms = result[1];
   } catch (err) {
-    console.error(err);
     return {
       error: {
         code: 500,
@@ -79,7 +79,7 @@ export async function getNextDocuments({
       error: {
         code: 403,
         message: "Not allowed access",
-        suggestion: "Check that you've been given permission to the document",
+        suggestion: "Check that you've been given permission to the documents",
       },
     };
   }

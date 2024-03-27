@@ -88,5 +88,6 @@ export function userAllowedInRoom({
     }
   }
 
+  console.log(room.id);
   return false;
 }
