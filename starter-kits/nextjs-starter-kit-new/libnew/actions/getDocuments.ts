@@ -30,7 +30,7 @@ import {
  */
 export async function getDocuments({
   groupIds = [],
-  userId = "",
+  userId = undefined,
   documentType,
   drafts = false,
   limit = 20,
@@ -47,7 +47,7 @@ export async function getDocuments({
     metadata,
   };
 
-  const draftGroupName = getDraftsGroupName(userId);
+  const draftGroupName = getDraftsGroupName(userId || "");
 
   if (drafts) {
     // Drafts are stored as a group that uses the userId
@@ -75,7 +75,7 @@ export async function getDocuments({
     session = result[0];
     rooms = result[1];
   } catch (err) {
-    console.error(err);
+    console.log(err);
     return {
       error: {
         code: 500,

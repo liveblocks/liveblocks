@@ -4,7 +4,7 @@ import { DashboardLayout } from "@/layouts/Dashboard";
 import { DocumentsLayout } from "@/layouts/Documents";
 import { getGroups } from "@/lib/server/database/getGroups";
 
-export default async function DashboardPage() {
+export default async function DashboardDraftsPage() {
   const session = await auth();
 
   // If not logged in, go to marketing page
@@ -16,7 +16,7 @@ export default async function DashboardPage() {
 
   return (
     <DashboardLayout groups={groups}>
-      <DocumentsLayout filter="all" />
+      <DocumentsLayout filter="drafts" />
     </DashboardLayout>
   );
 }

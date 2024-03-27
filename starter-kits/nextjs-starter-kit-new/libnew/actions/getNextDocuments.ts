@@ -22,7 +22,6 @@ import {
 export async function getNextDocuments({
   nextCursor,
 }: GetNextDocumentsProps): Promise<FetchApiResult<GetDocumentsResponse>> {
-  console.log("NEXT DOCS", nextCursor);
   let session;
   let rooms;
   try {
@@ -34,6 +33,7 @@ export async function getNextDocuments({
     session = result[0];
     rooms = result[1];
   } catch (err) {
+    console.log(err);
     return {
       error: {
         code: 500,

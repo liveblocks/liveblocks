@@ -1,15 +1,15 @@
 import clsx from "clsx";
-import { useRouter } from "next/router";
+import { usePathname } from "next/navigation";
 import { ComponentProps, useMemo } from "react";
 import {
   DASHBOARD_DRAFTS_URL,
   DASHBOARD_GROUP_URL,
   DASHBOARD_URL,
-} from "../../constants";
-import { FileIcon, FolderIcon } from "../../icons";
-import { LinkButton } from "../../primitives/Button";
-import { Group } from "../../types";
-import { normalizeTrailingSlash } from "../../utils";
+} from "@/constants";
+import { FileIcon, FolderIcon } from "@/icons";
+import { LinkButton } from "@/primitives/Button";
+import { Group } from "@/types";
+import { normalizeTrailingSlash } from "@/utils";
 import styles from "./DashboardSidebar.module.css";
 
 interface Props extends ComponentProps<"div"> {
@@ -27,11 +27,10 @@ function SidebarLink({
   className,
   ...props
 }: SidebarLinkProps) {
-  const router = useRouter();
+  const pathname = usePathname();
   const isActive = useMemo(
-    () =>
-      normalizeTrailingSlash(router.asPath) === normalizeTrailingSlash(href),
-    [router, href]
+    () => normalizeTrailingSlash(pathname) === normalizeTrailingSlash(href),
+    [pathname, href]
   );
 
   return (
@@ -48,9 +47,6 @@ function SidebarLink({
 }
 
 export function DashboardSidebar({ className, groups, ...props }: Props) {
-  // TODO fix
-  return <div>sidebar</div>;
-
   return (
     <div className={clsx(className, styles.sidebar)} {...props}>
       <nav className={styles.navigation}>

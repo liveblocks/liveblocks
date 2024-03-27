@@ -4,7 +4,11 @@ import { DashboardLayout } from "@/layouts/Dashboard";
 import { DocumentsLayout } from "@/layouts/Documents";
 import { getGroups } from "@/lib/server/database/getGroups";
 
-export default async function DashboardPage() {
+type Props = {
+  params: { groupId: string };
+};
+
+export default async function DashboardGroupPage({ params }: Props) {
   const session = await auth();
 
   // If not logged in, go to marketing page
@@ -16,7 +20,10 @@ export default async function DashboardPage() {
 
   return (
     <DashboardLayout groups={groups}>
-      <DocumentsLayout filter="all" />
+      <DocumentsLayout
+        filter="group"
+        group={groups.find((group) => group.id === params.groupId)}
+      />
     </DashboardLayout>
   );
 }
