@@ -1138,7 +1138,6 @@
 
 .lb-inbox-notification-title {
   min-block-size: $lb-button-size;
-  text-wrap: pretty;
 
   :where(.lb-list, .lb-name) {
     font-weight: 500;
