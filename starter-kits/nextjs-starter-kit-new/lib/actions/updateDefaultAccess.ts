@@ -7,7 +7,7 @@ import {
   userAllowedInRoom,
 } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
-import { Document, FetchApiResult, UpdateDefaultAccessProps } from "@/types";
+import { Document, UpdateDefaultAccessProps } from "@/types";
 
 /**
  * Update Default Access
@@ -21,7 +21,7 @@ import { Document, FetchApiResult, UpdateDefaultAccessProps } from "@/types";
 export async function updateDefaultAccess({
   documentId,
   access,
-}: UpdateDefaultAccessProps): Promise<FetchApiResult<Document>> {
+}: UpdateDefaultAccessProps) {
   let session;
   let room;
   try {

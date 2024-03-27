@@ -1,12 +1,6 @@
-import { RoomInfo } from "@liveblocks/node";
-import {
-  Document,
-  DocumentAccess,
-  DocumentGroup,
-  DocumentType,
-  DocumentUser,
-} from "./document";
-import { RoomActiveUser } from "./room";
+import { RoomUser } from "@liveblocks/node";
+import { UserInfo } from "@/liveblocks.config";
+import { Document } from "./document";
 
 /**
  * These types are used to unify the client/server API endpoints
@@ -17,50 +11,9 @@ export type GetDocumentsResponse = {
   nextCursor: string | null;
 };
 
-export type GetStorageResponse = Record<string, unknown>;
-
-export type CreateDocumentRequest = {
-  name: Document["name"];
-  type: DocumentType;
-  userId: DocumentUser["id"];
-  groupIds?: string; // Comma separated list of groupIds
-  draft?: boolean;
-};
-
-export type UpdateDocumentRequest = {
-  documentData: Partial<RoomInfo>;
-};
-
-export type UpdateDocumentScope = {
-  access: DocumentAccess;
-};
-
-export type UpdateGroupRequest = {
-  groupId: DocumentGroup["id"];
-  access: DocumentAccess;
-};
-
-export type RemoveGroupRequest = {
-  groupId: DocumentGroup["id"];
-};
-
-export type UpdateUserRequest = {
-  userId: DocumentUser["id"];
-  access: DocumentAccess;
-};
-
-export type RemoveUserRequest = {
-  userId: DocumentUser["id"];
-};
-
-export type GetRoomsResponse = {
-  nextPage: string | null;
-  data: RoomInfo[];
-};
-
 export type LiveUsersResponse = {
   documentId: Document["id"];
-  users: RoomActiveUser[];
+  users: RoomUser<UserInfo>[];
 };
 
 export type ErrorData = {

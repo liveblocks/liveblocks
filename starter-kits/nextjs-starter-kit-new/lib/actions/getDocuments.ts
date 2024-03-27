@@ -8,11 +8,7 @@ import {
   userAllowedInRooms,
 } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
-import {
-  FetchApiResult,
-  GetDocumentsProps,
-  GetDocumentsResponse,
-} from "@/types";
+import { GetDocumentsProps } from "@/types";
 
 /**
  * Get Documents
@@ -32,7 +28,7 @@ export async function getDocuments({
   documentType,
   drafts = false,
   limit = 20,
-}: GetDocumentsProps): Promise<FetchApiResult<GetDocumentsResponse>> {
+}: GetDocumentsProps) {
   // Build getRooms arguments
   const metadata: RoomInfo["metadata"] = {};
 
@@ -127,7 +123,7 @@ export async function getDocuments({
   // Convert rooms to custom document format
   const documents = buildDocuments(data ?? []);
 
-  const result: GetDocumentsResponse = {
+  const result = {
     documents,
     nextCursor,
   };

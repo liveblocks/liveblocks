@@ -11,9 +11,7 @@ import { DocumentGroup, Group } from "@/types";
  *
  * @param groupIds - The groups' ids
  */
-export async function getGroups(
-  groupIds: DocumentGroup["id"][]
-): Promise<Group[]> {
+export async function getGroups(groupIds: DocumentGroup["id"][]) {
   // Get all groups
   const groups = await Promise.all(
     groupIds.map((groupId) => getGroup(groupId))

@@ -9,7 +9,7 @@ import {
   userAllowedInRoom,
 } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
-import { DocumentGroup, FetchApiResult, UpdateGroupAccessProps } from "@/types";
+import { DocumentGroup, UpdateGroupAccessProps } from "@/types";
 
 /**
  * Update Group Access
@@ -25,7 +25,7 @@ export async function updateGroupAccess({
   groupId,
   documentId,
   access,
-}: UpdateGroupAccessProps): Promise<FetchApiResult<DocumentGroup[]>> {
+}: UpdateGroupAccessProps) {
   let session;
   let room;
   let group;

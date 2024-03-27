@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import { getGroup } from "@/lib/database/getGroup";
 import { buildDocumentGroups, userAllowedInRoom } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
-import { DocumentGroup, FetchApiResult, RemoveGroupAccessProps } from "@/types";
+import { DocumentGroup, RemoveGroupAccessProps } from "@/types";
 
 /**
  * Remove Group Access
@@ -18,7 +18,7 @@ import { DocumentGroup, FetchApiResult, RemoveGroupAccessProps } from "@/types";
 export async function removeGroupAccess({
   groupId,
   documentId,
-}: RemoveGroupAccessProps): Promise<FetchApiResult<DocumentGroup[]>> {
+}: RemoveGroupAccessProps) {
   let session;
   let room;
   let group;

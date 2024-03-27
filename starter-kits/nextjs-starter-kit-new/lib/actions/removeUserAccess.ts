@@ -8,7 +8,7 @@ import {
   userAllowedInRoom,
 } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
-import { DocumentUser, FetchApiResult, RemoveUserAccessProps } from "@/types";
+import { DocumentUser, RemoveUserAccessProps } from "@/types";
 
 /**
  * Remove User Access
@@ -22,7 +22,7 @@ import { DocumentUser, FetchApiResult, RemoveUserAccessProps } from "@/types";
 export async function removeUserAccess({
   userId,
   documentId,
-}: RemoveUserAccessProps): Promise<FetchApiResult<DocumentUser[]>> {
+}: RemoveUserAccessProps) {
   let session;
   let room;
   let user;

@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 import { userAllowedInRoom } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
-import { Document, FetchApiResult } from "@/types";
+import { Document } from "@/types";
 
 interface Props {
   documentId: Document["id"];
@@ -19,10 +19,7 @@ interface Props {
  * @param documentId - The documentId to update
  * @param name - The document's new name
  */
-export async function renameDocument({
-  documentId,
-  name,
-}: Props): Promise<FetchApiResult<true>> {
+export async function renameDocument({ documentId, name }: Props) {
   let session;
   let room;
   try {

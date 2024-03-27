@@ -1,3 +1,4 @@
+import { RoomUser } from "@liveblocks/node";
 import clsx from "clsx";
 import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
 import Link from "next/link";
@@ -7,18 +8,19 @@ import { DOCUMENT_URL } from "@/constants";
 import { DeleteIcon, MoreIcon } from "@/icons";
 import { getGroups } from "@/lib/actions";
 import { getDocumentAccess } from "@/lib/utils";
+import { UserInfo } from "@/liveblocks.config";
 import { AvatarStack } from "@/primitives/AvatarStack";
 import { Button } from "@/primitives/Button";
 import { Popover } from "@/primitives/Popover";
 import { Skeleton } from "@/primitives/Skeleton";
-import { Document, DocumentAccess, Group, RoomActiveUser } from "@/types";
+import { Document, DocumentAccess, Group } from "@/types";
 import { DocumentDeleteDialog } from "./DocumentDeleteDialog";
 import { DocumentIcon } from "./DocumentIcon";
 import styles from "./DocumentRow.module.css";
 
 interface Props extends ComponentProps<"div"> {
   document: Document;
-  others?: RoomActiveUser[];
+  others?: RoomUser<UserInfo>[];
   revalidateDocuments: () => void;
 }
 

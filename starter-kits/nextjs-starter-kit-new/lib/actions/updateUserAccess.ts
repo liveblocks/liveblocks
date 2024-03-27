@@ -9,7 +9,7 @@ import {
   userAllowedInRoom,
 } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
-import { DocumentUser, FetchApiResult, UpdateUserAccessProps } from "@/types";
+import { DocumentUser, UpdateUserAccessProps } from "@/types";
 
 /**
  * Update User Access
@@ -25,7 +25,7 @@ export async function updateUserAccess({
   userId,
   documentId,
   access,
-}: UpdateUserAccessProps): Promise<FetchApiResult<DocumentUser[]>> {
+}: UpdateUserAccessProps) {
   let session;
   let room;
   let user;

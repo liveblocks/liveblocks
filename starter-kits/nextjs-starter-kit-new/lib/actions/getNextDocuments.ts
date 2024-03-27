@@ -3,11 +3,7 @@
 import { auth } from "@/auth";
 import { buildDocuments, userAllowedInRooms } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
-import {
-  FetchApiResult,
-  GetDocumentsResponse,
-  GetNextDocumentsProps,
-} from "@/types";
+import { GetNextDocumentsProps } from "@/types";
 
 /**
  * Get Next Documents
@@ -18,9 +14,7 @@ import {
  *
  * @param nextPage - nextPage, retrieved from getDocumentByGroup
  */
-export async function getNextDocuments({
-  nextCursor,
-}: GetNextDocumentsProps): Promise<FetchApiResult<GetDocumentsResponse>> {
+export async function getNextDocuments({ nextCursor }: GetNextDocumentsProps) {
   let session;
   let rooms;
   try {
@@ -85,7 +79,7 @@ export async function getNextDocuments({
 
   // Convert to our document format and return
   const documents = buildDocuments(data ?? []);
-  const result: GetDocumentsResponse = {
+  const result = {
     documents: documents,
     nextCursor: newNextCursor,
   };

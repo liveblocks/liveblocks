@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 import { buildDocument, userAllowedInRoom } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
-import { Document, FetchApiResult, GetDocumentProps } from "@/types";
+import { Document, GetDocumentProps } from "@/types";
 
 /**
  * Get a document.
@@ -11,9 +11,7 @@ import { Document, FetchApiResult, GetDocumentProps } from "@/types";
  *
  * @param documentId - The document id
  */
-export async function getDocument({
-  documentId,
-}: GetDocumentProps): Promise<FetchApiResult<Document>> {
+export async function getDocument({ documentId }: GetDocumentProps) {
   let session;
   let room;
   try {

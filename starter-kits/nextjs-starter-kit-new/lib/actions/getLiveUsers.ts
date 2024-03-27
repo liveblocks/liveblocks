@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 import { UserInfo } from "@/liveblocks.config";
 import { liveblocks } from "@/liveblocks.server.config";
-import { FetchApiResult, GetLiveUsersProps, LiveUsersResponse } from "@/types";
+import { GetLiveUsersProps, LiveUsersResponse } from "@/types";
 
 /**
  * Get Live Users
@@ -13,9 +13,7 @@ import { FetchApiResult, GetLiveUsersProps, LiveUsersResponse } from "@/types";
  *
  * @param documentIds - An array of document ids
  */
-export async function getLiveUsers({
-  documentIds,
-}: GetLiveUsersProps): Promise<FetchApiResult<LiveUsersResponse[]>> {
+export async function getLiveUsers({ documentIds }: GetLiveUsersProps) {
   const promises: ReturnType<typeof liveblocks.getActiveUsers<UserInfo>>[] = [];
 
   for (const roomId of documentIds) {

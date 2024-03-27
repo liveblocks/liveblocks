@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 import { buildDocumentUsers } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
-import { DocumentUser, FetchApiResult, GetDocumentGroupsProps } from "@/types";
+import { DocumentUser, GetDocumentGroupsProps } from "@/types";
 
 /**
  * Get Document Users
@@ -13,9 +13,7 @@ import { DocumentUser, FetchApiResult, GetDocumentGroupsProps } from "@/types";
  *
  * @param documentId - The document id
  */
-export async function getDocumentUsers({
-  documentId,
-}: GetDocumentGroupsProps): Promise<FetchApiResult<DocumentUser[]>> {
+export async function getDocumentUsers({ documentId }: GetDocumentGroupsProps) {
   let session;
   let room;
   try {

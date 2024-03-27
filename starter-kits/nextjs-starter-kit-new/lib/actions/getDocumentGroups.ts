@@ -2,7 +2,7 @@
 
 import { buildDocumentGroups } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
-import { DocumentGroup, FetchApiResult, GetDocumentGroupsProps } from "@/types";
+import { DocumentGroup, GetDocumentGroupsProps } from "@/types";
 
 /**
  * Get Document Groups
@@ -14,7 +14,7 @@ import { DocumentGroup, FetchApiResult, GetDocumentGroupsProps } from "@/types";
  */
 export async function getDocumentGroups({
   documentId,
-}: GetDocumentGroupsProps): Promise<FetchApiResult<DocumentGroup[]>> {
+}: GetDocumentGroupsProps) {
   let room;
   try {
     // Get session and room

@@ -1,4 +1,3 @@
-import { RoomMetadata } from "@/types/room";
 import { Group, User } from "./data";
 
 /**
@@ -64,7 +63,8 @@ export type DocumentAccesses = {
 };
 
 // Room metadata used when creating a new document
-export interface DocumentRoomMetadata extends RoomMetadata {
+export interface DocumentRoomMetadata
+  extends Record<string, string | string[]> {
   name: Document["name"];
   type: DocumentType;
   owner: User["id"];

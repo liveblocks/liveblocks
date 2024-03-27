@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 import { userAllowedInRoom } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
-import { Document, FetchApiResult } from "@/types";
+import { Document } from "@/types";
 
 /**
  * Delete Document
@@ -17,7 +17,7 @@ export async function deleteDocument({
   documentId,
 }: {
   documentId: Document["id"];
-}): Promise<FetchApiResult<Document["id"]>> {
+}) {
   let session;
   let room;
   try {

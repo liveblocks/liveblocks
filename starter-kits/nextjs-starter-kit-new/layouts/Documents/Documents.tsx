@@ -14,12 +14,7 @@ import { Button } from "@/primitives/Button";
 import { Container } from "@/primitives/Container";
 import { Select } from "@/primitives/Select";
 import { Spinner } from "@/primitives/Spinner";
-import {
-  DocumentType,
-  GetDocumentsProps,
-  GetDocumentsResponse,
-  Group,
-} from "@/types";
+import { DocumentType, GetDocumentsProps, Group } from "@/types";
 import { capitalize } from "@/utils";
 import styles from "./Documents.module.css";
 
@@ -94,7 +89,7 @@ export function DocumentsLayout({
     refreshInterval: 10000,
   });
 
-  const documentsPages: GetDocumentsResponse[] = data ?? [];
+  const documentsPages = data ?? [];
 
   if (!session) {
     return (
