@@ -8,7 +8,20 @@ import {
   userAllowedInRooms,
 } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
-import { GetDocumentsProps } from "@/types";
+import { Document, DocumentGroup, DocumentType, DocumentUser } from "@/types";
+
+export type GetDocumentsProps = {
+  groupIds?: DocumentGroup["id"][];
+  userId?: DocumentUser["id"];
+  documentType?: DocumentType;
+  drafts?: boolean;
+  limit?: number;
+};
+
+export type GetDocumentsResponse = {
+  documents: Document[];
+  nextCursor: string | null;
+};
 
 /**
  * Get Documents
@@ -123,7 +136,7 @@ export async function getDocuments({
   // Convert rooms to custom document format
   const documents = buildDocuments(data ?? []);
 
-  const result = {
+  const result: GetDocumentsResponse = {
     documents,
     nextCursor,
   };

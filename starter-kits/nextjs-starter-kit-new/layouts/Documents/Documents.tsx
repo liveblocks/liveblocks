@@ -9,12 +9,13 @@ import {
 } from "@/components/Documents";
 import { DocumentRowGroup } from "@/components/Documents/DocumentRowGroup";
 import { PlusIcon } from "@/icons";
-import { usePaginatedDocumentsSWR } from "@/lib/hooks/usePaginatedDocumentsSWR";
+import { GetDocumentsProps } from "@/lib/actions";
+import { usePaginatedDocumentsSWR } from "@/lib/hooks";
 import { Button } from "@/primitives/Button";
 import { Container } from "@/primitives/Container";
 import { Select } from "@/primitives/Select";
 import { Spinner } from "@/primitives/Spinner";
-import { DocumentType, GetDocumentsProps, Group } from "@/types";
+import { DocumentType, Group } from "@/types";
 import { capitalize } from "@/utils";
 import styles from "./Documents.module.css";
 

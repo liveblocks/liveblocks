@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { SWRConfiguration } from "swr";
 import useSWRInfinite, { SWRInfiniteKeyLoader } from "swr/infinite";
-import { getDocuments } from "@/lib/actions/getDocuments";
-import { getNextDocuments } from "@/lib/actions/getNextDocuments";
-import { GetDocumentsProps, GetDocumentsResponse } from "@/types";
+import {
+  type GetDocumentsProps,
+  type GetDocumentsResponse,
+  getDocuments,
+  getNextDocuments,
+} from "@/lib/actions";
 
 /**
  * Takes a documentsOptions object and returns a list of paginatable rooms

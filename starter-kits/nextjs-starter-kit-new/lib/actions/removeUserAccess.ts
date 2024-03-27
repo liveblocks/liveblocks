@@ -8,7 +8,12 @@ import {
   userAllowedInRoom,
 } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
-import { DocumentUser, RemoveUserAccessProps } from "@/types";
+import { Document, DocumentUser } from "@/types";
+
+type Props = {
+  userId: DocumentUser["id"];
+  documentId: Document["id"];
+};
 
 /**
  * Remove User Access
@@ -19,10 +24,7 @@ import { DocumentUser, RemoveUserAccessProps } from "@/types";
  * @param userId - The id of the removed user
  * @param documentId - The document id
  */
-export async function removeUserAccess({
-  userId,
-  documentId,
-}: RemoveUserAccessProps) {
+export async function removeUserAccess({ userId, documentId }: Props) {
   let session;
   let room;
   let user;

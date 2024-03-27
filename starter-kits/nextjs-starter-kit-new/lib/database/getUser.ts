@@ -1,6 +1,5 @@
 import { colors } from "@/data/colors";
 import { users } from "@/data/users";
-import { User } from "@/types";
 
 /**
  * Get User
@@ -9,7 +8,7 @@ import { User } from "@/types";
  *
  * @param userId - The user's id
  */
-export async function getUser(userId: string): Promise<User | null> {
+export async function getUser(userId: string) {
   const user = users.find((user) => user.id === userId);
 
   if (!user) {

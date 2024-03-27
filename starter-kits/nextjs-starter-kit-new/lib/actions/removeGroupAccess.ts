@@ -4,7 +4,12 @@ import { auth } from "@/auth";
 import { getGroup } from "@/lib/database/getGroup";
 import { buildDocumentGroups, userAllowedInRoom } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
-import { DocumentGroup, RemoveGroupAccessProps } from "@/types";
+import { Document, DocumentGroup } from "@/types";
+
+type Props = {
+  groupId: DocumentGroup["id"];
+  documentId: Document["id"];
+};
 
 /**
  * Remove Group Access
@@ -15,10 +20,7 @@ import { DocumentGroup, RemoveGroupAccessProps } from "@/types";
  * @param groupId - The id of the removed group
  * @param documentId - The document id
  */
-export async function removeGroupAccess({
-  groupId,
-  documentId,
-}: RemoveGroupAccessProps) {
+export async function removeGroupAccess({ groupId, documentId }: Props) {
   let session;
   let room;
   let group;

@@ -5,6 +5,10 @@ import { userAllowedInRoom } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
 import { Document } from "@/types";
 
+type Props = {
+  documentId: Document["id"];
+};
+
 /**
  * Delete Document
  *
@@ -13,11 +17,7 @@ import { Document } from "@/types";
  *
  * @param documentId - The document's id
  */
-export async function deleteDocument({
-  documentId,
-}: {
-  documentId: Document["id"];
-}) {
+export async function deleteDocument({ documentId }: Props) {
   let session;
   let room;
   try {

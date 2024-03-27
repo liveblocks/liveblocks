@@ -2,7 +2,11 @@
 
 import { buildDocumentGroups } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
-import { DocumentGroup, GetDocumentGroupsProps } from "@/types";
+import { Document, DocumentGroup } from "@/types";
+
+type Props = {
+  documentId: Document["id"];
+};
 
 /**
  * Get Document Groups
@@ -12,9 +16,7 @@ import { DocumentGroup, GetDocumentGroupsProps } from "@/types";
  *
  * @param documentId - The document id
  */
-export async function getDocumentGroups({
-  documentId,
-}: GetDocumentGroupsProps) {
+export async function getDocumentGroups({ documentId }: Props) {
   let room;
   try {
     // Get session and room

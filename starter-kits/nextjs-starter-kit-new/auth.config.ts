@@ -1,7 +1,6 @@
 import type { NextAuthConfig } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { getUser } from "@/lib/database/getUser";
-import { User } from "@/types";
 
 export const authConfig: NextAuthConfig = {
   // Configure one or more authentication providers
@@ -22,7 +21,7 @@ export const authConfig: NextAuthConfig = {
           throw new Error("No credentials or email");
         }
 
-        const user: User | null = await getUser(credentials.email);
+        const user = await getUser(credentials.email);
 
         if (!user) {
           throw new Error("User not found");

@@ -9,7 +9,13 @@ import {
   userAllowedInRoom,
 } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
-import { DocumentUser, UpdateUserAccessProps } from "@/types";
+import { Document, DocumentAccess, DocumentUser } from "@/types";
+
+type Props = {
+  userId: DocumentUser["id"];
+  documentId: Document["id"];
+  access: DocumentAccess;
+};
 
 /**
  * Update User Access
@@ -21,11 +27,7 @@ import { DocumentUser, UpdateUserAccessProps } from "@/types";
  * @param documentId - The document id
  * @param access - The access level of the user
  */
-export async function updateUserAccess({
-  userId,
-  documentId,
-  access,
-}: UpdateUserAccessProps) {
+export async function updateUserAccess({ userId, documentId, access }: Props) {
   let session;
   let room;
   let user;

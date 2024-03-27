@@ -1,6 +1,11 @@
 import { users } from "@/data/users";
-import { GetUsersProps, User } from "@/types";
+import { Document, User } from "@/types";
 import { getUser } from "./getUser";
+
+type Props = {
+  userIds?: Document["id"][];
+  search?: string;
+};
 
 /**
  * Get Users
@@ -10,10 +15,7 @@ import { getUser } from "./getUser";
  * @param userIds - The user's ids to get
  * @param searchTerm - The term to filter your users by, checks users' ids and names
  */
-export async function getUsers({
-  userIds,
-  search,
-}: GetUsersProps): Promise<(User | null)[]> {
+export async function getUsers({ userIds, search }: Props) {
   const usersPromises: Promise<User | null>[] = [];
 
   // Filter by userIds or get all users

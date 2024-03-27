@@ -70,3 +70,9 @@ export interface DocumentRoomMetadata
   owner: User["id"];
   draft: "yes" | "no";
 }
+
+export type ErrorData = {
+  message: string;
+  code?: number;
+  suggestion?: string;
+};

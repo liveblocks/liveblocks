@@ -1,7 +1,6 @@
 import NextAuth from "next-auth";
 import { authConfig } from "@/auth.config";
 import { getUser } from "@/lib/database/getUser";
-import { User } from "@/types";
 
 // Your NextAuth secret (generate a new one for production)
 // More info: https://next-auth.js.org/configuration/options#secret
@@ -18,7 +17,7 @@ export const {
     // Get extra user info from your database to pass to front-end
     // For front end, update next-auth.d.ts with session type
     async session({ session }: { session: any }) {
-      const userInfo: User | null = await getUser(session.user.email);
+      const userInfo = await getUser(session.user.email);
 
       if (!userInfo) {
         throw new Error("User not found");

@@ -1,9 +1,13 @@
 "use server";
 
 import { auth } from "@/auth";
+import { GetDocumentsResponse } from "@/lib/actions/getDocuments";
 import { buildDocuments, userAllowedInRooms } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
-import { GetNextDocumentsProps } from "@/types";
+
+type Props = {
+  nextCursor: string;
+};
 
 /**
  * Get Next Documents
@@ -14,7 +18,7 @@ import { GetNextDocumentsProps } from "@/types";
  *
  * @param nextPage - nextPage, retrieved from getDocumentByGroup
  */
-export async function getNextDocuments({ nextCursor }: GetNextDocumentsProps) {
+export async function getNextDocuments({ nextCursor }: Props) {
   let session;
   let rooms;
   try {
@@ -79,7 +83,7 @@ export async function getNextDocuments({ nextCursor }: GetNextDocumentsProps) {
 
   // Convert to our document format and return
   const documents = buildDocuments(data ?? []);
-  const result = {
+  const result: GetDocumentsResponse = {
     documents: documents,
     nextCursor: newNextCursor,
   };

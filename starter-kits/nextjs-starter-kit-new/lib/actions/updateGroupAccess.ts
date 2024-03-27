@@ -9,7 +9,13 @@ import {
   userAllowedInRoom,
 } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
-import { DocumentGroup, UpdateGroupAccessProps } from "@/types";
+import { Document, DocumentAccess, DocumentGroup } from "@/types";
+
+type Props = {
+  groupId: DocumentGroup["id"];
+  documentId: Document["id"];
+  access: DocumentAccess;
+};
 
 /**
  * Update Group Access
@@ -25,7 +31,7 @@ export async function updateGroupAccess({
   groupId,
   documentId,
   access,
-}: UpdateGroupAccessProps) {
+}: Props) {
   let session;
   let room;
   let group;

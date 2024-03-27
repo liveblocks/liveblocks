@@ -7,7 +7,12 @@ import {
   userAllowedInRoom,
 } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
-import { Document, UpdateDefaultAccessProps } from "@/types";
+import { Document, DocumentAccess } from "@/types";
+
+type Props = {
+  documentId: Document["id"];
+  access: DocumentAccess;
+};
 
 /**
  * Update Default Access
@@ -18,10 +23,7 @@ import { Document, UpdateDefaultAccessProps } from "@/types";
  * @param documentId - The document to update
  * @param access - The new DocumentAccess permission level
  */
-export async function updateDefaultAccess({
-  documentId,
-  access,
-}: UpdateDefaultAccessProps) {
+export async function updateDefaultAccess({ documentId, access }: Props) {
   let session;
   let room;
   try {
