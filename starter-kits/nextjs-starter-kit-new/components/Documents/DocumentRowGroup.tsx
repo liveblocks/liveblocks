@@ -1,6 +1,6 @@
 import { memo } from "react";
-import { useDocumentsFunctionSWR } from "@/lib/client";
-import { getLiveUsers } from "@/libnew/actions/getLiveUsers";
+import { getLiveUsers } from "@/lib/actions/getLiveUsers";
+import { useDocumentsFunctionSWR } from "@/lib/hooks";
 import { Document } from "@/types";
 import { DocumentRow } from "./DocumentRow";
 import styles from "../../layouts/Documents/Documents.module.css";

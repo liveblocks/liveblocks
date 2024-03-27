@@ -2,12 +2,13 @@ import * as Tabs from "@radix-ui/react-tabs";
 import { useSession } from "next-auth/react";
 import { ComponentProps, useCallback, useEffect, useState } from "react";
 import { UserIcon, UsersIcon } from "@/icons";
-import { getDocument } from "@/libnew/actions/getDocument";
-import { getDocumentAccess } from "@/libnew/actions/getDocumentAccess";
-import { getDocumentGroups } from "@/libnew/actions/getDocumentGroups";
-import { getDocumentUsers } from "@/libnew/actions/getDocumentUsers";
-import { useDocumentsFunctionSWR } from "@/libnew/hooks/useDocumentsFunctionSWR";
-import { useInitialDocument } from "@/libnew/hooks/useInitialDocument";
+import {
+  getDocument,
+  getDocumentGroups,
+  getDocumentUsers,
+} from "@/lib/actions";
+import { useDocumentsFunctionSWR, useInitialDocument } from "@/lib/hooks";
+import { getDocumentAccess } from "@/lib/utils";
 import { useBroadcastEvent, useEventListener } from "@/liveblocks.config";
 import { Dialog } from "@/primitives/Dialog";
 import { DocumentAccess } from "@/types";

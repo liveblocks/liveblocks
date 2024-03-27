@@ -9,7 +9,7 @@ import {
 } from "@/components/Documents";
 import { DocumentRowGroup } from "@/components/Documents/DocumentRowGroup";
 import { PlusIcon } from "@/icons";
-import { usePaginatedDocumentsSWR } from "@/libnew/hooks/usePaginatedDocumentsSWR";
+import { usePaginatedDocumentsSWR } from "@/lib/hooks/usePaginatedDocumentsSWR";
 import { Button } from "@/primitives/Button";
 import { Container } from "@/primitives/Container";
 import { Select } from "@/primitives/Select";

@@ -7,7 +7,7 @@ import {
   useState,
 } from "react";
 import { CheckIcon, CopyIcon, EditIcon, LinkIcon } from "@/icons";
-import { updateDefaultAccess } from "@/libnew/actions/updateDefaultAccess";
+import { updateDefaultAccess } from "@/lib/actions/updateDefaultAccess";
 import { Button } from "@/primitives/Button";
 import { Checkbox } from "@/primitives/Checkbox";
 import { Input } from "@/primitives/Input";
