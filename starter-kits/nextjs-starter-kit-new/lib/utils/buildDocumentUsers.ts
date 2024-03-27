@@ -1,6 +1,7 @@
+import { RoomInfo } from "@liveblocks/node";
 import { getUser } from "@/lib/database/getUser";
 import { roomAccessesToDocumentAccess } from "@/lib/utils/convertAccessType";
-import { DocumentUser, Room } from "@/types";
+import { DocumentUser } from "@/types";
 
 /**
  * Convert a Liveblocks room result into a list of DocumentUsers
@@ -8,7 +9,7 @@ import { DocumentUser, Room } from "@/types";
  * @param result - Liveblocks getRoomById() result
  * @param userId - The current user's id
  */
-export async function buildDocumentUsers(result: Room, userId: string) {
+export async function buildDocumentUsers(result: RoomInfo, userId: string) {
   const users: DocumentUser[] = [];
 
   for (const [id, accessValue] of Object.entries(result.usersAccesses)) {

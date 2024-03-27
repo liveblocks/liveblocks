@@ -13,7 +13,6 @@ import {
   DocumentRoomMetadata,
   DocumentType,
   DocumentUser,
-  Room,
 } from "@/types";
 
 type Props = {
@@ -83,12 +82,12 @@ export async function createDocument(
 
   let room;
   try {
-    room = (await liveblocks.createRoom(roomId, {
+    room = await liveblocks.createRoom(roomId, {
       metadata,
       usersAccesses,
       groupsAccesses,
       defaultAccesses: [],
-    })) as unknown as Room;
+    });
   } catch (err) {
     return {
       error: {
@@ -108,13 +107,3 @@ export async function createDocument(
 
   return { data: document };
 }
-
-// TODO improve
-// function returnErrorMessage(error: unknown) {
-//   if (error instanceof LiveblocksError) {
-//     // Handle specific LiveblocksError cases
-//     console.error(`Liveblocks error: ${error!.status} - ${error!.message}`);
-//   } else {
-//     console.error(`Unexpected error: ${error!.message}`);
-//   }
-// }

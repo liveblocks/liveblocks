@@ -1,4 +1,5 @@
-import { DocumentAccess, RoomAccess } from "@/types";
+import { RoomPermission } from "@liveblocks/node";
+import { DocumentAccess } from "@/types";
 
 /**
  * Convert from Liveblocks room accesses to a custom document access format
@@ -7,24 +8,20 @@ import { DocumentAccess, RoomAccess } from "@/types";
  * @param setOnUserAccesses - If the user was set with userAccesses or not
  */
 export function roomAccessesToDocumentAccess(
-  roomAccesses: RoomAccess | RoomAccess[] | null,
+  roomAccesses: RoomPermission | null,
   setOnUserAccesses = false
 ): DocumentAccess {
   if (!roomAccesses) {
     return DocumentAccess.NONE;
   }
 
-  if (!Array.isArray(roomAccesses)) {
-    roomAccesses = [roomAccesses];
-  }
-
-  if (roomAccesses.includes(RoomAccess.RoomWrite)) {
+  if (roomAccesses[0] === "room:write") {
     return setOnUserAccesses ? DocumentAccess.FULL : DocumentAccess.EDIT;
   }
 
   if (
-    roomAccesses.includes(RoomAccess.RoomRead) &&
-    roomAccesses.includes(RoomAccess.RoomPresenceWrite)
+    roomAccesses[0] === "room:read" &&
+    roomAccesses[1] === "room:presence:write"
   ) {
     return DocumentAccess.READONLY;
   }
@@ -38,16 +35,16 @@ export function roomAccessesToDocumentAccess(
  */
 export function documentAccessToRoomAccesses(
   documentAccess: DocumentAccess
-): RoomAccess[] {
+): RoomPermission {
   if (
     documentAccess === DocumentAccess.FULL ||
     documentAccess === DocumentAccess.EDIT
   ) {
-    return [RoomAccess.RoomWrite];
+    return ["room:write"];
   }
 
   if (documentAccess === DocumentAccess.READONLY) {
-    return [RoomAccess.RoomRead, RoomAccess.RoomPresenceWrite];
+    return ["room:read", "room:presence:write"];
   }
 
   return [];

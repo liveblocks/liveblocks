@@ -3,13 +3,7 @@
 import { auth } from "@/auth";
 import { buildDocument, userAllowedInRoom } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
-import {
-  Document,
-  FetchApiResult,
-  GetDocumentProps,
-  Room,
-  RoomAccess,
-} from "@/types";
+import { Document, FetchApiResult, GetDocumentProps } from "@/types";
 
 /**
  * Get a document.
@@ -51,10 +45,10 @@ export async function getDocument({
   // Check current user has access to the room (if not logged in, use empty values)
   if (
     !userAllowedInRoom({
-      accessesAllowed: [RoomAccess.RoomWrite, RoomAccess.RoomRead],
+      accessAllowed: "read",
       userId: session?.user.info.id ?? "",
       groupIds: session?.user.info.groupIds ?? [],
-      room: room as unknown as Room,
+      room,
     })
   ) {
     return {
@@ -67,6 +61,6 @@ export async function getDocument({
   }
 
   // Convert room into our custom document format and return
-  const document: Document = buildDocument(room as unknown as Room);
+  const document: Document = buildDocument(room);
   return { data: document };
 }

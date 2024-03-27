@@ -4,14 +4,7 @@ import { auth } from "@/auth";
 import { getGroup } from "@/lib/database/getGroup";
 import { buildDocumentGroups, userAllowedInRoom } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
-import {
-  DocumentGroup,
-  FetchApiResult,
-  RemoveGroupAccessProps,
-  Room,
-  RoomAccess,
-  RoomAccessLevels,
-} from "@/types";
+import { DocumentGroup, FetchApiResult, RemoveGroupAccessProps } from "@/types";
 
 /**
  * Remove Group Access
@@ -64,11 +57,11 @@ export async function removeGroupAccess({
   // Check current logged-in user is set as a user with id, ignoring groupIds and default access
   if (
     !userAllowedInRoom({
-      accessesAllowed: [RoomAccess.RoomWrite],
-      checkAccessLevels: [RoomAccessLevels.USER],
+      accessAllowed: "write",
+      checkAccessLevel: "user",
       userId: session.user.info.id,
       groupIds: [],
-      room: room as unknown as Room,
+      room,
     })
   ) {
     return {
@@ -111,8 +104,6 @@ export async function removeGroupAccess({
   let updatedRoom;
   try {
     updatedRoom = await liveblocks.updateRoom(documentId, {
-      // TODO fix
-      // @ts-ignore
       groupsAccesses,
     });
   } catch (err) {
@@ -136,8 +127,6 @@ export async function removeGroupAccess({
   }
 
   // If successful, convert room to a list of groups and send
-  const result: DocumentGroup[] = await buildDocumentGroups(
-    updatedRoom as unknown as Room
-  );
+  const result: DocumentGroup[] = await buildDocumentGroups(updatedRoom);
   return { data: result };
 }

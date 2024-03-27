@@ -1,16 +1,13 @@
 "use server";
 
 import { auth } from "@/auth";
-import { buildDocument, userAllowedInRoom } from "@/lib/utils";
-import { documentAccessToRoomAccesses } from "@/lib/utils/convertAccessType";
-import { liveblocks } from "@/liveblocks.server.config";
 import {
-  Document,
-  FetchApiResult,
-  Room,
-  RoomAccess,
-  UpdateDefaultAccessProps,
-} from "@/types";
+  buildDocument,
+  documentAccessToRoomAccesses,
+  userAllowedInRoom,
+} from "@/lib/utils";
+import { liveblocks } from "@/liveblocks.server.config";
+import { Document, FetchApiResult, UpdateDefaultAccessProps } from "@/types";
 
 /**
  * Update Default Access
@@ -67,10 +64,10 @@ export async function updateDefaultAccess({
   // Check current logged-in user has write access to the room
   if (
     !userAllowedInRoom({
-      accessesAllowed: [RoomAccess.RoomWrite],
+      accessAllowed: "write",
       userId: session.user.info.id,
       groupIds: session.user.info.groupIds,
-      room: room as unknown as Room,
+      room,
     })
   ) {
     return {
@@ -89,8 +86,6 @@ export async function updateDefaultAccess({
   let updatedRoom;
   try {
     updatedRoom = await liveblocks.updateRoom(documentId, {
-      // TODO fix
-      // @ts-ignore
       defaultAccesses,
     });
   } catch (err) {
@@ -114,6 +109,6 @@ export async function updateDefaultAccess({
   }
 
   // If successful, covert to custom document format and return
-  const document: Document = buildDocument(updatedRoom as unknown as Room);
+  const document: Document = buildDocument(updatedRoom);
   return { data: document };
 }

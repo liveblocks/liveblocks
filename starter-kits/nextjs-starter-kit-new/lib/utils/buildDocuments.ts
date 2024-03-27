@@ -1,4 +1,5 @@
-import { Document, DocumentRoomMetadata, Room } from "@/types";
+import { RoomInfo } from "@liveblocks/node";
+import { Document, DocumentRoomMetadata } from "@/types";
 import { roomAccessesToDocumentAccess } from "./convertAccessType";
 
 /**
@@ -6,23 +7,21 @@ import { roomAccessesToDocumentAccess } from "./convertAccessType";
  *
  * @param rooms - Liveblocks rooms
  */
-export function buildDocuments(rooms: Room[]): Document[] {
+export function buildDocuments(rooms: RoomInfo[]): Document[] {
   if (!rooms) return [];
 
-  const documents: Document[] = rooms.map((x) => {
+  return rooms.map((x) => {
     return buildDocument(x);
   });
-
-  return documents;
 }
 
-export function buildDocument(room: Room): Document {
+export function buildDocument(room: RoomInfo): Document {
   let name: Document["name"] = "Untitled";
   let owner: Document["owner"] = "";
   let draft: Document["draft"] = false;
 
   // Get document info from metadata
-  const metadata: DocumentRoomMetadata = room.metadata;
+  const metadata = room.metadata as DocumentRoomMetadata;
 
   if (metadata.name) {
     name = metadata.name;
@@ -54,14 +53,16 @@ export function buildDocument(room: Room): Document {
     }
   });
 
+  const created = room.createdAt.toString();
+  const lastConnection = room.lastConnectionAt
+    ? room.lastConnectionAt.toString()
+    : created;
+
   // Return our custom Document format
-  const document: Document = {
+  return {
     id: room.id,
-    created: (room.createdAt
-      ? new Date(room.createdAt)
-      : new Date()
-    ).toString(),
-    lastConnection: new Date(room.lastConnectionAt).toString(),
+    created,
+    lastConnection,
     type: metadata.type,
     name,
     owner,
@@ -72,6 +73,4 @@ export function buildDocument(room: Room): Document {
       users: users,
     },
   };
-
-  return document;
 }

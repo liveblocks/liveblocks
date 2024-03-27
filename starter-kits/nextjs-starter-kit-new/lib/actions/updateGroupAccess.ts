@@ -4,20 +4,12 @@ import { auth } from "@/auth";
 import { getGroup } from "@/lib/database/getGroup";
 import {
   buildDocumentGroups,
+  documentAccessToRoomAccesses,
   getDraftsGroupName,
   userAllowedInRoom,
 } from "@/lib/utils";
-import { documentAccessToRoomAccesses } from "@/lib/utils/convertAccessType";
 import { liveblocks } from "@/liveblocks.server.config";
-import {
-  DocumentGroup,
-  FetchApiResult,
-  Room,
-  RoomAccess,
-  RoomAccessLevels,
-  RoomAccesses,
-  UpdateGroupAccessProps,
-} from "@/types";
+import { DocumentGroup, FetchApiResult, UpdateGroupAccessProps } from "@/types";
 
 /**
  * Update Group Access
@@ -72,11 +64,11 @@ export async function updateGroupAccess({
   // Check current logged-in user has edit access to the room
   if (
     !userAllowedInRoom({
-      accessesAllowed: [RoomAccess.RoomWrite],
-      checkAccessLevels: [RoomAccessLevels.USER],
+      accessAllowed: "write",
+      checkAccessLevel: "user",
       userId: session.user.info.id,
       groupIds: session.user.info.groupIds,
-      room: room as unknown as Room,
+      room,
     })
   ) {
     return {
@@ -111,8 +103,12 @@ export async function updateGroupAccess({
   }
 
   // If room exists, create groupsAccesses element for new collaborator with passed access level
-  const groupsAccesses: RoomAccesses = {
-    [groupId]: documentAccessToRoomAccesses(access),
+  const groupAccess = documentAccessToRoomAccesses(access);
+  const groupsAccesses: Record<
+    string,
+    ["room:write"] | ["room:read", "room:presence:write"] | null
+  > = {
+    [groupId]: groupAccess.length === 0 ? null : groupAccess,
   };
 
   // If draft and adding a group, remove drafts group
@@ -125,8 +121,6 @@ export async function updateGroupAccess({
   let updatedRoom;
   try {
     updatedRoom = await liveblocks.updateRoom(documentId, {
-      // TODO fix
-      // @ts-ignore
       groupsAccesses,
     });
   } catch (err) {
@@ -150,8 +144,6 @@ export async function updateGroupAccess({
   }
 
   // If successful, convert room to a list of groups and send
-  const result: DocumentGroup[] = await buildDocumentGroups(
-    updatedRoom as unknown as Room
-  );
+  const result: DocumentGroup[] = await buildDocumentGroups(updatedRoom);
   return { data: result };
 }

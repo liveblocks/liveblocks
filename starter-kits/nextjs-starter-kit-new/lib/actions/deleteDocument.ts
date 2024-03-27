@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 import { userAllowedInRoom } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
-import { Document, FetchApiResult, Room, RoomAccess } from "@/types";
+import { Document, FetchApiResult } from "@/types";
 
 /**
  * Delete Document
@@ -49,10 +49,10 @@ export async function deleteDocument({
   // Check current user has write access on the room (if not logged in, use empty values)
   if (
     !userAllowedInRoom({
-      accessesAllowed: [RoomAccess.RoomWrite],
+      accessAllowed: "write",
       userId: session?.user.info.id ?? "",
       groupIds: session?.user.info.groupIds ?? [],
-      room: room as unknown as Room,
+      room,
     })
   ) {
     return {

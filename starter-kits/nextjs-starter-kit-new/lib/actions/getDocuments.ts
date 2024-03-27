@@ -12,7 +12,6 @@ import {
   FetchApiResult,
   GetDocumentsProps,
   GetDocumentsResponse,
-  RoomMetadata,
 } from "@/types";
 
 /**
@@ -35,14 +34,13 @@ export async function getDocuments({
   limit = 20,
 }: GetDocumentsProps): Promise<FetchApiResult<GetDocumentsResponse>> {
   // Build getRooms arguments
-  const metadata: RoomMetadata = {};
+  const metadata: RoomInfo["metadata"] = {};
 
   if (documentType) {
     metadata["type"] = documentType;
   }
 
-  // TODO fix was `getRoomsProps`
-  let getRoomsOptions: any = {
+  let getRoomsOptions: Parameters<typeof liveblocks.getRooms>[0] = {
     limit,
     metadata,
   };
@@ -111,10 +109,10 @@ export async function getDocuments({
   // Check current logged-in user has access to each room
   if (
     !userAllowedInRooms({
-      accessesAllowed: ["room:read", "room:presence:write"],
+      accessAllowed: "read",
       userId: session.user.info.id,
       groupIds: groupIds,
-      rooms: data as unknown as RoomInfo[],
+      rooms: data,
     })
   ) {
     return {
@@ -127,7 +125,7 @@ export async function getDocuments({
   }
 
   // Convert rooms to custom document format
-  const documents = buildDocuments((data as unknown as RoomInfo[]) ?? []);
+  const documents = buildDocuments(data ?? []);
 
   const result: GetDocumentsResponse = {
     documents,

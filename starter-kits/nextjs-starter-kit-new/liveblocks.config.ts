@@ -10,9 +10,6 @@ import { authorizeLiveblocks } from "@/lib/actions/authorizeLiveblocks";
 import { getUsers } from "./lib/database";
 import { User } from "./types";
 
-// The location of the liveblocks custom API endpoints
-export const ENDPOINT_BASE_URL = "/api/liveblocks";
-
 // Creating client with a custom callback that calls our API
 // In this API we'll assign each user custom data, such as names, avatars
 // If any client side data is needed to get user info from your system,

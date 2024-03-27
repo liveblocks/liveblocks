@@ -3,12 +3,7 @@
 import { auth } from "@/auth";
 import { buildDocumentUsers } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
-import {
-  DocumentUser,
-  FetchApiResult,
-  GetDocumentGroupsProps,
-  Room,
-} from "@/types";
+import { DocumentUser, FetchApiResult, GetDocumentGroupsProps } from "@/types";
 
 /**
  * Get Document Users
@@ -51,7 +46,7 @@ export async function getDocumentUsers({
 
   // If successful, convert room to a list of groups and send
   const result: DocumentUser[] = await buildDocumentUsers(
-    room as unknown as Room,
+    room,
     session?.user.info.id ?? ""
   );
   return { data: result };

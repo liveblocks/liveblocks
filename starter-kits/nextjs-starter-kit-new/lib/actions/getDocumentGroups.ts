@@ -2,12 +2,7 @@
 
 import { buildDocumentGroups } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
-import {
-  DocumentGroup,
-  FetchApiResult,
-  GetDocumentGroupsProps,
-  Room,
-} from "@/types";
+import { DocumentGroup, FetchApiResult, GetDocumentGroupsProps } from "@/types";
 
 /**
  * Get Document Groups
@@ -46,8 +41,6 @@ export async function getDocumentGroups({
   }
 
   // If successful, convert room to a list of groups and send
-  const result: DocumentGroup[] = await buildDocumentGroups(
-    room as unknown as Room
-  );
+  const result: DocumentGroup[] = await buildDocumentGroups(room);
   return { data: result };
 }

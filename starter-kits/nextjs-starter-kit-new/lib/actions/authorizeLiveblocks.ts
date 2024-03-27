@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
-import { getDraftsGroupName } from "@/lib/utils/getDraftsGroupName";
+import { getDraftsGroupName } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
 import { User } from "@/types";
 

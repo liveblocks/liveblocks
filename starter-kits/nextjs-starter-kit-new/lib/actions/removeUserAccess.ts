@@ -8,14 +8,7 @@ import {
   userAllowedInRoom,
 } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
-import {
-  DocumentUser,
-  FetchApiResult,
-  RemoveUserAccessProps,
-  Room,
-  RoomAccess,
-  RoomAccessLevels,
-} from "@/types";
+import { DocumentUser, FetchApiResult, RemoveUserAccessProps } from "@/types";
 
 /**
  * Remove User Access
@@ -68,11 +61,11 @@ export async function removeUserAccess({
   // Check current logged-in user is set as a user with id, ignoring groupIds and default access
   if (
     !userAllowedInRoom({
-      accessesAllowed: [RoomAccess.RoomWrite],
-      checkAccessLevels: [RoomAccessLevels.USER],
+      accessAllowed: "write",
+      checkAccessLevel: "user",
       userId: session.user.info.id,
       groupIds: [],
-      room: room as unknown as Room,
+      room,
     })
   ) {
     return {
@@ -107,7 +100,7 @@ export async function removeUserAccess({
   }
 
   // If user exists, check that they are not the owner
-  if (isUserDocumentOwner({ room: room as unknown as Room, userId: userId })) {
+  if (isUserDocumentOwner({ room, userId })) {
     return {
       error: {
         code: 400,
@@ -149,7 +142,7 @@ export async function removeUserAccess({
   }
 
   const result: DocumentUser[] = await buildDocumentUsers(
-    updatedRoom as unknown as Room,
+    updatedRoom,
     session.user.info.id
   );
   return { data: result };

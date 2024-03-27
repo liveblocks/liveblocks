@@ -7,7 +7,6 @@ import {
   FetchApiResult,
   GetDocumentsResponse,
   GetNextDocumentsProps,
-  Room,
 } from "@/types";
 
 /**
@@ -69,10 +68,10 @@ export async function getNextDocuments({
   // Check current logged-in user has access to each room
   if (
     !userAllowedInRooms({
-      accessesAllowed: ["room:write", "room:read"],
+      accessAllowed: "read",
       userId: session.user.info.id,
       groupIds: session.user.info.groupIds,
-      rooms: data as unknown as Room[],
+      rooms: data,
     })
   ) {
     return {
@@ -85,7 +84,7 @@ export async function getNextDocuments({
   }
 
   // Convert to our document format and return
-  const documents = buildDocuments((data as unknown as Room[]) ?? []);
+  const documents = buildDocuments(data ?? []);
   const result: GetDocumentsResponse = {
     documents: documents,
     nextCursor: newNextCursor,

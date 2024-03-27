@@ -78,6 +78,8 @@ export function ShareDialog({ children, ...props }: Props) {
       groupIds: session?.user?.info.groupIds ?? [],
     });
 
+    console.log(document);
+
     // Reload if current user has no access (will show error page)
     if (accessLevel === DocumentAccess.NONE) {
       window.location.reload();

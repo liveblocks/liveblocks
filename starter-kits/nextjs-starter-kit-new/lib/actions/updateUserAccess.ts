@@ -2,18 +2,14 @@
 
 import { auth } from "@/auth";
 import { getUser } from "@/lib/database/getUser";
-import { buildDocumentUsers, userAllowedInRoom } from "@/lib/utils";
-import { documentAccessToRoomAccesses } from "@/lib/utils/convertAccessType";
-import { isUserDocumentOwner } from "@/lib/utils/isUserDocumentOwner";
-import { liveblocks } from "@/liveblocks.server.config";
 import {
-  DocumentUser,
-  FetchApiResult,
-  Room,
-  RoomAccess,
-  RoomAccessLevels,
-  UpdateUserAccessProps,
-} from "@/types";
+  buildDocumentUsers,
+  documentAccessToRoomAccesses,
+  isUserDocumentOwner,
+  userAllowedInRoom,
+} from "@/lib/utils";
+import { liveblocks } from "@/liveblocks.server.config";
+import { DocumentUser, FetchApiResult, UpdateUserAccessProps } from "@/types";
 
 /**
  * Update User Access
@@ -68,11 +64,11 @@ export async function updateUserAccess({
   // Check current logged-in user is set as a user with id, ignoring groupIds and default access
   if (
     !userAllowedInRoom({
-      accessesAllowed: [RoomAccess.RoomWrite],
-      checkAccessLevels: [RoomAccessLevels.USER],
+      accessAllowed: "write",
+      checkAccessLevel: "user",
       userId: session.user.info.id,
       groupIds: [],
-      room: room as unknown as Room,
+      room,
     })
   ) {
     return {
@@ -107,7 +103,7 @@ export async function updateUserAccess({
   }
 
   // If user exists, check that they are not the owner
-  if (isUserDocumentOwner({ room: room as unknown as Room, userId: userId })) {
+  if (isUserDocumentOwner({ room, userId })) {
     return {
       error: {
         code: 400,
@@ -118,16 +114,18 @@ export async function updateUserAccess({
   }
 
   // If room exists, create userAccesses element for new collaborator with passed access level
-  const usersAccesses = {
-    [userId]: documentAccessToRoomAccesses(access),
+  const userAccess = documentAccessToRoomAccesses(access);
+  const usersAccesses: Record<
+    string,
+    ["room:write"] | ["room:read", "room:presence:write"] | null
+  > = {
+    [userId]: userAccess.length === 0 ? null : userAccess,
   };
 
   // Send userAccesses to room and remove user
   let updatedRoom;
   try {
     updatedRoom = await liveblocks.updateRoom(documentId, {
-      // TODO fix
-      // @ts-ignore
       usersAccesses,
     });
   } catch (err) {
@@ -151,7 +149,7 @@ export async function updateUserAccess({
   }
 
   const result: DocumentUser[] = await buildDocumentUsers(
-    updatedRoom as unknown as Room,
+    updatedRoom,
     session.user.info.id
   );
   return { data: result };

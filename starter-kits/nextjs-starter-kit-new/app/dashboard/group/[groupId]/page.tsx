@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { DashboardLayout } from "@/layouts/Dashboard";
 import { DocumentsLayout } from "@/layouts/Documents";
-import { getGroups } from "@/lib/server/database/getGroups";
+import { getGroups } from "@/lib/database";
 
 type Props = {
   params: { groupId: string };
