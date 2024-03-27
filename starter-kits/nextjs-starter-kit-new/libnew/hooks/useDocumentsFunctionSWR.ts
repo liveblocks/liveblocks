@@ -5,7 +5,7 @@ export function useDocumentsFunctionSWR<T extends (...args: any) => any>(
   documentFunctionAndArguments: [T | null, Parameters<T> | Parameters<T>[0]],
   swrOptions: SWRConfiguration = {}
 ) {
-  const fetcher = async (func: T, ...args: Parameters<T>[]) => {
+  const fetcher = async ([func, ...args]: [T, Parameters<T>[]]) => {
     const { data, error } = await func(...args);
 
     if (error) {

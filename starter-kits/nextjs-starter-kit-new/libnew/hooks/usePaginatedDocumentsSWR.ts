@@ -42,10 +42,10 @@ export function usePaginatedDocumentsSWR(
     return [getNextDocuments, { nextPage: previousPageData.nextPage }];
   };
 
-  const fetcher = async <T extends (...args: any) => any>(
-    func: T,
-    ...args: Parameters<T>[]
-  ) => {
+  const fetcher = async <T extends (...args: any) => any>([func, ...args]: [
+    T,
+    Parameters<T>[],
+  ]) => {
     const { data, error } = await func(...args);
 
     if (error) {
