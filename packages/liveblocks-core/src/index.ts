@@ -46,6 +46,7 @@ export type {
 export {
   convertToCommentData,
   convertToCommentUserReaction,
+  convertToInboxNotificationData,
   convertToThreadData,
 } from "./convert-plain-data";
 export { cloneLson, isLiveNode } from "./crdts/liveblocks-helpers";
