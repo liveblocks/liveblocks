@@ -25,9 +25,9 @@ export default async function RootLayout({
       <head>
         <link href="/favicon.svg" rel="icon" type="image/svg" />
       </head>
-      <Providers session={session}>
-        <body className={inter.className}>{children}</body>
-      </Providers>
+      <body className={inter.className}>
+        <Providers session={session}>{children}</Providers>
+      </body>
     </html>
   );
 }

@@ -28,7 +28,7 @@ export function usePaginatedDocumentsSWR(
     }
 
     // `nextPage` is not set, no more pages to retrieve
-    if (previousPageData && !previousPageData.nextPage) {
+    if (previousPageData && !previousPageData.nextCursor) {
       setAtEnd(true);
       return null;
     }
@@ -39,7 +39,7 @@ export function usePaginatedDocumentsSWR(
     }
 
     // Current page is a later page, get next documents from `nextPage`
-    return [getNextDocuments, { nextPage: previousPageData.nextPage }];
+    return [getNextDocuments, { nextPage: previousPageData.nextCursor }];
   };
 
   const fetcher = async <T extends (...args: any) => any>([func, ...args]: [
