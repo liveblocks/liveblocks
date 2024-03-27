@@ -14,7 +14,6 @@ export type Room = {
   defaultAccesses: RoomAccess[];
   groupsAccesses: RoomAccesses;
   usersAccesses: RoomAccesses;
-  draft: "yes" | "no";
   createdAt?: string;
   lastConnectionAt: string;
 };

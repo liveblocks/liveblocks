@@ -8,11 +8,21 @@ import { DOCUMENT_URL } from "@/constants";
 import { buildDocument, getDraftsGroupName } from "@/lib/server/utils";
 import { liveblocks } from "@/liveblocks.server.config";
 import {
-  CreateDocumentProps,
   Document,
+  DocumentGroup,
   DocumentRoomMetadata,
+  DocumentType,
+  DocumentUser,
   Room,
 } from "@/types";
+
+type Props = {
+  name: Document["name"];
+  type: DocumentType;
+  userId: DocumentUser["id"];
+  groupIds?: DocumentGroup["id"][];
+  draft?: boolean;
+};
 
 /**
  * Create Document
@@ -29,7 +39,7 @@ import {
  * @param redirectToDocument - Redirect to the newly created document on success
  */
 export async function createDocument(
-  { name, type, groupIds, userId, draft = false }: CreateDocumentProps,
+  { name, type, groupIds, userId, draft = false }: Props,
   redirectToDocument?: boolean
 ) {
   const session = await auth();

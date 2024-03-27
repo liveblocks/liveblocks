@@ -1,3 +1,4 @@
+import { RoomInfo } from "@liveblocks/node";
 import {
   Document,
   DocumentAccess,
@@ -5,7 +6,7 @@ import {
   DocumentType,
   DocumentUser,
 } from "./document";
-import { Room, RoomActiveUser } from "./room";
+import { RoomActiveUser } from "./room";
 
 /**
  * These types are used to unify the client/server API endpoints
@@ -27,7 +28,7 @@ export type CreateDocumentRequest = {
 };
 
 export type UpdateDocumentRequest = {
-  documentData: Partial<Room>;
+  documentData: Partial<RoomInfo>;
 };
 
 export type UpdateDocumentScope = {
@@ -54,7 +55,7 @@ export type RemoveUserRequest = {
 
 export type GetRoomsResponse = {
   nextPage: string | null;
-  data: Room[];
+  data: RoomInfo[];
 };
 
 export type LiveUsersResponse = {

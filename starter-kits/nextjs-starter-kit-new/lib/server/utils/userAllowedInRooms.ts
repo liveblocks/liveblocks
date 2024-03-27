@@ -1,18 +1,24 @@
-import { Room, RoomAccess, RoomAccessLevels } from "@/types";
+import { RoomInfo, RoomPermission } from "@liveblocks/node";
+import { RoomAccessLevels } from "@/types";
+
+/**
+ * Learn more about ID token permissions
+ * https://liveblocks.io/docs/authentication/id-token#permission-types
+ */
 
 interface UserAccessProps {
-  accessesAllowed: RoomAccess[];
+  accessesAllowed: RoomPermission;
   checkAccessLevels?: RoomAccessLevels[];
   groupIds: string[];
   userId: string;
 }
 
 type UserAllowedInRoomProps = UserAccessProps & {
-  room: Room;
+  room: RoomInfo;
 };
 
 type UserAllowedInRoomsProps = UserAccessProps & {
-  rooms: Room[];
+  rooms: RoomInfo[];
 };
 
 /**

@@ -111,7 +111,7 @@ export async function getDocuments({
   // Check current logged-in user has access to each room
   if (
     !userAllowedInRooms({
-      accessesAllowed: ["room:write", "room:read"],
+      accessesAllowed: ["room:read", "room:presence:write"],
       userId: session.user.info.id,
       groupIds: groupIds,
       rooms: data as unknown as Room[],

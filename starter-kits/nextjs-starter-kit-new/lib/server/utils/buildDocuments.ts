@@ -1,4 +1,5 @@
-import { Document, DocumentRoomMetadata, Room } from "../../../types";
+import { RoomInfo } from "@liveblocks/node";
+import { Document, DocumentRoomMetadata } from "../../../types";
 import { roomAccessesToDocumentAccess } from "./convertAccessType";
 
 /**
@@ -6,7 +7,7 @@ import { roomAccessesToDocumentAccess } from "./convertAccessType";
  *
  * @param rooms - Liveblocks rooms
  */
-export function buildDocuments(rooms: Room[]): Document[] {
+export function buildDocuments(rooms: RoomInfo[]): Document[] {
   if (!rooms) return [];
 
   const documents: Document[] = rooms.map((x) => {
@@ -16,7 +17,7 @@ export function buildDocuments(rooms: Room[]): Document[] {
   return documents;
 }
 
-export function buildDocument(room: Room): Document {
+export function buildDocument(room: RoomInfo): Document {
   let name: Document["name"] = "Untitled";
   let owner: Document["owner"] = "";
   let draft: Document["draft"] = false;
