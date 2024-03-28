@@ -44,23 +44,17 @@ import { Room } from "./internal/Room";
 import { Tooltip } from "./internal/Tooltip";
 import { User } from "./internal/User";
 
+type ComponentTypeWithRef<
+  T extends keyof JSX.IntrinsicElements,
+  P,
+> = ComponentType<P & Pick<ComponentProps<T>, "ref">>;
+
 export type InboxNotificationKinds = Record<
   string,
-  ComponentType<InboxNotificationCustomProps>
+  ComponentTypeWithRef<"a", InboxNotificationCustomProps>
 > & {
-  thread: ComponentType<InboxNotificationThreadProps>;
+  thread: ComponentTypeWithRef<"a", InboxNotificationThreadProps>;
 };
-
-type AddRefToComponents<T, R> = {
-  [K in keyof T]: T[K] extends ComponentType<infer P>
-    ? ComponentType<P & { ref: R }>
-    : T[K];
-};
-
-type InboxNotificationKindsWithRef = AddRefToComponents<
-  InboxNotificationKinds,
-  ComponentProps<"a">["ref"]
->;
 
 interface InboxNotificationSharedProps {
   /**
@@ -139,6 +133,8 @@ interface InboxNotificationLayoutProps
   overrides?: Partial<GlobalOverrides & InboxNotificationOverrides>;
   components?: Partial<GlobalComponents>;
 }
+
+export type InboxNotificationIconProps = ComponentProps<"div">;
 
 export type InboxNotificationAvatarProps = AvatarProps;
 
@@ -268,6 +264,18 @@ const InboxNotificationLayout = forwardRef<
     );
   }
 );
+
+function InboxNotificationIcon({
+  className,
+  ...props
+}: InboxNotificationIconProps) {
+  return (
+    <div
+      className={classNames("lb-inbox-notification-icon", className)}
+      {...props}
+    />
+  );
+}
 
 function InboxNotificationAvatar({
   className,
@@ -474,11 +482,20 @@ const InboxNotificationCustom = forwardRef<
   }
 );
 
-// TODO: Remove `as any`
-const defaultInboxNotificationKinds: InboxNotificationKinds = {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  thread: InboxNotificationThread as any,
-};
+const InboxNotificationCustomDefault = forwardRef<
+  HTMLAnchorElement,
+  InboxNotificationCustomProps
+>(({ inboxNotification, ...props }, forwardedRef) => {
+  return (
+    <InboxNotificationCustom
+      inboxNotification={inboxNotification}
+      {...props}
+      title={inboxNotification.kind}
+      aside={<InboxNotificationIcon />}
+      ref={forwardedRef}
+    />
+  );
+});
 
 /**
  * Displays a single inbox notification.
@@ -497,19 +514,13 @@ const defaultInboxNotificationKinds: InboxNotificationKinds = {
 export const InboxNotification = Object.assign(
   forwardRef<HTMLAnchorElement, InboxNotificationProps>(
     ({ inboxNotification, kinds, ...props }, forwardedRef) => {
-      const { thread: InboxNotificationThread, ...resolvedKinds } = useMemo(
-        () =>
-          ({
-            ...defaultInboxNotificationKinds,
-            ...kinds,
-          }) as InboxNotificationKindsWithRef,
-        [kinds]
-      );
-
       switch (inboxNotification.kind) {
-        case "thread":
+        case "thread": {
+          const ResolvedInboxNotificationThread =
+            kinds?.thread ?? InboxNotificationThread;
+
           return (
-            <InboxNotificationThread
+            <ResolvedInboxNotificationThread
               inboxNotification={
                 inboxNotification as InboxNotificationThreadData
               }
@@ -517,19 +528,22 @@ export const InboxNotification = Object.assign(
               ref={forwardedRef}
             />
           );
+        }
 
         default: {
-          const ProvidedInboxNotificationCustom =
-            resolvedKinds[inboxNotification.kind];
+          const ResolvedInboxNotificationCustom =
+            kinds?.[inboxNotification.kind];
 
-          if (!ProvidedInboxNotificationCustom) {
+          if (!ResolvedInboxNotificationCustom) {
             // TODO: Add link to the docs
+            // TODO: Only warn once
+            // TODO: In production, render `null`
             console.warn(
               `Inbox notification of kind "${inboxNotification.kind}" was not customized. Custom notifications are empty by default given their custom nature, so you should customize them via the kinds prop to define their content.`
             );
 
             return (
-              <InboxNotificationCustom
+              <InboxNotificationCustomDefault
                 inboxNotification={
                   inboxNotification as InboxNotificationCustomData
                 }
@@ -540,7 +554,7 @@ export const InboxNotification = Object.assign(
           }
 
           return (
-            <ProvidedInboxNotificationCustom
+            <ResolvedInboxNotificationCustom
               inboxNotification={
                 inboxNotification as InboxNotificationCustomData
               }
@@ -555,6 +569,7 @@ export const InboxNotification = Object.assign(
   {
     Thread: InboxNotificationThread,
     Custom: InboxNotificationCustom,
+    Icon: InboxNotificationIcon,
     Avatar: InboxNotificationAvatar,
   }
 );

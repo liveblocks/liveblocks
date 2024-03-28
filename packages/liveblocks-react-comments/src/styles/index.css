@@ -1124,8 +1124,23 @@
   inline-size: var(--lb-inbox-notification-aside-size);
 }
 
+.lb-inbox-notification-icon {
+  display: flex;
+  justify-content: center;
+  place-items: center;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--lb-foreground-subtle);
+}
+
 .lb-inbox-notification-content {
   flex: 1;
+}
+
+.lb-inbox-notification-content,
+.lb-inbox-notification-body {
+  min-inline-size: 0;
+  max-inline-size: 100%;
 }
 
 .lb-inbox-notification-header {

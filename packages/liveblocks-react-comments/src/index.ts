@@ -11,6 +11,7 @@ export { Composer } from "./components/Composer";
 export type {
   InboxNotificationAvatarProps,
   InboxNotificationCustomProps,
+  InboxNotificationIconProps,
   InboxNotificationProps,
   InboxNotificationThreadProps,
 } from "./components/InboxNotification";
