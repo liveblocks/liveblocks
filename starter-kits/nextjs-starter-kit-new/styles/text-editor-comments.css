@@ -1,9 +1,3 @@
-.lb-root {
-  --lb-accent: var(--color-accent);
-  --lb-accent-foreground: var(--color-surface);
-  --lb-background: var(--color-surface-elevated);
-}
-
 .comment-highlight {
   display: inline-block;
   position: relative;
@@ -34,7 +28,7 @@
   --comment-border-color: var(--comment-highlight-complete-border);
 }
 
-.comment-highlight[data-selected="true"]{
+.comment-highlight[data-selected="true"] {
   --comment-highlight-color: var(--comment-highlight-selected);
   --comment-border-color: var(--comment-highlight-selected-border);
 }
