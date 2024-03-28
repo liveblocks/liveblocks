@@ -3,17 +3,23 @@ import clsx from "clsx";
 import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { ComponentProps, useCallback, useEffect, useState } from "react";
+import {
+  ComponentProps,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { DOCUMENT_URL } from "@/constants";
 import { DeleteIcon, MoreIcon } from "@/icons";
-import { getGroups } from "@/lib/actions";
+import { useGroupsInfo } from "@/lib/hooks";
 import { getDocumentAccess } from "@/lib/utils";
 import { UserInfo } from "@/liveblocks.config";
 import { AvatarStack } from "@/primitives/AvatarStack";
 import { Button } from "@/primitives/Button";
 import { Popover } from "@/primitives/Popover";
 import { Skeleton } from "@/primitives/Skeleton";
-import { Document, DocumentAccess, Group } from "@/types";
+import { Document, DocumentAccess } from "@/types";
 import { DocumentDeleteDialog } from "./DocumentDeleteDialog";
 import { DocumentIcon } from "./DocumentIcon";
 import styles from "./DocumentRow.module.css";
@@ -31,8 +37,11 @@ export function DocumentRow({
   revalidateDocuments,
   ...props
 }: Props) {
-  const { id, name, type, lastConnection, accesses } = document;
-  const [groups, setGroups] = useState<Group[]>([]);
+  const groupIds = useMemo(
+    () => Object.keys(document.accesses.groups),
+    [document]
+  );
+  const groups = useGroupsInfo(groupIds);
 
   const { data: session } = useSession();
   const [currentUserAccess, setCurrentUserAccess] = useState(
@@ -46,30 +55,17 @@ export function DocumentRow({
     }
 
     const access = getDocumentAccess({
-      documentAccesses: accesses,
+      documentAccesses: document.accesses,
       userId: session.user.info.id,
       groupIds: session.user.info.groupIds,
     });
     setCurrentUserAccess(access);
-  }, [session, accesses]);
-
-  // TODO swap to useSWR if enough time
-  useEffect(() => {
-    getGroupInfo();
-
-    async function getGroupInfo() {
-      const groupIds = Object.keys(accesses.groups);
-      if (groupIds.length) {
-        const groups = await getGroups(groupIds);
-        setGroups(groups);
-      }
-    }
-  }, [document, accesses.groups]);
+  }, [session, document]);
 
   const [isMoreOpen, setMoreOpen] = useState(false);
 
-  const date = new Date(lastConnection);
-  const url = DOCUMENT_URL(type, id);
+  const date = new Date(document.lastConnection);
+  const url = DOCUMENT_URL(document.type, document.id);
 
   const handleDeleteDialogOpenChange = useCallback((isOpen: boolean) => {
     if (!isOpen) {
@@ -81,11 +77,11 @@ export function DocumentRow({
     <div className={clsx(className, styles.row)} {...props}>
       <Link className={clsx(styles.container, styles.link)} href={url}>
         <div className={styles.icon}>
-          <DocumentIcon type={type} />
+          <DocumentIcon type={document.type} />
         </div>
         <div className={styles.info}>
           <span className={styles.documentName}>
-            <span>{name}</span>
+            <span>{document.name}</span>
             {groups.length > 0 ? (
               <span className={styles.groups}>
                 {groups.map((group) => (
