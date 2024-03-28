@@ -246,3 +246,46 @@ export function TrashIcon(props: ComponentProps<"svg">) {
     </svg>
   );
 }
+
+export function TextIcon(props: ComponentProps<"svg">) {
+  return (
+    <svg
+      width="20"
+      height="20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <rect
+        opacity=".1"
+        width="20"
+        height="20"
+        rx="4.375"
+        fill="currentColor"
+      />
+      <path
+        d="M14 6H5M16 10H5M12.5 14H5"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function CaretRightIcon(props: ComponentProps<"svg">) {
+  return (
+    <svg
+      width="8"
+      height="8"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <path
+        d="M2 6.117V1.883a.5.5 0 0 1 .757-.429l3.528 2.117a.5.5 0 0 1 0 .858L2.757 6.546A.5.5 0 0 1 2 6.116Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}

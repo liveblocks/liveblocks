@@ -3,6 +3,7 @@ import * as RadixSelect from "@radix-ui/react-select";
 import cx from "classnames";
 import {
   type ComponentProps,
+  Fragment,
   type MouseEvent,
   useCallback,
   useEffect,
@@ -14,15 +15,16 @@ import type { NodeApi, TreeApi } from "react-arborist";
 
 import { Loading } from "../../../components/Loading";
 import { truncate } from "../../../lib/truncate";
-import { yDocToJsonTree } from "../../../lib/ydoc";
 import { EmptyState } from "../../components/EmptyState";
 import type { SelectItem } from "../../components/Select";
 import { Select } from "../../components/Select";
 import { Tabs } from "../../components/Tabs";
 import {
-  Breadcrumbs,
   createTreeFromYUpdates,
-  filterNodes,
+  filterYNodes,
+  getNodePath,
+  getYTreeNodeColor,
+  getYTreeNodeIcon,
   YjsTree,
   YLogsTree,
 } from "../../components/Tree";
@@ -34,6 +36,8 @@ import {
   useYUpdates,
 } from "../../contexts/CurrentRoom";
 import { YFlow } from "./yflow/YFlow";
+import { toYNode } from "./to-y-node";
+import { toTreeYNode, YTreeNode } from "./to-yjs-tree-node";
 
 export const YJS_TABS = ["document", "awareness", "changes"] as const;
 export const YJS_CHANGES_VIEWS = ["diagram", "list"] as const;
@@ -114,19 +118,19 @@ function YjsDocument({
 }: YjsDocumentProps) {
   const ydoc = useYdoc();
   const currentStatus = useStatus();
-  const [json, setJson] = useState<DevTools.JsonTreeNode[]>([]);
-  const filteredJson = useMemo(() => {
-    return search ? filterNodes(json, search) : json;
-  }, [json, search]);
-  const tree = useRef<TreeApi<DevTools.JsonTreeNode>>(null);
-  const [selectedNode, setSelectedNode] =
-    useState<NodeApi<DevTools.JsonTreeNode> | null>(null);
+  const [node, setNode] = useState<YTreeNode[]>([]);
+  const filteredNode = useMemo(() => {
+    return search ? filterYNodes(node, search) : node;
+  }, [node, search]);
+  const tree = useRef<TreeApi<YTreeNode>>(null);
+  const [selectedNode, setSelectedNode] = useState<NodeApi<YTreeNode> | null>(
+    null
+  );
 
   useEffect(() => {
     function onUpdate() {
-      const yjson = yDocToJsonTree(ydoc);
-      console.log(yjson);
-      setJson(yjson);
+      const node = toYNode(ydoc);
+      setNode(toTreeYNode(node).payload);
     }
 
     onUpdate();
@@ -137,21 +141,18 @@ function YjsDocument({
     };
   }, [ydoc]);
 
-  const handleSelect = useCallback(
-    (nodes: NodeApi<DevTools.JsonTreeNode>[]) => {
-      const [node] = nodes;
+  const handleSelect = useCallback((nodes: NodeApi<YTreeNode>[]) => {
+    const [node] = nodes;
 
-      if (node) {
-        setSelectedNode(node);
-      } else {
-        setSelectedNode(null);
-      }
-    },
-    []
-  );
+    if (node) {
+      setSelectedNode(node);
+    } else {
+      setSelectedNode(null);
+    }
+  }, []);
 
   const handleBreadcrumbClick = useCallback(
-    (node: NodeApi<DevTools.LsonTreeNode> | null) => {
+    (node: NodeApi<YTreeNode> | null) => {
       tree.current?.focus(node, { scroll: true });
     },
     []
@@ -162,12 +163,12 @@ function YjsDocument({
     currentStatus === "open" || // Same as "connected", but only sent by old clients (prior to 1.1)
     currentStatus === "reconnecting"
   ) {
-    if (filteredJson.length > 0) {
+    if (filteredNode.length > 0) {
       return (
         <div className={cx(className, "absolute inset-0")} {...props}>
           <div className="absolute inset-0 flex flex-col">
             <YjsTree
-              data={filteredJson}
+              data={filteredNode}
               ref={tree}
               onSelect={handleSelect}
               search={search}
@@ -182,7 +183,7 @@ function YjsDocument({
           </div>
         </div>
       );
-    } else if (json.length > 0 && filteredJson.length === 0) {
+    } else if (node.length > 0 && filteredNode.length === 0) {
       return (
         <EmptyState
           title={
@@ -228,7 +229,7 @@ function YjsAwareness({ className, ...props }: ComponentProps<"div">) {
           className={cx(className, "absolute inset-0 flex h-full flex-col")}
           {...props}
         >
-          <YjsTree data={presence} />
+          {/* <YjsTree data={presence} /> */}
         </div>
       );
     } else if (presence.length > 0 && !hasAwareness) {
@@ -327,6 +328,62 @@ export function Yjs({
           )
         }
       />
+    </div>
+  );
+}
+
+export function Breadcrumbs({
+  node,
+  onNodeClick,
+  className,
+  ...props
+}: ComponentProps<"div"> & {
+  node: NodeApi<YTreeNode>;
+  onNodeClick: (node: NodeApi<YTreeNode> | null) => void;
+}) {
+  const nodePath = getNodePath(node);
+
+  return (
+    <div
+      className={cx(
+        className,
+        "border-light-300 dark:border-dark-300 bg-light-0 dark:bg-dark-0 scrollbar-hidden flex h-8 items-center gap-1.5 overflow-x-auto border-t px-2.5"
+      )}
+      {...props}
+    >
+      <span
+        key={node.data.id}
+        className="text-dark-600 dark:text-light-600 flex h-5 items-center font-mono text-[95%]"
+      >
+        $
+      </span>
+      {nodePath.map((node) => (
+        <Fragment key={node.id}>
+          <svg
+            width="7"
+            height="10"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="flex-none opacity-50"
+          >
+            <path
+              d="M1.5 8.5 5 5 1.5 1.5"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
+          </svg>
+          <button
+            key={node.data.id}
+            className=" hover:text-dark-0 focus-visible:text-dark-0 dark:hover:text-light-0 dark:focus-visible:text-light-0 text-dark-600 dark:text-light-600 flex h-5 items-center gap-1.5 font-mono text-[95%]"
+            onClick={() => onNodeClick(node)}
+          >
+            <div className={getYTreeNodeColor(node.data)}>
+              {getYTreeNodeIcon(node.data)}
+            </div>
+            <span>{node.data.key}</span>
+          </button>
+        </Fragment>
+      ))}
     </div>
   );
 }

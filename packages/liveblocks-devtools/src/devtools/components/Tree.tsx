@@ -4,11 +4,11 @@ import { TooltipProvider } from "@radix-ui/react-tooltip";
 import cx from "classnames";
 import type {
   ComponentProps,
+  ComponentPropsWithoutRef,
   CSSProperties,
   MouseEvent,
   ReactElement,
   ReactNode,
-  RefAttributes,
 } from "react";
 import {
   createContext,
@@ -50,6 +50,7 @@ import {
   ArrayIcon,
   BooleanOffIcon,
   BooleanOnIcon,
+  CaretRightIcon,
   CrossIcon,
   CustomEventIcon,
   EllipsisIcon,
@@ -58,12 +59,20 @@ import {
   ObjectIcon,
   QuestionIcon,
   StringIcon,
+  TextIcon,
   TrashIcon,
   UserIcon,
 } from "../icons/tree";
 import { Code } from "./Code";
 import { Dialog } from "./Dialog";
 import { Tooltip } from "./Tooltip";
+import {
+  YAbstractTypeTreeNode,
+  YContentTreeNode,
+  YDocTreeNode,
+  YTopAbstractTypeTreeNode,
+  YTreeNode,
+} from "../tabs/yjs/to-yjs-tree-node";
 
 /**
  * Node types that can be used in the Storage tree view.
@@ -74,11 +83,6 @@ type StorageTreeNode = DevTools.LsonTreeNode;
  * Node types that can be used in the Presence tree view.
  */
 type PresenceTreeNode = DevTools.UserTreeNode | DevTools.JsonTreeNode;
-
-/**
- * Node types that can be used in the Yjs tree view.
- */
-type YjsTreeNode = DevTools.UserTreeNode | DevTools.JsonTreeNode;
 
 /**
  * Node types that can be used in the Yjs logs tree view.
@@ -179,11 +183,10 @@ function makeJsonNode(
 type ArboristTreeProps<T> = TreeApi<T>["props"];
 
 type TreeProps<TTreeNode extends DevTools.TreeNode | YLogsTreeNode> = Pick<
-  ComponentProps<"div">,
+  ComponentPropsWithoutRef<"div">,
   "className" | "style"
 > &
-  ArboristTreeProps<TTreeNode> &
-  RefAttributes<TreeApi<TTreeNode> | undefined>;
+  ArboristTreeProps<TTreeNode>;
 
 interface RowProps<TTreeNode extends DevTools.TreeNode>
   extends ComponentProps<"div"> {
@@ -303,6 +306,43 @@ function icon(node: DevTools.TreeNode): ReactNode {
   }
 }
 
+export function getYTreeNodeIcon(node: YTreeNode) {
+  switch (node.type) {
+    case "Y.Doc":
+      return <ObjectIcon />;
+
+    case "Y.AbstractType":
+      return <ArrayIcon />;
+
+    case "Y.Map":
+      return <MapIcon />;
+
+    case "Y.Array":
+      return <ArrayIcon />;
+
+    case "Y.Text":
+    case "Y.XmlText":
+    case "Y.XmlElement":
+    case "Y.XmlFragment":
+      return <TextIcon />;
+
+    case "Y.ContentAny":
+      if (node.payload.length === 1) {
+        return <StringIcon />;
+      }
+      return <ArrayIcon />;
+    case "Y.ContentBinary":
+      return <ArrayIcon />;
+    case "Y.ContentEmbed":
+    case "Y.ContentFormat":
+      return <ObjectIcon />;
+    case "Y.ContentString":
+      return <StringIcon />;
+    default:
+      return <EllipsisIcon />;
+  }
+}
+
 function yLogsColor(node: YLogsTreeNode): string {
   switch (node.type) {
     case "YUpdateStruct":
@@ -324,6 +364,31 @@ function yLogsColor(node: YLogsTreeNode): string {
       return "text-red-500 dark:text-red-400";
     default:
       return "text-light-500 dark:text-dark-500";
+  }
+}
+
+export function getYTreeNodeColor(node: YTreeNode): string | undefined {
+  switch (node.type) {
+    case "Y.AbstractType":
+      return "text-brand-500 dark:text-brand-400";
+    case "Y.Map":
+      return "text-red-500 dark:text-red-400";
+    case "Y.Array":
+      return "text-green-500 dark:text-green-500";
+    case "Y.Text":
+    case "Y.XmlText":
+      return "text-blue-500 dark:text-blue-400";
+    case "Y.XmlElement":
+    case "Y.XmlFragment":
+      return "text-orange-500 dark:text-orange-400";
+
+    case "Y.Doc":
+    case "Y.ContentAny":
+    case "Y.ContentBinary":
+    case "Y.ContentEmbed":
+    case "Y.ContentFormat":
+    case "Y.ContentString":
+      return "text-dark-500 dark:text-light-500";
   }
 }
 
@@ -395,6 +460,30 @@ function yLogsIcon(node: YLogsTreeNode): ReactNode {
   }
 }
 
+function getYTreeNodeBackground(node: YTreeNode): string {
+  switch (node.type) {
+    case "Y.AbstractType":
+      return "tree-focus:bg-brand-500 dark:tree-focus:bg-brand-400";
+    case "Y.Map":
+      return "tree-focus:bg-red-500 dark:tree-focus:bg-red-400";
+    case "Y.Array":
+      return "tree-focus:bg-green-500 dark:tree-focus:bg-green-500";
+    case "Y.Text":
+    case "Y.XmlText":
+      return "tree-focus:bg-blue-500 dark:tree-focus:bg-blue-400";
+    case "Y.XmlElement":
+    case "Y.XmlFragment":
+      return "tree-focus:bg-orange-500 dark:tree-focus:bg-orange-400";
+    case "Y.Doc":
+    case "Y.ContentAny":
+    case "Y.ContentBinary":
+    case "Y.ContentEmbed":
+    case "Y.ContentFormat":
+    case "Y.ContentString":
+      return "tree-focus:bg-dark-800 dark:tree-focus:bg-dark-600";
+  }
+}
+
 /**
  * Function that helps construct a "preview" string for a collapsed node.
  */
@@ -438,6 +527,73 @@ function summarize(node: DevTools.TreeNode): string {
     default:
       // e.g. future LiveXxx types
       return "";
+  }
+}
+
+function summarizeYTreeNode(node: YTreeNode): ReactNode {
+  switch (node.type) {
+    case "Y.ContentString":
+      return node.payload;
+    case "Y.ContentAny":
+      if (node.payload.length === 0) {
+        return "Empty";
+      } else if (node.payload.length === 1) {
+        return stringify(node.payload[0]);
+      } else {
+        return `${node.payload.length} items: ${stringify(node.payload)}`;
+      }
+    case "Y.Doc":
+    case "Y.Map":
+      return `${node.payload.length} ${
+        node.payload.length !== 1 ? "entries" : "entry"
+      }`;
+    case "Y.Array":
+      return `${node.payload.length} item${
+        node.payload.length !== 1 ? "s" : ""
+      }`;
+    case "Y.AbstractType":
+    case "Y.Text":
+    case "Y.XmlText":
+    case "Y.XmlElement":
+    case "Y.XmlFragment":
+      return toString(node);
+    case "Y.ContentFormat":
+    case "Y.ContentEmbed":
+      return stringify(node.payload);
+    case "Y.ContentBinary":
+      return `${node.payload.length} item${
+        node.payload.length !== 1 ? "s" : ""
+      }`;
+    default:
+      return "";
+  }
+}
+
+function toString(node: YTreeNode): string {
+  switch (node.type) {
+    case "Y.ContentString":
+      return node.payload;
+    case "Y.ContentAny":
+    case "Y.ContentBinary":
+    case "Y.ContentEmbed":
+    case "Y.ContentFormat":
+      return "";
+    case "Y.Doc":
+    case "Y.AbstractType":
+    case "Y.Array":
+    case "Y.Map":
+    case "Y.Text":
+    case "Y.XmlText":
+    case "Y.XmlElement":
+    case "Y.XmlFragment":
+      return (
+        node.payload as (
+          | YTopAbstractTypeTreeNode
+          | YDocTreeNode
+          | YAbstractTypeTreeNode
+          | YContentTreeNode
+        )[]
+      ).reduce((str, node) => str + toString(node), "");
   }
 }
 
@@ -554,21 +710,12 @@ function Row<TTreeNode extends DevTools.TreeNode>({
       )}
       <div className="ml-2 flex h-[8px] w-[8px] items-center justify-center">
         {isParent && (
-          <svg
-            width="8"
-            height="8"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
+          <CaretRightIcon
             className={cx(
               "opacity-60 transition-transform",
               isOpen && "rotate-90"
             )}
-          >
-            <path
-              d="M2 6.117V1.883a.5.5 0 0 1 .757-.429l3.528 2.117a.5.5 0 0 1 0 .858L2.757 6.546A.5.5 0 0 1 2 6.116Z"
-              fill="currentColor"
-            />
-          </svg>
+          />
         )}
       </div>
       <div
@@ -627,21 +774,12 @@ function YLogsRow<TTreeNode extends YLogsTreeNode>({
     >
       <div className="ml-2 flex h-[8px] w-[8px] items-center justify-center">
         {isParent && (
-          <svg
-            width="8"
-            height="8"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
+          <CaretRightIcon
             className={cx(
               "opacity-60 transition-transform",
               isOpen && "rotate-90"
             )}
-          >
-            <path
-              d="M2 6.117V1.883a.5.5 0 0 1 .757-.429l3.528 2.117a.5.5 0 0 1 0 .858L2.757 6.546A.5.5 0 0 1 2 6.116Z"
-              fill="currentColor"
-            />
-          </svg>
+          />
         )}
       </div>
       <div
@@ -651,6 +789,83 @@ function YLogsRow<TTreeNode extends YLogsTreeNode>({
         )}
       >
         {yLogsIcon(node.data)}
+      </div>
+      <div
+        className={cx(
+          USE_GRID_LAYOUT
+            ? [
+                "grid min-w-0 flex-1 items-center gap-[inherit]",
+                isOpen
+                  ? "grid-cols-[1fr]"
+                  : "grid-cols-[minmax(0,1fr)_calc(var(--width)_*_0.4)]",
+              ]
+            : "flex min-w-0 flex-1 items-center gap-[inherit]"
+        )}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function YTypeRow({
+  node,
+  children,
+  className,
+  ...props
+}: ComponentProps<"div"> & { node: NodeApi<YTreeNode> }) {
+  const isOpen = node.isOpen;
+  const isParent = node.isInternal;
+  const isSelected = node.isSelected;
+  const isWithinSelectedParent = !isSelected && hasSelectedParent(node);
+  const shouldShowUpdates = isParent ? !isOpen : true;
+
+  return (
+    <div
+      className={cx(
+        className,
+        "row text-dark-400 dark:text-light-400 group flex h-full items-center gap-2 pr-2",
+        isSelected
+          ? [
+              getYTreeNodeBackground(node.data),
+              "tree-focus:text-light-0 bg-light-100 dark:bg-dark-100 hover:bg-light-200 dark:hover:bg-dark-200",
+            ]
+          : isWithinSelectedParent
+            ? "hover:bg-light-100 dark:hover:bg-dark-100 tree-focus:bg-light-100 dark:tree-focus:bg-dark-100 hover:tree-focus:bg-light-200 dark:tree-focus:hover:bg-dark-200"
+            : "hover:bg-light-100 dark:hover:bg-dark-100"
+      )}
+      data-selected={isSelected || undefined}
+      {...props}
+    >
+      {shouldShowUpdates && (
+        <RowHighlight
+          node={node}
+          className={
+            isSelected
+              ? "bg-white/20"
+              : isWithinSelectedParent
+                ? "bg-light-200 dark:bg-dark-200"
+                : "bg-light-100 dark:bg-dark-100"
+          }
+        />
+      )}
+      <div className="ml-2 flex h-[8px] w-[8px] items-center justify-center">
+        {isParent && (
+          <CaretRightIcon
+            className={cx(
+              "opacity-60 transition-transform",
+              isOpen && "rotate-90"
+            )}
+          />
+        )}
+      </div>
+      <div
+        className={cx(
+          getYTreeNodeColor(node.data),
+          isSelected && "tree-focus:text-light-0"
+        )}
+      >
+        {getYTreeNodeIcon(node.data)}
       </div>
       <div
         className={cx(
@@ -1039,24 +1254,178 @@ function PresenceNodeRenderer(props: NodeRendererProps<PresenceTreeNode>) {
   }
 }
 
-function YjsNodeRenderer(props: NodeRendererProps<YjsTreeNode>) {
+function YContentValueDialog({ node }: { node: NodeApi<YContentTreeNode> }) {
+  return (
+    <div className="grid h-[calc(100vh-2*theme(spacing.8))] max-h-[480px] grid-cols-[1fr] grid-rows-[auto_minmax(0,1fr)]">
+      <div className="border-light-300 dark:border-dark-300 flex h-9 items-center justify-between border-b px-2.5">
+        <div className="child:select-none flex min-w-0 select-none items-center">
+          <div className={cx(getYTreeNodeColor(node.data), "mr-2 flex-none")}>
+            {getYTreeNodeIcon(node.data)}
+          </div>
+          <span className="text-dark-600 dark:text-light-600 truncate font-mono text-[95%]">
+            {node.data.key}
+          </span>
+        </div>
+        <RadixDialog.Close
+          aria-label="Close"
+          className="text-dark-600 hover:text-dark-0 focus-visible:text-dark-0 dark:text-light-600 dark:hover:text-light-0 dark:focus-visible:text-light-0 flex h-5 w-5 items-center justify-center"
+        >
+          <svg
+            width="16"
+            height="16"
+            fill="none"
+            role="presentation"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              fillRule="evenodd"
+              clipRule="evenodd"
+              d="M12.03 5.03a.75.75 0 0 0-1.06-1.06L8 6.94 5.03 3.97a.75.75 0 0 0-1.06 1.06L6.94 8l-2.97 2.97a.75.75 0 1 0 1.06 1.06L8 9.06l2.97 2.97a.75.75 0 1 0 1.06-1.06L9.06 8l2.97-2.97Z"
+              fill="currentColor"
+            />
+          </svg>
+        </RadixDialog.Close>
+      </div>
+      <Code code={JSON.stringify(node.data.payload, null, 2)} language="json" />
+    </div>
+  );
+}
+
+function YAbstractTypeNodeRenderer({
+  node,
+  style,
+}: NodeRendererProps<
+  YAbstractTypeTreeNode | YDocTreeNode | YTopAbstractTypeTreeNode
+>) {
+  const toggle = useToggleNode(node);
+
+  return (
+    <YTypeRow node={node} style={style} onClick={toggle}>
+      <RowInfo>
+        <RowLabel>{node.data.key}</RowLabel>
+        {SHOW_INTERNAL_ID && <RowStaticLabel>{node.id}</RowStaticLabel>}
+      </RowInfo>
+      {node.data.type !== "Y.AbstractType" && (
+        <Badge
+          className={cx(
+            "flex-none",
+            node.isSelected && "tree-focus:text-current",
+            getYTreeNodeColor(node.data)
+          )}
+        >
+          {node.data.type}
+        </Badge>
+      )}
+
+      {!node.isOpen && <RowPreview>{summarizeYTreeNode(node.data)}</RowPreview>}
+    </YTypeRow>
+  );
+}
+
+function YContentTypeNodeRenderer({
+  node,
+  style,
+}: NodeRendererProps<YContentTreeNode>) {
+  const [isValueDialogOpen, setValueDialogOpen] = useState(false);
+  const isActionable = node.isSelected && !node.isOpen;
+  const toggle = useToggleNode(node);
+  const handleValueDialogOpen = useCallback(
+    (event: MouseEvent | KeyboardEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      setValueDialogOpen(true);
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (!isActionable) {
+      return;
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Enter") {
+        handleValueDialogOpen(event);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isActionable, handleValueDialogOpen]);
+
+  return (
+    <YTypeRow node={node} style={style} onClick={toggle}>
+      <RowInfo>
+        <RowLabel>{node.data.key}</RowLabel>
+        {SHOW_INTERNAL_ID && <RowStaticLabel>{node.id}</RowStaticLabel>}
+      </RowInfo>
+      <Badge
+        className={cx(
+          "flex-none",
+          node.isSelected && "tree-focus:text-current",
+          getYTreeNodeColor(node.data)
+        )}
+      >
+        {node.data.type}
+      </Badge>
+
+      {!node.isOpen && (
+        <>
+          <RowPreview>{summarizeYTreeNode(node.data)}</RowPreview>
+          <div className="ml-auto flex-none">
+            <Dialog
+              content={
+                isValueDialogOpen ? <YContentValueDialog node={node} /> : null
+              }
+              open={isValueDialogOpen}
+              onOpenChange={setValueDialogOpen}
+            >
+              <Tooltip content="Show value" sideOffset={8}>
+                <button
+                  onClick={handleValueDialogOpen}
+                  aria-label="Show value"
+                  className="text-light-500 dark:text-dark-500 hover:text-light-700 dark:hover:text-dark-700 tree-focus:group-[[data-selected]]:text-light-0/60 tree-focus:group-[[data-selected]]:hover:text-light-0/80 hidden h-full items-center justify-center group-hover:flex group-focus:flex group-[[data-selected]]:flex"
+                >
+                  <EyeIcon />
+                </button>
+              </Tooltip>
+            </Dialog>
+          </div>
+        </>
+      )}
+    </YTypeRow>
+  );
+}
+
+function YNodeRenderer(props: NodeRendererProps<YTreeNode>) {
   switch (props.node.data.type) {
-    case "User":
+    case "Y.Doc":
+    case "Y.AbstractType":
+    case "Y.Map":
+    case "Y.Array":
+    case "Y.Text":
+    case "Y.XmlText":
+    case "Y.XmlElement":
+    case "Y.XmlFragment":
       return (
-        <UserNodeRenderer
-          {...(props as NodeRendererProps<DevTools.UserTreeNode>)}
+        <YAbstractTypeNodeRenderer
+          {...(props as NodeRendererProps<YAbstractTypeTreeNode>)}
         />
       );
-
-    case "Json":
+    case "Y.ContentAny":
+    case "Y.ContentBinary":
+    case "Y.ContentEmbed":
+    case "Y.ContentFormat":
+    case "Y.ContentString":
       return (
-        <JsonNodeRenderer
-          {...(props as NodeRendererProps<DevTools.JsonTreeNode>)}
+        <YContentTypeNodeRenderer
+          {...(props as NodeRendererProps<YContentTreeNode>)}
         />
       );
-
-    default:
-      return null;
   }
 }
 
@@ -1244,34 +1613,22 @@ function storageChildAccessor(node: StorageTreeNode): StorageTreeNode[] | null {
   }
 }
 
-function yjsChildAccessor(node: YjsTreeNode): YjsTreeNode[] | null {
+function yjsChildAccessor(node: YTreeNode): YTreeNode[] | null {
   switch (node.type) {
-    case "User": {
-      const awareness = node.payload.presence.__yjs;
-
-      if (!awareness) {
-        return null;
-      }
-
-      return Object.entries(awareness).map(([key, value]) =>
-        makeJsonNode(node.id, key, value as Json)
-      );
-    }
-    case "Json": {
-      if (Array.isArray(node.payload)) {
-        return node.payload.map((item, index) =>
-          makeJsonNode(node.id, index.toString(), item)
-        );
-      } else if (node.payload !== null && typeof node.payload === "object") {
-        return Object.entries(node.payload).flatMap(([key, value]) =>
-          value === undefined ? [] : [makeJsonNode(node.id, key, value)]
-        );
-      } else {
-        return null;
-      }
-    }
-
-    default:
+    case "Y.Doc":
+    case "Y.AbstractType":
+    case "Y.Array":
+    case "Y.Map":
+    case "Y.Text":
+    case "Y.XmlText":
+    case "Y.XmlElement":
+    case "Y.XmlFragment":
+      return node.payload;
+    case "Y.ContentAny":
+    case "Y.ContentBinary":
+    case "Y.ContentEmbed":
+    case "Y.ContentFormat":
+    case "Y.ContentString":
       return null;
   }
 }
@@ -1436,6 +1793,124 @@ export function filterNodes<TTreeNode extends DevTools.TreeNode>(
   return pruneTree(tree, directMatches, indirectMatches);
 }
 
+/**
+ * Returns whether one of the collections was updated. This indicates to the
+ * parent call that it should be an indirect match.
+ */
+function collectYNode(
+  node: YTreeNode,
+  pattern: RegExp,
+  directMatches: Set<string>,
+  indirectMatches: Set<string>
+): boolean {
+  if (pattern.test(node.key)) {
+    directMatches.add(node.id);
+    return true;
+  } else {
+    // Recursively scan child nodes
+    switch (node.type) {
+      case "Y.ContentAny":
+      case "Y.ContentBinary":
+      case "Y.ContentEmbed":
+      case "Y.ContentFormat":
+      case "Y.ContentString":
+        // Yjs Content nodes are leafs and have no children
+        return false;
+
+      case "Y.Doc":
+      case "Y.AbstractType":
+      case "Y.Map":
+      case "Y.Array":
+      case "Y.Text":
+      case "Y.XmlText":
+      case "Y.XmlElement":
+      case "Y.XmlFragment":
+        let isIndirectMatch = false;
+        for (const childNode of node.payload) {
+          if (
+            collectYNode(childNode, pattern, directMatches, indirectMatches)
+          ) {
+            isIndirectMatch = true;
+          }
+        }
+        if (isIndirectMatch) {
+          indirectMatches.add(node.id);
+        }
+        return isIndirectMatch;
+    }
+  }
+}
+
+function collectMatchingYNodes(
+  tree: readonly YTreeNode[],
+  pattern: RegExp
+): {
+  directMatches: Set<string>;
+  indirectMatches: Set<string>;
+} {
+  const directMatches = new Set<string>();
+  const indirectMatches = new Set<string>();
+  for (const node of tree) {
+    collectYNode(node, pattern, directMatches, indirectMatches);
+  }
+  return {
+    directMatches,
+    indirectMatches,
+  };
+}
+
+function pruneYNode(
+  node: YTreeNode,
+  directMatches: Set<string>,
+  indirectMatches: Set<string>
+): YTreeNode | null {
+  if (directMatches.has(node.id)) {
+    // No sub filtering, keep the entire subtree!
+    return node;
+  } else if (indirectMatches.has(node.id)) {
+    if (
+      node.type === "Y.ContentAny" ||
+      node.type === "Y.ContentString" ||
+      node.type === "Y.ContentBinary" ||
+      node.type === "Y.ContentEmbed" ||
+      node.type === "Y.ContentFormat"
+    ) {
+      throw new Error("Content nodes will never be indirect matches");
+    }
+
+    return {
+      ...node,
+      payload: mapfilter(node.payload, (child) =>
+        pruneYNode(child, directMatches, indirectMatches)
+      ),
+    } as YTreeNode;
+  } else {
+    // No match in the entire subtree
+    return null;
+  }
+}
+
+function pruneYTree(
+  tree: readonly YTreeNode[],
+  directMatches: Set<string>,
+  indirectMatches: Set<string>
+): YTreeNode[] {
+  return mapfilter(tree, (node) =>
+    pruneYNode(node, directMatches, indirectMatches)
+  );
+}
+
+export function filterYNodes(
+  tree: readonly YTreeNode[],
+  pattern: RegExp
+): YTreeNode[] {
+  const { directMatches, indirectMatches } = collectMatchingYNodes(
+    tree,
+    pattern
+  );
+  return pruneYTree(tree, directMatches, indirectMatches);
+}
+
 const autoSizerStyle = {
   flex: 1,
   width: "100%",
@@ -1505,9 +1980,10 @@ export const StorageTree = forwardRef<
 });
 
 export const YjsTree = forwardRef<
-  TreeApi<YjsTreeNode>,
-  TreeProps<YjsTreeNode> & {
+  TreeApi<YTreeNode>,
+  ArboristTreeProps<YTreeNode> & {
     search?: RegExp;
+    style?: CSSProperties;
   }
 >(({ search, className, style, ...props }, ref) => {
   return (
@@ -1530,7 +2006,7 @@ export const YjsTree = forwardRef<
               indent={ROW_INDENT}
               {...props}
             >
-              {YjsNodeRenderer}
+              {YNodeRenderer}
             </ArboristTree>
           )}
         </AutoSizer>
@@ -1644,7 +2120,7 @@ export const CustomEventsTree = forwardRef<
  * The root node itself is excluded because it's an internal Arborist node
  * (invisible in the tree view).
  */
-function getNodePath<T>(node: NodeApi<T>): NodeApi<T>[] {
+export function getNodePath<T>(node: NodeApi<T>): NodeApi<T>[] {
   if (node.parent === null) {
     return [];
   } else {
