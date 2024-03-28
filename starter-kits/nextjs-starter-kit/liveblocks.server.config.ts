@@ -1,8 +1,7 @@
-// Liveblocks API base url
+"server-only";
 
 import { Liveblocks } from "@liveblocks/node";
-
-export const DEFAULT_BASE_URL = "https://api.liveblocks.io";
+import { getProviders } from "./auth";
 
 // Your Liveblocks secret key
 export const SECRET_API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
@@ -31,7 +30,6 @@ Follow the full starter kit guide on https://liveblocks.io/docs/guides/nextjs-st
 `);
 }
 
-/* TODO fix
 (async () => {
   const providers = await getProviders();
 
@@ -68,4 +66,3 @@ https://liveblocks.io/docs/guides/nextjs-starter-kit#auth0-authentication
     }
   }
 })();
-*/
