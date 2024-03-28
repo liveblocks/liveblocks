@@ -3,9 +3,8 @@ import { CollaborationPlugin } from "@lexical/react/LexicalCollaborationPlugin";
 import type { Provider } from "@lexical/yjs";
 import { useRoomContextBundle } from "@liveblocks/react";
 import LiveblocksProvider from "@liveblocks/yjs";
-import React from "react"
+import React from "react";
 import * as Y from "yjs";
-
 
 export const LiveblocksPlugin = (): JSX.Element => {
   const { useRoom } = useRoomContextBundle();
