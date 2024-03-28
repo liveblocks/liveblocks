@@ -535,22 +535,26 @@ export const InboxNotification = Object.assign(
             kinds?.[inboxNotification.kind];
 
           if (!ResolvedInboxNotificationCustom) {
-            // TODO: Add link to the docs
-            // TODO: Only warn once
-            // TODO: In production, render `null`
-            console.warn(
-              `Inbox notification of kind "${inboxNotification.kind}" was not customized. Custom notifications are empty by default given their custom nature, so you should customize them via the kinds prop to define their content.`
-            );
+            if (process.env.NODE_ENV !== "production") {
+              // TODO: Add link to the docs
+              // TODO: Only warn once
+              console.warn(
+                `Inbox notification of kind "${inboxNotification.kind}" was not customized. Custom notifications are empty by default given their custom nature, so you should customize them via the kinds prop to define their content.`
+              );
 
-            return (
-              <InboxNotificationCustomDefault
-                inboxNotification={
-                  inboxNotification as InboxNotificationCustomData
-                }
-                {...props}
-                ref={forwardedRef}
-              />
-            );
+              return (
+                <InboxNotificationCustomDefault
+                  inboxNotification={
+                    inboxNotification as InboxNotificationCustomData
+                  }
+                  {...props}
+                  ref={forwardedRef}
+                />
+              );
+            } else {
+              // Don't render anything in production if this inbox notification kind is not customized.
+              return null;
+            }
           }
 
           return (
