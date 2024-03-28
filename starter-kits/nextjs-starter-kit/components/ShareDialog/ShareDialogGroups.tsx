@@ -1,7 +1,6 @@
 import clsx from "clsx";
 import { ComponentProps } from "react";
-import { removeGroupAccess } from "@/lib/actions/removeGroupAccess";
-import { updateGroupAccess } from "@/lib/actions/updateGroupAccess";
+import { removeGroupAccess, updateGroupAccess } from "@/lib/actions";
 import { Select } from "@/primitives/Select";
 import { Document, DocumentAccess, DocumentGroup } from "@/types";
 import styles from "./ShareDialogRows.module.css";

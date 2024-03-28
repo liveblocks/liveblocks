@@ -1,12 +1,12 @@
 import clsx from "clsx";
 import { redirect } from "next/navigation";
 import { ComponentProps, ReactNode } from "react";
-import { DASHBOARD_URL } from "../constants";
-import { SignInIcon } from "../icons";
-import { MarketingLayout } from "../layouts/Marketing";
-import { Button, LinkButton } from "../primitives/Button";
-import { Container } from "../primitives/Container";
 import { auth, signIn } from "@/auth";
+import { DASHBOARD_URL } from "@/constants";
+import { SignInIcon } from "@/icons";
+import { MarketingLayout } from "@/layouts/Marketing";
+import { Button, LinkButton } from "@/primitives/Button";
+import { Container } from "@/primitives/Container";
 import styles from "./page.module.css";
 
 interface FeatureProps extends Omit<ComponentProps<"div">, "title"> {

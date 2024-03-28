@@ -5,7 +5,7 @@ import { DemoLogin } from "./DemoLogin";
 import { NextAuthLogin } from "./NextAuthLogin";
 import styles from "./signin.module.css";
 
-export default async function SignInPage({}) {
+export default async function SignInPage() {
   const session = await auth();
 
   // If logged in, go to dashboard

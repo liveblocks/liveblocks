@@ -1,4 +1,4 @@
-import { getDocument } from "@/lib/actions/getDocument";
+import { getDocument } from "@/lib/actions";
 import { TextDocumentView } from "./TextDocumentView";
 
 export default async function Whiteboard({

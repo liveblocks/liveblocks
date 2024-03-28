@@ -1,5 +1,5 @@
 import { ComponentProps } from "react";
-import { deleteDocument } from "@/lib/actions/deleteDocument";
+import { deleteDocument } from "@/lib/actions";
 import { Button } from "@/primitives/Button";
 import { Dialog } from "@/primitives/Dialog";
 import styles from "./DocumentDeleteDialog.module.css";

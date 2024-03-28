@@ -1,6 +1,6 @@
 import { Editor } from "@tiptap/react";
 import { useCallback } from "react";
-import { Select } from "../../primitives/Select";
+import { Select } from "@/primitives/Select";
 import styles from "./Toolbar.module.css";
 
 const toolbarHeadings = [

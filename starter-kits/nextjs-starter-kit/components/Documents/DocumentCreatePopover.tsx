@@ -1,6 +1,6 @@
 import { ComponentProps, useState } from "react";
 import { PlusIcon } from "@/icons";
-import { createDocument } from "@/lib/actions/createDocument";
+import { createDocument } from "@/lib/actions";
 import { Button } from "@/primitives/Button";
 import { Popover } from "@/primitives/Popover";
 import { Document, DocumentGroup, DocumentType, DocumentUser } from "@/types";

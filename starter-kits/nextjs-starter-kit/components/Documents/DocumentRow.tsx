@@ -64,7 +64,7 @@ export function DocumentRow({
         setGroups(groups);
       }
     }
-  }, [document]);
+  }, [document, accesses.groups]);
 
   const [isMoreOpen, setMoreOpen] = useState(false);
 

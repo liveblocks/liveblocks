@@ -2,7 +2,7 @@ import clsx from "clsx";
 import { useSession } from "next-auth/react";
 import { ComponentProps, FormEvent, useState } from "react";
 import { PlusIcon } from "@/icons";
-import { updateGroupAccess } from "@/lib/actions/updateGroupAccess";
+import { updateGroupAccess } from "@/lib/actions";
 import { Button } from "@/primitives/Button";
 import { Select } from "@/primitives/Select";
 import { Spinner } from "@/primitives/Spinner";
