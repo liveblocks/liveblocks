@@ -8,10 +8,10 @@ import { ComponentProps } from "react";
 import {
   useInboxNotifications,
   useMarkAllInboxNotificationsAsRead,
-} from "../../liveblocks.config";
-import { Button } from "../../primitives/Button";
-import { Link } from "../../primitives/Link";
-import { Spinner } from "../../primitives/Spinner";
+} from "@/liveblocks.config";
+import { Button } from "@/primitives/Button";
+import { Link } from "@/primitives/Link";
+import { Spinner } from "@/primitives/Spinner";
 import styles from "./Inbox.module.css";
 
 function InboxContent(props: ComponentProps<"div">) {

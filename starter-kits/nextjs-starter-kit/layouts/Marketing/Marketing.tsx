@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { ComponentProps } from "react";
-import { MarketingFooter, MarketingHeader } from "../../components/Marketing";
+import { MarketingFooter, MarketingHeader } from "@/components/Marketing";
 import styles from "./Marketing.module.css";
 
 export function MarketingLayout({

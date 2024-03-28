@@ -29,7 +29,6 @@
   border-radius: var(--radius);
   box-shadow: var(--shadow-xl);
   animation: 0.15s ease-in-out;
-  overflow: hidden;
 }
 
 .popover[data-side="top"] {

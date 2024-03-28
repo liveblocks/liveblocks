@@ -6,57 +6,46 @@ import {
 } from "@liveblocks/client";
 import { createLiveblocksContext, createRoomContext } from "@liveblocks/react";
 import Router from "next/router";
-import { DOCUMENT_URL } from "./constants";
-import { getSpecificDocuments, getUsers } from "./lib/client";
+import { DOCUMENT_URL } from "@/constants";
+import { authorizeLiveblocks, getSpecificDocuments } from "@/lib/actions";
+import { getUsers } from "./lib/database";
 import { User } from "./types";
-
-// The location of the liveblocks custom API endpoints
-export const ENDPOINT_BASE_URL = "/api/liveblocks";
 
 // Creating client with a custom callback that calls our API
 // In this API we'll assign each user custom data, such as names, avatars
 // If any client side data is needed to get user info from your system,
 // (e.g. auth token, user id) send it in the body alongside `room`.
-// Check inside `/pages/${ENDPOINT_BASE_URL}/auth` for the endpoint
+// This is using a Next.js server action called `authorizeLiveblocks`
 const client = createClient({
-  authEndpoint: async (roomId) => {
-    const payload = {
-      roomId,
-    };
+  authEndpoint: async () => {
+    const { data, error } = await authorizeLiveblocks();
 
-    // Call auth API route to get Liveblocks access token
-    const response = await fetch(ENDPOINT_BASE_URL + "/liveblocks-auth", {
-      method: "POST",
-      headers: {
-        Authentication: "token",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-    const result = await response.json();
-
-    // If auth not successful, add stringified error object to current URL params
-    if (!response.ok) {
+    if (error) {
       Router.push({
         query: {
           ...Router.query,
-          error: encodeURIComponent(JSON.stringify(result.error)),
+          error: encodeURIComponent(JSON.stringify(error)),
         },
       });
       return;
     }
 
-    // Return token
-    return result;
+    return data;
   },
+
+  // Resolve user IDs into name/avatar/etc for Comments/Notifications
   async resolveUsers({ userIds }) {
     const users = await getUsers({ userIds });
-    return users;
+    return users.map((user) => user || {});
   },
+
+  // Resolve a mention suggestion into a userId e.g. `@tat` → `tatum.paolo@example.com`
   async resolveMentionSuggestions({ text }) {
     const users = await getUsers({ search: text });
-    return users.map((user) => user.id);
+    return users.map((user) => user?.id || "");
   },
+
+  // Resolve a room ID into room information for Notifications
   async resolveRoomsInfo({ roomIds }) {
     const documents = await getSpecificDocuments({ documentIds: roomIds });
     return documents.map((document) => ({
@@ -130,7 +119,6 @@ export const {
     useUpdateMyPresence,
     useUser,
   },
-  /* ...all the other hooks you’re using... */
 } = createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(
   client
 );

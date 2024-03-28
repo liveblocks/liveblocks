@@ -5,7 +5,7 @@ import {
   NodeViewWrapper,
   ReactNodeViewRenderer,
 } from "@tiptap/react";
-import { Checkbox } from "../../primitives/Checkbox";
+import { Checkbox } from "@/primitives/Checkbox";
 import styles from "./CustomTaskItem.module.css";
 
 // A custom task item that uses the checkbox primitive

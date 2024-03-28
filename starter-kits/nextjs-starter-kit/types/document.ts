@@ -1,5 +1,4 @@
 import { Group, User } from "./data";
-import { RoomMetadata } from "./room";
 
 /**
  * This is the main type of your Documents.
@@ -64,9 +63,16 @@ export type DocumentAccesses = {
 };
 
 // Room metadata used when creating a new document
-export interface DocumentRoomMetadata extends RoomMetadata {
+export interface DocumentRoomMetadata
+  extends Record<string, string | string[]> {
   name: Document["name"];
   type: DocumentType;
   owner: User["id"];
   draft: "yes" | "no";
 }
+
+export type ErrorData = {
+  message: string;
+  code?: number;
+  suggestion?: string;
+};

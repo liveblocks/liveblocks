@@ -1,8 +1,8 @@
 import clsx from "clsx";
 import { signIn, useSession } from "next-auth/react";
 import { ComponentProps } from "react";
-import { Button, LinkButton } from "../../primitives/Button";
-import { ErrorData } from "../../types";
+import { Button, LinkButton } from "@/primitives/Button";
+import { ErrorData } from "@/types";
 import styles from "./Error.module.css";
 
 interface Props extends ComponentProps<"main"> {

@@ -1,24 +1,22 @@
+"use client";
+
 import clsx from "clsx";
 import { useSession } from "next-auth/react";
 import { ComponentProps, useMemo, useState } from "react";
 import {
   DocumentCreatePopover,
   DocumentRowSkeleton,
-} from "../../components/Documents";
-import { DocumentRowGroup } from "../../components/Documents/DocumentRowGroup";
-import { PlusIcon } from "../../icons";
-import { usePaginatedDocumentsSWR } from "../../lib/client";
-import { Button } from "../../primitives/Button";
-import { Container } from "../../primitives/Container";
-import { Select } from "../../primitives/Select";
-import { Spinner } from "../../primitives/Spinner";
-import {
-  DocumentType,
-  GetDocumentsProps,
-  GetDocumentsResponse,
-  Group,
-} from "../../types";
-import { capitalize } from "../../utils";
+} from "@/components/Documents";
+import { DocumentRowGroup } from "@/components/Documents/DocumentRowGroup";
+import { PlusIcon } from "@/icons";
+import { GetDocumentsProps } from "@/lib/actions";
+import { usePaginatedDocumentsSWR } from "@/lib/hooks";
+import { Button } from "@/primitives/Button";
+import { Container } from "@/primitives/Container";
+import { Select } from "@/primitives/Select";
+import { Spinner } from "@/primitives/Spinner";
+import { DocumentType, Group } from "@/types";
+import { capitalize } from "@/utils";
 import styles from "./Documents.module.css";
 
 // Load `x` documents at a time
@@ -78,8 +76,6 @@ export function DocumentsLayout({
   // When session is found, find pages of documents with the above document options
   const {
     data,
-    // error,
-    // isValidating,
     size,
     setSize,
     mutate: revalidateDocuments,
@@ -87,12 +83,14 @@ export function DocumentsLayout({
     isLoadingMore,
     isEmpty,
     isReachingEnd,
+    // error,
+    // isValidating,
     // isRefreshing,
   } = usePaginatedDocumentsSWR(getDocumentsOptions, {
     refreshInterval: 10000,
   });
 
-  const documentsPages: GetDocumentsResponse[] = data ?? [];
+  const documentsPages = data ?? [];
 
   if (!session) {
     return (
@@ -159,7 +157,7 @@ export function DocumentsLayout({
             <>
               {documentsPages.map((documentPage) => (
                 <DocumentRowGroup
-                  key={documentPage.nextPage}
+                  key={documentPage.nextCursor}
                   documents={documentPage.documents}
                   revalidateDocuments={revalidateDocuments}
                 />

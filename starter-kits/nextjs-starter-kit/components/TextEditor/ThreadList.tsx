@@ -7,12 +7,12 @@ import {
 } from "@liveblocks/react-comments";
 import { Editor } from "@tiptap/react";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
-import { CommentIcon } from "../../icons";
+import { CommentIcon } from "@/icons";
 import {
   CustomThreadData,
   useCreateThread,
   useThreads,
-} from "../../liveblocks.config";
+} from "@/liveblocks.config";
 import {
   getCommentHighlightContent,
   removeCommentHighlight,
