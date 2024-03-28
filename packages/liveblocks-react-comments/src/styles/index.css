@@ -11,6 +11,8 @@
   --lb-accent-foreground: #fff;
   --lb-background: #fff;
   --lb-foreground: #111;
+  --lb-error: #f45;
+  --lb-error-foreground: #fff;
 
   /** 
    * Advanced
@@ -24,6 +26,7 @@
   --lb-elevation-shadow: $lb-elevation-shadow;
   --lb-tooltip-shadow: $lb-tooltip-shadow;
   --lb-accent-contrast: 8%;
+  --lb-error-contrast: 8%;
   --lb-foreground-contrast: 8%;
 
   /** 
@@ -1065,6 +1068,14 @@
   text-decoration: inherit;
   transition-property: background;
 
+  /* Highlight missing notifications during development */
+  &:where([data-missing]) {
+    --lb-accent: var(--lb-error) !important;
+    --lb-accent-foreground: var(--lb-error-foreground) !important;
+    --lb-accent-contrast: var(--lb-error-contrast) !important;
+    --lb-dynamic-background: var(--lb-background-accent-faint);
+  }
+
   &:where([data-unread]) {
     --lb-dynamic-background: var(--lb-background-accent-faint);
   }
@@ -1131,6 +1142,11 @@
   aspect-ratio: 1;
   border-radius: 50%;
   background: var(--lb-foreground-subtle);
+
+  .lb-inbox-notification:where([data-missing]) :where(&) {
+    background: var(--lb-accent-subtle);
+    color: var(--lb-accent);
+  }
 }
 
 .lb-inbox-notification-content {

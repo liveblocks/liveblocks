@@ -22,6 +22,7 @@ import type { GlobalComponents } from "../components";
 import { useComponents } from "../components";
 import { CheckIcon } from "../icons/Check";
 import { EllipsisIcon } from "../icons/Ellipsis";
+import { MissingIcon } from "../icons/Missing";
 import type {
   CommentOverrides,
   GlobalOverrides,
@@ -482,7 +483,7 @@ const InboxNotificationCustom = forwardRef<
   }
 );
 
-const InboxNotificationCustomDefault = forwardRef<
+const InboxNotificationCustomMissing = forwardRef<
   HTMLAnchorElement,
   InboxNotificationCustomProps
 >(({ inboxNotification, ...props }, forwardedRef) => {
@@ -491,8 +492,13 @@ const InboxNotificationCustomDefault = forwardRef<
       inboxNotification={inboxNotification}
       {...props}
       title={inboxNotification.kind}
-      aside={<InboxNotificationIcon />}
+      aside={
+        <InboxNotificationIcon>
+          <MissingIcon />
+        </InboxNotificationIcon>
+      }
       ref={forwardedRef}
+      data-missing=""
     />
   );
 });
@@ -543,7 +549,7 @@ export const InboxNotification = Object.assign(
               );
 
               return (
-                <InboxNotificationCustomDefault
+                <InboxNotificationCustomMissing
                   inboxNotification={
                     inboxNotification as InboxNotificationCustomData
                   }
