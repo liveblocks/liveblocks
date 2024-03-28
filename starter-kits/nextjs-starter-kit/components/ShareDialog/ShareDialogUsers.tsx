@@ -1,9 +1,10 @@
 import clsx from "clsx";
 import { ComponentProps } from "react";
-import { removeUserAccess, updateUserAccess } from "../../lib/client";
-import { Avatar } from "../../primitives/Avatar";
-import { Select } from "../../primitives/Select";
-import { Document, DocumentAccess, DocumentUser } from "../../types";
+import { removeUserAccess } from "@/lib/actions/removeUserAccess";
+import { updateUserAccess } from "@/lib/actions/updateUserAccess";
+import { Avatar } from "@/primitives/Avatar";
+import { Select } from "@/primitives/Select";
+import { Document, DocumentAccess, DocumentUser } from "@/types";
 import styles from "./ShareDialogRows.module.css";
 
 interface Props extends ComponentProps<"div"> {
