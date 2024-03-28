@@ -32,8 +32,8 @@ export function ShareDialog({ children, ...props }: Props) {
   // Get a list of users attached to the document (+ their info)
   const {
     data: users,
-    error: usersError,
     mutate: revalidateUsers,
+    // error: usersError,
   } = useDocumentsFunctionSWR([getDocumentUsers, { documentId }], {
     refreshInterval: 0,
   });
@@ -41,8 +41,8 @@ export function ShareDialog({ children, ...props }: Props) {
   // Get a list of groups attached to the document (+ their info)
   const {
     data: groups,
-    error: groupsError,
     mutate: revalidateGroups,
+    // error: groupsError,
   } = useDocumentsFunctionSWR([getDocumentGroups, { documentId }], {
     refreshInterval: 0,
   });

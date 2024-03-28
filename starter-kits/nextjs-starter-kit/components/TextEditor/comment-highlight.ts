@@ -171,7 +171,7 @@ export const LiveblocksCommentsHighlight = Mark.create<
     };
 
     // On hover end, stop highlighting sidebar comment
-    const handlePointerLeave = (event: MouseEvent) => {
+    const handlePointerLeave = () => {
       elem.dataset.selected = "false";
 
       if (!this.editor) {
