@@ -5,11 +5,11 @@
    * Colors
    */
   --lb-accent: #4af;
-  --lb-error: #f77;
+  --lb-destructive: #f77;
   --lb-background: #222;
   --lb-foreground: #fff;
   --lb-accent-contrast: 16%;
-  --lb-error-contrast: 16%;
+  --lb-destructive-contrast: 16%;
   --lb-foreground-contrast: 10%;
 
   /**

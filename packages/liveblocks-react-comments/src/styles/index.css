@@ -9,10 +9,10 @@
   --lb-spacing: 1em;
   --lb-accent: #17f;
   --lb-accent-foreground: #fff;
+  --lb-destructive: #f45;
+  --lb-destructive-foreground: #fff;
   --lb-background: #fff;
   --lb-foreground: #111;
-  --lb-error: #f45;
-  --lb-error-foreground: #fff;
 
   /** 
    * Advanced
@@ -26,7 +26,7 @@
   --lb-elevation-shadow: $lb-elevation-shadow;
   --lb-tooltip-shadow: $lb-tooltip-shadow;
   --lb-accent-contrast: 8%;
-  --lb-error-contrast: 8%;
+  --lb-destructive-contrast: 8%;
   --lb-foreground-contrast: 8%;
 
   /** 
@@ -1070,9 +1070,9 @@
 
   /* Highlight missing notifications during development */
   &:where([data-missing]) {
-    --lb-accent: var(--lb-error) !important;
-    --lb-accent-foreground: var(--lb-error-foreground) !important;
-    --lb-accent-contrast: var(--lb-error-contrast) !important;
+    --lb-accent: var(--lb-destructive) !important;
+    --lb-accent-foreground: var(--lb-destructive-foreground) !important;
+    --lb-accent-contrast: var(--lb-destructive-contrast) !important;
     --lb-dynamic-background: var(--lb-background-accent-faint);
   }
 
@@ -1170,7 +1170,7 @@
 .lb-inbox-notification-title {
   min-block-size: $lb-button-size;
 
-  :where(.lb-list, .lb-name) {
+  :where(strong, .lb-list, .lb-name) {
     font-weight: 500;
   }
 }
