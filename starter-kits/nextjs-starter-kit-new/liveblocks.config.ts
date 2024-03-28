@@ -6,7 +6,8 @@ import {
 } from "@liveblocks/client";
 import { createLiveblocksContext, createRoomContext } from "@liveblocks/react";
 import Router from "next/router";
-import { authorizeLiveblocks } from "@/lib/actions/authorizeLiveblocks";
+import { DOCUMENT_URL } from "@/constants";
+import { authorizeLiveblocks, getSpecificDocuments } from "@/lib/actions";
 import { getUsers } from "./lib/database";
 import { User } from "./types";
 
@@ -14,8 +15,7 @@ import { User } from "./types";
 // In this API we'll assign each user custom data, such as names, avatars
 // If any client side data is needed to get user info from your system,
 // (e.g. auth token, user id) send it in the body alongside `room`.
-// TODO change comment below
-// Check inside `/pages/${ENDPOINT_BASE_URL}/auth` for the endpoint
+// This is using a Next.js server action called `authorizeLiveblocks`
 const client = createClient({
   authEndpoint: async () => {
     const { data, error } = await authorizeLiveblocks();
@@ -33,13 +33,25 @@ const client = createClient({
     return data;
   },
 
+  // Resolve user IDs into name/avatar/etc for Comments/Notifications
   async resolveUsers({ userIds }) {
     const users = await getUsers({ userIds });
     return users.map((user) => user || {});
   },
+
+  // Resolve a mention suggestion into a userId e.g. `@tat` → `tatum.paolo@example.com`
   async resolveMentionSuggestions({ text }) {
     const users = await getUsers({ search: text });
     return users.map((user) => user?.id || "");
+  },
+
+  // Resolve a room ID into room information for Notifications
+  async resolveRoomsInfo({ roomIds }) {
+    const documents = await getSpecificDocuments({ documentIds: roomIds });
+    return documents.map((document) => ({
+      name: document ? document.name : undefined,
+      url: document ? DOCUMENT_URL(document.type, document.id) : undefined,
+    }));
   },
 });
 
@@ -107,7 +119,6 @@ export const {
     useUpdateMyPresence,
     useUser,
   },
-  /* ...all the other hooks you’re using... */
 } = createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(
   client
 );

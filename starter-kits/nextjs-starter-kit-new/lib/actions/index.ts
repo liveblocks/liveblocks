@@ -8,6 +8,7 @@ export * from "./getDocumentUsers";
 export * from "./getGroups";
 export * from "./getLiveUsers";
 export * from "./getNextDocuments";
+export * from "./getSpecificDocuments";
 export * from "./removeGroupAccess";
 export * from "./removeUserAccess";
 export * from "./renameDocument";
