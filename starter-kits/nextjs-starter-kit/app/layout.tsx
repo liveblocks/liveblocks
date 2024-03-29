@@ -23,9 +23,6 @@ export default async function RootLayout({
   const session = await auth();
   return (
     <html lang="en">
-      <head>
-        <link href="/favicon.svg" rel="icon" type="image/svg" />
-      </head>
       <body className={inter.className}>
         <Providers session={session}>{children}</Providers>
       </body>
