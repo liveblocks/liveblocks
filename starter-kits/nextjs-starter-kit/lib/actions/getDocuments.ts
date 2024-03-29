@@ -122,8 +122,8 @@ export async function getDocuments({
       userAllowedInRoom({
         accessAllowed: "read",
         userId: session.user.info.id,
-        groupIds: groupIds,
-        room: room,
+        groupIds: session.user.info.groupIds,
+        room,
       })
     ) {
       finalRooms.push(room);
