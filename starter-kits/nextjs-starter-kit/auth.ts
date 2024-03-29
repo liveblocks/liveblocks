@@ -12,7 +12,7 @@ export const {
   signIn,
   signOut,
 } = NextAuth({
-  secret: NEXTAUTH_SECRET,
+  secret: NEXTAUTH_SECRET || "p49RDzU36fidumaF7imGnzyhRSPWoffNjDOleU77SM4=",
   callbacks: {
     // Get extra user info from your database to pass to front-end
     // For front end, update next-auth.d.ts with session type
