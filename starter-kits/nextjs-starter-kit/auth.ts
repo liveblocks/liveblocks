@@ -34,16 +34,14 @@ export const {
   ...authConfig,
 });
 
-export async function getProviders() {
-  try {
-    const response = await fetch(`http://localhost:3000/api/auth/providers`);
+export function getProviders() {
+  const providers: Record<string, string> = {};
 
-    if (!response.ok) {
-      throw new Error("Problem fetching providers");
+  for (const provider of authConfig.providers) {
+    if ("id" in provider) {
+      providers[provider.id] = provider.name;
     }
-
-    return await response.json();
-  } catch (err) {
-    console.error(err);
   }
+
+  return providers;
 }

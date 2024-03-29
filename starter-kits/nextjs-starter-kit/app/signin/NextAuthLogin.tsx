@@ -1,12 +1,12 @@
 "use client";
 
-import { getProviders, signIn } from "next-auth/react";
+import { signIn } from "next-auth/react";
 import { ComponentProps } from "react";
 import { Button } from "@/primitives/Button";
 import styles from "./signin.module.css";
 
 interface Props extends ComponentProps<"div"> {
-  providers?: Awaited<ReturnType<typeof getProviders>>;
+  providers?: Record<string, string>;
 }
 
 export function NextAuthLogin({ providers }: Props) {
@@ -16,9 +16,9 @@ export function NextAuthLogin({ providers }: Props) {
 
   return (
     <div className={styles.actions}>
-      {Object.values(providers).map((provider) => (
-        <Button key={provider.name} onClick={() => signIn(provider.id)}>
-          Sign in with {provider.name}
+      {Object.entries(providers).map(([id, name]) => (
+        <Button key={name} onClick={() => signIn(id)}>
+          Sign in with {name}
         </Button>
       ))}
     </div>
