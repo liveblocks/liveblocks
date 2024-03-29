@@ -104,9 +104,9 @@ export default class LiveblocksProvider<
     removed,
     added,
   }: {
-    loaded: Y.Doc[];
-    removed: Y.Doc[];
-    added: Y.Doc[];
+    loaded: Set<Y.Doc>;
+    removed: Set<Y.Doc>;
+    added: Set<Y.Doc>;
   }) => {
     loaded.forEach(this.createSubdocHandler);
     if (this.options.autoloadSubdocs) {

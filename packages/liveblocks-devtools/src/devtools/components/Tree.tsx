@@ -182,8 +182,7 @@ type TreeProps<TTreeNode extends DevTools.TreeNode | YLogsTreeNode> = Pick<
   ComponentProps<"div">,
   "className" | "style"
 > &
-  ArboristTreeProps<TTreeNode> &
-  RefAttributes<TreeApi<TTreeNode> | undefined>;
+  ArboristTreeProps<TTreeNode>;
 
 interface RowProps<TTreeNode extends DevTools.TreeNode>
   extends ComponentProps<"div"> {
