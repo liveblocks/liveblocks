@@ -3,7 +3,7 @@ import { getLiveUsers } from "@/lib/actions";
 import { useDocumentsFunctionSWR } from "@/lib/hooks";
 import { Document } from "@/types";
 import { DocumentRow } from "./DocumentRow";
-import styles from "@/layouts/Documents/Documents.module.css";
+import styles from "@/layouts/Documents/DocumentsPanel.module.css";
 
 type Props = {
   documents: Document[];

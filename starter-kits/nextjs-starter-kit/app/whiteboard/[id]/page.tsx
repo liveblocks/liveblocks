@@ -6,8 +6,7 @@ export default async function Whiteboard({
 }: {
   params: { id: string };
 }) {
-  const document = await getDocument({ documentId: id });
-  const { data = null, error = null } = document;
+  const { data = null, error = null } = await getDocument({ documentId: id });
 
   return <WhiteboardDocumentView initialDocument={data} initialError={error} />;
 }
