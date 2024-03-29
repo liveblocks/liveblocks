@@ -121,7 +121,7 @@ const ROW_INDENT = 18;
 const USE_GRID_LAYOUT = false;
 const SHOW_INTERNAL_ID = false;
 
-const SPECIAL_HACK_PREFIX = "@@HACK@@ ^_^;";
+export const SPECIAL_HACK_PREFIX = "@@HACK@@ ^_^;";
 
 /**
  * Used to convert a list of updates to tree nodes.
@@ -172,7 +172,7 @@ function getYUpdateStructType(struct: YUpdate["structs"][number]) {
 /**
  * Used to generate new Json subnodes on the fly.
  */
-function makeJsonNode(
+export function makeJsonNode(
   parentId: string,
   key: string,
   payload: Json
@@ -1481,6 +1481,45 @@ function YLogsNodeRenderer(props: NodeRendererProps<YLogsTreeNode>) {
   }
 }
 
+function jsonChildAccessor(
+  node: DevTools.JsonTreeNode
+): DevTools.JsonTreeNode[] | null {
+  if (node.id.startsWith(SPECIAL_HACK_PREFIX)) {
+    if (Array.isArray(node.payload)) {
+      return node.payload.map((item, index) =>
+        makeJsonNode(
+          `${node.id.substring(SPECIAL_HACK_PREFIX.length)}`,
+          //                   ^^^^^^^^^^^^^^^^^^^
+          //                   Undo the "special behavior" for the subnodes,
+          //                   making them "normal Json" nodes that aren't
+          //                   expandable
+          index.toString(),
+          item
+        )
+      );
+    } else if (node.payload !== null && typeof node.payload === "object") {
+      return Object.entries(node.payload).flatMap(([key, value]) =>
+        value === undefined
+          ? []
+          : [
+              makeJsonNode(
+                `${node.id.substring(SPECIAL_HACK_PREFIX.length)}`,
+                //                   ^^^^^^^^^^^^^^^^^^^
+                //                   Undo the "special behavior" for the
+                //                   subnodes, making them "normal Json" nodes
+                //                   that aren't expandable
+                key,
+                value
+              ),
+            ]
+      );
+    }
+  }
+
+  // Common case: Json nodes don't have children and aren't expandable
+  return null;
+}
+
 function presenceChildAccessor(
   node: PresenceTreeNode
 ): PresenceTreeNode[] | null {
@@ -2074,6 +2113,37 @@ export const PresenceTree = forwardRef<
             {...props}
           >
             {PresenceNodeRenderer}
+          </ArboristTree>
+        )}
+      </AutoSizer>
+    </TooltipProvider>
+  );
+});
+
+export const JsonTree = forwardRef<
+  TreeApi<DevTools.JsonTreeNode>,
+  TreeProps<DevTools.JsonTreeNode>
+>(({ className, style, ...props }, ref) => {
+  return (
+    <TooltipProvider skipDelayDuration={0}>
+      <AutoSizer className={cx(className, "tree")} style={style}>
+        {({ width, height }) => (
+          <ArboristTree
+            ref={ref}
+            width={width}
+            height={height}
+            childrenAccessor={jsonChildAccessor}
+            disableDrag
+            disableDrop
+            disableEdit
+            disableMultiSelection
+            className="!overflow-x-hidden"
+            selectionFollowsFocus
+            rowHeight={ROW_HEIGHT}
+            indent={ROW_INDENT}
+            {...props}
+          >
+            {JsonNodeRenderer}
           </ArboristTree>
         )}
       </AutoSizer>

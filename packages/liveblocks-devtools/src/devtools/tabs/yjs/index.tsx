@@ -1,4 +1,4 @@
-import { assertNever, type DevTools } from "@liveblocks/core";
+import { assertNever } from "@liveblocks/core";
 import * as RadixSelect from "@radix-ui/react-select";
 import cx from "classnames";
 import {
@@ -6,7 +6,6 @@ import {
   Fragment,
   type MouseEvent,
   useCallback,
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -25,6 +24,9 @@ import {
   getNodePath,
   getYTreeNodeColor,
   getYTreeNodeIcon,
+  JsonTree,
+  makeJsonNode,
+  SPECIAL_HACK_PREFIX,
   YjsTree,
   YLogsTree,
 } from "../../components/Tree";
@@ -203,6 +205,20 @@ function YjsAwareness({ className, ...props }: ComponentProps<"div">) {
     return presence.some((user) => user.payload.presence.__yjs);
   }, [presence]);
 
+  const awareness = useMemo(
+    () =>
+      presence
+        .map((user) => user.payload.presence.__yjs)
+        .map((awareness, index) =>
+          makeJsonNode(
+            `${SPECIAL_HACK_PREFIX}:${index}`,
+            index.toString(),
+            awareness
+          )
+        ),
+    [presence]
+  );
+
   if (
     currentStatus === "connected" ||
     currentStatus === "open" || // Same as "connected", but only sent by old clients (prior to 1.1)
@@ -214,7 +230,7 @@ function YjsAwareness({ className, ...props }: ComponentProps<"div">) {
           className={cx(className, "absolute inset-0 flex h-full flex-col")}
           {...props}
         >
-          {/* <YjsTree data={presence} /> */}
+          <JsonTree data={awareness} />
         </div>
       );
     } else if (presence.length > 0 && !hasAwareness) {
