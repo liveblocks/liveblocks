@@ -5,7 +5,7 @@ import { auth } from "@/auth";
 import {
   buildDocuments,
   getDraftsGroupName,
-  userAllowedInRooms,
+  userAllowedInRoom,
 } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
 import { Document, DocumentGroup, DocumentType, DocumentUser } from "@/types";
@@ -72,7 +72,7 @@ export async function getDocuments({
   }
 
   let session;
-  let rooms;
+  let getRoomsResponse;
   try {
     // Get session and rooms
     const result = await Promise.all([
@@ -80,7 +80,7 @@ export async function getDocuments({
       liveblocks.getRooms(getRoomsOptions),
     ]);
     session = result[0];
-    rooms = result[1];
+    getRoomsResponse = result[1];
   } catch (err) {
     console.log(err);
     return {
@@ -103,6 +103,8 @@ export async function getDocuments({
     };
   }
 
+  const { data: rooms, nextCursor } = getRoomsResponse;
+
   if (!rooms) {
     return {
       error: {
@@ -113,29 +115,23 @@ export async function getDocuments({
     };
   }
 
-  const { data, nextCursor } = rooms;
-
-  // Check current logged-in user has access to each room
-  if (
-    !userAllowedInRooms({
-      accessAllowed: "read",
-      userId: session.user.info.id,
-      groupIds: groupIds,
-      rooms: data,
-    })
-  ) {
-    return {
-      error: {
-        code: 403,
-        message: "Not allowed access",
-        suggestion: "Check that you've been given permission to the document",
-      },
-    };
+  // In case a room has changed, filter rooms the user no longer has access to
+  const finalRooms = [];
+  for (const room of rooms) {
+    if (
+      userAllowedInRoom({
+        accessAllowed: "read",
+        userId: session.user.info.id,
+        groupIds: groupIds,
+        room: room,
+      })
+    ) {
+      finalRooms.push(room);
+    }
   }
 
   // Convert rooms to custom document format
-  const documents = buildDocuments(data ?? []);
-
+  const documents = buildDocuments(finalRooms);
   const result: GetDocumentsResponse = {
     documents,
     nextCursor,

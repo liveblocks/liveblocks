@@ -2,7 +2,7 @@
 
 import { auth } from "@/auth";
 import { GetDocumentsResponse } from "@/lib/actions/getDocuments";
-import { buildDocuments, userAllowedInRooms } from "@/lib/utils";
+import { buildDocuments, userAllowedInRoom } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
 
 type Props = {
@@ -20,7 +20,7 @@ type Props = {
  */
 export async function getNextDocuments({ nextCursor }: Props) {
   let session;
-  let rooms;
+  let getRoomsResponse;
   try {
     // Get session and rooms
     const result = await Promise.all([
@@ -28,7 +28,7 @@ export async function getNextDocuments({ nextCursor }: Props) {
       liveblocks.getRooms({ startingAfter: nextCursor }),
     ]);
     session = result[0];
-    rooms = result[1];
+    getRoomsResponse = result[1];
   } catch (err) {
     console.log(err);
     return {
@@ -51,6 +51,8 @@ export async function getNextDocuments({ nextCursor }: Props) {
     };
   }
 
+  const { data: rooms, nextCursor: newNextCursor } = getRoomsResponse;
+
   if (!rooms) {
     return {
       error: {
@@ -61,31 +63,27 @@ export async function getNextDocuments({ nextCursor }: Props) {
     };
   }
 
-  const { data, nextCursor: newNextCursor } = rooms;
-
-  // Check current logged-in user has access to each room
-  if (
-    !userAllowedInRooms({
-      accessAllowed: "read",
-      userId: session.user.info.id,
-      groupIds: session.user.info.groupIds,
-      rooms: data,
-    })
-  ) {
-    return {
-      error: {
-        code: 403,
-        message: "Not allowed access",
-        suggestion: "Check that you've been given permission to the documents",
-      },
-    };
+  // In case a room has changed, filter rooms the user no longer has access to
+  const finalRooms = [];
+  for (const room of rooms) {
+    if (
+      userAllowedInRoom({
+        accessAllowed: "read",
+        userId: session.user.info.id,
+        groupIds: session.user.info.groupIds,
+        room: room,
+      })
+    ) {
+      finalRooms.push(room);
+    }
   }
 
   // Convert to our document format and return
-  const documents = buildDocuments(data ?? []);
+  const documents = buildDocuments(finalRooms);
   const result: GetDocumentsResponse = {
     documents: documents,
     nextCursor: newNextCursor,
   };
+
   return { data: result };
 }
