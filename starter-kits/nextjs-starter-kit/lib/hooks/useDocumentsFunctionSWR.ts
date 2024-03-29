@@ -8,11 +8,11 @@ import useSWR, { SWRConfiguration } from "swr";
  *   getDocumentUsers, { documentId }
  * ],{ refreshInterval: 0 });
  *
- * @param documentFunctionAndArguments
- * @param swrOptions
+ * @param documentActionAndArgs - A tuple containing the server action, and the argument to pass
+ * @param swrOptions - SWR configuration
  */
 export function useDocumentsFunctionSWR<T extends (...args: any) => any>(
-  documentFunctionAndArguments: [T | null, Parameters<T> | Parameters<T>[0]],
+  documentActionAndArgs: [T | null, Parameters<T> | Parameters<T>[0]],
   swrOptions: SWRConfiguration = {}
 ) {
   const fetcher = async ([func, ...args]: [T, Parameters<T>[]]) => {
@@ -27,7 +27,7 @@ export function useDocumentsFunctionSWR<T extends (...args: any) => any>(
   };
 
   return useSWR<Awaited<ReturnType<T>>["data"]>(
-    [...documentFunctionAndArguments],
+    [...documentActionAndArgs],
     fetcher,
     swrOptions
   );

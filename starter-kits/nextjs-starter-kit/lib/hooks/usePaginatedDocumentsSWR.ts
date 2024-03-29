@@ -16,8 +16,8 @@ import {
  *   userId: "charlie.layne@example.com",
  * }, { refreshInterval: 10000 });
  *
- * @param documentsOptions
- * @param swrOptions
+ * @param documentsOptions - Options to pass to get document actions
+ * @param swrOptions - SWR configuration
  */
 export function usePaginatedDocumentsSWR(
   documentsOptions: GetDocumentsProps | null,
