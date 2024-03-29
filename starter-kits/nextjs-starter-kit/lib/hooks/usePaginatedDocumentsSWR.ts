@@ -11,6 +11,7 @@ import {
 /**
  * Takes a documentsOptions object and returns a list of paginatable rooms
  *
+ * @example
  * const { data, error, isLoadingMore, ... } = usePaginatedDocumentsSWR({
  *   userId: "charlie.layne@example.com",
  * }, { refreshInterval: 10000 });
