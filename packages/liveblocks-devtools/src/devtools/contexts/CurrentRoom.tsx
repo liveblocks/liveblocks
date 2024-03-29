@@ -7,6 +7,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
 } from "react";
@@ -18,6 +19,7 @@ import type { EventSource, Observable } from "../../lib/EventSource";
 import { makeEventSource } from "../../lib/EventSource";
 import { onMessage, sendMessage } from "../port";
 import type { FullBackgroundToPanelMessage } from "../protocol";
+import { toYNode, YDocNode, YNode } from "../tabs/yjs/to-y-node";
 
 // Old/legacy connection statuses sent by old clients, prior to Liveblocks 1.1.
 // These will be removed from a future version of Liveblocks, but DevTools will
@@ -166,6 +168,15 @@ function getOrCreateRoom(roomId: string): Room {
   return roomsById.get(roomId) ?? makeRoom(roomId);
 }
 
+function getSubdocumentById(doc: Y.Doc, guid?: string): Y.Doc {
+  if (guid === undefined) return;
+  for (const subdoc of doc.getSubdocs()) {
+    if (subdoc.guid === guid) {
+      return subdoc;
+    }
+  }
+}
+
 type CurrentRoomContextT = {
   currentRoomId: string | null;
   setCurrentRoomId: (currentRoomId: string | null) => void;
@@ -245,7 +256,13 @@ export function CurrentRoomProvider(props: Props) {
         case "room::sync::ydoc": {
           const currRoom = getOrCreateRoom(msg.roomId);
           const update = Base64.toUint8Array(msg.update.update);
-          Y.applyUpdate(currRoom.ydoc, update, "backend");
+          const subdoc = getSubdocumentById(currRoom.ydoc, msg.update.guid);
+          if (subdoc === undefined) {
+            Y.applyUpdate(currRoom.ydoc, update, "backend");
+          } else {
+            Y.applyUpdate(subdoc, update, "backend");
+          }
+
           const decodedUpdate = Y.decodeUpdate(update);
           currRoom.yupdates = [decodedUpdate, ...currRoom.yupdates];
           const hub = getRoomHub(msg.roomId);
@@ -454,4 +471,40 @@ export function useYdoc(): Y.Doc {
     getSubscribe(currentRoomId, "onYdoc") ?? nosub,
     () => getRoom(currentRoomId)?.ydoc ?? new Y.Doc()
   );
+}
+
+export function useYNode(): YDocNode {
+  const currentRoomId = useCurrentRoomId();
+  const nodeRef = useRef<YDocNode>();
+  const room = getRoom(currentRoomId);
+
+  const getNode = useCallback(() => {
+    const doc = room.ydoc;
+    if (nodeRef.current !== undefined) {
+      return nodeRef.current;
+    }
+    const node = toYNode(doc);
+    nodeRef.current = node;
+    return node;
+  }, [room]);
+
+  const subscribe = useCallback(
+    (callback: () => void) => {
+      function onDocUpdate() {
+        const doc = room.ydoc;
+        nodeRef.current = toYNode(doc);
+        callback();
+      }
+
+      const hub = getOrCreateEventHubForRoomId(room.roomId);
+
+      const unsubscribe = hub["onYdoc"].subscribe(onDocUpdate);
+      return () => {
+        unsubscribe();
+      };
+    },
+    [room]
+  );
+
+  return useSyncExternalStore(subscribe, getNode);
 }

@@ -32,11 +32,10 @@ import {
   useCurrentRoomId,
   usePresence,
   useStatus,
-  useYdoc,
+  useYNode,
   useYUpdates,
 } from "../../contexts/CurrentRoom";
 import { YFlow } from "./yflow/YFlow";
-import { toYNode } from "./to-y-node";
 import { toTreeYNode, YTreeNode } from "./to-yjs-tree-node";
 
 export const YJS_TABS = ["document", "awareness", "changes"] as const;
@@ -116,30 +115,16 @@ function YjsDocument({
   className,
   ...props
 }: YjsDocumentProps) {
-  const ydoc = useYdoc();
   const currentStatus = useStatus();
-  const [node, setNode] = useState<YTreeNode[]>([]);
+  const node = useYNode();
+  const tree = useMemo(() => toTreeYNode(node).payload, [node]);
   const filteredNode = useMemo(() => {
-    return search ? filterYNodes(node, search) : node;
-  }, [node, search]);
-  const tree = useRef<TreeApi<YTreeNode>>(null);
+    return search ? filterYNodes(tree, search) : tree;
+  }, [tree, search]);
+  const treeRef = useRef<TreeApi<YTreeNode>>(null);
   const [selectedNode, setSelectedNode] = useState<NodeApi<YTreeNode> | null>(
     null
   );
-
-  useEffect(() => {
-    function onUpdate() {
-      const node = toYNode(ydoc);
-      setNode(toTreeYNode(node).payload);
-    }
-
-    onUpdate();
-    ydoc.on("update", onUpdate);
-
-    return () => {
-      ydoc.off("update", onUpdate);
-    };
-  }, [ydoc]);
 
   const handleSelect = useCallback((nodes: NodeApi<YTreeNode>[]) => {
     const [node] = nodes;
@@ -153,7 +138,7 @@ function YjsDocument({
 
   const handleBreadcrumbClick = useCallback(
     (node: NodeApi<YTreeNode> | null) => {
-      tree.current?.focus(node, { scroll: true });
+      treeRef.current?.focus(node, { scroll: true });
     },
     []
   );
@@ -169,7 +154,7 @@ function YjsDocument({
           <div className="absolute inset-0 flex flex-col">
             <YjsTree
               data={filteredNode}
-              ref={tree}
+              ref={treeRef}
               onSelect={handleSelect}
               search={search}
             />
@@ -183,7 +168,7 @@ function YjsDocument({
           </div>
         </div>
       );
-    } else if (node.length > 0 && filteredNode.length === 0) {
+    } else if (tree.length > 0 && filteredNode.length === 0) {
       return (
         <EmptyState
           title={
