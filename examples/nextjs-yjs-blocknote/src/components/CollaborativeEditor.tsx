@@ -1,7 +1,9 @@
 "use client";
 
 import { BlockNoteEditor } from "@blocknote/core";
-import { BlockNoteView, useBlockNote } from "@blocknote/react";
+import "@blocknote/core/fonts/inter.css";
+import { BlockNoteView, useCreateBlockNote } from "@blocknote/react";
+import "@blocknote/react/style.css";
 import * as Y from "yjs";
 import LiveblocksProvider from "@liveblocks/yjs";
 import { useRoom, useSelf } from "@/liveblocks.config";
@@ -45,7 +47,7 @@ function BlockNote({ doc, provider }: EditorProps) {
   // Get user info from Liveblocks authentication endpoint
   const userInfo = useSelf((me) => me.info);
 
-  const editor: BlockNoteEditor = useBlockNote({
+  const editor: BlockNoteEditor = useCreateBlockNote({
     collaboration: {
       provider,
 
@@ -66,13 +68,18 @@ function BlockNote({ doc, provider }: EditorProps) {
         <Toolbar editor={editor} />
         <Avatars />
       </div>
-      {/*
-        // Removing children from `BlockNoteView` will result in a zero-config editor with many more features
-        <BlockNoteView editor={editor} className={styles.editorContainer} />
-      */}
-      <BlockNoteView editor={editor} className={styles.editorContainer}>
-        <div />
-      </BlockNoteView>
+      {/* In the code below, we disabled BlockNote's built-in menus and toolbars to get a plain editor. */}
+      {/* Simply use <BlockNoteView editor={editor} className={styles.editorContainer} /> if you want a full-fledged editor experience. */}
+      <BlockNoteView
+        editor={editor}
+        className={styles.editorContainer}
+        formattingToolbar={false}
+        hyperlinkToolbar={false}
+        sideMenu={false}
+        slashMenu={false}
+        imageToolbar={false}
+        tableHandles={false}
+      />
     </div>
   );
 }

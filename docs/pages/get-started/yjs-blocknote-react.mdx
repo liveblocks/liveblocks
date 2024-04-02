@@ -14,9 +14,8 @@ collaboration to your React application using the APIs from the
 <Banner title="Public beta">
 
 Yjs support is currently in beta. If you have any questions or feedback, please
-reach out to us via the dedicated Discord channel,
-[#yjs-beta](https://discord.com/channels/913109211746009108/1123560088997728328).
-We’d love to hear from you.
+join us on our [Discord server](https://liveblocks.io/discord). We’d love to
+hear from you.
 
 </Banner>
 
@@ -102,7 +101,9 @@ We’d love to hear from you.
       ```tsx file="Editor.tsx"
       import { useEffect, useState } from "react";
       import { BlockNoteEditor } from "@blocknote/core";
-      import { BlockNoteView, useBlockNote } from "@blocknote/react";
+      import "@blocknote/core/fonts/inter.css";
+      import { BlockNoteView, useCreateBlockNote } from "@blocknote/react";
+      import "@blocknote/react/styles.css";
       import * as Y from "yjs";
       import LiveblocksProvider from "@liveblocks/yjs";
       import { useRoom } from "../liveblocks.config";
@@ -139,7 +140,7 @@ We’d love to hear from you.
 
 
       function BlockNote({ doc, provider }: EditorProps) {
-        const editor: BlockNoteEditor = useBlockNote({
+        const editor: BlockNoteEditor = useCreateBlockNote({
           collaboration: {
             provider,
 
@@ -171,7 +172,7 @@ We’d love to hear from you.
       required. If you want to limit access to a room for certain users, you’ll need
       to set up an authentication endpoint to enable permissions.
 
-      <ButtonLink className="not-markdown" href="/docs/rooms/authentication">
+      <ButtonLink className="not-markdown" href="/docs/authentication">
         Set up authentication
       </ButtonLink>
     </StepContent>

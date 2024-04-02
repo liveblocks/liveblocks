@@ -208,8 +208,7 @@ const client = createClient({
 ### createClient with auth endpoint [#createClientAuthEndpoint]
 
 If you are not using a public key, you need to set up your own `authEndpoint`.
-Refer to our [authentication guide](/docs/rooms/authentication) for more
-information.
+Please refer to our [Authentication guide](/docs/authentication).
 
 ```ts
 import { createClient } from "@liveblocks/client";
@@ -374,9 +373,8 @@ value of at least a few minutes, to avoid unnecessary disconnections.
 <Banner title="Public beta">
 
 Comments is currently in beta. If you have any questions or feedback, please
-reach out to us via the dedicated Discord channel,
-[#comments-beta](https://discord.com/channels/913109211746009108/1126614905160749097).
-We’d love to hear from you.
+join us on our [Discord server](https://liveblocks.io/discord). We’d love to
+hear from you.
 
 </Banner>
 
@@ -463,9 +461,8 @@ function Component() {
 <Banner title="Public beta">
 
 Comments is currently in beta. If you have any questions or feedback, please
-reach out to us via the dedicated Discord channel,
-[#comments-beta](https://discord.com/channels/913109211746009108/1126614905160749097).
-We’d love to hear from you.
+join us on our [Discord server](https://liveblocks.io/discord). We’d love to
+hear from you.
 
 </Banner>
 
@@ -513,9 +510,8 @@ you might need to call your backend for example. In that case, providing it via
 <Banner title="Public beta">
 
 Comments is currently in beta. If you have any questions or feedback, please
-reach out to us via the dedicated Discord channel,
-[#comments-beta](https://discord.com/channels/913109211746009108/1126614905160749097).
-We’d love to hear from you.
+join us on our [Discord server](https://liveblocks.io/discord). We’d love to
+hear from you.
 
 </Banner>
 
@@ -1286,6 +1282,11 @@ const unsubscribe = room.subscribe("error", (error) => {
 
     case 4005:
       // Could not connect because room was full
+      break;
+
+    case 4006:
+      // The room ID has changed, get the new room ID (use this for redirecting)
+      const newRoomId = error.message;
       break;
 
     default:

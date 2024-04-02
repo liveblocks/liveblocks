@@ -5,7 +5,7 @@ import { LiveObject } from "@liveblocks/client";
 import { RoomProvider } from "../liveblocks.config";
 
 function App({ Component, pageProps }) {
-  const roomId = useOverrideRoomId("nextjs-3d-builder");
+  const roomId = useExampleRoomdId("nextjs-3d-builder");
 
   return (
     <RoomProvider
@@ -40,11 +40,11 @@ export default App;
  * This function is used when deploying an example on liveblocks.io.
  * You can ignore it completely if you run the example locally.
  */
-function useOverrideRoomId(roomId) {
+function useExampleRoomdId(roomId) {
   const { query } = useRouter();
-  const overrideRoomId = useMemo(() => {
-    return query?.roomId ? `${roomId}-${query.roomId}` : roomId;
+  const exampleRoomId = useMemo(() => {
+    return query?.exampleId ? `${roomId}-${query.exampleId}` : roomId;
   }, [query, roomId]);
 
-  return overrideRoomId;
+  return exampleRoomId;
 }

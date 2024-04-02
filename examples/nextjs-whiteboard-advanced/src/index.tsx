@@ -45,7 +45,9 @@ import ToolsBar from "./components/ToolsBar";
 const MAX_LAYERS = 100;
 
 export default function Room() {
-  const roomId = useOverrideRoomId("nextjs-whiteboard-advanced");
+  const roomId = useExampleRoomId(
+    "liveblocks:examples:nextjs-whiteboard-advanced"
+  );
 
   return (
     <RoomProvider
@@ -559,11 +561,11 @@ function Canvas() {
  * This function is used when deploying an example on liveblocks.io.
  * You can ignore it completely if you run the example locally.
  */
-function useOverrideRoomId(roomId: string) {
+function useExampleRoomId(roomId: string) {
   const { query } = useRouter();
-  const overrideRoomId = useMemo(() => {
-    return query?.roomId ? `${roomId}-${query.roomId}` : roomId;
+  const exampleRoomId = useMemo(() => {
+    return query?.exampleId ? `${roomId}-${query.exampleId}` : roomId;
   }, [query, roomId]);
 
-  return overrideRoomId;
+  return exampleRoomId;
 }

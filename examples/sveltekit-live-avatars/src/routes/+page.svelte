@@ -5,7 +5,7 @@
 
   let room: Room;
   let leave: () => void;
-  let roomId = "sveltekit-live-avatars";
+  let roomId = "liveblocks:examples:sveltekit-live-avatars";
 
   // Presence represents the properties that will exist on every User in the
   // Room and that will automatically be kept in sync. Accessible through the
@@ -39,7 +39,7 @@
   // Set up the client on load
   // Check inside src/routes/api/liveblocks-auth.ts for the serverless function
   onMount(() => {
-    overrideRoomId();
+    applyExampleRoomId();
 
     const client = createClient({
       authEndpoint: "/api/liveblocks-auth",
@@ -62,12 +62,16 @@
    * This function is used when deploying an example on liveblocks.io.
    * You can ignore it completely if you run the example locally.
    */
-  function overrideRoomId() {
-    const query = new URLSearchParams(window?.location?.search);
-    const roomIdSuffix = query.get("roomId");
+  function applyExampleRoomId() {
+    if (typeof window === "undefined") {
+      return;
+    }
 
-    if (roomIdSuffix) {
-      roomId = `${roomId}-${roomIdSuffix}`;
+    const query = new URLSearchParams(window?.location?.search);
+    const exampleId = query.get("exampleId");
+
+    if (exampleId) {
+      roomId = exampleId ? `${roomId}-${exampleId}` : roomId;
     }
   }
 </script>

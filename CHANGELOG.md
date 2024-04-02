@@ -1,9 +1,56 @@
-# v1.10.3 (Unpublished)
+# v1.11.1
 
 ### `@liveblocks/react-comments`
 
+- Fix the composer’s placeholder to appear instantly instead of being initially
+  invisible.
+
+# v1.11.0
+
+### `@liveblocks/node`
+
+- Add `updateRoomId` method that lets you update the room ID of the specified
+  room.
+- Add an optional `guid` parameter to `sendYjsBinaryUpdate` and
+  `getYjsDocumentAsBinaryUpdate` to point to a Yjs subdocument with the
+  specified guid.
+
+### `@liveblocks/react`
+
+- Add `scrollOnLoad` option to `useThreads`: enabled by default, this option
+  controls whether to scroll to a comment on load based on the URL hash.
+- `useUser` and `useRoomInfo` no longer support returning nothing. Returning
+  `undefined` will now be treated as an error.
+- Fix bug where `useUser` and `useRoomInfo` returned an extra `data` superfluous
+  property.
+- Fix bug where customizing types on `createLiveblocksContext` would conflict
+  with the provided `Client`.
+
+### `@liveblocks/react-comments`
+
+- Add actions to `InboxNotification` with a single action for now: marking as
+  read.
+- Improve actions hover behavior in `Comment`/`Thread`.
+- Change `Comment` background color when it’s linked to or being edited.
+
+# v1.10.4
+
+- Fix bundling issue in Vite projects, where `process is not defined` could
+  happen
+
+# v1.10.3
+
+### `@liveblocks/react-comments`
+
+- Add support for Emoji v15.1 in emoji picker, along two additional locales:
+  Bengali (`bn`) and Hindi (`hi`).
 - Fix bug where the `showRoomName` prop on `InboxNotification.Thread` wasn’t
   applied to notifications about mentions.
+
+### `@liveblocks/react`
+
+- Fix bug where removing metadata via `useEditThreadMetadata` would result in a
+  brief flash of the old metadata after the metadata was removed optimistically.
 
 # v1.10.2
 

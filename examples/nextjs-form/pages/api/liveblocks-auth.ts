@@ -2,16 +2,21 @@ import { Liveblocks } from "@liveblocks/node";
 import { NextApiRequest, NextApiResponse } from "next";
 import { NAMES } from "../../constants";
 
-const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY!;
+/**
+ * Authenticating your Liveblocks application
+ * https://liveblocks.io/docs/authentication
+ */
 
-const liveblocks = new Liveblocks({ secret: API_KEY });
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
 
 export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   // For the avatar example, we're generating random users
   // and set their info from the authentication endpoint
-  // See https://liveblocks.io/docs/rooms/authentication for more information
   const userIndex = Math.floor(Math.random() * NAMES.length);
 
+  // Create a session for the current user (access token auth)
   const session = liveblocks.prepareSession(`user-${userIndex}`, {
     userInfo: {
       name: NAMES[userIndex],
@@ -20,7 +25,9 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
       )}.png`,
     },
   });
-  session.allow(req.body.room, session.FULL_ACCESS);
+
+  // Use a naming pattern to allow access to rooms with a wildcard
+  session.allow(`liveblocks:examples:*`, session.FULL_ACCESS);
 
   const { status, body } = await session.authorize();
   res.status(status).end(body);

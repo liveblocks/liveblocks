@@ -7,7 +7,7 @@ import React, { useMemo } from "react";
 import { LiveObject } from "@liveblocks/client";
 
 function App({ Component, pageProps }: AppProps) {
-  const roomId = useOverrideRoomId("nextjs-multiplayer-form");
+  const roomId = useExampleRoomId("liveblocks:examples:nextjs-form");
 
   return (
     <RoomProvider
@@ -48,11 +48,11 @@ export default App;
  * This function is used when deploying an example on liveblocks.io.
  * You can ignore it completely if you run the example locally.
  */
-function useOverrideRoomId(roomId: string) {
+function useExampleRoomId(roomId: string) {
   const { query } = useRouter();
-  const overrideRoomId = useMemo(() => {
-    return query?.roomId ? `${roomId}-${query.roomId}` : roomId;
+  const exampleRoomId = useMemo(() => {
+    return query?.exampleId ? `${roomId}-${query.exampleId}` : roomId;
   }, [query, roomId]);
 
-  return overrideRoomId;
+  return exampleRoomId;
 }

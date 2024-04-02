@@ -165,6 +165,11 @@ useErrorListener((error) => {
       // Could not connect because room was full
       break;
 
+    case 4006:
+      // The room ID has changed, get the new room ID (use this for redirecting)
+      const newRoomId = error.message;
+      break;
+
     default:
       // Unexpected error
       break;
@@ -1169,9 +1174,8 @@ the dependency arrays of your `useMutation` calls:
 <Banner title="Public beta">
 
 Comments is currently in beta. If you have any questions or feedback, please
-reach out to us via the dedicated Discord channel,
-[#comments-beta](https://discord.com/channels/913109211746009108/1126614905160749097).
-We’d love to hear from you.
+join us on our [Discord server](https://liveblocks.io/discord). We’d love to
+hear from you.
 
 </Banner>
 
@@ -1185,8 +1189,8 @@ import { useThreads } from "./liveblocks.config";
 const { threads, error, isLoading } = useThreads();
 ```
 
-`useThreads` can also take an optional `query` parameter, to filter threads
-based on their metadata.
+`useThreads` supports a few options as its first argument, one is `query` and it
+can be used to filter threads based on their metadata.
 
 ```tsx
 // Returns the threads with `metadata.color === "blue"` and `metadata.resolved === true`
@@ -1200,6 +1204,11 @@ const { threads } = useThreads({
   },
 });
 ```
+
+Another option is `scrollOnLoad`, which is enabled by default. When enabled, if
+the URL’s hash is set to a comment ID (e.g.
+`https://example.com/my-room#cm_xxx`), the page will scroll to that comment once
+the threads are loaded.
 
 👉 A [Suspense version][] of this hook is also available, which will never
 return a loading state and will throw when there’s an error.
@@ -1300,10 +1309,9 @@ removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
 
 <Banner title="Public beta">
 
-Notifications is currently part of Comments, which is in beta. If you have any
-questions or feedback, please reach out to us via the dedicated Discord channel,
-[#comments-beta](https://discord.com/channels/913109211746009108/1126614905160749097).
-We’d love to hear from you.
+Comments is currently in beta. If you have any questions or feedback, please
+join us on our [Discord server](https://liveblocks.io/discord). We’d love to
+hear from you.
 
 </Banner>
 

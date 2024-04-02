@@ -1,0 +1,166 @@
+---
+meta:
+  title: "Set up ID token permissions with Nuxt.js"
+  parentTitle: "Authentication"
+  description: "Learn how to setup ID token permissions with Nuxt.js."
+---
+
+Follow the following steps to start configure your authentication endpoint and
+start building your own security logic.
+
+## Quickstart
+
+<Steps>
+  <Step>
+    <StepTitle>Install the `liveblocks/node` package</StepTitle>
+    <StepContent>
+
+      ```bash
+      npm install @liveblocks/node
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Set up authentication endpoint</StepTitle>
+    <StepContent>
+      Users can only interact with rooms they have access to. You can
+      configure permission access in an `api/liveblocks-auth` endpoint by
+      creating the `server/api/liveblocks-auth.ts` file with the
+      following code. This is where you will implement your security and
+      define if the current user has access to a specific room.
+
+      ```ts file="server/api/liveblocks-auth.ts"
+      import { Liveblocks } from "@liveblocks/node";
+
+      const liveblocks = new Liveblocks({
+        secret: "{{SECRET_KEY}}",
+      });
+
+      export default defineEventHandler(async (event) => {
+        // Get the current user from your database
+        const user = __getUserFromDB__(event);
+
+        // Identify the user and return the result
+        const { status, body } = await liveblocks.identifyUser(
+          {
+            userId: user.id,
+            groupIds, // Optional
+          },
+          { userInfo: user.metadata },
+        );
+        return body;
+      })
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Set up the client</StepTitle>
+    <StepContent>
+      On the front end, you can now replace the `publicApiKey`
+      option with `authEndpoint` pointing to the endpoint you
+      just created.
+
+      ```ts file="liveblocks.config.ts"
+      import { createClient } from "@liveblocks/client";
+
+      const client = createClient({
+        authEndpoint: "/api/liveblocks-auth",
+      });
+      ```
+
+      If you need to pass custom headers or data to your endpoint, you can
+      use
+      [authEndpoint as a callback](/docs/api-reference/liveblocks-client#createClientCallback)
+      instead.
+
+      ```ts file="liveblocks.config.ts" isCollapsed isCollapsable
+      import { createClient } from "@liveblocks/client";
+
+      // Passing custom headers and body to your endpoint
+      const client = createClient({
+        authEndpoint: async (room) => {
+          const headers = {
+            // Custom headers
+            // ...
+
+            "Content-Type": "application/json",
+          };
+
+          const body = JSON.stringify({
+            // Custom body
+            // ...
+
+            room,
+          });
+
+          const response = await fetch("/api/liveblocks-auth", {
+            method: "POST",
+            headers,
+            body,
+          });
+
+          return await response.json();
+        },
+      });
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+    <StepTitle>Set permission accesses to a room</StepTitle>
+    <StepContent>
+      A room can have `defaultAccesses`, `usersAccesses`, and `groupsAccesses` defined.
+      Permissions are then checked when users try to connect to a room. For security purposes,
+      [room permissions](/docs/authentication/id-token#permissions) can only be set on the back-end through `@liveblocks/node` or our REST API.
+      For instance, you can use [`liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms)
+      to create a new room with read-only public access levels while giving write access to specific groups and users.
+
+      ```ts highlight="7-15"
+      import { Liveblocks } from "@liveblocks/node";
+
+      const liveblocks = new Liveblocks({
+        secret: "{{SECRET_KEY}}",
+      });
+
+      const room = await liveblocks.createRoom("my-room-id", {
+        defaultAccesses: ["room:read", "room:presence:write"],
+        groupsAccesses: {
+          "my-group-id": ["room:write"],
+        },
+        usersAccesses: {
+          "my-user-id": ["room:write"],
+        },
+      });
+      ```
+
+      For more information, make sure to read the section on [room permissions](/docs/authentication/id-token#permissions).
+
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## More information
+
+Both `userId` and `userInfo` can then be used in your Vue.js application as
+such:
+
+```ts
+const self = ref(room.getSelf());
+console.log(self.id);
+console.log(self.info);
+```
+
+<Figure>
+  <Image
+    src="/assets/id-token-auth-diagram.png"
+    alt="Auth diagram"
+    width={768}
+    height={576}
+  />
+</Figure>

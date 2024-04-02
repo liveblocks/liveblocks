@@ -1,0 +1,319 @@
+---
+meta:
+  title: "Authenticate with access tokens"
+  parentTitle: "Authentication"
+  description: "Learn more about access token permissions"
+---
+
+Access token authentication allows you to handle permissions yourself. When a
+user authenticates, it’s up to you to let Liveblocks know which rooms they
+should be allowed inside. This means that you need to manually keep track of
+which users should be allowed in which rooms, and apply these permissions
+yourself each time a user connects.
+
+<Figure>
+  <Image
+    src="/assets/authentication/access-token-enter-room.png"
+    alt="An access token granting entry to a room"
+    width={1494}
+    height={840}
+    quality={100}
+  />
+</Figure>
+
+<Banner title="Looking for more complex permissions?" type="warning">
+
+If you’re looking to build an application with permissions at organization,
+group, and user levels, we recommend using
+[ID tokens](/docs/authentication/id-token) instead. Access tokens have
+[limitations when granting nested permissions](#limitations).
+
+</Banner>
+
+## Authenticating
+
+Authenticating with access tokens means creating a
+[JSON Web Token](https://en.wikipedia.org/wiki/JSON_Web_Token) (JWT) that grants
+the current user permission to enter certain rooms when connecting to
+Liveblocks. An access token is created by calling
+[`liveblocks.prepareSession`](/docs/api-reference/liveblocks-node#access-tokens)
+then by allowing access to certain rooms.
+
+```ts
+const session = liveblocks.prepareSession("olivier@example.com");
+
+// Giving write access to one room, then read access to multiple rooms with a wildcard
+session.allow("Vu78Rt:design:9Hdu73", session.FULL_ACCESS);
+session.allow("Vu78Rt:product:*", session.READ_ACCESS);
+
+const { body, status } = await session.authorize();
+
+// '{ token: "j6Fga7..." }'
+console.log(body);
+```
+
+**Before using access tokens, it’s recommended to read through this entire
+page**, as it explains helpful practices for granting access to rooms. However,
+if you’d like to get set up now, you can select your framework and read more
+later.
+
+<ListGrid columns={3}>
+  <DocsCard
+    title="Next.js"
+    href="/docs/authentication/access-token/nextjs"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    title="Remix"
+    href="/docs/authentication/access-token/remix"
+    visual={<DocsRemixIcon />}
+  />
+  <DocsCard
+    title="SvelteKit"
+    href="/docs/authentication/access-token/sveltekit"
+    visual={<DocsSvelteIcon />}
+  />
+  <DocsCard
+    title="Nuxt.js"
+    href="/docs/authentication/access-token/nuxtjs"
+    visual={<DocsNuxtjsIcon />}
+  />
+  <DocsCard
+    title="Express"
+    href="/docs/authentication/access-token/express"
+    visual={<DocsExpressIcon />}
+  />
+  <DocsCard
+    title="Firebase"
+    href="/docs/authentication/access-token/firebase"
+    visual={<DocsFirebaseIcon />}
+  />
+</ListGrid>
+
+## Permissions [#permissions]
+
+When granting permissions using access tokens, it’s recommended to use a naming
+pattern for your room IDs. This makes it easy to use wildcard permissions,
+allowing you to authenticate access to multiple rooms at once. One scenario
+where this is helpful, is when rooms and users in your app are part of an
+organization (or workspace), and you need to permit users entry to each room
+that’s part of this.
+
+### Organization hierarchy
+
+Let’s picture an organization, a customer in your product. This organization has
+a number of groups (or teams), and each group can create documents that other
+members of the group can view.
+
+<Figure>
+  <Image
+    src="/assets/authentication/room-organizations.png"
+    srcDark="/assets/authentication/room-organizations-dark.png"
+    alt="An organization with documents in different teams"
+    width={1536}
+    height={864}
+    quality={100}
+  />
+</Figure>
+
+In your application, each organization, group, and document has a unique ID, and
+we can use these to create a naming pattern for your rooms. For example, in the
+diagram above, the Acme organization (`Vu78Rt`) has a Product group (`product`)
+with two documents inside (`6Dsw12`, `L2hr8p`).
+
+### Naming pattern
+
+An example of a naming pattern would be to combine the three IDs into a unique
+room ID separating them with symbols, such as
+`<organization_id>:<group_id>:<document_id>`. A room ID following this pattern
+may look like `Vu78Rt:product:6Dsw1z`.
+
+<Figure>
+  <Image
+    src="/assets/authentication/room-name-pattern.png"
+    srcDark="/assets/authentication/room-name-pattern-dark.png"
+    alt="Splitting a room ID into the pattern detailed above"
+    width={1536}
+    height={864}
+    quality={100}
+  />
+</Figure>
+
+<Banner title="Example pattern">
+
+This example is not a strict naming pattern you must follow, and you can use any
+pattern you like. Take care to avoid using your separator character in any other
+part of the room ID.
+
+</Banner>
+
+### Wildcard permissions
+
+Assuming you’re using the naming pattern displayed above, you can then grant
+access to multiple rooms at once using wildcards.
+
+<Figure>
+  <Image
+    src="/assets/authentication/access-token-room-naming.png"
+    alt="An access token using a wildcard to access multiple rooms"
+    width={1494}
+    height={840}
+    quality={100}
+  />
+</Figure>
+
+In the image above, you can see that _Olivier_ has access to multiple _product_
+rooms, thanks to the `Vu78Rt:product:*` wildcard rule. This is how he was
+authorized:
+
+```ts
+const session = liveblocks.prepareSession("olivier@example.com");
+
+// Giving full access to one room
+session.allow("Vu78Rt:design:9Hdu73", session.FULL_ACCESS);
+
+// Give full access to every room with an ID beginning with "Vu78Rt:product:"
+session.allow("Vu78Rt:product:*", session.FULL_ACCESS);
+
+const { body, status } = await session.authorize();
+```
+
+Note that you can only use a wildcard at the end of a room ID.
+
+```jsx
+// ❌ Wildcard must be at the end of the room ID
+session.allow("Vu78Rt:*:product", session.FULL_ACCESS);
+
+// ✅ Valid wildcard
+session.allow("Vu78Rt:product:*", session.FULL_ACCESS);
+```
+
+### Read-only access
+
+Should we wish to grant read-only access to each room in the organization, we
+then add another line to enable this.
+
+```ts highlight="9-10"
+const session = liveblocks.prepareSession("olivier@example.com");
+
+// Giving full access to one room
+session.allow("Vu78Rt:design:9Hdu73", session.FULL_ACCESS);
+
+// Give full access to every room with an ID beginning with "Vu78Rt:product:"
+session.allow("Vu78Rt:product:*", session.FULL_ACCESS);
+
+// Give read-only access to every room in the `Vu78Rt` organization
+session.allow("Vu78Rt:*", session.READ_ACCESS);
+
+const { body, status } = await session.authorize();
+```
+
+### Limitations [#limitations]
+
+There’s a limitation with access tokens related to granting access to individual
+rooms that are part of groups. Let’s say a user has been given access to every
+`product` room in their organization.
+
+```tsx
+// Access to every `product` room
+session.allow("Vu78Rt:product:*", session.FULL_ACCESS);
+```
+
+This user is able to enter `product` rooms, but has no access to any `design`
+rooms.
+
+<Figure>
+  <Image
+    src="/assets/authentication/access-token-product-access.png"
+    alt="An access token using a wildcard to access product rooms"
+    width={1494}
+    height={840}
+    quality={100}
+  />
+</Figure>
+
+Let’s say the user is invited to a `design` room via share menu—how would we
+grant them access?
+
+<Figure>
+  <Image
+    src="/assets/authentication/access-token-room-invite.png"
+    alt="Inviting Olivier to the `Vu78Rt:design:9Hdu73` room"
+    width={1494}
+    height={840}
+    quality={100}
+  />
+</Figure>
+
+We can’t give them access to _every_ `design` room with a wildcard, as they
+should only have permission for _one_.
+
+```tsx
+// ❌ Access to every `design` room
+session.allow("Vu78Rt:design:*", session.FULL_ACCESS);
+```
+
+Instead, we would have to manually find the exact room ID without a wildcard,
+and apply it ourselves—the naming pattern doesn’t work for this room.
+
+```tsx
+// Access to just this `design` room, but not scalable
+session.allow("Vu78Rt:design:9Hdu73", session.FULL_ACCESS);
+```
+
+To use access tokens you’d have to manually keep track of every room ID where
+the naming pattern doesn’t apply. This isn’t ideal, and it also doesn’t scale,
+as the token will need to be refreshed whenever access is granted to new rooms
+for this to work correctly.
+
+#### Building complex permissions
+
+For this reason,
+**[we recommend using ID tokens for complex permissions](/docs/authentication/id-token)**.
+ID token authentication allows you to attach permissions to each room when it’s
+created or modified, which means you don’t need to check permissions yourself,
+and no naming pattern is required.
+
+### Migrating your current rooms IDs
+
+If your application already has rooms, it’s possible to rename their IDs to be
+compatible with a naming pattern. Learn more in our
+[room ID migration guide](/docs/guides/how-to-rename-room-ids-and-successfully-migrate-users).
+
+## Select your framework [#select-your-framework]
+
+Select your framework for specific instructions on setting up access token
+authentication.
+
+<ListGrid columns={3}>
+  <DocsCard
+    title="Next.js"
+    href="/docs/authentication/access-token/nextjs"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    title="Remix"
+    href="/docs/authentication/access-token/remix"
+    visual={<DocsRemixIcon />}
+  />
+  <DocsCard
+    title="SvelteKit"
+    href="/docs/authentication/access-token/sveltekit"
+    visual={<DocsSvelteIcon />}
+  />
+  <DocsCard
+    title="Nuxt.js"
+    href="/docs/authentication/access-token/nuxtjs"
+    visual={<DocsNuxtjsIcon />}
+  />
+  <DocsCard
+    title="Express"
+    href="/docs/authentication/access-token/express"
+    visual={<DocsExpressIcon />}
+  />
+  <DocsCard
+    title="Firebase"
+    href="/docs/authentication/access-token/firebase"
+    visual={<DocsFirebaseIcon />}
+  />
+</ListGrid>

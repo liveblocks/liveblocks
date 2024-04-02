@@ -16,7 +16,8 @@ import {
 import styles from "./app.module.css";
 
 let roomId = "redux-whiteboard";
-overrideRoomId();
+
+applyExampleRoomId();
 
 export default function MyApp() {
   const shapes = useAppSelector((state) => state.shapes);
@@ -147,15 +148,15 @@ const Rectangle: React.FC<RectangleProps> = ({
  * This function is used when deploying an example on liveblocks.io.
  * You can ignore it completely if you run the example locally.
  */
-function overrideRoomId() {
+function applyExampleRoomId() {
   if (typeof window === "undefined") {
     return;
   }
 
-  const query = new URLSearchParams(window.location?.search);
-  const roomIdSuffix = query.get("roomId");
+  const query = new URLSearchParams(window?.location?.search);
+  const exampleId = query.get("exampleId");
 
-  if (roomIdSuffix) {
-    roomId = `${roomId}-${roomIdSuffix}`;
+  if (exampleId) {
+    roomId = exampleId ? `${roomId}-${exampleId}` : roomId;
   }
 }

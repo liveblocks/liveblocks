@@ -5,10 +5,11 @@ import { Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
 import { Badge } from "../components/Badge";
 import { LiveblocksProvider } from "../liveblocks.config";
-import "../styles/globals.css";
-import "../styles/text-editor.css";
+import "../styles/normalize.css";
 import "@liveblocks/react-comments/styles.css";
 import "@liveblocks/react-comments/styles/dark/media-query.css";
+import "../styles/globals.css";
+import "../styles/text-editor.css";
 import "../styles/text-editor-comments.css";
 
 export default function App({

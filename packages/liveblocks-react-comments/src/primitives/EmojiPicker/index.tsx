@@ -47,6 +47,22 @@ const EMOJIPICKER_ROOT_NAME = "EmojiPickerRoot";
 const EMOJIPICKER_CONTENT_NAME = "EmojiPickerContent";
 const EMOJIPICKER_SEARCH_NAME = "EmojiPickerSearch";
 
+/**
+ * @private
+ * The EmojiPicker primitive is undocumented for now and subject to change,
+ * use at your own risk. If you have any feedback on it, please let us know!
+ * See how we use it in the default components to learn how to use it:
+ * https://github.com/liveblocks/liveblocks/blob/main/packages/liveblocks-react-comments/src/components/internal/EmojiPicker.tsx.
+ *
+ * Surrounds the emoji picker, it handles emoji data and coordinates
+ * `EmojiPicker.Search` and `EmojiPicker.Content`.
+ *
+ * @example
+ * <EmojiPicker.Root>
+ *   <EmojiPicker.Search />
+ *   <EmojiPicker.Content />
+ * </EmojiPicker.Root>
+ */
 function EmojiPickerRoot({
   columns = DEFAULT_COLUMNS,
   locale = DEFAULT_LOCALE,
@@ -270,6 +286,19 @@ function EmojiPickerRoot({
   );
 }
 
+/**
+ * @private
+ * The EmojiPicker primitive is undocumented for now and subject to change,
+ * use at your own risk. If you have any feedback on it, please let us know!
+ * See how we use it in the default components to learn how to use it:
+ * https://github.com/liveblocks/liveblocks/blob/main/packages/liveblocks-react-comments/src/components/internal/EmojiPicker.tsx.
+ *
+ * The search input of the emoji picker. It also affects the focus and selection
+ * within `EmojiPicker.Content`.
+ *
+ * @example
+ * <EmojiPicker.Search />
+ */
 const EmojiPickerSearch = forwardRef<HTMLInputElement, EmojiPickerSearchProps>(
   ({ asChild, value, defaultValue, onChange, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "input";
@@ -382,6 +411,29 @@ const VirtuosoTopList = forwardRef<HTMLDivElement, TopItemListProps>(
   }
 );
 
+/**
+ * @private
+ * The EmojiPicker primitive is undocumented for now and subject to change,
+ * use at your own risk. If you have any feedback on it, please let us know!
+ * See how we use it in the default components to learn how to use it:
+ * https://github.com/liveblocks/liveblocks/blob/main/packages/liveblocks-react-comments/src/components/internal/EmojiPicker.tsx.
+ *
+ * The main content of the emoji picker, either displaying the emoji grid or various
+ * alternative states (loading, empty, and error).
+ *
+ * @example
+ * <EmojiPicker.Content
+ *  components={{
+ *    Loading: EmojiPickerLoading,
+ *    Empty: EmojiPickerEmpty,
+ *    Error: EmojiPickerError,
+ *    CategoryHeader: EmojiPickerCategoryHeader,
+ *    Grid: EmojiPickerGrid,
+ *    Row: EmojiPickerRow,
+ *    Emoji: EmojiPickerEmoji,
+ *  }}
+ * />
+ */
 const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
   ({ components, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
