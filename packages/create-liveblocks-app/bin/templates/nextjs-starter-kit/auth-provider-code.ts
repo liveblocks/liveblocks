@@ -10,16 +10,14 @@ export const demoAuthProvider = `
         },
       },
       async authorize(credentials) {
-        if (!credentials) {
-          return null;
+        if (!credentials || typeof credentials.email !== "string") {
+          throw new Error("No credentials or email");
         }
-
-        const a = [1, 2];
 
         const user: User | null = await getUser(credentials.email);
 
         if (!user) {
-          return null;
+          throw new Error("User not found");
         }
 
         return {
