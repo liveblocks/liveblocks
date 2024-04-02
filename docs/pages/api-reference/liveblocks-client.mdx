@@ -891,39 +891,86 @@ Room returned by [`client.enterRoom`][] (or [`client.getRoom`][]).
 
 ### Room.getPresence
 
-Gets the presence of the current user.
+Return the current user’s Presence. [Presence](/docs/products/presence) is used
+to store custom properties on each user that exist until the user disconnects.
+An example use would be storing a user’s cursor coordinates.
 
 ```ts
 const presence = room.getPresence();
+
+// { cursor: { x: 363, y: 723 } }
+console.log(presence);
 ```
+
+Presence is set with [`updatePresence`](#Room.updatePresence) and can be typed
+when you [enter a room](#enter-room-typing-a-room). The example above is using
+the following type:
+
+```ts
+type Presence = {
+  cursor: { x: number; y: number };
+};
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="presence" type="TPresence">
+    An object holding the Presence value for the currently connected user.
+    Presence is set with [`updatePresence`](#Room.updatePresence). Will always
+    be JSON-serializable.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### Room.updatePresence
 
-Updates the presence of the current user. You need only pass the properties you
-wish to update—any changes will be merged into the current presence. The entire
-presence object will not be replaced.
+Updates the current user’s [Presence](/docs/products/presence). Only pass the
+properties you wish to update—any changes will be merged into the current
+presence. The entire presence object will not be replaced.
 
 ```ts
-room.updatePresence({ x: 0 });
-room.updatePresence({ y: 0 });
+room.updatePresence({ typing: true });
+room.updatePresence({ status: "Online" });
 
+// { typing: true, status: "Online" }
 const presence = room.getPresence();
-// presence is equivalent to { x: 0, y: 0 }
 ```
 
-`updatePresence` accepts an optional argument to add a new item to the undo/redo
-stack. See [`room.history`][] for more information.
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="update" type="TPresence" required>
+    The updated Presence properties for the current user inside an object. The
+    user’s entire Presence object will not be replaced, instead these properties
+    will be merged with the existing Presence. This object must be
+    JSON-serializable.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="options.addToHistory"
+    type="boolean"
+    defaultValue="false"
+  >
+    Adds Presence values to the history stack, meaning using undo and redo
+    functions will change them. [Learn more](#add-presence-to-history).
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Add Presence to history [#add-presence-to-history]
+
+By default, Presence values are not added to history. However, using the
+`addToHistory` option will add items to the undo/redo stack.
 
 ```ts
-room.updatePresence({ selectedId: "xxx" }, { addToHistory: true });
-room.updatePresence({ selectedId: "yyy" }, { addToHistory: true });
+room.updatePresence({ color: "blue" }, { addToHistory: true });
+room.updatePresence({ color: "red" }, { addToHistory: true });
 room.history.undo();
-// room.getPresence() equals { selectedId: "xxx" }
+
+// { color: "blue" }
+const presence = room.getPresence();
 ```
+
+See [`room.history`][] for more information.
 
 ### Room.getOthers
 
-Gets all the other `User`s in the Room.
+Returns an array of currently connected users in the room. Returns a
+[`User`](#user-type) object for each user.
 
 ```ts
 const others = room.getOthers();
@@ -932,6 +979,15 @@ for (const { connectionId, id, info, presence, isReadOnly } of others) {
   // Do things
 }
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="others" type="User<TPresence, TUserMeta>[]">
+    An array holding each connected user’s [`User`](#user-type) object. `User`
+    contains the current user’s Presence value, along with other information.
+    Presence is set with [`updatePresence`](#Room.updatePresence). Will always
+    be JSON-serializable.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### Room.broadcastEvent
 
@@ -2213,6 +2269,42 @@ await stringifyCommentBody(comment.body, {
 });
 ```
 
+## Types
+
+### User [#user-type]
+
+`User` is a type that’s returned by [`room.getOthers`][], and other functions.
+
+<PropertiesList title="Properties">
+  <PropertiesListItem name="connectionId" type="number">
+    The connection ID of the User. It is unique and increment at every new
+    connection.
+  </PropertiesListItem>
+  <PropertiesListItem name="id" type={`TUserMeta["id"]`}>
+    The ID of the User that has been set in the authentication endpoint. Useful
+    to get additional information about the connected user.
+  </PropertiesListItem>
+  <PropertiesListItem name="info" type={`TUserMeta["info"]`}>
+    Additional user information that has been set in the authentication
+    endpoint.
+  </PropertiesListItem>
+  <PropertiesListItem name="presence" type={`TPresence`}>
+    The user’s Presence data.
+  </PropertiesListItem>
+  <PropertiesListItem name="canWrite" type="boolean">
+    True if the user can mutate the Room’s Storage and/or YDoc, false if they
+    can only read but not mutate it.
+  </PropertiesListItem>
+  <PropertiesListItem name="isReadOnly" type="boolean" deprecated>
+    Deprecated. False if the user can mutate the Room’s Storage and/or YDoc,
+    true if they can only read but not mutate it.
+  </PropertiesListItem>
+  <PropertiesListItem name="canComment" type="boolean">
+    The ID of the User that has been set in the authentication endpoint. Useful
+    to get additional information about the connected user.
+  </PropertiesListItem>
+</PropertiesList>
+
 [`atob`]: https://developer.mozilla.org/en-US/docs/Web/API/atob
 [`base-64`]: https://www.npmjs.com/package/base-64
 [`client.enterRoom`]: /docs/api-reference/liveblocks-client#Client.enterRoom
@@ -2229,6 +2321,7 @@ await stringifyCommentBody(comment.body, {
 [`room.broadcastevent`]:
   /docs/api-reference/liveblocks-client#Room.broadcastEvent
 [`room.getstorage`]: /docs/api-reference/liveblocks-client#Room.getStorage
+[`room.getOthers`]: /docs/api-reference/liveblocks-client#Room.getOthers
 [`room.history`]: /docs/api-reference/liveblocks-client#Room.history
 [`room.subscribe("event")`]:
   /docs/api-reference/liveblocks-client#Room.subscribe.event
