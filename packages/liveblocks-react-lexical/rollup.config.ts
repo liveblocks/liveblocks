@@ -43,10 +43,13 @@ function createMainConfig(format: "cjs" | "esm"): RollupOptions {
     external: [
       ...Object.keys(pkg.dependencies),
       ...Object.keys(pkg.peerDependencies),
+      "@liveblocks/react",
+      "@lexical/react/LexicalCollaborationPlugin",
+      "@lexical/react/LexicalComposerContext",
       "react-dom",
     ],
     output,
-    treeshake: true,
+    treeshake: false,
     plugins: [
       esbuild({
         target: "es2020",
@@ -84,11 +87,6 @@ function createTypesConfigs() {
         file: input
           .replace(`${SRC_DIR}/`, `${DIST_DIR}/`)
           .replace(/\.ts$/, ".d.ts"),
-      },
-      {
-        file: input
-          .replace(`${SRC_DIR}/`, `${DIST_DIR}/`)
-          .replace(/\.ts$/, ".d.mts"),
       },
     ],
     plugins: [dts()],
