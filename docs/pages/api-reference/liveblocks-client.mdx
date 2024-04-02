@@ -634,7 +634,8 @@ const { room, leave } = client.enterRoom("my-room-id", {
     name="room"
     type="Room<TPresence, TStorage, TUserMeta, TRoomEvent>"
   >
-    A [Room](#Room), used for building your Liveblocks application.
+    A [Room](#Room), used for building your Liveblocks application. Learn more
+    about [typing your room](#enter-room-typing-your-room).
   </PropertiesListItem>
   <PropertiesListItem name="leave" type="() => void">
     A function that’s used to destroy the room.
@@ -719,7 +720,48 @@ Any
 [conflict-free live structures](/docs/api-reference/liveblocks-client#Storage)
 and JSON-serializable objects are allowed (the `LsonObject` type).
 
-### Client.enter
+#### Typing your room [#enter-room-typing-your-room]
+
+It’s possible to have type hints on your room by passing types for your
+Presence, Storage, UserMeta, and RoomEvents. Here are some example values.
+
+```ts
+import { LiveList } from "@/liveblocks/client";
+
+type Presence = {
+  cursor: { x: number; y: number };
+};
+
+type Storage = {
+  animals: LiveList<string>;
+};
+
+type UserMeta = {
+  id: string;
+  info: {
+    // Corresponds with userInfo set when authenticating with secret key
+  };
+};
+
+type RoomEvent = {
+  type: "reaction";
+  emoji: "fire";
+};
+
+const { room, leave } = client.enterRoom<
+  Presence,
+  Storage,
+  UserMeta,
+  RoomEvent
+>("my-room-id", {
+  initialPresence: {},
+
+  // Other options
+  // ...
+});
+```
+
+### Client.enter [@badge=Deprecated]
 
 Enters a room and returns its local `Room` instance.
 
@@ -747,7 +789,7 @@ const { room, leave } = client.enterRoom("my-room", {
 leave();
 ```
 
-### Client.leave
+### Client.leave [@badge=Deprecated]
 
 Leaves a room.
 
@@ -777,8 +819,58 @@ called previously.
 const room = client.getRoom("my-room");
 ```
 
-You’ll likely not need this API if you’re using the newer [`client.enterRoom`][]
-API.
+It’s unlikely you’ll need this API if you’re using the newer
+[`client.enterRoom`][] API.
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="room"
+    type="Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null"
+  >
+    A [Room](#Room), used for building your Liveblocks application. Returns
+    `null` if the room has not yet been joined by the current client. Learn more
+    about [typing your room](#get-room-typing-your-room).
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="roomId" detailedType="string" required>
+    The ID of the room you’re connecting to.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Typing your room [#get-room-typing-your-room]
+
+It’s possible to have type hints on your room by passing types for your
+Presence, Storage, UserMeta, and RoomEvents. Here are some example values.
+
+```ts
+import { LiveList } from "@/liveblocks/client";
+
+type Presence = {
+  cursor: { x: number; y: number };
+};
+
+type Storage = {
+  animals: LiveList<string>;
+};
+
+type UserMeta = {
+  id: string;
+  info: {
+    // Corresponds with userInfo set when authenticating with secret key
+  };
+};
+
+type RoomEvent = {
+  type: "reaction";
+  emoji: "fire";
+};
+
+const { room, leave } = client.getRoom<Presence, Storage, UserMeta, RoomEvent>(
+  "my-room-id"
+);
+```
 
 ### Client.logout
 
@@ -789,8 +881,9 @@ still connected, they will be forced to reauthorize.
 client.logout();
 ```
 
-Call this API if you have a single page application (SPA) and you want to log
-your user out.
+Use this function if you have a single page application (SPA) and you wish to
+log your user out, and reauthenticate them. This is a way to update your user’s
+`info` after a connection has begun.
 
 ## Room
 
