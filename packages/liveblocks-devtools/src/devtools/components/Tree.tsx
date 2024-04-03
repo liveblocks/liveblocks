@@ -50,7 +50,6 @@ import {
   ArrayIcon,
   BooleanOffIcon,
   BooleanOnIcon,
-  CaretRightIcon,
   CrossIcon,
   CustomEventIcon,
   EllipsisIcon,
@@ -63,16 +62,16 @@ import {
   TrashIcon,
   UserIcon,
 } from "../icons/tree";
-import { Code } from "./Code";
-import { Dialog } from "./Dialog";
-import { Tooltip } from "./Tooltip";
-import {
+import type {
   YAbstractTypeTreeNode,
   YContentTreeNode,
   YDocTreeNode,
   YTopAbstractTypeTreeNode,
   YTreeNode,
 } from "../tabs/yjs/to-yjs-tree-node";
+import { Code } from "./Code";
+import { Dialog } from "./Dialog";
+import { Tooltip } from "./Tooltip";
 
 /**
  * Node types that can be used in the Storage tree view.
@@ -377,10 +376,9 @@ export function getYTreeNodeColor(node: YTreeNode): string | undefined {
       return "text-green-500 dark:text-green-500";
     case "Y.Text":
     case "Y.XmlText":
-      return "text-blue-500 dark:text-blue-400";
     case "Y.XmlElement":
     case "Y.XmlFragment":
-      return "text-orange-500 dark:text-orange-400";
+      return "text-blue-500 dark:text-blue-400";
 
     case "Y.Doc":
     case "Y.ContentAny":
@@ -470,10 +468,9 @@ function getYTreeNodeBackground(node: YTreeNode): string {
       return "tree-focus:bg-green-500 dark:tree-focus:bg-green-500";
     case "Y.Text":
     case "Y.XmlText":
-      return "tree-focus:bg-blue-500 dark:tree-focus:bg-blue-400";
     case "Y.XmlElement":
     case "Y.XmlFragment":
-      return "tree-focus:bg-orange-500 dark:tree-focus:bg-orange-400";
+      return "tree-focus:bg-blue-500 dark:tree-focus:bg-blue-400";
     case "Y.Doc":
     case "Y.ContentAny":
     case "Y.ContentBinary":
@@ -2249,5 +2246,22 @@ export function Breadcrumbs({
         </Fragment>
       ))}
     </div>
+  );
+}
+
+export function CaretRightIcon(props: ComponentProps<"svg">) {
+  return (
+    <svg
+      width="8"
+      height="8"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <path
+        d="M2 6.117V1.883a.5.5 0 0 1 .757-.429l3.528 2.117a.5.5 0 0 1 0 .858L2.757 6.546A.5.5 0 0 1 2 6.116Z"
+        fill="currentColor"
+      />
+    </svg>
   );
 }

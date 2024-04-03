@@ -265,20 +265,3 @@ export function TextIcon(props: ComponentProps<"svg">) {
     </svg>
   );
 }
-
-export function CaretRightIcon(props: ComponentProps<"svg">) {
-  return (
-    <svg
-      width="8"
-      height="8"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      {...props}
-    >
-      <path
-        d="M2 6.117V1.883a.5.5 0 0 1 .757-.429l3.528 2.117a.5.5 0 0 1 0 .858L2.757 6.546A.5.5 0 0 1 2 6.116Z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}

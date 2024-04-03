@@ -37,8 +37,9 @@ import {
   useYNode,
   useYUpdates,
 } from "../../contexts/CurrentRoom";
+import type { YTreeNode } from "./to-yjs-tree-node";
+import { toTreeYNode } from "./to-yjs-tree-node";
 import { YFlow } from "./yflow/YFlow";
-import { toTreeYNode, YTreeNode } from "./to-yjs-tree-node";
 
 export const YJS_TABS = ["document", "awareness", "changes"] as const;
 export const YJS_CHANGES_VIEWS = ["diagram", "list"] as const;

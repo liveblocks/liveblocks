@@ -19,7 +19,8 @@ import type { EventSource, Observable } from "../../lib/EventSource";
 import { makeEventSource } from "../../lib/EventSource";
 import { onMessage, sendMessage } from "../port";
 import type { FullBackgroundToPanelMessage } from "../protocol";
-import { toYNode, YDocNode, YNode } from "../tabs/yjs/to-y-node";
+import type { YDocNode } from "../tabs/yjs/to-y-node";
+import { toYNode } from "../tabs/yjs/to-y-node";
 
 // Old/legacy connection statuses sent by old clients, prior to Liveblocks 1.1.
 // These will be removed from a future version of Liveblocks, but DevTools will
