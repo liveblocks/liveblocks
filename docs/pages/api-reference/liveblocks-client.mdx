@@ -625,13 +625,15 @@ const { room, leave } = client.enterRoom("my-room-id", {
 });
 ```
 
+Note that it’s possible to [add types to your room](#typing-your-room).
+
 <PropertiesList title="Returns">
   <PropertiesListItem
     name="room"
     type="Room<TPresence, TStorage, TUserMeta, TRoomEvent>"
   >
     A [Room](#Room), used for building your Liveblocks application. Learn more
-    about [typing your room](#enter-room-typing-your-room).
+    about [typing your room](#typing-your-room).
   </PropertiesListItem>
   <PropertiesListItem name="leave" type="() => void">
     A function that’s used to destroy the room.
@@ -716,47 +718,6 @@ Any
 [conflict-free live structures](/docs/api-reference/liveblocks-client#Storage)
 and JSON-serializable objects are allowed (the `LsonObject` type).
 
-#### Typing your room [#enter-room-typing-your-room]
-
-It’s possible to have type hints on your room by passing types for your
-Presence, Storage, UserMeta, and RoomEvents. Here are some example values.
-
-```ts
-import { LiveList } from "@/liveblocks/client";
-
-type Presence = {
-  cursor: { x: number; y: number };
-};
-
-type Storage = {
-  animals: LiveList<string>;
-};
-
-type UserMeta = {
-  id: string;
-  info: {
-    // Corresponds with userInfo set when authenticating with secret key
-  };
-};
-
-type RoomEvent = {
-  type: "reaction";
-  emoji: "fire";
-};
-
-const { room, leave } = client.enterRoom<
-  Presence,
-  Storage,
-  UserMeta,
-  RoomEvent
->("my-room-id", {
-  initialPresence: {},
-
-  // Other options
-  // ...
-});
-```
-
 ### Client.enter [@badge=Deprecated]
 
 Enters a room and returns its local `Room` instance.
@@ -816,7 +777,8 @@ const room = client.getRoom("my-room");
 ```
 
 It’s unlikely you’ll need this API if you’re using the newer
-[`client.enterRoom`][] API.
+[`client.enterRoom`][] API. Note that it’s possible to
+[add types to your room](#typing-your-room).
 
 <PropertiesList title="Returns">
   <PropertiesListItem
@@ -825,7 +787,7 @@ It’s unlikely you’ll need this API if you’re using the newer
   >
     A [Room](#Room), used for building your Liveblocks application. Returns
     `null` if the room has not yet been joined by the current client. Learn more
-    about [typing your room](#get-room-typing-your-room).
+    about [typing your room](#typing-your-room).
   </PropertiesListItem>
 </PropertiesList>
 
@@ -834,39 +796,6 @@ It’s unlikely you’ll need this API if you’re using the newer
     The ID of the room you’re connecting to.
   </PropertiesListItem>
 </PropertiesList>
-
-#### Typing your room [#get-room-typing-your-room]
-
-It’s possible to have type hints on your room by passing types for your
-Presence, Storage, UserMeta, and RoomEvents. Here are some example values.
-
-```ts
-import { LiveList } from "@/liveblocks/client";
-
-type Presence = {
-  cursor: { x: number; y: number };
-};
-
-type Storage = {
-  animals: LiveList<string>;
-};
-
-type UserMeta = {
-  id: string;
-  info: {
-    // Corresponds with userInfo set when authenticating with secret key
-  };
-};
-
-type RoomEvent = {
-  type: "reaction";
-  emoji: "fire";
-};
-
-const { room, leave } = client.getRoom<Presence, Storage, UserMeta, RoomEvent>(
-  "my-room-id"
-);
-```
 
 ### Client.logout
 
@@ -966,12 +895,14 @@ See [`room.history`][] for more information.
 ### Room.getOthers
 
 Returns an array of currently connected users in the room. Returns a
-[`User`](#user-type) object for each user.
+[`User`](#user-type) object for each user. Note that you can also subscribe to
+others using [`Room.subscribe("others")`](#Room.subscribe.others).
 
 ```ts
 const others = room.getOthers();
 
-for (const { connectionId, id, info, presence, isReadOnly } of others) {
+for (const other of others) {
+  const { connectionId, id, info, presence, canWrite, canComment } = other;
   // Do things
 }
 ```
@@ -980,16 +911,52 @@ for (const { connectionId, id, info, presence, isReadOnly } of others) {
   <PropertiesListItem name="others" type="User<TPresence, TUserMeta>[]">
     An array holding each connected user’s [`User`](#user-type) object. `User`
     contains the current user’s Presence value, along with other information.
-    Presence is set with [`updatePresence`](#Room.updatePresence). Will always
-    be JSON-serializable.
+    Presence is set with [`updatePresence`](#Room.updatePresence). Returns an
+    empty array when no other users are currently connected. Will always be
+    JSON-serializable.
   </PropertiesListItem>
 </PropertiesList>
 
 ### Room.broadcastEvent
 
 Broadcast an event to other users in the Room. Events broadcast to the room can
-be listened to with [`Room.subscribe("event")`][]. Takes a payload as first
-argument. Should be serializable to JSON.
+be listened to with [`Room.subscribe("event")`][]. Takes a custom event payload
+as first argument. Should be serializable to JSON.
+
+```ts highlight="1-2"
+// User 1
+room.broadcastEvent({ type: "REACTION", emoji: "🔥" });
+
+// User 2
+room.subscribe("event", ({ event, user, connectionId }) => {
+  //                              ^^^^ User 1
+  if (event.type === "REACTION") {
+    // Do something
+  }
+});
+```
+
+The `user` property received on the other end is the sender’s
+[`User`](#user-type) instance.
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="event" type="TRoomEvent" required>
+    The event to broadcast to every other user in the room. Must be
+    JSON-serializable.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="options.shouldQueueEventIfNotReady"
+    type="boolean"
+    defaultValue="false"
+  >
+    Queue the event if the connection is currently closed, or has not been
+    opened yet. We’re not sure if we want to support this option in the future
+    so it might be deprecated to be replaced by something else. [Learn
+    more](#broadcasting-an-event-when-disconnected).
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Broadcasting an event when disconnected [#broadcasting-an-event-when-disconnected]
 
 By default, broadcasting an event is a “fire and forget” action. If the sending
 client is not currently connected to a room, the event is simply discarded. When
@@ -1003,42 +970,77 @@ so it may be deprecated and replaced with something else.
 
 </Banner>
 
-```ts highlight="1-2"
-// On client A
-room.broadcastEvent({ type: "EMOJI", emoji: "🔥" });
-
-// On client B
-room.subscribe("event", ({ event, user, connectionId }) => {
-  //                              ^^^^ Will be Client A
-  if (event.type === "EMOJI") {
-    // Do something
+```ts highlight="4"
+room.broadcastEvent(
+  { type: "REACTION", emoji: "🔥" },
+  {
+    shouldQueueEventIfNotReady: true,
   }
-});
+);
 ```
-
-The `user` property will indicate which User instance sent the message. This
-will typically be equal to one of the others in the room, but it can also be
-`null` in case this event was broadcasted from the server, using the
-[Broadcast Event API](https://liveblocks.io/docs/api-reference/rest-api-endpoints#post-broadcast-event).
 
 ### Room.getSelf
 
-Gets the current `User`. Returns `null` if it is not yet connected to the room.
+Gets the current [`User`](#user-type). Returns `null` if the client is not yet
+connected to the room.
 
 ```ts
-const { connectionId, presence, id, info, isReadOnly } = room.getSelf();
+const { connectionId, presence, id, info, canWrite, canComment } =
+  room.getSelf();
 ```
+
+Here’s an example of a full return value, assuming `Presence` and `UserMeta`
+[have been set](#user-type).
+
+```ts
+const user = room.getSelf();
+
+// {
+//   connectionId: 52,
+//   presence: {
+//     cursor: { x: 263, y: 786 },
+//   },
+//   id: "mislav.abha@example.com",
+//   info: {
+//     avatar: "/mislav.png",
+//   },
+//   canWrite: true,
+//   canComment: true,
+// }
+console.log(user);
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="user" type="User<TPresence, TUserMeta> | null">
+    Returns the current [`User`](#user-type). Returns `null` if the client is
+    not yet connected to the room.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### Room.getStatus
 
-Gets the current WebSocket connection status of the room.
+Gets the current WebSocket connection status of the room. The possible value
+are: `initial`, `connecting`, `connected`, `reconnecting`, or `disconnected`.
 
 ```ts
 const status = room.getStatus();
 ```
 
-The possible value are: `initial`, `connecting`, `connected`, `reconnecting`, or
-`disconnected`.
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="status"
+    type={`"initial" | "connecting" | "connected" | "reconnecting" | "disconnected"`}
+  >
+    Returns the current room status. It can return one of five values:
+
+    - `"initial"` - The room has not attempted to connect yet.
+    - `"connecting"` - The room is currently authenticating or connecting.
+    - `"connected"` - The room is connected.
+    - `"reconnecting"` - The room has disconnected, and is trying to connect again.
+    - `"disconnected"` - The room is disconnected, and is no longer attempting to connect.
+
+  </PropertiesListItem>
+</PropertiesList>
 
 ### Room.subscribe(storageItem)
 
@@ -1099,7 +1101,9 @@ Subscribe to events broadcast by [`Room.broadcastEvent`][].
 
 Takes a callback that is called when a user calls [`Room.broadcastEvent`][].
 Provides the `event` along with the `user` and their `connectionId` of the user
-that sent the message. If this event was sent via the
+that sent the message. If this event was sent via
+[`liveblocks.broadcastEvent`](/docs/api-reference/liveblocks-node#post-broadcast-event)
+or the
 [Broadcast to a room](/docs/api-reference/rest-api-endpoints#post-broadcast-event)
 REST API, `user` will be `null` and `connectionId` will be `-1`.
 
@@ -1167,6 +1171,48 @@ const unsubscribe = room.subscribe("others", (others, event) => {
   }
 });
 ```
+
+#### Live cursors
+
+Here’s a basic example showing you how to render live cursors.
+[`Room.updatePresence`](/docs/api-reference/liveblocks-client#Room.updatePresence)
+is being used to update each user’s cursor position.
+
+```ts highlight="15-18,20,22-28"
+type Presence = {
+  cursor: { x: number; y: number };
+};
+type Storage = {};
+type UserMeta = { id: string };
+type RoomEvent = {};
+
+const { room, leave } = client.enterRoom<
+  Presence,
+  Storage,
+  UserMeta,
+  RoomEvent
+>("my-room-id", { initialPresence: {} });
+
+// Call this to update the current user's Presence
+function updateCursorPosition({ x, y }) {
+  room.updatePresence({ cursor: { x, y } });
+}
+
+const others = room.getOthers();
+
+// Run __renderCursor__ when any other connected user updates their presence
+const unsubscribe = room.subscribe("others", (others, event) => {
+  for (const { id, presence } of others) {
+    const { x, y } = presence.cursor;
+    __renderCursor__(id, { x, y });
+  }
+}
+
+// Handle events and rendering
+// ...
+```
+
+Check our [examples page](/examples/browse/cursors) for live demos.
 
 ### Room.subscribe("status") [#Room.subscribe.status]
 
@@ -2270,15 +2316,108 @@ await stringifyCommentBody(comment.body, {
 });
 ```
 
-## Types
+## TypeScript
+
+### Typing your room [#typing-your-room]
+
+By passing Presence, Storage, UserMeta, and RoomEvents types to
+[`client.enterRoom`][], you can enable type hints on your room. Here are some
+example values.
+
+```ts
+import { LiveList } from "@/liveblocks/client";
+
+// Each user’s Presence
+type Presence = {
+  cursor: { x: number; y: number };
+};
+
+// The Storage tree for the room
+type Storage = {
+  animals: LiveList<string>;
+};
+
+// User information set when authenticating with a secret key
+type UserMeta = {
+  id: string;
+  info: {
+    // Custom properties, corresponds with userInfo
+  };
+};
+
+// Custom events that can be broadcast, use a union for multiple events
+type RoomEvent = {
+  type: "REACTION";
+  emoji: "🔥";
+};
+
+const { room, leave } = client.enterRoom<
+  Presence,
+  Storage,
+  UserMeta,
+  RoomEvent
+>("my-room-id", { initialPresence: {} });
+```
+
+You can also pass types to
+[`client.getRoom`](/docs/api-reference/liveblocks-client#Client.getRoom).
+
+```ts
+const { room, leave } = client.getRoom<Presence, Storage, UserMeta, RoomEvent>(
+  "my-room-id"
+);
+```
 
 ### User [#user-type]
 
-`User` is a type that’s returned by [`room.getOthers`][], and other functions.
+`User` is a type that’s returned by [`room.getSelf`][], [`room.getOthers`][],
+and other functions. Some of its values are set when
+[typing your room](#typing-your-room), here are some example values:
+
+```ts highlight="1-4,9-16,25-38"
+// Each user’s Presence
+type Presence = {
+  cursor: { x: number: y: number }
+}
+
+type Storage = {}
+type RoomEvent = {}
+
+// User information set when authenticating with a secret key
+type UserMeta = {
+  id: string;
+  info: {
+    // Custom `userInfo` properties set when authenticating
+    avatar: string;
+  }
+}
+
+const { room, leave } = client.enterRoom<
+  Presence,
+  Storage,
+  UserMeta,
+  RoomEvent
+>("my-room-id", { initialPresence: {} });
+
+// {
+//   connectionId: 52,
+//   presence: {
+//     cursor: { x: 263, y: 786 },
+//   },
+//   id: "mislav.abha@example.com",
+//   info: {
+//     avatar: "/mislav.png",
+//   },
+//   canWrite: true,
+//   canComment: true,
+//   isReadOnly: false,
+// }
+const user = room.getSelf();
+```
 
 <PropertiesList title="Properties">
   <PropertiesListItem name="connectionId" type="number">
-    The connection ID of the User. It is unique and increment at every new
+    The connection ID of the User. It is unique and increments with every new
     connection.
   </PropertiesListItem>
   <PropertiesListItem name="id" type={`TUserMeta["id"]`}>
@@ -2296,13 +2435,13 @@ await stringifyCommentBody(comment.body, {
     True if the user can mutate the Room’s Storage and/or YDoc, false if they
     can only read but not mutate it.
   </PropertiesListItem>
-  <PropertiesListItem name="isReadOnly" type="boolean" deprecated>
-    Deprecated. False if the user can mutate the Room’s Storage and/or YDoc,
-    true if they can only read but not mutate it.
-  </PropertiesListItem>
   <PropertiesListItem name="canComment" type="boolean">
     The ID of the User that has been set in the authentication endpoint. Useful
     to get additional information about the connected user.
+  </PropertiesListItem>
+  <PropertiesListItem name="isReadOnly" type="boolean" deprecated>
+    Deprecated. False if the user can mutate the Room’s Storage and/or YDoc,
+    true if they can only read but not mutate it.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -2322,6 +2461,7 @@ await stringifyCommentBody(comment.body, {
 [`room.broadcastevent`]:
   /docs/api-reference/liveblocks-client#Room.broadcastEvent
 [`room.getstorage`]: /docs/api-reference/liveblocks-client#Room.getStorage
+[`room.getSelf`]: /docs/api-reference/liveblocks-client#Room.getSelf
 [`room.getOthers`]: /docs/api-reference/liveblocks-client#Room.getOthers
 [`room.history`]: /docs/api-reference/liveblocks-client#Room.history
 [`room.subscribe("event")`]:
