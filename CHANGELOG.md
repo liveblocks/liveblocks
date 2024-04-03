@@ -2,7 +2,7 @@
 
 ### DevTools
 
-- Improved tree view to visualize Y.js documents and inspect Y.js awareness.
+- Improve tree view to visualize Y.js documents and inspect Y.js awareness.
 
 # v1.11.1
 
