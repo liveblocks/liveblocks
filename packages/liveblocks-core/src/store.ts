@@ -178,11 +178,9 @@ export function createClientStore<
           threads: deleteKeyImmutable(state.threads, threadId),
           inboxNotifications: Object.fromEntries(
             Object.entries(state.inboxNotifications).filter(
-              // TODO: Remove `as InboxNotificationThreadData`
               ([_id, notification]) =>
                 notification.kind === "thread" &&
-                (notification as InboxNotificationThreadData).threadId !==
-                  threadId
+                notification.threadId !== threadId
             )
           ),
         };
@@ -397,10 +395,9 @@ export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
         );
 
         const inboxNotification = Object.values(result.inboxNotifications).find(
-          // TODO: Remove `as InboxNotificationThreadData`
           (notification) =>
             notification.kind === "thread" &&
-            (notification as InboxNotificationThreadData).threadId !== thread.id
+            notification.threadId !== thread.id
         );
 
         if (inboxNotification === undefined) {
