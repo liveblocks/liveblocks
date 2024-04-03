@@ -2043,6 +2043,7 @@ export const YjsTree = forwardRef<
               selectionFollowsFocus
               rowHeight={ROW_HEIGHT}
               indent={ROW_INDENT}
+              openByDefault={false}
               {...props}
             >
               {YNodeRenderer}
