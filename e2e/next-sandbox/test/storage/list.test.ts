@@ -128,13 +128,13 @@ test.describe("Storage - LiveList", () => {
         const nbofUndoRedo = pickNumberOfUndoRedo();
         if (nbofUndoRedo > 0) {
           for (let y = 0; y < nbofUndoRedo; y++) {
-            await page.click("#undo");
+            await page.click("#undo", { force: true });
           }
           for (let y = 0; y < nbofUndoRedo; y++) {
-            await page.click("#redo");
+            await page.click("#redo", { force: true });
           }
         } else {
-          await page.click(pickFrom(actions));
+          await page.click(pickFrom(actions), { force: true });
         }
 
         // In this test, we should never see a list of more than 1 element. When

@@ -126,8 +126,8 @@ test.describe("Zustand", () => {
       await waitUntilEqualOnAllPages(pages, "#items");
 
       for (let i = 0; i < 50; i++) {
-        await page1.click(pickFrom(actions));
-        await page2.click(pickFrom(actions));
+        await page1.click(pickFrom(actions), { force: true });
+        await page2.click(pickFrom(actions), { force: true });
         await nanoSleep();
       }
 
