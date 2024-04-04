@@ -1,15 +1,13 @@
-# Unpublished
-
-### DevTools
-
-- Improve tree view to visualize Y.js documents and inspect Y.js awareness.
-
 # v1.11.1
 
 ### `@liveblocks/react-comments`
 
 - Fix the composer’s placeholder to appear instantly instead of being initially
   invisible.
+
+### DevTools
+
+- Improve tree view to visualize Y.js documents and inspect Y.js awareness.
 
 # v1.11.0
 
