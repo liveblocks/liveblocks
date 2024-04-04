@@ -503,6 +503,9 @@ const InboxNotificationCustomMissing = forwardRef<
   );
 });
 
+// Keeps track of which inbox notification kinds it has warned about already.
+const inboxNotificationKindsWarnings: Set<string> = new Set();
+
 /**
  * Displays a single inbox notification.
  *
@@ -527,9 +530,7 @@ export const InboxNotification = Object.assign(
 
           return (
             <ResolvedInboxNotificationThread
-              inboxNotification={
-                inboxNotification as InboxNotificationThreadData
-              }
+              inboxNotification={inboxNotification}
               {...props}
               ref={forwardedRef}
             />
@@ -542,32 +543,31 @@ export const InboxNotification = Object.assign(
 
           if (!ResolvedInboxNotificationCustom) {
             if (process.env.NODE_ENV !== "production") {
-              // TODO: Add link to the docs
-              // TODO: Only warn once
-              console.warn(
-                `Inbox notification of kind "${inboxNotification.kind}" was not customized. Custom notifications are empty by default given their custom nature, so you should customize them via the kinds prop to define their content.`
-              );
+              if (!inboxNotificationKindsWarnings.has(inboxNotification.kind)) {
+                inboxNotificationKindsWarnings.add(inboxNotification.kind);
+                // TODO: Add link to the docs
+                console.warnWithTitle(
+                  "Missing inbox notification",
+                  `Inbox notifications of kind "${inboxNotification.kind}" are not defined so they will not be displayed in production. Use the kinds prop to define how they should be rendered.`
+                );
+              }
 
               return (
                 <InboxNotificationCustomMissing
-                  inboxNotification={
-                    inboxNotification as InboxNotificationCustomData
-                  }
+                  inboxNotification={inboxNotification}
                   {...props}
                   ref={forwardedRef}
                 />
               );
             } else {
-              // Don't render anything in production if this inbox notification kind is not customized.
+              // Don't render anything in production if this inbox notification kind is not defined.
               return null;
             }
           }
 
           return (
             <ResolvedInboxNotificationCustom
-              inboxNotification={
-                inboxNotification as InboxNotificationCustomData
-              }
+              inboxNotification={inboxNotification}
               {...props}
               ref={forwardedRef}
             />
