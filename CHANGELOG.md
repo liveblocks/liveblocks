@@ -4,6 +4,7 @@
 
 - Fix the composer’s placeholder to appear instantly instead of being initially
   invisible.
+- Fix the default composer’s actions not being disabled when the composer is.
 
 # v1.11.0
 
