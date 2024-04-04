@@ -1362,6 +1362,14 @@
               "type": "string"
             },
             "description": "ID of the room"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "query",
+            "description": "Query to filter threads. Ex: `metadata[\"status\"]:\"open\" AND metadata[\"resolved\"]:true AND metadata[\"priority\"]:1`"
           }
         ],
         "operationId": "get-rooms-roomId-threads",
