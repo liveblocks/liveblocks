@@ -12,7 +12,7 @@ import type {
   ComponentProps,
   ComponentPropsWithoutRef,
   ComponentType,
-  MouseEvent,
+  MouseEvent as ReactMouseEvent,
   ReactNode,
   SyntheticEvent,
 } from "react";
@@ -113,14 +113,25 @@ export interface InboxNotificationCustomProps
   inboxNotification: InboxNotificationCustomData;
 
   /**
-   * TODO: JSDoc
+   * The inbox notification's content.
+   */
+  children?: ReactNode;
+
+  /**
+   * The inbox notification's title.
    */
   title?: ReactNode;
 
   /**
-   * TODO: JSDoc
+   * The inbox notification's aside content.
+   * Can be combined with `InboxNotification.Icon` or `InboxNotification.Avatar` to easily follow default styles.
    */
   aside?: ReactNode;
+
+  /**
+   * Whether to mark the inbox notification as read when clicked.
+   */
+  markAsReadOnClick?: boolean;
 }
 
 interface InboxNotificationLayoutProps
@@ -133,6 +144,7 @@ interface InboxNotificationLayoutProps
   unread?: boolean;
   overrides?: Partial<GlobalOverrides & InboxNotificationOverrides>;
   components?: Partial<GlobalComponents>;
+  markAsReadOnClick?: boolean;
 }
 
 export type InboxNotificationIconProps = ComponentProps<"div">;
@@ -151,6 +163,9 @@ const InboxNotificationLayout = forwardRef<
       title,
       date,
       unread,
+      markAsReadOnClick,
+      onClick,
+      href,
       showActions,
       overrides,
       components,
@@ -165,6 +180,26 @@ const InboxNotificationLayout = forwardRef<
     const { useMarkInboxNotificationAsRead } = useLiveblocksContextBundle();
     const markInboxNotificationAsRead = useMarkInboxNotificationAsRead();
 
+    const handleClick = useCallback(
+      (event: ReactMouseEvent<HTMLAnchorElement, MouseEvent>) => {
+        onClick?.(event);
+
+        const shouldMarkAsReadOnClick = markAsReadOnClick ?? Boolean(href);
+
+        if (unread && shouldMarkAsReadOnClick) {
+          markInboxNotificationAsRead(inboxNotification.id);
+        }
+      },
+      [
+        href,
+        inboxNotification.id,
+        markAsReadOnClick,
+        markInboxNotificationAsRead,
+        onClick,
+        unread,
+      ]
+    );
+
     const stopPropagation = useCallback((event: SyntheticEvent) => {
       event.stopPropagation();
     }, []);
@@ -177,7 +212,7 @@ const InboxNotificationLayout = forwardRef<
       []
     );
 
-    const handleMoreClick = useCallback((event: MouseEvent) => {
+    const handleMoreClick = useCallback((event: ReactMouseEvent) => {
       event.preventDefault();
       event.stopPropagation();
       setMoreActionOpen((open) => !open);
@@ -200,6 +235,8 @@ const InboxNotificationLayout = forwardRef<
           dir={$.dir}
           data-unread={unread ? "" : undefined}
           data-kind={inboxNotification.kind}
+          onClick={handleClick}
+          href={href}
           {...props}
           ref={forwardedRef}
         >
@@ -430,6 +467,7 @@ const InboxNotificationThread = forwardRef<
         overrides={overrides}
         href={resolvedHref}
         showActions={showActions}
+        markAsReadOnClick={false}
         {...props}
         ref={forwardedRef}
       >
