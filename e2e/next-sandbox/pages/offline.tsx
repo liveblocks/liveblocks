@@ -287,7 +287,14 @@ function Sandbox(_props: { roomId: string }) {
           Delete
         </Button>
 
-        <Button id="clear" enabled={canClear} onClick={clear}>
+        <Button
+          id="clear"
+          enabled={canClear}
+          onClick={() => {
+            if (!canClear) return;
+            clear();
+          }}
+        >
           Clear
         </Button>
 
