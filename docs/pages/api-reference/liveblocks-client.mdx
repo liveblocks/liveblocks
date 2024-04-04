@@ -936,8 +936,9 @@ room.subscribe("event", ({ event, user, connectionId }) => {
 });
 ```
 
-The `user` property received on the other end is the sender’s
-[`User`](#user-type) instance.
+We recommend using a property such as `type`, so that it’s easy to distinguish
+between different events on the receiving end. The `user` property received on
+the other end is the sender’s [`User`](#user-type) instance.
 
 <PropertiesList title="Arguments">
   <PropertiesListItem name="event" type="TRoomEvent" required>
@@ -955,6 +956,38 @@ The `user` property received on the other end is the sender’s
     more](#broadcasting-an-event-when-disconnected).
   </PropertiesListItem>
 </PropertiesList>
+
+#### Typing multiple events
+
+When [defining your types](#typing-your-room), you can pass a `RoomEvent` type
+to the fourth generic in [`client.enterRoom`][] to receive type hints in your
+app. To define multiple different custom events, use a union.
+
+```ts highlight="5-7,17-22"
+type Presence = {};
+type Storage = {};
+type UserMeta = {};
+
+type ReactionEvent = { type: "REACTION"; emoji: string };
+type ActionEvent = { type: "ACTION"; action: string };
+type RoomEvent = ReactionEvent | ActionEvent;
+
+const { room, leave } = client.enterRoom<
+  Presence,
+  Storage,
+  UserMeta,
+  RoomEvent
+>("my-room-id", { initialPresence: {} });
+
+room.subscribe("event", ({ event, user, connectionId }) => {
+  if (event.type === "REACTION") {
+    // Do something
+  }
+  if (event.type === "ACTION") {
+    // Do something else
+  }
+});
+```
 
 #### Broadcasting an event when disconnected [#broadcasting-an-event-when-disconnected]
 
