@@ -88,10 +88,7 @@ function ReduxSandbox() {
         <Button
           id="delete"
           enabled={canDelete}
-          onClick={() => {
-            if (!canDelete) return;
-            dispatch(deleteItem(nextIndexToDelete));
-          }}
+          onClick={() => dispatch(deleteItem(nextIndexToDelete))}
           subtitle={
             canDelete
               ? `index ${nextIndexToDelete} (${items[

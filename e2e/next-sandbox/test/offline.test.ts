@@ -349,16 +349,16 @@ test.describe("Offline", () => {
     const actions = ["#push", "#delete", "#move", "#undo", "#redo"];
 
     for (let i = 0; i < 50; i++) {
-      await page1.click(pickFrom(actions));
-      await page2.click(pickFrom(actions));
+      await page1.click(pickFrom(actions), { force: true });
+      await page2.click(pickFrom(actions), { force: true });
       await nanoSleep();
 
       if (i % 5 === 0) {
-        await page1.click(pickFrom(autoReconnectingActions));
+        await page1.click(pickFrom(autoReconnectingActions), { force: true });
       }
 
       if (i % 5 === 2) {
-        await page2.click(pickFrom(autoReconnectingActions));
+        await page2.click(pickFrom(autoReconnectingActions), { force: true });
       }
     }
 
@@ -366,6 +366,7 @@ test.describe("Offline", () => {
     await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#clear");
+    await page2.click("#clear");
     await waitForJson(pages, "#numItems", 0);
   });
 });

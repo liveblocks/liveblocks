@@ -41,8 +41,8 @@ test.describe("Storage - LiveObject", () => {
       await waitUntilEqualOnAllPages(pages, "#obj");
 
       for (let i = 0; i < 50; i++) {
-        await page1.click(pickFrom(actions));
-        await page2.click(pickFrom(actions));
+        await page1.click(pickFrom(actions), { force: true });
+        await page2.click(pickFrom(actions), { force: true });
         await nanoSleep();
       }
 
@@ -88,8 +88,8 @@ test.describe("Storage - LiveObject", () => {
           await page1.click("#redo");
         }
       } else {
-        await page1.click(pickFrom(actions));
-        await page2.click(pickFrom(actions));
+        await page1.click(pickFrom(actions), { force: true });
+        await page2.click(pickFrom(actions), { force: true });
       }
       await nanoSleep();
     }

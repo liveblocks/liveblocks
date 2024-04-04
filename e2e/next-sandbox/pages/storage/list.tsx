@@ -140,7 +140,6 @@ function Sandbox() {
           id="move"
           enabled={canMove}
           onClick={() => {
-            if (!canMove) return;
             const [fromIndex, toIndex] = nextIndicesToMove;
             move(fromIndex, toIndex);
           }}
@@ -154,10 +153,7 @@ function Sandbox() {
         <Button
           id="set"
           enabled={canSet}
-          onClick={() => {
-            if (!canSet) return;
-            set_(nextIndexToSet, nextValueToSet);
-          }}
+          onClick={() => set_(nextIndexToSet, nextValueToSet)}
           subtitle={canSet ? `${nextIndexToSet} → ${nextValueToSet}` : null}
         >
           Set
@@ -166,10 +162,7 @@ function Sandbox() {
         <Button
           id="delete"
           enabled={canDelete}
-          onClick={() => {
-            if (!canDelete) return;
-            delete_(nextIndexToDelete);
-          }}
+          onClick={() => delete_(nextIndexToDelete)}
           subtitle={
             canDelete
               ? `index ${nextIndexToDelete} (${items[
