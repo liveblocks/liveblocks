@@ -4,8 +4,8 @@ import { getUser } from "@/lib/database/getUser";
 
 // Your NextAuth secret (generate a new one for production)
 // More info: https://next-auth.js.org/configuration/options#secret
-// `create-liveblocks-app` generates a value for, but there's a fallback
-// value in case you don't use the installer.
+// `create-liveblocks-app` generates a value for you, but there's a
+// fallback value in case you don't use the installer.
 export const NEXTAUTH_SECRET =
   process.env.NEXTAUTH_SECRET || "p49RDzU36fidumaF7imGnzyhRSPWoffNjDOleU77SM4=";
 
