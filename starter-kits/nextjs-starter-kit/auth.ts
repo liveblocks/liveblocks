@@ -15,7 +15,6 @@ export const {
   signIn,
   signOut,
 } = NextAuth({
-  // If you d
   secret: NEXTAUTH_SECRET,
   callbacks: {
     // Get extra user info from your database to pass to front-end
