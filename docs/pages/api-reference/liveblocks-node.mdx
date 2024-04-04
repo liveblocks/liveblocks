@@ -1099,8 +1099,8 @@ Some notes about the query language:
 - `boolean` values can be exact matched with `:`
   - Exact: `metadata['resolved']:false`
 - `string` values can be exact matched with `:` and prefix matched with `^`
-  - Exact: `metadata['org']:liveblocks:engineering`
-  - Prefix: `metadata['org']^liveblocks`
+  - Exact: `metadata['org']:'liveblocks:engineering'`
+  - Prefix: `metadata['org']^'liveblocks'`
 
 #### Liveblocks.createThread [#post-rooms-roomId-threads] [@badge=Beta]
 
