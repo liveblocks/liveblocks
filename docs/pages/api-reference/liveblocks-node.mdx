@@ -1079,6 +1079,29 @@ const { data: threads } = await liveblocks.getThreads({
 console.log(threads);
 ```
 
+It's also possible to filter threads by their metadata using a query parameter.
+
+```ts
+const { data: threads } = await liveblocks.getThreads({
+  roomId: "my-room-id",
+  query:
+    "metadata['status']:'open' AND metadata['resolved']:false AND metadata['priority']:3",
+});
+```
+
+Some notes about the query language:
+
+- Only the `AND` operator is supported, it can also be omitted and will default
+  to `AND`.
+  - Exact: `metadata['status']:'open' metadata['resolved']:false`
+- `number` values can be exact matched with `:`
+  - Exact: `metadata['priority']:3`
+- `boolean` values can be exact matched with `:`
+  - Exact: `metadata['resolved']:false`
+- `string` values can be exact matched with `:` and prefix matched with `^`
+  - Exact: `metadata['org']:liveblocks:engineering`
+  - Prefix: `metadata['org']^liveblocks`
+
 #### Liveblocks.createThread [#post-rooms-roomId-threads] [@badge=Beta]
 
 Creates a new thread within a specific room, using room ID and thread data. This
