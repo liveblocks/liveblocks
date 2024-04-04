@@ -5,10 +5,7 @@ import type { Resolve } from "./lib/Resolve";
 import type { BaseMetadata } from "./types/BaseMetadata";
 import type { CommentData, CommentReaction } from "./types/CommentData";
 import type { CommentUserReaction } from "./types/CommentReaction";
-import type {
-  InboxNotificationData,
-  InboxNotificationThreadData,
-} from "./types/InboxNotificationData";
+import type { InboxNotificationData } from "./types/InboxNotificationData";
 import type { InboxNotificationDeleteInfo } from "./types/InboxNotificationDeleteInfo";
 import type { PartialNullable } from "./types/PartialNullable";
 import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";

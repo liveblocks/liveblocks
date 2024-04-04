@@ -21,7 +21,7 @@ import type {
   CommentData,
   CommentsEventServerMsg,
   EnterOptions,
-  InboxNotificationThreadData,
+  InboxNotificationCustomData,
   LiveblocksError,
   OptionalPromise,
   ResolveMentionSuggestionsArgs,
