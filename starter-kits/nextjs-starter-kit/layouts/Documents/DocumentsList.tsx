@@ -17,7 +17,7 @@ import { Select } from "@/primitives/Select";
 import { Spinner } from "@/primitives/Spinner";
 import { DocumentType, Group } from "@/types";
 import { capitalize } from "@/utils";
-import styles from "./DocumentsPanel.module.css";
+import styles from "./DocumentsList.module.css";
 
 // Load `x` documents at a time
 const DOCUMENT_LOAD_LIMIT = 10;
@@ -27,7 +27,7 @@ interface Props extends ComponentProps<"div"> {
   group?: Group;
 }
 
-export function DocumentsPanel({
+export function DocumentsList({
   filter = "all",
   group,
   className,

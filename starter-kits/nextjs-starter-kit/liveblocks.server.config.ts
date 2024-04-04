@@ -1,5 +1,3 @@
-"server-only";
-
 import { Liveblocks } from "@liveblocks/node";
 import { getProviders } from "@/auth";
 

@@ -1,7 +1,7 @@
 import { ErrorLayout } from "@/layouts/Error";
 import { getGroup } from "@/lib/database";
 import { Group } from "@/types";
-import { DocumentsPanel } from "./DocumentsPanel";
+import { DocumentsList } from "./DocumentsList";
 
 type Props = {
   filter?: "all" | "drafts" | "group";
@@ -22,8 +22,8 @@ export async function DocumentsLayout({ filter, groupId }: Props) {
         />
       );
     }
-    return <DocumentsPanel filter={filter} group={group} />;
+    return <DocumentsList filter={filter} group={group} />;
   }
 
-  return <DocumentsPanel filter={filter} />;
+  return <DocumentsList filter={filter} />;
 }
