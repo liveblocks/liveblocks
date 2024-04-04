@@ -885,12 +885,31 @@ export class Liveblocks {
    * @param params.roomId The room ID to get the threads from.
    * @returns A list of threads.
    */
-  public async getThreads(params: {
-    roomId: string;
-  }): Promise<{ data: ThreadData[] }> {
+  public async getThreads(
+    params: {
+      roomId: string;
+    },
+    options: {
+      /**
+       * The query to filter threads by. It is based on our query language
+       * @example
+       * ```ts
+       * {
+       *  query: "metadata['status']:'open' AND metadata['resolved']:false AND metadata['priority']:3"
+       * }
+       * ```
+       */
+      query?: string;
+    } = {}
+  ): Promise<{ data: ThreadData[] }> {
     const { roomId } = params;
+    let path = url`/v2/rooms/${roomId}/threads`;
 
-    const res = await this.get(url`/v2/rooms/${roomId}/threads`);
+    if (options.query) {
+      path = url`${path}?query=${options.query}`;
+    }
+
+    const res = await this.get(path);
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
