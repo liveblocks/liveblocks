@@ -6,6 +6,10 @@
   invisible.
 - Fix the default composer’s actions not being disabled when the composer is.
 
+### DevTools
+
+- Improve tree view to visualize Y.js documents and inspect Y.js awareness.
+
 # v1.11.0
 
 ### `@liveblocks/node`
