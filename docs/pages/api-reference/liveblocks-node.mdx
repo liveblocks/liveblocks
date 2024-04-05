@@ -1089,11 +1089,12 @@ const { data: threads } = await liveblocks.getThreads({
 });
 ```
 
-Some notes about the query language:
+The query language supports the following syntax:
 
 - Only the `AND` operator is supported, it can also be omitted and will default
-  to `AND`.
-  - Exact: `metadata['status']:'open' metadata['resolved']:false`
+  to `AND`
+  - Omitted: `metadata['status']:'open' metadata['resolved']:false`
+  - Explicit: `metadata['status']:'open' AND metadata['resolved']:false`
 - `number` values can be exact matched with `:`
   - Exact: `metadata['priority']:3`
 - `boolean` values can be exact matched with `:`
