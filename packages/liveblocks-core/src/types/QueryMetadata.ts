@@ -3,8 +3,7 @@ import type { BaseMetadata } from "./BaseMetadata";
 type QueryMetadataStringValue<T extends string> =
   | T
   | {
-      operator: "startsWith";
-      value: string;
+      startsWith: string;
     };
 
 /**
