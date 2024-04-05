@@ -899,13 +899,10 @@ export class Liveblocks {
     query?: string;
   }): Promise<{ data: ThreadData[] }> {
     const { roomId } = params;
-    let path = url`/v2/rooms/${roomId}/threads`;
 
-    if (params.query) {
-      path = url`${path}?query=${params.query}`;
-    }
-
-    const res = await this.get(path);
+    const res = await this.get(url`/v2/rooms/${roomId}/threads`, {
+      query: params.query,
+    });
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
