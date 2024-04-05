@@ -4,7 +4,7 @@ type QueryMetadataStringValue<T extends string> =
   | T
   | {
       operator: "startsWith";
-      value: T;
+      value: string;
     };
 
 /**
