@@ -923,22 +923,9 @@ Broadcast an event to other users in the Room. Events broadcast to the room can
 be listened to with [`Room.subscribe("event")`][]. Takes a custom event payload
 as first argument. Should be serializable to JSON.
 
-```ts highlight="1-2"
-// User 1
+```ts
 room.broadcastEvent({ type: "REACTION", emoji: "🔥" });
-
-// User 2
-room.subscribe("event", ({ event, user, connectionId }) => {
-  //                              ^^^^ User 1
-  if (event.type === "REACTION") {
-    // Do something
-  }
-});
 ```
-
-We recommend using a property such as `type`, so that it’s easy to distinguish
-between different events on the receiving end. The `user` property received on
-the other end is the sender’s [`User`](#user-type) instance.
 
 <PropertiesList title="Arguments">
   <PropertiesListItem name="event" type="TRoomEvent" required>
@@ -956,6 +943,27 @@ the other end is the sender’s [`User`](#user-type) instance.
     more](#broadcasting-an-event-when-disconnected).
   </PropertiesListItem>
 </PropertiesList>
+
+#### Receiving an event
+
+To receive an event, use [`Room.subscribe("event")`][]. The `user` property
+received on the other end is the sender’s [`User`](#user-type) instance.
+
+```ts
+// User 1
+room.broadcastEvent({ type: "REACTION", emoji: "🔥" });
+
+// User 2
+room.subscribe("event", ({ event, user, connectionId }) => {
+  //                              ^^^^ User 1
+  if (event.type === "REACTION") {
+    // Do something
+  }
+});
+```
+
+We recommend using a property such as `type`, so that it’s easy to distinguish
+between different events on the receiving end.
 
 #### Typing multiple events
 
@@ -996,7 +1004,7 @@ client is not currently connected to a room, the event is simply discarded. When
 passing the `shouldQueueEventIfNotReady` option, the client will queue up the
 event, and only send it once the connection to the room is (re)established.
 
-<Banner title="Notice">
+<Banner>
 
 We’re not sure if we want to support `shouldQueueEventIfNotReady` in the future,
 so it may be deprecated and replaced with something else.
@@ -1022,6 +1030,13 @@ const { connectionId, presence, id, info, canWrite, canComment } =
   room.getSelf();
 ```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem name="user" type="User<TPresence, TUserMeta> | null">
+    Returns the current [`User`](#user-type). Returns `null` if the client is
+    not yet connected to the room.
+  </PropertiesListItem>
+</PropertiesList>
+
 Here’s an example of a full return value, assuming `Presence` and `UserMeta`
 [have been set](#user-type).
 
@@ -1043,13 +1058,6 @@ const user = room.getSelf();
 console.log(user);
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem name="user" type="User<TPresence, TUserMeta> | null">
-    Returns the current [`User`](#user-type). Returns `null` if the client is
-    not yet connected to the room.
-  </PropertiesListItem>
-</PropertiesList>
-
 ### Room.getStatus
 
 Gets the current WebSocket connection status of the room. The possible value
@@ -1057,6 +1065,9 @@ are: `initial`, `connecting`, `connected`, `reconnecting`, or `disconnected`.
 
 ```ts
 const status = room.getStatus();
+
+// "connected"
+console.log(status);
 ```
 
 <PropertiesList title="Returns">
