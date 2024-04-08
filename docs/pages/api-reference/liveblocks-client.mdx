@@ -1788,15 +1788,36 @@ const unsubscribe = room.subscribe("error", (error) => {
 
 ### Room.subscribe("history") [#Room.subscribe.history]
 
-Subscribe to the current user’s history changes.
-
-Returns an unsubscribe function.
+Subscribe to the current user’s history changes. Returns an unsubscribe
+function.
 
 ```ts
 const unsubscribe = room.subscribe("history", ({ canUndo, canRedo }) => {
   // Do something
 });
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="unsubscribe" type="() => void">
+    Unsubscribe function. Call it to cancel the subscription.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="history" type={`"history"`} required>
+    Listen to history events.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="callback"
+    detailedType={`({ canUndo: boolean, canRedo: boolean }) => void`}
+    required
+  >
+    Function that’s called when the current user’s history changes. Returns
+    booleans that describe whether the user can use
+    [undo](/docs/api-reference/liveblocks-client#Room.history.undo) or
+    [redo](/docs/api-reference/liveblocks-client#Room.history.redo).
+  </PropertiesListItem>
+</PropertiesList>
 
 ### Room.subscribe("storage-status") [#Room.subscribe.storage-status]
 
