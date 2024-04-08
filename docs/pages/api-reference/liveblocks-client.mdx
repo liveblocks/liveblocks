@@ -1821,26 +1821,53 @@ const unsubscribe = room.subscribe("history", ({ canUndo, canRedo }) => {
 
 ### Room.subscribe("storage-status") [#Room.subscribe.storage-status]
 
-Subscribe to storage status changes.
-
-Returns an unsubscribe function.
+Subscribe to Storage status changes. Use this to tell whether Storage has been
+synchronized with the Liveblocks servers. Returns an unsubscribe function.
 
 ```typescript
 const unsubscribe = room.subscribe("storage-status", (status) => {
   switch (status) {
     case "not-loaded":
+      // Storage has not been loaded yet
       break;
     case "loading":
+      // Storage is currently loading
       break;
     case "synchronizing":
+      // Local Storage changes are being synchronized
       break;
     case "synchronized":
-      break;
-    default:
+      // Local Storage changes have been synchronized
       break;
   }
 });
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="unsubscribe" type="() => void">
+    Unsubscribe function. Call it to cancel the subscription.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="history" type={`"history"`} required>
+    Listen to history events.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="callback"
+    detailedType={`(status: "not-loaded" | "loading" | "synchronizing" | "synchronized") => void`}
+    required
+  >
+    Function that’s called when the current user’s Storage updated status have
+    changed. `status` can be one of four types.
+
+    - `"not-loaded` - Storage has not been loaded yet as [`getStorage`][] has not been called.
+    - `"loading"` - Storage is currently loading for the first time.
+    - `"synchronizing"` - Local Storage changes are currently being synchronized.
+    - `"synchronized"` - Local Storage changes have been synchronized
+
+  </PropertiesListItem>
+</PropertiesList>
 
 ### Room.batch
 
@@ -2926,6 +2953,7 @@ const user = room.getSelf();
 [`room.reconnect`]: /docs/api-reference/liveblocks-client#Room.reconnect
 [`room.getSelf`]: /docs/api-reference/liveblocks-client#Room.getSelf
 [`room.getOthers`]: /docs/api-reference/liveblocks-client#Room.getOthers
+[`room.getStorage`]: /docs/api-reference/liveblocks-client#Room.getStorage
 [`room.history`]: /docs/api-reference/liveblocks-client#Room.history
 [`room.subscribe("event")`]:
   /docs/api-reference/liveblocks-client#Room.subscribe.event
