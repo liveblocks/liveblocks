@@ -1102,7 +1102,7 @@ const unsubscribe = room.subscribe(root, (updatedRoot) => {
 ```
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="unsubscribe" type="() => void" required>
+  <PropertiesListItem name="unsubscribe" type="() => void">
     Unsubscribe function. Call it to cancel the subscription.
   </PropertiesListItem>
 </PropertiesList>
@@ -1111,6 +1111,7 @@ const unsubscribe = room.subscribe(root, (updatedRoot) => {
   <PropertiesListItem
     name="storageItem"
     type="L extends (LiveObject | LiveMap | LiveList)"
+    required
   >
     The `LiveObject`, `LiveMap`, or `LiveList` which is being subscribed to.
     Each time the structure is updated, the callback is called.
@@ -1247,13 +1248,13 @@ const unsubscribe = room.subscribe("event", ({ event, user, connectionId }) => {
 ```
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="unsubscribe" type="() => void" required>
+  <PropertiesListItem name="unsubscribe" type="() => void">
     Unsubscribe function. Call it to cancel the subscription.
   </PropertiesListItem>
 </PropertiesList>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="event" type={`"event"`}>
+  <PropertiesListItem name="event" type={`"event"`} required>
     Listen to events.
   </PropertiesListItem>
   <PropertiesListItem
@@ -1345,13 +1346,13 @@ const unsubscribe = room.subscribe("my-presence", (presence) => {
 ```
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="unsubscribe" type="() => void" required>
+  <PropertiesListItem name="unsubscribe" type="() => void">
     Unsubscribe function. Call it to cancel the subscription.
   </PropertiesListItem>
 </PropertiesList>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="event" type={`"event"`}>
+  <PropertiesListItem name="event" type={`"event"`} required>
     Listen to events.
   </PropertiesListItem>
   <PropertiesListItem
@@ -1398,13 +1399,13 @@ const unsubscribe = room.subscribe("others", (others, event) => {
 ```
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="unsubscribe" type="() => void" required>
+  <PropertiesListItem name="unsubscribe" type="() => void">
     Unsubscribe function. Call it to cancel the subscription.
   </PropertiesListItem>
 </PropertiesList>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="others" type={`"others"`}>
+  <PropertiesListItem name="others" type={`"others"`} required>
     Listen to others.
   </PropertiesListItem>
   <PropertiesListItem
@@ -1515,36 +1516,75 @@ Check our [examples page](/examples/browse/cursors) for live demos.
 
 ### Room.subscribe("status") [#Room.subscribe.status]
 
-Subscribe to WebSocket connection status updates.
-
-Takes a callback that is called whenever the connection status changes. Possible
-value are: `initial`, `connecting`, `connected`, `reconnecting`, or
-`disconnected`.
-
-Returns an unsubscribe function.
+Subscribe to WebSocket connection status updates. Takes a callback that is
+called whenever the connection status changes. Possible value are: `initial`,
+`connecting`, `connected`, `reconnecting`, or `disconnected`. Returns an
+unsubscribe function.
 
 ```ts
 const unsubscribe = room.subscribe("status", (status) => {
-  // Do something
+  // "connected"
+  console.log(status);
 });
 ```
 
-This is a low-level API that exposes the WebSocket’s connectivity status. You
+<PropertiesList title="Returns">
+  <PropertiesListItem name="unsubscribe" type="() => void">
+    Unsubscribe function. Call it to cancel the subscription.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="status" type={`"status"`} required>
+    Listen to status updates.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="callback"
+    detailedType={`(status: "initial" | "connecting" | "connected" | "reconnecting" | "disconnected") => void`}
+    required
+  >
+    Function that’s called when the room’s connection status has changed. It can return one of five values:
+
+    - `"initial"` - The room has not attempted to connect yet.
+    - `"connecting"` - The room is currently authenticating or connecting.
+    - `"connected"` - The room is connected.
+    - `"reconnecting"` - The room has disconnected, and is trying to connect again.
+    - `"disconnected"` - The room is disconnected, and is no longer attempting to connect.
+
+  </PropertiesListItem>
+</PropertiesList>
+
+#### When to use status
+
+Status is a low-level API that exposes the WebSocket’s connectivity status. You
 can use this, for example, to update a connection status indicator in your UI.
-It would be normal for a client to briefly lose the connection and restore it,
-using quick `connected` → `reconnecting` → `connected` status jumps.
+It would be normal for a client to briefly lose the connection and restore it
+with quick `connected` → `reconnecting` → `connected` status jumps.
 
-If you want to let users know that there may be connectivity issues, don’t use
-this API, but instead refer to [`Room.subscribe("lost-connection")`][].
+```ts
+let indicator = "⚪";
 
-<Banner title="Notice">
+const unsubscribe = room.subscribe("status", (status) => {
+  switch (status) {
+    case "connecting":
+      indiciator = "🟡";
+      break;
+    case "connected":
+      indicator = "🟢";
+      break;
+    // ...
+  }
+});
+```
+
+If you’d like to let users know that there may be connectivity issues, don’t use
+this API, but instead refer to [`Room.subscribe("lost-connection")`][] which was
+specially built for this purpose.
 
 Do not use this API to detect when Storage or Presence are initialized or
 loaded. "Connected" does not guarantee that Storage or Presence are ready. To
 detect when Storage is loaded, rely on awaiting the [`Room.getStorage`][]
 promise or using the [`Room.subscribe("storage-status")`][] event.
-
-</Banner>
 
 ### Room.subscribe("lost-connection") [#Room.subscribe.lost-connection]
 
