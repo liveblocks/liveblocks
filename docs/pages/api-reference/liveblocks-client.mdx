@@ -468,8 +468,8 @@ hear from you.
 
 When using [Notifications](/docs/products/comments/notifications) with
 [Comments](/docs/products/comments), room IDs will be used to contextualize
-notifications (e.g. "Chris mentioned you in room-id"). To replace room IDs with
-more fitting names (e.g. document names, "Chris mentioned you in Document A"),
+notifications (e.g. “Chris mentioned you in room-id”). To replace room IDs with
+more fitting names (e.g. document names, “Chris mentioned you in Document A”),
 you can provide a resolver function to the `resolveRoomsInfo` option in
 [`createClient`](#createClient).
 
@@ -1088,25 +1088,112 @@ console.log(status);
 
 ### Room.subscribe(storageItem)
 
-Subscribe to updates for a particular storage item.
-
-Takes a callback that is called when the storage item is updated.
-
-Returns an unsubscribe function.
+Subscribe to updates on a particular storage item, and takes a callback function
+that’s called when the storage item is updated. The Storage `root` is a
+[`LiveObject`][], which means you can subscribe to this, as well as other live
+structures. Returns an unsubscribe function.
 
 ```ts
 const { root } = await room.getStorage();
-const unsubscribe = room.subscribe(root, (root) => {
+
+const unsubscribe = room.subscribe(root, (updatedRoot) => {
   // Do something
 });
 ```
 
-It’s also possible to subscribe to a storage item and its children by passing an
-optional `isDeep` parameter. In that case, the callback will get called with a
-list of updates instead. Each such update is a `{ type, node, updates }` object.
+<PropertiesList title="Returns">
+  <PropertiesListItem name="unsubscribe" type="() => void" required>
+    Unsubscribe function. Call it to cancel the subscription.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem
+    name="storageItem"
+    type="L extends (LiveObject | LiveMap | LiveList)"
+  >
+    The `LiveObject`, `LiveMap`, or `LiveList` which is being subscribed to.
+    Each time the structure is updated, the callback is called.
+  </PropertiesListItem>
+  <PropertiesListItem name="callback" type="(node: L) => void" required>
+    Function that’s called when `storageItem` updates. Returns the updated
+    storage structure.
+  </PropertiesListItem>
+  <PropertiesListItem name="options.isDeep" type="boolean">
+    Subscribe to both `storageItem` and its children. The callback function will
+    be passed a list of updates instead of just the new Storage item. [Learn
+    more](#listening-for-nested-changes).
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Typing Storage
+
+To type the Storage values you receive, make sure to set your `Storage` type.
+
+```ts
+import { LiveList } from "@liveblocks/client";
+
+type Storage = {
+  animals: LiveList<{ name: string }>;
+};
+```
+
+The type received in the callback will match the type passed. Learn more under
+[typing your room](#typing-your-room).
 
 ```ts
 const { root } = await room.getStorage();
+const animals = root.get("animals");
+
+const unsubscribe = room.subscribe(animals, (updatedAnimals) => {
+  // LiveList<[{ name: "Fido" }]>
+  console.log(updatedAnimals);
+});
+```
+
+#### Subscribe to any live structure
+
+You can subscribe to any live structure, be it the Storage `root`, a child, or a
+structure even more deeply nested.
+
+```ts
+import { LiveObject, LiveMap } from "@liveblocks/client";
+
+type Person = LiveObject<{ name: string; age: number }>;
+
+type Storage = {
+  people: LiveMap<string, Person>;
+};
+```
+
+```ts
+const { root } = await room.getStorage();
+const people = root.get("people");
+const steven = people.get("steven");
+
+const unsubscribeRoot = room.subscribe(root, (updatedRoot) => {
+  // ...
+});
+
+const unsubscribePeople = room.subscribe(people, (updatedPeople) => {
+  // ...
+});
+
+const unsubscribeSteven = room.subscribe(steven, (updatedSteven) => {
+  // ...
+});
+```
+
+#### Listening for nested changes [#listening-for-nested-changes]
+
+It’s also possible to subscribe to a Storage item and all of its children by
+passing an optional `isDeep` option in the third argument. In this case, the
+callback will be passed a list of updates instead of just the new Storage item.
+Each such update is a `{ type, node, updates }` object.
+
+```ts
+const { root } = await room.getStorage();
+
 const unsubscribe = room.subscribe(
   root,
   (storageUpdates) => {
