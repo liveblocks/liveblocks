@@ -1588,23 +1588,56 @@ promise or using the [`Room.subscribe("storage-status")`][] event.
 
 ### Room.subscribe("lost-connection") [#Room.subscribe.lost-connection]
 
-A special-purpose event that will fire in the exceptional case where a
-previously connected Liveblocks client has lost its connection (e.g. due to a
-network outage) and was unable to recover quickly.
+A [special-purpose event](#when-to-use-lost-connection-events) that will fire
+when a previously connected Liveblocks client has lost connection, for example
+due to a network outage, and was unable to recover quickly. This event will not
+trigger on short interruptions, those that are less than
+[5 seconds by default](#setting-lost-connection-timeout). The event only
+triggers if a previously connected client disconnects.
 
-This event allows you to build high-quality UIs by warning your users that the
-app is still trying to re-establish the connection, for example through a toast
-notification. You may want to take extra care in the mean time to ensure their
-changes won’t go unsaved, or to help them understand why they’re not seeing
-updates made by others yet.
+```ts
+const unsubscribe = room.subscribe("lost-connection", (event) => {
+  // "lost"
+  console.log(event);
+});
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="unsubscribe" type="() => void">
+    Unsubscribe function. Call it to cancel the subscription.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="status" type={`"status"`} required>
+    Listen to status updates.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="callback"
+    detailedType={`(event: "lost" | "restored" | "failed") => void`}
+    required
+  >
+    Function that’s called when a room’s lost connection event has been triggered. It can return one of three values:
+
+    - `"lost"` - A connection has been lost for longer than [`lostConnectionTimeout`][].
+    - `"restored"` - The connection has been restored again.
+    - `"failed"` - The room has been unable to reconnect again, and is no longer trying. This may happen if a user’s network has recovered, but the room’s authentication values no longer allow them to enter.
+
+  </PropertiesListItem>
+</PropertiesList>
+
+#### When to use lost connection events [#when-to-use-lost-connection-events]
+
+Lost connections events allows you to build high-quality UIs by warning your
+users that the application is still trying to re-establish the connection, for
+example through a toast notification. You may want to take extra care in the
+mean time to ensure their changes won’t go unsaved, or to help them understand
+why they’re not seeing updates made by others yet.
 
 When this happens, this callback is called with the event `lost`. Then, once the
 connection restores, the callback will be called with the value `restored`. If
 the connection could definitively not be restored, it will be called with
 `failed` (uncommon).
-
-The [`lostConnectionTimeout`][] configuration option will determine how quickly
-this event will fire after a connection loss (default: 5 seconds).
 
 ```ts
 import { toast } from "my-preferred-toast-library";
@@ -1623,6 +1656,23 @@ const unsubscribe = room.subscribe("lost-connection", (event) => {
       toast.error("Could not restore the connection");
       break;
   }
+});
+```
+
+#### Setting lost connection timeout [#setting-lost-connection-timeout]
+
+The [`lostConnectionTimeout`][] configuration option will determine how quickly
+the event triggers after a connection loss occurs. By default, it’s set to
+`5000`ms, which is 5 seconds.
+
+```ts
+import { createClient } from "@liveblocks/client";
+
+const client = createClient({
+  // Throw lost-connection event after 5 seconds offline
+  lostConnectionTimeout: 5000,
+
+  // ...
 });
 ```
 
