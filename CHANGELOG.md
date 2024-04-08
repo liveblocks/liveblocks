@@ -1,10 +1,3 @@
-# v1.11.2 (unreleased)
-
-### `@liveblocks/node`
-
-- Fix "`process` is undefined" issue in Vite builds. This issue was already
-  fixed for `@liveblocks/core`, but not for `@liveblocks/node` yet.
-
 # v1.11.1
 
 ### `@liveblocks/react-comments`
@@ -12,6 +5,11 @@
 - Fix the composer’s placeholder to appear instantly instead of being initially
   invisible.
 - Fix the default composer’s actions not being disabled when the composer is.
+
+### `@liveblocks/node`
+
+- Fix "`process` is undefined" issue in Vite builds. This issue was already
+  fixed for `@liveblocks/core`, but not for `@liveblocks/node` yet.
 
 ### DevTools
 
