@@ -1258,7 +1258,7 @@ const unsubscribe = room.subscribe("event", ({ event, user, connectionId }) => {
   </PropertiesListItem>
   <PropertiesListItem
     name="callback"
-    detailedType="RoomEventMessage<TPresence, TUserMeta, TRoomEvent>"
+    detailedType="(event: RoomEventMessage<TPresence, TUserMeta, TRoomEvent>) => void"
     required
   >
     Function that’s called when another user sends an event. Receives the event,
@@ -1334,11 +1334,8 @@ const unsubscribe = room.subscribe("event", ({ event, user, connectionId }) => {
 
 ### Room.subscribe("my-presence") [#Room.subscribe.my-presence]
 
-Subscribe to the current user presence updates.
-
-Takes a callback that is called every time the current user presence is updated
-with [`Room.updatePresence`][].
-
+Subscribe to the current user’s Presence. Takes a callback that is called every
+time the current user presence is updated with [`Room.updatePresence`][].
 Returns an unsubscribe function.
 
 ```ts
@@ -1347,19 +1344,111 @@ const unsubscribe = room.subscribe("my-presence", (presence) => {
 });
 ```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem name="unsubscribe" type="() => void" required>
+    Unsubscribe function. Call it to cancel the subscription.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="event" type={`"event"`}>
+    Listen to events.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="callback"
+    type="(presence: TPresence) => void"
+    required
+  >
+    Function that’s called when the current user’s Presence has updated, for
+    example with [`Room.updatePresence`][]. Receives the updates Presence value.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Typing Presence
+
+To type the Presence values you receive, make sure to set your Presence type.
+
+```ts
+type Presence = {
+  status: string;
+  cursor: { x: number; y: number };
+};
+```
+
+The type received in the callback will match the type passed. Learn more under
+[typing your room](#typing-your-room).
+
+```ts
+const unsubscribe = room.subscribe("my-presence", (presence) => {
+  // { status: "typing", cursor: { x: 45, y: 67 }
+  console.log(presence);
+});
+```
+
 ### Room.subscribe("others") [#Room.subscribe.others]
 
-Subscribe to the other users updates.
-
-Takes a callback that is called when a user enters or leaves the room or when a
-user update its presence.
-
-Returns an unsubscribe function.
+Subscribe to every other users’ updates. Takes a callback that’s called when a
+user’s Presence updates, or when they enter or leave the room. Returns an
+unsubscribe function.
 
 ```ts
 const unsubscribe = room.subscribe("others", (others, event) => {
   // Do something
+});
+```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem name="unsubscribe" type="() => void" required>
+    Unsubscribe function. Call it to cancel the subscription.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="others" type={`"others"`}>
+    Listen to others.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="callback"
+    type="(others: User<TPresence, TUserMeta>[], event: OthersEvent) => void"
+    required
+  >
+    Function that’s called when another user’s Presence has updated, for example
+    with [`Room.updatePresence`][], or an others event has occurred. Receives an
+    array of [`User`](user-type) values for each currently connected user. Also
+    received an object with information about the event that has triggered the
+    update, [learn more](#listening-for-others-events).
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Typing Presence
+
+To type the Presence values you receive, make sure to set your Presence type.
+
+```ts
+type Presence = {
+  status: string;
+  cursor: { x: number; y: number };
+};
+```
+
+The type received in the callback will match the type passed. Learn more under
+[typing your room](#typing-your-room).
+
+```ts
+const unsubscribe = room.subscribe("others", (others, event) => {
+  // { status: "typing", cursor: { x: 45, y: 67 }
+  console.log(others[0].presence);
+});
+```
+
+#### Listening for others events [#listening-for-others-events]
+
+The `event` parameter returns information on why the callback has just run, for
+example if their Presence has updated, if they’ve just left or entered the room,
+or if the current user has disconnected.
+
+```ts
+const unsubscribe = room.subscribe("others", (others, event) => {
   if (event.type === "leave") {
     // A user has left the room
     // event.user;
