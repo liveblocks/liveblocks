@@ -954,7 +954,7 @@ received on the other end is the sender’s [`User`](#user-type) instance.
 room.broadcastEvent({ type: "REACTION", emoji: "🔥" });
 
 // User 2
-room.subscribe("event", ({ event, user, connectionId }) => {
+const unsubscribe = room.subscribe("event", ({ event, user, connectionId }) => {
   //                              ^^^^ User 1
   if (event.type === "REACTION") {
     // Do something
@@ -965,7 +965,7 @@ room.subscribe("event", ({ event, user, connectionId }) => {
 We recommend using a property such as `type`, so that it’s easy to distinguish
 between different events on the receiving end.
 
-#### Typing multiple events
+#### Typing multiple events [#typing-multiple-events]
 
 When [defining your types](#typing-your-room), you can pass a `RoomEvent` type
 to the fourth generic in [`client.enterRoom`][] to receive type hints in your
@@ -1146,7 +1146,7 @@ const { root } = await room.getStorage();
 const animals = root.get("animals");
 
 const unsubscribe = room.subscribe(animals, (updatedAnimals) => {
-  // LiveList<[{ name: "Fido" }]>
+  // LiveList<[{ name: "Fido" }, { name: "Felix" }]>
   console.log(updatedAnimals);
 });
 ```
@@ -1228,28 +1228,106 @@ const unsubscribe = room.subscribe(
 
 ### Room.subscribe("event") [#Room.subscribe.event]
 
-Subscribe to events broadcast by [`Room.broadcastEvent`][].
-
-Takes a callback that is called when a user calls [`Room.broadcastEvent`][].
-Provides the `event` along with the `user` and their `connectionId` of the user
-that sent the message. If this event was sent via
-[`liveblocks.broadcastEvent`](/docs/api-reference/liveblocks-node#post-broadcast-event)
-or the
-[Broadcast to a room](/docs/api-reference/rest-api-endpoints#post-broadcast-event)
-REST API, `user` will be `null` and `connectionId` will be `-1`.
-
-Returns an unsubscribe function.
+Subscribe to events broadcast by [`Room.broadcastEvent`][]. Takes a callback
+that’s run when another user calls [`Room.broadcastEvent`][]. Provides the
+`event` along with the `user` and their `connectionId` of the user that sent the
+message. Returns an unsubscribe function.
 
 ```ts highlight="4-10"
-// On client A
-room.broadcastEvent({ type: "EMOJI", emoji: "🔥" });
+// User 1
+room.broadcastEvent({ type: "REACTION", emoji: "🔥" });
 
-// On client B
+// User 2
 const unsubscribe = room.subscribe("event", ({ event, user, connectionId }) => {
-  //                                                  ^^^^ Will be Client A
-  if (event.type === "EMOJI") {
+  //                                                  ^^^^ Will be User 1
+  if (event.type === "REACTION") {
     // Do something
   }
+});
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="unsubscribe" type="() => void" required>
+    Unsubscribe function. Call it to cancel the subscription.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="event" type={`"event"`}>
+    Listen to events.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="callback"
+    detailedType="RoomEventMessage<TPresence, TUserMeta, TRoomEvent>"
+    required
+  >
+    Function that’s called when another user sends an event. Receives the event,
+    the [`user`](#user-type) that sent the event, and their `connectionId`. If
+    this event was sent via
+    [`liveblocks.broadcastEvent`](/docs/api-reference/liveblocks-node#post-broadcast-event)
+    or the [Broadcast to a
+    room](/docs/api-reference/rest-api-endpoints#post-broadcast-event) REST API,
+    `user` will be `null` and `connectionId` will be `-1`.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Typing events
+
+When [defining your types](#typing-your-room), you can pass a `RoomEvent` type
+to the fourth generic in [`client.enterRoom`][] to receive type hints in your
+app. To define multiple different custom events, use a union.
+
+```ts highlight="5-7,17-22"
+type Presence = {};
+type Storage = {};
+type UserMeta = {};
+
+type ReactionEvent = { type: "REACTION"; emoji: string };
+type ActionEvent = { type: "ACTION"; action: string };
+type RoomEvent = ReactionEvent | ActionEvent;
+
+const { room, leave } = client.enterRoom<
+  Presence,
+  Storage,
+  UserMeta,
+  RoomEvent
+>("my-room-id", { initialPresence: {} });
+
+room.subscribe("event", ({ event, user, connectionId }) => {
+  if (event.type === "REACTION") {
+    // Do something
+  }
+  if (event.type === "ACTION") {
+    // Do something else
+  }
+});
+```
+
+#### Receiving events from the server
+
+Events can be received from the server with either
+[`liveblocks.broadcastEvent`](/docs/api-reference/liveblocks-node#post-broadcast-event)
+or the
+[Broadcast Event API](/docs/api-reference/rest-api-endpoints#post-broadcast-event).
+In events sent from the server, `user` will be `null`, and `connectionId` will
+be `-1`.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+export async function POST() {
+  await liveblocks.broadcastEvent({ type: "REACTION", emoji: "🔥" });
+}
+```
+
+```ts
+const unsubscribe = room.subscribe("event", ({ event, user, connectionId }) => {
+  // `null`, `-1`
+  console.log(user, connectionId);
 });
 ```
 
