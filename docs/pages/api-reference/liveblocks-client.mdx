@@ -1609,8 +1609,8 @@ const unsubscribe = room.subscribe("lost-connection", (event) => {
 </PropertiesList>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="status" type={`"status"`} required>
-    Listen to status updates.
+  <PropertiesListItem name="lost-connection" type={`"lost-connection"`} required>
+    Listen to lost connection events.
   </PropertiesListItem>
   <PropertiesListItem
     name="callback"
@@ -1685,11 +1685,9 @@ recommend switching to [`Room.subscribe("status")`][] instead.
 
 </Banner>
 
-Subscribe to our legacy WebSocket connection status updates.
-
-Takes a callback that is called when the connection status changes.
-
-Returns an unsubscribe function.
+Subscribe to our legacy WebSocket connection status updates. Takes a callback
+that is called when the connection status changes. Returns an unsubscribe
+function.
 
 ```ts
 const unsubscribe = room.subscribe("connection", (status) => {
@@ -1700,9 +1698,9 @@ const unsubscribe = room.subscribe("connection", (status) => {
 ### Room.subscribe("error") [#Room.subscribe.error]
 
 Subscribe to unrecoverable room connection errors. This event will be emitted
-right before the client disconnects and won’t try reconnecting again.
-
-Returns an unsubscribe function.
+immediately before the client disconnects and won’t try reconnecting again.
+Returns an unsubscribe function. If you’d like to retry connecting, call
+[`room.reconnect()`][].
 
 ```ts
 const unsubscribe = room.subscribe("error", (error) => {
@@ -1731,8 +1729,62 @@ const unsubscribe = room.subscribe("error", (error) => {
 });
 ```
 
-You can use this event to trigger a “Not allowed” screen/dialog. If you’d like
-to retry connecting, call `room.reconnect()`.
+<PropertiesList title="Returns">
+  <PropertiesListItem name="unsubscribe" type="() => void">
+    Unsubscribe function. Call it to cancel the subscription.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="error" type={`"error"`} required>
+    Listen to error events.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="callback"
+    detailedType={`(error: LiveblocksError) => void`}
+    required
+  >
+    Function that’s called when an unrecoverable error event has been triggered. `error.code` can return one of these values:
+
+    - `-1` - Authentication error.
+    - `4001` - Could not connect because you don't have access to this room.
+    - `4005` - Could not connect because room was full.
+    - `4006` - The room ID has changed.
+
+  </PropertiesListItem>
+</PropertiesList>
+
+#### When to use error events
+
+You can use this event to trigger a “Not allowed” screen/dialog. It can also be
+helpful for implementing a redirect to another page.
+
+```ts
+const unsubscribe = room.subscribe("error", (error) => {
+  // Could not connect because you don't have access to this room
+  if (error.code === 4001)
+    return __displayForbiddenEntryDialog__();
+  }
+});
+```
+
+#### When a room ID has changed
+
+When a room ID has been changed with
+[`liveblocks.updateRoomId`](/docs/api-reference/liveblocks-node#post-rooms-update-roomId)
+or the
+[Update Room ID API](/docs/api-reference/rest-api-endpoints#post-rooms-update-roomId),
+`error.message` will contain the new room ID.
+
+```ts
+const unsubscribe = room.subscribe("error", (error) => {
+  // The room ID has changed, get the new room ID
+  if (error.code === 4006)
+    const newRoomId = error.message;
+    return __redirect__(`/app/${newRoomId}`)
+  }
+});
+```
 
 ### Room.subscribe("history") [#Room.subscribe.history]
 
@@ -2850,6 +2902,7 @@ const user = room.getSelf();
 [`room.broadcastevent`]:
   /docs/api-reference/liveblocks-client#Room.broadcastEvent
 [`room.getstorage`]: /docs/api-reference/liveblocks-client#Room.getStorage
+[`room.reconnect`]: /docs/api-reference/liveblocks-client#Room.reconnect
 [`room.getSelf`]: /docs/api-reference/liveblocks-client#Room.getSelf
 [`room.getOthers`]: /docs/api-reference/liveblocks-client#Room.getOthers
 [`room.history`]: /docs/api-reference/liveblocks-client#Room.history
