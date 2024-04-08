@@ -5,6 +5,7 @@ import { RoomProvider } from "@/liveblocks.config";
 import { useSearchParams } from "next/navigation";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { Loading } from "@/components/Loading";
+import { TextCollaborationProvider } from "@liveblocks/react-lexical";
 
 export function Room({ children }: { children: ReactNode }) {
   const roomId = useExampleRoomId("liveblocks:examples:nextjs-yjs-lexical");
@@ -17,7 +18,7 @@ export function Room({ children }: { children: ReactNode }) {
       }}
     >
       <ClientSideSuspense fallback={<Loading />}>
-        {() => children}
+        {() => <TextCollaborationProvider>{children}</TextCollaborationProvider>}
       </ClientSideSuspense>
     </RoomProvider>
   );

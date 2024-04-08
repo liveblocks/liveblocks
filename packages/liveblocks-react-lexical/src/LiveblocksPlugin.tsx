@@ -20,11 +20,11 @@ export type LiveblocksPluginProps = {
    * Whether or not the user can edit the document before it has been synced
    * default: true
    */
-  allowEditsBeforeSync: boolean
+  allowEditsBeforeSync?: boolean
 
 }
 
-export const LiveblocksPlugin = ({ userInfo, allowEditsBeforeSync = true }: LiveblocksPluginProps): JSX.Element => {
+export const LiveblocksPlugin = ({ userInfo = undefined, allowEditsBeforeSync = true }: LiveblocksPluginProps): JSX.Element => {
   const { useSelf } = useRoomContextBundle();
   const { provider, doc } = useTextCollaboration();
   const [editor] = useLexicalComposerContext();
