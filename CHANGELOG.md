@@ -6,6 +6,11 @@
   invisible.
 - Fix the default composer’s actions not being disabled when the composer is.
 
+### `@liveblocks/node`
+
+- Fix "`process` is undefined" issue in Vite builds. This issue was already
+  fixed for `@liveblocks/core`, but not for `@liveblocks/node` yet.
+
 ### DevTools
 
 - Improve tree view to visualize Y.js documents and inspect Y.js awareness.
