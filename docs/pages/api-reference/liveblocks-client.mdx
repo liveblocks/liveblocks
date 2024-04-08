@@ -1265,9 +1265,10 @@ const unsubscribe = room.subscribe("event", ({ event, user, connectionId }) => {
     the [`user`](#user-type) that sent the event, and their `connectionId`. If
     this event was sent via
     [`liveblocks.broadcastEvent`](/docs/api-reference/liveblocks-node#post-broadcast-event)
-    or the [Broadcast to a
-    room](/docs/api-reference/rest-api-endpoints#post-broadcast-event) REST API,
-    `user` will be `null` and `connectionId` will be `-1`.
+    or the [Broadcast event
+    API](/docs/api-reference/rest-api-endpoints#post-broadcast-event), `user`
+    will be `null` and `connectionId` will be `-1`. [Learn
+    more](#receiving-events-from-the-server)
   </PropertiesListItem>
 </PropertiesList>
 
@@ -1303,7 +1304,7 @@ room.subscribe("event", ({ event, user, connectionId }) => {
 });
 ```
 
-#### Receiving events from the server
+#### Receiving events from the server [#receiving-events-from-the-server]
 
 Events can be received from the server with either
 [`liveblocks.broadcastEvent`](/docs/api-reference/liveblocks-node#post-broadcast-event)
