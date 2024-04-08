@@ -597,36 +597,6 @@
   :where(strong) {
     font-weight: 600;
   }
-
-  :where(code) {
-    padding: 0.2em 0.4em;
-    border-radius: calc(0.75 * var(--lb-radius));
-    background: var(--lb-foreground-subtle);
-    box-decoration-break: clone;
-    font-size: 85%;
-    line-height: 1;
-  }
-
-  /**
-   * Progressive enhancement: Merge adjacent inline code elements
-   */
-  :where(span:has(code) + span code) {
-    padding-inline-start: 0;
-    border-start-start-radius: 0;
-    border-end-start-radius: 0;
-  }
-
-  :where(span:has(code):has(+ span code) code) {
-    padding-inline-end: 0;
-    border-start-end-radius: 0;
-    border-end-end-radius: 0;
-  }
-}
-
-/* 0,0,0 specificity to inherit any styles applied to `code` elements */
-:where(:is(.lb-comment-body, .lb-composer-editor) code) {
-  font-family: ui-monospace, Menlo, Monaco, "Roboto Mono", "Cascadia Code",
-    "Source Code Pro", Consolas, "DejaVu Sans Mono", monospace;
 }
 
 .lb-comment-mention,
@@ -1249,6 +1219,42 @@
   &:where(:not(:last-of-type)) {
     border-block-end: 1px solid var(--lb-foreground-subtle);
   }
+}
+
+/*************************************
+ *            Inline code            *
+ *************************************/
+
+:is(.lb-root) {
+  :where(code) {
+    padding: 0.2em 0.4em;
+    border-radius: calc(0.75 * var(--lb-radius));
+    background: var(--lb-foreground-subtle);
+    box-decoration-break: clone;
+    font-size: 85%;
+    line-height: 1;
+  }
+
+  /**
+   * Progressive enhancement: Merge adjacent inline code elements
+   */
+  :where(span:has(code) + span code) {
+    padding-inline-start: 0;
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+  }
+
+  :where(span:has(code):has(+ span code) code) {
+    padding-inline-end: 0;
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+  }
+}
+
+/* 0,0,0 specificity to inherit any styles applied to `code` elements */
+:where(:is(.lb-root) code) {
+  font-family: ui-monospace, Menlo, Monaco, "Roboto Mono", "Cascadia Code",
+    "Source Code Pro", Consolas, "DejaVu Sans Mono", monospace;
 }
 
 /*************************************

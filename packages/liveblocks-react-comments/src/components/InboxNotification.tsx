@@ -529,7 +529,12 @@ const InboxNotificationCustomMissing = forwardRef<
     <InboxNotificationCustom
       inboxNotification={inboxNotification}
       {...props}
-      title={inboxNotification.kind}
+      title={
+        <>
+          <strong>Inbox notification</strong> of kind{" "}
+          <code>{inboxNotification.kind}</code> is not handled
+        </>
+      }
       aside={
         <InboxNotificationIcon>
           <MissingIcon />
@@ -537,7 +542,11 @@ const InboxNotificationCustomMissing = forwardRef<
       }
       ref={forwardedRef}
       data-missing=""
-    />
+    >
+      {/* TODO: Add link to the docs */}
+      It won’t be displayed in production. Use the <code>kinds</code> prop to
+      define how it should be rendered.
+    </InboxNotificationCustom>
   );
 });
 
@@ -585,8 +594,8 @@ export const InboxNotification = Object.assign(
                 inboxNotificationKindsWarnings.add(inboxNotification.kind);
                 // TODO: Add link to the docs
                 console.warnWithTitle(
-                  "Missing inbox notification",
-                  `Inbox notifications of kind "${inboxNotification.kind}" are not defined so they will not be displayed in production. Use the kinds prop to define how they should be rendered.`
+                  "Unhandled inbox notification",
+                  `Inbox notifications of kind "${inboxNotification.kind}" are not handled so they will not be displayed in production. Use the kinds prop to define how they should be rendered.`
                 );
               }
 
