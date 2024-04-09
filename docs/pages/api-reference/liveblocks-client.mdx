@@ -1120,6 +1120,37 @@ console.log(status);
   <PropertiesListItem>_None_</PropertiesListItem>
 </PropertiesList>
 
+### Room.getStorageStatus
+
+Get the Storage status. Use this to tell whether Storage has been synchronized
+with the Liveblocks servers.
+
+```ts
+const status = room.getStorageStatus();
+
+// "synchronizing"
+console.log(status);
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="status"
+    type={`"not-loaded" | "loading" | "synchronizing" | "synchronized"`}
+  >
+    The current user’s Storage status. `status` can be one of four types.
+
+    - `"not-loaded` - Storage has not been loaded yet as [`getStorage`][] has not been called.
+    - `"loading"` - Storage is currently loading for the first time.
+    - `"synchronizing"` - Local Storage changes are currently being synchronized.
+    - `"synchronized"` - Local Storage changes have been synchronized
+
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem>_None_</PropertiesListItem>
+</PropertiesList>
+
 ### Room.subscribe(storageItem)
 
 Subscribe to updates on a particular storage item, and takes a callback function
@@ -2180,36 +2211,6 @@ room.get("time");
 
 <PropertiesList title="Returns">
   <PropertiesListItem>_Nothing_</PropertiesListItem>
-</PropertiesList>
-
-<PropertiesList title="Arguments">
-  <PropertiesListItem>_None_</PropertiesListItem>
-</PropertiesList>
-
-### Room.getStorageStatus
-
-Get the storage status.
-
-```ts
-const status = room.getStorageStatus();
-
-// "synchronizing"
-console.log(status);
-```
-
-<PropertiesList title="Returns">
-  <PropertiesListItem
-    name="status"
-    type={`"not-loaded" | "loading" | "synchronizing" | "synchronized"`}
-  >
-    The current user’s Storage status. `status` can be one of four types.
-
-    - `"not-loaded` - Storage has not been loaded yet as [`getStorage`][] has not been called.
-    - `"loading"` - Storage is currently loading for the first time.
-    - `"synchronizing"` - Local Storage changes are currently being synchronized.
-    - `"synchronized"` - Local Storage changes have been synchronized
-
-  </PropertiesListItem>
 </PropertiesList>
 
 <PropertiesList title="Arguments">
