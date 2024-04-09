@@ -2220,13 +2220,20 @@ room.get("time");
 ### Room.connect
 
 Connect the local room instance to the Liveblocks server. Does nothing if the
-room is already connecting, reconnecting or connected.
+room is already connecting, reconnecting or connected. We don’t recommend using
+this API directly.
 
 ```ts
 room.connect();
 ```
 
-We don’t recommend using this API directly.
+<PropertiesList title="Returns">
+  <PropertiesListItem>_Nothing_</PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem>_None_</PropertiesListItem>
+</PropertiesList>
 
 ### Room.reconnect
 
@@ -2237,18 +2244,33 @@ WebSocket connection.
 room.reconnect();
 ```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem>_Nothing_</PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem>_None_</PropertiesListItem>
+</PropertiesList>
+
 ### Room.disconnect
 
 Disconnect the local room instance from the Liveblocks server. The room instance
 will remain functional (for example, it will still allow local presence or
 storage mutations), but since it’s no longer connected, changes will not be
-persisted or synchronized until the room instance is reconnected again.
+persisted or synchronized until the room instance is reconnected again. We don’t
+recommend using this API directly.
 
 ```ts
 room.disconnect();
 ```
 
-We don’t recommend using this API directly.
+<PropertiesList title="Returns">
+  <PropertiesListItem>_Nothing_</PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem>_None_</PropertiesListItem>
+</PropertiesList>
 
 ## Storage
 
