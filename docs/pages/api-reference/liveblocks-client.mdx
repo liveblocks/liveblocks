@@ -2138,29 +2138,53 @@ All future modifications made on the Room will be merged together to create a
 single history item until resume is called.
 
 ```ts
-room.updatePresence({ cursor: { x: 0, y: 0 } }, { addToHistory: true });
+const info = new LiveObject({ time: "one" });
+
 room.history.pause();
-room.updatePresence({ cursor: { x: 1, y: 1 } }, { addToHistory: true });
-room.updatePresence({ cursor: { x: 2, y: 2 } }, { addToHistory: true });
+info.set("time", "two");
+info.set("time", "three");
 room.history.resume();
+
 room.history.undo();
-// room.getPresence() equals { cursor: { x: 0, y: 0 } }
+
+// "one"
+room.get("time");
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem>_Nothing_</PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem>_None_</PropertiesListItem>
+</PropertiesList>
 
 ### Room.history.resume
 
-Resumes history. Modifications made on the Room are not merged into a single
-history item anymore.
+Resumes history after a [pause](#Room.history.pause). Modifications made on the
+Room are not merged into a single history item any more.
 
 ```ts
-room.updatePresence({ cursor: { x: 0, y: 0 } }, { addToHistory: true });
+const info = new LiveObject({ time: "one" });
+
 room.history.pause();
-room.updatePresence({ cursor: { x: 1, y: 1 } }, { addToHistory: true });
-room.updatePresence({ cursor: { x: 2, y: 2 } }, { addToHistory: true });
+info.set("time", "two");
+info.set("time", "three");
 room.history.resume();
+
 room.history.undo();
-// room.getPresence() equals { cursor: { x: 0, y: 0 } }
+
+// "one"
+room.get("time");
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem>_Nothing_</PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem>_None_</PropertiesListItem>
+</PropertiesList>
 
 ### Room.getStorageStatus
 
