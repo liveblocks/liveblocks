@@ -806,6 +806,16 @@ still connected, they will be forced to reauthorize.
 client.logout();
 ```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem>_Nothing_</PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem>_None_</PropertiesListItem>
+</PropertiesList>
+
+#### When to logout
+
 Use this function if you have a single page application (SPA) and you wish to
 log your user out, and reauthenticate them. This is a way to update your user’s
 `info` after a connection has begun.
@@ -845,6 +855,10 @@ type Presence = {
   </PropertiesListItem>
 </PropertiesList>
 
+<PropertiesList title="Arguments">
+  <PropertiesListItem>_None_</PropertiesListItem>
+</PropertiesList>
+
 ### Room.updatePresence
 
 Updates the current user’s [Presence](/docs/products/presence). Only pass the
@@ -858,6 +872,10 @@ room.updatePresence({ status: "Online" });
 // { typing: true, status: "Online" }
 const presence = room.getPresence();
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem>_Nothing_</PropertiesListItem>
+</PropertiesList>
 
 <PropertiesList title="Arguments">
   <PropertiesListItem name="update" type="TPresence" required>
@@ -917,6 +935,10 @@ for (const other of others) {
   </PropertiesListItem>
 </PropertiesList>
 
+<PropertiesList title="Arguments">
+  <PropertiesListItem>_None_</PropertiesListItem>
+</PropertiesList>
+
 ### Room.broadcastEvent
 
 Broadcast an event to other users in the Room. Events broadcast to the room can
@@ -926,6 +948,10 @@ as first argument. Should be serializable to JSON.
 ```ts
 room.broadcastEvent({ type: "REACTION", emoji: "🔥" });
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem>_Nothing_</PropertiesListItem>
+</PropertiesList>
 
 <PropertiesList title="Arguments">
   <PropertiesListItem name="event" type="TRoomEvent" required>
@@ -1037,6 +1063,10 @@ const { connectionId, presence, id, info, canWrite, canComment } =
   </PropertiesListItem>
 </PropertiesList>
 
+<PropertiesList title="Arguments">
+  <PropertiesListItem>_None_</PropertiesListItem>
+</PropertiesList>
+
 Here’s an example of a full return value, assuming `Presence` and `UserMeta`
 [have been set](#user-type).
 
@@ -1084,6 +1114,10 @@ console.log(status);
     - `"disconnected"` - The room is disconnected, and is no longer attempting to connect.
 
   </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem>_None_</PropertiesListItem>
 </PropertiesList>
 
 ### Room.subscribe(storageItem)
