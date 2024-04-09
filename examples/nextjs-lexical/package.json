@@ -14,7 +14,7 @@
     "@liveblocks/client": "*",
     "@liveblocks/node": "*",
     "@liveblocks/react": "*",
-    "@liveblocks/react-lexical": "*",
+    "@liveblocks/react-lexical": "file:../../packages/liveblocks-react-lexical",
     "@types/node": "^18.11.18",
     "@types/react": "^18.0.27",
     "@types/react-dom": "^18.0.10",
