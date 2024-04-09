@@ -51,7 +51,7 @@ rm -f ./package-lock.json
 # Step 3: Replace @liveblocks dependencies in the current example by a "*"
 # reference, so they will be picked up from the local workspaces instead.
 for dep in $(jq -r '.dependencies | keys[]' package.json | grep -Ee '@liveblocks/'); do
-    jq ".dependencies.\"$dep\" = \"*\"" package.json | sponge package.json
+    jq ".dependencies.\"$dep\" = \"workspace:*\"" package.json | sponge package.json
 done
 
 # Step 4: Add this example to the top-level package.json to officially make it
