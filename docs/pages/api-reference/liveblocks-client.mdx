@@ -1941,67 +1941,135 @@ room.batch(() => {
 
 ### Room.history
 
-Room’s history contains functions that let you undo and redo operation made on
-by the current client on the presence and storage.
+Room’s history contains functions that let you undo and redo operations made to
+Storage and Presence on the current client. Each user has a separate history
+stored in memory, and history is reset when the page is reloaded.
 
 ```ts
-const { undo, redo, pause, resume } = room.history;
+const { undo, redo, pause, resume /*, ... */ } = room.history;
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem name="return" type="T">
-    Returns the return value from the callback.
-  </PropertiesListItem>
-</PropertiesList>
+<Banner title="History in Yjs">
+
+Note that to undo or redo in Yjs, you must use a separate history manager,
+[`Y.UndoManager`](https://docs.yjs.dev/api/undo-manager).
+
+</Banner>
+
+#### Add Presence to history
+
+By default, history is only enabled for Storage. However, you can use the
+`addToHistory` option to additionally
+[add Presence state to history](/docs/api-reference/liveblocks-client#add-presence-to-history).
+
+```tsx
+room.updatePresence({ color: "blue" }, { addToHistory: true });
+```
 
 ### Room.history.undo
 
-Undoes the last operation executed by the current client. It does not impact
-operations made by other clients.
+Reverts the last operation. It does not impact operations made by other clients,
+and will only undo changes made by the current client.
 
 ```ts
-room.updatePresence({ selectedId: "xxx" }, { addToHistory: true });
-room.updatePresence({ selectedId: "yyy" }, { addToHistory: true });
+const person = new LiveObject();
+person.set("name", "Pierre");
+person.set("name", "Jonathan");
+
 room.history.undo();
-// room.getPresence() equals { selectedId: "xxx" }
+
+// "Pierre"
+root.get("name");
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem>_Nothing_</PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem>_None_</PropertiesListItem>
+</PropertiesList>
 
 ### Room.history.redo
 
-Redoes the last operation executed by the current client. It does not impact
-operations made by other clients.
+Restores the last undone operation. It does not impact operations made by other
+clients, and will only restore changes made by the current client.
 
 ```ts
-room.updatePresence({ selectedId: "xxx" }, { addToHistory: true });
-room.updatePresence({ selectedId: "yyy" }, { addToHistory: true });
+const person = new LiveObject();
+person.set("name", "Pierre");
+person.set("name", "Jonathan");
+
 room.history.undo();
-// room.getPresence() equals { selectedId: "xxx" }
 room.history.redo();
-// room.getPresence() equals { selectedId: "yyy" }
+
+// "Jonathan"
+root.get("name");
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem>_Nothing_</PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem>_None_</PropertiesListItem>
+</PropertiesList>
 
 ### Room.history.canUndo
 
-Returns whether there are any operations to undo.
+Returns true or false, depending on whether there are any operations to undo.
+Helpful for disabling undo buttons.
 
 ```ts
-room.updatePresence({ selectedId: "xx" }, { addToHistory: true });
-// room.history.canUndo() is true
+const person = new LiveObject();
+person.set("name", "Pierre");
+
+// true
+room.history.canUndo();
+
 room.history.undo();
-// room.history.canUndo() is false
+
+// false
+room.history.canUndo();
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="canUndo" type="boolean">
+    Whether there is an undo operation in the current history stack.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem>_None_</PropertiesListItem>
+</PropertiesList>
 
 ### Room.history.canRedo
 
-Returns whether there are any operations to redo.
+Returns true or false, depending on whether there are any operations to redo.
+Helpful for disabling redo buttons.
 
 ```ts
-room.updatePresence({ selectedId: "xx" }, { addToHistory: true });
+const person = new LiveObject();
+person.set("name", "Pierre");
+
+// false
+room.history.canRedo();
+
 room.history.undo();
-// room.history.canRedo() is true
-room.history.redo();
-// room.history.canRedo() is false
+
+// true
+room.history.canRedo();
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="canRedo" type="boolean">
+    Whether there is a redo operation in the current history stack.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem>_None_</PropertiesListItem>
+</PropertiesList>
 
 ### Room.history.clear
 
@@ -2010,11 +2078,25 @@ history resets the ability to undo beyond the current document state. Other
 clients’ histories are unaffected.
 
 ```ts
-room.updatePresence({ selectedId: "xx" }, { addToHistory: true });
-// room.history.canUndo() is true
+const person = new LiveObject();
+person.set("name", "Pierre");
+
+// true
+room.history.canUndo();
+
 room.history.clear();
-// room.history.canUndo() is false
+
+// false
+room.history.canUndo();
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem>_Nothing_</PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem>_None_</PropertiesListItem>
+</PropertiesList>
 
 ### Room.history.pause
 
