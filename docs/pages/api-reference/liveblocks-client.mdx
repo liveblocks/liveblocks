@@ -1824,7 +1824,7 @@ const unsubscribe = room.subscribe("history", ({ canUndo, canRedo }) => {
 Subscribe to Storage status changes. Use this to tell whether Storage has been
 synchronized with the Liveblocks servers. Returns an unsubscribe function.
 
-```typescript
+```ts
 const unsubscribe = room.subscribe("storage-status", (status) => {
   switch (status) {
     case "not-loaded":
@@ -1878,20 +1878,65 @@ made during the batch is merged into a single history item (undo/redo).
 
 ```ts
 const { root } = await room.getStorage();
+
 room.batch(() => {
   root.set("x", 0);
   room.updatePresence({ cursor: { x: 100, y: 100 } });
 });
 ```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem name="return" type="T">
+    Returns the return value from the callback.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="callback" type="() => T" required>
+    A callback containing every Storage and Presence notification that will be
+    part of the batch. Cannot be an `async` function.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### When to batch updates
+
+For the most part, _you don’t need to batch updates_. For example, given a
+[whiteboard application](/examples/browse/whiteboard), it’s perfectly fine to
+update a note’s position on the board multiple times per second, in separate
+updates. However, should you implement a “Delete all” button, that may delete 50
+notes at once, this is where you should use a batch.
+
+```ts
+const { root } = await room.getStorage();
+const notes = root.get("notes");
+
+// ✅ Batch simultaneous changes together
+room.batch(() => {
+  for (const noteId of notes.keys()) {
+    notes.delete(noteId);
+  }
+});
+```
+
+This batch places each
+[`LiveMap.delete`](/docs/api-reference/liveblocks-client#LiveMap.delete) call
+into a single WebSocket update, instead of sending multiple updates. This will
+be much quicker.
+
+#### Doesn’t work with async functions
+
 Note that `room.batch` cannot take an `async` function.
 
 ```tsx
 // ❌ Won't work
-room.batch(async () => /* ... */);
+room.batch(async () => {
+  // ...
+});
 
 // ✅ Will work
-room.batch(() => /*... */);
+room.batch(() => {
+  // ...
+});
 ```
 
 ### Room.history
@@ -1902,6 +1947,12 @@ by the current client on the presence and storage.
 ```ts
 const { undo, redo, pause, resume } = room.history;
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="return" type="T">
+    Returns the return value from the callback.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### Room.history.undo
 
