@@ -10,7 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@lexical/react": "^0.11.1",
+    "@lexical/react": "^0.14.3",
     "@liveblocks/client": "*",
     "@liveblocks/node": "*",
     "@liveblocks/react": "*",
@@ -18,7 +18,7 @@
     "@types/node": "^18.11.18",
     "@types/react": "^18.0.27",
     "@types/react-dom": "^18.0.10",
-    "lexical": "^0.11.1",
+    "lexical": "^0.14.3",
     "next": "^13.5.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

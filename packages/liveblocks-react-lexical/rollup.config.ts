@@ -43,7 +43,6 @@ function createMainConfig(format: "cjs" | "esm"): RollupOptions {
     external: [
       ...Object.keys(pkg.dependencies),
       ...Object.keys(pkg.peerDependencies),
-      "@liveblocks/react",
       "@lexical/react/LexicalCollaborationPlugin",
       "@lexical/react/LexicalComposerContext",
       "react-dom",
