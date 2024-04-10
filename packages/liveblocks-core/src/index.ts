@@ -207,6 +207,7 @@ export type {
   PlainLsonMap,
   PlainLsonObject,
 } from "./types/PlainLson";
+export type { QueryMetadata } from "./types/QueryMetadata";
 export type { RoomInfo } from "./types/RoomInfo";
 export type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 export type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
