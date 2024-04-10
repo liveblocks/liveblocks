@@ -29,6 +29,8 @@ android/keystore.properties
 android/app/*/*.aab
 android/vendor
 android/.bundle
+buck-out/
+\.buckd/
 *.keystore
 !debug.keystore
 **/fastlane/report.xml
@@ -38,9 +40,3 @@ android/.bundle
 *.jsbundle
 /ios/Pods/
 ios/.xcode.env.local
-
-# Temporary files created by Metro to check the health of the file watcher
-.metro-health-check*
- 
-# testing
-/coverage
