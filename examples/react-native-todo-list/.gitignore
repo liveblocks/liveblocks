@@ -24,6 +24,7 @@ build/
 .gradle
 local.properties
 *.iml
+.cxx/
 android/keystore.properties
 android/app/*/*.aab
 android/vendor
@@ -32,6 +33,10 @@ buck-out/
 \.buckd/
 *.keystore
 !debug.keystore
-*/fastlane/
+**/fastlane/report.xml
+**/fastlane/Preview.html
+**/fastlane/screenshots
+**/fastlane/test_output
 *.jsbundle
 /ios/Pods/
+ios/.xcode.env.local
