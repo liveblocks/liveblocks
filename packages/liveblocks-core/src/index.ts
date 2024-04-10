@@ -99,6 +99,7 @@ export {
   tryParseJson,
   withTimeout,
 } from "./lib/utils";
+export { objectToQuery } from "./lib/objectToQuery";
 export type { CustomAuthenticationResult } from "./protocol/Authentication";
 export type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 export type {
