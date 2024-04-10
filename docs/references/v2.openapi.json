@@ -1369,7 +1369,7 @@
             },
             "in": "query",
             "name": "query",
-            "description": "Query to filter threads. Ex: `metadata[\"status\"]:\"open\" AND metadata[\"resolved\"]:true AND metadata[\"priority\"]:1`"
+            "description": "Query to filter threads. For example, `metadata[\"status\"] AND metadata[\"resolved\"]:true`. Learn more in our guide on [filtering threads with the REST API](/docs/guides/how-to-filter-threads-with-the-rest-api)."
           }
         ],
         "operationId": "get-rooms-roomId-threads",

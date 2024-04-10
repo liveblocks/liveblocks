@@ -343,5 +343,12 @@
     "topics": ["text-editors"],
     "technologies": ["yjs", "tiptap", "react"],
     "date": "2024-03-25"
+  },
+  {
+    "title": "How to filter threads with the REST API",
+    "path": "/how-to-filter-threads-with-the-rest-api",
+    "topics": ["comments", "rest-api"],
+    "technologies": ["react-comments"],
+    "date": "2024-04-10"
   }
 ]

@@ -1,0 +1,67 @@
+---
+meta:
+  title: "How to filter threads with the REST API"
+  description:
+    "Learn how to filter for certain threads using their metadata with our REST
+    API"
+---
+
+When using Comments and retrieving threads with our REST API, it’s possible to
+filter for specific threads using
+[custom metadata](/docs/products/comments/metadata) and our custom query
+language. This enables the
+[Get Threads REST API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-threads)
+to have filtering that works the same as with
+[`useThreads`](/docs/api-reference/liveblocks-react#useThreads) and
+[`liveblocks.getThreads`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads).
+
+## Query language
+
+You can filter threads by their metadata, allowing you to select for certain
+properties, values, or even for string prefixes. Filters can be combined
+together using `AND` logic.
+
+### Cheatsheet
+
+```js
+// Threads with the `{ status }` metadata
+metadata['status']
+
+// Threads with both `{ status }` and `{ priority }` metadata
+metadata['status'] AND metadata['priority']
+
+// Threads with { status: 'open' } string metadata
+metadata['status']:'open'
+
+// Threads with { priority: 3 } number metadata
+metadata['priority']:3
+
+// Threads with { resolve: true } boolean metadata
+metadata['resolved']:false
+
+// Threads with `{ org }` string metadata that starts with "liveblocks"
+metadata['org']^'liveblocks'
+
+// A mixture of filters
+metadata['status'] AND metadata['status']:'open' AND metadata['org']^'liveblocks'
+```
+
+<Banner>
+
+The `AND` is optional and can actually be omitted, but we’re using it here for
+clarity.
+
+</Banner>
+
+### How to use
+
+To use the query language with the
+[REST API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-threads) pass
+your query string to the `query` parameter, for example:
+
+```
+https://api.liveblocks.io/v2/rooms/{roomId}/threads?query=metadata['status']
+```
+
+To learn more on _setting_ custom metadata on threads, make sure to
+[read our guide](/docs/products/comments/metadata).
