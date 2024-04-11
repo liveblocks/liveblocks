@@ -2,10 +2,21 @@
  * NOTE: this will move into RoomProvider or another package so it can be used by other text editors
  **/
 
-import type { BaseUserMeta, Json, JsonObject, LsonObject } from "@liveblocks/client";
+import type {
+  BaseUserMeta,
+  Json,
+  JsonObject,
+  LsonObject,
+} from "@liveblocks/client";
 import { useRoomContextBundle } from "@liveblocks/react";
 import LiveblocksProvider from "@liveblocks/yjs";
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { Doc } from "yjs";
 
 interface TextCollaborationContext {
@@ -29,7 +40,9 @@ function useTextCollaboration(): TextCollaborationContext {
 
 function useDocumentSyncState(): { synced: boolean } {
   const textCollabContext = useContext(TextCollabContext);
-  const [synced, setSynced] = useState(textCollabContext?.provider?.synced || false);
+  const [synced, setSynced] = useState(
+    textCollabContext?.provider?.synced || false
+  );
 
   if (!textCollabContext) {
     throw new Error(
@@ -43,16 +56,22 @@ function useDocumentSyncState(): { synced: boolean } {
     }
     provider.on("sync", setSynced);
     return () => {
-      provider.off("sync", setSynced)
-    }
-  }, [provider])
+      provider.off("sync", setSynced);
+    };
+  }, [provider]);
 
   return { synced };
 }
 
-function TextCollaborationProvider({ children }: { children: React.ReactNode }) {
+function TextCollaborationProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const { useRoom } = useRoomContextBundle();
-  const [provider, setProvider] = useState<LiveblocksProvider<JsonObject, LsonObject, BaseUserMeta, Json> | undefined>();
+  const [provider, setProvider] = useState<
+    LiveblocksProvider<JsonObject, LsonObject, BaseUserMeta, Json> | undefined
+  >();
   const room = useRoom();
   const doc = useMemo(() => new Doc(), []);
   useEffect(() => {
@@ -61,9 +80,17 @@ function TextCollaborationProvider({ children }: { children: React.ReactNode }) 
     return () => {
       _provider.destroy();
       setProvider(undefined);
-    }
+    };
   }, [room, doc]);
 
-  return <TextCollabContext.Provider value={{ provider, doc }}>{children}</TextCollabContext.Provider>
+  return (
+    <TextCollabContext.Provider value={{ provider, doc }}>
+      {children}
+    </TextCollabContext.Provider>
+  );
 }
-export { TextCollaborationProvider, useDocumentSyncState, useTextCollaboration }
+export {
+  TextCollaborationProvider,
+  useDocumentSyncState,
+  useTextCollaboration,
+};
