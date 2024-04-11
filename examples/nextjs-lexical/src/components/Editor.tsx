@@ -69,7 +69,7 @@ export default function Editor() {
             <LiveblocksPlugin />
 
             <div className={styles.sidebar}>
-              <LexicalThreadComposer className={styles.composer} />
+              <LexicalThreadComposer autoFocus className={styles.composer} />
               <Threads />
             </div>
           </div>
