@@ -2304,36 +2304,7 @@ temporary.
   by their name. If multiple users update the same property simultaneously, the
   last modification received by the Liveblocks servers is the winner.
 
-<Banner title="Need help troubleshooting Storage?">
-
-Get the [Liveblocks DevTools extension](/devtools) to develop and debug your
-application as you build it.
-
-</Banner>
-
-### Room.getStorage
-
-Get the room’s Storage asynchronously (returns a Promise). The promise will
-resolve once the Storage’s root is loaded and available. The Storage’s root is
-always a [`LiveObject`][].
-
-```ts
-const { root } = await room.getStorage();
-```
-
-<PropertiesList title="Returns">
-  <PropertiesListItem name="storage" type="{ root: LiveObject<TStorage> }">
-    The room’s Storage structures. `root` is a `LiveObject`, and is the root of
-    your Storage. Learn more about [typing
-    Storage](#get-storage-typing-storage).
-  </PropertiesListItem>
-</PropertiesList>
-
-<PropertiesList title="Arguments">
-  <PropertiesListItem>_None_</PropertiesListItem>
-</PropertiesList>
-
-#### Typing Storage [#get-storage-typing-storage]
+### Typing Storage [#typing-storage]
 
 To type the Storage values you receive, make sure to set your `Storage` type.
 
@@ -2358,30 +2329,127 @@ const unsubscribe = room.subscribe(animals, (updatedAnimals) => {
 });
 ```
 
+### Nesting data structures
+
+All Storage data structures can be nested, allowing you to create complex trees
+of conflict-free data.
+
+```ts
+import { LiveObject, LiveList, LiveMap } from "@liveblocks/client";
+
+type Person = LiveObject<{
+  name: string;
+  pets: LiveList<string>;
+}>;
+
+type Storage = {
+  people: LiveMap<string, Person>;
+};
+```
+
+```ts
+import { LiveObject, LiveList, LiveMap } from "@liveblocks/client";
+
+const pets = new LiveList(["Cat", "Dog"]);
+const person = new LiveObject({ name: "Alicia", pets });
+const people = new LiveMap();
+people.set("alicia", person);
+
+const { root } = await room.getStorage();
+root.set(people);
+```
+
+<Banner title="Need help troubleshooting Storage?">
+
+Get the [Liveblocks DevTools extension](/devtools) to develop and debug your
+application as you build it.
+
+</Banner>
+
+### Room.getStorage
+
+Get the room’s Storage asynchronously (returns a Promise). The promise will
+resolve once the Storage’s root is loaded and available. The Storage’s root is
+always a [`LiveObject`][].
+
+```ts
+const { root } = await room.getStorage();
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="storage" type="{ root: LiveObject<TStorage> }">
+    The room’s Storage structures. `root` is a `LiveObject`, and is the root of
+    your Storage. Learn more about [typing Storage](#typing-storage).
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem>_None_</PropertiesListItem>
+</PropertiesList>
+
 ## LiveObject
 
 The `LiveObject` class is similar to a JavaScript object that is synchronized on
 all clients. Use this for storing records with fixed key names and where the
-values don’t necessarily have the same types. For example, a Person with a
-`name` (string) and an `age` (number) field.
+values don’t necessarily have the same types. For example, a `Person` with
+`name` and `age` fields. To add typing, read more under
+[typing Storage](#typing-storage).
 
-Keys should be strings, and values should be serializable to JSON.
+```ts
+type Person = LiveObject<{
+  name: string;
+  age: number;
+}>;
+```
 
-If multiple clients update the same property simultaneously, the last
-modification received by the Liveblocks servers is the winner.
+Keys should be strings, and values should be serializable to JSON. If multiple
+clients update the same property simultaneously, the last modification received
+by the Liveblocks servers is the winner.
 
 ### new LiveObject [#LiveObject.constructor]
 
 Create an empty `LiveObject`
 
 ```ts
+import { LiveObject } from "@liveblocks/client";
+
 const object = new LiveObject();
 ```
 
 Create a `LiveObject` with initial data.
 
 ```ts
+import { LiveObject } from "@liveblocks/client";
+
 const object = new LiveObject({ firstName: "Margaret", lastName: "Hamilton" });
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="LiveObject" type="LiveObject<L>">
+    The newly created `LiveObject`.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="initialValue" type="L extends LsonObject" required>
+    The initial value for the `LiveObject`. Can contain other Liveblocks data
+    structures (`LiveList`, `LiveMap`) and JSON-compatible data.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Add a LiveObject to Storage
+
+The Storage root is `LiveObject` itself, so you can use [`LiveObject.set`]() to
+add a new property to your root. If you’ve [typed Storage](#typing-storage)
+you’ll have type hints as you build.
+
+```ts
+import { LiveObject } from "@liveblocks/client";
+
+const { root } = await room.getStorage();
+
+const person = new LiveObject({ name: "Alicia" });
+root.set("person", person);
 ```
 
 ### delete [#LiveObject.delete]
