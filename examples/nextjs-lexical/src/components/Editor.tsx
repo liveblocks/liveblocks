@@ -7,7 +7,13 @@ import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
-import { LiveblocksPlugin } from "@liveblocks/react-lexical";
+import {
+  LexicalThread,
+  LexicalThreadComposer,
+  LiveblocksPluginProvider,
+  ThreadMarkNode,
+} from "@liveblocks/react-lexical";
+import { useThreads } from "@/liveblocks.config";
 
 // Set up editor config and theme
 const initialConfig = {
@@ -16,7 +22,7 @@ const initialConfig = {
   // (not even empty one), and let collaboration plugin do it instead
   editorState: null,
   namespace: "Demo",
-  nodes: [],
+  nodes: [ThreadMarkNode],
   onError: (error: unknown) => {
     throw error;
   },
@@ -27,14 +33,13 @@ const initialConfig = {
       underline: styles.textUnderline,
     },
     paragraph: styles.paragraph,
+    threadMark: styles.threadMark,
   },
 };
-
 
 // Collaborative text editor with simple rich text, live cursors, and live avatars
 
 export default function Editor() {
-
   return (
     <div className={styles.container}>
       <LexicalComposer initialConfig={initialConfig}>
@@ -43,16 +48,44 @@ export default function Editor() {
           <Avatars />
         </div>
         <div className={styles.editorContainer}>
-          <RichTextPlugin
-            contentEditable={<ContentEditable className={styles.editor} />}
-            placeholder={
-              <p className={styles.placeholder}>Start typing here…</p>
-            }
-            ErrorBoundary={LexicalErrorBoundary}
-          />
-          <LiveblocksPlugin />
+          <div className={styles.editor}>
+            <RichTextPlugin
+              contentEditable={
+                <ContentEditable className={styles.contentEditable} />
+              }
+              placeholder={
+                <p className={styles.placeholder}>Start typing here…</p>
+              }
+              ErrorBoundary={LexicalErrorBoundary}
+            />
+          </div>
+
+          <LiveblocksPluginProvider>
+            <div className={styles.sidebar}>
+              <LexicalThreadComposer className={styles.composer} />
+              <Threads />
+            </div>
+          </LiveblocksPluginProvider>
         </div>
       </LexicalComposer>
+    </div>
+  );
+}
+
+function Threads() {
+  const { threads } = useThreads();
+
+  return (
+    <div className={styles.threads}>
+      {threads.map((thread) => {
+        return (
+          <LexicalThread
+            key={thread.id}
+            thread={thread}
+            className={styles.thread}
+          />
+        );
+      })}
     </div>
   );
 }

@@ -15,7 +15,7 @@
   align-items: center;
 }
 
-.editor {
+.contentEditable {
   border-radius: inherit;
   flex-grow: 1;
   width: 100%;
@@ -23,13 +23,30 @@
   padding: 1rem;
 }
 
-.editor:focus {
+.contentEditable:focus {
   outline: none;
 }
 
 .editorContainer {
+  display: flex;
+  flex-direction: row;
   position: relative;
   height: 100%;
+  width: 100%;
+  border-top: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+.editor {
+  position: relative;
+  width: calc(100% - 400px);
+  overflow: auto;
+}
+
+.sidebar {
+  width: 400px;
+  height: 100%;
+  border-left: 1px solid rgba(55, 53, 47, 0.09);
+  overflow-y: auto;
 }
 
 .placeholder {
@@ -54,4 +71,38 @@
 
 .paragraph {
   margin: 1em 0;
+}
+
+.threadMark {
+  background-color: rgba(255, 212, 0, 0.14);
+  border-bottom-width: 2px;
+  border-bottom-style: solid;
+  border-bottom-color: rgb(255, 212, 0);
+  transition: background-color 100ms;
+}
+
+.threadMark:hover {
+  background-color: rgba(255, 212, 0, 0.42);
+}
+
+.threadMark[data-state="active"] {
+  background-color: rgba(255, 212, 0, 0.56);
+  border-bottom-color: rgb(255, 212, 0);
+}
+
+.composer {
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: rgba(55, 53, 47, 0.09);
+}
+
+.threads {
+  display: flex;
+  flex-direction: column;
+}
+
+.thread {
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: rgba(55, 53, 47, 0.09);
 }
