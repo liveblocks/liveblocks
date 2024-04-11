@@ -2432,8 +2432,8 @@ const object = new LiveObject({ firstName: "Margaret", lastName: "Hamilton" });
 
 <PropertiesList title="Arguments">
   <PropertiesListItem name="initialValue" type="L extends LsonObject" required>
-    The initial value for the `LiveObject`. Can contain other Liveblocks data
-    structures (`LiveList`, `LiveMap`) and JSON-compatible data.
+    The initial value for the `LiveObject`. Can contain JSON-serializable data
+    and other Liveblocks conflict-free data structures.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -2459,17 +2459,44 @@ Delete a property from the `LiveObject`
 ```ts
 const object = new LiveObject({ firstName: "Ada", lastName: "Lovelace" });
 object.delete("lastName");
-object.toObject(); // equals to { firstName: "Ada" }
+
+// { firstName: "Ada" }
+object.toImmutable();
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem>_Nothing_</PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="key" type="string" required>
+    The key of the property you’re deleting. If the property doesn’t exist,
+    nothing will occur.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### get [#LiveObject.get]
 
-Get a property from the `LiveObject`
+Get a property from the `LiveObject`.
 
 ```ts
 const object = new LiveObject({ firstName: "Ada", lastName: "Lovelace" });
-object.get("firstName"); // equals to "Ada"
+
+// "Ada"
+object.get("firstName");
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="value">
+    The value of the property. Returns `undefined` if it doesn’t exist.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="key" type="string" required>
+    The key of the property you’re getting.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### set [#LiveObject.set]
 
@@ -2478,16 +2505,100 @@ Adds or updates a property with the specified key and a value.
 ```ts
 const object = new LiveObject({ firstName: "Marie" });
 object.set("lastName", "Curie");
+
+// { firstName: "Ada", lastName: "Curie" }
+object.toImmutable();
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem>_Nothing_</PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="key" type="string" required>
+    The key of the property you’re setting.
+  </PropertiesListItem>
+  <PropertiesListItem name="value" type="LsonObject" required>
+    The value of the property you’re setting. Can contain JSON-serializable data
+    and other Liveblocks conflict-free data structures.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### update [#LiveObject.update]
 
 Adds or updates multiple properties at once.
 
 ```ts
-const object = new LiveObject({ firstName: "Grace", lastName: "Hopper" });
-object.update({ job: "Computer Scientist", birthDate: "December 9, 1906" });
+const object = new LiveObject({ firstName: "Grace" });
+object.update({ lastName: "Hopper", job: "Computer Scientist" });
+
+// { firstName: "Grace", lastName: "Hopper", job: "Computer Scientist" }
+object.toImmutable();
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem>_Nothing_</PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="value" type="LsonObject" required>
+    The keys and values you’re updating. Can contain JSON-serializable data and
+    other Liveblocks conflict-free data structures.
+  </PropertiesListItem>
+</PropertiesList>
+
+### clone [#LiveObject.clone]
+
+Returns a deep copy of the `LiveObject` that can be inserted elsewhere in the
+Storage tree.
+
+```ts
+const obj = new LiveObject(/* ... */);
+root.set("a", obj);
+root.set("b", obj.clone());
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="clonedStructure" type="LiveObject">
+    The cloned `LiveObject`.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem>_None_</PropertiesListItem>
+</PropertiesList>
+
+### toImmutable [#LiveObject.toImmutable]
+
+Returns an immutable JavaScript object that is equivalent to the `LiveObject`.
+Nested values will also be immutable.
+
+```ts
+const liveObject = new LiveObject({
+  firstName: "Grace",
+  lastName: "Hopper",
+  hobbies: new LiveList(["reading", "piano"]),
+});
+
+// {
+//   firstName: "Grace",
+//   lastName: "Hopper",
+//   hobbies: ["reading", "piano"]
+// }
+liveObject.toImmutable();
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="immutableStructure" type="object">
+    Returns a JavaScript object in the shape of your data structure.
+    `LiveObject` is converted to an object, `LiveMap` to a map, and `LiveList`
+    to an array.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem>_None_</PropertiesListItem>
+</PropertiesList>
 
 ### toObject [#LiveObject.toObject]
 
@@ -2515,36 +2626,6 @@ const liveObject = new LiveObject({
 });
 liveObject.toObject();
 // { animals: <LiveList instance> } // ❗️
-```
-
-### toImmutable [#LiveObject.toImmutable]
-
-Returns an immutable JavaScript object that is equivalent to the `LiveObject`.
-Nested values will also be immutable.
-
-```ts
-const liveObject = new LiveObject({
-  firstName: "Grace",
-  lastName: "Hopper",
-  hobbies: new LiveList(["needlepoint", "reading", "playing piano"]),
-});
-liveObject.toImmutable();
-// {
-//   firstName: "Grace",
-//   lastName: "Hopper",
-//   hobbies: ["needlepoint", "reading", "playing piano"]
-// }
-```
-
-### clone [#LiveObject.clone]
-
-Returns a deep copy of the `LiveObject` that can be inserted elsewhere in the
-Storage tree.
-
-```ts
-const obj = new LiveObject(/* ... */);
-root.set("a", obj);
-root.set("b", obj.clone());
 ```
 
 ## LiveMap
