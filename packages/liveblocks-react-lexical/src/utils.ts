@@ -24,11 +24,8 @@
 import type { LexicalNode, RangeSelection, TextNode } from "lexical";
 import { $isElementNode, $isTextNode } from "lexical";
 
-import {
-  $createThreadMarkNode,
-  $isThreadMarkNode,
-  ThreadMarkNode,
-} from "./ThreadMarkNode";
+import type { ThreadMarkNode } from "./ThreadMarkNode";
+import { $createThreadMarkNode, $isThreadMarkNode } from "./ThreadMarkNode";
 
 export function $unwrapThreadMarkNode(node: ThreadMarkNode): void {
   const children = node.getChildren();

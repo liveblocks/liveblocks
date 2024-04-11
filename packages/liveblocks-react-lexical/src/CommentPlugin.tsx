@@ -1,19 +1,13 @@
-import {
-  $createThreadMarkNode,
-  ThreadMarkNode,
-  $isThreadMarkNode,
-} from "./ThreadMarkNode";
-import {
-  $getThreadMarkIds,
-  $unwrapThreadMarkNode,
-  $wrapSelectionInThreadMarkNode,
-} from "./utils";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { createDOMRange, createRectsFromDOMRange } from "@lexical/selection";
 import { registerNestedElementResolver } from "@lexical/utils";
-import type { BaseMetadata, ThreadData } from "@liveblocks/client";
+import type { BaseMetadata } from "@liveblocks/client";
 import { useRoomContextBundle } from "@liveblocks/react";
-import type { ComposerSubmitComment } from "@liveblocks/react-comments";
+import type {
+  ComposerProps,
+  ComposerSubmitComment,
+  ThreadProps,
+} from "@liveblocks/react-comments";
 import { Composer, Thread } from "@liveblocks/react-comments";
 import type {
   BaseSelection,
@@ -30,6 +24,7 @@ import {
   COMMAND_PRIORITY_EDITOR,
   createCommand,
 } from "lexical";
+import type { MouseEvent } from "react";
 import React, {
   createContext,
   useCallback,
@@ -39,6 +34,17 @@ import React, {
   useRef,
   useState,
 } from "react";
+
+import {
+  $createThreadMarkNode,
+  $isThreadMarkNode,
+  ThreadMarkNode,
+} from "./ThreadMarkNode";
+import {
+  $getThreadMarkIds,
+  $unwrapThreadMarkNode,
+  $wrapSelectionInThreadMarkNode,
+} from "./utils";
 
 export const INSERT_THREAD_COMMAND: LexicalCommand<void> = createCommand(
   "INSERT_THREAD_COMMAND"
@@ -259,9 +265,16 @@ export type ThreadMetadata = {
   resolved?: boolean;
 };
 
+type LexicalThreadComposerProps<
+  TThreadMetadata extends BaseMetadata = ThreadMetadata,
+> = Omit<
+  ComposerProps<TThreadMetadata>,
+  "onComposerSubmit" | "threadId" | "commentId"
+>;
+
 export function LexicalThreadComposer<
   TThreadMetadata extends BaseMetadata = ThreadMetadata,
->({ metadata }: { metadata?: TThreadMetadata }) {
+>({ metadata, ...props }: LexicalThreadComposerProps<TThreadMetadata>) {
   const lastActiveSelection = useContext(LastActiveSelectionContext);
   const { useCreateThread } = useRoomContextBundle();
   const createThread = useCreateThread();
@@ -290,13 +303,14 @@ export function LexicalThreadComposer<
         event.preventDefault();
         handleComposerSubmit(content);
       }}
-      autoFocus
-      className="border-b border-[rgba(55,53,47,0.09)] dark:border-[rgba(255,255,255,0.094)]"
+      {...props}
     />
   );
 }
 
-export function LexicalThread({ thread }: { thread: ThreadData }) {
+export function LexicalThread<
+  TThreadMetadata extends BaseMetadata = ThreadMetadata,
+>({ thread, onClick, onThreadDelete, ...props }: ThreadProps<TThreadMetadata>) {
   const [editor] = useLexicalComposerContext();
   const divRef = useRef<HTMLDivElement>(null);
   const threadToNodeKeysRef = useContext(ThreadToNodeKeysRefContext);
@@ -304,24 +318,33 @@ export function LexicalThread({ thread }: { thread: ThreadData }) {
 
   const isActive = activeThreads.includes(thread.id);
 
-  const handleThreadClick = useCallback(() => {
-    const threadToNodes = threadToNodeKeysRef.current;
-    const keys = threadToNodes.get(thread.id);
-    if (keys === undefined) return;
-    if (keys.size === 0) return;
+  const handleThreadClick = useCallback(
+    (event: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
+      onClick?.(event);
 
-    editor.update(() => {
-      // Get the first key associated with the thread
-      const [key] = keys;
-      // Get the node associated with the key
-      const node = $getNodeByKey(key);
+      if (event.isDefaultPrevented()) return;
 
-      if (!$isThreadMarkNode(node)) return;
-      node.selectStart();
-    });
-  }, [editor, threadToNodeKeysRef, thread.id]);
+      const threadToNodes = threadToNodeKeysRef.current;
+      const keys = threadToNodes.get(thread.id);
+      if (keys === undefined) return;
+      if (keys.size === 0) return;
+
+      editor.update(() => {
+        // Get the first key associated with the thread
+        const [key] = keys;
+        // Get the node associated with the key
+        const node = $getNodeByKey(key);
+
+        if (!$isThreadMarkNode(node)) return;
+        node.selectStart();
+      });
+    },
+    [editor, threadToNodeKeysRef, thread.id]
+  );
 
   function handleThreadDelete() {
+    onThreadDelete?.(thread);
+
     editor.update(() => {
       const threadToNodes = threadToNodeKeysRef.current;
       const keys = threadToNodes.get(thread.id);
@@ -403,8 +426,7 @@ export function LexicalThread({ thread }: { thread: ThreadData }) {
       onClick={handleThreadClick}
       onThreadDelete={handleThreadDelete}
       data-state={isActive ? "active" : undefined}
-      className="border-b border-[rgba(55,53,47,0.09)] dark:border-[rgba(255,255,255,0.094)]"
-      showComposer={true}
+      {...props}
     />
   );
 }

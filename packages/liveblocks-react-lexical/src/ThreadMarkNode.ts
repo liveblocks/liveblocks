@@ -21,6 +21,10 @@
  * SOFTWARE.
  */
 
+import {
+  addClassNamesToElement,
+  removeClassNamesFromElement,
+} from "@lexical/utils";
 import type {
   BaseSelection,
   EditorConfig,
@@ -30,11 +34,6 @@ import type {
   SerializedElementNode,
   Spread,
 } from "lexical";
-
-import {
-  addClassNamesToElement,
-  removeClassNamesFromElement,
-} from "@lexical/utils";
 import { $applyNodeReplacement, $isRangeSelection, ElementNode } from "lexical";
 
 export type SerializedThreadMarkNode = Spread<
