@@ -471,7 +471,7 @@ describe("client", () => {
       http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads`, (res) => {
         expect(
           decodeURIComponent(res.request.url).includes(
-            "?query=metadata['status']:'open'"
+            "?query=metadata['status']:'open'+AND+metadata['priority']:3"
           )
         ).toBe(true);
         return HttpResponse.json(
@@ -488,7 +488,44 @@ describe("client", () => {
     await expect(
       client.getThreads({
         roomId: "room1",
-        query: "metadata['status']:'open'",
+        query: "metadata['status']:'open' AND metadata['priority']:3",
+      })
+    ).resolves.toEqual({
+      data: [thread],
+    });
+  });
+
+  test("should return a filtered list of threads when a query parameter is used for getThreads with a metadata object", async () => {
+    server.use(
+      http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads`, (res) => {
+        expect(
+          decodeURIComponent(res.request.url).includes(
+            `?query=metadata["status"]:"open"+AND+metadata["priority"]:3`
+          )
+        ).toBe(true);
+        return HttpResponse.json(
+          {
+            data: [thread],
+          },
+          { status: 200 }
+        );
+      })
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    await expect(
+      client.getThreads<{
+        status: "open";
+        priority: 3;
+      }>({
+        roomId: "room1",
+        query: {
+          metadata: {
+            status: "open",
+            priority: 3,
+          },
+        },
       })
     ).resolves.toEqual({
       data: [thread],
