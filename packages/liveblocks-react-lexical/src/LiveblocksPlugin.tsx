@@ -6,6 +6,7 @@ import type { LexicalEditor } from "lexical";
 import React, { useCallback, useEffect } from "react";
 import type { Doc } from "yjs";
 
+import { CommentPluginProvider } from "./CommentPlugin";
 import {
   useDocumentSyncState,
   useTextCollaboration,
@@ -33,12 +34,15 @@ export type LiveblocksPluginProps = {
    * @returns void
    */
   initialEditorState?: (editor: LexicalEditor) => void;
+
+  children?: React.ReactNode;
 };
 
-export const LiveblocksPlugin = ({
+export const LiveblocksPluginProvider = ({
   userInfo = undefined,
   allowEditsBeforeSync = true,
   initialEditorState = undefined,
+  children,
 }: LiveblocksPluginProps): JSX.Element => {
   const { useSelf } = useRoomContextBundle();
   const { provider, doc } = useTextCollaboration();
@@ -81,18 +85,21 @@ export const LiveblocksPlugin = ({
     [provider, doc]
   );
 
+  if (provider === undefined) {
+    return <>{children}</>;
+  }
+
   return (
     <>
-      {provider && ( // NOTE: if we used suspense, we wouldn't need this provider &&
-        <CollaborationPlugin
-          providerFactory={providerFactor}
-          initialEditorState={initialEditorState}
-          id={"liveblocks-document"}
-          username={username}
-          cursorColor={cursorcolor}
-          shouldBootstrap={true}
-        />
-      )}
+      <CollaborationPlugin
+        providerFactory={providerFactor}
+        initialEditorState={initialEditorState}
+        id={"liveblocks-document"}
+        username={username}
+        cursorColor={cursorcolor}
+        shouldBootstrap={true}
+      />
+      <CommentPluginProvider>{children}</CommentPluginProvider>
     </>
   );
 };
