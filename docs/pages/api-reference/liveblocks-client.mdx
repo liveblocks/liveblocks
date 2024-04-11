@@ -1,8 +1,8 @@
 ---
 meta:
-  title: "@liveblocks/client"
-  parentTitle: "API Reference"
-  description: "API Reference for the @liveblocks/client package"
+title: "@liveblocks/client"
+parentTitle: "API Reference"
+description: "API Reference for the @liveblocks/client package"
 alwaysShowAllNavigationLevels: false
 ---
 
@@ -1686,7 +1686,8 @@ const unsubscribe = room.subscribe("lost-connection", (event) => {
 
     - `"lost"` - A connection has been lost for longer than [`lostConnectionTimeout`][].
     - `"restored"` - The connection has been restored again.
-    - `"failed"` - The room has been unable to reconnect again, and is no longer trying. This may happen if a user’s network has recovered, but the room’s authentication values no longer allow them to enter.
+    - `"failed"` - The room has been unable to reconnect again, and is no longer trying. This may happen if a user’s
+    network has recovered, but the room’s authentication values no longer allow them to enter.
 
   </PropertiesListItem>
 </PropertiesList>
@@ -1809,7 +1810,8 @@ const unsubscribe = room.subscribe("error", (error) => {
     detailedType={`(error: LiveblocksError) => void`}
     required
   >
-    Function that’s called when an unrecoverable error event has been triggered. `error.code` can return one of these values:
+    Function that’s called when an unrecoverable error event has been triggered. `error.code` can return one of these
+    values:
 
     - `-1` - Authentication error.
     - `4001` - Could not connect because you don't have access to this room.
@@ -2274,23 +2276,23 @@ room.disconnect();
 
 ## Storage
 
-<Banner title="Need help troubleshooting storage?">
+Each room contains Storage, a conflict-free data store that multiple users can
+edit at the same time. When users make edits simultaneously, conflicts are
+resolved automatically, and each user will see the same state. Storage is ideal
+for storing permanent document state, such as shapes on a canvas, notes on a
+whiteboard, or cells in a spreadsheet.
 
-Try the [Liveblocks DevTools extension](/devtools) to visualize your
-collaborative experiences as you build them, in real-time.
+### Data structures
 
-</Banner>
-
-The room’s storage is a conflicts-free state that multiple users can edit at the
-same time. It persists even after everyone leaves the room. Liveblocks provides
-3 data structures that can be nested to create the state that you want.
+Storage provides three different conflict-free data structures, which you can
+use to build your application. All structures are permanent and persist when all
+users have left the room, unlike [Presence](/docs/products/presence) which is
+temporary.
 
 - [`LiveObject`][] - Similar to JavaScript object. Use this for storing records
   with fixed key names and where the values don’t necessarily have the same
-  types. For example, a `Person` with a `name` (string) and an `age` (number)
-  field.
-
-  If multiple clients update the same property simultaneously, the last
+  types. For example, a `Person` with a `name: string` and an `age: number`
+  field. If multiple clients update the same property simultaneously, the last
   modification received by the Liveblocks servers is the winner.
 
 - [`LiveList`][] - An ordered collection of items synchronized across clients.
@@ -2302,15 +2304,58 @@ same time. It persists even after everyone leaves the room. Liveblocks provides
   by their name. If multiple users update the same property simultaneously, the
   last modification received by the Liveblocks servers is the winner.
 
+<Banner title="Need help troubleshooting Storage?">
+
+Get the [Liveblocks DevTools extension](/devtools) to develop and debug your
+application as you build it.
+
+</Banner>
+
 ### Room.getStorage
 
-Get the room’s storage asynchronously (returns a Promise). The promise will
-resolve once the storage’s root is loaded and available.
-
-The storage’s root will always be a [`LiveObject`][].
+Get the room’s Storage asynchronously (returns a Promise). The promise will
+resolve once the Storage’s root is loaded and available. The Storage’s root is
+always a [`LiveObject`][].
 
 ```ts
 const { root } = await room.getStorage();
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="storage" type="{ root: LiveObject<TStorage> }">
+    The room’s Storage structures. `root` is a `LiveObject`, and is the root of
+    your Storage. Learn more about [typing
+    Storage](#get-storage-typing-storage).
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem>_None_</PropertiesListItem>
+</PropertiesList>
+
+#### Typing Storage [#get-storage-typing-storage]
+
+To type the Storage values you receive, make sure to set your `Storage` type.
+
+```ts
+import { LiveList } from "@liveblocks/client";
+
+type Storage = {
+  animals: LiveList<{ name: string }>;
+};
+```
+
+The type received in the callback will match the type passed. Learn more under
+[typing your room](#typing-your-room).
+
+```ts
+const { root } = await room.getStorage();
+const animals = root.get("animals");
+
+const unsubscribe = room.subscribe(animals, (updatedAnimals) => {
+  // LiveList<[{ name: "Fido" }, { name: "Felix" }]>
+  console.log(updatedAnimals);
+});
 ```
 
 ## LiveObject
