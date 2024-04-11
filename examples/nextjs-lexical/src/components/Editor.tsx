@@ -10,8 +10,10 @@ import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import {
   LexicalThread,
   LexicalThreadComposer,
-  LiveblocksPluginProvider,
+  CommentPluginProvider,
+  LiveblocksPlugin,
   ThreadMarkNode,
+  LastActiveSelection,
 } from "@liveblocks/react-lexical";
 import { useThreads } from "@/liveblocks.config";
 
@@ -43,30 +45,35 @@ export default function Editor() {
   return (
     <div className={styles.container}>
       <LexicalComposer initialConfig={initialConfig}>
-        <div className={styles.editorHeader}>
-          <Toolbar />
-          <Avatars />
-        </div>
-        <div className={styles.editorContainer}>
-          <div className={styles.editor}>
-            <RichTextPlugin
-              contentEditable={
-                <ContentEditable className={styles.contentEditable} />
-              }
-              placeholder={
-                <p className={styles.placeholder}>Start typing here…</p>
-              }
-              ErrorBoundary={LexicalErrorBoundary}
-            />
+        <CommentPluginProvider>
+          <div className={styles.editorHeader}>
+            <Toolbar />
+            <Avatars />
           </div>
+          <div className={styles.editorContainer}>
+            <div className={styles.editor}>
+              <RichTextPlugin
+                contentEditable={
+                  <>
+                    <ContentEditable className={styles.contentEditable} />
+                    <LastActiveSelection />
+                  </>
+                }
+                placeholder={
+                  <p className={styles.placeholder}>Start typing here…</p>
+                }
+                ErrorBoundary={LexicalErrorBoundary}
+              />
+            </div>
 
-          <LiveblocksPluginProvider>
+            <LiveblocksPlugin />
+
             <div className={styles.sidebar}>
               <LexicalThreadComposer className={styles.composer} />
               <Threads />
             </div>
-          </LiveblocksPluginProvider>
-        </div>
+          </div>
+        </CommentPluginProvider>
       </LexicalComposer>
     </div>
   );

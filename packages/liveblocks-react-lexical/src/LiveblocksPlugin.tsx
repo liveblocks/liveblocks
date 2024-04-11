@@ -6,7 +6,6 @@ import type { LexicalEditor } from "lexical";
 import React, { useCallback, useEffect } from "react";
 import type { Doc } from "yjs";
 
-import { CommentPluginProvider } from "./CommentPlugin";
 import {
   useDocumentSyncState,
   useTextCollaboration,
@@ -38,7 +37,7 @@ export type LiveblocksPluginProps = {
   children?: React.ReactNode;
 };
 
-export const LiveblocksPluginProvider = ({
+export const LiveblocksPlugin = ({
   userInfo = undefined,
   allowEditsBeforeSync = true,
   initialEditorState = undefined,
@@ -90,16 +89,13 @@ export const LiveblocksPluginProvider = ({
   }
 
   return (
-    <>
-      <CollaborationPlugin
-        providerFactory={providerFactor}
-        initialEditorState={initialEditorState}
-        id={"liveblocks-document"}
-        username={username}
-        cursorColor={cursorcolor}
-        shouldBootstrap={true}
-      />
-      <CommentPluginProvider>{children}</CommentPluginProvider>
-    </>
+    <CollaborationPlugin
+      providerFactory={providerFactor}
+      initialEditorState={initialEditorState}
+      id={"liveblocks-document"}
+      username={username}
+      cursorColor={cursorcolor}
+      shouldBootstrap={true}
+    />
   );
 };
