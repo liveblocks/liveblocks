@@ -278,6 +278,80 @@ describe("useThreads", () => {
     unmount();
   });
 
+  test("shoud fetch threads for a given query with a startsWith filter", async () => {
+    const liveblocksEngineeringThread = dummyThreadData();
+    liveblocksEngineeringThread.metadata = {
+      organization: "liveblocks:engineering",
+    };
+
+    const liveblocksDesignThread = dummyThreadData();
+    liveblocksDesignThread.metadata = {
+      organization: "liveblocks:design",
+    };
+
+    const acmeEngineeringThread = dummyThreadData();
+    acmeEngineeringThread.metadata = {
+      organization: "acme",
+    };
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            data: [
+              liveblocksEngineeringThread,
+              liveblocksDesignThread,
+              acmeEngineeringThread,
+            ],
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest<{
+      organization: string;
+    }>();
+
+    const { result, unmount } = renderHook(
+      () =>
+        useThreads({
+          query: {
+            metadata: {
+              organization: {
+                startsWith: "liveblocks:",
+              },
+            },
+          },
+        }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id="room-id" initialPresence={{}}>
+            {children}
+          </RoomProvider>
+        ),
+      }
+    );
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [liveblocksEngineeringThread, liveblocksDesignThread],
+      })
+    );
+
+    unmount();
+  });
+
   test("should dedupe fetch threads for a given query", async () => {
     let getThreadsReqCount = 0;
 
