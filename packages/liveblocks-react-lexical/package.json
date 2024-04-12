@@ -40,6 +40,9 @@
   },
   "peerDependencies": {
     "@lexical/react": "^0.10.0",
+    "@lexical/selection": "^0.14.3",
+    "@lexical/utils": "^0.14.3",
+    "@liveblocks/react-comments": "^1.11.0",
     "lexical": "^0.10.0",
     "react": "^16.14.0 || ^17 || ^18"
   },

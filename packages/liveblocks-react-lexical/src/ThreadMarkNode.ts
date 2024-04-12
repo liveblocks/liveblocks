@@ -83,9 +83,9 @@ export class ThreadMarkNode extends ElementNode {
 
   createDOM(config: EditorConfig): HTMLElement {
     const element = document.createElement("mark");
-    addClassNamesToElement(element, config.theme.threadMark);
+    addClassNamesToElement(element, config.theme.threadMark as string);
     if (this.__ids.length > 1) {
-      addClassNamesToElement(element, config.theme.threadMarkOverlap);
+      addClassNamesToElement(element, config.theme.threadMarkOverlap as string);
     }
     return element;
   }

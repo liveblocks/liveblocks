@@ -1,14 +1,6 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { createDOMRange, createRectsFromDOMRange } from "@lexical/selection";
 import { registerNestedElementResolver } from "@lexical/utils";
-import type { BaseMetadata } from "@liveblocks/client";
-import { useRoomContextBundle } from "@liveblocks/react";
-import type {
-  ComposerProps,
-  ComposerSubmitComment,
-  ThreadProps,
-} from "@liveblocks/react-comments";
-import { Composer, Thread } from "@liveblocks/react-comments";
 import type {
   BaseSelection,
   LexicalCommand,
@@ -24,10 +16,8 @@ import {
   COMMAND_PRIORITY_EDITOR,
   createCommand,
 } from "lexical";
-import type { MouseEvent } from "react";
 import React, {
   createContext,
-  useCallback,
   useContext,
   useEffect,
   useLayoutEffect,
@@ -42,8 +32,6 @@ import {
 } from "./ThreadMarkNode";
 import {
   $getThreadMarkIds,
-  $unwrapThreadMarkNode,
-  $wrapSelectionInThreadMarkNode,
 } from "./utils";
 
 export const INSERT_THREAD_COMMAND: LexicalCommand<void> = createCommand(
@@ -61,15 +49,17 @@ type SelectionInfo = {
   };
 };
 
-const LastActiveSelectionContext = createContext<SelectionInfo | undefined>(
-  undefined
+const LastActiveSelectionContext = createContext<SelectionInfo | null>(
+  null
 );
 
 const ActiveThreadsContext = createContext<string[]>([]);
 
-const ThreadToNodeKeysRefContext = createContext<{
+type ThreadToNodesMap = {
   current: Map<string, Set<NodeKey>>;
-}>({
+}
+
+const ThreadToNodeKeysRefContext = createContext<ThreadToNodesMap>({
   current: new Map(),
 });
 
@@ -83,8 +73,8 @@ export function CommentPluginProvider({
   const threadToNodeKeysRef = useRef<Map<string, Set<NodeKey>>>(new Map()); // A map from thread id to a set of (mark) node keys that are associated with the thread
 
   const [lastActiveSelection, setLastActiveSelection] = useState<
-    SelectionInfo | undefined
-  >(); // The last active selection that was used to attach a thread
+    SelectionInfo | null
+  >(null); // The last active selection that was used to attach a thread
 
   const [activeThreads, setActiveThreads] = useState<string[]>([]); // The threads that are currently active (or selected) in the editor
 
@@ -225,7 +215,7 @@ export function CommentPluginProvider({
 
   useEffect(() => {
     function onStateRead() {
-      setLastActiveSelection(undefined);
+      setLastActiveSelection(null);
     }
 
     return editor.registerUpdateListener(({ editorState: state, tags }) => {
@@ -261,183 +251,45 @@ export function CommentPluginProvider({
   );
 }
 
-export type ThreadMetadata = {
-  resolved?: boolean;
-};
-
-type LexicalThreadComposerProps<
-  TThreadMetadata extends BaseMetadata = ThreadMetadata,
-> = Omit<
-  ComposerProps<TThreadMetadata>,
-  "onComposerSubmit" | "threadId" | "commentId"
->;
-
-export function LexicalThreadComposer<
-  TThreadMetadata extends BaseMetadata = ThreadMetadata,
->({ metadata, ...props }: LexicalThreadComposerProps<TThreadMetadata>) {
+export function useLastActiveSelection(): SelectionInfo | null {
   const lastActiveSelection = useContext(LastActiveSelectionContext);
-  const { useCreateThread } = useRoomContextBundle();
-  const createThread = useCreateThread();
-  const [editor] = useLexicalComposerContext();
+  if (lastActiveSelection === undefined) {
+    throw new Error(
+      "useLastActiveSelection has to be used within <LiveblocksPlugin>"
+    );
+  }
+  return lastActiveSelection;
+}
+export function useThreadToNodeKeysMap(): ThreadToNodesMap {
+  const threadToNodesMap = useContext(ThreadToNodeKeysRefContext);
 
-  if (lastActiveSelection === undefined) return null;
-
-  function handleComposerSubmit(comment: ComposerSubmitComment) {
-    const thread = createThread({
-      body: comment.body,
-      metadata: metadata ?? {},
-    });
-    editor.update(() => {
-      const selection = $getSelection();
-      if (!$isRangeSelection(selection)) return;
-
-      const isBackward = selection.isBackward();
-      // Wrap content in a MarkNode
-      $wrapSelectionInThreadMarkNode(selection, isBackward, thread.id);
-    });
+  if (!threadToNodesMap) {
+    throw new Error(
+      "useThreadToNodeKeysMap has to be used within <LiveblocksPlugin>"
+    );
   }
 
-  return (
-    <Composer
-      onComposerSubmit={(content, event) => {
-        event.preventDefault();
-        handleComposerSubmit(content);
-      }}
-      {...props}
-    />
-  );
+  return threadToNodesMap;
 }
-
-export function LexicalThread<
-  TThreadMetadata extends BaseMetadata = ThreadMetadata,
->({ thread, onClick, onThreadDelete, ...props }: ThreadProps<TThreadMetadata>) {
-  const [editor] = useLexicalComposerContext();
-  const divRef = useRef<HTMLDivElement>(null);
-  const threadToNodeKeysRef = useContext(ThreadToNodeKeysRefContext);
+export function useActiveThreads(): string[] {
   const activeThreads = useContext(ActiveThreadsContext);
 
-  const isActive = activeThreads.includes(thread.id);
-
-  const handleThreadClick = useCallback(
-    (event: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
-      onClick?.(event);
-
-      if (event.isDefaultPrevented()) return;
-
-      const threadToNodes = threadToNodeKeysRef.current;
-      const keys = threadToNodes.get(thread.id);
-      if (keys === undefined) return;
-      if (keys.size === 0) return;
-
-      editor.update(() => {
-        // Get the first key associated with the thread
-        const [key] = keys;
-        // Get the node associated with the key
-        const node = $getNodeByKey(key);
-
-        if (!$isThreadMarkNode(node)) return;
-        node.selectStart();
-      });
-    },
-    [editor, threadToNodeKeysRef, thread.id]
-  );
-
-  function handleThreadDelete() {
-    onThreadDelete?.(thread);
-
-    editor.update(() => {
-      const threadToNodes = threadToNodeKeysRef.current;
-      const keys = threadToNodes.get(thread.id);
-      if (keys === undefined) return;
-
-      for (const key of keys) {
-        const node = $getNodeByKey(key);
-        if (!$isThreadMarkNode(node)) continue;
-        node.deleteID(thread.id);
-
-        if (node.getIDs().length === 0) {
-          $unwrapThreadMarkNode(node);
-        }
-      }
-    });
+  if (!activeThreads) {
+    throw new Error(
+      "useActiveThreads has to be used within <LiveblocksPlugin>"
+    );
   }
 
-  useEffect(() => {
-    const element = divRef.current;
-    if (element === null) return;
-
-    const composer = element.querySelector(".lb-composer-editor");
-    if (composer === null) return;
-
-    function handleComposerClick() {
-      const threadToNodes = threadToNodeKeysRef.current;
-      const keys = threadToNodes.get(thread.id);
-      if (keys === undefined) return;
-      if (keys.size === 0) return;
-
-      editor.update(
-        () => {
-          // Get the first key associated with the thread
-          const [key] = keys;
-          // Get the node associated with the key
-          const node = $getNodeByKey(key);
-
-          if (!$isThreadMarkNode(node)) return;
-          node.selectStart();
-        },
-        {
-          onUpdate: () => {
-            const element = divRef.current;
-            if (element === null) return;
-
-            const composer = element.querySelector(".lb-composer-editor");
-            if (composer === null) return;
-
-            if (composer instanceof HTMLElement) {
-              composer.focus();
-            }
-          },
-        }
-      );
-    }
-
-    composer.addEventListener("click", handleComposerClick);
-    return () => {
-      composer.removeEventListener("click", handleComposerClick);
-    };
-  }, [editor, thread.id, threadToNodeKeysRef]);
-
-  useEffect(() => {
-    if (!isActive) return;
-
-    const element = divRef.current;
-    if (element === null) return;
-
-    element.scrollIntoView({
-      behavior: "smooth",
-    });
-  }, [isActive]);
-
-  return (
-    <Thread
-      ref={divRef}
-      key={thread.id}
-      thread={thread}
-      onClick={handleThreadClick}
-      onThreadDelete={handleThreadDelete}
-      data-state={isActive ? "active" : undefined}
-      {...props}
-    />
-  );
+  return activeThreads;
 }
 
 export function LastActiveSelection() {
   const [editor] = useLexicalComposerContext();
-  const selection = useContext(LastActiveSelectionContext);
+  const selection = useLastActiveSelection();
   const containerRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
-    if (selection === undefined) return;
+    if (selection === null) return;
 
     const container = containerRef.current;
     if (container === null) return;
@@ -462,9 +314,8 @@ export function LastActiveSelection() {
       const div = document.createElement("div");
       div.style.position = "absolute";
       div.style.top = `${rect.top - container.getBoundingClientRect().top}px`;
-      div.style.left = `${
-        rect.left - container.getBoundingClientRect().left
-      }px`;
+      div.style.left = `${rect.left - container.getBoundingClientRect().left
+        }px`;
       div.style.width = `${rect.width}px`;
       div.style.height = `${rect.height}px`;
       div.style.backgroundColor = "rgb(255, 212, 0)";

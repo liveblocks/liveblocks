@@ -113,7 +113,7 @@ export function $wrapSelectionInThreadMarkNode(
         continue;
       }
       const parentNode = targetNode.getParent();
-      if (parentNode == null || !parentNode.is(currentNodeParent)) {
+      if (parentNode === null || !parentNode.is(currentNodeParent)) {
         // If the parent node is not the current node's parent node, we can
         // clear the last created mark node.
         lastCreatedMarkNode = undefined;

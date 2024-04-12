@@ -6,6 +6,7 @@ import type { LexicalEditor } from "lexical";
 import React, { useCallback, useEffect } from "react";
 import type { Doc } from "yjs";
 
+import { CommentPluginProvider } from "./CommentPluginProvider";
 import {
   useDocumentSyncState,
   useTextCollaboration,
@@ -89,13 +90,18 @@ export const LiveblocksPlugin = ({
   }
 
   return (
-    <CollaborationPlugin
-      providerFactory={providerFactor}
-      initialEditorState={initialEditorState}
-      id={"liveblocks-document"}
-      username={username}
-      cursorColor={cursorcolor}
-      shouldBootstrap={true}
-    />
+    <>
+      <CollaborationPlugin
+        providerFactory={providerFactor}
+        initialEditorState={initialEditorState}
+        id={"liveblocks-document"}
+        username={username}
+        cursorColor={cursorcolor}
+        shouldBootstrap={true}
+      />
+      <CommentPluginProvider>
+        {children}
+      </CommentPluginProvider>
+    </>
   );
 };

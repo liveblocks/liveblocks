@@ -10,7 +10,6 @@ import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import {
   LexicalThread,
   LexicalThreadComposer,
-  CommentPluginProvider,
   LiveblocksPlugin,
   ThreadMarkNode,
   LastActiveSelection,
@@ -45,35 +44,35 @@ export default function Editor() {
   return (
     <div className={styles.container}>
       <LexicalComposer initialConfig={initialConfig}>
-        <CommentPluginProvider>
-          <div className={styles.editorHeader}>
-            <Toolbar />
-            <Avatars />
+        <div className={styles.editorHeader}>
+          <Toolbar />
+          <Avatars />
+        </div>
+        <div className={styles.editorContainer}>
+          <div className={styles.editor}>
+            <RichTextPlugin
+              contentEditable={
+                <>
+                  <ContentEditable className={styles.contentEditable} />
+                  <LastActiveSelection />
+                </>
+              }
+              placeholder={
+                <p className={styles.placeholder}>Start typing here…</p>
+              }
+              ErrorBoundary={LexicalErrorBoundary}
+            />
           </div>
-          <div className={styles.editorContainer}>
-            <div className={styles.editor}>
-              <RichTextPlugin
-                contentEditable={
-                  <>
-                    <ContentEditable className={styles.contentEditable} />
-                    <LastActiveSelection />
-                  </>
-                }
-                placeholder={
-                  <p className={styles.placeholder}>Start typing here…</p>
-                }
-                ErrorBoundary={LexicalErrorBoundary}
-              />
-            </div>
 
-            <LiveblocksPlugin />
-
+          <LiveblocksPlugin >
             <div className={styles.sidebar}>
               <LexicalThreadComposer autoFocus className={styles.composer} />
               <Threads />
             </div>
-          </div>
-        </CommentPluginProvider>
+          </LiveblocksPlugin>
+
+
+        </div>
       </LexicalComposer>
     </div>
   );
