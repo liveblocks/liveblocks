@@ -9,4 +9,4 @@ export { LexicalThread } from "./LexicalThread";
 export { LexicalThreadComposer } from "./LexicalThreadComposer";
 export { LiveblocksPlugin } from "./LiveblocksPlugin";
 export * from "./TextCollaborationProvider";
-export * from "./ThreadMarkNode";
+export { liveblocksLexicalConfig } from "./utils";

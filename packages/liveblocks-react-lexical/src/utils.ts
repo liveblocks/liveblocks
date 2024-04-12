@@ -21,11 +21,51 @@
  * SOFTWARE.
  */
 
-import type { LexicalNode, RangeSelection, TextNode } from "lexical";
+import type { InitialConfigType } from "@lexical/react/LexicalComposer";
+import type {
+  Klass,
+  LexicalEditor,
+  LexicalNode,
+  LexicalNodeReplacement,
+  RangeSelection,
+  TextNode,
+} from "lexical";
 import { $isElementNode, $isTextNode } from "lexical";
 
-import type { ThreadMarkNode } from "./ThreadMarkNode";
-import { $createThreadMarkNode, $isThreadMarkNode } from "./ThreadMarkNode";
+import {
+  $createThreadMarkNode,
+  $isThreadMarkNode,
+  ThreadMarkNode,
+} from "./ThreadMarkNode";
+
+export function liveblocksLexicalConfig(editorConfig: InitialConfigType) {
+  let nodes: ReadonlyArray<Klass<LexicalNode> | LexicalNodeReplacement> = [];
+  if (!editorConfig.nodes?.includes(ThreadMarkNode)) {
+    nodes = [ThreadMarkNode, ...(editorConfig.nodes ?? [])];
+  }
+  const { namespace, editable, html } = editorConfig;
+  const theme = { ...editorConfig.theme };
+  if (!theme.threadMark) {
+    // TODO: add default threadmark styles!?
+    //theme.threadMark =
+  }
+  const onError = (error: Error, editor: LexicalEditor) => {
+    // TODO (We can ahndle some errors? maybe?)
+    if (editorConfig.onError) {
+      editorConfig.onError(error, editor);
+    }
+    throw error;
+  };
+  return {
+    nodes,
+    editorState: null, // explicitly null because CollabProvider requiers it
+    namespace,
+    onError,
+    editable,
+    theme,
+    html,
+  };
+}
 
 export function $unwrapThreadMarkNode(node: ThreadMarkNode): void {
   const children = node.getChildren();

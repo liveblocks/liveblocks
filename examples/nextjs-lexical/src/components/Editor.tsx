@@ -11,18 +11,15 @@ import {
   LexicalThread,
   LexicalThreadComposer,
   LiveblocksPlugin,
-  ThreadMarkNode,
+  liveblocksLexicalConfig,
 } from "@liveblocks/react-lexical";
 import { useThreads } from "@/liveblocks.config";
 
 // Set up editor config and theme
 const initialConfig = {
-  // NOTE: This is critical for collaboration plugin to set editor state to null. It
-  // would indicate that the editor should not try to set any default state
-  // (not even empty one), and let collaboration plugin do it instead
   editorState: null,
   namespace: "Demo",
-  nodes: [ThreadMarkNode],
+  nodes: [],
   onError: (error: unknown) => {
     throw error;
   },
@@ -36,13 +33,12 @@ const initialConfig = {
     threadMark: styles.threadMark,
   },
 };
-
 // Collaborative text editor with simple rich text, live cursors, and live avatars
 
 export default function Editor() {
   return (
     <div className={styles.container}>
-      <LexicalComposer initialConfig={initialConfig}>
+      <LexicalComposer initialConfig={liveblocksLexicalConfig(initialConfig)}>
         <div className={styles.editorHeader}>
           <Toolbar />
           <Avatars />
