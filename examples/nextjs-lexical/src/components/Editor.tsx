@@ -54,7 +54,6 @@ export default function Editor() {
               contentEditable={
                 <>
                   <ContentEditable className={styles.contentEditable} />
-                  <LastActiveSelection />
                 </>
               }
               placeholder={
@@ -67,6 +66,7 @@ export default function Editor() {
           <LiveblocksPlugin >
             <div className={styles.sidebar}>
               <LexicalThreadComposer autoFocus className={styles.composer} />
+              <LastActiveSelection />
               <Threads />
             </div>
           </LiveblocksPlugin>
