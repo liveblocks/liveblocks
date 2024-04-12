@@ -232,11 +232,14 @@ describe("useThreads", () => {
 
     server.use(
       mockGetThreads(async (req, res, ctx) => {
-        const { metadata } = await req.json<{ metadata: BaseMetadata }>();
+        const query = req.url.searchParams.get("query");
+        // TODO: This is a hacky way to check if the query includes resolved:true or resolved:false
+        // There must be a more elegant way by modifying mockGetThreads directly
+        const isResolved = query?.includes('metadata["resolved"]:true');
         return res(
           ctx.json({
             data: [resolvedThread, unresolvedThread].filter(
-              (thread) => thread.metadata.resolved === metadata.resolved
+              (thread) => thread.metadata.resolved === isResolved
             ),
             inboxNotifications: [],
             deletedThreads: [],
@@ -411,11 +414,14 @@ describe("useThreads", () => {
 
     server.use(
       mockGetThreads(async (req, res, ctx) => {
-        const { metadata } = await req.json<{ metadata: BaseMetadata }>();
+        const query = req.url.searchParams.get("query");
+        // TODO: This is a hacky way to check if the query includes resolved:true or resolved:false
+        // There must be a more elegant way by modifying mockGetThreads directly
+        const isResolved = query?.includes('metadata["resolved"]:true');
         return res(
           ctx.json({
             data: [resolvedThread, unresolvedThread].filter(
-              (thread) => thread.metadata.resolved === metadata.resolved
+              (thread) => thread.metadata.resolved === isResolved
             ),
             inboxNotifications: [],
             deletedThreads: [],
@@ -486,8 +492,8 @@ describe("useThreads", () => {
     room2Threads.map((thread) => (thread.roomId = "room2"));
 
     server.use(
-      rest.post(
-        "https://api.liveblocks.io/v2/c/rooms/room1/threads/search",
+      rest.get(
+        "https://api.liveblocks.io/v2/c/rooms/room1/threads",
         async (_req, res, ctx) => {
           return res(
             ctx.json({
@@ -502,8 +508,8 @@ describe("useThreads", () => {
           );
         }
       ),
-      rest.post(
-        "https://api.liveblocks.io/v2/c/rooms/room2/threads/search",
+      rest.get(
+        "https://api.liveblocks.io/v2/c/rooms/room2/threads",
         async (_req, res, ctx) => {
           return res(
             ctx.json({
@@ -575,8 +581,8 @@ describe("useThreads", () => {
     room2Threads.map((thread) => (thread.roomId = "room2"));
 
     server.use(
-      rest.post(
-        "https://api.liveblocks.io/v2/c/rooms/room1/threads/search",
+      rest.get(
+        "https://api.liveblocks.io/v2/c/rooms/room1/threads",
         async (_req, res, ctx) => {
           return res(
             ctx.json({
@@ -591,8 +597,8 @@ describe("useThreads", () => {
           );
         }
       ),
-      rest.post(
-        "https://api.liveblocks.io/v2/c/rooms/room2/threads/search",
+      rest.get(
+        "https://api.liveblocks.io/v2/c/rooms/room2/threads",
         async (_req, res, ctx) => {
           return res(
             ctx.json({
