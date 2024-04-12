@@ -41,6 +41,7 @@ import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
+import { objectToQuery } from "./lib/objectToQuery";
 import { asPos } from "./lib/position";
 import type { Resolve } from "./lib/Resolve";
 import type { QueryParams } from "./lib/url";
@@ -1115,19 +1116,23 @@ function createCommentsApi(
   async function getThreads<TThreadMetadata extends BaseMetadata = never>(
     options?: GetThreadsOptions<TThreadMetadata>
   ) {
+    let query: string | undefined;
+
+    if (options?.query) {
+      // @ts-expect-error: FIXME typing
+      query = objectToQuery(options.query);
+    }
+
     const response = await fetchCommentsApi(
-      "/threads/search",
+      "/threads",
       {
         since: options?.since?.toISOString(),
+        query,
       },
       {
-        body: JSON.stringify({
-          ...(options?.query?.metadata && { metadata: options.query.metadata }),
-        }),
         headers: {
           "Content-Type": "application/json",
         },
-        method: "POST",
       }
     );
 
