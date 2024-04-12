@@ -12,7 +12,6 @@ import {
   LexicalThreadComposer,
   LiveblocksPlugin,
   ThreadMarkNode,
-  LastActiveSelection,
 } from "@liveblocks/react-lexical";
 import { useThreads } from "@/liveblocks.config";
 
@@ -66,7 +65,6 @@ export default function Editor() {
           <LiveblocksPlugin >
             <div className={styles.sidebar}>
               <LexicalThreadComposer autoFocus className={styles.composer} />
-              <LastActiveSelection />
               <Threads />
             </div>
           </LiveblocksPlugin>

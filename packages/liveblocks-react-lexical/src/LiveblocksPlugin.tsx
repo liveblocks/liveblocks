@@ -6,7 +6,7 @@ import type { LexicalEditor } from "lexical";
 import React, { useCallback, useEffect } from "react";
 import type { Doc } from "yjs";
 
-import { CommentPluginProvider } from "./CommentPluginProvider";
+import { CommentPluginProvider, LastActiveSelection } from "./CommentPluginProvider";
 import {
   useDocumentSyncState,
   useTextCollaboration,
@@ -100,6 +100,7 @@ export const LiveblocksPlugin = ({
         shouldBootstrap={true}
       />
       <CommentPluginProvider>
+        <LastActiveSelection />
         {children}
       </CommentPluginProvider>
     </>
