@@ -12,7 +12,8 @@ import { $unwrapThreadMarkNode } from "./utils";
 
 export function LexicalThread<
   TThreadMetadata extends BaseMetadata = ThreadMetadata,
->({ thread, onClick, onThreadDelete, ...props }: ThreadProps<TThreadMetadata>) {
+>({ thread, ...props }: ThreadProps<TThreadMetadata>) {
+  const { onClick, onThreadDelete } = props;
   const [editor] = useLexicalComposerContext();
   const divRef = useRef<HTMLDivElement>(null);
   const threadToNodeKeysRef = useThreadToNodeKeysMap();

@@ -18,7 +18,7 @@ type LexicalThreadComposerProps<
 
 export function LexicalThreadComposer<
   TThreadMetadata extends BaseMetadata = ThreadMetadata,
->({ metadata, ...props }: LexicalThreadComposerProps<TThreadMetadata>) {
+>({ ...props }: LexicalThreadComposerProps<TThreadMetadata>) {
   const lastActiveSelection = useLastActiveSelection();
   const { useCreateThread } = useRoomContextBundle();
   const createThread = useCreateThread();
@@ -29,7 +29,7 @@ export function LexicalThreadComposer<
   function handleComposerSubmit(comment: ComposerSubmitComment) {
     const thread = createThread({
       body: comment.body,
-      metadata: metadata ?? {},
+      metadata: props.metadata ?? {},
     });
     editor.update(() => {
       const selection = $getSelection();
