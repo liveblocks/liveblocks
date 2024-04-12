@@ -154,16 +154,35 @@ export function CommentPluginProvider({
   useEffect(() => {
     return editor.registerCommand(
       INSERT_THREAD_COMMAND,
-      () => {
+      (type?: string) => {
         const selection = $getSelection();
         if (!$isRangeSelection(selection)) return false;
 
+        // If we got an empty selection (just a caret), try and expand it
+        if (selection?.getTextContent().trim() === "") {
+          if (type === "expansion") {
+            // Do NOT try to expand again if this came from an expansion
+            return false;
+          }
+          // Update selection to find nearest word
+          editor.update(() => {
+            selection.modify("move", true, "word"); // move to the beginning of the previous word
+            selection.modify("extend", false, "word"); // extend back to the whole word
+          }, {
+            tag: "expansion", // Tag the update so we can find it in handlers
+            onUpdate: () => {
+              // After expansion, run the insert comment command again (the original one did NOT complete)
+              editor.dispatchCommand<LexicalCommand<"expansion">>(INSERT_THREAD_COMMAND, "expansion");
+            }
+          });
+          return false;
+        }
         const nativeSelection = window.getSelection();
         if (nativeSelection !== null) {
           nativeSelection.removeAllRanges();
         }
 
-        setLastActiveSelection({
+        const activeSelection = {
           anchor: {
             node: selection.anchor.getNode() as LexicalNode,
             offset: selection.anchor.offset,
@@ -172,7 +191,9 @@ export function CommentPluginProvider({
             node: selection.focus.getNode() as LexicalNode,
             offset: selection.focus.offset,
           },
-        });
+        };
+
+        setLastActiveSelection(activeSelection);
 
         return true;
       },
@@ -217,9 +238,11 @@ export function CommentPluginProvider({
     function onStateRead() {
       setLastActiveSelection(null);
     }
-
     return editor.registerUpdateListener(({ editorState: state, tags }) => {
-      if (tags.has("collaboration")) return;
+      // Ignore selection expansion updates (from insert comments on a caret) and collab updates
+      if (tags.has("collaboration") || tags.has("expansion")) {
+        return;
+      }
       state.read(onStateRead);
     });
   }, [editor, setLastActiveSelection]);
@@ -325,7 +348,7 @@ export function LastActiveSelection() {
     }
   }, [editor, selection]);
 
-  if (selection === undefined) return null;
+  if (selection === null) return null;
 
   return (
     <div

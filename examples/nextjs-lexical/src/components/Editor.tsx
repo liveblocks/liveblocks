@@ -2,7 +2,7 @@
 
 import styles from "./Editor.module.css";
 import { Toolbar } from "@/components/Toolbar";
-import { Avatars } from "./Avatars";
+import { Avatars } from "@/components/Avatars";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";

@@ -77,7 +77,7 @@ export const LiveblocksPlugin = ({
   }, [synced, editor, allowEditsBeforeSync]);
 
   // Create the provider factory
-  const providerFactor = useCallback(
+  const providerFactory = useCallback(
     (id: string, yjsDocMap: Map<string, Doc>) => {
       yjsDocMap.set(id, doc);
       return provider as Provider;
@@ -92,7 +92,7 @@ export const LiveblocksPlugin = ({
   return (
     <>
       <CollaborationPlugin
-        providerFactory={providerFactor}
+        providerFactory={providerFactory}
         initialEditorState={initialEditorState}
         id={"liveblocks-document"}
         username={username}
