@@ -8,7 +8,7 @@ import { Loading } from "@/components/Loading";
 import { TextCollaborationProvider } from "@liveblocks/react-lexical";
 
 export function Room({ children }: { children: ReactNode }) {
-  const roomId = useExampleRoomId("liveblocks:examples:nextjs-yjs-lexical");
+  const roomId = useExampleRoomId("liveblocks:examples:nextjs-lexical");
 
   return (
     <RoomProvider
