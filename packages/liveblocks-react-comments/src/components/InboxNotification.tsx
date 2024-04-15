@@ -93,7 +93,7 @@ export interface InboxNotificationProps
 }
 
 export interface InboxNotificationThreadProps
-  extends Omit<InboxNotificationProps, "kinds">,
+  extends Omit<InboxNotificationProps, "kinds" | "children">,
     InboxNotificationSharedProps {
   /**
    * The inbox notification to display.
