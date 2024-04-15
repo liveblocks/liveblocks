@@ -30,7 +30,7 @@ export function createExampleUserId(
 
 export function setExampleId(url: string) {
   const params = new URLSearchParams(window.location.search);
-  const exampleId = params.get("exampleId");
+  const exampleId = params.get("exampleId") ?? undefined;
 
   return setQueryParams(url, { exampleId });
 }
@@ -38,7 +38,7 @@ export function setExampleId(url: string) {
 export function authWithExampleId(endpoint: string) {
   return async (room?: string) => {
     const params = new URLSearchParams(window.location.search);
-    const exampleId = params.get("exampleId");
+    const exampleId = params.get("exampleId") ?? undefined;
     const examplePreview = Number(params.get("examplePreview"));
 
     const userId = createExampleUserId(examplePreview, exampleId);
