@@ -7,6 +7,7 @@ import type {
 } from "@liveblocks/core";
 import { assertNever, console, kInternal } from "@liveblocks/core";
 import { useLiveblocksContextBundle } from "@liveblocks/react";
+import { Slot } from "@radix-ui/react-slot";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import type {
   ComponentProps,
@@ -30,6 +31,7 @@ import type {
 } from "../overrides";
 import { useOverrides } from "../overrides";
 import { Timestamp } from "../primitives/Timestamp";
+import type { SlotProp } from "../types";
 import { classNames } from "../utils/class-names";
 import { generateURL } from "../utils/url";
 import { Avatar, type AvatarProps } from "./internal/Avatar";
@@ -106,7 +108,8 @@ export interface InboxNotificationThreadProps
 
 export interface InboxNotificationCustomProps
   extends Omit<InboxNotificationProps, "kinds">,
-    InboxNotificationSharedProps {
+    InboxNotificationSharedProps,
+    SlotProp {
   /**
    * The inbox notification to display.
    */
@@ -136,7 +139,8 @@ export interface InboxNotificationCustomProps
 
 interface InboxNotificationLayoutProps
   extends Omit<ComponentPropsWithoutRef<"a">, "title">,
-    InboxNotificationSharedProps {
+    InboxNotificationSharedProps,
+    SlotProp {
   inboxNotification: InboxNotificationData;
   aside: ReactNode;
   title: ReactNode;
@@ -170,12 +174,14 @@ const InboxNotificationLayout = forwardRef<
       overrides,
       components,
       className,
+      asChild,
       ...props
     },
     forwardedRef
   ) => {
     const $ = useOverrides(overrides);
     const { Anchor } = useComponents(components);
+    const Component = asChild ? Slot : Anchor;
     const [isMoreActionOpen, setMoreActionOpen] = useState(false);
     const { useMarkInboxNotificationAsRead } = useLiveblocksContextBundle();
     const markInboxNotificationAsRead = useMarkInboxNotificationAsRead();
@@ -224,7 +230,7 @@ const InboxNotificationLayout = forwardRef<
 
     return (
       <TooltipProvider>
-        <Anchor
+        <Component
           className={classNames(
             "lb-root lb-inbox-notification",
             showActions === "hover" &&
@@ -297,7 +303,7 @@ const InboxNotificationLayout = forwardRef<
             </div>
             <div className="lb-inbox-notification-body">{children}</div>
           </div>
-        </Anchor>
+        </Component>
       </TooltipProvider>
     );
   }
