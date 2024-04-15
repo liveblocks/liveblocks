@@ -106,8 +106,8 @@ test.describe("Redux", () => {
 
     const actions = ["#push", "#delete"];
     for (let i = 0; i < 30; i++) {
-      await page1.click(pickFrom(actions));
-      await page2.click(pickFrom(actions));
+      await page1.click(pickFrom(actions), { force: true });
+      await page2.click(pickFrom(actions), { force: true });
       await nanoSleep();
     }
 
@@ -134,8 +134,8 @@ test.describe("Redux", () => {
 
     const actions = ["#push", "#delete"];
     for (let i = 0; i < 30; i++) {
-      await page1.click(pickFrom(actions));
-      await page2.click(pickFrom(actions));
+      await page1.click(pickFrom(actions), { force: true });
+      await page2.click(pickFrom(actions), { force: true });
       await nanoSleep();
     }
 

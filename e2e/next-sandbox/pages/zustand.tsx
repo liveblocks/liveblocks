@@ -131,10 +131,7 @@ export default function ZustandApp() {
         <Button
           id="delete"
           enabled={canDelete}
-          onClick={() => {
-            if (!canDelete) return;
-            deleteItem(nextIndexToDelete);
-          }}
+          onClick={() => deleteItem(nextIndexToDelete)}
           subtitle={
             canDelete
               ? `index ${nextIndexToDelete} (${items[
