@@ -537,7 +537,7 @@ const InboxNotificationCustomMissing = forwardRef<
       {...props}
       title={
         <>
-          <strong>Inbox notification</strong> of kind{" "}
+          This <strong>inbox notification</strong> of custom kind{" "}
           <code>{inboxNotification.kind}</code> is not handled
         </>
       }
@@ -599,9 +599,8 @@ export const InboxNotification = Object.assign(
               if (!inboxNotificationKindsWarnings.has(inboxNotification.kind)) {
                 inboxNotificationKindsWarnings.add(inboxNotification.kind);
                 // TODO: Add link to the docs
-                console.warnWithTitle(
-                  "Unhandled inbox notification",
-                  `Inbox notifications of kind "${inboxNotification.kind}" are not handled so they will not be displayed in production. Use the kinds prop to define how they should be rendered.`
+                console.warn(
+                  `Inbox notifications of custom kind "${inboxNotification.kind}" are not handled so they will not be displayed in production. Use the kinds prop to define how they should be rendered.`
                 );
               }
 
