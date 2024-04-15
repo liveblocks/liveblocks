@@ -14,10 +14,10 @@ export function LastActiveSelection() {
     let observer: ResizeObserver | undefined;
     if (container === null) return;
 
-    // Look for existing marker container
-    let markerContainer = container.parentNode?.querySelector(".lb-marker-container") as HTMLDivElement | undefined;
     // Look for contentEditable, then use its parent so we can place markerContainer next to it
     const editorRef = editor.getRootElement();
+    // Look for existing marker container
+    let markerContainer = editorRef?.parentNode?.querySelector(".lb-marker-container") as HTMLDivElement | undefined;
     if (editorRef && !markerContainer) {
       markerContainer = document.createElement("div");
       markerContainer.style.position = "absolute";
