@@ -14,8 +14,9 @@ export function LastActiveSelection() {
     let observer: ResizeObserver | undefined;
     if (container === null) return;
 
+    // Look for existing marker container
     let markerContainer = container.parentNode?.querySelector(".lb-marker-container") as HTMLDivElement | undefined;
-    // Look for contentEditable, then use its parent
+    // Look for contentEditable, then use its parent so we can place markerContainer next to it
     const editorRef = Array.from(container.parentNode?.querySelectorAll("[contenteditable=true]") as NodeList)
       .find((div) => !(div as HTMLElement).className.includes("lb-composer-editor"))
     if (editorRef && !markerContainer) {
@@ -29,13 +30,12 @@ export function LastActiveSelection() {
       markerContainer.className = "lb-marker-container";
       editorRef.parentNode?.appendChild(markerContainer);
     }
-    // If we weren't able to find the editor ref (this shouldn't really happen...) then use our own container
+    // If we weren't able to find the editor ref then use our own container TODO: allow user to provide containerRef
     if (!markerContainer) {
       markerContainer = container;
     }
 
-
-
+    // Function that draws rectangles around text (markers)
     function drawRects() {
       if (!markerContainer) return;
       // Remove all existing children of the container
@@ -43,6 +43,7 @@ export function LastActiveSelection() {
         markerContainer.removeChild(markerContainer.firstChild);
       }
 
+      // nothing to render when there's no selection
       if (selection === null) return;
       const range = createDOMRange(
         editor,
@@ -71,12 +72,14 @@ export function LastActiveSelection() {
     }
     drawRects();
 
-    if (editorRef) {
+    // Observer resizes
+    if (markerContainer) {
       observer = new ResizeObserver(drawRects);
-      observer.observe(editorRef as HTMLElement);
+      observer.observe(markerContainer as HTMLElement);
     }
 
     return () => {
+      // Cleans up observer
       observer?.disconnect();
       observer = undefined;
     }
