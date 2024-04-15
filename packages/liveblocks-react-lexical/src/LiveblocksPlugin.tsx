@@ -6,7 +6,8 @@ import type { LexicalEditor } from "lexical";
 import React, { useCallback, useEffect } from "react";
 import type { Doc } from "yjs";
 
-import { CommentPluginProvider, LastActiveSelection } from "./CommentPluginProvider";
+import { CommentPluginProvider } from "./CommentPluginProvider";
+import { LastActiveSelection } from "./LastActiveSelection";
 import {
   useDocumentSyncState,
   useTextCollaboration,

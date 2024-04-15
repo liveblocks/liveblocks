@@ -1,5 +1,4 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { createDOMRange, createRectsFromDOMRange } from "@lexical/selection";
 import { registerNestedElementResolver } from "@lexical/utils";
 import type {
   BaseSelection,
@@ -20,7 +19,6 @@ import React, {
   createContext,
   useContext,
   useEffect,
-  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -306,61 +304,4 @@ export function useActiveThreads(): string[] {
   return activeThreads;
 }
 
-export function LastActiveSelection() {
-  const [editor] = useLexicalComposerContext();
-  const selection = useLastActiveSelection();
-  const containerRef = useRef<HTMLDivElement>(null);
 
-  useLayoutEffect(() => {
-    if (selection === null) return;
-
-    const container = containerRef.current;
-    if (container === null) return;
-
-    // // Remove all existing children of the container
-    while (container.firstChild) {
-      container.removeChild(container.firstChild);
-    }
-
-    const range = createDOMRange(
-      editor,
-      selection.anchor.node,
-      selection.anchor.offset,
-      selection.focus.node,
-      selection.focus.offset
-    );
-
-    if (range === null) return;
-    const rects = createRectsFromDOMRange(editor, range);
-
-    for (const rect of rects) {
-      const div = document.createElement("div");
-      div.style.position = "absolute";
-      div.style.top = `${rect.top - container.getBoundingClientRect().top}px`;
-      div.style.left = `${rect.left - container.getBoundingClientRect().left
-        }px`;
-      div.style.width = `${rect.width}px`;
-      div.style.height = `${rect.height}px`;
-      div.style.backgroundColor = "rgb(255, 212, 0)";
-      div.style.opacity = "0.5";
-      div.style.pointerEvents = "none";
-      container.appendChild(div);
-    }
-  }, [editor, selection]);
-
-  if (selection === null) return null;
-
-  return (
-    <div
-      ref={containerRef}
-      style={{
-        position: "absolute",
-        height: "100%",
-        width: "100%",
-        top: 0,
-        left: 0,
-        pointerEvents: "none",
-      }}
-    />
-  );
-}
