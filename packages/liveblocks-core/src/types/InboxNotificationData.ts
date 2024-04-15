@@ -20,8 +20,8 @@ type InboxNotificationActivity = {
 export type InboxNotificationCustomData = {
   kind: `$${string}`;
   id: string;
-  roomId: string;
-  subjectId?: string;
+  roomId?: string;
+  subjectId: string;
   notifiedAt: Date;
   readAt: Date | null;
   activities: InboxNotificationActivity[];
