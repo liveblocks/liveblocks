@@ -1,3 +1,14 @@
+# v1.12.0
+
+### `@liveblocks/react`
+
+- Add support for custom notifications to `useInboxNotifications`.
+
+### `@liveblocks/react-comments`
+
+- Add support for custom notifications to the `InboxNotification` component via
+  the `kinds` prop and the `InboxNotification.Custom` component.
+
 # v1.11.1
 
 ### `@liveblocks/react-comments`
