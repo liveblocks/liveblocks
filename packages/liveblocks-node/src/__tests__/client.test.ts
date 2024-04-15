@@ -1007,7 +1007,9 @@ describe("client", () => {
       activities: [
         {
           ...notification.activities[0],
-          createdAt: new Date(notification.activities[0]?.createdAt!),
+          createdAt: notification.activities[0]?.createdAt
+            ? new Date(notification.activities[0].createdAt)
+            : null,
         },
       ],
     });
