@@ -53,7 +53,7 @@ type ComponentTypeWithRef<
 > = ComponentType<P & Pick<ComponentProps<T>, "ref">>;
 
 type InboxNotificationKinds = Record<
-  `${string}`,
+  `$${string}`,
   ComponentTypeWithRef<"a", InboxNotificationCustomProps>
 > & {
   thread: ComponentTypeWithRef<"a", InboxNotificationThreadProps>;
