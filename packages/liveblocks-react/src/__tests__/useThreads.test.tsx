@@ -10,6 +10,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
+import { AST, QueryParser } from "@liveblocks/query-parser";
 import { addSeconds } from "date-fns";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
@@ -29,6 +30,32 @@ import {
 } from "./_restMocks";
 
 const server = setupServer();
+
+const parser = new QueryParser({
+  fields: {},
+  indexableFields: {
+    metadata: "mixed",
+  },
+});
+
+const getFilter = (
+  clauses: AST.Clause[],
+  indexedFieldKey: string,
+  filterKey: string
+) => {
+  const filter = clauses.find(
+    (clause) =>
+      clause.field._kind === "IndexedField" &&
+      clause.field.base.name === indexedFieldKey &&
+      clause.field.key === filterKey
+  );
+
+  return {
+    key: filter?.field._kind === "IndexedField" ? filter.field.key : "",
+    operator: filter?.operator.op,
+    value: filter?.value.value,
+  };
+};
 
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 
@@ -233,13 +260,18 @@ describe("useThreads", () => {
     server.use(
       mockGetThreads(async (req, res, ctx) => {
         const query = req.url.searchParams.get("query");
-        // TODO: This is a hacky way to check if the query includes resolved:true or resolved:false
-        // There must be a more elegant way by modifying mockGetThreads directly
-        const isResolved = query?.includes('metadata["resolved"]:true');
+        const parseRes = parser.parse(query ?? "");
+
+        const metadataResolved = getFilter(
+          parseRes.query.clauses,
+          "metadata",
+          "resolved"
+        );
+
         return res(
           ctx.json({
             data: [resolvedThread, unresolvedThread].filter(
-              (thread) => thread.metadata.resolved === isResolved
+              (thread) => thread.metadata.resolved === metadataResolved.value
             ),
             inboxNotifications: [],
             deletedThreads: [],
@@ -415,13 +447,18 @@ describe("useThreads", () => {
     server.use(
       mockGetThreads(async (req, res, ctx) => {
         const query = req.url.searchParams.get("query");
-        // TODO: This is a hacky way to check if the query includes resolved:true or resolved:false
-        // There must be a more elegant way by modifying mockGetThreads directly
-        const isResolved = query?.includes('metadata["resolved"]:true');
+        const parseRes = parser.parse(query ?? "");
+
+        const metadataResolved = getFilter(
+          parseRes.query.clauses,
+          "metadata",
+          "resolved"
+        );
+
         return res(
           ctx.json({
             data: [resolvedThread, unresolvedThread].filter(
-              (thread) => thread.metadata.resolved === isResolved
+              (thread) => thread.metadata.resolved === metadataResolved.value
             ),
             inboxNotifications: [],
             deletedThreads: [],

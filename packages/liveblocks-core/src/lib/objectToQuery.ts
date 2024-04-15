@@ -23,10 +23,24 @@ console.log(query);
 
 type FilterValue = string | number | boolean | { startsWith: string };
 
-type Filter = {
+type Filter = NumberFilter | StringFilter | BooleanFilter;
+
+type NumberFilter = {
+  key: string;
+  operator: ":";
+  value: number;
+};
+
+type StringFilter = {
   key: string;
   operator: ":" | "^";
-  value: string | number | boolean;
+  value: string;
+};
+
+type BooleanFilter = {
+  key: string;
+  operator: ":";
+  value: boolean;
 };
 
 /**
@@ -65,7 +79,7 @@ export function objectToQuery(obj: {
   const entries = Object.entries(obj);
 
   /**
-   * Case 1: Simple key value pairs
+   * Case 1: Simple key value pairs (equal operator)
    * @example
    * ```ts
    * { key: "foo" }
