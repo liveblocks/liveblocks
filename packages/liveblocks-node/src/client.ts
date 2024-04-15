@@ -1353,7 +1353,7 @@ export class Liveblocks {
     kind: `$${string}`;
     roomId?: string;
     subjectId: string;
-    activityData: Nullable<BaseMetadata>;
+    activityData: BaseMetadata;
   }): Promise<InboxNotificationData> {
     const res = await this.post(url`/v2/inbox-notifications`, params);
 
