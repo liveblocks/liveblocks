@@ -17,8 +17,7 @@ export function LastActiveSelection() {
     // Look for existing marker container
     let markerContainer = container.parentNode?.querySelector(".lb-marker-container") as HTMLDivElement | undefined;
     // Look for contentEditable, then use its parent so we can place markerContainer next to it
-    const editorRef = Array.from(container.parentNode?.querySelectorAll("[contenteditable=true]") as NodeList)
-      .find((div) => !(div as HTMLElement).className.includes("lb-composer-editor"))
+    const editorRef = editor.getRootElement();
     if (editorRef && !markerContainer) {
       markerContainer = document.createElement("div");
       markerContainer.style.position = "absolute";
