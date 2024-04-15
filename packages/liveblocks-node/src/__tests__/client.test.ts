@@ -969,4 +969,47 @@ describe("client", () => {
       }
     }
   });
+
+  test("should return the created inbox notification when createInboxNotification receives a successful response", async () => {
+    const userId = "user1";
+    const inboxNotificationId = "notification1";
+
+    const notification = {
+      id: inboxNotificationId,
+      kind: "fileUploaded",
+      notifiedAt: new Date().toISOString(),
+      readAt: null,
+      subjectId: "subject1",
+      activities: [
+        { createdAt: new Date().toISOString(), data: { file: "url" } },
+      ],
+    };
+
+    server.use(
+      http.post(`${DEFAULT_BASE_URL}/v2/inbox-notifications`, () => {
+        return HttpResponse.json(notification, { status: 200 });
+      })
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    await expect(
+      client.createInboxNotification({
+        userId,
+        kind: "$fileUploaded",
+        subjectId: "subject1",
+        activityData: { file: "url" },
+      })
+    ).resolves.toEqual({
+      ...notification,
+      notifiedAt: new Date(notification.notifiedAt),
+      readAt: notification.readAt ? new Date(notification.readAt) : null,
+      activities: [
+        {
+          ...notification.activities[0],
+          createdAt: new Date(notification.activities[0]?.createdAt!),
+        },
+      ],
+    });
+  });
 });

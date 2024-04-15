@@ -10,6 +10,7 @@ import type {
   CommentDataPlain,
   CommentUserReaction,
   CommentUserReactionPlain,
+  InboxNotificationCustomDataPlain,
   InboxNotificationData,
   InboxNotificationDataPlain,
   IUserInfo,
@@ -1345,6 +1346,25 @@ export class Liveblocks {
         ? new Date(data.lastConnectionAt)
         : undefined,
     };
+  }
+
+  public async createInboxNotification(params: {
+    userId: string;
+    kind: `$${string}`;
+    roomId?: string;
+    subjectId: string;
+    activityData: Nullable<BaseMetadata>;
+  }): Promise<InboxNotificationData> {
+    const res = await this.post(url`/v2/inbox-notifications`, params);
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    return convertToInboxNotificationData(
+      (await res.json()) as InboxNotificationCustomDataPlain
+    );
   }
 }
 
