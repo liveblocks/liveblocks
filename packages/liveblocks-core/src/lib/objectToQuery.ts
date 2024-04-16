@@ -20,8 +20,10 @@ console.log(query);
  *
  *
  */
+type SimpleFilterValue = string | number | boolean;
+type OperatorFilterValue = { startsWith: string };
 
-type FilterValue = string | number | boolean | { startsWith: string };
+type FilterValue = SimpleFilterValue | OperatorFilterValue;
 
 type Filter = NumberFilter | StringFilter | BooleanFilter;
 
@@ -131,10 +133,10 @@ export function objectToQuery(obj: {
     const nestedEntries = Object.entries(value);
     const nestedKeyValuePairs = nestedEntries
       .filter(([_, value]) => isSimpleValue(value))
-      .map(([nestedKey, nestedValue]) => [
+      .map(([nestedKey, nestedValue]): [string, SimpleFilterValue] => [
         formatFilterKey(key, nestedKey),
         nestedValue,
-      ]) as [string, string | number | boolean][];
+      ]);
 
     filterList = filterList.concat(
       getFiltersFromKeyValuePairs(nestedKeyValuePairs)
@@ -142,10 +144,10 @@ export function objectToQuery(obj: {
 
     const nestedKeyValuePairsWithOperator = nestedEntries
       .filter(([_, value]) => isValueWithOperator(value))
-      .map(([nestedKey, nestedValue]) => [
+      .map(([nestedKey, nestedValue]): [string, OperatorFilterValue] => [
         formatFilterKey(key, nestedKey),
         nestedValue,
-      ]) as [string, { startsWith: string }][];
+      ]);
 
     filterList = filterList.concat(
       getFiltersFromKeyValuePairsWithOperator(nestedKeyValuePairsWithOperator)
@@ -191,7 +193,7 @@ const getFiltersFromKeyValuePairsWithOperator = (
   return filters;
 };
 
-const isSimpleValue = (value: unknown) => {
+const isSimpleValue = (value: unknown): value is string | number | boolean => {
   if (
     typeof value === "string" ||
     typeof value === "number" ||
@@ -202,7 +204,9 @@ const isSimpleValue = (value: unknown) => {
   return false;
 };
 
-const isValueWithOperator = (value: unknown) => {
+const isValueWithOperator = (
+  value: unknown
+): value is { startsWith: string } => {
   if (typeof value === "object" && value !== null && "startsWith" in value) {
     return true;
   }
