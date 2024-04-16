@@ -970,7 +970,7 @@ describe("client", () => {
     }
   });
 
-  test("should return the created inbox notification when createInboxNotification receives a successful response", async () => {
+  test("should return the created inbox notification when triggerInboxNotification receives a successful response", async () => {
     const userId = "user1";
 
     server.use(

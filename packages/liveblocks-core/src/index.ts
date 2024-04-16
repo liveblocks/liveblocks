@@ -184,6 +184,7 @@ export type {
 } from "./types/CommentReaction";
 export type { Immutable } from "./types/Immutable";
 export type {
+  ActivityData,
   InboxNotificationCustomData,
   InboxNotificationCustomDataPlain,
   InboxNotificationData,

@@ -19,6 +19,7 @@ import type {
   RoomNotificationSettings,
   ThreadData,
   ThreadDataPlain,
+  ActivityData,
 } from "@liveblocks/core";
 import {
   convertToCommentData,
@@ -1352,7 +1353,7 @@ export class Liveblocks {
     kind: `$${string}`;
     roomId?: string;
     subjectId: string;
-    activityData: BaseMetadata;
+    activityData: ActivityData;
   }): Promise<void> {
     const res = await this.post(url`/v2/inbox-notifications/trigger`, params);
 
