@@ -20,6 +20,7 @@ export function LastActiveSelection() {
     let markerContainer = editorRef?.parentNode?.querySelector(".lb-marker-container") as HTMLDivElement | undefined;
     if (editorRef && !markerContainer) {
       markerContainer = document.createElement("div");
+      // TODO: move these to a class?
       markerContainer.style.position = "absolute";
       markerContainer.style.height = "100%";
       markerContainer.style.width = "100%";
@@ -69,18 +70,24 @@ export function LastActiveSelection() {
         markerContainer.appendChild(div);
       }
     }
-    drawRects();
 
-    // Observer resizes
-    if (markerContainer) {
+    let unsubUpdateHandler = () => { };
+
+    // Observer resizes and edit listener, but only when selection is not null
+    if (markerContainer && selection !== null) {
       observer = new ResizeObserver(drawRects);
       observer.observe(markerContainer as HTMLElement);
+      unsubUpdateHandler = editor.registerUpdateListener(drawRects);
     }
 
+    // draw or clear rects
+    drawRects();
+
     return () => {
-      // Cleans up observer
+      // Cleans up observer and updeate listener
       observer?.disconnect();
       observer = undefined;
+      unsubUpdateHandler();
     }
   }, [editor, selection]);
 
