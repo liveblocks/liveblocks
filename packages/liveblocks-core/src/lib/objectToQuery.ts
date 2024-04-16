@@ -226,7 +226,7 @@ const formatFilterKey = (key: string, nestedKey?: string) => {
 
 const formatFilterValue = (value: string | number | boolean) => {
   if (typeof value === "string") {
-    return escapeQuotes(value);
+    return `"${escapeQuotes(value)}"`;
   }
   return value.toString();
 };
