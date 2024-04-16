@@ -25,7 +25,7 @@ import {
   convertToCommentData,
   convertToCommentUserReaction,
   convertToThreadData,
-} from "@liveblocks/core";
+ objectToQuery } from "@liveblocks/core";
 
 import { Session } from "./Session";
 import {
@@ -39,7 +39,6 @@ import {
   urljoin,
   type URLSafeString,
 } from "./utils";
-import { objectToQuery } from "@liveblocks/core";
 
 export type LiveblocksOptions = {
   /**
