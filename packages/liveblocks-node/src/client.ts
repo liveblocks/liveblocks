@@ -911,7 +911,6 @@ export class Liveblocks {
     if (typeof params.query === "string") {
       query = params.query;
     } else if (typeof params.query === "object") {
-      // @ts-expect-error: FIXME typing
       query = objectToQuery(params.query);
     }
 

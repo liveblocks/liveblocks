@@ -73,7 +73,10 @@ type BooleanFilter = {
  *
  */
 export function objectToQuery(obj: {
-  [key: string]: FilterValue | { [key: string]: FilterValue };
+  [key: string]:
+    | FilterValue
+    | { [key: string]: FilterValue | undefined }
+    | undefined;
 }): string {
   let filterList: Filter[] = [];
   const entries = Object.entries(obj);
@@ -122,6 +125,9 @@ export function objectToQuery(obj: {
   });
 
   indexedKeys.forEach(([key, value]) => {
+    if (!value) {
+      return;
+    }
     const nestedEntries = Object.entries(value);
     const nestedKeyValuePairs = nestedEntries
       .filter(([_, value]) => isSimpleValue(value))

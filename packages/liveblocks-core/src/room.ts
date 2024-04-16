@@ -1119,7 +1119,6 @@ function createCommentsApi(
     let query: string | undefined;
 
     if (options?.query) {
-      // @ts-expect-error: FIXME typing
       query = objectToQuery(options.query);
     }
 
