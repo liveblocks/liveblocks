@@ -4,6 +4,7 @@
  * @liveblocks/core has browser-specific code.
  */
 import type {
+  ActivityData,
   BaseMetadata,
   CommentBody,
   CommentData,
@@ -19,7 +20,6 @@ import type {
   RoomNotificationSettings,
   ThreadData,
   ThreadDataPlain,
-  ActivityData,
 } from "@liveblocks/core";
 import {
   convertToCommentData,
