@@ -219,14 +219,16 @@ const formatFilter = (key: string, operator: ":" | "^", value: string) => {
 
 const formatFilterKey = (key: string, nestedKey?: string) => {
   if (nestedKey) {
-    return `${key}["${nestedKey}"]`;
+    return `${escapeQuotes(key)}["${escapeQuotes(nestedKey)}"]`;
   }
-  return key;
+  return escapeQuotes(key);
 };
 
 const formatFilterValue = (value: string | number | boolean) => {
   if (typeof value === "string") {
-    return `"${value}"`;
+    return escapeQuotes(value);
   }
   return value.toString();
 };
+
+const escapeQuotes = (value: string) => value.replace(/"/g, '\\"');
