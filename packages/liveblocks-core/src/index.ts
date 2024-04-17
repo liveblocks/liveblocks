@@ -86,6 +86,7 @@ export * as console from "./lib/fancy-console";
 export { freeze } from "./lib/freeze";
 export type { Json, JsonArray, JsonObject, JsonScalar } from "./lib/Json";
 export { isJsonArray, isJsonObject, isJsonScalar } from "./lib/Json";
+export { objectToQuery } from "./lib/objectToQuery";
 export { makePoller } from "./lib/Poller";
 export { asPos, makePosition } from "./lib/position";
 export type { Resolve } from "./lib/Resolve";
@@ -99,7 +100,6 @@ export {
   tryParseJson,
   withTimeout,
 } from "./lib/utils";
-export { objectToQuery } from "./lib/objectToQuery";
 export type { CustomAuthenticationResult } from "./protocol/Authentication";
 export type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 export type {

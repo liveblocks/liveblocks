@@ -131,26 +131,24 @@ export function objectToQuery(obj: {
       return;
     }
     const nestedEntries = Object.entries(value);
-    const nestedKeyValuePairs = nestedEntries
-      .filter(([_, value]) => isSimpleValue(value))
-      .map(([nestedKey, nestedValue]): [string, SimpleFilterValue] => [
-        formatFilterKey(key, nestedKey),
-        nestedValue,
-      ]);
+    const nKeyValuePairs: [string, SimpleFilterValue][] = [];
+    const nKeyValuePairsWithOperator: [string, OperatorFilterValue][] = [];
+
+    nestedEntries.forEach(([nestedKey, nestedValue]) => {
+      if (isSimpleValue(nestedValue)) {
+        nKeyValuePairs.push([formatFilterKey(key, nestedKey), nestedValue]);
+      } else if (isValueWithOperator(nestedValue)) {
+        nKeyValuePairsWithOperator.push([
+          formatFilterKey(key, nestedKey),
+          nestedValue,
+        ]);
+      }
+    });
+
+    filterList = filterList.concat(getFiltersFromKeyValuePairs(nKeyValuePairs));
 
     filterList = filterList.concat(
-      getFiltersFromKeyValuePairs(nestedKeyValuePairs)
-    );
-
-    const nestedKeyValuePairsWithOperator = nestedEntries
-      .filter(([_, value]) => isValueWithOperator(value))
-      .map(([nestedKey, nestedValue]): [string, OperatorFilterValue] => [
-        formatFilterKey(key, nestedKey),
-        nestedValue,
-      ]);
-
-    filterList = filterList.concat(
-      getFiltersFromKeyValuePairsWithOperator(nestedKeyValuePairsWithOperator)
+      getFiltersFromKeyValuePairsWithOperator(nKeyValuePairsWithOperator)
     );
   });
 
@@ -169,7 +167,7 @@ const getFiltersFromKeyValuePairs = (
     filters.push({
       key,
       operator: ":",
-      value: value,
+      value,
     });
   });
 
@@ -193,7 +191,7 @@ const getFiltersFromKeyValuePairsWithOperator = (
   return filters;
 };
 
-const isSimpleValue = (value: unknown): value is string | number | boolean => {
+const isSimpleValue = (value: unknown): value is SimpleFilterValue => {
   if (
     typeof value === "string" ||
     typeof value === "number" ||
