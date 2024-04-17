@@ -8,6 +8,8 @@
 
 - Add support for custom notification kinds to the `InboxNotification` component
   via the `kinds` prop and the `InboxNotification.Custom` component.
+- Add destructive color tokens. (`--lb-destructive`,
+  `--lb-destructive-foreground`, and `--lb-destructive-contrast`)
 
 ### `@liveblocks/node`
 
