@@ -2,6 +2,8 @@ import "@testing-library/jest-dom";
 
 import type { BaseMetadata, JsonObject } from "@liveblocks/core";
 import { createClient, kInternal, ServerMsgCode } from "@liveblocks/core";
+import type { AST} from "@liveblocks/query-parser";
+import { QueryParser } from "@liveblocks/query-parser";
 import {
   act,
   fireEvent,
@@ -10,7 +12,6 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { AST, QueryParser } from "@liveblocks/query-parser";
 import { addSeconds } from "date-fns";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
