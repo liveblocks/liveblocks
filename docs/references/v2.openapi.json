@@ -2690,7 +2690,7 @@
         "x-badge": "Beta",
         "tags": ["Notifications"],
         "operationId": "post-inbox-notifications-trigger",
-        "description": "This endpoint triggers an inbox notification.",
+        "description": "This endpoint triggers an inbox notification. Corresponds to [`liveblocks.triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger).",
         "responses": {
           "200": {
             "description": "No Content"
