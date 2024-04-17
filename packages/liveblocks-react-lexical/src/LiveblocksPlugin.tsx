@@ -1,4 +1,3 @@
-import { CollaborationPlugin } from "@lexical/react/LexicalCollaborationPlugin";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { Provider } from "@lexical/yjs";
 import { useRoomContextBundle } from "@liveblocks/react";
@@ -12,6 +11,9 @@ import {
   useDocumentSyncState,
   useTextCollaboration,
 } from "./TextCollaborationProvider";
+import { ThreadAnnotations } from "./ThreadAnnotations";
+import { CollaborationPlugin } from "./CollaborationPlugin";
+import { LexicalThreadComposer } from "./LexicalThreadComposer";
 
 export type LiveblocksPluginProps = {
   /**
@@ -91,19 +93,20 @@ export const LiveblocksPlugin = ({
   }
 
   return (
-    <>
-      <CollaborationPlugin
-        providerFactory={providerFactory}
-        initialEditorState={initialEditorState}
-        id={"liveblocks-document"}
-        username={username}
-        cursorColor={cursorcolor}
-        shouldBootstrap={true}
-      />
+    <CollaborationPlugin
+      providerFactory={providerFactory}
+      initialEditorState={initialEditorState}
+      id={"liveblocks-document"}
+      username={username}
+      cursorColor={cursorcolor}
+      shouldBootstrap={true}
+    >
       <CommentPluginProvider>
         <LastActiveSelection />
+        <ThreadAnnotations />
+        <LexicalThreadComposer />
         {children}
       </CommentPluginProvider>
-    </>
+    </CollaborationPlugin>
   );
 };

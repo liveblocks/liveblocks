@@ -1,12 +1,11 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { createDOMRange, createRectsFromDOMRange } from "@lexical/selection";
-import React, { useLayoutEffect, useRef } from "react";
-
-import { useLastActiveSelection } from "./CommentPluginProvider";
+import React, { useContext, useLayoutEffect, useRef } from "react";
+import { LastActiveSelectionContext } from "./CommentPluginProvider";
 
 export function LastActiveSelection() {
   const [editor] = useLexicalComposerContext();
-  const selection = useLastActiveSelection();
+  const selection = useContext(LastActiveSelectionContext);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
@@ -17,7 +16,9 @@ export function LastActiveSelection() {
     // Look for contentEditable, then use its parent so we can place markerContainer next to it
     const editorRef = editor.getRootElement();
     // Look for existing marker container
-    let markerContainer = editorRef?.parentNode?.querySelector(".lb-marker-container") as HTMLDivElement | undefined;
+    let markerContainer = editorRef?.parentNode?.querySelector(
+      ".lb-marker-container"
+    ) as HTMLDivElement | undefined;
     if (editorRef && !markerContainer) {
       markerContainer = document.createElement("div");
       // TODO: move these to a class?
@@ -44,7 +45,7 @@ export function LastActiveSelection() {
       }
 
       // nothing to render when there's no selection
-      if (selection === null) return;
+      if (selection === undefined) return;
       const range = createDOMRange(
         editor,
         selection.anchor.node,
@@ -60,8 +61,9 @@ export function LastActiveSelection() {
         const div = document.createElement("div");
         div.style.position = "absolute";
         div.style.top = `${rect.top - markerContainer.getBoundingClientRect().top}px`;
-        div.style.left = `${rect.left - markerContainer.getBoundingClientRect().left
-          }px`;
+        div.style.left = `${
+          rect.left - markerContainer.getBoundingClientRect().left
+        }px`;
         div.style.width = `${rect.width}px`;
         div.style.height = `${rect.height}px`;
         div.style.backgroundColor = "rgb(255, 212, 0)";
@@ -71,10 +73,10 @@ export function LastActiveSelection() {
       }
     }
 
-    let unsubUpdateHandler = () => { };
+    let unsubUpdateHandler = () => {};
 
     // Observer resizes and edit listener, but only when selection is not null
-    if (markerContainer && selection !== null) {
+    if (markerContainer && selection !== undefined) {
       observer = new ResizeObserver(drawRects);
       observer.observe(markerContainer as HTMLElement);
       unsubUpdateHandler = editor.registerUpdateListener(drawRects);
@@ -88,7 +90,7 @@ export function LastActiveSelection() {
       observer?.disconnect();
       observer = undefined;
       unsubUpdateHandler();
-    }
+    };
   }, [editor, selection]);
 
   return (

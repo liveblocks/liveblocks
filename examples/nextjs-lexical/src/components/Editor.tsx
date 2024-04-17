@@ -7,13 +7,9 @@ import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
-import {
-  LexicalThread,
-  LexicalThreadComposer,
-  LiveblocksPlugin,
-  liveblocksLexicalConfig,
-} from "@liveblocks/react-lexical";
+import { LiveblocksPlugin } from "@liveblocks/react-lexical";
 import { useThreads } from "@/liveblocks.config";
+import { Thread } from "@liveblocks/react-comments";
 
 // Set up editor config and theme
 const initialConfig = {
@@ -30,7 +26,6 @@ const initialConfig = {
       underline: styles.textUnderline,
     },
     paragraph: styles.paragraph,
-    threadMark: styles.threadMark,
   },
 };
 // Collaborative text editor with simple rich text, live cursors, and live avatars
@@ -38,7 +33,7 @@ const initialConfig = {
 export default function Editor() {
   return (
     <div className={styles.container}>
-      <LexicalComposer initialConfig={liveblocksLexicalConfig(initialConfig)}>
+      <LexicalComposer initialConfig={initialConfig}>
         <div className={styles.editorHeader}>
           <Toolbar />
           <Avatars />
@@ -58,14 +53,10 @@ export default function Editor() {
             />
           </div>
 
-          <LiveblocksPlugin >
-            <div className={styles.sidebar}>
-              <LexicalThreadComposer autoFocus className={styles.composer} />
-              <Threads />
-            </div>
-          </LiveblocksPlugin>
-
-
+          <div className={styles.sidebar}>
+            <LiveblocksPlugin />
+            <Threads />
+          </div>
         </div>
       </LexicalComposer>
     </div>
@@ -79,10 +70,12 @@ function Threads() {
     <div className={styles.threads}>
       {threads.map((thread) => {
         return (
-          <LexicalThread
+          <Thread
             key={thread.id}
             thread={thread}
             className={styles.thread}
+            showComposer
+            showActions
           />
         );
       })}

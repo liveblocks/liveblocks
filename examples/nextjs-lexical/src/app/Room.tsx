@@ -8,7 +8,9 @@ import { Loading } from "@/components/Loading";
 import { TextCollaborationProvider } from "@liveblocks/react-lexical";
 
 export function Room({ children }: { children: ReactNode }) {
-  const roomId = useExampleRoomId("liveblocks:examples:nextjs-lexical");
+  const roomId = useExampleRoomId(
+    "liveblocks:examples:nextjs-lexical-relative-position"
+  );
 
   return (
     <RoomProvider
@@ -18,7 +20,9 @@ export function Room({ children }: { children: ReactNode }) {
       }}
     >
       <ClientSideSuspense fallback={<Loading />}>
-        {() => <TextCollaborationProvider>{children}</TextCollaborationProvider>}
+        {() => (
+          <TextCollaborationProvider>{children}</TextCollaborationProvider>
+        )}
       </ClientSideSuspense>
     </RoomProvider>
   );
