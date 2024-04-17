@@ -1590,29 +1590,28 @@ console.log(inboxNotification);
 
 #### Liveblocks.triggerInboxNotification [#trigger-inbox-notification] [@badge=Beta]
 
-Triggers an inbox notification based on an activity that happened in your
-system. This is a wrapper around the
+Triggers a custom inbox notification. `kind` must start with a `$`, and
+represents the type of notification. `activityData` is used to send custom data
+with the notification, and properties can have `string`, `number`, or `boolean`
+values. This is a wrapper around the
 [Trigger Inbox Notification API](/docs/api-reference/rest-api-endpoints#post-inbox-notifications-trigger).
-
-`kind` must start with a `$`.
-
-`activityData` can have `string`, `number`, or `boolean`.
 
 ```ts
 await liveblocks.triggerInboxNotification({
-  // The ID of the user that will receive the inbox notification.
+  // The ID of the user that will receive the inbox notification
   userId: "steven@example.com",
 
-  // The type of notification, must start with a $.
+  // The custom notification kind, must start with a $
   kind: "$fileUploaded",
 
-  // The ID of the resource that is the subject of the activity.
-  subjectId: "file123",
+  // The ID of the resource that is the subject of the activity
+  subjectId: "my-file",
 
-  // Everything related to the activity that you need to render the inbox notification.
+  // Custom data related to the activity that you need to render the inbox notification
   activityData: {
     // data can be a string, number, or boolean
-    file: "url-to-file",
+    file: "https://example.com/my-file.zip",
+    size: 256,
     success: true,
   },
 
