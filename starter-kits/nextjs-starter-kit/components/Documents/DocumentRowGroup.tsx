@@ -1,8 +1,9 @@
 import { memo } from "react";
-import { getLiveUsers, useDocumentsFunctionSWR } from "../../lib/client";
-import { Document } from "../../types";
+import { getLiveUsers } from "@/lib/actions";
+import { useDocumentsFunctionSWR } from "@/lib/hooks";
+import { Document } from "@/types";
 import { DocumentRow } from "./DocumentRow";
-import styles from "../../layouts/Documents/Documents.module.css";
+import styles from "@/layouts/Documents/DocumentsList.module.css";
 
 type Props = {
   documents: Document[];

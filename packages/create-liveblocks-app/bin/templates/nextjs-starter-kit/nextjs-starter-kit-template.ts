@@ -173,13 +173,7 @@ export async function create(flags: Record<string, any>) {
   const filesToWrite: { location: string; content: string }[] = [];
 
   // === Set up starter kit authentication ===============================
-  const nextauthTsLocation = path.join(
-    appDir,
-    "pages",
-    "api",
-    "auth",
-    "[...nextauth].ts"
-  );
+  const nextauthTsLocation = path.join(appDir, "auth.config.ts");
   const nextauthTs = fs.readFileSync(nextauthTsLocation, "utf-8");
   filesToWrite.push({
     location: nextauthTsLocation,

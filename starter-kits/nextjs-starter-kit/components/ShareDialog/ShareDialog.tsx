@@ -1,19 +1,17 @@
 import * as Tabs from "@radix-ui/react-tabs";
-import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
 import { ComponentProps, useCallback, useEffect, useState } from "react";
-import { UserIcon, UsersIcon } from "../../icons";
+import { UserIcon, UsersIcon } from "@/icons";
 import {
   getDocument,
-  getDocumentAccess,
   getDocumentGroups,
   getDocumentUsers,
-  useDocumentsFunctionSWR,
-  useInitialDocument,
-} from "../../lib/client";
-import { useBroadcastEvent, useEventListener } from "../../liveblocks.config";
-import { Dialog } from "../../primitives/Dialog";
-import { DocumentAccess } from "../../types";
+} from "@/lib/actions";
+import { useDocumentsFunctionSWR, useInitialDocument } from "@/lib/hooks";
+import { getDocumentAccess } from "@/lib/utils";
+import { useBroadcastEvent, useEventListener } from "@/liveblocks.config";
+import { Dialog } from "@/primitives/Dialog";
+import { DocumentAccess } from "@/types";
 import { ShareDialogDefault } from "./ShareDialogDefault";
 import { ShareDialogGroups } from "./ShareDialogGroups";
 import { ShareDialogInviteGroup } from "./ShareDialogInviteGroup";
@@ -25,7 +23,6 @@ type Props = Omit<ComponentProps<typeof Dialog>, "content" | "title">;
 
 export function ShareDialog({ children, ...props }: Props) {
   const { id: documentId, accesses: documentAccesses } = useInitialDocument();
-  const router = useRouter();
 
   const { data: session } = useSession();
   const [currentUserAccess, setCurrentUserAccess] = useState(
@@ -35,8 +32,8 @@ export function ShareDialog({ children, ...props }: Props) {
   // Get a list of users attached to the document (+ their info)
   const {
     data: users,
-    error: usersError,
     mutate: revalidateUsers,
+    // error: usersError,
   } = useDocumentsFunctionSWR([getDocumentUsers, { documentId }], {
     refreshInterval: 0,
   });
@@ -44,8 +41,8 @@ export function ShareDialog({ children, ...props }: Props) {
   // Get a list of groups attached to the document (+ their info)
   const {
     data: groups,
-    error: groupsError,
     mutate: revalidateGroups,
+    // error: groupsError,
   } = useDocumentsFunctionSWR([getDocumentGroups, { documentId }], {
     refreshInterval: 0,
   });
@@ -66,24 +63,24 @@ export function ShareDialog({ children, ...props }: Props) {
 
   // If you have no access to this room, refresh
   if (defaultAccessError && defaultAccessError.code === 403) {
-    router.reload();
+    window.location.reload();
   }
 
   // Refresh the current user's access level
   const revalidateCurrentUserAccess = useCallback(() => {
-    if (!session || !document) {
+    if (!document) {
       return;
     }
 
     const accessLevel = getDocumentAccess({
       documentAccesses: document.accesses,
-      userId: session.user?.info.id,
-      groupIds: session.user?.info.groupIds,
+      userId: session?.user?.info.id ?? "",
+      groupIds: session?.user?.info.groupIds ?? [],
     });
 
     // Reload if current user has no access (will show error page)
     if (accessLevel === DocumentAccess.NONE) {
-      router.reload();
+      window.location.reload();
       return;
     }
 
@@ -94,12 +91,12 @@ export function ShareDialog({ children, ...props }: Props) {
       (accessChanges.has(DocumentAccess.EDIT) ||
         accessChanges.has(DocumentAccess.FULL))
     ) {
-      router.reload();
+      window.location.reload();
       return;
     }
 
     setCurrentUserAccess(accessLevel);
-  }, [document, session, currentUserAccess, router]);
+  }, [document, session, currentUserAccess]);
 
   useEffect(() => {
     revalidateCurrentUserAccess();
