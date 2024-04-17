@@ -484,7 +484,7 @@ const InboxNotificationThread = forwardRef<
 );
 
 /**
- * Displays a custom inbox notification.
+ * Displays an inbox notification of custom kind.
  */
 const InboxNotificationCustom = forwardRef<
   HTMLAnchorElement,
