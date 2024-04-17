@@ -484,7 +484,7 @@ const InboxNotificationThread = forwardRef<
 );
 
 /**
- * Displays an inbox notification of custom kind.
+ * Displays a custom notification kind.
  */
 const InboxNotificationCustom = forwardRef<
   HTMLAnchorElement,
@@ -537,8 +537,8 @@ const InboxNotificationCustomMissing = forwardRef<
       {...props}
       title={
         <>
-          This <strong>inbox notification</strong> of custom kind{" "}
-          <code>{inboxNotification.kind}</code> is not handled
+          Custom notification kind <code>{inboxNotification.kind}</code> is not
+          handled
         </>
       }
       aside={
@@ -550,8 +550,8 @@ const InboxNotificationCustomMissing = forwardRef<
       data-missing=""
     >
       {/* TODO: Add link to the docs */}
-      It won’t be displayed in production. Use the <code>kinds</code> prop to
-      define how it should be rendered.
+      Notifications of this kind won’t be displayed in production. Use the{" "}
+      <code>kinds</code> prop to define how they should be rendered.
     </InboxNotificationCustom>
   );
 });
@@ -600,7 +600,7 @@ export const InboxNotification = Object.assign(
                 inboxNotificationKindsWarnings.add(inboxNotification.kind);
                 // TODO: Add link to the docs
                 console.warn(
-                  `Inbox notifications of custom kind "${inboxNotification.kind}" are not handled so they will not be displayed in production. Use the kinds prop to define how they should be rendered.`
+                  `Custom notification kind "${inboxNotification.kind}" is not handled so notifications of this kind will not be displayed in production. Use the kinds prop to define how they should be rendered.`
                 );
               }
 
