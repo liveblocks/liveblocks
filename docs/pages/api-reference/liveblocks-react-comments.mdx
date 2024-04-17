@@ -531,7 +531,7 @@ Displays a single inbox notification.
 <PropertiesList>
   <PropertiesListItem
     name="inboxNotification"
-    type="InboxNotification"
+    type="InboxNotificationData"
     required
   >
     The inbox notification to display.
@@ -565,8 +565,15 @@ Override specific kinds of inbox notifications.
     name="thread"
     type="ComponentType<InboxNotificationThreadProps>"
   >
-    The component used to display thread inbox notifications. Defaults to
+    The component used to display thread notifications. Defaults to
     `InboxNotification.Thread`.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="$${string}"
+    type="ComponentType<InboxNotificationCustomProps>"
+  >
+    The component used to display a custom notification kind. Custom
+    notification kinds must start with a `$`.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -585,11 +592,69 @@ Displays a thread inbox notification.
 ```
 
 <PropertiesList>
+  <PropertiesListItem
+    name="inboxNotification"
+    type="InboxNotificationThreadData"
+    required
+  >
+    The inbox notification to display.
+  </PropertiesListItem>
   <PropertiesListItem name="showActions" type='boolean | "hover"'>
     How to show or hide the actions.
   </PropertiesListItem>
   <PropertiesListItem name="showRoomName" type="boolean">
     Whether to show the room name in the title.
+  </PropertiesListItem>
+</PropertiesList>
+
+###### InboxNotification.Custom [#InboxNotification.Custom]
+
+Displays a custom notification kind.
+
+```tsx
+<InboxNotification
+  kinds={{
+    $myCustomNotificationKind: (props) => {
+      const activityData = props.inboxNotification.activities[0].data;
+
+      return(
+        <InboxNotification.Custom
+          title={<>User <strong>{activityData.file}</strong></>}
+          aside={<InboxNotification.Icon>❌</InboxNotification.Icon>}
+          {...props}
+        >
+          {activityData.errorDescription}
+        </InboxNotification>
+      )
+    },
+  }}
+/>
+```
+
+<PropertiesList>
+  <PropertiesListItem
+    name="inboxNotification"
+    type="InboxNotificationCustomData"
+    required
+  >
+    The inbox notification to display.
+  </PropertiesListItem>
+  <PropertiesListItem name="showActions" type='boolean | "hover"'>
+    How to show or hide the actions.
+  </PropertiesListItem>
+  <PropertiesListItem name="title" type="ReactNode">
+    The inbox notification’s title.
+  </PropertiesListItem>
+  <PropertiesListItem name="aside" type="ReactNode">
+    The inbox notification's aside content. Can be combined with{" "}
+    <code>InboxNotification.Icon</code> or <code>InboxNotification.Avatar</code>{" "}
+    to easily follow default styles.
+  </PropertiesListItem>
+  <PropertiesListItem name="children" type="ReactNode">
+    The inbox notification’s content.
+  </PropertiesListItem>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
   </PropertiesListItem>
 </PropertiesList>
 
