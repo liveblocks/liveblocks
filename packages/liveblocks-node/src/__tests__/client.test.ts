@@ -466,6 +466,35 @@ describe("client", () => {
     });
   });
 
+  test("should return a filtered list of threads when a query parameter is used for getThreads", async () => {
+    server.use(
+      http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads`, (res) => {
+        expect(
+          decodeURIComponent(res.request.url).includes(
+            "?query=metadata['status']:'open'"
+          )
+        ).toBe(true);
+        return HttpResponse.json(
+          {
+            data: [thread],
+          },
+          { status: 200 }
+        );
+      })
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    await expect(
+      client.getThreads({
+        roomId: "room1",
+        query: "metadata['status']:'open'",
+      })
+    ).resolves.toEqual({
+      data: [thread],
+    });
+  });
+
   test("should return the specified thread when getThread receives a successful response", async () => {
     server.use(
       http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads/:threadId`, () => {

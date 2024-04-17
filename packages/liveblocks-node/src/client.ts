@@ -887,10 +887,22 @@ export class Liveblocks {
    */
   public async getThreads(params: {
     roomId: string;
+    /**
+     * The query to filter threads by. It is based on our query language
+     * @example
+     * ```ts
+     * {
+     *  query: "metadata['status']:'open' AND metadata['resolved']:false AND metadata['priority']:3"
+     * }
+     * ```
+     */
+    query?: string;
   }): Promise<{ data: ThreadData[] }> {
     const { roomId } = params;
 
-    const res = await this.get(url`/v2/rooms/${roomId}/threads`);
+    const res = await this.get(url`/v2/rooms/${roomId}/threads`, {
+      query: params.query,
+    });
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
