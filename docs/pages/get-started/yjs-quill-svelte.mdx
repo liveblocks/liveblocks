@@ -86,7 +86,7 @@ hear from you.
         });
 
         // Attach Yjs to Quill
-        const binding = new QuillBinding(yText, quill, provider.awareness);
+        const binding = new QuillBinding(yText, quill, yProvider.awareness);
 
         return () => {
           binding.destroy();

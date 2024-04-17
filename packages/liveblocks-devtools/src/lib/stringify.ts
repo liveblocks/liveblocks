@@ -20,11 +20,13 @@ export function wrapObject(values?: string) {
   return values ? `{ ${values} }` : "{}";
 }
 
+type YjsContentData = Number | Object | Boolean | Array<unknown> | String;
+
 export function stringify(
-  value?: Json,
+  value?: Json | YjsContentData | YjsContentData[],
   maxDepth = 2,
   depth = 0,
-  seen = new WeakSet<JsonObject | Json[]>()
+  seen = new WeakSet<JsonObject | Json[] | YjsContentData>()
 ): string {
   if (Array.isArray(value)) {
     const isCircular = seen.has(value);
@@ -42,6 +44,12 @@ export function stringify(
 
       return wrapArray(values);
     }
+  } else if (
+    value instanceof Boolean ||
+    value instanceof Number ||
+    value instanceof String
+  ) {
+    return JSON.stringify(value);
   } else if (typeof value === "object" && value !== null) {
     const keys = Object.keys(value);
     const isCircular = seen.has(value);
@@ -55,10 +63,17 @@ export function stringify(
     } else {
       const values = keys
         .map((key) =>
-          wrapProperty(key, stringify(value[key], maxDepth, depth + 1, seen))
+          wrapProperty(
+            key,
+            stringify(
+              value[key as keyof typeof value],
+              maxDepth,
+              depth + 1,
+              seen
+            )
+          )
         )
         .join(SEPARATOR);
-
       return wrapObject(values);
     }
   } else {

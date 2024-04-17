@@ -68,7 +68,7 @@ the [`@liveblocks/react`](/docs/api-reference/liveblocks-react) package.
       "use client";
 
       import { ReactNode } from "react";
-      import { RoomProvider } from "./liveblocks.config";
+      import { RoomProvider } from "../liveblocks.config";
       import { ClientSideSuspense } from "@liveblocks/react";
 
       export function Room({ children }: { children: ReactNode }) {
@@ -120,7 +120,7 @@ the [`@liveblocks/react`](/docs/api-reference/liveblocks-react) package.
       ```tsx file="app/CollaborativeApp.tsx" highlight="6"
       "use client";
 
-      import { useOthers } from "./liveblocks.config";
+      import { useOthers } from "../liveblocks.config";
 
       export function CollaborativeApp() {
         const others = useOthers();
