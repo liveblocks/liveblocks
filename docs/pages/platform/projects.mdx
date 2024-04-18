@@ -25,9 +25,11 @@ clicking on the **Create project…** button.
   />
 </Figure>
 
+### Project environment
+
 A project’s environment can either be set to **Development** or **Production**,
-helping you map projects to your deployment model. This setting cannot be
-changed later.
+helping you map projects to your deployment model. We recommend setting up a new
+project for each different environment your collaborative application uses.
 
 <Figure>
   <Image
@@ -38,8 +40,18 @@ changed later.
   />
 </Figure>
 
-We recommend setting up a new project for each different environment your
-collaborative application uses.
+Secret [API keys](#project-api-keys) are treated slightly differently depending
+on the environment:
+
+- **Development** environments allow you to read your secret key any time after
+  generation. It’s recommended to use this setting in development, preview, and
+  staging environments.
+- **Production** environments encrypt your secret key, meaning it can only be
+  read when it’s first generated. If you forget your secret key, you must roll a
+  new one. It’s recommended to use this environment in your production
+  application.
+
+A project’s environment cannot be changed later.
 
 ## Managing a project
 
@@ -87,7 +99,7 @@ deleting the document’s data altogether.
   />
 </Figure>
 
-### Project API keys
+### Project API keys [#project-api-keys]
 
 The **API keys** tab enables you to manage, view, and roll your **public** and
 **secret** API keys.
