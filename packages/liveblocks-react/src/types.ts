@@ -1215,6 +1215,18 @@ type LiveblocksContextBundleCommon = {
    * markAllInboxNotificationsAsRead();
    */
   useMarkAllInboxNotificationsAsRead(): () => void;
+
+  /**
+   * @beta
+   *
+   * Returns the inbox notification thread for the given inbox notification ID.
+   *
+   * @example
+   * const thread = useInboxNotificationThread("in_xxx");
+   */
+  useInboxNotificationThread(
+    inboxNotificationId: string
+  ): ThreadData<BaseMetadata>;
 };
 
 /**

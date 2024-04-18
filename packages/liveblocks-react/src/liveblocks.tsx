@@ -448,6 +448,40 @@ export function createLiveblocksContext<
     }, []);
   }
 
+  function useInboxNotificationThread(
+    inboxNotificationId: string
+  ): ThreadData<BaseMetadata> {
+    const selector = useCallback(
+      (state: CacheState<BaseMetadata>) => {
+        const inboxNotification = state.inboxNotifications[inboxNotificationId];
+
+        if (inboxNotification === undefined) {
+          throw new Error(
+            `Inbox notification with id "${inboxNotificationId}" not found`
+          );
+        }
+
+        const thread = state.threads[inboxNotification.threadId];
+
+        if (thread === undefined) {
+          throw new Error(
+            `Thread with id "${inboxNotification.threadId}" not found`
+          );
+        }
+
+        return thread;
+      },
+      [inboxNotificationId]
+    );
+
+    return useSyncExternalStoreWithSelector(
+      store.subscribe,
+      store.get,
+      store.get,
+      selector
+    );
+  }
+
   function useThreadFromCache(threadId: string): ThreadData<BaseMetadata> {
     const selector = useCallback(
       (state: CacheState<BaseMetadata>) => {
@@ -492,6 +526,8 @@ export function createLiveblocksContext<
     useMarkInboxNotificationAsRead,
     useMarkAllInboxNotificationsAsRead,
 
+    useInboxNotificationThread,
+
     ...shared,
 
     suspense: {
@@ -503,6 +539,8 @@ export function createLiveblocksContext<
 
       useMarkInboxNotificationAsRead,
       useMarkAllInboxNotificationsAsRead,
+
+      useInboxNotificationThread,
 
       ...shared.suspense,
     },
