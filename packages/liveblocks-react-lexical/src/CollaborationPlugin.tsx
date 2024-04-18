@@ -1,23 +1,26 @@
-import * as React from "react";
+import type { InitialEditorStateType } from "@lexical/react/LexicalComposer";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { ReactNode, useEffect, useMemo } from "react";
-import { type InitialEditorStateType } from "@lexical/react/LexicalComposer";
-import {
-  createRelativePositionFromTypeIndex,
-  Doc,
-  RelativePosition,
-} from "yjs";
 import type { Binding, ExcludedProperties, Provider } from "@lexical/yjs";
-
+import type { Point } from "lexical";
+import { $isElementNode, $isTextNode } from "lexical";
+import type { ReactNode } from "react";
+import React, { createContext, useContext, useEffect, useMemo } from "react";
+import type {
+  Doc,
+  RelativePosition
+} from "yjs";
 import {
-  CursorsContainerRef,
+  createRelativePositionFromTypeIndex
+} from "yjs";
+
+import type {
+  CursorsContainerRef
+} from "./useYjsCollaboration";
+import {
   useYjsCollaboration,
   useYjsFocusTracking,
   useYjsHistory,
 } from "./useYjsCollaboration";
-
-import { createContext, useContext } from "react";
-import { Point, $isElementNode, $isTextNode } from "lexical";
 
 type CollaborationContextType = {
   clientID: number;
@@ -108,7 +111,7 @@ export function CollaborationPlugin({
     return () => {
       // Reseting flag only when unmount top level editor collab plugin. Nested
       // editors (e.g. image caption) should unmount without affecting it
-      if (editor._parentEditor == null) {
+      if (editor._parentEditor === null) {
         collabContext.isCollabActive = false;
       }
     };
@@ -154,11 +157,11 @@ export function useCollaborationContext(
 ): CollaborationContextType {
   const collabContext = useContext(CollaborationContext);
 
-  if (username != null) {
+  if (username) {
     collabContext.name = username;
   }
 
-  if (color != null) {
+  if (color) {
     collabContext.color = color;
   }
 
@@ -305,7 +308,6 @@ export function createRelativePosition(
 export default function invariant(
   cond?: boolean,
   message?: string,
-  ...args: string[]
 ): asserts cond {
   if (cond) {
     return;
@@ -313,7 +315,7 @@ export default function invariant(
 
   throw new Error(
     "Internal Lexical error: invariant() is meant to be replaced at compile " +
-      "time. There is no runtime version. Error: " +
-      message
+    "time. There is no runtime version. Error: " +
+    message
   );
 }

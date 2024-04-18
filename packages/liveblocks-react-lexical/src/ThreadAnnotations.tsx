@@ -1,12 +1,15 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { createDOMRange, createRectsFromDOMRange } from "@lexical/selection";
 import { useRoomContextBundle } from "@liveblocks/react";
 import React, { useLayoutEffect, useRef } from "react";
-import {
-  createAbsolutePositionFromRelativePosition,
-  RelativePosition,
+import type {
+  RelativePosition
 } from "yjs";
+import {
+  createAbsolutePositionFromRelativePosition
+} from "yjs";
+
 import { getCollabNodeAndOffset, useBinding } from "./CollaborationPlugin";
-import { createDOMRange, createRectsFromDOMRange } from "@lexical/selection";
 
 export function ThreadAnnotations() {
   const [editor] = useLexicalComposerContext();
@@ -85,12 +88,10 @@ export function ThreadAnnotations() {
           for (const rect of rects) {
             const div = document.createElement("div");
             div.style.position = "absolute";
-            div.style.top = `${
-              rect.top - container.getBoundingClientRect().top
-            }px`;
-            div.style.left = `${
-              rect.left - container.getBoundingClientRect().left
-            }px`;
+            div.style.top = `${rect.top - container.getBoundingClientRect().top
+              }px`;
+            div.style.left = `${rect.left - container.getBoundingClientRect().left
+              }px`;
             div.style.width = `${rect.width}px`;
             div.style.height = `${rect.height}px`;
             div.style.backgroundColor = "rgb(255, 212, 0)";
@@ -106,7 +107,7 @@ export function ThreadAnnotations() {
     return editor.registerUpdateListener(({ editorState: state }) => {
       state.read(createThreadAnnotations);
     });
-  }, [editor, threads]);
+  }, [binding.doc, editor, threads]);
 
   return (
     <div

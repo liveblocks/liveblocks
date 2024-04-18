@@ -1,6 +1,7 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { createDOMRange, createRectsFromDOMRange } from "@lexical/selection";
 import React, { useContext, useLayoutEffect, useRef } from "react";
+
 import { LastActiveSelectionContext } from "./CommentPluginProvider";
 
 export function LastActiveSelection() {
@@ -61,9 +62,8 @@ export function LastActiveSelection() {
         const div = document.createElement("div");
         div.style.position = "absolute";
         div.style.top = `${rect.top - markerContainer.getBoundingClientRect().top}px`;
-        div.style.left = `${
-          rect.left - markerContainer.getBoundingClientRect().left
-        }px`;
+        div.style.left = `${rect.left - markerContainer.getBoundingClientRect().left
+          }px`;
         div.style.width = `${rect.width}px`;
         div.style.height = `${rect.height}px`;
         div.style.backgroundColor = "rgb(255, 212, 0)";
@@ -73,7 +73,7 @@ export function LastActiveSelection() {
       }
     }
 
-    let unsubUpdateHandler = () => {};
+    let unsubUpdateHandler = () => { };
 
     // Observer resizes and edit listener, but only when selection is not null
     if (markerContainer && selection !== undefined) {

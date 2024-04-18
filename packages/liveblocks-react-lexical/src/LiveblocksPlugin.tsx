@@ -5,15 +5,15 @@ import type { LexicalEditor } from "lexical";
 import React, { useCallback, useEffect } from "react";
 import type { Doc } from "yjs";
 
+import { CollaborationPlugin } from "./CollaborationPlugin";
 import { CommentPluginProvider } from "./CommentPluginProvider";
 import { LastActiveSelection } from "./LastActiveSelection";
+import { LexicalThreadComposer } from "./LexicalThreadComposer";
 import {
   useDocumentSyncState,
   useTextCollaboration,
 } from "./TextCollaborationProvider";
 import { ThreadAnnotations } from "./ThreadAnnotations";
-import { CollaborationPlugin } from "./CollaborationPlugin";
-import { LexicalThreadComposer } from "./LexicalThreadComposer";
 
 export type LiveblocksPluginProps = {
   /**

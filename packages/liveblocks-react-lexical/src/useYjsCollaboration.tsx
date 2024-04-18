@@ -6,10 +6,9 @@
  *
  */
 
-import type { Binding, ExcludedProperties, Provider } from "@lexical/yjs";
-import type { LexicalEditor } from "lexical";
-
+import type { InitialEditorStateType } from "@lexical/react/LexicalComposer";
 import { mergeRegister } from "@lexical/utils";
+import type { Binding, ExcludedProperties, Provider } from "@lexical/yjs";
 import {
   CONNECTED_COMMAND,
   createBinding,
@@ -21,6 +20,7 @@ import {
   syncYjsChangesToLexical,
   TOGGLE_CONNECT_COMMAND,
 } from "@lexical/yjs";
+import type { LexicalEditor } from "lexical";
 import {
   $createParagraphNode,
   $getRoot,
@@ -36,8 +36,8 @@ import {
 import * as React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Doc, Transaction, UndoManager, YEvent } from "yjs";
-import { InitialEditorStateType } from "@lexical/react/LexicalComposer";
+import type { Doc, Transaction, YEvent } from "yjs";
+import { UndoManager } from "yjs";
 
 export type CursorsContainerRef = React.MutableRefObject<HTMLElement | null>;
 
