@@ -36,23 +36,11 @@ metadata['priority']:3
 // Threads with { resolved: false } boolean metadata
 metadata['resolved']:false
 
-// Threads that do NOT have { status: 'closed' } string metadata
--metadata['status']:'closed'
-
-// Threads that with `{ org }` string metadata that does NOT start with "acme:"
--metadata['org']^'acme:'
-
-// Threads that do NOT have { priority: 1 } number metadata
--metadata['priority']:1
-
-// Threads that do NOT have { resolved: true } boolean metadata
--metadata['resolved']:true
-
 // Combine queries with AND
 metadata['status']:'open' AND metadata['priority']:3
 
 // A more complex combination
-metadata['status']:'closed' AND -metadata['priority']:1 AND metadata['org']^'liveblocks:'
+metadata['status']:'closed' AND metadata['org']^'liveblocks:'
 ```
 
 <Banner>
