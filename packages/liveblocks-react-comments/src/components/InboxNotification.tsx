@@ -118,12 +118,12 @@ export interface InboxNotificationCustomProps
   /**
    * The inbox notification's content.
    */
-  children?: ReactNode;
+  children: ReactNode;
 
   /**
    * The inbox notification's title.
    */
-  title?: ReactNode;
+  title: ReactNode;
 
   /**
    * The inbox notification's aside content.
