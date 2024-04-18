@@ -25,7 +25,8 @@ import {
   convertToCommentData,
   convertToCommentUserReaction,
   convertToThreadData,
- objectToQuery } from "@liveblocks/core";
+  objectToQuery,
+} from "@liveblocks/core";
 
 import { Session } from "./Session";
 import {

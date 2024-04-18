@@ -306,9 +306,13 @@ function logPrematureErrorOrCloseEvent(e: IWebSocketEvent | Error) {
 }
 
 function logCloseEvent(event: IWebSocketCloseEvent) {
+  const details = [`code: ${event.code}`];
+  if (event.reason) {
+    details.push(`reason: ${event.reason}`);
+  }
   return (ctx: Readonly<Context>) => {
     console.warn(
-      `Connection to Liveblocks websocket server closed (code: ${event.code}). Retrying in ${ctx.backoffDelay}ms.`
+      `Connection to Liveblocks websocket server closed (${details.join(", ")}). Retrying in ${ctx.backoffDelay}ms.`
     );
   };
 }
