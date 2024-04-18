@@ -140,6 +140,15 @@ describe("useInboxNotificationThread", () => {
       },
     } = createLiveblocksContextForTest();
 
+    // Use the hook without fetching the notifications should throw
+    expect(() =>
+      renderHook(() => useInboxNotificationThread(inboxNotification.id), {
+        wrapper: ({ children }) => (
+          <LiveblocksProvider>{children}</LiveblocksProvider>
+        ),
+      })
+    ).toThrow(`Inbox notification with id "${inboxNotification.id}" not found`);
+
     const { result, unmount } = renderHook(() => useInboxNotifications(), {
       wrapper: ({ children }) => (
         <LiveblocksProvider>{children}</LiveblocksProvider>
@@ -157,6 +166,7 @@ describe("useInboxNotificationThread", () => {
       })
     );
 
+    // Use the hook with a notification that does not exist should throw
     expect(() =>
       renderHook(() => useInboxNotificationThread("not-found"), {
         wrapper: ({ children }) => (
@@ -165,6 +175,8 @@ describe("useInboxNotificationThread", () => {
       })
     ).toThrow('Inbox notification with id "not-found" not found');
 
+    // Use the hook with a notification that has a thread that does not exist should throw
+    // This should never happen in practice, but we should handle it
     expect(() =>
       renderHook(() => useInboxNotificationThread(inboxNotification.id), {
         wrapper: ({ children }) => (
