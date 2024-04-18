@@ -47,6 +47,8 @@ import { Room } from "./internal/Room";
 import { Tooltip } from "./internal/Tooltip";
 import { User } from "./internal/User";
 
+type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
+
 type ComponentTypeWithRef<
   T extends keyof JSX.IntrinsicElements,
   P,
@@ -54,7 +56,10 @@ type ComponentTypeWithRef<
 
 type InboxNotificationKinds = Record<
   `$${string}`,
-  ComponentTypeWithRef<"a", InboxNotificationCustomProps>
+  ComponentTypeWithRef<
+    "a",
+    Optional<InboxNotificationCustomProps, "title" | "children">
+  >
 > & {
   thread: ComponentTypeWithRef<"a", InboxNotificationThreadProps>;
 };
@@ -246,7 +251,7 @@ const InboxNotificationLayout = forwardRef<
           {...props}
           ref={forwardedRef}
         >
-          <div className="lb-inbox-notification-aside">{aside}</div>
+          {aside && <div className="lb-inbox-notification-aside">{aside}</div>}
           <div className="lb-inbox-notification-content">
             <div className="lb-inbox-notification-header">
               <span className="lb-inbox-notification-title">{title}</span>
@@ -529,7 +534,7 @@ const InboxNotificationCustom = forwardRef<
 
 const InboxNotificationCustomMissing = forwardRef<
   HTMLAnchorElement,
-  InboxNotificationCustomProps
+  Omit<InboxNotificationCustomProps, "children" | "title" | "aside">
 >(({ inboxNotification, ...props }, forwardedRef) => {
   return (
     <InboxNotificationCustom
