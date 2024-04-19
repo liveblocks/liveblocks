@@ -20,7 +20,12 @@ export async function POST(request: NextRequest) {
   const userIndex = Math.floor(Math.random() * NAMES.length);
 
   // Create a session for the current user (access token auth)
-  const session = liveblocks.prepareSession(`user-${userIndex}`);
+  const session = liveblocks.prepareSession(`user-${userIndex}`, {
+    userInfo: {
+      name: NAMES[userIndex],
+      avatar: `https://liveblocks.io/avatars/avatar-${userIndex}.png`,
+    },
+  });
 
   // Use a naming pattern to allow access to rooms with a wildcard
   session.allow(`liveblocks:examples:*`, session.FULL_ACCESS);
