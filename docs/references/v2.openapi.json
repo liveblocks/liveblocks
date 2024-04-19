@@ -2490,7 +2490,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InboxNotification"
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/InboxNotificationThreadData"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InboxNotificationCustomData"
+                    }
+                  ]
                 }
               }
             }
@@ -2672,6 +2679,42 @@
           },
           "404": {
             "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/inbox-notifications/trigger": {
+      "parameters": [],
+      "post": {
+        "summary": "Trigger inbox notification",
+        "x-badge": "Beta",
+        "tags": ["Notifications"],
+        "operationId": "post-inbox-notifications-trigger",
+        "description": "This endpoint triggers an inbox notification. Corresponds to [`liveblocks.triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger).",
+        "responses": {
+          "200": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TriggerInboxNotification"
+              }
+            }
           }
         }
       }
@@ -3349,18 +3392,20 @@
           }
         ]
       },
-      "InboxNotification": {
-        "title": "InboxNotification",
+      "InboxNotificationThreadData": {
+        "title": "InboxNotificationThreadData",
         "type": "object",
         "properties": {
           "id": {
             "type": "string"
           },
           "kind": {
-            "type": "string",
-            "default": "thread"
+            "type": "string"
           },
           "threadId": {
+            "type": "string"
+          },
+          "roomId": {
             "type": "string"
           },
           "readAt": {
@@ -3373,6 +3418,35 @@
           }
         }
       },
+      "InboxNotificationCustomData": {
+        "title": "InboxNotificationCustomData",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "subjectId": {
+            "type": "string"
+          },
+          "roomId": {
+            "type": "string"
+          },
+          "readAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "notifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "activityData": {
+            "type": "object"
+          }
+        }
+      },
       "UserRoomNotificationSettings": {
         "title": "UserRoomNotificationSettings",
         "type": "object",
@@ -3381,6 +3455,38 @@
             "enum": ["all", "replies_and_mentions", "none"]
           }
         }
+      },
+      "TriggerInboxNotification": {
+        "title": "TriggerInboxNotification",
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "subjectId": {
+            "type": "string"
+          },
+          "roomId": {
+            "type": "string"
+          },
+          "activityData": {
+            "type": "object"
+          }
+        },
+        "required": ["userId", "kind", "subjectId", "activityData"],
+        "examples": [
+          {
+            "userId": "alice",
+            "kind": "file-uploaded",
+            "subjectId": "file123",
+            "activityData": {
+              "url": "url-to-file"
+            }
+          }
+        ]
       }
     },
     "securitySchemes": {
