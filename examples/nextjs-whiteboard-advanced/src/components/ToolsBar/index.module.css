@@ -6,6 +6,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  pointer-events: none;
 }
 
 .tools_panel {
@@ -15,6 +16,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  pointer-events: all;
 }
 
 .tools_panel_section {

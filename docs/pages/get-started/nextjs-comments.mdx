@@ -78,7 +78,7 @@ hear from you.
       "use client";
 
       import { ReactNode } from "react";
-      import { RoomProvider } from "./liveblocks.config";
+      import { RoomProvider } from "../liveblocks.config";
       import { ClientSideSuspense } from "@liveblocks/react";
 
       export function Room({ children }: { children: ReactNode }) {
@@ -130,7 +130,7 @@ hear from you.
       ```tsx file="app/CollaborativeApp.tsx" highlight="7,11-14"
       "use client";
 
-      import { useThreads } from "./liveblocks.config";
+      import { useThreads } from "../liveblocks.config";
       import { Composer, Thread } from "@liveblocks/react-comments";
 
       export function CollaborativeApp() {

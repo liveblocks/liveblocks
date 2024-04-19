@@ -38,7 +38,7 @@ export function getCommentHighlight(
   let result = null;
 
   // Iterate over each mark in the text node and find a matching mark
-  editor.state.doc.descendants((node, pos: number) => {
+  editor.state.doc.descendants((node /* , pos: number */) => {
     if (node.isText) {
       node.marks.forEach((mark) => {
         const dataId: string | undefined = mark.attrs.highlightId;
