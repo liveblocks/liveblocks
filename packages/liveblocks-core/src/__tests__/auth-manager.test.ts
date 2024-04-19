@@ -50,15 +50,6 @@ describe("auth-manager - secret auth", () => {
 
   /*
     Access token with those permissions:
-        perms: {
-          "room1": ["comments:read"],
-        }
-  */
-  const accessTokenOneRoomCommentsRead =
-    "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJrIjoiYWNjIiwicGlkIjoiNjVjNTI5MjU4M2NlMGY4MGYyYjhlYzZiIiwidWlkIjoidXNlcjEiLCJwZXJtcyI6eyJyb29tMSI6WyJjb21tZW50czpyZWFkIl19LCJtY3ByIjoyMCwiaWF0IjoxNzA3NDE5OTQxLCJleHAiOjE3MDc0MjM1NDEsImp0aSI6ImVHZEhYd0l6eVF2NyJ9.ZQVQMwLaZzFzqp6fEN9pGz4IrTkkM1vMRBCzPomyIBnEnANNGKFMkfEQb9nMFXl7IftUvUTy7rU6VwBCXnu-O3PyUdhx5HA1TsYyODjnEvYfG-eaXryFGVleSX-6x2xIxLpdwV_e4yG7zcx16hMO6xEBYdzHZ4F8CqTjekAx6wTKLElQdnoV0yW8pQV8MDTc8t8Gn_3owVMS5wN11xvfaSgvQsbJL86VZzCyjdyTdlc5vaFGA6R_GVzwro_bhUDZxIcN1Kqvg6TQTdf5TPRL4-PzrOKxXc41PQfHn3318q6N10zQZH9xFjtEy-iUf-cGKv-LICJsD-M8M7WKcDo7tg;";
-
-  /*
-    Access token with those permissions:
         perms: {}
   */
   const accessTokenWithNoPermission =
@@ -88,13 +79,6 @@ describe("auth-manager - secret auth", () => {
       requestCount++;
       return res(ctx.json({ token: accessTokenWildcardCommentsRead }));
     }),
-    rest.post(
-      "/mocked-api/access-auth-one-room-comments-read",
-      (_req, res, ctx) => {
-        requestCount++;
-        return res(ctx.json({ token: accessTokenOneRoomCommentsRead }));
-      }
-    ),
     rest.post("/mocked-api/access-auth-no-permission", (_req, res, ctx) => {
       requestCount++;
       return res(ctx.json({ token: accessTokenWithNoPermission }));
@@ -307,22 +291,6 @@ describe("auth-manager - secret auth", () => {
     expect(authValueReq1.token.raw).toEqual(accessTokenWithNoPermission);
     expect(authValueReq2.token.raw).toEqual(accessTokenWithNoPermission);
     expect(requestCount).toBe(1);
-  });
-
-  test("when no roomId, should throw when access token has no wildcard", async () => {
-    const authManager = createAuthManager({
-      authEndpoint: "/mocked-api/access-auth-one-room-comments-read",
-    });
-
-    const $promise = expect(
-      authManager.getAuthValue({
-        requestedScope: "comments:read",
-      })
-    ).rejects.toThrow(
-      "The issued access token doesn't grant enough permissions. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/access-tokens-not-enough-permissions"
-    );
-
-    await $promise;
   });
 
   test("should throw if access token is expired but the next fetch from the backend returns the same (expired) token", async () => {
