@@ -9,3 +9,6 @@ export { LexicalThreadComposer } from "./LexicalThreadComposer";
 export { LiveblocksPlugin } from "./LiveblocksPlugin";
 export * from "./TextCollaborationProvider";
 export { liveblocksLexicalConfig } from "./utils";
+
+// TODO: remove this, just for debugging
+export { useBinding } from "./CollaborationPlugin";

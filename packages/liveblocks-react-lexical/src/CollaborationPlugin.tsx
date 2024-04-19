@@ -1,6 +1,6 @@
 import type { InitialEditorStateType } from "@lexical/react/LexicalComposer";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import type { Binding, ExcludedProperties, Provider } from "@lexical/yjs";
+import type { Binding, ExcludedProperties, Provider, } from "@lexical/yjs";
 import type { Point } from "lexical";
 import { $isElementNode, $isTextNode } from "lexical";
 import type { ReactNode } from "react";
@@ -147,8 +147,34 @@ export function CollaborationPlugin({
     <BindingContext.Provider value={binding}>
       {children}
       {cursors}
+      { /*<Debug />*/}
     </BindingContext.Provider>
   );
+}
+
+
+
+export function Debug() {
+  const binding = useBinding();
+  const outputArray = Array.from(binding.collabNodeMap.values());
+  // prevent circular references via _parent
+  function replacer(_: string, value: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    if (typeof value === "object" && value?._parent) {
+      console.log("Possible circular ref", value);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return {
+        ...value,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        _parent: value._parent._key
+      };
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return value;
+  }
+  const output = JSON.stringify(outputArray, replacer, "  ");
+
+  return <pre style={{ zIndex: 10000, position: "fixed", bottom: "0", right: "0", left: "0", background: "rgba(255,255,255,0.8)", height: "500px", overflow: "scroll" }}>{output}</pre>
 }
 
 export function useCollaborationContext(
