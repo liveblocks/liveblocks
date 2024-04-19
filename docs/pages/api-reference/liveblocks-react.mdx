@@ -1355,6 +1355,14 @@ const markAllInboxNotificationsAsRead = useMarkAllInboxNotificationsAsRead();
 markAllInboxNotificationsAsRead();
 ```
 
+### useInboxNotificationThread [@badge=LiveblocksProvider]
+
+Returns the thread associated with an inbox notification.
+
+```tsx
+const thread = useInboxNotificationThread("in_xxx");
+```
+
 ### useRoomNotificationSettings [@badge=RoomProvider]
 
 Returns the user’s notification settings for the current room and a function to
