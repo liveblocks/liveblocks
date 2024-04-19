@@ -8,13 +8,8 @@ import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
 import { CommentsCanvas } from "../components/CommentsCanvas";
 
-/**
- * Displays a list of threads, along with a composer for creating
- * new threads.
- */
-
 export default function Page() {
-  const roomId = useExampleRoomId("liveblocks:examples:nextjs-comments");
+  const roomId = useExampleRoomId("liveblocks:examples:nextjs-comments-canvas");
 
   return (
     <RoomProvider id={roomId} initialPresence={{}}>

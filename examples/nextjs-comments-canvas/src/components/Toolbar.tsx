@@ -31,16 +31,15 @@ export function Toolbar() {
         </button>
       </div>
 
-      {state !== "initial" ? (
-        <div
-          className={styles.cancelPlacing}
-          onClick={resetState}
-          onContextMenu={(e) => {
-            e.preventDefault();
-            resetState();
-          }}
-        />
-      ) : null}
+      <div
+        className={styles.cancelPlacing}
+        onClick={resetState}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          resetState();
+        }}
+        data-enabled={state !== "initial" ? true : undefined}
+      />
 
       {state === "placing" ? (
         <div
