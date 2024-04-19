@@ -1,3 +1,6 @@
+import { QueryParser } from "@liveblocks/query-parser";
+import * as fc from "fast-check";
+
 import { objectToQuery } from "../objectToQuery";
 
 describe("objectToQuery", () => {
@@ -75,6 +78,51 @@ describe("objectToQuery", () => {
       `org:${expectedValue} AND metadata["org"]:${expectedValue}`
     );
   });
+
+  it("will only generate syntactically valid queries", () =>
+    fc.assert(
+      fc.property(
+        fc.dictionary(
+          fc.string(),
+          fc.oneof(
+            fc.string(),
+            fc.dictionary(fc.string(), fc.string(), { minKeys: 1 })
+          ),
+          { minKeys: 1 }
+        ),
+        fc.context(),
+
+        (objValue, ctx) => {
+          let query: string;
+          try {
+            query = objectToQuery(objValue);
+          } catch {
+            // If there was a parse error, we cannot assert anything reasonable
+            // about the result
+            return;
+          }
+
+          const fields = Object.fromEntries(
+            Object.entries(objValue).flatMap(([k, v]) =>
+              typeof v === "string" ? [[k, "mixed"] as const] : []
+            )
+          );
+          const indexableFields = Object.fromEntries(
+            Object.entries(objValue).flatMap(([k, v]) =>
+              typeof v !== "string" ? [[k, "mixed"] as const] : []
+            )
+          );
+
+          const parser = new QueryParser({
+            fields,
+            indexableFields,
+          });
+
+          ctx.log(`Generated query that did not parse was: →${query}←`);
+          expect(() => parser.parse(query)).not.toThrow();
+        }
+      )
+    ));
 
   it.each(["'string with single quotes'", '"string with double quotes"'])(
     "should work with funky key: %s",
