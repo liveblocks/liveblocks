@@ -50,5 +50,12 @@ export type ThreadMetadata = {
 };
 
 export const {
-  suspense: { RoomProvider, useThreads, useEditThreadMetadata, useUser },
+  suspense: {
+    RoomProvider,
+    useThreads,
+    useEditThreadMetadata,
+    useUser,
+    useCreateThread,
+    useSelf,
+  },
 } = createRoomContext<{}, {}, UserInfo, {}, ThreadMetadata>(client);

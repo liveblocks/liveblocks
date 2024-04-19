@@ -1,0 +1,46 @@
+.toolbar {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 4%), 0 2px 6px rgb(0 0 0 / 4%), 0 8px 26px rgb(0 0 0 / 6%);
+  border-radius: 8px;
+}
+
+.newThreadClick {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  cursor: none;
+}
+
+.composerWrapper {
+  position: absolute;
+  width: 300px;
+  top: 0;
+  left: 0;
+}
+
+.cancelPlacing {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.button {
+  appearance: none;
+  background: #fff;
+  display: flex;
+  width: 40px;
+  height: 40px;
+  justify-content: center;
+  align-items: center;
+  border: 0;
+  font-size: 24px;
+  border-radius: 8px;
+  cursor: pointer;
+}

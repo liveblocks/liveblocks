@@ -16,14 +16,15 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import styles from "./CommentsCanvas.module.css";
+import { Toolbar } from "./Toolbar";
 
 export function CommentsCanvas() {
   const { threads } = useThreads();
   const editThreadMetadata = useEditThreadMetadata();
 
-  // Allow click if moved less than 3px
+  // Allow click event if thread moved less than 3px
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -62,18 +63,24 @@ export function CommentsCanvas() {
         {threads.map((thread) => (
           <DraggableThread key={thread.id} thread={thread} />
         ))}
-        <Composer className="composer" metadata={{ x: 200, y: 200 }} />
       </DndContext>
+      <Toolbar />
     </div>
   );
 }
 
 function DraggableThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
-  const [open, setOpen] = useState(false);
-  const { user } = useUser(thread.comments[0].userId);
+  // Open threads that have just been created
+  const startOpen = useMemo(() => {
+    return Number(new Date()) - Number(new Date(thread.createdAt)) <= 100;
+  }, [thread]);
+
+  const [open, setOpen] = useState(startOpen);
+  const { user: creator } = useUser(thread.comments[0].userId);
+
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: thread.id,
-    data: { thread },
+    data: { thread }, // Pass thread to DndContext drag end event
   });
 
   // If currently dragging, add drag values to current metadata
@@ -90,10 +97,10 @@ function DraggableThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
     >
       <div {...listeners} {...attributes}>
         <div className={styles.avatar} onClick={() => setOpen(!open)}>
-          {user ? (
+          {creator ? (
             <img
-              src={user.avatar}
-              alt={user.name}
+              src={creator.avatar}
+              alt={creator.name}
               width="28px"
               height="28px"
               draggable={false}
