@@ -1,3 +1,10 @@
+# v1.11.3
+
+### `@liveblocks/client`
+
+- Fixes a potential `RangeError: Maximum call stack size exceeded` in
+  applications that produce many operations
+
 # v1.11.2
 
 ### `create-liveblocks-app`
