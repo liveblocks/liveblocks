@@ -1,4 +1,4 @@
-import { Composer, Thread } from "@liveblocks/react-comments";
+import { Thread } from "@liveblocks/react-comments";
 import { ThreadData } from "@liveblocks/core";
 import {
   ThreadMetadata,
@@ -24,7 +24,7 @@ export function CommentsCanvas() {
   const { threads } = useThreads();
   const editThreadMetadata = useEditThreadMetadata();
 
-  // Allow click event if thread moved less than 3px
+  // Allow click event on avatar if thread moved less than 3px
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -69,15 +69,15 @@ export function CommentsCanvas() {
   );
 }
 
+// A draggable thread
 function DraggableThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
   // Open threads that have just been created
   const startOpen = useMemo(() => {
     return Number(new Date()) - Number(new Date(thread.createdAt)) <= 100;
   }, [thread]);
-
   const [open, setOpen] = useState(startOpen);
-  const { user: creator } = useUser(thread.comments[0].userId);
 
+  // Enable drag
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: thread.id,
     data: { thread }, // Pass thread to DndContext drag end event
@@ -86,6 +86,9 @@ function DraggableThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
   // If currently dragging, add drag values to current metadata
   const x = transform ? transform.x + thread.metadata.x : thread.metadata.x;
   const y = transform ? transform.y + thread.metadata.y : thread.metadata.y;
+
+  // Get the creator of the thread
+  const { user: creator } = useUser(thread.comments[0].userId);
 
   return (
     <div
