@@ -36,6 +36,14 @@ export const client = createClient({
   },
 });
 
+type UserInfo = {
+  id: string;
+  info: {
+    avatar: string;
+    name: string;
+  };
+};
+
 export type ThreadMetadata = {
   x: number;
   y: number;
@@ -43,4 +51,4 @@ export type ThreadMetadata = {
 
 export const {
   suspense: { RoomProvider, useThreads, useEditThreadMetadata, useUser },
-} = createRoomContext<{}, {}, {}, {}, ThreadMetadata>(client);
+} = createRoomContext<{}, {}, UserInfo, {}, ThreadMetadata>(client);

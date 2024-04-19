@@ -1,8 +1,4 @@
-import {
-  Composer,
-  InboxNotification,
-  Thread,
-} from "@liveblocks/react-comments";
+import { Composer, Thread } from "@liveblocks/react-comments";
 import { ThreadData } from "@liveblocks/core";
 import {
   ThreadMetadata,
@@ -21,11 +17,13 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { useCallback, useState } from "react";
+import styles from "./CommentsCanvas.module.css";
 
 export function CommentsCanvas() {
   const { threads } = useThreads();
   const editThreadMetadata = useEditThreadMetadata();
 
+  // Allow click if moved less than 3px
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -39,6 +37,7 @@ export function CommentsCanvas() {
     })
   );
 
+  // On drag end, update thread metadata with new coords
   const handleDragEnd = useCallback(({ active, delta }: DragEndEvent) => {
     const thread = (
       active.data as DataRef<{ thread: ThreadData<ThreadMetadata> }>
@@ -48,54 +47,61 @@ export function CommentsCanvas() {
       return;
     }
 
-    const newX = (thread.metadata.x || 0) + delta.x;
-    const newY = (thread.metadata.y || 0) + delta.y;
     editThreadMetadata({
       threadId: thread.id,
-      metadata: { x: newX, y: newY },
+      metadata: {
+        x: thread.metadata.x + delta.x,
+        y: thread.metadata.y + delta.y,
+      },
     });
   }, []);
 
   return (
-    <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
-      {threads.map((thread) => (
-        <DraggableThread key={thread.id} thread={thread} />
-      ))}
-      <Composer className="composer" />
-    </DndContext>
+    <div className={styles.wrapper}>
+      <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
+        {threads.map((thread) => (
+          <DraggableThread key={thread.id} thread={thread} />
+        ))}
+        <Composer className="composer" metadata={{ x: 200, y: 200 }} />
+      </DndContext>
+    </div>
   );
 }
 
 function DraggableThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
   const [open, setOpen] = useState(false);
-  const creator = useUser(thread.comments[0].userId);
+  const { user } = useUser(thread.comments[0].userId);
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: thread.id,
     data: { thread },
   });
 
-  const initialX = thread.metadata.x || 0;
-  const initialY = thread.metadata.y || 0;
-  const x = transform ? transform.x + initialX : initialX;
-  const y = transform ? transform.y + initialY : initialY;
+  // If currently dragging, add drag values to current metadata
+  const x = transform ? transform.x + thread.metadata.x : thread.metadata.x;
+  const y = transform ? transform.y + thread.metadata.y : thread.metadata.y;
 
   return (
     <div
       ref={setNodeRef}
+      className={styles.draggableThread}
       style={{
-        position: "absolute",
-        top: 0,
-        left: 0,
         transform: `translate3d(${x}px, ${y}px, 0)`,
-        width: 340,
       }}
     >
       <div {...listeners} {...attributes}>
-        {open ? (
-          <div onClick={() => setOpen(!open)}>avatar</div>
-        ) : (
-          <div onClick={() => setOpen(!open)}>handle</div>
-        )}
+        <div className={styles.avatar} onClick={() => setOpen(!open)}>
+          {user ? (
+            <img
+              src={user.avatar}
+              alt={user.name}
+              width="28px"
+              height="28px"
+              draggable={false}
+            />
+          ) : (
+            <div />
+          )}
+        </div>
       </div>
       {open ? <Thread thread={thread} className="thread" /> : null}
     </div>
