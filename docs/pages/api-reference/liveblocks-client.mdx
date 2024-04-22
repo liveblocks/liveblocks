@@ -2402,9 +2402,10 @@ type Person = LiveObject<{
 }>;
 ```
 
-Keys should be strings, and values should be serializable to JSON. If multiple
-clients update the same property simultaneously, the last modification received
-by the Liveblocks servers is the winner.
+Keys are strings, and values can contain other Storage structures, or
+JSON-serializable data. If multiple clients update the same property
+simultaneously, the last modification received by the Liveblocks servers is the
+winner.
 
 ### new LiveObject [#LiveObject.constructor]
 
@@ -2632,13 +2633,18 @@ liveObject.toObject();
 
 The `LiveMap` class is similar to a
 [JavaScript Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map)
-that is synchronized on all clients.
+that is synchronized on all clients. Use this for indexing values that all have
+the same structure. For example, to store an index of `Person` values by their
+name.
 
-Use this for indexing values that all have the same structure. For example, to
-store an index of `Person` values by their name. Keys should be strings, and
-values should be serializable to JSON. If multiple clients update the same
-property simultaneously, the last modification received by the Liveblocks
-servers is the winner.
+```ts
+type Shapes = LiveMap<string, LiveObject<{ name: string }>>;
+```
+
+Keys are strings, and values can contain other Storage structures, or
+JSON-serializable data. If multiple clients update the same property
+simultaneously, the last modification received by the Liveblocks servers is the
+winner.
 
 ### new LiveMap [#LiveMap.constructor]
 
@@ -2652,9 +2658,45 @@ Create a `LiveMap` with initial data.
 
 ```ts
 const map = new LiveMap([
-  ["keyA", "valueA"],
-  ["keyB", "valueB"],
+  ["nimesh", "developer"],
+  ["pierre", "designer"],
 ]);
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="LiveMap" type="LiveMap<string, L>">
+    The newly created `LiveMap`.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem
+    name="initialValue"
+    type="[string, L extends LsonObject][]"
+    required
+  >
+    The initial value for the `LiveMap`. An array of tuples, each containing a
+    key and a value. The values can contain JSON-serializable data and other
+    Liveblocks conflict-free data structures.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Add a LiveMap to Storage
+
+The Storage root is a `LiveObject`, so you can create a new `LiveMap` then use
+[`LiveObject.set`]() to add it to your root. If you’ve
+[typed Storage](#typing-storage) you’ll have type hints as you build.
+
+```ts
+import { LiveMap } from "@liveblocks/client";
+
+const { root } = await room.getStorage();
+
+const people = new LiveMap([
+  ["vincent", "engineer"],
+  ["marc", "designer"],
+]);
+root.set("people", people);
 ```
 
 ### delete [#LiveMap.delete]
@@ -2664,13 +2706,29 @@ been removed, or false if the element does not exist.
 
 ```ts
 const map = new LiveMap([
-  ["keyA", "valueA"],
-  ["keyB", "valueB"],
+  ["nimesh", "developer"],
+  ["pierre", "designer"],
 ]);
-map.delete("keyA"); // equals true
-map.get("keyA"); // equals undefined
-map.delete("unknownKey"); // equals false
+
+// true
+map.delete("nimesh");
+
+// Map { "pierre" => "designer" }
+map.toImmutable();
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="deleted" type="boolean">
+    If the element existed and was removed.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="key" type="string" required>
+    The key of the element you’re deleting. If the element doesn’t exist,
+    nothing will occur.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### entries [#LiveMap.entries]
 
@@ -2691,32 +2749,75 @@ enable the <code>--downlevelIteration</code> option to use this API.
 
 </Banner>
 
+<PropertiesList title="Returns">
+  <PropertiesListItem name="iterator" type="IterableIterator<[string, L]>">
+    A new Iterator object for the `LiveMap`, containing the `[key, value]` pairs
+    for each element.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem>_None_</PropertiesListItem>
+</PropertiesList>
+
 ### forEach [#LiveMap.forEach]
 
-Executes a provided function once per each key/value pair in the Map object.
+Executes a provided function once per each key/value pair in the Map object, in
+insertion order.
 
 ```ts
 const map = new LiveMap([
-  ["keyA", "valueA"],
-  ["keyB", "valueB"],
+  ["nimesh", "developer"],
+  ["pierre", "designer"],
 ]);
-map.forEach((value, key) => console.log(value));
-// prints to the console "valueA", "valueB"
+
+// "developer", "designer"
+map.forEach((value, key, liveMap) => console.log(value));
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="iterator"
+    detailedType="callback: (value: L, key: string, map: LiveMap<string, L>) => void"
+  >
+    A callback for each entry. The callback is passed the current `value`,
+    `key`, and the `LiveMap`. Returned values are ignored.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem>_None_</PropertiesListItem>
+</PropertiesList>
 
 ### get [#LiveMap.get]
 
-Returns a specified element from the LiveMap or undefined if the key can’t be
-found.
+Returns a specified element from the `LiveMap`. Returns `undefined` if the key
+can’t be found.
 
 ```ts
 const map = new LiveMap([
-  ["keyA", "valueA"],
-  ["keyB", "valueB"],
+  ["nimesh", "developer"],
+  ["pierre", "designer"],
 ]);
-map.get("keyA"); // equals "valueA"
-map.get("unknownKey"); // equals undefined
+
+// "developer"
+map.get("nimesh");
+
+// undefined
+map.get("alicia");
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="value" type="L | undefined">
+    The value of the entry. Returns `undefined` if it doesn’t exist.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="key" type="string" required>
+    The key of the entry you’re getting.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### has [#LiveMap.has]
 
@@ -2725,12 +2826,28 @@ not.
 
 ```ts
 const map = new LiveMap([
-  ["keyA", "valueA"],
-  ["keyB", "valueB"],
+  ["nimesh", "developer"],
+  ["pierre", "designer"],
 ]);
-map.has("keyA"); // equals true
-map.has("unknownKey"); // equals false
+
+// true
+map.has("nimesh");
+
+// false
+map.has("alicia");
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="exists" type="boolean">
+    Whether the entry exists.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="key" type="string" required>
+    The key of the entry you’re getting.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### keys [#LiveMap.keys]
 
@@ -2751,14 +2868,41 @@ enable the <code>--downlevelIteration</code> option to use this API.
 
 </Banner>
 
+<PropertiesList title="Returns">
+  <PropertiesListItem name="iterator" type="IterableIterator<string>">
+    A new Iterator object for the `LiveMap`, containing the keys of each entry.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem>_None_</PropertiesListItem>
+</PropertiesList>
+
 ### set [#LiveMap.set]
 
 Adds or updates an element with a specified key and a value.
 
 ```ts
 const map = new LiveMap();
-map.set("keyA", "valueA");
+map.set("vincent", "engineer");
+
+// Map { "vincent" => "engineer" }
+map.toImmutable();
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem>_Nothing_</PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="key" type="string" required>
+    The key of the entry you’re setting.
+  </PropertiesListItem>
+  <PropertiesListItem name="value" type="LsonObject" required>
+    The value of the entry you’re setting. Can contain JSON-serializable data
+    and other Liveblocks conflict-free data structures.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### size [#LiveMap.size]
 
@@ -2766,11 +2910,23 @@ Returns the number of elements in the `LiveMap`.
 
 ```ts
 const map = new LiveMap([
-  ["keyA", "valueA"],
-  ["keyB", "valueB"],
+  ["nimesh", "developer"],
+  ["pierre", "designer"],
 ]);
-map.size; // equals 2
+
+// 2
+map.size();
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="size" type="number">
+    The number of entries in the `LiveMap`
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem>_None_</PropertiesListItem>
+</PropertiesList>
 
 ### values [#LiveMap.values]
 
@@ -2791,23 +2947,16 @@ enable the <code>--downlevelIteration</code> option to use this API.
 
 </Banner>
 
-### toImmutable [#LiveMap.toImmutable]
+<PropertiesList title="Returns">
+  <PropertiesListItem name="iterator" type="IterableIterator<L>">
+    A new Iterator object for the `LiveMap`, containing the values of each
+    entry.
+  </PropertiesListItem>
+</PropertiesList>
 
-Returns an immutable ES6 Map that is equivalent to the `LiveMap`. Nested values
-will also be immutable.
-
-```ts
-const map = new LiveMap([
-  ["abc", new LiveObject({ firstName: "Grace", lastName: "Hopper" })],
-  ["pqr", new LiveObject({ firstName: "Ada", lastName: "Lovelace" })],
-]);
-map.toImmutable();
-// equal to:
-// Map(2) {
-//   'abc' => { firstName: 'Grace', lastName: 'Hopper' },
-//   'pqr' => { firstName: 'Ada', lastName: 'Lovelace' }
-// }
-```
+<PropertiesList title="Arguments">
+  <PropertiesListItem>_None_</PropertiesListItem>
+</PropertiesList>
 
 ### clone [#LiveMap.clone]
 
@@ -2818,6 +2967,34 @@ Storage tree.
 const map = new LiveMap(/* ... */);
 root.set("a", map);
 root.set("b", map.clone());
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="clonedStructure" type="LiveMap">
+    The cloned `LiveMap`.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem>_None_</PropertiesListItem>
+</PropertiesList>
+
+### toImmutable [#LiveMap.toImmutable]
+
+Returns an immutable ES6 Map that is equivalent to the `LiveMap`. Nested values
+will also be immutable.
+
+```ts
+const map = new LiveMap([
+  ["florent", new LiveObject({ role: "engineer" })],
+  ["marc", new LiveObject({ role: "designer" })],
+]);
+
+// Map {
+//   "florent" => { role: "engineer" },
+//   "marc" => { role: "designer" },
+// }
+map.toImmutable();
 ```
 
 ## LiveList
