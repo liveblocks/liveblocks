@@ -2916,7 +2916,7 @@ const map = new LiveMap([
 ]);
 
 // 2
-map.size();
+map.size;
 ```
 
 <PropertiesList title="Returns">
@@ -2926,7 +2926,7 @@ map.size();
 </PropertiesList>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem>_None_</PropertiesListItem>
+  <PropertiesListItem>_N/A_</PropertiesListItem>
 </PropertiesList>
 
 ### values [#LiveMap.values]
@@ -3091,7 +3091,7 @@ list.toImmutable();
 </PropertiesList>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="key" type="string" required>
+  <PropertiesListItem name="index" type="number" required>
     The index of the property you’re deleting. If the property doesn’t exist, an
     `Error` is thrown.
   </PropertiesListItem>
@@ -3177,7 +3177,7 @@ list.find((value, index) => value.startsWith("l"));
 ```
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="value" type="L | undefined">
+  <PropertiesListItem name="item" type="L | undefined">
     The item that has been found. If no item passes the test, `undefined` is
     returned.
   </PropertiesListItem>
@@ -3208,7 +3208,7 @@ list.findIndex((value, index) => value.startsWith("l"));
 ```
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="value" type="number">
+  <PropertiesListItem name="index" type="number">
     The index of the item that has been found. If no item passes the test, `-1`
     is returned.
   </PropertiesListItem>
@@ -3244,7 +3244,7 @@ list.forEach((item) => console.log(item));
 <PropertiesList title="Arguments">
   <PropertiesListItem
     name="callback"
-    detailedType="(value: L, key: string) => void"
+    detailedType="(value: L, index: number) => void"
     required
   >
     A callback for each item. The callback is passed the current `value` and
@@ -3265,13 +3265,13 @@ list.get(1);
 ```
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="value" type="L | undefined">
+  <PropertiesListItem name="item" type="L | undefined">
     The value of the item at the index. Returns `undefined` if it doesn’t exist.
   </PropertiesListItem>
 </PropertiesList>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="index" type="string" required>
+  <PropertiesListItem name="index" type="number" required>
     The index of the item you’re getting.
   </PropertiesListItem>
 </PropertiesList>
@@ -3292,14 +3292,17 @@ list.indexOf("chris");
 ```
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="value" type="L | undefined">
-    The index of the item. Returns `undefined` if it doesn’t exist.
+  <PropertiesListItem name="index" type="number">
+    The index of the item. Returns `-1` if it doesn’t exist.
   </PropertiesListItem>
 </PropertiesList>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="index" type="string" required>
-    The value of the index you’re getting.
+  <PropertiesListItem name="searchElement" type="L" required>
+    The item you’re locating.
+  </PropertiesListItem>
+  <PropertiesListItem name="index" type="number">
+    The index to start the search at.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -3322,10 +3325,10 @@ list.toImmutable();
 </PropertiesList>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="index" type="L extends LsonObject" required>
+  <PropertiesListItem name="value" type="L extends LsonObject" required>
     The value of the item you’re inserting.
   </PropertiesListItem>
-  <PropertiesListItem name="index" type="index" required>
+  <PropertiesListItem name="index" type="number" required>
     The index to insert the item into.
   </PropertiesListItem>
 </PropertiesList>
@@ -3334,22 +3337,53 @@ list.toImmutable();
 
 Returns the last index at which a given element can be found in the `LiveList`,
 or -1 if it is not present. The `LiveList` is searched backwards, starting at
-fromIndex.
+fromIndex. Returns `-1` if it is not present.
 
 ```ts
-const list = new LiveList(["🦁", "🦊", "🐵", "🦊"]);
-list.lastIndexOf("🦊"); // equals 3
-list.lastIndexOf("🐺"); // equals -1
+const list = new LiveList(["adrien", "jonathan", "adrien"]);
+
+// 2
+list.indexOf("adrien");
+
+// undefined
+list.indexOf("chris");
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="index" type="number">
+    The index of the item. Returns `-1` if it doesn’t exist.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="searchElement" type="L" required>
+    The item you’re locating.
+  </PropertiesListItem>
+  <PropertiesListItem name="index" type="number">
+    The index at which to start searching backwards.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### length [#LiveList.length]
 
 Returns the number of elements.
 
 ```ts
-const list = new LiveList(["🦁", "🦊", "🐵"]);
-list.length; // equals 3
+const list = new LiveList(["adrien", "jonathan"]);
+
+// 3
+list.length; // equals
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="length" type="number">
+    The number of items in the `LiveList`.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem>_N/A_</PropertiesListItem>
+</PropertiesList>
 
 ### map [#LiveList.map]
 
@@ -3358,37 +3392,88 @@ every element.
 
 ```ts
 const list = new LiveList(["apple", "lemon", "tomato"]);
-list.map((fruit) => fruit.toUpperCase()); // equals ["APPLE", "LEMON", "TOMATO"]
+
+// ["APPLE", "LEMON", "TOMATO"]
+list.map((value, index) => value.toUpperCase());
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="array">
+    The array of each item has been transformed by the callback function.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem
+    name="callback"
+    detailedType="(value: L, index: number) => void"
+    required
+  >
+    A callback for each item. The callback is passed the current `value` and
+    `index`. Return values are used in the returned array.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### move [#LiveList.move]
 
 Moves one element at a specified index.
 
 ```ts
-const list = new LiveList(["🦁", "🦊", "🐵"]);
-list.move(2, 0); // move the "🐵" at index 0
-list.toArray(); // equals ["🐵", "🦁", "🦊"]
+const list = new LiveList(["adrien", "chris", "jonathan"]);
+
+list.move(2, 0);
+
+// ["jonathan", "adrien", "chris"]
+list.toImmutable();
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem>_Nothing_</PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="index" type="number" required>
+    The index of the item to move.
+  </PropertiesListItem>
+  <PropertiesListItem name="targetIndex" type="number" required>
+    The index where the element should be after moving.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### push [#LiveList.push]
 
 Adds one element to the end of the `LiveList`.
 
 ```ts
-const list = new LiveList(["🦁", "🦊", "🐵"]);
-list.push("🐺");
-list.toArray(); // equals ["🦁", "🦊", "🐵", "🐺"]
+const list = new LiveList(["adrien", "jonathan"]);
+
+list.push("chris");
+
+// ["adrien", "jonathan", "chris"]
+list.toImmutable();
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem>_Nothing_</PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="index" type="L" required>
+    The item to add to the end of the `LiveList`.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### set [#LiveList.set]
 
 Replace one element at the specified index.
 
 ```ts
-const list = new LiveList(["🦁", "🦊", "🐵"]);
-list.set(1, "🐺");
-list.toArray(); // equals ["🦁", "🐺", "🐵"]
+const list = new LiveList(["adrien", "jonathan"]);
+
+list.set(1, "chris");
+
+// equals ["adrien", "chris"]
+list.toImmutable();
 ```
 
 ### some [#LiveList.some]
@@ -3398,9 +3483,81 @@ by the provided function.
 
 ```ts
 const list = new LiveList(["apple", "lemon", "tomato"]);
-list.some((fruit) => fruit.startsWith("l")); // equals true
-list.some((fruit) => fruit.startsWith("x")); // equals false
+
+// true
+list.some((value, index) => value.startsWith("l"));
+
+// false
+list.some((value, index) => value.startsWith("x"));
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="areSome" type="boolean">
+    Whether any elements pass the test implemented by the provided function.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem
+    name="callback"
+    type="(value: L, index: number) => unknown"
+    required
+  >
+    A function to execute for each item in the array. It should return a truthy
+    value to indicate the element passes the test, and a falsy value otherwise.
+    The function is passed the `value` of the item and its current `index`.
+  </PropertiesListItem>
+</PropertiesList>
+
+### clone [#LiveList.clone]
+
+Returns a deep copy of the `LiveList` that can be inserted elsewhere in the
+Storage tree.
+
+```ts
+const list = new LiveList(/* ... */);
+root.set("a", list);
+root.set("b", list.clone());
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="clonedStructure" type="LiveList">
+    The cloned `LiveList`.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem>_None_</PropertiesListItem>
+</PropertiesList>
+
+### toImmutable [#LiveList.toImmutable]
+
+Returns an immutable JavaScript array that is equivalent to the `LiveList`.
+Nested values will also be immutable.
+
+```ts
+const list = new LiveList([
+  new LiveObject({ name: "Olivier" }),
+  new LiveObject({ name: "Vincent" }),
+]);
+
+// [
+//   { name: "Olivier" },
+//   { name: "Vincent" },
+// ]
+list.toImmutable();
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="immutableStructure" type="object">
+    Returns a JavaScript object in the shape of your data structure.`ListList`
+    is converted to an array, `LiveObject` to an object, and `LiveMap` to a map.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem>_None_</PropertiesListItem>
+</PropertiesList>
 
 ### toArray [#LiveList.toArray]
 
@@ -3428,30 +3585,6 @@ const list = new LiveList([
 ]);
 list.toArray();
 // [ <LiveObject instance> ]  // ❗️
-```
-
-### toImmutable [#LiveList.toImmutable]
-
-Returns an immutable JavaScript array that is equivalent to the `LiveList`.
-Nested values will also be immutable.
-
-```ts
-const list = new LiveList([
-  new LiveObject({ firstName: "Grace", lastName: "Hopper" }),
-]);
-list.toImmutable();
-// [ { firstName: "Grace", lastName: "Hopper" } ]
-```
-
-### clone [#LiveList.clone]
-
-Returns a deep copy of the `LiveList` that can be inserted elsewhere in the
-Storage tree.
-
-```ts
-const list = new LiveList(/* ... */);
-root.set("a", list);
-root.set("b", list.clone());
 ```
 
 ## Utilities
