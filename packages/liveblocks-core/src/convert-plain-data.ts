@@ -19,8 +19,11 @@ import type {
 } from "./types/ThreadDeleteInfo";
 
 /**
- * Converts a plain comment data object (usually returned by the API) to a comment data object that can be used by the client.
- * This is necessary because the plain data object stores dates as ISO strings, but the client expects them as Date objects.
+ * Converts a plain comment data object (usually returned by the API) to
+ * a comment data object that can be used by the client. This is necessary
+ * because the plain data object stores dates as ISO strings, but the client
+ * expects them as Date objects.
+ *
  * @param data The plain comment data object (usually returned by the API)
  * @returns The rich comment data object that can be used by the client.
  */
@@ -52,8 +55,11 @@ export function convertToCommentData(data: CommentDataPlain): CommentData {
 }
 
 /**
- * Converts a plain thread data object (usually returned by the API) to a thread data object that can be used by the client.
- * This is necessary because the plain data object stores dates as ISO strings, but the client expects them as Date objects.
+ * Converts a plain thread data object (usually returned by the API) to
+ * a thread data object that can be used by the client. This is necessary
+ * because the plain data object stores dates as ISO strings, but the client
+ * expects them as Date objects.
+ *
  * @param data The plain thread data object (usually returned by the API)
  * @returns The rich thread data object that can be used by the client.
  */
@@ -76,8 +82,11 @@ export function convertToThreadData<
 }
 
 /**
- * Converts a plain comment reaction object (usually returned by the API) to a comment reaction object that can be used by the client.
- * This is necessary because the plain data object stores dates as ISO strings, but the client expects them as Date objects.
+ * Converts a plain comment reaction object (usually returned by the API) to
+ * a comment reaction object that can be used by the client. This is necessary
+ * because the plain data object stores dates as ISO strings, but the client
+ * expects them as Date objects.
+ *
  * @param data The plain comment reaction object (usually returned by the API)
  * @returns The rich comment reaction object that can be used by the client.
  */
@@ -91,8 +100,11 @@ export function convertToCommentUserReaction(
 }
 
 /**
- * Converts a plain inbox notification data object (usually returned by the API) to an inbox notification data object that can be used by the client.
- * This is necessary because the plain data object stores dates as ISO strings, but the client expects them as Date objects.
+ * Converts a plain inbox notification data object (usually returned by the
+ * API) to an inbox notification data object that can be used by the client.
+ * This is necessary because the plain data object stores dates as ISO strings,
+ * but the client expects them as Date objects.
+ *
  * @param data The plain inbox notification data object (usually returned by the API)
  * @returns The rich inbox notification data object that can be used by the client.
  */
