@@ -366,6 +366,11 @@ type YDocUpdatedEvent = {
   data: {
     projectId: string;
     roomId: string;
+    /**
+     * ISO 8601 datestring
+     * @example "2021-03-01T12:00:00.000Z"
+     */
+    updatedAt: string;
   };
 };
 
