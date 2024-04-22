@@ -104,6 +104,9 @@ export function convertToCommentUserReaction(
  * API) to an inbox notification data object that can be used by the client.
  * This is necessary because the plain data object stores dates as ISO strings,
  * but the client expects them as Date objects.
+ 
+TEST
+
  *
  * @param data The plain inbox notification data object (usually returned by the API)
  * @returns The rich inbox notification data object that can be used by the client.
