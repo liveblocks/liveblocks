@@ -22,7 +22,7 @@ import type {
  * Converts a plain comment data object (usually returned by the API) to
  * a comment data object that can be used by the client. This is necessary
  * because the plain data object stores dates as ISO strings, but the client
- * expects them as Date objects.
+ * expects them as Date objects. TEST.
  *
  * @param data The plain comment data object (usually returned by the API)
  * @returns The rich comment data object that can be used by the client.
