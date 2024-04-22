@@ -1185,7 +1185,7 @@ export type RoomContextBundle<
 /**
  * Properties that are the same in LiveblocksContext and LiveblocksContext["suspense"].
  */
-type LiveblocksContextBundleCommon = {
+type LiveblocksContextBundleCommon<TThreadMetadata extends BaseMetadata> = {
   /**
    * @beta
    *
@@ -1226,7 +1226,7 @@ type LiveblocksContextBundleCommon = {
    */
   useInboxNotificationThread(
     inboxNotificationId: string
-  ): ThreadData<BaseMetadata>;
+  ): ThreadData<TThreadMetadata>;
 };
 
 /**
@@ -1236,7 +1236,7 @@ type LiveblocksContextBundleCommon = {
  * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
  * will probably happen if you do.
  */
-type PrivateLiveblocksContextApi = {
+type PrivateLiveblocksContextApi<TThreadMetadata extends BaseMetadata> = {
   /**
    * @private
    *
@@ -1245,7 +1245,7 @@ type PrivateLiveblocksContextApi = {
    * @example
    * const thread = useThreadFromCache("th_xxx");
    */
-  useThreadFromCache(threadId: string): ThreadData<BaseMetadata>;
+  useThreadFromCache(threadId: string): ThreadData<TThreadMetadata>;
 
   /**
    * @private
@@ -1255,8 +1255,11 @@ type PrivateLiveblocksContextApi = {
   useCurrentUserId(): string | null;
 };
 
-export type LiveblocksContextBundle<TUserMeta extends BaseUserMeta> = Resolve<
-  LiveblocksContextBundleCommon &
+export type LiveblocksContextBundle<
+  TUserMeta extends BaseUserMeta,
+  TThreadMetadata extends BaseMetadata,
+> = Resolve<
+  LiveblocksContextBundleCommon<TThreadMetadata> &
     Omit<SharedContextBundle<TUserMeta>, "suspense"> & {
       /**
        * @beta
@@ -1279,7 +1282,7 @@ export type LiveblocksContextBundle<TUserMeta extends BaseUserMeta> = Resolve<
       useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountState;
 
       suspense: Resolve<
-        LiveblocksContextBundleCommon &
+        LiveblocksContextBundleCommon<TThreadMetadata> &
           SharedContextBundle<TUserMeta>["suspense"] & {
             /**
              * @beta
@@ -1311,5 +1314,5 @@ export type LiveblocksContextBundle<TUserMeta extends BaseUserMeta> = Resolve<
    * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
    * will probably happen if you do.
    */
-  readonly [kInternal]: PrivateLiveblocksContextApi;
+  readonly [kInternal]: PrivateLiveblocksContextApi<TThreadMetadata>;
 };

@@ -35,8 +35,10 @@ import type {
   UnreadInboxNotificationsCountStateSuccess,
 } from "./types";
 
-export const ContextBundle =
-  createContext<LiveblocksContextBundle<BaseUserMeta> | null>(null);
+export const ContextBundle = createContext<LiveblocksContextBundle<
+  BaseUserMeta,
+  BaseMetadata
+> | null>(null);
 
 /**
  * @private
@@ -57,7 +59,7 @@ export const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
 export function createLiveblocksContext<
   TUserMeta extends BaseUserMeta = BaseUserMeta,
   TThreadMetadata extends BaseMetadata = never,
->(client: Client): LiveblocksContextBundle<TUserMeta> {
+>(client: Client): LiveblocksContextBundle<TUserMeta, TThreadMetadata> {
   const shared = createSharedContext<TUserMeta>(client);
 
   const store = client[kInternal]
@@ -68,7 +70,12 @@ export function createLiveblocksContext<
   function LiveblocksProvider(props: PropsWithChildren) {
     return (
       <ContextBundle.Provider
-        value={bundle as unknown as LiveblocksContextBundle<BaseUserMeta>}
+        value={
+          bundle as unknown as LiveblocksContextBundle<
+            BaseUserMeta,
+            BaseMetadata
+          >
+        }
       >
         {props.children}
       </ContextBundle.Provider>
@@ -450,9 +457,9 @@ export function createLiveblocksContext<
 
   function useInboxNotificationThread(
     inboxNotificationId: string
-  ): ThreadData<BaseMetadata> {
+  ): ThreadData<TThreadMetadata> {
     const selector = useCallback(
-      (state: CacheState<BaseMetadata>) => {
+      (state: CacheState<TThreadMetadata>) => {
         const inboxNotification = state.inboxNotifications[inboxNotificationId];
 
         if (inboxNotification === undefined) {
@@ -482,9 +489,9 @@ export function createLiveblocksContext<
     );
   }
 
-  function useThreadFromCache(threadId: string): ThreadData<BaseMetadata> {
+  function useThreadFromCache(threadId: string): ThreadData<TThreadMetadata> {
     const selector = useCallback(
-      (state: CacheState<BaseMetadata>) => {
+      (state: CacheState<TThreadMetadata>) => {
         const thread = state.threads[threadId];
 
         if (thread === undefined) {
@@ -517,7 +524,7 @@ export function createLiveblocksContext<
     );
   }
 
-  const bundle: LiveblocksContextBundle<TUserMeta> = {
+  const bundle: LiveblocksContextBundle<TUserMeta, TThreadMetadata> = {
     LiveblocksProvider,
 
     useInboxNotifications,
