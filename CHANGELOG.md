@@ -1,3 +1,21 @@
+# v1.12.0
+
+### `@liveblocks/react`
+
+- Add support for custom notification kinds to `useInboxNotifications`.
+
+### `@liveblocks/react-comments`
+
+- Add support for custom notification kinds to the `InboxNotification` component
+  via the `kinds` prop and the `InboxNotification.Custom` component.
+- Add destructive color tokens. (`--lb-destructive`,
+  `--lb-destructive-foreground`, and `--lb-destructive-contrast`)
+
+### `@liveblocks/node`
+
+- Add `triggerInboxNotification` method that lets you trigger custom
+  notification kinds.
+
 # v1.11.2
 
 ### `create-liveblocks-app`

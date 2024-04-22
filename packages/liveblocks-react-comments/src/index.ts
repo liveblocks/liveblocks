@@ -8,7 +8,13 @@ export type { CommentProps } from "./components/Comment";
 export { Comment } from "./components/Comment";
 export type { ComposerProps } from "./components/Composer";
 export { Composer } from "./components/Composer";
-export type { InboxNotificationProps } from "./components/InboxNotification";
+export type {
+  InboxNotificationAvatarProps,
+  InboxNotificationCustomProps,
+  InboxNotificationIconProps,
+  InboxNotificationProps,
+  InboxNotificationThreadProps,
+} from "./components/InboxNotification";
 export { InboxNotification } from "./components/InboxNotification";
 export type { InboxNotificationListProps } from "./components/InboxNotificationList";
 export { InboxNotificationList } from "./components/InboxNotificationList";
