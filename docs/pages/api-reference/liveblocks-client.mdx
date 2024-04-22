@@ -2568,7 +2568,8 @@ object.toImmutable();
 
 ### update [#LiveObject.update]
 
-Adds or updates multiple properties at once.
+Adds or updates multiple properties at once. Nested changes to other Storage
+types will not be applied.
 
 ```ts
 const object = new LiveObject({ firstName: "Grace" });
@@ -2585,7 +2586,8 @@ object.toImmutable();
 <PropertiesList title="Arguments">
   <PropertiesListItem name="value" type="LsonObject" required>
     The keys and values you’re updating. Can contain JSON-serializable data and
-    other Liveblocks conflict-free data structures.
+    other Liveblocks conflict-free data structures. Nested changes to other
+    Storage types will not be applied.
   </PropertiesListItem>
 </PropertiesList>
 
