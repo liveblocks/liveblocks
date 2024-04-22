@@ -1236,17 +1236,7 @@ type LiveblocksContextBundleCommon<TThreadMetadata extends BaseMetadata> = {
  * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
  * will probably happen if you do.
  */
-type PrivateLiveblocksContextApi<TThreadMetadata extends BaseMetadata> = {
-  /**
-   * @private
-   *
-   * Returns a thread from the cache.
-   *
-   * @example
-   * const thread = useThreadFromCache("th_xxx");
-   */
-  useThreadFromCache(threadId: string): ThreadData<TThreadMetadata>;
-
+type PrivateLiveblocksContextApi = {
   /**
    * @private
    *
@@ -1314,5 +1304,5 @@ export type LiveblocksContextBundle<
    * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
    * will probably happen if you do.
    */
-  readonly [kInternal]: PrivateLiveblocksContextApi<TThreadMetadata>;
+  readonly [kInternal]: PrivateLiveblocksContextApi;
 };

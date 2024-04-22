@@ -489,30 +489,6 @@ export function createLiveblocksContext<
     );
   }
 
-  function useThreadFromCache(threadId: string): ThreadData<TThreadMetadata> {
-    const selector = useCallback(
-      (state: CacheState<TThreadMetadata>) => {
-        const thread = state.threads[threadId];
-
-        if (thread === undefined) {
-          throw new Error(
-            `Internal error: thread with id "${threadId}" not found in cache`
-          );
-        }
-
-        return thread;
-      },
-      [threadId]
-    );
-
-    return useSyncExternalStoreWithSelector(
-      store.subscribe,
-      store.get,
-      store.get,
-      selector
-    );
-  }
-
   const currentUserIdStore = client[kInternal]
     .currentUserIdStore as unknown as Store<string | null>;
 
@@ -553,7 +529,6 @@ export function createLiveblocksContext<
     },
 
     [kInternal]: {
-      useThreadFromCache,
       useCurrentUserId,
     },
   };
