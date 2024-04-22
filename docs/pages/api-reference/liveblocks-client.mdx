@@ -1292,6 +1292,47 @@ const unsubscribe = room.subscribe(
 );
 ```
 
+#### Using async functions
+
+You use an `async` function inside the subscription callback, though bear in
+mind that the callback itself is synchronous, and there’s no guarantee the
+`async` function will complete before the callback is run again.
+
+```ts
+const { root } = await room.getStorage();
+
+const unsubscribe = room.subscribe(root, (updatedRoot) => {
+  async function doThing() {
+    await fetch(/* ... */);
+  }
+
+  doThing();
+});
+```
+
+If the order of updates is imporant in your application, and it’s important to
+ensure that your `async` function doesn’t start before the previous one
+finishes, you can use a package such as
+[`async-mutex`](https://www.npmjs.com/package/async-mutex) to help you with
+this. Using `runExclusive` will effectively form a queue for all upcoming
+updates, guaranteeing serial execution.
+
+```ts
+import { Mutex } from "async-mutex";
+
+const { root } = await room.getStorage();
+const myMutex = new Mutex();
+
+const unsubscribeUpdates = room.subscribe(root, (root) => {
+  void myMutex.runExclusive(async () => {
+    await fetch(/* ... */);
+  });
+});
+```
+
+Note that this may cause a performance penalty in your application, as certain
+updates will be ignored.
+
 ### Room.subscribe("event") [#Room.subscribe.event]
 
 Subscribe to events broadcast by [`Room.broadcastEvent`][]. Takes a callback
