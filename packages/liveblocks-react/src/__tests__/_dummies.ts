@@ -2,6 +2,7 @@ import type {
   BaseMetadata,
   CommentData,
   InboxNotificationData,
+  InboxNotificationThreadData,
   ThreadData,
 } from "@liveblocks/core";
 
@@ -54,6 +55,47 @@ export function dummyCommentData(): CommentData {
 }
 
 export function dummyInboxNoficationData(): InboxNotificationData {
+  const id = createInboxNotificationId();
+  const threadId = createThreadId();
+  const now = new Date();
+
+  return {
+    kind: "thread",
+    roomId: "room-id",
+    id,
+    notifiedAt: now,
+    threadId,
+    readAt: null,
+  };
+}
+
+export function dummyCustomInboxNoficationData(): InboxNotificationData {
+  const id = createInboxNotificationId();
+  const now = new Date();
+
+  return {
+    kind: "$custom",
+    roomId: "room-id",
+    id,
+    notifiedAt: now,
+    readAt: null,
+    subjectId: "subject-id",
+    activities: [
+      {
+        id: "activity-id",
+        createdAt: now,
+        data: {
+          type: "fileUploaded",
+          fileName: "file.txt",
+          fileSize: 1234,
+          success: true,
+        },
+      },
+    ],
+  };
+}
+
+export function dummyThreadInboxNotificationData(): InboxNotificationThreadData {
   const id = createInboxNotificationId();
   const threadId = createThreadId();
   const now = new Date();

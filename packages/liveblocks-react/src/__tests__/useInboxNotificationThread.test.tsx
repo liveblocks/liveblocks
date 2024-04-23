@@ -6,7 +6,11 @@ import { setupServer } from "msw/node";
 import React from "react";
 
 import { createLiveblocksContext } from "../liveblocks";
-import { dummyInboxNoficationData, dummyThreadData } from "./_dummies";
+import {
+  dummyCustomInboxNoficationData,
+  dummyThreadData,
+  dummyThreadInboxNotificationData,
+} from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import { mockGetInboxNotifications } from "./_restMocks";
 import { generateFakeJwt } from "./_utils";
@@ -45,7 +49,7 @@ function createLiveblocksContextForTest() {
 describe("useInboxNotificationThread", () => {
   test("should return a thread after notifications are fetched", async () => {
     const threads = [dummyThreadData()];
-    const inboxNotification = dummyInboxNoficationData();
+    const inboxNotification = dummyThreadInboxNotificationData();
     inboxNotification.threadId = threads[0].id;
     const inboxNotifications = [inboxNotification];
 
@@ -112,9 +116,10 @@ describe("useInboxNotificationThread", () => {
 
   test("it should throw when the notification is not found or the thread is not found", async () => {
     const threads = [dummyThreadData()];
-    const inboxNotification = dummyInboxNoficationData();
+    const inboxNotification = dummyThreadInboxNotificationData();
+    const customInboxNotification = dummyCustomInboxNoficationData();
     inboxNotification.threadId = threads[0].id;
-    const inboxNotifications = [inboxNotification];
+    const inboxNotifications = [inboxNotification, customInboxNotification];
 
     server.use(
       mockGetInboxNotifications(async (_req, res, ctx) => {
@@ -147,7 +152,7 @@ describe("useInboxNotificationThread", () => {
           <LiveblocksProvider>{children}</LiveblocksProvider>
         ),
       })
-    ).toThrow(`Inbox notification with id "${inboxNotification.id}" not found`);
+    ).toThrow(`Inbox notification with ID "${inboxNotification.id}" not found`);
 
     const { result, unmount } = renderHook(() => useInboxNotifications(), {
       wrapper: ({ children }) => (
@@ -173,7 +178,7 @@ describe("useInboxNotificationThread", () => {
           <LiveblocksProvider>{children}</LiveblocksProvider>
         ),
       })
-    ).toThrow('Inbox notification with id "not-found" not found');
+    ).toThrow('Inbox notification with ID "not-found" not found');
 
     // Use the hook with a notification that has a thread that does not exist should throw
     // This should never happen in practice, but we should handle it
@@ -183,7 +188,18 @@ describe("useInboxNotificationThread", () => {
           <LiveblocksProvider>{children}</LiveblocksProvider>
         ),
       })
-    ).toThrow(`Thread with id "${threads[0].id}" not found`);
+    ).toThrow(`Thread with ID "${threads[0].id}" not found`);
+
+    // Use the hook with a custom notification should throw
+    expect(() =>
+      renderHook(() => useInboxNotificationThread(customInboxNotification.id), {
+        wrapper: ({ children }) => (
+          <LiveblocksProvider>{children}</LiveblocksProvider>
+        ),
+      })
+    ).toThrow(
+      `Inbox notification with ID "${customInboxNotification.id}" is not of kind "thread"`
+    );
 
     unmount();
   });
