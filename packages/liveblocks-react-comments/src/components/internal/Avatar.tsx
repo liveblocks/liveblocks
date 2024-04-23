@@ -8,6 +8,9 @@ import { classNames } from "../../utils/class-names";
 import { getInitials } from "../../utils/get-initials";
 
 export interface AvatarProps extends ComponentProps<"div"> {
+  /**
+   * The user ID to display the avatar for.
+   */
   userId: string;
 }
 

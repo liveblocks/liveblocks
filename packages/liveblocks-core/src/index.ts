@@ -46,6 +46,7 @@ export type {
 export {
   convertToCommentData,
   convertToCommentUserReaction,
+  convertToInboxNotificationData,
   convertToThreadData,
 } from "./convert-plain-data";
 export { cloneLson, isLiveNode } from "./crdts/liveblocks-helpers";
@@ -184,9 +185,13 @@ export type {
 } from "./types/CommentReaction";
 export type { Immutable } from "./types/Immutable";
 export type {
+  ActivityData,
+  InboxNotificationCustomData,
+  InboxNotificationCustomDataPlain,
   InboxNotificationData,
   InboxNotificationDataPlain,
   InboxNotificationThreadData,
+  InboxNotificationThreadDataPlain,
 } from "./types/InboxNotificationData";
 export type { InboxNotificationDeleteInfo } from "./types/InboxNotificationDeleteInfo";
 export type {

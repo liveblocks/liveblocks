@@ -9,6 +9,8 @@
   --lb-spacing: 1em;
   --lb-accent: #17f;
   --lb-accent-foreground: #fff;
+  --lb-destructive: #f45;
+  --lb-destructive-foreground: #fff;
   --lb-background: #fff;
   --lb-foreground: #111;
 
@@ -24,6 +26,7 @@
   --lb-elevation-shadow: $lb-elevation-shadow;
   --lb-tooltip-shadow: $lb-tooltip-shadow;
   --lb-accent-contrast: 8%;
+  --lb-destructive-contrast: 8%;
   --lb-foreground-contrast: 8%;
 
   /** 
@@ -594,36 +597,6 @@
   :where(strong) {
     font-weight: 600;
   }
-
-  :where(code) {
-    padding: 0.2em 0.4em;
-    border-radius: calc(0.75 * var(--lb-radius));
-    background: var(--lb-foreground-subtle);
-    box-decoration-break: clone;
-    font-size: 85%;
-    line-height: 1;
-  }
-
-  /**
-   * Progressive enhancement: Merge adjacent inline code elements
-   */
-  :where(span:has(code) + span code) {
-    padding-inline-start: 0;
-    border-start-start-radius: 0;
-    border-end-start-radius: 0;
-  }
-
-  :where(span:has(code):has(+ span code) code) {
-    padding-inline-end: 0;
-    border-start-end-radius: 0;
-    border-end-end-radius: 0;
-  }
-}
-
-/* 0,0,0 specificity to inherit any styles applied to `code` elements */
-:where(:is(.lb-comment-body, .lb-composer-editor) code) {
-  font-family: ui-monospace, Menlo, Monaco, "Roboto Mono", "Cascadia Code",
-    "Source Code Pro", Consolas, "DejaVu Sans Mono", monospace;
 }
 
 .lb-comment-mention,
@@ -1065,6 +1038,14 @@
   text-decoration: inherit;
   transition-property: background;
 
+  /* Highlight missing notifications during development */
+  &:where([data-missing]) {
+    --lb-accent: var(--lb-destructive) !important;
+    --lb-accent-foreground: var(--lb-destructive-foreground) !important;
+    --lb-accent-contrast: var(--lb-destructive-contrast) !important;
+    --lb-dynamic-background: var(--lb-background-accent-faint);
+  }
+
   &:where([data-unread]) {
     --lb-dynamic-background: var(--lb-background-accent-faint);
   }
@@ -1124,8 +1105,28 @@
   inline-size: var(--lb-inbox-notification-aside-size);
 }
 
+.lb-inbox-notification-icon {
+  display: flex;
+  justify-content: center;
+  place-items: center;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--lb-foreground-subtle);
+
+  .lb-inbox-notification:where([data-missing]) :where(&) {
+    background: var(--lb-accent-subtle);
+    color: var(--lb-accent);
+  }
+}
+
 .lb-inbox-notification-content {
   flex: 1;
+}
+
+.lb-inbox-notification-content,
+.lb-inbox-notification-body {
+  min-inline-size: 0;
+  max-inline-size: 100%;
 }
 
 .lb-inbox-notification-header {
@@ -1138,9 +1139,8 @@
 
 .lb-inbox-notification-title {
   min-block-size: $lb-button-size;
-  text-wrap: pretty;
 
-  :where(.lb-list, .lb-name) {
+  :where(strong, .lb-list, .lb-name) {
     font-weight: 500;
   }
 }
@@ -1219,6 +1219,42 @@
   &:where(:not(:last-of-type)) {
     border-block-end: 1px solid var(--lb-foreground-subtle);
   }
+}
+
+/*************************************
+ *            Inline code            *
+ *************************************/
+
+:is(.lb-root) {
+  :where(code) {
+    padding: 0.2em 0.4em;
+    border-radius: calc(0.75 * var(--lb-radius));
+    background: var(--lb-foreground-subtle);
+    box-decoration-break: clone;
+    font-size: 85%;
+    line-height: 1;
+  }
+
+  /**
+   * Progressive enhancement: Merge adjacent inline code elements
+   */
+  :where(span:has(code) + span code) {
+    padding-inline-start: 0;
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+  }
+
+  :where(span:has(code):has(+ span code) code) {
+    padding-inline-end: 0;
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+  }
+}
+
+/* 0,0,0 specificity to inherit any styles applied to `code` elements */
+:where(:is(.lb-root) code) {
+  font-family: ui-monospace, Menlo, Monaco, "Roboto Mono", "Cascadia Code",
+    "Source Code Pro", Consolas, "DejaVu Sans Mono", monospace;
 }
 
 /*************************************

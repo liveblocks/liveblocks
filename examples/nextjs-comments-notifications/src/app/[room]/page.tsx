@@ -5,7 +5,7 @@ import { Loading } from "../../components/Loading";
 import { Composer, Thread } from "@liveblocks/react-comments";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
-import { useExampleRoomId } from "../../example";
+import { useExampleRoomId } from "../../example.client";
 import { Suspense } from "react";
 
 /**

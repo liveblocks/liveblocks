@@ -3,8 +3,8 @@
 import { Editor } from "@tiptap/react";
 import { nanoid } from "nanoid";
 import { useCallback, useRef } from "react";
-import { CommentIcon } from "../../icons";
-import { Button } from "../../primitives/Button";
+import { CommentIcon } from "@/icons";
+import { Button } from "@/primitives/Button";
 import styles from "./Toolbar.module.css";
 
 type Props = {
