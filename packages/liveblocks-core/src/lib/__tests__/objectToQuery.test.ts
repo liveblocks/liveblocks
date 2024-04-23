@@ -128,23 +128,23 @@ describe("objectToQuery", () => {
     "should work with funky key: %s",
     (key) => {
       const query = objectToQuery({
-        [key]: "value",
         metadata: {
           [key]: "value",
         },
       });
 
-      expect(query).toEqual(
-        `${key}:"value" AND metadata[${JSON.stringify(key)}]:"value"`
-      );
-
-      const query2 = objectToQuery({
-        [key]: {
-          metadata: "value",
-        },
-      });
-
-      expect(query2).toEqual(`${key}["metadata"]:"value"`);
+      expect(query).toEqual(`metadata[${JSON.stringify(key)}]:"value"`);
     }
   );
+
+  it("should avoid injections", () => {
+    const query = objectToQuery({ foo: '" OR evil:"' });
+    //                                 ^^^^^^^^^^^^^ Injection attack with double-quoted strings
+
+    const query2 = objectToQuery({ foo: "' OR evil:'" });
+    //                                  ^^^^^^^^^^^^^ Injection attack with single-quoted strings
+
+    expect(query).toEqual(`foo:"\\" OR evil:\\""`);
+    expect(query2).toEqual(`foo:"' OR evil:'"`);
+  });
 });

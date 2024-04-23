@@ -74,6 +74,9 @@ type BooleanFilter = {
  * ```
  *
  */
+
+const identifierRegex = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+
 export function objectToQuery(obj: {
   [key: string]:
     | FilterValue
@@ -83,58 +86,41 @@ export function objectToQuery(obj: {
   let filterList: Filter[] = [];
   const entries = Object.entries(obj);
 
-  /**
-   * Case 1: Simple key value pairs (equal operator)
-   * @example
-   * ```ts
-   * { key: "foo" }
-   * ```
-   */
-  const keyValuePairs = entries.filter(([_, value]) =>
-    isSimpleValue(value)
-  ) as [string, string | number | boolean][];
+  const keyValuePairs: [string, string | number | boolean][] = [];
+  const keyValuePairsWithOperator: [string, Record<"startsWith", string>][] =
+    [];
+  const indexedKeys: [string, Record<string, FilterValue | undefined>][] = [];
 
-  filterList = getFiltersFromKeyValuePairs(keyValuePairs);
+  entries.forEach(([key, value]) => {
+    if (!identifierRegex.test(key)) {
+      throw new Error("Key must only contain letters, numbers, _");
+    }
 
-  /**
-   * Case 2: Key value pairs with operator
-   * @example
-   * ```ts
-   * { key: { startsWith: "fo" } }
-   * ```
-   */
-  const keyValuePairsWithOperator = entries.filter(([_, value]) =>
-    isValueWithOperator(value)
-  ) as [string, Record<"startsWith", string>][];
-
-  filterList = filterList.concat(
-    getFiltersFromKeyValuePairsWithOperator(keyValuePairsWithOperator)
-  );
-
-  /**
-   * Case 3: Indexed key value pairs
-   * @example
-   * ```ts
-   * { key: { nestedKey: "foo" } }
-   * ```
-   * @example
-   * ```ts
-   * { key: { nestedKey: { startsWith: "fo" } } }
-   * ```
-   */
-  const indexedKeys = entries.filter(([_, value]) => {
-    return typeof value === "object" && !("startsWith" in value);
+    if (isSimpleValue(value)) {
+      keyValuePairs.push([key, value]);
+    } else if (isValueWithOperator(value)) {
+      keyValuePairsWithOperator.push([key, value]);
+    } else if (typeof value === "object" && !("startsWith" in value)) {
+      indexedKeys.push([key, value]);
+    }
   });
 
+  filterList = [
+    ...getFiltersFromKeyValuePairs(keyValuePairs),
+    ...getFiltersFromKeyValuePairsWithOperator(keyValuePairsWithOperator),
+  ];
+
   indexedKeys.forEach(([key, value]) => {
-    if (!value) {
-      return;
-    }
     const nestedEntries = Object.entries(value);
     const nKeyValuePairs: [string, SimpleFilterValue][] = [];
     const nKeyValuePairsWithOperator: [string, OperatorFilterValue][] = [];
-
     nestedEntries.forEach(([nestedKey, nestedValue]) => {
+      if (isStringEmpty(nestedKey)) {
+        throw new Error("Key cannot be empty");
+      } else if (stringContainsOpeningBracket(nestedKey)) {
+        throw new Error('Key cannot contain "{" character');
+      }
+
       if (isSimpleValue(nestedValue)) {
         nKeyValuePairs.push([formatFilterKey(key, nestedKey), nestedValue]);
       } else if (isValueWithOperator(nestedValue)) {
@@ -144,12 +130,11 @@ export function objectToQuery(obj: {
         ]);
       }
     });
-
-    filterList = filterList.concat(getFiltersFromKeyValuePairs(nKeyValuePairs));
-
-    filterList = filterList.concat(
-      getFiltersFromKeyValuePairsWithOperator(nKeyValuePairsWithOperator)
-    );
+    filterList = [
+      ...filterList,
+      ...getFiltersFromKeyValuePairs(nKeyValuePairs),
+      ...getFiltersFromKeyValuePairsWithOperator(nKeyValuePairsWithOperator),
+    ];
   });
 
   return filterList
@@ -224,7 +209,20 @@ const formatFilterKey = (key: string, nestedKey?: string) => {
 
 const formatFilterValue = (value: string | number | boolean) => {
   if (typeof value === "string") {
+    if (isStringEmpty(value)) {
+      throw new Error("Value cannot be empty");
+    } else if (stringContainsOpeningBracket(value)) {
+      throw new Error('Value cannot contain "{" character');
+    }
     return JSON.stringify(value);
   }
   return value.toString();
+};
+
+const isStringEmpty = (value: string) => {
+  return !value || value.toString().trim() === "";
+};
+
+const stringContainsOpeningBracket = (value: string) => {
+  return value.includes("{");
 };
