@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks-examples/nextjs-comments-canvas",
-  "description": "This example shows how to build a comments canvas with Liveblocks and Next.js.",
+  "description": "This example shows how to build a 2D canvas with draggable comments using Liveblocks and Next.js.",
   "license": "Apache-2.0",
   "private": true,
   "scripts": {
