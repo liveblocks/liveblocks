@@ -144,7 +144,7 @@ describe("objectToQuery", () => {
     const query2 = objectToQuery({ foo: "' OR evil:'" });
     //                                  ^^^^^^^^^^^^^ Injection attack with single-quoted strings
 
-    expect(query).toEqual(`foo:"\\" OR evil:\\""`);
-    expect(query2).toEqual(`foo:"' OR evil:'"`);
+    expect(query).toEqual("foo:\"\\\" OR evil:\\\"\"");
+    expect(query2).toEqual("foo:\"' OR evil:'\"");
   });
 });
