@@ -58,7 +58,7 @@ export function CommentsCanvas() {
   }, []);
 
   return (
-    <div className={styles.wrapper}>
+    <div className={`${styles.wrapper} lb-root`}>
       <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
         {threads.map((thread) => (
           <DraggableThread key={thread.id} thread={thread} />

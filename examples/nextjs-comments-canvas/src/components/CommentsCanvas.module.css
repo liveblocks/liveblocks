@@ -20,12 +20,12 @@
   user-select: none;
   width: 36px;
   height: 36px;
-  box-shadow: 0 0 0 1px rgb(0 0 0 / 4%), 0 2px 6px rgb(0 0 0 / 4%), 0 8px 26px rgb(0 0 0 / 6%);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 4%), 0 2px 6px rgb(0 0 0 / 4%), 0 8px 26px rgb(0 0 0 / 6%), inset 0 0 0 1px rgb(255 255 255 / 6%);
   border-top-left-radius: 4px;
   border-top-right-radius: 50%;
   border-bottom-right-radius: 50%;
   border-bottom-left-radius: 50%;
-  background: #fff;
+  background: var(--lb-background);
   cursor: grab;
 }
 
@@ -40,5 +40,5 @@
 }
 
 .avatar > div {
-  background: lightgray;
+  background: var(--lb-background);
 }
