@@ -464,7 +464,7 @@ export function createLiveblocksContext<
 
         if (inboxNotification === undefined) {
           throw new Error(
-            `Inbox notification with id "${inboxNotificationId}" not found`
+            `Inbox notification with ID "${inboxNotificationId}" not found`
           );
         }
 
@@ -472,7 +472,7 @@ export function createLiveblocksContext<
 
         if (thread === undefined) {
           throw new Error(
-            `Thread with id "${inboxNotification.threadId}" not found`
+            `Thread with ID "${inboxNotification.threadId}" not found, this inbox notification might not be of kind "thread"`
           );
         }
 

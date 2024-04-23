@@ -1219,7 +1219,7 @@ type LiveblocksContextBundleCommon<TThreadMetadata extends BaseMetadata> = {
   /**
    * @beta
    *
-   * Returns the inbox notification thread for the given inbox notification ID.
+   * Returns the thread associated with a `"thread"` inbox notification.
    *
    * @example
    * const thread = useInboxNotificationThread("in_xxx");
