@@ -117,8 +117,6 @@ export function objectToQuery(obj: {
     nestedEntries.forEach(([nestedKey, nestedValue]) => {
       if (isStringEmpty(nestedKey)) {
         throw new Error("Key cannot be empty");
-      } else if (stringContainsOpeningBracket(nestedKey)) {
-        throw new Error('Key cannot contain "{" character');
       }
 
       if (isSimpleValue(nestedValue)) {
@@ -211,8 +209,6 @@ const formatFilterValue = (value: string | number | boolean) => {
   if (typeof value === "string") {
     if (isStringEmpty(value)) {
       throw new Error("Value cannot be empty");
-    } else if (stringContainsOpeningBracket(value)) {
-      throw new Error('Value cannot contain "{" character');
     }
     return JSON.stringify(value);
   }
@@ -221,8 +217,4 @@ const formatFilterValue = (value: string | number | boolean) => {
 
 const isStringEmpty = (value: string) => {
   return !value || value.toString().trim() === "";
-};
-
-const stringContainsOpeningBracket = (value: string) => {
-  return value.includes("{");
 };
