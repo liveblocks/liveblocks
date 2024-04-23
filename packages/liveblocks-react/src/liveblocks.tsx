@@ -468,6 +468,12 @@ export function createLiveblocksContext<
           );
         }
 
+        if (inboxNotification.kind !== "thread") {
+          throw new Error(
+            `Inbox notification with ID "${inboxNotificationId}" is not of kind "thread"`
+          );
+        }
+
         const thread = state.threads[inboxNotification.threadId];
 
         if (thread === undefined) {
