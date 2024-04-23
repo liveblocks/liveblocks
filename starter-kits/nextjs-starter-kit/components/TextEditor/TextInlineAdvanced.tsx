@@ -1,9 +1,9 @@
 import { Editor } from "@tiptap/react";
 import { useState } from "react";
-import { CodeIcon, CrossIcon, HighlightIcon, LinkIcon } from "../../icons";
-import { Button } from "../../primitives/Button";
-import { Input } from "../../primitives/Input";
-import { Popover } from "../../primitives/Popover";
+import { CodeIcon, CrossIcon, HighlightIcon, LinkIcon } from "@/icons";
+import { Button } from "@/primitives/Button";
+import { Input } from "@/primitives/Input";
+import { Popover } from "@/primitives/Popover";
 import styles from "./Toolbar.module.css";
 
 type Props = {

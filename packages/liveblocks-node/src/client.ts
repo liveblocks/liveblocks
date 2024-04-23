@@ -4,6 +4,7 @@
  * @liveblocks/core has browser-specific code.
  */
 import type {
+  ActivityData,
   BaseMetadata,
   CommentBody,
   CommentData,
@@ -23,6 +24,7 @@ import type {
 import {
   convertToCommentData,
   convertToCommentUserReaction,
+  convertToInboxNotificationData,
   convertToThreadData,
 } from "@liveblocks/core";
 
@@ -1254,13 +1256,9 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    const data = (await res.json()) as InboxNotificationDataPlain;
-
-    return {
-      ...data,
-      notifiedAt: new Date(data.notifiedAt),
-      readAt: data.readAt ? new Date(data.readAt) : null,
-    };
+    return convertToInboxNotificationData(
+      (await res.json()) as InboxNotificationDataPlain
+    );
   }
 
   /**
@@ -1360,6 +1358,21 @@ export class Liveblocks {
         ? new Date(data.lastConnectionAt)
         : undefined,
     };
+  }
+
+  public async triggerInboxNotification(params: {
+    userId: string;
+    kind: `$${string}`;
+    roomId?: string;
+    subjectId: string;
+    activityData: ActivityData;
+  }): Promise<void> {
+    const res = await this.post(url`/v2/inbox-notifications/trigger`, params);
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
   }
 }
 

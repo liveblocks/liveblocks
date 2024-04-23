@@ -998,4 +998,25 @@ describe("client", () => {
       }
     }
   });
+
+  test("should return the created inbox notification when triggerInboxNotification receives a successful response", async () => {
+    const userId = "user1";
+
+    server.use(
+      http.post(`${DEFAULT_BASE_URL}/v2/inbox-notifications/trigger`, () => {
+        return HttpResponse.json({}, { status: 200 });
+      })
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    await expect(
+      client.triggerInboxNotification({
+        userId,
+        kind: "$fileUploaded",
+        subjectId: "subject1",
+        activityData: { file: "url" },
+      })
+    ).resolves.toBeUndefined();
+  });
 });

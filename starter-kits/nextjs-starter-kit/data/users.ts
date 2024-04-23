@@ -1,4 +1,4 @@
-import { User } from "../types";
+import { User } from "@/types";
 
 /**
  * This array simulates a database consisting of a list of users.

@@ -1,13 +1,13 @@
 import clsx from "clsx";
 import { useSession } from "next-auth/react";
 import { ComponentProps, FormEvent, useState } from "react";
-import { PlusIcon } from "../../icons";
-import { updateGroupAccess } from "../../lib/client";
-import { Button } from "../../primitives/Button";
-import { Select } from "../../primitives/Select";
-import { Spinner } from "../../primitives/Spinner";
-import { Document, DocumentAccess, DocumentGroup, Group } from "../../types";
-import { capitalize } from "../../utils";
+import { PlusIcon } from "@/icons";
+import { updateGroupAccess } from "@/lib/actions";
+import { Button } from "@/primitives/Button";
+import { Select } from "@/primitives/Select";
+import { Spinner } from "@/primitives/Spinner";
+import { Document, DocumentAccess, DocumentGroup, Group } from "@/types";
+import { capitalize } from "@/utils";
 import styles from "./ShareDialogInvite.module.css";
 
 interface Props extends ComponentProps<"div"> {
