@@ -1,4 +1,5 @@
 import "../styles/globals.css";
+import { Suspense } from "react";
 
 export default function RootLayout({
   children,
@@ -24,7 +25,9 @@ export default function RootLayout({
           type="image/png"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <Suspense>{children}</Suspense>
+      </body>
     </html>
   );
 }
