@@ -9,6 +9,7 @@
 ### Documentation
 
 - We made all the writing better, all over.
+- Added some images.
 
 ## v1.11.3
 
