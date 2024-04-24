@@ -20,11 +20,11 @@ jobs:
 
       - name: Install git-toolbelt
         run: |
-          wget https://github.com/nvie/git-toolbelt/archive/v1.8.0.tar.gz
-          tar -xzf v1.8.0.tar.gz
+          wget https://github.com/nvie/git-toolbelt/archive/v1.9.1.tar.gz
+          tar -xzf v1.9.1.tar.gz
           mkdir -p "$HOME/.local/bin"
-          cp git-toolbelt-1.8.0/git-* "$HOME/.local/bin"
-          rm -rf v1.8.0.tar.gz git-toolbelt-1.8.0
+          cp git-toolbelt-1.9.1/git-* "$HOME/.local/bin"
+          rm -rf v1.9.1.tar.gz git-toolbelt-1.9.1
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Checkout
