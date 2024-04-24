@@ -331,6 +331,9 @@ export class Liveblocks {
     params: {
       limit?: number;
       startingAfter?: string;
+      /**
+       * @deprecated Use `query` instead.
+       */
       metadata?: QueryRoomMetadata;
       userId?: string;
       groupIds?: string[];
