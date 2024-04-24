@@ -4,7 +4,7 @@ import clsx from "clsx";
 import { ComponentProps } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useUser } from "../../liveblocks.config";
-import { useExampleUserId } from "../example";
+import { useExampleUserId } from "../example.client";
 import { ClientSideSuspense } from "@liveblocks/react";
 
 function Avatar({ className, ...props }: ComponentProps<"div">) {

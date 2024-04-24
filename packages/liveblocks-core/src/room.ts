@@ -1625,7 +1625,9 @@ export function createRoom<
       }
 
       if (activeBatch) {
-        activeBatch.ops.push(...ops);
+        for (const op of ops) {
+          activeBatch.ops.push(op);
+        }
         for (const [key, value] of storageUpdates) {
           activeBatch.updates.storageUpdates.set(
             key,
@@ -2538,7 +2540,10 @@ export function createRoom<
   }
 
   function dispatchOps(ops: Op[]) {
-    context.buffer.storageOperations.push(...ops);
+    const { storageOperations } = context.buffer;
+    for (const op of ops) {
+      storageOperations.push(op);
+    }
     flushNowOrSoon();
   }
 

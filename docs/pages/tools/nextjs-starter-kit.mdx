@@ -205,7 +205,7 @@ This method uses a NextAuth
 simulate a real sign in system. To replace it with your own authentication
 method, you can add any other NextAuth
 [`Provider`](https://next-auth.js.org/providers/) to
-[`/pages/api/auth/[...nextauth].ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/pages/api/auth/%5B...nextauth%5D.ts).
+[`/auth.config.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/auth.config.ts).
 
 Read the [next section](#how-to-sign-up) to learn how to add a new user to your
 demo application.
@@ -250,16 +250,21 @@ The
 has the following structure:
 
 ```
+app
 components
 data
+icons
 layouts
 lib
- └─ client
- └─ server
-pages
+ └─ actions
+ └─ database
+ └─ hooks
+ └─ utils
 primitives
 styles
 types
+auth.ts
+auth.config.ts
 liveblocks.config.ts
 liveblocks.server.config.ts
 package.json
@@ -268,33 +273,44 @@ package.json
 The important thing to note is that there are primitives, which are base level
 components such as buttons (think of these as the small building blocks of a
 page), components, which you can think of as multiplayer implementations
-(cursors, badges, etc), pages, which render document level experiences and both
-server side and client side methods which contain the logic to create and modify
-documents.
+(cursors, badges, etc), app, which renders document level experiences and a
+library (lib) of both server side and client side methods which contain the
+logic to create and modify documents.
 
 <br />
 <details>
   <summary>More info about the structure</summary>
   <br />
   <dl>
+    <dt>`/app/`</dt>
+    <dd>Next.js app folder.</dd>
     <dt>`/components/`</dt>
     <dd>Components used in the app.</dd>
     <dt>`/data/`</dt>
     <dd>A demo database.</dd>
+    <dt>`/icons/`</dt>
+    <dd>Every icon component.</dd>
     <dt>`/layouts/`</dt>
     <dd>Page layout components.</dd>
-    <dt>`/lib/client/`</dt>
-    <dd>Client functions used for accessing documents, database, SWR hooks.</dd>
-    <dt>`/lib/server/`</dt>
+    <dt>`/lib/actions/`</dt>
     <dd>
-      Server functions used for accessing documents, database, liveblocks.
+      Server actions that can be used on both client and server, used for
+      accessing and modifying documents.
     </dd>
-    <dt>`/pages/`</dt>
-    <dd>Next.js pages.</dd>
-    <dt>`/products/`</dt>
+    <dt>`/lib/database/`</dt>
+    <dd>Server functions used for getting database information.</dd>
+    <dt>`/lib/hooks/`</dt>
+    <dd>A set of React hooks that are used on the client.</dd>
+    <dt>`/lib/utils/`</dt>
+    <dd>Assorted document-related utilities.</dd>
+    <dt>`/primitives/`</dt>
     <dd>Generic reusable components.</dd>
     <dt>`/types/`</dt>
     <dd>All reusable TypeScript types.</dd>
+    <dt>`/auth.ts`</dt>
+    <dd>File that links NextAuth to your database.</dd>
+    <dt>`/auth.config.ts`</dt>
+    <dt>File where NextAuth providers are set up.</dt>
     <dt>`/liveblocks.config.ts`</dt>
     <dd>Liveblocks config file.</dd>
     <dt>`/liveblocks.server.config.ts`</dt>
@@ -332,34 +348,30 @@ console.log(data);
 ### Document functions
 
 Much of the starter kit’s power is in the
-[`/lib/server/documents`](https://github.com/liveblocks/liveblocks/tree/main/starter-kits/nextjs-starter-kit/lib/server/documents)
+[`/lib/actions`](https://github.com/liveblocks/liveblocks/tree/main/starter-kits/nextjs-starter-kit/lib/actions)
 directory. The functions in these files allow you to edit your documents easily
 and return type-safe objects. For example in an API endpoint:
 
 ```ts
-import { createDocument } from "../../lib/server";
+import { createDocument } from "@/lib/actions";
 
-export default async function (req, res) {
+export async function POST() {
   // Create a new document
-  const { data, error } = await createDocument(req, res, {
+  const { data, error } = await createDocument({
     name: "My document",
     type: "whiteboard",
     userId: "charlie.layne@example.com",
   });
+
   // ...
 }
 ```
 
-These functions can also be leveraged on the client side. To do so, instead
-simply import from the
-[`/lib/client`](https://github.com/liveblocks/liveblocks/tree/main/starter-kits/nextjs-starter-kit/lib/client)
-folder, and omit `req` and `res`. This client function works by calling an API
-endpoint for you and then calling the
-[`/lib/server`](https://github.com/liveblocks/liveblocks/tree/main/starter-kits/nextjs-starter-kit/lib/server)
-function.
+Because these functions are server actions, they can be leveraged on both client
+and server.
 
 ```tsx
-import { createDocument } from "../../lib/client";
+import { createDocument } from "@/lib/actions";
 
 export function CreateDocumentButton() {
   async function handleCreateDocument() {
@@ -369,8 +381,8 @@ export function CreateDocumentButton() {
       type: "whiteboard",
       userId: "charlie.layne@example.com",
     });
-    // ...
   }
+
   return <button onClick={handleCreateDocument}>New document</button>;
 }
 ```
@@ -444,11 +456,11 @@ export type Document = {
 ```
 
 Then modify the return value in
-[`/lib/server/utils/buildDocuments.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/lib/server/utils/buildDocuments.ts).
+[`/lib/utils/buildDocuments.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/lib/utils/buildDocuments.ts).
 This is a function that converts a Liveblocks room into your custom document
 format:
 
-```ts file="lib/server/utils/buildDocuments.ts"
+```ts file="lib/utils/buildDocuments.ts"
 // Return our custom Document format
 const document: Document = {
   randomNumber: Math.random(),
@@ -482,9 +494,9 @@ export type User = {
 ```
 
 Then make sure to return this new property in
-[`/lib/server/database/getUser.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/lib/server/database/getUser.ts).
+[`/lib/database/getUser.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/lib/database/getUser.ts).
 
-```ts file="lib/server/database/getUser.ts"
+```ts file="lib/database/getUser.ts"
 return { randomNumber: Math.random() /* ... */ };
 ```
 
@@ -511,10 +523,10 @@ In this example
 [Pick](https://www.typescriptlang.org/docs/handbook/utility-types.html) creates
 the UserInfo type based off of the User type and adds additional keys based on
 the properties you provide. After this, modify
-[`/pages/api/liveblocks/auth.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/pages/api/liveblocks/auth.ts).
+[`/lib/actions/authorizeLiveblocks.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/lib/actions/authorizeLiveblocks.ts).
 First, we’ll give an anonymous user a property:
 
-```ts file="pages/api/liveblocks/auth.ts"
+```ts file="lib/actions/authorizeLiveblocks.ts"
 // Anonymous user info
 const anonymousUser: User = {
   randomNumber: Math.random(),
@@ -524,8 +536,8 @@ const anonymousUser: User = {
 
 Next, we’ll get the signed-in user’s property:
 
-```ts file="pages/api/liveblocks/auth.ts"
-// Get current user info from session (defined in /pages/api/auth/[...nextauth].ts)
+```ts file="lib/actions/authorizeLiveblocks.ts"
+// Get current user info from session (defined in /auth.config.ts)
 // If no session found, this is a logged out/anonymous user
 const {
   randomNumber,
@@ -535,7 +547,7 @@ const {
 
 And then pass this info to `authorize`:
 
-```ts file="pages/api/liveblocks/auth.ts"
+```ts file="lib/actions/authorizeLiveblocks.ts"
 // Get Liveblocks access token
 const { data, error } = await authorize({
   userInfo: { randomNumber /* ... */ },
@@ -565,7 +577,7 @@ const everyonesRandomNumbers = useOthersMapped(
 
 It’s possible to add multiple authentication providers to the starter kit using
 [NextAuth Providers](https://next-auth.js.org/providers/). Open
-[`/pages/api/auth/[...nextauth].ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/pages/api/auth/%5B...nextauth%5D.ts)
+[`/auth.config.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/auth.config.ts)
 and place your providers in the object:
 
 ```ts
@@ -615,8 +627,8 @@ your whole app to just dark or light mode by modifying
 To add a database you need to modify the following async functions to return the
 correct properties:
 
-- [`/lib/server/database/getGroup.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/lib/server/database/getGroup.ts)
-- [`/lib/server/database/getGroups.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/lib/server/database/getGroups.ts)
-- [`/lib/server/database/getUser.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/lib/server/database/getUser.ts)
+- [`/lib/database/getGroup.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/lib/database/getGroup.ts)
+- [`/lib/database/getGroups.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/lib/database/getGroups.ts)
+- [`/lib/database/getUser.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/lib/database/getUser.ts)
 
 You can then remove the `/data` folder. Everything else should work as expected.

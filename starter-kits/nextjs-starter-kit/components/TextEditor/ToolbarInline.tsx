@@ -1,6 +1,6 @@
 import { Editor } from "@tiptap/react";
-import { BoldIcon, ItalicIcon, StrikethroughIcon } from "../../icons";
-import { Button } from "../../primitives/Button";
+import { BoldIcon, ItalicIcon, StrikethroughIcon } from "@/icons";
+import { Button } from "@/primitives/Button";
 import styles from "./Toolbar.module.css";
 
 type Props = {
