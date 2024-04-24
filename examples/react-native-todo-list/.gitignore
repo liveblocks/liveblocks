@@ -36,11 +36,19 @@ android/.bundle
 **/fastlane/screenshots
 **/fastlane/test_output
 *.jsbundle
-/ios/Pods/
-ios/.xcode.env.local
+**/Pods/
+**/.xcode.env.local
 
 # Temporary files created by Metro to check the health of the file watcher
 .metro-health-check*
  
 # testing
 /coverage
+
+# Yarn
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
