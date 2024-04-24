@@ -467,11 +467,12 @@ describe("client", () => {
   });
 
   test("should return a filtered list of threads when a query parameter is used for getThreads", async () => {
+    const query = "metadata['status']:'open' AND metadata['priority']:3";
     server.use(
       http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads`, (res) => {
         expect(
-          decodeURIComponent(res.request.url).includes(
-            "?query=metadata['status']:'open'"
+          decodeURIComponentWithSpaces(res.request.url).includes(
+            `?query=${query}`
           )
         ).toBe(true);
         return HttpResponse.json(
@@ -488,7 +489,50 @@ describe("client", () => {
     await expect(
       client.getThreads({
         roomId: "room1",
-        query: "metadata['status']:'open'",
+        query,
+      })
+    ).resolves.toEqual({
+      data: [thread],
+    });
+  });
+
+  test("should return a filtered list of threads when a query parameter is used for getThreads with a metadata object", async () => {
+    const query =
+      'metadata["status"]:"open" AND metadata["priority"]:3 AND metadata["organization"]^"liveblocks:"';
+    server.use(
+      http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads`, (res) => {
+        expect(
+          decodeURIComponentWithSpaces(res.request.url).includes(
+            `?query=${query}`
+          )
+        ).toBe(true);
+        return HttpResponse.json(
+          {
+            data: [thread],
+          },
+          { status: 200 }
+        );
+      })
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    await expect(
+      client.getThreads<{
+        status: "open";
+        priority: 3;
+        organization: "liveblocks:engineering";
+      }>({
+        roomId: "room1",
+        query: {
+          metadata: {
+            status: "open",
+            priority: 3,
+            organization: {
+              startsWith: "liveblocks:",
+            },
+          },
+        },
       })
     ).resolves.toEqual({
       data: [thread],
@@ -1020,3 +1064,7 @@ describe("client", () => {
     ).resolves.toBeUndefined();
   });
 });
+
+const decodeURIComponentWithSpaces = (url: string) => {
+  return decodeURIComponent(url.replace(/\+/g, " "));
+};

@@ -87,6 +87,7 @@ export * as console from "./lib/fancy-console";
 export { freeze } from "./lib/freeze";
 export type { Json, JsonArray, JsonObject, JsonScalar } from "./lib/Json";
 export { isJsonArray, isJsonObject, isJsonScalar } from "./lib/Json";
+export { objectToQuery } from "./lib/objectToQuery";
 export { makePoller } from "./lib/Poller";
 export { asPos, makePosition } from "./lib/position";
 export type { Resolve } from "./lib/Resolve";
@@ -212,6 +213,7 @@ export type {
   PlainLsonMap,
   PlainLsonObject,
 } from "./types/PlainLson";
+export type { QueryMetadata } from "./types/QueryMetadata";
 export type { RoomInfo } from "./types/RoomInfo";
 export type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 export type { ThreadData, ThreadDataPlain } from "./types/ThreadData";

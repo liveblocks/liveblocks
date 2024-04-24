@@ -17,6 +17,7 @@ import type {
   Json,
   JsonObject,
   PlainLsonObject,
+  QueryMetadata,
   RoomNotificationSettings,
   ThreadData,
   ThreadDataPlain,
@@ -26,6 +27,7 @@ import {
   convertToCommentUserReaction,
   convertToInboxNotificationData,
   convertToThreadData,
+  objectToQuery,
 } from "@liveblocks/core";
 
 import { Session } from "./Session";
@@ -887,7 +889,7 @@ export class Liveblocks {
    * @param params.roomId The room ID to get the threads from.
    * @returns A list of threads.
    */
-  public async getThreads(params: {
+  public async getThreads<TThreadMetadata extends BaseMetadata>(params: {
     roomId: string;
     /**
      * The query to filter threads by. It is based on our query language
@@ -898,12 +900,24 @@ export class Liveblocks {
      * }
      * ```
      */
-    query?: string;
+    query?:
+      | string
+      | {
+          metadata?: Partial<QueryMetadata<TThreadMetadata>>;
+        };
   }): Promise<{ data: ThreadData[] }> {
     const { roomId } = params;
 
+    let query: string | undefined;
+
+    if (typeof params.query === "string") {
+      query = params.query;
+    } else if (typeof params.query === "object") {
+      query = objectToQuery(params.query);
+    }
+
     const res = await this.get(url`/v2/rooms/${roomId}/threads`, {
-      query: params.query,
+      query,
     });
     if (!res.ok) {
       const text = await res.text();

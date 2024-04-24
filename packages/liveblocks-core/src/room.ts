@@ -41,6 +41,7 @@ import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
+import { objectToQuery } from "./lib/objectToQuery";
 import { asPos } from "./lib/position";
 import type { Resolve } from "./lib/Resolve";
 import type { QueryParams } from "./lib/url";
@@ -93,6 +94,7 @@ import type {
 import type { NodeMap } from "./types/NodeMap";
 import type { InternalOthersEvent, OthersEvent } from "./types/Others";
 import type { PartialNullable } from "./types/PartialNullable";
+import type { QueryMetadata } from "./types/QueryMetadata";
 import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 import type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
 import type {
@@ -495,7 +497,7 @@ type SubscribeFn<
 
 export type GetThreadsOptions<TThreadMetadata extends BaseMetadata> = {
   query?: {
-    metadata?: Partial<TThreadMetadata>;
+    metadata?: Partial<QueryMetadata<TThreadMetadata>>;
   };
   since?: Date;
 };
@@ -1114,19 +1116,22 @@ function createCommentsApi(
   async function getThreads<TThreadMetadata extends BaseMetadata = never>(
     options?: GetThreadsOptions<TThreadMetadata>
   ) {
+    let query: string | undefined;
+
+    if (options?.query) {
+      query = objectToQuery(options.query);
+    }
+
     const response = await fetchCommentsApi(
-      "/threads/search",
+      "/threads",
       {
         since: options?.since?.toISOString(),
+        query,
       },
       {
-        body: JSON.stringify({
-          ...(options?.query?.metadata && { metadata: options.query.metadata }),
-        }),
         headers: {
           "Content-Type": "application/json",
         },
-        method: "POST",
       }
     );
 
