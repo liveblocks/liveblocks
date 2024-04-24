@@ -42,3 +42,7 @@
 .presence {
   margin-right: var(--space-2);
 }
+
+.documentNameFallback {
+  padding-right: var(--space-11);
+}

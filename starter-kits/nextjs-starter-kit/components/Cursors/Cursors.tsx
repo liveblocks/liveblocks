@@ -1,5 +1,5 @@
 import { MutableRefObject, useEffect } from "react";
-import { useOthers, useUpdateMyPresence } from "../../liveblocks.config";
+import { useOthers, useUpdateMyPresence } from "@/liveblocks.config";
 import { Cursor } from "./Cursor";
 
 interface Props {

@@ -1,3 +1,21 @@
+# v1.11.3
+
+### `@liveblocks/client`
+
+- Fixes a potential `RangeError: Maximum call stack size exceeded` in
+  applications that produce many operations
+
+### `@liveblocks/node`
+
+- Add missing `updatedAt` property to `YDocUpdatedEvent` type.
+  ([@alexlande](https://github.com/alexlande))
+
+# v1.11.2
+
+### `create-liveblocks-app`
+
+- Add support for the updated Starter Kit.
+
 # v1.11.1
 
 ### `@liveblocks/react-comments`
