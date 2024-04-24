@@ -1,3 +1,15 @@
+## Week 0, 2024-24-04
+
+### v1.0.0
+
+- Made a change.
+- Made a second change here that does another more complex thing, needing a
+  short explanation.
+
+### Documentation
+
+- We made all the writing better, all over.
+
 ## v1.11.3
 
 ### `@liveblocks/client`
