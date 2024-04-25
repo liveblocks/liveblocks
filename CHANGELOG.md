@@ -1,3 +1,13 @@
+## Week 1 (2024-04-31)
+
+### v1.0.1
+
+- Made changes again.
+
+### Documentation
+
+- Some things changed.
+
 ## Week 0 (2024-04-24)
 
 ### v1.0.0
