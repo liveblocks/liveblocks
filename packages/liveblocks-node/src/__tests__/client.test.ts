@@ -120,7 +120,7 @@ describe("client", () => {
       http.get(`${DEFAULT_BASE_URL}/v2/rooms`, ({ request }) => {
         const url = new URL(request.url);
 
-        expect(url.searchParams.size).toEqual(5);
+        expect(url.searchParams.size).toEqual(6);
         expect(url.searchParams.get("limit")).toEqual("10");
         expect(url.searchParams.get("startingAfter")).toEqual("2");
         expect(url.searchParams.get("metadata.color")).toEqual("blue");
@@ -143,11 +143,61 @@ describe("client", () => {
       client.getRooms({
         limit: 10,
         startingAfter: "2",
+        query: 'roomId^"liveblocks:" AND metadata["color"]:"blue"',
         metadata: {
           color: "blue",
         },
         userId: "user1",
         groupIds: ["group1"],
+      })
+    ).resolves.toEqual({
+      nextPage: "/v2/rooms?startingAfter=1",
+      data: [room],
+    });
+  });
+
+  test("should return a list of room when getRooms with query params receives a successful response", async () => {
+    const query =
+      'roomId^"liveblocks:" AND metadata["color"]:"blue" AND metadata["size"]:"10"';
+
+    server.use(
+      http.get(`${DEFAULT_BASE_URL}/v2/rooms`, (res) => {
+        const url = new URL(res.request.url);
+
+        expect(url.searchParams.size).toEqual(1);
+        expect(url.searchParams.get("query")).toEqual(query);
+        return HttpResponse.json(
+          {
+            nextPage: "/v2/rooms?startingAfter=1",
+            data: [room],
+          },
+          { status: 200 }
+        );
+      })
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    await expect(
+      client.getRooms({
+        query,
+      })
+    ).resolves.toEqual({
+      nextPage: "/v2/rooms?startingAfter=1",
+      data: [room],
+    });
+
+    await expect(
+      client.getRooms({
+        query: {
+          metadata: {
+            color: "blue",
+            size: "10",
+          },
+          roomId: {
+            startsWith: "liveblocks:",
+          },
+        },
       })
     ).resolves.toEqual({
       nextPage: "/v2/rooms?startingAfter=1",
@@ -470,11 +520,10 @@ describe("client", () => {
     const query = "metadata['status']:'open' AND metadata['priority']:3";
     server.use(
       http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads`, (res) => {
-        expect(
-          decodeURIComponentWithSpaces(res.request.url).includes(
-            `?query=${query}`
-          )
-        ).toBe(true);
+        const url = new URL(res.request.url);
+
+        expect(url.searchParams.get("query")).toEqual(query);
+
         return HttpResponse.json(
           {
             data: [thread],
@@ -501,11 +550,9 @@ describe("client", () => {
       'metadata["status"]:"open" AND metadata["priority"]:3 AND metadata["organization"]^"liveblocks:"';
     server.use(
       http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads`, (res) => {
-        expect(
-          decodeURIComponentWithSpaces(res.request.url).includes(
-            `?query=${query}`
-          )
-        ).toBe(true);
+        const url = new URL(res.request.url);
+
+        expect(url.searchParams.get("query")).toEqual(query);
         return HttpResponse.json(
           {
             data: [thread],
@@ -1064,7 +1111,3 @@ describe("client", () => {
     ).resolves.toBeUndefined();
   });
 });
-
-const decodeURIComponentWithSpaces = (url: string) => {
-  return decodeURIComponent(url.replace(/\+/g, " "));
-};
