@@ -932,7 +932,7 @@ Recommended steps to upgrade:
 
 ## v1.0.6
 
-## Internal changes
+### Internal changes
 
 - Release `create-liveblocks-app` along with other Liveblocks packages, using
   the same versioning scheme.
@@ -972,7 +972,7 @@ Non-existent.
 This major release marks the maturity of Liveblocks. For upgrade instructions,
 see the [1.0 upgrade guide](https://liveblocks.io/docs/guides/upgrading/1.0).
 
-## `@liveblocks/node`
+### `@liveblocks/node`
 
 `authorize` option `userId` is now mandatory.
 
@@ -982,13 +982,13 @@ Liveblocks account.
 
 ## v0.19.11
 
-## `@liveblocks/node`
+### `@liveblocks/node`
 
 - `WebhookHandler` now handles `RoomCreatedEvent` and `RoomDeletedEvent`
 
 ## v0.19.10
 
-## `@liveblocks/client`
+### `@liveblocks/client`
 
 - Allow
   [`createClient`](https://liveblocks.io/docs/api-reference/liveblocks-client#createClientThrottle)
@@ -996,7 +996,7 @@ Liveblocks account.
 
 ## v0.19.9
 
-## `@liveblocks/client`
+### `@liveblocks/client`
 
 - Adds a `WebhookHandler` class
   - `new WebhookHandler(secret).verifyRequest({ rawBody, headers })` can be used
@@ -1036,7 +1036,7 @@ Fix CORS issue.
 
 In **@liveblocks/client**:
 
-## Room.getStorageStatus
+### Room.getStorageStatus
 
 Get the storage status.
 
@@ -1046,7 +1046,7 @@ Get the storage status.
   Liveblocks servers.
 - `synchronized`: Storage is in sync with Liveblocks servers.
 
-## Room.subscribe("storage-status", status => { })
+### Room.subscribe("storage-status", status => { })
 
 Subscribe to storage status changes.
 
@@ -1069,11 +1069,11 @@ room.subscribe("storage-status", (status) => {
 });
 ```
 
-## Room.reconnect
+### Room.reconnect
 
 Close the room connection and try to reconnect.
 
-## Internal changes
+### Internal changes
 
 - Add support for the upcoming Liveblocks browser extension
 
