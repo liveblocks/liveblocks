@@ -9,6 +9,10 @@
 ### Documentation
 
 - We made all the writing better, all over.
+- Added some images.
+
+### Dashboard
+- New buttons.
 
 ## v1.11.3
 
