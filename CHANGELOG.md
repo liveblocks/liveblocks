@@ -1,4 +1,4 @@
-## Week 0, 2024-24-04
+## Week 0 (2024-04-24)
 
 ### v1.0.0
 
@@ -12,6 +12,7 @@
 - Added some images.
 
 ### Dashboard
+
 - New buttons.
 
 ## v1.11.3
