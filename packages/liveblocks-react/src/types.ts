@@ -847,6 +847,12 @@ type PrivateRoomContextApi = {
   hasResolveMentionSuggestions: boolean;
   useMentionSuggestions(search?: string): string[] | undefined;
   useCurrentUserId(): string | null;
+  useOptimisticThreadCreateListener(
+    callback: ({ threadId }: { threadId: string }) => void
+  ): void;
+  useOptimisticThreadDeleteListener(
+    callback: ({ threadId }: { threadId: string }) => void
+  ): void;
 };
 
 export type RoomContextBundle<

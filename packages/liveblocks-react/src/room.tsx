@@ -630,6 +630,59 @@ export function createRoomContext<
     );
   }
 
+  function useOptimisticThreadCreateListener(
+    callback: ({ threadId }: { threadId: string }) => void
+  ) {
+    const room = useRoom();
+    const savedCallback = useLatest(callback);
+
+    React.useEffect(() => {
+      return store.optimisticUpdatesEventSource.subscribe((event) => {
+        if (event.type === "create-thread") {
+          if (event.roomId !== room.id) return;
+
+          savedCallback.current({
+            threadId: event.id,
+          });
+        }
+      });
+    }, [room, savedCallback]);
+  }
+
+  function useOptimisticThreadDeleteListener(
+    callback: ({ threadId }: { threadId: string }) => void
+  ) {
+    const room = useRoom();
+    const savedCallback = useLatest(callback);
+
+    React.useEffect(() => {
+      return store.optimisticUpdatesEventSource.subscribe((event) => {
+        if (event.type === "delete-comment") {
+          if (event.roomId !== room.id) return;
+
+          const thread = store.get().threads[event.threadId];
+          if (!thread) return;
+
+          // If the thread is already deleted, we do not invoke the callback
+          if (thread.deletedAt !== undefined) return;
+
+          const newThread = deleteComment(
+            thread,
+            event.commentId,
+            event.deletedAt
+          );
+
+          // If the thread is not deleted from the optimistic update, we do not invoke the callback
+          if (newThread.deletedAt === undefined) return;
+
+          savedCallback.current({
+            threadId: event.id,
+          });
+        }
+      });
+    }, [room, savedCallback]);
+  }
+
   function useOthersListener(
     callback: (event: OthersEvent<TPresence, TUserMeta>) => void
   ) {
@@ -1376,6 +1429,7 @@ export function createRoomContext<
 
         store.pushOptimisticUpdate({
           type: "create-thread",
+          roomId: room.id,
           thread: newThread,
           id: optimisticUpdateId,
         });
@@ -1831,6 +1885,7 @@ export function createRoomContext<
         store.pushOptimisticUpdate({
           type: "delete-comment",
           threadId,
+          roomId: room.id,
           commentId,
           deletedAt,
           id: optimisticUpdateId,
@@ -2338,6 +2393,8 @@ export function createRoomContext<
       useCurrentUserId,
       hasResolveMentionSuggestions: resolveMentionSuggestions !== undefined,
       useMentionSuggestions,
+      useOptimisticThreadCreateListener,
+      useOptimisticThreadDeleteListener,
     },
   };
 

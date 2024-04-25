@@ -31,6 +31,8 @@ import {
 import {
   $getThreadMarkIds,
 } from "./utils";
+import { useRoomContextBundle } from "@liveblocks/react";
+import { kInternal } from "@liveblocks/core";
 
 export const INSERT_THREAD_COMMAND: LexicalCommand<void> = createCommand(
   "INSERT_THREAD_COMMAND"
@@ -75,6 +77,21 @@ export function CommentPluginProvider({
   >(null); // The last active selection that was used to attach a thread
 
   const [activeThreads, setActiveThreads] = useState<string[]>([]); // The threads that are currently active (or selected) in the editor
+
+  const {
+    [kInternal]: {
+      useOptimisticThreadCreateListener,
+      useOptimisticThreadDeleteListener,
+    },
+  } = useRoomContextBundle();
+
+  useOptimisticThreadCreateListener(({ threadId }) => {
+    console.log("Thread created", threadId);
+  });
+
+  useOptimisticThreadDeleteListener(({ threadId }) => {
+    console.log("Thread deleted", threadId);
+  });
 
   useEffect(() => {
     if (!editor.hasNodes([ThreadMarkNode])) {
