@@ -1,13 +1,17 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { BaseMetadata } from "@liveblocks/core";
 import { useRoomContextBundle } from "@liveblocks/react";
-import { Composer, type ComposerProps, type ComposerSubmitComment } from "@liveblocks/react-comments";
+import {
+  Composer,
+  type ComposerProps,
+  type ComposerSubmitComment,
+} from "@liveblocks/react-comments";
 import { $getSelection, $isRangeSelection } from "lexical";
-import React from "react";
+import React, { useContext } from "react";
 
-import { useLastActiveSelection } from "./CommentPluginProvider";
 import type { ThreadMetadata } from "./types";
 import { $wrapSelectionInThreadMarkNode } from "./utils";
+import { ShowComposerContext } from "./CommentPluginProvider";
 
 type LexicalThreadComposerProps<
   TThreadMetadata extends BaseMetadata = ThreadMetadata,
@@ -19,12 +23,12 @@ type LexicalThreadComposerProps<
 export function LexicalThreadComposer<
   TThreadMetadata extends BaseMetadata = ThreadMetadata,
 >({ ...props }: LexicalThreadComposerProps<TThreadMetadata>) {
-  const lastActiveSelection = useLastActiveSelection();
+  const showComposer = useContext(ShowComposerContext);
   const { useCreateThread } = useRoomContextBundle();
   const createThread = useCreateThread();
   const [editor] = useLexicalComposerContext();
 
-  if (lastActiveSelection === null) return null;
+  if (!showComposer) return null;
 
   function handleComposerSubmit(comment: ComposerSubmitComment) {
     const thread = createThread({

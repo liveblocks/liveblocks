@@ -3,7 +3,6 @@ import { registerNestedElementResolver } from "@lexical/utils";
 import type {
   BaseSelection,
   LexicalCommand,
-  LexicalNode,
   NodeKey,
   NodeMutation,
 } from "lexical";
@@ -15,22 +14,14 @@ import {
   COMMAND_PRIORITY_EDITOR,
   createCommand,
 } from "lexical";
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { createContext, useEffect, useRef, useState } from "react";
 
 import {
   $createThreadMarkNode,
   $isThreadMarkNode,
   ThreadMarkNode,
 } from "./ThreadMarkNode";
-import {
-  $getThreadMarkIds,
-} from "./utils";
+import { $getThreadMarkIds } from "./utils";
 import { useRoomContextBundle } from "@liveblocks/react";
 import { kInternal } from "@liveblocks/core";
 
@@ -38,30 +29,17 @@ export const INSERT_THREAD_COMMAND: LexicalCommand<void> = createCommand(
   "INSERT_THREAD_COMMAND"
 );
 
-type SelectionInfo = {
-  anchor: {
-    node: LexicalNode;
-    offset: number;
-  };
-  focus: {
-    node: LexicalNode;
-    offset: number;
-  };
-};
-
-const LastActiveSelectionContext = createContext<SelectionInfo | null>(
-  null
-);
-
-const ActiveThreadsContext = createContext<string[]>([]);
+export const ActiveThreadsContext = createContext<string[]>([]);
 
 type ThreadToNodesMap = {
   current: Map<string, Set<NodeKey>>;
-}
+};
 
-const ThreadToNodeKeysRefContext = createContext<ThreadToNodesMap>({
+export const ThreadToNodeKeysRefContext = createContext<ThreadToNodesMap>({
   current: new Map(),
 });
+
+export const ShowComposerContext = createContext<boolean>(false);
 
 export function CommentPluginProvider({
   children,
@@ -72,9 +50,7 @@ export function CommentPluginProvider({
 
   const threadToNodeKeysRef = useRef<Map<string, Set<NodeKey>>>(new Map()); // A map from thread id to a set of (mark) node keys that are associated with the thread
 
-  const [lastActiveSelection, setLastActiveSelection] = useState<
-    SelectionInfo | null
-  >(null); // The last active selection that was used to attach a thread
+  const [showComposer, setShowComposer] = useState(false);
 
   const [activeThreads, setActiveThreads] = useState<string[]>([]); // The threads that are currently active (or selected) in the editor
 
@@ -174,47 +150,43 @@ export function CommentPluginProvider({
         if (!$isRangeSelection(selection)) return false;
 
         // If we got an empty selection (just a caret), try and expand it
-        if (selection?.getTextContent().trim() === "") {
+        if (selection.getTextContent().trim() === "") {
           if (type === "expansion") {
             // Do NOT try to expand again if this came from an expansion
             return false;
           }
           // Update selection to find nearest word
-          editor.update(() => {
-            selection.modify("move", true, "word"); // move to the beginning of the previous word
-            selection.modify("extend", false, "word"); // extend back to the whole word
-          }, {
-            tag: "expansion", // Tag the update so we can find it in handlers
-            onUpdate: () => {
-              // After expansion, run the insert comment command again (the original one did NOT complete)
-              editor.dispatchCommand<LexicalCommand<"expansion">>(INSERT_THREAD_COMMAND, "expansion");
+          editor.update(
+            () => {
+              selection.modify("move", true, "word"); // move to the beginning of the previous word
+              selection.modify("extend", false, "word"); // extend back to the whole word
+            },
+            {
+              tag: "expansion", // Tag the update so we can find it in handlers
+              onUpdate: () => {
+                // After expansion, run the insert comment command again (the original one did NOT complete)
+                editor.dispatchCommand<LexicalCommand<"expansion">>(
+                  INSERT_THREAD_COMMAND,
+                  "expansion"
+                );
+              },
             }
-          });
+          );
           return false;
         }
+
         const nativeSelection = window.getSelection();
         if (nativeSelection !== null) {
           nativeSelection.removeAllRanges();
         }
 
-        const activeSelection = {
-          anchor: {
-            node: selection.anchor.getNode() as LexicalNode,
-            offset: selection.anchor.offset,
-          },
-          focus: {
-            node: selection.focus.getNode() as LexicalNode,
-            offset: selection.focus.offset,
-          },
-        };
-
-        setLastActiveSelection(activeSelection);
+        setShowComposer(true);
 
         return true;
       },
       COMMAND_PRIORITY_EDITOR
     );
-  }, [editor, setLastActiveSelection]);
+  }, [editor, setShowComposer]);
 
   /**
    * When active threads change, we add a data-state attribute and set it to "active" for all HTML elements that are associated with the active threads.
@@ -251,8 +223,9 @@ export function CommentPluginProvider({
 
   useEffect(() => {
     function onStateRead() {
-      setLastActiveSelection(null);
+      setShowComposer(false);
     }
+
     return editor.registerUpdateListener(({ editorState: state, tags }) => {
       // Ignore selection expansion updates (from insert comments on a caret) and collab updates
       if (tags.has("collaboration") || tags.has("expansion")) {
@@ -260,7 +233,7 @@ export function CommentPluginProvider({
       }
       state.read(onStateRead);
     });
-  }, [editor, setLastActiveSelection]);
+  }, [editor, setShowComposer]);
 
   useEffect(() => {
     return registerNestedElementResolver<ThreadMarkNode>(
@@ -279,46 +252,12 @@ export function CommentPluginProvider({
   }, [editor]);
 
   return (
-    <LastActiveSelectionContext.Provider value={lastActiveSelection}>
+    <ShowComposerContext.Provider value={showComposer}>
       <ThreadToNodeKeysRefContext.Provider value={threadToNodeKeysRef}>
         <ActiveThreadsContext.Provider value={activeThreads}>
           {children}
         </ActiveThreadsContext.Provider>
       </ThreadToNodeKeysRefContext.Provider>
-    </LastActiveSelectionContext.Provider>
+    </ShowComposerContext.Provider>
   );
 }
-
-export function useLastActiveSelection(): SelectionInfo | null {
-  const lastActiveSelection = useContext(LastActiveSelectionContext);
-  if (lastActiveSelection === undefined) {
-    throw new Error(
-      "useLastActiveSelection has to be used within <LiveblocksPlugin>"
-    );
-  }
-  return lastActiveSelection;
-}
-export function useThreadToNodeKeysMap(): ThreadToNodesMap {
-  const threadToNodesMap = useContext(ThreadToNodeKeysRefContext);
-
-  if (!threadToNodesMap) {
-    throw new Error(
-      "useThreadToNodeKeysMap has to be used within <LiveblocksPlugin>"
-    );
-  }
-
-  return threadToNodesMap;
-}
-export function useActiveThreads(): string[] {
-  const activeThreads = useContext(ActiveThreadsContext);
-
-  if (!activeThreads) {
-    throw new Error(
-      "useActiveThreads has to be used within <LiveblocksPlugin>"
-    );
-  }
-
-  return activeThreads;
-}
-
-

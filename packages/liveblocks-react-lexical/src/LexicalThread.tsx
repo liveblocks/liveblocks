@@ -3,9 +3,12 @@ import type { BaseMetadata } from "@liveblocks/core";
 import { Thread, type ThreadProps } from "@liveblocks/react-comments";
 import { $getNodeByKey } from "lexical";
 import type { MouseEvent } from "react";
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useContext, useEffect, useRef } from "react";
 
-import { useActiveThreads, useThreadToNodeKeysMap } from "./CommentPluginProvider";
+import {
+  ActiveThreadsContext,
+  ThreadToNodeKeysRefContext,
+} from "./CommentPluginProvider";
 import { $isThreadMarkNode } from "./ThreadMarkNode";
 import type { ThreadMetadata } from "./types";
 import { $unwrapThreadMarkNode } from "./utils";
@@ -16,8 +19,8 @@ export function LexicalThread<
   const { onClick, onThreadDelete } = props;
   const [editor] = useLexicalComposerContext();
   const divRef = useRef<HTMLDivElement>(null);
-  const threadToNodeKeysRef = useThreadToNodeKeysMap();
-  const activeThreads = useActiveThreads();
+  const threadToNodeKeysRef = useContext(ThreadToNodeKeysRefContext);
+  const activeThreads = useContext(ActiveThreadsContext);
 
   const isActive = activeThreads.includes(thread.id);
 
