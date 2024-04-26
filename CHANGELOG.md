@@ -1,4 +1,20 @@
-## Week 1 (2024-04-31)
+## Week 3 (2024-05-07)
+
+### v1.1.0
+
+- Made a second change here that does another more complex thing, needing a
+  short explanation.
+-
+
+### Dashboard
+
+- Some things changed.
+
+### Contributors
+
+pierrelevaillant, guillaumesalles, stevenfabre.
+
+## Week 2 (2024-04-31)
 
 ### v1.0.1
 
@@ -11,9 +27,9 @@
 ### Contributors
 
 flowflorent, nimeshnayaju, jrowny, pierrelevaillant, guillaumesalles,
-stevenfabre
+stevenfabre.
 
-## Week 0 (2024-04-24)
+## Week 1 (2024-04-24)
 
 ### v1.0.0
 
