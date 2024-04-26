@@ -643,12 +643,12 @@ Note that it’s possible to [add types to your room](#typing-your-room).
     about [typing your room](#typing-your-room).
   </PropertiesListItem>
   <PropertiesListItem name="leave" type="() => void">
-    A function that’s used to destroy the room.
+    A function that’s used to leave the room and disconnect.
   </PropertiesListItem>
 </PropertiesList>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="roomId" detailedType="string" required>
+  <PropertiesListItem name="roomId" type="string" required>
     The ID of the room you’re connecting to.
   </PropertiesListItem>
   <PropertiesListItem name="options.initialPresence" type="JsonObject" required>
@@ -659,7 +659,8 @@ Note that it’s possible to [add types to your room](#typing-your-room).
   </PropertiesListItem>
   <PropertiesListItem name="options.initialStorage" type="LsonObject">
     The initial Storage structure for the room when it’s joined for the first
-    time. This is only set on time. This object must contain [conflict-free live
+    time. This is only set a single time, when the room has not yet been
+    populated. This object must contain [conflict-free live
     structures](/docs/api-reference/liveblocks-client#Storage) or be
     JSON-serializable. [Learn more](#setting-initial-storage).
   </PropertiesListItem>
@@ -799,7 +800,7 @@ It’s unlikely you’ll need this API if you’re using the newer
 </PropertiesList>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="roomId" detailedType="string" required>
+  <PropertiesListItem name="roomId" type="string" required>
     The ID of the room you’re connecting to.
   </PropertiesListItem>
 </PropertiesList>
@@ -988,7 +989,7 @@ room.broadcastEvent({ type: "REACTION", emoji: "🔥" });
 
 // User 2
 const unsubscribe = room.subscribe("event", ({ event, user, connectionId }) => {
-  //                              ^^^^ User 1
+  //                                                  ^^^^ User 1
   if (event.type === "REACTION") {
     // Do something
   }
@@ -1112,13 +1113,13 @@ console.log(status);
     name="status"
     type={`"initial" | "connecting" | "connected" | "reconnecting" | "disconnected"`}
   >
-    Returns the current room status. It can return one of five values:
+    Returns the room’s current connection status. It can return one of five values:
 
-    - `"initial"` - The room has not attempted to connect yet.
-    - `"connecting"` - The room is currently authenticating or connecting.
-    - `"connected"` - The room is connected.
-    - `"reconnecting"` - The room has disconnected, and is trying to connect again.
-    - `"disconnected"` - The room is disconnected, and is no longer attempting to connect.
+    - `"initial"` The room has not attempted to connect yet.
+    - `"connecting"` The room is currently authenticating or connecting.
+    - `"connected"` The room is connected.
+    - `"reconnecting"` The room has disconnected, and is trying to connect again.
+    - `"disconnected"` The room is disconnected, and is no longer attempting to connect.
 
   </PropertiesListItem>
 </PropertiesList>
@@ -1144,12 +1145,12 @@ console.log(status);
     name="status"
     type={`"not-loaded" | "loading" | "synchronizing" | "synchronized"`}
   >
-    The current user’s Storage status. `status` can be one of four types.
+    The current room’s Storage status. `status` can be one of four types.
 
-    - `"not-loaded` - Storage has not been loaded yet as [`getStorage`][] has not been called.
-    - `"loading"` - Storage is currently loading for the first time.
-    - `"synchronizing"` - Local Storage changes are currently being synchronized.
-    - `"synchronized"` - Local Storage changes have been synchronized
+    - `"not-loaded` Storage has not been loaded yet as [`room.getStorage`][] has not been called.
+    - `"loading"` Storage is currently loading for the first time.
+    - `"synchronizing"` Local Storage changes are currently being synchronized.
+    - `"synchronized"` Local Storage changes have been synchronized.
 
   </PropertiesListItem>
 </PropertiesList>
@@ -1658,11 +1659,11 @@ const unsubscribe = room.subscribe("status", (status) => {
   >
     Function that’s called when the room’s connection status has changed. It can return one of five values:
 
-    - `"initial"` - The room has not attempted to connect yet.
-    - `"connecting"` - The room is currently authenticating or connecting.
-    - `"connected"` - The room is connected.
-    - `"reconnecting"` - The room has disconnected, and is trying to connect again.
-    - `"disconnected"` - The room is disconnected, and is no longer attempting to connect.
+    - `"initial"` The room has not attempted to connect yet.
+    - `"connecting"` The room is currently authenticating or connecting.
+    - `"connected"` The room is connected.
+    - `"reconnecting"` The room has disconnected, and is trying to connect again.
+    - `"disconnected"` The room is disconnected, and is no longer attempting to connect.
 
   </PropertiesListItem>
 </PropertiesList>
@@ -1701,10 +1702,11 @@ promise or using the [`Room.subscribe("storage-status")`][] event.
 
 ### Room.subscribe("lost-connection") [#Room.subscribe.lost-connection]
 
-A [special-purpose event](#when-to-use-lost-connection-events) that will fire
-when a previously connected Liveblocks client has lost connection, for example
-due to a network outage, and was unable to recover quickly. This event will not
-trigger on short interruptions, those that are less than
+A special-purpose event that will fire when a previously connected Liveblocks
+client has lost connection, for example due to a network outage, and was unable
+to recover quickly. This event is
+[designed to help improve UX for your users](#when-to-use-lost-connection-events),
+and will not trigger on short interruptions, those that are less than
 [5 seconds by default](#setting-lost-connection-timeout). The event only
 triggers if a previously connected client disconnects.
 
@@ -1732,9 +1734,9 @@ const unsubscribe = room.subscribe("lost-connection", (event) => {
   >
     Function that’s called when a room’s lost connection event has been triggered. It can return one of three values:
 
-    - `"lost"` - A connection has been lost for longer than [`lostConnectionTimeout`][].
-    - `"restored"` - The connection has been restored again.
-    - `"failed"` - The room has been unable to reconnect again, and is no longer trying. This may happen if a user’s
+    - `"lost"` A connection has been lost for longer than [`lostConnectionTimeout`][].
+    - `"restored"` The connection has been restored again.
+    - `"failed"` The room has been unable to reconnect again, and is no longer trying. This may happen if a user’s
     network has recovered, but the room’s authentication values no longer allow them to enter.
 
   </PropertiesListItem>
@@ -1814,7 +1816,7 @@ const unsubscribe = room.subscribe("connection", (status) => {
 Subscribe to unrecoverable room connection errors. This event will be emitted
 immediately before the client disconnects and won’t try reconnecting again.
 Returns an unsubscribe function. If you’d like to retry connecting, call
-[`room.reconnect()`][].
+[`room.reconnect`][].
 
 ```ts
 const unsubscribe = room.subscribe("error", (error) => {
@@ -1861,10 +1863,10 @@ const unsubscribe = room.subscribe("error", (error) => {
     Function that’s called when an unrecoverable error event has been triggered. `error.code` can return one of these
     values:
 
-    - `-1` - Authentication error.
-    - `4001` - Could not connect because you don't have access to this room.
-    - `4005` - Could not connect because room was full.
-    - `4006` - The room ID has changed.
+    - `-1` Authentication error.
+    - `4001` Could not connect because you don't have access to this room.
+    - `4005` Could not connect because room was full.
+    - `4006` The room ID has changed.
 
   </PropertiesListItem>
 </PropertiesList>
@@ -1965,8 +1967,8 @@ const unsubscribe = room.subscribe("storage-status", (status) => {
 </PropertiesList>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="history" type={`"history"`} required>
-    Listen to history events.
+  <PropertiesListItem name="storage-status" type={`"storage-status"`} required>
+    Listen to Storage status events.
   </PropertiesListItem>
   <PropertiesListItem
     name="callback"
@@ -1988,8 +1990,9 @@ const unsubscribe = room.subscribe("storage-status", (status) => {
 
 Batches Storage and Presence modifications made during the given function. Each
 modification is grouped together, which means that other clients receive the
-changes as a single message after the batch function has run. Every modification
-made during the batch is merged into a single history item (undo/redo).
+changes as a single message after the batch function has run. When undoing or
+redoing these changes, the entire batch will be undone/redone together instead
+of atomically.
 
 ```ts
 const { root } = await room.getStorage();
