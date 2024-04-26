@@ -8,6 +8,11 @@
 
 - Some things changed.
 
+### Contributors
+
+flowflorent, nimeshnayaju, jrowny, pierrelevaillant, guillaumesalles,
+stevenfabre
+
 ## Week 0 (2024-04-24)
 
 ### v1.0.0
@@ -24,6 +29,10 @@
 ### Dashboard
 
 - New buttons.
+
+### Contributors
+
+ofoucherot, ctnicholas, nvie, marcbouchenoire, adigau
 
 ## v1.11.3
 
