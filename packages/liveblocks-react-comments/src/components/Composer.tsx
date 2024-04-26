@@ -12,7 +12,7 @@ import type {
   RefAttributes,
   SyntheticEvent,
 } from "react";
-import React, { forwardRef, useCallback, useState } from "react";
+import React, { forwardRef, useCallback, useMemo, useState } from "react";
 
 import { EmojiIcon } from "../icons/Emoji";
 import { MentionIcon } from "../icons/Mention";
@@ -291,7 +291,13 @@ const ComposerWithContext = forwardRef<
   ) => {
     const {
       [kInternal]: { hasResolveMentionSuggestions },
+      useSelf,
     } = useRoomContextBundle();
+    const self = useSelf();
+    const isDisabled = useMemo(
+      () => disabled || !self?.canComment,
+      [disabled, self?.canComment]
+    );
     const { isEmpty } = useComposer();
     const $ = useOverrides(overrides);
     const [isEmojiPickerOpen, setEmojiPickerOpen] = useState(false);
@@ -373,7 +379,7 @@ const ComposerWithContext = forwardRef<
           onClick={handleEditorClick}
           placeholder={$.COMPOSER_PLACEHOLDER}
           defaultValue={defaultValue}
-          disabled={disabled}
+          disabled={isDisabled}
           autoFocus={autoFocus}
           components={editorComponents}
           dir={$.dir}
@@ -384,11 +390,13 @@ const ComposerWithContext = forwardRef<
               {hasResolveMentionSuggestions && (
                 <ComposerInsertMentionEditorAction
                   label={$.COMPOSER_INSERT_MENTION}
+                  disabled={isDisabled}
                 />
               )}
               <ComposerInsertEmojiEditorAction
                 label={$.COMPOSER_INSERT_EMOJI}
                 onPickerOpenChange={setEmojiPickerOpen}
+                disabled={isDisabled}
               />
             </div>
             {showAttribution && <Attribution />}
@@ -399,7 +407,7 @@ const ComposerWithContext = forwardRef<
                     content={$.COMPOSER_SEND}
                     shortcut={<ShortcutTooltipKey name="enter" />}
                   >
-                    <ComposerPrimitive.Submit disabled={disabled} asChild>
+                    <ComposerPrimitive.Submit disabled={isDisabled} asChild>
                       <Button
                         onMouseDown={preventDefault}
                         onClick={stopPropagation}

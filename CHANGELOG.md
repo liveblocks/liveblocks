@@ -1,9 +1,37 @@
+# v1.11.3
+
+### `@liveblocks/client`
+
+- Fixes a potential `RangeError: Maximum call stack size exceeded` in
+  applications that produce many operations
+
+### `@liveblocks/node`
+
+- Add missing `updatedAt` property to `YDocUpdatedEvent` type.
+  ([@alexlande](https://github.com/alexlande))
+
+# v1.11.2
+
+### `create-liveblocks-app`
+
+- Add support for the updated Starter Kit.
+
 # v1.11.1
 
 ### `@liveblocks/react-comments`
 
 - Fix the composer’s placeholder to appear instantly instead of being initially
   invisible.
+- Fix the default composer’s actions not being disabled when the composer is.
+
+### `@liveblocks/node`
+
+- Fix "`process` is undefined" issue in Vite builds. This issue was already
+  fixed for `@liveblocks/core`, but not for `@liveblocks/node` yet.
+
+### DevTools
+
+- Improve tree view to visualize Y.js documents and inspect Y.js awareness.
 
 # v1.11.0
 

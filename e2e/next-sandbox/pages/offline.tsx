@@ -245,10 +245,8 @@ function Sandbox(_props: { roomId: string }) {
       <div style={{ display: "flex", margin: "8px 0" }}>
         <Button
           id="push"
-          onClick={() => {
-            if (!canPush) return;
-            push(nextValueToPush);
-          }}
+          enabled={canPush}
+          onClick={() => push(nextValueToPush)}
           subtitle={nextValueToPush}
         >
           Push
@@ -258,7 +256,6 @@ function Sandbox(_props: { roomId: string }) {
           id="move"
           enabled={canMove}
           onClick={() => {
-            if (!canMove) return;
             const [fromIndex, toIndex] = nextIndicesToMove;
             move(fromIndex, toIndex);
           }}
@@ -272,10 +269,7 @@ function Sandbox(_props: { roomId: string }) {
         <Button
           id="delete"
           enabled={canDelete}
-          onClick={() => {
-            if (!canDelete) return;
-            delete_(nextIndexToDelete);
-          }}
+          onClick={() => delete_(nextIndexToDelete)}
           subtitle={
             canDelete
               ? `index ${nextIndexToDelete} (${items[

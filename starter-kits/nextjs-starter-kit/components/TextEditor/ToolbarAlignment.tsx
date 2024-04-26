@@ -4,8 +4,8 @@ import {
   AlignJustifyIcon,
   AlignLeftIcon,
   AlignRightIcon,
-} from "../../icons";
-import { Button } from "../../primitives/Button";
+} from "@/icons";
+import { Button } from "@/primitives/Button";
 import styles from "./Toolbar.module.css";
 
 type Props = {

@@ -61,9 +61,8 @@ hear from you.
       const room = info.room;
       leave.value = info.leave;
 
-      // Set up Yjs document, shared text, and Liveblocks Yjs provider
+      // Set up Yjs document and Liveblocks Yjs provider
       const yDoc = new Y.Doc();
-      const yText = yDoc.getText("tiptap");
       const yProvider = new LiveblocksProvider(room, yDoc);
 
       // Set up the Tiptap editor

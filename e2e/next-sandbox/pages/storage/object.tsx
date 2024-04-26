@@ -124,10 +124,7 @@ function Sandbox() {
         <Button
           id="delete"
           enabled={canDelete}
-          onClick={() => {
-            if (!canDelete) return;
-            delete_(nextKeyToDelete);
-          }}
+          onClick={() => delete_(nextKeyToDelete)}
           subtitle={canDelete ? `key ${JSON.stringify(nextKeyToDelete)}` : null}
         >
           Delete
