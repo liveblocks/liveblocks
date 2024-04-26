@@ -6,6 +6,8 @@
 - Add new `useInboxNotificationThread` hook to `createLiveblocksContext`, which
   can be used to retrieve threads within thread notifications for more
   flexibility.
+- Add support for `startsWith` operator to `useThreads` when filtering based on
+  metadata.
 
 ### `@liveblocks/react-comments`
 
@@ -18,6 +20,13 @@
 
 - Add `triggerInboxNotification` method that lets you trigger custom
   notification kinds.
+- Add the ability to filter rooms based on their room ID to the `getRooms`
+  method. (via `query.roomId`, `metadata` is deprecated and is now
+  `query.metadata`)
+- In addition to supporting our query language when using string queries when
+  filtering with `getRooms` and `getThreads`, both methods also support an
+  object-based query notation (which supports exact matches and the `startsWith`
+  operator).
 
 # v1.11.2
 
