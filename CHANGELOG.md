@@ -20,13 +20,13 @@
 
 - Add `triggerInboxNotification` method that lets you trigger custom
   notification kinds.
-- Add the ability to filter rooms based on their room ID to the `getRooms`
-  method. (via `query.roomId`, `metadata` is deprecated and is now
-  `query.metadata`)
-- In addition to supporting our query language when using string queries when
-  filtering with `getRooms` and `getThreads`, both methods also support an
-  object-based query notation (which supports exact matches and the `startsWith`
-  operator).
+- Enable filtering rooms by room ID in the `getRooms` method. This works via
+  `query.roomId`, `metadata` is deprecated and is now `query.metadata`.
+- Add support for our query language when filtering with the `getRooms` and
+  `getThreads` methods.
+- Add support for an alternative object-based query notation to the `getRooms`
+  and `getThreads` methods, which supports exact matches and the `startsWith`
+  operator.
 
 # v1.11.2
 
