@@ -1,3 +1,99 @@
+## Week 9 (2024-06-19)
+
+### v1.1.0
+
+- Made a second change here that does another more complex thing, needing a
+  short explanation.
+-
+
+### Dashboard
+
+- Some things changed.
+
+### Contributors
+
+pierrelevaillant, guillaumesalles, stevenfabre.
+
+## Week 8 (2024-06-12)
+
+### v1.1.0
+
+- Made a second change here that does another more complex thing, needing a
+  short explanation.
+-
+
+### Dashboard
+
+- Some things changed.
+
+### Contributors
+
+pierrelevaillant, guillaumesalles, stevenfabre.
+
+## Week 7 (2024-06-05)
+
+### v1.1.0
+
+- Made a second change here that does another more complex thing, needing a
+  short explanation.
+-
+
+### Dashboard
+
+- Some things changed.
+
+### Contributors
+
+pierrelevaillant, guillaumesalles, stevenfabre.
+
+## Week 6 (2024-05-28)
+
+### v1.1.0
+
+- Made a second change here that does another more complex thing, needing a
+  short explanation.
+-
+
+### Dashboard
+
+- Some things changed.
+
+### Contributors
+
+pierrelevaillant, guillaumesalles, stevenfabre.
+
+## Week 5 (2024-05-21)
+
+### v1.1.0
+
+- Made a second change here that does another more complex thing, needing a
+  short explanation.
+-
+
+### Dashboard
+
+- Some things changed.
+
+### Contributors
+
+pierrelevaillant, guillaumesalles, stevenfabre.
+
+## Week 4 (2024-05-14)
+
+### v1.1.0
+
+- Made a second change here that does another more complex thing, needing a
+  short explanation.
+-
+
+### Dashboard
+
+- Some things changed.
+
+### Contributors
+
+pierrelevaillant, guillaumesalles, stevenfabre.
+
 ## Week 3 (2024-05-07)
 
 ### v1.1.0
