@@ -320,15 +320,35 @@ const {
   // Optional, filter for rooms that allow entry to a user's ID in `usersAccesses`
   userId: "my-user-id",
 
-  // Optional, filter for rooms with custom metadata in `metadata`
-  metadata: {
-    myRoomType: "whiteboard",
-  },
+  // Optional query parameter for more advanced filtering
+  // Recommend as an object for better type safety
+  query: {
+    // Optional, filter for rooms with custom metadata in `metadata`
+    metadata: {
+      myRoomType: "whiteboard",
+    },
+    // Optional, filter for rooms with a specific starting ID
+    roomId: {
+      startsWith: "liveblocks:",
+    },
+  }
+  // The query parameter can also be a string, e.g. `query=metadata["myRoomType"]:"whiteboard" AND roomId^"liveblocks:"`
 
   // Optional, cursor used for pagination, use `nextCursor` from the previous page's response
   startingAfter: "L3YyL3Jvb21z...",
 });
 ```
+
+The query language supports the following syntax:
+
+- Only the `AND` operator is supported, it can also be omitted and will default
+  to `AND`
+  - Omitted: `metadata["myRoomType"]:"whiteboard" roomId^"liveblocks:"`
+  - Explicit: `metadata["myRoomType"]:"whiteboard" AND roomId^"liveblocks:"`
+- `string` values for `metadata` can be exact matched with `:` and `roomId` can
+  be prefix matched with `^`
+  - Exact: `metadata["myRoomType"]:"whiteboard"`
+  - Prefix: `roomId^"liveblocks:"`
 
 You can use `nextCursor` to paginate rooms. In this example, when `getNextPage`
 is called, the next set of rooms is added to `pages`.

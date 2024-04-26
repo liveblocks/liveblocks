@@ -37,12 +37,11 @@
           },
           {
             "schema": {
-              "type": "string",
-              "examples": ["metadata.colors=blue"]
+              "type": "string"
             },
             "in": "query",
-            "name": "metadata.KEY",
-            "description": "A filter on metadata. Multiple metadata keys can be used to filter rooms."
+            "name": "query",
+            "description": "Query to filter rooms. For example, `metadata[\"roomType\"]:\"whiteboard\" AND roomId^\"liveblocks:engineering\"`. Learn more in our [query language documentation](/docs/api-reference/liveblocks-node#get-rooms)."
           },
           {
             "schema": {
@@ -1369,7 +1368,7 @@
             },
             "in": "query",
             "name": "query",
-            "description": "Query to filter threads. For example, `metadata[\"status\"] AND metadata[\"resolved\"]:true`. Learn more in our guide on [filtering threads with the REST API](/docs/guides/how-to-filter-threads-with-the-rest-api)."
+            "description": "Query to filter threads. For example, `metadata[\"status\"]:\"open\" AND metadata[\"resolved\"]:true`. Learn more in our guide on [filtering threads with the REST API](/docs/guides/how-to-filter-threads-with-the-rest-api)."
           }
         ],
         "operationId": "get-rooms-roomId-threads",
