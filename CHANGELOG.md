@@ -2,7 +2,7 @@
 
 ### `@liveblocks/react`
 
-- Add support for custom notification kinds to `useInboxNotifications`.
+- Add support for custom notification kinds.
 - Add new `useInboxNotificationThread` hook to `createLiveblocksContext`, which
   can be used to retrieve threads within thread notifications for more
   flexibility.
