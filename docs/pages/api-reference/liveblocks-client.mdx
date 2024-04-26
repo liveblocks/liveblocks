@@ -112,10 +112,10 @@ const client = createClient({
     name="authEndpoint"
     detailedType="string | async ((room?: string) => CustomAuthenticationResult)"
   >
-    The URL of your [authentication endpoint](/docs/authentication) as a string,
-    or an async callback function that returns a Liveblocks token result. Either
-    `authEndpoint` or `publicApikey` are required. Learn more about [using a URL
-    string](#createClientAuthEndpoint) and [using a
+    The URL of your back end’s [authentication endpoint](/docs/authentication)
+    as a string, or an async callback function that returns a Liveblocks token
+    result. Either `authEndpoint` or `publicApikey` are required. Learn more
+    about [using a URL string](#createClientAuthEndpoint) and [using a
     callback](#createClientCallback).
   </PropertiesListItem>
   <PropertiesListItem name="publicApiKey" type="string">
@@ -168,7 +168,7 @@ const client = createClient({
     [Comments](/docs/products/comments). Return an array of user IDs. [Learn
     more](#createClientResolveMentionSuggestions).
   </PropertiesListItem>
-  <PropertiesListItem name="polyfills" type="Polyfills">
+  <PropertiesListItem name="polyfills">
     Place polyfills for `atob`, `fetch`, and `WebSocket` inside here. Useful
     when using a non-browser environment, such as [Node.js](#createClientNode)
     or [React Native](#createClientReactNative).
@@ -178,14 +178,16 @@ const client = createClient({
     type="boolean"
     defaultValue="false"
   >
-    Automatically fall back to HTTP when a message is too large for WebSockets.
+    Experimental. Automatically fall back to HTTP when a message is too large
+    for WebSockets.
   </PropertiesListItem>
   <PropertiesListItem
     name="unstable_streamData"
     type="boolean"
     defaultValue="false"
   >
-    help???
+    Experimental. Stream the initial Storage content over HTTP, instead of
+    waiting for a large initial WebSocket message to be sent from the server.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -402,6 +404,9 @@ const client = createClient({
 });
 ```
 
+The name and avatar you return are rendered in
+[`Thread`](/docs/api-reference/liveblocks-react-comments#Thread) components.
+
 #### User objects
 
 The user objects returned by the resolver function take the shape of
@@ -468,10 +473,11 @@ hear from you.
 
 When using [Notifications](/docs/products/comments/notifications) with
 [Comments](/docs/products/comments), room IDs will be used to contextualize
-notifications (e.g. “Chris mentioned you in room-id”). To replace room IDs with
-more fitting names (e.g. document names, “Chris mentioned you in Document A”),
-you can provide a resolver function to the `resolveRoomsInfo` option in
-[`createClient`](#createClient).
+notifications (e.g. “Chris mentioned you in _room-id_”) in the
+[`InboxNotification`](/docs/api-reference/liveblocks-react-comments#InboxNotification)
+component. To replace room IDs with more fitting names (e.g. document names,
+“Chris mentioned you in _Document A_”), you can provide a resolver function to
+the `resolveRoomsInfo` option in [`createClient`](#createClient).
 
 This resolver function will receive a list of room IDs and should return a list
 of room info objects of the same size and in the same order.
@@ -517,12 +523,13 @@ hear from you.
 
 To enable creating mentions in [Comments](/docs/products/comments), you can
 provide a resolver function to the `resolveMentionSuggestions` option in
-[`createClient`](#createClient).
+[`createClient`](#createClient). These mentions will be displayed in the
+[`Composer`](/docs/api-reference/liveblocks-react-comments#Composer) component.
 
-This resolver function will receive the mention currently being written (e.g.
-when writing “@jane”, `text` will be `jane`) and should return a list of user
-IDs matching that text. This function will be called every time the text changes
-but with some debouncing.
+This resolver function will receive the mention currently being typed (e.g. when
+writing “@jane”, `text` will be `jane`) and should return a list of user IDs
+matching that text. This function will be called every time the text changes but
+with some debouncing.
 
 ```tsx
 import { createClient } from "@liveblocks/client";
