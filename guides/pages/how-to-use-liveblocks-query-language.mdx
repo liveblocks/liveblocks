@@ -1,0 +1,138 @@
+---
+meta:
+  title: "How to use Liveblocks query language"
+  description:
+    "Learn how to use the Liveblocks query language to filter data with our REST
+    API"
+---
+
+When using certain REST APIs, you can use a query language to filter the data
+you receive, for example only retrieving information with certain
+[custom metadata](/docs/products/comments/metadata). This works as an
+alternative to the object-based filtering that our JavaScript APIs provide.
+
+## Query language
+
+All query language APIs provide a way to filter by `metadata`, allowing you to
+select for certain properties, values, or even for string prefixes. Filters can
+be combined using `AND` logic.
+
+```js
+// Data with { status: 'open' } string metadata
+metadata['status']:'open'
+
+// Data with `{ org }` string metadata that starts with "liveblocks:"
+metadata['org']^'liveblocks:'
+
+// Data with { priority: 3 } number metadata
+metadata['priority']:3
+
+// Data with { resolved: false } boolean metadata
+metadata['resolved']:false
+
+// Combine queries with AND
+metadata['status']:'open' AND metadata['priority']:3
+
+// A more complex combination
+metadata['status']:'closed' AND metadata['org']^'liveblocks:'
+```
+
+Some APIs provide more than just `metadata`, for example the
+[Get Rooms API](/docs/api-reference/rest-api-endpoints#get-rooms) allows you to
+use the same logic to filter by `roomId`.
+
+```js
+// Rooms with ID that start with "liveblocks:"
+roomId^'liveblocks:'
+
+// Rooms with ID that start with "liveblocks:" and have { status: 'open' } string metadata
+roomId^'liveblocks:' AND metadata['status']:'open'
+```
+
+<Banner>
+
+The `AND` is optional and can actually be omitted, but we’re using it here for
+clarity.
+
+</Banner>
+
+### How to use
+
+To use the query language with the
+[REST API](/docs/api-reference/rest-api-endpoints) pass your query string to the
+`query` parameter and encode it, for example:
+
+```
+https://api.liveblocks.io/v2/rooms/{roomId}/threads?query=metadata%5B'status'%5D%3A'open'
+```
+
+Learn more about _setting_ custom metadata on [rooms](/docs/rooms/metadata) or
+[threads](/docs/products/comments/metadata).
+
+## Specific REST APIs
+
+### Get Rooms API
+
+The [Get Threads API](/docs/api-reference/rest-api-endpoints#get-rooms) allows
+you to filter by `roomId` and `metadata`, for example:
+
+```js
+// Rooms with ID that start with `liveblocks:` and { status: 'open' } string metadata
+roomId^'liveblocks:' AND metadata['status']:'open'
+```
+
+And the corresponding request after encoding:
+
+```
+https://api.liveblocks.io/v2/rooms?query=roomId%5E'liveblocks%3A'%20AND%20metadata%5B'status'%5D%3A'open'
+```
+
+This is the same as using the following object-based filtering in
+[`liveblocks.getRooms`](/docs/api-reference/liveblocks-node#get-rooms):
+
+```ts highlight="3-8"
+liveblocks.getRooms({
+  query: {
+    roomId: {
+      startsWith: "liveblocks:",
+    },
+    metadata: {
+      status: "open",
+    },
+  },
+});
+```
+
+### Get Threads API
+
+The
+[Get Threads API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-threads)
+allows you to filter by `metadata`, for example:
+
+```js
+// Threads with { status: closed } metadata, and { org } metadata starting with "liveblocks:"
+metadata['status']:'closed' AND metadata['org']^'liveblocks:'
+```
+
+And the corresponding request after encoding:
+
+```
+https://api.liveblocks.io/v2/rooms/{roomId}/threads?query=metadata%5B'status'%5D%3A'closed'%20AND%20metadata%5B'org'%5D%5E'liveblocks%3A'
+```
+
+This is the same as using the following object-based filtering in
+[`useThreads`](/docs/api-reference/liveblocks-react#useThreads) or
+[`liveblocks.getThreads`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads).
+
+```tsx highlight="3-8"
+const { threads } = useThreads({
+  query: {
+    metadata: {
+      status: "open",
+      org: {
+        startsWith: "liveblocks:",
+      },
+    },
+  },
+});
+```
