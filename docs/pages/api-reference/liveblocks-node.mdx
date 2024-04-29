@@ -322,17 +322,15 @@ const {
 
   // Optional, use advanced filtering
   query: {
-    // Optional, filter for rooms with custom metadata in `metadata`
-    metadata: {
-      myRoomType: "whiteboard",
-      shared: true,
-      time: 0,
-    },
     // Optional, filter for rooms with an ID that starts with specific string
     roomId: {
       startsWith: "liveblocks:",
     },
-  }
+    // Optional, filter for rooms with custom metadata in `metadata`
+    metadata: {
+      roomType: "whiteboard",
+    },
+  },
 
   // Optional, cursor used for pagination, use `nextCursor` from the previous page's response
   startingAfter: "L3YyL3Jvb21z...",
@@ -340,7 +338,7 @@ const {
 ```
 
 The `query` option also allows you to pass a
-[query language](/docs/guides/how-to-use-liveblocks-query-language) string
+[query language](/docs/guides/how-to-filter-rooms-using-query-language) string
 instead of a `query` object.
 
 ##### Pagination
@@ -1120,7 +1118,7 @@ const { data: threads } = await liveblocks.getThreads({
 ```
 
 You can also pass a
-[query language](/docs/guides/how-to-use-liveblocks-query-language) string
+[query language](/docs/guides/how-to-filter-threads-using-query-language) string
 instead of a `query` object.
 
 #### Liveblocks.createThread [#post-rooms-roomId-threads] [@badge=Beta]

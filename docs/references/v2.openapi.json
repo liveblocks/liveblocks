@@ -41,7 +41,7 @@
             },
             "in": "query",
             "name": "query",
-            "description": "Query to filter rooms. You can filter by `roomId` and `metadata`, for example, `metadata[\"roomType\"]:\"whiteboard\" AND roomId^\"liveblocks:engineering\"`. Learn more about using the [query language](/docs/guides/how-to-use-liveblocks-query-language)."
+            "description": "Query to filter rooms. You can filter by `roomId` and `metadata`, for example, `metadata[\"roomType\"]:\"whiteboard\" AND roomId^\"liveblocks:engineering\"`. Learn more about [filtering rooms with query language](/docs/guides/how-to-filter-rooms-using-query-language)."
           },
           {
             "schema": {
@@ -1368,7 +1368,7 @@
             },
             "in": "query",
             "name": "query",
-            "description": "Query to filter threads. You can filter by `metadata`, for example, `metadata[\"status\"]:\"open\" AND metadata[\"resolved\"]:true`. Learn more about using the [query language](/docs/guides/how-to-use-liveblocks-query-language)."
+            "description": "Query to filter threads. You can filter by `metadata`, for example, `metadata[\"status\"]:\"open\" AND metadata[\"resolved\"]:true`. Learn more about [filtering threads with query language](/docs/guides/how-to-filter-threads-using-query-language)."
           }
         ],
         "operationId": "get-rooms-roomId-threads",
