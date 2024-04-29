@@ -1,9 +1,9 @@
 ---
 meta:
-  title: "How to filter threads with the REST API"
+  title: "How to filter threads with query language"
   description:
-    "Learn how to filter for certain threads using their metadata with our REST
-    API"
+    "Learn how to filter for certain threads using their metadata with our query
+    language"
 ---
 
 When using Comments and retrieving threads with our REST API, it’s possible to
@@ -18,10 +18,8 @@ to have filtering that works the same as with
 ## Query language
 
 You can filter threads by their metadata, allowing you to select for certain
-properties, values, or even for string prefixes. Filters can be combined
-together using `AND` logic.
-
-### Cheatsheet
+properties, values, or even for string prefixes. Filters can be combined using
+`AND` logic.
 
 ```js
 // Threads with { status: 'open' } string metadata
@@ -54,10 +52,16 @@ clarity.
 
 To use the query language with the
 [REST API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-threads) pass
-your query string to the `query` parameter, for example:
+your query string to the `query` parameter. For example, given this query:
+
+```js
+metadata['status']:'open' AND metadata['priority']:3
+```
+
+Encode it, and add it to the `query` parameter:
 
 ```
-https://api.liveblocks.io/v2/rooms/{roomId}/threads?query=metadata['status']
+https://api.liveblocks.io/v2/rooms/{roomId}/threads?query=metadata%5B'status'%5D%3A'open'%20AND%20metadata%5B'priority'%5D%3A3
 ```
 
 To learn more on _setting_ custom metadata on threads, make sure to

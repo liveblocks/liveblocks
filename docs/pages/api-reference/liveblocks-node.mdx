@@ -320,15 +320,28 @@ const {
   // Optional, filter for rooms that allow entry to a user's ID in `usersAccesses`
   userId: "my-user-id",
 
-  // Optional, filter for rooms with custom metadata in `metadata`
-  metadata: {
-    myRoomType: "whiteboard",
+  // Optional, use advanced filtering
+  query: {
+    // Optional, filter for rooms with an ID that starts with specific string
+    roomId: {
+      startsWith: "liveblocks:",
+    },
+    // Optional, filter for rooms with custom metadata in `metadata`
+    metadata: {
+      roomType: "whiteboard",
+    },
   },
 
   // Optional, cursor used for pagination, use `nextCursor` from the previous page's response
   startingAfter: "L3YyL3Jvb21z...",
 });
 ```
+
+The `query` option also allows you to pass a
+[query language](/docs/guides/how-to-filter-rooms-using-query-language) string
+instead of a `query` object.
+
+##### Pagination
 
 You can use `nextCursor` to paginate rooms. In this example, when `getNextPage`
 is called, the next set of rooms is added to `pages`.
@@ -1079,29 +1092,34 @@ const { data: threads } = await liveblocks.getThreads({
 console.log(threads);
 ```
 
-It's also possible to filter threads by their metadata using a query parameter.
+It's also possible to filter threads by their string, boolean, and number
+metadata using a query parameter. You can also pass `startsWith` to match the
+start of a string.
 
 ```ts
 const { data: threads } = await liveblocks.getThreads({
   roomId: "my-room-id",
-  query:
-    "metadata['status']:'open' AND metadata['resolved']:false AND metadata['priority']:3",
+
+  // Optional, use advanced filtering
+  query: {
+    // Optional, filter for metadata values
+    metadata: {
+      status: "open",
+      resolved: true,
+      priority: 3,
+
+      // You can match the start of a metadata string
+      organization: {
+        startsWith: "liveblocks:",
+      },
+    },
+  },
 });
 ```
 
-The query language supports the following syntax:
-
-- Only the `AND` operator is supported, it can also be omitted and will default
-  to `AND`
-  - Omitted: `metadata['status']:'open' metadata['resolved']:false`
-  - Explicit: `metadata['status']:'open' AND metadata['resolved']:false`
-- `number` values can be exact matched with `:`
-  - Exact: `metadata['priority']:3`
-- `boolean` values can be exact matched with `:`
-  - Exact: `metadata['resolved']:false`
-- `string` values can be exact matched with `:` and prefix matched with `^`
-  - Exact: `metadata['org']:'liveblocks:engineering'`
-  - Prefix: `metadata['org']^'liveblocks'`
+You can also pass a
+[query language](/docs/guides/how-to-filter-threads-using-query-language) string
+instead of a `query` object.
 
 #### Liveblocks.createThread [#post-rooms-roomId-threads] [@badge=Beta]
 
