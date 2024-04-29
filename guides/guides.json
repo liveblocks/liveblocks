@@ -347,8 +347,8 @@
   {
     "title": "How to filter threads using query language",
     "path": "/how-to-filter-threads-using-query-language",
-    "topics": ["rest-api"],
-    "technologies": ["nodejs"],
+    "topics": ["rest-api", "comments"],
+    "technologies": ["nodejs", "react-comments"],
     "date": "2024-04-10"
   },
   {
