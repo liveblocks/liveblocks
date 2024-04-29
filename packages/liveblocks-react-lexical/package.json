@@ -35,6 +35,7 @@
     "@liveblocks/client": "1.11.0",
     "@liveblocks/core": "1.11.0",
     "@liveblocks/react": "1.11.0",
+    "@liveblocks/react-comments": "1.11.0",
     "@liveblocks/yjs": "1.11.0",
     "yjs": "^13.6.14"
   },
@@ -42,7 +43,6 @@
     "@lexical/react": "^0.10.0",
     "@lexical/selection": "^0.14.3",
     "@lexical/utils": "^0.14.3",
-    "@liveblocks/react-comments": "^1.11.0",
     "lexical": "^0.10.0",
     "react": "^16.14.0 || ^17 || ^18"
   },
@@ -54,7 +54,6 @@
     "@rollup/plugin-replace": "^5.0.5",
     "@rollup/plugin-typescript": "^11.1.2",
     "@testing-library/jest-dom": "^5.16.5",
-    "@testing-library/react": "^13.1.1",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "lexical": "^0.14.2",

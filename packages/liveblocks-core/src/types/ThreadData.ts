@@ -1,6 +1,7 @@
 import type { BaseMetadata } from "./BaseMetadata";
 import type { CommentData, CommentDataPlain } from "./CommentData";
 import type { DateToString } from "./DateToString";
+import type { ThreadSelection } from "./ThreadSelection";
 
 /**
  * Represents a thread of comments.
@@ -29,4 +30,5 @@ export type ThreadDataPlain<TThreadMetadata extends BaseMetadata = never> =
     metadata: [TThreadMetadata] extends [never]
       ? Record<string, never>
       : TThreadMetadata;
+    selection?: ThreadSelection;
   };

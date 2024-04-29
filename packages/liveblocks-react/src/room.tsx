@@ -92,7 +92,7 @@ import type {
   UseThreadsOptions,
 } from "./types";
 
-const noop = () => {};
+const noop = () => { };
 const identity: <T>(x: T) => T = (x) => x;
 
 const missing_unstable_batchedUpdates = (
@@ -104,8 +104,8 @@ const missing_unstable_batchedUpdates = (
     import { unstable_batchedUpdates } from "react-dom";  // or "react-native"
 
     <RoomProvider id=${JSON.stringify(
-      roomId
-    )} ... unstable_batchedUpdates={unstable_batchedUpdates}>
+    roomId
+  )} ... unstable_batchedUpdates={unstable_batchedUpdates}>
       ...
     </RoomProvider>
 
@@ -529,7 +529,7 @@ export function createRoomContext<
       getSnapshot,
       getServerSnapshot,
       selector ??
-        (identity as (others: readonly User<TPresence, TUserMeta>[]) => T),
+      (identity as (others: readonly User<TPresence, TUserMeta>[]) => T),
       isEqual
     );
   }
@@ -1344,7 +1344,7 @@ export function createRoomContext<
       (
         options: CreateThreadOptions<TThreadMetadata>
       ): ThreadData<TThreadMetadata> => {
-        const body = options.body;
+        const { body, selection } = options;
         const metadata: TThreadMetadata =
           "metadata" in options ? options.metadata : ({} as TThreadMetadata);
 
@@ -1381,7 +1381,7 @@ export function createRoomContext<
         });
 
         room[kInternal].comments
-          .createThread({ threadId, commentId, body, metadata })
+          .createThread({ threadId, commentId, body, metadata, selection })
           .then(
             (thread) => {
               store.set((state) => ({
@@ -1699,13 +1699,13 @@ export function createRoomContext<
                 const updatedInboxNotifications =
                   inboxNotification !== undefined
                     ? {
-                        ...state.inboxNotifications,
-                        [inboxNotification.id]: {
-                          ...inboxNotification,
-                          notifiedAt: newComment.createdAt,
-                          readAt: newComment.createdAt,
-                        },
-                      }
+                      ...state.inboxNotifications,
+                      [inboxNotification.id]: {
+                        ...inboxNotification,
+                        notifiedAt: newComment.createdAt,
+                        readAt: newComment.createdAt,
+                      },
+                    }
                     : state.inboxNotifications;
 
                 return {
@@ -1933,7 +1933,7 @@ export function createRoomContext<
       } else if (
         !lastInvokedAt.current ||
         Math.abs(performance.now() - lastInvokedAt.current) >
-          MENTION_SUGGESTIONS_DEBOUNCE
+        MENTION_SUGGESTIONS_DEBOUNCE
       ) {
         // If on the debounce's leading edge (either because it's the first invokation or enough
         // time has passed since the last debounce), get mention suggestions immediately.

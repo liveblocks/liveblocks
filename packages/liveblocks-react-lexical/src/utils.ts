@@ -23,6 +23,7 @@
 
 import type { InitialConfigType } from "@lexical/react/LexicalComposer";
 import type {
+  ElementNode,
   Klass,
   LexicalEditor,
   LexicalNode,
@@ -30,7 +31,7 @@ import type {
   RangeSelection,
   TextNode,
 } from "lexical";
-import { $isElementNode, $isTextNode } from "lexical";
+import { $isElementNode, $isRootNode, $isTextNode } from "lexical";
 
 import {
   $createThreadMarkNode,
@@ -184,6 +185,17 @@ export function $wrapSelectionInThreadMarkNode(
       ? lastCreatedMarkNode.selectStart()
       : lastCreatedMarkNode.selectEnd();
   }
+}
+
+export function getDomPath(el: TextNode | ElementNode | null) {
+  const anchorNode = el;
+  const path = [];
+  let node = anchorNode;
+  while (node !== null && !$isRootNode(node)) {
+    path.unshift(node.getIndexWithinParent());
+    node = node.getParent();
+  }
+  return path;
 }
 
 export function $getThreadMarkIds(

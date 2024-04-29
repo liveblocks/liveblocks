@@ -26,6 +26,7 @@ import type {
   RoomInfo,
   RoomInitializers,
   ThreadData,
+  ThreadSelection,
   ToImmutable,
 } from "@liveblocks/core";
 
@@ -105,8 +106,9 @@ export type CreateThreadOptions<TMetadata extends BaseMetadata> = [
 ] extends [never]
   ? {
       body: CommentBody;
+      selection?: ThreadSelection;
     }
-  : { body: CommentBody; metadata: TMetadata };
+  : { body: CommentBody; metadata: TMetadata; selection?: ThreadSelection };
 
 export type EditThreadMetadataOptions<TMetadata extends BaseMetadata> = [
   TMetadata,
