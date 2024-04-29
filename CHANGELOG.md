@@ -4,7 +4,6 @@
 
 - Made a second change here that does another more complex thing, needing a
   short explanation.
--
 
 ### Dashboard
 
