@@ -345,8 +345,15 @@
     "date": "2024-03-25"
   },
   {
-    "title": "How to use Liveblocks query language",
-    "path": "/how-to-use-liveblocks-query-language",
+    "title": "How to filter threads using query language",
+    "path": "/how-to-filter-threads-using-query-language",
+    "topics": ["rest-api"],
+    "technologies": ["nodejs"],
+    "date": "2024-04-10"
+  },
+  {
+    "title": "How to filter rooms using query language",
+    "path": "/how-to-filter-rooms-using-query-language",
     "topics": ["rest-api"],
     "technologies": ["nodejs"],
     "date": "2024-04-10"
