@@ -86,20 +86,18 @@ export const LiveblocksPlugin = ({
     [provider, doc]
   );
 
-  if (provider === undefined) {
-    return <>{children}</>;
-  }
-
   return (
     <>
-      <CollaborationPlugin
-        providerFactory={providerFactory}
-        initialEditorState={initialEditorState}
-        id={"liveblocks-document"}
-        username={username}
-        cursorColor={cursorcolor}
-        shouldBootstrap={true}
-      />
+      {provider && (
+        <CollaborationPlugin
+          providerFactory={providerFactory}
+          initialEditorState={initialEditorState}
+          id={"liveblocks-document"}
+          username={username}
+          cursorColor={cursorcolor}
+          shouldBootstrap={true}
+        />
+      )}
       <CommentPluginProvider>
         <LastActiveSelection />
         {children}

@@ -1,5 +1,6 @@
 import type { Store } from "./lib/create-store";
 import { createStore } from "./lib/create-store";
+import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { Resolve } from "./lib/Resolve";
 import type { BaseMetadata } from "./types/BaseMetadata";
@@ -24,11 +25,13 @@ type OptimisticUpdate<TThreadMetadata extends BaseMetadata> =
   | MarkAllInboxNotificationsAsReadOptimisticUpdate
   | UpdateNotificationSettingsOptimisticUpdate;
 
-type CreateThreadOptimisticUpdate<TThreadMetadata extends BaseMetadata> = {
-  type: "create-thread";
-  id: string;
-  thread: ThreadData<TThreadMetadata>;
-};
+export type CreateThreadOptimisticUpdate<TThreadMetadata extends BaseMetadata> =
+  {
+    type: "create-thread";
+    id: string;
+    roomId: string;
+    thread: ThreadData<TThreadMetadata>;
+  };
 
 type EditThreadMetadataOptimisticUpdate<TThreadMetadata extends BaseMetadata> =
   {
@@ -54,6 +57,7 @@ type EditCommentOptimisticUpdate = {
 type DeleteCommentOptimisticUpdate = {
   type: "delete-comment";
   id: string;
+  roomId: string;
   threadId: string;
   deletedAt: Date;
   commentId: string;
@@ -148,6 +152,10 @@ export interface CacheStore<TThreadMetadata extends BaseMetadata>
     optimisticUpdate: OptimisticUpdate<TThreadMetadata>
   ): void;
   setQueryState(queryKey: string, queryState: QueryState): void;
+
+  optimisticUpdatesEventSource: ReturnType<
+    typeof makeEventSource<OptimisticUpdate<TThreadMetadata>>
+  >;
 }
 
 /**
@@ -164,6 +172,9 @@ export function createClientStore<
     inboxNotifications: {},
     notificationSettings: {},
   });
+
+  const optimisticUpdatesEventSource =
+    makeEventSource<OptimisticUpdate<TThreadMetadata>>();
 
   return {
     ...store,
@@ -260,6 +271,8 @@ export function createClientStore<
     },
 
     pushOptimisticUpdate(optimisticUpdate: OptimisticUpdate<TThreadMetadata>) {
+      optimisticUpdatesEventSource.notify(optimisticUpdate);
+
       store.set((state) => ({
         ...state,
         optimisticUpdates: [...state.optimisticUpdates, optimisticUpdate],
@@ -275,6 +288,8 @@ export function createClientStore<
         },
       }));
     },
+
+    optimisticUpdatesEventSource,
   };
 }
 
