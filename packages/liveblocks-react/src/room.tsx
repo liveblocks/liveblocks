@@ -18,6 +18,7 @@ import type {
   BaseMetadata,
   CacheState,
   CacheStore,
+  CommentBody,
   CommentData,
   CommentsEventServerMsg,
   EnterOptions,
@@ -45,6 +46,7 @@ import {
   removeReaction,
   ServerMsgCode,
   stringify,
+  ThreadSelection,
   upsertComment,
 } from "@liveblocks/core";
 import { nanoid } from "nanoid";
@@ -75,7 +77,6 @@ import { createSharedContext } from "./shared";
 import type {
   CommentReactionOptions,
   CreateCommentOptions,
-  CreateThreadOptions,
   DeleteCommentOptions,
   EditCommentOptions,
   EditThreadMetadataOptions,
@@ -92,7 +93,7 @@ import type {
   UseThreadsOptions,
 } from "./types";
 
-const noop = () => { };
+const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
 
 const missing_unstable_batchedUpdates = (
@@ -104,8 +105,8 @@ const missing_unstable_batchedUpdates = (
     import { unstable_batchedUpdates } from "react-dom";  // or "react-native"
 
     <RoomProvider id=${JSON.stringify(
-    roomId
-  )} ... unstable_batchedUpdates={unstable_batchedUpdates}>
+      roomId
+    )} ... unstable_batchedUpdates={unstable_batchedUpdates}>
       ...
     </RoomProvider>
 
@@ -222,6 +223,14 @@ type Options<TUserMeta extends BaseUserMeta> = {
     args: ResolveMentionSuggestionsArgs
   ) => OptionalPromise<string[]>;
 };
+
+type CreateThreadOptions<TMetadata extends BaseMetadata> = [TMetadata] extends [
+  never,
+]
+  ? {
+      body: CommentBody;
+    }
+  : { body: CommentBody; metadata: TMetadata };
 
 export function createRoomContext<
   TPresence extends JsonObject,
@@ -529,7 +538,7 @@ export function createRoomContext<
       getSnapshot,
       getServerSnapshot,
       selector ??
-      (identity as (others: readonly User<TPresence, TUserMeta>[]) => T),
+        (identity as (others: readonly User<TPresence, TUserMeta>[]) => T),
       isEqual
     );
   }
@@ -1393,11 +1402,13 @@ export function createRoomContext<
 
   function useCreateThread() {
     const room = useRoom();
+    const getThreadSelection = React.useContext(ThreadSelectionGetterContext);
+
     return React.useCallback(
       (
         options: CreateThreadOptions<TThreadMetadata>
       ): ThreadData<TThreadMetadata> => {
-        const { body, selection } = options;
+        const { body } = options;
         const metadata: TThreadMetadata =
           "metadata" in options ? options.metadata : ({} as TThreadMetadata);
 
@@ -1434,6 +1445,8 @@ export function createRoomContext<
           id: optimisticUpdateId,
         });
 
+        const selection = getThreadSelection?.();
+
         room[kInternal].comments
           .createThread({ threadId, commentId, body, metadata, selection })
           .then(
@@ -1466,7 +1479,7 @@ export function createRoomContext<
 
         return newThread;
       },
-      [room]
+      [room, getThreadSelection]
     );
   }
 
@@ -1753,13 +1766,13 @@ export function createRoomContext<
                 const updatedInboxNotifications =
                   inboxNotification !== undefined
                     ? {
-                      ...state.inboxNotifications,
-                      [inboxNotification.id]: {
-                        ...inboxNotification,
-                        notifiedAt: newComment.createdAt,
-                        readAt: newComment.createdAt,
-                      },
-                    }
+                        ...state.inboxNotifications,
+                        [inboxNotification.id]: {
+                          ...inboxNotification,
+                          notifiedAt: newComment.createdAt,
+                          readAt: newComment.createdAt,
+                        },
+                      }
                     : state.inboxNotifications;
 
                 return {
@@ -1988,7 +2001,7 @@ export function createRoomContext<
       } else if (
         !lastInvokedAt.current ||
         Math.abs(performance.now() - lastInvokedAt.current) >
-        MENTION_SUGGESTIONS_DEBOUNCE
+          MENTION_SUGGESTIONS_DEBOUNCE
       ) {
         // If on the debounce's leading edge (either because it's the first invokation or enough
         // time has passed since the last debounce), get mention suggestions immediately.
@@ -2435,3 +2448,10 @@ export function generateQueryKey<TThreadMetadata extends BaseMetadata>(
 ) {
   return `${roomId}-${stringify(options ?? {})}`;
 }
+
+/**
+ * @private
+ */
+export const ThreadSelectionGetterContext = React.createContext<
+  (() => ThreadSelection | undefined) | undefined
+>(undefined);

@@ -9,9 +9,9 @@ import {
 import { $getSelection, $isRangeSelection } from "lexical";
 import React, { useContext } from "react";
 
+import { ShowComposerContext } from "./CommentPluginProvider";
 import type { ThreadMetadata } from "./types";
 import { $wrapSelectionInThreadMarkNode } from "./utils";
-import { ShowComposerContext } from "./CommentPluginProvider";
 
 type LexicalThreadComposerProps<
   TThreadMetadata extends BaseMetadata = ThreadMetadata,

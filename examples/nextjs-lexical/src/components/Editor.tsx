@@ -14,6 +14,7 @@ import {
   liveblocksLexicalConfig,
 } from "@liveblocks/react-lexical";
 import { useThreads } from "@/liveblocks.config";
+import { Composer } from "@liveblocks/react-comments";
 
 // Set up editor config and theme
 const initialConfig = {
@@ -58,14 +59,12 @@ export default function Editor() {
             />
           </div>
 
-          <LiveblocksPlugin >
+          <LiveblocksPlugin>
             <div className={styles.sidebar}>
-              <LexicalThreadComposer autoFocus className={styles.composer} />
+              <Composer autoFocus className={styles.composer} />
               <Threads />
             </div>
           </LiveblocksPlugin>
-
-
         </div>
       </LexicalComposer>
     </div>

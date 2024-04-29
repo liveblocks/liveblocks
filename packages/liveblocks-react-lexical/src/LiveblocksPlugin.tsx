@@ -1,8 +1,12 @@
 import { CollaborationPlugin } from "@lexical/react/LexicalCollaborationPlugin";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { Provider } from "@lexical/yjs";
-import { useRoomContextBundle } from "@liveblocks/react";
-import type { LexicalEditor } from "lexical";
+import type { ThreadSelection } from "@liveblocks/core";
+import {
+  ThreadSelectionGetterContext,
+  useRoomContextBundle,
+} from "@liveblocks/react";
+import { $getSelection, $isRangeSelection, type LexicalEditor } from "lexical";
 import React, { useCallback, useEffect } from "react";
 import type { Doc } from "yjs";
 
@@ -12,6 +16,7 @@ import {
   useDocumentSyncState,
   useTextCollaboration,
 } from "./TextCollaborationProvider";
+import { getDomPath } from "./utils";
 
 export type LiveblocksPluginProps = {
   /**
@@ -38,6 +43,27 @@ export type LiveblocksPluginProps = {
 
   children?: React.ReactNode;
 };
+
+function $getEditorSelection(): ThreadSelection | undefined {
+  const selection = $getSelection();
+  if (!$isRangeSelection(selection)) return undefined;
+  const focus = selection.focus;
+  const anchor = selection.anchor;
+  const isBackward = selection.isBackward();
+  const anchorPath = getDomPath(anchor.getNode());
+  const focusPath = getDomPath(focus.getNode());
+
+  return {
+    editor: "lexical",
+    anchorPath,
+    anchorOffset: anchor.offset,
+    anchorType: anchor.type,
+    focusPath,
+    focusOffset: focus.offset,
+    focusType: focus.type,
+    isBackward,
+  };
+}
 
 export const LiveblocksPlugin = ({
   userInfo = undefined,
@@ -86,8 +112,14 @@ export const LiveblocksPlugin = ({
     [provider, doc]
   );
 
+  const getEditorSelection = useCallback((): ThreadSelection | undefined => {
+    const state = editor.getEditorState();
+    const selection = state.read(() => $getEditorSelection());
+    return selection;
+  }, [editor]);
+
   return (
-    <>
+    <ThreadSelectionGetterContext.Provider value={getEditorSelection}>
       {provider && (
         <CollaborationPlugin
           providerFactory={providerFactory}
@@ -102,6 +134,6 @@ export const LiveblocksPlugin = ({
         <LastActiveSelection />
         {children}
       </CommentPluginProvider>
-    </>
+    </ThreadSelectionGetterContext.Provider>
   );
 };

@@ -1,5 +1,7 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { registerNestedElementResolver } from "@lexical/utils";
+import { kInternal } from "@liveblocks/core";
+import { useRoomContextBundle } from "@liveblocks/react";
 import type {
   BaseSelection,
   LexicalCommand,
@@ -22,8 +24,6 @@ import {
   ThreadMarkNode,
 } from "./ThreadMarkNode";
 import { $getThreadMarkIds } from "./utils";
-import { useRoomContextBundle } from "@liveblocks/react";
-import { kInternal } from "@liveblocks/core";
 
 export const INSERT_THREAD_COMMAND: LexicalCommand<void> = createCommand(
   "INSERT_THREAD_COMMAND"

@@ -1,5 +1,7 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { createDOMRange, createRectsFromDOMRange } from "@lexical/selection";
+import type { LexicalNode } from "lexical";
+import { $getSelection, $isRangeSelection } from "lexical";
 import {
   useCallback,
   useContext,
@@ -7,8 +9,8 @@ import {
   useRef,
   useSyncExternalStore,
 } from "react";
+
 import { ShowComposerContext } from "./CommentPluginProvider";
-import { $getSelection, $isRangeSelection, LexicalNode } from "lexical";
 
 const SELECTION_CONTAINER_DATA_ATTR = "data-lb-selection-container-attr";
 
