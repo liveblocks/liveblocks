@@ -106,6 +106,7 @@ export const {
     RoomProvider,
     useBroadcastEvent,
     useEventListener,
+    useErrorListener,
     useHistory,
     useCanUndo,
     useCanRedo,

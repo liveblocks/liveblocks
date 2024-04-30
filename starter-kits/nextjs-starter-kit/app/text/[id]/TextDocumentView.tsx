@@ -8,7 +8,7 @@ import { TextEditor } from "@/components/TextEditor";
 import { DocumentLayout } from "@/layouts/Document";
 import { ErrorLayout } from "@/layouts/Error";
 import { InitialDocumentProvider } from "@/lib/hooks";
-import { RoomProvider } from "@/liveblocks.config";
+import { RoomProvider, useErrorListener } from "@/liveblocks.config";
 import { Document, ErrorData } from "@/types";
 
 type Props = {
@@ -52,6 +52,7 @@ export function TextDocumentView({ initialDocument, initialError }: Props) {
       initialPresence={{ cursor: null }}
       initialStorage={{ notes: new LiveMap() }}
     >
+      <ErrorInfo />
       <InitialDocumentProvider initialDocument={initialDocument}>
         <DocumentLayout
           header={<DocumentHeader documentId={initialDocument.id} />}
@@ -61,4 +62,12 @@ export function TextDocumentView({ initialDocument, initialError }: Props) {
       </InitialDocumentProvider>
     </RoomProvider>
   );
+}
+
+function ErrorInfo() {
+  useErrorListener((err) => {
+    console.log("Error listener:");
+    console.log(err);
+  });
+  return null;
 }

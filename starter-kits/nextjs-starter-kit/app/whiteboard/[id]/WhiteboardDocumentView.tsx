@@ -8,7 +8,7 @@ import { Whiteboard } from "@/components/Whiteboard";
 import { DocumentLayout } from "@/layouts/Document";
 import { ErrorLayout } from "@/layouts/Error";
 import { InitialDocumentProvider } from "@/lib/hooks";
-import { RoomProvider } from "@/liveblocks.config";
+import { RoomProvider, useErrorListener } from "@/liveblocks.config";
 import { Document, ErrorData } from "@/types";
 
 type Props = {
@@ -59,9 +59,18 @@ export function WhiteboardDocumentView({
         <DocumentLayout
           header={<DocumentHeader documentId={initialDocument.id} />}
         >
+          <ErrorInfo />
           <Whiteboard />
         </DocumentLayout>
       </InitialDocumentProvider>
     </RoomProvider>
   );
+}
+
+function ErrorInfo() {
+  useErrorListener((err) => {
+    console.log("Error listener:");
+    console.log(err);
+  });
+  return null;
 }
