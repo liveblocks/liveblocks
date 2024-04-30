@@ -6,7 +6,6 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 export { INSERT_THREAD_COMMAND } from "./CommentPluginProvider";
 export { LexicalThread } from "./LexicalThread";
-export { LexicalThreadComposer } from "./LexicalThreadComposer";
 export { LiveblocksPlugin } from "./LiveblocksPlugin";
 export * from "./TextCollaborationProvider";
 export { liveblocksLexicalConfig } from "./utils";
