@@ -393,7 +393,6 @@ export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
 
         const inboxNotification = Object.values(result.inboxNotifications).find(
           (notification) =>
-            // CHECK ALL
             notification.kind === "thread" &&
             notification.threadId === thread.id
         );
