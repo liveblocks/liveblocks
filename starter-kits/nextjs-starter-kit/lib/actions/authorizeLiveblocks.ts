@@ -29,6 +29,8 @@ export async function authorizeLiveblocks() {
 
   const groupIdsWithDraftsGroup = [...groupIds, getDraftsGroupName(id)];
 
+  console.log("auth id", id, "auth name", name);
+
   // Get Liveblocks ID token
   const { status, body } = await liveblocks.identifyUser(
     {
