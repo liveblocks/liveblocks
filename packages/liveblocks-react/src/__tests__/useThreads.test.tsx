@@ -2,7 +2,7 @@ import "@testing-library/jest-dom";
 
 import type { BaseMetadata, JsonObject } from "@liveblocks/core";
 import { createClient, kInternal, ServerMsgCode } from "@liveblocks/core";
-import type { AST} from "@liveblocks/query-parser";
+import type { AST } from "@liveblocks/query-parser";
 import { QueryParser } from "@liveblocks/query-parser";
 import {
   act,
@@ -22,7 +22,7 @@ import { ErrorBoundary } from "react-error-boundary";
 
 import { createLiveblocksContext } from "../liveblocks";
 import { createRoomContext, generateQueryKey, POLLING_INTERVAL } from "../room";
-import { dummyInboxNoficationData, dummyThreadData } from "./_dummies";
+import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
 import MockWebSocket, { websocketSimulator } from "./_MockWebSocket";
 import {
   mockGetInboxNotifications,
@@ -811,7 +811,7 @@ describe("useThreads", () => {
     const newThread = dummyThreadData();
     newThread.createdAt = new Date("2021-01-02T00:00:00Z");
 
-    const inboxNotification = dummyInboxNoficationData();
+    const inboxNotification = dummyThreadInboxNotificationData();
     inboxNotification.threadId = oldThread.id;
 
     server.use(
@@ -886,7 +886,7 @@ describe("useThreads", () => {
     const newThread = dummyThreadData();
     newThread.createdAt = new Date("2021-01-02T00:00:00Z");
 
-    const inboxNotification = dummyInboxNoficationData();
+    const inboxNotification = dummyThreadInboxNotificationData();
     inboxNotification.threadId = newThread.id;
 
     server.use(

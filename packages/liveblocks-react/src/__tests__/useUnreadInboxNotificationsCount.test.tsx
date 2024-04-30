@@ -6,7 +6,7 @@ import { setupServer } from "msw/node";
 import React, { Suspense } from "react";
 
 import { createLiveblocksContext } from "../liveblocks";
-import { dummyInboxNoficationData, dummyThreadData } from "./_dummies";
+import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import { mockGetInboxNotifications } from "./_restMocks";
 import { generateFakeJwt } from "./_utils";
@@ -45,7 +45,7 @@ function createLiveblocksContextForTest() {
 describe("useUnreadInboxNotificationsCount", () => {
   test("should fetch inbox notifications", async () => {
     const threads = [dummyThreadData()];
-    const inboxNotification = dummyInboxNoficationData();
+    const inboxNotification = dummyThreadInboxNotificationData();
     inboxNotification.readAt = null;
     inboxNotification.threadId = threads[0].id;
     const inboxNotifications = [inboxNotification];
@@ -96,7 +96,7 @@ describe("useUnreadInboxNotificationsCount", () => {
 describe("useUnreadInboxNotificationsCount - Suspense", () => {
   test("should be referentially stable after rerendering", async () => {
     const threads = [dummyThreadData()];
-    const inboxNotification = dummyInboxNoficationData();
+    const inboxNotification = dummyThreadInboxNotificationData();
     inboxNotification.threadId = threads[0].id;
     inboxNotification.readAt = null;
     const inboxNotifications = [inboxNotification];
