@@ -1,6 +1,9 @@
 import { getDocument } from "@/lib/actions";
 import { TextDocumentView } from "./TextDocumentView";
 
+// Stop Next.js caching getDocument and causing issues
+export const dynamic = "force-dynamic";
+
 export default async function Whiteboard({
   params: { id },
 }: {
