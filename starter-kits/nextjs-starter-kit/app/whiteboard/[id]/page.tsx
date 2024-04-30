@@ -11,5 +11,7 @@ export default async function Whiteboard({
 }) {
   const { data = null, error = null } = await getDocument({ documentId: id });
 
+  console.log("page page", data, "page error", error);
+
   return <WhiteboardDocumentView initialDocument={data} initialError={error} />;
 }

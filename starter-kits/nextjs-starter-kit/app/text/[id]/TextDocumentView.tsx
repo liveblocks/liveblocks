@@ -20,6 +20,17 @@ export function TextDocumentView({ initialDocument, initialError }: Props) {
   const { id, error: queryError } = useParams<{ id: string; error: string }>();
   const [error, setError] = useState<ErrorData | null>(initialError);
 
+  console.log(
+    "room ID:",
+    id,
+    "initial doc:",
+    initialDocument,
+    "initial err:",
+    initialError,
+    "params err:",
+    error
+  );
+
   // If error object in params, retrieve it
   useEffect(() => {
     if (queryError) {

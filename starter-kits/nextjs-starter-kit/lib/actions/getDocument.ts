@@ -16,6 +16,7 @@ type Props = {
  * @param documentId - The document id
  */
 export async function getDocument({ documentId }: Props) {
+  console.log("server action", documentId);
   let session;
   let room;
   try {
