@@ -29,7 +29,7 @@ export async function authorizeLiveblocks() {
 
   const groupIdsWithDraftsGroup = [...groupIds, getDraftsGroupName(id)];
 
-  console.log("auth id", id, "auth name", name);
+  console.log();
 
   // Get Liveblocks ID token
   const { status, body } = await liveblocks.identifyUser(
@@ -40,6 +40,19 @@ export async function authorizeLiveblocks() {
     {
       userInfo: { name, color, avatar },
     }
+  );
+
+  console.log(
+    "auth id",
+    id,
+    "auth name",
+    name,
+    "groups ids",
+    groupIdsWithDraftsGroup,
+    "status",
+    status,
+    "body",
+    body
   );
 
   if (status !== 200) {
