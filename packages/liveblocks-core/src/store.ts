@@ -177,7 +177,7 @@ export function createClientStore<
             Object.entries(state.inboxNotifications).filter(
               ([_id, notification]) =>
                 notification.kind === "thread" &&
-                notification.threadId !== threadId
+                notification.threadId === threadId
             )
           ),
         };
@@ -393,8 +393,9 @@ export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
 
         const inboxNotification = Object.values(result.inboxNotifications).find(
           (notification) =>
+            // CHECK ALL
             notification.kind === "thread" &&
-            notification.threadId !== thread.id
+            notification.threadId === thread.id
         );
 
         if (inboxNotification === undefined) {
