@@ -1,4 +1,4 @@
-<p align="center">
+<p align="center"> 
   <a href="https://liveblocks.io#gh-light-mode-only">
     <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header-wordmark-light.svg" alt="Liveblocks"   />
   </a>
