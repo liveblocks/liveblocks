@@ -29,8 +29,6 @@ export async function authorizeLiveblocks() {
 
   const groupIdsWithDraftsGroup = [...groupIds, getDraftsGroupName(id)];
 
-  console.log();
-
   // Get Liveblocks ID token
   const { status, body } = await liveblocks.identifyUser(
     {
@@ -56,6 +54,7 @@ export async function authorizeLiveblocks() {
   );
 
   if (status !== 200) {
+    console.log("not 200 here", status !== 200);
     return {
       error: {
         code: 401,
