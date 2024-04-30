@@ -17,6 +17,9 @@ import { User } from "./types";
 // (e.g. auth token, user id) send it in the body alongside `room`.
 // This is using a Next.js server action called `authorizeLiveblocks`
 const client = createClient({
+  // @ts-expect-error - Hidden setting
+  baseUrl: "https://dev.dev-liveblocks5948.workers.dev/",
+
   authEndpoint: async () => {
     const { data, error } = await authorizeLiveblocks();
 

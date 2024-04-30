@@ -4,7 +4,11 @@ import { getProviders } from "@/auth";
 // Your Liveblocks secret key
 export const SECRET_API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
 
-export const liveblocks = new Liveblocks({ secret: SECRET_API_KEY as string });
+export const liveblocks = new Liveblocks({
+  // @ts-expect-error - Hidden setting
+  baseUrl: "https://dev.dev-liveblocks5948.workers.dev/",
+  secret: SECRET_API_KEY as string,
+});
 
 // ============================================================================
 if (typeof window !== "undefined") {
