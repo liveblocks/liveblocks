@@ -4,6 +4,14 @@ import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
+// Global types, intended to be augmented by the end-user
+export type {
+  GPresence,
+  GStorage,
+  /* GRoomEvent, */
+  GThreadMetadata,
+  GUserMeta,
+} from "./global";
 export type {
   BaseMetadata,
   BaseUserMeta,
