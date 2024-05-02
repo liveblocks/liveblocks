@@ -68,7 +68,6 @@ import { retryError } from "./lib/retry-error";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { LiveblocksProvider, useClient, useClientOrNull } from "./liveblocks";
-import type { DE, DM, DP, DS, DU } from "./shared";
 import { createSharedContext } from "./shared";
 import type {
   CommentReactionOptions,
@@ -2348,6 +2347,12 @@ export function generateQueryKey(
 ) {
   return `${roomId}-${stringify(options ?? {})}`;
 }
+
+type DP = Liveblocks.Presence;
+type DS = Liveblocks.Storage;
+type DU = Liveblocks.UserMeta;
+type DE = Liveblocks.RoomEvent;
+type DM = Liveblocks.ThreadMetadata;
 
 // TODO in 2.0 Copy/paste all the docstrings onto these global hooks :(
 const __1 = RoomProvider<DP, DS, DU, DE>;
