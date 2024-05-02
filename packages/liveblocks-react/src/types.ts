@@ -21,6 +21,7 @@ import type {
   kInternal,
   LiveblocksError,
   PartialNullable,
+  QueryMetadata,
   Resolve,
   RoomEventMessage,
   RoomInfo,
@@ -39,7 +40,7 @@ export type UseThreadsOptions<TThreadMetadata extends BaseMetadata> = {
      * The metadata to filter the threads by. If provided, only threads with metadata that matches
      * the provided metadata will be returned. If not provided, all threads will be returned.
      */
-    metadata?: Partial<TThreadMetadata>;
+    metadata?: Partial<QueryMetadata<TThreadMetadata>>;
   };
 
   /**

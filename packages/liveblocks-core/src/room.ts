@@ -93,6 +93,7 @@ import type {
 import type { NodeMap } from "./types/NodeMap";
 import type { InternalOthersEvent, OthersEvent } from "./types/Others";
 import type { PartialNullable } from "./types/PartialNullable";
+import type { QueryMetadata } from "./types/QueryMetadata";
 import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 import type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
 import type {
@@ -495,7 +496,7 @@ type SubscribeFn<
 
 export type GetThreadsOptions<TThreadMetadata extends BaseMetadata> = {
   query?: {
-    metadata?: Partial<TThreadMetadata>;
+    metadata?: Partial<QueryMetadata<TThreadMetadata>>;
   };
   since?: Date;
 };
@@ -1120,6 +1121,7 @@ function createCommentsApi(
         since: options?.since?.toISOString(),
       },
       {
+        // TODO: Handle advanced metadata query
         body: JSON.stringify({
           ...(options?.query?.metadata && { metadata: options.query.metadata }),
         }),
