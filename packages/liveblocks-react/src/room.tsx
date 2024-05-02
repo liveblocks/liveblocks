@@ -1693,7 +1693,11 @@ export function createRoomContext<
 
                 const inboxNotification = Object.values(
                   state.inboxNotifications
-                ).find((notification) => notification.threadId === threadId);
+                ).find(
+                  (notification) =>
+                    notification.kind === "thread" &&
+                    notification.threadId === threadId
+                );
 
                 // If the thread has an inbox notification associated with it, we update the notification's `notifiedAt` and `readAt` values
                 const updatedInboxNotifications =
@@ -1958,7 +1962,9 @@ export function createRoomContext<
     const selector = React.useCallback(
       (state: CacheState<BaseMetadata>): ThreadSubscription => {
         const inboxNotification = selectedInboxNotifications(state).find(
-          (inboxNotification) => inboxNotification.threadId === threadId
+          (inboxNotification) =>
+            inboxNotification.kind === "thread" &&
+            inboxNotification.threadId === threadId
         );
 
         const thread = state.threads[threadId];
@@ -1992,7 +1998,11 @@ export function createRoomContext<
       (threadId: string) => {
         const inboxNotification = Object.values(
           store.get().inboxNotifications
-        ).find((inboxNotification) => inboxNotification.threadId === threadId);
+        ).find(
+          (inboxNotification) =>
+            inboxNotification.kind === "thread" &&
+            inboxNotification.threadId === threadId
+        );
 
         if (!inboxNotification) return;
 

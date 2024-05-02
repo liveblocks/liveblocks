@@ -18,8 +18,8 @@ export function mockGetThreads(
     }
   >
 ) {
-  return rest.post(
-    "https://api.liveblocks.io/v2/c/rooms/room-id/threads/search",
+  return rest.get(
+    "https://api.liveblocks.io/v2/c/rooms/room-id/threads",
     resolver
   );
 }

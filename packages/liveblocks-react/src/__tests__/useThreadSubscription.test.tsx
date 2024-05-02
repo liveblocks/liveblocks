@@ -5,7 +5,7 @@ import { setupServer } from "msw/node";
 import React from "react";
 
 import { createRoomContext } from "../room";
-import { dummyInboxNoficationData, dummyThreadData } from "./_dummies";
+import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import { mockGetThreads } from "./_restMocks";
 
@@ -43,7 +43,7 @@ function createRoomContextForTest<
 describe("useThreadSubscription", () => {
   test("should return the expected object if the associated inbox notification hasn't been read at all", async () => {
     const threads = [dummyThreadData()];
-    const inboxNotifications = [dummyInboxNoficationData()];
+    const inboxNotifications = [dummyThreadInboxNotificationData()];
     inboxNotifications[0].threadId = threads[0].id;
 
     server.use(
@@ -99,7 +99,7 @@ describe("useThreadSubscription", () => {
 
   test("should return the expected object if the associated inbox notification has been read", async () => {
     const threads = [dummyThreadData()];
-    const inboxNotifications = [dummyInboxNoficationData()];
+    const inboxNotifications = [dummyThreadInboxNotificationData()];
     inboxNotifications[0].threadId = threads[0].id;
     inboxNotifications[0].readAt = new Date();
 
@@ -207,7 +207,7 @@ describe("useThreadSubscription", () => {
 
   test("should be referentially stable", async () => {
     const threads = [dummyThreadData()];
-    const inboxNotifications = [dummyInboxNoficationData()];
+    const inboxNotifications = [dummyThreadInboxNotificationData()];
     inboxNotifications[0].threadId = threads[0].id;
 
     server.use(

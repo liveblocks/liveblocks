@@ -29,7 +29,19 @@ export function selectedThreads<TThreadMetadata extends BaseMetadata>(
     if (!query) return true;
 
     for (const key in query.metadata) {
-      if (thread.metadata[key] !== query.metadata[key]) {
+      const metadataValue = thread.metadata[key];
+      const filterValue = query.metadata[key];
+
+      if (
+        assertFilterIsStartsWithOperator(filterValue) &&
+        assertMetadataValueIsString(metadataValue)
+      ) {
+        if (metadataValue.startsWith(filterValue.startsWith)) {
+          return true;
+        }
+      }
+
+      if (metadataValue !== filterValue) {
         return false;
       }
     }
@@ -40,3 +52,17 @@ export function selectedThreads<TThreadMetadata extends BaseMetadata>(
   // Sort threads by creation date (oldest first)
   return threads.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 }
+
+const assertFilterIsStartsWithOperator = (
+  filter: boolean | string | number | undefined | { startsWith: string }
+): filter is { startsWith: string } => {
+  if (typeof filter === "object" && typeof filter.startsWith === "string") {
+    return true;
+  } else {
+    return false;
+  }
+};
+
+const assertMetadataValueIsString = (value: any): value is string => {
+  return typeof value === "string";
+};

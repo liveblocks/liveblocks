@@ -21,6 +21,7 @@ import type {
   kInternal,
   LiveblocksError,
   PartialNullable,
+  QueryMetadata,
   Resolve,
   RoomEventMessage,
   RoomInfo,
@@ -39,7 +40,7 @@ export type UseThreadsOptions<TThreadMetadata extends BaseMetadata> = {
      * The metadata to filter the threads by. If provided, only threads with metadata that matches
      * the provided metadata will be returned. If not provided, all threads will be returned.
      */
-    metadata?: Partial<TThreadMetadata>;
+    metadata?: Partial<QueryMetadata<TThreadMetadata>>;
   };
 
   /**
@@ -1185,7 +1186,7 @@ export type RoomContextBundle<
 /**
  * Properties that are the same in LiveblocksContext and LiveblocksContext["suspense"].
  */
-type LiveblocksContextBundleCommon = {
+type LiveblocksContextBundleCommon<TThreadMetadata extends BaseMetadata> = {
   /**
    * @beta
    *
@@ -1215,6 +1216,18 @@ type LiveblocksContextBundleCommon = {
    * markAllInboxNotificationsAsRead();
    */
   useMarkAllInboxNotificationsAsRead(): () => void;
+
+  /**
+   * @beta
+   *
+   * Returns the thread associated with a `"thread"` inbox notification.
+   *
+   * @example
+   * const thread = useInboxNotificationThread("in_xxx");
+   */
+  useInboxNotificationThread(
+    inboxNotificationId: string
+  ): ThreadData<TThreadMetadata>;
 };
 
 /**
@@ -1228,23 +1241,16 @@ type PrivateLiveblocksContextApi = {
   /**
    * @private
    *
-   * Returns a thread from the cache.
-   *
-   * @example
-   * const thread = useThreadFromCache("th_xxx");
-   */
-  useThreadFromCache(threadId: string): ThreadData<BaseMetadata>;
-
-  /**
-   * @private
-   *
    * Returns the current user ID. Can only be used after making a call to a Notifications API.
    */
   useCurrentUserId(): string | null;
 };
 
-export type LiveblocksContextBundle<TUserMeta extends BaseUserMeta> = Resolve<
-  LiveblocksContextBundleCommon &
+export type LiveblocksContextBundle<
+  TUserMeta extends BaseUserMeta,
+  TThreadMetadata extends BaseMetadata,
+> = Resolve<
+  LiveblocksContextBundleCommon<TThreadMetadata> &
     Omit<SharedContextBundle<TUserMeta>, "suspense"> & {
       /**
        * @beta
@@ -1267,7 +1273,7 @@ export type LiveblocksContextBundle<TUserMeta extends BaseUserMeta> = Resolve<
       useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountState;
 
       suspense: Resolve<
-        LiveblocksContextBundleCommon &
+        LiveblocksContextBundleCommon<TThreadMetadata> &
           SharedContextBundle<TUserMeta>["suspense"] & {
             /**
              * @beta
