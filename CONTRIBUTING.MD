@@ -29,7 +29,9 @@ Welcome to our contributing guide! We're excited to have you as a contributor.
 
 After making a change to documentation or examples, record your change:
 
-1.
+1. Look in [pull requests](https://github.com/liveblocks/liveblocks/pulls) for
+   the CHANGELOG PR
+2. Click the link in the PR, add your changes into the file and save
 
 ## Releasing
 
