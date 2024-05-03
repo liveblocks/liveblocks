@@ -13,6 +13,16 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 -->
 
+# Week 1 (2024-05-10)
+
+## Website
+
+- New [changelog section](https://liveblocks.io/changelog).
+
+## Contributors
+
+ctnicholas, stevenfabre
+
 # v1.12.0
 
 ## `@liveblocks/react`
