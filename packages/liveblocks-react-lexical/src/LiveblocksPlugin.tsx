@@ -17,6 +17,7 @@ import {
   useTextCollaboration,
 } from "./TextCollaborationProvider";
 import { getDomPath } from "./utils";
+import MentionPlugin from "./mentions/mention-plugin";
 
 export type LiveblocksPluginProps = {
   /**
@@ -130,6 +131,7 @@ export const LiveblocksPlugin = ({
           shouldBootstrap={true}
         />
       )}
+      <MentionPlugin />
       <CommentPluginProvider>
         <LastActiveSelection />
         {children}

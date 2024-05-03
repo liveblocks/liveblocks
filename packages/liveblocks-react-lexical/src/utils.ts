@@ -38,11 +38,12 @@ import {
   $isThreadMarkNode,
   ThreadMarkNode,
 } from "./ThreadMarkNode";
+import MentionNode from "./mentions/mention-node";
 
 export function liveblocksLexicalConfig(editorConfig: InitialConfigType) {
   let nodes: ReadonlyArray<Klass<LexicalNode> | LexicalNodeReplacement> = [];
   if (!editorConfig.nodes?.includes(ThreadMarkNode)) {
-    nodes = [ThreadMarkNode, ...(editorConfig.nodes ?? [])];
+    nodes = [ThreadMarkNode, MentionNode, ...(editorConfig.nodes ?? [])];
   }
   const { namespace, editable, html } = editorConfig;
   const theme = { ...editorConfig.theme };
