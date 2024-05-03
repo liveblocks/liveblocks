@@ -334,7 +334,7 @@ transform comments, to `@liveblocks/node`.
     formatting. See
     [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#stringify-comment-body).
 
-# 1.7.1
+# v1.7.1
 
 ## `@liveblocks/react-comments`
 
