@@ -74,7 +74,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 - Fix "`process` is undefined" issue in Vite builds. This issue was already
   fixed for `@liveblocks/core`, but not for `@liveblocks/node` yet.
 
-### DevTools
+## DevTools
 
 - Improve tree view to visualize Y.js documents and inspect Y.js awareness.
 
@@ -569,7 +569,7 @@ leave();
 
 # v1.4.0
 
-### DevTools
+## DevTools
 
 - New Yjs tab: visualize Yjs documents as a diagram, a tree, or as a list of
   operations, and inspect Awareness at the same time as Presence.
@@ -1285,7 +1285,7 @@ In **@liveblocks/react**:
 For information, please read our
 [Upgrade Guide for 0.18](https://liveblocks.io/docs/guides/upgrading/0.18).
 
-### New React hooks ✨
+## New React hooks ✨
 
 - In **@liveblocks/react**:
 
@@ -1308,7 +1308,7 @@ For information, please read our
   - Reduced bundle size
   - Others only become visible in the `others` array if their presence is known
 
-### Breaking changes
+## Breaking changes
 
 - Remove support for directly importing hooks from **@liveblocks/client** (e.g.
   `import { useMyPresence } from '@liveblocks/react'`). If you’re still using
@@ -1342,7 +1342,7 @@ In **@liveblocks/react**:
 
 # v0.17.8
 
-### New history APIs ↩️ ↪️
+## New history APIs ↩️ ↪️
 
 - In **@liveblocks/client**:
 
@@ -1464,7 +1464,7 @@ Fix `@liveblocks/nodes` packaging.
 For information, please read our
 [Upgrade Guide](https://liveblocks.io/docs/guides/upgrading/0.17).
 
-### TypeScript improvements ✨
+## TypeScript improvements ✨
 
 This release contains major TypeScript improvements. The recommended setup now
 is that you define your own Presence and Storage types at the highest level
@@ -1487,14 +1487,14 @@ To learn how to set that up, follow the instructions in our
     `{ a: number, b: string }`)
   - `LiveList<T>` (like `Array<T>`)
 
-### React Native support ✨
+## React Native support ✨
 
 We now support React Native! To learn how to use Liveblocks in your React Native
 projects, see our
 [API reference](https://liveblocks.io/docs/api-reference/liveblocks-client#createClientReactNative).
 It's surprisingly simple!
 
-### New APIs ✨
+## New APIs ✨
 
 - In **@liveblocks/react**:
 
@@ -1508,18 +1508,18 @@ It's surprisingly simple!
   - New endpoint to
     [Get a list of all Rooms](https://liveblocks.io/docs/api-reference/rest-api-endpoints#GetRooms)
 
-### Bug fixes 🐛
+## Bug fixes 🐛
 
 - Improved conflict resolution on LiveList
 - Various minor internal bug fixes
 
-### Breaking changes
+## Breaking changes
 
 - In **@liveblocks/client**:
 
   - Removed old `Room.unsubscribe()` API
 
-### New deprecations
+## New deprecations
 
 - In **@liveblocks/client**:
 
@@ -1594,11 +1594,11 @@ Fix bug in example code suggested in deprecation warning.
 
 # v0.16.5
 
-### All packages
+## All packages
 
 - Various internal refactorings
 
-### Bug fixes
+## Bug fixes
 
 - In **@liveblocks/client**:
 
@@ -1607,7 +1607,7 @@ Fix bug in example code suggested in deprecation warning.
 
 # v0.16.4
 
-### All packages
+## All packages
 
 - Improve our generated bundles. They are now even more tree-shakable, and
   smaller!
@@ -1616,7 +1616,7 @@ Fix bug in example code suggested in deprecation warning.
 
 # v0.16.3
 
-### Bug fixes
+## Bug fixes
 
 - In **@liveblocks/client**:
 
@@ -1633,7 +1633,7 @@ Fix bug in example code suggested in deprecation warning.
 
 # v0.16.2
 
-### Bug fixes
+## Bug fixes
 
 - In **@liveblocks/client**:
 
@@ -1642,7 +1642,7 @@ Fix bug in example code suggested in deprecation warning.
 
 # v0.16.1
 
-### Bug fixes
+## Bug fixes
 
 - In **@liveblocks/react**:
 
@@ -1650,9 +1650,9 @@ Fix bug in example code suggested in deprecation warning.
 
 # v0.16.0
 
-### New APIs
+## New APIs
 
-#### `LiveList.set`
+### `LiveList.set`
 
 Set one element at a specified index.
 
@@ -1668,7 +1668,7 @@ https://github.com/liveblocks/liveblocks/pull/147 for more information
 clients are using `0.16.0`. If a client is connected to a room with version
 `< 0.16`, `LiveList.set` might lead to slightly unexpected behavior._**
 
-### TypeScript improvements
+## TypeScript improvements
 
 @nvie improved our typescript definitions! They are more precise and restrictive
 (for your own good :)). If typescript errors appears after upgrading to `0.16.0`
