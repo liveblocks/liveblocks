@@ -25,6 +25,12 @@
 
 Welcome to our contributing guide! We're excited to have you as a contributor.
 
+## Documentation and examples
+
+After making a change to documentation or examples, record your change:
+
+1.
+
 ## Releasing
 
 Packages are published on the [npm registry](https://www.npmjs.com/). Each
@@ -62,6 +68,13 @@ To run a release in github (for `main` and `beta` branches):
    workflow.
 4. Add the release notes
 5. Update CHANGELOG.md
+
+Next, add changes to the public changelog:
+
+6. Look in [pull requests](https://github.com/liveblocks/liveblocks/pulls) for
+   the CHANGELOG PR
+7. Click the link in the PR, paste your release note changes into the file and
+   save
 
 ### Latest releases
 
