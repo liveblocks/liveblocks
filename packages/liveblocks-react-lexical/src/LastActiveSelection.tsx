@@ -86,18 +86,18 @@ export function useActiveSelection() {
     const rootContainer = root.parentNode;
     if (rootContainer === null) return;
 
-    let container = rootContainer.querySelector(
+    let selectionContainer = rootContainer.querySelector(
       `[${SELECTION_CONTAINER_DATA_ATTR}]`
     );
 
-    if (container === null) {
-      container = document.createElement("div");
-      container.setAttribute(SELECTION_CONTAINER_DATA_ATTR, "");
-      container.setAttribute(
+    if (selectionContainer === null) {
+      selectionContainer = document.createElement("div");
+      selectionContainer.setAttribute(SELECTION_CONTAINER_DATA_ATTR, "");
+      selectionContainer.setAttribute(
         "style",
         "position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"
       );
-      rootContainer.appendChild(container);
+      rootContainer.appendChild(selectionContainer);
     }
 
     function drawSelectionRects(container: Element) {
@@ -126,9 +126,8 @@ export function useActiveSelection() {
         const div = document.createElement("div");
         div.style.position = "absolute";
         div.style.top = `${rect.top - container.getBoundingClientRect().top}px`;
-        div.style.left = `${
-          rect.left - container.getBoundingClientRect().left
-        }px`;
+        div.style.left = `${rect.left - container.getBoundingClientRect().left
+          }px`;
         div.style.width = `${rect.width}px`;
         div.style.height = `${rect.height}px`;
         div.style.backgroundColor = "rgb(255, 212, 0)";
@@ -139,12 +138,12 @@ export function useActiveSelection() {
     }
 
     // Observe resizes of the container element to redraw the selection
-    const observer = new ResizeObserver(() => drawSelectionRects(container));
-    observer.observe(container);
+    const observer = new ResizeObserver(() => drawSelectionRects(selectionContainer!));
+    observer.observe(selectionContainer);
 
     // Listen to updates in the editor to redraw the selection
     const unsubUpdateHandler = editor.registerUpdateListener(() =>
-      drawSelectionRects(container)
+      drawSelectionRects(selectionContainer!)
     );
 
     return () => {
