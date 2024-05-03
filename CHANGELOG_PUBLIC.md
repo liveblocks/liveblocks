@@ -13,10 +13,6 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 -->
 
-# Week 1 (2024-05-10)
-
-## Contributors
-
 # v1.12.0
 
 ## `@liveblocks/react`
