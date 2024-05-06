@@ -19,9 +19,15 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 - New [changelog section](https://liveblocks.io/changelog).
 
+## Documentation
+
+- Completely rewritten API reference for [`@liveblocks/client`](https://liveblocks.io/docs/api-reference/liveblocks-client).
+- New components for showing arguments, returns, properties.
+- Refreshed banner components.
+
 ## Contributors
 
-ctnicholas, stevenfabre
+ctnicholas, stevenfabre, pierrelevaillant
 
 # v1.12.0
 
