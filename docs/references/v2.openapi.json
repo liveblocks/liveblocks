@@ -13,7 +13,7 @@
     "/rooms": {
       "get": {
         "summary": "Get rooms",
-        "description": "This endpoint returns a list of your rooms. The rooms are returned sorted by creation date, from newest to oldest. You can filter rooms by metadata, users accesses and groups accesses. Corresponds to [`liveblocks.getRooms`](/docs/api-reference/liveblocks-node#get-rooms).\n\nThere is a pagination system where the next page URL is returned in the response as `nextPage`. You can also paginate by using `nextCursor` in combination with `startingAfter`.\nYou can also limit the number of rooms by query.\n\nFiltering by metadata works by giving key values like `metadata.color=red`. Of course you can combine multiple metadata clauses to refine the response like `metadata.color=red&metadata.type=text`. Notice here the operator AND is applied between each clauses.\n\nFiltering by groups or userId works by giving a list of groups like `groupIds=marketing,GZo7tQ,product` or/and a userId like `userId=user1`.\nNotice here the operator OR is applied between each `groupIds` and the `userId`.\n",
+        "description": "This endpoint returns a list of your rooms. The rooms are returned sorted by creation date, from newest to oldest. You can filter rooms by room ID prefixes, metadata, users accesses, and groups accesses. Corresponds to [`liveblocks.getRooms`](/docs/api-reference/liveblocks-node#get-rooms).\n\nThere is a pagination system where the next page URL is returned in the response as `nextPage`. You can also paginate by using `nextCursor` in combination with `startingAfter`.\nYou can also limit the number of rooms by query.\n\nFiltering by metadata works by giving key values like `metadata.color=red`. Of course you can combine multiple metadata clauses to refine the response like `metadata.color=red&metadata.type=text`. Notice here the operator AND is applied between each clauses.\n\nFiltering by groups or userId works by giving a list of groups like `groupIds=marketing,GZo7tQ,product` or/and a userId like `userId=user1`.\nNotice here the operator OR is applied between each `groupIds` and the `userId`.\n",
         "tags": ["Room"],
         "parameters": [
           {
@@ -37,12 +37,11 @@
           },
           {
             "schema": {
-              "type": "string",
-              "examples": ["metadata.colors=blue"]
+              "type": "string"
             },
             "in": "query",
-            "name": "metadata.KEY",
-            "description": "A filter on metadata. Multiple metadata keys can be used to filter rooms."
+            "name": "query",
+            "description": "Query to filter rooms. You can filter by `roomId` and `metadata`, for example, `metadata[\"roomType\"]:\"whiteboard\" AND roomId^\"liveblocks:engineering\"`. Learn more about [filtering rooms with query language](/docs/guides/how-to-filter-rooms-using-query-language)."
           },
           {
             "schema": {
@@ -746,7 +745,7 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "description": "This endpoint initializes a room’s Storage. The room must already exist and have an empty Storage. Calling this endpoint will disconnect all users from the room if there are any. Corresponds to [`liveblocks.initializeStorageDocument`](/docs/api-reference/liveblocks-node#post-rooms-roomId-storage).\n\nThe format of the request body is the same as what’s returned by the get Storage endpoint.\n\nFor each Liveblocks data structure that you want to create, you need a JSON element having two properties:\n- `\"liveblocksType\"` => `\"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n- `\"data\"` => contains the nested data structures (children) and data.\n\nThe root’s type can only be LiveObject.\n\nA utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.",
+        "description": "This endpoint initializes or reinitializes a room’s Storage. The room must already exist. Calling this endpoint will disconnect all users from the room if there are any, triggering a reconnect. Corresponds to [`liveblocks.initializeStorageDocument`](/docs/api-reference/liveblocks-node#post-rooms-roomId-storage).\n\nThe format of the request body is the same as what’s returned by the get Storage endpoint.\n\nFor each Liveblocks data structure that you want to create, you need a JSON element having two properties:\n- `\"liveblocksType\"` => `\"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n- `\"data\"` => contains the nested data structures (children) and data.\n\nThe root’s type can only be LiveObject.\n\nA utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1362,6 +1361,14 @@
               "type": "string"
             },
             "description": "ID of the room"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "query",
+            "description": "Query to filter threads. You can filter by `metadata`, for example, `metadata[\"status\"]:\"open\" AND metadata[\"resolved\"]:true`. Learn more about [filtering threads with query language](/docs/guides/how-to-filter-threads-using-query-language)."
           }
         ],
         "operationId": "get-rooms-roomId-threads",
@@ -2490,7 +2497,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InboxNotification"
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/InboxNotificationThreadData"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InboxNotificationCustomData"
+                    }
+                  ]
                 }
               }
             }
@@ -2672,6 +2686,42 @@
           },
           "404": {
             "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/inbox-notifications/trigger": {
+      "parameters": [],
+      "post": {
+        "summary": "Trigger inbox notification",
+        "x-badge": "Beta",
+        "tags": ["Notifications"],
+        "operationId": "post-inbox-notifications-trigger",
+        "description": "This endpoint triggers an inbox notification. Corresponds to [`liveblocks.triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger).",
+        "responses": {
+          "200": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TriggerInboxNotification"
+              }
+            }
           }
         }
       }
@@ -3349,18 +3399,20 @@
           }
         ]
       },
-      "InboxNotification": {
-        "title": "InboxNotification",
+      "InboxNotificationThreadData": {
+        "title": "InboxNotificationThreadData",
         "type": "object",
         "properties": {
           "id": {
             "type": "string"
           },
           "kind": {
-            "type": "string",
-            "default": "thread"
+            "type": "string"
           },
           "threadId": {
+            "type": "string"
+          },
+          "roomId": {
             "type": "string"
           },
           "readAt": {
@@ -3373,6 +3425,35 @@
           }
         }
       },
+      "InboxNotificationCustomData": {
+        "title": "InboxNotificationCustomData",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "subjectId": {
+            "type": "string"
+          },
+          "roomId": {
+            "type": "string"
+          },
+          "readAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "notifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "activityData": {
+            "type": "object"
+          }
+        }
+      },
       "UserRoomNotificationSettings": {
         "title": "UserRoomNotificationSettings",
         "type": "object",
@@ -3381,6 +3462,38 @@
             "enum": ["all", "replies_and_mentions", "none"]
           }
         }
+      },
+      "TriggerInboxNotification": {
+        "title": "TriggerInboxNotification",
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "subjectId": {
+            "type": "string"
+          },
+          "roomId": {
+            "type": "string"
+          },
+          "activityData": {
+            "type": "object"
+          }
+        },
+        "required": ["userId", "kind", "subjectId", "activityData"],
+        "examples": [
+          {
+            "userId": "alice",
+            "kind": "file-uploaded",
+            "subjectId": "file123",
+            "activityData": {
+              "url": "url-to-file"
+            }
+          }
+        ]
       }
     },
     "securitySchemes": {

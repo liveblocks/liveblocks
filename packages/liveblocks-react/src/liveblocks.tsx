@@ -35,8 +35,10 @@ import type {
   UnreadInboxNotificationsCountStateSuccess,
 } from "./types";
 
-export const ContextBundle =
-  createContext<LiveblocksContextBundle<BaseUserMeta> | null>(null);
+export const ContextBundle = createContext<LiveblocksContextBundle<
+  BaseUserMeta,
+  BaseMetadata
+> | null>(null);
 
 /**
  * @private
@@ -57,7 +59,7 @@ export const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
 export function createLiveblocksContext<
   TUserMeta extends BaseUserMeta = BaseUserMeta,
   TThreadMetadata extends BaseMetadata = never,
->(client: Client): LiveblocksContextBundle<TUserMeta> {
+>(client: Client): LiveblocksContextBundle<TUserMeta, TThreadMetadata> {
   const shared = createSharedContext<TUserMeta>(client);
 
   const store = client[kInternal]
@@ -68,7 +70,12 @@ export function createLiveblocksContext<
   function LiveblocksProvider(props: PropsWithChildren) {
     return (
       <ContextBundle.Provider
-        value={bundle as unknown as LiveblocksContextBundle<BaseUserMeta>}
+        value={
+          bundle as unknown as LiveblocksContextBundle<
+            BaseUserMeta,
+            BaseMetadata
+          >
+        }
       >
         {props.children}
       </ContextBundle.Provider>
@@ -448,20 +455,36 @@ export function createLiveblocksContext<
     }, []);
   }
 
-  function useThreadFromCache(threadId: string): ThreadData<BaseMetadata> {
+  function useInboxNotificationThread(
+    inboxNotificationId: string
+  ): ThreadData<TThreadMetadata> {
     const selector = useCallback(
-      (state: CacheState<BaseMetadata>) => {
-        const thread = state.threads[threadId];
+      (state: CacheState<TThreadMetadata>) => {
+        const inboxNotification = state.inboxNotifications[inboxNotificationId];
+
+        if (inboxNotification === undefined) {
+          throw new Error(
+            `Inbox notification with ID "${inboxNotificationId}" not found`
+          );
+        }
+
+        if (inboxNotification.kind !== "thread") {
+          throw new Error(
+            `Inbox notification with ID "${inboxNotificationId}" is not of kind "thread"`
+          );
+        }
+
+        const thread = state.threads[inboxNotification.threadId];
 
         if (thread === undefined) {
           throw new Error(
-            `Internal error: thread with id "${threadId}" not found in cache`
+            `Thread with ID "${inboxNotification.threadId}" not found, this inbox notification might not be of kind "thread"`
           );
         }
 
         return thread;
       },
-      [threadId]
+      [inboxNotificationId]
     );
 
     return useSyncExternalStoreWithSelector(
@@ -483,7 +506,7 @@ export function createLiveblocksContext<
     );
   }
 
-  const bundle: LiveblocksContextBundle<TUserMeta> = {
+  const bundle: LiveblocksContextBundle<TUserMeta, TThreadMetadata> = {
     LiveblocksProvider,
 
     useInboxNotifications,
@@ -491,6 +514,8 @@ export function createLiveblocksContext<
 
     useMarkInboxNotificationAsRead,
     useMarkAllInboxNotificationsAsRead,
+
+    useInboxNotificationThread,
 
     ...shared,
 
@@ -504,11 +529,12 @@ export function createLiveblocksContext<
       useMarkInboxNotificationAsRead,
       useMarkAllInboxNotificationsAsRead,
 
+      useInboxNotificationThread,
+
       ...shared.suspense,
     },
 
     [kInternal]: {
-      useThreadFromCache,
       useCurrentUserId,
     },
   };

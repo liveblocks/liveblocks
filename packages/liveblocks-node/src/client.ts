@@ -4,6 +4,7 @@
  * @liveblocks/core has browser-specific code.
  */
 import type {
+  ActivityData,
   BaseMetadata,
   CommentBody,
   CommentData,
@@ -16,6 +17,7 @@ import type {
   Json,
   JsonObject,
   PlainLsonObject,
+  QueryMetadata,
   RoomNotificationSettings,
   ThreadData,
   ThreadDataPlain,
@@ -23,7 +25,9 @@ import type {
 import {
   convertToCommentData,
   convertToCommentUserReaction,
+  convertToInboxNotificationData,
   convertToThreadData,
+  objectToQuery,
 } from "@liveblocks/core";
 
 import { Session } from "./Session";
@@ -89,6 +93,7 @@ export type RoomAccesses = Record<
   ["room:write"] | ["room:read", "room:presence:write"]
 >;
 export type RoomMetadata = Record<string, string | string[]>;
+type QueryRoomMetadata = Record<string, string>;
 
 export type RoomInfo = {
   type: "room";
@@ -319,15 +324,49 @@ export class Liveblocks {
    * @param params.userId (optional) A filter on users accesses.
    * @param params.metadata (optional) A filter on metadata. Multiple metadata keys can be used to filter rooms.
    * @param params.groupIds (optional) A filter on groups accesses. Multiple groups can be used.
+   * @param params.query (optional) A query to filter rooms by. It is based on our query language. You can filter by metadata and room ID.
    * @returns A list of rooms.
    */
   public async getRooms(
     params: {
       limit?: number;
       startingAfter?: string;
-      metadata?: RoomMetadata;
+      /**
+       * @deprecated Use `query` instead.
+       */
+      metadata?: QueryRoomMetadata;
       userId?: string;
       groupIds?: string[];
+      /**
+       * The query to filter rooms by. It is based on our query language.
+       * @example
+       * ```
+       * {
+       *   query: 'metadata["status"]:"open" AND roomId^"liveblocks:"'
+       * }
+       * ```
+       * @example
+       * ```
+       * {
+       *   query: {
+       *     metadata: {
+       *       status: "open",
+       *     },
+       *     roomId: {
+       *       startsWith: "liveblocks:"
+       *     }
+       *   }
+       * }
+       * ```
+       */
+      query?:
+        | string
+        | {
+            metadata?: QueryRoomMetadata;
+            roomId?: {
+              startsWith: string;
+            };
+          };
     } = {}
   ): Promise<{
     nextPage: string | null;
@@ -336,6 +375,14 @@ export class Liveblocks {
   }> {
     const path = url`/v2/rooms`;
 
+    let query: string | undefined;
+
+    if (typeof params.query === "string") {
+      query = params.query;
+    } else if (typeof params.query === "object") {
+      query = objectToQuery(params.query);
+    }
+
     const queryParams = {
       limit: params.limit,
       startingAfter: params.startingAfter,
@@ -343,11 +390,12 @@ export class Liveblocks {
       groupIds: params.groupIds ? params.groupIds.join(",") : undefined,
       // "Flatten" {metadata: {foo: "bar"}} to {"metadata.foo": "bar"}
       ...Object.fromEntries(
-        Object.entries(params.metadata ?? {}).map(([key, val]) => {
-          const value = Array.isArray(val) ? val.join(",") : val;
-          return [`metadata.${key}`, value];
-        })
+        Object.entries(params.metadata ?? {}).map(([key, val]) => [
+          `metadata.${key}`,
+          val,
+        ])
       ),
+      query,
     };
 
     const res = await this.get(path, queryParams);
@@ -883,14 +931,55 @@ export class Liveblocks {
    * Gets all the threads in a room.
    *
    * @param params.roomId The room ID to get the threads from.
+   * @param params.query The query to filter threads by. It is based on our query language and can filter by metadata.
    * @returns A list of threads.
    */
-  public async getThreads(params: {
+  public async getThreads<TThreadMetadata extends BaseMetadata>(params: {
     roomId: string;
+    /**
+     * The query to filter threads by. It is based on our query language.
+     *
+     * @example
+     * ```
+     * {
+     *   query: "metadata['organization']^'liveblocks:' AND metadata['status']:'open' AND metadata['resolved']:false AND metadata['priority']:3"
+     * }
+     * ```
+     * @example
+     * ```
+     * {
+     *   query: {
+     *     metadata: {
+     *       status: "open",
+     *       resolved: false,
+     *       priority: 3,
+     *       organization: {
+     *         startsWith: "liveblocks:"
+     *       }
+     *     }
+     *   }
+     * }
+     * ```
+     */
+    query?:
+      | string
+      | {
+          metadata?: Partial<QueryMetadata<TThreadMetadata>>;
+        };
   }): Promise<{ data: ThreadData[] }> {
     const { roomId } = params;
 
-    const res = await this.get(url`/v2/rooms/${roomId}/threads`);
+    let query: string | undefined;
+
+    if (typeof params.query === "string") {
+      query = params.query;
+    } else if (typeof params.query === "object") {
+      query = objectToQuery(params.query);
+    }
+
+    const res = await this.get(url`/v2/rooms/${roomId}/threads`, {
+      query,
+    });
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -1242,13 +1331,9 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    const data = (await res.json()) as InboxNotificationDataPlain;
-
-    return {
-      ...data,
-      notifiedAt: new Date(data.notifiedAt),
-      readAt: data.readAt ? new Date(data.readAt) : null,
-    };
+    return convertToInboxNotificationData(
+      (await res.json()) as InboxNotificationDataPlain
+    );
   }
 
   /**
@@ -1348,6 +1433,21 @@ export class Liveblocks {
         ? new Date(data.lastConnectionAt)
         : undefined,
     };
+  }
+
+  public async triggerInboxNotification(params: {
+    userId: string;
+    kind: `$${string}`;
+    roomId?: string;
+    subjectId: string;
+    activityData: ActivityData;
+  }): Promise<void> {
+    const res = await this.post(url`/v2/inbox-notifications/trigger`, params);
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
   }
 }
 

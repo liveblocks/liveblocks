@@ -1,6 +1,21 @@
-## v1.12.0
+<!--
 
-### `@liveblocks/react`
+PUBLIC CHANGELOG
+https://liveblocks.io/changelog
+
+- Paste changes into the current week.
+- Put package versions first, with the newest at the top.
+- Add each contributor's GitHub username.
+
+TEAM MEMBERS
+adigau, ctnicholas, flowflorent, guillaumesalles, jrowny, marcbouchenoire,
+nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
+
+-->
+
+# v1.12.0
+
+## `@liveblocks/react`
 
 - Add support for custom notification kinds.
 - Add new `useInboxNotificationThread` hook to `createLiveblocksContext`, which
@@ -9,14 +24,14 @@
 - Add support for `startsWith` operator to `useThreads` when filtering based on
   metadata.
 
-### `@liveblocks/react-comments`
+## `@liveblocks/react-comments`
 
 - Add support for custom notification kinds to the `InboxNotification` component
   via the `kinds` prop and the `InboxNotification.Custom` component.
 - Add destructive color tokens. (`--lb-destructive`,
   `--lb-destructive-foreground`, and `--lb-destructive-contrast`)
 
-### `@liveblocks/node`
+## `@liveblocks/node`
 
 - Add `triggerInboxNotification` method that lets you trigger custom
   notification kinds.
@@ -28,44 +43,44 @@
   and `getThreads` methods, which supports exact matches and the `startsWith`
   operator.
 
-## v1.11.3
+# v1.11.3
 
-### `@liveblocks/client`
+## `@liveblocks/client`
 
 - Fixes a potential `RangeError: Maximum call stack size exceeded` in
   applications that produce many operations
 
-### `@liveblocks/node`
+## `@liveblocks/node`
 
 - Add missing `updatedAt` property to `YDocUpdatedEvent` type.
   ([@alexlande](https://github.com/alexlande))
 
-## v1.11.2
+# v1.11.2
 
-### `create-liveblocks-app`
+## `create-liveblocks-app`
 
 - Add support for the updated Starter Kit.
 
-## v1.11.1
+# v1.11.1
 
-### `@liveblocks/react-comments`
+## `@liveblocks/react-comments`
 
 - Fix the composer’s placeholder to appear instantly instead of being initially
   invisible.
 - Fix the default composer’s actions not being disabled when the composer is.
 
-### `@liveblocks/node`
+## `@liveblocks/node`
 
 - Fix "`process` is undefined" issue in Vite builds. This issue was already
   fixed for `@liveblocks/core`, but not for `@liveblocks/node` yet.
 
-### DevTools
+## DevTools
 
 - Improve tree view to visualize Y.js documents and inspect Y.js awareness.
 
-## v1.11.0
+# v1.11.0
 
-### `@liveblocks/node`
+## `@liveblocks/node`
 
 - Add `updateRoomId` method that lets you update the room ID of the specified
   room.
@@ -73,7 +88,7 @@
   `getYjsDocumentAsBinaryUpdate` to point to a Yjs subdocument with the
   specified guid.
 
-### `@liveblocks/react`
+## `@liveblocks/react`
 
 - Add `scrollOnLoad` option to `useThreads`: enabled by default, this option
   controls whether to scroll to a comment on load based on the URL hash.
@@ -84,73 +99,73 @@
 - Fix bug where customizing types on `createLiveblocksContext` would conflict
   with the provided `Client`.
 
-### `@liveblocks/react-comments`
+## `@liveblocks/react-comments`
 
 - Add actions to `InboxNotification` with a single action for now: marking as
   read.
 - Improve actions hover behavior in `Comment`/`Thread`.
 - Change `Comment` background color when it’s linked to or being edited.
 
-## v1.10.4
+# v1.10.4
 
 - Fix bundling issue in Vite projects, where `process is not defined` could
   happen
 
-## v1.10.3
+# v1.10.3
 
-### `@liveblocks/react-comments`
+## `@liveblocks/react-comments`
 
 - Add support for Emoji v15.1 in emoji picker, along two additional locales:
   Bengali (`bn`) and Hindi (`hi`).
 - Fix bug where the `showRoomName` prop on `InboxNotification.Thread` wasn’t
   applied to notifications about mentions.
 
-### `@liveblocks/react`
+## `@liveblocks/react`
 
 - Fix bug where removing metadata via `useEditThreadMetadata` would result in a
   brief flash of the old metadata after the metadata was removed optimistically.
 
-## v1.10.2
+# v1.10.2
 
-### `@liveblocks/client`
+## `@liveblocks/client`
 
 - Fix bug where calling `.clone()` immediately after creating a new `LiveObject`
   could throw an error
 
-## v1.10.1
+# v1.10.1
 
-### `@liveblocks/client`
+## `@liveblocks/client`
 
 - Fix bug where the client’s backoff delay would not be respected correctly in a
   small edge case.
 
-### `@liveblocks/react-comments`
+## `@liveblocks/react-comments`
 
 - Fix date localization in `InboxNotification`.
 - Add vendor prefixes to more CSS properties within the default styles.
 
-### `@liveblocks/react`
+## `@liveblocks/react`
 
 - Added error retrying to `useThreads`, `useRoomNotificationSettings`, and
   `useInboxNotifications` during initial fetching.
 
-## v1.10.0
+# v1.10.0
 
 This release introduces Notifications (and unread indicators) for Comments.
 
-### `create-liveblocks-app`
+## `create-liveblocks-app`
 
 - Add `createLiveblocksContext` and Notifications to `--init`.
 - Move resolver options from `createRoomContext` to `createClient` and add
   `resolveRoomsInfo` to the list of resolvers.
 
-### `@liveblocks/client`
+## `@liveblocks/client`
 
 - Add options to `createClient`: `resolveUsers`, `resolveMentionSuggestions`
   (both were previously defined on `createRoomContext` from
   `@liveblocks/react`), and the new `resolveRoomsInfo`.
 
-### `@liveblocks/react`
+## `@liveblocks/react`
 
 - Add new `LiveblocksContext` accessible with `createLiveblocksContext`,
   similarly to `createRoomContext`. This context is meant to live at the root
@@ -164,14 +179,14 @@ This release introduces Notifications (and unread indicators) for Comments.
 - Make some hooks usable interchangeably between `createLiveblocksContext` and
   `createRoomContext`: `useUser`, and `useRoomInfo`.
 
-### `@liveblocks/react-comments`
+## `@liveblocks/react-comments`
 
 - Add new default components: `InboxNotification` and `InboxNotificationList`.
 - Add unread indicators to the default `Thread` component.
 - Support "@" in mentions. (e.g. `@user@email.com` is now a valid mention and
   will trigger `resolveMentionSuggestions` with `"user@email.com"`)
 
-### `@liveblocks/node`
+## `@liveblocks/node`
 
 - Add the Notifications REST APIs as fully typed methods. (includes
   `getInboxNotification`, `getRoomNotificationSettings`,
@@ -179,84 +194,84 @@ This release introduces Notifications (and unread indicators) for Comments.
   methods)
 - Add notification webhook event: `NotificationEvent`.
 
-## v1.9.8
+# v1.9.8
 
-### `@liveblocks/client`
+## `@liveblocks/client`
 
 - Fix race condition in client that could leave zombie WebSocket connections
   open indefinitely in a small edge case. (thanks for reporting,
   [@dev-badace](https://github.com/dev-badace))
 
-### `@liveblocks/react`
+## `@liveblocks/react`
 
 - Fix type definitions of `useOthersListener` hook.
 - Fix type definitions of `useErrorListener` hook.
 
-### `@liveblocks/yjs`
+## `@liveblocks/yjs`
 
 - Emit update events from awareness.
 - Fix several awareness bugs.
 
-## v1.9.7
+# v1.9.7
 
-### `@liveblocks/node`
+## `@liveblocks/node`
 
 - Expose new `nextCursor` field in
   [Get Rooms](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms)
   API responses, to make pagination easier to work with
 - Update TypeScript types for some responses
 
-### `create-liveblocks-app`
+## `create-liveblocks-app`
 
 - Adds a fallback for passing data from Safari to the console.
 
-## v1.9.6
+# v1.9.6
 
-### `@liveblocks/react`
+## `@liveblocks/react`
 
 - Fix certain Next.js sites not building correctly due to improper
   `useSyncExternalStore` import
 
-## v1.9.5
+# v1.9.5
 
-### `@liveblocks/react-comments`
+## `@liveblocks/react-comments`
 
 - Fix mention suggestions not appearing.
 
-## v1.9.4
+# v1.9.4
 
-### `@liveblocks/react`
+## `@liveblocks/react`
 
 - Fix polling on `useThreads` hook.
 
-## v1.9.3
+# v1.9.3
 
-### `@liveblocks/react`
+## `@liveblocks/react`
 
 - Fix a bug that prevented comments from being used across multiple rooms.
 
-### `@liveblocks/node`
+## `@liveblocks/node`
 
 - Fix `getRooms()` not throwing `LiveblocksError` when invalid response was
   received.
 
-## v1.9.2
+# v1.9.2
 
-### `@liveblocks/react-comments`
+## `@liveblocks/react-comments`
 
 - Add `portalContainer` prop to `CommentsConfig` to customize where floating
   elements (e.g. tooltips, dropdowns, etc) are portaled into.
 
-## v1.9.1
+# v1.9.1
 
-### `@liveblocks/node`
+## `@liveblocks/node`
 
 - Fixes the signature and behavior of the `Liveblocks.sendYjsBinaryUpdate()`
   API. It now takes a Yjs encoded update (`Uint8Array`) directly.
 
-## v1.9.0
+# v1.9.0
 
-### `@liveblocks/node`
+## `@liveblocks/node`
 
 - Add the Comments write REST APIs as fully typed methods. (includes
   `createThread`, `editThreadMetadata`, `createComment`, `editComment`,
@@ -264,30 +279,30 @@ This release introduces Notifications (and unread indicators) for Comments.
 - Fix the return type of `getActiveUsers` to match the data returned from the
   endpoint.
 
-### `@liveblocks/react`
+## `@liveblocks/react`
 
 - Add `query` option to `useThreads` to filter threads based on their metadata.
 
-### `@liveblocks/react-comments`
+## `@liveblocks/react-comments`
 
 - Add support for exit animations to `ComposerSuggestions`.
 
-## v1.8.2
+# v1.8.2
 
-### `@liveblocks/react`
+## `@liveblocks/react`
 
 - Improve Comments revalidation when losing network or staying in the
   background.
 - Improve error handling of Comments mutations. (e.g. thread creation, comment
   creation, etc.)
 
-### `@liveblocks/client`
+## `@liveblocks/client`
 
 - Export the `CommentBody` utilities added to `@liveblocks/node` in v1.8.0.
 - Harmonize exports with `@liveblocks/node`. (added `IUserInfo` and
   `PlainLsonObject`)
 
-### `@liveblocks/node`
+## `@liveblocks/node`
 
 - Harmonize exports with `@liveblocks/client`. (added `CommentBody`,
   `CommentBodyBlockElement`, `CommentBodyElement`, `CommentBodyInlineElement`,
@@ -295,17 +310,17 @@ This release introduces Notifications (and unread indicators) for Comments.
   `CommentBodyText`, `JsonArray`, `JsonScalar`, `Lson`, `LsonObject`, and
   `User`)
 
-## v1.8.1
+# v1.8.1
 
 - Fix a bug in `toPlainLson` helper
 - Fix a bug where pausing history more than once could lead to history loss
 
-## v1.8.0
+# v1.8.0
 
 This release adds all the REST APIs as fully typed methods, and utilities to
 transform comments, to `@liveblocks/node`.
 
-### `@liveblocks/node`
+## `@liveblocks/node`
 
 - Add all the REST APIs as fully typed methods to `Liveblocks` client. See
   [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#Liveblocks-client).
@@ -319,54 +334,54 @@ transform comments, to `@liveblocks/node`.
     formatting. See
     [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#stringify-comment-body).
 
-## 1.7.1
+# v1.7.1
 
-### `@liveblocks/react-comments`
+## `@liveblocks/react-comments`
 
 - Fix `Composer` focus issues.
 - Improve relative date formatting for some locales. (e.g. the `"fr"`` locale
   formatted “1h ago” as “-1 h” instead of “il y a 1 h”)
 - Improve default monospace font for inline code blocks.
 
-## v1.7.0
+# v1.7.0
 
 [Liveblocks Comments](https://liveblocks.io/comments) is now available for
 everyone as a public beta, learn more about this
 [in the announcement](https://liveblocks.io/blog/liveblocks-comments-is-available-for-everyone).
 
-### `@liveblocks/client`
+## `@liveblocks/client`
 
 - Improve some internal logging.
 
-### `@liveblocks/react`
+## `@liveblocks/react`
 
 - Improve Comments-specific error logging.
 
-### `@liveblocks/react-comments`
+## `@liveblocks/react-comments`
 
 - Improve default relative date formatting. (e.g. “2 hours ago” → “2h ago”)
 
-### `create-liveblocks-app`
+## `create-liveblocks-app`
 
 - Add `ThreadMetadata` type to `--init` command.
 
-## v1.6.0
+# v1.6.0
 
-### `@liveblocks/yjs`
+## `@liveblocks/yjs`
 
 - Add support for subdocs.
 
-## v1.5.2
+# v1.5.2
 
-### `@liveblocks/react`
+## `@liveblocks/react`
 
 - Fix return type of `resolveUsers`.
 
-## v1.5.1
+# v1.5.1
 
 - Fixes a bug in the bounds check of the `backgroundKeepAliveTimeout` option.
 
-## v1.5.0
+# v1.5.0
 
 Support multiple RoomProviders, or mixing and matching our React package in the
 same app with a Redux and/or Zustand instance.
@@ -388,7 +403,7 @@ const { room, leave } = client.enterRoom("my-room", options);
 leave();
 ```
 
-### `@liveblocks/client`
+## `@liveblocks/client`
 
 - New client config option: `backgroundKeepAliveTimeout` (a numeric value in
   milliseconds). See
@@ -418,7 +433,7 @@ leave();
   initializing storage with Live datastructures that are already tied to a
   Storage tree.
 
-### `@liveblocks/react`
+## `@liveblocks/react`
 
 - Support using multiple `RoomProvider` components in your component tree for
   the same room ID.
@@ -428,28 +443,28 @@ leave();
   - `useOthersListener({ type, user, others })`, see
     [docs](https://liveblocks.io/docs/api-reference/liveblocks-react#useOthersListener)
 
-### `@liveblocks/redux`
+## `@liveblocks/redux`
 
 - **Breaking:** The `leaveRoom()` function no longer accepts a `roomId`. It will
   always leave the currently joined room.
 
-### `@liveblocks/zustand`
+## `@liveblocks/zustand`
 
 - The `enterRoom()` function will now return a leave callback function.
 - **Breaking:** The `leaveRoom()` function no longer accepts a `roomId`. It will
   always leave the currently joined room.
 
-## v1.4.8
+# v1.4.8
 
-### `create-liveblocks-app`
+## `create-liveblocks-app`
 
 - Add Comments hooks and options to `--init` command.
 
-### `@liveblocks/client`
+## `@liveblocks/client`
 
 - Export all `CommentBody`-related types.
 
-### `@liveblocks/react-comments`
+## `@liveblocks/react-comments`
 
 - Improve default styles:
   - Cap CSS selector specificity to improve overridability.
@@ -458,15 +473,15 @@ leave();
     results), and to work within shadow DOMs.
 - Fix reactions and links styles on Safari.
 
-## v1.4.7
+# v1.4.7
 
-### `@liveblocks/react`
+## `@liveblocks/react`
 
 - Fix `userIds` type in `ResolveUsersArgs`.
 
-## v1.4.6
+# v1.4.6
 
-### `@liveblocks/react`
+## `@liveblocks/react`
 
 - Fix a race condition that could cause a Liveblocks client to hang during
   loading when using Suspense.
@@ -485,7 +500,7 @@ leave();
 - `editThreadMetadata` now correctly allows `null` to be set on a property.
   Doing so deletes existing metadata properties.
 
-### `@liveblocks/react-comments`
+## `@liveblocks/react-comments`
 
 - Export `ComposerSubmitComment` type from root too, in addition to
   `/primitives`.
@@ -496,76 +511,76 @@ leave();
 - **Breaking (beta):** `Comment`’s `onEdit` and `onDelete` were renamed to
   `onEditComment` and `onDeleteComment` respectively.
 
-## v1.4.5
+# v1.4.5
 
-### `@liveblocks/react`
+## `@liveblocks/react`
 
 - Fix `createThread` not creating valid comment.
 
-### `@liveblocks/node`
+## `@liveblocks/node`
 
 - Fix URL encoding bug
 
-## v1.4.4
+# v1.4.4
 
-### `@liveblocks/react`
+## `@liveblocks/react`
 
 - Fix `removeReaction` not removing reactions which led to reactions displaying
   a count of 0.
 
-### `@liveblocks/react-comments`
+## `@liveblocks/react-comments`
 
 - Fix reactions list (and its add button) showing on all comments.
 - Improve emoji rendering on Windows.
 - Hide country flag emojis when unsupported. (e.g. on Windows)
 
-## v1.4.3
+# v1.4.3
 
-### `@liveblocks/react`
+## `@liveblocks/react`
 
 - Add new Comments hooks to add/remove reactions.
 - Fix a bug in `useOthers()` that could lead to the warning "The result of
   getServerSnapshot should be cached to avoid an infinite loop"
 
-### `@liveblocks/react-comments`
+## `@liveblocks/react-comments`
 
 - Add support for reactions. (👍)
 - Add keyboard navigation to emoji picker.
 
-## v1.4.2
+# v1.4.2
 
-### `@liveblocks/client`
+## `@liveblocks/client`
 
 - Fix a bug where calculating the insertion position between two existing
   elements could happen incorrectly in a small edge case
 
-## v1.4.1
+# v1.4.1
 
-### `@liveblocks/*`
+## `@liveblocks/*`
 
 - [#1177](https://github.com/liveblocks/liveblocks/pull/1177) Fix an issue with
   internal LiveList serialization that could lead to a "ghosting" bug with
   `@liveblocks/zustand` / `@liveblocks/redux` when using tuples.
 
-### `@liveblocks/node`
+## `@liveblocks/node`
 
 - Add comment reaction webhook events `CommentReactionAdded` and
   `CommentReactionRemoved`
 
-## v1.4.0
+# v1.4.0
 
-### DevTools
+## DevTools
 
 - New Yjs tab: visualize Yjs documents as a diagram, a tree, or as a list of
   operations, and inspect Awareness at the same time as Presence.
 - New Events tab: inspect all custom Events a client receives in an event
   timeline, for easy testing/debugging.
 
-### `@liveblocks/yjs`
+## `@liveblocks/yjs`
 
 - Add support for the Liveblocks [DevTools](https://liveblocks.io/devtools).
 
-### `@liveblocks/client`
+## `@liveblocks/client`
 
 - Broadcast event messages now include a `user` property to indicate the user
   that sent the event:
@@ -575,7 +590,7 @@ leave();
   });
   ```
 
-### `@liveblocks/react`
+## `@liveblocks/react`
 
 - Broadcast event messages now include a `user` property to indicate the user
   that sent the event:
@@ -588,29 +603,29 @@ leave();
   Suspense version. (`const threads = useThreads()` becomes
   `const { threads } = useThreads()`)
 
-### `@liveblocks/react-comments`
+## `@liveblocks/react-comments`
 
 - **Breaking (beta):** `Comment`’s `indentBody` and `Thread`’s
   `indentCommentBody` were renamed to `indentContent` and `indentCommentContent`
   respectively. `Thread`’s `onResolveChange` was renamed to `onResolvedChange`.
 - Add emoji button in `Composer`.
 
-### `@liveblocks/node`
+## `@liveblocks/node`
 
 - Support using `@liveblocks/node` in
   [Edge runtimes](https://vercel.com/docs/functions/edge-functions/edge-runtime).
 
-## v1.3.6
+# v1.3.6
 
-### `@liveblocks/client`
+## `@liveblocks/client`
 
 - Support `unstable_fallbackToHTTP` client option when using any auth token type
   (previously it only worked when using single-room tokens, which we no longer
   recommend since 1.2)
 
-## v1.3.5
+# v1.3.5
 
-### `@liveblocks/react`
+## `@liveblocks/react`
 
 - Officially mark `useList()`, `useMap()`, and `useObject()` as deprecated in
   JSDoc comments (we stopped recommending them since the release of 0.18)
@@ -618,7 +633,7 @@ leave();
   during mutations.
 - Fix non-Suspense Comments hooks not working properly in some situations.
 
-### `@liveblocks/react-comments`
+## `@liveblocks/react-comments`
 
 - **Breaking (beta):** Replace the render prop API (e.g. `renderMention`,
   `renderLink`, etc) by a single `components` prop. (e.g.
@@ -626,27 +641,27 @@ leave();
 - Fix overflowing `Composer.Suggestions`.
 - Reduce the impact of icons on bundle size.
 
-## v1.3.4
+# v1.3.4
 
-### `@liveblocks/react`
+## `@liveblocks/react`
 
 - Fix confusing `Error: "undefined" is not a valid event name` error when using
   the (deprecated) `useMap()`, `useObject()`, or `useList()` hooks on
   uninitialized storage values.
 
-## v1.3.3
+# v1.3.3
 
-### `@liveblocks/*`
+## `@liveblocks/*`
 
 - Fix unescaped room IDs when using Comments.
 
-### `@liveblocks/react-comments`
+## `@liveblocks/react-comments`
 
 - Add support for auto-links. (e.g. `"www.liveblocks.io"`)
 
-## v1.3.2
+# v1.3.2
 
-### `@liveblocks/client`
+## `@liveblocks/client`
 
 - The client will disconnect with an error if your `/api/liveblocks-auth`
   backend returns reused/cached tokens. It’s important that auth tokens are
@@ -654,23 +669,23 @@ leave();
   will cache and reuse tokens already, so implementing additional caching in
   your backend isn’t needed, and could even cause reconnection issues.)
 
-## v1.3.1
+# v1.3.1
 
-### `@liveblocks/client`
+## `@liveblocks/client`
 
 - Actually include the new Clear History API.
 
-### `@liveblocks/react`
+## `@liveblocks/react`
 
 - Fix missing dependency declaration.
 
-## v1.3.0
+# v1.3.0
 
 This release marks the initial release of
 [Liveblocks Comments](https://liveblocks.io/comments), which is currently in
 private beta.
 
-### `@liveblocks/client`
+## `@liveblocks/client`
 
 - New history API: `room.history.clear()` allows you to explicitly clear the
   history, which resets the ability to undo beyond the current state.
@@ -679,75 +694,75 @@ private beta.
   - `others.toArray()` → Use `others` instead (it’s already an array)
 - Deprecated the `Others<P, U>` type → Use `readonly User<P, U>[]` instead.
 
-### `@liveblocks/react`
+## `@liveblocks/react`
 
 - Add support for Comments.
 - `UserMeta["info"]` can no longer be a scalar value.
 
-### `@liveblocks/react-comments`
+## `@liveblocks/react-comments`
 
 - Initial release.
 
-### `@liveblocks/node`
+## `@liveblocks/node`
 
 - Add Comments helpers to Client.
 - Add Comments webhook events.
 
-## v1.2.4
+# v1.2.4
 
-### `@liveblocks/node`
+## `@liveblocks/node`
 
 - Fixes a bug where sending an empty (or non-string) user ID with
   `.identifyUser` would confusingly get reported as an HTTP 503.
 
-## v1.2.3
+# v1.2.3
 
-### `@liveblocks/client`
+## `@liveblocks/client`
 
 - Improve configuration error messages to be more user friendly.
 - Fix bug where entering a new room could potentially initialize the undo stack
   incorrectly.
 
-### `create-liveblocks-app`
+## `create-liveblocks-app`
 
 - Fix Suspense option when specifying a framework.
 - Add helpful comments by default.
 
-## v1.2.2
+# v1.2.2
 
-### `@liveblocks/node`
+## `@liveblocks/node`
 
 - Add Yjs document change event (`YDocUpdatedEvent`) to `WebhookHandler`.
 - Allow `Header` object to be passed to `headers` in
   `WebhookHandler.verifyRequest()`
 
-## v1.2.1
+# v1.2.1
 
-### `@liveblocks/node`
+## `@liveblocks/node`
 
 - Fix session.allow to support path up to 128 characters to meet room id length
   requirement.
 
-## v1.2.0
+# v1.2.0
 
-### `@liveblocks/*`
+## `@liveblocks/*`
 
 - Support the new and improved Liveblocks authorization.
 - Change client logic to stop retrying if room is full. Instead, the client will
   now disconnect. To retry, call `room.reconnect()` explicitly.
 
-### `@liveblocks/node`
+## `@liveblocks/node`
 
 - Add new APIs for authorization. See our migration guide for tips on how to
   adopt the new style of authorizing your Liveblocks clients.
 
-## v1.1.8
+# v1.1.8
 
 - Fix a small TypeScript issue introduced in 1.1.7.
 
-## v1.1.7
+# v1.1.7
 
-### `@liveblocks/client`
+## `@liveblocks/client`
 
 - When initializing the client with a
   [custom auth callback](https://liveblocks.io/docs/api-reference/liveblocks-client#createClientCallback),
@@ -756,27 +771,27 @@ private beta.
   disconnect from the room, instead of remaining in `"connecting"` status
   indefinitely.
 
-### `@liveblocks/react`
+## `@liveblocks/react`
 
 - Fix a bug with `useSelf()` where it would not correctly re-render after
   entering an empty room. It’s now consistent again with `useMyPresence()`.
 
-### DevTools
+## DevTools
 
 - Fix a bug in the Liveblocks [DevTools](https://liveblocks.io/devtools) panel
   where the "me" view would incorrectly stay empty after entering an empty room.
 
-## v1.1.6
+# v1.1.6
 
-### `@liveblocks/*`
+## `@liveblocks/*`
 
 - Loosen duplicate import detection so it won't throw when used in test runners
   that deliberately run multiple instances of a module (like Jest or Playwright
   can do).
 
-## v1.1.5
+# v1.1.5
 
-### `@liveblocks/*`
+## `@liveblocks/*`
 
 - Ship all of our packages as both ESM and CJS modules again (restore the
   changes that 1.1.3 originally introduced).
@@ -787,14 +802,14 @@ private beta.
   break the room’s internals. (This became an issue since Liveblocks 1.1 was
   released.)
 
-## v1.1.4
+# v1.1.4
 
 - Undo the changes made in 1.1.3. We’ve got some bug reports where Liveblocks
   could still be doubly-included in production bundles (in some bundler setups
   only), with storage data corruptions as a possible result. We’re
   investigating.
 
-## v1.1.3
+# v1.1.3
 
 Ship all of our packages as both ESM and CJS modules. By upgrading, your
 project’s bundler can now perform (better) tree-shaking on the Liveblocks code.
@@ -807,9 +822,9 @@ You can expect (at least) the following bundle size reductions:
 - `@liveblocks/zustand` from 83kB → 37kB
 - `@liveblocks/yjs` from 129kB → 74kB
 
-## v1.1.2
+# v1.1.2
 
-### `@liveblocks/yjs`
+## `@liveblocks/yjs`
 
 Added Yjs support to **open beta** through the new `@liveblocks/yjs` package
 (not stable yet).
@@ -818,17 +833,17 @@ Added Yjs support to **open beta** through the new `@liveblocks/yjs` package
 
 - Fixes a missing internal export.
 
-## v1.1.1
+# v1.1.1
 
 - Fixes a bug where under certain circumstances the Liveblocks client could
   incorrectly throw a `Not started yet` error message.
 
-## v1.1.0
+# v1.1.0
 
 This release improves the client’s internals to ensure a more reliable
 connection with Liveblocks servers.
 
-### `@liveblocks/client`
+## `@liveblocks/client`
 
 - New APIs:
   - `room.getStatus()`: returns the current status of the WebSocket connection:
@@ -846,7 +861,7 @@ connection with Liveblocks servers.
     your backend, or a configuration error.
   - The client will more quickly reconnect even after long periods of sleep.
 
-### `@liveblocks/react`
+## `@liveblocks/react`
 
 - New APIs:
   - `useStatus()` - React hook version of `room.getStatus()`
@@ -890,35 +905,35 @@ Recommended steps to upgrade:
   - ❌ `clientOptions.WebSocketPolyfill` → ✅
     `clientOptions.polyfills: { fetch, WebSocket }`
 
-## v1.0.12
+# v1.0.12
 
-### `create-liveblocks-app`
+## `create-liveblocks-app`
 
 - Added `export type TypedRoom = Room<...>` to init command for non-React apps.
 
-## v1.0.11
+# v1.0.11
 
-### `@liveblocks/client`
+## `@liveblocks/client`
 
 - Fix a bug where undo/redo on `LiveObject` creates exponentially larger deltas.
 
-## v1.0.10
+# v1.0.10
 
-### `@liveblocks/client`
+## `@liveblocks/client`
 
 - Fix a bug related to proactive token expiration detection.
 - Internal refactorings.
 - Add unstable_fallbackToHTTP option to the core client to support messages over
   1MB.
 
-### `@liveblocks/node`
+## `@liveblocks/node`
 
 - Fix incorrect status code when Liveblocks server cannot be reached
   temporarily.
 
-## v1.0.9
+# v1.0.9
 
-### `@liveblocks/client`
+## `@liveblocks/client`
 
 - Export `LiveListUpdate`, `LiveMapUpdate`, and `LiveObjectUpdate` types used by
   the storage update callback.
@@ -926,13 +941,13 @@ Recommended steps to upgrade:
   API.
 - Internal refactorings.
 
-## v1.0.8
+# v1.0.8
 
-### `@liveblocks/client`
+## `@liveblocks/client`
 
 - Internal refactorings.
 
-### `create-liveblocks-app`
+## `create-liveblocks-app`
 
 - Added
   [flags](https://github.com/liveblocks/liveblocks/tree/main/packages/create-liveblocks-app#flags-optional)
@@ -940,15 +955,15 @@ Recommended steps to upgrade:
 - Added an error if an incorrect flag is used.
 - Slightly changed the format of the default config file.
 
-### `@liveblocks/client`
+## `@liveblocks/client`
 
 - Internal refactorings.
 
-## v1.0.7
+# v1.0.7
 
 - Private API changes only.
 
-## v1.0.6
+# v1.0.6
 
 ## Internal changes
 
@@ -956,36 +971,36 @@ Recommended steps to upgrade:
   the same versioning scheme.
 - Internal refactorings.
 
-## v1.0.5
+# v1.0.5
 
 Non-existent.
 
-## v1.0.4
+# v1.0.4
 
 Non-existent.
 
-## v1.0.3
+# v1.0.3
 
 Non-existent.
 
-## v1.0.2
+# v1.0.2
 
 - Fix bug where passing down `shouldInitiallyConnect` connection option would
   not always work.
 
-## v1.0.1
+# v1.0.1
 
 - Log stack traces of function calls that resulted in rejected storage mutations
   to the console in non-production builds to ease debugging.
 
-### `@liveblocks/client`
+## `@liveblocks/client`
 
 - Fixes bug where the state of `others` in a room was wrong when:
   - Client A disconnects improperly (ex: computer goes to sleep)
   - Then Client B disconnects (ex: computer goes to sleep)
   - Then Client A reconnects: client B still shows in the `others` state
 
-## v1.0.0
+# v1.0.0
 
 This major release marks the maturity of Liveblocks. For upgrade instructions,
 see the [1.0 upgrade guide](https://liveblocks.io/docs/guides/upgrading/1.0).
@@ -998,13 +1013,13 @@ Our new [pricing](https://liveblocks.io/pricing) is based on Monthly Active
 Users instead of connections. We're using `userId` to track MAU associated to a
 Liveblocks account.
 
-## v0.19.11
+# v0.19.11
 
 ## `@liveblocks/node`
 
 - `WebhookHandler` now handles `RoomCreatedEvent` and `RoomDeletedEvent`
 
-## v0.19.10
+# v0.19.10
 
 ## `@liveblocks/client`
 
@@ -1012,7 +1027,7 @@ Liveblocks account.
   [`createClient`](https://liveblocks.io/docs/api-reference/liveblocks-client#createClientThrottle)
   `throttle` option to go as low as 16ms.
 
-## v0.19.9
+# v0.19.9
 
 ## `@liveblocks/client`
 
@@ -1023,7 +1038,7 @@ Liveblocks account.
   - Check out our [Webhooks guide](https://liveblocks.io/docs/guides/webhooks)
     for more details
 
-## v0.19.8
+# v0.19.8
 
 - Fixes a bug where history didn't reliably undo `LiveObject` key set changes if
   any pending local changes existed on that key.
@@ -1034,23 +1049,23 @@ Liveblocks account.
   stuck in a "synchronizing" state indefinitely
 - Expose `JsonArray` and `JsonScalar` types publicly
 
-## v0.19.7
+# v0.19.7
 
 Fix nested storage event handling issue.
 
-## v0.19.6
+# v0.19.6
 
 Support authentication with cookies.
 
-## v0.19.5
+# v0.19.5
 
 Export the `StorageStatus` type (introduced with 0.19.3).
 
-## v0.19.4
+# v0.19.4
 
 Fix CORS issue.
 
-## v0.19.3
+# v0.19.3
 
 In **@liveblocks/client**:
 
@@ -1095,16 +1110,16 @@ Close the room connection and try to reconnect.
 
 - Add support for the upcoming Liveblocks browser extension
 
-## v0.19.2
+# v0.19.2
 
 Fixes some internal type definitions.
 
-## v0.19.1
+# v0.19.1
 
 Fixes an issue where `import`s from Liveblocks packages could not be resolved
 correctly in certain build environments.
 
-## v0.19.0
+# v0.19.0
 
 This release brings Zustand v4 support. This is a breaking change **only if
 you’re using @liveblocks/zustand**.
@@ -1166,7 +1181,7 @@ In **@liveblocks/redux**:
   initial state is no longer supported. It will use the state in your Redux
   store, for consistency and ease of use.
 
-## v0.18.5
+# v0.18.5
 
 Bug fix:
 
@@ -1177,7 +1192,7 @@ Internal updates:
 
 - Switch the monorepo over to Turborepo.
 
-## v0.18.4
+# v0.18.4
 
 All packages now provide an `isReadOnly` flag on user instances. It is available
 when getting self or others. `isReadOnly` is true when storage is read-only, see
@@ -1218,7 +1233,7 @@ In **@liveblocks/react**:
   dependency show up in your dependency tree: `@liveblocks/core`. It contains
   private APIs that aren't intended for direct consumption.
 
-## v0.18.3
+# v0.18.3
 
 - In **@liveblocks/react**:
 
@@ -1249,7 +1264,7 @@ In **@liveblocks/react**:
 
   - Fix a confusing error message
 
-## v0.18.2
+# v0.18.2
 
 - In **@liveblocks/react**:
 
@@ -1258,19 +1273,19 @@ In **@liveblocks/react**:
     got the chance to unmount them.
   - Disallow `useOther` without selector
 
-## v0.18.1
+# v0.18.1
 
 - In **@liveblocks/react**:
 
   - Fix a bug that could cause an error when patching presence during local
     development. Not an issue in production builds. (#505)
 
-## v0.18.0
+# v0.18.0
 
 For information, please read our
 [Upgrade Guide for 0.18](https://liveblocks.io/docs/guides/upgrading/0.18).
 
-### New React hooks ✨
+## New React hooks ✨
 
 - In **@liveblocks/react**:
 
@@ -1293,7 +1308,7 @@ For information, please read our
   - Reduced bundle size
   - Others only become visible in the `others` array if their presence is known
 
-### Breaking changes
+## Breaking changes
 
 - Remove support for directly importing hooks from **@liveblocks/client** (e.g.
   `import { useMyPresence } from '@liveblocks/react'`). If you’re still using
@@ -1307,7 +1322,7 @@ For information, please read our
 - Remove `new LiveMap(null)` support. (Just use `new LiveMap()` or
   `new LiveMap([])`.)
 
-## v0.17.11
+# v0.17.11
 
 General:
 
@@ -1317,7 +1332,7 @@ In **@liveblocks/react**:
 
 - Deprecate an undocumented API
 
-## v0.17.9
+# v0.17.9
 
 - Fix bug that could cause duplicate copies of @liveblocks/client to end up in
   final bundle, for certain bundler configurations.
@@ -1325,9 +1340,9 @@ In **@liveblocks/react**:
   would not come through to all existing clients in the room
 - Various internal changes
 
-## v0.17.8
+# v0.17.8
 
-### New history APIs ↩️ ↪️
+## New history APIs ↩️ ↪️
 
 - In **@liveblocks/client**:
 
@@ -1339,7 +1354,7 @@ In **@liveblocks/react**:
 
   - Add `useCanUndo()` and `useCanRedo()` hooks
 
-## v0.17.7
+# v0.17.7
 
 - In **@liveblocks/zustand**:
 
@@ -1421,13 +1436,13 @@ const useStore = create(
 useStore(state => state.liveblocks.others[0].presence?.isTyping)
 ```
 
-## v0.17.6
+# v0.17.6
 
 - In **@liveblocks/react**:
 
   - Expose `RoomContext` in the return value of `createRoomContext()`
 
-## v0.17.5
+# v0.17.5
 
 - In **@liveblocks/react**:
 
@@ -1436,20 +1451,20 @@ useStore(state => state.liveblocks.others[0].presence?.isTyping)
   - Ignore changes to the `RoomProvider`'s initial presence/storage props on
     subsequent renders. This makes it behave closer to `useState(initialState)`
 
-## v0.17.4
+# v0.17.4
 
 Fix missing documentation for hooks created via `createRoomContext()`.
 
-## v0.17.1
+# v0.17.1
 
 Fix `@liveblocks/nodes` packaging.
 
-## v0.17.0
+# v0.17.0
 
 For information, please read our
 [Upgrade Guide](https://liveblocks.io/docs/guides/upgrading/0.17).
 
-### TypeScript improvements ✨
+## TypeScript improvements ✨
 
 This release contains major TypeScript improvements. The recommended setup now
 is that you define your own Presence and Storage types at the highest level
@@ -1472,14 +1487,14 @@ To learn how to set that up, follow the instructions in our
     `{ a: number, b: string }`)
   - `LiveList<T>` (like `Array<T>`)
 
-### React Native support ✨
+## React Native support ✨
 
 We now support React Native! To learn how to use Liveblocks in your React Native
 projects, see our
 [API reference](https://liveblocks.io/docs/api-reference/liveblocks-client#createClientReactNative).
 It's surprisingly simple!
 
-### New APIs ✨
+## New APIs ✨
 
 - In **@liveblocks/react**:
 
@@ -1493,18 +1508,18 @@ It's surprisingly simple!
   - New endpoint to
     [Get a list of all Rooms](https://liveblocks.io/docs/api-reference/rest-api-endpoints#GetRooms)
 
-### Bug fixes 🐛
+## Bug fixes 🐛
 
 - Improved conflict resolution on LiveList
 - Various minor internal bug fixes
 
-### Breaking changes
+## Breaking changes
 
 - In **@liveblocks/client**:
 
   - Removed old `Room.unsubscribe()` API
 
-### New deprecations
+## New deprecations
 
 - In **@liveblocks/client**:
 
@@ -1526,82 +1541,82 @@ It's surprisingly simple!
   - The RoomProvider's `defaultPresence` is renamed to `initialPresence`
   - The RoomProvider's `defaultStorageRoot` is renamed to `initialStorage`
 
-## v0.16.17
+# v0.16.17
 
 Fix bug in internal code where some legal authentication tokens would be
 considered invalid.
 
-## v0.16.16
+# v0.16.16
 
 Internals only.
 
-## v0.16.15
+# v0.16.15
 
 Internals only.
 
-## v0.16.14
+# v0.16.14
 
 Fix an issue where the current user's info would not properly display accented
 characters.
 
-## v0.16.13
+# v0.16.13
 
 (Unpublished.)
 
-## v0.16.12
+# v0.16.12
 
 Internals only.
 
-## v0.16.11
+# v0.16.11
 
 Expose helper type to help users adopt to using Live structures with interfaces
 they don't own.
 
-## v0.16.10
+# v0.16.10
 
 Restructures a few more internals.
 
-## v0.16.9
+# v0.16.9
 
 Restructures a few internals.
 
-## v0.16.8
+# v0.16.8
 
 Fix bug in private/internal code.
 
-## v0.16.7
+# v0.16.7
 
 Fix bug in private/internal code.
 
-## v0.16.6
+# v0.16.6
 
 Fix bug in example code suggested in deprecation warning.
 
-## v0.16.5
+# v0.16.5
 
-### All packages
+## All packages
 
 - Various internal refactorings
 
-### Bug fixes
+## Bug fixes
 
 - In **@liveblocks/client**:
 
   - If you're using `@liveblocks/client` in a ES2015 context, you no longer have
     to polyfill `Object.fromEntries()`.
 
-## v0.16.4
+# v0.16.4
 
-### All packages
+## All packages
 
 - Improve our generated bundles. They are now even more tree-shakable, and
   smaller!
 - Some APIs are being deprecation and will show warnings in the dev console when
   used
 
-## v0.16.3
+# v0.16.3
 
-### Bug fixes
+## Bug fixes
 
 - In **@liveblocks/client**:
 
@@ -1616,28 +1631,28 @@ Fix bug in example code suggested in deprecation warning.
     - Client A updates state : `{ list: [0] }`
     - Client B states is updated to : `{ list: [0, 0] }`
 
-## v0.16.2
+# v0.16.2
 
-### Bug fixes
+## Bug fixes
 
 - In **@liveblocks/client**:
 
   - Fix small bug related to new `JsonObject` type, which would reject some
     values that were legal JSON objects.
 
-## v0.16.1
+# v0.16.1
 
-### Bug fixes
+## Bug fixes
 
 - In **@liveblocks/react**:
 
   - Fix issue with React 18 and StrictMode.
 
-## v0.16.0
+# v0.16.0
 
-### New APIs
+## New APIs
 
-#### `LiveList.set`
+### `LiveList.set`
 
 Set one element at a specified index.
 
@@ -1653,7 +1668,7 @@ https://github.com/liveblocks/liveblocks/pull/147 for more information
 clients are using `0.16.0`. If a client is connected to a room with version
 `< 0.16`, `LiveList.set` might lead to slightly unexpected behavior._**
 
-### TypeScript improvements
+## TypeScript improvements
 
 @nvie improved our typescript definitions! They are more precise and restrictive
 (for your own good :)). If typescript errors appears after upgrading to `0.16.0`

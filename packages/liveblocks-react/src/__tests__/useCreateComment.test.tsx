@@ -8,8 +8,8 @@ import React from "react";
 import { createRoomContext } from "../room";
 import {
   dummyCommentData,
-  dummyInboxNoficationData,
   dummyThreadData,
+  dummyThreadInboxNotificationData,
 } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import { mockCreateComment, mockGetThreads } from "./_restMocks";
@@ -127,7 +127,7 @@ describe("useCreateComment", () => {
 
   test("should mark thread as read optimistically", async () => {
     const initialThread = dummyThreadData();
-    const initialInboxNotification = dummyInboxNoficationData();
+    const initialInboxNotification = dummyThreadInboxNotificationData();
     const fakeCreatedAt = addMinutes(new Date(), 5);
     initialInboxNotification.threadId = initialThread.id;
 

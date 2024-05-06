@@ -102,6 +102,20 @@ export function convertToInboxNotificationData(
   const notifiedAt = new Date(data.notifiedAt);
   const readAt = data.readAt ? new Date(data.readAt) : null;
 
+  if ("activities" in data) {
+    const activities = data.activities.map((activity) => ({
+      ...activity,
+      createdAt: new Date(activity.createdAt),
+    }));
+
+    return {
+      ...data,
+      notifiedAt,
+      readAt,
+      activities,
+    };
+  }
+
   return {
     ...data,
     notifiedAt,

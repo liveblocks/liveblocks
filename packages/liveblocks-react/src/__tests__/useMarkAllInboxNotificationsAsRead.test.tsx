@@ -6,7 +6,7 @@ import React from "react";
 
 import { createLiveblocksContext } from "../liveblocks";
 import { createRoomContext } from "../room";
-import { dummyInboxNoficationData, dummyThreadData } from "./_dummies";
+import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import {
   mockGetInboxNotifications,
@@ -55,8 +55,8 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
   test("should mark notification as read optimistically", async () => {
     const threads = [dummyThreadData(), dummyThreadData()];
     const inboxNotifications = [
-      dummyInboxNoficationData(),
-      dummyInboxNoficationData(),
+      dummyThreadInboxNotificationData(),
+      dummyThreadInboxNotificationData(),
     ];
     inboxNotifications[0].threadId = threads[0].id;
     inboxNotifications[0].readAt = null;
@@ -123,8 +123,8 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
   test("should mark inbox notification as read optimistically and revert the updates if error response from server", async () => {
     const threads = [dummyThreadData(), dummyThreadData()];
     const inboxNotifications = [
-      dummyInboxNoficationData(),
-      dummyInboxNoficationData(),
+      dummyThreadInboxNotificationData(),
+      dummyThreadInboxNotificationData(),
     ];
     inboxNotifications[0].threadId = threads[0].id;
     inboxNotifications[0].readAt = null;
