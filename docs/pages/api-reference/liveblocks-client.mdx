@@ -661,8 +661,8 @@ Note that it’s possible to [add types to your room](#typing-your-room).
     The initial Storage structure for the room when it’s joined for the first
     time. This is only set a single time, when the room has not yet been
     populated. This object must contain [conflict-free live
-    structures](/docs/api-reference/liveblocks-client#Storage) or be
-    JSON-serializable. [Learn more](#setting-initial-storage).
+    structures](/docs/api-reference/liveblocks-client#Storage). [Learn
+    more](#setting-initial-storage).
   </PropertiesListItem>
   <PropertiesListItem
     name="options.autoConnect"
@@ -1113,7 +1113,9 @@ console.log(status);
     name="status"
     type={`"initial" | "connecting" | "connected" | "reconnecting" | "disconnected"`}
   >
+    <div className="-mb-3">
     Returns the room’s current connection status. It can return one of five values:
+    </div>
 
     - `"initial"` The room has not attempted to connect yet.
     - `"connecting"` The room is currently authenticating or connecting.
@@ -1145,7 +1147,9 @@ console.log(status);
     name="status"
     type={`"not-loaded" | "loading" | "synchronizing" | "synchronized"`}
   >
+    <div className="-mb-3">
     The current room’s Storage status. `status` can be one of four types.
+    </div>
 
     - `"not-loaded` Storage has not been loaded yet as [`room.getStorage`][] has not been called.
     - `"loading"` Storage is currently loading for the first time.
@@ -1368,7 +1372,7 @@ const unsubscribe = room.subscribe("event", ({ event, user, connectionId }) => {
 </PropertiesList>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="event" type={`"event"`} required>
+  <PropertiesListItem name="eventType" type={`"event"`} required>
     Listen to events.
   </PropertiesListItem>
   <PropertiesListItem
@@ -1466,8 +1470,8 @@ const unsubscribe = room.subscribe("my-presence", (presence) => {
 </PropertiesList>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="event" type={`"event"`} required>
-    Listen to events.
+  <PropertiesListItem name="eventType" type={`"my-presence"`} required>
+    Listen to the current user’s presence.
   </PropertiesListItem>
   <PropertiesListItem
     name="callback"
@@ -1519,7 +1523,7 @@ const unsubscribe = room.subscribe("others", (others, event) => {
 </PropertiesList>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="others" type={`"others"`} required>
+  <PropertiesListItem name="eventType" type={`"others"`} required>
     Listen to others.
   </PropertiesListItem>
   <PropertiesListItem
@@ -1649,7 +1653,7 @@ const unsubscribe = room.subscribe("status", (status) => {
 </PropertiesList>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="status" type={`"status"`} required>
+  <PropertiesListItem name="eventType" type={`"status"`} required>
     Listen to status updates.
   </PropertiesListItem>
   <PropertiesListItem
@@ -1657,7 +1661,9 @@ const unsubscribe = room.subscribe("status", (status) => {
     detailedType={`(status: "initial" | "connecting" | "connected" | "reconnecting" | "disconnected") => void`}
     required
   >
+    <div className="-mb-3">
     Function that’s called when the room’s connection status has changed. It can return one of five values:
+    </div>
 
     - `"initial"` The room has not attempted to connect yet.
     - `"connecting"` The room is currently authenticating or connecting.
@@ -1724,7 +1730,7 @@ const unsubscribe = room.subscribe("lost-connection", (event) => {
 </PropertiesList>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="lost-connection" type={`"lost-connection"`} required>
+  <PropertiesListItem name="eventType" type={`"lost-connection"`} required>
     Listen to lost connection events.
   </PropertiesListItem>
   <PropertiesListItem
@@ -1732,7 +1738,9 @@ const unsubscribe = room.subscribe("lost-connection", (event) => {
     detailedType={`(event: "lost" | "restored" | "failed") => void`}
     required
   >
+    <div className="-mb-3">
     Function that’s called when a room’s lost connection event has been triggered. It can return one of three values:
+    </div>
 
     - `"lost"` A connection has been lost for longer than [`lostConnectionTimeout`][].
     - `"restored"` The connection has been restored again.
@@ -1852,7 +1860,7 @@ const unsubscribe = room.subscribe("error", (error) => {
 </PropertiesList>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="error" type={`"error"`} required>
+  <PropertiesListItem name="eventType" type={`"error"`} required>
     Listen to error events.
   </PropertiesListItem>
   <PropertiesListItem
@@ -1860,8 +1868,10 @@ const unsubscribe = room.subscribe("error", (error) => {
     detailedType={`(error: LiveblocksError) => void`}
     required
   >
+    <div className="-mb-3">
     Function that’s called when an unrecoverable error event has been triggered. `error.code` can return one of these
     values:
+    </div>
 
     - `-1` Authentication error.
     - `4001` Could not connect because you don't have access to this room.
@@ -1921,7 +1931,7 @@ const unsubscribe = room.subscribe("history", ({ canUndo, canRedo }) => {
 </PropertiesList>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="history" type={`"history"`} required>
+  <PropertiesListItem name="eventType" type={`"history"`} required>
     Listen to history events.
   </PropertiesListItem>
   <PropertiesListItem
@@ -1967,7 +1977,7 @@ const unsubscribe = room.subscribe("storage-status", (status) => {
 </PropertiesList>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="storage-status" type={`"storage-status"`} required>
+  <PropertiesListItem name="eventType" type={`"storage-status"`} required>
     Listen to Storage status events.
   </PropertiesListItem>
   <PropertiesListItem
@@ -1975,8 +1985,10 @@ const unsubscribe = room.subscribe("storage-status", (status) => {
     detailedType={`(status: "not-loaded" | "loading" | "synchronizing" | "synchronized") => void`}
     required
   >
+    <div className="-mb-3">
     Function that’s called when the current user’s Storage updated status have
     changed. `status` can be one of four types.
+    </div>
 
     - `"not-loaded` - Storage has not been loaded yet as [`getStorage`][] has not been called.
     - `"loading"` - Storage is currently loading for the first time.
@@ -2040,6 +2052,29 @@ This batch places each
 [`LiveMap.delete`](/docs/api-reference/liveblocks-client#LiveMap.delete) call
 into a single WebSocket update, instead of sending multiple updates. This will
 be much quicker.
+
+#### Batching groups history changes
+
+Batching changes will also group changes into a single history state.
+
+```ts
+const { root } = await room.getStorage();
+const pet = root.set("pet", new LiveObject({ name: "Fido", age: 5 }));
+
+// ✅ Batch groups changes into one
+room.batch(() => {
+  pet.set("name", "Felix");
+  pet.set("age", 10);
+});
+
+// { name: "Felix", age: 10 }
+pet.toImmutable();
+
+room.history.undo();
+
+// { name: "Fido", age: 5 }
+pet.toImmutable();
+```
 
 #### Doesn’t work with async functions
 
