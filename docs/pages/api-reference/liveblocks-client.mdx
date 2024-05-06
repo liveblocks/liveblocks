@@ -814,13 +814,9 @@ still connected, they will be forced to reauthorize.
 client.logout();
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem>_Nothing_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem>_None_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 #### When to logout
 
@@ -863,9 +859,7 @@ type Presence = {
   </PropertiesListItem>
 </PropertiesList>
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem>_None_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### Room.updatePresence
 
@@ -881,9 +875,7 @@ room.updatePresence({ status: "Online" });
 const presence = room.getPresence();
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem>_Nothing_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
 
 <PropertiesList title="Arguments">
   <PropertiesListItem name="update" type="TPresence" required>
@@ -943,9 +935,7 @@ for (const other of others) {
   </PropertiesListItem>
 </PropertiesList>
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem>_None_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### Room.broadcastEvent
 
@@ -957,9 +947,7 @@ as first argument. Should be serializable to JSON.
 room.broadcastEvent({ type: "REACTION", emoji: "🔥" });
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem>_Nothing_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
 
 <PropertiesList title="Arguments">
   <PropertiesListItem name="event" type="TRoomEvent" required>
@@ -1071,9 +1059,7 @@ const { connectionId, presence, id, info, canWrite, canComment } =
   </PropertiesListItem>
 </PropertiesList>
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem>_None_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 Here’s an example of a full return value, assuming `Presence` and `UserMeta`
 [have been set](#user-type).
@@ -1126,9 +1112,7 @@ console.log(status);
   </PropertiesListItem>
 </PropertiesList>
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem>_None_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### Room.getStorageStatus
 
@@ -1159,9 +1143,7 @@ console.log(status);
   </PropertiesListItem>
 </PropertiesList>
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem>_None_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### Room.subscribe(storageItem)
 
@@ -2135,13 +2117,9 @@ room.history.undo();
 root.get("name");
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem>_Nothing_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem>_None_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### Room.history.redo
 
@@ -2160,13 +2138,9 @@ room.history.redo();
 root.get("name");
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem>_Nothing_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem>_None_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### Room.history.canUndo
 
@@ -2192,9 +2166,7 @@ room.history.canUndo();
   </PropertiesListItem>
 </PropertiesList>
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem>_None_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### Room.history.canRedo
 
@@ -2220,9 +2192,7 @@ room.history.canRedo();
   </PropertiesListItem>
 </PropertiesList>
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem>_None_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### Room.history.clear
 
@@ -2243,13 +2213,9 @@ room.history.clear();
 room.history.canUndo();
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem>_Nothing_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem>_None_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### Room.history.pause
 
@@ -2270,13 +2236,9 @@ room.history.undo();
 room.get("time");
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem>_Nothing_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem>_None_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### Room.history.resume
 
@@ -2297,13 +2259,9 @@ room.history.undo();
 room.get("time");
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem>_Nothing_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem>_None_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### Room.connect
 
@@ -2315,13 +2273,9 @@ this API directly.
 room.connect();
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem>_Nothing_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem>_None_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### Room.reconnect
 
@@ -2332,13 +2286,9 @@ WebSocket connection.
 room.reconnect();
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem>_Nothing_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem>_None_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### Room.disconnect
 
@@ -2352,13 +2302,9 @@ recommend using this API directly.
 room.disconnect();
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem>_Nothing_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem>_None_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ## Storage
 
@@ -2469,9 +2415,7 @@ const { root } = await room.getStorage();
   </PropertiesListItem>
 </PropertiesList>
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem>_None_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ## LiveObject
 
@@ -2551,9 +2495,7 @@ object.delete("lastName");
 object.toImmutable();
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem>_Nothing_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
 
 <PropertiesList title="Arguments">
   <PropertiesListItem name="key" type="string" required>
@@ -2597,9 +2539,7 @@ object.set("lastName", "Curie");
 object.toImmutable();
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem>_Nothing_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
 
 <PropertiesList title="Arguments">
   <PropertiesListItem name="key" type="string" required>
@@ -2624,9 +2564,7 @@ object.update({ lastName: "Hopper", job: "Computer Scientist" });
 object.toImmutable();
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem>_Nothing_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
 
 <PropertiesList title="Arguments">
   <PropertiesListItem name="value" type="LsonObject" required>
@@ -2653,9 +2591,7 @@ root.set("b", obj.clone());
   </PropertiesListItem>
 </PropertiesList>
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem>_None_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### toImmutable [#LiveObject.toImmutable]
 
@@ -2685,9 +2621,7 @@ liveObject.toImmutable();
   </PropertiesListItem>
 </PropertiesList>
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem>_None_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### toObject [#LiveObject.toObject]
 
@@ -2844,9 +2778,7 @@ enable the <code>--downlevelIteration</code> option to use this API.
   </PropertiesListItem>
 </PropertiesList>
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem>_None_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### forEach [#LiveMap.forEach]
 
@@ -2863,9 +2795,7 @@ const map = new LiveMap([
 map.forEach((value, key, liveMap) => console.log(value));
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem>_Nothing_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
 
 <PropertiesList title="Arguments">
   <PropertiesListItem
@@ -2963,9 +2893,7 @@ enable the <code>--downlevelIteration</code> option to use this API.
   </PropertiesListItem>
 </PropertiesList>
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem>_None_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### set [#LiveMap.set]
 
@@ -2979,9 +2907,7 @@ map.set("vincent", "engineer");
 map.toImmutable();
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem>_Nothing_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
 
 <PropertiesList title="Arguments">
   <PropertiesListItem name="key" type="string" required>
@@ -3043,9 +2969,7 @@ enable the <code>--downlevelIteration</code> option to use this API.
   </PropertiesListItem>
 </PropertiesList>
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem>_None_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### clone [#LiveMap.clone]
 
@@ -3064,9 +2988,7 @@ root.set("b", map.clone());
   </PropertiesListItem>
 </PropertiesList>
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem>_None_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### toImmutable [#LiveMap.toImmutable]
 
@@ -3094,9 +3016,7 @@ map.toImmutable();
   </PropertiesListItem>
 </PropertiesList>
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem>_None_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ## LiveList
 
@@ -3153,13 +3073,9 @@ list.clear();
 list.toImmutable();
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem>_Nothing_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem>_None_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### delete [#LiveList.delete]
 
@@ -3174,9 +3090,7 @@ list.delete(1);
 list.toImmutable();
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem>_Nothing_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
 
 <PropertiesList title="Arguments">
   <PropertiesListItem name="index" type="number" required>
@@ -3325,9 +3239,7 @@ const list = new LiveList(["adrien", "jonathan"]);
 list.forEach((item) => console.log(item));
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem>_Nothing_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
 
 <PropertiesList title="Arguments">
   <PropertiesListItem
@@ -3408,9 +3320,7 @@ list.insert("chris", 1);
 list.toImmutable();
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem>_Nothing_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
 
 <PropertiesList title="Arguments">
   <PropertiesListItem name="value" type="L extends LsonObject" required>
@@ -3515,9 +3425,7 @@ list.move(2, 0);
 list.toImmutable();
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem>_Nothing_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
 
 <PropertiesList title="Arguments">
   <PropertiesListItem name="index" type="number" required>
@@ -3541,9 +3449,7 @@ list.push("chris");
 list.toImmutable();
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem>_Nothing_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
 
 <PropertiesList title="Arguments">
   <PropertiesListItem name="index" type="L" required>
@@ -3614,9 +3520,7 @@ root.set("b", list.clone());
   </PropertiesListItem>
 </PropertiesList>
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem>_None_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### toImmutable [#LiveList.toImmutable]
 
@@ -3643,9 +3547,7 @@ list.toImmutable();
   </PropertiesListItem>
 </PropertiesList>
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem>_None_</PropertiesListItem>
-</PropertiesList>
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### toArray [#LiveList.toArray]
 
