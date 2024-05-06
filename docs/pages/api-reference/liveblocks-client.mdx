@@ -855,7 +855,8 @@ type Presence = {
   <PropertiesListItem name="presence" type="TPresence">
     An object holding the Presence value for the currently connected user.
     Presence is set with [`updatePresence`](#Room.updatePresence). Will always
-    be JSON-serializable.
+    be JSON-serializable. `TPresence` is the `Presence` type you set yourself,
+    [learn more](#Typing-presence).
   </PropertiesListItem>
 </PropertiesList>
 
@@ -952,7 +953,8 @@ room.broadcastEvent({ type: "REACTION", emoji: "🔥" });
 <PropertiesList title="Arguments">
   <PropertiesListItem name="event" type="TRoomEvent" required>
     The event to broadcast to every other user in the room. Must be
-    JSON-serializable.
+    JSON-serializable. `TRoomEvent` is the `RoomEvent` type you set yourself,
+    [learn more](#typing-multiple-events).
   </PropertiesListItem>
   <PropertiesListItem
     name="options.shouldQueueEventIfNotReady"
