@@ -25,6 +25,12 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 - New components for showing arguments, returns, properties.
 - Refreshed banner components.
 
+## Dashboard
+
+- The project quickstart connection status can now be dismissed.
+- Improved copy to clarify the difference between production and development projects.
+- Improved project overview banner copy for when Liveblocks hasn't yet been set up.
+
 ## Contributors
 
 ctnicholas, stevenfabre, pierrelevaillant
