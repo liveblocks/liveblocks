@@ -22,13 +22,13 @@ rooms. Filters can be combined using `AND` logic.
 
 ```js
 // Rooms with IDs that begin with "liveblocks:"
-roomId^:'liveblocks:'
+roomId^'liveblocks:'
 
 // Rooms with { roomType: 'whiteboard' } string metadata
 metadata['roomType']:'whiteboard'
 
 // Combine queries with AND
-roomId^:'liveblocks:' AND metadata['roomType']:'whiteboard'
+roomId^'liveblocks:' AND metadata['roomType']:'whiteboard'
 
 // Use multiple metadata filters at once
 metadata['roomType']:'whiteboard' AND metadata['creator']:'florent'
@@ -53,13 +53,13 @@ To use the query language with the
 string to the `query` parameter. For example, given this query:
 
 ```js
-roomId^:'liveblocks:' AND metadata['roomType']:'whiteboard'
+roomId^'liveblocks:' AND metadata['roomType']:'whiteboard'
 ```
 
 Encode it, and add it to the `query` parameter:
 
 ```
-https://api.liveblocks.io/v2/rooms?query=roomId%5E%3A'liveblocks%3A'%20AND%20metadata%5B'roomType'%5D%3A'whiteboard'
+https://api.liveblocks.io/v2/rooms?query=roomId%5E'liveblocks%3A'%20AND%20metadata%5B'roomType'%5D%3A'whiteboard'
 ```
 
 To learn more on _setting_ custom metadata on rooms, make sure to
