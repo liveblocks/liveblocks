@@ -24,6 +24,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 - Completely rewritten API reference for [`@liveblocks/client`](https://liveblocks.io/docs/api-reference/liveblocks-client).
 - New components for showing arguments, returns, properties.
 - Refreshed banner components.
+- Add webhooks [source IP addresses](https://liveblocks.io/docs/platform/webhooks#source-ips) for receiving endpoints behind NAT or firewalls. 
 
 ## Dashboard
 
