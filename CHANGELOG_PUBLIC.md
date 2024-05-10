@@ -21,16 +21,23 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 ## Documentation
 
-- Completely rewritten API reference for [`@liveblocks/client`](https://liveblocks.io/docs/api-reference/liveblocks-client).
+- Completely rewritten API reference for
+  [`@liveblocks/client`](https://liveblocks.io/docs/api-reference/liveblocks-client).
 - New components for showing arguments, returns, properties.
 - Refreshed banner components.
-- Add webhooks [source IP addresses](https://liveblocks.io/docs/platform/webhooks#source-ips) for receiving endpoints behind NAT or firewalls. 
+- Add webhooks
+  [source IP addresses](https://liveblocks.io/docs/platform/webhooks#source-ips)
+  for receiving endpoints behind NAT or firewalls.
+- Fixed a typo in query language rooms
+  [guide](https://liveblocks.io/docs/guides/how-to-filter-rooms-using-query-language).
 
 ## Dashboard
 
 - The project quickstart connection status can now be dismissed.
-- Improved copy to clarify the difference between production and development projects.
-- Improved project overview banner copy for when Liveblocks hasn't yet been set up.
+- Improved copy to clarify the difference between production and development
+  projects.
+- Improved project overview banner copy for when Liveblocks hasn't yet been set
+  up.
 
 ## Backend
 
