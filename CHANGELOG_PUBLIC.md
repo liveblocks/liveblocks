@@ -31,9 +31,13 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 - Improved copy to clarify the difference between production and development projects.
 - Improved project overview banner copy for when Liveblocks hasn't yet been set up.
 
+## Backend
+
+- Made batch processing of webhook and other events more efficient at scale.
+
 ## Contributors
 
-ctnicholas, stevenfabre, pierrelevaillant
+ctnicholas, stevenfabre, pierrelevaillant, ofoucherot, flowflorent
 
 # v1.12.0
 
