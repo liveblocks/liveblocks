@@ -12,12 +12,192 @@ collaboration APIs, built on top of WebSockets. Read our
 
 ## createClient
 
-Create a client that will be responsible to communicate with Liveblocks servers.
+Creates a [client](#Client) that allows you to connect to Liveblocks servers.
+You must define either `authEndpoint` or `publicApiKey`. Resolver functions
+should be placed inside here, and a number of other options are available.
+
+```tsx
+import { createClient } from "@liveblocks/client";
+
+const client = createClient({
+  authEndpoint: "/api/liveblocks-auth",
+
+  // Other options
+  // ...
+});
+```
+
+```tsx title="Every createClient option" isCollapsable isCollapsed
+import { createClient } from "@liveblocks/client";
+
+const client = createClient({
+  // Connect with authEndpoint
+  authEndpoint: "/api/liveblocks-auth",
+
+  // Alternatively, use an authEndpoint callback
+  // authEndpoint: async (room) => {
+  //   const response = await fetch("/api/liveblocks-auth", {
+  //   method: "POST",
+  //   headers: {
+  //     Authentication: "<your own headers here>",
+  //     "Content-Type": "application/json",
+  //   },
+  //   body: JSON.stringify({ room }),
+  // });
+  // return await response.json();
+  // },
+
+  // Alternatively, use a public key
+  // publicApiKey: "pk_...",
+
+  // Throttle time (ms) between WebSocket updates
+  throttle: 100,
+
+  // Throw lost-connection event after 5 seconds offline
+  lostConnectionTimeout: 5000,
+
+  // Disconnect users after X (ms) of inactivity, disabled by default
+  backgroundKeepAliveTimeout: undefined,
+
+  // Resolve user info for Comments and Notifications
+  resolveUsers: async ({ userIds }) => {
+    const usersData = await __getUsersFromDB__(userIds);
+
+    return usersData.map((userData) => ({
+      name: userData.name,
+      avatar: userData.avatar.src,
+    }));
+  },
+
+  // Resolve room info for Notifications
+  resolveRoomsInfo: async ({ roomIds }) => {
+    const documentsData = await __getDocumentsFromDB__(roomIds);
+
+    return documentsData.map((documentData) => ({
+      name: documentData.name,
+      // url: documentData.url,
+    }));
+  },
+
+  // Resolve mention suggestions for Comments
+  resolveMentionSuggestions: async ({ text, roomId }) => {
+    const workspaceUsers = await __getWorkspaceUsersFromDB__(roomId);
+
+    if (!text) {
+      // Show all workspace users by default
+      return __getUserIds__(workspaceUsers);
+    } else {
+      const matchingUsers = __findUsers__(workspaceUsers, text);
+      return __getUserIds__(matchingUsers);
+    }
+  },
+
+  // Polyfill options for non-browser environments
+  polyfills: {
+    // atob,
+    // fetch,
+    // WebSocket,
+  },
+});
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="client" type="Client">
+    Returns a [Client](#Client), used for connecting to Liveblocks.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Options">
+  <PropertiesListItem
+    name="authEndpoint"
+    detailedType="string | async ((room?: string) => CustomAuthenticationResult)"
+  >
+    The URL of your back end’s [authentication endpoint](/docs/authentication)
+    as a string, or an async callback function that returns a Liveblocks token
+    result. Either `authEndpoint` or `publicApikey` are required. Learn more
+    about [using a URL string](#createClientAuthEndpoint) and [using a
+    callback](#createClientCallback).
+  </PropertiesListItem>
+  <PropertiesListItem name="publicApiKey" type="string">
+    The public API key taken from your project’s
+    [dashboard](/dashboard/apikeys). Generally not recommended for production
+    use. Either `authEndpoint` or `publicApikey` are required. [Learn
+    more](#createClientPublicKey).
+  </PropertiesListItem>
+  <PropertiesListItem name="throttle" type="number" defaultValue="100">
+    The throttle time between WebSocket messages in milliseconds, a number
+    between `16` and `1000` is allowed. Using `16` means your app will update 60
+    times per second. [Learn more](#createClientThrottle).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="lostConnectionTimeout"
+    type="number"
+    defaultValue="5000"
+  >
+    After a user disconnects, the time in milliseconds before a
+    [`"lost-connection"`](/docs/api-reference/liveblocks-client#Room.subscribe.lost-connection)
+    event is fired. [Learn more](#createClientLostConnectionTimeout).
+  </PropertiesListItem>
+  <PropertiesListItem name="backgroundKeepAliveTimeout" type="number">
+    The time before an inactive WebSocket connection is disconnected. This is
+    disabled by default, but setting a number will activate it. [Learn
+    more](#createClientBackgroundKeepAliveTimeout).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="resolveUsers"
+    detailedType='async? (args: ResolveUsersArgs) => (TUserMeta["info"] | undefined)[] | undefined'
+  >
+    A function that resolves user information in
+    [Comments](/docs/products/comments). Return an array of `TUserMeta["info"]`
+    objects in the same order they arrived. [Learn
+    more](#createClientResolveUsers).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="resolveRoomsInfo"
+    detailedType="async? (args: ResolveRoomsInfoArgs) => (RoomInfo | undefined)[] | undefined"
+  >
+    A function that resolves room information in
+    [Comments](/docs/products/comments). Return an array of `RoomInfo` objects
+    in the same order they arrived. [Learn more](#createClientResolveRoomsInfo).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="resolveMentionSuggestions"
+    detailedType="async? (args: ResolveMentionSuggestionsArgs) => string[]"
+  >
+    A function that resolves mention suggestions in
+    [Comments](/docs/products/comments). Return an array of user IDs. [Learn
+    more](#createClientResolveMentionSuggestions).
+  </PropertiesListItem>
+  <PropertiesListItem name="polyfills">
+    Place polyfills for `atob`, `fetch`, and `WebSocket` inside here. Useful
+    when using a non-browser environment, such as [Node.js](#createClientNode)
+    or [React Native](#createClientReactNative).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="unstable_fallbackToHTTP"
+    type="boolean"
+    defaultValue="false"
+  >
+    Experimental. Automatically fall back to HTTP when a message is too large
+    for WebSockets.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="unstable_streamData"
+    type="boolean"
+    defaultValue="false"
+  >
+    Experimental. Stream the initial Storage content over HTTP, instead of
+    waiting for a large initial WebSocket message to be sent from the server.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### createClient with public key [#createClientPublicKey]
 
 When creating a client with a public key, you don’t need to set up an
-authorization endpoint:
+authorization endpoint. We only recommend using a public key when prototyping,
+or on public landing pages, as it makes it possible for end users to access any
+room’s data. You should instead use an
+[auth endpoint](#createClientAuthEndpoint).
 
 ```ts
 import { createClient } from "@liveblocks/client";
@@ -38,27 +218,37 @@ import { createClient } from "@liveblocks/client";
 const client = createClient({ authEndpoint: "/api/liveblocks-auth" });
 ```
 
-### createClient with callback [#createClientCallback]
+### createClient with auth endpoint callback [#createClientCallback]
 
-If you need to add additional headers or use your own function to call the
-endpoint, `authEndpoint` can be provided as a custom callback.
+If you need to add additional headers or use your own function to call your
+endpoint, `authEndpoint` can be provided as a custom callback. You should return
+the token created with
+[`Liveblocks.prepareSession`](/docs/api-reference/liveblocks-node#access-tokens)
+or [`liveblocks.identifyUser`](/docs/api-reference/liveblocks-node#id-tokens),
+learn more in [authentication guide](/docs/rooms/authentication).
 
-Your async function should return either of the following values:
+```ts
+import { createClient } from "@liveblocks/client";
 
-1. **A valid token.** Return a `{ "token": "..." }` shaped response.
-1. **Explicitly forbid access.** Return an
-   `{ "error": "forbidden", "reason": "..." }` shaped response. If you return
-   this response, the client will disconnect and won't keep trying to authorize.
+const client = createClient({
+  authEndpoint: async (room) => {
+    // Fetch your authentication endpoint and retrieve your access or ID token
+    // ...
 
-Any other error will be treated as an unexpected error, after which the client
-will retry making the request until it gets either (1) or (2).
+    return '{ "token": "..." }';
+  },
+});
+```
 
-Note that when using Notifications, the parameter `room` can be undefined. This
-implies that the client is requesting a token that grants access to multiple
+`room` is the room ID that the user is connecting to. When using
+[Notifications](/docs/products/comments/notifications), `room` can be
+`undefined`, as the client is requesting a token that grants access to multiple
 rooms, rather than a specific room.
 
-You’re responsible for making the fetch to your own backend. Example
-implementation:
+#### Fetch your endpoint
+
+Here’s an example of fetching your API endpoint at `/api/liveblocks-auth` within
+the callback.
 
 ```ts
 import { createClient } from "@liveblocks/client";
@@ -71,8 +261,8 @@ const client = createClient({
         Authentication: "<your own headers here>",
         "Content-Type": "application/json",
       },
-      // Don't forget to pass `room` down,
-      // and note that in some cases, `room` can be undefined.
+      // Don't forget to pass `room` down. Note that it
+      // can be undefined when using Notifications.
       body: JSON.stringify({ room }),
     });
     return await response.json();
@@ -80,109 +270,78 @@ const client = createClient({
 });
 ```
 
-### createClient for React Native [#createClientReactNative]
+#### Token details
 
-If you want to use `@liveblocks/client` with
-[React Native](https://reactnative.dev/), you need to add an [`atob`][]
-polyfill.
+You should return the token created with
+[`Liveblocks.prepareSession`](/docs/api-reference/liveblocks-node#access-tokens)
+or [`liveblocks.identifyUser`](/docs/api-reference/liveblocks-node#id-tokens).
+These are the values the functions can return.
 
-As a polyfill, we recommend installing the package [`base-64`][].
+1. A valid token, it returns a `'{ "token": "..." }'` shaped response.
+1. A token that explicitly forbids access, it returns an
+   `'{ "error": "forbidden", "reason": "..." }'` shaped response. If this is
+   returned, the client will disconnect and won't keep trying to authorize.
 
-```bash
-npm install base-64
-```
-
-Then you can pass the `decode` function to our `atob` polyfill option when you
-create the client.
-
-```ts
-import { createClient } from "@liveblocks/client";
-import { decode } from "base-64";
-
-const client = createClient({
-  /* ... other options ... */
-  polyfills: {
-    atob: decode,
-  },
-});
-```
-
-### createClient for Node.js [#createClientNode]
-
-If you want to use `@liveblocks/client` in a Node.js environment, you need to
-provide [`WebSocket`][] and [`fetch`][] polyfills.
-
-As polyfills, we recommend installing the packages [`ws`][] and
-[`node-fetch`][].
-
-```bash
-npm install ws node-fetch
-```
-
-Then, pass them to the `createClient` function as below.
-
-```ts
-import { createClient } from "@liveblocks/client";
-import fetch from "node-fetch";
-import WebSocket from "ws";
-
-const client = createClient({
-  /* ... other options ... */
-  polyfills: {
-    fetch,
-    WebSocket,
-  },
-});
-```
-
-Note that `node-fetch` v3+
-[does not support CommonJS](https://github.com/node-fetch/node-fetch/blob/main/docs/v3-UPGRADE-GUIDE.md#converted-to-es-module).
-If you are using CommonJS, downgrade `node-fetch` to v2.
+Any other error will be treated as an unexpected error, after which the client
+will retry the request until it receives either 1. or 2.
 
 ### WebSocket throttle [#createClientThrottle]
 
-By default, the client throttles the WebSocket messages sent to 100
-milliseconds.
-
-It is possible to override that configuration with the `throttle` option.
-
-`throttle` should be between 16 and 1000 milliseconds.
+By default, the client throttles the WebSocket messages sent to one every 100
+milliseconds, which translates to 10 updates per second. It’s possible to
+override that configuration with the `throttle` option with a value between `16`
+and `1000` milliseconds.
 
 ```ts
 import { createClient } from "@liveblocks/client";
 
 const client = createClient({
-  /* ... other options ... */
   throttle: 16,
+
+  // Other options
+  // ...
 });
+```
+
+This option is helpful for smoothing out real-time animations in your
+application, as you can effectively increase the framerate without using any
+interpolation. Here are some examples with their approximate frames per second
+(FPS) values.
+
+```ts
+throttle:  16, // 60 FPS
+throttle:  32, // 30 FPS
+throttle: 200, //  5 FPS
 ```
 
 ### Lost connection timeout [#createClientLostConnectionTimeout]
 
-If you’re connected to a room and you briefly lose connection, Liveblocks will
-normally reconnect automatically and quickly. However, if this takes longer than
-usual (for example, your network is offline), then the room will emit an event
-informing you about such exceptional circumstances.
+If you’re connected to a room and briefly lose connection, Liveblocks will
+reconnect automatically and quickly. However, if reconnecting takes longer than
+usual, for example if your network is offline, then the room will emit an event
+informing you about this.
 
-How quickly this happens can be configured with the `lostConnectionTimeout`
-setting.
-
-`lostConnectionTimeout` can be set between 1000 (pedantic) and 30000 (very
-relaxed) milliseconds. The default is 5000, or 5 seconds.
+How quickly this event is triggered can be configured with the
+`lostConnectionTimeout` setting, and it takes a number in milliseconds.
+`lostConnectionTimeout` can be set between `1000` and `30000` milliseconds. The
+default is `5000`, or 5 seconds.
 
 ```ts
 import { createClient } from "@liveblocks/client";
 
 const client = createClient({
-  /* ... other options ... */
   lostConnectionTimeout: 5000,
+
+  // Other options
+  // ...
 });
 ```
 
 You can listen to the event with [`room.subscribe("lost-connection")`][]. Note
 that this also affects when `others` are reset to an empty array after a
-disconnection. For a demonstration of this behavior, see our [connection status
-example][].
+disconnection. This helps prevent temporary flashes in your application as a
+user quickly disconnects and reconnects. For a demonstration of this behavior,
+see our [connection status example][].
 
 ### Background keep-alive timeout [#createClientBackgroundKeepAliveTimeout]
 
@@ -200,15 +359,18 @@ immediately reconnect to the room and synchronize the document.
 import { createClient } from "@liveblocks/client";
 
 const client = createClient({
-  /* ... other options ... */
-  backgroundKeepAliveTimeout: 15 * 60 * 1000 /* 15 minutes */,
+  // Disconnect users after 15 minutes of inactivity
+  backgroundKeepAliveTimeout: 15 * 60 * 1000,
+
+  // Other options
+  // ...
 });
 ```
 
-`backgroundKeepAliveTimeout` accepts a numeric value in milliseconds—we advise
-using a value of at least a few minutes, to avoid unnecessary disconnections.
+`backgroundKeepAliveTimeout` accepts a number in milliseconds—we advise using a
+value of at least a few minutes, to avoid unnecessary disconnections.
 
-### resolveUsers
+### resolveUsers [#createClientResolveUsers]
 
 <Banner title="Public beta">
 
@@ -218,19 +380,16 @@ hear from you.
 
 </Banner>
 
-When using [Comments](/docs/products/comments), anything that is linked to a
-user (comments, mentions, etc.) will reference their ID. To display user
-information based on IDs, you can provide a resolver function to the
-`resolveUsers` option in [`createClient`](#createClient).
-
-This resolver function will receive a list of user IDs and should return a list
-of user objects of the same size and in the same order.
+[Comments](/docs/products/comments) stores user IDs in its system, but no other
+user information. To display user information in Comments components, such as a
+user’s name or avatar, you need to resolve these IDs into user objects. This
+function receives a list of user IDs and you should return a list of user
+objects of the same size, in the same order.
 
 ```tsx
 import { createClient } from "@liveblocks/client";
 
 const client = createClient({
-  /* ... other options ... */
   resolveUsers: async ({ userIds }) => {
     const usersData = await __getUsersFromDB__(userIds);
 
@@ -239,19 +398,70 @@ const client = createClient({
       avatar: userData.avatar.src,
     }));
   },
+
+  // Other options
+  // ...
 });
 ```
 
-<Banner title="User object">
-  The user object returned by the resolver function takes the shape of
-  `UserMeta["info"]`, which contains `name` and `avatar` (both optional) by
-  default. The [default
-  components](/docs/api-reference/liveblocks-react-comments#Components) look
-  specifically for the `name` and `avatar` properties to display user names and
-  avatars.
-</Banner>
+The name and avatar you return are rendered in
+[`Thread`](/docs/api-reference/liveblocks-react-comments#Thread) components.
 
-### resolveRoomsInfo
+#### User objects
+
+The user objects returned by the resolver function take the shape of
+`UserMeta["info"]`, which contains `name` and `avatar` by default. These two
+values are optional, though if you’re using the
+[Comments default components](/docs/api-reference/liveblocks-react-comments#Components),
+they are necessary. Here’s an example of `userIds` and the exact values
+returned.
+
+```ts
+resolveUsers: async ({ userIds }) => {
+  // ["marc@example.com", "nimesh@example.com"];
+  console.log(userIds);
+
+  return [
+    { name: "Marc", avatar: "https://example.com/marc.png" },
+    { name: "Nimesh", avatar: "https://example.com/nimesh.png" },
+  ];
+};
+```
+
+You can also return custom information, for example, a user’s `color`:
+
+```ts highlight="9"
+resolveUsers: async ({ userIds }) => {
+  // ["marc@example.com"];
+  console.log(userIds);
+
+  return [
+    {
+      name: "Marc",
+      avatar: "https://example.com/marc.png",
+      color: "purple",
+    },
+  ];
+};
+```
+
+#### Accessing user data in React
+
+You can access any values set within `resolveUsers` with the
+[`useUser`](/docs/api-reference/liveblocks-react#useUser) hook.
+
+```tsx
+import { useUser } from "../liveblocks.config";
+
+function Component() {
+  const user = useUser("marc@example.com");
+
+  // { name: "Marc", avatar: "https://...", ... }
+  console.log(user);
+}
+```
+
+### resolveRoomsInfo [#createClientResolveRoomsInfo]
 
 <Banner title="Public beta">
 
@@ -263,10 +473,11 @@ hear from you.
 
 When using [Notifications](/docs/products/comments/notifications) with
 [Comments](/docs/products/comments), room IDs will be used to contextualize
-notifications (e.g. "Chris mentioned you in room-id"). To replace room IDs with
-more fitting names (e.g. document names, "Chris mentioned you in Document A"),
-you can provide a resolver function to the `resolveRoomsInfo` option in
-[`createClient`](#createClient).
+notifications (e.g. “Chris mentioned you in _room-id_”) in the
+[`InboxNotification`](/docs/api-reference/liveblocks-react-comments#InboxNotification)
+component. To replace room IDs with more fitting names (e.g. document names,
+“Chris mentioned you in _Document A_”), you can provide a resolver function to
+the `resolveRoomsInfo` option in [`createClient`](#createClient).
 
 This resolver function will receive a list of room IDs and should return a list
 of room info objects of the same size and in the same order.
@@ -275,7 +486,6 @@ of room info objects of the same size and in the same order.
 import { createClient } from "@liveblocks/client";
 
 const client = createClient({
-  /* ... other options ... */
   resolveRoomsInfo: async ({ roomIds }) => {
     const documentsData = await __getDocumentsFromDB__(roomIds);
 
@@ -284,6 +494,9 @@ const client = createClient({
       // url: documentData.url,
     }));
   },
+
+  // Other options
+  // ...
 });
 ```
 
@@ -298,7 +511,7 @@ via `href`, but the room ID might not be enough for you to construct the URL ,
 you might need to call your backend for example. In that case, providing it via
 `resolveRoomsInfo` is the preferred way.
 
-### resolveMentionSuggestions
+### resolveMentionSuggestions [#createClientResolveMentionSuggestions]
 
 <Banner title="Public beta">
 
@@ -310,72 +523,210 @@ hear from you.
 
 To enable creating mentions in [Comments](/docs/products/comments), you can
 provide a resolver function to the `resolveMentionSuggestions` option in
-[`createClient`](#createClient).
+[`createClient`](#createClient). These mentions will be displayed in the
+[`Composer`](/docs/api-reference/liveblocks-react-comments#Composer) component.
 
-This resolver function will receive the mention currently being written (e.g.
-when writing “@jane”, `text` will be `jane`) and should return a list of user
-IDs matching that text. This function will be called every time the text changes
-but with some debouncing.
+This resolver function will receive the mention currently being typed (e.g. when
+writing “@jane”, `text` will be `jane`) and should return a list of user IDs
+matching that text. This function will be called every time the text changes but
+with some debouncing.
 
 ```tsx
 import { createClient } from "@liveblocks/client";
 
 const client = createClient({
-  /* ... other options ... */
   resolveMentionSuggestions: async ({ text, roomId }) => {
     const workspaceUsers = await __getWorkspaceUsersFromDB__(roomId);
 
     if (!text) {
       // Show all workspace users by default
-
       return __getUserIds__(workspaceUsers);
     } else {
       const matchingUsers = __findUsers__(workspaceUsers, text);
-
       return __getUserIds__(matchingUsers);
     }
   },
+
+  // Other options
+  // ...
+});
+```
+
+### createClient for Node.js [#createClientNode]
+
+To use `@liveblocks/client` in Node.js, you need to provide [`WebSocket`][] and
+[`fetch`][] polyfills. As polyfills, we recommend installing [`ws`][] and
+[`node-fetch`][].
+
+```bash
+npm install ws node-fetch
+```
+
+Then, pass them to the `createClient` polyfill option as below.
+
+```ts
+import { createClient } from "@liveblocks/client";
+import fetch from "node-fetch";
+import WebSocket from "ws";
+
+const client = createClient({
+  polyfills: {
+    fetch,
+    WebSocket,
+  },
+
+  // Other options
+  // ...
+});
+```
+
+Note that `node-fetch` v3+
+[does not support CommonJS](https://github.com/node-fetch/node-fetch/blob/main/docs/v3-UPGRADE-GUIDE.md#converted-to-es-module).
+If you are using CommonJS, downgrade `node-fetch` to v2.
+
+### createClient for React Native [#createClientReactNative]
+
+To use `@liveblocks/client` with [React Native](https://reactnative.dev/), you
+need to add an [`atob`][] polyfill. As a polyfill, we recommend installing
+[`base-64`][].
+
+```bash
+npm install base-64
+```
+
+Then you can pass the `decode` function to our `atob` polyfill option when you
+create the client.
+
+```ts
+import { createClient } from "@liveblocks/client";
+import { decode } from "base-64";
+
+const client = createClient({
+  polyfills: {
+    atob: decode,
+  },
+
+  // Other options
+  // ...
 });
 ```
 
 ## Client
 
-Client returned by [`createClient`][].
+Client returned by [`createClient`][] which allows you to connect to Liveblocks
+servers in your application, and enter rooms.
 
 ### Client.enterRoom
 
-Enters a room and returns both the local `Room` instance, and a “leave” function
-(unsubscribe function). The authentication endpoint is called as soon as you
-call this function.
-
-The second argument is a configuration for the presence and storage.
-
-- `initialPresence` - The initial Presence to use for the User currently
-  entering the Room. Presence data belongs to the current User and is readable
-  to all other Users in the room while the current User is connected to the
-  Room. Must be serializable to JSON.
-- `initialStorage` (optional) - The initial Storage structure to create when a
-  new Room is entered for the first time. Storage data is shared and belongs to
-  the Room itself. It persists even after all Users leave the room, and is
-  mutable by every client. Must either contain Live structures (e.g.
-  `new LiveList()`, `new LiveObject({ a: 1 })`, etc.) or be serializable to
-  JSON.
-- `autoConnect` (optional) - Whether or not the room immediately connects to
-  Liveblocks servers. Default is `true`. Usually set to `false` when the client
-  is used from the server to not call the authentication endpoint or connect via
-  WebSocket.
+Enters a room and returns both the local `Room` instance, and a `leave`
+unsubscribe function. The authentication endpoint is called as soon as you call
+this function. Used for setting [initial Presence](#setting-initial-presence)
+and [initial Storage](#setting-initial-storage) values.
 
 ```ts
-const { room, leave } = client.enterRoom("my-room", {
-  initialPresence: { cursor: null },
-  initialStorage: { todos: new LiveList() },
-});
+const { room, leave } = client.enterRoom("my-room-id", {
+  initialPresence: {},
 
-// Don’t forget to call `leave()` when you’re done with the room
-leave();
+  // Other options
+  // ...
+});
 ```
 
-### Client.enter
+Note that it’s possible to [add types to your room](#typing-your-room).
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="room"
+    type="Room<TPresence, TStorage, TUserMeta, TRoomEvent>"
+  >
+    A [Room](#Room), used for building your Liveblocks application. Learn more
+    about [typing your room](#typing-your-room).
+  </PropertiesListItem>
+  <PropertiesListItem name="leave" type="() => void">
+    A function that’s used to leave the room and disconnect.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="roomId" type="string" required>
+    The ID of the room you’re connecting to.
+  </PropertiesListItem>
+  <PropertiesListItem name="options.initialPresence" type="JsonObject" required>
+    The initial Presence of the user entering the room. Each user has their own
+    presence, and this is readable for all other connected users. A user’s
+    Presence resets every time they disconnect. This object must be
+    JSON-serializable. [Learn more](#setting-initial-presence).
+  </PropertiesListItem>
+  <PropertiesListItem name="options.initialStorage" type="LsonObject">
+    The initial Storage structure for the room when it’s joined for the first
+    time. This is only set a single time, when the room has not yet been
+    populated. This object must contain [conflict-free live
+    structures](/docs/api-reference/liveblocks-client#Storage). [Learn
+    more](#setting-initial-storage).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="options.autoConnect"
+    type="boolean"
+    defaultValue="true"
+  >
+    Whether the room immediately connects to Liveblocks servers.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Setting initial Presence [#setting-initial-presence]
+
+Presence is used for storing temporary user-based values, such as a user’s
+cursor coordinates, or their current selection. Each user has their own
+presence, and this is readable for all other connected users. Set your initial
+Presence value by using `initialPresence`.
+
+```ts highlight="2-8"
+const { room, leave } = client.enterRoom("my-room-id", {
+  initialPresence: {
+    cursor: null,
+    colors: ["red", "purple"],
+    selection: {
+      id: 72426,
+    },
+  },
+
+  // Other options
+  // ...
+});
+```
+
+Each user’s Presence resets every time they disconnect, as this is only meant
+for temporary data. Any JSON-serializable object is allowed (the `JsonObject`
+type).
+
+#### Setting initial Storage [#setting-initial-storage]
+
+Storage is used to store permanent data that’s used in your application, such as
+shapes on a whiteboard, nodes on a flowchart, or text in a form. The first time
+a room is entered, you can set an initial value by using `initialStorage`. Note
+that this value is only read a single time.
+
+```ts highlight="4-9"
+import { LiveList, LiveObject } from "@liveblocks/client";
+
+const { room, leave } = client.enterRoom("my-room-id", {
+  initialStorage: {
+    title: "Untitled",
+    shapes: new LiveList([
+      new LiveObject({ type: "rectangle", color: "yellow" }),
+    ]),
+  },
+
+  // Other options
+  // ...
+});
+```
+
+Any
+[conflict-free live structures](/docs/api-reference/liveblocks-client#Storage)
+and JSON-serializable objects are allowed (the `LsonObject` type).
+
+### Client.enter [@badge=Deprecated]
 
 Enters a room and returns its local `Room` instance.
 
@@ -403,7 +754,7 @@ const { room, leave } = client.enterRoom("my-room", {
 leave();
 ```
 
-### Client.leave
+### Client.leave [@badge=Deprecated]
 
 Leaves a room.
 
@@ -433,8 +784,26 @@ called previously.
 const room = client.getRoom("my-room");
 ```
 
-You’ll likely not need this API if you’re using the newer [`client.enterRoom`][]
-API.
+It’s unlikely you’ll need this API if you’re using the newer
+[`client.enterRoom`][] API. Note that it’s possible to
+[add types to your room](#typing-your-room).
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="room"
+    type="Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null"
+  >
+    A [Room](#Room), used for building your Liveblocks application. Returns
+    `null` if the room has not yet been joined by the current client. Learn more
+    about [typing your room](#typing-your-room).
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="roomId" type="string" required>
+    The ID of the room you’re connecting to.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### Client.logout
 
@@ -445,8 +814,15 @@ still connected, they will be forced to reauthorize.
 client.logout();
 ```
 
-Call this API if you have a single page application (SPA) and you want to log
-your user out.
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+#### When to logout
+
+Use this function if you have a single page application (SPA) and you wish to
+log your user out, and reauthenticate them. This is a way to update your user’s
+`info` after a connection has begun.
 
 ## Room
 
@@ -454,124 +830,432 @@ Room returned by [`client.enterRoom`][] (or [`client.getRoom`][]).
 
 ### Room.getPresence
 
-Gets the presence of the current user.
+Return the current user’s Presence. [Presence](/docs/products/presence) is used
+to store custom properties on each user that exist until the user disconnects.
+An example use would be storing a user’s cursor coordinates.
 
 ```ts
 const presence = room.getPresence();
+
+// { cursor: { x: 363, y: 723 } }
+console.log(presence);
 ```
+
+Presence is set with [`updatePresence`](#Room.updatePresence) and can be typed
+when you [enter a room](#enter-room-typing-a-room). The example above is using
+the following type:
+
+```ts
+type Presence = {
+  cursor: { x: number; y: number };
+};
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="presence" type="TPresence">
+    An object holding the Presence value for the currently connected user.
+    Presence is set with [`updatePresence`](#Room.updatePresence). Will always
+    be JSON-serializable. `TPresence` is the `Presence` type you set yourself,
+    [learn more](#Typing-presence).
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### Room.updatePresence
 
-Updates the presence of the current user. You need only pass the properties you
-wish to update—any changes will be merged into the current presence. The entire
-presence object will not be replaced.
+Updates the current user’s [Presence](/docs/products/presence). Only pass the
+properties you wish to update—any changes will be merged into the current
+presence. The entire presence object will not be replaced.
 
 ```ts
-room.updatePresence({ x: 0 });
-room.updatePresence({ y: 0 });
+room.updatePresence({ typing: true });
+room.updatePresence({ status: "Online" });
 
+// { typing: true, status: "Online" }
 const presence = room.getPresence();
-// presence is equivalent to { x: 0, y: 0 }
 ```
 
-`updatePresence` accepts an optional argument to add a new item to the undo/redo
-stack. See [`room.history`][] for more information.
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="update" type="TPresence" required>
+    The updated Presence properties for the current user inside an object. The
+    user’s entire Presence object will not be replaced, instead these properties
+    will be merged with the existing Presence. This object must be
+    JSON-serializable.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="options.addToHistory"
+    type="boolean"
+    defaultValue="false"
+  >
+    Adds Presence values to the history stack, meaning using undo and redo
+    functions will change them. [Learn more](#add-presence-to-history).
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Add Presence to history [#add-presence-to-history]
+
+By default, Presence values are not added to history. However, using the
+`addToHistory` option will add items to the undo/redo stack.
 
 ```ts
-room.updatePresence({ selectedId: "xxx" }, { addToHistory: true });
-room.updatePresence({ selectedId: "yyy" }, { addToHistory: true });
+room.updatePresence({ color: "blue" }, { addToHistory: true });
+room.updatePresence({ color: "red" }, { addToHistory: true });
 room.history.undo();
-// room.getPresence() equals { selectedId: "xxx" }
+
+// { color: "blue" }
+const presence = room.getPresence();
 ```
+
+See [`room.history`][] for more information.
 
 ### Room.getOthers
 
-Gets all the other `User`s in the Room.
+Returns an array of currently connected users in the room. Returns a
+[`User`](#user-type) object for each user. Note that you can also subscribe to
+others using [`Room.subscribe("others")`](#Room.subscribe.others).
 
 ```ts
 const others = room.getOthers();
 
-for (const { connectionId, id, info, presence, isReadOnly } of others) {
+for (const other of others) {
+  const { connectionId, id, info, presence, canWrite, canComment } = other;
   // Do things
 }
 ```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem name="others" type="User<TPresence, TUserMeta>[]">
+    An array holding each connected user’s [`User`](#user-type) object. `User`
+    contains the current user’s Presence value, along with other information.
+    Presence is set with [`updatePresence`](#Room.updatePresence). Returns an
+    empty array when no other users are currently connected. Will always be
+    JSON-serializable.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
 ### Room.broadcastEvent
 
 Broadcast an event to other users in the Room. Events broadcast to the room can
-be listened to with [`Room.subscribe("event")`][]. Takes a payload as first
-argument. Should be serializable to JSON.
+be listened to with [`Room.subscribe("event")`][]. Takes a custom event payload
+as first argument. Should be serializable to JSON.
+
+```ts
+room.broadcastEvent({ type: "REACTION", emoji: "🔥" });
+```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="event" type="TRoomEvent" required>
+    The event to broadcast to every other user in the room. Must be
+    JSON-serializable. `TRoomEvent` is the `RoomEvent` type you set yourself,
+    [learn more](#typing-multiple-events).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="options.shouldQueueEventIfNotReady"
+    type="boolean"
+    defaultValue="false"
+  >
+    Queue the event if the connection is currently closed, or has not been
+    opened yet. We’re not sure if we want to support this option in the future
+    so it might be deprecated to be replaced by something else. [Learn
+    more](#broadcasting-an-event-when-disconnected).
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Receiving an event
+
+To receive an event, use [`Room.subscribe("event")`][]. The `user` property
+received on the other end is the sender’s [`User`](#user-type) instance.
+
+```ts
+// User 1
+room.broadcastEvent({ type: "REACTION", emoji: "🔥" });
+
+// User 2
+const unsubscribe = room.subscribe("event", ({ event, user, connectionId }) => {
+  //                                                  ^^^^ User 1
+  if (event.type === "REACTION") {
+    // Do something
+  }
+});
+```
+
+We recommend using a property such as `type`, so that it’s easy to distinguish
+between different events on the receiving end.
+
+#### Typing multiple events [#typing-multiple-events]
+
+When [defining your types](#typing-your-room), you can pass a `RoomEvent` type
+to the fourth generic in [`client.enterRoom`][] to receive type hints in your
+app. To define multiple different custom events, use a union.
+
+```ts highlight="5-7,17-22"
+type Presence = {};
+type Storage = {};
+type UserMeta = {};
+
+type ReactionEvent = { type: "REACTION"; emoji: string };
+type ActionEvent = { type: "ACTION"; action: string };
+type RoomEvent = ReactionEvent | ActionEvent;
+
+const { room, leave } = client.enterRoom<
+  Presence,
+  Storage,
+  UserMeta,
+  RoomEvent
+>("my-room-id", { initialPresence: {} });
+
+room.subscribe("event", ({ event, user, connectionId }) => {
+  if (event.type === "REACTION") {
+    // Do something
+  }
+  if (event.type === "ACTION") {
+    // Do something else
+  }
+});
+```
+
+#### Broadcasting an event when disconnected [#broadcasting-an-event-when-disconnected]
 
 By default, broadcasting an event is a “fire and forget” action. If the sending
 client is not currently connected to a room, the event is simply discarded. When
 passing the `shouldQueueEventIfNotReady` option, the client will queue up the
 event, and only send it once the connection to the room is (re)established.
 
-<Banner title="Notice">
+<Banner>
 
 We’re not sure if we want to support `shouldQueueEventIfNotReady` in the future,
 so it may be deprecated and replaced with something else.
 
 </Banner>
 
-```ts highlight="1-2"
-// On client A
-room.broadcastEvent({ type: "EMOJI", emoji: "🔥" });
-
-// On client B
-room.subscribe("event", ({ event, user, connectionId }) => {
-  //                              ^^^^ Will be Client A
-  if (event.type === "EMOJI") {
-    // Do something
+```ts highlight="4"
+room.broadcastEvent(
+  { type: "REACTION", emoji: "🔥" },
+  {
+    shouldQueueEventIfNotReady: true,
   }
-});
+);
 ```
-
-The `user` property will indicate which User instance sent the message. This
-will typically be equal to one of the others in the room, but it can also be
-`null` in case this event was broadcasted from the server, using the
-[Broadcast Event API](https://liveblocks.io/docs/api-reference/rest-api-endpoints#post-broadcast-event).
 
 ### Room.getSelf
 
-Gets the current `User`. Returns `null` if it is not yet connected to the room.
+Gets the current [`User`](#user-type). Returns `null` if the client is not yet
+connected to the room.
 
 ```ts
-const { connectionId, presence, id, info, isReadOnly } = room.getSelf();
+const { connectionId, presence, id, info, canWrite, canComment } =
+  room.getSelf();
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="user" type="User<TPresence, TUserMeta> | null">
+    Returns the current [`User`](#user-type). Returns `null` if the client is
+    not yet connected to the room.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+Here’s an example of a full return value, assuming `Presence` and `UserMeta`
+[have been set](#user-type).
+
+```ts
+const user = room.getSelf();
+
+// {
+//   connectionId: 52,
+//   presence: {
+//     cursor: { x: 263, y: 786 },
+//   },
+//   id: "mislav.abha@example.com",
+//   info: {
+//     avatar: "/mislav.png",
+//   },
+//   canWrite: true,
+//   canComment: true,
+// }
+console.log(user);
 ```
 
 ### Room.getStatus
 
-Gets the current WebSocket connection status of the room.
+Gets the current WebSocket connection status of the room. The possible value
+are: `initial`, `connecting`, `connected`, `reconnecting`, or `disconnected`.
 
 ```ts
 const status = room.getStatus();
+
+// "connected"
+console.log(status);
 ```
 
-The possible value are: `initial`, `connecting`, `connected`, `reconnecting`, or
-`disconnected`.
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="status"
+    type={`"initial" | "connecting" | "connected" | "reconnecting" | "disconnected"`}
+  >
+    <div className="-mb-3">
+    Returns the room’s current connection status. It can return one of five values:
+    </div>
+
+    - `"initial"` The room has not attempted to connect yet.
+    - `"connecting"` The room is currently authenticating or connecting.
+    - `"connected"` The room is connected.
+    - `"reconnecting"` The room has disconnected, and is trying to connect again.
+    - `"disconnected"` The room is disconnected, and is no longer attempting to connect.
+
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+### Room.getStorageStatus
+
+Get the Storage status. Use this to tell whether Storage has been synchronized
+with the Liveblocks servers.
+
+```ts
+const status = room.getStorageStatus();
+
+// "synchronizing"
+console.log(status);
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="status"
+    type={`"not-loaded" | "loading" | "synchronizing" | "synchronized"`}
+  >
+    <div className="-mb-3">
+    The current room’s Storage status. `status` can be one of four types.
+    </div>
+
+    - `"not-loaded` Storage has not been loaded yet as [`room.getStorage`][] has not been called.
+    - `"loading"` Storage is currently loading for the first time.
+    - `"synchronizing"` Local Storage changes are currently being synchronized.
+    - `"synchronized"` Local Storage changes have been synchronized.
+
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### Room.subscribe(storageItem)
 
-Subscribe to updates for a particular storage item.
-
-Takes a callback that is called when the storage item is updated.
-
-Returns an unsubscribe function.
+Subscribe to updates on a particular storage item, and takes a callback function
+that’s called when the storage item is updated. The Storage `root` is a
+[`LiveObject`][], which means you can subscribe to this, as well as other live
+structures. Returns an unsubscribe function.
 
 ```ts
 const { root } = await room.getStorage();
-const unsubscribe = room.subscribe(root, (root) => {
+
+const unsubscribe = room.subscribe(root, (updatedRoot) => {
   // Do something
 });
 ```
 
-It’s also possible to subscribe to a storage item and its children by passing an
-optional `isDeep` parameter. In that case, the callback will get called with a
-list of updates instead. Each such update is a `{ type, node, updates }` object.
+<PropertiesList title="Returns">
+  <PropertiesListItem name="unsubscribe" type="() => void">
+    Unsubscribe function. Call it to cancel the subscription.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem
+    name="storageItem"
+    type="L extends (LiveObject | LiveMap | LiveList)"
+    required
+  >
+    The `LiveObject`, `LiveMap`, or `LiveList` which is being subscribed to.
+    Each time the structure is updated, the callback is called.
+  </PropertiesListItem>
+  <PropertiesListItem name="callback" type="(node: L) => void" required>
+    Function that’s called when `storageItem` updates. Returns the updated
+    storage structure.
+  </PropertiesListItem>
+  <PropertiesListItem name="options.isDeep" type="boolean">
+    Subscribe to both `storageItem` and its children. The callback function will
+    be passed a list of updates instead of just the new Storage item. [Learn
+    more](#listening-for-nested-changes).
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Typing Storage
+
+To type the Storage values you receive, make sure to set your `Storage` type.
+
+```ts
+import { LiveList } from "@liveblocks/client";
+
+type Storage = {
+  animals: LiveList<{ name: string }>;
+};
+```
+
+The type received in the callback will match the type passed. Learn more under
+[typing your room](#typing-your-room).
 
 ```ts
 const { root } = await room.getStorage();
+const animals = root.get("animals");
+
+const unsubscribe = room.subscribe(animals, (updatedAnimals) => {
+  // LiveList<[{ name: "Fido" }, { name: "Felix" }]>
+  console.log(updatedAnimals);
+});
+```
+
+#### Subscribe to any live structure
+
+You can subscribe to any live structure, be it the Storage `root`, a child, or a
+structure even more deeply nested.
+
+```ts
+import { LiveObject, LiveMap } from "@liveblocks/client";
+
+type Person = LiveObject<{ name: string; age: number }>;
+
+type Storage = {
+  people: LiveMap<string, Person>;
+};
+```
+
+```ts
+const { root } = await room.getStorage();
+const people = root.get("people");
+const steven = people.get("steven");
+
+const unsubscribeRoot = room.subscribe(root, (updatedRoot) => {
+  // ...
+});
+
+const unsubscribePeople = room.subscribe(people, (updatedPeople) => {
+  // ...
+});
+
+const unsubscribeSteven = room.subscribe(steven, (updatedSteven) => {
+  // ...
+});
+```
+
+#### Listening for nested changes [#listening-for-nested-changes]
+
+It’s also possible to subscribe to a Storage item and all of its children by
+passing an optional `isDeep` option in the third argument. In this case, the
+callback will be passed a list of updates instead of just the new Storage item.
+Each such update is a `{ type, node, updates }` object.
+
+```ts
+const { root } = await room.getStorage();
+
 const unsubscribe = room.subscribe(
   root,
   (storageUpdates) => {
@@ -604,38 +1288,157 @@ const unsubscribe = room.subscribe(
 );
 ```
 
+#### Using async functions
+
+You use an `async` function inside the subscription callback, though bear in
+mind that the callback itself is synchronous, and there’s no guarantee the
+`async` function will complete before the callback is run again.
+
+```ts
+const { root } = await room.getStorage();
+
+const unsubscribe = room.subscribe(root, (updatedRoot) => {
+  async function doThing() {
+    await fetch(/* ... */);
+  }
+
+  doThing();
+});
+```
+
+If the order of updates is imporant in your application, and it’s important to
+ensure that your `async` function doesn’t start before the previous one
+finishes, you can use a package such as
+[`async-mutex`](https://www.npmjs.com/package/async-mutex) to help you with
+this. Using `runExclusive` will effectively form a queue for all upcoming
+updates, guaranteeing serial execution.
+
+```ts
+import { Mutex } from "async-mutex";
+
+const { root } = await room.getStorage();
+const myMutex = new Mutex();
+
+const unsubscribeUpdates = room.subscribe(root, (root) => {
+  void myMutex.runExclusive(async () => {
+    await fetch(/* ... */);
+  });
+});
+```
+
+Note that this may cause a performance penalty in your application, as certain
+updates will be ignored.
+
 ### Room.subscribe("event") [#Room.subscribe.event]
 
-Subscribe to events broadcast by [`Room.broadcastEvent`][].
-
-Takes a callback that is called when a user calls [`Room.broadcastEvent`][].
-Provides the `event` along with the `user` and their `connectionId` of the user
-that sent the message. If this event was sent via the
-[Broadcast to a room](/docs/api-reference/rest-api-endpoints#post-broadcast-event)
-REST API, `user` will be `null` and `connectionId` will be `-1`.
-
-Returns an unsubscribe function.
+Subscribe to events broadcast by [`Room.broadcastEvent`][]. Takes a callback
+that’s run when another user calls [`Room.broadcastEvent`][]. Provides the
+`event` along with the `user` and their `connectionId` of the user that sent the
+message. Returns an unsubscribe function.
 
 ```ts highlight="4-10"
-// On client A
-room.broadcastEvent({ type: "EMOJI", emoji: "🔥" });
+// User 1
+room.broadcastEvent({ type: "REACTION", emoji: "🔥" });
 
-// On client B
+// User 2
 const unsubscribe = room.subscribe("event", ({ event, user, connectionId }) => {
-  //                                                  ^^^^ Will be Client A
-  if (event.type === "EMOJI") {
+  //                                                  ^^^^ Will be User 1
+  if (event.type === "REACTION") {
     // Do something
   }
 });
 ```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem name="unsubscribe" type="() => void">
+    Unsubscribe function. Call it to cancel the subscription.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="eventType" type={`"event"`} required>
+    Listen to events.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="callback"
+    detailedType="(event: RoomEventMessage<TPresence, TUserMeta, TRoomEvent>) => void"
+    required
+  >
+    Function that’s called when another user sends an event. Receives the event,
+    the [`user`](#user-type) that sent the event, and their `connectionId`. If
+    this event was sent via
+    [`liveblocks.broadcastEvent`](/docs/api-reference/liveblocks-node#post-broadcast-event)
+    or the [Broadcast event
+    API](/docs/api-reference/rest-api-endpoints#post-broadcast-event), `user`
+    will be `null` and `connectionId` will be `-1`. [Learn
+    more](#receiving-events-from-the-server)
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Typing events
+
+When [defining your types](#typing-your-room), you can pass a `RoomEvent` type
+to the fourth generic in [`client.enterRoom`][] to receive type hints in your
+app. To define multiple different custom events, use a union.
+
+```ts highlight="5-7,17-22"
+type Presence = {};
+type Storage = {};
+type UserMeta = {};
+
+type ReactionEvent = { type: "REACTION"; emoji: string };
+type ActionEvent = { type: "ACTION"; action: string };
+type RoomEvent = ReactionEvent | ActionEvent;
+
+const { room, leave } = client.enterRoom<
+  Presence,
+  Storage,
+  UserMeta,
+  RoomEvent
+>("my-room-id", { initialPresence: {} });
+
+room.subscribe("event", ({ event, user, connectionId }) => {
+  if (event.type === "REACTION") {
+    // Do something
+  }
+  if (event.type === "ACTION") {
+    // Do something else
+  }
+});
+```
+
+#### Receiving events from the server [#receiving-events-from-the-server]
+
+Events can be received from the server with either
+[`liveblocks.broadcastEvent`](/docs/api-reference/liveblocks-node#post-broadcast-event)
+or the
+[Broadcast Event API](/docs/api-reference/rest-api-endpoints#post-broadcast-event).
+In events sent from the server, `user` will be `null`, and `connectionId` will
+be `-1`.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+export async function POST() {
+  await liveblocks.broadcastEvent({ type: "REACTION", emoji: "🔥" });
+}
+```
+
+```ts
+const unsubscribe = room.subscribe("event", ({ event, user, connectionId }) => {
+  // `null`, `-1`
+  console.log(user, connectionId);
+});
+```
+
 ### Room.subscribe("my-presence") [#Room.subscribe.my-presence]
 
-Subscribe to the current user presence updates.
-
-Takes a callback that is called every time the current user presence is updated
-with [`Room.updatePresence`][].
-
+Subscribe to the current user’s Presence. Takes a callback that is called every
+time the current user presence is updated with [`Room.updatePresence`][].
 Returns an unsubscribe function.
 
 ```ts
@@ -644,19 +1447,111 @@ const unsubscribe = room.subscribe("my-presence", (presence) => {
 });
 ```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem name="unsubscribe" type="() => void">
+    Unsubscribe function. Call it to cancel the subscription.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="eventType" type={`"my-presence"`} required>
+    Listen to the current user’s presence.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="callback"
+    type="(presence: TPresence) => void"
+    required
+  >
+    Function that’s called when the current user’s Presence has updated, for
+    example with [`Room.updatePresence`][]. Receives the updates Presence value.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Typing Presence
+
+To type the Presence values you receive, make sure to set your Presence type.
+
+```ts
+type Presence = {
+  status: string;
+  cursor: { x: number; y: number };
+};
+```
+
+The type received in the callback will match the type passed. Learn more under
+[typing your room](#typing-your-room).
+
+```ts
+const unsubscribe = room.subscribe("my-presence", (presence) => {
+  // { status: "typing", cursor: { x: 45, y: 67 }
+  console.log(presence);
+});
+```
+
 ### Room.subscribe("others") [#Room.subscribe.others]
 
-Subscribe to the other users updates.
-
-Takes a callback that is called when a user enters or leaves the room or when a
-user update its presence.
-
-Returns an unsubscribe function.
+Subscribe to every other users’ updates. Takes a callback that’s called when a
+user’s Presence updates, or when they enter or leave the room. Returns an
+unsubscribe function.
 
 ```ts
 const unsubscribe = room.subscribe("others", (others, event) => {
   // Do something
+});
+```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem name="unsubscribe" type="() => void">
+    Unsubscribe function. Call it to cancel the subscription.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="eventType" type={`"others"`} required>
+    Listen to others.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="callback"
+    type="(others: User<TPresence, TUserMeta>[], event: OthersEvent) => void"
+    required
+  >
+    Function that’s called when another user’s Presence has updated, for example
+    with [`Room.updatePresence`][], or an others event has occurred. Receives an
+    array of [`User`](user-type) values for each currently connected user. Also
+    received an object with information about the event that has triggered the
+    update, [learn more](#listening-for-others-events).
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Typing Presence
+
+To type the Presence values you receive, make sure to set your Presence type.
+
+```ts
+type Presence = {
+  status: string;
+  cursor: { x: number; y: number };
+};
+```
+
+The type received in the callback will match the type passed. Learn more under
+[typing your room](#typing-your-room).
+
+```ts
+const unsubscribe = room.subscribe("others", (others, event) => {
+  // { status: "typing", cursor: { x: 45, y: 67 }
+  console.log(others[0].presence);
+});
+```
+
+#### Listening for others events [#listening-for-others-events]
+
+The `event` parameter returns information on why the callback has just run, for
+example if their Presence has updated, if they’ve just left or entered the room,
+or if the current user has disconnected.
+
+```ts
+const unsubscribe = room.subscribe("others", (others, event) => {
   if (event.type === "leave") {
     // A user has left the room
     // event.user;
@@ -679,58 +1574,178 @@ const unsubscribe = room.subscribe("others", (others, event) => {
 });
 ```
 
+#### Live cursors
+
+Here’s a basic example showing you how to render live cursors.
+[`Room.updatePresence`](/docs/api-reference/liveblocks-client#Room.updatePresence)
+is being used to update each user’s cursor position.
+
+```ts highlight="15-18,20,22-28"
+type Presence = {
+  cursor: { x: number; y: number };
+};
+type Storage = {};
+type UserMeta = { id: string };
+type RoomEvent = {};
+
+const { room, leave } = client.enterRoom<
+  Presence,
+  Storage,
+  UserMeta,
+  RoomEvent
+>("my-room-id", { initialPresence: {} });
+
+// Call this to update the current user's Presence
+function updateCursorPosition({ x, y }) {
+  room.updatePresence({ cursor: { x, y } });
+}
+
+const others = room.getOthers();
+
+// Run __renderCursor__ when any other connected user updates their presence
+const unsubscribe = room.subscribe("others", (others, event) => {
+  for (const { id, presence } of others) {
+    const { x, y } = presence.cursor;
+    __renderCursor__(id, { x, y });
+  }
+}
+
+// Handle events and rendering
+// ...
+```
+
+Check our [examples page](/examples/browse/cursors) for live demos.
+
 ### Room.subscribe("status") [#Room.subscribe.status]
 
-Subscribe to WebSocket connection status updates.
-
-Takes a callback that is called whenever the connection status changes. Possible
-value are: `initial`, `connecting`, `connected`, `reconnecting`, or
-`disconnected`.
-
-Returns an unsubscribe function.
+Subscribe to WebSocket connection status updates. Takes a callback that is
+called whenever the connection status changes. Possible value are: `initial`,
+`connecting`, `connected`, `reconnecting`, or `disconnected`. Returns an
+unsubscribe function.
 
 ```ts
 const unsubscribe = room.subscribe("status", (status) => {
-  // Do something
+  // "connected"
+  console.log(status);
 });
 ```
 
-This is a low-level API that exposes the WebSocket’s connectivity status. You
+<PropertiesList title="Returns">
+  <PropertiesListItem name="unsubscribe" type="() => void">
+    Unsubscribe function. Call it to cancel the subscription.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="eventType" type={`"status"`} required>
+    Listen to status updates.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="callback"
+    detailedType={`(status: "initial" | "connecting" | "connected" | "reconnecting" | "disconnected") => void`}
+    required
+  >
+    <div className="-mb-3">
+    Function that’s called when the room’s connection status has changed. It can return one of five values:
+    </div>
+
+    - `"initial"` The room has not attempted to connect yet.
+    - `"connecting"` The room is currently authenticating or connecting.
+    - `"connected"` The room is connected.
+    - `"reconnecting"` The room has disconnected, and is trying to connect again.
+    - `"disconnected"` The room is disconnected, and is no longer attempting to connect.
+
+  </PropertiesListItem>
+</PropertiesList>
+
+#### When to use status
+
+Status is a low-level API that exposes the WebSocket’s connectivity status. You
 can use this, for example, to update a connection status indicator in your UI.
-It would be normal for a client to briefly lose the connection and restore it,
-using quick `connected` → `reconnecting` → `connected` status jumps.
+It would be normal for a client to briefly lose the connection and restore it
+with quick `connected` → `reconnecting` → `connected` status jumps.
 
-If you want to let users know that there may be connectivity issues, don’t use
-this API, but instead refer to [`Room.subscribe("lost-connection")`][].
+```ts
+let indicator = "⚪";
 
-<Banner title="Notice">
+const unsubscribe = room.subscribe("status", (status) => {
+  switch (status) {
+    case "connecting":
+      indiciator = "🟡";
+      break;
+    case "connected":
+      indicator = "🟢";
+      break;
+    // ...
+  }
+});
+```
+
+If you’d like to let users know that there may be connectivity issues, don’t use
+this API, but instead refer to [`Room.subscribe("lost-connection")`][] which was
+specially built for this purpose.
 
 Do not use this API to detect when Storage or Presence are initialized or
 loaded. "Connected" does not guarantee that Storage or Presence are ready. To
 detect when Storage is loaded, rely on awaiting the [`Room.getStorage`][]
 promise or using the [`Room.subscribe("storage-status")`][] event.
 
-</Banner>
-
 ### Room.subscribe("lost-connection") [#Room.subscribe.lost-connection]
 
-A special-purpose event that will fire in the exceptional case where a
-previously connected Liveblocks client has lost its connection (e.g. due to a
-network outage) and was unable to recover quickly.
+A special-purpose event that will fire when a previously connected Liveblocks
+client has lost connection, for example due to a network outage, and was unable
+to recover quickly. This event is
+[designed to help improve UX for your users](#when-to-use-lost-connection-events),
+and will not trigger on short interruptions, those that are less than
+[5 seconds by default](#setting-lost-connection-timeout). The event only
+triggers if a previously connected client disconnects.
 
-This event allows you to build high-quality UIs by warning your users that the
-app is still trying to re-establish the connection, for example through a toast
-notification. You may want to take extra care in the mean time to ensure their
-changes won’t go unsaved, or to help them understand why they’re not seeing
-updates made by others yet.
+```ts
+const unsubscribe = room.subscribe("lost-connection", (event) => {
+  // "lost"
+  console.log(event);
+});
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="unsubscribe" type="() => void">
+    Unsubscribe function. Call it to cancel the subscription.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="eventType" type={`"lost-connection"`} required>
+    Listen to lost connection events.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="callback"
+    detailedType={`(event: "lost" | "restored" | "failed") => void`}
+    required
+  >
+    <div className="-mb-3">
+    Function that’s called when a room’s lost connection event has been triggered. It can return one of three values:
+    </div>
+
+    - `"lost"` A connection has been lost for longer than [`lostConnectionTimeout`][].
+    - `"restored"` The connection has been restored again.
+    - `"failed"` The room has been unable to reconnect again, and is no longer trying. This may happen if a user’s
+    network has recovered, but the room’s authentication values no longer allow them to enter.
+
+  </PropertiesListItem>
+</PropertiesList>
+
+#### When to use lost connection events [#when-to-use-lost-connection-events]
+
+Lost connections events allows you to build high-quality UIs by warning your
+users that the application is still trying to re-establish the connection, for
+example through a toast notification. You may want to take extra care in the
+mean time to ensure their changes won’t go unsaved, or to help them understand
+why they’re not seeing updates made by others yet.
 
 When this happens, this callback is called with the event `lost`. Then, once the
 connection restores, the callback will be called with the value `restored`. If
 the connection could definitively not be restored, it will be called with
 `failed` (uncommon).
-
-The [`lostConnectionTimeout`][] configuration option will determine how quickly
-this event will fire after a connection loss (default: 5 seconds).
 
 ```ts
 import { toast } from "my-preferred-toast-library";
@@ -752,6 +1767,23 @@ const unsubscribe = room.subscribe("lost-connection", (event) => {
 });
 ```
 
+#### Setting lost connection timeout [#setting-lost-connection-timeout]
+
+The [`lostConnectionTimeout`][] configuration option will determine how quickly
+the event triggers after a connection loss occurs. By default, it’s set to
+`5000`ms, which is 5 seconds.
+
+```ts
+import { createClient } from "@liveblocks/client";
+
+const client = createClient({
+  // Throw lost-connection event after 5 seconds offline
+  lostConnectionTimeout: 5000,
+
+  // ...
+});
+```
+
 ### Room.subscribe("connection") [#Room.subscribe.connection]
 
 <Banner title="Deprecated since 1.1" type="warning">
@@ -761,11 +1793,9 @@ recommend switching to [`Room.subscribe("status")`][] instead.
 
 </Banner>
 
-Subscribe to our legacy WebSocket connection status updates.
-
-Takes a callback that is called when the connection status changes.
-
-Returns an unsubscribe function.
+Subscribe to our legacy WebSocket connection status updates. Takes a callback
+that is called when the connection status changes. Returns an unsubscribe
+function.
 
 ```ts
 const unsubscribe = room.subscribe("connection", (status) => {
@@ -776,9 +1806,9 @@ const unsubscribe = room.subscribe("connection", (status) => {
 ### Room.subscribe("error") [#Room.subscribe.error]
 
 Subscribe to unrecoverable room connection errors. This event will be emitted
-right before the client disconnects and won’t try reconnecting again.
-
-Returns an unsubscribe function.
+immediately before the client disconnects and won’t try reconnecting again.
+Returns an unsubscribe function. If you’d like to retry connecting, call
+[`room.reconnect`][].
 
 ```ts
 const unsubscribe = room.subscribe("error", (error) => {
@@ -807,14 +1837,70 @@ const unsubscribe = room.subscribe("error", (error) => {
 });
 ```
 
-You can use this event to trigger a “Not allowed” screen/dialog. If you’d like
-to retry connecting, call `room.reconnect()`.
+<PropertiesList title="Returns">
+  <PropertiesListItem name="unsubscribe" type="() => void">
+    Unsubscribe function. Call it to cancel the subscription.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="eventType" type={`"error"`} required>
+    Listen to error events.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="callback"
+    detailedType={`(error: LiveblocksError) => void`}
+    required
+  >
+    <div className="-mb-3">
+    Function that’s called when an unrecoverable error event has been triggered. `error.code` can return one of these
+    values:
+    </div>
+
+    - `-1` Authentication error.
+    - `4001` Could not connect because you don't have access to this room.
+    - `4005` Could not connect because room was full.
+    - `4006` The room ID has changed.
+
+  </PropertiesListItem>
+</PropertiesList>
+
+#### When to use error events
+
+You can use this event to trigger a “Not allowed” screen/dialog. It can also be
+helpful for implementing a redirect to another page.
+
+```ts
+const unsubscribe = room.subscribe("error", (error) => {
+  // Could not connect because you don't have access to this room
+  if (error.code === 4001)
+    return __displayForbiddenEntryDialog__();
+  }
+});
+```
+
+#### When a room ID has changed
+
+When a room ID has been changed with
+[`liveblocks.updateRoomId`](/docs/api-reference/liveblocks-node#post-rooms-update-roomId)
+or the
+[Update Room ID API](/docs/api-reference/rest-api-endpoints#post-rooms-update-roomId),
+`error.message` will contain the new room ID.
+
+```ts
+const unsubscribe = room.subscribe("error", (error) => {
+  // The room ID has changed, get the new room ID
+  if (error.code === 4006)
+    const newRoomId = error.message;
+    return __redirect__(`/app/${newRoomId}`)
+  }
+});
+```
 
 ### Room.subscribe("history") [#Room.subscribe.history]
 
-Subscribe to the current user’s history changes.
-
-Returns an unsubscribe function.
+Subscribe to the current user’s history changes. Returns an unsubscribe
+function.
 
 ```ts
 const unsubscribe = room.subscribe("history", ({ canUndo, canRedo }) => {
@@ -822,111 +1908,293 @@ const unsubscribe = room.subscribe("history", ({ canUndo, canRedo }) => {
 });
 ```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem name="unsubscribe" type="() => void">
+    Unsubscribe function. Call it to cancel the subscription.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="eventType" type={`"history"`} required>
+    Listen to history events.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="callback"
+    detailedType={`({ canUndo: boolean, canRedo: boolean }) => void`}
+    required
+  >
+    Function that’s called when the current user’s history changes. Returns
+    booleans that describe whether the user can use
+    [undo](/docs/api-reference/liveblocks-client#Room.history.undo) or
+    [redo](/docs/api-reference/liveblocks-client#Room.history.redo).
+  </PropertiesListItem>
+</PropertiesList>
+
 ### Room.subscribe("storage-status") [#Room.subscribe.storage-status]
 
-Subscribe to storage status changes.
+Subscribe to Storage status changes. Use this to tell whether Storage has been
+synchronized with the Liveblocks servers. Returns an unsubscribe function.
 
-Returns an unsubscribe function.
-
-```typescript
+```ts
 const unsubscribe = room.subscribe("storage-status", (status) => {
   switch (status) {
     case "not-loaded":
+      // Storage has not been loaded yet
       break;
     case "loading":
+      // Storage is currently loading
       break;
     case "synchronizing":
+      // Local Storage changes are being synchronized
       break;
     case "synchronized":
-      break;
-    default:
+      // Local Storage changes have been synchronized
       break;
   }
 });
 ```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem name="unsubscribe" type="() => void">
+    Unsubscribe function. Call it to cancel the subscription.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="eventType" type={`"storage-status"`} required>
+    Listen to Storage status events.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="callback"
+    detailedType={`(status: "not-loaded" | "loading" | "synchronizing" | "synchronized") => void`}
+    required
+  >
+    <div className="-mb-3">
+    Function that’s called when the current user’s Storage updated status have
+    changed. `status` can be one of four types.
+    </div>
+
+    - `"not-loaded` - Storage has not been loaded yet as [`getStorage`][] has not been called.
+    - `"loading"` - Storage is currently loading for the first time.
+    - `"synchronizing"` - Local Storage changes are currently being synchronized.
+    - `"synchronized"` - Local Storage changes have been synchronized
+
+  </PropertiesListItem>
+</PropertiesList>
+
 ### Room.batch
 
 Batches Storage and Presence modifications made during the given function. Each
 modification is grouped together, which means that other clients receive the
-changes as a single message after the batch function has run. Every modification
-made during the batch is merged into a single history item (undo/redo).
+changes as a single message after the batch function has run. When undoing or
+redoing these changes, the entire batch will be undone/redone together instead
+of atomically.
 
 ```ts
 const { root } = await room.getStorage();
+
 room.batch(() => {
   root.set("x", 0);
   room.updatePresence({ cursor: { x: 100, y: 100 } });
 });
 ```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem name="return" type="T">
+    Returns the return value from the callback.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="callback" type="() => T" required>
+    A callback containing every Storage and Presence notification that will be
+    part of the batch. Cannot be an `async` function.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### When to batch updates
+
+For the most part, _you don’t need to batch updates_. For example, given a
+[whiteboard application](/examples/browse/whiteboard), it’s perfectly fine to
+update a note’s position on the board multiple times per second, in separate
+updates. However, should you implement a “Delete all” button, that may delete 50
+notes at once, this is where you should use a batch.
+
+```ts
+const { root } = await room.getStorage();
+const notes = root.get("notes");
+
+// ✅ Batch simultaneous changes together
+room.batch(() => {
+  for (const noteId of notes.keys()) {
+    notes.delete(noteId);
+  }
+});
+```
+
+This batch places each
+[`LiveMap.delete`](/docs/api-reference/liveblocks-client#LiveMap.delete) call
+into a single WebSocket update, instead of sending multiple updates. This will
+be much quicker.
+
+#### Batching groups history changes
+
+Batching changes will also group changes into a single history state.
+
+```ts
+const { root } = await room.getStorage();
+const pet = root.set("pet", new LiveObject({ name: "Fido", age: 5 }));
+
+// ✅ Batch groups changes into one
+room.batch(() => {
+  pet.set("name", "Felix");
+  pet.set("age", 10);
+});
+
+// { name: "Felix", age: 10 }
+pet.toImmutable();
+
+room.history.undo();
+
+// { name: "Fido", age: 5 }
+pet.toImmutable();
+```
+
+#### Doesn’t work with async functions
+
 Note that `room.batch` cannot take an `async` function.
 
 ```tsx
 // ❌ Won't work
-room.batch(async () => /* ... */);
+room.batch(async () => {
+  // ...
+});
 
 // ✅ Will work
-room.batch(() => /*... */);
+room.batch(() => {
+  // ...
+});
 ```
 
 ### Room.history
 
-Room’s history contains functions that let you undo and redo operation made on
-by the current client on the presence and storage.
+Room’s history contains functions that let you undo and redo operations made to
+Storage and Presence on the current client. Each user has a separate history
+stored in memory, and history is reset when the page is reloaded.
 
 ```ts
-const { undo, redo, pause, resume } = room.history;
+const { undo, redo, pause, resume /*, ... */ } = room.history;
+```
+
+<Banner title="History in Yjs">
+
+Note that to undo or redo in Yjs, you must use a separate history manager,
+[`Y.UndoManager`](https://docs.yjs.dev/api/undo-manager).
+
+</Banner>
+
+#### Add Presence to history
+
+By default, history is only enabled for Storage. However, you can use the
+`addToHistory` option to additionally
+[add Presence state to history](/docs/api-reference/liveblocks-client#add-presence-to-history).
+
+```tsx
+room.updatePresence({ color: "blue" }, { addToHistory: true });
 ```
 
 ### Room.history.undo
 
-Undoes the last operation executed by the current client. It does not impact
-operations made by other clients.
+Reverts the last operation. It does not impact operations made by other clients,
+and will only undo changes made by the current client.
 
 ```ts
-room.updatePresence({ selectedId: "xxx" }, { addToHistory: true });
-room.updatePresence({ selectedId: "yyy" }, { addToHistory: true });
+const person = new LiveObject();
+person.set("name", "Pierre");
+person.set("name", "Jonathan");
+
 room.history.undo();
-// room.getPresence() equals { selectedId: "xxx" }
+
+// "Pierre"
+root.get("name");
 ```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### Room.history.redo
 
-Redoes the last operation executed by the current client. It does not impact
-operations made by other clients.
+Restores the last undone operation. It does not impact operations made by other
+clients, and will only restore changes made by the current client.
 
 ```ts
-room.updatePresence({ selectedId: "xxx" }, { addToHistory: true });
-room.updatePresence({ selectedId: "yyy" }, { addToHistory: true });
+const person = new LiveObject();
+person.set("name", "Pierre");
+person.set("name", "Jonathan");
+
 room.history.undo();
-// room.getPresence() equals { selectedId: "xxx" }
 room.history.redo();
-// room.getPresence() equals { selectedId: "yyy" }
+
+// "Jonathan"
+root.get("name");
 ```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### Room.history.canUndo
 
-Returns whether there are any operations to undo.
+Returns true or false, depending on whether there are any operations to undo.
+Helpful for disabling undo buttons.
 
 ```ts
-room.updatePresence({ selectedId: "xx" }, { addToHistory: true });
-// room.history.canUndo() is true
+const person = new LiveObject();
+person.set("name", "Pierre");
+
+// true
+room.history.canUndo();
+
 room.history.undo();
-// room.history.canUndo() is false
+
+// false
+room.history.canUndo();
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="canUndo" type="boolean">
+    Whether there is an undo operation in the current history stack.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### Room.history.canRedo
 
-Returns whether there are any operations to redo.
+Returns true or false, depending on whether there are any operations to redo.
+Helpful for disabling redo buttons.
 
 ```ts
-room.updatePresence({ selectedId: "xx" }, { addToHistory: true });
+const person = new LiveObject();
+person.set("name", "Pierre");
+
+// false
+room.history.canRedo();
+
 room.history.undo();
-// room.history.canRedo() is true
-room.history.redo();
-// room.history.canRedo() is false
+
+// true
+room.history.canRedo();
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="canRedo" type="boolean">
+    Whether there is a redo operation in the current history stack.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### Room.history.clear
 
@@ -935,11 +2203,21 @@ history resets the ability to undo beyond the current document state. Other
 clients’ histories are unaffected.
 
 ```ts
-room.updatePresence({ selectedId: "xx" }, { addToHistory: true });
-// room.history.canUndo() is true
+const person = new LiveObject();
+person.set("name", "Pierre");
+
+// true
+room.history.canUndo();
+
 room.history.clear();
-// room.history.canUndo() is false
+
+// false
+room.history.canUndo();
 ```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### Room.history.pause
 
@@ -947,54 +2225,59 @@ All future modifications made on the Room will be merged together to create a
 single history item until resume is called.
 
 ```ts
-room.updatePresence({ cursor: { x: 0, y: 0 } }, { addToHistory: true });
+const info = new LiveObject({ time: "one" });
+
 room.history.pause();
-room.updatePresence({ cursor: { x: 1, y: 1 } }, { addToHistory: true });
-room.updatePresence({ cursor: { x: 2, y: 2 } }, { addToHistory: true });
+info.set("time", "two");
+info.set("time", "three");
 room.history.resume();
+
 room.history.undo();
-// room.getPresence() equals { cursor: { x: 0, y: 0 } }
+
+// "one"
+room.get("time");
 ```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### Room.history.resume
 
-Resumes history. Modifications made on the Room are not merged into a single
-history item anymore.
+Resumes history after a [pause](#Room.history.pause). Modifications made on the
+Room are not merged into a single history item any more.
 
 ```ts
-room.updatePresence({ cursor: { x: 0, y: 0 } }, { addToHistory: true });
+const info = new LiveObject({ time: "one" });
+
 room.history.pause();
-room.updatePresence({ cursor: { x: 1, y: 1 } }, { addToHistory: true });
-room.updatePresence({ cursor: { x: 2, y: 2 } }, { addToHistory: true });
+info.set("time", "two");
+info.set("time", "three");
 room.history.resume();
+
 room.history.undo();
-// room.getPresence() equals { cursor: { x: 0, y: 0 } }
+
+// "one"
+room.get("time");
 ```
 
-### Room.getStorageStatus
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
 
-Get the storage status.
-
-- `not-loaded`: Initial state when entering the room.
-- `loading`: Once the storage has been requested via room.getStorage().
-- `synchronizing`: When some local updates have not been acknowledged by
-  Liveblocks servers.
-- `synchronized`: Storage is in sync with Liveblocks servers.
-
-```ts
-const status = room.getStorageStatus();
-```
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### Room.connect
 
 Connect the local room instance to the Liveblocks server. Does nothing if the
-room is already connecting, reconnecting or connected.
+room is already connecting, reconnecting or connected. We don’t recommend using
+this API directly.
 
 ```ts
 room.connect();
 ```
 
-We don’t recommend using this API directly.
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### Room.reconnect
 
@@ -1005,38 +2288,45 @@ WebSocket connection.
 room.reconnect();
 ```
 
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
 ### Room.disconnect
 
 Disconnect the local room instance from the Liveblocks server. The room instance
 will remain functional (for example, it will still allow local presence or
 storage mutations), but since it’s no longer connected, changes will not be
-persisted or synchronized until the room instance is reconnected again.
+persisted or synchronized until the room instance is reconnected again. We don’t
+recommend using this API directly.
 
 ```ts
 room.disconnect();
 ```
 
-We don’t recommend using this API directly.
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ## Storage
 
-<Banner title="Need help troubleshooting storage?">
+Each room contains Storage, a conflict-free data store that multiple users can
+edit at the same time. When users make edits simultaneously, conflicts are
+resolved automatically, and each user will see the same state. Storage is ideal
+for storing permanent document state, such as shapes on a canvas, notes on a
+whiteboard, or cells in a spreadsheet.
 
-Try the [Liveblocks DevTools extension](/devtools) to visualize your
-collaborative experiences as you build them, in real-time.
+### Data structures
 
-</Banner>
-
-The room’s storage is a conflicts-free state that multiple users can edit at the
-same time. It persists even after everyone leaves the room. Liveblocks provides
-3 data structures that can be nested to create the state that you want.
+Storage provides three different conflict-free data structures, which you can
+use to build your application. All structures are permanent and persist when all
+users have left the room, unlike [Presence](/docs/products/presence) which is
+temporary.
 
 - [`LiveObject`][] - Similar to JavaScript object. Use this for storing records
   with fixed key names and where the values don’t necessarily have the same
-  types. For example, a `Person` with a `name` (string) and an `age` (number)
-  field.
-
-  If multiple clients update the same property simultaneously, the last
+  types. For example, a `Person` with a `name: string` and an `age: number`
+  field. If multiple clients update the same property simultaneously, the last
   modification received by the Liveblocks servers is the winner.
 
 - [`LiveList`][] - An ordered collection of items synchronized across clients.
@@ -1048,41 +2338,151 @@ same time. It persists even after everyone leaves the room. Liveblocks provides
   by their name. If multiple users update the same property simultaneously, the
   last modification received by the Liveblocks servers is the winner.
 
+### Typing Storage [#typing-storage]
+
+To type the Storage values you receive, make sure to set your `Storage` type.
+
+```ts
+import { LiveList } from "@liveblocks/client";
+
+type Storage = {
+  animals: LiveList<{ name: string }>;
+};
+```
+
+The type received in the callback will match the type passed. Learn more under
+[typing your room](#typing-your-room).
+
+```ts
+const { root } = await room.getStorage();
+const animals = root.get("animals");
+
+const unsubscribe = room.subscribe(animals, (updatedAnimals) => {
+  // LiveList<[{ name: "Fido" }, { name: "Felix" }]>
+  console.log(updatedAnimals);
+});
+```
+
+### Nesting data structures
+
+All Storage data structures can be nested, allowing you to create complex trees
+of conflict-free data.
+
+```ts
+import { LiveObject, LiveList, LiveMap } from "@liveblocks/client";
+
+type Person = LiveObject<{
+  name: string;
+  pets: LiveList<string>;
+}>;
+
+type Storage = {
+  people: LiveMap<string, Person>;
+};
+```
+
+```ts
+import { LiveObject, LiveList, LiveMap } from "@liveblocks/client";
+
+const pets = new LiveList(["Cat", "Dog"]);
+const person = new LiveObject({ name: "Alicia", pets });
+const people = new LiveMap();
+people.set("alicia", person);
+
+const { root } = await room.getStorage();
+root.set(people);
+```
+
+<Banner title="Need help troubleshooting Storage?">
+
+Get the [Liveblocks DevTools extension](/devtools) to develop and debug your
+application as you build it.
+
+</Banner>
+
 ### Room.getStorage
 
-Get the room’s storage asynchronously (returns a Promise). The promise will
-resolve once the storage’s root is loaded and available.
-
-The storage’s root will always be a [`LiveObject`][].
+Get the room’s Storage asynchronously (returns a Promise). The promise will
+resolve once the Storage’s root is loaded and available. The Storage’s root is
+always a [`LiveObject`][].
 
 ```ts
 const { root } = await room.getStorage();
 ```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem name="storage" type="{ root: LiveObject<TStorage> }">
+    The room’s Storage structures. `root` is a `LiveObject`, and is the root of
+    your Storage. Learn more about [typing Storage](#typing-storage).
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
 ## LiveObject
 
 The `LiveObject` class is similar to a JavaScript object that is synchronized on
 all clients. Use this for storing records with fixed key names and where the
-values don’t necessarily have the same types. For example, a Person with a
-`name` (string) and an `age` (number) field.
+values don’t necessarily have the same types. For example, a `Person` with
+`name` and `age` fields. To add typing, read more under
+[typing Storage](#typing-storage).
 
-Keys should be strings, and values should be serializable to JSON.
+```ts
+type Person = LiveObject<{
+  name: string;
+  age: number;
+}>;
+```
 
-If multiple clients update the same property simultaneously, the last
-modification received by the Liveblocks servers is the winner.
+Keys are strings, and values can contain other Storage structures, or
+JSON-serializable data. If multiple clients update the same property
+simultaneously, the last modification received by the Liveblocks servers is the
+winner.
 
 ### new LiveObject [#LiveObject.constructor]
 
 Create an empty `LiveObject`
 
 ```ts
+import { LiveObject } from "@liveblocks/client";
+
 const object = new LiveObject();
 ```
 
 Create a `LiveObject` with initial data.
 
 ```ts
+import { LiveObject } from "@liveblocks/client";
+
 const object = new LiveObject({ firstName: "Margaret", lastName: "Hamilton" });
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="LiveObject" type="LiveObject<L>">
+    The newly created `LiveObject`.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="initialValue" type="L extends LsonObject" required>
+    The initial value for the `LiveObject`. Can contain JSON-serializable data
+    and other Liveblocks conflict-free data structures.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Add a LiveObject to Storage
+
+The Storage root is `LiveObject` itself, so you can use [`LiveObject.set`]() to
+add a new property to your root. If you’ve [typed Storage](#typing-storage)
+you’ll have type hints as you build.
+
+```ts
+import { LiveObject } from "@liveblocks/client";
+
+const { root } = await room.getStorage();
+
+const person = new LiveObject({ name: "Alicia" });
+root.set("person", person);
 ```
 
 ### delete [#LiveObject.delete]
@@ -1092,17 +2492,42 @@ Delete a property from the `LiveObject`
 ```ts
 const object = new LiveObject({ firstName: "Ada", lastName: "Lovelace" });
 object.delete("lastName");
-object.toObject(); // equals to { firstName: "Ada" }
+
+// { firstName: "Ada" }
+object.toImmutable();
 ```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="key" type="string" required>
+    The key of the property you’re deleting. If the property doesn’t exist,
+    nothing will occur.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### get [#LiveObject.get]
 
-Get a property from the `LiveObject`
+Get a property from the `LiveObject`.
 
 ```ts
 const object = new LiveObject({ firstName: "Ada", lastName: "Lovelace" });
-object.get("firstName"); // equals to "Ada"
+
+// "Ada"
+object.get("firstName");
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="value">
+    The value of the property. Returns `undefined` if it doesn’t exist.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="key" type="string" required>
+    The key of the property you’re getting.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### set [#LiveObject.set]
 
@@ -1111,16 +2536,94 @@ Adds or updates a property with the specified key and a value.
 ```ts
 const object = new LiveObject({ firstName: "Marie" });
 object.set("lastName", "Curie");
+
+// { firstName: "Ada", lastName: "Curie" }
+object.toImmutable();
 ```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="key" type="string" required>
+    The key of the property you’re setting.
+  </PropertiesListItem>
+  <PropertiesListItem name="value" type="LsonObject" required>
+    The value of the property you’re setting. Can contain JSON-serializable data
+    and other Liveblocks conflict-free data structures.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### update [#LiveObject.update]
 
-Adds or updates multiple properties at once.
+Adds or updates multiple properties at once. Nested changes to other Storage
+types will not be applied.
 
 ```ts
-const object = new LiveObject({ firstName: "Grace", lastName: "Hopper" });
-object.update({ job: "Computer Scientist", birthDate: "December 9, 1906" });
+const object = new LiveObject({ firstName: "Grace" });
+object.update({ lastName: "Hopper", job: "Computer Scientist" });
+
+// { firstName: "Grace", lastName: "Hopper", job: "Computer Scientist" }
+object.toImmutable();
 ```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="value" type="LsonObject" required>
+    The keys and values you’re updating. Can contain JSON-serializable data and
+    other Liveblocks conflict-free data structures. Nested changes to other
+    Storage types will not be applied.
+  </PropertiesListItem>
+</PropertiesList>
+
+### clone [#LiveObject.clone]
+
+Returns a deep copy of the `LiveObject` that can be inserted elsewhere in the
+Storage tree.
+
+```ts
+const obj = new LiveObject(/* ... */);
+root.set("a", obj);
+root.set("b", obj.clone());
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="clonedStructure" type="LiveObject">
+    The cloned `LiveObject`.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+### toImmutable [#LiveObject.toImmutable]
+
+Returns an immutable JavaScript object that is equivalent to the `LiveObject`.
+Nested values will also be immutable.
+
+```ts
+const liveObject = new LiveObject({
+  firstName: "Grace",
+  lastName: "Hopper",
+  hobbies: new LiveList(["reading", "piano"]),
+});
+
+// {
+//   firstName: "Grace",
+//   lastName: "Hopper",
+//   hobbies: ["reading", "piano"]
+// }
+liveObject.toImmutable();
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="immutableStructure" type="object">
+    Returns a JavaScript object in the shape of your data structure.
+    `LiveObject` is converted to an object, `LiveMap` to a map, and `LiveList`
+    to an array.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### toObject [#LiveObject.toObject]
 
@@ -1150,47 +2653,22 @@ liveObject.toObject();
 // { animals: <LiveList instance> } // ❗️
 ```
 
-### toImmutable [#LiveObject.toImmutable]
-
-Returns an immutable JavaScript object that is equivalent to the `LiveObject`.
-Nested values will also be immutable.
-
-```ts
-const liveObject = new LiveObject({
-  firstName: "Grace",
-  lastName: "Hopper",
-  hobbies: new LiveList(["needlepoint", "reading", "playing piano"]),
-});
-liveObject.toImmutable();
-// {
-//   firstName: "Grace",
-//   lastName: "Hopper",
-//   hobbies: ["needlepoint", "reading", "playing piano"]
-// }
-```
-
-### clone [#LiveObject.clone]
-
-Returns a deep copy of the `LiveObject` that can be inserted elsewhere in the
-Storage tree.
-
-```ts
-const obj = new LiveObject(/* ... */);
-root.set("a", obj);
-root.set("b", obj.clone());
-```
-
 ## LiveMap
 
 The `LiveMap` class is similar to a
 [JavaScript Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map)
-that is synchronized on all clients.
+that is synchronized on all clients. Use this for indexing values that all have
+the same structure. For example, to store an index of `Person` values by their
+name. To add typing, read more under [typing Storage](#typing-storage).
 
-Use this for indexing values that all have the same structure. For example, to
-store an index of `Person` values by their name. Keys should be strings, and
-values should be serializable to JSON. If multiple clients update the same
-property simultaneously, the last modification received by the Liveblocks
-servers is the winner.
+```ts
+type Shapes = LiveMap<string, LiveObject<{ name: string }>>;
+```
+
+Keys are strings, and values can contain other Storage structures, or
+JSON-serializable data. If multiple clients update the same property
+simultaneously, the last modification received by the Liveblocks servers is the
+winner.
 
 ### new LiveMap [#LiveMap.constructor]
 
@@ -1204,9 +2682,45 @@ Create a `LiveMap` with initial data.
 
 ```ts
 const map = new LiveMap([
-  ["keyA", "valueA"],
-  ["keyB", "valueB"],
+  ["nimesh", "developer"],
+  ["pierre", "designer"],
 ]);
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="LiveMap" type="LiveMap<string, L>">
+    The newly created `LiveMap`.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem
+    name="initialValue"
+    type="[string, L extends LsonObject][]"
+    required
+  >
+    The initial value for the `LiveMap`. An array of tuples, each containing a
+    key and a value. The values can contain JSON-serializable data and other
+    Liveblocks conflict-free data structures.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Add a LiveMap to Storage
+
+The Storage root is a `LiveObject`, so you can create a new `LiveMap` then use
+[`LiveObject.set`]() to add it to your root. If you’ve
+[typed Storage](#typing-storage) you’ll have type hints as you build.
+
+```ts
+import { LiveMap } from "@liveblocks/client";
+
+const { root } = await room.getStorage();
+
+const people = new LiveMap([
+  ["vincent", "engineer"],
+  ["marc", "designer"],
+]);
+root.set("people", people);
 ```
 
 ### delete [#LiveMap.delete]
@@ -1216,13 +2730,29 @@ been removed, or false if the element does not exist.
 
 ```ts
 const map = new LiveMap([
-  ["keyA", "valueA"],
-  ["keyB", "valueB"],
+  ["nimesh", "developer"],
+  ["pierre", "designer"],
 ]);
-map.delete("keyA"); // equals true
-map.get("keyA"); // equals undefined
-map.delete("unknownKey"); // equals false
+
+// true
+map.delete("nimesh");
+
+// Map { "pierre" => "designer" }
+map.toImmutable();
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="deleted" type="boolean">
+    If the element existed and was removed.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="key" type="string" required>
+    The key of the element you’re deleting. If the element doesn’t exist,
+    nothing will occur.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### entries [#LiveMap.entries]
 
@@ -1243,32 +2773,72 @@ enable the <code>--downlevelIteration</code> option to use this API.
 
 </Banner>
 
+<PropertiesList title="Returns">
+  <PropertiesListItem name="iterator" type="IterableIterator<[string, L]>">
+    A new Iterator object for the `LiveMap`, containing the `[key, value]` pairs
+    for each element.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
 ### forEach [#LiveMap.forEach]
 
-Executes a provided function once per each key/value pair in the Map object.
+Executes a provided function once per each key/value pair in the Map object, in
+insertion order.
 
 ```ts
 const map = new LiveMap([
-  ["keyA", "valueA"],
-  ["keyB", "valueB"],
+  ["nimesh", "developer"],
+  ["pierre", "designer"],
 ]);
-map.forEach((value, key) => console.log(value));
-// prints to the console "valueA", "valueB"
+
+// "developer", "designer"
+map.forEach((value, key, liveMap) => console.log(value));
 ```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem
+    name="callback"
+    detailedType="(value: L, key: string, map: LiveMap<string, L>) => void"
+    required
+  >
+    A callback for each entry. The callback is passed the current `value`,
+    `key`, and the `LiveMap`. Return values are ignored.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### get [#LiveMap.get]
 
-Returns a specified element from the LiveMap or undefined if the key can’t be
-found.
+Returns a specified element from the `LiveMap`. Returns `undefined` if the key
+can’t be found.
 
 ```ts
 const map = new LiveMap([
-  ["keyA", "valueA"],
-  ["keyB", "valueB"],
+  ["nimesh", "developer"],
+  ["pierre", "designer"],
 ]);
-map.get("keyA"); // equals "valueA"
-map.get("unknownKey"); // equals undefined
+
+// "developer"
+map.get("nimesh");
+
+// undefined
+map.get("alicia");
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="value" type="L | undefined">
+    The value of the entry. Returns `undefined` if it doesn’t exist.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="key" type="string" required>
+    The key of the entry you’re getting.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### has [#LiveMap.has]
 
@@ -1277,12 +2847,28 @@ not.
 
 ```ts
 const map = new LiveMap([
-  ["keyA", "valueA"],
-  ["keyB", "valueB"],
+  ["nimesh", "developer"],
+  ["pierre", "designer"],
 ]);
-map.has("keyA"); // equals true
-map.has("unknownKey"); // equals false
+
+// true
+map.has("nimesh");
+
+// false
+map.has("alicia");
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="exists" type="boolean">
+    Whether the entry exists.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="key" type="string" required>
+    The key of the entry you’re getting.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### keys [#LiveMap.keys]
 
@@ -1303,14 +2889,37 @@ enable the <code>--downlevelIteration</code> option to use this API.
 
 </Banner>
 
+<PropertiesList title="Returns">
+  <PropertiesListItem name="iterator" type="IterableIterator<string>">
+    A new Iterator object for the `LiveMap`, containing the keys of each entry.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
 ### set [#LiveMap.set]
 
 Adds or updates an element with a specified key and a value.
 
 ```ts
 const map = new LiveMap();
-map.set("keyA", "valueA");
+map.set("vincent", "engineer");
+
+// Map { "vincent" => "engineer" }
+map.toImmutable();
 ```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="key" type="string" required>
+    The key of the entry you’re setting.
+  </PropertiesListItem>
+  <PropertiesListItem name="value" type="LsonObject" required>
+    The value of the entry you’re setting. Can contain JSON-serializable data
+    and other Liveblocks conflict-free data structures.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### size [#LiveMap.size]
 
@@ -1318,11 +2927,23 @@ Returns the number of elements in the `LiveMap`.
 
 ```ts
 const map = new LiveMap([
-  ["keyA", "valueA"],
-  ["keyB", "valueB"],
+  ["nimesh", "developer"],
+  ["pierre", "designer"],
 ]);
-map.size; // equals 2
+
+// 2
+map.size;
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="size" type="number">
+    The number of entries in the `LiveMap`
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem>_N/A_</PropertiesListItem>
+</PropertiesList>
 
 ### values [#LiveMap.values]
 
@@ -1343,23 +2964,14 @@ enable the <code>--downlevelIteration</code> option to use this API.
 
 </Banner>
 
-### toImmutable [#LiveMap.toImmutable]
+<PropertiesList title="Returns">
+  <PropertiesListItem name="iterator" type="IterableIterator<L>">
+    A new Iterator object for the `LiveMap`, containing the values of each
+    entry.
+  </PropertiesListItem>
+</PropertiesList>
 
-Returns an immutable ES6 Map that is equivalent to the `LiveMap`. Nested values
-will also be immutable.
-
-```ts
-const map = new LiveMap([
-  ["abc", new LiveObject({ firstName: "Grace", lastName: "Hopper" })],
-  ["pqr", new LiveObject({ firstName: "Ada", lastName: "Lovelace" })],
-]);
-map.toImmutable();
-// equal to:
-// Map(2) {
-//   'abc' => { firstName: 'Grace', lastName: 'Hopper' },
-//   'pqr' => { firstName: 'Ada', lastName: 'Lovelace' }
-// }
-```
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### clone [#LiveMap.clone]
 
@@ -1372,11 +2984,53 @@ root.set("a", map);
 root.set("b", map.clone());
 ```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem name="clonedStructure" type="LiveMap">
+    The cloned `LiveMap`.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+### toImmutable [#LiveMap.toImmutable]
+
+Returns an immutable ES6 Map that is equivalent to the `LiveMap`. Nested values
+will also be immutable.
+
+```ts
+const map = new LiveMap([
+  ["florent", new LiveObject({ role: "engineer" })],
+  ["marc", new LiveObject({ role: "designer" })],
+]);
+
+// Map {
+//   "florent" => { role: "engineer" },
+//   "marc" => { role: "designer" },
+// }
+map.toImmutable();
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="immutableStructure" type="object">
+    Returns a JavaScript object in the shape of your data structure. `LiveMap`
+    is converted to a map, `LiveObject` to an object, and `LiveList` to an
+    array.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
 ## LiveList
 
 The `LiveList` class represents an ordered collection of items that is
-synchorinized across clients. Items should be serializable to JSON or another
-Live data type.
+synchronized across clients. To add typing, read more under
+[typing Storage](#typing-storage).
+
+```ts
+type Names = LiveList<string>;
+```
+
+Items can contain other Storage structures, or JSON-serializable data.
 
 ### new LiveList [#LiveList.constructor]
 
@@ -1389,28 +3043,63 @@ const list = new LiveList();
 Create a `LiveList` with initial data.
 
 ```ts
-const list = new LiveList(["🦁", "🦊", "🐵"]);
+const list = new LiveList(["adrien", "jonathan"]);
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="LiveList" type="LiveList<L>">
+    The newly created `LiveList`.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem
+    name="initialValue"
+    type="Array<L extends LsonObject>"
+    required
+  >
+    The initial array of values for the `LiveList`. Can contain
+    JSON-serializable data and other Liveblocks conflict-free data structures.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### clear [#LiveList.clear]
 
 Removes all the elements.
 
 ```ts
-const list = new LiveList(["🦁", "🦊", "🐵"]);
+const list = new LiveList(["adrien", "jonathan"]);
 list.clear();
-list.toArray(); // equals []
+
+// []
+list.toImmutable();
 ```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### delete [#LiveList.delete]
 
-Deletes an element at the specified index.
+Deletes an element at the specified index. If the index doesn’t exist, an
+`Error` is thrown.
 
 ```ts
-const list = new LiveList(["🦁", "🦊", "🐵"]);
+const list = new LiveList(["adrien", "jonathan"]);
 list.delete(1);
-list.toArray(); // equals ["🦁", "🐵"]
+
+// ["adrien"]
+list.toImmutable();
 ```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="index" type="number" required>
+    The index of the property you’re deleting. If the property doesn’t exist, an
+    `Error` is thrown.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### every [#LiveList.every]
 
@@ -1420,10 +3109,33 @@ Otherwise, false.
 
 ```ts
 const list = new LiveList([0, 2, 4]);
-list.every((i) => i % 2 === 0); // equals true
+
+// true
+list.every((i) => i % 2 === 0);
+
 list.push(5);
-list.every((i) => i % 2 === 0); // equals false
+
+// false
+list.every((i) => i % 2 === 0);
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="isEvery" type="boolean">
+    Whether all elements pass the test implemented by the provided function.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem
+    name="callback"
+    type="(value: L, index: number) => unknown"
+    required
+  >
+    A function to execute for each item in the array. It should return a truthy
+    value to indicate the element passes the test, and a falsy value otherwise.
+    The function is passed the `value` of the item and its current `index`.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### filter [#LiveList.filter]
 
@@ -1432,87 +3144,246 @@ provided function.
 
 ```ts
 const list = new LiveList([0, 1, 2, 3, 4]);
-list.filter((i) => i % 2 === 0); // equals [0, 2, 4]
+
+// [0, 2, 4]
+list.filter((i) => i % 2 === 0);
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="filteredArray" type="L[]">
+    An array containing each item of the `LiveList` that passed the test
+    implemented by the provided function.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem
+    name="callback"
+    type="(value: L, index: number) => unknown"
+    required
+  >
+    A function to execute for each item in the array. It should return a truthy
+    value to indicate the element passes the test, and a falsy value otherwise.
+    The function is passed the `value` of the item and its current `index`.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### find [#LiveList.find]
 
-Returns the first element that satisfies the provided testing function.
+Returns the first element that satisfies the provided testing function. If no
+item passes the test, `undefined` is returned.
 
 ```ts
 const list = new LiveList(["apple", "lemon", "tomato"]);
-list.find((fruit) => fruit.startsWith("l")); // equals "lemon"
+
+// "lemon"
+list.find((value, index) => value.startsWith("l"));
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="item" type="L | undefined">
+    The item that has been found. If no item passes the test, `undefined` is
+    returned.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem
+    name="callback"
+    type="(value: L, index: number) => unknown"
+    required
+  >
+    A function to execute for each item in the array. It should return a truthy
+    value to indicate the element passes the test, and a falsy value otherwise.
+    The function is passed the `value` of the item and its current `index`.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### findIndex [#LiveList.findIndex]
 
 Returns the index of the first element in the `LiveList` that satisfies the
-provided testing function.
+provided testing function. If no item passes the test, `-1` is returned.
 
 ```ts
 const list = new LiveList(["apple", "lemon", "tomato"]);
-list.findIndex((fruit) => fruit.startsWith("l")); // equals 1
+
+// 1
+list.findIndex((value, index) => value.startsWith("l"));
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="index" type="number">
+    The index of the item that has been found. If no item passes the test, `-1`
+    is returned.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem
+    name="callback"
+    type="(value: L, index: number) => unknown"
+    required
+  >
+    A function to execute for each item in the array. It should return a truthy
+    value to indicate the element passes the test, and a falsy value otherwise.
+    The function is passed the `value` of the item and its current `index`.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### forEach [#LiveList.forEach]
 
 Executes a provided function once for each element.
 
 ```ts
-const list = new LiveList(["🦁", "🦊", "🐵"]);
-list.forEach((item) => console.log(item)); // prints to the console "🦁", "🦊", "🐵"
+const list = new LiveList(["adrien", "jonathan"]);
+
+// "adrien", "jonathan"
+list.forEach((item) => console.log(item));
 ```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem
+    name="callback"
+    detailedType="(value: L, index: number) => void"
+    required
+  >
+    A callback for each item. The callback is passed the current `value` and
+    `index`. Return values are ignored.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### get [#LiveList.get]
 
-Get the element at the specified index.
+Get the element at the specified index. Returns `undefined` if the index doesn’t
+exist.
 
 ```ts
-const list = new LiveList(["🦁", "🦊", "🐵"]);
-list.get(2); // equals "🐵"
+const list = new LiveList(["adrien", "jonathan"]);
+
+// "jonathan"
+list.get(1);
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="item" type="L | undefined">
+    The value of the item at the index. Returns `undefined` if it doesn’t exist.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="index" type="number" required>
+    The index of the item you’re getting.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### indexOf [#LiveList.indexOf]
 
-Returns the first index at which a given element can be found in the `LiveList`,
-or -1 if it is not present.
+Returns the first index at which a given element can be found in the `LiveList`.
+Returns `-1` if it is not present.
 
 ```ts
-const list = new LiveList(["🦁", "🦊", "🐵"]);
-list.indexOf("🐵"); // equals 2
-list.indexOf("🐺"); // equals -1
+const list = new LiveList(["adrien", "jonathan"]);
+
+// 1
+list.indexOf("jonathan");
+
+// undefined
+list.indexOf("chris");
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="index" type="number">
+    The index of the item. Returns `-1` if it doesn’t exist.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="searchElement" type="L" required>
+    The item you’re locating.
+  </PropertiesListItem>
+  <PropertiesListItem name="index" type="number">
+    The index to start the search at.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### insert [#LiveList.insert]
 
-Inserts one element at a specified index.
+Inserts one element at a specified index. Throws an `Error` if the index is out
+of bounds.
 
 ```ts
-const list = new LiveList(["🦁", "🦊", "🐵"]);
-list.insert("🐺", 1);
-list.toArray(); // equals ["🦁", "🐺", "🦊", "🐵"]
+const list = new LiveList(["adrien", "jonathan"]);
+
+list.insert("chris", 1);
+
+// ["adrien", "chris", "jonathan"]
+list.toImmutable();
 ```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="value" type="L extends LsonObject" required>
+    The value of the item you’re inserting.
+  </PropertiesListItem>
+  <PropertiesListItem name="index" type="number" required>
+    The index to insert the item into.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### lastIndexOf [#LiveList.lastIndexOf]
 
 Returns the last index at which a given element can be found in the `LiveList`,
 or -1 if it is not present. The `LiveList` is searched backwards, starting at
-fromIndex.
+fromIndex. Returns `-1` if it is not present.
 
 ```ts
-const list = new LiveList(["🦁", "🦊", "🐵", "🦊"]);
-list.lastIndexOf("🦊"); // equals 3
-list.lastIndexOf("🐺"); // equals -1
+const list = new LiveList(["adrien", "jonathan", "adrien"]);
+
+// 2
+list.indexOf("adrien");
+
+// undefined
+list.indexOf("chris");
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="index" type="number">
+    The index of the item. Returns `-1` if it doesn’t exist.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="searchElement" type="L" required>
+    The item you’re locating.
+  </PropertiesListItem>
+  <PropertiesListItem name="index" type="number">
+    The index at which to start searching backwards.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### length [#LiveList.length]
 
 Returns the number of elements.
 
 ```ts
-const list = new LiveList(["🦁", "🦊", "🐵"]);
-list.length; // equals 3
+const list = new LiveList(["adrien", "jonathan"]);
+
+// 3
+list.length; // equals
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="length" type="number">
+    The number of items in the `LiveList`.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem>_N/A_</PropertiesListItem>
+</PropertiesList>
 
 ### map [#LiveList.map]
 
@@ -1521,37 +3392,84 @@ every element.
 
 ```ts
 const list = new LiveList(["apple", "lemon", "tomato"]);
-list.map((fruit) => fruit.toUpperCase()); // equals ["APPLE", "LEMON", "TOMATO"]
+
+// ["APPLE", "LEMON", "TOMATO"]
+list.map((value, index) => value.toUpperCase());
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="array">
+    The array of each item has been transformed by the callback function.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem
+    name="callback"
+    detailedType="(value: L, index: number) => void"
+    required
+  >
+    A callback for each item. The callback is passed the current `value` and
+    `index`. Return values are used in the returned array.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### move [#LiveList.move]
 
 Moves one element at a specified index.
 
 ```ts
-const list = new LiveList(["🦁", "🦊", "🐵"]);
-list.move(2, 0); // move the "🐵" at index 0
-list.toArray(); // equals ["🐵", "🦁", "🦊"]
+const list = new LiveList(["adrien", "chris", "jonathan"]);
+
+list.move(2, 0);
+
+// ["jonathan", "adrien", "chris"]
+list.toImmutable();
 ```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="index" type="number" required>
+    The index of the item to move.
+  </PropertiesListItem>
+  <PropertiesListItem name="targetIndex" type="number" required>
+    The index where the element should be after moving.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### push [#LiveList.push]
 
 Adds one element to the end of the `LiveList`.
 
 ```ts
-const list = new LiveList(["🦁", "🦊", "🐵"]);
-list.push("🐺");
-list.toArray(); // equals ["🦁", "🦊", "🐵", "🐺"]
+const list = new LiveList(["adrien", "jonathan"]);
+
+list.push("chris");
+
+// ["adrien", "jonathan", "chris"]
+list.toImmutable();
 ```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="index" type="L" required>
+    The item to add to the end of the `LiveList`.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### set [#LiveList.set]
 
 Replace one element at the specified index.
 
 ```ts
-const list = new LiveList(["🦁", "🦊", "🐵"]);
-list.set(1, "🐺");
-list.toArray(); // equals ["🦁", "🐺", "🐵"]
+const list = new LiveList(["adrien", "jonathan"]);
+
+list.set(1, "chris");
+
+// equals ["adrien", "chris"]
+list.toImmutable();
 ```
 
 ### some [#LiveList.some]
@@ -1561,9 +3479,77 @@ by the provided function.
 
 ```ts
 const list = new LiveList(["apple", "lemon", "tomato"]);
-list.some((fruit) => fruit.startsWith("l")); // equals true
-list.some((fruit) => fruit.startsWith("x")); // equals false
+
+// true
+list.some((value, index) => value.startsWith("l"));
+
+// false
+list.some((value, index) => value.startsWith("x"));
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="areSome" type="boolean">
+    Whether any elements pass the test implemented by the provided function.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem
+    name="callback"
+    type="(value: L, index: number) => unknown"
+    required
+  >
+    A function to execute for each item in the array. It should return a truthy
+    value to indicate the element passes the test, and a falsy value otherwise.
+    The function is passed the `value` of the item and its current `index`.
+  </PropertiesListItem>
+</PropertiesList>
+
+### clone [#LiveList.clone]
+
+Returns a deep copy of the `LiveList` that can be inserted elsewhere in the
+Storage tree.
+
+```ts
+const list = new LiveList(/* ... */);
+root.set("a", list);
+root.set("b", list.clone());
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="clonedStructure" type="LiveList">
+    The cloned `LiveList`.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+### toImmutable [#LiveList.toImmutable]
+
+Returns an immutable JavaScript array that is equivalent to the `LiveList`.
+Nested values will also be immutable.
+
+```ts
+const list = new LiveList([
+  new LiveObject({ name: "Olivier" }),
+  new LiveObject({ name: "Vincent" }),
+]);
+
+// [
+//   { name: "Olivier" },
+//   { name: "Vincent" },
+// ]
+list.toImmutable();
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="immutableStructure" type="object">
+    Returns a JavaScript object in the shape of your data structure.`ListList`
+    is converted to an array, `LiveObject` to an object, and `LiveMap` to a map.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### toArray [#LiveList.toArray]
 
@@ -1591,30 +3577,6 @@ const list = new LiveList([
 ]);
 list.toArray();
 // [ <LiveObject instance> ]  // ❗️
-```
-
-### toImmutable [#LiveList.toImmutable]
-
-Returns an immutable JavaScript array that is equivalent to the `LiveList`.
-Nested values will also be immutable.
-
-```ts
-const list = new LiveList([
-  new LiveObject({ firstName: "Grace", lastName: "Hopper" }),
-]);
-list.toImmutable();
-// [ { firstName: "Grace", lastName: "Hopper" } ]
-```
-
-### clone [#LiveList.clone]
-
-Returns a deep copy of the `LiveList` that can be inserted elsewhere in the
-Storage tree.
-
-```ts
-const list = new LiveList(/* ... */);
-root.set("a", list);
-root.set("b", list.clone());
 ```
 
 ## Utilities
@@ -1781,6 +3743,135 @@ await stringifyCommentBody(comment.body, {
 });
 ```
 
+## TypeScript
+
+### Typing your room [#typing-your-room]
+
+By passing Presence, Storage, UserMeta, and RoomEvents types to
+[`client.enterRoom`][], you can enable type hints on your room. Here are some
+example values.
+
+```ts
+import { LiveList } from "@/liveblocks/client";
+
+// Each user’s Presence
+type Presence = {
+  cursor: { x: number; y: number };
+};
+
+// The Storage tree for the room
+type Storage = {
+  animals: LiveList<string>;
+};
+
+// User information set when authenticating with a secret key
+type UserMeta = {
+  id: string;
+  info: {
+    // Custom properties, corresponds with userInfo
+  };
+};
+
+// Custom events that can be broadcast, use a union for multiple events
+type RoomEvent = {
+  type: "REACTION";
+  emoji: "🔥";
+};
+
+const { room, leave } = client.enterRoom<
+  Presence,
+  Storage,
+  UserMeta,
+  RoomEvent
+>("my-room-id", { initialPresence: {} });
+```
+
+You can also pass types to
+[`client.getRoom`](/docs/api-reference/liveblocks-client#Client.getRoom).
+
+```ts
+const { room, leave } = client.getRoom<Presence, Storage, UserMeta, RoomEvent>(
+  "my-room-id"
+);
+```
+
+### User [#user-type]
+
+`User` is a type that’s returned by [`room.getSelf`][], [`room.getOthers`][],
+and other functions. Some of its values are set when
+[typing your room](#typing-your-room), here are some example values:
+
+```ts highlight="1-4,9-16,25-38"
+// Each user’s Presence
+type Presence = {
+  cursor: { x: number: y: number }
+}
+
+type Storage = {}
+type RoomEvent = {}
+
+// User information set when authenticating with a secret key
+type UserMeta = {
+  id: string;
+  info: {
+    // Custom `userInfo` properties set when authenticating
+    avatar: string;
+  }
+}
+
+const { room, leave } = client.enterRoom<
+  Presence,
+  Storage,
+  UserMeta,
+  RoomEvent
+>("my-room-id", { initialPresence: {} });
+
+// {
+//   connectionId: 52,
+//   presence: {
+//     cursor: { x: 263, y: 786 },
+//   },
+//   id: "mislav.abha@example.com",
+//   info: {
+//     avatar: "/mislav.png",
+//   },
+//   canWrite: true,
+//   canComment: true,
+//   isReadOnly: false,
+// }
+const user = room.getSelf();
+```
+
+<PropertiesList title="Properties">
+  <PropertiesListItem name="connectionId" type="number">
+    The connection ID of the User. It is unique and increments with every new
+    connection.
+  </PropertiesListItem>
+  <PropertiesListItem name="id" type={`TUserMeta["id"]`}>
+    The ID of the User that has been set in the authentication endpoint. Useful
+    to get additional information about the connected user.
+  </PropertiesListItem>
+  <PropertiesListItem name="info" type={`TUserMeta["info"]`}>
+    Additional user information that has been set in the authentication
+    endpoint.
+  </PropertiesListItem>
+  <PropertiesListItem name="presence" type={`TPresence`}>
+    The user’s Presence data.
+  </PropertiesListItem>
+  <PropertiesListItem name="canWrite" type="boolean">
+    True if the user can mutate the Room’s Storage and/or YDoc, false if they
+    can only read but not mutate it.
+  </PropertiesListItem>
+  <PropertiesListItem name="canComment" type="boolean">
+    The ID of the User that has been set in the authentication endpoint. Useful
+    to get additional information about the connected user.
+  </PropertiesListItem>
+  <PropertiesListItem name="isReadOnly" type="boolean" deprecated>
+    Deprecated. False if the user can mutate the Room’s Storage and/or YDoc,
+    true if they can only read but not mutate it.
+  </PropertiesListItem>
+</PropertiesList>
+
 [`atob`]: https://developer.mozilla.org/en-US/docs/Web/API/atob
 [`base-64`]: https://www.npmjs.com/package/base-64
 [`client.enterRoom`]: /docs/api-reference/liveblocks-client#Client.enterRoom
@@ -1797,6 +3888,10 @@ await stringifyCommentBody(comment.body, {
 [`room.broadcastevent`]:
   /docs/api-reference/liveblocks-client#Room.broadcastEvent
 [`room.getstorage`]: /docs/api-reference/liveblocks-client#Room.getStorage
+[`room.reconnect`]: /docs/api-reference/liveblocks-client#Room.reconnect
+[`room.getSelf`]: /docs/api-reference/liveblocks-client#Room.getSelf
+[`room.getOthers`]: /docs/api-reference/liveblocks-client#Room.getOthers
+[`room.getStorage`]: /docs/api-reference/liveblocks-client#Room.getStorage
 [`room.history`]: /docs/api-reference/liveblocks-client#Room.history
 [`room.subscribe("event")`]:
   /docs/api-reference/liveblocks-client#Room.subscribe.event
