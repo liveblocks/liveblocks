@@ -183,7 +183,7 @@ export function toYNode(
 
     return {
       type: "Y.Map",
-      data: data,
+      data,
     };
   } else if (
     item instanceof Y.Array ||
