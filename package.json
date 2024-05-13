@@ -17,10 +17,10 @@
     "format": "turbo run format"
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "^0.13.3",
+    "@arethetypeswrong/cli": "^0.15.3",
     "dependency-cruiser": "^15.5.0",
     "prettier": "^3.2.5",
-    "publint": "^0.2.6",
+    "publint": "^0.2.7",
     "tsd": "^0.29.0",
     "tsup": "^8.0.1",
     "turbo": "^1.13.3",
