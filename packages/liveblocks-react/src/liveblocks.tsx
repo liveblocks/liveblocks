@@ -139,7 +139,6 @@ function makeBundle<
     useEffect(() => {
       void fetchInboxNotifications();
       incrementInboxNotificationsSubscribers();
-
       return () => decrementInboxNotificationsSubscribers();
     }, []);
 
@@ -189,52 +188,10 @@ function makeBundle<
     );
   }
 
-  function selectUnreadInboxNotificationsCount(
-    state: CacheState<BaseMetadata>
-  ) {
-    let count = 0;
-
-    for (const notification of selectedInboxNotifications(state)) {
-      if (
-        notification.readAt === null ||
-        notification.readAt < notification.notifiedAt
-      ) {
-        count++;
-      }
-    }
-
-    return count;
-  }
-
-  function useUnreadInboxNotificationsCountSelector(
-    state: CacheState<BaseMetadata>
-  ): UnreadInboxNotificationsCountState {
-    const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
-
-    if (query === undefined || query.isLoading) {
-      return {
-        isLoading: true,
-      };
-    }
-
-    if (query.error !== undefined) {
-      return {
-        error: query.error,
-        isLoading: false,
-      };
-    }
-
-    return {
-      isLoading: false,
-      count: selectUnreadInboxNotificationsCount(state),
-    };
-  }
-
   function useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountState {
     useEffect(() => {
       void fetchInboxNotifications();
       incrementInboxNotificationsSubscribers();
-
       return () => decrementInboxNotificationsSubscribers();
     }, []);
 
@@ -242,7 +199,7 @@ function makeBundle<
       store.subscribe,
       store.get,
       store.get,
-      useUnreadInboxNotificationsCountSelector
+      selectorForUseUnreadInboxNotificationsCount
     );
   }
 
@@ -464,6 +421,45 @@ function useMarkAllInboxNotificationsAsRead() {
       }
     );
   }, []);
+}
+
+function selectUnreadInboxNotificationsCount(state: CacheState<BaseMetadata>) {
+  let count = 0;
+
+  for (const notification of selectedInboxNotifications(state)) {
+    if (
+      notification.readAt === null ||
+      notification.readAt < notification.notifiedAt
+    ) {
+      count++;
+    }
+  }
+
+  return count;
+}
+
+function selectorForUseUnreadInboxNotificationsCount(
+  state: CacheState<BaseMetadata>
+): UnreadInboxNotificationsCountState {
+  const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
+
+  if (query === undefined || query.isLoading) {
+    return {
+      isLoading: true,
+    };
+  }
+
+  if (query.error !== undefined) {
+    return {
+      error: query.error,
+      isLoading: false,
+    };
+  }
+
+  return {
+    isLoading: false,
+    count: selectUnreadInboxNotificationsCount(state),
+  };
 }
 
 export function createLiveblocksContext<
