@@ -12,7 +12,7 @@ import type {
   Store,
   ThreadDeleteInfo,
 } from "@liveblocks/core";
-import { kInternal, makePoller } from "@liveblocks/core";
+import { kInternal, makePoller, raise } from "@liveblocks/core";
 import { nanoid } from "nanoid";
 import type { PropsWithChildren } from "react";
 import React, {
@@ -46,11 +46,10 @@ export const ContextBundle = createContext<LiveblocksContextBundle<
  * This is an internal API, use "createLiveblocksContext" instead.
  */
 export function useLiveblocksContextBundle() {
-  const bundle = useContext(ContextBundle);
-  if (bundle === null) {
-    throw new Error("LiveblocksProvider is missing from the React tree.");
-  }
-  return bundle;
+  return (
+    useContext(ContextBundle) ??
+    raise("LiveblocksProvider is missing from the React tree.")
+  );
 }
 
 export const POLLING_INTERVAL = 60 * 1000; // 1 minute
@@ -460,27 +459,23 @@ export function createLiveblocksContext<
   ): ThreadData<TThreadMetadata> {
     const selector = useCallback(
       (state: CacheState<TThreadMetadata>) => {
-        const inboxNotification = state.inboxNotifications[inboxNotificationId];
-
-        if (inboxNotification === undefined) {
-          throw new Error(
+        const inboxNotification =
+          state.inboxNotifications[inboxNotificationId] ??
+          raise(
             `Inbox notification with ID "${inboxNotificationId}" not found`
           );
-        }
 
         if (inboxNotification.kind !== "thread") {
-          throw new Error(
+          raise(
             `Inbox notification with ID "${inboxNotificationId}" is not of kind "thread"`
           );
         }
 
-        const thread = state.threads[inboxNotification.threadId];
-
-        if (thread === undefined) {
-          throw new Error(
+        const thread =
+          state.threads[inboxNotification.threadId] ??
+          raise(
             `Thread with ID "${inboxNotification.threadId}" not found, this inbox notification might not be of kind "thread"`
           );
-        }
 
         return thread;
       },
