@@ -99,8 +99,6 @@ function makeBundle<
   const store = client[kInternal]
     .cacheStore as unknown as CacheStore<TThreadMetadata>;
 
-  const notifications = client[kInternal].notifications;
-
   function BoundLiveblocksProvider(props: PropsWithChildren) {
     return (
       <LiveblocksProvider client={client}>{props.children}</LiveblocksProvider>
@@ -280,101 +278,6 @@ function makeBundle<
     );
   }
 
-  function useMarkInboxNotificationAsRead() {
-    return useCallback((inboxNotificationId: string) => {
-      const optimisticUpdateId = nanoid();
-      const readAt = new Date();
-      store.pushOptimisticUpdate({
-        type: "mark-inbox-notification-as-read",
-        id: optimisticUpdateId,
-        inboxNotificationId,
-        readAt,
-      });
-
-      notifications.markInboxNotificationAsRead(inboxNotificationId).then(
-        () => {
-          store.set((state) => {
-            const existingNotification =
-              state.inboxNotifications[inboxNotificationId];
-
-            // If existing notification has been deleted, we return the existing state
-            if (existingNotification === undefined) {
-              return {
-                ...state,
-                optimisticUpdates: state.optimisticUpdates.filter(
-                  (update) => update.id !== optimisticUpdateId
-                ),
-              };
-            }
-
-            return {
-              ...state,
-              inboxNotifications: {
-                ...state.inboxNotifications,
-                [inboxNotificationId]: {
-                  ...existingNotification,
-                  readAt,
-                },
-              },
-              optimisticUpdates: state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              ),
-            };
-          });
-        },
-        () => {
-          // TODO: Broadcast errors to client
-          store.set((state) => ({
-            ...state,
-            optimisticUpdates: state.optimisticUpdates.filter(
-              (update) => update.id !== optimisticUpdateId
-            ),
-          }));
-        }
-      );
-    }, []);
-  }
-
-  function useMarkAllInboxNotificationsAsRead() {
-    return useCallback(() => {
-      const optimisticUpdateId = nanoid();
-      const readAt = new Date();
-      store.pushOptimisticUpdate({
-        type: "mark-inbox-notifications-as-read",
-        id: optimisticUpdateId,
-        readAt,
-      });
-
-      notifications.markAllInboxNotificationsAsRead().then(
-        () => {
-          store.set((state) => ({
-            ...state,
-            inboxNotifications: Object.fromEntries(
-              Array.from(Object.entries(state.inboxNotifications)).map(
-                ([id, inboxNotification]) => [
-                  id,
-                  { ...inboxNotification, readAt },
-                ]
-              )
-            ),
-            optimisticUpdates: state.optimisticUpdates.filter(
-              (update) => update.id !== optimisticUpdateId
-            ),
-          }));
-        },
-        () => {
-          // TODO: Broadcast errors to client
-          store.set((state) => ({
-            ...state,
-            optimisticUpdates: state.optimisticUpdates.filter(
-              (update) => update.id !== optimisticUpdateId
-            ),
-          }));
-        }
-      );
-    }, []);
-  }
-
   function useInboxNotificationThread(
     inboxNotificationId: string
   ): ThreadData<TThreadMetadata> {
@@ -458,6 +361,109 @@ function makeBundle<
   return Object.defineProperty(bundle, kInternal, {
     enumerable: false,
   });
+}
+
+function useMarkInboxNotificationAsRead() {
+  const client = useClient();
+  const store = client[kInternal].cacheStore;
+  const notifications = client[kInternal].notifications;
+
+  return useCallback((inboxNotificationId: string) => {
+    const optimisticUpdateId = nanoid();
+    const readAt = new Date();
+    store.pushOptimisticUpdate({
+      type: "mark-inbox-notification-as-read",
+      id: optimisticUpdateId,
+      inboxNotificationId,
+      readAt,
+    });
+
+    notifications.markInboxNotificationAsRead(inboxNotificationId).then(
+      () => {
+        store.set((state) => {
+          const existingNotification =
+            state.inboxNotifications[inboxNotificationId];
+
+          // If existing notification has been deleted, we return the existing state
+          if (existingNotification === undefined) {
+            return {
+              ...state,
+              optimisticUpdates: state.optimisticUpdates.filter(
+                (update) => update.id !== optimisticUpdateId
+              ),
+            };
+          }
+
+          return {
+            ...state,
+            inboxNotifications: {
+              ...state.inboxNotifications,
+              [inboxNotificationId]: {
+                ...existingNotification,
+                readAt,
+              },
+            },
+            optimisticUpdates: state.optimisticUpdates.filter(
+              (update) => update.id !== optimisticUpdateId
+            ),
+          };
+        });
+      },
+      () => {
+        // TODO: Broadcast errors to client
+        store.set((state) => ({
+          ...state,
+          optimisticUpdates: state.optimisticUpdates.filter(
+            (update) => update.id !== optimisticUpdateId
+          ),
+        }));
+      }
+    );
+  }, []);
+}
+
+function useMarkAllInboxNotificationsAsRead() {
+  const client = useClient();
+  const store = client[kInternal].cacheStore;
+  const notifications = client[kInternal].notifications;
+
+  return useCallback(() => {
+    const optimisticUpdateId = nanoid();
+    const readAt = new Date();
+    store.pushOptimisticUpdate({
+      type: "mark-inbox-notifications-as-read",
+      id: optimisticUpdateId,
+      readAt,
+    });
+
+    notifications.markAllInboxNotificationsAsRead().then(
+      () => {
+        store.set((state) => ({
+          ...state,
+          inboxNotifications: Object.fromEntries(
+            Array.from(Object.entries(state.inboxNotifications)).map(
+              ([id, inboxNotification]) => [
+                id,
+                { ...inboxNotification, readAt },
+              ]
+            )
+          ),
+          optimisticUpdates: state.optimisticUpdates.filter(
+            (update) => update.id !== optimisticUpdateId
+          ),
+        }));
+      },
+      () => {
+        // TODO: Broadcast errors to client
+        store.set((state) => ({
+          ...state,
+          optimisticUpdates: state.optimisticUpdates.filter(
+            (update) => update.id !== optimisticUpdateId
+          ),
+        }));
+      }
+    );
+  }, []);
 }
 
 export function createLiveblocksContext<
