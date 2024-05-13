@@ -555,7 +555,18 @@ export function LiveblocksProvider(
   );
 }
 
+/**
+ * @private
+ *
+ * For internal use only.
+ */
+export function useClientOrNull() {
+  return useContext(LiveblocksClientContext);
+}
+
 export function useClient() {
-  const client = useContext(LiveblocksClientContext);
-  return client ?? raise("LiveblocksProvider is missing from the React tree.");
+  return (
+    useClientOrNull() ??
+    raise("LiveblocksProvider is missing from the React tree.")
+  );
 }
