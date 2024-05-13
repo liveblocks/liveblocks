@@ -69,7 +69,7 @@ function useRangeSelectionInfo(): RangeSelectionInfo | undefined {
 
   const getSnapshot = useCallback(() => {
     return selectionInfo.current;
-  }, [editor]);
+  }, []);
 
   return useSyncExternalStore(subscribe, getSnapshot);
 }
@@ -150,7 +150,7 @@ export function useActiveSelection() {
       observer.disconnect();
       unsubUpdateHandler();
     };
-  }, [showComposer, selection]);
+  }, [showComposer, selection, editor]);
 }
 
 export function LastActiveSelection() {

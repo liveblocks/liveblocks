@@ -13,6 +13,7 @@ import {
   $getSelection,
   $isRangeSelection,
   $isTextNode,
+  $setSelection,
   COMMAND_PRIORITY_EDITOR,
   createCommand,
 } from "lexical";
@@ -62,6 +63,10 @@ export function CommentPluginProvider({
   } = useRoomContextBundle();
 
   useOptimisticThreadCreateListener(({ threadId }) => {
+    // TODO, this should only fire if we're the source of creation
+    editor.update(() => {
+      $setSelection(null);
+    })
     console.log("Thread created", threadId);
   });
 

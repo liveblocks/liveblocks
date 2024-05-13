@@ -9,7 +9,6 @@ import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import {
   LexicalThread,
-  LexicalThreadComposer,
   LiveblocksPlugin,
   liveblocksLexicalConfig,
 } from "@liveblocks/react-lexical";
