@@ -54,6 +54,17 @@ function getOrCreateBundle(client: Client) {
   return bundle;
 }
 
+const _extras = new WeakMap<Client, ReturnType<typeof makeClientExtras>>();
+
+function getOrCreateExtras(client: Client) {
+  let extras = _extras.get(client);
+  if (!extras) {
+    extras = makeClientExtras(client);
+    _extras.set(client, extras);
+  }
+  return extras;
+}
+
 /**
  * @private
  *
@@ -564,6 +575,10 @@ export function createLiveblocksContext<
     TUserMeta,
     TThreadMetadata
   >;
+}
+
+function makeClientExtras(client: Client) {
+  // TODO: Make extras for this client instance
 }
 
 export function LiveblocksProvider(
