@@ -60,10 +60,12 @@ export function useLiveblocksContextBundle() {
 export const POLLING_INTERVAL = 60 * 1000; // 1 minute
 export const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
 
-export function createLiveblocksContext<
-  TUserMeta extends BaseUserMeta = BaseUserMeta,
-  TThreadMetadata extends BaseMetadata = never,
->(client: Client): LiveblocksContextBundle<TUserMeta, TThreadMetadata> {
+function makeBundle<
+  TUserMeta extends BaseUserMeta,
+  TThreadMetadata extends BaseMetadata,
+>(
+  client: Client<TUserMeta>
+): LiveblocksContextBundle<TUserMeta, TThreadMetadata> {
   const shared = createSharedContext<TUserMeta>(client);
 
   const store = client[kInternal]
@@ -542,6 +544,15 @@ export function createLiveblocksContext<
   return Object.defineProperty(bundle, kInternal, {
     enumerable: false,
   });
+}
+
+export function createLiveblocksContext<
+  TUserMeta extends BaseUserMeta = BaseUserMeta,
+  TThreadMetadata extends BaseMetadata = never,
+>(
+  client: Client<TUserMeta>
+): LiveblocksContextBundle<TUserMeta, TThreadMetadata> {
+  return makeBundle<TUserMeta, TThreadMetadata>(client);
 }
 
 export function LiveblocksProvider(
