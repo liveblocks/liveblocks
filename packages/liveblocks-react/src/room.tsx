@@ -223,6 +223,16 @@ type Options<TUserMeta extends BaseUserMeta> = {
   ) => OptionalPromise<string[]>;
 };
 
+// Shorthands for types bound to the "global" types. Just added here for brevity.
+// XXX Maybe, eventually, we could use `User` (without type params) to be the equiv of GUser. For now, that's too confusing.
+// type GEnterOptions = EnterOptions<GPresence, GStorage>;
+// type GRoom = Room<GPresence, GStorage, GUserMeta, never>;
+// type GRoomEvent = never; // XXX Fix this later :(
+// type GRoomLeavePair = { room: GRoom; leave: () => void };
+// type GRoomProviderProps = RoomProviderProps<GPresence, GStorage>;
+// type GUser = User<GPresence, GUserMeta>;
+// type GClient = Client<GUserMeta>;
+
 export function createRoomContext<
   TPresence extends JsonObject,
   TStorage extends LsonObject = LsonObject,

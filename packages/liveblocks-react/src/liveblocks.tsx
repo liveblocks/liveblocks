@@ -496,7 +496,7 @@ export function createLiveblocksContext<
   }
 
   const currentUserIdStore = client[kInternal]
-    .currentUserIdStore as unknown as Store<string | null>;
+    .currentUserIdStore as unknown as Store<string | null>; // XXX Double check: is this cast still needed?
 
   function useCurrentUserId() {
     return useSyncExternalStore(
