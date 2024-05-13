@@ -1,4 +1,5 @@
-import { type BaseUserMeta, type Client, kInternal } from "@liveblocks/core";
+import type { BaseUserMeta, Client } from "@liveblocks/core";
+import { kInternal, raise } from "@liveblocks/core";
 import { useCallback, useContext, useEffect } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
@@ -26,7 +27,7 @@ export function useSharedContextBundle() {
   } else if (liveblocksContextBundle !== null) {
     return liveblocksContextBundle;
   } else {
-    throw new Error(
+    raise(
       "LiveblocksProvider or RoomProvider are missing from the React tree."
     );
   }
