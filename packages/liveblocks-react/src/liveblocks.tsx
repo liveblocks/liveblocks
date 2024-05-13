@@ -40,10 +40,29 @@ export const LiveblocksClientContext = createContext<Client<GUserMeta> | null>(
   null
 );
 
-export const ContextBundle = createContext<LiveblocksContextBundle<
-  BaseUserMeta,
-  BaseMetadata
-> | null>(null);
+const _bundles = new WeakMap<
+  Client,
+  LiveblocksContextBundle<BaseUserMeta, BaseMetadata>
+>();
+
+function getOrCreateBundle(client: Client) {
+  let bundle = _bundles.get(client);
+  if (!bundle) {
+    bundle = makeBundle(client);
+    _bundles.set(client, bundle);
+  }
+  return bundle;
+}
+
+/**
+ * @private
+ *
+ * This is an internal API, use "createLiveblocksContext" instead.
+ */
+export function useLiveblocksContextBundleOrNull() {
+  const client = useClientOrNull();
+  return client ? getOrCreateBundle(client) : null;
+}
 
 /**
  * @private
@@ -51,10 +70,8 @@ export const ContextBundle = createContext<LiveblocksContextBundle<
  * This is an internal API, use "createLiveblocksContext" instead.
  */
 export function useLiveblocksContextBundle() {
-  return (
-    useContext(ContextBundle) ??
-    raise("LiveblocksProvider is missing from the React tree.")
-  );
+  const client = useClient();
+  return getOrCreateBundle(client);
 }
 
 export const POLLING_INTERVAL = 60 * 1000; // 1 minute
@@ -73,18 +90,9 @@ function makeBundle<
 
   const notifications = client[kInternal].notifications;
 
-  function LiveblocksProvider(props: PropsWithChildren) {
+  function BoundLiveblocksProvider(props: PropsWithChildren) {
     return (
-      <ContextBundle.Provider
-        value={
-          bundle as unknown as LiveblocksContextBundle<
-            BaseUserMeta,
-            BaseMetadata
-          >
-        }
-      >
-        {props.children}
-      </ContextBundle.Provider>
+      <LiveblocksProvider client={client}>{props.children}</LiveblocksProvider>
     );
   }
 
@@ -509,7 +517,7 @@ function makeBundle<
   }
 
   const bundle: LiveblocksContextBundle<TUserMeta, TThreadMetadata> = {
-    LiveblocksProvider,
+    LiveblocksProvider: BoundLiveblocksProvider,
 
     useInboxNotifications,
     useUnreadInboxNotificationsCount,
@@ -522,7 +530,7 @@ function makeBundle<
     ...shared,
 
     suspense: {
-      LiveblocksProvider,
+      LiveblocksProvider: BoundLiveblocksProvider,
 
       useInboxNotifications: useInboxNotificationsSuspense,
       useUnreadInboxNotificationsCount:
@@ -552,7 +560,10 @@ export function createLiveblocksContext<
 >(
   client: Client<TUserMeta>
 ): LiveblocksContextBundle<TUserMeta, TThreadMetadata> {
-  return makeBundle<TUserMeta, TThreadMetadata>(client);
+  return getOrCreateBundle(client) as LiveblocksContextBundle<
+    TUserMeta,
+    TThreadMetadata
+  >;
 }
 
 export function LiveblocksProvider(

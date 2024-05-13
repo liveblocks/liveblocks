@@ -10,6 +10,7 @@ export {
   LiveblocksProvider,
   useClient,
   useLiveblocksContextBundle,
+  useLiveblocksContextBundleOrNull,
 } from "./liveblocks";
 export { createRoomContext, useRoomContextBundle } from "./room";
 export { useSharedContextBundle } from "./shared";

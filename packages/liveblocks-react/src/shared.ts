@@ -3,7 +3,7 @@ import { kInternal, raise } from "@liveblocks/core";
 import { useCallback, useContext, useEffect } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
-import { ContextBundle as LiveblocksContextBundle } from "./liveblocks";
+import { useLiveblocksContextBundleOrNull } from "./liveblocks";
 import { ContextBundle as RoomContextBundle } from "./room";
 import type {
   RoomInfoState,
@@ -20,7 +20,7 @@ import type {
  */
 export function useSharedContextBundle() {
   const roomContextBundle = useContext(RoomContextBundle);
-  const liveblocksContextBundle = useContext(LiveblocksContextBundle);
+  const liveblocksContextBundle = useLiveblocksContextBundleOrNull();
 
   if (roomContextBundle !== null) {
     return roomContextBundle;
