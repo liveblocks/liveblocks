@@ -2,6 +2,7 @@ import type {
   BaseMetadata,
   BaseUserMeta,
   Client,
+  GUserMeta,
   ThreadData,
 } from "@liveblocks/client";
 import type {
@@ -34,6 +35,10 @@ import type {
   UnreadInboxNotificationsCountState,
   UnreadInboxNotificationsCountStateSuccess,
 } from "./types";
+
+export const LiveblocksClientContext = createContext<Client<GUserMeta> | null>(
+  null
+);
 
 export const ContextBundle = createContext<LiveblocksContextBundle<
   BaseUserMeta,
@@ -537,4 +542,20 @@ export function createLiveblocksContext<
   return Object.defineProperty(bundle, kInternal, {
     enumerable: false,
   });
+}
+
+export function LiveblocksProvider(
+  props: PropsWithChildren<{ client: Client }>
+) {
+  const client = props.client;
+  return (
+    <LiveblocksClientContext.Provider value={client}>
+      {props.children}
+    </LiveblocksClientContext.Provider>
+  );
+}
+
+export function useClient() {
+  const client = useContext(LiveblocksClientContext);
+  return client ?? raise("LiveblocksProvider is missing from the React tree.");
 }
