@@ -31,12 +31,6 @@ const server = setupServer(
 );
 
 beforeAll(() => server.listen());
-afterEach(() => {
-  MockWebSocket.reset();
-});
-beforeEach(() => {
-  MockWebSocket.reset();
-});
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 
