@@ -107,116 +107,11 @@ function makeBundle<
     );
   }
 
-  // TODO: Unify request cache
-  let fetchInboxNotificationsRequest: Promise<{
-    inboxNotifications: InboxNotificationData[];
-    threads: ThreadData<TThreadMetadata>[];
-    deletedThreads: ThreadDeleteInfo[];
-    deletedInboxNotifications: InboxNotificationDeleteInfo[];
-    meta: {
-      requestedAt: Date;
-    };
-  }> | null = null;
-  let inboxNotificationsSubscribers = 0;
-  let lastRequestedAt: Date | undefined;
-
-  const poller = makePoller(refreshThreadsAndNotifications);
-
-  function refreshThreadsAndNotifications() {
-    return notifications.getInboxNotifications({ since: lastRequestedAt }).then(
-      (result) => {
-        lastRequestedAt = result.meta.requestedAt;
-
-        store.updateThreadsAndNotifications(
-          result.threads,
-          result.inboxNotifications,
-          result.deletedThreads,
-          result.deletedInboxNotifications,
-          INBOX_NOTIFICATIONS_QUERY
-        );
-      },
-      () => {
-        // TODO: Error handling
-      }
-    );
-  }
-
-  function incrementInboxNotificationsSubscribers() {
-    inboxNotificationsSubscribers++;
-
-    poller.start(POLLING_INTERVAL);
-  }
-
-  function decrementInboxNotificationsSubscribers() {
-    if (inboxNotificationsSubscribers <= 0) {
-      console.warn(
-        `Internal unexpected behavior. Cannot decrease subscriber count for query "${INBOX_NOTIFICATIONS_QUERY}"`
-      );
-      return;
-    }
-
-    inboxNotificationsSubscribers--;
-
-    if (inboxNotificationsSubscribers <= 0) {
-      poller.stop();
-    }
-  }
-
-  async function fetchInboxNotifications(
-    { retryCount }: { retryCount: number } = { retryCount: 0 }
-  ) {
-    if (fetchInboxNotificationsRequest !== null) {
-      return fetchInboxNotificationsRequest;
-    }
-
-    store.setQueryState(INBOX_NOTIFICATIONS_QUERY, {
-      isLoading: true,
-    });
-
-    try {
-      fetchInboxNotificationsRequest = notifications.getInboxNotifications();
-
-      const result = await fetchInboxNotificationsRequest;
-
-      store.updateThreadsAndNotifications(
-        result.threads,
-        result.inboxNotifications,
-        result.deletedThreads,
-        result.deletedInboxNotifications,
-        INBOX_NOTIFICATIONS_QUERY
-      );
-
-      /**
-       * We set the `lastRequestedAt` to the timestamp returned by the current request if:
-       * 1. The `lastRequestedAt`has not been set
-       * OR
-       * 2. The current `lastRequestedAt` is older than the timestamp returned by the current request
-       */
-      if (
-        lastRequestedAt === undefined ||
-        lastRequestedAt > result.meta.requestedAt
-      ) {
-        lastRequestedAt = result.meta.requestedAt;
-      }
-
-      poller.start(POLLING_INTERVAL);
-    } catch (er) {
-      fetchInboxNotificationsRequest = null;
-
-      // Retry the action using the exponential backoff algorithm
-      retryError(() => {
-        void fetchInboxNotifications({
-          retryCount: retryCount + 1,
-        });
-      }, retryCount);
-
-      store.setQueryState(INBOX_NOTIFICATIONS_QUERY, {
-        isLoading: false,
-        error: er as Error,
-      });
-    }
-    return;
-  }
+  const {
+    fetchInboxNotifications,
+    incrementInboxNotificationsSubscribers,
+    decrementInboxNotificationsSubscribers,
+  } = getOrCreateExtras(client);
 
   function useInboxNotificationsSelectorCallback(
     state: CacheState<BaseMetadata>
@@ -578,7 +473,129 @@ export function createLiveblocksContext<
 }
 
 function makeClientExtras(client: Client) {
-  // TODO: Make extras for this client instance
+  const store = client[kInternal]
+    .cacheStore as unknown as CacheStore<BaseMetadata>;
+
+  const notifications = client[kInternal].notifications;
+
+  let inboxNotificationsSubscribers = 0;
+
+  // TODO: Unify request cache
+  let fetchInboxNotificationsRequest: Promise<{
+    inboxNotifications: InboxNotificationData[];
+    threads: ThreadData<BaseMetadata>[];
+    deletedThreads: ThreadDeleteInfo[];
+    deletedInboxNotifications: InboxNotificationDeleteInfo[];
+    meta: {
+      requestedAt: Date;
+    };
+  }> | null = null;
+
+  let lastRequestedAt: Date | undefined;
+
+  async function fetchInboxNotifications(
+    { retryCount }: { retryCount: number } = { retryCount: 0 }
+  ) {
+    if (fetchInboxNotificationsRequest !== null) {
+      return fetchInboxNotificationsRequest;
+    }
+
+    store.setQueryState(INBOX_NOTIFICATIONS_QUERY, {
+      isLoading: true,
+    });
+
+    try {
+      fetchInboxNotificationsRequest = notifications.getInboxNotifications();
+
+      const result = await fetchInboxNotificationsRequest;
+
+      store.updateThreadsAndNotifications(
+        result.threads,
+        result.inboxNotifications,
+        result.deletedThreads,
+        result.deletedInboxNotifications,
+        INBOX_NOTIFICATIONS_QUERY
+      );
+
+      /**
+       * We set the `lastRequestedAt` to the timestamp returned by the current request if:
+       * 1. The `lastRequestedAt`has not been set
+       * OR
+       * 2. The current `lastRequestedAt` is older than the timestamp returned by the current request
+       */
+      if (
+        lastRequestedAt === undefined ||
+        lastRequestedAt > result.meta.requestedAt
+      ) {
+        lastRequestedAt = result.meta.requestedAt;
+      }
+
+      poller.start(POLLING_INTERVAL);
+    } catch (er) {
+      fetchInboxNotificationsRequest = null;
+
+      // Retry the action using the exponential backoff algorithm
+      retryError(() => {
+        void fetchInboxNotifications({
+          retryCount: retryCount + 1,
+        });
+      }, retryCount);
+
+      store.setQueryState(INBOX_NOTIFICATIONS_QUERY, {
+        isLoading: false,
+        error: er as Error,
+      });
+    }
+    return;
+  }
+
+  function refreshThreadsAndNotifications() {
+    return notifications.getInboxNotifications({ since: lastRequestedAt }).then(
+      (result) => {
+        lastRequestedAt = result.meta.requestedAt;
+
+        store.updateThreadsAndNotifications(
+          result.threads,
+          result.inboxNotifications,
+          result.deletedThreads,
+          result.deletedInboxNotifications,
+          INBOX_NOTIFICATIONS_QUERY
+        );
+      },
+      () => {
+        // TODO: Error handling
+      }
+    );
+  }
+
+  const poller = makePoller(refreshThreadsAndNotifications);
+
+  function incrementInboxNotificationsSubscribers() {
+    inboxNotificationsSubscribers++;
+
+    poller.start(POLLING_INTERVAL);
+  }
+
+  function decrementInboxNotificationsSubscribers() {
+    if (inboxNotificationsSubscribers <= 0) {
+      console.warn(
+        `Internal unexpected behavior. Cannot decrease subscriber count for query "${INBOX_NOTIFICATIONS_QUERY}"`
+      );
+      return;
+    }
+
+    inboxNotificationsSubscribers--;
+
+    if (inboxNotificationsSubscribers <= 0) {
+      poller.stop();
+    }
+  }
+
+  return {
+    fetchInboxNotifications,
+    incrementInboxNotificationsSubscribers,
+    decrementInboxNotificationsSubscribers,
+  };
 }
 
 export function LiveblocksProvider(
