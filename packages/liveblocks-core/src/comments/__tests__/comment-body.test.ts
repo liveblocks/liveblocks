@@ -193,7 +193,7 @@ describe("stringifyCommentBody", () => {
     "",
   ].map(
     (stringified, index) =>
-      [...commentBodyFixtures[index]!, stringified] as const
+      [...commentBodyFixtures[index], stringified] as const
   );
   const commentBodyFixturesStringifiedHtml = [
     "<p>Hello <strong>world</strong> and <span data-mention>@chris</span></p>",
@@ -205,7 +205,7 @@ describe("stringifyCommentBody", () => {
     "",
   ].map(
     (stringified, index) =>
-      [...commentBodyFixtures[index]!, stringified] as const
+      [...commentBodyFixtures[index], stringified] as const
   );
   const commentBodyFixturesStringifiedMarkdown = [
     "Hello **world** and @chris",
@@ -217,7 +217,7 @@ describe("stringifyCommentBody", () => {
     "",
   ].map(
     (stringified, index) =>
-      [...commentBodyFixtures[index]!, stringified] as const
+      [...commentBodyFixtures[index], stringified] as const
   );
 
   test.each(commentBodyFixturesStringifiedPlain)(
@@ -371,8 +371,8 @@ describe("stringifyCommentBody", () => {
       resolveUsers,
     });
 
-    const firstParagraph = commentBodyWithMultipleParagraphs.content[0]!;
-    const secondParagraph = commentBodyWithMultipleParagraphs.content[1]!;
+    const firstParagraph = commentBodyWithMultipleParagraphs.content[0];
+    const secondParagraph = commentBodyWithMultipleParagraphs.content[1];
 
     expect(paragraph).toHaveBeenNthCalledWith(
       1,
