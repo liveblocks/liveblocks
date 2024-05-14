@@ -284,14 +284,12 @@ export function createLiveblocksContext<
       return () => decrementInboxNotificationsSubscribers();
     }, []);
 
-    const result = useSyncExternalStoreWithSelector(
+    return useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
       store.get,
       selectorFor_useInboxNotifications
     );
-
-    return result;
   }
 
   function useInboxNotificationsSuspense(): InboxNotificationsStateSuccess {
