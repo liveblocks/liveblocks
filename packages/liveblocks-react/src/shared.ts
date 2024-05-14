@@ -1,10 +1,10 @@
 import type { BaseUserMeta, Client } from "@liveblocks/core";
 import { kInternal, raise } from "@liveblocks/core";
-import { useCallback, useContext, useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
-import { ContextBundle as LiveblocksContextBundle } from "./liveblocks";
-import { ContextBundle as RoomContextBundle } from "./room";
+import { useLiveblocksContextBundleOrNull } from "./liveblocks";
+import { useRoomContextBundleOrNull } from "./room";
 import type {
   RoomInfoState,
   RoomInfoStateSuccess,
@@ -19,8 +19,8 @@ import type {
  * This is an internal API, use `createLiveblocksContext` or `createRoomContext` instead.
  */
 export function useSharedContextBundle() {
-  const roomContextBundle = useContext(RoomContextBundle);
-  const liveblocksContextBundle = useContext(LiveblocksContextBundle);
+  const roomContextBundle = useRoomContextBundleOrNull();
+  const liveblocksContextBundle = useLiveblocksContextBundleOrNull();
 
   if (roomContextBundle !== null) {
     return roomContextBundle;

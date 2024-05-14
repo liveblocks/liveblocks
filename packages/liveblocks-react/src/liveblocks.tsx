@@ -35,7 +35,7 @@ import type {
   UnreadInboxNotificationsCountStateSuccess,
 } from "./types";
 
-export const ContextBundle = createContext<LiveblocksContextBundle<
+const ContextBundle = createContext<LiveblocksContextBundle<
   BaseUserMeta,
   BaseMetadata
 > | null>(null);
@@ -45,9 +45,18 @@ export const ContextBundle = createContext<LiveblocksContextBundle<
  *
  * This is an internal API, use "createLiveblocksContext" instead.
  */
+export function useLiveblocksContextBundleOrNull() {
+  return useContext(ContextBundle);
+}
+
+/**
+ * @private
+ *
+ * This is an internal API, use "createLiveblocksContext" instead.
+ */
 export function useLiveblocksContextBundle() {
   return (
-    useContext(ContextBundle) ??
+    useLiveblocksContextBundleOrNull() ??
     raise("LiveblocksProvider is missing from the React tree.")
   );
 }

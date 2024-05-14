@@ -42,6 +42,7 @@ import {
   makeEventSource,
   makePoller,
   NotificationsApiError,
+  raise,
   removeReaction,
   ServerMsgCode,
   stringify,
@@ -180,7 +181,7 @@ function makeMutationContext<
   };
 }
 
-export const ContextBundle = React.createContext<RoomContextBundle<
+const ContextBundle = React.createContext<RoomContextBundle<
   JsonObject,
   LsonObject,
   BaseUserMeta,
@@ -193,12 +194,20 @@ export const ContextBundle = React.createContext<RoomContextBundle<
  *
  * This is an internal API, use `createRoomContext` instead.
  */
+export function useRoomContextBundleOrNull() {
+  return React.useContext(ContextBundle);
+}
+
+/**
+ * @private
+ *
+ * This is an internal API, use `createRoomContext` instead.
+ */
 export function useRoomContextBundle() {
-  const bundle = React.useContext(ContextBundle);
-  if (bundle === null) {
-    throw new Error("RoomProvider is missing from the React tree.");
-  }
-  return bundle;
+  return (
+    useRoomContextBundleOrNull() ??
+    raise("RoomProvider is missing from the React tree.")
+  );
 }
 
 type Options<TUserMeta extends BaseUserMeta> = {
