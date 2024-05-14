@@ -256,7 +256,9 @@ export function createLiveblocksContext<
 
   let inboxNotificationsSubscribers = 0;
 
-  function useSubscribeToInboxNotifications(options?: { autoFetch: boolean }) {
+  function useSubscribeToInboxNotificationsEffect(options?: {
+    autoFetch: boolean;
+  }) {
     const autoFetch = options?.autoFetch ?? true;
     useEffect(() => {
       if (autoFetch) {
@@ -285,7 +287,7 @@ export function createLiveblocksContext<
   }
 
   function useInboxNotifications(): InboxNotificationsState {
-    useSubscribeToInboxNotifications();
+    useSubscribeToInboxNotificationsEffect();
     return useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
@@ -305,7 +307,7 @@ export function createLiveblocksContext<
       throw query.error;
     }
 
-    useSubscribeToInboxNotifications({ autoFetch: false });
+    useSubscribeToInboxNotificationsEffect({ autoFetch: false });
     return useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
@@ -315,7 +317,7 @@ export function createLiveblocksContext<
   }
 
   function useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountState {
-    useSubscribeToInboxNotifications();
+    useSubscribeToInboxNotificationsEffect();
     return useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
@@ -331,7 +333,7 @@ export function createLiveblocksContext<
       throw fetchInboxNotifications();
     }
 
-    useSubscribeToInboxNotifications({ autoFetch: false });
+    useSubscribeToInboxNotificationsEffect({ autoFetch: false });
     return useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
