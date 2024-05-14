@@ -28,7 +28,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 ## Contributors
 
-stevenfabre, pierrelevaillant, ofoucherot
+pierrelevaillant, ofoucherot
 
 # Week 19 (2024-05-10)
 
