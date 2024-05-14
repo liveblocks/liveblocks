@@ -55,6 +55,91 @@ export function useLiveblocksContextBundle() {
 export const POLLING_INTERVAL = 60 * 1000; // 1 minute
 export const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
 
+// --- Selector helpers ------------------------------------------------- {{{
+
+function selectorFor_useInboxNotifications(
+  state: CacheState<BaseMetadata>
+): InboxNotificationsState {
+  const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
+
+  if (query === undefined || query.isLoading) {
+    return {
+      isLoading: true,
+    };
+  }
+
+  if (query.error !== undefined) {
+    return {
+      error: query.error,
+      isLoading: false,
+    };
+  }
+
+  return {
+    inboxNotifications: selectedInboxNotifications(state),
+    isLoading: false,
+  };
+}
+
+function selectorFor_useInboxNotificationsSuspense(
+  state: CacheState<BaseMetadata>
+): InboxNotificationsStateSuccess {
+  return {
+    inboxNotifications: selectedInboxNotifications(state),
+    isLoading: false,
+  };
+}
+
+function selectUnreadInboxNotificationsCount(state: CacheState<BaseMetadata>) {
+  let count = 0;
+
+  for (const notification of selectedInboxNotifications(state)) {
+    if (
+      notification.readAt === null ||
+      notification.readAt < notification.notifiedAt
+    ) {
+      count++;
+    }
+  }
+
+  return count;
+}
+
+function selectorFor_useUnreadInboxNotificationsCount(
+  state: CacheState<BaseMetadata>
+): UnreadInboxNotificationsCountState {
+  const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
+
+  if (query === undefined || query.isLoading) {
+    return {
+      isLoading: true,
+    };
+  }
+
+  if (query.error !== undefined) {
+    return {
+      error: query.error,
+      isLoading: false,
+    };
+  }
+
+  return {
+    isLoading: false,
+    count: selectUnreadInboxNotificationsCount(state),
+  };
+}
+
+function selectorFor_useUnreadInboxNotificationsCountSuspense(
+  state: CacheState<BaseMetadata>
+): UnreadInboxNotificationsCountStateSuccess {
+  return {
+    isLoading: false,
+    count: selectUnreadInboxNotificationsCount(state),
+  };
+}
+
+// ---------------------------------------------------------------------- }}}
+
 export function createLiveblocksContext<
   TUserMeta extends BaseUserMeta = BaseUserMeta,
   TThreadMetadata extends BaseMetadata = never,
@@ -192,30 +277,6 @@ export function createLiveblocksContext<
     return;
   }
 
-  function useInboxNotificationsSelectorCallback(
-    state: CacheState<BaseMetadata>
-  ): InboxNotificationsState {
-    const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
-
-    if (query === undefined || query.isLoading) {
-      return {
-        isLoading: true,
-      };
-    }
-
-    if (query.error !== undefined) {
-      return {
-        error: query.error,
-        isLoading: false,
-      };
-    }
-
-    return {
-      inboxNotifications: selectedInboxNotifications(state),
-      isLoading: false,
-    };
-  }
-
   function useInboxNotifications(): InboxNotificationsState {
     useEffect(() => {
       void fetchInboxNotifications();
@@ -228,19 +289,10 @@ export function createLiveblocksContext<
       store.subscribe,
       store.get,
       store.get,
-      useInboxNotificationsSelectorCallback
+      selectorFor_useInboxNotifications
     );
 
     return result;
-  }
-
-  function useInboxNotificationsSuspenseSelector(
-    state: CacheState<BaseMetadata>
-  ): InboxNotificationsStateSuccess {
-    return {
-      inboxNotifications: selectedInboxNotifications(state),
-      isLoading: false,
-    };
   }
 
   function useInboxNotificationsSuspense(): InboxNotificationsStateSuccess {
@@ -266,49 +318,8 @@ export function createLiveblocksContext<
       store.subscribe,
       store.get,
       store.get,
-      useInboxNotificationsSuspenseSelector
+      selectorFor_useInboxNotificationsSuspense
     );
-  }
-
-  function selectUnreadInboxNotificationsCount(
-    state: CacheState<BaseMetadata>
-  ) {
-    let count = 0;
-
-    for (const notification of selectedInboxNotifications(state)) {
-      if (
-        notification.readAt === null ||
-        notification.readAt < notification.notifiedAt
-      ) {
-        count++;
-      }
-    }
-
-    return count;
-  }
-
-  function useUnreadInboxNotificationsCountSelector(
-    state: CacheState<BaseMetadata>
-  ): UnreadInboxNotificationsCountState {
-    const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
-
-    if (query === undefined || query.isLoading) {
-      return {
-        isLoading: true,
-      };
-    }
-
-    if (query.error !== undefined) {
-      return {
-        error: query.error,
-        isLoading: false,
-      };
-    }
-
-    return {
-      isLoading: false,
-      count: selectUnreadInboxNotificationsCount(state),
-    };
   }
 
   function useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountState {
@@ -323,17 +334,8 @@ export function createLiveblocksContext<
       store.subscribe,
       store.get,
       store.get,
-      useUnreadInboxNotificationsCountSelector
+      selectorFor_useUnreadInboxNotificationsCount
     );
-  }
-
-  function useUnreadInboxNotificationsCountSuspenseSelector(
-    state: CacheState<BaseMetadata>
-  ): UnreadInboxNotificationsCountStateSuccess {
-    return {
-      isLoading: false,
-      count: selectUnreadInboxNotificationsCount(state),
-    };
   }
 
   function useUnreadInboxNotificationsCountSuspense(): UnreadInboxNotificationsCountStateSuccess {
@@ -355,7 +357,7 @@ export function createLiveblocksContext<
       store.subscribe,
       store.get,
       store.get,
-      useUnreadInboxNotificationsCountSuspenseSelector
+      selectorFor_useUnreadInboxNotificationsCountSuspense
     );
   }
 
