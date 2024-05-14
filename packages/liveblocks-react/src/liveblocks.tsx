@@ -308,14 +308,7 @@ export function createLiveblocksContext<
       throw query.error;
     }
 
-    React.useEffect(() => {
-      incrementInboxNotificationsSubscribers();
-
-      return () => {
-        decrementInboxNotificationsSubscribers();
-      };
-    }, []);
-
+    useSubscribeToInboxNotifications({ autoFetch: false });
     return useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
@@ -325,13 +318,7 @@ export function createLiveblocksContext<
   }
 
   function useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountState {
-    useEffect(() => {
-      void fetchInboxNotifications();
-      incrementInboxNotificationsSubscribers();
-
-      return () => decrementInboxNotificationsSubscribers();
-    }, []);
-
+    useSubscribeToInboxNotifications();
     return useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
@@ -347,14 +334,7 @@ export function createLiveblocksContext<
       throw fetchInboxNotifications();
     }
 
-    React.useEffect(() => {
-      incrementInboxNotificationsSubscribers();
-
-      return () => {
-        decrementInboxNotificationsSubscribers();
-      };
-    }, []);
-
+    useSubscribeToInboxNotifications({ autoFetch: false });
     return useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
