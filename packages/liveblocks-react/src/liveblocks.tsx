@@ -276,14 +276,19 @@ export function createLiveblocksContext<
     return;
   }
 
-  function useInboxNotifications(): InboxNotificationsState {
+  function useSubscribeToInboxNotifications(options?: { autoFetch: boolean }) {
+    const autoFetch = options?.autoFetch ?? true;
     useEffect(() => {
-      void fetchInboxNotifications();
+      if (autoFetch) {
+        void fetchInboxNotifications();
+      }
       incrementInboxNotificationsSubscribers();
-
       return () => decrementInboxNotificationsSubscribers();
     }, []);
+  }
 
+  function useInboxNotifications(): InboxNotificationsState {
+    useSubscribeToInboxNotifications();
     return useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
