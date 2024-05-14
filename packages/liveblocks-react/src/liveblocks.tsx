@@ -9,7 +9,6 @@ import type {
   CacheStore,
   InboxNotificationData,
   InboxNotificationDeleteInfo,
-  Store,
   ThreadDeleteInfo,
 } from "@liveblocks/core";
 import { kInternal, makePoller, raise } from "@liveblocks/core";
@@ -492,8 +491,7 @@ export function createLiveblocksContext<
     );
   }
 
-  const currentUserIdStore = client[kInternal]
-    .currentUserIdStore as unknown as Store<string | null>;
+  const currentUserIdStore = client[kInternal].currentUserIdStore;
 
   function useCurrentUserId() {
     return useSyncExternalStore(
