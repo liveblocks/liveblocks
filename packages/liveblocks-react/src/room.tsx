@@ -210,6 +210,12 @@ export function useRoomContextBundle() {
   );
 }
 
+function selectorFor_useOthersConnectionIds(
+  others: readonly User<JsonObject, BaseUserMeta>[]
+): number[] {
+  return others.map((user) => user.connectionId);
+}
+
 type Options<TUserMeta extends BaseUserMeta> = {
   /**
    * @deprecated Define 'resolveUsers' in 'createClient' from '@liveblocks/client' instead.
@@ -479,12 +485,6 @@ export function createRoomContext<
     );
   }
 
-  function connectionIdSelector(
-    others: readonly User<TPresence, TUserMeta>[]
-  ): number[] {
-    return others.map((user) => user.connectionId);
-  }
-
   function useRoom(): TRoom {
     const room = React.useContext(RoomContext);
     if (room === null) {
@@ -544,7 +544,7 @@ export function createRoomContext<
   }
 
   function useOthersConnectionIds(): readonly number[] {
-    return useOthers(connectionIdSelector, shallow);
+    return useOthers(selectorFor_useOthersConnectionIds, shallow);
   }
 
   function useOthersMapped<T>(
