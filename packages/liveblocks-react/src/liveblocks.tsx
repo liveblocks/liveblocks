@@ -199,27 +199,6 @@ export function createLiveblocksContext<
     );
   }
 
-  function incrementInboxNotificationsSubscribers() {
-    inboxNotificationsSubscribers++;
-
-    poller.start(POLLING_INTERVAL);
-  }
-
-  function decrementInboxNotificationsSubscribers() {
-    if (inboxNotificationsSubscribers <= 0) {
-      console.warn(
-        `Internal unexpected behavior. Cannot decrease subscriber count for query "${INBOX_NOTIFICATIONS_QUERY}"`
-      );
-      return;
-    }
-
-    inboxNotificationsSubscribers--;
-
-    if (inboxNotificationsSubscribers <= 0) {
-      poller.stop();
-    }
-  }
-
   async function fetchInboxNotifications(
     { retryCount }: { retryCount: number } = { retryCount: 0 }
   ) {
@@ -282,8 +261,25 @@ export function createLiveblocksContext<
       if (autoFetch) {
         void fetchInboxNotifications();
       }
-      incrementInboxNotificationsSubscribers();
-      return () => decrementInboxNotificationsSubscribers();
+
+      // Increment
+      inboxNotificationsSubscribers++;
+      poller.start(POLLING_INTERVAL);
+
+      return () => {
+        // Decrement
+        if (inboxNotificationsSubscribers <= 0) {
+          console.warn(
+            `Internal unexpected behavior. Cannot decrease subscriber count for query "${INBOX_NOTIFICATIONS_QUERY}"`
+          );
+          return;
+        }
+
+        inboxNotificationsSubscribers--;
+        if (inboxNotificationsSubscribers <= 0) {
+          poller.stop();
+        }
+      };
     }, []);
   }
 
