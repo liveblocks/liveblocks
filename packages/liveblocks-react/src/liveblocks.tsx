@@ -9,10 +9,9 @@ import type {
   CacheStore,
   InboxNotificationData,
   InboxNotificationDeleteInfo,
-  Store,
   ThreadDeleteInfo,
 } from "@liveblocks/core";
-import { kInternal, makePoller } from "@liveblocks/core";
+import { kInternal, makePoller, raise } from "@liveblocks/core";
 import { nanoid } from "nanoid";
 import type { PropsWithChildren } from "react";
 import React, {
@@ -26,6 +25,7 @@ import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/w
 
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 import { retryError } from "./lib/retry-error";
+import { useInitial } from "./lib/use-initial";
 import { createSharedContext } from "./shared";
 import type {
   InboxNotificationsState,
@@ -46,15 +46,99 @@ export const ContextBundle = createContext<LiveblocksContextBundle<
  * This is an internal API, use "createLiveblocksContext" instead.
  */
 export function useLiveblocksContextBundle() {
-  const bundle = useContext(ContextBundle);
-  if (bundle === null) {
-    throw new Error("LiveblocksProvider is missing from the React tree.");
-  }
-  return bundle;
+  return (
+    useContext(ContextBundle) ??
+    raise("LiveblocksProvider is missing from the React tree.")
+  );
 }
 
 export const POLLING_INTERVAL = 60 * 1000; // 1 minute
 export const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
+
+// --- Selector helpers ------------------------------------------------- {{{
+
+function selectorFor_useInboxNotifications(
+  state: CacheState<BaseMetadata>
+): InboxNotificationsState {
+  const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
+
+  if (query === undefined || query.isLoading) {
+    return {
+      isLoading: true,
+    };
+  }
+
+  if (query.error !== undefined) {
+    return {
+      error: query.error,
+      isLoading: false,
+    };
+  }
+
+  return {
+    inboxNotifications: selectedInboxNotifications(state),
+    isLoading: false,
+  };
+}
+
+function selectorFor_useInboxNotificationsSuspense(
+  state: CacheState<BaseMetadata>
+): InboxNotificationsStateSuccess {
+  return {
+    inboxNotifications: selectedInboxNotifications(state),
+    isLoading: false,
+  };
+}
+
+function selectUnreadInboxNotificationsCount(state: CacheState<BaseMetadata>) {
+  let count = 0;
+
+  for (const notification of selectedInboxNotifications(state)) {
+    if (
+      notification.readAt === null ||
+      notification.readAt < notification.notifiedAt
+    ) {
+      count++;
+    }
+  }
+
+  return count;
+}
+
+function selectorFor_useUnreadInboxNotificationsCount(
+  state: CacheState<BaseMetadata>
+): UnreadInboxNotificationsCountState {
+  const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
+
+  if (query === undefined || query.isLoading) {
+    return {
+      isLoading: true,
+    };
+  }
+
+  if (query.error !== undefined) {
+    return {
+      error: query.error,
+      isLoading: false,
+    };
+  }
+
+  return {
+    isLoading: false,
+    count: selectUnreadInboxNotificationsCount(state),
+  };
+}
+
+function selectorFor_useUnreadInboxNotificationsCountSuspense(
+  state: CacheState<BaseMetadata>
+): UnreadInboxNotificationsCountStateSuccess {
+  return {
+    isLoading: false,
+    count: selectUnreadInboxNotificationsCount(state),
+  };
+}
+
+// ---------------------------------------------------------------------- }}}
 
 export function createLiveblocksContext<
   TUserMeta extends BaseUserMeta = BaseUserMeta,
@@ -92,7 +176,6 @@ export function createLiveblocksContext<
       requestedAt: Date;
     };
   }> | null = null;
-  let inboxNotificationsSubscribers = 0;
   let lastRequestedAt: Date | undefined;
 
   const poller = makePoller(refreshThreadsAndNotifications);
@@ -114,27 +197,6 @@ export function createLiveblocksContext<
         // TODO: Error handling
       }
     );
-  }
-
-  function incrementInboxNotificationsSubscribers() {
-    inboxNotificationsSubscribers++;
-
-    poller.start(POLLING_INTERVAL);
-  }
-
-  function decrementInboxNotificationsSubscribers() {
-    if (inboxNotificationsSubscribers <= 0) {
-      console.warn(
-        `Internal unexpected behavior. Cannot decrease subscriber count for query "${INBOX_NOTIFICATIONS_QUERY}"`
-      );
-      return;
-    }
-
-    inboxNotificationsSubscribers--;
-
-    if (inboxNotificationsSubscribers <= 0) {
-      poller.stop();
-    }
   }
 
   async function fetchInboxNotifications(
@@ -193,55 +255,46 @@ export function createLiveblocksContext<
     return;
   }
 
-  function useInboxNotificationsSelectorCallback(
-    state: CacheState<BaseMetadata>
-  ): InboxNotificationsState {
-    const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
+  let inboxNotificationsSubscribers = 0;
 
-    if (query === undefined || query.isLoading) {
-      return {
-        isLoading: true,
+  function useSubscribeToInboxNotificationsEffect(options?: {
+    autoFetch: boolean;
+  }) {
+    const autoFetch = useInitial(options?.autoFetch ?? true);
+    useEffect(() => {
+      if (autoFetch) {
+        void fetchInboxNotifications();
+      }
+
+      // Increment
+      inboxNotificationsSubscribers++;
+      poller.start(POLLING_INTERVAL);
+
+      return () => {
+        // Decrement
+        if (inboxNotificationsSubscribers <= 0) {
+          console.warn(
+            `Internal unexpected behavior. Cannot decrease subscriber count for query "${INBOX_NOTIFICATIONS_QUERY}"`
+          );
+          return;
+        }
+
+        inboxNotificationsSubscribers--;
+        if (inboxNotificationsSubscribers <= 0) {
+          poller.stop();
+        }
       };
-    }
-
-    if (query.error !== undefined) {
-      return {
-        error: query.error,
-        isLoading: false,
-      };
-    }
-
-    return {
-      inboxNotifications: selectedInboxNotifications(state),
-      isLoading: false,
-    };
+    }, [autoFetch]);
   }
 
   function useInboxNotifications(): InboxNotificationsState {
-    useEffect(() => {
-      void fetchInboxNotifications();
-      incrementInboxNotificationsSubscribers();
-
-      return () => decrementInboxNotificationsSubscribers();
-    }, []);
-
-    const result = useSyncExternalStoreWithSelector(
+    useSubscribeToInboxNotificationsEffect();
+    return useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
       store.get,
-      useInboxNotificationsSelectorCallback
+      selectorFor_useInboxNotifications
     );
-
-    return result;
-  }
-
-  function useInboxNotificationsSuspenseSelector(
-    state: CacheState<BaseMetadata>
-  ): InboxNotificationsStateSuccess {
-    return {
-      inboxNotifications: selectedInboxNotifications(state),
-      isLoading: false,
-    };
   }
 
   function useInboxNotificationsSuspense(): InboxNotificationsStateSuccess {
@@ -255,86 +308,23 @@ export function createLiveblocksContext<
       throw query.error;
     }
 
-    React.useEffect(() => {
-      incrementInboxNotificationsSubscribers();
-
-      return () => {
-        decrementInboxNotificationsSubscribers();
-      };
-    }, []);
-
+    useSubscribeToInboxNotificationsEffect({ autoFetch: false });
     return useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
       store.get,
-      useInboxNotificationsSuspenseSelector
+      selectorFor_useInboxNotificationsSuspense
     );
-  }
-
-  function selectUnreadInboxNotificationsCount(
-    state: CacheState<BaseMetadata>
-  ) {
-    let count = 0;
-
-    for (const notification of selectedInboxNotifications(state)) {
-      if (
-        notification.readAt === null ||
-        notification.readAt < notification.notifiedAt
-      ) {
-        count++;
-      }
-    }
-
-    return count;
-  }
-
-  function useUnreadInboxNotificationsCountSelector(
-    state: CacheState<BaseMetadata>
-  ): UnreadInboxNotificationsCountState {
-    const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
-
-    if (query === undefined || query.isLoading) {
-      return {
-        isLoading: true,
-      };
-    }
-
-    if (query.error !== undefined) {
-      return {
-        error: query.error,
-        isLoading: false,
-      };
-    }
-
-    return {
-      isLoading: false,
-      count: selectUnreadInboxNotificationsCount(state),
-    };
   }
 
   function useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountState {
-    useEffect(() => {
-      void fetchInboxNotifications();
-      incrementInboxNotificationsSubscribers();
-
-      return () => decrementInboxNotificationsSubscribers();
-    }, []);
-
+    useSubscribeToInboxNotificationsEffect();
     return useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
       store.get,
-      useUnreadInboxNotificationsCountSelector
+      selectorFor_useUnreadInboxNotificationsCount
     );
-  }
-
-  function useUnreadInboxNotificationsCountSuspenseSelector(
-    state: CacheState<BaseMetadata>
-  ): UnreadInboxNotificationsCountStateSuccess {
-    return {
-      isLoading: false,
-      count: selectUnreadInboxNotificationsCount(state),
-    };
   }
 
   function useUnreadInboxNotificationsCountSuspense(): UnreadInboxNotificationsCountStateSuccess {
@@ -344,19 +334,12 @@ export function createLiveblocksContext<
       throw fetchInboxNotifications();
     }
 
-    React.useEffect(() => {
-      incrementInboxNotificationsSubscribers();
-
-      return () => {
-        decrementInboxNotificationsSubscribers();
-      };
-    }, []);
-
+    useSubscribeToInboxNotificationsEffect({ autoFetch: false });
     return useSyncExternalStoreWithSelector(
       store.subscribe,
       store.get,
       store.get,
-      useUnreadInboxNotificationsCountSuspenseSelector
+      selectorFor_useUnreadInboxNotificationsCountSuspense
     );
   }
 
@@ -460,27 +443,23 @@ export function createLiveblocksContext<
   ): ThreadData<TThreadMetadata> {
     const selector = useCallback(
       (state: CacheState<TThreadMetadata>) => {
-        const inboxNotification = state.inboxNotifications[inboxNotificationId];
-
-        if (inboxNotification === undefined) {
-          throw new Error(
+        const inboxNotification =
+          state.inboxNotifications[inboxNotificationId] ??
+          raise(
             `Inbox notification with ID "${inboxNotificationId}" not found`
           );
-        }
 
         if (inboxNotification.kind !== "thread") {
-          throw new Error(
+          raise(
             `Inbox notification with ID "${inboxNotificationId}" is not of kind "thread"`
           );
         }
 
-        const thread = state.threads[inboxNotification.threadId];
-
-        if (thread === undefined) {
-          throw new Error(
+        const thread =
+          state.threads[inboxNotification.threadId] ??
+          raise(
             `Thread with ID "${inboxNotification.threadId}" not found, this inbox notification might not be of kind "thread"`
           );
-        }
 
         return thread;
       },
@@ -495,8 +474,7 @@ export function createLiveblocksContext<
     );
   }
 
-  const currentUserIdStore = client[kInternal]
-    .currentUserIdStore as unknown as Store<string | null>;
+  const currentUserIdStore = client[kInternal].currentUserIdStore;
 
   function useCurrentUserId() {
     return useSyncExternalStore(
