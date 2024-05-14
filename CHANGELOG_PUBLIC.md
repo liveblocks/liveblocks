@@ -13,6 +13,23 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 -->
 
+# Week 20 (2024-05-17)
+
+## Dashboard
+
+- Liveblocks events are now visible in the dashboard.
+  - New "Events" tab within a project.
+  - Filter room events by type (e.g. `userEntered`, `userLeft`), exact `roomId`, and exact `userId`.
+  - Select a date range (with available presets).
+  - Click on an event to open the event details modal.
+  - Navigate between events using the previous/next buttons without leaving the modal.
+- On the room's detail page, click "View room events" at the top right to access the room events.
+- Added a new date picker to the "Overview" and "Events" pages.
+
+## Contributors
+
+stevenfabre, pierrelevaillant, ofoucherot
+
 # Week 19 (2024-05-10)
 
 ## Website
