@@ -25,6 +25,7 @@ import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/w
 
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 import { retryError } from "./lib/retry-error";
+import { useInitial } from "./lib/use-initial";
 import { createSharedContext } from "./shared";
 import type {
   InboxNotificationsState,
@@ -259,7 +260,7 @@ export function createLiveblocksContext<
   function useSubscribeToInboxNotificationsEffect(options?: {
     autoFetch: boolean;
   }) {
-    const autoFetch = options?.autoFetch ?? true;
+    const autoFetch = useInitial(options?.autoFetch ?? true);
     useEffect(() => {
       if (autoFetch) {
         void fetchInboxNotifications();
@@ -283,7 +284,7 @@ export function createLiveblocksContext<
           poller.stop();
         }
       };
-    }, []);
+    }, [autoFetch]);
   }
 
   function useInboxNotifications(): InboxNotificationsState {
