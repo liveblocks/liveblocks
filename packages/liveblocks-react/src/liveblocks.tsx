@@ -175,7 +175,6 @@ export function createLiveblocksContext<
       requestedAt: Date;
     };
   }> | null = null;
-  let inboxNotificationsSubscribers = 0;
   let lastRequestedAt: Date | undefined;
 
   const poller = makePoller(refreshThreadsAndNotifications);
@@ -254,6 +253,8 @@ export function createLiveblocksContext<
     }
     return;
   }
+
+  let inboxNotificationsSubscribers = 0;
 
   function useSubscribeToInboxNotifications(options?: { autoFetch: boolean }) {
     const autoFetch = options?.autoFetch ?? true;
