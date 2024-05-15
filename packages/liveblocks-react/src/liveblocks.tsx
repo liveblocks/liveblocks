@@ -37,12 +37,6 @@ import type {
 
 const ClientContext = createContext<Client | null>(null);
 
-// XXX The goal is to refactor this bundle away
-const ContextBundle = createContext<LiveblocksContextBundle<
-  BaseUserMeta,
-  BaseMetadata
-> | null>(null);
-
 const _bundles = new WeakMap<
   Client,
   LiveblocksContextBundle<BaseUserMeta, BaseMetadata>
@@ -162,16 +156,9 @@ function makeLiveblocksContextBundle<
 
   function LiveblocksProvider(props: PropsWithChildren) {
     return (
-      <ContextBundle.Provider
-        value={
-          bundle as unknown as LiveblocksContextBundle<
-            BaseUserMeta,
-            BaseMetadata
-          >
-        }
-      >
+      <ClientContext.Provider value={client}>
         {props.children}
-      </ContextBundle.Provider>
+      </ClientContext.Provider>
     );
   }
 
@@ -557,7 +544,8 @@ function useClient() {
  * This is an internal API, use "createLiveblocksContext" instead.
  */
 export function useLiveblocksContextBundleOrNull() {
-  return useContext(ContextBundle);
+  const client = useClientOrNull();
+  return client !== null ? getOrCreateContextBundle(client) : null;
 }
 
 /**
@@ -566,10 +554,8 @@ export function useLiveblocksContextBundleOrNull() {
  * This is an internal API, use "createLiveblocksContext" instead.
  */
 export function useLiveblocksContextBundle() {
-  return (
-    useLiveblocksContextBundleOrNull() ??
-    raise("LiveblocksProvider is missing from the React tree.")
-  );
+  const client = useClient();
+  return getOrCreateContextBundle(client);
 }
 
 export function createLiveblocksContext<
