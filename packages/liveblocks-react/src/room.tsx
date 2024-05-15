@@ -181,6 +181,7 @@ function makeMutationContext<
   };
 }
 
+// XXX The goal is to refactor away this ContextBundle context
 const ContextBundle = React.createContext<RoomContextBundle<
   JsonObject,
   LsonObject,
