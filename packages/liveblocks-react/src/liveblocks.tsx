@@ -35,6 +35,7 @@ import type {
   UnreadInboxNotificationsCountStateSuccess,
 } from "./types";
 
+// XXX The goal is to refactor this bundle away
 const ContextBundle = createContext<LiveblocksContextBundle<
   BaseUserMeta,
   BaseMetadata
