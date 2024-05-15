@@ -126,8 +126,9 @@ export function useActiveSelection() {
         const div = document.createElement("div");
         div.style.position = "absolute";
         div.style.top = `${rect.top - container.getBoundingClientRect().top}px`;
-        div.style.left = `${rect.left - container.getBoundingClientRect().left
-          }px`;
+        div.style.left = `${
+          rect.left - container.getBoundingClientRect().left
+        }px`;
         div.style.width = `${rect.width}px`;
         div.style.height = `${rect.height}px`;
         div.style.backgroundColor = "rgb(255, 212, 0)";
@@ -138,7 +139,9 @@ export function useActiveSelection() {
     }
 
     // Observe resizes of the container element to redraw the selection
-    const observer = new ResizeObserver(() => drawSelectionRects(selectionContainer!));
+    const observer = new ResizeObserver(() =>
+      drawSelectionRects(selectionContainer!)
+    );
     observer.observe(selectionContainer);
 
     // Listen to updates in the editor to redraw the selection

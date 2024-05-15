@@ -5,7 +5,7 @@ import LiveblocksProvider from "@liveblocks/yjs";
 const client = createClient({
   authEndpoint: "/api/liveblocks-auth",
   // @ts-expect-error - Hidden config option
-  baseUrl: "https://dev.dev-liveblocks5948.workers.dev/",
+  baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
 
   // Get users' info from their ID
   resolveUsers: async ({ userIds }) => {

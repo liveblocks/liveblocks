@@ -12,12 +12,12 @@ import type { Doc } from "yjs";
 
 import { CommentPluginProvider } from "./CommentPluginProvider";
 import { LastActiveSelection } from "./LastActiveSelection";
+import MentionPlugin from "./mentions/mention-plugin";
 import {
   useDocumentSyncState,
   useTextCollaboration,
 } from "./TextCollaborationProvider";
 import { getDomPath } from "./utils";
-import MentionPlugin from "./mentions/mention-plugin";
 
 export type LiveblocksPluginProps = {
   /**

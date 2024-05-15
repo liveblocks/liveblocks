@@ -1,30 +1,38 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { kInternal } from "@liveblocks/core";
 import { useRoomContextBundle } from "@liveblocks/react";
+import type { EditorState, NodeKey, NodeMutation, TextNode } from "lexical";
 import {
+  $createRangeSelection,
+  $createTextNode,
   $getSelection,
+  $isElementNode,
+  $isNodeSelection,
   $isRangeSelection,
   $isTextNode,
+  $setSelection,
   COMMAND_PRIORITY_LOW,
-  KEY_ARROW_DOWN_COMMAND,
-  KEY_ARROW_UP_COMMAND,
   KEY_BACKSPACE_COMMAND,
-  KEY_ENTER_COMMAND,
-  KEY_ESCAPE_COMMAND,
-  TextNode,
 } from "lexical";
-
+import type { ReactNode } from "react";
 import React, {
-  HTMLAttributes,
-  ReactNode,
+  createContext,
   useCallback,
+  useContext,
   useEffect,
   useLayoutEffect,
   useRef,
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import MentionNode, { $createMentionNode } from "./mention-node";
+
+import Avatar from "./avatar";
+import MentionNode, {
+  $createMentionNode,
+  $isMentionNode,
+} from "./mention-node";
+import * as Suggestions from "./suggestion";
+import User from "./user";
 
 const MENTION_TRIGGER = "@";
 
@@ -120,7 +128,7 @@ function $getRangeAtMatch(match: RegExpExecArray): globalThis.Range | null {
   if (anchor === null) return null;
 
   const endOffset = selection.anchorOffset;
-  if (endOffset == null) return null;
+  if (endOffset === null) return null;
 
   const range = document.createRange();
 
@@ -133,6 +141,14 @@ function $getRangeAtMatch(match: RegExpExecArray): globalThis.Range | null {
   }
 }
 
+const SuggestionsContext = createContext<string[] | null>(null);
+
+const OnValueSelectCallbackContext = createContext<
+  ((value: string) => void) | null
+>(null);
+
+const OnResetMatchCallbackContext = createContext<(() => void) | null>(null);
+
 export default function MentionPlugin() {
   const [editor] = useLexicalComposerContext();
 
@@ -140,13 +156,35 @@ export default function MentionPlugin() {
     throw new Error("MentionPlugin: MentionNode not registered on editor");
   }
 
-  const [match, setMatch] = useState<RegExpExecArray | null>(null);
+  const [match, setMatch] = useState<RegExpExecArray | null>(null); // Represents the current match of the mention regex. A `null` value means there is no match.
   const matchingString = match?.[3];
 
   const {
     [kInternal]: { useMentionSuggestions },
   } = useRoomContextBundle();
   const suggestions = useMentionSuggestions(matchingString);
+
+  useEffect(() => {
+    function handleMutation(
+      mutations: Map<NodeKey, NodeMutation>,
+      {
+        prevEditorState,
+      }: {
+        prevEditorState: EditorState;
+      }
+    ) {
+      for (const [key, mutation] of mutations) {
+        if (mutation !== "destroyed") continue;
+
+        const node = prevEditorState._nodeMap.get(key);
+        if (node === null) continue;
+
+        // TODO
+      }
+    }
+
+    return editor.registerMutationListener(MentionNode, handleMutation);
+  }, [editor]);
 
   useEffect(() => {
     function $onStateRead() {
@@ -167,13 +205,59 @@ export default function MentionPlugin() {
 
   useEffect(() => {
     function $handleBackspace(event: KeyboardEvent): boolean {
-      console.log("BACKSPACE");
       const selection = $getSelection();
+
       if (selection === null) return false;
 
-      if (!$isRangeSelection(selection)) return false;
+      // If the selection is a node selection and the only node selected is a mention node, then we replace the mention node with a text node containing "@" and set the selection at the end of the text node.
+      if ($isNodeSelection(selection)) {
+        const nodes = selection.getNodes();
+        if (nodes.length !== 1) return false;
 
-      if (!selection.isCollapsed()) return false;
+        const node = nodes[0];
+        if (!$isMentionNode(node)) return false;
+
+        const text = $createTextNode("@");
+        node.replace(text);
+
+        const newSelection = $createRangeSelection();
+        newSelection.setTextNodeRange(text, 1, text, 1);
+        $setSelection(newSelection);
+
+        event.preventDefault();
+        return true;
+      } else if ($isRangeSelection(selection)) {
+        if (!selection.isCollapsed()) return false;
+
+        const anchor = selection.anchor.getNode();
+        const prevSibling = anchor.getPreviousSibling();
+        if (selection.anchor.offset === 0 && $isMentionNode(prevSibling)) {
+          const text = $createTextNode("@");
+          prevSibling.replace(text);
+
+          const newSelection = $createRangeSelection();
+          newSelection.setTextNodeRange(text, 1, text, 1);
+          $setSelection(newSelection);
+
+          event.preventDefault();
+          return true;
+        } else if ($isElementNode(anchor)) {
+          const child = anchor.getChildAtIndex(selection.anchor.offset - 1);
+          if (!$isMentionNode(child)) return false;
+
+          const text = $createTextNode("@");
+          child.replace(text);
+
+          const newSelection = $createRangeSelection();
+          newSelection.setTextNodeRange(text, 1, text, 1);
+          $setSelection(newSelection);
+
+          event.preventDefault();
+          return true;
+        }
+
+        return false;
+      }
 
       return false;
     }
@@ -185,14 +269,12 @@ export default function MentionPlugin() {
     );
   }, [editor]);
 
-  const handleValueChange = useCallback(
-    (suggestion: string) => {
-      function $onValueChange() {
-        const mentionNode = $createMentionNode(suggestion);
+  const handleValueSelect = useCallback(
+    (userId: string) => {
+      function $onValueSelect() {
+        if (match === null) return;
 
         setMatch(null);
-
-        if (match === null) return;
 
         const selection = $getSelection();
 
@@ -213,6 +295,8 @@ export default function MentionPlugin() {
         const startOffset = selectionOffset - queryOffset;
         if (startOffset < 0) return;
 
+        const mentionNode = $createMentionNode(userId);
+
         // Split the anchor (text) node and create a new text node only containing matched text.
         if (startOffset === 0) {
           const [node] = anchorNode.splitText(selectionOffset);
@@ -223,7 +307,7 @@ export default function MentionPlugin() {
         }
       }
 
-      editor.update($onValueChange);
+      editor.update($onValueSelect);
     },
     [editor, match]
   );
@@ -239,29 +323,43 @@ export default function MentionPlugin() {
   const rect = range.getBoundingClientRect();
 
   return createPortal(
-    <MentionDropdownMenuRoot rect={rect}>
-      <MentionDropdownMenuContent
-        key={matchingString}
-        values={suggestions}
-        onValueChange={handleValueChange}
-        onEscapeKeyDown={() => setMatch(null)}
-      />
-    </MentionDropdownMenuRoot>,
+    <SuggestionsContext.Provider value={suggestions}>
+      <OnValueSelectCallbackContext.Provider value={handleValueSelect}>
+        <OnResetMatchCallbackContext.Provider value={() => setMatch(null)}>
+          <SuggestionsRoot rect={rect} key={matchingString}>
+            <Suggestions.Content className="lb-lexical-composer-suggestions-list">
+              {suggestions.map((userId) => (
+                <Suggestions.Item
+                  key={userId}
+                  value={userId}
+                  className="lb-lexical-composer-suggestions-list-item"
+                >
+                  <Avatar
+                    userId={userId}
+                    className="lb-lexical-composer-mention-suggestion-avatar"
+                  />
+                  <User
+                    userId={userId}
+                    className="lb-lexical-composer-mention-suggestion-user"
+                  />
+                </Suggestions.Item>
+              ))}
+            </Suggestions.Content>
+          </SuggestionsRoot>
+        </OnResetMatchCallbackContext.Provider>
+      </OnValueSelectCallbackContext.Provider>
+    </SuggestionsContext.Provider>,
     document.body
   );
 }
 
-interface DropdownMenuRootProps extends HTMLAttributes<HTMLDivElement> {
-  children: ReactNode;
-  rect: DOMRect;
-}
-
-function MentionDropdownMenuRoot({
-  children,
+function SuggestionsRoot({
   rect,
-  style,
-  ...divProps
-}: DropdownMenuRootProps) {
+  children,
+}: {
+  rect: DOMRect;
+  children: ReactNode;
+}) {
   const [editor] = useLexicalComposerContext();
   const divRef = useRef<HTMLDivElement>(null);
 
@@ -277,164 +375,35 @@ function MentionDropdownMenuRoot({
   }, [editor, rect]);
 
   return (
-    <div
-      {...divProps}
-      ref={divRef}
-      role="listbox"
-      style={{ position: "absolute", ...style }}
-    >
+    <div ref={divRef} style={{ position: "absolute" }}>
       {children}
     </div>
   );
 }
 
-interface DropdownMenuContentProps {
-  values: string[];
-  onValueChange: (suggestion: string) => void;
-  onEscapeKeyDown: () => void;
+export function useSuggestions(): string[] {
+  const suggestions = useContext(SuggestionsContext);
+  if (suggestions === null) {
+    throw new Error("useSuggestions: SuggestionsContext not found");
+  }
+
+  return suggestions;
 }
 
-function MentionDropdownMenuContent({
-  values,
-  onValueChange,
-  onEscapeKeyDown,
-}: DropdownMenuContentProps) {
-  const [editor] = useLexicalComposerContext();
+export function useOnValueSelectCallback(): (value: string) => void {
+  const onValueSelect = useContext(OnValueSelectCallbackContext);
+  if (onValueSelect === null) {
+    throw new Error("useOnValueSelectCallback: OnValueSelectContext not found");
+  }
 
-  const [highlightedIndex, setHighlightedIndex] = useState<number>(0);
-
-  useEffect(() => {
-    function onKeyArrowDown(event: KeyboardEvent): boolean {
-      if (values.length === 0) return true;
-      if (highlightedIndex === null) return true;
-
-      // If the highlighted index is at the last suggestion, then we loop back to the first suggestion, otherwise we increment the index.
-      const nextIndex =
-        highlightedIndex === values.length - 1 ? 0 : highlightedIndex + 1;
-      setHighlightedIndex(nextIndex);
-
-      event.preventDefault();
-      event.stopImmediatePropagation();
-
-      return true;
-    }
-
-    return editor.registerCommand(
-      KEY_ARROW_DOWN_COMMAND,
-      onKeyArrowDown,
-      COMMAND_PRIORITY_LOW
-    );
-  }, [editor, highlightedIndex, values]);
-
-  useEffect(() => {
-    function onKeyArrowUp(event: KeyboardEvent): boolean {
-      if (values.length === 0) return true;
-      if (highlightedIndex === null) return true;
-
-      // If the highlighted index is at the first suggestion, then we loop back to the last suggestion, otherwise we decrement the index.
-      const nextIndex =
-        highlightedIndex === 0 ? values.length - 1 : highlightedIndex - 1;
-      setHighlightedIndex(nextIndex);
-
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      return true;
-    }
-
-    return editor.registerCommand(
-      KEY_ARROW_UP_COMMAND,
-      onKeyArrowUp,
-      COMMAND_PRIORITY_LOW
-    );
-  }, [editor, highlightedIndex, values]);
-
-  useEffect(() => {
-    function onKeyEnter(event: KeyboardEvent | null): boolean {
-      if (values.length === 0) return true;
-
-      onValueChange(values[highlightedIndex]);
-
-      if (event === null) return true;
-
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      return true;
-    }
-
-    return editor.registerCommand(
-      KEY_ENTER_COMMAND,
-      onKeyEnter,
-      COMMAND_PRIORITY_LOW
-    );
-  }, [editor, onValueChange, highlightedIndex, values]);
-
-  useEffect(() => {
-    function onKeyEscape(event: KeyboardEvent): boolean {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-
-      onEscapeKeyDown();
-      return true;
-    }
-
-    return editor.registerCommand<KeyboardEvent>(
-      KEY_ESCAPE_COMMAND,
-      onKeyEscape,
-      COMMAND_PRIORITY_LOW
-    );
-  }, [editor, onEscapeKeyDown]);
-
-  useEffect(() => {
-    const root = editor.getRootElement();
-    if (root === null) return;
-
-    root.setAttribute(
-      "aria-activedescendant",
-      `typeahead-item-${highlightedIndex}`
-    );
-
-    return () => {
-      root.removeAttribute("aria-activedescendant");
-    };
-  }, [editor, highlightedIndex]);
-
-  return values.map((value, index) => {
-    const isHighlighted = index === highlightedIndex;
-    return (
-      <MentionDropdownMenuItem
-        key={value}
-        isHighlighted={isHighlighted}
-        data-highlighted={isHighlighted ? "" : undefined}
-        onClick={() => onValueChange(value)}
-        onMouseEnter={() => setHighlightedIndex(index)}
-      >
-        {value}
-      </MentionDropdownMenuItem>
-    );
-  });
+  return onValueSelect;
 }
 
-interface DropdownMenuItemProps extends HTMLAttributes<HTMLDivElement> {
-  isHighlighted: boolean;
-}
+export function useOnResetMatchCallback(): () => void {
+  const onResetMatch = useContext(OnResetMatchCallbackContext);
+  if (onResetMatch === null) {
+    throw new Error("useOnResetMatchCallback: OnResetMatchContext not found");
+  }
 
-function MentionDropdownMenuItem({
-  isHighlighted,
-  ...props
-}: DropdownMenuItemProps) {
-  const divRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!isHighlighted) return;
-
-    const div = divRef.current;
-    if (div === null) return;
-
-    div.scrollIntoView({
-      block: "nearest",
-      inline: "nearest",
-    });
-  }, [isHighlighted]);
-
-  return <div {...props} ref={divRef}></div>;
+  return onResetMatch;
 }

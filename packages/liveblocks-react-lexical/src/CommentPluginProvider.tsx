@@ -66,7 +66,7 @@ export function CommentPluginProvider({
     // TODO, this should only fire if we're the source of creation
     editor.update(() => {
       $setSelection(null);
-    })
+    });
     console.log("Thread created", threadId);
   });
 
