@@ -524,7 +524,7 @@ function makeLiveblocksContextBundle<
 /**
  * @private This is an internal API.
  */
-function useClientOrNull() {
+export function useClientOrNull() {
   return useContext(ClientContext);
 }
 

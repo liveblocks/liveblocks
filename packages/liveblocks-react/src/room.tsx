@@ -42,7 +42,6 @@ import {
   makeEventSource,
   makePoller,
   NotificationsApiError,
-  raise,
   removeReaction,
   ServerMsgCode,
   stringify,
@@ -72,6 +71,7 @@ import { retryError } from "./lib/retry-error";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { useRerender } from "./lib/use-rerender";
+import { LiveblocksProvider, useClient, useClientOrNull } from "./liveblocks";
 import { createSharedContext } from "./shared";
 import type {
   CommentReactionOptions,
@@ -217,15 +217,6 @@ function handleApiError(err: CommentsApiError | NotificationsApiError): Error {
 
   return new Error(message);
 }
-
-// XXX The goal is to refactor away this ContextBundle context
-const ContextBundle = React.createContext<RoomContextBundle<
-  JsonObject,
-  LsonObject,
-  BaseUserMeta,
-  never,
-  BaseMetadata
-> | null>(null);
 
 const _bundles = new WeakMap<
   Client,
@@ -475,21 +466,11 @@ function makeRoomContextBundle<
     }, [roomId, frozenProps, stableEnterRoom]);
 
     return (
-      <RoomContext.Provider value={room}>
-        <ContextBundle.Provider
-          value={
-            bundle as unknown as RoomContextBundle<
-              JsonObject,
-              LsonObject,
-              BaseUserMeta,
-              never,
-              BaseMetadata
-            >
-          }
-        >
+      <LiveblocksProvider client={client}>
+        <RoomContext.Provider value={room}>
           {props.children}
-        </ContextBundle.Provider>
-      </RoomContext.Provider>
+        </RoomContext.Provider>
+      </LiveblocksProvider>
     );
   }
 
@@ -2382,7 +2363,8 @@ function makeRoomContextBundle<
  * This is an internal API, use `createRoomContext` instead.
  */
 export function useRoomContextBundleOrNull() {
-  return React.useContext(ContextBundle);
+  const client = useClientOrNull();
+  return client === null ? null : getOrCreateRoomContextBundle(client);
 }
 
 /**
@@ -2391,10 +2373,8 @@ export function useRoomContextBundleOrNull() {
  * This is an internal API, use `createRoomContext` instead.
  */
 export function useRoomContextBundle() {
-  return (
-    useRoomContextBundleOrNull() ??
-    raise("RoomProvider is missing from the React tree.")
-  );
+  const client = useClient();
+  return getOrCreateRoomContextBundle(client);
 }
 
 type Options<TUserMeta extends BaseUserMeta> = {
