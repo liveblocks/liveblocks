@@ -131,8 +131,8 @@ function selectorFor_useUnreadInboxNotificationsCountSuspense(
 // --- Private APIs ----------------------------------------------------- {{{
 
 function makeLiveblocksContextBundle<
-  TUserMeta extends BaseUserMeta = BaseUserMeta,
-  TThreadMetadata extends BaseMetadata = never,
+  TUserMeta extends BaseUserMeta,
+  TThreadMetadata extends BaseMetadata,
 >(client: Client): LiveblocksContextBundle<TUserMeta, TThreadMetadata> {
   const shared = createSharedContext<TUserMeta>(client);
 
