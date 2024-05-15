@@ -35,6 +35,8 @@ import type {
   UnreadInboxNotificationsCountStateSuccess,
 } from "./types";
 
+const ClientContext = createContext<Client | null>(null);
+
 // XXX The goal is to refactor this bundle away
 const ContextBundle = createContext<LiveblocksContextBundle<
   BaseUserMeta,
@@ -531,6 +533,23 @@ function makeLiveblocksContextBundle<
 
 // ---------------------------------------------------------------------- }}}
 // --- Public APIs ------------------------------------------------------ {{{
+
+/**
+ * @beta This is an internal API for now, but it will become public eventually.
+ */
+function useClientOrNull() {
+  return useContext(ClientContext);
+}
+
+/**
+ * @beta This is an internal API for now, but it will become public eventually.
+ */
+function useClient() {
+  return (
+    useClientOrNull() ??
+    raise("LiveblocksProvider is missing from the React tree.")
+  );
+}
 
 /**
  * @private
