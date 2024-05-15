@@ -539,6 +539,19 @@ export function useClient() {
 }
 
 /**
+ * @beta This is an internal API for now, but it will become public eventually.
+ */
+export function LiveblocksProvider(
+  props: PropsWithChildren<{ client: Client }>
+) {
+  return (
+    <ClientContext.Provider value={props.client}>
+      {props.children}
+    </ClientContext.Provider>
+  );
+}
+
+/**
  * @private
  *
  * This is an internal API, use "createLiveblocksContext" instead.
