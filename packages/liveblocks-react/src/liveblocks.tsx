@@ -40,27 +40,6 @@ const ContextBundle = createContext<LiveblocksContextBundle<
   BaseMetadata
 > | null>(null);
 
-/**
- * @private
- *
- * This is an internal API, use "createLiveblocksContext" instead.
- */
-export function useLiveblocksContextBundleOrNull() {
-  return useContext(ContextBundle);
-}
-
-/**
- * @private
- *
- * This is an internal API, use "createLiveblocksContext" instead.
- */
-export function useLiveblocksContextBundle() {
-  return (
-    useLiveblocksContextBundleOrNull() ??
-    raise("LiveblocksProvider is missing from the React tree.")
-  );
-}
-
 export const POLLING_INTERVAL = 60 * 1000; // 1 minute
 export const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
 
@@ -148,6 +127,31 @@ function selectorFor_useUnreadInboxNotificationsCountSuspense(
 }
 
 // ---------------------------------------------------------------------- }}}
+// --- Private APIs ----------------------------------------------------- {{{
+
+// ---------------------------------------------------------------------- }}}
+// --- Public APIs ------------------------------------------------------ {{{
+
+/**
+ * @private
+ *
+ * This is an internal API, use "createLiveblocksContext" instead.
+ */
+export function useLiveblocksContextBundleOrNull() {
+  return useContext(ContextBundle);
+}
+
+/**
+ * @private
+ *
+ * This is an internal API, use "createLiveblocksContext" instead.
+ */
+export function useLiveblocksContextBundle() {
+  return (
+    useLiveblocksContextBundleOrNull() ??
+    raise("LiveblocksProvider is missing from the React tree.")
+  );
+}
 
 export function createLiveblocksContext<
   TUserMeta extends BaseUserMeta = BaseUserMeta,
@@ -530,3 +534,5 @@ export function createLiveblocksContext<
     enumerable: false,
   });
 }
+
+// ---------------------------------------------------------------------- }}}
