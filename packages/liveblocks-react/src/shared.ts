@@ -46,11 +46,14 @@ function useUser_withClient<TUserMeta extends BaseUserMeta>(
 ): UserState<TUserMeta["info"]> {
   const usersStore = client[kInternal].usersStore;
 
-  const getUserState = useCallback(() => usersStore.getState(userId), [userId]);
+  const getUserState = useCallback(
+    () => usersStore.getState(userId),
+    [usersStore, userId]
+  );
 
   useEffect(() => {
     void usersStore.get(userId);
-  }, [userId]);
+  }, [usersStore, userId]);
 
   const state = useSyncExternalStore(
     usersStore.subscribe,
@@ -77,7 +80,10 @@ function useUserSuspense_withClient<TUserMeta extends BaseUserMeta>(
 ) {
   const usersStore = client[kInternal].usersStore;
 
-  const getUserState = useCallback(() => usersStore.getState(userId), [userId]);
+  const getUserState = useCallback(
+    () => usersStore.getState(userId),
+    [usersStore, userId]
+  );
   const userState = getUserState();
 
   if (!userState || userState.isLoading) {
@@ -111,12 +117,12 @@ function useRoomInfo_withClient(client: Client, roomId: string): RoomInfoState {
 
   const getRoomInfoState = useCallback(
     () => roomsInfoStore.getState(roomId),
-    [roomId]
+    [roomsInfoStore, roomId]
   );
 
   useEffect(() => {
     void roomsInfoStore.get(roomId);
-  }, [roomId]);
+  }, [roomsInfoStore, roomId]);
 
   const state = useSyncExternalStore(
     roomsInfoStore.subscribe,
@@ -142,7 +148,7 @@ function useRoomInfoSuspense_withClient(client: Client, roomId: string) {
 
   const getRoomInfoState = useCallback(
     () => roomsInfoStore.getState(roomId),
-    [roomId]
+    [roomsInfoStore, roomId]
   );
   const roomInfoState = getRoomInfoState();
 
