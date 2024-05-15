@@ -143,6 +143,12 @@ function alwaysNull() {
   return null;
 }
 
+function selectorFor_useOthersConnectionIds(
+  others: readonly User<JsonObject, BaseUserMeta>[]
+): number[] {
+  return others.map((user) => user.connectionId);
+}
+
 // ---------------------------------------------------------------------- }}}
 // --- Private APIs ----------------------------------------------------- {{{
 
@@ -186,6 +192,32 @@ function makeMutationContext<
   };
 }
 
+function getCurrentUserId(
+  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
+): string {
+  const self = room.getSelf();
+  if (self === null || self.id === undefined) {
+    return "anonymous";
+  } else {
+    return self.id;
+  }
+}
+
+function handleApiError(err: CommentsApiError | NotificationsApiError): Error {
+  const message = `Request failed with status ${err.status}: ${err.message}`;
+
+  // Log details about FORBIDDEN errors
+  if (err.details?.error === "FORBIDDEN") {
+    const detailedMessage = [message, err.details.suggestion, err.details.docs]
+      .filter(Boolean)
+      .join("\n");
+
+    console.error(detailedMessage);
+  }
+
+  return new Error(message);
+}
+
 // XXX The goal is to refactor away this ContextBundle context
 const ContextBundle = React.createContext<RoomContextBundle<
   JsonObject,
@@ -217,12 +249,6 @@ export function useRoomContextBundle() {
     useRoomContextBundleOrNull() ??
     raise("RoomProvider is missing from the React tree.")
   );
-}
-
-function selectorFor_useOthersConnectionIds(
-  others: readonly User<JsonObject, BaseUserMeta>[]
-): number[] {
-  return others.map((user) => user.connectionId);
 }
 
 type Options<TUserMeta extends BaseUserMeta> = {
@@ -2372,32 +2398,6 @@ export function createRoomContext<
   return Object.defineProperty(bundle, kInternal, {
     enumerable: false,
   });
-}
-
-function getCurrentUserId(
-  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
-): string {
-  const self = room.getSelf();
-  if (self === null || self.id === undefined) {
-    return "anonymous";
-  } else {
-    return self.id;
-  }
-}
-
-function handleApiError(err: CommentsApiError | NotificationsApiError): Error {
-  const message = `Request failed with status ${err.status}: ${err.message}`;
-
-  // Log details about FORBIDDEN errors
-  if (err.details?.error === "FORBIDDEN") {
-    const detailedMessage = [message, err.details.suggestion, err.details.docs]
-      .filter(Boolean)
-      .join("\n");
-
-    console.error(detailedMessage);
-  }
-
-  return new Error(message);
 }
 
 export function generateQueryKey<TThreadMetadata extends BaseMetadata>(
