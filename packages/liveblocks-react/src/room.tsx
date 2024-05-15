@@ -227,6 +227,40 @@ const ContextBundle = React.createContext<RoomContextBundle<
   BaseMetadata
 > | null>(null);
 
+const _bundles = new WeakMap<
+  Client,
+  RoomContextBundle<JsonObject, LsonObject, BaseUserMeta, Json, BaseMetadata>
+>();
+
+function getOrCreateRoomContextBundle<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json,
+  TThreadMetadata extends BaseMetadata,
+>(
+  client: Client
+): RoomContextBundle<
+  TPresence,
+  TStorage,
+  TUserMeta,
+  TRoomEvent,
+  TThreadMetadata
+> {
+  let bundle = _bundles.get(client);
+  if (!bundle) {
+    bundle = makeRoomContextBundle(client);
+    _bundles.set(client, bundle);
+  }
+  return bundle as unknown as RoomContextBundle<
+    TPresence,
+    TStorage,
+    TUserMeta,
+    TRoomEvent,
+    TThreadMetadata
+  >;
+}
+
 function makeRoomContextBundle<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
@@ -2415,7 +2449,7 @@ export function createRoomContext<
     );
   }
 
-  return makeRoomContextBundle<
+  return getOrCreateRoomContextBundle<
     TPresence,
     TStorage,
     TUserMeta,
