@@ -129,6 +129,8 @@ export const POLLING_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
 const MENTION_SUGGESTIONS_DEBOUNCE = 500;
 
+// --- Selector helpers ------------------------------------------------- {{{
+
 // Don't try to inline this. This function is intended to be a stable
 // reference, to avoid a React.useCallback() wrapper.
 function alwaysEmptyList() {
@@ -140,6 +142,9 @@ function alwaysEmptyList() {
 function alwaysNull() {
   return null;
 }
+
+// ---------------------------------------------------------------------- }}}
+// --- Private APIs ----------------------------------------------------- {{{
 
 function makeMutationContext<
   TPresence extends JsonObject,
@@ -189,6 +194,9 @@ const ContextBundle = React.createContext<RoomContextBundle<
   never,
   BaseMetadata
 > | null>(null);
+
+// ---------------------------------------------------------------------- }}}
+// --- Public APIs ------------------------------------------------------ {{{
 
 /**
  * @private
@@ -2398,3 +2406,5 @@ export function generateQueryKey<TThreadMetadata extends BaseMetadata>(
 ) {
   return `${roomId}-${stringify(options ?? {})}`;
 }
+
+// ---------------------------------------------------------------------- }}}
