@@ -227,7 +227,7 @@ const ContextBundle = React.createContext<RoomContextBundle<
   BaseMetadata
 > | null>(null);
 
-export function makeRoomContextBundle<
+function makeRoomContextBundle<
   TPresence extends JsonObject,
   TStorage extends LsonObject = LsonObject,
   TUserMeta extends BaseUserMeta = BaseUserMeta,
