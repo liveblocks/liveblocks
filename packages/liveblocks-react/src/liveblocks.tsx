@@ -130,7 +130,7 @@ function selectorFor_useUnreadInboxNotificationsCountSuspense(
 // ---------------------------------------------------------------------- }}}
 // --- Private APIs ----------------------------------------------------- {{{
 
-export function makeLiveblocksContextBundle<
+function makeLiveblocksContextBundle<
   TUserMeta extends BaseUserMeta = BaseUserMeta,
   TThreadMetadata extends BaseMetadata = never,
 >(client: Client): LiveblocksContextBundle<TUserMeta, TThreadMetadata> {
