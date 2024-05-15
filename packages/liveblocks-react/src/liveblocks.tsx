@@ -41,6 +41,11 @@ const ContextBundle = createContext<LiveblocksContextBundle<
   BaseMetadata
 > | null>(null);
 
+const _bundles = new WeakMap<
+  Client,
+  LiveblocksContextBundle<BaseUserMeta, BaseMetadata>
+>();
+
 export const POLLING_INTERVAL = 60 * 1000; // 1 minute
 export const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
 
@@ -129,6 +134,18 @@ function selectorFor_useUnreadInboxNotificationsCountSuspense(
 
 // ---------------------------------------------------------------------- }}}
 // --- Private APIs ----------------------------------------------------- {{{
+
+function getOrCreateContextBundle<
+  TUserMeta extends BaseUserMeta,
+  TThreadMetadata extends BaseMetadata,
+>(client: Client): LiveblocksContextBundle<TUserMeta, TThreadMetadata> {
+  let bundle = _bundles.get(client);
+  if (!bundle) {
+    bundle = makeLiveblocksContextBundle(client);
+    _bundles.set(client, bundle);
+  }
+  return bundle as LiveblocksContextBundle<TUserMeta, TThreadMetadata>;
+}
 
 function makeLiveblocksContextBundle<
   TUserMeta extends BaseUserMeta,
@@ -540,7 +557,7 @@ export function createLiveblocksContext<
   TUserMeta extends BaseUserMeta = BaseUserMeta,
   TThreadMetadata extends BaseMetadata = never,
 >(client: Client): LiveblocksContextBundle<TUserMeta, TThreadMetadata> {
-  return makeLiveblocksContextBundle<TUserMeta, TThreadMetadata>(client);
+  return getOrCreateContextBundle<TUserMeta, TThreadMetadata>(client);
 }
 
 // ---------------------------------------------------------------------- }}}
