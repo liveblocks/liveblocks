@@ -229,10 +229,10 @@ const ContextBundle = React.createContext<RoomContextBundle<
 
 function makeRoomContextBundle<
   TPresence extends JsonObject,
-  TStorage extends LsonObject = LsonObject,
-  TUserMeta extends BaseUserMeta = BaseUserMeta,
-  TRoomEvent extends Json = never,
-  TThreadMetadata extends BaseMetadata = never,
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json,
+  TThreadMetadata extends BaseMetadata,
 >(
   client: Client
 ): RoomContextBundle<
