@@ -35,22 +35,12 @@ import type {
   UnreadInboxNotificationsCountStateSuccess,
 } from "./types";
 
-export const ContextBundle = createContext<LiveblocksContextBundle<
-  BaseUserMeta,
-  BaseMetadata
-> | null>(null);
+const ClientContext = createContext<Client | null>(null);
 
-/**
- * @private
- *
- * This is an internal API, use "createLiveblocksContext" instead.
- */
-export function useLiveblocksContextBundle() {
-  return (
-    useContext(ContextBundle) ??
-    raise("LiveblocksProvider is missing from the React tree.")
-  );
-}
+const _bundles = new WeakMap<
+  Client,
+  LiveblocksContextBundle<BaseUserMeta, BaseMetadata>
+>();
 
 export const POLLING_INTERVAL = 60 * 1000; // 1 minute
 export const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
@@ -139,10 +129,23 @@ function selectorFor_useUnreadInboxNotificationsCountSuspense(
 }
 
 // ---------------------------------------------------------------------- }}}
+// --- Private APIs ----------------------------------------------------- {{{
 
-export function createLiveblocksContext<
-  TUserMeta extends BaseUserMeta = BaseUserMeta,
-  TThreadMetadata extends BaseMetadata = never,
+function getOrCreateContextBundle<
+  TUserMeta extends BaseUserMeta,
+  TThreadMetadata extends BaseMetadata,
+>(client: Client): LiveblocksContextBundle<TUserMeta, TThreadMetadata> {
+  let bundle = _bundles.get(client);
+  if (!bundle) {
+    bundle = makeLiveblocksContextBundle(client);
+    _bundles.set(client, bundle);
+  }
+  return bundle as LiveblocksContextBundle<TUserMeta, TThreadMetadata>;
+}
+
+function makeLiveblocksContextBundle<
+  TUserMeta extends BaseUserMeta,
+  TThreadMetadata extends BaseMetadata,
 >(client: Client): LiveblocksContextBundle<TUserMeta, TThreadMetadata> {
   const shared = createSharedContext<TUserMeta>(client);
 
@@ -153,16 +156,9 @@ export function createLiveblocksContext<
 
   function LiveblocksProvider(props: PropsWithChildren) {
     return (
-      <ContextBundle.Provider
-        value={
-          bundle as unknown as LiveblocksContextBundle<
-            BaseUserMeta,
-            BaseMetadata
-          >
-        }
-      >
+      <ClientContext.Provider value={client}>
         {props.children}
-      </ContextBundle.Provider>
+      </ClientContext.Provider>
     );
   }
 
@@ -521,3 +517,52 @@ export function createLiveblocksContext<
     enumerable: false,
   });
 }
+
+// ---------------------------------------------------------------------- }}}
+// --- Public APIs ------------------------------------------------------ {{{
+
+/**
+ * @private This is an internal API.
+ */
+function useClientOrNull() {
+  return useContext(ClientContext);
+}
+
+/**
+ * @beta This is an internal API for now, but it will become public eventually.
+ */
+export function useClient() {
+  return (
+    useClientOrNull() ??
+    raise("LiveblocksProvider is missing from the React tree.")
+  );
+}
+
+/**
+ * @private
+ *
+ * This is an internal API, use "createLiveblocksContext" instead.
+ */
+export function useLiveblocksContextBundleOrNull() {
+  const client = useClientOrNull();
+  return client !== null ? getOrCreateContextBundle(client) : null;
+}
+
+/**
+ * @private
+ *
+ * This is an internal API, use "createLiveblocksContext" instead.
+ */
+export function useLiveblocksContextBundle() {
+  const client = useClient();
+  return getOrCreateContextBundle(client);
+}
+
+export function createLiveblocksContext<
+  TUserMeta extends BaseUserMeta = BaseUserMeta,
+  TThreadMetadata extends BaseMetadata = never,
+>(client: Client): LiveblocksContextBundle<TUserMeta, TThreadMetadata> {
+  return getOrCreateContextBundle<TUserMeta, TThreadMetadata>(client);
+}
+
+// ---------------------------------------------------------------------- }}}

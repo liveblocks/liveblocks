@@ -42,6 +42,7 @@ import {
   makeEventSource,
   makePoller,
   NotificationsApiError,
+  raise,
   removeReaction,
   ServerMsgCode,
   stringify,
@@ -180,7 +181,7 @@ function makeMutationContext<
   };
 }
 
-export const ContextBundle = React.createContext<RoomContextBundle<
+const ContextBundle = React.createContext<RoomContextBundle<
   JsonObject,
   LsonObject,
   BaseUserMeta,
@@ -193,12 +194,26 @@ export const ContextBundle = React.createContext<RoomContextBundle<
  *
  * This is an internal API, use `createRoomContext` instead.
  */
+export function useRoomContextBundleOrNull() {
+  return React.useContext(ContextBundle);
+}
+
+/**
+ * @private
+ *
+ * This is an internal API, use `createRoomContext` instead.
+ */
 export function useRoomContextBundle() {
-  const bundle = React.useContext(ContextBundle);
-  if (bundle === null) {
-    throw new Error("RoomProvider is missing from the React tree.");
-  }
-  return bundle;
+  return (
+    useRoomContextBundleOrNull() ??
+    raise("RoomProvider is missing from the React tree.")
+  );
+}
+
+function selectorFor_useOthersConnectionIds(
+  others: readonly User<JsonObject, BaseUserMeta>[]
+): number[] {
+  return others.map((user) => user.connectionId);
 }
 
 type Options<TUserMeta extends BaseUserMeta> = {
@@ -470,12 +485,6 @@ export function createRoomContext<
     );
   }
 
-  function connectionIdSelector(
-    others: readonly User<TPresence, TUserMeta>[]
-  ): number[] {
-    return others.map((user) => user.connectionId);
-  }
-
   function useRoom(): TRoom {
     const room = React.useContext(RoomContext);
     if (room === null) {
@@ -535,7 +544,7 @@ export function createRoomContext<
   }
 
   function useOthersConnectionIds(): readonly number[] {
-    return useOthers(connectionIdSelector, shallow);
+    return useOthers(selectorFor_useOthersConnectionIds, shallow);
   }
 
   function useOthersMapped<T>(
