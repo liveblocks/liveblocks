@@ -234,8 +234,7 @@ function makeRoomContextBundle<
   TRoomEvent extends Json = never,
   TThreadMetadata extends BaseMetadata = never,
 >(
-  client: Client,
-  options?: Options<TUserMeta>
+  client: Client
 ): RoomContextBundle<
   TPresence,
   TStorage,
@@ -245,20 +244,6 @@ function makeRoomContextBundle<
 > {
   type TRoom = Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
   type TRoomLeavePair = { room: TRoom; leave: () => void };
-
-  // Deprecated option
-  if (options?.resolveUsers) {
-    throw new Error(
-      "The 'resolveUsers' option has moved to 'createClient' from '@liveblocks/client'. Please refer to our Upgrade Guide to learn more, see https://liveblocks.io/docs/platform/upgrading/1.10."
-    );
-  }
-
-  // Deprecated option
-  if (options?.resolveMentionSuggestions) {
-    throw new Error(
-      "The 'resolveMentionSuggestions' option has moved to 'createClient' from '@liveblocks/client'. Please refer to our Upgrade Guide to learn more, see https://liveblocks.io/docs/platform/upgrading/1.10."
-    );
-  }
 
   const RoomContext = React.createContext<TRoom | null>(null);
 
