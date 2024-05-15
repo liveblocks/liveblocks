@@ -522,7 +522,7 @@ function makeLiveblocksContextBundle<
 // --- Public APIs ------------------------------------------------------ {{{
 
 /**
- * @beta This is an internal API for now, but it will become public eventually.
+ * @private This is an internal API.
  */
 function useClientOrNull() {
   return useContext(ClientContext);
@@ -531,7 +531,7 @@ function useClientOrNull() {
 /**
  * @beta This is an internal API for now, but it will become public eventually.
  */
-function useClient() {
+export function useClient() {
   return (
     useClientOrNull() ??
     raise("LiveblocksProvider is missing from the React tree.")
