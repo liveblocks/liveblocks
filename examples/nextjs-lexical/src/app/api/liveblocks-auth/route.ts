@@ -10,7 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
   // @ts-expect-error - Hidden config option
-  baseUrl: "https://dev.dev-liveblocks5948.workers.dev/",
+  baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
 });
 
 export async function POST(request: NextRequest) {

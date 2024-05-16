@@ -60,3 +60,61 @@ main {
 .lb-thread-composer:after {
   border-width: 0;
 }
+
+.lb-lexical-composer-suggestions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background-color: white;
+  padding: 4px;
+  overflow: hidden;
+  border-radius: 6px;
+  box-shadow:
+    0px 10px 38px -10px rgba(22, 23, 24, 0.35),
+    0px 10px 20px -15px rgba(22, 23, 24, 0.2);
+}
+
+.lb-lexical-composer-suggestions-list-item {
+  font-size: 13px;
+  line-height: 1;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 25px;
+  padding: 0 10px 0 10px;
+  position: relative;
+  user-select: none;
+  color: rgba(55, 53, 47, 0.8);
+}
+
+.lb-lexical-composer-suggestions-list-item[data-highlighted] {
+  outline: none;
+  background-color: rgba(55, 53, 47, 0.1);
+  color: rgba(55, 53, 47, 0.8);
+}
+
+.lb-lexical-composer-mention-suggestion-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  overflow: hidden;
+  user-select: none;
+  user-select: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 100%;
+}
+
+.lb-lexical-composer-mention {
+  border-radius: 3px;
+  padding: 0px 4px;
+  cursor: pointer;
+  user-select: none;
+  background-color: rgba(55, 53, 47, 0.1);
+}
+
+.lb-lexical-composer-mention[data-selected] {
+  background-color: rgba(55, 53, 47, 0.2);
+}

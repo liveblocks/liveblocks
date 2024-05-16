@@ -33,12 +33,12 @@ import type {
 } from "lexical";
 import { $isElementNode, $isRootNode, $isTextNode } from "lexical";
 
+import MentionNode from "./mentions/mention-node";
 import {
   $createThreadMarkNode,
   $isThreadMarkNode,
   ThreadMarkNode,
 } from "./ThreadMarkNode";
-import MentionNode from "./mentions/mention-node";
 
 export function liveblocksLexicalConfig(editorConfig: InitialConfigType) {
   let nodes: ReadonlyArray<Klass<LexicalNode> | LexicalNodeReplacement> = [];

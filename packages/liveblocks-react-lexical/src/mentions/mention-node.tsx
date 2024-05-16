@@ -1,99 +1,138 @@
+const MENTION_CHARACTER = "@";
+
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import type {
+  DOMConversionMap,
+  DOMExportOutput,
+  LexicalNode,
+  NodeKey,
+  SerializedLexicalNode,
+  Spread,
+} from "lexical";
 import {
   $applyNodeReplacement,
   $createNodeSelection,
   $getNodeByKey,
-  $getSelection,
-  $isNodeSelection,
   $setSelection,
-  COMMAND_PRIORITY_LOW,
   DecoratorNode,
-  DOMExportOutput,
-  KEY_BACKSPACE_COMMAND,
-  LexicalNode,
-  NodeKey,
 } from "lexical";
-import type { JSX, MouseEvent } from "react";
-import React, { useCallback, useEffect, useSyncExternalStore } from "react";
+import type { JSX, ReactNode } from "react";
+import React, { useCallback, useRef, useSyncExternalStore } from "react";
+
+import User from "./user";
+
+export type SerializedMentionNode = Spread<
+  {
+    value: string;
+  },
+  SerializedLexicalNode
+>;
 
 export default class MentionNode extends DecoratorNode<JSX.Element> {
-  __value: string;
+  __id: string;
 
   constructor(value: string, key?: NodeKey) {
     super(key);
-    this.__value = value;
+    this.__id = value;
   }
 
   static getType(): string {
-    return "mention";
+    return "lb-mention";
   }
 
   static clone(node: MentionNode): MentionNode {
-    return new MentionNode(node.__value);
+    return new MentionNode(node.__id);
   }
 
   createDOM(): HTMLElement {
-    return document.createElement("span");
+    const element = document.createElement("span");
+    element.style.display = "inline-block";
+    return element;
   }
 
   updateDOM(): boolean {
     return false;
   }
 
+  static importDom(): DOMConversionMap<HTMLElement> | null {
+    return {
+      span: () => ({
+        conversion: (element) => {
+          const value = atob(element.getAttribute("data-lexical-lb-mention")!);
+          const node = $createMentionNode(value);
+          return { node };
+        },
+        priority: 1,
+      }),
+    };
+  }
+
   exportDOM(): DOMExportOutput {
     const element = document.createElement("span");
-    element.setAttribute("data-lexical-lb-mention", "true");
+    const value = this.getTextContent();
+    element.setAttribute("data-lexical-lb-mention", btoa(value));
     element.textContent = this.getTextContent();
     return { element };
   }
 
+  static importJSON(serializedNode: SerializedMentionNode): MentionNode {
+    const node = $createMentionNode(serializedNode.value);
+    return node;
+  }
+
+  exportJSON(): SerializedMentionNode {
+    return {
+      value: this.getTextContent(),
+      type: "lb-mention",
+      version: 1,
+    };
+  }
+
   getTextContent(): string {
     const self = this.getLatest();
-    return self.__value;
+    return self.__id;
   }
 
   decorate(): JSX.Element {
-    return <Mention value={this.__value} nodeKey={this.getKey()} />;
+    return (
+      <Mention nodeKey={this.getKey()}>
+        {MENTION_CHARACTER}
+        <User userId={this.__id} />
+      </Mention>
+    );
   }
 }
 
-function Mention({ value, nodeKey }: { value: string; nodeKey: NodeKey }) {
+function Mention({
+  nodeKey,
+  children,
+}: {
+  nodeKey: NodeKey;
+  children: ReactNode;
+}) {
   const [editor] = useLexicalComposerContext();
+  const spanRef = useRef<HTMLSpanElement>(null);
   const isSelected = useIsNodeSelected(nodeKey);
 
-  useEffect(() => {
-    function $handleBackspace(event: KeyboardEvent): boolean {
-      if (!isSelected) return false;
-      const selection = $getSelection();
-      if (!$isNodeSelection(selection)) return false;
-      const node = $getNodeByKey(nodeKey);
-      if (!$isMentionNode(node)) return false;
-      event.preventDefault();
-      node.remove();
-      return true;
-    }
-
-    return editor.registerCommand(
-      KEY_BACKSPACE_COMMAND,
-      $handleBackspace,
-      COMMAND_PRIORITY_LOW
-    );
-  }, [editor, isSelected, nodeKey]);
-
-  function handleClick(event: MouseEvent) {
+  function handleClick(event: React.MouseEvent) {
     editor.update(() => {
-      if (event.shiftKey) return;
+      event.stopPropagation();
+      event.preventDefault();
+
       const selection = $createNodeSelection();
       selection.add(nodeKey);
       $setSelection(selection);
-      event.stopPropagation();
-      event.preventDefault();
     });
   }
 
   return (
-    <span data-selected={isSelected ? "" : undefined} onClick={handleClick}>
-      {value}
+    <span
+      ref={spanRef}
+      data-selected={isSelected ? "" : undefined}
+      onClick={handleClick}
+      className="lb-lexical-composer-mention"
+    >
+      {children}
     </span>
   );
 }
@@ -121,8 +160,8 @@ function useIsNodeSelected(key: NodeKey) {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
-export function $createMentionNode(value: string): MentionNode {
-  const node = new MentionNode(value);
+export function $createMentionNode(id: string): MentionNode {
+  const node = new MentionNode(id);
   return $applyNodeReplacement(node);
 }
 
