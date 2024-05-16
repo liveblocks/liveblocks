@@ -298,7 +298,6 @@ function makeLiveblocksContextBundle<
 >(client: Client): LiveblocksContextBundle<TUserMeta, TThreadMetadata> {
   const {
     store,
-    notifications,
     fetchInboxNotifications,
     useSubscribeToInboxNotificationsEffect,
   } = getExtrasForClient<TThreadMetadata>(client);
@@ -359,8 +358,74 @@ function makeLiveblocksContextBundle<
     );
   }
 
-  function useMarkInboxNotificationAsRead() {
-    return useCallback((inboxNotificationId: string) => {
+  function LiveblocksProvider(props: PropsWithChildren) {
+    return (
+      <ClientContext.Provider value={client}>
+        {props.children}
+      </ClientContext.Provider>
+    );
+  }
+
+  // Bind all hooks to the current client instance
+  const useInboxNotificationThread = (inboxNotificationId: string) =>
+    useInboxNotificationThread_withClient<TThreadMetadata>(
+      client,
+      inboxNotificationId
+    );
+
+  const useMarkInboxNotificationAsRead = () =>
+    useMarkInboxNotificationAsRead_withClient(client);
+
+  const useMarkAllInboxNotificationsAsRead = () =>
+    useMarkAllInboxNotificationsAsRead_withClient(client);
+
+  const shared = createSharedContext<TUserMeta>(client);
+  const bundle: LiveblocksContextBundle<TUserMeta, TThreadMetadata> = {
+    LiveblocksProvider,
+
+    useInboxNotifications, // XXX Convert
+    useUnreadInboxNotificationsCount, // XXX Convert
+
+    useMarkInboxNotificationAsRead,
+    useMarkAllInboxNotificationsAsRead,
+
+    useInboxNotificationThread,
+
+    ...shared,
+
+    suspense: {
+      LiveblocksProvider,
+
+      useInboxNotifications: useInboxNotificationsSuspense, // XXX Convert
+      useUnreadInboxNotificationsCount:
+        useUnreadInboxNotificationsCountSuspense, // XXX Convert
+
+      useMarkInboxNotificationAsRead,
+      useMarkAllInboxNotificationsAsRead,
+
+      useInboxNotificationThread,
+
+      ...shared.suspense,
+    },
+
+    [kInternal]: {
+      useCurrentUserId: () => useCurrentUserId_withClient(client),
+    },
+  };
+
+  return Object.defineProperty(bundle, kInternal, {
+    enumerable: false,
+  });
+}
+
+// ---------------------------------------------------------------------- }}}
+// --- Private useXxx_withClient() helpers ------------------------------ {{{
+
+function useMarkInboxNotificationAsRead_withClient(client: Client) {
+  return useCallback(
+    (inboxNotificationId: string) => {
+      const { store, notifications } = getExtrasForClient(client);
+
       const optimisticUpdateId = nanoid();
       const readAt = new Date();
       store.pushOptimisticUpdate({
@@ -411,68 +476,10 @@ function makeLiveblocksContextBundle<
           }));
         }
       );
-    }, []);
-  }
-
-  function LiveblocksProvider(props: PropsWithChildren) {
-    return (
-      <ClientContext.Provider value={client}>
-        {props.children}
-      </ClientContext.Provider>
-    );
-  }
-
-  // Bind all hooks to the current client instance
-  const useInboxNotificationThread = (inboxNotificationId: string) =>
-    useInboxNotificationThread_withClient<TThreadMetadata>(
-      client,
-      inboxNotificationId
-    );
-
-  const useMarkAllInboxNotificationsAsRead = () =>
-    useMarkAllInboxNotificationsAsRead_withClient(client);
-
-  const shared = createSharedContext<TUserMeta>(client);
-  const bundle: LiveblocksContextBundle<TUserMeta, TThreadMetadata> = {
-    LiveblocksProvider,
-
-    useInboxNotifications, // XXX Convert
-    useUnreadInboxNotificationsCount, // XXX Convert
-
-    useMarkInboxNotificationAsRead, // XXX Convert
-    useMarkAllInboxNotificationsAsRead,
-
-    useInboxNotificationThread,
-
-    ...shared,
-
-    suspense: {
-      LiveblocksProvider,
-
-      useInboxNotifications: useInboxNotificationsSuspense, // XXX Convert
-      useUnreadInboxNotificationsCount:
-        useUnreadInboxNotificationsCountSuspense, // XXX Convert
-
-      useMarkInboxNotificationAsRead, // XXX Convert
-      useMarkAllInboxNotificationsAsRead,
-
-      useInboxNotificationThread,
-
-      ...shared.suspense,
     },
-
-    [kInternal]: {
-      useCurrentUserId: () => useCurrentUserId_withClient(client),
-    },
-  };
-
-  return Object.defineProperty(bundle, kInternal, {
-    enumerable: false,
-  });
+    [client]
+  );
 }
-
-// ---------------------------------------------------------------------- }}}
-// --- Private useXxx_withClient() helpers ------------------------------ {{{
 
 function useMarkAllInboxNotificationsAsRead_withClient(client: Client) {
   return useCallback(() => {
