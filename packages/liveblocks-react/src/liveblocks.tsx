@@ -147,8 +147,6 @@ function makeLiveblocksContextBundle<
   TUserMeta extends BaseUserMeta,
   TThreadMetadata extends BaseMetadata,
 >(client: Client): LiveblocksContextBundle<TUserMeta, TThreadMetadata> {
-  const shared = createSharedContext<TUserMeta>(client);
-
   const store = client[kInternal]
     .cacheStore as unknown as CacheStore<TThreadMetadata>;
 
@@ -480,6 +478,7 @@ function makeLiveblocksContextBundle<
     );
   }
 
+  const shared = createSharedContext<TUserMeta>(client);
   const bundle: LiveblocksContextBundle<TUserMeta, TThreadMetadata> = {
     LiveblocksProvider,
 
