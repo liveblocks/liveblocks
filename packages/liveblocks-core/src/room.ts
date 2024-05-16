@@ -810,6 +810,9 @@ type PrivateRoomApi = {
   getSelf_forDevTools(): DevTools.UserTreeNode | null;
   getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
 
+  // For reporting editor metadata
+  reportTextEditor(editor: "lexical", rootKey: string): void;
+
   // NOTE: These are only used in our e2e test app!
   simulate: {
     explicitClose(event: IWebSocketCloseEvent): void;
@@ -1718,7 +1721,10 @@ export function createRoom<
     });
   }
 
-  async function httpPostToRoom(endpoint: "/send-message", body: JsonObject) {
+  async function httpPostToRoom(
+    endpoint: "/send-message" | "/text-metadata",
+    body: JsonObject
+  ) {
     if (!managedSocket.authValue) {
       throw new Error("Not authorized");
     }
@@ -1729,6 +1735,13 @@ export function createRoom<
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
+    });
+  }
+
+  async function reportTextEditor(type: "lexical", rootKey: string) {
+    return httpPostToRoom("/text-metadata", {
+      type,
+      rootKey,
     });
   }
 
@@ -2932,6 +2945,9 @@ export function createRoom<
         get presenceBuffer() { return deepClone(context.buffer.presenceUpdates?.data ?? null) }, // prettier-ignore
         get undoStack() { return deepClone(context.undoStack) }, // prettier-ignore
         get nodeCount() { return context.nodes.size }, // prettier-ignore
+
+        // send metadata when using a text editor
+        reportTextEditor,
 
         // Support for the Liveblocks browser extension
         getSelf_forDevTools: () => selfAsTreeNode.current,

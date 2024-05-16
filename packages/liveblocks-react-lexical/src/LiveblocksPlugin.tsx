@@ -1,7 +1,7 @@
 import { CollaborationPlugin } from "@lexical/react/LexicalCollaborationPlugin";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { Provider } from "@lexical/yjs";
-import type { ThreadSelection } from "@liveblocks/core";
+import { kInternal, type ThreadSelection } from "@liveblocks/core";
 import {
   ThreadSelectionGetterContext,
   useRoomContextBundle,
@@ -12,12 +12,12 @@ import type { Doc } from "yjs";
 
 import { CommentPluginProvider } from "./CommentPluginProvider";
 import { LastActiveSelection } from "./LastActiveSelection";
+import MentionPlugin from "./mentions/mention-plugin";
 import {
   useDocumentSyncState,
   useTextCollaboration,
 } from "./TextCollaborationProvider";
 import { getDomPath } from "./utils";
-import MentionPlugin from "./mentions/mention-plugin";
 
 export type LiveblocksPluginProps = {
   /**
@@ -72,10 +72,11 @@ export const LiveblocksPlugin = ({
   initialEditorState = undefined,
   children,
 }: LiveblocksPluginProps): JSX.Element => {
-  const { useSelf } = useRoomContextBundle();
+  const { useSelf, useRoom } = useRoomContextBundle();
   const { provider, doc } = useTextCollaboration();
   const [editor] = useLexicalComposerContext();
   const { synced } = useDocumentSyncState();
+  const room = useRoom();
 
   // Warn users if initialConfig.editorState, set on the composer, is not null
   useEffect(() => {
@@ -88,6 +89,11 @@ export const LiveblocksPlugin = ({
         );
       }
     }
+
+    // Report that this is lexical and root is the rootKey
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    room[kInternal].reportTextEditor("lexical", "root");
+
     // we know editor is already defined as we're inside LexicalComposer, and we only want this running the first time
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
