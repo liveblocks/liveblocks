@@ -302,22 +302,6 @@ function makeLiveblocksContextBundle<
     useSubscribeToInboxNotificationsEffect,
   } = getExtrasForClient<TThreadMetadata>(client);
 
-  function useUnreadInboxNotificationsCountSuspense(): UnreadInboxNotificationsCountStateSuccess {
-    const query = store.get().queries[INBOX_NOTIFICATIONS_QUERY];
-
-    if (query === undefined || query.isLoading) {
-      throw fetchInboxNotifications();
-    }
-
-    useSubscribeToInboxNotificationsEffect({ autoFetch: false });
-    return useSyncExternalStoreWithSelector(
-      store.subscribe,
-      store.get,
-      store.get,
-      selectorFor_useUnreadInboxNotificationsCountSuspense
-    );
-  }
-
   function LiveblocksProvider(props: PropsWithChildren) {
     return (
       <ClientContext.Provider value={client}>
@@ -359,8 +343,8 @@ function makeLiveblocksContextBundle<
 
       useInboxNotifications: () =>
         useInboxNotificationsSuspense_withClient(client),
-      useUnreadInboxNotificationsCount:
-        useUnreadInboxNotificationsCountSuspense, // XXX Convert
+      useUnreadInboxNotificationsCount: () =>
+        useUnreadInboxNotificationsCountSuspense_withClient(client),
 
       useMarkInboxNotificationAsRead,
       useMarkAllInboxNotificationsAsRead,
@@ -432,6 +416,28 @@ function useUnreadInboxNotificationsCount_withClient(client: Client) {
     store.get,
     store.get,
     selectorFor_useUnreadInboxNotificationsCount
+  );
+}
+
+function useUnreadInboxNotificationsCountSuspense_withClient(client: Client) {
+  const {
+    store,
+    fetchInboxNotifications,
+    useSubscribeToInboxNotificationsEffect,
+  } = getExtrasForClient(client);
+
+  const query = store.get().queries[INBOX_NOTIFICATIONS_QUERY];
+
+  if (query === undefined || query.isLoading) {
+    throw fetchInboxNotifications();
+  }
+
+  useSubscribeToInboxNotificationsEffect({ autoFetch: false });
+  return useSyncExternalStoreWithSelector(
+    store.subscribe,
+    store.get,
+    store.get,
+    selectorFor_useUnreadInboxNotificationsCountSuspense
   );
 }
 
