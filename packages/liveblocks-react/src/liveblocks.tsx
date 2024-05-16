@@ -144,22 +144,30 @@ function getOrCreateContextBundle<
   return bundle as LiveblocksContextBundle<TUserMeta, TThreadMetadata>;
 }
 
-function getExtrasForClient(client: Client) {
+function getExtrasForClient<TThreadMetadata extends BaseMetadata>(
+  client: Client
+) {
   let extras = _extras.get(client);
   if (!extras) {
     extras = makeExtrasForClient(client);
     _extras.set(client, extras);
   }
-  return extras;
+
+  return extras as unknown as Omit<typeof extras, "store"> & {
+    store: CacheStore<TThreadMetadata>;
+  };
 }
 
-function makeExtrasForClient(client: Client) {
-  const store = client[kInternal].cacheStore;
+function makeExtrasForClient<TThreadMetadata extends BaseMetadata>(
+  client: Client
+) {
+  const store = client[kInternal]
+    .cacheStore as unknown as CacheStore<TThreadMetadata>;
   const notifications = client[kInternal].notifications;
 
   let fetchInboxNotificationsRequest: Promise<{
     inboxNotifications: InboxNotificationData[];
-    threads: ThreadData<BaseMetadata>[];
+    threads: ThreadData<TThreadMetadata>[];
     deletedThreads: ThreadDeleteInfo[];
     deletedInboxNotifications: InboxNotificationDeleteInfo[];
     meta: {
@@ -293,7 +301,7 @@ function makeLiveblocksContextBundle<
     notifications,
     fetchInboxNotifications,
     useSubscribeToInboxNotificationsEffect,
-  } = getExtrasForClient(client);
+  } = getExtrasForClient<TThreadMetadata>(client);
 
   function useInboxNotifications(): InboxNotificationsState {
     useSubscribeToInboxNotificationsEffect();
@@ -506,7 +514,7 @@ function makeLiveblocksContextBundle<
 function useInboxNotificationThread_withClient<
   TThreadMetadata extends BaseMetadata,
 >(client: Client, inboxNotificationId: string): ThreadData<TThreadMetadata> {
-  const { store } = getExtrasForClient(client);
+  const { store } = getExtrasForClient<TThreadMetadata>(client);
 
   const selector = useCallback(
     (state: CacheState<TThreadMetadata>) => {
