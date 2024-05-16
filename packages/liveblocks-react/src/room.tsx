@@ -2284,7 +2284,7 @@ function makeRoomContextBundle<
     useRoomNotificationSettings,
     useUpdateRoomNotificationSettings,
 
-    ...shared,
+    ...shared.classic,
 
     suspense: {
       RoomContext,

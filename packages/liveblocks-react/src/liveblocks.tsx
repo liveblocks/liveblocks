@@ -331,7 +331,7 @@ function makeLiveblocksContextBundle<
 
     useInboxNotificationThread,
 
-    ...shared,
+    ...shared.classic,
 
     suspense: {
       LiveblocksProvider,

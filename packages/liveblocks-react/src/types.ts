@@ -320,25 +320,27 @@ export type ThreadSubscription =
     };
 
 export type SharedContextBundle<TUserMeta extends BaseUserMeta> = {
-  /**
-   * @beta
-   *
-   * Returns user info from a given user ID.
-   *
-   * @example
-   * const { user, error, isLoading } = useUser("user-id");
-   */
-  useUser(userId: string): UserState<TUserMeta["info"]>;
+  classic: {
+    /**
+     * @beta
+     *
+     * Returns user info from a given user ID.
+     *
+     * @example
+     * const { user, error, isLoading } = useUser("user-id");
+     */
+    useUser(userId: string): UserState<TUserMeta["info"]>;
 
-  /**
-   * @private
-   *
-   * Returns room info from a given room ID.
-   *
-   * @example
-   * const { info, error, isLoading } = useRoomInfo("room-id");
-   */
-  useRoomInfo(roomId: string): RoomInfoState;
+    /**
+     * @private
+     *
+     * Returns room info from a given room ID.
+     *
+     * @example
+     * const { info, error, isLoading } = useRoomInfo("room-id");
+     */
+    useRoomInfo(roomId: string): RoomInfoState;
+  };
 
   suspense: {
     /**
@@ -864,7 +866,7 @@ export type RoomContextBundle<
     TRoomEvent,
     TThreadMetadata
   > &
-    Omit<SharedContextBundle<TUserMeta>, "suspense"> & {
+    SharedContextBundle<TUserMeta>["classic"] & {
       /**
        * Extract arbitrary data from the Liveblocks Storage state, using an
        * arbitrary selector function.
@@ -1251,7 +1253,7 @@ export type LiveblocksContextBundle<
   TThreadMetadata extends BaseMetadata,
 > = Resolve<
   LiveblocksContextBundleCommon<TThreadMetadata> &
-    Omit<SharedContextBundle<TUserMeta>, "suspense"> & {
+    SharedContextBundle<TUserMeta>["classic"] & {
       /**
        * @beta
        *
