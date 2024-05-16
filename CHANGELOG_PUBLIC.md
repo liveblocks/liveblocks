@@ -26,9 +26,13 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 - On the room's detail page, click "View room events" at the top right to access the room events.
 - Added a new date picker to the "Overview" and "Events" pages.
 
+## Misc
+
+- Fixed broken link in one onboarding email
+
 ## Contributors
 
-pierrelevaillant, ofoucherot
+pierrelevaillant, ofoucherot, stevenfabre
 
 # Week 19 (2024-05-10)
 
