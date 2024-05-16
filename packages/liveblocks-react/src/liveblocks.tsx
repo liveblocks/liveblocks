@@ -244,21 +244,6 @@ function makeExtrasForClient(client: Client) {
     return;
   }
 
-  return {
-    store,
-    notifications,
-    poller,
-    fetchInboxNotifications,
-  };
-}
-
-function makeLiveblocksContextBundle<
-  TUserMeta extends BaseUserMeta,
-  TThreadMetadata extends BaseMetadata,
->(client: Client): LiveblocksContextBundle<TUserMeta, TThreadMetadata> {
-  const { store, notifications, poller, fetchInboxNotifications } =
-    getExtrasForClient(client);
-
   let inboxNotificationsSubscribers = 0;
 
   function useSubscribeToInboxNotificationsEffect(options?: {
@@ -290,6 +275,25 @@ function makeLiveblocksContextBundle<
       };
     }, [autoFetch]);
   }
+
+  return {
+    store,
+    notifications,
+    fetchInboxNotifications,
+    useSubscribeToInboxNotificationsEffect,
+  };
+}
+
+function makeLiveblocksContextBundle<
+  TUserMeta extends BaseUserMeta,
+  TThreadMetadata extends BaseMetadata,
+>(client: Client): LiveblocksContextBundle<TUserMeta, TThreadMetadata> {
+  const {
+    store,
+    notifications,
+    fetchInboxNotifications,
+    useSubscribeToInboxNotificationsEffect,
+  } = getExtrasForClient(client);
 
   function useInboxNotifications(): InboxNotificationsState {
     useSubscribeToInboxNotificationsEffect();
@@ -502,8 +506,7 @@ function makeLiveblocksContextBundle<
 function useInboxNotificationThread_withClient<
   TThreadMetadata extends BaseMetadata,
 >(client: Client, inboxNotificationId: string): ThreadData<TThreadMetadata> {
-  const store = client[kInternal]
-    .cacheStore as unknown as CacheStore<TThreadMetadata>;
+  const { store } = getExtrasForClient(client);
 
   const selector = useCallback(
     (state: CacheState<TThreadMetadata>) => {
