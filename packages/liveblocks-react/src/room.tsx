@@ -42,7 +42,6 @@ import {
   makeEventSource,
   makePoller,
   NotificationsApiError,
-  raise,
   removeReaction,
   ServerMsgCode,
   stringify,
@@ -72,6 +71,7 @@ import { retryError } from "./lib/retry-error";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { useRerender } from "./lib/use-rerender";
+import { LiveblocksProvider, useClient, useClientOrNull } from "./liveblocks";
 import { createSharedContext } from "./shared";
 import type {
   CommentReactionOptions,
@@ -129,6 +129,8 @@ export const POLLING_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
 const MENTION_SUGGESTIONS_DEBOUNCE = 500;
 
+// --- Selector helpers ------------------------------------------------- {{{
+
 // Don't try to inline this. This function is intended to be a stable
 // reference, to avoid a React.useCallback() wrapper.
 function alwaysEmptyList() {
@@ -140,6 +142,15 @@ function alwaysEmptyList() {
 function alwaysNull() {
   return null;
 }
+
+function selectorFor_useOthersConnectionIds(
+  others: readonly User<JsonObject, BaseUserMeta>[]
+): number[] {
+  return others.map((user) => user.connectionId);
+}
+
+// ---------------------------------------------------------------------- }}}
+// --- Private APIs ----------------------------------------------------- {{{
 
 function makeMutationContext<
   TPresence extends JsonObject,
@@ -181,72 +192,74 @@ function makeMutationContext<
   };
 }
 
-const ContextBundle = React.createContext<RoomContextBundle<
-  JsonObject,
-  LsonObject,
-  BaseUserMeta,
-  never,
-  BaseMetadata
-> | null>(null);
-
-/**
- * @private
- *
- * This is an internal API, use `createRoomContext` instead.
- */
-export function useRoomContextBundleOrNull() {
-  return React.useContext(ContextBundle);
+function getCurrentUserId(
+  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
+): string {
+  const self = room.getSelf();
+  if (self === null || self.id === undefined) {
+    return "anonymous";
+  } else {
+    return self.id;
+  }
 }
 
-/**
- * @private
- *
- * This is an internal API, use `createRoomContext` instead.
- */
-export function useRoomContextBundle() {
-  return (
-    useRoomContextBundleOrNull() ??
-    raise("RoomProvider is missing from the React tree.")
-  );
+function handleApiError(err: CommentsApiError | NotificationsApiError): Error {
+  const message = `Request failed with status ${err.status}: ${err.message}`;
+
+  // Log details about FORBIDDEN errors
+  if (err.details?.error === "FORBIDDEN") {
+    const detailedMessage = [message, err.details.suggestion, err.details.docs]
+      .filter(Boolean)
+      .join("\n");
+
+    console.error(detailedMessage);
+  }
+
+  return new Error(message);
 }
 
-function selectorFor_useOthersConnectionIds(
-  others: readonly User<JsonObject, BaseUserMeta>[]
-): number[] {
-  return others.map((user) => user.connectionId);
-}
+const _bundles = new WeakMap<
+  Client,
+  RoomContextBundle<JsonObject, LsonObject, BaseUserMeta, Json, BaseMetadata>
+>();
 
-type Options<TUserMeta extends BaseUserMeta> = {
-  /**
-   * @deprecated Define 'resolveUsers' in 'createClient' from '@liveblocks/client' instead.
-   * Please refer to our Upgrade Guide to learn more, see https://liveblocks.io/docs/platform/upgrading/1.10.
-   *
-   * A function that returns user info from user IDs.
-   */
-  resolveUsers?: (
-    args: ResolveUsersArgs
-  ) => OptionalPromise<(TUserMeta["info"] | undefined)[] | undefined>;
-
-  /**
-   * @deprecated Define 'resolveMentionSuggestions' in 'createClient' from '@liveblocks/client' instead.
-   * Please refer to our Upgrade Guide to learn more, see https://liveblocks.io/docs/platform/upgrading/1.10.
-   *
-   * A function that returns a list of user IDs matching a string.
-   */
-  resolveMentionSuggestions?: (
-    args: ResolveMentionSuggestionsArgs
-  ) => OptionalPromise<string[]>;
-};
-
-export function createRoomContext<
+function getOrCreateRoomContextBundle<
   TPresence extends JsonObject,
-  TStorage extends LsonObject = LsonObject,
-  TUserMeta extends BaseUserMeta = BaseUserMeta,
-  TRoomEvent extends Json = never,
-  TThreadMetadata extends BaseMetadata = never,
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json,
+  TThreadMetadata extends BaseMetadata,
 >(
-  client: Client,
-  options?: Options<TUserMeta>
+  client: Client
+): RoomContextBundle<
+  TPresence,
+  TStorage,
+  TUserMeta,
+  TRoomEvent,
+  TThreadMetadata
+> {
+  let bundle = _bundles.get(client);
+  if (!bundle) {
+    bundle = makeRoomContextBundle(client);
+    _bundles.set(client, bundle);
+  }
+  return bundle as unknown as RoomContextBundle<
+    TPresence,
+    TStorage,
+    TUserMeta,
+    TRoomEvent,
+    TThreadMetadata
+  >;
+}
+
+function makeRoomContextBundle<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json,
+  TThreadMetadata extends BaseMetadata,
+>(
+  client: Client
 ): RoomContextBundle<
   TPresence,
   TStorage,
@@ -256,20 +269,6 @@ export function createRoomContext<
 > {
   type TRoom = Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
   type TRoomLeavePair = { room: TRoom; leave: () => void };
-
-  // Deprecated option
-  if (options?.resolveUsers) {
-    throw new Error(
-      "The 'resolveUsers' option has moved to 'createClient' from '@liveblocks/client'. Please refer to our Upgrade Guide to learn more, see https://liveblocks.io/docs/platform/upgrading/1.10."
-    );
-  }
-
-  // Deprecated option
-  if (options?.resolveMentionSuggestions) {
-    throw new Error(
-      "The 'resolveMentionSuggestions' option has moved to 'createClient' from '@liveblocks/client'. Please refer to our Upgrade Guide to learn more, see https://liveblocks.io/docs/platform/upgrading/1.10."
-    );
-  }
 
   const RoomContext = React.createContext<TRoom | null>(null);
 
@@ -467,21 +466,11 @@ export function createRoomContext<
     }, [roomId, frozenProps, stableEnterRoom]);
 
     return (
-      <RoomContext.Provider value={room}>
-        <ContextBundle.Provider
-          value={
-            bundle as unknown as RoomContextBundle<
-              JsonObject,
-              LsonObject,
-              BaseUserMeta,
-              never,
-              BaseMetadata
-            >
-          }
-        >
+      <LiveblocksProvider client={client}>
+        <RoomContext.Provider value={room}>
           {props.children}
-        </ContextBundle.Provider>
-      </RoomContext.Provider>
+        </RoomContext.Provider>
+      </LiveblocksProvider>
     );
   }
 
@@ -2365,30 +2354,88 @@ export function createRoomContext<
   });
 }
 
-function getCurrentUserId(
-  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
-): string {
-  const self = room.getSelf();
-  if (self === null || self.id === undefined) {
-    return "anonymous";
-  } else {
-    return self.id;
-  }
+// ---------------------------------------------------------------------- }}}
+// --- Public APIs ------------------------------------------------------ {{{
+
+/**
+ * @private
+ *
+ * This is an internal API, use `createRoomContext` instead.
+ */
+export function useRoomContextBundleOrNull() {
+  const client = useClientOrNull();
+  return client === null ? null : getOrCreateRoomContextBundle(client);
 }
 
-function handleApiError(err: CommentsApiError | NotificationsApiError): Error {
-  const message = `Request failed with status ${err.status}: ${err.message}`;
+/**
+ * @private
+ *
+ * This is an internal API, use `createRoomContext` instead.
+ */
+export function useRoomContextBundle() {
+  const client = useClient();
+  return getOrCreateRoomContextBundle(client);
+}
 
-  // Log details about FORBIDDEN errors
-  if (err.details?.error === "FORBIDDEN") {
-    const detailedMessage = [message, err.details.suggestion, err.details.docs]
-      .filter(Boolean)
-      .join("\n");
+type Options<TUserMeta extends BaseUserMeta> = {
+  /**
+   * @deprecated Define 'resolveUsers' in 'createClient' from '@liveblocks/client' instead.
+   * Please refer to our Upgrade Guide to learn more, see https://liveblocks.io/docs/platform/upgrading/1.10.
+   *
+   * A function that returns user info from user IDs.
+   */
+  resolveUsers?: (
+    args: ResolveUsersArgs
+  ) => OptionalPromise<(TUserMeta["info"] | undefined)[] | undefined>;
 
-    console.error(detailedMessage);
+  /**
+   * @deprecated Define 'resolveMentionSuggestions' in 'createClient' from '@liveblocks/client' instead.
+   * Please refer to our Upgrade Guide to learn more, see https://liveblocks.io/docs/platform/upgrading/1.10.
+   *
+   * A function that returns a list of user IDs matching a string.
+   */
+  resolveMentionSuggestions?: (
+    args: ResolveMentionSuggestionsArgs
+  ) => OptionalPromise<string[]>;
+};
+
+export function createRoomContext<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject = LsonObject,
+  TUserMeta extends BaseUserMeta = BaseUserMeta,
+  TRoomEvent extends Json = never,
+  TThreadMetadata extends BaseMetadata = never,
+>(
+  client: Client,
+  options?: Options<TUserMeta>
+): RoomContextBundle<
+  TPresence,
+  TStorage,
+  TUserMeta,
+  TRoomEvent,
+  TThreadMetadata
+> {
+  // Deprecated option
+  if (options?.resolveUsers) {
+    throw new Error(
+      "The 'resolveUsers' option has moved to 'createClient' from '@liveblocks/client'. Please refer to our Upgrade Guide to learn more, see https://liveblocks.io/docs/platform/upgrading/1.10."
+    );
   }
 
-  return new Error(message);
+  // Deprecated option
+  if (options?.resolveMentionSuggestions) {
+    throw new Error(
+      "The 'resolveMentionSuggestions' option has moved to 'createClient' from '@liveblocks/client'. Please refer to our Upgrade Guide to learn more, see https://liveblocks.io/docs/platform/upgrading/1.10."
+    );
+  }
+
+  return getOrCreateRoomContextBundle<
+    TPresence,
+    TStorage,
+    TUserMeta,
+    TRoomEvent,
+    TThreadMetadata
+  >(client);
 }
 
 export function generateQueryKey<TThreadMetadata extends BaseMetadata>(
@@ -2397,3 +2444,5 @@ export function generateQueryKey<TThreadMetadata extends BaseMetadata>(
 ) {
   return `${roomId}-${stringify(options ?? {})}`;
 }
+
+// ---------------------------------------------------------------------- }}}

@@ -524,7 +524,7 @@ function makeLiveblocksContextBundle<
 /**
  * @private This is an internal API.
  */
-function useClientOrNull() {
+export function useClientOrNull() {
   return useContext(ClientContext);
 }
 
@@ -535,6 +535,19 @@ export function useClient() {
   return (
     useClientOrNull() ??
     raise("LiveblocksProvider is missing from the React tree.")
+  );
+}
+
+/**
+ * @beta This is an internal API for now, but it will become public eventually.
+ */
+export function LiveblocksProvider(
+  props: PropsWithChildren<{ client: Client }>
+) {
+  return (
+    <ClientContext.Provider value={props.client}>
+      {props.children}
+    </ClientContext.Provider>
   );
 }
 
