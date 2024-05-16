@@ -480,35 +480,35 @@ function makeLiveblocksContextBundle<
 
   const shared = createSharedContext<TUserMeta>(client);
   const bundle: LiveblocksContextBundle<TUserMeta, TThreadMetadata> = {
-    LiveblocksProvider,
+    LiveblocksProvider, // XXX Convert
 
-    useInboxNotifications,
-    useUnreadInboxNotificationsCount,
+    useInboxNotifications, // XXX Convert
+    useUnreadInboxNotificationsCount, // XXX Convert
 
-    useMarkInboxNotificationAsRead,
-    useMarkAllInboxNotificationsAsRead,
+    useMarkInboxNotificationAsRead, // XXX Convert
+    useMarkAllInboxNotificationsAsRead, // XXX Convert
 
-    useInboxNotificationThread,
+    useInboxNotificationThread, // XXX Convert
 
     ...shared,
 
     suspense: {
-      LiveblocksProvider,
+      LiveblocksProvider, // XXX Convert
 
-      useInboxNotifications: useInboxNotificationsSuspense,
+      useInboxNotifications: useInboxNotificationsSuspense, // XXX Convert
       useUnreadInboxNotificationsCount:
-        useUnreadInboxNotificationsCountSuspense,
+        useUnreadInboxNotificationsCountSuspense, // XXX Convert
 
-      useMarkInboxNotificationAsRead,
-      useMarkAllInboxNotificationsAsRead,
+      useMarkInboxNotificationAsRead, // XXX Convert
+      useMarkAllInboxNotificationsAsRead, // XXX Convert
 
-      useInboxNotificationThread,
+      useInboxNotificationThread, // XXX Convert
 
       ...shared.suspense,
     },
 
     [kInternal]: {
-      useCurrentUserId,
+      useCurrentUserId, // XXX Convert
     },
   };
 
