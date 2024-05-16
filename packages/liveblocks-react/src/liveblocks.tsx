@@ -414,46 +414,6 @@ function makeLiveblocksContextBundle<
     }, []);
   }
 
-  function useMarkAllInboxNotificationsAsRead() {
-    return useCallback(() => {
-      const optimisticUpdateId = nanoid();
-      const readAt = new Date();
-      store.pushOptimisticUpdate({
-        type: "mark-inbox-notifications-as-read",
-        id: optimisticUpdateId,
-        readAt,
-      });
-
-      notifications.markAllInboxNotificationsAsRead().then(
-        () => {
-          store.set((state) => ({
-            ...state,
-            inboxNotifications: Object.fromEntries(
-              Array.from(Object.entries(state.inboxNotifications)).map(
-                ([id, inboxNotification]) => [
-                  id,
-                  { ...inboxNotification, readAt },
-                ]
-              )
-            ),
-            optimisticUpdates: state.optimisticUpdates.filter(
-              (update) => update.id !== optimisticUpdateId
-            ),
-          }));
-        },
-        () => {
-          // TODO: Broadcast errors to client
-          store.set((state) => ({
-            ...state,
-            optimisticUpdates: state.optimisticUpdates.filter(
-              (update) => update.id !== optimisticUpdateId
-            ),
-          }));
-        }
-      );
-    }, []);
-  }
-
   function LiveblocksProvider(props: PropsWithChildren) {
     return (
       <ClientContext.Provider value={client}>
@@ -469,6 +429,9 @@ function makeLiveblocksContextBundle<
       inboxNotificationId
     );
 
+  const useMarkAllInboxNotificationsAsRead = () =>
+    useMarkAllInboxNotificationsAsRead_withClient(client);
+
   const shared = createSharedContext<TUserMeta>(client);
   const bundle: LiveblocksContextBundle<TUserMeta, TThreadMetadata> = {
     LiveblocksProvider,
@@ -477,7 +440,7 @@ function makeLiveblocksContextBundle<
     useUnreadInboxNotificationsCount, // XXX Convert
 
     useMarkInboxNotificationAsRead, // XXX Convert
-    useMarkAllInboxNotificationsAsRead, // XXX Convert
+    useMarkAllInboxNotificationsAsRead,
 
     useInboxNotificationThread,
 
@@ -491,7 +454,7 @@ function makeLiveblocksContextBundle<
         useUnreadInboxNotificationsCountSuspense, // XXX Convert
 
       useMarkInboxNotificationAsRead, // XXX Convert
-      useMarkAllInboxNotificationsAsRead, // XXX Convert
+      useMarkAllInboxNotificationsAsRead,
 
       useInboxNotificationThread,
 
@@ -510,6 +473,47 @@ function makeLiveblocksContextBundle<
 
 // ---------------------------------------------------------------------- }}}
 // --- Private useXxx_withClient() helpers ------------------------------ {{{
+
+function useMarkAllInboxNotificationsAsRead_withClient(client: Client) {
+  return useCallback(() => {
+    const { store, notifications } = getExtrasForClient(client);
+    const optimisticUpdateId = nanoid();
+    const readAt = new Date();
+    store.pushOptimisticUpdate({
+      type: "mark-inbox-notifications-as-read",
+      id: optimisticUpdateId,
+      readAt,
+    });
+
+    notifications.markAllInboxNotificationsAsRead().then(
+      () => {
+        store.set((state) => ({
+          ...state,
+          inboxNotifications: Object.fromEntries(
+            Array.from(Object.entries(state.inboxNotifications)).map(
+              ([id, inboxNotification]) => [
+                id,
+                { ...inboxNotification, readAt },
+              ]
+            )
+          ),
+          optimisticUpdates: state.optimisticUpdates.filter(
+            (update) => update.id !== optimisticUpdateId
+          ),
+        }));
+      },
+      () => {
+        // TODO: Broadcast errors to client
+        store.set((state) => ({
+          ...state,
+          optimisticUpdates: state.optimisticUpdates.filter(
+            (update) => update.id !== optimisticUpdateId
+          ),
+        }));
+      }
+    );
+  }, [client]);
+}
 
 function useInboxNotificationThread_withClient<
   TThreadMetadata extends BaseMetadata,
