@@ -322,16 +322,6 @@ function makeLiveblocksContextBundle<
     );
   }
 
-  function useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountState {
-    useSubscribeToInboxNotificationsEffect();
-    return useSyncExternalStoreWithSelector(
-      store.subscribe,
-      store.get,
-      store.get,
-      selectorFor_useUnreadInboxNotificationsCount
-    );
-  }
-
   function useUnreadInboxNotificationsCountSuspense(): UnreadInboxNotificationsCountStateSuccess {
     const query = store.get().queries[INBOX_NOTIFICATIONS_QUERY];
 
@@ -374,7 +364,8 @@ function makeLiveblocksContextBundle<
     LiveblocksProvider,
 
     useInboxNotifications: () => useInboxNotifications_withClient(client),
-    useUnreadInboxNotificationsCount, // XXX Convert
+    useUnreadInboxNotificationsCount: () =>
+      useUnreadInboxNotificationsCount_withClient(client),
 
     useMarkInboxNotificationAsRead,
     useMarkAllInboxNotificationsAsRead,
@@ -411,9 +402,7 @@ function makeLiveblocksContextBundle<
 // ---------------------------------------------------------------------- }}}
 // --- Private useXxx_withClient() helpers ------------------------------ {{{
 
-function useInboxNotifications_withClient(
-  client: Client
-): InboxNotificationsState {
+function useInboxNotifications_withClient(client: Client) {
   const { store, useSubscribeToInboxNotificationsEffect } =
     getExtrasForClient(client);
 
@@ -423,6 +412,19 @@ function useInboxNotifications_withClient(
     store.get,
     store.get,
     selectorFor_useInboxNotifications
+  );
+}
+
+function useUnreadInboxNotificationsCount_withClient(client: Client) {
+  const { store, useSubscribeToInboxNotificationsEffect } =
+    getExtrasForClient(client);
+
+  useSubscribeToInboxNotificationsEffect();
+  return useSyncExternalStoreWithSelector(
+    store.subscribe,
+    store.get,
+    store.get,
+    selectorFor_useUnreadInboxNotificationsCount
   );
 }
 
