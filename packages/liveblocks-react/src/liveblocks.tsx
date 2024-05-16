@@ -37,6 +37,7 @@ import type {
 
 const ClientContext = createContext<Client | null>(null);
 
+const _extras = new WeakMap<Client, ReturnType<typeof makeExtrasForClient>>();
 const _bundles = new WeakMap<
   Client,
   LiveblocksContextBundle<BaseUserMeta, BaseMetadata>
@@ -143,31 +144,33 @@ function getOrCreateContextBundle<
   return bundle as LiveblocksContextBundle<TUserMeta, TThreadMetadata>;
 }
 
-function makeLiveblocksContextBundle<
-  TUserMeta extends BaseUserMeta,
-  TThreadMetadata extends BaseMetadata,
->(client: Client): LiveblocksContextBundle<TUserMeta, TThreadMetadata> {
-  const store = client[kInternal]
-    .cacheStore as unknown as CacheStore<TThreadMetadata>;
+function getExtrasForClient(client: Client) {
+  let extras = _extras.get(client);
+  if (!extras) {
+    extras = makeExtrasForClient(client);
+    _extras.set(client, extras);
+  }
+  return extras;
+}
 
+function makeExtrasForClient(client: Client) {
+  const store = client[kInternal].cacheStore;
   const notifications = client[kInternal].notifications;
 
-  // TODO: Unify request cache
   let fetchInboxNotificationsRequest: Promise<{
     inboxNotifications: InboxNotificationData[];
-    threads: ThreadData<TThreadMetadata>[];
+    threads: ThreadData<BaseMetadata>[];
     deletedThreads: ThreadDeleteInfo[];
     deletedInboxNotifications: InboxNotificationDeleteInfo[];
     meta: {
       requestedAt: Date;
     };
   }> | null = null;
+
   let lastRequestedAt: Date | undefined;
 
-  const poller = makePoller(refreshThreadsAndNotifications);
-
-  function refreshThreadsAndNotifications() {
-    return notifications.getInboxNotifications({ since: lastRequestedAt }).then(
+  const poller = makePoller(() =>
+    notifications.getInboxNotifications({ since: lastRequestedAt }).then(
       (result) => {
         lastRequestedAt = result.meta.requestedAt;
 
@@ -182,8 +185,8 @@ function makeLiveblocksContextBundle<
       () => {
         // TODO: Error handling
       }
-    );
-  }
+    )
+  );
 
   async function fetchInboxNotifications(
     { retryCount }: { retryCount: number } = { retryCount: 0 }
@@ -240,6 +243,21 @@ function makeLiveblocksContextBundle<
     }
     return;
   }
+
+  return {
+    store,
+    notifications,
+    poller,
+    fetchInboxNotifications,
+  };
+}
+
+function makeLiveblocksContextBundle<
+  TUserMeta extends BaseUserMeta,
+  TThreadMetadata extends BaseMetadata,
+>(client: Client): LiveblocksContextBundle<TUserMeta, TThreadMetadata> {
+  const { store, notifications, poller, fetchInboxNotifications } =
+    getExtrasForClient(client);
 
   let inboxNotificationsSubscribers = 0;
 
