@@ -144,6 +144,9 @@ function getOrCreateContextBundle<
   return bundle as LiveblocksContextBundle<TUserMeta, TThreadMetadata>;
 }
 
+// TODO: Likely a better / more clear name for this helper will arise. I'll
+// rename this later. All of these are implementation details to support inbox
+// notifications on a per-client basis.
 function getExtrasForClient<TThreadMetadata extends BaseMetadata>(
   client: Client
 ) {
