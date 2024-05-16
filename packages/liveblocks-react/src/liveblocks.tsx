@@ -432,41 +432,12 @@ function makeLiveblocksContextBundle<
     }, []);
   }
 
-  function useInboxNotificationThread(
-    inboxNotificationId: string
-  ): ThreadData<TThreadMetadata> {
-    const selector = useCallback(
-      (state: CacheState<TThreadMetadata>) => {
-        const inboxNotification =
-          state.inboxNotifications[inboxNotificationId] ??
-          raise(
-            `Inbox notification with ID "${inboxNotificationId}" not found`
-          );
-
-        if (inboxNotification.kind !== "thread") {
-          raise(
-            `Inbox notification with ID "${inboxNotificationId}" is not of kind "thread"`
-          );
-        }
-
-        const thread =
-          state.threads[inboxNotification.threadId] ??
-          raise(
-            `Thread with ID "${inboxNotification.threadId}" not found, this inbox notification might not be of kind "thread"`
-          );
-
-        return thread;
-      },
-      [inboxNotificationId]
+  // Bind all hooks to the current client instance
+  const useInboxNotificationThread = (inboxNotificationId: string) =>
+    useInboxNotificationThread_withClient<TThreadMetadata>(
+      client,
+      inboxNotificationId
     );
-
-    return useSyncExternalStoreWithSelector(
-      store.subscribe,
-      store.get,
-      store.get,
-      selector
-    );
-  }
 
   const shared = createSharedContext<TUserMeta>(client);
   const bundle: LiveblocksContextBundle<TUserMeta, TThreadMetadata> = {
@@ -478,7 +449,7 @@ function makeLiveblocksContextBundle<
     useMarkInboxNotificationAsRead, // XXX Convert
     useMarkAllInboxNotificationsAsRead, // XXX Convert
 
-    useInboxNotificationThread, // XXX Convert
+    useInboxNotificationThread,
 
     ...shared,
 
@@ -492,7 +463,7 @@ function makeLiveblocksContextBundle<
       useMarkInboxNotificationAsRead, // XXX Convert
       useMarkAllInboxNotificationsAsRead, // XXX Convert
 
-      useInboxNotificationThread, // XXX Convert
+      useInboxNotificationThread,
 
       ...shared.suspense,
     },
@@ -509,6 +480,43 @@ function makeLiveblocksContextBundle<
 
 // ---------------------------------------------------------------------- }}}
 // --- Private useXxx_withClient() helpers ------------------------------ {{{
+
+function useInboxNotificationThread_withClient<
+  TThreadMetadata extends BaseMetadata,
+>(client: Client, inboxNotificationId: string): ThreadData<TThreadMetadata> {
+  const store = client[kInternal]
+    .cacheStore as unknown as CacheStore<TThreadMetadata>;
+
+  const selector = useCallback(
+    (state: CacheState<TThreadMetadata>) => {
+      const inboxNotification =
+        state.inboxNotifications[inboxNotificationId] ??
+        raise(`Inbox notification with ID "${inboxNotificationId}" not found`);
+
+      if (inboxNotification.kind !== "thread") {
+        raise(
+          `Inbox notification with ID "${inboxNotificationId}" is not of kind "thread"`
+        );
+      }
+
+      const thread =
+        state.threads[inboxNotification.threadId] ??
+        raise(
+          `Thread with ID "${inboxNotification.threadId}" not found, this inbox notification might not be of kind "thread"`
+        );
+
+      return thread;
+    },
+    [inboxNotificationId]
+  );
+
+  return useSyncExternalStoreWithSelector(
+    store.subscribe,
+    store.get,
+    store.get,
+    selector
+  );
+}
 
 function useCurrentUserId_withClient(client: Client) {
   const currentUserIdStore = client[kInternal].currentUserIdStore;
