@@ -468,16 +468,6 @@ function makeLiveblocksContextBundle<
     );
   }
 
-  const currentUserIdStore = client[kInternal].currentUserIdStore;
-
-  function useCurrentUserId() {
-    return useSyncExternalStore(
-      currentUserIdStore.subscribe,
-      currentUserIdStore.get,
-      currentUserIdStore.get
-    );
-  }
-
   const shared = createSharedContext<TUserMeta>(client);
   const bundle: LiveblocksContextBundle<TUserMeta, TThreadMetadata> = {
     LiveblocksProvider, // XXX Convert
@@ -508,13 +498,25 @@ function makeLiveblocksContextBundle<
     },
 
     [kInternal]: {
-      useCurrentUserId, // XXX Convert
+      useCurrentUserId: () => useCurrentUserId_withClient(client),
     },
   };
 
   return Object.defineProperty(bundle, kInternal, {
     enumerable: false,
   });
+}
+
+// ---------------------------------------------------------------------- }}}
+// --- Private useXxx_withClient() helpers ------------------------------ {{{
+
+function useCurrentUserId_withClient(client: Client) {
+  const currentUserIdStore = client[kInternal].currentUserIdStore;
+  return useSyncExternalStore(
+    currentUserIdStore.subscribe,
+    currentUserIdStore.get,
+    currentUserIdStore.get
+  );
 }
 
 // ---------------------------------------------------------------------- }}}
