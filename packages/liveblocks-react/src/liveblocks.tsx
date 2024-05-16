@@ -296,14 +296,6 @@ function makeLiveblocksContextBundle<
   TUserMeta extends BaseUserMeta,
   TThreadMetadata extends BaseMetadata,
 >(client: Client): LiveblocksContextBundle<TUserMeta, TThreadMetadata> {
-  function LiveblocksProvider(props: PropsWithChildren) {
-    return (
-      <ClientContext.Provider value={client}>
-        {props.children}
-      </ClientContext.Provider>
-    );
-  }
-
   // Bind all hooks to the current client instance
   const useInboxNotificationThread = (inboxNotificationId: string) =>
     useInboxNotificationThread_withClient<TThreadMetadata>(
@@ -317,7 +309,16 @@ function makeLiveblocksContextBundle<
   const useMarkAllInboxNotificationsAsRead = () =>
     useMarkAllInboxNotificationsAsRead_withClient(client);
 
+  function LiveblocksProvider(props: PropsWithChildren) {
+    return (
+      <ClientContext.Provider value={client}>
+        {props.children}
+      </ClientContext.Provider>
+    );
+  }
+
   const shared = createSharedContext<TUserMeta>(client);
+
   const bundle: LiveblocksContextBundle<TUserMeta, TThreadMetadata> = {
     LiveblocksProvider,
 
