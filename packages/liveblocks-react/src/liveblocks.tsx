@@ -296,12 +296,6 @@ function makeLiveblocksContextBundle<
   TUserMeta extends BaseUserMeta,
   TThreadMetadata extends BaseMetadata,
 >(client: Client): LiveblocksContextBundle<TUserMeta, TThreadMetadata> {
-  const {
-    store,
-    fetchInboxNotifications,
-    useSubscribeToInboxNotificationsEffect,
-  } = getExtrasForClient<TThreadMetadata>(client);
-
   function LiveblocksProvider(props: PropsWithChildren) {
     return (
       <ClientContext.Provider value={client}>
