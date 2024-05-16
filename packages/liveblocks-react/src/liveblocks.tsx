@@ -152,14 +152,6 @@ function makeLiveblocksContextBundle<
 
   const notifications = client[kInternal].notifications;
 
-  function LiveblocksProvider(props: PropsWithChildren) {
-    return (
-      <ClientContext.Provider value={client}>
-        {props.children}
-      </ClientContext.Provider>
-    );
-  }
-
   // TODO: Unify request cache
   let fetchInboxNotificationsRequest: Promise<{
     inboxNotifications: InboxNotificationData[];
@@ -432,6 +424,14 @@ function makeLiveblocksContextBundle<
     }, []);
   }
 
+  function LiveblocksProvider(props: PropsWithChildren) {
+    return (
+      <ClientContext.Provider value={client}>
+        {props.children}
+      </ClientContext.Provider>
+    );
+  }
+
   // Bind all hooks to the current client instance
   const useInboxNotificationThread = (inboxNotificationId: string) =>
     useInboxNotificationThread_withClient<TThreadMetadata>(
@@ -441,7 +441,7 @@ function makeLiveblocksContextBundle<
 
   const shared = createSharedContext<TUserMeta>(client);
   const bundle: LiveblocksContextBundle<TUserMeta, TThreadMetadata> = {
-    LiveblocksProvider, // XXX Convert
+    LiveblocksProvider,
 
     useInboxNotifications, // XXX Convert
     useUnreadInboxNotificationsCount, // XXX Convert
@@ -454,7 +454,7 @@ function makeLiveblocksContextBundle<
     ...shared,
 
     suspense: {
-      LiveblocksProvider, // XXX Convert
+      LiveblocksProvider,
 
       useInboxNotifications: useInboxNotificationsSuspense, // XXX Convert
       useUnreadInboxNotificationsCount:
