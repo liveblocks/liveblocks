@@ -302,16 +302,6 @@ function makeLiveblocksContextBundle<
     useSubscribeToInboxNotificationsEffect,
   } = getExtrasForClient<TThreadMetadata>(client);
 
-  function useInboxNotifications(): InboxNotificationsState {
-    useSubscribeToInboxNotificationsEffect();
-    return useSyncExternalStoreWithSelector(
-      store.subscribe,
-      store.get,
-      store.get,
-      selectorFor_useInboxNotifications
-    );
-  }
-
   function useInboxNotificationsSuspense(): InboxNotificationsStateSuccess {
     const query = store.get().queries[INBOX_NOTIFICATIONS_QUERY];
 
@@ -383,7 +373,7 @@ function makeLiveblocksContextBundle<
   const bundle: LiveblocksContextBundle<TUserMeta, TThreadMetadata> = {
     LiveblocksProvider,
 
-    useInboxNotifications, // XXX Convert
+    useInboxNotifications: () => useInboxNotifications_withClient(client),
     useUnreadInboxNotificationsCount, // XXX Convert
 
     useMarkInboxNotificationAsRead,
@@ -420,6 +410,21 @@ function makeLiveblocksContextBundle<
 
 // ---------------------------------------------------------------------- }}}
 // --- Private useXxx_withClient() helpers ------------------------------ {{{
+
+function useInboxNotifications_withClient(
+  client: Client
+): InboxNotificationsState {
+  const { store, useSubscribeToInboxNotificationsEffect } =
+    getExtrasForClient(client);
+
+  useSubscribeToInboxNotificationsEffect();
+  return useSyncExternalStoreWithSelector(
+    store.subscribe,
+    store.get,
+    store.get,
+    selectorFor_useInboxNotifications
+  );
+}
 
 function useMarkInboxNotificationAsRead_withClient(client: Client) {
   return useCallback(
