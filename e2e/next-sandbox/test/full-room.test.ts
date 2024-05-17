@@ -24,15 +24,15 @@ test.describe("Room completely full", () => {
     Promise.all(pagesToClose.map((page) => page.close()))
   );
 
-  skipOnCI("join a room with 20 clients", async ({}, testInfo) => {
+  skipOnCI("join a room with 10 clients", async ({}, testInfo) => {
     const room = genRoomId(testInfo);
     const url = `${TEST_URL}?room=${encodeURIComponent(room)}`;
 
     pagesToClose = [];
     const batches = [];
 
-    // Open 4 batches...
-    for (let i = 0; i < 4; i++) {
+    // Open 2 batches...
+    for (let i = 0; i < 2; i++) {
       const batch = await preparePages(url, { n: 5 }); // ...of 5 windows each
       batches.push(batch);
       pagesToClose.push(...batch);
@@ -47,7 +47,7 @@ test.describe("Room completely full", () => {
   });
 
   skipOnCI(
-    'join a room with 21 clients (will hit "room full")',
+    'join a room with 11 clients (will hit "room full")',
     async ({}, testInfo) => {
       const room = genRoomId(testInfo);
       const url = `${TEST_URL}?room=${encodeURIComponent(room)}`;
@@ -55,8 +55,8 @@ test.describe("Room completely full", () => {
       pagesToClose = [];
       const batches = [];
 
-      // Open 4 batches...
-      for (let i = 0; i < 4; i++) {
+      // Open 2 batches...
+      for (let i = 0; i < 2; i++) {
         const batch = await preparePages(url, { n: 5 }); // ...of 5 windows each
         batches.push(batch);
         pagesToClose.push(...batch);
