@@ -365,12 +365,34 @@
             "path": "/products/comments/styling-and-customization"
           },
           {
-            "title": "Notifications",
-            "path": "/products/comments/notifications"
+            "title": "Email notifications",
+            "path": "/products/comments/email-notifications"
+          }
+        ]
+      },
+      {
+        "title": "Notifications",
+        "path": "/products/notifications",
+        "routes": [
+          {
+            "title": "Concepts",
+            "path": "/products/notifications/concepts"
+          },
+          {
+            "title": "Default components",
+            "path": "/products/notifications/default-components"
+          },
+          {
+            "title": "Hooks",
+            "path": "/products/notifications/hooks"
+          },
+          {
+            "title": "Styling and customization",
+            "path": "/products/notifications/styling-and-customization"
           },
           {
             "title": "Email notifications",
-            "path": "/products/comments/email-notifications"
+            "path": "/products/notifications/email-notifications"
           }
         ]
       }
