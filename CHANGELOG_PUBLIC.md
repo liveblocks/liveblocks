@@ -32,10 +32,11 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 ## Misc
 
 - Fixed broken link in one onboarding email
+- Internal refactorings to enable simpler setup for `@liveblocks/react` in the future
 
 ## Contributors
 
-pierrelevaillant, ofoucherot, stevenfabre
+pierrelevaillant, ofoucherot, stevenfabre, nvie
 
 # Week 19 (2024-05-10)
 
