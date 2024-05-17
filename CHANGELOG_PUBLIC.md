@@ -63,7 +63,7 @@ pierrelevaillant, ofoucherot, stevenfabre
 - Improved project overview banner copy for when Liveblocks hasn't yet been set
   up.
 
-## Backend
+## Infrastructure
 
 - Made batch processing of webhook and other events more efficient at scale.
 
