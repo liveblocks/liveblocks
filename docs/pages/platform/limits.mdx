@@ -8,16 +8,67 @@ meta:
 
 ## General limits
 
-|                                      | Starter                                       | Pro                                          | Enterprise |
-| ------------------------------------ | --------------------------------------------- | -------------------------------------------- | ---------- |
-| Monthly active users included        | <Limits.StarterMauMax />                         | <Limits.ProMauIncluded />                    | Custom     |
-| Monthly active users limit           | <Limits.StarterMauMax />                         | <Limits.ProMauMax />                         | Unlimited  |
-| Projects limit                       | Unlimited                                     | Unlimited                                    | Unlimited  |
+To prevent abuse of our platform, we apply the following limits to all accounts.
+
+|                                      | Starter                                          | Pro                                          | Enterprise |
+| ------------------------------------ | ------------------------------------------------ | -------------------------------------------- | ---------- |
+| Monthly active users included        | <Limits.StarterMauIncluded />                    | <Limits.ProMauIncluded />                    | Custom     |
+| Monthly active users cap             | <Limits.StarterMauMax />                         | <Limits.ProMauMax />                         | Unlimited  |
+| Projects                             | <Limits.StarterMaxProjects />                    | <Limits.ProMaxProjects />                    | Unlimited  |
 | Average connections per MAU          | Up to <Limits.StarterAvgConnectionsPerMau />     | Up to <Limits.ProAvgConnectionsPerMau />     | Custom     |
-| Maximum storage size per room        | Up to <Limits.StarterMaxStorageSizePerRoom /> MB | Up to <Limits.ProMaxStorageSizePerRoom /> MB | Custom     |
+| Maximum data stored size per room    | Up to <Limits.StarterMaxStorageSizePerRoom />    | Up to <Limits.ProMaxStorageSizePerRoom />    | Custom     |
 | Simultaneous connections per room    | Up to <Limits.StarterMaxConnectionsPerRoom />    | Up to <Limits.ProMaxConnectionsPerRoom />    | Custom     |
-| Monthly comments limit               | <Limits.StarterMaxCommentsCreatedPerMonth />     | <Limits.StarterMaxCommentsCreatedPerMonth />    | Custom     |
+| Simultaneous connections per project | Up to <Limits.StarterMaxConnectionsPerProject /> | Up to <Limits.ProMaxConnectionsPerProject /> | Custom     |
 | Team members per account             | <Limits.StarterTeamMembersPerAccount />          | <Limits.ProTeamMembersPerAccount />          | Custom     |
+| Monthly anonymous connections        | <Limits.StarterMaxAnonymousConnections />        | <Limits.ProMaxAnonymousConnections />        | Custom     |
+
+#### Comments
+
+Comments is free up to <Limits.StarterMauMax /> monthly active users and
+<Limits.StarterMaxComments /> comments per month. You can get higher limits for
+an additional <Limits.ProStartingPriceComments />.
+
+| Comments                      | Included                      | <Limits.ProStartingPriceComments /> |
+| ----------------------------- | ----------------------------- | ----------------------------------- |
+| Monthly active users included | <Limits.StarterMauMax />      | <Limits.ProMauIncluded />           |
+| Monthly active users cap      | <Limits.StarterMauMax />      | <Limits.ProMauMax />                |
+| Monthly comments cap          | <Limits.StarterMaxComments /> | <Limits.ProMaxComments />           |
+
+#### Notifications
+
+Notifications is free up to <Limits.StarterMauMax /> monthly active users and
+<Limits.StarterMaxNotifications /> notifications per month. You can get higher
+limits for an additional <Limits.ProStartingPriceNotifications />.
+
+| Notifications                 | Included                           | <Limits.ProStartingPriceNotifications /> |
+| ----------------------------- | ---------------------------------- | ---------------------------------------- |
+| Monthly active users included | <Limits.StarterMauMax />           | <Limits.ProMauIncluded />                |
+| Monthly active users cap      | <Limits.StarterMauMax />           | <Limits.ProMauMax />                     |
+| Monthly notifications cap     | <Limits.StarterMaxNotifications /> | <Limits.ProMaxNotifications />           |
+
+#### Text editor
+
+Text editor is free up to <Limits.StarterMauMax /> monthly active users and
+<Limits.StarterTotalTextEditorStored /> data stored. You can get higher limits
+for an additional <Limits.ProStartingPriceTextEditor />.
+
+| Text editor                   | Included                                | <Limits.ProStartingPriceTextEditor /> |
+| ----------------------------- | --------------------------------------- | ------------------------------------- |
+| Monthly active users included | <Limits.StarterMauMax />                | <Limits.ProMauIncluded />             |
+| Monthly active users cap      | <Limits.StarterMauMax />                | <Limits.ProMauMax />                  |
+| Total GB stored               | <Limits.StarterTotalTextEditorStored /> | <Limits.ProTotalTextEditorStored />   |
+
+#### Custom app
+
+Custom app is free up to <Limits.StarterMauMax /> monthly active users and
+<Limits.StarterTotalCustomAppStored /> data stored. You can get higher limits
+for an additional <Limits.ProStartingPriceCustomApp />.
+
+| Custom app                    | Included                               | <Limits.ProStartingPriceCustomApp /> |
+| ----------------------------- | -------------------------------------- | ------------------------------------ |
+| Monthly active users included | <Limits.StarterMauMax />               | <Limits.ProMauIncluded />            |
+| Monthly active users cap      | <Limits.StarterMauMax />               | <Limits.ProMauMax />                 |
+| Total GB stored               | <Limits.StarterTotalCustomAppStored /> | <Limits.ProTotalCustomAppStored />   |
 
 ### Monthly active users
 
@@ -48,7 +99,7 @@ once serialized to JSON.
 
 Broadcast event messages have a limit of 1 MB.
 
-### Storage limits
+### Liveblocks Storage limits
 
 - A `LiveObject` cannot exceed 128 kB when totalling the size of the keys and
   values.
