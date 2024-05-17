@@ -52,6 +52,11 @@ export default function Home() {
           </Link>
         </li>
         <li>
+          <Link href="/inbox-notifications?room=e2e-inbox-notif">
+            <a>Inbox notifications</a>
+          </Link>
+        </li>
+        <li>
           <Link href="/offline?room=e2e-offline">
             <a>Offline</a>
           </Link>
