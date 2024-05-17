@@ -25,6 +25,9 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
   - Navigate between events using the previous/next buttons without leaving the modal.
 - On the room's detail page, click "View room events" at the top right to access the room events.
 - Added a new date picker to the "Overview" and "Events" pages.
+- Improved onboarding
+  - Making sure the default team name isn't too long and can be submitted
+  - Improved form submission performance by only calling the required API endpoints
 
 ## Misc
 
