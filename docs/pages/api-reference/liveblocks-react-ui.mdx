@@ -7,8 +7,10 @@ alwaysShowAllNavigationLevels: false
 ---
 
 `@liveblocks/react-ui` provides you with [React](https://react.dev/) components
-to build a commenting experience. Read our
-[getting started](/docs/get-started/comments) guide to learn more.
+to build collaborative experiences. Read our
+[Comments](/docs/get-started/comments) and
+[Notifications](/docs/get-started/notifications) get started guides to learn
+more.
 
 <Banner title="Public beta">
 
@@ -18,9 +20,11 @@ hear from you.
 
 </Banner>
 
-## Default components [#Components]
+## Comments
 
-### Thread
+### Default components [#Components]
+
+#### Thread
 
 Displays a thread of comments. Each thread has a composer for creating replies.
 
@@ -58,7 +62,7 @@ function Component() {
 }
 ```
 
-#### Resolved thread metadata
+##### Resolved thread metadata
 
 A thread allows you to attach custom metadata to it when using the
 [mutation hooks](/docs/api-reference/liveblocks-react#Comments), and when
@@ -83,7 +87,7 @@ export type ThreadMetadata = {
 };
 ```
 
-#### Props [#Thread-props]
+##### Props [#Thread-props]
 
 <PropertiesList>
   <PropertiesListItem name="thread" type="ThreadData" required>
@@ -180,7 +184,7 @@ export type ThreadMetadata = {
 
 {/* TODO: Document classes and data attributes */}
 
-### Composer
+#### Composer
 
 Displays a composer for creating threads or comments.
 
@@ -208,7 +212,7 @@ function Component() {
 }
 ```
 
-#### Adding thread metadata
+##### Adding thread metadata
 
 If you’d like to attach custom metadata to the newly created thread, you can add
 a `metadata` prop.
@@ -231,7 +235,7 @@ function Component() {
 }
 ```
 
-##### Typed metadata
+###### Typed metadata
 
 Optionally, you can type `metadata` by importing your custom `ThreadMetadata`
 type from your config file.
@@ -259,7 +263,7 @@ export type ThreadMetadata = {
 };
 ```
 
-#### Replying to a thread
+##### Replying to a thread
 
 If you provide a `threadId`, then submitting the composer will add a new reply
 to the thread.
@@ -273,7 +277,7 @@ function Component({ threadId }) {
 }
 ```
 
-#### Modifying a comment
+##### Modifying a comment
 
 If you provide both a `threadId` and a `commentId`, then submitting the composer
 will edit the comment.
@@ -287,7 +291,7 @@ function Component({ threadId, commentId }) {
 }
 ```
 
-#### Custom behavior
+##### Custom behavior
 
 If you’d like to customize submission behavior, you can use
 `event.preventDefault()` in `onComposerSubmit` to disable the default behavior
@@ -322,7 +326,7 @@ function Component({ threadId, commentId }) {
 Learn more about mutation hooks under
 [`@liveblocks/react`](/docs/api-reference/liveblocks-react#Comments).
 
-#### Props [#Composer-props]
+##### Props [#Composer-props]
 
 <PropertiesList>
   <PropertiesListItem name="threadId" type="string">
@@ -375,7 +379,7 @@ Learn more about mutation hooks under
 
 {/* TODO: Document classes and data attributes */}
 
-### Comment
+#### Comment
 
 Displays a single comment.
 
@@ -411,7 +415,7 @@ function Component({ thread }: { thread: ThreadData }) {
 }
 ```
 
-#### Custom thread components
+##### Custom thread components
 
 [`Comment`](#Comment) can be used in combination with [`Composer`](#Composer) to
 create a custom thread component. The composer in this example is used to
@@ -448,7 +452,7 @@ function Component() {
 }
 ```
 
-#### Props [#Comment-props]
+##### Props [#Comment-props]
 
 <PropertiesList>
   <PropertiesListItem name="comment" type="CommentData" required>
@@ -509,187 +513,7 @@ function Component() {
 
 {/* TODO: Document classes and data attributes */}
 
-### InboxNotification
-
-Displays a single inbox notification.
-
-```tsx
-<InboxNotification inboxNotification={inboxNotification} />
-```
-
-<Figure>
-  <Image
-    src="/assets/comments/inbox-notification.png"
-    alt="InboxNotification"
-    width={768}
-    height={446}
-  />
-</Figure>
-
-#### Props [#InboxNotification-props]
-
-<PropertiesList>
-  <PropertiesListItem
-    name="inboxNotification"
-    type="InboxNotificationData"
-    required
-  >
-    The inbox notification to display.
-  </PropertiesListItem>
-  <PropertiesListItem name="href" type="string">
-    The URL which the inbox notification links to.
-  </PropertiesListItem>
-  <PropertiesListItem name="showActions" type='boolean | "hover"'>
-    How to show or hide the actions.
-  </PropertiesListItem>
-  <PropertiesListItem name="kinds" type="Partial<InboxNotificationKinds>">
-    Override specific kinds of inbox notifications.
-  </PropertiesListItem>
-  <PropertiesListItem
-    name="overrides"
-    type="Partial<GlobalOverrides & InboxNotificationOverrides & CommentOverrides>"
-  >
-    Override the component’s strings.
-  </PropertiesListItem>
-  <PropertiesListItem name="components" type="Partial<GlobalComponents>">
-    Override the component’s components.
-  </PropertiesListItem>
-</PropertiesList>
-
-##### kinds [#InboxNotification-kinds]
-
-Override specific kinds of inbox notifications.
-
-<PropertiesList>
-  <PropertiesListItem
-    name="thread"
-    type="ComponentType<InboxNotificationThreadProps>"
-  >
-    The component used to display thread notifications. Defaults to
-    `InboxNotification.Thread`.
-  </PropertiesListItem>
-  <PropertiesListItem
-    name="$${string}"
-    type="ComponentType<InboxNotificationCustomProps>"
-  >
-    The component used to display a custom notification kind. Custom
-    notification kinds must start with a `$`.
-  </PropertiesListItem>
-</PropertiesList>
-
-###### InboxNotification.Thread [#InboxNotification.Thread]
-
-Displays a thread inbox notification.
-
-```tsx
-<InboxNotification
-  kinds={{
-    thread: (props) => (
-      <InboxNotification.Thread {...props} showRoomName={false} />
-    ),
-  }}
-/>
-```
-
-<PropertiesList>
-  <PropertiesListItem
-    name="inboxNotification"
-    type="InboxNotificationThreadData"
-    required
-  >
-    The inbox notification to display.
-  </PropertiesListItem>
-  <PropertiesListItem name="showActions" type='boolean | "hover"'>
-    How to show or hide the actions.
-  </PropertiesListItem>
-  <PropertiesListItem name="showRoomName" type="boolean">
-    Whether to show the room name in the title.
-  </PropertiesListItem>
-</PropertiesList>
-
-###### InboxNotification.Custom [#InboxNotification.Custom]
-
-Displays a custom notification kind.
-
-```tsx
-<InboxNotification
-  kinds={{
-    $myCustomNotificationKind: (props) => {
-      const activityData = props.inboxNotification.activities[0].data;
-
-      return(
-        <InboxNotification.Custom
-          title={<>User <strong>{activityData.file}</strong></>}
-          aside={<InboxNotification.Icon>❌</InboxNotification.Icon>}
-          {...props}
-        >
-          {activityData.errorDescription}
-        </InboxNotification>
-      )
-    },
-  }}
-/>
-```
-
-<PropertiesList>
-  <PropertiesListItem
-    name="inboxNotification"
-    type="InboxNotificationCustomData"
-    required
-  >
-    The inbox notification to display.
-  </PropertiesListItem>
-  <PropertiesListItem name="title" type="ReactNode" required>
-    The inbox notification’s title.
-  </PropertiesListItem>
-  <PropertiesListItem name="children" type="ReactNode" required>
-    The inbox notification’s content.
-  </PropertiesListItem>
-  <PropertiesListItem name="showActions" type='boolean | "hover"'>
-    How to show or hide the actions.
-  </PropertiesListItem>
-  <PropertiesListItem name="aside" type="ReactNode">
-    The inbox notification’s aside content. Can be combined with{" "}
-    <code>InboxNotification.Icon</code> or <code>InboxNotification.Avatar</code>{" "}
-    to easily follow default styles.
-  </PropertiesListItem>
-  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
-    Replace the rendered element by the one passed as a child.
-  </PropertiesListItem>
-</PropertiesList>
-
-### InboxNotificationList
-
-Displays inbox notifications as a list. Each
-[`InboxNotification`](#InboxNotification) component will be wrapped in a `li`
-element.
-
-```tsx
-<InboxNotificationList>
-  <InboxNotification />
-  <InboxNotification />
-  <InboxNotification />
-</InboxNotificationList>
-```
-
-<Figure>
-  <Image
-    src="/assets/comments/inbox-notification-list.png"
-    alt="InboxNotificationList"
-    width={768}
-    height={446}
-  />
-</Figure>
-
-#### Props [#InboxNotificationList-props]
-
-<PropertiesList>
-  <PropertiesListItem name="children" type="ReactNode">
-    The inbox notifications to display.
-  </PropertiesListItem>
-</PropertiesList>
-
-### CommentsConfig
+#### CommentsConfig
 
 Set configuration options for all Comments components, such as
 [overrides](#overrides).
@@ -698,7 +522,7 @@ Set configuration options for all Comments components, such as
 <CommentsConfig overrides={{ locale: "fr", USER_UNKNOWN: "Anonyme" }} />
 ```
 
-#### Props [#CommentsConfig-props]
+##### Props [#CommentsConfig-props]
 
 <PropertiesList>
   <PropertiesListItem name="overrides" type="Partial<Overrides>">
@@ -716,9 +540,9 @@ Set configuration options for all Comments components, such as
   </PropertiesListItem>
 </PropertiesList>
 
-### Styling and customization
+#### Styling and customization
 
-#### Default styles
+##### Default styles
 
 The default components come with default styles. These styles can be imported
 into the root of your app or directly into a CSS file with `@import`.
@@ -727,7 +551,7 @@ into the root of your app or directly into a CSS file with `@import`.
 import "@liveblocks/react-ui/styles.css";
 ```
 
-#### Dark mode
+##### Dark mode
 
 You can also import default dark mode styling. There are two versions to choose
 from, the first uses the
@@ -747,7 +571,7 @@ import "@liveblocks/react-ui/styles/dark/attributes.css";
 
 {/* TODO: Mention --elevation-background, --elevation-foreground here */}
 
-#### CSS variables
+##### CSS variables
 
 The default components are built around a set of customizable CSS variables. Set
 these variables within `.lb-root` to globally style your components.
@@ -835,7 +659,7 @@ these variables within `.lb-root` to globally style your components.
 
 {/* TODO: Explain automatic color scales (with a palette-type visual) */}
 
-#### Class names
+##### Class names
 
 Each default component has a set of predefined class names, which can be helpful
 for custom styling, for example.
@@ -871,7 +695,7 @@ Classes containing colons `:` are internal and may change over time.
 
 {/* TODO: Think about adding back the browser support section */}
 
-#### Portaled elements
+##### Portaled elements
 
 Floating elements within the default components (e.g. tooltips, drowdowns, etc)
 are portaled to the end of the document to avoid `z-index` conflicts and
@@ -899,7 +723,7 @@ ignoring their containers. You can either target specific floating elements
 }
 ```
 
-#### Overrides
+##### Overrides
 
 Overrides can be used to customize components’ strings and localization-related
 properties, such as locale and reading direction.
@@ -934,7 +758,7 @@ threads:
 />
 ```
 
-## Primitives
+### Primitives
 
 Primitives are unstyled, headless components that can be used to create fully
 custom commenting experiences.
@@ -949,7 +773,7 @@ error, you should update your `tsconfig.json`’s `moduleResolution`
 
 </Banner>
 
-### Composition
+#### Composition
 
 All primitives are composable; they forward their props and refs, merge their
 classes and styles, and chain their event handlers.
@@ -974,7 +798,7 @@ import { Button } from "@/my-design-system";
 Learn more about this concept on
 [Radix’s composition guide](https://www.radix-ui.com/primitives/docs/guides/composition).
 
-### Composer [#primitives-Composer]
+#### Composer [#primitives-Composer]
 
 Used to render a composer for creating, or editing, threads and comments.
 
@@ -1082,7 +906,7 @@ function Link({ href, children }: CommentBodyLinkProps) {
 }
 ```
 
-#### Composer.Form [#primitives-Composer.Form]
+##### Composer.Form [#primitives-Composer.Form]
 
 Surrounds the composer’s content and handles submissions. By default, no action
 occurs when the composer is submitted. You must create your own mutations within
@@ -1108,7 +932,7 @@ occurs when the composer is submitted. You must create your own mutations within
   </PropertiesListItem>
 </PropertiesList>
 
-#### Composer.Editor [#primitives-Composer.Editor]
+##### Composer.Editor [#primitives-Composer.Editor]
 
 Displays the composer’s editor.
 
@@ -1149,7 +973,7 @@ Displays the composer’s editor.
 
 </Table>
 
-##### components [#primitives-Composer.Editor-components]
+###### components [#primitives-Composer.Editor-components]
 
 The components displayed within the editor.
 
@@ -1174,7 +998,7 @@ The components displayed within the editor.
   </PropertiesListItem>
 </PropertiesList>
 
-###### Mention [#primitives-Composer.Editor-Mention]
+####### Mention [#primitives-Composer.Editor-Mention]
 
 The component used to display mentions.
 
@@ -1197,7 +1021,7 @@ The component used to display mentions.
   </PropertiesListItem>
 </PropertiesList>
 
-###### MentionSuggestions [#primitives-Composer.Editor-MentionSuggestions]
+####### MentionSuggestions [#primitives-Composer.Editor-MentionSuggestions]
 
 The component used to display mention suggestions.
 
@@ -1224,7 +1048,7 @@ The component used to display mention suggestions.
 />
 ```
 
-###### Link [#primitives-Composer.Editor-Link]
+####### Link [#primitives-Composer.Editor-Link]
 
 The component used to display links.
 
@@ -1245,7 +1069,7 @@ The component used to display links.
   </PropertiesListItem>
 </PropertiesList>
 
-#### Composer.Mention [#primitives-Composer.Mention]
+##### Composer.Mention [#primitives-Composer.Mention]
 
 Displays mentions within `Composer.Editor`.
 
@@ -1267,7 +1091,7 @@ Displays mentions within `Composer.Editor`.
 
 </Table>
 
-#### Composer.Suggestions [#primitives-Composer.Suggestions]
+##### Composer.Suggestions [#primitives-Composer.Suggestions]
 
 Contains suggestions within `Composer.Editor`.
 
@@ -1281,7 +1105,7 @@ Contains suggestions within `Composer.Editor`.
   </PropertiesListItem>
 </PropertiesList>
 
-#### Composer.SuggestionsList [#primitives-Composer.SuggestionsList]
+##### Composer.SuggestionsList [#primitives-Composer.SuggestionsList]
 
 Displays a list of suggestions within `Composer.Editor`.
 
@@ -1301,7 +1125,7 @@ Displays a list of suggestions within `Composer.Editor`.
   </PropertiesListItem>
 </PropertiesList>
 
-#### Composer.SuggestionsListItem [#primitives-Composer.SuggestionsListItem]
+##### Composer.SuggestionsListItem [#primitives-Composer.SuggestionsListItem]
 
 Displays a suggestion within `Composer.SuggestionsList`.
 
@@ -1328,7 +1152,7 @@ Displays a suggestion within `Composer.SuggestionsList`.
 
 </Table>
 
-#### Composer.Link [#primitives-Composer.Link]
+##### Composer.Link [#primitives-Composer.Link]
 
 Displays links within `Composer.Editor`.
 
@@ -1342,7 +1166,7 @@ Displays links within `Composer.Editor`.
   </PropertiesListItem>
 </PropertiesList>
 
-#### Composer.Submit [#primitives-Composer.Submit]
+##### Composer.Submit [#primitives-Composer.Submit]
 
 A button to submit the composer.
 
@@ -1356,7 +1180,7 @@ A button to submit the composer.
   </PropertiesListItem>
 </PropertiesList>
 
-### Comment [#primitives-Comment]
+#### Comment [#primitives-Comment]
 
 Used to render a single comment.
 
@@ -1410,7 +1234,7 @@ function Link({ href, children }: CommentBodyLinkProps) {
 }
 ```
 
-#### Comment.Body [#primitives-Comment.Body]
+##### Comment.Body [#primitives-Comment.Body]
 
 Displays a comment body.
 
@@ -1431,7 +1255,7 @@ Displays a comment body.
   </PropertiesListItem>
 </PropertiesList>
 
-##### components [#primitives-Comment.Body-components]
+###### components [#primitives-Comment.Body-components]
 
 The components displayed within the comment body.
 
@@ -1449,7 +1273,7 @@ The components displayed within the comment body.
   </PropertiesListItem>
 </PropertiesList>
 
-###### Mention [#primitives-Comment.Body-Mention]
+####### Mention [#primitives-Comment.Body-Mention]
 
 The component used to display mentions.
 
@@ -1467,7 +1291,7 @@ The component used to display mentions.
   </PropertiesListItem>
 </PropertiesList>
 
-###### Link [#primitives-Comment.Body-Link]
+####### Link [#primitives-Comment.Body-Link]
 
 The component used to display links.
 
@@ -1490,7 +1314,7 @@ The component used to display links.
   </PropertiesListItem>
 </PropertiesList>
 
-#### Comment.Mention [#primitives-Comment.Mention]
+##### Comment.Mention [#primitives-Comment.Mention]
 
 Displays mentions within `Comment.Body`.
 
@@ -1504,7 +1328,7 @@ Displays mentions within `Comment.Body`.
   </PropertiesListItem>
 </PropertiesList>
 
-#### Comment.Link [#primitives-Comment.Link]
+##### Comment.Link [#primitives-Comment.Link]
 
 Displays links within `Comment.Body`.
 
@@ -1518,7 +1342,7 @@ Displays links within `Comment.Body`.
   </PropertiesListItem>
 </PropertiesList>
 
-### Timestamp [#primitives-Timestamp]
+#### Timestamp [#primitives-Timestamp]
 
 Displays a formatted date, and automatically re-renders to support relative
 formatting. Defaults to relative formatting for recent dates (e.g. “5 minutes
@@ -1584,9 +1408,9 @@ function MyComments({ thread }: { thread: ThreadData }) {
   </PropertiesListItem>
 </PropertiesList>
 
-## Hooks
+### Hooks
 
-### useComposer
+#### useComposer
 
 Returns states and methods related to the composer. Can only be used within the
 [`Composer.Form`](#primitives-Composer.Form) primitive.
@@ -1624,7 +1448,7 @@ function MyComposerButton() {
 }
 ```
 
-### Other hooks
+#### Other hooks
 
 Other Comments hooks are part of
 [`@liveblocks/react`](/docs/api-reference/liveblocks-react), you can find them
@@ -1639,3 +1463,245 @@ on the
 - [`useDeleteComment`](/docs/api-reference/liveblocks-react#useDeleteComment)
 - [`useAddReaction`](/docs/api-reference/liveblocks-react#useAddReaction)
 - [`useRemoveReaction`](/docs/api-reference/liveblocks-react#useRemoveReaction)
+
+## Notifications
+
+### Default components
+
+#### InboxNotification
+
+Displays a single inbox notification.
+
+```tsx
+<InboxNotification inboxNotification={inboxNotification} />
+```
+
+<Figure>
+  <Image
+    src="/assets/comments/inbox-notification.png"
+    alt="InboxNotification"
+    width={768}
+    height={446}
+  />
+</Figure>
+
+Map through `inboxNotifications` with
+[`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications)
+to render a list of the room’s notifications.
+
+```tsx highlight="10-13"
+import { InboxNotification } from "@liveblocks/react-ui";
+import { useInboxNotifications } from "../liveblocks.config";
+
+function Component() {
+  const { inboxNotifications } = useInboxNotifications();
+
+  return (
+    <>
+      {inboxNotifications.map((inboxNotification) => (
+        <InboxNotification
+          key={inboxNotification.id}
+          inboxNotification={inboxNotification}
+        />
+      ))}
+    </>
+  );
+}
+```
+
+##### Rendering notification kinds differently
+
+Different `kinds` of notifications are available, for example `thread` which is
+triggered when using Comments, or `$myCustomNotification` which would be a
+custom notification you’ve triggered manually. You can choose to render each
+notification differently.
+
+```tsx highlight="3-13"
+<InboxNotification
+  kinds={{
+    thread: (props) => (
+      <InboxNotification.Thread {...props} showRoomName={false} />
+    ),
+    $myCustomNotification: (props) => (
+      <InboxNotification.Custom
+        {...props}
+        title="New notification"
+        aside={<InboxNotification.Icon>❕</InboxNotification.Icon>}
+      >
+        My custom notification
+      </InboxNotification.Custom>
+    ),
+  }}
+/>
+```
+
+Adding these two properties to `kinds` will overwrite the default component
+that’s displayed for those two notification types. Using
+[`InboxNotification.Thread`](/docs/api-reference/liveblocks-react-ui#InboxNotification.Thread)
+and
+[`InboxNotification.Custom`](/docs/api-reference/liveblocks-react-ui#InboxNotification.Custom)
+in this way allow you to easily create components that fit into the existing
+design system, whilst still adding lots of customization.
+
+##### Props [#InboxNotification-props]
+
+<PropertiesList>
+  <PropertiesListItem
+    name="inboxNotification"
+    type="InboxNotificationData"
+    required
+  >
+    The inbox notification to display.
+  </PropertiesListItem>
+  <PropertiesListItem name="href" type="string">
+    The URL which the inbox notification links to.
+  </PropertiesListItem>
+  <PropertiesListItem name="showActions" type='boolean | "hover"'>
+    How to show or hide the actions.
+  </PropertiesListItem>
+  <PropertiesListItem name="kinds" type="Partial<InboxNotificationKinds>">
+    Override specific kinds of inbox notifications.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="overrides"
+    type="Partial<GlobalOverrides & InboxNotificationOverrides & CommentOverrides>"
+  >
+    Override the component’s strings.
+  </PropertiesListItem>
+  <PropertiesListItem name="components" type="Partial<GlobalComponents>">
+    Override the component’s components.
+  </PropertiesListItem>
+</PropertiesList>
+
+###### kinds [#InboxNotification-kinds]
+
+Override specific kinds of inbox notifications.
+
+<PropertiesList>
+  <PropertiesListItem
+    name="thread"
+    type="ComponentType<InboxNotificationThreadProps>"
+  >
+    The component used to display thread notifications. Defaults to
+    `InboxNotification.Thread`.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="$${string}"
+    type="ComponentType<InboxNotificationCustomProps>"
+  >
+    The component used to display a custom notification kind. Custom
+    notification kinds must start with a `$`.
+  </PropertiesListItem>
+</PropertiesList>
+
+###### InboxNotification.Thread [#InboxNotification.Thread]
+
+Displays a thread inbox notification.
+
+```tsx
+<InboxNotification
+  kinds={{
+    thread: (props) => (
+      <InboxNotification.Thread {...props} showRoomName={false} />
+    ),
+  }}
+/>
+```
+
+<PropertiesList>
+  <PropertiesListItem
+    name="inboxNotification"
+    type="InboxNotificationThreadData"
+    required
+  >
+    The inbox notification to display.
+  </PropertiesListItem>
+  <PropertiesListItem name="showActions" type='boolean | "hover"'>
+    How to show or hide the actions.
+  </PropertiesListItem>
+  <PropertiesListItem name="showRoomName" type="boolean">
+    Whether to show the room name in the title.
+  </PropertiesListItem>
+</PropertiesList>
+
+###### InboxNotification.Custom [#InboxNotification.Custom]
+
+Displays a custom notification kind.
+
+```tsx
+<InboxNotification
+  kinds={{
+    $myCustomNotificationKind: (props) => {
+      const activityData = props.inboxNotification.activities[0].data;
+
+      return(
+        <InboxNotification.Custom
+          title={<>User <strong>{activityData.file}</strong></>}
+          aside={<InboxNotification.Icon>❌</InboxNotification.Icon>}
+          {...props}
+        >
+          {activityData.errorDescription}
+        </InboxNotification>
+      )
+    },
+  }}
+/>
+```
+
+<PropertiesList>
+  <PropertiesListItem
+    name="inboxNotification"
+    type="InboxNotificationCustomData"
+    required
+  >
+    The inbox notification to display.
+  </PropertiesListItem>
+  <PropertiesListItem name="title" type="ReactNode" required>
+    The inbox notification’s title.
+  </PropertiesListItem>
+  <PropertiesListItem name="children" type="ReactNode" required>
+    The inbox notification’s content.
+  </PropertiesListItem>
+  <PropertiesListItem name="showActions" type='boolean | "hover"'>
+    How to show or hide the actions.
+  </PropertiesListItem>
+  <PropertiesListItem name="aside" type="ReactNode">
+    The inbox notification’s aside content. Can be combined with{" "}
+    <code>InboxNotification.Icon</code> or <code>InboxNotification.Avatar</code>{" "}
+    to easily follow default styles.
+  </PropertiesListItem>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### InboxNotificationList
+
+Displays inbox notifications as a list. Each
+[`InboxNotification`](#InboxNotification) component will be wrapped in a `li`
+element.
+
+```tsx
+<InboxNotificationList>
+  <InboxNotification />
+  <InboxNotification />
+  <InboxNotification />
+</InboxNotificationList>
+```
+
+<Figure>
+  <Image
+    src="/assets/comments/inbox-notification-list.png"
+    alt="InboxNotificationList"
+    width={768}
+    height={446}
+  />
+</Figure>
+
+##### Props [#InboxNotificationList-props]
+
+<PropertiesList>
+  <PropertiesListItem name="children" type="ReactNode">
+    The inbox notifications to display.
+  </PropertiesListItem>
+</PropertiesList>
