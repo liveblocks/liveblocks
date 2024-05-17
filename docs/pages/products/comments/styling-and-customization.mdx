@@ -15,32 +15,32 @@ helpful for localization.
 ## Default components
 
 The add the default components’s theme, import the
-[default styles](/docs/api-reference/liveblocks-react-comments#Default-styles)
-CSS file.
+[default styles](/docs/api-reference/liveblocks-react-ui#Default-styles) CSS
+file.
 
 ```ts
-import "@liveblocks/react-comments/styles.css";
+import "@liveblocks/react-ui/styles.css";
 ```
 
 You can also import one of two CSS files to enable
-[dark mode](/docs/api-reference/liveblocks-react-comments#Dark-mode), depending
-on how you’d like to enable it.
+[dark mode](/docs/api-reference/liveblocks-react-ui#Dark-mode), depending on how
+you’d like to enable it.
 
 ```ts
 // Dark mode using the system theme with `prefers-color-scheme`
-import "@liveblocks/react-comments/styles/dark/media-query.css";
+import "@liveblocks/react-ui/styles/dark/media-query.css";
 ```
 
 ```ts
 // Dark mode using `className="dark"`, `data-theme="dark"`, or `data-dark="true"`
-import "@liveblocks/react-comments/styles/dark/attributes.css";
+import "@liveblocks/react-ui/styles/dark/attributes.css";
 ```
 
 ### CSS variables
 
 A number of
-[CSS variables](/docs/api-reference/liveblocks-react-comments#CSS-variables) can
-be used to customize colors, spacing, and more. This is our recommended path for
+[CSS variables](/docs/api-reference/liveblocks-react-ui#CSS-variables) can be
+used to customize colors, spacing, and more. This is our recommended path for
 styling the default components, as you can quickly and easily modify all
 components with just a few variables.
 
@@ -56,7 +56,7 @@ components with just a few variables.
 ### Class names
 
 Should you need deeper customization,
-[class names](/docs/api-reference/liveblocks-react-comments#Class-names) can be
+[class names](/docs/api-reference/liveblocks-react-ui#Class-names) can be
 styled, some of which provide contextual data attributes.
 
 ```css
@@ -72,13 +72,13 @@ styled, some of which provide contextual data attributes.
 ### Overrides and localization
 
 It’s possible to
-[override strings](/docs/api-reference/liveblocks-react-comments#Overrides) used
-in the default components, which has a couple of different uses, the first being
+[override strings](/docs/api-reference/liveblocks-react-ui#Overrides) used in
+the default components, which has a couple of different uses, the first being
 localization. In this example, we’re globally switching the word _Anonymous_ to
 _Anonyme_ for French users.
 
 ```tsx
-import { CommentsConfig } from "@liveblocks/react-comments";
+import { CommentsConfig } from "@liveblocks/react-ui";
 
 export function App() {
   return (
@@ -93,10 +93,10 @@ export function App() {
 
 You can also override strings on a component basis, for example if you’d like to
 change the placeholder text in the
-[`Composer`](/docs/api-reference/liveblocks-react-comments#Composer).
+[`Composer`](/docs/api-reference/liveblocks-react-ui#Composer).
 
 ```tsx
-import { Composer } from "@liveblocks/react-comments";
+import { Composer } from "@liveblocks/react-ui";
 
 function Component() {
   return (
@@ -117,7 +117,7 @@ in your React application—each component passes down props to its root element
 meaning you can use regular HTML props.
 
 ```tsx
-import { Composer } from "@liveblocks/react-comments/primitives";
+import { Composer } from "@liveblocks/react-ui/primitives";
 
 function Component() {
   return (
@@ -134,7 +134,7 @@ You can use your custom design system components with primitives by using the
 into your component’s.
 
 ```tsx highlight="6"
-import { Composer } from "@liveblocks/react-comments/primitives";
+import { Composer } from "@liveblocks/react-ui/primitives";
 import { Button } from "@/my-design-system";
 
 function Component() {
@@ -151,7 +151,7 @@ function Component() {
 Style primitives with [Tailwind](https://tailwindcss.com) by adding class names.
 
 ```tsx
-import { Composer } from "@liveblocks/react-comments/primitives";
+import { Composer } from "@liveblocks/react-ui/primitives";
 
 function Component() {
   return (
@@ -166,7 +166,7 @@ Style primitives with [CSS modules](https://github.com/css-modules/css-modules)
 as you would any other component.
 
 ```tsx
-import { Composer } from "@liveblocks/react-comments";
+import { Composer } from "@liveblocks/react-ui";
 import styles from "./Component.module.css";
 
 function Component() {

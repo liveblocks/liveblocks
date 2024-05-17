@@ -23,7 +23,7 @@
           },
           {
             "title": "Comments",
-            "path": "/get-started/react-comments",
+            "path": "/get-started/react-ui",
             "hidden": true
           },
           {
@@ -458,8 +458,8 @@
         "path": "/api-reference/liveblocks-react"
       },
       {
-        "title": "@liveblocks/react-comments",
-        "path": "/api-reference/liveblocks-react-comments"
+        "title": "@liveblocks/react-ui",
+        "path": "/api-reference/liveblocks-react-ui"
       },
       {
         "title": "@liveblocks/redux",

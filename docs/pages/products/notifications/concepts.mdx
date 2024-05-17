@@ -106,17 +106,14 @@ This behavior can be customized per room, learn more about it in the
 ### Components
 
 To display inbox notifications,
-[`@liveblocks/react-comments`](/docs/api-reference/liveblocks-react-comments)
-comes with two default components:
-[`InboxNotification`](/docs/api-reference/liveblocks-react-comments#InboxNotification)
+[`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui) comes with two
+default components:
+[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
 and
-[`InboxNotificationList`](/docs/api-reference/liveblocks-react-comments#InboxNotification).
+[`InboxNotificationList`](/docs/api-reference/liveblocks-react-ui#InboxNotification).
 
 ```tsx
-import {
-  InboxNotification,
-  InboxNotificationList,
-} from "@liveblocks/react-comments";
+import { InboxNotification, InboxNotificationList } from "@liveblocks/react-ui";
 import { useInboxNotifications } from "./liveblocks.config";
 
 function Inbox() {
@@ -182,8 +179,8 @@ comments so viewing a thread will also mark its inbox notification as read, and
 vice versa.
 
 If you use the default
-[`Thread`](/docs/api-reference/liveblocks-react-comments#Thread) component, it
-will automatically handle marking threads as read when they are viewed and show
+[`Thread`](/docs/api-reference/liveblocks-react-ui#Thread) component, it will
+automatically handle marking threads as read when they are viewed and show
 unread indicators when there are unread comments in threads you are
 participating in.
 

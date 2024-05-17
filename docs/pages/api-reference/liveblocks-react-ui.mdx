@@ -1,13 +1,13 @@
 ---
 meta:
-  title: "@liveblocks/react-comments"
+  title: "@liveblocks/react-ui"
   parentTitle: "API Reference"
-  description: "API Reference for the @liveblocks/react-comments package"
+  description: "API Reference for the @liveblocks/react-ui package"
 alwaysShowAllNavigationLevels: false
 ---
 
-`@liveblocks/react-comments` provides you with [React](https://react.dev/)
-components to build a commenting experience. Read our
+`@liveblocks/react-ui` provides you with [React](https://react.dev/) components
+to build a commenting experience. Read our
 [getting started](/docs/get-started/comments) guide to learn more.
 
 <Banner title="Public beta">
@@ -42,7 +42,7 @@ Threads can be retrieved with
 [`useThreads`](/docs/api-reference/liveblocks-react#useThreads).
 
 ```tsx highlight="10"
-import { Thread } from "@liveblocks/react-comments";
+import { Thread } from "@liveblocks/react-ui";
 import { useThreads } from "../liveblocks.config";
 
 function Component() {
@@ -200,7 +200,7 @@ Displays a composer for creating threads or comments.
 By default, submitting the composer will create a new thread.
 
 ```tsx
-import { Composer } from "@liveblocks/react-comments";
+import { Composer } from "@liveblocks/react-ui";
 
 // Creates a new thread
 function Component() {
@@ -214,7 +214,7 @@ If you’d like to attach custom metadata to the newly created thread, you can a
 a `metadata` prop.
 
 ```tsx
-import { Composer } from "@liveblocks/react-comments";
+import { Composer } from "@liveblocks/react-ui";
 
 // Creates a new thread with custom metadata
 function Component() {
@@ -237,7 +237,7 @@ Optionally, you can type `metadata` by importing your custom `ThreadMetadata`
 type from your config file.
 
 ```tsx highlight="2,7"
-import { Composer } from "@liveblocks/react-comments";
+import { Composer } from "@liveblocks/react-ui";
 import { ThreadMetadata } from "../liveblocks.config";
 
 // Creates a new thread with custom metadata
@@ -265,7 +265,7 @@ If you provide a `threadId`, then submitting the composer will add a new reply
 to the thread.
 
 ```tsx
-import { Composer } from "@liveblocks/react-comments";
+import { Composer } from "@liveblocks/react-ui";
 
 // Adds a new comment to a thread
 function Component({ threadId }) {
@@ -279,7 +279,7 @@ If you provide both a `threadId` and a `commentId`, then submitting the composer
 will edit the comment.
 
 ```tsx
-import { Composer } from "@liveblocks/react-comments";
+import { Composer } from "@liveblocks/react-ui";
 
 // Edits an existing comment
 function Component({ threadId, commentId }) {
@@ -294,7 +294,7 @@ If you’d like to customize submission behavior, you can use
 and call comment and thread mutation methods manually.
 
 ```tsx
-import { Composer } from "@liveblocks/react-comments";
+import { Composer } from "@liveblocks/react-ui";
 import { useEditComment, useAddReaction } from "../liveblocks.config";
 
 // Custom submission behavior (edits a comment and adds a reaction)
@@ -396,7 +396,7 @@ Map through `thread.comments` to render each comment in a thread. Threads can be
 retrieved with [`useThreads`](/docs/api-reference/liveblocks-react#useThreads).
 
 ```tsx highlight="9"
-import { Comment } from "@liveblocks/react-comments";
+import { Comment } from "@liveblocks/react-ui";
 import { ThreadData } from "@liveblocks/client";
 
 // Renders a list of comments attach to the specified `thread`
@@ -415,10 +415,10 @@ function Component({ thread }: { thread: ThreadData }) {
 
 [`Comment`](#Comment) can be used in combination with [`Composer`](#Composer) to
 create a custom thread component. The composer in this example is used to
-[reply to the existing thread](/docs/api-reference/liveblocks-react-comments#Replying-to-a-thread).
+[reply to the existing thread](/docs/api-reference/liveblocks-react-ui#Replying-to-a-thread).
 
 ```tsx highlight="10"
-import { Comment, Composer } from "@liveblocks/react-comments";
+import { Comment, Composer } from "@liveblocks/react-ui";
 import { ThreadData } from "@liveblocks/client";
 import { useThreads } from "../liveblocks.config";
 
@@ -724,7 +724,7 @@ The default components come with default styles. These styles can be imported
 into the root of your app or directly into a CSS file with `@import`.
 
 ```tsx
-import "@liveblocks/react-comments/styles.css";
+import "@liveblocks/react-ui/styles.css";
 ```
 
 #### Dark mode
@@ -735,14 +735,14 @@ from, the first uses the
 
 ```tsx
 // Dark mode using the system theme with `prefers-color-scheme`
-import "@liveblocks/react-comments/styles/dark/media-query.css";
+import "@liveblocks/react-ui/styles/dark/media-query.css";
 ```
 
 The second uses the `dark` class name, and two commonly used data attributes.
 
 ```tsx
 // Dark mode using `className="dark"`, `data-theme="dark"`, or `data-dark="true"`
-import "@liveblocks/react-comments/styles/dark/attributes.css";
+import "@liveblocks/react-ui/styles/dark/attributes.css";
 ```
 
 {/* TODO: Mention --elevation-background, --elevation-foreground here */}
@@ -907,7 +907,7 @@ properties, such as locale and reading direction.
 They can be set globally for all components using `CommentsConfig`:
 
 ```tsx
-import { CommentsConfig } from "@liveblocks/react-comments";
+import { CommentsConfig } from "@liveblocks/react-ui";
 
 export function App() {
   return (
@@ -942,7 +942,7 @@ custom commenting experiences.
 <Banner title="Using primitives with TypeScript">
 
 If you run into the
-`Cannot find module '@liveblocks/react-comments/primitives' or its corresponding type declarations`
+`Cannot find module '@liveblocks/react-ui/primitives' or its corresponding type declarations`
 error, you should update your `tsconfig.json`’s `moduleResolution`
 [property](https://www.typescriptlang.org/tsconfig#moduleResolution) to
 `"node16"` or `"nodenext"` (or `"bundler"` if you’re on TS >=5).
@@ -1008,7 +1008,7 @@ import {
   CommentBodyMentionProps,
   ComposerEditorMentionSuggestionsProps,
   ComposerSubmitComment,
-} from "@liveblocks/react-comments/primitives";
+} from "@liveblocks/react-ui/primitives";
 import { useCreateThread, useUser } from "../liveblocks.config.ts";
 import { FormEvent } from "react";
 
@@ -1377,7 +1377,7 @@ import {
   Comment,
   CommentBodyLinkProps,
   CommentBodyMentionProps,
-} from "@liveblocks/react-comments/primitives";
+} from "@liveblocks/react-ui/primitives";
 import { ThreadData } from "@liveblocks/client";
 
 // Render custom comments in a thread. Pass a thread from `useThreads`.
@@ -1532,7 +1532,7 @@ Use with `comment.createdAt`, `comment.editedAt`, or `comment.deletedAt` to
 display a human-readable time.
 
 ```tsx highlight="8"
-import { ThreadData, Timestamp } from "@liveblocks/react-comments";
+import { ThreadData, Timestamp } from "@liveblocks/react-ui";
 
 function MyComments({ thread }: { thread: ThreadData }) {
   return (
@@ -1592,7 +1592,7 @@ Returns states and methods related to the composer. Can only be used within the
 [`Composer.Form`](#primitives-Composer.Form) primitive.
 
 ```tsx
-import { useComposer } from "@liveblocks/react-comments/primitives";
+import { useComposer } from "@liveblocks/react-ui/primitives";
 
 const { isEmpty, submit } = useComposer();
 ```
@@ -1601,7 +1601,7 @@ This hook has a number of uses, for example constructing a custom button that
 submits threads, and disabling it when the composer input is empty.
 
 ```tsx highlight="14,17-19"
-import { Composer, useComposer } from "@liveblocks/react-comments/primitives";
+import { Composer, useComposer } from "@liveblocks/react-ui/primitives";
 
 function MyComposer() {
   return (

@@ -11,7 +11,7 @@ collaborative experiences. Follow the following steps to start adding a
 commenting experience to your Next.js `/app` directory application using the
 hooks from [`@liveblocks/react`](/docs/api-reference/liveblocks-react) and the
 components from
-[`@liveblocks/react-comments`](/docs/api-reference/liveblocks-react-comments).
+[`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
 
 <Banner title="Public beta">
 
@@ -29,7 +29,7 @@ hear from you.
     <StepContent>
 
       ```bash
-      npm install @liveblocks/client @liveblocks/react @liveblocks/react-comments
+      npm install @liveblocks/client @liveblocks/react @liveblocks/react-ui
       ```
 
     </StepContent>
@@ -131,7 +131,7 @@ hear from you.
       "use client";
 
       import { useThreads } from "../liveblocks.config";
-      import { Composer, Thread } from "@liveblocks/react-comments";
+      import { Composer, Thread } from "@liveblocks/react-ui";
 
       export function CollaborativeApp() {
         const { threads } = useThreads();
@@ -158,7 +158,7 @@ hear from you.
     root layout of your app or directly into a CSS file with `@import`.
 
     ```tsx file="app/layout.tsx"
-    import "@liveblocks/react-comments/styles.css";
+    import "@liveblocks/react-ui/styles.css";
     ```
 
     </StepContent>
@@ -184,7 +184,7 @@ hear from you.
 Congratulations! You’ve set up the foundation to start building a commenting
 experience for your Next.js application.
 
-- [API Reference](/docs/api-reference/liveblocks-react-comments)
+- [API Reference](/docs/api-reference/liveblocks-react-ui)
 - [How to send email notifications when comments are created](/docs/guides/how-to-send-email-notifications-when-comments-are-created)
 
 ---
