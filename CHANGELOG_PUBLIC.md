@@ -13,6 +13,31 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 -->
 
+# Week 20 (2024-05-17)
+
+## Dashboard
+
+- Liveblocks events are now visible in the dashboard.
+  - New "Events" tab within a project.
+  - Filter room events by type (e.g. `userEntered`, `userLeft`), exact `roomId`, and exact `userId`.
+  - Select a date range (with available presets).
+  - Click on an event to open the event details modal.
+  - Navigate between events using the previous/next buttons without leaving the modal.
+- On the room's detail page, click "View room events" at the top right to access the room events.
+- Added a new date picker to the "Overview" and "Events" pages.
+- Improved onboarding.
+  - Making sure the default team name isn't too long and can be submitted.
+  - Improved form submission performance by only calling the required API endpoints.
+
+## Misc
+
+- Fixed broken link in one onboarding email.
+- Internal refactorings to enable simpler setup for `@liveblocks/react` in the future.
+
+## Contributors
+
+pierrelevaillant, ofoucherot, stevenfabre, nvie
+
 # Week 19 (2024-05-10)
 
 ## Website
@@ -39,7 +64,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 - Improved project overview banner copy for when Liveblocks hasn't yet been set
   up.
 
-## Backend
+## Infrastructure
 
 - Made batch processing of webhook and other events more efficient at scale.
 
