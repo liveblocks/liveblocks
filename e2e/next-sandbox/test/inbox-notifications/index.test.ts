@@ -35,7 +35,7 @@ test.describe("Inbox notifications", () => {
 
   test.afterEach(() => Promise.all(pages.map((page) => page.close())));
 
-  test.only("Inbox notifications are received correctly when mentioning or participating in threads", async () => {
+  test("Inbox notifications are received correctly when mentioning or participating in threads", async () => {
     const [page1, page2] = pages;
 
     //
