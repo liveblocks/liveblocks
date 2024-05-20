@@ -600,19 +600,6 @@ function makeRoomContextBundle<
     return other;
   }
 
-  function useOthersListener(
-    callback: (event: OthersEvent<TPresence, TUserMeta>) => void
-  ) {
-    const room = useTRoom();
-    const savedCallback = useLatest(callback);
-
-    React.useEffect(
-      () =>
-        room.events.others.subscribe((event) => savedCallback.current(event)),
-      [room, savedCallback]
-    );
-  }
-
   function useLostConnectionListener(
     callback: (event: LostConnectionEvent) => void
   ): void {
@@ -2208,7 +2195,7 @@ function makeRoomContextBundle<
 
     useBatch,
     useBroadcastEvent,
-    useOthersListener, // XXX Convert
+    useOthersListener,
     useLostConnectionListener, // XXX Convert
     useErrorListener, // XXX Convert
     useEventListener, // XXX Convert
@@ -2263,7 +2250,7 @@ function makeRoomContextBundle<
 
       useBatch,
       useBroadcastEvent,
-      useOthersListener, // XXX Convert
+      useOthersListener,
       useLostConnectionListener, // XXX Convert
       useErrorListener, // XXX Convert
       useEventListener, // XXX Convert
@@ -2358,6 +2345,18 @@ function useBroadcastEvent<TRoomEvent extends Json>(): (
       room.broadcastEvent(event, options);
     },
     [room]
+  );
+}
+
+function useOthersListener<
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta,
+>(callback: (event: OthersEvent<TPresence, TUserMeta>) => void) {
+  const room = useRoom() as Room<TPresence, never, TUserMeta, never>;
+  const savedCallback = useLatest(callback);
+  React.useEffect(
+    () => room.events.others.subscribe((event) => savedCallback.current(event)),
+    [room, savedCallback]
   );
 }
 
