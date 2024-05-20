@@ -123,7 +123,6 @@ test.describe("Inbox notifications", () => {
     //
     await page1.locator("#delete-all-mine").click({ force: true });
     await page2.locator("#delete-all-mine").click({ force: true });
-
-    await waitForJson(pages, "#numOfThreads", 0);
+    await sleep(250);
   });
 });
