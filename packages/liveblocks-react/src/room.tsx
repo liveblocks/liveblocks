@@ -2244,12 +2244,17 @@ function makeRoomContextBundle<
 // ---------------------------------------------------------------------- }}}
 // --- Private useXxx_withClient() helpers ------------------------------ {{{
 
-function useRoom(): OpaqueRoom {
+function useRoom<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json,
+>(): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const room = React.useContext(RoomContext);
   if (room === null) {
     throw new Error("RoomProvider is missing from the React tree.");
   }
-  return room as OpaqueRoom;
+  return room as Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
 }
 
 function useStatus(): Status {
@@ -2284,7 +2289,7 @@ function useOthersListener<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta,
 >(callback: (event: OthersEvent<TPresence, TUserMeta>) => void) {
-  const room = useRoom() as Room<TPresence, never, TUserMeta, never>;
+  const room = useRoom<TPresence, never, TUserMeta, never>();
   const savedCallback = useLatest(callback);
   React.useEffect(
     () => room.events.others.subscribe((event) => savedCallback.current(event)),
@@ -2322,7 +2327,7 @@ function useEventListener<
 >(
   callback: (data: RoomEventMessage<TPresence, TUserMeta, TRoomEvent>) => void
 ): void {
-  const room = useRoom() as Room<TPresence, never, TUserMeta, TRoomEvent>;
+  const room = useRoom<TPresence, never, TUserMeta, TRoomEvent>();
   const savedCallback = useLatest(callback);
   React.useEffect(() => {
     const listener = (
