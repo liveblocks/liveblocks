@@ -5,28 +5,24 @@ meta:
   description: "Ready-to-use customizable components"
 ---
 
-[TODO]
+The default components included in Notifications are a great way to start
+building your application. With these components you can render inbox
+notification components.
 
----
-
-The default components included in Comments are a great way to start building
-your application. With these components you can render entire threads, along
-with a comment composer.
-
-- Fully styled commenting components, with an optional dark mode.
+- Fully styled notification components, with an optional dark mode.
 - Customize through CSS variables and class names.
-- Localize and modify strings with overrides.
-- Can be used alongside [primitives](/docs/products/comments/primitives).
+- Receive notifications automatically triggered by Liveblocks
+  [Comments](/docs/products/comments).
+- Receive fully custom notifications.
 
-## Thread
+## InboxNotification
 
-The [`Thread`][] component renders a thread and its contained comments, as well
-a composer for adding new comments to thread.
+The [`InboxNotification`][] component renders a single inbox notification.
 
 <Figure>
   <Image
-    src="/assets/comments/thread.png"
-    alt="Thread"
+    src="/assets/comments/inbox-notification.png"
+    alt="InboxNotification"
     width={768}
     height={446}
   />
@@ -34,104 +30,110 @@ a composer for adding new comments to thread.
 
 ### Usage
 
-The best way to get started is to import the [`useThreads`][] hook, and loop
-through each thread in the current room.
+The best way to get started is to import the [`useInboxNotifications`][] hook,
+and loop through each of the current user’s notifications.
 
-```tsx highlight="5,9-11"
-import { Thread } from "@liveblocks/react-ui";
-import { useThreads } from "../liveblocks.config";
+```tsx highlight="5,10-13"
+import { InboxNotification } from "@liveblocks/react-ui";
+import { useInboxNotifications } from "../liveblocks.config";
 
 function Component() {
-  const { threads } = useThreads();
+  const { inboxNotifications } = useInboxNotifications();
 
   return (
     <>
-      {threads.map((thread) => (
-        <Thread key={thread.id} thread={thread} />
+      {inboxNotifications.map((inboxNotification) => (
+        <InboxNotification
+          key={inboxNotification.id}
+          inboxNotification={inboxNotification}
+        />
       ))}
     </>
   );
 }
 ```
 
-This will render a list containing every thread in the room, each with its own
-composer for adding new comments.
+#### Rendering different components
 
-## Composer
+As well as displaying the default notification component, you can render
+alternate components for different notification `kinds` (the type of
+notification). Below we’re rendering a different component for custom
+`$fileUploaded` notifications.
 
-The [`Composer`][] component renders a rich-text composer that’s used to create
-new threads. It can also be used to add comments to an existing thread, or to
-edit comments.
+```tsx highlight="14-18"
+import { InboxNotification } from "@liveblocks/react-ui";
+import { useInboxNotifications } from "../liveblocks.config";
 
-<Figure>
-  <Image
-    src="/assets/comments/composer.png"
-    alt="Composer"
-    width={768}
-    height={446}
-  />
-</Figure>
-
-### Usage
-
-Get started by importing the component. By default, it’ll create a new thread
-when the form’s submitted.
-
-```tsx
-import { Composer } from "@liveblocks/react-ui";
-
-// Creates a new thread
 function Component() {
-  return <Composer />;
-}
-```
+  const { inboxNotifications } = useInboxNotifications();
 
-[`Composer`][] can also be used in other ways:
-
-- [Adding metadata to a new thread](/docs/api-reference/liveblocks-react-ui#Adding-thread-metadata)
-- [Replying to a thread](/docs/api-reference/liveblocks-react-ui#Replying-to-a-thread)
-- [Modifying a comment](/docs/api-reference/liveblocks-react-ui#Modifying-a-comment)
-- [Custom behavior](/docs/api-reference/liveblocks-react-ui#Custom-behavior)
-
-## Comment
-
-The [`Comment`][] component renders a single comment. It’s useful if you’re
-building a custom [Thread](#Thread) component, or if you’re displaying a
-standalone comment.
-
-<Figure>
-  <Image
-    src="/assets/comments/comment.png"
-    alt="Comment"
-    width={768}
-    height={446}
-  />
-</Figure>
-
-### Usage
-
-Start by importing the component, and passing the comment to it.
-
-```tsx highlight="9"
-import { Comment } from "@liveblocks/react-ui";
-import { ThreadData } from "@liveblocks/client";
-
-// Renders a list of comments attached to the specified `thread`
-function MyComment({ thread }: { thread: ThreadData }) {
   return (
     <>
-      {thread.comments.map((comment) => (
-        <Comment key={comment.id} comment={comment} />
+      {inboxNotifications.map((inboxNotification) => (
+        <InboxNotification
+          key={inboxNotification.id}
+          inboxNotification={inboxNotification}
+          kinds={{
+            $fileUploaded: (props) => (
+              <InboxNotification.Custom {...props} title="New file" aside="📁">
+                A new file has been uploaded
+              </InboxNotification.Custom>
+            ),
+          }}
+        />
       ))}
     </>
   );
 }
 ```
 
-[`Composer`]: /docs/api-reference/liveblocks-react-ui#Composer
-[`Comment`]: /docs/api-reference/liveblocks-react-ui#Comment
-[`Thread`]: /docs/api-reference/liveblocks-react-ui#Thread
-[`useThreads`]: /docs/api-reference/liveblocks-react#useThreads
+You can also render any plain JSX you like. Learn more about this under
+[rendering notification kinds differently](/docs/api-reference/liveblocks-react-ui#Rendering-notification-kinds-differently).
+
+## InboxNotificationList
+
+The [`InboxNotificationList`][] component renders your inbox notifications as a
+list.
+
+<Figure>
+  <Image
+    src="/assets/comments/inbox-notification-list.png"
+    alt="InboxNotificationList"
+    width={768}
+    height={446}
+  />
+</Figure>
+
+### Usage
+
+Wrap your [`InboxNotification`][] components in [`InboxNotificationList`][] to
+render your notifications as an ordered HTML list, `ol > li`.
+
+```tsx highlight="8,15"
+import { InboxNotification, InboxNotificationList } from "@liveblocks/react-ui";
+import { useInboxNotifications } from "../liveblocks.config";
+
+function Component() {
+  const { inboxNotifications } = useInboxNotifications();
+
+  return (
+    <InboxNotificationList>
+      {inboxNotifications.map((inboxNotification) => (
+        <InboxNotification
+          key={inboxNotification.id}
+          inboxNotification={inboxNotification}
+        />
+      ))}
+    </InboxNotificationList>
+  );
+}
+```
+
+[`InboxNotification`]: /docs/api-reference/liveblocks-react-ui#InboxNotification
+[`InboxNotificationList`]:
+  /docs/api-reference/liveblocks-react-ui#InboxNotificationList
+[`useInboxNotifications`]:
+  /docs/api-reference/liveblocks-react#useInboxNotifications
 
 ## Customization
 
@@ -142,4 +144,4 @@ It’s possible to style and localize the default components:
 - Use overrides to change default text used in the components.
 
 Learn more under
-[styling and customization](/docs/products/comments/styling-and-customization).
+[styling and customization](/docs/products/notifications/styling-and-customization).
