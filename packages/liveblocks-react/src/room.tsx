@@ -745,10 +745,6 @@ function makeRoomContextBundle<
     return useSyncExternalStore(subscribe, canRedo, canRedo);
   }
 
-  function useBatch<T>(): (callback: () => T) => T {
-    return useTRoom().batch;
-  }
-
   function useLegacyKey<TKey extends Extract<keyof TStorage, string>>(
     key: TKey
   ): TStorage[TKey] | null {
@@ -2227,7 +2223,7 @@ function makeRoomContextBundle<
     useRoom: useTRoom,
     useStatus,
 
-    useBatch, // XXX Convert
+    useBatch,
     useBroadcastEvent, // XXX Convert
     useOthersListener, // XXX Convert
     useLostConnectionListener, // XXX Convert
@@ -2282,7 +2278,7 @@ function makeRoomContextBundle<
       useRoom: useTRoom,
       useStatus,
 
-      useBatch, // XXX Convert
+      useBatch,
       useBroadcastEvent, // XXX Convert
       useOthersListener, // XXX Convert
       useLostConnectionListener, // XXX Convert
@@ -2360,6 +2356,10 @@ function useStatus(): Status {
   const getSnapshot = room.getStatus;
   const getServerSnapshot = room.getStatus;
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
+
+function useBatch<T>(): (callback: () => T) => T {
+  return useRoom().batch;
 }
 
 // ---------------------------------------------------------------------- }}}
