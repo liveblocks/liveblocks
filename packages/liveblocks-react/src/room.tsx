@@ -504,13 +504,6 @@ function makeRoomContextBundle<
     );
   }
 
-  function useLegacyKeySuspense<TKey extends Extract<keyof TStorage, string>>(
-    key: TKey
-  ): TStorage[TKey] {
-    useSuspendUntilStorageLoaded();
-    return useLegacyKey(key) as TStorage[TKey];
-  }
-
   const store = client[kInternal]
     .cacheStore as unknown as CacheStore<TThreadMetadata>;
 
@@ -1828,9 +1821,9 @@ function makeRoomContextBundle<
       useCanUndo,
 
       // Legacy hooks
-      useList: useLegacyKeySuspense, // XXX Convert
-      useMap: useLegacyKeySuspense, // XXX Convert
-      useObject: useLegacyKeySuspense, // XXX Convert
+      useList: useLegacyKeySuspense,
+      useMap: useLegacyKeySuspense,
+      useObject: useLegacyKeySuspense,
 
       useStorageRoot,
       useStorage: useStorageSuspense,
@@ -2419,6 +2412,14 @@ function useStorageSuspense<T, TStorage extends LsonObject>(
     selector,
     isEqual as (prev: T | null, curr: T | null) => boolean
   ) as T;
+}
+
+function useLegacyKeySuspense<
+  TKey extends Extract<keyof TStorage, string>,
+  TStorage extends LsonObject,
+>(key: TKey): TStorage[TKey] {
+  useSuspendUntilStorageLoaded();
+  return useLegacyKey(key) as TStorage[TKey];
 }
 
 // ---------------------------------------------------------------------- }}}
