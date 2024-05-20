@@ -45,38 +45,53 @@ const client = createLiveblocksClient({
 });
 
 const {
-  suspense: { useInboxNotifications },
+  suspense: { LiveblocksProvider, useInboxNotifications },
 } = createLiveblocksContext(client);
 
 const {
   suspense: { RoomProvider, useSelf, useThreads },
 } = createRoomContext(client);
 
-export default function Home() {
+function WithRoomProvider(props: React.PropsWithChildren) {
   const roomId = getRoomFromUrl();
-
   return (
     <RoomProvider id={roomId} initialPresence={{} as never}>
       <ClientSideSuspense fallback="Loading...">
-        {() => <Skeleton />}
+        {() => props.children}
       </ClientSideSuspense>
     </RoomProvider>
   );
 }
 
-function Skeleton() {
+function WithLiveblocksProvider(props: React.PropsWithChildren) {
+  return (
+    <LiveblocksProvider>
+      <ClientSideSuspense fallback="Loading...">
+        {() => props.children}
+      </ClientSideSuspense>
+    </LiveblocksProvider>
+  );
+}
+
+export default function Home() {
   return (
     <>
-      <TopPart />
+      <WithRoomProvider>
+        <TopPart />
+      </WithRoomProvider>
       <div style={{ fontFamily: "sans-serif" }}>
         <table width="100%">
           <tbody>
             <tr>
               <td width="50%" valign="top">
-                <LeftSide />
+                <WithRoomProvider>
+                  <LeftSide />
+                </WithRoomProvider>
               </td>
               <td width="50%" valign="top">
-                <RightSide />
+                <WithLiveblocksProvider>
+                  <RightSide />
+                </WithLiveblocksProvider>
               </td>
             </tr>
           </tbody>
@@ -89,6 +104,7 @@ function Skeleton() {
 function TopPart() {
   const me = useSelf();
   const { threads } = useThreads();
+
   return (
     <table>
       <tbody>
