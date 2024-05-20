@@ -479,10 +479,6 @@ function makeRoomContextBundle<
   // Bind to typed hooks
   const useTRoom = () => useRoom() as TRoom;
 
-  function useOthersConnectionIds(): readonly number[] {
-    return useOthers(selectorFor_useOthersConnectionIds, shallow);
-  }
-
   const NOT_FOUND = Symbol();
 
   type NotFound = typeof NOT_FOUND;
@@ -1998,7 +1994,7 @@ function makeRoomContextBundle<
     useUpdateMyPresence,
     useOthers,
     useOthersMapped,
-    useOthersConnectionIds, // XXX Convert
+    useOthersConnectionIds,
     useOther, // XXX Convert
 
     useMutation, // XXX Convert
@@ -2344,6 +2340,10 @@ function useOthersMapped<
   );
 
   return useOthers(wrappedSelector, wrappedIsEqual);
+}
+
+function useOthersConnectionIds(): readonly number[] {
+  return useOthers(selectorFor_useOthersConnectionIds, shallow);
 }
 
 // ---------------------------------------------------------------------- }}}
