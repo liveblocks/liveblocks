@@ -483,39 +483,6 @@ function makeRoomContextBundle<
     return useOthers(selectorFor_useOthersConnectionIds, shallow);
   }
 
-  function useOthersMapped<T>(
-    itemSelector: (other: User<TPresence, TUserMeta>) => T,
-    itemIsEqual?: (prev: T, curr: T) => boolean
-  ): ReadonlyArray<readonly [connectionId: number, data: T]> {
-    const wrappedSelector = React.useCallback(
-      (others: readonly User<TPresence, TUserMeta>[]) =>
-        others.map(
-          (other) => [other.connectionId, itemSelector(other)] as const
-        ),
-      [itemSelector]
-    );
-
-    const wrappedIsEqual = React.useCallback(
-      (
-        a: ReadonlyArray<readonly [connectionId: number, data: T]>,
-        b: ReadonlyArray<readonly [connectionId: number, data: T]>
-      ): boolean => {
-        const eq = itemIsEqual ?? Object.is;
-        return (
-          a.length === b.length &&
-          a.every((atuple, index) => {
-            // We know btuple always exist because we checked the array length on the previous line
-            const btuple = b[index];
-            return atuple[0] === btuple[0] && eq(atuple[1], btuple[1]);
-          })
-        );
-      },
-      [itemIsEqual]
-    );
-
-    return useOthers(wrappedSelector, wrappedIsEqual);
-  }
-
   const NOT_FOUND = Symbol();
 
   type NotFound = typeof NOT_FOUND;
@@ -2030,7 +1997,7 @@ function makeRoomContextBundle<
     useMyPresence,
     useUpdateMyPresence,
     useOthers,
-    useOthersMapped, // XXX Convert
+    useOthersMapped,
     useOthersConnectionIds, // XXX Convert
     useOther, // XXX Convert
 
@@ -2342,6 +2309,41 @@ function useOthers<
       (identity as (others: readonly User<TPresence, TUserMeta>[]) => T),
     isEqual
   );
+}
+
+function useOthersMapped<
+  T,
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta,
+>(
+  itemSelector: (other: User<TPresence, TUserMeta>) => T,
+  itemIsEqual?: (prev: T, curr: T) => boolean
+): ReadonlyArray<readonly [connectionId: number, data: T]> {
+  const wrappedSelector = React.useCallback(
+    (others: readonly User<TPresence, TUserMeta>[]) =>
+      others.map((other) => [other.connectionId, itemSelector(other)] as const),
+    [itemSelector]
+  );
+
+  const wrappedIsEqual = React.useCallback(
+    (
+      a: ReadonlyArray<readonly [connectionId: number, data: T]>,
+      b: ReadonlyArray<readonly [connectionId: number, data: T]>
+    ): boolean => {
+      const eq = itemIsEqual ?? Object.is;
+      return (
+        a.length === b.length &&
+        a.every((atuple, index) => {
+          // We know btuple always exist because we checked the array length on the previous line
+          const btuple = b[index];
+          return atuple[0] === btuple[0] && eq(atuple[1], btuple[1]);
+        })
+      );
+    },
+    [itemIsEqual]
+  );
+
+  return useOthers(wrappedSelector, wrappedIsEqual);
 }
 
 // ---------------------------------------------------------------------- }}}
