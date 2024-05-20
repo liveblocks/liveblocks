@@ -12,6 +12,7 @@ import {
   Thread,
 } from "../../../../packages/liveblocks-react-comments/dist";
 import { getRoomFromUrl, getUserFromUrl, Row } from "../../utils";
+import Button from "../../utils/Button";
 import { createLiveblocksClient } from "../../utils/createClient";
 import { FAKE_USERS } from "../api/_utils";
 
@@ -49,7 +50,7 @@ const {
 } = createLiveblocksContext(client);
 
 const {
-  suspense: { RoomProvider, useSelf, useThreads },
+  suspense: { RoomProvider, useSelf, useThreads, useDeleteComment },
 } = createRoomContext(client);
 
 function WithRoomProvider(props: React.PropsWithChildren) {
@@ -101,29 +102,79 @@ export default function Home() {
   );
 }
 
+function useInboxNotificationsForThisPage() {
+  const { inboxNotifications: allInboxNotifications } = useInboxNotifications();
+
+  // Filter down inbox notifications to just the notifications from this room,
+  // and only the ones that happened since the page was loaded. If we didn't
+  // there could be a lot of existing inbox notifications, from different test
+  // runs, or from the same user but from different rooms.
+  const roomId = getRoomFromUrl();
+  const [pageLoadTimestamp] = React.useState(() => Date.now());
+
+  const inboxNotifications = allInboxNotifications.filter(
+    (ibn) =>
+      ibn.kind === "thread" &&
+      ibn.roomId === roomId &&
+      ibn.notifiedAt.getTime() > pageLoadTimestamp
+  );
+
+  return inboxNotifications;
+}
+
 function TopPart() {
   const me = useSelf();
   const { threads } = useThreads();
+  const inboxNotifications = useInboxNotificationsForThisPage();
+
+  const deleteComment = useDeleteComment();
+
+  function deleteAllMine() {
+    for (const th of threads) {
+      for (const cm of th.comments) {
+        if (cm.userId === me.id) {
+          deleteComment({ threadId: th.id, commentId: cm.id });
+        }
+      }
+    }
+  }
 
   return (
-    <table>
-      <tbody>
-        <Row id="userId" name="userId" value={me.id} />
-        <Row id="name" name="name" value={me.info?.name} />
-        <Row
-          id="numOfThreads"
-          name="Number of Threads"
-          value={threads?.length}
-        />
-      </tbody>
-    </table>
+    <>
+      <div style={{ display: "flex", margin: "8px 0" }}>
+        <Button id="delete-all-mine" onClick={() => deleteAllMine()}>
+          Delete all my comments
+        </Button>
+      </div>
+      <table>
+        <tbody>
+          <Row id="userId" name="userId" value={me.id} />
+          <Row id="name" name="name" value={me.info?.name} />
+          <Row
+            id="numOfThreads"
+            name="Number of Threads"
+            value={threads?.length}
+          />
+          <Row
+            id="numOfComments"
+            name="Number of Comments"
+            value={threads?.reduce((acc, cur) => acc + cur.comments.length, 0)}
+          />
+          <Row
+            id="numOfNotifications"
+            name="Number of Notifications"
+            value={inboxNotifications?.length}
+          />
+        </tbody>
+      </table>
+    </>
   );
 }
 
 function LeftSide() {
   const { threads } = useThreads();
   return (
-    <>
+    <div id="left">
       <h3>Threads</h3>
       <div
         style={{
@@ -137,33 +188,20 @@ function LeftSide() {
           </div>
         ))}
         <Composer
+          id="new-thread-composer"
           overrides={{
             COMPOSER_PLACEHOLDER: "Start a new thread…",
           }}
         />
       </div>
-    </>
+    </div>
   );
 }
 
 function RightSide() {
-  const { inboxNotifications: allInboxNotifications } = useInboxNotifications();
-
-  // Filter down inbox notifications to just the notifications from this room,
-  // and only the ones that happened since the page was loaded. If we didn't
-  // there could be a lot of existing inbox notifications, from different test
-  // runs, or from the same user but from different rooms.
-  const roomId = getRoomFromUrl();
-  const [pageLoadTimestamp] = React.useState(() => Date.now());
-  const inboxNotifications = allInboxNotifications.filter(
-    (ibn) =>
-      ibn.kind === "thread" &&
-      ibn.roomId === roomId &&
-      ibn.notifiedAt.getTime() > pageLoadTimestamp
-  );
-
+  const inboxNotifications = useInboxNotificationsForThisPage();
   return (
-    <>
+    <div id="right">
       <h3>Thread Inbox Notifications (for this room only)</h3>
       <div
         style={{
@@ -177,6 +215,6 @@ function RightSide() {
           ))}
         </InboxNotificationList>
       </div>
-    </>
+    </div>
   );
 }
