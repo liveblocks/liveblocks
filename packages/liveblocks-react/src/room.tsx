@@ -2235,119 +2235,119 @@ function makeRoomContextBundle<
     TThreadMetadata
   > = {
     RoomContext: RoomContext as React.Context<TRoom | null>,
-    RoomProvider: RoomProviderOuter,
+    RoomProvider: RoomProviderOuter, // XXX Convert
 
-    useRoom,
-    useStatus,
+    useRoom, // XXX Convert
+    useStatus, // XXX Convert
 
-    useBatch,
-    useBroadcastEvent,
-    useOthersListener,
-    useLostConnectionListener,
-    useErrorListener,
-    useEventListener,
+    useBatch, // XXX Convert
+    useBroadcastEvent, // XXX Convert
+    useOthersListener, // XXX Convert
+    useLostConnectionListener, // XXX Convert
+    useErrorListener, // XXX Convert
+    useEventListener, // XXX Convert
 
-    useHistory,
-    useUndo,
-    useRedo,
-    useCanRedo,
-    useCanUndo,
+    useHistory, // XXX Convert
+    useUndo, // XXX Convert
+    useRedo, // XXX Convert
+    useCanRedo, // XXX Convert
+    useCanUndo, // XXX Convert
 
     // These are just aliases. The passed-in key will define their return values.
-    useList: useLegacyKey,
-    useMap: useLegacyKey,
-    useObject: useLegacyKey,
+    useList: useLegacyKey, // XXX Convert
+    useMap: useLegacyKey, // XXX Convert
+    useObject: useLegacyKey, // XXX Convert
 
-    useStorageRoot,
-    useStorage,
+    useStorageRoot, // XXX Convert
+    useStorage, // XXX Convert
 
-    useSelf,
-    useMyPresence,
-    useUpdateMyPresence,
-    useOthers,
-    useOthersMapped,
-    useOthersConnectionIds,
-    useOther,
+    useSelf, // XXX Convert
+    useMyPresence, // XXX Convert
+    useUpdateMyPresence, // XXX Convert
+    useOthers, // XXX Convert
+    useOthersMapped, // XXX Convert
+    useOthersConnectionIds, // XXX Convert
+    useOther, // XXX Convert
 
-    useMutation,
+    useMutation, // XXX Convert
 
-    useThreads,
+    useThreads, // XXX Convert
 
-    useCreateThread,
-    useEditThreadMetadata,
-    useCreateComment,
-    useEditComment,
-    useDeleteComment,
-    useAddReaction,
-    useRemoveReaction,
-    useMarkThreadAsRead,
-    useThreadSubscription,
+    useCreateThread, // XXX Convert
+    useEditThreadMetadata, // XXX Convert
+    useCreateComment, // XXX Convert
+    useEditComment, // XXX Convert
+    useDeleteComment, // XXX Convert
+    useAddReaction, // XXX Convert
+    useRemoveReaction, // XXX Convert
+    useMarkThreadAsRead, // XXX Convert
+    useThreadSubscription, // XXX Convert
 
-    useRoomNotificationSettings,
-    useUpdateRoomNotificationSettings,
+    useRoomNotificationSettings, // XXX Convert
+    useUpdateRoomNotificationSettings, // XXX Convert
 
     ...shared.classic,
 
     suspense: {
       RoomContext: RoomContext as React.Context<TRoom | null>,
-      RoomProvider: RoomProviderOuter,
+      RoomProvider: RoomProviderOuter, // XXX Convert
 
-      useRoom,
-      useStatus,
+      useRoom, // XXX Convert
+      useStatus, // XXX Convert
 
-      useBatch,
-      useBroadcastEvent,
-      useOthersListener,
-      useLostConnectionListener,
-      useErrorListener,
-      useEventListener,
+      useBatch, // XXX Convert
+      useBroadcastEvent, // XXX Convert
+      useOthersListener, // XXX Convert
+      useLostConnectionListener, // XXX Convert
+      useErrorListener, // XXX Convert
+      useEventListener, // XXX Convert
 
-      useHistory,
-      useUndo,
-      useRedo,
-      useCanRedo,
-      useCanUndo,
+      useHistory, // XXX Convert
+      useUndo, // XXX Convert
+      useRedo, // XXX Convert
+      useCanRedo, // XXX Convert
+      useCanUndo, // XXX Convert
 
       // Legacy hooks
-      useList: useLegacyKeySuspense,
-      useMap: useLegacyKeySuspense,
-      useObject: useLegacyKeySuspense,
+      useList: useLegacyKeySuspense, // XXX Convert
+      useMap: useLegacyKeySuspense, // XXX Convert
+      useObject: useLegacyKeySuspense, // XXX Convert
 
-      useStorageRoot,
-      useStorage: useStorageSuspense,
+      useStorageRoot, // XXX Convert
+      useStorage: useStorageSuspense, // XXX Convert
 
-      useSelf: useSelfSuspense,
-      useMyPresence,
-      useUpdateMyPresence,
-      useOthers: useOthersSuspense,
-      useOthersMapped: useOthersMappedSuspense,
-      useOthersConnectionIds: useOthersConnectionIdsSuspense,
-      useOther: useOtherSuspense,
+      useSelf: useSelfSuspense, // XXX Convert
+      useMyPresence, // XXX Convert
+      useUpdateMyPresence, // XXX Convert
+      useOthers: useOthersSuspense, // XXX Convert
+      useOthersMapped: useOthersMappedSuspense, // XXX Convert
+      useOthersConnectionIds: useOthersConnectionIdsSuspense, // XXX Convert
+      useOther: useOtherSuspense, // XXX Convert
 
-      useMutation,
+      useMutation, // XXX Convert
 
-      useThreads: useThreadsSuspense,
+      useThreads: useThreadsSuspense, // XXX Convert
 
-      useCreateThread,
-      useEditThreadMetadata,
-      useCreateComment,
-      useEditComment,
-      useDeleteComment,
-      useAddReaction,
-      useRemoveReaction,
-      useMarkThreadAsRead,
-      useThreadSubscription,
+      useCreateThread, // XXX Convert
+      useEditThreadMetadata, // XXX Convert
+      useCreateComment, // XXX Convert
+      useEditComment, // XXX Convert
+      useDeleteComment, // XXX Convert
+      useAddReaction, // XXX Convert
+      useRemoveReaction, // XXX Convert
+      useMarkThreadAsRead, // XXX Convert
+      useThreadSubscription, // XXX Convert
 
-      useRoomNotificationSettings: useRoomNotificationSettingsSuspense,
-      useUpdateRoomNotificationSettings,
+      useRoomNotificationSettings: useRoomNotificationSettingsSuspense, // XXX Convert
+      useUpdateRoomNotificationSettings, // XXX Convert
 
       ...shared.suspense,
     },
 
     [kInternal]: {
-      useCurrentUserId,
-      hasResolveMentionSuggestions: resolveMentionSuggestions !== undefined,
-      useMentionSuggestions,
+      useCurrentUserId, // XXX Convert
+      hasResolveMentionSuggestions: resolveMentionSuggestions !== undefined, // XXX Convert
+      useMentionSuggestions, // XXX Convert
     },
   };
 
