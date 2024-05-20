@@ -600,21 +600,6 @@ function makeRoomContextBundle<
     return other;
   }
 
-  function useLostConnectionListener(
-    callback: (event: LostConnectionEvent) => void
-  ): void {
-    const room = useTRoom();
-    const savedCallback = useLatest(callback);
-
-    React.useEffect(
-      () =>
-        room.events.lostConnection.subscribe((event) =>
-          savedCallback.current(event)
-        ),
-      [room, savedCallback]
-    );
-  }
-
   function useErrorListener(callback: (err: LiveblocksError) => void): void {
     const room = useTRoom();
     const savedCallback = useLatest(callback);
@@ -2196,7 +2181,7 @@ function makeRoomContextBundle<
     useBatch,
     useBroadcastEvent,
     useOthersListener,
-    useLostConnectionListener, // XXX Convert
+    useLostConnectionListener,
     useErrorListener, // XXX Convert
     useEventListener, // XXX Convert
 
@@ -2251,7 +2236,7 @@ function makeRoomContextBundle<
       useBatch,
       useBroadcastEvent,
       useOthersListener,
-      useLostConnectionListener, // XXX Convert
+      useLostConnectionListener,
       useErrorListener, // XXX Convert
       useEventListener, // XXX Convert
 
@@ -2356,6 +2341,20 @@ function useOthersListener<
   const savedCallback = useLatest(callback);
   React.useEffect(
     () => room.events.others.subscribe((event) => savedCallback.current(event)),
+    [room, savedCallback]
+  );
+}
+
+function useLostConnectionListener(
+  callback: (event: LostConnectionEvent) => void
+): void {
+  const room = useRoom();
+  const savedCallback = useLatest(callback);
+  React.useEffect(
+    () =>
+      room.events.lostConnection.subscribe((event) =>
+        savedCallback.current(event)
+      ),
     [room, savedCallback]
   );
 }
