@@ -479,24 +479,11 @@ function makeRoomContextBundle<
   // Bind to typed hooks
   const useTRoom = () => useRoom() as TRoom;
 
-  function useMutableStorageRoot(): LiveObject<TStorage> | null {
-    const room = useTRoom();
-    const subscribe = room.events.storageDidLoad.subscribeOnce;
-    const getSnapshot = room.getStorageSnapshot;
-    const getServerSnapshot = alwaysNull;
-    return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  }
-
-  // NOTE: This API exists for backward compatible reasons
-  function useStorageRoot(): [root: LiveObject<TStorage> | null] {
-    return [useMutableStorageRoot()];
-  }
-
   function useLegacyKey<TKey extends Extract<keyof TStorage, string>>(
     key: TKey
   ): TStorage[TKey] | null {
     const room = useTRoom();
-    const rootOrNull = useMutableStorageRoot();
+    const rootOrNull = useMutableStorageRoot<TStorage>();
     const rerender = useRerender();
 
     React.useEffect(() => {
@@ -549,7 +536,7 @@ function makeRoomContextBundle<
     type Selection = T | null;
 
     const room = useTRoom();
-    const rootOrNull = useMutableStorageRoot();
+    const rootOrNull = useMutableStorageRoot<TStorage>();
 
     const wrappedSelector = React.useCallback(
       (rootOrNull: Snapshot): Selection =>
@@ -1895,7 +1882,7 @@ function makeRoomContextBundle<
     useMap: useLegacyKey, // XXX Convert
     useObject: useLegacyKey, // XXX Convert
 
-    useStorageRoot, // XXX Convert
+    useStorageRoot,
     useStorage, // XXX Convert
 
     useSelf,
@@ -1950,7 +1937,7 @@ function makeRoomContextBundle<
       useMap: useLegacyKeySuspense, // XXX Convert
       useObject: useLegacyKeySuspense, // XXX Convert
 
-      useStorageRoot, // XXX Convert
+      useStorageRoot,
       useStorage: useStorageSuspense, // XXX Convert
 
       useSelf: useSelfSuspense,
@@ -2297,6 +2284,23 @@ function useOther<
   }
 
   return other;
+}
+
+function useMutableStorageRoot<
+  TStorage extends LsonObject,
+>(): LiveObject<TStorage> | null {
+  const room = useRoom<never, TStorage, never, never>();
+  const subscribe = room.events.storageDidLoad.subscribeOnce;
+  const getSnapshot = room.getStorageSnapshot;
+  const getServerSnapshot = alwaysNull;
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
+
+// NOTE: This API exists for backward compatible reasons
+function useStorageRoot<TStorage extends LsonObject>(): [
+  root: LiveObject<TStorage> | null,
+] {
+  return [useMutableStorageRoot()];
 }
 
 // ---------------------------------------------------------------------- }}}
