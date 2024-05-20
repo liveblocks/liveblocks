@@ -1,15 +1,7 @@
 import { expect, Page } from "@playwright/test";
 import { test } from "@playwright/test";
 
-import {
-  genRoomId,
-  getJson,
-  //getJson,
-  preparePage,
-  sleep,
-  waitForJson,
-  //waitUntilEqualOnAllPages,
-} from "../utils";
+import { genRoomId, preparePage, sleep, waitForJson } from "../utils";
 
 const TEST_URL = "http://localhost:3007/inbox-notifications";
 
