@@ -479,14 +479,6 @@ function makeRoomContextBundle<
   // Bind to typed hooks
   const useTRoom = () => useRoom() as TRoom;
 
-  function useStatus(): Status {
-    const room = useTRoom();
-    const subscribe = room.events.status.subscribe;
-    const getSnapshot = room.getStatus;
-    const getServerSnapshot = room.getStatus;
-    return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  }
-
   function useMyPresence(): [
     TPresence,
     (patch: Partial<TPresence>, options?: { addToHistory: boolean }) => void,
@@ -2233,7 +2225,7 @@ function makeRoomContextBundle<
     RoomProvider: RoomProviderOuter, // XXX Convert
 
     useRoom: useTRoom,
-    useStatus, // XXX Convert
+    useStatus,
 
     useBatch, // XXX Convert
     useBroadcastEvent, // XXX Convert
@@ -2288,7 +2280,7 @@ function makeRoomContextBundle<
       RoomProvider: RoomProviderOuter, // XXX Convert
 
       useRoom: useTRoom,
-      useStatus, // XXX Convert
+      useStatus,
 
       useBatch, // XXX Convert
       useBroadcastEvent, // XXX Convert
@@ -2360,6 +2352,14 @@ function useRoom(): OpaqueRoom {
     throw new Error("RoomProvider is missing from the React tree.");
   }
   return room as OpaqueRoom;
+}
+
+function useStatus(): Status {
+  const room = useRoom();
+  const subscribe = room.events.status.subscribe;
+  const getSnapshot = room.getStatus;
+  const getServerSnapshot = room.getStatus;
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
 // ---------------------------------------------------------------------- }}}
