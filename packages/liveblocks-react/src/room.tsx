@@ -707,15 +707,6 @@ function makeRoomContextBundle<
     );
   }
 
-  function ensureNotServerSide(): void {
-    // Error early if suspense is used in a server-side context
-    if (typeof window === "undefined") {
-      throw new Error(
-        "You cannot use the Suspense version of this hook on the server side. Make sure to only call them on the client side.\nFor tips, see https://liveblocks.io/docs/api-reference/liveblocks-react#suspense-avoid-ssr"
-      );
-    }
-  }
-
   function useSuspendUntilStorageLoaded(): void {
     const room = useTRoom();
     if (room.getStorageSnapshot() !== null) {
@@ -729,25 +720,6 @@ function makeRoomContextBundle<
     // render this component tree again.
     throw new Promise<void>((res) => {
       room.events.storageDidLoad.subscribeOnce(() => res());
-    });
-  }
-
-  function useSuspendUntilPresenceLoaded(): void {
-    const room = useTRoom();
-    if (room.getSelf() !== null) {
-      return;
-    }
-
-    ensureNotServerSide();
-
-    // Throw a _promise_. Suspense will suspend the component tree until either
-    // until either a presence update event, or a connection status change has
-    // happened. After that, it will render this component tree again and
-    // re-evaluate the .getSelf() condition above, or re-suspend again until
-    // such event happens.
-    throw new Promise<void>((res) => {
-      room.events.self.subscribeOnce(() => res());
-      room.events.status.subscribeOnce(() => res());
     });
   }
 
@@ -785,22 +757,6 @@ function makeRoomContextBundle<
       selector,
       isEqual as (prev: T | null, curr: T | null) => boolean
     ) as T;
-  }
-
-  function useSelfSuspense(): User<TPresence, TUserMeta>;
-  function useSelfSuspense<T>(
-    selector: (me: User<TPresence, TUserMeta>) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ): T;
-  function useSelfSuspense<T>(
-    selector?: (me: User<TPresence, TUserMeta>) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ): T | User<TPresence, TUserMeta> {
-    useSuspendUntilPresenceLoaded();
-    return useSelf(
-      selector as (me: User<TPresence, TUserMeta>) => T,
-      isEqual as (prev: T | null, curr: T | null) => boolean
-    ) as T | User<TPresence, TUserMeta>;
   }
 
   function useOthersSuspense<T>(
@@ -2167,7 +2123,7 @@ function makeRoomContextBundle<
       useStorageRoot, // XXX Convert
       useStorage: useStorageSuspense, // XXX Convert
 
-      useSelf: useSelfSuspense, // XXX Convert
+      useSelf: useSelfSuspense,
       useMyPresence, // XXX Convert
       useUpdateMyPresence, // XXX Convert
       useOthers: useOthersSuspense, // XXX Convert
@@ -2379,6 +2335,61 @@ function useSelf<
 
 // ---------------------------------------------------------------------- }}}
 // --- Private suspense APIs -------------------------------------------- {{{
+
+function ensureNotServerSide(): void {
+  // Error early if suspense is used in a server-side context
+  if (typeof window === "undefined") {
+    throw new Error(
+      "You cannot use the Suspense version of this hook on the server side. Make sure to only call them on the client side.\nFor tips, see https://liveblocks.io/docs/api-reference/liveblocks-react#suspense-avoid-ssr"
+    );
+  }
+}
+
+function useSuspendUntilPresenceLoaded(): void {
+  const room = useRoom();
+  if (room.getSelf() !== null) {
+    return;
+  }
+
+  ensureNotServerSide();
+
+  // Throw a _promise_. Suspense will suspend the component tree until either
+  // until either a presence update event, or a connection status change has
+  // happened. After that, it will render this component tree again and
+  // re-evaluate the .getSelf() condition above, or re-suspend again until
+  // such event happens.
+  throw new Promise<void>((res) => {
+    room.events.self.subscribeOnce(() => res());
+    room.events.status.subscribeOnce(() => res());
+  });
+}
+
+function useSelfSuspense<
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta,
+>(): User<TPresence, TUserMeta>;
+function useSelfSuspense<
+  T,
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta,
+>(
+  selector: (me: User<TPresence, TUserMeta>) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T;
+function useSelfSuspense<
+  T,
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta,
+>(
+  selector?: (me: User<TPresence, TUserMeta>) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T | User<TPresence, TUserMeta> {
+  useSuspendUntilPresenceLoaded();
+  return useSelf(
+    selector as (me: User<TPresence, TUserMeta>) => T,
+    isEqual as (prev: T | null, curr: T | null) => boolean
+  ) as T | User<TPresence, TUserMeta>;
+}
 
 // ---------------------------------------------------------------------- }}}
 // --- Public APIs ------------------------------------------------------ {{{
