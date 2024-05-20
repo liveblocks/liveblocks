@@ -479,29 +479,6 @@ function makeRoomContextBundle<
   // Bind to typed hooks
   const useTRoom = () => useRoom() as TRoom;
 
-  function useOthers(): readonly User<TPresence, TUserMeta>[];
-  function useOthers<T>(
-    selector: (others: readonly User<TPresence, TUserMeta>[]) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ): T;
-  function useOthers<T>(
-    selector?: (others: readonly User<TPresence, TUserMeta>[]) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ): T | readonly User<TPresence, TUserMeta>[] {
-    const room = useTRoom();
-    const subscribe = room.events.others.subscribe;
-    const getSnapshot = room.getOthers;
-    const getServerSnapshot = alwaysEmptyList;
-    return useSyncExternalStoreWithSelector(
-      subscribe,
-      getSnapshot,
-      getServerSnapshot,
-      selector ??
-        (identity as (others: readonly User<TPresence, TUserMeta>[]) => T),
-      isEqual
-    );
-  }
-
   function useOthersConnectionIds(): readonly number[] {
     return useOthers(selectorFor_useOthersConnectionIds, shallow);
   }
@@ -2052,7 +2029,7 @@ function makeRoomContextBundle<
     useSelf,
     useMyPresence,
     useUpdateMyPresence,
-    useOthers, // XXX Convert
+    useOthers,
     useOthersMapped, // XXX Convert
     useOthersConnectionIds, // XXX Convert
     useOther, // XXX Convert
@@ -2331,6 +2308,40 @@ function useUpdateMyPresence<TPresence extends JsonObject>(): (
   options?: { addToHistory: boolean }
 ) => void {
   return useRoom<TPresence, never, never, never>().updatePresence;
+}
+
+function useOthers<
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta,
+>(): readonly User<TPresence, TUserMeta>[];
+function useOthers<
+  T,
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta,
+>(
+  selector: (others: readonly User<TPresence, TUserMeta>[]) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T;
+function useOthers<
+  T,
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta,
+>(
+  selector?: (others: readonly User<TPresence, TUserMeta>[]) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T | readonly User<TPresence, TUserMeta>[] {
+  const room = useRoom<TPresence, never, TUserMeta, never>();
+  const subscribe = room.events.others.subscribe;
+  const getSnapshot = room.getOthers;
+  const getServerSnapshot = alwaysEmptyList;
+  return useSyncExternalStoreWithSelector(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+    selector ??
+      (identity as (others: readonly User<TPresence, TUserMeta>[]) => T),
+    isEqual
+  );
 }
 
 // ---------------------------------------------------------------------- }}}
