@@ -479,18 +479,6 @@ function makeRoomContextBundle<
   // Bind to typed hooks
   const useTRoom = () => useRoom() as TRoom;
 
-  function useMyPresence(): [
-    TPresence,
-    (patch: Partial<TPresence>, options?: { addToHistory: boolean }) => void,
-  ] {
-    const room = useTRoom();
-    const subscribe = room.events.myPresence.subscribe;
-    const getSnapshot = room.getPresence;
-    const presence = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-    const setPresence = room.updatePresence;
-    return [presence, setPresence];
-  }
-
   function useUpdateMyPresence(): (
     patch: Partial<TPresence>,
     options?: { addToHistory: boolean }
@@ -2069,7 +2057,7 @@ function makeRoomContextBundle<
     useStorage, // XXX Convert
 
     useSelf,
-    useMyPresence, // XXX Convert
+    useMyPresence,
     useUpdateMyPresence, // XXX Convert
     useOthers, // XXX Convert
     useOthersMapped, // XXX Convert
@@ -2124,7 +2112,7 @@ function makeRoomContextBundle<
       useStorage: useStorageSuspense, // XXX Convert
 
       useSelf: useSelfSuspense,
-      useMyPresence, // XXX Convert
+      useMyPresence,
       useUpdateMyPresence, // XXX Convert
       useOthers: useOthersSuspense, // XXX Convert
       useOthersMapped: useOthersMappedSuspense, // XXX Convert
@@ -2331,6 +2319,18 @@ function useSelf<
     wrappedSelector,
     isEqual
   );
+}
+
+function useMyPresence<TPresence extends JsonObject>(): [
+  TPresence,
+  (patch: Partial<TPresence>, options?: { addToHistory: boolean }) => void,
+] {
+  const room = useRoom<TPresence, never, never, never>();
+  const subscribe = room.events.myPresence.subscribe;
+  const getSnapshot = room.getPresence;
+  const presence = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  const setPresence = room.updatePresence;
+  return [presence, setPresence];
 }
 
 // ---------------------------------------------------------------------- }}}
