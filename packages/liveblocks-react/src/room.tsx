@@ -600,23 +600,6 @@ function makeRoomContextBundle<
     return other;
   }
 
-  function useBroadcastEvent(): (
-    event: TRoomEvent,
-    options?: BroadcastOptions
-  ) => void {
-    const room = useTRoom();
-
-    return React.useCallback(
-      (
-        event: TRoomEvent,
-        options: BroadcastOptions = { shouldQueueEventIfNotReady: false }
-      ) => {
-        room.broadcastEvent(event, options);
-      },
-      [room]
-    );
-  }
-
   function useOthersListener(
     callback: (event: OthersEvent<TPresence, TUserMeta>) => void
   ) {
@@ -2224,7 +2207,7 @@ function makeRoomContextBundle<
     useStatus,
 
     useBatch,
-    useBroadcastEvent, // XXX Convert
+    useBroadcastEvent,
     useOthersListener, // XXX Convert
     useLostConnectionListener, // XXX Convert
     useErrorListener, // XXX Convert
@@ -2279,7 +2262,7 @@ function makeRoomContextBundle<
       useStatus,
 
       useBatch,
-      useBroadcastEvent, // XXX Convert
+      useBroadcastEvent,
       useOthersListener, // XXX Convert
       useLostConnectionListener, // XXX Convert
       useErrorListener, // XXX Convert
@@ -2360,6 +2343,22 @@ function useStatus(): Status {
 
 function useBatch<T>(): (callback: () => T) => T {
   return useRoom().batch;
+}
+
+function useBroadcastEvent<TRoomEvent extends Json>(): (
+  event: TRoomEvent,
+  options?: BroadcastOptions
+) => void {
+  const room = useRoom();
+  return React.useCallback(
+    (
+      event: TRoomEvent,
+      options: BroadcastOptions = { shouldQueueEventIfNotReady: false }
+    ) => {
+      room.broadcastEvent(event, options);
+    },
+    [room]
+  );
 }
 
 // ---------------------------------------------------------------------- }}}
