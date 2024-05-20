@@ -479,13 +479,6 @@ function makeRoomContextBundle<
   // Bind to typed hooks
   const useTRoom = () => useRoom() as TRoom;
 
-  function useUpdateMyPresence(): (
-    patch: Partial<TPresence>,
-    options?: { addToHistory: boolean }
-  ) => void {
-    return useTRoom().updatePresence;
-  }
-
   function useOthers(): readonly User<TPresence, TUserMeta>[];
   function useOthers<T>(
     selector: (others: readonly User<TPresence, TUserMeta>[]) => T,
@@ -2058,7 +2051,7 @@ function makeRoomContextBundle<
 
     useSelf,
     useMyPresence,
-    useUpdateMyPresence, // XXX Convert
+    useUpdateMyPresence,
     useOthers, // XXX Convert
     useOthersMapped, // XXX Convert
     useOthersConnectionIds, // XXX Convert
@@ -2113,7 +2106,7 @@ function makeRoomContextBundle<
 
       useSelf: useSelfSuspense,
       useMyPresence,
-      useUpdateMyPresence, // XXX Convert
+      useUpdateMyPresence,
       useOthers: useOthersSuspense, // XXX Convert
       useOthersMapped: useOthersMappedSuspense, // XXX Convert
       useOthersConnectionIds: useOthersConnectionIdsSuspense, // XXX Convert
@@ -2331,6 +2324,13 @@ function useMyPresence<TPresence extends JsonObject>(): [
   const presence = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   const setPresence = room.updatePresence;
   return [presence, setPresence];
+}
+
+function useUpdateMyPresence<TPresence extends JsonObject>(): (
+  patch: Partial<TPresence>,
+  options?: { addToHistory: boolean }
+) => void {
+  return useRoom<TPresence, never, never, never>().updatePresence;
 }
 
 // ---------------------------------------------------------------------- }}}
