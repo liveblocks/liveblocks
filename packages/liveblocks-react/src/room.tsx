@@ -600,23 +600,6 @@ function makeRoomContextBundle<
     return other;
   }
 
-  function useEventListener(
-    callback: (data: RoomEventMessage<TPresence, TUserMeta, TRoomEvent>) => void
-  ): void {
-    const room = useTRoom();
-    const savedCallback = useLatest(callback);
-
-    React.useEffect(() => {
-      const listener = (
-        eventData: RoomEventMessage<TPresence, TUserMeta, TRoomEvent>
-      ) => {
-        savedCallback.current(eventData);
-      };
-
-      return room.events.customEvent.subscribe(listener);
-    }, [room, savedCallback]);
-  }
-
   function useSelf(): User<TPresence, TUserMeta> | null;
   function useSelf<T>(
     selector: (me: User<TPresence, TUserMeta>) => T,
@@ -2173,7 +2156,7 @@ function makeRoomContextBundle<
     useOthersListener,
     useLostConnectionListener,
     useErrorListener,
-    useEventListener, // XXX Convert
+    useEventListener,
 
     useHistory, // XXX Convert
     useUndo, // XXX Convert
@@ -2228,7 +2211,7 @@ function makeRoomContextBundle<
       useOthersListener,
       useLostConnectionListener,
       useErrorListener,
-      useEventListener, // XXX Convert
+      useEventListener,
 
       useHistory, // XXX Convert
       useUndo, // XXX Convert
@@ -2356,6 +2339,26 @@ function useErrorListener(callback: (err: LiveblocksError) => void): void {
     () => room.events.error.subscribe((e) => savedCallback.current(e)),
     [room, savedCallback]
   );
+}
+
+function useEventListener<
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json,
+>(
+  callback: (data: RoomEventMessage<TPresence, TUserMeta, TRoomEvent>) => void
+): void {
+  const room = useRoom() as Room<TPresence, never, TUserMeta, TRoomEvent>;
+  const savedCallback = useLatest(callback);
+  React.useEffect(() => {
+    const listener = (
+      eventData: RoomEventMessage<TPresence, TUserMeta, TRoomEvent>
+    ) => {
+      savedCallback.current(eventData);
+    };
+
+    return room.events.customEvent.subscribe(listener);
+  }, [room, savedCallback]);
 }
 
 // ---------------------------------------------------------------------- }}}
