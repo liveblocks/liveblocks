@@ -9,51 +9,51 @@ meta:
 
 ---
 
-The Comments React hooks can be used to fetch, create, and modify threads on the
-client.
+The Notifications React hooks can be used to fetch inbox notifications on the
+client, and change their behavior.
 
-## useThreads hook [#threads-hook]
+## useInboxNotifications hook [#inbox-notifications-hook]
 
-The most important Comments hook is
-[`useThreads`](/docs/api-reference/liveblocks-react#useThreads), which retrieves
-a list of each thread in the current room. This can be used to render a list of
-threads, either using the
-[default components](/docs/products/comments/default-components), or
-[primitives](/docs/products/comments/primitives). Here’s an example of it used
-with the default [`Thread`](/docs/api-reference/liveblocks-react-ui#Thread)
-component.
+The most important Notifications hook is [`useInboxNotifications`][], which
+retrieves every inbox notification for the current user. This can be used to
+render a list of notifications, either using the
+[default components](/docs/products/comments/default-components), or with your
+own components. Here’s an example of it used with the default
+[`InboxNotification`][] component.
 
 ```tsx
-import { useThreads } from "../liveblocks.config";
+import { useInboxNotifications } from "../liveblocks.config";
 
 function Component() {
-  const { threads } = useThreads();
+  const { inboxNotifications } = useInboxNotifications();
 
-  // [{ type: "thread", id: "th_sf8s6sh...", ... }, ...]
-  console.log(threads);
+  // [{ kind: "$myCustomNotification", id: "in_sf8s6sh...", ... }, ...]
+  console.log(inboxNotifications);
 
   return (
     <>
-      {threads.map((thread) => (
-        <Thread key={thread.id} thread={thread} />
+      {inboxNotifications.map((inboxNotification) => (
+        <InboxNotification
+          key={inboxNotification.id}
+          inboxNotification={inboxNotification}
+        />
       ))}
     </>
   );
 }
 ```
 
-There are two versions of the
-[`useThreads`](/docs/api-reference/liveblocks-react#useThreads) hook, the
+There are two versions of the [`useInboxNotifications`][] hook, the
 [Suspense version](#suspense-hooks), which we recommend by default, and the
 [regular version](#regular-hooks).
 
 ## useUser hook [#user-hook]
 
-The only information Comments stores about users is their user ID, which is set
-when [authenticating with Liveblocks](/docs/authentication). With the
+The only information Liveblocks stores about users is their user ID, which is
+set when [authenticating with Liveblocks](/docs/authentication). With the
 [`useUser`](/docs/api-reference/liveblocks-react#useUser) hook, you can fetch a
 user’s information from their ID. This is particularly helpful when building
-primitive components, as this allows you fetch their name, avatar, and any other
+custom components, as this allows you fetch their name, avatar, and any other
 custom data you’ve set.
 
 ```tsx
@@ -93,88 +93,20 @@ There are two versions of the
 [Suspense](#suspense-hooks), which we recommend by default, and
 [regular](#regular-hooks).
 
-## Mutation hooks [#mutation-hooks]
+## Other hooks
 
-A number of hooks can be used to mutate comment and thread data, for example:
+A number of other hooks are available, related to different areas, for example:
 
-- Creating threads
-- Deleting comments
-- Adding emoji reactions
-
-Some of these hooks are quite simple, such as
-[`useAddReaction`](/docs/api-reference/liveblocks-react#useAddReaction) which
-adds a reaction to a specified comment.
-
-```tsx highlight="6,9-13"
-import { CommentData } from "@liveblocks/client";
-import { useAddReaction } from "../liveblocks.config.ts";
-
-// A button that adds a "⭐" reaction to a comment
-function Component({ comment }: { CommentData }) {
-  const addReaction = useAddReaction();
-
-  function handleClick() {
-    addReaction({
-      threadId: comment.threadId,
-      commentId: comment.commentId,
-      emoji: "⭐",
-    });
-  }
-
-  return <button onClick={handleClick}>Star ⭐</button>;
-}
-```
-
-Whereas others, such as
-[`useCreateThread`](/docs/api-reference/liveblocks-react#useCreateThread), have
-more complex behaviour and are designed to work alongside
-[primitives](/docs/products/comments/primitives).
-
-```tsx highlight="10,18-21"
-import {
-  Composer,
-  ComposerSubmitComment,
-} from "@liveblocks/react-ui/primitives";
-import { useCreateThread } from "../liveblocks.config.ts";
-import { FormEvent } from "react";
-
-// A custom composer that creates a thread on submit
-function MyComposer() {
-  const createThread = useCreateThread();
-
-  function handleComposerSubmit(
-    { body }: ComposerSubmitComment,
-    event: FormEvent<HTMLFormElement>
-  ) {
-    event.preventdefault();
-
-    const thread = createThread({
-      body,
-      metadata: {},
-    });
-  }
-
-  return (
-    <Composer.Form onComposerSubmit={handleComposerSubmit}>
-      <Composer.Editor />
-      <Composer.Submit>Create thread</Composer.Submit>
-    </Composer.Form>
-  );
-}
-```
-
-You can find more information on each mutation hook in our API reference pages:
-
-- [`useCreateThread`](/docs/api-reference/liveblocks-react#useCreateThread)
-- [`useEditThreadMetadata`](/docs/api-reference/liveblocks-react#useEditThreadMetadata)
-- [`useCreateComment`](/docs/api-reference/liveblocks-react#useCreateComment)
-- [`useEditComment`](/docs/api-reference/liveblocks-react#useEditComment)
-- [`useDeleteComment`](/docs/api-reference/liveblocks-react#useDeleteComment)
-- [`useAddReaction`](/docs/api-reference/liveblocks-react#useAddReaction)
-- [`useRemoveReaction`](/docs/api-reference/liveblocks-react#useRemoveReaction)
-
-There’s only one version of these hooks, so it doesn’t make a difference if you
-export them from `suspense` in your config file or not.
+- Getting the notification count for rendering badges:
+  - [`useUnreadInboxNotificationsCount`](/docs/api-reference/liveblocks-react#useUnreadInboxNotificationsCount)
+- Marking notifications as read:
+  - [`useMarkInboxNotificationAsRead`](/docs/api-reference/liveblocks-react#useMarkInboxNotificationAsRead)
+  - [`useMarkAllInboxNotificationsAsRead`](/docs/api-reference/liveblocks-react#useMarkAllInboxNotificationsAsRead)
+- Changing notification settings:
+  - [`useRoomNotificationSettings`](/docs/api-reference/liveblocks-react#useRoomNotificationSettings)
+  - [`useUpdateRoomNotificationSettings`](/docs/api-reference/liveblocks-react#useUpdateRoomNotificationSettings)
+- Getting thread data associated with Comments notifications:
+  - [`useInboxNotificationThread`](/docs/api-reference/liveblocks-react#useInboxNotificationThread)
 
 ## Hook types [#hook-types]
 
@@ -190,14 +122,14 @@ Using Suspense hooks means that any data retrieved, for example `threads` from
 error.
 
 ```tsx
-import { useThreads } from "../liveblocks.config.ts";
+import { useInboxNotifications } from "../liveblocks.config.ts";
 
-// Suspense: `threads` is always defined
-function MyThreads() {
-  const { threads } = useThreads();
+// Suspense: `inboxNotifications` is always defined
+function MyNotifications() {
+  const { inboxNotifications } = useInboxNotifications();
 
-  // [{ type: "thread", id: "th_sf8s6sh...", ... }, ...]
-  console.log(threads);
+  // [{ type: "$myCustomNotification", id: "in_sf8s6sh...", ... }, ...]
+  console.log(inboxNotifications);
 }
 ```
 
@@ -214,7 +146,7 @@ function Component() {
   return (
     <ErrorBoundary fallback={<div>Error</div>}>
       <ClientSideSuspense fallback={<div>Loading...</div>}>
-        {() => <MyThreads />}
+        {() => <MyNotifications />}
       </ClientSideSuspense>
     </ErrorBoundary>
   );
@@ -230,10 +162,10 @@ property in your config file.
 export const {
   suspense: {
     // Export from here to use Suspense hooks
-    useThreads,
+    useInboxNotifications,
     useUser,
   },
-} = createRoomContext(client, {});
+} = createLiveblocksContext(client, {});
 ```
 
 ### Regular hooks [#regular-hooks]
@@ -242,11 +174,11 @@ The regular versions of Liveblocks hooks require you to check for `error` and
 `isLoading` properties. You can then handle these states in the same component.
 
 ```tsx
-import { useThreads } from "../liveblocks.config.ts";
+import { useInboxNotifications } from "../liveblocks.config.ts";
 
 // Handle errors and loading state in the same component
 function MyThreads() {
-  const { threads, error, isLoading } = useThreads();
+  const { inboxNotifications, error, isLoading } = useInboxNotifications();
 
   if (error) {
     return <div>Error</div>;
@@ -256,9 +188,9 @@ function MyThreads() {
     return <div>Loading...</div>;
   }
 
-  // Non-Suspense: `threads` is only defined AFTER the `if` checks
-  // [{ type: "thread", id: "th_sf8s6sh...", ... }, ...]
-  console.log(threads);
+  // Non-Suspense: `inboxNotifications` is only defined AFTER the `if` checks
+  // [{ type: "$myCustomNotification", id: "in_sf8s6sh...", ... }, ...]
+  console.log(inboxNotifications);
 }
 ```
 
@@ -270,7 +202,13 @@ config file.
 
 export const {
   // Export from here to use regular hooks
-  useThreads,
+  useInboxNotifications,
   useUser,
-} = createRoomContext(client, {});
+} = createLiveblocksContext(client, {});
 ```
+
+[`InboxNotification`]: /docs/api-reference/liveblocks-react-ui#InboxNotification
+[`InboxNotificationList`]:
+  /docs/api-reference/liveblocks-react-ui#InboxNotificationList
+[`useInboxNotifications`]:
+  /docs/api-reference/liveblocks-react#useInboxNotifications
