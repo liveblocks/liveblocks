@@ -528,51 +528,6 @@ function makeRoomContextBundle<
     }
   }
 
-  function useStorage<T>(
-    selector: (root: ToImmutable<TStorage>) => T,
-    isEqual?: (prev: T | null, curr: T | null) => boolean
-  ): T | null {
-    type Snapshot = ToImmutable<TStorage> | null;
-    type Selection = T | null;
-
-    const room = useTRoom();
-    const rootOrNull = useMutableStorageRoot<TStorage>();
-
-    const wrappedSelector = React.useCallback(
-      (rootOrNull: Snapshot): Selection =>
-        rootOrNull !== null ? selector(rootOrNull) : null,
-      [selector]
-    );
-
-    const subscribe = React.useCallback(
-      (onStoreChange: () => void) =>
-        rootOrNull !== null
-          ? room.subscribe(rootOrNull, onStoreChange, { isDeep: true })
-          : noop,
-      [room, rootOrNull]
-    );
-
-    const getSnapshot = React.useCallback((): Snapshot => {
-      if (rootOrNull === null) {
-        return null;
-      } else {
-        const root = rootOrNull;
-        const imm = root.toImmutable();
-        return imm;
-      }
-    }, [rootOrNull]);
-
-    const getServerSnapshot = alwaysNull;
-
-    return useSyncExternalStoreWithSelector(
-      subscribe,
-      getSnapshot,
-      getServerSnapshot,
-      wrappedSelector,
-      isEqual
-    );
-  }
-
   function useMutation<
     F extends (
       context: MutationContext<TPresence, TStorage, TUserMeta>,
@@ -1883,7 +1838,7 @@ function makeRoomContextBundle<
     useObject: useLegacyKey, // XXX Convert
 
     useStorageRoot,
-    useStorage, // XXX Convert
+    useStorage,
 
     useSelf,
     useMyPresence,
@@ -2301,6 +2256,51 @@ function useStorageRoot<TStorage extends LsonObject>(): [
   root: LiveObject<TStorage> | null,
 ] {
   return [useMutableStorageRoot()];
+}
+
+function useStorage<T, TStorage extends LsonObject>(
+  selector: (root: ToImmutable<TStorage>) => T,
+  isEqual?: (prev: T | null, curr: T | null) => boolean
+): T | null {
+  type Snapshot = ToImmutable<TStorage> | null;
+  type Selection = T | null;
+
+  const room = useRoom<never, TStorage, never, never>();
+  const rootOrNull = useMutableStorageRoot<TStorage>();
+
+  const wrappedSelector = React.useCallback(
+    (rootOrNull: Snapshot): Selection =>
+      rootOrNull !== null ? selector(rootOrNull) : null,
+    [selector]
+  );
+
+  const subscribe = React.useCallback(
+    (onStoreChange: () => void) =>
+      rootOrNull !== null
+        ? room.subscribe(rootOrNull, onStoreChange, { isDeep: true })
+        : noop,
+    [room, rootOrNull]
+  );
+
+  const getSnapshot = React.useCallback((): Snapshot => {
+    if (rootOrNull === null) {
+      return null;
+    } else {
+      const root = rootOrNull;
+      const imm = root.toImmutable();
+      return imm;
+    }
+  }, [rootOrNull]);
+
+  const getServerSnapshot = alwaysNull;
+
+  return useSyncExternalStoreWithSelector(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+    wrappedSelector,
+    isEqual
+  );
 }
 
 // ---------------------------------------------------------------------- }}}
