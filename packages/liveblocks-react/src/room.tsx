@@ -553,17 +553,6 @@ function makeRoomContextBundle<
     );
   }
 
-  function useStorageSuspense<T>(
-    selector: (root: ToImmutable<TStorage>) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ): T {
-    useSuspendUntilStorageLoaded();
-    return useStorage(
-      selector,
-      isEqual as (prev: T | null, curr: T | null) => boolean
-    ) as T;
-  }
-
   function useLegacyKeySuspense<TKey extends Extract<keyof TStorage, string>>(
     key: TKey
   ): TStorage[TKey] {
@@ -1893,7 +1882,7 @@ function makeRoomContextBundle<
       useObject: useLegacyKeySuspense, // XXX Convert
 
       useStorageRoot,
-      useStorage: useStorageSuspense, // XXX Convert
+      useStorage: useStorageSuspense,
 
       useSelf: useSelfSuspense,
       useMyPresence,
@@ -2420,6 +2409,17 @@ function useSuspendUntilStorageLoaded(): void {
   throw new Promise<void>((res) => {
     room.events.storageDidLoad.subscribeOnce(() => res());
   });
+}
+
+function useStorageSuspense<T, TStorage extends LsonObject>(
+  selector: (root: ToImmutable<TStorage>) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T {
+  useSuspendUntilStorageLoaded();
+  return useStorage(
+    selector,
+    isEqual as (prev: T | null, curr: T | null) => boolean
+  ) as T;
 }
 
 // ---------------------------------------------------------------------- }}}
