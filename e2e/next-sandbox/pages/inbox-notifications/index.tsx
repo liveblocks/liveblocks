@@ -58,15 +58,79 @@ export default function Home() {
   return (
     <RoomProvider id={roomId} initialPresence={{} as never}>
       <ClientSideSuspense fallback="Loading...">
-        {() => <Sandbox />}
+        {() => <Skeleton />}
       </ClientSideSuspense>
     </RoomProvider>
   );
 }
 
-function Sandbox() {
+function Skeleton() {
+  return (
+    <>
+      <TopPart />
+      <div style={{ fontFamily: "sans-serif" }}>
+        <table width="100%">
+          <tbody>
+            <tr>
+              <td width="50%" valign="top">
+                <LeftSide />
+              </td>
+              <td width="50%" valign="top">
+                <RightSide />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}
+
+function TopPart() {
   const me = useSelf();
   const { threads } = useThreads();
+  return (
+    <table>
+      <tbody>
+        <Row id="userId" name="userId" value={me.id} />
+        <Row id="name" name="name" value={me.info?.name} />
+        <Row
+          id="numOfThreads"
+          name="Number of Threads"
+          value={threads?.length}
+        />
+      </tbody>
+    </table>
+  );
+}
+
+function LeftSide() {
+  const { threads } = useThreads();
+  return (
+    <>
+      <h3>Threads</h3>
+      <div
+        style={{
+          background: "#d8efef",
+          paddingTop: 1,
+        }}
+      >
+        {threads.map((thread) => (
+          <div key={thread.id} style={{ margin: 20 }}>
+            <Thread thread={thread} />
+          </div>
+        ))}
+        <Composer
+          overrides={{
+            COMPOSER_PLACEHOLDER: "Start a new thread…",
+          }}
+        />
+      </div>
+    </>
+  );
+}
+
+function RightSide() {
   const { inboxNotifications: allInboxNotifications } = useInboxNotifications();
 
   // Filter down inbox notifications to just the notifications from this room,
@@ -84,64 +148,18 @@ function Sandbox() {
 
   return (
     <>
-      <table>
-        <tbody>
-          <Row id="userId" name="userId" value={me.id} />
-          <Row id="name" name="name" value={me.info?.name} />
-          <Row
-            id="numOfThreads"
-            name="Number of Threads"
-            value={threads?.length}
-          />
-        </tbody>
-      </table>
-
+      <h3>Thread Inbox Notifications (for this room only)</h3>
       <div
         style={{
-          fontFamily: "sans-serif",
+          background: "#efd8ef",
+          // padding: 20,
         }}
       >
-        <table width="100%">
-          <tbody>
-            <tr>
-              <td width="50%" valign="top">
-                <h3>Threads</h3>
-                <div
-                  style={{
-                    background: "#d8efef",
-                    paddingTop: 1,
-                  }}
-                >
-                  {threads.map((thread) => (
-                    <div key={thread.id} style={{ margin: 20 }}>
-                      <Thread thread={thread} />
-                    </div>
-                  ))}
-                  <Composer
-                    overrides={{
-                      COMPOSER_PLACEHOLDER: "Start a new thread…",
-                    }}
-                  />
-                </div>
-              </td>
-              <td width="50%" valign="top">
-                <h3>Thread Inbox Notifications (for this room only)</h3>
-                <div
-                  style={{
-                    background: "#efd8ef",
-                    // padding: 20,
-                  }}
-                >
-                  <InboxNotificationList>
-                    {inboxNotifications.map((ibn) => (
-                      <InboxNotification key={ibn.id} inboxNotification={ibn} />
-                    ))}
-                  </InboxNotificationList>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <InboxNotificationList>
+          {inboxNotifications.map((ibn) => (
+            <InboxNotification key={ibn.id} inboxNotification={ibn} />
+          ))}
+        </InboxNotificationList>
       </div>
     </>
   );
