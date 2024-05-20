@@ -479,48 +479,6 @@ function makeRoomContextBundle<
   // Bind to typed hooks
   const useTRoom = () => useRoom() as TRoom;
 
-  const NOT_FOUND = Symbol();
-
-  type NotFound = typeof NOT_FOUND;
-
-  function useOther<T>(
-    connectionId: number,
-    selector: (other: User<TPresence, TUserMeta>) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ): T {
-    const wrappedSelector = React.useCallback(
-      (others: readonly User<TPresence, TUserMeta>[]) => {
-        // TODO: Make this O(1) instead of O(n)?
-        const other = others.find(
-          (other) => other.connectionId === connectionId
-        );
-        return other !== undefined ? selector(other) : NOT_FOUND;
-      },
-      [connectionId, selector]
-    );
-
-    const wrappedIsEqual = React.useCallback(
-      (prev: T | NotFound, curr: T | NotFound): boolean => {
-        if (prev === NOT_FOUND || curr === NOT_FOUND) {
-          return prev === curr;
-        }
-
-        const eq = isEqual ?? Object.is;
-        return eq(prev, curr);
-      },
-      [isEqual]
-    );
-
-    const other = useOthers(wrappedSelector, wrappedIsEqual);
-    if (other === NOT_FOUND) {
-      throw new Error(
-        `No such other user with connection id ${connectionId} exists`
-      );
-    }
-
-    return other;
-  }
-
   function useMutableStorageRoot(): LiveObject<TStorage> | null {
     const room = useTRoom();
     const subscribe = room.events.storageDidLoad.subscribeOnce;
@@ -1995,7 +1953,7 @@ function makeRoomContextBundle<
     useOthers,
     useOthersMapped,
     useOthersConnectionIds,
-    useOther, // XXX Convert
+    useOther,
 
     useMutation, // XXX Convert
 
@@ -2344,6 +2302,50 @@ function useOthersMapped<
 
 function useOthersConnectionIds(): readonly number[] {
   return useOthers(selectorFor_useOthersConnectionIds, shallow);
+}
+
+const NOT_FOUND = Symbol();
+
+type NotFound = typeof NOT_FOUND;
+
+function useOther<
+  T,
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta,
+>(
+  connectionId: number,
+  selector: (other: User<TPresence, TUserMeta>) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T {
+  const wrappedSelector = React.useCallback(
+    (others: readonly User<TPresence, TUserMeta>[]) => {
+      // TODO: Make this O(1) instead of O(n)?
+      const other = others.find((other) => other.connectionId === connectionId);
+      return other !== undefined ? selector(other) : NOT_FOUND;
+    },
+    [connectionId, selector]
+  );
+
+  const wrappedIsEqual = React.useCallback(
+    (prev: T | NotFound, curr: T | NotFound): boolean => {
+      if (prev === NOT_FOUND || curr === NOT_FOUND) {
+        return prev === curr;
+      }
+
+      const eq = isEqual ?? Object.is;
+      return eq(prev, curr);
+    },
+    [isEqual]
+  );
+
+  const other = useOthers(wrappedSelector, wrappedIsEqual);
+  if (other === NOT_FOUND) {
+    throw new Error(
+      `No such other user with connection id ${connectionId} exists`
+    );
+  }
+
+  return other;
 }
 
 // ---------------------------------------------------------------------- }}}
