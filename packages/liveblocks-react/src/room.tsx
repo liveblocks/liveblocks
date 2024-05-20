@@ -586,22 +586,6 @@ function makeRoomContextBundle<
     );
   }
 
-  function useSuspendUntilStorageLoaded(): void {
-    const room = useTRoom();
-    if (room.getStorageSnapshot() !== null) {
-      return;
-    }
-
-    ensureNotServerSide();
-
-    // Throw a _promise_. Suspense will suspend the component tree until this
-    // promise resolves (aka until storage has loaded). After that, it will
-    // render this component tree again.
-    throw new Promise<void>((res) => {
-      room.events.storageDidLoad.subscribeOnce(() => res());
-    });
-  }
-
   function useMutation<
     F extends (
       context: MutationContext<TPresence, TStorage, TUserMeta>,
@@ -2416,6 +2400,22 @@ function useOtherSuspense<
 ): T {
   useSuspendUntilPresenceLoaded();
   return useOther(connectionId, selector, isEqual);
+}
+
+function useSuspendUntilStorageLoaded(): void {
+  const room = useRoom();
+  if (room.getStorageSnapshot() !== null) {
+    return;
+  }
+
+  ensureNotServerSide();
+
+  // Throw a _promise_. Suspense will suspend the component tree until this
+  // promise resolves (aka until storage has loaded). After that, it will
+  // render this component tree again.
+  throw new Promise<void>((res) => {
+    room.events.storageDidLoad.subscribeOnce(() => res());
+  });
 }
 
 // ---------------------------------------------------------------------- }}}
