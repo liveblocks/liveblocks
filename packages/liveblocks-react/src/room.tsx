@@ -638,39 +638,6 @@ function makeRoomContextBundle<
     ) as T;
   }
 
-  function useOthersSuspense<T>(
-    selector?: (others: readonly User<TPresence, TUserMeta>[]) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ): T | readonly User<TPresence, TUserMeta>[] {
-    useSuspendUntilPresenceLoaded();
-    return useOthers(
-      selector as (others: readonly User<TPresence, TUserMeta>[]) => T,
-      isEqual as (prev: T, curr: T) => boolean
-    ) as T | readonly User<TPresence, TUserMeta>[];
-  }
-
-  function useOthersConnectionIdsSuspense(): readonly number[] {
-    useSuspendUntilPresenceLoaded();
-    return useOthersConnectionIds();
-  }
-
-  function useOthersMappedSuspense<T>(
-    itemSelector: (other: User<TPresence, TUserMeta>) => T,
-    itemIsEqual?: (prev: T, curr: T) => boolean
-  ): ReadonlyArray<readonly [connectionId: number, data: T]> {
-    useSuspendUntilPresenceLoaded();
-    return useOthersMapped(itemSelector, itemIsEqual);
-  }
-
-  function useOtherSuspense<T>(
-    connectionId: number,
-    selector: (other: User<TPresence, TUserMeta>) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ): T {
-    useSuspendUntilPresenceLoaded();
-    return useOther(connectionId, selector, isEqual);
-  }
-
   function useLegacyKeySuspense<TKey extends Extract<keyof TStorage, string>>(
     key: TKey
   ): TStorage[TKey] {
@@ -2005,10 +1972,10 @@ function makeRoomContextBundle<
       useSelf: useSelfSuspense,
       useMyPresence,
       useUpdateMyPresence,
-      useOthers: useOthersSuspense, // XXX Convert
-      useOthersMapped: useOthersMappedSuspense, // XXX Convert
-      useOthersConnectionIds: useOthersConnectionIdsSuspense, // XXX Convert
-      useOther: useOtherSuspense, // XXX Convert
+      useOthers: useOthersSuspense,
+      useOthersMapped: useOthersMappedSuspense,
+      useOthersConnectionIds: useOthersConnectionIdsSuspense,
+      useOther: useOtherSuspense,
 
       useMutation, // XXX Convert
 
@@ -2404,6 +2371,51 @@ function useSelfSuspense<
     selector as (me: User<TPresence, TUserMeta>) => T,
     isEqual as (prev: T | null, curr: T | null) => boolean
   ) as T | User<TPresence, TUserMeta>;
+}
+
+function useOthersSuspense<
+  T,
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta,
+>(
+  selector?: (others: readonly User<TPresence, TUserMeta>[]) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T | readonly User<TPresence, TUserMeta>[] {
+  useSuspendUntilPresenceLoaded();
+  return useOthers(
+    selector as (others: readonly User<TPresence, TUserMeta>[]) => T,
+    isEqual as (prev: T, curr: T) => boolean
+  ) as T | readonly User<TPresence, TUserMeta>[];
+}
+
+function useOthersConnectionIdsSuspense(): readonly number[] {
+  useSuspendUntilPresenceLoaded();
+  return useOthersConnectionIds();
+}
+
+function useOthersMappedSuspense<
+  T,
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta,
+>(
+  itemSelector: (other: User<TPresence, TUserMeta>) => T,
+  itemIsEqual?: (prev: T, curr: T) => boolean
+): ReadonlyArray<readonly [connectionId: number, data: T]> {
+  useSuspendUntilPresenceLoaded();
+  return useOthersMapped(itemSelector, itemIsEqual);
+}
+
+function useOtherSuspense<
+  T,
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta,
+>(
+  connectionId: number,
+  selector: (other: User<TPresence, TUserMeta>) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T {
+  useSuspendUntilPresenceLoaded();
+  return useOther(connectionId, selector, isEqual);
 }
 
 // ---------------------------------------------------------------------- }}}
