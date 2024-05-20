@@ -1541,7 +1541,16 @@ that’s displayed for those two notification types. Using
 and
 [`InboxNotification.Custom`](/docs/api-reference/liveblocks-react-ui#InboxNotification.Custom)
 in this way allow you to easily create components that fit into the existing
-design system, whilst still adding lots of customization.
+design system, whilst still adding lots of customization. However, it’s also
+valid to render any custom JSX.
+
+```tsx highlight="2-4"
+<InboxNotification
+  kinds={{
+    $myCustomNotification: (props) => <div>New notification</div>,
+  }}
+/>
+```
 
 ##### Props [#InboxNotification-props]
 
