@@ -476,16 +476,11 @@ function makeRoomContextBundle<
     );
   }
 
-  function useRoom(): TRoom {
-    const room = React.useContext(RoomContext);
-    if (room === null) {
-      throw new Error("RoomProvider is missing from the React tree.");
-    }
-    return room as TRoom;
-  }
+  // Bind to typed hooks
+  const useTRoom = () => useRoom() as TRoom;
 
   function useStatus(): Status {
-    const room = useRoom();
+    const room = useTRoom();
     const subscribe = room.events.status.subscribe;
     const getSnapshot = room.getStatus;
     const getServerSnapshot = room.getStatus;
@@ -496,7 +491,7 @@ function makeRoomContextBundle<
     TPresence,
     (patch: Partial<TPresence>, options?: { addToHistory: boolean }) => void,
   ] {
-    const room = useRoom();
+    const room = useTRoom();
     const subscribe = room.events.myPresence.subscribe;
     const getSnapshot = room.getPresence;
     const presence = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
@@ -508,7 +503,7 @@ function makeRoomContextBundle<
     patch: Partial<TPresence>,
     options?: { addToHistory: boolean }
   ) => void {
-    return useRoom().updatePresence;
+    return useTRoom().updatePresence;
   }
 
   function useOthers(): readonly User<TPresence, TUserMeta>[];
@@ -520,7 +515,7 @@ function makeRoomContextBundle<
     selector?: (others: readonly User<TPresence, TUserMeta>[]) => T,
     isEqual?: (prev: T, curr: T) => boolean
   ): T | readonly User<TPresence, TUserMeta>[] {
-    const room = useRoom();
+    const room = useTRoom();
     const subscribe = room.events.others.subscribe;
     const getSnapshot = room.getOthers;
     const getServerSnapshot = alwaysEmptyList;
@@ -617,7 +612,7 @@ function makeRoomContextBundle<
     event: TRoomEvent,
     options?: BroadcastOptions
   ) => void {
-    const room = useRoom();
+    const room = useTRoom();
 
     return React.useCallback(
       (
@@ -633,7 +628,7 @@ function makeRoomContextBundle<
   function useOthersListener(
     callback: (event: OthersEvent<TPresence, TUserMeta>) => void
   ) {
-    const room = useRoom();
+    const room = useTRoom();
     const savedCallback = useLatest(callback);
 
     React.useEffect(
@@ -646,7 +641,7 @@ function makeRoomContextBundle<
   function useLostConnectionListener(
     callback: (event: LostConnectionEvent) => void
   ): void {
-    const room = useRoom();
+    const room = useTRoom();
     const savedCallback = useLatest(callback);
 
     React.useEffect(
@@ -659,7 +654,7 @@ function makeRoomContextBundle<
   }
 
   function useErrorListener(callback: (err: LiveblocksError) => void): void {
-    const room = useRoom();
+    const room = useTRoom();
     const savedCallback = useLatest(callback);
 
     React.useEffect(
@@ -671,7 +666,7 @@ function makeRoomContextBundle<
   function useEventListener(
     callback: (data: RoomEventMessage<TPresence, TUserMeta, TRoomEvent>) => void
   ): void {
-    const room = useRoom();
+    const room = useTRoom();
     const savedCallback = useLatest(callback);
 
     React.useEffect(() => {
@@ -697,7 +692,7 @@ function makeRoomContextBundle<
     type Snapshot = User<TPresence, TUserMeta> | null;
     type Selection = T | null;
 
-    const room = useRoom();
+    const room = useTRoom();
     const subscribe = room.events.self.subscribe;
     const getSnapshot: () => Snapshot = room.getSelf;
 
@@ -720,7 +715,7 @@ function makeRoomContextBundle<
   }
 
   function useMutableStorageRoot(): LiveObject<TStorage> | null {
-    const room = useRoom();
+    const room = useTRoom();
     const subscribe = room.events.storageDidLoad.subscribeOnce;
     const getSnapshot = room.getStorageSnapshot;
     const getServerSnapshot = alwaysNull;
@@ -733,7 +728,7 @@ function makeRoomContextBundle<
   }
 
   function useHistory(): History {
-    return useRoom().history;
+    return useTRoom().history;
   }
 
   function useUndo(): () => void {
@@ -745,27 +740,27 @@ function makeRoomContextBundle<
   }
 
   function useCanUndo(): boolean {
-    const room = useRoom();
+    const room = useTRoom();
     const subscribe = room.events.history.subscribe;
     const canUndo = room.history.canUndo;
     return useSyncExternalStore(subscribe, canUndo, canUndo);
   }
 
   function useCanRedo(): boolean {
-    const room = useRoom();
+    const room = useTRoom();
     const subscribe = room.events.history.subscribe;
     const canRedo = room.history.canRedo;
     return useSyncExternalStore(subscribe, canRedo, canRedo);
   }
 
   function useBatch<T>(): (callback: () => T) => T {
-    return useRoom().batch;
+    return useTRoom().batch;
   }
 
   function useLegacyKey<TKey extends Extract<keyof TStorage, string>>(
     key: TKey
   ): TStorage[TKey] | null {
-    const room = useRoom();
+    const room = useTRoom();
     const rootOrNull = useMutableStorageRoot();
     const rerender = useRerender();
 
@@ -818,7 +813,7 @@ function makeRoomContextBundle<
     type Snapshot = ToImmutable<TStorage> | null;
     type Selection = T | null;
 
-    const room = useRoom();
+    const room = useTRoom();
     const rootOrNull = useMutableStorageRoot();
 
     const wrappedSelector = React.useCallback(
@@ -866,7 +861,7 @@ function makeRoomContextBundle<
   }
 
   function useSuspendUntilStorageLoaded(): void {
-    const room = useRoom();
+    const room = useTRoom();
     if (room.getStorageSnapshot() !== null) {
       return;
     }
@@ -882,7 +877,7 @@ function makeRoomContextBundle<
   }
 
   function useSuspendUntilPresenceLoaded(): void {
-    const room = useRoom();
+    const room = useTRoom();
     if (room.getSelf() !== null) {
       return;
     }
@@ -906,7 +901,7 @@ function makeRoomContextBundle<
       ...args: any[]
     ) => any,
   >(callback: F, deps: readonly unknown[]): OmitFirstArg<F> {
-    const room = useRoom();
+    const room = useTRoom();
     return React.useMemo(
       () => {
         return ((...args) =>
@@ -1226,7 +1221,7 @@ function makeRoomContextBundle<
     }
   ): ThreadsState<TThreadMetadata> {
     const { scrollOnLoad = true } = options;
-    const room = useRoom();
+    const room = useTRoom();
     const queryKey = React.useMemo(
       () => generateQueryKey(room.id, options.query),
       [room, options]
@@ -1284,7 +1279,7 @@ function makeRoomContextBundle<
   ): ThreadsStateSuccess<TThreadMetadata> {
     const { scrollOnLoad = true } = options;
 
-    const room = useRoom();
+    const room = useTRoom();
     const queryKey = React.useMemo(
       () => generateQueryKey(room.id, options.query),
       [room, options]
@@ -1339,7 +1334,7 @@ function makeRoomContextBundle<
   }
 
   function useCreateThread() {
-    const room = useRoom();
+    const room = useTRoom();
     return React.useCallback(
       (
         options: CreateThreadOptions<TThreadMetadata>
@@ -1417,7 +1412,7 @@ function makeRoomContextBundle<
   }
 
   function useEditThreadMetadata() {
-    const room = useRoom();
+    const room = useTRoom();
     return React.useCallback(
       (options: EditThreadMetadataOptions<TThreadMetadata>): void => {
         if (!("metadata" in options)) {
@@ -1507,7 +1502,7 @@ function makeRoomContextBundle<
   }
 
   function useAddReaction() {
-    const room = useRoom();
+    const room = useTRoom();
     return React.useCallback(
       ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
         const createdAt = new Date();
@@ -1578,7 +1573,7 @@ function makeRoomContextBundle<
   }
 
   function useRemoveReaction() {
-    const room = useRoom();
+    const room = useTRoom();
     return React.useCallback(
       ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
         const userId = getCurrentUserId(room);
@@ -1649,7 +1644,7 @@ function makeRoomContextBundle<
   }
 
   function useCreateComment(): (options: CreateCommentOptions) => CommentData {
-    const room = useRoom();
+    const room = useTRoom();
     return React.useCallback(
       ({ threadId, body }: CreateCommentOptions): CommentData => {
         const commentId = createCommentId();
@@ -1744,7 +1739,7 @@ function makeRoomContextBundle<
   }
 
   function useEditComment(): (options: EditCommentOptions) => void {
-    const room = useRoom();
+    const room = useTRoom();
     return React.useCallback(
       ({ threadId, commentId, body }: EditCommentOptions): void => {
         const editedAt = new Date();
@@ -1825,7 +1820,7 @@ function makeRoomContextBundle<
   }
 
   function useDeleteComment() {
-    const room = useRoom();
+    const room = useTRoom();
     return React.useCallback(
       ({ threadId, commentId }: DeleteCommentOptions): void => {
         const deletedAt = new Date();
@@ -1893,7 +1888,7 @@ function makeRoomContextBundle<
   // Simplistic debounced search, we don't need to worry too much about
   // deduping and race conditions as there can only be one search at a time.
   function useMentionSuggestions(search?: string) {
-    const room = useRoom();
+    const room = useTRoom();
     const [mentionSuggestions, setMentionSuggestions] =
       React.useState<string[]>();
     const lastInvokedAt = React.useRef<number>();
@@ -1992,7 +1987,7 @@ function makeRoomContextBundle<
   }
 
   function useMarkThreadAsRead() {
-    const room = useRoom();
+    const room = useTRoom();
 
     return React.useCallback(
       (threadId: string) => {
@@ -2099,7 +2094,7 @@ function makeRoomContextBundle<
     RoomNotificationSettingsState,
     (settings: Partial<RoomNotificationSettings>) => void,
   ] {
-    const room = useRoom();
+    const room = useTRoom();
 
     React.useEffect(() => {
       const queryKey = makeNotificationSettingsQueryKey(room.id);
@@ -2145,7 +2140,7 @@ function makeRoomContextBundle<
     (settings: Partial<RoomNotificationSettings>) => void,
   ] {
     const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
-    const room = useRoom();
+    const room = useTRoom();
     const queryKey = makeNotificationSettingsQueryKey(room.id);
     const query = store.get().queries[queryKey];
 
@@ -2182,7 +2177,7 @@ function makeRoomContextBundle<
   }
 
   function useUpdateRoomNotificationSettings() {
-    const room = useRoom();
+    const room = useTRoom();
     return React.useCallback(
       (settings: Partial<RoomNotificationSettings>) => {
         const optimisticUpdateId = nanoid();
@@ -2237,7 +2232,7 @@ function makeRoomContextBundle<
     RoomContext: RoomContext as React.Context<TRoom | null>,
     RoomProvider: RoomProviderOuter, // XXX Convert
 
-    useRoom, // XXX Convert
+    useRoom: useTRoom,
     useStatus, // XXX Convert
 
     useBatch, // XXX Convert
@@ -2292,7 +2287,7 @@ function makeRoomContextBundle<
       RoomContext: RoomContext as React.Context<TRoom | null>,
       RoomProvider: RoomProviderOuter, // XXX Convert
 
-      useRoom, // XXX Convert
+      useRoom: useTRoom,
       useStatus, // XXX Convert
 
       useBatch, // XXX Convert
@@ -2358,6 +2353,14 @@ function makeRoomContextBundle<
 
 // ---------------------------------------------------------------------- }}}
 // --- Private useXxx_withClient() helpers ------------------------------ {{{
+
+function useRoom(): OpaqueRoom {
+  const room = React.useContext(RoomContext);
+  if (room === null) {
+    throw new Error("RoomProvider is missing from the React tree.");
+  }
+  return room as OpaqueRoom;
+}
 
 // ---------------------------------------------------------------------- }}}
 // --- Public APIs ------------------------------------------------------ {{{
