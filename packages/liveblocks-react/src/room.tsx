@@ -647,32 +647,6 @@ function makeRoomContextBundle<
     return [useMutableStorageRoot()];
   }
 
-  function useHistory(): History {
-    return useTRoom().history;
-  }
-
-  function useUndo(): () => void {
-    return useHistory().undo;
-  }
-
-  function useRedo(): () => void {
-    return useHistory().redo;
-  }
-
-  function useCanUndo(): boolean {
-    const room = useTRoom();
-    const subscribe = room.events.history.subscribe;
-    const canUndo = room.history.canUndo;
-    return useSyncExternalStore(subscribe, canUndo, canUndo);
-  }
-
-  function useCanRedo(): boolean {
-    const room = useTRoom();
-    const subscribe = room.events.history.subscribe;
-    const canRedo = room.history.canRedo;
-    return useSyncExternalStore(subscribe, canRedo, canRedo);
-  }
-
   function useLegacyKey<TKey extends Extract<keyof TStorage, string>>(
     key: TKey
   ): TStorage[TKey] | null {
@@ -2158,11 +2132,11 @@ function makeRoomContextBundle<
     useErrorListener,
     useEventListener,
 
-    useHistory, // XXX Convert
-    useUndo, // XXX Convert
-    useRedo, // XXX Convert
-    useCanRedo, // XXX Convert
-    useCanUndo, // XXX Convert
+    useHistory,
+    useUndo,
+    useRedo,
+    useCanRedo,
+    useCanUndo,
 
     // These are just aliases. The passed-in key will define their return values.
     useList: useLegacyKey, // XXX Convert
@@ -2213,11 +2187,11 @@ function makeRoomContextBundle<
       useErrorListener,
       useEventListener,
 
-      useHistory, // XXX Convert
-      useUndo, // XXX Convert
-      useRedo, // XXX Convert
-      useCanRedo, // XXX Convert
-      useCanUndo, // XXX Convert
+      useHistory,
+      useUndo,
+      useRedo,
+      useCanRedo,
+      useCanUndo,
 
       // Legacy hooks
       useList: useLegacyKeySuspense, // XXX Convert
@@ -2359,6 +2333,32 @@ function useEventListener<
 
     return room.events.customEvent.subscribe(listener);
   }, [room, savedCallback]);
+}
+
+function useHistory(): History {
+  return useRoom().history;
+}
+
+function useUndo(): () => void {
+  return useHistory().undo;
+}
+
+function useRedo(): () => void {
+  return useHistory().redo;
+}
+
+function useCanUndo(): boolean {
+  const room = useRoom();
+  const subscribe = room.events.history.subscribe;
+  const canUndo = room.history.canUndo;
+  return useSyncExternalStore(subscribe, canUndo, canUndo);
+}
+
+function useCanRedo(): boolean {
+  const room = useRoom();
+  const subscribe = room.events.history.subscribe;
+  const canRedo = room.history.canRedo;
+  return useSyncExternalStore(subscribe, canRedo, canRedo);
 }
 
 // ---------------------------------------------------------------------- }}}
