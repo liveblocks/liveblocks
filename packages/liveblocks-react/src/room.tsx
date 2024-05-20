@@ -479,55 +479,6 @@ function makeRoomContextBundle<
   // Bind to typed hooks
   const useTRoom = () => useRoom() as TRoom;
 
-  function useLegacyKey<TKey extends Extract<keyof TStorage, string>>(
-    key: TKey
-  ): TStorage[TKey] | null {
-    const room = useTRoom();
-    const rootOrNull = useMutableStorageRoot<TStorage>();
-    const rerender = useRerender();
-
-    React.useEffect(() => {
-      if (rootOrNull === null) {
-        return;
-      }
-      const root = rootOrNull;
-
-      let unsubCurr: (() => void) | undefined;
-      let curr = root.get(key);
-
-      function subscribeToCurr() {
-        unsubCurr = isLiveNode(curr)
-          ? room.subscribe(curr, rerender)
-          : undefined;
-      }
-
-      function onRootChange() {
-        const newValue = root.get(key);
-        if (newValue !== curr) {
-          unsubCurr?.();
-          curr = newValue;
-          subscribeToCurr();
-          rerender();
-        }
-      }
-
-      subscribeToCurr();
-      rerender();
-
-      const unsubscribeRoot = room.subscribe(root, onRootChange);
-      return () => {
-        unsubscribeRoot();
-        unsubCurr?.();
-      };
-    }, [rootOrNull, room, key, rerender]);
-
-    if (rootOrNull === null) {
-      return null;
-    } else {
-      return rootOrNull.get(key);
-    }
-  }
-
   function useMutation<
     F extends (
       context: MutationContext<TPresence, TStorage, TUserMeta>,
@@ -1822,9 +1773,9 @@ function makeRoomContextBundle<
     useCanUndo,
 
     // These are just aliases. The passed-in key will define their return values.
-    useList: useLegacyKey, // XXX Convert
-    useMap: useLegacyKey, // XXX Convert
-    useObject: useLegacyKey, // XXX Convert
+    useList: useLegacyKey,
+    useMap: useLegacyKey,
+    useObject: useLegacyKey,
 
     useStorageRoot,
     useStorage,
@@ -2290,6 +2241,54 @@ function useStorage<T, TStorage extends LsonObject>(
     wrappedSelector,
     isEqual
   );
+}
+
+function useLegacyKey<
+  TKey extends Extract<keyof TStorage, string>,
+  TStorage extends LsonObject,
+>(key: TKey): TStorage[TKey] | null {
+  const room = useRoom<never, TStorage, never, never>();
+  const rootOrNull = useMutableStorageRoot<TStorage>();
+  const rerender = useRerender();
+
+  React.useEffect(() => {
+    if (rootOrNull === null) {
+      return;
+    }
+    const root = rootOrNull;
+
+    let unsubCurr: (() => void) | undefined;
+    let curr = root.get(key);
+
+    function subscribeToCurr() {
+      unsubCurr = isLiveNode(curr) ? room.subscribe(curr, rerender) : undefined;
+    }
+
+    function onRootChange() {
+      const newValue = root.get(key);
+      if (newValue !== curr) {
+        unsubCurr?.();
+        curr = newValue;
+        subscribeToCurr();
+        rerender();
+      }
+    }
+
+    subscribeToCurr();
+    rerender();
+
+    const unsubscribeRoot = room.subscribe(root, onRootChange);
+    return () => {
+      unsubscribeRoot();
+      unsubCurr?.();
+    };
+  }, [rootOrNull, room, key, rerender]);
+
+  if (rootOrNull === null) {
+    return null;
+  } else {
+    return rootOrNull.get(key);
+  }
 }
 
 // ---------------------------------------------------------------------- }}}
