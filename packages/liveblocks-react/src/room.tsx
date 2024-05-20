@@ -600,40 +600,6 @@ function makeRoomContextBundle<
     return other;
   }
 
-  function useSelf(): User<TPresence, TUserMeta> | null;
-  function useSelf<T>(
-    selector: (me: User<TPresence, TUserMeta>) => T,
-    isEqual?: (prev: T | null, curr: T | null) => boolean
-  ): T | null;
-  function useSelf<T>(
-    maybeSelector?: (me: User<TPresence, TUserMeta>) => T,
-    isEqual?: (prev: T | null, curr: T | null) => boolean
-  ): T | User<TPresence, TUserMeta> | null {
-    type Snapshot = User<TPresence, TUserMeta> | null;
-    type Selection = T | null;
-
-    const room = useTRoom();
-    const subscribe = room.events.self.subscribe;
-    const getSnapshot: () => Snapshot = room.getSelf;
-
-    const selector =
-      maybeSelector ?? (identity as (me: User<TPresence, TUserMeta>) => T);
-    const wrappedSelector = React.useCallback(
-      (me: Snapshot): Selection => (me !== null ? selector(me) : null),
-      [selector]
-    );
-
-    const getServerSnapshot = alwaysNull;
-
-    return useSyncExternalStoreWithSelector(
-      subscribe,
-      getSnapshot,
-      getServerSnapshot,
-      wrappedSelector,
-      isEqual
-    );
-  }
-
   function useMutableStorageRoot(): LiveObject<TStorage> | null {
     const room = useTRoom();
     const subscribe = room.events.storageDidLoad.subscribeOnce;
@@ -2146,7 +2112,7 @@ function makeRoomContextBundle<
     useStorageRoot, // XXX Convert
     useStorage, // XXX Convert
 
-    useSelf, // XXX Convert
+    useSelf,
     useMyPresence, // XXX Convert
     useUpdateMyPresence, // XXX Convert
     useOthers, // XXX Convert
@@ -2364,6 +2330,51 @@ function useCanRedo(): boolean {
   const subscribe = room.events.history.subscribe;
   const canRedo = room.history.canRedo;
   return useSyncExternalStore(subscribe, canRedo, canRedo);
+}
+
+function useSelf<
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta,
+>(): User<TPresence, TUserMeta> | null;
+function useSelf<
+  T,
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta,
+>(
+  selector: (me: User<TPresence, TUserMeta>) => T,
+  isEqual?: (prev: T | null, curr: T | null) => boolean
+): T | null;
+function useSelf<
+  T,
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta,
+>(
+  maybeSelector?: (me: User<TPresence, TUserMeta>) => T,
+  isEqual?: (prev: T | null, curr: T | null) => boolean
+): T | User<TPresence, TUserMeta> | null {
+  type Snapshot = User<TPresence, TUserMeta> | null;
+  type Selection = T | null;
+
+  const room = useRoom<TPresence, never, TUserMeta, never>();
+  const subscribe = room.events.self.subscribe;
+  const getSnapshot: () => Snapshot = room.getSelf;
+
+  const selector =
+    maybeSelector ?? (identity as (me: User<TPresence, TUserMeta>) => T);
+  const wrappedSelector = React.useCallback(
+    (me: Snapshot): Selection => (me !== null ? selector(me) : null),
+    [selector]
+  );
+
+  const getServerSnapshot = alwaysNull;
+
+  return useSyncExternalStoreWithSelector(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+    wrappedSelector,
+    isEqual
+  );
 }
 
 // ---------------------------------------------------------------------- }}}
