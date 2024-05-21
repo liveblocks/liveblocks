@@ -817,69 +817,6 @@ function makeRoomContextBundle<
     );
   }
 
-  function useDeleteComment() {
-    const room = useTRoom();
-    return React.useCallback(
-      ({ threadId, commentId }: DeleteCommentOptions): void => {
-        const deletedAt = new Date();
-
-        const optimisticUpdateId = nanoid();
-
-        store.pushOptimisticUpdate({
-          type: "delete-comment",
-          threadId,
-          commentId,
-          deletedAt,
-          id: optimisticUpdateId,
-        });
-
-        room[kInternal].comments.deleteComment({ threadId, commentId }).then(
-          () => {
-            store.set((state) => {
-              const existingThread = state.threads[threadId];
-              const updatedOptimisticUpdates = state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              );
-
-              // If thread does not exist, we return the existing state
-              if (existingThread === undefined) {
-                return {
-                  ...state,
-                  optimisticUpdates: updatedOptimisticUpdates,
-                };
-              }
-
-              return {
-                ...state,
-                threads: {
-                  ...state.threads,
-                  [threadId]: deleteComment(
-                    existingThread,
-                    commentId,
-                    deletedAt
-                  ),
-                },
-                optimisticUpdates: updatedOptimisticUpdates,
-              };
-            });
-          },
-          (err: Error) =>
-            onMutationFailure(
-              err,
-              optimisticUpdateId,
-              (error) =>
-                new DeleteCommentError(error, {
-                  roomId: room.id,
-                  threadId,
-                  commentId,
-                })
-            )
-        );
-      },
-      [room]
-    );
-  }
-
   const resolveMentionSuggestions = client[kInternal].resolveMentionSuggestions;
   const mentionSuggestionsCache = new Map<string, string[]>();
 
@@ -1232,7 +1169,7 @@ function makeRoomContextBundle<
     useEditThreadMetadata,
     useCreateComment,
     useEditComment,
-    useDeleteComment, // XXX Convert
+    useDeleteComment,
     useAddReaction,
     useRemoveReaction, // XXX Convert
     useMarkThreadAsRead, // XXX Convert
@@ -1287,7 +1224,7 @@ function makeRoomContextBundle<
       useEditThreadMetadata,
       useCreateComment,
       useEditComment,
-      useDeleteComment, // XXX Convert
+      useDeleteComment,
       useAddReaction,
       useRemoveReaction, // XXX Convert
       useMarkThreadAsRead, // XXX Convert
@@ -2149,6 +2086,67 @@ function useEditComment(): (options: EditCommentOptions) => void {
                 threadId,
                 commentId,
                 body,
+              })
+          )
+      );
+    },
+    [client, room]
+  );
+}
+
+function useDeleteComment() {
+  const client = useClient();
+  const room = useRoom();
+  return React.useCallback(
+    ({ threadId, commentId }: DeleteCommentOptions): void => {
+      const deletedAt = new Date();
+
+      const optimisticUpdateId = nanoid();
+
+      const { store, onMutationFailure } = getExtrasForClient(client);
+      store.pushOptimisticUpdate({
+        type: "delete-comment",
+        threadId,
+        commentId,
+        deletedAt,
+        id: optimisticUpdateId,
+      });
+
+      room[kInternal].comments.deleteComment({ threadId, commentId }).then(
+        () => {
+          store.set((state) => {
+            const existingThread = state.threads[threadId];
+            const updatedOptimisticUpdates = state.optimisticUpdates.filter(
+              (update) => update.id !== optimisticUpdateId
+            );
+
+            // If thread does not exist, we return the existing state
+            if (existingThread === undefined) {
+              return {
+                ...state,
+                optimisticUpdates: updatedOptimisticUpdates,
+              };
+            }
+
+            return {
+              ...state,
+              threads: {
+                ...state.threads,
+                [threadId]: deleteComment(existingThread, commentId, deletedAt),
+              },
+              optimisticUpdates: updatedOptimisticUpdates,
+            };
+          });
+        },
+        (err: Error) =>
+          onMutationFailure(
+            err,
+            optimisticUpdateId,
+            (error) =>
+              new DeleteCommentError(error, {
+                roomId: room.id,
+                threadId,
+                commentId,
               })
           )
       );
