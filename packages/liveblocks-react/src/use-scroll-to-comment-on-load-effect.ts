@@ -1,19 +1,18 @@
 import type { BaseMetadata } from "@liveblocks/client";
 
-import type { ThreadsStateResolved } from "./types";
+import type { ThreadsState } from "./types";
 
 /**
  * Scroll to the comment with the ID in the hash of the URL based on whether
  * the query is loading and whether the hook should scroll to the comment on load.
  */
 export function handleScrollToCommentOnLoad(
-  isQueryLoading: boolean,
   shouldScrollOnLoad: boolean,
-  state: ThreadsStateResolved<BaseMetadata>
+  state: ThreadsState<BaseMetadata>
 ) {
   if (shouldScrollOnLoad === false) return;
 
-  if (isQueryLoading === true) return;
+  if (state.isLoading) return;
 
   const isWindowDefined = typeof window !== "undefined";
   if (!isWindowDefined) return;

@@ -790,7 +790,7 @@ function makeRoomContextBundle<
 
     React.useEffect(
       () => {
-        handleScrollToCommentOnLoad(state.isLoading, scrollOnLoad, state);
+        handleScrollToCommentOnLoad(scrollOnLoad, state);
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps -- We only want to run this effect once
       [state.isLoading]
@@ -845,7 +845,7 @@ function makeRoomContextBundle<
 
     React.useEffect(
       () => {
-        handleScrollToCommentOnLoad(state.isLoading, scrollOnLoad, state);
+        handleScrollToCommentOnLoad(scrollOnLoad, state);
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps -- We only want to run this effect once
       [state.isLoading]
