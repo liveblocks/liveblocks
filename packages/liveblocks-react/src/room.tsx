@@ -743,7 +743,7 @@ function makeRoomContextBundle<
   // Bind to typed hooks
   const useTRoom: () => TRoom = () => useRoom();
 
-  const { store, getThreadsUpdates, getInboxNotificationSettings } =
+  const { store, getThreadsUpdates } =
     getExtrasForClient<TThreadMetadata>(client);
 
   const resolveMentionSuggestions = client[kInternal].resolveMentionSuggestions;
@@ -815,47 +815,6 @@ function makeRoomContextBundle<
     }, [room.id, search]);
 
     return mentionSuggestions;
-  }
-
-  function useRoomNotificationSettingsSuspense(): [
-    RoomNotificationSettingsStateSuccess,
-    (settings: Partial<RoomNotificationSettings>) => void,
-  ] {
-    const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
-    const room = useTRoom();
-    const queryKey = makeNotificationSettingsQueryKey(room.id);
-    const query = store.get().queries[queryKey];
-
-    if (query === undefined || query.isLoading) {
-      throw getInboxNotificationSettings(room, queryKey);
-    }
-
-    if (query.error) {
-      throw query.error;
-    }
-
-    const selector = React.useCallback(
-      (
-        state: CacheState<BaseMetadata>
-      ): RoomNotificationSettingsStateSuccess => {
-        return {
-          isLoading: false,
-          settings: selectNotificationSettings(room.id, state),
-        };
-      },
-      [room]
-    );
-
-    const settings = useSyncExternalStoreWithSelector(
-      store.subscribe,
-      store.get,
-      store.get,
-      selector
-    );
-
-    return React.useMemo(() => {
-      return [settings, updateRoomNotificationSettings];
-    }, [settings, updateRoomNotificationSettings]);
   }
 
   function useCurrentUserId() {
@@ -975,7 +934,7 @@ function makeRoomContextBundle<
       useMarkThreadAsRead,
       useThreadSubscription,
 
-      useRoomNotificationSettings: useRoomNotificationSettingsSuspense, // XXX Convert
+      useRoomNotificationSettings: useRoomNotificationSettingsSuspense,
       useUpdateRoomNotificationSettings,
 
       ...shared.suspense,
@@ -2426,6 +2385,48 @@ function useThreadsSuspense<TThreadMetadata extends BaseMetadata>(
   useScrollToCommentOnLoadEffect(scrollOnLoad, state);
 
   return state;
+}
+
+function useRoomNotificationSettingsSuspense(): [
+  RoomNotificationSettingsStateSuccess,
+  (settings: Partial<RoomNotificationSettings>) => void,
+] {
+  const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
+  const client = useClient();
+  const room = useRoom();
+  const queryKey = makeNotificationSettingsQueryKey(room.id);
+
+  const { store, getInboxNotificationSettings } = getExtrasForClient(client);
+  const query = store.get().queries[queryKey];
+
+  if (query === undefined || query.isLoading) {
+    throw getInboxNotificationSettings(room, queryKey);
+  }
+
+  if (query.error) {
+    throw query.error;
+  }
+
+  const selector = React.useCallback(
+    (state: CacheState<BaseMetadata>): RoomNotificationSettingsStateSuccess => {
+      return {
+        isLoading: false,
+        settings: selectNotificationSettings(room.id, state),
+      };
+    },
+    [room]
+  );
+
+  const settings = useSyncExternalStoreWithSelector(
+    store.subscribe,
+    store.get,
+    store.get,
+    selector
+  );
+
+  return React.useMemo(() => {
+    return [settings, updateRoomNotificationSettings];
+  }, [settings, updateRoomNotificationSettings]);
 }
 
 // ---------------------------------------------------------------------- }}}
