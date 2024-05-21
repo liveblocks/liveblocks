@@ -938,7 +938,6 @@ function makeRoomContextBundle<
 
     [kInternal]: {
       useCurrentUserId,
-      hasResolveMentionSuggestions: resolveMentionSuggestions !== undefined, // XXX Convert
       useMentionSuggestions, // XXX Convert
     },
   };
