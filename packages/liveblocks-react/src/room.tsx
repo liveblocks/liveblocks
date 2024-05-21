@@ -790,8 +790,6 @@ function makeRoomContextBundle<
 
     React.useEffect(
       () => {
-        if (state.isLoading === true) return;
-
         handleScrollToCommentOnLoad(state.isLoading, scrollOnLoad, state);
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps -- We only want to run this effect once
