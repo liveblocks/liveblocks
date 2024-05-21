@@ -746,53 +746,6 @@ function makeRoomContextBundle<
     throw innerError;
   }
 
-  function useThreads(
-    options: UseThreadsOptions<TThreadMetadata> = {
-      query: { metadata: {} },
-    }
-  ): ThreadsState<TThreadMetadata> {
-    const { scrollOnLoad = true } = options;
-    const room = useTRoom();
-    const queryKey = React.useMemo(
-      () => generateQueryKey(room.id, options.query),
-      [room, options]
-    );
-
-    React.useEffect(() => {
-      void getThreadsAndInboxNotifications(room, queryKey, options);
-      return incrementQuerySubscribers(queryKey);
-    }, [room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
-
-    const selector = React.useCallback(
-      (state: CacheState<TThreadMetadata>): ThreadsState<TThreadMetadata> => {
-        const query = state.queries[queryKey];
-        if (query === undefined || query.isLoading) {
-          return {
-            isLoading: true,
-          };
-        }
-
-        return {
-          threads: selectedThreads(room.id, state, options),
-          isLoading: false,
-          error: query.error,
-        };
-      },
-      [room, queryKey] // eslint-disable-line react-hooks/exhaustive-deps
-    );
-
-    const state = useSyncExternalStoreWithSelector(
-      store.subscribe,
-      store.get,
-      store.get,
-      selector
-    );
-
-    useScrollToCommentOnLoadEffect(scrollOnLoad, state);
-
-    return state;
-  }
-
   function useThreadsSuspense(
     options: UseThreadsOptions<TThreadMetadata> = {
       query: { metadata: {} },
@@ -1737,7 +1690,7 @@ function makeRoomContextBundle<
 
     useMutation: useMutation as any, // XXX Can we get rid of this any more nicely?
 
-    useThreads, // XXX Convert
+    useThreads,
 
     useCreateThread, // XXX Convert
     useEditThreadMetadata, // XXX Convert
@@ -2267,6 +2220,57 @@ function useMutation<
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [room, ...deps]
   );
+}
+
+function useThreads<TThreadMetadata extends BaseMetadata>(
+  options: UseThreadsOptions<TThreadMetadata> = {
+    query: { metadata: {} },
+  }
+): ThreadsState<TThreadMetadata> {
+  const { scrollOnLoad = true } = options;
+  const client = useClient();
+  const room = useRoom();
+  const queryKey = React.useMemo(
+    () => generateQueryKey(room.id, options.query),
+    [room, options]
+  );
+
+  const { store, getThreadsAndInboxNotifications, incrementQuerySubscribers } =
+    getExtrasForClient<TThreadMetadata>(client);
+
+  React.useEffect(() => {
+    void getThreadsAndInboxNotifications(room, queryKey, options);
+    return incrementQuerySubscribers(queryKey);
+  }, [room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const selector = React.useCallback(
+    (state: CacheState<TThreadMetadata>): ThreadsState<TThreadMetadata> => {
+      const query = state.queries[queryKey];
+      if (query === undefined || query.isLoading) {
+        return {
+          isLoading: true,
+        };
+      }
+
+      return {
+        threads: selectedThreads(room.id, state, options),
+        isLoading: false,
+        error: query.error,
+      };
+    },
+    [room, queryKey] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  const state = useSyncExternalStoreWithSelector(
+    store.subscribe,
+    store.get,
+    store.get,
+    selector
+  );
+
+  useScrollToCommentOnLoadEffect(scrollOnLoad, state);
+
+  return state;
 }
 
 // ---------------------------------------------------------------------- }}}
