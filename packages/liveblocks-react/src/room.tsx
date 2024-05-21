@@ -746,84 +746,6 @@ function makeRoomContextBundle<
     onMutationFailure,
   } = getExtrasForClient<TThreadMetadata>(client);
 
-  function useCreateThread() {
-    const room = useTRoom();
-    return React.useCallback(
-      (
-        options: CreateThreadOptions<TThreadMetadata>
-      ): ThreadData<TThreadMetadata> => {
-        const body = options.body;
-        const metadata: TThreadMetadata =
-          "metadata" in options ? options.metadata : ({} as TThreadMetadata);
-
-        const threadId = createThreadId();
-        const commentId = createCommentId();
-        const createdAt = new Date();
-
-        const newComment: CommentData = {
-          id: commentId,
-          threadId,
-          roomId: room.id,
-          createdAt,
-          type: "comment",
-          userId: getCurrentUserId(room),
-          body,
-          reactions: [],
-        };
-        const newThread: ThreadData<TThreadMetadata> = {
-          id: threadId,
-          type: "thread",
-          createdAt,
-          updatedAt: createdAt,
-          roomId: room.id,
-          metadata: metadata as ThreadData<TThreadMetadata>["metadata"],
-          comments: [newComment],
-        };
-
-        const optimisticUpdateId = nanoid();
-
-        store.pushOptimisticUpdate({
-          type: "create-thread",
-          thread: newThread,
-          id: optimisticUpdateId,
-        });
-
-        room[kInternal].comments
-          .createThread({ threadId, commentId, body, metadata })
-          .then(
-            (thread) => {
-              store.set((state) => ({
-                ...state,
-                threads: {
-                  ...state.threads,
-                  [threadId]: thread,
-                },
-                optimisticUpdates: state.optimisticUpdates.filter(
-                  (update) => update.id !== optimisticUpdateId
-                ),
-              }));
-            },
-            (err: Error) =>
-              onMutationFailure(
-                err,
-                optimisticUpdateId,
-                (err) =>
-                  new CreateThreadError(err, {
-                    roomId: room.id,
-                    threadId,
-                    commentId,
-                    body,
-                    metadata,
-                  })
-              )
-          );
-
-        return newThread;
-      },
-      [room]
-    );
-  }
-
   function useEditThreadMetadata() {
     const room = useTRoom();
     return React.useCallback(
@@ -1643,7 +1565,7 @@ function makeRoomContextBundle<
 
     useThreads,
 
-    useCreateThread, // XXX Convert
+    useCreateThread,
     useEditThreadMetadata, // XXX Convert
     useCreateComment, // XXX Convert
     useEditComment, // XXX Convert
@@ -1698,7 +1620,7 @@ function makeRoomContextBundle<
 
       useThreads: useThreadsSuspense,
 
-      useCreateThread, // XXX Convert
+      useCreateThread,
       useEditThreadMetadata, // XXX Convert
       useCreateComment, // XXX Convert
       useEditComment, // XXX Convert
@@ -2222,6 +2144,86 @@ function useThreads<TThreadMetadata extends BaseMetadata>(
   useScrollToCommentOnLoadEffect(scrollOnLoad, state);
 
   return state;
+}
+
+function useCreateThread<TThreadMetadata extends BaseMetadata>() {
+  const client = useClient();
+  const room = useRoom();
+  return React.useCallback(
+    (
+      options: CreateThreadOptions<TThreadMetadata>
+    ): ThreadData<TThreadMetadata> => {
+      const body = options.body;
+      const metadata: TThreadMetadata =
+        "metadata" in options ? options.metadata : ({} as TThreadMetadata);
+
+      const threadId = createThreadId();
+      const commentId = createCommentId();
+      const createdAt = new Date();
+
+      const newComment: CommentData = {
+        id: commentId,
+        threadId,
+        roomId: room.id,
+        createdAt,
+        type: "comment",
+        userId: getCurrentUserId(room),
+        body,
+        reactions: [],
+      };
+      const newThread: ThreadData<TThreadMetadata> = {
+        id: threadId,
+        type: "thread",
+        createdAt,
+        updatedAt: createdAt,
+        roomId: room.id,
+        metadata: metadata as ThreadData<TThreadMetadata>["metadata"],
+        comments: [newComment],
+      };
+
+      const optimisticUpdateId = nanoid();
+
+      const { store, onMutationFailure } = getExtrasForClient(client);
+      store.pushOptimisticUpdate({
+        type: "create-thread",
+        thread: newThread,
+        id: optimisticUpdateId,
+      });
+
+      room[kInternal].comments
+        .createThread({ threadId, commentId, body, metadata })
+        .then(
+          (thread) => {
+            store.set((state) => ({
+              ...state,
+              threads: {
+                ...state.threads,
+                [threadId]: thread,
+              },
+              optimisticUpdates: state.optimisticUpdates.filter(
+                (update) => update.id !== optimisticUpdateId
+              ),
+            }));
+          },
+          (err: Error) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (err) =>
+                new CreateThreadError(err, {
+                  roomId: room.id,
+                  threadId,
+                  commentId,
+                  body,
+                  metadata,
+                })
+            )
+        );
+
+      return newThread;
+    },
+    [client, room]
+  );
 }
 
 // ---------------------------------------------------------------------- }}}
