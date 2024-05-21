@@ -746,77 +746,6 @@ function makeRoomContextBundle<
     onMutationFailure,
   } = getExtrasForClient<TThreadMetadata>(client);
 
-  function useRemoveReaction() {
-    const room = useTRoom();
-    return React.useCallback(
-      ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
-        const userId = getCurrentUserId(room);
-
-        const removedAt = new Date();
-        const optimisticUpdateId = nanoid();
-
-        store.pushOptimisticUpdate({
-          type: "remove-reaction",
-          threadId,
-          commentId,
-          emoji,
-          userId,
-          removedAt,
-          id: optimisticUpdateId,
-        });
-
-        room[kInternal].comments
-          .removeReaction({ threadId, commentId, emoji })
-          .then(
-            () => {
-              store.set((state) => {
-                const existingThread = state.threads[threadId];
-                const updatedOptimisticUpdates = state.optimisticUpdates.filter(
-                  (update) => update.id !== optimisticUpdateId
-                );
-
-                // If the thread doesn't exist in the cache, we do not update the metadata
-                if (existingThread === undefined) {
-                  return {
-                    ...state,
-                    optimisticUpdates: updatedOptimisticUpdates,
-                  };
-                }
-
-                return {
-                  ...state,
-                  threads: {
-                    ...state.threads,
-                    [threadId]: removeReaction(
-                      existingThread,
-                      commentId,
-                      emoji,
-                      userId,
-                      removedAt
-                    ),
-                  },
-                  optimisticUpdates: updatedOptimisticUpdates,
-                };
-              });
-            },
-            (err: Error) =>
-              onMutationFailure(
-                err,
-                optimisticUpdateId,
-                (error) =>
-                  new RemoveReactionError(error, {
-                    roomId: room.id,
-                    threadId,
-                    commentId,
-                    emoji,
-                  })
-              )
-          );
-      },
-      [room]
-    );
-  }
-
   const resolveMentionSuggestions = client[kInternal].resolveMentionSuggestions;
   const mentionSuggestionsCache = new Map<string, string[]>();
 
@@ -1171,7 +1100,7 @@ function makeRoomContextBundle<
     useEditComment,
     useDeleteComment,
     useAddReaction,
-    useRemoveReaction, // XXX Convert
+    useRemoveReaction,
     useMarkThreadAsRead, // XXX Convert
     useThreadSubscription, // XXX Convert
 
@@ -1226,7 +1155,7 @@ function makeRoomContextBundle<
       useEditComment,
       useDeleteComment,
       useAddReaction,
-      useRemoveReaction, // XXX Convert
+      useRemoveReaction,
       useMarkThreadAsRead, // XXX Convert
       useThreadSubscription, // XXX Convert
 
@@ -2222,6 +2151,79 @@ function useAddReaction<TThreadMetadata extends BaseMetadata>() {
               })
           )
       );
+    },
+    [client, room]
+  );
+}
+
+function useRemoveReaction() {
+  const client = useClient();
+  const room = useRoom();
+  return React.useCallback(
+    ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
+      const userId = getCurrentUserId(room);
+
+      const removedAt = new Date();
+      const optimisticUpdateId = nanoid();
+
+      const { store, onMutationFailure } = getExtrasForClient(client);
+      store.pushOptimisticUpdate({
+        type: "remove-reaction",
+        threadId,
+        commentId,
+        emoji,
+        userId,
+        removedAt,
+        id: optimisticUpdateId,
+      });
+
+      room[kInternal].comments
+        .removeReaction({ threadId, commentId, emoji })
+        .then(
+          () => {
+            store.set((state) => {
+              const existingThread = state.threads[threadId];
+              const updatedOptimisticUpdates = state.optimisticUpdates.filter(
+                (update) => update.id !== optimisticUpdateId
+              );
+
+              // If the thread doesn't exist in the cache, we do not update the metadata
+              if (existingThread === undefined) {
+                return {
+                  ...state,
+                  optimisticUpdates: updatedOptimisticUpdates,
+                };
+              }
+
+              return {
+                ...state,
+                threads: {
+                  ...state.threads,
+                  [threadId]: removeReaction(
+                    existingThread,
+                    commentId,
+                    emoji,
+                    userId,
+                    removedAt
+                  ),
+                },
+                optimisticUpdates: updatedOptimisticUpdates,
+              };
+            });
+          },
+          (err: Error) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (error) =>
+                new RemoveReactionError(error, {
+                  roomId: room.id,
+                  threadId,
+                  commentId,
+                  emoji,
+                })
+            )
+        );
     },
     [client, room]
   );
