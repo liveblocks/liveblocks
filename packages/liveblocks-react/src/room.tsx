@@ -129,6 +129,10 @@ export const POLLING_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
 const MENTION_SUGGESTIONS_DEBOUNCE = 500;
 
+function makeNotificationSettingsQueryKey(roomId: string) {
+  return `${roomId}:NOTIFICATION_SETTINGS`;
+}
+
 // --- Selector helpers ------------------------------------------------- {{{
 
 // Don't try to inline this. This function is intended to be a stable
@@ -815,10 +819,6 @@ function makeRoomContextBundle<
     }, [room.id, search]);
 
     return mentionSuggestions;
-  }
-
-  function makeNotificationSettingsQueryKey(roomId: string) {
-    return `${roomId}:NOTIFICATION_SETTINGS`;
   }
 
   function useRoomNotificationSettings(): [
