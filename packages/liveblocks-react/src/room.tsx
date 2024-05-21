@@ -277,8 +277,6 @@ function makeRoomContextBundle<
   const commentsErrorEventSource =
     makeEventSource<CommentsError<TThreadMetadata>>();
 
-  const shared = createSharedContext<TUserMeta>(client);
-
   /**
    * RATIONALE:
    * At the "Outer" RoomProvider level, we keep a cache and produce
@@ -1738,6 +1736,8 @@ function makeRoomContextBundle<
   function useCurrentUserId() {
     return useSelf((user) => (typeof user.id === "string" ? user.id : null));
   }
+
+  const shared = createSharedContext<TUserMeta>(client);
 
   const bundle: RoomContextBundle<
     TPresence,
