@@ -817,51 +817,6 @@ function makeRoomContextBundle<
     return mentionSuggestions;
   }
 
-  function useRoomNotificationSettings(): [
-    RoomNotificationSettingsState,
-    (settings: Partial<RoomNotificationSettings>) => void,
-  ] {
-    const room = useTRoom();
-
-    React.useEffect(() => {
-      const queryKey = makeNotificationSettingsQueryKey(room.id);
-      void getInboxNotificationSettings(room, queryKey);
-    }, [room]);
-
-    const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
-
-    const selector = React.useCallback(
-      (state: CacheState<BaseMetadata>): RoomNotificationSettingsState => {
-        const query = state.queries[makeNotificationSettingsQueryKey(room.id)];
-
-        if (query === undefined || query.isLoading) {
-          return { isLoading: true };
-        }
-
-        if (query.error !== undefined) {
-          return { isLoading: false, error: query.error };
-        }
-
-        return {
-          isLoading: false,
-          settings: selectNotificationSettings(room.id, state),
-        };
-      },
-      [room]
-    );
-
-    const settings = useSyncExternalStoreWithSelector(
-      store.subscribe,
-      store.get,
-      store.get,
-      selector
-    );
-
-    return React.useMemo(() => {
-      return [settings, updateRoomNotificationSettings];
-    }, [settings, updateRoomNotificationSettings]);
-  }
-
   function useRoomNotificationSettingsSuspense(): [
     RoomNotificationSettingsStateSuccess,
     (settings: Partial<RoomNotificationSettings>) => void,
@@ -965,7 +920,7 @@ function makeRoomContextBundle<
     useMarkThreadAsRead,
     useThreadSubscription,
 
-    useRoomNotificationSettings, // XXX Convert
+    useRoomNotificationSettings,
     useUpdateRoomNotificationSettings,
 
     ...shared.classic,
@@ -2185,6 +2140,54 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
     store.get,
     selector
   );
+}
+
+function useRoomNotificationSettings(): [
+  RoomNotificationSettingsState,
+  (settings: Partial<RoomNotificationSettings>) => void,
+] {
+  const client = useClient();
+  const room = useRoom();
+  const { store } = getExtrasForClient(client);
+
+  React.useEffect(() => {
+    const { getInboxNotificationSettings } = getExtrasForClient(client);
+    const queryKey = makeNotificationSettingsQueryKey(room.id);
+    void getInboxNotificationSettings(room, queryKey);
+  }, [client, room]);
+
+  const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
+
+  const selector = React.useCallback(
+    (state: CacheState<BaseMetadata>): RoomNotificationSettingsState => {
+      const query = state.queries[makeNotificationSettingsQueryKey(room.id)];
+
+      if (query === undefined || query.isLoading) {
+        return { isLoading: true };
+      }
+
+      if (query.error !== undefined) {
+        return { isLoading: false, error: query.error };
+      }
+
+      return {
+        isLoading: false,
+        settings: selectNotificationSettings(room.id, state),
+      };
+    },
+    [room]
+  );
+
+  const settings = useSyncExternalStoreWithSelector(
+    store.subscribe,
+    store.get,
+    store.get,
+    selector
+  );
+
+  return React.useMemo(() => {
+    return [settings, updateRoomNotificationSettings];
+  }, [settings, updateRoomNotificationSettings]);
 }
 
 function useUpdateRoomNotificationSettings() {
