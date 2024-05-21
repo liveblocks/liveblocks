@@ -59,9 +59,11 @@ test.describe("Inbox notifications", () => {
         .getByRole("textbox");
 
       // Add a comment to ping another user
-      await replyComposer.fill("Pinging @Marc");
-      await sleep(800); // Give the list some time to filter only the matches
-      await page1.getByRole("option").first().click();
+      await replyComposer.fill("Pinging @M");
+      await page1
+        .locator(".lb-composer-suggestions-list-item")
+        .getByText("Marc B.")
+        .click();
       await replyComposer.press("Enter");
 
       //
@@ -111,7 +113,7 @@ test.describe("Inbox notifications", () => {
     }
 
     //
-    // Cleanup
+    // Cleanup, as a courtesy to the next test run
     //
     await page1.locator("#delete-all-mine").click({ force: true });
     await page2.locator("#delete-all-mine").click({ force: true });
