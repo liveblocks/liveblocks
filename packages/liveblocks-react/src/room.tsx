@@ -817,39 +817,6 @@ function makeRoomContextBundle<
     return mentionSuggestions;
   }
 
-  function useThreadSubscription(threadId: string): ThreadSubscription {
-    const selector = React.useCallback(
-      (state: CacheState<BaseMetadata>): ThreadSubscription => {
-        const inboxNotification = selectedInboxNotifications(state).find(
-          (inboxNotification) =>
-            inboxNotification.kind === "thread" &&
-            inboxNotification.threadId === threadId
-        );
-
-        const thread = state.threads[threadId];
-
-        if (inboxNotification === undefined || thread === undefined) {
-          return {
-            status: "not-subscribed",
-          };
-        }
-
-        return {
-          status: "subscribed",
-          unreadSince: inboxNotification.readAt,
-        };
-      },
-      [threadId]
-    );
-
-    return useSyncExternalStoreWithSelector(
-      store.subscribe,
-      store.get,
-      store.get,
-      selector
-    );
-  }
-
   function makeNotificationSettingsQueryKey(roomId: string) {
     return `${roomId}:NOTIFICATION_SETTINGS`;
   }
@@ -1042,7 +1009,7 @@ function makeRoomContextBundle<
     useAddReaction,
     useRemoveReaction,
     useMarkThreadAsRead,
-    useThreadSubscription, // XXX Convert
+    useThreadSubscription,
 
     useRoomNotificationSettings, // XXX Convert
     useUpdateRoomNotificationSettings, // XXX Convert
@@ -1097,7 +1064,7 @@ function makeRoomContextBundle<
       useAddReaction,
       useRemoveReaction,
       useMarkThreadAsRead,
-      useThreadSubscription, // XXX Convert
+      useThreadSubscription,
 
       useRoomNotificationSettings: useRoomNotificationSettingsSuspense, // XXX Convert
       useUpdateRoomNotificationSettings, // XXX Convert
@@ -2227,6 +2194,42 @@ function useMarkThreadAsRead() {
         );
     },
     [client, room]
+  );
+}
+
+function useThreadSubscription(threadId: string): ThreadSubscription {
+  const client = useClient();
+  const { store } = getExtrasForClient(client);
+
+  const selector = React.useCallback(
+    (state: CacheState<BaseMetadata>): ThreadSubscription => {
+      const inboxNotification = selectedInboxNotifications(state).find(
+        (inboxNotification) =>
+          inboxNotification.kind === "thread" &&
+          inboxNotification.threadId === threadId
+      );
+
+      const thread = state.threads[threadId];
+
+      if (inboxNotification === undefined || thread === undefined) {
+        return {
+          status: "not-subscribed",
+        };
+      }
+
+      return {
+        status: "subscribed",
+        unreadSince: inboxNotification.readAt,
+      };
+    },
+    [threadId]
+  );
+
+  return useSyncExternalStoreWithSelector(
+    store.subscribe,
+    store.get,
+    store.get,
+    selector
   );
 }
 
