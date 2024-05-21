@@ -311,24 +311,24 @@
     "title": "Products",
     "routes": [
       {
-        "title": "Presence",
-        "path": "/products/presence"
-      },
-      {
-        "title": "Broadcast",
-        "path": "/products/broadcast"
-      },
-      {
-        "title": "Document",
-        "path": "/products/document",
+        "title": "Custom app",
+        "path": "/products/custom-app",
         "routes": [
           {
             "title": "Storage",
-            "path": "/products/document/storage"
+            "path": "/products/custom-app/storage"
+          },
+          {
+            "title": "Presence",
+            "path": "/products/custom-app/presence"
+          },
+          {
+            "title": "Broadcast",
+            "path": "/products/custom-app/broadcast"
           },
           {
             "title": "Yjs",
-            "path": "/products/document/yjs"
+            "path": "/products/custom-app/yjs"
           }
         ]
       },
