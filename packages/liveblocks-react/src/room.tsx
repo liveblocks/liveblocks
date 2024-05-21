@@ -817,10 +817,6 @@ function makeRoomContextBundle<
     return mentionSuggestions;
   }
 
-  function useCurrentUserId() {
-    return useSelf((user) => (typeof user.id === "string" ? user.id : null));
-  }
-
   const shared = createSharedContext<TUserMeta>(client);
 
   const bundle: RoomContextBundle<
@@ -941,7 +937,7 @@ function makeRoomContextBundle<
     },
 
     [kInternal]: {
-      useCurrentUserId, // XXX Convert
+      useCurrentUserId,
       hasResolveMentionSuggestions: resolveMentionSuggestions !== undefined, // XXX Convert
       useMentionSuggestions, // XXX Convert
     },
@@ -1120,6 +1116,10 @@ function useSelf<
     wrappedSelector,
     isEqual
   );
+}
+
+function useCurrentUserId() {
+  return useSelf((user) => (typeof user.id === "string" ? user.id : null));
 }
 
 function useMyPresence<TPresence extends JsonObject>(): [
