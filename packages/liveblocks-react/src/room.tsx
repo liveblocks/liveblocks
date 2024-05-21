@@ -711,13 +711,8 @@ function makeRoomContextBundle<
   // Bind to typed hooks
   const useTRoom: () => TRoom = () => useRoom();
 
-  const {
-    store,
-    incrementQuerySubscribers,
-    getThreadsUpdates,
-    getThreadsAndInboxNotifications,
-    getInboxNotificationSettings,
-  } = getExtrasForClient<TThreadMetadata>(client);
+  const { store, getThreadsUpdates, getInboxNotificationSettings } =
+    getExtrasForClient<TThreadMetadata>(client);
 
   function onMutationFailure(
     innerError: Error,
@@ -744,55 +739,6 @@ function makeRoomContextBundle<
     }
 
     throw innerError;
-  }
-
-  function useThreadsSuspense(
-    options: UseThreadsOptions<TThreadMetadata> = {
-      query: { metadata: {} },
-    }
-  ): ThreadsStateSuccess<TThreadMetadata> {
-    const { scrollOnLoad = true } = options;
-
-    const room = useTRoom();
-    const queryKey = React.useMemo(
-      () => generateQueryKey(room.id, options.query),
-      [room, options]
-    );
-
-    const query = store.get().queries[queryKey];
-
-    if (query === undefined || query.isLoading) {
-      throw getThreadsAndInboxNotifications(room, queryKey, options);
-    }
-
-    if (query.error) {
-      throw query.error;
-    }
-
-    const selector = React.useCallback(
-      (
-        state: CacheState<TThreadMetadata>
-      ): ThreadsStateSuccess<TThreadMetadata> => {
-        return {
-          threads: selectedThreads(room.id, state, options),
-          isLoading: false,
-        };
-      },
-      [room, queryKey] // eslint-disable-line react-hooks/exhaustive-deps
-    );
-
-    React.useEffect(() => incrementQuerySubscribers(queryKey), [queryKey]);
-
-    const state = useSyncExternalStoreWithSelector(
-      store.subscribe,
-      store.get,
-      store.get,
-      selector
-    );
-
-    useScrollToCommentOnLoadEffect(scrollOnLoad, state);
-
-    return state;
   }
 
   function useCreateThread() {
@@ -1745,7 +1691,7 @@ function makeRoomContextBundle<
 
       useMutation: useMutation as any, // XXX Can we get rid of this any more nicely?
 
-      useThreads: useThreadsSuspense, // XXX Convert
+      useThreads: useThreadsSuspense,
 
       useCreateThread, // XXX Convert
       useEditThreadMetadata, // XXX Convert
@@ -2409,6 +2355,62 @@ function useLegacyKeySuspense<
 >(key: TKey): TStorage[TKey] {
   useSuspendUntilStorageLoaded();
   return useLegacyKey(key) as TStorage[TKey];
+}
+
+function useThreadsSuspense<TThreadMetadata extends BaseMetadata>(
+  options: UseThreadsOptions<TThreadMetadata> = {
+    query: { metadata: {} },
+  }
+): ThreadsStateSuccess<TThreadMetadata> {
+  const { scrollOnLoad = true } = options;
+
+  const client = useClient();
+  const room = useRoom();
+  const queryKey = React.useMemo(
+    () => generateQueryKey(room.id, options.query),
+    [room, options]
+  );
+
+  const { store, getThreadsAndInboxNotifications } =
+    getExtrasForClient<TThreadMetadata>(client);
+
+  const query = store.get().queries[queryKey];
+
+  if (query === undefined || query.isLoading) {
+    throw getThreadsAndInboxNotifications(room, queryKey, options);
+  }
+
+  if (query.error) {
+    throw query.error;
+  }
+
+  const selector = React.useCallback(
+    (
+      state: CacheState<TThreadMetadata>
+    ): ThreadsStateSuccess<TThreadMetadata> => {
+      return {
+        threads: selectedThreads(room.id, state, options),
+        isLoading: false,
+      };
+    },
+    [room, queryKey] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  React.useEffect(() => {
+    const { incrementQuerySubscribers } = getExtrasForClient(client);
+    return incrementQuerySubscribers(queryKey);
+  }, [client, queryKey]);
+
+  const state = useSyncExternalStoreWithSelector(
+    store.subscribe,
+    store.get,
+    store.get,
+    selector
+  );
+
+  useScrollToCommentOnLoadEffect(scrollOnLoad, state);
+
+  return state;
 }
 
 // ---------------------------------------------------------------------- }}}
