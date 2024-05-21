@@ -252,6 +252,10 @@ function getOrCreateRoomContextBundle<
   >;
 }
 
+type OpaqueRoom = Room<JsonObject, LsonObject, BaseUserMeta, Json>;
+
+const RoomContext = React.createContext<OpaqueRoom | null>(null);
+
 function makeRoomContextBundle<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
@@ -269,8 +273,6 @@ function makeRoomContextBundle<
 > {
   type TRoom = Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
   type TRoomLeavePair = { room: TRoom; leave: () => void };
-
-  const RoomContext = React.createContext<TRoom | null>(null);
 
   const commentsErrorEventSource =
     makeEventSource<CommentsError<TThreadMetadata>>();
@@ -479,7 +481,7 @@ function makeRoomContextBundle<
     if (room === null) {
       throw new Error("RoomProvider is missing from the React tree.");
     }
-    return room;
+    return room as TRoom;
   }
 
   function useStatus(): Status {
@@ -2232,7 +2234,7 @@ function makeRoomContextBundle<
     TRoomEvent,
     TThreadMetadata
   > = {
-    RoomContext,
+    RoomContext: RoomContext as React.Context<TRoom | null>,
     RoomProvider: RoomProviderOuter,
 
     useRoom,
@@ -2284,10 +2286,10 @@ function makeRoomContextBundle<
     useRoomNotificationSettings,
     useUpdateRoomNotificationSettings,
 
-    ...shared,
+    ...shared.classic,
 
     suspense: {
-      RoomContext,
+      RoomContext: RoomContext as React.Context<TRoom | null>,
       RoomProvider: RoomProviderOuter,
 
       useRoom,
@@ -2357,6 +2359,10 @@ function makeRoomContextBundle<
 // ---------------------------------------------------------------------- }}}
 // --- Public APIs ------------------------------------------------------ {{{
 
+function useRoomOrNull() {
+  return React.useContext(RoomContext);
+}
+
 /**
  * @private
  *
@@ -2364,7 +2370,8 @@ function makeRoomContextBundle<
  */
 export function useRoomContextBundleOrNull() {
   const client = useClientOrNull();
-  return client === null ? null : getOrCreateRoomContextBundle(client);
+  const room = useRoomOrNull();
+  return client && room ? getOrCreateRoomContextBundle(client) : null;
 }
 
 /**

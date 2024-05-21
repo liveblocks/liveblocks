@@ -98,13 +98,13 @@ export type EnterOptions<
  * will probably happen if you do.
  */
 type PrivateClientApi<TUserMeta extends BaseUserMeta> = {
-  notifications: NotificationsApi;
-  currentUserIdStore: Store<string | null>;
-  resolveMentionSuggestions: ClientOptions["resolveMentionSuggestions"];
-  cacheStore: CacheStore<BaseMetadata>;
-  usersStore: BatchStore<TUserMeta["info"] | undefined, [string]>;
-  roomsInfoStore: BatchStore<RoomInfo | undefined, [string]>;
-  getRoomIds: () => string[];
+  readonly notifications: NotificationsApi;
+  readonly currentUserIdStore: Store<string | null>;
+  readonly resolveMentionSuggestions: ClientOptions["resolveMentionSuggestions"];
+  readonly cacheStore: CacheStore<BaseMetadata>;
+  readonly usersStore: BatchStore<TUserMeta["info"] | undefined, [string]>;
+  readonly roomsInfoStore: BatchStore<RoomInfo | undefined, [string]>;
+  readonly getRoomIds: () => string[];
 };
 
 export type NotificationsApi<TThreadMetadata extends BaseMetadata = never> = {

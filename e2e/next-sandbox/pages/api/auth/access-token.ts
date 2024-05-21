@@ -2,7 +2,7 @@ import { nn } from "@liveblocks/core";
 import { Liveblocks } from "@liveblocks/node";
 import type { NextApiRequest, NextApiResponse } from "next";
 
-import { randomUser } from "../_utils";
+import { getUser, randomUser } from "../_utils";
 
 const SECRET_KEY = nn(
   process.env.LIVEBLOCKS_SECRET_KEY,
@@ -20,10 +20,11 @@ const liveblocks = new Liveblocks({
 });
 
 export default async function accessTokenAuth(
-  _req: NextApiRequest,
+  req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const user = randomUser();
+  const id = Number(req.query.user);
+  const user = !isNaN(id) ? getUser(id) : randomUser();
 
   const session = liveblocks.prepareSession(
     // Unique user ID

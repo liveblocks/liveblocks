@@ -182,8 +182,10 @@ export function createSharedContext<
   TUserMeta extends BaseUserMeta = BaseUserMeta,
 >(client: Client): SharedContextBundle<TUserMeta> {
   return {
-    useUser: (userId: string) => useUser_withClient(client, userId),
-    useRoomInfo: (roomId: string) => useRoomInfo_withClient(client, roomId),
+    classic: {
+      useUser: (userId: string) => useUser_withClient(client, userId),
+      useRoomInfo: (roomId: string) => useRoomInfo_withClient(client, roomId),
+    },
     suspense: {
       useUser: (userId: string) => useUserSuspense_withClient(client, userId),
       useRoomInfo: (roomId: string) =>
