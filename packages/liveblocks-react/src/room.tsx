@@ -477,12 +477,43 @@ function makeExtrasForClient<TThreadMetadata extends BaseMetadata>(
     }
   }
 
+  const commentsErrorEventSource =
+    makeEventSource<CommentsError<TThreadMetadata>>();
+
+  function onMutationFailure(
+    innerError: Error,
+    optimisticUpdateId: string,
+    createPublicError: (error: Error) => CommentsError<TThreadMetadata>
+  ) {
+    store.set((state) => ({
+      ...state,
+      optimisticUpdates: state.optimisticUpdates.filter(
+        (update) => update.id !== optimisticUpdateId
+      ),
+    }));
+
+    if (innerError instanceof CommentsApiError) {
+      const error = handleApiError(innerError);
+      commentsErrorEventSource.notify(createPublicError(error));
+      return;
+    }
+
+    if (innerError instanceof NotificationsApiError) {
+      handleApiError(innerError);
+      // TODO: Create public error and notify via notificationsErrorEventSource?
+      return;
+    }
+
+    throw innerError;
+  }
+
   return {
     store,
     incrementQuerySubscribers,
     getThreadsUpdates,
     getThreadsAndInboxNotifications,
     getInboxNotificationSettings,
+    onMutationFailure,
   };
 }
 
@@ -507,9 +538,6 @@ function makeRoomContextBundle<
 > {
   type TRoom = Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
   type TRoomLeavePair = { room: TRoom; leave: () => void };
-
-  const commentsErrorEventSource =
-    makeEventSource<CommentsError<TThreadMetadata>>();
 
   /**
    * RATIONALE:
@@ -711,35 +739,12 @@ function makeRoomContextBundle<
   // Bind to typed hooks
   const useTRoom: () => TRoom = () => useRoom();
 
-  const { store, getThreadsUpdates, getInboxNotificationSettings } =
-    getExtrasForClient<TThreadMetadata>(client);
-
-  function onMutationFailure(
-    innerError: Error,
-    optimisticUpdateId: string,
-    createPublicError: (error: Error) => CommentsError<TThreadMetadata>
-  ) {
-    store.set((state) => ({
-      ...state,
-      optimisticUpdates: state.optimisticUpdates.filter(
-        (update) => update.id !== optimisticUpdateId
-      ),
-    }));
-
-    if (innerError instanceof CommentsApiError) {
-      const error = handleApiError(innerError);
-      commentsErrorEventSource.notify(createPublicError(error));
-      return;
-    }
-
-    if (innerError instanceof NotificationsApiError) {
-      handleApiError(innerError);
-      // TODO: Create public error and notify via notificationsErrorEventSource?
-      return;
-    }
-
-    throw innerError;
-  }
+  const {
+    store,
+    getThreadsUpdates,
+    getInboxNotificationSettings,
+    onMutationFailure,
+  } = getExtrasForClient<TThreadMetadata>(client);
 
   function useCreateThread() {
     const room = useTRoom();
