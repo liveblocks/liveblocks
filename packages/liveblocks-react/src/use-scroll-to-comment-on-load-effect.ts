@@ -1,12 +1,9 @@
 import type { BaseMetadata } from "@liveblocks/client";
+import * as React from "react";
 
 import type { ThreadsState } from "./types";
 
-/**
- * Scroll to the comment with the ID in the hash of the URL based on whether
- * the query is loading and whether the hook should scroll to the comment on load.
- */
-export function handleScrollToCommentOnLoad(
+function handleScrollToCommentOnLoad(
   shouldScrollOnLoad: boolean,
   state: ThreadsState<BaseMetadata>
 ) {
@@ -36,4 +33,21 @@ export function handleScrollToCommentOnLoad(
   if (!isCommentInThreads) return;
 
   comment.scrollIntoView();
+}
+
+/**
+ * Scroll to the comment with the ID in the hash of the URL based on whether
+ * the query is loading and whether the hook should scroll to the comment on load.
+ */
+export function useScrollToCommentOnLoadEffect(
+  shouldScrollOnLoad: boolean,
+  state: ThreadsState<BaseMetadata>
+) {
+  React.useEffect(
+    () => {
+      handleScrollToCommentOnLoad(shouldScrollOnLoad, state);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- We only want to run this effect once
+    [state.isLoading]
+  );
 }

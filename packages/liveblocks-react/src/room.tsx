@@ -91,7 +91,7 @@ import type {
   ThreadSubscription,
   UseThreadsOptions,
 } from "./types";
-import { handleScrollToCommentOnLoad } from "./use-scroll-to-comment-on-load-effect";
+import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
 
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
@@ -788,13 +788,7 @@ function makeRoomContextBundle<
       selector
     );
 
-    React.useEffect(
-      () => {
-        handleScrollToCommentOnLoad(scrollOnLoad, state);
-      },
-      // eslint-disable-next-line react-hooks/exhaustive-deps -- We only want to run this effect once
-      [state.isLoading]
-    );
+    useScrollToCommentOnLoadEffect(scrollOnLoad, state);
 
     return state;
   }
@@ -843,13 +837,7 @@ function makeRoomContextBundle<
       selector
     );
 
-    React.useEffect(
-      () => {
-        handleScrollToCommentOnLoad(scrollOnLoad, state);
-      },
-      // eslint-disable-next-line react-hooks/exhaustive-deps -- We only want to run this effect once
-      [state.isLoading]
-    );
+    useScrollToCommentOnLoadEffect(scrollOnLoad, state);
 
     return state;
   }
