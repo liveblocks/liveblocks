@@ -978,101 +978,6 @@ function makeRoomContextBundle<
     );
   }
 
-  function useCreateComment(): (options: CreateCommentOptions) => CommentData {
-    const room = useTRoom();
-    return React.useCallback(
-      ({ threadId, body }: CreateCommentOptions): CommentData => {
-        const commentId = createCommentId();
-        const createdAt = new Date();
-
-        const comment: CommentData = {
-          id: commentId,
-          threadId,
-          roomId: room.id,
-          type: "comment",
-          createdAt,
-          userId: getCurrentUserId(room),
-          body,
-          reactions: [],
-        };
-
-        const optimisticUpdateId = nanoid();
-
-        store.pushOptimisticUpdate({
-          type: "create-comment",
-          comment,
-          id: optimisticUpdateId,
-        });
-
-        room[kInternal].comments
-          .createComment({ threadId, commentId, body })
-          .then(
-            (newComment) => {
-              store.set((state) => {
-                const existingThread = state.threads[threadId];
-                const updatedOptimisticUpdates = state.optimisticUpdates.filter(
-                  (update) => update.id !== optimisticUpdateId
-                );
-
-                if (existingThread === undefined) {
-                  return {
-                    ...state,
-                    optimisticUpdates: updatedOptimisticUpdates,
-                  };
-                }
-
-                const inboxNotification = Object.values(
-                  state.inboxNotifications
-                ).find(
-                  (notification) =>
-                    notification.kind === "thread" &&
-                    notification.threadId === threadId
-                );
-
-                // If the thread has an inbox notification associated with it, we update the notification's `notifiedAt` and `readAt` values
-                const updatedInboxNotifications =
-                  inboxNotification !== undefined
-                    ? {
-                        ...state.inboxNotifications,
-                        [inboxNotification.id]: {
-                          ...inboxNotification,
-                          notifiedAt: newComment.createdAt,
-                          readAt: newComment.createdAt,
-                        },
-                      }
-                    : state.inboxNotifications;
-
-                return {
-                  ...state,
-                  threads: {
-                    ...state.threads,
-                    [threadId]: upsertComment(existingThread, newComment), // Upsert the new comment into the thread comments list (if applicable)
-                  },
-                  inboxNotifications: updatedInboxNotifications,
-                  optimisticUpdates: updatedOptimisticUpdates,
-                };
-              });
-            },
-            (err: Error) =>
-              onMutationFailure(
-                err,
-                optimisticUpdateId,
-                (err) =>
-                  new CreateCommentError(err, {
-                    roomId: room.id,
-                    threadId,
-                    commentId,
-                    body,
-                  })
-              )
-          );
-
-        return comment;
-      },
-      [room]
-    );
-  }
-
   function useEditComment(): (options: EditCommentOptions) => void {
     const room = useTRoom();
     return React.useCallback(
@@ -1567,7 +1472,7 @@ function makeRoomContextBundle<
 
     useCreateThread,
     useEditThreadMetadata, // XXX Convert
-    useCreateComment, // XXX Convert
+    useCreateComment,
     useEditComment, // XXX Convert
     useDeleteComment, // XXX Convert
     useAddReaction, // XXX Convert
@@ -1622,7 +1527,7 @@ function makeRoomContextBundle<
 
       useCreateThread,
       useEditThreadMetadata, // XXX Convert
-      useCreateComment, // XXX Convert
+      useCreateComment,
       useEditComment, // XXX Convert
       useDeleteComment, // XXX Convert
       useAddReaction, // XXX Convert
@@ -2221,6 +2126,103 @@ function useCreateThread<TThreadMetadata extends BaseMetadata>() {
         );
 
       return newThread;
+    },
+    [client, room]
+  );
+}
+
+function useCreateComment(): (options: CreateCommentOptions) => CommentData {
+  const client = useClient();
+  const room = useRoom();
+  return React.useCallback(
+    ({ threadId, body }: CreateCommentOptions): CommentData => {
+      const commentId = createCommentId();
+      const createdAt = new Date();
+
+      const comment: CommentData = {
+        id: commentId,
+        threadId,
+        roomId: room.id,
+        type: "comment",
+        createdAt,
+        userId: getCurrentUserId(room),
+        body,
+        reactions: [],
+      };
+
+      const optimisticUpdateId = nanoid();
+
+      const { store, onMutationFailure } = getExtrasForClient(client);
+      store.pushOptimisticUpdate({
+        type: "create-comment",
+        comment,
+        id: optimisticUpdateId,
+      });
+
+      room[kInternal].comments
+        .createComment({ threadId, commentId, body })
+        .then(
+          (newComment) => {
+            store.set((state) => {
+              const existingThread = state.threads[threadId];
+              const updatedOptimisticUpdates = state.optimisticUpdates.filter(
+                (update) => update.id !== optimisticUpdateId
+              );
+
+              if (existingThread === undefined) {
+                return {
+                  ...state,
+                  optimisticUpdates: updatedOptimisticUpdates,
+                };
+              }
+
+              const inboxNotification = Object.values(
+                state.inboxNotifications
+              ).find(
+                (notification) =>
+                  notification.kind === "thread" &&
+                  notification.threadId === threadId
+              );
+
+              // If the thread has an inbox notification associated with it, we update the notification's `notifiedAt` and `readAt` values
+              const updatedInboxNotifications =
+                inboxNotification !== undefined
+                  ? {
+                      ...state.inboxNotifications,
+                      [inboxNotification.id]: {
+                        ...inboxNotification,
+                        notifiedAt: newComment.createdAt,
+                        readAt: newComment.createdAt,
+                      },
+                    }
+                  : state.inboxNotifications;
+
+              return {
+                ...state,
+                threads: {
+                  ...state.threads,
+                  [threadId]: upsertComment(existingThread, newComment), // Upsert the new comment into the thread comments list (if applicable)
+                },
+                inboxNotifications: updatedInboxNotifications,
+                optimisticUpdates: updatedOptimisticUpdates,
+              };
+            });
+          },
+          (err: Error) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (err) =>
+                new CreateCommentError(err, {
+                  roomId: room.id,
+                  threadId,
+                  commentId,
+                  body,
+                })
+            )
+        );
+
+      return comment;
     },
     [client, room]
   );
