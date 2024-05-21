@@ -746,96 +746,6 @@ function makeRoomContextBundle<
     onMutationFailure,
   } = getExtrasForClient<TThreadMetadata>(client);
 
-  function useEditThreadMetadata() {
-    const room = useTRoom();
-    return React.useCallback(
-      (options: EditThreadMetadataOptions<TThreadMetadata>): void => {
-        if (!("metadata" in options)) {
-          return;
-        }
-
-        const threadId = options.threadId;
-        const metadata = options.metadata;
-        const updatedAt = new Date();
-
-        const optimisticUpdateId = nanoid();
-
-        store.pushOptimisticUpdate({
-          type: "edit-thread-metadata",
-          metadata,
-          id: optimisticUpdateId,
-          threadId,
-          updatedAt,
-        });
-
-        room[kInternal].comments
-          .editThreadMetadata({ metadata, threadId })
-          .then(
-            (metadata) => {
-              store.set((state) => {
-                const existingThread = state.threads[threadId];
-                const updatedOptimisticUpdates = state.optimisticUpdates.filter(
-                  (update) => update.id !== optimisticUpdateId
-                );
-
-                // If the thread doesn't exist in the cache, we do not update the metadata
-                if (existingThread === undefined) {
-                  return {
-                    ...state,
-                    optimisticUpdates: updatedOptimisticUpdates,
-                  };
-                }
-
-                // If the thread has been deleted, we do not update the metadata
-                if (existingThread.deletedAt !== undefined) {
-                  return {
-                    ...state,
-                    optimisticUpdates: updatedOptimisticUpdates,
-                  };
-                }
-
-                if (
-                  existingThread.updatedAt &&
-                  existingThread.updatedAt > updatedAt
-                ) {
-                  return {
-                    ...state,
-                    optimisticUpdates: updatedOptimisticUpdates,
-                  };
-                }
-
-                return {
-                  ...state,
-                  threads: {
-                    ...state.threads,
-                    [threadId]: {
-                      ...existingThread,
-                      metadata: metadata as [TThreadMetadata] extends [never]
-                        ? Record<string, never>
-                        : TThreadMetadata,
-                    },
-                  },
-                  optimisticUpdates: updatedOptimisticUpdates,
-                };
-              });
-            },
-            (err: Error) =>
-              onMutationFailure(
-                err,
-                optimisticUpdateId,
-                (error) =>
-                  new EditThreadMetadataError(error, {
-                    roomId: room.id,
-                    threadId,
-                    metadata,
-                  })
-              )
-          );
-      },
-      [room]
-    );
-  }
-
   function useRemoveReaction() {
     const room = useTRoom();
     return React.useCallback(
@@ -1400,7 +1310,7 @@ function makeRoomContextBundle<
     useThreads,
 
     useCreateThread,
-    useEditThreadMetadata, // XXX Convert
+    useEditThreadMetadata,
     useCreateComment,
     useEditComment, // XXX Convert
     useDeleteComment, // XXX Convert
@@ -1455,7 +1365,7 @@ function makeRoomContextBundle<
       useThreads: useThreadsSuspense,
 
       useCreateThread,
-      useEditThreadMetadata, // XXX Convert
+      useEditThreadMetadata,
       useCreateComment,
       useEditComment, // XXX Convert
       useDeleteComment, // XXX Convert
@@ -2055,6 +1965,96 @@ function useCreateThread<TThreadMetadata extends BaseMetadata>() {
         );
 
       return newThread;
+    },
+    [client, room]
+  );
+}
+
+function useEditThreadMetadata<TThreadMetadata extends BaseMetadata>() {
+  const client = useClient();
+  const room = useRoom();
+  return React.useCallback(
+    (options: EditThreadMetadataOptions<TThreadMetadata>): void => {
+      if (!("metadata" in options)) {
+        return;
+      }
+
+      const threadId = options.threadId;
+      const metadata = options.metadata;
+      const updatedAt = new Date();
+
+      const optimisticUpdateId = nanoid();
+
+      const { store, onMutationFailure } = getExtrasForClient(client);
+      store.pushOptimisticUpdate({
+        type: "edit-thread-metadata",
+        metadata,
+        id: optimisticUpdateId,
+        threadId,
+        updatedAt,
+      });
+
+      room[kInternal].comments.editThreadMetadata({ metadata, threadId }).then(
+        (metadata) => {
+          store.set((state) => {
+            const existingThread = state.threads[threadId];
+            const updatedOptimisticUpdates = state.optimisticUpdates.filter(
+              (update) => update.id !== optimisticUpdateId
+            );
+
+            // If the thread doesn't exist in the cache, we do not update the metadata
+            if (existingThread === undefined) {
+              return {
+                ...state,
+                optimisticUpdates: updatedOptimisticUpdates,
+              };
+            }
+
+            // If the thread has been deleted, we do not update the metadata
+            if (existingThread.deletedAt !== undefined) {
+              return {
+                ...state,
+                optimisticUpdates: updatedOptimisticUpdates,
+              };
+            }
+
+            if (
+              existingThread.updatedAt &&
+              existingThread.updatedAt > updatedAt
+            ) {
+              return {
+                ...state,
+                optimisticUpdates: updatedOptimisticUpdates,
+              };
+            }
+
+            return {
+              ...state,
+              threads: {
+                ...state.threads,
+                [threadId]: {
+                  ...existingThread,
+                  metadata: metadata as [TThreadMetadata] extends [never]
+                    ? Record<string, never>
+                    : TThreadMetadata,
+                },
+              },
+              optimisticUpdates: updatedOptimisticUpdates,
+            };
+          });
+        },
+        (err: Error) =>
+          onMutationFailure(
+            err,
+            optimisticUpdateId,
+            (error) =>
+              new EditThreadMetadataError(error, {
+                roomId: room.id,
+                threadId,
+                metadata,
+              })
+          )
+      );
     },
     [client, room]
   );
