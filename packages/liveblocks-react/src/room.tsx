@@ -536,12 +536,12 @@ function makeRoomContextBundle<
   }
 
   const subscribersByQuery: Map<string, number> = new Map(); // A map of query keys to the number of subscribers for that query
-  const requestsByQuery: Map<string, Promise<any>> = new Map(); // A map of query keys to the promise of the request for that query
+  const requestsByQuery: Map<string, Promise<unknown>> = new Map(); // A map of query keys to the promise of the request for that query
 
   const poller = makePoller(refreshThreadsAndNotifications);
 
   async function refreshThreadsAndNotifications() {
-    const requests: Promise<any>[] = [];
+    const requests: Promise<unknown>[] = [];
 
     client[kInternal].getRoomIds().map((roomId) => {
       const room = client.getRoom(roomId);
