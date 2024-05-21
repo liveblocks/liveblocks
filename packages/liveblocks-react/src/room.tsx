@@ -477,31 +477,6 @@ function makeRoomContextBundle<
   // Bind to typed hooks
   const useTRoom = () => useRoom() as TRoom;
 
-  function useMutation<
-    F extends (
-      context: MutationContext<TPresence, TStorage, TUserMeta>,
-      ...args: any[]
-    ) => any,
-  >(callback: F, deps: readonly unknown[]): OmitFirstArg<F> {
-    const room = useTRoom();
-    return React.useMemo(
-      () => {
-        return ((...args) =>
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-          room.batch(() =>
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            callback(
-              makeMutationContext(room),
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-              ...args
-            )
-          )) as OmitFirstArg<F>;
-      },
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      [room, ...deps]
-    );
-  }
-
   const store = client[kInternal]
     .cacheStore as unknown as CacheStore<TThreadMetadata>;
 
@@ -1781,7 +1756,7 @@ function makeRoomContextBundle<
     useOthersConnectionIds,
     useOther,
 
-    useMutation, // XXX Convert
+    useMutation: useMutation as any, // XXX Can we get rid of this any more nicely?
 
     useThreads, // XXX Convert
 
@@ -1836,7 +1811,7 @@ function makeRoomContextBundle<
       useOthersConnectionIds: useOthersConnectionIdsSuspense,
       useOther: useOtherSuspense,
 
-      useMutation, // XXX Convert
+      useMutation: useMutation as any, // XXX Can we get rid of this any more nicely?
 
       useThreads: useThreadsSuspense, // XXX Convert
 
@@ -2282,6 +2257,37 @@ function useLegacyKey<
   } else {
     return rootOrNull.get(key);
   }
+}
+
+function useMutation<
+  F extends (
+    context: MutationContext<TPresence, TStorage, TUserMeta>,
+    ...args: any[]
+  ) => any,
+  TPresence extends JsonObject,
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json,
+>(callback: F, deps: readonly unknown[]): OmitFirstArg<F> {
+  const room = useRoom<TPresence, TStorage, TUserMeta, TRoomEvent>();
+  return React.useMemo(
+    () => {
+      return ((...args) =>
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        room.batch(() =>
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+          callback(
+            makeMutationContext<TPresence, TStorage, TUserMeta, TRoomEvent>(
+              room
+            ),
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+            ...args
+          )
+        )) as OmitFirstArg<F>;
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [room, ...deps]
+  );
 }
 
 // ---------------------------------------------------------------------- }}}
