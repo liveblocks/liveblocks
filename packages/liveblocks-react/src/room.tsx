@@ -218,6 +218,7 @@ function handleApiError(err: CommentsApiError | NotificationsApiError): Error {
   return new Error(message);
 }
 
+const _extras = new WeakMap<Client, ReturnType<typeof makeExtrasForClient>>();
 const _bundles = new WeakMap<
   Client,
   RoomContextBundle<JsonObject, LsonObject, BaseUserMeta, Json, BaseMetadata>
@@ -250,6 +251,34 @@ function getOrCreateRoomContextBundle<
     TRoomEvent,
     TThreadMetadata
   >;
+}
+
+// TODO: Likely a better / more clear name for this helper will arise. I'll
+// rename this later. All of these are implementation details to support inbox
+// notifications on a per-client basis.
+function getExtrasForClient<TThreadMetadata extends BaseMetadata>(
+  client: Client
+) {
+  let extras = _extras.get(client);
+  if (!extras) {
+    extras = makeExtrasForClient(client);
+    _extras.set(client, extras);
+  }
+
+  return extras as unknown as Omit<typeof extras, "store"> & {
+    store: CacheStore<TThreadMetadata>;
+  };
+}
+
+function makeExtrasForClient<TThreadMetadata extends BaseMetadata>(
+  client: Client
+) {
+  const store = client[kInternal]
+    .cacheStore as unknown as CacheStore<TThreadMetadata>;
+
+  return {
+    store,
+  };
 }
 
 type OpaqueRoom = Room<JsonObject, LsonObject, BaseUserMeta, Json>;
@@ -477,8 +506,7 @@ function makeRoomContextBundle<
   // Bind to typed hooks
   const useTRoom = () => useRoom() as TRoom;
 
-  const store = client[kInternal]
-    .cacheStore as unknown as CacheStore<TThreadMetadata>;
+  const { store } = getExtrasForClient<TThreadMetadata>(client);
 
   function onMutationFailure(
     innerError: Error,
