@@ -106,16 +106,16 @@ A number of other hooks are available, related to different areas, for example:
 
 ## Hook types [#hook-types]
 
-There are two different ways to use the [threads](#threads-hook) and
-[user](#user-hook) hooks; with
+There are two different ways to use the
+[notifications](#inbox-notifications-hook) and [user](#user-hook) hooks; with
 [React Suspense](https://react.dev/reference/react/Suspense), and without it. We
 recommend using the Suspense versions, as they often result in simpler code.
 
 ### Suspense hooks [#suspense-hooks]
 
-Using Suspense hooks means that any data retrieved, for example `threads` from
-`getThreads`, will never be `undefined`, and your component will never see an
-error.
+Using Suspense hooks means that any data retrieved, for example
+`inboxNotifications` from `useInboxNotifications`, will never be `undefined`,
+and your component will never see an error.
 
 ```tsx
 import { useInboxNotifications } from "../liveblocks.config.ts";
@@ -173,7 +173,7 @@ The regular versions of Liveblocks hooks require you to check for `error` and
 import { useInboxNotifications } from "../liveblocks.config.ts";
 
 // Handle errors and loading state in the same component
-function MyThreads() {
+function MyNotifications() {
   const { inboxNotifications, error, isLoading } = useInboxNotifications();
 
   if (error) {
