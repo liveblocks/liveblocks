@@ -535,8 +535,8 @@ function makeRoomContextBundle<
     throw innerError;
   }
 
-  const subscribersByQuery: Map<string, number> = new Map(); // A map of query keys to the number of subscribers for that query
-  const requestsByQuery: Map<string, Promise<unknown>> = new Map(); // A map of query keys to the promise of the request for that query
+  const subscribersByQuery = new Map<string, number>(); // A map of query keys to the number of subscribers for that query
+  const requestsByQuery = new Map<string, Promise<unknown>>(); // A map of query keys to the promise of the request for that query
 
   const poller = makePoller(refreshThreadsAndNotifications);
 
