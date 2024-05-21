@@ -5,71 +5,208 @@ meta:
   description: "Learn about the different plans available on Liveblocks."
 ---
 
-Liveblocks offers three plans: Starter, Pro, and Enterprise. Each plan is
-designed to meet the needs of different types of users, from passion projects to
-large-scale applications. The Starter plan is free and includes all the features
-you need to get started, while the Pro and Enterprise plans offer enhanced
-features and resources.
+Liveblocks offers three plans: Starter, Pro, and Enterprise. The Starter plan is
+free and includes all the features you need to get started, while the Pro and
+Enterprise plans offer higher limits, enhanced features and resources.
 
 ## Starter plan
 
-The Starter plan is **free** and designed for passion projects and testing. It
-offers a generous set of features for individual users:
+The Starter plan is **free** and designed for developers getting started with
+Liveblocks. Key features include:
 
-- Unlimited projects
-- Up to <Limits.FreeMcuMax /> monthly collaborative users
-- Up to <Limits.FreeMauMax /> monthly active users
-- Up to <Limits.FreeMaxConnectionsPerRoom /> simultaneous connections per room
-- <Limits.FreeTeamMembersPerAccount /> team member per account
+- Up to <Limits.StarterMauMax /> monthly active users
+- Up to <Limits.StarterMaxConnectionsPerRoom /> simultaneous connections per
+  room
+- <Limits.StarterTeamMembersPerAccount /> team members per account
 - Community support
+
+#### Comments
+
+Comments is free up to <Limits.StarterMauMax /> monthly active users and
+<Limits.StarterMaxComments /> comments per month.
+
+| Comments                      | Included                      |
+| ----------------------------- | ----------------------------- |
+| Monthly active users included | <Limits.StarterMauMax />      |
+| Monthly active users cap      | <Limits.StarterMauMax />      |
+| MAU overage rate              | —                             |
+| Monthly comments cap          | <Limits.StarterMaxComments /> |
+
+#### Notifications
+
+Notifications is free up to <Limits.StarterMauMax /> monthly active users and
+<Limits.StarterMaxNotifications /> comments per month.
+
+| Notifications                 | Included                           |
+| ----------------------------- | ---------------------------------- |
+| Monthly active users included | <Limits.StarterMauMax />           |
+| Monthly active users cap      | <Limits.StarterMauMax />           |
+| MAU overage rate              | —                                  |
+| Monthly notifications cap     | <Limits.StarterMaxNotifications /> |
+
+#### Text editor
+
+Text editor is free up to <Limits.StarterMauMax /> monthly active users and
+<Limits.StarterTotalTextEditorStored /> data stored.
+
+| Text editor                   | Included                                |
+| ----------------------------- | --------------------------------------- |
+| Monthly active users included | <Limits.StarterMauMax />                |
+| Monthly active users cap      | <Limits.StarterMauMax />                |
+| MAU overage rate              | —                                       |
+| Total GB stored               | <Limits.StarterTotalTextEditorStored /> |
+
+#### Custom app
+
+Custom app is free up to <Limits.StarterMauMax /> monthly active users and
+<Limits.StarterTotalCustomAppStored /> data stored.
+
+| Custom app                    | Included                               |
+| ----------------------------- | -------------------------------------- |
+| Monthly active users included | <Limits.StarterMauMax />               |
+| Monthly active users cap      | <Limits.StarterMauMax />               |
+| MAU overage rate              | —                                      |
+| Total GB stored               | <Limits.StarterTotalCustomAppStored /> |
 
 ## Pro plan
 
-The Pro plan starts at **$99/month** and is designed for production applications
-with the ability to scale. Key features include:
+The Pro plan starts at **<Limits.ProStartingPrice />** and is designed for
+companies adding collaboration in production. Key features include:
 
-- Unlimited projects
-- Up to <Limits.ProMcuMax /> monthly collaborative users
+- <Limits.ProMauIncluded /> monthly active users included,
+  then <Limits.ProPAYGPrice /> for each additional MAU
+- Up to <Limits.ProMauMax /> monthly active users cap
 - Up to <Limits.ProMaxConnectionsPerRoom /> simultaneous connections per room
-- 10 team members per account
+- <Limits.ProTeamMembersPerAccount /> team members per account
 - Email support
+
+#### Comments
+
+Comments is free up to <Limits.StarterMauMax /> monthly active users and
+<Limits.StarterMaxComments /> comments per month. You can get higher limits for
+an additional <Limits.ProStartingPriceComments />.
+
+| Comments                      | Included                      | <Limits.ProStartingPriceComments />                      |
+| ----------------------------- | ----------------------------- | -------------------------------------------------------- |
+| Monthly active users included | <Limits.StarterMauMax />      | <Limits.ProMauIncluded />                                |
+| Monthly active users cap      | <Limits.StarterMauMax />      | <Limits.ProMauMax />                                     |
+| MAU overage rate              | —                             | <Limits.ProPAYGPriceComments /> per each additional user |
+| Monthly comments cap          | <Limits.StarterMaxComments /> | <Limits.ProMaxComments />                                |
+
+#### Notifications
+
+Notifications is free up to <Limits.StarterMauMax /> monthly active users and
+<Limits.StarterMaxNotifications /> notifications per month. You can get higher
+limits for an additional <Limits.ProStartingPriceNotifications />.
+
+| Notifications                 | Included                           | <Limits.ProStartingPriceNotifications />                      |
+| ----------------------------- | ---------------------------------- | ------------------------------------------------------------- |
+| Monthly active users included | <Limits.StarterMauMax />           | <Limits.ProMauIncluded />                                     |
+| Monthly active users cap      | <Limits.StarterMauMax />           | <Limits.ProMauMax />                                          |
+| MAU overage rate              | —                                  | <Limits.ProPAYGPriceNotifications /> per each additional user |
+| Monthly notifications cap     | <Limits.StarterMaxNotifications /> | <Limits.ProMaxNotifications />                                |
+
+#### Text editor
+
+Text editor is free up to <Limits.StarterMauMax /> monthly active users and
+<Limits.StarterTotalTextEditorStored /> data stored. You can get higher limits
+for an additional <Limits.ProStartingPriceTextEditor />.
+
+| Text editor                   | Included                                | <Limits.ProStartingPriceTextEditor />                      |
+| ----------------------------- | --------------------------------------- | ---------------------------------------------------------- |
+| Monthly active users included | <Limits.StarterMauMax />                | <Limits.ProMauIncluded />                                  |
+| Monthly active users cap      | <Limits.StarterMauMax />                | <Limits.ProMauMax />                                       |
+| MAU overage rate              | —                                       | <Limits.ProPAYGPriceTextEditor /> per each additional user |
+| Total GB stored               | <Limits.StarterTotalTextEditorStored /> | <Limits.ProTotalTextEditorStored />                        |
+
+#### Custom app
+
+Custom app is free up to <Limits.StarterMauMax /> monthly active users and
+<Limits.StarterTotalCustomAppStored /> data stored. You can get higher limits
+for an additional <Limits.ProStartingPriceCustomApp />.
+
+| Custom app                    | Included                               | <Limits.ProStartingPriceCustomApp />                      |
+| ----------------------------- | -------------------------------------- | --------------------------------------------------------- |
+| Monthly active users included | <Limits.StarterMauMax />               | <Limits.ProMauIncluded />                                 |
+| Monthly active users cap      | <Limits.StarterMauMax />               | <Limits.ProMauMax />                                      |
+| MAU overage rate              | —                                      | <Limits.ProPAYGPriceCustomApp /> per each additional user |
+| Total GB stored               | <Limits.StarterTotalCustomAppStored /> | <Limits.ProTotalCustomAppStored />                        |
 
 ## Enterprise plan
 
-The Enterprise plan is tailored for organizations with custom needs, advanced
-security, and premium support. Key features include:
+The Enterprise plan is tailored for organizations with custom needs and advanced
+security. Key features include:
 
-- Unlimited projects
-- Unlimited monthly active users
+- Custom monthly active users
 - Custom simultaneous connections per room
 - Custom team members per account
 - Premium support
+- Dedicated shared Slack channel
 - Volume discounts
-- SOC2 Report
+- SOC 2 Report
 - 99.9% Uptime SLA
+
+#### Comments
+
+Comments can be included in the enterpise plan.
+
+| Comments                      |           |
+| ----------------------------- | --------- |
+| Monthly active users included | Custom    |
+| Monthly active users cap      | Custom    |
+| MAU overage rate              | Custom    |
+| Monthly comments cap          | Unlimited |
+
+#### Notifications
+
+Notifications can be included in the enterprise plan.
+
+| Notifications                 |           |
+| ----------------------------- | --------- |
+| Monthly active users included | Custom    |
+| Monthly active users cap      | Custom    |
+| MAU overage rate              | Custom    |
+| Monthly notifications cap     | Unlimited |
+
+#### Text editor
+
+Text editor can be included in the enterprise plan.
+
+| Text editor                   |        |
+| ----------------------------- | ------ |
+| Monthly active users included | Custom |
+| Monthly active users cap      | Custom |
+| MAU overage rate              | Custom |
+| Total GB stored               | Custom |
+
+#### Custom app
+
+Custom app can be included in the enterprise plan.
+
+| Custom app                    |        |
+| ----------------------------- | ------ |
+| Monthly active users included | Custom |
+| Monthly active users cap      | Custom |
+| MAU overage rate              | Custom |
+| Total GB stored               | Custom |
 
 ## General billing information
 
 ### What is a monthly active user?
 
-A monthly active user is an identified or anonymous user who connects to a
-Liveblocks room at least once a month.
+Monthly active users (MAU) is the number of users that connect to Liveblocks in
+a given month.
 
-If you use the public API key to create the Liveblocks client, all users will be
-anonymous. A cookie will be automatically set on the browser for 30 days to
-avoid counting the same user multiple times.
+Users are identified by the `userId` property provided in your
+[authentication endpoint](/docs/authentication).
 
-If you use a backend endpoint with the secret API key to create the Liveblocks
-client, all users will be identified through the `userId` property. We recommend
-using this method for counting accuracy. See the
-[authentication](/docs/authentication) docs for more information.
+This `userId` generally comes from your database or your authentification
+provider. One unique `userId` corresponds to one user, whether they connected to
+a room 1 day for 5 minutes or kept coming back every day for 8 hours.
 
 One user will be counted as one monthly active user, no matter how frequently
 they connect to Liveblocks rooms in any given month as long as it falls under
 our [Fair Use Policy](/docs/platform/limits/fair-use-policy).
-
-Users coming from `localhost`, `.local`, `.localhost`, and `.test` domains are
-not counted towards your billing.
 
 <Banner>
   You must use the 1.0 or newer Liveblocks packages to have monthly active users
