@@ -51,7 +51,7 @@ test.describe("Inbox notifications", () => {
       const newThreadComposer = page1
         .locator("#new-thread-composer")
         .getByRole("textbox");
-      await newThreadComposer.type("Hi team!");
+      await newThreadComposer.fill("Hi team!");
       await newThreadComposer.press("Enter");
 
       const replyComposer = page1
@@ -59,7 +59,7 @@ test.describe("Inbox notifications", () => {
         .getByRole("textbox");
 
       // Add a comment to ping another user
-      await replyComposer.type("Pinging @Marc");
+      await replyComposer.fill("Pinging @Marc");
       await sleep(800); // Give the list some time to filter only the matches
       await page1.getByRole("option").first().click();
       await replyComposer.press("Enter");
@@ -92,7 +92,7 @@ test.describe("Inbox notifications", () => {
       const replyComposer = page2
         .locator(".lb-thread-composer")
         .getByRole("textbox");
-      await replyComposer.type("Cool stuff");
+      await replyComposer.fill("Cool stuff");
       await replyComposer.press("Enter");
 
       //
