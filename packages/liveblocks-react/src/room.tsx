@@ -276,8 +276,213 @@ function makeExtrasForClient<TThreadMetadata extends BaseMetadata>(
   const store = client[kInternal]
     .cacheStore as unknown as CacheStore<TThreadMetadata>;
 
+  const DEFAULT_DEDUPING_INTERVAL = 2000; // 2 seconds
+
+  const lastRequestedAtByRoom = new Map<string, Date>(); // A map of room ids to the timestamp when the last request for threads updates was made
+  const requestsByQuery = new Map<string, Promise<unknown>>(); // A map of query keys to the promise of the request for that query
+  const requestStatusByRoom = new Map<string, boolean>(); // A map of room ids to a boolean indicating whether a request to retrieve threads updates is in progress
+  const subscribersByQuery = new Map<string, number>(); // A map of query keys to the number of subscribers for that query
+
+  const poller = makePoller(refreshThreadsAndNotifications);
+
+  async function refreshThreadsAndNotifications() {
+    const requests: Promise<unknown>[] = [];
+
+    client[kInternal].getRoomIds().map((roomId) => {
+      const room = client.getRoom(roomId);
+      if (room === null) return;
+
+      // Retrieve threads that have been updated/deleted since the last requestedAt value
+      requests.push(getThreadsUpdates(room.id));
+    });
+
+    await Promise.allSettled(requests);
+  }
+
+  function incrementQuerySubscribers(queryKey: string) {
+    const subscribers = subscribersByQuery.get(queryKey) ?? 0;
+    subscribersByQuery.set(queryKey, subscribers + 1);
+
+    poller.start(POLLING_INTERVAL);
+
+    // Decrement in the unsub function
+    return () => {
+      const subscribers = subscribersByQuery.get(queryKey);
+
+      if (subscribers === undefined || subscribers <= 0) {
+        console.warn(
+          `Internal unexpected behavior. Cannot decrease subscriber count for query "${queryKey}"`
+        );
+        return;
+      }
+
+      subscribersByQuery.set(queryKey, subscribers - 1);
+
+      let totalSubscribers = 0;
+      for (const subscribers of subscribersByQuery.values()) {
+        totalSubscribers += subscribers;
+      }
+
+      if (totalSubscribers <= 0) {
+        poller.stop();
+      }
+    };
+  }
+
+  /**
+   * Retrieve threads that have been updated/deleted since the last time the room requested threads updates and update the local cache with the new data
+   * @param roomId The id of the room for which to retrieve threads updates
+   */
+  async function getThreadsUpdates(roomId: string) {
+    const room = client.getRoom(roomId);
+    if (room === null) return;
+
+    const since = lastRequestedAtByRoom.get(room.id);
+    if (since === undefined) return;
+
+    const isFetchingThreadsUpdates = requestStatusByRoom.get(room.id) ?? false;
+    // If another request to retrieve threads updates for the room is in progress, we do not start a new one
+    if (isFetchingThreadsUpdates === true) return;
+
+    try {
+      // Set the isFetchingThreadsUpdates flag to true to prevent multiple requests to fetch threads updates for the room from being made at the same time
+      requestStatusByRoom.set(room.id, true);
+      const updates = await room[kInternal].comments.getThreads({ since });
+
+      // Set the isFetchingThreadsUpdates flag to false after a certain interval to prevent multiple requests from being made at the same time
+      setTimeout(() => {
+        requestStatusByRoom.set(room.id, false);
+      }, DEFAULT_DEDUPING_INTERVAL);
+
+      store.updateThreadsAndNotifications(
+        updates.threads,
+        updates.inboxNotifications,
+        updates.deletedThreads,
+        updates.deletedInboxNotifications
+      );
+
+      // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
+      lastRequestedAtByRoom.set(room.id, updates.meta.requestedAt);
+    } catch (err) {
+      requestStatusByRoom.set(room.id, false);
+      // TODO: Implement error handling
+      return;
+    }
+  }
+
+  async function getThreadsAndInboxNotifications(
+    room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
+    queryKey: string,
+    options: UseThreadsOptions<TThreadMetadata>,
+    { retryCount }: { retryCount: number } = { retryCount: 0 }
+  ) {
+    const existingRequest = requestsByQuery.get(queryKey);
+
+    // If a request was already made for the query, we do not make another request and return the existing promise of the request
+    if (existingRequest !== undefined) return existingRequest;
+
+    const request = room[kInternal].comments.getThreads(options);
+
+    // Store the promise of the request for the query so that we do not make another request for the same query
+    requestsByQuery.set(queryKey, request);
+
+    store.setQueryState(queryKey, {
+      isLoading: true,
+    });
+
+    try {
+      const result = await request;
+
+      store.updateThreadsAndNotifications(
+        result.threads,
+        result.inboxNotifications,
+        result.deletedThreads,
+        result.deletedInboxNotifications,
+        queryKey
+      );
+
+      const lastRequestedAt = lastRequestedAtByRoom.get(room.id);
+
+      /**
+       * We set the `lastRequestedAt` value for the room to the timestamp returned by the current request if:
+       * 1. The `lastRequestedAt` value for the room has not been set
+       * OR
+       * 2. The `lastRequestedAt` value for the room is older than the timestamp returned by the current request
+       */
+      if (
+        lastRequestedAt === undefined ||
+        lastRequestedAt > result.meta.requestedAt
+      ) {
+        lastRequestedAtByRoom.set(room.id, result.meta.requestedAt);
+      }
+
+      poller.start(POLLING_INTERVAL);
+    } catch (err) {
+      requestsByQuery.delete(queryKey);
+
+      // Retry the action using the exponential backoff algorithm
+      retryError(() => {
+        void getThreadsAndInboxNotifications(room, queryKey, options, {
+          retryCount: retryCount + 1,
+        });
+      }, retryCount);
+
+      // Set the query state to the error state
+      store.setQueryState(queryKey, {
+        isLoading: false,
+        error: err as Error,
+      });
+
+      return;
+    }
+  }
+
+  async function getInboxNotificationSettings(
+    room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
+    queryKey: string,
+    { retryCount }: { retryCount: number } = { retryCount: 0 }
+  ) {
+    const existingRequest = requestsByQuery.get(queryKey);
+
+    // If a request was already made for the notifications query, we do not make another request and return the existing promise
+    if (existingRequest !== undefined) return existingRequest;
+
+    try {
+      const request =
+        room[kInternal].notifications.getRoomNotificationSettings();
+
+      requestsByQuery.set(queryKey, request);
+
+      store.setQueryState(queryKey, {
+        isLoading: true,
+      });
+
+      const settings = await request;
+      store.updateRoomInboxNotificationSettings(room.id, settings, queryKey);
+    } catch (err) {
+      requestsByQuery.delete(queryKey);
+
+      retryError(() => {
+        void getInboxNotificationSettings(room, queryKey, {
+          retryCount: retryCount + 1,
+        });
+      }, retryCount);
+
+      store.setQueryState(queryKey, {
+        isLoading: false,
+        error: err as Error,
+      });
+
+      return;
+    }
+  }
+
   return {
     store,
+    incrementQuerySubscribers,
+    getThreadsUpdates,
+    getThreadsAndInboxNotifications,
+    getInboxNotificationSettings,
   };
 }
 
@@ -506,7 +711,13 @@ function makeRoomContextBundle<
   // Bind to typed hooks
   const useTRoom = () => useRoom() as TRoom;
 
-  const { store } = getExtrasForClient<TThreadMetadata>(client);
+  const {
+    store,
+    incrementQuerySubscribers,
+    getThreadsUpdates,
+    getThreadsAndInboxNotifications,
+    getInboxNotificationSettings,
+  } = getExtrasForClient<TThreadMetadata>(client);
 
   function onMutationFailure(
     innerError: Error,
@@ -533,168 +744,6 @@ function makeRoomContextBundle<
     }
 
     throw innerError;
-  }
-
-  const subscribersByQuery = new Map<string, number>(); // A map of query keys to the number of subscribers for that query
-  const requestsByQuery = new Map<string, Promise<unknown>>(); // A map of query keys to the promise of the request for that query
-
-  const poller = makePoller(refreshThreadsAndNotifications);
-
-  async function refreshThreadsAndNotifications() {
-    const requests: Promise<unknown>[] = [];
-
-    client[kInternal].getRoomIds().map((roomId) => {
-      const room = client.getRoom(roomId);
-      if (room === null) return;
-
-      // Retrieve threads that have been updated/deleted since the last requestedAt value
-      requests.push(getThreadsUpdates(room.id));
-    });
-
-    await Promise.allSettled(requests);
-  }
-
-  function incrementQuerySubscribers(queryKey: string) {
-    const subscribers = subscribersByQuery.get(queryKey) ?? 0;
-    subscribersByQuery.set(queryKey, subscribers + 1);
-
-    poller.start(POLLING_INTERVAL);
-
-    // Decrement in the unsub function
-    return () => {
-      const subscribers = subscribersByQuery.get(queryKey);
-
-      if (subscribers === undefined || subscribers <= 0) {
-        console.warn(
-          `Internal unexpected behavior. Cannot decrease subscriber count for query "${queryKey}"`
-        );
-        return;
-      }
-
-      subscribersByQuery.set(queryKey, subscribers - 1);
-
-      let totalSubscribers = 0;
-      for (const subscribers of subscribersByQuery.values()) {
-        totalSubscribers += subscribers;
-      }
-
-      if (totalSubscribers <= 0) {
-        poller.stop();
-      }
-    };
-  }
-
-  async function getThreadsAndInboxNotifications(
-    room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-    queryKey: string,
-    options: UseThreadsOptions<TThreadMetadata>,
-    { retryCount }: { retryCount: number } = { retryCount: 0 }
-  ) {
-    const existingRequest = requestsByQuery.get(queryKey);
-
-    // If a request was already made for the query, we do not make another request and return the existing promise of the request
-    if (existingRequest !== undefined) return existingRequest;
-
-    const request = room[kInternal].comments.getThreads(options);
-
-    // Store the promise of the request for the query so that we do not make another request for the same query
-    requestsByQuery.set(queryKey, request);
-
-    store.setQueryState(queryKey, {
-      isLoading: true,
-    });
-
-    try {
-      const result = await request;
-
-      store.updateThreadsAndNotifications(
-        result.threads,
-        result.inboxNotifications,
-        result.deletedThreads,
-        result.deletedInboxNotifications,
-        queryKey
-      );
-
-      const lastRequestedAt = lastRequestedAtByRoom.get(room.id);
-
-      /**
-       * We set the `lastRequestedAt` value for the room to the timestamp returned by the current request if:
-       * 1. The `lastRequestedAt` value for the room has not been set
-       * OR
-       * 2. The `lastRequestedAt` value for the room is older than the timestamp returned by the current request
-       */
-      if (
-        lastRequestedAt === undefined ||
-        lastRequestedAt > result.meta.requestedAt
-      ) {
-        lastRequestedAtByRoom.set(room.id, result.meta.requestedAt);
-      }
-
-      poller.start(POLLING_INTERVAL);
-    } catch (err) {
-      requestsByQuery.delete(queryKey);
-
-      // Retry the action using the exponential backoff algorithm
-      retryError(() => {
-        void getThreadsAndInboxNotifications(room, queryKey, options, {
-          retryCount: retryCount + 1,
-        });
-      }, retryCount);
-
-      // Set the query state to the error state
-      store.setQueryState(queryKey, {
-        isLoading: false,
-        error: err as Error,
-      });
-
-      return;
-    }
-  }
-
-  const DEFAULT_DEDUPING_INTERVAL = 2000; // 2 seconds
-
-  const lastRequestedAtByRoom = new Map<string, Date>(); // A map of room ids to the timestamp when the last request for threads updates was made
-  const requestStatusByRoom = new Map<string, boolean>(); // A map of room ids to a boolean indicating whether a request to retrieve threads updates is in progress
-
-  /**
-   * Retrieve threads that have been updated/deleted since the last time the room requested threads updates and update the local cache with the new data
-   * @param roomId The id of the room for which to retrieve threads updates
-   */
-  async function getThreadsUpdates(roomId: string) {
-    const room = client.getRoom(roomId);
-    if (room === null) return;
-
-    const since = lastRequestedAtByRoom.get(room.id);
-    if (since === undefined) return;
-
-    const isFetchingThreadsUpdates = requestStatusByRoom.get(room.id) ?? false;
-    // If another request to retrieve threads updates for the room is in progress, we do not start a new one
-    if (isFetchingThreadsUpdates === true) return;
-
-    try {
-      // Set the isFetchingThreadsUpdates flag to true to prevent multiple requests to fetch threads updates for the room from being made at the same time
-      requestStatusByRoom.set(room.id, true);
-      const updates = await room[kInternal].comments.getThreads({ since });
-
-      // Set the isFetchingThreadsUpdates flag to false after a certain interval to prevent multiple requests from being made at the same time
-      setTimeout(() => {
-        requestStatusByRoom.set(room.id, false);
-      }, DEFAULT_DEDUPING_INTERVAL);
-
-      store.updateThreadsAndNotifications(
-        updates.threads,
-        updates.inboxNotifications,
-        updates.deletedThreads,
-        updates.deletedInboxNotifications
-      );
-
-      // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
-      lastRequestedAtByRoom.set(room.id, updates.meta.requestedAt);
-    } catch (err) {
-      requestStatusByRoom.set(room.id, false);
-      // TODO: Implement error handling
-      return;
-    }
   }
 
   /**
@@ -1559,46 +1608,6 @@ function makeRoomContextBundle<
 
   function makeNotificationSettingsQueryKey(roomId: string) {
     return `${roomId}:NOTIFICATION_SETTINGS`;
-  }
-
-  async function getInboxNotificationSettings(
-    room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-    queryKey: string,
-    { retryCount }: { retryCount: number } = { retryCount: 0 }
-  ) {
-    const existingRequest = requestsByQuery.get(queryKey);
-
-    // If a request was already made for the notifications query, we do not make another request and return the existing promise
-    if (existingRequest !== undefined) return existingRequest;
-
-    try {
-      const request =
-        room[kInternal].notifications.getRoomNotificationSettings();
-
-      requestsByQuery.set(queryKey, request);
-
-      store.setQueryState(queryKey, {
-        isLoading: true,
-      });
-
-      const settings = await request;
-      store.updateRoomInboxNotificationSettings(room.id, settings, queryKey);
-    } catch (err) {
-      requestsByQuery.delete(queryKey);
-
-      retryError(() => {
-        void getInboxNotificationSettings(room, queryKey, {
-          retryCount: retryCount + 1,
-        });
-      }, retryCount);
-
-      store.setQueryState(queryKey, {
-        isLoading: false,
-        error: err as Error,
-      });
-
-      return;
-    }
   }
 
   function useRoomNotificationSettings(): [
