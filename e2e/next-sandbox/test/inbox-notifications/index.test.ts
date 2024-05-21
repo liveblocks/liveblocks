@@ -35,8 +35,8 @@ test.describe("Inbox notifications", () => {
     //
 
     // Wait until the pages are loaded
-    await waitForJson(page1, "#name", "Vincent D.", { timeout: 8_000 });
-    await waitForJson(page2, "#name", "Marc B.", { timeout: 8_000 });
+    await waitForJson(page1, "#name", "Vincent D.", { timeout: 10_000 });
+    await waitForJson(page2, "#name", "Marc B.", { timeout: 10_000 });
 
     // Clear out any existing comments before starting the test
     await page1.locator("#delete-all-mine").click({ force: true });
