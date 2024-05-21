@@ -743,12 +743,8 @@ function makeRoomContextBundle<
   // Bind to typed hooks
   const useTRoom: () => TRoom = () => useRoom();
 
-  const {
-    store,
-    getThreadsUpdates,
-    getInboxNotificationSettings,
-    onMutationFailure,
-  } = getExtrasForClient<TThreadMetadata>(client);
+  const { store, getThreadsUpdates, getInboxNotificationSettings } =
+    getExtrasForClient<TThreadMetadata>(client);
 
   const resolveMentionSuggestions = client[kInternal].resolveMentionSuggestions;
   const mentionSuggestionsCache = new Map<string, string[]>();
@@ -907,48 +903,6 @@ function makeRoomContextBundle<
     }, [settings, updateRoomNotificationSettings]);
   }
 
-  function useUpdateRoomNotificationSettings() {
-    const room = useTRoom();
-    return React.useCallback(
-      (settings: Partial<RoomNotificationSettings>) => {
-        const optimisticUpdateId = nanoid();
-
-        store.pushOptimisticUpdate({
-          id: optimisticUpdateId,
-          type: "update-notification-settings",
-          roomId: room.id,
-          settings,
-        });
-
-        room[kInternal].notifications
-          .updateRoomNotificationSettings(settings)
-          .then(
-            (settings) => {
-              store.set((state) => ({
-                ...state,
-                notificationSettings: {
-                  [room.id]: settings,
-                },
-                optimisticUpdates: state.optimisticUpdates.filter(
-                  (update) => update.id !== optimisticUpdateId
-                ),
-              }));
-            },
-            (err: Error) =>
-              onMutationFailure(
-                err,
-                optimisticUpdateId,
-                (error) =>
-                  new UpdateNotificationSettingsError(error, {
-                    roomId: room.id,
-                  })
-              )
-          );
-      },
-      [room]
-    );
-  }
-
   function useCurrentUserId() {
     return useSelf((user) => (typeof user.id === "string" ? user.id : null));
   }
@@ -1012,7 +966,7 @@ function makeRoomContextBundle<
     useThreadSubscription,
 
     useRoomNotificationSettings, // XXX Convert
-    useUpdateRoomNotificationSettings, // XXX Convert
+    useUpdateRoomNotificationSettings,
 
     ...shared.classic,
 
@@ -1067,7 +1021,7 @@ function makeRoomContextBundle<
       useThreadSubscription,
 
       useRoomNotificationSettings: useRoomNotificationSettingsSuspense, // XXX Convert
-      useUpdateRoomNotificationSettings, // XXX Convert
+      useUpdateRoomNotificationSettings,
 
       ...shared.suspense,
     },
@@ -2230,6 +2184,50 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
     store.get,
     store.get,
     selector
+  );
+}
+
+function useUpdateRoomNotificationSettings() {
+  const client = useClient();
+  const room = useRoom();
+  return React.useCallback(
+    (settings: Partial<RoomNotificationSettings>) => {
+      const optimisticUpdateId = nanoid();
+
+      const { store, onMutationFailure } = getExtrasForClient(client);
+      store.pushOptimisticUpdate({
+        id: optimisticUpdateId,
+        type: "update-notification-settings",
+        roomId: room.id,
+        settings,
+      });
+
+      room[kInternal].notifications
+        .updateRoomNotificationSettings(settings)
+        .then(
+          (settings) => {
+            store.set((state) => ({
+              ...state,
+              notificationSettings: {
+                [room.id]: settings,
+              },
+              optimisticUpdates: state.optimisticUpdates.filter(
+                (update) => update.id !== optimisticUpdateId
+              ),
+            }));
+          },
+          (err: Error) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (error) =>
+                new UpdateNotificationSettingsError(error, {
+                  roomId: room.id,
+                })
+            )
+        );
+    },
+    [client, room]
   );
 }
 
