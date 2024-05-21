@@ -1,10 +1,20 @@
-import type { LiveList, Room, User } from "@liveblocks/client";
+import type {
+  LiveList,
+  LiveMap,
+  LiveObject,
+  Room,
+  User,
+} from "@liveblocks/client";
 import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
-import { expectType } from "tsd";
+import { expectError, expectType } from "tsd";
 
 type MyPresence = { cursor: { x: number; y: number } | null };
-type MyStorage = { animals: LiveList<string> };
+type MyStorage = {
+  animals: LiveList<string>;
+  scores: LiveMap<string, number>;
+  person: LiveObject<{ name: string; age: number }>;
+};
 type MyUserMeta = { id: string; info: { name: string } };
 type MyRoomEvent = { type: "emoji"; value: string };
 
@@ -41,6 +51,94 @@ expectType<P>(ctx.suspense.useOthersMapped((u) => u.presence)[0][1]);
 expectType<readonly number[]>(ctx.suspense.useOthersConnectionIds());
 expectType<P>(ctx.suspense.useOther(123, (o) => o.presence));
 expectType<P>(ctx.suspense.useMyPresence()[0]);
+
+// The storage hooks
+expectType<readonly string[] | null>(ctx.useStorage((x) => x.animals));
+expectType<ReadonlyMap<string, number> | null>(ctx.useStorage((x) => x.scores));
+expectType<{ readonly name: string; readonly age: number } | null>(
+  ctx.useStorage((x) => x.person)
+);
+
+expectType<[root: LiveObject<MyStorage> | null]>(ctx.useStorageRoot());
+
+expectType<(a: number, b: boolean) => "hi">(
+  ctx.useMutation((mut, _a: number, _b: boolean) => {
+    expectType<User<MyPresence, MyUserMeta>>(mut.self);
+    expectType<readonly User<MyPresence, MyUserMeta>[]>(mut.others);
+    expectType<LiveObject<MyStorage>>(mut.storage);
+    expectType<
+      (p: Partial<MyPresence>, options?: { addToHistory: boolean }) => void
+    >(mut.setMyPresence);
+    return "hi" as const;
+  }, [])
+);
+
+// The storage hooks (suspense versions)
+expectType<readonly string[]>(ctx.suspense.useStorage((x) => x.animals));
+expectType<ReadonlyMap<string, number>>(
+  ctx.suspense.useStorage((x) => x.scores)
+);
+expectType<{ readonly name: string; readonly age: number }>(
+  ctx.suspense.useStorage((x) => x.person)
+);
+
+expectType<[root: LiveObject<MyStorage> | null]>(ctx.suspense.useStorageRoot());
+//                                        ^^^^ Despite being a Suspense hook,
+//                                             this one still returns `null`,
+//                                             as it's used as a building
+//                                             block. This is NOT a bug.
+
+expectType<(a: number, b: boolean) => "hi">(
+  ctx.suspense.useMutation((mut, _a: number, _b: boolean) => {
+    expectType<User<MyPresence, MyUserMeta>>(mut.self);
+    expectType<readonly User<MyPresence, MyUserMeta>[]>(mut.others);
+    expectType<LiveObject<MyStorage>>(mut.storage);
+    expectType<
+      (p: Partial<MyPresence>, options?: { addToHistory: boolean }) => void
+    >(mut.setMyPresence);
+    return "hi" as const;
+  }, [])
+);
+
+// Legacy hoooks
+expectType<LiveList<string> | null>(ctx.useList("animals"));
+expectType<LiveList<string> | null>(ctx.useMap("animals"));
+expectType<LiveList<string> | null>(ctx.useObject("animals"));
+expectType<LiveMap<string, number> | null>(ctx.useList("scores"));
+expectType<LiveMap<string, number> | null>(ctx.useMap("scores"));
+expectType<LiveMap<string, number> | null>(ctx.useObject("scores"));
+expectType<LiveObject<{ name: string; age: number }> | null>(
+  ctx.useList("person")
+);
+expectType<LiveObject<{ name: string; age: number }> | null>(
+  ctx.useMap("person")
+);
+expectType<LiveObject<{ name: string; age: number }> | null>(
+  ctx.useObject("person")
+);
+expectError(ctx.useList("nonexisting"));
+expectError(ctx.useMap("nonexisting"));
+expectError(ctx.useObject("nonexisting"));
+
+// Legacy hoooks (suspense versions)
+expectType<LiveList<string>>(ctx.suspense.useList("animals"));
+expectType<LiveList<string>>(ctx.suspense.useMap("animals"));
+expectType<LiveList<string>>(ctx.suspense.useObject("animals"));
+expectType<LiveMap<string, number>>(ctx.suspense.useList("scores"));
+expectType<LiveMap<string, number>>(ctx.suspense.useMap("scores"));
+expectType<LiveMap<string, number>>(ctx.suspense.useObject("scores"));
+expectType<LiveObject<{ name: string; age: number }>>(
+  ctx.suspense.useList("person")
+);
+expectType<LiveObject<{ name: string; age: number }>>(
+  ctx.suspense.useMap("person")
+);
+expectType<LiveObject<{ name: string; age: number }>>(
+  ctx.suspense.useObject("person")
+);
+expectError(ctx.suspense.useList("nonexisting"));
+expectError(ctx.suspense.useMap("nonexisting"));
+expectError(ctx.suspense.useObject("nonexisting"));
 
 // The useOthersListener() hook
 ctx.useOthersListener((event) => {
