@@ -746,7 +746,6 @@ function makeRoomContextBundle<
   const { store, getThreadsUpdates } =
     getExtrasForClient<TThreadMetadata>(client);
 
-  const resolveMentionSuggestions = client[kInternal].resolveMentionSuggestions;
   const mentionSuggestionsCache = new Map<string, string[]>();
 
   // Simplistic debounced search, we don't need to worry too much about
@@ -758,6 +757,9 @@ function makeRoomContextBundle<
     const lastInvokedAt = React.useRef<number>();
 
     React.useEffect(() => {
+      const resolveMentionSuggestions =
+        client[kInternal].resolveMentionSuggestions;
+
       if (search === undefined || !resolveMentionSuggestions) {
         return;
       }
@@ -812,7 +814,7 @@ function makeRoomContextBundle<
         isCanceled = true;
         window.clearTimeout(debounceTimeout);
       };
-    }, [room.id, search]);
+    }, [client, room.id, search]);
 
     return mentionSuggestions;
   }
