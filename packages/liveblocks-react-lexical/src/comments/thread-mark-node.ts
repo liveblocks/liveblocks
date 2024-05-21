@@ -45,10 +45,10 @@ export type SerializedThreadMarkNode = Spread<
 
 export class ThreadMarkNode extends ElementNode {
   /** @internal */
-  __ids: Array<string>;
+  __ids: Array<string>; // The ids of the threads that this mark is associated with
 
   static getType(): string {
-    return "thread-mark";
+    return "lb-thread-mark";
   }
 
   static clone(node: ThreadMarkNode): ThreadMarkNode {

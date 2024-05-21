@@ -1,5 +1,3 @@
-const MENTION_CHARACTER = "@";
-
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type {
   DOMConversionMap,
@@ -28,7 +26,9 @@ export type SerializedMentionNode = Spread<
   SerializedLexicalNode
 >;
 
-export default class MentionNode extends DecoratorNode<JSX.Element> {
+const MENTION_CHARACTER = "@";
+
+export class MentionNode extends DecoratorNode<JSX.Element> {
   __id: string;
 
   constructor(value: string, key?: NodeKey) {
@@ -136,6 +136,8 @@ function Mention({
     </span>
   );
 }
+
+// export function Mention({ userId: string }) {}
 
 function $isNodeSelected(key: NodeKey): boolean {
   const node = $getNodeByKey(key);

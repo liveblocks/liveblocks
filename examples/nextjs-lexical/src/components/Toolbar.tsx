@@ -1,7 +1,10 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { FORMAT_TEXT_COMMAND } from "lexical";
+import { createCommand, FORMAT_TEXT_COMMAND, LexicalCommand } from "lexical";
 import styles from "./Toolbar.module.css";
-import { INSERT_THREAD_COMMAND } from "@liveblocks/react-lexical";
+
+export const INSERT_THREAD_COMMAND: LexicalCommand<void> = createCommand(
+  "INSERT_THREAD_COMMAND"
+);
 
 // A toolbar with simple rich-text controls
 export function Toolbar() {

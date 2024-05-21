@@ -1,78 +1,36 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { registerNestedElementResolver } from "@lexical/utils";
-import { kInternal } from "@liveblocks/core";
-import { useRoomContextBundle } from "@liveblocks/react";
-import type {
-  BaseSelection,
-  LexicalCommand,
-  NodeKey,
-  NodeMutation,
-} from "lexical";
+import type { BaseSelection, NodeKey, NodeMutation } from "lexical";
 import {
   $getNodeByKey,
   $getSelection,
   $isRangeSelection,
   $isTextNode,
-  $setSelection,
-  COMMAND_PRIORITY_EDITOR,
-  createCommand,
 } from "lexical";
-import React, { createContext, useEffect, useRef, useState } from "react";
+import type { PropsWithChildren, RefObject } from "react";
+import * as React from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 
+import $getThreadMarkIds from "./get-thread-mark-ids";
 import {
   $createThreadMarkNode,
   $isThreadMarkNode,
   ThreadMarkNode,
-} from "./ThreadMarkNode";
-import { $getThreadMarkIds } from "./utils";
+} from "./thread-mark-node";
 
-export const INSERT_THREAD_COMMAND: LexicalCommand<void> = createCommand(
-  "INSERT_THREAD_COMMAND"
-);
+type ThreadToNodesMap = Map<string, Set<NodeKey>>;
 
-export const ActiveThreadsContext = createContext<string[]>([]);
+export const ThreadToNodeKeysRefContext =
+  createContext<RefObject<ThreadToNodesMap> | null>(null);
 
-type ThreadToNodesMap = {
-  current: Map<string, Set<NodeKey>>;
-};
+export const ActiveThreadsContext = createContext<string[] | null>(null);
 
-export const ThreadToNodeKeysRefContext = createContext<ThreadToNodesMap>({
-  current: new Map(),
-});
-
-export const ShowComposerContext = createContext<boolean>(false);
-
-export function CommentPluginProvider({
-  children,
-}: {
-  children?: React.ReactNode;
-}) {
+export function CommentPluginProvider({ children }: PropsWithChildren) {
   const [editor] = useLexicalComposerContext();
 
-  const threadToNodeKeysRef = useRef<Map<string, Set<NodeKey>>>(new Map()); // A map from thread id to a set of (mark) node keys that are associated with the thread
-
-  const [showComposer, setShowComposer] = useState(false);
+  const threadToNodeKeysRef = useRef<ThreadToNodesMap>(new Map()); // A map from thread id to a set of (thread mark) node keys that are associated with the thread
 
   const [activeThreads, setActiveThreads] = useState<string[]>([]); // The threads that are currently active (or selected) in the editor
-
-  const {
-    [kInternal]: {
-      useOptimisticThreadCreateListener,
-      useOptimisticThreadDeleteListener,
-    },
-  } = useRoomContextBundle();
-
-  useOptimisticThreadCreateListener(({ threadId }) => {
-    // TODO, this should only fire if we're the source of creation
-    editor.update(() => {
-      $setSelection(null);
-    });
-    console.log("Thread created", threadId);
-  });
-
-  useOptimisticThreadDeleteListener(({ threadId }) => {
-    console.log("Thread deleted", threadId);
-  });
 
   useEffect(() => {
     if (!editor.hasNodes([ThreadMarkNode])) {
@@ -145,55 +103,6 @@ export function CommentPluginProvider({
   }, [editor]);
 
   /**
-   * Register a command that can be used to insert a comment at the current selection.
-   */
-  useEffect(() => {
-    return editor.registerCommand(
-      INSERT_THREAD_COMMAND,
-      (type?: string) => {
-        const selection = $getSelection();
-        if (!$isRangeSelection(selection)) return false;
-
-        // If we got an empty selection (just a caret), try and expand it
-        if (selection.getTextContent().trim() === "") {
-          if (type === "expansion") {
-            // Do NOT try to expand again if this came from an expansion
-            return false;
-          }
-          // Update selection to find nearest word
-          editor.update(
-            () => {
-              selection.modify("move", true, "word"); // move to the beginning of the previous word
-              selection.modify("extend", false, "word"); // extend back to the whole word
-            },
-            {
-              tag: "expansion", // Tag the update so we can find it in handlers
-              onUpdate: () => {
-                // After expansion, run the insert comment command again (the original one did NOT complete)
-                editor.dispatchCommand<LexicalCommand<"expansion">>(
-                  INSERT_THREAD_COMMAND,
-                  "expansion"
-                );
-              },
-            }
-          );
-          return false;
-        }
-
-        const nativeSelection = window.getSelection();
-        if (nativeSelection !== null) {
-          nativeSelection.removeAllRanges();
-        }
-
-        setShowComposer(true);
-
-        return true;
-      },
-      COMMAND_PRIORITY_EDITOR
-    );
-  }, [editor, setShowComposer]);
-
-  /**
    * When active threads change, we add a data-state attribute and set it to "active" for all HTML elements that are associated with the active threads.
    */
   useEffect(() => {
@@ -227,20 +136,6 @@ export function CommentPluginProvider({
   }, [activeThreads, editor]);
 
   useEffect(() => {
-    function onStateRead() {
-      setShowComposer(false);
-    }
-
-    return editor.registerUpdateListener(({ editorState: state, tags }) => {
-      // Ignore selection expansion updates (from insert comments on a caret) and collab updates
-      if (tags.has("collaboration") || tags.has("expansion")) {
-        return;
-      }
-      state.read(onStateRead);
-    });
-  }, [editor, setShowComposer]);
-
-  useEffect(() => {
     return registerNestedElementResolver<ThreadMarkNode>(
       editor,
       ThreadMarkNode,
@@ -257,12 +152,31 @@ export function CommentPluginProvider({
   }, [editor]);
 
   return (
-    <ShowComposerContext.Provider value={showComposer}>
-      <ThreadToNodeKeysRefContext.Provider value={threadToNodeKeysRef}>
-        <ActiveThreadsContext.Provider value={activeThreads}>
-          {children}
-        </ActiveThreadsContext.Provider>
-      </ThreadToNodeKeysRefContext.Provider>
-    </ShowComposerContext.Provider>
+    <ThreadToNodeKeysRefContext.Provider value={threadToNodeKeysRef}>
+      <ActiveThreadsContext.Provider value={activeThreads}>
+        {children}
+      </ActiveThreadsContext.Provider>
+    </ThreadToNodeKeysRefContext.Provider>
   );
+}
+
+export function useThreadToNodesMap() {
+  const threadToNodesRef = useContext(ThreadToNodeKeysRefContext);
+  if (threadToNodesRef === null) {
+    throw new Error(
+      "useThreadToNodesMap must be used within a CommentPluginProvider"
+    );
+  }
+
+  return threadToNodesRef;
+}
+
+export function useActiveThreads() {
+  const threads = useContext(ActiveThreadsContext);
+  if (threads === null) {
+    throw new Error(
+      "useActiveThreads must be used within a CommentPluginProvider"
+    );
+  }
+  return threads;
 }

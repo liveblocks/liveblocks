@@ -1,19 +1,22 @@
 "use client";
 
 import styles from "./Editor.module.css";
-import { Toolbar } from "@/components/Toolbar";
+import { INSERT_THREAD_COMMAND, Toolbar } from "@/components/Toolbar";
 import { Avatars } from "@/components/Avatars";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import {
-  LexicalThread,
-  LiveblocksPlugin,
+  ActiveSelection,
+  LiveblocksPluginProvider,
   liveblocksLexicalConfig,
 } from "@liveblocks/react-lexical";
 import { useThreads } from "@/liveblocks.config";
-import { Composer } from "@liveblocks/react-comments";
+import { Composer, Thread } from "@liveblocks/react-comments";
+import { useEffect, useState } from "react";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { COMMAND_PRIORITY_EDITOR } from "lexical";
 
 // Set up editor config and theme
 const initialConfig = {
@@ -33,38 +36,39 @@ const initialConfig = {
     threadMark: styles.threadMark,
   },
 };
+
 // Collaborative text editor with simple rich text, live cursors, and live avatars
 
 export default function Editor() {
   return (
     <div className={styles.container}>
       <LexicalComposer initialConfig={liveblocksLexicalConfig(initialConfig)}>
-        <div className={styles.editorHeader}>
-          <Toolbar />
-          <Avatars />
-        </div>
-        <div className={styles.editorContainer}>
-          <div className={styles.editor}>
-            <RichTextPlugin
-              contentEditable={
-                <>
-                  <ContentEditable className={styles.contentEditable} />
-                </>
-              }
-              placeholder={
-                <p className={styles.placeholder}>Start typing here…</p>
-              }
-              ErrorBoundary={LexicalErrorBoundary}
-            />
+        <LiveblocksPluginProvider>
+          <div className={styles.editorHeader}>
+            <Toolbar />
+            <Avatars />
           </div>
+          <div className={styles.editorContainer}>
+            <div className={styles.editor}>
+              <RichTextPlugin
+                contentEditable={
+                  <>
+                    <ContentEditable className={styles.contentEditable} />
+                  </>
+                }
+                placeholder={
+                  <p className={styles.placeholder}>Start typing here…</p>
+                }
+                ErrorBoundary={LexicalErrorBoundary}
+              />
+            </div>
 
-          <LiveblocksPlugin>
             <div className={styles.sidebar}>
-              <Composer autoFocus className={styles.composer} />
+              <ComposerWrapper />
               <Threads />
             </div>
-          </LiveblocksPlugin>
-        </div>
+          </div>
+        </LiveblocksPluginProvider>
       </LexicalComposer>
     </div>
   );
@@ -73,17 +77,50 @@ export default function Editor() {
 function Threads() {
   const { threads } = useThreads();
 
+  if (threads.length === 0) {
+    return <div className={styles.noThreads}>No threads yet</div>;
+  }
+
   return (
     <div className={styles.threads}>
       {threads.map((thread) => {
         return (
-          <LexicalThread
-            key={thread.id}
-            thread={thread}
-            className={styles.thread}
-          />
+          <Thread key={thread.id} thread={thread} className={styles.thread} />
         );
       })}
     </div>
+  );
+}
+
+function ComposerWrapper() {
+  const [editor] = useLexicalComposerContext();
+  const [showComposer, setShowComposer] = useState(false);
+
+  useEffect(() => {
+    return editor.registerUpdateListener(({ editorState: state, tags }) => {
+      // Ignore selection updates related to collaboration
+      if (tags.has("collaboration")) return;
+      state.read(() => setShowComposer(false));
+    });
+  }, [editor, setShowComposer]);
+
+  useEffect(() => {
+    return editor.registerCommand(
+      INSERT_THREAD_COMMAND,
+      () => {
+        setShowComposer(true);
+        return true;
+      },
+      COMMAND_PRIORITY_EDITOR
+    );
+  });
+
+  if (!showComposer) return null;
+
+  return (
+    <>
+      <ActiveSelection />
+      <Composer autoFocus className={styles.composer} />
+    </>
   );
 }

@@ -27,9 +27,10 @@ import React, {
 import { createPortal } from "react-dom";
 
 import Avatar from "./avatar";
-import MentionNode, {
+import {
   $createMentionNode,
   $isMentionNode,
+  MentionNode,
 } from "./mention-node";
 import * as Suggestions from "./suggestion";
 import User from "./user";
