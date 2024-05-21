@@ -559,28 +559,29 @@ function makeRoomContextBundle<
     subscribersByQuery.set(queryKey, subscribers + 1);
 
     poller.start(POLLING_INTERVAL);
-  }
 
-  function decrementQuerySubscribers(queryKey: string) {
-    const subscribers = subscribersByQuery.get(queryKey);
+    // Decrement in the unsub function
+    return () => {
+      const subscribers = subscribersByQuery.get(queryKey);
 
-    if (subscribers === undefined || subscribers <= 0) {
-      console.warn(
-        `Internal unexpected behavior. Cannot decrease subscriber count for query "${queryKey}"`
-      );
-      return;
-    }
+      if (subscribers === undefined || subscribers <= 0) {
+        console.warn(
+          `Internal unexpected behavior. Cannot decrease subscriber count for query "${queryKey}"`
+        );
+        return;
+      }
 
-    subscribersByQuery.set(queryKey, subscribers - 1);
+      subscribersByQuery.set(queryKey, subscribers - 1);
 
-    let totalSubscribers = 0;
-    for (const subscribers of subscribersByQuery.values()) {
-      totalSubscribers += subscribers;
-    }
+      let totalSubscribers = 0;
+      for (const subscribers of subscribersByQuery.values()) {
+        totalSubscribers += subscribers;
+      }
 
-    if (totalSubscribers <= 0) {
-      poller.stop();
-    }
+      if (totalSubscribers <= 0) {
+        poller.stop();
+      }
+    };
   }
 
   async function getThreadsAndInboxNotifications(
@@ -747,9 +748,7 @@ function makeRoomContextBundle<
 
     React.useEffect(() => {
       void getThreadsAndInboxNotifications(room, queryKey, options);
-      incrementQuerySubscribers(queryKey);
-
-      return () => decrementQuerySubscribers(queryKey);
+      return incrementQuerySubscribers(queryKey);
     }, [room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const selector = React.useCallback(
@@ -825,13 +824,7 @@ function makeRoomContextBundle<
       [room, queryKey] // eslint-disable-line react-hooks/exhaustive-deps
     );
 
-    React.useEffect(() => {
-      incrementQuerySubscribers(queryKey);
-
-      return () => {
-        decrementQuerySubscribers(queryKey);
-      };
-    }, [queryKey]);
+    React.useEffect(() => incrementQuerySubscribers(queryKey), [queryKey]);
 
     const state = useSyncExternalStoreWithSelector(
       store.subscribe,
