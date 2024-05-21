@@ -709,7 +709,7 @@ function makeRoomContextBundle<
   }
 
   // Bind to typed hooks
-  const useTRoom = () => useRoom() as TRoom;
+  const useTRoom: () => TRoom = () => useRoom();
 
   const {
     store,
