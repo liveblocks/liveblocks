@@ -850,66 +850,6 @@ function makeRoomContextBundle<
     );
   }
 
-  function useMarkThreadAsRead() {
-    const room = useTRoom();
-
-    return React.useCallback(
-      (threadId: string) => {
-        const inboxNotification = Object.values(
-          store.get().inboxNotifications
-        ).find(
-          (inboxNotification) =>
-            inboxNotification.kind === "thread" &&
-            inboxNotification.threadId === threadId
-        );
-
-        if (!inboxNotification) return;
-
-        const optimisticUpdateId = nanoid();
-        const now = new Date();
-
-        store.pushOptimisticUpdate({
-          type: "mark-inbox-notification-as-read",
-          id: optimisticUpdateId,
-          inboxNotificationId: inboxNotification.id,
-          readAt: now,
-        });
-
-        room[kInternal].notifications
-          .markInboxNotificationAsRead(inboxNotification.id)
-          .then(
-            () => {
-              store.set((state) => ({
-                ...state,
-                inboxNotifications: {
-                  ...state.inboxNotifications,
-                  [inboxNotification.id]: {
-                    ...inboxNotification,
-                    readAt: now,
-                  },
-                },
-                optimisticUpdates: state.optimisticUpdates.filter(
-                  (update) => update.id !== optimisticUpdateId
-                ),
-              }));
-            },
-            (err: Error) => {
-              onMutationFailure(
-                err,
-                optimisticUpdateId,
-                (error) =>
-                  new MarkInboxNotificationAsReadError(error, {
-                    inboxNotificationId: inboxNotification.id,
-                  })
-              );
-              return;
-            }
-          );
-      },
-      [room]
-    );
-  }
-
   function makeNotificationSettingsQueryKey(roomId: string) {
     return `${roomId}:NOTIFICATION_SETTINGS`;
   }
@@ -1101,7 +1041,7 @@ function makeRoomContextBundle<
     useDeleteComment,
     useAddReaction,
     useRemoveReaction,
-    useMarkThreadAsRead, // XXX Convert
+    useMarkThreadAsRead,
     useThreadSubscription, // XXX Convert
 
     useRoomNotificationSettings, // XXX Convert
@@ -1156,7 +1096,7 @@ function makeRoomContextBundle<
       useDeleteComment,
       useAddReaction,
       useRemoveReaction,
-      useMarkThreadAsRead, // XXX Convert
+      useMarkThreadAsRead,
       useThreadSubscription, // XXX Convert
 
       useRoomNotificationSettings: useRoomNotificationSettingsSuspense, // XXX Convert
@@ -2223,6 +2163,67 @@ function useRemoveReaction() {
                   emoji,
                 })
             )
+        );
+    },
+    [client, room]
+  );
+}
+
+function useMarkThreadAsRead() {
+  const client = useClient();
+  const room = useRoom();
+  return React.useCallback(
+    (threadId: string) => {
+      const { store, onMutationFailure } = getExtrasForClient(client);
+      const inboxNotification = Object.values(
+        store.get().inboxNotifications
+      ).find(
+        (inboxNotification) =>
+          inboxNotification.kind === "thread" &&
+          inboxNotification.threadId === threadId
+      );
+
+      if (!inboxNotification) return;
+
+      const optimisticUpdateId = nanoid();
+      const now = new Date();
+
+      store.pushOptimisticUpdate({
+        type: "mark-inbox-notification-as-read",
+        id: optimisticUpdateId,
+        inboxNotificationId: inboxNotification.id,
+        readAt: now,
+      });
+
+      room[kInternal].notifications
+        .markInboxNotificationAsRead(inboxNotification.id)
+        .then(
+          () => {
+            store.set((state) => ({
+              ...state,
+              inboxNotifications: {
+                ...state.inboxNotifications,
+                [inboxNotification.id]: {
+                  ...inboxNotification,
+                  readAt: now,
+                },
+              },
+              optimisticUpdates: state.optimisticUpdates.filter(
+                (update) => update.id !== optimisticUpdateId
+              ),
+            }));
+          },
+          (err: Error) => {
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (error) =>
+                new MarkInboxNotificationAsReadError(error, {
+                  inboxNotificationId: inboxNotification.id,
+                })
+            );
+            return;
+          }
         );
     },
     [client, room]
