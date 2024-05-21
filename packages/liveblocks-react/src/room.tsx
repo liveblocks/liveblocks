@@ -817,87 +817,6 @@ function makeRoomContextBundle<
     );
   }
 
-  function useEditComment(): (options: EditCommentOptions) => void {
-    const room = useTRoom();
-    return React.useCallback(
-      ({ threadId, commentId, body }: EditCommentOptions): void => {
-        const editedAt = new Date();
-        const optimisticUpdateId = nanoid();
-
-        const thread = store.get().threads[threadId];
-        if (thread === undefined) {
-          console.warn(
-            `Internal unexpected behavior. Cannot edit comment in thread "${threadId}" because the thread does not exist in the cache.`
-          );
-          return;
-        }
-
-        const comment = thread.comments.find(
-          (comment) => comment.id === commentId
-        );
-
-        if (comment === undefined || comment.deletedAt !== undefined) {
-          console.warn(
-            `Internal unexpected behavior. Cannot edit comment "${commentId}" in thread "${threadId}" because the comment does not exist in the cache.`
-          );
-          return;
-        }
-
-        store.pushOptimisticUpdate({
-          type: "edit-comment",
-          comment: {
-            ...comment,
-            editedAt,
-            body,
-          },
-          id: optimisticUpdateId,
-        });
-
-        room[kInternal].comments
-          .editComment({ threadId, commentId, body })
-          .then(
-            (editedComment) => {
-              store.set((state) => {
-                const existingThread = state.threads[threadId];
-                const updatedOptimisticUpdates = state.optimisticUpdates.filter(
-                  (update) => update.id !== optimisticUpdateId
-                );
-
-                if (existingThread === undefined) {
-                  return {
-                    ...state,
-                    optimisticUpdates: updatedOptimisticUpdates,
-                  };
-                }
-
-                return {
-                  ...state,
-                  threads: {
-                    ...state.threads,
-                    [threadId]: upsertComment(existingThread, editedComment), // Upsert the edited comment into the thread comments list (if applicable)
-                  },
-                  optimisticUpdates: updatedOptimisticUpdates,
-                };
-              });
-            },
-            (err: Error) =>
-              onMutationFailure(
-                err,
-                optimisticUpdateId,
-                (error) =>
-                  new EditCommentError(error, {
-                    roomId: room.id,
-                    threadId,
-                    commentId,
-                    body,
-                  })
-              )
-          );
-      },
-      [room]
-    );
-  }
-
   function useDeleteComment() {
     const room = useTRoom();
     return React.useCallback(
@@ -1312,7 +1231,7 @@ function makeRoomContextBundle<
     useCreateThread,
     useEditThreadMetadata,
     useCreateComment,
-    useEditComment, // XXX Convert
+    useEditComment,
     useDeleteComment, // XXX Convert
     useAddReaction,
     useRemoveReaction, // XXX Convert
@@ -1367,7 +1286,7 @@ function makeRoomContextBundle<
       useCreateThread,
       useEditThreadMetadata,
       useCreateComment,
-      useEditComment, // XXX Convert
+      useEditComment,
       useDeleteComment, // XXX Convert
       useAddReaction,
       useRemoveReaction, // XXX Convert
@@ -2152,6 +2071,87 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
         );
 
       return comment;
+    },
+    [client, room]
+  );
+}
+
+function useEditComment(): (options: EditCommentOptions) => void {
+  const client = useClient();
+  const room = useRoom();
+  return React.useCallback(
+    ({ threadId, commentId, body }: EditCommentOptions): void => {
+      const editedAt = new Date();
+      const optimisticUpdateId = nanoid();
+
+      const { store, onMutationFailure } = getExtrasForClient(client);
+      const thread = store.get().threads[threadId];
+      if (thread === undefined) {
+        console.warn(
+          `Internal unexpected behavior. Cannot edit comment in thread "${threadId}" because the thread does not exist in the cache.`
+        );
+        return;
+      }
+
+      const comment = thread.comments.find(
+        (comment) => comment.id === commentId
+      );
+
+      if (comment === undefined || comment.deletedAt !== undefined) {
+        console.warn(
+          `Internal unexpected behavior. Cannot edit comment "${commentId}" in thread "${threadId}" because the comment does not exist in the cache.`
+        );
+        return;
+      }
+
+      store.pushOptimisticUpdate({
+        type: "edit-comment",
+        comment: {
+          ...comment,
+          editedAt,
+          body,
+        },
+        id: optimisticUpdateId,
+      });
+
+      room[kInternal].comments.editComment({ threadId, commentId, body }).then(
+        (editedComment) => {
+          store.set((state) => {
+            const existingThread = state.threads[threadId];
+            const updatedOptimisticUpdates = state.optimisticUpdates.filter(
+              (update) => update.id !== optimisticUpdateId
+            );
+
+            if (existingThread === undefined) {
+              return {
+                ...state,
+                optimisticUpdates: updatedOptimisticUpdates,
+              };
+            }
+
+            return {
+              ...state,
+              threads: {
+                ...state.threads,
+                [threadId]: upsertComment(existingThread, editedComment), // Upsert the edited comment into the thread comments list (if applicable)
+              },
+              optimisticUpdates: updatedOptimisticUpdates,
+            };
+          });
+        },
+        (err: Error) =>
+          onMutationFailure(
+            err,
+            optimisticUpdateId,
+            (error) =>
+              new EditCommentError(error, {
+                roomId: room.id,
+                threadId,
+                commentId,
+                body,
+              })
+          )
+      );
     },
     [client, room]
   );
