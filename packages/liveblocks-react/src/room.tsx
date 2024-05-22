@@ -686,11 +686,9 @@ function makeRoomContextBundle<
     );
 
     return (
-      <RoomProviderInner
-        {...props}
-        client={client}
-        stableEnterRoom={stableEnterRoom}
-      />
+      <LiveblocksProvider client={client}>
+        <RoomProviderInner {...props} stableEnterRoom={stableEnterRoom} />
+      </LiveblocksProvider>
     );
   }
 
@@ -840,14 +838,14 @@ function RoomProviderInner<
   E extends Json,
 >(
   props: RoomProviderProps<P, S> & {
-    client: Client;
     stableEnterRoom: (
       roomId: string,
       options: EnterOptions<P, S>
     ) => RoomLeavePair<P, S, U, E>;
   }
 ) {
-  const { client, id: roomId, stableEnterRoom } = props;
+  const client = useClient();
+  const { id: roomId, stableEnterRoom } = props;
 
   if (process.env.NODE_ENV !== "production") {
     if (!roomId) {
@@ -976,9 +974,7 @@ function RoomProviderInner<
   }, [roomId, frozenProps, stableEnterRoom]);
 
   return (
-    <LiveblocksProvider client={client}>
-      <RoomContext.Provider value={room}>{props.children}</RoomContext.Provider>
-    </LiveblocksProvider>
+    <RoomContext.Provider value={room}>{props.children}</RoomContext.Provider>
   );
 }
 
