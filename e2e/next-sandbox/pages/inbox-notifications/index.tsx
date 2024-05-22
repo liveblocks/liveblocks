@@ -1,7 +1,9 @@
+import { kInternal } from "@liveblocks/core";
 import {
   ClientSideSuspense,
   createLiveblocksContext,
   createRoomContext,
+  useClient,
 } from "@liveblocks/react";
 import * as React from "react";
 
@@ -126,6 +128,7 @@ function TopPart() {
   const me = useSelf();
   const { threads } = useThreads();
   const inboxNotifications = useInboxNotificationsForThisPage();
+  const pendingCount = usePendingUpdatesCount();
 
   const deleteComment = useDeleteComment();
 
@@ -165,10 +168,25 @@ function TopPart() {
             name="Number of Notifications"
             value={inboxNotifications?.length}
           />
+          <Row
+            id="numPendingUpdates"
+            name="Number of pending updates"
+            value={pendingCount}
+          />
         </tbody>
       </table>
     </>
   );
+}
+
+function usePendingUpdatesCount() {
+  const client = useClient();
+  const store = client[kInternal].cacheStore;
+  const getter = React.useCallback(
+    () => store.get().optimisticUpdates.length,
+    [store]
+  );
+  return React.useSyncExternalStore(store.subscribe, getter);
 }
 
 function LeftSide() {
