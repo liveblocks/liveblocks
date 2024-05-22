@@ -311,28 +311,6 @@
     "title": "Products",
     "routes": [
       {
-        "title": "Custom app",
-        "path": "/products/custom-app",
-        "routes": [
-          {
-            "title": "Storage",
-            "path": "/products/custom-app/storage"
-          },
-          {
-            "title": "Presence",
-            "path": "/products/custom-app/presence"
-          },
-          {
-            "title": "Broadcast",
-            "path": "/products/custom-app/broadcast"
-          },
-          {
-            "title": "Yjs",
-            "path": "/products/custom-app/yjs"
-          }
-        ]
-      },
-      {
         "title": "Comments",
         "path": "/products/comments",
         "routes": [
@@ -393,6 +371,28 @@
           {
             "title": "Email notifications",
             "path": "/products/notifications/email-notifications"
+          }
+        ]
+      },
+      {
+        "title": "Custom app",
+        "path": "/products/custom-app",
+        "routes": [
+          {
+            "title": "Yjs",
+            "path": "/products/custom-app/yjs"
+          },
+          {
+            "title": "Storage",
+            "path": "/products/custom-app/storage"
+          },
+          {
+            "title": "Presence",
+            "path": "/products/custom-app/presence"
+          },
+          {
+            "title": "Broadcast",
+            "path": "/products/custom-app/broadcast"
           }
         ]
       }
