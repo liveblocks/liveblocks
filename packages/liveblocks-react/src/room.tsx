@@ -133,8 +133,6 @@ function makeNotificationSettingsQueryKey(roomId: string) {
   return `${roomId}:NOTIFICATION_SETTINGS`;
 }
 
-// --- Selector helpers ------------------------------------------------- {{{
-
 // Don't try to inline this. This function is intended to be a stable
 // reference, to avoid a React.useCallback() wrapper.
 function alwaysEmptyList() {
@@ -152,9 +150,6 @@ function selectorFor_useOthersConnectionIds(
 ): number[] {
   return others.map((user) => user.connectionId);
 }
-
-// ---------------------------------------------------------------------- }}}
-// --- Private APIs ----------------------------------------------------- {{{
 
 function makeMutationContext<
   TPresence extends JsonObject,
@@ -770,9 +765,6 @@ function makeRoomContextBundle<
     enumerable: false,
   });
 }
-
-// ---------------------------------------------------------------------- }}}
-// --- Private hook helpers --------------------------------------------- {{{
 
 function RoomProvider<
   TPresence extends JsonObject,
@@ -2230,9 +2222,6 @@ function useUpdateRoomNotificationSettings() {
   );
 }
 
-// ---------------------------------------------------------------------- }}}
-// --- Private suspense APIs -------------------------------------------- {{{
-
 function ensureNotServerSide(): void {
   // Error early if suspense is used in a server-side context
   if (typeof window === "undefined") {
@@ -2466,9 +2455,6 @@ function useRoomNotificationSettingsSuspense(): [
   }, [settings, updateRoomNotificationSettings]);
 }
 
-// ---------------------------------------------------------------------- }}}
-// --- Public APIs ------------------------------------------------------ {{{
-
 function useRoomOrNull() {
   return React.useContext(RoomContext);
 }
@@ -2561,5 +2547,3 @@ export function generateQueryKey<TThreadMetadata extends BaseMetadata>(
 ) {
   return `${roomId}-${stringify(options ?? {})}`;
 }
-
-// ---------------------------------------------------------------------- }}}
