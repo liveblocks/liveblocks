@@ -8,7 +8,7 @@ import type {
 } from "lexical";
 import { $applyNodeReplacement, DecoratorNode } from "lexical";
 import type { ComponentType, JSX } from "react";
-import React from "react";
+import * as React from "react";
 
 import type { MentionProps } from "../liveblocks-config";
 import { MentionWrapper } from "./mention-component";
@@ -99,7 +99,9 @@ export function createMentionNodeFactory(
     }
   }
 
-  function $isMentionNode(node: LexicalNode | null): node is MentionNode {
+  function $isMentionNode(
+    node: LexicalNode | null | undefined
+  ): node is MentionNode {
     return node instanceof MentionNode;
   }
 

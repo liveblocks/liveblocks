@@ -9,11 +9,7 @@ export {
   createLiveblocksContext,
   useLiveblocksContextBundle,
 } from "./liveblocks";
-export {
-  createRoomContext,
-  useRoomContextBundle,
-  ThreadSelectionGetterContext,
-} from "./room";
+export { createRoomContext, useRoomContextBundle } from "./room";
 export { useSharedContextBundle } from "./shared";
 export type { MutationContext, UseThreadsOptions } from "./types";
 

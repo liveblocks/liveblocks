@@ -1,11 +1,14 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { registerNestedElementResolver } from "@lexical/utils";
+import { kInternal } from "@liveblocks/core";
+import { useRoomContextBundle } from "@liveblocks/react";
 import type { BaseSelection, NodeKey, NodeMutation } from "lexical";
 import {
   $getNodeByKey,
   $getSelection,
   $isRangeSelection,
   $isTextNode,
+  $setSelection,
 } from "lexical";
 import type { PropsWithChildren, RefObject } from "react";
 import * as React from "react";
@@ -17,6 +20,7 @@ import {
   $isThreadMarkNode,
   ThreadMarkNode,
 } from "./thread-mark-node";
+import { $wrapSelectionInThreadMarkNode } from "./wrap-selection-in-thread-mark-node";
 
 type ThreadToNodesMap = Map<string, Set<NodeKey>>;
 
@@ -32,6 +36,10 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
 
   const [activeThreads, setActiveThreads] = useState<string[]>([]); // The threads that are currently active (or selected) in the editor
 
+  const {
+    [kInternal]: { useOptimisticThreadCreateListener },
+  } = useRoomContextBundle();
+
   useEffect(() => {
     if (!editor.hasNodes([ThreadMarkNode])) {
       throw new Error(
@@ -39,6 +47,20 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       );
     }
   }, [editor]);
+
+  useOptimisticThreadCreateListener(({ threadId }) => {
+    editor.update(() => {
+      const selection = $getSelection();
+      if (!$isRangeSelection(selection)) return;
+
+      const isBackward = selection.isBackward();
+      // Wrap content in a ThreadMarkNode
+      $wrapSelectionInThreadMarkNode(selection, isBackward, threadId);
+
+      // Clear the selection after wrapping
+      $setSelection(null);
+    });
+  });
 
   /**
    * Register an update listener that listens for changes in the selection and updates the active threads accordingly.

@@ -9,7 +9,7 @@ import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import {
   ActiveSelection,
-  LiveblocksPluginProvider,
+  LiveblocksPlugin,
   liveblocksLexicalConfig,
   Mention as LexicalMention,
 } from "@liveblocks/react-lexical";
@@ -58,32 +58,32 @@ export default function Editor() {
           // },
         })}
       >
-        <LiveblocksPluginProvider>
-          <div className={styles.editorHeader}>
-            <Toolbar />
-            <Avatars />
+        <div className={styles.editorHeader}>
+          <Toolbar />
+          <Avatars />
+        </div>
+        <div className={styles.editorContainer}>
+          <div className={styles.editor}>
+            <RichTextPlugin
+              contentEditable={
+                <>
+                  <ContentEditable className={styles.contentEditable} />
+                </>
+              }
+              placeholder={
+                <p className={styles.placeholder}>Start typing here…</p>
+              }
+              ErrorBoundary={LexicalErrorBoundary}
+            />
           </div>
-          <div className={styles.editorContainer}>
-            <div className={styles.editor}>
-              <RichTextPlugin
-                contentEditable={
-                  <>
-                    <ContentEditable className={styles.contentEditable} />
-                  </>
-                }
-                placeholder={
-                  <p className={styles.placeholder}>Start typing here…</p>
-                }
-                ErrorBoundary={LexicalErrorBoundary}
-              />
-            </div>
 
-            <div className={styles.sidebar}>
-              <ComposerWrapper />
-              <Threads />
-            </div>
+          <LiveblocksPlugin />
+
+          <div className={styles.sidebar}>
+            <ComposerWrapper />
+            <Threads />
           </div>
-        </LiveblocksPluginProvider>
+        </div>
       </LexicalComposer>
     </div>
   );

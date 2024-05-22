@@ -26,7 +26,7 @@ import React, {
 } from "react";
 import { createPortal } from "react-dom";
 
-import { useLiveblocksLexicalConfigContext } from "../liveblocks-plugin-provider";
+import { useLiveblocksLexicalConfigContext } from "../liveblocks-plugin";
 import Avatar from "./avatar";
 import * as Suggestions from "./suggestion";
 import User from "./user";

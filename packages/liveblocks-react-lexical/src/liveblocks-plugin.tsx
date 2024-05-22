@@ -6,21 +6,11 @@ import type {
   Json,
   JsonObject,
   LsonObject,
-  ThreadSelection,
 } from "@liveblocks/core";
 import { kInternal } from "@liveblocks/core";
-import {
-  ThreadSelectionGetterContext,
-  useRoomContextBundle,
-} from "@liveblocks/react";
+import { useRoomContextBundle } from "@liveblocks/react";
 import LiveblocksProvider from "@liveblocks/yjs";
-import type { ElementNode, LexicalEditor, TextNode } from "lexical";
-import {
-  $getSelection,
-  $isRangeSelection,
-  $isRootNode,
-  $setSelection,
-} from "lexical";
+import type { LexicalEditor } from "lexical";
 import React, {
   createContext,
   useCallback,
@@ -37,7 +27,7 @@ import { getLiveblocksLexicalConfig } from "./liveblocks-config";
 import type { createMentionNodeFactory } from "./mentions/mention-node";
 import MentionPlugin from "./mentions/mention-plugin";
 
-export type LiveblocksPluginProviderProps = {
+export type LiveblocksPluginProps = {
   /**
    * Optionally override user information. If not, user["info"] from auth will be used.
    */
@@ -71,52 +61,16 @@ export interface LiveblocksLexicalInternalConfig {
   };
 }
 
-function getDomPath(el: TextNode | ElementNode | null) {
-  const anchorNode = el;
-  const path = [];
-  let node = anchorNode;
-  while (node !== null && !$isRootNode(node)) {
-    path.unshift(node.getIndexWithinParent());
-    node = node.getParent();
-  }
-  return path;
-}
-
-function $getEditorSelection(): ThreadSelection | undefined {
-  const selection = $getSelection();
-  if (!$isRangeSelection(selection)) return undefined;
-  const focus = selection.focus;
-  const anchor = selection.anchor;
-  const isBackward = selection.isBackward();
-  const anchorPath = getDomPath(anchor.getNode());
-  const focusPath = getDomPath(focus.getNode());
-
-  return {
-    editor: "lexical",
-    anchorPath,
-    anchorOffset: anchor.offset,
-    anchorType: anchor.type,
-    focusPath,
-    focusOffset: focus.offset,
-    focusType: focus.type,
-    isBackward,
-  };
-}
-
 const LiveblocksLexicalConfigContext =
   createContext<LiveblocksLexicalInternalConfig | null>(null);
 
-export const LiveblocksPluginProvider = ({
+export const LiveblocksPlugin = ({
   userInfo = undefined,
   allowEditsBeforeSync = true,
   initialEditorState = undefined,
   children,
-}: LiveblocksPluginProviderProps): JSX.Element => {
-  const {
-    useSelf,
-    useRoom,
-    [kInternal]: { useOptimisticThreadCreateListener },
-  } = useRoomContextBundle();
+}: LiveblocksPluginProps): JSX.Element => {
+  const { useSelf, useRoom } = useRoomContextBundle();
   const [editor] = useLexicalComposerContext();
   const room = useRoom();
 
@@ -179,11 +133,6 @@ export const LiveblocksPluginProvider = ({
     }
   }, [synced, editor, allowEditsBeforeSync]);
 
-  // Clear the current selection when a new thread is created
-  useOptimisticThreadCreateListener(() => {
-    editor.update(() => $setSelection(null));
-  });
-
   // Create the provider factory
   const providerFactory = useCallback(
     (id: string, yjsDocMap: Map<string, Doc>) => {
@@ -193,12 +142,6 @@ export const LiveblocksPluginProvider = ({
     [provider, doc]
   );
 
-  const getEditorSelection = useCallback((): ThreadSelection | undefined => {
-    const state = editor.getEditorState();
-    const selection = state.read(() => $getEditorSelection());
-    return selection;
-  }, [editor]);
-
   const configRef = useRef<LiveblocksLexicalInternalConfig | null>(null);
   if (configRef.current === null) {
     configRef.current = getLiveblocksLexicalConfig();
@@ -206,24 +149,22 @@ export const LiveblocksPluginProvider = ({
 
   return (
     <LiveblocksLexicalConfigContext.Provider value={configRef.current}>
-      <ThreadSelectionGetterContext.Provider value={getEditorSelection}>
-        {provider && (
-          <CollaborationPlugin
-            providerFactory={providerFactory}
-            initialEditorState={initialEditorState}
-            id={"liveblocks-document"}
-            username={username}
-            cursorColor={cursorcolor}
-            shouldBootstrap={true}
-          />
-        )}
+      {provider && (
+        <CollaborationPlugin
+          providerFactory={providerFactory}
+          initialEditorState={initialEditorState}
+          id={"liveblocks-document"}
+          username={username}
+          cursorColor={cursorcolor}
+          shouldBootstrap={true}
+        />
+      )}
 
-        {configRef.current.mentions && <MentionPlugin />}
+      {configRef.current.mentions && <MentionPlugin />}
 
-        {configRef.current.comments && (
-          <CommentPluginProvider>{children}</CommentPluginProvider>
-        )}
-      </ThreadSelectionGetterContext.Provider>
+      {configRef.current.comments && (
+        <CommentPluginProvider>{children}</CommentPluginProvider>
+      )}
     </LiveblocksLexicalConfigContext.Provider>
   );
 };

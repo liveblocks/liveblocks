@@ -3,7 +3,7 @@ import type { ComponentType } from "react";
 import * as React from "react";
 
 import { ThreadMarkNode } from "./comments/thread-mark-node";
-import type { LiveblocksLexicalInternalConfig } from "./liveblocks-plugin-provider";
+import type { LiveblocksLexicalInternalConfig } from "./liveblocks-plugin";
 import { Mention } from "./mentions/mention-component";
 import { createMentionNodeFactory } from "./mentions/mention-node";
 import User from "./mentions/user";
