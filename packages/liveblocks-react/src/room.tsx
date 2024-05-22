@@ -694,154 +694,10 @@ function makeRoomContextBundle<
     );
   }
 
-  /** @internal */
-  function RoomProviderInner(
-    props: RoomProviderProps<TPresence, TStorage> & {
-      client: Client;
-      stableEnterRoom: (
-        roomId: string,
-        options: EnterOptions<TPresence, TStorage>
-      ) => TRoomLeavePair;
-    }
-  ) {
-    const { id: roomId, stableEnterRoom } = props;
-
-    if (process.env.NODE_ENV !== "production") {
-      if (!roomId) {
-        throw new Error(
-          "RoomProvider id property is required. For more information: https://liveblocks.io/docs/errors/liveblocks-react/RoomProvider-id-property-is-required"
-        );
-      }
-
-      if (typeof roomId !== "string") {
-        throw new Error("RoomProvider id property should be a string.");
-      }
-
-      const majorReactVersion = parseInt(React.version) || 1;
-      const oldReactVersion = majorReactVersion < 18;
-      errorIf(
-        oldReactVersion && props.unstable_batchedUpdates === undefined,
-        missing_unstable_batchedUpdates(majorReactVersion, roomId)
-      );
-      deprecateIf(
-        !oldReactVersion && props.unstable_batchedUpdates !== undefined,
-        superfluous_unstable_batchedUpdates
-      );
-    }
-
-    // Note: We'll hold on to the initial value given here, and ignore any
-    // changes to this argument in subsequent renders
-    const frozenProps = useInitial({
-      initialPresence: props.initialPresence,
-      initialStorage: props.initialStorage,
-      unstable_batchedUpdates: props.unstable_batchedUpdates,
-      autoConnect:
-        props.autoConnect ??
-        props.shouldInitiallyConnect ??
-        typeof window !== "undefined",
-    });
-
-    const [{ room }, setRoomLeavePair] = React.useState(() =>
-      stableEnterRoom(roomId, {
-        ...frozenProps,
-        autoConnect: false, // Deliberately using false here on the first render, see below
-      })
-    );
-
-    React.useEffect(() => {
-      async function handleCommentEvent(message: CommentsEventServerMsg) {
-        // TODO: Error handling
-        const info = await room[kInternal].comments.getThread({
-          threadId: message.threadId,
-        });
-
-        // If no thread info was returned (i.e., 404), we remove the thread and relevant inbox notifications from local cache.
-        if (!info) {
-          store.deleteThread(message.threadId);
-          return;
-        }
-        const { thread, inboxNotification } = info;
-
-        const existingThread = store.get().threads[message.threadId];
-
-        switch (message.type) {
-          case ServerMsgCode.COMMENT_EDITED:
-          case ServerMsgCode.THREAD_METADATA_UPDATED:
-          case ServerMsgCode.COMMENT_REACTION_ADDED:
-          case ServerMsgCode.COMMENT_REACTION_REMOVED:
-          case ServerMsgCode.COMMENT_DELETED:
-            // If the thread doesn't exist in the local cache, we do not update it with the server data as an optimistic update could have deleted the thread locally.
-            if (!existingThread) break;
-
-            store.updateThreadAndNotification(thread, inboxNotification);
-            break;
-          case ServerMsgCode.COMMENT_CREATED:
-            store.updateThreadAndNotification(thread, inboxNotification);
-            break;
-          default:
-            break;
-        }
-      }
-
-      return room.events.comments.subscribe(
-        (message) => void handleCommentEvent(message)
-      );
-    }, [room]);
-
-    React.useEffect(() => {
-      // Retrieve threads that have been updated/deleted since the last time the room requested threads updates
-      void getThreadsUpdates(room.id);
-    }, [room.id]);
-
-    /**
-     * Subscribe to the 'online' event to fetch threads/notifications updates when the browser goes back online.
-     */
-    React.useEffect(() => {
-      function handleIsOnline() {
-        void getThreadsUpdates(room.id);
-      }
-
-      window.addEventListener("online", handleIsOnline);
-      return () => {
-        window.removeEventListener("online", handleIsOnline);
-      };
-    }, [room.id]);
-
-    React.useEffect(() => {
-      const pair = stableEnterRoom(roomId, frozenProps);
-
-      setRoomLeavePair(pair);
-      const { room, leave } = pair;
-
-      // In React, it's important to start connecting to the room as an effect,
-      // rather than doing this during the initial render. This means that
-      // during the initial render (both on the server-side, and on the first
-      // hydration on the client-side), the value of the `useStatus()` hook
-      // will correctly be "initial", and transition to "connecting" as an
-      // effect.
-      if (frozenProps.autoConnect) {
-        room.connect();
-      }
-
-      return () => {
-        leave();
-      };
-    }, [roomId, frozenProps, stableEnterRoom]);
-
-    return (
-      <LiveblocksProvider client={props.client}>
-        <RoomContext.Provider value={room}>
-          {props.children}
-        </RoomContext.Provider>
-      </LiveblocksProvider>
-    );
-  }
-
   // Bind to typed hooks
   const useTRoom: () => TRoom = () => useRoom();
 
-  const { store, getThreadsUpdates, useMentionSuggestions } =
-    getExtrasForClient<TThreadMetadata>(client);
+  const { useMentionSuggestions } = getExtrasForClient<TThreadMetadata>(client);
 
   const shared = createSharedContext<TUserMeta>(client);
 
@@ -975,6 +831,156 @@ function makeRoomContextBundle<
 
 // ---------------------------------------------------------------------- }}}
 // --- Private hook helpers --------------------------------------------- {{{
+
+/** @internal */
+function RoomProviderInner<
+  P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
+>(
+  props: RoomProviderProps<P, S> & {
+    client: Client;
+    stableEnterRoom: (
+      roomId: string,
+      options: EnterOptions<P, S>
+    ) => RoomLeavePair<P, S, U, E>;
+  }
+) {
+  const { client, id: roomId, stableEnterRoom } = props;
+
+  if (process.env.NODE_ENV !== "production") {
+    if (!roomId) {
+      throw new Error(
+        "RoomProvider id property is required. For more information: https://liveblocks.io/docs/errors/liveblocks-react/RoomProvider-id-property-is-required"
+      );
+    }
+
+    if (typeof roomId !== "string") {
+      throw new Error("RoomProvider id property should be a string.");
+    }
+
+    const majorReactVersion = parseInt(React.version) || 1;
+    const oldReactVersion = majorReactVersion < 18;
+    errorIf(
+      oldReactVersion && props.unstable_batchedUpdates === undefined,
+      missing_unstable_batchedUpdates(majorReactVersion, roomId)
+    );
+    deprecateIf(
+      !oldReactVersion && props.unstable_batchedUpdates !== undefined,
+      superfluous_unstable_batchedUpdates
+    );
+  }
+
+  // Note: We'll hold on to the initial value given here, and ignore any
+  // changes to this argument in subsequent renders
+  const frozenProps = useInitial({
+    initialPresence: props.initialPresence,
+    initialStorage: props.initialStorage,
+    unstable_batchedUpdates: props.unstable_batchedUpdates,
+    autoConnect:
+      props.autoConnect ??
+      props.shouldInitiallyConnect ??
+      typeof window !== "undefined",
+  });
+
+  const [{ room }, setRoomLeavePair] = React.useState(() =>
+    stableEnterRoom(roomId, {
+      ...frozenProps,
+      autoConnect: false, // Deliberately using false here on the first render, see below
+    })
+  );
+
+  React.useEffect(() => {
+    const { store } = getExtrasForClient(client);
+
+    async function handleCommentEvent(message: CommentsEventServerMsg) {
+      // TODO: Error handling
+      const info = await room[kInternal].comments.getThread({
+        threadId: message.threadId,
+      });
+
+      // If no thread info was returned (i.e., 404), we remove the thread and relevant inbox notifications from local cache.
+      if (!info) {
+        store.deleteThread(message.threadId);
+        return;
+      }
+      const { thread, inboxNotification } = info;
+
+      const existingThread = store.get().threads[message.threadId];
+
+      switch (message.type) {
+        case ServerMsgCode.COMMENT_EDITED:
+        case ServerMsgCode.THREAD_METADATA_UPDATED:
+        case ServerMsgCode.COMMENT_REACTION_ADDED:
+        case ServerMsgCode.COMMENT_REACTION_REMOVED:
+        case ServerMsgCode.COMMENT_DELETED:
+          // If the thread doesn't exist in the local cache, we do not update it with the server data as an optimistic update could have deleted the thread locally.
+          if (!existingThread) break;
+
+          store.updateThreadAndNotification(thread, inboxNotification);
+          break;
+        case ServerMsgCode.COMMENT_CREATED:
+          store.updateThreadAndNotification(thread, inboxNotification);
+          break;
+        default:
+          break;
+      }
+    }
+
+    return room.events.comments.subscribe(
+      (message) => void handleCommentEvent(message)
+    );
+  }, [client, room]);
+
+  React.useEffect(() => {
+    const { getThreadsUpdates } = getExtrasForClient(client);
+    // Retrieve threads that have been updated/deleted since the last time the room requested threads updates
+    void getThreadsUpdates(room.id);
+  }, [client, room.id]);
+
+  /**
+   * Subscribe to the 'online' event to fetch threads/notifications updates when the browser goes back online.
+   */
+  React.useEffect(() => {
+    function handleIsOnline() {
+      const { getThreadsUpdates } = getExtrasForClient(client);
+      void getThreadsUpdates(room.id);
+    }
+
+    window.addEventListener("online", handleIsOnline);
+    return () => {
+      window.removeEventListener("online", handleIsOnline);
+    };
+  }, [client, room.id]);
+
+  React.useEffect(() => {
+    const pair = stableEnterRoom(roomId, frozenProps);
+
+    setRoomLeavePair(pair);
+    const { room, leave } = pair;
+
+    // In React, it's important to start connecting to the room as an effect,
+    // rather than doing this during the initial render. This means that
+    // during the initial render (both on the server-side, and on the first
+    // hydration on the client-side), the value of the `useStatus()` hook
+    // will correctly be "initial", and transition to "connecting" as an
+    // effect.
+    if (frozenProps.autoConnect) {
+      room.connect();
+    }
+
+    return () => {
+      leave();
+    };
+  }, [roomId, frozenProps, stableEnterRoom]);
+
+  return (
+    <LiveblocksProvider client={client}>
+      <RoomContext.Provider value={room}>{props.children}</RoomContext.Provider>
+    </LiveblocksProvider>
+  );
+}
 
 function useRoom<
   TPresence extends JsonObject,
