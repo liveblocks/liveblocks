@@ -625,75 +625,13 @@ function makeRoomContextBundle<
   TThreadMetadata
 > {
   type TRoom = Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
-  type TRoomLeavePair = RoomLeavePair<
-    TPresence,
-    TStorage,
-    TUserMeta,
-    TRoomEvent
-  >;
-
-  /**
-   * RATIONALE:
-   * At the "Outer" RoomProvider level, we keep a cache and produce
-   * a stableEnterRoom function, which we pass down to the real "Inner"
-   * RoomProvider level.
-   *
-   * The purpose is to ensure that if `stableEnterRoom("my-room")` is called
-   * multiple times for the same room ID, it will always return the exact same
-   * (cached) value, so that in total only a single "leave" function gets
-   * produced and registered in the client.
-   *
-   * If we didn't use this cache, then in React StrictMode
-   * stableEnterRoom("my-room") might get called multiple (at least 4) times,
-   * causing more leave functions to be produced in the client, some of which
-   * we cannot get a hold on (because StrictMode would discard those results by
-   * design). This would make it appear to the Client that the Room is still in
-   * use by some party that hasn't called `leave()` on it yet, thus causing the
-   * Room to not be freed and destroyed when the component unmounts later.
-   */
-  function RoomProviderOuter(props: RoomProviderProps<TPresence, TStorage>) {
-    const [cache] = React.useState<Map<string, TRoomLeavePair>>(
-      () => new Map()
-    );
-
-    // Produce a version of client.enterRoom() that when called for the same
-    // room ID multiple times, will not keep producing multiple leave
-    // functions, but instead return the cached one.
-    const stableEnterRoom = React.useCallback(
-      (
-        roomId: string,
-        options: EnterOptions<TPresence, TStorage>
-      ): TRoomLeavePair => {
-        const cached = cache.get(roomId);
-        if (cached) return cached;
-
-        const rv = client.enterRoom<TPresence, TStorage, TUserMeta, TRoomEvent>(
-          roomId,
-          options
-        );
-
-        // Wrap the leave function to also delete the cached value
-        const origLeave = rv.leave;
-        rv.leave = () => {
-          origLeave();
-          cache.delete(roomId);
-        };
-
-        cache.set(roomId, rv);
-        return rv;
-      },
-      [cache]
-    );
-
-    return <RoomProviderInner {...props} stableEnterRoom={stableEnterRoom} />;
-  }
 
   function RoomProvider_withImplicitLiveblocksProvider(
     props: RoomProviderProps<TPresence, TStorage>
   ) {
     return (
       <LiveblocksProvider client={client}>
-        <RoomProviderOuter {...props} />
+        <RoomProvider {...props} />
       </LiveblocksProvider>
     );
   }
@@ -713,7 +651,7 @@ function makeRoomContextBundle<
     TThreadMetadata
   > = {
     RoomContext: RoomContext as React.Context<TRoom | null>,
-    RoomProvider: RoomProvider_withImplicitLiveblocksProvider, // XXX Convert
+    RoomProvider: RoomProvider_withImplicitLiveblocksProvider,
 
     useRoom: useTRoom,
     useStatus,
@@ -768,7 +706,7 @@ function makeRoomContextBundle<
 
     suspense: {
       RoomContext: RoomContext as React.Context<TRoom | null>,
-      RoomProvider: RoomProvider_withImplicitLiveblocksProvider, // XXX Convert
+      RoomProvider: RoomProvider_withImplicitLiveblocksProvider,
 
       useRoom: useTRoom,
       useStatus,
@@ -835,6 +773,72 @@ function makeRoomContextBundle<
 
 // ---------------------------------------------------------------------- }}}
 // --- Private hook helpers --------------------------------------------- {{{
+
+function RoomProvider<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json,
+>(props: RoomProviderProps<TPresence, TStorage>) {
+  const client = useClient();
+  const [cache] = React.useState(
+    () =>
+      new Map<
+        string,
+        RoomLeavePair<TPresence, TStorage, TUserMeta, TRoomEvent>
+      >()
+  );
+
+  // Produce a version of client.enterRoom() that when called for the same
+  // room ID multiple times, will not keep producing multiple leave
+  // functions, but instead return the cached one.
+  const stableEnterRoom = React.useCallback(
+    (
+      roomId: string,
+      options: EnterOptions<TPresence, TStorage>
+    ): RoomLeavePair<TPresence, TStorage, TUserMeta, TRoomEvent> => {
+      const cached = cache.get(roomId);
+      if (cached) return cached;
+
+      const rv = client.enterRoom<TPresence, TStorage, TUserMeta, TRoomEvent>(
+        roomId,
+        options
+      );
+
+      // Wrap the leave function to also delete the cached value
+      const origLeave = rv.leave;
+      rv.leave = () => {
+        origLeave();
+        cache.delete(roomId);
+      };
+
+      cache.set(roomId, rv);
+      return rv;
+    },
+    [client, cache]
+  );
+
+  //
+  // RATIONALE:
+  // At the "Outer" RoomProvider level, we keep a cache and produce
+  // a stableEnterRoom function, which we pass down to the real "Inner"
+  // RoomProvider level.
+  //
+  // The purpose is to ensure that if `stableEnterRoom("my-room")` is called
+  // multiple times for the same room ID, it will always return the exact same
+  // (cached) value, so that in total only a single "leave" function gets
+  // produced and registered in the client.
+  //
+  // If we didn't use this cache, then in React StrictMode
+  // stableEnterRoom("my-room") might get called multiple (at least 4) times,
+  // causing more leave functions to be produced in the client, some of which
+  // we cannot get a hold on (because StrictMode would discard those results by
+  // design). This would make it appear to the Client that the Room is still in
+  // use by some party that hasn't called `leave()` on it yet, thus causing the
+  // Room to not be freed and destroyed when the component unmounts later.
+  //
+  return <RoomProviderInner {...props} stableEnterRoom={stableEnterRoom} />;
+}
 
 /** @internal */
 function RoomProviderInner<
