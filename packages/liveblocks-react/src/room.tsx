@@ -597,6 +597,16 @@ function makeExtrasForClient<TThreadMetadata extends BaseMetadata>(
 
 type OpaqueRoom = Room<JsonObject, LsonObject, BaseUserMeta, Json>;
 
+type RoomLeavePair<
+  P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
+> = {
+  room: Room<P, S, U, E>;
+  leave: () => void;
+};
+
 const RoomContext = React.createContext<OpaqueRoom | null>(null);
 
 function makeRoomContextBundle<
@@ -615,7 +625,12 @@ function makeRoomContextBundle<
   TThreadMetadata
 > {
   type TRoom = Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
-  type TRoomLeavePair = { room: TRoom; leave: () => void };
+  type TRoomLeavePair = RoomLeavePair<
+    TPresence,
+    TStorage,
+    TUserMeta,
+    TRoomEvent
+  >;
 
   /**
    * RATIONALE:
