@@ -211,7 +211,6 @@ export type { RoomInfo } from "./types/RoomInfo";
 export type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 export type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
 export type { ThreadDeleteInfo } from "./types/ThreadDeleteInfo";
-export type { ThreadSelection } from "./types/ThreadSelection";
 export type { User } from "./types/User";
 export { detectDupes };
 

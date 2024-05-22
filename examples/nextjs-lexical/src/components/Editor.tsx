@@ -99,14 +99,10 @@ function Threads() {
   return (
     <div className={styles.threads}>
       {threads.map((thread) => {
-        return <ThreadWrapper key={thread.id} thread={thread} />;
+        return <Thread thread={thread} className={styles.thread} />;
       })}
     </div>
   );
-}
-
-function ThreadWrapper({ thread }: { thread: ThreadData }) {
-  return <Thread thread={thread} className={styles.thread} />;
 }
 
 function ComposerWrapper() {

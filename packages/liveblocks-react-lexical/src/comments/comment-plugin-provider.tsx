@@ -21,6 +21,7 @@ import {
   ThreadMarkNode,
 } from "./thread-mark-node";
 import { $wrapSelectionInThreadMarkNode } from "./wrap-selection-in-thread-mark-node";
+import $unwrapThreadMarkNode from "./unwrap-thread-mark-node";
 
 type ThreadToNodesMap = Map<string, Set<NodeKey>>;
 
@@ -37,7 +38,10 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
   const [activeThreads, setActiveThreads] = useState<string[]>([]); // The threads that are currently active (or selected) in the editor
 
   const {
-    [kInternal]: { useOptimisticThreadCreateListener },
+    [kInternal]: {
+      useOptimisticThreadCreateListener,
+      useOptimisticThreadDeleteListener,
+    },
   } = useRoomContextBundle();
 
   useEffect(() => {
@@ -59,6 +63,26 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
 
       // Clear the selection after wrapping
       $setSelection(null);
+    });
+  });
+
+  useOptimisticThreadDeleteListener(({ threadId }) => {
+    editor.update(() => {
+      const threadToNodes = threadToNodeKeysRef.current;
+      const keys = threadToNodes.get(threadId);
+
+      if (keys === undefined) return;
+
+      for (const key of keys) {
+        const node = $getNodeByKey(key);
+        console.log({ node });
+        if (!$isThreadMarkNode(node)) continue;
+        node.deleteID(threadId);
+
+        if (node.getIDs().length === 0) {
+          $unwrapThreadMarkNode(node);
+        }
+      }
     });
   });
 

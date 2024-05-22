@@ -99,7 +99,6 @@ import type {
   ThreadDeleteInfo,
   ThreadDeleteInfoPlain,
 } from "./types/ThreadDeleteInfo";
-import type { ThreadSelection } from "./types/ThreadSelection";
 import type { User } from "./types/User";
 import { PKG_VERSION } from "./version";
 
@@ -527,7 +526,6 @@ type CommentsApi = {
     commentId: string;
     metadata: TThreadMetadata | undefined;
     body: CommentBody;
-    selection: ThreadSelection | undefined;
   }): Promise<ThreadData<TThreadMetadata>>;
   editThreadMetadata<TThreadMetadata extends BaseMetadata = never>(options: {
     metadata: PartialNullable<TThreadMetadata>;
@@ -1205,13 +1203,11 @@ function createCommentsApi(
     body,
     commentId,
     threadId,
-    selection,
   }: {
     roomId: string;
     threadId: string;
     commentId: string;
     metadata: TThreadMetadata | undefined;
-    selection: ThreadSelection | undefined;
     body: CommentBody;
   }) {
     const thread = await fetchJson<ThreadDataPlain<TThreadMetadata>>(
@@ -1228,7 +1224,6 @@ function createCommentsApi(
             body,
           },
           metadata,
-          selection,
         }),
       }
     );

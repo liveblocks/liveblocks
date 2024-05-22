@@ -46,7 +46,6 @@ import {
   removeReaction,
   ServerMsgCode,
   stringify,
-  ThreadSelection,
   upsertComment,
 } from "@liveblocks/core";
 import { nanoid } from "nanoid";
@@ -651,7 +650,7 @@ export function createRoomContext<
           if (event.roomId !== room.id) return;
 
           savedCallback.current({
-            threadId: event.id,
+            threadId: event.thread.id,
           });
         }
       });
@@ -685,7 +684,7 @@ export function createRoomContext<
           if (newThread.deletedAt === undefined) return;
 
           savedCallback.current({
-            threadId: event.id,
+            threadId: event.threadId,
           });
         }
       });
@@ -1402,7 +1401,6 @@ export function createRoomContext<
 
   function useCreateThread() {
     const room = useRoom();
-    const getThreadSelection = React.useContext(ThreadSelectionGetterContext);
 
     return React.useCallback(
       (
@@ -1445,10 +1443,8 @@ export function createRoomContext<
           id: optimisticUpdateId,
         });
 
-        const selection = getThreadSelection?.();
-
         room[kInternal].comments
-          .createThread({ threadId, commentId, body, metadata, selection })
+          .createThread({ threadId, commentId, body, metadata })
           .then(
             (thread) => {
               store.set((state) => ({
@@ -1479,7 +1475,7 @@ export function createRoomContext<
 
         return newThread;
       },
-      [room, getThreadSelection]
+      [room]
     );
   }
 
@@ -2448,10 +2444,3 @@ export function generateQueryKey<TThreadMetadata extends BaseMetadata>(
 ) {
   return `${roomId}-${stringify(options ?? {})}`;
 }
-
-/**
- * @private
- */
-export const ThreadSelectionGetterContext = React.createContext<
-  (() => ThreadSelection | undefined) | undefined
->(undefined);
