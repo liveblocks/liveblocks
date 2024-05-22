@@ -680,7 +680,15 @@ function makeRoomContextBundle<
     useOthersConnectionIds,
     useOther,
 
-    useMutation: useMutation as any, // XXX Can we get rid of this any more nicely?
+    useMutation: useMutation as <
+      F extends (
+        context: MutationContext<TPresence, TStorage, TUserMeta>,
+        ...args: any[]
+      ) => any,
+    >(
+      callback: F,
+      deps: readonly unknown[]
+    ) => OmitFirstArg<F>,
 
     useThreads,
 
@@ -735,7 +743,15 @@ function makeRoomContextBundle<
       useOthersConnectionIds: useOthersConnectionIdsSuspense,
       useOther: useOtherSuspense,
 
-      useMutation: useMutation as any, // XXX Can we get rid of this any more nicely?
+      useMutation: useMutation as <
+        F extends (
+          context: MutationContext<TPresence, TStorage, TUserMeta>,
+          ...args: any[]
+        ) => any,
+      >(
+        callback: F,
+        deps: readonly unknown[]
+      ) => OmitFirstArg<F>,
 
       useThreads: useThreadsSuspense,
 
