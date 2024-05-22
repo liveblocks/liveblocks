@@ -7,3 +7,4 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 export { ActiveSelection } from "./active-selection";
 export { liveblocksLexicalConfig } from "./liveblocks-config";
 export { LiveblocksPluginProvider } from "./liveblocks-plugin-provider";
+export { Mention } from "./mentions/mention-component";

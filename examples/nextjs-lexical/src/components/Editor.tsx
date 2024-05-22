@@ -11,12 +11,14 @@ import {
   ActiveSelection,
   LiveblocksPluginProvider,
   liveblocksLexicalConfig,
+  Mention as LexicalMention,
 } from "@liveblocks/react-lexical";
 import { useThreads } from "@/liveblocks.config";
 import { Composer, Thread } from "@liveblocks/react-comments";
 import { useEffect, useState } from "react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { COMMAND_PRIORITY_EDITOR } from "lexical";
+import { ThreadData } from "@liveblocks/client";
 
 // Set up editor config and theme
 const initialConfig = {
@@ -24,6 +26,7 @@ const initialConfig = {
   namespace: "Demo",
   nodes: [],
   onError: (error: unknown) => {
+    console.error(error);
     throw error;
   },
   theme: {
@@ -42,7 +45,19 @@ const initialConfig = {
 export default function Editor() {
   return (
     <div className={styles.container}>
-      <LexicalComposer initialConfig={liveblocksLexicalConfig(initialConfig)}>
+      <LexicalComposer
+        initialConfig={liveblocksLexicalConfig(initialConfig, {
+          // components: {
+          //   Mention: ({ userId }) => {
+          //     return (
+          //       <LexicalMention className="lb-lexical-composer-mention">
+          //         {userId}
+          //       </LexicalMention>
+          //     );
+          //   },
+          // },
+        })}
+      >
         <LiveblocksPluginProvider>
           <div className={styles.editorHeader}>
             <Toolbar />
@@ -84,12 +99,14 @@ function Threads() {
   return (
     <div className={styles.threads}>
       {threads.map((thread) => {
-        return (
-          <Thread key={thread.id} thread={thread} className={styles.thread} />
-        );
+        return <ThreadWrapper key={thread.id} thread={thread} />;
       })}
     </div>
   );
+}
+
+function ThreadWrapper({ thread }: { thread: ThreadData }) {
+  return <Thread thread={thread} className={styles.thread} />;
 }
 
 function ComposerWrapper() {

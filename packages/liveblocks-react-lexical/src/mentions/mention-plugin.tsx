@@ -26,12 +26,8 @@ import React, {
 } from "react";
 import { createPortal } from "react-dom";
 
+import { useLiveblocksLexicalConfigContext } from "../liveblocks-plugin-provider";
 import Avatar from "./avatar";
-import {
-  $createMentionNode,
-  $isMentionNode,
-  MentionNode,
-} from "./mention-node";
 import * as Suggestions from "./suggestion";
 import User from "./user";
 
@@ -152,6 +148,11 @@ const OnResetMatchCallbackContext = createContext<(() => void) | null>(null);
 
 export default function MentionPlugin() {
   const [editor] = useLexicalComposerContext();
+  const {
+    mentions: {
+      factory: { $isMentionNode, $createMentionNode, MentionNode },
+    },
+  } = useLiveblocksLexicalConfigContext();
 
   if (!editor.hasNodes([MentionNode])) {
     throw new Error("MentionPlugin: MentionNode not registered on editor");
@@ -185,7 +186,7 @@ export default function MentionPlugin() {
     }
 
     return editor.registerMutationListener(MentionNode, handleMutation);
-  }, [editor]);
+  }, [editor, MentionNode]);
 
   useEffect(() => {
     function $onStateRead() {
@@ -268,7 +269,7 @@ export default function MentionPlugin() {
       $handleBackspace,
       COMMAND_PRIORITY_LOW
     );
-  }, [editor]);
+  }, [editor, $isMentionNode]);
 
   const handleValueSelect = useCallback(
     (userId: string) => {
@@ -310,7 +311,7 @@ export default function MentionPlugin() {
 
       editor.update($onValueSelect);
     },
-    [editor, match]
+    [editor, match, $createMentionNode]
   );
 
   if (match === null || matchingString === undefined) return null;

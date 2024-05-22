@@ -48,7 +48,7 @@ export class ThreadMarkNode extends ElementNode {
   __ids: Array<string>; // The ids of the threads that this mark is associated with
 
   static getType(): string {
-    return "lb-thread-mark";
+    return "thread-mark";
   }
 
   static clone(node: ThreadMarkNode): ThreadMarkNode {

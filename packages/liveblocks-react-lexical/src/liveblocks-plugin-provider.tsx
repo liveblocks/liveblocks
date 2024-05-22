@@ -15,9 +15,16 @@ import {
 } from "@liveblocks/react";
 import LiveblocksProvider from "@liveblocks/yjs";
 import type { ElementNode, LexicalEditor, TextNode } from "lexical";
-import { $getSelection, $isRangeSelection, $isRootNode } from "lexical";
+import {
+  $getSelection,
+  $isRangeSelection,
+  $isRootNode,
+  $setSelection,
+} from "lexical";
 import React, {
+  createContext,
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -26,8 +33,8 @@ import React, {
 import { Doc } from "yjs";
 
 import { CommentPluginProvider } from "./comments/comment-plugin-provider";
-import type { LiveblocksConfig } from "./liveblocks-config";
-import { getLiveblocksConfig } from "./liveblocks-config";
+import { getLiveblocksLexicalConfig } from "./liveblocks-config";
+import type { createMentionNodeFactory } from "./mentions/mention-node";
 import MentionPlugin from "./mentions/mention-plugin";
 
 export type LiveblocksPluginProviderProps = {
@@ -55,6 +62,14 @@ export type LiveblocksPluginProviderProps = {
 
   children?: React.ReactNode;
 };
+
+export interface LiveblocksLexicalInternalConfig {
+  comments: boolean;
+  mentions: {
+    enabled: boolean;
+    factory: ReturnType<typeof createMentionNodeFactory>;
+  };
+}
 
 function getDomPath(el: TextNode | ElementNode | null) {
   const anchorNode = el;
@@ -88,13 +103,20 @@ function $getEditorSelection(): ThreadSelection | undefined {
   };
 }
 
+const LiveblocksLexicalConfigContext =
+  createContext<LiveblocksLexicalInternalConfig | null>(null);
+
 export const LiveblocksPluginProvider = ({
   userInfo = undefined,
   allowEditsBeforeSync = true,
   initialEditorState = undefined,
   children,
 }: LiveblocksPluginProviderProps): JSX.Element => {
-  const { useSelf, useRoom } = useRoomContextBundle();
+  const {
+    useSelf,
+    useRoom,
+    [kInternal]: { useOptimisticThreadCreateListener },
+  } = useRoomContextBundle();
   const [editor] = useLexicalComposerContext();
   const room = useRoom();
 
@@ -157,6 +179,11 @@ export const LiveblocksPluginProvider = ({
     }
   }, [synced, editor, allowEditsBeforeSync]);
 
+  // Clear the current selection when a new thread is created
+  useOptimisticThreadCreateListener(() => {
+    editor.update(() => $setSelection(null));
+  });
+
   // Create the provider factory
   const providerFactory = useCallback(
     (id: string, yjsDocMap: Map<string, Doc>) => {
@@ -172,29 +199,41 @@ export const LiveblocksPluginProvider = ({
     return selection;
   }, [editor]);
 
-  const configRef = useRef<LiveblocksConfig | null>(null);
+  const configRef = useRef<LiveblocksLexicalInternalConfig | null>(null);
   if (configRef.current === null) {
-    configRef.current = getLiveblocksConfig();
+    configRef.current = getLiveblocksLexicalConfig();
   }
 
   return (
-    <ThreadSelectionGetterContext.Provider value={getEditorSelection}>
-      {provider && (
-        <CollaborationPlugin
-          providerFactory={providerFactory}
-          initialEditorState={initialEditorState}
-          id={"liveblocks-document"}
-          username={username}
-          cursorColor={cursorcolor}
-          shouldBootstrap={true}
-        />
-      )}
+    <LiveblocksLexicalConfigContext.Provider value={configRef.current}>
+      <ThreadSelectionGetterContext.Provider value={getEditorSelection}>
+        {provider && (
+          <CollaborationPlugin
+            providerFactory={providerFactory}
+            initialEditorState={initialEditorState}
+            id={"liveblocks-document"}
+            username={username}
+            cursorColor={cursorcolor}
+            shouldBootstrap={true}
+          />
+        )}
 
-      {configRef.current.mentions && <MentionPlugin />}
+        {configRef.current.mentions && <MentionPlugin />}
 
-      {configRef.current.comments && (
-        <CommentPluginProvider>{children}</CommentPluginProvider>
-      )}
-    </ThreadSelectionGetterContext.Provider>
+        {configRef.current.comments && (
+          <CommentPluginProvider>{children}</CommentPluginProvider>
+        )}
+      </ThreadSelectionGetterContext.Provider>
+    </LiveblocksLexicalConfigContext.Provider>
   );
 };
+
+export function useLiveblocksLexicalConfigContext(): LiveblocksLexicalInternalConfig {
+  const config = useContext(LiveblocksLexicalConfigContext);
+  if (config === null) {
+    throw new Error(
+      "useLiveblocksLexicalConfigContext must be used within a LiveblocksPluginProvider"
+    );
+  }
+  return config;
+}
