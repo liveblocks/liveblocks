@@ -685,9 +685,15 @@ function makeRoomContextBundle<
       [cache]
     );
 
+    return <RoomProviderInner {...props} stableEnterRoom={stableEnterRoom} />;
+  }
+
+  function RoomProvider_withImplicitLiveblocksProvider(
+    props: RoomProviderProps<TPresence, TStorage>
+  ) {
     return (
       <LiveblocksProvider client={client}>
-        <RoomProviderInner {...props} stableEnterRoom={stableEnterRoom} />
+        <RoomProviderOuter {...props} />
       </LiveblocksProvider>
     );
   }
@@ -707,7 +713,7 @@ function makeRoomContextBundle<
     TThreadMetadata
   > = {
     RoomContext: RoomContext as React.Context<TRoom | null>,
-    RoomProvider: RoomProviderOuter, // XXX Convert
+    RoomProvider: RoomProvider_withImplicitLiveblocksProvider, // XXX Convert
 
     useRoom: useTRoom,
     useStatus,
@@ -762,7 +768,7 @@ function makeRoomContextBundle<
 
     suspense: {
       RoomContext: RoomContext as React.Context<TRoom | null>,
-      RoomProvider: RoomProviderOuter, // XXX Convert
+      RoomProvider: RoomProvider_withImplicitLiveblocksProvider, // XXX Convert
 
       useRoom: useTRoom,
       useStatus,
