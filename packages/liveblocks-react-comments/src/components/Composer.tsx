@@ -1,7 +1,7 @@
 "use client";
 
 import { type BaseMetadata, kInternal } from "@liveblocks/core";
-import { useRoomContextBundle } from "@liveblocks/react";
+import { useClient, useRoomContextBundle } from "@liveblocks/react";
 import type {
   ComponentPropsWithoutRef,
   FocusEvent,
@@ -289,10 +289,10 @@ const ComposerWithContext = forwardRef<
     },
     forwardedRef
   ) => {
-    const {
-      [kInternal]: { hasResolveMentionSuggestions },
-      useSelf,
-    } = useRoomContextBundle();
+    const client = useClient();
+    const hasResolveMentionSuggestions =
+      client[kInternal].resolveMentionSuggestions !== undefined;
+    const { useSelf } = useRoomContextBundle();
     const self = useSelf();
     const isDisabled = useMemo(
       () => disabled || !self?.canComment,

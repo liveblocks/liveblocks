@@ -1,5 +1,5 @@
-import { expect, Page } from "@playwright/test";
-import { test } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 import { genRoomId, preparePage, sleep, waitForJson } from "../utils";
 
@@ -27,7 +27,7 @@ test.describe("Inbox notifications", () => {
 
   test.afterEach(() => Promise.all(pages.map((page) => page.close())));
 
-  test("Inbox notifications are received correctly when mentioning or participating in threads", async () => {
+  test("Inbox notifications synchronize", async () => {
     const [page1, page2] = pages;
 
     //
@@ -53,6 +53,9 @@ test.describe("Inbox notifications", () => {
         .getByRole("textbox");
       await newThreadComposer.fill("Hi team!");
       await newThreadComposer.press("Enter");
+
+      // Await confirmation for the thread creation from the server
+      await waitForJson(page1, "#numPendingUpdates", 0);
 
       const replyComposer = page1
         .locator(".lb-thread-composer")

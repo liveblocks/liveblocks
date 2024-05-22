@@ -7,6 +7,7 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 export { ClientSideSuspense } from "./ClientSideSuspense";
 export {
   createLiveblocksContext,
+  useClient,
   useLiveblocksContextBundle,
   useLiveblocksContextBundleOrNull,
 } from "./liveblocks";

@@ -46,8 +46,6 @@ const _bundles = new WeakMap<
 export const POLLING_INTERVAL = 60 * 1000; // 1 minute
 export const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
 
-// --- Selector helpers ------------------------------------------------- {{{
-
 function selectorFor_useInboxNotifications(
   state: CacheState<BaseMetadata>
 ): InboxNotificationsState {
@@ -128,9 +126,6 @@ function selectorFor_useUnreadInboxNotificationsCountSuspense(
     count: selectUnreadInboxNotificationsCount(state),
   };
 }
-
-// ---------------------------------------------------------------------- }}}
-// --- Private APIs ----------------------------------------------------- {{{
 
 function getOrCreateContextBundle<
   TUserMeta extends BaseUserMeta,
@@ -362,9 +357,6 @@ function makeLiveblocksContextBundle<
   });
 }
 
-// ---------------------------------------------------------------------- }}}
-// --- Private useXxx_withClient() helpers ------------------------------ {{{
-
 function useInboxNotifications_withClient(client: Client) {
   const { store, useSubscribeToInboxNotificationsEffect } =
     getExtrasForClient(client);
@@ -585,9 +577,6 @@ function useCurrentUserId_withClient(client: Client) {
   );
 }
 
-// ---------------------------------------------------------------------- }}}
-// --- Public APIs ------------------------------------------------------ {{{
-
 /**
  * @private This is an internal API.
  */
@@ -644,5 +633,3 @@ export function createLiveblocksContext<
 >(client: Client): LiveblocksContextBundle<TUserMeta, TThreadMetadata> {
   return getOrCreateContextBundle<TUserMeta, TThreadMetadata>(client);
 }
-
-// ---------------------------------------------------------------------- }}}
