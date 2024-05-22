@@ -670,11 +670,19 @@ function makeRoomContextBundle<
       [cache]
     );
 
-    return <RoomProviderInner {...props} stableEnterRoom={stableEnterRoom} />;
+    return (
+      <RoomProviderInner
+        {...props}
+        client={client}
+        stableEnterRoom={stableEnterRoom}
+      />
+    );
   }
 
+  /** @internal */
   function RoomProviderInner(
     props: RoomProviderProps<TPresence, TStorage> & {
+      client: Client;
       stableEnterRoom: (
         roomId: string,
         options: EnterOptions<TPresence, TStorage>
@@ -806,7 +814,7 @@ function makeRoomContextBundle<
     }, [roomId, frozenProps, stableEnterRoom]);
 
     return (
-      <LiveblocksProvider client={client}>
+      <LiveblocksProvider client={props.client}>
         <RoomContext.Provider value={room}>
           {props.children}
         </RoomContext.Provider>
