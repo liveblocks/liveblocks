@@ -128,7 +128,7 @@ export type Client<U extends BaseUserMeta = BaseUserMeta> = {
   getRoom<
     P extends JsonObject,
     S extends LsonObject = LsonObject,
-    U extends BaseUserMeta = BaseUserMeta,
+    U extends BaseUserMeta = BaseUserMeta, // XXX This is shadowing the Client-level type arg
     E extends Json = never,
   >(
     roomId: string
@@ -143,7 +143,7 @@ export type Client<U extends BaseUserMeta = BaseUserMeta> = {
   enterRoom<
     P extends JsonObject,
     S extends LsonObject = LsonObject,
-    U extends BaseUserMeta = BaseUserMeta,
+    U extends BaseUserMeta = BaseUserMeta, // XXX This is shadowing the Client-level type arg
     E extends Json = never,
   >(
     roomId: string,
@@ -163,7 +163,7 @@ export type Client<U extends BaseUserMeta = BaseUserMeta> = {
   enter<
     P extends JsonObject,
     S extends LsonObject = LsonObject,
-    U extends BaseUserMeta = BaseUserMeta,
+    U extends BaseUserMeta = BaseUserMeta, // XXX This is shadowing the Client-level type arg
     E extends Json = never,
   >(
     roomId: string,
