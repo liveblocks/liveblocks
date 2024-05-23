@@ -7,15 +7,56 @@ meta:
 
 TODO
 
-[intro]
+A quick overview of the concepts used in Liveblocks Notifications.
 
 ## Inbox Notifications
 
-### LiveblocksProvider
+In Liveblocks Notifications, everything resolves around _inbox notifications_.
+Each user can receive these notifications, and a list of them can be rendered in
+your application to create a notification tray. Inbox notifications can be sent
+either automatically by other Liveblocks products, or manually by calling a
+function on the server.
+
+[image]
+
+A user’s inbox notifications can be retrieved by a
+[React hook](/docs/api-reference/liveblocks-react#useInboxNotifications) or
+[individually on your server](/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications-inboxNotificationId),
+which is helpful after receiving a
+[notification webhook event](/docs/platform/webhooks#NotificationEvent). Here’s
+an example of an inbox notification object for a custom notification.
+
+```ts
+{
+  id: "in_sfj29g...",
+  kind: "$myCustomNotification",
+  subjectId: "myCustomId_dxs9s0",
+  readAt: Date <Fri Dec 16 2023 15:16:25 GMT+0000 (Greenwich Mean Time)>,
+  notifiedAt: Date <Fri Dec 15 2023 14:15:22 GMT+0000 (Greenwich Mean Time)>,
+  activityData: {
+    myCustomProperty: "myCustomValue",
+  }
+}
+```
+
+### Project-level
+
+Inbox notifications are
+[project-level](/docs/concepts/how-liveblocks-works#Project), which means that a
+user can receive notifications that were sent from other
+[rooms](/docs/concepts/how-liveblocks-works#Rooms). This is different to other
+Liveblocks products which are room-based.
 
 ## Notification kinds
 
+Each inbox notification has a `kind`, and this represents the type of
+notification it is. A `kind` can be a custom string (e.g.
+`$myCustomNotification`) when sending a custom notification, or it can be a
+value set by Liveblocks (e.g. `thread`) when it’s sent by a Liveblocks product.
+
 ### Custom
+
+When sending custom notifications
 
 ### Comments
 
@@ -26,6 +67,15 @@ TODO
 ## Email notifications
 
 ---
+
+Email notifications are built around the concept of inbox notifications, which
+are different from “normal” notifications in the sense that they can group
+multiple activities together and evolve over time. This makes more sense when
+sending email notifications because it helps to avoid flooding your users with
+too many emails. In the case of Comments, inbox notifications are grouped per
+thread, which means that if there are 4 new comments in a thread you’re
+participating in, you will have a single inbox notification for it, instead of 4
+“normal” notifications.
 
 Notifications are a key part of a commenting experience, learn how to add them
 to your product in different ways:
