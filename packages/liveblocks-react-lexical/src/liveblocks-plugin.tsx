@@ -56,7 +56,6 @@ export type LiveblocksPluginProps = {
 export interface LiveblocksLexicalInternalConfig {
   comments: boolean;
   mentions: {
-    enabled: boolean;
     factory: ReturnType<typeof createMentionNodeFactory>;
   };
 }
@@ -70,7 +69,11 @@ export const LiveblocksPlugin = ({
   initialEditorState = undefined,
   children,
 }: LiveblocksPluginProps): JSX.Element => {
-  const { useSelf, useRoom } = useRoomContextBundle();
+  const {
+    useSelf,
+    useRoom,
+    [kInternal]: { hasResolveMentionSuggestions },
+  } = useRoomContextBundle();
   const [editor] = useLexicalComposerContext();
   const room = useRoom();
 
@@ -160,7 +163,7 @@ export const LiveblocksPlugin = ({
         />
       )}
 
-      {configRef.current.mentions && <MentionPlugin />}
+      {hasResolveMentionSuggestions && <MentionPlugin />}
 
       {configRef.current.comments && (
         <CommentPluginProvider>{children}</CommentPluginProvider>

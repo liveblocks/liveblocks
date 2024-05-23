@@ -25,10 +25,6 @@ export interface LiveblocksConfig {
   /**
    * Whether comments are enabled. Defaults to true.
    */
-  mentions?: boolean;
-  /**
-   * Whether comments are enabled. Defaults to true.
-   */
   comments?: boolean;
   /**
    * The components displayed within the editor.
@@ -52,7 +48,7 @@ export function liveblocksLexicalConfig(
   editorConfig: InitialConfigType,
   config: LiveblocksConfig = {}
 ) {
-  const { comments = true, mentions = true, components = {} } = config;
+  const { comments = true, components = {} } = config;
 
   const nodes = [...(editorConfig.nodes ?? [])];
 
@@ -65,7 +61,6 @@ export function liveblocksLexicalConfig(
   liveblocksConfig = {
     comments,
     mentions: {
-      enabled: mentions,
       factory: mentionFactory,
     },
   };
