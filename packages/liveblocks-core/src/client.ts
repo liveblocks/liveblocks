@@ -136,17 +136,17 @@ export type NotificationsApi<M extends BaseMetadata = never> = {
   markInboxNotificationAsRead(inboxNotificationId: string): Promise<void>;
 };
 
-export type Client<U extends BaseUserMeta = BaseUserMeta> = {
+export type Client<U extends BaseUserMeta = DU> = {
   /**
    * Gets a room. Returns null if {@link Client.enter} has not been called previously.
    *
    * @param roomId The id of the room
    */
   getRoom<
-    P extends JsonObject,
-    S extends LsonObject = LsonObject,
-    U extends BaseUserMeta = BaseUserMeta, // XXX This is shadowing the Client-level type arg
-    E extends Json = never,
+    P extends JsonObject = DP,
+    S extends LsonObject = DS,
+    U extends BaseUserMeta = DU, // XXX This is shadowing the Client-level type arg, remove in 2.0
+    E extends Json = never, // XXX Change to DE in 2.0
   >(
     roomId: string
   ): Room<P, S, U, E> | null;
@@ -158,10 +158,10 @@ export type Client<U extends BaseUserMeta = BaseUserMeta> = {
    * @returns The room and a leave function. Call the returned leave() function when you no longer need the room.
    */
   enterRoom<
-    P extends JsonObject,
-    S extends LsonObject = LsonObject,
-    U extends BaseUserMeta = BaseUserMeta, // XXX This is shadowing the Client-level type arg
-    E extends Json = never,
+    P extends JsonObject = DP,
+    S extends LsonObject = DS,
+    U extends BaseUserMeta = DU, // XXX This is shadowing the Client-level type arg
+    E extends Json = never, // XXX Change to DE in 2.0
   >(
     roomId: string,
     options: EnterOptions<P, S>
@@ -178,10 +178,10 @@ export type Client<U extends BaseUserMeta = BaseUserMeta> = {
    * @param options Optional. You can provide initializers for the Presence or Storage when entering the Room.
    */
   enter<
-    P extends JsonObject,
-    S extends LsonObject = LsonObject,
-    U extends BaseUserMeta = BaseUserMeta, // XXX This is shadowing the Client-level type arg
-    E extends Json = never,
+    P extends JsonObject = DP,
+    S extends LsonObject = DS,
+    U extends BaseUserMeta = DU, // XXX This is shadowing the Client-level type arg
+    E extends Json = never, // XXX Change to DE in 2.0
   >(
     roomId: string,
     options: EnterOptions<P, S>
@@ -227,7 +227,7 @@ export type AuthEndpoint =
  * The authentication endpoint that is called to ensure that the current user has access to a room.
  * Can be an url or a callback if you need to add additional headers.
  */
-export type ClientOptions<U extends BaseUserMeta = BaseUserMeta> = {
+export type ClientOptions<U extends BaseUserMeta = DU> = {
   throttle?: number; // in milliseconds
   lostConnectionTimeout?: number; // in milliseconds
   backgroundKeepAliveTimeout?: number; // in milliseconds
@@ -347,7 +347,7 @@ export function getAuthBearerHeaderFromAuthValue(authValue: AuthValue): string {
  *   }
  * });
  */
-export function createClient<U extends BaseUserMeta = BaseUserMeta>(
+export function createClient<U extends BaseUserMeta = DU>(
   options: ClientOptions<U>
 ): Client<U> {
   const clientOptions = options;

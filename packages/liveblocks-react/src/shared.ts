@@ -24,7 +24,7 @@ import type {
 // Default concrete types for each of the user-provided type placeholders.
 //
 
-/** DP = Default Presence  type */
+/** DP = Default Presence type */
 export type DP = JsonObject;
 /** DS = Default Storage type */
 export type DS = LsonObject;
