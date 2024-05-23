@@ -15,7 +15,14 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 # Week 21 (2024-05-24)
 
+## Dashboard
+
+- Added a brand new project analytics page with graphs that gives you better insights into active users, active rooms, comments, notifications, and data stored.
+- Improved the billing and usage view.
+
 ## Contributors
+
+ofoucherot, flowflorent, stevenfabre
 
 # Week 20 (2024-05-17)
 
