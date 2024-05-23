@@ -26,6 +26,7 @@ import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/w
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 import { retryError } from "./lib/retry-error";
 import { useInitial } from "./lib/use-initial";
+import type { DU } from "./shared";
 import { createSharedContext } from "./shared";
 import type {
   InboxNotificationsState,
@@ -621,8 +622,8 @@ export function useLiveblocksContextBundle() {
 }
 
 export function createLiveblocksContext<
-  U extends BaseUserMeta = BaseUserMeta,
-  M extends BaseMetadata = never,
+  U extends BaseUserMeta = DU,
+  M extends BaseMetadata = never, // XXX Think about whether this would be a breaking change to assign to DE and DM by default
 >(client: Client): LiveblocksContextBundle<U, M> {
   return getOrCreateContextBundle<U, M>(client);
 }
