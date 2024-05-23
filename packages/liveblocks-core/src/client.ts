@@ -33,6 +33,21 @@ import type { RoomInfo } from "./types/RoomInfo";
 import type { ThreadData } from "./types/ThreadData";
 import type { ThreadDeleteInfo } from "./types/ThreadDeleteInfo";
 
+//
+// Default concrete types for each of the user-provided type placeholders.
+//
+
+/** DP = Default Presence type */
+type DP = JsonObject;
+/** DS = Default Storage type */
+type DS = LsonObject;
+/** DU = Default UserMeta type */
+type DU = BaseUserMeta;
+/** DE = Default (Room)Event type */
+// type DE = Json;
+/** DM = Default Thread Metadata type */
+// type DM = BaseMetadata;
+
 type OpaqueRoom = Room<JsonObject, LsonObject, BaseUserMeta, Json>;
 
 const MIN_THROTTLE = 16;
