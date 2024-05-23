@@ -279,11 +279,11 @@ export type RoomEventName = Extract<
 >;
 
 export type RoomEventCallbackFor<
-  E extends RoomEventName,
+  K extends RoomEventName,
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json,
-> = RoomEventCallbackMap<TPresence, TUserMeta, TRoomEvent>[E];
+> = RoomEventCallbackMap<TPresence, TUserMeta, TRoomEvent>[K];
 
 export type RoomEventCallback = RoomEventCallbackFor<
   RoomEventName,
@@ -3063,10 +3063,10 @@ function makeClassicSubscribeFn<
   function subscribe<L extends LiveStructure>(liveStructure: L, callback: (node: L) => void): () => void; // prettier-ignore
   function subscribe(node: LiveStructure, callback: StorageCallback, options: { isDeep: true }): () => void; // prettier-ignore
   // Room event callbacks
-  function subscribe<E extends RoomEventName>(type: E, listener: RoomEventCallbackFor<E, TPresence, TUserMeta, TRoomEvent>): () => void; // prettier-ignore
+  function subscribe<K extends RoomEventName>(type: K, listener: RoomEventCallbackFor<K, TPresence, TUserMeta, TRoomEvent>): () => void; // prettier-ignore
 
-  function subscribe<L extends LiveStructure, E extends RoomEventName>(
-    first: StorageCallback | L | E,
+  function subscribe<L extends LiveStructure, K extends RoomEventName>(
+    first: StorageCallback | L | K,
     second?: ((node: L) => void) | StorageCallback | RoomEventCallback,
     options?: { isDeep: boolean }
   ): () => void {
