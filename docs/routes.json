@@ -375,6 +375,16 @@
         ]
       },
       {
+        "title": "Text editor",
+        "path": "/products/text-editor",
+        "routes": [
+          {
+            "title": "Lexical",
+            "path": "/products/text-editor/lexical"
+          }
+        ]
+      },
+      {
         "title": "Custom app",
         "path": "/products/custom-app",
         "routes": [
