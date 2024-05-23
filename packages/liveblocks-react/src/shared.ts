@@ -63,7 +63,7 @@ const missingRoomInfoError = new Error(
 );
 
 function useUser_withClient<U extends BaseUserMeta>(
-  client: Client,
+  client: Client<U>,
   userId: string
 ): UserState<U["info"]> {
   const usersStore = client[kInternal].usersStore;
@@ -97,7 +97,7 @@ function useUser_withClient<U extends BaseUserMeta>(
 }
 
 function useUserSuspense_withClient<U extends BaseUserMeta>(
-  client: Client,
+  client: Client<U>,
   userId: string
 ) {
   const usersStore = client[kInternal].usersStore;
