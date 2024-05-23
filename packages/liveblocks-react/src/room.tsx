@@ -2468,9 +2468,9 @@ export function createRoomContext<
   return getOrCreateRoomContextBundle<P, S, U, E, M>(client);
 }
 
-export function generateQueryKey<M extends BaseMetadata>(
+export function generateQueryKey(
   roomId: string,
-  options: UseThreadsOptions<M>["query"]
+  options: UseThreadsOptions<BaseMetadata>["query"]
 ) {
   return `${roomId}-${stringify(options ?? {})}`;
 }
