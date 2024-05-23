@@ -38,12 +38,12 @@ import { Button } from "./internal/Button";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";
 
 export interface ThreadProps<
-  TThreadMetadata extends BaseMetadata = ThreadMetadata,
+  M extends BaseMetadata = ThreadMetadata,
 > extends ComponentPropsWithoutRef<"div"> {
   /**
    * The thread to display.
    */
-  thread: ThreadData<TThreadMetadata>;
+  thread: ThreadData<M>;
 
   /**
    * How to show or hide the composer to reply to the thread.
@@ -94,7 +94,7 @@ export interface ThreadProps<
    * The event handler called when the thread is deleted.
    * A thread is deleted when all its comments are deleted.
    */
-  onThreadDelete?: (thread: ThreadData<TThreadMetadata>) => void;
+  onThreadDelete?: (thread: ThreadData<M>) => void;
 
   /**
    * The event handler called when clicking on a comment's author.
@@ -126,7 +126,7 @@ export interface ThreadProps<
  * </>
  */
 export const Thread = forwardRef(
-  <TThreadMetadata extends BaseMetadata = ThreadMetadata>(
+  <M extends BaseMetadata = ThreadMetadata>(
     {
       thread,
       indentCommentContent = true,
@@ -144,7 +144,7 @@ export const Thread = forwardRef(
       overrides,
       className,
       ...props
-    }: ThreadProps<TThreadMetadata>,
+    }: ThreadProps<M>,
     forwardedRef: ForwardedRef<HTMLDivElement>
   ) => {
     const { useEditThreadMetadata, useThreadSubscription } =
@@ -347,6 +347,6 @@ export const Thread = forwardRef(
       </TooltipProvider>
     );
   }
-) as <TThreadMetadata extends BaseMetadata = ThreadMetadata>(
-  props: ThreadProps<TThreadMetadata> & RefAttributes<HTMLDivElement>
+) as <M extends BaseMetadata = ThreadMetadata>(
+  props: ThreadProps<M> & RefAttributes<HTMLDivElement>
 ) => JSX.Element;

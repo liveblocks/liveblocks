@@ -27,7 +27,7 @@ afterAll(() => server.close());
 
 // TODO: Dry up and create utils that wrap renderHook
 function createRoomContextForTest<
-  TThreadMetadata extends BaseMetadata = BaseMetadata,
+  M extends BaseMetadata = BaseMetadata,
 >() {
   const client = createClient({
     async authEndpoint() {
@@ -46,7 +46,7 @@ function createRoomContextForTest<
       never,
       never,
       never,
-      TThreadMetadata
+      M
     >(client),
     liveblocksCtx: createLiveblocksContext(client),
   };

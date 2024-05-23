@@ -32,10 +32,10 @@ function mappingToFunctionIsNotAllowed(key: string): Error {
 }
 
 export type LiveblocksContext<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json,
+  P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
 > = {
   /**
    * Enters a room and starts sync it with zustand state
@@ -50,11 +50,11 @@ export type LiveblocksContext<
   /**
    * The room currently synced to your zustand state.
    */
-  readonly room: Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null;
+  readonly room: Room<P, S, U, E> | null;
   /**
    * Other users in the room. Empty no room is currently synced
    */
-  readonly others: readonly User<TPresence, TUserMeta>[];
+  readonly others: readonly User<P, U>[];
   /**
    * Whether or not the room storage is currently loading
    */
@@ -87,27 +87,27 @@ export type LiveblocksContext<
  */
 export type LiveblocksState<
   TState,
-  TPresence extends JsonObject = JsonObject,
-  TStorage extends LsonObject = LsonObject,
-  TUserMeta extends BaseUserMeta = BaseUserMeta,
-  TRoomEvent extends Json = Json,
-> = WithLiveblocks<TState, TPresence, TStorage, TUserMeta, TRoomEvent>;
+  P extends JsonObject = JsonObject,
+  S extends LsonObject = LsonObject,
+  U extends BaseUserMeta = BaseUserMeta,
+  E extends Json = Json,
+> = WithLiveblocks<TState, P, S, U, E>;
 
 /**
  * Adds the `liveblocks` property to your custom Zustand state.
  */
 export type WithLiveblocks<
   TState,
-  TPresence extends JsonObject = JsonObject,
-  TStorage extends LsonObject = LsonObject,
-  TUserMeta extends BaseUserMeta = BaseUserMeta,
-  TRoomEvent extends Json = Json,
+  P extends JsonObject = JsonObject,
+  S extends LsonObject = LsonObject,
+  U extends BaseUserMeta = BaseUserMeta,
+  E extends Json = Json,
 > = TState & {
   readonly liveblocks: LiveblocksContext<
-    TPresence,
-    TStorage,
-    TUserMeta,
-    TRoomEvent
+    P,
+    S,
+    U,
+    E
   >;
 };
 
@@ -165,14 +165,14 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
   type TState = ReturnType<typeof config>;
   type TLiveblocksContext = TState["liveblocks"];
   type TRoom = NonNullable<TLiveblocksContext["room"]>;
-  type TPresence = ExtractPresence<TRoom>;
-  type TStorage = ExtractStorage<TRoom>;
+  type P = ExtractPresence<TRoom>;
+  type S = ExtractStorage<TRoom>;
 
   const { client, presenceMapping, storageMapping } = validateOptions(options);
   return (set, get, api) => {
     let maybeRoom: TRoom | null = null;
     let isPatching: boolean = false;
-    let storageRoot: LiveObject<TStorage> | null = null;
+    let storageRoot: LiveObject<S> | null = null;
     let unsubscribeCallbacks: Array<() => void> = [];
     let lastRoomId: string | null = null;
     let lastLeaveFn: (() => void) | null = null;
@@ -191,7 +191,7 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
       const initialPresence = selectFields(
         get(),
         presenceMapping
-      ) as unknown as TPresence;
+      ) as unknown as P;
 
       const { room, leave } = client.enterRoom(newRoomId, {
         initialPresence,
@@ -247,7 +247,7 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
 
         set(updates);
 
-        storageRoot = root as LiveObject<TStorage>;
+        storageRoot = root as LiveObject<S>;
         unsubscribeCallbacks.push(
           room.subscribe(
             root,
@@ -380,41 +380,41 @@ Partial<TState> {
 
 function updateLiveblocksContext<
   TState,
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json,
+  P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
 >(
   set: (
     callbackOrPartial: (
       current: WithLiveblocks<
         TState,
-        TPresence,
-        TStorage,
-        TUserMeta,
-        TRoomEvent
+        P,
+        S,
+        U,
+        E
       >
     ) =>
-      | WithLiveblocks<TState, TPresence, TStorage, TUserMeta, TRoomEvent>
+      | WithLiveblocks<TState, P, S, U, E>
       | Partial<any>
   ) => void,
   partial: Partial<
-    LiveblocksContext<TPresence, TStorage, TUserMeta, TRoomEvent>
+    LiveblocksContext<P, S, U, E>
   >
 ) {
   set((state) => ({ liveblocks: { ...state.liveblocks, ...partial } }));
 }
 
 function updatePresence<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json,
+  P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
 >(
-  room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>,
-  oldState: TPresence,
-  newState: TPresence,
-  presenceMapping: Mapping<TPresence>
+  room: Room<P, S, U, E>,
+  oldState: P,
+  newState: P,
+  presenceMapping: Mapping<P>
 ) {
   for (const key in presenceMapping) {
     if (typeof newState[key] === "function") {
@@ -423,7 +423,7 @@ function updatePresence<
 
     if (oldState[key] !== newState[key]) {
       const val = newState?.[key];
-      const patch = {} as Partial<TPresence>;
+      const patch = {} as Partial<P>;
       patch[key] = val;
       room.updatePresence(patch);
     }

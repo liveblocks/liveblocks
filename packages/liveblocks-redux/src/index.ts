@@ -44,13 +44,13 @@ const ACTION_TYPES = {
 };
 
 type LiveblocksContext<
-  TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta,
+  P extends JsonObject,
+  U extends BaseUserMeta,
 > = {
   /**
    * Other users in the room. Empty no room is currently synced
    */
-  readonly others: readonly User<TPresence, TUserMeta>[];
+  readonly others: readonly User<P, U>[];
   /**
    * Whether or not the room storage is currently loading
    */
@@ -83,18 +83,18 @@ type LiveblocksContext<
  */
 export type LiveblocksState<
   TState,
-  TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta,
-> = WithLiveblocks<TState, TPresence, TUserMeta>;
+  P extends JsonObject,
+  U extends BaseUserMeta,
+> = WithLiveblocks<TState, P, U>;
 
 /**
  * Adds the `liveblocks` property to your custom Redux state.
  */
 export type WithLiveblocks<
   TState,
-  TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta,
-> = TState & { readonly liveblocks: LiveblocksContext<TPresence, TUserMeta> };
+  P extends JsonObject,
+  U extends BaseUserMeta,
+> = TState & { readonly liveblocks: LiveblocksContext<P, U> };
 
 const internalEnhancer = <TState>(options: {
   client: Client;
@@ -417,11 +417,11 @@ function patchLiveblocksStorage<O extends LsonObject, TState>(
   }
 }
 
-function updatePresence<TPresence extends JsonObject>(
-  room: Room<TPresence, any, any, any>,
-  oldState: TPresence,
-  newState: TPresence,
-  presenceMapping: Mapping<TPresence>
+function updatePresence<P extends JsonObject>(
+  room: Room<P, any, any, any>,
+  oldState: P,
+  newState: P,
+  presenceMapping: Mapping<P>
 ) {
   for (const key in presenceMapping) {
     if (typeof newState[key] === "function") {
@@ -429,7 +429,7 @@ function updatePresence<TPresence extends JsonObject>(
     }
 
     if (oldState[key] !== newState[key]) {
-      room.updatePresence({ [key]: newState[key] } as TPresence);
+      room.updatePresence({ [key]: newState[key] } as P);
     }
   }
 }

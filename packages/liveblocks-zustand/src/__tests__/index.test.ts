@@ -96,10 +96,10 @@ const basicStateCreator: StateCreator<BasicStore> = (set) => ({
 
 function prepareClientAndStore<
   TState,
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json,
+  P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
 >(
   stateCreator: StateCreator<TState>,
   options: {
@@ -109,7 +109,7 @@ function prepareClientAndStore<
 ) {
   const client = createClient({ authEndpoint: "/api/auth" });
   const store = create<
-    WithLiveblocks<TState, TPresence, TStorage, TUserMeta, TRoomEvent>
+    WithLiveblocks<TState, P, S, U, E>
   >()(
     liveblocksMiddleware(stateCreator, {
       ...options,

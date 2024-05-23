@@ -6,8 +6,8 @@ import type {
 import { applyOptimisticUpdates } from "@liveblocks/core";
 
 export function selectedInboxNotifications<
-  TThreadMetadata extends BaseMetadata,
->(state: CacheState<TThreadMetadata>): InboxNotificationData[] {
+  M extends BaseMetadata,
+>(state: CacheState<M>): InboxNotificationData[] {
   const result = applyOptimisticUpdates(state);
 
   return Object.values(result.inboxNotifications).sort(

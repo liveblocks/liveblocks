@@ -5,28 +5,28 @@ import type { DateToString } from "./DateToString";
 /**
  * Represents a thread of comments.
  */
-export type ThreadData<TThreadMetadata extends BaseMetadata = never> = {
+export type ThreadData<M extends BaseMetadata = never> = {
   type: "thread";
   id: string;
   roomId: string;
   createdAt: Date;
   updatedAt?: Date;
   comments: CommentData[];
-  metadata: [TThreadMetadata] extends [never]
+  metadata: [M] extends [never]
     ? Record<string, never>
-    : TThreadMetadata;
+    : M;
 };
 
 export interface ThreadDataWithDeleteInfo<
-  TThreadMetadata extends BaseMetadata = never,
-> extends ThreadData<TThreadMetadata> {
+  M extends BaseMetadata = never,
+> extends ThreadData<M> {
   deletedAt?: Date;
 }
 
-export type ThreadDataPlain<TThreadMetadata extends BaseMetadata = never> =
-  Omit<DateToString<ThreadData<TThreadMetadata>>, "comments" | "metadata"> & {
+export type ThreadDataPlain<M extends BaseMetadata = never> =
+  Omit<DateToString<ThreadData<M>>, "comments" | "metadata"> & {
     comments: CommentDataPlain[];
-    metadata: [TThreadMetadata] extends [never]
+    metadata: [M] extends [never]
       ? Record<string, never>
-      : TThreadMetadata;
+      : M;
   };

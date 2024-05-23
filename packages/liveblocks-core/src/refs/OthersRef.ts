@@ -6,17 +6,17 @@ import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { User } from "../types/User";
 import { ImmutableRef, merge } from "./ImmutableRef";
 
-type Connection<TUserMeta extends BaseUserMeta> = {
+type Connection<U extends BaseUserMeta> = {
   readonly connectionId: number;
   readonly scopes: string[];
-  readonly id: TUserMeta["id"];
-  readonly info: TUserMeta["info"];
+  readonly id: U["id"];
+  readonly info: U["info"];
 };
 
-function makeUser<TPresence extends JsonObject, TUserMeta extends BaseUserMeta>(
-  conn: Connection<TUserMeta>,
-  presence: TPresence
-): User<TPresence, TUserMeta> {
+function makeUser<P extends JsonObject, U extends BaseUserMeta>(
+  conn: Connection<U>,
+  presence: P
+): User<P, U> {
   const { connectionId, id, info } = conn;
   const canWrite = canWriteStorage(conn.scopes);
   return freeze(
@@ -33,12 +33,12 @@ function makeUser<TPresence extends JsonObject, TUserMeta extends BaseUserMeta>(
 }
 
 export class OthersRef<
-  TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta,
-> extends ImmutableRef<readonly User<TPresence, TUserMeta>[]> {
+  P extends JsonObject,
+  U extends BaseUserMeta,
+> extends ImmutableRef<readonly User<P, U>[]> {
   // To track "others"
-  private _connections: Map</* connectionId */ number, Connection<TUserMeta>>;
-  private _presences: Map</* connectionId */ number, TPresence>;
+  private _connections: Map</* connectionId */ number, Connection<U>>;
+  private _presences: Map</* connectionId */ number, P>;
 
   //
   // --------------------------------------------------------------
@@ -50,7 +50,7 @@ export class OthersRef<
   // abstraction/helper. Manually maintaining these caches should no longer be
   // necessary.
   //
-  private _users: Map</* connectionId */ number, User<TPresence, TUserMeta>>;
+  private _users: Map</* connectionId */ number, User<P, U>>;
   //
   // --------------------------------------------------------------
   //
@@ -69,7 +69,7 @@ export class OthersRef<
   }
 
   /** @internal */
-  _toImmutable(): readonly User<TPresence, TUserMeta>[] {
+  _toImmutable(): readonly User<P, U>[] {
     const users = compact(
       Array.from(this._presences.keys()).map((connectionId) =>
         this.getUser(Number(connectionId))
@@ -87,7 +87,7 @@ export class OthersRef<
   }
 
   /** @internal */
-  _getUser(connectionId: number): User<TPresence, TUserMeta> | undefined {
+  _getUser(connectionId: number): User<P, U> | undefined {
     const conn = this._connections.get(connectionId);
     const presence = this._presences.get(connectionId);
     if (conn !== undefined && presence !== undefined) {
@@ -97,7 +97,7 @@ export class OthersRef<
     return undefined;
   }
 
-  getUser(connectionId: number): User<TPresence, TUserMeta> | undefined {
+  getUser(connectionId: number): User<P, U> | undefined {
     const cachedUser = this._users.get(connectionId);
     if (cachedUser) {
       return cachedUser;
@@ -126,8 +126,8 @@ export class OthersRef<
    */
   setConnection(
     connectionId: number,
-    metaUserId: TUserMeta["id"],
-    metaUserInfo: TUserMeta["info"],
+    metaUserId: U["id"],
+    metaUserInfo: U["info"],
     scopes: string[]
   ): void {
     this._connections.set(
@@ -158,7 +158,7 @@ export class OthersRef<
    * Stores a new user from a full presence update. If the user already exists,
    * its known presence data is overwritten.
    */
-  setOther(connectionId: number, presence: TPresence): void {
+  setOther(connectionId: number, presence: P): void {
     this._presences.set(connectionId, freeze(compactObject(presence)));
     if (this._connections.has(connectionId)) {
       this._invalidateUser(connectionId);
@@ -170,7 +170,7 @@ export class OthersRef<
    * initial presence data for this user yet, discard this patch and await the
    * full .setOther() call first.
    */
-  patchOther(connectionId: number, patch: Partial<TPresence>): void {
+  patchOther(connectionId: number, patch: Partial<P>): void {
     const oldPresence = this._presences.get(connectionId);
     if (oldPresence === undefined) {
       return;

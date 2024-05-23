@@ -16,7 +16,7 @@ import { generateFakeJwt } from "./_utils";
 
 // TODO: Dry up and create utils that wrap renderHook
 function createRoomContextForTest<
-  TThreadMetadata extends BaseMetadata = BaseMetadata,
+  M extends BaseMetadata = BaseMetadata,
 >(options?: Omit<ClientOptions, "authEndpoint" | "publicApiKey">) {
   const client = createClient({
     async authEndpoint() {
@@ -31,7 +31,7 @@ function createRoomContextForTest<
     ...options,
   });
 
-  return createRoomContext<JsonObject, never, never, never, TThreadMetadata>(
+  return createRoomContext<JsonObject, never, never, never, M>(
     client
   );
 }

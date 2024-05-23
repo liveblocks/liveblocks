@@ -40,10 +40,10 @@ const missingRoomInfoError = new Error(
   "resolveRoomsInfo didn't return anything for this room ID."
 );
 
-function useUser_withClient<TUserMeta extends BaseUserMeta>(
+function useUser_withClient<U extends BaseUserMeta>(
   client: Client,
   userId: string
-): UserState<TUserMeta["info"]> {
+): UserState<U["info"]> {
   const usersStore = client[kInternal].usersStore;
 
   const getUserState = useCallback(
@@ -70,11 +70,11 @@ function useUser_withClient<TUserMeta extends BaseUserMeta>(
           !state.isLoading && !state.data && !state.error
             ? missingUserError
             : state.error,
-      } as UserState<TUserMeta["info"]>)
+      } as UserState<U["info"]>)
     : { isLoading: true };
 }
 
-function useUserSuspense_withClient<TUserMeta extends BaseUserMeta>(
+function useUserSuspense_withClient<U extends BaseUserMeta>(
   client: Client,
   userId: string
 ) {
@@ -109,7 +109,7 @@ function useUserSuspense_withClient<TUserMeta extends BaseUserMeta>(
     isLoading: false,
     user: state?.data,
     error: state?.error,
-  } as UserStateSuccess<TUserMeta["info"]>;
+  } as UserStateSuccess<U["info"]>;
 }
 
 function useRoomInfo_withClient(client: Client, roomId: string): RoomInfoState {
@@ -179,8 +179,8 @@ function useRoomInfoSuspense_withClient(client: Client, roomId: string) {
 }
 
 export function createSharedContext<
-  TUserMeta extends BaseUserMeta = BaseUserMeta,
->(client: Client): SharedContextBundle<TUserMeta> {
+  U extends BaseUserMeta = BaseUserMeta,
+>(client: Client): SharedContextBundle<U> {
   return {
     classic: {
       useUser: (userId: string) => useUser_withClient(client, userId),

@@ -7,17 +7,17 @@ import {
 
 import type { UseThreadsOptions } from "../../types";
 
-export function selectedThreads<TThreadMetadata extends BaseMetadata>(
+export function selectedThreads<M extends BaseMetadata>(
   roomId: string,
-  state: CacheState<TThreadMetadata>,
-  options: UseThreadsOptions<TThreadMetadata>
-): ThreadData<TThreadMetadata>[] {
+  state: CacheState<M>,
+  options: UseThreadsOptions<M>
+): ThreadData<M>[] {
   const result = applyOptimisticUpdates(state);
 
   // Filter threads to only include the non-deleted threads from the specified room and that match the specified filter options
   const threads = Object.values(result.threads).filter<
-    ThreadData<TThreadMetadata>
-  >((thread): thread is ThreadData<TThreadMetadata> => {
+    ThreadData<M>
+  >((thread): thread is ThreadData<M> => {
     if (thread.roomId !== roomId) return false;
 
     // We do not want to include threads that have been marked as deleted

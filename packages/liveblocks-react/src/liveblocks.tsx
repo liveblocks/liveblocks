@@ -128,21 +128,21 @@ function selectorFor_useUnreadInboxNotificationsCountSuspense(
 }
 
 function getOrCreateContextBundle<
-  TUserMeta extends BaseUserMeta,
-  TThreadMetadata extends BaseMetadata,
->(client: Client): LiveblocksContextBundle<TUserMeta, TThreadMetadata> {
+  U extends BaseUserMeta,
+  M extends BaseMetadata,
+>(client: Client): LiveblocksContextBundle<U, M> {
   let bundle = _bundles.get(client);
   if (!bundle) {
     bundle = makeLiveblocksContextBundle(client);
     _bundles.set(client, bundle);
   }
-  return bundle as LiveblocksContextBundle<TUserMeta, TThreadMetadata>;
+  return bundle as LiveblocksContextBundle<U, M>;
 }
 
 // TODO: Likely a better / more clear name for this helper will arise. I'll
 // rename this later. All of these are implementation details to support inbox
 // notifications on a per-client basis.
-function getExtrasForClient<TThreadMetadata extends BaseMetadata>(
+function getExtrasForClient<M extends BaseMetadata>(
   client: Client
 ) {
   let extras = _extras.get(client);
@@ -152,20 +152,20 @@ function getExtrasForClient<TThreadMetadata extends BaseMetadata>(
   }
 
   return extras as unknown as Omit<typeof extras, "store"> & {
-    store: CacheStore<TThreadMetadata>;
+    store: CacheStore<M>;
   };
 }
 
-function makeExtrasForClient<TThreadMetadata extends BaseMetadata>(
+function makeExtrasForClient<M extends BaseMetadata>(
   client: Client
 ) {
   const store = client[kInternal]
-    .cacheStore as unknown as CacheStore<TThreadMetadata>;
+    .cacheStore as unknown as CacheStore<M>;
   const notifications = client[kInternal].notifications;
 
   let fetchInboxNotificationsRequest: Promise<{
     inboxNotifications: InboxNotificationData[];
-    threads: ThreadData<TThreadMetadata>[];
+    threads: ThreadData<M>[];
     deletedThreads: ThreadDeleteInfo[];
     deletedInboxNotifications: InboxNotificationDeleteInfo[];
     meta: {
@@ -291,12 +291,12 @@ function makeExtrasForClient<TThreadMetadata extends BaseMetadata>(
 }
 
 function makeLiveblocksContextBundle<
-  TUserMeta extends BaseUserMeta,
-  TThreadMetadata extends BaseMetadata,
->(client: Client): LiveblocksContextBundle<TUserMeta, TThreadMetadata> {
+  U extends BaseUserMeta,
+  M extends BaseMetadata,
+>(client: Client): LiveblocksContextBundle<U, M> {
   // Bind all hooks to the current client instance
   const useInboxNotificationThread = (inboxNotificationId: string) =>
-    useInboxNotificationThread_withClient<TThreadMetadata>(
+    useInboxNotificationThread_withClient<M>(
       client,
       inboxNotificationId
     );
@@ -315,9 +315,9 @@ function makeLiveblocksContextBundle<
     );
   }
 
-  const shared = createSharedContext<TUserMeta>(client);
+  const shared = createSharedContext<U>(client);
 
-  const bundle: LiveblocksContextBundle<TUserMeta, TThreadMetadata> = {
+  const bundle: LiveblocksContextBundle<U, M> = {
     LiveblocksProvider,
 
     useInboxNotifications: () => useInboxNotifications_withClient(client),
@@ -533,12 +533,12 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: Client) {
 }
 
 function useInboxNotificationThread_withClient<
-  TThreadMetadata extends BaseMetadata,
->(client: Client, inboxNotificationId: string): ThreadData<TThreadMetadata> {
-  const { store } = getExtrasForClient<TThreadMetadata>(client);
+  M extends BaseMetadata,
+>(client: Client, inboxNotificationId: string): ThreadData<M> {
+  const { store } = getExtrasForClient<M>(client);
 
   const selector = useCallback(
-    (state: CacheState<TThreadMetadata>) => {
+    (state: CacheState<M>) => {
       const inboxNotification =
         state.inboxNotifications[inboxNotificationId] ??
         raise(`Inbox notification with ID "${inboxNotificationId}" not found`);
@@ -628,8 +628,8 @@ export function useLiveblocksContextBundle() {
 }
 
 export function createLiveblocksContext<
-  TUserMeta extends BaseUserMeta = BaseUserMeta,
-  TThreadMetadata extends BaseMetadata = never,
->(client: Client): LiveblocksContextBundle<TUserMeta, TThreadMetadata> {
-  return getOrCreateContextBundle<TUserMeta, TThreadMetadata>(client);
+  U extends BaseUserMeta = BaseUserMeta,
+  M extends BaseMetadata = never,
+>(client: Client): LiveblocksContextBundle<U, M> {
+  return getOrCreateContextBundle<U, M>(client);
 }

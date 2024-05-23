@@ -58,8 +58,8 @@ export function convertToCommentData(data: CommentDataPlain): CommentData {
  * @returns The rich thread data object that can be used by the client.
  */
 export function convertToThreadData<
-  TThreadMetadata extends BaseMetadata = never,
->(data: ThreadDataPlain<TThreadMetadata>): ThreadData<TThreadMetadata> {
+  M extends BaseMetadata = never,
+>(data: ThreadDataPlain<M>): ThreadData<M> {
   const updatedAt = data.updatedAt ? new Date(data.updatedAt) : undefined;
   const createdAt = new Date(data.createdAt);
 

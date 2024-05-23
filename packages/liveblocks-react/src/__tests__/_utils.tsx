@@ -53,7 +53,7 @@ function customRenderHook<Result, Props>(
 }
 
 export function createRoomContextForTest<
-  TThreadMetadata extends BaseMetadata = BaseMetadata,
+  M extends BaseMetadata = BaseMetadata,
 >() {
   const client = createClient({
     publicApiKey: "pk_xxx",
@@ -62,7 +62,7 @@ export function createRoomContextForTest<
     },
   });
 
-  return createRoomContext<JsonObject, never, never, never, TThreadMetadata>(
+  return createRoomContext<JsonObject, never, never, never, M>(
     client
   );
 }

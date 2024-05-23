@@ -13,8 +13,8 @@ import {
 } from "../comments/lib/createIds";
 
 export function dummyThreadData<
-  TThreadMetadata extends BaseMetadata = BaseMetadata,
->(): ThreadData<TThreadMetadata> {
+  M extends BaseMetadata = BaseMetadata,
+>(): ThreadData<M> {
   const now = new Date();
   const threadId = createThreadId();
 
@@ -30,7 +30,7 @@ export function dummyThreadData<
     metadata: {}, // TODO Fix type
     updatedAt: now,
     comments: [comment],
-  } as ThreadData<TThreadMetadata>;
+  } as ThreadData<M>;
 }
 
 export function dummyCommentData(): CommentData {
