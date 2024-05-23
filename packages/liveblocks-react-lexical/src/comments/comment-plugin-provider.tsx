@@ -1,11 +1,7 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { registerNestedElementResolver } from "@lexical/utils";
 import { kInternal } from "@liveblocks/core";
-import {
-  CreateThreadError,
-  DeleteCommentError,
-  useRoomContextBundle,
-} from "@liveblocks/react";
+import { CreateThreadError, useRoomContextBundle } from "@liveblocks/react";
 import type { BaseSelection, NodeKey, NodeMutation } from "lexical";
 import {
   $getNodeByKey,
@@ -68,42 +64,48 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
    * Create a new ThreadMarkNode and wrap the selected content in it.
    * @param threadId The id of the thread to associate with the selected content
    */
-  const handleThreadCreate = useCallback((threadId: string) => {
-    editor.update(() => {
-      const selection = $getSelection();
-      if (!$isRangeSelection(selection)) return;
+  const handleThreadCreate = useCallback(
+    (threadId: string) => {
+      editor.update(() => {
+        const selection = $getSelection();
+        if (!$isRangeSelection(selection)) return;
 
-      const isBackward = selection.isBackward();
-      // Wrap content in a ThreadMarkNode
-      $wrapSelectionInThreadMarkNode(selection, isBackward, threadId);
+        const isBackward = selection.isBackward();
+        // Wrap content in a ThreadMarkNode
+        $wrapSelectionInThreadMarkNode(selection, isBackward, threadId);
 
-      // Clear the selection after wrapping
-      $setSelection(null);
-    });
-  }, []);
+        // Clear the selection after wrapping
+        $setSelection(null);
+      });
+    },
+    [editor]
+  );
 
   /**
    * Remove the thread id from the associated nodes and unwrap the nodes if they are no longer associated with any threads.
    * @param threadId The id of the thread to remove
    */
-  const handleThreadDelete = useCallback((threadId: string) => {
-    editor.update(() => {
-      const threadToNodes = threadToNodeKeysRef.current;
-      const keys = threadToNodes.get(threadId);
+  const handleThreadDelete = useCallback(
+    (threadId: string) => {
+      editor.update(() => {
+        const threadToNodes = threadToNodeKeysRef.current;
+        const keys = threadToNodes.get(threadId);
 
-      if (keys === undefined) return;
+        if (keys === undefined) return;
 
-      for (const key of keys) {
-        const node = $getNodeByKey(key);
-        if (!$isThreadMarkNode(node)) continue;
-        node.deleteID(threadId);
+        for (const key of keys) {
+          const node = $getNodeByKey(key);
+          if (!$isThreadMarkNode(node)) continue;
+          node.deleteID(threadId);
 
-        if (node.getIDs().length === 0) {
-          $unwrapThreadMarkNode(node);
+          if (node.getIDs().length === 0) {
+            $unwrapThreadMarkNode(node);
+          }
         }
-      }
-    });
-  }, []);
+      });
+    },
+    [editor]
+  );
 
   // Listen to (optimistic) thread creation to create a new ThreadMarkNode and associate the newly created thread to mark node.
   useOptimisticThreadCreateListener(handleThreadCreate);
