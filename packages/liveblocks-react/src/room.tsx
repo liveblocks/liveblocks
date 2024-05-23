@@ -72,6 +72,7 @@ import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { useRerender } from "./lib/use-rerender";
 import { LiveblocksProvider, useClient, useClientOrNull } from "./liveblocks";
+import type { DE, DM, DP, DS, DU } from "./shared";
 import { createSharedContext } from "./shared";
 import type {
   CommentReactionOptions,
@@ -92,22 +93,6 @@ import type {
   UseThreadsOptions,
 } from "./types";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
-
-//
-// Default concrete types for each of the user-provided type placeholders.
-//
-// DP = Default Presence type
-// DS = Default Storage type
-// DU = Default UserMeta type
-// DE = Default RoomEvent type
-// DM = Default ThreadMetadata type
-// etc
-//
-type DP = JsonObject;
-type DS = LsonObject;
-type DU = BaseUserMeta;
-type DE = Json;
-type DM = BaseMetadata;
 
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
