@@ -589,7 +589,7 @@ function makeRoomContextBundle<
   U extends BaseUserMeta,
   E extends Json,
   M extends BaseMetadata,
->(client: Client): RoomContextBundle<P, S, U, E, M> {
+>(client: Client<U>): RoomContextBundle<P, S, U, E, M> {
   type TRoom = Room<P, S, U, E>;
 
   function RoomProvider_withImplicitLiveblocksProvider(

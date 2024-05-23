@@ -289,7 +289,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: Client) {
 function makeLiveblocksContextBundle<
   U extends BaseUserMeta,
   M extends BaseMetadata,
->(client: Client): LiveblocksContextBundle<U, M> {
+>(client: Client<U>): LiveblocksContextBundle<U, M> {
   // Bind all hooks to the current client instance
   const useInboxNotificationThread = (inboxNotificationId: string) =>
     useInboxNotificationThread_withClient<M>(client, inboxNotificationId);

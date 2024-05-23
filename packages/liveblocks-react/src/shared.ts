@@ -200,8 +200,8 @@ function useRoomInfoSuspense_withClient(client: Client, roomId: string) {
   } as RoomInfoStateSuccess;
 }
 
-export function createSharedContext<U extends BaseUserMeta = BaseUserMeta>(
-  client: Client
+export function createSharedContext<U extends BaseUserMeta>(
+  client: Client<U>
 ): SharedContextBundle<U> {
   return {
     classic: {
