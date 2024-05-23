@@ -4,6 +4,7 @@ import type {
   InboxNotificationCustomData,
   InboxNotificationData,
   InboxNotificationThreadData,
+  InboxNotificationMentionData,
 } from "@liveblocks/core";
 import { assertNever, console, kInternal } from "@liveblocks/core";
 import { useLiveblocksContextBundle } from "@liveblocks/react";
@@ -109,6 +110,18 @@ export interface InboxNotificationThreadProps
    * Whether to show the room name in the title.
    */
   showRoomName?: boolean;
+}
+
+/**
+ * TODO: add rendering of mention data
+ */
+export interface InboxNotificationMentionProps
+  extends Omit<InboxNotificationProps, "kinds">,
+    InboxNotificationSharedProps {
+  /**
+   * The inbox notification to display.
+   */
+  inboxNotification: InboxNotificationMentionData;
 }
 
 export interface InboxNotificationCustomProps

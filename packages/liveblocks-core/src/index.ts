@@ -188,6 +188,8 @@ export type {
   ActivityData,
   InboxNotificationCustomData,
   InboxNotificationCustomDataPlain,
+  InboxNotificationMentionData,
+  InboxNotificationMentionDataPlain,
   InboxNotificationData,
   InboxNotificationDataPlain,
   InboxNotificationThreadData,
