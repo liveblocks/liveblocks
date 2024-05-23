@@ -19,6 +19,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 - Added a brand new project analytics page with graphs that gives you better insights into active users, active rooms, comments, notifications, and data stored.
 - Improved the billing and usage view.
+- Move Webhooks notification throttle interval setting to the project settings page
 
 ## Contributors
 
