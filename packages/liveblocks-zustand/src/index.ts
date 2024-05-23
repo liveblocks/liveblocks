@@ -103,12 +103,7 @@ export type WithLiveblocks<
   U extends BaseUserMeta = BaseUserMeta,
   E extends Json = Json,
 > = TState & {
-  readonly liveblocks: LiveblocksContext<
-    P,
-    S,
-    U,
-    E
-  >;
+  readonly liveblocks: LiveblocksContext<P, S, U, E>;
 };
 
 export type Mapping<T> = {
@@ -387,20 +382,10 @@ function updateLiveblocksContext<
 >(
   set: (
     callbackOrPartial: (
-      current: WithLiveblocks<
-        TState,
-        P,
-        S,
-        U,
-        E
-      >
-    ) =>
-      | WithLiveblocks<TState, P, S, U, E>
-      | Partial<any>
+      current: WithLiveblocks<TState, P, S, U, E>
+    ) => WithLiveblocks<TState, P, S, U, E> | Partial<any>
   ) => void,
-  partial: Partial<
-    LiveblocksContext<P, S, U, E>
-  >
+  partial: Partial<LiveblocksContext<P, S, U, E>>
 ) {
   set((state) => ({ liveblocks: { ...state.liveblocks, ...partial } }));
 }

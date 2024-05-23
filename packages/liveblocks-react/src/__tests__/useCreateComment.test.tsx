@@ -30,9 +30,7 @@ afterEach(() => {
 afterAll(() => server.close());
 
 // TODO: Dry up and create utils that wrap renderHook
-function createRoomContextForTest<
-  M extends BaseMetadata = BaseMetadata,
->() {
+function createRoomContextForTest<M extends BaseMetadata = BaseMetadata>() {
   const client = createClient({
     publicApiKey: "pk_xxx",
     polyfills: {
@@ -40,9 +38,7 @@ function createRoomContextForTest<
     },
   });
 
-  return createRoomContext<JsonObject, never, never, never, M>(
-    client
-  );
+  return createRoomContext<JsonObject, never, never, never, M>(client);
 }
 
 describe("useCreateComment", () => {

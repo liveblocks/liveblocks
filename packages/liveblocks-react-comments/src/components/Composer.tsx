@@ -86,9 +86,10 @@ type ComposerEditCommentProps = {
   metadata?: never;
 };
 
-export type ComposerProps<
-  M extends BaseMetadata = ThreadMetadata,
-> = Omit<ComponentPropsWithoutRef<"form">, "defaultValue"> &
+export type ComposerProps<M extends BaseMetadata = ThreadMetadata> = Omit<
+  ComponentPropsWithoutRef<"form">,
+  "defaultValue"
+> &
   (
     | ComposerCreateThreadProps<M>
     | ComposerCreateCommentProps

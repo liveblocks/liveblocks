@@ -40,19 +40,9 @@ export async function prepareStorageImmutableTest<
 
   let totalStorageOps = 0;
 
-  const ref = await prepareRoomWithStorage<
-    P,
-    S,
-    U,
-    E
-  >(items, -1);
+  const ref = await prepareRoomWithStorage<P, S, U, E>(items, -1);
 
-  const subject = await prepareRoomWithStorage<
-    P,
-    S,
-    U,
-    E
-  >(items, actor);
+  const subject = await prepareRoomWithStorage<P, S, U, E>(items, actor);
 
   subject.wss.onReceive.subscribe((data) => {
     const messages = parseAsClientMsgs(data);

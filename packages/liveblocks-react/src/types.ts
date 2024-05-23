@@ -380,12 +380,7 @@ type RoomContextBundleCommon<
    * it can be necessary if you're building an advanced app where you need to
    * set up a context bridge between two React renderers.
    */
-  RoomContext: React.Context<Room<
-    P,
-    S,
-    U,
-    E
-  > | null>;
+  RoomContext: React.Context<Room<P, S, U, E> | null>;
 
   /**
    * Makes a Room available in the component hierarchy below.
@@ -436,9 +431,7 @@ type RoomContextBundleCommon<
    *   }
    * })
    */
-  useOthersListener(
-    callback: (event: OthersEvent<P, U>) => void
-  ): void;
+  useOthersListener(callback: (event: OthersEvent<P, U>) => void): void;
 
   /**
    * Get informed when reconnecting to the Liveblocks servers is taking
@@ -486,9 +479,7 @@ type RoomContextBundleCommon<
    *   }
    * });
    */
-  useEventListener(
-    callback: (data: RoomEventMessage<P, U, E>) => void
-  ): void;
+  useEventListener(callback: (data: RoomEventMessage<P, U, E>) => void): void;
 
   /**
    * Returns the room.history
@@ -604,10 +595,7 @@ type RoomContextBundleCommon<
    * deleteLayers();
    */
   useMutation<
-    F extends (
-      context: MutationContext<P, S, U>,
-      ...args: any[]
-    ) => any,
+    F extends (context: MutationContext<P, S, U>, ...args: any[]) => any,
   >(
     callback: F,
     deps: readonly unknown[]
@@ -729,9 +717,7 @@ type RoomContextBundleCommon<
    * const createThread = useCreateThread();
    * createThread({ body: {}, metadata: {} });
    */
-  useCreateThread(): (
-    options: CreateThreadOptions<M>
-  ) => ThreadData<M>;
+  useCreateThread(): (options: CreateThreadOptions<M>) => ThreadData<M>;
 
   /**
    * @beta
@@ -743,9 +729,7 @@ type RoomContextBundleCommon<
    * const editThreadMetadata = useEditThreadMetadata();
    * editThreadMetadata({ threadId: "th_xxx", metadata: {} })
    */
-  useEditThreadMetadata(): (
-    options: EditThreadMetadataOptions<M>
-  ) => void;
+  useEditThreadMetadata(): (options: EditThreadMetadataOptions<M>) => void;
 
   /**
    * @beta
@@ -858,13 +842,7 @@ export type RoomContextBundle<
   E extends Json,
   M extends BaseMetadata,
 > = Resolve<
-  RoomContextBundleCommon<
-    P,
-    S,
-    U,
-    E,
-    M
-  > &
+  RoomContextBundleCommon<P, S, U, E, M> &
     SharedContextBundle<U>["classic"] & {
       /**
        * Extract arbitrary data from the Liveblocks Storage state, using an
@@ -935,9 +913,7 @@ export type RoomContextBundle<
        * @example
        * const { threads, error, isLoading } = useThreads();
        */
-      useThreads(
-        options?: UseThreadsOptions<M>
-      ): ThreadsState<M>;
+      useThreads(options?: UseThreadsOptions<M>): ThreadsState<M>;
 
       /**
        * @beta
@@ -972,9 +948,7 @@ export type RoomContextBundle<
        * @deprecated We no longer recommend using `useList`. Prefer `useStorage`
        * for reading and `useMutation` for writing.
        */
-      useList<TKey extends Extract<keyof S, string>>(
-        key: TKey
-      ): S[TKey] | null;
+      useList<TKey extends Extract<keyof S, string>>(key: TKey): S[TKey] | null;
 
       /**
        * Returns the LiveMap associated with the provided key. If the LiveMap
@@ -992,9 +966,7 @@ export type RoomContextBundle<
        * @deprecated We no longer recommend using `useMap`. Prefer `useStorage`
        * for reading and `useMutation` for writing.
        */
-      useMap<TKey extends Extract<keyof S, string>>(
-        key: TKey
-      ): S[TKey] | null;
+      useMap<TKey extends Extract<keyof S, string>>(key: TKey): S[TKey] | null;
 
       /**
        * Returns the LiveObject associated with the provided key.
@@ -1015,13 +987,7 @@ export type RoomContextBundle<
       ): S[TKey] | null;
 
       suspense: Resolve<
-        RoomContextBundleCommon<
-          P,
-          S,
-          U,
-          E,
-          M
-        > &
+        RoomContextBundleCommon<P, S, U, E, M> &
           SharedContextBundle<U>["suspense"] & {
             /**
              * Extract arbitrary data from the Liveblocks Storage state, using an
@@ -1092,9 +1058,7 @@ export type RoomContextBundle<
              * @example
              * const { threads } = useThreads();
              */
-            useThreads(
-              options?: UseThreadsOptions<M>
-            ): ThreadsStateSuccess<M>;
+            useThreads(options?: UseThreadsOptions<M>): ThreadsStateSuccess<M>;
 
             /**
              * @beta
@@ -1129,9 +1093,7 @@ export type RoomContextBundle<
              * @deprecated We no longer recommend using `useList`. Prefer `useStorage`
              * for reading and `useMutation` for writing.
              */
-            useList<TKey extends Extract<keyof S, string>>(
-              key: TKey
-            ): S[TKey];
+            useList<TKey extends Extract<keyof S, string>>(key: TKey): S[TKey];
 
             /**
              * Returns the LiveMap associated with the provided key. If the LiveMap
@@ -1149,9 +1111,7 @@ export type RoomContextBundle<
              * @deprecated We no longer recommend using `useMap`. Prefer `useStorage`
              * for reading and `useMutation` for writing.
              */
-            useMap<TKey extends Extract<keyof S, string>>(
-              key: TKey
-            ): S[TKey];
+            useMap<TKey extends Extract<keyof S, string>>(key: TKey): S[TKey];
 
             /**
              * Returns the LiveObject associated with the provided key.
@@ -1226,9 +1186,7 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
    * @example
    * const thread = useInboxNotificationThread("in_xxx");
    */
-  useInboxNotificationThread(
-    inboxNotificationId: string
-  ): ThreadData<M>;
+  useInboxNotificationThread(inboxNotificationId: string): ThreadData<M>;
 };
 
 /**

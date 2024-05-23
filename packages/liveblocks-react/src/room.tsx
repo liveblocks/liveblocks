@@ -156,9 +156,7 @@ function makeMutationContext<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
->(
-  room: Room<P, S, U, E>
-): MutationContext<P, S, U> {
+>(room: Room<P, S, U, E>): MutationContext<P, S, U> {
   const errmsg =
     "This mutation cannot be used until connected to the Liveblocks room";
 
@@ -229,35 +227,19 @@ function getOrCreateRoomContextBundle<
   U extends BaseUserMeta,
   E extends Json,
   M extends BaseMetadata,
->(
-  client: Client
-): RoomContextBundle<
-  P,
-  S,
-  U,
-  E,
-  M
-> {
+>(client: Client): RoomContextBundle<P, S, U, E, M> {
   let bundle = _bundles.get(client);
   if (!bundle) {
     bundle = makeRoomContextBundle(client);
     _bundles.set(client, bundle);
   }
-  return bundle as unknown as RoomContextBundle<
-    P,
-    S,
-    U,
-    E,
-    M
-  >;
+  return bundle as unknown as RoomContextBundle<P, S, U, E, M>;
 }
 
 // TODO: Likely a better / more clear name for this helper will arise. I'll
 // rename this later. All of these are implementation details to support inbox
 // notifications on a per-client basis.
-function getExtrasForClient<M extends BaseMetadata>(
-  client: Client
-) {
+function getExtrasForClient<M extends BaseMetadata>(client: Client) {
   let extras = _extras.get(client);
   if (!extras) {
     extras = makeExtrasForClient(client);
@@ -269,11 +251,8 @@ function getExtrasForClient<M extends BaseMetadata>(
   };
 }
 
-function makeExtrasForClient<M extends BaseMetadata>(
-  client: Client
-) {
-  const store = client[kInternal]
-    .cacheStore as unknown as CacheStore<M>;
+function makeExtrasForClient<M extends BaseMetadata>(client: Client) {
+  const store = client[kInternal].cacheStore as unknown as CacheStore<M>;
 
   const DEFAULT_DEDUPING_INTERVAL = 2000; // 2 seconds
 
@@ -477,8 +456,7 @@ function makeExtrasForClient<M extends BaseMetadata>(
     }
   }
 
-  const commentsErrorEventSource =
-    makeEventSource<CommentsError<M>>();
+  const commentsErrorEventSource = makeEventSource<CommentsError<M>>();
 
   function onMutationFailure(
     innerError: Error,
@@ -610,15 +588,7 @@ function makeRoomContextBundle<
   U extends BaseUserMeta,
   E extends Json,
   M extends BaseMetadata,
->(
-  client: Client
-): RoomContextBundle<
-  P,
-  S,
-  U,
-  E,
-  M
-> {
+>(client: Client): RoomContextBundle<P, S, U, E, M> {
   type TRoom = Room<P, S, U, E>;
 
   function RoomProvider_withImplicitLiveblocksProvider(
@@ -638,13 +608,7 @@ function makeRoomContextBundle<
 
   const shared = createSharedContext<U>(client);
 
-  const bundle: RoomContextBundle<
-    P,
-    S,
-    U,
-    E,
-    M
-  > = {
+  const bundle: RoomContextBundle<P, S, U, E, M> = {
     RoomContext: RoomContext as React.Context<TRoom | null>,
     RoomProvider: RoomProvider_withImplicitLiveblocksProvider,
 
@@ -681,10 +645,7 @@ function makeRoomContextBundle<
     useOther,
 
     useMutation: useMutation as <
-      F extends (
-        context: MutationContext<P, S, U>,
-        ...args: any[]
-      ) => any,
+      F extends (context: MutationContext<P, S, U>, ...args: any[]) => any,
     >(
       callback: F,
       deps: readonly unknown[]
@@ -744,10 +705,7 @@ function makeRoomContextBundle<
       useOther: useOtherSuspense,
 
       useMutation: useMutation as <
-        F extends (
-          context: MutationContext<P, S, U>,
-          ...args: any[]
-        ) => any,
+        F extends (context: MutationContext<P, S, U>, ...args: any[]) => any,
       >(
         callback: F,
         deps: readonly unknown[]
@@ -790,11 +748,7 @@ function RoomProvider<
 >(props: RoomProviderProps<P, S>) {
   const client = useClient();
   const [cache] = React.useState(
-    () =>
-      new Map<
-        string,
-        RoomLeavePair<P, S, U, E>
-      >()
+    () => new Map<string, RoomLeavePair<P, S, U, E>>()
   );
 
   // Produce a version of client.enterRoom() that when called for the same
@@ -808,10 +762,7 @@ function RoomProvider<
       const cached = cache.get(roomId);
       if (cached) return cached;
 
-      const rv = client.enterRoom<P, S, U, E>(
-        roomId,
-        options
-      );
+      const rv = client.enterRoom<P, S, U, E>(roomId, options);
 
       // Wrap the leave function to also delete the cached value
       const origLeave = rv.leave;
@@ -1037,10 +988,9 @@ function useBroadcastEvent<E extends Json>(): (
   );
 }
 
-function useOthersListener<
-  P extends JsonObject,
-  U extends BaseUserMeta,
->(callback: (event: OthersEvent<P, U>) => void) {
+function useOthersListener<P extends JsonObject, U extends BaseUserMeta>(
+  callback: (event: OthersEvent<P, U>) => void
+) {
   const room = useRoom<P, never, U, never>();
   const savedCallback = useLatest(callback);
   React.useEffect(
@@ -1076,15 +1026,11 @@ function useEventListener<
   P extends JsonObject,
   U extends BaseUserMeta,
   E extends Json,
->(
-  callback: (data: RoomEventMessage<P, U, E>) => void
-): void {
+>(callback: (data: RoomEventMessage<P, U, E>) => void): void {
   const room = useRoom<P, never, U, E>();
   const savedCallback = useLatest(callback);
   React.useEffect(() => {
-    const listener = (
-      eventData: RoomEventMessage<P, U, E>
-    ) => {
+    const listener = (eventData: RoomEventMessage<P, U, E>) => {
       savedCallback.current(eventData);
     };
 
@@ -1118,23 +1064,15 @@ function useCanRedo(): boolean {
   return useSyncExternalStore(subscribe, canRedo, canRedo);
 }
 
-function useSelf<
-  P extends JsonObject,
-  U extends BaseUserMeta,
->(): User<P, U> | null;
-function useSelf<
-  T,
-  P extends JsonObject,
-  U extends BaseUserMeta,
->(
+function useSelf<P extends JsonObject, U extends BaseUserMeta>(): User<
+  P,
+  U
+> | null;
+function useSelf<T, P extends JsonObject, U extends BaseUserMeta>(
   selector: (me: User<P, U>) => T,
   isEqual?: (prev: T | null, curr: T | null) => boolean
 ): T | null;
-function useSelf<
-  T,
-  P extends JsonObject,
-  U extends BaseUserMeta,
->(
+function useSelf<T, P extends JsonObject, U extends BaseUserMeta>(
   maybeSelector?: (me: User<P, U>) => T,
   isEqual?: (prev: T | null, curr: T | null) => boolean
 ): T | User<P, U> | null {
@@ -1145,8 +1083,7 @@ function useSelf<
   const subscribe = room.events.self.subscribe;
   const getSnapshot: () => Snapshot = room.getSelf;
 
-  const selector =
-    maybeSelector ?? (identity as (me: User<P, U>) => T);
+  const selector = maybeSelector ?? (identity as (me: User<P, U>) => T);
   const wrappedSelector = React.useCallback(
     (me: Snapshot): Selection => (me !== null ? selector(me) : null),
     [selector]
@@ -1190,19 +1127,11 @@ function useOthers<
   P extends JsonObject,
   U extends BaseUserMeta,
 >(): readonly User<P, U>[];
-function useOthers<
-  T,
-  P extends JsonObject,
-  U extends BaseUserMeta,
->(
+function useOthers<T, P extends JsonObject, U extends BaseUserMeta>(
   selector: (others: readonly User<P, U>[]) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T;
-function useOthers<
-  T,
-  P extends JsonObject,
-  U extends BaseUserMeta,
->(
+function useOthers<T, P extends JsonObject, U extends BaseUserMeta>(
   selector?: (others: readonly User<P, U>[]) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T | readonly User<P, U>[] {
@@ -1214,17 +1143,12 @@ function useOthers<
     subscribe,
     getSnapshot,
     getServerSnapshot,
-    selector ??
-      (identity as (others: readonly User<P, U>[]) => T),
+    selector ?? (identity as (others: readonly User<P, U>[]) => T),
     isEqual
   );
 }
 
-function useOthersMapped<
-  T,
-  P extends JsonObject,
-  U extends BaseUserMeta,
->(
+function useOthersMapped<T, P extends JsonObject, U extends BaseUserMeta>(
   itemSelector: (other: User<P, U>) => T,
   itemIsEqual?: (prev: T, curr: T) => boolean
 ): ReadonlyArray<readonly [connectionId: number, data: T]> {
@@ -1263,11 +1187,7 @@ const NOT_FOUND = Symbol();
 
 type NotFound = typeof NOT_FOUND;
 
-function useOther<
-  T,
-  P extends JsonObject,
-  U extends BaseUserMeta,
->(
+function useOther<T, P extends JsonObject, U extends BaseUserMeta>(
   connectionId: number,
   selector: (other: User<P, U>) => T,
   isEqual?: (prev: T, curr: T) => boolean
@@ -1303,9 +1223,7 @@ function useOther<
   return other;
 }
 
-function useMutableStorageRoot<
-  S extends LsonObject,
->(): LiveObject<S> | null {
+function useMutableStorageRoot<S extends LsonObject>(): LiveObject<S> | null {
   const room = useRoom<never, S, never, never>();
   const subscribe = room.events.storageDidLoad.subscribeOnce;
   const getSnapshot = room.getStorageSnapshot;
@@ -1314,9 +1232,7 @@ function useMutableStorageRoot<
 }
 
 // NOTE: This API exists for backward compatible reasons
-function useStorageRoot<S extends LsonObject>(): [
-  root: LiveObject<S> | null,
-] {
+function useStorageRoot<S extends LsonObject>(): [root: LiveObject<S> | null] {
   return [useMutableStorageRoot()];
 }
 
@@ -1414,10 +1330,7 @@ function useLegacyKey<
 }
 
 function useMutation<
-  F extends (
-    context: MutationContext<P, S, U>,
-    ...args: any[]
-  ) => any,
+  F extends (context: MutationContext<P, S, U>, ...args: any[]) => any,
   P extends JsonObject,
   S extends LsonObject,
   U extends BaseUserMeta,
@@ -1431,9 +1344,7 @@ function useMutation<
         room.batch(() =>
           // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           callback(
-            makeMutationContext<P, S, U, E>(
-              room
-            ),
+            makeMutationContext<P, S, U, E>(room),
             // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             ...args
           )
@@ -1499,12 +1410,9 @@ function useCreateThread<M extends BaseMetadata>() {
   const client = useClient();
   const room = useRoom();
   return React.useCallback(
-    (
-      options: CreateThreadOptions<M>
-    ): ThreadData<M> => {
+    (options: CreateThreadOptions<M>): ThreadData<M> => {
       const body = options.body;
-      const metadata: M =
-        "metadata" in options ? options.metadata : ({} as M);
+      const metadata: M = "metadata" in options ? options.metadata : ({} as M);
 
       const threadId = createThreadId();
       const commentId = createCommentId();
@@ -1914,8 +1822,7 @@ function useAddReaction<M extends BaseMetadata>() {
 
       const optimisticUpdateId = nanoid();
 
-      const { store, onMutationFailure } =
-        getExtrasForClient<M>(client);
+      const { store, onMutationFailure } = getExtrasForClient<M>(client);
       store.pushOptimisticUpdate({
         type: "add-reaction",
         threadId,
@@ -2266,23 +2173,15 @@ function useSuspendUntilPresenceLoaded(): void {
   });
 }
 
-function useSelfSuspense<
-  P extends JsonObject,
-  U extends BaseUserMeta,
->(): User<P, U>;
-function useSelfSuspense<
-  T,
-  P extends JsonObject,
-  U extends BaseUserMeta,
->(
+function useSelfSuspense<P extends JsonObject, U extends BaseUserMeta>(): User<
+  P,
+  U
+>;
+function useSelfSuspense<T, P extends JsonObject, U extends BaseUserMeta>(
   selector: (me: User<P, U>) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T;
-function useSelfSuspense<
-  T,
-  P extends JsonObject,
-  U extends BaseUserMeta,
->(
+function useSelfSuspense<T, P extends JsonObject, U extends BaseUserMeta>(
   selector?: (me: User<P, U>) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T | User<P, U> {
@@ -2293,11 +2192,7 @@ function useSelfSuspense<
   ) as T | User<P, U>;
 }
 
-function useOthersSuspense<
-  T,
-  P extends JsonObject,
-  U extends BaseUserMeta,
->(
+function useOthersSuspense<T, P extends JsonObject, U extends BaseUserMeta>(
   selector?: (others: readonly User<P, U>[]) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T | readonly User<P, U>[] {
@@ -2325,11 +2220,7 @@ function useOthersMappedSuspense<
   return useOthersMapped(itemSelector, itemIsEqual);
 }
 
-function useOtherSuspense<
-  T,
-  P extends JsonObject,
-  U extends BaseUserMeta,
->(
+function useOtherSuspense<T, P extends JsonObject, U extends BaseUserMeta>(
   connectionId: number,
   selector: (other: User<P, U>) => T,
   isEqual?: (prev: T, curr: T) => boolean
@@ -2401,9 +2292,7 @@ function useThreadsSuspense<M extends BaseMetadata>(
   }
 
   const selector = React.useCallback(
-    (
-      state: CacheState<M>
-    ): ThreadsStateSuccess<M> => {
+    (state: CacheState<M>): ThreadsStateSuccess<M> => {
       return {
         threads: selectedThreads(room.id, state, options),
         isLoading: false,
@@ -2524,16 +2413,7 @@ export function createRoomContext<
   U extends BaseUserMeta = BaseUserMeta,
   E extends Json = never,
   M extends BaseMetadata = never,
->(
-  client: Client,
-  options?: Options<U>
-): RoomContextBundle<
-  P,
-  S,
-  U,
-  E,
-  M
-> {
+>(client: Client, options?: Options<U>): RoomContextBundle<P, S, U, E, M> {
   // Deprecated option
   if (options?.resolveUsers) {
     throw new Error(
@@ -2548,13 +2428,7 @@ export function createRoomContext<
     );
   }
 
-  return getOrCreateRoomContextBundle<
-    P,
-    S,
-    U,
-    E,
-    M
-  >(client);
+  return getOrCreateRoomContextBundle<P, S, U, E, M>(client);
 }
 
 export function generateQueryKey<M extends BaseMetadata>(

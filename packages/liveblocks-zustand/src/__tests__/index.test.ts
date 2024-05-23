@@ -108,9 +108,7 @@ function prepareClientAndStore<
   }
 ) {
   const client = createClient({ authEndpoint: "/api/auth" });
-  const store = create<
-    WithLiveblocks<TState, P, S, U, E>
-  >()(
+  const store = create<WithLiveblocks<TState, P, S, U, E>>()(
     liveblocksMiddleware(stateCreator, {
       ...options,
       client,

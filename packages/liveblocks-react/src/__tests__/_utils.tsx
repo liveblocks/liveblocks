@@ -62,9 +62,7 @@ export function createRoomContextForTest<
     },
   });
 
-  return createRoomContext<JsonObject, never, never, never, M>(
-    client
-  );
+  return createRoomContext<JsonObject, never, never, never, M>(client);
 }
 
 export const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));

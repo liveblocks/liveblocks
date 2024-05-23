@@ -43,10 +43,7 @@ const ACTION_TYPES = {
   UPDATE_OTHERS: "@@LIVEBLOCKS/UPDATE_OTHERS",
 };
 
-type LiveblocksContext<
-  P extends JsonObject,
-  U extends BaseUserMeta,
-> = {
+type LiveblocksContext<P extends JsonObject, U extends BaseUserMeta> = {
   /**
    * Other users in the room. Empty no room is currently synced
    */

@@ -113,10 +113,7 @@ type TimeoutID = ReturnType<typeof setTimeout>;
 // The type LegacyOthersEvent is used in the signature of some public APIs, and
 // as such should remain backward compatible.
 //
-type LegacyOthersEvent<
-  P extends JsonObject,
-  U extends BaseUserMeta,
-> =
+type LegacyOthersEvent<P extends JsonObject, U extends BaseUserMeta> =
   | { type: "leave"; user: User<P, U> }
   | { type: "enter"; user: User<P, U> }
   | {
@@ -126,10 +123,7 @@ type LegacyOthersEvent<
     }
   | { type: "reset" };
 
-type LegacyOthersEventCallback<
-  P extends JsonObject,
-  U extends BaseUserMeta,
-> = (
+type LegacyOthersEventCallback<P extends JsonObject, U extends BaseUserMeta> = (
   others: readonly User<P, U>[],
   event: LegacyOthersEvent<P, U>
 ) => void;
@@ -341,10 +335,7 @@ type SubscribeFn<
    * });
    *
    */
-  (
-    type: "others",
-    listener: LegacyOthersEventCallback<P, U>
-  ): () => void;
+  (type: "others", listener: LegacyOthersEventCallback<P, U>): () => void;
 
   /**
    * Subscribe to events broadcasted by {@link Room.broadcastEvent}
@@ -359,10 +350,7 @@ type SubscribeFn<
    * });
    *
    */
-  (
-    type: "event",
-    listener: Callback<RoomEventMessage<P, U, E>>
-  ): () => void;
+  (type: "event", listener: Callback<RoomEventMessage<P, U, E>>): () => void;
 
   /**
    * Subscribe to errors thrown in the room.
@@ -1212,30 +1200,25 @@ function createCommentsApi(
     metadata: M | undefined;
     body: CommentBody;
   }) {
-    const thread = await fetchJson<ThreadDataPlain<M>>(
-      "/threads",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+    const thread = await fetchJson<ThreadDataPlain<M>>("/threads", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: threadId,
+        comment: {
+          id: commentId,
+          body,
         },
-        body: JSON.stringify({
-          id: threadId,
-          comment: {
-            id: commentId,
-            body,
-          },
-          metadata,
-        }),
-      }
-    );
+        metadata,
+      }),
+    });
 
     return convertToThreadData(thread);
   }
 
-  async function editThreadMetadata<
-    M extends BaseMetadata = never,
-  >({
+  async function editThreadMetadata<M extends BaseMetadata = never>({
     metadata,
     threadId,
   }: {
@@ -1674,8 +1657,7 @@ export function createRoom<
     status: makeEventSource<Status>(), // New/recommended API
     lostConnection: makeEventSource<LostConnectionEvent>(),
 
-    customEvent:
-      makeEventSource<RoomEventMessage<P, U, E>>(),
+    customEvent: makeEventSource<RoomEventMessage<P, U, E>>(),
     self: makeEventSource<User<P, U>>(),
     myPresence: makeEventSource<P>(),
     others: makeEventSource<OthersEvent<P, U>>(),
@@ -1762,11 +1744,7 @@ export function createRoom<
     context.staticSessionInfo as ImmutableRef<StaticSessionInfo | null>,
     context.dynamicSessionInfo as ImmutableRef<DynamicSessionInfo | null>,
     context.myPresence,
-    (
-      staticSession,
-      dynamicSession,
-      myPresence
-    ): User<P, U> | null => {
+    (staticSession, dynamicSession, myPresence): User<P, U> | null => {
       if (staticSession === null || dynamicSession === null) {
         return null;
       } else {
@@ -2246,9 +2224,7 @@ export function createRoom<
     return user ? { type: "enter", user } : undefined;
   }
 
-  function parseServerMessage(
-    data: Json
-  ): ServerMsg<P, U, E> | null {
+  function parseServerMessage(data: Json): ServerMsg<P, U, E> | null {
     if (!isJsonObject(data)) {
       return null;
     }
@@ -2257,9 +2233,7 @@ export function createRoom<
     //             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME: Properly validate incoming external data instead!
   }
 
-  function parseServerMessages(
-    text: string
-  ): ServerMsg<P, U, E>[] | null {
+  function parseServerMessages(text: string): ServerMsg<P, U, E>[] | null {
     const data: Json | undefined = tryParseJson(text);
     if (data === undefined) {
       return null;
@@ -3078,9 +3052,7 @@ function makeClassicSubscribeFn<
       switch (first) {
         case "event":
           return events.customEvent.subscribe(
-            callback as Callback<
-              RoomEventMessage<P, U, E>
-            >
+            callback as Callback<RoomEventMessage<P, U, E>>
           );
 
         case "my-presence":
@@ -3089,10 +3061,7 @@ function makeClassicSubscribeFn<
         case "others": {
           // NOTE: Others have a different callback structure, where the API
           // exposed on the outside takes _two_ callback arguments!
-          const cb = callback as LegacyOthersEventCallback<
-            P,
-            U
-          >;
+          const cb = callback as LegacyOthersEventCallback<P, U>;
           return events.others.subscribe((event) => {
             const { others, ...internalEvent } = event;
             return cb(others, internalEvent);

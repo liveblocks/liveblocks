@@ -37,9 +37,8 @@ import { Composer } from "./Composer";
 import { Button } from "./internal/Button";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";
 
-export interface ThreadProps<
-  M extends BaseMetadata = ThreadMetadata,
-> extends ComponentPropsWithoutRef<"div"> {
+export interface ThreadProps<M extends BaseMetadata = ThreadMetadata>
+  extends ComponentPropsWithoutRef<"div"> {
   /**
    * The thread to display.
    */

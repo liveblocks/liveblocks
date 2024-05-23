@@ -11,10 +11,7 @@ export type Others<
   U extends BaseUserMeta,
 > = readonly User<P, U>[];
 
-export type InternalOthersEvent<
-  P extends JsonObject,
-  U extends BaseUserMeta,
-> =
+export type InternalOthersEvent<P extends JsonObject, U extends BaseUserMeta> =
   | { type: "leave"; user: User<P, U> }
   | { type: "enter"; user: User<P, U> }
   | {
@@ -24,10 +21,7 @@ export type InternalOthersEvent<
     }
   | { type: "reset"; user?: never };
 
-export type OthersEvent<
-  P extends JsonObject,
-  U extends BaseUserMeta,
-> = Resolve<
+export type OthersEvent<P extends JsonObject, U extends BaseUserMeta> = Resolve<
   InternalOthersEvent<P, U> & {
     others: readonly User<P, U>[];
   }

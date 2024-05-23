@@ -233,19 +233,21 @@ export async function prepareStorageTest<
   let currentActor = actor;
   const operations: Op[] = [];
 
-  const ref = await prepareRoomWithStorage<
-    P,
-    S,
-    U,
-    E
-  >(items, -1, undefined, undefined, scopes);
+  const ref = await prepareRoomWithStorage<P, S, U, E>(
+    items,
+    -1,
+    undefined,
+    undefined,
+    scopes
+  );
 
-  const subject = await prepareRoomWithStorage<
-    P,
-    S,
-    U,
-    E
-  >(items, currentActor, undefined, undefined, scopes);
+  const subject = await prepareRoomWithStorage<P, S, U, E>(
+    items,
+    currentActor,
+    undefined,
+    undefined,
+    scopes
+  );
 
   subject.wss.onReceive.subscribe((data) => {
     const messages = parseAsClientMsgs(data);
@@ -436,12 +438,7 @@ export async function prepareStorageUpdateTest<
   expectUpdates: (updates: JsonStorageUpdate[][]) => void;
 }> {
   const ref = await prepareRoomWithStorage(items, -1);
-  const subject = await prepareRoomWithStorage<
-    P,
-    S,
-    U,
-    E
-  >(items, -2);
+  const subject = await prepareRoomWithStorage<P, S, U, E>(items, -2);
 
   subject.wss.onReceive.subscribe((data) => {
     const messages = parseAsClientMsgs(data);
@@ -494,12 +491,7 @@ export async function prepareDisconnectedStorageUpdateTest<
   U extends BaseUserMeta = never,
   E extends Json = never,
 >(items: IdTuple<SerializedCrdt>[]) {
-  const { storage, room } = await prepareRoomWithStorage<
-    P,
-    S,
-    U,
-    E
-  >(items, -1);
+  const { storage, room } = await prepareRoomWithStorage<P, S, U, E>(items, -1);
 
   const receivedUpdates: JsonStorageUpdate[][] = [];
 

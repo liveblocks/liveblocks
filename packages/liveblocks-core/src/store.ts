@@ -30,14 +30,13 @@ type CreateThreadOptimisticUpdate<M extends BaseMetadata> = {
   thread: ThreadData<M>;
 };
 
-type EditThreadMetadataOptimisticUpdate<M extends BaseMetadata> =
-  {
-    type: "edit-thread-metadata";
-    id: string;
-    threadId: string;
-    metadata: Resolve<PartialNullable<M>>;
-    updatedAt: Date;
-  };
+type EditThreadMetadataOptimisticUpdate<M extends BaseMetadata> = {
+  type: "edit-thread-metadata";
+  id: string;
+  threadId: string;
+  metadata: Resolve<PartialNullable<M>>;
+  updatedAt: Date;
+};
 
 type CreateCommentOptimisticUpdate = {
   type: "create-comment";
@@ -144,9 +143,7 @@ export interface CacheStore<M extends BaseMetadata>
     settings: RoomNotificationSettings,
     queryKey: string
   ): void;
-  pushOptimisticUpdate(
-    optimisticUpdate: OptimisticUpdate<M>
-  ): void;
+  pushOptimisticUpdate(optimisticUpdate: OptimisticUpdate<M>): void;
   setQueryState(queryKey: string, queryState: QueryState): void;
 }
 
@@ -154,9 +151,7 @@ export interface CacheStore<M extends BaseMetadata>
  * Create internal immutable store for comments and notifications.
  * Keep all the state required to return data from our hooks.
  */
-export function createClientStore<
-  M extends BaseMetadata,
->(): CacheStore<M> {
+export function createClientStore<M extends BaseMetadata>(): CacheStore<M> {
   const store = createStore<CacheState<M>>({
     threads: {},
     queries: {},

@@ -142,9 +142,7 @@ function getOrCreateContextBundle<
 // TODO: Likely a better / more clear name for this helper will arise. I'll
 // rename this later. All of these are implementation details to support inbox
 // notifications on a per-client basis.
-function getExtrasForClient<M extends BaseMetadata>(
-  client: Client
-) {
+function getExtrasForClient<M extends BaseMetadata>(client: Client) {
   let extras = _extras.get(client);
   if (!extras) {
     extras = makeExtrasForClient(client);
@@ -156,11 +154,8 @@ function getExtrasForClient<M extends BaseMetadata>(
   };
 }
 
-function makeExtrasForClient<M extends BaseMetadata>(
-  client: Client
-) {
-  const store = client[kInternal]
-    .cacheStore as unknown as CacheStore<M>;
+function makeExtrasForClient<M extends BaseMetadata>(client: Client) {
+  const store = client[kInternal].cacheStore as unknown as CacheStore<M>;
   const notifications = client[kInternal].notifications;
 
   let fetchInboxNotificationsRequest: Promise<{
@@ -296,10 +291,7 @@ function makeLiveblocksContextBundle<
 >(client: Client): LiveblocksContextBundle<U, M> {
   // Bind all hooks to the current client instance
   const useInboxNotificationThread = (inboxNotificationId: string) =>
-    useInboxNotificationThread_withClient<M>(
-      client,
-      inboxNotificationId
-    );
+    useInboxNotificationThread_withClient<M>(client, inboxNotificationId);
 
   const useMarkInboxNotificationAsRead = () =>
     useMarkInboxNotificationAsRead_withClient(client);
@@ -532,9 +524,10 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: Client) {
   }, [client]);
 }
 
-function useInboxNotificationThread_withClient<
-  M extends BaseMetadata,
->(client: Client, inboxNotificationId: string): ThreadData<M> {
+function useInboxNotificationThread_withClient<M extends BaseMetadata>(
+  client: Client,
+  inboxNotificationId: string
+): ThreadData<M> {
   const { store } = getExtrasForClient<M>(client);
 
   const selector = useCallback(

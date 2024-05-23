@@ -72,10 +72,7 @@ export type ResolveRoomsInfoArgs = {
   roomIds: string[];
 };
 
-export type EnterOptions<
-  P extends JsonObject,
-  S extends LsonObject,
-> = Resolve<
+export type EnterOptions<P extends JsonObject, S extends LsonObject> = Resolve<
   // Enter options are just room initializers, plus an internal option
   RoomInitializers<P, S> & {
     /**
@@ -480,16 +477,8 @@ export function createClient<U extends BaseUserMeta = BaseUserMeta>(
     S extends LsonObject = LsonObject,
     U extends BaseUserMeta = BaseUserMeta,
     E extends Json = never,
-  >(
-    roomId: string,
-    options: EnterOptions<P, S>
-  ): Room<P, S, U, E> {
-    const { room, leave: _ } = enterRoom<
-      P,
-      S,
-      U,
-      E
-    >(roomId, options);
+  >(roomId: string, options: EnterOptions<P, S>): Room<P, S, U, E> {
+    const { room, leave: _ } = enterRoom<P, S, U, E>(roomId, options);
     return room;
   }
 
@@ -500,9 +489,7 @@ export function createClient<U extends BaseUserMeta = BaseUserMeta>(
     E extends Json = never,
   >(roomId: string): Room<P, S, U, E> | null {
     const room = roomsById.get(roomId)?.room;
-    return room
-      ? (room as Room<P, S, U, E>)
-      : null;
+    return room ? (room as Room<P, S, U, E>) : null;
   }
 
   function forceLeave(roomId: string) {

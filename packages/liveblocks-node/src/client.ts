@@ -1008,9 +1008,7 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
-    return convertToThreadData(
-      (await res.json()) as ThreadDataPlain<M>
-    );
+    return convertToThreadData((await res.json()) as ThreadDataPlain<M>);
   }
 
   /**
@@ -1166,14 +1164,10 @@ export class Liveblocks {
    * @param params.thread.comment.body The body of the comment.
    * @returns The created thread. The thread will be created with the specified comment as its first comment.
    */
-  public async createThread<
-    M extends BaseMetadata = never,
-  >(params: {
+  public async createThread<M extends BaseMetadata = never>(params: {
     roomId: string;
     data: {
-      metadata?: [M] extends [never]
-        ? Record<string, never>
-        : M;
+      metadata?: [M] extends [never] ? Record<string, never> : M;
       comment: {
         userId: string;
         createdAt?: Date;
@@ -1196,9 +1190,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    return convertToThreadData(
-      (await res.json()) as ThreadDataPlain<M>
-    );
+    return convertToThreadData((await res.json()) as ThreadDataPlain<M>);
   }
 
   /**
@@ -1210,9 +1202,7 @@ export class Liveblocks {
    * @param params.data.updatedAt (optional) The date the thread is set to be updated.
    * @returns The updated thread.
    */
-  public async editThreadMetadata<
-    M extends BaseMetadata = never,
-  >(params: {
+  public async editThreadMetadata<M extends BaseMetadata = never>(params: {
     roomId: string;
     threadId: string;
     data: {

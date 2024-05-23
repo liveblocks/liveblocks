@@ -6,9 +6,7 @@ import {
   type RoomNotificationSettings,
 } from "@liveblocks/core";
 
-export function selectNotificationSettings<
-  M extends BaseMetadata,
->(
+export function selectNotificationSettings<M extends BaseMetadata>(
   roomId: string,
   state: CacheState<M>
 ): RoomNotificationSettings {

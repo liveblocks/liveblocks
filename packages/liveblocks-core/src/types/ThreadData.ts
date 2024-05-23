@@ -12,21 +12,18 @@ export type ThreadData<M extends BaseMetadata = never> = {
   createdAt: Date;
   updatedAt?: Date;
   comments: CommentData[];
-  metadata: [M] extends [never]
-    ? Record<string, never>
-    : M;
+  metadata: [M] extends [never] ? Record<string, never> : M;
 };
 
-export interface ThreadDataWithDeleteInfo<
-  M extends BaseMetadata = never,
-> extends ThreadData<M> {
+export interface ThreadDataWithDeleteInfo<M extends BaseMetadata = never>
+  extends ThreadData<M> {
   deletedAt?: Date;
 }
 
-export type ThreadDataPlain<M extends BaseMetadata = never> =
-  Omit<DateToString<ThreadData<M>>, "comments" | "metadata"> & {
-    comments: CommentDataPlain[];
-    metadata: [M] extends [never]
-      ? Record<string, never>
-      : M;
-  };
+export type ThreadDataPlain<M extends BaseMetadata = never> = Omit<
+  DateToString<ThreadData<M>>,
+  "comments" | "metadata"
+> & {
+  comments: CommentDataPlain[];
+  metadata: [M] extends [never] ? Record<string, never> : M;
+};
