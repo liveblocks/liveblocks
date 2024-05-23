@@ -36,11 +36,16 @@ import type {
   UnreadInboxNotificationsCountStateSuccess,
 } from "./types";
 
-const ClientContext = createContext<Client | null>(null);
+type OpaqueClient = Client<BaseUserMeta>;
 
-const _extras = new WeakMap<Client, ReturnType<typeof makeExtrasForClient>>();
+const ClientContext = createContext<OpaqueClient | null>(null);
+
+const _extras = new WeakMap<
+  OpaqueClient,
+  ReturnType<typeof makeExtrasForClient>
+>();
 const _bundles = new WeakMap<
-  Client,
+  OpaqueClient,
   LiveblocksContextBundle<BaseUserMeta, BaseMetadata>
 >();
 
@@ -131,7 +136,7 @@ function selectorFor_useUnreadInboxNotificationsCountSuspense(
 function getOrCreateContextBundle<
   U extends BaseUserMeta,
   M extends BaseMetadata,
->(client: Client): LiveblocksContextBundle<U, M> {
+>(client: Client<U>): LiveblocksContextBundle<U, M> {
   let bundle = _bundles.get(client);
   if (!bundle) {
     bundle = makeLiveblocksContextBundle(client);
@@ -143,7 +148,7 @@ function getOrCreateContextBundle<
 // TODO: Likely a better / more clear name for this helper will arise. I'll
 // rename this later. All of these are implementation details to support inbox
 // notifications on a per-client basis.
-function getExtrasForClient<M extends BaseMetadata>(client: Client) {
+function getExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   let extras = _extras.get(client);
   if (!extras) {
     extras = makeExtrasForClient(client);
@@ -155,7 +160,7 @@ function getExtrasForClient<M extends BaseMetadata>(client: Client) {
   };
 }
 
-function makeExtrasForClient<M extends BaseMetadata>(client: Client) {
+function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   const store = client[kInternal].cacheStore as unknown as CacheStore<M>;
   const notifications = client[kInternal].notifications;
 
@@ -350,7 +355,7 @@ function makeLiveblocksContextBundle<
   });
 }
 
-function useInboxNotifications_withClient(client: Client) {
+function useInboxNotifications_withClient(client: OpaqueClient) {
   const { store, useSubscribeToInboxNotificationsEffect } =
     getExtrasForClient(client);
 
@@ -363,7 +368,7 @@ function useInboxNotifications_withClient(client: Client) {
   );
 }
 
-function useInboxNotificationsSuspense_withClient(client: Client) {
+function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
   const {
     store,
     fetchInboxNotifications,
@@ -389,7 +394,7 @@ function useInboxNotificationsSuspense_withClient(client: Client) {
   );
 }
 
-function useUnreadInboxNotificationsCount_withClient(client: Client) {
+function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
   const { store, useSubscribeToInboxNotificationsEffect } =
     getExtrasForClient(client);
 
@@ -402,7 +407,9 @@ function useUnreadInboxNotificationsCount_withClient(client: Client) {
   );
 }
 
-function useUnreadInboxNotificationsCountSuspense_withClient(client: Client) {
+function useUnreadInboxNotificationsCountSuspense_withClient(
+  client: OpaqueClient
+) {
   const {
     store,
     fetchInboxNotifications,
@@ -424,7 +431,7 @@ function useUnreadInboxNotificationsCountSuspense_withClient(client: Client) {
   );
 }
 
-function useMarkInboxNotificationAsRead_withClient(client: Client) {
+function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
   return useCallback(
     (inboxNotificationId: string) => {
       const { store, notifications } = getExtrasForClient(client);
@@ -484,7 +491,7 @@ function useMarkInboxNotificationAsRead_withClient(client: Client) {
   );
 }
 
-function useMarkAllInboxNotificationsAsRead_withClient(client: Client) {
+function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
   return useCallback(() => {
     const { store, notifications } = getExtrasForClient(client);
     const optimisticUpdateId = nanoid();
@@ -526,7 +533,7 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: Client) {
 }
 
 function useInboxNotificationThread_withClient<M extends BaseMetadata>(
-  client: Client,
+  client: OpaqueClient,
   inboxNotificationId: string
 ): ThreadData<M> {
   const { store } = getExtrasForClient<M>(client);
@@ -562,7 +569,7 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
   );
 }
 
-function useCurrentUserId_withClient(client: Client) {
+function useCurrentUserId_withClient(client: OpaqueClient) {
   const currentUserIdStore = client[kInternal].currentUserIdStore;
   return useSyncExternalStore(
     currentUserIdStore.subscribe,
@@ -592,7 +599,7 @@ export function useClient() {
  * @beta This is an internal API for now, but it will become public eventually.
  */
 export function LiveblocksProvider(
-  props: PropsWithChildren<{ client: Client }>
+  props: PropsWithChildren<{ client: OpaqueClient }>
 ) {
   return (
     <ClientContext.Provider value={props.client}>
@@ -624,6 +631,6 @@ export function useLiveblocksContextBundle() {
 export function createLiveblocksContext<
   U extends BaseUserMeta = DU,
   M extends BaseMetadata = never, // XXX Think about whether this would be a breaking change to assign to DE and DM by default
->(client: Client): LiveblocksContextBundle<U, M> {
+>(client: Client<U>): LiveblocksContextBundle<U, M> {
   return getOrCreateContextBundle<U, M>(client);
 }

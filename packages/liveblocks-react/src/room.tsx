@@ -216,9 +216,12 @@ function handleApiError(err: CommentsApiError | NotificationsApiError): Error {
   return new Error(message);
 }
 
-const _extras = new WeakMap<Client, ReturnType<typeof makeExtrasForClient>>();
+const _extras = new WeakMap<
+  OpaqueClient,
+  ReturnType<typeof makeExtrasForClient>
+>();
 const _bundles = new WeakMap<
-  Client,
+  OpaqueClient,
   RoomContextBundle<JsonObject, LsonObject, BaseUserMeta, Json, BaseMetadata>
 >();
 
@@ -228,7 +231,7 @@ function getOrCreateRoomContextBundle<
   U extends BaseUserMeta,
   E extends Json,
   M extends BaseMetadata,
->(client: Client): RoomContextBundle<P, S, U, E, M> {
+>(client: OpaqueClient): RoomContextBundle<P, S, U, E, M> {
   let bundle = _bundles.get(client);
   if (!bundle) {
     bundle = makeRoomContextBundle(client);
@@ -240,7 +243,7 @@ function getOrCreateRoomContextBundle<
 // TODO: Likely a better / more clear name for this helper will arise. I'll
 // rename this later. All of these are implementation details to support inbox
 // notifications on a per-client basis.
-function getExtrasForClient<M extends BaseMetadata>(client: Client) {
+function getExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   let extras = _extras.get(client);
   if (!extras) {
     extras = makeExtrasForClient(client);
@@ -252,7 +255,7 @@ function getExtrasForClient<M extends BaseMetadata>(client: Client) {
   };
 }
 
-function makeExtrasForClient<M extends BaseMetadata>(client: Client) {
+function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   const store = client[kInternal].cacheStore as unknown as CacheStore<M>;
 
   const DEFAULT_DEDUPING_INTERVAL = 2000; // 2 seconds
@@ -569,6 +572,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: Client) {
   };
 }
 
+type OpaqueClient = Client<BaseUserMeta>;
 type OpaqueRoom = Room<JsonObject, LsonObject, BaseUserMeta, Json>;
 
 type RoomLeavePair<
@@ -2435,7 +2439,10 @@ export function createRoomContext<
   U extends BaseUserMeta = DU,
   E extends Json = never, // XXX Think about whether this would be a breaking change to assign to DE and DM by default
   M extends BaseMetadata = never,
->(client: Client, options?: Options<U>): RoomContextBundle<P, S, U, E, M> {
+>(
+  client: OpaqueClient,
+  options?: Options<U>
+): RoomContextBundle<P, S, U, E, M> {
   // Deprecated option
   if (options?.resolveUsers) {
     throw new Error(
