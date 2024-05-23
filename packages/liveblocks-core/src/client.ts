@@ -33,6 +33,8 @@ import type { RoomInfo } from "./types/RoomInfo";
 import type { ThreadData } from "./types/ThreadData";
 import type { ThreadDeleteInfo } from "./types/ThreadDeleteInfo";
 
+type OpaqueRoom = Room<JsonObject, LsonObject, BaseUserMeta, Json>;
+
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1_000;
 const DEFAULT_THROTTLE = 100;
@@ -333,8 +335,6 @@ export function getAuthBearerHeaderFromAuthValue(authValue: AuthValue): string {
 export function createClient<U extends BaseUserMeta = BaseUserMeta>(
   options: ClientOptions<U>
 ): Client<U> {
-  type OpaqueRoom = Room<JsonObject, LsonObject, BaseUserMeta, Json>;
-
   const clientOptions = options;
   const throttleDelay = getThrottle(clientOptions.throttle ?? DEFAULT_THROTTLE);
   const lostConnectionTimeout = getLostConnectionTimeout(
