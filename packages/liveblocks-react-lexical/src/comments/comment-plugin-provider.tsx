@@ -1,7 +1,11 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { registerNestedElementResolver } from "@lexical/utils";
 import { kInternal } from "@liveblocks/core";
-import { useRoomContextBundle } from "@liveblocks/react";
+import {
+  CreateThreadError,
+  DeleteCommentError,
+  useRoomContextBundle,
+} from "@liveblocks/react";
 import type { BaseSelection, NodeKey, NodeMutation } from "lexical";
 import {
   $getNodeByKey,
@@ -12,7 +16,14 @@ import {
 } from "lexical";
 import type { PropsWithChildren, RefObject } from "react";
 import * as React from "react";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import $getThreadMarkIds from "./get-thread-mark-ids";
 import {
@@ -20,8 +31,8 @@ import {
   $isThreadMarkNode,
   ThreadMarkNode,
 } from "./thread-mark-node";
-import { $wrapSelectionInThreadMarkNode } from "./wrap-selection-in-thread-mark-node";
 import $unwrapThreadMarkNode from "./unwrap-thread-mark-node";
+import $wrapSelectionInThreadMarkNode from "./wrap-selection-in-thread-mark-node";
 
 type ThreadToNodesMap = Map<string, Set<NodeKey>>;
 
@@ -41,6 +52,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     [kInternal]: {
       useOptimisticThreadCreateListener,
       useOptimisticThreadDeleteListener,
+      useCommentsErrorListener,
     },
   } = useRoomContextBundle();
 
@@ -52,7 +64,11 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     }
   }, [editor]);
 
-  useOptimisticThreadCreateListener(({ threadId }) => {
+  /**
+   * Create a new ThreadMarkNode and wrap the selected content in it.
+   * @param threadId The id of the thread to associate with the selected content
+   */
+  const handleThreadCreate = useCallback((threadId: string) => {
     editor.update(() => {
       const selection = $getSelection();
       if (!$isRangeSelection(selection)) return;
@@ -64,9 +80,13 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       // Clear the selection after wrapping
       $setSelection(null);
     });
-  });
+  }, []);
 
-  useOptimisticThreadDeleteListener(({ threadId }) => {
+  /**
+   * Remove the thread id from the associated nodes and unwrap the nodes if they are no longer associated with any threads.
+   * @param threadId The id of the thread to remove
+   */
+  const handleThreadDelete = useCallback((threadId: string) => {
     editor.update(() => {
       const threadToNodes = threadToNodeKeysRef.current;
       const keys = threadToNodes.get(threadId);
@@ -75,7 +95,6 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
 
       for (const key of keys) {
         const node = $getNodeByKey(key);
-        console.log({ node });
         if (!$isThreadMarkNode(node)) continue;
         node.deleteID(threadId);
 
@@ -84,6 +103,19 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
         }
       }
     });
+  }, []);
+
+  // Listen to (optimistic) thread creation to create a new ThreadMarkNode and associate the newly created thread to mark node.
+  useOptimisticThreadCreateListener(handleThreadCreate);
+
+  // Listen to (optimistic) thread deletion to remove the thread id from the associated nodes and unwrap the nodes if they are no longer associated with any threads.
+  useOptimisticThreadDeleteListener(handleThreadDelete);
+
+  useCommentsErrorListener((error) => {
+    // If thread creation fails, we remove the thread id from the associated nodes and unwrap the nodes if they are no longer associated with any threads
+    if (error instanceof CreateThreadError) {
+      handleThreadDelete(error.context.threadId);
+    }
   });
 
   /**

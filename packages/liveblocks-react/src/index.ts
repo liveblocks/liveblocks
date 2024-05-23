@@ -12,6 +12,7 @@ export {
 export { createRoomContext, useRoomContextBundle } from "./room";
 export { useSharedContextBundle } from "./shared";
 export type { MutationContext, UseThreadsOptions } from "./types";
+export { CreateThreadError, DeleteCommentError } from "./comments/errors";
 
 // Re-exports from @liveblocks/client, for convenience
 export type { Json, JsonObject } from "@liveblocks/client";

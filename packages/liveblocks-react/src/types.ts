@@ -54,6 +54,8 @@ export type UseThreadsOptions<TThreadMetadata extends BaseMetadata> = {
 
 import type { PropsWithChildren } from "react";
 
+import type { CommentsError } from "./comments/errors";
+
 export type UserStateLoading = {
   isLoading: true;
   user?: never;
@@ -847,11 +849,10 @@ type PrivateRoomContextApi = {
   hasResolveMentionSuggestions: boolean;
   useMentionSuggestions(search?: string): string[] | undefined;
   useCurrentUserId(): string | null;
-  useOptimisticThreadCreateListener(
-    callback: ({ threadId }: { threadId: string }) => void
-  ): void;
-  useOptimisticThreadDeleteListener(
-    callback: ({ threadId }: { threadId: string }) => void
+  useOptimisticThreadCreateListener(callback: (threadId: string) => void): void;
+  useOptimisticThreadDeleteListener(callback: (threadId: string) => void): void;
+  useCommentsErrorListener<TThreadMetadata extends BaseMetadata>(
+    callback: (err: CommentsError<TThreadMetadata>) => void
   ): void;
 };
 

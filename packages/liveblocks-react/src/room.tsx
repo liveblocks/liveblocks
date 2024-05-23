@@ -639,7 +639,7 @@ export function createRoomContext<
   }
 
   function useOptimisticThreadCreateListener(
-    callback: ({ threadId }: { threadId: string }) => void
+    callback: (threadId: string) => void
   ) {
     const room = useRoom();
     const savedCallback = useLatest(callback);
@@ -649,16 +649,14 @@ export function createRoomContext<
         if (event.type === "create-thread") {
           if (event.roomId !== room.id) return;
 
-          savedCallback.current({
-            threadId: event.thread.id,
-          });
+          savedCallback.current(event.thread.id);
         }
       });
     }, [room, savedCallback]);
   }
 
   function useOptimisticThreadDeleteListener(
-    callback: ({ threadId }: { threadId: string }) => void
+    callback: (threadId: string) => void
   ) {
     const room = useRoom();
     const savedCallback = useLatest(callback);
@@ -683,12 +681,20 @@ export function createRoomContext<
           // If the thread is not deleted from the optimistic update, we do not invoke the callback
           if (newThread.deletedAt === undefined) return;
 
-          savedCallback.current({
-            threadId: event.threadId,
-          });
+          savedCallback.current(event.threadId);
         }
       });
     }, [room, savedCallback]);
+  }
+
+  function useCommentsErrorListener(
+    callback: (error: CommentsError<TThreadMetadata>) => void
+  ) {
+    const savedCallback = useLatest(callback);
+
+    React.useEffect(() => {
+      return commentsErrorEventSource.subscribe(savedCallback.current);
+    }, [savedCallback]);
   }
 
   function useOthersListener(
@@ -2404,6 +2410,7 @@ export function createRoomContext<
       useMentionSuggestions,
       useOptimisticThreadCreateListener,
       useOptimisticThreadDeleteListener,
+      useCommentsErrorListener,
     },
   };
 

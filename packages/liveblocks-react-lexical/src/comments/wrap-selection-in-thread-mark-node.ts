@@ -27,7 +27,7 @@ import { $isElementNode, $isTextNode } from "lexical";
 import type { ThreadMarkNode } from "./thread-mark-node";
 import { $createThreadMarkNode, $isThreadMarkNode } from "./thread-mark-node";
 
-export function $wrapSelectionInThreadMarkNode(
+export default function $wrapSelectionInThreadMarkNode(
   selection: RangeSelection,
   isBackward: boolean,
   id: string,
