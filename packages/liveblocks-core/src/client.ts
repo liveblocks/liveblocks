@@ -97,7 +97,7 @@ export type EnterOptions<P extends JsonObject, S extends LsonObject> = Resolve<
 type PrivateClientApi<U extends BaseUserMeta> = {
   readonly notifications: NotificationsApi;
   readonly currentUserIdStore: Store<string | null>;
-  readonly resolveMentionSuggestions: ClientOptions["resolveMentionSuggestions"];
+  readonly resolveMentionSuggestions: ClientOptions<U>["resolveMentionSuggestions"];
   readonly cacheStore: CacheStore<BaseMetadata>;
   readonly usersStore: BatchStore<U["info"] | undefined, [string]>;
   readonly roomsInfoStore: BatchStore<RoomInfo | undefined, [string]>;
