@@ -1,4 +1,5 @@
 import type {
+  BaseMetadata,
   BaseUserMeta,
   BroadcastOptions,
   Client,
@@ -15,7 +16,6 @@ import type {
 } from "@liveblocks/client";
 import { shallow } from "@liveblocks/client";
 import type {
-  BaseMetadata,
   CacheState,
   CacheStore,
   CommentData,
@@ -92,6 +92,22 @@ import type {
   UseThreadsOptions,
 } from "./types";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
+
+//
+// Default concrete types for each of the user-provided type placeholders.
+//
+// DP = Default Presence type
+// DS = Default Storage type
+// DU = Default UserMeta type
+// DE = Default RoomEvent type
+// DM = Default ThreadMetadata type
+// etc
+//
+type DP = JsonObject;
+type DS = LsonObject;
+type DU = BaseUserMeta;
+type DE = Json;
+type DM = BaseMetadata;
 
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
