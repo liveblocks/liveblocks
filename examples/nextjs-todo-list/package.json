@@ -15,7 +15,6 @@
     "@types/node": "^18.11.18",
     "@types/react": "^18.0.27",
     "@types/react-dom": "^18.0.10",
-    "eslint-config-next": "^14.2.3",
     "next": "^14.2.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
