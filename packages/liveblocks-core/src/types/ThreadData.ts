@@ -1,6 +1,6 @@
 import type { BaseMetadata } from "./BaseMetadata";
 import type { CommentData, CommentDataPlain } from "./CommentData";
-import type { DateToString } from "./DateToString";
+import type { DateToString } from "../lib/DateToString";
 
 /**
  * Represents a thread of comments.

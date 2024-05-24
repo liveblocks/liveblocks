@@ -1,4 +1,4 @@
-import type { DateToString } from "./DateToString";
+import type { DateToString } from "../lib/DateToString";
 
 export type ThreadDeleteInfo = {
   type: "deletedThread";

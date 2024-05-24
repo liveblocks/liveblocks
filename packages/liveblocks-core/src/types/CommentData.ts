@@ -1,5 +1,5 @@
 import type { CommentBody } from "./CommentBody";
-import type { DateToString } from "./DateToString";
+import type { DateToString } from "../lib/DateToString";
 
 export type CommentReaction = {
   emoji: string;
