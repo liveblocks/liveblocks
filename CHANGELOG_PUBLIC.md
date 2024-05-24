@@ -28,9 +28,14 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 - Fixed a number formatting issue by enforcing US number formatting for all
   locations
 
+## Misc
+- Ongoing internal refactorings to enable simpler setup for `@liveblocks/react` in the
+  future.
+
+
 ## Contributors
 
-ofoucherot, flowflorent, stevenfabre, guillaumesalles
+ofoucherot, flowflorent, stevenfabre, guillaumesalles, nvie
 
 # Week 20 (2024-05-17)
 
