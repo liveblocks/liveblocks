@@ -136,7 +136,7 @@ function selectorFor_useUnreadInboxNotificationsCountSuspense(
 function getOrCreateContextBundle<
   U extends BaseUserMeta,
   M extends BaseMetadata,
->(client: Client<U>): LiveblocksContextBundle<U, M> {
+>(client: OpaqueClient): LiveblocksContextBundle<U, M> {
   let bundle = _bundles.get(client);
   if (!bundle) {
     bundle = makeLiveblocksContextBundle(client);
@@ -631,6 +631,6 @@ export function useLiveblocksContextBundle() {
 export function createLiveblocksContext<
   U extends BaseUserMeta = DU,
   M extends BaseMetadata = never, // TODO Change this to DM for 2.0
->(client: Client<U>): LiveblocksContextBundle<U, M> {
+>(client: OpaqueClient): LiveblocksContextBundle<U, M> {
   return getOrCreateContextBundle<U, M>(client);
 }
