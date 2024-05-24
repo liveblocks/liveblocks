@@ -123,17 +123,17 @@ function makeRoomConfig(mockedDelegates: RoomDelegates) {
  * loaded.
  */
 export async function prepareRoomWithStorage<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json,
+  P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
 >(
   items: IdTuple<SerializedCrdt>[],
   actor: number = 0,
   onSend_DEPRECATED:
-    | ((messages: ClientMsg<TPresence, TRoomEvent>[]) => void)
+    | ((messages: ClientMsg<P, E>[]) => void)
     | undefined = undefined,
-  defaultStorage?: TStorage,
+  defaultStorage?: S,
   scopes: string[] = ["room:write"]
 ) {
   if (onSend_DEPRECATED !== undefined) {
@@ -157,10 +157,10 @@ export async function prepareRoomWithStorage<
     );
   });
 
-  const room = createRoom<TPresence, TStorage, TUserMeta, TRoomEvent>(
+  const room = createRoom<P, S, U, E>(
     {
-      initialPresence: {} as TPresence,
-      initialStorage: defaultStorage || ({} as TStorage),
+      initialPresence: {} as P,
+      initialStorage: defaultStorage || ({} as S),
     },
     makeRoomConfig(delegates)
   );
@@ -179,24 +179,24 @@ export async function prepareRoomWithStorage<
  * The `expectStorage`, `expectMessagesSent`, and `applyRemoteOperations`
  * helpers can be used to make assertions easier to express.
  */
-export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
+export async function prepareIsolatedStorageTest<S extends LsonObject>(
   items: IdTuple<SerializedCrdt>[],
   actor: number = 0,
-  defaultStorage?: TStorage
+  defaultStorage?: S
 ) {
   const { room, storage, wss } = await prepareRoomWithStorage<
     never,
-    TStorage,
+    S,
     never,
     never
-  >(items, actor, undefined, defaultStorage || ({} as TStorage));
+  >(items, actor, undefined, defaultStorage || ({} as S));
 
   return {
     root: storage.root,
     room,
     wss,
 
-    expectStorage: (data: ToImmutable<TStorage>) =>
+    expectStorage: (data: ToImmutable<S>) =>
       expect(storage.root.toImmutable()).toEqual(data),
 
     expectMessagesSent: (
@@ -221,10 +221,10 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
  * Assertion on the storage validate both rooms
  */
 export async function prepareStorageTest<
-  TStorage extends LsonObject,
-  TPresence extends JsonObject = never,
-  TUserMeta extends BaseUserMeta = never,
-  TRoomEvent extends Json = never,
+  S extends LsonObject,
+  P extends JsonObject = never,
+  U extends BaseUserMeta = never,
+  E extends Json = never,
 >(
   items: IdTuple<SerializedCrdt>[],
   actor: number = 0,
@@ -233,19 +233,21 @@ export async function prepareStorageTest<
   let currentActor = actor;
   const operations: Op[] = [];
 
-  const ref = await prepareRoomWithStorage<
-    TPresence,
-    TStorage,
-    TUserMeta,
-    TRoomEvent
-  >(items, -1, undefined, undefined, scopes);
+  const ref = await prepareRoomWithStorage<P, S, U, E>(
+    items,
+    -1,
+    undefined,
+    undefined,
+    scopes
+  );
 
-  const subject = await prepareRoomWithStorage<
-    TPresence,
-    TStorage,
-    TUserMeta,
-    TRoomEvent
-  >(items, currentActor, undefined, undefined, scopes);
+  const subject = await prepareRoomWithStorage<P, S, U, E>(
+    items,
+    currentActor,
+    undefined,
+    undefined,
+    scopes
+  );
 
   subject.wss.onReceive.subscribe((data) => {
     const messages = parseAsClientMsgs(data);
@@ -304,9 +306,9 @@ export async function prepareStorageTest<
     })
   );
 
-  const states: ToImmutable<TStorage>[] = [];
+  const states: ToImmutable<S>[] = [];
 
-  function expectBothClientStoragesToEqual(data: ToImmutable<TStorage>) {
+  function expectBothClientStoragesToEqual(data: ToImmutable<S>) {
     expect(subject.storage.root.toImmutable()).toEqual(data);
     expect(ref.storage.root.toImmutable()).toEqual(data);
     expect(subject.room[kInternal].nodeCount).toBe(
@@ -314,7 +316,7 @@ export async function prepareStorageTest<
     );
   }
 
-  function expectStorage(data: ToImmutable<TStorage>) {
+  function expectStorage(data: ToImmutable<S>) {
     states.push(data);
     expectBothClientStoragesToEqual(data);
   }
@@ -424,24 +426,19 @@ export async function prepareStorageTest<
  * Join the same room with 2 different clients and stop sending socket messages when the storage is initialized
  */
 export async function prepareStorageUpdateTest<
-  TStorage extends LsonObject,
-  TPresence extends JsonObject = never,
-  TUserMeta extends BaseUserMeta = never,
-  TRoomEvent extends Json = never,
+  S extends LsonObject,
+  P extends JsonObject = never,
+  U extends BaseUserMeta = never,
+  E extends Json = never,
 >(
   items: IdTuple<SerializedCrdt>[]
 ): Promise<{
-  room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
-  root: LiveObject<TStorage>;
+  room: Room<P, S, U, E>;
+  root: LiveObject<S>;
   expectUpdates: (updates: JsonStorageUpdate[][]) => void;
 }> {
   const ref = await prepareRoomWithStorage(items, -1);
-  const subject = await prepareRoomWithStorage<
-    TPresence,
-    TStorage,
-    TUserMeta,
-    TRoomEvent
-  >(items, -2);
+  const subject = await prepareRoomWithStorage<P, S, U, E>(items, -2);
 
   subject.wss.onReceive.subscribe((data) => {
     const messages = parseAsClientMsgs(data);
@@ -489,17 +486,12 @@ export async function prepareStorageUpdateTest<
  * Create a room, join with the client but sync local storage changes with the server
  */
 export async function prepareDisconnectedStorageUpdateTest<
-  TStorage extends LsonObject,
-  TPresence extends JsonObject = never,
-  TUserMeta extends BaseUserMeta = never,
-  TRoomEvent extends Json = never,
+  S extends LsonObject,
+  P extends JsonObject = never,
+  U extends BaseUserMeta = never,
+  E extends Json = never,
 >(items: IdTuple<SerializedCrdt>[]) {
-  const { storage, room } = await prepareRoomWithStorage<
-    TPresence,
-    TStorage,
-    TUserMeta,
-    TRoomEvent
-  >(items, -1);
+  const { storage, room } = await prepareRoomWithStorage<P, S, U, E>(items, -1);
 
   const receivedUpdates: JsonStorageUpdate[][] = [];
 

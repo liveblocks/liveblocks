@@ -74,7 +74,7 @@ export type CommentBodyLinkElementArgs = {
 };
 
 export type CommentBodyMentionElementArgs<
-  TUserMeta extends BaseUserMeta = BaseUserMeta,
+  U extends BaseUserMeta = BaseUserMeta,
 > = {
   /**
    * The mention element.
@@ -84,11 +84,11 @@ export type CommentBodyMentionElementArgs<
   /**
    * The mention's user info, if the `resolvedUsers` option was provided.
    */
-  user?: TUserMeta["info"];
+  user?: U["info"];
 };
 
 export type StringifyCommentBodyElements<
-  TUserMeta extends BaseUserMeta = BaseUserMeta,
+  U extends BaseUserMeta = BaseUserMeta,
 > = {
   /**
    * The element used to display paragraphs.
@@ -108,38 +108,34 @@ export type StringifyCommentBodyElements<
   /**
    * The element used to display mentions.
    */
-  mention: (
-    args: CommentBodyMentionElementArgs<TUserMeta>,
-    index: number
-  ) => string;
+  mention: (args: CommentBodyMentionElementArgs<U>, index: number) => string;
 };
 
-export type StringifyCommentBodyOptions<
-  TUserMeta extends BaseUserMeta = BaseUserMeta,
-> = {
-  /**
-   * Which format to convert the comment to.
-   */
-  format?: "plain" | "html" | "markdown";
+export type StringifyCommentBodyOptions<U extends BaseUserMeta = BaseUserMeta> =
+  {
+    /**
+     * Which format to convert the comment to.
+     */
+    format?: "plain" | "html" | "markdown";
 
-  /**
-   * The elements used to customize the resulting string. Each element has
-   * priority over the defaults inherited from the `format` option.
-   */
-  elements?: Partial<StringifyCommentBodyElements<TUserMeta>>;
+    /**
+     * The elements used to customize the resulting string. Each element has
+     * priority over the defaults inherited from the `format` option.
+     */
+    elements?: Partial<StringifyCommentBodyElements<U>>;
 
-  /**
-   * The separator used between paragraphs.
-   */
-  separator?: string;
+    /**
+     * The separator used between paragraphs.
+     */
+    separator?: string;
 
-  /**
-   * A function that returns user info from user IDs.
-   */
-  resolveUsers?: (
-    args: ResolveUsersArgs
-  ) => OptionalPromise<(TUserMeta["info"] | undefined)[] | undefined>;
-};
+    /**
+     * A function that returns user info from user IDs.
+     */
+    resolveUsers?: (
+      args: ResolveUsersArgs
+    ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+  };
 
 function isCommentBodyParagraph(
   element: CommentBodyElement
@@ -237,13 +233,13 @@ export function getMentionedIdsFromCommentBody(body: CommentBody): string[] {
   return Array.from(mentionedIds);
 }
 
-async function resolveUsersInCommentBody<TUserMeta extends BaseUserMeta>(
+async function resolveUsersInCommentBody<U extends BaseUserMeta>(
   body: CommentBody,
   resolveUsers?: (
     args: ResolveUsersArgs
-  ) => OptionalPromise<(TUserMeta["info"] | undefined)[] | undefined>
+  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>
 ) {
-  const resolvedUsers = new Map<string, TUserMeta["info"]>();
+  const resolvedUsers = new Map<string, U["info"]>();
 
   if (!resolveUsers) {
     return resolvedUsers;
@@ -562,10 +558,10 @@ const stringifyCommentBodyMarkdownElements: StringifyCommentBodyElements = {
  * Markdown, HTML, or a custom format.
  */
 export async function stringifyCommentBody<
-  TUserMeta extends BaseUserMeta = BaseUserMeta,
+  U extends BaseUserMeta = BaseUserMeta,
 >(
   body: CommentBody,
-  options?: StringifyCommentBodyOptions<TUserMeta>
+  options?: StringifyCommentBodyOptions<U>
 ): Promise<string> {
   const format = options?.format ?? "plain";
   const separator =

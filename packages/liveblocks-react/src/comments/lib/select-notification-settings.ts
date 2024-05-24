@@ -6,11 +6,9 @@ import {
   type RoomNotificationSettings,
 } from "@liveblocks/core";
 
-export function selectNotificationSettings<
-  TThreadMetadata extends BaseMetadata,
->(
+export function selectNotificationSettings<M extends BaseMetadata>(
   roomId: string,
-  state: CacheState<TThreadMetadata>
+  state: CacheState<M>
 ): RoomNotificationSettings {
   const { notificationSettings } = applyOptimisticUpdates(state);
   return nn(notificationSettings[roomId]);

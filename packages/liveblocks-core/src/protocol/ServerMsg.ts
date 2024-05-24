@@ -32,16 +32,16 @@ export enum ServerMsgCode {
  * Messages that can be sent from the server to the client.
  */
 export type ServerMsg<
-  TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json,
+  P extends JsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
 > =
   // For Presence
-  | UpdatePresenceServerMsg<TPresence> // Broadcasted
-  | UserJoinServerMsg<TUserMeta> // Broadcasted
+  | UpdatePresenceServerMsg<P> // Broadcasted
+  | UserJoinServerMsg<U> // Broadcasted
   | UserLeftServerMsg // Broadcasted
-  | BroadcastedEventServerMsg<TRoomEvent> // Broadcasted
-  | RoomStateServerMsg<TUserMeta> // For a single client
+  | BroadcastedEventServerMsg<E> // Broadcasted
+  | RoomStateServerMsg<U> // For a single client
 
   // For Storage
   | InitialDocumentStateServerMsg // For a single client
@@ -114,7 +114,7 @@ type CommentReactionRemoved = {
  * those cases, the `targetActor` field indicates the newly connected client,
  * so all other existing clients can ignore this broadcasted message.
  */
-export type UpdatePresenceServerMsg<TPresence extends JsonObject> =
+export type UpdatePresenceServerMsg<P extends JsonObject> =
   //
   // Full Presence™ message
   //
@@ -142,7 +142,7 @@ export type UpdatePresenceServerMsg<TPresence extends JsonObject> =
        * this will be the full Presence, otherwise it only contain the fields that
        * have changed since the last broadcast.
        */
-      readonly data: TPresence;
+      readonly data: P;
     }
 
   //
@@ -162,26 +162,26 @@ export type UpdatePresenceServerMsg<TPresence extends JsonObject> =
        * A partial Presence patch to apply to the User. It will only contain the
        * fields that have changed since the last broadcast.
        */
-      readonly data: Partial<TPresence>;
+      readonly data: Partial<P>;
     };
 
 /**
  * Sent by the WebSocket server and broadcasted to all clients to announce that
  * a new User has joined the Room.
  */
-export type UserJoinServerMsg<TUserMeta extends BaseUserMeta> = {
+export type UserJoinServerMsg<U extends BaseUserMeta> = {
   readonly type: ServerMsgCode.USER_JOINED;
   readonly actor: number;
   /**
    * The id of the User that has been set in the authentication endpoint.
    * Useful to get additional information about the connected user.
    */
-  readonly id: TUserMeta["id"];
+  readonly id: U["id"];
   /**
    * Additional user information that has been set in the authentication
    * endpoint.
    */
-  readonly info: TUserMeta["info"];
+  readonly info: U["info"];
   /**
    * Informs the client what (public) permissions this (other) User has.
    */
@@ -213,7 +213,7 @@ export type YDocUpdateServerMsg = {
  * Sent by the WebSocket server and broadcasted to all clients to announce that
  * a User broadcasted an Event to everyone in the Room.
  */
-export type BroadcastedEventServerMsg<TRoomEvent extends Json> = {
+export type BroadcastedEventServerMsg<E extends Json> = {
   readonly type: ServerMsgCode.BROADCASTED_EVENT;
   /**
    * The User who broadcast the Event. Absent when this event is broadcast from
@@ -224,7 +224,7 @@ export type BroadcastedEventServerMsg<TRoomEvent extends Json> = {
    * The arbitrary payload of the Event. This can be any JSON value. Clients
    * will have to manually verify/decode this event.
    */
-  readonly event: TRoomEvent;
+  readonly event: E;
 };
 
 /**
@@ -232,7 +232,7 @@ export type BroadcastedEventServerMsg<TRoomEvent extends Json> = {
  * joining the Room, to provide the initial state of the Room. The payload
  * includes a list of all other Users that already are in the Room.
  */
-export type RoomStateServerMsg<TUserMeta extends BaseUserMeta> = {
+export type RoomStateServerMsg<U extends BaseUserMeta> = {
   readonly type: ServerMsgCode.ROOM_STATE;
 
   /**
@@ -254,7 +254,7 @@ export type RoomStateServerMsg<TUserMeta extends BaseUserMeta> = {
   readonly scopes: string[];
 
   readonly users: {
-    readonly [otherActor: number]: TUserMeta & { scopes: string[] };
+    readonly [otherActor: number]: U & { scopes: string[] };
   };
 };
 

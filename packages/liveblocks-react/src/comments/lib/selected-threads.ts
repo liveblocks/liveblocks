@@ -7,47 +7,47 @@ import {
 
 import type { UseThreadsOptions } from "../../types";
 
-export function selectedThreads<TThreadMetadata extends BaseMetadata>(
+export function selectedThreads<M extends BaseMetadata>(
   roomId: string,
-  state: CacheState<TThreadMetadata>,
-  options: UseThreadsOptions<TThreadMetadata>
-): ThreadData<TThreadMetadata>[] {
+  state: CacheState<M>,
+  options: UseThreadsOptions<M>
+): ThreadData<M>[] {
   const result = applyOptimisticUpdates(state);
 
   // Filter threads to only include the non-deleted threads from the specified room and that match the specified filter options
-  const threads = Object.values(result.threads).filter<
-    ThreadData<TThreadMetadata>
-  >((thread): thread is ThreadData<TThreadMetadata> => {
-    if (thread.roomId !== roomId) return false;
+  const threads = Object.values(result.threads).filter<ThreadData<M>>(
+    (thread): thread is ThreadData<M> => {
+      if (thread.roomId !== roomId) return false;
 
-    // We do not want to include threads that have been marked as deleted
-    if (thread.deletedAt !== undefined) {
-      return false;
-    }
+      // We do not want to include threads that have been marked as deleted
+      if (thread.deletedAt !== undefined) {
+        return false;
+      }
 
-    const query = options.query;
-    if (!query) return true;
+      const query = options.query;
+      if (!query) return true;
 
-    for (const key in query.metadata) {
-      const metadataValue = thread.metadata[key];
-      const filterValue = query.metadata[key];
+      for (const key in query.metadata) {
+        const metadataValue = thread.metadata[key];
+        const filterValue = query.metadata[key];
 
-      if (
-        assertFilterIsStartsWithOperator(filterValue) &&
-        assertMetadataValueIsString(metadataValue)
-      ) {
-        if (metadataValue.startsWith(filterValue.startsWith)) {
-          return true;
+        if (
+          assertFilterIsStartsWithOperator(filterValue) &&
+          assertMetadataValueIsString(metadataValue)
+        ) {
+          if (metadataValue.startsWith(filterValue.startsWith)) {
+            return true;
+          }
+        }
+
+        if (metadataValue !== filterValue) {
+          return false;
         }
       }
 
-      if (metadataValue !== filterValue) {
-        return false;
-      }
+      return true;
     }
-
-    return true;
-  });
+  );
 
   // Sort threads by creation date (oldest first)
   return threads.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());

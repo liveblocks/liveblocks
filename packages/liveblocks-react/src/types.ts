@@ -30,7 +30,7 @@ import type {
   ToImmutable,
 } from "@liveblocks/core";
 
-export type UseThreadsOptions<TThreadMetadata extends BaseMetadata> = {
+export type UseThreadsOptions<M extends BaseMetadata> = {
   /**
    * The query (including metadata) to filter the threads by. If provided, only threads
    * that match the query will be returned. If not provided, all threads will be returned.
@@ -40,7 +40,7 @@ export type UseThreadsOptions<TThreadMetadata extends BaseMetadata> = {
      * The metadata to filter the threads by. If provided, only threads with metadata that matches
      * the provided metadata will be returned. If not provided, all threads will be returned.
      */
-    metadata?: Partial<QueryMetadata<TThreadMetadata>>;
+    metadata?: Partial<QueryMetadata<M>>;
   };
 
   /**
@@ -145,21 +145,21 @@ export type ThreadsStateLoading = {
   error?: never;
 };
 
-export type ThreadsStateResolved<TThreadMetadata extends BaseMetadata> = {
+export type ThreadsStateResolved<M extends BaseMetadata> = {
   isLoading: false;
-  threads: ThreadData<TThreadMetadata>[];
+  threads: ThreadData<M>[];
   error?: Error;
 };
 
-export type ThreadsStateSuccess<TThreadMetadata extends BaseMetadata> = {
+export type ThreadsStateSuccess<M extends BaseMetadata> = {
   isLoading: false;
-  threads: ThreadData<TThreadMetadata>[];
+  threads: ThreadData<M>[];
   error?: never;
 };
 
-export type ThreadsState<TThreadMetadata extends BaseMetadata> =
+export type ThreadsState<M extends BaseMetadata> =
   | ThreadsStateLoading
-  | ThreadsStateResolved<TThreadMetadata>;
+  | ThreadsStateResolved<M>;
 
 export type InboxNotificationsStateLoading = {
   isLoading: true;
@@ -237,8 +237,8 @@ export type RoomNotificationSettingsState =
   | RoomNotificationSettingsStateSuccess;
 
 export type RoomProviderProps<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
+  P extends JsonObject,
+  S extends LsonObject,
 > = Resolve<
   {
     /**
@@ -274,7 +274,7 @@ export type RoomProviderProps<
      * Not necessary when you're on React v18 or later.
      */
     unstable_batchedUpdates?: (cb: () => void) => void;
-  } & RoomInitializers<TPresence, TStorage>
+  } & RoomInitializers<P, S>
 >;
 
 /**
@@ -289,15 +289,15 @@ export type OmitFirstArg<F> = F extends (
   : never;
 
 export type MutationContext<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
+  P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
 > = {
-  storage: LiveObject<TStorage>;
-  self: User<TPresence, TUserMeta>;
-  others: readonly User<TPresence, TUserMeta>[];
+  storage: LiveObject<S>;
+  self: User<P, U>;
+  others: readonly User<P, U>[];
   setMyPresence: (
-    patch: Partial<TPresence>,
+    patch: Partial<P>,
     options?: { addToHistory: boolean }
   ) => void;
 };
@@ -319,7 +319,7 @@ export type ThreadSubscription =
       unreadSince: Date;
     };
 
-export type SharedContextBundle<TUserMeta extends BaseUserMeta> = {
+export type SharedContextBundle<U extends BaseUserMeta> = {
   classic: {
     /**
      * @beta
@@ -329,7 +329,7 @@ export type SharedContextBundle<TUserMeta extends BaseUserMeta> = {
      * @example
      * const { user, error, isLoading } = useUser("user-id");
      */
-    useUser(userId: string): UserState<TUserMeta["info"]>;
+    useUser(userId: string): UserState<U["info"]>;
 
     /**
      * @private
@@ -351,7 +351,7 @@ export type SharedContextBundle<TUserMeta extends BaseUserMeta> = {
      * @example
      * const { user } = useUser("user-id");
      */
-    useUser(userId: string): UserStateSuccess<TUserMeta["info"]>;
+    useUser(userId: string): UserStateSuccess<U["info"]>;
 
     /**
      * @private
@@ -369,36 +369,31 @@ export type SharedContextBundle<TUserMeta extends BaseUserMeta> = {
  * Properties that are the same in RoomContext and RoomContext["suspense"].
  */
 type RoomContextBundleCommon<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json,
-  TThreadMetadata extends BaseMetadata,
+  P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
+  M extends BaseMetadata,
 > = {
   /**
    * You normally don't need to directly interact with the RoomContext, but
    * it can be necessary if you're building an advanced app where you need to
    * set up a context bridge between two React renderers.
    */
-  RoomContext: React.Context<Room<
-    TPresence,
-    TStorage,
-    TUserMeta,
-    TRoomEvent
-  > | null>;
+  RoomContext: React.Context<Room<P, S, U, E> | null>;
 
   /**
    * Makes a Room available in the component hierarchy below.
    * Joins the room when the component is mounted, and automatically leaves
    * the room when the component is unmounted.
    */
-  RoomProvider(props: RoomProviderProps<TPresence, TStorage>): JSX.Element;
+  RoomProvider(props: RoomProviderProps<P, S>): JSX.Element;
 
   /**
    * Returns the Room of the nearest RoomProvider above in the React component
    * tree.
    */
-  useRoom(): Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
+  useRoom(): Room<P, S, U, E>;
 
   /**
    * Returns the current connection status for the Room, and triggers
@@ -422,7 +417,7 @@ type RoomContextBundleCommon<
    *
    * broadcast({ type: "CUSTOM_EVENT", data: { x: 0, y: 0 } });
    */
-  useBroadcastEvent(): (event: TRoomEvent, options?: BroadcastOptions) => void;
+  useBroadcastEvent(): (event: E, options?: BroadcastOptions) => void;
 
   /**
    * Get informed when users enter or leave the room, as an event.
@@ -436,9 +431,7 @@ type RoomContextBundleCommon<
    *   }
    * })
    */
-  useOthersListener(
-    callback: (event: OthersEvent<TPresence, TUserMeta>) => void
-  ): void;
+  useOthersListener(callback: (event: OthersEvent<P, U>) => void): void;
 
   /**
    * Get informed when reconnecting to the Liveblocks servers is taking
@@ -486,9 +479,7 @@ type RoomContextBundleCommon<
    *   }
    * });
    */
-  useEventListener(
-    callback: (data: RoomEventMessage<TPresence, TUserMeta, TRoomEvent>) => void
-  ): void;
+  useEventListener(callback: (data: RoomEventMessage<P, U, E>) => void): void;
 
   /**
    * Returns the room.history
@@ -524,7 +515,7 @@ type RoomContextBundleCommon<
    * @example
    * const [root] = useStorageRoot();
    */
-  useStorageRoot(): [root: LiveObject<TStorage> | null];
+  useStorageRoot(): [root: LiveObject<S> | null];
 
   /**
    * Returns the presence of the current user of the current room, and a function to update it.
@@ -539,8 +530,8 @@ type RoomContextBundleCommon<
    * // At the next render, "myPresence" will be equal to "{ x: 0, y: 0 }"
    */
   useMyPresence(): [
-    TPresence,
-    (patch: Partial<TPresence>, options?: { addToHistory: boolean }) => void,
+    P,
+    (patch: Partial<P>, options?: { addToHistory: boolean }) => void,
   ];
 
   /**
@@ -555,7 +546,7 @@ type RoomContextBundleCommon<
    * // At the next render, the presence of the current user will be equal to "{ x: 0, y: 0 }"
    */
   useUpdateMyPresence(): (
-    patch: Partial<TPresence>,
+    patch: Partial<P>,
     options?: { addToHistory: boolean }
   ) => void;
 
@@ -604,10 +595,7 @@ type RoomContextBundleCommon<
    * deleteLayers();
    */
   useMutation<
-    F extends (
-      context: MutationContext<TPresence, TStorage, TUserMeta>,
-      ...args: any[]
-    ) => any,
+    F extends (context: MutationContext<P, S, U>, ...args: any[]) => any,
   >(
     callback: F,
     deps: readonly unknown[]
@@ -632,7 +620,7 @@ type RoomContextBundleCommon<
    *   </>
    * )
    */
-  useOthers(): readonly User<TPresence, TUserMeta>[];
+  useOthers(): readonly User<P, U>[];
 
   /**
    * Extract arbitrary data based on all the users currently connected in the
@@ -656,7 +644,7 @@ type RoomContextBundleCommon<
    *
    */
   useOthers<T>(
-    selector: (others: readonly User<TPresence, TUserMeta>[]) => T,
+    selector: (others: readonly User<P, U>[]) => T,
     isEqual?: (prev: T, curr: T) => boolean
   ): T;
 
@@ -701,7 +689,7 @@ type RoomContextBundleCommon<
    * );
    */
   useOthersMapped<T>(
-    itemSelector: (other: User<TPresence, TUserMeta>) => T,
+    itemSelector: (other: User<P, U>) => T,
     itemIsEqual?: (prev: T, curr: T) => boolean
   ): ReadonlyArray<readonly [connectionId: number, data: T]>;
 
@@ -716,7 +704,7 @@ type RoomContextBundleCommon<
    */
   useOther<T>(
     connectionId: number,
-    selector: (other: User<TPresence, TUserMeta>) => T,
+    selector: (other: User<P, U>) => T,
     isEqual?: (prev: T, curr: T) => boolean
   ): T;
 
@@ -729,9 +717,7 @@ type RoomContextBundleCommon<
    * const createThread = useCreateThread();
    * createThread({ body: {}, metadata: {} });
    */
-  useCreateThread(): (
-    options: CreateThreadOptions<TThreadMetadata>
-  ) => ThreadData<TThreadMetadata>;
+  useCreateThread(): (options: CreateThreadOptions<M>) => ThreadData<M>;
 
   /**
    * @beta
@@ -743,9 +729,7 @@ type RoomContextBundleCommon<
    * const editThreadMetadata = useEditThreadMetadata();
    * editThreadMetadata({ threadId: "th_xxx", metadata: {} })
    */
-  useEditThreadMetadata(): (
-    options: EditThreadMetadataOptions<TThreadMetadata>
-  ) => void;
+  useEditThreadMetadata(): (options: EditThreadMetadataOptions<M>) => void;
 
   /**
    * @beta
@@ -852,20 +836,14 @@ type PrivateRoomContextApi = {
 };
 
 export type RoomContextBundle<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json,
-  TThreadMetadata extends BaseMetadata,
+  P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
+  M extends BaseMetadata,
 > = Resolve<
-  RoomContextBundleCommon<
-    TPresence,
-    TStorage,
-    TUserMeta,
-    TRoomEvent,
-    TThreadMetadata
-  > &
-    SharedContextBundle<TUserMeta>["classic"] & {
+  RoomContextBundleCommon<P, S, U, E, M> &
+    SharedContextBundle<U>["classic"] & {
       /**
        * Extract arbitrary data from the Liveblocks Storage state, using an
        * arbitrary selector function.
@@ -886,7 +864,7 @@ export type RoomContextBundle<
        * those cases, you'll probably want to use a `shallow` comparison check.
        */
       useStorage<T>(
-        selector: (root: ToImmutable<TStorage>) => T,
+        selector: (root: ToImmutable<S>) => T,
         isEqual?: (prev: T | null, curr: T | null) => boolean
       ): T | null;
 
@@ -897,7 +875,7 @@ export type RoomContextBundle<
        * const me = useSelf();
        * const { x, y } = me.presence.cursor;
        */
-      useSelf(): User<TPresence, TUserMeta> | null;
+      useSelf(): User<P, U> | null;
 
       /**
        * Extract arbitrary data based on the current user.
@@ -923,7 +901,7 @@ export type RoomContextBundle<
        *
        */
       useSelf<T>(
-        selector: (me: User<TPresence, TUserMeta>) => T,
+        selector: (me: User<P, U>) => T,
         isEqual?: (prev: T, curr: T) => boolean
       ): T | null;
 
@@ -935,9 +913,7 @@ export type RoomContextBundle<
        * @example
        * const { threads, error, isLoading } = useThreads();
        */
-      useThreads(
-        options?: UseThreadsOptions<TThreadMetadata>
-      ): ThreadsState<TThreadMetadata>;
+      useThreads(options?: UseThreadsOptions<M>): ThreadsState<M>;
 
       /**
        * @beta
@@ -972,9 +948,7 @@ export type RoomContextBundle<
        * @deprecated We no longer recommend using `useList`. Prefer `useStorage`
        * for reading and `useMutation` for writing.
        */
-      useList<TKey extends Extract<keyof TStorage, string>>(
-        key: TKey
-      ): TStorage[TKey] | null;
+      useList<TKey extends Extract<keyof S, string>>(key: TKey): S[TKey] | null;
 
       /**
        * Returns the LiveMap associated with the provided key. If the LiveMap
@@ -992,9 +966,7 @@ export type RoomContextBundle<
        * @deprecated We no longer recommend using `useMap`. Prefer `useStorage`
        * for reading and `useMutation` for writing.
        */
-      useMap<TKey extends Extract<keyof TStorage, string>>(
-        key: TKey
-      ): TStorage[TKey] | null;
+      useMap<TKey extends Extract<keyof S, string>>(key: TKey): S[TKey] | null;
 
       /**
        * Returns the LiveObject associated with the provided key.
@@ -1010,19 +982,13 @@ export type RoomContextBundle<
        * @deprecated We no longer recommend using `useObject`. Prefer `useStorage`
        * for reading and `useMutation` for writing.
        */
-      useObject<TKey extends Extract<keyof TStorage, string>>(
+      useObject<TKey extends Extract<keyof S, string>>(
         key: TKey
-      ): TStorage[TKey] | null;
+      ): S[TKey] | null;
 
       suspense: Resolve<
-        RoomContextBundleCommon<
-          TPresence,
-          TStorage,
-          TUserMeta,
-          TRoomEvent,
-          TThreadMetadata
-        > &
-          SharedContextBundle<TUserMeta>["suspense"] & {
+        RoomContextBundleCommon<P, S, U, E, M> &
+          SharedContextBundle<U>["suspense"] & {
             /**
              * Extract arbitrary data from the Liveblocks Storage state, using an
              * arbitrary selector function.
@@ -1043,7 +1009,7 @@ export type RoomContextBundle<
              * those cases, you'll probably want to use a `shallow` comparison check.
              */
             useStorage<T>(
-              selector: (root: ToImmutable<TStorage>) => T,
+              selector: (root: ToImmutable<S>) => T,
               isEqual?: (prev: T, curr: T) => boolean
             ): T;
 
@@ -1054,7 +1020,7 @@ export type RoomContextBundle<
              * const me = useSelf();
              * const { x, y } = me.presence.cursor;
              */
-            useSelf(): User<TPresence, TUserMeta>;
+            useSelf(): User<P, U>;
 
             /**
              * Extract arbitrary data based on the current user.
@@ -1080,7 +1046,7 @@ export type RoomContextBundle<
              *
              */
             useSelf<T>(
-              selector: (me: User<TPresence, TUserMeta>) => T,
+              selector: (me: User<P, U>) => T,
               isEqual?: (prev: T, curr: T) => boolean
             ): T;
 
@@ -1092,9 +1058,7 @@ export type RoomContextBundle<
              * @example
              * const { threads } = useThreads();
              */
-            useThreads(
-              options?: UseThreadsOptions<TThreadMetadata>
-            ): ThreadsStateSuccess<TThreadMetadata>;
+            useThreads(options?: UseThreadsOptions<M>): ThreadsStateSuccess<M>;
 
             /**
              * @beta
@@ -1129,9 +1093,7 @@ export type RoomContextBundle<
              * @deprecated We no longer recommend using `useList`. Prefer `useStorage`
              * for reading and `useMutation` for writing.
              */
-            useList<TKey extends Extract<keyof TStorage, string>>(
-              key: TKey
-            ): TStorage[TKey];
+            useList<TKey extends Extract<keyof S, string>>(key: TKey): S[TKey];
 
             /**
              * Returns the LiveMap associated with the provided key. If the LiveMap
@@ -1149,9 +1111,7 @@ export type RoomContextBundle<
              * @deprecated We no longer recommend using `useMap`. Prefer `useStorage`
              * for reading and `useMutation` for writing.
              */
-            useMap<TKey extends Extract<keyof TStorage, string>>(
-              key: TKey
-            ): TStorage[TKey];
+            useMap<TKey extends Extract<keyof S, string>>(key: TKey): S[TKey];
 
             /**
              * Returns the LiveObject associated with the provided key.
@@ -1167,9 +1127,9 @@ export type RoomContextBundle<
              * @deprecated We no longer recommend using `useObject`. Prefer `useStorage`
              * for reading and `useMutation` for writing.
              */
-            useObject<TKey extends Extract<keyof TStorage, string>>(
+            useObject<TKey extends Extract<keyof S, string>>(
               key: TKey
-            ): TStorage[TKey];
+            ): S[TKey];
           }
       >;
     }
@@ -1187,7 +1147,7 @@ export type RoomContextBundle<
 /**
  * Properties that are the same in LiveblocksContext and LiveblocksContext["suspense"].
  */
-type LiveblocksContextBundleCommon<TThreadMetadata extends BaseMetadata> = {
+type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
   /**
    * @beta
    *
@@ -1226,9 +1186,7 @@ type LiveblocksContextBundleCommon<TThreadMetadata extends BaseMetadata> = {
    * @example
    * const thread = useInboxNotificationThread("in_xxx");
    */
-  useInboxNotificationThread(
-    inboxNotificationId: string
-  ): ThreadData<TThreadMetadata>;
+  useInboxNotificationThread(inboxNotificationId: string): ThreadData<M>;
 };
 
 /**
@@ -1248,11 +1206,11 @@ type PrivateLiveblocksContextApi = {
 };
 
 export type LiveblocksContextBundle<
-  TUserMeta extends BaseUserMeta,
-  TThreadMetadata extends BaseMetadata,
+  U extends BaseUserMeta,
+  M extends BaseMetadata,
 > = Resolve<
-  LiveblocksContextBundleCommon<TThreadMetadata> &
-    SharedContextBundle<TUserMeta>["classic"] & {
+  LiveblocksContextBundleCommon<M> &
+    SharedContextBundle<U>["classic"] & {
       /**
        * @beta
        *
@@ -1274,8 +1232,8 @@ export type LiveblocksContextBundle<
       useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountState;
 
       suspense: Resolve<
-        LiveblocksContextBundleCommon<TThreadMetadata> &
-          SharedContextBundle<TUserMeta>["suspense"] & {
+        LiveblocksContextBundleCommon<M> &
+          SharedContextBundle<U>["suspense"] & {
             /**
              * @beta
              *
