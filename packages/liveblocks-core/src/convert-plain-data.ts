@@ -55,7 +55,7 @@ export function convertToCommentData(data: CommentDataPlain): CommentData {
  * @param data The plain thread data object (usually returned by the API)
  * @returns The rich thread data object that can be used by the client.
  */
-export function convertToThreadData<M extends BaseMetadata = never>(
+export function convertToThreadData<M extends BaseMetadata>(
   data: ThreadDataPlain<M>
 ): ThreadData<M> {
   const updatedAt = data.updatedAt ? new Date(data.updatedAt) : undefined;

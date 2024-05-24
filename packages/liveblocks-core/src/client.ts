@@ -42,15 +42,15 @@ import type { RoomInfo } from "./types/RoomInfo";
 //
 
 /** DP = Default Presence type */
-type DP = JsonObject;
+export type DP = JsonObject;
 /** DS = Default Storage type */
-type DS = LsonObject;
+export type DS = LsonObject;
 /** DU = Default UserMeta type */
-type DU = BaseUserMeta;
+export type DU = BaseUserMeta;
 /** DE = Default (Room)Event type */
-// type DE = Json;
+export type DE = Json;
 /** DM = Default Thread Metadata type */
-// type DM = BaseMetadata;
+export type DM = BaseMetadata;
 
 type OpaqueRoom = Room<JsonObject, LsonObject, BaseUserMeta, Json>;
 
