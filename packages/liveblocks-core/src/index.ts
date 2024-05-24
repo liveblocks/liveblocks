@@ -163,7 +163,7 @@ export type {
 } from "./room";
 export type { GetThreadsOptions } from "./room";
 export { CommentsApiError } from "./room";
-export type { BaseMetadata } from "./types/BaseMetadata";
+export type { BaseMetadata } from "./protocol/Comments";
 export type {
   CommentBody,
   CommentBodyBlockElement,
@@ -173,16 +173,16 @@ export type {
   CommentBodyMention,
   CommentBodyParagraph,
   CommentBodyText,
-} from "./types/CommentBody";
+} from "./protocol/Comments";
 export type {
   CommentData,
   CommentDataPlain,
   CommentReaction,
-} from "./types/CommentData";
+} from "./protocol/Comments";
 export type {
   CommentUserReaction,
   CommentUserReactionPlain,
-} from "./types/CommentReaction";
+} from "./protocol/Comments";
 export type { Immutable } from "./types/Immutable";
 export type {
   ActivityData,
@@ -213,11 +213,11 @@ export type {
   PlainLsonMap,
   PlainLsonObject,
 } from "./types/PlainLson";
-export type { QueryMetadata } from "./types/QueryMetadata";
+export type { QueryMetadata } from "./protocol/Comments";
 export type { RoomInfo } from "./types/RoomInfo";
 export type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
-export type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
-export type { ThreadDeleteInfo } from "./types/ThreadDeleteInfo";
+export type { ThreadData, ThreadDataPlain } from "./protocol/Comments";
+export type { ThreadDeleteInfo } from "./protocol/Comments";
 export type { User } from "./types/User";
 export { detectDupes };
 

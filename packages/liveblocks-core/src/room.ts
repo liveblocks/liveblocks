@@ -69,13 +69,13 @@ import type { ImmutableRef } from "./refs/ImmutableRef";
 import { OthersRef } from "./refs/OthersRef";
 import { PatchableRef } from "./refs/PatchableRef";
 import { DerivedRef, ValueRef } from "./refs/ValueRef";
-import type { BaseMetadata } from "./types/BaseMetadata";
-import type { CommentBody } from "./types/CommentBody";
-import type { CommentData, CommentDataPlain } from "./types/CommentData";
+import type { BaseMetadata } from "./protocol/Comments";
+import type { CommentBody } from "./protocol/Comments";
+import type { CommentData, CommentDataPlain } from "./protocol/Comments";
 import type {
   CommentUserReaction,
   CommentUserReactionPlain,
-} from "./types/CommentReaction";
+} from "./protocol/Comments";
 import type * as DevTools from "./types/DevToolsTreeNode";
 import type {
   InboxNotificationData,
@@ -94,13 +94,13 @@ import type {
 import type { NodeMap } from "./types/NodeMap";
 import type { InternalOthersEvent, OthersEvent } from "./types/Others";
 import type { PartialNullable } from "./types/PartialNullable";
-import type { QueryMetadata } from "./types/QueryMetadata";
+import type { QueryMetadata } from "./protocol/Comments";
 import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
-import type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
+import type { ThreadData, ThreadDataPlain } from "./protocol/Comments";
 import type {
   ThreadDeleteInfo,
   ThreadDeleteInfoPlain,
-} from "./types/ThreadDeleteInfo";
+} from "./protocol/Comments";
 import type { User } from "./types/User";
 import { PKG_VERSION } from "./version";
 

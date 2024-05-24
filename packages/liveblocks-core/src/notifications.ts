@@ -16,8 +16,8 @@ import { type QueryParams, urljoin } from "./lib/url";
 import { TokenKind } from "./protocol/AuthToken";
 import type { InboxNotificationDataPlain } from "./types/InboxNotificationData";
 import type { InboxNotificationDeleteInfoPlain } from "./types/InboxNotificationDeleteInfo";
-import type { ThreadDataPlain } from "./types/ThreadData";
-import type { ThreadDeleteInfoPlain } from "./types/ThreadDeleteInfo";
+import type { ThreadDataPlain } from "./protocol/Comments";
+import type { ThreadDeleteInfoPlain } from "./protocol/Comments";
 
 const MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY = 50;
 
