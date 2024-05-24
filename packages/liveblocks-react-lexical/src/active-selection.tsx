@@ -103,12 +103,12 @@ function SelectionRects({
     observer.observe(container);
 
     // Listen to updates in the editor to redraw the selection
-    const unsubsribeFromUpdates =
+    const unsubscribeFromUpdates =
       editor.registerUpdateListener(drawSelectionRects);
 
     return () => {
       observer.disconnect();
-      unsubsribeFromUpdates();
+      unsubscribeFromUpdates();
     };
   }, [selection, editor, styles]);
 
