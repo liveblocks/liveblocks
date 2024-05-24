@@ -74,9 +74,7 @@ afterEach(() => {
 afterAll(() => server.close());
 
 // TODO: Dry up and create utils that wrap renderHook
-function createRoomContextForTest<
-  TThreadMetadata extends BaseMetadata = BaseMetadata,
->() {
+function createRoomContextForTest<M extends BaseMetadata>() {
   const client = createClient({
     publicApiKey: "pk_xxx",
     polyfills: {
@@ -85,13 +83,7 @@ function createRoomContextForTest<
   });
 
   return {
-    roomCtx: createRoomContext<
-      JsonObject,
-      never,
-      never,
-      never,
-      TThreadMetadata
-    >(client),
+    roomCtx: createRoomContext<JsonObject, never, never, never, M>(client),
     liveblocksCtx: createLiveblocksContext(client),
     client,
   };

@@ -934,7 +934,7 @@ export class Liveblocks {
    * @param params.query The query to filter threads by. It is based on our query language and can filter by metadata.
    * @returns A list of threads.
    */
-  public async getThreads<TThreadMetadata extends BaseMetadata>(params: {
+  public async getThreads<M extends BaseMetadata>(params: {
     roomId: string;
     /**
      * The query to filter threads by. It is based on our query language.
@@ -964,7 +964,7 @@ export class Liveblocks {
     query?:
       | string
       | {
-          metadata?: Partial<QueryMetadata<TThreadMetadata>>;
+          metadata?: Partial<QueryMetadata<M>>;
         };
   }): Promise<{ data: ThreadData[] }> {
     const { roomId } = params;
@@ -997,10 +997,10 @@ export class Liveblocks {
    * @param params.threadId The thread ID.
    * @returns A thread.
    */
-  public async getThread<TThreadMetadata extends BaseMetadata = never>(params: {
+  public async getThread<M extends BaseMetadata = never>(params: {
     roomId: string;
     threadId: string;
-  }): Promise<ThreadData<TThreadMetadata>> {
+  }): Promise<ThreadData<M>> {
     const { roomId, threadId } = params;
 
     const res = await this.get(url`/v2/rooms/${roomId}/threads/${threadId}`);
@@ -1008,9 +1008,7 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
-    return convertToThreadData(
-      (await res.json()) as ThreadDataPlain<TThreadMetadata>
-    );
+    return convertToThreadData((await res.json()) as ThreadDataPlain<M>);
   }
 
   /**
@@ -1166,21 +1164,17 @@ export class Liveblocks {
    * @param params.thread.comment.body The body of the comment.
    * @returns The created thread. The thread will be created with the specified comment as its first comment.
    */
-  public async createThread<
-    TThreadMetadata extends BaseMetadata = never,
-  >(params: {
+  public async createThread<M extends BaseMetadata = never>(params: {
     roomId: string;
     data: {
-      metadata?: [TThreadMetadata] extends [never]
-        ? Record<string, never>
-        : TThreadMetadata;
+      metadata?: [M] extends [never] ? Record<string, never> : M;
       comment: {
         userId: string;
         createdAt?: Date;
         body: CommentBody;
       };
     };
-  }): Promise<ThreadData<TThreadMetadata>> {
+  }): Promise<ThreadData<M>> {
     const { roomId, data } = params;
 
     const res = await this.post(url`/v2/rooms/${roomId}/threads`, {
@@ -1196,9 +1190,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    return convertToThreadData(
-      (await res.json()) as ThreadDataPlain<TThreadMetadata>
-    );
+    return convertToThreadData((await res.json()) as ThreadDataPlain<M>);
   }
 
   /**
@@ -1210,9 +1202,7 @@ export class Liveblocks {
    * @param params.data.updatedAt (optional) The date the thread is set to be updated.
    * @returns The updated thread.
    */
-  public async editThreadMetadata<
-    TThreadMetadata extends BaseMetadata = never,
-  >(params: {
+  public async editThreadMetadata<M extends BaseMetadata = never>(params: {
     roomId: string;
     threadId: string;
     data: {
@@ -1220,7 +1210,7 @@ export class Liveblocks {
       userId: string;
       updatedAt?: Date;
     };
-  }): Promise<TThreadMetadata> {
+  }): Promise<M> {
     const { roomId, threadId, data } = params;
 
     const res = await this.post(
@@ -1236,7 +1226,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    return (await res.json()) as TThreadMetadata;
+    return (await res.json()) as M;
   }
 
   /**

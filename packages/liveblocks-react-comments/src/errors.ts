@@ -76,9 +76,9 @@ export class DeleteCommentError extends Error {
   }
 }
 
-export type CommentsError<TThreadMetadata extends BaseMetadata> =
-  | CreateThreadError<TThreadMetadata>
-  | EditThreadMetadataError<TThreadMetadata>
+export type CommentsError<M extends BaseMetadata> =
+  | CreateThreadError<M>
+  | EditThreadMetadataError<M>
   | CreateCommentError
   | EditCommentError
   | DeleteCommentError;
