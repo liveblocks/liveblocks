@@ -7,11 +7,11 @@ import type {
 import type {
   InboxNotificationData,
   InboxNotificationDataPlain,
-} from "./types/InboxNotificationData";
+} from "./protocol/InboxNotifications";
 import type {
   InboxNotificationDeleteInfo,
   InboxNotificationDeleteInfoPlain,
-} from "./types/InboxNotificationDeleteInfo";
+} from "./protocol/InboxNotifications";
 import type { ThreadData, ThreadDataPlain } from "./protocol/Comments";
 import type {
   ThreadDeleteInfo,

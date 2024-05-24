@@ -44,3 +44,13 @@ export type InboxNotificationCustomDataPlain = Omit<
 export type InboxNotificationDataPlain =
   | InboxNotificationThreadDataPlain
   | InboxNotificationCustomDataPlain;
+
+export type InboxNotificationDeleteInfo = {
+  type: "deletedInboxNotification";
+  id: string;
+  roomId: string;
+  deletedAt: Date;
+};
+
+export type InboxNotificationDeleteInfoPlain =
+  DateToString<InboxNotificationDeleteInfo>;

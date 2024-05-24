@@ -14,8 +14,8 @@ import { Batch } from "./lib/batch";
 import type { Store } from "./lib/create-store";
 import { type QueryParams, urljoin } from "./lib/url";
 import { TokenKind } from "./protocol/AuthToken";
-import type { InboxNotificationDataPlain } from "./types/InboxNotificationData";
-import type { InboxNotificationDeleteInfoPlain } from "./types/InboxNotificationDeleteInfo";
+import type { InboxNotificationDataPlain } from "./protocol/InboxNotifications";
+import type { InboxNotificationDeleteInfoPlain } from "./protocol/InboxNotifications";
 import type { ThreadDataPlain } from "./protocol/Comments";
 import type { ThreadDeleteInfoPlain } from "./protocol/Comments";
 

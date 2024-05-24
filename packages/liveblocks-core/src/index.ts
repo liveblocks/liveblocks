@@ -192,8 +192,8 @@ export type {
   InboxNotificationDataPlain,
   InboxNotificationThreadData,
   InboxNotificationThreadDataPlain,
-} from "./types/InboxNotificationData";
-export type { InboxNotificationDeleteInfo } from "./types/InboxNotificationDeleteInfo";
+} from "./protocol/InboxNotifications";
+export type { InboxNotificationDeleteInfo } from "./protocol/InboxNotifications";
 export type {
   IWebSocket,
   IWebSocketCloseEvent,

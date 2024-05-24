@@ -26,8 +26,8 @@ import {
 import type { CacheStore } from "./store";
 import { createClientStore } from "./store";
 import type { BaseMetadata } from "./protocol/Comments";
-import type { InboxNotificationData } from "./types/InboxNotificationData";
-import type { InboxNotificationDeleteInfo } from "./types/InboxNotificationDeleteInfo";
+import type { InboxNotificationData } from "./protocol/InboxNotifications";
+import type { InboxNotificationDeleteInfo } from "./protocol/InboxNotifications";
 import type { OptionalPromise } from "./types/OptionalPromise";
 import type { RoomInfo } from "./types/RoomInfo";
 import type { ThreadData } from "./protocol/Comments";

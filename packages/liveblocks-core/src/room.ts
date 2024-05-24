@@ -80,11 +80,11 @@ import type * as DevTools from "./types/DevToolsTreeNode";
 import type {
   InboxNotificationData,
   InboxNotificationDataPlain,
-} from "./types/InboxNotificationData";
+} from "./protocol/InboxNotifications";
 import type {
   InboxNotificationDeleteInfo,
   InboxNotificationDeleteInfoPlain,
-} from "./types/InboxNotificationDeleteInfo";
+} from "./protocol/InboxNotifications";
 import type {
   IWebSocket,
   IWebSocketCloseEvent,
