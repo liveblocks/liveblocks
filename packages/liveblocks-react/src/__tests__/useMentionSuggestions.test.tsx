@@ -12,7 +12,7 @@ import { createRoomContext } from "../room";
 import { generateFakeJwt } from "./_utils";
 
 // TODO: Dry up and create utils that wrap renderHook
-function createRoomContextForTest<M extends BaseMetadata = BaseMetadata>(
+function createRoomContextForTest<M extends BaseMetadata>(
   options?: Omit<ClientOptions, "authEndpoint" | "publicApiKey">
 ) {
   const client = createClient({

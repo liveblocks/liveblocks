@@ -37,7 +37,7 @@ afterEach(() => {
 afterAll(() => server.close());
 
 // TODO: Dry up and create utils that wrap renderHook
-function createRoomContextForTest<M extends BaseMetadata = BaseMetadata>() {
+function createRoomContextForTest<M extends BaseMetadata>() {
   const client = createClient({
     publicApiKey: "pk_xxx",
     polyfills: {

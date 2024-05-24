@@ -52,9 +52,7 @@ function customRenderHook<Result, Props>(
   return renderHook(render, { wrapper: AllTheProviders, ...options });
 }
 
-export function createRoomContextForTest<
-  M extends BaseMetadata = BaseMetadata,
->() {
+export function createRoomContextForTest<M extends BaseMetadata>() {
   const client = createClient({
     publicApiKey: "pk_xxx",
     polyfills: {
