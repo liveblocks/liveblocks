@@ -90,7 +90,9 @@ export type CommentUserReactionPlain = DateToString<CommentUserReaction>;
 /**
  * Represents a thread of comments.
  */
-export type ThreadData<M extends BaseMetadata = never> = {
+export type ThreadData<
+  M extends BaseMetadata = never, // TODO Change this to DM for 2.0
+> = {
   type: "thread";
   id: string;
   roomId: string;
@@ -100,15 +102,15 @@ export type ThreadData<M extends BaseMetadata = never> = {
   metadata: [M] extends [never] ? Record<string, never> : M;
 };
 
-export interface ThreadDataWithDeleteInfo<M extends BaseMetadata = never>
-  extends ThreadData<M> {
+export interface ThreadDataWithDeleteInfo<
+  M extends BaseMetadata = never, // TODO Change this to DM for 2.0
+> extends ThreadData<M> {
   deletedAt?: Date;
 }
 
-export type ThreadDataPlain<M extends BaseMetadata = never> = Omit<
-  DateToString<ThreadData<M>>,
-  "comments" | "metadata"
-> & {
+export type ThreadDataPlain<
+  M extends BaseMetadata = never, // TODO Change this to DM for 2.0
+> = Omit<DateToString<ThreadData<M>>, "comments" | "metadata"> & {
   comments: CommentDataPlain[];
   metadata: [M] extends [never] ? Record<string, never> : M;
 };

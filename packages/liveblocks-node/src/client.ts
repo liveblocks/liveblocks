@@ -997,10 +997,9 @@ export class Liveblocks {
    * @param params.threadId The thread ID.
    * @returns A thread.
    */
-  public async getThread<M extends BaseMetadata = never>(params: {
-    roomId: string;
-    threadId: string;
-  }): Promise<ThreadData<M>> {
+  public async getThread<
+    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
+  >(params: { roomId: string; threadId: string }): Promise<ThreadData<M>> {
     const { roomId, threadId } = params;
 
     const res = await this.get(url`/v2/rooms/${roomId}/threads/${threadId}`);
@@ -1164,7 +1163,9 @@ export class Liveblocks {
    * @param params.thread.comment.body The body of the comment.
    * @returns The created thread. The thread will be created with the specified comment as its first comment.
    */
-  public async createThread<M extends BaseMetadata = never>(params: {
+  public async createThread<
+    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
+  >(params: {
     roomId: string;
     data: {
       metadata?: [M] extends [never] ? Record<string, never> : M;
@@ -1202,7 +1203,9 @@ export class Liveblocks {
    * @param params.data.updatedAt (optional) The date the thread is set to be updated.
    * @returns The updated thread.
    */
-  public async editThreadMetadata<M extends BaseMetadata = never>(params: {
+  public async editThreadMetadata<
+    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
+  >(params: {
     roomId: string;
     threadId: string;
     data: {

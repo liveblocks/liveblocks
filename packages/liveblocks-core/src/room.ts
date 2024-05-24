@@ -489,7 +489,9 @@ export type GetThreadsOptions<M extends BaseMetadata> = {
 };
 
 type CommentsApi = {
-  getThreads<M extends BaseMetadata = never>(
+  getThreads<
+    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
+  >(
     options?: GetThreadsOptions<M>
   ): Promise<{
     threads: ThreadData<M>[];
@@ -500,7 +502,9 @@ type CommentsApi = {
       requestedAt: Date;
     };
   }>;
-  getThread<M extends BaseMetadata = never>(options: {
+  getThread<
+    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
+  >(options: {
     threadId: string;
   }): Promise<
     | {
@@ -509,13 +513,18 @@ type CommentsApi = {
       }
     | undefined
   >;
-  createThread<M extends BaseMetadata = never>(options: {
+  createThread<
+    M extends BaseMetadata = never,
+    // TODO Change this to DM for 2.0
+  >(options: {
     threadId: string;
     commentId: string;
     metadata: M | undefined;
     body: CommentBody;
   }): Promise<ThreadData<M>>;
-  editThreadMetadata<M extends BaseMetadata = never>(options: {
+  editThreadMetadata<
+    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
+  >(options: {
     metadata: PartialNullable<M>;
     threadId: string;
   }): Promise<M>;
@@ -1099,9 +1108,9 @@ function createCommentsApi(
     return body;
   }
 
-  async function getThreads<M extends BaseMetadata = never>(
-    options?: GetThreadsOptions<M>
-  ) {
+  async function getThreads<
+    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
+  >(options?: GetThreadsOptions<M>) {
     let query: string | undefined;
 
     if (options?.query) {
@@ -1186,7 +1195,9 @@ function createCommentsApi(
     }
   }
 
-  async function createThread<M extends BaseMetadata = never>({
+  async function createThread<
+    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
+  >({
     metadata,
     body,
     commentId,
@@ -1216,7 +1227,9 @@ function createCommentsApi(
     return convertToThreadData(thread);
   }
 
-  async function editThreadMetadata<M extends BaseMetadata = never>({
+  async function editThreadMetadata<
+    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
+  >({
     metadata,
     threadId,
   }: {

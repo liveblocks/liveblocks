@@ -125,7 +125,9 @@ type PrivateClientApi<U extends BaseUserMeta> = {
   readonly getRoomIds: () => string[];
 };
 
-export type NotificationsApi<M extends BaseMetadata = never> = {
+export type NotificationsApi<
+  M extends BaseMetadata = never, // TODO Change this to DM for 2.0
+> = {
   getInboxNotifications(options?: GetInboxNotificationsOptions): Promise<{
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<M>[];
