@@ -158,14 +158,15 @@ function makeMutationContext<
   U extends BaseUserMeta,
   E extends Json,
 >(room: Room<P, S, U, E>): MutationContext<P, S, U> {
-  const errmsg =
-    "This mutation cannot be used until connected to the Liveblocks room";
+  const cannotUseUntil = "This mutation cannot be used until";
+  const needsPresence = `${cannotUseUntil} connected to the Liveblocks room`;
+  const needsStorage = `${cannotUseUntil} storage has been loaded`;
 
   return {
     get storage() {
       const mutableRoot = room.getStorageSnapshot();
       if (mutableRoot === null) {
-        throw new Error(errmsg);
+        throw new Error(needsStorage);
       }
       return mutableRoot;
     },
@@ -173,7 +174,7 @@ function makeMutationContext<
     get self() {
       const self = room.getSelf();
       if (self === null) {
-        throw new Error(errmsg);
+        throw new Error(needsPresence);
       }
       return self;
     },
@@ -181,7 +182,7 @@ function makeMutationContext<
     get others() {
       const others = room.getOthers();
       if (room.getSelf() === null) {
-        throw new Error(errmsg);
+        throw new Error(needsPresence);
       }
       return others;
     },
