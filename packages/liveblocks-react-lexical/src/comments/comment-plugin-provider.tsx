@@ -1,5 +1,9 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { registerNestedElementResolver } from "@lexical/utils";
+import {
+  addClassNamesToElement,
+  registerNestedElementResolver,
+  removeClassNamesFromElement,
+} from "@lexical/utils";
 import { kInternal } from "@liveblocks/core";
 import { CreateThreadError, useRoomContextBundle } from "@liveblocks/react";
 import type { BaseSelection, NodeKey, NodeMutation } from "lexical";
@@ -38,7 +42,7 @@ export const ThreadToNodeKeysRefContext =
 export const ActiveThreadsContext = createContext<string[] | null>(null);
 
 export function CommentPluginProvider({ children }: PropsWithChildren) {
-  const [editor] = useLexicalComposerContext();
+  const [editor, context] = useLexicalComposerContext();
 
   const threadToNodeKeysRef = useRef<ThreadToNodesMap>(new Map()); // A map from thread id to a set of (thread mark) node keys that are associated with the thread
 
@@ -49,6 +53,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       useOptimisticThreadCreateListener,
       useOptimisticThreadDeleteListener,
       useCommentsErrorListener,
+      useThreadsFromCache,
     },
   } = useRoomContextBundle();
 
@@ -59,6 +64,44 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       );
     }
   }, [editor]);
+
+  const threads = useThreadsFromCache();
+
+  /**
+   * Only add styles to the thread mark elements that currently have threads associated with them.
+   */
+  useEffect(() => {
+    function getThreadMarkElements() {
+      const activeElements = new Set<HTMLElement>();
+
+      for (const thread of threads) {
+        const keys = threadToNodeKeysRef.current.get(thread.id);
+        if (keys === undefined) continue;
+
+        for (const key of keys) {
+          const element = editor.getElementByKey(key);
+          if (element === null) continue;
+          activeElements.add(element);
+        }
+      }
+      return activeElements;
+    }
+
+    const elements = getThreadMarkElements();
+
+    const theme = context.getTheme();
+    if (theme === null || theme === undefined) return;
+
+    elements.forEach((element) => {
+      addClassNamesToElement(element, theme.threadMark);
+    });
+
+    return () => {
+      elements.forEach((element) => {
+        removeClassNamesFromElement(element, theme.threadMark);
+      });
+    };
+  }, [threads]);
 
   /**
    * Create a new ThreadMarkNode and wrap the selected content in it.

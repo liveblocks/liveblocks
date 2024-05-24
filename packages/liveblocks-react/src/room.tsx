@@ -638,6 +638,19 @@ export function createRoomContext<
     );
   }
 
+  function useThreadsFromCache() {
+    const room = useRoom();
+
+    const state = useSyncExternalStoreWithSelector(
+      store.subscribe,
+      store.get,
+      store.get,
+      (state) => selectedThreads(room.id, state, { query: {} })
+    );
+
+    return state;
+  }
+
   function useOptimisticThreadCreateListener(
     callback: (threadId: string) => void
   ) {
@@ -2411,6 +2424,7 @@ export function createRoomContext<
       useOptimisticThreadCreateListener,
       useOptimisticThreadDeleteListener,
       useCommentsErrorListener,
+      useThreadsFromCache,
     },
   };
 

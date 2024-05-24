@@ -854,6 +854,7 @@ type PrivateRoomContextApi = {
   useCommentsErrorListener<TThreadMetadata extends BaseMetadata>(
     callback: (err: CommentsError<TThreadMetadata>) => void
   ): void;
+  useThreadsFromCache(): ThreadData<BaseMetadata>[];
 };
 
 export type RoomContextBundle<
