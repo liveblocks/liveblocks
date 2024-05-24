@@ -23,6 +23,21 @@ import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
+//
+// Default concrete types for each of the user-provided type placeholders.
+//
+
+/** DP = Default Presence type */
+type DP = JsonObject;
+/** DS = Default Storage type */
+type DS = LsonObject;
+/** DU = Default UserMeta type */
+type DU = BaseUserMeta;
+/** DE = Default (Room)Event type */
+type DE = Json;
+/** DM = Default Thread Metadata type */
+// type DM = BaseMetadata;
+
 const ERROR_PREFIX = "Invalid @liveblocks/zustand middleware config.";
 
 function mappingToFunctionIsNotAllowed(key: string): Error {
@@ -87,10 +102,10 @@ export type LiveblocksContext<
  */
 export type LiveblocksState<
   TState,
-  P extends JsonObject = JsonObject,
-  S extends LsonObject = LsonObject,
-  U extends BaseUserMeta = BaseUserMeta,
-  E extends Json = Json,
+  P extends JsonObject = DP,
+  S extends LsonObject = DS,
+  U extends BaseUserMeta = DU,
+  E extends Json = DE,
 > = WithLiveblocks<TState, P, S, U, E>;
 
 /**
@@ -98,10 +113,10 @@ export type LiveblocksState<
  */
 export type WithLiveblocks<
   TState,
-  P extends JsonObject = JsonObject,
-  S extends LsonObject = LsonObject,
-  U extends BaseUserMeta = BaseUserMeta,
-  E extends Json = Json,
+  P extends JsonObject = DP,
+  S extends LsonObject = DS,
+  U extends BaseUserMeta = DU,
+  E extends Json = DE,
 > = TState & {
   readonly liveblocks: LiveblocksContext<P, S, U, E>;
 };
