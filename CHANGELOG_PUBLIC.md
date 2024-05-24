@@ -13,6 +13,10 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 -->
 
+# Week 22 (2024-05-31)
+
+## Contributors
+
 # Week 21 (2024-05-24)
 
 ![banner](/assets/changelog/week-21.png)
@@ -31,7 +35,6 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 ## Misc
 - Ongoing internal refactorings to enable simpler setup for `@liveblocks/react` in the
   future.
-
 
 ## Contributors
 
