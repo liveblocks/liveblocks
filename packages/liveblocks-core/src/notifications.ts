@@ -14,10 +14,14 @@ import { Batch } from "./lib/batch";
 import type { Store } from "./lib/create-store";
 import { type QueryParams, urljoin } from "./lib/url";
 import { TokenKind } from "./protocol/AuthToken";
-import type { InboxNotificationDataPlain } from "./protocol/InboxNotifications";
-import type { InboxNotificationDeleteInfoPlain } from "./protocol/InboxNotifications";
-import type { ThreadDataPlain } from "./protocol/Comments";
-import type { ThreadDeleteInfoPlain } from "./protocol/Comments";
+import type {
+  ThreadDataPlain,
+  ThreadDeleteInfoPlain,
+} from "./protocol/Comments";
+import type {
+  InboxNotificationDataPlain,
+  InboxNotificationDeleteInfoPlain,
+} from "./protocol/InboxNotifications";
 
 const MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY = 50;
 

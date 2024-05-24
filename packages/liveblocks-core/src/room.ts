@@ -51,6 +51,25 @@ import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 import type { ClientMsg, UpdateYDocClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
+import type {
+  BaseMetadata,
+  CommentBody,
+  CommentData,
+  CommentDataPlain,
+  CommentUserReaction,
+  CommentUserReactionPlain,
+  QueryMetadata,
+  ThreadData,
+  ThreadDataPlain,
+  ThreadDeleteInfo,
+  ThreadDeleteInfoPlain,
+} from "./protocol/Comments";
+import type {
+  InboxNotificationData,
+  InboxNotificationDataPlain,
+  InboxNotificationDeleteInfo,
+  InboxNotificationDeleteInfoPlain,
+} from "./protocol/InboxNotifications";
 import type { Op } from "./protocol/Op";
 import { isAckOp, OpCode } from "./protocol/Op";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
@@ -69,22 +88,7 @@ import type { ImmutableRef } from "./refs/ImmutableRef";
 import { OthersRef } from "./refs/OthersRef";
 import { PatchableRef } from "./refs/PatchableRef";
 import { DerivedRef, ValueRef } from "./refs/ValueRef";
-import type { BaseMetadata } from "./protocol/Comments";
-import type { CommentBody } from "./protocol/Comments";
-import type { CommentData, CommentDataPlain } from "./protocol/Comments";
-import type {
-  CommentUserReaction,
-  CommentUserReactionPlain,
-} from "./protocol/Comments";
 import type * as DevTools from "./types/DevToolsTreeNode";
-import type {
-  InboxNotificationData,
-  InboxNotificationDataPlain,
-} from "./protocol/InboxNotifications";
-import type {
-  InboxNotificationDeleteInfo,
-  InboxNotificationDeleteInfoPlain,
-} from "./protocol/InboxNotifications";
 import type {
   IWebSocket,
   IWebSocketCloseEvent,
@@ -94,13 +98,7 @@ import type {
 import type { NodeMap } from "./types/NodeMap";
 import type { InternalOthersEvent, OthersEvent } from "./types/Others";
 import type { PartialNullable } from "./types/PartialNullable";
-import type { QueryMetadata } from "./protocol/Comments";
 import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
-import type { ThreadData, ThreadDataPlain } from "./protocol/Comments";
-import type {
-  ThreadDeleteInfo,
-  ThreadDeleteInfoPlain,
-} from "./protocol/Comments";
 import type { User } from "./types/User";
 import { PKG_VERSION } from "./version";
 

@@ -1,22 +1,20 @@
-import type { BaseMetadata } from "./protocol/Comments";
-import type { CommentData, CommentDataPlain } from "./protocol/Comments";
 import type {
+  BaseMetadata,
+  CommentData,
+  CommentDataPlain,
   CommentUserReaction,
   CommentUserReactionPlain,
+  ThreadData,
+  ThreadDataPlain,
+  ThreadDeleteInfo,
+  ThreadDeleteInfoPlain,
 } from "./protocol/Comments";
 import type {
   InboxNotificationData,
   InboxNotificationDataPlain,
-} from "./protocol/InboxNotifications";
-import type {
   InboxNotificationDeleteInfo,
   InboxNotificationDeleteInfoPlain,
 } from "./protocol/InboxNotifications";
-import type { ThreadData, ThreadDataPlain } from "./protocol/Comments";
-import type {
-  ThreadDeleteInfo,
-  ThreadDeleteInfoPlain,
-} from "./protocol/Comments";
 
 /**
  * Converts a plain comment data object (usually returned by the API) to a comment data object that can be used by the client.

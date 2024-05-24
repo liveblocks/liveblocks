@@ -17,6 +17,15 @@ import type { GetInboxNotificationsOptions } from "./notifications";
 import { createNotificationsApi } from "./notifications";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
+import type {
+  BaseMetadata,
+  ThreadData,
+  ThreadDeleteInfo,
+} from "./protocol/Comments";
+import type {
+  InboxNotificationData,
+  InboxNotificationDeleteInfo,
+} from "./protocol/InboxNotifications";
 import type { Polyfills, Room, RoomDelegates, RoomInitializers } from "./room";
 import {
   createRoom,
@@ -25,13 +34,8 @@ import {
 } from "./room";
 import type { CacheStore } from "./store";
 import { createClientStore } from "./store";
-import type { BaseMetadata } from "./protocol/Comments";
-import type { InboxNotificationData } from "./protocol/InboxNotifications";
-import type { InboxNotificationDeleteInfo } from "./protocol/InboxNotifications";
 import type { OptionalPromise } from "./types/OptionalPromise";
 import type { RoomInfo } from "./types/RoomInfo";
-import type { ThreadData } from "./protocol/Comments";
-import type { ThreadDeleteInfo } from "./protocol/Comments";
 
 //
 // Default concrete types for each of the user-provided type placeholders.
