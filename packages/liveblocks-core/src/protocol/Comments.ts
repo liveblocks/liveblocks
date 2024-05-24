@@ -136,6 +136,6 @@ type QueryMetadataStringValue<T extends string> =
  * - to strings:
  *  - `startsWith` (`^` in query string)
  */
-export type QueryMetadata<T extends BaseMetadata> = {
-  [K in keyof T]: T[K] extends string ? QueryMetadataStringValue<T[K]> : T[K];
+export type QueryMetadata<M extends BaseMetadata> = {
+  [K in keyof M]: M[K] extends string ? QueryMetadataStringValue<M[K]> : M[K];
 };

@@ -68,13 +68,9 @@ export function mockCreateComment(
   );
 }
 
-export function mockEditThreadMetadata<ThreadMetadata extends BaseMetadata>(
+export function mockEditThreadMetadata<M extends BaseMetadata>(
   params: { threadId: string },
-  resolver: ResponseResolver<
-    RestRequest<never, never>,
-    RestContext,
-    ThreadMetadata
-  >
+  resolver: ResponseResolver<RestRequest<never, never>, RestContext, M>
 ) {
   return rest.post(
     `https://api.liveblocks.io/v2/c/rooms/room-id/threads/${params.threadId}/metadata`,
