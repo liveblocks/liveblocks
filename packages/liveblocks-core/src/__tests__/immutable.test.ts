@@ -105,13 +105,13 @@ export async function prepareStorageImmutableTest<
   };
 }
 
-function applyStateChanges<T extends JsonObject>(
-  state: T,
+function applyStateChanges<TState extends JsonObject>(
+  state: TState,
   applyChanges: () => void
-): { oldState: T; newState: T } {
-  const oldState = JSON.parse(JSON.stringify(state)) as T;
+): { oldState: TState; newState: TState } {
+  const oldState = JSON.parse(JSON.stringify(state)) as TState;
   applyChanges();
-  const newState = JSON.parse(JSON.stringify(state)) as T;
+  const newState = JSON.parse(JSON.stringify(state)) as TState;
   return { oldState, newState };
 }
 
