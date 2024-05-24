@@ -630,7 +630,7 @@ export function useLiveblocksContextBundle() {
 
 export function createLiveblocksContext<
   U extends BaseUserMeta = DU,
-  M extends BaseMetadata = never, // XXX Think about whether this would be a breaking change to assign to DE and DM by default
+  M extends BaseMetadata = never, // TODO Change this to DM for 2.0
 >(client: Client<U>): LiveblocksContextBundle<U, M> {
   return getOrCreateContextBundle<U, M>(client);
 }

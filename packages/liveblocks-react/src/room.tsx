@@ -2437,8 +2437,8 @@ export function createRoomContext<
   P extends JsonObject = DP,
   S extends LsonObject = DS,
   U extends BaseUserMeta = DU,
-  E extends Json = never, // XXX Think about whether this would be a breaking change to assign to DE and DM by default
-  M extends BaseMetadata = never,
+  E extends Json = never, // TODO Change this to DE for 2.0
+  M extends BaseMetadata = never, // TODO Change this to DM for 2.0
 >(
   client: OpaqueClient,
   options?: Options<U>

@@ -145,8 +145,8 @@ export type Client<U extends BaseUserMeta = DU> = {
   getRoom<
     P extends JsonObject = DP,
     S extends LsonObject = DS,
-    U extends BaseUserMeta = DU, // XXX This is shadowing the Client-level type arg, remove in 2.0
-    E extends Json = never, // XXX Change to DE in 2.0
+    U extends BaseUserMeta = DU, // TODO Remove in 2.0, this is shadowing the Client-level type arg
+    E extends Json = never, // TODO Change to DE in 2.0
   >(
     roomId: string
   ): Room<P, S, U, E> | null;
@@ -160,8 +160,8 @@ export type Client<U extends BaseUserMeta = DU> = {
   enterRoom<
     P extends JsonObject = DP,
     S extends LsonObject = DS,
-    U extends BaseUserMeta = DU, // XXX This is shadowing the Client-level type arg
-    E extends Json = never, // XXX Change to DE in 2.0
+    U extends BaseUserMeta = DU, // TODO Remove in 2.0, this is shadowing the Client-level type arg
+    E extends Json = never, // TODO Change to DE in 2.0
   >(
     roomId: string,
     options: EnterOptions<P, S>
@@ -180,8 +180,8 @@ export type Client<U extends BaseUserMeta = DU> = {
   enter<
     P extends JsonObject = DP,
     S extends LsonObject = DS,
-    U extends BaseUserMeta = DU, // XXX This is shadowing the Client-level type arg
-    E extends Json = never, // XXX Change to DE in 2.0
+    U extends BaseUserMeta = DU, // TODO Remove in 2.0, this is shadowing the Client-level type arg
+    E extends Json = never, // TODO Change to DE in 2.0
   >(
     roomId: string,
     options: EnterOptions<P, S>
