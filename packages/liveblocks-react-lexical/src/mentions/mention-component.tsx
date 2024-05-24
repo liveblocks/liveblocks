@@ -7,8 +7,8 @@ import React, {
   forwardRef,
   useCallback,
   useContext,
-  useSyncExternalStore,
 } from "react";
+import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
 const IsSelectedContext = createContext<boolean | null>(null);
 
