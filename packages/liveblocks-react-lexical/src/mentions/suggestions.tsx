@@ -32,11 +32,11 @@ const HighlightedIndexContext = createContext<
   [number, Dispatch<SetStateAction<number>>] | null
 >(null);
 
-export interface ContentProps extends HTMLAttributes<HTMLDivElement> {
+export interface ListProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
 }
 
-const Content = forwardRef<HTMLDivElement, ContentProps>(
+const List = forwardRef<HTMLDivElement, ListProps>(
   function (props, forwardedRef) {
     const { children, ...divProps } = props;
     const [editor] = useLexicalComposerContext();
@@ -228,4 +228,4 @@ function useHighlightedIndex(): [
   return context;
 }
 
-export { Content, Item };
+export { Item, List };

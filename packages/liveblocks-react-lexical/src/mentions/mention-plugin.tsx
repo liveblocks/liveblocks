@@ -27,9 +27,6 @@ import React, {
 import { createPortal } from "react-dom";
 
 import { useLiveblocksLexicalConfigContext } from "../liveblocks-plugin";
-import Avatar from "./avatar";
-import * as Suggestions from "./suggestion";
-import User from "./user";
 
 const MENTION_TRIGGER = "@";
 
@@ -151,6 +148,7 @@ export default function MentionPlugin() {
   const {
     mentions: {
       factory: { $isMentionNode, $createMentionNode, MentionNode },
+      components: { MentionSuggestions },
     },
   } = useLiveblocksLexicalConfigContext();
 
@@ -329,24 +327,7 @@ export default function MentionPlugin() {
       <OnValueSelectCallbackContext.Provider value={handleValueSelect}>
         <OnResetMatchCallbackContext.Provider value={() => setMatch(null)}>
           <SuggestionsRoot rect={rect} key={matchingString}>
-            <Suggestions.Content className="lb-lexical-composer-suggestions-list">
-              {suggestions.map((userId) => (
-                <Suggestions.Item
-                  key={userId}
-                  value={userId}
-                  className="lb-lexical-composer-suggestions-list-item"
-                >
-                  <Avatar
-                    userId={userId}
-                    className="lb-lexical-composer-mention-suggestion-avatar"
-                  />
-                  <User
-                    userId={userId}
-                    className="lb-lexical-composer-mention-suggestion-user"
-                  />
-                </Suggestions.Item>
-              ))}
-            </Suggestions.Content>
+            <MentionSuggestions userIds={suggestions} />
           </SuggestionsRoot>
         </OnResetMatchCallbackContext.Provider>
       </OnValueSelectCallbackContext.Provider>

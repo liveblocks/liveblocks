@@ -11,6 +11,7 @@ import { kInternal } from "@liveblocks/core";
 import { useRoomContextBundle } from "@liveblocks/react";
 import LiveblocksProvider from "@liveblocks/yjs";
 import type { LexicalEditor } from "lexical";
+import type { ComponentType } from "react";
 import React, {
   createContext,
   useCallback,
@@ -23,6 +24,7 @@ import React, {
 import { Doc } from "yjs";
 
 import { CommentPluginProvider } from "./comments/comment-plugin-provider";
+import type { MentionSuggestionsProps } from "./liveblocks-config";
 import { getLiveblocksLexicalConfig } from "./liveblocks-config";
 import type { createMentionNodeFactory } from "./mentions/mention-node";
 import MentionPlugin from "./mentions/mention-plugin";
@@ -57,6 +59,9 @@ export interface LiveblocksLexicalInternalConfig {
   comments: boolean;
   mentions: {
     factory: ReturnType<typeof createMentionNodeFactory>;
+    components: {
+      MentionSuggestions: ComponentType<MentionSuggestionsProps>;
+    };
   };
 }
 

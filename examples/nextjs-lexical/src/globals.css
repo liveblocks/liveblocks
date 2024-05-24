@@ -1,6 +1,10 @@
 @import "@liveblocks/react-comments/styles.css";
 @import "@liveblocks/react-comments/styles/dark/media-query.css";
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 html,
 body {
   padding: 0;
@@ -61,7 +65,7 @@ main {
   border-width: 0;
 }
 
-.lb-lexical-composer-suggestions-list {
+.lb-lexical-suggestions-list {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -74,7 +78,7 @@ main {
     0px 10px 20px -15px rgba(22, 23, 24, 0.2);
 }
 
-.lb-lexical-composer-suggestions-list-item {
+.lb-lexical-suggestions-list-item {
   font-size: 13px;
   line-height: 1;
   border-radius: 3px;
@@ -88,13 +92,13 @@ main {
   color: rgba(55, 53, 47, 0.8);
 }
 
-.lb-lexical-composer-suggestions-list-item[data-highlighted] {
+.lb-lexical-suggestions-list-item[data-highlighted] {
   outline: none;
   background-color: rgba(55, 53, 47, 0.1);
   color: rgba(55, 53, 47, 0.8);
 }
 
-.lb-lexical-composer-mention-suggestion-avatar {
+.lb-lexical-mention-suggestion-avatar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -107,14 +111,16 @@ main {
   border-radius: 100%;
 }
 
-.lb-lexical-composer-mention {
-  border-radius: 3px;
-  padding: 0px 4px;
+.lb-lexical-mention {
+  border-radius: 4px;
+  padding: 0.1em 0.3em;
   cursor: pointer;
   user-select: none;
-  background-color: rgba(55, 53, 47, 0.1);
+  background-color: #ebf4ff;
+  color: #1077ff;
 }
 
-.lb-lexical-composer-mention[data-selected] {
-  background-color: rgba(55, 53, 47, 0.2);
+.lb-lexical-mention[data-selected] {
+  background-color: #1077ff;
+  color: #ffffff;
 }

@@ -135,14 +135,14 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       return $getThreadMarkIds(anchor, selection.anchor.offset) ?? [];
     }
 
-    function onStateRead() {
+    function $onStateRead() {
       const selection = $getSelection();
       const threadIds = $getThreadIds(selection);
       setActiveThreads(threadIds);
     }
 
     return editor.registerUpdateListener(({ editorState: state }) => {
-      state.read(onStateRead);
+      state.read($onStateRead);
     });
   }, [editor]);
 
