@@ -411,9 +411,9 @@ export function createClient<U extends BaseUserMeta = DU>(
 
   function enterRoom<
     P extends JsonObject,
-    S extends LsonObject = LsonObject,
-    U extends BaseUserMeta = BaseUserMeta,
-    E extends Json = never,
+    S extends LsonObject,
+    U extends BaseUserMeta,
+    E extends Json,
   >(
     roomId: string,
     options: EnterOptions<P, S>
@@ -489,9 +489,9 @@ export function createClient<U extends BaseUserMeta = DU>(
 
   function enter<
     P extends JsonObject,
-    S extends LsonObject = LsonObject,
-    U extends BaseUserMeta = BaseUserMeta,
-    E extends Json = never,
+    S extends LsonObject,
+    U extends BaseUserMeta,
+    E extends Json,
   >(roomId: string, options: EnterOptions<P, S>): Room<P, S, U, E> {
     const { room, leave: _ } = enterRoom<P, S, U, E>(roomId, options);
     return room;
@@ -499,9 +499,9 @@ export function createClient<U extends BaseUserMeta = DU>(
 
   function getRoom<
     P extends JsonObject,
-    S extends LsonObject = LsonObject,
-    U extends BaseUserMeta = BaseUserMeta,
-    E extends Json = never,
+    S extends LsonObject,
+    U extends BaseUserMeta,
+    E extends Json,
   >(roomId: string): Room<P, S, U, E> | null {
     const room = roomsById.get(roomId)?.room;
     return room ? (room as Room<P, S, U, E>) : null;
