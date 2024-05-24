@@ -29,6 +29,8 @@ import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
+type OpaqueRoom = Room<JsonObject, LsonObject, BaseUserMeta, Json>;
+
 export type Mapping<T> = {
   [K in keyof T]?: boolean;
 };
@@ -98,8 +100,6 @@ const internalEnhancer = <TState>(options: {
   storageMapping?: Mapping<TState>;
   presenceMapping?: Mapping<TState>;
 }) => {
-  type OpaqueRoom = Room<JsonObject, LsonObject, BaseUserMeta, Json>;
-
   if (process.env.NODE_ENV !== "production" && options.client == null) {
     throw missingClient();
   }
