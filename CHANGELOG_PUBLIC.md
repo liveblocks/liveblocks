@@ -19,11 +19,12 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 - Added a brand new project analytics page with graphs that gives you better insights into active users, active rooms, comments, notifications, and data stored.
 - Improved the billing and usage view.
-- Move Webhooks notification throttle interval setting to the project settings page
+- Moved Webhooks notification throttle interval setting to the project settings page
+- Fixed a number formatting issue by enforcing US number formatting for all locations
 
 ## Contributors
 
-ofoucherot, flowflorent, stevenfabre
+ofoucherot, flowflorent, stevenfabre, guillaumesalles
 
 # Week 20 (2024-05-17)
 
