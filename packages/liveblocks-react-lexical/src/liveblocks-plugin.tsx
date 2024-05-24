@@ -30,27 +30,28 @@ import type { createMentionNodeFactory } from "./mentions/mention-node";
 import MentionPlugin from "./mentions/mention-plugin";
 
 export type LiveblocksPluginProps = {
-  /**
-   * Optionally override user information. If not, user["info"] from auth will be used.
-   */
-  userInfo?: {
-    name: string;
-    color?: string;
-  };
-  /**
-   * Whether or not the user can edit the document before it has been synced
-   * default: true
-   */
-  allowEditsBeforeSync?: boolean;
+  // TODO: Move these configuration options (if applicable and necessary) to the `liveblocksLexicalConfig` function to have all configuration in one place
+  // /**
+  //  * Optionally override user information. If not, user["info"] from auth will be used.
+  //  */
+  // userInfo?: {
+  //   name: string;
+  //   color?: string;
+  // };
+  // /**
+  //  * Whether or not the user can edit the document before it has been synced
+  //  * default: true
+  //  */
+  // allowEditsBeforeSync?: boolean;
 
-  /**
-   * Modify the state with this function to set the initial state.
-   * Ex. $createTextNode('initial text content');
-   *
-   * @param editor
-   * @returns void
-   */
-  initialEditorState?: (editor: LexicalEditor) => void;
+  // /**
+  //  * Modify the state with this function to set the initial state.
+  //  * Ex. $createTextNode('initial text content');
+  //  *
+  //  * @param editor
+  //  * @returns void
+  //  */
+  // initialEditorState?: (editor: LexicalEditor) => void;
 
   children?: React.ReactNode;
 };
@@ -69,9 +70,9 @@ const LiveblocksLexicalConfigContext =
   createContext<LiveblocksLexicalInternalConfig | null>(null);
 
 export const LiveblocksPlugin = ({
-  userInfo = undefined,
-  allowEditsBeforeSync = true,
-  initialEditorState = undefined,
+  // userInfo = undefined,
+  // allowEditsBeforeSync = true,
+  // initialEditorState = undefined,
   children,
 }: LiveblocksPluginProps): JSX.Element => {
   const {
@@ -119,8 +120,8 @@ export const LiveblocksPlugin = ({
 
   // Get user info or allow override from props
   const info = useSelf((me) => me.info);
-  const username = userInfo?.name ?? info?.name;
-  const cursorcolor = userInfo?.color ?? (info?.color as string | undefined);
+  const username = info?.name;
+  const cursorcolor = info?.color as string | undefined;
 
   const [synced, setSynced] = useState(false);
 
@@ -134,12 +135,12 @@ export const LiveblocksPlugin = ({
     };
   }, [provider]);
 
-  // Disable the editor before sync
-  useEffect(() => {
-    if (!allowEditsBeforeSync) {
-      editor.setEditable(synced);
-    }
-  }, [synced, editor, allowEditsBeforeSync]);
+  // // Disable the editor before sync
+  // useEffect(() => {
+  //   if (!allowEditsBeforeSync) {
+  //     editor.setEditable(synced);
+  //   }
+  // }, [synced, editor, allowEditsBeforeSync]);
 
   // Create the provider factory
   const providerFactory = useCallback(
@@ -160,7 +161,7 @@ export const LiveblocksPlugin = ({
       {provider && (
         <CollaborationPlugin
           providerFactory={providerFactory}
-          initialEditorState={initialEditorState}
+          // initialEditorState={initialEditorState}
           id={"liveblocks-document"}
           username={username}
           cursorColor={cursorcolor}
