@@ -415,9 +415,8 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
         isLoading: false,
         error: err as Error,
       });
-
-      return;
     }
+    return;
   }
 
   async function getInboxNotificationSettings(
@@ -455,9 +454,8 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
         isLoading: false,
         error: err as Error,
       });
-
-      return;
     }
+    return;
   }
 
   const commentsErrorEventSource = makeEventSource<CommentsError<M>>();
