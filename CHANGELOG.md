@@ -1,3 +1,10 @@
+## v1.13.0 (not yet released)
+
+### `@liveblocks/react`
+
+- Tweak `useMutation` error message to be less confusing
+- Large internal refactorings to support a simpler DX in a future version
+
 ## v1.12.0
 
 ### `@liveblocks/react`
