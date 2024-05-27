@@ -455,7 +455,7 @@ function toAbsoluteUrl(url: string): string | undefined {
   return;
 }
 
-const stringifyCommentBodyPlainElements: StringifyCommentBodyElements = {
+const stringifyCommentBodyPlainElements: StringifyCommentBodyElements<BaseUserMeta> = {
   paragraph: ({ children }) => children,
   text: ({ element }) => element.text,
   link: ({ element }) => element.url,
@@ -464,7 +464,7 @@ const stringifyCommentBodyPlainElements: StringifyCommentBodyElements = {
   },
 };
 
-const stringifyCommentBodyHtmlElements: StringifyCommentBodyElements = {
+const stringifyCommentBodyHtmlElements: StringifyCommentBodyElements<BaseUserMeta> = {
   paragraph: ({ children }) => {
     // prettier-ignore
     return children ? html`<p>${htmlSafe(children)}</p>` : children;
@@ -509,7 +509,7 @@ const stringifyCommentBodyHtmlElements: StringifyCommentBodyElements = {
   },
 };
 
-const stringifyCommentBodyMarkdownElements: StringifyCommentBodyElements = {
+const stringifyCommentBodyMarkdownElements: StringifyCommentBodyElements<BaseUserMeta> = {
   paragraph: ({ children }) => {
     return children;
   },
