@@ -1242,9 +1242,9 @@ function useMutableStorageRoot<S extends LsonObject>(): LiveObject<S> | null {
 }
 
 // NOTE: This API exists for backward compatible reasons
-function useStorageRoot<S extends LsonObject = DS>(): [
-  root: LiveObject<S> | null,
-] {
+function useStorageRoot<
+  S extends LsonObject = DS, // TODO Remove these (LB-649)
+>(): [root: LiveObject<S> | null] {
   return [useMutableStorageRoot()];
 }
 
@@ -2270,6 +2270,7 @@ function useSuspendUntilStorageLoaded(): void {
   });
 }
 
+// TODO Remove default type here (LB-649)
 function useStorageSuspense<T, S extends LsonObject = DS>(
   selector: (root: ToImmutable<S>) => T,
   isEqual?: (prev: T, curr: T) => boolean
@@ -2281,6 +2282,7 @@ function useStorageSuspense<T, S extends LsonObject = DS>(
   ) as T;
 }
 
+// TODO Remove default type here (LB-649)
 function useLegacyKeySuspense<
   TKey extends Extract<keyof S, string>,
   S extends LsonObject = DS,
