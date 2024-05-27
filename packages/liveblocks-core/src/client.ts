@@ -17,6 +17,15 @@ import type { GetInboxNotificationsOptions } from "./notifications";
 import { createNotificationsApi } from "./notifications";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
+import type {
+  BaseMetadata,
+  ThreadData,
+  ThreadDeleteInfo,
+} from "./protocol/Comments";
+import type {
+  InboxNotificationData,
+  InboxNotificationDeleteInfo,
+} from "./protocol/InboxNotifications";
 import type { Polyfills, Room, RoomDelegates, RoomInitializers } from "./room";
 import {
   createRoom,
@@ -25,28 +34,23 @@ import {
 } from "./room";
 import type { CacheStore } from "./store";
 import { createClientStore } from "./store";
-import type { BaseMetadata } from "./types/BaseMetadata";
-import type { InboxNotificationData } from "./types/InboxNotificationData";
-import type { InboxNotificationDeleteInfo } from "./types/InboxNotificationDeleteInfo";
 import type { OptionalPromise } from "./types/OptionalPromise";
 import type { RoomInfo } from "./types/RoomInfo";
-import type { ThreadData } from "./types/ThreadData";
-import type { ThreadDeleteInfo } from "./types/ThreadDeleteInfo";
 
 //
 // Default concrete types for each of the user-provided type placeholders.
 //
 
 /** DP = Default Presence type */
-type DP = JsonObject;
+export type DP = JsonObject;
 /** DS = Default Storage type */
-type DS = LsonObject;
+export type DS = LsonObject;
 /** DU = Default UserMeta type */
-type DU = BaseUserMeta;
+export type DU = BaseUserMeta;
 /** DE = Default (Room)Event type */
-// type DE = Json;
+export type DE = Json;
 /** DM = Default Thread Metadata type */
-// type DM = BaseMetadata;
+export type DM = BaseMetadata;
 
 type OpaqueRoom = Room<JsonObject, LsonObject, BaseUserMeta, Json>;
 
@@ -121,7 +125,9 @@ type PrivateClientApi<U extends BaseUserMeta> = {
   readonly getRoomIds: () => string[];
 };
 
-export type NotificationsApi<M extends BaseMetadata = never> = {
+export type NotificationsApi<
+  M extends BaseMetadata = never, // TODO Change this to DM for 2.0
+> = {
   getInboxNotifications(options?: GetInboxNotificationsOptions): Promise<{
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<M>[];

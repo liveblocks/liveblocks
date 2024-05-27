@@ -10,7 +10,7 @@ import type {
   CommentBodyMention,
   CommentBodyParagraph,
   CommentBodyText,
-} from "../types/CommentBody";
+} from "../protocol/Comments";
 import type { OptionalPromise } from "../types/OptionalPromise";
 
 type CommentBodyBlockElementName = Exclude<

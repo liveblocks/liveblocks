@@ -2,15 +2,21 @@ import type { Store } from "./lib/create-store";
 import { createStore } from "./lib/create-store";
 import * as console from "./lib/fancy-console";
 import type { Resolve } from "./lib/Resolve";
-import type { BaseMetadata } from "./types/BaseMetadata";
-import type { CommentData, CommentReaction } from "./types/CommentData";
-import type { CommentUserReaction } from "./types/CommentReaction";
-import type { InboxNotificationData } from "./types/InboxNotificationData";
-import type { InboxNotificationDeleteInfo } from "./types/InboxNotificationDeleteInfo";
+import type {
+  BaseMetadata,
+  CommentData,
+  CommentReaction,
+  CommentUserReaction,
+  ThreadData,
+  ThreadDataWithDeleteInfo,
+  ThreadDeleteInfo,
+} from "./protocol/Comments";
+import type {
+  InboxNotificationData,
+  InboxNotificationDeleteInfo,
+} from "./protocol/InboxNotifications";
 import type { PartialNullable } from "./types/PartialNullable";
 import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
-import type { ThreadData, ThreadDataWithDeleteInfo } from "./types/ThreadData";
-import type { ThreadDeleteInfo } from "./types/ThreadDeleteInfo";
 
 type OptimisticUpdate<M extends BaseMetadata> =
   | CreateThreadOptimisticUpdate<M>

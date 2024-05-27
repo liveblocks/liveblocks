@@ -51,6 +51,25 @@ import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 import type { ClientMsg, UpdateYDocClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
+import type {
+  BaseMetadata,
+  CommentBody,
+  CommentData,
+  CommentDataPlain,
+  CommentUserReaction,
+  CommentUserReactionPlain,
+  QueryMetadata,
+  ThreadData,
+  ThreadDataPlain,
+  ThreadDeleteInfo,
+  ThreadDeleteInfoPlain,
+} from "./protocol/Comments";
+import type {
+  InboxNotificationData,
+  InboxNotificationDataPlain,
+  InboxNotificationDeleteInfo,
+  InboxNotificationDeleteInfoPlain,
+} from "./protocol/InboxNotifications";
 import type { Op } from "./protocol/Op";
 import { isAckOp, OpCode } from "./protocol/Op";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
@@ -69,22 +88,7 @@ import type { ImmutableRef } from "./refs/ImmutableRef";
 import { OthersRef } from "./refs/OthersRef";
 import { PatchableRef } from "./refs/PatchableRef";
 import { DerivedRef, ValueRef } from "./refs/ValueRef";
-import type { BaseMetadata } from "./types/BaseMetadata";
-import type { CommentBody } from "./types/CommentBody";
-import type { CommentData, CommentDataPlain } from "./types/CommentData";
-import type {
-  CommentUserReaction,
-  CommentUserReactionPlain,
-} from "./types/CommentReaction";
 import type * as DevTools from "./types/DevToolsTreeNode";
-import type {
-  InboxNotificationData,
-  InboxNotificationDataPlain,
-} from "./types/InboxNotificationData";
-import type {
-  InboxNotificationDeleteInfo,
-  InboxNotificationDeleteInfoPlain,
-} from "./types/InboxNotificationDeleteInfo";
 import type {
   IWebSocket,
   IWebSocketCloseEvent,
@@ -94,13 +98,7 @@ import type {
 import type { NodeMap } from "./types/NodeMap";
 import type { InternalOthersEvent, OthersEvent } from "./types/Others";
 import type { PartialNullable } from "./types/PartialNullable";
-import type { QueryMetadata } from "./types/QueryMetadata";
 import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
-import type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
-import type {
-  ThreadDeleteInfo,
-  ThreadDeleteInfoPlain,
-} from "./types/ThreadDeleteInfo";
 import type { User } from "./types/User";
 import { PKG_VERSION } from "./version";
 
@@ -491,7 +489,9 @@ export type GetThreadsOptions<M extends BaseMetadata> = {
 };
 
 type CommentsApi = {
-  getThreads<M extends BaseMetadata = never>(
+  getThreads<
+    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
+  >(
     options?: GetThreadsOptions<M>
   ): Promise<{
     threads: ThreadData<M>[];
@@ -502,7 +502,9 @@ type CommentsApi = {
       requestedAt: Date;
     };
   }>;
-  getThread<M extends BaseMetadata = never>(options: {
+  getThread<
+    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
+  >(options: {
     threadId: string;
   }): Promise<
     | {
@@ -511,13 +513,18 @@ type CommentsApi = {
       }
     | undefined
   >;
-  createThread<M extends BaseMetadata = never>(options: {
+  createThread<
+    M extends BaseMetadata = never,
+    // TODO Change this to DM for 2.0
+  >(options: {
     threadId: string;
     commentId: string;
     metadata: M | undefined;
     body: CommentBody;
   }): Promise<ThreadData<M>>;
-  editThreadMetadata<M extends BaseMetadata = never>(options: {
+  editThreadMetadata<
+    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
+  >(options: {
     metadata: PartialNullable<M>;
     threadId: string;
   }): Promise<M>;
@@ -1101,9 +1108,9 @@ function createCommentsApi(
     return body;
   }
 
-  async function getThreads<M extends BaseMetadata = never>(
-    options?: GetThreadsOptions<M>
-  ) {
+  async function getThreads<
+    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
+  >(options?: GetThreadsOptions<M>) {
     let query: string | undefined;
 
     if (options?.query) {
@@ -1188,7 +1195,9 @@ function createCommentsApi(
     }
   }
 
-  async function createThread<M extends BaseMetadata = never>({
+  async function createThread<
+    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
+  >({
     metadata,
     body,
     commentId,
@@ -1218,7 +1227,9 @@ function createCommentsApi(
     return convertToThreadData(thread);
   }
 
-  async function editThreadMetadata<M extends BaseMetadata = never>({
+  async function editThreadMetadata<
+    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
+  >({
     metadata,
     threadId,
   }: {
