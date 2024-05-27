@@ -560,11 +560,9 @@ const stringifyCommentBodyMarkdownElements: StringifyCommentBodyElements<BaseUse
  * Convert a `CommentBody` into either a plain string,
  * Markdown, HTML, or a custom format.
  */
-export async function stringifyCommentBody<
-  U extends BaseUserMeta = BaseUserMeta,
->(
+export async function stringifyCommentBody(
   body: CommentBody,
-  options?: StringifyCommentBodyOptions<U>
+  options?: StringifyCommentBodyOptions<BaseUserMeta>
 ): Promise<string> {
   const format = options?.format ?? "plain";
   const separator =
