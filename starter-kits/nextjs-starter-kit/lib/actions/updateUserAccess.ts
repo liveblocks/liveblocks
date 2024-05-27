@@ -153,15 +153,14 @@ export async function updateUserAccess({ userId, documentId, access }: Props) {
     };
   }
 
-  console.log("level", document.accesses.users, userId);
-
   // If the user previously had no access to document, send a notification saying they've been added
-  if (document.accesses.users[userId] === undefined || DocumentAccess.NONE) {
+  const previousAccessLevel = document.accesses.users[userId];
+  if (!previousAccessLevel || previousAccessLevel === DocumentAccess.NONE) {
     liveblocks.triggerInboxNotification({
       userId,
       kind: "$addedToDocument",
       subjectId: document.id,
-      roomId: document.id,
+      roomId: room.id,
       activityData: {
         documentId: document.id,
       },
