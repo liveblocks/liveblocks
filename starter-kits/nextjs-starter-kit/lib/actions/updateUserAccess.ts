@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { getUser } from "@/lib/database/getUser";
 import {
+  buildDocument,
   buildDocumentUsers,
   documentAccessToRoomAccesses,
   isUserDocumentOwner,
@@ -93,6 +94,8 @@ export async function updateUserAccess({ userId, documentId, access }: Props) {
     };
   }
 
+  const document = await buildDocument(room);
+
   // Check user exists in system
   if (!user) {
     return {
@@ -148,6 +151,21 @@ export async function updateUserAccess({ userId, documentId, access }: Props) {
         suggestion: "Contact an administrator",
       },
     };
+  }
+
+  console.log("level", document.accesses.users, userId);
+
+  // If the user previously had no access to document, send a notification saying they've been added
+  if (document.accesses.users[userId] === undefined || DocumentAccess.NONE) {
+    liveblocks.triggerInboxNotification({
+      userId,
+      kind: "$addedToDocument",
+      subjectId: document.id,
+      roomId: document.id,
+      activityData: {
+        documentId: document.id,
+      },
+    });
   }
 
   const result: DocumentUser[] = await buildDocumentUsers(

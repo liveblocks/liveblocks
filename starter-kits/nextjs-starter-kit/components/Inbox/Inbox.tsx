@@ -1,15 +1,20 @@
 import { ClientSideSuspense } from "@liveblocks/react";
 import {
   InboxNotification,
+  InboxNotificationCustomProps,
   InboxNotificationList,
 } from "@liveblocks/react-comments";
 import clsx from "clsx";
 import { ComponentProps } from "react";
+import { DocumentIcon } from "@/components/Documents";
+import { DOCUMENT_URL } from "@/constants";
+import { getDocument } from "@/lib/actions";
+import { useDocumentsFunctionSWR } from "@/lib/hooks";
 import {
   useInboxNotifications,
   useMarkAllInboxNotificationsAsRead,
 } from "@/liveblocks.config";
-import { Button } from "@/primitives/Button";
+import { Button, LinkButton } from "@/primitives/Button";
 import { Link } from "@/primitives/Link";
 import { Spinner } from "@/primitives/Spinner";
 import styles from "./Inbox.module.css";
@@ -31,12 +36,50 @@ function InboxContent(props: ComponentProps<"div">) {
                 key={inboxNotification.id}
                 inboxNotification={inboxNotification}
                 components={{ Anchor: Link }}
+                kinds={{
+                  $addedToDocument: AddedToDocumentNotification as any,
+                }}
               />
             );
           })}
         </InboxNotificationList>
       )}
     </div>
+  );
+}
+
+function AddedToDocumentNotification(props: InboxNotificationCustomProps) {
+  const { documentId } = props.inboxNotification.activities[0].data;
+  const { data: document } = useDocumentsFunctionSWR(
+    [getDocument, { documentId: documentId as string }],
+    { refreshInterval: 10000 }
+  );
+
+  if (!document) {
+    return null;
+  }
+
+  return (
+    <InboxNotification.Custom
+      {...props}
+      title={
+        <>
+          Added to <strong>{document.name}</strong>
+        </>
+      }
+      aside={
+        <div className={styles.icon}>
+          <DocumentIcon type={document.type} />
+        </div>
+      }
+    >
+      You’ve been granted access to a new document.
+      <div className={styles.addedToDocumentButton}>
+        <LinkButton href={DOCUMENT_URL(document.type, document.id)}>
+          Go to document
+        </LinkButton>
+      </div>
+    </InboxNotification.Custom>
   );
 }
 
