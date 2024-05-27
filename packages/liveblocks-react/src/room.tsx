@@ -952,10 +952,10 @@ function RoomProviderInner<
 }
 
 function useRoom<
-  P extends JsonObject = DP,
-  S extends LsonObject = DS,
-  U extends BaseUserMeta = DU,
-  E extends Json = DE,
+  P extends JsonObject = never,
+  S extends LsonObject = never,
+  U extends BaseUserMeta = never,
+  E extends Json = never,
 >(): Room<P, S, U, E> {
   const room = React.useContext(RoomContext);
   if (room === null) {
@@ -980,7 +980,7 @@ function useBroadcastEvent<E extends Json>(): (
   event: E,
   options?: BroadcastOptions
 ) => void {
-  const room = useRoom();
+  const room = useRoom<never, never, never, E>();
   return React.useCallback(
     (
       event: E,
