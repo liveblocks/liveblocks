@@ -72,7 +72,7 @@ import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { useRerender } from "./lib/use-rerender";
 import { LiveblocksProvider, useClient, useClientOrNull } from "./liveblocks";
-import type { DE, DM, DP, DS, DU } from "./shared";
+import type { DP, DS, DU } from "./shared";
 import { createSharedContext } from "./shared";
 import type {
   CommentReactionOptions,
@@ -745,10 +745,10 @@ function makeRoomContextBundle<
 }
 
 function RoomProvider<
-  P extends JsonObject = DP,
-  S extends LsonObject = DS,
-  U extends BaseUserMeta = DU,
-  E extends Json = DE,
+  P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
 >(props: RoomProviderProps<P, S>) {
   const client = useClient();
   const [cache] = React.useState(
@@ -952,10 +952,10 @@ function RoomProviderInner<
 }
 
 function useRoom<
-  P extends JsonObject = DP,
-  S extends LsonObject = DS,
-  U extends BaseUserMeta = DU,
-  E extends Json = DE,
+  P extends JsonObject = never,
+  S extends LsonObject = never,
+  U extends BaseUserMeta = never,
+  E extends Json = never,
 >(): Room<P, S, U, E> {
   const room = React.useContext(RoomContext);
   if (room === null) {
@@ -980,7 +980,7 @@ function useBroadcastEvent<E extends Json>(): (
   event: E,
   options?: BroadcastOptions
 ) => void {
-  const room = useRoom();
+  const room = useRoom<never, never, never, E>();
   return React.useCallback(
     (
       event: E,
@@ -992,10 +992,9 @@ function useBroadcastEvent<E extends Json>(): (
   );
 }
 
-function useOthersListener<
-  P extends JsonObject = DP,
-  U extends BaseUserMeta = DU,
->(callback: (event: OthersEvent<P, U>) => void) {
+function useOthersListener<P extends JsonObject, U extends BaseUserMeta>(
+  callback: (event: OthersEvent<P, U>) => void
+) {
   const room = useRoom<P, never, U, never>();
   const savedCallback = useLatest(callback);
   React.useEffect(
@@ -1028,9 +1027,9 @@ function useErrorListener(callback: (err: LiveblocksError) => void): void {
 }
 
 function useEventListener<
-  P extends JsonObject = DP,
-  U extends BaseUserMeta = DU,
-  E extends Json = DE,
+  P extends JsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
 >(callback: (data: RoomEventMessage<P, U, E>) => void): void {
   const room = useRoom<P, never, U, E>();
   const savedCallback = useLatest(callback);
@@ -1069,10 +1068,10 @@ function useCanRedo(): boolean {
   return useSyncExternalStore(subscribe, canRedo, canRedo);
 }
 
-function useSelf<
-  P extends JsonObject = DP,
-  U extends BaseUserMeta = DU,
->(): User<P, U> | null;
+function useSelf<P extends JsonObject, U extends BaseUserMeta>(): User<
+  P,
+  U
+> | null;
 function useSelf<T, P extends JsonObject, U extends BaseUserMeta>(
   selector: (me: User<P, U>) => T,
   isEqual?: (prev: T | null, curr: T | null) => boolean
@@ -1109,7 +1108,7 @@ function useCurrentUserId() {
   return useSelf((user) => (typeof user.id === "string" ? user.id : null));
 }
 
-function useMyPresence<P extends JsonObject = DP>(): [
+function useMyPresence<P extends JsonObject>(): [
   P,
   (patch: Partial<P>, options?: { addToHistory: boolean }) => void,
 ] {
@@ -1121,7 +1120,7 @@ function useMyPresence<P extends JsonObject = DP>(): [
   return [presence, setPresence];
 }
 
-function useUpdateMyPresence<P extends JsonObject = DP>(): (
+function useUpdateMyPresence<P extends JsonObject>(): (
   patch: Partial<P>,
   options?: { addToHistory: boolean }
 ) => void {
@@ -1129,14 +1128,14 @@ function useUpdateMyPresence<P extends JsonObject = DP>(): (
 }
 
 function useOthers<
-  P extends JsonObject = DP,
-  U extends BaseUserMeta = DU,
+  P extends JsonObject,
+  U extends BaseUserMeta,
 >(): readonly User<P, U>[];
-function useOthers<T, P extends JsonObject = DP, U extends BaseUserMeta = DU>(
+function useOthers<T, P extends JsonObject, U extends BaseUserMeta>(
   selector: (others: readonly User<P, U>[]) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T;
-function useOthers<T, P extends JsonObject = DP, U extends BaseUserMeta = DU>(
+function useOthers<T, P extends JsonObject, U extends BaseUserMeta>(
   selector?: (others: readonly User<P, U>[]) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T | readonly User<P, U>[] {
@@ -1153,11 +1152,7 @@ function useOthers<T, P extends JsonObject = DP, U extends BaseUserMeta = DU>(
   );
 }
 
-function useOthersMapped<
-  T,
-  P extends JsonObject = DP,
-  U extends BaseUserMeta = DU,
->(
+function useOthersMapped<T, P extends JsonObject, U extends BaseUserMeta>(
   itemSelector: (other: User<P, U>) => T,
   itemIsEqual?: (prev: T, curr: T) => boolean
 ): ReadonlyArray<readonly [connectionId: number, data: T]> {
@@ -1196,7 +1191,7 @@ const NOT_FOUND = Symbol();
 
 type NotFound = typeof NOT_FOUND;
 
-function useOther<T, P extends JsonObject = DP, U extends BaseUserMeta = DU>(
+function useOther<T, P extends JsonObject, U extends BaseUserMeta>(
   connectionId: number,
   selector: (other: User<P, U>) => T,
   isEqual?: (prev: T, curr: T) => boolean
@@ -1242,13 +1237,11 @@ function useMutableStorageRoot<S extends LsonObject>(): LiveObject<S> | null {
 }
 
 // NOTE: This API exists for backward compatible reasons
-function useStorageRoot<S extends LsonObject = DS>(): [
-  root: LiveObject<S> | null,
-] {
+function useStorageRoot<S extends LsonObject>(): [root: LiveObject<S> | null] {
   return [useMutableStorageRoot()];
 }
 
-function useStorage<T, S extends LsonObject = DS>(
+function useStorage<T, S extends LsonObject>(
   selector: (root: ToImmutable<S>) => T,
   isEqual?: (prev: T | null, curr: T | null) => boolean
 ): T | null {
@@ -1295,7 +1288,7 @@ function useStorage<T, S extends LsonObject = DS>(
 
 function useLegacyKey<
   TKey extends Extract<keyof S, string>,
-  S extends LsonObject = DS,
+  S extends LsonObject,
 >(key: TKey): S[TKey] | null {
   const room = useRoom<never, S, never, never>();
   const rootOrNull = useMutableStorageRoot<S>();
@@ -1343,10 +1336,10 @@ function useLegacyKey<
 
 function useMutation<
   F extends (context: MutationContext<P, S, U>, ...args: any[]) => any,
-  P extends JsonObject = DP,
-  S extends LsonObject = DS,
-  U extends BaseUserMeta = DU,
-  E extends Json = DE,
+  P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
 >(callback: F, deps: readonly unknown[]): OmitFirstArg<F> {
   const room = useRoom<P, S, U, E>();
   return React.useMemo(
@@ -1367,7 +1360,7 @@ function useMutation<
   );
 }
 
-function useThreads<M extends BaseMetadata = DM>(
+function useThreads<M extends BaseMetadata>(
   options: UseThreadsOptions<M> = {
     query: { metadata: {} },
   }
@@ -1418,7 +1411,7 @@ function useThreads<M extends BaseMetadata = DM>(
   return state;
 }
 
-function useCreateThread<M extends BaseMetadata = DM>() {
+function useCreateThread<M extends BaseMetadata>() {
   const client = useClient();
   const room = useRoom();
   return React.useCallback(
@@ -1495,7 +1488,7 @@ function useCreateThread<M extends BaseMetadata = DM>() {
   );
 }
 
-function useEditThreadMetadata<M extends BaseMetadata = DM>() {
+function useEditThreadMetadata<M extends BaseMetadata>() {
   const client = useClient();
   const room = useRoom();
   return React.useCallback(
@@ -1824,7 +1817,7 @@ function useDeleteComment() {
   );
 }
 
-function useAddReaction<M extends BaseMetadata = DM>() {
+function useAddReaction<M extends BaseMetadata>() {
   const client = useClient();
   const room = useRoom();
   return React.useCallback(
@@ -2185,20 +2178,15 @@ function useSuspendUntilPresenceLoaded(): void {
   });
 }
 
-function useSelfSuspense<
-  P extends JsonObject = DP,
-  U extends BaseUserMeta = DU,
->(): User<P, U>;
-function useSelfSuspense<
-  T,
-  P extends JsonObject = DP,
-  U extends BaseUserMeta = DU,
->(selector: (me: User<P, U>) => T, isEqual?: (prev: T, curr: T) => boolean): T;
-function useSelfSuspense<
-  T,
-  P extends JsonObject = DP,
-  U extends BaseUserMeta = DU,
->(
+function useSelfSuspense<P extends JsonObject, U extends BaseUserMeta>(): User<
+  P,
+  U
+>;
+function useSelfSuspense<T, P extends JsonObject, U extends BaseUserMeta>(
+  selector: (me: User<P, U>) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T;
+function useSelfSuspense<T, P extends JsonObject, U extends BaseUserMeta>(
   selector?: (me: User<P, U>) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T | User<P, U> {
@@ -2209,11 +2197,7 @@ function useSelfSuspense<
   ) as T | User<P, U>;
 }
 
-function useOthersSuspense<
-  T,
-  P extends JsonObject = DP,
-  U extends BaseUserMeta = DU,
->(
+function useOthersSuspense<T, P extends JsonObject, U extends BaseUserMeta>(
   selector?: (others: readonly User<P, U>[]) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T | readonly User<P, U>[] {
@@ -2231,8 +2215,8 @@ function useOthersConnectionIdsSuspense(): readonly number[] {
 
 function useOthersMappedSuspense<
   T,
-  P extends JsonObject = DP,
-  U extends BaseUserMeta = DU,
+  P extends JsonObject,
+  U extends BaseUserMeta,
 >(
   itemSelector: (other: User<P, U>) => T,
   itemIsEqual?: (prev: T, curr: T) => boolean
@@ -2241,11 +2225,7 @@ function useOthersMappedSuspense<
   return useOthersMapped(itemSelector, itemIsEqual);
 }
 
-function useOtherSuspense<
-  T,
-  P extends JsonObject = DP,
-  U extends BaseUserMeta = DU,
->(
+function useOtherSuspense<T, P extends JsonObject, U extends BaseUserMeta>(
   connectionId: number,
   selector: (other: User<P, U>) => T,
   isEqual?: (prev: T, curr: T) => boolean
@@ -2270,7 +2250,7 @@ function useSuspendUntilStorageLoaded(): void {
   });
 }
 
-function useStorageSuspense<T, S extends LsonObject = DS>(
+function useStorageSuspense<T, S extends LsonObject>(
   selector: (root: ToImmutable<S>) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T {
@@ -2283,13 +2263,13 @@ function useStorageSuspense<T, S extends LsonObject = DS>(
 
 function useLegacyKeySuspense<
   TKey extends Extract<keyof S, string>,
-  S extends LsonObject = DS,
+  S extends LsonObject,
 >(key: TKey): S[TKey] {
   useSuspendUntilStorageLoaded();
   return useLegacyKey(key) as S[TKey];
 }
 
-function useThreadsSuspense<M extends BaseMetadata = DM>(
+function useThreadsSuspense<M extends BaseMetadata>(
   options: UseThreadsOptions<M> = {
     query: { metadata: {} },
   }
