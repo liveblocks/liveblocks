@@ -385,24 +385,24 @@
         ]
       },
       {
-        "title": "Custom app",
-        "path": "/products/custom-app",
+        "title": "Low-level API",
+        "path": "/products/low-level-api",
         "routes": [
           {
             "title": "Yjs",
-            "path": "/products/custom-app/yjs"
+            "path": "/products/low-level-api/yjs"
           },
           {
             "title": "Storage",
-            "path": "/products/custom-app/storage"
+            "path": "/products/low-level-api/storage"
           },
           {
             "title": "Presence",
-            "path": "/products/custom-app/presence"
+            "path": "/products/low-level-api/presence"
           },
           {
             "title": "Broadcast",
-            "path": "/products/custom-app/broadcast"
+            "path": "/products/low-level-api/broadcast"
           }
         ]
       }
