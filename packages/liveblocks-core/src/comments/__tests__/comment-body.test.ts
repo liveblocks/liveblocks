@@ -1,5 +1,5 @@
 import type { ResolveUsersArgs } from "../../client";
-import type { CommentBody } from "../../types/CommentBody";
+import type { CommentBody } from "../../protocol/Comments";
 import {
   getMentionedIdsFromCommentBody,
   stringifyCommentBody,

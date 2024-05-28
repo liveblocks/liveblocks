@@ -1,4 +1,11 @@
-import type { BaseUserMeta, Client } from "@liveblocks/core";
+import type {
+  BaseMetadata,
+  BaseUserMeta,
+  Client,
+  Json,
+  JsonObject,
+  LsonObject,
+} from "@liveblocks/client";
 import { kInternal, raise } from "@liveblocks/core";
 import { useCallback, useEffect } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
@@ -12,6 +19,21 @@ import type {
   UserState,
   UserStateSuccess,
 } from "./types";
+
+//
+// Default concrete types for each of the user-provided type placeholders.
+//
+
+/** DP = Default Presence type */
+export type DP = JsonObject;
+/** DS = Default Storage type */
+export type DS = LsonObject;
+/** DU = Default UserMeta type */
+export type DU = BaseUserMeta;
+/** DE = Default (Room)Event type */
+export type DE = Json;
+/** DM = Default Thread Metadata type */
+export type DM = BaseMetadata;
 
 /**
  * @private
@@ -40,10 +62,10 @@ const missingRoomInfoError = new Error(
   "resolveRoomsInfo didn't return anything for this room ID."
 );
 
-function useUser_withClient<TUserMeta extends BaseUserMeta>(
-  client: Client,
+function useUser_withClient<U extends BaseUserMeta>(
+  client: Client<U>,
   userId: string
-): UserState<TUserMeta["info"]> {
+): UserState<U["info"]> {
   const usersStore = client[kInternal].usersStore;
 
   const getUserState = useCallback(
@@ -70,12 +92,12 @@ function useUser_withClient<TUserMeta extends BaseUserMeta>(
           !state.isLoading && !state.data && !state.error
             ? missingUserError
             : state.error,
-      } as UserState<TUserMeta["info"]>)
+      } as UserState<U["info"]>)
     : { isLoading: true };
 }
 
-function useUserSuspense_withClient<TUserMeta extends BaseUserMeta>(
-  client: Client,
+function useUserSuspense_withClient<U extends BaseUserMeta>(
+  client: Client<U>,
   userId: string
 ) {
   const usersStore = client[kInternal].usersStore;
@@ -109,7 +131,7 @@ function useUserSuspense_withClient<TUserMeta extends BaseUserMeta>(
     isLoading: false,
     user: state?.data,
     error: state?.error,
-  } as UserStateSuccess<TUserMeta["info"]>;
+  } as UserStateSuccess<U["info"]>;
 }
 
 function useRoomInfo_withClient(client: Client, roomId: string): RoomInfoState {
@@ -178,9 +200,9 @@ function useRoomInfoSuspense_withClient(client: Client, roomId: string) {
   } as RoomInfoStateSuccess;
 }
 
-export function createSharedContext<
-  TUserMeta extends BaseUserMeta = BaseUserMeta,
->(client: Client): SharedContextBundle<TUserMeta> {
+export function createSharedContext<U extends BaseUserMeta>(
+  client: Client<U>
+): SharedContextBundle<U> {
   return {
     classic: {
       useUser: (userId: string) => useUser_withClient(client, userId),

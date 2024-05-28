@@ -10,7 +10,7 @@ import type {
   CommentBodyMention,
   CommentBodyParagraph,
   CommentBodyText,
-} from "../types/CommentBody";
+} from "../protocol/Comments";
 import type { OptionalPromise } from "../types/OptionalPromise";
 
 type CommentBodyBlockElementName = Exclude<
@@ -74,7 +74,7 @@ export type CommentBodyLinkElementArgs = {
 };
 
 export type CommentBodyMentionElementArgs<
-  TUserMeta extends BaseUserMeta = BaseUserMeta,
+  U extends BaseUserMeta = BaseUserMeta,
 > = {
   /**
    * The mention element.
@@ -84,11 +84,11 @@ export type CommentBodyMentionElementArgs<
   /**
    * The mention's user info, if the `resolvedUsers` option was provided.
    */
-  user?: TUserMeta["info"];
+  user?: U["info"];
 };
 
 export type StringifyCommentBodyElements<
-  TUserMeta extends BaseUserMeta = BaseUserMeta,
+  U extends BaseUserMeta = BaseUserMeta,
 > = {
   /**
    * The element used to display paragraphs.
@@ -108,38 +108,34 @@ export type StringifyCommentBodyElements<
   /**
    * The element used to display mentions.
    */
-  mention: (
-    args: CommentBodyMentionElementArgs<TUserMeta>,
-    index: number
-  ) => string;
+  mention: (args: CommentBodyMentionElementArgs<U>, index: number) => string;
 };
 
-export type StringifyCommentBodyOptions<
-  TUserMeta extends BaseUserMeta = BaseUserMeta,
-> = {
-  /**
-   * Which format to convert the comment to.
-   */
-  format?: "plain" | "html" | "markdown";
+export type StringifyCommentBodyOptions<U extends BaseUserMeta = BaseUserMeta> =
+  {
+    /**
+     * Which format to convert the comment to.
+     */
+    format?: "plain" | "html" | "markdown";
 
-  /**
-   * The elements used to customize the resulting string. Each element has
-   * priority over the defaults inherited from the `format` option.
-   */
-  elements?: Partial<StringifyCommentBodyElements<TUserMeta>>;
+    /**
+     * The elements used to customize the resulting string. Each element has
+     * priority over the defaults inherited from the `format` option.
+     */
+    elements?: Partial<StringifyCommentBodyElements<U>>;
 
-  /**
-   * The separator used between paragraphs.
-   */
-  separator?: string;
+    /**
+     * The separator used between paragraphs.
+     */
+    separator?: string;
 
-  /**
-   * A function that returns user info from user IDs.
-   */
-  resolveUsers?: (
-    args: ResolveUsersArgs
-  ) => OptionalPromise<(TUserMeta["info"] | undefined)[] | undefined>;
-};
+    /**
+     * A function that returns user info from user IDs.
+     */
+    resolveUsers?: (
+      args: ResolveUsersArgs
+    ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+  };
 
 function isCommentBodyParagraph(
   element: CommentBodyElement
@@ -237,13 +233,13 @@ export function getMentionedIdsFromCommentBody(body: CommentBody): string[] {
   return Array.from(mentionedIds);
 }
 
-async function resolveUsersInCommentBody<TUserMeta extends BaseUserMeta>(
+async function resolveUsersInCommentBody<U extends BaseUserMeta>(
   body: CommentBody,
   resolveUsers?: (
     args: ResolveUsersArgs
-  ) => OptionalPromise<(TUserMeta["info"] | undefined)[] | undefined>
+  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>
 ) {
-  const resolvedUsers = new Map<string, TUserMeta["info"]>();
+  const resolvedUsers = new Map<string, U["info"]>();
 
   if (!resolveUsers) {
     return resolvedUsers;
@@ -459,113 +455,114 @@ function toAbsoluteUrl(url: string): string | undefined {
   return;
 }
 
-const stringifyCommentBodyPlainElements: StringifyCommentBodyElements = {
-  paragraph: ({ children }) => children,
-  text: ({ element }) => element.text,
-  link: ({ element }) => element.url,
-  mention: ({ element, user }) => {
-    return `@${user?.name ?? element.id}`;
-  },
-};
+const stringifyCommentBodyPlainElements: StringifyCommentBodyElements<BaseUserMeta> =
+  {
+    paragraph: ({ children }) => children,
+    text: ({ element }) => element.text,
+    link: ({ element }) => element.url,
+    mention: ({ element, user }) => {
+      return `@${user?.name ?? element.id}`;
+    },
+  };
 
-const stringifyCommentBodyHtmlElements: StringifyCommentBodyElements = {
-  paragraph: ({ children }) => {
-    // prettier-ignore
-    return children ? html`<p>${htmlSafe(children)}</p>` : children;
-  },
-  text: ({ element }) => {
-    // <code><s><em><strong>text</strong></s></em></code>
-    let children = element.text;
+const stringifyCommentBodyHtmlElements: StringifyCommentBodyElements<BaseUserMeta> =
+  {
+    paragraph: ({ children }) => {
+      // prettier-ignore
+      return children ? html`<p>${htmlSafe(children)}</p>` : children;
+    },
+    text: ({ element }) => {
+      // <code><s><em><strong>text</strong></s></em></code>
+      let children = element.text;
 
-    if (!children) {
+      if (!children) {
+        return children;
+      }
+
+      if (element.bold) {
+        // prettier-ignore
+        children = html`<strong>${children}</strong>`;
+      }
+
+      if (element.italic) {
+        // prettier-ignore
+        children = html`<em>${children}</em>`;
+      }
+
+      if (element.strikethrough) {
+        // prettier-ignore
+        children = html`<s>${children}</s>`;
+      }
+
+      if (element.code) {
+        // prettier-ignore
+        children = html`<code>${children}</code>`;
+      }
+
       return children;
-    }
-
-    if (element.bold) {
+    },
+    link: ({ element, href }) => {
       // prettier-ignore
-      children = html`<strong>${children}</strong>`;
-    }
-
-    if (element.italic) {
+      return html`<a href="${href}" target="_blank" rel="noopener noreferrer">${element.url}</a>`;
+    },
+    mention: ({ element, user }) => {
       // prettier-ignore
-      children = html`<em>${children}</em>`;
-    }
+      return html`<span data-mention>@${user?.name ?? element.id}</span>`;
+    },
+  };
 
-    if (element.strikethrough) {
-      // prettier-ignore
-      children = html`<s>${children}</s>`;
-    }
-
-    if (element.code) {
-      // prettier-ignore
-      children = html`<code>${children}</code>`;
-    }
-
-    return children;
-  },
-  link: ({ element, href }) => {
-    // prettier-ignore
-    return html`<a href="${href}" target="_blank" rel="noopener noreferrer">${element.url}</a>`;
-  },
-  mention: ({ element, user }) => {
-    // prettier-ignore
-    return html`<span data-mention>@${user?.name ?? element.id}</span>`;
-  },
-};
-
-const stringifyCommentBodyMarkdownElements: StringifyCommentBodyElements = {
-  paragraph: ({ children }) => {
-    return children;
-  },
-  text: ({ element }) => {
-    // <code><s><em><strong>text</strong></s></em></code>
-    let children = element.text;
-
-    if (!children) {
+const stringifyCommentBodyMarkdownElements: StringifyCommentBodyElements<BaseUserMeta> =
+  {
+    paragraph: ({ children }) => {
       return children;
-    }
+    },
+    text: ({ element }) => {
+      // <code><s><em><strong>text</strong></s></em></code>
+      let children = element.text;
 
-    if (element.bold) {
+      if (!children) {
+        return children;
+      }
+
+      if (element.bold) {
+        // prettier-ignore
+        children = markdown`**${children}**`;
+      }
+
+      if (element.italic) {
+        // prettier-ignore
+        children = markdown`_${children}_`;
+      }
+
+      if (element.strikethrough) {
+        // prettier-ignore
+        children = markdown`~~${children}~~`;
+      }
+
+      if (element.code) {
+        // prettier-ignore
+        children = markdown`\`${children}\``;
+      }
+
+      return children;
+    },
+    link: ({ element, href }) => {
       // prettier-ignore
-      children = markdown`**${children}**`;
-    }
-
-    if (element.italic) {
+      return markdown`[${element.url}](${href})`;
+    },
+    mention: ({ element, user }) => {
       // prettier-ignore
-      children = markdown`_${children}_`;
-    }
-
-    if (element.strikethrough) {
-      // prettier-ignore
-      children = markdown`~~${children}~~`;
-    }
-
-    if (element.code) {
-      // prettier-ignore
-      children = markdown`\`${children}\``;
-    }
-
-    return children;
-  },
-  link: ({ element, href }) => {
-    // prettier-ignore
-    return markdown`[${element.url}](${href})`;
-  },
-  mention: ({ element, user }) => {
-    // prettier-ignore
-    return markdown`@${user?.name ?? element.id}`;
-  },
-};
+      return markdown`@${user?.name ?? element.id}`;
+    },
+  };
 
 /**
  * Convert a `CommentBody` into either a plain string,
  * Markdown, HTML, or a custom format.
  */
-export async function stringifyCommentBody<
-  TUserMeta extends BaseUserMeta = BaseUserMeta,
->(
+export async function stringifyCommentBody(
   body: CommentBody,
-  options?: StringifyCommentBodyOptions<TUserMeta>
+  options?: StringifyCommentBodyOptions<BaseUserMeta>
 ): Promise<string> {
   const format = options?.format ?? "plain";
   const separator =

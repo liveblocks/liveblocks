@@ -17,6 +17,15 @@ import type { GetInboxNotificationsOptions } from "./notifications";
 import { createNotificationsApi } from "./notifications";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
+import type {
+  BaseMetadata,
+  ThreadData,
+  ThreadDeleteInfo,
+} from "./protocol/Comments";
+import type {
+  InboxNotificationData,
+  InboxNotificationDeleteInfo,
+} from "./protocol/InboxNotifications";
 import type { Polyfills, Room, RoomDelegates, RoomInitializers } from "./room";
 import {
   createRoom,
@@ -25,13 +34,25 @@ import {
 } from "./room";
 import type { CacheStore } from "./store";
 import { createClientStore } from "./store";
-import type { BaseMetadata } from "./types/BaseMetadata";
-import type { InboxNotificationData } from "./types/InboxNotificationData";
-import type { InboxNotificationDeleteInfo } from "./types/InboxNotificationDeleteInfo";
 import type { OptionalPromise } from "./types/OptionalPromise";
 import type { RoomInfo } from "./types/RoomInfo";
-import type { ThreadData } from "./types/ThreadData";
-import type { ThreadDeleteInfo } from "./types/ThreadDeleteInfo";
+
+//
+// Default concrete types for each of the user-provided type placeholders.
+//
+
+/** DP = Default Presence type */
+export type DP = JsonObject;
+/** DS = Default Storage type */
+export type DS = LsonObject;
+/** DU = Default UserMeta type */
+export type DU = BaseUserMeta;
+/** DE = Default (Room)Event type */
+export type DE = Json;
+/** DM = Default Thread Metadata type */
+export type DM = BaseMetadata;
+
+type OpaqueRoom = Room<JsonObject, LsonObject, BaseUserMeta, Json>;
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1_000;
@@ -72,12 +93,9 @@ export type ResolveRoomsInfoArgs = {
   roomIds: string[];
 };
 
-export type EnterOptions<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-> = Resolve<
+export type EnterOptions<P extends JsonObject, S extends LsonObject> = Resolve<
   // Enter options are just room initializers, plus an internal option
-  RoomInitializers<TPresence, TStorage> & {
+  RoomInitializers<P, S> & {
     /**
      * Only necessary when you’re using Liveblocks with React v17 or lower.
      *
@@ -97,20 +115,22 @@ export type EnterOptions<
  * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
  * will probably happen if you do.
  */
-type PrivateClientApi<TUserMeta extends BaseUserMeta> = {
+type PrivateClientApi<U extends BaseUserMeta> = {
   readonly notifications: NotificationsApi;
   readonly currentUserIdStore: Store<string | null>;
-  readonly resolveMentionSuggestions: ClientOptions["resolveMentionSuggestions"];
+  readonly resolveMentionSuggestions: ClientOptions<U>["resolveMentionSuggestions"];
   readonly cacheStore: CacheStore<BaseMetadata>;
-  readonly usersStore: BatchStore<TUserMeta["info"] | undefined, [string]>;
+  readonly usersStore: BatchStore<U["info"] | undefined, [string]>;
   readonly roomsInfoStore: BatchStore<RoomInfo | undefined, [string]>;
   readonly getRoomIds: () => string[];
 };
 
-export type NotificationsApi<TThreadMetadata extends BaseMetadata = never> = {
+export type NotificationsApi<
+  M extends BaseMetadata = never, // TODO Change this to DM for 2.0
+> = {
   getInboxNotifications(options?: GetInboxNotificationsOptions): Promise<{
     inboxNotifications: InboxNotificationData[];
-    threads: ThreadData<TThreadMetadata>[];
+    threads: ThreadData<M>[];
     deletedThreads: ThreadDeleteInfo[];
     deletedInboxNotifications: InboxNotificationDeleteInfo[];
     meta: {
@@ -122,20 +142,20 @@ export type NotificationsApi<TThreadMetadata extends BaseMetadata = never> = {
   markInboxNotificationAsRead(inboxNotificationId: string): Promise<void>;
 };
 
-export type Client<TUserMeta extends BaseUserMeta = BaseUserMeta> = {
+export type Client<U extends BaseUserMeta = DU> = {
   /**
    * Gets a room. Returns null if {@link Client.enter} has not been called previously.
    *
    * @param roomId The id of the room
    */
   getRoom<
-    TPresence extends JsonObject,
-    TStorage extends LsonObject = LsonObject,
-    TUserMeta extends BaseUserMeta = BaseUserMeta,
-    TRoomEvent extends Json = never,
+    P extends JsonObject = DP,
+    S extends LsonObject = DS,
+    U extends BaseUserMeta = DU, // TODO Remove in 2.0, this is shadowing the Client-level type arg
+    E extends Json = never, // TODO Change to DE in 2.0
   >(
     roomId: string
-  ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null;
+  ): Room<P, S, U, E> | null;
 
   /**
    * Enter a room.
@@ -144,15 +164,15 @@ export type Client<TUserMeta extends BaseUserMeta = BaseUserMeta> = {
    * @returns The room and a leave function. Call the returned leave() function when you no longer need the room.
    */
   enterRoom<
-    TPresence extends JsonObject,
-    TStorage extends LsonObject = LsonObject,
-    TUserMeta extends BaseUserMeta = BaseUserMeta,
-    TRoomEvent extends Json = never,
+    P extends JsonObject = DP,
+    S extends LsonObject = DS,
+    U extends BaseUserMeta = DU, // TODO Remove in 2.0, this is shadowing the Client-level type arg
+    E extends Json = never, // TODO Change to DE in 2.0
   >(
     roomId: string,
-    options: EnterOptions<TPresence, TStorage>
+    options: EnterOptions<P, S>
   ): {
-    room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
+    room: Room<P, S, U, E>;
     leave: () => void;
   };
 
@@ -164,14 +184,14 @@ export type Client<TUserMeta extends BaseUserMeta = BaseUserMeta> = {
    * @param options Optional. You can provide initializers for the Presence or Storage when entering the Room.
    */
   enter<
-    TPresence extends JsonObject,
-    TStorage extends LsonObject = LsonObject,
-    TUserMeta extends BaseUserMeta = BaseUserMeta,
-    TRoomEvent extends Json = never,
+    P extends JsonObject = DP,
+    S extends LsonObject = DS,
+    U extends BaseUserMeta = DU, // TODO Remove in 2.0, this is shadowing the Client-level type arg
+    E extends Json = never, // TODO Change to DE in 2.0
   >(
     roomId: string,
-    options: EnterOptions<TPresence, TStorage>
-  ): Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
+    options: EnterOptions<P, S>
+  ): Room<P, S, U, E>;
 
   /**
    * @deprecated - Prefer using {@link Client.enterRoom} and calling the returned leave function instead, which is safer.
@@ -202,7 +222,7 @@ export type Client<TUserMeta extends BaseUserMeta = BaseUserMeta> = {
    * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
    * will probably happen if you do.
    */
-  readonly [kInternal]: PrivateClientApi<TUserMeta>;
+  readonly [kInternal]: PrivateClientApi<U>;
 };
 
 export type AuthEndpoint =
@@ -213,7 +233,7 @@ export type AuthEndpoint =
  * The authentication endpoint that is called to ensure that the current user has access to a room.
  * Can be an url or a callback if you need to add additional headers.
  */
-export type ClientOptions<TUserMeta extends BaseUserMeta = BaseUserMeta> = {
+export type ClientOptions<U extends BaseUserMeta = DU> = {
   throttle?: number; // in milliseconds
   lostConnectionTimeout?: number; // in milliseconds
   backgroundKeepAliveTimeout?: number; // in milliseconds
@@ -249,7 +269,7 @@ export type ClientOptions<TUserMeta extends BaseUserMeta = BaseUserMeta> = {
    */
   resolveUsers?: (
     args: ResolveUsersArgs
-  ) => OptionalPromise<(TUserMeta["info"] | undefined)[] | undefined>;
+  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
 
   /**
    * @beta
@@ -333,11 +353,9 @@ export function getAuthBearerHeaderFromAuthValue(authValue: AuthValue): string {
  *   }
  * });
  */
-export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
-  options: ClientOptions<TUserMeta>
-): Client<TUserMeta> {
-  type OpaqueRoom = Room<JsonObject, LsonObject, BaseUserMeta, Json>;
-
+export function createClient<U extends BaseUserMeta = DU>(
+  options: ClientOptions<U>
+): Client<U> {
   const clientOptions = options;
   const throttleDelay = getThrottle(clientOptions.throttle ?? DEFAULT_THROTTLE);
   const lostConnectionTimeout = getLostConnectionTimeout(
@@ -364,14 +382,14 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
   }
 
   function leaseRoom<
-    TPresence extends JsonObject,
-    TStorage extends LsonObject,
-    TUserMeta extends BaseUserMeta,
-    TRoomEvent extends Json,
+    P extends JsonObject,
+    S extends LsonObject,
+    U extends BaseUserMeta,
+    E extends Json,
   >(
     info: RoomInfo
   ): {
-    room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
+    room: Room<P, S, U, E>;
     leave: () => void;
   } {
     // Create a new self-destructing leave function
@@ -392,21 +410,21 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
 
     info.unsubs.add(leave);
     return {
-      room: info.room as Room<TPresence, TStorage, TUserMeta, TRoomEvent>,
+      room: info.room as Room<P, S, U, E>,
       leave,
     };
   }
 
   function enterRoom<
-    TPresence extends JsonObject,
-    TStorage extends LsonObject = LsonObject,
-    TUserMeta extends BaseUserMeta = BaseUserMeta,
-    TRoomEvent extends Json = never,
+    P extends JsonObject,
+    S extends LsonObject,
+    U extends BaseUserMeta,
+    E extends Json,
   >(
     roomId: string,
-    options: EnterOptions<TPresence, TStorage>
+    options: EnterOptions<P, S>
   ): {
-    room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
+    room: Room<P, S, U, E>;
     leave: () => void;
   } {
     const existing = roomsById.get(roomId);
@@ -419,7 +437,7 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
       "Please provide an initial presence value for the current user when entering the room."
     );
 
-    const newRoom = createRoom<TPresence, TStorage, TUserMeta, TRoomEvent>(
+    const newRoom = createRoom<P, S, U, E>(
       {
         initialPresence: options.initialPresence ?? {},
         initialStorage: options.initialStorage,
@@ -476,33 +494,23 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
   }
 
   function enter<
-    TPresence extends JsonObject,
-    TStorage extends LsonObject = LsonObject,
-    TUserMeta extends BaseUserMeta = BaseUserMeta,
-    TRoomEvent extends Json = never,
-  >(
-    roomId: string,
-    options: EnterOptions<TPresence, TStorage>
-  ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
-    const { room, leave: _ } = enterRoom<
-      TPresence,
-      TStorage,
-      TUserMeta,
-      TRoomEvent
-    >(roomId, options);
+    P extends JsonObject,
+    S extends LsonObject,
+    U extends BaseUserMeta,
+    E extends Json,
+  >(roomId: string, options: EnterOptions<P, S>): Room<P, S, U, E> {
+    const { room, leave: _ } = enterRoom<P, S, U, E>(roomId, options);
     return room;
   }
 
   function getRoom<
-    TPresence extends JsonObject,
-    TStorage extends LsonObject = LsonObject,
-    TUserMeta extends BaseUserMeta = BaseUserMeta,
-    TRoomEvent extends Json = never,
-  >(roomId: string): Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null {
+    P extends JsonObject,
+    S extends LsonObject,
+    U extends BaseUserMeta,
+    E extends Json,
+  >(roomId: string): Room<P, S, U, E> | null {
     const room = roomsById.get(roomId)?.room;
-    return room
-      ? (room as Room<TPresence, TStorage, TUserMeta, TRoomEvent>)
-      : null;
+    return room ? (room as Room<P, S, U, E>) : null;
   }
 
   function forceLeave(roomId: string) {

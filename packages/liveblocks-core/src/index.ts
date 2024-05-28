@@ -113,6 +113,41 @@ export type {
   UpdateYDocClientMsg,
 } from "./protocol/ClientMsg";
 export { ClientMsgCode } from "./protocol/ClientMsg";
+export type { BaseMetadata } from "./protocol/Comments";
+export type {
+  CommentBody,
+  CommentBodyBlockElement,
+  CommentBodyElement,
+  CommentBodyInlineElement,
+  CommentBodyLink,
+  CommentBodyMention,
+  CommentBodyParagraph,
+  CommentBodyText,
+} from "./protocol/Comments";
+export type {
+  CommentData,
+  CommentDataPlain,
+  CommentReaction,
+} from "./protocol/Comments";
+export type {
+  CommentUserReaction,
+  CommentUserReactionPlain,
+} from "./protocol/Comments";
+export type { QueryMetadata } from "./protocol/Comments";
+export type { ThreadData, ThreadDataPlain } from "./protocol/Comments";
+export type { ThreadDeleteInfo } from "./protocol/Comments";
+export type {
+  ActivityData,
+  InboxNotificationCustomData,
+  InboxNotificationCustomDataPlain,
+  InboxNotificationData,
+  InboxNotificationDataPlain,
+  InboxNotificationThreadData,
+  InboxNotificationThreadDataPlain,
+  InboxNotificationTextMentionData,
+  InboxNotificationTextMentionDataPlain,
+} from "./protocol/InboxNotifications";
+export type { InboxNotificationDeleteInfo } from "./protocol/InboxNotifications";
 export type {
   AckOp,
   CreateListOp,
@@ -153,6 +188,7 @@ export type {
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 export { ServerMsgCode } from "./protocol/ServerMsg";
+export type { PrivateRoomApi } from "./room";
 export type {
   BroadcastOptions,
   History,
@@ -163,39 +199,7 @@ export type {
 } from "./room";
 export type { GetThreadsOptions } from "./room";
 export { CommentsApiError } from "./room";
-export type { BaseMetadata } from "./types/BaseMetadata";
-export type {
-  CommentBody,
-  CommentBodyBlockElement,
-  CommentBodyElement,
-  CommentBodyInlineElement,
-  CommentBodyLink,
-  CommentBodyMention,
-  CommentBodyParagraph,
-  CommentBodyText,
-} from "./types/CommentBody";
-export type {
-  CommentData,
-  CommentDataPlain,
-  CommentReaction,
-} from "./types/CommentData";
-export type {
-  CommentUserReaction,
-  CommentUserReactionPlain,
-} from "./types/CommentReaction";
 export type { Immutable } from "./types/Immutable";
-export type {
-  ActivityData,
-  InboxNotificationCustomData,
-  InboxNotificationCustomDataPlain,
-  InboxNotificationTextMentionData,
-  InboxNotificationTextMentionDataPlain,
-  InboxNotificationData,
-  InboxNotificationDataPlain,
-  InboxNotificationThreadData,
-  InboxNotificationThreadDataPlain,
-} from "./types/InboxNotificationData";
-export type { InboxNotificationDeleteInfo } from "./types/InboxNotificationDeleteInfo";
 export type {
   IWebSocket,
   IWebSocketCloseEvent,
@@ -215,11 +219,8 @@ export type {
   PlainLsonMap,
   PlainLsonObject,
 } from "./types/PlainLson";
-export type { QueryMetadata } from "./types/QueryMetadata";
 export type { RoomInfo } from "./types/RoomInfo";
 export type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
-export type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
-export type { ThreadDeleteInfo } from "./types/ThreadDeleteInfo";
 export type { User } from "./types/User";
 export { detectDupes };
 

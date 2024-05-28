@@ -5,6 +5,7 @@
 .svelte-kit/
 .turbo/
 .vercel/
+.vim/
 .vscode/
 build/
 coverage/

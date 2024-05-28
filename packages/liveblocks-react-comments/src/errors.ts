@@ -1,6 +1,6 @@
 import type { BaseMetadata, CommentBody } from "@liveblocks/core";
 
-export class CreateThreadError<TMetadata extends BaseMetadata> extends Error {
+export class CreateThreadError<M extends BaseMetadata> extends Error {
   constructor(
     public cause: Error,
     public context: {
@@ -8,7 +8,7 @@ export class CreateThreadError<TMetadata extends BaseMetadata> extends Error {
       threadId: string;
       commentId: string;
       body: CommentBody;
-      metadata: TMetadata;
+      metadata: M;
     }
   ) {
     super("Create thread failed.");
@@ -16,15 +16,13 @@ export class CreateThreadError<TMetadata extends BaseMetadata> extends Error {
   }
 }
 
-export class EditThreadMetadataError<
-  TMetadata extends BaseMetadata,
-> extends Error {
+export class EditThreadMetadataError<M extends BaseMetadata> extends Error {
   constructor(
     public cause: Error,
     public context: {
       roomId: string;
       threadId: string;
-      metadata: Partial<TMetadata>;
+      metadata: Partial<M>;
     }
   ) {
     super("Edit thread metadata failed.");
@@ -76,9 +74,9 @@ export class DeleteCommentError extends Error {
   }
 }
 
-export type CommentsError<TThreadMetadata extends BaseMetadata> =
-  | CreateThreadError<TThreadMetadata>
-  | EditThreadMetadataError<TThreadMetadata>
+export type CommentsError<M extends BaseMetadata> =
+  | CreateThreadError<M>
+  | EditThreadMetadataError<M>
   | CreateCommentError
   | EditCommentError
   | DeleteCommentError;
