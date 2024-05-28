@@ -73,7 +73,7 @@ import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { useRerender } from "./lib/use-rerender";
 import { LiveblocksProvider, useClient, useClientOrNull } from "./liveblocks";
-import type { DE, DM, DP, DS, DU } from "./shared";
+import type { DP, DS, DU } from "./shared";
 import { createSharedContext } from "./shared";
 import type {
   CommentReactionOptions,
