@@ -63,6 +63,21 @@ function Component() {
 }
 ```
 
+## useMarkAllInboxNotificationsAsRead hook
+
+To mark all notifications as read for the current user, you can add
+[`useMarkAllInboxNotificationsAsRead`](/docs/api-reference/liveblocks-react#useMarkAllInboxNotificationsAsRead).
+
+```tsx
+function NotificationReadButton() {
+  const markAllInboxNotificationsAsRead = useMarkAllInboxNotificationsAsRead();
+
+  return (
+    <button onClick={markAllInboxNotificationsAsRead}>Mark all as read</button>
+  );
+}
+```
+
 ## useUser hook [#user-hook]
 
 The only information Liveblocks stores about users is their user ID, which is
