@@ -1,10 +1,10 @@
 import { ClientSideSuspense } from "@liveblocks/react";
-import { useRouter } from "next/router";
+import { usePathname } from "next/navigation";
 import { ComponentProps, useEffect, useState } from "react";
-import { InboxIcon } from "../../icons";
-import { useUnreadInboxNotificationsCount } from "../../liveblocks.config";
-import { Button } from "../../primitives/Button";
-import { Popover } from "../../primitives/Popover";
+import { InboxIcon } from "@/icons";
+import { useUnreadInboxNotificationsCount } from "@/liveblocks.config";
+import { Button } from "@/primitives/Button";
+import { Popover } from "@/primitives/Popover";
 import { Inbox } from "./Inbox";
 import styles from "./InboxPopover.module.css";
 
@@ -19,20 +19,12 @@ function InboxPopoverUnreadCount() {
 export function InboxPopover(
   props: Omit<ComponentProps<typeof Popover>, "content">
 ) {
-  const router = useRouter();
+  const pathname = usePathname();
   const [isOpen, setOpen] = useState(false);
 
   useEffect(() => {
-    const handleRouteChange = () => {
-      setOpen(false);
-    };
-
-    router.events.on("routeChangeStart", handleRouteChange);
-
-    return () => {
-      router.events.off("routeChangeStart", handleRouteChange);
-    };
-  }, [router]);
+    setOpen(false);
+  }, [pathname]);
 
   return (
     <Popover

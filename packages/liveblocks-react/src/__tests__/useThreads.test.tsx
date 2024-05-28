@@ -2,6 +2,8 @@ import "@testing-library/jest-dom";
 
 import type { BaseMetadata, JsonObject } from "@liveblocks/core";
 import { createClient, kInternal, ServerMsgCode } from "@liveblocks/core";
+import type { AST } from "@liveblocks/query-parser";
+import { QueryParser } from "@liveblocks/query-parser";
 import {
   act,
   fireEvent,
@@ -20,7 +22,7 @@ import { ErrorBoundary } from "react-error-boundary";
 
 import { createLiveblocksContext } from "../liveblocks";
 import { createRoomContext, generateQueryKey, POLLING_INTERVAL } from "../room";
-import { dummyInboxNoficationData, dummyThreadData } from "./_dummies";
+import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
 import MockWebSocket, { websocketSimulator } from "./_MockWebSocket";
 import {
   mockGetInboxNotifications,
@@ -29,6 +31,32 @@ import {
 } from "./_restMocks";
 
 const server = setupServer();
+
+const parser = new QueryParser({
+  fields: {},
+  indexableFields: {
+    metadata: "mixed",
+  },
+});
+
+const getFilter = (
+  clauses: AST.Clause[],
+  indexedFieldKey: string,
+  filterKey: string
+) => {
+  const filter = clauses.find(
+    (clause) =>
+      clause.field._kind === "IndexedField" &&
+      clause.field.base.name === indexedFieldKey &&
+      clause.field.key === filterKey
+  );
+
+  return {
+    key: filter?.field._kind === "IndexedField" ? filter.field.key : "",
+    operator: filter?.operator.op,
+    value: filter?.value.value,
+  };
+};
 
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 
@@ -46,9 +74,7 @@ afterEach(() => {
 afterAll(() => server.close());
 
 // TODO: Dry up and create utils that wrap renderHook
-function createRoomContextForTest<
-  TThreadMetadata extends BaseMetadata = BaseMetadata,
->() {
+function createRoomContextForTest<M extends BaseMetadata>() {
   const client = createClient({
     publicApiKey: "pk_xxx",
     polyfills: {
@@ -57,13 +83,7 @@ function createRoomContextForTest<
   });
 
   return {
-    roomCtx: createRoomContext<
-      JsonObject,
-      never,
-      never,
-      never,
-      TThreadMetadata
-    >(client),
+    roomCtx: createRoomContext<JsonObject, never, never, never, M>(client),
     liveblocksCtx: createLiveblocksContext(client),
     client,
   };
@@ -232,11 +252,19 @@ describe("useThreads", () => {
 
     server.use(
       mockGetThreads(async (req, res, ctx) => {
-        const { metadata } = await req.json<{ metadata: BaseMetadata }>();
+        const query = req.url.searchParams.get("query");
+        const parseRes = parser.parse(query ?? "");
+
+        const metadataResolved = getFilter(
+          parseRes.query.clauses,
+          "metadata",
+          "resolved"
+        );
+
         return res(
           ctx.json({
             data: [resolvedThread, unresolvedThread].filter(
-              (thread) => thread.metadata.resolved === metadata.resolved
+              (thread) => thread.metadata.resolved === metadataResolved.value
             ),
             inboxNotifications: [],
             deletedThreads: [],
@@ -272,6 +300,80 @@ describe("useThreads", () => {
       expect(result.current).toEqual({
         isLoading: false,
         threads: [resolvedThread],
+      })
+    );
+
+    unmount();
+  });
+
+  test("shoud fetch threads for a given query with a startsWith filter", async () => {
+    const liveblocksEngineeringThread = dummyThreadData();
+    liveblocksEngineeringThread.metadata = {
+      organization: "liveblocks:engineering",
+    };
+
+    const liveblocksDesignThread = dummyThreadData();
+    liveblocksDesignThread.metadata = {
+      organization: "liveblocks:design",
+    };
+
+    const acmeEngineeringThread = dummyThreadData();
+    acmeEngineeringThread.metadata = {
+      organization: "acme",
+    };
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            data: [
+              liveblocksEngineeringThread,
+              liveblocksDesignThread,
+              acmeEngineeringThread,
+            ],
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest<{
+      organization: string;
+    }>();
+
+    const { result, unmount } = renderHook(
+      () =>
+        useThreads({
+          query: {
+            metadata: {
+              organization: {
+                startsWith: "liveblocks:",
+              },
+            },
+          },
+        }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id="room-id" initialPresence={{}}>
+            {children}
+          </RoomProvider>
+        ),
+      }
+    );
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [liveblocksEngineeringThread, liveblocksDesignThread],
       })
     );
 
@@ -337,11 +439,19 @@ describe("useThreads", () => {
 
     server.use(
       mockGetThreads(async (req, res, ctx) => {
-        const { metadata } = await req.json<{ metadata: BaseMetadata }>();
+        const query = req.url.searchParams.get("query");
+        const parseRes = parser.parse(query ?? "");
+
+        const metadataResolved = getFilter(
+          parseRes.query.clauses,
+          "metadata",
+          "resolved"
+        );
+
         return res(
           ctx.json({
             data: [resolvedThread, unresolvedThread].filter(
-              (thread) => thread.metadata.resolved === metadata.resolved
+              (thread) => thread.metadata.resolved === metadataResolved.value
             ),
             inboxNotifications: [],
             deletedThreads: [],
@@ -412,8 +522,8 @@ describe("useThreads", () => {
     room2Threads.map((thread) => (thread.roomId = "room2"));
 
     server.use(
-      rest.post(
-        "https://api.liveblocks.io/v2/c/rooms/room1/threads/search",
+      rest.get(
+        "https://api.liveblocks.io/v2/c/rooms/room1/threads",
         async (_req, res, ctx) => {
           return res(
             ctx.json({
@@ -428,8 +538,8 @@ describe("useThreads", () => {
           );
         }
       ),
-      rest.post(
-        "https://api.liveblocks.io/v2/c/rooms/room2/threads/search",
+      rest.get(
+        "https://api.liveblocks.io/v2/c/rooms/room2/threads",
         async (_req, res, ctx) => {
           return res(
             ctx.json({
@@ -501,8 +611,8 @@ describe("useThreads", () => {
     room2Threads.map((thread) => (thread.roomId = "room2"));
 
     server.use(
-      rest.post(
-        "https://api.liveblocks.io/v2/c/rooms/room1/threads/search",
+      rest.get(
+        "https://api.liveblocks.io/v2/c/rooms/room1/threads",
         async (_req, res, ctx) => {
           return res(
             ctx.json({
@@ -517,8 +627,8 @@ describe("useThreads", () => {
           );
         }
       ),
-      rest.post(
-        "https://api.liveblocks.io/v2/c/rooms/room2/threads/search",
+      rest.get(
+        "https://api.liveblocks.io/v2/c/rooms/room2/threads",
         async (_req, res, ctx) => {
           return res(
             ctx.json({
@@ -693,7 +803,7 @@ describe("useThreads", () => {
     const newThread = dummyThreadData();
     newThread.createdAt = new Date("2021-01-02T00:00:00Z");
 
-    const inboxNotification = dummyInboxNoficationData();
+    const inboxNotification = dummyThreadInboxNotificationData();
     inboxNotification.threadId = oldThread.id;
 
     server.use(
@@ -768,7 +878,7 @@ describe("useThreads", () => {
     const newThread = dummyThreadData();
     newThread.createdAt = new Date("2021-01-02T00:00:00Z");
 
-    const inboxNotification = dummyInboxNoficationData();
+    const inboxNotification = dummyThreadInboxNotificationData();
     inboxNotification.threadId = newThread.id;
 
     server.use(

@@ -10,8 +10,19 @@ import { capitalize } from "../../utils/capitalize";
 import { classNames } from "../../utils/class-names";
 
 export interface UserProps extends ComponentProps<"span"> {
+  /**
+   * The user ID to display the user name for.
+   */
   userId: string;
+
+  /**
+   * Whether to replace the user name with "you" ($.USER_SELF) for the current user.
+   */
   replaceSelf?: boolean;
+
+  /**
+   * Whether to capitalize the user name.
+   */
   capitalize?: boolean;
 }
 

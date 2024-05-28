@@ -12,33 +12,33 @@ import {
 } from "../../liveblocks.config";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { Loading } from "./Loading";
-import { ComponentPropsWithoutRef, useCallback, useState } from "react";
+import { ComponentPropsWithoutRef, useEffect, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import clsx from "clsx";
 import { Link } from "./Link";
+import { usePathname } from "next/navigation";
 
-interface InboxProps extends ComponentPropsWithoutRef<"ol"> {
-  onNotificationClick?: () => void;
-}
-
-function Inbox({ className, onNotificationClick, ...props }: InboxProps) {
+function Inbox({ className, ...props }: ComponentPropsWithoutRef<"div">) {
   const { inboxNotifications } = useInboxNotifications();
 
   return inboxNotifications.length === 0 ? (
-    <div className="empty">There aren’t any notifications yet.</div>
+    <div className={clsx(className, "empty")}>
+      There aren’t any notifications yet.
+    </div>
   ) : (
-    <InboxNotificationList className={clsx(className, "inbox-list")} {...props}>
-      {inboxNotifications.map((inboxNotification) => {
-        return (
-          <InboxNotification
-            key={inboxNotification.id}
-            inboxNotification={inboxNotification}
-            components={{ Anchor: Link }}
-            onClick={onNotificationClick}
-          />
-        );
-      })}
-    </InboxNotificationList>
+    <div className={className} {...props}>
+      <InboxNotificationList className="inbox-list">
+        {inboxNotifications.map((inboxNotification) => {
+          return (
+            <InboxNotification
+              key={inboxNotification.id}
+              inboxNotification={inboxNotification}
+              components={{ Anchor: Link }}
+            />
+          );
+        })}
+      </InboxNotificationList>
+    </div>
   );
 }
 
@@ -54,10 +54,11 @@ export function InboxPopover({
 }: Popover.PopoverContentProps) {
   const [isOpen, setOpen] = useState(false);
   const markAllInboxNotificationsAsRead = useMarkAllInboxNotificationsAsRead();
+  const pathname = usePathname();
 
-  const closePopover = useCallback(() => {
+  useEffect(() => {
     setOpen(false);
-  }, []);
+  }, [pathname]);
 
   return (
     <Popover.Root open={isOpen} onOpenChange={setOpen}>
@@ -111,7 +112,7 @@ export function InboxPopover({
             }
           >
             <ClientSideSuspense fallback={<Loading />}>
-              {() => <Inbox onNotificationClick={closePopover} />}
+              {() => <Inbox />}
             </ClientSideSuspense>
           </ErrorBoundary>
         </Popover.Content>

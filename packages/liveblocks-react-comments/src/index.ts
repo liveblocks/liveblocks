@@ -11,7 +11,13 @@ export {
   Composer,
   OnComposerFocusCallbackContext,
 } from "./components/Composer";
-export type { InboxNotificationProps } from "./components/InboxNotification";
+export type {
+  InboxNotificationAvatarProps,
+  InboxNotificationCustomProps,
+  InboxNotificationIconProps,
+  InboxNotificationProps,
+  InboxNotificationThreadProps,
+} from "./components/InboxNotification";
 export { InboxNotification } from "./components/InboxNotification";
 export type { InboxNotificationListProps } from "./components/InboxNotificationList";
 export { InboxNotificationList } from "./components/InboxNotificationList";

@@ -1,3 +1,6 @@
+import "./styles.css";
+import "@liveblocks/react-comments/styles.css";
+
 import type { AppProps } from "next/app";
 import React from "react";
 

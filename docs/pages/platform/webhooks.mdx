@@ -389,6 +389,20 @@ For a full step-by-step guide on testing with `localtunnel` and `ngrok`, read
 the guide on
 [how to test webhooks on localhost](/docs/guides/how-to-test-webhooks-on-localhost#Use-your-webhook-event).
 
+## Source IP Addresses [#source-ips]
+
+In case your webhook receiving endpoint is behind a firewall or NAT, you may
+need to allow traffic from
+[Svix's IP addresses](https://docs.svix.com/receiving/source-ips).
+
+```
+44.228.126.217
+50.112.21.217
+52.24.126.164
+54.148.139.208
+2600:1f24:64:8000::/52
+```
+
 ## Liveblocks events
 
 An event occurs when a change is made to Liveblocks data. Each endpoint you

@@ -7,7 +7,7 @@ import { ErrorBoundary } from "react-error-boundary";
 import { InboxPopover } from "./InboxPopover";
 import { User } from "./User";
 import { useRoomInfo } from "../../liveblocks.config";
-import { useExampleRoomId } from "../example";
+import { useExampleRoomId } from "../example.client";
 import { ClientSideSuspense } from "@liveblocks/react";
 
 interface TitleRoomProps extends ComponentProps<"div"> {

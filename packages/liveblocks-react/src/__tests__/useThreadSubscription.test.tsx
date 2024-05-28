@@ -5,7 +5,7 @@ import { setupServer } from "msw/node";
 import React from "react";
 
 import { createRoomContext } from "../room";
-import { dummyInboxNoficationData, dummyThreadData } from "./_dummies";
+import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import { mockGetThreads } from "./_restMocks";
 
@@ -25,9 +25,7 @@ afterEach(() => {
 afterAll(() => server.close());
 
 // TODO: Dry up and create utils that wrap renderHook
-function createRoomContextForTest<
-  TThreadMetadata extends BaseMetadata = BaseMetadata,
->() {
+function createRoomContextForTest<M extends BaseMetadata>() {
   const client = createClient({
     publicApiKey: "pk_xxx",
     polyfills: {
@@ -35,15 +33,13 @@ function createRoomContextForTest<
     },
   });
 
-  return createRoomContext<JsonObject, never, never, never, TThreadMetadata>(
-    client
-  );
+  return createRoomContext<JsonObject, never, never, never, M>(client);
 }
 
 describe("useThreadSubscription", () => {
   test("should return the expected object if the associated inbox notification hasn't been read at all", async () => {
     const threads = [dummyThreadData()];
-    const inboxNotifications = [dummyInboxNoficationData()];
+    const inboxNotifications = [dummyThreadInboxNotificationData()];
     inboxNotifications[0].threadId = threads[0].id;
 
     server.use(
@@ -99,7 +95,7 @@ describe("useThreadSubscription", () => {
 
   test("should return the expected object if the associated inbox notification has been read", async () => {
     const threads = [dummyThreadData()];
-    const inboxNotifications = [dummyInboxNoficationData()];
+    const inboxNotifications = [dummyThreadInboxNotificationData()];
     inboxNotifications[0].threadId = threads[0].id;
     inboxNotifications[0].readAt = new Date();
 
@@ -207,7 +203,7 @@ describe("useThreadSubscription", () => {
 
   test("should be referentially stable", async () => {
     const threads = [dummyThreadData()];
-    const inboxNotifications = [dummyInboxNoficationData()];
+    const inboxNotifications = [dummyThreadInboxNotificationData()];
     inboxNotifications[0].threadId = threads[0].id;
 
     server.use(

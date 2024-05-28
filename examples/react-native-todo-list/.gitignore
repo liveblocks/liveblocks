@@ -24,14 +24,31 @@ build/
 .gradle
 local.properties
 *.iml
+.cxx/
 android/keystore.properties
 android/app/*/*.aab
 android/vendor
 android/.bundle
-buck-out/
-\.buckd/
 *.keystore
 !debug.keystore
-*/fastlane/
+**/fastlane/report.xml
+**/fastlane/Preview.html
+**/fastlane/screenshots
+**/fastlane/test_output
 *.jsbundle
-/ios/Pods/
+**/Pods/
+**/.xcode.env.local
+
+# Temporary files created by Metro to check the health of the file watcher
+.metro-health-check*
+ 
+# testing
+/coverage
+
+# Yarn
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions

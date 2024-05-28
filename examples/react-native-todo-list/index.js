@@ -1,9 +1,14 @@
 import React from "react";
-import { AppRegistry, unstable_batchedUpdates } from "react-native";
+import { AppRegistry } from "react-native";
 import { LiveList } from "@liveblocks/client";
 import { RoomProvider } from "./liveblocks.config";
 import App from "./App";
 import { name as appName } from "./app.json";
+import { URL } from "react-native-url-polyfill";
+
+window.addEventListener = () => { }; // workaround until a solution is found to handle reconnection in RN
+window.postMessage = () => { }; // used for Liveblocks DevTools. Not supported by RN
+global.URL = URL; // need polyfill in RN
 
 const roomId = "react-native-todo-list";
 
@@ -17,11 +22,6 @@ const Wrapper = () => {
       id={roomId}
       initialStorage={initialStorage}
       initialPresence={{ isTyping: false }}
-      unstable_batchedUpdates={
-        // NOTE: Only needed while this project is on React 17. After upgrading
-        // to React 18, this can be removed.
-        unstable_batchedUpdates
-      }
     >
       <App />
     </RoomProvider>

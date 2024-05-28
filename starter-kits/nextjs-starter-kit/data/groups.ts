@@ -1,4 +1,4 @@
-import { Group } from "../types";
+import { Group } from "@/types";
 
 /**
  * This array simulates a database consisting of a list of groups.

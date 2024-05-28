@@ -52,9 +52,7 @@ function customRenderHook<Result, Props>(
   return renderHook(render, { wrapper: AllTheProviders, ...options });
 }
 
-export function createRoomContextForTest<
-  TThreadMetadata extends BaseMetadata = BaseMetadata,
->() {
+export function createRoomContextForTest<M extends BaseMetadata>() {
   const client = createClient({
     publicApiKey: "pk_xxx",
     polyfills: {
@@ -62,9 +60,7 @@ export function createRoomContextForTest<
     },
   });
 
-  return createRoomContext<JsonObject, never, never, never, TThreadMetadata>(
-    client
-  );
+  return createRoomContext<JsonObject, never, never, never, M>(client);
 }
 
 export const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
