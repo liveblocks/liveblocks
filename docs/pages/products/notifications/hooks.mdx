@@ -109,18 +109,69 @@ There are two versions of the
 [Suspense](#suspense-hooks), which we recommend by default, and
 [regular](#regular-hooks).
 
-## Other hooks
+## Comments hooks
 
-A number of other hooks are available, related to different areas, for example:
+[Comments](/docs/products/comments) integrates seamlessly into Notifications,
+and a number of hooks are provided to modify this behavior.
 
-- Marking notifications as read:
-  - [`useMarkInboxNotificationAsRead`](/docs/api-reference/liveblocks-react#useMarkInboxNotificationAsRead)
-  - [`useMarkAllInboxNotificationsAsRead`](/docs/api-reference/liveblocks-react#useMarkAllInboxNotificationsAsRead)
-- Changing notification settings:
-  - [`useRoomNotificationSettings`](/docs/api-reference/liveblocks-react#useRoomNotificationSettings)
-  - [`useUpdateRoomNotificationSettings`](/docs/api-reference/liveblocks-react#useUpdateRoomNotificationSettings)
-- Getting thread data associated with Comments notifications:
-  - [`useInboxNotificationThread`](/docs/api-reference/liveblocks-react#useInboxNotificationThread)
+### Unread indicator
+
+Threads keep track of unread comments so viewing a thread will also mark its
+inbox notification as read, and vice versa. If you use the default
+[`Thread`](/docs/api-reference/liveblocks-react-ui#Thread) component, it will
+automatically handle marking threads as read when they are viewed and show
+unread indicators when there are unread comments in threads you are
+participating in.
+
+<Figure>
+  <Image
+    src="/assets/comments/thread-unread-indicator.png"
+    alt="Unread indicator in Thread component"
+    width={1456}
+    height={896}
+  />
+</Figure>
+
+If you’re building your own custom `Thread` component, you can use
+[`useMarkThreadAsRead`](/docs/api-reference/liveblocks-react#useMarkThreadAsRead)
+and
+[`useThreadSubscription`](/docs/api-reference/liveblocks-react#useThreadSubscription)
+to replicate or customize this behavior.
+
+### Thread notification settings
+
+By default, you’ll receive inbox notifications for threads you are participating
+in. This setting can be customized for each user and per room:
+
+- `"all"` to be notified about everything.
+- `"replies_and_mentions"` for the default setting.
+- `"none"` to mute the room.
+
+You can use
+[`useRoomNotificationSettings`](/docs/api-reference/liveblocks-react#useRoomNotificationSettings)
+to build a settings picker in your app and allow users to change their own
+notification settings for the current room, or use
+[`updateRoomNotificationSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-notification-settings)
+server-side to control them yourself: for example, to automatically make a
+document’s author notified about everything in their document.
+
+### Getting thread data
+
+When using inbox notifications for threads, it can be useful to fetch the actual
+thread data, and
+[`useInboxNotificationThread`](/docs/api-reference/liveblocks-react#useInboxNotificationThread)
+makes this easy.
+
+```tsx
+function Notification({ inboxNotification }) {
+  const thread = useInboxNotificationThread(inboxNotification.id);
+
+  // { type: "thread", id: "th_sf8s6sh...", ... }
+  console.log(thread);
+
+  // ...
+}
+```
 
 ## Hook types [#hook-types]
 
