@@ -31,6 +31,7 @@ import {
 } from "react";
 
 import { ActiveSelection } from "../active-selection";
+import $getThreadMarkIds from "./get-thread-mark-ids";
 import {
   $createThreadMarkNode,
   $isThreadMarkNode,
@@ -38,8 +39,6 @@ import {
 } from "./thread-mark-node";
 import $unwrapThreadMarkNode from "./unwrap-thread-mark-node";
 import $wrapSelectionInThreadMarkNode from "./wrap-selection-in-thread-mark-node";
-import $getThreadMark from "./get-thread-mark";
-import $getThreadMarkIds from "./get-thread-mark-ids";
 
 type ThreadToNodesMap = Map<string, Set<NodeKey>>;
 
@@ -157,12 +156,12 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     if (theme === null || theme === undefined) return;
 
     elements.forEach((element) => {
-      addClassNamesToElement(element, theme.threadMark);
+      addClassNamesToElement(element, theme.threadMark as string);
     });
 
     return () => {
       elements.forEach((element) => {
-        removeClassNamesFromElement(element, theme.threadMark);
+        removeClassNamesFromElement(element, theme.threadMark as string);
       });
     };
   }, [context, editor, threads, threadToNodes]);
@@ -262,7 +261,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
         element.removeAttribute("data-state");
       });
     };
-  }, [activeThreads, editor]);
+  }, [activeThreads, editor, threadToNodes]);
 
   useEffect(() => {
     return registerNestedElementResolver<ThreadMarkNode>(

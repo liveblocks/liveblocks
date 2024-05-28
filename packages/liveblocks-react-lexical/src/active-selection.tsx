@@ -33,7 +33,7 @@ export function ActiveSelection({ styles }: ActiveSelectionProps) {
   if (root === null) return null;
 
   const rootContainer = root.parentElement;
-  if (rootContainer === null) return;
+  if (rootContainer === null) return null;
 
   return createPortal(
     <SelectionRects selection={info} styles={styles} />,

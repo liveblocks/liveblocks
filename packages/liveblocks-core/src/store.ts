@@ -156,7 +156,7 @@ export interface CacheStore<M extends BaseMetadata>
   setQueryState(queryKey: string, queryState: QueryState): void;
 
   optimisticUpdatesEventSource: ReturnType<
-    typeof makeEventSource<OptimisticUpdate<TThreadMetadata>>
+    typeof makeEventSource<OptimisticUpdate<M>>
   >;
 }
 
@@ -173,8 +173,7 @@ export function createClientStore<M extends BaseMetadata>(): CacheStore<M> {
     notificationSettings: {},
   });
 
-  const optimisticUpdatesEventSource =
-    makeEventSource<OptimisticUpdate<TThreadMetadata>>();
+  const optimisticUpdatesEventSource = makeEventSource<OptimisticUpdate<M>>();
 
   return {
     ...store,

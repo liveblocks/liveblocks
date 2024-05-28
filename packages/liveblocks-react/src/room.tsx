@@ -103,6 +103,14 @@ export const OnDeleteThreadCallbackContext = React.createContext<
   null | ((threadId: string) => void)
 >(null);
 
+type CreateThreadOptions<M extends BaseMetadata> = [M] extends [
+  never,
+]
+  ? {
+    body: CommentBody;
+  }
+  : { body: CommentBody; metadata: M };
+
 const noop = () => { };
 const identity: <T>(x: T) => T = (x) => x;
 
@@ -498,6 +506,8 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     throw innerError;
   }
 
+
+
   /** @internal */
   // Simplistic debounced search, we don't need to worry too much about
   // deduping and race conditions as there can only be one search at a time.
@@ -573,6 +583,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   return {
     store,
     incrementQuerySubscribers,
+    commentsErrorEventSource,
     getThreadsUpdates,
     getThreadsAndInboxNotifications,
     getInboxNotificationSettings,
@@ -1423,6 +1434,37 @@ function useThreads<M extends BaseMetadata>(
   return state;
 }
 
+function useCommentsErrorListener<M extends BaseMetadata>(
+  callback: (error: CommentsError<M>) => void
+) {
+  const client = useClient();
+  const savedCallback = useLatest(callback);
+  const { commentsErrorEventSource } =
+    getExtrasForClient<M>(client);
+
+  React.useEffect(() => {
+    return commentsErrorEventSource.subscribe(savedCallback.current);
+  }, [savedCallback, commentsErrorEventSource]);
+}
+
+function useThreadsFromCache<M extends BaseMetadata>() {
+  const room = useRoom();
+  const client = useClient();
+  const { store } =
+    getExtrasForClient<M>(client);
+
+  const state = useSyncExternalStoreWithSelector(
+    store.subscribe,
+    store.get,
+    store.get,
+    (state) => selectedThreads(room.id, state, { query: {} })
+  );
+
+  return state;
+}
+
+
+
 function useCreateThread<M extends BaseMetadata>() {
   const client = useClient();
   const room = useRoom();
@@ -1462,6 +1504,7 @@ function useCreateThread<M extends BaseMetadata>() {
         type: "create-thread",
         thread: newThread,
         id: optimisticUpdateId,
+        roomId: room.id
       });
 
       const commentsAPI = (room[kInternal] as PrivateRoomApi<M>).comments;
@@ -1784,6 +1827,7 @@ function useDeleteComment() {
         commentId,
         deletedAt,
         id: optimisticUpdateId,
+        roomId: room.id,
       });
 
       room[kInternal].comments.deleteComment({ threadId, commentId }).then(

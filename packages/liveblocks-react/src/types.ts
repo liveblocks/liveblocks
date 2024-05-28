@@ -829,8 +829,8 @@ type RoomContextBundleCommon<
 type PrivateRoomContextApi = {
   useMentionSuggestions(search?: string): string[] | undefined;
   useCurrentUserId(): string | null;
-  useCommentsErrorListener<TThreadMetadata extends BaseMetadata>(
-    callback: (err: CommentsError<TThreadMetadata>) => void
+  useCommentsErrorListener<M extends BaseMetadata>(
+    callback: (err: CommentsError<M>) => void
   ): void;
   useThreadsFromCache(): ThreadData<BaseMetadata>[];
 };
