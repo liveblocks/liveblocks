@@ -23,12 +23,22 @@
           },
           {
             "title": "Comments",
-            "path": "/get-started/react-ui",
+            "path": "/get-started/react-comments",
             "hidden": true
           },
           {
             "title": "Comments",
             "path": "/get-started/nextjs-comments",
+            "hidden": true
+          },
+          {
+            "title": "Notifications",
+            "path": "/get-started/react-notifications",
+            "hidden": true
+          },
+          {
+            "title": "Notifications",
+            "path": "/get-started/nextjs-notifications",
             "hidden": true
           },
           {
