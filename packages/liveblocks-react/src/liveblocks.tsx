@@ -588,6 +588,7 @@ export function useClientOrNull() {
 /**
  * @beta This is an internal API for now, but it will become public eventually.
  */
+// XXX Make public API for 2.0
 export function useClient() {
   return (
     useClientOrNull() ??
