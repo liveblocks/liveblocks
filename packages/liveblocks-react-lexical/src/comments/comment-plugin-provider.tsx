@@ -6,6 +6,7 @@ import {
 } from "@lexical/utils";
 import { kInternal } from "@liveblocks/core";
 import { CreateThreadError, useRoomContextBundle } from "@liveblocks/react";
+import { OnComposerFocusCallbackContext } from "@liveblocks/react-comments";
 import type { BaseSelection, NodeKey, NodeMutation } from "lexical";
 import {
   $getNodeByKey,
@@ -25,6 +26,7 @@ import {
   useState,
 } from "react";
 
+import { ActiveSelection } from "../active-selection";
 import $getThreadMarkIds from "./get-thread-mark-ids";
 import {
   $createThreadMarkNode,
@@ -47,6 +49,8 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
   const threadToNodeKeysRef = useRef<ThreadToNodesMap>(new Map()); // A map from thread id to a set of (thread mark) node keys that are associated with the thread
 
   const [activeThreads, setActiveThreads] = useState<string[]>([]); // The threads that are currently active (or selected) in the editor
+
+  const [showActiveSelection, setShowActiveSelection] = useState(false);
 
   const {
     [kInternal]: {
@@ -274,12 +278,27 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     );
   }, [editor]);
 
+  const handleComposerFocus = useCallback(() => {
+    setShowActiveSelection(true);
+  }, []);
+
+  useEffect(() => {
+    return editor.registerUpdateListener(({ editorState: state, tags }) => {
+      // Ignore selection updates related to collaboration
+      if (tags.has("collaboration")) return;
+      state.read(() => setShowActiveSelection(false));
+    });
+  }, [editor]);
+
   return (
-    <ThreadToNodeKeysRefContext.Provider value={threadToNodeKeysRef}>
-      <ActiveThreadsContext.Provider value={activeThreads}>
-        {children}
-      </ActiveThreadsContext.Provider>
-    </ThreadToNodeKeysRefContext.Provider>
+    <OnComposerFocusCallbackContext.Provider value={handleComposerFocus}>
+      <ThreadToNodeKeysRefContext.Provider value={threadToNodeKeysRef}>
+        <ActiveThreadsContext.Provider value={activeThreads}>
+          {showActiveSelection && <ActiveSelection />}
+          {children}
+        </ActiveThreadsContext.Provider>
+      </ThreadToNodeKeysRefContext.Provider>
+    </OnComposerFocusCallbackContext.Provider>
   );
 }
 
