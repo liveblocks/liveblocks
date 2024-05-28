@@ -2,19 +2,25 @@ import type { Store } from "./lib/create-store";
 import { createStore } from "./lib/create-store";
 import * as console from "./lib/fancy-console";
 import type { Resolve } from "./lib/Resolve";
-import type { BaseMetadata } from "./types/BaseMetadata";
-import type { CommentData, CommentReaction } from "./types/CommentData";
-import type { CommentUserReaction } from "./types/CommentReaction";
-import type { InboxNotificationData } from "./types/InboxNotificationData";
-import type { InboxNotificationDeleteInfo } from "./types/InboxNotificationDeleteInfo";
+import type {
+  BaseMetadata,
+  CommentData,
+  CommentReaction,
+  CommentUserReaction,
+  ThreadData,
+  ThreadDataWithDeleteInfo,
+  ThreadDeleteInfo,
+} from "./protocol/Comments";
+import type {
+  InboxNotificationData,
+  InboxNotificationDeleteInfo,
+} from "./protocol/InboxNotifications";
 import type { PartialNullable } from "./types/PartialNullable";
 import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
-import type { ThreadData, ThreadDataWithDeleteInfo } from "./types/ThreadData";
-import type { ThreadDeleteInfo } from "./types/ThreadDeleteInfo";
 
-type OptimisticUpdate<TThreadMetadata extends BaseMetadata> =
-  | CreateThreadOptimisticUpdate<TThreadMetadata>
-  | EditThreadMetadataOptimisticUpdate<TThreadMetadata>
+type OptimisticUpdate<M extends BaseMetadata> =
+  | CreateThreadOptimisticUpdate<M>
+  | EditThreadMetadataOptimisticUpdate<M>
   | CreateCommentOptimisticUpdate
   | EditCommentOptimisticUpdate
   | DeleteCommentOptimisticUpdate
@@ -24,20 +30,19 @@ type OptimisticUpdate<TThreadMetadata extends BaseMetadata> =
   | MarkAllInboxNotificationsAsReadOptimisticUpdate
   | UpdateNotificationSettingsOptimisticUpdate;
 
-type CreateThreadOptimisticUpdate<TThreadMetadata extends BaseMetadata> = {
+type CreateThreadOptimisticUpdate<M extends BaseMetadata> = {
   type: "create-thread";
   id: string;
-  thread: ThreadData<TThreadMetadata>;
+  thread: ThreadData<M>;
 };
 
-type EditThreadMetadataOptimisticUpdate<TThreadMetadata extends BaseMetadata> =
-  {
-    type: "edit-thread-metadata";
-    id: string;
-    threadId: string;
-    metadata: Resolve<PartialNullable<TThreadMetadata>>;
-    updatedAt: Date;
-  };
+type EditThreadMetadataOptimisticUpdate<M extends BaseMetadata> = {
+  type: "edit-thread-metadata";
+  id: string;
+  threadId: string;
+  metadata: Resolve<PartialNullable<M>>;
+  updatedAt: Date;
+};
 
 type CreateCommentOptimisticUpdate = {
   type: "create-comment";
@@ -101,11 +106,11 @@ type QueryState =
   | { isLoading: true; error?: never }
   | { isLoading: false; error?: Error };
 
-export type CacheState<TThreadMetadata extends BaseMetadata> = {
+export type CacheState<M extends BaseMetadata> = {
   /**
    * Threads by ID.
    */
-  threads: Record<string, ThreadDataWithDeleteInfo<TThreadMetadata>>;
+  threads: Record<string, ThreadDataWithDeleteInfo<M>>;
   /**
    * Keep track of loading and error status of all the queries made by the client.
    */
@@ -114,7 +119,7 @@ export type CacheState<TThreadMetadata extends BaseMetadata> = {
    * Optimistic updates that have not been acknowledged by the server yet.
    * They are applied on top of the threads in selectors.
    */
-  optimisticUpdates: OptimisticUpdate<TThreadMetadata>[];
+  optimisticUpdates: OptimisticUpdate<M>[];
   /**
    * Inbox notifications by ID.
    */
@@ -125,15 +130,15 @@ export type CacheState<TThreadMetadata extends BaseMetadata> = {
   notificationSettings: Record<string, RoomNotificationSettings>;
 };
 
-export interface CacheStore<TThreadMetadata extends BaseMetadata>
-  extends Store<CacheState<TThreadMetadata>> {
+export interface CacheStore<M extends BaseMetadata>
+  extends Store<CacheState<M>> {
   deleteThread(threadId: string): void;
   updateThreadAndNotification(
-    thread: ThreadData<TThreadMetadata>,
+    thread: ThreadData<M>,
     inboxNotification?: InboxNotificationData
   ): void;
   updateThreadsAndNotifications(
-    threads: ThreadData<TThreadMetadata>[],
+    threads: ThreadData<M>[],
     inboxNotifications: InboxNotificationData[],
     deletedThreads: ThreadDeleteInfo[],
     deletedInboxNotifications: InboxNotificationDeleteInfo[],
@@ -144,9 +149,7 @@ export interface CacheStore<TThreadMetadata extends BaseMetadata>
     settings: RoomNotificationSettings,
     queryKey: string
   ): void;
-  pushOptimisticUpdate(
-    optimisticUpdate: OptimisticUpdate<TThreadMetadata>
-  ): void;
+  pushOptimisticUpdate(optimisticUpdate: OptimisticUpdate<M>): void;
   setQueryState(queryKey: string, queryState: QueryState): void;
 }
 
@@ -154,10 +157,8 @@ export interface CacheStore<TThreadMetadata extends BaseMetadata>
  * Create internal immutable store for comments and notifications.
  * Keep all the state required to return data from our hooks.
  */
-export function createClientStore<
-  TThreadMetadata extends BaseMetadata,
->(): CacheStore<TThreadMetadata> {
-  const store = createStore<CacheState<TThreadMetadata>>({
+export function createClientStore<M extends BaseMetadata>(): CacheStore<M> {
+  const store = createStore<CacheState<M>>({
     threads: {},
     queries: {},
     optimisticUpdates: [],
@@ -185,7 +186,7 @@ export function createClientStore<
     },
 
     updateThreadAndNotification(
-      thread: ThreadData<TThreadMetadata>,
+      thread: ThreadData<M>,
       inboxNotification?: InboxNotificationData
     ) {
       store.set((state) => {
@@ -210,7 +211,7 @@ export function createClientStore<
     },
 
     updateThreadsAndNotifications(
-      threads: ThreadData<TThreadMetadata>[],
+      threads: ThreadData<M>[],
       inboxNotifications: InboxNotificationData[],
       deletedThreads: ThreadDeleteInfo[],
       deletedInboxNotifications: InboxNotificationDeleteInfo[],
@@ -261,7 +262,7 @@ export function createClientStore<
       }));
     },
 
-    pushOptimisticUpdate(optimisticUpdate: OptimisticUpdate<TThreadMetadata>) {
+    pushOptimisticUpdate(optimisticUpdate: OptimisticUpdate<M>) {
       store.set((state) => ({
         ...state,
         optimisticUpdates: [...state.optimisticUpdates, optimisticUpdate],
@@ -298,9 +299,9 @@ function deleteKeyImmutable<TKey extends string | number | symbol, TValue>(
  * @param threadB The second thread to compare.
  * @returns 1 if threadA is newer, -1 if threadB is newer, or 0 if they are the same age or can't be compared.
  */
-export function compareThreads<TThreadMetadata extends BaseMetadata>(
-  thread1: ThreadData<TThreadMetadata>,
-  thread2: ThreadData<TThreadMetadata>
+export function compareThreads<M extends BaseMetadata>(
+  thread1: ThreadData<M>,
+  thread2: ThreadData<M>
 ): number {
   // Compare updatedAt if available
   if (thread1.updatedAt && thread2.updatedAt) {
@@ -324,10 +325,10 @@ export function compareThreads<TThreadMetadata extends BaseMetadata>(
   return 0;
 }
 
-export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
-  state: CacheState<TThreadMetadata>
+export function applyOptimisticUpdates<M extends BaseMetadata>(
+  state: CacheState<M>
 ): Pick<
-  CacheState<TThreadMetadata>,
+  CacheState<M>,
   "threads" | "inboxNotifications" | "notificationSettings"
 > {
   const result = {
@@ -498,13 +499,13 @@ export function applyOptimisticUpdates<TThreadMetadata extends BaseMetadata>(
   return result;
 }
 
-export function applyThreadUpdates<TThreadMetadata extends BaseMetadata>(
-  existingThreads: Record<string, ThreadDataWithDeleteInfo<TThreadMetadata>>,
+export function applyThreadUpdates<M extends BaseMetadata>(
+  existingThreads: Record<string, ThreadDataWithDeleteInfo<M>>,
   updates: {
-    newThreads: ThreadData<TThreadMetadata>[];
+    newThreads: ThreadData<M>[];
     deletedThreads: ThreadDeleteInfo[];
   }
-): Record<string, ThreadData<TThreadMetadata>> {
+): Record<string, ThreadData<M>> {
   const updatedThreads = { ...existingThreads };
 
   // Add new threads or update existing threads if the existing thread is older than the new thread.
@@ -598,10 +599,10 @@ export function compareInboxNotifications(
   return 0;
 }
 
-export function upsertComment<TThreadMetadata extends BaseMetadata>(
-  thread: ThreadDataWithDeleteInfo<TThreadMetadata>,
+export function upsertComment<M extends BaseMetadata>(
+  thread: ThreadDataWithDeleteInfo<M>,
   comment: CommentData
-): ThreadDataWithDeleteInfo<TThreadMetadata> {
+): ThreadDataWithDeleteInfo<M> {
   // If the thread has been deleted, we do not apply the update
   if (thread.deletedAt !== undefined) {
     return thread;
@@ -668,11 +669,11 @@ export function upsertComment<TThreadMetadata extends BaseMetadata>(
   return thread;
 }
 
-export function deleteComment<TThreadMetadata extends BaseMetadata>(
-  thread: ThreadDataWithDeleteInfo<TThreadMetadata>,
+export function deleteComment<M extends BaseMetadata>(
+  thread: ThreadDataWithDeleteInfo<M>,
   commentId: string,
   deletedAt: Date
-): ThreadDataWithDeleteInfo<TThreadMetadata> {
+): ThreadDataWithDeleteInfo<M> {
   // If the thread has been deleted, we do not delete the comment
   if (thread.deletedAt !== undefined) {
     return thread;
@@ -719,11 +720,11 @@ export function deleteComment<TThreadMetadata extends BaseMetadata>(
   };
 }
 
-export function addReaction<TThreadMetadata extends BaseMetadata>(
-  thread: ThreadDataWithDeleteInfo<TThreadMetadata>,
+export function addReaction<M extends BaseMetadata>(
+  thread: ThreadDataWithDeleteInfo<M>,
   commentId: string,
   reaction: CommentUserReaction
-): ThreadDataWithDeleteInfo<TThreadMetadata> {
+): ThreadDataWithDeleteInfo<M> {
   // If the thread has been deleted, we do not add the reaction
   if (thread.deletedAt !== undefined) {
     return thread;
@@ -761,13 +762,13 @@ export function addReaction<TThreadMetadata extends BaseMetadata>(
   };
 }
 
-export function removeReaction<TThreadMetadata extends BaseMetadata>(
-  thread: ThreadDataWithDeleteInfo<TThreadMetadata>,
+export function removeReaction<M extends BaseMetadata>(
+  thread: ThreadDataWithDeleteInfo<M>,
   commentId: string,
   emoji: string,
   userId: string,
   removedAt: Date
-): ThreadDataWithDeleteInfo<TThreadMetadata> {
+): ThreadDataWithDeleteInfo<M> {
   // If the thread has been deleted, we do not remove the reaction
   if (thread.deletedAt !== undefined) {
     return thread;

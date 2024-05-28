@@ -1,4 +1,4 @@
-import type { DateToString } from "./DateToString";
+import type { DateToString } from "../lib/DateToString";
 
 export type InboxNotificationThreadData = {
   kind: "thread";
@@ -9,7 +9,10 @@ export type InboxNotificationThreadData = {
   readAt: Date | null;
 };
 
-export type ActivityData = Record<string, string | boolean | number>;
+export type ActivityData = Record<
+  string,
+  string | boolean | number | undefined
+>;
 
 type InboxNotificationActivity = {
   id: string;
@@ -44,3 +47,13 @@ export type InboxNotificationCustomDataPlain = Omit<
 export type InboxNotificationDataPlain =
   | InboxNotificationThreadDataPlain
   | InboxNotificationCustomDataPlain;
+
+export type InboxNotificationDeleteInfo = {
+  type: "deletedInboxNotification";
+  id: string;
+  roomId: string;
+  deletedAt: Date;
+};
+
+export type InboxNotificationDeleteInfoPlain =
+  DateToString<InboxNotificationDeleteInfo>;
