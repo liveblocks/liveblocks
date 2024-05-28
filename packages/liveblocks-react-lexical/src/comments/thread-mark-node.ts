@@ -81,9 +81,8 @@ export class ThreadMarkNode extends ElementNode {
     this.__ids = ids || [];
   }
 
-  createDOM(config: EditorConfig): HTMLElement {
+  createDOM(): HTMLElement {
     const element = document.createElement("span");
-    addClassNamesToElement(element, config.theme.threadMark as string);
     return element;
   }
 

@@ -50,7 +50,7 @@ export const ThreadToNodesContext = createContext<ThreadToNodesMap | null>(
 export const ActiveThreadsContext = createContext<string[] | null>(null);
 
 export function CommentPluginProvider({ children }: PropsWithChildren) {
-  const [editor] = useLexicalComposerContext();
+  const [editor, context] = useLexicalComposerContext();
 
   const [threadToNodes, setThreadToNodes] = useState<ThreadToNodesMap>(
     new Map()
@@ -61,8 +61,10 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
   const [showActiveSelection, setShowActiveSelection] = useState(false);
 
   const {
-    [kInternal]: { useCommentsErrorListener },
+    [kInternal]: { useCommentsErrorListener, useThreadsFromCache },
   } = useRoomContextBundle();
+
+  const threads = useThreadsFromCache();
 
   useEffect(() => {
     if (!editor.hasNodes([ThreadMarkNode])) {
@@ -99,9 +101,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
    */
   const handleThreadDelete = useCallback(
     (threadId: string) => {
-      console.log("DELETED");
       setThreadToNodes((prev) => {
-        console.log("handleThreadDelete", prev, prev.get(threadId));
         const updatedMap = new Map(prev);
         editor.update(() => {
           const keys = updatedMap.get(threadId);
@@ -130,6 +130,42 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       handleThreadDelete(error.context.threadId);
     }
   });
+
+  /**
+   * Only add styles to the thread mark elements that currently have threads associated with them.
+   */
+  useEffect(() => {
+    function getThreadMarkElements() {
+      const activeElements = new Set<HTMLElement>();
+
+      for (const thread of threads) {
+        const keys = threadToNodes.get(thread.id);
+        if (keys === undefined) continue;
+
+        for (const key of keys) {
+          const element = editor.getElementByKey(key);
+          if (element === null) continue;
+          activeElements.add(element);
+        }
+      }
+      return activeElements;
+    }
+
+    const elements = getThreadMarkElements();
+
+    const theme = context.getTheme();
+    if (theme === null || theme === undefined) return;
+
+    elements.forEach((element) => {
+      addClassNamesToElement(element, theme.threadMark);
+    });
+
+    return () => {
+      elements.forEach((element) => {
+        removeClassNamesFromElement(element, theme.threadMark);
+      });
+    };
+  }, [context, editor, threads, threadToNodes]);
 
   /**
    * Register a mutation listener that listens for mutations on 'ThreadMarkNode's and updates the map of thread to node keys accordingly.
