@@ -142,10 +142,10 @@ export type {
   InboxNotificationCustomDataPlain,
   InboxNotificationData,
   InboxNotificationDataPlain,
-  InboxNotificationThreadData,
-  InboxNotificationThreadDataPlain,
   InboxNotificationTextMentionData,
   InboxNotificationTextMentionDataPlain,
+  InboxNotificationThreadData,
+  InboxNotificationThreadDataPlain,
 } from "./protocol/InboxNotifications";
 export type { InboxNotificationDeleteInfo } from "./protocol/InboxNotifications";
 export type {
