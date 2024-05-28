@@ -10,7 +10,6 @@ import type {
 import { kInternal } from "@liveblocks/core";
 import { useRoomContextBundle } from "@liveblocks/react";
 import LiveblocksProvider from "@liveblocks/yjs";
-import type { LexicalEditor } from "lexical";
 import type { ComponentType } from "react";
 import React, {
   createContext,
@@ -123,7 +122,7 @@ export const LiveblocksPlugin = ({
   const username = info?.name;
   const cursorcolor = info?.color as string | undefined;
 
-  const [synced, setSynced] = useState(false);
+  const [_, setSynced] = useState(false);
 
   useEffect(() => {
     if (!provider) {
