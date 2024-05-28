@@ -4,7 +4,7 @@ import type {
   InboxNotificationCustomData,
   InboxNotificationData,
   InboxNotificationThreadData,
-  InboxNotificationMentionData,
+  InboxNotificationTextMentionData,
 } from "@liveblocks/core";
 import { assertNever, console, kInternal } from "@liveblocks/core";
 import { useLiveblocksContextBundle } from "@liveblocks/react";
@@ -112,16 +112,13 @@ export interface InboxNotificationThreadProps
   showRoomName?: boolean;
 }
 
-/**
- * TODO: add rendering of mention data
- */
-export interface InboxNotificationMentionProps
+export interface InboxNotificationTextMentionProps
   extends Omit<InboxNotificationProps, "kinds">,
     InboxNotificationSharedProps {
   /**
    * The inbox notification to display.
    */
-  inboxNotification: InboxNotificationMentionData;
+  inboxNotification: InboxNotificationTextMentionData;
 }
 
 export interface InboxNotificationCustomProps
@@ -503,6 +500,45 @@ const InboxNotificationThread = forwardRef<
 );
 
 /**
+ * Displays a text mention notification kind.
+ */
+const InboxNotificationTextMention = forwardRef<
+  HTMLAnchorElement,
+  InboxNotificationTextMentionProps
+>(({ inboxNotification, showActions = "hover", overrides, ...props }, ref) => {
+  const $ = useOverrides(overrides);
+
+  const unread = useMemo(() => {
+    return (
+      !inboxNotification.readAt ||
+      inboxNotification.notifiedAt > inboxNotification.readAt
+    );
+  }, [inboxNotification.notifiedAt, inboxNotification.readAt]);
+
+  return (
+    <InboxNotificationLayout
+      inboxNotification={inboxNotification}
+      aside={<InboxNotificationIcon />}
+      title={$.INBOX_NOTIFICATION_TEXT_MENTION(
+        <User
+          key={inboxNotification.createdBy}
+          userId={inboxNotification.createdBy}
+          capitalize
+        />,
+        <Room roomId={inboxNotification.roomId} />
+      )}
+      date={inboxNotification.notifiedAt}
+      unread={unread}
+      overrides={overrides}
+      showActions={showActions}
+      {...props}
+      ref={ref}
+    />
+    // </InboxNotificationLayout>
+  );
+});
+
+/**
  * Displays a custom notification kind.
  */
 const InboxNotificationCustom = forwardRef<
@@ -602,6 +638,16 @@ export const InboxNotification = Object.assign(
 
           return (
             <ResolvedInboxNotificationThread
+              inboxNotification={inboxNotification}
+              {...props}
+              ref={forwardedRef}
+            />
+          );
+        }
+
+        case "textMention": {
+          return (
+            <InboxNotificationTextMention
               inboxNotification={inboxNotification}
               {...props}
               ref={forwardedRef}

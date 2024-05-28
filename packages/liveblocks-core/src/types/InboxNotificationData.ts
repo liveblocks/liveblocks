@@ -9,17 +9,18 @@ export type InboxNotificationThreadData = {
   readAt: Date | null;
 };
 
-export type InboxNotificationMentionData = {
-  kind: "mention";
+export type InboxNotificationTextMentionData = {
+  kind: "textMention";
   id: string;
   roomId: string;
   notifiedAt: Date;
   readAt: Date | null;
-  // TODO: Add mention data.
+  createdBy: string;
+  mentionId: string;
 };
 
-export type InboxNotificationMentionDataPlain =
-  DateToString<InboxNotificationMentionData>;
+export type InboxNotificationTextMentionDataPlain =
+  DateToString<InboxNotificationTextMentionData>;
 
 export type ActivityData = Record<string, string | boolean | number>;
 
@@ -42,7 +43,7 @@ export type InboxNotificationCustomData = {
 export type InboxNotificationData =
   | InboxNotificationThreadData
   | InboxNotificationCustomData
-  | InboxNotificationMentionData;
+  | InboxNotificationTextMentionData;
 
 export type InboxNotificationThreadDataPlain =
   DateToString<InboxNotificationThreadData>;
@@ -57,4 +58,4 @@ export type InboxNotificationCustomDataPlain = Omit<
 export type InboxNotificationDataPlain =
   | InboxNotificationThreadDataPlain
   | InboxNotificationCustomDataPlain
-  | InboxNotificationMentionDataPlain;
+  | InboxNotificationTextMentionDataPlain;
