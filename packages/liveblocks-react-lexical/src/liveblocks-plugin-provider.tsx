@@ -28,7 +28,7 @@ import { getLiveblocksLexicalConfig } from "./liveblocks-config";
 import type { createMentionNodeFactory } from "./mentions/mention-node";
 import MentionPlugin from "./mentions/mention-plugin";
 
-export type LiveblocksPluginProps = {
+export type LiveblocksPluginProviderProps = {
   // TODO: Move these configuration options (if applicable and necessary) to the `liveblocksLexicalConfig` function to have all configuration in one place
   // /**
   //  * Optionally override user information. If not, user["info"] from auth will be used.
@@ -68,12 +68,12 @@ export interface LiveblocksLexicalInternalConfig {
 const LiveblocksLexicalConfigContext =
   createContext<LiveblocksLexicalInternalConfig | null>(null);
 
-export const LiveblocksPlugin = ({
+export const LiveblocksPluginProvider = ({
   // userInfo = undefined,
   // allowEditsBeforeSync = true,
   // initialEditorState = undefined,
   children,
-}: LiveblocksPluginProps): JSX.Element => {
+}: LiveblocksPluginProviderProps): JSX.Element => {
   const {
     useSelf,
     useRoom,
@@ -104,7 +104,7 @@ export const LiveblocksPlugin = ({
       // A user should not even be set an emptyState, but when passing null, getEditorState still has initial empty state
       if (!editor.getEditorState().isEmpty()) {
         console.warn(
-          "Warning: LiveblocksPlugin: editorState in initialConfig detected, but must be null."
+          "Warning: LiveblocksPluginProvider: editorState in initialConfig detected, but must be null."
         );
       }
     }
@@ -122,17 +122,17 @@ export const LiveblocksPlugin = ({
   const username = info?.name;
   const cursorcolor = info?.color as string | undefined;
 
-  const [_, setSynced] = useState(false);
+  // const [synced, setSynced] = useState(false);
 
-  useEffect(() => {
-    if (!provider) {
-      return;
-    }
-    provider.on("sync", setSynced);
-    return () => {
-      provider.off("sync", setSynced);
-    };
-  }, [provider]);
+  // useEffect(() => {
+  //   if (!provider) {
+  //     return;
+  //   }
+  //   provider.on("sync", setSynced);
+  //   return () => {
+  //     provider.off("sync", setSynced);
+  //   };
+  // }, [provider]);
 
   // // Disable the editor before sync
   // useEffect(() => {
@@ -181,7 +181,7 @@ export function useLiveblocksLexicalConfigContext(): LiveblocksLexicalInternalCo
   const config = useContext(LiveblocksLexicalConfigContext);
   if (config === null) {
     throw new Error(
-      "useLiveblocksLexicalConfigContext must be used within a LiveblocksPluginProvider"
+      "useLiveblocksLexicalConfigContext must be used within a LiveblocksPluginProviderProvider"
     );
   }
   return config;

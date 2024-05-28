@@ -26,7 +26,7 @@ import React, {
 } from "react";
 import { createPortal } from "react-dom";
 
-import { useLiveblocksLexicalConfigContext } from "../liveblocks-plugin";
+import { useLiveblocksLexicalConfigContext } from "../liveblocks-plugin-provider";
 
 const MENTION_TRIGGER = "@";
 

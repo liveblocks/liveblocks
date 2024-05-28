@@ -12,7 +12,13 @@ import type {
   RefAttributes,
   SyntheticEvent,
 } from "react";
-import React, { forwardRef, useCallback, useState } from "react";
+import React, {
+  createContext,
+  forwardRef,
+  useCallback,
+  useContext,
+  useState,
+} from "react";
 
 import { EmojiIcon } from "../icons/Emoji";
 import { MentionIcon } from "../icons/Mention";
@@ -45,6 +51,10 @@ import {
   TooltipProvider,
 } from "./internal/Tooltip";
 import { User } from "./internal/User";
+
+export const OnComposerFocusCallbackContext = createContext<
+  null | (() => void)
+>(null);
 
 interface EditorActionProps extends ComponentPropsWithoutRef<"button"> {
   label: string;
@@ -304,6 +314,8 @@ const ComposerWithContext = forwardRef<
       defaultCollapsed
     );
 
+    const onComposerSubmit = useContext(OnComposerFocusCallbackContext);
+
     const preventDefault = useCallback((event: SyntheticEvent) => {
       event.preventDefault();
     }, []);
@@ -325,6 +337,8 @@ const ComposerWithContext = forwardRef<
 
     const handleFocus = useCallback(
       (event: FocusEvent<HTMLFormElement>) => {
+        onComposerSubmit?.();
+
         onFocus?.(event);
 
         if (event.isDefaultPrevented()) {
@@ -335,7 +349,7 @@ const ComposerWithContext = forwardRef<
           onCollapsedChange?.(false);
         }
       },
-      [isEmpty, onCollapsedChange, onFocus]
+      [isEmpty, onCollapsedChange, onFocus, onComposerSubmit]
     );
 
     const handleBlur = useCallback(

@@ -92,6 +92,14 @@ import type {
   UseThreadsOptions,
 } from "./types";
 
+export const OnCreateThreadCallbackContext = React.createContext<
+  null | ((threadId: string) => void)
+>(null);
+
+export const OnDeleteThreadCallbackContext = React.createContext<
+  null | ((threadId: string) => void)
+>(null);
+
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
 
@@ -649,55 +657,6 @@ export function createRoomContext<
     );
 
     return state;
-  }
-
-  function useOptimisticThreadCreateListener(
-    callback: (threadId: string) => void
-  ) {
-    const room = useRoom();
-    const savedCallback = useLatest(callback);
-
-    React.useEffect(() => {
-      return store.optimisticUpdatesEventSource.subscribe((event) => {
-        if (event.type === "create-thread") {
-          if (event.roomId !== room.id) return;
-
-          savedCallback.current(event.thread.id);
-        }
-      });
-    }, [room, savedCallback]);
-  }
-
-  function useOptimisticThreadDeleteListener(
-    callback: (threadId: string) => void
-  ) {
-    const room = useRoom();
-    const savedCallback = useLatest(callback);
-
-    React.useEffect(() => {
-      return store.optimisticUpdatesEventSource.subscribe((event) => {
-        if (event.type === "delete-comment") {
-          if (event.roomId !== room.id) return;
-
-          const thread = store.get().threads[event.threadId];
-          if (!thread) return;
-
-          // If the thread is already deleted, we do not invoke the callback
-          if (thread.deletedAt !== undefined) return;
-
-          const newThread = deleteComment(
-            thread,
-            event.commentId,
-            event.deletedAt
-          );
-
-          // If the thread is not deleted from the optimistic update, we do not invoke the callback
-          if (newThread.deletedAt === undefined) return;
-
-          savedCallback.current(event.threadId);
-        }
-      });
-    }, [room, savedCallback]);
   }
 
   function useCommentsErrorListener(
@@ -1420,6 +1379,7 @@ export function createRoomContext<
 
   function useCreateThread() {
     const room = useRoom();
+    const onCreateThread = React.useContext(OnCreateThreadCallbackContext);
 
     return React.useCallback(
       (
@@ -1461,6 +1421,8 @@ export function createRoomContext<
           thread: newThread,
           id: optimisticUpdateId,
         });
+
+        onCreateThread?.(newThread.id);
 
         room[kInternal].comments
           .createThread({ threadId, commentId, body, metadata })
@@ -1904,6 +1866,8 @@ export function createRoomContext<
 
   function useDeleteComment() {
     const room = useRoom();
+    const onDeleteThread = React.useContext(OnDeleteThreadCallbackContext);
+
     return React.useCallback(
       ({ threadId, commentId }: DeleteCommentOptions): void => {
         const deletedAt = new Date();
@@ -1918,6 +1882,14 @@ export function createRoomContext<
           deletedAt,
           id: optimisticUpdateId,
         });
+
+        const thread = store.get().threads[threadId];
+        if (thread !== undefined && thread.deletedAt === undefined) {
+          const newThread = deleteComment(thread, commentId, deletedAt);
+          if (newThread.deletedAt !== undefined) {
+            onDeleteThread?.(threadId);
+          }
+        }
 
         room[kInternal].comments.deleteComment({ threadId, commentId }).then(
           () => {
@@ -2421,8 +2393,6 @@ export function createRoomContext<
       useCurrentUserId,
       hasResolveMentionSuggestions: resolveMentionSuggestions !== undefined,
       useMentionSuggestions,
-      useOptimisticThreadCreateListener,
-      useOptimisticThreadDeleteListener,
       useCommentsErrorListener,
       useThreadsFromCache,
     },

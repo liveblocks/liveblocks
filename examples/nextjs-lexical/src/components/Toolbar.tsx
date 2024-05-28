@@ -1,10 +1,6 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { createCommand, FORMAT_TEXT_COMMAND, LexicalCommand } from "lexical";
+import { FORMAT_TEXT_COMMAND } from "lexical";
 import styles from "./Toolbar.module.css";
-
-export const INSERT_THREAD_COMMAND: LexicalCommand<void> = createCommand(
-  "INSERT_THREAD_COMMAND"
-);
 
 // A toolbar with simple rich-text controls
 export function Toolbar() {
@@ -38,15 +34,6 @@ export function Toolbar() {
         aria-label="Underline"
       >
         <UnderlineIcon />
-      </button>
-      <button
-        className={styles.button}
-        onClick={() => {
-          editor.dispatchCommand(INSERT_THREAD_COMMAND, undefined);
-        }}
-        aria-label="Add new thread"
-      >
-        <MessageCircleIcon />
       </button>
     </div>
   );
@@ -99,26 +86,6 @@ function UnderlineIcon() {
         d="M4 26H28V28H4V26ZM16 23C14.1435 23 12.363 22.2625 11.0503 20.9497C9.7375 19.637 9 17.8565 9 16V5H11V16C11 17.3261 11.5268 18.5979 12.4645 19.5355C13.4021 20.4732 14.6739 21 16 21C17.3261 21 18.5979 20.4732 19.5355 19.5355C20.4732 18.5979 21 17.3261 21 16V5H23V16C23 17.8565 22.2625 19.637 20.9497 20.9497C19.637 22.2625 17.8565 23 16 23Z"
         fill="currentColor"
       />
-    </svg>
-  );
-}
-
-function MessageCircleIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-    >
-      <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
-      <path d="M8 12h8" />
-      <path d="M12 8v8" />
     </svg>
   );
 }

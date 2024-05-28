@@ -849,8 +849,6 @@ type PrivateRoomContextApi = {
   hasResolveMentionSuggestions: boolean;
   useMentionSuggestions(search?: string): string[] | undefined;
   useCurrentUserId(): string | null;
-  useOptimisticThreadCreateListener(callback: (threadId: string) => void): void;
-  useOptimisticThreadDeleteListener(callback: (threadId: string) => void): void;
   useCommentsErrorListener<TThreadMetadata extends BaseMetadata>(
     callback: (err: CommentsError<TThreadMetadata>) => void
   ): void;

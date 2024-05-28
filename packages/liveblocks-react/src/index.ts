@@ -5,14 +5,19 @@ import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 export { ClientSideSuspense } from "./ClientSideSuspense";
+export { CreateThreadError, DeleteCommentError } from "./comments/errors";
 export {
   createLiveblocksContext,
   useLiveblocksContextBundle,
 } from "./liveblocks";
-export { createRoomContext, useRoomContextBundle } from "./room";
+export {
+  createRoomContext,
+  OnCreateThreadCallbackContext,
+  OnDeleteThreadCallbackContext,
+  useRoomContextBundle,
+} from "./room";
 export { useSharedContextBundle } from "./shared";
 export type { MutationContext, UseThreadsOptions } from "./types";
-export { CreateThreadError, DeleteCommentError } from "./comments/errors";
 
 // Re-exports from @liveblocks/client, for convenience
 export type { Json, JsonObject } from "@liveblocks/client";

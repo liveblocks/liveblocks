@@ -5,7 +5,13 @@ import {
   removeClassNamesFromElement,
 } from "@lexical/utils";
 import { kInternal } from "@liveblocks/core";
-import { CreateThreadError, useRoomContextBundle } from "@liveblocks/react";
+import {
+  CreateThreadError,
+  OnCreateThreadCallbackContext,
+  OnDeleteThreadCallbackContext,
+  useRoomContextBundle,
+} from "@liveblocks/react";
+import { OnComposerFocusCallbackContext } from "@liveblocks/react-comments";
 import type { BaseSelection, NodeKey, NodeMutation } from "lexical";
 import {
   $getNodeByKey,
@@ -14,18 +20,17 @@ import {
   $isTextNode,
   $setSelection,
 } from "lexical";
-import type { PropsWithChildren, RefObject } from "react";
+import type { PropsWithChildren } from "react";
 import * as React from "react";
 import {
   createContext,
   useCallback,
   useContext,
   useEffect,
-  useRef,
   useState,
 } from "react";
 
-import $getThreadMarkIds from "./get-thread-mark-ids";
+import { ActiveSelection } from "../active-selection";
 import {
   $createThreadMarkNode,
   $isThreadMarkNode,
@@ -33,29 +38,33 @@ import {
 } from "./thread-mark-node";
 import $unwrapThreadMarkNode from "./unwrap-thread-mark-node";
 import $wrapSelectionInThreadMarkNode from "./wrap-selection-in-thread-mark-node";
+import $getThreadMark from "./get-thread-mark";
+import $getThreadMarkIds from "./get-thread-mark-ids";
 
 type ThreadToNodesMap = Map<string, Set<NodeKey>>;
 
-export const ThreadToNodeKeysRefContext =
-  createContext<RefObject<ThreadToNodesMap> | null>(null);
+export const ThreadToNodesContext = createContext<ThreadToNodesMap | null>(
+  null
+);
 
 export const ActiveThreadsContext = createContext<string[] | null>(null);
 
 export function CommentPluginProvider({ children }: PropsWithChildren) {
   const [editor, context] = useLexicalComposerContext();
 
-  const threadToNodeKeysRef = useRef<ThreadToNodesMap>(new Map()); // A map from thread id to a set of (thread mark) node keys that are associated with the thread
+  const [threadToNodes, setThreadToNodes] = useState<ThreadToNodesMap>(
+    new Map()
+  ); // A map from thread id to a set of (thread mark) node keys that are associated with the thread
 
   const [activeThreads, setActiveThreads] = useState<string[]>([]); // The threads that are currently active (or selected) in the editor
 
+  const [showActiveSelection, setShowActiveSelection] = useState(false);
+
   const {
-    [kInternal]: {
-      useOptimisticThreadCreateListener,
-      useOptimisticThreadDeleteListener,
-      useCommentsErrorListener,
-      useThreadsFromCache,
-    },
+    [kInternal]: { useCommentsErrorListener, useThreadsFromCache },
   } = useRoomContextBundle();
+
+  const threads = useThreadsFromCache();
 
   useEffect(() => {
     if (!editor.hasNodes([ThreadMarkNode])) {
@@ -64,44 +73,6 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       );
     }
   }, [editor]);
-
-  const threads = useThreadsFromCache();
-
-  /**
-   * Only add styles to the thread mark elements that currently have threads associated with them.
-   */
-  useEffect(() => {
-    function getThreadMarkElements() {
-      const activeElements = new Set<HTMLElement>();
-
-      for (const thread of threads) {
-        const keys = threadToNodeKeysRef.current.get(thread.id);
-        if (keys === undefined) continue;
-
-        for (const key of keys) {
-          const element = editor.getElementByKey(key);
-          if (element === null) continue;
-          activeElements.add(element);
-        }
-      }
-      return activeElements;
-    }
-
-    const elements = getThreadMarkElements();
-
-    const theme = context.getTheme();
-    if (theme === null || theme === undefined) return;
-
-    elements.forEach((element) => {
-      addClassNamesToElement(element, theme.threadMark);
-    });
-
-    return () => {
-      elements.forEach((element) => {
-        removeClassNamesFromElement(element, theme.threadMark);
-      });
-    };
-  }, [threads]);
 
   /**
    * Create a new ThreadMarkNode and wrap the selected content in it.
@@ -130,31 +101,28 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
    */
   const handleThreadDelete = useCallback(
     (threadId: string) => {
-      editor.update(() => {
-        const threadToNodes = threadToNodeKeysRef.current;
-        const keys = threadToNodes.get(threadId);
+      setThreadToNodes((prev) => {
+        const updatedMap = new Map(prev);
+        editor.update(() => {
+          const keys = updatedMap.get(threadId);
 
-        if (keys === undefined) return;
+          if (keys === undefined) return;
 
-        for (const key of keys) {
-          const node = $getNodeByKey(key);
-          if (!$isThreadMarkNode(node)) continue;
-          node.deleteID(threadId);
+          for (const key of keys) {
+            const node = $getNodeByKey(key);
+            if (!$isThreadMarkNode(node)) continue;
+            node.deleteID(threadId);
 
-          if (node.getIDs().length === 0) {
-            $unwrapThreadMarkNode(node);
+            if (node.getIDs().length === 0) {
+              $unwrapThreadMarkNode(node);
+            }
           }
-        }
+        });
+        return updatedMap;
       });
     },
     [editor]
   );
-
-  // Listen to (optimistic) thread creation to create a new ThreadMarkNode and associate the newly created thread to mark node.
-  useOptimisticThreadCreateListener(handleThreadCreate);
-
-  // Listen to (optimistic) thread deletion to remove the thread id from the associated nodes and unwrap the nodes if they are no longer associated with any threads.
-  useOptimisticThreadDeleteListener(handleThreadDelete);
 
   useCommentsErrorListener((error) => {
     // If thread creation fails, we remove the thread id from the associated nodes and unwrap the nodes if they are no longer associated with any threads
@@ -162,6 +130,80 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       handleThreadDelete(error.context.threadId);
     }
   });
+
+  /**
+   * Only add styles to the thread mark elements that currently have threads associated with them.
+   */
+  useEffect(() => {
+    function getThreadMarkElements() {
+      const activeElements = new Set<HTMLElement>();
+
+      for (const thread of threads) {
+        const keys = threadToNodes.get(thread.id);
+        if (keys === undefined) continue;
+
+        for (const key of keys) {
+          const element = editor.getElementByKey(key);
+          if (element === null) continue;
+          activeElements.add(element);
+        }
+      }
+      return activeElements;
+    }
+
+    const elements = getThreadMarkElements();
+
+    const theme = context.getTheme();
+    if (theme === null || theme === undefined) return;
+
+    elements.forEach((element) => {
+      addClassNamesToElement(element, theme.threadMark);
+    });
+
+    return () => {
+      elements.forEach((element) => {
+        removeClassNamesFromElement(element, theme.threadMark);
+      });
+    };
+  }, [context, editor, threads, threadToNodes]);
+
+  /**
+   * Register a mutation listener that listens for mutations on 'ThreadMarkNode's and updates the map of thread to node keys accordingly.
+   */
+  useEffect(() => {
+    function onMutation(mutations: Map<string, NodeMutation>) {
+      const state = editor.getEditorState();
+      setThreadToNodes((prev) => {
+        const updatedMap = new Map(prev);
+        state.read(() => {
+          for (const [key, mutation] of mutations) {
+            // If the node is destroyed, we remove its key from the map of thread to node keys
+            if (mutation === "destroyed") {
+              for (const [, nodes] of updatedMap) {
+                nodes.delete(key);
+              }
+            }
+            // Otherwise, if a new node is created or an existing node is updated, we update the map of thread to node keys to include the new/updated node
+            else if (mutation === "created" || mutation === "updated") {
+              const node = $getNodeByKey(key);
+              if (!$isThreadMarkNode(node)) continue;
+
+              const threadIds = node.getIDs();
+
+              for (const id of threadIds) {
+                const keys = updatedMap.get(id) ?? new Set();
+                keys.add(key);
+                updatedMap.set(id, keys);
+              }
+            }
+          }
+        });
+        return updatedMap;
+      });
+    }
+
+    return editor.registerMutationListener(ThreadMarkNode, onMutation);
+  }, [editor, threadToNodes]);
 
   /**
    * Register an update listener that listens for changes in the selection and updates the active threads accordingly.
@@ -190,42 +232,6 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
   }, [editor]);
 
   /**
-   * Register a mutation listener that listens for mutations on 'ThreadMarkNode's and updates the map of thread to node keys accordingly.
-   */
-  useEffect(() => {
-    const threadToNodeKeys = threadToNodeKeysRef.current;
-
-    function onMutation(mutations: Map<string, NodeMutation>) {
-      const state = editor.getEditorState();
-      state.read(() => {
-        for (const [key, mutation] of mutations) {
-          // If the node is destroyed, we remove its key from the map of thread to node keys
-          if (mutation === "destroyed") {
-            for (const [, nodes] of threadToNodeKeys) {
-              nodes.delete(key);
-            }
-          }
-          // Otherwise, if a new node is created or an existing node is updated, we update the map of thread to node keys to include the new/updated node
-          else if (mutation === "created" || mutation === "updated") {
-            const node = $getNodeByKey(key);
-            if (!$isThreadMarkNode(node)) continue;
-
-            const threadIds = node.getIDs();
-
-            for (const id of threadIds) {
-              const keys = threadToNodeKeys.get(id) ?? new Set();
-              keys.add(key);
-              threadToNodeKeys.set(id, keys);
-            }
-          }
-        }
-      });
-    }
-
-    return editor.registerMutationListener(ThreadMarkNode, onMutation);
-  }, [editor]);
-
-  /**
    * When active threads change, we add a data-state attribute and set it to "active" for all HTML elements that are associated with the active threads.
    */
   useEffect(() => {
@@ -233,7 +239,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       const activeElements = new Set<HTMLElement>();
 
       for (const thread of activeThreads) {
-        const keys = threadToNodeKeysRef.current.get(thread);
+        const keys = threadToNodes.get(thread);
         if (keys === undefined) continue;
 
         for (const key of keys) {
@@ -274,24 +280,43 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     );
   }, [editor]);
 
+  const handleComposerFocus = useCallback(() => {
+    setShowActiveSelection(true);
+  }, []);
+
+  useEffect(() => {
+    return editor.registerUpdateListener(({ editorState: state, tags }) => {
+      // Ignore selection updates related to collaboration
+      if (tags.has("collaboration")) return;
+      state.read(() => setShowActiveSelection(false));
+    });
+  }, [editor]);
+
   return (
-    <ThreadToNodeKeysRefContext.Provider value={threadToNodeKeysRef}>
-      <ActiveThreadsContext.Provider value={activeThreads}>
-        {children}
-      </ActiveThreadsContext.Provider>
-    </ThreadToNodeKeysRefContext.Provider>
+    <OnCreateThreadCallbackContext.Provider value={handleThreadCreate}>
+      <OnDeleteThreadCallbackContext.Provider value={handleThreadDelete}>
+        <OnComposerFocusCallbackContext.Provider value={handleComposerFocus}>
+          <ThreadToNodesContext.Provider value={threadToNodes}>
+            <ActiveThreadsContext.Provider value={activeThreads}>
+              {showActiveSelection && <ActiveSelection />}
+              {children}
+            </ActiveThreadsContext.Provider>
+          </ThreadToNodesContext.Provider>
+        </OnComposerFocusCallbackContext.Provider>
+      </OnDeleteThreadCallbackContext.Provider>
+    </OnCreateThreadCallbackContext.Provider>
   );
 }
 
-export function useThreadToNodesMap() {
-  const threadToNodesRef = useContext(ThreadToNodeKeysRefContext);
-  if (threadToNodesRef === null) {
+export function useThreadToNodes() {
+  const threadToNodes = useContext(ThreadToNodesContext);
+  if (threadToNodes === null) {
     throw new Error(
-      "useThreadToNodesMap must be used within a CommentPluginProvider"
+      "useThreadToNodes must be used within a CommentPluginProvider"
     );
   }
 
-  return threadToNodesRef;
+  return threadToNodes;
 }
 
 export function useActiveThreads() {
