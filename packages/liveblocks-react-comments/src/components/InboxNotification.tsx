@@ -534,7 +534,6 @@ const InboxNotificationTextMention = forwardRef<
       {...props}
       ref={ref}
     />
-    // </InboxNotificationLayout>
   );
 });
 
