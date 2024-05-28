@@ -23,6 +23,7 @@ import type {
   EnterOptions,
   LiveblocksError,
   OptionalPromise,
+  PrivateRoomApi,
   ResolveMentionSuggestionsArgs,
   ResolveUsersArgs,
   RoomEventMessage,
@@ -365,7 +366,8 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     // If a request was already made for the query, we do not make another request and return the existing promise of the request
     if (existingRequest !== undefined) return existingRequest;
 
-    const request = room[kInternal].comments.getThreads(options);
+    const commentsAPI = (room[kInternal] as PrivateRoomApi<M>).comments;
+    const request = commentsAPI.getThreads(options);
 
     // Store the promise of the request for the query so that we do not make another request for the same query
     requestsByQuery.set(queryKey, request);
@@ -1452,35 +1454,34 @@ function useCreateThread<M extends BaseMetadata>() {
         id: optimisticUpdateId,
       });
 
-      room[kInternal].comments
-        .createThread({ threadId, commentId, body, metadata })
-        .then(
-          (thread) => {
-            store.set((state) => ({
-              ...state,
-              threads: {
-                ...state.threads,
-                [threadId]: thread,
-              },
-              optimisticUpdates: state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              ),
-            }));
-          },
-          (err: Error) =>
-            onMutationFailure(
-              err,
-              optimisticUpdateId,
-              (err) =>
-                new CreateThreadError(err, {
-                  roomId: room.id,
-                  threadId,
-                  commentId,
-                  body,
-                  metadata,
-                })
-            )
-        );
+      const commentsAPI = (room[kInternal] as PrivateRoomApi<M>).comments;
+      commentsAPI.createThread({ threadId, commentId, body, metadata }).then(
+        (thread) => {
+          store.set((state) => ({
+            ...state,
+            threads: {
+              ...state.threads,
+              [threadId]: thread,
+            },
+            optimisticUpdates: state.optimisticUpdates.filter(
+              (update) => update.id !== optimisticUpdateId
+            ),
+          }));
+        },
+        (err: Error) =>
+          onMutationFailure(
+            err,
+            optimisticUpdateId,
+            (err) =>
+              new CreateThreadError(err, {
+                roomId: room.id,
+                threadId,
+                commentId,
+                body,
+                metadata,
+              })
+          )
+      );
 
       return newThread;
     },
@@ -1512,7 +1513,8 @@ function useEditThreadMetadata<M extends BaseMetadata>() {
         updatedAt,
       });
 
-      room[kInternal].comments.editThreadMetadata({ metadata, threadId }).then(
+      const commentsAPI = (room[kInternal] as PrivateRoomApi<M>).comments;
+      commentsAPI.editThreadMetadata({ metadata, threadId }).then(
         (metadata) => {
           store.set((state) => {
             const existingThread = state.threads[threadId];
