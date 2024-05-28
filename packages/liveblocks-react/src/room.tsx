@@ -2250,7 +2250,6 @@ function useSuspendUntilStorageLoaded(): void {
   });
 }
 
-// TODO Remove default type here (LB-649)
 function useStorageSuspense<T, S extends LsonObject>(
   selector: (root: ToImmutable<S>) => T,
   isEqual?: (prev: T, curr: T) => boolean
@@ -2262,7 +2261,6 @@ function useStorageSuspense<T, S extends LsonObject>(
   ) as T;
 }
 
-// TODO Remove default type here (LB-649)
 function useLegacyKeySuspense<
   TKey extends Extract<keyof S, string>,
   S extends LsonObject,
