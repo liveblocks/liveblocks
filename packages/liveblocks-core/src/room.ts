@@ -1733,6 +1733,43 @@ export function createRoom<
     });
   }
 
+  async function createTextMention(userId: string, mentionId: string) {
+    if (!managedSocket.authValue) {
+      throw new Error("Not authorized");
+    }
+
+    return fetchClientApi(
+      config.roomId,
+      "/text-mentions",
+      managedSocket.authValue,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          mentionId,
+        }),
+      }
+    );
+  }
+
+  async function deleteTextMention(mentionId: string) {
+    if (!managedSocket.authValue) {
+      throw new Error("Not authorized");
+    }
+
+    return fetchClientApi(
+      config.roomId,
+      `/text-mentions/${mentionId}`,
+      managedSocket.authValue,
+      {
+        method: "DELETE",
+      }
+    );
+  }
+
   async function reportTextEditor(type: "lexical", rootKey: string) {
     return httpPostToRoom("/text-metadata", {
       type,
@@ -2943,6 +2980,10 @@ export function createRoom<
 
         // send metadata when using a text editor
         reportTextEditor,
+        // create a text mention when using a text editor
+        createTextMention,
+        // delete a text mention when using a text editor
+        deleteTextMention,
 
         // Support for the Liveblocks browser extension
         getSelf_forDevTools: () => selfAsTreeNode.current,
