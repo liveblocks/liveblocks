@@ -783,7 +783,7 @@ export type Room<
  * Liveblocks, NEVER USE ANY OF THESE METHODS DIRECTLY, because bad things
  * will probably happen if you do.
  */
-type PrivateRoomApi<M extends BaseMetadata> = {
+export type PrivateRoomApi<M extends BaseMetadata> = {
   // For introspection in unit tests only
   presenceBuffer: Json | undefined;
   undoStack: readonly (readonly Readonly<HistoryOp<JsonObject>>[])[];

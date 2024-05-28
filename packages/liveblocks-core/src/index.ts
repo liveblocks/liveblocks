@@ -186,6 +186,7 @@ export type {
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 export { ServerMsgCode } from "./protocol/ServerMsg";
+export type { PrivateRoomApi } from "./room";
 export type {
   BroadcastOptions,
   History,
