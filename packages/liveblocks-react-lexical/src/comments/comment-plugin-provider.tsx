@@ -5,7 +5,12 @@ import {
   removeClassNamesFromElement,
 } from "@lexical/utils";
 import { kInternal } from "@liveblocks/core";
-import { CreateThreadError, useRoomContextBundle } from "@liveblocks/react";
+import {
+  CreateThreadError,
+  OnCreateThreadCallbackContext,
+  OnDeleteThreadCallbackContext,
+  useRoomContextBundle,
+} from "@liveblocks/react";
 import { OnComposerFocusCallbackContext } from "@liveblocks/react-comments";
 import type { BaseSelection, NodeKey, NodeMutation } from "lexical";
 import {
@@ -53,12 +58,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
   const [showActiveSelection, setShowActiveSelection] = useState(false);
 
   const {
-    [kInternal]: {
-      useOptimisticThreadCreateListener,
-      useOptimisticThreadDeleteListener,
-      useCommentsErrorListener,
-      useThreadsFromCache,
-    },
+    [kInternal]: { useCommentsErrorListener, useThreadsFromCache },
   } = useRoomContextBundle();
 
   useEffect(() => {
@@ -153,12 +153,6 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     },
     [editor]
   );
-
-  // Listen to (optimistic) thread creation to create a new ThreadMarkNode and associate the newly created thread to mark node.
-  useOptimisticThreadCreateListener(handleThreadCreate);
-
-  // Listen to (optimistic) thread deletion to remove the thread id from the associated nodes and unwrap the nodes if they are no longer associated with any threads.
-  useOptimisticThreadDeleteListener(handleThreadDelete);
 
   useCommentsErrorListener((error) => {
     // If thread creation fails, we remove the thread id from the associated nodes and unwrap the nodes if they are no longer associated with any threads
@@ -291,14 +285,18 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
   }, [editor]);
 
   return (
-    <OnComposerFocusCallbackContext.Provider value={handleComposerFocus}>
-      <ThreadToNodeKeysRefContext.Provider value={threadToNodeKeysRef}>
-        <ActiveThreadsContext.Provider value={activeThreads}>
-          {showActiveSelection && <ActiveSelection />}
-          {children}
-        </ActiveThreadsContext.Provider>
-      </ThreadToNodeKeysRefContext.Provider>
-    </OnComposerFocusCallbackContext.Provider>
+    <OnCreateThreadCallbackContext.Provider value={handleThreadCreate}>
+      <OnDeleteThreadCallbackContext.Provider value={handleThreadDelete}>
+        <OnComposerFocusCallbackContext.Provider value={handleComposerFocus}>
+          <ThreadToNodeKeysRefContext.Provider value={threadToNodeKeysRef}>
+            <ActiveThreadsContext.Provider value={activeThreads}>
+              {showActiveSelection && <ActiveSelection />}
+              {children}
+            </ActiveThreadsContext.Provider>
+          </ThreadToNodeKeysRefContext.Provider>
+        </OnComposerFocusCallbackContext.Provider>
+      </OnDeleteThreadCallbackContext.Provider>
+    </OnCreateThreadCallbackContext.Provider>
   );
 }
 
