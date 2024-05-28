@@ -82,9 +82,9 @@
   transition: background-color 100ms;
 }
 
-.threadMark:hover {
+/* .threadMark:hover {
   background-color: rgba(255, 212, 0, 0.42);
-}
+} */
 
 .threadMark[data-state="active"] {
   background-color: rgba(255, 212, 0, 0.56);

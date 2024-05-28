@@ -1884,7 +1884,7 @@ export function createRoomContext<
         });
 
         const thread = store.get().threads[threadId];
-        if (thread !== undefined && thread.deletedAt !== undefined) {
+        if (thread !== undefined && thread.deletedAt === undefined) {
           const newThread = deleteComment(thread, commentId, deletedAt);
           if (newThread.deletedAt !== undefined) {
             onDeleteThread?.(threadId);
