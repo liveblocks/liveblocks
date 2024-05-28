@@ -63,6 +63,7 @@ type InboxNotificationKinds = Record<
   >
 > & {
   thread: ComponentTypeWithRef<"a", InboxNotificationThreadProps>;
+  textMention: ComponentTypeWithRef<"a", InboxNotificationTextMentionProps>;
 };
 
 interface InboxNotificationSharedProps {
@@ -694,6 +695,7 @@ export const InboxNotification = Object.assign(
   ),
   {
     Thread: InboxNotificationThread,
+    TextMention: InboxNotificationTextMention,
     Custom: InboxNotificationCustom,
     Icon: InboxNotificationIcon,
     Avatar: InboxNotificationAvatar,
