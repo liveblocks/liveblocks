@@ -9,7 +9,10 @@ export type InboxNotificationThreadData = {
   readAt: Date | null;
 };
 
-export type ActivityData = Record<string, string | boolean | number>;
+export type ActivityData = Record<
+  string,
+  string | boolean | number | undefined
+>;
 
 type InboxNotificationActivity = {
   id: string;
