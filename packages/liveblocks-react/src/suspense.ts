@@ -19,9 +19,9 @@ export { shallow } from "@liveblocks/client";
 
 // Export all the top-level hooks
 export {
+  createRoomContext,
   RoomContext,
   RoomProvider,
-  createRoomContext,
   useAddReaction,
   useBatch,
   useBroadcastEvent,
@@ -56,11 +56,11 @@ export {
 // Export the Suspense versions of our hooks
 // (This part differs from src/index.ts)
 export {
-  useOthersConnectionIdsSuspense as useOthersConnectionIds,
-  useOthersMappedSuspense as useOthersMapped,
-  useThreadsSuspense as useThreads,
   useOtherSuspense as useOther,
   useOthersSuspense as useOthers,
-  useStorageSuspense as useStorage,
+  useOthersConnectionIdsSuspense as useOthersConnectionIds,
+  useOthersMappedSuspense as useOthersMapped,
   useSelfSuspense as useSelf,
+  useStorageSuspense as useStorage,
+  useThreadsSuspense as useThreads,
 } from "./room";
