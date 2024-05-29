@@ -17,10 +17,22 @@
         "module": "./dist/index.mjs",
         "default": "./dist/index.js"
       }
+    },
+    "./suspense": {
+      "import": {
+        "types": "./dist/suspense.d.mts",
+        "default": "./dist/suspense.mjs"
+      },
+      "require": {
+        "types": "./dist/suspense.d.ts",
+        "module": "./dist/suspense.mjs",
+        "default": "./dist/suspense.js"
+      }
     }
   },
   "files": [
     "dist/**",
+    "suspense/**",
     "README.md"
   ],
   "scripts": {
