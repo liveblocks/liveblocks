@@ -2463,6 +2463,7 @@ export function generateQueryKey(
 }
 
 // TODO in 2.0 Copy/paste all the docstrings onto these global hooks :(
+const __1 = RoomProvider<DP, DS, DU, DE>;
 const __2 = useBroadcastEvent<DE>;
 const __3 = useOthersListener<DP, DU>;
 const __4 = useRoom<DP, DS, DU, DE>;
@@ -2488,6 +2489,7 @@ const _26 = useStorageRoot<DS>;
 const _27 = useUpdateMyPresence<DP>;
 
 export {
+  __1 as RoomProvider,
   __2 as useBroadcastEvent,
   __3 as useOthersListener,
   __4 as useRoom,

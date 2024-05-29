@@ -20,6 +20,7 @@ export { shallow } from "@liveblocks/client";
 // Export all the top-level hooks
 export {
   RoomContext,
+  RoomProvider,
   createRoomContext,
   useAddReaction,
   useBatch,
