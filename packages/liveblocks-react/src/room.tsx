@@ -2463,19 +2463,15 @@ export function generateQueryKey(
 }
 
 // TODO in 2.0 Copy/paste all the docstrings onto these global hooks :(
-const __1 = useBatch;
 const __2 = useBroadcastEvent<DE>;
 const __3 = useOthersListener<DP, DU>;
 const __4 = useRoom<DP, DS, DU, DE>;
-const __5 = useStatus;
 const __6 = useAddReaction<DM>;
 const __7 = make_useMutation<DP, DS, DU, DE>();
 const __8 = useCreateThread<DM>;
 const __9 = useEditThreadMetadata<DM>;
 const _10 = useEventListener<DP, DU, DE>;
 const _11 = useMyPresence<DP>;
-const _12 = useOthersConnectionIds;
-const _13 = useOthersConnectionIdsSuspense;
 const _14 = make_useOthersMapped<DP, DU>();
 const _15 = make_useOthersMappedSuspense<DP, DU>();
 const _16 = useThreads<DM>;
@@ -2492,19 +2488,15 @@ const _26 = useStorageRoot<DS>;
 const _27 = useUpdateMyPresence<DP>;
 
 export {
-  __1 as useBatch,
   __2 as useBroadcastEvent,
   __3 as useOthersListener,
   __4 as useRoom,
-  __5 as useStatus,
   __6 as useAddReaction,
   __7 as useMutation,
   __8 as useCreateThread,
   __9 as useEditThreadMetadata,
   _10 as useEventListener,
   _11 as useMyPresence,
-  _12 as useOthersConnectionIds,
-  _13 as useOthersConnectionIdsSuspense,
   _14 as useOthersMapped,
   _15 as useOthersMappedSuspense,
   _16 as useThreads,
@@ -2519,4 +2511,24 @@ export {
   _25 as useSelfSuspense,
   _26 as useStorageRoot,
   _27 as useUpdateMyPresence,
+  RoomContext,
+  useBatch,
+  useCanRedo,
+  useCanUndo,
+  useCreateComment,
+  useDeleteComment,
+  useEditComment,
+  useErrorListener,
+  useHistory,
+  useLostConnectionListener,
+  useMarkThreadAsRead,
+  useOthersConnectionIds,
+  useOthersConnectionIdsSuspense,
+  useRedo,
+  useRemoveReaction,
+  useRoomNotificationSettings,
+  useStatus,
+  useThreadSubscription,
+  useUndo,
+  useUpdateRoomNotificationSettings,
 };
