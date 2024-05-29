@@ -103,15 +103,13 @@ export const OnDeleteThreadCallbackContext = React.createContext<
   null | ((threadId: string) => void)
 >(null);
 
-type CreateThreadOptions<M extends BaseMetadata> = [M] extends [
-  never,
-]
+type CreateThreadOptions<M extends BaseMetadata> = [M] extends [never]
   ? {
-    body: CommentBody;
-  }
+      body: CommentBody;
+    }
   : { body: CommentBody; metadata: M };
 
-const noop = () => { };
+const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
 
 const missing_unstable_batchedUpdates = (
@@ -123,8 +121,8 @@ const missing_unstable_batchedUpdates = (
     import { unstable_batchedUpdates } from "react-dom";  // or "react-native"
 
     <RoomProvider id=${JSON.stringify(
-    roomId
-  )} ... unstable_batchedUpdates={unstable_batchedUpdates}>
+      roomId
+    )} ... unstable_batchedUpdates={unstable_batchedUpdates}>
       ...
     </RoomProvider>
 
@@ -506,8 +504,6 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     throw innerError;
   }
 
-
-
   /** @internal */
   // Simplistic debounced search, we don't need to worry too much about
   // deduping and race conditions as there can only be one search at a time.
@@ -559,7 +555,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
       } else if (
         !lastInvokedAt.current ||
         Math.abs(performance.now() - lastInvokedAt.current) >
-        MENTION_SUGGESTIONS_DEBOUNCE
+          MENTION_SUGGESTIONS_DEBOUNCE
       ) {
         // If on the debounce's leading edge (either because it's the first invokation or enough
         // time has passed since the last debounce), get mention suggestions immediately.
@@ -1439,8 +1435,7 @@ function useCommentsErrorListener<M extends BaseMetadata>(
 ) {
   const client = useClient();
   const savedCallback = useLatest(callback);
-  const { commentsErrorEventSource } =
-    getExtrasForClient<M>(client);
+  const { commentsErrorEventSource } = getExtrasForClient<M>(client);
 
   React.useEffect(() => {
     return commentsErrorEventSource.subscribe(savedCallback.current);
@@ -1450,8 +1445,7 @@ function useCommentsErrorListener<M extends BaseMetadata>(
 function useThreadsFromCache<M extends BaseMetadata>() {
   const room = useRoom();
   const client = useClient();
-  const { store } =
-    getExtrasForClient<M>(client);
+  const { store } = getExtrasForClient<M>(client);
 
   const state = useSyncExternalStoreWithSelector(
     store.subscribe,
@@ -1463,11 +1457,11 @@ function useThreadsFromCache<M extends BaseMetadata>() {
   return state;
 }
 
-
-
 function useCreateThread<M extends BaseMetadata>() {
   const client = useClient();
   const room = useRoom();
+  const onCreateThread = React.useContext(OnCreateThreadCallbackContext);
+
   return React.useCallback(
     (options: CreateThreadOptions<M>): ThreadData<M> => {
       const body = options.body;
@@ -1504,8 +1498,10 @@ function useCreateThread<M extends BaseMetadata>() {
         type: "create-thread",
         thread: newThread,
         id: optimisticUpdateId,
-        roomId: room.id
+        roomId: room.id,
       });
+
+      onCreateThread?.(newThread.id);
 
       const commentsAPI = (room[kInternal] as PrivateRoomApi<M>).comments;
       commentsAPI.createThread({ threadId, commentId, body, metadata }).then(
@@ -1690,13 +1686,13 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
               const updatedInboxNotifications =
                 inboxNotification !== undefined
                   ? {
-                    ...state.inboxNotifications,
-                    [inboxNotification.id]: {
-                      ...inboxNotification,
-                      notifiedAt: newComment.createdAt,
-                      readAt: newComment.createdAt,
-                    },
-                  }
+                      ...state.inboxNotifications,
+                      [inboxNotification.id]: {
+                        ...inboxNotification,
+                        notifiedAt: newComment.createdAt,
+                        readAt: newComment.createdAt,
+                      },
+                    }
                   : state.inboxNotifications;
 
               return {
@@ -1814,6 +1810,8 @@ function useEditComment(): (options: EditCommentOptions) => void {
 function useDeleteComment() {
   const client = useClient();
   const room = useRoom();
+  const onDeleteThread = React.useContext(OnDeleteThreadCallbackContext);
+
   return React.useCallback(
     ({ threadId, commentId }: DeleteCommentOptions): void => {
       const deletedAt = new Date();
@@ -1829,6 +1827,14 @@ function useDeleteComment() {
         id: optimisticUpdateId,
         roomId: room.id,
       });
+
+      const thread = store.get().threads[threadId];
+      if (thread !== undefined && thread.deletedAt !== undefined) {
+        const newThread = deleteComment(thread, commentId, deletedAt);
+        if (newThread.deletedAt !== undefined) {
+          onDeleteThread?.(threadId);
+        }
+      }
 
       room[kInternal].comments.deleteComment({ threadId, commentId }).then(
         () => {
