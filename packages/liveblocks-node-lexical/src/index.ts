@@ -57,10 +57,7 @@ export async function modifyDocument(
     (editor, binding) => {
       applyUpdate(binding.doc, update);
       editor.update(() => {}, { discrete: true });
-      console.log("GOT UPDATE!");
       const beforeVector = encodeStateVectorFromUpdate(update);
-      console.log("before vector: ", beforeVector);
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       editor.update(
         () => {
           const root = $getRoot();
