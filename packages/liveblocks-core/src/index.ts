@@ -38,11 +38,7 @@ export {
   stringifyCommentBody,
 } from "./comments/comment-body";
 export type { BaseAuthResult, Delegates, LiveblocksError } from "./connection";
-export type {
-  LegacyConnectionStatus,
-  LostConnectionEvent,
-  Status,
-} from "./connection";
+export type { LostConnectionEvent, Status } from "./connection";
 export {
   convertToCommentData,
   convertToCommentUserReaction,
@@ -208,7 +204,7 @@ export type {
 export { WebsocketCloseCodes } from "./types/IWebSocket";
 export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 export type { OptionalPromise } from "./types/OptionalPromise";
-export type { Others, OthersEvent } from "./types/Others";
+export type { OthersEvent } from "./types/Others";
 export type { PartialNullable } from "./types/PartialNullable";
 export type {
   PlainLson,

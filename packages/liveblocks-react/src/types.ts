@@ -250,8 +250,6 @@ export type RoomProviderProps<
      * only on the client side.
      */
     autoConnect?: boolean;
-    /** @deprecated Renamed to `autoConnect` */
-    shouldInitiallyConnect?: boolean;
 
     /**
      * If you're on React 17 or lower, pass in a reference to

@@ -177,37 +177,6 @@ export type Client<U extends BaseUserMeta = DU> = {
   };
 
   /**
-   * @deprecated - Prefer using {@link Client.enterRoom} instead.
-   *
-   * Enters a room and returns it.
-   * @param roomId The id of the room
-   * @param options Optional. You can provide initializers for the Presence or Storage when entering the Room.
-   */
-  enter<
-    P extends JsonObject = DP,
-    S extends LsonObject = DS,
-    U extends BaseUserMeta = DU, // TODO Remove in 2.0, this is shadowing the Client-level type arg
-    E extends Json = never, // TODO Change to DE in 2.0
-  >(
-    roomId: string,
-    options: EnterOptions<P, S>
-  ): Room<P, S, U, E>;
-
-  /**
-   * @deprecated - Prefer using {@link Client.enterRoom} and calling the returned leave function instead, which is safer.
-   *
-   * Forcefully leaves a room.
-   *
-   * Only call this if you know for sure there are no other "instances" of this
-   * room used elsewhere in your application. Force-leaving can trigger
-   * unexpected conditions in other parts of your application that may not
-   * expect this.
-   *
-   * @param roomId The id of the room
-   */
-  leave(roomId: string): void;
-
-  /**
    * Purges all cached auth tokens and reconnects all rooms that are still
    * connected, if any.
    *
@@ -240,18 +209,6 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
   polyfills?: Polyfills;
   unstable_fallbackToHTTP?: boolean;
   unstable_streamData?: boolean;
-
-  /**
-   * @deprecated Use `polyfills: { fetch: ... }` instead.
-   * This option will be removed in a future release.
-   */
-  fetchPolyfill?: Polyfills["fetch"];
-
-  /**
-   * @deprecated Use `polyfills: { WebSocket: ... }` instead.
-   * This option will be removed in a future release.
-   */
-  WebSocketPolyfill?: Polyfills["WebSocket"];
 
   /**
    * @beta
@@ -473,8 +430,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     setupDevTools(() => Array.from(roomsById.keys()));
     linkDevTools(roomId, newRoom);
 
-    const shouldConnect =
-      options.autoConnect ?? options.shouldInitiallyConnect ?? true;
+    const shouldConnect = options.autoConnect ?? true;
     if (shouldConnect) {
       // we need to check here because nextjs would fail earlier with Node < 16
       if (typeof atob === "undefined") {
