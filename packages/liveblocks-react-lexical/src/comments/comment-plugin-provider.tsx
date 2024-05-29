@@ -21,6 +21,7 @@ import {
 import type { PropsWithChildren } from "react";
 import * as React from "react";
 import { useCallback, useEffect, useState } from "react";
+import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import { ActiveSelection } from "../active-selection";
 import $getThreadMarkIds from "./get-thread-mark-ids";
@@ -131,19 +132,25 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     }
   });
 
+  const store = client[kInternal].cacheStore;
+
+  const threads = useSyncExternalStoreWithSelector(
+    store.subscribe,
+    store.get,
+    store.get,
+    useCallback(
+      () =>
+        client[kInternal].comments.selectedThreads(room.id, store.get(), {}),
+      [client, room.id, store]
+    )
+  );
+
   /**
    * Only add styles to the thread mark elements that currently have threads associated with them.
    */
   useEffect(() => {
     function getThreadMarkElements() {
       const activeElements = new Set<HTMLElement>();
-
-      const store = client[kInternal].cacheStore;
-      const threads = client[kInternal].comments.selectedThreads(
-        room.id,
-        store.get(),
-        {}
-      );
 
       for (const thread of threads) {
         const keys = threadToNodes.get(thread.id);
@@ -172,7 +179,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
         removeClassNamesFromElement(element, theme.threadMark as string);
       });
     };
-  }, [context, editor, threadToNodes, client, room.id]);
+  }, [context, editor, threadToNodes, threads]);
 
   /**
    * Register a mutation listener that listens for mutations on 'ThreadMarkNode's and updates the map of thread to node keys accordingly.
@@ -216,7 +223,6 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
    * Register an update listener that listens for changes in the selection and updates the active threads accordingly.
    */
   useEffect(() => {
-    const store = client[kInternal].cacheStore;
     const selectedThreads = client[kInternal].comments.selectedThreads;
 
     function $getThreadIds(selection: BaseSelection | null): string[] {
@@ -255,7 +261,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       unregisterUpdateListener();
       unsubscribeCache();
     };
-  }, [editor, client, room.id]);
+  }, [editor, client, room.id, store]);
 
   /**
    * When active threads change, we add a data-state attribute and set it to "active" for all HTML elements that are associated with the active threads.
