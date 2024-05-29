@@ -394,6 +394,9 @@ type RoomContextBundleCommon<
   useStatus(): Status;
 
   /**
+   * @deprecated It's recommended to use `useMutation` for writing to Storage,
+   * which will automatically batch all mutations.
+   *
    * Returns a function that batches modifications made during the given function.
    * All the modifications are sent to other clients in a single message.
    * All the modifications are merged in a single history item (undo/redo).
