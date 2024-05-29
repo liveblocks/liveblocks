@@ -9,7 +9,7 @@ export default function Home() {
     <Room>
       <div className={styles.wrapper}>
         <header className={styles.header}>
-          <h1>michael-james-16296843-720p.mp4</h1>
+          <h1>My video name</h1>
           <Presence />
         </header>
         <main className={styles.main}>

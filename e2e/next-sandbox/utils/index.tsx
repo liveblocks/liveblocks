@@ -1,5 +1,8 @@
 import type { Json } from "@liveblocks/client";
+import { raise } from "@liveblocks/core";
 import React from "react";
+
+import { FAKE_USERS } from "../pages/api/_utils";
 
 export function getRoomFromUrl(): string {
   if (typeof window === "undefined") {
@@ -12,6 +15,14 @@ export function getRoomFromUrl(): string {
     throw new Error("Specify ?room= in URL, please");
   }
   return room;
+}
+
+export function getUserFromUrl(): number {
+  const q = new URL(window.location.href).searchParams;
+  const user = Number(q.get("user"));
+  return user && !isNaN(user) && user >= 1 && user <= FAKE_USERS.length
+    ? user
+    : raise("Specify ?user= in URL, please");
 }
 
 /**

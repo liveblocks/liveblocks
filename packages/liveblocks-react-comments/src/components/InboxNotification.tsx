@@ -1,24 +1,19 @@
 "use client";
 
 import type {
-  BaseMetadata,
-  CommentData,
+  InboxNotificationCustomData,
   InboxNotificationData,
   InboxNotificationThreadData,
-  ThreadData,
 } from "@liveblocks/core";
-import {
-  assertNever,
-  getMentionedIdsFromCommentBody,
-  kInternal,
-} from "@liveblocks/core";
+import { assertNever, console, kInternal } from "@liveblocks/core";
 import { useLiveblocksContextBundle } from "@liveblocks/react";
+import { Slot } from "@radix-ui/react-slot";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import type {
   ComponentProps,
   ComponentPropsWithoutRef,
   ComponentType,
-  MouseEvent,
+  MouseEvent as ReactMouseEvent,
   ReactNode,
   SyntheticEvent,
 } from "react";
@@ -28,65 +23,46 @@ import type { GlobalComponents } from "../components";
 import { useComponents } from "../components";
 import { CheckIcon } from "../icons/Check";
 import { EllipsisIcon } from "../icons/Ellipsis";
+import { MissingIcon } from "../icons/Missing";
 import type {
   CommentOverrides,
   GlobalOverrides,
   InboxNotificationOverrides,
 } from "../overrides";
 import { useOverrides } from "../overrides";
-import * as CommentPrimitive from "../primitives/Comment";
 import { Timestamp } from "../primitives/Timestamp";
+import type { SlotProp } from "../types";
 import { classNames } from "../utils/class-names";
 import { generateURL } from "../utils/url";
-import {
-  CommentMention,
-  CommentNonInteractiveLink,
-  CommentNonInteractiveReaction,
-} from "./Comment";
 import { Avatar, type AvatarProps } from "./internal/Avatar";
 import { Button } from "./internal/Button";
 import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
+import {
+  generateInboxNotificationThreadContents,
+  INBOX_NOTIFICATION_THREAD_MAX_COMMENTS,
+  InboxNotificationComment,
+} from "./internal/InboxNotificationThread";
 import { List } from "./internal/List";
 import { Room } from "./internal/Room";
 import { Tooltip } from "./internal/Tooltip";
 import { User } from "./internal/User";
 
-const INBOX_NOTIFICATION_THREAD_MAX_COMMENTS = 3;
+type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 
-type InboxNotificationThreadCommentsContents = {
-  type: "comments";
-  unread: boolean;
-  comments: CommentData[];
-  userIds: string[];
-  date: Date;
+type ComponentTypeWithRef<
+  T extends keyof JSX.IntrinsicElements,
+  P,
+> = ComponentType<P & Pick<ComponentProps<T>, "ref">>;
+
+type InboxNotificationKinds = Record<
+  `$${string}`,
+  ComponentTypeWithRef<
+    "a",
+    Optional<InboxNotificationCustomProps, "title" | "children">
+  >
+> & {
+  thread: ComponentTypeWithRef<"a", InboxNotificationThreadProps>;
 };
-
-type InboxNotificationThreadMentionContents = {
-  type: "mention";
-  unread: boolean;
-  comments: CommentData[];
-  userIds: string[];
-  date: Date;
-};
-
-type InboxNotificationThreadContents =
-  | InboxNotificationThreadCommentsContents
-  | InboxNotificationThreadMentionContents;
-
-export type InboxNotificationKinds = {
-  thread: ComponentType<InboxNotificationThreadProps>;
-};
-
-export type AddRefToComponents<T, R> = {
-  [K in keyof T]: T[K] extends ComponentType<infer P>
-    ? ComponentType<P & { ref: R }>
-    : T[K];
-};
-
-type InboxNotificationKindsWithRef = AddRefToComponents<
-  InboxNotificationKinds,
-  ComponentProps<"a">["ref"]
->;
 
 interface InboxNotificationSharedProps {
   /**
@@ -96,7 +72,7 @@ interface InboxNotificationSharedProps {
 }
 
 export interface InboxNotificationProps
-  extends ComponentPropsWithoutRef<"a">,
+  extends Omit<ComponentPropsWithoutRef<"a">, "title">,
     InboxNotificationSharedProps {
   /**
    * The inbox notification to display.
@@ -122,33 +98,67 @@ export interface InboxNotificationProps
 }
 
 export interface InboxNotificationThreadProps
-  extends Omit<InboxNotificationProps, "kinds">,
+  extends Omit<InboxNotificationProps, "kinds" | "children">,
     InboxNotificationSharedProps {
+  /**
+   * The inbox notification to display.
+   */
+  inboxNotification: InboxNotificationThreadData;
+
   /**
    * Whether to show the room name in the title.
    */
   showRoomName?: boolean;
 }
 
+export interface InboxNotificationCustomProps
+  extends Omit<InboxNotificationProps, "kinds">,
+    InboxNotificationSharedProps,
+    SlotProp {
+  /**
+   * The inbox notification to display.
+   */
+  inboxNotification: InboxNotificationCustomData;
+
+  /**
+   * The inbox notification's content.
+   */
+  children: ReactNode;
+
+  /**
+   * The inbox notification's title.
+   */
+  title: ReactNode;
+
+  /**
+   * The inbox notification's aside content.
+   * Can be combined with `InboxNotification.Icon` or `InboxNotification.Avatar` to easily follow default styles.
+   */
+  aside?: ReactNode;
+
+  /**
+   * Whether to mark the inbox notification as read when clicked.
+   */
+  markAsReadOnClick?: boolean;
+}
+
 interface InboxNotificationLayoutProps
   extends Omit<ComponentPropsWithoutRef<"a">, "title">,
-    InboxNotificationSharedProps {
-  inboxNotificationId: string;
+    InboxNotificationSharedProps,
+    SlotProp {
+  inboxNotification: InboxNotificationData;
   aside: ReactNode;
   title: ReactNode;
   date: Date | string | number;
   unread?: boolean;
   overrides?: Partial<GlobalOverrides & InboxNotificationOverrides>;
   components?: Partial<GlobalComponents>;
+  markAsReadOnClick?: boolean;
 }
 
-type InboxNotificationAvatarProps = AvatarProps;
+export type InboxNotificationIconProps = ComponentProps<"div">;
 
-interface InboxNotificationCommentProps extends ComponentProps<"div"> {
-  comment: CommentData;
-  showHeader?: boolean;
-  overrides?: Partial<GlobalOverrides & CommentOverrides>;
-}
+export type InboxNotificationAvatarProps = AvatarProps;
 
 const InboxNotificationLayout = forwardRef<
   HTMLAnchorElement,
@@ -156,25 +166,50 @@ const InboxNotificationLayout = forwardRef<
 >(
   (
     {
-      inboxNotificationId,
+      inboxNotification,
       children,
       aside,
       title,
       date,
       unread,
+      markAsReadOnClick,
+      onClick,
+      href,
       showActions,
       overrides,
       components,
       className,
+      asChild,
       ...props
     },
     forwardedRef
   ) => {
     const $ = useOverrides(overrides);
     const { Anchor } = useComponents(components);
+    const Component = asChild ? Slot : Anchor;
     const [isMoreActionOpen, setMoreActionOpen] = useState(false);
     const { useMarkInboxNotificationAsRead } = useLiveblocksContextBundle();
     const markInboxNotificationAsRead = useMarkInboxNotificationAsRead();
+
+    const handleClick = useCallback(
+      (event: ReactMouseEvent<HTMLAnchorElement, MouseEvent>) => {
+        onClick?.(event);
+
+        const shouldMarkAsReadOnClick = markAsReadOnClick ?? Boolean(href);
+
+        if (unread && shouldMarkAsReadOnClick) {
+          markInboxNotificationAsRead(inboxNotification.id);
+        }
+      },
+      [
+        href,
+        inboxNotification.id,
+        markAsReadOnClick,
+        markInboxNotificationAsRead,
+        onClick,
+        unread,
+      ]
+    );
 
     const stopPropagation = useCallback((event: SyntheticEvent) => {
       event.stopPropagation();
@@ -188,19 +223,19 @@ const InboxNotificationLayout = forwardRef<
       []
     );
 
-    const handleMoreClick = useCallback((event: MouseEvent) => {
+    const handleMoreClick = useCallback((event: ReactMouseEvent) => {
       event.preventDefault();
       event.stopPropagation();
       setMoreActionOpen((open) => !open);
     }, []);
 
     const handleMarkAsRead = useCallback(() => {
-      markInboxNotificationAsRead(inboxNotificationId);
-    }, [inboxNotificationId, markInboxNotificationAsRead]);
+      markInboxNotificationAsRead(inboxNotification.id);
+    }, [inboxNotification.id, markInboxNotificationAsRead]);
 
     return (
       <TooltipProvider>
-        <Anchor
+        <Component
           className={classNames(
             "lb-root lb-inbox-notification",
             showActions === "hover" &&
@@ -210,10 +245,13 @@ const InboxNotificationLayout = forwardRef<
           )}
           dir={$.dir}
           data-unread={unread ? "" : undefined}
+          data-kind={inboxNotification.kind}
+          onClick={handleClick}
+          href={href}
           {...props}
           ref={forwardedRef}
         >
-          <div className="lb-inbox-notification-aside">{aside}</div>
+          {aside && <div className="lb-inbox-notification-aside">{aside}</div>}
           <div className="lb-inbox-notification-content">
             <div className="lb-inbox-notification-header">
               <span className="lb-inbox-notification-title">{title}</span>
@@ -270,11 +308,23 @@ const InboxNotificationLayout = forwardRef<
             </div>
             <div className="lb-inbox-notification-body">{children}</div>
           </div>
-        </Anchor>
+        </Component>
       </TooltipProvider>
     );
   }
 );
+
+function InboxNotificationIcon({
+  className,
+  ...props
+}: InboxNotificationIconProps) {
+  return (
+    <div
+      className={classNames("lb-inbox-notification-icon", className)}
+      {...props}
+    />
+  );
+}
 
 function InboxNotificationAvatar({
   className,
@@ -286,154 +336,6 @@ function InboxNotificationAvatar({
       {...props}
     />
   );
-}
-
-function InboxNotificationComment({
-  comment,
-  showHeader = true,
-  overrides,
-  className,
-  ...props
-}: InboxNotificationCommentProps) {
-  const $ = useOverrides(overrides);
-
-  return (
-    <div
-      className={classNames(
-        "lb-root lb-inbox-notification-comment lb-comment",
-        className
-      )}
-      {...props}
-    >
-      {showHeader && (
-        <div className="lb-comment-header">
-          <User className="lb-comment-author" userId={comment.userId} />
-        </div>
-      )}
-      <div className="lb-comment-content">
-        {comment.body ? (
-          <>
-            <CommentPrimitive.Body
-              className="lb-comment-body"
-              body={comment.body}
-              components={{
-                Mention: CommentMention,
-                Link: CommentNonInteractiveLink,
-              }}
-            />
-            {comment.reactions.length > 0 && (
-              <div className="lb-comment-reactions">
-                {comment.reactions.map((reaction) => (
-                  <CommentNonInteractiveReaction
-                    key={reaction.emoji}
-                    reaction={reaction}
-                    overrides={overrides}
-                    disabled
-                  />
-                ))}
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="lb-comment-body">
-            <p className="lb-comment-deleted">{$.COMMENT_DELETED}</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/**
- * Find the last comment with a mention for the given user ID,
- * unless the comment was created by the user themselves.
- */
-function findLastCommentWithMentionedId(
-  comments: CommentData[],
-  mentionedId: string
-) {
-  for (let i = comments.length - 1; i >= 0; i--) {
-    const comment = comments[i];
-
-    if (comment.userId === mentionedId) {
-      continue;
-    }
-
-    if (comment.body) {
-      const mentionedIds = getMentionedIdsFromCommentBody(comment.body);
-
-      if (mentionedIds.includes(mentionedId)) {
-        return comment;
-      }
-    }
-  }
-
-  return;
-}
-
-function getUserIdsFromComments(comments: CommentData[]) {
-  return Array.from(new Set(comments.map((comment) => comment.userId)));
-}
-
-function generateInboxNotificationThreadContents(
-  inboxNotification: InboxNotificationThreadData,
-  thread: ThreadData<BaseMetadata>,
-  userId: string
-): InboxNotificationThreadContents {
-  const unreadComments = thread.comments.filter((comment) => {
-    if (!comment.body) {
-      return false;
-    }
-
-    return inboxNotification.readAt
-      ? comment.createdAt > inboxNotification.readAt &&
-          comment.createdAt <= inboxNotification.notifiedAt
-      : comment.createdAt <= inboxNotification.notifiedAt;
-  });
-
-  // If the thread is read, show the last comments.
-  if (unreadComments.length === 0) {
-    const lastComments = thread.comments
-      .filter((comment) => comment.body)
-      .slice(-INBOX_NOTIFICATION_THREAD_MAX_COMMENTS);
-
-    return {
-      type: "comments",
-      unread: false,
-      comments: lastComments,
-      userIds: getUserIdsFromComments(lastComments),
-      date: inboxNotification.notifiedAt,
-    };
-  }
-
-  const commentWithMention = findLastCommentWithMentionedId(
-    unreadComments,
-    userId
-  );
-
-  // If the thread contains one or more mentions for the current user, show the last comment with a mention.
-  if (commentWithMention) {
-    return {
-      type: "mention",
-      unread: true,
-      comments: [commentWithMention],
-      userIds: [commentWithMention.userId],
-      date: commentWithMention.createdAt,
-    };
-  }
-
-  const lastUnreadComments = unreadComments.slice(
-    -INBOX_NOTIFICATION_THREAD_MAX_COMMENTS
-  );
-
-  // Otherwise, show the last unread comments.
-  return {
-    type: "comments",
-    unread: true,
-    comments: lastUnreadComments,
-    userIds: getUserIdsFromComments(unreadComments),
-    date: inboxNotification.notifiedAt,
-  };
 }
 
 /**
@@ -457,9 +359,10 @@ const InboxNotificationThread = forwardRef<
     const $ = useOverrides(overrides);
     const {
       useRoomInfo,
-      [kInternal]: { useThreadFromCache, useCurrentUserId },
+      useInboxNotificationThread,
+      [kInternal]: { useCurrentUserId },
     } = useLiveblocksContextBundle();
-    const thread = useThreadFromCache(inboxNotification.threadId);
+    const thread = useInboxNotificationThread(inboxNotification.id);
     const currentUserId = useCurrentUserId();
     // TODO: If you provide `href` (or plan to), we shouldn't run this hook. We should find a way to conditionally run it.
     //       Because of batching and the fact that the same hook will be called within <Room /> in the notification's title,
@@ -568,7 +471,7 @@ const InboxNotificationThread = forwardRef<
 
     return (
       <InboxNotificationLayout
-        inboxNotificationId={inboxNotification.id}
+        inboxNotification={inboxNotification}
         aside={aside}
         title={title}
         date={date}
@@ -576,6 +479,7 @@ const InboxNotificationThread = forwardRef<
         overrides={overrides}
         href={resolvedHref}
         showActions={showActions}
+        markAsReadOnClick={false}
         {...props}
         ref={forwardedRef}
       >
@@ -585,9 +489,81 @@ const InboxNotificationThread = forwardRef<
   }
 );
 
-const defaultInboxNotificationKinds: InboxNotificationKinds = {
-  thread: InboxNotificationThread,
-};
+/**
+ * Displays a custom notification kind.
+ */
+const InboxNotificationCustom = forwardRef<
+  HTMLAnchorElement,
+  InboxNotificationCustomProps
+>(
+  (
+    {
+      inboxNotification,
+      showActions = "hover",
+      title,
+      aside,
+      children,
+      overrides,
+      ...props
+    },
+    forwardedRef
+  ) => {
+    const unread = useMemo(() => {
+      return (
+        !inboxNotification.readAt ||
+        inboxNotification.notifiedAt > inboxNotification.readAt
+      );
+    }, [inboxNotification.notifiedAt, inboxNotification.readAt]);
+
+    return (
+      <InboxNotificationLayout
+        inboxNotification={inboxNotification}
+        aside={aside}
+        title={title}
+        date={inboxNotification.notifiedAt}
+        unread={unread}
+        overrides={overrides}
+        showActions={showActions}
+        {...props}
+        ref={forwardedRef}
+      >
+        {children}
+      </InboxNotificationLayout>
+    );
+  }
+);
+
+const InboxNotificationCustomMissing = forwardRef<
+  HTMLAnchorElement,
+  Omit<InboxNotificationCustomProps, "children" | "title" | "aside">
+>(({ inboxNotification, ...props }, forwardedRef) => {
+  return (
+    <InboxNotificationCustom
+      inboxNotification={inboxNotification}
+      {...props}
+      title={
+        <>
+          Custom notification kind <code>{inboxNotification.kind}</code> is not
+          handled
+        </>
+      }
+      aside={
+        <InboxNotificationIcon>
+          <MissingIcon />
+        </InboxNotificationIcon>
+      }
+      ref={forwardedRef}
+      data-missing=""
+    >
+      {/* TODO: Add link to the docs */}
+      Notifications of this kind won’t be displayed in production. Use the{" "}
+      <code>kinds</code> prop to define how they should be rendered.
+    </InboxNotificationCustom>
+  );
+});
+
+// Keeps track of which inbox notification kinds it has warned about already.
+const inboxNotificationKindsWarnings: Set<string> = new Set();
 
 /**
  * Displays a single inbox notification.
@@ -606,34 +582,62 @@ const defaultInboxNotificationKinds: InboxNotificationKinds = {
 export const InboxNotification = Object.assign(
   forwardRef<HTMLAnchorElement, InboxNotificationProps>(
     ({ inboxNotification, kinds, ...props }, forwardedRef) => {
-      const { thread: InboxNotificationThread } = useMemo(
-        () =>
-          ({
-            ...defaultInboxNotificationKinds,
-            ...kinds,
-          }) as InboxNotificationKindsWithRef,
-        [kinds]
-      );
-
       switch (inboxNotification.kind) {
-        case "thread":
+        case "thread": {
+          const ResolvedInboxNotificationThread =
+            kinds?.thread ?? InboxNotificationThread;
+
           return (
-            <InboxNotificationThread
+            <ResolvedInboxNotificationThread
               inboxNotification={inboxNotification}
               {...props}
               ref={forwardedRef}
             />
           );
+        }
 
-        default:
-          return assertNever(
-            inboxNotification.kind,
-            "Unexpected inbox notification kind"
+        default: {
+          const ResolvedInboxNotificationCustom =
+            kinds?.[inboxNotification.kind];
+
+          if (!ResolvedInboxNotificationCustom) {
+            if (process.env.NODE_ENV !== "production") {
+              if (!inboxNotificationKindsWarnings.has(inboxNotification.kind)) {
+                inboxNotificationKindsWarnings.add(inboxNotification.kind);
+                // TODO: Add link to the docs
+                console.warn(
+                  `Custom notification kind "${inboxNotification.kind}" is not handled so notifications of this kind will not be displayed in production. Use the kinds prop to define how they should be rendered.`
+                );
+              }
+
+              return (
+                <InboxNotificationCustomMissing
+                  inboxNotification={inboxNotification}
+                  {...props}
+                  ref={forwardedRef}
+                />
+              );
+            } else {
+              // Don't render anything in production if this inbox notification kind is not defined.
+              return null;
+            }
+          }
+
+          return (
+            <ResolvedInboxNotificationCustom
+              inboxNotification={inboxNotification}
+              {...props}
+              ref={forwardedRef}
+            />
           );
+        }
       }
     }
   ),
   {
     Thread: InboxNotificationThread,
+    Custom: InboxNotificationCustom,
+    Icon: InboxNotificationIcon,
+    Avatar: InboxNotificationAvatar,
   }
 );

@@ -2,10 +2,13 @@ import { ClientSideSuspense } from "@liveblocks/react";
 import clsx from "clsx";
 import Link from "next/link";
 import { ComponentProps } from "react";
-import { ShareIcon } from "../../icons";
-import { Button } from "../../primitives/Button";
-import { Skeleton } from "../../primitives/Skeleton";
-import { InboxPopover } from "../Inbox";
+import { InboxPopover } from "@/components/Inbox";
+import { ShareIcon } from "@/icons";
+import { renameDocument } from "@/lib/actions";
+import { useInitialDocument } from "@/lib/hooks";
+import { Button } from "@/primitives/Button";
+import { Skeleton } from "@/primitives/Skeleton";
+import { Document } from "@/types";
 import { Logo } from "../Logo";
 import { ShareDialog } from "../ShareDialog";
 import { DocumentHeaderAvatars } from "./DocumentHeaderAvatars";
@@ -13,14 +16,12 @@ import { DocumentHeaderName } from "./DocumentHeaderName";
 import styles from "./DocumentHeader.module.css";
 
 interface Props extends ComponentProps<"header"> {
-  onDocumentRename: (name: string) => void;
+  documentId: Document["id"];
 }
 
-export function DocumentHeader({
-  onDocumentRename,
-  className,
-  ...props
-}: Props) {
+export function DocumentHeader({ documentId, className, ...props }: Props) {
+  const initialDocument = useInitialDocument();
+
   return (
     <header className={clsx(className, styles.header)} {...props}>
       <div className={styles.logo}>
@@ -29,8 +30,18 @@ export function DocumentHeader({
         </Link>
       </div>
       <div className={styles.document}>
-        <ClientSideSuspense fallback={null}>
-          {() => <DocumentHeaderName onDocumentRename={onDocumentRename} />}
+        <ClientSideSuspense
+          fallback={
+            <span className={styles.documentNameFallback}>
+              {initialDocument.name}
+            </span>
+          }
+        >
+          {() => (
+            <DocumentHeaderName
+              onDocumentRename={(name) => renameDocument({ documentId, name })}
+            />
+          )}
         </ClientSideSuspense>
       </div>
       <div className={styles.collaboration}>
@@ -39,9 +50,20 @@ export function DocumentHeader({
             {() => <DocumentHeaderAvatars />}
           </ClientSideSuspense>
         </div>
-        <ShareDialog>
-          <Button icon={<ShareIcon />}>Share</Button>
-        </ShareDialog>
+        <ClientSideSuspense
+          fallback={
+            <Button icon={<ShareIcon />} disabled={true}>
+              Share
+            </Button>
+          }
+        >
+          {() => (
+            <ShareDialog>
+              <Button icon={<ShareIcon />}>Share</Button>
+            </ShareDialog>
+          )}
+        </ClientSideSuspense>
+
         <InboxPopover align="end" sideOffset={4} />
       </div>
     </header>

@@ -1,7 +1,10 @@
+import type {
+  BaseMetadata,
+  ThreadData,
+  ThreadDataWithDeleteInfo,
+  ThreadDeleteInfo,
+} from "../protocol/Comments";
 import { applyThreadUpdates } from "../store";
-import type { BaseMetadata } from "../types/BaseMetadata";
-import type { ThreadData, ThreadDataWithDeleteInfo } from "../types/ThreadData";
-import type { ThreadDeleteInfo } from "../types/ThreadDeleteInfo";
 
 describe("applyThreadUpdates", () => {
   const thread1: ThreadDataWithDeleteInfo = {

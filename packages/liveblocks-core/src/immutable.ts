@@ -277,20 +277,20 @@ function getParentsPath(node: LiveNode): Array<string | number> {
 // Redux packages. We should be able to reimplement those using the new
 // `.toImmutable()` APIs.
 //
-export function legacy_patchImmutableObject<S extends JsonObject>(
-  state: S,
+export function legacy_patchImmutableObject<TState extends JsonObject>(
+  state: TState,
   updates: StorageUpdate[]
-): S {
+): TState {
   return updates.reduce(
     (state, update) => legacy_patchImmutableObjectWithUpdate(state, update),
     state
   );
 }
 
-function legacy_patchImmutableObjectWithUpdate<S extends JsonObject>(
-  state: S,
+function legacy_patchImmutableObjectWithUpdate<TState extends JsonObject>(
+  state: TState,
   update: StorageUpdate
-): S {
+): TState {
   const path = getParentsPath(update.node);
   return legacy_patchImmutableNode(state, path, update);
 }

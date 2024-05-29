@@ -18,8 +18,9 @@ export type Props = Omit<
   };
 
 export default function Button(props: Props) {
-  const { enabled, ...rest } = props;
-  const opacity = enabled ?? true ? undefined : 0.7;
+  let { enabled, ...rest } = props;
+  enabled ??= true;
+  const opacity = enabled ? undefined : 0.7;
   return (
     <button
       {...rest}
@@ -30,6 +31,7 @@ export default function Button(props: Props) {
         opacity,
       }}
       title={`#${props.id}`}
+      disabled={!enabled}
     >
       <strong>{props.children}</strong>
       <br />

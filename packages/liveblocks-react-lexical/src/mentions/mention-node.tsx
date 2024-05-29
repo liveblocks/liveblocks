@@ -22,7 +22,7 @@ export type SerializedMentionNode = Spread<
 
 export function createMentionNodeFactory(
   Component: ComponentType<MentionProps>
-) {
+): any {
   class MentionNode extends DecoratorNode<JSX.Element> {
     __id: string;
 

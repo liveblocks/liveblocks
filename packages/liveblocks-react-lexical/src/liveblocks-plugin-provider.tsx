@@ -8,7 +8,7 @@ import type {
   LsonObject,
 } from "@liveblocks/core";
 import { kInternal } from "@liveblocks/core";
-import { useRoomContextBundle } from "@liveblocks/react";
+import { useClient, useRoomContextBundle } from "@liveblocks/react";
 import LiveblocksProvider from "@liveblocks/yjs";
 import type { ComponentType } from "react";
 import React, {
@@ -74,10 +74,12 @@ export const LiveblocksPluginProvider = ({
   // initialEditorState = undefined,
   children,
 }: LiveblocksPluginProviderProps): JSX.Element => {
+  const client = useClient();
+  const hasResolveMentionSuggestions =
+    client[kInternal].resolveMentionSuggestions !== undefined;
   const {
     useSelf,
     useRoom,
-    [kInternal]: { hasResolveMentionSuggestions },
   } = useRoomContextBundle();
   const [editor] = useLexicalComposerContext();
   const room = useRoom();

@@ -41,6 +41,7 @@ import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
+import { objectToQuery } from "./lib/objectToQuery";
 import { asPos } from "./lib/position";
 import type { Resolve } from "./lib/Resolve";
 import type { QueryParams } from "./lib/url";
@@ -50,6 +51,25 @@ import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 import type { ClientMsg, UpdateYDocClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
+import type {
+  BaseMetadata,
+  CommentBody,
+  CommentData,
+  CommentDataPlain,
+  CommentUserReaction,
+  CommentUserReactionPlain,
+  QueryMetadata,
+  ThreadData,
+  ThreadDataPlain,
+  ThreadDeleteInfo,
+  ThreadDeleteInfoPlain,
+} from "./protocol/Comments";
+import type {
+  InboxNotificationData,
+  InboxNotificationDataPlain,
+  InboxNotificationDeleteInfo,
+  InboxNotificationDeleteInfoPlain,
+} from "./protocol/InboxNotifications";
 import type { Op } from "./protocol/Op";
 import { isAckOp, OpCode } from "./protocol/Op";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
@@ -68,22 +88,7 @@ import type { ImmutableRef } from "./refs/ImmutableRef";
 import { OthersRef } from "./refs/OthersRef";
 import { PatchableRef } from "./refs/PatchableRef";
 import { DerivedRef, ValueRef } from "./refs/ValueRef";
-import type { BaseMetadata } from "./types/BaseMetadata";
-import type { CommentBody } from "./types/CommentBody";
-import type { CommentData, CommentDataPlain } from "./types/CommentData";
-import type {
-  CommentUserReaction,
-  CommentUserReactionPlain,
-} from "./types/CommentReaction";
 import type * as DevTools from "./types/DevToolsTreeNode";
-import type {
-  InboxNotificationData,
-  InboxNotificationDataPlain,
-} from "./types/InboxNotificationData";
-import type {
-  InboxNotificationDeleteInfo,
-  InboxNotificationDeleteInfoPlain,
-} from "./types/InboxNotificationDeleteInfo";
 import type {
   IWebSocket,
   IWebSocketCloseEvent,
@@ -94,11 +99,6 @@ import type { NodeMap } from "./types/NodeMap";
 import type { InternalOthersEvent, OthersEvent } from "./types/Others";
 import type { PartialNullable } from "./types/PartialNullable";
 import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
-import type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
-import type {
-  ThreadDeleteInfo,
-  ThreadDeleteInfoPlain,
-} from "./types/ThreadDeleteInfo";
 import type { User } from "./types/User";
 import { PKG_VERSION } from "./version";
 
@@ -111,31 +111,25 @@ type TimeoutID = ReturnType<typeof setTimeout>;
 // The type LegacyOthersEvent is used in the signature of some public APIs, and
 // as such should remain backward compatible.
 //
-type LegacyOthersEvent<
-  TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta,
-> =
-  | { type: "leave"; user: User<TPresence, TUserMeta> }
-  | { type: "enter"; user: User<TPresence, TUserMeta> }
+type LegacyOthersEvent<P extends JsonObject, U extends BaseUserMeta> =
+  | { type: "leave"; user: User<P, U> }
+  | { type: "enter"; user: User<P, U> }
   | {
       type: "update";
-      user: User<TPresence, TUserMeta>;
-      updates: Partial<TPresence>;
+      user: User<P, U>;
+      updates: Partial<P>;
     }
   | { type: "reset" };
 
-type LegacyOthersEventCallback<
-  TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta,
-> = (
-  others: readonly User<TPresence, TUserMeta>[],
-  event: LegacyOthersEvent<TPresence, TUserMeta>
+type LegacyOthersEventCallback<P extends JsonObject, U extends BaseUserMeta> = (
+  others: readonly User<P, U>[],
+  event: LegacyOthersEvent<P, U>
 ) => void;
 
 export type RoomEventMessage<
-  TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json,
+  P extends JsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
 > = {
   /**
    * The connection ID of the client that sent the event.
@@ -148,8 +142,8 @@ export type RoomEventMessage<
    * If this message was broadcast from the server (via the REST API), then
    * this value will be null.
    */
-  user: User<TPresence, TUserMeta> | null;
-  event: TRoomEvent;
+  user: User<P, U> | null;
+  event: E;
 };
 
 export type StorageStatus =
@@ -163,20 +157,20 @@ export type StorageStatus =
   | "synchronized";
 
 type RoomEventCallbackMap<
-  TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json,
+  P extends JsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
 > = {
   connection: Callback<LegacyConnectionStatus>; // Old/deprecated API
   status: Callback<Status>; // New/recommended API
   "lost-connection": Callback<LostConnectionEvent>;
-  event: Callback<RoomEventMessage<TPresence, TUserMeta, TRoomEvent>>;
-  "my-presence": Callback<TPresence>;
+  event: Callback<RoomEventMessage<P, U, E>>;
+  "my-presence": Callback<P>;
   //
   // NOTE: LegacyOthersEventCallback is the only one not taking a Callback<T>
   // shape, since this API historically has taken _two_ callback arguments
   // instead of just one.
-  others: LegacyOthersEventCallback<TPresence, TUserMeta>;
+  others: LegacyOthersEventCallback<P, U>;
   error: Callback<Error>;
   history: Callback<HistoryEvent>;
   "storage-status": Callback<StorageStatus>;
@@ -277,11 +271,11 @@ export type RoomEventName = Extract<
 >;
 
 export type RoomEventCallbackFor<
-  E extends RoomEventName,
-  TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json,
-> = RoomEventCallbackMap<TPresence, TUserMeta, TRoomEvent>[E];
+  K extends RoomEventName,
+  P extends JsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
+> = RoomEventCallbackMap<P, U, E>[K];
 
 export type RoomEventCallback = RoomEventCallbackFor<
   RoomEventName,
@@ -300,10 +294,10 @@ export type BroadcastOptions = {
 };
 
 type SubscribeFn<
-  TPresence extends JsonObject,
+  P extends JsonObject,
   _TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json,
+  U extends BaseUserMeta,
+  E extends Json,
 > = {
   /**
    * Subscribes to changes made on any Live structure. Returns an unsubscribe function.
@@ -324,7 +318,7 @@ type SubscribeFn<
    *   // Do something
    * });
    */
-  (type: "my-presence", listener: Callback<TPresence>): () => void;
+  (type: "my-presence", listener: Callback<P>): () => void;
 
   /**
    * Subscribe to the other users updates.
@@ -339,10 +333,7 @@ type SubscribeFn<
    * });
    *
    */
-  (
-    type: "others",
-    listener: LegacyOthersEventCallback<TPresence, TUserMeta>
-  ): () => void;
+  (type: "others", listener: LegacyOthersEventCallback<P, U>): () => void;
 
   /**
    * Subscribe to events broadcasted by {@link Room.broadcastEvent}
@@ -357,10 +348,7 @@ type SubscribeFn<
    * });
    *
    */
-  (
-    type: "event",
-    listener: Callback<RoomEventMessage<TPresence, TUserMeta, TRoomEvent>>
-  ): () => void;
+  (type: "event", listener: Callback<RoomEventMessage<P, U, E>>): () => void;
 
   /**
    * Subscribe to errors thrown in the room.
@@ -493,18 +481,16 @@ type SubscribeFn<
   (type: "storage-status", listener: Callback<StorageStatus>): () => void;
 };
 
-export type GetThreadsOptions<TThreadMetadata extends BaseMetadata> = {
+export type GetThreadsOptions<M extends BaseMetadata> = {
   query?: {
-    metadata?: Partial<TThreadMetadata>;
+    metadata?: Partial<QueryMetadata<M>>;
   };
   since?: Date;
 };
 
-type CommentsApi = {
-  getThreads<TThreadMetadata extends BaseMetadata = never>(
-    options?: GetThreadsOptions<TThreadMetadata>
-  ): Promise<{
-    threads: ThreadData<TThreadMetadata>[];
+type CommentsApi<M extends BaseMetadata> = {
+  getThreads(options?: GetThreadsOptions<M>): Promise<{
+    threads: ThreadData<M>[];
     inboxNotifications: InboxNotificationData[];
     deletedThreads: ThreadDeleteInfo[];
     deletedInboxNotifications: InboxNotificationDeleteInfo[];
@@ -512,25 +498,23 @@ type CommentsApi = {
       requestedAt: Date;
     };
   }>;
-  getThread<TThreadMetadata extends BaseMetadata = never>(options: {
-    threadId: string;
-  }): Promise<
+  getThread(options: { threadId: string }): Promise<
     | {
-        thread: ThreadData<TThreadMetadata>;
+        thread: ThreadData<M>;
         inboxNotification?: InboxNotificationData;
       }
     | undefined
   >;
-  createThread<TThreadMetadata extends BaseMetadata = never>(options: {
+  createThread(options: {
     threadId: string;
     commentId: string;
-    metadata: TThreadMetadata | undefined;
+    metadata: M | undefined;
     body: CommentBody;
-  }): Promise<ThreadData<TThreadMetadata>>;
-  editThreadMetadata<TThreadMetadata extends BaseMetadata = never>(options: {
-    metadata: PartialNullable<TThreadMetadata>;
+  }): Promise<ThreadData<M>>;
+  editThreadMetadata(options: {
+    metadata: PartialNullable<M>;
     threadId: string;
-  }): Promise<TThreadMetadata>;
+  }): Promise<M>;
   createComment(options: {
     threadId: string;
     commentId: string;
@@ -557,12 +541,12 @@ type CommentsApi = {
   }): Promise<void>;
 };
 
-// TODO: Add TThreadMetadata
+// TODO: Add M in 2.0
 export type Room<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json,
+  P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
 > = {
   /**
    * @private
@@ -571,7 +555,8 @@ export type Room<
    * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
    * will probably happen if you do.
    */
-  readonly [kInternal]: PrivateRoomApi;
+  // TODO Change `never` to `M` in 2.0
+  readonly [kInternal]: PrivateRoomApi<never>;
 
   /**
    * The id of the room.
@@ -603,7 +588,7 @@ export type Room<
    * a status badge for your Liveblocks connection.
    */
   getStatus(): Status;
-  readonly subscribe: SubscribeFn<TPresence, TStorage, TUserMeta, TRoomEvent>;
+  readonly subscribe: SubscribeFn<P, S, U, E>;
 
   /**
    * Room's history contains functions that let you undo and redo operation made on by the current client on the presence and storage.
@@ -617,7 +602,7 @@ export type Room<
    * @example
    * const user = room.getSelf();
    */
-  getSelf(): User<TPresence, TUserMeta> | null;
+  getSelf(): User<P, U> | null;
 
   /**
    * Gets the presence of the current user.
@@ -625,7 +610,7 @@ export type Room<
    * @example
    * const presence = room.getPresence();
    */
-  getPresence(): TPresence;
+  getPresence(): P;
 
   /**
    * Gets all the other users in the room.
@@ -633,7 +618,7 @@ export type Room<
    * @example
    * const others = room.getOthers();
    */
-  getOthers(): readonly User<TPresence, TUserMeta>[];
+  getOthers(): readonly User<P, U>[];
 
   /**
    * Updates the presence of the current user. Only pass the properties you want to update. No need to send the full presence.
@@ -648,7 +633,7 @@ export type Room<
    * // presence is equivalent to { x: 0, y: 0 }
    */
   updatePresence(
-    patch: Partial<TPresence>,
+    patch: Partial<P>,
     options?: {
       /**
        * Whether or not the presence should have an impact on the undo/redo history.
@@ -684,7 +669,7 @@ export type Room<
    *   }
    * });
    */
-  broadcastEvent(event: TRoomEvent, options?: BroadcastOptions): void;
+  broadcastEvent(event: E, options?: BroadcastOptions): void;
 
   /**
    * Get the room's storage asynchronously.
@@ -694,7 +679,7 @@ export type Room<
    * const { root } = await room.getStorage();
    */
   getStorage(): Promise<{
-    root: LiveObject<TStorage>;
+    root: LiveObject<S>;
   }>;
 
   /**
@@ -704,16 +689,16 @@ export type Room<
    * @example
    * const root = room.getStorageSnapshot();
    */
-  getStorageSnapshot(): LiveObject<TStorage> | null;
+  getStorageSnapshot(): LiveObject<S> | null;
 
   readonly events: {
     readonly status: Observable<Status>;
     readonly lostConnection: Observable<LostConnectionEvent>;
 
-    readonly customEvent: Observable<RoomEventMessage<TPresence, TUserMeta, TRoomEvent>>; // prettier-ignore
-    readonly self: Observable<User<TPresence, TUserMeta>>;
-    readonly myPresence: Observable<TPresence>;
-    readonly others: Observable<OthersEvent<TPresence, TUserMeta>>;
+    readonly customEvent: Observable<RoomEventMessage<P, U, E>>; // prettier-ignore
+    readonly self: Observable<User<P, U>>;
+    readonly myPresence: Observable<P>;
+    readonly others: Observable<OthersEvent<P, U>>;
     readonly error: Observable<LiveblocksError>;
     readonly storage: Observable<StorageUpdate[]>;
     readonly history: Observable<HistoryEvent>;
@@ -798,7 +783,7 @@ export type Room<
  * Liveblocks, NEVER USE ANY OF THESE METHODS DIRECTLY, because bad things
  * will probably happen if you do.
  */
-type PrivateRoomApi = {
+export type PrivateRoomApi<M extends BaseMetadata> = {
   // For introspection in unit tests only
   presenceBuffer: Json | undefined;
   undoStack: readonly (readonly Readonly<HistoryOp<JsonObject>>[])[];
@@ -817,7 +802,7 @@ type PrivateRoomApi = {
     rawSend(data: string): void;
   };
 
-  comments: CommentsApi;
+  comments: CommentsApi<M>;
 
   notifications: {
     getRoomNotificationSettings(): Promise<RoomNotificationSettings>;
@@ -839,11 +824,11 @@ function makeIdFactory(connectionId: number): IdFactory {
   return () => `${connectionId}:${count++}`;
 }
 
-type HistoryOp<TPresence extends JsonObject> =
+type HistoryOp<P extends JsonObject> =
   | Op
   | {
       readonly type: "presence";
-      readonly data: TPresence;
+      readonly data: P;
     };
 
 type IdFactory = () => string;
@@ -860,10 +845,10 @@ type DynamicSessionInfo = {
 };
 
 type RoomState<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json,
+  P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
 > = {
   /**
    * All pending changes that yet need to be synced.
@@ -878,10 +863,10 @@ type RoomState<
 
     // Queued-up "my presence" updates to be flushed at the earliest convenience
     presenceUpdates:
-      | { type: "partial"; data: Partial<TPresence> }
-      | { type: "full"; data: TPresence }
+      | { type: "partial"; data: Partial<P> }
+      | { type: "full"; data: P }
       | null;
-    messages: ClientMsg<TPresence, TRoomEvent>[];
+    messages: ClientMsg<P, E>[];
     storageOperations: Op[];
   };
 
@@ -894,25 +879,25 @@ type RoomState<
   //
   readonly staticSessionInfo: ValueRef<StaticSessionInfo | null>;
   readonly dynamicSessionInfo: ValueRef<DynamicSessionInfo | null>;
-  readonly myPresence: PatchableRef<TPresence>;
-  readonly others: OthersRef<TPresence, TUserMeta>;
+  readonly myPresence: PatchableRef<P>;
+  readonly others: OthersRef<P, U>;
 
   idFactory: IdFactory | null;
-  initialStorage?: TStorage;
+  initialStorage?: S;
 
   clock: number;
   opClock: number;
   readonly nodes: Map<string, LiveNode>;
-  root: LiveObject<TStorage> | undefined;
+  root: LiveObject<S> | undefined;
 
-  readonly undoStack: HistoryOp<TPresence>[][];
-  readonly redoStack: HistoryOp<TPresence>[][];
+  readonly undoStack: HistoryOp<P>[][];
+  readonly redoStack: HistoryOp<P>[][];
 
   /**
    * When history is paused, all operations will get queued up here. When
    * history is resumed, these operations get "committed" to the undo stack.
    */
-  pausedHistory: null | HistoryOp<TPresence>[];
+  pausedHistory: null | HistoryOp<P>[];
 
   /**
    * Place to collect all mutations during a batch. Ops will be sent over the
@@ -920,7 +905,7 @@ type RoomState<
    */
   activeBatch: {
     ops: Op[];
-    reverseOps: HistoryOp<TPresence>[];
+    reverseOps: HistoryOp<P>[];
     updates: {
       others: [];
       presence: boolean;
@@ -943,18 +928,18 @@ export type Polyfills = {
 };
 
 export type RoomInitializers<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
+  P extends JsonObject,
+  S extends LsonObject,
 > = Resolve<{
   /**
    * The initial Presence to use and announce when you enter the Room. The
    * Presence is available on all users in the Room (me & others).
    */
-  initialPresence: TPresence | ((roomId: string) => TPresence);
+  initialPresence: P | ((roomId: string) => P);
   /**
    * The initial Storage to use when entering a new Room.
    */
-  initialStorage?: TStorage | ((roomId: string) => TStorage);
+  initialStorage?: S | ((roomId: string) => S);
   /**
    * Whether or not the room automatically connects to Liveblock servers.
    * Default is true.
@@ -1054,7 +1039,7 @@ export class CommentsApiError extends Error {
 /**
  * Handles all Comments-related API calls.
  */
-function createCommentsApi(
+function createCommentsApi<M extends BaseMetadata>(
   roomId: string,
   getAuthValue: () => Promise<AuthValue>,
   fetchClientApi: (
@@ -1064,7 +1049,7 @@ function createCommentsApi(
     options?: RequestInit,
     params?: QueryParams
   ) => Promise<Response>
-): CommentsApi {
+): CommentsApi<M> {
   async function fetchCommentsApi(
     endpoint: string,
     params?: QueryParams,
@@ -1114,28 +1099,31 @@ function createCommentsApi(
     return body;
   }
 
-  async function getThreads<TThreadMetadata extends BaseMetadata = never>(
-    options?: GetThreadsOptions<TThreadMetadata>
-  ) {
+  async function getThreads<
+    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
+  >(options?: GetThreadsOptions<M>) {
+    let query: string | undefined;
+
+    if (options?.query) {
+      query = objectToQuery(options.query);
+    }
+
     const response = await fetchCommentsApi(
-      "/threads/search",
+      "/threads",
       {
         since: options?.since?.toISOString(),
+        query,
       },
       {
-        body: JSON.stringify({
-          ...(options?.query?.metadata && { metadata: options.query.metadata }),
-        }),
         headers: {
           "Content-Type": "application/json",
         },
-        method: "POST",
       }
     );
 
     if (response.ok) {
       const json = await (response.json() as Promise<{
-        data: ThreadDataPlain<TThreadMetadata>[];
+        data: ThreadDataPlain<M>[];
         inboxNotifications: InboxNotificationDataPlain[];
         deletedThreads: ThreadDeleteInfoPlain[];
         deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
@@ -1198,7 +1186,9 @@ function createCommentsApi(
     }
   }
 
-  async function createThread<TThreadMetadata extends BaseMetadata = never>({
+  async function createThread<
+    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
+  >({
     metadata,
     body,
     commentId,
@@ -1207,41 +1197,38 @@ function createCommentsApi(
     roomId: string;
     threadId: string;
     commentId: string;
-    metadata: TThreadMetadata | undefined;
+    metadata: M | undefined;
     body: CommentBody;
   }) {
-    const thread = await fetchJson<ThreadDataPlain<TThreadMetadata>>(
-      "/threads",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+    const thread = await fetchJson<ThreadDataPlain<M>>("/threads", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: threadId,
+        comment: {
+          id: commentId,
+          body,
         },
-        body: JSON.stringify({
-          id: threadId,
-          comment: {
-            id: commentId,
-            body,
-          },
-          metadata,
-        }),
-      }
-    );
+        metadata,
+      }),
+    });
 
     return convertToThreadData(thread);
   }
 
   async function editThreadMetadata<
-    TThreadMetadata extends BaseMetadata = never,
+    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
   >({
     metadata,
     threadId,
   }: {
     roomId: string;
-    metadata: PartialNullable<TThreadMetadata>;
+    metadata: PartialNullable<M>;
     threadId: string;
   }) {
-    return await fetchJson<TThreadMetadata>(
+    return await fetchJson<M>(
       `/threads/${encodeURIComponent(threadId)}/metadata`,
       {
         method: "POST",
@@ -1388,17 +1375,17 @@ const MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY = 50;
  * Initializes a new Room, and returns its public API.
  */
 export function createRoom<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json,
+  P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
 >(
   options: Omit<
-    RoomInitializers<TPresence, TStorage>,
+    RoomInitializers<P, S>,
     "autoConnect" | "shouldInitiallyConnect"
   >,
   config: RoomConfig
-): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
+): Room<P, S, U, E> {
   const initialPresence =
     typeof options.initialPresence === "function"
       ? options.initialPresence(config.roomId)
@@ -1439,7 +1426,7 @@ export function createRoom<
   );
 
   // The room's internal stateful context
-  const context: RoomState<TPresence, TStorage, TUserMeta, TRoomEvent> = {
+  const context: RoomState<P, S, U, E> = {
     buffer: {
       flushTimerID: undefined,
       lastFlushedAt: 0,
@@ -1456,7 +1443,7 @@ export function createRoom<
     staticSessionInfo: new ValueRef(null),
     dynamicSessionInfo: new ValueRef(null),
     myPresence: new PatchableRef(initialPresence),
-    others: new OthersRef<TPresence, TUserMeta>(),
+    others: new OthersRef<P, U>(),
 
     initialStorage,
     idFactory: null,
@@ -1628,7 +1615,9 @@ export function createRoom<
       }
 
       if (activeBatch) {
-        activeBatch.ops.push(...ops);
+        for (const op of ops) {
+          activeBatch.ops.push(op);
+        }
         for (const [key, value] of storageUpdates) {
           activeBatch.updates.storageUpdates.set(
             key,
@@ -1670,11 +1659,10 @@ export function createRoom<
     status: makeEventSource<Status>(), // New/recommended API
     lostConnection: makeEventSource<LostConnectionEvent>(),
 
-    customEvent:
-      makeEventSource<RoomEventMessage<TPresence, TUserMeta, TRoomEvent>>(),
-    self: makeEventSource<User<TPresence, TUserMeta>>(),
-    myPresence: makeEventSource<TPresence>(),
-    others: makeEventSource<OthersEvent<TPresence, TUserMeta>>(),
+    customEvent: makeEventSource<RoomEventMessage<P, U, E>>(),
+    self: makeEventSource<User<P, U>>(),
+    myPresence: makeEventSource<P>(),
+    others: makeEventSource<OthersEvent<P, U>>(),
     error: makeEventSource<LiveblocksError>(),
     storage: makeEventSource<StorageUpdate[]>(),
     history: makeEventSource<HistoryEvent>(),
@@ -1733,6 +1721,43 @@ export function createRoom<
     });
   }
 
+  async function createTextMention(userId: string, mentionId: string) {
+    if (!managedSocket.authValue) {
+      throw new Error("Not authorized");
+    }
+
+    return fetchClientApi(
+      config.roomId,
+      "/text-mentions",
+      managedSocket.authValue,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          mentionId,
+        }),
+      }
+    );
+  }
+
+  async function deleteTextMention(mentionId: string) {
+    if (!managedSocket.authValue) {
+      throw new Error("Not authorized");
+    }
+
+    return fetchClientApi(
+      config.roomId,
+      `/text-mentions/${mentionId}`,
+      managedSocket.authValue,
+      {
+        method: "DELETE",
+      }
+    );
+  }
+
   async function reportTextEditor(type: "lexical", rootKey: string) {
     return httpPostToRoom("/text-metadata", {
       type,
@@ -1740,7 +1765,7 @@ export function createRoom<
     });
   }
 
-  function sendMessages(messages: ClientMsg<TPresence, TRoomEvent>[]) {
+  function sendMessages(messages: ClientMsg<P, E>[]) {
     const serializedPayload = JSON.stringify(messages);
     const nonce = context.dynamicSessionInfo.current?.nonce;
     if (config.unstable_fallbackToHTTP && nonce) {
@@ -1768,11 +1793,7 @@ export function createRoom<
     context.staticSessionInfo as ImmutableRef<StaticSessionInfo | null>,
     context.dynamicSessionInfo as ImmutableRef<DynamicSessionInfo | null>,
     context.myPresence,
-    (
-      staticSession,
-      dynamicSession,
-      myPresence
-    ): User<TPresence, TUserMeta> | null => {
+    (staticSession, dynamicSession, myPresence): User<P, U> | null => {
       if (staticSession === null || dynamicSession === null) {
         return null;
       } else {
@@ -1790,7 +1811,7 @@ export function createRoom<
     }
   );
 
-  let _lastSelf: Readonly<User<TPresence, TUserMeta>> | undefined;
+  let _lastSelf: Readonly<User<P, U>> | undefined;
   function notifySelfChanged(batchedUpdatesWrapper: (cb: () => void) => void) {
     const currSelf = self.current;
     if (currSelf !== null && currSelf !== _lastSelf) {
@@ -1803,7 +1824,7 @@ export function createRoom<
 
   // For use in DevTools
   const selfAsTreeNode = new DerivedRef(
-    self as ImmutableRef<User<TPresence, TUserMeta> | null>,
+    self as ImmutableRef<User<P, U> | null>,
     (me) => (me !== null ? userToTreeNode("Me", me) : null)
   );
 
@@ -1818,7 +1839,7 @@ export function createRoom<
     if (context.root !== undefined) {
       updateRoot(message.items, batchedUpdatesWrapper);
     } else {
-      context.root = LiveObject._fromItems<TStorage>(message.items, pool);
+      context.root = LiveObject._fromItems<S>(message.items, pool);
     }
 
     // Populate missing top-level keys using `initialStorage`
@@ -1856,7 +1877,7 @@ export function createRoom<
   }
 
   function _addToRealUndoStack(
-    historyOps: HistoryOp<TPresence>[],
+    historyOps: HistoryOp<P>[],
     batchedUpdatesWrapper: (cb: () => void) => void
   ) {
     // If undo stack is too large, we remove the older item
@@ -1869,7 +1890,7 @@ export function createRoom<
   }
 
   function addToUndoStack(
-    historyOps: HistoryOp<TPresence>[],
+    historyOps: HistoryOp<P>[],
     batchedUpdatesWrapper: (cb: () => void) => void
   ) {
     if (context.pausedHistory !== null) {
@@ -1882,7 +1903,7 @@ export function createRoom<
   type NotifyUpdates = {
     storageUpdates?: Map<string, StorageUpdate>;
     presence?: boolean;
-    others?: InternalOthersEvent<TPresence, TUserMeta>[];
+    others?: InternalOthersEvent<P, U>[];
   };
 
   function notify(
@@ -1924,7 +1945,7 @@ export function createRoom<
     );
   }
 
-  function applyOps<O extends HistoryOp<TPresence>>(
+  function applyOps<O extends HistoryOp<P>>(
     rawOps: readonly O[],
     isLocal: boolean
   ): {
@@ -1958,7 +1979,7 @@ export function createRoom<
       if (op.type === "presence") {
         const reverse = {
           type: "presence" as const,
-          data: {} as TPresence,
+          data: {} as P,
         };
 
         for (const key in op.data) {
@@ -2085,10 +2106,10 @@ export function createRoom<
   }
 
   function updatePresence(
-    patch: Partial<TPresence>,
+    patch: Partial<P>,
     options?: { addToHistory: boolean }
   ) {
-    const oldValues = {} as TPresence;
+    const oldValues = {} as P;
 
     if (context.buffer.presenceUpdates === null) {
       // try {
@@ -2104,7 +2125,7 @@ export function createRoom<
 
     for (const key in patch) {
       type K = typeof key;
-      const overrideValue: TPresence[K] | undefined = patch[key];
+      const overrideValue: P[K] | undefined = patch[key];
       if (overrideValue === undefined) {
         continue;
       }
@@ -2137,8 +2158,8 @@ export function createRoom<
   }
 
   function onUpdatePresenceMessage(
-    message: UpdatePresenceServerMsg<TPresence>
-  ): InternalOthersEvent<TPresence, TUserMeta> | undefined {
+    message: UpdatePresenceServerMsg<P>
+  ): InternalOthersEvent<P, U> | undefined {
     if (message.targetActor !== undefined) {
       // The incoming message is a full presence update. We are obliged to
       // handle it if `targetActor` matches our own connection ID, but we can
@@ -2172,7 +2193,7 @@ export function createRoom<
 
   function onUserLeftMessage(
     message: UserLeftServerMsg
-  ): InternalOthersEvent<TPresence, TUserMeta> | null {
+  ): InternalOthersEvent<P, U> | null {
     const user = context.others.getUser(message.actor);
     if (user) {
       context.others.removeConnection(message.actor);
@@ -2182,9 +2203,9 @@ export function createRoom<
   }
 
   function onRoomStateMessage(
-    message: RoomStateServerMsg<TUserMeta>,
+    message: RoomStateServerMsg<U>,
     batchedUpdatesWrapper: (cb: () => void) => void
-  ): InternalOthersEvent<TPresence, TUserMeta> {
+  ): InternalOthersEvent<P, U> {
     // The server will inform the client about its assigned actor ID and scopes
     context.dynamicSessionInfo.set({
       actor: message.actor,
@@ -2229,8 +2250,8 @@ export function createRoom<
   }
 
   function onUserJoinedMessage(
-    message: UserJoinServerMsg<TUserMeta>
-  ): InternalOthersEvent<TPresence, TUserMeta> | undefined {
+    message: UserJoinServerMsg<U>
+  ): InternalOthersEvent<P, U> | undefined {
     context.others.setConnection(
       message.actor,
       message.id,
@@ -2252,20 +2273,16 @@ export function createRoom<
     return user ? { type: "enter", user } : undefined;
   }
 
-  function parseServerMessage(
-    data: Json
-  ): ServerMsg<TPresence, TUserMeta, TRoomEvent> | null {
+  function parseServerMessage(data: Json): ServerMsg<P, U, E> | null {
     if (!isJsonObject(data)) {
       return null;
     }
 
-    return data as ServerMsg<TPresence, TUserMeta, TRoomEvent>;
+    return data as ServerMsg<P, U, E>;
     //             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME: Properly validate incoming external data instead!
   }
 
-  function parseServerMessages(
-    text: string
-  ): ServerMsg<TPresence, TUserMeta, TRoomEvent>[] | null {
+  function parseServerMessages(text: string): ServerMsg<P, U, E>[] | null {
     const data: Json | undefined = tryParseJson(text);
     if (data === undefined) {
       return null;
@@ -2284,7 +2301,7 @@ export function createRoom<
       return;
     }
 
-    const messages: ClientMsg<TPresence, TRoomEvent>[] = [];
+    const messages: ClientMsg<P, E>[] = [];
 
     const ops = Array.from(offlineOps.values());
 
@@ -2318,7 +2335,7 @@ export function createRoom<
 
     const updates = {
       storageUpdates: new Map<string, StorageUpdate>(),
-      others: [] as InternalOthersEvent<TPresence, TUserMeta>[],
+      others: [] as InternalOthersEvent<P, U>[],
     };
 
     batchUpdates(() => {
@@ -2489,7 +2506,7 @@ export function createRoom<
    * pending changes in the buffer. Has no side effects.
    */
   function serializeBuffer() {
-    const messages: ClientMsg<TPresence, TRoomEvent>[] = [];
+    const messages: ClientMsg<P, E>[] = [];
     if (context.buffer.presenceUpdates) {
       messages.push(
         context.buffer.presenceUpdates.type === "full"
@@ -2531,7 +2548,7 @@ export function createRoom<
   }
 
   function broadcastEvent(
-    event: TRoomEvent,
+    event: E,
     options: BroadcastOptions = {
       shouldQueueEventIfNotReady: false,
     }
@@ -2551,7 +2568,10 @@ export function createRoom<
   }
 
   function dispatchOps(ops: Op[]) {
-    context.buffer.storageOperations.push(...ops);
+    const { storageOperations } = context.buffer;
+    for (const op of ops) {
+      storageOperations.push(op);
+    }
     flushNowOrSoon();
   }
 
@@ -2614,7 +2634,7 @@ export function createRoom<
    * Once Storage is loaded, will return a stable reference to the storage
    * root.
    */
-  function getStorageSnapshot(): LiveObject<TStorage> | null {
+  function getStorageSnapshot(): LiveObject<S> | null {
     const root = context.root;
     if (root !== undefined) {
       // Done loading
@@ -2627,7 +2647,7 @@ export function createRoom<
   }
 
   async function getStorage(): Promise<{
-    root: LiveObject<TStorage>;
+    root: LiveObject<S>;
   }> {
     if (context.root !== undefined) {
       // Store has already loaded, so we can resolve it directly
@@ -2638,7 +2658,7 @@ export function createRoom<
 
     await startLoadingStorage();
     return {
-      root: nn(context.root) as LiveObject<TStorage>,
+      root: nn(context.root) as LiveObject<S>,
     };
   }
 
@@ -2836,7 +2856,8 @@ export function createRoom<
     comments: eventHub.comments.observable,
   };
 
-  const commentsApi = createCommentsApi(
+  // TODO Change `never` to `M` in 2.0
+  const commentsApi = createCommentsApi<never>(
     config.roomId,
     delegates.authenticate,
     fetchClientApi
@@ -2943,6 +2964,10 @@ export function createRoom<
 
         // send metadata when using a text editor
         reportTextEditor,
+        // create a text mention when using a text editor
+        createTextMention,
+        // delete a text mention when using a text editor
+        deleteTextMention,
 
         // Support for the Liveblocks browser extension
         getSelf_forDevTools: () => selfAsTreeNode.current,
@@ -3025,16 +3050,16 @@ export function createRoom<
  * documented here https://liveblocks.io/docs/api-reference/liveblocks-client#Room.subscribe(storageItem)
  */
 function makeClassicSubscribeFn<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json,
+  P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
 >(
   events: Omit<
-    Room<TPresence, TStorage, TUserMeta, TRoomEvent>["events"],
+    Room<P, S, U, E>["events"],
     "comments" // comments is an internal events so we omit it from the subscribe method
   >
-): SubscribeFn<TPresence, TStorage, TUserMeta, TRoomEvent> {
+): SubscribeFn<P, S, U, E> {
   // Set up the "subscribe" wrapper API
   function subscribeToLiveStructureDeeply<L extends LiveStructure>(
     node: L,
@@ -3069,10 +3094,10 @@ function makeClassicSubscribeFn<
   function subscribe<L extends LiveStructure>(liveStructure: L, callback: (node: L) => void): () => void; // prettier-ignore
   function subscribe(node: LiveStructure, callback: StorageCallback, options: { isDeep: true }): () => void; // prettier-ignore
   // Room event callbacks
-  function subscribe<E extends RoomEventName>(type: E, listener: RoomEventCallbackFor<E, TPresence, TUserMeta, TRoomEvent>): () => void; // prettier-ignore
+  function subscribe<K extends RoomEventName>(type: K, listener: RoomEventCallbackFor<K, P, U, E>): () => void; // prettier-ignore
 
-  function subscribe<L extends LiveStructure, E extends RoomEventName>(
-    first: StorageCallback | L | E,
+  function subscribe<L extends LiveStructure, K extends RoomEventName>(
+    first: StorageCallback | L | K,
     second?: ((node: L) => void) | StorageCallback | RoomEventCallback,
     options?: { isDeep: boolean }
   ): () => void {
@@ -3084,21 +3109,16 @@ function makeClassicSubscribeFn<
       switch (first) {
         case "event":
           return events.customEvent.subscribe(
-            callback as Callback<
-              RoomEventMessage<TPresence, TUserMeta, TRoomEvent>
-            >
+            callback as Callback<RoomEventMessage<P, U, E>>
           );
 
         case "my-presence":
-          return events.myPresence.subscribe(callback as Callback<TPresence>);
+          return events.myPresence.subscribe(callback as Callback<P>);
 
         case "others": {
           // NOTE: Others have a different callback structure, where the API
           // exposed on the outside takes _two_ callback arguments!
-          const cb = callback as LegacyOthersEventCallback<
-            TPresence,
-            TUserMeta
-          >;
+          const cb = callback as LegacyOthersEventCallback<P, U>;
           return events.others.subscribe((event) => {
             const { others, ...internalEvent } = event;
             return cb(others, internalEvent);

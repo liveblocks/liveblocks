@@ -149,8 +149,6 @@ export function createAuthManager(
       });
       const parsed = parseAuthToken(response.token);
 
-      verifyTokenPermissions(parsed, options);
-
       if (seenTokens.has(parsed.raw)) {
         throw new StopRetrying(
           "The same Liveblocks auth token was issued from the backend before. Caching Liveblocks tokens is not supported."
@@ -165,7 +163,6 @@ export function createAuthManager(
       if (response && typeof response === "object") {
         if (typeof response.token === "string") {
           const parsed = parseAuthToken(response.token);
-          verifyTokenPermissions(parsed, options);
           return parsed;
         } else if (typeof response.error === "string") {
           const reason = `Authentication failed: ${
@@ -192,41 +189,6 @@ export function createAuthManager(
     throw new Error(
       "Unexpected authentication type. Must be private or custom."
     );
-  }
-
-  /**
-   * Throw an error and stops retrying if the issued token doesn't have enough
-   * permissions for the requested usage.
-   */
-  function verifyTokenPermissions(
-    parsedToken: ParsedAuthToken,
-    options: {
-      requestedScope: RequestedScope;
-      roomId?: string;
-    }
-  ) {
-    // If the requester didn't pass a roomId,
-    // it means they need the token to access the user's resources (inbox notifications for example).
-    // If the token is access token, it needs to have a wildcard permission (or to have zero permission).
-    if (!options.roomId && parsedToken.parsed.k === TokenKind.ACCESS_TOKEN) {
-      // In this version, we accept access tokens with zero permission when issuing token for resources outside a room.
-      if (Object.entries(parsedToken.parsed.perms).length === 0) {
-        return;
-      }
-      for (const [resource, scopes] of Object.entries(
-        parsedToken.parsed.perms
-      )) {
-        if (
-          resource.includes("*") &&
-          hasCorrespondingScopes(options.requestedScope, scopes)
-        ) {
-          return;
-        }
-      }
-      throw new StopRetrying(
-        "The issued access token doesn't grant enough permissions. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/access-tokens-not-enough-permissions"
-      );
-    }
   }
 
   async function getAuthValue(requestOptions: {

@@ -320,15 +320,28 @@ const {
   // Optional, filter for rooms that allow entry to a user's ID in `usersAccesses`
   userId: "my-user-id",
 
-  // Optional, filter for rooms with custom metadata in `metadata`
-  metadata: {
-    myRoomType: "whiteboard",
+  // Optional, use advanced filtering
+  query: {
+    // Optional, filter for rooms with an ID that starts with specific string
+    roomId: {
+      startsWith: "liveblocks:",
+    },
+    // Optional, filter for rooms with custom metadata in `metadata`
+    metadata: {
+      roomType: "whiteboard",
+    },
   },
 
   // Optional, cursor used for pagination, use `nextCursor` from the previous page's response
   startingAfter: "L3YyL3Jvb21z...",
 });
 ```
+
+The `query` option also allows you to pass a
+[query language](/docs/guides/how-to-filter-rooms-using-query-language) string
+instead of a `query` object.
+
+##### Pagination
 
 You can use `nextCursor` to paginate rooms. In this example, when `getNextPage`
 is called, the next set of rooms is added to `pages`.
@@ -1079,6 +1092,35 @@ const { data: threads } = await liveblocks.getThreads({
 console.log(threads);
 ```
 
+It’s also possible to filter threads by their string, boolean, and number
+metadata using a query parameter. You can also pass `startsWith` to match the
+start of a string.
+
+```ts
+const { data: threads } = await liveblocks.getThreads({
+  roomId: "my-room-id",
+
+  // Optional, use advanced filtering
+  query: {
+    // Optional, filter for metadata values
+    metadata: {
+      status: "open",
+      resolved: true,
+      priority: 3,
+
+      // You can match the start of a metadata string
+      organization: {
+        startsWith: "liveblocks:",
+      },
+    },
+  },
+});
+```
+
+You can also pass a
+[query language](/docs/guides/how-to-filter-threads-using-query-language) string
+instead of a `query` object.
+
 #### Liveblocks.createThread [#post-rooms-roomId-threads] [@badge=Beta]
 
 Creates a new thread within a specific room, using room ID and thread data. This
@@ -1521,21 +1563,6 @@ await liveblocks.removeCommentReaction({
 });
 ```
 
-#### Liveblocks.getInboxNotification [#get-users-userId-inboxNotifications-inboxNotificationId] [@badge=Beta]
-
-Returns a user’s inbox notification. This is a wrapper around the
-[Get Inbox Notification API](/docs/api-reference/rest-api-endpoints#get-users-userId-inboxNotifications-inboxNotificationId).
-
-```ts
-const inboxNotification = await liveblocks.getInboxNotification({
-  userId: "steven@example.com",
-  inboxNotificationId: "in_3dH7sF3...",
-});
-
-// { id: "in_3dH7sF3...", kind: "thread", ... }
-console.log(inboxNotification);
-```
-
 #### Liveblocks.getRoomNotificationSettings [#get-rooms-roomId-users-userId-notification-settings] [@badge=Beta]
 
 Returns a user’s notification settings for a specific room. This is a wrapper
@@ -1582,6 +1609,56 @@ around the
 await liveblocks.deleteRoomNotificationSettings({
   roomId: "my-room-id",
   userId: "steven@example.com",
+});
+```
+
+### Notifications
+
+#### Liveblocks.getInboxNotification [#get-users-userId-inboxNotifications-inboxNotificationId] [@badge=Beta]
+
+Returns a user’s inbox notification. This is a wrapper around the
+[Get Inbox Notification API](/docs/api-reference/rest-api-endpoints#get-users-userId-inboxNotifications-inboxNotificationId).
+
+```ts
+const inboxNotification = await liveblocks.getInboxNotification({
+  userId: "steven@example.com",
+  inboxNotificationId: "in_3dH7sF3...",
+});
+
+// { id: "in_3dH7sF3...", kind: "thread", ... }
+// or { id: "in_3dH7sF3...", kind: "$yourKind", ... }
+console.log(inboxNotification);
+```
+
+#### Liveblocks.triggerInboxNotification [#post-inbox-notifications-trigger] [@badge=Beta]
+
+Triggers a custom inbox notification. `kind` must start with a `$`, and
+represents the type of notification. `activityData` is used to send custom data
+with the notification, and properties can have `string`, `number`, or `boolean`
+values. This is a wrapper around the
+[Trigger Inbox Notification API](/docs/api-reference/rest-api-endpoints#post-inbox-notifications-trigger).
+
+```ts
+await liveblocks.triggerInboxNotification({
+  // The ID of the user that will receive the inbox notification
+  userId: "steven@example.com",
+
+  // The custom notification kind, must start with a $
+  kind: "$fileUploaded",
+
+  // The ID of the resource that is the subject of the activity
+  subjectId: "my-file",
+
+  // Custom data related to the activity that you need to render the inbox notification
+  activityData: {
+    // data can be a string, number, or boolean
+    file: "https://example.com/my-file.zip",
+    size: 256,
+    success: true,
+  },
+
+  // Optional
+  roomId: "my-room-id",
 });
 ```
 

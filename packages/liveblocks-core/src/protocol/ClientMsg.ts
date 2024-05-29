@@ -18,10 +18,10 @@ export enum ClientMsgCode {
 /**
  * Messages that can be sent from the client to the server.
  */
-export type ClientMsg<TPresence extends JsonObject, TRoomEvent extends Json> =
+export type ClientMsg<P extends JsonObject, E extends Json> =
   // For Presence
-  | BroadcastEventClientMsg<TRoomEvent>
-  | UpdatePresenceClientMsg<TPresence>
+  | BroadcastEventClientMsg<E>
+  | UpdatePresenceClientMsg<P>
 
   // For Storage
   | UpdateStorageClientMsg
@@ -31,12 +31,12 @@ export type ClientMsg<TPresence extends JsonObject, TRoomEvent extends Json> =
   | FetchYDocClientMsg
   | UpdateYDocClientMsg;
 
-export type BroadcastEventClientMsg<TRoomEvent extends Json> = {
+export type BroadcastEventClientMsg<E extends Json> = {
   type: ClientMsgCode.BROADCAST_EVENT;
-  event: TRoomEvent;
+  event: E;
 };
 
-export type UpdatePresenceClientMsg<TPresence extends JsonObject> =
+export type UpdatePresenceClientMsg<P extends JsonObject> =
   //
   // Full Presence™ message
   //
@@ -56,7 +56,7 @@ export type UpdatePresenceClientMsg<TPresence extends JsonObject> =
        * all presence fields, and isn't a partial "patch".
        */
       readonly targetActor: number;
-      readonly data: TPresence;
+      readonly data: P;
     }
 
   //
@@ -69,7 +69,7 @@ export type UpdatePresenceClientMsg<TPresence extends JsonObject> =
        * Presence™ "patch".
        */
       readonly targetActor?: undefined;
-      readonly data: Partial<TPresence>;
+      readonly data: Partial<P>;
     };
 
 export type UpdateStorageClientMsg = {

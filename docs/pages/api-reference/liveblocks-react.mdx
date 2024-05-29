@@ -1193,13 +1193,19 @@ const { threads, error, isLoading } = useThreads();
 can be used to filter threads based on their metadata.
 
 ```tsx
-// Returns the threads with `metadata.color === "blue"` and `metadata.resolved === true`
+// Returns threads that match the entire `query`, e.g. { color: "blue", resolved: true, ... }
 const { threads } = useThreads({
   query: {
     metadata: {
-      // Custom metadata query goes here
+      // Filter for threads that contain specific string, boolean, and number data
       color: "blue",
       resolved: true,
+      priority: 3,
+
+      // Filter for threads with string metadata that starts with a certain value
+      organization: {
+        startsWith: "liveblocks:",
+      },
     },
   },
 });
@@ -1237,7 +1243,8 @@ Returns a function that edits a thread’s metadata.
 
 <Banner title="Deleting properties">
 
-To delete an existing metadata property, set its value to `null`.
+To delete an existing metadata property, set its value to `null`. Passing
+`undefined` for a metadata property will ignore it.
 
 </Banner>
 
@@ -1353,6 +1360,14 @@ Returns a function that marks all inbox notifications as read.
 ```tsx
 const markAllInboxNotificationsAsRead = useMarkAllInboxNotificationsAsRead();
 markAllInboxNotificationsAsRead();
+```
+
+### useInboxNotificationThread [@badge=LiveblocksProvider]
+
+Returns the thread associated with a `"thread"` inbox notification.
+
+```tsx
+const thread = useInboxNotificationThread("in_xxx");
 ```
 
 ### useRoomNotificationSettings [@badge=RoomProvider]

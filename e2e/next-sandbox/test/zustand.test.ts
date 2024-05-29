@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import { test } from "@playwright/test";
 
-import { IDSelector, waitUntilFlushed } from "./utils";
+import type { IDSelector } from "./utils";
 import {
   expectJson,
   genRoomId,
@@ -10,6 +10,7 @@ import {
   preparePages,
   waitForJson,
   waitUntilEqualOnAllPages,
+  waitUntilFlushed,
 } from "./utils";
 
 test.describe.configure({ mode: "parallel" });
@@ -126,8 +127,8 @@ test.describe("Zustand", () => {
       await waitUntilEqualOnAllPages(pages, "#items");
 
       for (let i = 0; i < 50; i++) {
-        await page1.click(pickFrom(actions));
-        await page2.click(pickFrom(actions));
+        await page1.click(pickFrom(actions), { force: true });
+        await page2.click(pickFrom(actions), { force: true });
         await nanoSleep();
       }
 

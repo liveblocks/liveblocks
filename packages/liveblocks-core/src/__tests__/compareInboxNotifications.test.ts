@@ -1,5 +1,5 @@
+import type { InboxNotificationData } from "../protocol/InboxNotifications";
 import { compareInboxNotifications } from "../store";
-import type { InboxNotificationData } from "../types/InboxNotificationData";
 
 describe("compareInboxNotifications", () => {
   const inboxNotificationA: InboxNotificationData = {

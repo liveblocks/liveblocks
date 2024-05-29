@@ -1,7 +1,9 @@
 import { nanoid } from "../lib/nanoid";
-import type { BaseMetadata } from "../types/BaseMetadata";
-import type { CommentData } from "../types/CommentData";
-import type { ThreadDataWithDeleteInfo } from "../types/ThreadData";
+import type {
+  BaseMetadata,
+  CommentData,
+  ThreadDataWithDeleteInfo,
+} from "../protocol/Comments";
 
 export function createThread(
   overrides: Partial<ThreadDataWithDeleteInfo<BaseMetadata>> = {}

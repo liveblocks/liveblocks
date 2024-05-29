@@ -38,8 +38,8 @@ test.describe("Storage - LiveMap", () => {
       await waitForJson(pages, "#mapSize", 0);
 
       for (let i = 0; i < 50; i++) {
-        await page1.click(pickFrom(actions));
-        await page2.click(pickFrom(actions));
+        await page1.click(pickFrom(actions), { force: true });
+        await page2.click(pickFrom(actions), { force: true });
         await nanoSleep();
       }
 
@@ -85,13 +85,13 @@ test.describe("Storage - LiveMap", () => {
         const nbofUndoRedo = pickNumberOfUndoRedo();
         if (nbofUndoRedo > 0) {
           for (let y = 0; y < nbofUndoRedo; y++) {
-            await page.click("#undo");
+            await page.click("#undo", { force: true });
           }
           for (let y = 0; y < nbofUndoRedo; y++) {
-            await page.click("#redo");
+            await page.click("#redo", { force: true });
           }
         } else {
-          await page.click(pickFrom(actions));
+          await page.click(pickFrom(actions), { force: true });
         }
       }
       await nanoSleep();

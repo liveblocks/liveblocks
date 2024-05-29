@@ -8,7 +8,9 @@ export { ClientSideSuspense } from "./ClientSideSuspense";
 export { CreateThreadError, DeleteCommentError } from "./comments/errors";
 export {
   createLiveblocksContext,
+  useClient,
   useLiveblocksContextBundle,
+  useLiveblocksContextBundleOrNull,
 } from "./liveblocks";
 export {
   createRoomContext,
