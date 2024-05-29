@@ -77,10 +77,7 @@ export const LiveblocksPluginProvider = ({
   const client = useClient();
   const hasResolveMentionSuggestions =
     client[kInternal].resolveMentionSuggestions !== undefined;
-  const {
-    useSelf,
-    useRoom,
-  } = useRoomContextBundle();
+  const { useSelf, useRoom } = useRoomContextBundle();
   const [editor] = useLexicalComposerContext();
   const room = useRoom();
 

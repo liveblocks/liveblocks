@@ -20,13 +20,7 @@ import {
 } from "lexical";
 import type { PropsWithChildren } from "react";
 import * as React from "react";
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { ActiveSelection } from "../active-selection";
 import $getThreadMarkIds from "./get-thread-mark-ids";
@@ -39,12 +33,6 @@ import $unwrapThreadMarkNode from "./unwrap-thread-mark-node";
 import $wrapSelectionInThreadMarkNode from "./wrap-selection-in-thread-mark-node";
 
 type ThreadToNodesMap = Map<string, Set<NodeKey>>;
-
-export const ThreadToNodesContext = createContext<ThreadToNodesMap | null>(
-  null
-);
-
-export const ActiveThreadsContext = createContext<string[] | null>(null);
 
 export function CommentPluginProvider({ children }: PropsWithChildren) {
   const [editor, context] = useLexicalComposerContext();
@@ -96,6 +84,9 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
         const selection = $getSelection();
         if (!$isRangeSelection(selection)) return;
 
+        // If the selection is collapsed, we do not create a new thread node in the editor.
+        if (selection.isCollapsed()) return;
+
         const isBackward = selection.isBackward();
         // Wrap content in a ThreadMarkNode
         $wrapSelectionInThreadMarkNode(selection, isBackward, threadId);
@@ -113,27 +104,24 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
    */
   const handleThreadDelete = useCallback(
     (threadId: string) => {
-      setThreadToNodes((prev) => {
-        const updatedMap = new Map(prev);
-        editor.update(() => {
-          const keys = updatedMap.get(threadId);
+      editor.update(() => {
+        // Retrieve node keys associated with the thread
+        const keys = threadToNodes.get(threadId);
+        if (keys === undefined) return;
 
-          if (keys === undefined) return;
+        // Iterate over each thread node and disassociate the thread if from the node and unwrap the node if it is no longer associated with any threads
+        for (const key of keys) {
+          const node = $getNodeByKey(key);
+          if (!$isThreadMarkNode(node)) continue;
+          node.deleteID(threadId);
 
-          for (const key of keys) {
-            const node = $getNodeByKey(key);
-            if (!$isThreadMarkNode(node)) continue;
-            node.deleteID(threadId);
-
-            if (node.getIDs().length === 0) {
-              $unwrapThreadMarkNode(node);
-            }
+          if (node.getIDs().length === 0) {
+            $unwrapThreadMarkNode(node);
           }
-        });
-        return updatedMap;
+        }
       });
     },
-    [editor]
+    [editor, threadToNodes]
   );
 
   useCommentsErrorListener((error) => {
@@ -184,7 +172,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
         removeClassNamesFromElement(element, theme.threadMark as string);
       });
     };
-  }, [context, editor, threadToNodes]);
+  }, [context, editor, threadToNodes, client, room.id]);
 
   /**
    * Register a mutation listener that listens for mutations on 'ThreadMarkNode's and updates the map of thread to node keys accordingly.
@@ -222,7 +210,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     }
 
     return editor.registerMutationListener(ThreadMarkNode, onMutation);
-  }, [editor, threadToNodes]);
+  }, [editor]);
 
   /**
    * Register an update listener that listens for changes in the selection and updates the active threads accordingly.
@@ -267,7 +255,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       unregisterUpdateListener();
       unsubscribeCache();
     };
-  }, [editor]);
+  }, [editor, client, room.id]);
 
   /**
    * When active threads change, we add a data-state attribute and set it to "active" for all HTML elements that are associated with the active threads.
@@ -334,35 +322,12 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     <ThreadCreateCallbackProvider value={handleThreadCreate}>
       <ThreadDeleteCallbackProvider value={handleThreadDelete}>
         <ComposerFocusCallbackProvider value={handleComposerFocus}>
-          <ThreadToNodesContext.Provider value={threadToNodes}>
-            <IsThreadActiveCallbackProvider value={isThreadActive}>
-              {showActiveSelection && <ActiveSelection />}
-              {children}
-            </IsThreadActiveCallbackProvider>
-          </ThreadToNodesContext.Provider>
+          <IsThreadActiveCallbackProvider value={isThreadActive}>
+            {showActiveSelection && <ActiveSelection />}
+            {children}
+          </IsThreadActiveCallbackProvider>
         </ComposerFocusCallbackProvider>
       </ThreadDeleteCallbackProvider>
     </ThreadCreateCallbackProvider>
   );
-}
-
-export function useThreadToNodes() {
-  const threadToNodes = useContext(ThreadToNodesContext);
-  if (threadToNodes === null) {
-    throw new Error(
-      "useThreadToNodes must be used within a CommentPluginProvider"
-    );
-  }
-
-  return threadToNodes;
-}
-
-export function useActiveThreads() {
-  const threads = useContext(ActiveThreadsContext);
-  if (threads === null) {
-    throw new Error(
-      "useActiveThreads must be used within a CommentPluginProvider"
-    );
-  }
-  return threads;
 }

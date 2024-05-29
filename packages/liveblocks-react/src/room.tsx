@@ -1846,7 +1846,9 @@ function useDeleteComment() {
       });
 
       const thread = store.get().threads[threadId];
-      if (thread !== undefined && thread.deletedAt !== undefined) {
+
+      // Only trigger `onDeleteThread` callback if the thread exists in cache and is not already deleted
+      if (thread !== undefined && thread.deletedAt === undefined) {
         const newThread = deleteComment(thread, commentId, deletedAt);
         if (newThread.deletedAt !== undefined) {
           onDeleteThread?.(threadId);
