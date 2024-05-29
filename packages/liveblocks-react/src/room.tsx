@@ -2488,6 +2488,7 @@ const _25 = useSelfSuspense<DP, DU>;
 const _26 = useStorageRoot<DS>;
 const _27 = useUpdateMyPresence<DP>;
 
+// eslint-disable-next-line simple-import-sort/exports
 export {
   __1 as RoomProvider,
   __2 as useBroadcastEvent,
