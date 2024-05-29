@@ -111,3 +111,7 @@
   border-bottom-style: solid;
   border-bottom-color: rgba(55, 53, 47, 0.09);
 }
+
+.thread[data-state="active"] {
+  background-color: #fffcf2;
+}

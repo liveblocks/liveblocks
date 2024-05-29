@@ -10,9 +10,11 @@ import type {
   SyntheticEvent,
 } from "react";
 import React, {
+  createContext,
   forwardRef,
   Fragment,
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useState,
@@ -36,6 +38,10 @@ import { Comment } from "./Comment";
 import { Composer } from "./Composer";
 import { Button } from "./internal/Button";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";
+
+export const IsThreadActiveCallbackContext = createContext<
+  null | ((id: string) => boolean)
+>(null);
 
 export interface ThreadProps<
   TThreadMetadata extends BaseMetadata = ThreadMetadata,
@@ -195,6 +201,9 @@ export const Thread = forwardRef(
     const [newIndex, setNewIndex] = useState<number>();
     const newIndicatorIndex = newIndex === undefined ? unreadIndex : newIndex;
 
+    const isThreadActive = useContext(IsThreadActiveCallbackContext);
+    const isActive = isThreadActive?.(thread.id);
+
     useEffect(() => {
       if (unreadIndex) {
         // Keep the "new" indicator at the lowest unread index.
@@ -244,6 +253,7 @@ export const Thread = forwardRef(
             (thread.metadata as ThreadMetadata).resolved ? "" : undefined
           }
           data-unread={unreadIndex !== undefined ? "" : undefined}
+          data-state={isActive ? "active" : undefined}
           dir={$.dir}
           {...props}
           ref={forwardedRef}

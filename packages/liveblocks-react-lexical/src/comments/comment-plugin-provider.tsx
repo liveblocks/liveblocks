@@ -11,7 +11,10 @@ import {
   OnDeleteThreadCallbackContext,
   useRoomContextBundle,
 } from "@liveblocks/react";
-import { OnComposerFocusCallbackContext } from "@liveblocks/react-comments";
+import {
+  IsThreadActiveCallbackContext,
+  OnComposerFocusCallbackContext,
+} from "@liveblocks/react-comments";
 import type { BaseSelection, NodeKey, NodeMutation } from "lexical";
 import {
   $getNodeByKey,
@@ -38,7 +41,6 @@ import {
 } from "./thread-mark-node";
 import $unwrapThreadMarkNode from "./unwrap-thread-mark-node";
 import $wrapSelectionInThreadMarkNode from "./wrap-selection-in-thread-mark-node";
-import $getThreadMark from "./get-thread-mark";
 import $getThreadMarkIds from "./get-thread-mark-ids";
 
 type ThreadToNodesMap = Map<string, Set<NodeKey>>;
@@ -73,6 +75,13 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       );
     }
   }, [editor]);
+
+  const isThreadActive = useCallback(
+    (threadId: string) => {
+      return activeThreads.includes(threadId);
+    },
+    [activeThreads]
+  );
 
   /**
    * Create a new ThreadMarkNode and wrap the selected content in it.
@@ -297,10 +306,10 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       <OnDeleteThreadCallbackContext.Provider value={handleThreadDelete}>
         <OnComposerFocusCallbackContext.Provider value={handleComposerFocus}>
           <ThreadToNodesContext.Provider value={threadToNodes}>
-            <ActiveThreadsContext.Provider value={activeThreads}>
+            <IsThreadActiveCallbackContext.Provider value={isThreadActive}>
               {showActiveSelection && <ActiveSelection />}
               {children}
-            </ActiveThreadsContext.Provider>
+            </IsThreadActiveCallbackContext.Provider>
           </ThreadToNodesContext.Provider>
         </OnComposerFocusCallbackContext.Provider>
       </OnDeleteThreadCallbackContext.Provider>
