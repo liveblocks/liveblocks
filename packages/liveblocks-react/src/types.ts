@@ -55,6 +55,8 @@ export type UseThreadsOptions<M extends BaseMetadata> = {
 
 import type { PropsWithChildren } from "react";
 
+import type { CommentsError } from "./comments/errors";
+
 export type UserStateLoading = {
   isLoading: true;
   user?: never;
@@ -827,6 +829,10 @@ type RoomContextBundleCommon<
 type PrivateRoomContextApi = {
   useMentionSuggestions(search?: string): string[] | undefined;
   useCurrentUserId(): string | null;
+  useCommentsErrorListener<M extends BaseMetadata>(
+    callback: (err: CommentsError<M>) => void
+  ): void;
+  useThreadsFromCache(): ThreadData<BaseMetadata>[];
 };
 
 export type RoomContextBundle<

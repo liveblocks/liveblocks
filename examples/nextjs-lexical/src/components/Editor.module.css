@@ -1,0 +1,117 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  border-radius: 12px;
+  background: #fff;
+  width: 100%;
+  height: 100%;
+  color: #111827;
+}
+
+.editorHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.contentEditable {
+  border-radius: inherit;
+  flex-grow: 1;
+  width: 100%;
+  height: 100%;
+  padding: 1rem;
+}
+
+.contentEditable:focus {
+  outline: none;
+}
+
+.editorContainer {
+  display: flex;
+  flex-direction: row;
+  position: relative;
+  height: 100%;
+  width: 100%;
+  overflow: auto;
+  border-top: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+.editor {
+  position: relative;
+  width: calc(100% - 400px);
+  overflow: auto;
+}
+
+.sidebar {
+  width: 400px;
+  height: 100%;
+  border-left: 1px solid rgba(55, 53, 47, 0.09);
+  overflow-y: auto;
+}
+
+.placeholder {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  opacity: 0.3;
+  padding: 0 1em;
+}
+
+.textBold {
+  font-weight: bold;
+}
+
+.textItalic {
+  font-style: italic;
+}
+
+.textUnderline {
+  text-decoration: underline;
+}
+
+.paragraph {
+  margin: 1em 0;
+}
+
+.threadMark {
+  background-color: rgba(255, 212, 0, 0.14);
+  border-bottom-width: 2px;
+  border-bottom-style: solid;
+  border-bottom-color: rgb(255, 212, 0);
+  transition: background-color 100ms;
+}
+
+.threadMark[data-state="active"] {
+  background-color: rgba(255, 212, 0, 0.56);
+  border-bottom-color: rgb(255, 212, 0);
+}
+
+.composer {
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: rgba(55, 53, 47, 0.09);
+}
+
+.noThreads {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  color: rgba(55, 53, 47, 0.5);
+}
+
+.threads {
+  display: flex;
+  flex-direction: column;
+}
+
+.thread {
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: rgba(55, 53, 47, 0.09);
+}
+
+.thread[data-state="active"] {
+  background-color: #fffcf2;
+}

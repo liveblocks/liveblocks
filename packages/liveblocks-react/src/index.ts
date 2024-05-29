@@ -5,13 +5,19 @@ import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 export { ClientSideSuspense } from "./ClientSideSuspense";
+export { CreateThreadError, DeleteCommentError } from "./comments/errors";
 export {
   createLiveblocksContext,
   useClient,
   useLiveblocksContextBundle,
   useLiveblocksContextBundleOrNull,
 } from "./liveblocks";
-export { createRoomContext, useRoomContextBundle } from "./room";
+export {
+  createRoomContext,
+  OnCreateThreadCallbackContext,
+  OnDeleteThreadCallbackContext,
+  useRoomContextBundle,
+} from "./room";
 export { useSharedContextBundle } from "./shared";
 export type { MutationContext, UseThreadsOptions } from "./types";
 
