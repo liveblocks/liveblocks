@@ -1,3 +1,10 @@
+## v2.0.0 (not yet released)
+
+<!-- Next major release marks the maturity of Liveblocks. For upgrade instructions,
+see the [2.0 upgrade guide](https://liveblocks.io/docs/guides/upgrading/2.0). -->
+
+- ...
+
 ## v1.13.0 (not yet released)
 
 ### `@liveblocks/react`
