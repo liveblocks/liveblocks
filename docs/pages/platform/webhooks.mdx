@@ -851,6 +851,10 @@ const threadMetadataUpdatedEvent = {
 
 #### NotificationEvent
 
+There are three notification kinds: "thread", "textMention", and custom.
+
+##### Thread notification
+
 An event is triggered 30 minutes after a user has been mentioned or replied to
 in a thread, and has not seen the thread. It will also be triggered if the user
 has subscribed to the thread and has not seen the thread. The event won’t be
@@ -859,7 +863,7 @@ notifications.
 
 ```ts
 // Schema
-type NotificationEvent = {
+type ThreadNotificationEvent = {
   type: "notification";
   data: {
     channel: "email";
@@ -874,18 +878,92 @@ type NotificationEvent = {
 };
 
 // Example
-const notificationEvent = {
+const threadNotificationEvent = {
   type: "notification",
   data: {
     channel: "email",
     kind: "thread",
     projectId: "my-project-id",
     roomId: "my-room-id",
-    userId: "my-user-id
+    userId: "my-user-id",
     threadId: "my-thread-id",
     inboxNotificationId: "my-inbox-notification-id",
     createdAt: "2021-10-06T01:45:56.558Z",
-    },
+  },
+};
+```
+
+##### TextMention notification
+
+An event is triggered 30 minutes after a user has been mentioned in a text and
+has not seen the text mention.
+
+```ts
+// Schema
+type TextMentionNotificationEvent = {
+  type: "notification";
+  data: {
+    channel: "email";
+    kind: "textMention";
+    projectId: string;
+    roomId: string;
+    userId: string;
+    mentionId: string;
+    inboxNotificationId: string;
+    createdAt: string;
+  };
+};
+
+// Example
+const textMentionNotificationEvent = {
+  type: "notification",
+  data: {
+    channel: "email",
+    kind: "textMention",
+    projectId: "my-project-id",
+    roomId: "my-room-id",
+    userId: "my-user-id",
+    mentionId: "my-mention-id",
+    inboxNotificationId: "my-inbox-notification-id",
+    createdAt: "2021-10-06T01:45:56.558Z",
+  },
+};
+```
+
+##### Custom notification
+
+An event is triggered 30 minutes after the user has been notified of a custom
+event and has not seen the notification. See more about triggering custom
+notifications
+[here](/docs/api-reference/rest-api-endpoints#post-inbox-notifications-trigger).
+
+```ts
+// Schema
+type CustomNotificationEvent = {
+  type: "notification";
+  data: {
+    channel: "email";
+    kind: "$yourKind"; // Can be any string starting with "$" as defined by the user
+    projectId: string;
+    roomId: string | null;
+    userId: string;
+    inboxNotificationId: string;
+    createdAt: string;
+  };
+};
+
+// Example
+const customNotificationEvent = {
+  type: "notification",
+  data: {
+    channel: "email",
+    kind: "$fileUpload",
+    projectId: "my-project-id",
+    roomId: "my-room-id",
+    userId: "my-user-id",
+    inboxNotificationId: "my-inbox-notification-id",
+    createdAt: "2021-10-06T01:45:56.558Z",
+  },
 };
 ```
 
