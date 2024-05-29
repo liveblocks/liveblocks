@@ -1,10 +1,7 @@
-import {
-  applyOptimisticUpdates,
-  type BaseMetadata,
-  type CacheState,
-  nn,
-  type RoomNotificationSettings,
-} from "@liveblocks/core";
+import { nn } from "../../lib/assert";
+import { BaseMetadata } from "../../protocol/Comments";
+import { CacheState, applyOptimisticUpdates } from "../../store";
+import { RoomNotificationSettings } from "../../types/RoomNotificationSettings";
 
 export function selectNotificationSettings<M extends BaseMetadata>(
   roomId: string,

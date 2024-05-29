@@ -1,6 +1,11 @@
 "use client";
 
-import type { BaseMetadata, CommentData, ThreadData } from "@liveblocks/core";
+import {
+  kInternal,
+  type BaseMetadata,
+  type CommentData,
+  type ThreadData,
+} from "@liveblocks/core";
 import { useRoomContextBundle } from "@liveblocks/react";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
@@ -10,11 +15,9 @@ import type {
   SyntheticEvent,
 } from "react";
 import React, {
-  createContext,
   forwardRef,
   Fragment,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useState,
@@ -38,10 +41,6 @@ import { Comment } from "./Comment";
 import { Composer } from "./Composer";
 import { Button } from "./internal/Button";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";
-
-export const IsThreadActiveCallbackContext = createContext<
-  null | ((id: string) => boolean)
->(null);
 
 export interface ThreadProps<M extends BaseMetadata = ThreadMetadata>
   extends ComponentPropsWithoutRef<"div"> {
@@ -152,8 +151,11 @@ export const Thread = forwardRef(
     }: ThreadProps<M>,
     forwardedRef: ForwardedRef<HTMLDivElement>
   ) => {
-    const { useEditThreadMetadata, useThreadSubscription } =
-      useRoomContextBundle();
+    const {
+      useEditThreadMetadata,
+      useThreadSubscription,
+      [kInternal]: { useIsThreadActiveCallback },
+    } = useRoomContextBundle();
     const editThreadMetadata = useEditThreadMetadata();
     const $ = useOverrides(overrides);
     const firstCommentIndex = useMemo(() => {
@@ -200,7 +202,7 @@ export const Thread = forwardRef(
     const [newIndex, setNewIndex] = useState<number>();
     const newIndicatorIndex = newIndex === undefined ? unreadIndex : newIndex;
 
-    const isThreadActive = useContext(IsThreadActiveCallbackContext);
+    const isThreadActive = useIsThreadActiveCallback();
     const isActive = isThreadActive?.(thread.id);
 
     useEffect(() => {

@@ -65,10 +65,6 @@ import {
   RemoveReactionError,
   UpdateNotificationSettingsError,
 } from "./comments/errors";
-import { createCommentId, createThreadId } from "./comments/lib/createIds";
-import { selectNotificationSettings } from "./comments/lib/select-notification-settings";
-import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
-import { selectedThreads } from "./comments/lib/selected-threads";
 import { retryError } from "./lib/retry-error";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
@@ -78,16 +74,19 @@ import type { DP, DS, DU } from "./shared";
 import { createSharedContext } from "./shared";
 import type {
   CommentReactionOptions,
+  ComposerFocusCallback,
   CreateCommentOptions,
   DeleteCommentOptions,
   EditCommentOptions,
   EditThreadMetadataOptions,
+  IsThreadActiveCallback,
   MutationContext,
   OmitFirstArg,
   RoomContextBundle,
   RoomNotificationSettingsState,
   RoomNotificationSettingsStateSuccess,
   RoomProviderProps,
+  ThreadCreateCallback,
   ThreadsState,
   ThreadsStateSuccess,
   ThreadSubscription,
@@ -95,13 +94,18 @@ import type {
 } from "./types";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
 
-export const OnCreateThreadCallbackContext = React.createContext<
+const ThreadCreateCallbackContext =
+  React.createContext<null | ThreadCreateCallback>(null);
+
+const ThreadDeleteCallbackContext = React.createContext<
   null | ((threadId: string) => void)
 >(null);
 
-export const OnDeleteThreadCallbackContext = React.createContext<
-  null | ((threadId: string) => void)
->(null);
+const ComposerFocusCallbackContext =
+  React.createContext<null | ComposerFocusCallback>(null);
+
+const IsThreadActiveCallbackContext =
+  React.createContext<null | IsThreadActiveCallback>(null);
 
 type CreateThreadOptions<M extends BaseMetadata> = [M] extends [never]
   ? {
@@ -754,7 +758,14 @@ function makeRoomContextBundle<
       useCurrentUserId,
       useMentionSuggestions,
       useCommentsErrorListener,
-      useThreadsFromCache,
+      ThreadCreateCallbackProvider: ThreadCreateCallbackContext.Provider,
+      useThreadCreateCallback,
+      ThreadDeleteCallbackProvider: ThreadDeleteCallbackContext.Provider,
+      useThreadDeleteCallback: useThreadDeleteCallback,
+      ComposerFocusCallbackProvider: ComposerFocusCallbackContext.Provider,
+      useComposerFocusCallback: useComposerFocusCallback,
+      IsThreadActiveCallbackProvider: IsThreadActiveCallbackContext.Provider,
+      useIsThreadActiveCallback: useIsThreadActiveCallback,
     },
   };
 
@@ -1410,7 +1421,11 @@ function useThreads<M extends BaseMetadata>(
       }
 
       return {
-        threads: selectedThreads(room.id, state, options),
+        threads: client[kInternal].comments.selectedThreads(
+          room.id,
+          state,
+          options
+        ),
         isLoading: false,
         error: query.error,
       };
@@ -1442,33 +1457,34 @@ function useCommentsErrorListener<M extends BaseMetadata>(
   }, [savedCallback, commentsErrorEventSource]);
 }
 
-function useThreadsFromCache<M extends BaseMetadata>() {
-  const room = useRoom();
-  const client = useClient();
-  const { store } = getExtrasForClient<M>(client);
+function useThreadCreateCallback() {
+  return React.useContext(ThreadCreateCallbackContext);
+}
 
-  const state = useSyncExternalStoreWithSelector(
-    store.subscribe,
-    store.get,
-    store.get,
-    (state) => selectedThreads(room.id, state, { query: {} })
-  );
+function useThreadDeleteCallback() {
+  return React.useContext(ThreadDeleteCallbackContext);
+}
 
-  return state;
+function useComposerFocusCallback() {
+  return React.useContext(ComposerFocusCallbackContext);
+}
+
+function useIsThreadActiveCallback() {
+  return React.useContext(IsThreadActiveCallbackContext);
 }
 
 function useCreateThread<M extends BaseMetadata>() {
   const client = useClient();
   const room = useRoom();
-  const onCreateThread = React.useContext(OnCreateThreadCallbackContext);
+  const onCreateThread = useThreadCreateCallback();
 
   return React.useCallback(
     (options: CreateThreadOptions<M>): ThreadData<M> => {
       const body = options.body;
       const metadata: M = "metadata" in options ? options.metadata : ({} as M);
 
-      const threadId = createThreadId();
-      const commentId = createCommentId();
+      const threadId = client[kInternal].comments.createThreadId();
+      const commentId = client[kInternal].comments.createCommentId();
       const createdAt = new Date();
 
       const newComment: CommentData = {
@@ -1634,7 +1650,7 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
   const room = useRoom();
   return React.useCallback(
     ({ threadId, body }: CreateCommentOptions): CommentData => {
-      const commentId = createCommentId();
+      const commentId = client[kInternal].comments.createCommentId();
       const createdAt = new Date();
 
       const comment: CommentData = {
@@ -1810,7 +1826,7 @@ function useEditComment(): (options: EditCommentOptions) => void {
 function useDeleteComment() {
   const client = useClient();
   const room = useRoom();
-  const onDeleteThread = React.useContext(OnDeleteThreadCallbackContext);
+  const onDeleteThread = useThreadDeleteCallback();
 
   return React.useCallback(
     ({ threadId, commentId }: DeleteCommentOptions): void => {
@@ -2090,11 +2106,13 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
 
   const selector = React.useCallback(
     (state: CacheState<BaseMetadata>): ThreadSubscription => {
-      const inboxNotification = selectedInboxNotifications(state).find(
-        (inboxNotification) =>
-          inboxNotification.kind === "thread" &&
-          inboxNotification.threadId === threadId
-      );
+      const inboxNotification = client[kInternal].comments
+        .selectedInboxNotifications(state)
+        .find(
+          (inboxNotification) =>
+            inboxNotification.kind === "thread" &&
+            inboxNotification.threadId === threadId
+        );
 
       const thread = state.threads[threadId];
 
@@ -2150,7 +2168,10 @@ function useRoomNotificationSettings(): [
 
       return {
         isLoading: false,
-        settings: selectNotificationSettings(room.id, state),
+        settings: client[kInternal].comments.selectNotificationSettings(
+          room.id,
+          state
+        ),
       };
     },
     [room]
@@ -2361,7 +2382,11 @@ function useThreadsSuspense<M extends BaseMetadata>(
   const selector = React.useCallback(
     (state: CacheState<M>): ThreadsStateSuccess<M> => {
       return {
-        threads: selectedThreads(room.id, state, options),
+        threads: client[kInternal].comments.selectedThreads(
+          room.id,
+          state,
+          options
+        ),
         isLoading: false,
       };
     },
@@ -2409,7 +2434,10 @@ function useRoomNotificationSettingsSuspense(): [
     (state: CacheState<BaseMetadata>): RoomNotificationSettingsStateSuccess => {
       return {
         isLoading: false,
-        settings: selectNotificationSettings(room.id, state),
+        settings: client[kInternal].comments.selectNotificationSettings(
+          room.id,
+          state
+        ),
       };
     },
     [room]

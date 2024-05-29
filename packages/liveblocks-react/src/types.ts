@@ -53,7 +53,7 @@ export type UseThreadsOptions<M extends BaseMetadata> = {
   scrollOnLoad?: boolean;
 };
 
-import type { PropsWithChildren } from "react";
+import type { PropsWithChildren, Provider } from "react";
 
 import type { CommentsError } from "./comments/errors";
 
@@ -819,6 +819,11 @@ type RoomContextBundleCommon<
   useThreadSubscription(threadId: string): ThreadSubscription;
 };
 
+export type ThreadCreateCallback = (threadId: string) => void;
+export type ThreadDeleteCallback = (threadId: string) => void;
+export type ComposerFocusCallback = () => void;
+export type IsThreadActiveCallback = (threadId: string) => boolean;
+
 /**
  * @private
  *
@@ -832,7 +837,21 @@ type PrivateRoomContextApi = {
   useCommentsErrorListener<M extends BaseMetadata>(
     callback: (err: CommentsError<M>) => void
   ): void;
-  useThreadsFromCache(): ThreadData<BaseMetadata>[];
+  // Thread create callback
+  ThreadCreateCallbackProvider: Provider<ThreadCreateCallback | null>;
+  useThreadCreateCallback(): ThreadCreateCallback | null;
+
+  // Thread delete callback
+  ThreadDeleteCallbackProvider: Provider<ThreadDeleteCallback | null>;
+  useThreadDeleteCallback(): ThreadDeleteCallback | null;
+
+  // Composer focus callback
+  ComposerFocusCallbackProvider: Provider<ComposerFocusCallback | null>;
+  useComposerFocusCallback(): ComposerFocusCallback | null;
+
+  // Is thread active callback
+  IsThreadActiveCallbackProvider: Provider<IsThreadActiveCallback | null>;
+  useIsThreadActiveCallback(): IsThreadActiveCallback | null;
 };
 
 export type RoomContextBundle<

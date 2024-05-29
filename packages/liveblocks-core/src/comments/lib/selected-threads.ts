@@ -1,16 +1,11 @@
-import {
-  applyOptimisticUpdates,
-  type BaseMetadata,
-  type CacheState,
-  type ThreadData,
-} from "@liveblocks/core";
-
-import type { UseThreadsOptions } from "../../types";
+import { BaseMetadata, ThreadData } from "../../protocol/Comments";
+import { GetThreadsOptions } from "../../room";
+import { applyOptimisticUpdates, CacheState } from "../../store";
 
 export function selectedThreads<M extends BaseMetadata>(
   roomId: string,
   state: CacheState<M>,
-  options: UseThreadsOptions<M>
+  options: GetThreadsOptions<M>
 ): ThreadData<M>[] {
   const result = applyOptimisticUpdates(state);
 

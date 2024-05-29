@@ -23,7 +23,6 @@ import React, {
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
-import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 import { retryError } from "./lib/retry-error";
 import { useInitial } from "./lib/use-initial";
 import type { DU } from "./shared";
@@ -49,10 +48,12 @@ const _bundles = new WeakMap<
   LiveblocksContextBundle<BaseUserMeta, BaseMetadata>
 >();
 
-export const POLLING_INTERVAL = 60 * 1000; // 1 minute
+// export const POLLING_INTERVAL = 60 * 1000; // 1 minute
+export const POLLING_INTERVAL = 5 * 1000; // 1 minute
 export const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
 
 function selectorFor_useInboxNotifications(
+  client: OpaqueClient,
   state: CacheState<BaseMetadata>
 ): InboxNotificationsState {
   const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
@@ -71,24 +72,32 @@ function selectorFor_useInboxNotifications(
   }
 
   return {
-    inboxNotifications: selectedInboxNotifications(state),
+    inboxNotifications:
+      client[kInternal].comments.selectedInboxNotifications(state),
     isLoading: false,
   };
 }
 
 function selectorFor_useInboxNotificationsSuspense(
+  client: OpaqueClient,
   state: CacheState<BaseMetadata>
 ): InboxNotificationsStateSuccess {
   return {
-    inboxNotifications: selectedInboxNotifications(state),
+    inboxNotifications:
+      client[kInternal].comments.selectedInboxNotifications(state),
     isLoading: false,
   };
 }
 
-function selectUnreadInboxNotificationsCount(state: CacheState<BaseMetadata>) {
+function selectUnreadInboxNotificationsCount(
+  client: OpaqueClient,
+  state: CacheState<BaseMetadata>
+) {
   let count = 0;
 
-  for (const notification of selectedInboxNotifications(state)) {
+  for (const notification of client[
+    kInternal
+  ].comments.selectedInboxNotifications(state)) {
     if (
       notification.readAt === null ||
       notification.readAt < notification.notifiedAt
@@ -101,6 +110,7 @@ function selectUnreadInboxNotificationsCount(state: CacheState<BaseMetadata>) {
 }
 
 function selectorFor_useUnreadInboxNotificationsCount(
+  client: OpaqueClient,
   state: CacheState<BaseMetadata>
 ): UnreadInboxNotificationsCountState {
   const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
@@ -120,16 +130,17 @@ function selectorFor_useUnreadInboxNotificationsCount(
 
   return {
     isLoading: false,
-    count: selectUnreadInboxNotificationsCount(state),
+    count: selectUnreadInboxNotificationsCount(client, state),
   };
 }
 
 function selectorFor_useUnreadInboxNotificationsCountSuspense(
+  client: OpaqueClient,
   state: CacheState<BaseMetadata>
 ): UnreadInboxNotificationsCountStateSuccess {
   return {
     isLoading: false,
-    count: selectUnreadInboxNotificationsCount(state),
+    count: selectUnreadInboxNotificationsCount(client, state),
   };
 }
 
@@ -364,7 +375,7 @@ function useInboxNotifications_withClient(client: OpaqueClient) {
     store.subscribe,
     store.get,
     store.get,
-    selectorFor_useInboxNotifications
+    () => selectorFor_useInboxNotifications(client, store.get())
   );
 }
 
@@ -390,7 +401,7 @@ function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
     store.subscribe,
     store.get,
     store.get,
-    selectorFor_useInboxNotificationsSuspense
+    () => selectorFor_useInboxNotificationsSuspense(client, store.get())
   );
 }
 
@@ -403,7 +414,7 @@ function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
     store.subscribe,
     store.get,
     store.get,
-    selectorFor_useUnreadInboxNotificationsCount
+    () => selectorFor_useUnreadInboxNotificationsCount(client, store.get())
   );
 }
 
@@ -427,7 +438,8 @@ function useUnreadInboxNotificationsCountSuspense_withClient(
     store.subscribe,
     store.get,
     store.get,
-    selectorFor_useUnreadInboxNotificationsCountSuspense
+    () =>
+      selectorFor_useUnreadInboxNotificationsCountSuspense(client, store.get())
   );
 }
 

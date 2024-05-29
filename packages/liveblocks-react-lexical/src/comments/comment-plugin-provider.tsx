@@ -7,14 +7,9 @@ import {
 import { kInternal } from "@liveblocks/core";
 import {
   CreateThreadError,
-  OnCreateThreadCallbackContext,
-  OnDeleteThreadCallbackContext,
+  useClient,
   useRoomContextBundle,
 } from "@liveblocks/react";
-import {
-  IsThreadActiveCallbackContext,
-  OnComposerFocusCallbackContext,
-} from "@liveblocks/react-comments";
 import type { BaseSelection, NodeKey, NodeMutation } from "lexical";
 import {
   $getNodeByKey,
@@ -62,11 +57,19 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
 
   const [showActiveSelection, setShowActiveSelection] = useState(false);
 
+  const client = useClient();
   const {
-    [kInternal]: { useCommentsErrorListener, useThreadsFromCache },
+    useRoom,
+    [kInternal]: {
+      useCommentsErrorListener,
+      ThreadCreateCallbackProvider,
+      ThreadDeleteCallbackProvider,
+      ComposerFocusCallbackProvider,
+      IsThreadActiveCallbackProvider,
+    },
   } = useRoomContextBundle();
 
-  const threads = useThreadsFromCache();
+  const room = useRoom();
 
   useEffect(() => {
     if (!editor.hasNodes([ThreadMarkNode])) {
@@ -147,6 +150,13 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     function getThreadMarkElements() {
       const activeElements = new Set<HTMLElement>();
 
+      const store = client[kInternal].cacheStore;
+      const threads = client[kInternal].comments.selectedThreads(
+        room.id,
+        store.get(),
+        {}
+      );
+
       for (const thread of threads) {
         const keys = threadToNodes.get(thread.id);
         if (keys === undefined) continue;
@@ -174,7 +184,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
         removeClassNamesFromElement(element, theme.threadMark as string);
       });
     };
-  }, [context, editor, threads, threadToNodes]);
+  }, [context, editor, threadToNodes]);
 
   /**
    * Register a mutation listener that listens for mutations on 'ThreadMarkNode's and updates the map of thread to node keys accordingly.
@@ -218,6 +228,9 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
    * Register an update listener that listens for changes in the selection and updates the active threads accordingly.
    */
   useEffect(() => {
+    const store = client[kInternal].cacheStore;
+    const selectedThreads = client[kInternal].comments.selectedThreads;
+
     function $getThreadIds(selection: BaseSelection | null): string[] {
       if (selection === null) return [];
 
@@ -231,13 +244,29 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
 
     function $onStateRead() {
       const selection = $getSelection();
-      const threadIds = $getThreadIds(selection);
+
+      const threadIds = $getThreadIds(selection).filter((id) => {
+        return selectedThreads(room.id, store.get(), {}).some(
+          (thread) => thread.id === id
+        );
+      });
       setActiveThreads(threadIds);
     }
 
-    return editor.registerUpdateListener(({ editorState: state }) => {
-      state.read($onStateRead);
+    const unsubscribeCache = store.subscribe(() => {
+      editor.getEditorState().read($onStateRead);
     });
+
+    const unregisterUpdateListener = editor.registerUpdateListener(
+      ({ editorState: state }) => {
+        state.read($onStateRead);
+      }
+    );
+
+    return () => {
+      unregisterUpdateListener();
+      unsubscribeCache();
+    };
   }, [editor]);
 
   /**
@@ -302,18 +331,18 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
   }, [editor]);
 
   return (
-    <OnCreateThreadCallbackContext.Provider value={handleThreadCreate}>
-      <OnDeleteThreadCallbackContext.Provider value={handleThreadDelete}>
-        <OnComposerFocusCallbackContext.Provider value={handleComposerFocus}>
+    <ThreadCreateCallbackProvider value={handleThreadCreate}>
+      <ThreadDeleteCallbackProvider value={handleThreadDelete}>
+        <ComposerFocusCallbackProvider value={handleComposerFocus}>
           <ThreadToNodesContext.Provider value={threadToNodes}>
-            <IsThreadActiveCallbackContext.Provider value={isThreadActive}>
+            <IsThreadActiveCallbackProvider value={isThreadActive}>
               {showActiveSelection && <ActiveSelection />}
               {children}
-            </IsThreadActiveCallbackContext.Provider>
+            </IsThreadActiveCallbackProvider>
           </ThreadToNodesContext.Provider>
-        </OnComposerFocusCallbackContext.Provider>
-      </OnDeleteThreadCallbackContext.Provider>
-    </OnCreateThreadCallbackContext.Provider>
+        </ComposerFocusCallbackProvider>
+      </ThreadDeleteCallbackProvider>
+    </ThreadCreateCallbackProvider>
   );
 }
 

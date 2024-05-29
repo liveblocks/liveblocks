@@ -796,6 +796,9 @@ export type PrivateRoomApi<M extends BaseMetadata> = {
   // For reporting editor metadata
   reportTextEditor(editor: "lexical", rootKey: string): void;
 
+  createTextMention(userId: string, mentionId: string): Promise<Response>;
+  deleteTextMention(mentionId: string): Promise<Response>;
+
   // NOTE: These are only used in our e2e test app!
   simulate: {
     explicitClose(event: IWebSocketCloseEvent): void;

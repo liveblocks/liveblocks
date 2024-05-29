@@ -1,5 +1,13 @@
 import type { AuthValue } from "./auth-manager";
 import { createAuthManager } from "./auth-manager";
+import {
+  createCommentId,
+  createInboxNotificationId,
+  createThreadId,
+} from "./comments/lib/createIds";
+import { selectNotificationSettings } from "./comments/lib/select-notification-settings";
+import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
+import { selectedThreads } from "./comments/lib/selected-threads";
 import { isIdle } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
 import type { LsonObject } from "./crdts/Lson";
@@ -26,16 +34,23 @@ import type {
   InboxNotificationData,
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
-import type { Polyfills, Room, RoomDelegates, RoomInitializers } from "./room";
+import type {
+  GetThreadsOptions,
+  Polyfills,
+  Room,
+  RoomDelegates,
+  RoomInitializers,
+} from "./room";
 import {
   createRoom,
   makeAuthDelegateForRoom,
   makeCreateSocketDelegateForRoom,
 } from "./room";
-import type { CacheStore } from "./store";
+import type { CacheState, CacheStore } from "./store";
 import { createClientStore } from "./store";
 import type { OptionalPromise } from "./types/OptionalPromise";
 import type { RoomInfo } from "./types/RoomInfo";
+import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 
 //
 // Default concrete types for each of the user-provided type placeholders.
@@ -117,6 +132,7 @@ export type EnterOptions<P extends JsonObject, S extends LsonObject> = Resolve<
  */
 type PrivateClientApi<U extends BaseUserMeta> = {
   readonly notifications: NotificationsApi;
+  readonly comments: CommentsApi;
   readonly currentUserIdStore: Store<string | null>;
   readonly resolveMentionSuggestions: ClientOptions<U>["resolveMentionSuggestions"];
   readonly cacheStore: CacheStore<BaseMetadata>;
@@ -140,6 +156,24 @@ export type NotificationsApi<
   getUnreadInboxNotificationsCount(): Promise<number>;
   markAllInboxNotificationsAsRead(): Promise<void>;
   markInboxNotificationAsRead(inboxNotificationId: string): Promise<void>;
+};
+
+export type CommentsApi = {
+  createThreadId(): string;
+  createCommentId(): string;
+  createInboxNotificationId(): string;
+  selectedThreads<M extends BaseMetadata>(
+    roomId: string,
+    state: CacheState<M>,
+    options: GetThreadsOptions<M>
+  ): ThreadData<M>[];
+  selectedInboxNotifications<M extends BaseMetadata>(
+    state: CacheState<M>
+  ): InboxNotificationData[];
+  selectNotificationSettings<M extends BaseMetadata>(
+    roomId: string,
+    state: CacheState<M>
+  ): RoomNotificationSettings;
 };
 
 export type Client<U extends BaseUserMeta = DU> = {
@@ -604,6 +638,14 @@ export function createClient<U extends BaseUserMeta = DU>(
           getUnreadInboxNotificationsCount,
           markAllInboxNotificationsAsRead,
           markInboxNotificationAsRead,
+        },
+        comments: {
+          createThreadId: createThreadId,
+          createCommentId: createCommentId,
+          createInboxNotificationId: createInboxNotificationId,
+          selectedThreads: selectedThreads,
+          selectedInboxNotifications: selectedInboxNotifications,
+          selectNotificationSettings: selectNotificationSettings,
         },
         currentUserIdStore,
         resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,

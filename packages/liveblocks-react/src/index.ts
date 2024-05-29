@@ -12,12 +12,7 @@ export {
   useLiveblocksContextBundle,
   useLiveblocksContextBundleOrNull,
 } from "./liveblocks";
-export {
-  createRoomContext,
-  OnCreateThreadCallbackContext,
-  OnDeleteThreadCallbackContext,
-  useRoomContextBundle,
-} from "./room";
+export { createRoomContext, useRoomContextBundle } from "./room";
 export { useSharedContextBundle } from "./shared";
 export type { MutationContext, UseThreadsOptions } from "./types";
 
