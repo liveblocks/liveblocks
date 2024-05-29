@@ -600,6 +600,7 @@ export function useClientOrNull() {
 /**
  * @beta This is an internal API for now, but it will become public eventually.
  */
+// TODO in 2.0 make public / non-beta
 export function useClient() {
   return (
     useClientOrNull() ??
