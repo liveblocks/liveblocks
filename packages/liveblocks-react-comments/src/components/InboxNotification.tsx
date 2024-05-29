@@ -120,6 +120,11 @@ export interface InboxNotificationTextMentionProps
    * The inbox notification to display.
    */
   inboxNotification: InboxNotificationTextMentionData;
+
+  /**
+   * Whether to show the room name in the title.
+   */
+  showRoomName?: boolean;
 }
 
 export interface InboxNotificationCustomProps
@@ -506,37 +511,48 @@ const InboxNotificationThread = forwardRef<
 const InboxNotificationTextMention = forwardRef<
   HTMLAnchorElement,
   InboxNotificationTextMentionProps
->(({ inboxNotification, showActions = "hover", overrides, ...props }, ref) => {
-  const $ = useOverrides(overrides);
+>(
+  (
+    {
+      inboxNotification,
+      showActions = "hover",
+      showRoomName = true,
+      overrides,
+      ...props
+    },
+    ref
+  ) => {
+    const $ = useOverrides(overrides);
 
-  const unread = useMemo(() => {
+    const unread = useMemo(() => {
+      return (
+        !inboxNotification.readAt ||
+        inboxNotification.notifiedAt > inboxNotification.readAt
+      );
+    }, [inboxNotification.notifiedAt, inboxNotification.readAt]);
+
     return (
-      !inboxNotification.readAt ||
-      inboxNotification.notifiedAt > inboxNotification.readAt
+      <InboxNotificationLayout
+        inboxNotification={inboxNotification}
+        aside={<InboxNotificationIcon />}
+        title={$.INBOX_NOTIFICATION_TEXT_MENTION(
+          <User
+            key={inboxNotification.createdBy}
+            userId={inboxNotification.createdBy}
+            capitalize
+          />,
+          showRoomName ? <Room roomId={inboxNotification.roomId} /> : undefined
+        )}
+        date={inboxNotification.notifiedAt}
+        unread={unread}
+        overrides={overrides}
+        showActions={showActions}
+        {...props}
+        ref={ref}
+      />
     );
-  }, [inboxNotification.notifiedAt, inboxNotification.readAt]);
-
-  return (
-    <InboxNotificationLayout
-      inboxNotification={inboxNotification}
-      aside={<InboxNotificationIcon />}
-      title={$.INBOX_NOTIFICATION_TEXT_MENTION(
-        <User
-          key={inboxNotification.createdBy}
-          userId={inboxNotification.createdBy}
-          capitalize
-        />,
-        <Room roomId={inboxNotification.roomId} />
-      )}
-      date={inboxNotification.notifiedAt}
-      unread={unread}
-      overrides={overrides}
-      showActions={showActions}
-      {...props}
-      ref={ref}
-    />
-  );
-});
+  }
+);
 
 /**
  * Displays a custom notification kind.
