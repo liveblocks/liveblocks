@@ -1535,7 +1535,7 @@ function useCreateThread<M extends BaseMetadata>() {
 
       return newThread;
     },
-    [client, room]
+    [client, room, onCreateThread]
   );
 }
 
@@ -1876,7 +1876,7 @@ function useDeleteComment() {
           )
       );
     },
-    [client, room]
+    [client, room, onDeleteThread]
   );
 }
 
