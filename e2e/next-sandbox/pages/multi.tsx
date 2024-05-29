@@ -18,7 +18,8 @@ type Storage = {
 
 const {
   RoomProvider,
-  useList,
+  useStorage,
+  useMutation,
   useMyPresence,
   useOthers,
   useSelf,
@@ -169,7 +170,12 @@ function Sandbox({ index }: SandboxProps) {
   const renderCount = useRenderCount();
   const socketStatus = useStatus();
   const others = useOthers();
-  const items = useList("items");
+  const items = useStorage((root) => root.items);
+  const push = useMutation(
+    ({ storage }, value: string) => storage.get("items")?.push(value),
+    []
+  );
+  const clear = useMutation(({ storage }) => storage.get("items")?.clear(), []);
   const [myPresence, updateMyPresence] = useMyPresence();
   const me = useSelf();
   const theirPresence = others[0]?.presence;
@@ -210,21 +216,11 @@ function Sandbox({ index }: SandboxProps) {
           Inc
         </Button>
 
-        <Button
-          id={`push_${index}`}
-          onClick={() => {
-            items?.push("ha");
-          }}
-        >
+        <Button id={`push_${index}`} onClick={() => push("ha")}>
           Push
         </Button>
 
-        <Button
-          id={`clear_${index}`}
-          onClick={() => {
-            items?.clear();
-          }}
-        >
+        <Button id={`clear_${index}`} onClick={clear}>
           Clear
         </Button>
       </div>
@@ -268,7 +264,7 @@ function Sandbox({ index }: SandboxProps) {
       <h2>Storage</h2>
       <table style={styles.dataTable}>
         <tbody>
-          <Row id={`items_${index}`} name="Items" value={items?.toArray()} />
+          <Row id={`items_${index}`} name="Items" value={items} />
         </tbody>
       </table>
 
