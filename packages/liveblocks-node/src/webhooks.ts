@@ -152,8 +152,24 @@ export class WebhookHandler {
         "ydocUpdated",
         "notification",
       ].includes(event.type)
-    )
+    ) {
+      if (event.type === "notification") {
+        const notification = event as NotificationEvent;
+        if (
+          notification.data.kind === "thread" ||
+          notification.data.kind === "textMention" ||
+          notification.data.kind.startsWith("$")
+        ) {
+          return;
+        } else {
+          throw new Error(
+            `Unknown notification kind: ${notification.data.kind}`
+          );
+        }
+      }
+
       return;
+    }
 
     throw new Error(
       "Unknown event type, please upgrade to a higher version of @liveblocks/node"
