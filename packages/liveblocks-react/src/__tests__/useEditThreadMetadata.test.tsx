@@ -89,7 +89,7 @@ describe("useEditThreadMetadata", () => {
       expect(result.current.threads).toEqual([initialThread])
     );
 
-    await act(() =>
+    act(() =>
       result.current.editThreadMetadata({
         threadId: initialThread.id,
         metadata: {
@@ -162,7 +162,7 @@ describe("useEditThreadMetadata", () => {
       expect(result.current.threads).toEqual([initialThread])
     );
 
-    await act(() =>
+    act(() =>
       result.current.editThreadMetadata({
         threadId: initialThread.id,
         metadata: {

@@ -70,6 +70,10 @@ export interface InboxNotificationOverrides {
     user: ReactNode,
     room: ReactNode | undefined
   ) => ReactNode;
+  INBOX_NOTIFICATION_TEXT_MENTION: (
+    user: ReactNode,
+    room: ReactNode | undefined
+  ) => ReactNode;
 }
 
 export type Overrides = LocalizationOverrides &
@@ -134,6 +138,11 @@ export const defaultOverrides: Overrides = {
     </>
   ),
   INBOX_NOTIFICATION_THREAD_MENTION: (user: ReactNode, room: ReactNode) => (
+    <>
+      {user} mentioned you{room ? <> in {room}</> : null}
+    </>
+  ),
+  INBOX_NOTIFICATION_TEXT_MENTION: (user: ReactNode, room: ReactNode) => (
     <>
       {user} mentioned you{room ? <> in {room}</> : null}
     </>
