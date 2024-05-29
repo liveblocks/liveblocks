@@ -7,7 +7,7 @@ import type {
 } from "@liveblocks/client";
 import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
-import { expectError, expectType } from "tsd";
+import { expectType } from "tsd";
 
 type MyPresence = { cursor: { x: number; y: number } | null };
 type MyStorage = {
@@ -99,46 +99,6 @@ expectType<(a: number, b: boolean) => "hi">(
     return "hi" as const;
   }, [])
 );
-
-// Legacy hoooks
-expectType<LiveList<string> | null>(ctx.useList("animals"));
-expectType<LiveList<string> | null>(ctx.useMap("animals"));
-expectType<LiveList<string> | null>(ctx.useObject("animals"));
-expectType<LiveMap<string, number> | null>(ctx.useList("scores"));
-expectType<LiveMap<string, number> | null>(ctx.useMap("scores"));
-expectType<LiveMap<string, number> | null>(ctx.useObject("scores"));
-expectType<LiveObject<{ name: string; age: number }> | null>(
-  ctx.useList("person")
-);
-expectType<LiveObject<{ name: string; age: number }> | null>(
-  ctx.useMap("person")
-);
-expectType<LiveObject<{ name: string; age: number }> | null>(
-  ctx.useObject("person")
-);
-expectError(ctx.useList("nonexisting"));
-expectError(ctx.useMap("nonexisting"));
-expectError(ctx.useObject("nonexisting"));
-
-// Legacy hoooks (suspense versions)
-expectType<LiveList<string>>(ctx.suspense.useList("animals"));
-expectType<LiveList<string>>(ctx.suspense.useMap("animals"));
-expectType<LiveList<string>>(ctx.suspense.useObject("animals"));
-expectType<LiveMap<string, number>>(ctx.suspense.useList("scores"));
-expectType<LiveMap<string, number>>(ctx.suspense.useMap("scores"));
-expectType<LiveMap<string, number>>(ctx.suspense.useObject("scores"));
-expectType<LiveObject<{ name: string; age: number }>>(
-  ctx.suspense.useList("person")
-);
-expectType<LiveObject<{ name: string; age: number }>>(
-  ctx.suspense.useMap("person")
-);
-expectType<LiveObject<{ name: string; age: number }>>(
-  ctx.suspense.useObject("person")
-);
-expectError(ctx.suspense.useList("nonexisting"));
-expectError(ctx.suspense.useMap("nonexisting"));
-expectError(ctx.suspense.useObject("nonexisting"));
 
 // The useOthersListener() hook
 ctx.useOthersListener((event) => {
