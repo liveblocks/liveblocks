@@ -632,7 +632,7 @@ function makeRoomContextBundle<
     useSelf: make_useSelf<P, U>(),
     useMyPresence: useMyPresence<P>,
     useUpdateMyPresence: useUpdateMyPresence<P>,
-    useOthers: useOthers<P, U>,
+    useOthers: make_useOthers<P, U>(),
     useOthersMapped: make_useOthersMapped<P, U>(),
     useOthersConnectionIds,
     useOther: make_useOther<P, U>(),
@@ -1100,32 +1100,34 @@ function useUpdateMyPresence<P extends JsonObject>(): (
   return useRoom<P, never, never, never>().updatePresence;
 }
 
-function useOthers<
-  P extends JsonObject,
-  U extends BaseUserMeta,
->(): readonly User<P, U>[];
-function useOthers<T, P extends JsonObject, U extends BaseUserMeta>(
-  selector: (others: readonly User<P, U>[]) => T,
-  isEqual?: (prev: T, curr: T) => boolean
-): T;
-function useOthers<T, P extends JsonObject, U extends BaseUserMeta>(
-  selector?: (others: readonly User<P, U>[]) => T,
-  isEqual?: (prev: T, curr: T) => boolean
-): T | readonly User<P, U>[] {
-  const room = useRoom<P, never, U, never>();
-  const subscribe = room.events.others.subscribe;
-  const getSnapshot = room.getOthers;
-  const getServerSnapshot = alwaysEmptyList;
-  return useSyncExternalStoreWithSelector(
-    subscribe,
-    getSnapshot,
-    getServerSnapshot,
-    selector ?? (identity as (others: readonly User<P, U>[]) => T),
-    isEqual
-  );
+function make_useOthers<P extends JsonObject, U extends BaseUserMeta>() {
+  function useOthers(): readonly User<P, U>[];
+  function useOthers<T>(
+    selector: (others: readonly User<P, U>[]) => T,
+    isEqual?: (prev: T, curr: T) => boolean
+  ): T;
+  function useOthers<T>(
+    selector?: (others: readonly User<P, U>[]) => T,
+    isEqual?: (prev: T, curr: T) => boolean
+  ): T | readonly User<P, U>[] {
+    const room = useRoom<P, never, U, never>();
+    const subscribe = room.events.others.subscribe;
+    const getSnapshot = room.getOthers;
+    const getServerSnapshot = alwaysEmptyList;
+    return useSyncExternalStoreWithSelector(
+      subscribe,
+      getSnapshot,
+      getServerSnapshot,
+      selector ?? (identity as (others: readonly User<P, U>[]) => T),
+      isEqual
+    );
+  }
+
+  return useOthers;
 }
 
 function make_useOthersMapped<P extends JsonObject, U extends BaseUserMeta>() {
+  const useOthers = make_useOthers<P, U>();
   return function useOthersMapped<T>(
     itemSelector: (other: User<P, U>) => T,
     itemIsEqual?: (prev: T, curr: T) => boolean
@@ -1161,6 +1163,7 @@ function make_useOthersMapped<P extends JsonObject, U extends BaseUserMeta>() {
 }
 
 function useOthersConnectionIds(): readonly number[] {
+  const useOthers = make_useOthers<never, never>();
   return useOthers(selectorFor_useOthersConnectionIds, shallow);
 }
 
@@ -1169,6 +1172,7 @@ const NOT_FOUND = Symbol();
 type NotFound = typeof NOT_FOUND;
 
 function make_useOther<P extends JsonObject, U extends BaseUserMeta>() {
+  const useOthers = make_useOthers<P, U>();
   return function useOther<T>(
     connectionId: number,
     selector: (other: User<P, U>) => T,
@@ -2140,6 +2144,7 @@ function make_useOthersSuspense<
   P extends JsonObject,
   U extends BaseUserMeta,
 >() {
+  const useOthers = make_useOthers<P, U>();
   return function useOthersSuspense<T>(
     selector?: (others: readonly User<P, U>[]) => T,
     isEqual?: (prev: T, curr: T) => boolean
@@ -2373,7 +2378,7 @@ const _15 = make_useOthersMappedSuspense<DP, DU>();
 const _16 = useThreads<DM>;
 const _17 = useThreadsSuspense<DM>;
 const _18 = make_useOther<DP, DU>();
-const _19 = useOthers<DP, DU>;
+const _19 = make_useOthers<DP, DU>();
 const _20 = make_useOtherSuspense<DP, DU>();
 const _21 = make_useOthersSuspense<DP, DU>();
 const _22 = make_useStorage<DS>();
