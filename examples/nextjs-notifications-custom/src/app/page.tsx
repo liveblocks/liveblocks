@@ -10,7 +10,7 @@ import { CustomNotifications } from "../components/CustomNotifications";
 
 export default function Page() {
   const roomId = useExampleRoomId(
-    "liveblocks:examples:nextjs-custom-notifications"
+    "liveblocks:examples:nextjs-notifications-custom"
   );
 
   return (
