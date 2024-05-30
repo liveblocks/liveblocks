@@ -41,27 +41,32 @@ function ButtonPanel() {
   return (
     <div className={styles.buttonPanel}>
       <h2>Send notifications</h2>
-      <Button
-        onClick={() =>
-          alertNotification(self.id, {
-            title: "Warning!",
-            message: "You have a problem",
-          })
-        }
-      >
-        Alert
-      </Button>
-      <Button onClick={() => welcomeNotification(self.id)}>New user</Button>
-      <Button
-        onClick={() =>
-          inviteNotification(self.id, {
-            inviteFrom: "emil.joyce@example.com",
-            documentTitle: "My document",
-          })
-        }
-      >
-        New user
-      </Button>
+      <div className={styles.buttonBar}>
+        <Button
+          onClick={() => {
+            alertNotification(self.id, {
+              title: "Warning!",
+              message: "You have a problem",
+            });
+            location.reload();
+          }}
+        >
+          Alert
+        </Button>
+        <Button onClick={() => welcomeNotification(self.id)}>Welcome</Button>
+        <Button
+          onClick={() =>
+            inviteNotification(self.id, {
+              inviteFrom: "emil.joyce@example.com",
+              documentTitle: "My new document",
+              documentDescription:
+                "To ready ourselves for our next marketing push, we need to coordinate our efforts.…",
+            })
+          }
+        >
+          Invite
+        </Button>
+      </div>
     </div>
   );
 }

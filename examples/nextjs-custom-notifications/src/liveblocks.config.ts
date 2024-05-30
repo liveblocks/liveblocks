@@ -14,7 +14,7 @@ export const client = createClient({
     const response = await fetch(`/api/users?${searchParams}`);
 
     if (!response.ok) {
-      throw new Error("Problem resolving users");
+      throw new Error("Problem resolving user");
     }
 
     const users = await response.json();
@@ -28,7 +28,7 @@ export const client = createClient({
     );
 
     if (!response.ok) {
-      throw new Error("Problem resolving mention suggestions");
+      throw new Error("Problem resolving user");
     }
 
     const userIds = await response.json();
@@ -36,8 +36,13 @@ export const client = createClient({
   },
 });
 
-type UserMeta = {
+export type UserMeta = {
   id: string;
+  info: {
+    name: string;
+    color: string;
+    avatar: string;
+  };
 };
 
 export const {
@@ -45,5 +50,5 @@ export const {
 } = createLiveblocksContext(client);
 
 export const {
-  suspense: { RoomProvider, useThreads, useSelf },
+  suspense: { RoomProvider, useThreads, useSelf, useUser },
 } = createRoomContext<{}, {}, UserMeta>(client);

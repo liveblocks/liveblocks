@@ -31,20 +31,8 @@
   flex-grow: 1;
 }
 
-
-.warningIcon {
-  width: 36px;
-  height: 36px;
-  background: #f3f3f3;
-  border-radius: 100%;
-  padding: 8px;
-  color: #c99f00;
-}
-
-.welcomeNotification {
-  background: #f8f6f6;
-  padding: 16px;
+.buttonBar {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+  margin-top: 12px;
 }

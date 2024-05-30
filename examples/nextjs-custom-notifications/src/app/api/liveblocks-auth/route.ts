@@ -1,31 +1,28 @@
 import { Liveblocks } from "@liveblocks/node";
-import { NAMES } from "../../../database";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import { getUser, getUsers } from "../../../database";
 
-/**
- * Authenticating your Liveblocks application
- * https://liveblocks.io/docs/authentication
- */
+// Authenticating your Liveblocks application
+// https://liveblocks.io/docs/authentication
 
 const liveblocks = new Liveblocks({
-  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+  secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
 });
 
 export async function POST(request: NextRequest) {
-  if (!process.env.LIVEBLOCKS_SECRET_KEY) {
-    return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
-  }
+  // Get the current user's unique id and info from your database
+  const user = getUsers()[0];
 
-  // Get the current user's unique id from your database
-  const userIndex = 0; //Math.floor(Math.random() * NAMES.length);
-
-  // Create a session for the current user (access token auth)
-  const session = liveblocks.prepareSession(`user-${userIndex}`);
+  // Create a session for the current user
+  // userInfo is made available in Liveblocks presence hooks, e.g. useOthers
+  const session = liveblocks.prepareSession(`${user.id}`, {
+    userInfo: user.info,
+  });
 
   // Use a naming pattern to allow access to rooms with a wildcard
   session.allow(`liveblocks:examples:*`, session.FULL_ACCESS);
 
   // Authorize the user and return the result
-  const { status, body } = await session.authorize();
-  return new NextResponse(body, { status });
+  const { body, status } = await session.authorize();
+  return new Response(body, { status });
 }

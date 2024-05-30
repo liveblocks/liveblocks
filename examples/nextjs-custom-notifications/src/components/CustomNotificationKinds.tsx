@@ -4,9 +4,10 @@ import {
   InboxNotificationProps,
 } from "@liveblocks/react-comments";
 import { AlertData, InviteData } from "../actions";
-import styles from "./CustomNotifications.module.css";
+import styles from "./CustomNotificationKinds.module.css";
 import { WarningIcon } from "./Icons";
 import { Button } from "./Button";
+import { useUser } from "../liveblocks.config";
 
 export function AlertNotification({
   inboxNotification,
@@ -45,18 +46,29 @@ export function WelcomeNotification({
 export function InviteNotification({
   inboxNotification,
 }: InboxNotificationCustomProps) {
-  const { inviteFrom, documentTitle } = inboxNotification.activities[0]
-    .data as InviteData;
+  const { inviteFrom, documentTitle, documentDescription } = inboxNotification
+    .activities[0].data as InviteData;
+  const { user: inviter } = useUser(inviteFrom);
 
   return (
-    <div className={styles.welcomeNotification}>
+    <InboxNotification.Custom
+      inboxNotification={inboxNotification}
+      title={
+        <>
+          <strong>{inviter.name}</strong> invited you to{" "}
+          <strong>{documentTitle}</strong>
+        </>
+      }
+      aside={<InboxNotification.Avatar userId={inviteFrom} />}
+    >
       <div>
-        {inviter.name} has invited you to {documentTitle}
+        <small>Document preview</small>
+        <div>{documentDescription}</div>
       </div>
-      <div>
+      <div className={styles.buttonBar}>
         <Button>Accept</Button>
-        <Button>Decline</Button>
+        <Button variant="secondary">Decline</Button>
       </div>
-    </div>
+    </InboxNotification.Custom>
   );
 }

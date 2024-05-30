@@ -33,6 +33,7 @@ export async function alertNotification(userId: string, data: AlertData) {
 export type InviteData = {
   inviteFrom: string;
   documentTitle: string;
+  documentDescription: string;
 };
 
 export async function inviteNotification(userId: string, data: InviteData) {
