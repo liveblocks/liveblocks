@@ -1,9 +1,8 @@
 import {
   InboxNotification,
   InboxNotificationCustomProps,
-  InboxNotificationProps,
 } from "@liveblocks/react-comments";
-import { AlertData, InviteData } from "../actions";
+import { AlertData, ImageUploadData, InviteData } from "../actions";
 import styles from "./CustomNotificationKinds.module.css";
 import { WarningIcon } from "./Icons";
 import { Button } from "./Button";
@@ -16,7 +15,7 @@ export function AlertNotification({
 
   return (
     <InboxNotification.Custom
-      title={<>{inboxNotification.activities[0].data.title}</>}
+      title={<strong>{inboxNotification.activities[0].data.title}</strong>}
       aside={
         <div className={styles.warningIcon}>
           <WarningIcon />
@@ -29,17 +28,28 @@ export function AlertNotification({
   );
 }
 
-export function WelcomeNotification({
+export function ImageUploadNotification({
   inboxNotification,
 }: InboxNotificationCustomProps) {
+  const { src, alt, uploadedBy } = inboxNotification.activities[0]
+    .data as ImageUploadData;
+  const { user: uploader } = useUser(uploadedBy);
+
   return (
-    <div className={styles.welcomeNotification}>
-      <div>Welcome to our application</div>
-      <div>
-        <button>Overview</button>
-        <button>Settings</button>
-      </div>
-    </div>
+    <InboxNotification.Custom
+      inboxNotification={inboxNotification}
+      title={
+        <>
+          <strong>New image</strong> uploaded by{" "}
+          <strong>{uploader.name}</strong>
+        </>
+      }
+      aside={<InboxNotification.Avatar userId={uploadedBy} />}
+    >
+      <small>{alt}</small>
+      <img src={src} alt={alt} className={styles.image} />
+      <Button variant="secondary">Details</Button>
+    </InboxNotification.Custom>
   );
 }
 

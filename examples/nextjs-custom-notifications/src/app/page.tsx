@@ -14,17 +14,7 @@ export default function Page() {
   return (
     <LiveblocksProvider>
       <RoomProvider id={roomId} initialPresence={{}}>
-        <ErrorBoundary
-          fallback={
-            <div className="error">
-              There was an error while getting threads.
-            </div>
-          }
-        >
-          <ClientSideSuspense fallback={<Loading />}>
-            {() => <CustomNotifications />}
-          </ClientSideSuspense>
-        </ErrorBoundary>
+        <CustomNotifications />
       </RoomProvider>
     </LiveblocksProvider>
   );

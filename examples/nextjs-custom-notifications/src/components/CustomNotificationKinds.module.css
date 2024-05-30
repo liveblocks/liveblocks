@@ -1,5 +1,5 @@
 .welcomeNotification {
-  background: #f8f6f6;
+  background: #fff;
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -20,4 +20,12 @@
   display: flex;
   gap: 6px;
   margin-top: 12px;
+}
+
+.imageSurround {}
+
+.image {
+  margin: 6px 0 16px;
+  border-radius: 8px;
+  max-width: 60%;
 }

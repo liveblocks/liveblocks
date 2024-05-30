@@ -8,65 +8,85 @@ import {
 import { useInboxNotifications, useSelf } from "../liveblocks.config";
 import { ErrorBoundary } from "react-error-boundary";
 import {
-  AlertData,
   alertNotification,
   inviteNotification,
-  welcomeNotification,
+  imageUploadNotification,
 } from "../actions";
-import { WarningIcon } from "./Icons";
-import { useState } from "react";
 import { Button } from "./Button";
 import {
   AlertNotification,
+  ImageUploadNotification,
   InviteNotification,
-  WelcomeNotification,
 } from "./CustomNotificationKinds";
+import { ClientSideSuspense } from "@liveblocks/react";
 
 export function CustomNotifications() {
   return (
     <div className={styles.wrapper}>
-      <ButtonPanel />
-      <ErrorBoundary
-        fallback={<div className="error">Error getting notifications.</div>}
-      >
-        <NotificationPanel />
-      </ErrorBoundary>
+      <div className={styles.buttonPanel}>
+        <h2>Send notifications</h2>
+        <ClientSideSuspense fallback={null}>
+          {() => <SendNotificationButtons />}
+        </ClientSideSuspense>
+      </div>
+
+      <div className={styles.notificationPanel}>
+        <h2>Notification panel</h2>
+        <ErrorBoundary
+          fallback={<div className="error">Error getting notifications</div>}
+        >
+          <ClientSideSuspense fallback={null}>
+            {() => <NotificationPanel />}
+          </ClientSideSuspense>
+        </ErrorBoundary>
+      </div>
     </div>
   );
 }
 
-function ButtonPanel() {
+function SendNotificationButtons() {
   const self = useSelf();
 
   return (
-    <div className={styles.buttonPanel}>
-      <h2>Send notifications</h2>
-      <div className={styles.buttonBar}>
-        <Button
-          onClick={() => {
-            alertNotification(self.id, {
-              title: "Warning!",
-              message: "You have a problem",
-            });
-            location.reload();
-          }}
-        >
-          Alert
-        </Button>
-        <Button onClick={() => welcomeNotification(self.id)}>Welcome</Button>
-        <Button
-          onClick={() =>
-            inviteNotification(self.id, {
-              inviteFrom: "emil.joyce@example.com",
-              documentTitle: "My new document",
-              documentDescription:
-                "To ready ourselves for our next marketing push, we need to coordinate our efforts.…",
-            })
-          }
-        >
-          Invite
-        </Button>
-      </div>
+    <div className={styles.buttonBar}>
+      <Button
+        onClick={async () => {
+          await imageUploadNotification(self.id, {
+            src: "/atoll.png",
+            alt: "A Polynesian atoll",
+            uploadedBy: "quinn.elton@example.com",
+          });
+          location.reload();
+        }}
+      >
+        Image upload
+      </Button>
+
+      <Button
+        onClick={async () => {
+          await alertNotification(self.id, {
+            title: "Warning!",
+            message: "Your account may be at risk if you don’t take action.",
+          });
+          location.reload();
+        }}
+      >
+        Alert
+      </Button>
+
+      <Button
+        onClick={async () => {
+          await inviteNotification(self.id, {
+            inviteFrom: "emil.joyce@example.com",
+            documentTitle: "New document",
+            documentDescription:
+              "To ready ourselves for our next marketing push, we need to coordinate our efforts.…",
+          });
+          location.reload();
+        }}
+      >
+        Invite
+      </Button>
     </div>
   );
 }
@@ -79,21 +99,18 @@ function NotificationPanel() {
   }
 
   return (
-    <div className={styles.notificationPanel}>
-      <h2>Notification panel</h2>
-      <InboxNotificationList className={styles.notificationList}>
-        {inboxNotifications.map((inboxNotification) => (
-          <InboxNotification
-            key={inboxNotification.id}
-            inboxNotification={inboxNotification}
-            kinds={{
-              $alert: AlertNotification,
-              $welcome: WelcomeNotification,
-              $invite: InviteNotification,
-            }}
-          />
-        ))}
-      </InboxNotificationList>
-    </div>
+    <InboxNotificationList className={styles.notificationList}>
+      {inboxNotifications.map((inboxNotification) => (
+        <InboxNotification
+          key={inboxNotification.id}
+          inboxNotification={inboxNotification}
+          kinds={{
+            $alert: AlertNotification,
+            $imageUpload: ImageUploadNotification,
+            $invite: InviteNotification,
+          }}
+        />
+      ))}
+    </InboxNotificationList>
   );
 }

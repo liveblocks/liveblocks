@@ -7,12 +7,21 @@ const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
 });
 
-export async function welcomeNotification(userId: string) {
+export type ImageUploadData = {
+  src: string;
+  alt: string;
+  uploadedBy: string;
+};
+
+export async function imageUploadNotification(
+  userId: string,
+  data: ImageUploadData
+) {
   await liveblocks.triggerInboxNotification({
     userId,
-    kind: "$welcome",
+    kind: "$imageUpload",
     subjectId: nanoid(),
-    activityData: {},
+    activityData: data,
   });
 }
 
