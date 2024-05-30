@@ -22,10 +22,7 @@ import type {
   CommentsEventServerMsg,
   EnterOptions,
   LiveblocksError,
-  OptionalPromise,
   PrivateRoomApi,
-  ResolveMentionSuggestionsArgs,
-  ResolveUsersArgs,
   RoomEventMessage,
   RoomNotificationSettings,
   ThreadData,
@@ -38,7 +35,6 @@ import {
   deleteComment,
   deprecateIf,
   errorIf,
-  isLiveNode,
   kInternal,
   makeEventSource,
   makePoller,
@@ -71,7 +67,6 @@ import { selectedThreads } from "./comments/lib/selected-threads";
 import { retryError } from "./lib/retry-error";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
-import { useRerender } from "./lib/use-rerender";
 import { LiveblocksProvider, useClient, useClientOrNull } from "./liveblocks";
 import type { DE, DM, DP, DS, DU } from "./shared";
 import { createSharedContext } from "./shared";
@@ -632,11 +627,6 @@ function makeRoomContextBundle<
     useCanRedo,
     useCanUndo,
 
-    // These are just aliases. The passed-in key will define their return values.
-    useList: useLegacyKey,
-    useMap: useLegacyKey,
-    useObject: useLegacyKey,
-
     useStorageRoot: useStorageRoot<S>,
     useStorage: make_useStorage<S>(),
 
@@ -686,11 +676,6 @@ function makeRoomContextBundle<
       useRedo,
       useCanRedo,
       useCanUndo,
-
-      // Legacy hooks
-      useList: useLegacyKeySuspense,
-      useMap: useLegacyKeySuspense,
-      useObject: useLegacyKeySuspense,
 
       useStorageRoot: useStorageRoot<S>,
       useStorage: make_useStorageSuspense<S>(),
@@ -839,10 +824,7 @@ function RoomProviderInner<
     initialPresence: props.initialPresence,
     initialStorage: props.initialStorage,
     unstable_batchedUpdates: props.unstable_batchedUpdates,
-    autoConnect:
-      props.autoConnect ??
-      props.shouldInitiallyConnect ??
-      typeof window !== "undefined",
+    autoConnect: props.autoConnect ?? typeof window !== "undefined",
   });
 
   const [{ room }, setRoomLeavePair] = React.useState(() =>
@@ -1284,54 +1266,6 @@ function make_useStorage<S extends LsonObject>() {
       isEqual
     );
   };
-}
-
-function useLegacyKey<
-  TKey extends Extract<keyof S, string>,
-  S extends LsonObject,
->(key: TKey): S[TKey] | null {
-  const room = useRoom<never, S, never, never>();
-  const rootOrNull = useMutableStorageRoot<S>();
-  const rerender = useRerender();
-
-  React.useEffect(() => {
-    if (rootOrNull === null) {
-      return;
-    }
-    const root = rootOrNull;
-
-    let unsubCurr: (() => void) | undefined;
-    let curr = root.get(key);
-
-    function subscribeToCurr() {
-      unsubCurr = isLiveNode(curr) ? room.subscribe(curr, rerender) : undefined;
-    }
-
-    function onRootChange() {
-      const newValue = root.get(key);
-      if (newValue !== curr) {
-        unsubCurr?.();
-        curr = newValue;
-        subscribeToCurr();
-        rerender();
-      }
-    }
-
-    subscribeToCurr();
-    rerender();
-
-    const unsubscribeRoot = room.subscribe(root, onRootChange);
-    return () => {
-      unsubscribeRoot();
-      unsubCurr?.();
-    };
-  }, [rootOrNull, room, key, rerender]);
-
-  if (rootOrNull === null) {
-    return null;
-  } else {
-    return rootOrNull.get(key);
-  }
 }
 
 function make_useMutation<
@@ -2277,14 +2211,6 @@ function make_useStorageSuspense<S extends LsonObject>() {
   };
 }
 
-function useLegacyKeySuspense<
-  TKey extends Extract<keyof S, string>,
-  S extends LsonObject,
->(key: TKey): S[TKey] {
-  useSuspendUntilStorageLoaded();
-  return useLegacyKey(key) as S[TKey];
-}
-
 function useThreadsSuspense<M extends BaseMetadata>(
   options: UseThreadsOptions<M> = {
     query: { metadata: {} },
@@ -2406,52 +2332,13 @@ export function useRoomContextBundle() {
   return getOrCreateRoomContextBundle(client);
 }
 
-type Options<U extends BaseUserMeta> = {
-  /**
-   * @deprecated Define 'resolveUsers' in 'createClient' from '@liveblocks/client' instead.
-   * Please refer to our Upgrade Guide to learn more, see https://liveblocks.io/docs/platform/upgrading/1.10.
-   *
-   * A function that returns user info from user IDs.
-   */
-  resolveUsers?: (
-    args: ResolveUsersArgs
-  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
-
-  /**
-   * @deprecated Define 'resolveMentionSuggestions' in 'createClient' from '@liveblocks/client' instead.
-   * Please refer to our Upgrade Guide to learn more, see https://liveblocks.io/docs/platform/upgrading/1.10.
-   *
-   * A function that returns a list of user IDs matching a string.
-   */
-  resolveMentionSuggestions?: (
-    args: ResolveMentionSuggestionsArgs
-  ) => OptionalPromise<string[]>;
-};
-
 export function createRoomContext<
   P extends JsonObject = DP,
   S extends LsonObject = DS,
   U extends BaseUserMeta = DU,
   E extends Json = never, // TODO Change this to DE for 2.0
   M extends BaseMetadata = never, // TODO Change this to DM for 2.0
->(
-  client: OpaqueClient,
-  options?: Options<U>
-): RoomContextBundle<P, S, U, E, M> {
-  // Deprecated option
-  if (options?.resolveUsers) {
-    throw new Error(
-      "The 'resolveUsers' option has moved to 'createClient' from '@liveblocks/client'. Please refer to our Upgrade Guide to learn more, see https://liveblocks.io/docs/platform/upgrading/1.10."
-    );
-  }
-
-  // Deprecated option
-  if (options?.resolveMentionSuggestions) {
-    throw new Error(
-      "The 'resolveMentionSuggestions' option has moved to 'createClient' from '@liveblocks/client'. Please refer to our Upgrade Guide to learn more, see https://liveblocks.io/docs/platform/upgrading/1.10."
-    );
-  }
-
+>(client: OpaqueClient): RoomContextBundle<P, S, U, E, M> {
   return getOrCreateRoomContextBundle<P, S, U, E, M>(client);
 }
 

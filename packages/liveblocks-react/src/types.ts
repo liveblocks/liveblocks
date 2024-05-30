@@ -250,8 +250,6 @@ export type RoomProviderProps<
      * only on the client side.
      */
     autoConnect?: boolean;
-    /** @deprecated Renamed to `autoConnect` */
-    shouldInitiallyConnect?: boolean;
 
     /**
      * If you're on React 17 or lower, pass in a reference to
@@ -396,6 +394,9 @@ type RoomContextBundleCommon<
   useStatus(): Status;
 
   /**
+   * @deprecated It's recommended to use `useMutation` for writing to Storage,
+   * which will automatically batch all mutations.
+   *
    * Returns a function that batches modifications made during the given function.
    * All the modifications are sent to other clients in a single message.
    * All the modifications are merged in a single history item (undo/redo).
@@ -923,63 +924,6 @@ export type RoomContextBundle<
         (settings: Partial<RoomNotificationSettings>) => void,
       ];
 
-      //
-      // Legacy hooks
-      //
-
-      /**
-       * Returns the LiveList associated with the provided key. The hook triggers
-       * a re-render if the LiveList is updated, however it does not triggers
-       * a re-render if a nested CRDT is updated.
-       *
-       * @param key The top-level storage key associated with the LiveList
-       * @returns null while storage is still loading, otherwise, returns the LiveList instance at the storage key
-       *
-       * @example
-       * const animals = useList("animals");  // e.g. [] or ["🦁", "🐍", "🦍"]  // ❌ No longer recommended
-       * const animals = useStorage((root) => root.animals);                    // ✅ Do this instead
-       *
-       * @deprecated We no longer recommend using `useList`. Prefer `useStorage`
-       * for reading and `useMutation` for writing.
-       */
-      useList<TKey extends Extract<keyof S, string>>(key: TKey): S[TKey] | null;
-
-      /**
-       * Returns the LiveMap associated with the provided key. If the LiveMap
-       * does not exist, a new empty LiveMap will be created. The hook triggers
-       * a re-render if the LiveMap is updated, however it does not triggers
-       * a re-render if a nested CRDT is updated.
-       *
-       * @param key The top-level storage key associated with the LiveMap
-       * @returns null while storage is still loading, otherwise, returns the LiveMap instance at the storage key
-       *
-       * @example
-       * const shapesById = useMap("shapes");                   // ❌ No longer recommended
-       * const shapesById = useStorage((root) => root.shapes);  // ✅ Do this instead
-       *
-       * @deprecated We no longer recommend using `useMap`. Prefer `useStorage`
-       * for reading and `useMutation` for writing.
-       */
-      useMap<TKey extends Extract<keyof S, string>>(key: TKey): S[TKey] | null;
-
-      /**
-       * Returns the LiveObject associated with the provided key.
-       * The hook triggers a re-render if the LiveObject is updated, however it does not triggers a re-render if a nested CRDT is updated.
-       *
-       * @param key The top-level storage key associated with the LiveObject
-       * @returns null while storage is still loading, otherwise, returns the LiveObject instance at the storage key
-       *
-       * @example
-       * const object = useObject("obj");                // ❌ No longer recommended
-       * const object = useStorage((root) => root.obj);  // ✅ Do this instead
-       *
-       * @deprecated We no longer recommend using `useObject`. Prefer `useStorage`
-       * for reading and `useMutation` for writing.
-       */
-      useObject<TKey extends Extract<keyof S, string>>(
-        key: TKey
-      ): S[TKey] | null;
-
       suspense: Resolve<
         RoomContextBundleCommon<P, S, U, E, M> &
           SharedContextBundle<U>["suspense"] & {
@@ -1067,63 +1011,6 @@ export type RoomContextBundle<
               RoomNotificationSettingsStateSuccess,
               (settings: Partial<RoomNotificationSettings>) => void,
             ];
-
-            //
-            // Legacy hooks
-            //
-
-            /**
-             * Returns the LiveList associated with the provided key. The hook triggers
-             * a re-render if the LiveList is updated, however it does not triggers
-             * a re-render if a nested CRDT is updated.
-             *
-             * @param key The top-level storage key associated with the LiveList
-             * @returns Returns the LiveList instance at the storage key
-             *
-             * @example
-             * const animals = useList("animals");  // e.g. [] or ["🦁", "🐍", "🦍"]  // ❌ No longer recommended
-             * const animals = useStorage((root) => root.animals);                    // ✅ Do this instead
-             *
-             * @deprecated We no longer recommend using `useList`. Prefer `useStorage`
-             * for reading and `useMutation` for writing.
-             */
-            useList<TKey extends Extract<keyof S, string>>(key: TKey): S[TKey];
-
-            /**
-             * Returns the LiveMap associated with the provided key. If the LiveMap
-             * does not exist, a new empty LiveMap will be created. The hook triggers
-             * a re-render if the LiveMap is updated, however it does not triggers
-             * a re-render if a nested CRDT is updated.
-             *
-             * @param key The top-level storage key associated with the LiveMap
-             * @returns Returns the LiveMap instance at the storage key
-             *
-             * @example
-             * const shapesById = useMap("shapes");                   // ❌ No longer recommended
-             * const shapesById = useStorage((root) => root.shapes);  // ✅ Do this instead
-             *
-             * @deprecated We no longer recommend using `useMap`. Prefer `useStorage`
-             * for reading and `useMutation` for writing.
-             */
-            useMap<TKey extends Extract<keyof S, string>>(key: TKey): S[TKey];
-
-            /**
-             * Returns the LiveObject associated with the provided key.
-             * The hook triggers a re-render if the LiveObject is updated, however it does not triggers a re-render if a nested CRDT is updated.
-             *
-             * @param key The top-level storage key associated with the LiveObject
-             * @returns Returns the LiveObject instance at the storage key
-             *
-             * @example
-             * const object = useObject("obj");                // ❌ No longer recommended
-             * const object = useStorage((root) => root.obj);  // ✅ Do this instead
-             *
-             * @deprecated We no longer recommend using `useObject`. Prefer `useStorage`
-             * for reading and `useMutation` for writing.
-             */
-            useObject<TKey extends Extract<keyof S, string>>(
-              key: TKey
-            ): S[TKey];
           }
       >;
     }

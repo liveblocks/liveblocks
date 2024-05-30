@@ -29,7 +29,6 @@ export const {
   useCanUndo,
   useMutation,
   useMyPresence,
-  useObject,
   useOthers,
   useRoom,
   useStorage,

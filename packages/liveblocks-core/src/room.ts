@@ -5,12 +5,11 @@ import {
 } from "./client";
 import type {
   Delegates,
-  LegacyConnectionStatus,
   LiveblocksError,
   LostConnectionEvent,
   Status,
 } from "./connection";
-import { ManagedSocket, newToLegacyStatus, StopRetrying } from "./connection";
+import { ManagedSocket, StopRetrying } from "./connection";
 import {
   convertToCommentData,
   convertToCommentUserReaction,
@@ -161,7 +160,6 @@ type RoomEventCallbackMap<
   U extends BaseUserMeta,
   E extends Json,
 > = {
-  connection: Callback<LegacyConnectionStatus>; // Old/deprecated API
   status: Callback<Status>; // New/recommended API
   "lost-connection": Callback<LostConnectionEvent>;
   event: Callback<RoomEventMessage<P, U, E>>;
@@ -359,31 +357,6 @@ type SubscribeFn<
   (type: "error", listener: Callback<LiveblocksError>): () => void;
 
   /**
-   * @deprecated This API will be removed in a future version of Liveblocks.
-   * Prefer using the newer `.subscribe('status')` API.
-   *
-   * We recommend making the following changes if you use these APIs:
-   *
-   *     OLD APIs                       NEW APIs
-   *     .getConnectionState()     -->  .getStatus()
-   *     .subscribe('connection')  -->  .subscribe('status')
-   *
-   *     OLD STATUSES         NEW STATUSES
-   *     closed          -->  initial
-   *     authenticating  -->  connecting
-   *     connecting      -->  connecting
-   *     open            -->  connected
-   *     unavailable     -->  reconnecting
-   *     failed          -->  disconnected
-   *
-   * Subscribe to legacy connection status updates.
-   *
-   * @returns Unsubscribe function.
-   *
-   */
-  (type: "connection", listener: Callback<LegacyConnectionStatus>): () => void;
-
-  /**
    * Subscribe to connection status updates. The callback will be called any
    * time the status changes.
    *
@@ -562,26 +535,6 @@ export type Room<
    * The id of the room.
    */
   readonly id: string;
-
-  /**
-   * @deprecated This API will be removed in a future version of Liveblocks.
-   * Prefer using `.getStatus()` instead.
-   *
-   * We recommend making the following changes if you use these APIs:
-   *
-   *     OLD APIs                       NEW APIs
-   *     .getConnectionState()     -->  .getStatus()
-   *     .subscribe('connection')  -->  .subscribe('status')
-   *
-   *     OLD STATUSES         NEW STATUSES
-   *     closed          -->  initial
-   *     authenticating  -->  connecting
-   *     connecting      -->  connecting
-   *     open            -->  connected
-   *     unavailable     -->  reconnecting
-   *     failed          -->  disconnected
-   */
-  getConnectionState(): LegacyConnectionStatus;
 
   /**
    * Return the current connection status for this room. Can be used to display
@@ -945,8 +898,6 @@ export type RoomInitializers<
    * the authentication endpoint or connect via WebSocket.
    */
   autoConnect?: boolean;
-  /** @deprecated Renamed to `autoConnect` */
-  shouldInitiallyConnect?: boolean;
 }>;
 
 export type RoomDelegates = Omit<Delegates<AuthValue>, "canZombie">;
@@ -987,7 +938,13 @@ function userToTreeNode(
     type: "User",
     id: `${user.connectionId}`,
     key,
-    payload: user,
+    payload: {
+      connectionId: user.connectionId,
+      id: user.id,
+      info: user.info,
+      presence: user.presence,
+      isReadOnly: !user.canWrite,
+    },
   };
 }
 
@@ -1652,7 +1609,6 @@ export function createRoom<
   };
 
   const eventHub = {
-    connection: makeEventSource<LegacyConnectionStatus>(), // Old/deprecated API
     status: makeEventSource<Status>(), // New/recommended API
     lostConnection: makeEventSource<LostConnectionEvent>(),
 
@@ -1755,7 +1711,6 @@ export function createRoom<
           presence: myPresence,
           canWrite,
           canComment: canComment(dynamicSession.scopes),
-          isReadOnly: !canWrite, // Deprecated, kept for backward-compatibility
         };
       }
     }
@@ -2972,7 +2927,6 @@ export function createRoom<
 
       // Core
       getStatus: () => managedSocket.getStatus(),
-      getConnectionState: () => managedSocket.getLegacyStatus(),
       getSelf: () => self.current,
 
       // Presence
@@ -3070,13 +3024,6 @@ function makeClassicSubscribeFn<
 
         case "error":
           return events.error.subscribe(callback as Callback<Error>);
-
-        case "connection": {
-          const cb = callback as Callback<LegacyConnectionStatus>;
-          return events.status.subscribe((status) =>
-            cb(newToLegacyStatus(status))
-          );
-        }
 
         case "status":
           return events.status.subscribe(callback as Callback<Status>);

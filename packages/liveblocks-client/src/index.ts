@@ -38,7 +38,6 @@ export type {
   LostConnectionEvent,
   Lson,
   LsonObject,
-  Others,
   OthersEvent,
   PlainLsonObject,
   ResolveMentionSuggestionsArgs,
