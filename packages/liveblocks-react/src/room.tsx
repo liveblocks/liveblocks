@@ -2145,7 +2145,13 @@ function make_useOthersSuspense<
   U extends BaseUserMeta,
 >() {
   const useOthers = make_useOthers<P, U>();
-  return function useOthersSuspense<T>(
+
+  function useOthersSuspense(): readonly User<P, U>[];
+  function useOthersSuspense<T>(
+    selector: (others: readonly User<P, U>[]) => T,
+    isEqual?: (prev: T, curr: T) => boolean
+  ): T;
+  function useOthersSuspense<T>(
     selector?: (others: readonly User<P, U>[]) => T,
     isEqual?: (prev: T, curr: T) => boolean
   ): T | readonly User<P, U>[] {
@@ -2154,7 +2160,9 @@ function make_useOthersSuspense<
       selector as (others: readonly User<P, U>[]) => T,
       isEqual as (prev: T, curr: T) => boolean
     ) as T | readonly User<P, U>[];
-  };
+  }
+
+  return useOthersSuspense;
 }
 
 function useOthersConnectionIdsSuspense(): readonly number[] {
