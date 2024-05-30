@@ -1,7 +1,7 @@
 import type { Json } from "@liveblocks/client";
 import * as classic from "@liveblocks/react";
 import * as suspense from "@liveblocks/react/suspense";
-import { expectType } from "tsd";
+import { expectError, expectType } from "tsd";
 
 //
 // User-provided type augmentations
@@ -9,10 +9,12 @@ import { expectType } from "tsd";
 declare global {
   namespace Liveblocks {
     interface Presence {
-      cursor: {
-        x: number;
-        y: number;
-      };
+      cursor: { x: number; y: number };
+    }
+
+    interface RoomEvent {
+      type: "emoji";
+      emoji: string;
     }
   }
 }
@@ -123,4 +125,22 @@ declare global {
     suspense.shallow
   );
   expectType<number[]>(xs);
+}
+
+// ---------------------------------------------------------
+
+// useBroadcastEvent()
+{
+  const broadcast = classic.useBroadcastEvent();
+  broadcast({ type: "emoji", emoji: "😍" });
+  expectError(broadcast({ type: "i-do-not-exist" }));
+  expectError(broadcast(new Date()));
+}
+
+// useBroadcastEvent() (suspense)
+{
+  const broadcast = suspense.useBroadcastEvent();
+  broadcast({ type: "emoji", emoji: "😍" });
+  expectError(broadcast({ type: "i-do-not-exist" }));
+  expectError(broadcast(new Date()));
 }
