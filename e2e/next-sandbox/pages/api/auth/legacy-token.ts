@@ -21,7 +21,7 @@ async function authorize(options: {
     const { room, secret, userId, userInfo } = options;
 
     url = new URL(
-      `/v2/rooms/${encodeURIComponent(room as string)}/authorize`,
+      `/v2/rooms/${encodeURIComponent(room)}/authorize`,
       nn(
         process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
         "Please specify NEXT_PUBLIC_LIVEBLOCKS_BASE_URL env var"
@@ -48,7 +48,9 @@ async function authorize(options: {
     return {
       status: 503 /* Service Unavailable */,
       body:
-        (url ? `Call to "${url}" failed.` : "Invalid authorize request.") +
+        (url
+          ? `Call to "${url.toString()}" failed.`
+          : "Invalid authorize request.") +
         ' See "error" for more information.',
       error: er as Error | undefined,
     };
