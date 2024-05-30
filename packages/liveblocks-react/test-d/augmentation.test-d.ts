@@ -12,6 +12,16 @@ declare global {
       cursor: { x: number; y: number };
     }
 
+    //
+    // TODO Ideally support using union types here, somehow.
+    // Maybe this could work?
+    //
+    // interface RoomEvents {
+    //   events:
+    //     | { type: "emoji"; emoji: string }
+    //     | { type: "leave"; userId: string };
+    // }
+    //
     interface RoomEvent {
       type: "emoji";
       emoji: string;
@@ -133,6 +143,7 @@ declare global {
 {
   const broadcast = classic.useBroadcastEvent();
   broadcast({ type: "emoji", emoji: "😍" });
+  // broadcast({ type: "leave", userId: "1234" });  // TODO Allow this using union types
   expectError(broadcast({ type: "i-do-not-exist" }));
   expectError(broadcast(new Date()));
 }
@@ -141,6 +152,7 @@ declare global {
 {
   const broadcast = suspense.useBroadcastEvent();
   broadcast({ type: "emoji", emoji: "😍" });
+  // broadcast({ type: "leave", userId: "1234" });  // TODO Allow this using union types
   expectError(broadcast({ type: "i-do-not-exist" }));
   expectError(broadcast(new Date()));
 }
