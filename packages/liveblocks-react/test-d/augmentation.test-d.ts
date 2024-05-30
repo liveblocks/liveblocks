@@ -44,6 +44,18 @@ expectType<Json | undefined>(room.getPresence().notAPresenceField);
   expectType<Json | undefined>(me.presence.notAPresenceField);
 }
 
+// useSelf(selector)
+{
+  const x = useSelf((me) => me.presence.cursor.x);
+  expectType<number | null>(x);
+}
+
+// useSelf(selector) (suspense)
+{
+  const x = suspense.useSelf((me) => me.presence.cursor.x);
+  expectType<number>(x);
+}
+
 // ---------------------------------------------------------
 
 // useOthers()
@@ -54,3 +66,10 @@ expectType<Json | undefined>(room.getPresence().notAPresenceField);
   expectType<boolean>(others[0].canWrite);
 }
 
+// useOthers() (suspense)
+{
+  const others = suspense.useOthers();
+  expectType<number>(others[13].presence.cursor.x);
+  expectType<number>(others[42].presence.cursor.y);
+  expectType<boolean>(others[0].canWrite);
+}
