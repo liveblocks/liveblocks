@@ -53,14 +53,14 @@ export {
   useUpdateRoomNotificationSettings,
 } from "./room";
 
-// Export the classic (non-Suspense) versions of our hooks
-// (This part differs from src/suspense.ts)
+// Export the Suspense versions of our hooks
+// (This part differs from src/index.ts)
 export {
-  useOther,
-  useOthers,
-  useOthersConnectionIds,
-  useOthersMapped,
-  useSelf,
-  useStorage,
-  useThreads,
+  useOtherSuspense as useOther,
+  useOthersSuspense as useOthers,
+  useOthersConnectionIdsSuspense as useOthersConnectionIds,
+  useOthersMappedSuspense as useOthersMapped,
+  useSelfSuspense as useSelf,
+  useStorageSuspense as useStorage,
+  useThreadsSuspense as useThreads,
 } from "./room";
