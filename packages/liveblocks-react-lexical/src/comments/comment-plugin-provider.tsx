@@ -312,9 +312,16 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     );
   }, [editor]);
 
-  const handleComposerFocus = useCallback(() => {
-    setShowActiveSelection(true);
-  }, []);
+  const handleComposerFocus = useCallback(
+    (commentId: string, threadId: string) => {
+      if (commentId === undefined && threadId === undefined) {
+        setShowActiveSelection(true);
+      } else {
+        setShowActiveSelection(false);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     return editor.registerUpdateListener(({ editorState: state, tags }) => {

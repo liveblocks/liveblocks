@@ -821,7 +821,10 @@ type RoomContextBundleCommon<
 
 export type ThreadCreateCallback = (threadId: string) => void;
 export type ThreadDeleteCallback = (threadId: string) => void;
-export type ComposerFocusCallback = () => void;
+export type ComposerFocusCallback = (
+  commentId: string | undefined,
+  threadId: string | undefined
+) => void;
 export type IsThreadActiveCallback = (threadId: string) => boolean;
 
 /**
