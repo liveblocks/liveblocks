@@ -106,3 +106,21 @@ declare global {
   );
   expectType<number[]>(xs);
 }
+
+// useOthers(selector, eq)
+{
+  const xs = classic.useOthers(
+    (others) => others.map((o) => o.presence.cursor.x),
+    classic.shallow
+  );
+  expectType<number[]>(xs);
+}
+
+// useOthers(selector, eq) (suspense)
+{
+  const xs = suspense.useOthers(
+    (others) => others.map((o) => o.presence.cursor.x),
+    suspense.shallow
+  );
+  expectType<number[]>(xs);
+}
