@@ -51,19 +51,6 @@ function SendNotificationButtons() {
     <div className={styles.buttonBar}>
       <Button
         onClick={async () => {
-          await imageUploadNotification(self.id, {
-            src: "/atoll.png",
-            alt: "A Polynesian atoll",
-            uploadedBy: "quinn.elton@example.com",
-          });
-          location.reload();
-        }}
-      >
-        Image upload
-      </Button>
-
-      <Button
-        onClick={async () => {
           await alertNotification(self.id, {
             title: "Warning!",
             message: "Your account may be at risk if you don’t take action.",
@@ -86,6 +73,19 @@ function SendNotificationButtons() {
         }}
       >
         Invite
+      </Button>
+
+      <Button
+        onClick={async () => {
+          await imageUploadNotification(self.id, {
+            src: "/atoll.png",
+            alt: "A Polynesian atoll",
+            uploadedBy: "quinn.elton@example.com",
+          });
+          location.reload();
+        }}
+      >
+        Image upload
       </Button>
     </div>
   );

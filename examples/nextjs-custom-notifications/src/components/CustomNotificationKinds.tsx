@@ -15,7 +15,7 @@ export function AlertNotification({
 
   return (
     <InboxNotification.Custom
-      title={<strong>{inboxNotification.activities[0].data.title}</strong>}
+      title={<strong>{title}</strong>}
       aside={
         <div className={styles.warningIcon}>
           <WarningIcon />
@@ -23,7 +23,7 @@ export function AlertNotification({
       }
       inboxNotification={inboxNotification}
     >
-      {inboxNotification.activities[0].data.message}
+      {message}
     </InboxNotification.Custom>
   );
 }
