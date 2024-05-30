@@ -629,7 +629,7 @@ function makeRoomContextBundle<
     useStorageRoot: useStorageRoot<S>,
     useStorage: make_useStorage<S>(),
 
-    useSelf: useSelf<P, U>,
+    useSelf: make_useSelf<P, U>(),
     useMyPresence: useMyPresence<P>,
     useUpdateMyPresence: useUpdateMyPresence<P>,
     useOthers: useOthers<P, U>,
@@ -679,7 +679,7 @@ function makeRoomContextBundle<
       useStorageRoot: useStorageRoot<S>,
       useStorage: make_useStorageSuspense<S>(),
 
-      useSelf: useSelfSuspense<P, U>,
+      useSelf: make_useSelfSuspense<P, U>(),
       useMyPresence: useMyPresence<P>,
       useUpdateMyPresence: useUpdateMyPresence<P>,
       useOthers: make_useOthersSuspense<P, U>(),
@@ -1039,43 +1039,45 @@ function useCanRedo(): boolean {
   return useSyncExternalStore(subscribe, canRedo, canRedo);
 }
 
-function useSelf<P extends JsonObject, U extends BaseUserMeta>(): User<
-  P,
-  U
-> | null;
-function useSelf<T, P extends JsonObject, U extends BaseUserMeta>(
-  selector: (me: User<P, U>) => T,
-  isEqual?: (prev: T | null, curr: T | null) => boolean
-): T | null;
-function useSelf<T, P extends JsonObject, U extends BaseUserMeta>(
-  maybeSelector?: (me: User<P, U>) => T,
-  isEqual?: (prev: T | null, curr: T | null) => boolean
-): T | User<P, U> | null {
-  type Snapshot = User<P, U> | null;
-  type Selection = T | null;
+function make_useSelf<P extends JsonObject, U extends BaseUserMeta>() {
+  function useSelf(): User<P, U> | null;
+  function useSelf<T>(
+    selector: (me: User<P, U>) => T,
+    isEqual?: (prev: T | null, curr: T | null) => boolean
+  ): T | null;
+  function useSelf<T>(
+    maybeSelector?: (me: User<P, U>) => T,
+    isEqual?: (prev: T | null, curr: T | null) => boolean
+  ): T | User<P, U> | null {
+    type Snapshot = User<P, U> | null;
+    type Selection = T | null;
 
-  const room = useRoom<P, never, U, never>();
-  const subscribe = room.events.self.subscribe;
-  const getSnapshot: () => Snapshot = room.getSelf;
+    const room = useRoom<P, never, U, never>();
+    const subscribe = room.events.self.subscribe;
+    const getSnapshot: () => Snapshot = room.getSelf;
 
-  const selector = maybeSelector ?? (identity as (me: User<P, U>) => T);
-  const wrappedSelector = React.useCallback(
-    (me: Snapshot): Selection => (me !== null ? selector(me) : null),
-    [selector]
-  );
+    const selector = maybeSelector ?? (identity as (me: User<P, U>) => T);
+    const wrappedSelector = React.useCallback(
+      (me: Snapshot): Selection => (me !== null ? selector(me) : null),
+      [selector]
+    );
 
-  const getServerSnapshot = alwaysNull;
+    const getServerSnapshot = alwaysNull;
 
-  return useSyncExternalStoreWithSelector(
-    subscribe,
-    getSnapshot,
-    getServerSnapshot,
-    wrappedSelector,
-    isEqual
-  );
+    return useSyncExternalStoreWithSelector(
+      subscribe,
+      getSnapshot,
+      getServerSnapshot,
+      wrappedSelector,
+      isEqual
+    );
+  }
+
+  return useSelf;
 }
 
 function useCurrentUserId() {
+  const useSelf = make_useSelf<never, never>();
   return useSelf((user) => (typeof user.id === "string" ? user.id : null));
 }
 
@@ -2114,23 +2116,24 @@ function useSuspendUntilPresenceLoaded(): void {
   });
 }
 
-function useSelfSuspense<P extends JsonObject, U extends BaseUserMeta>(): User<
-  P,
-  U
->;
-function useSelfSuspense<T, P extends JsonObject, U extends BaseUserMeta>(
-  selector: (me: User<P, U>) => T,
-  isEqual?: (prev: T, curr: T) => boolean
-): T;
-function useSelfSuspense<T, P extends JsonObject, U extends BaseUserMeta>(
-  selector?: (me: User<P, U>) => T,
-  isEqual?: (prev: T, curr: T) => boolean
-): T | User<P, U> {
-  useSuspendUntilPresenceLoaded();
-  return useSelf(
-    selector as (me: User<P, U>) => T,
-    isEqual as (prev: T | null, curr: T | null) => boolean
-  ) as T | User<P, U>;
+function make_useSelfSuspense<P extends JsonObject, U extends BaseUserMeta>() {
+  function useSelfSuspense(): User<P, U>;
+  function useSelfSuspense<T>(
+    selector: (me: User<P, U>) => T,
+    isEqual?: (prev: T, curr: T) => boolean
+  ): T;
+  function useSelfSuspense<T>(
+    selector?: (me: User<P, U>) => T,
+    isEqual?: (prev: T, curr: T) => boolean
+  ): T | User<P, U> {
+    const useSelf = make_useSelf<P, U>();
+    useSuspendUntilPresenceLoaded();
+    return useSelf(
+      selector as (me: User<P, U>) => T,
+      isEqual as (prev: T | null, curr: T | null) => boolean
+    ) as T | User<P, U>;
+  }
+  return useSelfSuspense;
 }
 
 function make_useOthersSuspense<
@@ -2375,8 +2378,8 @@ const _20 = make_useOtherSuspense<DP, DU>();
 const _21 = make_useOthersSuspense<DP, DU>();
 const _22 = make_useStorage<DS>();
 const _23 = make_useStorageSuspense<DS>();
-const _24 = useSelf<DP, DU>;
-const _25 = useSelfSuspense<DP, DU>;
+const _24 = make_useSelf<DP, DU>();
+const _25 = make_useSelfSuspense<DP, DU>();
 const _26 = useStorageRoot<DS>;
 const _27 = useUpdateMyPresence<DP>;
 
