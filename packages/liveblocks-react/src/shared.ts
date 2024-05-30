@@ -1,11 +1,4 @@
-import type {
-  BaseMetadata,
-  BaseUserMeta,
-  Client,
-  Json,
-  JsonObject,
-  LsonObject,
-} from "@liveblocks/client";
+import type { BaseUserMeta, Client } from "@liveblocks/client";
 import { kInternal, raise } from "@liveblocks/core";
 import { useCallback, useEffect } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
@@ -19,21 +12,6 @@ import type {
   UserState,
   UserStateSuccess,
 } from "./types";
-
-//
-// Default concrete types for each of the user-provided type placeholders.
-//
-
-/** DP = Default Presence type */
-export type DP = JsonObject;
-/** DS = Default Storage type */
-export type DS = LsonObject;
-/** DU = Default UserMeta type */
-export type DU = BaseUserMeta;
-/** DE = Default (Room)Event type */
-export type DE = Json;
-/** DM = Default Thread Metadata type */
-export type DM = BaseMetadata;
 
 /**
  * @private
