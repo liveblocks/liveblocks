@@ -1,8 +1,8 @@
 "use client";
 
 import styles from "./Editor.module.css";
-import { Toolbar } from "@/components/Toolbar";
 import { Avatars } from "@/components/Avatars";
+import FloatingTextFormatToolbarPlugin from "@/components/FloatingToolbarPlugin/FloatingToolbarPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
@@ -12,8 +12,8 @@ import {
   ThreadPanel,
   liveblocksLexicalConfig,
 } from "@liveblocks/react-lexical";
-import { useThreads } from "@/liveblocks.config";
-import { Composer, Thread } from "@liveblocks/react-comments";
+import { Composer } from "@liveblocks/react-comments";
+import { useState } from "react";
 
 // Set up editor config and theme
 const initialConfig = {
@@ -38,16 +38,23 @@ const initialConfig = {
 // Collaborative text editor with simple rich text, live cursors, and live avatars
 
 export default function Editor() {
+
+  const [floatingAnchorElem, setFloatingAnchorElem] =
+    useState<HTMLDivElement | null>(null);
+  const onRef = (_floatingAnchorElem: HTMLDivElement) => {
+    if (_floatingAnchorElem !== null) {
+      setFloatingAnchorElem(_floatingAnchorElem);
+    }
+  };
   return (
     <div className={styles.container}>
       <LexicalComposer initialConfig={liveblocksLexicalConfig(initialConfig)}>
         <LiveblocksPluginProvider>
           <div className={styles.editorHeader}>
-            <Toolbar />
             <Avatars />
           </div>
           <div className={styles.editorContainer}>
-            <div className={styles.editor}>
+            <div className={styles.editor} ref={onRef}>
               <RichTextPlugin
                 contentEditable={
                   <>
@@ -59,6 +66,10 @@ export default function Editor() {
                 }
                 ErrorBoundary={LexicalErrorBoundary}
               />
+              {floatingAnchorElem &&
+                <FloatingTextFormatToolbarPlugin
+                  anchorElem={floatingAnchorElem}
+                />}
             </div>
 
             <div className={styles.sidebar}>
