@@ -87,20 +87,20 @@ function makeRoomConfig(
  * control/observe.
  */
 function createTestableRoom<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json,
+  P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
 >(
-  initialPresence: TPresence,
+  initialPresence: P,
   authBehavior = AUTH_SUCCESS,
   socketBehavior = SOCKET_AUTOCONNECT_AND_ROOM_STATE(),
   config?: Partial<RoomConfig>,
-  initialStorage?: TStorage
+  initialStorage?: S
 ) {
   const { wss, delegates } = defineBehavior(authBehavior, socketBehavior);
 
-  const room = createRoom<TPresence, TStorage, TUserMeta, TRoomEvent>(
+  const room = createRoom<P, S, U, E>(
     { initialPresence, initialStorage },
     makeRoomConfig(delegates, config)
   );

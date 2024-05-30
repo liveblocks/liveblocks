@@ -1,22 +1,20 @@
-import type { BaseMetadata } from "./types/BaseMetadata";
-import type { CommentData, CommentDataPlain } from "./types/CommentData";
 import type {
+  BaseMetadata,
+  CommentData,
+  CommentDataPlain,
   CommentUserReaction,
   CommentUserReactionPlain,
-} from "./types/CommentReaction";
+  ThreadData,
+  ThreadDataPlain,
+  ThreadDeleteInfo,
+  ThreadDeleteInfoPlain,
+} from "./protocol/Comments";
 import type {
   InboxNotificationData,
   InboxNotificationDataPlain,
-} from "./types/InboxNotificationData";
-import type {
   InboxNotificationDeleteInfo,
   InboxNotificationDeleteInfoPlain,
-} from "./types/InboxNotificationDeleteInfo";
-import type { ThreadData, ThreadDataPlain } from "./types/ThreadData";
-import type {
-  ThreadDeleteInfo,
-  ThreadDeleteInfoPlain,
-} from "./types/ThreadDeleteInfo";
+} from "./protocol/InboxNotifications";
 
 /**
  * Converts a plain comment data object (usually returned by the API) to a comment data object that can be used by the client.
@@ -57,9 +55,9 @@ export function convertToCommentData(data: CommentDataPlain): CommentData {
  * @param data The plain thread data object (usually returned by the API)
  * @returns The rich thread data object that can be used by the client.
  */
-export function convertToThreadData<
-  TThreadMetadata extends BaseMetadata = never,
->(data: ThreadDataPlain<TThreadMetadata>): ThreadData<TThreadMetadata> {
+export function convertToThreadData<M extends BaseMetadata>(
+  data: ThreadDataPlain<M>
+): ThreadData<M> {
   const updatedAt = data.updatedAt ? new Date(data.updatedAt) : undefined;
   const createdAt = new Date(data.createdAt);
 
@@ -101,6 +99,20 @@ export function convertToInboxNotificationData(
 ): InboxNotificationData {
   const notifiedAt = new Date(data.notifiedAt);
   const readAt = data.readAt ? new Date(data.readAt) : null;
+
+  if ("activities" in data) {
+    const activities = data.activities.map((activity) => ({
+      ...activity,
+      createdAt: new Date(activity.createdAt),
+    }));
+
+    return {
+      ...data,
+      notifiedAt,
+      readAt,
+      activities,
+    };
+  }
 
   return {
     ...data,

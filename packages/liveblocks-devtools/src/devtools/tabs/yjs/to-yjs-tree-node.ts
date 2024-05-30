@@ -1,4 +1,4 @@
-import {
+import type {
   YAbstractTypeNode,
   YContentAnyNode,
   YContentBinaryNode,
@@ -252,7 +252,7 @@ export function toTreeYNode(
       return {
         type: node.type,
         id,
-        key: key,
+        key,
         payload: node.data,
       };
     case "Y.ContentEmbed":

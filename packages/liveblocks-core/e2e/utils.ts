@@ -15,11 +15,11 @@ import type { ToImmutable } from "../src/crdts/utils";
 import { createClient } from "../src/client";
 
 async function initializeRoomForTest<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json,
->(roomId: string, initialPresence: TPresence, initialStorage?: TStorage) {
+  P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
+>(roomId: string, initialPresence: P, initialStorage?: S) {
   const publicApiKey = process.env.LIVEBLOCKS_PUBLIC_KEY;
 
   if (publicApiKey == null) {
@@ -69,10 +69,10 @@ async function initializeRoomForTest<
   });
 
   const { room, leave } = client.enterRoom<
-    TPresence,
-    TStorage,
-    TUserMeta,
-    TRoomEvent
+    P,
+    S,
+    U,
+    E
   >(roomId, { initialPresence, initialStorage });
   await waitUntilStatus(room, "connected");
 
@@ -91,13 +91,13 @@ async function initializeRoomForTest<
 /**
  * Join the same room with 2 different clients and stop sending socket messages when the storage is initialized
  */
-export function prepareTestsConflicts<TStorage extends LsonObject>(
-  initialStorage: TStorage,
+export function prepareTestsConflicts<S extends LsonObject>(
+  initialStorage: S,
   callback: (args: {
-    root1: LiveObject<TStorage>;
-    root2: LiveObject<TStorage>;
-    room2: Room<never, TStorage, never, never>;
-    room1: Room<never, TStorage, never, never>;
+    root1: LiveObject<S>;
+    root2: LiveObject<S>;
+    room2: Room<never, S, never, never>;
+    room1: Room<never, S, never, never>;
 
     /**
      * Assert that room1 and room2 storage are equal to the provided immutable
@@ -106,8 +106,8 @@ export function prepareTestsConflicts<TStorage extends LsonObject>(
      * states updated with the updates generated from conflicts are equal.
      */
     assert: (
-      immRoot1: ToImmutable<TStorage>,
-      immRoot2?: ToImmutable<TStorage>
+      immRoot1: ToImmutable<S>,
+      immRoot2?: ToImmutable<S>
     ) => void;
     wsUtils: {
       flushSocket1Messages: () => Promise<void>;
@@ -118,12 +118,12 @@ export function prepareTestsConflicts<TStorage extends LsonObject>(
   return async () => {
     const roomName = "storage-requirements-e2e-tests-" + new Date().getTime();
 
-    const actor1 = await initializeRoomForTest<never, TStorage, never, never>(
+    const actor1 = await initializeRoomForTest<never, S, never, never>(
       roomName,
       {} as never,
       initialStorage
     );
-    const actor2 = await initializeRoomForTest<never, TStorage, never, never>(
+    const actor2 = await initializeRoomForTest<never, S, never, never>(
       roomName,
       {} as never
     );
@@ -172,8 +172,8 @@ export function prepareTestsConflicts<TStorage extends LsonObject>(
     );
 
     function assert(
-      immRoot1: ToImmutable<TStorage>,
-      immRoot2?: ToImmutable<TStorage>
+      immRoot1: ToImmutable<S>,
+      immRoot2?: ToImmutable<S>
     ) {
       if (immRoot2 == null) {
         immRoot2 = immRoot1;
@@ -207,18 +207,18 @@ export function prepareTestsConflicts<TStorage extends LsonObject>(
 /**
  * Join a room and stop sending socket messages when the storage is initialized
  */
-export function prepareSingleClientTest<TStorage extends LsonObject>(
-  initialStorage: TStorage,
+export function prepareSingleClientTest<S extends LsonObject>(
+  initialStorage: S,
   callback: (args: {
-    root: LiveObject<TStorage>;
-    room: Room<never, TStorage, never, never>;
+    root: LiveObject<S>;
+    room: Room<never, S, never, never>;
     flushSocketMessages: () => Promise<void>;
   }) => Promise<void>
 ): () => Promise<void> {
   return async () => {
     const roomName = "storage-requirements-e2e-tests-" + new Date().getTime();
 
-    const actor = await initializeRoomForTest<never, TStorage, never, never>(
+    const actor = await initializeRoomForTest<never, S, never, never>(
       roomName,
       {} as never,
       initialStorage

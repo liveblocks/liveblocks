@@ -343,5 +343,19 @@
     "topics": ["text-editors"],
     "technologies": ["yjs", "tiptap", "react"],
     "date": "2024-03-25"
+  },
+  {
+    "title": "How to filter threads using query language",
+    "path": "/how-to-filter-threads-using-query-language",
+    "topics": ["rest-api", "comments"],
+    "technologies": ["nodejs", "react-comments"],
+    "date": "2024-04-10"
+  },
+  {
+    "title": "How to filter rooms using query language",
+    "path": "/how-to-filter-rooms-using-query-language",
+    "topics": ["rest-api"],
+    "technologies": ["nodejs"],
+    "date": "2024-04-10"
   }
 ]

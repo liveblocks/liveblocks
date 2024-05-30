@@ -1,0 +1,66 @@
+---
+meta:
+  title: "How to filter rooms using query language"
+  description:
+    "Learn how to filter for certain rooms using their names and metadata with
+    our query language"
+---
+
+When retrieving rooms with our REST API, it’s possible to filter for specific
+threads using [custom metadata](/docs/products/comments/metadata) and room ID
+prefixes using our custom query language. This enables the
+[Get Rooms REST API](/docs/api-reference/rest-api-endpoints#get-rooms) to have
+filtering that works the same as with
+[`liveblocks.getRooms`](/docs/api-reference/liveblocks-node#get-rooms).
+
+## Query language
+
+You can filter rooms by their metadata and room ID prefixes, which is helpful
+when you’re using a
+[naming pattern](/docs/authentication/access-token#Naming-pattern) for your
+rooms. Filters can be combined using `AND` logic.
+
+```js
+// Rooms with IDs that begin with "liveblocks:"
+roomId^'liveblocks:'
+
+// Rooms with { roomType: 'whiteboard' } string metadata
+metadata['roomType']:'whiteboard'
+
+// Combine queries with AND
+roomId^'liveblocks:' AND metadata['roomType']:'whiteboard'
+
+// Use multiple metadata filters at once
+metadata['roomType']:'whiteboard' AND metadata['creator']:'florent'
+```
+
+<Banner>
+
+The `AND` is optional and can actually be omitted, but we’re using it here for
+clarity.
+
+</Banner>
+
+Note that room metadata can contain `strings` or `arrays`, but only `strings`
+can be filtered. If you wish to return a single specific room, instead use the
+[Get Room API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId) or
+[`liveblocks.getRoom`](/docs/api-reference/liveblocks-node#get-rooms-roomId).
+
+### How to use
+
+To use the query language with the
+[REST API](/docs/api-reference/rest-api-endpoints#get-rooms) pass your query
+string to the `query` parameter. For example, given this query:
+
+```js
+roomId^'liveblocks:' AND metadata['roomType']:'whiteboard'
+```
+
+Encode it, and add it to the `query` parameter:
+
+```
+https://api.liveblocks.io/v2/rooms?query=roomId%5E'liveblocks%3A'%20AND%20metadata%5B'roomType'%5D%3A'whiteboard'
+```
+
+To learn more on _setting_ custom metadata on rooms, make sure to
+[read our guide](/docs/rooms/metadata).

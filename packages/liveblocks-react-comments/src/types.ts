@@ -3,6 +3,9 @@ import type { ComponentPropsWithoutRef, ElementType } from "react";
 export type Direction = "ltr" | "rtl";
 
 export type SlotProp = {
+  /**
+   * Replace the rendered element by the one passed as a child.
+   */
   asChild?: boolean;
 };
 

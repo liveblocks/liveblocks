@@ -1,7 +1,7 @@
 "use client";
 
 import { type BaseMetadata, kInternal } from "@liveblocks/core";
-import { useRoomContextBundle } from "@liveblocks/react";
+import { useClient, useRoomContextBundle } from "@liveblocks/react";
 import type {
   ComponentPropsWithoutRef,
   FocusEvent,
@@ -54,14 +54,14 @@ interface EmojiEditorActionProps extends EditorActionProps {
   onPickerOpenChange?: EmojiPickerProps["onOpenChange"];
 }
 
-type ComposerCreateThreadProps<TThreadMetadata extends BaseMetadata> = {
+type ComposerCreateThreadProps<M extends BaseMetadata> = {
   threadId?: never;
   commentId?: never;
 
   /**
    * The metadata of the thread to create.
    */
-  metadata?: TThreadMetadata;
+  metadata?: M;
 };
 
 type ComposerCreateCommentProps = {
@@ -86,11 +86,12 @@ type ComposerEditCommentProps = {
   metadata?: never;
 };
 
-export type ComposerProps<
-  TThreadMetadata extends BaseMetadata = ThreadMetadata,
-> = Omit<ComponentPropsWithoutRef<"form">, "defaultValue"> &
+export type ComposerProps<M extends BaseMetadata = ThreadMetadata> = Omit<
+  ComponentPropsWithoutRef<"form">,
+  "defaultValue"
+> &
   (
-    | ComposerCreateThreadProps<TThreadMetadata>
+    | ComposerCreateThreadProps<M>
     | ComposerCreateCommentProps
     | ComposerEditCommentProps
   ) & {
@@ -289,10 +290,10 @@ const ComposerWithContext = forwardRef<
     },
     forwardedRef
   ) => {
-    const {
-      [kInternal]: { hasResolveMentionSuggestions },
-      useSelf,
-    } = useRoomContextBundle();
+    const client = useClient();
+    const hasResolveMentionSuggestions =
+      client[kInternal].resolveMentionSuggestions !== undefined;
+    const { useSelf } = useRoomContextBundle();
     const self = useSelf();
     const isDisabled = useMemo(
       () => disabled || !self?.canComment,
@@ -436,14 +437,14 @@ const ComposerWithContext = forwardRef<
  * <Composer />
  */
 export const Composer = forwardRef(
-  <TThreadMetadata extends BaseMetadata = ThreadMetadata>(
+  <M extends BaseMetadata = ThreadMetadata>(
     {
       threadId,
       commentId,
       metadata,
       onComposerSubmit,
       ...props
-    }: ComposerProps<TThreadMetadata>,
+    }: ComposerProps<M>,
     forwardedRef: ForwardedRef<HTMLFormElement>
   ) => {
     const { useCreateThread, useCreateComment, useEditComment } =
@@ -497,6 +498,6 @@ export const Composer = forwardRef(
       </TooltipProvider>
     );
   }
-) as <TThreadMetadata extends BaseMetadata = ThreadMetadata>(
-  props: ComposerProps<TThreadMetadata> & RefAttributes<HTMLFormElement>
+) as <M extends BaseMetadata = ThreadMetadata>(
+  props: ComposerProps<M> & RefAttributes<HTMLFormElement>
 ) => JSX.Element;
