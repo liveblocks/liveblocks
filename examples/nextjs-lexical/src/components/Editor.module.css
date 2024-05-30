@@ -92,26 +92,3 @@
   border-bottom-style: solid;
   border-bottom-color: rgba(55, 53, 47, 0.09);
 }
-
-.noThreads {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-  color: rgba(55, 53, 47, 0.5);
-}
-
-.threads {
-  display: flex;
-  flex-direction: column;
-}
-
-.thread {
-  border-bottom-width: 1px;
-  border-bottom-style: solid;
-  border-bottom-color: rgba(55, 53, 47, 0.09);
-}
-
-.thread[data-state="active"] {
-  background-color: #fffcf2;
-}

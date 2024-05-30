@@ -9,6 +9,7 @@ import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import {
   LiveblocksPluginProvider,
+  ThreadPanel,
   liveblocksLexicalConfig,
 } from "@liveblocks/react-lexical";
 import { useThreads } from "@/liveblocks.config";
@@ -62,7 +63,7 @@ export default function Editor() {
 
             <div className={styles.sidebar}>
               <Composer className={styles.composer} />
-              <Threads />
+              <ThreadPanel />
             </div>
           </div>
         </LiveblocksPluginProvider>
@@ -71,18 +72,4 @@ export default function Editor() {
   );
 }
 
-function Threads() {
-  const { threads } = useThreads();
 
-  if (threads.length === 0) {
-    return <div className={styles.noThreads}>No threads yet</div>;
-  }
-
-  return (
-    <div className={styles.threads}>
-      {threads.map((thread) => {
-        return <Thread thread={thread} className={styles.thread} />;
-      })}
-    </div>
-  );
-}
