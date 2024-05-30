@@ -41,9 +41,8 @@
   color: #c99f00;
 }
 
-.newUserNotification {
-  background: #f3f3f3;
-  border: 16px solid white;
+.welcomeNotification {
+  background: #f8f6f6;
   padding: 16px;
   display: flex;
   flex-direction: column;

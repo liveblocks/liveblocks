@@ -7,12 +7,20 @@ import {
 } from "@liveblocks/react-comments";
 import { useInboxNotifications, useSelf } from "../liveblocks.config";
 import { ErrorBoundary } from "react-error-boundary";
-import { AlertData, alertNotification, newUserNotification } from "../actions";
 import {
-  InboxNotificationCustomData,
-  InboxNotificationData,
-} from "@liveblocks/core";
+  AlertData,
+  alertNotification,
+  inviteNotification,
+  welcomeNotification,
+} from "../actions";
 import { WarningIcon } from "./Icons";
+import { useState } from "react";
+import { Button } from "./Button";
+import {
+  AlertNotification,
+  InviteNotification,
+  WelcomeNotification,
+} from "./CustomNotificationKinds";
 
 export function CustomNotifications() {
   return (
@@ -33,7 +41,7 @@ function ButtonPanel() {
   return (
     <div className={styles.buttonPanel}>
       <h2>Send notifications</h2>
-      <button
+      <Button
         onClick={() =>
           alertNotification(self.id, {
             title: "Warning!",
@@ -42,8 +50,18 @@ function ButtonPanel() {
         }
       >
         Alert
-      </button>
-      <button onClick={() => newUserNotification(self.id)}>New user</button>
+      </Button>
+      <Button onClick={() => welcomeNotification(self.id)}>New user</Button>
+      <Button
+        onClick={() =>
+          inviteNotification(self.id, {
+            inviteFrom: "emil.joyce@example.com",
+            documentTitle: "My document",
+          })
+        }
+      >
+        New user
+      </Button>
     </div>
   );
 }
@@ -64,33 +82,9 @@ function NotificationPanel() {
             key={inboxNotification.id}
             inboxNotification={inboxNotification}
             kinds={{
-              $alert({ inboxNotification }) {
-                const { title, message } = inboxNotification.activities[0]
-                  .data as AlertData;
-                return (
-                  <InboxNotification.Custom
-                    title={<>{inboxNotification.activities[0].data.title}</>}
-                    aside={
-                      <div className={styles.warningIcon}>
-                        <WarningIcon />
-                      </div>
-                    }
-                    inboxNotification={inboxNotification}
-                  >
-                    {inboxNotification.activities[0].data.message}
-                  </InboxNotification.Custom>
-                );
-              },
-
-              $newUser: ({ inboxNotification }) => (
-                <div className={styles.newUserNotification}>
-                  <div>Welcome to our application</div>
-                  <div>
-                    <button>Overview</button>
-                    <button>Settings</button>
-                  </div>
-                </div>
-              ),
+              $alert: AlertNotification,
+              $welcome: WelcomeNotification,
+              $invite: InviteNotification,
             }}
           />
         ))}

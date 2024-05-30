@@ -9,10 +9,11 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.12.0-test1",
-    "@liveblocks/node": "^1.12.0-test1",
-    "@liveblocks/react": "^1.12.0-test1",
-    "@liveblocks/react-comments": "^1.12.0-test1",
+    "@liveblocks/client": "^1.12.0",
+    "@liveblocks/node": "^1.12.0",
+    "@liveblocks/react": "^1.12.0",
+    "@liveblocks/react-comments": "^1.12.0",
+    "clsx": "^2.1.1",
     "nanoid": "^5.0.7",
     "next": "^14.2.1",
     "react": "^18.2.0",
