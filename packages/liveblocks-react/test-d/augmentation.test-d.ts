@@ -1,5 +1,5 @@
 import type { Json } from "@liveblocks/client";
-import { useRoom, useSelf, useOthers } from "@liveblocks/react";
+import * as classic from "@liveblocks/react";
 import * as suspense from "@liveblocks/react/suspense";
 import { expectType } from "tsd";
 
@@ -21,16 +21,27 @@ declare global {
 // Hook APIs
 // ---------------------------------------------------------
 
-const room = useRoom();
+// useRoom()
+{
+  const room = classic.useRoom();
+  expectType<number>(room.getPresence().cursor.x);
+  expectType<number>(room.getPresence().cursor.y);
+  expectType<Json | undefined>(room.getPresence().notAPresenceField);
+}
 
-// Global presence is now available
-expectType<number>(room.getPresence().cursor.x);
-expectType<number>(room.getPresence().cursor.y);
-expectType<Json | undefined>(room.getPresence().notAPresenceField);
+// useRoom() (suspense)
+{
+  const room = suspense.useRoom();
+  expectType<number>(room.getPresence().cursor.x);
+  expectType<number>(room.getPresence().cursor.y);
+  expectType<Json | undefined>(room.getPresence().notAPresenceField);
+}
+
+// ---------------------------------------------------------
 
 // useSelf()
 {
-  const me = useSelf();
+  const me = classic.useSelf();
   expectType<number | undefined>(me?.presence.cursor.x);
   expectType<number | undefined>(me?.presence.cursor.y);
   expectType<Json | undefined>(me?.presence.notAPresenceField);
@@ -46,7 +57,7 @@ expectType<Json | undefined>(room.getPresence().notAPresenceField);
 
 // useSelf(selector)
 {
-  const x = useSelf((me) => me.presence.cursor.x);
+  const x = classic.useSelf((me) => me.presence.cursor.x);
   expectType<number | null>(x);
 }
 
@@ -60,7 +71,7 @@ expectType<Json | undefined>(room.getPresence().notAPresenceField);
 
 // useOthers()
 {
-  const others = useOthers();
+  const others = classic.useOthers();
   expectType<number>(others[13].presence.cursor.x);
   expectType<number>(others[42].presence.cursor.y);
   expectType<boolean>(others[0].canWrite);
@@ -72,4 +83,26 @@ expectType<Json | undefined>(room.getPresence().notAPresenceField);
   expectType<number>(others[13].presence.cursor.x);
   expectType<number>(others[42].presence.cursor.y);
   expectType<boolean>(others[0].canWrite);
+}
+
+// useOthers(selector)
+{
+  const num = classic.useOthers((others) => others.length);
+  expectType<number>(num);
+
+  const xs = classic.useOthers((others) =>
+    others.map((o) => o.presence.cursor.x)
+  );
+  expectType<number[]>(xs);
+}
+
+// useOthers(selector) (suspense)
+{
+  const num = classic.useOthers((others) => others.length);
+  expectType<number>(num);
+
+  const xs = classic.useOthers((others) =>
+    others.map((o) => o.presence.cursor.x)
+  );
+  expectType<number[]>(xs);
 }
