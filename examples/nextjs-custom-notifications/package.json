@@ -1,6 +1,6 @@
 {
-  "name": "@liveblocks-examples/nextjs-comments",
-  "description": "This example shows how to use custom notifications with Liveblocks and Next.js.",
+  "name": "@liveblocks-examples/nextjs-custom-notifications",
+  "description": "This example shows how to build a notification inbox with custom notifications using Liveblocks and Next.js.",
   "license": "Apache-2.0",
   "private": true,
   "scripts": {

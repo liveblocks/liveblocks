@@ -9,7 +9,9 @@ import { ErrorBoundary } from "react-error-boundary";
 import { CustomNotifications } from "../components/CustomNotifications";
 
 export default function Page() {
-  const roomId = useExampleRoomId("liveblocks:examples:nextjs-comments");
+  const roomId = useExampleRoomId(
+    "liveblocks:examples:nextjs-custom-notifications"
+  );
 
   return (
     <LiveblocksProvider>
