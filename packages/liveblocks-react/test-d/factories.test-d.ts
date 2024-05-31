@@ -6,8 +6,8 @@ import type {
   User,
 } from "@liveblocks/client";
 import { createClient } from "@liveblocks/client";
-import { createRoomContext } from "@liveblocks/react";
-import { expectType } from "tsd";
+import { createLiveblocksContext, createRoomContext } from "@liveblocks/react";
+import { expectAssignable, expectType } from "tsd";
 
 type MyPresence = { cursor: { x: number; y: number } | null };
 type MyStorage = {
@@ -17,14 +17,17 @@ type MyStorage = {
 };
 type MyUserMeta = { id: string; info: { name: string } };
 type MyRoomEvent = { type: "emoji"; value: string };
+type MyThreadMetadata = { color: string };
 
 type P = MyPresence;
 type S = MyStorage;
 type U = MyUserMeta;
 type E = MyRoomEvent;
+type M = MyThreadMetadata;
 
 const client = createClient({ publicApiKey: "pk_whatever" });
 
+const lbctx = createLiveblocksContext<U, M>(client);
 const ctx = createRoomContext<P, S, U, E>(client);
 
 // ---------------------------------------------------------
@@ -157,4 +160,58 @@ ctx.useErrorListener((err) => {
 {
   expectType<boolean>(ctx.useUser("1234").isLoading);
   expectType<{ name: string } | undefined>(ctx.useUser("1234").user);
+}
+
+// The useUser() hook (suspense)
+{
+  expectType<false>(ctx.suspense.useUser("1234").isLoading);
+  expectType<{ name: string }>(ctx.suspense.useUser("1234").user);
+}
+
+// ---------------------------------------------------------
+
+// The useInboxNotifications() hook
+{
+  const result = lbctx.useInboxNotifications();
+  expectType<boolean>(result.isLoading);
+  expectType<Error | undefined>(result.error);
+  expectType<("thread" | `$${string}`)[] | undefined>(
+    result.inboxNotifications?.map((ibn) => ibn.kind)
+  );
+  expectType<(string | undefined)[] | undefined>(
+    result.inboxNotifications?.map((ibn) => ibn.roomId)
+  );
+}
+
+// The useInboxNotifications() hook (suspense)
+{
+  const result = lbctx.suspense.useInboxNotifications();
+  expectType<false>(result.isLoading);
+  expectType<undefined>(result.error);
+  expectType<("thread" | `$${string}`)[]>(
+    result.inboxNotifications?.map((ibn) => ibn.kind)
+  );
+  expectType<(string | undefined)[]>(
+    result.inboxNotifications?.map((ibn) => ibn.roomId)
+  );
+}
+
+// ---------------------------------------------------------
+
+// The useInboxNotificationThread() hook
+{
+  const result = lbctx.useInboxNotificationThread("in_xxx");
+  expectType<"thread">(result.type);
+  expectType<string>(result.roomId);
+  expectAssignable<unknown[]>(result.comments);
+  expectType<MyThreadMetadata>(result.metadata);
+}
+
+// The useInboxNotificationThread() hook (suspense)
+{
+  const result = lbctx.suspense.useInboxNotificationThread("in_xxx");
+  expectType<"thread">(result.type);
+  expectType<string>(result.roomId);
+  expectAssignable<unknown[]>(result.comments);
+  expectType<MyThreadMetadata>(result.metadata);
 }
