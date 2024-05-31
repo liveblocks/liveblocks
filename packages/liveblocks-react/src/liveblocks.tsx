@@ -844,6 +844,14 @@ function useUserSuspense<U extends BaseUserMeta>(userId: string) {
   return useUserSuspense_withClient(client, userId);
 }
 
+function useRoomInfo(roomId: string) {
+  return useRoomInfo_withClient(useClient(), roomId);
+}
+
+function useRoomInfoSuspense(roomId: string) {
+  return useRoomInfoSuspense_withClient(useClient(), roomId);
+}
+
 // type DP = Liveblocks.Presence;
 // type DS = Liveblocks.Storage;
 type DU = Liveblocks.UserMeta;
@@ -864,6 +872,8 @@ export {
   useInboxNotificationsSuspense,
   useMarkAllInboxNotificationsAsRead,
   useMarkInboxNotificationAsRead,
+  useRoomInfo,
+  useRoomInfoSuspense,
   useUnreadInboxNotificationsCount,
   useUnreadInboxNotificationsCountSuspense,
 };

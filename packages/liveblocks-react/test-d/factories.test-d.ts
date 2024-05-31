@@ -239,6 +239,48 @@ ctx.useErrorListener((err) => {
 
 // ---------------------------------------------------------
 
+// The useRoomInfo() hook
+{
+  {
+    const { info, error, isLoading } = ctx.useRoomInfo("room-id");
+    //                                 ^^^ [1]
+    expectType<boolean>(isLoading);
+    expectType<string | undefined>(info?.name);
+    expectType<string | undefined>(info?.url);
+    expectType<Error | undefined>(error);
+  }
+  {
+    const { info, error, isLoading } = lbctx.useRoomInfo("room-id");
+    //                                 ^^^^^ [2]
+    expectType<boolean>(isLoading);
+    expectType<string | undefined>(info?.name);
+    expectType<string | undefined>(info?.url);
+    expectType<Error | undefined>(error);
+  }
+}
+
+// The useRoomInfo() hook (suspense)
+{
+  {
+    const { info, error, isLoading } = ctx.suspense.useRoomInfo("room-id");
+    //                                 ^^^^^^^^^^^^ [3]
+    expectType<false>(isLoading);
+    expectType<string | undefined>(info.name);
+    expectType<string | undefined>(info.url);
+    expectType<undefined>(error);
+  }
+  {
+    const { info, error, isLoading } = lbctx.suspense.useRoomInfo("room-id");
+    //                                 ^^^^^^^^^^^^^^ [4]
+    expectType<false>(isLoading);
+    expectType<string | undefined>(info.name);
+    expectType<string | undefined>(info.url);
+    expectType<undefined>(error);
+  }
+}
+
+// ---------------------------------------------------------
+
 // The useInboxNotifications() hook
 {
   const result = lbctx.useInboxNotifications();

@@ -21,10 +21,6 @@ export {
   useInboxNotificationThread,
   useMarkAllInboxNotificationsAsRead,
   useMarkInboxNotificationAsRead,
-
-  // XXX TODO Add these here
-  // useUser,
-  // useRoomInfo,
 } from "./liveblocks";
 export {
   createRoomContext,
@@ -74,6 +70,7 @@ export {
 } from "./room";
 export {
   useInboxNotifications,
+  useRoomInfo,
   useUnreadInboxNotificationsCount,
   useUser,
 } from "./liveblocks";

@@ -202,6 +202,26 @@ declare global {
 
 // ---------------------------------------------------------
 
+// The useRoomInfo() hook
+{
+  const { info, error, isLoading } = classic.useRoomInfo("room-id");
+  expectType<boolean>(isLoading);
+  expectType<string | undefined>(info?.name);
+  expectType<string | undefined>(info?.url);
+  expectType<Error | undefined>(error);
+}
+
+// The useRoomInfo() hook (suspense)
+{
+  const { info, error, isLoading } = suspense.useRoomInfo("room-id");
+  expectType<false>(isLoading);
+  expectType<string | undefined>(info.name);
+  expectType<string | undefined>(info.url);
+  expectType<undefined>(error);
+}
+
+// ---------------------------------------------------------
+
 // The useInboxNotifications() hook
 {
   expectType<boolean>(classic.useInboxNotifications().isLoading);
