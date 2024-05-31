@@ -712,7 +712,7 @@ function makeRoomContextBundle<
     },
 
     [kInternal]: {
-      useCurrentUserId,
+      useCurrentUserIdFromRoom,
       useMentionSuggestions,
     },
   };
@@ -1080,7 +1080,7 @@ function make_useSelf<P extends JsonObject, U extends BaseUserMeta>() {
   return useSelf;
 }
 
-function useCurrentUserId() {
+function useCurrentUserIdFromRoom() {
   const useSelf = make_useSelf<never, never>();
   return useSelf((user) => (typeof user.id === "string" ? user.id : null));
 }
