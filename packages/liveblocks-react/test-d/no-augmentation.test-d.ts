@@ -1,7 +1,7 @@
-import type { Json } from "@liveblocks/client";
+import type { BaseMetadata, Json } from "@liveblocks/client";
 import * as classic from "@liveblocks/react";
 import * as suspense from "@liveblocks/react/suspense";
-import { expectError, expectType } from "tsd";
+import { expectAssignable, expectError, expectType } from "tsd";
 
 // ---------------------------------------------------------
 // Hook APIs
@@ -166,5 +166,33 @@ import { expectError, expectType } from "tsd";
     suspense
       .useInboxNotifications()
       .inboxNotifications?.map((ibn) => ibn.roomId)
+  );
+}
+
+// ---------------------------------------------------------
+
+// The useInboxNotificationThread() hook
+{
+  const result = classic.useInboxNotificationThread("in_xxx");
+  expectType<"thread">(result.type);
+  expectType<string>(result.roomId);
+  expectAssignable<unknown[]>(result.comments);
+  expectType<BaseMetadata>(result.metadata);
+  expectType<string | number | boolean | undefined>(result.metadata.color);
+  expectType<string | number | boolean | undefined>(
+    result.metadata.nonexisting
+  );
+}
+
+// The useInboxNotificationThread() hook (suspense)
+{
+  const result = suspense.useInboxNotificationThread("in_xxx");
+  expectType<"thread">(result.type);
+  expectType<string>(result.roomId);
+  expectAssignable<unknown[]>(result.comments);
+  expectType<BaseMetadata>(result.metadata);
+  expectType<string | number | boolean | undefined>(result.metadata.color);
+  expectType<string | number | boolean | undefined>(
+    result.metadata.nonexisting
   );
 }

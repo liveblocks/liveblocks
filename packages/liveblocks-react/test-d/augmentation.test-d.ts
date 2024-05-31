@@ -1,7 +1,7 @@
 import type { Json } from "@liveblocks/client";
 import * as classic from "@liveblocks/react";
 import * as suspense from "@liveblocks/react/suspense";
-import { expectError, expectType } from "tsd";
+import { expectAssignable, expectError, expectType } from "tsd";
 
 //
 // User-provided type augmentations
@@ -25,6 +25,10 @@ declare global {
     interface RoomEvent {
       type: "emoji";
       emoji: string;
+    }
+
+    interface ThreadMetadata {
+      color: "red" | "blue";
     }
   }
 }
@@ -196,5 +200,31 @@ declare global {
     suspense
       .useInboxNotifications()
       .inboxNotifications?.map((ibn) => ibn.roomId)
+  );
+}
+
+// ---------------------------------------------------------
+
+// The useInboxNotificationThread() hook
+{
+  const result = classic.useInboxNotificationThread("in_xxx");
+  expectType<"thread">(result.type);
+  expectType<string>(result.roomId);
+  expectAssignable<unknown[]>(result.comments);
+  expectType<"red" | "blue">(result.metadata.color);
+  expectType<string | number | boolean | undefined>(
+    result.metadata.nonexisting
+  );
+}
+
+// The useInboxNotificationThread() hook (suspense)
+{
+  const result = suspense.useInboxNotificationThread("in_xxx");
+  expectType<"thread">(result.type);
+  expectType<string>(result.roomId);
+  expectAssignable<unknown[]>(result.comments);
+  expectType<"red" | "blue">(result.metadata.color);
+  expectType<string | number | boolean | undefined>(
+    result.metadata.nonexisting
   );
 }

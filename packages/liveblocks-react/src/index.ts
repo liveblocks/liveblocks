@@ -18,6 +18,7 @@ export {
   useClient,
   useLiveblocksContextBundle,
   useLiveblocksContextBundleOrNull,
+  useInboxNotificationThread,
 
   // XXX TODO Add these here
   // useUser,
@@ -74,6 +75,5 @@ export {
 // XXX TODO Add these here
 export {
   useInboxNotifications,
-  // useInboxNotificationThread,
   // useUnreadInboxNotificationsCount,
 } from "./liveblocks";

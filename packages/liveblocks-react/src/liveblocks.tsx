@@ -809,18 +809,28 @@ function useInboxNotificationsSuspense() {
   return useInboxNotificationsSuspense_withClient(useClient());
 }
 
+function useInboxNotificationThread<M extends BaseMetadata>(
+  inboxNotificationId: string
+) {
+  return useInboxNotificationThread_withClient<M>(
+    useClient(),
+    inboxNotificationId
+  );
+}
+
 // type DP = Liveblocks.Presence;
 // type DS = Liveblocks.Storage;
 // type DU = Liveblocks.UserMeta;
 // type DE = Liveblocks.RoomEvent;
-// type DM = Liveblocks.ThreadMetadata;
+type DM = Liveblocks.ThreadMetadata;
 
 // TODO in 2.0 Copy/paste all the docstrings onto these global hooks :(
-// const __1 = useInboxNotifications;
+const __1 = useInboxNotificationThread<DM>;
 
 // eslint-disable-next-line simple-import-sort/exports
 export {
   // __1 as useInboxNotifications,
   useInboxNotifications,
   useInboxNotificationsSuspense,
+  __1 as useInboxNotificationThread,
 };

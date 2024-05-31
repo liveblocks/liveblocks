@@ -7,7 +7,7 @@ import type {
 } from "@liveblocks/client";
 import { createClient } from "@liveblocks/client";
 import { createLiveblocksContext, createRoomContext } from "@liveblocks/react";
-import { expectAssignable, expectType } from "tsd";
+import { expectAssignable, expectError, expectType } from "tsd";
 
 type MyPresence = { cursor: { x: number; y: number } | null };
 type MyStorage = {
@@ -17,7 +17,7 @@ type MyStorage = {
 };
 type MyUserMeta = { id: string; info: { name: string } };
 type MyRoomEvent = { type: "emoji"; value: string };
-type MyThreadMetadata = { color: string };
+type MyThreadMetadata = { color: "red" | "blue" };
 
 type P = MyPresence;
 type S = MyStorage;
@@ -204,7 +204,8 @@ ctx.useErrorListener((err) => {
   expectType<"thread">(result.type);
   expectType<string>(result.roomId);
   expectAssignable<unknown[]>(result.comments);
-  expectType<MyThreadMetadata>(result.metadata);
+  expectType<"red" | "blue">(result.metadata.color);
+  expectError(result.metadata.nonexisting);
 }
 
 // The useInboxNotificationThread() hook (suspense)
@@ -213,5 +214,6 @@ ctx.useErrorListener((err) => {
   expectType<"thread">(result.type);
   expectType<string>(result.roomId);
   expectAssignable<unknown[]>(result.comments);
-  expectType<MyThreadMetadata>(result.metadata);
+  expectType<"red" | "blue">(result.metadata.color);
+  expectError(result.metadata.nonexisting);
 }
