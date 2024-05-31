@@ -170,3 +170,31 @@ declare global {
 //   expectType<boolean>(suspense.useUser("1234").isLoading);
 //   expectType<{ name: string } | undefined>(suspense.useUser("1234").user);
 // }
+
+// ---------------------------------------------------------
+
+// The useInboxNotifications() hook
+{
+  expectType<boolean>(classic.useInboxNotifications().isLoading);
+  expectType<Error | undefined>(classic.useInboxNotifications().error);
+  expectType<("thread" | `$${string}`)[] | undefined>(
+    classic.useInboxNotifications().inboxNotifications?.map((ibn) => ibn.kind)
+  );
+  expectType<(string | undefined)[] | undefined>(
+    classic.useInboxNotifications().inboxNotifications?.map((ibn) => ibn.roomId)
+  );
+}
+
+// The useInboxNotifications() hook (suspense)
+{
+  expectType<false>(suspense.useInboxNotifications().isLoading);
+  expectType<undefined>(suspense.useInboxNotifications().error);
+  expectType<("thread" | `$${string}`)[]>(
+    suspense.useInboxNotifications().inboxNotifications?.map((ibn) => ibn.kind)
+  );
+  expectType<(string | undefined)[]>(
+    suspense
+      .useInboxNotifications()
+      .inboxNotifications?.map((ibn) => ibn.roomId)
+  );
+}

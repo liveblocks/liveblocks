@@ -72,8 +72,8 @@ export {
   useThreads,
 } from "./room";
 // XXX TODO Add these here
-// export {
-//   useInboxNotifications,
-//   useInboxNotificationThread,
-//   useUnreadInboxNotificationsCount,
-// } from "./liveblocks";
+export {
+  useInboxNotifications,
+  // useInboxNotificationThread,
+  // useUnreadInboxNotificationsCount,
+} from "./liveblocks";

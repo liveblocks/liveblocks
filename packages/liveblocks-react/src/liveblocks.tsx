@@ -800,3 +800,27 @@ export function createLiveblocksContext<
 >(client: OpaqueClient): LiveblocksContextBundle<U, M> {
   return getOrCreateContextBundle<U, M>(client);
 }
+
+function useInboxNotifications() {
+  return useInboxNotifications_withClient(useClient());
+}
+
+function useInboxNotificationsSuspense() {
+  return useInboxNotificationsSuspense_withClient(useClient());
+}
+
+// type DP = Liveblocks.Presence;
+// type DS = Liveblocks.Storage;
+// type DU = Liveblocks.UserMeta;
+// type DE = Liveblocks.RoomEvent;
+// type DM = Liveblocks.ThreadMetadata;
+
+// TODO in 2.0 Copy/paste all the docstrings onto these global hooks :(
+// const __1 = useInboxNotifications;
+
+// eslint-disable-next-line simple-import-sort/exports
+export {
+  // __1 as useInboxNotifications,
+  useInboxNotifications,
+  useInboxNotificationsSuspense,
+};

@@ -73,8 +73,8 @@ export {
 } from "./room";
 
 // XXX TODO Add these here
-// export {
-//   useInboxNotificationsSuspense as useInboxNotifications,
-//   useInboxNotificationThreadSuspense as useInboxNotificationThread,
-//   useUnreadInboxNotificationsCountSuspense as useUnreadInboxNotificationsCount,
-// } from "./liveblocks";
+export {
+  useInboxNotificationsSuspense as useInboxNotifications,
+  // useInboxNotificationThreadSuspense as useInboxNotificationThread,
+  // useUnreadInboxNotificationsCountSuspense as useUnreadInboxNotificationsCount,
+} from "./liveblocks";
