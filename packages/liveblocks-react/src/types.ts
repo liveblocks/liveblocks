@@ -826,7 +826,6 @@ type RoomContextBundleCommon<
  * will probably happen if you do.
  */
 type PrivateRoomContextApi = {
-  useMentionSuggestions(search?: string): string[] | undefined;
   useCurrentUserIdFromRoom(): string | null;
 };
 

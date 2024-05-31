@@ -127,8 +127,6 @@ const STABLE_EMPTY_LIST = Object.freeze([]);
 
 export const POLLING_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
-const MENTION_SUGGESTIONS_DEBOUNCE = 500;
-
 function makeNotificationSettingsQueryKey(roomId: string) {
   return `${roomId}:NOTIFICATION_SETTINGS`;
 }
@@ -264,7 +262,6 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   const requestsByQuery = new Map<string, Promise<unknown>>(); // A map of query keys to the promise of the request for that query
   const requestStatusByRoom = new Map<string, boolean>(); // A map of room ids to a boolean indicating whether a request to retrieve threads updates is in progress
   const subscribersByQuery = new Map<string, number>(); // A map of query keys to the number of subscribers for that query
-  const mentionSuggestionsCache = new Map<string, string[]>();
 
   const poller = makePoller(refreshThreadsAndNotifications);
 
@@ -488,85 +485,12 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     throw innerError;
   }
 
-  /** @internal */
-  // Simplistic debounced search, we don't need to worry too much about
-  // deduping and race conditions as there can only be one search at a time.
-  function useMentionSuggestions(search?: string) {
-    const room = useRoom();
-    const [mentionSuggestions, setMentionSuggestions] =
-      React.useState<string[]>();
-    const lastInvokedAt = React.useRef<number>();
-
-    React.useEffect(() => {
-      const resolveMentionSuggestions =
-        client[kInternal].resolveMentionSuggestions;
-
-      if (search === undefined || !resolveMentionSuggestions) {
-        return;
-      }
-
-      const resolveMentionSuggestionsArgs = { text: search, roomId: room.id };
-      const mentionSuggestionsCacheKey = stringify(
-        resolveMentionSuggestionsArgs
-      );
-      let debounceTimeout: number | undefined;
-      let isCanceled = false;
-
-      const getMentionSuggestions = async () => {
-        try {
-          lastInvokedAt.current = performance.now();
-          const mentionSuggestions = await resolveMentionSuggestions(
-            resolveMentionSuggestionsArgs
-          );
-
-          if (!isCanceled) {
-            setMentionSuggestions(mentionSuggestions);
-            mentionSuggestionsCache.set(
-              mentionSuggestionsCacheKey,
-              mentionSuggestions
-            );
-          }
-        } catch (error) {
-          console.error((error as Error)?.message);
-        }
-      };
-
-      if (mentionSuggestionsCache.has(mentionSuggestionsCacheKey)) {
-        // If there are already cached mention suggestions, use them immediately.
-        setMentionSuggestions(
-          mentionSuggestionsCache.get(mentionSuggestionsCacheKey)
-        );
-      } else if (
-        !lastInvokedAt.current ||
-        Math.abs(performance.now() - lastInvokedAt.current) >
-          MENTION_SUGGESTIONS_DEBOUNCE
-      ) {
-        // If on the debounce's leading edge (either because it's the first invokation or enough
-        // time has passed since the last debounce), get mention suggestions immediately.
-        void getMentionSuggestions();
-      } else {
-        // Otherwise, wait for the debounce delay.
-        debounceTimeout = window.setTimeout(() => {
-          void getMentionSuggestions();
-        }, MENTION_SUGGESTIONS_DEBOUNCE);
-      }
-
-      return () => {
-        isCanceled = true;
-        window.clearTimeout(debounceTimeout);
-      };
-    }, [room.id, search]);
-
-    return mentionSuggestions;
-  }
-
   return {
     store,
     incrementQuerySubscribers,
     getThreadsUpdates,
     getThreadsAndInboxNotifications,
     getInboxNotificationSettings,
-    useMentionSuggestions,
     onMutationFailure,
   };
 }
@@ -604,9 +528,6 @@ function makeRoomContextBundle<
       </LiveblocksProvider>
     );
   }
-
-  // Bind to typed hooks
-  const { useMentionSuggestions } = getExtrasForClient<M>(client);
 
   const shared = createSharedContext<U>(client);
 
@@ -713,7 +634,6 @@ function makeRoomContextBundle<
 
     [kInternal]: {
       useCurrentUserIdFromRoom,
-      useMentionSuggestions,
     },
   };
 
