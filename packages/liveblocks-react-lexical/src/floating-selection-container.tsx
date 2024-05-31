@@ -20,6 +20,7 @@ import { createDOMRange } from "@lexical/selection";
 export interface FloatingSelectionContainerProps {
   sideOffset?: number;
   alignOffset?: number;
+  collisionPadding?: number;
 }
 
 export const FloatingSelectionContainer = forwardRef<
@@ -82,9 +83,14 @@ const FloatingSelectionContainerImpl = forwardRef<
   HTMLDivElement | null,
   PropsWithChildren<FloatingSelectionContainerImplProps>
 >(function FloatingSelectionContainer(props, forwardedRef) {
-  const { children, selection, sideOffset = 0, alignOffset = 0 } = props;
+  const {
+    children,
+    selection,
+    sideOffset = 0,
+    alignOffset = 0,
+    collisionPadding = 0,
+  } = props;
 
-  const containerRef = useRef<HTMLDivElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
 
   const [editor] = useLexicalComposerContext();
@@ -95,11 +101,11 @@ const FloatingSelectionContainerImpl = forwardRef<
   );
 
   useLayoutEffect(() => {
-    const container = containerRef.current;
-    if (container === null) return;
-
     const content = divRef.current;
     if (content === null) return;
+
+    const parent = content.parentElement;
+    if (parent === null) return;
 
     // Create a DOM range from the selection
     const range = createDOMRange(
@@ -112,38 +118,46 @@ const FloatingSelectionContainerImpl = forwardRef<
 
     if (range === null) return;
 
-    // Get the bounding client rect of the DOM range
+    // Get the bounding client rect of the DOM (selection) range
     const rect = range.getBoundingClientRect();
 
-    let left = rect.left - container.getBoundingClientRect().left;
-    let top = rect.bottom - container.getBoundingClientRect().top;
+    let left = rect.left - parent.getBoundingClientRect().x + parent.scrollLeft;
+    let top = rect.bottom - parent.getBoundingClientRect().y + parent.scrollTop;
 
-    // Get the width of the content`
+    // Apply the align offset
+    left += alignOffset;
+
+    // Apply the side offset
+    top += sideOffset;
+
+    // Get the width and height of the content
     const width = content.getBoundingClientRect().width;
 
     // Align content to the center of the selection
     left = left + rect.width / 2 - width / 2;
 
     // Ensure content does not overflow the container
-    if (left + width > container.getBoundingClientRect().width) {
-      left = container.clientWidth - width;
-      left -= sideOffset;
-    }
-
-    if (left < 0) {
+    if (
+      left + width + collisionPadding >
+      parent.scrollLeft + parent.clientWidth
+    ) {
+      left = parent.scrollLeft + parent.clientWidth - width;
+      left -= collisionPadding;
+    } else if (left < 0) {
       left = 0;
-      left += sideOffset;
+      left += collisionPadding;
     }
 
-    if (top + content.clientHeight > container.clientHeight) {
-      top = container.clientHeight - content.clientHeight;
-    }
+    const height = content.getBoundingClientRect().height;
 
-    if (top < 0) {
-      top = 0;
+    if (
+      top + height + collisionPadding >
+      parent.scrollTop + parent.clientHeight
+    ) {
+      top =
+        rect.top - parent.getBoundingClientRect().y + parent.scrollTop - height;
+      top -= sideOffset;
     }
-
-    top += alignOffset;
 
     content.style.left = `${left}px`;
     content.style.top = `${top}px`;
@@ -151,25 +165,13 @@ const FloatingSelectionContainerImpl = forwardRef<
 
   return (
     <div
-      ref={containerRef}
+      ref={divRef}
       style={{
         position: "absolute",
-        top: 0,
-        left: 0,
-        width: "100%",
-        height: "100%",
-        pointerEvents: "none",
+        pointerEvents: "auto",
       }}
     >
-      <div
-        ref={divRef}
-        style={{
-          position: "absolute",
-          pointerEvents: "auto",
-        }}
-      >
-        {children}
-      </div>
+      {children}
     </div>
   );
 });

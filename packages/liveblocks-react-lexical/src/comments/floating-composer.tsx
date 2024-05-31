@@ -15,18 +15,18 @@ type ThreadMetadata = {
 type FloatingComposerProps<M extends BaseMetadata = ThreadMetadata> = Omit<
   ComposerProps<M>,
   "threadId" | "commentId"
-> &
-  FloatingSelectionContainerProps;
+>;
 
 export const FloatingComposer = forwardRef<
   ComposerElement,
   FloatingComposerProps
 >(function FloatingComposer(props, forwardedRef) {
-  const { sideOffset, alignOffset, ...composerProps } = props;
+  const { ...composerProps } = props;
   return (
     <FloatingSelectionContainer
-      sideOffset={sideOffset}
-      alignOffset={alignOffset}
+      sideOffset={5}
+      alignOffset={0}
+      collisionPadding={5}
     >
       <Composer {...composerProps} ref={forwardedRef} />
     </FloatingSelectionContainer>
