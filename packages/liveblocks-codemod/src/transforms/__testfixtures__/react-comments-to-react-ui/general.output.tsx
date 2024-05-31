@@ -2,6 +2,7 @@
 // @ts-nocheck
 import React from "react";
 import { createRoomContext } from "@liveblocks/react";
+import { LiveblocksUIConfig } from "@liveblocks/react-ui";
 import * as Liveblocks from "@liveblocks/react-ui";
 import { Thread } from "@liveblocks/react-ui";
 import type { ThreadProps } from "@liveblocks/react-ui";
@@ -17,11 +18,14 @@ import { type ComposerLinkProps as LiveblocksComposerLinkProps } from "@livebloc
 export default function Home() {
   return (
     <div>
-      <Thread thread={null} />
-      <Composer.Form>
-        <Composer.Editor />
-        <Composer.Submit>Submit</Composer.Submit>
-      </Composer.Form>
+      <LiveblocksUIConfig overrides={{ locale: "fr", USER_UNKNOWN: "Anonyme" }}>
+        <Thread thread={null} />
+        <LiveblocksUIConfig />
+        <Composer.Form>
+          <Composer.Editor />
+          <Composer.Submit>Submit</Composer.Submit>
+        </Composer.Form>
+      </LiveblocksUIConfig>
     </div>
   );
 }

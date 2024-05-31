@@ -2,6 +2,7 @@
 // @ts-nocheck
 import React from "react";
 import { createRoomContext } from "@liveblocks/react";
+import { CommentsConfig } from "@liveblocks/react-comments";
 import * as Liveblocks from "@liveblocks/react-comments";
 import { Thread } from "@liveblocks/react-comments";
 import type { ThreadProps } from "@liveblocks/react-comments";
@@ -17,11 +18,14 @@ import { type ComposerLinkProps as LiveblocksComposerLinkProps } from "@livebloc
 export default function Home() {
   return (
     <div>
-      <Thread thread={null} />
-      <Composer.Form>
-        <Composer.Editor />
-        <Composer.Submit>Submit</Composer.Submit>
-      </Composer.Form>
+      <CommentsConfig overrides={{ locale: "fr", USER_UNKNOWN: "Anonyme" }}>
+        <Thread thread={null} />
+        <CommentsConfig />
+        <Composer.Form>
+          <Composer.Editor />
+          <Composer.Submit>Submit</Composer.Submit>
+        </Composer.Form>
+      </CommentsConfig>
     </div>
   );
 }
