@@ -2,7 +2,7 @@ import * as PopoverPrimitive from "@radix-ui/react-popover";
 import type { ComponentPropsWithoutRef } from "react";
 import React, { forwardRef, useCallback, useMemo, useState } from "react";
 
-import { useLiveblocksUiConfig } from "../../config";
+import { useLiveblocksUIConfig } from "../../config";
 import {
   FLOATING_ELEMENT_COLLISION_PADDING,
   FLOATING_ELEMENT_SIDE_OFFSET,
@@ -144,7 +144,7 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(
     forwardedRef
   ) => {
     const [isOpen, setOpen] = useState(false);
-    const { portalContainer } = useLiveblocksUiConfig();
+    const { portalContainer } = useLiveblocksUIConfig();
     const $ = useOverrides();
 
     const handleOpenChange = useCallback(

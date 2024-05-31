@@ -7,7 +7,7 @@ import { type Components, ComponentsProvider } from "./components";
 import type { Overrides } from "./overrides";
 import { OverridesProvider } from "./overrides";
 
-type LiveblocksUiConfigProps = PropsWithChildren<{
+type LiveblocksUIConfigProps = PropsWithChildren<{
   /**
    * Override the components' strings.
    */
@@ -24,42 +24,42 @@ type LiveblocksUiConfigProps = PropsWithChildren<{
   portalContainer?: HTMLElement;
 }>;
 
-interface LiveblocksUiConfigContext {
+interface LiveblocksUIConfigContext {
   portalContainer?: HTMLElement;
 }
 
-const LiveblocksUiConfigContext = createContext<LiveblocksUiConfigContext>({});
+const LiveblocksUIConfigContext = createContext<LiveblocksUIConfigContext>({});
 
-export function useLiveblocksUiConfig() {
-  return useContext(LiveblocksUiConfigContext);
+export function useLiveblocksUIConfig() {
+  return useContext(LiveblocksUIConfigContext);
 }
 
 /**
  * Set configuration options for all components.
  *
  * @example
- * <LiveblocksUiConfig overrides={{ locale: "fr", USER_UNKNOWN: "Anonyme", ... }}>
+ * <LiveblocksUIConfig overrides={{ locale: "fr", USER_UNKNOWN: "Anonyme", ... }}>
  *   <App />
- * </LiveblocksUiConfig>
+ * </LiveblocksUIConfig>
  */
-export function LiveblocksUiConfig({
+export function LiveblocksUIConfig({
   overrides,
   components,
   portalContainer,
   children,
-}: LiveblocksUiConfigProps) {
-  const liveblocksUiConfig = useMemo(
+}: LiveblocksUIConfigProps) {
+  const liveblocksUIConfig = useMemo(
     () => ({ portalContainer }),
     [portalContainer]
   );
 
   return (
-    <LiveblocksUiConfigContext.Provider value={liveblocksUiConfig}>
+    <LiveblocksUIConfigContext.Provider value={liveblocksUIConfig}>
       <OverridesProvider overrides={overrides}>
         <ComponentsProvider components={components}>
           {children}
         </ComponentsProvider>
       </OverridesProvider>
-    </LiveblocksUiConfigContext.Provider>
+    </LiveblocksUIConfigContext.Provider>
   );
 }

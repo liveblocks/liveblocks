@@ -3,7 +3,7 @@ import type { API, FileInfo, Options } from "jscodeshift";
 // Based on https://github.com/vercel/next.js/blob/main/packages/next-codemod
 
 // TODO: Handle `package.json`?
-// TODO: Also handle CommentsConfig → LiveblocksUiConfig
+// TODO: Also handle CommentsConfig → LiveblocksUIConfig
 
 export default function transformer(
   file: FileInfo,
