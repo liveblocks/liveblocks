@@ -1,8 +1,8 @@
 "use client";
 
+import { useUser } from "@liveblocks/react";
 import type { ComponentProps } from "react";
 import React, { useMemo } from "react";
-import { useUser } from "@liveblocks/react";
 
 import { classNames } from "../../utils/class-names";
 import { getInitials } from "../../utils/get-initials";

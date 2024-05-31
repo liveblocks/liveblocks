@@ -8,8 +8,8 @@ import { createClient } from "@liveblocks/core";
 import { createRoomContext } from "@liveblocks/react";
 import { renderHook, waitFor } from "@testing-library/react";
 import React from "react";
-import { useMentionSuggestions } from "../shared";
 
+import { useMentionSuggestions } from "../shared";
 import { generateFakeJwt } from "./_utils";
 
 // TODO: Dry up and create utils that wrap renderHook
