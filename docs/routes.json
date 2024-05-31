@@ -395,24 +395,24 @@
         ]
       },
       {
-        "title": "Low-level API",
-        "path": "/products/low-level-api",
+        "title": "Real-time APIs",
+        "path": "/products/real-time-apis",
         "routes": [
           {
             "title": "Yjs",
-            "path": "/products/low-level-api/yjs"
+            "path": "/products/real-time-apis/yjs"
           },
           {
             "title": "Storage",
-            "path": "/products/low-level-api/storage"
+            "path": "/products/real-time-apis/storage"
           },
           {
             "title": "Presence",
-            "path": "/products/low-level-api/presence"
+            "path": "/products/real-time-apis/presence"
           },
           {
             "title": "Broadcast",
-            "path": "/products/low-level-api/broadcast"
+            "path": "/products/real-time-apis/broadcast"
           }
         ]
       }
