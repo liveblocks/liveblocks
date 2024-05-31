@@ -245,3 +245,22 @@ ctx.useErrorListener((err) => {
   const markAllRead = lbctx.suspense.useMarkAllInboxNotificationsAsRead();
   expectType<void>(markAllRead());
 }
+
+// ---------------------------------------------------------
+
+// The useUnreadInboxNotificationsCount() hook
+{
+  const { count, error, isLoading } = lbctx.useUnreadInboxNotificationsCount();
+  expectType<boolean>(isLoading);
+  expectType<number | undefined>(count);
+  expectType<Error | undefined>(error);
+}
+
+// The useUnreadInboxNotificationsCount() hook (suspense)
+{
+  const { count, error, isLoading } =
+    lbctx.suspense.useUnreadInboxNotificationsCount();
+  expectType<false>(isLoading);
+  expectType<number>(count);
+  expectType<undefined>(error);
+}

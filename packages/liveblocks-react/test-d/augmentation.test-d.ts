@@ -256,3 +256,23 @@ declare global {
   const markAllRead = suspense.useMarkAllInboxNotificationsAsRead();
   expectType<void>(markAllRead());
 }
+
+// ---------------------------------------------------------
+
+// The useUnreadInboxNotificationsCount() hook
+{
+  const { count, error, isLoading } =
+    classic.useUnreadInboxNotificationsCount();
+  expectType<boolean>(isLoading);
+  expectType<number | undefined>(count);
+  expectType<Error | undefined>(error);
+}
+
+// The useUnreadInboxNotificationsCount() hook (suspense)
+{
+  const { count, error, isLoading } =
+    suspense.useUnreadInboxNotificationsCount();
+  expectType<false>(isLoading);
+  expectType<number>(count);
+  expectType<undefined>(error);
+}

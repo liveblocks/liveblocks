@@ -826,6 +826,14 @@ function useMarkInboxNotificationAsRead() {
   return useMarkInboxNotificationAsRead_withClient(useClient());
 }
 
+function useUnreadInboxNotificationsCount() {
+  return useUnreadInboxNotificationsCount_withClient(useClient());
+}
+
+function useUnreadInboxNotificationsCountSuspense() {
+  return useUnreadInboxNotificationsCountSuspense_withClient(useClient());
+}
+
 // type DP = Liveblocks.Presence;
 // type DS = Liveblocks.Storage;
 // type DU = Liveblocks.UserMeta;
@@ -842,4 +850,6 @@ export {
   useInboxNotificationsSuspense,
   useMarkAllInboxNotificationsAsRead,
   useMarkInboxNotificationAsRead,
+  useUnreadInboxNotificationsCount,
+  useUnreadInboxNotificationsCountSuspense,
 };

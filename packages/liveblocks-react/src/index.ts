@@ -75,5 +75,5 @@ export {
 // XXX TODO Add these here
 export {
   useInboxNotifications,
-  // useUnreadInboxNotificationsCount,
+  useUnreadInboxNotificationsCount,
 } from "./liveblocks";
