@@ -5,7 +5,7 @@ import type {
   InboxNotificationData,
   InboxNotificationThreadData,
 } from "@liveblocks/core";
-import { assertNever, console, kInternal } from "@liveblocks/core";
+import { assertNever, console } from "@liveblocks/core";
 import { useLiveblocksContextBundle } from "@liveblocks/react";
 import { Slot } from "@radix-ui/react-slot";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
@@ -31,6 +31,7 @@ import type {
 } from "../overrides";
 import { useOverrides } from "../overrides";
 import { Timestamp } from "../primitives/Timestamp";
+import { useCurrentUserId } from "../shared";
 import type { SlotProp } from "../types";
 import { classNames } from "../utils/class-names";
 import { generateURL } from "../utils/url";
@@ -357,13 +358,10 @@ const InboxNotificationThread = forwardRef<
     forwardedRef
   ) => {
     const $ = useOverrides(overrides);
-    const {
-      useRoomInfo,
-      useInboxNotificationThread,
-      [kInternal]: { useCurrentUserIdFromClient },
-    } = useLiveblocksContextBundle();
+    const { useRoomInfo, useInboxNotificationThread } =
+      useLiveblocksContextBundle();
     const thread = useInboxNotificationThread(inboxNotification.id);
-    const currentUserId = useCurrentUserIdFromClient();
+    const currentUserId = useCurrentUserId();
     // TODO: If you provide `href` (or plan to), we shouldn't run this hook. We should find a way to conditionally run it.
     //       Because of batching and the fact that the same hook will be called within <Room /> in the notification's title,
     //       it's not a big deal, the only scenario where it would be superfluous would be if the user provides their own
