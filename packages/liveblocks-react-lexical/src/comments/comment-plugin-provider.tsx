@@ -39,7 +39,8 @@ type ShowFloatingComposerContextType = {
   showFloatingComposer: boolean;
   setShowFloatingComposer: (show: boolean) => void;
 } | null;
-const ShowFloatingComposerContext = React.createContext<ShowFloatingComposerContextType>(null);
+const ShowFloatingComposerContext =
+  React.createContext<ShowFloatingComposerContextType>(null);
 
 const ShowFloatingComposerProvider = ({ children }: PropsWithChildren) => {
   const [showFloatingComposer, setShowFloatingComposer] = useState(false);
@@ -47,8 +48,9 @@ const ShowFloatingComposerProvider = ({ children }: PropsWithChildren) => {
     <ShowFloatingComposerContext.Provider
       value={{
         setShowFloatingComposer,
-        showFloatingComposer
-      }}>
+        showFloatingComposer,
+      }}
+    >
       {children}
     </ShowFloatingComposerContext.Provider>
   );
@@ -64,7 +66,7 @@ export function useCreateThread() {
 
   return () => {
     context.setShowFloatingComposer(true);
-  }
+  };
 }
 
 export function useShowFloatingComposer() {
@@ -77,8 +79,6 @@ export function useShowFloatingComposer() {
 
   return context.showFloatingComposer;
 }
-
-
 
 export function CommentPluginProvider({ children }: PropsWithChildren) {
   const [editor, context] = useLexicalComposerContext();
@@ -358,7 +358,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
   }, [editor]);
 
   const handleComposerFocus = useCallback(
-    (commentId: string, threadId: string) => {
+    (commentId: string | undefined, threadId: string | undefined) => {
       if (commentId === undefined && threadId === undefined) {
         setShowActiveSelection(true);
       } else {
@@ -391,5 +391,3 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     </ShowFloatingComposerProvider>
   );
 }
-
-
