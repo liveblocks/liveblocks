@@ -12,6 +12,7 @@ PACKAGE_DIRS=(
     "packages/liveblocks-yjs"
     "packages/liveblocks-react-ui"
     "packages/create-liveblocks-app"
+    "packages/liveblocks-codemod"
 )
 
 err () {
