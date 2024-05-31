@@ -150,3 +150,11 @@ ctx.useErrorListener((err) => {
   expectType<string | undefined>(err.stack);
   expectType<number>(err.code);
 });
+
+// ---------------------------------------------------------
+
+// The useUser() hook
+{
+  expectType<boolean>(ctx.useUser("1234").isLoading);
+  expectType<{ name: string } | undefined>(ctx.useUser("1234").user);
+}
