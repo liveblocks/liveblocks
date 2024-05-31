@@ -72,8 +72,8 @@ export {
   useStorage,
   useThreads,
 } from "./room";
-
 export {
   useInboxNotifications,
   useUnreadInboxNotificationsCount,
+  useUser,
 } from "./liveblocks";

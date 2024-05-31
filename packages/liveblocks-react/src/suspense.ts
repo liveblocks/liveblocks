@@ -72,8 +72,8 @@ export {
   useStorageSuspense as useStorage,
   useThreadsSuspense as useThreads,
 } from "./room";
-
 export {
   useInboxNotificationsSuspense as useInboxNotifications,
   useUnreadInboxNotificationsCountSuspense as useUnreadInboxNotificationsCount,
+  useUserSuspense as useUser,
 } from "./liveblocks";

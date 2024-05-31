@@ -834,18 +834,32 @@ function useUnreadInboxNotificationsCountSuspense() {
   return useUnreadInboxNotificationsCountSuspense_withClient(useClient());
 }
 
+function useUser<U extends BaseUserMeta>(userId: string) {
+  const client = useClient() as Client<U>;
+  return useUser_withClient(client, userId);
+}
+
+function useUserSuspense<U extends BaseUserMeta>(userId: string) {
+  const client = useClient() as Client<U>;
+  return useUserSuspense_withClient(client, userId);
+}
+
 // type DP = Liveblocks.Presence;
 // type DS = Liveblocks.Storage;
-// type DU = Liveblocks.UserMeta;
+type DU = Liveblocks.UserMeta;
 // type DE = Liveblocks.RoomEvent;
 type DM = Liveblocks.ThreadMetadata;
 
 // TODO in 2.0 Copy/paste all the docstrings onto these global hooks :(
 const __1 = useInboxNotificationThread<DM>;
+const __2 = useUser<DU>;
+const __3 = useUserSuspense<DU>;
 
 // eslint-disable-next-line simple-import-sort/exports
 export {
   __1 as useInboxNotificationThread,
+  __2 as useUser,
+  __3 as useUserSuspense,
   useInboxNotifications,
   useInboxNotificationsSuspense,
   useMarkAllInboxNotificationsAsRead,

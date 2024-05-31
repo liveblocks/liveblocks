@@ -158,14 +158,38 @@ ctx.useErrorListener((err) => {
 
 // The useUser() hook
 {
-  expectType<boolean>(ctx.useUser("1234").isLoading);
-  expectType<{ name: string } | undefined>(ctx.useUser("1234").user);
+  {
+    const { user, error, isLoading } = ctx.useUser("user-id");
+    //                                 ^^^ [1]
+    expectType<boolean>(isLoading);
+    expectType<{ name: string } | undefined>(user);
+    expectType<Error | undefined>(error);
+  }
+  {
+    const { user, error, isLoading } = lbctx.useUser("user-id");
+    //                                 ^^^^^ [2]
+    expectType<boolean>(isLoading);
+    expectType<{ name: string } | undefined>(user);
+    expectType<Error | undefined>(error);
+  }
 }
 
 // The useUser() hook (suspense)
 {
-  expectType<false>(ctx.suspense.useUser("1234").isLoading);
-  expectType<{ name: string }>(ctx.suspense.useUser("1234").user);
+  {
+    const { user, error, isLoading } = ctx.suspense.useUser("user-id");
+    //                                 ^^^^^^^^^^^^ [3]
+    expectType<false>(isLoading);
+    expectType<{ name: string }>(user);
+    expectType<undefined>(error);
+  }
+  {
+    const { user, error, isLoading } = lbctx.suspense.useUser("user-id");
+    //                                 ^^^^^^^^^^^^^^ [4]
+    expectType<false>(isLoading);
+    expectType<{ name: string }>(user);
+    expectType<undefined>(error);
+  }
 }
 
 // ---------------------------------------------------------

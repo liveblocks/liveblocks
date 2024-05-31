@@ -129,17 +129,25 @@ import { expectAssignable, expectError, expectType } from "tsd";
 
 // ---------------------------------------------------------
 
-// // The useUser() hook
-// {
-//   expectType<boolean>(classic.useUser("1234").isLoading);
-//   expectType<{ name: string } | undefined>(classic.useUser("1234").user);
-// }
-//
-// // The useUser() hook (suspense)
-// {
-//   expectType<boolean>(suspense.useUser("1234").isLoading);
-//   expectType<{ name: string } | undefined>(suspense.useUser("1234").user);
-// }
+// The useUser() hook
+{
+  const { user, error, isLoading } = classic.useUser("user-id");
+  expectType<boolean>(isLoading);
+  expectType<string | undefined>(user?.name);
+  expectType<string | undefined>(user?.avatar);
+  expectType<Json | undefined>(user?.age);
+  expectType<Error | undefined>(error);
+}
+
+// The useUser() hook (suspense)
+{
+  const { user, error, isLoading } = suspense.useUser("user-id");
+  expectType<false>(isLoading);
+  expectType<string | undefined>(user?.name);
+  expectType<string | undefined>(user?.avatar);
+  expectType<Json | undefined>(user?.age);
+  expectType<undefined>(error);
+}
 
 // ---------------------------------------------------------
 
