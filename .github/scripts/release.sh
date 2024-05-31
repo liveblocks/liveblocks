@@ -10,7 +10,7 @@ PACKAGE_DIRS=(
     "packages/liveblocks-redux"
     "packages/liveblocks-zustand"
     "packages/liveblocks-yjs"
-    "packages/liveblocks-react-comments"
+    "packages/liveblocks-react-ui"
     "packages/create-liveblocks-app"
 )
 

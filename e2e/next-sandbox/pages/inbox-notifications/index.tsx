@@ -5,14 +5,14 @@ import {
   createRoomContext,
   useClient,
 } from "@liveblocks/react";
-import * as React from "react";
-
 import {
   Composer,
   InboxNotification,
   InboxNotificationList,
   Thread,
-} from "../../../../packages/liveblocks-react-comments/dist";
+} from "@liveblocks/react-ui";
+import * as React from "react";
+
 import { getRoomFromUrl, getUserFromUrl, Row } from "../../utils";
 import Button from "../../utils/Button";
 import { createLiveblocksClient } from "../../utils/createClient";
