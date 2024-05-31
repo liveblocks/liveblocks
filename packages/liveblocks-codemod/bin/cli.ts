@@ -14,7 +14,7 @@ import inquirer from "inquirer";
 import isGitClean from "is-git-clean";
 import meow from "meow";
 import path from "path";
-import { yellow } from "picocolors";
+import { magenta, yellow } from "picocolors";
 
 const TRANSFORMER_INQUIRER_CHOICES = [
   {
@@ -119,8 +119,15 @@ function expandFilePathsIfNeeded(filesBeforeExpansion: string[]) {
 }
 
 export function run() {
+  console.log(
+    magenta(`
+▀█████▀  ▄   
+ ▀██▀  ▄██▄  
+  ▀  ▄█████▄ 
+`)
+  );
+
   const cli = meow({
-    description: "Codemods for updating Liveblocks apps.",
     help: `
     Usage
       $ npx @liveblocks/codemod@latest <transform> <path> <...options>

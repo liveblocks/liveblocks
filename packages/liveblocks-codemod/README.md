@@ -8,3 +8,5 @@
 </p>
 
 # `@liveblocks/codemod`
+
+Codemods for updating Liveblocks apps.
