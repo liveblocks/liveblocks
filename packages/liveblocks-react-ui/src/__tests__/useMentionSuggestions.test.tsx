@@ -4,11 +4,12 @@ import type {
   JsonObject,
   ResolveMentionSuggestionsArgs,
 } from "@liveblocks/core";
-import { createClient, kInternal } from "@liveblocks/core";
+import { createClient } from "@liveblocks/core";
+import { createRoomContext } from "@liveblocks/react";
 import { renderHook, waitFor } from "@testing-library/react";
 import React from "react";
+import { useMentionSuggestions } from "../shared";
 
-import { createRoomContext } from "../room";
 import { generateFakeJwt } from "./_utils";
 
 // TODO: Dry up and create utils that wrap renderHook
@@ -41,10 +42,7 @@ describe("useMentionSuggestions", () => {
   });
 
   test("should return the results from resolveMentionSuggestions", async () => {
-    const {
-      RoomProvider,
-      [kInternal]: { useMentionSuggestions },
-    } = createRoomContextForTest();
+    const { RoomProvider } = createRoomContextForTest();
 
     const { result, unmount } = renderHook(
       () => ({
@@ -71,10 +69,7 @@ describe("useMentionSuggestions", () => {
   });
 
   test("should update whenever the text changes", async () => {
-    const {
-      RoomProvider,
-      [kInternal]: { useMentionSuggestions },
-    } = createRoomContextForTest();
+    const { RoomProvider } = createRoomContextForTest();
 
     const { result, rerender, unmount } = renderHook(
       ({ text }: { text: string }) => ({
@@ -111,10 +106,9 @@ describe("useMentionSuggestions", () => {
     const resolveMentionSuggestions = jest.fn(
       ({ text }: ResolveMentionSuggestionsArgs) => text.split("")
     );
-    const {
-      RoomProvider,
-      [kInternal]: { useMentionSuggestions },
-    } = createRoomContextForTest({ resolveMentionSuggestions });
+    const { RoomProvider } = createRoomContextForTest({
+      resolveMentionSuggestions,
+    });
 
     const { result, unmount } = renderHook(
       ({ text }: { text: string }) => ({
@@ -146,10 +140,9 @@ describe("useMentionSuggestions", () => {
     const resolveMentionSuggestions = jest.fn(
       ({ text }: ResolveMentionSuggestionsArgs) => text.split("")
     );
-    const {
-      RoomProvider,
-      [kInternal]: { useMentionSuggestions },
-    } = createRoomContextForTest({ resolveMentionSuggestions });
+    const { RoomProvider } = createRoomContextForTest({
+      resolveMentionSuggestions,
+    });
 
     const { result, rerender, unmount } = renderHook(
       ({ text }: { text: string }) => ({
@@ -201,10 +194,9 @@ describe("useMentionSuggestions", () => {
     const resolveMentionSuggestions = jest.fn(
       ({ text }: ResolveMentionSuggestionsArgs) => text.split("")
     );
-    const {
-      RoomProvider,
-      [kInternal]: { useMentionSuggestions },
-    } = createRoomContextForTest({ resolveMentionSuggestions });
+    const { RoomProvider } = createRoomContextForTest({
+      resolveMentionSuggestions,
+    });
 
     const { result, rerender, unmount } = renderHook(
       ({ text }: { text: string }) => ({
