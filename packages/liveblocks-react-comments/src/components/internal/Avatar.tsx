@@ -2,7 +2,7 @@
 
 import type { ComponentProps } from "react";
 import React, { useMemo } from "react";
-import { useSharedContextBundle } from "../../shared";
+import { useUser } from "@liveblocks/react";
 
 import { classNames } from "../../utils/class-names";
 import { getInitials } from "../../utils/get-initials";
@@ -15,7 +15,6 @@ export interface AvatarProps extends ComponentProps<"div"> {
 }
 
 export function Avatar({ userId, className, ...props }: AvatarProps) {
-  const { useUser } = useSharedContextBundle();
   const { user, isLoading } = useUser(userId);
   const resolvedUserName = useMemo(() => user?.name, [user]);
   const resolvedUserAvatar = useMemo(() => user?.avatar, [user]);

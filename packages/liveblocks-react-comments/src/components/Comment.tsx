@@ -1,9 +1,8 @@
 "use client";
 
-import {
-  type CommentData,
-  type CommentReaction as CommentReactionData,
-  kInternal,
+import type {
+  CommentData,
+  CommentReaction as CommentReactionData,
 } from "@liveblocks/core";
 import { useRoomContextBundle } from "@liveblocks/react";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
@@ -45,7 +44,7 @@ import type {
 } from "../primitives/Comment/types";
 import * as ComposerPrimitive from "../primitives/Composer";
 import { Timestamp } from "../primitives/Timestamp";
-import { useSharedContextBundle } from "../shared";
+import { useCurrentUserId } from "../shared";
 import { MENTION_CHARACTER } from "../slate/plugins/mentions";
 import { classNames } from "../utils/class-names";
 import { useRefs } from "../utils/use-refs";
@@ -153,11 +152,7 @@ export function CommentMention({
   className,
   ...props
 }: CommentBodyMentionProps & CommentMentionProps) {
-  const {
-    [kInternal]: { useCurrentUserId },
-  } = useSharedContextBundle();
   const currentId = useCurrentUserId();
-
   return (
     <CommentPrimitive.Mention
       className={classNames("lb-comment-mention", className)}
@@ -229,9 +224,6 @@ export const CommentReaction = forwardRef<
   const { useAddReaction, useRemoveReaction } = useRoomContextBundle();
   const addReaction = useAddReaction();
   const removeReaction = useRemoveReaction();
-  const {
-    [kInternal]: { useCurrentUserId },
-  } = useSharedContextBundle();
   const currentId = useCurrentUserId();
   const isActive = useMemo(() => {
     return reaction.users.some((users) => users.id === currentId);
@@ -308,9 +300,6 @@ export const CommentNonInteractiveReaction = forwardRef<
   HTMLButtonElement,
   CommentNonInteractiveReactionProps
 >(({ reaction, overrides, ...props }, forwardedRef) => {
-  const {
-    [kInternal]: { useCurrentUserId },
-  } = useSharedContextBundle();
   const currentId = useCurrentUserId();
   const isActive = useMemo(() => {
     return reaction.users.some((users) => users.id === currentId);

@@ -360,10 +360,10 @@ const InboxNotificationThread = forwardRef<
     const {
       useRoomInfo,
       useInboxNotificationThread,
-      [kInternal]: { useCurrentUserId },
+      [kInternal]: { useCurrentUserIdFromClient },
     } = useLiveblocksContextBundle();
     const thread = useInboxNotificationThread(inboxNotification.id);
-    const currentUserId = useCurrentUserId();
+    const currentUserId = useCurrentUserIdFromClient();
     // TODO: If you provide `href` (or plan to), we shouldn't run this hook. We should find a way to conditionally run it.
     //       Because of batching and the fact that the same hook will be called within <Room /> in the notification's title,
     //       it's not a big deal, the only scenario where it would be superfluous would be if the user provides their own
