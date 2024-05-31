@@ -4,7 +4,14 @@ import type {
   CommentData,
   CommentReaction as CommentReactionData,
 } from "@liveblocks/core";
-import { useRoomContextBundle } from "@liveblocks/react";
+import {
+  useAddReaction,
+  useDeleteComment,
+  useEditComment,
+  useMarkThreadAsRead,
+  useRemoveReaction,
+  useSelf,
+} from "@liveblocks/react";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
   ComponentPropsWithoutRef,
@@ -221,7 +228,6 @@ export const CommentReaction = forwardRef<
   HTMLButtonElement,
   CommentReactionProps
 >(({ comment, reaction, overrides, disabled, ...props }, forwardedRef) => {
-  const { useAddReaction, useRemoveReaction } = useRoomContextBundle();
   const addReaction = useAddReaction();
   const removeReaction = useRemoveReaction();
   const currentId = useCurrentUserId();
@@ -348,14 +354,6 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     },
     forwardedRef
   ) => {
-    const {
-      useDeleteComment,
-      useEditComment,
-      useAddReaction,
-      useRemoveReaction,
-      useMarkThreadAsRead,
-      useSelf,
-    } = useRoomContextBundle();
     const ref = useRef<HTMLDivElement>(null);
     const mergedRefs = useRefs(forwardedRef, ref);
     const self = useSelf();

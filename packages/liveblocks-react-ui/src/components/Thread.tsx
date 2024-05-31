@@ -1,7 +1,10 @@
 "use client";
 
 import type { BaseMetadata, CommentData, ThreadData } from "@liveblocks/core";
-import { useRoomContextBundle } from "@liveblocks/react";
+import {
+  useEditThreadMetadata,
+  useThreadSubscription,
+} from "@liveblocks/react";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
   ComponentPropsWithoutRef,
@@ -146,8 +149,6 @@ export const Thread = forwardRef(
     }: ThreadProps<M>,
     forwardedRef: ForwardedRef<HTMLDivElement>
   ) => {
-    const { useEditThreadMetadata, useThreadSubscription } =
-      useRoomContextBundle();
     const editThreadMetadata = useEditThreadMetadata();
     const $ = useOverrides(overrides);
     const firstCommentIndex = useMemo(() => {

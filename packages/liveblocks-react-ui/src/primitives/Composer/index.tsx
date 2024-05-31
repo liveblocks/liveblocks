@@ -14,7 +14,7 @@ import {
   useFloating,
 } from "@floating-ui/react-dom";
 import type { CommentBody } from "@liveblocks/core";
-import { useRoomContextBundle } from "@liveblocks/react";
+import { useSelf } from "@liveblocks/react";
 import { Slot } from "@radix-ui/react-slot";
 import type {
   AriaAttributes,
@@ -625,7 +625,6 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     },
     forwardedRef
   ) => {
-    const { useSelf } = useRoomContextBundle();
     const self = useSelf();
     const isDisabled = useMemo(
       () => disabled || !self?.canComment,
@@ -1069,7 +1068,6 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 const ComposerSubmit = forwardRef<HTMLButtonElement, ComposerSubmitProps>(
   ({ children, disabled, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "button";
-    const { useSelf } = useRoomContextBundle();
     const { isEmpty } = useComposer();
     const self = useSelf();
     const isDisabled = useMemo(
