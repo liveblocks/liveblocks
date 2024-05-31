@@ -1,3 +1,4 @@
+/* eslint-disable simple-import-sort/exports */
 import { detectDupes } from "@liveblocks/core";
 
 import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
