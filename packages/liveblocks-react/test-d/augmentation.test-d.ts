@@ -156,3 +156,17 @@ declare global {
   expectError(broadcast({ type: "i-do-not-exist" }));
   expectError(broadcast(new Date()));
 }
+
+// ---------------------------------------------------------
+
+// // The useUser() hook
+// {
+//   expectType<boolean>(classic.useUser("1234").isLoading);
+//   expectType<{ name: string } | undefined>(classic.useUser("1234").user);
+// }
+//
+// // The useUser() hook (suspense)
+// {
+//   expectType<boolean>(suspense.useUser("1234").isLoading);
+//   expectType<{ name: string } | undefined>(suspense.useUser("1234").user);
+// }
