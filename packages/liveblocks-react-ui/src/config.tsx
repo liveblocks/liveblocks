@@ -7,7 +7,7 @@ import { type Components, ComponentsProvider } from "./components";
 import type { Overrides } from "./overrides";
 import { OverridesProvider } from "./overrides";
 
-type CommentsConfigProps = PropsWithChildren<{
+type LiveblocksUiConfigProps = PropsWithChildren<{
   /**
    * Override the components' strings.
    */
@@ -24,42 +24,42 @@ type CommentsConfigProps = PropsWithChildren<{
   portalContainer?: HTMLElement;
 }>;
 
-interface CommentsConfigContext {
+interface LiveblocksUiConfigContext {
   portalContainer?: HTMLElement;
 }
 
-const CommentsConfigContext = createContext<CommentsConfigContext>({});
+const LiveblocksUiConfigContext = createContext<LiveblocksUiConfigContext>({});
 
-export function useCommentsConfig() {
-  return useContext(CommentsConfigContext);
+export function useLiveblocksUiConfig() {
+  return useContext(LiveblocksUiConfigContext);
 }
 
 /**
- * Set configuration options for all Comments components.
+ * Set configuration options for all components.
  *
  * @example
- * <CommentsConfig overrides={{ locale: "fr", USER_UNKNOWN: "Anonyme", ... }}>
+ * <LiveblocksUiConfig overrides={{ locale: "fr", USER_UNKNOWN: "Anonyme", ... }}>
  *   <App />
- * </CommentsConfig>
+ * </LiveblocksUiConfig>
  */
-export function CommentsConfig({
+export function LiveblocksUiConfig({
   overrides,
   components,
   portalContainer,
   children,
-}: CommentsConfigProps) {
-  const commentsConfig = useMemo(
+}: LiveblocksUiConfigProps) {
+  const liveblocksUiConfig = useMemo(
     () => ({ portalContainer }),
     [portalContainer]
   );
 
   return (
-    <CommentsConfigContext.Provider value={commentsConfig}>
+    <LiveblocksUiConfigContext.Provider value={liveblocksUiConfig}>
       <OverridesProvider overrides={overrides}>
         <ComponentsProvider components={components}>
           {children}
         </ComponentsProvider>
       </OverridesProvider>
-    </CommentsConfigContext.Provider>
+    </LiveblocksUiConfigContext.Provider>
   );
 }

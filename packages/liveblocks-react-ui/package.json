@@ -109,8 +109,10 @@
   "homepage": "https://liveblocks.io",
   "keywords": [
     "react",
+    "components",
     "comments",
     "threads",
+    "notifications",
     "liveblocks",
     "real-time",
     "toolkit",
