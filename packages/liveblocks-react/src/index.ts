@@ -72,7 +72,7 @@ export {
   useStorage,
   useThreads,
 } from "./room";
-// XXX TODO Add these here
+
 export {
   useInboxNotifications,
   useUnreadInboxNotificationsCount,

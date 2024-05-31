@@ -73,7 +73,6 @@ export {
   useThreadsSuspense as useThreads,
 } from "./room";
 
-// XXX TODO Add these here
 export {
   useInboxNotificationsSuspense as useInboxNotifications,
   useUnreadInboxNotificationsCountSuspense as useUnreadInboxNotificationsCount,
