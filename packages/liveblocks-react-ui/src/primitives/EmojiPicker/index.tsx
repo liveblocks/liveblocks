@@ -52,7 +52,7 @@ const EMOJIPICKER_SEARCH_NAME = "EmojiPickerSearch";
  * The EmojiPicker primitive is undocumented for now and subject to change,
  * use at your own risk. If you have any feedback on it, please let us know!
  * See how we use it in the default components to learn how to use it:
- * https://github.com/liveblocks/liveblocks/blob/main/packages/liveblocks-react-comments/src/components/internal/EmojiPicker.tsx.
+ * https://github.com/liveblocks/liveblocks/blob/main/packages/liveblocks-react-ui/src/components/internal/EmojiPicker.tsx.
  *
  * Surrounds the emoji picker, it handles emoji data and coordinates
  * `EmojiPicker.Search` and `EmojiPicker.Content`.
@@ -291,7 +291,7 @@ function EmojiPickerRoot({
  * The EmojiPicker primitive is undocumented for now and subject to change,
  * use at your own risk. If you have any feedback on it, please let us know!
  * See how we use it in the default components to learn how to use it:
- * https://github.com/liveblocks/liveblocks/blob/main/packages/liveblocks-react-comments/src/components/internal/EmojiPicker.tsx.
+ * https://github.com/liveblocks/liveblocks/blob/main/packages/liveblocks-react-ui/src/components/internal/EmojiPicker.tsx.
  *
  * The search input of the emoji picker. It also affects the focus and selection
  * within `EmojiPicker.Content`.
@@ -416,7 +416,7 @@ const VirtuosoTopList = forwardRef<HTMLDivElement, TopItemListProps>(
  * The EmojiPicker primitive is undocumented for now and subject to change,
  * use at your own risk. If you have any feedback on it, please let us know!
  * See how we use it in the default components to learn how to use it:
- * https://github.com/liveblocks/liveblocks/blob/main/packages/liveblocks-react-comments/src/components/internal/EmojiPicker.tsx.
+ * https://github.com/liveblocks/liveblocks/blob/main/packages/liveblocks-react-ui/src/components/internal/EmojiPicker.tsx.
  *
  * The main content of the emoji picker, either displaying the emoji grid or various
  * alternative states (loading, empty, and error).

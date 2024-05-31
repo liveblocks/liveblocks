@@ -20,5 +20,5 @@ export type { InboxNotificationListProps } from "./components/InboxNotificationL
 export { InboxNotificationList } from "./components/InboxNotificationList";
 export type { ThreadProps } from "./components/Thread";
 export { Thread } from "./components/Thread";
-export { CommentsConfig } from "./config";
+export { LiveblocksUIConfig } from "./config";
 export type { ComposerSubmitComment } from "./primitives";

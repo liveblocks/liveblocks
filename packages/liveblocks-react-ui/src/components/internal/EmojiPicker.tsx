@@ -2,7 +2,7 @@ import * as PopoverPrimitive from "@radix-ui/react-popover";
 import type { ComponentPropsWithoutRef } from "react";
 import React, { forwardRef, useCallback, useMemo, useState } from "react";
 
-import { useCommentsConfig } from "../../config";
+import { useLiveblocksUIConfig } from "../../config";
 import {
   FLOATING_ELEMENT_COLLISION_PADDING,
   FLOATING_ELEMENT_SIDE_OFFSET,
@@ -21,7 +21,7 @@ import type {
   EmojiPickerContentRowProps,
 } from "../../primitives/EmojiPicker/types";
 import { classNames } from "../../utils/class-names";
-import { Emoji } from "../internal/Emoji";
+import { Emoji } from "./Emoji";
 
 export interface EmojiPickerProps extends ComponentPropsWithoutRef<"div"> {
   onOpenChange?: (open: boolean) => void;
@@ -144,7 +144,7 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(
     forwardedRef
   ) => {
     const [isOpen, setOpen] = useState(false);
-    const { portalContainer } = useCommentsConfig();
+    const { portalContainer } = useLiveblocksUIConfig();
     const $ = useOverrides();
 
     const handleOpenChange = useCallback(
