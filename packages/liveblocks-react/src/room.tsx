@@ -67,8 +67,12 @@ import { selectedThreads } from "./comments/lib/selected-threads";
 import { retryError } from "./lib/retry-error";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
-import { LiveblocksProvider, useClient, useClientOrNull } from "./liveblocks";
-import { createSharedContext } from "./shared";
+import {
+  createSharedContext,
+  LiveblocksProvider,
+  useClient,
+  useClientOrNull,
+} from "./liveblocks";
 import type {
   CommentReactionOptions,
   CreateCommentOptions,
@@ -928,11 +932,11 @@ function useRoom<
   U extends BaseUserMeta = never,
   E extends Json = never,
 >(): Room<P, S, U, E> {
-  const room = React.useContext(RoomContext);
+  const room = useRoomOrNull<P, S, U, E>();
   if (room === null) {
     throw new Error("RoomProvider is missing from the React tree.");
   }
-  return room as Room<P, S, U, E>;
+  return room;
 }
 
 function useStatus(): Status {
@@ -2322,8 +2326,14 @@ function useRoomNotificationSettingsSuspense(): [
   }, [settings, updateRoomNotificationSettings]);
 }
 
-function useRoomOrNull() {
-  return React.useContext(RoomContext);
+/** @internal */
+export function useRoomOrNull<
+  P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
+>(): Room<P, S, U, E> | null {
+  return React.useContext(RoomContext) as Room<P, S, U, E> | null;
 }
 
 /**
@@ -2333,7 +2343,7 @@ function useRoomOrNull() {
  */
 export function useRoomContextBundleOrNull() {
   const client = useClientOrNull();
-  const room = useRoomOrNull();
+  const room = useRoomOrNull<never, never, never, never>();
   return client && room ? getOrCreateRoomContextBundle(client) : null;
 }
 

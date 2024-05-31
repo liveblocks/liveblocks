@@ -1,7 +1,7 @@
 import type { Json } from "@liveblocks/client";
 import * as classic from "@liveblocks/react";
 import * as suspense from "@liveblocks/react/suspense";
-import { expectError, expectType } from "tsd";
+import { expectAssignable, expectError, expectType } from "tsd";
 
 //
 // User-provided type augmentations
@@ -10,6 +10,13 @@ declare global {
   namespace Liveblocks {
     interface Presence {
       cursor: { x: number; y: number };
+    }
+
+    interface UserMeta {
+      info: {
+        name: string;
+        age: number;
+      };
     }
 
     //
@@ -26,6 +33,10 @@ declare global {
       type: "emoji";
       emoji: string;
     }
+
+    interface ThreadMetadata {
+      color: "red" | "blue";
+    }
   }
 }
 
@@ -38,7 +49,7 @@ declare global {
   const room = classic.useRoom();
   expectType<number>(room.getPresence().cursor.x);
   expectType<number>(room.getPresence().cursor.y);
-  expectType<Json | undefined>(room.getPresence().notAPresenceField);
+  expectType<Json | undefined>(room.getPresence().nonexisting);
 }
 
 // useRoom() (suspense)
@@ -46,7 +57,7 @@ declare global {
   const room = suspense.useRoom();
   expectType<number>(room.getPresence().cursor.x);
   expectType<number>(room.getPresence().cursor.y);
-  expectType<Json | undefined>(room.getPresence().notAPresenceField);
+  expectType<Json | undefined>(room.getPresence().nonexisting);
 }
 
 // ---------------------------------------------------------
@@ -56,7 +67,11 @@ declare global {
   const me = classic.useSelf();
   expectType<number | undefined>(me?.presence.cursor.x);
   expectType<number | undefined>(me?.presence.cursor.y);
-  expectType<Json | undefined>(me?.presence.notAPresenceField);
+  expectType<Json | undefined>(me?.presence.nonexisting);
+
+  expectType<string | undefined>(me?.info.name);
+  expectType<number | undefined>(me?.info.age);
+  expectError(me?.info.nonexisting);
 }
 
 // useSelf() (suspense)
@@ -64,7 +79,11 @@ declare global {
   const me = suspense.useSelf();
   expectType<number>(me.presence.cursor.x);
   expectType<number>(me.presence.cursor.y);
-  expectType<Json | undefined>(me.presence.notAPresenceField);
+  expectType<Json | undefined>(me.presence.nonexisting);
+
+  expectType<string>(me.info.name);
+  expectType<number>(me.info.age);
+  expectError(me.info.nonexisting);
 }
 
 // useSelf(selector)
@@ -155,4 +174,150 @@ declare global {
   // broadcast({ type: "leave", userId: "1234" });  // TODO Allow this using union types
   expectError(broadcast({ type: "i-do-not-exist" }));
   expectError(broadcast(new Date()));
+}
+
+// ---------------------------------------------------------
+
+// The useUser() hook
+{
+  const { user, error, isLoading } = classic.useUser("user-id");
+  expectType<boolean>(isLoading);
+  expectType<string | undefined>(user?.name);
+  expectType<string | undefined>(user?.avatar);
+  expectType<Json | undefined>(user?.age);
+  expectType<Json | undefined>(user?.anyOtherProp);
+  expectType<Error | undefined>(error);
+}
+
+// The useUser() hook (suspense)
+{
+  const { user, error, isLoading } = suspense.useUser("user-id");
+  expectType<false>(isLoading);
+  expectType<string | undefined>(user?.name);
+  expectType<string | undefined>(user?.avatar);
+  expectType<Json | undefined>(user?.age);
+  expectType<Json | undefined>(user?.anyOtherProp);
+  expectType<undefined>(error);
+}
+
+// ---------------------------------------------------------
+
+// The useRoomInfo() hook
+{
+  const { info, error, isLoading } = classic.useRoomInfo("room-id");
+  expectType<boolean>(isLoading);
+  expectType<string | undefined>(info?.name);
+  expectType<string | undefined>(info?.url);
+  expectType<Error | undefined>(error);
+}
+
+// The useRoomInfo() hook (suspense)
+{
+  const { info, error, isLoading } = suspense.useRoomInfo("room-id");
+  expectType<false>(isLoading);
+  expectType<string | undefined>(info.name);
+  expectType<string | undefined>(info.url);
+  expectType<undefined>(error);
+}
+
+// ---------------------------------------------------------
+
+// The useInboxNotifications() hook
+{
+  expectType<boolean>(classic.useInboxNotifications().isLoading);
+  expectType<Error | undefined>(classic.useInboxNotifications().error);
+  expectType<("thread" | `$${string}`)[] | undefined>(
+    classic.useInboxNotifications().inboxNotifications?.map((ibn) => ibn.kind)
+  );
+  expectType<(string | undefined)[] | undefined>(
+    classic.useInboxNotifications().inboxNotifications?.map((ibn) => ibn.roomId)
+  );
+}
+
+// The useInboxNotifications() hook (suspense)
+{
+  expectType<false>(suspense.useInboxNotifications().isLoading);
+  expectType<undefined>(suspense.useInboxNotifications().error);
+  expectType<("thread" | `$${string}`)[]>(
+    suspense.useInboxNotifications().inboxNotifications?.map((ibn) => ibn.kind)
+  );
+  expectType<(string | undefined)[]>(
+    suspense
+      .useInboxNotifications()
+      .inboxNotifications?.map((ibn) => ibn.roomId)
+  );
+}
+
+// ---------------------------------------------------------
+
+// The useInboxNotificationThread() hook
+{
+  const result = classic.useInboxNotificationThread("in_xxx");
+  expectType<"thread">(result.type);
+  expectType<string>(result.roomId);
+  expectAssignable<unknown[]>(result.comments);
+  expectType<"red" | "blue">(result.metadata.color);
+  expectType<string | number | boolean | undefined>(
+    result.metadata.nonexisting
+  );
+}
+
+// The useInboxNotificationThread() hook (suspense)
+{
+  const result = suspense.useInboxNotificationThread("in_xxx");
+  expectType<"thread">(result.type);
+  expectType<string>(result.roomId);
+  expectAssignable<unknown[]>(result.comments);
+  expectType<"red" | "blue">(result.metadata.color);
+  expectType<string | number | boolean | undefined>(
+    result.metadata.nonexisting
+  );
+}
+
+// ---------------------------------------------------------
+
+// The useMarkInboxNotificationAsRead() hook
+{
+  const markRead = classic.useMarkInboxNotificationAsRead();
+  expectType<void>(markRead("in_xxx"));
+}
+
+// The useMarkInboxNotificationAsRead() hook (suspense)
+{
+  const markRead = suspense.useMarkInboxNotificationAsRead();
+  expectType<void>(markRead("in_xxx"));
+}
+
+// ---------------------------------------------------------
+
+// The useMarkAllInboxNotificationsAsRead() hook
+{
+  const markAllRead = classic.useMarkAllInboxNotificationsAsRead();
+  expectType<void>(markAllRead());
+}
+
+// The useMarkAllInboxNotificationsAsRead() hook (suspense)
+{
+  const markAllRead = suspense.useMarkAllInboxNotificationsAsRead();
+  expectType<void>(markAllRead());
+}
+
+// ---------------------------------------------------------
+
+// The useUnreadInboxNotificationsCount() hook
+{
+  const { count, error, isLoading } =
+    classic.useUnreadInboxNotificationsCount();
+  expectType<boolean>(isLoading);
+  expectType<number | undefined>(count);
+  expectType<Error | undefined>(error);
+}
+
+// The useUnreadInboxNotificationsCount() hook (suspense)
+{
+  const { count, error, isLoading } =
+    suspense.useUnreadInboxNotificationsCount();
+  expectType<false>(isLoading);
+  expectType<number>(count);
+  expectType<undefined>(error);
 }
