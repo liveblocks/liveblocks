@@ -228,3 +228,31 @@ declare global {
     result.metadata.nonexisting
   );
 }
+
+// ---------------------------------------------------------
+
+// The useMarkInboxNotificationAsRead() hook
+{
+  const markRead = classic.useMarkInboxNotificationAsRead();
+  expectType<void>(markRead("in_xxx"));
+}
+
+// The useMarkInboxNotificationAsRead() hook (suspense)
+{
+  const markRead = suspense.useMarkInboxNotificationAsRead();
+  expectType<void>(markRead("in_xxx"));
+}
+
+// ---------------------------------------------------------
+
+// The useMarkAllInboxNotificationsAsRead() hook
+{
+  const markAllRead = classic.useMarkAllInboxNotificationsAsRead();
+  expectType<void>(markAllRead());
+}
+
+// The useMarkAllInboxNotificationsAsRead() hook (suspense)
+{
+  const markAllRead = suspense.useMarkAllInboxNotificationsAsRead();
+  expectType<void>(markAllRead());
+}

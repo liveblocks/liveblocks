@@ -217,3 +217,31 @@ ctx.useErrorListener((err) => {
   expectType<"red" | "blue">(result.metadata.color);
   expectError(result.metadata.nonexisting);
 }
+
+// ---------------------------------------------------------
+
+// The useMarkInboxNotificationAsRead() hook
+{
+  const markRead = lbctx.useMarkInboxNotificationAsRead();
+  expectType<void>(markRead("in_xxx"));
+}
+
+// The useMarkInboxNotificationAsRead() hook (suspense)
+{
+  const markRead = lbctx.suspense.useMarkInboxNotificationAsRead();
+  expectType<void>(markRead("in_xxx"));
+}
+
+// ---------------------------------------------------------
+
+// The useMarkAllInboxNotificationsAsRead() hook
+{
+  const markAllRead = lbctx.useMarkAllInboxNotificationsAsRead();
+  expectType<void>(markAllRead());
+}
+
+// The useMarkAllInboxNotificationsAsRead() hook (suspense)
+{
+  const markAllRead = lbctx.suspense.useMarkAllInboxNotificationsAsRead();
+  expectType<void>(markAllRead());
+}

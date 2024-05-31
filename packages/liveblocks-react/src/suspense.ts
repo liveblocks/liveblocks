@@ -19,12 +19,12 @@ export {
   useLiveblocksContextBundle,
   useLiveblocksContextBundleOrNull,
   useInboxNotificationThread,
+  useMarkAllInboxNotificationsAsRead,
+  useMarkInboxNotificationAsRead,
 
   // XXX TODO Add these here
   // useUser,
   // useRoomInfo,
-  // useMarkAllInboxNotificationsAsRead,
-  // useMarkInboxNotificationAsRead,
 } from "./liveblocks";
 export {
   createRoomContext,

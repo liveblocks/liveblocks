@@ -818,6 +818,14 @@ function useInboxNotificationThread<M extends BaseMetadata>(
   );
 }
 
+function useMarkAllInboxNotificationsAsRead() {
+  return useMarkAllInboxNotificationsAsRead_withClient(useClient());
+}
+
+function useMarkInboxNotificationAsRead() {
+  return useMarkInboxNotificationAsRead_withClient(useClient());
+}
+
 // type DP = Liveblocks.Presence;
 // type DS = Liveblocks.Storage;
 // type DU = Liveblocks.UserMeta;
@@ -829,8 +837,9 @@ const __1 = useInboxNotificationThread<DM>;
 
 // eslint-disable-next-line simple-import-sort/exports
 export {
-  // __1 as useInboxNotifications,
+  __1 as useInboxNotificationThread,
   useInboxNotifications,
   useInboxNotificationsSuspense,
-  __1 as useInboxNotificationThread,
+  useMarkAllInboxNotificationsAsRead,
+  useMarkInboxNotificationAsRead,
 };
