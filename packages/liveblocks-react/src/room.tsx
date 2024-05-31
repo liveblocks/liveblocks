@@ -67,8 +67,12 @@ import { selectedThreads } from "./comments/lib/selected-threads";
 import { retryError } from "./lib/retry-error";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
-import { LiveblocksProvider, useClient, useClientOrNull } from "./liveblocks";
-import { createSharedContext } from "./shared";
+import {
+  createSharedContext,
+  LiveblocksProvider,
+  useClient,
+  useClientOrNull,
+} from "./liveblocks";
 import type {
   CommentReactionOptions,
   CreateCommentOptions,
