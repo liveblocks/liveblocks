@@ -827,7 +827,7 @@ type RoomContextBundleCommon<
  */
 type PrivateRoomContextApi = {
   useMentionSuggestions(search?: string): string[] | undefined;
-  useCurrentUserId(): string | null;
+  useCurrentUserIdFromRoom(): string | null;
 };
 
 export type RoomContextBundle<
@@ -1083,7 +1083,7 @@ type PrivateLiveblocksContextApi = {
    *
    * Returns the current user ID. Can only be used after making a call to a Notifications API.
    */
-  useCurrentUserId(): string | null;
+  useCurrentUserIdFromClient(): string | null;
 };
 
 export type LiveblocksContextBundle<

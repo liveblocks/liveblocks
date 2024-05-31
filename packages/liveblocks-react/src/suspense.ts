@@ -5,7 +5,6 @@ import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 export { ClientSideSuspense } from "./ClientSideSuspense";
-export { useSharedContextBundle } from "./shared";
 export type { MutationContext, UseThreadsOptions } from "./types";
 
 // Re-exports from @liveblocks/client, for convenience
@@ -18,10 +17,12 @@ export {
   LiveblocksProvider,
   useClient,
   useLiveblocksContextBundle,
-  useLiveblocksContextBundleOrNull,
   useInboxNotificationThread,
   useMarkAllInboxNotificationsAsRead,
   useMarkInboxNotificationAsRead,
+
+  // TODO Move these private APIs into another namespace eventually
+  useLiveblocksContextBundleOrNull as useLiveblocksContextBundleOrNull__,
 } from "./liveblocks";
 export {
   createRoomContext,
@@ -56,6 +57,9 @@ export {
   useUndo,
   useUpdateMyPresence,
   useUpdateRoomNotificationSettings,
+
+  // TODO Move these private APIs into another namespace eventually
+  useRoomContextBundleOrNull as useRoomContextBundleOrNull__,
 } from "./room";
 
 // Export the Suspense versions of our hooks

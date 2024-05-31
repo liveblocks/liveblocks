@@ -356,7 +356,8 @@ function makeLiveblocksContextBundle<
     },
 
     [kInternal]: {
-      useCurrentUserId: () => useCurrentUserId_withClient(client),
+      useCurrentUserIdFromClient: () =>
+        useCurrentUserIdFromClient_withClient(client),
     },
   };
 
@@ -579,7 +580,7 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
   );
 }
 
-function useCurrentUserId_withClient(client: OpaqueClient) {
+function useCurrentUserIdFromClient_withClient(client: OpaqueClient) {
   const currentUserIdStore = client[kInternal].currentUserIdStore;
   return useSyncExternalStore(
     currentUserIdStore.subscribe,
