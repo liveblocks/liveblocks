@@ -11,14 +11,14 @@ import { expectAssignable, expectError, expectType } from "tsd";
 {
   const room = classic.useRoom();
   expectType<Json | undefined>(room.getPresence().cursor);
-  expectType<Json | undefined>(room.getPresence().notAPresenceField);
+  expectType<Json | undefined>(room.getPresence().nonexisting);
 }
 
 // useRoom() (suspense)
 {
   const room = suspense.useRoom();
   expectType<Json | undefined>(room.getPresence().cursor);
-  expectType<Json | undefined>(room.getPresence().notAPresenceField);
+  expectType<Json | undefined>(room.getPresence().nonexisting);
 }
 
 // ---------------------------------------------------------
@@ -27,14 +27,22 @@ import { expectAssignable, expectError, expectType } from "tsd";
 {
   const me = classic.useSelf();
   expectType<Json | undefined>(me?.presence.cursor);
-  expectType<Json | undefined>(me?.presence.notAPresenceField);
+  expectType<Json | undefined>(me?.presence.nonexisting);
+
+  expectType<string | undefined>(me?.info?.name);
+  expectType<Json | undefined>(me?.info?.age);
+  expectType<Json | undefined>(me?.info?.nonexisting);
 }
 
 // useSelf() (suspense)
 {
   const me = suspense.useSelf();
   expectType<Json | undefined>(me.presence.cursor);
-  expectType<Json | undefined>(me.presence.notAPresenceField);
+  expectType<Json | undefined>(me.presence.nonexisting);
+
+  expectType<string | undefined>(me.info?.name);
+  expectType<Json | undefined>(me.info?.age);
+  expectType<Json | undefined>(me.info?.nonexisting);
 }
 
 // useSelf(selector)

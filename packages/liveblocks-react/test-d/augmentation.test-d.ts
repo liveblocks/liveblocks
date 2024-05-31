@@ -49,7 +49,7 @@ declare global {
   const room = classic.useRoom();
   expectType<number>(room.getPresence().cursor.x);
   expectType<number>(room.getPresence().cursor.y);
-  expectType<Json | undefined>(room.getPresence().notAPresenceField);
+  expectType<Json | undefined>(room.getPresence().nonexisting);
 }
 
 // useRoom() (suspense)
@@ -57,7 +57,7 @@ declare global {
   const room = suspense.useRoom();
   expectType<number>(room.getPresence().cursor.x);
   expectType<number>(room.getPresence().cursor.y);
-  expectType<Json | undefined>(room.getPresence().notAPresenceField);
+  expectType<Json | undefined>(room.getPresence().nonexisting);
 }
 
 // ---------------------------------------------------------
@@ -67,7 +67,11 @@ declare global {
   const me = classic.useSelf();
   expectType<number | undefined>(me?.presence.cursor.x);
   expectType<number | undefined>(me?.presence.cursor.y);
-  expectType<Json | undefined>(me?.presence.notAPresenceField);
+  expectType<Json | undefined>(me?.presence.nonexisting);
+
+  expectType<string | undefined>(me?.info.name);
+  expectType<number | undefined>(me?.info.age);
+  expectError(me?.info.nonexisting);
 }
 
 // useSelf() (suspense)
@@ -75,7 +79,11 @@ declare global {
   const me = suspense.useSelf();
   expectType<number>(me.presence.cursor.x);
   expectType<number>(me.presence.cursor.y);
-  expectType<Json | undefined>(me.presence.notAPresenceField);
+  expectType<Json | undefined>(me.presence.nonexisting);
+
+  expectType<string>(me.info.name);
+  expectType<number>(me.info.age);
+  expectError(me.info.nonexisting);
 }
 
 // useSelf(selector)

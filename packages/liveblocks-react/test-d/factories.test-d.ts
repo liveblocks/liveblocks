@@ -9,15 +9,32 @@ import { createClient } from "@liveblocks/client";
 import { createLiveblocksContext, createRoomContext } from "@liveblocks/react";
 import { expectAssignable, expectError, expectType } from "tsd";
 
-type MyPresence = { cursor: { x: number; y: number } | null };
+type MyPresence = {
+  cursor: { x: number; y: number };
+};
+
 type MyStorage = {
   animals: LiveList<string>;
   scores: LiveMap<string, number>;
   person: LiveObject<{ name: string; age: number }>;
 };
-type MyUserMeta = { id: string; info: { name: string } };
-type MyRoomEvent = { type: "emoji"; value: string };
-type MyThreadMetadata = { color: "red" | "blue" };
+
+type MyUserMeta = {
+  id: string;
+  info: {
+    name: string;
+    age: number;
+  };
+};
+
+type MyRoomEvent = {
+  type: "emoji";
+  value: string;
+};
+
+type MyThreadMetadata = {
+  color: "red" | "blue";
+};
 
 type P = MyPresence;
 type S = MyStorage;
@@ -156,20 +173,46 @@ ctx.useErrorListener((err) => {
 
 // ---------------------------------------------------------
 
+// useSelf()
+{
+  const me = ctx.useSelf();
+  expectType<number | undefined>(me?.presence.cursor.x);
+  expectError(me?.presence.nonexisting);
+
+  expectType<string | undefined>(me?.info.name);
+  expectType<number | undefined>(me?.info.age);
+  expectError(me?.info.nonexisting);
+}
+
+// useSelf() (suspense)
+{
+  const me = ctx.suspense.useSelf();
+  expectType<number>(me.presence.cursor.x);
+  expectError(me.presence.nonexisting);
+
+  expectType<string>(me.info.name);
+  expectType<number>(me.info.age);
+  expectError(me.info.nonexisting);
+}
+
+// ---------------------------------------------------------
+
 // The useUser() hook
 {
   {
     const { user, error, isLoading } = ctx.useUser("user-id");
     //                                 ^^^ [1]
     expectType<boolean>(isLoading);
-    expectType<{ name: string } | undefined>(user);
+    expectType<string | undefined>(user?.name);
+    expectType<number | undefined>(user?.age);
     expectType<Error | undefined>(error);
   }
   {
     const { user, error, isLoading } = lbctx.useUser("user-id");
     //                                 ^^^^^ [2]
     expectType<boolean>(isLoading);
-    expectType<{ name: string } | undefined>(user);
+    expectType<string | undefined>(user?.name);
+    expectType<number | undefined>(user?.age);
     expectType<Error | undefined>(error);
   }
 }
@@ -180,14 +223,16 @@ ctx.useErrorListener((err) => {
     const { user, error, isLoading } = ctx.suspense.useUser("user-id");
     //                                 ^^^^^^^^^^^^ [3]
     expectType<false>(isLoading);
-    expectType<{ name: string }>(user);
+    expectType<string>(user.name);
+    expectType<number>(user.age);
     expectType<undefined>(error);
   }
   {
     const { user, error, isLoading } = lbctx.suspense.useUser("user-id");
     //                                 ^^^^^^^^^^^^^^ [4]
     expectType<false>(isLoading);
-    expectType<{ name: string }>(user);
+    expectType<string>(user.name);
+    expectType<number>(user.age);
     expectType<undefined>(error);
   }
 }
