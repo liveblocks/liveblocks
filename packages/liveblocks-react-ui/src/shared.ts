@@ -23,9 +23,12 @@ function getMentionSuggestionsCacheForClient(client: OpaqueClient) {
   return cache;
 }
 
-/** @internal */
-// Simplistic debounced search, we don't need to worry too much about
-// deduping and race conditions as there can only be one search at a time.
+/**
+ * @private For internal use only. Do not rely on this hook.
+ *
+ * Simplistic debounced search, we don't need to worry too much about deduping
+ * and race conditions as there can only be one search at a time.
+ */
 export function useMentionSuggestions(search?: string) {
   const client = useClient();
   const mentionSuggestionsCache = getMentionSuggestionsCacheForClient(client);
