@@ -8,6 +8,7 @@ import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import {
+  FloatingComposer,
   LiveblocksPluginProvider,
   ThreadPanel,
   liveblocksLexicalConfig,
@@ -38,7 +39,6 @@ const initialConfig = {
 // Collaborative text editor with simple rich text, live cursors, and live avatars
 
 export default function Editor() {
-
   const [floatingAnchorElem, setFloatingAnchorElem] =
     useState<HTMLDivElement | null>(null);
   const onRef = (_floatingAnchorElem: HTMLDivElement) => {
@@ -66,10 +66,17 @@ export default function Editor() {
                 }
                 ErrorBoundary={LexicalErrorBoundary}
               />
-              {floatingAnchorElem &&
+              {floatingAnchorElem && (
                 <FloatingTextFormatToolbarPlugin
                   anchorElem={floatingAnchorElem}
-                />}
+                />
+              )}
+
+              <FloatingComposer
+                className={styles.floatingComposer}
+                sideOffset={5}
+                alignOffset={5}
+              />
             </div>
 
             <div className={styles.sidebar}>
@@ -82,5 +89,3 @@ export default function Editor() {
     </div>
   );
 }
-
-

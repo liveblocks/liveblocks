@@ -92,3 +92,11 @@
   border-bottom-style: solid;
   border-bottom-color: rgba(55, 53, 47, 0.09);
 }
+
+.floatingComposer {
+  width: 400px;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 8px;
+  border-color: rgba(55, 53, 47, 0.5);
+}
