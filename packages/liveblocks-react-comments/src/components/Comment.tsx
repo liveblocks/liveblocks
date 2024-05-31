@@ -5,10 +5,7 @@ import {
   type CommentReaction as CommentReactionData,
   kInternal,
 } from "@liveblocks/core";
-import {
-  useRoomContextBundle,
-  useSharedContextBundle,
-} from "@liveblocks/react";
+import { useRoomContextBundle } from "@liveblocks/react";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
   ComponentPropsWithoutRef,
@@ -48,6 +45,7 @@ import type {
 } from "../primitives/Comment/types";
 import * as ComposerPrimitive from "../primitives/Composer";
 import { Timestamp } from "../primitives/Timestamp";
+import { useSharedContextBundle } from "../shared";
 import { MENTION_CHARACTER } from "../slate/plugins/mentions";
 import { classNames } from "../utils/class-names";
 import { useRefs } from "../utils/use-refs";

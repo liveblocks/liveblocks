@@ -5,7 +5,6 @@ import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 export { ClientSideSuspense } from "./ClientSideSuspense";
-export { useSharedContextBundle } from "./shared";
 export type { MutationContext, UseThreadsOptions } from "./types";
 
 // Re-exports from @liveblocks/client, for convenience
@@ -56,6 +55,7 @@ export {
   useUndo,
   useUpdateMyPresence,
   useUpdateRoomNotificationSettings,
+  useRoomContextBundleOrNull, // PRIVATE API
 } from "./room";
 
 // Export the classic (non-Suspense) versions of our hooks

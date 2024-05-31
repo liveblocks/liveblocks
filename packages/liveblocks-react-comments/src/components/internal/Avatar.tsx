@@ -1,8 +1,8 @@
 "use client";
 
-import { useSharedContextBundle } from "@liveblocks/react";
 import type { ComponentProps } from "react";
 import React, { useMemo } from "react";
+import { useSharedContextBundle } from "../../shared";
 
 import { classNames } from "../../utils/class-names";
 import { getInitials } from "../../utils/get-initials";

@@ -1,13 +1,9 @@
 import { raise } from "@liveblocks/core";
+import {
+  useLiveblocksContextBundleOrNull,
+  useRoomContextBundleOrNull,
+} from "@liveblocks/react";
 
-import { useLiveblocksContextBundleOrNull } from "./liveblocks";
-import { useRoomContextBundleOrNull } from "./room";
-
-/**
- * @private
- *
- * This is an internal API, use `createLiveblocksContext` or `createRoomContext` instead.
- */
 export function useSharedContextBundle() {
   const roomContextBundle = useRoomContextBundleOrNull();
   const liveblocksContextBundle = useLiveblocksContextBundleOrNull();

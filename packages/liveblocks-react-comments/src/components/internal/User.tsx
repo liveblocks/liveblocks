@@ -1,11 +1,11 @@
 "use client";
 
 import { kInternal } from "@liveblocks/core";
-import { useSharedContextBundle } from "@liveblocks/react";
 import type { ComponentProps } from "react";
 import React, { useMemo } from "react";
 
 import { useOverrides } from "../../overrides";
+import { useSharedContextBundle } from "../../shared";
 import { capitalize } from "../../utils/capitalize";
 import { classNames } from "../../utils/class-names";
 
