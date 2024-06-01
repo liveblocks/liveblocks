@@ -38,9 +38,8 @@
 }
 
 .topBar {
-  padding: 12px 0;
+  margin-bottom: 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgb(220, 220, 220);
 }
