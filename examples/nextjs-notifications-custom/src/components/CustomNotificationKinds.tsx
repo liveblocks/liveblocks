@@ -60,8 +60,15 @@ export function InviteNotification({
     .data as InviteData;
 
   // Fetch room and user info from resolvers in liveblocks.config.ts
-  const { info } = useRoomInfo(roomId) as unknown as Room;
+  const { info, error, isLoading } = useRoomInfo(roomId) as ReturnType<
+    typeof useRoomInfo
+  > &
+    Room;
   const { user: inviter } = useUser(inviteFrom);
+
+  if (error || isLoading) {
+    return null;
+  }
 
   return (
     <InboxNotification.Custom

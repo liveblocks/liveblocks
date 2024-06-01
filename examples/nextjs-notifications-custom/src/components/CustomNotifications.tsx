@@ -5,7 +5,11 @@ import {
   InboxNotification,
   InboxNotificationList,
 } from "@liveblocks/react-comments";
-import { useInboxNotifications, useSelf } from "../liveblocks.config";
+import {
+  useInboxNotifications,
+  useMarkInboxNotificationAsRead,
+  useSelf,
+} from "../liveblocks.config";
 import { ErrorBoundary } from "react-error-boundary";
 import {
   alertNotification,
@@ -93,23 +97,21 @@ function NotificationPanel() {
   const { inboxNotifications } = useInboxNotifications();
 
   if (inboxNotifications.length === 0) {
-    return <div>No notifications!</div>;
+    return <div>No notifications yet</div>;
   }
 
   return (
     <InboxNotificationList className={styles.notificationList}>
       {inboxNotifications.map((inboxNotification) => (
-        <ErrorBoundary fallback={null}>
-          <InboxNotification
-            key={inboxNotification.id}
-            inboxNotification={inboxNotification}
-            kinds={{
-              $alert: AlertNotification,
-              $imageUpload: ImageUploadNotification,
-              $invite: InviteNotification,
-            }}
-          />
-        </ErrorBoundary>
+        <InboxNotification
+          key={inboxNotification}
+          inboxNotification={inboxNotification}
+          kinds={{
+            $alert: AlertNotification,
+            $imageUpload: ImageUploadNotification,
+            $invite: InviteNotification,
+          }}
+        />
       ))}
     </InboxNotificationList>
   );

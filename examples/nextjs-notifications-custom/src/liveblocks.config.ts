@@ -25,7 +25,6 @@ export const client = createClient({
     const searchParams = new URLSearchParams(
       roomIds.map((roomId) => ["roomIds", roomId])
     );
-    console.log(roomIds, searchParams.get("roomIds"));
     const response = await fetch(`/api/rooms?${searchParams}`);
 
     if (!response.ok) {
@@ -33,7 +32,6 @@ export const client = createClient({
     }
 
     const rooms = await response.json();
-    console.log(rooms);
     return rooms;
   },
 });
@@ -60,5 +58,6 @@ export const {
 } = createLiveblocksContext(client);
 
 export const {
-  suspense: { RoomProvider, useRoomInfo, useSelf, useUser },
+  useRoomInfo,
+  suspense: { RoomProvider, useSelf, useUser },
 } = createRoomContext<{}, {}, UserMeta>(client);
