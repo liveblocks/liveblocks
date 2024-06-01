@@ -20,20 +20,6 @@ export const client = createClient({
     const users = await response.json();
     return users;
   },
-
-  // Find a list of users that match the current search term
-  resolveMentionSuggestions: async ({ text }) => {
-    const response = await fetch(
-      `/api/users/search?text=${encodeURIComponent(text)}`
-    );
-
-    if (!response.ok) {
-      throw new Error("Problem resolving user");
-    }
-
-    const userIds = await response.json();
-    return userIds;
-  },
 });
 
 export type UserMeta = {
@@ -50,5 +36,5 @@ export const {
 } = createLiveblocksContext(client);
 
 export const {
-  suspense: { RoomProvider, useThreads, useSelf, useUser },
+  suspense: { RoomProvider, useSelf, useUser },
 } = createRoomContext<{}, {}, UserMeta>(client);

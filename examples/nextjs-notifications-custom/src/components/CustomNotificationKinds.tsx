@@ -45,10 +45,10 @@ export function ImageUploadNotification({
         </>
       }
       aside={<InboxNotification.Avatar userId={uploadedBy} />}
+      href={src}
     >
       <small>{alt}</small>
       <img src={src} alt={alt} className={styles.image} />
-      <Button variant="secondary">Details</Button>
     </InboxNotification.Custom>
   );
 }

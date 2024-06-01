@@ -3,9 +3,6 @@
 import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { LiveblocksProvider, RoomProvider } from "../liveblocks.config";
-import { Loading } from "../components/Loading";
-import { ClientSideSuspense } from "@liveblocks/react";
-import { ErrorBoundary } from "react-error-boundary";
 import { CustomNotifications } from "../components/CustomNotifications";
 
 export default function Page() {
