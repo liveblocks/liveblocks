@@ -1,4 +1,27 @@
-import { UserMeta } from "./liveblocks.config";
+import { UserMeta, Room } from "./liveblocks.config";
+
+const ROOMS: Room[] = [
+  {
+    id: "my-org:my-team:room-1",
+    info: {
+      title: "New document",
+      description:
+        "To ready ourselves for our next marketing push, we need to coordinate our efforts…",
+    },
+  },
+  {
+    id: "my-org:my-team:room-2",
+    info: {
+      title: "A second document",
+      description: "We should consider whether it’s possible to…",
+    },
+  },
+];
+
+export function getRoom(id: string) {
+  console.log(id);
+  return ROOMS.find((u) => u.id === id) || null;
+}
 
 const USER_INFO: UserMeta[] = [
   {
@@ -67,20 +90,6 @@ const USER_INFO: UserMeta[] = [
   },
 ];
 
-export function getRandomUser() {
-  return USER_INFO[Math.floor(Math.random() * 10) % USER_INFO.length];
-}
-
 export function getUser(id: string) {
-  const user = USER_INFO.find((u) => u.id === id);
-
-  if (!user) {
-    throw new Error(`User not found: ${id}`);
-  }
-
-  return user;
-}
-
-export function getUsers() {
-  return USER_INFO;
+  return USER_INFO.find((u) => u.id === id) || null;
 }

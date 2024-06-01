@@ -6,7 +6,7 @@ import { AlertData, ImageUploadData, InviteData } from "../actions";
 import styles from "./CustomNotificationKinds.module.css";
 import { WarningIcon } from "./Icons";
 import { Button } from "./Button";
-import { useUser } from "../liveblocks.config";
+import { Room, useRoomInfo, useUser } from "../liveblocks.config";
 
 export function AlertNotification({
   inboxNotification,
@@ -56,8 +56,11 @@ export function ImageUploadNotification({
 export function InviteNotification({
   inboxNotification,
 }: InboxNotificationCustomProps) {
-  const { inviteFrom, documentTitle, documentDescription } = inboxNotification
-    .activities[0].data as InviteData;
+  const { inviteFrom, roomId } = inboxNotification.activities[0]
+    .data as InviteData;
+
+  // Fetch room and user info from resolvers in liveblocks.config.ts
+  const { info } = useRoomInfo(roomId) as unknown as Room;
   const { user: inviter } = useUser(inviteFrom);
 
   return (
@@ -66,14 +69,14 @@ export function InviteNotification({
       title={
         <>
           <strong>{inviter.name}</strong> invited you to{" "}
-          <strong>{documentTitle}</strong>
+          <strong>{info.title}</strong>
         </>
       }
       aside={<InboxNotification.Avatar userId={inviteFrom} />}
     >
       <div>
         <small>Document preview</small>
-        <div>{documentDescription}</div>
+        <div>{info.description}</div>
       </div>
       <div className={styles.buttonBar}>
         <Button>Accept</Button>

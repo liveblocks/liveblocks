@@ -65,9 +65,7 @@ function SendNotificationButtons() {
         onClick={async () => {
           await inviteNotification(self.id, {
             inviteFrom: "emil.joyce@example.com",
-            documentTitle: "New document",
-            documentDescription:
-              "To ready ourselves for our next marketing push, we need to coordinate our efforts.…",
+            roomId: "my-org:my-team:room-1",
           });
           location.reload();
         }}

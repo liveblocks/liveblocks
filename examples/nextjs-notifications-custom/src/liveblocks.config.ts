@@ -20,6 +20,22 @@ export const client = createClient({
     const users = await response.json();
     return users;
   },
+
+  resolveRoomsInfo: async ({ roomIds }) => {
+    const searchParams = new URLSearchParams(
+      roomIds.map((roomId) => ["roomIds", roomId])
+    );
+    console.log(roomIds, searchParams.get("roomIds"));
+    const response = await fetch(`/api/rooms?${searchParams}`);
+
+    if (!response.ok) {
+      throw new Error("Problem resolving room");
+    }
+
+    const rooms = await response.json();
+    console.log(rooms);
+    return rooms;
+  },
 });
 
 export type UserMeta = {
@@ -31,10 +47,18 @@ export type UserMeta = {
   };
 };
 
+export type Room = {
+  id: string;
+  info: {
+    title: string;
+    description: string;
+  };
+};
+
 export const {
   suspense: { LiveblocksProvider, useInboxNotifications },
 } = createLiveblocksContext(client);
 
 export const {
-  suspense: { RoomProvider, useSelf, useUser },
+  suspense: { RoomProvider, useRoomInfo, useSelf, useUser },
 } = createRoomContext<{}, {}, UserMeta>(client);
