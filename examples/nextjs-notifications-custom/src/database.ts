@@ -72,7 +72,13 @@ export function getRandomUser() {
 }
 
 export function getUser(id: string) {
-  return USER_INFO.find((u) => u.id === id) || null;
+  const user = USER_INFO.find((u) => u.id === id);
+
+  if (!user) {
+    throw new Error(`User not found: ${id}`);
+  }
+
+  return user;
 }
 
 export function getUsers() {
