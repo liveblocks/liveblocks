@@ -19,7 +19,6 @@ const ROOMS: Room[] = [
 ];
 
 export function getRoom(id: string) {
-  console.log(id);
   return ROOMS.find((u) => u.id === id) || null;
 }
 

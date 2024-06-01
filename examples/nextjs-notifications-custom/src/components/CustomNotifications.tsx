@@ -99,15 +99,17 @@ function NotificationPanel() {
   return (
     <InboxNotificationList className={styles.notificationList}>
       {inboxNotifications.map((inboxNotification) => (
-        <InboxNotification
-          key={inboxNotification.id}
-          inboxNotification={inboxNotification}
-          kinds={{
-            $alert: AlertNotification,
-            $imageUpload: ImageUploadNotification,
-            $invite: InviteNotification,
-          }}
-        />
+        <ErrorBoundary fallback={null}>
+          <InboxNotification
+            key={inboxNotification.id}
+            inboxNotification={inboxNotification}
+            kinds={{
+              $alert: AlertNotification,
+              $imageUpload: ImageUploadNotification,
+              $invite: InviteNotification,
+            }}
+          />
+        </ErrorBoundary>
       ))}
     </InboxNotificationList>
   );
