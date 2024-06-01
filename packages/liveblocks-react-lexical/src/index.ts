@@ -9,3 +9,4 @@ export { liveblocksLexicalConfig } from "./liveblocks-config";
 export { LiveblocksPluginProvider } from "./liveblocks-plugin-provider";
 export { Mention } from "./mentions/mention-component";
 export { FloatingComposer } from "./comments/floating-composer";
+export { useCreateThread } from "./comments/comment-plugin-provider";

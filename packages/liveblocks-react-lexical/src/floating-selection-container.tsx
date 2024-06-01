@@ -9,6 +9,7 @@ import React, {
   forwardRef,
   PropsWithChildren,
   useCallback,
+  useEffect,
   useImperativeHandle,
   useLayoutEffect,
   useRef,
@@ -16,6 +17,7 @@ import React, {
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { createPortal } from "react-dom";
 import { createDOMRange } from "@lexical/selection";
+import { useHideFloatingComposer } from "./comments/comment-plugin-provider";
 
 export interface FloatingSelectionContainerProps {
   sideOffset?: number;
@@ -91,6 +93,9 @@ const FloatingSelectionContainerImpl = forwardRef<
     collisionPadding = 0,
   } = props;
 
+  const hideFloatingComposer = useHideFloatingComposer();
+
+  const containerRef = useRef<HTMLDivElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
 
   const [editor] = useLexicalComposerContext();
@@ -100,78 +105,123 @@ const FloatingSelectionContainerImpl = forwardRef<
     () => divRef.current
   );
 
+  useEffect(() => {
+    return editor.registerUpdateListener(({ editorState: state, tags }) => {
+      // Ignore selection updates related to collaboration
+      if (tags.has("collaboration")) return;
+      state.read(() => hideFloatingComposer());
+    });
+  }, [editor, hideFloatingComposer]);
+
   useLayoutEffect(() => {
     const content = divRef.current;
     if (content === null) return;
 
-    const parent = content.parentElement;
+    const parent = containerRef.current;
     if (parent === null) return;
 
-    // Create a DOM range from the selection
-    const range = createDOMRange(
-      editor,
-      selection.anchor.node,
-      selection.anchor.offset,
-      selection.focus.node,
-      selection.focus.offset
-    );
+    function positionContent() {
+      const content = divRef.current;
+      if (content === null) return;
 
-    if (range === null) return;
+      const parent = content.parentElement;
+      if (parent === null) return;
 
-    // Get the bounding client rect of the DOM (selection) range
-    const rect = range.getBoundingClientRect();
+      // Create a DOM range from the selection
+      const range = createDOMRange(
+        editor,
+        selection.anchor.node,
+        selection.anchor.offset,
+        selection.focus.node,
+        selection.focus.offset
+      );
 
-    let left = rect.left - parent.getBoundingClientRect().x + parent.scrollLeft;
-    let top = rect.bottom - parent.getBoundingClientRect().y + parent.scrollTop;
+      if (range === null) return;
 
-    // Apply the align offset
-    left += alignOffset;
+      // Get the bounding client rect of the DOM (selection) range
+      const rect = range.getBoundingClientRect();
 
-    // Apply the side offset
-    top += sideOffset;
+      // Set the position of the floating container
+      let left = rect.left - parent.getBoundingClientRect().left;
+      let top = rect.bottom - parent.getBoundingClientRect().top;
 
-    // Get the width and height of the content
-    const width = content.getBoundingClientRect().width;
+      // Apply the align offset
+      left += alignOffset;
 
-    // Align content to the center of the selection
-    left = left + rect.width / 2 - width / 2;
+      // Get the width and height of the content
+      const width = content.getBoundingClientRect().width;
+      left = left + rect.width / 2 - width / 2;
 
-    // Ensure content does not overflow the container
-    if (
-      left + width + collisionPadding >
-      parent.scrollLeft + parent.clientWidth
-    ) {
-      left = parent.scrollLeft + parent.clientWidth - width;
-      left -= collisionPadding;
-    } else if (left < 0) {
-      left = 0;
-      left += collisionPadding;
+      // Ensure content does not overflow the container
+      if (left < collisionPadding) {
+        left = collisionPadding;
+      } else if (
+        left + width >
+        parent.getBoundingClientRect().right -
+          parent.getBoundingClientRect().left -
+          collisionPadding
+      ) {
+        left =
+          parent.getBoundingClientRect().right -
+          parent.getBoundingClientRect().left -
+          width -
+          collisionPadding;
+      }
+
+      // Apply the side offset
+      top += sideOffset;
+
+      const height = content.getBoundingClientRect().height;
+
+      if (
+        top + height >
+        parent.getBoundingClientRect().height -
+          parent.getBoundingClientRect().top +
+          collisionPadding
+      ) {
+        top = rect.top - parent.getBoundingClientRect().top - height;
+        top -= sideOffset;
+      }
+
+      content.style.left = `${left}px`;
+      content.style.top = `${top}px`;
     }
 
-    const height = content.getBoundingClientRect().height;
+    // Observe resizes of the container element to redraw the selection
+    const observer = new ResizeObserver(positionContent);
+    observer.observe(parent);
 
-    if (
-      top + height + collisionPadding >
-      parent.scrollTop + parent.clientHeight
-    ) {
-      top =
-        rect.top - parent.getBoundingClientRect().y + parent.scrollTop - height;
-      top -= sideOffset;
-    }
+    // Listen to updates in the editor to redraw the selection
+    const unsubscribeFromUpdates =
+      editor.registerUpdateListener(positionContent);
 
-    content.style.left = `${left}px`;
-    content.style.top = `${top}px`;
+    return () => {
+      observer.disconnect();
+      unsubscribeFromUpdates();
+    };
   }, [selection, editor]);
 
   return (
     <div
-      ref={divRef}
+      ref={containerRef}
       style={{
         position: "absolute",
-        pointerEvents: "auto",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        pointerEvents: "none",
       }}
     >
-      {children}
+      <div
+        ref={divRef}
+        style={{
+          position: "absolute",
+          pointerEvents: "auto",
+        }}
+      >
+        {children}
+      </div>
     </div>
   );
 });

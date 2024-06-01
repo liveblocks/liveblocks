@@ -72,11 +72,7 @@ export default function Editor() {
                 />
               )}
 
-              <FloatingComposer
-                className={styles.floatingComposer}
-                sideOffset={5}
-                alignOffset={5}
-              />
+              <FloatingComposer className={styles.floatingComposer} />
             </div>
 
             <div className={styles.sidebar}>

@@ -80,6 +80,19 @@ export function useShowFloatingComposer() {
   return context.showFloatingComposer;
 }
 
+export function useHideFloatingComposer() {
+  const context = React.useContext(ShowFloatingComposerContext);
+  if (context === null) {
+    throw new Error(
+      "useHideFloatingComposer must be used within a LiveblocksPluginProvider with comments enabled"
+    );
+  }
+
+  return () => {
+    context.setShowFloatingComposer(false);
+  };
+}
+
 export function CommentPluginProvider({ children }: PropsWithChildren) {
   const [editor, context] = useLexicalComposerContext();
 

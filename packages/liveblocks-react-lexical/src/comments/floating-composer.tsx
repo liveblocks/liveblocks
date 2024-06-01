@@ -1,10 +1,12 @@
 import { Composer, ComposerProps } from "@liveblocks/react-comments";
-import React, { ComponentRef, forwardRef } from "react";
-import {
-  FloatingSelectionContainer,
-  FloatingSelectionContainerProps,
-} from "../floating-selection-container";
+import React, { ComponentRef, forwardRef, KeyboardEvent } from "react";
+import { FloatingSelectionContainer } from "../floating-selection-container";
 import type { BaseMetadata } from "@liveblocks/core";
+import {
+  useHideFloatingComposer,
+  useShowFloatingComposer,
+} from "./comment-plugin-provider";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 
 type ComposerElement = ComponentRef<typeof Composer>;
 
@@ -21,14 +23,31 @@ export const FloatingComposer = forwardRef<
   ComposerElement,
   FloatingComposerProps
 >(function FloatingComposer(props, forwardedRef) {
-  const { ...composerProps } = props;
+  const shouldShowFloatingComposer = useShowFloatingComposer();
+  const hideFloatingComposer = useHideFloatingComposer();
+  const [editor] = useLexicalComposerContext();
+
+  if (!shouldShowFloatingComposer) return null;
+
+  function handleKeyDown(event: KeyboardEvent<HTMLFormElement>) {
+    if (event.key === "Escape") {
+      hideFloatingComposer();
+      editor.focus();
+    }
+  }
+
   return (
     <FloatingSelectionContainer
       sideOffset={5}
       alignOffset={0}
       collisionPadding={5}
     >
-      <Composer {...composerProps} ref={forwardedRef} />
+      <Composer
+        autoFocus
+        onKeyDown={handleKeyDown}
+        {...props}
+        ref={forwardedRef}
+      />
     </FloatingSelectionContainer>
   );
 });
