@@ -62,8 +62,7 @@ export function InviteNotification({
   // Fetch room and user info from resolvers in liveblocks.config.ts
   const { info, error, isLoading } = useRoomInfo(roomId) as ReturnType<
     typeof useRoomInfo
-  > &
-    Room;
+  > & { info: Room["info"] };
   const { user: inviter } = useUser(inviteFrom);
 
   if (error || isLoading) {

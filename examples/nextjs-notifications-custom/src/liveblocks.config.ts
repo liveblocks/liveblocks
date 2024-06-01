@@ -54,7 +54,12 @@ export type Room = {
 };
 
 export const {
-  suspense: { LiveblocksProvider, useInboxNotifications },
+  suspense: {
+    LiveblocksProvider,
+    useInboxNotifications,
+    useUnreadInboxNotificationsCount,
+    useMarkAllInboxNotificationsAsRead,
+  },
 } = createLiveblocksContext(client);
 
 export const {

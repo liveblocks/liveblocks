@@ -7,8 +7,10 @@ import {
 } from "@liveblocks/react-comments";
 import {
   useInboxNotifications,
+  useMarkAllInboxNotificationsAsRead,
   useMarkInboxNotificationAsRead,
   useSelf,
+  useUnreadInboxNotificationsCount,
 } from "../liveblocks.config";
 import { ErrorBoundary } from "react-error-boundary";
 import {
@@ -95,24 +97,32 @@ function SendNotificationButtons() {
 
 function NotificationPanel() {
   const { inboxNotifications } = useInboxNotifications();
+  const { count } = useUnreadInboxNotificationsCount();
+  const markInboxNotificationAsRead = useMarkAllInboxNotificationsAsRead();
 
   if (inboxNotifications.length === 0) {
     return <div>No notifications yet</div>;
   }
 
   return (
-    <InboxNotificationList className={styles.notificationList}>
-      {inboxNotifications.map((inboxNotification) => (
-        <InboxNotification
-          key={inboxNotification}
-          inboxNotification={inboxNotification}
-          kinds={{
-            $alert: AlertNotification,
-            $imageUpload: ImageUploadNotification,
-            $invite: InviteNotification,
-          }}
-        />
-      ))}
-    </InboxNotificationList>
+    <>
+      <div className={styles.topBar}>
+        <span>{count} unread</span>
+        <Button onClick={markInboxNotificationAsRead}>Mark all as read</Button>
+      </div>
+      <InboxNotificationList className={styles.notificationList}>
+        {inboxNotifications.map((inboxNotification) => (
+          <InboxNotification
+            key={inboxNotification.id}
+            inboxNotification={inboxNotification}
+            kinds={{
+              $alert: AlertNotification,
+              $imageUpload: ImageUploadNotification,
+              $invite: InviteNotification,
+            }}
+          />
+        ))}
+      </InboxNotificationList>
+    </>
   );
 }

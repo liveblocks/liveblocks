@@ -36,3 +36,11 @@
   gap: 6px;
   margin-top: 12px;
 }
+
+.topBar {
+  padding: 12px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgb(220, 220, 220);
+}
