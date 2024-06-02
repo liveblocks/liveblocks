@@ -2374,11 +2374,29 @@ export function generateQueryKey(
   return `${roomId}-${stringify(options ?? {})}`;
 }
 
-type DP = Liveblocks.Presence;
-type DS = Liveblocks.Storage;
-type DU = Liveblocks.UserMeta;
-type DE = Liveblocks.RoomEvent;
-type DM = Liveblocks.ThreadMetadata;
+type DP = ExtendedType<"Presence", JsonObject, "Invalid generic">;
+type DS = ExtendedType<"Storage", LsonObject, "Invalid generic">;
+type DU = ExtendedType<"UserMeta", BaseUserMeta, "Invalid generic">;
+type DE = ExtendedType<"RoomEvent", JsonObject, "Invalid generic">;
+type DM = ExtendedType<"ThreadMetadata", BaseMetadata, "Invalid generic">;
+
+// TODO: Reuse types utilities between room.tsx and liveblocks.tsx
+type ExtendableTypes =
+  | "Presence"
+  | "Storage"
+  | "UserMeta"
+  | "RoomEvent"
+  | "ThreadMetadata";
+
+type ExtendedType<
+  K extends ExtendableTypes,
+  B,
+  ErrorMessage,
+> = unknown extends Liveblocks[K]
+  ? B
+  : Liveblocks[K] extends B
+    ? Liveblocks[K]
+    : ErrorMessage;
 
 type DefaultRoomContextBundle = RoomContextBundle<DP, DS, DU, DE, DM>;
 

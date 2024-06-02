@@ -1,4 +1,3 @@
-import type { Json } from "@liveblocks/client";
 import * as classic from "@liveblocks/react";
 import * as suspense from "@liveblocks/react/suspense";
 import { expectAssignable, expectError, expectType } from "tsd";
@@ -7,36 +6,26 @@ import { expectAssignable, expectError, expectType } from "tsd";
 // User-provided type augmentations
 //
 declare global {
-  namespace Liveblocks {
-    interface Presence {
+  interface Liveblocks {
+    Presence: {
       cursor: { x: number; y: number };
-    }
+    };
 
-    interface UserMeta {
+    UserMeta: {
       info: {
         name: string;
         age: number;
       };
-    }
+    };
 
-    //
-    // TODO Ideally support using union types here, somehow.
-    // Maybe this could work?
-    //
-    // interface RoomEvents {
-    //   events:
-    //     | { type: "emoji"; emoji: string }
-    //     | { type: "leave"; userId: string };
-    // }
-    //
-    interface RoomEvent {
+    RoomEvent: {
       type: "emoji";
       emoji: string;
-    }
+    };
 
-    interface ThreadMetadata {
+    ThreadMetadata: {
       color: "red" | "blue";
-    }
+    };
   }
 }
 
@@ -49,7 +38,7 @@ declare global {
   const room = classic.useRoom();
   expectType<number>(room.getPresence().cursor.x);
   expectType<number>(room.getPresence().cursor.y);
-  expectType<Json | undefined>(room.getPresence().nonexisting);
+  expectError(room.getPresence().nonexisting);
 }
 
 // useRoom() (suspense)
@@ -57,7 +46,7 @@ declare global {
   const room = suspense.useRoom();
   expectType<number>(room.getPresence().cursor.x);
   expectType<number>(room.getPresence().cursor.y);
-  expectType<Json | undefined>(room.getPresence().nonexisting);
+  expectError(room.getPresence().nonexisting);
 }
 
 // ---------------------------------------------------------
@@ -67,7 +56,7 @@ declare global {
   const me = classic.useSelf();
   expectType<number | undefined>(me?.presence.cursor.x);
   expectType<number | undefined>(me?.presence.cursor.y);
-  expectType<Json | undefined>(me?.presence.nonexisting);
+  expectError(me?.presence.nonexisting);
 
   expectType<string | undefined>(me?.info.name);
   expectType<number | undefined>(me?.info.age);
@@ -79,7 +68,7 @@ declare global {
   const me = suspense.useSelf();
   expectType<number>(me.presence.cursor.x);
   expectType<number>(me.presence.cursor.y);
-  expectType<Json | undefined>(me.presence.nonexisting);
+  expectError(me.presence.nonexisting);
 
   expectType<string>(me.info.name);
   expectType<number>(me.info.age);
@@ -183,9 +172,9 @@ declare global {
   const { user, error, isLoading } = classic.useUser("user-id");
   expectType<boolean>(isLoading);
   expectType<string | undefined>(user?.name);
-  expectType<string | undefined>(user?.avatar);
-  expectType<Json | undefined>(user?.age);
-  expectType<Json | undefined>(user?.anyOtherProp);
+  expectError(user?.avatar);
+  expectType<number | undefined>(user?.age);
+  expectError(user?.anyOtherProp);
   expectType<Error | undefined>(error);
 }
 
@@ -193,10 +182,10 @@ declare global {
 {
   const { user, error, isLoading } = suspense.useUser("user-id");
   expectType<false>(isLoading);
-  expectType<string | undefined>(user?.name);
-  expectType<string | undefined>(user?.avatar);
-  expectType<Json | undefined>(user?.age);
-  expectType<Json | undefined>(user?.anyOtherProp);
+  expectType<string>(user.name);
+  expectError(user.avatar);
+  expectType<number>(user.age);
+  expectError(user.anyOtherProp);
   expectType<undefined>(error);
 }
 
@@ -257,9 +246,7 @@ declare global {
   expectType<string>(result.roomId);
   expectAssignable<unknown[]>(result.comments);
   expectType<"red" | "blue">(result.metadata.color);
-  expectType<string | number | boolean | undefined>(
-    result.metadata.nonexisting
-  );
+  expectError(result.metadata.nonexisting);
 }
 
 // The useInboxNotificationThread() hook (suspense)
@@ -269,9 +256,7 @@ declare global {
   expectType<string>(result.roomId);
   expectAssignable<unknown[]>(result.comments);
   expectType<"red" | "blue">(result.metadata.color);
-  expectType<string | number | boolean | undefined>(
-    result.metadata.nonexisting
-  );
+  expectError(result.metadata.nonexisting);
 }
 
 // ---------------------------------------------------------
