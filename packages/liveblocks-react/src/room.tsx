@@ -2377,7 +2377,7 @@ export function generateQueryKey(
 type DP = ExtendedType<"Presence", JsonObject, "Invalid generic">;
 type DS = ExtendedType<"Storage", LsonObject, "Invalid generic">;
 type DU = ExtendedType<"UserMeta", BaseUserMeta, "Invalid generic">;
-type DE = ExtendedType<"RoomEvent", JsonObject, "Invalid generic">;
+type DE = ExtendedType<"RoomEvent", Json, "Invalid generic">;
 type DM = ExtendedType<"ThreadMetadata", BaseMetadata, "Invalid generic">;
 
 // TODO: Reuse types utilities between room.tsx and liveblocks.tsx
