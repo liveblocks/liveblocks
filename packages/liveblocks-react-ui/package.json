@@ -29,13 +29,24 @@
         "default": "./dist/primitives/index.js"
       }
     },
-    "./styles.css": "./styles.css",
-    "./styles/dark/media-query.css": "./styles/dark/media-query.css",
-    "./styles/dark/attributes.css": "./styles/dark/attributes.css"
+    "./styles.css": {
+      "types": "./styles.css.d.ts",
+      "default": "./styles.css"
+    },
+    "./styles/dark/media-query.css": {
+      "types": "./styles/dark/media-query.css.d.ts",
+      "default": "./styles/dark/media-query.css"
+    },
+    "./styles/dark/attributes.css": {
+      "types": "./styles/dark/attributes.css.d.ts",
+      "default": "./styles/dark/attributes.css"
+    }
   },
   "files": [
     "dist/**",
+    "primitives/**",
     "**/*.css",
+    "**/*.css.d.ts",
     "**/*.css.map",
     "README.md"
   ],
@@ -45,6 +56,7 @@
     "start": "npm run dev",
     "format": "eslint --fix src/; stylelint --fix src/styles/; prettier --write src/",
     "lint": "eslint src/; stylelint src/styles/",
+    "lint:package": "publint --strict && attw --pack",
     "test": "jest --silent --verbose --color=always",
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
