@@ -97,6 +97,11 @@ function createTypesConfigs() {
           .replace(`${SRC_DIR}/`, `${DIST_DIR}/`)
           .replace(/\.ts$/, ".d.ts"),
       },
+      {
+        file: input
+          .replace(`${SRC_DIR}/`, `${DIST_DIR}/`)
+          .replace(/\.ts$/, ".d.mts"),
+      },
     ],
     plugins: [dts()],
   }));
