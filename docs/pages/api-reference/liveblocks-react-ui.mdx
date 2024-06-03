@@ -12,14 +12,6 @@ to build collaborative experiences. Read our
 [Notifications](/docs/get-started/notifications) get started guides to learn
 more.
 
-<Banner title="Public beta">
-
-Comments is currently in beta. If you have any questions or feedback, please
-join us on our [Discord server](https://liveblocks.io/discord). We’d love to
-hear from you.
-
-</Banner>
-
 ## Comments
 
 ### Default components [#Components]
@@ -512,251 +504,6 @@ function Component() {
 </PropertiesList>
 
 {/* TODO: Document classes and data attributes */}
-
-#### CommentsConfig
-
-Set configuration options for all Comments components, such as
-[overrides](#overrides).
-
-```tsx
-<CommentsConfig overrides={{ locale: "fr", USER_UNKNOWN: "Anonyme" }} />
-```
-
-##### Props [#CommentsConfig-props]
-
-<PropertiesList>
-  <PropertiesListItem name="overrides" type="Partial<Overrides>">
-    Override the components’ strings.
-  </PropertiesListItem>
-  <PropertiesListItem name="components" type="Partial<Components>">
-    Override the components’ components.
-  </PropertiesListItem>
-  <PropertiesListItem
-    name="portalContainer"
-    type="HTMLElement"
-    defaultValue="document.body"
-  >
-    The container to render the portal into.
-  </PropertiesListItem>
-</PropertiesList>
-
-#### Styling and customization
-
-##### Default styles
-
-The default components come with default styles. These styles can be imported
-into the root of your app or directly into a CSS file with `@import`.
-
-```tsx
-import "@liveblocks/react-ui/styles.css";
-```
-
-##### Dark mode
-
-You can also import default dark mode styling. There are two versions to choose
-from, the first uses the
-[system theme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme).
-
-```tsx
-// Dark mode using the system theme with `prefers-color-scheme`
-import "@liveblocks/react-ui/styles/dark/media-query.css";
-```
-
-The second uses the `dark` class name, and two commonly used data attributes.
-
-```tsx
-// Dark mode using `className="dark"`, `data-theme="dark"`, or `data-dark="true"`
-import "@liveblocks/react-ui/styles/dark/attributes.css";
-```
-
-{/* TODO: Mention --elevation-background, --elevation-foreground here */}
-
-##### CSS variables
-
-The default components are built around a set of customizable CSS variables. Set
-these variables within `.lb-root` to globally style your components.
-
-```css
-/* Styles all default Comments components */
-.lb-root {
-  --lb-accent: purple;
-  --lb-spacing: 1em;
-  --lb-radius: 0;
-}
-```
-
-<PropertiesList>
-  <PropertiesListItem name="--lb-radius" defaultValue="0.5em">
-    The border radius scale. `em` values recommended.
-  </PropertiesListItem>
-  <PropertiesListItem name="--lb-spacing" defaultValue="1em">
-    The spacing scale. `em` values recommended.
-  </PropertiesListItem>
-  <PropertiesListItem name="--lb-accent" defaultValue="#1177ff">
-    The accent color.
-  </PropertiesListItem>
-  <PropertiesListItem name="--lb-accent-foreground" defaultValue="#ffffff">
-    The foreground color used over the accent color.
-  </PropertiesListItem>
-  <PropertiesListItem name="--lb-destructive" defaultValue="#ff4455">
-    The destructive color.
-  </PropertiesListItem>
-  <PropertiesListItem name="--lb-destructive-foreground" defaultValue="#ffffff">
-    The foreground color used over the destructive color.
-  </PropertiesListItem>
-  <PropertiesListItem name="--lb-background" defaultValue="#ffffff">
-    The main background color.
-  </PropertiesListItem>
-  <PropertiesListItem name="--lb-foreground" defaultValue="#111111">
-    The main foreground color.
-  </PropertiesListItem>
-  <PropertiesListItem name="--lb-icon-size" defaultValue="20px">
-    The size of icons.
-  </PropertiesListItem>
-  <PropertiesListItem name="--lb-icon-weight" defaultValue="1.5px">
-    The stroke weight of icons.
-  </PropertiesListItem>
-  <PropertiesListItem name="--lb-avatar-radius" defaultValue="50%">
-    The border radius used for avatars.
-  </PropertiesListItem>
-  <PropertiesListItem
-    name="--lb-button-radius"
-    defaultValue="calc(0.75 * var(--lb-radius))"
-  >
-    The border radius used for buttons.
-  </PropertiesListItem>
-  <PropertiesListItem name="--lb-transition-duration" defaultValue="0.1s">
-    The duration used for transitioned elements.
-  </PropertiesListItem>
-  <PropertiesListItem
-    name="--lb-transition-easing"
-    defaultValue="cubic-bezier(0.4, 0, 0.2, 1)"
-  >
-    The easing function used for transitioned elements.
-  </PropertiesListItem>
-  <PropertiesListItem
-    name="--lb-elevation-shadow"
-    defaultValue="0 0 0 1px rgb(0 0 0 / 4%), 0 2px 6px rgb(0 0 0 / 8%),  0 8px 26px rgb(0 0 0 / 12%)"
-  >
-    The box shadow added to elevated elements.
-  </PropertiesListItem>
-  <PropertiesListItem
-    name="--lb-tooltip-shadow"
-    defaultValue="0 2px 4px rgb(0 0 0 / 8%), 0 4px 12px rgb(0 0 0 / 12%)"
-  >
-    The box shadow added to tooltips.
-  </PropertiesListItem>
-  <PropertiesListItem name="--lb-accent-contrast" defaultValue="8%">
-    Affects the lightness of accent colors. `%` value required.
-  </PropertiesListItem>
-  <PropertiesListItem name="--lb-destructive-contrast" defaultValue="8%">
-    Affects the lightness of destructive colors. `%` value required.
-  </PropertiesListItem>
-  <PropertiesListItem name="--lb-foreground-contrast" defaultValue="6%">
-    Affects the lightness of foreground colors. `%` value required.
-  </PropertiesListItem>
-</PropertiesList>
-
-{/* TODO: Explain automatic color scales (with a palette-type visual) */}
-
-##### Class names
-
-Each default component has a set of predefined class names, which can be helpful
-for custom styling, for example.
-
-```css
-.lb-thread {
-  /* Customise thread */
-}
-
-.lb-composer {
-  /* Customise composer */
-}
-```
-
-Additionally, some elements also have data attributes to provide contextual
-information, for example:
-
-```css
-.lb-button[data-variant="primary"] {
-  /* Customise primary buttons */
-}
-
-.lb-avatar[data-loading] {
-  /* Customise avatar loading state */
-}
-```
-
-<Banner title="Internal classes" type="warning">
-
-Classes containing colons `:` are internal and may change over time.
-
-</Banner>
-
-{/* TODO: Think about adding back the browser support section */}
-
-##### Portaled elements
-
-Floating elements within the default components (e.g. tooltips, drowdowns, etc)
-are portaled to the end of the document to avoid `z-index` conflicts and
-`overflow` issues.
-
-When portaled, those elements are also wrapped in a container to handle their
-positioning. These containers don’t have any specific class names or data
-attributes so they shouldn’t be targeted or styled directly, but they will
-mirror whichever `z-index` value is set on their inner element (which would be
-`auto` by default). So if you need to set a specific `z-index` value on floating
-elements, you should set it on the floating elements themselves directly,
-ignoring their containers. You can either target specific floating elements
-(e.g. `.lb-tooltip`, `.lb-dropdown`, etc) or all of them at once via the
-`.lb-portal` class name.
-
-```css
-/* Target all floating elements */
-.lb-portal {
-  z-index: 5;
-}
-
-/* Target a specific floating element */
-.lb-tooltip {
-  z-index: 10;
-}
-```
-
-##### Overrides
-
-Overrides can be used to customize components’ strings and localization-related
-properties, such as locale and reading direction.
-
-They can be set globally for all components using `CommentsConfig`:
-
-```tsx
-import { CommentsConfig } from "@liveblocks/react-ui";
-
-export function App() {
-  return (
-    <CommentsConfig
-      overrides={{ locale: "fr", USER_UNKNOWN: "Anonyme" /* ... */ }}
-    >
-      {/* ... */}
-    </CommentsConfig>
-  );
-}
-```
-
-Overrides can also be set per-component, and these settings will take precedence
-over global settings. This is particularly useful in certain contexts, for
-example when you’re using a `<Composer />` component for creating replies to
-threads:
-
-```tsx
-<Composer
-  overrides={{
-    COMPOSER_PLACEHOLDER: "Reply to thread…",
-    COMPOSER_SEND: "Reply",
-  }}
-/>
-```
 
 ### Primitives
 
@@ -1466,6 +1213,14 @@ on the
 
 ## Notifications
 
+<Banner title="Public beta">
+
+Notifications is currently in beta. If you have any questions or feedback,
+please join us on our [Discord server](https://liveblocks.io/discord). We’d love
+to hear from you.
+
+</Banner>
+
 ### Default components
 
 #### InboxNotification
@@ -1714,3 +1469,252 @@ element.
     The inbox notifications to display.
   </PropertiesListItem>
 </PropertiesList>
+
+## Utilities
+
+### Components
+
+#### LiveblocksUIConfig
+
+Set configuration options for all `@liveblocks/react-ui` components, such as
+[overrides](#overrides).
+
+```tsx
+<LiveblocksUIConfig overrides={{ locale: "fr", USER_UNKNOWN: "Anonyme" }} />
+```
+
+##### Props [#LiveblocksUIConfig-props]
+
+<PropertiesList>
+  <PropertiesListItem name="overrides" type="Partial<Overrides>">
+    Override the components’ strings.
+  </PropertiesListItem>
+  <PropertiesListItem name="components" type="Partial<Components>">
+    Override the components’ components.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="portalContainer"
+    type="HTMLElement"
+    defaultValue="document.body"
+  >
+    The container to render the portal into.
+  </PropertiesListItem>
+</PropertiesList>
+
+## Styling and customization
+
+### Default styles
+
+The default components come with default styles. These styles can be imported
+into the root of your app or directly into a CSS file with `@import`.
+
+```tsx
+import "@liveblocks/react-ui/styles.css";
+```
+
+### Dark mode
+
+You can also import default dark mode styling. There are two versions to choose
+from, the first uses the
+[system theme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme).
+
+```tsx
+// Dark mode using the system theme with `prefers-color-scheme`
+import "@liveblocks/react-ui/styles/dark/media-query.css";
+```
+
+The second uses the `dark` class name, and two commonly used data attributes.
+
+```tsx
+// Dark mode using `className="dark"`, `data-theme="dark"`, or `data-dark="true"`
+import "@liveblocks/react-ui/styles/dark/attributes.css";
+```
+
+{/* TODO: Mention --elevation-background, --elevation-foreground here */}
+
+### CSS variables
+
+The default components are built around a set of customizable CSS variables. Set
+these variables within `.lb-root` to globally style your components.
+
+```css
+/* Styles all default Comments components */
+.lb-root {
+  --lb-accent: purple;
+  --lb-spacing: 1em;
+  --lb-radius: 0;
+}
+```
+
+<PropertiesList>
+  <PropertiesListItem name="--lb-radius" defaultValue="0.5em">
+    The border radius scale. `em` values recommended.
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-spacing" defaultValue="1em">
+    The spacing scale. `em` values recommended.
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-accent" defaultValue="#1177ff">
+    The accent color.
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-accent-foreground" defaultValue="#ffffff">
+    The foreground color used over the accent color.
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-destructive" defaultValue="#ff4455">
+    The destructive color.
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-destructive-foreground" defaultValue="#ffffff">
+    The foreground color used over the destructive color.
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-background" defaultValue="#ffffff">
+    The main background color.
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-foreground" defaultValue="#111111">
+    The main foreground color.
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-icon-size" defaultValue="20px">
+    The size of icons.
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-icon-weight" defaultValue="1.5px">
+    The stroke weight of icons.
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-avatar-radius" defaultValue="50%">
+    The border radius used for avatars.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="--lb-button-radius"
+    defaultValue="calc(0.75 * var(--lb-radius))"
+  >
+    The border radius used for buttons.
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-transition-duration" defaultValue="0.1s">
+    The duration used for transitioned elements.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="--lb-transition-easing"
+    defaultValue="cubic-bezier(0.4, 0, 0.2, 1)"
+  >
+    The easing function used for transitioned elements.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="--lb-elevation-shadow"
+    defaultValue="0 0 0 1px rgb(0 0 0 / 4%), 0 2px 6px rgb(0 0 0 / 8%),  0 8px 26px rgb(0 0 0 / 12%)"
+  >
+    The box shadow added to elevated elements.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="--lb-tooltip-shadow"
+    defaultValue="0 2px 4px rgb(0 0 0 / 8%), 0 4px 12px rgb(0 0 0 / 12%)"
+  >
+    The box shadow added to tooltips.
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-accent-contrast" defaultValue="8%">
+    Affects the lightness of accent colors. `%` value required.
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-destructive-contrast" defaultValue="8%">
+    Affects the lightness of destructive colors. `%` value required.
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-foreground-contrast" defaultValue="6%">
+    Affects the lightness of foreground colors. `%` value required.
+  </PropertiesListItem>
+</PropertiesList>
+
+{/* TODO: Explain automatic color scales (with a palette-type visual) */}
+
+### Class names
+
+Each default component has a set of predefined class names, which can be helpful
+for custom styling, for example.
+
+```css
+.lb-thread {
+  /* Customise thread */
+}
+
+.lb-composer {
+  /* Customise composer */
+}
+```
+
+Additionally, some elements also have data attributes to provide contextual
+information, for example:
+
+```css
+.lb-button[data-variant="primary"] {
+  /* Customise primary buttons */
+}
+
+.lb-avatar[data-loading] {
+  /* Customise avatar loading state */
+}
+```
+
+<Banner title="Internal classes" type="warning">
+
+Classes containing colons `:` are internal and may change over time.
+
+</Banner>
+
+{/* TODO: Think about adding back the browser support section */}
+
+### Portaled elements
+
+Floating elements within the default components (e.g. tooltips, drowdowns, etc)
+are portaled to the end of the document to avoid `z-index` conflicts and
+`overflow` issues.
+
+When portaled, those elements are also wrapped in a container to handle their
+positioning. These containers don’t have any specific class names or data
+attributes so they shouldn’t be targeted or styled directly, but they will
+mirror whichever `z-index` value is set on their inner element (which would be
+`auto` by default). So if you need to set a specific `z-index` value on floating
+elements, you should set it on the floating elements themselves directly,
+ignoring their containers. You can either target specific floating elements
+(e.g. `.lb-tooltip`, `.lb-dropdown`, etc) or all of them at once via the
+`.lb-portal` class name.
+
+```css
+/* Target all floating elements */
+.lb-portal {
+  z-index: 5;
+}
+
+/* Target a specific floating element */
+.lb-tooltip {
+  z-index: 10;
+}
+```
+
+### Overrides
+
+Overrides can be used to customize components’ strings and localization-related
+properties, such as locale and reading direction.
+
+They can be set globally for all components using `LiveblocksUIConfig`:
+
+```tsx
+import { LiveblocksUIConfig } from "@liveblocks/react-ui";
+
+export function App() {
+  return (
+    <LiveblocksUIConfig
+      overrides={{ locale: "fr", USER_UNKNOWN: "Anonyme" /* ... */ }}
+    >
+      {/* ... */}
+    </LiveblocksUIConfig>
+  );
+}
+```
+
+Overrides can also be set per-component, and these settings will take precedence
+over global settings. This is particularly useful in certain contexts, for
+example when you’re using a `<Composer />` component for creating replies to
+threads:
+
+```tsx
+<Composer
+  overrides={{
+    COMPOSER_PLACEHOLDER: "Reply to thread…",
+    COMPOSER_SEND: "Reply",
+  }}
+/>
+```
