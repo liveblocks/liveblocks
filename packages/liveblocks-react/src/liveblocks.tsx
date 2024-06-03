@@ -42,7 +42,7 @@ import type {
 
 type OpaqueClient = Client<BaseUserMeta>;
 
-const ClientContext = createContext<OpaqueClient | null>(null);
+export const ClientContext = createContext<OpaqueClient | null>(null);
 
 const missingUserError = new Error(
   "resolveUsers didn't return anything for this user ID."

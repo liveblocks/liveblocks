@@ -13,8 +13,9 @@ export { shallow } from "@liveblocks/client";
 
 // Export all the top-level hooks
 export {
-  createLiveblocksContext,
+  ClientContext,
   LiveblocksProvider,
+  createLiveblocksContext,
   useClient,
   useLiveblocksContextBundle,
   useInboxNotificationThread,
