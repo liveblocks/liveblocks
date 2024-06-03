@@ -372,14 +372,6 @@ value of at least a few minutes, to avoid unnecessary disconnections.
 
 ### resolveUsers [#createClientResolveUsers]
 
-<Banner title="Public beta">
-
-Comments is currently in beta. If you have any questions or feedback, please
-join us on our [Discord server](https://liveblocks.io/discord). We’d love to
-hear from you.
-
-</Banner>
-
 [Comments](/docs/products/comments) stores user IDs in its system, but no other
 user information. To display user information in Comments components, such as a
 user’s name or avatar, you need to resolve these IDs into user objects. This
@@ -463,14 +455,6 @@ function Component() {
 
 ### resolveRoomsInfo [#createClientResolveRoomsInfo]
 
-<Banner title="Public beta">
-
-Comments is currently in beta. If you have any questions or feedback, please
-join us on our [Discord server](https://liveblocks.io/discord). We’d love to
-hear from you.
-
-</Banner>
-
 When using [Notifications](/docs/products/comments/notifications) with
 [Comments](/docs/products/comments), room IDs will be used to contextualize
 notifications (e.g. “Chris mentioned you in _room-id_”) in the
@@ -512,14 +496,6 @@ you might need to call your backend for example. In that case, providing it via
 `resolveRoomsInfo` is the preferred way.
 
 ### resolveMentionSuggestions [#createClientResolveMentionSuggestions]
-
-<Banner title="Public beta">
-
-Comments is currently in beta. If you have any questions or feedback, please
-join us on our [Discord server](https://liveblocks.io/discord). We’d love to
-hear from you.
-
-</Banner>
 
 To enable creating mentions in [Comments](/docs/products/comments), you can
 provide a resolver function to the `resolveMentionSuggestions` option in
