@@ -456,6 +456,86 @@ ctx.useErrorListener((err) => {
 
 // ---------------------------------------------------------
 
+// The useEditThreadMetadata() hook
+{
+  {
+    const untypedCtx = createRoomContext(client);
+    //    ^^^^^^^^^^ [1]
+    const editMetadata = untypedCtx.useEditThreadMetadata();
+    expectError(editMetadata({}));
+
+    expectType<void>(editMetadata({ threadId: "th_xxx", metadata: {} }));
+    expectType<void>(
+      editMetadata({ threadId: "th_xxx", metadata: { nonexisting: 123 } })
+    );
+    expectType<void>(
+      editMetadata({ threadId: "th_xxx", metadata: { nonexisting: null } })
+    );
+  }
+
+  {
+    const editMetadata = ctx.useEditThreadMetadata();
+    //                   ^^^ [2]
+    expectError(editMetadata({})); // no body = error
+
+    expectError(
+      editMetadata({ threadId: "th_xxx", metadata: { nonexisting: null } })
+    );
+    expectError(
+      editMetadata({ threadId: "th_xxx", metadata: { nonexisting: 123 } })
+    );
+
+    expectType<void>(editMetadata({ threadId: "th_xxx", metadata: {} }));
+    expectType<void>(
+      editMetadata({ threadId: "th_xxx", metadata: { color: null } })
+    );
+    expectType<void>(
+      editMetadata({ threadId: "th_xxx", metadata: { color: "red" } })
+    );
+  }
+}
+
+// The useEditThreadMetadata() hook (suspense)
+{
+  {
+    const untypedCtx = createRoomContext(client);
+    const editMetadata = untypedCtx.suspense.useEditThreadMetadata();
+    //                   ^^^^^^^^^^^^^^^^^^^ [3]
+    expectError(editMetadata({}));
+
+    expectType<void>(editMetadata({ threadId: "th_xxx", metadata: {} }));
+    expectType<void>(
+      editMetadata({ threadId: "th_xxx", metadata: { nonexisting: 123 } })
+    );
+    expectType<void>(
+      editMetadata({ threadId: "th_xxx", metadata: { nonexisting: null } })
+    );
+  }
+
+  {
+    const editMetadata = ctx.suspense.useEditThreadMetadata();
+    //                   ^^^^^^^^^^^^ [4]
+    expectError(editMetadata({})); // no body = error
+
+    expectError(
+      editMetadata({ threadId: "th_xxx", metadata: { nonexisting: null } })
+    );
+    expectError(
+      editMetadata({ threadId: "th_xxx", metadata: { nonexisting: 123 } })
+    );
+
+    expectType<void>(editMetadata({ threadId: "th_xxx", metadata: {} }));
+    expectType<void>(
+      editMetadata({ threadId: "th_xxx", metadata: { color: null } })
+    );
+    expectType<void>(
+      editMetadata({ threadId: "th_xxx", metadata: { color: "red" } })
+    );
+  }
+}
+
+// ---------------------------------------------------------
+
 // The useInboxNotifications() hook
 {
   const result = lbctx.useInboxNotifications();

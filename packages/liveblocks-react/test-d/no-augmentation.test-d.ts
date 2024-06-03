@@ -307,6 +307,44 @@ import { expectAssignable, expectError, expectType } from "tsd";
 
 // ---------------------------------------------------------
 
+// The useEditThreadMetadata() hook
+{
+  const editMetadata = classic.useEditThreadMetadata();
+  expectError(editMetadata({}));
+
+  expectType<void>(editMetadata({ threadId: "th_xxx", metadata: {} }));
+  expectType<void>(
+    editMetadata({ threadId: "th_xxx", metadata: { nonexisting: 123 } })
+  );
+  expectType<void>(
+    editMetadata({ threadId: "th_xxx", metadata: { nonexisting: null } })
+  );
+}
+
+// The useEditThreadMetadata() hook (suspense)
+{
+  //        ---------------------
+  const editMetadata = suspense.useEditThreadMetadata();
+  expectError(editMetadata({})); // no body = error
+
+  expectType<void>(
+    editMetadata({ threadId: "th_xxx", metadata: { nonexisting: null } })
+  );
+  expectType<void>(
+    editMetadata({ threadId: "th_xxx", metadata: { nonexisting: 123 } })
+  );
+
+  expectType<void>(editMetadata({ threadId: "th_xxx", metadata: {} }));
+  expectType<void>(
+    editMetadata({ threadId: "th_xxx", metadata: { color: null } })
+  );
+  expectType<void>(
+    editMetadata({ threadId: "th_xxx", metadata: { color: "red" } })
+  );
+}
+
+// ---------------------------------------------------------
+
 // The useInboxNotifications() hook
 {
   expectType<boolean>(classic.useInboxNotifications().isLoading);
