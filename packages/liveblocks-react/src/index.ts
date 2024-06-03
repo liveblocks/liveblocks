@@ -17,13 +17,9 @@ export {
   LiveblocksProvider,
   createLiveblocksContext,
   useClient,
-  useLiveblocksContextBundle,
   useInboxNotificationThread,
   useMarkAllInboxNotificationsAsRead,
   useMarkInboxNotificationAsRead,
-
-  // TODO Move these private APIs into another namespace eventually
-  useLiveblocksContextBundleOrNull as useLiveblocksContextBundleOrNull__,
 } from "./liveblocks";
 export {
   createRoomContext,
@@ -50,7 +46,6 @@ export {
   useRedo,
   useRemoveReaction,
   useRoom,
-  useRoomContextBundle,
   useRoomNotificationSettings,
   useStatus,
   useStorageRoot,
@@ -58,10 +53,6 @@ export {
   useUndo,
   useUpdateMyPresence,
   useUpdateRoomNotificationSettings,
-
-  // Maybe we can eventually move these private APIs into another namespace
-  // somehow, but making that decision later
-  useRoomContextBundleOrNull as useRoomContextBundleOrNull__,
 } from "./room";
 
 // Export the classic (non-Suspense) versions of our hooks

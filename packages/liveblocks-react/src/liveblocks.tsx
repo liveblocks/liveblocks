@@ -355,16 +355,8 @@ function makeLiveblocksContextBundle<
 
       ...shared.suspense,
     },
-
-    [kInternal]: {
-      useCurrentUserIdFromClient: () =>
-        useCurrentUserIdFromClient_withClient(client),
-    },
   };
-
-  return Object.defineProperty(bundle, kInternal, {
-    enumerable: false,
-  });
+  return bundle;
 }
 
 function useInboxNotifications_withClient(client: OpaqueClient) {
@@ -578,15 +570,6 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
     store.get,
     store.get,
     selector
-  );
-}
-
-function useCurrentUserIdFromClient_withClient(client: OpaqueClient) {
-  const currentUserIdStore = client[kInternal].currentUserIdStore;
-  return useSyncExternalStore(
-    currentUserIdStore.subscribe,
-    currentUserIdStore.get,
-    currentUserIdStore.get
   );
 }
 

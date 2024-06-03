@@ -18,7 +18,6 @@ import type {
   CommentBody,
   CommentData,
   InboxNotificationData,
-  kInternal,
   LiveblocksError,
   PartialNullable,
   QueryMetadata,
@@ -1017,22 +1016,6 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
   useInboxNotificationThread(inboxNotificationId: string): ThreadData<M>;
 };
 
-/**
- * @private
- *
- * Private methods and variables used in the core internals, but as a user
- * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
- * will probably happen if you do.
- */
-type PrivateLiveblocksContextApi = {
-  /**
-   * @private
-   *
-   * Returns the current user ID. Can only be used after making a call to a Notifications API.
-   */
-  useCurrentUserIdFromClient(): string | null;
-};
-
 export type LiveblocksContextBundle<
   U extends BaseUserMeta,
   M extends BaseMetadata,
@@ -1084,13 +1067,4 @@ export type LiveblocksContextBundle<
           }
       >;
     }
-> & {
-  /**
-   * @private
-   *
-   * Private methods and variables used in the core internals, but as a user
-   * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
-   * will probably happen if you do.
-   */
-  readonly [kInternal]: PrivateLiveblocksContextApi;
-};
+>;
