@@ -10,8 +10,9 @@ PACKAGE_DIRS=(
     "packages/liveblocks-redux"
     "packages/liveblocks-zustand"
     "packages/liveblocks-yjs"
-    "packages/liveblocks-react-comments"
+    "packages/liveblocks-react-ui"
     "packages/create-liveblocks-app"
+    "packages/liveblocks-codemod"
 )
 PRIMARY_PKG=${PACKAGE_DIRS[0]}
 

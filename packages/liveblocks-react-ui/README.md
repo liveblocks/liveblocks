@@ -10,32 +10,30 @@
 # `@liveblocks/react-comments`
 
 <p>
-  <a href="https://npmjs.org/package/@liveblocks/react-comments">
-    <img src="https://img.shields.io/npm/v/@liveblocks/react-comments?style=flat&label=npm&color=c33" alt="NPM" />
+  <a href="https://npmjs.org/package/@liveblocks/react-ui">
+    <img src="https://img.shields.io/npm/v/@liveblocks/react-ui?style=flat&label=npm&color=c33" alt="NPM" />
   </a>
-  <a href="https://bundlephobia.com/package/@liveblocks/react-comments">
-    <img src="https://img.shields.io/bundlephobia/minzip/@liveblocks/react-comments?style=flat&label=size&color=09f" alt="Size" />
+  <a href="https://bundlephobia.com/package/@liveblocks/react-ui">
+    <img src="https://img.shields.io/bundlephobia/minzip/@liveblocks/react-ui?style=flat&label=size&color=09f" alt="Size" />
   </a>
   <a href="https://github.com/liveblocks/liveblocks/blob/main/LICENSE">
     <img src="https://img.shields.io/github/license/liveblocks/liveblocks?style=flat&label=license&color=f80" alt="License" />
   </a>
 </p>
 
-`@liveblocks/react-comments` provides [React](https://reactjs.org/) components
-to build comments in your application with Liveblocks—a platform to build, host,
-and scale collaborative applications with zero configuration, no maintenance
-required.
+`@liveblocks/react-ui` provides [React](https://reactjs.org/) pre-built
+components for the [Liveblocks](https://liveblocks.io/) products.
 
 ## Installation
 
 ```
-npm install @liveblocks/client @liveblocks/react @liveblocks/react-comments
+npm install @liveblocks/client @liveblocks/react @liveblocks/react-ui
 ```
 
 ## Documentation
 
 Read the
-[documentation](https://liveblocks.io/docs/api-reference/liveblocks-react-comments)
+[documentation](https://liveblocks.io/docs/api-reference/liveblocks-react-ui)
 for guides and API references.
 
 ## Examples
