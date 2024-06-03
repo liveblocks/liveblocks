@@ -460,8 +460,8 @@ ctx.useErrorListener((err) => {
 {
   {
     const untypedCtx = createRoomContext(client);
-    //    ^^^^^^^^^^ [1]
     const editMetadata = untypedCtx.useEditThreadMetadata();
+    //                   ^^^^^^^^^^ [1]
     expectError(editMetadata({}));
 
     expectType<void>(editMetadata({ threadId: "th_xxx", metadata: {} }));
@@ -532,6 +532,176 @@ ctx.useErrorListener((err) => {
       editMetadata({ threadId: "th_xxx", metadata: { color: "red" } })
     );
   }
+}
+
+// ---------------------------------------------------------
+
+// The useCreateComment() hook
+{
+  {
+    const createComment = ctx.useCreateComment();
+    expectError(createComment({}));
+
+    const comment = createComment({
+      threadId: "th_xxx",
+      body: {
+        version: 1,
+        content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+      },
+    });
+
+    expectType<"comment">(comment.type);
+    expectType<string>(comment.id);
+    expectType<string>(comment.threadId);
+  }
+}
+
+// The useCreateComment() hook (suspense)
+{
+  const createComment = ctx.suspense.useCreateComment();
+  expectError(createComment({}));
+
+  const comment = createComment({
+    threadId: "th_xxx",
+    body: {
+      version: 1,
+      content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+    },
+  });
+
+  expectType<"comment">(comment.type);
+  expectType<string>(comment.id);
+  expectType<string>(comment.threadId);
+}
+
+// ---------------------------------------------------------
+
+// The useEditComment() hook
+{
+  const editComment = ctx.useEditComment();
+  expectError(editComment({}));
+
+  expectType<void>(
+    editComment({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      body: { version: 1, content: [] },
+    })
+  );
+}
+
+// The useEditComment() hook (suspense)
+{
+  const editComment = ctx.suspense.useEditComment();
+  expectError(editComment({}));
+
+  expectType<void>(
+    editComment({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      body: { version: 1, content: [] },
+    })
+  );
+}
+
+// ---------------------------------------------------------
+
+// The useDeleteComment() hook
+{
+  const deleteComment = ctx.useDeleteComment();
+
+  expectError(deleteComment({}));
+  expectError(deleteComment({ threadId: "th_xxx" }));
+  expectError(deleteComment({ commentId: "co_xxx" }));
+
+  expectType<void>(deleteComment({ threadId: "th_xxx", commentId: "co_xxx" }));
+}
+
+// The useDeleteComment() hook (suspense)
+{
+  const deleteComment = ctx.suspense.useDeleteComment();
+
+  expectError(deleteComment({}));
+  expectError(deleteComment({ threadId: "th_xxx" }));
+  expectError(deleteComment({ commentId: "co_xxx" }));
+
+  expectType<void>(deleteComment({ threadId: "th_xxx", commentId: "co_xxx" }));
+}
+
+// ---------------------------------------------------------
+
+// The useAddReaction() hook
+{
+  const addReaction = ctx.useAddReaction();
+
+  expectError(addReaction({}));
+  expectError(addReaction({ threadId: "th_xxx", emoji: "👍" }));
+  expectError(addReaction({ commentId: "th_xxx", emoji: "👍" }));
+  expectError(addReaction({ threadId: "th_xxx", commentId: "th_xxx" }));
+
+  expectType<void>(
+    addReaction({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      emoji: "👍",
+    })
+  );
+}
+
+// The useAddReaction() hook (suspense)
+{
+  const addReaction = ctx.suspense.useAddReaction();
+
+  expectError(addReaction({}));
+  expectError(addReaction({ threadId: "th_xxx", emoji: "👍" }));
+  expectError(addReaction({ commentId: "th_xxx", emoji: "👍" }));
+  expectError(addReaction({ threadId: "th_xxx", commentId: "th_xxx" }));
+
+  expectType<void>(
+    addReaction({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      emoji: "👍",
+    })
+  );
+}
+
+// ---------------------------------------------------------
+
+// The useRemoveReaction() hook
+{
+  const removeReaction = ctx.useRemoveReaction();
+
+  expectError(removeReaction({}));
+  expectError(removeReaction({ threadId: "th_xxx", emoji: "👍" }));
+  expectError(removeReaction({ commentId: "th_xxx", emoji: "👍" }));
+  expectError(removeReaction({ threadId: "th_xxx", commentId: "th_xxx" }));
+
+  expectType<void>(
+    removeReaction({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      emoji: "👍",
+    })
+  );
+}
+
+// The useRemoveReaction() hook (suspense)
+{
+  const removeReaction = ctx.suspense.useRemoveReaction();
+
+  expectError(removeReaction({}));
+  expectError(removeReaction({ threadId: "th_xxx", emoji: "👍" }));
+  expectError(removeReaction({ commentId: "th_xxx", emoji: "👍" }));
+  expectError(removeReaction({ threadId: "th_xxx", commentId: "th_xxx" }));
+
+  expectType<void>(
+    removeReaction({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      emoji: "👍",
+    })
+  );
 }
 
 // ---------------------------------------------------------

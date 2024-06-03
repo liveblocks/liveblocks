@@ -390,6 +390,176 @@ declare global {
 
 // ---------------------------------------------------------
 
+// The useCreateComment() hook
+{
+  {
+    const createComment = classic.useCreateComment();
+    expectError(createComment({}));
+
+    const comment = createComment({
+      threadId: "th_xxx",
+      body: {
+        version: 1,
+        content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+      },
+    });
+
+    expectType<"comment">(comment.type);
+    expectType<string>(comment.id);
+    expectType<string>(comment.threadId);
+  }
+}
+
+// The useCreateComment() hook (suspense)
+{
+  const createComment = suspense.useCreateComment();
+  expectError(createComment({}));
+
+  const comment = createComment({
+    threadId: "th_xxx",
+    body: {
+      version: 1,
+      content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+    },
+  });
+
+  expectType<"comment">(comment.type);
+  expectType<string>(comment.id);
+  expectType<string>(comment.threadId);
+}
+
+// ---------------------------------------------------------
+
+// The useEditComment() hook
+{
+  const editComment = classic.useEditComment();
+  expectError(editComment({}));
+
+  expectType<void>(
+    editComment({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      body: { version: 1, content: [] },
+    })
+  );
+}
+
+// The useEditComment() hook (suspense)
+{
+  const editComment = suspense.useEditComment();
+  expectError(editComment({}));
+
+  expectType<void>(
+    editComment({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      body: { version: 1, content: [] },
+    })
+  );
+}
+
+// ---------------------------------------------------------
+
+// The useDeleteComment() hook
+{
+  const deleteComment = classic.useDeleteComment();
+
+  expectError(deleteComment({}));
+  expectError(deleteComment({ threadId: "th_xxx" }));
+  expectError(deleteComment({ commentId: "co_xxx" }));
+
+  expectType<void>(deleteComment({ threadId: "th_xxx", commentId: "co_xxx" }));
+}
+
+// The useDeleteComment() hook (suspense)
+{
+  const deleteComment = suspense.useDeleteComment();
+
+  expectError(deleteComment({}));
+  expectError(deleteComment({ threadId: "th_xxx" }));
+  expectError(deleteComment({ commentId: "co_xxx" }));
+
+  expectType<void>(deleteComment({ threadId: "th_xxx", commentId: "co_xxx" }));
+}
+
+// ---------------------------------------------------------
+
+// The useAddReaction() hook
+{
+  const addReaction = classic.useAddReaction();
+
+  expectError(addReaction({}));
+  expectError(addReaction({ threadId: "th_xxx", emoji: "👍" }));
+  expectError(addReaction({ commentId: "th_xxx", emoji: "👍" }));
+  expectError(addReaction({ threadId: "th_xxx", commentId: "th_xxx" }));
+
+  expectType<void>(
+    addReaction({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      emoji: "👍",
+    })
+  );
+}
+
+// The useAddReaction() hook (suspense)
+{
+  const addReaction = suspense.useAddReaction();
+
+  expectError(addReaction({}));
+  expectError(addReaction({ threadId: "th_xxx", emoji: "👍" }));
+  expectError(addReaction({ commentId: "th_xxx", emoji: "👍" }));
+  expectError(addReaction({ threadId: "th_xxx", commentId: "th_xxx" }));
+
+  expectType<void>(
+    addReaction({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      emoji: "👍",
+    })
+  );
+}
+
+// ---------------------------------------------------------
+
+// The useRemoveReaction() hook
+{
+  const removeReaction = classic.useRemoveReaction();
+
+  expectError(removeReaction({}));
+  expectError(removeReaction({ threadId: "th_xxx", emoji: "👍" }));
+  expectError(removeReaction({ commentId: "th_xxx", emoji: "👍" }));
+  expectError(removeReaction({ threadId: "th_xxx", commentId: "th_xxx" }));
+
+  expectType<void>(
+    removeReaction({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      emoji: "👍",
+    })
+  );
+}
+
+// The useRemoveReaction() hook (suspense)
+{
+  const removeReaction = suspense.useRemoveReaction();
+
+  expectError(removeReaction({}));
+  expectError(removeReaction({ threadId: "th_xxx", emoji: "👍" }));
+  expectError(removeReaction({ commentId: "th_xxx", emoji: "👍" }));
+  expectError(removeReaction({ threadId: "th_xxx", commentId: "th_xxx" }));
+
+  expectType<void>(
+    removeReaction({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      emoji: "👍",
+    })
+  );
+}
+
+// ---------------------------------------------------------
+
 // The useInboxNotifications() hook
 {
   expectType<boolean>(classic.useInboxNotifications().isLoading);
