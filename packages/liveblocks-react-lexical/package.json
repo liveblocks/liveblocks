@@ -3,6 +3,7 @@
   "version": "1.12.0-lexical4",
   "description": "A lexical react plugin to enable collaboration, comments, live cursors, and more.",
   "license": "Apache-2.0",
+  "type": "commonjs",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -17,18 +18,25 @@
         "default": "./dist/index.js"
       }
     },
-    "./styles.css": "./styles.css"
+    "./styles.css": {
+      "types": "./styles.css.d.ts",
+      "default": "./styles.css"
+    }
   },
   "files": [
     "dist/**",
+    "**/*.css",
+    "**/*.css.d.ts",
+    "**/*.css.map",
     "README.md"
   ],
   "scripts": {
     "dev": "rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript --watch",
     "build": "rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
-    "start": "npm run dev",
     "format": "eslint --fix src/; stylelint --fix src/styles/; prettier --write src/",
     "lint": "eslint src/; stylelint src/styles/",
+    "lint:package": "publint --strict && attw --pack",
+    "start": "npm run dev",
     "test": "jest --silent --verbose --color=always",
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
