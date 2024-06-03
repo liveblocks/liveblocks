@@ -1,0 +1,12 @@
+.lb-lexical-threads-empty {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  block-size: max-content;
+  color: rgb(55 53 47 / 50%);
+}
+
+.lb-lexical-threads {
+  display: flex;
+  flex-direction: column;
+}

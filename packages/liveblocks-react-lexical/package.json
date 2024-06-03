@@ -16,7 +16,8 @@
         "module": "./dist/index.mjs",
         "default": "./dist/index.js"
       }
-    }
+    },
+    "./styles.css": "./styles.css"
   },
   "files": [
     "dist/**",
@@ -63,7 +64,11 @@
     "rollup": "^3.28.0",
     "rollup-plugin-dts": "^5.3.1",
     "rollup-plugin-esbuild": "^5.0.0",
-    "rollup-plugin-preserve-directives": "^0.2.0"
+    "rollup-plugin-preserve-directives": "^0.2.0",
+    "stylelint": "^15.10.2",
+    "stylelint-config-standard": "^34.0.0",
+    "stylelint-order": "^6.0.3",
+    "stylelint-plugin-logical-css": "^0.13.2"
   },
   "sideEffects": false,
   "bugs": {
