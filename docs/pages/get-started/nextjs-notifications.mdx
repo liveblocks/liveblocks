@@ -1,16 +1,29 @@
 ---
 meta:
-  title: "Get started with Comments using Liveblocks and React"
+  title: "Get started with Notifications using Liveblocks and Next.js"
   parentTitle: "Get started"
   description:
-    "Learn how to get started with Comments using Liveblocks and React"
+    "Learn how to get started with Notifications using Liveblocks and Next.js"
+---
+
+TODO
+
 ---
 
 Liveblocks is a real-time collaboration infrastructure for building performant
 collaborative experiences. Follow the following steps to start adding a
-commenting experience to your React application using the hooks from
-[`@liveblocks/react`](/docs/api-reference/liveblocks-react) and the components
-from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
+commenting experience to your Next.js `/app` directory application using the
+hooks from [`@liveblocks/react`](/docs/api-reference/liveblocks-react) and the
+components from
+[`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
+
+<Banner title="Public beta">
+
+Notifications is currently in beta. If you have any questions or feedback,
+please join us on our [Discord server](https://liveblocks.io/discord). We’d love
+to hear from you.
+
+</Banner>
 
 ## Quickstart
 
@@ -61,22 +74,48 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
 
       Liveblocks uses the concept of rooms, separate virtual spaces where people
       collaborate. To create a real-time experience, multiple users must be
-      connected to the same room.
+      connected to the same room. When using Next.js’ `/app`
+      directory, we recommend creating your room in a `Room.tsx`
+      file in the same directory as your current route.
 
-      ```tsx file="App.tsx" highlight="9-13"
+      ```tsx file="app/Room.tsx" highlight="9-13"
       "use client";
 
-      import { RoomProvider } from "./liveblocks.config";
-      import { Room } from "./Room";
+      import { ReactNode } from "react";
+      import { RoomProvider } from "../liveblocks.config";
       import { ClientSideSuspense } from "@liveblocks/react";
 
-      export default function App() {
+      export function Room({ children }: { children: ReactNode }) {
         return (
           <RoomProvider id="my-room" initialPresence={{}}>
             <ClientSideSuspense fallback={<div>Loading…</div>}>
-              {() => <Room />}
+              {() => children}
             </ClientSideSuspense>
           </RoomProvider>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Add the Liveblocks room to your page</StepTitle>
+    <StepContent>
+
+      After creating your room file, it’s time to join it. Import
+      your room into your `page.tsx` file, and place
+      your collaborative app components inside it.
+
+      ```tsx file="app/page.tsx" highlight="6-8"
+      import { Room } from "./Room";
+      import { CollaborativeApp } from "./CollaborativeApp";
+
+      export default function Page() {
+        return (
+          <Room>
+            <CollaborativeApp />
+          </Room>
         );
       }
       ```
@@ -92,13 +131,13 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
       We’ll add `useThreads` to get the threads in the room, then we’ll use the `Thread` component
       to render them. Finally, we’ll add a way to create threads by adding a `Composer`.
 
-      ```tsx file="Room.tsx" highlight="7,11-14"
+      ```tsx file="app/CollaborativeApp.tsx" highlight="7,11-14"
       "use client";
 
-      import { useThreads } from "./liveblocks.config";
+      import { useThreads } from "../liveblocks.config";
       import { Composer, Thread } from "@liveblocks/react-ui";
 
-      export function Room() {
+      export function CollaborativeApp() {
         const { threads } = useThreads();
 
         return (
@@ -120,9 +159,9 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
     <StepContent>
 
     The default components come with default styles, you can import them into the
-    root of your app or directly into a CSS file with `@import`.
+    root layout of your app or directly into a CSS file with `@import`.
 
-    ```tsx
+    ```tsx file="app/layout.tsx"
     import "@liveblocks/react-ui/styles.css";
     ```
 
@@ -136,7 +175,7 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
       Comments is set up and working now, but each user is anonymous—the next step is to
       authenticate each user as they connect, and attach their name and avatar to their comments.
 
-      <Button asChild className="not-markdown">
+      <Button asChild  className="not-markdown">
         <a href="/docs/guides/how-to-add-users-to-liveblocks-comments">
           Add your users to Comments
         </a>
@@ -149,20 +188,20 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
 ## What to read next
 
 Congratulations! You’ve set up the foundation to start building a commenting
-experience for your React application.
+experience for your Next.js application.
 
 - [API Reference](/docs/api-reference/liveblocks-react-ui)
 - [How to send email notifications when comments are created](/docs/guides/how-to-send-email-notifications-when-comments-are-created)
 
 ---
 
-## Examples using React
+## Examples using Next.js
 
 <ListGrid columns={2}>
   <ExampleCard
     example={{
       title: "Comments",
-      slug: "comments/react-ui",
+      slug: "comments/nextjs-comments",
       image: "/images/examples/thumbnails/comments.jpg",
     }}
     technologies={["nextjs", "react"]}

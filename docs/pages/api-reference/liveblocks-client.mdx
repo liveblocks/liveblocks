@@ -372,14 +372,6 @@ value of at least a few minutes, to avoid unnecessary disconnections.
 
 ### resolveUsers [#createClientResolveUsers]
 
-<Banner title="Public beta">
-
-Comments is currently in beta. If you have any questions or feedback, please
-join us on our [Discord server](https://liveblocks.io/discord). We’d love to
-hear from you.
-
-</Banner>
-
 [Comments](/docs/products/comments) stores user IDs in its system, but no other
 user information. To display user information in Comments components, such as a
 user’s name or avatar, you need to resolve these IDs into user objects. This
@@ -405,14 +397,14 @@ const client = createClient({
 ```
 
 The name and avatar you return are rendered in
-[`Thread`](/docs/api-reference/liveblocks-react-comments#Thread) components.
+[`Thread`](/docs/api-reference/liveblocks-react-ui#Thread) components.
 
 #### User objects
 
 The user objects returned by the resolver function take the shape of
 `UserMeta["info"]`, which contains `name` and `avatar` by default. These two
 values are optional, though if you’re using the
-[Comments default components](/docs/api-reference/liveblocks-react-comments#Components),
+[Comments default components](/docs/api-reference/liveblocks-react-ui#Components),
 they are necessary. Here’s an example of `userIds` and the exact values
 returned.
 
@@ -463,18 +455,10 @@ function Component() {
 
 ### resolveRoomsInfo [#createClientResolveRoomsInfo]
 
-<Banner title="Public beta">
-
-Comments is currently in beta. If you have any questions or feedback, please
-join us on our [Discord server](https://liveblocks.io/discord). We’d love to
-hear from you.
-
-</Banner>
-
 When using [Notifications](/docs/products/comments/notifications) with
 [Comments](/docs/products/comments), room IDs will be used to contextualize
 notifications (e.g. “Chris mentioned you in _room-id_”) in the
-[`InboxNotification`](/docs/api-reference/liveblocks-react-comments#InboxNotification)
+[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
 component. To replace room IDs with more fitting names (e.g. document names,
 “Chris mentioned you in _Document A_”), you can provide a resolver function to
 the `resolveRoomsInfo` option in [`createClient`](#createClient).
@@ -502,29 +486,21 @@ const client = createClient({
 
 In addition to the room’s name, you can also provide a room’s URL as the `url`
 property. If you do so, the
-[`InboxNotification`](/docs/api-reference/liveblocks-react-comments#InboxNotification)
+[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
 component will automatically use it. It’s possible to use an inbox
 notification’s `roomId` property to construct a room’s URL directly in React and
 set it on
-[`InboxNotification`](/docs/api-reference/liveblocks-react-comments#InboxNotification)
+[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
 via `href`, but the room ID might not be enough for you to construct the URL ,
 you might need to call your backend for example. In that case, providing it via
 `resolveRoomsInfo` is the preferred way.
 
 ### resolveMentionSuggestions [#createClientResolveMentionSuggestions]
 
-<Banner title="Public beta">
-
-Comments is currently in beta. If you have any questions or feedback, please
-join us on our [Discord server](https://liveblocks.io/discord). We’d love to
-hear from you.
-
-</Banner>
-
 To enable creating mentions in [Comments](/docs/products/comments), you can
 provide a resolver function to the `resolveMentionSuggestions` option in
 [`createClient`](#createClient). These mentions will be displayed in the
-[`Composer`](/docs/api-reference/liveblocks-react-comments#Composer) component.
+[`Composer`](/docs/api-reference/liveblocks-react-ui#Composer) component.
 
 This resolver function will receive the mention currently being typed (e.g. when
 writing “@jane”, `text` will be `jane`) and should return a list of user IDs
