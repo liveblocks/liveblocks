@@ -14,11 +14,11 @@ import inquirer from "inquirer";
 import isGitClean from "is-git-clean";
 import meow from "meow";
 import path from "path";
-import { magenta, yellow } from "picocolors";
+import { bgMagenta, bold, magenta, yellow } from "picocolors";
 
 const TRANSFORMER_INQUIRER_CHOICES = [
   {
-    name: 'react-comments-to-react-ui: Transforms "@liveblocks/react-comments" imports to "@liveblocks/react-ui"',
+    name: 'react-comments-to-react-ui: Transforms "@liveblocks/react-comments" imports to "@liveblocks/react-ui" and <CommentsConfig /> to <LiveblocksUIConfig />',
     value: "react-comments-to-react-ui",
   },
 ];
@@ -126,6 +126,9 @@ export function run() {
   ▀  ▄█████▄ 
 `)
   );
+
+  console.log(bgMagenta(bold(" Liveblocks ")));
+  console.log();
 
   const cli = meow({
     help: `
