@@ -26,9 +26,10 @@
   "scripts": {
     "dev": "rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript --watch",
     "build": "rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
-    "start": "npm run dev",
     "format": "eslint --fix src/; stylelint --fix src/styles/; prettier --write src/",
     "lint": "eslint src/; stylelint src/styles/",
+    "lint:package": "publint --strict && attw --pack",
+    "start": "npm run dev",
     "test": "jest --silent --verbose --color=always",
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
