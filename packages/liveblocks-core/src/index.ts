@@ -16,6 +16,9 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
  * https://join.team/liveblocks ;)
  */
 
+// Global types, intended to be augmented by the end-user
+export * from "./global";
+
 export type {
   Client,
   ClientOptions,
