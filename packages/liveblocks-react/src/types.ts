@@ -100,15 +100,15 @@ export type RoomInfoState =
   | RoomInfoStateError
   | RoomInfoStateSuccess;
 
-export type CreateThreadOptions<M extends BaseMetadata> = [M] extends [never]
-  ? { body: CommentBody }
-  : { body: CommentBody; metadata: M };
+export type CreateThreadOptions<M extends BaseMetadata> =
+  Record<string, never> extends M
+    ? { body: CommentBody; metadata?: M }
+    : { body: CommentBody; metadata: M };
 
-export type EditThreadMetadataOptions<M extends BaseMetadata> = [M] extends [
-  never,
-]
-  ? { threadId: string }
-  : { threadId: string; metadata: Resolve<PartialNullable<M>> };
+export type EditThreadMetadataOptions<M extends BaseMetadata> =
+  Record<string, never> extends M
+    ? { threadId: string; metadata?: Resolve<PartialNullable<M>> }
+    : { threadId: string; metadata: Resolve<PartialNullable<M>> };
 
 export type CreateCommentOptions = {
   threadId: string;
