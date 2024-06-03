@@ -39,5 +39,21 @@ function customRenderHook<Result, Props>(
   return renderHook(render, { wrapper: AllTheProviders, ...options });
 }
 
+export function generateFakeJwt(options: { userId: string }) {
+  // I tried to generate tokens with jose lib, but couldn't because of jest
+  return Promise.resolve(
+    `${btoa(JSON.stringify({ alg: "HS256" }))}.${btoa(
+      JSON.stringify({
+        k: "acc",
+        pid: "test_pid",
+        uid: options.userId,
+        perms: { "*": ["room:write"] },
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000 + 3600),
+      })
+    )}.${btoa("fake_signature")}`
+  );
+}
+
 export * from "@testing-library/react";
 export { customRender as render, customRenderHook as renderHook };

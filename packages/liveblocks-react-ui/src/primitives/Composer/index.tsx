@@ -13,8 +13,8 @@ import {
   size,
   useFloating,
 } from "@floating-ui/react-dom";
-import { type CommentBody, kInternal } from "@liveblocks/core";
-import { useRoomContextBundle } from "@liveblocks/react";
+import type { CommentBody } from "@liveblocks/core";
+import { useSelf } from "@liveblocks/react";
 import { Slot } from "@radix-ui/react-slot";
 import type {
   AriaAttributes,
@@ -60,6 +60,7 @@ import {
 
 import { useLiveblocksUIConfig } from "../../config";
 import { FLOATING_ELEMENT_COLLISION_PADDING } from "../../constants";
+import { useMentionSuggestions } from "../../shared";
 import { withAutoFormatting } from "../../slate/plugins/auto-formatting";
 import { withAutoLinks } from "../../slate/plugins/auto-links";
 import { withEmptyClearFormatting } from "../../slate/plugins/empty-clear-formatting";
@@ -624,10 +625,6 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     },
     forwardedRef
   ) => {
-    const {
-      [kInternal]: { useMentionSuggestions },
-      useSelf,
-    } = useRoomContextBundle();
     const self = useSelf();
     const isDisabled = useMemo(
       () => disabled || !self?.canComment,
@@ -1071,7 +1068,6 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 const ComposerSubmit = forwardRef<HTMLButtonElement, ComposerSubmitProps>(
   ({ children, disabled, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "button";
-    const { useSelf } = useRoomContextBundle();
     const { isEmpty } = useComposer();
     const self = useSelf();
     const isDisabled = useMemo(

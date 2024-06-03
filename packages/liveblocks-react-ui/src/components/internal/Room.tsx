@@ -1,6 +1,6 @@
 "use client";
 
-import { useLiveblocksContextBundle } from "@liveblocks/react";
+import { useRoomInfo } from "@liveblocks/react";
 import type { ComponentProps } from "react";
 import React, { useMemo } from "react";
 
@@ -11,7 +11,6 @@ export interface RoomProps extends ComponentProps<"span"> {
 }
 
 export function Room({ roomId, className, ...props }: RoomProps) {
-  const { useRoomInfo } = useLiveblocksContextBundle();
   const { info, isLoading } = useRoomInfo(roomId);
   const resolvedRoomName = useMemo(() => {
     return info?.name ?? roomId;

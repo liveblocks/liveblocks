@@ -6,7 +6,11 @@ import type {
   InboxNotificationThreadData,
 } from "@liveblocks/core";
 import { assertNever, console } from "@liveblocks/core";
-import { useLiveblocksContextBundle } from "@liveblocks/react";
+import {
+  useInboxNotificationThread,
+  useMarkInboxNotificationAsRead,
+  useRoomInfo,
+} from "@liveblocks/react";
 import { Slot } from "@radix-ui/react-slot";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import type {
@@ -189,7 +193,6 @@ const InboxNotificationLayout = forwardRef<
     const { Anchor } = useComponents(components);
     const Component = asChild ? Slot : Anchor;
     const [isMoreActionOpen, setMoreActionOpen] = useState(false);
-    const { useMarkInboxNotificationAsRead } = useLiveblocksContextBundle();
     const markInboxNotificationAsRead = useMarkInboxNotificationAsRead();
 
     const handleClick = useCallback(
@@ -358,8 +361,6 @@ const InboxNotificationThread = forwardRef<
     forwardedRef
   ) => {
     const $ = useOverrides(overrides);
-    const { useRoomInfo, useInboxNotificationThread } =
-      useLiveblocksContextBundle();
     const thread = useInboxNotificationThread(inboxNotification.id);
     const currentUserId = useCurrentUserId();
     // TODO: If you provide `href` (or plan to), we shouldn't run this hook. We should find a way to conditionally run it.

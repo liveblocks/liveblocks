@@ -1,7 +1,13 @@
 "use client";
 
 import { type BaseMetadata, kInternal } from "@liveblocks/core";
-import { useClient, useRoomContextBundle } from "@liveblocks/react";
+import {
+  useClient,
+  useCreateComment,
+  useCreateThread,
+  useEditComment,
+  useSelf,
+} from "@liveblocks/react";
 import type {
   ComponentPropsWithoutRef,
   FocusEvent,
@@ -293,7 +299,6 @@ const ComposerWithContext = forwardRef<
     const client = useClient();
     const hasResolveMentionSuggestions =
       client[kInternal].resolveMentionSuggestions !== undefined;
-    const { useSelf } = useRoomContextBundle();
     const self = useSelf();
     const isDisabled = useMemo(
       () => disabled || !self?.canComment,
@@ -447,8 +452,6 @@ export const Composer = forwardRef(
     }: ComposerProps<M>,
     forwardedRef: ForwardedRef<HTMLFormElement>
   ) => {
-    const { useCreateThread, useCreateComment, useEditComment } =
-      useRoomContextBundle();
     const createThread = useCreateThread();
     const createComment = useCreateComment();
     const editComment = useEditComment();
