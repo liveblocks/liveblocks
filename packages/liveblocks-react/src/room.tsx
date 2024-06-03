@@ -47,7 +47,7 @@ import {
 import { nanoid } from "nanoid";
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
-
+import type { DP, DS, DU, DE, DM } from "./custom-types";
 import {
   AddReactionError,
   type CommentsError,
@@ -2373,30 +2373,6 @@ export function generateQueryKey(
 ) {
   return `${roomId}-${stringify(options ?? {})}`;
 }
-
-type DP = ExtendedType<"Presence", JsonObject, "Invalid generic">;
-type DS = ExtendedType<"Storage", LsonObject, "Invalid generic">;
-type DU = ExtendedType<"UserMeta", BaseUserMeta, "Invalid generic">;
-type DE = ExtendedType<"RoomEvent", Json, "Invalid generic">;
-type DM = ExtendedType<"ThreadMetadata", BaseMetadata, "Invalid generic">;
-
-// TODO: Reuse types utilities between room.tsx and liveblocks.tsx
-type ExtendableTypes =
-  | "Presence"
-  | "Storage"
-  | "UserMeta"
-  | "RoomEvent"
-  | "ThreadMetadata";
-
-type ExtendedType<
-  K extends ExtendableTypes,
-  B,
-  ErrorMessage,
-> = unknown extends Liveblocks[K]
-  ? B
-  : Liveblocks[K] extends B
-    ? Liveblocks[K]
-    : ErrorMessage;
 
 type DefaultRoomContextBundle = RoomContextBundle<DP, DS, DU, DE, DM>;
 

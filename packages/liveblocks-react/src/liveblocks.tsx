@@ -24,6 +24,7 @@ import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
+import type { DM, DU } from "./custom-types";
 import { retryError } from "./lib/retry-error";
 import { useInitial } from "./lib/use-initial";
 import type {
@@ -852,27 +853,6 @@ function useRoomInfo(roomId: string) {
 function useRoomInfoSuspense(roomId: string) {
   return useRoomInfoSuspense_withClient(useClient(), roomId);
 }
-
-type DU = ExtendedType<"UserMeta", BaseUserMeta, "Invalid generic">;
-type DM = ExtendedType<"ThreadMetadata", BaseMetadata, "Invalid generic">;
-
-// TODO: Reuse types utilities between room.tsx and liveblocks.tsx
-type ExtendableTypes =
-  | "Presence"
-  | "Storage"
-  | "UserMeta"
-  | "RoomEvent"
-  | "ThreadMetadata";
-
-type ExtendedType<
-  K extends ExtendableTypes,
-  B,
-  ErrorMessage,
-> = unknown extends Liveblocks[K]
-  ? B
-  : Liveblocks[K] extends B
-    ? Liveblocks[K]
-    : ErrorMessage;
 
 // TODO in 2.0 Copy/paste all the docstrings onto these global hooks :(
 const __1: LiveblocksContextBundle<DU, DM>["useInboxNotificationThread"] =
