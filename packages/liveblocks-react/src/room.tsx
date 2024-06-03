@@ -47,7 +47,7 @@ import {
 import { nanoid } from "nanoid";
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
-import type { DP, DS, DU, DE, DM } from "./custom-types";
+
 import {
   AddReactionError,
   type CommentsError,
@@ -64,6 +64,7 @@ import { createCommentId, createThreadId } from "./comments/lib/createIds";
 import { selectNotificationSettings } from "./comments/lib/select-notification-settings";
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 import { selectedThreads } from "./comments/lib/selected-threads";
+import type { DE, DM, DP, DS, DU } from "./custom-types";
 import { retryError } from "./lib/retry-error";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
@@ -535,15 +536,15 @@ function makeRoomContextBundle<
     RoomContext: RoomContext as React.Context<TRoom | null>,
     RoomProvider: RoomProvider_withImplicitLiveblocksProvider,
 
-    useRoom: useRoom<P, S, U, E>,
+    useRoom,
     useStatus,
 
     useBatch,
-    useBroadcastEvent: useBroadcastEvent<E>,
-    useOthersListener: useOthersListener<P, U>,
+    useBroadcastEvent,
+    useOthersListener,
     useLostConnectionListener,
     useErrorListener,
-    useEventListener: useEventListener<P, U, E>,
+    useEventListener,
 
     useHistory,
     useUndo,
@@ -551,27 +552,27 @@ function makeRoomContextBundle<
     useCanRedo,
     useCanUndo,
 
-    useStorageRoot: useStorageRoot<S>,
-    useStorage: make_useStorage<S>(),
+    useStorageRoot,
+    useStorage,
 
-    useSelf: make_useSelf<P, U>(),
-    useMyPresence: useMyPresence<P>,
-    useUpdateMyPresence: useUpdateMyPresence<P>,
-    useOthers: make_useOthers<P, U>(),
-    useOthersMapped: make_useOthersMapped<P, U>(),
+    useSelf,
+    useMyPresence,
+    useUpdateMyPresence,
+    useOthers,
+    useOthersMapped,
     useOthersConnectionIds,
-    useOther: make_useOther<P, U>(),
+    useOther,
 
-    useMutation: make_useMutation<P, S, U, E>(),
+    useMutation: useMutation as RoomContextBundle<P, S, U, E, M>["useMutation"],
 
-    useThreads: useThreads<M>,
+    useThreads,
 
-    useCreateThread: useCreateThread<M>,
-    useEditThreadMetadata: useEditThreadMetadata<M>,
+    useCreateThread,
+    useEditThreadMetadata,
     useCreateComment,
     useEditComment,
     useDeleteComment,
-    useAddReaction: useAddReaction<M>,
+    useAddReaction,
     useRemoveReaction,
     useMarkThreadAsRead,
     useThreadSubscription,
@@ -585,15 +586,15 @@ function makeRoomContextBundle<
       RoomContext: RoomContext as React.Context<TRoom | null>,
       RoomProvider: RoomProvider_withImplicitLiveblocksProvider,
 
-      useRoom: useRoom<P, S, U, E>,
+      useRoom,
       useStatus,
 
       useBatch,
-      useBroadcastEvent: useBroadcastEvent<E>,
-      useOthersListener: useOthersListener<P, U>,
+      useBroadcastEvent,
+      useOthersListener,
       useLostConnectionListener,
       useErrorListener,
-      useEventListener: useEventListener<P, U, E>,
+      useEventListener,
 
       useHistory,
       useUndo,
@@ -601,27 +602,33 @@ function makeRoomContextBundle<
       useCanRedo,
       useCanUndo,
 
-      useStorageRoot: useStorageRoot<S>,
-      useStorage: make_useStorageSuspense<S>(),
+      useStorageRoot,
+      useStorage: useStorageSuspense,
 
-      useSelf: make_useSelfSuspense<P, U>(),
-      useMyPresence: useMyPresence<P>,
-      useUpdateMyPresence: useUpdateMyPresence<P>,
-      useOthers: make_useOthersSuspense<P, U>(),
-      useOthersMapped: make_useOthersMappedSuspense<P, U>(),
+      useSelf: useSelfSuspense,
+      useMyPresence,
+      useUpdateMyPresence,
+      useOthers: useOthersSuspense,
+      useOthersMapped: useOthersMappedSuspense,
       useOthersConnectionIds: useOthersConnectionIdsSuspense,
-      useOther: make_useOtherSuspense<P, U>(),
+      useOther: useOtherSuspense,
 
-      useMutation: make_useMutation<P, S, U, E>(),
+      useMutation: useMutation as RoomContextBundle<
+        P,
+        S,
+        U,
+        E,
+        M
+      >["suspense"]["useMutation"],
 
-      useThreads: useThreadsSuspense<M>,
+      useThreads: useThreadsSuspense,
 
-      useCreateThread: useCreateThread<M>,
-      useEditThreadMetadata: useEditThreadMetadata<M>,
+      useCreateThread,
+      useEditThreadMetadata,
       useCreateComment,
       useEditComment,
       useDeleteComment,
-      useAddReaction: useAddReaction<M>,
+      useAddReaction,
       useRemoveReaction,
       useMarkThreadAsRead,
       useThreadSubscription,
@@ -963,45 +970,43 @@ function useCanRedo(): boolean {
   return useSyncExternalStore(subscribe, canRedo, canRedo);
 }
 
-function make_useSelf<P extends JsonObject, U extends BaseUserMeta>() {
-  function useSelf(): User<P, U> | null;
-  function useSelf<T>(
-    selector: (me: User<P, U>) => T,
-    isEqual?: (prev: T | null, curr: T | null) => boolean
-  ): T | null;
-  function useSelf<T>(
-    maybeSelector?: (me: User<P, U>) => T,
-    isEqual?: (prev: T | null, curr: T | null) => boolean
-  ): T | User<P, U> | null {
-    type Snapshot = User<P, U> | null;
-    type Selection = T | null;
+function useSelf<P extends JsonObject, U extends BaseUserMeta>(): User<
+  P,
+  U
+> | null;
+function useSelf<P extends JsonObject, U extends BaseUserMeta, T>(
+  selector: (me: User<P, U>) => T,
+  isEqual?: (prev: T | null, curr: T | null) => boolean
+): T | null;
+function useSelf<P extends JsonObject, U extends BaseUserMeta, T>(
+  maybeSelector?: (me: User<P, U>) => T,
+  isEqual?: (prev: T | null, curr: T | null) => boolean
+): T | User<P, U> | null {
+  type Snapshot = User<P, U> | null;
+  type Selection = T | null;
 
-    const room = useRoom<P, never, U, never>();
-    const subscribe = room.events.self.subscribe;
-    const getSnapshot: () => Snapshot = room.getSelf;
+  const room = useRoom<P, never, U, never>();
+  const subscribe = room.events.self.subscribe;
+  const getSnapshot: () => Snapshot = room.getSelf;
 
-    const selector = maybeSelector ?? (identity as (me: User<P, U>) => T);
-    const wrappedSelector = React.useCallback(
-      (me: Snapshot): Selection => (me !== null ? selector(me) : null),
-      [selector]
-    );
+  const selector = maybeSelector ?? (identity as (me: User<P, U>) => T);
+  const wrappedSelector = React.useCallback(
+    (me: Snapshot): Selection => (me !== null ? selector(me) : null),
+    [selector]
+  );
 
-    const getServerSnapshot = alwaysNull;
+  const getServerSnapshot = alwaysNull;
 
-    return useSyncExternalStoreWithSelector(
-      subscribe,
-      getSnapshot,
-      getServerSnapshot,
-      wrappedSelector,
-      isEqual
-    );
-  }
-
-  return useSelf;
+  return useSyncExternalStoreWithSelector(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+    wrappedSelector,
+    isEqual
+  );
 }
 
 function useCurrentUserIdFromRoom() {
-  const useSelf = make_useSelf<never, never>();
   return useSelf((user) => (typeof user.id === "string" ? user.id : null));
 }
 
@@ -1024,70 +1029,63 @@ function useUpdateMyPresence<P extends JsonObject>(): (
   return useRoom<P, never, never, never>().updatePresence;
 }
 
-function make_useOthers<P extends JsonObject, U extends BaseUserMeta>() {
-  function useOthers(): readonly User<P, U>[];
-  function useOthers<T>(
-    selector: (others: readonly User<P, U>[]) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ): T;
-  function useOthers<T>(
-    selector?: (others: readonly User<P, U>[]) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ): T | readonly User<P, U>[] {
-    const room = useRoom<P, never, U, never>();
-    const subscribe = room.events.others.subscribe;
-    const getSnapshot = room.getOthers;
-    const getServerSnapshot = alwaysEmptyList;
-    return useSyncExternalStoreWithSelector(
-      subscribe,
-      getSnapshot,
-      getServerSnapshot,
-      selector ?? (identity as (others: readonly User<P, U>[]) => T),
-      isEqual
-    );
-  }
-
-  return useOthers;
+function useOthers<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+>(): readonly User<P, U>[];
+function useOthers<P extends JsonObject, U extends BaseUserMeta, T>(
+  selector: (others: readonly User<P, U>[]) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T;
+function useOthers<P extends JsonObject, U extends BaseUserMeta, T>(
+  selector?: (others: readonly User<P, U>[]) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T | readonly User<P, U>[] {
+  const room = useRoom<P, never, U, never>();
+  const subscribe = room.events.others.subscribe;
+  const getSnapshot = room.getOthers;
+  const getServerSnapshot = alwaysEmptyList;
+  return useSyncExternalStoreWithSelector(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+    selector ?? (identity as (others: readonly User<P, U>[]) => T),
+    isEqual
+  );
 }
 
-function make_useOthersMapped<P extends JsonObject, U extends BaseUserMeta>() {
-  const useOthers = make_useOthers<P, U>();
-  return function useOthersMapped<T>(
-    itemSelector: (other: User<P, U>) => T,
-    itemIsEqual?: (prev: T, curr: T) => boolean
-  ): ReadonlyArray<readonly [connectionId: number, data: T]> {
-    const wrappedSelector = React.useCallback(
-      (others: readonly User<P, U>[]) =>
-        others.map(
-          (other) => [other.connectionId, itemSelector(other)] as const
-        ),
-      [itemSelector]
-    );
+function useOthersMapped<P extends JsonObject, U extends BaseUserMeta, T>(
+  itemSelector: (other: User<P, U>) => T,
+  itemIsEqual?: (prev: T, curr: T) => boolean
+): ReadonlyArray<readonly [connectionId: number, data: T]> {
+  const wrappedSelector = React.useCallback(
+    (others: readonly User<P, U>[]) =>
+      others.map((other) => [other.connectionId, itemSelector(other)] as const),
+    [itemSelector]
+  );
 
-    const wrappedIsEqual = React.useCallback(
-      (
-        a: ReadonlyArray<readonly [connectionId: number, data: T]>,
-        b: ReadonlyArray<readonly [connectionId: number, data: T]>
-      ): boolean => {
-        const eq = itemIsEqual ?? Object.is;
-        return (
-          a.length === b.length &&
-          a.every((atuple, index) => {
-            // We know btuple always exist because we checked the array length on the previous line
-            const btuple = b[index];
-            return atuple[0] === btuple[0] && eq(atuple[1], btuple[1]);
-          })
-        );
-      },
-      [itemIsEqual]
-    );
+  const wrappedIsEqual = React.useCallback(
+    (
+      a: ReadonlyArray<readonly [connectionId: number, data: T]>,
+      b: ReadonlyArray<readonly [connectionId: number, data: T]>
+    ): boolean => {
+      const eq = itemIsEqual ?? Object.is;
+      return (
+        a.length === b.length &&
+        a.every((atuple, index) => {
+          // We know btuple always exist because we checked the array length on the previous line
+          const btuple = b[index];
+          return atuple[0] === btuple[0] && eq(atuple[1], btuple[1]);
+        })
+      );
+    },
+    [itemIsEqual]
+  );
 
-    return useOthers(wrappedSelector, wrappedIsEqual);
-  };
+  return useOthers(wrappedSelector, wrappedIsEqual);
 }
 
 function useOthersConnectionIds(): readonly number[] {
-  const useOthers = make_useOthers<never, never>();
   return useOthers(selectorFor_useOthersConnectionIds, shallow);
 }
 
@@ -1095,45 +1093,40 @@ const NOT_FOUND = Symbol();
 
 type NotFound = typeof NOT_FOUND;
 
-function make_useOther<P extends JsonObject, U extends BaseUserMeta>() {
-  const useOthers = make_useOthers<P, U>();
-  return function useOther<T>(
-    connectionId: number,
-    selector: (other: User<P, U>) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ): T {
-    const wrappedSelector = React.useCallback(
-      (others: readonly User<P, U>[]) => {
-        // TODO: Make this O(1) instead of O(n)?
-        const other = others.find(
-          (other) => other.connectionId === connectionId
-        );
-        return other !== undefined ? selector(other) : NOT_FOUND;
-      },
-      [connectionId, selector]
+function useOther<P extends JsonObject, U extends BaseUserMeta, T>(
+  connectionId: number,
+  selector: (other: User<P, U>) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T {
+  const wrappedSelector = React.useCallback(
+    (others: readonly User<P, U>[]) => {
+      // TODO: Make this O(1) instead of O(n)?
+      const other = others.find((other) => other.connectionId === connectionId);
+      return other !== undefined ? selector(other) : NOT_FOUND;
+    },
+    [connectionId, selector]
+  );
+
+  const wrappedIsEqual = React.useCallback(
+    (prev: T | NotFound, curr: T | NotFound): boolean => {
+      if (prev === NOT_FOUND || curr === NOT_FOUND) {
+        return prev === curr;
+      }
+
+      const eq = isEqual ?? Object.is;
+      return eq(prev, curr);
+    },
+    [isEqual]
+  );
+
+  const other = useOthers(wrappedSelector, wrappedIsEqual);
+  if (other === NOT_FOUND) {
+    throw new Error(
+      `No such other user with connection id ${connectionId} exists`
     );
+  }
 
-    const wrappedIsEqual = React.useCallback(
-      (prev: T | NotFound, curr: T | NotFound): boolean => {
-        if (prev === NOT_FOUND || curr === NOT_FOUND) {
-          return prev === curr;
-        }
-
-        const eq = isEqual ?? Object.is;
-        return eq(prev, curr);
-      },
-      [isEqual]
-    );
-
-    const other = useOthers(wrappedSelector, wrappedIsEqual);
-    if (other === NOT_FOUND) {
-      throw new Error(
-        `No such other user with connection id ${connectionId} exists`
-      );
-    }
-
-    return other;
-  };
+  return other;
 }
 
 /** @internal */
@@ -1150,80 +1143,75 @@ function useStorageRoot<S extends LsonObject>(): [root: LiveObject<S> | null] {
   return [useMutableStorageRoot<S>()];
 }
 
-function make_useStorage<S extends LsonObject>() {
-  return function useStorage<T>(
-    selector: (root: ToImmutable<S>) => T,
-    isEqual?: (prev: T | null, curr: T | null) => boolean
-  ): T | null {
-    type Snapshot = ToImmutable<S> | null;
-    type Selection = T | null;
+function useStorage<S extends LsonObject, T>(
+  selector: (root: ToImmutable<S>) => T,
+  isEqual?: (prev: T | null, curr: T | null) => boolean
+): T | null {
+  type Snapshot = ToImmutable<S> | null;
+  type Selection = T | null;
 
-    const room = useRoom<never, S, never, never>();
-    const rootOrNull = useMutableStorageRoot<S>();
+  const room = useRoom<never, S, never, never>();
+  const rootOrNull = useMutableStorageRoot<S>();
 
-    const wrappedSelector = React.useCallback(
-      (rootOrNull: Snapshot): Selection =>
-        rootOrNull !== null ? selector(rootOrNull) : null,
-      [selector]
-    );
+  const wrappedSelector = React.useCallback(
+    (rootOrNull: Snapshot): Selection =>
+      rootOrNull !== null ? selector(rootOrNull) : null,
+    [selector]
+  );
 
-    const subscribe = React.useCallback(
-      (onStoreChange: () => void) =>
-        rootOrNull !== null
-          ? room.subscribe(rootOrNull, onStoreChange, { isDeep: true })
-          : noop,
-      [room, rootOrNull]
-    );
+  const subscribe = React.useCallback(
+    (onStoreChange: () => void) =>
+      rootOrNull !== null
+        ? room.subscribe(rootOrNull, onStoreChange, { isDeep: true })
+        : noop,
+    [room, rootOrNull]
+  );
 
-    const getSnapshot = React.useCallback((): Snapshot => {
-      if (rootOrNull === null) {
-        return null;
-      } else {
-        const root = rootOrNull;
-        const imm = root.toImmutable();
-        return imm;
-      }
-    }, [rootOrNull]);
+  const getSnapshot = React.useCallback((): Snapshot => {
+    if (rootOrNull === null) {
+      return null;
+    } else {
+      const root = rootOrNull;
+      const imm = root.toImmutable();
+      return imm;
+    }
+  }, [rootOrNull]);
 
-    const getServerSnapshot = alwaysNull;
+  const getServerSnapshot = alwaysNull;
 
-    return useSyncExternalStoreWithSelector(
-      subscribe,
-      getSnapshot,
-      getServerSnapshot,
-      wrappedSelector,
-      isEqual
-    );
-  };
+  return useSyncExternalStoreWithSelector(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+    wrappedSelector,
+    isEqual
+  );
 }
 
-function make_useMutation<
+function useMutation<
   P extends JsonObject,
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
->() {
-  return function useMutation<
-    F extends (context: MutationContext<P, S, U>, ...args: any[]) => any,
-  >(callback: F, deps: readonly unknown[]): OmitFirstArg<F> {
-    const room = useRoom<P, S, U, E>();
-    return React.useMemo(
-      () => {
-        return ((...args) =>
+  F extends (context: MutationContext<P, S, U>, ...args: any[]) => any,
+>(callback: F, deps: readonly unknown[]): OmitFirstArg<F> {
+  const room = useRoom<P, S, U, E>();
+  return React.useMemo(
+    () => {
+      return ((...args) =>
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        room.batch(() =>
           // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-          room.batch(() =>
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            callback(
-              makeMutationContext<P, S, U, E>(room),
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-              ...args
-            )
-          )) as OmitFirstArg<F>;
-      },
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      [room, ...deps]
-    );
-  };
+          callback(
+            makeMutationContext<P, S, U, E>(room),
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+            ...args
+          )
+        )) as OmitFirstArg<F>;
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [room, ...deps]
+  );
 }
 
 function useThreads<M extends BaseMetadata>(
@@ -2044,49 +2032,42 @@ function useSuspendUntilPresenceLoaded(): void {
   });
 }
 
-function make_useSelfSuspense<P extends JsonObject, U extends BaseUserMeta>() {
-  function useSelfSuspense(): User<P, U>;
-  function useSelfSuspense<T>(
-    selector: (me: User<P, U>) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ): T;
-  function useSelfSuspense<T>(
-    selector?: (me: User<P, U>) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ): T | User<P, U> {
-    const useSelf = make_useSelf<P, U>();
-    useSuspendUntilPresenceLoaded();
-    return useSelf(
-      selector as (me: User<P, U>) => T,
-      isEqual as (prev: T | null, curr: T | null) => boolean
-    ) as T | User<P, U>;
-  }
-  return useSelfSuspense;
+function useSelfSuspense<P extends JsonObject, U extends BaseUserMeta>(): User<
+  P,
+  U
+>;
+function useSelfSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
+  selector: (me: User<P, U>) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T;
+function useSelfSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
+  selector?: (me: User<P, U>) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T | User<P, U> {
+  useSuspendUntilPresenceLoaded();
+  return useSelf(
+    selector as (me: User<P, U>) => T,
+    isEqual as (prev: T | null, curr: T | null) => boolean
+  ) as T | User<P, U>;
 }
 
-function make_useOthersSuspense<
+function useOthersSuspense<
   P extends JsonObject,
   U extends BaseUserMeta,
->() {
-  const useOthers = make_useOthers<P, U>();
-
-  function useOthersSuspense(): readonly User<P, U>[];
-  function useOthersSuspense<T>(
-    selector: (others: readonly User<P, U>[]) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ): T;
-  function useOthersSuspense<T>(
-    selector?: (others: readonly User<P, U>[]) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ): T | readonly User<P, U>[] {
-    useSuspendUntilPresenceLoaded();
-    return useOthers(
-      selector as (others: readonly User<P, U>[]) => T,
-      isEqual as (prev: T, curr: T) => boolean
-    ) as T | readonly User<P, U>[];
-  }
-
-  return useOthersSuspense;
+>(): readonly User<P, U>[];
+function useOthersSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
+  selector: (others: readonly User<P, U>[]) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T;
+function useOthersSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
+  selector?: (others: readonly User<P, U>[]) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T | readonly User<P, U>[] {
+  useSuspendUntilPresenceLoaded();
+  return useOthers(
+    selector as (others: readonly User<P, U>[]) => T,
+    isEqual as (prev: T, curr: T) => boolean
+  ) as T | readonly User<P, U>[];
 }
 
 function useOthersConnectionIdsSuspense(): readonly number[] {
@@ -2094,30 +2075,25 @@ function useOthersConnectionIdsSuspense(): readonly number[] {
   return useOthersConnectionIds();
 }
 
-function make_useOthersMappedSuspense<
+function useOthersMappedSuspense<
   P extends JsonObject,
   U extends BaseUserMeta,
->() {
-  const useOthersMapped = make_useOthersMapped<P, U>();
-  return function <T>(
-    itemSelector: (other: User<P, U>) => T,
-    itemIsEqual?: (prev: T, curr: T) => boolean
-  ): ReadonlyArray<readonly [connectionId: number, data: T]> {
-    useSuspendUntilPresenceLoaded();
-    return useOthersMapped(itemSelector, itemIsEqual);
-  };
+  T,
+>(
+  itemSelector: (other: User<P, U>) => T,
+  itemIsEqual?: (prev: T, curr: T) => boolean
+): ReadonlyArray<readonly [connectionId: number, data: T]> {
+  useSuspendUntilPresenceLoaded();
+  return useOthersMapped(itemSelector, itemIsEqual);
 }
 
-function make_useOtherSuspense<P extends JsonObject, U extends BaseUserMeta>() {
-  const useOther = make_useOther<P, U>();
-  return function useOtherSuspense<T>(
-    connectionId: number,
-    selector: (other: User<P, U>) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ): T {
-    useSuspendUntilPresenceLoaded();
-    return useOther(connectionId, selector, isEqual);
-  };
+function useOtherSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
+  connectionId: number,
+  selector: (other: User<P, U>) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T {
+  useSuspendUntilPresenceLoaded();
+  return useOther(connectionId, selector, isEqual);
 }
 
 function useSuspendUntilStorageLoaded(): void {
@@ -2136,18 +2112,15 @@ function useSuspendUntilStorageLoaded(): void {
   });
 }
 
-function make_useStorageSuspense<S extends LsonObject>() {
-  const useStorage = make_useStorage<S>();
-  return function useStorageSuspense<T>(
-    selector: (root: ToImmutable<S>) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ): T {
-    useSuspendUntilStorageLoaded();
-    return useStorage(
-      selector,
-      isEqual as (prev: T | null, curr: T | null) => boolean
-    ) as T;
-  };
+function useStorageSuspense<S extends LsonObject, T>(
+  selector: (root: ToImmutable<S>) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T {
+  useSuspendUntilStorageLoaded();
+  return useStorage(
+    selector,
+    isEqual as (prev: T | null, curr: T | null) => boolean
+  ) as T;
 }
 
 function useThreadsSuspense<M extends BaseMetadata>(
@@ -2296,91 +2269,89 @@ export function generateQueryKey(
 
 type DefaultRoomContextBundle = RoomContextBundle<DP, DS, DU, DE, DM>;
 
-const __1: DefaultRoomContextBundle["RoomProvider"] = RoomProvider;
-const __2: DefaultRoomContextBundle["useBroadcastEvent"] = useBroadcastEvent;
-const __3: DefaultRoomContextBundle["useOthersListener"] = useOthersListener;
-const __4: DefaultRoomContextBundle["useRoom"] = useRoom;
-const __6: DefaultRoomContextBundle["useAddReaction"] = useAddReaction;
-const __7: DefaultRoomContextBundle["useMutation"] = make_useMutation<
-  DP,
-  DS,
-  DU,
-  DE
->();
-const __8: DefaultRoomContextBundle["useCreateThread"] = useCreateThread;
-const __9: DefaultRoomContextBundle["useEditThreadMetadata"] =
+const _RoomProvider: DefaultRoomContextBundle["RoomProvider"] = RoomProvider;
+const _useBroadcastEvent: DefaultRoomContextBundle["useBroadcastEvent"] =
+  useBroadcastEvent;
+const _useOthersListener: DefaultRoomContextBundle["useOthersListener"] =
+  useOthersListener;
+const _useRoom: DefaultRoomContextBundle["useRoom"] = useRoom;
+const _useAddReaction: DefaultRoomContextBundle["useAddReaction"] =
+  useAddReaction;
+const _useMutation: DefaultRoomContextBundle["useMutation"] = useMutation;
+const _useCreateThread: DefaultRoomContextBundle["useCreateThread"] =
+  useCreateThread;
+const _useEditThreadMetadata: DefaultRoomContextBundle["useEditThreadMetadata"] =
   useEditThreadMetadata;
-const _10: DefaultRoomContextBundle["useEventListener"] = useEventListener;
-const _11: DefaultRoomContextBundle["useMyPresence"] = useMyPresence;
-const _14: DefaultRoomContextBundle["useOthersMapped"] = make_useOthersMapped<
-  DP,
-  DU
->();
-const _15: DefaultRoomContextBundle["suspense"]["useOthersMapped"] =
-  make_useOthersMappedSuspense<DP, DU>();
-const _16: DefaultRoomContextBundle["useThreads"] = useThreads;
-const _17: DefaultRoomContextBundle["suspense"]["useThreads"] =
+const _useEventListener: DefaultRoomContextBundle["useEventListener"] =
+  useEventListener;
+const _useMyPresence: DefaultRoomContextBundle["useMyPresence"] = useMyPresence;
+const _useOthersMapped: DefaultRoomContextBundle["useOthersMapped"] =
+  useOthersMapped;
+const _useOthersMappedSuspense: DefaultRoomContextBundle["suspense"]["useOthersMapped"] =
+  useOthersMappedSuspense;
+const _useThreads: DefaultRoomContextBundle["useThreads"] = useThreads;
+const _useThreadsSuspense: DefaultRoomContextBundle["suspense"]["useThreads"] =
   useThreadsSuspense;
-const _18: DefaultRoomContextBundle["useOther"] = make_useOther<DP, DU>();
-const _19: DefaultRoomContextBundle["useOthers"] = make_useOthers<DP, DU>();
-const _20: DefaultRoomContextBundle["suspense"]["useOther"] =
-  make_useOtherSuspense<DP, DU>();
-const _21: DefaultRoomContextBundle["suspense"]["useOthers"] =
-  make_useOthersSuspense<DP, DU>();
-const _22: DefaultRoomContextBundle["useStorage"] = make_useStorage<DS>();
-const _23: DefaultRoomContextBundle["suspense"]["useStorage"] =
-  make_useStorageSuspense<DS>();
-const _24: DefaultRoomContextBundle["useSelf"] = make_useSelf<DP, DU>();
-const _25: DefaultRoomContextBundle["suspense"]["useSelf"] =
-  make_useSelfSuspense<DP, DU>();
-const _26: DefaultRoomContextBundle["useStorageRoot"] = useStorageRoot;
-const _27: DefaultRoomContextBundle["useUpdateMyPresence"] =
+const _useOther: DefaultRoomContextBundle["useOther"] = useOther;
+const _useOthers: DefaultRoomContextBundle["useOthers"] = useOthers;
+const _useOtherSuspense: DefaultRoomContextBundle["suspense"]["useOther"] =
+  useOtherSuspense;
+const _useOthersSuspense: DefaultRoomContextBundle["suspense"]["useOthers"] =
+  useOthersSuspense;
+const _useStorage: DefaultRoomContextBundle["useStorage"] = useStorage;
+const _useStorageSuspense: DefaultRoomContextBundle["suspense"]["useStorage"] =
+  useStorageSuspense;
+const _useSelf: DefaultRoomContextBundle["useSelf"] = useSelf;
+const _useSelfSuspense: DefaultRoomContextBundle["suspense"]["useSelf"] =
+  useSelfSuspense;
+const _useStorageRoot: DefaultRoomContextBundle["useStorageRoot"] =
+  useStorageRoot;
+const _useUpdateMyPresence: DefaultRoomContextBundle["useUpdateMyPresence"] =
   useUpdateMyPresence;
 
-// eslint-disable-next-line simple-import-sort/exports
 export {
-  __1 as RoomProvider,
-  __2 as useBroadcastEvent,
-  __3 as useOthersListener,
-  __4 as useRoom,
-  __6 as useAddReaction,
-  __7 as useMutation,
-  __8 as useCreateThread,
-  __9 as useEditThreadMetadata,
-  _10 as useEventListener,
-  _11 as useMyPresence,
-  _14 as useOthersMapped,
-  _15 as useOthersMappedSuspense,
-  _16 as useThreads,
-  _17 as useThreadsSuspense,
-  _18 as useOther,
-  _19 as useOthers,
-  _20 as useOtherSuspense,
-  _21 as useOthersSuspense,
-  _22 as useStorage,
-  _23 as useStorageSuspense,
-  _24 as useSelf,
-  _25 as useSelfSuspense,
-  _26 as useStorageRoot,
-  _27 as useUpdateMyPresence,
   RoomContext,
+  _RoomProvider as RoomProvider,
+  _useAddReaction as useAddReaction,
   useBatch,
+  _useBroadcastEvent as useBroadcastEvent,
   useCanRedo,
   useCanUndo,
   useCreateComment,
+  _useCreateThread as useCreateThread,
   useDeleteComment,
   useEditComment,
+  _useEditThreadMetadata as useEditThreadMetadata,
   useErrorListener,
+  _useEventListener as useEventListener,
   useHistory,
   useLostConnectionListener,
   useMarkThreadAsRead,
+  _useMutation as useMutation,
+  _useMyPresence as useMyPresence,
+  _useOther as useOther,
+  _useOthers as useOthers,
   useOthersConnectionIds,
   useOthersConnectionIdsSuspense,
+  _useOthersListener as useOthersListener,
+  _useOthersMapped as useOthersMapped,
+  _useOthersMappedSuspense as useOthersMappedSuspense,
+  _useOthersSuspense as useOthersSuspense,
+  _useOtherSuspense as useOtherSuspense,
   useRedo,
   useRemoveReaction,
+  _useRoom as useRoom,
   useRoomNotificationSettings,
+  _useSelf as useSelf,
+  _useSelfSuspense as useSelfSuspense,
   useStatus,
+  _useStorage as useStorage,
+  _useStorageRoot as useStorageRoot,
+  _useStorageSuspense as useStorageSuspense,
+  _useThreads as useThreads,
+  _useThreadsSuspense as useThreadsSuspense,
   useThreadSubscription,
   useUndo,
+  _useUpdateMyPresence as useUpdateMyPresence,
   useUpdateRoomNotificationSettings,
 };

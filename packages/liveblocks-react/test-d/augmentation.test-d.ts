@@ -1,3 +1,4 @@
+import type { LiveList, LiveMap, LiveObject } from "@liveblocks/core";
 import * as classic from "@liveblocks/react";
 import * as suspense from "@liveblocks/react/suspense";
 import { expectAssignable, expectError, expectType } from "tsd";
@@ -9,6 +10,12 @@ declare global {
   interface Liveblocks {
     Presence: {
       cursor: { x: number; y: number };
+    };
+
+    Storage: {
+      animals: LiveList<string>;
+      scores: LiveMap<string, number>;
+      person: LiveObject<{ name: string; age: number }>;
     };
 
     UserMeta: {
@@ -143,6 +150,64 @@ declare global {
     suspense.shallow
   );
   expectType<number[]>(xs);
+}
+
+// ---------------------------------------------------------
+
+// The useMutation() hook
+{
+  expectType<(a: number, b: boolean) => "hi">(
+    classic.useMutation((mut, _a: number, _b: boolean) => {
+      expectType<number>(mut.self.presence.cursor.x);
+      expectError(mut.self.presence.nonexisting);
+      expectType<string>(mut.self.info.name);
+      expectType<number>(mut.self.info.age);
+      expectError(mut.self.info.nonexisting);
+
+      expectType<number>(mut.others[0].presence.cursor.x);
+      expectError(mut.others[0].presence.nonexisting);
+      expectType<string>(mut.others[0].info.name);
+      expectType<number>(mut.others[0].info.age);
+      expectError(mut.others[0].info.nonexisting);
+
+      expectType<string | undefined>(mut.storage.get("animals").get(0));
+      expectType<number | undefined>(mut.storage.get("scores").get("one"));
+      expectType<number>(mut.storage.get("person").get("age"));
+      expectError(mut.storage.get("nonexisting"));
+      expectType<void>(mut.setMyPresence({ cursor: { x: 0, y: 0 } }));
+      expectError(mut.setMyPresence({ nonexisting: 123 }));
+
+      return "hi" as const;
+    }, [])
+  );
+}
+
+// The useMutation() hook (suspense)
+{
+  expectType<(a: number, b: boolean) => "hi">(
+    suspense.useMutation((mut, _a: number, _b: boolean) => {
+      expectType<number>(mut.self.presence.cursor.x);
+      expectError(mut.self.presence.nonexisting);
+      expectType<string>(mut.self.info.name);
+      expectType<number>(mut.self.info.age);
+      expectError(mut.self.info.nonexisting);
+
+      expectType<number>(mut.others[0].presence.cursor.x);
+      expectError(mut.others[0].presence.nonexisting);
+      expectType<string>(mut.others[0].info.name);
+      expectType<number>(mut.others[0].info.age);
+      expectError(mut.others[0].info.nonexisting);
+
+      expectType<string | undefined>(mut.storage.get("animals").get(0));
+      expectType<number | undefined>(mut.storage.get("scores").get("one"));
+      expectType<number>(mut.storage.get("person").get("age"));
+      expectError(mut.storage.get("nonexisting"));
+      expectType<void>(mut.setMyPresence({ cursor: { x: 0, y: 0 } }));
+      expectError(mut.setMyPresence({ nonexisting: 123 }));
+
+      return "hi" as const;
+    }, [])
+  );
 }
 
 // ---------------------------------------------------------
