@@ -105,10 +105,10 @@ export type CreateThreadOptions<M extends BaseMetadata> =
     ? { body: CommentBody; metadata?: M }
     : { body: CommentBody; metadata: M };
 
-export type EditThreadMetadataOptions<M extends BaseMetadata> =
-  Record<string, never> extends M
-    ? { threadId: string; metadata?: Resolve<PartialNullable<M>> }
-    : { threadId: string; metadata: Resolve<PartialNullable<M>> };
+export type EditThreadMetadataOptions<M extends BaseMetadata> = {
+  threadId: string;
+  metadata: PartialNullable<M>;
+};
 
 export type CreateCommentOptions = {
   threadId: string;
