@@ -81,18 +81,6 @@ expectType<{ readonly name: string; readonly age: number } | null>(
 
 expectType<[root: LiveObject<MyStorage> | null]>(ctx.useStorageRoot());
 
-expectType<(a: number, b: boolean) => "hi">(
-  ctx.useMutation((mut, _a: number, _b: boolean) => {
-    expectType<User<MyPresence, MyUserMeta>>(mut.self);
-    expectType<readonly User<MyPresence, MyUserMeta>[]>(mut.others);
-    expectType<LiveObject<MyStorage>>(mut.storage);
-    expectType<
-      (p: Partial<MyPresence>, options?: { addToHistory: boolean }) => void
-    >(mut.setMyPresence);
-    return "hi" as const;
-  }, [])
-);
-
 // The storage hooks (suspense versions)
 expectType<readonly string[]>(ctx.suspense.useStorage((x) => x.animals));
 expectType<ReadonlyMap<string, number>>(
@@ -107,18 +95,6 @@ expectType<[root: LiveObject<MyStorage> | null]>(ctx.suspense.useStorageRoot());
 //                                             this one still returns `null`,
 //                                             as it's used as a building
 //                                             block. This is NOT a bug.
-
-expectType<(a: number, b: boolean) => "hi">(
-  ctx.suspense.useMutation((mut, _a: number, _b: boolean) => {
-    expectType<User<MyPresence, MyUserMeta>>(mut.self);
-    expectType<readonly User<MyPresence, MyUserMeta>[]>(mut.others);
-    expectType<LiveObject<MyStorage>>(mut.storage);
-    expectType<
-      (p: Partial<MyPresence>, options?: { addToHistory: boolean }) => void
-    >(mut.setMyPresence);
-    return "hi" as const;
-  }, [])
-);
 
 // The useOthersListener() hook
 ctx.useOthersListener((event) => {
@@ -193,6 +169,64 @@ ctx.useErrorListener((err) => {
   expectType<string>(me.info.name);
   expectType<number>(me.info.age);
   expectError(me.info.nonexisting);
+}
+
+// ---------------------------------------------------------
+
+// The useMutation() hook
+{
+  expectType<(a: number, b: boolean) => "hi">(
+    ctx.useMutation((mut, _a: number, _b: boolean) => {
+      expectType<number>(mut.self.presence.cursor.x);
+      expectError(mut.self.presence.nonexisting);
+      expectType<string>(mut.self.info.name);
+      expectType<number>(mut.self.info.age);
+      expectError(mut.self.info.nonexisting);
+
+      expectType<number>(mut.others[0].presence.cursor.x);
+      expectError(mut.others[0].presence.nonexisting);
+      expectType<string>(mut.others[0].info.name);
+      expectType<number>(mut.others[0].info.age);
+      expectError(mut.others[0].info.nonexisting);
+
+      expectType<string | undefined>(mut.storage.get("animals").get(0));
+      expectType<number | undefined>(mut.storage.get("scores").get("one"));
+      expectType<number>(mut.storage.get("person").get("age"));
+      expectError(mut.storage.get("nonexisting"));
+      expectType<void>(mut.setMyPresence({ cursor: { x: 0, y: 0 } }));
+      expectError(mut.setMyPresence({ nonexisting: 123 }));
+
+      return "hi" as const;
+    }, [])
+  );
+}
+
+// The useMutation() hook (suspense)
+{
+  expectType<(a: number, b: boolean) => "hi">(
+    ctx.suspense.useMutation((mut, _a: number, _b: boolean) => {
+      expectType<number>(mut.self.presence.cursor.x);
+      expectError(mut.self.presence.nonexisting);
+      expectType<string>(mut.self.info.name);
+      expectType<number>(mut.self.info.age);
+      expectError(mut.self.info.nonexisting);
+
+      expectType<number>(mut.others[0].presence.cursor.x);
+      expectError(mut.others[0].presence.nonexisting);
+      expectType<string>(mut.others[0].info.name);
+      expectType<number>(mut.others[0].info.age);
+      expectError(mut.others[0].info.nonexisting);
+
+      expectType<string | undefined>(mut.storage.get("animals").get(0));
+      expectType<number | undefined>(mut.storage.get("scores").get("one"));
+      expectType<number>(mut.storage.get("person").get("age"));
+      expectError(mut.storage.get("nonexisting"));
+      expectType<void>(mut.setMyPresence({ cursor: { x: 0, y: 0 } }));
+      expectError(mut.setMyPresence({ nonexisting: 123 }));
+
+      return "hi" as const;
+    }, [])
+  );
 }
 
 // ---------------------------------------------------------

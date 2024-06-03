@@ -1,4 +1,4 @@
-import type { BaseMetadata, Json } from "@liveblocks/client";
+import type { BaseMetadata, Json, Lson } from "@liveblocks/client";
 import * as classic from "@liveblocks/react";
 import * as suspense from "@liveblocks/react/suspense";
 import { expectAssignable, expectError, expectType } from "tsd";
@@ -111,6 +111,60 @@ import { expectAssignable, expectError, expectType } from "tsd";
     suspense.shallow
   );
   expectType<(Json | undefined)[]>(xs);
+}
+
+// ---------------------------------------------------------
+
+// The useMutation() hook
+{
+  expectType<(a: number, b: boolean) => "hi">(
+    classic.useMutation((mut, _a: number, _b: boolean) => {
+      expectType<Json | undefined>(mut.self.presence.cursor);
+      expectType<Json | undefined>(mut.self.presence.nonexisting);
+      expectType<string | undefined>(mut.self.info!.name);
+      expectType<Json | undefined>(mut.self.info!.age);
+      expectType<Json | undefined>(mut.self.info!.nonexisting);
+
+      expectType<Json | undefined>(mut.others[0].presence.cursor);
+      expectType<Json | undefined>(mut.others[0].presence.nonexisting);
+      expectType<string | undefined>(mut.others[0].info!.name);
+      expectType<Json | undefined>(mut.others[0].info!.age);
+      expectType<Json | undefined>(mut.others[0].info!.nonexisting);
+
+      expectType<Lson | undefined>(mut.storage.get("animals"));
+      expectType<Lson | undefined>(mut.storage.get("nonexisting"));
+      expectType<void>(mut.setMyPresence({ cursor: { x: 0, y: 0 } }));
+      expectType<void>(mut.setMyPresence({ nonexisting: 123 }));
+
+      return "hi" as const;
+    }, [])
+  );
+}
+
+// The useMutation() hook (suspense)
+{
+  expectType<(a: number, b: boolean) => "hi">(
+    suspense.useMutation((mut, _a: number, _b: boolean) => {
+      expectType<Json | undefined>(mut.self.presence.cursor);
+      expectType<Json | undefined>(mut.self.presence.nonexisting);
+      expectType<string | undefined>(mut.self.info!.name);
+      expectType<Json | undefined>(mut.self.info!.age);
+      expectType<Json | undefined>(mut.self.info!.nonexisting);
+
+      expectType<Json | undefined>(mut.others[0].presence.cursor);
+      expectType<Json | undefined>(mut.others[0].presence.nonexisting);
+      expectType<string | undefined>(mut.others[0].info!.name);
+      expectType<Json | undefined>(mut.others[0].info!.age);
+      expectType<Json | undefined>(mut.others[0].info!.nonexisting);
+
+      expectType<Lson | undefined>(mut.storage.get("animals"));
+      expectType<Lson | undefined>(mut.storage.get("nonexisting"));
+      expectType<void>(mut.setMyPresence({ cursor: { x: 0, y: 0 } }));
+      expectType<void>(mut.setMyPresence({ nonexisting: 123 }));
+
+      return "hi" as const;
+    }, [])
+  );
 }
 
 // ---------------------------------------------------------
