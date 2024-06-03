@@ -45,6 +45,7 @@
     "start": "npm run dev",
     "format": "eslint --fix src/; stylelint --fix src/styles/; prettier --write src/",
     "lint": "eslint src/; stylelint src/styles/",
+    "lint:package": "publint --strict && attw --pack",
     "test": "jest --silent --verbose --color=always",
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
