@@ -11,7 +11,6 @@ import React, {
   useCallback,
   useEffect,
   useImperativeHandle,
-  useLayoutEffect,
   useRef,
 } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
@@ -52,16 +51,17 @@ export const FloatingSelectionContainer = forwardRef<
   const root = editor.getRootElement();
   if (root === null) return null;
 
-  const rootContainer = root.parentElement;
-  if (rootContainer === null) return null;
+  const parent = root.offsetParent;
+  if (parent === null) return null;
 
   return createPortal(
     <FloatingSelectionContainerImpl
       {...props}
       selection={info}
+      container={parent}
       ref={forwardedRef}
     />,
-    rootContainer
+    parent
   );
 });
 
@@ -79,6 +79,7 @@ type SelectionInfo = {
 interface FloatingSelectionContainerImplProps
   extends FloatingSelectionContainerProps {
   selection: SelectionInfo;
+  container: Element;
 }
 
 const FloatingSelectionContainerImpl = forwardRef<
@@ -87,6 +88,7 @@ const FloatingSelectionContainerImpl = forwardRef<
 >(function FloatingSelectionContainer(props, forwardedRef) {
   const {
     children,
+    container,
     selection,
     sideOffset = 0,
     alignOffset = 0,
@@ -95,7 +97,6 @@ const FloatingSelectionContainerImpl = forwardRef<
 
   const hideFloatingComposer = useHideFloatingComposer();
 
-  const containerRef = useRef<HTMLDivElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
 
   const [editor] = useLexicalComposerContext();
@@ -113,115 +114,91 @@ const FloatingSelectionContainerImpl = forwardRef<
     });
   }, [editor, hideFloatingComposer]);
 
-  useLayoutEffect(() => {
+  const positionContent = useCallback(() => {
     const content = divRef.current;
     if (content === null) return;
 
-    const parent = containerRef.current;
-    if (parent === null) return;
+    // Create a DOM range from the selection
+    const range = createDOMRange(
+      editor,
+      selection.anchor.node,
+      selection.anchor.offset,
+      selection.focus.node,
+      selection.focus.offset
+    );
 
-    function positionContent() {
-      const content = divRef.current;
-      if (content === null) return;
+    if (range === null) return;
 
-      const parent = content.parentElement;
-      if (parent === null) return;
+    // Get the bounding client rect of the DOM (selection) range
+    const rect = range.getBoundingClientRect();
 
-      // Create a DOM range from the selection
-      const range = createDOMRange(
-        editor,
-        selection.anchor.node,
-        selection.anchor.offset,
-        selection.focus.node,
-        selection.focus.offset
-      );
+    // Set the position of the floating container
+    let left =
+      rect.left - container.getBoundingClientRect().left + container.scrollLeft;
 
-      if (range === null) return;
+    // Apply the align offset
+    left += alignOffset;
 
-      // Get the bounding client rect of the DOM (selection) range
-      const rect = range.getBoundingClientRect();
+    // Get the width of the content
+    const width = content.getBoundingClientRect().width;
+    left = left + rect.width / 2 - width / 2;
 
-      // Set the position of the floating container
-      let left = rect.left - parent.getBoundingClientRect().left;
-      let top = rect.bottom - parent.getBoundingClientRect().top;
-
-      // Apply the align offset
-      left += alignOffset;
-
-      // Get the width and height of the content
-      const width = content.getBoundingClientRect().width;
-      left = left + rect.width / 2 - width / 2;
-
-      // Ensure content does not overflow the container
-      if (left < collisionPadding) {
-        left = collisionPadding;
-      } else if (
-        left + width >
-        parent.getBoundingClientRect().right -
-          parent.getBoundingClientRect().left -
-          collisionPadding
-      ) {
-        left =
-          parent.getBoundingClientRect().right -
-          parent.getBoundingClientRect().left -
-          width -
-          collisionPadding;
-      }
-
-      // Apply the side offset
-      top += sideOffset;
-
-      const height = content.getBoundingClientRect().height;
-
-      if (
-        top + height >
-        parent.getBoundingClientRect().height -
-          parent.getBoundingClientRect().top +
-          collisionPadding
-      ) {
-        top = rect.top - parent.getBoundingClientRect().top - height;
-        top -= sideOffset;
-      }
-
-      content.style.left = `${left}px`;
-      content.style.top = `${top}px`;
+    // Ensure content does not overflow the container
+    if (left <= collisionPadding) {
+      left = collisionPadding;
+    } else if (
+      left + width >=
+      container.getBoundingClientRect().width - collisionPadding
+    ) {
+      left = container.getBoundingClientRect().width - width - collisionPadding;
     }
 
-    // Observe resizes of the container element to redraw the selection
+    let top =
+      rect.bottom - container.getBoundingClientRect().top + container.scrollTop;
+
+    // Apply the side offset
+    top += sideOffset;
+
+    // Get the height of the content
+    const height = content.getBoundingClientRect().height;
+
+    if (rect.top + height >= window.innerHeight - collisionPadding) {
+      top =
+        rect.top -
+        container.getBoundingClientRect().top +
+        container.scrollTop -
+        height;
+      top -= sideOffset;
+    }
+
+    content.style.left = `${left}px`;
+    content.style.top = `${top}px`;
+  }, [selection, container, editor]);
+
+  useEffect(() => {
+    const editable = editor.getRootElement();
+    if (editable === null) return;
+
     const observer = new ResizeObserver(positionContent);
-    observer.observe(parent);
-
-    // Listen to updates in the editor to redraw the selection
-    const unsubscribeFromUpdates =
-      editor.registerUpdateListener(positionContent);
-
+    observer.observe(editable);
     return () => {
       observer.disconnect();
-      unsubscribeFromUpdates();
     };
-  }, [selection, editor]);
+  }, [editor, positionContent]);
+
+  useEffect(() => {
+    return editor.registerUpdateListener(positionContent);
+  }, [editor, positionContent]);
 
   return (
     <div
-      ref={containerRef}
+      ref={divRef}
       style={{
         position: "absolute",
-        top: 0,
-        left: 0,
-        width: "100%",
-        height: "100%",
-        pointerEvents: "none",
+        zIndex: 1000,
       }}
     >
-      <div
-        ref={divRef}
-        style={{
-          position: "absolute",
-          pointerEvents: "auto",
-        }}
-      >
-        {children}
-      </div>
+      {children}
     </div>
   );
 });

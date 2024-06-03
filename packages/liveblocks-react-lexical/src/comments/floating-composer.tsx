@@ -23,6 +23,7 @@ export const FloatingComposer = forwardRef<
   ComposerElement,
   FloatingComposerProps
 >(function FloatingComposer(props, forwardedRef) {
+  const { onKeyDown, ...composerProps } = props;
   const shouldShowFloatingComposer = useShowFloatingComposer();
   const hideFloatingComposer = useHideFloatingComposer();
   const [editor] = useLexicalComposerContext();
@@ -34,18 +35,20 @@ export const FloatingComposer = forwardRef<
       hideFloatingComposer();
       editor.focus();
     }
+
+    props.onKeyDown?.(event);
   }
 
   return (
     <FloatingSelectionContainer
       sideOffset={5}
       alignOffset={0}
-      collisionPadding={5}
+      collisionPadding={10}
     >
       <Composer
         autoFocus
+        {...composerProps}
         onKeyDown={handleKeyDown}
-        {...props}
         ref={forwardedRef}
       />
     </FloatingSelectionContainer>
