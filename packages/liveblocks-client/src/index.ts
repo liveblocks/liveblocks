@@ -4,8 +4,6 @@ import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
-// Global types, intended to be augmented by the end-user
-export * from "./global";
 export type {
   BaseMetadata,
   BaseUserMeta,

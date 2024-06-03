@@ -24,6 +24,7 @@ import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
+import type { DM, DU } from "./custom-types";
 import { retryError } from "./lib/retry-error";
 import { useInitial } from "./lib/use-initial";
 import type {
@@ -796,7 +797,7 @@ export function useLiveblocksContextBundle() {
 }
 
 export function createLiveblocksContext<
-  U extends BaseUserMeta = Liveblocks.UserMeta,
+  U extends BaseUserMeta = DU,
   M extends BaseMetadata = never, // TODO Change this to DM for 2.0
 >(client: OpaqueClient): LiveblocksContextBundle<U, M> {
   return getOrCreateContextBundle<U, M>(client);
@@ -853,16 +854,12 @@ function useRoomInfoSuspense(roomId: string) {
   return useRoomInfoSuspense_withClient(useClient(), roomId);
 }
 
-// type DP = Liveblocks.Presence;
-// type DS = Liveblocks.Storage;
-type DU = Liveblocks.UserMeta;
-// type DE = Liveblocks.RoomEvent;
-type DM = Liveblocks.ThreadMetadata;
-
 // TODO in 2.0 Copy/paste all the docstrings onto these global hooks :(
-const __1 = useInboxNotificationThread<DM>;
-const __2 = useUser<DU>;
-const __3 = useUserSuspense<DU>;
+const __1: LiveblocksContextBundle<DU, DM>["useInboxNotificationThread"] =
+  useInboxNotificationThread;
+const __2: LiveblocksContextBundle<DU, DM>["useUser"] = useUser;
+const __3: LiveblocksContextBundle<DU, DM>["suspense"]["useUser"] =
+  useUserSuspense;
 
 // eslint-disable-next-line simple-import-sort/exports
 export {

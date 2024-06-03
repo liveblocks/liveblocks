@@ -47,7 +47,7 @@ import {
 import { nanoid } from "nanoid";
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
-
+import type { DP, DS, DU, DE, DM } from "./custom-types";
 import {
   AddReactionError,
   type CommentsError,
@@ -2374,37 +2374,48 @@ export function generateQueryKey(
   return `${roomId}-${stringify(options ?? {})}`;
 }
 
-type DP = Liveblocks.Presence;
-type DS = Liveblocks.Storage;
-type DU = Liveblocks.UserMeta;
-type DE = Liveblocks.RoomEvent;
-type DM = Liveblocks.ThreadMetadata;
+type DefaultRoomContextBundle = RoomContextBundle<DP, DS, DU, DE, DM>;
 
-// TODO in 2.0 Copy/paste all the docstrings onto these global hooks :(
-const __1 = RoomProvider<DP, DS, DU, DE>;
-const __2 = useBroadcastEvent<DE>;
-const __3 = useOthersListener<DP, DU>;
-const __4 = useRoom<DP, DS, DU, DE>;
-const __6 = useAddReaction<DM>;
-const __7 = make_useMutation<DP, DS, DU, DE>();
-const __8 = useCreateThread<DM>;
-const __9 = useEditThreadMetadata<DM>;
-const _10 = useEventListener<DP, DU, DE>;
-const _11 = useMyPresence<DP>;
-const _14 = make_useOthersMapped<DP, DU>();
-const _15 = make_useOthersMappedSuspense<DP, DU>();
-const _16 = useThreads<DM>;
-const _17 = useThreadsSuspense<DM>;
-const _18 = make_useOther<DP, DU>();
-const _19 = make_useOthers<DP, DU>();
-const _20 = make_useOtherSuspense<DP, DU>();
-const _21 = make_useOthersSuspense<DP, DU>();
-const _22 = make_useStorage<DS>();
-const _23 = make_useStorageSuspense<DS>();
-const _24 = make_useSelf<DP, DU>();
-const _25 = make_useSelfSuspense<DP, DU>();
-const _26 = useStorageRoot<DS>;
-const _27 = useUpdateMyPresence<DP>;
+const __1: DefaultRoomContextBundle["RoomProvider"] = RoomProvider;
+const __2: DefaultRoomContextBundle["useBroadcastEvent"] = useBroadcastEvent;
+const __3: DefaultRoomContextBundle["useOthersListener"] = useOthersListener;
+const __4: DefaultRoomContextBundle["useRoom"] = useRoom;
+const __6: DefaultRoomContextBundle["useAddReaction"] = useAddReaction;
+const __7: DefaultRoomContextBundle["useMutation"] = make_useMutation<
+  DP,
+  DS,
+  DU,
+  DE
+>();
+const __8: DefaultRoomContextBundle["useCreateThread"] = useCreateThread;
+const __9: DefaultRoomContextBundle["useEditThreadMetadata"] =
+  useEditThreadMetadata;
+const _10: DefaultRoomContextBundle["useEventListener"] = useEventListener;
+const _11: DefaultRoomContextBundle["useMyPresence"] = useMyPresence;
+const _14: DefaultRoomContextBundle["useOthersMapped"] = make_useOthersMapped<
+  DP,
+  DU
+>();
+const _15: DefaultRoomContextBundle["suspense"]["useOthersMapped"] =
+  make_useOthersMappedSuspense<DP, DU>();
+const _16: DefaultRoomContextBundle["useThreads"] = useThreads;
+const _17: DefaultRoomContextBundle["suspense"]["useThreads"] =
+  useThreadsSuspense;
+const _18: DefaultRoomContextBundle["useOther"] = make_useOther<DP, DU>();
+const _19: DefaultRoomContextBundle["useOthers"] = make_useOthers<DP, DU>();
+const _20: DefaultRoomContextBundle["suspense"]["useOther"] =
+  make_useOtherSuspense<DP, DU>();
+const _21: DefaultRoomContextBundle["suspense"]["useOthers"] =
+  make_useOthersSuspense<DP, DU>();
+const _22: DefaultRoomContextBundle["useStorage"] = make_useStorage<DS>();
+const _23: DefaultRoomContextBundle["suspense"]["useStorage"] =
+  make_useStorageSuspense<DS>();
+const _24: DefaultRoomContextBundle["useSelf"] = make_useSelf<DP, DU>();
+const _25: DefaultRoomContextBundle["suspense"]["useSelf"] =
+  make_useSelfSuspense<DP, DU>();
+const _26: DefaultRoomContextBundle["useStorageRoot"] = useStorageRoot;
+const _27: DefaultRoomContextBundle["useUpdateMyPresence"] =
+  useUpdateMyPresence;
 
 // eslint-disable-next-line simple-import-sort/exports
 export {

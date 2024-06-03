@@ -16,6 +16,7 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
  * https://join.team/liveblocks ;)
  */
 
+// Global types, intended to be augmented by the end-user
 export type {
   Client,
   ClientOptions,
@@ -64,6 +65,7 @@ export type {
 } from "./crdts/StorageUpdates";
 export type { ToImmutable } from "./crdts/utils";
 export { toPlainLson } from "./crdts/utils";
+export * from "./global";
 export {
   legacy_patchImmutableObject,
   lsonToJson,
