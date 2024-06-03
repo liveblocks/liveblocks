@@ -642,7 +642,7 @@ function makeRoomContextBundle<
     useOthersConnectionIds,
     useOther,
 
-    useMutation: make_useMutation<P, S, U, E>(),
+    useMutation: useMutation as RoomContextBundle<P, S, U, E, M>["useMutation"],
 
     useThreads: useThreads<M>,
 
@@ -692,7 +692,13 @@ function makeRoomContextBundle<
       useOthersConnectionIds: useOthersConnectionIdsSuspense,
       useOther: useOtherSuspense,
 
-      useMutation: make_useMutation<P, S, U, E>(),
+      useMutation: useMutation as RoomContextBundle<
+        P,
+        S,
+        U,
+        E,
+        M
+      >["suspense"]["useMutation"],
 
       useThreads: useThreadsSuspense<M>,
 
@@ -1262,33 +1268,30 @@ function useStorage<S extends LsonObject, T>(
   );
 }
 
-function make_useMutation<
+function useMutation<
   P extends JsonObject,
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
->() {
-  return function useMutation<
-    F extends (context: MutationContext<P, S, U>, ...args: any[]) => any,
-  >(callback: F, deps: readonly unknown[]): OmitFirstArg<F> {
-    const room = useRoom<P, S, U, E>();
-    return React.useMemo(
-      () => {
-        return ((...args) =>
+  F extends (context: MutationContext<P, S, U>, ...args: any[]) => any,
+>(callback: F, deps: readonly unknown[]): OmitFirstArg<F> {
+  const room = useRoom<P, S, U, E>();
+  return React.useMemo(
+    () => {
+      return ((...args) =>
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        room.batch(() =>
           // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-          room.batch(() =>
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            callback(
-              makeMutationContext<P, S, U, E>(room),
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-              ...args
-            )
-          )) as OmitFirstArg<F>;
-      },
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      [room, ...deps]
-    );
-  };
+          callback(
+            makeMutationContext<P, S, U, E>(room),
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+            ...args
+          )
+        )) as OmitFirstArg<F>;
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [room, ...deps]
+  );
 }
 
 function useThreads<M extends BaseMetadata>(
@@ -2354,12 +2357,7 @@ const _useOthersListener: DefaultRoomContextBundle["useOthersListener"] =
 const _useRoom: DefaultRoomContextBundle["useRoom"] = useRoom;
 const _useAddReaction: DefaultRoomContextBundle["useAddReaction"] =
   useAddReaction;
-const _useMutation: DefaultRoomContextBundle["useMutation"] = make_useMutation<
-  DP,
-  DS,
-  DU,
-  DE
->();
+const _useMutation: DefaultRoomContextBundle["useMutation"] = useMutation;
 const _useCreateThread: DefaultRoomContextBundle["useCreateThread"] =
   useCreateThread;
 const _useEditThreadMetadata: DefaultRoomContextBundle["useEditThreadMetadata"] =
