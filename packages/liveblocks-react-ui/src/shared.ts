@@ -1,12 +1,13 @@
 import type { BaseUserMeta, Client } from "@liveblocks/core";
 import { kInternal, raise, stringify } from "@liveblocks/core";
 import {
+  ClientContext,
+  RoomContext,
   useClient,
-  useLiveblocksContextBundleOrNull__,
   useRoom,
-  useRoomContextBundleOrNull__,
+  useSelf,
 } from "@liveblocks/react";
-import React from "react";
+import React, { useContext, useSyncExternalStore } from "react";
 
 type OpaqueClient = Client<BaseUserMeta>;
 
@@ -99,14 +100,26 @@ export function useMentionSuggestions(search?: string) {
   return mentionSuggestions;
 }
 
-export function useCurrentUserId(): string | null {
-  const roomContextBundle = useRoomContextBundleOrNull__();
-  const liveblocksContextBundle = useLiveblocksContextBundleOrNull__();
+function useCurrentUserIdFromRoom() {
+  return useSelf((user) => (typeof user.id === "string" ? user.id : null));
+}
 
-  if (roomContextBundle !== null) {
-    return roomContextBundle[kInternal].useCurrentUserIdFromRoom();
-  } else if (liveblocksContextBundle !== null) {
-    return liveblocksContextBundle[kInternal].useCurrentUserIdFromClient();
+function useCurrentUserIdFromClient_withClient(client: OpaqueClient) {
+  const currentUserIdStore = client[kInternal].currentUserIdStore;
+  return useSyncExternalStore(
+    currentUserIdStore.subscribe,
+    currentUserIdStore.get,
+    currentUserIdStore.get
+  );
+}
+
+export function useCurrentUserId(): string | null {
+  const client = useContext(ClientContext);
+  const room = useContext(RoomContext);
+  if (room !== null) {
+    return useCurrentUserIdFromRoom();
+  } else if (client !== null) {
+    return useCurrentUserIdFromClient_withClient(client);
   } else {
     raise(
       "LiveblocksProvider or RoomProvider are missing from the React tree."

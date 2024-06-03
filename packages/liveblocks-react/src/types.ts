@@ -18,7 +18,6 @@ import type {
   CommentBody,
   CommentData,
   InboxNotificationData,
-  kInternal,
   LiveblocksError,
   PartialNullable,
   QueryMetadata,
@@ -792,17 +791,6 @@ type RoomContextBundleCommon<
   useThreadSubscription(threadId: string): ThreadSubscription;
 };
 
-/**
- * @private
- *
- * Private methods and variables used in the core internals, but as a user
- * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
- * will probably happen if you do.
- */
-type PrivateRoomContextApi = {
-  useCurrentUserIdFromRoom(): string | null;
-};
-
 export type RoomContextBundle<
   P extends JsonObject,
   S extends LsonObject,
@@ -983,16 +971,7 @@ export type RoomContextBundle<
           }
       >;
     }
-> & {
-  /**
-   * @private
-   *
-   * Private methods and variables used in the core internals, but as a user
-   * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
-   * will probably happen if you do.
-   */
-  readonly [kInternal]: PrivateRoomContextApi;
-};
+>;
 
 /**
  * Properties that are the same in LiveblocksContext and LiveblocksContext["suspense"].
@@ -1035,22 +1014,6 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
    * const thread = useInboxNotificationThread("in_xxx");
    */
   useInboxNotificationThread(inboxNotificationId: string): ThreadData<M>;
-};
-
-/**
- * @private
- *
- * Private methods and variables used in the core internals, but as a user
- * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
- * will probably happen if you do.
- */
-type PrivateLiveblocksContextApi = {
-  /**
-   * @private
-   *
-   * Returns the current user ID. Can only be used after making a call to a Notifications API.
-   */
-  useCurrentUserIdFromClient(): string | null;
 };
 
 export type LiveblocksContextBundle<
@@ -1104,13 +1067,4 @@ export type LiveblocksContextBundle<
           }
       >;
     }
-> & {
-  /**
-   * @private
-   *
-   * Private methods and variables used in the core internals, but as a user
-   * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
-   * will probably happen if you do.
-   */
-  readonly [kInternal]: PrivateLiveblocksContextApi;
-};
+>;
