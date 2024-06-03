@@ -615,15 +615,15 @@ function makeRoomContextBundle<
     RoomContext: RoomContext as React.Context<TRoom | null>,
     RoomProvider: RoomProvider_withImplicitLiveblocksProvider,
 
-    useRoom: useRoom<P, S, U, E>,
+    useRoom,
     useStatus,
 
     useBatch,
-    useBroadcastEvent: useBroadcastEvent<E>,
-    useOthersListener: useOthersListener<P, U>,
+    useBroadcastEvent,
+    useOthersListener,
     useLostConnectionListener,
     useErrorListener,
-    useEventListener: useEventListener<P, U, E>,
+    useEventListener,
 
     useHistory,
     useUndo,
@@ -631,12 +631,12 @@ function makeRoomContextBundle<
     useCanRedo,
     useCanUndo,
 
-    useStorageRoot: useStorageRoot<S>,
+    useStorageRoot,
     useStorage,
 
     useSelf,
-    useMyPresence: useMyPresence<P>,
-    useUpdateMyPresence: useUpdateMyPresence<P>,
+    useMyPresence,
+    useUpdateMyPresence,
     useOthers,
     useOthersMapped,
     useOthersConnectionIds,
@@ -644,14 +644,14 @@ function makeRoomContextBundle<
 
     useMutation: useMutation as RoomContextBundle<P, S, U, E, M>["useMutation"],
 
-    useThreads: useThreads<M>,
+    useThreads,
 
-    useCreateThread: useCreateThread<M>,
-    useEditThreadMetadata: useEditThreadMetadata<M>,
+    useCreateThread,
+    useEditThreadMetadata,
     useCreateComment,
     useEditComment,
     useDeleteComment,
-    useAddReaction: useAddReaction<M>,
+    useAddReaction,
     useRemoveReaction,
     useMarkThreadAsRead,
     useThreadSubscription,
@@ -665,15 +665,15 @@ function makeRoomContextBundle<
       RoomContext: RoomContext as React.Context<TRoom | null>,
       RoomProvider: RoomProvider_withImplicitLiveblocksProvider,
 
-      useRoom: useRoom<P, S, U, E>,
+      useRoom,
       useStatus,
 
       useBatch,
-      useBroadcastEvent: useBroadcastEvent<E>,
-      useOthersListener: useOthersListener<P, U>,
+      useBroadcastEvent,
+      useOthersListener,
       useLostConnectionListener,
       useErrorListener,
-      useEventListener: useEventListener<P, U, E>,
+      useEventListener,
 
       useHistory,
       useUndo,
@@ -681,12 +681,12 @@ function makeRoomContextBundle<
       useCanRedo,
       useCanUndo,
 
-      useStorageRoot: useStorageRoot<S>,
+      useStorageRoot,
       useStorage: useStorageSuspense,
 
       useSelf: useSelfSuspense,
-      useMyPresence: useMyPresence<P>,
-      useUpdateMyPresence: useUpdateMyPresence<P>,
+      useMyPresence,
+      useUpdateMyPresence,
       useOthers: useOthersSuspense,
       useOthersMapped: useOthersMappedSuspense,
       useOthersConnectionIds: useOthersConnectionIdsSuspense,
@@ -700,14 +700,14 @@ function makeRoomContextBundle<
         M
       >["suspense"]["useMutation"],
 
-      useThreads: useThreadsSuspense<M>,
+      useThreads: useThreadsSuspense,
 
-      useCreateThread: useCreateThread<M>,
-      useEditThreadMetadata: useEditThreadMetadata<M>,
+      useCreateThread,
+      useEditThreadMetadata,
       useCreateComment,
       useEditComment,
       useDeleteComment,
-      useAddReaction: useAddReaction<M>,
+      useAddReaction,
       useRemoveReaction,
       useMarkThreadAsRead,
       useThreadSubscription,
