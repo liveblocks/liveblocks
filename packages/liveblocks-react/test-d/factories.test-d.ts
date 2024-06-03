@@ -319,8 +319,8 @@ ctx.useErrorListener((err) => {
 {
   {
     const untypedCtx = createRoomContext(client);
-    //    ^^^^^^^^^^ [1]
     const createThread = untypedCtx.useCreateThread();
+    //                   ^^^^^^^^^^ [1]
     expectError(createThread({}));
 
     const thread1 = createThread({
@@ -389,8 +389,8 @@ ctx.useErrorListener((err) => {
 {
   {
     const untypedCtx = createRoomContext(client);
-    //    ^^^^^^^^^^ [3]
     const createThread = untypedCtx.suspense.useCreateThread();
+    //                   ^^^^^^^^^^^^^^^^^^^ [3]
     expectError(createThread({}));
 
     const thread1 = createThread({
@@ -422,7 +422,7 @@ ctx.useErrorListener((err) => {
 
   {
     const createThread = ctx.suspense.useCreateThread();
-    //                   ^^^ [4]
+    //                   ^^^^^^^^^^^^ [4]
     expectError(createThread({})); // no body = error
 
     // No metadata = error
