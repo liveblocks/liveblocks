@@ -1398,9 +1398,7 @@ function useEditThreadMetadata<M extends BaseMetadata>() {
                 ...state.threads,
                 [threadId]: {
                   ...existingThread,
-                  metadata: metadata as [M] extends [never]
-                    ? Record<string, never>
-                    : M,
+                  metadata,
                 },
               },
               optimisticUpdates: updatedOptimisticUpdates,
