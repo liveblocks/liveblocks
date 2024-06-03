@@ -233,6 +233,80 @@ import { expectAssignable, expectError, expectType } from "tsd";
 
 // ---------------------------------------------------------
 
+// The useCreateThread() hook
+{
+  const createThread = classic.useCreateThread();
+  expectError(createThread({}));
+
+  const thread1 = createThread({
+    body: {
+      version: 1,
+      content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+    },
+  });
+
+  expectType<"thread">(thread1.type);
+  expectType<string>(thread1.id);
+  expectType<string>(thread1.roomId);
+  expectType<"comment">(thread1.comments[0].type);
+  expectType<string>(thread1.comments[0].id);
+  expectType<string>(thread1.comments[0].threadId);
+
+  expectType<string | number | boolean | undefined>(thread1.metadata.color);
+
+  const thread2 = createThread({
+    body: {
+      version: 1,
+      content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+    },
+    metadata: { foo: "bar" },
+  });
+
+  expectType<string>(thread2.id);
+  expectType<string | number | boolean | undefined>(thread2.metadata.foo);
+  expectType<string | number | boolean | undefined>(
+    thread2.metadata.nonexisting
+  );
+}
+
+// The useCreateThread() hook (suspense)
+{
+  const createThread = suspense.useCreateThread();
+  expectError(createThread({}));
+
+  const thread1 = createThread({
+    body: {
+      version: 1,
+      content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+    },
+  });
+
+  expectType<"thread">(thread1.type);
+  expectType<string>(thread1.id);
+  expectType<string>(thread1.roomId);
+  expectType<"comment">(thread1.comments[0].type);
+  expectType<string>(thread1.comments[0].id);
+  expectType<string>(thread1.comments[0].threadId);
+
+  expectType<string | number | boolean | undefined>(thread1.metadata.foo);
+
+  const thread2 = createThread({
+    body: {
+      version: 1,
+      content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+    },
+    metadata: { foo: "bar" },
+  });
+
+  expectType<string>(thread2.id);
+  expectType<string | number | boolean | undefined>(thread2.metadata.foo);
+  expectType<string | number | boolean | undefined>(
+    thread2.metadata.nonexisting
+  );
+}
+
+// ---------------------------------------------------------
+
 // The useInboxNotifications() hook
 {
   expectType<boolean>(classic.useInboxNotifications().isLoading);

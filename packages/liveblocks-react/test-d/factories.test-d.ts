@@ -45,7 +45,7 @@ type M = MyThreadMetadata;
 const client = createClient({ publicApiKey: "pk_whatever" });
 
 const lbctx = createLiveblocksContext<U, M>(client);
-const ctx = createRoomContext<P, S, U, E>(client);
+const ctx = createRoomContext<P, S, U, E, M>(client);
 
 // ---------------------------------------------------------
 // Hook APIs
@@ -310,6 +310,147 @@ ctx.useErrorListener((err) => {
     expectType<string | undefined>(info.name);
     expectType<string | undefined>(info.url);
     expectType<undefined>(error);
+  }
+}
+
+// ---------------------------------------------------------
+
+// The useCreateThread() hook
+{
+  {
+    const untypedCtx = createRoomContext(client);
+    //    ^^^^^^^^^^ [1]
+    const createThread = untypedCtx.useCreateThread();
+    expectError(createThread({}));
+
+    const thread1 = createThread({
+      body: {
+        version: 1,
+        content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+      },
+    });
+
+    expectType<"thread">(thread1.type);
+    expectType<string>(thread1.id);
+    expectType<string>(thread1.roomId);
+    expectType<"comment">(thread1.comments[0].type);
+    expectType<string>(thread1.comments[0].id);
+    expectType<string>(thread1.comments[0].threadId);
+
+    expectType<string | number | boolean | undefined>(thread1.metadata.color);
+
+    // But... creating a thread _with_ metadata is now an error
+    const thread2 = createThread({
+      body: {
+        version: 1,
+        content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+      },
+      metadata: { foo: "bar" },
+    });
+
+    expectType<string>(thread2.id);
+  }
+
+  {
+    const createThread = ctx.useCreateThread();
+    //                   ^^^ [2]
+    expectError(createThread({})); // no body = error
+
+    // No metadata = error
+    expectError(
+      createThread({
+        body: {
+          version: 1,
+          content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+        },
+      })
+    );
+
+    const thread = createThread({
+      body: {
+        version: 1,
+        content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+      },
+      metadata: { color: "red" },
+    });
+
+    expectType<"thread">(thread.type);
+    expectType<string>(thread.id);
+    expectType<string>(thread.roomId);
+    expectType<"comment">(thread.comments[0].type);
+    expectType<string>(thread.comments[0].id);
+    expectType<string>(thread.comments[0].threadId);
+
+    expectType<"red" | "blue">(thread.metadata.color);
+  }
+}
+
+// The useCreateThread() hook (suspense)
+{
+  {
+    const untypedCtx = createRoomContext(client);
+    //    ^^^^^^^^^^ [3]
+    const createThread = untypedCtx.suspense.useCreateThread();
+    expectError(createThread({}));
+
+    const thread1 = createThread({
+      body: {
+        version: 1,
+        content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+      },
+    });
+
+    expectType<"thread">(thread1.type);
+    expectType<string>(thread1.id);
+    expectType<string>(thread1.roomId);
+    expectType<"comment">(thread1.comments[0].type);
+    expectType<string>(thread1.comments[0].id);
+    expectType<string>(thread1.comments[0].threadId);
+
+    expectType<string | number | boolean | undefined>(thread1.metadata.color);
+
+    const thread2 = createThread({
+      body: {
+        version: 1,
+        content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+      },
+      metadata: { foo: "bar" },
+    });
+
+    expectType<string>(thread2.id);
+  }
+
+  {
+    const createThread = ctx.suspense.useCreateThread();
+    //                   ^^^ [4]
+    expectError(createThread({})); // no body = error
+
+    // No metadata = error
+    expectError(
+      createThread({
+        body: {
+          version: 1,
+          content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+        },
+      })
+    );
+
+    const thread = createThread({
+      body: {
+        version: 1,
+        content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+      },
+      metadata: { color: "red" },
+    });
+
+    expectType<"thread">(thread.type);
+    expectType<string>(thread.id);
+    expectType<string>(thread.roomId);
+    expectType<"comment">(thread.comments[0].type);
+    expectType<string>(thread.comments[0].id);
+    expectType<string>(thread.comments[0].threadId);
+
+    expectType<"red" | "blue">(thread.metadata.color);
   }
 }
 

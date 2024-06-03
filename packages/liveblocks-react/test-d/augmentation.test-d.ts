@@ -276,6 +276,76 @@ declare global {
 
 // ---------------------------------------------------------
 
+// The useCreateThread() hook
+{
+  const createThread = classic.useCreateThread();
+  expectError(createThread({})); // no body = error
+
+  // No metadata = error
+  expectError(
+    createThread({
+      body: {
+        version: 1,
+        content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+      },
+    })
+  );
+
+  const thread = createThread({
+    body: {
+      version: 1,
+      content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+    },
+    metadata: { color: "red" },
+  });
+
+  expectType<"thread">(thread.type);
+  expectType<string>(thread.id);
+  expectType<string>(thread.roomId);
+  expectType<"comment">(thread.comments[0].type);
+  expectType<string>(thread.comments[0].id);
+  expectType<string>(thread.comments[0].threadId);
+
+  expectType<"red" | "blue">(thread.metadata.color);
+  expectError(thread.metadata.nonexisting);
+}
+
+// The useCreateThread() hook (suspense)
+{
+  const createThread = suspense.useCreateThread();
+  expectError(createThread({})); // no body = error
+
+  // No metadata = error
+  expectError(
+    createThread({
+      body: {
+        version: 1,
+        content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+      },
+    })
+  );
+
+  const thread = createThread({
+    body: {
+      version: 1,
+      content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+    },
+    metadata: { color: "red" },
+  });
+
+  expectType<"thread">(thread.type);
+  expectType<string>(thread.id);
+  expectType<string>(thread.roomId);
+  expectType<"comment">(thread.comments[0].type);
+  expectType<string>(thread.comments[0].id);
+  expectType<string>(thread.comments[0].threadId);
+
+  expectType<"red" | "blue">(thread.metadata.color);
+  expectError(thread.metadata.nonexisting);
+}
+
+// ---------------------------------------------------------
+
 // The useInboxNotifications() hook
 {
   expectType<boolean>(classic.useInboxNotifications().isLoading);
