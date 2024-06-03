@@ -7,7 +7,7 @@ export interface AvatarProps
   userId: string;
 }
 
-const Avatar = forwardRef<HTMLSpanElement, AvatarProps>(
+export const Avatar = forwardRef<HTMLSpanElement, AvatarProps>(
   function Avatar(props, forwardedRef) {
     const { userId, ...spanProps } = props;
     const { useUser } = useSharedContextBundle();
@@ -61,5 +61,3 @@ function getInitials(name: string) {
       return initials;
     }, "");
 }
-
-export default Avatar;

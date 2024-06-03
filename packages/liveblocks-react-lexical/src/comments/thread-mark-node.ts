@@ -21,13 +21,8 @@
  * SOFTWARE.
  */
 
-import {
-  addClassNamesToElement,
-  removeClassNamesFromElement,
-} from "@lexical/utils";
 import type {
   BaseSelection,
-  EditorConfig,
   LexicalNode,
   NodeKey,
   RangeSelection,
@@ -86,26 +81,7 @@ export class ThreadMarkNode extends ElementNode {
     return element;
   }
 
-  updateDOM(
-    prevNode: ThreadMarkNode,
-    element: HTMLElement,
-    config: EditorConfig
-  ): boolean {
-    const prevIDs = prevNode.__ids;
-    const nextIDs = this.__ids;
-    const prevIDsCount = prevIDs.length;
-    const nextIDsCount = nextIDs.length;
-    const overlapTheme = config.theme.markOverlap;
-
-    if (prevIDsCount !== nextIDsCount) {
-      if (prevIDsCount === 1) {
-        if (nextIDsCount === 2) {
-          addClassNamesToElement(element, overlapTheme);
-        }
-      } else if (nextIDsCount === 1) {
-        removeClassNamesFromElement(element, overlapTheme);
-      }
-    }
+  updateDOM(): boolean {
     return false;
   }
 

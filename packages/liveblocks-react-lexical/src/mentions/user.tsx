@@ -7,14 +7,14 @@ export interface UserProps
   userId: string;
 }
 
-const User = forwardRef<HTMLSpanElement, UserProps>(
+export const User = forwardRef<HTMLSpanElement, UserProps>(
   function User(props, forwardedRef) {
     const { userId, ...spanProps } = props;
     const { useUser } = useSharedContextBundle();
 
     const { user, isLoading } = useUser(userId);
 
-    const name = user === undefined ? "Anonymous" : user.name;
+    const name = user === undefined || user === null ? "Anonymous" : user.name;
 
     return (
       <span
@@ -27,5 +27,3 @@ const User = forwardRef<HTMLSpanElement, UserProps>(
     );
   }
 );
-
-export default User;

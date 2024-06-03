@@ -4,11 +4,11 @@ import * as React from "react";
 
 import { ThreadMarkNode } from "./comments/thread-mark-node";
 import type { LiveblocksLexicalInternalConfig } from "./liveblocks-plugin-provider";
-import Avatar from "./mentions/avatar";
+import { Avatar } from "./mentions/avatar";
 import { Mention } from "./mentions/mention-component";
 import { createMentionNodeFactory } from "./mentions/mention-node";
 import * as Suggestions from "./mentions/suggestions";
-import User from "./mentions/user";
+import { User } from "./mentions/user";
 
 let liveblocksConfig: LiveblocksLexicalInternalConfig | null = null;
 

@@ -229,12 +229,12 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     if (theme === null || theme === undefined) return;
 
     elements.forEach((element) => {
-      addClassNamesToElement(element, theme.threadMark as string);
+      addClassNamesToElement(element, theme.lexicalThreadMark as string);
     });
 
     return () => {
       elements.forEach((element) => {
-        removeClassNamesFromElement(element, theme.threadMark as string);
+        removeClassNamesFromElement(element, theme.lexicalThreadMark as string);
       });
     };
   }, [context, editor, threadToNodes, threads]);

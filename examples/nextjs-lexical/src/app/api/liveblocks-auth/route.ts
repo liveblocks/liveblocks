@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
   const { room } = await request.json();
 
   // Use a naming pattern to allow access to rooms with a wildcard
-  session.allow(room, session.FULL_ACCESS);
+  session.allow(`liveblocks:lexical-examples:*`, session.FULL_ACCESS);
 
   // Authorize the user and return the result
   const { status, body } = await session.authorize();
