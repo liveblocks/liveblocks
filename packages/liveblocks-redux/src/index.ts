@@ -9,7 +9,6 @@ import type {
   Status,
   User,
 } from "@liveblocks/client";
-import type { LegacyConnectionStatus } from "@liveblocks/core";
 import {
   detectDupes,
   legacy_patchImmutableObject,
@@ -55,36 +54,10 @@ type LiveblocksContext<P extends JsonObject, U extends BaseUserMeta> = {
    */
   readonly isStorageLoading: boolean;
   /**
-   * Legacy connection status of the room.
-   *
-   * @deprecated This API will be removed in a future version of Liveblocks.
-   * Prefer using the newer `.status` property.
-   *
-   * We recommend making the following changes if you use these APIs:
-   *
-   *     OLD STATUSES         NEW STATUSES
-   *     closed          -->  initial
-   *     authenticating  -->  connecting
-   *     connecting      -->  connecting
-   *     open            -->  connected
-   *     unavailable     -->  reconnecting
-   *     failed          -->  disconnected
-   */
-  readonly connection: LegacyConnectionStatus;
-  /**
    * Connection status of the room.
    */
   readonly status: Status;
 };
-
-/**
- * @deprecated Please rename to WithLiveblocks<...>
- */
-export type LiveblocksState<
-  TState,
-  P extends JsonObject,
-  U extends BaseUserMeta,
-> = WithLiveblocks<TState, P, U>;
 
 /**
  * Adds the `liveblocks` property to your custom Redux state.
@@ -237,7 +210,6 @@ const internalEnhancer = <TState>(options: {
             store.dispatch({
               type: ACTION_TYPES.UPDATE_CONNECTION,
               status,
-              connection: room.getConnectionState(), // For backward-compatibility
             });
           })
         );
@@ -386,11 +358,6 @@ export const liveblocksEnhancer = internalEnhancer as <TState>(options: {
   storageMapping?: Mapping<TState>;
   presenceMapping?: Mapping<TState>;
 }) => StoreEnhancer;
-
-/**
- * @deprecated Renamed to `liveblocksEnhancer`.
- */
-export const enhancer = liveblocksEnhancer;
 
 function patchLiveblocksStorage<O extends LsonObject, TState>(
   root: LiveObject<O>,

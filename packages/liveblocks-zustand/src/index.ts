@@ -9,7 +9,7 @@ import type {
   Status,
   User,
 } from "@liveblocks/client";
-import type { LegacyConnectionStatus, StorageUpdate } from "@liveblocks/core";
+import type { StorageUpdate } from "@liveblocks/core";
 import {
   detectDupes,
   errorIf,
@@ -75,38 +75,10 @@ export type LiveblocksContext<
    */
   readonly isStorageLoading: boolean;
   /**
-   * Legacy connection status of the room.
-   *
-   * @deprecated This API will be removed in a future version of Liveblocks.
-   * Prefer using the newer `.status` property.
-   *
-   * We recommend making the following changes if you use these APIs:
-   *
-   *     OLD STATUSES         NEW STATUSES
-   *     closed          -->  initial
-   *     authenticating  -->  connecting
-   *     connecting      -->  connecting
-   *     open            -->  connected
-   *     unavailable     -->  reconnecting
-   *     failed          -->  disconnected
-   */
-  readonly connection: LegacyConnectionStatus;
-  /**
    * Connection status of the room.
    */
   readonly status: Status;
 };
-
-/**
- * @deprecated Renamed to WithLiveblocks<...>
- */
-export type LiveblocksState<
-  TState,
-  P extends JsonObject = DP,
-  S extends LsonObject = DS,
-  U extends BaseUserMeta = DU,
-  E extends Json = DE,
-> = WithLiveblocks<TState, P, S, U, E>;
 
 /**
  * Adds the `liveblocks` property to your custom Zustand state.
@@ -220,7 +192,6 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
         room.events.status.subscribe((status) => {
           updateLiveblocksContext(set, {
             status,
-            connection: room.getConnectionState(), // For backward-compatibility
           });
         })
       );
@@ -292,7 +263,7 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
 
         updateLiveblocksContext(set, {
           others: [],
-          connection: "closed",
+          status: "initial",
           isStorageLoading: false,
           room: null,
         });
@@ -348,11 +319,6 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
 
 export const liveblocks =
   middlewareImpl as unknown as OuterLiveblocksMiddleware;
-
-/**
- * @deprecated Renamed to `liveblocks`.
- */
-export const middleware = liveblocks;
 
 function patchState<T>(
   state: T,

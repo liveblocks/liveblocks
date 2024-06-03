@@ -158,7 +158,6 @@ describe("room", () => {
     const { room, delegates } = createTestableRoom({});
     expect(delegates.authenticate).not.toHaveBeenCalled();
     room.connect();
-    expect(room.getConnectionState()).toEqual("connecting");
     expect(room.getStatus()).toEqual("connecting");
     expect(delegates.authenticate).toHaveBeenCalled();
     expect(delegates.createSocket).not.toHaveBeenCalled();
@@ -167,12 +166,10 @@ describe("room", () => {
   test("connect should stay authenticating if connect is called multiple times and call authenticate only once", () => {
     const { room, delegates } = createTestableRoom({});
     room.connect();
-    expect(room.getConnectionState()).toEqual("connecting");
     expect(room.getStatus()).toEqual("connecting");
     room.connect();
     room.connect();
     room.connect();
-    expect(room.getConnectionState()).toEqual("connecting");
     expect(room.getStatus()).toEqual("connecting");
     expect(delegates.authenticate).toHaveBeenCalledTimes(1);
     expect(delegates.createSocket).not.toHaveBeenCalled();
@@ -180,14 +177,11 @@ describe("room", () => {
 
   test("authentication success should transition to connecting", async () => {
     const { room } = createTestableRoom({});
-    expect(room.getConnectionState()).toBe("closed"); // This API will be deprecated in the future
     expect(room.getStatus()).toEqual("initial");
 
     room.connect();
-    expect(room.getConnectionState()).toBe("connecting");
     expect(room.getStatus()).toEqual("connecting");
     await waitUntilStatus(room, "connected");
-    expect(room.getConnectionState()).toBe("open"); // This API will be deprecated in the future
     expect(room.getStatus()).toEqual("connected");
   });
 
@@ -2387,11 +2381,9 @@ describe("room", () => {
           AUTH_SUCCESS,
           SOCKET_NO_BEHAVIOR // ⚠️  This will let us programmatically control opening the sockets
         );
-        expect(room.getConnectionState()).toBe("closed"); // This API will be deprecated in the future
         expect(room.getStatus()).toEqual("initial");
 
         room.connect();
-        expect(room.getConnectionState()).toBe("connecting");
         expect(room.getStatus()).toEqual("connecting");
         await jest.advanceTimersByTimeAsync(0); // Resolve the auth promise, which will then start the socket connection
 
@@ -2407,17 +2399,13 @@ describe("room", () => {
           })
         );
         await waitUntilStatus(room, "connected");
-        expect(room.getConnectionState()).toBe("open"); // This API will be deprecated in the future
         expect(room.getStatus()).toEqual("connected");
 
         room.reconnect();
-        expect(room.getConnectionState()).toBe("connecting");
         expect(room.getStatus()).toEqual("connecting");
         await jest.advanceTimersByTimeAsync(0); // There's a backoff delay here!
-        expect(room.getConnectionState()).toBe("connecting");
         expect(room.getStatus()).toEqual("connecting");
         await jest.advanceTimersByTimeAsync(500); // Wait for the increased backoff delay!
-        expect(room.getConnectionState()).toBe("connecting"); // This API will be deprecated in the future
         expect(room.getStatus()).toEqual("connecting");
 
         const ws2 = wss.last;
@@ -2436,7 +2424,6 @@ describe("room", () => {
         expect(ws1 === ws2).toBe(false);
 
         await waitUntilStatus(room, "connected");
-        expect(room.getConnectionState()).toBe("open");
         expect(room.getStatus()).toEqual("connected");
       } finally {
         jest.useRealTimers();

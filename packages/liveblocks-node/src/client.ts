@@ -332,7 +332,8 @@ export class Liveblocks {
       limit?: number;
       startingAfter?: string;
       /**
-       * @deprecated Use `query` instead.
+       * @deprecated Use `query` property instead. Support for the `metadata`
+       * field will be removed in a future version.
        */
       metadata?: QueryRoomMetadata;
       userId?: string;
