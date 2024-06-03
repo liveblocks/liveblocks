@@ -314,8 +314,6 @@ export type ThreadSubscription =
 export type SharedContextBundle<U extends BaseUserMeta> = {
   classic: {
     /**
-     * @beta
-     *
      * Returns user info from a given user ID.
      *
      * @example
@@ -324,8 +322,6 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
     useUser(userId: string): UserState<U["info"]>;
 
     /**
-     * @private
-     *
      * Returns room info from a given room ID.
      *
      * @example
@@ -336,8 +332,6 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
 
   suspense: {
     /**
-     * @beta
-     *
      * Returns user info from a given user ID.
      *
      * @example
@@ -346,8 +340,6 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
     useUser(userId: string): UserStateSuccess<U["info"]>;
 
     /**
-     * @private
-     *
      * Returns room info from a given room ID.
      *
      * @example
@@ -704,8 +696,6 @@ type RoomContextBundleCommon<
   ): T;
 
   /**
-   * @beta
-   *
    * Returns a function that creates a thread with an initial comment, and optionally some metadata.
    *
    * @example
@@ -715,8 +705,6 @@ type RoomContextBundleCommon<
   useCreateThread(): (options: CreateThreadOptions<M>) => ThreadData<M>;
 
   /**
-   * @beta
-   *
    * Returns a function that edits a thread's metadata.
    * To delete an existing metadata property, set its value to `null`.
    *
@@ -727,8 +715,6 @@ type RoomContextBundleCommon<
   useEditThreadMetadata(): (options: EditThreadMetadataOptions<M>) => void;
 
   /**
-   * @beta
-   *
    * Returns a function that adds a comment to a thread.
    *
    * @example
@@ -738,8 +724,6 @@ type RoomContextBundleCommon<
   useCreateComment(): (options: CreateCommentOptions) => CommentData;
 
   /**
-   * @beta
-   *
    * Returns a function that edits a comment's body.
    *
    * @example
@@ -749,8 +733,6 @@ type RoomContextBundleCommon<
   useEditComment(): (options: EditCommentOptions) => void;
 
   /**
-   * @beta
-   *
    * Returns a function that deletes a comment.
    * If it is the last non-deleted comment, the thread also gets deleted.
    *
@@ -761,8 +743,6 @@ type RoomContextBundleCommon<
   useDeleteComment(): (options: DeleteCommentOptions) => void;
 
   /**
-   * @beta
-   *
    * Returns a function that adds a reaction from a comment.
    *
    * @example
@@ -772,8 +752,6 @@ type RoomContextBundleCommon<
   useAddReaction(): (options: CommentReactionOptions) => void;
 
   /**
-   * @beta
-   *
    * Returns a function that removes a reaction on a comment.
    *
    * @example
@@ -797,8 +775,6 @@ type RoomContextBundleCommon<
   ) => void;
 
   /**
-   * @beta
-   *
    * Returns a function that marks a thread as read.
    *
    * @example
@@ -808,8 +784,6 @@ type RoomContextBundleCommon<
   useMarkThreadAsRead(): (threadId: string) => void;
 
   /**
-   * @beta
-   *
    * Returns the subscription status of a thread.
    *
    * @example
@@ -901,8 +875,6 @@ export type RoomContextBundle<
       ): T | null;
 
       /**
-       * @beta
-       *
        * Returns the threads within the current room.
        *
        * @example
@@ -989,8 +961,6 @@ export type RoomContextBundle<
             ): T;
 
             /**
-             * @beta
-             *
              * Returns the threads within the current room.
              *
              * @example
@@ -1030,8 +1000,6 @@ export type RoomContextBundle<
  */
 type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
   /**
-   * @beta
-   *
    * Makes Liveblocks features outside of rooms (e.g. Notifications) available
    * in the component hierarchy below.
    */

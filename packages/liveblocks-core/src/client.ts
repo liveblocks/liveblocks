@@ -211,8 +211,6 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
   unstable_streamData?: boolean;
 
   /**
-   * @beta
-   *
    * A function that returns a list of user IDs matching a string.
    */
   resolveMentionSuggestions?: (
@@ -220,8 +218,6 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
   ) => OptionalPromise<string[]>;
 
   /**
-   * @beta
-   *
    * A function that returns user info from user IDs.
    */
   resolveUsers?: (
@@ -229,8 +225,6 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
   ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
 
   /**
-   * @beta
-   *
    * A function that returns room info from room IDs.
    */
   resolveRoomsInfo?: (

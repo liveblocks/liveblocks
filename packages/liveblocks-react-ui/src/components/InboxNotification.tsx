@@ -564,6 +564,8 @@ const InboxNotificationCustomMissing = forwardRef<
 const inboxNotificationKindsWarnings: Set<string> = new Set();
 
 /**
+ * @beta
+ *
  * Displays a single inbox notification.
  *
  * @example
