@@ -7,6 +7,7 @@ import type {
   Spread,
 } from "lexical";
 import { $applyNodeReplacement, DecoratorNode } from "lexical";
+import { nanoid } from "nanoid";
 import type { ComponentType, JSX } from "react";
 import * as React from "react";
 
@@ -15,7 +16,7 @@ import { MentionWrapper } from "./mention-component";
 
 export type SerializedMentionNode = Spread<
   {
-    value: string;
+    userId: string;
   },
   SerializedLexicalNode
 >;
@@ -25,10 +26,12 @@ export function createMentionNodeFactory(
 ): any {
   class MentionNode extends DecoratorNode<JSX.Element> {
     __id: string;
+    __userId: string;
 
-    constructor(value: string, key?: NodeKey) {
+    constructor(id: string, userId: string, key?: NodeKey) {
       super(key);
-      this.__id = value;
+      this.__id = id;
+      this.__userId = userId;
     }
 
     static getType(): string {
@@ -36,7 +39,7 @@ export function createMentionNodeFactory(
     }
 
     static clone(node: MentionNode): MentionNode {
-      return new MentionNode(node.__id);
+      return new MentionNode(node.__id, node.__userId);
     }
 
     createDOM(): HTMLElement {
@@ -73,19 +76,24 @@ export function createMentionNodeFactory(
     }
 
     static importJSON(serializedNode: SerializedMentionNode): MentionNode {
-      const node = $createMentionNode(serializedNode.value);
+      const node = $createMentionNode(serializedNode.userId);
       return node;
     }
 
     exportJSON(): SerializedMentionNode {
       return {
-        value: this.getTextContent(),
+        userId: this.__userId,
         type: "lb-mention",
         version: 1,
       };
     }
 
-    getTextContent(): string {
+    getUserId(): string {
+      const self = this.getLatest();
+      return self.__userId;
+    }
+
+    getId(): string {
       const self = this.getLatest();
       return self.__id;
     }
@@ -93,7 +101,7 @@ export function createMentionNodeFactory(
     decorate(): JSX.Element {
       return (
         <MentionWrapper nodeKey={this.getKey()}>
-          <Component userId={this.__id} />
+          <Component userId={this.__userId} />
         </MentionWrapper>
       );
     }
@@ -105,8 +113,9 @@ export function createMentionNodeFactory(
     return node instanceof MentionNode;
   }
 
-  function $createMentionNode(id: string): MentionNode {
-    const node = new MentionNode(id);
+  function $createMentionNode(userId: string): MentionNode {
+    const id = `in_${nanoid()}`;
+    const node = new MentionNode(id, userId);
     return $applyNodeReplacement(node);
   }
 

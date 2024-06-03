@@ -5,6 +5,7 @@ import type { EditorState, NodeKey, NodeMutation, TextNode } from "lexical";
 import {
   $createRangeSelection,
   $createTextNode,
+  $getNodeByKey,
   $getSelection,
   $isElementNode,
   $isNodeSelection,
@@ -164,8 +165,11 @@ export default function MentionPlugin() {
   } = useRoomContextBundle();
   const suggestions = useMentionSuggestions(matchingString);
 
+  const { useRoom } = useRoomContextBundle();
+  const room = useRoom();
+
   useEffect(() => {
-    function handleMutation(
+    async function $handleMutation(
       mutations: Map<NodeKey, NodeMutation>,
       {
         prevEditorState,
@@ -174,17 +178,54 @@ export default function MentionPlugin() {
       }
     ) {
       for (const [key, mutation] of mutations) {
-        if (mutation !== "destroyed") continue;
+        if (mutation === "created") {
+          editor.getEditorState().read(() => {
+            const node = $getNodeByKey(key);
+            if (node === null) return;
 
-        const node = prevEditorState._nodeMap.get(key);
-        if (node === null) continue;
+            if (!$isMentionNode(node)) return;
 
-        // TODO
+            // console.log("MentionNode created", node.getUserId(), node.getId());
+
+            room[kInternal]
+              .createTextMention(node.getUserId(), node.getId())
+              .catch((err) => {
+                // TODO: Handle error
+                console.error(err);
+              });
+          });
+        } else if (mutation === "destroyed") {
+          prevEditorState.read(() => {
+            // const node = prevEditorState._nodeMap.get(key);
+            // if (node === null) continue;
+            const node = $getNodeByKey(key);
+            if (node === null) return;
+
+            if (!$isMentionNode(node)) return;
+
+            // console.log(
+            //   "MentionNode destroyed",
+            //   node.getUserId(),
+            //   node.getId()
+            // );
+
+            room[kInternal].deleteTextMention(node.getId()).catch((err) => {
+              // TODO: Handle error
+              console.error(err);
+            });
+          });
+        }
       }
     }
 
-    return editor.registerMutationListener(MentionNode, handleMutation);
-  }, [editor, MentionNode]);
+    return editor.registerMutationListener(
+      MentionNode,
+      (mutations, payload) => {
+        if (payload.updateTags.has("collaboration")) return;
+        $handleMutation(mutations, payload);
+      }
+    );
+  }, [editor, MentionNode, $isMentionNode, room]);
 
   useEffect(() => {
     function $onStateRead() {

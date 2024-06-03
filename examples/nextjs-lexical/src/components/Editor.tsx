@@ -32,7 +32,7 @@ const initialConfig = {
       underline: styles.textUnderline,
     },
     paragraph: styles.paragraph,
-    threadMark: styles.threadMark,
+    lexicalThreadMark: styles.threadMark,
   },
 };
 
@@ -50,9 +50,12 @@ export default function Editor() {
     <div className={styles.container}>
       <LexicalComposer initialConfig={liveblocksLexicalConfig(initialConfig)}>
         <LiveblocksPluginProvider>
-          <div className={styles.editorHeader}>
+          {/* Header */}
+          <div className={styles.header}>
             <Avatars />
           </div>
+
+          {/* Editor content */}
           <div className={styles.editorContainer}>
             <div className={styles.editor} ref={onRef}>
               <RichTextPlugin
