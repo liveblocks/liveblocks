@@ -18,11 +18,15 @@
         "default": "./dist/index.js"
       }
     },
-    "./styles.css": "./styles.css"
+    "./styles.css": {
+      "types": "./styles.css.d.ts",
+      "default": "./styles.css"
+    }
   },
   "files": [
     "dist/**",
     "**/*.css",
+    "**/*.css.d.ts",
     "**/*.css.map",
     "README.md"
   ],
