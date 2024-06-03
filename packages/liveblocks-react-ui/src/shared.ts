@@ -5,6 +5,7 @@ import {
   useLiveblocksContextBundleOrNull__,
   useRoom,
   useRoomContextBundleOrNull__,
+  useSelf,
 } from "@liveblocks/react";
 import React from "react";
 
@@ -99,12 +100,16 @@ export function useMentionSuggestions(search?: string) {
   return mentionSuggestions;
 }
 
+function useCurrentUserIdFromRoom() {
+  return useSelf((user) => (typeof user.id === "string" ? user.id : null));
+}
+
 export function useCurrentUserId(): string | null {
   const roomContextBundle = useRoomContextBundleOrNull__();
   const liveblocksContextBundle = useLiveblocksContextBundleOrNull__();
 
   if (roomContextBundle !== null) {
-    return roomContextBundle[kInternal].useCurrentUserIdFromRoom();
+    return useCurrentUserIdFromRoom();
   } else if (liveblocksContextBundle !== null) {
     return liveblocksContextBundle[kInternal].useCurrentUserIdFromClient();
   } else {

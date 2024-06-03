@@ -638,10 +638,6 @@ function makeRoomContextBundle<
 
       ...shared.suspense,
     },
-
-    [kInternal]: {
-      useCurrentUserIdFromRoom,
-    },
   };
 
   return Object.defineProperty(bundle, kInternal, {
@@ -1004,10 +1000,6 @@ function useSelf<P extends JsonObject, U extends BaseUserMeta, T>(
     wrappedSelector,
     isEqual
   );
-}
-
-function useCurrentUserIdFromRoom() {
-  return useSelf((user) => (typeof user.id === "string" ? user.id : null));
 }
 
 function useMyPresence<P extends JsonObject>(): [
