@@ -21,6 +21,8 @@
   },
   "files": [
     "dist/**",
+    "**/*.css",
+    "**/*.css.map",
     "README.md"
   ],
   "scripts": {
