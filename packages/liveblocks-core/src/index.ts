@@ -16,6 +16,7 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
  * https://join.team/liveblocks ;)
  */
 
+// Global types, intended to be augmented by the end-user
 export type {
   Client,
   ClientOptions,
@@ -38,11 +39,7 @@ export {
   stringifyCommentBody,
 } from "./comments/comment-body";
 export type { BaseAuthResult, Delegates, LiveblocksError } from "./connection";
-export type {
-  LegacyConnectionStatus,
-  LostConnectionEvent,
-  Status,
-} from "./connection";
+export type { LostConnectionEvent, Status } from "./connection";
 export {
   convertToCommentData,
   convertToCommentUserReaction,
@@ -68,6 +65,7 @@ export type {
 } from "./crdts/StorageUpdates";
 export type { ToImmutable } from "./crdts/utils";
 export { toPlainLson } from "./crdts/utils";
+export * from "./global";
 export {
   legacy_patchImmutableObject,
   lsonToJson,
@@ -186,6 +184,7 @@ export type {
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 export { ServerMsgCode } from "./protocol/ServerMsg";
+export type { PrivateRoomApi } from "./room";
 export type {
   BroadcastOptions,
   History,
@@ -207,7 +206,7 @@ export type {
 export { WebsocketCloseCodes } from "./types/IWebSocket";
 export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 export type { OptionalPromise } from "./types/OptionalPromise";
-export type { Others, OthersEvent } from "./types/Others";
+export type { OthersEvent } from "./types/Others";
 export type { PartialNullable } from "./types/PartialNullable";
 export type {
   PlainLson,

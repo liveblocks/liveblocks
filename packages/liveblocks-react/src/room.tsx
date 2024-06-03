@@ -22,9 +22,7 @@ import type {
   CommentsEventServerMsg,
   EnterOptions,
   LiveblocksError,
-  OptionalPromise,
-  ResolveMentionSuggestionsArgs,
-  ResolveUsersArgs,
+  PrivateRoomApi,
   RoomEventMessage,
   RoomNotificationSettings,
   ThreadData,
@@ -37,7 +35,6 @@ import {
   deleteComment,
   deprecateIf,
   errorIf,
-  isLiveNode,
   kInternal,
   makeEventSource,
   makePoller,
@@ -67,13 +64,16 @@ import { createCommentId, createThreadId } from "./comments/lib/createIds";
 import { selectNotificationSettings } from "./comments/lib/select-notification-settings";
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 import { selectedThreads } from "./comments/lib/selected-threads";
+import type { DE, DM, DP, DS, DU } from "./custom-types";
 import { retryError } from "./lib/retry-error";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
-import { useRerender } from "./lib/use-rerender";
-import { LiveblocksProvider, useClient, useClientOrNull } from "./liveblocks";
-import type { DP, DS, DU } from "./shared";
-import { createSharedContext } from "./shared";
+import {
+  createSharedContext,
+  LiveblocksProvider,
+  useClient,
+  useClientOrNull,
+} from "./liveblocks";
 import type {
   CommentReactionOptions,
   CreateCommentOptions,
@@ -127,8 +127,6 @@ function useSyncExternalStore<Snapshot>(
 const STABLE_EMPTY_LIST = Object.freeze([]);
 
 export const POLLING_INTERVAL = 5 * 60 * 1000; // 5 minutes
-
-const MENTION_SUGGESTIONS_DEBOUNCE = 500;
 
 function makeNotificationSettingsQueryKey(roomId: string) {
   return `${roomId}:NOTIFICATION_SETTINGS`;
@@ -265,7 +263,6 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   const requestsByQuery = new Map<string, Promise<unknown>>(); // A map of query keys to the promise of the request for that query
   const requestStatusByRoom = new Map<string, boolean>(); // A map of room ids to a boolean indicating whether a request to retrieve threads updates is in progress
   const subscribersByQuery = new Map<string, number>(); // A map of query keys to the number of subscribers for that query
-  const mentionSuggestionsCache = new Map<string, string[]>();
 
   const poller = makePoller(refreshThreadsAndNotifications);
 
@@ -365,7 +362,8 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     // If a request was already made for the query, we do not make another request and return the existing promise of the request
     if (existingRequest !== undefined) return existingRequest;
 
-    const request = room[kInternal].comments.getThreads(options);
+    const commentsAPI = (room[kInternal] as PrivateRoomApi<M>).comments;
+    const request = commentsAPI.getThreads(options);
 
     // Store the promise of the request for the query so that we do not make another request for the same query
     requestsByQuery.set(queryKey, request);
@@ -488,85 +486,12 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     throw innerError;
   }
 
-  /** @internal */
-  // Simplistic debounced search, we don't need to worry too much about
-  // deduping and race conditions as there can only be one search at a time.
-  function useMentionSuggestions(search?: string) {
-    const room = useRoom();
-    const [mentionSuggestions, setMentionSuggestions] =
-      React.useState<string[]>();
-    const lastInvokedAt = React.useRef<number>();
-
-    React.useEffect(() => {
-      const resolveMentionSuggestions =
-        client[kInternal].resolveMentionSuggestions;
-
-      if (search === undefined || !resolveMentionSuggestions) {
-        return;
-      }
-
-      const resolveMentionSuggestionsArgs = { text: search, roomId: room.id };
-      const mentionSuggestionsCacheKey = stringify(
-        resolveMentionSuggestionsArgs
-      );
-      let debounceTimeout: number | undefined;
-      let isCanceled = false;
-
-      const getMentionSuggestions = async () => {
-        try {
-          lastInvokedAt.current = performance.now();
-          const mentionSuggestions = await resolveMentionSuggestions(
-            resolveMentionSuggestionsArgs
-          );
-
-          if (!isCanceled) {
-            setMentionSuggestions(mentionSuggestions);
-            mentionSuggestionsCache.set(
-              mentionSuggestionsCacheKey,
-              mentionSuggestions
-            );
-          }
-        } catch (error) {
-          console.error((error as Error)?.message);
-        }
-      };
-
-      if (mentionSuggestionsCache.has(mentionSuggestionsCacheKey)) {
-        // If there are already cached mention suggestions, use them immediately.
-        setMentionSuggestions(
-          mentionSuggestionsCache.get(mentionSuggestionsCacheKey)
-        );
-      } else if (
-        !lastInvokedAt.current ||
-        Math.abs(performance.now() - lastInvokedAt.current) >
-          MENTION_SUGGESTIONS_DEBOUNCE
-      ) {
-        // If on the debounce's leading edge (either because it's the first invokation or enough
-        // time has passed since the last debounce), get mention suggestions immediately.
-        void getMentionSuggestions();
-      } else {
-        // Otherwise, wait for the debounce delay.
-        debounceTimeout = window.setTimeout(() => {
-          void getMentionSuggestions();
-        }, MENTION_SUGGESTIONS_DEBOUNCE);
-      }
-
-      return () => {
-        isCanceled = true;
-        window.clearTimeout(debounceTimeout);
-      };
-    }, [room.id, search]);
-
-    return mentionSuggestions;
-  }
-
   return {
     store,
     incrementQuerySubscribers,
     getThreadsUpdates,
     getThreadsAndInboxNotifications,
     getInboxNotificationSettings,
-    useMentionSuggestions,
     onMutationFailure,
   };
 }
@@ -605,18 +530,13 @@ function makeRoomContextBundle<
     );
   }
 
-  // Bind to typed hooks
-  const useTRoom: () => TRoom = () => useRoom();
-
-  const { useMentionSuggestions } = getExtrasForClient<M>(client);
-
   const shared = createSharedContext<U>(client);
 
   const bundle: RoomContextBundle<P, S, U, E, M> = {
     RoomContext: RoomContext as React.Context<TRoom | null>,
     RoomProvider: RoomProvider_withImplicitLiveblocksProvider,
 
-    useRoom: useTRoom,
+    useRoom,
     useStatus,
 
     useBatch,
@@ -632,11 +552,6 @@ function makeRoomContextBundle<
     useCanRedo,
     useCanUndo,
 
-    // These are just aliases. The passed-in key will define their return values.
-    useList: useLegacyKey,
-    useMap: useLegacyKey,
-    useObject: useLegacyKey,
-
     useStorageRoot,
     useStorage,
 
@@ -648,12 +563,7 @@ function makeRoomContextBundle<
     useOthersConnectionIds,
     useOther,
 
-    useMutation: useMutation as <
-      F extends (context: MutationContext<P, S, U>, ...args: any[]) => any,
-    >(
-      callback: F,
-      deps: readonly unknown[]
-    ) => OmitFirstArg<F>,
+    useMutation: useMutation as RoomContextBundle<P, S, U, E, M>["useMutation"],
 
     useThreads,
 
@@ -676,7 +586,7 @@ function makeRoomContextBundle<
       RoomContext: RoomContext as React.Context<TRoom | null>,
       RoomProvider: RoomProvider_withImplicitLiveblocksProvider,
 
-      useRoom: useTRoom,
+      useRoom,
       useStatus,
 
       useBatch,
@@ -692,11 +602,6 @@ function makeRoomContextBundle<
       useCanRedo,
       useCanUndo,
 
-      // Legacy hooks
-      useList: useLegacyKeySuspense,
-      useMap: useLegacyKeySuspense,
-      useObject: useLegacyKeySuspense,
-
       useStorageRoot,
       useStorage: useStorageSuspense,
 
@@ -708,12 +613,13 @@ function makeRoomContextBundle<
       useOthersConnectionIds: useOthersConnectionIdsSuspense,
       useOther: useOtherSuspense,
 
-      useMutation: useMutation as <
-        F extends (context: MutationContext<P, S, U>, ...args: any[]) => any,
-      >(
-        callback: F,
-        deps: readonly unknown[]
-      ) => OmitFirstArg<F>,
+      useMutation: useMutation as RoomContextBundle<
+        P,
+        S,
+        U,
+        E,
+        M
+      >["suspense"]["useMutation"],
 
       useThreads: useThreadsSuspense,
 
@@ -731,11 +637,6 @@ function makeRoomContextBundle<
       useUpdateRoomNotificationSettings,
 
       ...shared.suspense,
-    },
-
-    [kInternal]: {
-      useCurrentUserId,
-      useMentionSuggestions,
     },
   };
 
@@ -849,10 +750,7 @@ function RoomProviderInner<
     initialPresence: props.initialPresence,
     initialStorage: props.initialStorage,
     unstable_batchedUpdates: props.unstable_batchedUpdates,
-    autoConnect:
-      props.autoConnect ??
-      props.shouldInitiallyConnect ??
-      typeof window !== "undefined",
+    autoConnect: props.autoConnect ?? typeof window !== "undefined",
   });
 
   const [{ room }, setRoomLeavePair] = React.useState(() =>
@@ -957,11 +855,11 @@ function useRoom<
   U extends BaseUserMeta = never,
   E extends Json = never,
 >(): Room<P, S, U, E> {
-  const room = React.useContext(RoomContext);
+  const room = useRoomOrNull<P, S, U, E>();
   if (room === null) {
     throw new Error("RoomProvider is missing from the React tree.");
   }
-  return room as Room<P, S, U, E>;
+  return room;
 }
 
 function useStatus(): Status {
@@ -1072,11 +970,11 @@ function useSelf<P extends JsonObject, U extends BaseUserMeta>(): User<
   P,
   U
 > | null;
-function useSelf<T, P extends JsonObject, U extends BaseUserMeta>(
+function useSelf<P extends JsonObject, U extends BaseUserMeta, T>(
   selector: (me: User<P, U>) => T,
   isEqual?: (prev: T | null, curr: T | null) => boolean
 ): T | null;
-function useSelf<T, P extends JsonObject, U extends BaseUserMeta>(
+function useSelf<P extends JsonObject, U extends BaseUserMeta, T>(
   maybeSelector?: (me: User<P, U>) => T,
   isEqual?: (prev: T | null, curr: T | null) => boolean
 ): T | User<P, U> | null {
@@ -1104,10 +1002,6 @@ function useSelf<T, P extends JsonObject, U extends BaseUserMeta>(
   );
 }
 
-function useCurrentUserId() {
-  return useSelf((user) => (typeof user.id === "string" ? user.id : null));
-}
-
 function useMyPresence<P extends JsonObject>(): [
   P,
   (patch: Partial<P>, options?: { addToHistory: boolean }) => void,
@@ -1131,11 +1025,11 @@ function useOthers<
   P extends JsonObject,
   U extends BaseUserMeta,
 >(): readonly User<P, U>[];
-function useOthers<T, P extends JsonObject, U extends BaseUserMeta>(
+function useOthers<P extends JsonObject, U extends BaseUserMeta, T>(
   selector: (others: readonly User<P, U>[]) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T;
-function useOthers<T, P extends JsonObject, U extends BaseUserMeta>(
+function useOthers<P extends JsonObject, U extends BaseUserMeta, T>(
   selector?: (others: readonly User<P, U>[]) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T | readonly User<P, U>[] {
@@ -1152,7 +1046,7 @@ function useOthers<T, P extends JsonObject, U extends BaseUserMeta>(
   );
 }
 
-function useOthersMapped<T, P extends JsonObject, U extends BaseUserMeta>(
+function useOthersMapped<P extends JsonObject, U extends BaseUserMeta, T>(
   itemSelector: (other: User<P, U>) => T,
   itemIsEqual?: (prev: T, curr: T) => boolean
 ): ReadonlyArray<readonly [connectionId: number, data: T]> {
@@ -1191,7 +1085,7 @@ const NOT_FOUND = Symbol();
 
 type NotFound = typeof NOT_FOUND;
 
-function useOther<T, P extends JsonObject, U extends BaseUserMeta>(
+function useOther<P extends JsonObject, U extends BaseUserMeta, T>(
   connectionId: number,
   selector: (other: User<P, U>) => T,
   isEqual?: (prev: T, curr: T) => boolean
@@ -1238,10 +1132,10 @@ function useMutableStorageRoot<S extends LsonObject>(): LiveObject<S> | null {
 
 // NOTE: This API exists for backward compatible reasons
 function useStorageRoot<S extends LsonObject>(): [root: LiveObject<S> | null] {
-  return [useMutableStorageRoot()];
+  return [useMutableStorageRoot<S>()];
 }
 
-function useStorage<T, S extends LsonObject>(
+function useStorage<S extends LsonObject, T>(
   selector: (root: ToImmutable<S>) => T,
   isEqual?: (prev: T | null, curr: T | null) => boolean
 ): T | null {
@@ -1286,60 +1180,12 @@ function useStorage<T, S extends LsonObject>(
   );
 }
 
-function useLegacyKey<
-  TKey extends Extract<keyof S, string>,
-  S extends LsonObject,
->(key: TKey): S[TKey] | null {
-  const room = useRoom<never, S, never, never>();
-  const rootOrNull = useMutableStorageRoot<S>();
-  const rerender = useRerender();
-
-  React.useEffect(() => {
-    if (rootOrNull === null) {
-      return;
-    }
-    const root = rootOrNull;
-
-    let unsubCurr: (() => void) | undefined;
-    let curr = root.get(key);
-
-    function subscribeToCurr() {
-      unsubCurr = isLiveNode(curr) ? room.subscribe(curr, rerender) : undefined;
-    }
-
-    function onRootChange() {
-      const newValue = root.get(key);
-      if (newValue !== curr) {
-        unsubCurr?.();
-        curr = newValue;
-        subscribeToCurr();
-        rerender();
-      }
-    }
-
-    subscribeToCurr();
-    rerender();
-
-    const unsubscribeRoot = room.subscribe(root, onRootChange);
-    return () => {
-      unsubscribeRoot();
-      unsubCurr?.();
-    };
-  }, [rootOrNull, room, key, rerender]);
-
-  if (rootOrNull === null) {
-    return null;
-  } else {
-    return rootOrNull.get(key);
-  }
-}
-
 function useMutation<
-  F extends (context: MutationContext<P, S, U>, ...args: any[]) => any,
   P extends JsonObject,
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
+  F extends (context: MutationContext<P, S, U>, ...args: any[]) => any,
 >(callback: F, deps: readonly unknown[]): OmitFirstArg<F> {
   const room = useRoom<P, S, U, E>();
   return React.useMemo(
@@ -1452,35 +1298,34 @@ function useCreateThread<M extends BaseMetadata>() {
         id: optimisticUpdateId,
       });
 
-      room[kInternal].comments
-        .createThread({ threadId, commentId, body, metadata })
-        .then(
-          (thread) => {
-            store.set((state) => ({
-              ...state,
-              threads: {
-                ...state.threads,
-                [threadId]: thread,
-              },
-              optimisticUpdates: state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              ),
-            }));
-          },
-          (err: Error) =>
-            onMutationFailure(
-              err,
-              optimisticUpdateId,
-              (err) =>
-                new CreateThreadError(err, {
-                  roomId: room.id,
-                  threadId,
-                  commentId,
-                  body,
-                  metadata,
-                })
-            )
-        );
+      const commentsAPI = (room[kInternal] as PrivateRoomApi<M>).comments;
+      commentsAPI.createThread({ threadId, commentId, body, metadata }).then(
+        (thread) => {
+          store.set((state) => ({
+            ...state,
+            threads: {
+              ...state.threads,
+              [threadId]: thread,
+            },
+            optimisticUpdates: state.optimisticUpdates.filter(
+              (update) => update.id !== optimisticUpdateId
+            ),
+          }));
+        },
+        (err: Error) =>
+          onMutationFailure(
+            err,
+            optimisticUpdateId,
+            (err) =>
+              new CreateThreadError(err, {
+                roomId: room.id,
+                threadId,
+                commentId,
+                body,
+                metadata,
+              })
+          )
+      );
 
       return newThread;
     },
@@ -1512,7 +1357,8 @@ function useEditThreadMetadata<M extends BaseMetadata>() {
         updatedAt,
       });
 
-      room[kInternal].comments.editThreadMetadata({ metadata, threadId }).then(
+      const commentsAPI = (room[kInternal] as PrivateRoomApi<M>).comments;
+      commentsAPI.editThreadMetadata({ metadata, threadId }).then(
         (metadata) => {
           store.set((state) => {
             const existingThread = state.threads[threadId];
@@ -2182,11 +2028,11 @@ function useSelfSuspense<P extends JsonObject, U extends BaseUserMeta>(): User<
   P,
   U
 >;
-function useSelfSuspense<T, P extends JsonObject, U extends BaseUserMeta>(
+function useSelfSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
   selector: (me: User<P, U>) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T;
-function useSelfSuspense<T, P extends JsonObject, U extends BaseUserMeta>(
+function useSelfSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
   selector?: (me: User<P, U>) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T | User<P, U> {
@@ -2197,7 +2043,15 @@ function useSelfSuspense<T, P extends JsonObject, U extends BaseUserMeta>(
   ) as T | User<P, U>;
 }
 
-function useOthersSuspense<T, P extends JsonObject, U extends BaseUserMeta>(
+function useOthersSuspense<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+>(): readonly User<P, U>[];
+function useOthersSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
+  selector: (others: readonly User<P, U>[]) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T;
+function useOthersSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
   selector?: (others: readonly User<P, U>[]) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T | readonly User<P, U>[] {
@@ -2214,9 +2068,9 @@ function useOthersConnectionIdsSuspense(): readonly number[] {
 }
 
 function useOthersMappedSuspense<
-  T,
   P extends JsonObject,
   U extends BaseUserMeta,
+  T,
 >(
   itemSelector: (other: User<P, U>) => T,
   itemIsEqual?: (prev: T, curr: T) => boolean
@@ -2225,7 +2079,7 @@ function useOthersMappedSuspense<
   return useOthersMapped(itemSelector, itemIsEqual);
 }
 
-function useOtherSuspense<T, P extends JsonObject, U extends BaseUserMeta>(
+function useOtherSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
   connectionId: number,
   selector: (other: User<P, U>) => T,
   isEqual?: (prev: T, curr: T) => boolean
@@ -2250,7 +2104,7 @@ function useSuspendUntilStorageLoaded(): void {
   });
 }
 
-function useStorageSuspense<T, S extends LsonObject>(
+function useStorageSuspense<S extends LsonObject, T>(
   selector: (root: ToImmutable<S>) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T {
@@ -2259,14 +2113,6 @@ function useStorageSuspense<T, S extends LsonObject>(
     selector,
     isEqual as (prev: T | null, curr: T | null) => boolean
   ) as T;
-}
-
-function useLegacyKeySuspense<
-  TKey extends Extract<keyof S, string>,
-  S extends LsonObject,
->(key: TKey): S[TKey] {
-  useSuspendUntilStorageLoaded();
-  return useLegacyKey(key) as S[TKey];
 }
 
 function useThreadsSuspense<M extends BaseMetadata>(
@@ -2365,8 +2211,14 @@ function useRoomNotificationSettingsSuspense(): [
   }, [settings, updateRoomNotificationSettings]);
 }
 
-function useRoomOrNull() {
-  return React.useContext(RoomContext);
+/** @internal */
+export function useRoomOrNull<
+  P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
+>(): Room<P, S, U, E> | null {
+  return React.useContext(RoomContext) as Room<P, S, U, E> | null;
 }
 
 /**
@@ -2376,7 +2228,7 @@ function useRoomOrNull() {
  */
 export function useRoomContextBundleOrNull() {
   const client = useClientOrNull();
-  const room = useRoomOrNull();
+  const room = useRoomOrNull<never, never, never, never>();
   return client && room ? getOrCreateRoomContextBundle(client) : null;
 }
 
@@ -2390,52 +2242,13 @@ export function useRoomContextBundle() {
   return getOrCreateRoomContextBundle(client);
 }
 
-type Options<U extends BaseUserMeta> = {
-  /**
-   * @deprecated Define 'resolveUsers' in 'createClient' from '@liveblocks/client' instead.
-   * Please refer to our Upgrade Guide to learn more, see https://liveblocks.io/docs/platform/upgrading/1.10.
-   *
-   * A function that returns user info from user IDs.
-   */
-  resolveUsers?: (
-    args: ResolveUsersArgs
-  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
-
-  /**
-   * @deprecated Define 'resolveMentionSuggestions' in 'createClient' from '@liveblocks/client' instead.
-   * Please refer to our Upgrade Guide to learn more, see https://liveblocks.io/docs/platform/upgrading/1.10.
-   *
-   * A function that returns a list of user IDs matching a string.
-   */
-  resolveMentionSuggestions?: (
-    args: ResolveMentionSuggestionsArgs
-  ) => OptionalPromise<string[]>;
-};
-
 export function createRoomContext<
   P extends JsonObject = DP,
   S extends LsonObject = DS,
   U extends BaseUserMeta = DU,
   E extends Json = never, // TODO Change this to DE for 2.0
   M extends BaseMetadata = never, // TODO Change this to DM for 2.0
->(
-  client: OpaqueClient,
-  options?: Options<U>
-): RoomContextBundle<P, S, U, E, M> {
-  // Deprecated option
-  if (options?.resolveUsers) {
-    throw new Error(
-      "The 'resolveUsers' option has moved to 'createClient' from '@liveblocks/client'. Please refer to our Upgrade Guide to learn more, see https://liveblocks.io/docs/platform/upgrading/1.10."
-    );
-  }
-
-  // Deprecated option
-  if (options?.resolveMentionSuggestions) {
-    throw new Error(
-      "The 'resolveMentionSuggestions' option has moved to 'createClient' from '@liveblocks/client'. Please refer to our Upgrade Guide to learn more, see https://liveblocks.io/docs/platform/upgrading/1.10."
-    );
-  }
-
+>(client: OpaqueClient): RoomContextBundle<P, S, U, E, M> {
   return getOrCreateRoomContextBundle<P, S, U, E, M>(client);
 }
 
@@ -2445,3 +2258,92 @@ export function generateQueryKey(
 ) {
   return `${roomId}-${stringify(options ?? {})}`;
 }
+
+type DefaultRoomContextBundle = RoomContextBundle<DP, DS, DU, DE, DM>;
+
+const _RoomProvider: DefaultRoomContextBundle["RoomProvider"] = RoomProvider;
+const _useBroadcastEvent: DefaultRoomContextBundle["useBroadcastEvent"] =
+  useBroadcastEvent;
+const _useOthersListener: DefaultRoomContextBundle["useOthersListener"] =
+  useOthersListener;
+const _useRoom: DefaultRoomContextBundle["useRoom"] = useRoom;
+const _useAddReaction: DefaultRoomContextBundle["useAddReaction"] =
+  useAddReaction;
+const _useMutation: DefaultRoomContextBundle["useMutation"] = useMutation;
+const _useCreateThread: DefaultRoomContextBundle["useCreateThread"] =
+  useCreateThread;
+const _useEditThreadMetadata: DefaultRoomContextBundle["useEditThreadMetadata"] =
+  useEditThreadMetadata;
+const _useEventListener: DefaultRoomContextBundle["useEventListener"] =
+  useEventListener;
+const _useMyPresence: DefaultRoomContextBundle["useMyPresence"] = useMyPresence;
+const _useOthersMapped: DefaultRoomContextBundle["useOthersMapped"] =
+  useOthersMapped;
+const _useOthersMappedSuspense: DefaultRoomContextBundle["suspense"]["useOthersMapped"] =
+  useOthersMappedSuspense;
+const _useThreads: DefaultRoomContextBundle["useThreads"] = useThreads;
+const _useThreadsSuspense: DefaultRoomContextBundle["suspense"]["useThreads"] =
+  useThreadsSuspense;
+const _useOther: DefaultRoomContextBundle["useOther"] = useOther;
+const _useOthers: DefaultRoomContextBundle["useOthers"] = useOthers;
+const _useOtherSuspense: DefaultRoomContextBundle["suspense"]["useOther"] =
+  useOtherSuspense;
+const _useOthersSuspense: DefaultRoomContextBundle["suspense"]["useOthers"] =
+  useOthersSuspense;
+const _useStorage: DefaultRoomContextBundle["useStorage"] = useStorage;
+const _useStorageSuspense: DefaultRoomContextBundle["suspense"]["useStorage"] =
+  useStorageSuspense;
+const _useSelf: DefaultRoomContextBundle["useSelf"] = useSelf;
+const _useSelfSuspense: DefaultRoomContextBundle["suspense"]["useSelf"] =
+  useSelfSuspense;
+const _useStorageRoot: DefaultRoomContextBundle["useStorageRoot"] =
+  useStorageRoot;
+const _useUpdateMyPresence: DefaultRoomContextBundle["useUpdateMyPresence"] =
+  useUpdateMyPresence;
+
+export {
+  RoomContext,
+  _RoomProvider as RoomProvider,
+  _useAddReaction as useAddReaction,
+  useBatch,
+  _useBroadcastEvent as useBroadcastEvent,
+  useCanRedo,
+  useCanUndo,
+  useCreateComment,
+  _useCreateThread as useCreateThread,
+  useDeleteComment,
+  useEditComment,
+  _useEditThreadMetadata as useEditThreadMetadata,
+  useErrorListener,
+  _useEventListener as useEventListener,
+  useHistory,
+  useLostConnectionListener,
+  useMarkThreadAsRead,
+  _useMutation as useMutation,
+  _useMyPresence as useMyPresence,
+  _useOther as useOther,
+  _useOthers as useOthers,
+  useOthersConnectionIds,
+  useOthersConnectionIdsSuspense,
+  _useOthersListener as useOthersListener,
+  _useOthersMapped as useOthersMapped,
+  _useOthersMappedSuspense as useOthersMappedSuspense,
+  _useOthersSuspense as useOthersSuspense,
+  _useOtherSuspense as useOtherSuspense,
+  useRedo,
+  useRemoveReaction,
+  _useRoom as useRoom,
+  useRoomNotificationSettings,
+  _useSelf as useSelf,
+  _useSelfSuspense as useSelfSuspense,
+  useStatus,
+  _useStorage as useStorage,
+  _useStorageRoot as useStorageRoot,
+  _useStorageSuspense as useStorageSuspense,
+  _useThreads as useThreads,
+  _useThreadsSuspense as useThreadsSuspense,
+  useThreadSubscription,
+  useUndo,
+  _useUpdateMyPresence as useUpdateMyPresence,
+  useUpdateRoomNotificationSettings,
+};
