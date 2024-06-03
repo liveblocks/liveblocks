@@ -1250,7 +1250,7 @@ To delete an existing metadata property, set its value to `null`. Passing
 
 ```tsx
 const editThreadMetadata = useEditThreadMetadata();
-const thread = editThreadMetadata({ threadId: "th_xxx", metadata: {} });
+editThreadMetadata({ threadId: "th_xxx", metadata: {} });
 ```
 
 ### useMarkThreadAsRead [@badge=RoomProvider]
