@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { useOther } from "@liveblocks/react/suspense";
+import { useOther } from "../../liveblocks.config";
 import { connectionIdToColor } from "../utils";
 
 type Props = {

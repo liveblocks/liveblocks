@@ -1,8 +1,9 @@
 import { createClient } from "@liveblocks/client";
+import { createRoomContext } from "@liveblocks/react";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import { Point, Color, Layer } from "./src/types";
 
-export const client = createClient({
+const client = createClient({
   throttle: 16,
   authEndpoint: "/api/liveblocks-auth",
 });
@@ -38,9 +39,20 @@ type Storage = {
 // room. Must be JSON-serializable.
 // type RoomEvent = {};
 
-declare global {
-  interface Liveblocks {
-    Presence: Presence;
-    Storage: Storage;
-  }
-}
+export const {
+  suspense: {
+    RoomProvider,
+    useCanRedo,
+    useCanUndo,
+    useHistory,
+    useMutation,
+    useOthers,
+    useOthersMapped,
+    useOthersConnectionIds,
+    useOther,
+    useRoom,
+    useSelf,
+    useStorage,
+    useUpdateMyPresence,
+  },
+} = createRoomContext<Presence, Storage /* UserMeta, RoomEvent */>(client);

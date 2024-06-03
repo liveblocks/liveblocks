@@ -1,4 +1,4 @@
-import { useSelf, useMutation } from "@liveblocks/react/suspense";
+import { useSelf, useMutation } from "../../liveblocks.config";
 
 /**
  * Delete all the selected layers.

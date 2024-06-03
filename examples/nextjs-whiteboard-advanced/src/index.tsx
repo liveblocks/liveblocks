@@ -7,8 +7,8 @@ import {
   useOthersMapped,
   useCanUndo,
   useCanRedo,
-  ClientSideSuspense
-} from "@liveblocks/react/suspense";
+} from "../liveblocks.config";
+import { ClientSideSuspense } from "@liveblocks/react";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
