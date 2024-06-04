@@ -105,7 +105,7 @@ export type EnterOptions<P extends JsonObject, S extends LsonObject> = Resolve<
  * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
  * will probably happen if you do.
  */
-type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
+export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
   readonly notifications: NotificationsApi<M>;
   readonly currentUserIdStore: Store<string | null>;
   readonly resolveMentionSuggestions: ClientOptions<U>["resolveMentionSuggestions"];
