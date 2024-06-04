@@ -542,7 +542,6 @@ export type Room<
    * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
    * will probably happen if you do.
    */
-  // XXX Make this a getter, so we can provide M.
   readonly [kInternal]: PrivateRoomApi<M>;
 
   /**

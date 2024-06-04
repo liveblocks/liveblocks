@@ -3,7 +3,14 @@ import { createAuthManager } from "./auth-manager";
 import { isIdle } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
 import type { LsonObject } from "./crdts/Lson";
-// import type { DE, DM, DP, DRI, DS, DU } from "./custom-types";
+import type {
+  // DE,
+  // DM,
+  // DP,
+  DRI,
+  // DS,
+  // DU,
+} from "./custom-types";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import { kInternal } from "./internal";
 import type { BatchStore } from "./lib/batch";
@@ -191,7 +198,7 @@ export type Client<U extends BaseUserMeta> = {
    * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
    * will probably happen if you do.
    */
-  // XXX Make this a getter, so we can provide U and M.
+  // XXX Make this a getter, so we can provide M.
   readonly [kInternal]: PrivateClientApi<U, BaseMetadata>;
 };
 
