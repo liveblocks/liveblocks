@@ -820,12 +820,12 @@ function useUnreadInboxNotificationsCountSuspense() {
 }
 
 function useUser<U extends BaseUserMeta>(userId: string) {
-  const client = useClient() as Client<U>;
+  const client = useClient<U>();
   return useUser_withClient(client, userId);
 }
 
 function useUserSuspense<U extends BaseUserMeta>(userId: string) {
-  const client = useClient() as Client<U>;
+  const client = useClient<U>();
   return useUserSuspense_withClient(client, userId);
 }
 
