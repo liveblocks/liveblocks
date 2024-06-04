@@ -82,6 +82,7 @@ export type ResolveRoomsInfoArgs = {
   roomIds: string[];
 };
 
+// XXX Set default types
 export type EnterOptions<P extends JsonObject, S extends LsonObject> = Resolve<
   // Enter options are just room initializers, plus an internal option
   RoomInitializers<P, S> & {
@@ -104,8 +105,8 @@ export type EnterOptions<P extends JsonObject, S extends LsonObject> = Resolve<
  * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
  * will probably happen if you do.
  */
-type PrivateClientApi<U extends BaseUserMeta> = {
-  readonly notifications: NotificationsApi;
+type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
+  readonly notifications: NotificationsApi<M>;
   readonly currentUserIdStore: Store<string | null>;
   readonly resolveMentionSuggestions: ClientOptions<U>["resolveMentionSuggestions"];
   readonly cacheStore: CacheStore<BaseMetadata>;
@@ -114,9 +115,8 @@ type PrivateClientApi<U extends BaseUserMeta> = {
   readonly getRoomIds: () => string[];
 };
 
-export type NotificationsApi<
-  M extends BaseMetadata = never, // TODO Change this to DM for 2.0
-> = {
+// XXX Should we restore default types here?
+export type NotificationsApi<M extends BaseMetadata> = {
   getInboxNotifications(options?: GetInboxNotificationsOptions): Promise<{
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<M>[];
@@ -139,17 +139,19 @@ export type NotificationsApi<
  */
 export type OpaqueClient = Client<BaseUserMeta>;
 
-export type Client<U extends BaseUserMeta = DU> = {
+// XXX Set default types
+export type Client<U extends BaseUserMeta> = {
   /**
    * Gets a room. Returns null if {@link Client.enter} has not been called previously.
    *
    * @param roomId The id of the room
    */
+  // XXX Set default types
   getRoom<
-    P extends JsonObject = DP,
-    S extends LsonObject = DS,
-    E extends Json = DE,
-    M extends BaseMetadata = DM,
+    P extends JsonObject,
+    S extends LsonObject,
+    E extends Json,
+    M extends BaseMetadata,
   >(
     roomId: string
   ): Room<P, S, U, E, M> | null;
@@ -160,11 +162,12 @@ export type Client<U extends BaseUserMeta = DU> = {
    * @param options Optional. You can provide initializers for the Presence or Storage when entering the Room.
    * @returns The room and a leave function. Call the returned leave() function when you no longer need the room.
    */
+  // XXX Set default types
   enterRoom<
-    P extends JsonObject = DP,
-    S extends LsonObject = DS,
-    E extends Json = DE,
-    M extends BaseMetadata = DM,
+    P extends JsonObject,
+    S extends LsonObject,
+    E extends Json,
+    M extends BaseMetadata,
   >(
     roomId: string,
     options: EnterOptions<P, S>
@@ -188,7 +191,12 @@ export type Client<U extends BaseUserMeta = DU> = {
    * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
    * will probably happen if you do.
    */
-  readonly [kInternal]: PrivateClientApi<U>;
+  readonly [kInternal]: PrivateClientApi<U, BaseMetadata>;
+  // XXX                                    ^^^^^^^^^^^^
+  // XXX This is a mistake, it should be `M`. However, `M` is not an open
+  // XXX variable here. The call site should define what it is. We cannot
+  // XXX obtain an `M`-typed version here easily. We should make this a factory
+  // XXX pattern to do so.
 };
 
 export type AuthEndpoint =
@@ -199,7 +207,8 @@ export type AuthEndpoint =
  * The authentication endpoint that is called to ensure that the current user has access to a room.
  * Can be an url or a callback if you need to add additional headers.
  */
-export type ClientOptions<U extends BaseUserMeta = DU> = {
+// XXX Set default types
+export type ClientOptions<U extends BaseUserMeta> = {
   throttle?: number; // in milliseconds
   lostConnectionTimeout?: number; // in milliseconds
   backgroundKeepAliveTimeout?: number; // in milliseconds
@@ -301,7 +310,8 @@ export function getAuthBearerHeaderFromAuthValue(authValue: AuthValue): string {
  *   }
  * });
  */
-export function createClient<U extends BaseUserMeta = DU>(
+// XXX Set default types
+export function createClient<U extends BaseUserMeta>(
   options: ClientOptions<U>
 ): Client<U> {
   const clientOptions = options;

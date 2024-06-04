@@ -4,6 +4,7 @@ import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 /**
  * Represents a user connected in a room. Treated as immutable.
  */
+// XXX Set default types
 export type User<P extends JsonObject, U extends BaseUserMeta> = {
   /**
    * The connection ID of the User. It is unique and increment at every new connection.

@@ -13,6 +13,7 @@ export type InternalOthersEvent<P extends JsonObject, U extends BaseUserMeta> =
     }
   | { type: "reset"; user?: never };
 
+// XXX Set default types
 export type OthersEvent<P extends JsonObject, U extends BaseUserMeta> = Resolve<
   InternalOthersEvent<P, U> & {
     others: readonly User<P, U>[];

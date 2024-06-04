@@ -527,6 +527,7 @@ export type OpaqueRoom = Room<
   BaseMetadata
 >;
 
+// XXX Set default types
 export type Room<
   P extends JsonObject,
   S extends LsonObject,
@@ -1065,9 +1066,10 @@ function createCommentsApi<M extends BaseMetadata>(
     return body;
   }
 
-  async function getThreads<
-    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
-  >(options?: GetThreadsOptions<M>) {
+  // XXX Set default types?
+  async function getThreads<M extends BaseMetadata>(
+    options?: GetThreadsOptions<M>
+  ) {
     let query: string | undefined;
 
     if (options?.query) {
@@ -1128,14 +1130,19 @@ function createCommentsApi<M extends BaseMetadata>(
     }
   }
 
-  async function getThread({ threadId }: { threadId: string }) {
+  // XXX Set default types?
+  async function getThread<M extends BaseMetadata>({
+    threadId,
+  }: {
+    threadId: string;
+  }) {
     const response = await fetchCommentsApi(
       `/thread-with-notification/${threadId}`
     );
 
     if (response.ok) {
       const json = (await response.json()) as {
-        thread: ThreadDataPlain;
+        thread: ThreadDataPlain<M>;
         inboxNotification?: InboxNotificationDataPlain;
       };
 
@@ -1152,9 +1159,8 @@ function createCommentsApi<M extends BaseMetadata>(
     }
   }
 
-  async function createThread<
-    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
-  >({
+  // XXX Set default types?
+  async function createThread<M extends BaseMetadata>({
     metadata,
     body,
     commentId,
@@ -1184,9 +1190,8 @@ function createCommentsApi<M extends BaseMetadata>(
     return convertToThreadData(thread);
   }
 
-  async function editThreadMetadata<
-    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
-  >({
+  // XXX Set default types?
+  async function editThreadMetadata<M extends BaseMetadata>({
     metadata,
     threadId,
   }: {

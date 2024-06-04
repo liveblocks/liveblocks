@@ -73,9 +73,8 @@ export type CommentBodyLinkElementArgs = {
   href: string;
 };
 
-export type CommentBodyMentionElementArgs<
-  U extends BaseUserMeta = BaseUserMeta,
-> = {
+// XXX Set default types
+export type CommentBodyMentionElementArgs<U extends BaseUserMeta> = {
   /**
    * The mention element.
    */
@@ -87,9 +86,8 @@ export type CommentBodyMentionElementArgs<
   user?: U["info"];
 };
 
-export type StringifyCommentBodyElements<
-  U extends BaseUserMeta = BaseUserMeta,
-> = {
+// XXX Set default types
+export type StringifyCommentBodyElements<U extends BaseUserMeta> = {
   /**
    * The element used to display paragraphs.
    */
@@ -111,31 +109,31 @@ export type StringifyCommentBodyElements<
   mention: (args: CommentBodyMentionElementArgs<U>, index: number) => string;
 };
 
-export type StringifyCommentBodyOptions<U extends BaseUserMeta = BaseUserMeta> =
-  {
-    /**
-     * Which format to convert the comment to.
-     */
-    format?: "plain" | "html" | "markdown";
+// XXX Set default types
+export type StringifyCommentBodyOptions<U extends BaseUserMeta> = {
+  /**
+   * Which format to convert the comment to.
+   */
+  format?: "plain" | "html" | "markdown";
 
-    /**
-     * The elements used to customize the resulting string. Each element has
-     * priority over the defaults inherited from the `format` option.
-     */
-    elements?: Partial<StringifyCommentBodyElements<U>>;
+  /**
+   * The elements used to customize the resulting string. Each element has
+   * priority over the defaults inherited from the `format` option.
+   */
+  elements?: Partial<StringifyCommentBodyElements<U>>;
 
-    /**
-     * The separator used between paragraphs.
-     */
-    separator?: string;
+  /**
+   * The separator used between paragraphs.
+   */
+  separator?: string;
 
-    /**
-     * A function that returns user info from user IDs.
-     */
-    resolveUsers?: (
-      args: ResolveUsersArgs
-    ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
-  };
+  /**
+   * A function that returns user info from user IDs.
+   */
+  resolveUsers?: (
+    args: ResolveUsersArgs
+  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+};
 
 function isCommentBodyParagraph(
   element: CommentBodyElement
