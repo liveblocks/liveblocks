@@ -188,6 +188,7 @@ export type { PrivateRoomApi } from "./room";
 export type {
   BroadcastOptions,
   History,
+  OpaqueRoom,
   Room,
   RoomEventMessage,
   RoomInitializers,

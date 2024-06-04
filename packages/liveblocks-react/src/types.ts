@@ -363,7 +363,7 @@ type RoomContextBundleCommon<
    * it can be necessary if you're building an advanced app where you need to
    * set up a context bridge between two React renderers.
    */
-  RoomContext: React.Context<Room<P, S, U, E> | null>;
+  RoomContext: React.Context<Room<P, S, U, E, M> | null>;
 
   /**
    * Makes a Room available in the component hierarchy below.
@@ -376,7 +376,7 @@ type RoomContextBundleCommon<
    * Returns the Room of the nearest RoomProvider above in the React component
    * tree.
    */
-  useRoom(): Room<P, S, U, E>;
+  useRoom(): Room<P, S, U, E, M>;
 
   /**
    * Returns the current connection status for the Room, and triggers
