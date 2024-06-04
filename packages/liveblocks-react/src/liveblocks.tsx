@@ -797,6 +797,9 @@ export function LiveblocksProvider(
     resolveRoomsInfo: useInitialUnlessFunction(o.resolveRoomsInfo),
   } as ClientOptions<BaseUserMeta>;
 
+  // NOTE: Deliberately not passing any deps here, because we'll _never_ want
+  // to recreate a client instance after the first render.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const client = useMemo(() => createClient(options), []);
   return (
     <LiveblocksProviderWithClient client={client}>

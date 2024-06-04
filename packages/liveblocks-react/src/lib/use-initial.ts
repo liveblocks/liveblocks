@@ -23,12 +23,16 @@ export function useInitialUnlessFunction<T>(latestValue: T): T {
   // conditionally. In this case, we're good here, because the same code path
   // will always be taken on every subsequent render here, because we've frozen
   // the value.
+  /* eslint-disable react-hooks/rules-of-hooks */
   if (typeof frozenValue === "function") {
-    type Fn = T & Function;
+    type Fn = T & ((...args: unknown[]) => unknown);
     const ref = useRef(latestValue as Fn);
-    const wrapper = ((...args: any[]) => ref.current(...args)) as any as Fn;
-    return useCallback(wrapper, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return useCallback(((...args: unknown[]) => ref.current(...args)) as Fn, [
+      ref,
+    ]);
   } else {
     return frozenValue;
   }
+  /* eslint-enable react-hooks/rules-of-hooks */
 }
