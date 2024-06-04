@@ -137,7 +137,7 @@ export type NotificationsApi<
  */
 export type OpaqueClient = Client<BaseUserMeta>;
 
-export type Client<U extends BaseUserMeta> = {
+export type Client<U extends BaseUserMeta = DU> = {
   /**
    * Gets a room. Returns null if {@link Client.enter} has not been called previously.
    *
