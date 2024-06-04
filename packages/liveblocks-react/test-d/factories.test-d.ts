@@ -45,7 +45,7 @@ type M = MyThreadMetadata;
 const client = createClient({ publicApiKey: "pk_whatever" });
 
 const lbctx = createLiveblocksContext<U, M>(client);
-const ctx = createRoomContext<P, S, U, E>(client);
+const ctx = createRoomContext<P, S, U, E, M>(client);
 
 // ---------------------------------------------------------
 // Hook APIs
@@ -311,6 +311,397 @@ ctx.useErrorListener((err) => {
     expectType<string | undefined>(info.url);
     expectType<undefined>(error);
   }
+}
+
+// ---------------------------------------------------------
+
+// The useCreateThread() hook
+{
+  {
+    const untypedCtx = createRoomContext(client);
+    const createThread = untypedCtx.useCreateThread();
+    //                   ^^^^^^^^^^ [1]
+    expectError(createThread({}));
+
+    const thread1 = createThread({
+      body: {
+        version: 1,
+        content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+      },
+    });
+
+    expectType<"thread">(thread1.type);
+    expectType<string>(thread1.id);
+    expectType<string>(thread1.roomId);
+    expectType<"comment">(thread1.comments[0].type);
+    expectType<string>(thread1.comments[0].id);
+    expectType<string>(thread1.comments[0].threadId);
+
+    expectType<string | number | boolean | undefined>(thread1.metadata.color);
+
+    // But... creating a thread _with_ metadata is now an error
+    const thread2 = createThread({
+      body: {
+        version: 1,
+        content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+      },
+      metadata: { foo: "bar" },
+    });
+
+    expectType<string>(thread2.id);
+  }
+
+  {
+    const createThread = ctx.useCreateThread();
+    //                   ^^^ [2]
+    expectError(createThread({})); // no body = error
+
+    // No metadata = error
+    expectError(
+      createThread({
+        body: {
+          version: 1,
+          content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+        },
+      })
+    );
+
+    const thread = createThread({
+      body: {
+        version: 1,
+        content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+      },
+      metadata: { color: "red" },
+    });
+
+    expectType<"thread">(thread.type);
+    expectType<string>(thread.id);
+    expectType<string>(thread.roomId);
+    expectType<"comment">(thread.comments[0].type);
+    expectType<string>(thread.comments[0].id);
+    expectType<string>(thread.comments[0].threadId);
+
+    expectType<"red" | "blue">(thread.metadata.color);
+  }
+}
+
+// The useCreateThread() hook (suspense)
+{
+  {
+    const untypedCtx = createRoomContext(client);
+    const createThread = untypedCtx.suspense.useCreateThread();
+    //                   ^^^^^^^^^^^^^^^^^^^ [3]
+    expectError(createThread({}));
+
+    const thread1 = createThread({
+      body: {
+        version: 1,
+        content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+      },
+    });
+
+    expectType<"thread">(thread1.type);
+    expectType<string>(thread1.id);
+    expectType<string>(thread1.roomId);
+    expectType<"comment">(thread1.comments[0].type);
+    expectType<string>(thread1.comments[0].id);
+    expectType<string>(thread1.comments[0].threadId);
+
+    expectType<string | number | boolean | undefined>(thread1.metadata.color);
+
+    const thread2 = createThread({
+      body: {
+        version: 1,
+        content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+      },
+      metadata: { foo: "bar" },
+    });
+
+    expectType<string>(thread2.id);
+  }
+
+  {
+    const createThread = ctx.suspense.useCreateThread();
+    //                   ^^^^^^^^^^^^ [4]
+    expectError(createThread({})); // no body = error
+
+    // No metadata = error
+    expectError(
+      createThread({
+        body: {
+          version: 1,
+          content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+        },
+      })
+    );
+
+    const thread = createThread({
+      body: {
+        version: 1,
+        content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+      },
+      metadata: { color: "red" },
+    });
+
+    expectType<"thread">(thread.type);
+    expectType<string>(thread.id);
+    expectType<string>(thread.roomId);
+    expectType<"comment">(thread.comments[0].type);
+    expectType<string>(thread.comments[0].id);
+    expectType<string>(thread.comments[0].threadId);
+
+    expectType<"red" | "blue">(thread.metadata.color);
+  }
+}
+
+// ---------------------------------------------------------
+
+// The useEditThreadMetadata() hook
+{
+  {
+    const untypedCtx = createRoomContext(client);
+    const editMetadata = untypedCtx.useEditThreadMetadata();
+    //                   ^^^^^^^^^^ [1]
+    expectError(editMetadata({}));
+
+    expectType<void>(editMetadata({ threadId: "th_xxx", metadata: {} }));
+    expectType<void>(
+      editMetadata({ threadId: "th_xxx", metadata: { nonexisting: 123 } })
+    );
+    expectType<void>(
+      editMetadata({ threadId: "th_xxx", metadata: { nonexisting: null } })
+    );
+  }
+
+  {
+    const editMetadata = ctx.useEditThreadMetadata();
+    //                   ^^^ [2]
+    expectError(editMetadata({})); // no body = error
+
+    expectError(
+      editMetadata({ threadId: "th_xxx", metadata: { nonexisting: null } })
+    );
+    expectError(
+      editMetadata({ threadId: "th_xxx", metadata: { nonexisting: 123 } })
+    );
+
+    expectType<void>(editMetadata({ threadId: "th_xxx", metadata: {} }));
+    expectType<void>(
+      editMetadata({ threadId: "th_xxx", metadata: { color: null } })
+    );
+    expectType<void>(
+      editMetadata({ threadId: "th_xxx", metadata: { color: "red" } })
+    );
+  }
+}
+
+// The useEditThreadMetadata() hook (suspense)
+{
+  {
+    const untypedCtx = createRoomContext(client);
+    const editMetadata = untypedCtx.suspense.useEditThreadMetadata();
+    //                   ^^^^^^^^^^^^^^^^^^^ [3]
+    expectError(editMetadata({}));
+
+    expectType<void>(editMetadata({ threadId: "th_xxx", metadata: {} }));
+    expectType<void>(
+      editMetadata({ threadId: "th_xxx", metadata: { nonexisting: 123 } })
+    );
+    expectType<void>(
+      editMetadata({ threadId: "th_xxx", metadata: { nonexisting: null } })
+    );
+  }
+
+  {
+    const editMetadata = ctx.suspense.useEditThreadMetadata();
+    //                   ^^^^^^^^^^^^ [4]
+    expectError(editMetadata({})); // no body = error
+
+    expectError(
+      editMetadata({ threadId: "th_xxx", metadata: { nonexisting: null } })
+    );
+    expectError(
+      editMetadata({ threadId: "th_xxx", metadata: { nonexisting: 123 } })
+    );
+
+    expectType<void>(editMetadata({ threadId: "th_xxx", metadata: {} }));
+    expectType<void>(
+      editMetadata({ threadId: "th_xxx", metadata: { color: null } })
+    );
+    expectType<void>(
+      editMetadata({ threadId: "th_xxx", metadata: { color: "red" } })
+    );
+  }
+}
+
+// ---------------------------------------------------------
+
+// The useCreateComment() hook
+{
+  {
+    const createComment = ctx.useCreateComment();
+    expectError(createComment({}));
+
+    const comment = createComment({
+      threadId: "th_xxx",
+      body: {
+        version: 1,
+        content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+      },
+    });
+
+    expectType<"comment">(comment.type);
+    expectType<string>(comment.id);
+    expectType<string>(comment.threadId);
+  }
+}
+
+// The useCreateComment() hook (suspense)
+{
+  const createComment = ctx.suspense.useCreateComment();
+  expectError(createComment({}));
+
+  const comment = createComment({
+    threadId: "th_xxx",
+    body: {
+      version: 1,
+      content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+    },
+  });
+
+  expectType<"comment">(comment.type);
+  expectType<string>(comment.id);
+  expectType<string>(comment.threadId);
+}
+
+// ---------------------------------------------------------
+
+// The useEditComment() hook
+{
+  const editComment = ctx.useEditComment();
+  expectError(editComment({}));
+
+  expectType<void>(
+    editComment({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      body: { version: 1, content: [] },
+    })
+  );
+}
+
+// The useEditComment() hook (suspense)
+{
+  const editComment = ctx.suspense.useEditComment();
+  expectError(editComment({}));
+
+  expectType<void>(
+    editComment({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      body: { version: 1, content: [] },
+    })
+  );
+}
+
+// ---------------------------------------------------------
+
+// The useDeleteComment() hook
+{
+  const deleteComment = ctx.useDeleteComment();
+
+  expectError(deleteComment({}));
+  expectError(deleteComment({ threadId: "th_xxx" }));
+  expectError(deleteComment({ commentId: "co_xxx" }));
+
+  expectType<void>(deleteComment({ threadId: "th_xxx", commentId: "co_xxx" }));
+}
+
+// The useDeleteComment() hook (suspense)
+{
+  const deleteComment = ctx.suspense.useDeleteComment();
+
+  expectError(deleteComment({}));
+  expectError(deleteComment({ threadId: "th_xxx" }));
+  expectError(deleteComment({ commentId: "co_xxx" }));
+
+  expectType<void>(deleteComment({ threadId: "th_xxx", commentId: "co_xxx" }));
+}
+
+// ---------------------------------------------------------
+
+// The useAddReaction() hook
+{
+  const addReaction = ctx.useAddReaction();
+
+  expectError(addReaction({}));
+  expectError(addReaction({ threadId: "th_xxx", emoji: "👍" }));
+  expectError(addReaction({ commentId: "th_xxx", emoji: "👍" }));
+  expectError(addReaction({ threadId: "th_xxx", commentId: "th_xxx" }));
+
+  expectType<void>(
+    addReaction({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      emoji: "👍",
+    })
+  );
+}
+
+// The useAddReaction() hook (suspense)
+{
+  const addReaction = ctx.suspense.useAddReaction();
+
+  expectError(addReaction({}));
+  expectError(addReaction({ threadId: "th_xxx", emoji: "👍" }));
+  expectError(addReaction({ commentId: "th_xxx", emoji: "👍" }));
+  expectError(addReaction({ threadId: "th_xxx", commentId: "th_xxx" }));
+
+  expectType<void>(
+    addReaction({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      emoji: "👍",
+    })
+  );
+}
+
+// ---------------------------------------------------------
+
+// The useRemoveReaction() hook
+{
+  const removeReaction = ctx.useRemoveReaction();
+
+  expectError(removeReaction({}));
+  expectError(removeReaction({ threadId: "th_xxx", emoji: "👍" }));
+  expectError(removeReaction({ commentId: "th_xxx", emoji: "👍" }));
+  expectError(removeReaction({ threadId: "th_xxx", commentId: "th_xxx" }));
+
+  expectType<void>(
+    removeReaction({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      emoji: "👍",
+    })
+  );
+}
+
+// The useRemoveReaction() hook (suspense)
+{
+  const removeReaction = ctx.suspense.useRemoveReaction();
+
+  expectError(removeReaction({}));
+  expectError(removeReaction({ threadId: "th_xxx", emoji: "👍" }));
+  expectError(removeReaction({ commentId: "th_xxx", emoji: "👍" }));
+  expectError(removeReaction({ threadId: "th_xxx", commentId: "th_xxx" }));
+
+  expectType<void>(
+    removeReaction({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      emoji: "👍",
+    })
+  );
 }
 
 // ---------------------------------------------------------

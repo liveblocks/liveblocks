@@ -1263,7 +1263,7 @@ function useCreateThread<M extends BaseMetadata>() {
   return React.useCallback(
     (options: CreateThreadOptions<M>): ThreadData<M> => {
       const body = options.body;
-      const metadata: M = "metadata" in options ? options.metadata : ({} as M);
+      const metadata: M = (options.metadata ?? {}) as M;
 
       const threadId = createThreadId();
       const commentId = createCommentId();
@@ -1338,7 +1338,7 @@ function useEditThreadMetadata<M extends BaseMetadata>() {
   const room = useRoom();
   return React.useCallback(
     (options: EditThreadMetadataOptions<M>): void => {
-      if (!("metadata" in options)) {
+      if (!options.metadata) {
         return;
       }
 
@@ -1398,9 +1398,7 @@ function useEditThreadMetadata<M extends BaseMetadata>() {
                 ...state.threads,
                 [threadId]: {
                   ...existingThread,
-                  metadata: metadata as [M] extends [never]
-                    ? Record<string, never>
-                    : M,
+                  metadata,
                 },
               },
               optimisticUpdates: updatedOptimisticUpdates,
@@ -2246,8 +2244,8 @@ export function createRoomContext<
   P extends JsonObject = DP,
   S extends LsonObject = DS,
   U extends BaseUserMeta = DU,
-  E extends Json = never, // TODO Change this to DE for 2.0
-  M extends BaseMetadata = never, // TODO Change this to DM for 2.0
+  E extends Json = DE,
+  M extends BaseMetadata = DM,
 >(client: OpaqueClient): RoomContextBundle<P, S, U, E, M> {
   return getOrCreateRoomContextBundle<P, S, U, E, M>(client);
 }
