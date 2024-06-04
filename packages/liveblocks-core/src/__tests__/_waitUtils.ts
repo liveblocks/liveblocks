@@ -3,7 +3,16 @@ import type { LsonObject } from "../crdts/Lson";
 import type { Json, JsonObject } from "../lib/Json";
 import { withTimeout } from "../lib/utils";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
+import type { BaseMetadata } from "../protocol/Comments";
 import type { Room } from "../room";
+
+type OpaqueRoom = Room<
+  JsonObject,
+  LsonObject,
+  BaseUserMeta,
+  Json,
+  BaseMetadata
+>;
 
 export function sleep(delay: number) {
   return new Promise((resolve) => setTimeout(resolve, delay));
@@ -33,7 +42,7 @@ export async function waitFor(predicate: () => boolean): Promise<void> {
  * a limited time window, or else this will fail, to avoid hanging.
  */
 export async function waitUntilStatus(
-  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
+  room: OpaqueRoom,
   targetStatus: Status,
   timeout = 1000
 ): Promise<void> {
@@ -50,9 +59,7 @@ export async function waitUntilStatus(
   );
 }
 
-export async function waitUntilOthersEvent(
-  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
-): Promise<void> {
+export async function waitUntilOthersEvent(room: OpaqueRoom): Promise<void> {
   await withTimeout(
     room.events.others.waitUntil(),
     1000,
@@ -60,9 +67,7 @@ export async function waitUntilOthersEvent(
   );
 }
 
-export async function waitUntilCustomEvent(
-  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
-): Promise<void> {
+export async function waitUntilCustomEvent(room: OpaqueRoom): Promise<void> {
   await withTimeout(
     room.events.customEvent.waitUntil(),
     1000,
@@ -74,9 +79,7 @@ export async function waitUntilCustomEvent(
  * Handy helper that allows to pause test execution until the room has
  * synchronized all pending changes to the server.
  */
-export async function waitUntilSynchronized(
-  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
-): Promise<void> {
+export async function waitUntilSynchronized(room: OpaqueRoom): Promise<void> {
   if (room.getStorageStatus() === "synchronized") {
     return;
   }
@@ -88,9 +91,7 @@ export async function waitUntilSynchronized(
   );
 }
 
-export async function waitUntilStorageUpdate(
-  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
-): Promise<void> {
+export async function waitUntilStorageUpdate(room: OpaqueRoom): Promise<void> {
   await withTimeout(
     room.events.storage.waitUntil(),
     1000,

@@ -854,8 +854,9 @@ function useRoom<
   S extends LsonObject = never,
   U extends BaseUserMeta = never,
   E extends Json = never,
->(): Room<P, S, U, E> {
-  const room = useRoomOrNull<P, S, U, E>();
+  M extends BaseMetadata = never,
+>(): Room<P, S, U, E, M> {
+  const room = useRoomOrNull<P, S, U, E, M>();
   if (room === null) {
     throw new Error("RoomProvider is missing from the React tree.");
   }
@@ -2215,8 +2216,9 @@ export function useRoomOrNull<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
->(): Room<P, S, U, E> | null {
-  return React.useContext(RoomContext) as Room<P, S, U, E> | null;
+  M extends BaseMetadata,
+>(): Room<P, S, U, E, M> | null {
+  return React.useContext(RoomContext) as Room<P, S, U, E, M> | null;
 }
 
 /**
@@ -2226,7 +2228,7 @@ export function useRoomOrNull<
  */
 export function useRoomContextBundleOrNull() {
   const client = useClientOrNull();
-  const room = useRoomOrNull<never, never, never, never>();
+  const room = useRoomOrNull<never, never, never, never, never>();
   return client && room ? getOrCreateRoomContextBundle(client) : null;
 }
 

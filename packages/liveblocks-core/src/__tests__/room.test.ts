@@ -13,6 +13,7 @@ import * as console from "../lib/fancy-console";
 import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import { ClientMsgCode } from "../protocol/ClientMsg";
+import type { BaseMetadata } from "../protocol/Comments";
 import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
@@ -91,6 +92,7 @@ function createTestableRoom<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
+  M extends BaseMetadata,
 >(
   initialPresence: P,
   authBehavior = AUTH_SUCCESS,
@@ -100,7 +102,7 @@ function createTestableRoom<
 ) {
   const { wss, delegates } = defineBehavior(authBehavior, socketBehavior);
 
-  const room = createRoom<P, S, U, E>(
+  const room = createRoom<P, S, U, E, M>(
     { initialPresence, initialStorage },
     makeRoomConfig(delegates, config)
   );
@@ -1565,7 +1567,7 @@ describe("room", () => {
     test("others", async () => {
       type P = { x?: number };
 
-      const { room, wss } = createTestableRoom<P, never, never, never>(
+      const { room, wss } = createTestableRoom<P, never, never, never, never>(
         {},
         undefined,
         SOCKET_AUTOCONNECT_AND_ROOM_STATE()
@@ -2435,10 +2437,11 @@ describe("room", () => {
     test("skip UpdatePresence from other when initial full presence has not been received", async () => {
       type P = { x?: number };
       type S = never;
-      type M = never;
+      type U = never;
       type E = never;
+      type M = never;
 
-      const { room, wss } = createTestableRoom<P, S, M, E>(
+      const { room, wss } = createTestableRoom<P, S, U, E, M>(
         {},
         undefined,
         SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
@@ -2467,7 +2470,7 @@ describe("room", () => {
 
       room.connect();
 
-      let others: readonly User<P, M>[] | undefined;
+      let others: readonly User<P, U>[] | undefined;
 
       room.events.others.subscribe((ev) => (others = ev.others));
 
