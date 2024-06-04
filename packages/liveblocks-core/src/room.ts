@@ -31,6 +31,7 @@ import {
 import { LiveObject } from "./crdts/LiveObject";
 import type { LiveNode, LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
+import type { DE, DM, DP, DS, DU } from "./custom-types";
 import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
 import { Batch } from "./lib/batch";
@@ -527,13 +528,12 @@ export type OpaqueRoom = Room<
   BaseMetadata
 >;
 
-// XXX Set default types
 export type Room<
-  P extends JsonObject,
-  S extends LsonObject,
-  U extends BaseUserMeta,
-  E extends Json,
-  M extends BaseMetadata,
+  P extends JsonObject = DP,
+  S extends LsonObject = DS,
+  U extends BaseUserMeta = DU,
+  E extends Json = DE,
+  M extends BaseMetadata = DM,
 > = {
   /**
    * @private

@@ -1,3 +1,4 @@
+import type { DP, DU } from "../custom-types";
 import type { JsonObject } from "../lib/Json";
 import type { Resolve } from "../lib/Resolve";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
@@ -13,8 +14,10 @@ export type InternalOthersEvent<P extends JsonObject, U extends BaseUserMeta> =
     }
   | { type: "reset"; user?: never };
 
-// XXX Set default types
-export type OthersEvent<P extends JsonObject, U extends BaseUserMeta> = Resolve<
+export type OthersEvent<
+  P extends JsonObject = DP,
+  U extends BaseUserMeta = DU,
+> = Resolve<
   InternalOthersEvent<P, U> & {
     others: readonly User<P, U>[];
   }

@@ -11,6 +11,7 @@ import type {
   CommentDataPlain,
   CommentUserReaction,
   CommentUserReactionPlain,
+  DM,
   InboxNotificationData,
   InboxNotificationDataPlain,
   IUserInfo,
@@ -935,7 +936,7 @@ export class Liveblocks {
    * @param params.query The query to filter threads by. It is based on our query language and can filter by metadata.
    * @returns A list of threads.
    */
-  public async getThreads<M extends BaseMetadata>(params: {
+  public async getThreads<M extends BaseMetadata = DM>(params: {
     roomId: string;
     /**
      * The query to filter threads by. It is based on our query language.
@@ -998,8 +999,7 @@ export class Liveblocks {
    * @param params.threadId The thread ID.
    * @returns A thread.
    */
-  // XXX Set default types?
-  public async getThread<M extends BaseMetadata>(params: {
+  public async getThread<M extends BaseMetadata = DM>(params: {
     roomId: string;
     threadId: string;
   }): Promise<ThreadData<M>> {
@@ -1166,8 +1166,7 @@ export class Liveblocks {
    * @param params.thread.comment.body The body of the comment.
    * @returns The created thread. The thread will be created with the specified comment as its first comment.
    */
-  // XXX Set default types?
-  public async createThread<M extends BaseMetadata>(params: {
+  public async createThread<M extends BaseMetadata = DM>(params: {
     roomId: string;
     data: {
       metadata?: [M] extends [never] ? Record<string, never> : M;
@@ -1205,8 +1204,7 @@ export class Liveblocks {
    * @param params.data.updatedAt (optional) The date the thread is set to be updated.
    * @returns The updated thread.
    */
-  // XXX Set default types?
-  public async editThreadMetadata<M extends BaseMetadata>(params: {
+  public async editThreadMetadata<M extends BaseMetadata = DM>(params: {
     roomId: string;
     threadId: string;
     data: {

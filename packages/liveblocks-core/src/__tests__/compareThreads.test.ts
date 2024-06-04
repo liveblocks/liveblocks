@@ -1,11 +1,8 @@
-import type { BaseMetadata, ThreadData } from "../protocol/Comments";
+import type { ThreadData } from "../protocol/Comments";
 import { compareThreads } from "../store";
 
-// XXX Remove me when done
-type ___REMOVE_ME_WHEN_DONE___ = BaseMetadata;
-
 describe("compareThreads", () => {
-  const thread1: ThreadData<___REMOVE_ME_WHEN_DONE___> = {
+  const thread1: ThreadData = {
     type: "thread" as const,
     id: "th_1",
     createdAt: new Date("2024-01-01"),
@@ -14,7 +11,7 @@ describe("compareThreads", () => {
     metadata: {},
   };
 
-  const thread2: ThreadData<___REMOVE_ME_WHEN_DONE___> = {
+  const thread2: ThreadData = {
     type: "thread" as const,
     id: "th_1",
     createdAt: new Date("2024-01-01"),

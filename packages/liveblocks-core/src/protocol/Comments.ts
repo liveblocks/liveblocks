@@ -1,3 +1,4 @@
+import type { DM } from "../custom-types";
 import type { DateToString } from "../lib/DateToString";
 
 export type BaseMetadata = Record<
@@ -90,8 +91,7 @@ export type CommentUserReactionPlain = DateToString<CommentUserReaction>;
 /**
  * Represents a thread of comments.
  */
-// XXX Set default types
-export type ThreadData<M extends BaseMetadata> = {
+export type ThreadData<M extends BaseMetadata = DM> = {
   type: "thread";
   id: string;
   roomId: string;
@@ -101,13 +101,11 @@ export type ThreadData<M extends BaseMetadata> = {
   metadata: M;
 };
 
-// XXX Set default types???????? Is this public?
 export interface ThreadDataWithDeleteInfo<M extends BaseMetadata>
   extends ThreadData<M> {
   deletedAt?: Date;
 }
 
-// XXX Set default types???????? Is this public?
 export type ThreadDataPlain<M extends BaseMetadata> = Omit<
   DateToString<ThreadData<M>>,
   "comments" | "metadata"

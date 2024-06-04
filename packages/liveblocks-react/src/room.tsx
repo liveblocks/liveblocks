@@ -856,13 +856,12 @@ function RoomProviderInner<
   );
 }
 
-// XXX Set default types
 function useRoom<
-  P extends JsonObject,
-  S extends LsonObject,
-  U extends BaseUserMeta,
-  E extends Json,
-  M extends BaseMetadata,
+  P extends JsonObject = DP,
+  S extends LsonObject = DS,
+  U extends BaseUserMeta = DU,
+  E extends Json = DE,
+  M extends BaseMetadata = DM,
 >(): Room<P, S, U, E, M> {
   const room = useRoomOrNull<P, S, U, E, M>();
   if (room === null) {

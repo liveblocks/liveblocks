@@ -1,16 +1,12 @@
 import type {
-  BaseMetadata,
   ThreadData,
   ThreadDataWithDeleteInfo,
   ThreadDeleteInfo,
 } from "../protocol/Comments";
 import { applyThreadUpdates } from "../store";
 
-// XXX Remove me when done
-type ___REMOVE_ME_WHEN_DONE___ = BaseMetadata;
-
 describe("applyThreadUpdates", () => {
-  const thread1: ThreadDataWithDeleteInfo<___REMOVE_ME_WHEN_DONE___> = {
+  const thread1: ThreadDataWithDeleteInfo = {
     type: "thread" as const,
     id: "th_1",
     createdAt: new Date("2024-01-01"),
@@ -19,7 +15,7 @@ describe("applyThreadUpdates", () => {
     metadata: {},
   };
 
-  const thread2: ThreadDataWithDeleteInfo<___REMOVE_ME_WHEN_DONE___> = {
+  const thread2: ThreadDataWithDeleteInfo = {
     type: "thread" as const,
     id: "th_2",
     createdAt: new Date("2024-01-01"),
@@ -57,7 +53,7 @@ describe("applyThreadUpdates", () => {
   });
 
   it("should update an existing thread with a newer one", () => {
-    const thread1Updated: ThreadData<___REMOVE_ME_WHEN_DONE___> = {
+    const thread1Updated: ThreadData = {
       ...thread1,
       updatedAt: new Date("2024-01-03"), // A newer date than the original thread1
       metadata: { resolved: true }, // Simulate changes in the thread

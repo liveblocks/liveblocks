@@ -1,4 +1,5 @@
 import type { ResolveUsersArgs } from "../client";
+import type { DU } from "../custom-types";
 import { nn } from "../lib/assert";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type {
@@ -73,8 +74,7 @@ export type CommentBodyLinkElementArgs = {
   href: string;
 };
 
-// XXX Set default types
-export type CommentBodyMentionElementArgs<U extends BaseUserMeta> = {
+export type CommentBodyMentionElementArgs<U extends BaseUserMeta = DU> = {
   /**
    * The mention element.
    */
@@ -86,8 +86,7 @@ export type CommentBodyMentionElementArgs<U extends BaseUserMeta> = {
   user?: U["info"];
 };
 
-// XXX Set default types
-export type StringifyCommentBodyElements<U extends BaseUserMeta> = {
+export type StringifyCommentBodyElements<U extends BaseUserMeta = DU> = {
   /**
    * The element used to display paragraphs.
    */
@@ -109,8 +108,7 @@ export type StringifyCommentBodyElements<U extends BaseUserMeta> = {
   mention: (args: CommentBodyMentionElementArgs<U>, index: number) => string;
 };
 
-// XXX Set default types
-export type StringifyCommentBodyOptions<U extends BaseUserMeta> = {
+export type StringifyCommentBodyOptions<U extends BaseUserMeta = DU> = {
   /**
    * Which format to convert the comment to.
    */

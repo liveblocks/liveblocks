@@ -785,10 +785,9 @@ export function useLiveblocksContextBundle() {
   return getOrCreateContextBundle(client);
 }
 
-// XXX Set default types
 export function createLiveblocksContext<
-  U extends BaseUserMeta,
-  M extends BaseMetadata,
+  U extends BaseUserMeta = DU,
+  M extends BaseMetadata = DM,
 >(client: OpaqueClient): LiveblocksContextBundle<U, M> {
   return getOrCreateContextBundle<U, M>(client);
 }

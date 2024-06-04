@@ -4,10 +4,15 @@ import { isIdle } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
 import type { LsonObject } from "./crdts/Lson";
 import type {
+  DE,
+  DM,
+  DP,
   // DE,
   // DM,
   // DP,
   DRI,
+  DS,
+  DU,
   // DS,
   // DU,
 } from "./custom-types";
@@ -89,8 +94,10 @@ export type ResolveRoomsInfoArgs = {
   roomIds: string[];
 };
 
-// XXX Set default types
-export type EnterOptions<P extends JsonObject, S extends LsonObject> = Resolve<
+export type EnterOptions<
+  P extends JsonObject = DP,
+  S extends LsonObject = DS,
+> = Resolve<
   // Enter options are just room initializers, plus an internal option
   RoomInitializers<P, S> & {
     /**
@@ -122,7 +129,6 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
   readonly getRoomIds: () => string[];
 };
 
-// XXX Should we restore default types here?
 export type NotificationsApi<M extends BaseMetadata> = {
   getInboxNotifications(options?: GetInboxNotificationsOptions): Promise<{
     inboxNotifications: InboxNotificationData[];
@@ -146,19 +152,17 @@ export type NotificationsApi<M extends BaseMetadata> = {
  */
 export type OpaqueClient = Client<BaseUserMeta>;
 
-// XXX Set default types
-export type Client<U extends BaseUserMeta> = {
+export type Client<U extends BaseUserMeta = DU> = {
   /**
    * Gets a room. Returns null if {@link Client.enter} has not been called previously.
    *
    * @param roomId The id of the room
    */
-  // XXX Set default types
   getRoom<
-    P extends JsonObject,
-    S extends LsonObject,
-    E extends Json,
-    M extends BaseMetadata,
+    P extends JsonObject = DP,
+    S extends LsonObject = DS,
+    E extends Json = DE,
+    M extends BaseMetadata = DM,
   >(
     roomId: string
   ): Room<P, S, U, E, M> | null;
@@ -169,12 +173,11 @@ export type Client<U extends BaseUserMeta> = {
    * @param options Optional. You can provide initializers for the Presence or Storage when entering the Room.
    * @returns The room and a leave function. Call the returned leave() function when you no longer need the room.
    */
-  // XXX Set default types
   enterRoom<
-    P extends JsonObject,
-    S extends LsonObject,
-    E extends Json,
-    M extends BaseMetadata,
+    P extends JsonObject = DP,
+    S extends LsonObject = DS,
+    E extends Json = DE,
+    M extends BaseMetadata = DM,
   >(
     roomId: string,
     options: EnterOptions<P, S>
@@ -198,7 +201,7 @@ export type Client<U extends BaseUserMeta> = {
    * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
    * will probably happen if you do.
    */
-  // XXX Make this a getter, so we can provide M.
+  // TODO Make this a getter, so we can provide M
   readonly [kInternal]: PrivateClientApi<U, BaseMetadata>;
 };
 
@@ -210,8 +213,7 @@ export type AuthEndpoint =
  * The authentication endpoint that is called to ensure that the current user has access to a room.
  * Can be an url or a callback if you need to add additional headers.
  */
-// XXX Set default types
-export type ClientOptions<U extends BaseUserMeta> = {
+export type ClientOptions<U extends BaseUserMeta = DU> = {
   throttle?: number; // in milliseconds
   lostConnectionTimeout?: number; // in milliseconds
   backgroundKeepAliveTimeout?: number; // in milliseconds
@@ -313,8 +315,7 @@ export function getAuthBearerHeaderFromAuthValue(authValue: AuthValue): string {
  *   }
  * });
  */
-// XXX Set default types
-export function createClient<U extends BaseUserMeta>(
+export function createClient<U extends BaseUserMeta = DU>(
   options: ClientOptions<U>
 ): Client<U> {
   const clientOptions = options;
