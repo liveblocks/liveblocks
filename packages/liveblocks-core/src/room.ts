@@ -1066,10 +1066,7 @@ function createCommentsApi<M extends BaseMetadata>(
     return body;
   }
 
-  // XXX Set default types?
-  async function getThreads<M extends BaseMetadata>(
-    options?: GetThreadsOptions<M>
-  ) {
+  async function getThreads(options?: GetThreadsOptions<M>) {
     let query: string | undefined;
 
     if (options?.query) {
@@ -1130,12 +1127,7 @@ function createCommentsApi<M extends BaseMetadata>(
     }
   }
 
-  // XXX Set default types?
-  async function getThread<M extends BaseMetadata>({
-    threadId,
-  }: {
-    threadId: string;
-  }) {
+  async function getThread({ threadId }: { threadId: string }) {
     const response = await fetchCommentsApi(
       `/thread-with-notification/${threadId}`
     );
@@ -1159,8 +1151,7 @@ function createCommentsApi<M extends BaseMetadata>(
     }
   }
 
-  // XXX Set default types?
-  async function createThread<M extends BaseMetadata>({
+  async function createThread({
     metadata,
     body,
     commentId,
@@ -1190,8 +1181,7 @@ function createCommentsApi<M extends BaseMetadata>(
     return convertToThreadData(thread);
   }
 
-  // XXX Set default types?
-  async function editThreadMetadata<M extends BaseMetadata>({
+  async function editThreadMetadata({
     metadata,
     threadId,
   }: {
