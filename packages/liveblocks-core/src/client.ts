@@ -3,6 +3,7 @@ import { createAuthManager } from "./auth-manager";
 import { isIdle } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
 import type { LsonObject } from "./crdts/Lson";
+import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import type {
   DE,
   DM,
@@ -16,7 +17,6 @@ import type {
   // DS,
   // DU,
 } from "./globals/augmentation";
-import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import { kInternal } from "./internal";
 import type { BatchStore } from "./lib/batch";
 import { createBatchStore } from "./lib/batch";
