@@ -769,10 +769,6 @@ export function LiveblocksProviderWithClient(
   );
 }
 
-/**
- * @beta This is an internal API for now, but it will become public eventually.
- */
-// XXX Make public
 export function LiveblocksProvider(
   props: PropsWithChildren<ClientOptions<BaseUserMeta>>
 ) {
