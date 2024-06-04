@@ -101,7 +101,7 @@ export type ThreadData<M extends BaseMetadata = DM> = {
   metadata: M;
 };
 
-export interface ThreadDataWithDeleteInfo<M extends BaseMetadata>
+export interface ThreadDataWithDeleteInfo<M extends BaseMetadata = DM>
   extends ThreadData<M> {
   deletedAt?: Date;
 }
