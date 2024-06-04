@@ -95,7 +95,7 @@ export type RoomAccesses = Record<
 export type RoomMetadata = Record<string, string | string[]>;
 type QueryRoomMetadata = Record<string, string>;
 
-export type RoomInfo = {
+export type RoomData = {
   type: "room";
   id: string;
   createdAt: Date;
@@ -106,13 +106,13 @@ export type RoomInfo = {
   metadata: RoomMetadata;
 };
 
-type RoomInfoPlain = DateToString<RoomInfo>;
+type RoomDataPlain = DateToString<RoomData>;
 
-export type RoomUser<Info> = {
+export type RoomUser<UserInfo> = {
   type: "user";
   id: string | null;
   connectionId: number;
-  info: Info;
+  info: UserInfo;
 };
 
 export type Schema = {
@@ -372,7 +372,7 @@ export class Liveblocks {
   ): Promise<{
     nextPage: string | null;
     nextCursor: string | null;
-    data: RoomInfo[];
+    data: RoomData[];
   }> {
     const path = url`/v2/rooms`;
 
@@ -409,7 +409,7 @@ export class Liveblocks {
     const data = (await res.json()) as {
       nextPage: string | null;
       nextCursor: string | null;
-      data: RoomInfoPlain[];
+      data: RoomDataPlain[];
     };
 
     const rooms = data.data.map((room) => {
@@ -449,7 +449,7 @@ export class Liveblocks {
       usersAccesses?: RoomAccesses;
       metadata?: RoomMetadata;
     }
-  ): Promise<RoomInfo> {
+  ): Promise<RoomData> {
     const { defaultAccesses, groupsAccesses, usersAccesses, metadata } = params;
 
     const res = await this.post(url`/v2/rooms`, {
@@ -465,7 +465,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    const data = (await res.json()) as RoomInfoPlain;
+    const data = (await res.json()) as RoomDataPlain;
 
     // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
     const lastConnectionAt = data.lastConnectionAt
@@ -485,7 +485,7 @@ export class Liveblocks {
    * @param roomId The id of the room to return.
    * @returns The room with the given id.
    */
-  public async getRoom(roomId: string): Promise<RoomInfo> {
+  public async getRoom(roomId: string): Promise<RoomData> {
     const res = await this.get(url`/v2/rooms/${roomId}`);
 
     if (!res.ok) {
@@ -493,7 +493,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    const data = (await res.json()) as RoomInfoPlain;
+    const data = (await res.json()) as RoomDataPlain;
 
     // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
     const lastConnectionAt = data.lastConnectionAt
@@ -532,7 +532,7 @@ export class Liveblocks {
       >;
       metadata?: Record<string, string | string[] | null>;
     }
-  ): Promise<RoomInfo> {
+  ): Promise<RoomData> {
     const { defaultAccesses, groupsAccesses, usersAccesses, metadata } = params;
 
     const res = await this.post(url`/v2/rooms/${roomId}`, {
@@ -547,7 +547,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    const data = (await res.json()) as RoomInfoPlain;
+    const data = (await res.json()) as RoomDataPlain;
 
     // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
     const lastConnectionAt = data.lastConnectionAt
@@ -1405,7 +1405,7 @@ export class Liveblocks {
   public async updateRoomId(params: {
     currentRoomId: string;
     newRoomId: string;
-  }): Promise<RoomInfo> {
+  }): Promise<RoomData> {
     const { currentRoomId, newRoomId } = params;
 
     const res = await this.post(
@@ -1419,7 +1419,7 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
-    const data = (await res.json()) as RoomInfoPlain;
+    const data = (await res.json()) as RoomDataPlain;
     return {
       ...data,
       createdAt: new Date(data.createdAt),

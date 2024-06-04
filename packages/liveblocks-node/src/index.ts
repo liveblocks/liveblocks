@@ -7,7 +7,7 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 export type {
   LiveblocksOptions,
   RoomAccesses,
-  RoomInfo,
+  RoomData,
   RoomPermission,
   RoomUser,
   Schema,
