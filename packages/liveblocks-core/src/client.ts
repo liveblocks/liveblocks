@@ -4,19 +4,7 @@ import { isIdle } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
-import type {
-  DE,
-  DM,
-  DP,
-  // DE,
-  // DM,
-  // DP,
-  DRI,
-  DS,
-  DU,
-  // DS,
-  // DU,
-} from "./globals/augmentation";
+import type { DE, DM, DP, DRI, DS, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
 import type { BatchStore } from "./lib/batch";
 import { createBatchStore } from "./lib/batch";
