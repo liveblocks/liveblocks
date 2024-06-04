@@ -3,6 +3,7 @@ import { createAuthManager } from "./auth-manager";
 import { isIdle } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
 import type { LsonObject } from "./crdts/Lson";
+import type { DE, DM, DP, DS, DU } from "./custom-types";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import { kInternal } from "./internal";
 import type { BatchStore } from "./lib/batch";
@@ -42,21 +43,6 @@ import type { CacheStore } from "./store";
 import { createClientStore } from "./store";
 import type { OptionalPromise } from "./types/OptionalPromise";
 import type { RoomInfo } from "./types/RoomInfo";
-
-//
-// Default concrete types for each of the user-provided type placeholders.
-//
-
-/** DP = Default Presence type */
-export type DP = JsonObject;
-/** DS = Default Storage type */
-export type DS = LsonObject;
-/** DU = Default UserMeta type */
-export type DU = BaseUserMeta;
-/** DE = Default (Room)Event type */
-export type DE = Json;
-/** DM = Default Thread Metadata type */
-export type DM = BaseMetadata;
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1_000;
