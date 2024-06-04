@@ -133,7 +133,10 @@ export type NotificationsApi<
 };
 
 /**
- * @private Widest-possible Client type, matching _any_ Client instance.
+ * @private Widest-possible Client type, matching _any_ Client instance. Note
+ * that this type is different from `Client`-without-type-arguments. That
+ * represents a Client instance using globally augmented types only, which is
+ * narrower.
  */
 export type OpaqueClient = Client<BaseUserMeta>;
 
