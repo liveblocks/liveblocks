@@ -1,3 +1,4 @@
+import type { DM } from "../globals/augmentation";
 import type { DateToString } from "../lib/DateToString";
 
 export type BaseMetadata = Record<
@@ -90,29 +91,27 @@ export type CommentUserReactionPlain = DateToString<CommentUserReaction>;
 /**
  * Represents a thread of comments.
  */
-export type ThreadData<
-  M extends BaseMetadata = never, // TODO Change this to DM for 2.0
-> = {
+export type ThreadData<M extends BaseMetadata = DM> = {
   type: "thread";
   id: string;
   roomId: string;
   createdAt: Date;
   updatedAt?: Date;
   comments: CommentData[];
-  metadata: [M] extends [never] ? Record<string, never> : M;
+  metadata: M;
 };
 
-export interface ThreadDataWithDeleteInfo<
-  M extends BaseMetadata = never, // TODO Change this to DM for 2.0
-> extends ThreadData<M> {
+export interface ThreadDataWithDeleteInfo<M extends BaseMetadata = DM>
+  extends ThreadData<M> {
   deletedAt?: Date;
 }
 
-export type ThreadDataPlain<
-  M extends BaseMetadata = never, // TODO Change this to DM for 2.0
-> = Omit<DateToString<ThreadData<M>>, "comments" | "metadata"> & {
+export type ThreadDataPlain<M extends BaseMetadata> = Omit<
+  DateToString<ThreadData<M>>,
+  "comments" | "metadata"
+> & {
   comments: CommentDataPlain[];
-  metadata: [M] extends [never] ? Record<string, never> : M;
+  metadata: M;
 };
 
 export type ThreadDeleteInfo = {

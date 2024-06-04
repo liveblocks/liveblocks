@@ -31,6 +31,7 @@ import {
 import { LiveObject } from "./crdts/LiveObject";
 import type { LiveNode, LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
+import type { DE, DM, DP, DS, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
 import { Batch } from "./lib/batch";
@@ -528,11 +529,11 @@ export type OpaqueRoom = Room<
 >;
 
 export type Room<
-  P extends JsonObject,
-  S extends LsonObject,
-  U extends BaseUserMeta,
-  E extends Json,
-  M extends BaseMetadata,
+  P extends JsonObject = DP,
+  S extends LsonObject = DS,
+  U extends BaseUserMeta = DU,
+  E extends Json = DE,
+  M extends BaseMetadata = DM,
 > = {
   /**
    * @private
@@ -1065,9 +1066,7 @@ function createCommentsApi<M extends BaseMetadata>(
     return body;
   }
 
-  async function getThreads<
-    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
-  >(options?: GetThreadsOptions<M>) {
+  async function getThreads(options?: GetThreadsOptions<M>) {
     let query: string | undefined;
 
     if (options?.query) {
@@ -1135,7 +1134,7 @@ function createCommentsApi<M extends BaseMetadata>(
 
     if (response.ok) {
       const json = (await response.json()) as {
-        thread: ThreadDataPlain;
+        thread: ThreadDataPlain<M>;
         inboxNotification?: InboxNotificationDataPlain;
       };
 
@@ -1152,9 +1151,7 @@ function createCommentsApi<M extends BaseMetadata>(
     }
   }
 
-  async function createThread<
-    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
-  >({
+  async function createThread({
     metadata,
     body,
     commentId,
@@ -1184,9 +1181,7 @@ function createCommentsApi<M extends BaseMetadata>(
     return convertToThreadData(thread);
   }
 
-  async function editThreadMetadata<
-    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
-  >({
+  async function editThreadMetadata({
     metadata,
     threadId,
   }: {
