@@ -192,7 +192,6 @@ export type {
   RoomInitializers,
   StorageStatus,
 } from "./room";
-// XXX Find better names now that they are public exports?
 export type { DE, DM, DP, DS, DU } from "./custom-types";
 export type { GetThreadsOptions } from "./room";
 export { CommentsApiError } from "./room";
