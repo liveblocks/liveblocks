@@ -1,4 +1,4 @@
-import type { DM } from "../custom-types";
+import type { DM } from "../globals/augmentation";
 import type { DateToString } from "../lib/DateToString";
 
 export type BaseMetadata = Record<

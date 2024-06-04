@@ -1,8 +1,8 @@
-import type { LsonObject } from "./crdts/Lson";
-import type { Json, JsonObject } from "./lib/Json";
-import type { BaseRoomInfo } from "./protocol/BaseRoomInfo";
-import type { BaseUserMeta } from "./protocol/BaseUserMeta";
-import type { BaseMetadata } from "./protocol/Comments";
+import type { LsonObject } from "../crdts/Lson";
+import type { Json, JsonObject } from "../lib/Json";
+import type { BaseRoomInfo } from "../protocol/BaseRoomInfo";
+import type { BaseUserMeta } from "../protocol/BaseUserMeta";
+import type { BaseMetadata } from "../protocol/Comments";
 
 declare global {
   /**

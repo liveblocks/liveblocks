@@ -31,7 +31,7 @@ import {
 import { LiveObject } from "./crdts/LiveObject";
 import type { LiveNode, LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
-import type { DE, DM, DP, DS, DU } from "./custom-types";
+import type { DE, DM, DP, DS, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
 import { Batch } from "./lib/batch";

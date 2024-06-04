@@ -1,4 +1,4 @@
-import type { DP, DU } from "../custom-types";
+import type { DP, DU } from "../globals/augmentation";
 import type { JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 

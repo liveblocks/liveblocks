@@ -15,7 +15,7 @@ import type {
   DU,
   // DS,
   // DU,
-} from "./custom-types";
+} from "./globals/augmentation";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import { kInternal } from "./internal";
 import type { BatchStore } from "./lib/batch";

@@ -1,5 +1,5 @@
 import type { ResolveUsersArgs } from "../client";
-import type { DU } from "../custom-types";
+import type { DU } from "../globals/augmentation";
 import { nn } from "../lib/assert";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type {
