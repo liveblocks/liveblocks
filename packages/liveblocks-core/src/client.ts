@@ -132,7 +132,12 @@ export type NotificationsApi<
   markInboxNotificationAsRead(inboxNotificationId: string): Promise<void>;
 };
 
-export type Client<U extends BaseUserMeta = DU> = {
+/**
+ * @private Widest-possible Client type, matching _any_ Client instance.
+ */
+export type OpaqueClient = Client<BaseUserMeta>;
+
+export type Client<U extends BaseUserMeta> = {
   /**
    * Gets a room. Returns null if {@link Client.enter} has not been called previously.
    *

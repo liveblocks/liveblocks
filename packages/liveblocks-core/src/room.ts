@@ -514,6 +514,9 @@ type CommentsApi<M extends BaseMetadata> = {
   }): Promise<void>;
 };
 
+/**
+ * @private Widest-possible Room type, matching _any_ Room instance.
+ */
 export type OpaqueRoom = Room<
   JsonObject,
   LsonObject,
