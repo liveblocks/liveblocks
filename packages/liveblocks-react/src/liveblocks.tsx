@@ -7,6 +7,7 @@ import type {
 import type {
   CacheState,
   CacheStore,
+  ClientOptions,
   DM,
   DU,
   InboxNotificationData,
@@ -15,7 +16,7 @@ import type {
   PrivateClientApi,
   ThreadDeleteInfo,
 } from "@liveblocks/core";
-import { kInternal, makePoller, raise } from "@liveblocks/core";
+import { createClient, kInternal, makePoller, raise } from "@liveblocks/core";
 import { nanoid } from "nanoid";
 import type { PropsWithChildren } from "react";
 import React, {
@@ -23,13 +24,14 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
 } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 import { retryError } from "./lib/retry-error";
-import { useInitial } from "./lib/use-initial";
+import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import type {
   InboxNotificationsState,
   InboxNotificationsStateSuccess,
@@ -320,6 +322,8 @@ function makeLiveblocksContextBundle<
   const useMarkAllInboxNotificationsAsRead = () =>
     useMarkAllInboxNotificationsAsRead_withClient(client);
 
+  // NOTE: This version of the LiveblocksProvider does _not_ take any props.
+  // This is because we already have a client bound to it.
   function LiveblocksProvider(props: PropsWithChildren) {
     return (
       <ClientContext.Provider value={client}>
@@ -753,16 +757,51 @@ export function useClient<U extends BaseUserMeta>() {
 }
 
 /**
- * @beta This is an internal API for now, but it will become public eventually.
+ * @private
  */
-// XXX Make public
-export function LiveblocksProvider(
+export function LiveblocksProviderWithClient(
   props: PropsWithChildren<{ client: OpaqueClient }>
 ) {
   return (
     <ClientContext.Provider value={props.client}>
       {props.children}
     </ClientContext.Provider>
+  );
+}
+
+/**
+ * @beta This is an internal API for now, but it will become public eventually.
+ */
+// XXX Make public
+export function LiveblocksProvider(
+  props: PropsWithChildren<ClientOptions<BaseUserMeta>>
+) {
+  const { children, ...o } = props;
+
+  // It's important that the static options remain stable, otherwise we'd be
+  // creating new client instances on every render.
+  const options = {
+    publicApiKey: useInitial(o.publicApiKey),
+    throttle: useInitial(o.throttle),
+    lostConnectionTimeout: useInitial(o.lostConnectionTimeout),
+    backgroundKeepAliveTimeout: useInitial(o.backgroundKeepAliveTimeout),
+    polyfills: useInitial(o.polyfills),
+    unstable_fallbackToHTTP: useInitial(o.unstable_fallbackToHTTP),
+    unstable_streamData: useInitial(o.unstable_streamData),
+
+    authEndpoint: useInitialUnlessFunction(o.authEndpoint),
+    resolveMentionSuggestions: useInitialUnlessFunction(
+      o.resolveMentionSuggestions
+    ),
+    resolveUsers: useInitialUnlessFunction(o.resolveUsers),
+    resolveRoomsInfo: useInitialUnlessFunction(o.resolveRoomsInfo),
+  } as ClientOptions<BaseUserMeta>;
+
+  const client = useMemo(() => createClient(options), []);
+  return (
+    <LiveblocksProviderWithClient client={client}>
+      {children}
+    </LiveblocksProviderWithClient>
   );
 }
 
