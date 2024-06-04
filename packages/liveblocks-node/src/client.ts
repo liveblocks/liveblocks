@@ -967,7 +967,7 @@ export class Liveblocks {
       | {
           metadata?: Partial<QueryMetadata<M>>;
         };
-  }): Promise<{ data: ThreadData[] }> {
+  }): Promise<{ data: ThreadData<M>[] }> {
     const { roomId } = params;
 
     let query: string | undefined;
@@ -985,7 +985,7 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
-    const { data } = (await res.json()) as { data: ThreadDataPlain[] };
+    const { data } = (await res.json()) as { data: ThreadDataPlain<M>[] };
     return {
       data: data.map((thread) => convertToThreadData(thread)),
     };
@@ -998,9 +998,11 @@ export class Liveblocks {
    * @param params.threadId The thread ID.
    * @returns A thread.
    */
-  public async getThread<
-    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
-  >(params: { roomId: string; threadId: string }): Promise<ThreadData<M>> {
+  // XXX Set default types?
+  public async getThread<M extends BaseMetadata>(params: {
+    roomId: string;
+    threadId: string;
+  }): Promise<ThreadData<M>> {
     const { roomId, threadId } = params;
 
     const res = await this.get(url`/v2/rooms/${roomId}/threads/${threadId}`);
@@ -1164,9 +1166,8 @@ export class Liveblocks {
    * @param params.thread.comment.body The body of the comment.
    * @returns The created thread. The thread will be created with the specified comment as its first comment.
    */
-  public async createThread<
-    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
-  >(params: {
+  // XXX Set default types?
+  public async createThread<M extends BaseMetadata>(params: {
     roomId: string;
     data: {
       metadata?: [M] extends [never] ? Record<string, never> : M;
@@ -1204,9 +1205,8 @@ export class Liveblocks {
    * @param params.data.updatedAt (optional) The date the thread is set to be updated.
    * @returns The updated thread.
    */
-  public async editThreadMetadata<
-    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
-  >(params: {
+  // XXX Set default types?
+  public async editThreadMetadata<M extends BaseMetadata>(params: {
     roomId: string;
     threadId: string;
     data: {

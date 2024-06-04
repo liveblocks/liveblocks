@@ -8,8 +8,12 @@ import { Response as NodeFetchResponse } from "node-fetch";
 import type { ClientOptions } from "../client";
 import { createClient } from "../client";
 import * as console from "../lib/fancy-console";
+import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import { MockWebSocket } from "./_MockWebSocketServer";
 import { waitUntilStatus } from "./_waitUtils";
+
+// XXX Remove me when done
+type ___REMOVE_ME_WHEN_DONE___ = BaseUserMeta;
 
 const token =
   "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2OTAwMzMzMjgsImV4cCI6MTY5MDAzMzMzMywiayI6InNlYy1sZWdhY3kiLCJyb29tSWQiOiJlTFB3dU9tTXVUWEN6Q0dSaTVucm4iLCJhcHBJZCI6IjYyNDFjYjk1ZWQ2ODdkNWRlNWFhYTEzMiIsImFjdG9yIjoxLCJzY29wZXMiOlsicm9vbTp3cml0ZSJdLCJpZCI6InVzZXItMyIsIm1heENvbm5lY3Rpb25zUGVyUm9vbSI6MjB9.QoRc9dJJp-C1LzmQ-S_scHfFsAZ7dBcqep0bUZNyWxEWz_VeBHBBNdJpNs7b7RYRFDBi7RxkywKJlO-gNE8h3wkhebgLQVeSgI3YfTJo7J8Jzj38TzH85ZIbybaiGcxda_sYn3VohDtUHA1k67ns08Q2orJBNr30Gc88jJmc1He_7bLStsDP4M2F1NRMuFuqLULWHnPeEM7jMvLZYkbu3SBeCH4TQGyweu7qAXvP-HHtmvzOi8LdEnpxgxGjxefdu6m4a-fJj6LwoYCGi1rlLDHH9aOHFwYVrBBBVwoeIDSHoAonkPaae9AWM6igJhNt9-ihgEH6sF-qgFiPxHNXdg";
@@ -27,7 +31,7 @@ function atobPolyfillMock(data: string): string {
   return Buffer.from(data, "base64").toString();
 }
 
-function enterAndLeave(options: ClientOptions) {
+function enterAndLeave(options: ClientOptions<___REMOVE_ME_WHEN_DONE___>) {
   const client = createClient(options);
   const { room: _, leave } = client.enterRoom("room", { initialPresence: {} });
 

@@ -12,6 +12,7 @@ import type {
   InboxNotificationData,
   InboxNotificationDeleteInfo,
   OpaqueClient,
+  PrivateClientApi,
   ThreadDeleteInfo,
 } from "@liveblocks/core";
 import { kInternal, makePoller, raise } from "@liveblocks/core";
@@ -171,9 +172,12 @@ function getExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   };
 }
 
-function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
-  const store = client[kInternal].cacheStore as unknown as CacheStore<M>;
-  const notifications = client[kInternal].notifications;
+function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
+  client: OpaqueClient
+) {
+  const internals = client[kInternal] as PrivateClientApi<U, M>;
+  const store = internals.cacheStore;
+  const notifications = internals.notifications;
 
   let fetchInboxNotificationsRequest: Promise<{
     inboxNotifications: InboxNotificationData[];
@@ -781,9 +785,10 @@ export function useLiveblocksContextBundle() {
   return getOrCreateContextBundle(client);
 }
 
+// XXX Set default types
 export function createLiveblocksContext<
-  U extends BaseUserMeta = DU,
-  M extends BaseMetadata = never, // TODO Change this to DM for 2.0
+  U extends BaseUserMeta,
+  M extends BaseMetadata,
 >(client: OpaqueClient): LiveblocksContextBundle<U, M> {
   return getOrCreateContextBundle<U, M>(client);
 }

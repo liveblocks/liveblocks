@@ -856,12 +856,13 @@ function RoomProviderInner<
   );
 }
 
+// XXX Set default types
 function useRoom<
-  P extends JsonObject = never,
-  S extends LsonObject = never,
-  U extends BaseUserMeta = never,
-  E extends Json = never,
-  M extends BaseMetadata = never,
+  P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
+  M extends BaseMetadata,
 >(): Room<P, S, U, E, M> {
   const room = useRoomOrNull<P, S, U, E, M>();
   if (room === null) {
@@ -886,7 +887,7 @@ function useBroadcastEvent<E extends Json>(): (
   event: E,
   options?: BroadcastOptions
 ) => void {
-  const room = useRoom<never, never, never, E>();
+  const room = useRoom<never, never, never, E, never>();
   return React.useCallback(
     (
       event: E,
@@ -901,7 +902,7 @@ function useBroadcastEvent<E extends Json>(): (
 function useOthersListener<P extends JsonObject, U extends BaseUserMeta>(
   callback: (event: OthersEvent<P, U>) => void
 ) {
-  const room = useRoom<P, never, U, never>();
+  const room = useRoom<P, never, U, never, never>();
   const savedCallback = useLatest(callback);
   React.useEffect(
     () => room.events.others.subscribe((event) => savedCallback.current(event)),
@@ -937,7 +938,7 @@ function useEventListener<
   U extends BaseUserMeta,
   E extends Json,
 >(callback: (data: RoomEventMessage<P, U, E>) => void): void {
-  const room = useRoom<P, never, U, E>();
+  const room = useRoom<P, never, U, E, never>();
   const savedCallback = useLatest(callback);
   React.useEffect(() => {
     const listener = (eventData: RoomEventMessage<P, U, E>) => {
@@ -989,7 +990,7 @@ function useSelf<P extends JsonObject, U extends BaseUserMeta, T>(
   type Snapshot = User<P, U> | null;
   type Selection = T | null;
 
-  const room = useRoom<P, never, U, never>();
+  const room = useRoom<P, never, U, never, never>();
   const subscribe = room.events.self.subscribe;
   const getSnapshot: () => Snapshot = room.getSelf;
 
@@ -1014,7 +1015,7 @@ function useMyPresence<P extends JsonObject>(): [
   P,
   (patch: Partial<P>, options?: { addToHistory: boolean }) => void,
 ] {
-  const room = useRoom<P, never, never, never>();
+  const room = useRoom<P, never, never, never, never>();
   const subscribe = room.events.myPresence.subscribe;
   const getSnapshot = room.getPresence;
   const presence = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
@@ -1026,7 +1027,7 @@ function useUpdateMyPresence<P extends JsonObject>(): (
   patch: Partial<P>,
   options?: { addToHistory: boolean }
 ) => void {
-  return useRoom<P, never, never, never>().updatePresence;
+  return useRoom<P, never, never, never, never>().updatePresence;
 }
 
 function useOthers<
@@ -1041,7 +1042,7 @@ function useOthers<P extends JsonObject, U extends BaseUserMeta, T>(
   selector?: (others: readonly User<P, U>[]) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T | readonly User<P, U>[] {
-  const room = useRoom<P, never, U, never>();
+  const room = useRoom<P, never, U, never, never>();
   const subscribe = room.events.others.subscribe;
   const getSnapshot = room.getOthers;
   const getServerSnapshot = alwaysEmptyList;
@@ -1131,7 +1132,7 @@ function useOther<P extends JsonObject, U extends BaseUserMeta, T>(
 
 /** @internal */
 function useMutableStorageRoot<S extends LsonObject>(): LiveObject<S> | null {
-  const room = useRoom<never, S, never, never>();
+  const room = useRoom<never, S, never, never, never>();
   const subscribe = room.events.storageDidLoad.subscribeOnce;
   const getSnapshot = room.getStorageSnapshot;
   const getServerSnapshot = alwaysNull;
@@ -1150,7 +1151,7 @@ function useStorage<S extends LsonObject, T>(
   type Snapshot = ToImmutable<S> | null;
   type Selection = T | null;
 
-  const room = useRoom<never, S, never, never>();
+  const room = useRoom<never, S, never, never, never>();
   const rootOrNull = useMutableStorageRoot<S>();
 
   const wrappedSelector = React.useCallback(
@@ -1196,7 +1197,7 @@ function useMutation<
   M extends BaseMetadata,
   F extends (context: MutationContext<P, S, U>, ...args: any[]) => any,
 >(callback: F, deps: readonly unknown[]): OmitFirstArg<F> {
-  const room = useRoom<P, S, U, E>();
+  const room = useRoom<P, S, U, E, M>();
   return React.useMemo(
     () => {
       return ((...args) =>

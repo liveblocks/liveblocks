@@ -3,7 +3,7 @@ import { createAuthManager } from "./auth-manager";
 import { isIdle } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
 import type { LsonObject } from "./crdts/Lson";
-import type { DE, DM, DP, DRI, DS, DU } from "./custom-types";
+// import type { DE, DM, DP, DRI, DS, DU } from "./custom-types";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import { kInternal } from "./internal";
 import type { BatchStore } from "./lib/batch";
@@ -191,12 +191,8 @@ export type Client<U extends BaseUserMeta> = {
    * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
    * will probably happen if you do.
    */
+  // XXX Make this a getter, so we can provide U and M.
   readonly [kInternal]: PrivateClientApi<U, BaseMetadata>;
-  // XXX                                    ^^^^^^^^^^^^
-  // XXX This is a mistake, it should be `M`. However, `M` is not an open
-  // XXX variable here. The call site should define what it is. We cannot
-  // XXX obtain an `M`-typed version here easily. We should make this a factory
-  // XXX pattern to do so.
 };
 
 export type AuthEndpoint =
