@@ -316,12 +316,12 @@ export function createClient<U extends BaseUserMeta = DU>(
 
   const authManager = createAuthManager(options);
 
-  type RoomInfo = {
+  type RoomDetails = {
     room: OpaqueRoom;
     unsubs: Set<() => void>;
   };
 
-  const roomsById = new Map<string, RoomInfo>();
+  const roomsById = new Map<string, RoomDetails>();
 
   function teardownRoom(room: OpaqueRoom) {
     unlinkDevTools(room.id);
@@ -336,7 +336,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     E extends Json,
     M extends BaseMetadata,
   >(
-    info: RoomInfo
+    details: RoomDetails
   ): {
     room: Room<P, S, U, E, M>;
     leave: () => void;
@@ -345,21 +345,21 @@ export function createClient<U extends BaseUserMeta = DU>(
     const leave = () => {
       const self = leave; // A reference to the currently executing function itself
 
-      if (!info.unsubs.delete(self)) {
+      if (!details.unsubs.delete(self)) {
         console.warn(
           "This leave function was already called. Calling it more than once has no effect."
         );
       } else {
         // Was this the last room lease? If so, tear down the room
-        if (info.unsubs.size === 0) {
-          teardownRoom(info.room);
+        if (details.unsubs.size === 0) {
+          teardownRoom(details.room);
         }
       }
     };
 
-    info.unsubs.add(leave);
+    details.unsubs.add(leave);
     return {
-      room: info.room as Room<P, S, U, E, M>,
+      room: details.room as Room<P, S, U, E, M>,
       leave,
     };
   }
@@ -414,11 +414,11 @@ export function createClient<U extends BaseUserMeta = DU>(
       }
     );
 
-    const newRoomInfo: RoomInfo = {
+    const newRoomDetails: RoomDetails = {
       room: newRoom,
       unsubs: new Set(),
     };
-    roomsById.set(roomId, newRoomInfo);
+    roomsById.set(roomId, newRoomDetails);
 
     setupDevTools(() => Array.from(roomsById.keys()));
     linkDevTools(roomId, newRoom);
@@ -439,7 +439,7 @@ export function createClient<U extends BaseUserMeta = DU>(
       newRoom.connect();
     }
 
-    return leaseRoom(newRoomInfo);
+    return leaseRoom(newRoomDetails);
   }
 
   function enter<
