@@ -1,4 +1,5 @@
 import type {
+  Json,
   LiveList,
   LiveMap,
   LiveObject,
@@ -281,6 +282,7 @@ ctx.useErrorListener((err) => {
     expectType<boolean>(isLoading);
     expectType<string | undefined>(info?.name);
     expectType<string | undefined>(info?.url);
+    expectType<Json | undefined>(info?.nonexisting);
     expectType<Error | undefined>(error);
   }
   {
@@ -289,6 +291,7 @@ ctx.useErrorListener((err) => {
     expectType<boolean>(isLoading);
     expectType<string | undefined>(info?.name);
     expectType<string | undefined>(info?.url);
+    expectType<Json | undefined>(info?.nonexisting);
     expectType<Error | undefined>(error);
   }
 }
@@ -301,6 +304,7 @@ ctx.useErrorListener((err) => {
     expectType<false>(isLoading);
     expectType<string | undefined>(info.name);
     expectType<string | undefined>(info.url);
+    expectType<Json | undefined>(info.nonexisting);
     expectType<undefined>(error);
   }
   {
@@ -309,6 +313,7 @@ ctx.useErrorListener((err) => {
     expectType<false>(isLoading);
     expectType<string | undefined>(info.name);
     expectType<string | undefined>(info.url);
+    expectType<Json | undefined>(info.nonexisting);
     expectType<undefined>(error);
   }
 }
