@@ -20,6 +20,7 @@ export type {
   Client,
   ClientOptions,
   EnterOptions,
+  OpaqueClient,
   ResolveMentionSuggestionsArgs,
   ResolveRoomsInfoArgs,
   ResolveUsersArgs,

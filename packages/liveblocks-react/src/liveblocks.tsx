@@ -11,6 +11,7 @@ import type {
   DU,
   InboxNotificationData,
   InboxNotificationDeleteInfo,
+  OpaqueClient,
   ThreadDeleteInfo,
 } from "@liveblocks/core";
 import { kInternal, makePoller, raise } from "@liveblocks/core";
@@ -40,8 +41,6 @@ import type {
   UserState,
   UserStateSuccess,
 } from "./types";
-
-type OpaqueClient = Client<BaseUserMeta>;
 
 export const ClientContext = createContext<OpaqueClient | null>(null);
 
@@ -646,7 +645,10 @@ function useUserSuspense_withClient<U extends BaseUserMeta>(
   } as UserStateSuccess<U["info"]>;
 }
 
-function useRoomInfo_withClient(client: Client, roomId: string): RoomInfoState {
+function useRoomInfo_withClient(
+  client: OpaqueClient,
+  roomId: string
+): RoomInfoState {
   const roomsInfoStore = client[kInternal].roomsInfoStore;
 
   const getRoomInfoState = useCallback(
@@ -677,7 +679,7 @@ function useRoomInfo_withClient(client: Client, roomId: string): RoomInfoState {
     : { isLoading: true };
 }
 
-function useRoomInfoSuspense_withClient(client: Client, roomId: string) {
+function useRoomInfoSuspense_withClient(client: OpaqueClient, roomId: string) {
   const roomsInfoStore = client[kInternal].roomsInfoStore;
 
   const getRoomInfoState = useCallback(

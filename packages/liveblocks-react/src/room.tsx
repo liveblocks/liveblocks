@@ -27,6 +27,7 @@ import type {
   DU,
   EnterOptions,
   LiveblocksError,
+  OpaqueClient,
   OpaqueRoom,
   PrivateRoomApi,
   RoomEventMessage,
@@ -501,8 +502,6 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     onMutationFailure,
   };
 }
-
-type OpaqueClient = Client<BaseUserMeta>;
 
 type RoomLeavePair<
   P extends JsonObject,

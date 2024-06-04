@@ -1,4 +1,4 @@
-import type { BaseUserMeta, Client } from "@liveblocks/core";
+import type { OpaqueClient } from "@liveblocks/core";
 import { kInternal, raise, stringify } from "@liveblocks/core";
 import {
   ClientContext,
@@ -8,8 +8,6 @@ import {
   useSelf,
 } from "@liveblocks/react";
 import React, { useContext, useSyncExternalStore } from "react";
-
-type OpaqueClient = Client<BaseUserMeta>;
 
 const MENTION_SUGGESTIONS_DEBOUNCE = 500;
 

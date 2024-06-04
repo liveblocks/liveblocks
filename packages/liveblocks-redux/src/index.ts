@@ -1,6 +1,5 @@
 import type {
   BaseUserMeta,
-  Client,
   JsonObject,
   LiveObject,
   LsonObject,
@@ -8,7 +7,7 @@ import type {
   Status,
   User,
 } from "@liveblocks/client";
-import type { OpaqueRoom } from "@liveblocks/core";
+import type { OpaqueClient, OpaqueRoom } from "@liveblocks/core";
 import {
   detectDupes,
   legacy_patchImmutableObject,
@@ -67,7 +66,7 @@ export type WithLiveblocks<
 > = TState & { readonly liveblocks: LiveblocksContext<P, U> };
 
 const internalEnhancer = <TState>(options: {
-  client: Client;
+  client: OpaqueClient;
   storageMapping?: Mapping<TState>;
   presenceMapping?: Mapping<TState>;
 }) => {
@@ -352,7 +351,7 @@ function leaveRoom(): {
  * Redux store.
  */
 export const liveblocksEnhancer = internalEnhancer as <TState>(options: {
-  client: Client;
+  client: OpaqueClient;
   storageMapping?: Mapping<TState>;
   presenceMapping?: Mapping<TState>;
 }) => StoreEnhancer;
