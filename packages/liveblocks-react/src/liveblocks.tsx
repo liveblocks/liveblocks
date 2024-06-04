@@ -645,7 +645,10 @@ function useUserSuspense_withClient<U extends BaseUserMeta>(
   } as UserStateSuccess<U["info"]>;
 }
 
-function useRoomInfo_withClient(client: Client, roomId: string): RoomInfoState {
+function useRoomInfo_withClient(
+  client: OpaqueClient,
+  roomId: string
+): RoomInfoState {
   const roomsInfoStore = client[kInternal].roomsInfoStore;
 
   const getRoomInfoState = useCallback(
@@ -676,7 +679,7 @@ function useRoomInfo_withClient(client: Client, roomId: string): RoomInfoState {
     : { isLoading: true };
 }
 
-function useRoomInfoSuspense_withClient(client: Client, roomId: string) {
+function useRoomInfoSuspense_withClient(client: OpaqueClient, roomId: string) {
   const roomsInfoStore = client[kInternal].roomsInfoStore;
 
   const getRoomInfoState = useCallback(

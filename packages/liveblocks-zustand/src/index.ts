@@ -1,6 +1,5 @@
 import type {
   BaseUserMeta,
-  Client,
   Json,
   JsonObject,
   LiveObject,
@@ -16,6 +15,7 @@ import type {
   DP,
   DS,
   DU,
+  OpaqueClient,
   OpaqueRoom,
   StorageUpdate,
 } from "@liveblocks/core";
@@ -97,7 +97,7 @@ type Options<T> = {
   /**
    * Liveblocks client created by @liveblocks/client createClient
    */
-  client: Client;
+  client: OpaqueClient;
   /**
    * Mapping used to synchronize a part of your zustand state with one Liveblocks Room storage.
    */
@@ -459,7 +459,7 @@ function validateMapping<T>(
 }
 
 function validateOptions<TState>(options: Options<TState>): {
-  client: Client;
+  client: OpaqueClient;
   presenceMapping: Mapping<TState>;
   storageMapping: Mapping<TState>;
 } {
