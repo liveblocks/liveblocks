@@ -765,26 +765,6 @@ export function LiveblocksProvider(
   );
 }
 
-/**
- * @private
- *
- * This is an internal API, use "createLiveblocksContext" instead.
- */
-export function useLiveblocksContextBundleOrNull() {
-  const client = useClientOrNull();
-  return client !== null ? getOrCreateContextBundle(client) : null;
-}
-
-/**
- * @private
- *
- * This is an internal API, use "createLiveblocksContext" instead.
- */
-export function useLiveblocksContextBundle() {
-  const client = useClient();
-  return getOrCreateContextBundle(client);
-}
-
 export function createLiveblocksContext<
   U extends BaseUserMeta = DU,
   M extends BaseMetadata = DM,
