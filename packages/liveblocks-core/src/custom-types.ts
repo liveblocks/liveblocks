@@ -1,10 +1,16 @@
-import type {
-  BaseMetadata,
-  BaseUserMeta,
-  Json,
-  JsonObject,
-  LsonObject,
-} from "@liveblocks/core";
+import type { LsonObject } from "./crdts/Lson";
+import type { Json, JsonObject } from "./lib/Json";
+import type { BaseUserMeta } from "./protocol/BaseUserMeta";
+import type { BaseMetadata } from "./protocol/Comments";
+
+declare global {
+  /**
+   * Namespace for user-defined Liveblocks types.
+   */
+  export interface Liveblocks {
+    [key: string]: unknown;
+  }
+}
 
 type ExtendableTypes =
   | "Presence"

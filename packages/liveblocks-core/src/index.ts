@@ -16,7 +16,6 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
  * https://join.team/liveblocks ;)
  */
 
-// Global types, intended to be augmented by the end-user
 export type {
   Client,
   ClientOptions,
@@ -65,7 +64,6 @@ export type {
 } from "./crdts/StorageUpdates";
 export type { ToImmutable } from "./crdts/utils";
 export { toPlainLson } from "./crdts/utils";
-export * from "./global";
 export {
   legacy_patchImmutableObject,
   lsonToJson,
@@ -194,6 +192,8 @@ export type {
   RoomInitializers,
   StorageStatus,
 } from "./room";
+// XXX Find better names now that they are public exports?
+export type { DE, DM, DP, DS, DU } from "./custom-types";
 export type { GetThreadsOptions } from "./room";
 export { CommentsApiError } from "./room";
 export type { Immutable } from "./types/Immutable";
