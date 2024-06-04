@@ -64,7 +64,7 @@ export type {
 } from "./crdts/StorageUpdates";
 export type { ToImmutable } from "./crdts/utils";
 export { toPlainLson } from "./crdts/utils";
-export type { DE, DM, DP, DS, DU } from "./custom-types";
+export type { DE, DM, DP, DRI, DS, DU } from "./custom-types";
 export {
   legacy_patchImmutableObject,
   lsonToJson,
@@ -195,6 +195,7 @@ export type {
 } from "./room";
 export type { GetThreadsOptions } from "./room";
 export { CommentsApiError } from "./room";
+export type { BaseRoomInfo } from "./protocol/BaseRoomInfo";
 export type { Immutable } from "./types/Immutable";
 export type {
   IWebSocket,
@@ -215,7 +216,6 @@ export type {
   PlainLsonMap,
   PlainLsonObject,
 } from "./types/PlainLson";
-export type { RoomInfo } from "./types/RoomInfo";
 export type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 export type { User } from "./types/User";
 export { detectDupes };

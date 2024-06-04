@@ -2,6 +2,7 @@ import type { LsonObject } from "./crdts/Lson";
 import type { Json, JsonObject } from "./lib/Json";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { BaseMetadata } from "./protocol/Comments";
+import type { BaseRoomInfo } from "./protocol/BaseRoomInfo";
 
 declare global {
   /**
@@ -17,7 +18,8 @@ type ExtendableTypes =
   | "Storage"
   | "UserMeta"
   | "RoomEvent"
-  | "ThreadMetadata";
+  | "ThreadMetadata"
+  | "RoomInfo";
 
 type ExtendedType<
   K extends ExtendableTypes,
@@ -39,3 +41,4 @@ export type DM = ExtendedType<
   BaseMetadata,
   "Invalid generic"
 >;
+export type DRI = ExtendedType<"RoomInfo", BaseRoomInfo, "Invalid generic">;

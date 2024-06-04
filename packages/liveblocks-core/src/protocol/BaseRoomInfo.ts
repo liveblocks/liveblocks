@@ -1,4 +1,4 @@
-export type RoomInfo = {
+export type BaseRoomInfo = {
   /**
    * The name of the room.
    */
