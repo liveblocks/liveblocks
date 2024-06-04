@@ -1,7 +1,6 @@
 import type {
   BaseUserMeta,
   Client,
-  Json,
   JsonObject,
   LiveObject,
   LsonObject,
@@ -9,6 +8,7 @@ import type {
   Status,
   User,
 } from "@liveblocks/client";
+import type { OpaqueRoom } from "@liveblocks/core";
 import {
   detectDupes,
   legacy_patchImmutableObject,
@@ -27,8 +27,6 @@ import {
 import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
-
-type OpaqueRoom = Room<JsonObject, LsonObject, BaseUserMeta, Json>;
 
 export type Mapping<T> = {
   [K in keyof T]?: boolean;
@@ -382,7 +380,7 @@ function patchLiveblocksStorage<O extends LsonObject, TState>(
 }
 
 function updatePresence<P extends JsonObject>(
-  room: Room<P, any, any, any>,
+  room: Room<P, any, any, any, any>,
   oldState: P,
   newState: P,
   presenceMapping: Mapping<P>

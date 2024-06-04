@@ -52,7 +52,7 @@ const ctx = createRoomContext<P, S, U, E, M>(client);
 // ---------------------------------------------------------
 
 // The useRoom() hook
-expectType<Room<P, S, U, E>>(ctx.useRoom());
+expectType<Room<P, S, U, E, M>>(ctx.useRoom());
 
 // The presence hooks
 expectType<P>(ctx.useSelf()!.presence);

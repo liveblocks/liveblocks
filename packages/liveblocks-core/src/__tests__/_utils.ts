@@ -16,6 +16,7 @@ import { Permission, TokenKind } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { ClientMsg } from "../protocol/ClientMsg";
 import { ClientMsgCode } from "../protocol/ClientMsg";
+import type { BaseMetadata } from "../protocol/Comments";
 import type { Op } from "../protocol/Op";
 import type {
   IdTuple,
@@ -127,6 +128,7 @@ export async function prepareRoomWithStorage<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
+  M extends BaseMetadata,
 >(
   items: IdTuple<SerializedCrdt>[],
   actor: number = 0,
@@ -157,7 +159,7 @@ export async function prepareRoomWithStorage<
     );
   });
 
-  const room = createRoom<P, S, U, E>(
+  const room = createRoom<P, S, U, E, M>(
     {
       initialPresence: {} as P,
       initialStorage: defaultStorage || ({} as S),
@@ -187,6 +189,7 @@ export async function prepareIsolatedStorageTest<S extends LsonObject>(
   const { room, storage, wss } = await prepareRoomWithStorage<
     never,
     S,
+    never,
     never,
     never
   >(items, actor, undefined, defaultStorage || ({} as S));
@@ -225,6 +228,7 @@ export async function prepareStorageTest<
   P extends JsonObject = never,
   U extends BaseUserMeta = never,
   E extends Json = never,
+  M extends BaseMetadata = never,
 >(
   items: IdTuple<SerializedCrdt>[],
   actor: number = 0,
@@ -233,7 +237,7 @@ export async function prepareStorageTest<
   let currentActor = actor;
   const operations: Op[] = [];
 
-  const ref = await prepareRoomWithStorage<P, S, U, E>(
+  const ref = await prepareRoomWithStorage<P, S, U, E, M>(
     items,
     -1,
     undefined,
@@ -241,7 +245,7 @@ export async function prepareStorageTest<
     scopes
   );
 
-  const subject = await prepareRoomWithStorage<P, S, U, E>(
+  const subject = await prepareRoomWithStorage<P, S, U, E, M>(
     items,
     currentActor,
     undefined,
@@ -430,15 +434,16 @@ export async function prepareStorageUpdateTest<
   P extends JsonObject = never,
   U extends BaseUserMeta = never,
   E extends Json = never,
+  M extends BaseMetadata = never,
 >(
   items: IdTuple<SerializedCrdt>[]
 ): Promise<{
-  room: Room<P, S, U, E>;
+  room: Room<P, S, U, E, M>;
   root: LiveObject<S>;
   expectUpdates: (updates: JsonStorageUpdate[][]) => void;
 }> {
   const ref = await prepareRoomWithStorage(items, -1);
-  const subject = await prepareRoomWithStorage<P, S, U, E>(items, -2);
+  const subject = await prepareRoomWithStorage<P, S, U, E, M>(items, -2);
 
   subject.wss.onReceive.subscribe((data) => {
     const messages = parseAsClientMsgs(data);
@@ -490,8 +495,12 @@ export async function prepareDisconnectedStorageUpdateTest<
   P extends JsonObject = never,
   U extends BaseUserMeta = never,
   E extends Json = never,
+  M extends BaseMetadata = never,
 >(items: IdTuple<SerializedCrdt>[]) {
-  const { storage, room } = await prepareRoomWithStorage<P, S, U, E>(items, -1);
+  const { storage, room } = await prepareRoomWithStorage<P, S, U, E, M>(
+    items,
+    -1
+  );
 
   const receivedUpdates: JsonStorageUpdate[][] = [];
 

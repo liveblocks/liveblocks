@@ -20,8 +20,14 @@ import type {
   CacheStore,
   CommentData,
   CommentsEventServerMsg,
+  DE,
+  DM,
+  DP,
+  DS,
+  DU,
   EnterOptions,
   LiveblocksError,
+  OpaqueRoom,
   PrivateRoomApi,
   RoomEventMessage,
   RoomNotificationSettings,
@@ -64,7 +70,6 @@ import { createCommentId, createThreadId } from "./comments/lib/createIds";
 import { selectNotificationSettings } from "./comments/lib/select-notification-settings";
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 import { selectedThreads } from "./comments/lib/selected-threads";
-import type { DE, DM, DP, DS, DU } from "./custom-types";
 import { retryError } from "./lib/retry-error";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
@@ -155,7 +160,8 @@ function makeMutationContext<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
->(room: Room<P, S, U, E>): MutationContext<P, S, U> {
+  M extends BaseMetadata,
+>(room: Room<P, S, U, E, M>): MutationContext<P, S, U> {
   const cannotUseUntil = "This mutation cannot be used until";
   const needsPresence = `${cannotUseUntil} connected to the Liveblocks room`;
   const needsStorage = `${cannotUseUntil} storage has been loaded`;
@@ -189,9 +195,7 @@ function makeMutationContext<
   };
 }
 
-function getCurrentUserId(
-  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
-): string {
+function getCurrentUserId(room: OpaqueRoom): string {
   const self = room.getSelf();
   if (self === null || self.id === undefined) {
     return "anonymous";
@@ -328,7 +332,9 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     try {
       // Set the isFetchingThreadsUpdates flag to true to prevent multiple requests to fetch threads updates for the room from being made at the same time
       requestStatusByRoom.set(room.id, true);
-      const updates = await room[kInternal].comments.getThreads({ since });
+
+      const commentsAPI = (room[kInternal] as PrivateRoomApi<M>).comments;
+      const updates = await commentsAPI.getThreads({ since });
 
       // Set the isFetchingThreadsUpdates flag to false after a certain interval to prevent multiple requests from being made at the same time
       setTimeout(() => {
@@ -352,7 +358,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   }
 
   async function getThreadsAndInboxNotifications(
-    room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
+    room: OpaqueRoom,
     queryKey: string,
     options: UseThreadsOptions<M>,
     { retryCount }: { retryCount: number } = { retryCount: 0 }
@@ -419,7 +425,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   }
 
   async function getInboxNotificationSettings(
-    room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
+    room: OpaqueRoom,
     queryKey: string,
     { retryCount }: { retryCount: number } = { retryCount: 0 }
   ) {
@@ -497,15 +503,15 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
 }
 
 type OpaqueClient = Client<BaseUserMeta>;
-type OpaqueRoom = Room<JsonObject, LsonObject, BaseUserMeta, Json>;
 
 type RoomLeavePair<
   P extends JsonObject,
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
+  M extends BaseMetadata,
 > = {
-  room: Room<P, S, U, E>;
+  room: Room<P, S, U, E, M>;
   leave: () => void;
 };
 
@@ -518,7 +524,7 @@ function makeRoomContextBundle<
   E extends Json,
   M extends BaseMetadata,
 >(client: Client<U>): RoomContextBundle<P, S, U, E, M> {
-  type TRoom = Room<P, S, U, E>;
+  type TRoom = Room<P, S, U, E, M>;
 
   function RoomProvider_withImplicitLiveblocksProvider(
     props: RoomProviderProps<P, S>
@@ -650,10 +656,11 @@ function RoomProvider<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
+  M extends BaseMetadata,
 >(props: RoomProviderProps<P, S>) {
-  const client = useClient();
+  const client = useClient<U>();
   const [cache] = React.useState(
-    () => new Map<string, RoomLeavePair<P, S, U, E>>()
+    () => new Map<string, RoomLeavePair<P, S, U, E, M>>()
   );
 
   // Produce a version of client.enterRoom() that when called for the same
@@ -663,11 +670,11 @@ function RoomProvider<
     (
       roomId: string,
       options: EnterOptions<P, S>
-    ): RoomLeavePair<P, S, U, E> => {
+    ): RoomLeavePair<P, S, U, E, M> => {
       const cached = cache.get(roomId);
       if (cached) return cached;
 
-      const rv = client.enterRoom<P, S, U, E>(roomId, options);
+      const rv = client.enterRoom<P, S, E, M>(roomId, options);
 
       // Wrap the leave function to also delete the cached value
       const origLeave = rv.leave;
@@ -710,12 +717,13 @@ function RoomProviderInner<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
+  M extends BaseMetadata,
 >(
   props: RoomProviderProps<P, S> & {
     stableEnterRoom: (
       roomId: string,
       options: EnterOptions<P, S>
-    ) => RoomLeavePair<P, S, U, E>;
+    ) => RoomLeavePair<P, S, U, E, M>;
   }
 ) {
   const client = useClient();
@@ -854,8 +862,9 @@ function useRoom<
   S extends LsonObject = never,
   U extends BaseUserMeta = never,
   E extends Json = never,
->(): Room<P, S, U, E> {
-  const room = useRoomOrNull<P, S, U, E>();
+  M extends BaseMetadata = never,
+>(): Room<P, S, U, E, M> {
+  const room = useRoomOrNull<P, S, U, E, M>();
   if (room === null) {
     throw new Error("RoomProvider is missing from the React tree.");
   }
@@ -1185,6 +1194,7 @@ function useMutation<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
+  M extends BaseMetadata,
   F extends (context: MutationContext<P, S, U>, ...args: any[]) => any,
 >(callback: F, deps: readonly unknown[]): OmitFirstArg<F> {
   const room = useRoom<P, S, U, E>();
@@ -1195,7 +1205,7 @@ function useMutation<
         room.batch(() =>
           // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           callback(
-            makeMutationContext<P, S, U, E>(room),
+            makeMutationContext<P, S, U, E, M>(room),
             // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             ...args
           )
@@ -2215,8 +2225,9 @@ export function useRoomOrNull<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
->(): Room<P, S, U, E> | null {
-  return React.useContext(RoomContext) as Room<P, S, U, E> | null;
+  M extends BaseMetadata,
+>(): Room<P, S, U, E, M> | null {
+  return React.useContext(RoomContext) as Room<P, S, U, E, M> | null;
 }
 
 /**
@@ -2226,7 +2237,7 @@ export function useRoomOrNull<
  */
 export function useRoomContextBundleOrNull() {
   const client = useClientOrNull();
-  const room = useRoomOrNull<never, never, never, never>();
+  const room = useRoomOrNull<never, never, never, never, never>();
   return client && room ? getOrCreateRoomContextBundle(client) : null;
 }
 

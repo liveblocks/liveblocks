@@ -3,6 +3,7 @@ import { createAuthManager } from "./auth-manager";
 import { isIdle } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
 import type { LsonObject } from "./crdts/Lson";
+import type { DE, DM, DP, DS, DU } from "./custom-types";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import { kInternal } from "./internal";
 import type { BatchStore } from "./lib/batch";
@@ -26,7 +27,13 @@ import type {
   InboxNotificationData,
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
-import type { Polyfills, Room, RoomDelegates, RoomInitializers } from "./room";
+import type {
+  OpaqueRoom,
+  Polyfills,
+  Room,
+  RoomDelegates,
+  RoomInitializers,
+} from "./room";
 import {
   createRoom,
   makeAuthDelegateForRoom,
@@ -36,23 +43,6 @@ import type { CacheStore } from "./store";
 import { createClientStore } from "./store";
 import type { OptionalPromise } from "./types/OptionalPromise";
 import type { RoomInfo } from "./types/RoomInfo";
-
-//
-// Default concrete types for each of the user-provided type placeholders.
-//
-
-/** DP = Default Presence type */
-export type DP = JsonObject;
-/** DS = Default Storage type */
-export type DS = LsonObject;
-/** DU = Default UserMeta type */
-export type DU = BaseUserMeta;
-/** DE = Default (Room)Event type */
-export type DE = Json;
-/** DM = Default Thread Metadata type */
-export type DM = BaseMetadata;
-
-type OpaqueRoom = Room<JsonObject, LsonObject, BaseUserMeta, Json>;
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1_000;
@@ -151,11 +141,11 @@ export type Client<U extends BaseUserMeta = DU> = {
   getRoom<
     P extends JsonObject = DP,
     S extends LsonObject = DS,
-    U extends BaseUserMeta = DU, // TODO Remove in 2.0, this is shadowing the Client-level type arg
-    E extends Json = never, // TODO Change to DE in 2.0
+    E extends Json = DE,
+    M extends BaseMetadata = DM,
   >(
     roomId: string
-  ): Room<P, S, U, E> | null;
+  ): Room<P, S, U, E, M> | null;
 
   /**
    * Enter a room.
@@ -166,13 +156,13 @@ export type Client<U extends BaseUserMeta = DU> = {
   enterRoom<
     P extends JsonObject = DP,
     S extends LsonObject = DS,
-    U extends BaseUserMeta = DU, // TODO Remove in 2.0, this is shadowing the Client-level type arg
-    E extends Json = never, // TODO Change to DE in 2.0
+    E extends Json = DE,
+    M extends BaseMetadata = DM,
   >(
     roomId: string,
     options: EnterOptions<P, S>
   ): {
-    room: Room<P, S, U, E>;
+    room: Room<P, S, U, E, M>;
     leave: () => void;
   };
 
@@ -337,10 +327,11 @@ export function createClient<U extends BaseUserMeta = DU>(
     S extends LsonObject,
     U extends BaseUserMeta,
     E extends Json,
+    M extends BaseMetadata,
   >(
     info: RoomInfo
   ): {
-    room: Room<P, S, U, E>;
+    room: Room<P, S, U, E, M>;
     leave: () => void;
   } {
     // Create a new self-destructing leave function
@@ -361,7 +352,7 @@ export function createClient<U extends BaseUserMeta = DU>(
 
     info.unsubs.add(leave);
     return {
-      room: info.room as Room<P, S, U, E>,
+      room: info.room as Room<P, S, U, E, M>,
       leave,
     };
   }
@@ -371,11 +362,12 @@ export function createClient<U extends BaseUserMeta = DU>(
     S extends LsonObject,
     U extends BaseUserMeta,
     E extends Json,
+    M extends BaseMetadata,
   >(
     roomId: string,
     options: EnterOptions<P, S>
   ): {
-    room: Room<P, S, U, E>;
+    room: Room<P, S, U, E, M>;
     leave: () => void;
   } {
     const existing = roomsById.get(roomId);
@@ -388,7 +380,7 @@ export function createClient<U extends BaseUserMeta = DU>(
       "Please provide an initial presence value for the current user when entering the room."
     );
 
-    const newRoom = createRoom<P, S, U, E>(
+    const newRoom = createRoom<P, S, U, E, M>(
       {
         initialPresence: options.initialPresence ?? {},
         initialStorage: options.initialStorage,
@@ -448,8 +440,9 @@ export function createClient<U extends BaseUserMeta = DU>(
     S extends LsonObject,
     U extends BaseUserMeta,
     E extends Json,
-  >(roomId: string, options: EnterOptions<P, S>): Room<P, S, U, E> {
-    const { room, leave: _ } = enterRoom<P, S, U, E>(roomId, options);
+    M extends BaseMetadata,
+  >(roomId: string, options: EnterOptions<P, S>): Room<P, S, U, E, M> {
+    const { room, leave: _ } = enterRoom<P, S, U, E, M>(roomId, options);
     return room;
   }
 
@@ -458,9 +451,10 @@ export function createClient<U extends BaseUserMeta = DU>(
     S extends LsonObject,
     U extends BaseUserMeta,
     E extends Json,
-  >(roomId: string): Room<P, S, U, E> | null {
+    M extends BaseMetadata,
+  >(roomId: string): Room<P, S, U, E, M> | null {
     const room = roomsById.get(roomId)?.room;
-    return room ? (room as Room<P, S, U, E>) : null;
+    return room ? (room as Room<P, S, U, E, M>) : null;
   }
 
   function forceLeave(roomId: string) {

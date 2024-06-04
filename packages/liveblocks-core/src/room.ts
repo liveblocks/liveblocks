@@ -514,12 +514,20 @@ type CommentsApi<M extends BaseMetadata> = {
   }): Promise<void>;
 };
 
-// TODO: Add M in 2.0
+export type OpaqueRoom = Room<
+  JsonObject,
+  LsonObject,
+  BaseUserMeta,
+  Json,
+  BaseMetadata
+>;
+
 export type Room<
   P extends JsonObject,
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
+  M extends BaseMetadata,
 > = {
   /**
    * @private
@@ -528,8 +536,7 @@ export type Room<
    * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
    * will probably happen if you do.
    */
-  // TODO Change `never` to `M` in 2.0
-  readonly [kInternal]: PrivateRoomApi<never>;
+  readonly [kInternal]: PrivateRoomApi<M>;
 
   /**
    * The id of the room.
@@ -1333,13 +1340,14 @@ export function createRoom<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
+  M extends BaseMetadata,
 >(
   options: Omit<
     RoomInitializers<P, S>,
     "autoConnect" | "shouldInitiallyConnect"
   >,
   config: RoomConfig
-): Room<P, S, U, E> {
+): Room<P, S, U, E, M> {
   const initialPresence =
     typeof options.initialPresence === "function"
       ? options.initialPresence(config.roomId)
@@ -2951,9 +2959,10 @@ function makeClassicSubscribeFn<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
+  M extends BaseMetadata,
 >(
   events: Omit<
-    Room<P, S, U, E>["events"],
+    Room<P, S, U, E, M>["events"],
     "comments" // comments is an internal events so we omit it from the subscribe method
   >
 ): SubscribeFn<P, S, U, E> {

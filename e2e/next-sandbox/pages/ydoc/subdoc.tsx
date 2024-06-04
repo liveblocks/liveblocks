@@ -33,7 +33,7 @@ function Sandbox() {
   );
   const [synced, setSynced] = useState(false);
   const [provider, setProvider] =
-    useState<LiveblocksProvider<never, never, BaseUserMeta, never>>();
+    useState<LiveblocksProvider<never, never, BaseUserMeta, never, never>>();
   const doc = useMemo(() => new Y.Doc(), []);
 
   const updateSubdocContent = useCallback(() => {

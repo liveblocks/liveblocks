@@ -7,6 +7,8 @@ import type {
 import type {
   CacheState,
   CacheStore,
+  DM,
+  DU,
   InboxNotificationData,
   InboxNotificationDeleteInfo,
   ThreadDeleteInfo,
@@ -24,7 +26,6 @@ import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
-import type { DM, DU } from "./custom-types";
 import { retryError } from "./lib/retry-error";
 import { useInitial } from "./lib/use-initial";
 import type {
@@ -731,17 +732,16 @@ export function createSharedContext<U extends BaseUserMeta>(
 /**
  * @private This is an internal API.
  */
-export function useClientOrNull() {
-  return useContext(ClientContext);
+export function useClientOrNull<U extends BaseUserMeta>() {
+  return useContext(ClientContext) as Client<U> | null;
 }
 
 /**
- * @beta This is an internal API for now, but it will become public eventually.
+ * Obtains a reference to the current Liveblocks client.
  */
-// TODO in 2.0 make public / non-beta
-export function useClient() {
+export function useClient<U extends BaseUserMeta>() {
   return (
-    useClientOrNull() ??
+    useClientOrNull<U>() ??
     raise("LiveblocksProvider is missing from the React tree.")
   );
 }
@@ -820,12 +820,12 @@ function useUnreadInboxNotificationsCountSuspense() {
 }
 
 function useUser<U extends BaseUserMeta>(userId: string) {
-  const client = useClient() as Client<U>;
+  const client = useClient<U>();
   return useUser_withClient(client, userId);
 }
 
 function useUserSuspense<U extends BaseUserMeta>(userId: string) {
-  const client = useClient() as Client<U>;
+  const client = useClient<U>();
   return useUserSuspense_withClient(client, userId);
 }
 

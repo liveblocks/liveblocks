@@ -1,10 +1,9 @@
-import type { LsonObject } from "../crdts/Lson";
 import { kInternal } from "../internal";
 import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { UpdateYDocClientMsg } from "../protocol/ClientMsg";
 import type { YDocUpdateServerMsg } from "../protocol/ServerMsg";
-import type { Room, RoomEventMessage } from "../room";
+import type { OpaqueRoom, RoomEventMessage } from "../room";
 import { PKG_VERSION } from "../version";
 import { activateBridge, onMessageFromPanel, sendToPanel } from "./bridge";
 
@@ -90,9 +89,7 @@ function stopSyncStream(roomId: string): void {
  * stream consists of an initial "full sync" message, followed by many
  * "partial" messages that happen whenever part of the room changes.
  */
-function startSyncStream(
-  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
-): void {
+function startSyncStream(room: OpaqueRoom): void {
   stopSyncStream(room.id);
 
   // Sync the room ID instantly, as soon as we know it
@@ -123,7 +120,7 @@ function startSyncStream(
 }
 
 function syncYdocUpdate(
-  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
+  room: OpaqueRoom,
   update: YDocUpdateServerMsg | UpdateYDocClientMsg
 ) {
   sendToPanel({
@@ -141,7 +138,7 @@ function nextEventId() {
 }
 
 function forwardEvent(
-  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
+  room: OpaqueRoom,
   eventData: RoomEventMessage<JsonObject, BaseUserMeta, Json>
 ) {
   sendToPanel({
@@ -157,9 +154,7 @@ function forwardEvent(
   });
 }
 
-function partialSyncConnection(
-  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
-) {
+function partialSyncConnection(room: OpaqueRoom) {
   sendToPanel({
     msg: "room::sync::partial",
     roomId: room.id,
@@ -167,9 +162,7 @@ function partialSyncConnection(
   });
 }
 
-function partialSyncStorage(
-  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
-) {
+function partialSyncStorage(room: OpaqueRoom) {
   const root = room.getStorageSnapshot();
   if (root) {
     sendToPanel({
@@ -180,7 +173,7 @@ function partialSyncStorage(
   }
 }
 
-function partialSyncMe(room: Room<JsonObject, LsonObject, BaseUserMeta, Json>) {
+function partialSyncMe(room: OpaqueRoom) {
   const me = room[kInternal].getSelf_forDevTools();
   if (me) {
     sendToPanel({
@@ -191,9 +184,7 @@ function partialSyncMe(room: Room<JsonObject, LsonObject, BaseUserMeta, Json>) {
   }
 }
 
-function partialSyncOthers(
-  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
-) {
+function partialSyncOthers(room: OpaqueRoom) {
   // Any time others updates, send the new storage root to the dev panel
   const others = room[kInternal].getOthers_forDevTools();
   if (others) {
@@ -205,7 +196,7 @@ function partialSyncOthers(
   }
 }
 
-function fullSync(room: Room<JsonObject, LsonObject, BaseUserMeta, Json>) {
+function fullSync(room: OpaqueRoom) {
   const root = room.getStorageSnapshot();
   const me = room[kInternal].getSelf_forDevTools();
   const others = room[kInternal].getOthers_forDevTools();
@@ -237,10 +228,7 @@ function stopRoomChannelListener(roomId: string) {
 /**
  * Publicly announce to the devtool panel that a new room is available.
  */
-export function linkDevTools(
-  roomId: string,
-  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
-): void {
+export function linkDevTools(roomId: string, room: OpaqueRoom): void {
   // Define it as a no-op in production environments or when run outside of a browser context
   if (process.env.NODE_ENV === "production" || typeof window === "undefined") {
     return;
