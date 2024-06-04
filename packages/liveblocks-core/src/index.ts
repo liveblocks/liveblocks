@@ -99,6 +99,7 @@ export {
   withTimeout,
 } from "./lib/utils";
 export type { CustomAuthenticationResult } from "./protocol/Authentication";
+export type { BaseRoomInfo } from "./protocol/BaseRoomInfo";
 export type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 export type {
   BroadcastEventClientMsg,
@@ -195,7 +196,6 @@ export type {
 } from "./room";
 export type { GetThreadsOptions } from "./room";
 export { CommentsApiError } from "./room";
-export type { BaseRoomInfo } from "./protocol/BaseRoomInfo";
 export type { Immutable } from "./types/Immutable";
 export type {
   IWebSocket,
