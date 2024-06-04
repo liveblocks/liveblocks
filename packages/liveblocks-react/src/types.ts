@@ -17,13 +17,13 @@ import type {
   BaseMetadata,
   CommentBody,
   CommentData,
+  DRI,
   InboxNotificationData,
   LiveblocksError,
   PartialNullable,
   QueryMetadata,
   Resolve,
   RoomEventMessage,
-  RoomInfo,
   RoomInitializers,
   ThreadData,
   ToImmutable,
@@ -91,7 +91,7 @@ export type RoomInfoStateError = {
 
 export type RoomInfoStateSuccess = {
   isLoading: false;
-  info: RoomInfo;
+  info: DRI;
   error?: never;
 };
 

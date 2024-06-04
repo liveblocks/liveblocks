@@ -3,7 +3,7 @@ import { createAuthManager } from "./auth-manager";
 import { isIdle } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
 import type { LsonObject } from "./crdts/Lson";
-import type { DE, DM, DP, DS, DU } from "./custom-types";
+import type { DE, DM, DP, DRI, DS, DU } from "./custom-types";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import { kInternal } from "./internal";
 import type { BatchStore } from "./lib/batch";
@@ -42,7 +42,6 @@ import {
 import type { CacheStore } from "./store";
 import { createClientStore } from "./store";
 import type { OptionalPromise } from "./types/OptionalPromise";
-import type { RoomInfo } from "./types/RoomInfo";
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1_000;
@@ -111,7 +110,7 @@ type PrivateClientApi<U extends BaseUserMeta> = {
   readonly resolveMentionSuggestions: ClientOptions<U>["resolveMentionSuggestions"];
   readonly cacheStore: CacheStore<BaseMetadata>;
   readonly usersStore: BatchStore<U["info"] | undefined, [string]>;
-  readonly roomsInfoStore: BatchStore<RoomInfo | undefined, [string]>;
+  readonly roomsInfoStore: BatchStore<DRI | undefined, [string]>;
   readonly getRoomIds: () => string[];
 };
 
@@ -227,7 +226,7 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
    */
   resolveRoomsInfo?: (
     args: ResolveRoomsInfoArgs
-  ) => OptionalPromise<(RoomInfo | undefined)[] | undefined>;
+  ) => OptionalPromise<(DRI | undefined)[] | undefined>;
 
   /**
    * @internal To point the client to a different Liveblocks server. Only

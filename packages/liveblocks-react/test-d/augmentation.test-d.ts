@@ -33,6 +33,12 @@ declare global {
     ThreadMetadata: {
       color: "red" | "blue";
     };
+
+    RoomInfo: {
+      name: string;
+      url?: string;
+      type: "public" | "private";
+    };
   }
 }
 
@@ -262,6 +268,8 @@ declare global {
   expectType<boolean>(isLoading);
   expectType<string | undefined>(info?.name);
   expectType<string | undefined>(info?.url);
+  expectType<"public" | "private" | undefined>(info?.type);
+  expectError(info?.nonexisting);
   expectType<Error | undefined>(error);
 }
 
@@ -269,8 +277,10 @@ declare global {
 {
   const { info, error, isLoading } = suspense.useRoomInfo("room-id");
   expectType<false>(isLoading);
-  expectType<string | undefined>(info.name);
+  expectType<string>(info.name);
   expectType<string | undefined>(info.url);
+  expectType<"public" | "private">(info?.type);
+  expectError(info?.nonexisting);
   expectType<undefined>(error);
 }
 

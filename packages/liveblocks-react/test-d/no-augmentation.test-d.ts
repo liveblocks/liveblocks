@@ -219,6 +219,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
   expectType<boolean>(isLoading);
   expectType<string | undefined>(info?.name);
   expectType<string | undefined>(info?.url);
+  expectType<Json | undefined>(info?.nonexisting);
   expectType<Error | undefined>(error);
 }
 
@@ -228,6 +229,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
   expectType<false>(isLoading);
   expectType<string | undefined>(info.name);
   expectType<string | undefined>(info.url);
+  expectType<Json | undefined>(info?.nonexisting);
   expectType<undefined>(error);
 }
 

@@ -1,4 +1,8 @@
-export type RoomInfo = {
+import type { Json } from "../lib/Json";
+
+export type BaseRoomInfo = {
+  [key: string]: Json | undefined;
+
   /**
    * The name of the room.
    */
