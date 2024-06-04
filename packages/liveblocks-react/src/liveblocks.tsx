@@ -736,9 +736,8 @@ export function useClientOrNull<U extends BaseUserMeta>() {
 }
 
 /**
- * @beta This is an internal API for now, but it will become public eventually.
+ * Obtains a reference to the current Liveblocks client.
  */
-// TODO in 2.0 make public / non-beta
 export function useClient<U extends BaseUserMeta>() {
   return (
     useClientOrNull<U>() ??
