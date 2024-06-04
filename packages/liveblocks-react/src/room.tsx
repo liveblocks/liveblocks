@@ -1272,7 +1272,7 @@ function useCreateThread<M extends BaseMetadata>() {
   return React.useCallback(
     (options: CreateThreadOptions<M>): ThreadData<M> => {
       const body = options.body;
-      const metadata: M = (options.metadata ?? {}) as M;
+      const metadata = options.metadata ?? ({} as M);
 
       const threadId = createThreadId();
       const commentId = createCommentId();
@@ -1294,7 +1294,7 @@ function useCreateThread<M extends BaseMetadata>() {
         createdAt,
         updatedAt: createdAt,
         roomId: room.id,
-        metadata: metadata as ThreadData<M>["metadata"],
+        metadata,
         comments: [newComment],
       };
 
