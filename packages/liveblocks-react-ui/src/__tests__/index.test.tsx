@@ -1,6 +1,7 @@
 import "@testing-library/jest-dom";
 
 import type {
+  BaseMetadata,
   CommentData,
   RoomStateServerMsg,
   ThreadData,
@@ -15,6 +16,9 @@ import { Composer } from "../components/Composer";
 import { Thread } from "../components/Thread";
 import { Timestamp } from "../primitives";
 import { render } from "./_utils"; // Basically re-exports from @testing-library/react
+
+// XXX Remove me when done
+type ___REMOVE_ME_WHEN_DONE___ = BaseMetadata;
 
 function remove<T>(array: T[], item: T) {
   for (let i = 0; i < array.length; i++) {
@@ -226,7 +230,7 @@ const deletedComment: CommentData = {
   deletedAt: new Date("2023-08-14T12:41:50.243Z"),
 };
 
-const thread: ThreadData = {
+const thread: ThreadData<___REMOVE_ME_WHEN_DONE___> = {
   type: "thread",
   id: "th_1",
   roomId: "room",
