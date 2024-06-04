@@ -1,18 +1,6 @@
 import type { Status } from "../connection";
-import type { LsonObject } from "../crdts/Lson";
-import type { Json, JsonObject } from "../lib/Json";
 import { withTimeout } from "../lib/utils";
-import type { BaseUserMeta } from "../protocol/BaseUserMeta";
-import type { BaseMetadata } from "../protocol/Comments";
-import type { Room } from "../room";
-
-type OpaqueRoom = Room<
-  JsonObject,
-  LsonObject,
-  BaseUserMeta,
-  Json,
-  BaseMetadata
->;
+import type { OpaqueRoom } from "../room";
 
 export function sleep(delay: number) {
   return new Promise((resolve) => setTimeout(resolve, delay));

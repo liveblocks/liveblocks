@@ -9,7 +9,16 @@ import type {
   Status,
   User,
 } from "@liveblocks/client";
-import type { StorageUpdate } from "@liveblocks/core";
+import type {
+  BaseMetadata,
+  DE,
+  DM,
+  DP,
+  DS,
+  DU,
+  OpaqueRoom,
+  StorageUpdate,
+} from "@liveblocks/core";
 import {
   detectDupes,
   errorIf,
@@ -22,21 +31,6 @@ import type { StateCreator, StoreMutatorIdentifier } from "zustand";
 import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
-
-//
-// Default concrete types for each of the user-provided type placeholders.
-//
-
-/** DP = Default Presence type */
-type DP = JsonObject;
-/** DS = Default Storage type */
-type DS = LsonObject;
-/** DU = Default UserMeta type */
-type DU = BaseUserMeta;
-/** DE = Default (Room)Event type */
-type DE = Json;
-/** DM = Default Thread Metadata type */
-// type DM = BaseMetadata;
 
 const ERROR_PREFIX = "Invalid @liveblocks/zustand middleware config.";
 
@@ -51,6 +45,7 @@ export type LiveblocksContext<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
+  M extends BaseMetadata,
 > = {
   /**
    * Enters a room and starts sync it with zustand state
@@ -65,7 +60,7 @@ export type LiveblocksContext<
   /**
    * The room currently synced to your zustand state.
    */
-  readonly room: Room<P, S, U, E> | null;
+  readonly room: Room<P, S, U, E, M> | null;
   /**
    * Other users in the room. Empty no room is currently synced
    */
@@ -89,8 +84,9 @@ export type WithLiveblocks<
   S extends LsonObject = DS,
   U extends BaseUserMeta = DU,
   E extends Json = DE,
+  M extends BaseMetadata = DM,
 > = TState & {
-  readonly liveblocks: LiveblocksContext<P, S, U, E>;
+  readonly liveblocks: LiveblocksContext<P, S, U, E, M>;
 };
 
 export type Mapping<T> = {
@@ -127,7 +123,8 @@ type InnerLiveblocksMiddleware = <
       JsonObject,
       LsonObject,
       BaseUserMeta,
-      Json
+      Json,
+      BaseMetadata
     >;
   },
 >(
@@ -135,13 +132,11 @@ type InnerLiveblocksMiddleware = <
   options: Options<TState>
 ) => StateCreator<TState, [], []>;
 
-type ExtractPresence<
-  TRoom extends Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-> = TRoom extends Room<infer P, any, any, any> ? P : never;
+type ExtractPresence<TRoom extends OpaqueRoom> =
+  TRoom extends Room<infer P, any, any, any, any> ? P : never;
 
-type ExtractStorage<
-  TRoom extends Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-> = TRoom extends Room<any, infer S, any, any> ? S : never;
+type ExtractStorage<TRoom extends OpaqueRoom> =
+  TRoom extends Room<any, infer S, any, any, any> ? S : never;
 
 const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
   type TState = ReturnType<typeof config>;
@@ -360,13 +355,14 @@ function updateLiveblocksContext<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
+  M extends BaseMetadata,
 >(
   set: (
     callbackOrPartial: (
-      current: WithLiveblocks<TState, P, S, U, E>
+      current: WithLiveblocks<TState, P, S, U, E, M>
     ) => WithLiveblocks<TState, P, S, U, E> | Partial<any>
   ) => void,
-  partial: Partial<LiveblocksContext<P, S, U, E>>
+  partial: Partial<LiveblocksContext<P, S, U, E, M>>
 ) {
   set((state) => ({ liveblocks: { ...state.liveblocks, ...partial } }));
 }
@@ -376,8 +372,9 @@ function updatePresence<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
+  M extends BaseMetadata,
 >(
-  room: Room<P, S, U, E>,
+  room: Room<P, S, U, E, M>,
   oldState: P,
   newState: P,
   presenceMapping: Mapping<P>
