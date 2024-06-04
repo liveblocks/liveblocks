@@ -7,6 +7,8 @@ import type {
 import type {
   CacheState,
   CacheStore,
+  DM,
+  DU,
   InboxNotificationData,
   InboxNotificationDeleteInfo,
   ThreadDeleteInfo,
@@ -24,7 +26,6 @@ import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
-import type { DM, DU } from "@liveblocks/core";
 import { retryError } from "./lib/retry-error";
 import { useInitial } from "./lib/use-initial";
 import type {

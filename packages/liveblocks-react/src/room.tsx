@@ -20,6 +20,11 @@ import type {
   CacheStore,
   CommentData,
   CommentsEventServerMsg,
+  DE,
+  DM,
+  DP,
+  DS,
+  DU,
   EnterOptions,
   LiveblocksError,
   OpaqueRoom,
@@ -65,7 +70,6 @@ import { createCommentId, createThreadId } from "./comments/lib/createIds";
 import { selectNotificationSettings } from "./comments/lib/select-notification-settings";
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 import { selectedThreads } from "./comments/lib/selected-threads";
-import type { DE, DM, DP, DS, DU } from "@liveblocks/core";
 import { retryError } from "./lib/retry-error";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";

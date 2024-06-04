@@ -64,6 +64,7 @@ export type {
 } from "./crdts/StorageUpdates";
 export type { ToImmutable } from "./crdts/utils";
 export { toPlainLson } from "./crdts/utils";
+export type { DE, DM, DP, DS, DU } from "./custom-types";
 export {
   legacy_patchImmutableObject,
   lsonToJson,
@@ -192,7 +193,6 @@ export type {
   RoomInitializers,
   StorageStatus,
 } from "./room";
-export type { DE, DM, DP, DS, DU } from "./custom-types";
 export type { GetThreadsOptions } from "./room";
 export { CommentsApiError } from "./room";
 export type { Immutable } from "./types/Immutable";
