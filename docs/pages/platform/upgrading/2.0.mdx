@@ -30,7 +30,7 @@ I found the following order of mechanical changes to be most ideal path to upgra
 1. Run `tsc` again, no new errors should pop up at this point. If they do, they should only be from APIs that were long-deprecated and now removed. Adjust accordingly. See section above.
 1. [Mechanical change] Go to `liveblocks.config.ts`, look at the `createRoomContext()` call. Add the `declare global { ... }` definition right above it, and move the type params to the global. Remove the type params. [Example of this change](https://github.com/liveblocks/liveblocks/commit/da750d4ac9e88d812c0fb612ce18f02920d65463). And another [example](https://github.com/liveblocks/liveblocks/commit/1c14e6e553463538d722b0b91baacc2aa4ff3267).
 1. [Mechanical change]
-   1. If using `const { suspense: { ... } } = createRoomContext()`, do a mass search & replace of `"../../path/to/liveblocks.config"` to `"@liveblocks/react/suspense"`.
+   1. If using `const { suspense: { ... } } = createRoomContext()`, do a mass search & replace of `"../../path/to/liveblocks.config"` to `"@liveblocks/react/suspense"`. [Examples of this change](https://github.com/liveblocks/liveblocks/commit/9e6fd25f21e1bcbc4e625161f8d33ce6aaafb0ab).
    1. If using `const { ... } = createRoomContext()`, do a mass search & replace of `"../../path/to/liveblocks.config"` to `"@liveblocks/react"`. [Example of this change](https://github.com/liveblocks/liveblocks/commit/adc5692b072ef291082c2e1a22e77eb30c2b1667).
 1. Run `tsc` again. There should not be any TypeScript issues at this point. However, the code will not work.
 1. [Mechanical change]
