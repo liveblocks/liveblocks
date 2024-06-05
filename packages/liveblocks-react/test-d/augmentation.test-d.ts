@@ -42,6 +42,86 @@ declare global {
   }
 }
 
+// LiveblocksProvider
+{
+  const LiveblocksProvider = classic.LiveblocksProvider;
+
+  // These are all JSX components
+  expectError(LiveblocksProvider({} /* no props */));
+  expectError(LiveblocksProvider({ throttle: 16 }));
+
+  expectType<React.JSX.Element>(
+    LiveblocksProvider({ authEndpoint: "/api/auth" })
+  );
+
+  expectType<React.JSX.Element>(LiveblocksProvider({ publicApiKey: "pk_xxx" }));
+
+  expectType<React.JSX.Element>(
+    LiveblocksProvider({ authEndpoint: "/api/auth", throttle: 16 })
+  );
+
+  expectType<React.JSX.Element>(
+    LiveblocksProvider({
+      authEndpoint: async () => ({ token: "token" }),
+      throttle: 16,
+    })
+  );
+
+  expectError(
+    LiveblocksProvider({
+      authEndpoint: "/api/auth",
+      resolveUsers: async () => [{ foo: "bar" }],
+    })
+  );
+
+  expectType<React.JSX.Element>(
+    LiveblocksProvider({
+      authEndpoint: "/api/auth",
+      resolveUsers: async () => [{ name: "Vincent", age: 42 }],
+    })
+  );
+}
+
+// LiveblocksProvider (suspense)
+{
+  const LiveblocksProvider = suspense.LiveblocksProvider;
+
+  // These are all JSX components
+  expectError(LiveblocksProvider({} /* no props */));
+  expectError(LiveblocksProvider({ throttle: 16 }));
+
+  expectType<React.JSX.Element>(
+    LiveblocksProvider({ authEndpoint: "/api/auth" })
+  );
+
+  expectType<React.JSX.Element>(LiveblocksProvider({ publicApiKey: "pk_xxx" }));
+
+  expectType<React.JSX.Element>(
+    LiveblocksProvider({ authEndpoint: "/api/auth", throttle: 16 })
+  );
+
+  expectType<React.JSX.Element>(
+    LiveblocksProvider({
+      authEndpoint: async () => ({ token: "token" }),
+      throttle: 16,
+    })
+  );
+
+  expectError(
+    LiveblocksProvider({
+      authEndpoint: "/api/auth",
+      resolveUsers: async () => [{ foo: "bar" }],
+    })
+  );
+
+  expectType<React.JSX.Element>(
+    LiveblocksProvider({
+      authEndpoint: "/api/auth",
+      resolveUsers: async () => [{ name: "Vincent", age: 42 }],
+    })
+  );
+}
+
 // ---------------------------------------------------------
 // Hook APIs
 // ---------------------------------------------------------

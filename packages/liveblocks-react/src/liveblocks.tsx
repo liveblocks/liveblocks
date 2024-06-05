@@ -769,8 +769,8 @@ export function LiveblocksProviderWithClient(
   );
 }
 
-export function LiveblocksProvider(
-  props: PropsWithChildren<ClientOptions<BaseUserMeta>>
+export function LiveblocksProvider<U extends BaseUserMeta>(
+  props: PropsWithChildren<ClientOptions<U>>
 ) {
   const { children, ...o } = props;
 
@@ -800,12 +800,12 @@ export function LiveblocksProvider(
       // @ts-expect-error - Hidden config options
       o.enableDebugLogging as boolean | undefined
     ),
-  } as ClientOptions<BaseUserMeta>;
+  } as ClientOptions<U>;
 
   // NOTE: Deliberately not passing any deps here, because we'll _never_ want
   // to recreate a client instance after the first render.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const client = useMemo(() => createClient(options), []);
+  const client = useMemo(() => createClient<U>(options), []);
   return (
     <LiveblocksProviderWithClient client={client}>
       {children}
