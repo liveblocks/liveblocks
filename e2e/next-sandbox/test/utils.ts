@@ -210,19 +210,6 @@ export async function expectJson(
   }
 }
 
-export async function expectJsonNotEqual(
-  page: Page,
-  selector: IDSelector,
-  unexpectedValue: Json | undefined
-) {
-  if (unexpectedValue !== undefined) {
-    await expect(getJson(page, selector)).resolves.not.toEqual(unexpectedValue);
-  } else {
-    const text = await page.locator(selector).innerText();
-    expect(text).not.toEqual("undefined");
-  }
-}
-
 export async function getJson(
   page: Page,
   selector: IDSelector
