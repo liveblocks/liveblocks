@@ -66,7 +66,7 @@ export type {
 } from "./crdts/StorageUpdates";
 export type { ToImmutable } from "./crdts/utils";
 export { toPlainLson } from "./crdts/utils";
-export type { DE, DM, DP, DRI, DS, DU } from "./globals/augmentation";
+export type { DAD, DE, DM, DP, DRI, DS, DU } from "./globals/augmentation";
 export {
   legacy_patchImmutableObject,
   lsonToJson,
@@ -101,6 +101,7 @@ export {
   withTimeout,
 } from "./lib/utils";
 export type { CustomAuthenticationResult } from "./protocol/Authentication";
+export type { BaseActivitiesData } from "./protocol/BaseActivitiesData";
 export type { BaseRoomInfo } from "./protocol/BaseRoomInfo";
 export type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 export type {

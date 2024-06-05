@@ -1,3 +1,4 @@
+import type { DAD } from "../globals/augmentation";
 import type { DateToString } from "../lib/DateToString";
 
 export type InboxNotificationThreadData = {
@@ -14,21 +15,22 @@ export type ActivityData = Record<
   string | boolean | number | undefined
 >;
 
-type InboxNotificationActivity = {
+type InboxNotificationActivity<K extends `$${string}` = `$${string}`> = {
   id: string;
   createdAt: Date;
-  data: ActivityData;
+  data: DAD[K];
 };
 
-export type InboxNotificationCustomData = {
-  kind: `$${string}`;
-  id: string;
-  roomId?: string;
-  subjectId: string;
-  notifiedAt: Date;
-  readAt: Date | null;
-  activities: InboxNotificationActivity[];
-};
+export type InboxNotificationCustomData<K extends `$${string}` = `$${string}`> =
+  {
+    kind: `$${string}`;
+    id: string;
+    roomId?: string;
+    subjectId: string;
+    notifiedAt: Date;
+    readAt: Date | null;
+    activities: InboxNotificationActivity<K>[];
+  };
 
 export type InboxNotificationData =
   | InboxNotificationThreadData

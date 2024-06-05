@@ -1,6 +1,7 @@
 "use client";
 
 import type {
+  DAD,
   InboxNotificationCustomData,
   InboxNotificationData,
   InboxNotificationThreadData,
@@ -57,10 +58,12 @@ type ComponentTypeWithRef<
   P,
 > = ComponentType<P & Pick<ComponentProps<T>, "ref">>;
 
-type InboxNotificationKinds = Record<
-  `$${string}`,
-  ComponentTypeWithRef<"a", InboxNotificationCustomKindProps>
-> & {
+type InboxNotificationKinds = {
+  [K in keyof DAD]: ComponentTypeWithRef<
+    "a",
+    InboxNotificationCustomKindProps<K>
+  >;
+} & {
   thread: ComponentTypeWithRef<"a", InboxNotificationThreadKindProps>;
 };
 
@@ -149,11 +152,10 @@ export type InboxNotificationThreadKindProps = Omit<
   inboxNotification: InboxNotificationThreadData;
 };
 
-export type InboxNotificationCustomKindProps = Omit<
-  InboxNotificationProps,
-  "kinds"
-> & {
-  inboxNotification: InboxNotificationCustomData;
+export type InboxNotificationCustomKindProps<
+  K extends `$${string}` = `$${string}`,
+> = Omit<InboxNotificationProps, "kinds"> & {
+  inboxNotification: InboxNotificationCustomData<K>;
 };
 
 interface InboxNotificationLayoutProps

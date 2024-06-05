@@ -1,5 +1,6 @@
 import type { LsonObject } from "../crdts/Lson";
 import type { Json, JsonObject } from "../lib/Json";
+import type { BaseActivitiesData } from "../protocol/BaseActivitiesData";
 import type { BaseRoomInfo } from "../protocol/BaseRoomInfo";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { BaseMetadata } from "../protocol/Comments";
@@ -19,7 +20,8 @@ type ExtendableTypes =
   | "UserMeta"
   | "RoomEvent"
   | "ThreadMetadata"
-  | "RoomInfo";
+  | "RoomInfo"
+  | "ActivitiesData";
 
 type ExtendedType<
   K extends ExtendableTypes,
@@ -42,3 +44,8 @@ export type DM = ExtendedType<
   "Invalid generic"
 >;
 export type DRI = ExtendedType<"RoomInfo", BaseRoomInfo, "Invalid generic">;
+export type DAD = ExtendedType<
+  "ActivitiesData",
+  BaseActivitiesData,
+  "Invalid generic"
+>;
