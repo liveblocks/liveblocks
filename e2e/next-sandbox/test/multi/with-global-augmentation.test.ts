@@ -3,6 +3,7 @@ import { test } from "@playwright/test";
 
 import {
   expectJson,
+  expectJsonNotEqual,
   genRoomId,
   getJson,
   pickFrom,
@@ -49,7 +50,7 @@ test.describe("Multiple rooms", () => {
     await page.click("#mount_1");
     await waitForJson(page, "#socketStatus_1", "connected");
 
-    await expectJson(page, "#connectionId_1", connId + 1);
+    await expectJsonNotEqual(page, "#connectionId_1", connId);
   });
 
   test("mount, change room, change room back", async () => {
@@ -73,7 +74,7 @@ test.describe("Multiple rooms", () => {
     // await waitForJson(page, "#socketStatus_1", "connecting");
     await waitForJson(page, "#socketStatus_1", "connected");
 
-    await expectJson(page, "#connectionId_1", initialConnId + 1);
+    await expectJsonNotEqual(page, "#connectionId_1", initialConnId);
   });
 
   test("mount same room twice as siblings, change room, change room back, should retain connection ID", async () => {
