@@ -1,4 +1,7 @@
-import { useCallback, useRef, useState } from "react";
+import type { Reducer } from "react";
+import { useCallback, useReducer, useRef } from "react";
+
+const noop = <T>(state: T) => state;
 
 /**
  * "Freezes" a given value, so that it will return the same value/instance on
@@ -7,7 +10,8 @@ import { useCallback, useRef, useState } from "react";
  * `useRef(initialValue)` works.
  */
 export function useInitial<T>(value: T): T {
-  return useState(() => value)[0];
+  // Equivalent to useState(() => value)[0], but slightly more low-level
+  return useReducer<Reducer<T, unknown>>(noop, value)[0];
 }
 
 /**
