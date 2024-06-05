@@ -22,7 +22,7 @@
 </p>
 
 A browser extension that lets you inspect [Liveblocks](https://liveblocks.io)
-real-time collaborative experiences.
+realtime collaborative experiences.
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/devtools/devtools.png" width="640" alt="Liveblocks DevTools" />
 
