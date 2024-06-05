@@ -8,7 +8,7 @@ import {
   pickFrom,
   preparePages,
   waitForJson,
-} from "../utils";
+} from "./utils";
 
 // NOTE: The tests below don't play well with concurrency just yet. The reason
 // is that they unmount, remount, and then check that the connection ID
