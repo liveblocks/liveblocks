@@ -7,7 +7,7 @@ import { useCallback, useRef, useState } from "react";
  * `useRef(initialValue)` works.
  */
 export function useInitial<T>(value: T): T {
-  return useState(value)[0];
+  return useState(() => value)[0];
 }
 
 /**
