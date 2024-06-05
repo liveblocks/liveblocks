@@ -17,7 +17,7 @@ export const Button = forwardRef<
     className={clsx(
       className,
       styles.button,
-      icon && !children && styles.iconButton,
+      icon && !children ? styles.iconButton : undefined,
       {
         [styles.buttonPrimary]: variant === "primary",
         [styles.buttonSecondary]: variant === "secondary",
@@ -44,7 +44,7 @@ export function LinkButton({
       className={clsx(
         className,
         styles.button,
-        icon && !children && styles.iconButton,
+        icon && !children ? styles.iconButton : undefined,
         {
           [styles.buttonPrimary]: variant === "primary",
           [styles.buttonSecondary]: variant === "secondary",

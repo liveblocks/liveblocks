@@ -21,7 +21,7 @@
   },
   "devDependencies": {
     "@types/node": "^16.10.1",
-    "@types/react": "18.0.27",
+    "@types/react": "18.3.3",
     "@types/react-dom": "^18.0.6",
     "@types/recharts": "^1.8.24",
     "prettier": "^2.6.2",

@@ -6,9 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "test": "jest",
-    "tsc": "tsc --noEmit"
+    "start": "next start"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.0.5",
