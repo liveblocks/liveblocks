@@ -20,6 +20,8 @@ export type {
   Client,
   ClientOptions,
   EnterOptions,
+  OpaqueClient,
+  PrivateClientApi,
   ResolveMentionSuggestionsArgs,
   ResolveRoomsInfoArgs,
   ResolveUsersArgs,
@@ -38,11 +40,7 @@ export {
   stringifyCommentBody,
 } from "./comments/comment-body";
 export type { BaseAuthResult, Delegates, LiveblocksError } from "./connection";
-export type {
-  LegacyConnectionStatus,
-  LostConnectionEvent,
-  Status,
-} from "./connection";
+export type { LostConnectionEvent, Status } from "./connection";
 export {
   convertToCommentData,
   convertToCommentUserReaction,
@@ -68,6 +66,7 @@ export type {
 } from "./crdts/StorageUpdates";
 export type { ToImmutable } from "./crdts/utils";
 export { toPlainLson } from "./crdts/utils";
+export type { DE, DM, DP, DRI, DS, DU } from "./globals/augmentation";
 export {
   legacy_patchImmutableObject,
   lsonToJson,
@@ -102,6 +101,7 @@ export {
   withTimeout,
 } from "./lib/utils";
 export type { CustomAuthenticationResult } from "./protocol/Authentication";
+export type { BaseRoomInfo } from "./protocol/BaseRoomInfo";
 export type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 export type {
   BroadcastEventClientMsg,
@@ -192,6 +192,7 @@ export type { PrivateRoomApi } from "./room";
 export type {
   BroadcastOptions,
   History,
+  OpaqueRoom,
   Room,
   RoomEventMessage,
   RoomInitializers,
@@ -210,7 +211,7 @@ export type {
 export { WebsocketCloseCodes } from "./types/IWebSocket";
 export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 export type { OptionalPromise } from "./types/OptionalPromise";
-export type { Others, OthersEvent } from "./types/Others";
+export type { OthersEvent } from "./types/Others";
 export type { PartialNullable } from "./types/PartialNullable";
 export type {
   PlainLson,
@@ -219,7 +220,6 @@ export type {
   PlainLsonMap,
   PlainLsonObject,
 } from "./types/PlainLson";
-export type { RoomInfo } from "./types/RoomInfo";
 export type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 export type { User } from "./types/User";
 export { detectDupes };

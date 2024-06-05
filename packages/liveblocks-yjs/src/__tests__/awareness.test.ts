@@ -53,9 +53,9 @@ async function waitForSocketToBeConnected() {
 describe("presence", () => {
   test("Setting local state should remove local state", async () => {
     const client = createClient({ authEndpoint: "/api/auth" });
-    const { room, leave } = client.enterRoom<{
-      __yjs?: JsonObject;
-    }>("room", { initialPresence: {} });
+    const { room, leave } = client.enterRoom<{ __yjs?: JsonObject }>("room", {
+      initialPresence: {},
+    });
     await waitForSocketToBeConnected();
     const yDoc = new Y.Doc();
     const yProvider = new LiveblocksProvider(room, yDoc);
@@ -71,9 +71,9 @@ describe("presence", () => {
 
   test("Update handler should be called", async () => {
     const client = createClient({ authEndpoint: "/api/auth" });
-    const { room, leave } = client.enterRoom<{
-      __yjs?: JsonObject;
-    }>("room", { initialPresence: {} });
+    const { room, leave } = client.enterRoom<{ __yjs?: JsonObject }>("room", {
+      initialPresence: {},
+    });
     await waitForSocketToBeConnected();
     const yDoc = new Y.Doc();
     const yProvider = new LiveblocksProvider(room, yDoc);
@@ -91,9 +91,9 @@ describe("presence", () => {
 
   test("When others update, we should get awareness state correctly and update should be called", async () => {
     const client = createClient({ authEndpoint: "/api/auth" });
-    const { room, leave } = client.enterRoom<{
-      __yjs?: JsonObject;
-    }>("room", { initialPresence: {} });
+    const { room, leave } = client.enterRoom<{ __yjs?: JsonObject }>("room", {
+      initialPresence: {},
+    });
     const socket = await waitForSocketToBeConnected();
     const yDoc = new Y.Doc();
     const yProvider = new LiveblocksProvider(room, yDoc);

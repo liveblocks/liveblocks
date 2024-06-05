@@ -1647,18 +1647,18 @@ await liveblocks.triggerInboxNotification({
   // The custom notification kind, must start with a $
   kind: "$fileUploaded",
 
-  // The ID of the resource that is the subject of the activity
+  // Custom ID for this specific notification
   subjectId: "my-file",
 
   // Custom data related to the activity that you need to render the inbox notification
   activityData: {
-    // data can be a string, number, or boolean
+    // Data can be a string, number, or boolean
     file: "https://example.com/my-file.zip",
     size: 256,
     success: true,
   },
 
-  // Optional
+  // Optional, define the room ID the notification was sent from
   roomId: "my-room-id",
 });
 ```

@@ -5,12 +5,11 @@ import {
 } from "./client";
 import type {
   Delegates,
-  LegacyConnectionStatus,
   LiveblocksError,
   LostConnectionEvent,
   Status,
 } from "./connection";
-import { ManagedSocket, newToLegacyStatus, StopRetrying } from "./connection";
+import { ManagedSocket, StopRetrying } from "./connection";
 import {
   convertToCommentData,
   convertToCommentUserReaction,
@@ -32,6 +31,7 @@ import {
 import { LiveObject } from "./crdts/LiveObject";
 import type { LiveNode, LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
+import type { DE, DM, DP, DS, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
 import { Batch } from "./lib/batch";
@@ -161,7 +161,6 @@ type RoomEventCallbackMap<
   U extends BaseUserMeta,
   E extends Json,
 > = {
-  connection: Callback<LegacyConnectionStatus>; // Old/deprecated API
   status: Callback<Status>; // New/recommended API
   "lost-connection": Callback<LostConnectionEvent>;
   event: Callback<RoomEventMessage<P, U, E>>;
@@ -359,31 +358,6 @@ type SubscribeFn<
   (type: "error", listener: Callback<LiveblocksError>): () => void;
 
   /**
-   * @deprecated This API will be removed in a future version of Liveblocks.
-   * Prefer using the newer `.subscribe('status')` API.
-   *
-   * We recommend making the following changes if you use these APIs:
-   *
-   *     OLD APIs                       NEW APIs
-   *     .getConnectionState()     -->  .getStatus()
-   *     .subscribe('connection')  -->  .subscribe('status')
-   *
-   *     OLD STATUSES         NEW STATUSES
-   *     closed          -->  initial
-   *     authenticating  -->  connecting
-   *     connecting      -->  connecting
-   *     open            -->  connected
-   *     unavailable     -->  reconnecting
-   *     failed          -->  disconnected
-   *
-   * Subscribe to legacy connection status updates.
-   *
-   * @returns Unsubscribe function.
-   *
-   */
-  (type: "connection", listener: Callback<LegacyConnectionStatus>): () => void;
-
-  /**
    * Subscribe to connection status updates. The callback will be called any
    * time the status changes.
    *
@@ -541,12 +515,25 @@ type CommentsApi<M extends BaseMetadata> = {
   }): Promise<void>;
 };
 
-// TODO: Add M in 2.0
+/**
+ * @private Widest-possible Room type, matching _any_ Room instance. Note that
+ * this type is different from `Room`-without-type-arguments. That represents
+ * a Room instance using globally augmented types only, which is narrower.
+ */
+export type OpaqueRoom = Room<
+  JsonObject,
+  LsonObject,
+  BaseUserMeta,
+  Json,
+  BaseMetadata
+>;
+
 export type Room<
-  P extends JsonObject,
-  S extends LsonObject,
-  U extends BaseUserMeta,
-  E extends Json,
+  P extends JsonObject = DP,
+  S extends LsonObject = DS,
+  U extends BaseUserMeta = DU,
+  E extends Json = DE,
+  M extends BaseMetadata = DM,
 > = {
   /**
    * @private
@@ -555,33 +542,12 @@ export type Room<
    * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
    * will probably happen if you do.
    */
-  // TODO Change `never` to `M` in 2.0
-  readonly [kInternal]: PrivateRoomApi<never>;
+  readonly [kInternal]: PrivateRoomApi<M>;
 
   /**
    * The id of the room.
    */
   readonly id: string;
-
-  /**
-   * @deprecated This API will be removed in a future version of Liveblocks.
-   * Prefer using `.getStatus()` instead.
-   *
-   * We recommend making the following changes if you use these APIs:
-   *
-   *     OLD APIs                       NEW APIs
-   *     .getConnectionState()     -->  .getStatus()
-   *     .subscribe('connection')  -->  .subscribe('status')
-   *
-   *     OLD STATUSES         NEW STATUSES
-   *     closed          -->  initial
-   *     authenticating  -->  connecting
-   *     connecting      -->  connecting
-   *     open            -->  connected
-   *     unavailable     -->  reconnecting
-   *     failed          -->  disconnected
-   */
-  getConnectionState(): LegacyConnectionStatus;
 
   /**
    * Return the current connection status for this room. Can be used to display
@@ -951,8 +917,6 @@ export type RoomInitializers<
    * the authentication endpoint or connect via WebSocket.
    */
   autoConnect?: boolean;
-  /** @deprecated Renamed to `autoConnect` */
-  shouldInitiallyConnect?: boolean;
 }>;
 
 export type RoomDelegates = Omit<Delegates<AuthValue>, "canZombie">;
@@ -993,7 +957,13 @@ function userToTreeNode(
     type: "User",
     id: `${user.connectionId}`,
     key,
-    payload: user,
+    payload: {
+      connectionId: user.connectionId,
+      id: user.id,
+      info: user.info,
+      presence: user.presence,
+      isReadOnly: !user.canWrite,
+    },
   };
 }
 
@@ -1102,9 +1072,7 @@ function createCommentsApi<M extends BaseMetadata>(
     return body;
   }
 
-  async function getThreads<
-    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
-  >(options?: GetThreadsOptions<M>) {
+  async function getThreads(options?: GetThreadsOptions<M>) {
     let query: string | undefined;
 
     if (options?.query) {
@@ -1172,7 +1140,7 @@ function createCommentsApi<M extends BaseMetadata>(
 
     if (response.ok) {
       const json = (await response.json()) as {
-        thread: ThreadDataPlain;
+        thread: ThreadDataPlain<M>;
         inboxNotification?: InboxNotificationDataPlain;
       };
 
@@ -1189,9 +1157,7 @@ function createCommentsApi<M extends BaseMetadata>(
     }
   }
 
-  async function createThread<
-    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
-  >({
+  async function createThread({
     metadata,
     body,
     commentId,
@@ -1221,9 +1187,7 @@ function createCommentsApi<M extends BaseMetadata>(
     return convertToThreadData(thread);
   }
 
-  async function editThreadMetadata<
-    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
-  >({
+  async function editThreadMetadata({
     metadata,
     threadId,
   }: {
@@ -1382,13 +1346,14 @@ export function createRoom<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
+  M extends BaseMetadata,
 >(
   options: Omit<
     RoomInitializers<P, S>,
     "autoConnect" | "shouldInitiallyConnect"
   >,
   config: RoomConfig
-): Room<P, S, U, E> {
+): Room<P, S, U, E, M> {
   const initialPresence =
     typeof options.initialPresence === "function"
       ? options.initialPresence(config.roomId)
@@ -1658,7 +1623,6 @@ export function createRoom<
   };
 
   const eventHub = {
-    connection: makeEventSource<LegacyConnectionStatus>(), // Old/deprecated API
     status: makeEventSource<Status>(), // New/recommended API
     lostConnection: makeEventSource<LostConnectionEvent>(),
 
@@ -1808,7 +1772,6 @@ export function createRoom<
           presence: myPresence,
           canWrite,
           canComment: canComment(dynamicSession.scopes),
-          isReadOnly: !canWrite, // Deprecated, kept for backward-compatibility
         };
       }
     }
@@ -3032,7 +2995,6 @@ export function createRoom<
 
       // Core
       getStatus: () => managedSocket.getStatus(),
-      getConnectionState: () => managedSocket.getLegacyStatus(),
       getSelf: () => self.current,
 
       // Presence
@@ -3057,9 +3019,10 @@ function makeClassicSubscribeFn<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
+  M extends BaseMetadata,
 >(
   events: Omit<
-    Room<P, S, U, E>["events"],
+    Room<P, S, U, E, M>["events"],
     "comments" // comments is an internal events so we omit it from the subscribe method
   >
 ): SubscribeFn<P, S, U, E> {
@@ -3130,13 +3093,6 @@ function makeClassicSubscribeFn<
 
         case "error":
           return events.error.subscribe(callback as Callback<Error>);
-
-        case "connection": {
-          const cb = callback as Callback<LegacyConnectionStatus>;
-          return events.status.subscribe((status) =>
-            cb(newToLegacyStatus(status))
-          );
-        }
 
         case "status":
           return events.status.subscribe(callback as Callback<Status>);

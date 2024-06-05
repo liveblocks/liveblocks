@@ -15,6 +15,7 @@ import type { Store } from "./lib/create-store";
 import { type QueryParams, urljoin } from "./lib/url";
 import { TokenKind } from "./protocol/AuthToken";
 import type {
+  BaseMetadata,
   ThreadDataPlain,
   ThreadDeleteInfoPlain,
 } from "./protocol/Comments";
@@ -30,7 +31,7 @@ export type GetInboxNotificationsOptions = {
   since?: Date;
 };
 
-export function createNotificationsApi({
+export function createNotificationsApi<M extends BaseMetadata>({
   baseUrl,
   authManager,
   currentUserIdStore,
@@ -40,7 +41,7 @@ export function createNotificationsApi({
   authManager: AuthManager;
   currentUserIdStore: Store<string | null>;
   fetcher: (url: string, init?: RequestInit) => Promise<Response>;
-}): NotificationsApi {
+}): NotificationsApi<M> {
   async function fetchJson<T>(
     endpoint: string,
     options?: RequestInit,
@@ -103,7 +104,7 @@ export function createNotificationsApi({
 
   async function getInboxNotifications(options?: GetInboxNotificationsOptions) {
     const json = await fetchJson<{
-      threads: ThreadDataPlain[];
+      threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
       deletedThreads: ThreadDeleteInfoPlain[];
       deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];

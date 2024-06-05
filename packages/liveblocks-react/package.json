@@ -3,6 +3,7 @@
   "version": "1.12.0-lexical6",
   "description": "A set of React hooks and providers to use Liveblocks declaratively. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
+  "type": "commonjs",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -16,10 +17,22 @@
         "module": "./dist/index.mjs",
         "default": "./dist/index.js"
       }
+    },
+    "./suspense": {
+      "import": {
+        "types": "./dist/suspense.d.mts",
+        "default": "./dist/suspense.mjs"
+      },
+      "require": {
+        "types": "./dist/suspense.d.ts",
+        "module": "./dist/suspense.mjs",
+        "default": "./dist/suspense.js"
+      }
     }
   },
   "files": [
     "dist/**",
+    "suspense/**",
     "README.md"
   ],
   "scripts": {
@@ -30,7 +43,7 @@
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack",
     "test": "jest --silent --verbose --color=always",
-    "test:types": "tsd",
+    "test:types": "ls test-d/* | xargs -n1 tsd --files",
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
   "dependencies": {

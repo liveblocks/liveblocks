@@ -10,16 +10,7 @@ Liveblocks is a real-time collaboration infrastructure for building performant
 collaborative experiences. Follow the following steps to start adding a
 commenting experience to your React application using the hooks from
 [`@liveblocks/react`](/docs/api-reference/liveblocks-react) and the components
-from
-[`@liveblocks/react-comments`](/docs/api-reference/liveblocks-react-comments).
-
-<Banner title="Public beta">
-
-Comments is currently in beta. If you have any questions or feedback, please
-join us on our [Discord server](https://liveblocks.io/discord). We’d love to
-hear from you.
-
-</Banner>
+from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
 
 ## Quickstart
 
@@ -29,7 +20,7 @@ hear from you.
     <StepContent>
 
       ```bash
-      npm install @liveblocks/client @liveblocks/react @liveblocks/react-comments
+      npm install @liveblocks/client @liveblocks/react @liveblocks/react-ui
       ```
 
     </StepContent>
@@ -105,7 +96,7 @@ hear from you.
       "use client";
 
       import { useThreads } from "./liveblocks.config";
-      import { Composer, Thread } from "@liveblocks/react-comments";
+      import { Composer, Thread } from "@liveblocks/react-ui";
 
       export function Room() {
         const { threads } = useThreads();
@@ -132,7 +123,7 @@ hear from you.
     root of your app or directly into a CSS file with `@import`.
 
     ```tsx
-    import "@liveblocks/react-comments/styles.css";
+    import "@liveblocks/react-ui/styles.css";
     ```
 
     </StepContent>
@@ -160,7 +151,7 @@ hear from you.
 Congratulations! You’ve set up the foundation to start building a commenting
 experience for your React application.
 
-- [API Reference](/docs/api-reference/liveblocks-react-comments)
+- [API Reference](/docs/api-reference/liveblocks-react-ui)
 - [How to send email notifications when comments are created](/docs/guides/how-to-send-email-notifications-when-comments-are-created)
 
 ---
@@ -171,7 +162,7 @@ experience for your React application.
   <ExampleCard
     example={{
       title: "Comments",
-      slug: "comments/react-comments",
+      slug: "comments/react-ui",
       image: "/images/examples/thumbnails/comments.jpg",
     }}
     technologies={["nextjs", "react"]}

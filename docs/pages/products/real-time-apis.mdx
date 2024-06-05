@@ -1,0 +1,90 @@
+---
+meta:
+  title: "Real-time APIs"
+  parentTitle: "Products"
+  description:
+    "Embed a custom collaborative experience into your application using
+    Liveblocks Storage and Liveblocks Yjs."
+---
+
+Build a custom collaborative experience using Liveblocks Real-time APIs. This
+can include anything from whiteboards, flowcharts, spreadsheets, and more.
+
+## Overview
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="Yjs"
+    href="/docs/products/real-time-apis/yjs"
+    description="Data store for text editors"
+    visual={<DocsYjsIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Storage"
+    href="/docs/products/real-time-apis/storage"
+    description="Data store for creative tools"
+    visual={<DocsStorageIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Presence"
+    href="/docs/products/real-time-apis/presence"
+    description="Make users feel connected"
+    visual={<DocsPresenceIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Broadcast"
+    href="/docs/products/real-time-apis/broadcast"
+    description="Send custom events to others"
+    visual={
+      <DocsBroadcastIcon className="fill-product-icon-brand h-auto w-6" />
+    }
+  />
+</ListGrid>
+
+## Examples using Real-time APIs
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Live Avatar Stack",
+      slug: "live-avatar-stack",
+      image: "/images/examples/thumbnails/live-avatar-stack.jpg",
+    }}
+    technologies={["nextjs", "nuxtjs", "vuejs", "sveltekit", "solidjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Live Cursors Chat",
+      slug: "live-cursors-chat",
+      image: "/images/examples/thumbnails/live-cursors-chat.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Whiteboard",
+      slug: "collaborative-whiteboard-advanced",
+      image:
+        "/images/examples/thumbnails/collaborative-whiteboard-advanced.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Flowchart",
+      slug: "collaborative-flowchart/zustand-flowchart",
+      image: "/images/examples/thumbnails/collaborative-flowchart.jpg",
+      advanced: true,
+    }}
+    technologies={["zustand"]}
+    openInNewWindow
+  />
+</ListGrid>

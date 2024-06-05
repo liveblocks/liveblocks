@@ -1,5 +1,4 @@
-import type { ThreadData } from "@liveblocks/core";
-
+import type { ThreadData } from "../protocol/Comments";
 import { compareThreads } from "../store";
 
 describe("compareThreads", () => {

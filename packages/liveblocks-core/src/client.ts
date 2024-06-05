@@ -12,6 +12,7 @@ import { isIdle } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
+import type { DE, DM, DP, DRI, DS, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
 import type { BatchStore } from "./lib/batch";
 import { createBatchStore } from "./lib/batch";
@@ -35,7 +36,7 @@ import type {
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
 import type {
-  GetThreadsOptions,
+  OpaqueRoom,
   Polyfills,
   Room,
   RoomDelegates,
@@ -46,28 +47,9 @@ import {
   makeAuthDelegateForRoom,
   makeCreateSocketDelegateForRoom,
 } from "./room";
-import type { CacheState, CacheStore } from "./store";
+import type { CacheStore } from "./store";
 import { createClientStore } from "./store";
 import type { OptionalPromise } from "./types/OptionalPromise";
-import type { RoomInfo } from "./types/RoomInfo";
-import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
-
-//
-// Default concrete types for each of the user-provided type placeholders.
-//
-
-/** DP = Default Presence type */
-export type DP = JsonObject;
-/** DS = Default Storage type */
-export type DS = LsonObject;
-/** DU = Default UserMeta type */
-export type DU = BaseUserMeta;
-/** DE = Default (Room)Event type */
-export type DE = Json;
-/** DM = Default Thread Metadata type */
-export type DM = BaseMetadata;
-
-type OpaqueRoom = Room<JsonObject, LsonObject, BaseUserMeta, Json>;
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1_000;
@@ -108,7 +90,10 @@ export type ResolveRoomsInfoArgs = {
   roomIds: string[];
 };
 
-export type EnterOptions<P extends JsonObject, S extends LsonObject> = Resolve<
+export type EnterOptions<
+  P extends JsonObject = DP,
+  S extends LsonObject = DS,
+> = Resolve<
   // Enter options are just room initializers, plus an internal option
   RoomInitializers<P, S> & {
     /**
@@ -130,20 +115,17 @@ export type EnterOptions<P extends JsonObject, S extends LsonObject> = Resolve<
  * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
  * will probably happen if you do.
  */
-type PrivateClientApi<U extends BaseUserMeta> = {
-  readonly notifications: NotificationsApi;
-  readonly comments: CommentsApi;
+export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
+  readonly notifications: NotificationsApi<M>;
   readonly currentUserIdStore: Store<string | null>;
   readonly resolveMentionSuggestions: ClientOptions<U>["resolveMentionSuggestions"];
   readonly cacheStore: CacheStore<BaseMetadata>;
   readonly usersStore: BatchStore<U["info"] | undefined, [string]>;
-  readonly roomsInfoStore: BatchStore<RoomInfo | undefined, [string]>;
+  readonly roomsInfoStore: BatchStore<DRI | undefined, [string]>;
   readonly getRoomIds: () => string[];
 };
 
-export type NotificationsApi<
-  M extends BaseMetadata = never, // TODO Change this to DM for 2.0
-> = {
+export type NotificationsApi<M extends BaseMetadata> = {
   getInboxNotifications(options?: GetInboxNotificationsOptions): Promise<{
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<M>[];
@@ -158,23 +140,13 @@ export type NotificationsApi<
   markInboxNotificationAsRead(inboxNotificationId: string): Promise<void>;
 };
 
-export type CommentsApi = {
-  createThreadId(): string;
-  createCommentId(): string;
-  createInboxNotificationId(): string;
-  selectedThreads<M extends BaseMetadata>(
-    roomId: string,
-    state: CacheState<M>,
-    options: GetThreadsOptions<M>
-  ): ThreadData<M>[];
-  selectedInboxNotifications<M extends BaseMetadata>(
-    state: CacheState<M>
-  ): InboxNotificationData[];
-  selectNotificationSettings<M extends BaseMetadata>(
-    roomId: string,
-    state: CacheState<M>
-  ): RoomNotificationSettings;
-};
+/**
+ * @private Widest-possible Client type, matching _any_ Client instance. Note
+ * that this type is different from `Client`-without-type-arguments. That
+ * represents a Client instance using globally augmented types only, which is
+ * narrower.
+ */
+export type OpaqueClient = Client<BaseUserMeta>;
 
 export type Client<U extends BaseUserMeta = DU> = {
   /**
@@ -185,11 +157,11 @@ export type Client<U extends BaseUserMeta = DU> = {
   getRoom<
     P extends JsonObject = DP,
     S extends LsonObject = DS,
-    U extends BaseUserMeta = DU, // TODO Remove in 2.0, this is shadowing the Client-level type arg
-    E extends Json = never, // TODO Change to DE in 2.0
+    E extends Json = DE,
+    M extends BaseMetadata = DM,
   >(
     roomId: string
-  ): Room<P, S, U, E> | null;
+  ): Room<P, S, U, E, M> | null;
 
   /**
    * Enter a room.
@@ -200,46 +172,15 @@ export type Client<U extends BaseUserMeta = DU> = {
   enterRoom<
     P extends JsonObject = DP,
     S extends LsonObject = DS,
-    U extends BaseUserMeta = DU, // TODO Remove in 2.0, this is shadowing the Client-level type arg
-    E extends Json = never, // TODO Change to DE in 2.0
+    E extends Json = DE,
+    M extends BaseMetadata = DM,
   >(
     roomId: string,
     options: EnterOptions<P, S>
   ): {
-    room: Room<P, S, U, E>;
+    room: Room<P, S, U, E, M>;
     leave: () => void;
   };
-
-  /**
-   * @deprecated - Prefer using {@link Client.enterRoom} instead.
-   *
-   * Enters a room and returns it.
-   * @param roomId The id of the room
-   * @param options Optional. You can provide initializers for the Presence or Storage when entering the Room.
-   */
-  enter<
-    P extends JsonObject = DP,
-    S extends LsonObject = DS,
-    U extends BaseUserMeta = DU, // TODO Remove in 2.0, this is shadowing the Client-level type arg
-    E extends Json = never, // TODO Change to DE in 2.0
-  >(
-    roomId: string,
-    options: EnterOptions<P, S>
-  ): Room<P, S, U, E>;
-
-  /**
-   * @deprecated - Prefer using {@link Client.enterRoom} and calling the returned leave function instead, which is safer.
-   *
-   * Forcefully leaves a room.
-   *
-   * Only call this if you know for sure there are no other "instances" of this
-   * room used elsewhere in your application. Force-leaving can trigger
-   * unexpected conditions in other parts of your application that may not
-   * expect this.
-   *
-   * @param roomId The id of the room
-   */
-  leave(roomId: string): void;
 
   /**
    * Purges all cached auth tokens and reconnects all rooms that are still
@@ -256,7 +197,8 @@ export type Client<U extends BaseUserMeta = DU> = {
    * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
    * will probably happen if you do.
    */
-  readonly [kInternal]: PrivateClientApi<U>;
+  // TODO Make this a getter, so we can provide M
+  readonly [kInternal]: PrivateClientApi<U, BaseMetadata>;
 };
 
 export type AuthEndpoint =
@@ -276,20 +218,6 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
   unstable_streamData?: boolean;
 
   /**
-   * @deprecated Use `polyfills: { fetch: ... }` instead.
-   * This option will be removed in a future release.
-   */
-  fetchPolyfill?: Polyfills["fetch"];
-
-  /**
-   * @deprecated Use `polyfills: { WebSocket: ... }` instead.
-   * This option will be removed in a future release.
-   */
-  WebSocketPolyfill?: Polyfills["WebSocket"];
-
-  /**
-   * @beta
-   *
    * A function that returns a list of user IDs matching a string.
    */
   resolveMentionSuggestions?: (
@@ -297,8 +225,6 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
   ) => OptionalPromise<string[]>;
 
   /**
-   * @beta
-   *
    * A function that returns user info from user IDs.
    */
   resolveUsers?: (
@@ -306,13 +232,11 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
   ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
 
   /**
-   * @beta
-   *
    * A function that returns room info from room IDs.
    */
   resolveRoomsInfo?: (
     args: ResolveRoomsInfoArgs
-  ) => OptionalPromise<(RoomInfo | undefined)[] | undefined>;
+  ) => OptionalPromise<(DRI | undefined)[] | undefined>;
 
   /**
    * @internal To point the client to a different Liveblocks server. Only
@@ -420,10 +344,11 @@ export function createClient<U extends BaseUserMeta = DU>(
     S extends LsonObject,
     U extends BaseUserMeta,
     E extends Json,
+    M extends BaseMetadata,
   >(
     info: RoomInfo
   ): {
-    room: Room<P, S, U, E>;
+    room: Room<P, S, U, E, M>;
     leave: () => void;
   } {
     // Create a new self-destructing leave function
@@ -444,7 +369,7 @@ export function createClient<U extends BaseUserMeta = DU>(
 
     info.unsubs.add(leave);
     return {
-      room: info.room as Room<P, S, U, E>,
+      room: info.room as Room<P, S, U, E, M>,
       leave,
     };
   }
@@ -454,11 +379,12 @@ export function createClient<U extends BaseUserMeta = DU>(
     S extends LsonObject,
     U extends BaseUserMeta,
     E extends Json,
+    M extends BaseMetadata,
   >(
     roomId: string,
     options: EnterOptions<P, S>
   ): {
-    room: Room<P, S, U, E>;
+    room: Room<P, S, U, E, M>;
     leave: () => void;
   } {
     const existing = roomsById.get(roomId);
@@ -471,7 +397,7 @@ export function createClient<U extends BaseUserMeta = DU>(
       "Please provide an initial presence value for the current user when entering the room."
     );
 
-    const newRoom = createRoom<P, S, U, E>(
+    const newRoom = createRoom<P, S, U, E, M>(
       {
         initialPresence: options.initialPresence ?? {},
         initialStorage: options.initialStorage,
@@ -507,8 +433,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     setupDevTools(() => Array.from(roomsById.keys()));
     linkDevTools(roomId, newRoom);
 
-    const shouldConnect =
-      options.autoConnect ?? options.shouldInitiallyConnect ?? true;
+    const shouldConnect = options.autoConnect ?? true;
     if (shouldConnect) {
       // we need to check here because nextjs would fail earlier with Node < 16
       if (typeof atob === "undefined") {
@@ -532,8 +457,9 @@ export function createClient<U extends BaseUserMeta = DU>(
     S extends LsonObject,
     U extends BaseUserMeta,
     E extends Json,
-  >(roomId: string, options: EnterOptions<P, S>): Room<P, S, U, E> {
-    const { room, leave: _ } = enterRoom<P, S, U, E>(roomId, options);
+    M extends BaseMetadata,
+  >(roomId: string, options: EnterOptions<P, S>): Room<P, S, U, E, M> {
+    const { room, leave: _ } = enterRoom<P, S, U, E, M>(roomId, options);
     return room;
   }
 
@@ -542,9 +468,10 @@ export function createClient<U extends BaseUserMeta = DU>(
     S extends LsonObject,
     U extends BaseUserMeta,
     E extends Json,
-  >(roomId: string): Room<P, S, U, E> | null {
+    M extends BaseMetadata,
+  >(roomId: string): Room<P, S, U, E, M> | null {
     const room = roomsById.get(roomId)?.room;
-    return room ? (room as Room<P, S, U, E>) : null;
+    return room ? (room as Room<P, S, U, E, M>) : null;
   }
 
   function forceLeave(roomId: string) {
