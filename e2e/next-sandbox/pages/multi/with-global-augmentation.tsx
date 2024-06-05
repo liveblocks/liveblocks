@@ -1,36 +1,70 @@
 import { LiveList } from "@liveblocks/client";
-import { createRoomContext } from "@liveblocks/react";
-import React from "react";
-
-import { getRoomFromUrl, Row, styles, useRenderCount } from "../utils";
-import Button from "../utils/Button";
-import { createLiveblocksClient } from "../utils/createClient";
-
-const client = createLiveblocksClient();
-
-type Presence = {
-  foo?: number;
-};
-
-type Storage = {
-  items?: LiveList<string>;
-};
-
-const {
+import type { CustomAuthenticationResult } from "@liveblocks/core";
+import {
+  LiveblocksProvider,
   RoomProvider,
-  useStorage,
+  useClient,
   useMutation,
   useMyPresence,
   useOthers,
+  useRoom,
   useSelf,
   useStatus,
-  useRoom,
-} = createRoomContext<Presence, Storage>(client);
+  useStorage,
+} from "@liveblocks/react";
+import React from "react";
 
-const initialPresence = (): Presence => ({});
-const initialStorage = (): Storage => ({ items: new LiveList() });
+import {
+  getRoomFromUrl,
+  Row,
+  styles,
+  useRenderCount,
+  useRerender,
+} from "../../utils";
+import Button from "../../utils/Button";
+import { createLiveblocksClientOptions } from "../../utils/createClient";
+
+const initialPresence = (): Liveblocks["Presence"] => ({});
+const initialStorage = (): Liveblocks["Storage"] => ({ items: new LiveList() });
 
 export default function Home() {
+  const count = useRenderCount();
+  const rerender = useRerender();
+
+  const options = createLiveblocksClientOptions();
+  return (
+    <LiveblocksProvider
+      {...options}
+      publicApiKey={undefined}
+      authEndpoint={async (room?: string) => {
+        const response = await fetch(
+          `/api/auth/access-token?echo=${count}`,
+          //                      ^^^^^^^^^^^^^
+          //                      Just adding a render counter to the URL,
+          //                      so we can observe that the latest
+          //                      function is always invoked.
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ room }),
+          }
+        );
+        return (await response.json()) as CustomAuthenticationResult;
+      }}
+    >
+      <h4>
+        <span id="liveblocksProviderRenderCount">{count}</span>
+        <Button id="rerenderLiveblocksProvider" onClick={rerender}>
+          Rerender
+        </Button>
+      </h4>
+      <Page />
+    </LiveblocksProvider>
+  );
+}
+
+function Page() {
+  const client = useClient();
   const [numColumns, setNumColumns] = React.useState(1);
   return (
     <>
@@ -242,6 +276,11 @@ function Sandbox({ index }: SandboxProps) {
             id={`connectionId_${index}`}
             name="Connection ID"
             value={me?.connectionId}
+          />
+          <Row
+            id={`echo_${index}`}
+            name="Echoed payload from user info"
+            value={me?.info?.echo}
           />
           <Row
             id={`socketStatus_${index}`}

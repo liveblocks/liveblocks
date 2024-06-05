@@ -52,8 +52,6 @@ import { Room } from "./internal/Room";
 import { Tooltip } from "./internal/Tooltip";
 import { User } from "./internal/User";
 
-type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
-
 type ComponentTypeWithRef<
   T extends keyof JSX.IntrinsicElements,
   P,
@@ -61,12 +59,9 @@ type ComponentTypeWithRef<
 
 type InboxNotificationKinds = Record<
   `$${string}`,
-  ComponentTypeWithRef<
-    "a",
-    Optional<InboxNotificationCustomProps, "title" | "children">
-  >
+  ComponentTypeWithRef<"a", InboxNotificationCustomKindProps>
 > & {
-  thread: ComponentTypeWithRef<"a", InboxNotificationThreadProps>;
+  thread: ComponentTypeWithRef<"a", InboxNotificationThreadKindProps>;
 };
 
 interface InboxNotificationSharedProps {
@@ -146,6 +141,20 @@ export interface InboxNotificationCustomProps
    */
   markAsReadOnClick?: boolean;
 }
+
+export type InboxNotificationThreadKindProps = Omit<
+  InboxNotificationProps,
+  "kinds"
+> & {
+  inboxNotification: InboxNotificationThreadData;
+};
+
+export type InboxNotificationCustomKindProps = Omit<
+  InboxNotificationProps,
+  "kinds"
+> & {
+  inboxNotification: InboxNotificationCustomData;
+};
 
 interface InboxNotificationLayoutProps
   extends Omit<ComponentPropsWithoutRef<"a">, "title">,

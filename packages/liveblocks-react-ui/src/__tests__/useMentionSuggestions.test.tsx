@@ -1,5 +1,6 @@
 import type {
   BaseMetadata,
+  BaseUserMeta,
   ClientOptions,
   JsonObject,
   ResolveMentionSuggestionsArgs,
@@ -14,7 +15,7 @@ import { generateFakeJwt } from "./_utils";
 
 // TODO: Dry up and create utils that wrap renderHook
 function createRoomContextForTest<M extends BaseMetadata>(
-  options?: Omit<ClientOptions, "authEndpoint" | "publicApiKey">
+  options?: Omit<ClientOptions<BaseUserMeta>, "authEndpoint" | "publicApiKey">
 ) {
   const client = createClient({
     async authEndpoint() {

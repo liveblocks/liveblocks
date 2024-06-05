@@ -21,8 +21,8 @@
   </a>
 </p>
 
-**[Liveblocks](https://liveblocks.io) is a real-time collaboration
-infrastructure for building performant collaborative experiences.**
+**[Liveblocks](https://liveblocks.io) is a realtime collaboration infrastructure
+for building performant collaborative experiences.**
 
 <img src="./assets/concepts/platform.png" alt="Liveblocks"   />
 

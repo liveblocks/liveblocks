@@ -49,8 +49,6 @@ expectDocCommentIncludes<_>(suspense.ClientSideSuspense({} as any));
 // context.useHistory
 // context.useInboxNotifications
 // context.useInboxNotificationThread
-// context.useLiveblocksContextBundle
-// context.useLiveblocksContextBundleOrNull__
 // context.useLostConnectionListener
 // context.useMarkAllInboxNotificationsAsRead
 // context.useMarkInboxNotificationAsRead
@@ -65,8 +63,6 @@ expectDocCommentIncludes<_>(suspense.ClientSideSuspense({} as any));
 // context.useRedo
 // context.useRemoveReaction
 // context.useRoom
-// context.useRoomContextBundle
-// context.useRoomContextBundleOrNull__
 // context.useRoomInfo
 // context.useRoomNotificationSettings
 // context.useSelf
@@ -107,7 +103,6 @@ expectDocCommentIncludes<_>(suspense.ClientSideSuspense({} as any));
 // classic.useHistory
 // classic.useInboxNotifications
 // classic.useInboxNotificationThread
-// classic.useLiveblocksContextBundle
 // classic.useLiveblocksContextBundleOrNull__
 // classic.useLostConnectionListener
 // classic.useMarkAllInboxNotificationsAsRead
@@ -123,8 +118,6 @@ expectDocCommentIncludes<_>(suspense.ClientSideSuspense({} as any));
 // classic.useRedo
 // classic.useRemoveReaction
 // classic.useRoom
-// classic.useRoomContextBundle
-// classic.useRoomContextBundleOrNull__
 // classic.useRoomInfo
 // classic.useRoomNotificationSettings
 // classic.useSelf
@@ -165,8 +158,6 @@ expectDocCommentIncludes<_>(suspense.ClientSideSuspense({} as any));
 // suspense.useHistory
 // suspense.useInboxNotifications
 // suspense.useInboxNotificationThread
-// suspense.useLiveblocksContextBundle
-// suspense.useLiveblocksContextBundleOrNull__
 // suspense.useLostConnectionListener
 // suspense.useMarkAllInboxNotificationsAsRead
 // suspense.useMarkInboxNotificationAsRead
@@ -181,8 +172,6 @@ expectDocCommentIncludes<_>(suspense.ClientSideSuspense({} as any));
 // suspense.useRedo
 // suspense.useRemoveReaction
 // suspense.useRoom
-// suspense.useRoomContextBundle
-// suspense.useRoomContextBundleOrNull__
 // suspense.useRoomInfo
 // suspense.useRoomNotificationSettings
 // suspense.useSelf

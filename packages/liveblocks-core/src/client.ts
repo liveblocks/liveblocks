@@ -3,8 +3,8 @@ import { createAuthManager } from "./auth-manager";
 import { isIdle } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
 import type { LsonObject } from "./crdts/Lson";
-import type { DE, DM, DP, DRI, DS, DU } from "./custom-types";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
+import type { DE, DM, DP, DRI, DS, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
 import type { BatchStore } from "./lib/batch";
 import { createBatchStore } from "./lib/batch";
@@ -82,7 +82,10 @@ export type ResolveRoomsInfoArgs = {
   roomIds: string[];
 };
 
-export type EnterOptions<P extends JsonObject, S extends LsonObject> = Resolve<
+export type EnterOptions<
+  P extends JsonObject = DP,
+  S extends LsonObject = DS,
+> = Resolve<
   // Enter options are just room initializers, plus an internal option
   RoomInitializers<P, S> & {
     /**
@@ -104,8 +107,8 @@ export type EnterOptions<P extends JsonObject, S extends LsonObject> = Resolve<
  * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
  * will probably happen if you do.
  */
-type PrivateClientApi<U extends BaseUserMeta> = {
-  readonly notifications: NotificationsApi;
+export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
+  readonly notifications: NotificationsApi<M>;
   readonly currentUserIdStore: Store<string | null>;
   readonly resolveMentionSuggestions: ClientOptions<U>["resolveMentionSuggestions"];
   readonly cacheStore: CacheStore<BaseMetadata>;
@@ -114,9 +117,7 @@ type PrivateClientApi<U extends BaseUserMeta> = {
   readonly getRoomIds: () => string[];
 };
 
-export type NotificationsApi<
-  M extends BaseMetadata = never, // TODO Change this to DM for 2.0
-> = {
+export type NotificationsApi<M extends BaseMetadata> = {
   getInboxNotifications(options?: GetInboxNotificationsOptions): Promise<{
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<M>[];
@@ -188,7 +189,8 @@ export type Client<U extends BaseUserMeta = DU> = {
    * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
    * will probably happen if you do.
    */
-  readonly [kInternal]: PrivateClientApi<U>;
+  // TODO Make this a getter, so we can provide M
+  readonly [kInternal]: PrivateClientApi<U, BaseMetadata>;
 };
 
 export type AuthEndpoint =

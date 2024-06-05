@@ -1,4 +1,4 @@
-import { expectType } from "tsd";
+import { expectError, expectType } from "tsd";
 import { Liveblocks } from "../src/client";
 import type {
   CommentReaction,
@@ -6,6 +6,16 @@ import type {
   CommentBodyBlockElement,
   CommentData,
 } from "@liveblocks/core";
+
+type ThreadMetadata = {
+  abc: number;
+};
+
+declare global {
+  interface Liveblocks {
+    ThreadMetadata: ThreadMetadata;
+  }
+}
 
 async () => {
   const client = new Liveblocks({ secret: "sk_xxx" });
@@ -29,17 +39,21 @@ async () => {
   expectType<1 | undefined>(comment.body?.version);
   expectType<CommentBodyBlockElement[] | undefined>(comment.body?.content);
 
-  const thread = await client.getThread<Record<string, string>>({
-    roomId: "room-id",
-    threadId: "th_threadId",
-  });
-  expectType<"thread">(thread.type);
-  expectType<string>(thread.id);
-  expectType<string>(thread.roomId);
-  expectType<Date>(thread.createdAt);
-  expectType<Date | undefined>(thread.updatedAt);
-  expectType<Record<string, string>>(thread.metadata);
-  expectType<CommentData[]>(thread.comments);
+  {
+    // With global augmentation
+    const thread = await client.getThread({
+      roomId: "room-id",
+      threadId: "th_threadId",
+    });
+    expectType<"thread">(thread.type);
+    expectType<string>(thread.id);
+    expectType<string>(thread.roomId);
+    expectType<Date>(thread.createdAt);
+    expectType<Date | undefined>(thread.updatedAt);
+    expectType<number>(thread.metadata.abc);
+    expectError(thread.metadata.nonexisting);
+    expectType<CommentData[]>(thread.comments);
+  }
 
   const commentReaction = await client.addCommentReaction({
     roomId: "room-id",
