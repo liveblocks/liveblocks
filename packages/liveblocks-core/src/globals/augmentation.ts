@@ -27,7 +27,6 @@ type ExtendedType<K extends ExtendableTypes, B> = unknown extends Liveblocks[K]
     ? Liveblocks[K]
     : `The type you provided for '${K}' does not match its requirements. To learn how to fix this, see https://liveblocks.io/errors/${K}`;
 
-// TODO Craft actually useful error message, and documentation
 export type DP = ExtendedType<"Presence", JsonObject>;
 export type DS = ExtendedType<"Storage", LsonObject>;
 export type DU = ExtendedType<"UserMeta", BaseUserMeta>;
