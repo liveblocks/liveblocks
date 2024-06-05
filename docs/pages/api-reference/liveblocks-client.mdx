@@ -702,55 +702,6 @@ Any
 [conflict-free live structures](/docs/api-reference/liveblocks-client#Storage)
 and JSON-serializable objects are allowed (the `LsonObject` type).
 
-### Client.enter [@badge=Deprecated]
-
-Enters a room and returns its local `Room` instance.
-
-<Banner title="Deprecated since 1.5" type="warning">
-
-We no longer recommend this API, because issues will occur if you simultaneously
-connect to the same room with multiple instances. We recommend using
-[`client.enterRoom`][] instead.
-
-</Banner>
-
-```ts
-// ❌ This API was recommended before 1.5
-const room = client.enter("my-room", {
-  initialPresence: { cursor: null },
-  initialStorage: { todos: new LiveList() },
-});
-client.leave(roomId);
-
-// ✅ Prefer this instead
-const { room, leave } = client.enterRoom("my-room", {
-  initialPresence: { cursor: null },
-  initialStorage: { todos: new LiveList() },
-});
-leave();
-```
-
-### Client.leave [@badge=Deprecated]
-
-Leaves a room.
-
-<Banner title="Deprecated since 1.5" type="warning">
-
-We no longer recommend this API, because issues will occur if you simultaneously
-connect to the same room with multiple instances. We recommend using
-[`client.enterRoom`][] instead.
-
-</Banner>
-
-```ts
-// ❌ This API was recommended before 1.5
-client.leave("my-room");
-
-// ✅ Prefer this instead
-const { room, leave } = client.enterRoom("my-room" /* options */);
-leave();
-```
-
 ### Client.getRoom
 
 Gets a room by its ID. Returns `null` if [`client.enterRoom`][] has not been
@@ -1757,25 +1708,6 @@ const client = createClient({
   lostConnectionTimeout: 5000,
 
   // ...
-});
-```
-
-### Room.subscribe("connection") [#Room.subscribe.connection]
-
-<Banner title="Deprecated since 1.1" type="warning">
-
-Support for this subscription overload will be removed in a future version. We
-recommend switching to [`Room.subscribe("status")`][] instead.
-
-</Banner>
-
-Subscribe to our legacy WebSocket connection status updates. Takes a callback
-that is called when the connection status changes. Returns an unsubscribe
-function.
-
-```ts
-const unsubscribe = room.subscribe("connection", (status) => {
-  // Do something
 });
 ```
 
@@ -3813,7 +3745,6 @@ const { room, leave } = client.enterRoom<
 //   },
 //   canWrite: true,
 //   canComment: true,
-//   isReadOnly: false,
 // }
 const user = room.getSelf();
 ```
@@ -3842,11 +3773,52 @@ const user = room.getSelf();
     The ID of the User that has been set in the authentication endpoint. Useful
     to get additional information about the connected user.
   </PropertiesListItem>
-  <PropertiesListItem name="isReadOnly" type="boolean" deprecated>
-    Deprecated. False if the user can mutate the Room’s Storage and/or YDoc,
-    true if they can only read but not mutate it.
-  </PropertiesListItem>
 </PropertiesList>
+
+## Deprecated
+
+### Client.enter [@badge=Deprecated]
+
+<Banner title="Deprecated" type="error">
+  This is no longer supported. We recommend using [`client.enterRoom`][]
+  instead.
+</Banner>
+
+Enters a room and returns its local `Room` instance.
+
+```ts
+// ❌ This API was recommended before 1.5
+const room = client.enter("my-room", {
+  initialPresence: { cursor: null },
+  initialStorage: { todos: new LiveList() },
+});
+client.leave(roomId);
+
+// ✅ Prefer this instead
+const { room, leave } = client.enterRoom("my-room", {
+  initialPresence: { cursor: null },
+  initialStorage: { todos: new LiveList() },
+});
+leave();
+```
+
+### Client.leave [@badge=Deprecated]
+
+<Banner title="Deprecated" type="error">
+  This is no longer supported. We recommend using [`client.enterRoom`][]
+  instead.
+</Banner>
+
+Leaves a room.
+
+```ts
+// ❌ This API was recommended before 1.5
+client.leave("my-room");
+
+// ✅ Prefer this instead
+const { room, leave } = client.enterRoom("my-room" /* options */);
+leave();
+```
 
 [`atob`]: https://developer.mozilla.org/en-US/docs/Web/API/atob
 [`base-64`]: https://www.npmjs.com/package/base-64
