@@ -791,6 +791,15 @@ export function LiveblocksProvider(
     ),
     resolveUsers: useInitialUnlessFunction(o.resolveUsers),
     resolveRoomsInfo: useInitialUnlessFunction(o.resolveRoomsInfo),
+
+    baseUrl: useInitial(
+      // @ts-expect-error - Hidden config options
+      o.baseUrl
+    ),
+    enableDebugLogging: useInitial(
+      // @ts-expect-error - Hidden config options
+      o.enableDebugLogging
+    ),
   } as ClientOptions<BaseUserMeta>;
 
   // NOTE: Deliberately not passing any deps here, because we'll _never_ want
