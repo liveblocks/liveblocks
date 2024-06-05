@@ -95,20 +95,12 @@ import type {
   RoomNotificationSettingsState,
   RoomNotificationSettingsStateSuccess,
   RoomProviderProps,
-  ThreadCreateCallback,
   ThreadsState,
   ThreadsStateSuccess,
   ThreadSubscription,
   UseThreadsOptions,
 } from "./types";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
-
-const ThreadCreateCallbackContext =
-  React.createContext<null | ThreadCreateCallback>(null);
-
-const ThreadDeleteCallbackContext = React.createContext<
-  null | ((threadId: string) => void)
->(null);
 
 const ComposerFocusCallbackContext =
   React.createContext<null | ComposerFocusCallback>(null);
@@ -663,10 +655,6 @@ function makeRoomContextBundle<
 
     // TODO: Refactor this before 2.0
     useCommentsErrorListener,
-    ThreadCreateCallbackProvider: ThreadCreateCallbackContext.Provider,
-    useThreadCreateCallback,
-    ThreadDeleteCallbackProvider: ThreadDeleteCallbackContext.Provider,
-    useThreadDeleteCallback: useThreadDeleteCallback,
     ComposerFocusCallbackProvider: ComposerFocusCallbackContext.Provider,
     useComposerFocusCallback: useComposerFocusCallback,
     IsThreadActiveCallbackProvider: IsThreadActiveCallbackContext.Provider,
@@ -1306,14 +1294,6 @@ function useCommentsErrorListener<M extends BaseMetadata>(
   }, [savedCallback, commentsErrorEventSource]);
 }
 
-function useThreadCreateCallback() {
-  return React.useContext(ThreadCreateCallbackContext);
-}
-
-function useThreadDeleteCallback() {
-  return React.useContext(ThreadDeleteCallbackContext);
-}
-
 function useComposerFocusCallback() {
   return React.useContext(ComposerFocusCallbackContext);
 }
@@ -1327,7 +1307,6 @@ function useCreateThread<M extends BaseMetadata>(): (
 ) => ThreadData<M> {
   const client = useClient();
   const room = useRoom();
-  const onCreateThread = useThreadCreateCallback();
 
   return React.useCallback(
     (options: CreateThreadOptions<M>): ThreadData<M> => {
@@ -1368,8 +1347,6 @@ function useCreateThread<M extends BaseMetadata>(): (
         roomId: room.id,
       });
 
-      onCreateThread?.(newThread.id);
-
       const commentsAPI = (room[kInternal] as PrivateRoomApi<M>).comments;
       commentsAPI.createThread({ threadId, commentId, body, metadata }).then(
         (thread) => {
@@ -1401,7 +1378,7 @@ function useCreateThread<M extends BaseMetadata>(): (
 
       return newThread;
     },
-    [client, room, onCreateThread]
+    [client, room]
   );
 }
 
@@ -1675,7 +1652,6 @@ function useEditComment(): (options: EditCommentOptions) => void {
 function useDeleteComment() {
   const client = useClient();
   const room = useRoom();
-  const onDeleteThread = useThreadDeleteCallback();
 
   return React.useCallback(
     ({ threadId, commentId }: DeleteCommentOptions): void => {
@@ -1692,16 +1668,6 @@ function useDeleteComment() {
         id: optimisticUpdateId,
         roomId: room.id,
       });
-
-      const thread = store.get().threads[threadId];
-
-      // Only trigger `onDeleteThread` callback if the thread exists in cache and is not already deleted
-      if (thread !== undefined && thread.deletedAt === undefined) {
-        const newThread = deleteComment(thread, commentId, deletedAt);
-        if (newThread.deletedAt !== undefined) {
-          onDeleteThread?.(threadId);
-        }
-      }
 
       room[kInternal].comments.deleteComment({ threadId, commentId }).then(
         () => {
@@ -1742,7 +1708,7 @@ function useDeleteComment() {
           )
       );
     },
-    [client, room, onDeleteThread]
+    [client, room]
   );
 }
 
@@ -2385,8 +2351,6 @@ const _useStorageRoot: DefaultRoomContextBundle["useStorageRoot"] =
 const _useUpdateMyPresence: DefaultRoomContextBundle["useUpdateMyPresence"] =
   useUpdateMyPresence;
 
-const ThreadCreateCallbackProvider = ThreadCreateCallbackContext.Provider;
-const ThreadDeleteCallbackProvider = ThreadDeleteCallbackContext.Provider;
 const ComposerFocusCallbackProvider = ComposerFocusCallbackContext.Provider;
 const IsThreadActiveCallbackProvider = IsThreadActiveCallbackContext.Provider;
 
@@ -2440,8 +2404,6 @@ export {
   useIsThreadActiveCallback,
   useCommentsErrorListener,
   CreateThreadError,
-  ThreadCreateCallbackProvider,
-  ThreadDeleteCallbackProvider,
   ComposerFocusCallbackProvider,
   IsThreadActiveCallbackProvider,
 };

@@ -61,8 +61,6 @@ export {
   useIsThreadActiveCallback,
   useCommentsErrorListener,
   CreateThreadError,
-  ThreadCreateCallbackProvider,
-  ThreadDeleteCallbackProvider,
   ComposerFocusCallbackProvider,
   IsThreadActiveCallbackProvider,
 } from "./room";

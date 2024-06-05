@@ -812,13 +812,6 @@ type PrivateRoomContextApi = {
   useCommentsErrorListener<M extends BaseMetadata>(
     callback: (err: CommentsError<M>) => void
   ): void;
-  // Thread create callback
-  ThreadCreateCallbackProvider: Provider<ThreadCreateCallback | null>;
-  useThreadCreateCallback(): ThreadCreateCallback | null;
-
-  // Thread delete callback
-  ThreadDeleteCallbackProvider: Provider<ThreadDeleteCallback | null>;
-  useThreadDeleteCallback(): ThreadDeleteCallback | null;
 
   // Composer focus callback
   ComposerFocusCallbackProvider: Provider<ComposerFocusCallback | null>;

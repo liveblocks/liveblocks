@@ -10,8 +10,6 @@ import {
   CreateThreadError,
   IsThreadActiveCallbackProvider,
   selectedThreads,
-  ThreadCreateCallbackProvider,
-  ThreadDeleteCallbackProvider,
   useClient,
   useCommentsErrorListener,
   useRoom,
@@ -22,11 +20,10 @@ import {
   $getSelection,
   $isRangeSelection,
   $isTextNode,
-  $setSelection,
 } from "lexical";
 import type { PropsWithChildren } from "react";
 import * as React from "react";
-import { useCallback, useEffect, useState } from "react";
+import { createContext, useCallback, useEffect, useState } from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import { ActiveSelection } from "../active-selection";
@@ -37,7 +34,10 @@ import {
   ThreadMarkNode,
 } from "./thread-mark-node";
 import $unwrapThreadMarkNode from "./unwrap-thread-mark-node";
-import $wrapSelectionInThreadMarkNode from "./wrap-selection-in-thread-mark-node";
+
+export const OnDeleteThreadCallback = createContext<
+  ((threadId: string) => void) | null
+>(null);
 
 type ThreadToNodesMap = Map<string, Set<NodeKey>>;
 
@@ -69,30 +69,6 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       return activeThreads.includes(threadId);
     },
     [activeThreads]
-  );
-
-  /**
-   * Create a new ThreadMarkNode and wrap the selected content in it.
-   * @param threadId The id of the thread to associate with the selected content
-   */
-  const handleThreadCreate = useCallback(
-    (threadId: string) => {
-      editor.update(() => {
-        const selection = $getSelection();
-        if (!$isRangeSelection(selection)) return;
-
-        // If the selection is collapsed, we do not create a new thread node in the editor.
-        if (selection.isCollapsed()) return;
-
-        const isBackward = selection.isBackward();
-        // Wrap content in a ThreadMarkNode
-        $wrapSelectionInThreadMarkNode(selection, isBackward, threadId);
-
-        // Clear the selection after wrapping
-        $setSelection(null);
-      });
-    },
-    [editor]
   );
 
   /**
@@ -325,15 +301,13 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
   }, [editor]);
 
   return (
-    <ThreadCreateCallbackProvider value={handleThreadCreate}>
-      <ThreadDeleteCallbackProvider value={handleThreadDelete}>
-        <ComposerFocusCallbackProvider value={handleComposerFocus}>
-          <IsThreadActiveCallbackProvider value={isThreadActive}>
-            {showActiveSelection && <ActiveSelection />}
-            {children}
-          </IsThreadActiveCallbackProvider>
-        </ComposerFocusCallbackProvider>
-      </ThreadDeleteCallbackProvider>
-    </ThreadCreateCallbackProvider>
+    <ComposerFocusCallbackProvider value={handleComposerFocus}>
+      <OnDeleteThreadCallback.Provider value={handleThreadDelete}>
+        <IsThreadActiveCallbackProvider value={isThreadActive}>
+          {showActiveSelection && <ActiveSelection />}
+          {children}
+        </IsThreadActiveCallbackProvider>
+      </OnDeleteThreadCallback.Provider>
+    </ComposerFocusCallbackProvider>
   );
 }

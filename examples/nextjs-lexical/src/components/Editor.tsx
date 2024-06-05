@@ -13,7 +13,6 @@ import {
   ThreadPanel,
   liveblocksLexicalConfig,
 } from "@liveblocks/react-lexical";
-import { Composer } from "@liveblocks/react-ui";
 import { useState } from "react";
 
 // Set up editor config and theme
@@ -79,7 +78,6 @@ export default function Editor() {
             </div>
 
             <div className={styles.sidebar}>
-              <Composer className={styles.composer} />
               <ThreadPanel />
             </div>
           </div>
