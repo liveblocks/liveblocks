@@ -18,8 +18,27 @@ import { createLiveblocksClientOptions } from "../../utils/createClient";
 const initialPresence = (): Liveblocks["Presence"] => ({});
 const initialStorage = (): Liveblocks["Storage"] => ({ items: new LiveList() });
 
+let counter = 0;
+
 export default function Home() {
-  const options = createLiveblocksClientOptions();
+  const base = {
+    // Alternatively, use an authEndpoint callback
+    authEndpoint: async (room?: string) => {
+      const response = await fetch(
+        `/api/auth/access-token?counter=${++counter}`,
+        //                      ^^^^^^^^^^^^^^^^^^^^
+        //                      Just adding a counter to the URL, so we can see
+        //                      it go up as we invoke it multiple times.
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ room }),
+        }
+      );
+      return await response.json();
+    },
+  };
+  const options = createLiveblocksClientOptions(base);
   return (
     <LiveblocksProvider {...options}>
       <Page />
