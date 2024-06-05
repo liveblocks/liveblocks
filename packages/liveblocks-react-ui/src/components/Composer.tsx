@@ -7,6 +7,7 @@ import {
   useCreateThread,
   useEditComment,
   useSelf,
+  useComposerFocusCallback,
 } from "@liveblocks/react";
 import type {
   ComponentPropsWithoutRef,
@@ -448,6 +449,7 @@ export const Composer = forwardRef(
       commentId,
       metadata,
       onComposerSubmit,
+      onFocus,
       ...props
     }: ComposerProps<M>,
     forwardedRef: ForwardedRef<HTMLFormElement>
@@ -455,6 +457,7 @@ export const Composer = forwardRef(
     const createThread = useCreateThread();
     const createComment = useCreateComment();
     const editComment = useEditComment();
+    const onComposerFocus = useComposerFocusCallback();
 
     const handleCommentSubmit = useCallback(
       (comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => {
@@ -493,9 +496,22 @@ export const Composer = forwardRef(
       ]
     );
 
+    const handleComposerFocus = useCallback(
+      (event: FocusEvent<HTMLFormElement>) => {
+        onComposerFocus?.(commentId, threadId);
+
+        onFocus?.(event);
+      },
+      [onComposerFocus, commentId, threadId]
+    );
+
     return (
       <TooltipProvider>
-        <ComposerPrimitive.Form onComposerSubmit={handleCommentSubmit} asChild>
+        <ComposerPrimitive.Form
+          onComposerSubmit={handleCommentSubmit}
+          onFocus={handleComposerFocus}
+          asChild
+        >
           <ComposerWithContext {...props} ref={forwardedRef} />
         </ComposerPrimitive.Form>
       </TooltipProvider>

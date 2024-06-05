@@ -4,6 +4,7 @@ import type { BaseMetadata, CommentData, ThreadData } from "@liveblocks/core";
 import {
   useEditThreadMetadata,
   useThreadSubscription,
+  useIsThreadActiveCallback,
 } from "@liveblocks/react";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
@@ -195,6 +196,9 @@ export const Thread = forwardRef(
     const [newIndex, setNewIndex] = useState<number>();
     const newIndicatorIndex = newIndex === undefined ? unreadIndex : newIndex;
 
+    const isThreadActive = useIsThreadActiveCallback();
+    const isActive = isThreadActive?.(thread.id);
+
     useEffect(() => {
       if (unreadIndex) {
         // Keep the "new" indicator at the lowest unread index.
@@ -244,6 +248,7 @@ export const Thread = forwardRef(
             (thread.metadata as ThreadMetadata).resolved ? "" : undefined
           }
           data-unread={unreadIndex !== undefined ? "" : undefined}
+          data-state={isActive ? "active" : undefined}
           dir={$.dir}
           {...props}
           ref={forwardedRef}

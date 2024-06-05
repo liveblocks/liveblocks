@@ -759,6 +759,12 @@ export type PrivateRoomApi<M extends BaseMetadata> = {
   getSelf_forDevTools(): DevTools.UserTreeNode | null;
   getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
 
+  // For reporting editor metadata
+  reportTextEditor(editor: "lexical", rootKey: string): void;
+
+  createTextMention(userId: string, mentionId: string): Promise<Response>;
+  deleteTextMention(mentionId: string): Promise<Response>;
+
   // NOTE: These are only used in our e2e test app!
   simulate: {
     explicitClose(event: IWebSocketCloseEvent): void;
@@ -1665,7 +1671,10 @@ export function createRoom<
     });
   }
 
-  async function httpPostToRoom(endpoint: "/send-message", body: JsonObject) {
+  async function httpPostToRoom(
+    endpoint: "/send-message" | "/text-metadata",
+    body: JsonObject
+  ) {
     if (!managedSocket.authValue) {
       throw new Error("Not authorized");
     }
@@ -1676,6 +1685,50 @@ export function createRoom<
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
+    });
+  }
+
+  async function createTextMention(userId: string, mentionId: string) {
+    if (!managedSocket.authValue) {
+      throw new Error("Not authorized");
+    }
+
+    return fetchClientApi(
+      config.roomId,
+      "/text-mentions",
+      managedSocket.authValue,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          mentionId,
+        }),
+      }
+    );
+  }
+
+  async function deleteTextMention(mentionId: string) {
+    if (!managedSocket.authValue) {
+      throw new Error("Not authorized");
+    }
+
+    return fetchClientApi(
+      config.roomId,
+      `/text-mentions/${mentionId}`,
+      managedSocket.authValue,
+      {
+        method: "DELETE",
+      }
+    );
+  }
+
+  async function reportTextEditor(type: "lexical", rootKey: string) {
+    return httpPostToRoom("/text-metadata", {
+      type,
+      rootKey,
     });
   }
 
@@ -2874,6 +2927,13 @@ export function createRoom<
         get presenceBuffer() { return deepClone(context.buffer.presenceUpdates?.data ?? null) }, // prettier-ignore
         get undoStack() { return deepClone(context.undoStack) }, // prettier-ignore
         get nodeCount() { return context.nodes.size }, // prettier-ignore
+
+        // send metadata when using a text editor
+        reportTextEditor,
+        // create a text mention when using a text editor
+        createTextMention,
+        // delete a text mention when using a text editor
+        deleteTextMention,
 
         // Support for the Liveblocks browser extension
         getSelf_forDevTools: () => selfAsTreeNode.current,

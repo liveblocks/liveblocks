@@ -5,12 +5,11 @@ import type {
   InboxNotificationThreadData,
   ThreadData,
 } from "@liveblocks/core";
-
 import {
   createCommentId,
   createInboxNotificationId,
   createThreadId,
-} from "../comments/lib/createIds";
+} from "./createIds";
 
 export function dummyThreadData(): ThreadData<BaseMetadata> {
   const now = new Date();

@@ -29,7 +29,6 @@ import React, {
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
-import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 import { retryError } from "./lib/retry-error";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import type {
@@ -44,6 +43,7 @@ import type {
   UserState,
   UserStateSuccess,
 } from "./types";
+import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 
 export const ClientContext = createContext<OpaqueClient | null>(null);
 
@@ -63,7 +63,8 @@ const _bundles = new WeakMap<
   LiveblocksContextBundle<BaseUserMeta, BaseMetadata>
 >();
 
-export const POLLING_INTERVAL = 60 * 1000; // 1 minute
+// export const POLLING_INTERVAL = 60 * 1000; // 1 minute
+export const POLLING_INTERVAL = 5 * 1000; // 1 minute
 export const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
 
 function selectorFor_useInboxNotifications(
@@ -376,7 +377,7 @@ function useInboxNotifications_withClient(client: OpaqueClient) {
     store.subscribe,
     store.get,
     store.get,
-    selectorFor_useInboxNotifications
+    () => selectorFor_useInboxNotifications(store.get())
   );
 }
 
@@ -402,7 +403,7 @@ function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
     store.subscribe,
     store.get,
     store.get,
-    selectorFor_useInboxNotificationsSuspense
+    () => selectorFor_useInboxNotificationsSuspense(store.get())
   );
 }
 
@@ -415,7 +416,7 @@ function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
     store.subscribe,
     store.get,
     store.get,
-    selectorFor_useUnreadInboxNotificationsCount
+    () => selectorFor_useUnreadInboxNotificationsCount(store.get())
   );
 }
 
@@ -439,7 +440,7 @@ function useUnreadInboxNotificationsCountSuspense_withClient(
     store.subscribe,
     store.get,
     store.get,
-    selectorFor_useUnreadInboxNotificationsCountSuspense
+    () => selectorFor_useUnreadInboxNotificationsCountSuspense(store.get())
   );
 }
 

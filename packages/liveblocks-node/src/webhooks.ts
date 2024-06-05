@@ -152,8 +152,24 @@ export class WebhookHandler {
         "ydocUpdated",
         "notification",
       ].includes(event.type)
-    )
+    ) {
+      if (event.type === "notification") {
+        const notification = event as NotificationEvent;
+        if (
+          notification.data.kind === "thread" ||
+          notification.data.kind === "textMention" ||
+          notification.data.kind.startsWith("$")
+        ) {
+          return;
+        } else {
+          throw new Error(
+            `Unknown notification kind: ${notification.data.kind}`
+          );
+        }
+      }
+
       return;
+    }
 
     throw new Error(
       "Unknown event type, please upgrade to a higher version of @liveblocks/node"
@@ -404,7 +420,7 @@ type ThreadCreatedEvent = {
   };
 };
 
-type NotificationEvent = {
+type ThreadNotificationEvent = {
   type: "notification";
   data: {
     channel: "email";
@@ -422,6 +438,49 @@ type NotificationEvent = {
   };
 };
 
+type TextMentionNotificationEvent = {
+  type: "notification";
+  data: {
+    channel: "email";
+    kind: "textMention";
+    projectId: string;
+    roomId: string;
+    userId: string;
+    mentionId: string;
+    inboxNotificationId: string;
+    /**
+     * ISO 8601 datestring
+     * @example "2021-03-01T12:00:00.000Z"
+     */
+    createdAt: string;
+  };
+};
+
+type CustomKind = `$${string}`;
+
+type CustomNotificationEvent = {
+  type: "notification";
+  data: {
+    channel: "email";
+    kind: CustomKind;
+    projectId: string;
+    roomId: string | null;
+    userId: string;
+    subjectId: string;
+    inboxNotificationId: string;
+    /**
+     * ISO 8601 datestring
+     * @example "2021-03-01T12:00:00.000Z"
+     */
+    createdAt: string;
+  };
+};
+
+type NotificationEvent =
+  | ThreadNotificationEvent
+  | TextMentionNotificationEvent
+  | CustomNotificationEvent;
+
 export type {
   CommentCreatedEvent,
   CommentDeletedEvent,
@@ -429,6 +488,9 @@ export type {
   CommentReactionAdded,
   CommentReactionRemoved,
   NotificationEvent,
+  ThreadNotificationEvent,
+  TextMentionNotificationEvent,
+  CustomNotificationEvent,
   RoomCreatedEvent,
   RoomDeletedEvent,
   StorageUpdatedEvent,

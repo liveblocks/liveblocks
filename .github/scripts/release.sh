@@ -10,6 +10,8 @@ PACKAGE_DIRS=(
     "packages/liveblocks-redux"
     "packages/liveblocks-zustand"
     "packages/liveblocks-yjs"
+    "packages/liveblocks-react-lexical"
+    "packages/liveblocks-node-lexical"
     "packages/liveblocks-react-ui"
     "packages/create-liveblocks-app"
     "packages/liveblocks-codemod"

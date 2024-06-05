@@ -52,7 +52,9 @@ export type UseThreadsOptions<M extends BaseMetadata> = {
   scrollOnLoad?: boolean;
 };
 
-import type { PropsWithChildren } from "react";
+import type { PropsWithChildren, Provider } from "react";
+
+import type { CommentsError } from "./comments/errors";
 
 export type UserStateLoading = {
   isLoading: true;
@@ -791,6 +793,42 @@ type RoomContextBundleCommon<
   useThreadSubscription(threadId: string): ThreadSubscription;
 };
 
+export type ThreadCreateCallback = (threadId: string) => void;
+export type ThreadDeleteCallback = (threadId: string) => void;
+export type ComposerFocusCallback = (
+  commentId: string | undefined,
+  threadId: string | undefined
+) => void;
+export type IsThreadActiveCallback = (threadId: string) => boolean;
+
+/**
+ * @private
+ *
+ * Private methods and variables used in the core internals, but as a user
+ * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
+ * will probably happen if you do.
+ */
+type PrivateRoomContextApi = {
+  useCommentsErrorListener<M extends BaseMetadata>(
+    callback: (err: CommentsError<M>) => void
+  ): void;
+  // Thread create callback
+  ThreadCreateCallbackProvider: Provider<ThreadCreateCallback | null>;
+  useThreadCreateCallback(): ThreadCreateCallback | null;
+
+  // Thread delete callback
+  ThreadDeleteCallbackProvider: Provider<ThreadDeleteCallback | null>;
+  useThreadDeleteCallback(): ThreadDeleteCallback | null;
+
+  // Composer focus callback
+  ComposerFocusCallbackProvider: Provider<ComposerFocusCallback | null>;
+  useComposerFocusCallback(): ComposerFocusCallback | null;
+
+  // Is thread active callback
+  IsThreadActiveCallbackProvider: Provider<IsThreadActiveCallback | null>;
+  useIsThreadActiveCallback(): IsThreadActiveCallback | null;
+};
+
 export type RoomContextBundle<
   P extends JsonObject,
   S extends LsonObject,
@@ -970,7 +1008,7 @@ export type RoomContextBundle<
             ];
           }
       >;
-    }
+    } & PrivateRoomContextApi
 >;
 
 /**
