@@ -7,7 +7,7 @@ meta:
     issues!"
 ---
 
-### Why this error occured
+## Why this error occured
 
 You’re using multiple `@liveblocks/*` packages in your application bundle, but
 they’re not all on the same version.
@@ -15,7 +15,7 @@ they’re not all on the same version.
 For example: you’re using `@liveblocks/zustand` at 1.1.3, but
 `@liveblocks/react` is on 1.1.4.
 
-### How to find the culprit?
+## How to find the culprit?
 
 To find out if your project is affected, you can run
 
@@ -25,7 +25,7 @@ npm ls | grep @liveblocks
 
 Please make sure that all of the versions listed there are on the same version.
 
-### Possible ways to fix it
+## Possible ways to fix it
 
 When you upgrade one Liveblocks package, make sure to also upgrade other
 Liveblocks packages to the same version.

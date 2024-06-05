@@ -7,7 +7,7 @@ meta:
     cause issues!"
 ---
 
-### Why this error occured
+## Why this error occured
 
 Multiple copies of some Liveblocks package ended up being bundled in your
 application bundle.
@@ -21,7 +21,7 @@ It’s important that only a single copy of Liveblocks exists in your applicatio
 bundle at runtime, otherwise bugs will happen. Plus your bundle will be
 unnecessarily large.
 
-### Possible causes
+## Possible causes
 
 - Your project is using multiple internal packages that all rely on Liveblocks,
   but maybe some are on different versions.
@@ -29,7 +29,7 @@ unnecessarily large.
   issue with the way Liveblocks is packaged, feel free to open a support
   request.
 
-### Possible ways to fix it
+## Possible ways to fix it
 
 To investigate your set up, run the following command to see if all your
 Liveblocks dependencies are on the same version:
