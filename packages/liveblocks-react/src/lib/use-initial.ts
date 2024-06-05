@@ -1,5 +1,7 @@
 import type { Reducer } from "react";
-import { useCallback, useReducer, useRef } from "react";
+import { useCallback, useReducer } from "react";
+
+import { useLatest } from "./use-latest";
 
 const noop = <T>(state: T) => state;
 
@@ -30,7 +32,7 @@ export function useInitialUnlessFunction<T>(latestValue: T): T {
   /* eslint-disable react-hooks/rules-of-hooks */
   if (typeof frozenValue === "function") {
     type Fn = T & ((...args: unknown[]) => unknown);
-    const ref = useRef(latestValue as Fn);
+    const ref = useLatest(latestValue as Fn);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     return useCallback(((...args: unknown[]) => ref.current(...args)) as Fn, [
       ref,
