@@ -2,13 +2,14 @@ import { CollaborationPlugin } from "@lexical/react/LexicalCollaborationPlugin";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { Provider } from "@lexical/yjs";
 import type {
+  BaseMetadata,
   BaseUserMeta,
   Json,
   JsonObject,
   LsonObject,
 } from "@liveblocks/core";
 import { kInternal } from "@liveblocks/core";
-import { useClient, useRoomContextBundle } from "@liveblocks/react";
+import { useClient, useSelf, useRoom } from "@liveblocks/react";
 import LiveblocksProvider from "@liveblocks/yjs";
 import type { ComponentType } from "react";
 import React, {
@@ -77,12 +78,19 @@ export const LiveblocksPluginProvider = ({
   const client = useClient();
   const hasResolveMentionSuggestions =
     client[kInternal].resolveMentionSuggestions !== undefined;
-  const { useSelf, useRoom } = useRoomContextBundle();
   const [editor] = useLexicalComposerContext();
   const room = useRoom();
 
+  // TODO: Fix typing
   const [provider, setProvider] = useState<
-    LiveblocksProvider<JsonObject, LsonObject, BaseUserMeta, Json> | undefined
+    | LiveblocksProvider<
+        JsonObject,
+        LsonObject,
+        BaseUserMeta,
+        Json,
+        BaseMetadata
+      >
+    | undefined
   >();
 
   const doc = useMemo(() => new Doc(), []);

@@ -41,6 +41,7 @@ import type {
   UserState,
   UserStateSuccess,
 } from "./types";
+import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 
 export const ClientContext = createContext<OpaqueClient | null>(null);
 
@@ -65,7 +66,6 @@ export const POLLING_INTERVAL = 5 * 1000; // 1 minute
 export const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
 
 function selectorFor_useInboxNotifications(
-  client: OpaqueClient,
   state: CacheState<BaseMetadata>
 ): InboxNotificationsState {
   const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
@@ -84,32 +84,24 @@ function selectorFor_useInboxNotifications(
   }
 
   return {
-    inboxNotifications:
-      client[kInternal].comments.selectedInboxNotifications(state),
+    inboxNotifications: selectedInboxNotifications(state),
     isLoading: false,
   };
 }
 
 function selectorFor_useInboxNotificationsSuspense(
-  client: OpaqueClient,
   state: CacheState<BaseMetadata>
 ): InboxNotificationsStateSuccess {
   return {
-    inboxNotifications:
-      client[kInternal].comments.selectedInboxNotifications(state),
+    inboxNotifications: selectedInboxNotifications(state),
     isLoading: false,
   };
 }
 
-function selectUnreadInboxNotificationsCount(
-  client: OpaqueClient,
-  state: CacheState<BaseMetadata>
-) {
+function selectUnreadInboxNotificationsCount(state: CacheState<BaseMetadata>) {
   let count = 0;
 
-  for (const notification of client[
-    kInternal
-  ].comments.selectedInboxNotifications(state)) {
+  for (const notification of selectedInboxNotifications(state)) {
     if (
       notification.readAt === null ||
       notification.readAt < notification.notifiedAt
@@ -122,7 +114,6 @@ function selectUnreadInboxNotificationsCount(
 }
 
 function selectorFor_useUnreadInboxNotificationsCount(
-  client: OpaqueClient,
   state: CacheState<BaseMetadata>
 ): UnreadInboxNotificationsCountState {
   const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
@@ -142,17 +133,16 @@ function selectorFor_useUnreadInboxNotificationsCount(
 
   return {
     isLoading: false,
-    count: selectUnreadInboxNotificationsCount(client, state),
+    count: selectUnreadInboxNotificationsCount(state),
   };
 }
 
 function selectorFor_useUnreadInboxNotificationsCountSuspense(
-  client: OpaqueClient,
   state: CacheState<BaseMetadata>
 ): UnreadInboxNotificationsCountStateSuccess {
   return {
     isLoading: false,
-    count: selectUnreadInboxNotificationsCount(client, state),
+    count: selectUnreadInboxNotificationsCount(state),
   };
 }
 
@@ -383,7 +373,7 @@ function useInboxNotifications_withClient(client: OpaqueClient) {
     store.subscribe,
     store.get,
     store.get,
-    () => selectorFor_useInboxNotifications(client, store.get())
+    () => selectorFor_useInboxNotifications(store.get())
   );
 }
 
@@ -409,7 +399,7 @@ function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
     store.subscribe,
     store.get,
     store.get,
-    () => selectorFor_useInboxNotificationsSuspense(client, store.get())
+    () => selectorFor_useInboxNotificationsSuspense(store.get())
   );
 }
 
@@ -422,7 +412,7 @@ function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
     store.subscribe,
     store.get,
     store.get,
-    () => selectorFor_useUnreadInboxNotificationsCount(client, store.get())
+    () => selectorFor_useUnreadInboxNotificationsCount(store.get())
   );
 }
 
@@ -446,8 +436,7 @@ function useUnreadInboxNotificationsCountSuspense_withClient(
     store.subscribe,
     store.get,
     store.get,
-    () =>
-      selectorFor_useUnreadInboxNotificationsCountSuspense(client, store.get())
+    () => selectorFor_useUnreadInboxNotificationsCountSuspense(store.get())
   );
 }
 

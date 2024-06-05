@@ -1,4 +1,4 @@
-import { Composer, ComposerProps } from "@liveblocks/react-comments";
+import { Composer, ComposerProps } from "@liveblocks/react-ui";
 import React, { ComponentRef, forwardRef, KeyboardEvent } from "react";
 import { FloatingSelectionContainer } from "../floating-selection-container";
 import type { BaseMetadata } from "@liveblocks/core";

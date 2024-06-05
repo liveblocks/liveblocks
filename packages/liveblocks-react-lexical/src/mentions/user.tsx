@@ -1,4 +1,4 @@
-import { useSharedContextBundle } from "@liveblocks/react";
+import { useUser } from "@liveblocks/react";
 import type { HTMLAttributes } from "react";
 import React, { forwardRef } from "react";
 
@@ -10,7 +10,6 @@ export interface UserProps
 export const User = forwardRef<HTMLSpanElement, UserProps>(
   function User(props, forwardedRef) {
     const { userId, ...spanProps } = props;
-    const { useUser } = useSharedContextBundle();
 
     const { user, isLoading } = useUser(userId);
 

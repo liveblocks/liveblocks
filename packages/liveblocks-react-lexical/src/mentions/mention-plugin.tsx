@@ -1,6 +1,7 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { kInternal } from "@liveblocks/core";
-import { useRoomContextBundle } from "@liveblocks/react";
+import { useRoom } from "@liveblocks/react";
+import { useMentionSuggestions } from "@liveblocks/react-ui";
 import type { EditorState, NodeKey, NodeMutation, TextNode } from "lexical";
 import {
   $createRangeSelection,
@@ -160,12 +161,8 @@ export default function MentionPlugin() {
   const [match, setMatch] = useState<RegExpExecArray | null>(null); // Represents the current match of the mention regex. A `null` value means there is no match.
   const matchingString = match?.[3];
 
-  const {
-    [kInternal]: { useMentionSuggestions },
-  } = useRoomContextBundle();
   const suggestions = useMentionSuggestions(matchingString);
 
-  const { useRoom } = useRoomContextBundle();
   const room = useRoom();
 
   useEffect(() => {

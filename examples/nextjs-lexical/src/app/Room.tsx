@@ -1,9 +1,8 @@
 "use client";
 
 import { ReactNode, useMemo } from "react";
-import { RoomProvider } from "@/liveblocks.config";
 import { useSearchParams } from "next/navigation";
-import { ClientSideSuspense } from "@liveblocks/react";
+import { ClientSideSuspense, RoomProvider } from "@liveblocks/react/suspense";
 import { Loading } from "@/components/Loading";
 
 export function Room({ children }: { children: ReactNode }) {

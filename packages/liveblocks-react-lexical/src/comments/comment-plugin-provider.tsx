@@ -8,7 +8,13 @@ import { kInternal } from "@liveblocks/core";
 import {
   CreateThreadError,
   useClient,
-  useRoomContextBundle,
+  useRoom,
+  useCommentsErrorListener,
+  ThreadCreateCallbackProvider,
+  ThreadDeleteCallbackProvider,
+  ComposerFocusCallbackProvider,
+  IsThreadActiveCallbackProvider,
+  selectedThreads,
 } from "@liveblocks/react";
 import type { BaseSelection, NodeKey, NodeMutation } from "lexical";
 import {
@@ -105,16 +111,6 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
   const [showActiveSelection, setShowActiveSelection] = useState(false);
 
   const client = useClient();
-  const {
-    useRoom,
-    [kInternal]: {
-      useCommentsErrorListener,
-      ThreadCreateCallbackProvider,
-      ThreadDeleteCallbackProvider,
-      ComposerFocusCallbackProvider,
-      IsThreadActiveCallbackProvider,
-    },
-  } = useRoomContextBundle();
 
   const room = useRoom();
 
@@ -197,8 +193,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     store.get,
     store.get,
     useCallback(
-      () =>
-        client[kInternal].comments.selectedThreads(room.id, store.get(), {}),
+      () => selectedThreads(room.id, store.get(), {}),
       [client, room.id, store]
     )
   );
@@ -281,8 +276,6 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
    * Register an update listener that listens for changes in the selection and updates the active threads accordingly.
    */
   useEffect(() => {
-    const selectedThreads = client[kInternal].comments.selectedThreads;
-
     function $getThreadIds(selection: BaseSelection | null): string[] {
       if (selection === null) return [];
 

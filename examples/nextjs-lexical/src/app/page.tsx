@@ -3,8 +3,11 @@
 import { Room } from "@/app/Room";
 import styles from "@/components/Page.module.css";
 import CollaborativeEditor from "@/components/Editor";
-import { LiveblocksProvider } from "@/liveblocks.config";
-import { ClientSideSuspense } from "@liveblocks/react";
+import { client } from "@/liveblocks.config";
+import {
+  ClientSideSuspense,
+  LiveblocksProvider,
+} from "@liveblocks/react/suspense";
 import { Loading } from "@/components/Loading";
 import Notifications from "./notifications";
 
@@ -13,33 +16,24 @@ import Notifications from "./notifications";
 
 export default function Page() {
   return (
-    <main>
-      <div className={styles.container}>
-        {/* Notifications */}
-        <div className={styles.notificationsContainer}>
-          <LiveblocksProvider>
-            <ClientSideSuspense fallback={<Loading />}>
-              {() => <Notifications />}
-            </ClientSideSuspense>
-          </LiveblocksProvider>
-        </div>
+    <LiveblocksProvider client={client}>
+      <ClientSideSuspense fallback={<Loading />}>
+        {() => (
+          <main>
+            <div className={styles.container}>
+              <div className={styles.notificationsContainer}>
+                <Notifications />
+              </div>
 
-        {/* Editor */}
-        <div className={styles.editorContainer}>
-          <Room>
-            <CollaborativeEditor />
-          </Room>
-        </div>
-
-        {/* Notifications */}
-        <div className={styles.notificationsContainer}>
-          <LiveblocksProvider>
-            <ClientSideSuspense fallback={<Loading />}>
-              {() => <Notifications />}
-            </ClientSideSuspense>
-          </LiveblocksProvider>
-        </div>
-      </div>
-    </main>
+              <div className={styles.editorContainer}>
+                <Room>
+                  <CollaborativeEditor />
+                </Room>
+              </div>
+            </div>
+          </main>
+        )}
+      </ClientSideSuspense>
+    </LiveblocksProvider>
   );
 }

@@ -13,7 +13,7 @@ import {
   ThreadPanel,
   liveblocksLexicalConfig,
 } from "@liveblocks/react-lexical";
-import { Composer } from "@liveblocks/react-comments";
+import { Composer } from "@liveblocks/react-ui";
 import { useState } from "react";
 
 // Set up editor config and theme

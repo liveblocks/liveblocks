@@ -18,7 +18,6 @@ import { shallow } from "@liveblocks/client";
 import type {
   CacheState,
   CacheStore,
-  CommentBody,
   CommentData,
   CommentsEventServerMsg,
   DE,
@@ -68,6 +67,10 @@ import {
   RemoveReactionError,
   UpdateNotificationSettingsError,
 } from "./comments/errors";
+import { createCommentId, createThreadId } from "./comments/lib/createIds";
+import { selectNotificationSettings } from "./comments/lib/select-notification-settings";
+import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
+import { selectedThreads } from "./comments/lib/selected-threads";
 import { retryError } from "./lib/retry-error";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
@@ -81,6 +84,7 @@ import type {
   CommentReactionOptions,
   ComposerFocusCallback,
   CreateCommentOptions,
+  CreateThreadOptions,
   DeleteCommentOptions,
   EditCommentOptions,
   EditThreadMetadataOptions,
@@ -111,12 +115,6 @@ const ComposerFocusCallbackContext =
 
 const IsThreadActiveCallbackContext =
   React.createContext<null | IsThreadActiveCallback>(null);
-
-type CreateThreadOptions<M extends BaseMetadata> = [M] extends [never]
-  ? {
-      body: CommentBody;
-    }
-  : { body: CommentBody; metadata: M };
 
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
@@ -663,17 +661,16 @@ function makeRoomContextBundle<
       ...shared.suspense,
     },
 
-    [kInternal]: {
-      useCommentsErrorListener,
-      ThreadCreateCallbackProvider: ThreadCreateCallbackContext.Provider,
-      useThreadCreateCallback,
-      ThreadDeleteCallbackProvider: ThreadDeleteCallbackContext.Provider,
-      useThreadDeleteCallback: useThreadDeleteCallback,
-      ComposerFocusCallbackProvider: ComposerFocusCallbackContext.Provider,
-      useComposerFocusCallback: useComposerFocusCallback,
-      IsThreadActiveCallbackProvider: IsThreadActiveCallbackContext.Provider,
-      useIsThreadActiveCallback: useIsThreadActiveCallback,
-    },
+    // TODO: Refactor this before 2.0
+    useCommentsErrorListener,
+    ThreadCreateCallbackProvider: ThreadCreateCallbackContext.Provider,
+    useThreadCreateCallback,
+    ThreadDeleteCallbackProvider: ThreadDeleteCallbackContext.Provider,
+    useThreadDeleteCallback: useThreadDeleteCallback,
+    ComposerFocusCallbackProvider: ComposerFocusCallbackContext.Provider,
+    useComposerFocusCallback: useComposerFocusCallback,
+    IsThreadActiveCallbackProvider: IsThreadActiveCallbackContext.Provider,
+    useIsThreadActiveCallback: useIsThreadActiveCallback,
   };
 
   return Object.defineProperty(bundle, kInternal, {
@@ -1277,11 +1274,7 @@ function useThreads<M extends BaseMetadata>(
       }
 
       return {
-        threads: client[kInternal].comments.selectedThreads(
-          room.id,
-          state,
-          options
-        ),
+        threads: selectedThreads(room.id, state, options),
         isLoading: false,
         error: query.error,
       };
@@ -1329,7 +1322,9 @@ function useIsThreadActiveCallback() {
   return React.useContext(IsThreadActiveCallbackContext);
 }
 
-function useCreateThread<M extends BaseMetadata>() {
+function useCreateThread<M extends BaseMetadata>(): (
+  options: CreateThreadOptions<M>
+) => ThreadData<M> {
   const client = useClient();
   const room = useRoom();
   const onCreateThread = useThreadCreateCallback();
@@ -1339,8 +1334,8 @@ function useCreateThread<M extends BaseMetadata>() {
       const body = options.body;
       const metadata = options.metadata ?? ({} as M);
 
-      const threadId = client[kInternal].comments.createThreadId();
-      const commentId = client[kInternal].comments.createCommentId();
+      const threadId = createThreadId();
+      const commentId = createCommentId();
       const createdAt = new Date();
 
       const newComment: CommentData = {
@@ -1504,7 +1499,7 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
   const room = useRoom();
   return React.useCallback(
     ({ threadId, body }: CreateCommentOptions): CommentData => {
-      const commentId = client[kInternal].comments.createCommentId();
+      const commentId = createCommentId();
       const createdAt = new Date();
 
       const comment: CommentData = {
@@ -1962,13 +1957,11 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
 
   const selector = React.useCallback(
     (state: CacheState<BaseMetadata>): ThreadSubscription => {
-      const inboxNotification = client[kInternal].comments
-        .selectedInboxNotifications(state)
-        .find(
-          (inboxNotification) =>
-            inboxNotification.kind === "thread" &&
-            inboxNotification.threadId === threadId
-        );
+      const inboxNotification = selectedInboxNotifications(state).find(
+        (inboxNotification) =>
+          inboxNotification.kind === "thread" &&
+          inboxNotification.threadId === threadId
+      );
 
       const thread = state.threads[threadId];
 
@@ -2024,10 +2017,7 @@ function useRoomNotificationSettings(): [
 
       return {
         isLoading: false,
-        settings: client[kInternal].comments.selectNotificationSettings(
-          room.id,
-          state
-        ),
+        settings: selectNotificationSettings(room.id, state),
       };
     },
     [room]
@@ -2238,11 +2228,7 @@ function useThreadsSuspense<M extends BaseMetadata>(
   const selector = React.useCallback(
     (state: CacheState<M>): ThreadsStateSuccess<M> => {
       return {
-        threads: client[kInternal].comments.selectedThreads(
-          room.id,
-          state,
-          options
-        ),
+        threads: selectedThreads(room.id, state, options),
         isLoading: false,
       };
     },
@@ -2290,10 +2276,7 @@ function useRoomNotificationSettingsSuspense(): [
     (state: CacheState<BaseMetadata>): RoomNotificationSettingsStateSuccess => {
       return {
         isLoading: false,
-        settings: client[kInternal].comments.selectNotificationSettings(
-          room.id,
-          state
-        ),
+        settings: selectNotificationSettings(room.id, state),
       };
     },
     [room]
@@ -2402,6 +2385,11 @@ const _useStorageRoot: DefaultRoomContextBundle["useStorageRoot"] =
 const _useUpdateMyPresence: DefaultRoomContextBundle["useUpdateMyPresence"] =
   useUpdateMyPresence;
 
+const ThreadCreateCallbackProvider = ThreadCreateCallbackContext.Provider;
+const ThreadDeleteCallbackProvider = ThreadDeleteCallbackContext.Provider;
+const ComposerFocusCallbackProvider = ComposerFocusCallbackContext.Provider;
+const IsThreadActiveCallbackProvider = IsThreadActiveCallbackContext.Provider;
+
 export {
   RoomContext,
   _RoomProvider as RoomProvider,
@@ -2447,4 +2435,13 @@ export {
   useUndo,
   _useUpdateMyPresence as useUpdateMyPresence,
   useUpdateRoomNotificationSettings,
+  // TODO: Move to `liveblocks-react-lexical`
+  useComposerFocusCallback,
+  useIsThreadActiveCallback,
+  useCommentsErrorListener,
+  CreateThreadError,
+  ThreadCreateCallbackProvider,
+  ThreadDeleteCallbackProvider,
+  ComposerFocusCallbackProvider,
+  IsThreadActiveCallbackProvider,
 };

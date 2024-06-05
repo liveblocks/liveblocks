@@ -1008,7 +1008,7 @@ export type RoomContextBundle<
             ];
           }
       >;
-    }
+    } & PrivateRoomContextApi
 >;
 
 /**

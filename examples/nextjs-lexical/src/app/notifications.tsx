@@ -1,9 +1,6 @@
-import { useInboxNotifications } from "@/liveblocks.config";
+import { useInboxNotifications } from "@liveblocks/react/suspense";
 import styles from "@/components/Notification.module.css";
-import {
-  InboxNotification,
-  InboxNotificationList,
-} from "@liveblocks/react-comments";
+import { InboxNotification, InboxNotificationList } from "@liveblocks/react-ui";
 
 export default function Notifications() {
   const { inboxNotifications } = useInboxNotifications();

@@ -1,10 +1,8 @@
-
-import { useRoomContextBundle } from "@liveblocks/react";
-import { Thread } from "@liveblocks/react-comments";
+import { useThreads } from "@liveblocks/react";
+import { Thread } from "@liveblocks/react-ui";
 import React from "react";
 
 const ThreadPanel = () => {
-  const { useThreads } = useRoomContextBundle();
   const { threads } = useThreads();
 
   if (!threads || threads.length === 0) {
@@ -18,6 +16,6 @@ const ThreadPanel = () => {
       })}
     </div>
   );
-}
+};
 
-export { ThreadPanel }
+export { ThreadPanel };

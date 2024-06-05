@@ -6,7 +6,6 @@ import {
   createThreadId,
 } from "./comments/lib/createIds";
 import { selectNotificationSettings } from "./comments/lib/select-notification-settings";
-import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 import { selectedThreads } from "./comments/lib/selected-threads";
 import { isIdle } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
@@ -571,7 +570,6 @@ export function createClient<U extends BaseUserMeta = DU>(
           createCommentId: createCommentId,
           createInboxNotificationId: createInboxNotificationId,
           selectedThreads: selectedThreads,
-          selectedInboxNotifications: selectedInboxNotifications,
           selectNotificationSettings: selectNotificationSettings,
         },
         currentUserIdStore,
