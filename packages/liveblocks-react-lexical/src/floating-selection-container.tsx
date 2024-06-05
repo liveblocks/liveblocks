@@ -1,22 +1,17 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import {
-  RangeSelection,
-  $getSelection,
-  $isRangeSelection,
-  LexicalNode,
-} from "lexical";
+import { createDOMRange } from "@lexical/selection";
+import type { LexicalNode, RangeSelection } from "lexical";
+import { $getSelection, $isRangeSelection } from "lexical";
+import type { PropsWithChildren } from "react";
 import React, {
   forwardRef,
-  PropsWithChildren,
   useCallback,
   useEffect,
   useImperativeHandle,
   useRef,
 } from "react";
-import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { createPortal } from "react-dom";
-import { createDOMRange } from "@lexical/selection";
-import { useHideFloatingComposer } from "./comments/comment-plugin-provider";
+import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
 export interface FloatingSelectionContainerProps {
   sideOffset?: number;
@@ -95,8 +90,6 @@ const FloatingSelectionContainerImpl = forwardRef<
     collisionPadding = 0,
   } = props;
 
-  const hideFloatingComposer = useHideFloatingComposer();
-
   const divRef = useRef<HTMLDivElement>(null);
 
   const [editor] = useLexicalComposerContext();
@@ -105,14 +98,6 @@ const FloatingSelectionContainerImpl = forwardRef<
     forwardedRef,
     () => divRef.current
   );
-
-  useEffect(() => {
-    return editor.registerUpdateListener(({ editorState: state, tags }) => {
-      // Ignore selection updates related to collaboration
-      if (tags.has("collaboration")) return;
-      state.read(() => hideFloatingComposer());
-    });
-  }, [editor, hideFloatingComposer]);
 
   const positionContent = useCallback(() => {
     const content = divRef.current;
@@ -162,7 +147,7 @@ const FloatingSelectionContainerImpl = forwardRef<
     // Get the height of the content
     const height = content.getBoundingClientRect().height;
 
-    if (rect.top + height >= window.innerHeight - collisionPadding) {
+    if (rect.bottom + height >= window.innerHeight - collisionPadding) {
       top =
         rect.top -
         container.getBoundingClientRect().top +
@@ -173,7 +158,7 @@ const FloatingSelectionContainerImpl = forwardRef<
 
     content.style.left = `${left}px`;
     content.style.top = `${top}px`;
-  }, [selection, container, editor]);
+  }, [editor, selection, container, alignOffset, collisionPadding, sideOffset]);
 
   useEffect(() => {
     const editable = editor.getRootElement();

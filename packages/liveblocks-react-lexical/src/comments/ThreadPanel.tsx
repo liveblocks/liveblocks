@@ -1,4 +1,3 @@
-
 import { useRoomContextBundle } from "@liveblocks/react";
 import { Thread } from "@liveblocks/react-comments";
 import React from "react";
@@ -18,6 +17,6 @@ const ThreadPanel = () => {
       })}
     </div>
   );
-}
+};
 
-export { ThreadPanel }
+export { ThreadPanel };

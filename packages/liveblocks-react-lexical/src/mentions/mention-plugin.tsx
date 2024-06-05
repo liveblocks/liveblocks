@@ -169,7 +169,7 @@ export default function MentionPlugin() {
   const room = useRoom();
 
   useEffect(() => {
-    async function $handleMutation(
+    function $handleMutation(
       mutations: Map<NodeKey, NodeMutation>,
       {
         prevEditorState,
@@ -185,8 +185,6 @@ export default function MentionPlugin() {
 
             if (!$isMentionNode(node)) return;
 
-            // console.log("MentionNode created", node.getUserId(), node.getId());
-
             room[kInternal]
               .createTextMention(node.getUserId(), node.getId())
               .catch((err) => {
@@ -196,18 +194,10 @@ export default function MentionPlugin() {
           });
         } else if (mutation === "destroyed") {
           prevEditorState.read(() => {
-            // const node = prevEditorState._nodeMap.get(key);
-            // if (node === null) continue;
             const node = $getNodeByKey(key);
             if (node === null) return;
 
             if (!$isMentionNode(node)) return;
-
-            // console.log(
-            //   "MentionNode destroyed",
-            //   node.getUserId(),
-            //   node.getId()
-            // );
 
             room[kInternal].deleteTextMention(node.getId()).catch((err) => {
               // TODO: Handle error

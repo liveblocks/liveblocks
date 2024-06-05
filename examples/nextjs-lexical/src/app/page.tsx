@@ -30,15 +30,6 @@ export default function Page() {
             <CollaborativeEditor />
           </Room>
         </div>
-
-        {/* Notifications */}
-        <div className={styles.notificationsContainer}>
-          <LiveblocksProvider>
-            <ClientSideSuspense fallback={<Loading />}>
-              {() => <Notifications />}
-            </ClientSideSuspense>
-          </LiveblocksProvider>
-        </div>
       </div>
     </main>
   );

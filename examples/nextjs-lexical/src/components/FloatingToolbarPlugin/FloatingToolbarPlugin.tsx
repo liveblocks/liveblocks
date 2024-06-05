@@ -27,7 +27,7 @@ import { $isAtNodeEnd } from "@lexical/selection";
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as React from "react";
 import { createPortal } from "react-dom";
-import { useCreateThread } from "@liveblocks/react-lexical";
+import { OPEN_FLOATING_COMPOSER_COMMAND } from "@liveblocks/react-lexical";
 
 function BoldIcon() {
   return (
@@ -301,8 +301,6 @@ function TextFormatFloatingToolbar({
     );
   }, [editor, $updateTextFormatFloatingToolbar]);
 
-  const showFloatingComposer = useCreateThread();
-
   return (
     <div ref={popupCharStylesEditorRef} className="floating-text-format-popup">
       {editor.isEditable() && (
@@ -341,7 +339,9 @@ function TextFormatFloatingToolbar({
       )}
       <button
         type="button"
-        onClick={() => showFloatingComposer()}
+        onClick={() => {
+          editor.dispatchCommand(OPEN_FLOATING_COMPOSER_COMMAND, undefined);
+        }}
         className={"popup-item spaced insert-comment"}
         aria-label="Insert comment"
       >

@@ -1,12 +1,16 @@
-import { Composer, ComposerProps } from "@liveblocks/react-comments";
-import React, { ComponentRef, forwardRef, KeyboardEvent } from "react";
-import { FloatingSelectionContainer } from "../floating-selection-container";
-import type { BaseMetadata } from "@liveblocks/core";
-import {
-  useHideFloatingComposer,
-  useShowFloatingComposer,
-} from "./comment-plugin-provider";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import type { BaseMetadata } from "@liveblocks/core";
+import type { ComposerProps } from "@liveblocks/react-comments";
+import { Composer } from "@liveblocks/react-comments";
+import type { LexicalCommand } from "lexical";
+import { COMMAND_PRIORITY_EDITOR, createCommand } from "lexical";
+import type { ComponentRef, KeyboardEvent } from "react";
+import React, { forwardRef, useEffect, useState } from "react";
+
+import { FloatingSelectionContainer } from "../floating-selection-container";
+
+export const OPEN_FLOATING_COMPOSER_COMMAND: LexicalCommand<void> =
+  createCommand("OPEN_FLOATING_COMPOSER_COMMAND");
 
 type ComposerElement = ComponentRef<typeof Composer>;
 
@@ -24,19 +28,39 @@ export const FloatingComposer = forwardRef<
   FloatingComposerProps
 >(function FloatingComposer(props, forwardedRef) {
   const { onKeyDown, ...composerProps } = props;
-  const shouldShowFloatingComposer = useShowFloatingComposer();
-  const hideFloatingComposer = useHideFloatingComposer();
+  const [showComposer, setShowComposer] = useState(false);
   const [editor] = useLexicalComposerContext();
 
-  if (!shouldShowFloatingComposer) return null;
+  useEffect(() => {
+    return editor.registerCommand(
+      OPEN_FLOATING_COMPOSER_COMMAND,
+      () => {
+        setShowComposer(true);
+        return true;
+      },
+      COMMAND_PRIORITY_EDITOR
+    );
+  }, [editor]);
+
+  useEffect(() => {
+    if (!showComposer) return;
+
+    return editor.registerUpdateListener(({ editorState: state, tags }) => {
+      // Ignore selection updates related to collaboration
+      if (tags.has("collaboration")) return;
+      state.read(() => setShowComposer(false));
+    });
+  }, [editor, showComposer]);
+
+  if (!showComposer) return null;
 
   function handleKeyDown(event: KeyboardEvent<HTMLFormElement>) {
     if (event.key === "Escape") {
-      hideFloatingComposer();
+      setShowComposer(false);
       editor.focus();
     }
 
-    props.onKeyDown?.(event);
+    onKeyDown?.(event);
   }
 
   return (
