@@ -6,7 +6,7 @@ import { User } from "./User";
 import {
   Comment as CommentPrimitive,
   Timestamp,
-} from "@liveblocks/react-comments/primitives";
+} from "@liveblocks/react-ui/primitives";
 
 /**
  * Custom comment component.

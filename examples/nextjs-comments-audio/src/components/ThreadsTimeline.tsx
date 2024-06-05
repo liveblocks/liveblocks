@@ -6,7 +6,7 @@ import { ThreadMetadata, useThreads, useUser } from "@/liveblocks.config";
 import { useSkipTo } from "@/utils";
 import { ThreadData } from "@liveblocks/core";
 import { ClientSideSuspense } from "@liveblocks/react";
-import { Comment } from "@liveblocks/react-comments/primitives";
+import { Comment } from "@liveblocks/react-ui/primitives";
 import { CSSProperties, useCallback, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 

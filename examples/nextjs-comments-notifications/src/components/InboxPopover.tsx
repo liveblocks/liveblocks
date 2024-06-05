@@ -3,7 +3,7 @@
 import {
   InboxNotification,
   InboxNotificationList,
-} from "@liveblocks/react-comments";
+} from "@liveblocks/react-ui";
 import * as Popover from "@radix-ui/react-popover";
 import {
   useInboxNotifications,

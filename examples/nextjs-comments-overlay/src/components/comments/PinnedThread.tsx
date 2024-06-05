@@ -11,7 +11,7 @@ import {
 } from "react";
 import { ThreadData } from "@liveblocks/client";
 import { ThreadMetadata, UserMeta } from "@/liveblocks.config";
-import { Thread } from "@liveblocks/react-comments";
+import { Thread } from "@liveblocks/react-ui";
 
 type Props = {
   user: UserMeta["info"];

@@ -2,7 +2,7 @@
 
 import { RoomProvider, useThreads } from "../../../liveblocks.config";
 import { Loading } from "../../components/Loading";
-import { Composer, Thread } from "@liveblocks/react-comments";
+import { Composer, Thread } from "@liveblocks/react-ui";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useExampleRoomId } from "../../example.client";

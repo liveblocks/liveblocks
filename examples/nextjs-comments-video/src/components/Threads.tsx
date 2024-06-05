@@ -2,7 +2,7 @@
 
 import { ThreadMetadata, useThreads } from "@/liveblocks.config";
 import { ClientSideSuspense } from "@liveblocks/react";
-import { Thread } from "@liveblocks/react-comments";
+import { Thread } from "@liveblocks/react-ui";
 import { FormEvent, useCallback, useRef, useState } from "react";
 import styles from "./Threads.module.css";
 import {

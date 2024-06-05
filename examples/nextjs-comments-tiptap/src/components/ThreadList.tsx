@@ -5,10 +5,10 @@ import {
   useCreateThread,
   useThreads,
 } from "@/liveblocks.config";
-import { Composer, Thread } from "@liveblocks/react-comments";
+import { Composer, Thread } from "@liveblocks/react-ui";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { Editor } from "@tiptap/react";
-import { ComposerSubmitComment } from "@liveblocks/react-comments";
+import { ComposerSubmitComment } from "@liveblocks/react-ui";
 import {
   getCommentHighlightContent,
   removeCommentHighlight,

@@ -1,5 +1,5 @@
 @import "./normalize.css";
-@import "@liveblocks/react-comments/styles.css";
+@import "@liveblocks/react-ui/styles.css";
 @import "./comments.css";
 
 :root {

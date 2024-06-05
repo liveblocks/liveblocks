@@ -1,8 +1,8 @@
 import "../styles/globals.css";
 import "../styles/text-editor.css";
 import "../styles/comment-styles.css";
-import "@liveblocks/react-comments/styles.css";
-import "@liveblocks/react-comments/styles/dark/attributes.css";
+import "@liveblocks/react-ui/styles.css";
+import "@liveblocks/react-ui/styles/dark/attributes.css";
 
 export const metadata = {
   title: "Liveblocks",

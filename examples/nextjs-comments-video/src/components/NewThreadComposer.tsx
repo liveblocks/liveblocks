@@ -3,7 +3,7 @@
 import {
   Composer,
   ComposerSubmitComment,
-} from "@liveblocks/react-comments/primitives";
+} from "@liveblocks/react-ui/primitives";
 import { ChangeEvent, FormEvent, useCallback, useState } from "react";
 import { useCreateThread, useSelf } from "@/liveblocks.config";
 import { formatTime } from "@/components/Duration";

@@ -2,7 +2,7 @@ import { ClientSideSuspense } from "@liveblocks/react";
 import {
   InboxNotification,
   InboxNotificationList,
-} from "@liveblocks/react-comments";
+} from "@liveblocks/react-ui";
 import clsx from "clsx";
 import { ComponentProps } from "react";
 import {

@@ -1,7 +1,7 @@
 "use client";
 
 import styles from "./Sidebar.module.css";
-import { Thread } from "@liveblocks/react-comments";
+import { Thread } from "@liveblocks/react-ui";
 import { ThreadMetadata, useThreads } from "@/liveblocks.config";
 import { useMemo } from "react";
 import { DocumentMagnifyingIcon } from "@/components/icons/DocumentMagnifyingIcon";

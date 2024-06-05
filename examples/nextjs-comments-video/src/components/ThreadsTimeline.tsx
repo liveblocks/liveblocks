@@ -6,7 +6,7 @@ import { ErrorBoundary } from "react-error-boundary";
 import styles from "./ThreadsTimeline.module.css";
 import { ThreadData } from "@liveblocks/core";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { Comment } from "@liveblocks/react-comments/primitives";
+import { Comment } from "@liveblocks/react-ui/primitives";
 import {
   resetAllHighlights,
   useHighlightPinListener,

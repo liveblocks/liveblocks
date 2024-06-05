@@ -10,7 +10,7 @@ import {
 } from "react";
 import * as Portal from "@radix-ui/react-portal";
 import { useCreateThread, useSelf, useUser } from "@/liveblocks.config";
-import { ComposerSubmitComment } from "@liveblocks/react-comments/primitives";
+import { ComposerSubmitComment } from "@liveblocks/react-ui/primitives";
 import styles from "./NewThread.module.css";
 import { NewThreadCursor } from "@/components/comments/NewThreadCursor";
 import { getCoordsFromPointerEvent } from "@/lib/coords";

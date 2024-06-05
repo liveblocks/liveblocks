@@ -5,7 +5,7 @@ import { ThreadMetadata, useThreads } from "@/liveblocks.config";
 import { useSkipTo } from "@/utils";
 import { ThreadData } from "@liveblocks/core";
 import { ClientSideSuspense } from "@liveblocks/react";
-import { Thread } from "@liveblocks/react-comments";
+import { Thread } from "@liveblocks/react-ui";
 import { useCallback, useRef, useState } from "react";
 import {
   Clock as ClockIcon,

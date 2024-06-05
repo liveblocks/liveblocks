@@ -1,4 +1,4 @@
-import { Thread } from "@liveblocks/react-comments";
+import { Thread } from "@liveblocks/react-ui";
 import { ThreadData } from "@liveblocks/core";
 import {
   ThreadMetadata,

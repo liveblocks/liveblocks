@@ -7,7 +7,7 @@ import { useCreateThread, useSelf } from "@/liveblocks.config";
 import {
   Composer,
   ComposerSubmitComment,
-} from "@liveblocks/react-comments/primitives";
+} from "@liveblocks/react-ui/primitives";
 import cx from "classnames";
 import { FormEvent, useCallback } from "react";
 import { Send as SendIcon } from "react-feather";
