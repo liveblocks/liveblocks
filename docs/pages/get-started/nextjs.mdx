@@ -37,24 +37,6 @@ the [`@liveblocks/react`](/docs/api-reference/liveblocks-react) package.
 
   </Step>
   <Step>
-    <StepTitle>Set up the Liveblocks client</StepTitle>
-    <StepContent>
-
-      The first step in connecting to Liveblocks is creating a client which
-      will be responsible for communicating with the back end. You can do
-      this by modifying `createClient` in your config file, and
-      passing your public API key.
-
-      ```tsx file="liveblocks.config.ts"
-      const client = createClient({
-        publicApiKey: "{{PUBLIC_KEY}}",
-      });
-      ```
-
-    </StepContent>
-
-  </Step>
-  <Step>
     <StepTitle>Create a Liveblocks room</StepTitle>
     <StepContent>
 
@@ -64,23 +46,22 @@ the [`@liveblocks/react`](/docs/api-reference/liveblocks-react) package.
       directory, we recommend creating your room in a `Room.tsx`
       file in the same directory as your current route.
 
-      ```tsx file="app/Room.tsx" highlight="9-13"
+      ```tsx file="app/Room.tsx" highlight="8-12"
       "use client";
 
       import { ReactNode } from "react";
-      import { RoomProvider } from "../liveblocks.config";
-      import { ClientSideSuspense } from "@liveblocks/react";
+      import { LiveblocksProvider, RoomProvider } from "@liveblocks/react";
 
       export function Room({ children }: { children: ReactNode }) {
         return (
-          <RoomProvider id="my-room" initialPresence={{}}>
-            <ClientSideSuspense fallback={<div>Loading…</div>}>
-              {() => children}
-            </ClientSideSuspense>
-          </RoomProvider>
+          <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
+            <RoomProvider id="my-room" initialPresence={{}}>
+              {children}
+            </RoomProvider>
+          </LiveblocksProvider>
         );
       }
-      ```
+    ```
 
     </StepContent>
 
@@ -91,16 +72,20 @@ the [`@liveblocks/react`](/docs/api-reference/liveblocks-react) package.
 
       After creating your room file, it’s time to join it. Import
       your room into your `page.tsx` file, and place
-      your collaborative app components inside it.
+      your collaborative app components inside it. Use
+      `<ClientSideSuspense>` to add loading spinners to your app.
 
-      ```tsx file="app/page.tsx" highlight="6-8"
+      ```tsx file="app/page.tsx" highlight="7-11"
+      import { ClientSideSuspense } from "@liveblocks/react";
       import { Room } from "./Room";
       import { CollaborativeApp } from "./CollaborativeApp";
 
       export default function Page() {
         return (
           <Room>
-            <CollaborativeApp />
+            <ClientSideSuspense fallback={<div>Loading…</div>}>
+              {() => <CollaborativeApp />}
+            </ClientSideSuspense>
           </Room>
         );
       }
