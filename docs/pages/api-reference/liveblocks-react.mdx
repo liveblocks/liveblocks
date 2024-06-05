@@ -10,9 +10,798 @@ alwaysShowAllNavigationLevels: false
 our realtime collaboration APIs, built on top of WebSockets. Read our
 [getting started](/docs/get-started) guides to learn more.
 
+## Liveblocks
+
+### LiveblocksProvider
+
+<Banner>
+
+`<LiveblocksProvider>` is required in all applications as of Liveblocks 2.0.
+
+</Banner>
+
+Sets up a client for connecting to Liveblocks, and is required for all React
+apps. You must define either `authEndpoint` or `publicApiKey`. Resolver
+functions should be placed inside here, and a number of other options are
+available. Unlike [`RoomProvider`][], `LiveblocksProvider` doesn’t call
+Liveblocks servers when mounted, so it can (and should) live higher in the
+component tree of your app.
+
+```tsx
+import { LiveblocksProvider } from "./liveblocks.config";
+
+function App() {
+  return (
+    <LiveblocksProvider
+    // publicApiKey=""
+    // authEndpoint="/api/liveblocks-auth"
+    >
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+```tsx title="All LiveblocksProvider props" isCollapsable isCollapsed
+import { LiveblocksProvider } from "./liveblocks.config";
+
+function App() {
+  return (
+    <LiveblocksProvider
+      // Connect with authEndpoint
+      authEndpoint="/api/liveblocks-auth"
+      // Alternatively, use an authEndpoint callback
+      // authEndpoint={async (room) => {
+      //   const response = await fetch("/api/liveblocks-auth", {
+      //     method: "POST",
+      //     headers: {
+      //       Authentication: "<your own headers here>",
+      //       "Content-Type": "application/json",
+      //     },
+      //     body: JSON.stringify({ room }),
+      //   });
+      //   return await response.json();
+      // }}
+
+      // Alternatively, use a public key
+      // publicApiKey="pk_..."
+
+      // Throttle time (ms) between WebSocket updates
+      throttle={100}
+      // Throw lost-connection event after 5 seconds offline
+      lostConnectionTimeout={5000}
+      // Disconnect users after X (ms) of inactivity, disabled by default
+      backgroundKeepAliveTimeout={undefined}
+      // Resolve user info for Comments and Notifications
+      resolveUsers={async ({ userIds }) => {
+        const usersData = await __getUsersFromDB__(userIds);
+
+        return usersData.map((userData) => ({
+          name: userData.name,
+          avatar: userData.avatar.src,
+        }));
+      }}
+      // Resolve room info for Notifications
+      resolveRoomsInfo={async ({ roomIds }) => {
+        const documentsData = await __getDocumentsFromDB__(roomIds);
+
+        return documentsData.map((documentData) => ({
+          name: documentData.name,
+          // url: documentData.url,
+        }));
+      }}
+      // Resolve mention suggestions for Comments
+      resolveMentionSuggestions={async ({ text, roomId }) => {
+        const workspaceUsers = await __getWorkspaceUsersFromDB__(roomId);
+
+        if (!text) {
+          // Show all workspace users by default
+          return __getUserIds__(workspaceUsers);
+        } else {
+          const matchingUsers = __findUsers__(workspaceUsers, text);
+          return __getUserIds__(matchingUsers);
+        }
+      }}
+      // Polyfill options for non-browser environments
+      polyfills={
+        {
+          // atob,
+          // fetch,
+          // WebSocket,
+        }
+      }
+    >
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+<PropertiesList title="Props">
+  <PropertiesListItem
+    name="authEndpoint"
+    detailedType="string | async ((room?: string) => CustomAuthenticationResult)"
+  >
+    The URL of your back end’s [authentication endpoint](/docs/authentication)
+    as a string, or an async callback function that returns a Liveblocks token
+    result. Either `authEndpoint` or `publicApikey` are required. Learn more
+    about [using a URL string](#LiveblocksProviderAuthEndpoint) and [using a
+    callback](#LiveblocksProviderCallback).
+  </PropertiesListItem>
+  <PropertiesListItem name="publicApiKey" type="string">
+    The public API key taken from your project’s
+    [dashboard](/dashboard/apikeys). Generally not recommended for production
+    use. Either `authEndpoint` or `publicApikey` are required. [Learn
+    more](#LiveblocksProviderPublicKey).
+  </PropertiesListItem>
+  <PropertiesListItem name="throttle" type="number" defaultValue="100">
+    The throttle time between WebSocket messages in milliseconds, a number
+    between `16` and `1000` is allowed. Using `16` means your app will update 60
+    times per second. [Learn more](#LiveblocksProviderThrottle).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="lostConnectionTimeout"
+    type="number"
+    defaultValue="5000"
+  >
+    After a user disconnects, the time in milliseconds before a
+    [`"lost-connection"`](/docs/api-reference/liveblocks-client#Room.subscribe.lost-connection)
+    event is fired. [Learn more](#LiveblocksProviderLostConnectionTimeout).
+  </PropertiesListItem>
+  <PropertiesListItem name="backgroundKeepAliveTimeout" type="number">
+    The time before an inactive WebSocket connection is disconnected. This is
+    disabled by default, but setting a number will activate it. [Learn
+    more](#LiveblocksProviderBackgroundKeepAliveTimeout).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="resolveUsers"
+    detailedType='async? (args: ResolveUsersArgs) => (TUserMeta["info"] | undefined)[] | undefined'
+  >
+    A function that resolves user information in
+    [Comments](/docs/products/comments). Return an array of `TUserMeta["info"]`
+    objects in the same order they arrived. [Learn
+    more](#LiveblocksProviderResolveUsers).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="resolveRoomsInfo"
+    detailedType="async? (args: ResolveRoomsInfoArgs) => (RoomInfo | undefined)[] | undefined"
+  >
+    A function that resolves room information in
+    [Comments](/docs/products/comments). Return an array of `RoomInfo` objects
+    in the same order they arrived. [Learn
+    more](#LiveblocksProviderResolveRoomsInfo).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="resolveMentionSuggestions"
+    detailedType="async? (args: ResolveMentionSuggestionsArgs) => string[]"
+  >
+    A function that resolves mention suggestions in
+    [Comments](/docs/products/comments). Return an array of user IDs. [Learn
+    more](#LiveblocksProviderResolveMentionSuggestions).
+  </PropertiesListItem>
+  <PropertiesListItem name="polyfills">
+    Place polyfills for `atob`, `fetch`, and `WebSocket` inside here. Useful
+    when using a non-browser environment, such as
+    [Node.js](#LiveblocksProviderNode) or [React
+    Native](#LiveblocksProviderReactNative).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="unstable_fallbackToHTTP"
+    type="boolean"
+    defaultValue="false"
+  >
+    Experimental. Automatically fall back to HTTP when a message is too large
+    for WebSockets.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="unstable_streamData"
+    type="boolean"
+    defaultValue="false"
+  >
+    Experimental. Stream the initial Storage content over HTTP, instead of
+    waiting for a large initial WebSocket message to be sent from the server.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### LiveblocksProvider with public key [#LiveblocksProviderPublicKey]
+
+When creating a client with a public key, you don’t need to set up an
+authorization endpoint. We only recommend using a public key when prototyping,
+or on public landing pages, as it makes it possible for end users to access any
+room’s data. You should instead use an
+[auth endpoint](#LiveblocksProviderAuthEndpoint).
+
+```tsx
+import { LiveblocksProvider } from "liveblocks/react";
+
+function App() {
+  return (
+    <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+#### LiveblocksProvider with auth endpoint [#LiveblocksProviderAuthEndpoint]
+
+If you are not using a public key, you need to set up your own `authEndpoint`.
+Please refer to our [Authentication guide](/docs/authentication).
+
+```tsx
+import { LiveblocksProvider } from "liveblocks/react";
+
+function App() {
+  return (
+    <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+#### LiveblocksProvider with auth endpoint callback [#LiveblocksProviderCallback]
+
+If you need to add additional headers or use your own function to call your
+endpoint, `authEndpoint` can be provided as a custom callback. You should return
+the token created with
+[`Liveblocks.prepareSession`](/docs/api-reference/liveblocks-node#access-tokens)
+or [`liveblocks.identifyUser`](/docs/api-reference/liveblocks-node#id-tokens),
+learn more in [authentication guide](/docs/rooms/authentication).
+
+```tsx
+import { LiveblocksProvider } from "liveblocks/react";
+
+function App() {
+  return (
+    <LiveblocksProvider
+      authEndpoint={async (room) => {
+        // Fetch your authentication endpoint and retrieve your access or ID token
+        // ...
+
+        return '{ "token": "..." }';
+      }}
+    >
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+`room` is the room ID that the user is connecting to. When using
+[Notifications](/docs/products/comments/notifications), `room` can be
+`undefined`, as the client is requesting a token that grants access to multiple
+rooms, rather than a specific room.
+
+##### Fetch your endpoint
+
+Here’s an example of fetching your API endpoint at `/api/liveblocks-auth` within
+the callback.
+
+```tsx
+import { LiveblocksProvider } from "liveblocks/react";
+
+function App() {
+  return (
+    <LiveblocksProvider
+      authEndpoint={async (room) => {
+        const response = await fetch("/api/liveblocks-auth", {
+          method: "POST",
+          headers: {
+            Authentication: "<your own headers here>",
+            "Content-Type": "application/json",
+          },
+          // Don't forget to pass `room` down. Note that it
+          // can be undefined when using Notifications.
+          body: JSON.stringify({ room }),
+        });
+        return await response.json();
+      }}
+    >
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+##### Token details
+
+You should return the token created with
+[`Liveblocks.prepareSession`](/docs/api-reference/liveblocks-node#access-tokens)
+or [`liveblocks.identifyUser`](/docs/api-reference/liveblocks-node#id-tokens).
+These are the values the functions can return.
+
+1. A valid token, it returns a `'{ "token": "..." }'` shaped response.
+1. A token that explicitly forbids access, it returns an
+   `'{ "error": "forbidden", "reason": "..." }'` shaped response. If this is
+   returned, the client will disconnect and won't keep trying to authorize.
+
+Any other error will be treated as an unexpected error, after which the client
+will retry the request until it receives either 1. or 2.
+
+#### WebSocket throttle [#LiveblocksProviderThrottle]
+
+By default, the client throttles the WebSocket messages sent to one every 100
+milliseconds, which translates to 10 updates per second. It’s possible to
+override that configuration with the `throttle` option with a value between `16`
+and `1000` milliseconds.
+
+```tsx
+import { LiveblocksProvider } from "liveblocks/react";
+
+function App() {
+  return (
+    <LiveblocksProvider
+      throttle={16}
+
+      // Other options
+      // ...
+    >
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+This option is helpful for smoothing out realtime animations in your
+application, as you can effectively increase the framerate without using any
+interpolation. Here are some examples with their approximate frames per second
+(FPS) values.
+
+```ts
+throttle:  16, // 60 FPS
+throttle:  32, // 30 FPS
+throttle: 200, //  5 FPS
+```
+
+#### Lost connection timeout [#LiveblocksProviderLostConnectionTimeout]
+
+If you’re connected to a room and briefly lose connection, Liveblocks will
+reconnect automatically and quickly. However, if reconnecting takes longer than
+usual, for example if your network is offline, then the room will emit an event
+informing you about this.
+
+How quickly this event is triggered can be configured with the
+`lostConnectionTimeout` setting, and it takes a number in milliseconds.
+`lostConnectionTimeout` can be set between `1000` and `30000` milliseconds. The
+default is `5000`, or 5 seconds.
+
+```tsx
+import { LiveblocksProvider } from "liveblocks/react";
+
+function App() {
+  return (
+    <LiveblocksProvider
+      lostConnectionTimeout={5000}
+
+      // Other props
+      // ...
+    >
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+You can listen to the event with [`room.subscribe("lost-connection")`][]. Note
+that this also affects when `others` are reset to an empty array after a
+disconnection. This helps prevent temporary flashes in your application as a
+user quickly disconnects and reconnects. For a demonstration of this behavior,
+see our [connection status example][].
+
+#### Background keep-alive timeout [#LiveblocksProviderBackgroundKeepAliveTimeout]
+
+By default, Liveblocks applications will maintain an active WebSocket connection
+to the Liveblocks servers, even when running in a browser tab that’s in the
+background. However, if you’d prefer for background tabs to disconnect after a
+period of inactivity, then you can use `backgroundKeepAliveTimeout`.
+
+When `backgroundKeepAliveTimeout` is specified, the client will automatically
+disconnect applications that have been in an unfocused background tab for _at
+least_ the specified time. When the browser tab is refocused, the client will
+immediately reconnect to the room and synchronize the document.
+
+```tsx
+import { LiveblocksProvider } from "liveblocks/react";
+
+function App() {
+  return (
+    <LiveblocksProvider
+      // Disconnect users after 15 minutes of inactivity
+      backgroundKeepAliveTimeout={15 * 60 * 1000}
+
+      // Other props
+      // ...
+    >
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+`backgroundKeepAliveTimeout` accepts a number in milliseconds—we advise using a
+value of at least a few minutes, to avoid unnecessary disconnections.
+
+#### resolveUsers [#LiveblocksProviderResolveUsers]
+
+[Comments](/docs/products/comments) stores user IDs in its system, but no other
+user information. To display user information in Comments components, such as a
+user’s name or avatar, you need to resolve these IDs into user objects. This
+function receives a list of user IDs and you should return a list of user
+objects of the same size, in the same order.
+
+```tsx
+import { LiveblocksProvider } from "liveblocks/react";
+
+function App() {
+  return (
+    <LiveblocksProvider
+      resolveUsers={async ({ userIds }) => {
+        const usersData = await __getUsersFromDB__(userIds);
+
+        return usersData.map((userData) => ({
+          name: userData.name,
+          avatar: userData.avatar.src,
+        }));
+      }}
+
+      // Other props
+      // ...
+    >
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+The name and avatar you return are rendered in
+[`Thread`](/docs/api-reference/liveblocks-react-ui#Thread) components.
+
+##### User objects
+
+The user objects returned by the resolver function take the shape of
+`UserMeta["info"]`, which contains `name` and `avatar` by default. These two
+values are optional, though if you’re using the
+[Comments default components](/docs/api-reference/liveblocks-react-ui#Components),
+they are necessary. Here’s an example of `userIds` and the exact values
+returned.
+
+```tsx
+import { LiveblocksProvider } from "liveblocks/react";
+
+function App() {
+  return (
+    <LiveblocksProvider
+      resolveUsers={async ({ userIds }) => {
+        // ["marc@example.com", "nimesh@example.com"];
+        console.log(userIds);
+
+        return [
+          { name: "Marc", avatar: "https://example.com/marc.png" },
+          { name: "Nimesh", avatar: "https://example.com/nimesh.png" },
+        ];
+      }}
+
+      // Other props
+      // ...
+    >
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+You can also return custom information, for example, a user’s `color`:
+
+```tsx highlight="14"
+import { LiveblocksProvider } from "liveblocks/react";
+
+function App() {
+  return (
+    <LiveblocksProvider
+      resolveUsers={async ({ userIds }) => {
+        // ["marc@example.com"];
+        console.log(userIds);
+
+        return [
+          {
+            name: "Marc",
+            avatar: "https://example.com/marc.png",
+            color: "purple",
+          },
+        ];
+      }}
+
+      // Other props
+      // ...
+    >
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+##### Accessing user data
+
+You can access any values set within `resolveUsers` with the
+[`useUser`](/docs/api-reference/liveblocks-react#useUser) hook.
+
+```tsx
+import { useUser } from "../liveblocks.config";
+
+function Component() {
+  const user = useUser("marc@example.com");
+
+  // { name: "Marc", avatar: "https://...", ... }
+  console.log(user);
+}
+```
+
+#### resolveRoomsInfo [#LiveblocksProviderResolveRoomsInfo]
+
+When using [Notifications](/docs/products/comments/notifications) with
+[Comments](/docs/products/comments), room IDs will be used to contextualize
+notifications (e.g. “Chris mentioned you in _room-id_”) in the
+[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
+component. To replace room IDs with more fitting names (e.g. document names,
+“Chris mentioned you in _Document A_”), you can provide a resolver function to
+the `resolveRoomsInfo` option in [`LiveblocksProvider`](#LiveblocksProvider).
+
+This resolver function will receive a list of room IDs and should return a list
+of room info objects of the same size and in the same order.
+
+```tsx
+import { LiveblocksProvider } from "liveblocks/react";
+
+function App() {
+  return (
+    <LiveblocksProvider
+      resolveRoomsInfo={async ({ roomIds }) => {
+        const documentsData = await __getDocumentsFromDB__(roomIds);
+
+        return documentsData.map((documentData) => ({
+          name: documentData.name,
+          // url: documentData.url,
+        }));
+      }}
+
+      // Other props
+      // ...
+    >
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+In addition to the room’s name, you can also provide a room’s URL as the `url`
+property. If you do so, the
+[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
+component will automatically use it. It’s possible to use an inbox
+notification’s `roomId` property to construct a room’s URL directly in React and
+set it on
+[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
+via `href`, but the room ID might not be enough for you to construct the URL ,
+you might need to call your backend for example. In that case, providing it via
+`resolveRoomsInfo` is the preferred way.
+
+#### resolveMentionSuggestions [#LiveblocksProviderResolveMentionSuggestions]
+
+To enable creating mentions in [Comments](/docs/products/comments), you can
+provide a resolver function to the `resolveMentionSuggestions` option in
+[`LiveblocksProvider`](#LiveblocksProvider). These mentions will be displayed in
+the [`Composer`](/docs/api-reference/liveblocks-react-ui#Composer) component.
+
+This resolver function will receive the mention currently being typed (e.g. when
+writing “@jane”, `text` will be `jane`) and should return a list of user IDs
+matching that text. This function will be called every time the text changes but
+with some debouncing.
+
+```tsx
+import { LiveblocksProvider } from "liveblocks/react";
+
+function App() {
+  return (
+    <LiveblocksProvider
+      resolveMentionSuggestions={async ({ text, roomId }) => {
+        const workspaceUsers = await __getWorkspaceUsersFromDB__(roomId);
+
+        if (!text) {
+          // Show all workspace users by default
+          return __getUserIds__(workspaceUsers);
+        } else {
+          const matchingUsers = __findUsers__(workspaceUsers, text);
+          return __getUserIds__(matchingUsers);
+        }
+      }}
+
+      // Other props
+      // ...
+    >
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+#### LiveblocksProvider for Node.js [#LiveblocksProviderNode]
+
+To use `@liveblocks/client` in Node.js, you need to provide [`WebSocket`][] and
+[`fetch`][] polyfills. As polyfills, we recommend installing [`ws`][] and
+[`node-fetch`][].
+
+```bash
+npm install ws node-fetch
+```
+
+Then, pass them to the `LiveblocksProvider` polyfill option as below.
+
+```tsx
+import { LiveblocksProvider } from "liveblocks/react";
+import fetch from "node-fetch";
+import WebSocket from "ws";
+
+function App() {
+  return (
+    <LiveblocksProvider
+      polyfills={{
+        fetch,
+        WebSocket,
+      }}
+
+      // Other props
+      // ...
+    >
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+Note that `node-fetch` v3+
+[does not support CommonJS](https://github.com/node-fetch/node-fetch/blob/main/docs/v3-UPGRADE-GUIDE.md#converted-to-es-module).
+If you are using CommonJS, downgrade `node-fetch` to v2.
+
+#### LiveblocksProvider for React Native [#LiveblocksProviderReactNative]
+
+To use `@liveblocks/client` with [React Native](https://reactnative.dev/), you
+need to add an [`atob`][] polyfill. As a polyfill, we recommend installing
+[`base-64`][].
+
+```bash
+npm install base-64
+```
+
+Then you can pass the `decode` function to our `atob` polyfill option when you
+create the client.
+
+```ts
+import { LiveblocksProvider } from "liveblocks/react";
+import { decode } from "base-64";
+
+function App() {
+  return (
+    <LiveblocksProvider
+      polyfills={{
+        atob: decode,
+      }}
+
+      // Other props
+      // ...
+    >
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+
+```
+
+### createLiveblocksContext
+
+<Banner>
+
+For advanced usage only. We generally recommend using ... TODO ... unless you
+need to define multiple room types in your application.
+
+</Banner>
+
+Creates a [`LiveblocksProvider`][] and a set of typed hooks. We recommend using
+it in `liveblocks.config.ts` and re-exporting your typed hooks like below.
+
+While [`createRoomContext`](#createRoomContext) offers APIs for interacting with
+rooms (e.g. Presence, Storage, and Comments),
+[`createLiveblocksContext`](#createLiveblocksContext) offers APIs for
+interacting with Liveblocks features that are not tied to a specific room (e.g.
+Notifications).
+
+```tsx file="liveblocks.config.ts"
+import { createClient } from "@liveblocks/client";
+import { createRoomContext, createLiveblocksContext } from "@liveblocks/react";
+
+const client = createClient({
+  // publicApiKey: "",
+  // authEndpoint: "/api/liveblocks-auth",
+  // throttle: 100,
+});
+
+// ...
+
+export const { RoomProvider } = createRoomContext(client);
+
+export const {
+  LiveblocksProvider,
+  useInboxNotifications,
+  /* ...all the other hooks you’re using... */
+} = createLiveblocksContext(client);
+```
+
 ## Room
 
+### RoomProvider
+
+Makes a [`Room`] available in the component hierarchy below. Joins the room when
+the component is mounted, and automatically leaves the room when the component
+is unmounted.
+
+- `initialPresence` - The initial Presence to use for the User currently
+  entering the Room. Presence data belongs to the current User and is readable
+  to all other Users in the room while the current User is connected to the
+  Room. Must be serializable to JSON.
+- `initialStorage` (optional) - The initial Storage structure to create when a
+  new Room is entered for the first time. Storage data is shared and belongs to
+  the Room itself. It persists even after all Users leave the room, and is
+  mutable by every client. Must either contain Live structures (e.g.
+  `new LiveList()`, `new LiveObject({ a: 1 })`, etc.) or be serializable to
+  JSON.
+- `autoConnect` (optional) - Whether or not the room should automatically
+  connect to Liveblocks servers when the RoomProvider is mounted. By default
+  it’s set to `typeof window !== "undefined"`, meaning the RoomProvider attempts
+  to connect to Liveblocks servers only on the client side.
+
+The `initialPresence`, `initialStorage` and `autoConnect` props are ignored
+after the first render, so changes to the initial value argument won’t have an
+effect.
+
+```tsx
+import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
+import { RoomProvider } from "./liveblocks.config";
+
+function AppRoot() {
+  return (
+    <RoomProvider
+      id="my-room"
+      // 😎 Replace with your own data!
+      initialPresence={{ cursor: { x: 0, y: 0 } }}
+      // 😎 Replace with your own data!
+      initialStorage={() => ({
+        animals: new LiveList(["🦁", "🦊", "🐵"]),
+
+        mathematician: new LiveObject({
+          firstName: "Ada",
+          lastName: "Lovelace",
+        }),
+
+        fruitsByName: new LiveMap([
+          ["apple", "🍎"],
+          ["banana", "🍌"],
+          ["cherry", "🍒"],
+        ]),
+      })}
+    >
+      {/* children */}
+    </RoomProvider>
+  );
+}
+```
+
 ### createRoomContext
+
+<Banner>
+
+For advanced usage only. We generally recommend using ... TODO ... unless you
+need to define multiple room types in your application.
+
+</Banner>
 
 Creates a [`RoomProvider`][] and a set of typed hooks. We recommend using it in
 `liveblocks.config.ts` and re-exporting your typed hooks like below.
@@ -74,63 +863,6 @@ export const {
   Storage
   /* UserMeta, RoomEvent, ThreadMetadata */
 >(client);
-```
-
-### RoomProvider
-
-Makes a [`Room`] available in the component hierarchy below. Joins the room when
-the component is mounted, and automatically leaves the room when the component
-is unmounted.
-
-- `initialPresence` - The initial Presence to use for the User currently
-  entering the Room. Presence data belongs to the current User and is readable
-  to all other Users in the room while the current User is connected to the
-  Room. Must be serializable to JSON.
-- `initialStorage` (optional) - The initial Storage structure to create when a
-  new Room is entered for the first time. Storage data is shared and belongs to
-  the Room itself. It persists even after all Users leave the room, and is
-  mutable by every client. Must either contain Live structures (e.g.
-  `new LiveList()`, `new LiveObject({ a: 1 })`, etc.) or be serializable to
-  JSON.
-- `autoConnect` (optional) - Whether or not the room should automatically
-  connect to Liveblocks servers when the RoomProvider is mounted. By default
-  it’s set to `typeof window !== "undefined"`, meaning the RoomProvider attempts
-  to connect to Liveblocks servers only on the client side.
-
-The `initialPresence`, `initialStorage` and `autoConnect` props are ignored
-after the first render, so changes to the initial value argument won’t have an
-effect.
-
-```tsx
-import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
-import { RoomProvider } from "./liveblocks.config";
-
-function AppRoot() {
-  return (
-    <RoomProvider
-      id="my-room"
-      // 😎 Replace with your own data!
-      initialPresence={{ cursor: { x: 0, y: 0 } }}
-      // 😎 Replace with your own data!
-      initialStorage={() => ({
-        animals: new LiveList(["🦁", "🦊", "🐵"]),
-
-        mathematician: new LiveObject({
-          firstName: "Ada",
-          lastName: "Lovelace",
-        }),
-
-        fruitsByName: new LiveMap([
-          ["apple", "🍎"],
-          ["banana", "🍌"],
-          ["cherry", "🍒"],
-        ]),
-      })}
-    >
-      {/* children */}
-    </RoomProvider>
-  );
-}
 ```
 
 ### useRoom [@badge=RoomProvider]
@@ -270,68 +1002,6 @@ function App() {
 Automatically unsubscribes when the component is unmounted.
 
 For a demonstration of this behavior, see our [connection status example][].
-
-## Liveblocks
-
-### createLiveblocksContext
-
-Creates a [`LiveblocksProvider`][] and a set of typed hooks. We recommend using
-it in `liveblocks.config.ts` and re-exporting your typed hooks like below.
-
-While [`createRoomContext`](#createRoomContext) offers APIs for interacting with
-rooms (e.g. Presence, Storage, and Comments),
-[`createLiveblocksContext`](#createLiveblocksContext) offers APIs for
-interacting with Liveblocks features that are not tied to a specific room (e.g.
-Notifications).
-
-```tsx file="liveblocks.config.ts"
-import { createClient } from "@liveblocks/client";
-import { createRoomContext, createLiveblocksContext } from "@liveblocks/react";
-
-const client = createClient({
-  // publicApiKey: "",
-  // authEndpoint: "/api/liveblocks-auth",
-  // throttle: 100,
-});
-
-// ...
-
-export const { RoomProvider } = createRoomContext(client);
-
-export const {
-  LiveblocksProvider,
-  useInboxNotifications,
-  /* ...all the other hooks you’re using... */
-} = createLiveblocksContext(client);
-```
-
-### LiveblocksProvider
-
-Makes Liveblocks features outside of rooms (e.g. Notifications) available in the
-component hierarchy below.
-
-Unlike [`RoomProvider`][], `LiveblocksProvider` doesn’t call Liveblocks servers
-when mounted, so it can (and should) live higher in the component tree of your
-app.
-
-```tsx
-import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
-import { LiveblocksProvider } from "./liveblocks.config";
-
-function AppRoot() {
-  return <LiveblocksProvider>{/* children */}</LiveblocksProvider>;
-}
-```
-
-<Banner title="Different API in 0.18 and earlier versions">
-
-In 0.18 and earlier versions, a different `LiveblocksProvider` API was
-available. It was exported from `@liveblocks/react` directly instead of
-`createLiveblocksContext`, and accepted the
-[`Client`](/docs/api-reference/liveblocks-client#Client) via the `client` prop.
-This previous API has been deprecated in 0.17 and removed in 0.18.
-
-</Banner>
 
 ## Presence
 
@@ -1620,3 +2290,9 @@ function Page() {
 [suspense version]: /docs/api-reference/liveblocks-react#suspense-hooks
 [connection status example]:
   https://liveblocks.io/examples/connection-status/nextjs
+[`atob`]: https://developer.mozilla.org/en-US/docs/Web/API/atob
+[`base-64`]: https://www.npmjs.com/package/base-64
+[`websocket`]: https://developer.mozilla.org/en-US/docs/Web/API/WebSocket
+[`ws`]: https://www.npmjs.com/package/ws
+[`fetch`]: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
+[`node-fetch`]: https://npmjs.com/package/node-fetch
