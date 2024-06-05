@@ -108,7 +108,7 @@ const ComposerFocusCallbackContext =
 const IsThreadActiveCallbackContext =
   React.createContext<null | IsThreadActiveCallback>(null);
 
-const noop = () => {};
+const noop = () => { };
 const identity: <T>(x: T) => T = (x) => x;
 
 const missing_unstable_batchedUpdates = (
@@ -120,8 +120,8 @@ const missing_unstable_batchedUpdates = (
     import { unstable_batchedUpdates } from "react-dom";  // or "react-native"
 
     <RoomProvider id=${JSON.stringify(
-      roomId
-    )} ... unstable_batchedUpdates={unstable_batchedUpdates}>
+    roomId
+  )} ... unstable_batchedUpdates={unstable_batchedUpdates}>
       ...
     </RoomProvider>
 
@@ -657,8 +657,6 @@ function makeRoomContextBundle<
     useCommentsErrorListener,
     ComposerFocusCallbackProvider: ComposerFocusCallbackContext.Provider,
     useComposerFocusCallback: useComposerFocusCallback,
-    IsThreadActiveCallbackProvider: IsThreadActiveCallbackContext.Provider,
-    useIsThreadActiveCallback: useIsThreadActiveCallback,
   };
 
   return Object.defineProperty(bundle, kInternal, {
@@ -1528,13 +1526,13 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
               const updatedInboxNotifications =
                 inboxNotification !== undefined
                   ? {
-                      ...state.inboxNotifications,
-                      [inboxNotification.id]: {
-                        ...inboxNotification,
-                        notifiedAt: newComment.createdAt,
-                        readAt: newComment.createdAt,
-                      },
-                    }
+                    ...state.inboxNotifications,
+                    [inboxNotification.id]: {
+                      ...inboxNotification,
+                      notifiedAt: newComment.createdAt,
+                      readAt: newComment.createdAt,
+                    },
+                  }
                   : state.inboxNotifications;
 
               return {
@@ -2352,7 +2350,6 @@ const _useUpdateMyPresence: DefaultRoomContextBundle["useUpdateMyPresence"] =
   useUpdateMyPresence;
 
 const ComposerFocusCallbackProvider = ComposerFocusCallbackContext.Provider;
-const IsThreadActiveCallbackProvider = IsThreadActiveCallbackContext.Provider;
 
 export {
   RoomContext,
@@ -2405,5 +2402,4 @@ export {
   useCommentsErrorListener,
   CreateThreadError,
   ComposerFocusCallbackProvider,
-  IsThreadActiveCallbackProvider,
 };

@@ -62,7 +62,6 @@ export {
   useCommentsErrorListener,
   CreateThreadError,
   ComposerFocusCallbackProvider,
-  IsThreadActiveCallbackProvider,
 } from "./room";
 export { selectedThreads } from "./comments/lib/selected-threads";
 

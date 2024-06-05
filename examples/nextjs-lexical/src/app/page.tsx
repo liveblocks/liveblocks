@@ -16,6 +16,8 @@ import Notifications from "./notifications";
 export default function Page() {
   return (
     <LiveblocksProvider
+      // @ts-ignore
+      baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
       authEndpoint="/api/liveblocks-auth"
       resolveUsers={async ({ userIds }) => {
         const searchParams = new URLSearchParams(

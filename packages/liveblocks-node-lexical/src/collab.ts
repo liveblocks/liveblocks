@@ -16,17 +16,6 @@ import type {
 import type { Transaction, YEvent } from "yjs";
 import { applyUpdate, Doc } from "yjs";
 
-export function headlessConvertYDocStateToLexicalJSON(
-  nodes: ReadonlyArray<Klass<LexicalNode> | LexicalNodeReplacement>,
-  yDocState: Uint8Array
-): SerializedEditorState<SerializedLexicalNode> {
-  return withHeadlessCollaborationEditor(nodes, (editor, binding) => {
-    applyUpdate(binding.doc, yDocState, { isUpdateRemote: true });
-    editor.update(() => {}, { discrete: true });
-
-    return editor.getEditorState().toJSON();
-  });
-}
 export function withHeadlessCollaborationEditor<T>(
   nodes: ReadonlyArray<Klass<LexicalNode> | LexicalNodeReplacement>,
   callback: (editor: LexicalEditor, binding: Binding, provider: Provider) => T
@@ -50,7 +39,7 @@ export function withHeadlessCollaborationEditor<T>(
   return res;
 }
 
-function registerCollaborationListeners(
+export function registerCollaborationListeners(
   editor: LexicalEditor,
   provider: Provider,
   binding: Binding
@@ -95,7 +84,7 @@ function registerCollaborationListeners(
   };
 }
 
-function createNoOpProvider(): Provider {
+export function createNoOpProvider(): Provider {
   const emptyFunction = () => {};
 
   return {

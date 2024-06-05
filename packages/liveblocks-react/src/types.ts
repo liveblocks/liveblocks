@@ -816,10 +816,6 @@ type PrivateRoomContextApi = {
   // Composer focus callback
   ComposerFocusCallbackProvider: Provider<ComposerFocusCallback | null>;
   useComposerFocusCallback(): ComposerFocusCallback | null;
-
-  // Is thread active callback
-  IsThreadActiveCallbackProvider: Provider<IsThreadActiveCallback | null>;
-  useIsThreadActiveCallback(): IsThreadActiveCallback | null;
 };
 
 export type RoomContextBundle<

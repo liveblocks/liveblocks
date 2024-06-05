@@ -5,7 +5,11 @@ import React, { useCallback, useContext } from "react";
 
 import { OnDeleteThreadCallback } from "./comment-plugin-provider";
 
-const ThreadPanel = () => {
+type ThreadPanelProps = {
+  renderThread: JSX.Element;
+}
+
+const ThreadPanel = ({ renderThread }: ThreadPanelProps) => {
   const { threads } = useThreads();
   const onDeleteThread = useContext(OnDeleteThreadCallback);
 

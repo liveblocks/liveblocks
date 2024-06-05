@@ -8,7 +8,6 @@ import { kInternal } from "@liveblocks/core";
 import {
   ComposerFocusCallbackProvider,
   CreateThreadError,
-  IsThreadActiveCallbackProvider,
   selectedThreads,
   useClient,
   useCommentsErrorListener,
@@ -303,10 +302,8 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
   return (
     <ComposerFocusCallbackProvider value={handleComposerFocus}>
       <OnDeleteThreadCallback.Provider value={handleThreadDelete}>
-        <IsThreadActiveCallbackProvider value={isThreadActive}>
-          {showActiveSelection && <ActiveSelection />}
-          {children}
-        </IsThreadActiveCallbackProvider>
+        {showActiveSelection && <ActiveSelection />}
+        {children}
       </OnDeleteThreadCallback.Provider>
     </ComposerFocusCallbackProvider>
   );
