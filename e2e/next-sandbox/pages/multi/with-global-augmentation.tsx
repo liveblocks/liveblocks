@@ -1,36 +1,34 @@
 import { LiveList } from "@liveblocks/client";
-import { createRoomContext } from "@liveblocks/react";
+import {
+  LiveblocksProvider,
+  useMutation,
+  useMyPresence,
+  useOthers,
+  useRoom,
+  useSelf,
+  useStorage,
+} from "@liveblocks/react";
+import { RoomProvider, useClient, useStatus } from "@liveblocks/react/suspense";
 import React from "react";
 
 import { getRoomFromUrl, Row, styles, useRenderCount } from "../../utils";
 import Button from "../../utils/Button";
-import { createLiveblocksClient } from "../../utils/createClient";
+import { createLiveblocksClientOptions } from "../../utils/createClient";
 
-const client = createLiveblocksClient();
-
-type Presence = {
-  foo?: number;
-};
-
-type Storage = {
-  items?: LiveList<string>;
-};
-
-const {
-  RoomProvider,
-  useStorage,
-  useMutation,
-  useMyPresence,
-  useOthers,
-  useSelf,
-  useStatus,
-  useRoom,
-} = createRoomContext<Presence, Storage>(client);
-
-const initialPresence = (): Presence => ({});
-const initialStorage = (): Storage => ({ items: new LiveList() });
+const initialPresence = (): Liveblocks["Presence"] => ({});
+const initialStorage = (): Liveblocks["Storage"] => ({ items: new LiveList() });
 
 export default function Home() {
+  const options = createLiveblocksClientOptions();
+  return (
+    <LiveblocksProvider {...options}>
+      <Page />
+    </LiveblocksProvider>
+  );
+}
+
+function Page() {
+  const client = useClient();
   const [numColumns, setNumColumns] = React.useState(1);
   return (
     <>
