@@ -1,12 +1,5 @@
 import type { AuthValue } from "./auth-manager";
 import { createAuthManager } from "./auth-manager";
-import {
-  createCommentId,
-  createInboxNotificationId,
-  createThreadId,
-} from "./comments/lib/createIds";
-import { selectNotificationSettings } from "./comments/lib/select-notification-settings";
-import { selectedThreads } from "./comments/lib/selected-threads";
 import { isIdle } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
 import type { LsonObject } from "./crdts/Lson";
@@ -564,13 +557,6 @@ export function createClient<U extends BaseUserMeta = DU>(
           getUnreadInboxNotificationsCount,
           markAllInboxNotificationsAsRead,
           markInboxNotificationAsRead,
-        },
-        comments: {
-          createThreadId: createThreadId,
-          createCommentId: createCommentId,
-          createInboxNotificationId: createInboxNotificationId,
-          selectedThreads: selectedThreads,
-          selectNotificationSettings: selectNotificationSettings,
         },
         currentUserIdStore,
         resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,
