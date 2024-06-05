@@ -17,9 +17,17 @@ Codemods for updating Liveblocks apps.
 
 #### `react-comments-to-react-ui`
 
-Transforms `@liveblocks/react-comments` imports to `@liveblocks/react-ui` and
-`<CommentsConfig />` to `<LiveblocksUIConfig />`.
+Updates `@liveblocks/react-comments` imports to `@liveblocks/react-ui` and
+renames `<CommentsConfig />` to `<LiveblocksUIConfig />`.
 
 ```shell
 npx @liveblocks/codemod@latest react-comments-to-react-ui
+```
+
+#### `room-info-to-room-data`
+
+Renames `RoomInfo` type from `@liveblocks/node` to `RoomData`.
+
+```shell
+npx @liveblocks/codemod@latest room-info-to-room-data
 ```
