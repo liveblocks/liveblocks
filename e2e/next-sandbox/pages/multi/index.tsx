@@ -2,9 +2,9 @@ import { LiveList } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 import React from "react";
 
-import { getRoomFromUrl, Row, styles, useRenderCount } from "../utils";
-import Button from "../utils/Button";
-import { createLiveblocksClient } from "../utils/createClient";
+import { getRoomFromUrl, Row, styles, useRenderCount } from "../../utils";
+import Button from "../../utils/Button";
+import { createLiveblocksClient } from "../../utils/createClient";
 
 const client = createLiveblocksClient();
 
