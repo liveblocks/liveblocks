@@ -1979,5 +1979,23 @@ export function POST(request) {
 }
 ```
 
+## Deprecated
+
+### authorize [#authorize] [@badge=Deprecated]
+
+<Banner title="Deprecated" type="error">
+  This is no longer supported. Adopt
+  [`Liveblocks.prepareSession`](#access-tokens) or
+  [`Liveblocks.identifyUser`](#id-tokens) APIs instead.
+</Banner>
+
+The purpose of `authorize()` was to help you implement your custom
+authentication back end. It generates old-style single-room tokens.
+
+Please refer to [our upgrade guide](/docs/platform/upgrading/1.2) if you’re
+using the `authorize` function in your back end, and adopt
+[`Liveblocks.prepareSession`](#access-tokens) or
+[`Liveblocks.identifyUser`](#id-tokens) APIs instead.
+
 [`room.getothers`]: /docs/api-reference/liveblocks-client#Room.getOthers
 [Permissions REST API]: /docs/authentication/id-token

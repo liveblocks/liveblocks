@@ -3775,6 +3775,51 @@ const user = room.getSelf();
   </PropertiesListItem>
 </PropertiesList>
 
+## Deprecated
+
+### Client.enter [@badge=Deprecated]
+
+<Banner title="Deprecated" type="error">
+  This is no longer supported. We recommend using [`client.enterRoom`][]
+  instead.
+</Banner>
+
+Enters a room and returns its local `Room` instance.
+
+```ts
+// ❌ This API was recommended before 1.5
+const room = client.enter("my-room", {
+  initialPresence: { cursor: null },
+  initialStorage: { todos: new LiveList() },
+});
+client.leave(roomId);
+
+// ✅ Prefer this instead
+const { room, leave } = client.enterRoom("my-room", {
+  initialPresence: { cursor: null },
+  initialStorage: { todos: new LiveList() },
+});
+leave();
+```
+
+### Client.leave [@badge=Deprecated]
+
+<Banner title="Deprecated" type="error">
+  This is no longer supported. We recommend using [`client.enterRoom`][]
+  instead.
+</Banner>
+
+Leaves a room.
+
+```ts
+// ❌ This API was recommended before 1.5
+client.leave("my-room");
+
+// ✅ Prefer this instead
+const { room, leave } = client.enterRoom("my-room" /* options */);
+leave();
+```
+
 [`atob`]: https://developer.mozilla.org/en-US/docs/Web/API/atob
 [`base-64`]: https://www.npmjs.com/package/base-64
 [`client.enterRoom`]: /docs/api-reference/liveblocks-client#Client.enterRoom
