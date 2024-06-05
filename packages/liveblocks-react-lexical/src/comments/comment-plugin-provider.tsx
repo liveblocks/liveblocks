@@ -41,64 +41,6 @@ import $wrapSelectionInThreadMarkNode from "./wrap-selection-in-thread-mark-node
 
 type ThreadToNodesMap = Map<string, Set<NodeKey>>;
 
-type ShowFloatingComposerContextType = {
-  showFloatingComposer: boolean;
-  setShowFloatingComposer: (show: boolean) => void;
-} | null;
-const ShowFloatingComposerContext =
-  React.createContext<ShowFloatingComposerContextType>(null);
-
-const ShowFloatingComposerProvider = ({ children }: PropsWithChildren) => {
-  const [showFloatingComposer, setShowFloatingComposer] = useState(false);
-  return (
-    <ShowFloatingComposerContext.Provider
-      value={{
-        setShowFloatingComposer,
-        showFloatingComposer,
-      }}
-    >
-      {children}
-    </ShowFloatingComposerContext.Provider>
-  );
-};
-
-export function useCreateThread() {
-  const context = React.useContext(ShowFloatingComposerContext);
-  if (context === null) {
-    throw new Error(
-      "useCreateThread must be used within a LiveblocksPluginProvider with comments enabled"
-    );
-  }
-
-  return () => {
-    context.setShowFloatingComposer(true);
-  };
-}
-
-export function useShowFloatingComposer() {
-  const context = React.useContext(ShowFloatingComposerContext);
-  if (context === null) {
-    throw new Error(
-      "useShowFloatingComposer must be used within a LiveblocksPluginProvider with comments enabled"
-    );
-  }
-
-  return context.showFloatingComposer;
-}
-
-export function useHideFloatingComposer() {
-  const context = React.useContext(ShowFloatingComposerContext);
-  if (context === null) {
-    throw new Error(
-      "useHideFloatingComposer must be used within a LiveblocksPluginProvider with comments enabled"
-    );
-  }
-
-  return () => {
-    context.setShowFloatingComposer(false);
-  };
-}
-
 export function CommentPluginProvider({ children }: PropsWithChildren) {
   const [editor, context] = useLexicalComposerContext();
 
@@ -383,17 +325,15 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
   }, [editor]);
 
   return (
-    <ShowFloatingComposerProvider>
-      <ThreadCreateCallbackProvider value={handleThreadCreate}>
-        <ThreadDeleteCallbackProvider value={handleThreadDelete}>
-          <ComposerFocusCallbackProvider value={handleComposerFocus}>
-            <IsThreadActiveCallbackProvider value={isThreadActive}>
-              {showActiveSelection && <ActiveSelection />}
-              {children}
-            </IsThreadActiveCallbackProvider>
-          </ComposerFocusCallbackProvider>
-        </ThreadDeleteCallbackProvider>
-      </ThreadCreateCallbackProvider>
-    </ShowFloatingComposerProvider>
+    <ThreadCreateCallbackProvider value={handleThreadCreate}>
+      <ThreadDeleteCallbackProvider value={handleThreadDelete}>
+        <ComposerFocusCallbackProvider value={handleComposerFocus}>
+          <IsThreadActiveCallbackProvider value={isThreadActive}>
+            {showActiveSelection && <ActiveSelection />}
+            {children}
+          </IsThreadActiveCallbackProvider>
+        </ComposerFocusCallbackProvider>
+      </ThreadDeleteCallbackProvider>
+    </ThreadCreateCallbackProvider>
   );
 }

@@ -1,6 +1,7 @@
 import type {
   DOMConversionMap,
   DOMExportOutput,
+  Klass,
   LexicalNode,
   NodeKey,
   SerializedLexicalNode,
@@ -21,10 +22,24 @@ export type SerializedMentionNode = Spread<
   SerializedLexicalNode
 >;
 
+interface IMentionNode extends DecoratorNode<JSX.Element> {
+  __id: string;
+  __userId: string;
+
+  getUserId(): string;
+  getId(): string;
+}
+
 export function createMentionNodeFactory(
   Component: ComponentType<MentionProps>
-): any {
-  class MentionNode extends DecoratorNode<JSX.Element> {
+): {
+  MentionNode: Klass<IMentionNode>;
+  $isMentionNode: (
+    node: LexicalNode | null | undefined
+  ) => node is IMentionNode;
+  $createMentionNode: (userId: string) => IMentionNode;
+} {
+  class MentionNode extends DecoratorNode<JSX.Element> implements IMentionNode {
     __id: string;
     __userId: string;
 
