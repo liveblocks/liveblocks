@@ -21,24 +21,16 @@ type ExtendableTypes =
   | "ThreadMetadata"
   | "RoomInfo";
 
-type ExtendedType<
-  K extends ExtendableTypes,
-  B,
-  ErrorMessage,
-> = unknown extends Liveblocks[K]
+type ExtendedType<K extends ExtendableTypes, B> = unknown extends Liveblocks[K]
   ? B
   : Liveblocks[K] extends B
     ? Liveblocks[K]
-    : ErrorMessage;
+    : `The type you provided for '${K}' does not match its requirements. To learn how to fix this, see https://liveblocks.io/errors/${K}`;
 
 // TODO Craft actually useful error message, and documentation
-export type DP = ExtendedType<"Presence", JsonObject, "Invalid generic">;
-export type DS = ExtendedType<"Storage", LsonObject, "Invalid generic">;
-export type DU = ExtendedType<"UserMeta", BaseUserMeta, "Invalid generic">;
-export type DE = ExtendedType<"RoomEvent", Json, "Invalid generic">;
-export type DM = ExtendedType<
-  "ThreadMetadata",
-  BaseMetadata,
-  "Invalid generic"
->;
-export type DRI = ExtendedType<"RoomInfo", BaseRoomInfo, "Invalid generic">;
+export type DP = ExtendedType<"Presence", JsonObject>;
+export type DS = ExtendedType<"Storage", LsonObject>;
+export type DU = ExtendedType<"UserMeta", BaseUserMeta>;
+export type DE = ExtendedType<"RoomEvent", Json>;
+export type DM = ExtendedType<"ThreadMetadata", BaseMetadata>;
+export type DRI = ExtendedType<"RoomInfo", BaseRoomInfo>;
