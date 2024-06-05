@@ -7,7 +7,7 @@ alwaysShowAllNavigationLevels: false
 ---
 
 `@liveblocks/react` provides you with [React](https://react.dev/) bindings for
-our real-time collaboration APIs, built on top of WebSockets. Read our
+our realtime collaboration APIs, built on top of WebSockets. Read our
 [getting started](/docs/get-started) guides to learn more.
 
 ## Room
@@ -338,7 +338,7 @@ This previous API has been deprecated in 0.17 and removed in 0.18.
 <Banner title="Need help troubleshooting presence?">
 
 Try the [Liveblocks DevTools extension](/devtools) to visualize your
-collaborative experiences as you build them, in real-time.
+collaborative experiences as you build them, in realtime.
 
 </Banner>
 
@@ -673,7 +673,7 @@ Automatically unsubscribes when the component is unmounted.
 <Banner title="Need help troubleshooting storage?">
 
 Try the [Liveblocks DevTools extension](/devtools) to visualize your
-collaborative experiences as you build them, in real-time.
+collaborative experiences as you build them, in realtime.
 
 </Banner>
 
@@ -760,197 +760,12 @@ const myTodos = useStorage(
 
 </Banner>
 
-### useObject [@badge=RoomProvider]
-
-<Banner title="No longer recommended">
-
-Starting with 0.18, we no longer recommend `useObject`. Instead, we recommend to
-switch to [`useStorage`][] for reading and [`useMutation`][] for writing to
-Storage.
-
-</Banner>
-
-Returns the [`LiveObject`][] associated with the provided top-level key in your
-Storage root. The key should be a [`LiveObject`][] instance, as populated in the
-`initialStorage` prop at the [`RoomProvider`][] level.
-
-The hook returns `null` while the storage is loading, unless you use the
-[Suspense version][].
-
-⚠️ **Caveat 1**: This hook can only be used to select top-level keys. You cannot
-select nested values from your Storage with this hook.
-
-⚠️ **Caveat 2**: The hook only triggers a rerender if direct keys or values of
-the [`LiveObject`][] are updated, but it does _not_ trigger a rerender if any of
-its nested values get updated.
-
-```tsx file="index.tsx"
-import { LiveObject } from "@liveblocks/client";
-import { RoomProvider } from "./liveblocks.config";
-import { Component } from "./Component";
-
-export function App() {
-  return (
-    <RoomProvider
-      id="my-room-id"
-      initialStorage={{
-        mathematician: new LiveObject({
-          firstName: "Ada",
-          lastName: "Lovelace",
-        }),
-      }}
-    >
-      <Component />
-    </RoomProvider>
-  );
-}
-```
-
-```tsx file="Component.tsx"
-import { useObject } from "./liveblocks.config";
-
-function Component() {
-  const object = useObject("mathematician");
-
-  if (object == null) {
-    return <div>Loading...</div>;
-  }
-
-  object.get("firstName"); // => "Ada"
-  object.get("lastName"); // => "Lovelace"
-}
-```
-
-👉 A [Suspense version][] of this hook is also available, which will never
-return `null`.
-
-### useMap [@badge=RoomProvider]
-
-<Banner title="No longer recommended">
-
-Starting with 0.18, we no longer recommend `useMap`. Instead, we recommend to
-switch to [`useStorage`][] for reading and [`useMutation`][] for writing to
-Storage.
-
-</Banner>
-
-Returns the [`LiveMap`][] associated with the provided top-level key in your
-Storage root. The key should be a [`LiveMap`][] instance, as populated in the
-`initialStorage` prop at the [`RoomProvider`][] level.
-
-The hook returns `null` while the storage is loading, unless you use the
-[Suspense version][].
-
-⚠️ **Caveat 1**: This hook can only be used to select top-level keys. You cannot
-select nested values from your Storage with this hook.
-
-⚠️ **Caveat 2**: The hook only triggers a rerender if direct entries of the
-[`LiveMap`][] are updated, but it does _not_ trigger a rerender if a nested
-value gets updated.
-
-```tsx file="index.tsx"
-import { LiveMap } from "@liveblocks/client";
-import { RoomProvider } from "./liveblocks.config";
-import { Component } from "./Component";
-
-export function App() {
-  return (
-    <RoomProvider
-      id="my-room-id"
-      initialStorage={{
-        fruitsByName: new LiveMap([
-          ["apple", "🍎"],
-          ["banana", "🍌"],
-          ["cherry", "🍒"],
-        ]),
-      }}
-    >
-      <Component />
-    </RoomProvider>
-  );
-}
-```
-
-```tsx file="Component.tsx"
-import { useMap } from "./liveblocks.config";
-
-function Component() {
-  const fruitsByName = useMap("fruitsByName");
-
-  if (fruitsByName == null) {
-    return <div>Loading...</div>;
-  }
-
-  fruitsByName.get("cherry"); // => "🍒"
-}
-```
-
-### useList [@badge=RoomProvider]
-
-<Banner title="No longer recommended">
-
-Starting with 0.18, we no longer recommend `useList`. Instead, we recommend to
-switch to [`useStorage`][] for reading and [`useMutation`][] for writing to
-Storage.
-
-</Banner>
-
-Returns the [`LiveList`][] associated with the provided top-level key in your
-Storage root. The key should be a [`LiveList`][] instance, as populated in the
-`initialStorage` prop at the [`RoomProvider`][] level.
-
-The hook returns `null` while the storage is loading, unless you use the
-[Suspense version][].
-
-⚠️ **Caveat 1**: This hook can only be used to select top-level keys. You cannot
-select nested values from your Storage with this hook.
-
-⚠️ **Caveat 2**: The hook only triggers a rerender if direct items in the
-[`LiveList`][] are updated, but it does _not_ trigger a rerender if a nested
-value gets updated.
-
-```tsx file="index.tsx"
-import { LiveList } from "@liveblocks/client";
-import { RoomProvider } from "./liveblocks.config";
-import { Component } from "./Component";
-
-export function App() {
-  return (
-    <RoomProvider
-      id="my-room-id"
-      initialStorage={{
-        animals: new LiveList(["🦁", "🦊", "🐵"]),
-      }}
-    >
-      <Component />
-    </RoomProvider>
-  );
-}
-```
-
-```tsx file="Component.tsx"
-import { useList } from "./liveblocks.config";
-
-function Component() {
-  const animals = useList("animals");
-
-  if (animals == null) {
-    return <div>Loading...</div>;
-  }
-
-  animals.toArray(); // => ["🦁", "🦊", "🐵"]
-}
-```
-
-👉 A [Suspense version][] of this hook is also available, which will never
-return `null`.
-
 ### useBatch [@badge=RoomProvider]
 
-<Banner title={<>You may not need <code>useBatch</code></>}>
+<Banner title={<>Deprecated</>}>
 
-Starting with 0.18, we recommend using [`useMutation`][] for writing to Storage,
-which will automatically batch all mutations.
+Deprecated, starting with 0.18, we recommend using [`useMutation`][] for writing
+to Storage, which will automatically batch all mutations.
 
 </Banner>
 

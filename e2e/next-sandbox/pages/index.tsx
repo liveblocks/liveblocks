@@ -107,9 +107,19 @@ export default function Home() {
           </ul>
         </li>
         <li>
-          <Link href="/multi?room=e2e-multi">
-            <a>Multiple rooms</a>
-          </Link>
+          <div>Multiple rooms</div>
+          <ul>
+            <li>
+              <Link href="/multi?room=e2e-multi">
+                <a>With factory</a>
+              </Link>
+            </li>
+            <li>
+              <Link href="/multi/with-global-augmentation?room=e2e-multi">
+                <a>With global augmentation</a>
+              </Link>
+            </li>
+          </ul>
         </li>
         <li>
           <div>Yjs</div>

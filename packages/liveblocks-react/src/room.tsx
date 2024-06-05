@@ -76,7 +76,7 @@ import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import {
   createSharedContext,
-  LiveblocksProvider,
+  LiveblocksProviderWithClient,
   useClient,
   useClientOrNull,
 } from "./liveblocks";
@@ -546,9 +546,9 @@ function makeRoomContextBundle<
     props: RoomProviderProps<P, S>
   ) {
     return (
-      <LiveblocksProvider client={client}>
+      <LiveblocksProviderWithClient client={client}>
         <RoomProvider {...props} />
-      </LiveblocksProvider>
+      </LiveblocksProviderWithClient>
     );
   }
 

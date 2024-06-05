@@ -395,24 +395,24 @@
         ]
       },
       {
-        "title": "Real-time APIs",
-        "path": "/products/real-time-apis",
+        "title": "Realtime APIs",
+        "path": "/products/realtime-apis",
         "routes": [
           {
             "title": "Yjs",
-            "path": "/products/real-time-apis/yjs"
+            "path": "/products/realtime-apis/yjs"
           },
           {
             "title": "Storage",
-            "path": "/products/real-time-apis/storage"
+            "path": "/products/realtime-apis/storage"
           },
           {
             "title": "Presence",
-            "path": "/products/real-time-apis/presence"
+            "path": "/products/realtime-apis/presence"
           },
           {
             "title": "Broadcast",
-            "path": "/products/real-time-apis/broadcast"
+            "path": "/products/realtime-apis/broadcast"
           }
         ]
       }

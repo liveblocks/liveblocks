@@ -29,7 +29,7 @@
     "date": "2023-06-01"
   },
   {
-    "title": "Revalidate API data in real-time with SWR",
+    "title": "Revalidate API data in realtime with SWR",
     "path": "/revalidate-api-data-with-swr",
     "topics": ["data-fetching"],
     "technologies": ["react", "nextjs"],
