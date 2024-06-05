@@ -794,11 +794,11 @@ export function LiveblocksProvider(
 
     baseUrl: useInitial(
       // @ts-expect-error - Hidden config options
-      o.baseUrl
+      o.baseUrl as string | undefined
     ),
     enableDebugLogging: useInitial(
       // @ts-expect-error - Hidden config options
-      o.enableDebugLogging
+      o.enableDebugLogging as boolean | undefined
     ),
   } as ClientOptions<BaseUserMeta>;
 
