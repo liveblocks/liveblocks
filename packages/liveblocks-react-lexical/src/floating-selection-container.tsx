@@ -1,5 +1,4 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { createDOMRange } from "@lexical/selection";
 import type { LexicalNode, RangeSelection } from "lexical";
 import { $getSelection, $isRangeSelection } from "lexical";
 import type { PropsWithChildren } from "react";
@@ -12,6 +11,8 @@ import React, {
 } from "react";
 import { createPortal } from "react-dom";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
+
+import { createDOMRange } from "./create-dom-range";
 
 export interface FloatingSelectionContainerProps {
   sideOffset?: number;

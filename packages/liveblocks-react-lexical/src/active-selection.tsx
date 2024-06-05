@@ -1,11 +1,13 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { createDOMRange, createRectsFromDOMRange } from "@lexical/selection";
 import type { LexicalNode, RangeSelection } from "lexical";
 import { $getSelection, $isRangeSelection } from "lexical";
 import * as React from "react";
 import { useCallback, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
+
+import { createDOMRange } from "./create-dom-range";
+import { createRectsFromDOMRange } from "./create-rects-from-dom-range";
 
 interface ActiveSelectionProps {
   styles?: Partial<CSSStyleDeclaration>;

@@ -9,7 +9,7 @@ import type {
   LsonObject,
 } from "@liveblocks/core";
 import { kInternal } from "@liveblocks/core";
-import { useClient, useSelf, useRoom } from "@liveblocks/react";
+import { useClient, useRoom, useSelf } from "@liveblocks/react";
 import LiveblocksProvider from "@liveblocks/yjs";
 import type { ComponentType } from "react";
 import React, {

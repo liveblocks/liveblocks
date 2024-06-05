@@ -6,15 +6,15 @@ import {
 } from "@lexical/utils";
 import { kInternal } from "@liveblocks/core";
 import {
-  CreateThreadError,
-  useClient,
-  useRoom,
-  useCommentsErrorListener,
-  ThreadCreateCallbackProvider,
-  ThreadDeleteCallbackProvider,
   ComposerFocusCallbackProvider,
+  CreateThreadError,
   IsThreadActiveCallbackProvider,
   selectedThreads,
+  ThreadCreateCallbackProvider,
+  ThreadDeleteCallbackProvider,
+  useClient,
+  useCommentsErrorListener,
+  useRoom,
 } from "@liveblocks/react";
 import type { BaseSelection, NodeKey, NodeMutation } from "lexical";
 import {
@@ -136,7 +136,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     store.get,
     useCallback(
       () => selectedThreads(room.id, store.get(), {}),
-      [client, room.id, store]
+      [room.id, store]
     )
   );
 
