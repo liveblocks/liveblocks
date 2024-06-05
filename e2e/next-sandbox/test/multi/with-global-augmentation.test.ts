@@ -225,4 +225,31 @@ test.describe("Multiple rooms", () => {
 
     await waitForJson(page, "#connectionId_1", connId + 1);
   });
+
+  test("auth callback is always fresh", async () => {
+    const page = pages[0];
+
+    const initialRenderCount = await getJson(
+      page,
+      "#liveblocksProviderRenderCount"
+    );
+
+    await page.click("#mount_1");
+    await waitForJson(page, "#echo_1", initialRenderCount);
+
+    // Clicking logout has no effect, unless the top level
+    await page.click("#logout");
+    await waitForJson(page, "#echo_1", initialRenderCount);
+
+    // Things change when the top-level LiveblocksProvider is re-rendered.
+    // If that happens, a new authEndpoint function _instance_ should get
+    // invoked after pressing logout.
+    await page.click("#rerenderLiveblocksProvider");
+    const newRenderCount = await getJson(
+      page,
+      "#liveblocksProviderRenderCount"
+    );
+    await page.click("#logout");
+    await waitForJson(page, "#echo_1", newRenderCount);
+  });
 });
