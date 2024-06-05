@@ -10,9 +10,11 @@ export type { ComposerProps } from "./components/Composer";
 export { Composer } from "./components/Composer";
 export type {
   InboxNotificationAvatarProps,
+  InboxNotificationCustomKindProps,
   InboxNotificationCustomProps,
   InboxNotificationIconProps,
   InboxNotificationProps,
+  InboxNotificationThreadKindProps,
   InboxNotificationThreadProps,
 } from "./components/InboxNotification";
 export { InboxNotification } from "./components/InboxNotification";
