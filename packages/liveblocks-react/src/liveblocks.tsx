@@ -769,7 +769,7 @@ export function LiveblocksProviderWithClient(
   );
 }
 
-export function LiveblocksProvider<U extends BaseUserMeta>(
+export function LiveblocksProvider<U extends BaseUserMeta = DU>(
   props: PropsWithChildren<ClientOptions<U>>
 ) {
   const { children, ...o } = props;
