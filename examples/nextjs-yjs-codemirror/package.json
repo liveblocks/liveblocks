@@ -16,7 +16,7 @@
     "@liveblocks/react": "^1.11.0",
     "@liveblocks/yjs": "^1.11.0",
     "@types/node": "^18.11.18",
-    "@types/react": "^18.0.27",
+    "@types/react": "^18.3.3",
     "@types/react-dom": "^18.0.10",
     "codemirror": "^6.0.1",
     "next": "^13.5.4",

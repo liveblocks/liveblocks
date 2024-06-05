@@ -20,7 +20,7 @@
     "@tiptap/react": "^2.0.4",
     "@tiptap/starter-kit": "^2.0.4",
     "@types/node": "^20.3.1",
-    "@types/react": "^18.2.12",
+    "@types/react": "^18.3.3",
     "@types/react-dom": "^18.2.5",
     "next": "^13.5.4",
     "react": "^18.2.0",
