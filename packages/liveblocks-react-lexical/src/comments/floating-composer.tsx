@@ -1,7 +1,7 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { BaseMetadata } from "@liveblocks/core";
-import type { ComposerProps } from "@liveblocks/react-comments";
-import { Composer } from "@liveblocks/react-comments";
+import type { ComposerProps } from "@liveblocks/react-ui";
+import { Composer } from "@liveblocks/react-ui";
 import type { LexicalCommand } from "lexical";
 import { COMMAND_PRIORITY_EDITOR, createCommand } from "lexical";
 import type { ComponentRef, KeyboardEvent } from "react";

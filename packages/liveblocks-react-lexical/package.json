@@ -44,7 +44,7 @@
     "@liveblocks/client": "1.12.0",
     "@liveblocks/core": "1.12.0",
     "@liveblocks/react": "1.12.0",
-    "@liveblocks/react-comments": "1.12.0",
+    "@liveblocks/react-ui": "1.12.0",
     "@liveblocks/yjs": "1.12.0",
     "use-sync-external-store": "^1.2.2",
     "yjs": "^13.6.14"
