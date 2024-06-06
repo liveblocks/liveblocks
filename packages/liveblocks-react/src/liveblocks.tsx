@@ -29,6 +29,7 @@ import React, {
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
+import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 import { retryError } from "./lib/retry-error";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import type {
@@ -43,7 +44,6 @@ import type {
   UserState,
   UserStateSuccess,
 } from "./types";
-import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 
 export const ClientContext = createContext<OpaqueClient | null>(null);
 
