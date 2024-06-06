@@ -31,7 +31,7 @@ export type ActivityData = Record<
 type InboxNotificationActivity<K extends `$${string}` = `$${string}`> = {
   id: string;
   createdAt: Date;
-  data: DAD[K];
+  data: K extends keyof DAD ? DAD[K] : ActivityData;
 };
 
 export type InboxNotificationCustomData<K extends `$${string}` = `$${string}`> =
