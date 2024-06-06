@@ -377,7 +377,7 @@ function useInboxNotifications_withClient(client: OpaqueClient) {
     store.subscribe,
     store.get,
     store.get,
-    () => selectorFor_useInboxNotifications(store.get())
+    selectorFor_useInboxNotifications
   );
 }
 
@@ -403,7 +403,7 @@ function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
     store.subscribe,
     store.get,
     store.get,
-    () => selectorFor_useInboxNotificationsSuspense(store.get())
+    selectorFor_useInboxNotificationsSuspense
   );
 }
 
@@ -416,7 +416,7 @@ function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
     store.subscribe,
     store.get,
     store.get,
-    () => selectorFor_useUnreadInboxNotificationsCount(store.get())
+    selectorFor_useUnreadInboxNotificationsCount
   );
 }
 
@@ -440,7 +440,7 @@ function useUnreadInboxNotificationsCountSuspense_withClient(
     store.subscribe,
     store.get,
     store.get,
-    () => selectorFor_useUnreadInboxNotificationsCountSuspense(store.get())
+    selectorFor_useUnreadInboxNotificationsCountSuspense
   );
 }
 
