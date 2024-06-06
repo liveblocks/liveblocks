@@ -55,7 +55,7 @@ export class Awareness<
     // Add the clientId to presence so we can map it to connectionId later
     this.room.updatePresence({
       [Y_PRESENCE_ID_KEY]: this.doc.clientID,
-    } as any);
+    } as unknown as Partial<P>);
     this.othersUnsub = this.room.events.others.subscribe((event) => {
       let updates:
         | { added: number[]; updated: number[]; removed: number[] }
@@ -148,7 +148,7 @@ export class Awareness<
         ...((yPresence as JsonObject) || {}),
         ...(state || {}),
       },
-    } as any);
+    } as unknown as Partial<P>);
     this.emit("update", [{ added, updated, removed: [] }, "local"]);
   }
 
@@ -157,7 +157,7 @@ export class Awareness<
     const update = { [field]: value } as Partial<JsonObject>;
     this.room.updatePresence({
       [Y_PRESENCE_KEY]: { ...((presence as JsonObject) || {}), ...update },
-    } as any);
+    } as unknown as Partial<P>);
   }
 
   // Translate liveblocks presence to yjs awareness
