@@ -24,7 +24,7 @@ const DefaultOptions: ProviderOptions = {
   autoloadSubdocs: false,
 };
 
-export default class LiveblocksYjsProvider<
+export class LiveblocksYjsProvider<
   P extends JsonObject,
   S extends LsonObject,
   U extends BaseUserMeta,

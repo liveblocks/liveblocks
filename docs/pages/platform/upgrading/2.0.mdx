@@ -19,7 +19,12 @@ Breaking changes:
   `<CommentsConfig />` to `<LiveblocksUIConfig />` (codemod)
 - Rename `@liveblocks/node`'s `RoomInfo` to `RoomData` (codemod)
 - Removal of the deprecated APIs
-- Maybe some Yjs package changes
+- Yjs package changes
+  - No longer has a default export, change:
+    ```diff
+    -import LiveblocksProvider from "@liveblocks/yjs";
+    +import { LiveblocksYjsProvider } from "@liveblocks/yjs";
+    ```
 
 ## Step-wise migration guide
 

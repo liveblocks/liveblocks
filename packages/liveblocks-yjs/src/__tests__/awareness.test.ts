@@ -9,7 +9,7 @@ import { rest } from "msw";
 import { setupServer } from "msw/node";
 import * as Y from "yjs";
 
-import LiveblocksYjsProvider from "..";
+import { LiveblocksYjsProvider } from "..";
 import { MockWebSocket, waitFor } from "./_utils";
 
 type UpdateType = { added: string[]; removed: string[]; updated: string[] };
