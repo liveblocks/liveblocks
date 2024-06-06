@@ -21,13 +21,21 @@ type ExtendableTypes =
   | "ThreadMetadata"
   | "RoomInfo";
 
-type ExtendedType<K extends ExtendableTypes, B> = unknown extends Liveblocks[K]
+type ExtendedType<
+  K extends ExtendableTypes,
+  B,
+  ErrMsg extends string = K,
+> = unknown extends Liveblocks[K]
   ? B
   : Liveblocks[K] extends B
     ? Liveblocks[K]
-    : `The type you provided for '${K}' does not match its requirements. To learn how to fix this, see https://liveblocks.io/docs/errors/${K}`;
+    : `${ErrMsg} To learn how to fix this, see https://liveblocks.io/docs/errors/${K}`;
 
-export type DP = ExtendedType<"Presence", JsonObject>;
+export type DP = ExtendedType<
+  "Presence",
+  JsonObject,
+  "The type you provided for 'Presence' is not a valid JSON object."
+>;
 export type DS = ExtendedType<"Storage", LsonObject>;
 export type DU = ExtendedType<"UserMeta", BaseUserMeta>;
 export type DE = ExtendedType<"RoomEvent", Json>;
