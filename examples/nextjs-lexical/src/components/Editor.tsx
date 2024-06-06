@@ -9,7 +9,7 @@ import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import {
   FloatingComposer,
-  LiveblocksPluginProvider,
+  LiveblocksPlugin,
   ThreadPanel,
   liveblocksLexicalConfig,
 } from "@liveblocks/react-lexical";
@@ -48,7 +48,7 @@ export default function Editor() {
   return (
     <div className={styles.container}>
       <LexicalComposer initialConfig={liveblocksLexicalConfig(initialConfig)}>
-        <LiveblocksPluginProvider>
+        <LiveblocksPlugin>
           {/* Header */}
           <div className={styles.header}>
             <Avatars />
@@ -81,7 +81,7 @@ export default function Editor() {
               <ThreadPanel />
             </div>
           </div>
-        </LiveblocksPluginProvider>
+        </LiveblocksPlugin>
       </LexicalComposer>
     </div>
   );

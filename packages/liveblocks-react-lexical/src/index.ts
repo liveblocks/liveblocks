@@ -10,5 +10,5 @@ export {
 } from "./comments/floating-composer";
 export { ThreadPanel } from "./comments/ThreadPanel";
 export { liveblocksLexicalConfig } from "./liveblocks-config";
-export { LiveblocksPluginProvider } from "./liveblocks-plugin-provider";
+export { LiveblocksPlugin } from "./liveblocks-plugin-provider";
 export { Mention } from "./mentions/mention-component";

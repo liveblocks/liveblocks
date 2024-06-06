@@ -29,7 +29,7 @@ import { getLiveblocksLexicalConfig } from "./liveblocks-config";
 import type { createMentionNodeFactory } from "./mentions/mention-node";
 import MentionPlugin from "./mentions/mention-plugin";
 
-export type LiveblocksPluginProviderProps = {
+export type LiveblocksPluginProps = {
   // TODO: Move these configuration options (if applicable and necessary) to the `liveblocksLexicalConfig` function to have all configuration in one place
   // /**
   //  * Optionally override user information. If not, user["info"] from auth will be used.
@@ -69,12 +69,12 @@ export interface LiveblocksLexicalInternalConfig {
 const LiveblocksLexicalConfigContext =
   createContext<LiveblocksLexicalInternalConfig | null>(null);
 
-export const LiveblocksPluginProvider = ({
+export const LiveblocksPlugin = ({
   // userInfo = undefined,
   // allowEditsBeforeSync = true,
   // initialEditorState = undefined,
   children,
-}: LiveblocksPluginProviderProps): JSX.Element => {
+}: LiveblocksPluginProps): JSX.Element => {
   const client = useClient();
   const hasResolveMentionSuggestions =
     client[kInternal].resolveMentionSuggestions !== undefined;
@@ -84,12 +84,12 @@ export const LiveblocksPluginProvider = ({
   // TODO: Fix typing
   const [provider, setProvider] = useState<
     | LiveblocksProvider<
-        JsonObject,
-        LsonObject,
-        BaseUserMeta,
-        Json,
-        BaseMetadata
-      >
+      JsonObject,
+      LsonObject,
+      BaseUserMeta,
+      Json,
+      BaseMetadata
+    >
     | undefined
   >();
 
@@ -111,7 +111,7 @@ export const LiveblocksPluginProvider = ({
       // A user should not even be set an emptyState, but when passing null, getEditorState still has initial empty state
       if (!editor.getEditorState().isEmpty()) {
         console.warn(
-          "Warning: LiveblocksPluginProvider: editorState in initialConfig detected, but must be null."
+          "Warning: LiveblocksPlugin: editorState in initialConfig detected, but must be null."
         );
       }
     }
@@ -188,7 +188,7 @@ export function useLiveblocksLexicalConfigContext(): LiveblocksLexicalInternalCo
   const config = useContext(LiveblocksLexicalConfigContext);
   if (config === null) {
     throw new Error(
-      "useLiveblocksLexicalConfigContext must be used within a LiveblocksPluginProviderProvider"
+      "useLiveblocksLexicalConfigContext must be used within a LiveblocksPlugin"
     );
   }
   return config;
