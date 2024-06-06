@@ -1,8 +1,10 @@
 import { createHeadlessEditor } from "@lexical/headless";
+import { $convertToMarkdownString, TRANSFORMERS } from "@lexical/markdown";
 import { createBinding } from "@lexical/yjs";
 import { detectDupes } from "@liveblocks/core";
 import type { Liveblocks } from "@liveblocks/node";
 import type {
+  EditorState,
   Klass,
   LexicalEditor,
   LexicalNode,
@@ -24,24 +26,31 @@ const LIVEBLOCKS_NODES = [ThreadMarkNode, MentionNode];
 
 export { $createParagraphNode, $createTextNode, $getRoot } from "lexical";
 
-export type LiveblocksDocument = {
-  update: (modifyFn: () => void) => Promise<void>;
-  getTextContent: () => string;
-  getLexicalEditor: () => LexicalEditor;
-  toJSON: () => SerializedEditorState<SerializedLexicalNode>;
-  destroy: () => Promise<void> | void;
+export type LiveblocksLexicalOptions = {
+  roomId: string;
+  nodes?: ReadonlyArray<Klass<LexicalNode> | LexicalNodeReplacement>;
+  client: Liveblocks;
 };
 
-export async function createLiveblocksDocument(
-  client: Liveblocks,
-  roomId: string,
-  nodes: ReadonlyArray<Klass<LexicalNode> | LexicalNodeReplacement>
-): Promise<LiveblocksDocument> {
+export type LiveblocksDocumentApi = {
+  refresh: () => Promise<void>;
+  update: (modifyFn: () => void) => Promise<void>;
+  getTextContent: () => string;
+  getEditorState: () => EditorState;
+  getLexicalEditor: () => LexicalEditor;
+  toJSON: () => SerializedEditorState<SerializedLexicalNode>;
+  toMarkdown: () => string;
+};
+
+export async function withLexical<T>(
+  { roomId, nodes, client }: LiveblocksLexicalOptions,
+  callback: (api: LiveblocksDocumentApi) => Promise<T> | T
+): Promise<T> {
   const update = new Uint8Array(
     await client.getYjsDocumentAsBinaryUpdate(roomId)
   );
   const editor = createHeadlessEditor({
-    nodes: [...LIVEBLOCKS_NODES, ...nodes],
+    nodes: [...LIVEBLOCKS_NODES, ...(nodes ?? [])],
   });
   const id = "root";
   const doc = new Doc();
@@ -51,7 +60,15 @@ export async function createLiveblocksDocument(
   const unsubscribe = registerCollaborationListeners(editor, provider, binding);
   applyUpdate(binding.doc, update);
   editor.update(() => {}, { discrete: true });
-  return {
+
+  const val = await callback({
+    refresh: async () => {
+      const latest = new Uint8Array(
+        await client.getYjsDocumentAsBinaryUpdate(roomId)
+      );
+      applyUpdate(binding.doc, latest);
+      editor.update(() => {}, { discrete: true });
+    },
     update: async (modifyFn) => {
       // Flush any pending updates (there really shouldn't be any?), this may be a NOOP
       editor.update(() => {}, { discrete: true });
@@ -76,9 +93,21 @@ export async function createLiveblocksDocument(
     toJSON: () => {
       return editor.getEditorState().toJSON();
     },
+    toMarkdown: () => {
+      let markdown: string = "";
+      editor.getEditorState().read(() => {
+        markdown = $convertToMarkdownString(TRANSFORMERS);
+      });
+      return markdown;
+    },
+    getEditorState: () => {
+      return editor.getEditorState();
+    },
     getLexicalEditor: () => {
       return editor;
     },
-    destroy: unsubscribe,
-  };
+  });
+  unsubscribe();
+
+  return val;
 }

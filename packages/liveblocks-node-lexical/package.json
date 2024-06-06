@@ -42,6 +42,7 @@
     "@lexical/headless": "0.14.5",
     "@lexical/selection": "0.14.3",
     "@lexical/yjs": "0.14.5",
+    "@lexical/markdown": "0.14.5",
     "lexical": "0.14.5"
   },
   "devDependencies": {
