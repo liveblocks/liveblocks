@@ -1529,18 +1529,46 @@ function App() {
 The type received in your Storage will match the type passed. Learn more under
 [typing your room](#typing-your-room).
 
-```ts
-const addAnimal = useMutation(({ storage }) => {
-  const animals = storage.get("animals");
+```tsx
+import { useMutation } from "@liveblocks/react/suspense";
 
-  // LiveList<["Fido"]>
+function App() {
+  const addAnimal = useMutation(({ storage }) => {
+    const animals = storage.get("animals");
+
+    // LiveList<["Fido"]>
+    console.log(animals);
+
+    animals.push("Felix");
+
+    // LiveList<["Fido", "Felix"]>
+    console.log(animals);
+  });
+
+  return <button onClick={addAnimal}>Add animal</button>;
+}
+```
+
+[`useStorage`][] will return an immutable copy of the data, for example a
+`LiveList` is converted to an `array`, which makes it easy to render.
+
+```tsx
+import { useStorage } from "@liveblocks/react/suspense";
+
+function App() {
+  const animals = useStorage((root) => root.animals);
+
+  // ["Fido", "Felix"]
   console.log(animals);
 
-  animals.push("Felix");
-
-  // LiveList<["Fido", "Felix"]>
-  console.log(animals);
-});
+  return (
+    <ul>
+      {animals.map((animal) => (
+        <li key={animal}>{animal}</li>
+      ))}
+    </ul>
+  );
+}
 ```
 
 ### Nesting data structures
@@ -1561,16 +1589,31 @@ type Storage = {
 };
 ```
 
-```ts
+Here’s an example of setting `initialStorage` for this type.
+
+```tsx highlight="10-16"
 import { LiveObject, LiveList, LiveMap } from "@liveblocks/client";
+import { RoomProvider } from "@liveblocks/react/suspense";
 
-const pets = new LiveList(["Cat", "Dog"]);
-const person = new LiveObject({ name: "Alicia", pets });
-const people = new LiveMap();
-people.set("alicia", person);
-
-const { root } = await room.getStorage();
-root.set(people);
+function App() {
+  return (
+    <RoomProvider
+      id="my-room-name"
+      initialPresence={{}}
+      initialStorage={{
+        people: new LiveMap([
+          "alicia",
+          new LiveObject({
+            name: "Alicia",
+            pets: new LiveList(["Fido", "Felix"]),
+          }),
+        ]),
+      }}
+    >
+      {/* children */}
+    </RoomProvider>
+  );
+}
 ```
 
 <Banner title="Need help troubleshooting Storage?">
