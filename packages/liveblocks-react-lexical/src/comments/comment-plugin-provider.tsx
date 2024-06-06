@@ -38,6 +38,10 @@ export const OnDeleteThreadCallback = createContext<
   ((threadId: string) => void) | null
 >(null);
 
+export const IsActiveThreadContext = createContext<
+  ((threadId: string) => boolean)
+>((_: string) => false);
+
 type ThreadToNodesMap = Map<string, Set<NodeKey>>;
 
 export function CommentPluginProvider({ children }: PropsWithChildren) {
@@ -302,8 +306,10 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
   return (
     <ComposerFocusCallbackProvider value={handleComposerFocus}>
       <OnDeleteThreadCallback.Provider value={handleThreadDelete}>
-        {showActiveSelection && <ActiveSelection />}
-        {children}
+        <IsActiveThreadContext.Provider value={isThreadActive}>
+          {showActiveSelection && <ActiveSelection />}
+          {children}
+        </IsActiveThreadContext.Provider>
       </OnDeleteThreadCallback.Provider>
     </ComposerFocusCallbackProvider>
   );
