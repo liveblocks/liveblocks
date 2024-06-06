@@ -6,6 +6,7 @@ import type { LexicalCommand } from "lexical";
 import { COMMAND_PRIORITY_EDITOR, createCommand } from "lexical";
 import type { ComponentRef, KeyboardEvent } from "react";
 import React, { forwardRef, useEffect, useState } from "react";
+import { ActiveSelection } from "../active-selection";
 
 import { FloatingSelectionContainer } from "../floating-selection-container";
 
@@ -29,6 +30,7 @@ export const FloatingComposer = forwardRef<
 >(function FloatingComposer(props, forwardedRef) {
   const { onKeyDown, ...composerProps } = props;
   const [showComposer, setShowComposer] = useState(false);
+  const [showActiveSelection, setShowActiveSelection] = useState(false);
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
@@ -52,6 +54,14 @@ export const FloatingComposer = forwardRef<
     });
   }, [editor, showComposer]);
 
+  useEffect(() => {
+    return editor.registerUpdateListener(({ editorState: state, tags }) => {
+      // Ignore selection updates related to collaboration
+      if (tags.has("collaboration")) return;
+      state.read(() => setShowActiveSelection(false));
+    });
+  }, [editor]);
+
   if (!showComposer) return null;
 
   function handleKeyDown(event: KeyboardEvent<HTMLFormElement>) {
@@ -64,17 +74,21 @@ export const FloatingComposer = forwardRef<
   }
 
   return (
-    <FloatingSelectionContainer
-      sideOffset={5}
-      alignOffset={0}
-      collisionPadding={10}
-    >
-      <Composer
-        autoFocus
-        {...composerProps}
-        onKeyDown={handleKeyDown}
-        ref={forwardedRef}
-      />
-    </FloatingSelectionContainer>
+    <>
+      {showActiveSelection && <ActiveSelection />}
+      <FloatingSelectionContainer
+        sideOffset={5}
+        alignOffset={0}
+        collisionPadding={10}
+      >
+        <Composer
+          autoFocus
+          {...composerProps}
+          onKeyDown={handleKeyDown}
+          ref={forwardedRef}
+          onFocus={() => setShowActiveSelection(true)}
+        />
+      </FloatingSelectionContainer>
+    </>
   );
 });

@@ -29,7 +29,6 @@ import * as React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
-import { ActiveSelection } from "../active-selection";
 import $getThreadMarkIds from "./get-thread-mark-ids";
 import {
   $createThreadMarkNode,
@@ -316,23 +315,12 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     []
   );
 
-  useEffect(() => {
-    return editor.registerUpdateListener(({ editorState: state, tags }) => {
-      // Ignore selection updates related to collaboration
-      if (tags.has("collaboration")) return;
-      state.read(() => setShowActiveSelection(false));
-    });
-  }, [editor]);
-
   return (
     <ThreadCreateCallbackProvider value={handleThreadCreate}>
       <ThreadDeleteCallbackProvider value={handleThreadDelete}>
-        <ComposerFocusCallbackProvider value={handleComposerFocus}>
-          <IsThreadActiveCallbackProvider value={isThreadActive}>
-            {showActiveSelection && <ActiveSelection />}
-            {children}
-          </IsThreadActiveCallbackProvider>
-        </ComposerFocusCallbackProvider>
+        <IsThreadActiveCallbackProvider value={isThreadActive}>
+          {children}
+        </IsThreadActiveCallbackProvider>
       </ThreadDeleteCallbackProvider>
     </ThreadCreateCallbackProvider>
   );

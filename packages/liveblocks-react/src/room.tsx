@@ -82,7 +82,6 @@ import {
 } from "./liveblocks";
 import type {
   CommentReactionOptions,
-  ComposerFocusCallback,
   CreateCommentOptions,
   CreateThreadOptions,
   DeleteCommentOptions,
@@ -109,9 +108,6 @@ const ThreadCreateCallbackContext =
 const ThreadDeleteCallbackContext = React.createContext<
   null | ((threadId: string) => void)
 >(null);
-
-const ComposerFocusCallbackContext =
-  React.createContext<null | ComposerFocusCallback>(null);
 
 const IsThreadActiveCallbackContext =
   React.createContext<null | IsThreadActiveCallback>(null);
@@ -667,8 +663,6 @@ function makeRoomContextBundle<
     useThreadCreateCallback,
     ThreadDeleteCallbackProvider: ThreadDeleteCallbackContext.Provider,
     useThreadDeleteCallback: useThreadDeleteCallback,
-    ComposerFocusCallbackProvider: ComposerFocusCallbackContext.Provider,
-    useComposerFocusCallback: useComposerFocusCallback,
     IsThreadActiveCallbackProvider: IsThreadActiveCallbackContext.Provider,
     useIsThreadActiveCallback: useIsThreadActiveCallback,
   };
@@ -1312,10 +1306,6 @@ function useThreadCreateCallback() {
 
 function useThreadDeleteCallback() {
   return React.useContext(ThreadDeleteCallbackContext);
-}
-
-function useComposerFocusCallback() {
-  return React.useContext(ComposerFocusCallbackContext);
 }
 
 function useIsThreadActiveCallback() {
@@ -2387,7 +2377,6 @@ const _useUpdateMyPresence: DefaultRoomContextBundle["useUpdateMyPresence"] =
 
 const ThreadCreateCallbackProvider = ThreadCreateCallbackContext.Provider;
 const ThreadDeleteCallbackProvider = ThreadDeleteCallbackContext.Provider;
-const ComposerFocusCallbackProvider = ComposerFocusCallbackContext.Provider;
 const IsThreadActiveCallbackProvider = IsThreadActiveCallbackContext.Provider;
 
 export {
@@ -2436,12 +2425,10 @@ export {
   _useUpdateMyPresence as useUpdateMyPresence,
   useUpdateRoomNotificationSettings,
   // TODO: Move to `liveblocks-react-lexical`
-  useComposerFocusCallback,
   useIsThreadActiveCallback,
   useCommentsErrorListener,
   CreateThreadError,
   ThreadCreateCallbackProvider,
   ThreadDeleteCallbackProvider,
-  ComposerFocusCallbackProvider,
   IsThreadActiveCallbackProvider,
 };

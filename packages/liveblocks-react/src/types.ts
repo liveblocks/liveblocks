@@ -795,10 +795,6 @@ type RoomContextBundleCommon<
 
 export type ThreadCreateCallback = (threadId: string) => void;
 export type ThreadDeleteCallback = (threadId: string) => void;
-export type ComposerFocusCallback = (
-  commentId: string | undefined,
-  threadId: string | undefined
-) => void;
 export type IsThreadActiveCallback = (threadId: string) => boolean;
 
 /**
@@ -819,10 +815,6 @@ type PrivateRoomContextApi = {
   // Thread delete callback
   ThreadDeleteCallbackProvider: Provider<ThreadDeleteCallback | null>;
   useThreadDeleteCallback(): ThreadDeleteCallback | null;
-
-  // Composer focus callback
-  ComposerFocusCallbackProvider: Provider<ComposerFocusCallback | null>;
-  useComposerFocusCallback(): ComposerFocusCallback | null;
 
   // Is thread active callback
   IsThreadActiveCallbackProvider: Provider<IsThreadActiveCallback | null>;
