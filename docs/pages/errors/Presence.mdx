@@ -8,7 +8,8 @@ meta:
 ## Why this error occurred
 
 You have provided a custom `Presence` type for your application, but the type
-you provided isn’t a (completely) valid JSON object.
+you provided isn’t a (completely) valid JSON object. Values like `Date`, `Map`,
+`Set`, functions, classes, or `unknown` aren’t valid JSON.
 
 ```ts highlight="4-7"
 declare global {

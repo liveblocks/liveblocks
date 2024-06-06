@@ -8,7 +8,8 @@ meta:
 ## Why this error occurred
 
 You have provided a custom `RoomEvent` type for your application, but the type
-you provided isn’t a (completely) valid JSON value.
+you provided isn’t a (completely) valid JSON value. Values like `Date`, `Map`,
+`Set`, functions, classes, or `unknown` aren’t valid JSON.
 
 For example, suppose you have defined three broadcastable events for your
 application:
