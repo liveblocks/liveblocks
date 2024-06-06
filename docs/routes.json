@@ -385,7 +385,7 @@
         ]
       },
       {
-        "title": "Text editor",
+        "title": "Text Editor",
         "path": "/products/text-editor",
         "routes": [
           {
@@ -399,20 +399,12 @@
         "path": "/products/realtime-apis",
         "routes": [
           {
-            "title": "Yjs",
-            "path": "/products/realtime-apis/yjs"
+            "title": "Liveblocks Yjs",
+            "path": "/products/realtime-apis/liveblocks-yjs"
           },
           {
-            "title": "Storage",
-            "path": "/products/realtime-apis/storage"
-          },
-          {
-            "title": "Presence",
-            "path": "/products/realtime-apis/presence"
-          },
-          {
-            "title": "Broadcast",
-            "path": "/products/realtime-apis/broadcast"
+            "title": "Liveblocks Storage",
+            "path": "/products/realtime-apis/liveblocks-storage"
           }
         ]
       }
