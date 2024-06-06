@@ -152,7 +152,7 @@ const OnValueSelectCallbackContext = createContext<
 
 const OnResetMatchCallbackContext = createContext<(() => void) | null>(null);
 
-export default function MentionPlugin() {
+export function MentionPlugin() {
   const [editor] = useLexicalComposerContext();
 
   if (!editor.hasNodes([MentionNode])) {
