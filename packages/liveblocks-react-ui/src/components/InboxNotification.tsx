@@ -3,8 +3,8 @@
 import type {
   InboxNotificationCustomData,
   InboxNotificationData,
-  InboxNotificationThreadData,
   InboxNotificationTextMentionData,
+  InboxNotificationThreadData,
 } from "@liveblocks/core";
 import { assertNever, console } from "@liveblocks/core";
 import {

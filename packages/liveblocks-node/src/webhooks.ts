@@ -154,7 +154,7 @@ export class WebhookHandler {
       ].includes(event.type)
     ) {
       if (event.type === "notification") {
-        const notification = event as NotificationEvent;
+        const notification = event;
         if (
           notification.data.kind === "thread" ||
           notification.data.kind === "textMention" ||
@@ -487,15 +487,15 @@ export type {
   CommentEditedEvent,
   CommentReactionAdded,
   CommentReactionRemoved,
-  NotificationEvent,
-  ThreadNotificationEvent,
-  TextMentionNotificationEvent,
   CustomNotificationEvent,
+  NotificationEvent,
   RoomCreatedEvent,
   RoomDeletedEvent,
   StorageUpdatedEvent,
+  TextMentionNotificationEvent,
   ThreadCreatedEvent,
   ThreadMetadataUpdatedEvent,
+  ThreadNotificationEvent,
   UserEnteredEvent,
   UserLeftEvent,
   WebhookEvent,

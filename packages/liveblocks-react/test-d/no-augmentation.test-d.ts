@@ -601,7 +601,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
 {
   expectType<boolean>(classic.useInboxNotifications().isLoading);
   expectType<Error | undefined>(classic.useInboxNotifications().error);
-  expectType<("thread" | `$${string}`)[] | undefined>(
+  expectType<("thread" | "textMention" | `$${string}`)[] | undefined>(
     classic.useInboxNotifications().inboxNotifications?.map((ibn) => ibn.kind)
   );
   expectType<(string | undefined)[] | undefined>(
@@ -613,7 +613,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
 {
   expectType<false>(suspense.useInboxNotifications().isLoading);
   expectType<undefined>(suspense.useInboxNotifications().error);
-  expectType<("thread" | `$${string}`)[]>(
+  expectType<("thread" | "textMention" | `$${string}`)[]>(
     suspense.useInboxNotifications().inboxNotifications?.map((ibn) => ibn.kind)
   );
   expectType<(string | undefined)[]>(

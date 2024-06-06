@@ -2331,6 +2331,7 @@ const _useUpdateMyPresence: DefaultRoomContextBundle["useUpdateMyPresence"] =
   useUpdateMyPresence;
 
 export {
+  CreateThreadError,
   RoomContext,
   _RoomProvider as RoomProvider,
   _useAddReaction as useAddReaction,
@@ -2338,6 +2339,8 @@ export {
   _useBroadcastEvent as useBroadcastEvent,
   useCanRedo,
   useCanUndo,
+  // TODO: Move to `liveblocks-react-lexical`
+  useCommentsErrorListener,
   useCreateComment,
   _useCreateThread as useCreateThread,
   useDeleteComment,
@@ -2375,7 +2378,4 @@ export {
   useUndo,
   _useUpdateMyPresence as useUpdateMyPresence,
   useUpdateRoomNotificationSettings,
-  // TODO: Move to `liveblocks-react-lexical`
-  useCommentsErrorListener,
-  CreateThreadError,
 };

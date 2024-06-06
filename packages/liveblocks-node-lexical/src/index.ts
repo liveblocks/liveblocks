@@ -24,7 +24,7 @@ const LIVEBLOCKS_NODES = [ThreadMarkNode, MentionNode];
 
 export { $createParagraphNode, $createTextNode, $getRoot } from "lexical";
 
-type LiveblocksDocument = {
+export type LiveblocksDocument = {
   update: (modifyFn: () => void) => Promise<void>;
   getTextContent: () => string;
   getLexicalEditor: () => LexicalEditor;

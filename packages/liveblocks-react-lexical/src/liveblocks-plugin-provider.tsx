@@ -15,7 +15,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Doc } from "yjs";
 
 import { CommentPluginProvider } from "./comments/comment-plugin-provider";
-import MentionPlugin from "./mentions/mention-plugin";
+import { MentionPlugin } from "./mentions/mention-plugin";
 
 export type LiveblocksPluginProps = {
   children?: React.ReactNode;

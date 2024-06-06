@@ -47,6 +47,12 @@ function createMainConfig(format: "cjs" | "esm"): RollupOptions {
       "@lexical/react/LexicalCollaborationPlugin",
       "@lexical/react/LexicalComposerContext",
       "react-dom",
+
+      // NOTE: These should ideally not have to be here, because
+      // use-sync-external-store is already declared as a production
+      // dependency. Figure this out later.
+      "use-sync-external-store/shim/index.js",
+      "use-sync-external-store/shim/with-selector.js",
     ],
     output,
     treeshake: false,
