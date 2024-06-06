@@ -26,8 +26,12 @@ Breaking changes:
 I found the following order of mechanical changes to be most ideal path to upgrade. You can make a Git commit after every one of these changes.
 
 1. Start with a clean slate, run `tsc` to make sure your project contains no TypeScript errors to begin with.
-1. Do a project-wise search & replace of `@liveblocks/react-comments` → `@liveblocks/react-ui`.
-1. Upgrade _all_ `@liveblocks/*` packages to `@latest`.
+1. Replace `@liveblocks/react-comments` by `@liveblocks/react-ui`:
+   1. Run the codemod: `npx @liveblocks/codemod@latest react-comments-to-react-ui`
+   1. Run `npm uninstall @liveblocks/react-comments`
+   1. Run `npm i @liveblocks/react-ui@latest`
+1. Upgrade _all_ `@liveblocks/*` packages to `@latest`:
+   1. Run `npm i @liveblocks/client@latest @liveblocks/react@latest ...` for every package you have
 1. Run `tsc` again, no new errors should pop up at this point. If they do, they should only be from APIs that were long-deprecated and now removed. Adjust accordingly. See section above.
 1. [Mechanical change] Go to `liveblocks.config.ts`, look at the `createRoomContext()` call. Add the `declare global { ... }` definition right above it, and move the type params to the global. Remove the type params. [Example of this change](https://github.com/liveblocks/liveblocks/commit/da750d4ac9e88d812c0fb612ce18f02920d65463). And another [example](https://github.com/liveblocks/liveblocks/commit/1c14e6e553463538d722b0b91baacc2aa4ff3267).
 1. [Mechanical change]
