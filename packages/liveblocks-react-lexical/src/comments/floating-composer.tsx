@@ -16,8 +16,8 @@ import {
 } from "lexical";
 import type { ComponentRef, FormEvent, KeyboardEvent } from "react";
 import React, { forwardRef, useCallback, useEffect, useState } from "react";
-import { ActiveSelection } from "../active-selection";
 
+import { ActiveSelection } from "../active-selection";
 import { FloatingSelectionContainer } from "../floating-selection-container";
 import $wrapSelectionInThreadMarkNode from "./wrap-selection-in-thread-mark-node";
 

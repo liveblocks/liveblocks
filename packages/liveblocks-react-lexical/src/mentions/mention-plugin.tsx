@@ -28,7 +28,14 @@ import React, {
 } from "react";
 import { createPortal } from "react-dom";
 
-import { useLiveblocksLexicalConfigContext } from "../liveblocks-plugin-provider";
+import { Avatar } from "./avatar";
+import {
+  $createMentionNode,
+  $isMentionNode,
+  MentionNode,
+} from "./mention-node";
+import * as Suggestions from "./suggestions";
+import { User } from "./user";
 
 const MENTION_TRIGGER = "@";
 
@@ -147,12 +154,6 @@ const OnResetMatchCallbackContext = createContext<(() => void) | null>(null);
 
 export default function MentionPlugin() {
   const [editor] = useLexicalComposerContext();
-  const {
-    mentions: {
-      factory: { $isMentionNode, $createMentionNode, MentionNode },
-      components: { MentionSuggestions },
-    },
-  } = useLiveblocksLexicalConfigContext();
 
   if (!editor.hasNodes([MentionNode])) {
     throw new Error("MentionPlugin: MentionNode not registered on editor");
@@ -212,7 +213,7 @@ export default function MentionPlugin() {
         $handleMutation(mutations, payload);
       }
     );
-  }, [editor, MentionNode, $isMentionNode, room]);
+  }, [editor, room]);
 
   useEffect(() => {
     function $onStateRead() {
@@ -295,7 +296,7 @@ export default function MentionPlugin() {
       $handleBackspace,
       COMMAND_PRIORITY_LOW
     );
-  }, [editor, $isMentionNode]);
+  }, [editor]);
 
   const handleValueSelect = useCallback(
     (userId: string) => {
@@ -337,7 +338,7 @@ export default function MentionPlugin() {
 
       editor.update($onValueSelect);
     },
-    [editor, match, $createMentionNode]
+    [editor, match]
   );
 
   if (match === null || matchingString === undefined) return null;
@@ -355,7 +356,24 @@ export default function MentionPlugin() {
       <OnValueSelectCallbackContext.Provider value={handleValueSelect}>
         <OnResetMatchCallbackContext.Provider value={() => setMatch(null)}>
           <SuggestionsRoot rect={rect} key={matchingString}>
-            <MentionSuggestions userIds={suggestions} />
+            <Suggestions.List className="lb-lexical-suggestions-list">
+              {suggestions.map((userId) => (
+                <Suggestions.Item
+                  key={userId}
+                  value={userId}
+                  className="lb-lexical-suggestions-list-item"
+                >
+                  <Avatar
+                    userId={userId}
+                    className="lb-lexical-mention-suggestion-avatar"
+                  />
+                  <User
+                    userId={userId}
+                    className="lb-lexical-mention-suggestion-user"
+                  />
+                </Suggestions.Item>
+              ))}
+            </Suggestions.List>
           </SuggestionsRoot>
         </OnResetMatchCallbackContext.Provider>
       </OnValueSelectCallbackContext.Provider>

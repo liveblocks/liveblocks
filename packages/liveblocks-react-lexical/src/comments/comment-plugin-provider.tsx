@@ -6,7 +6,6 @@ import {
 } from "@lexical/utils";
 import { kInternal } from "@liveblocks/core";
 import {
-  ComposerFocusCallbackProvider,
   CreateThreadError,
   selectedThreads,
   useClient,
@@ -51,8 +50,6 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
   ); // A map from thread id to a set of (thread mark) node keys that are associated with the thread
 
   const [activeThreads, setActiveThreads] = useState<string[]>([]); // The threads that are currently active (or selected) in the editor
-
-  const [showActiveSelection, setShowActiveSelection] = useState(false);
 
   const client = useClient();
 
@@ -282,17 +279,6 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       }
     );
   }, [editor]);
-
-  const handleComposerFocus = useCallback(
-    (commentId: string | undefined, threadId: string | undefined) => {
-      if (commentId === undefined && threadId === undefined) {
-        setShowActiveSelection(true);
-      } else {
-        setShowActiveSelection(false);
-      }
-    },
-    []
-  );
 
   return (
     <OnDeleteThreadCallback.Provider value={handleThreadDelete}>
