@@ -10,11 +10,9 @@ import type {
   LexicalEditor,
   LexicalNode,
   LexicalNodeReplacement,
-  SerializedEditorState,
-  SerializedLexicalNode,
 } from "lexical";
 import type { Transaction, YEvent } from "yjs";
-import { applyUpdate, Doc } from "yjs";
+import { Doc } from "yjs";
 
 export function withHeadlessCollaborationEditor<T>(
   nodes: ReadonlyArray<Klass<LexicalNode> | LexicalNodeReplacement>,
