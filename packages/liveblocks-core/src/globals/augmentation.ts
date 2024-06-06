@@ -1,5 +1,6 @@
 import type { LsonObject } from "../crdts/Lson";
 import type { Json, JsonObject } from "../lib/Json";
+import type { BaseActivitiesData } from "../protocol/BaseActivitiesData";
 import type { BaseRoomInfo } from "../protocol/BaseRoomInfo";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { BaseMetadata } from "../protocol/Comments";
@@ -19,7 +20,8 @@ type ExtendableTypes =
   | "UserMeta"
   | "RoomEvent"
   | "ThreadMetadata"
-  | "RoomInfo";
+  | "RoomInfo"
+  | "ActivitiesData";
 
 type ExtendedType<K extends ExtendableTypes, B> = unknown extends Liveblocks[K]
   ? B
@@ -33,3 +35,4 @@ export type DU = ExtendedType<"UserMeta", BaseUserMeta>;
 export type DE = ExtendedType<"RoomEvent", Json>;
 export type DM = ExtendedType<"ThreadMetadata", BaseMetadata>;
 export type DRI = ExtendedType<"RoomInfo", BaseRoomInfo>;
+export type DAD = ExtendedType<"ActivitiesData", BaseActivitiesData>;
