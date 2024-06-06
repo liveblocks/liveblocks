@@ -87,7 +87,6 @@ import type {
   DeleteCommentOptions,
   EditCommentOptions,
   EditThreadMetadataOptions,
-  IsThreadActiveCallback,
   MutationContext,
   OmitFirstArg,
   RoomContextBundle,
@@ -100,9 +99,6 @@ import type {
   UseThreadsOptions,
 } from "./types";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
-
-const IsThreadActiveCallbackContext =
-  React.createContext<null | IsThreadActiveCallback>(null);
 
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
@@ -1285,10 +1281,6 @@ function useCommentsErrorListener<M extends BaseMetadata>(
   }, [savedCallback, commentsErrorEventSource]);
 }
 
-function useIsThreadActiveCallback() {
-  return React.useContext(IsThreadActiveCallbackContext);
-}
-
 function useCreateThread<M extends BaseMetadata>(): (
   options: CreateThreadOptions<M>
 ) => ThreadData<M> {
@@ -2384,7 +2376,6 @@ export {
   _useUpdateMyPresence as useUpdateMyPresence,
   useUpdateRoomNotificationSettings,
   // TODO: Move to `liveblocks-react-lexical`
-  useIsThreadActiveCallback,
   useCommentsErrorListener,
   CreateThreadError,
 };

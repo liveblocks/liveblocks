@@ -793,10 +793,6 @@ type RoomContextBundleCommon<
   useThreadSubscription(threadId: string): ThreadSubscription;
 };
 
-export type ThreadCreateCallback = (threadId: string) => void;
-export type ThreadDeleteCallback = (threadId: string) => void;
-export type IsThreadActiveCallback = (threadId: string) => boolean;
-
 /**
  * @private
  *

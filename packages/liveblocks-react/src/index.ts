@@ -55,11 +55,7 @@ export {
   useUpdateRoomNotificationSettings,
 } from "./room";
 
-export {
-  useIsThreadActiveCallback,
-  useCommentsErrorListener,
-  CreateThreadError,
-} from "./room";
+export { useCommentsErrorListener, CreateThreadError } from "./room";
 export { selectedThreads } from "./comments/lib/selected-threads";
 
 // Export the classic (non-Suspense) versions of our hooks
