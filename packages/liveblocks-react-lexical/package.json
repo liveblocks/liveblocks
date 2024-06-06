@@ -51,9 +51,9 @@
     "yjs": "^13.6.14"
   },
   "peerDependencies": {
-    "@lexical/react": "^0.14.3",
-    "@lexical/utils": "^0.14.3",
-    "lexical": "^0.14.3",
+    "@lexical/react": "^0.16.0",
+    "@lexical/utils": "^0.16.0",
+    "lexical": "^0.16.0",
     "react": "^16.14.0 || ^17 || ^18"
   },
   "devDependencies": {
