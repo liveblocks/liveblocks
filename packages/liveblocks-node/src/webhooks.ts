@@ -154,7 +154,7 @@ export class WebhookHandler {
       ].includes(event.type)
     ) {
       if (event.type === "notification") {
-        const notification = event as NotificationEvent;
+        const notification = event;
         if (
           notification.data.kind === "thread" ||
           notification.data.kind === "textMention" ||
