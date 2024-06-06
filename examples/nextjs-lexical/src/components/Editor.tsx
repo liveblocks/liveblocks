@@ -2,7 +2,7 @@
 
 import styles from "./Editor.module.css";
 import { Avatars } from "@/components/Avatars";
-import FloatingTextFormatToolbarPlugin from "@/components/FloatingToolbarPlugin/FloatingToolbarPlugin";
+import { FloatingToolbarPlugin } from "@/components/FloatingToolbarPlugin/FloatingToolbarPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
@@ -13,7 +13,6 @@ import {
   ThreadPanel,
   liveblocksLexicalConfig,
 } from "@liveblocks/react-lexical";
-import { useState } from "react";
 
 // Set up editor config and theme
 const initialConfig = {
@@ -38,13 +37,6 @@ const initialConfig = {
 // Collaborative text editor with simple rich text, live cursors, and live avatars
 
 export default function Editor() {
-  const [floatingAnchorElem, setFloatingAnchorElem] =
-    useState<HTMLDivElement | null>(null);
-  const onRef = (_floatingAnchorElem: HTMLDivElement) => {
-    if (_floatingAnchorElem !== null) {
-      setFloatingAnchorElem(_floatingAnchorElem);
-    }
-  };
   return (
     <div className={styles.container}>
       <LexicalComposer initialConfig={liveblocksLexicalConfig(initialConfig)}>
@@ -56,7 +48,7 @@ export default function Editor() {
 
           {/* Editor content */}
           <div className={styles.editorContainer}>
-            <div className={styles.editor} ref={onRef}>
+            <div className={styles.editor}>
               <RichTextPlugin
                 contentEditable={
                   <>
@@ -68,11 +60,8 @@ export default function Editor() {
                 }
                 ErrorBoundary={LexicalErrorBoundary}
               />
-              {floatingAnchorElem && (
-                <FloatingTextFormatToolbarPlugin
-                  anchorElem={floatingAnchorElem}
-                />
-              )}
+
+              <FloatingToolbarPlugin />
 
               <FloatingComposer className={styles.floatingComposer} />
             </div>

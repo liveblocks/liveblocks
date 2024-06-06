@@ -99,6 +99,11 @@ export const FloatingComposer = forwardRef<
     return editor.registerCommand(
       OPEN_FLOATING_COMPOSER_COMMAND,
       () => {
+        const selection = $getSelection();
+        if (!$isRangeSelection(selection)) return false;
+
+        if (selection.isCollapsed()) return false;
+
         setShowComposer(true);
         return true;
       },
