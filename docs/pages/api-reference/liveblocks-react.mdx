@@ -28,7 +28,7 @@ Liveblocks servers when mounted, so it can (and should) live higher in the
 component tree of your app.
 
 ```tsx
-import { LiveblocksProvider } from "./liveblocks.config";
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
 
 function App() {
   return (
@@ -43,7 +43,7 @@ function App() {
 ```
 
 ```tsx title="All LiveblocksProvider props" isCollapsable isCollapsed
-import { LiveblocksProvider } from "./liveblocks.config";
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
 
 function App() {
   return (
@@ -212,7 +212,7 @@ room’s data. You should instead use an
 [auth endpoint](#LiveblocksProviderAuthEndpoint).
 
 ```tsx
-import { LiveblocksProvider } from "liveblocks/react";
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
 
 function App() {
   return (
@@ -229,7 +229,7 @@ If you are not using a public key, you need to set up your own `authEndpoint`.
 Please refer to our [Authentication guide](/docs/authentication).
 
 ```tsx
-import { LiveblocksProvider } from "liveblocks/react";
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
 
 function App() {
   return (
@@ -250,7 +250,7 @@ or [`liveblocks.identifyUser`](/docs/api-reference/liveblocks-node#id-tokens),
 learn more in [authentication guide](/docs/rooms/authentication).
 
 ```tsx
-import { LiveblocksProvider } from "liveblocks/react";
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
 
 function App() {
   return (
@@ -279,7 +279,7 @@ Here’s an example of fetching your API endpoint at `/api/liveblocks-auth` with
 the callback.
 
 ```tsx
-import { LiveblocksProvider } from "liveblocks/react";
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
 
 function App() {
   return (
@@ -327,7 +327,7 @@ override that configuration with the `throttle` option with a value between `16`
 and `1000` milliseconds.
 
 ```tsx
-import { LiveblocksProvider } from "liveblocks/react";
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
 
 function App() {
   return (
@@ -367,7 +367,7 @@ How quickly this event is triggered can be configured with the
 default is `5000`, or 5 seconds.
 
 ```tsx
-import { LiveblocksProvider } from "liveblocks/react";
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
 
 function App() {
   return (
@@ -402,7 +402,7 @@ least_ the specified time. When the browser tab is refocused, the client will
 immediately reconnect to the room and synchronize the document.
 
 ```tsx
-import { LiveblocksProvider } from "liveblocks/react";
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
 
 function App() {
   return (
@@ -431,7 +431,7 @@ function receives a list of user IDs and you should return a list of user
 objects of the same size, in the same order.
 
 ```tsx
-import { LiveblocksProvider } from "liveblocks/react";
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
 
 function App() {
   return (
@@ -467,7 +467,7 @@ they are necessary. Here’s an example of `userIds` and the exact values
 returned.
 
 ```tsx
-import { LiveblocksProvider } from "liveblocks/react";
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
 
 function App() {
   return (
@@ -494,7 +494,7 @@ function App() {
 You can also return custom information, for example, a user’s `color`:
 
 ```tsx highlight="14"
-import { LiveblocksProvider } from "liveblocks/react";
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
 
 function App() {
   return (
@@ -527,7 +527,7 @@ You can access any values set within `resolveUsers` with the
 [`useUser`](/docs/api-reference/liveblocks-react#useUser) hook.
 
 ```tsx
-import { useUser } from "../liveblocks.config";
+import { useUser } from "@liveblocks/react/suspense";
 
 function Component() {
   const user = useUser("marc@example.com");
@@ -551,7 +551,7 @@ This resolver function will receive a list of room IDs and should return a list
 of room info objects of the same size and in the same order.
 
 ```tsx
-import { LiveblocksProvider } from "liveblocks/react";
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
 
 function App() {
   return (
@@ -598,7 +598,7 @@ matching that text. This function will be called every time the text changes but
 with some debouncing.
 
 ```tsx
-import { LiveblocksProvider } from "liveblocks/react";
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
 
 function App() {
   return (
@@ -637,7 +637,7 @@ npm install ws node-fetch
 Then, pass them to the `LiveblocksProvider` polyfill option as below.
 
 ```tsx
-import { LiveblocksProvider } from "liveblocks/react";
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
 import fetch from "node-fetch";
 import WebSocket from "ws";
 
@@ -676,7 +676,7 @@ Then you can pass the `decode` function to our `atob` polyfill option when you
 create the client.
 
 ```ts
-import { LiveblocksProvider } from "liveblocks/react";
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
 import { decode } from "base-64";
 
 function App() {
@@ -764,7 +764,7 @@ effect.
 
 ```tsx
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
-import { RoomProvider } from "./liveblocks.config";
+import { RoomProvider } from "@liveblocks/react/suspense";
 
 function AppRoot() {
   return (
@@ -871,7 +871,7 @@ Returns the [`Room`][] of the nearest [`RoomProvider`][] above in the React
 component tree.
 
 ```ts
-import { useRoom } from "./liveblocks.config";
+import { useRoom } from "@liveblocks/react/suspense";
 
 const room = useRoom();
 ```
@@ -881,7 +881,7 @@ const room = useRoom();
 Listen to potential room connection errors.
 
 ```ts
-import { useErrorListener } from "./liveblocks.config";
+import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
   switch (error.code) {
@@ -915,7 +915,7 @@ Returns the current WebSocket connection status of the room, and will re-render
 your component whenever it changes.
 
 ```ts
-import { useStatus } from "./liveblocks.config";
+import { useStatus } from "@liveblocks/react/suspense";
 
 const status = useStatus();
 ```
@@ -1023,7 +1023,7 @@ presence object to `updateMyPresence`, and any changes will be merged into the
 current presence. It will not replace the entire presence object.
 
 ```ts
-import { useMyPresence } from "./liveblocks.config";
+import { useMyPresence } from "@liveblocks/react/suspense";
 
 const [myPresence, updateMyPresence] = useMyPresence();
 updateMyPresence({ x: 0 });
@@ -1061,7 +1061,7 @@ presence object to `updateMyPresence`, and any changes will be merged into the
 current presence. It will not replace the entire presence object.
 
 ```ts
-import { useUpdateMyPresence } from "./liveblocks.config";
+import { useUpdateMyPresence } from "@liveblocks/react/suspense";
 
 const updateMyPresence = useUpdateMyPresence();
 
@@ -1081,7 +1081,7 @@ Returns the current user once it is connected to the room, and automatically
 subscribes to updates to the current user.
 
 ```ts
-import { useSelf } from "./liveblocks.config";
+import { useSelf } from "@liveblocks/react/suspense";
 
 const currentUser = useSelf();
 // {
@@ -1292,7 +1292,7 @@ Returns a callback that lets you broadcast custom events to other users in the
 room.
 
 ```ts highlight="3-5"
-import { useBroadcastEvent } from "./liveblocks.config";
+import { useBroadcastEvent } from "@liveblocks/react/suspense";
 
 // On client A
 const broadcast = useBroadcastEvent();
@@ -1316,7 +1316,7 @@ the user that sent the message. If an event was sent from the
 REST API, `connectionId` will be `-1`.
 
 ```ts highlight="7-13"
-import { useEventListener } from "./liveblocks.config";
+import { useEventListener } from "@liveblocks/react/suspense";
 
 // On client A
 const broadcast = useBroadcastEvent();
@@ -1446,7 +1446,7 @@ has run. Every modification made during the batch is merged into a single
 history item (undo/redo).
 
 ```tsx
-import { useBatch } from "./liveblocks.config";
+import { useBatch } from "@liveblocks/react/suspense";
 
 const batch = useBatch();
 batch(() => {
@@ -1469,7 +1469,7 @@ batch(() => /*... */);
 Returns the room’s history. See [`Room.history`][] for more information.
 
 ```ts
-import { useHistory } from "./liveblocks.config";
+import { useHistory } from "@liveblocks/react/suspense";
 
 const { undo, redo, pause, resume } = useHistory();
 ```
@@ -1480,7 +1480,7 @@ Returns a function that undoes the last operation executed by the current
 client. It does not impact operations made by other clients.
 
 ```ts
-import { useUndo } from "./liveblocks.config";
+import { useUndo } from "@liveblocks/react/suspense";
 
 const undo = useUndo();
 ```
@@ -1491,7 +1491,7 @@ Returns a function that redoes the last operation executed by the current
 client. It does not impact operations made by other clients.
 
 ```ts
-import { useRedo } from "./liveblocks.config";
+import { useRedo } from "@liveblocks/react/suspense";
 
 const redo = useRedo();
 ```
@@ -1501,7 +1501,7 @@ const redo = useRedo();
 Returns whether there are any operations to undo.
 
 ```ts
-import { useCanUndo, useUpdateMyPresence } from "./liveblocks.config";
+import { useCanUndo, useUpdateMyPresence } from "@liveblocks/react/suspense";
 
 const updateMyPresence = useUpdateMyPresence();
 const canUndo = useCanUndo();
@@ -1516,7 +1516,11 @@ updateMyPresence({ y: 0 });
 Returns whether there are any operations to redo.
 
 ```ts
-import { useCanRedo, useUndo, useUpdateMyPresence } from "./liveblocks.config";
+import {
+  useCanRedo,
+  useUndo,
+  useUpdateMyPresence,
+} from "@liveblocks/react/suspense";
 
 const updateMyPresence = useUpdateMyPresence();
 const undo = useUndo();
@@ -1661,7 +1665,7 @@ the dependency arrays of your `useMutation` calls:
 Returns the threads within the current room.
 
 ```tsx
-import { useThreads } from "./liveblocks.config";
+import { useThreads } from "@liveblocks/react/suspense";
 
 const { threads, error, isLoading } = useThreads();
 ```
@@ -1876,7 +1880,7 @@ updateRoomNotificationSettings({ threads: "all" });
 Returns user info from a given user ID.
 
 ```tsx
-import { useUser } from "./liveblocks.config";
+import { useUser } from "@liveblocks/react/suspense";
 
 const { user, error, isLoading } = useUser("user-id");
 ```
@@ -1896,7 +1900,7 @@ To use `useUser`, you should provide a resolver function to the
 Returns room info from a given room ID.
 
 ```tsx
-import { useRoomInfo } from "./liveblocks.config";
+import { useRoomInfo } from "@liveblocks/react/suspense";
 
 const { info, error, isLoading } = useRoomInfo("room-id");
 ```
