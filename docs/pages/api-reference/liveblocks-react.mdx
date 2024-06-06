@@ -1503,20 +1503,43 @@ To type the Storage values you receive, make sure to set your `Storage` type.
 import { LiveList } from "@liveblocks/client";
 
 type Storage = {
-  animals: LiveList<{ name: string }>;
+  animals: LiveList<string>;
 };
 ```
 
-The type received in the callback will match the type passed. Learn more under
+You can then set an initial value in [`RoomProvider`][].
+
+```tsx highlight="9"
+import { LiveList } from "@liveblocks/client";
+import { RoomProvider } from "@liveblocks/react/suspense";
+
+function App() {
+  return (
+    <RoomProvider
+      id="my-room-name"
+      initialPresence={{}}
+      initialStorage={{ animals: new LiveList(["Fido"]) }}
+    >
+      {/* children */}
+    </RoomProvider>
+  );
+}
+```
+
+The type received in your Storage will match the type passed. Learn more under
 [typing your room](#typing-your-room).
 
 ```ts
-const { root } = await room.getStorage();
-const animals = root.get("animals");
+const addAnimal = useMutation(({ storage }) => {
+  const animals = storage.get("animals");
 
-const unsubscribe = room.subscribe(animals, (updatedAnimals) => {
-  // LiveList<[{ name: "Fido" }, { name: "Felix" }]>
-  console.log(updatedAnimals);
+  // LiveList<["Fido"]>
+  console.log(animals);
+
+  animals.push("Felix");
+
+  // LiveList<["Fido", "Felix"]>
+  console.log(animals);
 });
 ```
 
