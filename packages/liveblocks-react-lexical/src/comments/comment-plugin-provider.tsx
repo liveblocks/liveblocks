@@ -25,7 +25,6 @@ import * as React from "react";
 import { createContext, useCallback, useEffect, useState } from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
-import { ActiveSelection } from "../active-selection";
 import $getThreadMarkIds from "./get-thread-mark-ids";
 import {
   $createThreadMarkNode,
@@ -39,7 +38,7 @@ export const OnDeleteThreadCallback = createContext<
 >(null);
 
 export const IsActiveThreadContext = createContext<
-  ((threadId: string) => boolean)
+  (threadId: string) => boolean
 >((_: string) => false);
 
 type ThreadToNodesMap = Map<string, Set<NodeKey>>;
@@ -295,22 +294,11 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     []
   );
 
-  useEffect(() => {
-    return editor.registerUpdateListener(({ editorState: state, tags }) => {
-      // Ignore selection updates related to collaboration
-      if (tags.has("collaboration")) return;
-      state.read(() => setShowActiveSelection(false));
-    });
-  }, [editor]);
-
   return (
-    <ComposerFocusCallbackProvider value={handleComposerFocus}>
-      <OnDeleteThreadCallback.Provider value={handleThreadDelete}>
-        <IsActiveThreadContext.Provider value={isThreadActive}>
-          {showActiveSelection && <ActiveSelection />}
-          {children}
-        </IsActiveThreadContext.Provider>
-      </OnDeleteThreadCallback.Provider>
-    </ComposerFocusCallbackProvider>
+    <OnDeleteThreadCallback.Provider value={handleThreadDelete}>
+      <IsActiveThreadContext.Provider value={isThreadActive}>
+        {children}
+      </IsActiveThreadContext.Provider>
+    </OnDeleteThreadCallback.Provider>
   );
 }

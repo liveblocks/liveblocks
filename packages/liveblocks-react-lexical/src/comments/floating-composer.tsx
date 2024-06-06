@@ -16,6 +16,7 @@ import {
 } from "lexical";
 import type { ComponentRef, FormEvent, KeyboardEvent } from "react";
 import React, { forwardRef, useCallback, useEffect, useState } from "react";
+import { ActiveSelection } from "../active-selection";
 
 import { FloatingSelectionContainer } from "../floating-selection-container";
 import $wrapSelectionInThreadMarkNode from "./wrap-selection-in-thread-mark-node";
@@ -40,6 +41,7 @@ export const FloatingComposer = forwardRef<
 >(function FloatingComposer(props, forwardedRef) {
   const { onKeyDown, onComposerSubmit, ...composerProps } = props;
   const [showComposer, setShowComposer] = useState(false);
+  const [showActiveSelection, setShowActiveSelection] = useState(false);
   const [editor] = useLexicalComposerContext();
   const createThread = useCreateThread();
 
@@ -114,21 +116,33 @@ export const FloatingComposer = forwardRef<
     });
   }, [editor, showComposer]);
 
+  useEffect(() => {
+    return editor.registerUpdateListener(({ editorState: state, tags }) => {
+      // Ignore selection updates related to collaboration
+      if (tags.has("collaboration")) return;
+      state.read(() => setShowActiveSelection(false));
+    });
+  }, [editor]);
+
   if (!showComposer) return null;
 
   return (
-    <FloatingSelectionContainer
-      sideOffset={5}
-      alignOffset={0}
-      collisionPadding={10}
-    >
-      <Composer
-        autoFocus
-        {...composerProps}
-        onKeyDown={handleKeyDown}
-        onComposerSubmit={handleComposerSubmit}
-        ref={forwardedRef}
-      />
-    </FloatingSelectionContainer>
+    <>
+      {showActiveSelection && <ActiveSelection />}
+      <FloatingSelectionContainer
+        sideOffset={5}
+        alignOffset={0}
+        collisionPadding={10}
+      >
+        <Composer
+          autoFocus
+          {...composerProps}
+          onKeyDown={handleKeyDown}
+          onComposerSubmit={handleComposerSubmit}
+          ref={forwardedRef}
+          onFocus={() => setShowActiveSelection(true)}
+        />
+      </FloatingSelectionContainer>
+    </>
   );
 });

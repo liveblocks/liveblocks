@@ -82,7 +82,6 @@ import {
 } from "./liveblocks";
 import type {
   CommentReactionOptions,
-  ComposerFocusCallback,
   CreateCommentOptions,
   CreateThreadOptions,
   DeleteCommentOptions,
@@ -102,13 +101,10 @@ import type {
 } from "./types";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
 
-const ComposerFocusCallbackContext =
-  React.createContext<null | ComposerFocusCallback>(null);
-
 const IsThreadActiveCallbackContext =
   React.createContext<null | IsThreadActiveCallback>(null);
 
-const noop = () => { };
+const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
 
 const missing_unstable_batchedUpdates = (
@@ -120,8 +116,8 @@ const missing_unstable_batchedUpdates = (
     import { unstable_batchedUpdates } from "react-dom";  // or "react-native"
 
     <RoomProvider id=${JSON.stringify(
-    roomId
-  )} ... unstable_batchedUpdates={unstable_batchedUpdates}>
+      roomId
+    )} ... unstable_batchedUpdates={unstable_batchedUpdates}>
       ...
     </RoomProvider>
 
@@ -653,10 +649,7 @@ function makeRoomContextBundle<
       ...shared.suspense,
     },
 
-    // TODO: Refactor this before 2.0
     useCommentsErrorListener,
-    ComposerFocusCallbackProvider: ComposerFocusCallbackContext.Provider,
-    useComposerFocusCallback: useComposerFocusCallback,
   };
 
   return Object.defineProperty(bundle, kInternal, {
@@ -1292,10 +1285,6 @@ function useCommentsErrorListener<M extends BaseMetadata>(
   }, [savedCallback, commentsErrorEventSource]);
 }
 
-function useComposerFocusCallback() {
-  return React.useContext(ComposerFocusCallbackContext);
-}
-
 function useIsThreadActiveCallback() {
   return React.useContext(IsThreadActiveCallbackContext);
 }
@@ -1526,13 +1515,13 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
               const updatedInboxNotifications =
                 inboxNotification !== undefined
                   ? {
-                    ...state.inboxNotifications,
-                    [inboxNotification.id]: {
-                      ...inboxNotification,
-                      notifiedAt: newComment.createdAt,
-                      readAt: newComment.createdAt,
-                    },
-                  }
+                      ...state.inboxNotifications,
+                      [inboxNotification.id]: {
+                        ...inboxNotification,
+                        notifiedAt: newComment.createdAt,
+                        readAt: newComment.createdAt,
+                      },
+                    }
                   : state.inboxNotifications;
 
               return {
@@ -2349,8 +2338,6 @@ const _useStorageRoot: DefaultRoomContextBundle["useStorageRoot"] =
 const _useUpdateMyPresence: DefaultRoomContextBundle["useUpdateMyPresence"] =
   useUpdateMyPresence;
 
-const ComposerFocusCallbackProvider = ComposerFocusCallbackContext.Provider;
-
 export {
   RoomContext,
   _RoomProvider as RoomProvider,
@@ -2397,9 +2384,7 @@ export {
   _useUpdateMyPresence as useUpdateMyPresence,
   useUpdateRoomNotificationSettings,
   // TODO: Move to `liveblocks-react-lexical`
-  useComposerFocusCallback,
   useIsThreadActiveCallback,
   useCommentsErrorListener,
   CreateThreadError,
-  ComposerFocusCallbackProvider,
 };

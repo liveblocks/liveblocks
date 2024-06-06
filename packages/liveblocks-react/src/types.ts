@@ -52,7 +52,7 @@ export type UseThreadsOptions<M extends BaseMetadata> = {
   scrollOnLoad?: boolean;
 };
 
-import type { PropsWithChildren, Provider } from "react";
+import type { PropsWithChildren } from "react";
 
 import type { CommentsError } from "./comments/errors";
 
@@ -795,10 +795,6 @@ type RoomContextBundleCommon<
 
 export type ThreadCreateCallback = (threadId: string) => void;
 export type ThreadDeleteCallback = (threadId: string) => void;
-export type ComposerFocusCallback = (
-  commentId: string | undefined,
-  threadId: string | undefined
-) => void;
 export type IsThreadActiveCallback = (threadId: string) => boolean;
 
 /**
@@ -812,10 +808,6 @@ type PrivateRoomContextApi = {
   useCommentsErrorListener<M extends BaseMetadata>(
     callback: (err: CommentsError<M>) => void
   ): void;
-
-  // Composer focus callback
-  ComposerFocusCallbackProvider: Provider<ComposerFocusCallback | null>;
-  useComposerFocusCallback(): ComposerFocusCallback | null;
 };
 
 export type RoomContextBundle<

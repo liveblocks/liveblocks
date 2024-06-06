@@ -55,13 +55,10 @@ export {
   useUpdateRoomNotificationSettings,
 } from "./room";
 
-// TODO: Remove before 2.0 launch
 export {
-  useComposerFocusCallback,
   useIsThreadActiveCallback,
   useCommentsErrorListener,
   CreateThreadError,
-  ComposerFocusCallbackProvider,
 } from "./room";
 export { selectedThreads } from "./comments/lib/selected-threads";
 
