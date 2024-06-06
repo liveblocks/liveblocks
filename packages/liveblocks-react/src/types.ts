@@ -52,7 +52,7 @@ export type UseThreadsOptions<M extends BaseMetadata> = {
   scrollOnLoad?: boolean;
 };
 
-import type { PropsWithChildren, Provider } from "react";
+import type { PropsWithChildren } from "react";
 
 import type { CommentsError } from "./comments/errors";
 
