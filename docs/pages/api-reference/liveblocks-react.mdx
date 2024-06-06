@@ -1467,23 +1467,23 @@ Automatically unsubscribes when the component is unmounted.
 
 ## Storage
 
-<Banner title="Need help troubleshooting storage?">
+Each room contains Storage, a conflict-free data store that multiple users can
+edit at the same time. When users make edits simultaneously, conflicts are
+resolved automatically, and each user will see the same state. Storage is ideal
+for storing permanent document state, such as shapes on a canvas, notes on a
+whiteboard, or cells in a spreadsheet.
 
-Try the [Liveblocks DevTools extension](/devtools) to visualize your
-collaborative experiences as you build them, in realtime.
+### Data structures
 
-</Banner>
-
-The room’s storage is a conflicts-free state that multiple users can edit at the
-same time. It persists even after everyone leaves the room. Liveblocks provides
-3 data structures that can be nested to create the state that you want.
+Storage provides three different conflict-free data structures, which you can
+use to build your application. All structures are permanent and persist when all
+users have left the room, unlike [Presence](/docs/products/presence) which is
+temporary.
 
 - [`LiveObject`][] - Similar to JavaScript object. Use this for storing records
   with fixed key names and where the values don’t necessarily have the same
-  types. For example, a `Person` with a `name` (string) and an `age` (number)
-  field.
-
-  If multiple clients update the same property simultaneously, the last
+  types. For example, a `Person` with a `name: string` and an `age: number`
+  field. If multiple clients update the same property simultaneously, the last
   modification received by the Liveblocks servers is the winner.
 
 - [`LiveList`][] - An ordered collection of items synchronized across clients.
@@ -1495,8 +1495,67 @@ same time. It persists even after everyone leaves the room. Liveblocks provides
   by their name. If multiple users update the same property simultaneously, the
   last modification received by the Liveblocks servers is the winner.
 
-`@liveblocks/react` provides a set of hooks that let you interact with the
-room’s storage.
+### Typing Storage [#typing-storage]
+
+To type the Storage values you receive, make sure to set your `Storage` type.
+
+```ts
+import { LiveList } from "@liveblocks/client";
+
+type Storage = {
+  animals: LiveList<{ name: string }>;
+};
+```
+
+The type received in the callback will match the type passed. Learn more under
+[typing your room](#typing-your-room).
+
+```ts
+const { root } = await room.getStorage();
+const animals = root.get("animals");
+
+const unsubscribe = room.subscribe(animals, (updatedAnimals) => {
+  // LiveList<[{ name: "Fido" }, { name: "Felix" }]>
+  console.log(updatedAnimals);
+});
+```
+
+### Nesting data structures
+
+All Storage data structures can be nested, allowing you to create complex trees
+of conflict-free data.
+
+```ts
+import { LiveObject, LiveList, LiveMap } from "@liveblocks/client";
+
+type Person = LiveObject<{
+  name: string;
+  pets: LiveList<string>;
+}>;
+
+type Storage = {
+  people: LiveMap<string, Person>;
+};
+```
+
+```ts
+import { LiveObject, LiveList, LiveMap } from "@liveblocks/client";
+
+const pets = new LiveList(["Cat", "Dog"]);
+const person = new LiveObject({ name: "Alicia", pets });
+const people = new LiveMap();
+people.set("alicia", person);
+
+const { root } = await room.getStorage();
+root.set(people);
+```
+
+<Banner title="Need help troubleshooting Storage?">
+
+Get the [Liveblocks DevTools extension](/devtools) to develop and debug your
+application as you build it.
+
+</Banner>
 
 ### useStorage [@badge=RoomProvider]
 
