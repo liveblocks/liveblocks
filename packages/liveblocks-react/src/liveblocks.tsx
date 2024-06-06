@@ -63,8 +63,7 @@ const _bundles = new WeakMap<
   LiveblocksContextBundle<BaseUserMeta, BaseMetadata>
 >();
 
-// export const POLLING_INTERVAL = 60 * 1000; // 1 minute
-export const POLLING_INTERVAL = 5 * 1000; // 1 minute
+export const POLLING_INTERVAL = 60 * 1000; // 1 minute
 export const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
 
 function selectorFor_useInboxNotifications(
