@@ -1,3 +1,6 @@
+import React from "react";
+React; // To silence tsd warning
+
 import type {
   Json,
   LiveList,
@@ -47,6 +50,74 @@ const client = createClient({ publicApiKey: "pk_whatever" });
 
 const lbctx = createLiveblocksContext<U, M>(client);
 const ctx = createRoomContext<P, S, U, E, M>(client);
+
+// LiveblocksProvider
+{
+  const LiveblocksProvider = lbctx.LiveblocksProvider;
+
+  // The only valid instantiation of the <LiveblocksProvider> as returned from
+  // a context factory is one without any props! This is because the factory
+  // itself already binds it to the client instance.
+  <LiveblocksProvider />;
+
+  // So all of the following ones are errors
+  expectError(<LiveblocksProvider throttle={16} />);
+  expectError(<LiveblocksProvider authEndpoint="/api/auth" />);
+  expectError(<LiveblocksProvider publicApiKey="pk_xxx" />);
+  expectError(<LiveblocksProvider authEndpoint="/api/auth" throttle={16} />);
+  expectError(
+    <LiveblocksProvider
+      authEndpoint={async () => ({ token: "token" })}
+      throttle={16}
+    />
+  );
+  expectError(
+    <LiveblocksProvider
+      authEndpoint="/api/auth"
+      resolveUsers={async () => [{ foo: "bar" }]}
+    />
+  );
+  expectError(
+    <LiveblocksProvider
+      authEndpoint="/api/auth"
+      resolveUsers={async () => [{ name: "Vincent", age: 42 }]}
+    />
+  );
+}
+
+// LiveblocksProvider (suspense)
+{
+  const LiveblocksProvider = lbctx.suspense.LiveblocksProvider;
+
+  // The only valid instantiation of the <LiveblocksProvider> as returned from
+  // a context factory is one without any props! This is because the factory
+  // itself already binds it to the client instance.
+  <LiveblocksProvider />;
+
+  // So all of the following ones are errors
+  expectError(<LiveblocksProvider throttle={16} />);
+  expectError(<LiveblocksProvider authEndpoint="/api/auth" />);
+  expectError(<LiveblocksProvider publicApiKey="pk_xxx" />);
+  expectError(<LiveblocksProvider authEndpoint="/api/auth" throttle={16} />);
+  expectError(
+    <LiveblocksProvider
+      authEndpoint={async () => ({ token: "token" })}
+      throttle={16}
+    />
+  );
+  expectError(
+    <LiveblocksProvider
+      authEndpoint="/api/auth"
+      resolveUsers={async () => [{ foo: "bar" }]}
+    />
+  );
+  expectError(
+    <LiveblocksProvider
+      authEndpoint="/api/auth"
+      resolveUsers={async () => [{ name: "Vincent", age: 42 }]}
+    />
+  );
+}
 
 // ---------------------------------------------------------
 // Hook APIs
