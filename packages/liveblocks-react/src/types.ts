@@ -808,17 +808,6 @@ type PrivateRoomContextApi = {
   useCommentsErrorListener<M extends BaseMetadata>(
     callback: (err: CommentsError<M>) => void
   ): void;
-  // Thread create callback
-  ThreadCreateCallbackProvider: Provider<ThreadCreateCallback | null>;
-  useThreadCreateCallback(): ThreadCreateCallback | null;
-
-  // Thread delete callback
-  ThreadDeleteCallbackProvider: Provider<ThreadDeleteCallback | null>;
-  useThreadDeleteCallback(): ThreadDeleteCallback | null;
-
-  // Is thread active callback
-  IsThreadActiveCallbackProvider: Provider<IsThreadActiveCallback | null>;
-  useIsThreadActiveCallback(): IsThreadActiveCallback | null;
 };
 
 export type RoomContextBundle<

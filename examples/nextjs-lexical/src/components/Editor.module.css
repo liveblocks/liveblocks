@@ -89,12 +89,6 @@
   border-bottom-color: rgb(255, 212, 0);
 }
 
-.composer {
-  border-bottom-width: 1px;
-  border-bottom-style: solid;
-  border-bottom-color: rgba(55, 53, 47, 0.09);
-}
-
 .floatingComposer {
   width: 400px;
   border-width: 1px;

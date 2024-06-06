@@ -8,10 +8,7 @@ import { kInternal } from "@liveblocks/core";
 import {
   ComposerFocusCallbackProvider,
   CreateThreadError,
-  IsThreadActiveCallbackProvider,
   selectedThreads,
-  ThreadCreateCallbackProvider,
-  ThreadDeleteCallbackProvider,
   useClient,
   useCommentsErrorListener,
   useRoom,
@@ -22,11 +19,10 @@ import {
   $getSelection,
   $isRangeSelection,
   $isTextNode,
-  $setSelection,
 } from "lexical";
 import type { PropsWithChildren } from "react";
 import * as React from "react";
-import { useCallback, useEffect, useState } from "react";
+import { createContext, useCallback, useEffect, useState } from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import $getThreadMarkIds from "./get-thread-mark-ids";
@@ -36,7 +32,14 @@ import {
   ThreadMarkNode,
 } from "./thread-mark-node";
 import $unwrapThreadMarkNode from "./unwrap-thread-mark-node";
-import $wrapSelectionInThreadMarkNode from "./wrap-selection-in-thread-mark-node";
+
+export const OnDeleteThreadCallback = createContext<
+  ((threadId: string) => void) | null
+>(null);
+
+export const IsActiveThreadContext = createContext<
+  (threadId: string) => boolean
+>((_: string) => false);
 
 type ThreadToNodesMap = Map<string, Set<NodeKey>>;
 
@@ -68,30 +71,6 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       return activeThreads.includes(threadId);
     },
     [activeThreads]
-  );
-
-  /**
-   * Create a new ThreadMarkNode and wrap the selected content in it.
-   * @param threadId The id of the thread to associate with the selected content
-   */
-  const handleThreadCreate = useCallback(
-    (threadId: string) => {
-      editor.update(() => {
-        const selection = $getSelection();
-        if (!$isRangeSelection(selection)) return;
-
-        // If the selection is collapsed, we do not create a new thread node in the editor.
-        if (selection.isCollapsed()) return;
-
-        const isBackward = selection.isBackward();
-        // Wrap content in a ThreadMarkNode
-        $wrapSelectionInThreadMarkNode(selection, isBackward, threadId);
-
-        // Clear the selection after wrapping
-        $setSelection(null);
-      });
-    },
-    [editor]
   );
 
   /**
@@ -316,12 +295,10 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
   );
 
   return (
-    <ThreadCreateCallbackProvider value={handleThreadCreate}>
-      <ThreadDeleteCallbackProvider value={handleThreadDelete}>
-        <IsThreadActiveCallbackProvider value={isThreadActive}>
-          {children}
-        </IsThreadActiveCallbackProvider>
-      </ThreadDeleteCallbackProvider>
-    </ThreadCreateCallbackProvider>
+    <OnDeleteThreadCallback.Provider value={handleThreadDelete}>
+      <IsActiveThreadContext.Provider value={isThreadActive}>
+        {children}
+      </IsActiveThreadContext.Provider>
+    </OnDeleteThreadCallback.Provider>
   );
 }

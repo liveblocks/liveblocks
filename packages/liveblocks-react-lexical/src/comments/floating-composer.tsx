@@ -1,14 +1,25 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { BaseMetadata } from "@liveblocks/core";
-import type { ComposerProps } from "@liveblocks/react-ui";
+import { useCreateThread } from "@liveblocks/react";
+import type {
+  ComposerProps,
+  ComposerSubmitComment,
+} from "@liveblocks/react-ui";
 import { Composer } from "@liveblocks/react-ui";
 import type { LexicalCommand } from "lexical";
-import { COMMAND_PRIORITY_EDITOR, createCommand } from "lexical";
-import type { ComponentRef, KeyboardEvent } from "react";
-import React, { forwardRef, useEffect, useState } from "react";
+import {
+  $getSelection,
+  $isRangeSelection,
+  $setSelection,
+  COMMAND_PRIORITY_EDITOR,
+  createCommand,
+} from "lexical";
+import type { ComponentRef, FormEvent, KeyboardEvent } from "react";
+import React, { forwardRef, useCallback, useEffect, useState } from "react";
 import { ActiveSelection } from "../active-selection";
 
 import { FloatingSelectionContainer } from "../floating-selection-container";
+import $wrapSelectionInThreadMarkNode from "./wrap-selection-in-thread-mark-node";
 
 export const OPEN_FLOATING_COMPOSER_COMMAND: LexicalCommand<void> =
   createCommand("OPEN_FLOATING_COMPOSER_COMMAND");
@@ -28,10 +39,61 @@ export const FloatingComposer = forwardRef<
   ComposerElement,
   FloatingComposerProps
 >(function FloatingComposer(props, forwardedRef) {
-  const { onKeyDown, ...composerProps } = props;
+  const { onKeyDown, onComposerSubmit, ...composerProps } = props;
   const [showComposer, setShowComposer] = useState(false);
   const [showActiveSelection, setShowActiveSelection] = useState(false);
   const [editor] = useLexicalComposerContext();
+  const createThread = useCreateThread();
+
+  /**
+   * Create a new ThreadMarkNode and wrap the selected content in it.
+   * @param threadId The id of the thread to associate with the selected content
+   */
+  const onThreadCreate = useCallback(
+    (threadId: string) => {
+      editor.update(() => {
+        const selection = $getSelection();
+        if (!$isRangeSelection(selection)) return;
+
+        // If the selection is collapsed, we do not create a new thread node in the editor.
+        if (selection.isCollapsed()) return;
+
+        const isBackward = selection.isBackward();
+        // Wrap content in a ThreadMarkNode
+        $wrapSelectionInThreadMarkNode(selection, isBackward, threadId);
+
+        // Clear the selection after wrapping
+        $setSelection(null);
+      });
+    },
+    [editor]
+  );
+
+  const handleComposerSubmit = useCallback(
+    (comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => {
+      onComposerSubmit?.(comment, event);
+      if (event.defaultPrevented) return;
+
+      event.preventDefault();
+
+      const thread = createThread({
+        body: comment.body,
+        metadata: props.metadata ?? {},
+      });
+
+      onThreadCreate(thread.id);
+    },
+    [onThreadCreate, onComposerSubmit, props.metadata, createThread]
+  );
+
+  function handleKeyDown(event: KeyboardEvent<HTMLFormElement>) {
+    if (event.key === "Escape") {
+      setShowComposer(false);
+      editor.focus();
+    }
+
+    onKeyDown?.(event);
+  }
 
   useEffect(() => {
     return editor.registerCommand(
@@ -64,15 +126,6 @@ export const FloatingComposer = forwardRef<
 
   if (!showComposer) return null;
 
-  function handleKeyDown(event: KeyboardEvent<HTMLFormElement>) {
-    if (event.key === "Escape") {
-      setShowComposer(false);
-      editor.focus();
-    }
-
-    onKeyDown?.(event);
-  }
-
   return (
     <>
       {showActiveSelection && <ActiveSelection />}
@@ -85,6 +138,7 @@ export const FloatingComposer = forwardRef<
           autoFocus
           {...composerProps}
           onKeyDown={handleKeyDown}
+          onComposerSubmit={handleComposerSubmit}
           ref={forwardedRef}
           onFocus={() => setShowActiveSelection(true)}
         />

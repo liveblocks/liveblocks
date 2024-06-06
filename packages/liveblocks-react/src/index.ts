@@ -59,9 +59,6 @@ export {
   useIsThreadActiveCallback,
   useCommentsErrorListener,
   CreateThreadError,
-  ThreadCreateCallbackProvider,
-  ThreadDeleteCallbackProvider,
-  IsThreadActiveCallbackProvider,
 } from "./room";
 export { selectedThreads } from "./comments/lib/selected-threads";
 
