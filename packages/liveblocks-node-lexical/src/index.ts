@@ -42,7 +42,7 @@ export type LiveblocksDocumentApi = {
   toMarkdown: () => string;
 };
 
-export async function withLexical<T>(
+export async function withLexicalDocument<T>(
   { roomId, nodes, client }: LiveblocksLexicalOptions,
   callback: (api: LiveblocksDocumentApi) => Promise<T> | T
 ): Promise<T> {
