@@ -31,14 +31,11 @@ const server = setupServer(
 );
 
 beforeAll(() => server.listen());
-afterEach(() => {
-  MockWebSocket.reset();
-});
-beforeEach(() => {
-  MockWebSocket.reset();
-});
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
+
+afterEach(() => MockWebSocket.reset());
+beforeEach(() => MockWebSocket.reset());
 
 async function waitForSocketToBeConnected() {
   await waitFor(() => MockWebSocket.instances.length === 1);
