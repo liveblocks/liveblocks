@@ -13,6 +13,8 @@ declare global {
   }
 }
 
+// NOTE: When extending this list, make sure to also add respective error
+// message docs (in ../../docs/pages/errors/*.mdx).
 type ExtendableTypes =
   | "Presence"
   | "Storage"
@@ -24,20 +26,31 @@ type ExtendableTypes =
 type ExtendedType<
   K extends ExtendableTypes,
   B,
-  ErrMsg extends string = K,
+  ErrorReason extends string = "does not match its requirements",
 > = unknown extends Liveblocks[K]
   ? B
   : Liveblocks[K] extends B
     ? Liveblocks[K]
-    : `${ErrMsg} To learn how to fix this, see https://liveblocks.io/docs/errors/${K}`;
+    : `The type you provided for '${K}' ${ErrorReason}. To learn how to fix this, see https://liveblocks.io/docs/errors/${K}`;
+
+// ------------------------------------------------------------------------
 
 export type DP = ExtendedType<
   "Presence",
   JsonObject,
-  "The type you provided for 'Presence' is not a valid JSON object."
+  "is not a valid JSON object"
 >;
-export type DS = ExtendedType<"Storage", LsonObject>;
+
+export type DS = ExtendedType<
+  "Storage",
+  LsonObject,
+  "is not a valid LSON value"
+>;
+
 export type DU = ExtendedType<"UserMeta", BaseUserMeta>;
-export type DE = ExtendedType<"RoomEvent", Json>;
+
+export type DE = ExtendedType<"RoomEvent", Json, "is not a valid JSON value">;
+
 export type DM = ExtendedType<"ThreadMetadata", BaseMetadata>;
+
 export type DRI = ExtendedType<"RoomInfo", BaseRoomInfo>;
