@@ -1,9 +1,9 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import LiveblocksProvider from "..";
+import LiveblocksYjsProvider from "..";
 
 describe("@liveblocks/yjs", () => {
   test("TODO", () => {
     // TODO: Add a real test here
-    expect(LiveblocksProvider).toEqual(LiveblocksProvider);
+    expect(LiveblocksYjsProvider).toEqual(LiveblocksYjsProvider);
   });
 });

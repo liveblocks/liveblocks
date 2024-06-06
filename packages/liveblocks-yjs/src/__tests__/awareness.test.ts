@@ -9,7 +9,7 @@ import { rest } from "msw";
 import { setupServer } from "msw/node";
 import * as Y from "yjs";
 
-import LiveblocksProvider from "..";
+import LiveblocksYjsProvider from "..";
 import { MockWebSocket, waitFor } from "./_utils";
 
 type UpdateType = { added: string[]; removed: string[]; updated: string[] };
@@ -55,7 +55,7 @@ describe("presence", () => {
     });
     await waitForSocketToBeConnected();
     const yDoc = new Y.Doc();
-    const yProvider = new LiveblocksProvider(room, yDoc);
+    const yProvider = new LiveblocksYjsProvider(room, yDoc);
     yProvider.awareness.setLocalState({ test: "local state" });
     const presence = room.getSelf()?.presence;
     expect(presence).toHaveProperty("__yjs");
@@ -73,7 +73,7 @@ describe("presence", () => {
     });
     await waitForSocketToBeConnected();
     const yDoc = new Y.Doc();
-    const yProvider = new LiveblocksProvider(room, yDoc);
+    const yProvider = new LiveblocksYjsProvider(room, yDoc);
     let updatesCalled = 0;
     let update: UpdateType | undefined;
     yProvider.awareness.on("update", (updateArray: UpdateType) => {
@@ -94,7 +94,7 @@ describe("presence", () => {
     });
     const socket = await waitForSocketToBeConnected();
     const yDoc = new Y.Doc();
-    const yProvider = new LiveblocksProvider(room, yDoc);
+    const yProvider = new LiveblocksYjsProvider(room, yDoc);
     let updatesCalled = 0;
     let update: UpdateType | undefined;
     yProvider.awareness.on("update", (updateArray: UpdateType) => {
