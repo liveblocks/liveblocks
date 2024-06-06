@@ -24,8 +24,8 @@ Sets up a client for connecting to Liveblocks, and is required for all React
 apps. You must define either `authEndpoint` or `publicApiKey`. Resolver
 functions should be placed inside here, and a number of other options are
 available. Unlike [`RoomProvider`][], `LiveblocksProvider` doesn’t call
-Liveblocks servers when mounted, so it can (and should) live higher in the
-component tree of your app.
+Liveblocks servers when mounted, and it should be placed higher in your app’s
+component tree.
 
 ```tsx
 import { LiveblocksProvider } from "@liveblocks/react/suspense";
@@ -741,58 +741,113 @@ export const {
 
 Makes a [`Room`] available in the component hierarchy below. Joins the room when
 the component is mounted, and automatically leaves the room when the component
-is unmounted.
-
-- `initialPresence` - The initial Presence to use for the User currently
-  entering the Room. Presence data belongs to the current User and is readable
-  to all other Users in the room while the current User is connected to the
-  Room. Must be serializable to JSON.
-- `initialStorage` (optional) - The initial Storage structure to create when a
-  new Room is entered for the first time. Storage data is shared and belongs to
-  the Room itself. It persists even after all Users leave the room, and is
-  mutable by every client. Must either contain Live structures (e.g.
-  `new LiveList()`, `new LiveObject({ a: 1 })`, etc.) or be serializable to
-  JSON.
-- `autoConnect` (optional) - Whether or not the room should automatically
-  connect to Liveblocks servers when the RoomProvider is mounted. By default
-  it’s set to `typeof window !== "undefined"`, meaning the RoomProvider attempts
-  to connect to Liveblocks servers only on the client side.
-
-The `initialPresence`, `initialStorage` and `autoConnect` props are ignored
-after the first render, so changes to the initial value argument won’t have an
-effect.
+is unmounted. When using [Realtime APIs](/docs/products/realtime-apis), initial
+Presence values for each user, and Storage values for the room can be set.
 
 ```tsx
-import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import { RoomProvider } from "@liveblocks/react/suspense";
 
-function AppRoot() {
+function App() {
+  return (
+    <RoomProvider id="my-room" initialPresence={}>
+      {/* children */}
+    </RoomProvider>
+  );
+}
+```
+
+<PropertiesList title="Props">
+  <PropertiesListItem name="id" type="string" required>
+    The unique ID for the current room. `RoomProvider` will join this room when
+    it loads. If the room doesn’t exist already it will automatically create the
+    room first.
+  </PropertiesListItem>
+  <PropertiesListItem name="initialPresence" type="JsonObject" required>
+    The initial Presence of the user entering the room. Each user has their own
+    presence, and this is readable for all other connected users. A user’s
+    Presence resets every time they disconnect. This object must be
+    JSON-serializable. This value is ignored after the first render. [Learn
+    more](#setting-initial-presence).
+  </PropertiesListItem>
+  <PropertiesListItem name="initialStorage" type="LsonObject">
+    The initial Storage structure for the room when it’s joined for the first
+    time. This is only set a single time, when the room has not yet been
+    populated. This object must contain [conflict-free live
+    structures](/docs/api-reference/liveblocks-client#Storage). This value is
+    ignored after the first render, and if Storage for the current room has
+    already been created. [Learn more](#setting-initial-storage).
+  </PropertiesListItem>
+  <PropertiesListItem name="autoConnect" type="boolean" defaultValue="true">
+    Whether the room immediately connects to Liveblocks servers. This value is
+    ignored after the first render.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Setting initial Presence [#setting-initial-presence]
+
+Presence is used for storing temporary user-based values, such as a user’s
+cursor coordinates, or their current selection. Each user has their own
+presence, and this is readable for all other connected users. Set your initial
+Presence value by using `initialPresence`.
+
+```tsx highlight="7-12"
+import { RoomProvider } from "@liveblocks/react/suspense";
+
+function App() {
   return (
     <RoomProvider
       id="my-room"
-      // 😎 Replace with your own data!
-      initialPresence={{ cursor: { x: 0, y: 0 } }}
-      // 😎 Replace with your own data!
-      initialStorage={() => ({
-        animals: new LiveList(["🦁", "🦊", "🐵"]),
-
-        mathematician: new LiveObject({
-          firstName: "Ada",
-          lastName: "Lovelace",
-        }),
-
-        fruitsByName: new LiveMap([
-          ["apple", "🍎"],
-          ["banana", "🍌"],
-          ["cherry", "🍒"],
-        ]),
-      })}
+      initialPresence={{
+        cursor: null,
+        colors: ["red", "purple"],
+        selection: {
+          id: 72426,
+        }}
     >
       {/* children */}
     </RoomProvider>
   );
 }
 ```
+
+Each user’s Presence resets every time they disconnect, as this is only meant
+for temporary data. Any JSON-serializable object is allowed (the `JsonObject`
+type).
+
+#### Setting initial Storage [#setting-initial-storage]
+
+Storage is used to store permanent data that’s used in your application, such as
+shapes on a whiteboard, nodes on a flowchart, or text in a form. The first time
+a room is entered, you can set an initial value by using `initialStorage`. Note
+that this value is only read a single time.
+
+```tsx highlight="9-15"
+import { LiveList, LiveObject } from "@liveblocks/client";
+import { RoomProvider } from "@liveblocks/react/suspense";
+
+function App() {
+  return (
+    <RoomProvider
+      id="my-room"
+      initialPresence={}
+      initialStorage={{
+        title: "Untitled",
+        names: new LiveList(["Steven", "Guillaume"])
+        shapes: new LiveMap([
+          ["g9shu0", new LiveObject({ type: "rectangle", color: "red" })],
+          ["djs3g5", new LiveObject({ type: "circle", color: "yellow" })],
+        ]),
+      }}
+    >
+      {/* children */}
+    </RoomProvider>
+  );
+}
+```
+
+Any
+[conflict-free live structures](/docs/api-reference/liveblocks-client#Storage)
+and JSON-serializable objects are allowed (the `LsonObject` type).
 
 ### createRoomContext
 
