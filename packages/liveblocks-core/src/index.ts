@@ -143,6 +143,8 @@ export type {
   InboxNotificationCustomDataPlain,
   InboxNotificationData,
   InboxNotificationDataPlain,
+  InboxNotificationTextMentionData,
+  InboxNotificationTextMentionDataPlain,
   InboxNotificationThreadData,
   InboxNotificationThreadDataPlain,
 } from "./protocol/InboxNotifications";

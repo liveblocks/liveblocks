@@ -716,7 +716,7 @@ ctx.useErrorListener((err) => {
   const result = lbctx.useInboxNotifications();
   expectType<boolean>(result.isLoading);
   expectType<Error | undefined>(result.error);
-  expectType<("thread" | `$${string}`)[] | undefined>(
+  expectType<("thread" | "textMention" | `$${string}`)[] | undefined>(
     result.inboxNotifications?.map((ibn) => ibn.kind)
   );
   expectType<(string | undefined)[] | undefined>(
@@ -729,7 +729,7 @@ ctx.useErrorListener((err) => {
   const result = lbctx.suspense.useInboxNotifications();
   expectType<false>(result.isLoading);
   expectType<undefined>(result.error);
-  expectType<("thread" | `$${string}`)[]>(
+  expectType<("thread" | "textMention" | `$${string}`)[]>(
     result.inboxNotifications?.map((ibn) => ibn.kind)
   );
   expectType<(string | undefined)[]>(

@@ -1,5 +1,6 @@
 import { detectDupes } from "@liveblocks/core";
 
+import type { RoomData } from "./client";
 import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
@@ -7,7 +8,7 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 export type {
   LiveblocksOptions,
   RoomAccesses,
-  RoomInfo,
+  RoomData,
   RoomPermission,
   RoomUser,
   Schema,
@@ -65,3 +66,10 @@ export {
   getMentionedIdsFromCommentBody,
   stringifyCommentBody,
 } from "@liveblocks/core";
+
+/**
+ * @deprecated RoomInfo was renamed to RoomData, to avoid
+ * confusion with the globally augmentable RoomInfo type. This
+ * alias will be removed in a future version.
+ */
+export type RoomInfo = RoomData;

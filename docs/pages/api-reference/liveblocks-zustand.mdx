@@ -7,7 +7,7 @@ alwaysShowAllNavigationLevels: false
 ---
 
 `@liveblocks/zustand` provides you with [Zustand](https://docs.pmnd.rs/zustand)
-bindings for our real-time collaboration APIs, built on top of WebSockets. Read
+bindings for our realtime collaboration APIs, built on top of WebSockets. Read
 our [getting started](/docs/get-started) guides to learn more.
 
 ## Middleware
@@ -162,27 +162,6 @@ const {
 
 The possible value are: `initial`, `connecting`, `connected`, `reconnecting`, or
 `disconnected`.
-
-### connection (legacy) [#liveblocks-state-connection]
-
-<Banner title="Deprecated since 1.1" type="warning">
-
-Support for this property will be removed in a future version. We recommend
-switching to the newer and simpler [`status`][] property instead.
-
-</Banner>
-
-Legacy connection status of the room. This property exists for backward
-compatibility reasons, but it’s no longer recommended.
-
-The value can be: `authenticating`, `connecting`, `open`, `failed`, `closed` or
-`unavailable`.
-
-```js
-const {
-  liveblocks: { connection },
-} = useStore();
-```
 
 [`createclient`]: /docs/api-reference/liveblocks-client#createClient
 [`room`]: /docs/api-reference/liveblocks-client#room

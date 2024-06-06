@@ -17,5 +17,29 @@ Breaking changes:
 
 - Rename `@liveblocks/react-comments` to `@liveblocks/react-ui` and
   `<CommentsConfig />` to `<LiveblocksUIConfig />` (codemod)
+- Rename `@liveblocks/node`'s `RoomInfo` to `RoomData` (codemod)
 - Removal of the deprecated APIs
 - Maybe some Yjs package changes
+
+## Step-wise migration guide
+
+I found the following order of mechanical changes to be most ideal path to upgrade. You can make a Git commit after every one of these changes.
+
+1. Start with a clean slate, run `tsc` to make sure your project contains no TypeScript errors to begin with.
+1. Do a project-wise search & replace of `@liveblocks/react-comments` → `@liveblocks/react-ui`.
+1. Upgrade _all_ `@liveblocks/*` packages to `@latest`.
+1. Run `tsc` again, no new errors should pop up at this point. If they do, they should only be from APIs that were long-deprecated and now removed. Adjust accordingly. See section above.
+1. [Mechanical change] Go to `liveblocks.config.ts`, look at the `createRoomContext()` call. Add the `declare global { ... }` definition right above it, and move the type params to the global. Remove the type params. [Example of this change](https://github.com/liveblocks/liveblocks/commit/da750d4ac9e88d812c0fb612ce18f02920d65463). And another [example](https://github.com/liveblocks/liveblocks/commit/1c14e6e553463538d722b0b91baacc2aa4ff3267).
+1. [Mechanical change]
+   1. If using `const { suspense: { ... } } = createRoomContext()`, do a mass search & replace of `"../../path/to/liveblocks.config"` to `"@liveblocks/react/suspense"`. [Examples of this change](https://github.com/liveblocks/liveblocks/commit/9e6fd25f21e1bcbc4e625161f8d33ce6aaafb0ab).
+   1. If using `const { ... } = createRoomContext()`, do a mass search & replace of `"../../path/to/liveblocks.config"` to `"@liveblocks/react"`. [Example of this change](https://github.com/liveblocks/liveblocks/commit/adc5692b072ef291082c2e1a22e77eb30c2b1667).
+1. Run `tsc` again. There should not be any TypeScript issues at this point. However, the code will not work.
+1. [Mechanical change]
+   1. Go to `liveblocks.config.ts`, look at the `createClient()` call.
+   1. Copy its options, then remove the `createClient()` call and the `client` global instance.
+   1. Find the module where you are importing `RoomProvider`.
+   1. Around the existing `<RoomProvider>` instance (or higher up the component tree), wrap a new `<LiveblocksProvider /* options */>` around it. Pass all the copied client options in here as props.
+   1. If you have other places in your components that are using the `client` instance directly, you can use the new `useClient()` hook to get it.
+   1. [Example of this change](https://github.com/liveblocks/liveblocks/commit/414f83c655ec5c5b5e045ab970423fb2ef79c50f).
+1. [Optional cleanup] At this point you are converted, but you can further simplify your types. Find all places where you're using `Presence`, `Storage`, etc as types, and remove them as type params from our Liveblocks types, like `User<MyPresence, MyUserMeta>` and just remove those. [Example of this change](https://github.com/liveblocks/liveblocks/commit/d079a0056a792c15c752dcd581ee9cc264269b81).
+1. That's it! You're converted! 🎉🎉🎉

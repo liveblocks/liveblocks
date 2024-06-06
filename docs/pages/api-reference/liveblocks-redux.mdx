@@ -7,7 +7,7 @@ alwaysShowAllNavigationLevels: false
 ---
 
 `@liveblocks/redux` provides you with [Redux](https://react-redux.js.org/)
-bindings for our real-time collaboration APIs, built on top of WebSockets. Read
+bindings for our realtime collaboration APIs, built on top of WebSockets. Read
 our [getting started](/docs/get-started) guides to learn more.
 
 ## Enhancer
@@ -160,7 +160,7 @@ const others = useSelector((state) => state.liveblocks.others);
 
 ### isStorageLoading [#liveblocks-state-is-storage-loading]
 
-Whether or not the room storage is currently loading.
+Whether the room storage is currently loading.
 
 ```js
 const connection = useSelector((state) => state.liveblocks.isStorageLoading);
@@ -178,25 +178,6 @@ const {
 
 The possible value are: `initial`, `connecting`, `connected`, `reconnecting`, or
 `disconnected`.
-
-### connection [#liveblocks-state-connection] [@badge=Legacy]
-
-<Banner title="Deprecated since 1.1" type="warning">
-
-Support for this property will be removed in a future version. We recommend
-switching to the newer and simpler [`status`][] property instead.
-
-</Banner>
-
-Legacy connection status of the room. This property exists for backward
-compatibility reasons, but it’s no longer recommended.
-
-The value can be: `authenticating`, `connecting`, `open`, `failed`, `closed` or
-`unavailable`.
-
-```js
-const connection = useSelector((state) => state.liveblocks.connection);
-```
 
 [`createclient`]: /docs/api-reference/liveblocks-client#createClient
 [`status`]: /docs/api-reference/liveblocks-redux#liveblocks-state-status

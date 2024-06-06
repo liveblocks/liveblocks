@@ -1,5 +1,6 @@
 import type { Store } from "./lib/create-store";
 import { createStore } from "./lib/create-store";
+import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { Resolve } from "./lib/Resolve";
 import type {
@@ -33,6 +34,7 @@ type OptimisticUpdate<M extends BaseMetadata> =
 type CreateThreadOptimisticUpdate<M extends BaseMetadata> = {
   type: "create-thread";
   id: string;
+  roomId: string;
   thread: ThreadData<M>;
 };
 
@@ -59,6 +61,7 @@ type EditCommentOptimisticUpdate = {
 type DeleteCommentOptimisticUpdate = {
   type: "delete-comment";
   id: string;
+  roomId: string;
   threadId: string;
   deletedAt: Date;
   commentId: string;
@@ -151,6 +154,10 @@ export interface CacheStore<M extends BaseMetadata>
   ): void;
   pushOptimisticUpdate(optimisticUpdate: OptimisticUpdate<M>): void;
   setQueryState(queryKey: string, queryState: QueryState): void;
+
+  optimisticUpdatesEventSource: ReturnType<
+    typeof makeEventSource<OptimisticUpdate<M>>
+  >;
 }
 
 /**
@@ -165,6 +172,8 @@ export function createClientStore<M extends BaseMetadata>(): CacheStore<M> {
     inboxNotifications: {},
     notificationSettings: {},
   });
+
+  const optimisticUpdatesEventSource = makeEventSource<OptimisticUpdate<M>>();
 
   return {
     ...store,
@@ -263,6 +272,7 @@ export function createClientStore<M extends BaseMetadata>(): CacheStore<M> {
     },
 
     pushOptimisticUpdate(optimisticUpdate: OptimisticUpdate<M>) {
+      optimisticUpdatesEventSource.notify(optimisticUpdate);
       store.set((state) => ({
         ...state,
         optimisticUpdates: [...state.optimisticUpdates, optimisticUpdate],
@@ -278,6 +288,8 @@ export function createClientStore<M extends BaseMetadata>(): CacheStore<M> {
         },
       }));
     },
+
+    optimisticUpdatesEventSource,
   };
 }
 

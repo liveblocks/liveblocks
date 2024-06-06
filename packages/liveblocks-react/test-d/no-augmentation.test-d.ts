@@ -3,6 +3,86 @@ import * as classic from "@liveblocks/react";
 import * as suspense from "@liveblocks/react/suspense";
 import { expectAssignable, expectError, expectType } from "tsd";
 
+// LiveblocksProvider
+{
+  const LiveblocksProvider = classic.LiveblocksProvider;
+
+  // These are all JSX components
+  expectError(LiveblocksProvider({} /* no props */));
+  expectError(LiveblocksProvider({ throttle: 16 }));
+
+  expectType<React.JSX.Element>(
+    LiveblocksProvider({ authEndpoint: "/api/auth" })
+  );
+
+  expectType<React.JSX.Element>(LiveblocksProvider({ publicApiKey: "pk_xxx" }));
+
+  expectType<React.JSX.Element>(
+    LiveblocksProvider({ authEndpoint: "/api/auth", throttle: 16 })
+  );
+
+  expectType<React.JSX.Element>(
+    LiveblocksProvider({
+      authEndpoint: async () => ({ token: "token" }),
+      throttle: 16,
+    })
+  );
+
+  expectType<React.JSX.Element>(
+    LiveblocksProvider({
+      authEndpoint: "/api/auth",
+      resolveUsers: async () => [{ foo: "bar" }],
+    })
+  );
+
+  expectType<React.JSX.Element>(
+    LiveblocksProvider({
+      authEndpoint: "/api/auth",
+      resolveUsers: async () => [{ name: "Vincent", age: 42 }],
+    })
+  );
+}
+
+// LiveblocksProvider (suspense)
+{
+  const LiveblocksProvider = suspense.LiveblocksProvider;
+
+  // These are all JSX components
+  expectError(LiveblocksProvider({} /* no props */));
+  expectError(LiveblocksProvider({ throttle: 16 }));
+
+  expectType<React.JSX.Element>(
+    LiveblocksProvider({ authEndpoint: "/api/auth" })
+  );
+
+  expectType<React.JSX.Element>(LiveblocksProvider({ publicApiKey: "pk_xxx" }));
+
+  expectType<React.JSX.Element>(
+    LiveblocksProvider({ authEndpoint: "/api/auth", throttle: 16 })
+  );
+
+  expectType<React.JSX.Element>(
+    LiveblocksProvider({
+      authEndpoint: async () => ({ token: "token" }),
+      throttle: 16,
+    })
+  );
+
+  expectType<React.JSX.Element>(
+    LiveblocksProvider({
+      authEndpoint: "/api/auth",
+      resolveUsers: async () => [{ foo: "bar" }],
+    })
+  );
+
+  expectType<React.JSX.Element>(
+    LiveblocksProvider({
+      authEndpoint: "/api/auth",
+      resolveUsers: async () => [{ name: "Vincent", age: 42 }],
+    })
+  );
+}
+
 // ---------------------------------------------------------
 // Hook APIs
 // ---------------------------------------------------------
@@ -521,7 +601,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
 {
   expectType<boolean>(classic.useInboxNotifications().isLoading);
   expectType<Error | undefined>(classic.useInboxNotifications().error);
-  expectType<("thread" | `$${string}`)[] | undefined>(
+  expectType<("thread" | "textMention" | `$${string}`)[] | undefined>(
     classic.useInboxNotifications().inboxNotifications?.map((ibn) => ibn.kind)
   );
   expectType<(string | undefined)[] | undefined>(
@@ -533,7 +613,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
 {
   expectType<false>(suspense.useInboxNotifications().isLoading);
   expectType<undefined>(suspense.useInboxNotifications().error);
-  expectType<("thread" | `$${string}`)[]>(
+  expectType<("thread" | "textMention" | `$${string}`)[]>(
     suspense.useInboxNotifications().inboxNotifications?.map((ibn) => ibn.kind)
   );
   expectType<(string | undefined)[]>(

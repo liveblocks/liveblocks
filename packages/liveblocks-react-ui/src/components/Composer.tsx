@@ -448,6 +448,7 @@ export const Composer = forwardRef(
       commentId,
       metadata,
       onComposerSubmit,
+      onFocus,
       ...props
     }: ComposerProps<M>,
     forwardedRef: ForwardedRef<HTMLFormElement>
@@ -495,7 +496,11 @@ export const Composer = forwardRef(
 
     return (
       <TooltipProvider>
-        <ComposerPrimitive.Form onComposerSubmit={handleCommentSubmit} asChild>
+        <ComposerPrimitive.Form
+          onComposerSubmit={handleCommentSubmit}
+          onFocus={onFocus}
+          asChild
+        >
           <ComposerWithContext {...props} ref={forwardedRef} />
         </ComposerPrimitive.Form>
       </TooltipProvider>
