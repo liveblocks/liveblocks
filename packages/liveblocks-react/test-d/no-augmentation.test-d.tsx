@@ -1,46 +1,10 @@
-import type { LiveList, LiveMap, LiveObject } from "@liveblocks/core";
+import React from "react";
+React; // To silence tsd warning
+
+import type { BaseMetadata, Json, Lson } from "@liveblocks/client";
 import * as classic from "@liveblocks/react";
 import * as suspense from "@liveblocks/react/suspense";
 import { expectAssignable, expectError, expectType } from "tsd";
-
-//
-// User-provided type augmentations
-//
-declare global {
-  interface Liveblocks {
-    Presence: {
-      cursor: { x: number; y: number };
-    };
-
-    Storage: {
-      animals: LiveList<string>;
-      scores: LiveMap<string, number>;
-      person: LiveObject<{ name: string; age: number }>;
-    };
-
-    UserMeta: {
-      info: {
-        name: string;
-        age: number;
-      };
-    };
-
-    RoomEvent: {
-      type: "emoji";
-      emoji: string;
-    };
-
-    ThreadMetadata: {
-      color: "red" | "blue";
-    };
-
-    RoomInfo: {
-      name: string;
-      url?: string;
-      type: "public" | "private";
-    };
-  }
-}
 
 // LiveblocksProvider
 {
@@ -67,7 +31,7 @@ declare global {
     })
   );
 
-  expectError(
+  expectType<React.JSX.Element>(
     LiveblocksProvider({
       authEndpoint: "/api/auth",
       resolveUsers: async () => [{ foo: "bar" }],
@@ -107,7 +71,7 @@ declare global {
     })
   );
 
-  expectError(
+  expectType<React.JSX.Element>(
     LiveblocksProvider({
       authEndpoint: "/api/auth",
       resolveUsers: async () => [{ foo: "bar" }],
@@ -129,17 +93,15 @@ declare global {
 // useRoom()
 {
   const room = classic.useRoom();
-  expectType<number>(room.getPresence().cursor.x);
-  expectType<number>(room.getPresence().cursor.y);
-  expectError(room.getPresence().nonexisting);
+  expectType<Json | undefined>(room.getPresence().cursor);
+  expectType<Json | undefined>(room.getPresence().nonexisting);
 }
 
 // useRoom() (suspense)
 {
   const room = suspense.useRoom();
-  expectType<number>(room.getPresence().cursor.x);
-  expectType<number>(room.getPresence().cursor.y);
-  expectError(room.getPresence().nonexisting);
+  expectType<Json | undefined>(room.getPresence().cursor);
+  expectType<Json | undefined>(room.getPresence().nonexisting);
 }
 
 // ---------------------------------------------------------
@@ -147,37 +109,35 @@ declare global {
 // useSelf()
 {
   const me = classic.useSelf();
-  expectType<number | undefined>(me?.presence.cursor.x);
-  expectType<number | undefined>(me?.presence.cursor.y);
-  expectError(me?.presence.nonexisting);
+  expectType<Json | undefined>(me?.presence.cursor);
+  expectType<Json | undefined>(me?.presence.nonexisting);
 
-  expectType<string | undefined>(me?.info.name);
-  expectType<number | undefined>(me?.info.age);
-  expectError(me?.info.nonexisting);
+  expectType<string | undefined>(me?.info?.name);
+  expectType<Json | undefined>(me?.info?.age);
+  expectType<Json | undefined>(me?.info?.nonexisting);
 }
 
 // useSelf() (suspense)
 {
   const me = suspense.useSelf();
-  expectType<number>(me.presence.cursor.x);
-  expectType<number>(me.presence.cursor.y);
-  expectError(me.presence.nonexisting);
+  expectType<Json | undefined>(me.presence.cursor);
+  expectType<Json | undefined>(me.presence.nonexisting);
 
-  expectType<string>(me.info.name);
-  expectType<number>(me.info.age);
-  expectError(me.info.nonexisting);
+  expectType<string | undefined>(me.info?.name);
+  expectType<Json | undefined>(me.info?.age);
+  expectType<Json | undefined>(me.info?.nonexisting);
 }
 
 // useSelf(selector)
 {
-  const x = classic.useSelf((me) => me.presence.cursor.x);
-  expectType<number | null>(x);
+  const x = classic.useSelf((me) => me.presence.cursor);
+  expectType<Json | undefined | null>(x);
 }
 
 // useSelf(selector) (suspense)
 {
-  const x = suspense.useSelf((me) => me.presence.cursor.x);
-  expectType<number>(x);
+  const x = suspense.useSelf((me) => me.presence.cursor);
+  expectType<Json | undefined>(x);
 }
 
 // ---------------------------------------------------------
@@ -185,16 +145,14 @@ declare global {
 // useOthers()
 {
   const others = classic.useOthers();
-  expectType<number>(others[13].presence.cursor.x);
-  expectType<number>(others[42].presence.cursor.y);
+  expectType<Json | undefined>(others[13].presence.cursor);
   expectType<boolean>(others[0].canWrite);
 }
 
 // useOthers() (suspense)
 {
   const others = suspense.useOthers();
-  expectType<number>(others[13].presence.cursor.x);
-  expectType<number>(others[42].presence.cursor.y);
+  expectType<Json | undefined>(others[13].presence.cursor);
   expectType<boolean>(others[0].canWrite);
 }
 
@@ -204,9 +162,9 @@ declare global {
   expectType<number>(num);
 
   const xs = classic.useOthers((others) =>
-    others.map((o) => o.presence.cursor.x)
+    others.map((o) => o.presence.cursor)
   );
-  expectType<number[]>(xs);
+  expectType<(Json | undefined)[]>(xs);
 }
 
 // useOthers(selector) (suspense)
@@ -215,27 +173,27 @@ declare global {
   expectType<number>(num);
 
   const xs = classic.useOthers((others) =>
-    others.map((o) => o.presence.cursor.x)
+    others.map((o) => o.presence.cursor)
   );
-  expectType<number[]>(xs);
+  expectType<(Json | undefined)[]>(xs);
 }
 
 // useOthers(selector, eq)
 {
   const xs = classic.useOthers(
-    (others) => others.map((o) => o.presence.cursor.x),
+    (others) => others.map((o) => o.presence.cursor),
     classic.shallow
   );
-  expectType<number[]>(xs);
+  expectType<(Json | undefined)[]>(xs);
 }
 
 // useOthers(selector, eq) (suspense)
 {
   const xs = suspense.useOthers(
-    (others) => others.map((o) => o.presence.cursor.x),
+    (others) => others.map((o) => o.presence.cursor),
     suspense.shallow
   );
-  expectType<number[]>(xs);
+  expectType<(Json | undefined)[]>(xs);
 }
 
 // ---------------------------------------------------------
@@ -244,24 +202,22 @@ declare global {
 {
   expectType<(a: number, b: boolean) => "hi">(
     classic.useMutation((mut, _a: number, _b: boolean) => {
-      expectType<number>(mut.self.presence.cursor.x);
-      expectError(mut.self.presence.nonexisting);
-      expectType<string>(mut.self.info.name);
-      expectType<number>(mut.self.info.age);
-      expectError(mut.self.info.nonexisting);
+      expectType<Json | undefined>(mut.self.presence.cursor);
+      expectType<Json | undefined>(mut.self.presence.nonexisting);
+      expectType<string | undefined>(mut.self.info!.name);
+      expectType<Json | undefined>(mut.self.info!.age);
+      expectType<Json | undefined>(mut.self.info!.nonexisting);
 
-      expectType<number>(mut.others[0].presence.cursor.x);
-      expectError(mut.others[0].presence.nonexisting);
-      expectType<string>(mut.others[0].info.name);
-      expectType<number>(mut.others[0].info.age);
-      expectError(mut.others[0].info.nonexisting);
+      expectType<Json | undefined>(mut.others[0].presence.cursor);
+      expectType<Json | undefined>(mut.others[0].presence.nonexisting);
+      expectType<string | undefined>(mut.others[0].info!.name);
+      expectType<Json | undefined>(mut.others[0].info!.age);
+      expectType<Json | undefined>(mut.others[0].info!.nonexisting);
 
-      expectType<string | undefined>(mut.storage.get("animals").get(0));
-      expectType<number | undefined>(mut.storage.get("scores").get("one"));
-      expectType<number>(mut.storage.get("person").get("age"));
-      expectError(mut.storage.get("nonexisting"));
+      expectType<Lson | undefined>(mut.storage.get("animals"));
+      expectType<Lson | undefined>(mut.storage.get("nonexisting"));
       expectType<void>(mut.setMyPresence({ cursor: { x: 0, y: 0 } }));
-      expectError(mut.setMyPresence({ nonexisting: 123 }));
+      expectType<void>(mut.setMyPresence({ nonexisting: 123 }));
 
       return "hi" as const;
     }, [])
@@ -272,24 +228,22 @@ declare global {
 {
   expectType<(a: number, b: boolean) => "hi">(
     suspense.useMutation((mut, _a: number, _b: boolean) => {
-      expectType<number>(mut.self.presence.cursor.x);
-      expectError(mut.self.presence.nonexisting);
-      expectType<string>(mut.self.info.name);
-      expectType<number>(mut.self.info.age);
-      expectError(mut.self.info.nonexisting);
+      expectType<Json | undefined>(mut.self.presence.cursor);
+      expectType<Json | undefined>(mut.self.presence.nonexisting);
+      expectType<string | undefined>(mut.self.info!.name);
+      expectType<Json | undefined>(mut.self.info!.age);
+      expectType<Json | undefined>(mut.self.info!.nonexisting);
 
-      expectType<number>(mut.others[0].presence.cursor.x);
-      expectError(mut.others[0].presence.nonexisting);
-      expectType<string>(mut.others[0].info.name);
-      expectType<number>(mut.others[0].info.age);
-      expectError(mut.others[0].info.nonexisting);
+      expectType<Json | undefined>(mut.others[0].presence.cursor);
+      expectType<Json | undefined>(mut.others[0].presence.nonexisting);
+      expectType<string | undefined>(mut.others[0].info!.name);
+      expectType<Json | undefined>(mut.others[0].info!.age);
+      expectType<Json | undefined>(mut.others[0].info!.nonexisting);
 
-      expectType<string | undefined>(mut.storage.get("animals").get(0));
-      expectType<number | undefined>(mut.storage.get("scores").get("one"));
-      expectType<number>(mut.storage.get("person").get("age"));
-      expectError(mut.storage.get("nonexisting"));
+      expectType<Lson | undefined>(mut.storage.get("animals"));
+      expectType<Lson | undefined>(mut.storage.get("nonexisting"));
       expectType<void>(mut.setMyPresence({ cursor: { x: 0, y: 0 } }));
-      expectError(mut.setMyPresence({ nonexisting: 123 }));
+      expectType<void>(mut.setMyPresence({ nonexisting: 123 }));
 
       return "hi" as const;
     }, [])
@@ -302,8 +256,9 @@ declare global {
 {
   const broadcast = classic.useBroadcastEvent();
   broadcast({ type: "emoji", emoji: "😍" });
-  // broadcast({ type: "leave", userId: "1234" });  // TODO Allow this using union types
-  expectError(broadcast({ type: "i-do-not-exist" }));
+  broadcast({ type: "left", userId: "1234" });
+  broadcast({ a: [], b: "", c: 123, d: false, e: undefined, f: null }); // arbitrary JSON
+  expectError(broadcast({ notSerializable: new Date() }));
   expectError(broadcast(new Date()));
 }
 
@@ -311,8 +266,9 @@ declare global {
 {
   const broadcast = suspense.useBroadcastEvent();
   broadcast({ type: "emoji", emoji: "😍" });
-  // broadcast({ type: "leave", userId: "1234" });  // TODO Allow this using union types
-  expectError(broadcast({ type: "i-do-not-exist" }));
+  broadcast({ type: "left", userId: "1234" });
+  broadcast({ a: [], b: "", c: 123, d: false, e: undefined, f: null }); // arbitrary JSON
+  expectError(broadcast({ notSerializable: new Date() }));
   expectError(broadcast(new Date()));
 }
 
@@ -323,9 +279,8 @@ declare global {
   const { user, error, isLoading } = classic.useUser("user-id");
   expectType<boolean>(isLoading);
   expectType<string | undefined>(user?.name);
-  expectError(user?.avatar);
-  expectType<number | undefined>(user?.age);
-  expectError(user?.anyOtherProp);
+  expectType<string | undefined>(user?.avatar);
+  expectType<Json | undefined>(user?.age);
   expectType<Error | undefined>(error);
 }
 
@@ -333,10 +288,9 @@ declare global {
 {
   const { user, error, isLoading } = suspense.useUser("user-id");
   expectType<false>(isLoading);
-  expectType<string>(user.name);
-  expectError(user.avatar);
-  expectType<number>(user.age);
-  expectError(user.anyOtherProp);
+  expectType<string | undefined>(user?.name);
+  expectType<string | undefined>(user?.avatar);
+  expectType<Json | undefined>(user?.age);
   expectType<undefined>(error);
 }
 
@@ -348,8 +302,7 @@ declare global {
   expectType<boolean>(isLoading);
   expectType<string | undefined>(info?.name);
   expectType<string | undefined>(info?.url);
-  expectType<"public" | "private" | undefined>(info?.type);
-  expectError(info?.nonexisting);
+  expectType<Json | undefined>(info?.nonexisting);
   expectType<Error | undefined>(error);
 }
 
@@ -357,10 +310,9 @@ declare global {
 {
   const { info, error, isLoading } = suspense.useRoomInfo("room-id");
   expectType<false>(isLoading);
-  expectType<string>(info.name);
+  expectType<string | undefined>(info.name);
   expectType<string | undefined>(info.url);
-  expectType<"public" | "private">(info?.type);
-  expectError(info?.nonexisting);
+  expectType<Json | undefined>(info?.nonexisting);
   expectType<undefined>(error);
 }
 
@@ -369,69 +321,73 @@ declare global {
 // The useCreateThread() hook
 {
   const createThread = classic.useCreateThread();
-  expectError(createThread({})); // no body = error
+  expectError(createThread({}));
 
-  // No metadata = error
-  expectError(
-    createThread({
-      body: {
-        version: 1,
-        content: [{ type: "paragraph", children: [{ text: "hi" }] }],
-      },
-    })
-  );
-
-  const thread = createThread({
+  const thread1 = createThread({
     body: {
       version: 1,
       content: [{ type: "paragraph", children: [{ text: "hi" }] }],
     },
-    metadata: { color: "red" },
   });
 
-  expectType<"thread">(thread.type);
-  expectType<string>(thread.id);
-  expectType<string>(thread.roomId);
-  expectType<"comment">(thread.comments[0].type);
-  expectType<string>(thread.comments[0].id);
-  expectType<string>(thread.comments[0].threadId);
+  expectType<"thread">(thread1.type);
+  expectType<string>(thread1.id);
+  expectType<string>(thread1.roomId);
+  expectType<"comment">(thread1.comments[0].type);
+  expectType<string>(thread1.comments[0].id);
+  expectType<string>(thread1.comments[0].threadId);
 
-  expectType<"red" | "blue">(thread.metadata.color);
-  expectError(thread.metadata.nonexisting);
+  expectType<string | number | boolean | undefined>(thread1.metadata.color);
+
+  const thread2 = createThread({
+    body: {
+      version: 1,
+      content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+    },
+    metadata: { foo: "bar" },
+  });
+
+  expectType<string>(thread2.id);
+  expectType<string | number | boolean | undefined>(thread2.metadata.foo);
+  expectType<string | number | boolean | undefined>(
+    thread2.metadata.nonexisting
+  );
 }
 
 // The useCreateThread() hook (suspense)
 {
   const createThread = suspense.useCreateThread();
-  expectError(createThread({})); // no body = error
+  expectError(createThread({}));
 
-  // No metadata = error
-  expectError(
-    createThread({
-      body: {
-        version: 1,
-        content: [{ type: "paragraph", children: [{ text: "hi" }] }],
-      },
-    })
-  );
-
-  const thread = createThread({
+  const thread1 = createThread({
     body: {
       version: 1,
       content: [{ type: "paragraph", children: [{ text: "hi" }] }],
     },
-    metadata: { color: "red" },
   });
 
-  expectType<"thread">(thread.type);
-  expectType<string>(thread.id);
-  expectType<string>(thread.roomId);
-  expectType<"comment">(thread.comments[0].type);
-  expectType<string>(thread.comments[0].id);
-  expectType<string>(thread.comments[0].threadId);
+  expectType<"thread">(thread1.type);
+  expectType<string>(thread1.id);
+  expectType<string>(thread1.roomId);
+  expectType<"comment">(thread1.comments[0].type);
+  expectType<string>(thread1.comments[0].id);
+  expectType<string>(thread1.comments[0].threadId);
 
-  expectType<"red" | "blue">(thread.metadata.color);
-  expectError(thread.metadata.nonexisting);
+  expectType<string | number | boolean | undefined>(thread1.metadata.foo);
+
+  const thread2 = createThread({
+    body: {
+      version: 1,
+      content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+    },
+    metadata: { foo: "bar" },
+  });
+
+  expectType<string>(thread2.id);
+  expectType<string | number | boolean | undefined>(thread2.metadata.foo);
+  expectType<string | number | boolean | undefined>(
+    thread2.metadata.nonexisting
+  );
 }
 
 // ---------------------------------------------------------
@@ -439,33 +395,27 @@ declare global {
 // The useEditThreadMetadata() hook
 {
   const editMetadata = classic.useEditThreadMetadata();
-  expectError(editMetadata({})); // no body = error
-
-  expectError(
-    editMetadata({ threadId: "th_xxx", metadata: { nonexisting: null } })
-  );
-  expectError(
-    editMetadata({ threadId: "th_xxx", metadata: { nonexisting: 123 } })
-  );
+  expectError(editMetadata({}));
 
   expectType<void>(editMetadata({ threadId: "th_xxx", metadata: {} }));
   expectType<void>(
-    editMetadata({ threadId: "th_xxx", metadata: { color: null } })
+    editMetadata({ threadId: "th_xxx", metadata: { nonexisting: 123 } })
   );
   expectType<void>(
-    editMetadata({ threadId: "th_xxx", metadata: { color: "red" } })
+    editMetadata({ threadId: "th_xxx", metadata: { nonexisting: null } })
   );
 }
 
 // The useEditThreadMetadata() hook (suspense)
 {
+  //        ---------------------
   const editMetadata = suspense.useEditThreadMetadata();
   expectError(editMetadata({})); // no body = error
 
-  expectError(
+  expectType<void>(
     editMetadata({ threadId: "th_xxx", metadata: { nonexisting: null } })
   );
-  expectError(
+  expectType<void>(
     editMetadata({ threadId: "th_xxx", metadata: { nonexisting: 123 } })
   );
 
@@ -684,8 +634,11 @@ declare global {
   expectType<"thread">(result.type);
   expectType<string>(result.roomId);
   expectAssignable<unknown[]>(result.comments);
-  expectType<"red" | "blue">(result.metadata.color);
-  expectError(result.metadata.nonexisting);
+  expectType<BaseMetadata>(result.metadata);
+  expectType<string | number | boolean | undefined>(result.metadata.color);
+  expectType<string | number | boolean | undefined>(
+    result.metadata.nonexisting
+  );
 }
 
 // The useInboxNotificationThread() hook (suspense)
@@ -694,8 +647,11 @@ declare global {
   expectType<"thread">(result.type);
   expectType<string>(result.roomId);
   expectAssignable<unknown[]>(result.comments);
-  expectType<"red" | "blue">(result.metadata.color);
-  expectError(result.metadata.nonexisting);
+  expectType<BaseMetadata>(result.metadata);
+  expectType<string | number | boolean | undefined>(result.metadata.color);
+  expectType<string | number | boolean | undefined>(
+    result.metadata.nonexisting
+  );
 }
 
 // ---------------------------------------------------------
