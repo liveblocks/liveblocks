@@ -76,19 +76,6 @@
   margin: 1em 0;
 }
 
-.threadMark {
-  background-color: rgba(255, 212, 0, 0.14);
-  border-bottom-width: 2px;
-  border-bottom-style: solid;
-  border-bottom-color: rgb(255, 212, 0);
-  transition: background-color 100ms;
-}
-
-.threadMark[data-state="active"] {
-  background-color: rgba(255, 212, 0, 0.56);
-  border-bottom-color: rgb(255, 212, 0);
-}
-
 .floatingComposer {
   width: 400px;
   border-width: 1px;

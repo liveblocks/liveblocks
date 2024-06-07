@@ -183,11 +183,7 @@ const Item = forwardRef<HTMLDivElement | null, ItemProps>(
       const div = divRef.current;
       if (div === null) return;
 
-      div.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-        inline: "nearest",
-      });
+      div.scrollIntoView({ block: "nearest" });
     }, [isHighlighted]);
 
     function handleMouseEnter(event: MouseEvent<HTMLDivElement>) {

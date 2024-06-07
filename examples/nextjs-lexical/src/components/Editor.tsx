@@ -30,7 +30,6 @@ const initialConfig = {
       underline: styles.textUnderline,
     },
     paragraph: styles.paragraph,
-    lexicalThreadMark: styles.threadMark,
   },
 };
 
