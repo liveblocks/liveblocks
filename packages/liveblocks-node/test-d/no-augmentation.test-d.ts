@@ -47,6 +47,22 @@ async () => {
     expectType<CommentBodyBlockElement[] | undefined>(comment.body?.content);
   }
 
+  // .getThreads()
+  {
+    const threads = (await client.getThreads({ roomId: "my-room" })).data;
+    const thread = threads[0]!;
+    expectType<"thread">(thread.type);
+    expectType<string>(thread.id);
+    expectType<string>(thread.roomId);
+    expectType<Date>(thread.createdAt);
+    expectType<Date | undefined>(thread.updatedAt);
+    expectType<string | number | boolean | undefined>(thread.metadata.foo);
+    expectType<string | number | boolean | undefined>(
+      thread.metadata.nonexisting
+    );
+    expectType<CommentData[]>(thread.comments);
+  }
+
   // .getThread()
   {
     const thread = await client.getThread({

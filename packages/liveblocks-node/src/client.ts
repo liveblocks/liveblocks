@@ -958,7 +958,7 @@ export class Liveblocks<
    * @param params.query The query to filter threads by. It is based on our query language and can filter by metadata.
    * @returns A list of threads.
    */
-  public async getThreads<M extends BaseMetadata = DM>(params: {
+  public async getThreads(params: {
     roomId: string;
     /**
      * The query to filter threads by. It is based on our query language.
