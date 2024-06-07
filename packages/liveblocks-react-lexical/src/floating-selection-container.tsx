@@ -159,8 +159,8 @@ const FloatingSelectionContainerImpl = forwardRef<
       ref={divRef}
       style={{
         position: "absolute",
-        zIndex: 1000,
       }}
+      className="lb-root lb-portal lb-elevation lb-lexical-floating-composer"
     >
       {children}
     </div>

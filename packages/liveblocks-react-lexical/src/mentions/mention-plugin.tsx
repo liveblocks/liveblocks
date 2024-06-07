@@ -362,26 +362,24 @@ export function MentionPlugin() {
             alignOffset={5}
             collisionPadding={20}
           >
-            <div className="lb-root lb-portal lb-elevation lb-lexical-suggestions lb-lexical-mention-suggestions">
-              <Suggestions.List className="lb-lexical-suggestions-list lb-lexical-mention-suggestions-list">
-                {suggestions.map((userId) => (
-                  <Suggestions.Item
-                    key={userId}
-                    value={userId}
-                    className="lb-lexical-suggestions-list-item lb-lexical-mention-suggestion"
-                  >
-                    <Avatar
-                      userId={userId}
-                      className="lb-lexical-mention-suggestion-avatar"
-                    />
-                    <User
-                      userId={userId}
-                      className="lb-lexical-mention-suggestion-user"
-                    />
-                  </Suggestions.Item>
-                ))}
-              </Suggestions.List>
-            </div>
+            <Suggestions.List className="lb-lexical-suggestions-list lb-lexical-mention-suggestions-list">
+              {suggestions.map((userId) => (
+                <Suggestions.Item
+                  key={userId}
+                  value={userId}
+                  className="lb-lexical-suggestions-list-item lb-lexical-mention-suggestion"
+                >
+                  <Avatar
+                    userId={userId}
+                    className="lb-lexical-mention-suggestion-avatar"
+                  />
+                  <User
+                    userId={userId}
+                    className="lb-lexical-mention-suggestion-user"
+                  />
+                </Suggestions.Item>
+              ))}
+            </Suggestions.List>
           </SuggestionsPortal>
         </OnResetMatchCallbackContext.Provider>
       </OnValueSelectCallbackContext.Provider>
@@ -450,7 +448,11 @@ function SuggestionsPortal({
   }, [editor, positionContent]);
 
   return createPortal(
-    <div ref={divRef} style={{ position: "absolute" }}>
+    <div
+      ref={divRef}
+      style={{ position: "absolute" }}
+      className="lb-root lb-portal lb-elevation lb-lexical-suggestions lb-lexical-mention-suggestions"
+    >
       {children}
     </div>,
     container
