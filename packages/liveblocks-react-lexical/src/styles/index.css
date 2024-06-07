@@ -1,4 +1,3 @@
-@import "@liveblocks/react-ui/styles.css";
 @import "./utils";
 @import "./constants";
 
@@ -125,4 +124,12 @@
     background: var(--lb-accent);
     color: var(--lb-accent-foreground);
   }
+}
+
+/*************************************
+ *       Active selection            *
+ *************************************/
+
+.lb-lexical-active-selection {
+  background-color: var(--lb-selection);
 }
