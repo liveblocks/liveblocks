@@ -14,6 +14,8 @@ export type {
   InboxNotificationCustomProps,
   InboxNotificationIconProps,
   InboxNotificationProps,
+  InboxNotificationTextMentionKindProps,
+  InboxNotificationTextMentionProps,
   InboxNotificationThreadKindProps,
   InboxNotificationThreadProps,
 } from "./components/InboxNotification";

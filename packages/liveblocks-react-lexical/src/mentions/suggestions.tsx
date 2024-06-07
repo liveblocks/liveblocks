@@ -16,17 +16,22 @@ import type {
 import React, {
   createContext,
   forwardRef,
+  useContext,
   useEffect,
   useImperativeHandle,
   useRef,
   useState,
 } from "react";
 
-import {
-  useOnResetMatchCallback,
-  useOnValueSelectCallback,
-  useSuggestions,
-} from "./mention-plugin";
+export const SuggestionsContext = createContext<string[] | null>(null);
+
+export const OnValueSelectCallbackContext = createContext<
+  ((value: string) => void) | null
+>(null);
+
+export const OnResetMatchCallbackContext = createContext<(() => void) | null>(
+  null
+);
 
 const HighlightedIndexContext = createContext<
   [number, Dispatch<SetStateAction<number>>] | null
@@ -178,7 +183,11 @@ const Item = forwardRef<HTMLDivElement | null, ItemProps>(
       const div = divRef.current;
       if (div === null) return;
 
-      div.scrollIntoView({ block: "nearest" });
+      div.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "nearest",
+      });
     }, [isHighlighted]);
 
     function handleMouseEnter(event: MouseEvent<HTMLDivElement>) {
@@ -226,6 +235,33 @@ function useHighlightedIndex(): [
     );
   }
   return context;
+}
+
+function useSuggestions(): string[] {
+  const suggestions = useContext(SuggestionsContext);
+  if (suggestions === null) {
+    throw new Error("useSuggestions: SuggestionsContext not found");
+  }
+
+  return suggestions;
+}
+
+function useOnValueSelectCallback(): (value: string) => void {
+  const onValueSelect = useContext(OnValueSelectCallbackContext);
+  if (onValueSelect === null) {
+    throw new Error("useOnValueSelectCallback: OnValueSelectContext not found");
+  }
+
+  return onValueSelect;
+}
+
+function useOnResetMatchCallback(): () => void {
+  const onResetMatch = useContext(OnResetMatchCallbackContext);
+  if (onResetMatch === null) {
+    throw new Error("useOnResetMatchCallback: OnResetMatchContext not found");
+  }
+
+  return onResetMatch;
 }
 
 export { Item, List };

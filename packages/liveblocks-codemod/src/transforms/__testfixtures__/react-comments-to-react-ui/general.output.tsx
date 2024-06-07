@@ -14,6 +14,10 @@ import type { CommentMentionProps } from "@liveblocks/react-ui/primitives";
 import { type ComposerLinkProps } from "@liveblocks/react-ui/primitives";
 import type { CommentMentionProps as LiveblocksCommentMentionProps } from "@liveblocks/react-ui/primitives";
 import { type ComposerLinkProps as LiveblocksComposerLinkProps } from "@liveblocks/react-ui/primitives";
+import "@liveblocks/react-ui/styles.css";
+import "@liveblocks/react-ui/styles/dark/attributes.css";
+import "@liveblocks/react-ui/styles/dark/media-query.css";
+import "./liveblocks-react-comments.css";
 
 export default function Home() {
   return (

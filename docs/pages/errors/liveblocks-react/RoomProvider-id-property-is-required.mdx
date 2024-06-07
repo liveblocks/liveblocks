@@ -5,12 +5,12 @@ meta:
   description: "@liveblocks/react error: RoomProvider id property is required."
 ---
 
-### Why this error occured
+## Why this error occurred
 
 [`RoomProvider`][] `id` property is required in order to provide a [`Room`][] in
 the tree below.
 
-### Possible ways to fix it
+## Possible ways to fix it
 
 ```jsx highlight="5"
 import { RoomProvider } from "@liveblocks/react";
@@ -30,7 +30,7 @@ forget that `useRouter().query.roomId` returns `undefined` on the first render.
 Do not render the [`RoomProvider`][] if you don’t have access to the room `id`
 right away.
 
-### Useful links
+## Useful links
 
 - [`RoomProvider`][]
 - [`Room`][]

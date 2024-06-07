@@ -1,6 +1,5 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import type { LexicalNode, RangeSelection } from "lexical";
-import { $getSelection, $isRangeSelection } from "lexical";
+import type { LexicalNode } from "lexical";
 import type { PropsWithChildren } from "react";
 import React, {
   forwardRef,
@@ -10,9 +9,9 @@ import React, {
   useRef,
 } from "react";
 import { createPortal } from "react-dom";
-import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
 import { createDOMRange } from "./create-dom-range";
+import { useSelection } from "./use-selection";
 
 export interface FloatingSelectionContainerProps {
   sideOffset?: number;
@@ -44,20 +43,14 @@ export const FloatingSelectionContainer = forwardRef<
     };
   });
 
-  const root = editor.getRootElement();
-  if (root === null) return null;
-
-  const parent = root.offsetParent;
-  if (parent === null) return null;
-
   return createPortal(
     <FloatingSelectionContainerImpl
       {...props}
       selection={info}
-      container={parent}
+      container={document.body}
       ref={forwardedRef}
     />,
-    parent
+    document.body
   );
 });
 
@@ -118,10 +111,7 @@ const FloatingSelectionContainerImpl = forwardRef<
     // Get the bounding client rect of the DOM (selection) range
     const rect = range.getBoundingClientRect();
 
-    // Set the position of the floating container
-    let left =
-      rect.left - container.getBoundingClientRect().left + container.scrollLeft;
-
+    let left = rect.left + container.scrollLeft;
     // Apply the align offset
     left += alignOffset;
 
@@ -132,29 +122,17 @@ const FloatingSelectionContainerImpl = forwardRef<
     // Ensure content does not overflow the container
     if (left <= collisionPadding) {
       left = collisionPadding;
-    } else if (
-      left + width >=
-      container.getBoundingClientRect().width - collisionPadding
-    ) {
-      left = container.getBoundingClientRect().width - width - collisionPadding;
+    } else if (left + width >= container.clientWidth - collisionPadding) {
+      left = container.clientWidth - width - collisionPadding;
     }
 
-    let top =
-      rect.bottom - container.getBoundingClientRect().top + container.scrollTop;
-
+    let top = rect.bottom + container.scrollTop;
     // Apply the side offset
     top += sideOffset;
 
-    // Get the height of the content
     const height = content.getBoundingClientRect().height;
-
-    if (rect.bottom + height >= window.innerHeight - collisionPadding) {
-      top =
-        rect.top -
-        container.getBoundingClientRect().top +
-        container.scrollTop -
-        height;
-      top -= sideOffset;
+    if (top + height >= container.clientHeight - collisionPadding) {
+      top = rect.top - height - sideOffset;
     }
 
     content.style.left = `${left}px`;
@@ -181,32 +159,10 @@ const FloatingSelectionContainerImpl = forwardRef<
       ref={divRef}
       style={{
         position: "absolute",
-        zIndex: 1000,
       }}
+      className="lb-root lb-portal lb-elevation lb-lexical-floating-composer"
     >
       {children}
     </div>
   );
 });
-
-function useSelection(): RangeSelection | null {
-  const [editor] = useLexicalComposerContext();
-
-  const subscribe = useCallback(
-    (onStoreChange: () => void) => {
-      return editor.registerUpdateListener(onStoreChange);
-    },
-    [editor]
-  );
-
-  const getSnapshot = useCallback(() => {
-    return editor.getEditorState().read(() => {
-      const selection = $getSelection();
-      if (!$isRangeSelection(selection)) return null;
-
-      return selection;
-    });
-  }, [editor]);
-
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-}

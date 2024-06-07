@@ -17,15 +17,7 @@ import {
   KEY_BACKSPACE_COMMAND,
 } from "lexical";
 import type { ReactNode } from "react";
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { Avatar } from "./avatar";
@@ -35,6 +27,11 @@ import {
   MentionNode,
 } from "./mention-node";
 import * as Suggestions from "./suggestions";
+import {
+  OnResetMatchCallbackContext,
+  OnValueSelectCallbackContext,
+  SuggestionsContext,
+} from "./suggestions";
 import { User } from "./user";
 
 const MENTION_TRIGGER = "@";
@@ -144,14 +141,6 @@ function $getRangeAtMatch(match: RegExpExecArray): globalThis.Range | null {
   }
 }
 
-const SuggestionsContext = createContext<string[] | null>(null);
-
-const OnValueSelectCallbackContext = createContext<
-  ((value: string) => void) | null
->(null);
-
-const OnResetMatchCallbackContext = createContext<(() => void) | null>(null);
-
 export function MentionPlugin() {
   const [editor] = useLexicalComposerContext();
 
@@ -230,6 +219,16 @@ export function MentionPlugin() {
     return editor.registerUpdateListener(({ editorState: state }) => {
       state.read($onStateRead);
     });
+  }, [editor]);
+
+  useEffect(() => {
+    const root = editor.getRootElement();
+    if (root === null) return;
+
+    root.classList.add("lb-root");
+    return () => {
+      root.classList.remove("lb-root");
+    };
   }, [editor]);
 
   useEffect(() => {
@@ -355,13 +354,20 @@ export function MentionPlugin() {
     <SuggestionsContext.Provider value={suggestions}>
       <OnValueSelectCallbackContext.Provider value={handleValueSelect}>
         <OnResetMatchCallbackContext.Provider value={() => setMatch(null)}>
-          <SuggestionsRoot rect={rect} key={matchingString}>
-            <Suggestions.List className="lb-lexical-suggestions-list">
+          <SuggestionsPortal
+            rect={rect}
+            container={document.body}
+            key={matchingString}
+            sideOffset={5}
+            alignOffset={5}
+            collisionPadding={20}
+          >
+            <Suggestions.List className="lb-lexical-suggestions-list lb-lexical-mention-suggestions-list">
               {suggestions.map((userId) => (
                 <Suggestions.Item
                   key={userId}
                   value={userId}
-                  className="lb-lexical-suggestions-list-item"
+                  className="lb-lexical-suggestions-list-item lb-lexical-mention-suggestion"
                 >
                   <Avatar
                     userId={userId}
@@ -374,7 +380,7 @@ export function MentionPlugin() {
                 </Suggestions.Item>
               ))}
             </Suggestions.List>
-          </SuggestionsRoot>
+          </SuggestionsPortal>
         </OnResetMatchCallbackContext.Provider>
       </OnValueSelectCallbackContext.Provider>
     </SuggestionsContext.Provider>,
@@ -382,57 +388,73 @@ export function MentionPlugin() {
   );
 }
 
-function SuggestionsRoot({
-  rect,
+function SuggestionsPortal({
   children,
+  rect,
+  container,
+  sideOffset = 0,
+  alignOffset = 0,
+  collisionPadding = 0,
 }: {
-  rect: DOMRect;
   children: ReactNode;
+  rect: DOMRect;
+  container: Element;
+  sideOffset?: number;
+  alignOffset?: number;
+  collisionPadding?: number;
 }) {
   const [editor] = useLexicalComposerContext();
   const divRef = useRef<HTMLDivElement>(null);
 
-  useLayoutEffect(() => {
-    const root = editor.getRootElement();
-    if (root === null) return;
+  const positionContent = useCallback(() => {
+    const content = divRef.current;
+    if (content === null) return;
 
-    const div = divRef.current;
-    if (div === null) return;
+    let left = rect.left + container.scrollLeft;
+    // Apply the align offset
+    left += alignOffset;
 
-    div.style.left = `${rect.left + window.scrollX}px`;
-    div.style.top = `${rect.bottom + window.scrollY}px`;
-  }, [editor, rect]);
+    // Get the width of the content
+    const width = content.getBoundingClientRect().width;
+    // Ensure content does not overflow the container
+    if (left <= collisionPadding) {
+      left = collisionPadding;
+    } else if (left + width >= container.clientWidth - collisionPadding) {
+      left = container.clientWidth - width - collisionPadding;
+    }
 
-  return (
-    <div ref={divRef} style={{ position: "absolute" }}>
+    let top = rect.bottom + container.scrollTop;
+    // Apply the side offset
+    top += sideOffset;
+
+    const height = content.getBoundingClientRect().height;
+    if (top + height >= container.clientHeight - collisionPadding) {
+      top = rect.top - height - sideOffset;
+    }
+
+    content.style.left = `${left}px`;
+    content.style.top = `${top}px`;
+  }, [rect, alignOffset, sideOffset, collisionPadding, container]);
+
+  useEffect(() => {
+    const editable = editor.getRootElement();
+    if (editable === null) return;
+
+    const observer = new ResizeObserver(positionContent);
+    observer.observe(editable);
+    return () => {
+      observer.disconnect();
+    };
+  }, [editor, positionContent]);
+
+  return createPortal(
+    <div
+      ref={divRef}
+      style={{ position: "absolute" }}
+      className="lb-root lb-portal lb-elevation lb-lexical-suggestions lb-lexical-mention-suggestions"
+    >
       {children}
-    </div>
+    </div>,
+    container
   );
-}
-
-export function useSuggestions(): string[] {
-  const suggestions = useContext(SuggestionsContext);
-  if (suggestions === null) {
-    throw new Error("useSuggestions: SuggestionsContext not found");
-  }
-
-  return suggestions;
-}
-
-export function useOnValueSelectCallback(): (value: string) => void {
-  const onValueSelect = useContext(OnValueSelectCallbackContext);
-  if (onValueSelect === null) {
-    throw new Error("useOnValueSelectCallback: OnValueSelectContext not found");
-  }
-
-  return onValueSelect;
-}
-
-export function useOnResetMatchCallback(): () => void {
-  const onResetMatch = useContext(OnResetMatchCallbackContext);
-  if (onResetMatch === null) {
-    throw new Error("useOnResetMatchCallback: OnResetMatchContext not found");
-  }
-
-  return onResetMatch;
 }
