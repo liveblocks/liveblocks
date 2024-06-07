@@ -2,6 +2,8 @@ import { useUser } from "@liveblocks/react";
 import type { HTMLAttributes } from "react";
 import React, { forwardRef } from "react";
 
+import { classNames } from "../classnames";
+
 export interface AvatarProps
   extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
   userId: string;
@@ -9,7 +11,7 @@ export interface AvatarProps
 
 export const Avatar = forwardRef<HTMLSpanElement, AvatarProps>(
   function Avatar(props, forwardedRef) {
-    const { userId, ...spanProps } = props;
+    const { userId, className, ...spanProps } = props;
 
     const { user, isLoading } = useUser(userId);
 
@@ -20,7 +22,11 @@ export const Avatar = forwardRef<HTMLSpanElement, AvatarProps>(
     function Initials() {
       const initials = name ? getInitials(name) : undefined;
       if (initials) {
-        return <span aria-hidden>{initials}</span>;
+        return (
+          <span aria-hidden className="lb-avatar-fallback">
+            {initials}
+          </span>
+        );
       }
 
       if (isLoading) return null;
@@ -28,7 +34,7 @@ export const Avatar = forwardRef<HTMLSpanElement, AvatarProps>(
       if (user === undefined) return null;
 
       return (
-        <span aria-label={userId} title={userId}>
+        <span aria-label={userId} title={userId} className="lb-avatar-fallback">
           {getInitials(userId)}
         </span>
       );
@@ -38,9 +44,10 @@ export const Avatar = forwardRef<HTMLSpanElement, AvatarProps>(
       <span
         data-loading={isLoading ? "" : undefined}
         {...spanProps}
+        className={classNames("lb-avatar", className)}
         ref={forwardedRef}
       >
-        {avatar && <img src={avatar} alt={name} />}
+        {avatar && <img src={avatar} alt={name} className="lb-avatar-image" />}
 
         <Initials />
       </span>

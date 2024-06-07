@@ -1,3 +1,7 @@
+@import "@liveblocks/react-ui/styles.css";
+@import "./utils";
+@import "./constants";
+
 .lb-lexical-threads-empty {
   display: flex;
   justify-content: center;
@@ -9,4 +13,116 @@
 .lb-lexical-threads {
   display: flex;
   flex-direction: column;
+}
+
+/*************************************
+ *       Suggestions                 *
+ *************************************/
+
+.lb-lexical-suggestions-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/*************************************
+ *   Mention suggestions             *
+ *************************************/
+
+.lb-lexical-mention-suggestions {
+  --lb-lexical-mention-suggestion-avatar-size: 1.25rem;
+}
+
+.lb-lexical-mention-suggestion {
+  padding: calc(0.375 * var(--lb-spacing)) calc(0.625 * var(--lb-spacing));
+}
+
+.lb-lexical-mention-suggestion-avatar {
+  inline-size: var(--lb-lexical-mention-suggestion-avatar-size);
+  margin-inline-start: calc(-0.125 * var(--lb-spacing));
+  margin-inline-end: calc(0.5 * var(--lb-spacing));
+  margin-block: calc(0.125 * var(--lb-spacing));
+  background: var(--lb-foreground-subtle);
+  color: var(--lb-foreground-moderate);
+}
+
+/*************************************
+ *          Elevation lists          *
+ *************************************/
+
+.lb-lexical-suggestions {
+  padding: $lb-elevation-list-padding;
+  animation-duration: var(--lb-transition-duration);
+  animation-timing-function: var(--lb-transition-easing);
+  will-change: transform, opacity;
+}
+
+.lb-lexical-suggestions-list-item {
+  display: flex;
+  align-items: center;
+  padding: calc(0.25 * var(--lb-spacing)) calc(0.5 * var(--lb-spacing));
+  border-radius: calc(var(--lb-radius) - 0.75 * $lb-elevation-list-padding);
+  color: var(--lb-foreground-secondary);
+  outline: none;
+  font-size: 0.875rem;
+  cursor: pointer;
+  user-select: none;
+  transition-property: background, color, opacity;
+  scroll-margin-block: $lb-elevation-list-padding;
+}
+
+:is(.lb-lexical-suggestions-list-item) {
+  &:where([data-highlighted], [data-selected]) {
+    background: var(--lb-foreground-subtle);
+    transition-duration: calc(var(--lb-transition-duration) / 2);
+  }
+
+  &:where(:disabled, [data-disabled]) {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+/*************************************
+ *        Floating animations        *
+ *************************************/
+
+:is(.lb-lexical-suggestions) {
+  &:where([data-side="top"]) {
+    animation-name: lb-animation-slide-up;
+  }
+
+  &:where([data-side="bottom"]) {
+    animation-name: lb-animation-slide-down;
+  }
+
+  &:where([data-state="closed"]) {
+    animation-name: lb-animation-disappear;
+  }
+}
+
+@media (prefers-reduced-motion) {
+  .lb-lexical-suggestions:where(:not([data-state="closed"])) {
+    animation-name: lb-animation-appear;
+  }
+}
+
+/*************************************
+ *       Mention                     *
+ *************************************/
+
+.lb-lexical-mention {
+  padding: 0.1em 0.3em;
+  border-radius: calc(0.675 * var(--lb-radius));
+  background: var(--lb-accent-subtle);
+  color: var(--lb-accent);
+  box-decoration-break: clone;
+  font-weight: 500;
+
+  @include invisible-selection;
+
+  &:where([data-selected]) {
+    background: var(--lb-accent);
+    color: var(--lb-accent-foreground);
+  }
 }

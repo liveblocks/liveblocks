@@ -1,5 +1,4 @@
-@import "@liveblocks/react-ui/styles.css";
-@import "@liveblocks/react-ui/styles/dark/media-query.css";
+@import "@liveblocks/react-lexical/styles.css";
 
 @tailwind base;
 @tailwind components;
@@ -40,87 +39,4 @@ main {
   align-items: center;
   padding: 16px;
   background: #e8eaee;
-}
-
-.lb-thread,
-.lb-thread .lb-comment,
-.lb-thread .lb-composer {
-  background-color: white;
-  transition: background-color 300ms ease 0s;
-}
-
-.lb-thread:hover,
-.lb-thread:hover .lb-comment,
-.lb-thread:hover .lb-composer {
-  background-color: rgba(55, 53, 47, 0.03);
-}
-
-.lb-thread[data-state="active"],
-.lb-thread[data-state="active"] .lb-comment,
-.lb-thread[data-state="active"] .lb-composer {
-  background-color: rgba(255, 212, 0, 0.067);
-}
-
-.lb-thread-composer:after {
-  border-width: 0;
-}
-
-.lb-lexical-suggestions-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  background-color: white;
-  padding: 4px;
-  overflow: hidden;
-  border-radius: 6px;
-  box-shadow:
-    0px 10px 38px -10px rgba(22, 23, 24, 0.35),
-    0px 10px 20px -15px rgba(22, 23, 24, 0.2);
-}
-
-.lb-lexical-suggestions-list-item {
-  font-size: 13px;
-  line-height: 1;
-  border-radius: 3px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  height: 25px;
-  padding: 0 10px 0 10px;
-  position: relative;
-  user-select: none;
-  color: rgba(55, 53, 47, 0.8);
-}
-
-.lb-lexical-suggestions-list-item[data-highlighted] {
-  outline: none;
-  background-color: rgba(55, 53, 47, 0.1);
-  color: rgba(55, 53, 47, 0.8);
-}
-
-.lb-lexical-mention-suggestion-avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  vertical-align: middle;
-  overflow: hidden;
-  user-select: none;
-  user-select: none;
-  width: 15px;
-  height: 15px;
-  border-radius: 100%;
-}
-
-.lb-lexical-mention {
-  border-radius: 4px;
-  padding: 0.1em 0.3em;
-  cursor: pointer;
-  user-select: none;
-  background-color: #ebf4ff;
-  color: #1077ff;
-}
-
-.lb-lexical-mention[data-selected] {
-  background-color: #1077ff;
-  color: #ffffff;
 }

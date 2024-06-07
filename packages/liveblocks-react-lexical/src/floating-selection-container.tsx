@@ -1,6 +1,5 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import type { LexicalNode, RangeSelection } from "lexical";
-import { $getSelection, $isRangeSelection } from "lexical";
+import type { LexicalNode } from "lexical";
 import type { PropsWithChildren } from "react";
 import React, {
   forwardRef,
@@ -10,9 +9,9 @@ import React, {
   useRef,
 } from "react";
 import { createPortal } from "react-dom";
-import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
 import { createDOMRange } from "./create-dom-range";
+import { useSelection } from "./use-selection";
 
 export interface FloatingSelectionContainerProps {
   sideOffset?: number;
@@ -188,25 +187,3 @@ const FloatingSelectionContainerImpl = forwardRef<
     </div>
   );
 });
-
-function useSelection(): RangeSelection | null {
-  const [editor] = useLexicalComposerContext();
-
-  const subscribe = useCallback(
-    (onStoreChange: () => void) => {
-      return editor.registerUpdateListener(onStoreChange);
-    },
-    [editor]
-  );
-
-  const getSnapshot = useCallback(() => {
-    return editor.getEditorState().read(() => {
-      const selection = $getSelection();
-      if (!$isRangeSelection(selection)) return null;
-
-      return selection;
-    });
-  }, [editor]);
-
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-}
