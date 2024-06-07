@@ -82,13 +82,11 @@ type DateToString<T> = {
   [P in keyof T]: Date extends T[P] ? string : T[P];
 };
 
-// XXX Assign default param of DU later
-export type CreateSessionOptions<U extends BaseUserMeta> = {
+export type CreateSessionOptions<U extends BaseUserMeta = DU> = {
   userInfo: U["info"];
 };
 
-// XXX Assign default param of DU later
-export type IdentifyUserOptions<U extends BaseUserMeta> = {
+export type IdentifyUserOptions<U extends BaseUserMeta = DU> = {
   userInfo: U["info"];
 };
 
