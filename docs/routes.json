@@ -444,31 +444,31 @@
         "path": "/errors/liveblocks-client/access-tokens-not-enough-permissions"
       },
       {
-        "title": "The type you provided for Presence does not match its requirements",
+        "title": "The type you provided for 'Presence' is not a valid JSON object",
         "path": "/errors/Presence"
       },
       {
-        "title": "The type you provided for Storage does not match its requirements",
+        "title": "The type you provided for 'Storage' is not a valid LSON value",
         "path": "/errors/Storage"
       },
       {
-        "title": "The type you provided for UserMeta does not match its requirements",
+        "title": "The type you provided for 'UserMeta' does not match its requirements",
         "path": "/errors/UserMeta"
       },
       {
-        "title": "The type you provided for RoomEvent does not match its requirements",
+        "title": "The type you provided for 'RoomEvent' is not a valid JSON value",
         "path": "/errors/RoomEvent"
       },
       {
-        "title": "The type you provided for ThreadMetadata does not match its requirements",
+        "title": "The type you provided for 'ThreadMetadata' does not match its requirements",
         "path": "/errors/ThreadMetadata"
       },
       {
-        "title": "The type you provided for RoomInfo does not match its requirements",
+        "title": "The type you provided for 'RoomInfo' does not match its requirements",
         "path": "/errors/RoomInfo"
       },
       {
-        "title": "The type you provided for ActivitiesData does not match its requirements",
+        "title": "The type you provided for 'ActivitiesData' does not match its requirements",
         "path": "/errors/ActivitiesData"
       }
     ]
