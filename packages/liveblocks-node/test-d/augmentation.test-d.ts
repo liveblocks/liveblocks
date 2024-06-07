@@ -32,10 +32,9 @@ declare global {
       };
     };
 
-    RoomEvent: {
-      type: "emoji";
-      emoji: string;
-    };
+    RoomEvent:
+      | { type: "emoji"; emoji: string }
+      | { type: "beep"; times?: number };
 
     ThreadMetadata: {
       color: "red" | "blue";
@@ -134,12 +133,18 @@ async () => {
   // .broadcastEvent()
   {
     expectError(client.broadcastEvent("my-room"));
+    expectError(client.broadcastEvent("my-room", { date: Date }));
 
-    // Arbitrary JSON can be sent
-    await client.broadcastEvent("my-room", 123);
-    await client.broadcastEvent("my-room", { type: "emoji", text: "😍" });
+    // Arbitrary JSON will be errors
+    expectError(client.broadcastEvent("my-room", 123));
+    expectError(client.broadcastEvent("my-room", [1, 2, 3]));
+    expectError(client.broadcastEvent("my-room", { type: "foo" }));
+    expectError(client.broadcastEvent("my-room", { type: "boop" }));
+
+    // Only correct room events can be sent
+    await client.broadcastEvent("my-room", { type: "emoji", emoji: "😍" });
     await client.broadcastEvent("my-room", { type: "beep" });
-    await client.broadcastEvent("my-room", { type: "boop" });
+    await client.broadcastEvent("my-room", { type: "beep", times: 3 });
   }
 
   // .getComment()

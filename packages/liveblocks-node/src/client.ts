@@ -168,7 +168,7 @@ export class Liveblocks<
   _P extends JsonObject = DP,
   _S extends LsonObject = DS,
   U extends BaseUserMeta = DU,
-  _E extends Json = DE,
+  E extends Json = DE,
   M extends BaseMetadata = DM,
 > {
   /** @internal */
@@ -636,7 +636,7 @@ export class Liveblocks<
    * @param roomId The id of the room to broadcast the event to.
    * @param message The message to broadcast. It can be any JSON serializable value.
    */
-  public async broadcastEvent(roomId: string, message: Json): Promise<void> {
+  public async broadcastEvent(roomId: string, message: E): Promise<void> {
     const res = await this.post(
       url`/v2/rooms/${roomId}/broadcast_event`,
       message

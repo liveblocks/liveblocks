@@ -99,12 +99,15 @@ async () => {
   // .broadcastEvent()
   {
     expectError(client.broadcastEvent("my-room"));
+    expectError(client.broadcastEvent("my-room", { date: Date }));
 
-    // Arbitrary JSON can be sent
     await client.broadcastEvent("my-room", 123);
-    await client.broadcastEvent("my-room", { type: "emoji", text: "😍" });
-    await client.broadcastEvent("my-room", { type: "beep" });
+    await client.broadcastEvent("my-room", [1, 2, 3]);
+    await client.broadcastEvent("my-room", { type: "foo" });
     await client.broadcastEvent("my-room", { type: "boop" });
+    await client.broadcastEvent("my-room", { type: "emoji", emoji: "😍" });
+    await client.broadcastEvent("my-room", { type: "beep" });
+    await client.broadcastEvent("my-room", { type: "beep", times: 3 });
   }
 
   // .getComment()
