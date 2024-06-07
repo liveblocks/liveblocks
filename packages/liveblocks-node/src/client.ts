@@ -71,10 +71,12 @@ type DateToString<T> = {
   [P in keyof T]: Date extends T[P] ? string : T[P];
 };
 
+// XXX Assign default param of DU later
 export type CreateSessionOptions<U extends BaseUserMeta> = {
   userInfo: U["info"];
 };
 
+// XXX Assign default param of DU later
 export type IdentifyUserOptions<U extends BaseUserMeta> = {
   userInfo: U["info"];
 };
@@ -654,18 +656,22 @@ export class Liveblocks<
    * @param format (optional) Set to return `plan-lson` representation by default. If set to `json`, the output will be formatted as a simplified JSON representation of the Storage tree.
    * In that format, each LiveObject and LiveMap will be formatted as a simple JSON object, and each LiveList will be formatted as a simple JSON array. This is a lossy format because information about the original data structures is not retained, but it may be easier to work with.
    */
+  // XXX Now that we know DS, we can return a better return type here
   public getStorageDocument(
     roomId: string,
     format: "plain-lson"
   ): Promise<PlainLsonObject>;
 
+  // XXX Now that we know DS, we can return a better return type here
   public getStorageDocument(roomId: string): Promise<PlainLsonObject>; // Default to 'plain-lson' when no format is provided
 
+  // XXX Now that we know DS, we can return a better return type here
   public getStorageDocument(
     roomId: string,
     format: "json"
   ): Promise<JsonObject>;
 
+  // XXX Now that we know DS, we can return a better return type here
   public async getStorageDocument(
     roomId: string,
     format: "plain-lson" | "json" = "plain-lson"
@@ -686,6 +692,7 @@ export class Liveblocks<
    * @param document The document to initialize the storage with.
    * @returns The initialized storage document. It is of the same format as the one passed in.
    */
+  // XXX Now that we know DS, we can accept a better input type here
   public async initializeStorageDocument(
     roomId: string,
     document: PlainLsonObject
