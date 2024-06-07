@@ -6,6 +6,8 @@ import type {
   CommentBodyBlockElement,
   CommentData,
   Json,
+  PlainLson,
+  JsonObject,
 } from "@liveblocks/core";
 
 async () => {
@@ -108,6 +110,26 @@ async () => {
     await client.broadcastEvent("my-room", { type: "emoji", emoji: "😍" });
     await client.broadcastEvent("my-room", { type: "beep" });
     await client.broadcastEvent("my-room", { type: "beep", times: 3 });
+  }
+
+  // .getStorageDocument() (implicit plain LSON format)
+  {
+    const root = await client.getStorageDocument("my-room");
+    expectType<"LiveObject">(root.liveblocksType);
+    expectType<PlainLson | undefined>(root.data.liveblocksType);
+  }
+
+  // .getStorageDocument() (explicit plain LSON format)
+  {
+    const root = await client.getStorageDocument("my-room", "plain-lson");
+    expectType<"LiveObject">(root.liveblocksType);
+    expectType<PlainLson | undefined>(root.data.liveblocksType);
+  }
+
+  // .getStorageDocument() (simplified JSON format)
+  {
+    const root = await client.getStorageDocument("my-room", "json");
+    expectType<JsonObject>(root);
   }
 
   // .getComment()
