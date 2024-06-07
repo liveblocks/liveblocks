@@ -63,9 +63,15 @@ export type LiveblocksOptions = {
   baseUrl?: string;
 };
 
-type Nullable<T> = {
-  [P in keyof T]: T[P] | null;
+type OptionalKeys<T> = {
+  [K in keyof T]-?: {} extends Pick<T, K> ? K : never;
+}[keyof T];
+
+type MakeOptionalFieldsNullable<T> = {
+  [K in keyof T]: K extends OptionalKeys<T> ? T[K] | null : T[K];
 };
+
+type Patchable<T> = Partial<MakeOptionalFieldsNullable<T>>;
 
 type DateToString<T> = {
   [P in keyof T]: Date extends T[P] ? string : T[P];
@@ -1232,11 +1238,11 @@ export class Liveblocks<
    * @param params.data.updatedAt (optional) The date the thread is set to be updated.
    * @returns The updated thread.
    */
-  public async editThreadMetadata<M extends BaseMetadata = DM>(params: {
+  public async editThreadMetadata(params: {
     roomId: string;
     threadId: string;
     data: {
-      metadata: Nullable<BaseMetadata>;
+      metadata: Patchable<M>;
       userId: string;
       updatedAt?: Date;
     };

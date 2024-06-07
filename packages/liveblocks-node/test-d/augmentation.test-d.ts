@@ -39,6 +39,7 @@ declare global {
 
     ThreadMetadata: {
       color: "red" | "blue";
+      resolved?: boolean;
     };
 
     RoomInfo: {
@@ -202,6 +203,65 @@ async () => {
     expectType<"red" | "blue">(thread.metadata.color);
     expectError(thread.metadata.nonexisting);
     expectType<CommentData[]>(thread.comments);
+  }
+
+  // .editThreadMetadata()
+  {
+    const roomId = "my-room";
+    const threadId = "th_xxx";
+    const userId = "user-123";
+
+    // Invalid calls
+    expectError(client.editThreadMetadata({ roomId }));
+    expectError(client.editThreadMetadata({ threadId }));
+    // TODO: Uncomment later, when tsd supports ts2739 error code
+    // expectError(
+    //   client.editThreadMetadata({
+    //     roomId: "my-room",
+    //     threadId: "th_xxx",
+    //     data: {},
+    //   })
+    // );
+    expectError(
+      client.editThreadMetadata({ roomId, threadId, data: { userId } })
+    );
+
+    // Incorrect metadata
+    expectError(
+      client.editThreadMetadata({
+        roomId,
+        threadId,
+        data: { userId, metadata: { foo: "bar" } }, // Incorrect metadata
+      })
+    );
+
+    await client.editThreadMetadata({
+      roomId,
+      threadId,
+      data: { userId, metadata: {} }, // Not updating any fields is useless, but fine
+    });
+
+    await client.editThreadMetadata({
+      roomId,
+      threadId,
+      data: { userId, metadata: { color: "red", resolved: null } }, // Correct metadata updates
+    });
+
+    expectError(
+      client.editThreadMetadata({
+        roomId,
+        threadId,
+        data: { userId, metadata: { color: null } }, // Color cannot be set to null
+      })
+    );
+
+    expectError(
+      client.editThreadMetadata({
+        roomId,
+        threadId,
+        data: { userId, metadata: { foo: null } }, // Undefined fields
+      })
+    );
   }
 
   // .getThreads()
