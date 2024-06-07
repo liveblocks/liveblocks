@@ -137,7 +137,7 @@ export const FloatingComposer = forwardRef<
       <FloatingSelectionContainer
         sideOffset={5}
         alignOffset={0}
-        collisionPadding={10}
+        collisionPadding={15}
       >
         <Composer
           autoFocus

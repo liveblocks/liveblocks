@@ -43,20 +43,14 @@ export const FloatingSelectionContainer = forwardRef<
     };
   });
 
-  const root = editor.getRootElement();
-  if (root === null) return null;
-
-  const parent = root.offsetParent;
-  if (parent === null) return null;
-
   return createPortal(
     <FloatingSelectionContainerImpl
       {...props}
       selection={info}
-      container={parent}
+      container={document.body}
       ref={forwardedRef}
     />,
-    parent
+    document.body
   );
 });
 
@@ -117,10 +111,7 @@ const FloatingSelectionContainerImpl = forwardRef<
     // Get the bounding client rect of the DOM (selection) range
     const rect = range.getBoundingClientRect();
 
-    // Set the position of the floating container
-    let left =
-      rect.left - container.getBoundingClientRect().left + container.scrollLeft;
-
+    let left = rect.left + container.scrollLeft;
     // Apply the align offset
     left += alignOffset;
 
@@ -131,29 +122,17 @@ const FloatingSelectionContainerImpl = forwardRef<
     // Ensure content does not overflow the container
     if (left <= collisionPadding) {
       left = collisionPadding;
-    } else if (
-      left + width >=
-      container.getBoundingClientRect().width - collisionPadding
-    ) {
-      left = container.getBoundingClientRect().width - width - collisionPadding;
+    } else if (left + width >= container.clientWidth - collisionPadding) {
+      left = container.clientWidth - width - collisionPadding;
     }
 
-    let top =
-      rect.bottom - container.getBoundingClientRect().top + container.scrollTop;
-
+    let top = rect.bottom + container.scrollTop;
     // Apply the side offset
     top += sideOffset;
 
-    // Get the height of the content
     const height = content.getBoundingClientRect().height;
-
-    if (rect.bottom + height >= window.innerHeight - collisionPadding) {
-      top =
-        rect.top -
-        container.getBoundingClientRect().top +
-        container.scrollTop -
-        height;
-      top -= sideOffset;
+    if (top + height >= container.clientHeight - collisionPadding) {
+      top = rect.top - height - sideOffset;
     }
 
     content.style.left = `${left}px`;

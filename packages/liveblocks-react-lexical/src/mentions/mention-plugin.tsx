@@ -356,6 +356,7 @@ export function MentionPlugin() {
         <OnResetMatchCallbackContext.Provider value={() => setMatch(null)}>
           <SuggestionsPortal
             rect={rect}
+            container={document.body}
             key={matchingString}
             sideOffset={5}
             alignOffset={5}
@@ -392,12 +393,14 @@ export function MentionPlugin() {
 function SuggestionsPortal({
   children,
   rect,
+  container,
   sideOffset = 0,
   alignOffset = 0,
   collisionPadding = 0,
 }: {
   children: ReactNode;
   rect: DOMRect;
+  container: Element;
   sideOffset?: number;
   alignOffset?: number;
   collisionPadding?: number;
@@ -405,57 +408,35 @@ function SuggestionsPortal({
   const [editor] = useLexicalComposerContext();
   const divRef = useRef<HTMLDivElement>(null);
 
-  const root = editor.getRootElement();
-
   const positionContent = useCallback(() => {
     const content = divRef.current;
     if (content === null) return;
 
-    const container = content.offsetParent;
-    // const container = document.body;
-    if (container === null) return;
-
-    // Set the position of the floating container
-    let left =
-      rect.left - container.getBoundingClientRect().left + container.scrollLeft;
-
+    let left = rect.left + container.scrollLeft;
     // Apply the align offset
     left += alignOffset;
 
     // Get the width of the content
     const width = content.getBoundingClientRect().width;
-
     // Ensure content does not overflow the container
     if (left <= collisionPadding) {
       left = collisionPadding;
-    } else if (
-      left + width >=
-      container.getBoundingClientRect().width - collisionPadding
-    ) {
-      left = container.getBoundingClientRect().width - width - collisionPadding;
+    } else if (left + width >= container.clientWidth - collisionPadding) {
+      left = container.clientWidth - width - collisionPadding;
     }
 
-    let top =
-      rect.bottom - container.getBoundingClientRect().top + container.scrollTop;
-
+    let top = rect.bottom + container.scrollTop;
     // Apply the side offset
     top += sideOffset;
 
-    // Get the height of the content
     const height = content.getBoundingClientRect().height;
-
-    if (rect.bottom + height >= window.innerHeight - collisionPadding) {
-      top =
-        rect.top -
-        container.getBoundingClientRect().top +
-        container.scrollTop -
-        height;
-      top -= sideOffset;
+    if (top + height >= container.clientHeight - collisionPadding) {
+      top = rect.top - height - sideOffset;
     }
 
     content.style.left = `${left}px`;
     content.style.top = `${top}px`;
-  }, [rect, alignOffset, sideOffset, collisionPadding]);
+  }, [rect, alignOffset, sideOffset, collisionPadding, container]);
 
   useEffect(() => {
     const editable = editor.getRootElement();
@@ -468,16 +449,10 @@ function SuggestionsPortal({
     };
   }, [editor, positionContent]);
 
-  if (root === null) return null;
-
-  const parent = root.offsetParent;
-  // const parent = document.body;
-  if (parent === null) return null;
-
   return createPortal(
     <div ref={divRef} style={{ position: "absolute" }}>
       {children}
     </div>,
-    parent
+    container
   );
 }

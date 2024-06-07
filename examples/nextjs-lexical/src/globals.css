@@ -32,7 +32,8 @@ a {
 }
 
 main {
-  position: fixed;
+  position: relative;
+  height: 100vh;
   inset: 0;
   display: flex;
   justify-content: center;
