@@ -58,64 +58,68 @@ export default function transformer(
       )?.typeParameters;
 
       if (isCreateRoomContext) {
-        // Presence
-        if (
-          typeParameters.params[0] &&
-          typeParameters.params[0].type !== "TSNeverKeyword"
-        ) {
-          globalTypes.Presence = typeParameters.params[0];
-        }
+        if (typeParameters) {
+          // Presence
+          if (
+            typeParameters.params[0] &&
+            typeParameters.params[0].type !== "TSNeverKeyword"
+          ) {
+            globalTypes.Presence = typeParameters.params[0];
+          }
 
-        // Storage
-        if (
-          typeParameters.params[1] &&
-          typeParameters.params[1].type !== "TSNeverKeyword"
-        ) {
-          globalTypes.Storage = typeParameters.params[1];
-        }
+          // Storage
+          if (
+            typeParameters.params[1] &&
+            typeParameters.params[1].type !== "TSNeverKeyword"
+          ) {
+            globalTypes.Storage = typeParameters.params[1];
+          }
 
-        // UserMeta
-        if (
-          typeParameters.params[2] &&
-          typeParameters.params[2].type !== "TSNeverKeyword"
-        ) {
-          globalTypes.UserMeta = typeParameters.params[2];
-        }
+          // UserMeta
+          if (
+            typeParameters.params[2] &&
+            typeParameters.params[2].type !== "TSNeverKeyword"
+          ) {
+            globalTypes.UserMeta = typeParameters.params[2];
+          }
 
-        // RoomEvent
-        if (
-          typeParameters.params[3] &&
-          typeParameters.params[3].type !== "TSNeverKeyword"
-        ) {
-          globalTypes.RoomEvent = typeParameters.params[3];
-        }
+          // RoomEvent
+          if (
+            typeParameters.params[3] &&
+            typeParameters.params[3].type !== "TSNeverKeyword"
+          ) {
+            globalTypes.RoomEvent = typeParameters.params[3];
+          }
 
-        // ThreadMetadata
-        if (
-          typeParameters.params[4] &&
-          typeParameters.params[4].type !== "TSNeverKeyword"
-        ) {
-          globalTypes.ThreadMetadata = typeParameters.params[4];
+          // ThreadMetadata
+          if (
+            typeParameters.params[4] &&
+            typeParameters.params[4].type !== "TSNeverKeyword"
+          ) {
+            globalTypes.ThreadMetadata = typeParameters.params[4];
+          }
         }
 
         removableFactoryImports.push("createRoomContext");
       }
 
       if (isCreateLiveblocksContext) {
-        // UserMeta
-        if (
-          typeParameters.params[0] &&
-          typeParameters.params[0].type !== "TSNeverKeyword"
-        ) {
-          globalTypes.UserMeta = typeParameters.params[0];
-        }
+        if (typeParameters) {
+          // UserMeta
+          if (
+            typeParameters.params[0] &&
+            typeParameters.params[0].type !== "TSNeverKeyword"
+          ) {
+            globalTypes.UserMeta = typeParameters.params[0];
+          }
 
-        // ThreadMetadata
-        if (
-          typeParameters.params[1] &&
-          typeParameters.params[1].type !== "TSNeverKeyword"
-        ) {
-          globalTypes.ThreadMetadata = typeParameters.params[1];
+          // ThreadMetadata
+          if (
+            typeParameters.params[1] &&
+            typeParameters.params[1].type !== "TSNeverKeyword"
+          ) {
+            globalTypes.ThreadMetadata = typeParameters.params[1];
+          }
         }
 
         removableFactoryImports.push("createLiveblocksContext");
