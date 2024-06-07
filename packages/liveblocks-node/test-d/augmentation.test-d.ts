@@ -52,6 +52,18 @@ declare global {
 async () => {
   const client = new Liveblocks({ secret: "sk_xxx" });
 
+  // .getActiveUsers()
+  {
+    const users = (await client.getActiveUsers("my-room")).data;
+    const user = users[0]!;
+    expectType<"user">(user.type);
+    expectType<number>(user.connectionId);
+    expectType<string | null>(user.id);
+    expectType<string>(user.info.name);
+    expectType<number>(user.info.age);
+    expectError(user.info.nonexisting);
+  }
+
   // .getComment()
   {
     const comment = await client.getComment({

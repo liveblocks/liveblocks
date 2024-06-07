@@ -5,10 +5,25 @@ import type {
   CommentBody,
   CommentBodyBlockElement,
   CommentData,
+  Json,
 } from "@liveblocks/core";
 
 async () => {
   const client = new Liveblocks({ secret: "sk_xxx" });
+
+  // .getActiveUsers()
+  {
+    const users = (await client.getActiveUsers("my-room")).data;
+    const user = users[0]!;
+    expectType<"user">(user.type);
+    expectType<number>(user.connectionId);
+    expectType<string | null>(user.id);
+
+    const info = user.info!;
+    expectType<string | undefined>(info.name);
+    expectType<Json | undefined>(info.age);
+    expectType<Json | undefined>(info.nonexisting);
+  }
 
   // .getComment()
   {

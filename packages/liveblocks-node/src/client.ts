@@ -6,17 +6,23 @@
 import type {
   ActivityData,
   BaseMetadata,
+  BaseUserMeta,
   CommentBody,
   CommentData,
   CommentDataPlain,
   CommentUserReaction,
   CommentUserReactionPlain,
+  DE,
   DM,
+  DP,
+  DS,
+  DU,
   InboxNotificationData,
   InboxNotificationDataPlain,
   IUserInfo,
   Json,
   JsonObject,
+  LsonObject,
   PlainLsonObject,
   QueryMetadata,
   RoomNotificationSettings,
@@ -66,8 +72,8 @@ type DateToString<T> = {
   [P in keyof T]: Date extends T[P] ? string : T[P];
 };
 
-export type CreateSessionOptions = {
-  userInfo: IUserInfo;
+export type CreateSessionOptions<U extends BaseUserMeta> = {
+  userInfo: U["info"];
 };
 
 export type AuthResponse = {
@@ -109,11 +115,11 @@ export type RoomData = {
 
 type RoomDataPlain = DateToString<RoomData>;
 
-export type RoomUser<UserInfo> = {
+export type RoomUser<U extends BaseUserMeta> = {
   type: "user";
   id: string | null;
   connectionId: number;
-  info: UserInfo;
+  info: U["info"];
 };
 
 export type Schema = {
@@ -130,7 +136,13 @@ type SchemaPlain = DateToString<Schema>;
 /**
  * Interact with the Liveblocks API from your Node.js backend.
  */
-export class Liveblocks {
+export class Liveblocks<
+  _P extends JsonObject = DP,
+  _S extends LsonObject = DS,
+  U extends BaseUserMeta = DU,
+  _E extends Json = DE,
+  M extends BaseMetadata = DM,
+> {
   /** @internal */
   private readonly _secret: string;
   /** @internal */
@@ -235,7 +247,7 @@ export class Liveblocks {
    * `other.info` property.
    *
    */
-  prepareSession(userId: string, options?: CreateSessionOptions): Session {
+  prepareSession(userId: string, options?: CreateSessionOptions<U>): Session {
     return new Session(this.post.bind(this), userId, options?.userInfo);
   }
 
@@ -581,9 +593,9 @@ export class Liveblocks {
    * @param roomId The id of the room to get the users from.
    * @returns A list of users currently present in the requested room.
    */
-  public async getActiveUsers<T = unknown>(
+  public async getActiveUsers(
     roomId: string
-  ): Promise<{ data: RoomUser<T>[] }> {
+  ): Promise<{ data: RoomUser<U>[] }> {
     const res = await this.get(url`/v2/rooms/${roomId}/active_users`);
 
     if (!res.ok) {
@@ -591,7 +603,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    return (await res.json()) as Promise<{ data: RoomUser<T>[] }>;
+    return (await res.json()) as Promise<{ data: RoomUser<U>[] }>;
   }
 
   /**
