@@ -31,10 +31,9 @@ type MyUserMeta = {
   };
 };
 
-type MyRoomEvent = {
-  type: "emoji";
-  value: string;
-};
+type MyRoomEvent =
+  | { type: "emoji"; emoji: string }
+  | { type: "beep"; times?: number };
 
 type MyThreadMetadata = {
   color: "red" | "blue";
