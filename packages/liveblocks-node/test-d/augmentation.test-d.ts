@@ -5,15 +5,47 @@ import type {
   CommentBody,
   CommentBodyBlockElement,
   CommentData,
+  LiveList,
+  LiveMap,
+  LiveObject,
 } from "@liveblocks/core";
 
-type ThreadMetadata = {
-  abc: number;
-};
-
+//
+// User-provided type augmentations
+//
 declare global {
   interface Liveblocks {
-    ThreadMetadata: ThreadMetadata;
+    Presence: {
+      cursor: { x: number; y: number };
+    };
+
+    Storage: {
+      animals: LiveList<string>;
+      scores: LiveMap<string, number>;
+      person: LiveObject<{ name: string; age: number }>;
+    };
+
+    UserMeta: {
+      info: {
+        name: string;
+        age: number;
+      };
+    };
+
+    RoomEvent: {
+      type: "emoji";
+      emoji: string;
+    };
+
+    ThreadMetadata: {
+      color: "red" | "blue";
+    };
+
+    RoomInfo: {
+      name: string;
+      url?: string;
+      type: "public" | "private";
+    };
   }
 }
 
@@ -53,7 +85,7 @@ async () => {
     expectType<string>(thread.roomId);
     expectType<Date>(thread.createdAt);
     expectType<Date | undefined>(thread.updatedAt);
-    expectType<number>(thread.metadata.abc);
+    expectType<"red" | "blue">(thread.metadata.color);
     expectError(thread.metadata.nonexisting);
     expectType<CommentData[]>(thread.comments);
   }
