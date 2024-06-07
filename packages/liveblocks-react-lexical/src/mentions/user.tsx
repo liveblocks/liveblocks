@@ -1,4 +1,5 @@
 import { useUser } from "@liveblocks/react";
+import { useOverrides } from "@liveblocks/react-ui";
 import type { HTMLAttributes } from "react";
 import React, { forwardRef } from "react";
 
@@ -14,8 +15,10 @@ export const User = forwardRef<HTMLSpanElement, UserProps>(
     const { userId, className, ...spanProps } = props;
 
     const { user, isLoading } = useUser(userId);
+    const $ = useOverrides();
 
-    const name = user === undefined || user === null ? "Anonymous" : user.name;
+    const name =
+      user === undefined || user === null ? $.USER_UNKNOWN : user.name;
 
     return (
       <span
