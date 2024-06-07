@@ -158,16 +158,6 @@ type SchemaPlain = DateToString<Schema>;
  * Interact with the Liveblocks API from your Node.js backend.
  */
 export class Liveblocks<
-  //
-  // XXX Decide about the final ordering here.
-  // I think it's nice to stick to the same params ordering as elsewhere. On
-  // the other hand, it's unlikely that we will need to use P here on the
-  // client side, since it's not available on the server (yet).
-  //
-  // If we _ever_ anticipate using P on the server, I'm for using consistent
-  // param ordering. We can always add it to the end later as an optional, but
-  // at the cost of inconsistent param ordering.
-  //
   _P extends JsonObject = DP,
   S extends LsonObject = DS,
   U extends BaseUserMeta = DU,
