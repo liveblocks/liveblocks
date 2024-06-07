@@ -1791,6 +1791,8 @@ undo();
 Creates a callback function that lets you mutate Liveblocks state.
 
 ```tsx
+import { useMutation } from "@liveblocks/react/suspense";
+
 const fillWithRed = useMutation(
   // Mutation context is passed as the first argument
   ({ storage, setMyPresence }) => {
@@ -1959,6 +1961,8 @@ return a loading state and will throw when there’s an error.
 Returns the subscription status of a thread.
 
 ```tsx
+import { useThreadSubscription } from "@liveblocks/react/suspense";
+
 const { status, unreadSince } = useThreadSubscription("th_xxx");
 ```
 
@@ -1968,6 +1972,8 @@ Returns a function that creates a thread with an initial comment, and optionally
 some metadata.
 
 ```tsx
+import { useCreateThread } from "@liveblocks/react/suspense";
+
 const createThread = useCreateThread();
 const thread = createThread({ body: {}, metadata: {} });
 ```
@@ -1984,6 +1990,8 @@ To delete an existing metadata property, set its value to `null`. Passing
 </Banner>
 
 ```tsx
+import { useEditThreadMetadata } from "@liveblocks/react/suspense";
+
 const editThreadMetadata = useEditThreadMetadata();
 const thread = editThreadMetadata({ threadId: "th_xxx", metadata: {} });
 ```
@@ -1993,6 +2001,8 @@ const thread = editThreadMetadata({ threadId: "th_xxx", metadata: {} });
 Returns a function that marks a thread as read.
 
 ```tsx
+import { useMarkThreadAsRead } from "@liveblocks/react/suspense";
+
 const markThreadAsRead = useMarkThreadAsRead();
 markThreadAsRead("th_xxx");
 ```
@@ -2002,6 +2012,8 @@ markThreadAsRead("th_xxx");
 Returns a function that adds a comment to a thread.
 
 ```tsx
+import { useCreateComment } from "@liveblocks/react/suspense";
+
 const createComment = useCreateComment();
 const comment = createComment({ threadId: "th_xxx", body: {} });
 ```
@@ -2011,6 +2023,8 @@ const comment = createComment({ threadId: "th_xxx", body: {} });
 Returns a function that edits a comment’s body.
 
 ```tsx
+import { useEditComment } from "@liveblocks/react/suspense";
+
 const editComment = useEditComment();
 const comment = editComment({
   threadId: "th_xxx",
@@ -2025,6 +2039,8 @@ Returns a function that deletes a comment. If it is the last non-deleted
 comment, the thread also gets deleted.
 
 ```tsx
+import { useDeleteComment } from "@liveblocks/react/suspense";
+
 const deleteComment = useDeleteComment();
 deleteComment({ threadId: "th_xxx", commentId: "cm_xxx" });
 ```
@@ -2034,6 +2050,8 @@ deleteComment({ threadId: "th_xxx", commentId: "cm_xxx" });
 Returns a function that adds a reaction to a comment.
 
 ```tsx
+import { useAddReaction } from "@liveblocks/react/suspense";
+
 const addReaction = useAddReaction();
 addReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
 ```
@@ -2043,6 +2061,8 @@ addReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
 Returns a function that removes a reaction from a comment.
 
 ```tsx
+import { useRemoveReaction } from "@liveblocks/react/suspense";
+
 const removeReaction = useRemoveReaction();
 removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
 ```
@@ -2062,6 +2082,8 @@ to hear from you.
 Returns the inbox notifications for the current user.
 
 ```tsx
+import { useInboxNotifications } from "@liveblocks/react/suspense";
+
 const { inboxNotifications, error, isLoading } = useInboxNotifications();
 ```
 
@@ -2073,6 +2095,8 @@ return a loading state and will throw when there’s an error.
 Returns the number of unread inbox notifications for the current user.
 
 ```tsx
+import { useUnreadInboxNotificationsCount } from "@liveblocks/react/suspense";
+
 const { count, error, isLoading } = useUnreadInboxNotificationsCount();
 ```
 
@@ -2084,6 +2108,8 @@ return a loading state and will throw when there’s an error.
 Returns a function that marks an inbox notification as read.
 
 ```tsx
+import { useMarkInboxNotificationAsRead } from "@liveblocks/react/suspense";
+
 const markInboxNotificationAsRead = useMarkInboxNotificationAsRead();
 markInboxNotificationAsRead("in_xxx");
 ```
@@ -2093,6 +2119,8 @@ markInboxNotificationAsRead("in_xxx");
 Returns a function that marks all inbox notifications as read.
 
 ```tsx
+import { useMarkAllInboxNotificationsAsRead } from "@liveblocks/react/suspense";
+
 const markAllInboxNotificationsAsRead = useMarkAllInboxNotificationsAsRead();
 markAllInboxNotificationsAsRead();
 ```
@@ -2102,6 +2130,8 @@ markAllInboxNotificationsAsRead();
 Returns the thread associated with a `"thread"` inbox notification.
 
 ```tsx
+import { useInboxNotificationThread } from "@liveblocks/react/suspense";
+
 const thread = useInboxNotificationThread("in_xxx");
 ```
 
@@ -2111,6 +2141,8 @@ Returns the user’s notification settings for the current room and a function t
 update them.
 
 ```tsx
+import { useRoomNotificationSettings } from "@liveblocks/react/suspense";
+
 const [{ settings }, updateSettings] = useRoomNotificationSettings();
 ```
 
@@ -2123,6 +2155,8 @@ Use this if you don’t need the current user’s notification settings in your
 component, but you need to update them (e.g. an unsubscribe button).
 
 ```tsx
+import { useUpdateRoomNotificationSettings } from "@liveblocks/react/suspense";
+
 const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
 updateRoomNotificationSettings({ threads: "all" });
 ```
