@@ -27,6 +27,7 @@ import type {
   RoomNotificationSettings,
   ThreadData,
   ThreadDataPlain,
+  ToImmutable,
 } from "@liveblocks/core";
 import {
   convertToCommentData,
@@ -48,6 +49,10 @@ import {
   urljoin,
   type URLSafeString,
 } from "./utils";
+
+type ToSimplifiedJson<S extends LsonObject> = LsonObject extends S
+  ? JsonObject
+  : ToImmutable<S>;
 
 export type LiveblocksOptions = {
   /**
@@ -166,7 +171,7 @@ export class Liveblocks<
   // at the cost of inconsistent param ordering.
   //
   _P extends JsonObject = DP,
-  _S extends LsonObject = DS,
+  S extends LsonObject = DS,
   U extends BaseUserMeta = DU,
   E extends Json = DE,
   M extends BaseMetadata = DM,
@@ -669,32 +674,28 @@ export class Liveblocks<
    * @param format (optional) Set to return `plan-lson` representation by default. If set to `json`, the output will be formatted as a simplified JSON representation of the Storage tree.
    * In that format, each LiveObject and LiveMap will be formatted as a simple JSON object, and each LiveList will be formatted as a simple JSON array. This is a lossy format because information about the original data structures is not retained, but it may be easier to work with.
    */
-  // XXX Now that we know DS, we can return a better return type here
   public getStorageDocument(
     roomId: string,
     format: "plain-lson"
   ): Promise<PlainLsonObject>;
 
-  // XXX Now that we know DS, we can return a better return type here
   public getStorageDocument(roomId: string): Promise<PlainLsonObject>; // Default to 'plain-lson' when no format is provided
 
-  // XXX Now that we know DS, we can return a better return type here
   public getStorageDocument(
     roomId: string,
     format: "json"
-  ): Promise<JsonObject>;
+  ): Promise<ToSimplifiedJson<S>>;
 
-  // XXX Now that we know DS, we can return a better return type here
   public async getStorageDocument(
     roomId: string,
     format: "plain-lson" | "json" = "plain-lson"
-  ): Promise<PlainLsonObject | JsonObject> {
+  ): Promise<PlainLsonObject | ToSimplifiedJson<S>> {
     const res = await this.get(url`/v2/rooms/${roomId}/storage`, { format });
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
-    return (await res.json()) as Promise<PlainLsonObject | JsonObject>;
+    return (await res.json()) as Promise<PlainLsonObject | ToSimplifiedJson<S>>;
   }
 
   /**

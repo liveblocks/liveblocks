@@ -9,7 +9,6 @@ import type {
   LiveMap,
   LiveObject,
   PlainLson,
-  JsonObject,
 } from "@liveblocks/core";
 
 //
@@ -166,7 +165,10 @@ async () => {
   // .getStorageDocument() (simplified JSON format)
   {
     const root = await client.getStorageDocument("my-room", "json");
-    expectType<JsonObject>(root);
+    expectType<readonly string[]>(root.animals);
+    expectType<string>(root.person.name);
+    expectType<number>(root.person.age);
+    expectType<number | undefined>(root.scores.get("foo"));
   }
 
   // .getComment()
