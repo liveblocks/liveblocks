@@ -55,9 +55,9 @@ async () => {
   // .getComment()
   {
     const comment = await client.getComment({
-      roomId: "room-id",
-      threadId: "th_threadId",
-      commentId: "cm_commentId",
+      roomId: "my-room",
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
     });
     expectType<"comment">(comment.type);
     expectType<string>(comment.id);
@@ -77,8 +77,8 @@ async () => {
   // .getThread()
   {
     const thread = await client.getThread({
-      roomId: "room-id",
-      threadId: "th_threadId",
+      roomId: "my-room",
+      threadId: "th_xxx",
     });
     expectType<"thread">(thread.type);
     expectType<string>(thread.id);
@@ -93,9 +93,9 @@ async () => {
   // .addCommentReaction()
   {
     const reaction = await client.addCommentReaction({
-      roomId: "room-id",
-      threadId: "th_threadId",
-      commentId: "cm_commentId",
+      roomId: "my-room",
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
       data: {
         emoji: "👍",
         userId: "user-id",
