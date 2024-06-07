@@ -17,6 +17,9 @@ jobs:
             "@liveblocks/redux",
             "@liveblocks/zustand",
             "@liveblocks/node",
+            "@liveblocks/react-ui",
+            "@liveblocks/react-lexical",
+            "@liveblocks/node-lexical",
           ]
 
     steps:
