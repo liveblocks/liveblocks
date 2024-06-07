@@ -11,6 +11,45 @@ import type {
 async () => {
   const client = new Liveblocks({ secret: "sk_xxx" });
 
+  // .prepareSession()
+  {
+    const session = await client.prepareSession("user-123");
+    session.allow("org1:*", session.READ_ACCESS);
+    const resp = await session.authorize();
+    expectType<number>(resp.status);
+    expectType<string>(resp.body);
+    expectType<Error | undefined>(resp.error);
+  }
+
+  // .prepareSession() with user info
+  {
+    const session = await client.prepareSession("user-123", {
+      userInfo: { name: "Vincent", age: 42 },
+    });
+    session.allow("org1:*", session.READ_ACCESS);
+    const resp = await session.authorize();
+    expectType<number>(resp.status);
+    expectType<string>(resp.body);
+    expectType<Error | undefined>(resp.error);
+  }
+
+  // .prepareSession() with arbitrary user info
+  {
+    await client.prepareSession("user-123", {
+      userInfo:
+        // Arbitrary user info is fine...
+        { foo: "bar" },
+    });
+
+    expectError(
+      await client.prepareSession("user-123", {
+        userInfo:
+          // ...but non-JSON is not
+          { foo: "bar", notJson: new Date() },
+      })
+    );
+  }
+
   // .getActiveUsers()
   {
     const users = (await client.getActiveUsers("my-room")).data;

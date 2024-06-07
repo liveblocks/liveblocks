@@ -52,6 +52,35 @@ declare global {
 async () => {
   const client = new Liveblocks({ secret: "sk_xxx" });
 
+  // .prepareSession()
+  {
+    const session = await client.prepareSession("user-123");
+    session.allow("org1:*", session.READ_ACCESS);
+    const resp = await session.authorize();
+    expectType<number>(resp.status);
+    expectType<string>(resp.body);
+    expectType<Error | undefined>(resp.error);
+  }
+
+  // .prepareSession() with user info
+  {
+    const session = await client.prepareSession("user-123", {
+      userInfo: { name: "Vincent", age: 42 },
+    });
+    session.allow("org1:*", session.READ_ACCESS);
+    const resp = await session.authorize();
+    expectType<number>(resp.status);
+    expectType<string>(resp.body);
+    expectType<Error | undefined>(resp.error);
+  }
+
+  // .prepareSession() with incorrect user info
+  {
+    expectError(
+      await client.prepareSession("user-123", { userInfo: { foo: "bar" } })
+    );
+  }
+
   // .getActiveUsers()
   {
     const users = (await client.getActiveUsers("my-room")).data;
