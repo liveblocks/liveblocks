@@ -118,6 +118,56 @@ async () => {
     expectType<CommentBodyBlockElement[] | undefined>(comment.body?.content);
   }
 
+  // .createThread()
+  {
+    // Invalid calls
+    expectError(client.createThread({ data: {} }));
+    expectError(client.createThread({ roomId: "my-room" }));
+    expectError(client.createThread({ roomId: "my-room", data: {} }));
+
+    // In this un-augmented world, this is fine
+    client.createThread({
+      roomId: "my-room",
+      data: {
+        comment: {
+          userId: "user-123",
+          body: { version: 1, content: [] },
+        },
+      },
+    });
+
+    // In this un-augmented world, this is fine
+    client.createThread({
+      roomId: "my-room",
+      data: {
+        comment: {
+          userId: "user-123",
+          body: { version: 1, content: [] },
+        },
+        metadata: { foo: "bar" }, // Arbitrary metadata!
+      },
+    });
+
+    const thread = await client.createThread({
+      roomId: "room-123",
+      data: {
+        comment: {
+          userId: "user-123",
+          body: { version: 1, content: [] },
+        },
+        metadata: { color: "red" },
+      },
+    });
+
+    expectType<"thread">(thread.type);
+    expectType<string>(thread.id);
+    expectType<string | number | boolean | undefined>(thread.metadata.color);
+    expectType<string | number | boolean | undefined>(
+      thread.metadata.nonexisting
+    );
+    expectType<CommentData[]>(thread.comments);
+  }
+
   // .getThreads()
   {
     const threads = (await client.getThreads({ roomId: "my-room" })).data;

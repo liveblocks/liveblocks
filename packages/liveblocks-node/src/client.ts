@@ -96,6 +96,13 @@ export type ThreadParticipants = {
   participantIds: string[];
 };
 
+export type CreateThreadOptions<M extends BaseMetadata> = {
+  roomId: string;
+  data: {
+    comment: { userId: string; createdAt?: Date; body: CommentBody };
+  } & (Record<string, never> extends M ? { metadata?: M } : { metadata: M });
+};
+
 export type RoomPermission =
   | []
   | ["room:write"]
@@ -1195,17 +1202,9 @@ export class Liveblocks<
    * @param params.thread.comment.body The body of the comment.
    * @returns The created thread. The thread will be created with the specified comment as its first comment.
    */
-  public async createThread<M extends BaseMetadata = DM>(params: {
-    roomId: string;
-    data: {
-      metadata?: [M] extends [never] ? Record<string, never> : M;
-      comment: {
-        userId: string;
-        createdAt?: Date;
-        body: CommentBody;
-      };
-    };
-  }): Promise<ThreadData<M>> {
+  public async createThread(
+    params: CreateThreadOptions<M>
+  ): Promise<ThreadData<M>> {
     const { roomId, data } = params;
 
     const res = await this.post(url`/v2/rooms/${roomId}/threads`, {
