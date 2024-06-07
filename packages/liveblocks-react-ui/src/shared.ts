@@ -30,7 +30,6 @@ function getMentionSuggestionsCacheForClient(client: OpaqueClient) {
  */
 export function useMentionSuggestions(search?: string) {
   const client = useClient();
-  const mentionSuggestionsCache = getMentionSuggestionsCacheForClient(client);
 
   const room = useRoom();
   const [mentionSuggestions, setMentionSuggestions] =
@@ -50,6 +49,7 @@ export function useMentionSuggestions(search?: string) {
     let debounceTimeout: number | undefined;
     let isCanceled = false;
 
+    const mentionSuggestionsCache = getMentionSuggestionsCacheForClient(client);
     const getMentionSuggestions = async () => {
       try {
         lastInvokedAt.current = performance.now();
