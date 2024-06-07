@@ -18,6 +18,10 @@ import { bgMagenta, bold, magenta, yellow } from "picocolors";
 
 const TRANSFORMER_INQUIRER_CHOICES = [
   {
+    name: "remove-liveblocks-config-contexts: Replaces `createRoomContext` and `createLiveblocksContext` in `liveblock.config` files with global `Liveblocks` types and updates all imports to `@liveblocks/react` accordingly.",
+    value: "remove-liveblocks-config-contexts",
+  },
+  {
     name: "react-comments-to-react-ui: Updates `@liveblocks/react-comments` imports to `@liveblocks/react-ui` and renames `<CommentsConfig />` to `<LiveblocksUIConfig />`.",
     value: "react-comments-to-react-ui",
   },
