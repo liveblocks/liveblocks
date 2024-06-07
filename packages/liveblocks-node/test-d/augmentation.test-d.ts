@@ -20,27 +20,30 @@ declare global {
 async () => {
   const client = new Liveblocks({ secret: "sk_xxx" });
 
-  const comment = await client.getComment({
-    roomId: "room-id",
-    threadId: "th_threadId",
-    commentId: "cm_commentId",
-  });
-  expectType<"comment">(comment.type);
-  expectType<string>(comment.id);
-  expectType<string>(comment.threadId);
-  expectType<string>(comment.roomId);
-  expectType<string>(comment.userId);
-  expectType<Date>(comment.createdAt);
-  expectType<Date | undefined>(comment.editedAt);
-  expectType<CommentReaction[]>(comment.reactions);
-  expectType<Date | undefined>(comment.deletedAt);
-
-  expectType<CommentBody | undefined>(comment.body);
-  expectType<1 | undefined>(comment.body?.version);
-  expectType<CommentBodyBlockElement[] | undefined>(comment.body?.content);
-
+  // .getComment()
   {
-    // With global augmentation
+    const comment = await client.getComment({
+      roomId: "room-id",
+      threadId: "th_threadId",
+      commentId: "cm_commentId",
+    });
+    expectType<"comment">(comment.type);
+    expectType<string>(comment.id);
+    expectType<string>(comment.threadId);
+    expectType<string>(comment.roomId);
+    expectType<string>(comment.userId);
+    expectType<Date>(comment.createdAt);
+    expectType<Date | undefined>(comment.editedAt);
+    expectType<CommentReaction[]>(comment.reactions);
+    expectType<Date | undefined>(comment.deletedAt);
+
+    expectType<CommentBody | undefined>(comment.body);
+    expectType<1 | undefined>(comment.body?.version);
+    expectType<CommentBodyBlockElement[] | undefined>(comment.body?.content);
+  }
+
+  // .getThread()
+  {
     const thread = await client.getThread({
       roomId: "room-id",
       threadId: "th_threadId",
@@ -55,17 +58,20 @@ async () => {
     expectType<CommentData[]>(thread.comments);
   }
 
-  const commentReaction = await client.addCommentReaction({
-    roomId: "room-id",
-    threadId: "th_threadId",
-    commentId: "cm_commentId",
-    data: {
-      emoji: "👍",
-      userId: "user-id",
-    },
-  });
+  // .addCommentReaction()
+  {
+    const reaction = await client.addCommentReaction({
+      roomId: "room-id",
+      threadId: "th_threadId",
+      commentId: "cm_commentId",
+      data: {
+        emoji: "👍",
+        userId: "user-id",
+      },
+    });
 
-  expectType<string>(commentReaction.emoji);
-  expectType<string>(commentReaction.userId);
-  expectType<Date>(commentReaction.createdAt);
+    expectType<string>(reaction.emoji);
+    expectType<string>(reaction.userId);
+    expectType<Date>(reaction.createdAt);
+  }
 };
