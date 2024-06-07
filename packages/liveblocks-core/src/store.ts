@@ -16,7 +16,7 @@ import type {
   InboxNotificationData,
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
-import type { PartialNullable } from "./types/PartialNullable";
+import type { Patchable } from "./types/Patchable";
 import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 
 type OptimisticUpdate<M extends BaseMetadata> =
@@ -42,7 +42,7 @@ type EditThreadMetadataOptimisticUpdate<M extends BaseMetadata> = {
   type: "edit-thread-metadata";
   id: string;
   threadId: string;
-  metadata: Resolve<PartialNullable<M>>;
+  metadata: Resolve<Patchable<M>>;
   updatedAt: Date;
 };
 

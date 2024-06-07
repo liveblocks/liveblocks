@@ -37,6 +37,7 @@ type MyRoomEvent =
 
 type MyThreadMetadata = {
   color: "red" | "blue";
+  resolved?: boolean;
 };
 
 type P = MyPresence;
@@ -562,10 +563,13 @@ ctx.useErrorListener((err) => {
 
     expectType<void>(editMetadata({ threadId: "th_xxx", metadata: {} }));
     expectType<void>(
-      editMetadata({ threadId: "th_xxx", metadata: { color: null } })
+      editMetadata({
+        threadId: "th_xxx",
+        metadata: { color: "red", resolved: null },
+      })
     );
-    expectType<void>(
-      editMetadata({ threadId: "th_xxx", metadata: { color: "red" } })
+    expectError(
+      editMetadata({ threadId: "th_xxx", metadata: { color: null } }) // Color isn't optional so cannot be wiped
     );
   }
 }
@@ -601,10 +605,13 @@ ctx.useErrorListener((err) => {
 
     expectType<void>(editMetadata({ threadId: "th_xxx", metadata: {} }));
     expectType<void>(
-      editMetadata({ threadId: "th_xxx", metadata: { color: null } })
+      editMetadata({
+        threadId: "th_xxx",
+        metadata: { color: "red", resolved: null },
+      })
     );
-    expectType<void>(
-      editMetadata({ threadId: "th_xxx", metadata: { color: "red" } })
+    expectError(
+      editMetadata({ threadId: "th_xxx", metadata: { color: null } }) // Color isn't optional so cannot be wiped
     );
   }
 }

@@ -22,6 +22,7 @@ import type {
   Json,
   JsonObject,
   LsonObject,
+  Patchable,
   PlainLsonObject,
   QueryMetadata,
   RoomNotificationSettings,
@@ -67,16 +68,6 @@ export type LiveblocksOptions = {
    */
   baseUrl?: string;
 };
-
-type OptionalKeys<T> = {
-  [K in keyof T]-?: {} extends Pick<T, K> ? K : never;
-}[keyof T];
-
-type MakeOptionalFieldsNullable<T> = {
-  [K in keyof T]: K extends OptionalKeys<T> ? T[K] | null : T[K];
-};
-
-type Patchable<T> = Partial<MakeOptionalFieldsNullable<T>>;
 
 type DateToString<T> = {
   [P in keyof T]: Date extends T[P] ? string : T[P];

@@ -20,7 +20,7 @@ import type {
   DRI,
   InboxNotificationData,
   LiveblocksError,
-  PartialNullable,
+  Patchable,
   QueryMetadata,
   Resolve,
   RoomEventMessage,
@@ -109,7 +109,7 @@ export type CreateThreadOptions<M extends BaseMetadata> =
 
 export type EditThreadMetadataOptions<M extends BaseMetadata> = {
   threadId: string;
-  metadata: PartialNullable<M>;
+  metadata: Patchable<M>;
 };
 
 export type CreateCommentOptions = {
