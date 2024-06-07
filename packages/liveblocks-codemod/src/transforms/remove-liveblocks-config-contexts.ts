@@ -12,6 +12,7 @@ export default function transformer(
 ) {
   const j = api.jscodeshift.withParser("tsx");
   const root = j(file.source);
+  const isSuspense = (options as { suspense?: boolean }).suspense;
 
   /**
    * Before: import { RoomProvider } from "./liveblocks.config"
@@ -37,7 +38,9 @@ export default function transformer(
       if (importsFromLiveblocksReact.length > 0) {
         const liveblocksReactImport = j.importDeclaration(
           importsFromLiveblocksReact,
-          j.stringLiteral("@liveblocks/react")
+          j.stringLiteral(
+            isSuspense ? "@liveblocks/react/suspense" : "@liveblocks/react"
+          )
         );
         path.insertBefore(liveblocksReactImport);
       }

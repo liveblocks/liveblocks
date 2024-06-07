@@ -14,5 +14,13 @@ const fixtures = readdirSync(fixtureDirPath)
 
 for (const fixture of fixtures) {
   const prefix = `${fixtureDir}/${fixture}`;
-  defineTest(__dirname, fixtureDir, null, prefix, { parser: "tsx" });
+  const options = {} as { suspense?: boolean };
+
+  if (fixture.includes("suspense")) {
+    options.suspense = true;
+  }
+
+  defineTest(__dirname, fixtureDir, options, prefix, {
+    parser: "tsx",
+  });
 }

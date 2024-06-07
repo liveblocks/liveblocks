@@ -25,7 +25,7 @@ files with global `Liveblocks` types and updates all imports to
 npx @liveblocks/codemod@latest remove-liveblocks-config-contexts
 ```
 
-If you use export the Suspense versions of hooks from `createRoomContext` and
+If you export the Suspense versions of hooks from `createRoomContext` and
 `createLiveblocksContext`, add the `--suspense` flag to update all imports to
 `@liveblocks/react/suspense` instead.
 

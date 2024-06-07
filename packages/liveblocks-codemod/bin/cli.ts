@@ -77,7 +77,7 @@ export function runTransform({
   transformer,
 }: {
   files: string[];
-  flags: { dry: boolean; print: boolean };
+  flags: { dry: boolean; print: boolean; suspense: boolean };
   transformer: string;
 }) {
   const transformerPath = path.join(transformerDirectory, `${transformer}.js`);
@@ -101,6 +101,10 @@ export function runTransform({
   args.push("--ignore-pattern=**/node_modules/**");
 
   args.push("--extensions=tsx,ts,jsx,js");
+
+  if (flags.suspense) {
+    args.push("--suspense");
+  }
 
   args = args.concat(["--transform", transformerPath]);
 
@@ -165,6 +169,9 @@ export function run() {
       help: {
         type: "boolean",
         shortFlag: "h",
+      },
+      suspense: {
+        type: "boolean",
       },
       // string: ["_"],
     },
