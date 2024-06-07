@@ -706,7 +706,6 @@ export class Liveblocks<
    * @param document The document to initialize the storage with.
    * @returns The initialized storage document. It is of the same format as the one passed in.
    */
-  // XXX Now that we know DS, we can accept a better input type here
   public async initializeStorageDocument(
     roomId: string,
     document: PlainLsonObject
