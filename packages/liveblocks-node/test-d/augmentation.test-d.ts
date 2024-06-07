@@ -131,6 +131,17 @@ async () => {
     expectError(user.info.nonexisting);
   }
 
+  // .broadcastEvent()
+  {
+    expectError(client.broadcastEvent("my-room"));
+
+    // Arbitrary JSON can be sent
+    await client.broadcastEvent("my-room", 123);
+    await client.broadcastEvent("my-room", { type: "emoji", text: "😍" });
+    await client.broadcastEvent("my-room", { type: "beep" });
+    await client.broadcastEvent("my-room", { type: "boop" });
+  }
+
   // .getComment()
   {
     const comment = await client.getComment({
