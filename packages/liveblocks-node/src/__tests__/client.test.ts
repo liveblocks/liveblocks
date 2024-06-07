@@ -562,14 +562,19 @@ describe("client", () => {
       })
     );
 
-    const client = new Liveblocks({ secret: "sk_xxx" });
+    // I would not recommend this way of typing it, but it's possible if you
+    // really must override the .getThreads() types
+    const LiveblocksClient = Liveblocks<
+      never,
+      never,
+      never,
+      never,
+      { status: "open"; priority: 3; organization: "liveblocks:engineering" }
+    >;
+    const client = new LiveblocksClient({ secret: "sk_xxx" });
 
     await expect(
-      client.getThreads<{
-        status: "open";
-        priority: 3;
-        organization: "liveblocks:engineering";
-      }>({
+      client.getThreads({
         roomId: "room1",
         query: {
           metadata: {
