@@ -30,7 +30,6 @@ function getMentionSuggestionsCacheForClient(client: OpaqueClient) {
  */
 export function useMentionSuggestions(search?: string) {
   const client = useClient();
-  const mentionSuggestionsCache = getMentionSuggestionsCacheForClient(client);
 
   const room = useRoom();
   const [mentionSuggestions, setMentionSuggestions] =
@@ -50,6 +49,7 @@ export function useMentionSuggestions(search?: string) {
     let debounceTimeout: number | undefined;
     let isCanceled = false;
 
+    const mentionSuggestionsCache = getMentionSuggestionsCacheForClient(client);
     const getMentionSuggestions = async () => {
       try {
         lastInvokedAt.current = performance.now();
@@ -93,7 +93,7 @@ export function useMentionSuggestions(search?: string) {
       isCanceled = true;
       window.clearTimeout(debounceTimeout);
     };
-  }, [room.id, search]);
+  }, [client, room.id, search]);
 
   return mentionSuggestions;
 }
@@ -114,6 +114,11 @@ function useCurrentUserIdFromClient_withClient(client: OpaqueClient) {
 export function useCurrentUserId(): string | null {
   const client = useContext(ClientContext);
   const room = useContext(RoomContext);
+
+  // NOTE: These hooks are called conditionally, but in a way that will not
+  // take different code paths between re-renders, so we can ignore the
+  // rules-of-hooks lint warning here.
+  /* eslint-disable react-hooks/rules-of-hooks */
   if (room !== null) {
     return useCurrentUserIdFromRoom();
   } else if (client !== null) {
@@ -123,4 +128,5 @@ export function useCurrentUserId(): string | null {
       "LiveblocksProvider or RoomProvider are missing from the React tree."
     );
   }
+  /* eslint-enable react-hooks/rules-of-hooks */
 }

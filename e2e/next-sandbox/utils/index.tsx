@@ -67,7 +67,7 @@ export function useRenderCount() {
 }
 
 export function useRerender() {
-  return useReducer<Reducer<number, any>>((x: number) => x + 1, 0)[1];
+  return useReducer<Reducer<number, unknown>>((x: number) => x + 1, 0)[1];
 }
 
 // A predefined mono style
