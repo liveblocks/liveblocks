@@ -50,6 +50,38 @@ async () => {
     );
   }
 
+  // .identifyUser() bare
+  {
+    await client.identifyUser("user-123");
+  }
+
+  // .identifyUser() with user info
+  {
+    const resp = await client.identifyUser("user-123", {
+      userInfo: { name: "Vincent", age: 42 },
+    });
+    expectType<number>(resp.status);
+    expectType<string>(resp.body);
+    expectType<Error | undefined>(resp.error);
+  }
+
+  // .identifyUser() with arbitrary user info
+  {
+    await client.identifyUser("user-123", {
+      userInfo:
+        // Arbitrary user info is fine...
+        { foo: "bar" },
+    });
+
+    expectError(
+      await client.identifyUser("user-123", {
+        userInfo:
+          // ...but non-JSON is not
+          { foo: "bar", notJson: new Date() },
+      })
+    );
+  }
+
   // .getActiveUsers()
   {
     const users = (await client.getActiveUsers("my-room")).data;

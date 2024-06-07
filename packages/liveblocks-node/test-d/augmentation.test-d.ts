@@ -81,6 +81,43 @@ async () => {
     );
   }
 
+  // .identifyUser()
+  {
+    const resp = await client.identifyUser("user-123");
+    expectType<number>(resp.status);
+    expectType<string>(resp.body);
+    expectType<Error | undefined>(resp.error);
+  }
+
+  // .identifyUser() with user info
+  {
+    const resp = await client.identifyUser("user-123", {
+      userInfo: { name: "Vincent", age: 42 },
+    });
+    expectType<number>(resp.status);
+    expectType<string>(resp.body);
+    expectType<Error | undefined>(resp.error);
+  }
+
+  // .identifyUser() with incorrect user info
+  {
+    expectError(
+      await client.identifyUser("user-123", {
+        userInfo:
+          // Not matching the annotations...
+          { foo: "bar" },
+      })
+    );
+
+    expectError(
+      await client.identifyUser("user-123", {
+        userInfo:
+          // ...or non-JSON
+          { notJson: new Date() },
+      })
+    );
+  }
+
   // .getActiveUsers()
   {
     const users = (await client.getActiveUsers("my-room")).data;

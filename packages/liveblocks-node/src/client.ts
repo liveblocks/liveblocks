@@ -19,7 +19,6 @@ import type {
   DU,
   InboxNotificationData,
   InboxNotificationDataPlain,
-  IUserInfo,
   Json,
   JsonObject,
   LsonObject,
@@ -73,6 +72,10 @@ type DateToString<T> = {
 };
 
 export type CreateSessionOptions<U extends BaseUserMeta> = {
+  userInfo: U["info"];
+};
+
+export type IdentifyUserOptions<U extends BaseUserMeta> = {
   userInfo: U["info"];
 };
 
@@ -298,10 +301,7 @@ export class Liveblocks<
     identity:
       | string // Shorthand for userId
       | Identity,
-    options?: {
-      userInfo: IUserInfo;
-      // ....
-    }
+    options?: IdentifyUserOptions<U>
   ): Promise<AuthResponse> {
     const path = url`/v2/identify-user`;
     const userId = typeof identity === "string" ? identity : identity.userId;
