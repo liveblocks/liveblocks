@@ -67,9 +67,13 @@ async () => {
 
   // .getThread() with hard-coded annotation
   {
-    const thread = await client.getThread<{ foo: string }>({
-      roomId: "room-id",
-      threadId: "th_threadId",
+    type _ = never;
+    const client = new Liveblocks<_, _, _, _, { foo: string }>({
+      secret: "sk_xxx",
+    });
+    const thread = await client.getThread({
+      roomId: "room",
+      threadId: "th_xxx",
     });
     expectType<"thread">(thread.type);
     expectType<string>(thread.id);

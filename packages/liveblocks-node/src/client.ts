@@ -1021,7 +1021,7 @@ export class Liveblocks<
    * @param params.threadId The thread ID.
    * @returns A thread.
    */
-  public async getThread<M extends BaseMetadata = DM>(params: {
+  public async getThread(params: {
     roomId: string;
     threadId: string;
   }): Promise<ThreadData<M>> {
