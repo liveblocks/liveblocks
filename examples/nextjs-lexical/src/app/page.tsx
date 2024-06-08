@@ -29,8 +29,7 @@ export default function Page() {
           throw new Error("Problem resolving users");
         }
 
-        const users = await response.json();
-        return users;
+        return response.json();
       }}
       resolveMentionSuggestions={async ({ text }) => {
         const response = await fetch(
@@ -41,8 +40,7 @@ export default function Page() {
           throw new Error("Problem resolving mention suggestions");
         }
 
-        const userIds = await response.json();
-        return userIds;
+        return response.json();
       }}
     >
       <ClientSideSuspense fallback={<Loading />}>
