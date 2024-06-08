@@ -5,6 +5,10 @@ see the [2.0 upgrade guide](https://liveblocks.io/docs/guides/upgrading/2.0). --
 
 - ...
 
+### `create-liveblocks-app`
+
+- Updated config generation for Liveblocks 2.0.
+
 ## v1.13.0 (not yet released)
 
 ### `@liveblocks/react`
