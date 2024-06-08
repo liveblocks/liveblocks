@@ -29,6 +29,14 @@ import { useThreads } from "@/liveblocks/react";
 We recommend importing from `@liveblocks/react/suspense` and using Suspense by
 default, as it often makes it easier to build your collaborative application.
 
+<Banner title="Enable Suspense with createRoomContext">
+
+If you’re using the non-standard [`createRoomContext`](#createRoomContext)
+function to build your hooks, you must
+[enable suspense differently](#createRoomContext-Suspense).
+
+</Banner>
+
 ### Suspense hooks
 
 Suspense hooks can be wrapped in [`ClientSideSuspense`][], which acts as a
@@ -1090,6 +1098,8 @@ export const {
 );
 ```
 
+#### Suspense with createRoomContext [#createRoomContext-Suspense]
+
 To use the React suspense version of our hooks, which we recommend, you can
 export from the `suspense` property instead.
 
@@ -1120,6 +1130,8 @@ export const {
   client
 );
 ```
+
+#### Typing createRoomContext
 
 To type your hooks, you can pass multiple different types to
 `createRoomContext`. A full explanation is in the code snippet below.
@@ -2929,7 +2941,7 @@ function Page() {
 [`resolveroomsinfo`]: /docs/api-reference/liveblocks-client#resolveRoomsInfo
 [selector]: /docs/api-reference/liveblocks-react#selectors
 [how selectors work]: /docs/api-reference/liveblocks-react#selectors
-[suspense version]: /docs/api-reference/liveblocks-react#suspense-hooks
+[suspense version]: /docs/api-reference/liveblocks-react#Suspense
 [connection status example]:
   https://liveblocks.io/examples/connection-status/nextjs
 [`atob`]: https://developer.mozilla.org/en-US/docs/Web/API/atob
