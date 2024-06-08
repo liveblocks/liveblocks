@@ -11,7 +11,7 @@ import { nanoid } from "nanoid";
 import type { JSX } from "react";
 import * as React from "react";
 
-import { Mention, MentionWrapper } from "./mention-component";
+import { Mention } from "./mention-component";
 import { User } from "./user";
 
 const MENTION_CHARACTER = "@";
@@ -43,6 +43,7 @@ export class MentionNode extends DecoratorNode<JSX.Element> {
   createDOM(): HTMLElement {
     const element = document.createElement("span");
     element.style.display = "inline-block";
+    element.style.userSelect = "none";
     return element;
   }
 
@@ -96,12 +97,10 @@ export class MentionNode extends DecoratorNode<JSX.Element> {
 
   decorate(): JSX.Element {
     return (
-      <MentionWrapper nodeKey={this.getKey()}>
-        <Mention className="lb-lexical-mention">
-          {MENTION_CHARACTER}
-          <User userId={this.getUserId()} />
-        </Mention>
-      </MentionWrapper>
+      <Mention nodeKey={this.getKey()}>
+        {MENTION_CHARACTER}
+        <User userId={this.getUserId()} />
+      </Mention>
     );
   }
 }

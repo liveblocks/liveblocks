@@ -45,11 +45,13 @@ const ThreadPanel = ({ renderThread }: ThreadPanelProps) => {
   const ThreadComponent = renderThread ?? DefaultThread;
 
   if (!threads || threads.length === 0) {
-    return <div className="lb-lexical-threads-empty">No threads yet</div>;
+    return (
+      <div className="lb-root lb-lexical-threads-empty">No threads yet</div>
+    );
   }
 
   return (
-    <div className="lb-lexical-threads">
+    <div className="lb-lexical-threads lb-root">
       {threads.map((thread) => {
         return (
           <ThreadComponent
