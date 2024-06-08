@@ -1,5 +1,5 @@
 import { expectError, expectType } from "tsd";
-import { Liveblocks } from "../src/client";
+import { Liveblocks, InternalLiveblocks } from "../src/client";
 import type {
   CommentReaction,
   CommentBody,
@@ -282,7 +282,7 @@ async () => {
   // .getThread() with hard-coded annotation
   {
     type _ = never;
-    const client = new Liveblocks<_, _, _, _, { foo: string }>({
+    const client = new InternalLiveblocks<_, _, _, _, { foo: string }>({
       secret: "sk_xxx",
     });
     const thread = await client.getThread({

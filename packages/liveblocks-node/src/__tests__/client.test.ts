@@ -7,7 +7,7 @@ import type {
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
-import { Liveblocks, LiveblocksError } from "../client";
+import { InternalLiveblocks, Liveblocks, LiveblocksError } from "../client";
 import { getBaseUrl } from "../utils";
 
 const DEFAULT_BASE_URL = getBaseUrl();
@@ -562,16 +562,13 @@ describe("client", () => {
       })
     );
 
-    // I would not recommend this way of typing it, but it's possible if you
-    // really must override the .getThreads() types
-    const LiveblocksClient = Liveblocks<
+    const client = new InternalLiveblocks<
       never,
       never,
       never,
       never,
-      { status: "open"; priority: 3; organization: "liveblocks:engineering" }
-    >;
-    const client = new LiveblocksClient({ secret: "sk_xxx" });
+      { status: "open" | "closed"; priority: 3; organization: string }
+    >({ secret: "sk_xxx" });
 
     await expect(
       client.getThreads({

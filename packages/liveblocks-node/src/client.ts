@@ -148,12 +148,12 @@ type SchemaPlain = DateToString<Schema>;
 /**
  * Interact with the Liveblocks API from your Node.js backend.
  */
-export class Liveblocks<
-  _P extends JsonObject = DP,
-  S extends LsonObject = DS,
-  U extends BaseUserMeta = DU,
-  E extends Json = DE,
-  M extends BaseMetadata = DM,
+export /* only for unit tests */ class InternalLiveblocks<
+  _P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
+  M extends BaseMetadata,
 > {
   /** @internal */
   private readonly _secret: string;
@@ -1455,6 +1455,11 @@ export class Liveblocks<
     }
   }
 }
+
+/**
+ * Interact with the Liveblocks API from your Node.js backend.
+ */
+export class Liveblocks extends InternalLiveblocks<DP, DS, DU, DE, DM> {}
 
 export class LiveblocksError extends Error {
   status: number;
