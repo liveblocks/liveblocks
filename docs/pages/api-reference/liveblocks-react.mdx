@@ -2411,9 +2411,9 @@ To use `useRoomInfo`, you should provide a resolver function to the
 
 It’s possible to have automatic types flow through your application by defining
 a global `Liveblocks` interface. We recommend doing this in a
-`liveblocks.config.ts` file, so it’s easy to keep track of your types. Each type
-(`Presence`, `Storage`, etc.), is optional, but it’s recommended to make use of
-them.
+`liveblocks.config.ts` file in the root of your app, so it’s easy to keep track
+of your types. Each type (`Presence`, `Storage`, etc.), is optional, but it’s
+recommended to make use of them.
 
 ```ts file="liveblocks.config.ts"
 declare global {
