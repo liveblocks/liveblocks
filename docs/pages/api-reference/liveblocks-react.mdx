@@ -1706,9 +1706,13 @@ To type the Storage values you receive, make sure to set your `Storage` type.
 ```ts
 import { LiveList } from "@liveblocks/client";
 
-type Storage = {
-  animals: LiveList<string>;
-};
+declare global {
+  interface Liveblocks {
+    Storage: {
+      animals: LiveList<string>;
+    };
+  }
+}
 ```
 
 You can then set an initial value in [`RoomProvider`][].
@@ -1788,9 +1792,13 @@ type Person = LiveObject<{
   pets: LiveList<string>;
 }>;
 
-type Storage = {
-  people: LiveMap<string, Person>;
-};
+declare global {
+  interface Liveblocks {
+    Storage: {
+      people: LiveMap<string, Person>;
+    };
+  }
+}
 ```
 
 Here’s an example of setting `initialStorage` for this type.
