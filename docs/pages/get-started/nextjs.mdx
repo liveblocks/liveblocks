@@ -50,7 +50,7 @@ the [`@liveblocks/react`](/docs/api-reference/liveblocks-react) package.
       "use client";
 
       import { ReactNode } from "react";
-      import { LiveblocksProvider, RoomProvider } from "@liveblocks/react";
+      import { LiveblocksProvider, RoomProvider } from "@liveblocks/react/suspense";
 
       export function Room({ children }: { children: ReactNode }) {
         return (
@@ -76,7 +76,7 @@ the [`@liveblocks/react`](/docs/api-reference/liveblocks-react) package.
       `<ClientSideSuspense>` to add loading spinners to your app.
 
       ```tsx file="app/page.tsx" highlight="7-11"
-      import { ClientSideSuspense } from "@liveblocks/react";
+      import { ClientSideSuspense } from "@liveblocks/react/suspense";
       import { Room } from "./Room";
       import { CollaborativeApp } from "./CollaborativeApp";
 
@@ -105,7 +105,7 @@ the [`@liveblocks/react`](/docs/api-reference/liveblocks-react) package.
       ```tsx file="app/CollaborativeApp.tsx" highlight="6"
       "use client";
 
-      import { useOthers } from "../liveblocks.config";
+      import { useOthers } from "@liveblocks/react/suspense";
 
       export function CollaborativeApp() {
         const others = useOthers();
