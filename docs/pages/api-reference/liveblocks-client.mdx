@@ -3756,9 +3756,12 @@ declare global {
 
 ### Typing with client.enter
 
-By passing Presence, Storage, UserMeta, and RoomEvents types to
-[`client.enterRoom`][], you can enable type hints on your room. Here are some
-example values.
+Before Liveblocks 2.0, it was recommended to type your data by passing
+`Presence`, `Storage`, `UserMeta`, and `RoomEvents` types to
+[`client.enterRoom`][]. This is no longer
+[the recommended method](#Typing-your-data) for setting up Liveblocks, but it
+can still be helpful, for example you can use `client.enter` multiple times to
+create different room types, each with their own correctly typed hooks.
 
 ```ts
 import { LiveList } from "@liveblocks/client";
