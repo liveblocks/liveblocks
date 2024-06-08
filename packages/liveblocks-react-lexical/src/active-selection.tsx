@@ -2,18 +2,14 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import type { LexicalNode, RangeSelection } from "lexical";
 import { $getSelection, $isRangeSelection } from "lexical";
 import * as React from "react";
-import { useCallback, useLayoutEffect, useRef } from "react";
+import { useCallback, useLayoutEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
 import { createDOMRange } from "./create-dom-range";
 import { createRectsFromDOMRange } from "./create-rects-from-dom-range";
 
-interface ActiveSelectionProps {
-  styles?: Partial<CSSStyleDeclaration>;
-}
-
-export function ActiveSelection({ styles }: ActiveSelectionProps) {
+export function ActiveSelection() {
   const [editor] = useLexicalComposerContext();
   const selection = useSelection();
   if (selection === null) return null;
@@ -31,41 +27,26 @@ export function ActiveSelection({ styles }: ActiveSelectionProps) {
     };
   });
 
-  const root = editor.getRootElement();
-  if (root === null) return null;
-
-  const rootContainer = root.parentElement;
-  if (rootContainer === null) return null;
-
   return createPortal(
-    <SelectionRects selection={info} styles={styles} />,
-    rootContainer
+    <SelectionRects selection={info} container={document.body} />,
+    document.body
   );
 }
 
 function SelectionRects({
   selection,
-  styles = {},
+  container,
 }: {
   selection: SelectionInfo;
-  styles?: Partial<CSSStyleDeclaration>;
+  container: HTMLElement;
 }) {
   const [editor] = useLexicalComposerContext();
-
-  const divRef = useRef<HTMLDivElement>(null);
+  const [elements, setElements] = useState<
+    { top: number; left: number; width: number; height: number }[]
+  >([]);
 
   useLayoutEffect(() => {
-    const container = divRef.current;
-    if (container === null) return;
-
     function drawSelectionRects() {
-      if (container === null) return;
-
-      // Remove all existing children of the container
-      while (container.firstChild) {
-        container.removeChild(container.firstChild);
-      }
-
       const range = createDOMRange(
         editor,
         selection.anchor.node,
@@ -77,22 +58,14 @@ function SelectionRects({
       if (range === null) return;
       const rects = createRectsFromDOMRange(editor, range);
 
-      for (const rect of rects) {
-        const div = document.createElement("div");
-
-        Object.assign(div.style, {
-          backgroundColor: "rgba(255, 212, 0, 0.14)",
-          ...styles,
-          position: "absolute",
-          top: `${rect.top - container.getBoundingClientRect().top}px`,
-          left: `${rect.left - container.getBoundingClientRect().left}px`,
-          width: `${rect.width}px`,
-          height: `${rect.height}px`,
-          pointerEvents: "none",
-        });
-
-        container.appendChild(div);
-      }
+      setElements(
+        rects.map((rect) => ({
+          top: rect.top - container.getBoundingClientRect().top,
+          left: rect.left - container.getBoundingClientRect().left,
+          width: rect.width,
+          height: rect.height,
+        }))
+      );
     }
 
     // Observe resizes of the container element to redraw the selection
@@ -108,20 +81,27 @@ function SelectionRects({
       observer.disconnect();
       unsubscribeFromUpdates();
     };
-  }, [selection, editor, styles]);
+  }, [selection, editor, container]);
 
   return (
-    <div
-      ref={divRef}
-      style={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        width: "100%",
-        height: "100%",
-        pointerEvents: "none",
-      }}
-    />
+    <>
+      {elements.map((element) =>
+        createPortal(
+          <span
+            style={{
+              position: "absolute",
+              top: `${element.top}px`,
+              left: `${element.left}px`,
+              width: `${element.width}px`,
+              height: `${element.height}px`,
+              pointerEvents: "none",
+            }}
+            className="lb-root lb-portal lb-lexical-active-selection"
+          />,
+          container
+        )
+      )}
+    </>
   );
 }
 

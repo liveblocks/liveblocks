@@ -1,3 +1,4 @@
+@import "@liveblocks/react-ui/styles.css";
 @import "@liveblocks/react-lexical/styles.css";
 
 @tailwind base;
