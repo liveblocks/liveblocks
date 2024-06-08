@@ -13,7 +13,7 @@ our realtime collaboration APIs, built on top of WebSockets. Read our
 ## Suspense
 
 All Liveblocks React components and hooks can be exported from two different
-locations, `@liveblocks/react` and `@liveblocks/react/suspense`. This is because
+locations, `@liveblocks/react/suspense` and `@liveblocks/react`. This is because
 Liveblocks provides two types of hooks; those that support
 [React Suspense](https://react.dev/reference/react/Suspense), and those that
 don’t.
@@ -27,13 +27,13 @@ import { useThreads } from "@/liveblocks/react";
 ```
 
 We recommend importing from `@liveblocks/react/suspense` and using Suspense by
-default, as it often makes it easier to build your application.
+default, as it often makes it easier to build your collaborative application.
 
 ### Suspense hooks
 
-Suspense hooks can be wrapped in `ClientSideSuspense`, which acts as a loading
-spinner for any components below it. When using this, all components below will
-only render once their hook contents have been loaded.
+Suspense hooks can be wrapped in [`ClientSideSuspense`][], which acts as a
+loading spinner for any components below it. When using this, all components
+below will only render once their hook contents have been loaded.
 
 ```tsx
 import { ClientSideSuspense, useStorage } from "@liveblocks/react/suspense";
@@ -125,6 +125,80 @@ function Component() {
   // ...
 }
 ```
+
+### ClientSideSuspense
+
+Liveblocks providers a React component named `ClientSideSuspense` which works as
+a replacement for `Suspense`. This is helpful as our Suspense hooks will throw
+an error when they’re run on the server, and this component avoids this issue by
+always rendering the `fallback` on the server.
+
+```tsx highlight="7-9"
+import { ClientSideSuspense } from "@liveblocks/react/suspense";
+
+function Page() {
+  return (
+    <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
+      <RoomProvider id="my-room-id" initialPresence={{}}>
+        <ClientSideSuspense fallback={<div>Loading…</div>}>
+          {() => <App />}
+        </ClientSideSuspense>
+      </RoomProvider>
+    </LiveblocksProvider>
+  );
+}
+```
+
+Note that you should wrap your inner component inside a function for it to work
+correctly.
+
+```tsx highlight="3,8"
+// ❌ Won't work
+<ClientSideSuspense fallback={<div>Loading…</div>}>
+  <App />;
+</ClientSideSuspense>
+
+// ✅ Correct
+<ClientSideSuspense fallback={<div>Loading…</div>}>
+  {() => <App />}
+</ClientSideSuspense>
+```
+
+#### Loading spinners
+
+Instead of wrapping your entire Liveblocks application inside a single
+`ClientSideSuspense` component, you can use multiple of these components in
+different parts of your application, and each will work as a loading fallback
+for any components further down your tree.
+
+```tsx highlight="10-12,16-18"
+import { ClientSideSuspense } from "@liveblocks/react/suspense";
+
+function Page() {
+  return (
+    <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
+      <RoomProvider id="my-room-id" initialPresence={{}}>
+        <header>My title</header>
+
+        <main>
+          <ClientSideSuspense fallback={<div>Loading…</div>}>
+            {() => <Canvas />}
+          </ClientSideSuspense>
+        </main>
+
+        <aside>
+          <ClientSideSuspense fallback={<div>Loading…</div>}>
+            {() => <LiveAvatars />}
+          </ClientSideSuspense>
+        </aside>
+      </RoomProvider>
+    </LiveblocksProvider>
+  );
+}
+```
+
+This is a great way to build a static skeleton around your dynamic collaborative
+application.
 
 ## Liveblocks
 
@@ -2845,6 +2919,8 @@ function Page() {
 [`useothersconnectionids`]:
   /docs/api-reference/liveblocks-react#useOthersConnectionIds
 [`useother`]: /docs/api-reference/liveblocks-react#useOther
+[`useother`]: /docs/api-reference/liveblocks-react#useOther
+[`clientsidesuspense`]: /docs/api-reference/liveblocks-react#ClientSideSuspsnse
 [`usebroadcastevent`]: /docs/api-reference/liveblocks-react#useBroadcastEvent
 [`usethreads`]: /docs/api-reference/liveblocks-react#useThreads
 [`room`]: /docs/api-reference/liveblocks-client#Room
