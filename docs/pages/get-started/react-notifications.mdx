@@ -6,15 +6,19 @@ meta:
     "Learn how to get started with Notifications using Liveblocks and React"
 ---
 
-TODO
-
----
-
 Liveblocks is a realtime collaboration infrastructure for building performant
-collaborative experiences. Follow the following steps to start adding a
-commenting experience to your React application using the hooks from
+collaborative experiences. Follow the following steps to start adding
+notifications to your application using the hooks from
 [`@liveblocks/react`](/docs/api-reference/liveblocks-react) and the components
 from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
+
+<Banner title="Public beta">
+
+Notifications is currently in beta. If you have any questions or feedback,
+please join us on our [Discord server](https://liveblocks.io/discord). We’d love
+to hear from you.
+
+</Banner>
 
 <Banner title="Public beta">
 
@@ -57,42 +61,21 @@ to hear from you.
     <StepTitle>Set up the Liveblocks client</StepTitle>
     <StepContent>
 
-      The first step in connecting to Liveblocks is creating a client which
-      will be responsible for communicating with the back end. You can do
-      this by modifying `createClient` in your config file, and
-      passing your public API key.
+      Liveblocks uses the concept of rooms, separate virtual spaces where
+      collaborate, and to create a realtime experience, multiple users must
+      be connected to the same room. Set up a Liveblocks client with [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider).
 
-      ```tsx file="liveblocks.config.ts"
-      const client = createClient({
-        publicApiKey: "{{PUBLIC_KEY}}",
-      });
-      ```
-
-    </StepContent>
-
-  </Step>
-  <Step>
-    <StepTitle>Join a Liveblocks room</StepTitle>
-    <StepContent>
-
-      Liveblocks uses the concept of rooms, separate virtual spaces where people
-      collaborate. To create a realtime experience, multiple users must be
-      connected to the same room.
-
-      ```tsx file="App.tsx" highlight="9-13"
+      ```tsx file="App.tsx" highlight="11-15"
       "use client";
 
-      import { RoomProvider } from "./liveblocks.config";
+      import { LiveblocksProvider } from "@liveblocks/react/suspense";
       import { Room } from "./Room";
-      import { ClientSideSuspense } from "@liveblocks/react";
 
       export default function App() {
         return (
-          <RoomProvider id="my-room" initialPresence={{}}>
-            <ClientSideSuspense fallback={<div>Loading…</div>}>
-              {() => <Room />}
-            </ClientSideSuspense>
-          </RoomProvider>
+          <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
+            <Room />
+          </LiveblocksProvider>
         );
       }
       ```
@@ -104,26 +87,32 @@ to hear from you.
     <StepTitle>Use the Liveblocks hooks and components</StepTitle>
     <StepContent>
 
-      Now that we’re connected to a room, we can start using the Liveblocks hooks and components.
-      We’ll add `useThreads` to get the threads in the room, then we’ll use the `Thread` component
-      to render them. Finally, we’ll add a way to create threads by adding a `Composer`.
+      Now that we’ve set up the provider, we can start using the Liveblocks hooks and components.
+      We’ll add [`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications)
+      to get the current project’s notifications, then we’ll
+      use [`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification) and [`InboxNotificationList`](/docs/api-reference/liveblocks-react-ui#InboxNotificationList) to render them.
 
-      ```tsx file="Room.tsx" highlight="7,11-14"
+      ```tsx file="app/MyApp.tsx" highlight="7,11-14"
       "use client";
 
-      import { useThreads } from "./liveblocks.config";
-      import { Composer, Thread } from "@liveblocks/react-ui";
+      import { useInboxNotifications } from "@liveblocks/react/suspense";
+      import {
+        InboxNotification,
+        InboxNotificationList,
+      } from "@liveblocks/react-ui";
 
-      export function Room() {
-        const { threads } = useThreads();
+      export function CollaborativeApp() {
+        const { inboxNotifications } = useInboxNotifications();
 
         return (
-          <div>
-            {threads.map((thread) => (
-              <Thread key={thread.id} thread={thread} />
+          <InboxNotificationList>
+            {inboxNotifications.map((inboxNotification) => (
+              <InboxNotification
+                key={inboxNotification.id}
+                inboxNotification={inboxNotification}
+              />
             ))}
-            <Composer />
-          </div>
+          </InboxNotificationList>
         );
       }
       ```
@@ -149,8 +138,8 @@ to hear from you.
     <StepTitle>Next: authenticate and add your users</StepTitle>
     <StepContent>
 
-      Comments is set up and working now, but each user is anonymous—the next step is to
-      authenticate each user as they connect, and attach their name and avatar to their comments.
+      Notifications is set up and working now, but each user is anonymous—the next step is to
+      authenticate each user as they connect, and attach their name and avatar to their notifications.
 
       <Button asChild className="not-markdown">
         <a href="/docs/guides/how-to-add-users-to-liveblocks-comments">
@@ -164,51 +153,24 @@ to hear from you.
 
 ## What to read next
 
-Congratulations! You’ve set up the foundation to start building a commenting
+Congratulations! You’ve set up the foundation to start building a notifications
 experience for your React application.
 
-- [API Reference](/docs/api-reference/liveblocks-react-ui)
-- [How to send email notifications when comments are created](/docs/guides/how-to-send-email-notifications-when-comments-are-created)
+- [API reference](/docs/api-reference/liveblocks-react#Notifications)
+- [Component Reference](/docs/api-reference/liveblocks-react-ui#Notifications)
 
 ---
 
-## Examples using React
+## Examples using Notifications
 
 <ListGrid columns={2}>
   <ExampleCard
     example={{
-      title: "Comments",
-      slug: "comments/react-ui",
-      image: "/images/examples/thumbnails/comments.jpg",
+      title: "Comments notifications",
+      slug: "comments-notifications/nextjs-comments-notifications",
+      image: "/images/examples/thumbnails/comments-notifications.png",
     }}
     technologies={["nextjs", "react"]}
-    openInNewWindow
-  />
-  <ExampleCard
-    example={{
-      title: "Video Comments",
-      slug: "video-comments/nextjs-comments-video",
-      image: "/images/examples/thumbnails/comments-video.png",
-    }}
-    technologies={["nextjs"]}
-    openInNewWindow
-  />
-  <ExampleCard
-    example={{
-      title: "Overlay Comments",
-      slug: "overlay-comments/nextjs-comments-overlay",
-      image: "/images/examples/thumbnails/comments-overlay.png",
-    }}
-    technologies={["nextjs"]}
-    openInNewWindow
-  />
-  <ExampleCard
-    example={{
-      title: "Text Editor Comments",
-      slug: "text-editor-comments/nextjs-comments-tiptap",
-      image: "/images/examples/thumbnails/comments-text-editor.png",
-    }}
-    technologies={["nextjs"]}
     openInNewWindow
   />
 </ListGrid>
