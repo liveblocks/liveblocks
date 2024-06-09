@@ -1,11 +1,13 @@
 import { createClient } from "@liveblocks/core";
 import { expectError, expectType } from "tsd";
 
+type MyPresence = {
+  cursor: { x: number; y: number };
+};
+
 declare global {
   interface Liveblocks {
-    Presence: {
-      cursor: { x: number; y: number };
-    };
+    Presence: MyPresence;
   }
 }
 
@@ -16,10 +18,11 @@ const client = createClient({ publicApiKey: "pk_xxx" });
   expectError(
     client.enterRoom("my-room", { initialPresence: { cursor: null } })
   );
-  const { room } = client.enterRoom("my-room", {
-    initialPresence: { cursor: null },
-  });
-  expectType<number>(room.getPresence()?.cursor?.x);
+  expectError(
+    client.enterRoom("my-room", {
+      initialPresence: { cursor: { x: 1, y: "2" } },
+    })
+  );
 }
 
 // .enterRoom()
