@@ -1726,9 +1726,16 @@ export function createRoom<
   }
 
   async function reportTextEditor(type: "lexical", rootKey: string) {
-    return httpPostToRoom("/text-metadata", {
-      type,
-      rootKey,
+    const authValue = await delegates.authenticate();
+    return fetchClientApi(config.roomId, "/text-metadata", authValue, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        type,
+        rootKey,
+      }),
     });
   }
 

@@ -1,5 +1,5 @@
-import { USER_INFO } from "@/database";
 import { NextRequest, NextResponse } from "next/server";
+import { USER_INFO } from "../dummy-users";
 
 /**
  * Get users' info from their ID

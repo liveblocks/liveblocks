@@ -41,6 +41,7 @@
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
   "dependencies": {
+    "@floating-ui/react-dom": "^2.1.0",
     "@liveblocks/client": "1.12.0",
     "@liveblocks/core": "1.12.0",
     "@liveblocks/react": "1.12.0",
@@ -54,7 +55,8 @@
     "@lexical/react": "^0.16.0",
     "@lexical/utils": "^0.16.0",
     "lexical": "^0.16.0",
-    "react": "^16.14.0 || ^17 || ^18"
+    "react": "^16.14.0 || ^17 || ^18",
+    "react-dom": "^16.14.0 || ^17 || ^18"
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
