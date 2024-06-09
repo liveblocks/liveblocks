@@ -1,17 +1,13 @@
 "use client";
 
 import styles from "./CustomNotifications.module.css";
-import {
-  InboxNotification,
-  InboxNotificationList,
-} from "@liveblocks/react-comments";
+import { InboxNotification, InboxNotificationList } from "@liveblocks/react-ui";
 import {
   useInboxNotifications,
   useMarkAllInboxNotificationsAsRead,
-  useMarkInboxNotificationAsRead,
   useSelf,
   useUnreadInboxNotificationsCount,
-} from "../liveblocks.config";
+} from "@liveblocks/react/suspense";
 import { ErrorBoundary } from "react-error-boundary";
 import {
   alertNotification,

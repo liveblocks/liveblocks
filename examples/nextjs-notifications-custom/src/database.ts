@@ -1,6 +1,6 @@
-import { UserMeta, Room } from "./liveblocks.config";
+import { UserMeta, RoomInfo } from "./liveblocks.config";
 
-const ROOMS: Room[] = [
+const ROOMS: { id: string; info: RoomInfo }[] = [
   {
     id: "my-org:my-team:room-1",
     info: {

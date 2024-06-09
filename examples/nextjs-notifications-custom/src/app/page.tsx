@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import { LiveblocksProvider, RoomProvider } from "../liveblocks.config";
+import { LiveblocksProvider, RoomProvider } from "@liveblocks/react/suspense";
 import { CustomNotifications } from "../components/CustomNotifications";
 
 export default function Page() {
@@ -11,7 +11,37 @@ export default function Page() {
   );
 
   return (
-    <LiveblocksProvider>
+    <LiveblocksProvider
+      authEndpoint="/api/liveblocks-auth"
+      resolveUsers={async ({ userIds }) => {
+        // Get users' info from their ID
+        const searchParams = new URLSearchParams(
+          userIds.map((userId) => ["userIds", userId])
+        );
+        const response = await fetch(`/api/users?${searchParams}`);
+
+        if (!response.ok) {
+          throw new Error("Problem resolving user");
+        }
+
+        const users = await response.json();
+        return users;
+      }}
+      resolveRoomsInfo={async ({ roomIds }) => {
+        // Get rooms' info from their ID
+        const searchParams = new URLSearchParams(
+          roomIds.map((roomId) => ["roomIds", roomId])
+        );
+        const response = await fetch(`/api/rooms?${searchParams}`);
+
+        if (!response.ok) {
+          throw new Error("Problem resolving room");
+        }
+
+        const rooms = await response.json();
+        return rooms;
+      }}
+    >
       <RoomProvider id={roomId} initialPresence={{}}>
         <CustomNotifications />
       </RoomProvider>

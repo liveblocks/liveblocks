@@ -1,12 +1,12 @@
 import {
   InboxNotification,
   InboxNotificationCustomProps,
-} from "@liveblocks/react-comments";
+} from "@liveblocks/react-ui";
 import { AlertData, ImageUploadData, InviteData } from "../actions";
 import styles from "./CustomNotificationKinds.module.css";
 import { WarningIcon } from "./Icons";
 import { Button } from "./Button";
-import { Room, useRoomInfo, useUser } from "../liveblocks.config";
+import { useRoomInfo, useUser } from "@liveblocks/react/suspense";
 
 export function AlertNotification({
   inboxNotification,
@@ -60,9 +60,7 @@ export function InviteNotification({
     .data as InviteData;
 
   // Fetch room and user info from resolvers in liveblocks.config.ts
-  const { info, error, isLoading } = useRoomInfo(roomId) as ReturnType<
-    typeof useRoomInfo
-  > & { info: Room["info"] };
+  const { info, error, isLoading } = useRoomInfo(roomId);
   const { user: inviter } = useUser(inviteFrom);
 
   if (error || isLoading) {
