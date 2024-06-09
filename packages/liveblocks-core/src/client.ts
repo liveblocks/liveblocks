@@ -169,7 +169,7 @@ export type Client<U extends BaseUserMeta = DU> = {
     M extends BaseMetadata = DM,
   >(
     roomId: string,
-    options: NoInferr<EnterOptions<P, S>>
+    options: EnterOptions<NoInferr<P>, NoInferr<S>>
   ): {
     room: Room<P, S, U, E, M>;
     leave: () => void;
@@ -375,7 +375,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     M extends BaseMetadata,
   >(
     roomId: string,
-    options: NoInferr<EnterOptions<P, S>>
+    options: EnterOptions<NoInferr<P>, NoInferr<S>>
   ): {
     room: Room<P, S, U, E, M>;
     leave: () => void;
