@@ -39,7 +39,7 @@ Options:
   The framework your config file uses. Option only for `--init`.
   e.g. `--framework react`
 
---next 
+  --next 
   Use the Next.js Starter Kit
   
   --example [example name]
