@@ -9,6 +9,8 @@ import {
 } from "../liveblocks.config";
 import { LiveMap, LiveObject } from "@liveblocks/client";
 import { shallow, ClientSideSuspense } from "@liveblocks/react";
+// XXX What's different about this example compared to others where we can just do this?
+// @ts-expect-error - Cannot find module '../styles/index.module.css' or its corresponding type declarations
 import styles from "../styles/index.module.css";
 import { useRouter } from "next/router";
 

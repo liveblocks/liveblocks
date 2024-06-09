@@ -2,6 +2,8 @@ import React, { useEffect, useMemo } from "react";
 import ReactFlow, { Controls, MiniMap } from "reactflow";
 import useStore from "../src/store";
 import { useRouter } from "next/router";
+// XXX What's different about this example compared to others where we can just do this?
+// @ts-expect-error - Cannot find module './index.module.css' or its corresponding type declarations
 import styles from "./index.module.css";
 
 /**
