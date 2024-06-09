@@ -21,9 +21,11 @@
     "next": "^13.5.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "typescript": "^5.2.2",
     "y-monaco": "^0.1.4",
     "y-protocols": "^1.0.6",
     "yjs": "^13.6.7"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
   }
 }

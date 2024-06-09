@@ -21,6 +21,6 @@
     "@types/react": "^18.3.3",
     "autoprefixer": "^10.2.5",
     "prettier": "^2.6.2",
-    "typescript": "^5.2.2"
+    "typescript": "^5.4.5"
   }
 }

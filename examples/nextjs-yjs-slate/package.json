@@ -24,10 +24,10 @@
     "react-dom": "^18.2.0",
     "slate": "^0.94.1",
     "slate-react": "^0.97.2",
-    "typescript": "^5.2.2",
     "yjs": "^13.6.4"
   },
   "devDependencies": {
-    "@iconify/react": "^4.1.0"
+    "@iconify/react": "^4.1.0",
+    "typescript": "^5.4.5"
   }
 }

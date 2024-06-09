@@ -12,7 +12,8 @@
   },
   "devDependencies": {
     "@types/node": "^18",
-    "nuxt": "^3.5.0"
+    "nuxt": "^3.5.0",
+    "typescript": "^5.4.5"
   },
   "dependencies": {
     "@liveblocks/client": "^2.0.0-alpha1",

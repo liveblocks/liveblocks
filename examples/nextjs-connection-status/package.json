@@ -18,7 +18,9 @@
     "next": "^13.5.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-hot-toast": "^2.4.1",
-    "typescript": "^5.1.3"
+    "react-hot-toast": "^2.4.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
   }
 }

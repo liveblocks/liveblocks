@@ -18,7 +18,7 @@
     "prettier-plugin-svelte": "^2.10.1",
     "svelte": "^4.0.0",
     "tslib": "^2.4.1",
-    "typescript": "^5.0.0",
+    "typescript": "^5.4.5",
     "vite": "^5.0.0"
   },
   "dependencies": {
