@@ -1,6 +1,6 @@
 import {
   InboxNotification,
-  InboxNotificationCustomProps,
+  InboxNotificationCustomKindProps,
 } from "@liveblocks/react-ui";
 import { AlertData, ImageUploadData, InviteData } from "../actions";
 import styles from "./CustomNotificationKinds.module.css";
@@ -10,7 +10,7 @@ import { useRoomInfo, useUser } from "@liveblocks/react/suspense";
 
 export function AlertNotification({
   inboxNotification,
-}: InboxNotificationCustomProps) {
+}: InboxNotificationCustomKindProps) {
   const { title, message } = inboxNotification.activities[0].data as AlertData;
 
   return (
@@ -30,7 +30,7 @@ export function AlertNotification({
 
 export function ImageUploadNotification({
   inboxNotification,
-}: InboxNotificationCustomProps) {
+}: InboxNotificationCustomKindProps) {
   const { src, alt, uploadedBy } = inboxNotification.activities[0]
     .data as ImageUploadData;
   const { user: uploader } = useUser(uploadedBy);
@@ -55,7 +55,7 @@ export function ImageUploadNotification({
 
 export function InviteNotification({
   inboxNotification,
-}: InboxNotificationCustomProps) {
+}: InboxNotificationCustomKindProps) {
   const { inviteFrom, roomId } = inboxNotification.activities[0]
     .data as InviteData;
 
