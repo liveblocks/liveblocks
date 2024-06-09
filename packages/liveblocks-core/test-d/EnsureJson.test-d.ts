@@ -29,6 +29,12 @@ interface IValid {
   items: IItem[];
 }
 
+interface IInvalid {
+  createdAt?: Date | number;
+  err: Error;
+  items: IItem[];
+}
+
 declare const u: EnsureJson<unknown>;
 declare const u6: EnsureJson<IInvalid>;
 
@@ -44,28 +50,18 @@ declare const uo: EnsureJson<{
   toString(): string;
 }>;
 
-{
-  expectType<Json | undefined>(u);
-  expectType<string[]>(ua1);
-  expectType<(number | string)[]>(ua2);
-  expectType<(number | string | boolean | null)[]>(ua3);
-  expectType<Valid[]>(ua4);
-  expectType<Valid[]>(ua5);
+expectType<Json | undefined>(u);
+expectType<string[]>(ua1);
+expectType<(number | string)[]>(ua2);
+expectType<(number | string | boolean | null)[]>(ua3);
+expectType<Valid[]>(ua4);
+expectType<Valid[]>(ua5);
 
-  expectType<{ hi?: Json; date?: number | string }>(uo);
-  expectAssignable<JsonObject>(uo);
-}
+expectType<{ hi?: Json; date?: number | string }>(uo);
+expectAssignable<JsonObject>(uo);
 
-interface IInvalid {
-  createdAt: Date;
-  err: Error;
-  items: IItem[];
-}
-
-{
-  expectType<{
-    createdAt: {};
-    err: { name: string; message: string; stack?: string; cause?: Json };
-    items: Item[];
-  }>(u6);
-}
+expectType<{
+  createdAt?: string | number; // Date became a string
+  err: { name: string; message: string; stack?: string; cause?: Json };
+  items: Item[];
+}>(u6);

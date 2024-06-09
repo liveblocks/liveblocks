@@ -239,6 +239,8 @@ export type EnsureJson<T> =
   T extends Array<infer I> ? (EnsureJson<I>)[] :
   // Retain `unknown` fields, but just treat them as if they're Json | undefined
   [unknown] extends [T] ? Json | undefined :
+  // Dates become strings when serialized to JSON
+  T extends Date ? string :
   // Remove functions
   T extends (...args: any[]) => any ? never :
   // Resolve all other values explicitly
