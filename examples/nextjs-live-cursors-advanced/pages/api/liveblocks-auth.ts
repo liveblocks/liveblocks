@@ -1,4 +1,4 @@
-import { Liveblocks, authorize } from "@liveblocks/node";
+import { Liveblocks } from "@liveblocks/node";
 import { NextApiRequest, NextApiResponse } from "next";
 
 /**

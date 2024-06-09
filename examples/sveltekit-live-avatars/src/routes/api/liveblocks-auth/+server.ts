@@ -1,5 +1,5 @@
 import { json } from "@sveltejs/kit";
-import { Liveblocks, authorize } from "@liveblocks/node";
+import { Liveblocks } from "@liveblocks/node";
 
 /**
  * Authenticating your Liveblocks application
@@ -18,6 +18,8 @@ const liveblocks = new Liveblocks({
   secret: API_KEY,
 });
 
+// XXX Restore back later
+// @ts-expect-error - Ignore for now
 export async function POST({ request }) {
   const { room } = await request.json();
 

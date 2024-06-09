@@ -50,11 +50,19 @@ type RoomEvent = {
   // ...
 };
 
+// Optionally, the type of thread metadata to use when using Liveblocks
+// Comments' threads.
+type ThreadMetadata = {
+  // positionX: number
+  // positionY: number
+};
+
 export type TypedLiveblocksProvider = LiveblocksProvider<
   Presence,
   Storage,
   UserMeta,
-  RoomEvent
+  RoomEvent,
+  ThreadMetadata
 >;
 
 export const {
@@ -81,4 +89,6 @@ export const {
     useStatus,
     useLostConnectionListener,
   },
-} = createRoomContext<Presence, Storage, UserMeta, RoomEvent>(client);
+} = createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(
+  client
+);

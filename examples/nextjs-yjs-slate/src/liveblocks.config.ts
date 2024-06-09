@@ -40,5 +40,6 @@ export type LiveblocksProviderType = LiveblocksProvider<
   Presence,
   Storage,
   UserMeta,
-  {}
+  never,
+  never
 >;
