@@ -28,13 +28,13 @@ declare global {
       };
     };
 
-    RoomEvent: {
-      type: "emoji";
-      emoji: string;
-    };
+    RoomEvent:
+      | { type: "emoji"; emoji: string }
+      | { type: "beep"; times?: number };
 
     ThreadMetadata: {
       color: "red" | "blue";
+      resolved?: boolean;
     };
 
     RoomInfo: {
@@ -281,6 +281,8 @@ declare global {
 {
   const broadcast = classic.useBroadcastEvent();
   broadcast({ type: "emoji", emoji: "😍" });
+  broadcast({ type: "beep", times: 3 });
+  broadcast({ type: "beep" });
   // broadcast({ type: "leave", userId: "1234" });  // TODO Allow this using union types
   expectError(broadcast({ type: "i-do-not-exist" }));
   expectError(broadcast(new Date()));
@@ -290,6 +292,8 @@ declare global {
 {
   const broadcast = suspense.useBroadcastEvent();
   broadcast({ type: "emoji", emoji: "😍" });
+  broadcast({ type: "beep", times: 3 });
+  broadcast({ type: "beep" });
   // broadcast({ type: "leave", userId: "1234" });  // TODO Allow this using union types
   expectError(broadcast({ type: "i-do-not-exist" }));
   expectError(broadcast(new Date()));
@@ -429,11 +433,13 @@ declare global {
 
   expectType<void>(editMetadata({ threadId: "th_xxx", metadata: {} }));
   expectType<void>(
-    editMetadata({ threadId: "th_xxx", metadata: { color: null } })
+    editMetadata({
+      threadId: "th_xxx",
+      metadata: { color: "red", resolved: null },
+    })
   );
-  expectType<void>(
-    editMetadata({ threadId: "th_xxx", metadata: { color: "red" } })
-  );
+
+  expectError(editMetadata({ threadId: "th_xxx", metadata: { color: null } })); // Color isn't optional, so cannot be wiped
 }
 
 // The useEditThreadMetadata() hook (suspense)
@@ -450,11 +456,13 @@ declare global {
 
   expectType<void>(editMetadata({ threadId: "th_xxx", metadata: {} }));
   expectType<void>(
-    editMetadata({ threadId: "th_xxx", metadata: { color: null } })
+    editMetadata({
+      threadId: "th_xxx",
+      metadata: { color: "red", resolved: null },
+    })
   );
-  expectType<void>(
-    editMetadata({ threadId: "th_xxx", metadata: { color: "red" } })
-  );
+
+  expectError(editMetadata({ threadId: "th_xxx", metadata: { color: null } })); // Color isn't optional, so cannot be wiped
 }
 
 // ---------------------------------------------------------

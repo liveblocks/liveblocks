@@ -18,6 +18,7 @@
     "@liveblocks/react": "*",
     "@liveblocks/react-lexical": "*",
     "@liveblocks/react-ui": "*",
+    "@radix-ui/react-popover": "^1.0.7",
     "@types/node": "^18.11.18",
     "@types/react": "^18.0.27",
     "@types/react-dom": "^18.0.10",
@@ -28,7 +29,6 @@
     "typescript": "^5.2.2"
   },
   "devDependencies": {
-    "@iconify/react": "^4.1.0",
     "autoprefixer": "^10.4.19",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.4"

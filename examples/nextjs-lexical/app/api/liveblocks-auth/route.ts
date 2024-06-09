@@ -1,6 +1,6 @@
-import { USER_INFO } from "@/database";
 import { Liveblocks } from "@liveblocks/node";
 import { NextRequest, NextResponse } from "next/server";
+import { USER_INFO } from "../dummy-users";
 
 /**
  * Authenticating your Liveblocks application

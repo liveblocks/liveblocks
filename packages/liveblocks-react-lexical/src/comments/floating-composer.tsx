@@ -136,7 +136,7 @@ const FloatingComposerImpl = forwardRef<
     );
 
     return range;
-  }, []);
+  }, [editor]);
 
   useEffect(() => {
     return editor.registerUpdateListener(({ editorState: state, tags }) => {
@@ -149,20 +149,7 @@ const FloatingComposerImpl = forwardRef<
       const range = state.read(() => $onStateRead());
       onRangeChange(range);
     });
-  }, [editor, range, onRangeChange]);
-
-  useEffect(() => {
-    const observer = new ResizeObserver(() => {
-      const root = editor.getRootElement();
-      if (root === null) return;
-      const state = editor.getEditorState();
-      const range = state.read(() => $onStateRead());
-      onRangeChange(range);
-    });
-
-    observer.observe(document.body);
-    return () => observer.disconnect();
-  }, [editor]);
+  }, [editor, range, onRangeChange, $onStateRead]);
 
   /**
    * Create a new ThreadMarkNode and wrap the selected content in it.
@@ -213,17 +200,9 @@ const FloatingComposerImpl = forwardRef<
     onKeyDown?.(event);
   }
 
-  const rects = createRectsFromDOMRange(editor, range);
-
   return (
     <>
-      {rects.map((rect) => (
-        <ActiveSelectionRectPortal
-          key={JSON.stringify(rect)}
-          rect={rect}
-          container={document.body}
-        />
-      ))}
+      <ActiveSelectionPortal range={range} container={document.body} />
 
       <FloatingComposerPortal range={range} container={document.body}>
         <Composer
@@ -238,11 +217,11 @@ const FloatingComposerImpl = forwardRef<
   );
 });
 
-function ActiveSelectionRectPortal({
-  rect,
+function ActiveSelectionPortal({
+  range,
   container,
 }: {
-  rect: DOMRect;
+  range: Range;
   container: HTMLElement;
 }) {
   const {
@@ -252,32 +231,57 @@ function ActiveSelectionRectPortal({
     y,
   } = useFloating({
     strategy: "fixed",
-    placement: "top",
-    middleware: [offset(-rect.height)],
-
-    whileElementsMounted: autoUpdate,
+    placement: "bottom",
+    middleware: [offset(-range.getBoundingClientRect().height)],
+    whileElementsMounted: (...args) => {
+      return autoUpdate(...args, {
+        animationFrame: true,
+      });
+    },
   });
 
   useLayoutEffect(() => {
     setReference({
-      getBoundingClientRect: () => rect,
+      getBoundingClientRect: () => range.getBoundingClientRect(),
     });
-  }, [setReference, rect]);
+  }, [setReference, range]);
+
+  const [editor] = useLexicalComposerContext();
+  const rects = createRectsFromDOMRange(editor, range);
 
   return createPortal(
-    <span
-      ref={setFloating}
-      style={{
-        position: strategy,
-        top: 0,
-        left: 0,
-        transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`,
-        minWidth: "max-content",
-        width: rect.width,
-        height: rect.height,
-      }}
-      className="lb-root lb-portal lb-lexical-active-selection"
-    />,
+    <>
+      <span
+        ref={setFloating}
+        style={{
+          position: strategy,
+          top: 0,
+          left: 0,
+          transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`,
+          minWidth: "max-content",
+          width: range.getBoundingClientRect().width,
+          height: range.getBoundingClientRect().height,
+          pointerEvents: "none",
+        }}
+        className="lb-root lb-portal"
+      >
+        {rects.map((rect) => (
+          <span
+            key={JSON.stringify(rect)}
+            style={{
+              position: "absolute",
+              top: rect.top - range.getBoundingClientRect().top,
+              left: rect.left - range.getBoundingClientRect().left,
+              width: rect.width,
+              height: rect.height,
+              backgroundColor: "rgba(0, 0, 255, 0.2)",
+              pointerEvents: "none",
+            }}
+            className="lb-lexical-active-selection"
+          />
+        ))}
+      </span>
+    </>,
     container
   );
 }
@@ -311,13 +315,16 @@ function FloatingComposerPortal({
       }),
       size({ padding: FLOATING_COMPOSER_COLLISION_PADDING }),
     ],
-    whileElementsMounted: autoUpdate,
+    whileElementsMounted: (...args) => {
+      return autoUpdate(...args, {
+        animationFrame: true,
+      });
+    },
   });
 
   useLayoutEffect(() => {
     setReference({
       getBoundingClientRect: () => range.getBoundingClientRect(),
-      getClientRects: () => range.getClientRects(),
     });
   }, [range, setReference]);
 

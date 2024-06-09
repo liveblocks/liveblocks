@@ -424,7 +424,11 @@ function SuggestionsPortal({
       shift({ padding: SUGGESTIONS_COLLISION_PADDING, limiter: limitShift() }),
       size({ padding: SUGGESTIONS_COLLISION_PADDING }),
     ],
-    whileElementsMounted: autoUpdate,
+    whileElementsMounted: (...args) => {
+      return autoUpdate(...args, {
+        animationFrame: true,
+      });
+    },
   });
 
   useLayoutEffect(() => {
