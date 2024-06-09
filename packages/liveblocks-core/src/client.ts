@@ -13,7 +13,7 @@ import { createStore } from "./lib/create-store";
 import { deprecateIf } from "./lib/deprecation";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
-import type { NoInferr } from "./lib/NoInfer";
+import type { NoInfr } from "./lib/NoInfer";
 import type { Resolve } from "./lib/Resolve";
 import type { GetInboxNotificationsOptions } from "./notifications";
 import { createNotificationsApi } from "./notifications";
@@ -169,7 +169,7 @@ export type Client<U extends BaseUserMeta = DU> = {
     M extends BaseMetadata = DM,
   >(
     roomId: string,
-    options: EnterOptions<NoInferr<P>, NoInferr<S>>
+    options: EnterOptions<NoInfr<P>, NoInfr<S>>
   ): {
     room: Room<P, S, U, E, M>;
     leave: () => void;
@@ -375,7 +375,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     M extends BaseMetadata,
   >(
     roomId: string,
-    options: EnterOptions<NoInferr<P>, NoInferr<S>>
+    options: EnterOptions<NoInfr<P>, NoInfr<S>>
   ): {
     room: Room<P, S, U, E, M>;
     leave: () => void;
