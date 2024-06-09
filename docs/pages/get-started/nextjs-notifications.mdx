@@ -27,6 +27,8 @@ to hear from you.
     <StepTitle>Install Liveblocks</StepTitle>
     <StepContent>
 
+      Every package should use the same version.
+
       ```bash
       npm install @liveblocks/client @liveblocks/react @liveblocks/react-ui
       ```
@@ -37,6 +39,8 @@ to hear from you.
   <Step>
     <StepTitle>Initialize the `liveblocks.config.ts` file</StepTitle>
     <StepContent>
+
+      We can use this file later to [define types for our application](/docs/api-reference/liveblocks-react#Typing-your-data).
 
       ```bash
       npx create-liveblocks-app@latest --init --framework react
@@ -52,9 +56,10 @@ to hear from you.
       Liveblocks Notifications uses the concept of projects, which relate to
       projects in [your dashboard](/dashboard). Notifications are sent between
       users in the same project. To connect and receive notifications, you must
-      add `<LiveblocksProvider>` to your app.
+      add [`<LiveblocksProvider>`](/docs/api-reference/liveblocks-react#LiveblocksProvider)
+      to a client component your app.
 
-      ```tsx file="app/NotificationsProvider.tsx" highlight="8-12"
+      ```tsx file="app/NotificationsProvider.tsx" highlight="8-10"
       "use client";
 
       import { ReactNode } from "react";
@@ -78,11 +83,9 @@ to hear from you.
 
       After creating your provider file, it’s time to join it. Import
       your room into your `layout.tsx` file, and place
-      your collaborative app components inside it. Use
-      `<ClientSideSuspense>` to add loading spinners to your app.
+      your collaborative app components inside it.
 
-      ```tsx file="app/layout.tsx" highlight="7-11"
-      import { ClientSideSuspense } from "@liveblocks/react";
+      ```tsx file="app/layout.tsx" highlight="6-1-"
       import { NotificationsProvider } from "./NotificationsProvider";
       import { MyApp } from "./MyApp";
 
@@ -102,26 +105,32 @@ to hear from you.
     <StepTitle>Use the Liveblocks hooks and components</StepTitle>
     <StepContent>
 
-      Now that we’re connected to a room, we can start using the Liveblocks hooks and components.
-      We’ll add `useThreads` to get the threads in the room, then we’ll use the `Thread` component
-      to render them. Finally, we’ll add a way to create threads by adding a `Composer`.
+      Now that we’ve set up the provider, we can start using the Liveblocks hooks and components.
+      We’ll add [`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications)
+      to get the current project’s notifications, then we’ll
+      use [`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification) and [`InboxNotificationList`](/docs/api-reference/liveblocks-react-ui#InboxNotificationList) to render them.
 
-      ```tsx file="app/CollaborativeApp.tsx" highlight="7,11-14"
+      ```tsx file="app/MyApp.tsx" highlight="7,11-14"
       "use client";
 
-      import { useThreads } from "../liveblocks.config";
-      import { Composer, Thread } from "@liveblocks/react-ui";
+      import { useInboxNotifications } from "@liveblocks/react/suspense";
+      import {
+        InboxNotification,
+        InboxNotificationList,
+      } from "@liveblocks/react-ui";
 
       export function CollaborativeApp() {
-        const { threads } = useThreads();
+        const { inboxNotifications } = useInboxNotifications();
 
         return (
-          <div>
-            {threads.map((thread) => (
-              <Thread key={thread.id} thread={thread} />
+          <InboxNotificationList>
+            {inboxNotifications.map((inboxNotification) => (
+              <InboxNotification
+                key={inboxNotification.id}
+                inboxNotification={inboxNotification}
+              />
             ))}
-            <Composer />
-          </div>
+          </InboxNotificationList>
         );
       }
       ```

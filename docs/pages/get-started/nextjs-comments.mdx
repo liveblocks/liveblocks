@@ -20,6 +20,8 @@ components from
     <StepTitle>Install Liveblocks</StepTitle>
     <StepContent>
 
+      Every package should use the same version.
+
       ```bash
       npm install @liveblocks/client @liveblocks/react @liveblocks/react-ui
       ```
@@ -30,6 +32,8 @@ components from
   <Step>
     <StepTitle>Initialize the `liveblocks.config.ts` file</StepTitle>
     <StepContent>
+
+      We can use this file later to [define types for our application](/docs/api-reference/liveblocks-react#Typing-your-data).
 
       ```bash
       npx create-liveblocks-app@latest --init --framework react
@@ -52,7 +56,7 @@ components from
       "use client";
 
       import { ReactNode } from "react";
-      import { LiveblocksProvider, RoomProvider } from "@liveblocks/react";
+      import { LiveblocksProvider, RoomProvider } from "@liveblocks/react/suspense";
 
       export function Room({ children }: { children: ReactNode }) {
         return (
@@ -75,10 +79,10 @@ components from
       After creating your room file, it’s time to join it. Import
       your room into your `page.tsx` file, and place
       your collaborative app components inside it. Use
-      `<ClientSideSuspense>` to add loading spinners to your app.
+      [`<ClientSideSuspense>`](/docs/api-reference/liveblocks-react#ClientSideSuspense) to add loading spinners to your app.
 
       ```tsx file="app/page.tsx" highlight="7-11"
-      import { ClientSideSuspense } from "@liveblocks/react";
+      import { ClientSideSuspense } from "@liveblocks/react/suspense";
       import { Room } from "./Room";
       import { CollaborativeApp } from "./CollaborativeApp";
 
@@ -107,7 +111,7 @@ components from
       ```tsx file="app/CollaborativeApp.tsx" highlight="7,11-14"
       "use client";
 
-      import { useThreads } from "../liveblocks.config";
+      import { useThreads } from "@liveblocks/react/suspense";
       import { Composer, Thread } from "@liveblocks/react-ui";
 
       export function CollaborativeApp() {
