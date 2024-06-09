@@ -1,0 +1,20 @@
+@import "@liveblocks/react-ui/styles.css";
+@import "@liveblocks/react-lexical/styles.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.lb-thread {
+  border-bottom: 1px solid var(--lb-foreground-subtle);
+  padding: 0.5rem;
+}
+
+.lb-thread-composer:after {
+  content: none;
+}
+
+.lb-lexical-threads-empty {
+  height: 100%;
+  border-left: 1px solid var(--lb-foreground-subtle);
+}

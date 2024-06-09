@@ -1,19 +1,20 @@
 "use client";
 
-import { Room } from "@/app/Room";
-import styles from "@/components/Page.module.css";
-import CollaborativeEditor from "@/components/Editor";
+import Room from "./room";
+import Loading from "./loading";
 import {
   ClientSideSuspense,
   LiveblocksProvider,
+  RoomProvider,
 } from "@liveblocks/react/suspense";
-import { Loading } from "@/components/Loading";
-import Notifications from "./notifications";
+import { useSearchParams } from "next/navigation";
 
 // Learn how to structure your collaborative Next.js app
 // https://liveblocks.io/docs/guides/how-to-use-liveblocks-with-nextjs-app-directory
 
 export default function Page() {
+  const roomId = useExampleRoomId("liveblocks:lexical-examples:nextjs");
+
   return (
     <LiveblocksProvider
       // @ts-ignore
@@ -29,7 +30,8 @@ export default function Page() {
           throw new Error("Problem resolving users");
         }
 
-        return response.json();
+        const users = await response.json();
+        return users;
       }}
       resolveMentionSuggestions={async ({ text }) => {
         const response = await fetch(
@@ -40,26 +42,33 @@ export default function Page() {
           throw new Error("Problem resolving mention suggestions");
         }
 
-        return response.json();
+        const userIds = await response.json();
+        return userIds;
       }}
     >
-      <ClientSideSuspense fallback={<Loading />}>
-        {() => (
-          <main>
-            <div className={styles.container}>
-              <div className={styles.notificationsContainer}>
-                <Notifications />
-              </div>
-
-              <div className={styles.editorContainer}>
-                <Room>
-                  <CollaborativeEditor />
-                </Room>
-              </div>
-            </div>
-          </main>
-        )}
-      </ClientSideSuspense>
+      {/* <ClientSideSuspense fallback={<Loading />}>
+          {() => <CollaborativeEditor />}
+        </ClientSideSuspense> */}
+      <RoomProvider
+        id={roomId}
+        initialPresence={{
+          cursor: null,
+        }}
+      >
+        <ClientSideSuspense fallback={<Loading />}>
+          {() => <Room />}
+        </ClientSideSuspense>
+      </RoomProvider>
     </LiveblocksProvider>
   );
+}
+
+/**
+ * This function is used when deploying an example on liveblocks.io.
+ * You can ignore it completely if you run the example locally.
+ */
+function useExampleRoomId(roomId: string) {
+  const params = useSearchParams();
+  const exampleId = params?.get("exampleId");
+  return exampleId ? `${roomId}-${exampleId}` : roomId;
 }

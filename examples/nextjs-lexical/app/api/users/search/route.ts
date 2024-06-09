@@ -1,5 +1,5 @@
-import { USER_INFO } from "@/database";
 import { NextRequest, NextResponse } from "next/server";
+import { USER_INFO } from "../../dummy-users";
 
 /**
  * Returns a list of user IDs from a partial search input
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   const userIndices = [...USER_INFO.keys()];
   const users = userIndices.map(
     (userIndex) =>
-      ({ id: `user-${userIndex}`, name: USER_INFO[userIndex].name } as User)
+      ({ id: `user-${userIndex}`, name: USER_INFO[userIndex].name }) as User
   );
   const filteredUserIds = users
     .filter((user) =>
