@@ -1,3 +1,4 @@
+import { CollaborationContext } from "@lexical/react/LexicalCollaborationContext";
 import { CollaborationPlugin } from "@lexical/react/LexicalCollaborationPlugin";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { Provider } from "@lexical/yjs";
@@ -11,7 +12,7 @@ import type {
 import { kInternal } from "@liveblocks/core";
 import { useClient, useRoom, useSelf } from "@liveblocks/react";
 import LiveblocksProvider from "@liveblocks/yjs";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Doc } from "yjs";
 
 import { CommentPluginProvider } from "./comments/comment-plugin-provider";
@@ -28,16 +29,17 @@ export const LiveblocksPlugin = ({
   const hasResolveMentionSuggestions =
     client[kInternal].resolveMentionSuggestions !== undefined;
   const [editor] = useLexicalComposerContext();
+  const collabContext = useContext(CollaborationContext);
   const room = useRoom();
 
   const [provider, setProvider] = useState<
     | LiveblocksProvider<
-        JsonObject,
-        LsonObject,
-        BaseUserMeta,
-        Json,
-        BaseMetadata
-      >
+      JsonObject,
+      LsonObject,
+      BaseUserMeta,
+      Json,
+      BaseMetadata
+    >
     | undefined
   >();
 
@@ -74,8 +76,12 @@ export const LiveblocksPlugin = ({
 
   // Get user info or allow override from props
   const info = useSelf((me) => me.info);
-  const username = info?.name;
+  const username = info?.name || ""; // use empty string to prevent random name
   const cursorcolor = info?.color as string | undefined;
+
+  useEffect(() => {
+    collabContext.name = username || "";
+  }, [collabContext, username]);
 
   // Create the provider factory
   const providerFactory = useCallback(
@@ -85,6 +91,7 @@ export const LiveblocksPlugin = ({
     },
     [provider, doc]
   );
+
 
   return (
     <>
