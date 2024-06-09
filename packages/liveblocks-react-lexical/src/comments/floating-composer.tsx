@@ -1,3 +1,13 @@
+import {
+  autoUpdate,
+  flip,
+  hide,
+  limitShift,
+  offset,
+  shift,
+  size,
+  useFloating,
+} from "@floating-ui/react-dom";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { BaseMetadata } from "@liveblocks/core";
 import { useCreateThread } from "@liveblocks/react";
@@ -14,11 +24,18 @@ import {
   COMMAND_PRIORITY_EDITOR,
   createCommand,
 } from "lexical";
-import type { ComponentRef, FormEvent, KeyboardEvent } from "react";
-import React, { forwardRef, useCallback, useEffect, useState } from "react";
+import type { ComponentRef, FormEvent, KeyboardEvent, ReactNode } from "react";
+import React, {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from "react";
+import { createPortal } from "react-dom";
 
-import { ActiveSelection } from "../active-selection";
-import { FloatingSelectionContainer } from "../floating-selection-container";
+import { createDOMRange } from "../create-dom-range";
+import { createRectsFromDOMRange } from "../create-rects-from-dom-range";
 import $wrapSelectionInThreadMarkNode from "./wrap-selection-in-thread-mark-node";
 
 export const OPEN_FLOATING_COMPOSER_COMMAND: LexicalCommand<void> =
@@ -39,11 +56,100 @@ export const FloatingComposer = forwardRef<
   ComposerElement,
   FloatingComposerProps
 >(function FloatingComposer(props, forwardedRef) {
-  const { onKeyDown, onComposerSubmit, ...composerProps } = props;
-  const [showComposer, setShowComposer] = useState(false);
-  const [showActiveSelection, setShowActiveSelection] = useState(false);
+  const [range, setRange] = useState<Range | null>(null);
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    return editor.registerCommand(
+      OPEN_FLOATING_COMPOSER_COMMAND,
+      () => {
+        const selection = $getSelection();
+        if (!$isRangeSelection(selection)) return false;
+
+        if (selection.isCollapsed()) return false;
+
+        const { anchor, focus } = selection;
+
+        const range = createDOMRange(
+          editor,
+          anchor.getNode(),
+          anchor.offset,
+          focus.getNode(),
+          focus.offset
+        );
+
+        setRange(range);
+
+        return true;
+      },
+      COMMAND_PRIORITY_EDITOR
+    );
+  }, [editor]);
+
+  if (range === null) return null;
+
+  return (
+    <FloatingComposerImpl
+      ref={forwardedRef}
+      {...props}
+      range={range}
+      onRangeChange={setRange}
+    />
+  );
+});
+
+interface FloatingComposerImplProps extends FloatingComposerProps {
+  range: Range;
+  onRangeChange: (range: Range | null) => void;
+}
+
+const FloatingComposerImpl = forwardRef<
+  ComposerElement,
+  FloatingComposerImplProps
+>(function FloatingComposer(props, forwardedRef) {
+  const {
+    range,
+    onRangeChange,
+    onKeyDown,
+    onComposerSubmit,
+    ...composerProps
+  } = props;
+
   const [editor] = useLexicalComposerContext();
   const createThread = useCreateThread();
+
+  const $onStateRead = useCallback((): Range | null => {
+    const selection = $getSelection();
+
+    // If the selection is not a range selection or is collapsed, clear the range so the composer is no longer displayed.
+    if (!$isRangeSelection(selection) || selection.isCollapsed()) {
+      return null;
+    }
+
+    const { anchor, focus } = selection;
+    const range = createDOMRange(
+      editor,
+      anchor.getNode(),
+      anchor.offset,
+      focus.getNode(),
+      focus.offset
+    );
+
+    return range;
+  }, [editor]);
+
+  useEffect(() => {
+    return editor.registerUpdateListener(({ editorState: state, tags }) => {
+      // If the update is not related to collaboration, clear the range so the composer is no longer displayed.
+      if (!tags.has("collaboration")) {
+        onRangeChange(null);
+        return;
+      }
+
+      const range = state.read(() => $onStateRead());
+      onRangeChange(range);
+    });
+  }, [editor, range, onRangeChange, $onStateRead]);
 
   /**
    * Create a new ThreadMarkNode and wrap the selected content in it.
@@ -88,66 +194,154 @@ export const FloatingComposer = forwardRef<
 
   function handleKeyDown(event: KeyboardEvent<HTMLFormElement>) {
     if (event.key === "Escape") {
-      setShowComposer(false);
+      onRangeChange(null);
       editor.focus();
     }
-
     onKeyDown?.(event);
   }
 
-  useEffect(() => {
-    return editor.registerCommand(
-      OPEN_FLOATING_COMPOSER_COMMAND,
-      () => {
-        const selection = $getSelection();
-        if (!$isRangeSelection(selection)) return false;
-
-        if (selection.isCollapsed()) return false;
-
-        setShowComposer(true);
-        return true;
-      },
-      COMMAND_PRIORITY_EDITOR
-    );
-  }, [editor]);
-
-  useEffect(() => {
-    if (!showComposer) return;
-
-    return editor.registerUpdateListener(({ editorState: state, tags }) => {
-      // Ignore selection updates related to collaboration
-      if (tags.has("collaboration")) return;
-      state.read(() => setShowComposer(false));
-    });
-  }, [editor, showComposer]);
-
-  useEffect(() => {
-    return editor.registerUpdateListener(({ editorState: state, tags }) => {
-      // Ignore selection updates related to collaboration
-      if (tags.has("collaboration")) return;
-      state.read(() => setShowActiveSelection(false));
-    });
-  }, [editor]);
-
-  if (!showComposer) return null;
-
   return (
     <>
-      {showActiveSelection && <ActiveSelection />}
-      <FloatingSelectionContainer
-        sideOffset={5}
-        alignOffset={0}
-        collisionPadding={15}
-      >
+      <ActiveSelectionPortal range={range} container={document.body} />
+
+      <FloatingComposerPortal range={range} container={document.body}>
         <Composer
           autoFocus
           {...composerProps}
           onKeyDown={handleKeyDown}
           onComposerSubmit={handleComposerSubmit}
           ref={forwardedRef}
-          onFocus={() => setShowActiveSelection(true)}
         />
-      </FloatingSelectionContainer>
+      </FloatingComposerPortal>
     </>
   );
 });
+
+function ActiveSelectionPortal({
+  range,
+  container,
+}: {
+  range: Range;
+  container: HTMLElement;
+}) {
+  const {
+    refs: { setReference, setFloating },
+    strategy,
+    x,
+    y,
+  } = useFloating({
+    strategy: "fixed",
+    placement: "bottom",
+    middleware: [offset(-range.getBoundingClientRect().height)],
+    whileElementsMounted: (...args) => {
+      return autoUpdate(...args, {
+        animationFrame: true,
+      });
+    },
+  });
+
+  useLayoutEffect(() => {
+    setReference({
+      getBoundingClientRect: () => range.getBoundingClientRect(),
+    });
+  }, [setReference, range]);
+
+  const [editor] = useLexicalComposerContext();
+  const rects = createRectsFromDOMRange(editor, range);
+
+  return createPortal(
+    <>
+      <span
+        ref={setFloating}
+        style={{
+          position: strategy,
+          top: 0,
+          left: 0,
+          transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`,
+          minWidth: "max-content",
+          width: range.getBoundingClientRect().width,
+          height: range.getBoundingClientRect().height,
+          pointerEvents: "none",
+        }}
+        className="lb-root lb-portal"
+      >
+        {rects.map((rect) => (
+          <span
+            key={JSON.stringify(rect)}
+            style={{
+              position: "absolute",
+              top: rect.top - range.getBoundingClientRect().top,
+              left: rect.left - range.getBoundingClientRect().left,
+              width: rect.width,
+              height: rect.height,
+              backgroundColor: "rgba(0, 0, 255, 0.2)",
+              pointerEvents: "none",
+            }}
+            className="lb-lexical-active-selection"
+          />
+        ))}
+      </span>
+    </>,
+    container
+  );
+}
+
+export const FLOATING_COMPOSER_COLLISION_PADDING = 10;
+
+function FloatingComposerPortal({
+  container,
+  range,
+  children,
+}: {
+  container: HTMLElement;
+  range: Range;
+  children: ReactNode;
+}) {
+  const {
+    refs: { setReference, setFloating },
+    strategy,
+    x,
+    y,
+  } = useFloating({
+    strategy: "fixed",
+    placement: "bottom",
+    middleware: [
+      flip({ padding: FLOATING_COMPOSER_COLLISION_PADDING, crossAxis: false }),
+      offset(10),
+      hide({ padding: FLOATING_COMPOSER_COLLISION_PADDING }),
+      shift({
+        padding: FLOATING_COMPOSER_COLLISION_PADDING,
+        limiter: limitShift(),
+      }),
+      size({ padding: FLOATING_COMPOSER_COLLISION_PADDING }),
+    ],
+    whileElementsMounted: (...args) => {
+      return autoUpdate(...args, {
+        animationFrame: true,
+      });
+    },
+  });
+
+  useLayoutEffect(() => {
+    setReference({
+      getBoundingClientRect: () => range.getBoundingClientRect(),
+    });
+  }, [range, setReference]);
+
+  return createPortal(
+    <div
+      ref={setFloating}
+      style={{
+        position: strategy,
+        top: 0,
+        left: 0,
+        transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`,
+        minWidth: "max-content",
+      }}
+      className="lb-root lb-portal lb-elevation lb-lexical-floating-composer"
+    >
+      {children}
+    </div>,
+    container
+  );
+}

@@ -1,3 +1,13 @@
+import {
+  autoUpdate,
+  flip,
+  hide,
+  limitShift,
+  offset,
+  shift,
+  size,
+  useFloating,
+} from "@floating-ui/react-dom";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { kInternal } from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
@@ -17,7 +27,12 @@ import {
   KEY_BACKSPACE_COMMAND,
 } from "lexical";
 import type { ReactNode } from "react";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 
 import { Avatar } from "./avatar";
@@ -348,19 +363,14 @@ export function MentionPlugin() {
 
   if (range === null) return null;
 
-  const rect = range.getBoundingClientRect();
-
   return createPortal(
     <SuggestionsContext.Provider value={suggestions}>
       <OnValueSelectCallbackContext.Provider value={handleValueSelect}>
         <OnResetMatchCallbackContext.Provider value={() => setMatch(null)}>
           <SuggestionsPortal
-            rect={rect}
+            range={range}
             container={document.body}
             key={matchingString}
-            sideOffset={5}
-            alignOffset={5}
-            collisionPadding={20}
           >
             <Suggestions.List className="lb-lexical-suggestions-list lb-lexical-mention-suggestions-list">
               {suggestions.map((userId) => (
@@ -388,69 +398,55 @@ export function MentionPlugin() {
   );
 }
 
+export const SUGGESTIONS_COLLISION_PADDING = 10;
+
 function SuggestionsPortal({
   children,
-  rect,
+  range,
   container,
-  sideOffset = 0,
-  alignOffset = 0,
-  collisionPadding = 0,
 }: {
   children: ReactNode;
-  rect: DOMRect;
+  range: Range;
   container: Element;
-  sideOffset?: number;
-  alignOffset?: number;
-  collisionPadding?: number;
 }) {
-  const [editor] = useLexicalComposerContext();
-  const divRef = useRef<HTMLDivElement>(null);
+  const {
+    refs: { setReference, setFloating },
+    strategy,
+    x,
+    y,
+  } = useFloating({
+    strategy: "fixed",
+    placement: "top-start",
+    middleware: [
+      flip({ padding: SUGGESTIONS_COLLISION_PADDING, crossAxis: false }),
+      offset(10),
+      hide({ padding: SUGGESTIONS_COLLISION_PADDING }),
+      shift({ padding: SUGGESTIONS_COLLISION_PADDING, limiter: limitShift() }),
+      size({ padding: SUGGESTIONS_COLLISION_PADDING }),
+    ],
+    whileElementsMounted: (...args) => {
+      return autoUpdate(...args, {
+        animationFrame: true,
+      });
+    },
+  });
 
-  const positionContent = useCallback(() => {
-    const content = divRef.current;
-    if (content === null) return;
-
-    let left = rect.left + container.scrollLeft;
-    // Apply the align offset
-    left += alignOffset;
-
-    // Get the width of the content
-    const width = content.getBoundingClientRect().width;
-    // Ensure content does not overflow the container
-    if (left <= collisionPadding) {
-      left = collisionPadding;
-    } else if (left + width >= container.clientWidth - collisionPadding) {
-      left = container.clientWidth - width - collisionPadding;
-    }
-
-    let top = rect.bottom + container.scrollTop;
-    // Apply the side offset
-    top += sideOffset;
-
-    const height = content.getBoundingClientRect().height;
-    if (top + height >= container.clientHeight - collisionPadding) {
-      top = rect.top - height - sideOffset;
-    }
-
-    content.style.left = `${left}px`;
-    content.style.top = `${top}px`;
-  }, [rect, alignOffset, sideOffset, collisionPadding, container]);
-
-  useEffect(() => {
-    const editable = editor.getRootElement();
-    if (editable === null) return;
-
-    const observer = new ResizeObserver(positionContent);
-    observer.observe(editable);
-    return () => {
-      observer.disconnect();
-    };
-  }, [editor, positionContent]);
+  useLayoutEffect(() => {
+    setReference({
+      getBoundingClientRect: () => range.getBoundingClientRect(),
+    });
+  }, [setReference, range]);
 
   return createPortal(
     <div
-      ref={divRef}
-      style={{ position: "absolute" }}
+      ref={setFloating}
+      style={{
+        position: strategy,
+        top: 0,
+        left: 0,
+        transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`,
+        minWidth: "max-content",
+      }}
       className="lb-root lb-portal lb-elevation lb-lexical-suggestions lb-lexical-mention-suggestions"
     >
       {children}

@@ -138,15 +138,19 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     const elements = getThreadMarkElements();
 
     const theme = context.getTheme();
-    if (theme === null || theme === undefined) return;
+
+    const classNames = ["lb-thread-mark"];
+    if (theme && theme.liveblocks && "threadMark" in theme.liveblocks) {
+      classNames.push((theme.liveblocks as { threadMark: string }).threadMark);
+    }
 
     elements.forEach((element) => {
-      addClassNamesToElement(element, theme.lexicalThreadMark as string);
+      addClassNamesToElement(element, ...classNames);
     });
 
     return () => {
       elements.forEach((element) => {
-        removeClassNamesFromElement(element, theme.lexicalThreadMark as string);
+        removeClassNamesFromElement(element, ...classNames);
       });
     };
   }, [context, editor, threadToNodes, threads]);

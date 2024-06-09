@@ -18,6 +18,7 @@ Breaking changes:
 - Rename `@liveblocks/react-comments` to `@liveblocks/react-ui` and
   `<CommentsConfig />` to `<LiveblocksUIConfig />` (codemod)
 - Rename `@liveblocks/node`'s `RoomInfo` to `RoomData` (codemod)
+- In `@liveblocks/node`, `client.getThread<MyMeta>()` no longer takes type params. Use global type augmentation instead.
 - Removal of the deprecated APIs
 - Yjs package changes
   - No longer has a default export, change:
