@@ -88,7 +88,11 @@ function FloatingToolbar({
       shift({ padding, limiter: limitShift() }),
       size({ padding }),
     ],
-    whileElementsMounted: autoUpdate,
+    whileElementsMounted: (...args) => {
+      return autoUpdate(...args, {
+        animationFrame: true,
+      });
+    },
   });
 
   useLayoutEffect(() => {
