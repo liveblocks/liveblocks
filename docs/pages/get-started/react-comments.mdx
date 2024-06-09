@@ -45,15 +45,28 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
     <StepTitle>Set up the Liveblocks client</StepTitle>
     <StepContent>
 
-      The first step in connecting to Liveblocks is creating a client which
-      will be responsible for communicating with the back end. You can do
-      this by modifying `createClient` in your config file, and
-      passing your public API key.
+      Liveblocks uses the concept of rooms, separate virtual spaces where
+      collaborate, and to create a realtime experience, multiple users must
+      be connected to the same room. Set up a Liveblocks client with [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider), and join a room with [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider).
 
-      ```tsx file="liveblocks.config.ts"
-      const client = createClient({
-        publicApiKey: "{{PUBLIC_KEY}}",
-      });
+      ```tsx file="App.tsx" highlight="11-15"
+      "use client";
+
+      import {
+        LiveblocksProvider,
+        RoomProvider,
+      } from "@liveblocks/react/suspense";
+      import { Room } from "./Room";
+
+      export default function App() {
+        return (
+          <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
+            <RoomProvider id="my-room" initialPresence={{}}>
+              {/* ... */}
+            </RoomProvider>
+          </LiveblocksProvider>
+        );
+      }
       ```
 
     </StepContent>
@@ -63,24 +76,28 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
     <StepTitle>Join a Liveblocks room</StepTitle>
     <StepContent>
 
-      Liveblocks uses the concept of rooms, separate virtual spaces where people
-      collaborate. To create a realtime experience, multiple users must be
-      connected to the same room.
+      After setting up the room, you can add collaborative components inside it, using
+      [`ClientSideSuspense`](/docs/api-reference/liveblocks-react#ClientSideSuspense) to add loading spinners to your app.
 
-      ```tsx file="App.tsx" highlight="9-13"
+      ```tsx file="App.tsx" highlight="14-16"
       "use client";
 
-      import { RoomProvider } from "./liveblocks.config";
+      import {
+        LiveblocksProvider,
+        RoomProvider,
+        ClientSideSuspense,
+      } from "@liveblocks/react/suspense";
       import { Room } from "./Room";
-      import { ClientSideSuspense } from "@liveblocks/react";
 
       export default function App() {
         return (
-          <RoomProvider id="my-room" initialPresence={{}}>
-            <ClientSideSuspense fallback={<div>Loading…</div>}>
-              {() => <Room />}
-            </ClientSideSuspense>
-          </RoomProvider>
+          <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
+            <RoomProvider id="my-room" initialPresence={{}}>
+              <ClientSideSuspense fallback={<div>Loading…</div>}>
+                {() => <Room />}
+              </ClientSideSuspense>
+            </RoomProvider>
+          </LiveblocksProvider>
         );
       }
       ```
@@ -93,13 +110,13 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
     <StepContent>
 
       Now that we’re connected to a room, we can start using the Liveblocks hooks and components.
-      We’ll add `useThreads` to get the threads in the room, then we’ll use the `Thread` component
-      to render them. Finally, we’ll add a way to create threads by adding a `Composer`.
+      We’ll add [`useThreads`](/docs/api-reference/liveblocks-react#useThreads) to get the threads in the room, then we’ll use the [`Thread`](/docs/api-reference/liveblocks-react-ui#Thread) component
+      to render them. Finally, we’ll add a way to create threads by adding a [`Composer`](/docs/api-reference/liveblocks-react-ui#Composer).
 
       ```tsx file="Room.tsx" highlight="7,11-14"
       "use client";
 
-      import { useThreads } from "./liveblocks.config";
+      import { useThreads } from "@liveblocks/react/suspense";
       import { Composer, Thread } from "@liveblocks/react-ui";
 
       export function Room() {

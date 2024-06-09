@@ -47,8 +47,8 @@ components from
     <StepContent>
 
       Liveblocks uses the concept of rooms, separate virtual spaces where
-      collaborate. To create a realtime experience, multiple users must
-      be connected to the same room. When using Next.js’ `/app`
+      collaborate, and to create a realtime experience, multiple users must
+      be connected to the same room. Set up a Liveblocks client with [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider), and join a room with [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider). When using Next.js’ `/app`
       directory, we recommend creating your room in a `Room.tsx`
       file in the same directory as your current route.
 
@@ -79,7 +79,7 @@ components from
       After creating your room file, it’s time to join it. Import
       your room into your `page.tsx` file, and place
       your collaborative app components inside it. Use
-      [`<ClientSideSuspense>`](/docs/api-reference/liveblocks-react#ClientSideSuspense) to add loading spinners to your app.
+      [`ClientSideSuspense`](/docs/api-reference/liveblocks-react#ClientSideSuspense) to add loading spinners to your app.
 
       ```tsx file="app/page.tsx" highlight="7-11"
       import { ClientSideSuspense } from "@liveblocks/react/suspense";
@@ -105,8 +105,8 @@ components from
     <StepContent>
 
       Now that we’re connected to a room, we can start using the Liveblocks hooks and components.
-      We’ll add `useThreads` to get the threads in the room, then we’ll use the `Thread` component
-      to render them. Finally, we’ll add a way to create threads by adding a `Composer`.
+      We’ll add [`useThreads`](/docs/api-reference/liveblocks-react#useThreads) to get the threads in the room, then we’ll use the [`Thread`](/docs/api-reference/liveblocks-react-ui#Thread) component
+      to render them. Finally, we’ll add a way to create threads by adding a [`Composer`](/docs/api-reference/liveblocks-react-ui#Composer).
 
       ```tsx file="app/CollaborativeApp.tsx" highlight="7,11-14"
       "use client";
