@@ -444,17 +444,6 @@ export function createClient<U extends BaseUserMeta = DU>(
     return leaseRoom(newRoomDetails);
   }
 
-  function enter<
-    P extends JsonObject,
-    S extends LsonObject,
-    U extends BaseUserMeta,
-    E extends Json,
-    M extends BaseMetadata,
-  >(roomId: string, options: EnterOptions<P, S>): Room<P, S, U, E, M> {
-    const { room, leave: _ } = enterRoom<P, S, U, E, M>(roomId, options);
-    return room;
-  }
-
   function getRoom<
     P extends JsonObject,
     S extends LsonObject,
@@ -464,13 +453,6 @@ export function createClient<U extends BaseUserMeta = DU>(
   >(roomId: string): Room<P, S, U, E, M> | null {
     const room = roomsById.get(roomId)?.room;
     return room ? (room as Room<P, S, U, E, M>) : null;
-  }
-
-  function forceLeave(roomId: string) {
-    const unsubs = roomsById.get(roomId)?.unsubs ?? new Set();
-    for (const unsub of unsubs) {
-      unsub();
-    }
   }
 
   function logout() {
@@ -540,15 +522,10 @@ export function createClient<U extends BaseUserMeta = DU>(
 
   return Object.defineProperty(
     {
-      logout,
-
-      // Old, deprecated APIs
-      enter,
-      getRoom,
-      leave: forceLeave,
-
-      // New, preferred API
       enterRoom,
+      getRoom,
+
+      logout,
 
       // Internal
       [kInternal]: {
