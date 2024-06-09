@@ -1,5 +1,5 @@
 import { expectError, expectType } from "tsd";
-import { Liveblocks, InternalLiveblocks } from "../src/client";
+import { Liveblocks } from "../src/client";
 import type {
   CommentReaction,
   CommentBody,
@@ -276,26 +276,6 @@ async () => {
     expectType<string | number | boolean | undefined>(
       thread.metadata.nonexisting
     );
-    expectType<CommentData[]>(thread.comments);
-  }
-
-  // .getThread() with hard-coded annotation
-  {
-    type _ = never;
-    const client = new InternalLiveblocks<_, _, _, _, { foo: string }>({
-      secret: "sk_xxx",
-    });
-    const thread = await client.getThread({
-      roomId: "room",
-      threadId: "th_xxx",
-    });
-    expectType<"thread">(thread.type);
-    expectType<string>(thread.id);
-    expectType<string>(thread.roomId);
-    expectType<Date>(thread.createdAt);
-    expectType<Date | undefined>(thread.updatedAt);
-    expectType<string>(thread.metadata.foo);
-    expectError(thread.metadata.nonexisting);
     expectType<CommentData[]>(thread.comments);
   }
 

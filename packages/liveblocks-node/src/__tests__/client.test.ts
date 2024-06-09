@@ -7,7 +7,7 @@ import type {
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
-import { InternalLiveblocks, Liveblocks, LiveblocksError } from "../client";
+import { Liveblocks, LiveblocksError } from "../client";
 import { getBaseUrl } from "../utils";
 
 const DEFAULT_BASE_URL = getBaseUrl();
@@ -562,13 +562,7 @@ describe("client", () => {
       })
     );
 
-    const client = new InternalLiveblocks<
-      never,
-      never,
-      never,
-      never,
-      { status: "open" | "closed"; priority: 3; organization: string }
-    >({ secret: "sk_xxx" });
+    const client = new Liveblocks({ secret: "sk_xxx" });
 
     await expect(
       client.getThreads({

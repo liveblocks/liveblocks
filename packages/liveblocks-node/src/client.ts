@@ -14,7 +14,6 @@ import type {
   CommentUserReactionPlain,
   DE,
   DM,
-  DP,
   DS,
   DU,
   InboxNotificationData,
@@ -144,6 +143,17 @@ export type Schema = {
 };
 
 type SchemaPlain = DateToString<Schema>;
+
+// NOTE: We should _never_ rely on using the default types (DS, DU, DE, ...)
+// inside the Liveblocks implementation. We should only rely on the type
+// "params" (S, U, E, ...) instead, where the concrete type is bound to the
+// class. In this case, we're not doing that at the class level, but globally.
+// The idea is that we "start small" and could always add them in at the class
+// level later.
+type E = DE;
+type M = DM;
+type S = DS;
+type U = DU;
 
 /**
  * Interact with the Liveblocks API from your Node.js backend.
