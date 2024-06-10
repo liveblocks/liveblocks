@@ -196,7 +196,7 @@ function Page() {
 
         <aside>
           <ClientSideSuspense fallback={<div>Loading…</div>}>
-            {() => <LiveAvatars />}
+            <LiveAvatars />
           </ClientSideSuspense>
         </aside>
       </RoomProvider>
