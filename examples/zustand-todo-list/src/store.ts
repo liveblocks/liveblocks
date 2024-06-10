@@ -3,6 +3,14 @@ import { createClient } from "@liveblocks/client";
 import { liveblocks } from "@liveblocks/zustand";
 import type { WithLiveblocks } from "@liveblocks/zustand";
 
+declare global {
+  interface Liveblocks {
+    Presence: {
+      isTyping: boolean;
+    };
+  }
+}
+
 let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
 
 overrideApiKey();
@@ -24,11 +32,7 @@ type State = {
   deleteTodo: (index: number) => void;
 };
 
-type Presence = {
-  isTyping: boolean;
-};
-
-const useStore = create<WithLiveblocks<State, Presence>>()(
+const useStore = create<WithLiveblocks<State>>()(
   liveblocks(
     (set) => ({
       draft: "",
