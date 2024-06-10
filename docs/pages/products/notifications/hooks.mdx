@@ -226,7 +226,7 @@ function Component() {
   return (
     <ErrorBoundary fallback={<div>Error</div>}>
       <ClientSideSuspense fallback={<div>Loading...</div>}>
-        {() => <MyNotifications />}
+        <MyNotifications />
       </ClientSideSuspense>
     </ErrorBoundary>
   );

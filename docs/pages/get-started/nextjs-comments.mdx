@@ -90,7 +90,7 @@ components from
         return (
           <Room>
             <ClientSideSuspense fallback={<div>Loading…</div>}>
-              {() => <CollaborativeApp />}
+              <CollaborativeApp />
             </ClientSideSuspense>
           </Room>
         );

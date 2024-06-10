@@ -210,7 +210,7 @@ function Component() {
   return (
     <ErrorBoundary fallback={<div>Error</div>}>
       <ClientSideSuspense fallback={<div>Loading...</div>}>
-        {() => <MyThreads />}
+        <MyThreads />
       </ClientSideSuspense>
     </ErrorBoundary>
   );

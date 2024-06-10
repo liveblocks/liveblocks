@@ -92,7 +92,7 @@ collaboration to your React application using the hooks from the
           <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
             <RoomProvider id="my-room" initialPresence={{}}>
               <ClientSideSuspense fallback={<div>Loading…</div>}>
-                {() => <Room />}
+                <Room />
               </ClientSideSuspense>
             </RoomProvider>
           </LiveblocksProvider>

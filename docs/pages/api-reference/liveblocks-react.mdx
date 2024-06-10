@@ -1586,7 +1586,7 @@ function Page() {
   return (
     <RoomProvider /* ... */>
       <ClientSideSuspense fallback={<Loading />}>
-        {() => <App />}
+        <App />
       </ClientSideSuspense>
     </RoomProvider>
   );
