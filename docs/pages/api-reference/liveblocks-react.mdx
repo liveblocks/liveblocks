@@ -157,21 +157,6 @@ function Page() {
 }
 ```
 
-Note that you should wrap your inner component inside a function for it to work
-correctly.
-
-```tsx highlight="3,8"
-// ❌ Won't work
-<ClientSideSuspense fallback={<div>Loading…</div>}>
-  <App />;
-</ClientSideSuspense>
-
-// ✅ Correct
-<ClientSideSuspense fallback={<div>Loading…</div>}>
-  {() => <App />}
-</ClientSideSuspense>
-```
-
 #### Loading spinners
 
 Instead of wrapping your entire Liveblocks application inside a single
@@ -901,13 +886,16 @@ function App() {
 <Banner>
 
 This used to be the default way to start your app, but now it’s recommend for
-advanced usage only. We generally recommend using ... TODO ... unless you need
-to define multiple room types in your application.
+advanced usage only. We generally recommend using [`LiveblocksProvider`][] and
+following [typing your data with the Liveblocks interface](#Typing-your-data],
+unless you need to define multiple room types in your application.
 
 </Banner>
 
-Creates a [`LiveblocksProvider`][] and a set of typed hooks. We recommend using
-it in `liveblocks.config.ts` and re-exporting your typed hooks like below.
+Creates a [`LiveblocksProvider`][] and a set of typed hooks. Note that any
+`LiveblocksProvider` created in this way takes no props, because it uses
+settings from the `client` instead. We recommend using it in
+`liveblocks.config.ts` and re-exporting your typed hooks like below.
 
 While [`createRoomContext`](#createRoomContext) offers APIs for interacting with
 rooms (e.g. Presence, Storage, and Comments),
@@ -932,18 +920,32 @@ export const { RoomProvider } = createRoomContext(client);
 export const {
   LiveblocksProvider,
   useInboxNotifications,
-  /* ...all the other hooks you’re using... */
+
+  // Other hooks
+  // ...
 } = createLiveblocksContext(client);
+```
+
+### useClient [@badge=LiveblocksProvider]
+
+Returns the [`client`][/docs/api-reference/liveblocks-client#Client] of the
+nearest [`LiveblocksProvider`][] above in the React component tree.
+
+```ts
+import { useClient } from "@liveblocks/react/suspense";
+
+const client = useClient();
 ```
 
 ## Room
 
 ### RoomProvider
 
-Makes a [`Room`] available in the component hierarchy below. Joins the room when
-the component is mounted, and automatically leaves the room when the component
-is unmounted. When using [Realtime APIs](/docs/products/realtime-apis), initial
-Presence values for each user, and Storage values for the room can be set.
+Makes a [`Room`][] available in the component hierarchy below. Joins the room
+when the component is mounted, and automatically leaves the room when the
+component is unmounted. When using
+[Realtime APIs](/docs/products/realtime-apis), initial Presence values for each
+user, and Storage values for the room can be set.
 
 ```tsx
 import { RoomProvider } from "@liveblocks/react/suspense";
@@ -1025,7 +1027,7 @@ a room is entered, you can set an initial value by using `initialStorage`. Note
 that this value is only read a single time.
 
 ```tsx highlight="9-15"
-import { LiveList, LiveObject } from "@liveblocks/client";
+import { LiveList, LiveObject, LiveMap } from "@liveblocks/client";
 import { RoomProvider } from "@liveblocks/react/suspense";
 
 function App() {
@@ -1035,7 +1037,7 @@ function App() {
       initialPresence={}
       initialStorage={{
         title: "Untitled",
-        names: new LiveList(["Steven", "Guillaume"])
+        names: new LiveList(["Steven", "Guillaume"]),
         shapes: new LiveMap([
           ["g9shu0", new LiveObject({ type: "rectangle", color: "red" })],
           ["djs3g5", new LiveObject({ type: "circle", color: "yellow" })],
@@ -1057,13 +1059,16 @@ and JSON-serializable objects are allowed (the `LsonObject` type).
 <Banner>
 
 This used to be the default way to start your app, but now it’s recommend for
-advanced usage only. We generally recommend using ... TODO ... unless you need
-to define multiple room types in your application.
+advanced usage only. We generally recommend using [`LiveblocksProvider`][] and
+following [typing your data with the Liveblocks interface](#Typing-your-data],
+unless you need to define multiple room types in your application.
 
 </Banner>
 
-Creates a [`RoomProvider`][] and a set of typed hooks to use in your app. We
-generally recommend typing your app using the newer method instead. When using
+Creates a [`RoomProvider`][] and a set of typed hooks to use in your app. Note
+that any `RoomProvider` created in this way does not need to be nested in
+[`LiveblocksProvider`][], as it already has access to the `client`. We generally
+recommend typing your app using the newer method instead. When using
 `createRoomContext` it can be helpful to use it in `liveblocks.config.ts` and
 re-export your typed hooks as below.
 
@@ -2446,6 +2451,9 @@ declare global {
     ActivitiesData: {};
   }
 }
+
+// Necessary if you have no imports/exports
+export {};
 ```
 
 Here are some example values that might be used.
@@ -2505,11 +2513,14 @@ declare global {
     };
   }
 }
+
+// Necessary if you have no imports/exports
+export {};
 ```
 
 ### Typing with createRoomContext
 
-Before Liveblocks 2.0, it was recommend to create your hooks using
+Before Liveblocks 2.0, it was recommended to create your hooks using
 [`createRoomContext`][], and manually pass your types to this function. This is
 no longer [the recommended method](#Typing-your-data) for setting up Liveblocks,
 but it can still be helpful, for example you can use `createRoomContext`
@@ -2575,6 +2586,9 @@ export const {
   /* UserMeta, RoomEvent, ThreadMetadata */
 >(client);
 ```
+
+To upgrade to Liveblocks 2.0 and the new typing system, follow the
+[2.0 migration guide](/docs/platform/upgrading/2.0).
 
 ## Helpers
 
@@ -2810,7 +2824,6 @@ And the following timeline:
 [`lostConnectionTimeout`]:
   /docs/api-reference/liveblocks-client#createClientLostConnectionTimeout
 [`room.history`]: /docs/api-reference/liveblocks-client#Room.history
-[`cl`]: /docs/api-reference/liveblocks-react#RoomProvider
 [`roomprovider`]: /docs/api-reference/liveblocks-react#RoomProvider
 [`liveblocksprovider`]: /docs/api-reference/liveblocks-react#LiveblocksProvider
 [`usemutation`]: /docs/api-reference/liveblocks-react#useMutation
