@@ -17,7 +17,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { EditorView } from "prosemirror-view";
 import { useEffect, useState } from "react";
 import * as Y from "yjs";
-import { useRoom, useSelf } from "@/liveblocks.config";
+import { useRoom, useSelf } from "@liveblocks/react/suspense";
 import { DocumentSpinner } from "@/primitives/Spinner";
 import { CustomTaskItem } from "./CustomTaskItem";
 import { SelectionMenu } from "./SelectionMenu";
