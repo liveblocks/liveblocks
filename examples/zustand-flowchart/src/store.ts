@@ -13,7 +13,7 @@ import {
   OnNodesChange,
 } from "reactflow";
 import { createClient } from "@liveblocks/client";
-import type { EnsureJson } from "@liveblocks/core"; // XXX Import from client instead
+import type { EnsureJson } from "@liveblocks/client";
 import { liveblocks } from "@liveblocks/zustand";
 import type { WithLiveblocks } from "@liveblocks/zustand";
 import nodes from "./nodes";
