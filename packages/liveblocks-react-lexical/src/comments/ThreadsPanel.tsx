@@ -2,7 +2,7 @@ import type { BaseMetadata, ThreadData } from "@liveblocks/core";
 import { useThreads } from "@liveblocks/react";
 import { Thread } from "@liveblocks/react-ui";
 import type { ComponentType } from "react";
-import React, { useCallback, useContext } from "react";
+import React, { forwardRef, useCallback, useContext } from "react";
 
 import {
   IsActiveThreadContext,
@@ -39,30 +39,28 @@ const DefaultThread = ({ thread, isActive }: ThreadProps) => {
   );
 };
 
-const ThreadPanel = ({ renderThread }: ThreadPanelProps) => {
-  const { threads } = useThreads();
-  const isThreadActive = useContext(IsActiveThreadContext);
-  const ThreadComponent = renderThread ?? DefaultThread;
+export const ThreadsPanel = forwardRef<HTMLDivElement, ThreadPanelProps>(
+  ({ renderThread }, forwardedRef) => {
+    const { threads } = useThreads();
+    const isThreadActive = useContext(IsActiveThreadContext);
+    const ThreadComponent = renderThread ?? DefaultThread;
 
-  if (!threads || threads.length === 0) {
     return (
-      <div className="lb-root lb-lexical-threads-empty">No threads yet</div>
+      <div className="lb-lexical-threads lb-root" ref={forwardedRef}>
+        {threads && threads.length > 0 ? (
+          threads.map((thread) => {
+            return (
+              <ThreadComponent
+                isActive={isThreadActive(thread.id)}
+                key={thread.id}
+                thread={thread}
+              />
+            );
+          })
+        ) : (
+          <div className="lb-root lb-lexical-threads-empty">No threads yet</div>
+        )}
+      </div>
     );
   }
-
-  return (
-    <div className="lb-lexical-threads lb-root">
-      {threads.map((thread) => {
-        return (
-          <ThreadComponent
-            isActive={isThreadActive(thread.id)}
-            key={thread.id}
-            thread={thread}
-          />
-        );
-      })}
-    </div>
-  );
-};
-
-export { ThreadPanel };
+);
