@@ -28,7 +28,7 @@ export function CustomNotifications() {
       <div className={styles.buttonPanel}>
         <h2>Send notifications</h2>
         <ClientSideSuspense fallback={null}>
-          {() => <SendNotificationButtons />}
+          <SendNotificationButtons />
         </ClientSideSuspense>
       </div>
 
@@ -38,7 +38,7 @@ export function CustomNotifications() {
           fallback={<div className="error">Error getting notifications</div>}
         >
           <ClientSideSuspense fallback={null}>
-            {() => <NotificationPanel />}
+            <NotificationPanel />
           </ClientSideSuspense>
         </ErrorBoundary>
       </div>
