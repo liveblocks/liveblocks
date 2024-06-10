@@ -7,15 +7,14 @@ import { HeadingNode } from "@lexical/rich-text";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import {
   FloatingComposer,
-  liveblocksLexicalConfig,
+  liveblocksConfig,
   LiveblocksPlugin,
   ThreadPanel,
 } from "@liveblocks/react-lexical";
 import FloatingToolbarPlugin from "./floating-toolbar-plugin";
 
-// Wrap your initial config with `liveblocksLexicalConfig`
-const initialConfig = liveblocksLexicalConfig({
-  editorState: null,
+// Wrap your initial config with `liveblocksConfig`
+const initialConfig = liveblocksConfig({
   namespace: "Demo",
   nodes: [HeadingNode],
   onError: (error: unknown) => {
