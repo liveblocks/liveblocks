@@ -10,7 +10,7 @@ export {
 } from "./comments/floating-composer";
 export { ThreadMarkNode } from "./comments/thread-mark-node";
 export { ThreadPanel } from "./comments/ThreadPanel";
-export { liveblocksLexicalConfig } from "./liveblocks-config";
+export { liveblocksConfig } from "./liveblocks-config";
 export { LiveblocksPlugin } from "./liveblocks-plugin-provider";
 export { Mention } from "./mentions/mention-component";
 export { MentionNode } from "./mentions/mention-node";

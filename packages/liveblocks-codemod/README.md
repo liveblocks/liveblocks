@@ -13,6 +13,26 @@ Codemods for updating Liveblocks apps.
 
 ## Transforms
 
+### General
+
+#### `remove-liveblocks-config-contexts`
+
+Replaces `createRoomContext` and `createLiveblocksContext` in `liveblock.config`
+files with global `Liveblocks` types and updates all imports to
+`@liveblocks/react` accordingly.
+
+```shell
+npx @liveblocks/codemod@latest remove-liveblocks-config-contexts
+```
+
+If you export the Suspense versions of hooks from `createRoomContext` and
+`createLiveblocksContext`, add the `--suspense` flag to update all imports to
+`@liveblocks/react/suspense` instead.
+
+```shell
+npx @liveblocks/codemod@latest remove-liveblocks-config-contexts --suspense
+```
+
 ### 2.0
 
 #### `react-comments-to-react-ui`

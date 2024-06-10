@@ -64,13 +64,14 @@ export const LiveblocksPlugin = ({
       }
     }
 
-    // Report that this is lexical and root is the rootKey
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    room[kInternal].reportTextEditor("lexical", "root");
-
     // we know editor is already defined as we're inside LexicalComposer, and we only want this running the first time
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    // Report that this is lexical and root is the rootKey
+    room[kInternal].reportTextEditor("lexical", "root");
+  }, [room]);
 
   // Get user info or allow override from props
   const info = useSelf((me) => me.info);
