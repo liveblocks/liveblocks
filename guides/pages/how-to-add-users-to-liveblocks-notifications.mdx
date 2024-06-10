@@ -1,22 +1,24 @@
 ---
 meta:
-  title: "How to add users to Liveblocks Comments"
+  title: "How to add users to Liveblocks Notifications"
   description:
-    "Learn how to add your user’s avatars and names to Liveblocks Comments using
-    the resolver functions."
+    "Learn how to add your user’s avatars and names to Liveblocks Notifications
+    using the resolver functions."
 ---
 
-After following the get started guide for Comments, you’ll notice that each user
-is currently “Anonymous”, and that there’s no way to mention or tag other users.
-To enable these features, we need to tell Comments where to find your users’
+After following the get started guide for Notifications, and sending
+notifications with [Comments](/docs/products/comments) or
+[Text editor](/docs/products/text-editor), you’ll notice that each user is
+currently “Anonymous”, and that there’s no way to mention or tag other users. To
+enable these features, we need to tell Notifications where to find your users’
 information.
 
 <Figure>
   <Image
-    src="/assets/tutorials/comments/thread.png"
-    alt="Thread with resolved users"
-    width={1291}
-    height={892}
+    src="/assets/notifications/notifications-inbox.jpg"
+    alt="Thread"
+    width={1344}
+    height={896}
   />
 </Figure>
 
@@ -26,20 +28,18 @@ In this guide we’ll be modifying
 [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider),
 learning how to:
 
-- Add names and avatars to threads and comments with
+- Add names and avatars to notifications with
   [`resolveUsers`](/docs/api-reference/liveblocks-react#resolveUsers).
-- Create user mention suggestions in the composer using
-  [`resolveMentionSuggestions`](/docs/api-reference/liveblocks-react#resolveMentionSuggestions).
 
 ## Authenticate your application
 
 The first step is to find an
 [authentication guide for your framework](/docs/authentication) and authenticate
-your app, as this is necessary for Comments.
+your app, as this is necessary for Notifications.
 
 Make sure to follow the metadata step in the guide, and attach the name of your
 user, along with the URL of their avatar, as these properties will both be used
-in the [default components](/docs/products/comments#Components). Here’s an
+in the [default components](/docs/products/notifications#Components). Here’s an
 example using access token authentication, with an email address as a user’s ID.
 
 ```ts title="Metadata in access tokens"
@@ -102,10 +102,10 @@ To show each user’s name and avatar in threads and comments, we need to use
 
 <Figure>
   <Image
-    src="/assets/tutorials/comments/thread.png"
-    alt="Thread with resolved users"
-    width={1291}
-    height={892}
+    src="/assets/notifications/notifications-inbox.jpg"
+    alt="Thread"
+    width={1344}
+    height={896}
   />
 </Figure>
 
@@ -115,7 +115,7 @@ To show each user’s name and avatar in threads and comments, we need to use
     <StepContent>
       The [`resolveUsers`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers) function is passed as an option to
       [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider)—let’s add it. This function
-      provides you with `userIds`, an array of user IDs that have interacted with Comments.
+      provides you with `userIds`, an array of user IDs that have interacted with Notifications.
       These `userIds` match the IDs set when authenticating users in your app.
 
       ```tsx highlight="2-8"
@@ -199,113 +199,14 @@ To show each user’s name and avatar in threads and comments, we need to use
   <Step lastStep>
     <StepTitle>Users are now visible</StepTitle>
     <StepContent>
-      After adding this, you should now be able to see your users in threads!
+      After adding this, you should now be able to see your users in notifications!
 
       <Figure>
         <Image
-          src="/assets/tutorials/comments/thread.png"
-          alt="Thread with resolved users"
-          width={1291}
-          height={892}
-        />
-      </Figure>
-
-    </StepContent>
-
-  </Step>
-</Steps>
-
-## Resolving mention suggestions
-
-We can see the users that have commented, but we don’t have a way to search for
-users to mention, for example after typing the `@` character. We can create a
-simple search that resolves this data with
-[`resolveMentionSuggestions`](/docs/api-reference/liveblocks-react#resolveMentionSuggestions).
-
-<Figure>
-  <Image
-    src="/assets/tutorials/comments/mentions.png"
-    alt="Working Comments mentions"
-    width={1297}
-    height={781}
-  />
-</Figure>
-
-<Steps>
-  <Step>
-    <StepTitle>Add the function to your config file</StepTitle>
-    <StepContent>
-      `resolveMentionSuggestions` is placed alongside `resolveUsers`, and
-      provides you with `text`, which is the string that the user is searching for.
-      You can use this string to return a list of matching user IDs.
-
-      ```tsx highlight="5-11"
-      <LiveblocksProvider
-        resolveUsers={async ({ userIds }) => {
-          // ...
-        }}
-        resolveMentionSuggestions={async ({ text, roomId }) => {
-          // The text the user is searching for, e.g. "mar"
-          console.log(text);
-
-          // Return a list of user IDs that match the query
-          return ["marc@example.com", "marissa@example.com"];
-        }}
-
-        // ...
-      />;
-      ```
-
-    </StepContent>
-
-  </Step>
-  <Step>
-    <StepTitle>Real-world example</StepTitle>
-    <StepContent>
-
-      In a real application, you’ll most likely be getting a list of each user,
-      before filtering the list by the user’s names or IDs. If `text` is an empty
-      string, then you need to return a list of every user, instead of a filtered list.
-
-      ```tsx highlight="6-16"
-      <LiveblocksProvider
-        resolveUsers={async ({ userIds }) => {
-          // ...
-        }}
-        resolveMentionSuggestions={async ({ text, roomId }) => {
-          // Fetch all users from your back end
-          let users = await __fetchAllUsers__();
-
-          // If there's a query, filter for the relevant users
-          if (text) {
-            // Filter any way you'd like, e.g. checking if the name matches
-            users = users.filter((user) => user.name.includes(text));
-          }
-
-          // Return the filtered `userIds`
-          return users.map((user) => user.id);
-        }}
-
-        // ...
-      />;
-      ```
-
-    </StepContent>
-
-  </Step>
-  <Step lastStep>
-    <StepTitle>Mention suggestions now appear</StepTitle>
-    <StepContent>
-
-      Now we’ve found and returned the correct users, Comments can display
-      a list of mention suggestions!
-
-      <Figure>
-        <Image
-          src="/assets/tutorials/comments/mentions.png"
-          alt="Working Comments mentions"
-          width={1297}
-          height={781}
+          src="/assets/notifications/notifications-inbox.jpg"
+          alt="Thread"
+          width={1344}
+          height={896}
         />
       </Figure>
 
@@ -316,9 +217,9 @@ simple search that resolves this data with
 
 ## Next steps
 
-You’re now ready to start building your Comments application! Here’s where you
-can learn more:
+You’re now ready to start building your Notifications application! Here’s where
+you can learn more:
 
-- [API reference](/docs/api-reference/liveblocks-react#Comments)
-- [Component reference](/docs/api-reference/liveblocks-ui#Comments)
-- [Examples](/examples/browse/comments)
+- [API reference](/docs/api-reference/liveblocks-react#Notifications)
+- [Component reference](/docs/api-reference/liveblocks-ui#Notifications)
+- [Examples](/examples/browse/notifications)

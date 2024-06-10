@@ -5,6 +5,10 @@
       "name": "Comments"
     },
     {
+      "id": "notifications",
+      "name": "Notifications"
+    },
+    {
       "id": "data-fetching",
       "name": "Data fetching"
     },

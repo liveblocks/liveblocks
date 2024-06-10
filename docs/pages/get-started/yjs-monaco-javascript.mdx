@@ -26,9 +26,25 @@ hear from you.
     <StepTitle>Install Liveblocks, Yjs, and Monaco</StepTitle>
     <StepContent>
 
+      Every Liveblocks package should use the same version.
+
       ```bash
       npm install @liveblocks/client @liveblocks/yjs yjs monaco-editor y-monaco
       ```
+    </StepContent>
+
+  </Step>
+
+  <Step>
+    <StepTitle>Initialize the `liveblocks.config.ts` file</StepTitle>
+    <StepContent>
+
+      We can use this file later to [define types for our application](/docs/api-reference/liveblocks-client#Typing-your-data).
+
+      ```bash
+      npx create-liveblocks-app@latest --init --framework javascript
+      ```
+
     </StepContent>
 
   </Step>
