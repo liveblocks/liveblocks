@@ -53,15 +53,28 @@ hear from you.
     <StepTitle>Set up the Liveblocks client</StepTitle>
     <StepContent>
 
-      The first step in connecting to Liveblocks is creating a client which
-      will be responsible for communicating with the back end. You can do
-      this by modifying `createClient` in your config file, and
-      passing your public API key.
+      Liveblocks uses the concept of rooms, separate virtual spaces where people
+      collaborate, and to create a realtime experience, multiple users must
+      be connected to the same room. Set up a Liveblocks client with [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider), and join a room with [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider).
 
-      ```ts file="liveblocks.config.ts"
-      const client = createClient({
-        publicApiKey: "{{PUBLIC_KEY}}",
-      });
+      ```tsx file="App.tsx" highlight="11-15"
+      "use client";
+
+      import {
+        LiveblocksProvider,
+        RoomProvider,
+      } from "@liveblocks/react/suspense";
+      import { Room } from "./Room";
+
+      export default function App() {
+        return (
+          <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
+            <RoomProvider id="my-room" initialPresence={{}}>
+              {/* ... */}
+            </RoomProvider>
+          </LiveblocksProvider>
+        );
+      }
       ```
 
     </StepContent>
@@ -71,24 +84,28 @@ hear from you.
     <StepTitle>Join a Liveblocks room</StepTitle>
     <StepContent>
 
-      Liveblocks uses the concept of rooms, separate virtual spaces where people
-      collaborate. To create a realtime experience, multiple users must be
-      connected to the same room.
+      After setting up the room, you can add collaborative components inside it, using
+      [`ClientSideSuspense`](/docs/api-reference/liveblocks-react#ClientSideSuspense) to add loading spinners to your app.
 
-      ```tsx file="index.tsx" highlight="9-13"
+      ```tsx file="App.tsx" highlight="14-16"
       "use client";
 
-      import { RoomProvider } from "./liveblocks.config";
+      import {
+        LiveblocksProvider,
+        RoomProvider,
+        ClientSideSuspense,
+      } from "@liveblocks/react/suspense";
       import { Editor } from "./Editor";
-      import { ClientSideSuspense } from "@liveblocks/react";
 
-      export default function Page() {
+      export default function App() {
         return (
-          <RoomProvider id="my-room" initialPresence={{}}>
-            <ClientSideSuspense fallback="Loading…">
-              {() => <Editor />}
-            </ClientSideSuspense>
-          </RoomProvider>
+          <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
+            <RoomProvider id="my-room" initialPresence={{}}>
+              <ClientSideSuspense fallback={<div>Loading…</div>}>
+                {() => <Editor />}
+              </ClientSideSuspense>
+            </RoomProvider>
+          </LiveblocksProvider>
         );
       }
       ```
