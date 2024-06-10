@@ -6,7 +6,7 @@ import {
   RoomProvider,
   useCreateThread,
   useThreads,
-} from "../../liveblocks.config";
+} from "@liveblocks/react/suspense";
 import { Loading } from "../components/Loading";
 import { Composer } from "../components/Composer";
 import { Thread } from "../components/Thread";

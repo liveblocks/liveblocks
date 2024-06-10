@@ -1,10 +1,5 @@
 "use client";
-
-import {
-  CustomThreadData,
-  useCreateThread,
-  useThreads,
-} from "@/liveblocks.config";
+import { useCreateThread, useThreads } from "@liveblocks/react/suspense";
 import { Composer, Thread } from "@liveblocks/react-ui";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { Editor } from "@tiptap/react";
@@ -16,6 +11,7 @@ import {
 } from "@/comment-utils";
 import { CommentIcon } from "@/icons";
 import styles from "./ThreadList.module.css";
+import { ThreadData } from "@liveblocks/client";
 
 type Props = {
   editor: Editor;
@@ -57,10 +53,7 @@ function NoComments() {
   );
 }
 
-function CustomThread({
-  editor,
-  thread,
-}: Props & { thread: CustomThreadData }) {
+function CustomThread({ editor, thread }: Props & { thread: ThreadData }) {
   const [active, setActive] = useState(false);
 
   useHighlightEventListener((highlightId) => {
@@ -68,7 +61,7 @@ function CustomThread({
   });
 
   const handleThreadDelete = useCallback(
-    (thread: CustomThreadData) => {
+    (thread: ThreadData) => {
       removeCommentHighlight(editor, thread.metadata.highlightId);
     },
     [editor]
@@ -189,7 +182,7 @@ function ThreadComposer({ editor }: Props) {
   );
 }
 
-function sortThreads(a: CustomThreadData, b: CustomThreadData) {
+function sortThreads(a: ThreadData, b: ThreadData) {
   if (a.metadata.resolved) {
     return 1;
   }

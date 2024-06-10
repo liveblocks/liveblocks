@@ -10,12 +10,11 @@ import {
   useState,
 } from "react";
 import { ThreadData } from "@liveblocks/client";
-import { ThreadMetadata, UserMeta } from "@/liveblocks.config";
 import { Thread } from "@liveblocks/react-ui";
 
 type Props = {
-  user: UserMeta["info"];
-  thread: ThreadData<ThreadMetadata>;
+  user: Liveblocks["UserMeta"]["info"];
+  thread: ThreadData;
   onPointerDown: PointerEventHandler<HTMLDivElement>;
   onPointerMove: PointerEventHandler<HTMLDivElement>;
   onPointerUp: PointerEventHandler<HTMLDivElement>;

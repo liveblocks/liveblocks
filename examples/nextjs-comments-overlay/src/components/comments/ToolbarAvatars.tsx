@@ -1,6 +1,6 @@
 "use client";
 
-import { useOthers, useSelf } from "@/liveblocks.config";
+import { useOthers, useSelf } from "@liveblocks/react/suspense";
 import styles from "./ToolbarAvatars.module.css";
 
 export function ToolbarAvatars() {

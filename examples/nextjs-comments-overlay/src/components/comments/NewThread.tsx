@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 import * as Portal from "@radix-ui/react-portal";
-import { useCreateThread, useSelf, useUser } from "@/liveblocks.config";
+import { useCreateThread, useSelf, useUser } from "@liveblocks/react/suspense";
 import { ComposerSubmitComment } from "@liveblocks/react-ui/primitives";
 import styles from "./NewThread.module.css";
 import { NewThreadCursor } from "@/components/comments/NewThreadCursor";

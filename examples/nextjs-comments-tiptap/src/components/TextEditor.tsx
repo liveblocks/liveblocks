@@ -14,7 +14,7 @@ import { SelectionMenu } from "@/components/SelectionMenu";
 import { DocumentSpinner } from "@/components/Spinner";
 import { ThreadList } from "@/components/ThreadList";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { useRoom, useSelf } from "@/liveblocks.config";
+import { useRoom, useSelf } from "@liveblocks/react/suspense";
 import { LiveblocksCommentsHighlight } from "@/comment-highlight";
 import styles from "./TextEditor.module.css";
 import { Placeholder } from "@tiptap/extension-placeholder";
