@@ -6,7 +6,7 @@ import {
   useInboxNotifications,
   useMarkAllInboxNotificationsAsRead,
   useUnreadInboxNotificationsCount,
-} from "../../liveblocks.config";
+} from "@liveblocks/react/suspense";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { Loading } from "./Loading";
 import { ComponentPropsWithoutRef, useEffect, useState } from "react";

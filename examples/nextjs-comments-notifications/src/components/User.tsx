@@ -3,7 +3,7 @@
 import clsx from "clsx";
 import { ComponentProps } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import { useUser } from "../../liveblocks.config";
+import { useUser } from "@liveblocks/react/suspense";
 import { useExampleUserId } from "../example.client";
 import { ClientSideSuspense } from "@liveblocks/react";
 

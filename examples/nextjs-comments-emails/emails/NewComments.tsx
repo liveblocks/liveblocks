@@ -11,10 +11,9 @@ import {
   Hr,
 } from "@react-email/components";
 import * as React from "react";
-import { UserMeta } from "../src/liveblocks.config";
 
 export type CommentEmailInfo = {
-  user: UserMeta | null;
+  user: Liveblocks["UserMeta"] | null;
   date: Date;
   html: string;
 };

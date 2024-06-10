@@ -4,10 +4,9 @@ import { usePathname } from "next/navigation";
 import { ComponentProps, Suspense } from "react";
 import { Link } from "./Link";
 import clsx from "clsx";
-import { Room } from "../../liveblocks.config";
 
 interface SidebarProps extends ComponentProps<"aside"> {
-  rooms: Room[];
+  rooms: Liveblocks["RoomInfo"][];
 }
 
 export function Sidebar({ rooms, className, ...props }: SidebarProps) {
@@ -17,13 +16,13 @@ export function Sidebar({ rooms, className, ...props }: SidebarProps) {
     <aside className={clsx(className, "sidebar")} {...props}>
       <ul>
         {rooms.map((room) => {
-          const isActive = pathname === room.info.url;
+          const isActive = pathname === room.url;
 
           return (
             <li key={room.id}>
               <Suspense fallback={null}>
                 <Link
-                  href={isActive ? "/" : room.info.url}
+                  href={isActive ? "/" : room.url}
                   className="sidebar-room"
                   data-active={isActive ? "" : undefined}
                 >
@@ -41,7 +40,7 @@ export function Sidebar({ rooms, className, ...props }: SidebarProps) {
                       strokeLinejoin="round"
                     />
                   </svg>
-                  {room.info.name}
+                  {room.name}
                 </Link>
               </Suspense>
             </li>
