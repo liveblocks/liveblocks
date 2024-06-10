@@ -2,7 +2,7 @@
 
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import * as Y from "yjs";
-import { useRoom, useSelf } from "@/liveblocks.config";
+import { useRoom, useSelf } from "@liveblocks/react/suspense";
 import styles from "./Editor.module.css";
 import { Toolbar } from "@/components/Toolbar";
 import { Avatars } from "./Avatars";
