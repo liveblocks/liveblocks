@@ -1,4 +1,4 @@
-import { useStorage, useSelf } from "../../liveblocks.config";
+import { useStorage, useSelf } from "@liveblocks/react/suspense";
 import { Layer, XYWH } from "../types";
 import { shallow } from "@liveblocks/react";
 

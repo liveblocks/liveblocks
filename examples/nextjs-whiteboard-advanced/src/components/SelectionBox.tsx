@@ -1,7 +1,7 @@
 import { memo } from "react";
 import styles from "./SelectionBox.module.css";
 import useSelectionBounds from "../hooks/useSelectionBounds";
-import { useSelf, useStorage } from "../../liveblocks.config";
+import { useSelf, useStorage } from "@liveblocks/react/suspense";
 import { LayerType, Side, XYWH } from "../types";
 
 type SelectionBoxProps = {

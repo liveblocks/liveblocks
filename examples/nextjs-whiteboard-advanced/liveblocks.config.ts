@@ -1,5 +1,4 @@
 import { createClient } from "@liveblocks/client";
-import { createRoomContext } from "@liveblocks/react";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import { Point, Color, Layer } from "./src/types";
 
@@ -27,32 +26,9 @@ type Storage = {
   layerIds: LiveList<string>;
 };
 
-// Optionally, UserMeta represents static/readonly metadata on each User, as
-// provided by your own custom auth backend (if used). Useful for data that
-// will not change during a session, like a User's name or avatar.
-// type UserMeta = {
-//   id?: string,  // Accessible through `user.id`
-//   info?: Json,  // Accessible through `user.info`
-// };
-
-// Optionally, the type of custom events broadcasted and listened for in this
-// room. Must be JSON-serializable.
-// type RoomEvent = {};
-
-export const {
-  suspense: {
-    RoomProvider,
-    useCanRedo,
-    useCanUndo,
-    useHistory,
-    useMutation,
-    useOthers,
-    useOthersMapped,
-    useOthersConnectionIds,
-    useOther,
-    useRoom,
-    useSelf,
-    useStorage,
-    useUpdateMyPresence,
-  },
-} = createRoomContext<Presence, Storage /* UserMeta, RoomEvent */>(client);
+declare global {
+  interface Liveblocks {
+    Presence: Presence;
+    Storage: Storage;
+  }
+}
