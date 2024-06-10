@@ -18,7 +18,6 @@ const pkgJson = `{
     "@liveblocks/client": "^1.11.0",
     "@liveblocks/node": "^1.11.0",
     "@liveblocks/react": "^1.11.0",
-    "@liveblocks/react-comments": "^1.11.0",
     "next": "^13.4.16",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
