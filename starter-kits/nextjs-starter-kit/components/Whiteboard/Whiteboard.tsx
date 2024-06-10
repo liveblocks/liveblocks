@@ -63,7 +63,7 @@ function Canvas({ currentUser, className, style, ...props }: Props) {
   const canvasRef = useRef(null);
   const rectRef = useBoundingClientRectRef(canvasRef);
 
-  const isReadOnly = useSelf((me) => me.isReadOnly);
+  const canWrite = useSelf((me) => me.canWrite);
 
   // Info about element being dragged
   const [isDragging, setIsDragging] = useState(false);
@@ -75,7 +75,7 @@ function Canvas({ currentUser, className, style, ...props }: Props) {
 
   // Insert a new note onto the canvas
   const insertNote = useMutation(({ storage, self }) => {
-    if (self.isReadOnly) {
+    if (!self.canWrite) {
       return;
     }
 
@@ -92,7 +92,7 @@ function Canvas({ currentUser, className, style, ...props }: Props) {
 
   // Delete a note
   const handleNoteDelete = useMutation(({ storage, self }, noteId) => {
-    if (self.isReadOnly) {
+    if (!self.canWrite) {
       return;
     }
 
@@ -101,7 +101,7 @@ function Canvas({ currentUser, className, style, ...props }: Props) {
 
   // Update a note, if it exists
   const handleNoteUpdate = useMutation(({ storage, self }, noteId, updates) => {
-    if (self.isReadOnly) {
+    if (!self.canWrite) {
       return;
     }
 
@@ -183,7 +183,7 @@ function Canvas({ currentUser, className, style, ...props }: Props) {
       onPointerMove={handleCanvasPointerMove}
       onPointerUp={handleCanvasPointerUp}
       ref={canvasRef}
-      style={{ pointerEvents: isReadOnly ? "none" : undefined, ...style }}
+      style={{ pointerEvents: canWrite ? undefined : "none", ...style }}
       {...props}
     >
       <Cursors element={canvasRef} />
@@ -205,7 +205,7 @@ function Canvas({ currentUser, className, style, ...props }: Props) {
         ))
       }
 
-      {!isReadOnly && (
+      {canWrite && (
         <div className={styles.toolbar}>
           <Tooltip content="Add note" sideOffset={16}>
             <Button icon={<PlusIcon />} onClick={insertNote} variant="subtle" />
