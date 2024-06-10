@@ -2,16 +2,11 @@
 
 import { Liveblocks } from "@liveblocks/node";
 import { nanoid } from "nanoid";
+import { AlertData, ImageUploadData, InviteData } from "./liveblocks.config";
 
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
 });
-
-export type ImageUploadData = {
-  src: string;
-  alt: string;
-  uploadedBy: string;
-};
 
 export async function imageUploadNotification(
   userId: string,
@@ -25,11 +20,6 @@ export async function imageUploadNotification(
   });
 }
 
-export type AlertData = {
-  title: string;
-  message: string;
-};
-
 export async function alertNotification(userId: string, data: AlertData) {
   await liveblocks.triggerInboxNotification({
     userId,
@@ -38,11 +28,6 @@ export async function alertNotification(userId: string, data: AlertData) {
     activityData: data,
   });
 }
-
-export type InviteData = {
-  inviteFrom: string;
-  roomId: `${string}:${string}:${string}`;
-};
 
 export async function inviteNotification(userId: string, data: InviteData) {
   await liveblocks.triggerInboxNotification({

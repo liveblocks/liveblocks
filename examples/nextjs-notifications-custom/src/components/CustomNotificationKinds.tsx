@@ -2,7 +2,6 @@ import {
   InboxNotification,
   InboxNotificationCustomKindProps,
 } from "@liveblocks/react-ui";
-import { AlertData, ImageUploadData, InviteData } from "../actions";
 import styles from "./CustomNotificationKinds.module.css";
 import { WarningIcon } from "./Icons";
 import { Button } from "./Button";
@@ -10,8 +9,8 @@ import { useRoomInfo, useUser } from "@liveblocks/react/suspense";
 
 export function AlertNotification({
   inboxNotification,
-}: InboxNotificationCustomKindProps) {
-  const { title, message } = inboxNotification.activities[0].data as AlertData;
+}: InboxNotificationCustomKindProps<"$alert">) {
+  const { title, message } = inboxNotification.activities[0].data;
 
   return (
     <InboxNotification.Custom
@@ -30,9 +29,8 @@ export function AlertNotification({
 
 export function ImageUploadNotification({
   inboxNotification,
-}: InboxNotificationCustomKindProps) {
-  const { src, alt, uploadedBy } = inboxNotification.activities[0]
-    .data as ImageUploadData;
+}: InboxNotificationCustomKindProps<"$imageUpload">) {
+  const { src, alt, uploadedBy } = inboxNotification.activities[0].data;
   const { user: uploader } = useUser(uploadedBy);
 
   return (
@@ -55,9 +53,8 @@ export function ImageUploadNotification({
 
 export function InviteNotification({
   inboxNotification,
-}: InboxNotificationCustomKindProps) {
-  const { inviteFrom, roomId } = inboxNotification.activities[0]
-    .data as InviteData;
+}: InboxNotificationCustomKindProps<"$invite">) {
+  const { inviteFrom, roomId } = inboxNotification.activities[0].data;
 
   // Fetch room and user info from resolvers in liveblocks.config.ts
   const { info, error, isLoading } = useRoomInfo(roomId);
