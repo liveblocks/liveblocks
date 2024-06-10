@@ -13,7 +13,7 @@ import { MentionPlugin } from "./mentions/mention-plugin";
 // TODO: Replace by ref once I understand why useRef is not stable (?!)
 const providersMap = new Map<
   string,
-  LiveblocksProvider<never, never, never, never, never>
+  LiveblocksYjsProvider<never, never, never, never, never>
 >();
 
 export type LiveblocksPluginProps = {
@@ -74,7 +74,7 @@ export const LiveblocksPlugin = ({
 
       if (doc === undefined) {
         doc = new Doc();
-        const provider = new LiveblocksProvider(room, doc);
+        const provider = new LiveblocksYjsProvider(room, doc);
         yjsDocMap.set(id, doc);
         providersMap.set(id, provider);
       }
