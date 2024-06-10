@@ -19,6 +19,12 @@ import type { WithLiveblocks } from "@liveblocks/zustand";
 import nodes from "./nodes";
 import edges from "./edges";
 
+declare global {
+  interface Liveblocks {
+    Storage: Storage;
+  }
+}
+
 /**
  * This file contains the Zustand store & Liveblocks middleware
  * https://liveblocks.io/docs/api-reference/liveblocks-zustand
@@ -38,13 +44,13 @@ type FlowState = {
   onConnect: OnConnect;
 };
 
-type Storage = {
+type Storage = EnsureJson<{
   nodes: FlowState["nodes"];
   edges: FlowState["edges"];
-};
+}>;
 
 // Define your fully-typed Zustand store
-const useStore = create<WithLiveblocks<FlowState, {}, EnsureJson<Storage>>>()(
+const useStore = create<WithLiveblocks<FlowState>>()(
   liveblocks(
     (set, get) => ({
       // Initial values for nodes and edges
