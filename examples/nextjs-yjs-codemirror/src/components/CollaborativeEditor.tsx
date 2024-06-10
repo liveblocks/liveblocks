@@ -9,7 +9,7 @@ import { EditorState } from "@codemirror/state";
 import { javascript } from "@codemirror/lang-javascript";
 import { useCallback, useEffect, useState } from "react";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
-import { TypedLiveblocksProvider, useRoom, useSelf } from "@/liveblocks.config";
+import { useRoom, useSelf } from "@liveblocks/react/suspense";
 import styles from "./CollaborativeEditor.module.css";
 import { Avatars } from "@/components/Avatars";
 import { Toolbar } from "@/components/Toolbar";
@@ -30,7 +30,7 @@ export function CollaborativeEditor() {
 
   // Set up Liveblocks Yjs provider and attach CodeMirror editor
   useEffect(() => {
-    let provider: TypedLiveblocksProvider;
+    let provider: LiveblocksYjsProvider;
     let ydoc: Y.Doc;
     let view: EditorView;
 
