@@ -2,11 +2,10 @@
 
 import { RoomUser } from "@liveblocks/node";
 import { auth } from "@/auth";
-import { UserInfo } from "@/liveblocks.config";
 import { liveblocks } from "@/liveblocks.server.config";
 import { Document } from "@/types";
 
-type LiveUserList = { documentId: Document["id"]; users: RoomUser<UserInfo>[] };
+type LiveUserList = { documentId: Document["id"]; users: RoomUser[] };
 
 type Props = {
   documentIds: Document["id"][];
@@ -21,10 +20,10 @@ type Props = {
  * @param documentIds - An array of document ids
  */
 export async function getLiveUsers({ documentIds }: Props) {
-  const promises: ReturnType<typeof liveblocks.getActiveUsers<UserInfo>>[] = [];
+  const promises: ReturnType<typeof liveblocks.getActiveUsers>[] = [];
 
   for (const roomId of documentIds) {
-    promises.push(liveblocks.getActiveUsers<UserInfo>(roomId));
+    promises.push(liveblocks.getActiveUsers(roomId));
   }
 
   let session;

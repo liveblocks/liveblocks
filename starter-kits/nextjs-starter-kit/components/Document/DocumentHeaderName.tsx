@@ -1,3 +1,4 @@
+import { useSelf } from "@liveblocks/react/suspense";
 import clsx from "clsx";
 import {
   ChangeEvent,
@@ -8,7 +9,6 @@ import {
 } from "react";
 import { EditIcon } from "@/icons";
 import { useInitialDocument } from "@/lib/hooks/useInitialDocument";
-import { useSelf } from "@/liveblocks.config";
 import { Tooltip } from "@/primitives/Tooltip";
 import styles from "./DocumentHeaderName.module.css";
 

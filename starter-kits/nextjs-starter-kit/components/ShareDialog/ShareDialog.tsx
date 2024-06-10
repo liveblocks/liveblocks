@@ -9,7 +9,10 @@ import {
 } from "@/lib/actions";
 import { useDocumentsFunctionSWR, useInitialDocument } from "@/lib/hooks";
 import { getDocumentAccess } from "@/lib/utils";
-import { useBroadcastEvent, useEventListener } from "@/liveblocks.config";
+import {
+  useBroadcastEvent,
+  useEventListener,
+} from "@liveblocks/react/suspense";
 import { Dialog } from "@/primitives/Dialog";
 import { DocumentAccess } from "@/types";
 import { ShareDialogDefault } from "./ShareDialogDefault";

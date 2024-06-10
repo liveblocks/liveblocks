@@ -1,5 +1,13 @@
 import { LiveObject, shallow } from "@liveblocks/client";
 import { ClientSideSuspense } from "@liveblocks/react";
+import {
+  useCanRedo,
+  useCanUndo,
+  useHistory,
+  useMutation,
+  useSelf,
+  useStorage,
+} from "@liveblocks/react/suspense";
 import clsx from "clsx";
 import { nanoid } from "nanoid";
 import { useSession } from "next-auth/react";
@@ -12,15 +20,6 @@ import {
   useState,
 } from "react";
 import { PlusIcon, RedoIcon, UndoIcon } from "@/icons";
-import {
-  UserMeta,
-  useCanRedo,
-  useCanUndo,
-  useHistory,
-  useMutation,
-  useSelf,
-  useStorage,
-} from "@/liveblocks.config";
 import { Button } from "@/primitives/Button";
 import { DocumentSpinner } from "@/primitives/Spinner";
 import { Tooltip } from "@/primitives/Tooltip";
@@ -30,7 +29,7 @@ import { WhiteboardNote } from "./WhiteboardNote";
 import styles from "./Whiteboard.module.css";
 
 interface Props extends ComponentProps<"div"> {
-  currentUser: UserMeta["info"] | null;
+  currentUser: Liveblocks["UserMeta"]["info"] | null;
 }
 
 /**
@@ -44,7 +43,7 @@ export function Whiteboard() {
 
   return (
     <ClientSideSuspense fallback={<DocumentSpinner />}>
-      {() => <Canvas currentUser={session?.user.info ?? null} />}
+      <Canvas currentUser={session?.user.info ?? null} />
     </ClientSideSuspense>
   );
 }

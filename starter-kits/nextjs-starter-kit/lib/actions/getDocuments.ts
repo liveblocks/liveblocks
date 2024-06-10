@@ -1,6 +1,6 @@
 "use server";
 
-import { RoomInfo } from "@liveblocks/node";
+import { RoomData } from "@liveblocks/node";
 import { auth } from "@/auth";
 import {
   buildDocuments,
@@ -43,7 +43,7 @@ export async function getDocuments({
   limit = 20,
 }: GetDocumentsProps) {
   // Build getRooms arguments
-  const metadata: RoomInfo["metadata"] = {};
+  const metadata: RoomData["metadata"] = {};
 
   if (documentType) {
     metadata["type"] = documentType;

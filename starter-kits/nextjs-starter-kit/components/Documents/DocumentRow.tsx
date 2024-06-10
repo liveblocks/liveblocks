@@ -14,7 +14,6 @@ import { DOCUMENT_URL } from "@/constants";
 import { DeleteIcon, MoreIcon } from "@/icons";
 import { useGroupsInfo } from "@/lib/hooks";
 import { getDocumentAccess } from "@/lib/utils";
-import { UserInfo } from "@/liveblocks.config";
 import { AvatarStack } from "@/primitives/AvatarStack";
 import { Button } from "@/primitives/Button";
 import { Popover } from "@/primitives/Popover";
@@ -26,7 +25,7 @@ import styles from "./DocumentRow.module.css";
 
 interface Props extends ComponentProps<"div"> {
   document: Document;
-  others?: RoomUser<UserInfo>[];
+  others?: RoomUser[];
   revalidateDocuments: () => void;
 }
 
