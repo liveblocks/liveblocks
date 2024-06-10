@@ -6,58 +6,38 @@ meta:
 alwaysShowAllNavigationLevels: false
 ---
 
-`@liveblocks/react-lexical` provides you with a plugin that makes any
-[Lexical](https://lexical.dev/) editor collaborative
-
-TODO explain that it adds real time cursors, document persistance on the cloud,
-comments and mentions.
-
-Read our `TODO` to get started guides to learn more.
+`@liveblocks/react-lexical` provides you with a [React](https://react.dev/)
+plugin that adds collaboration to any [Lexical](https://lexical.dev/) text
+editor. It also adds realtime cursors, document persistence on the cloud,
+comments, and mentions. Read our
+[get started guide](/docs/get-started/yjs-lexical-react) to learn more.
 
 ## LiveblocksPlugin
 
-Our `lexical` plugin that will make your editor collaborative.
+Liveblocks plugin for Lexical that adds collaboration to your editor. It should
+always be nested inside
+[`LexicalComposer`](https://lexical.dev/docs/react/plugins).
 
-It should be inside a `LexicalComposer` and our `RoomProvider`.
-
-```tsx
-/* ... Lexical imports ... */
-import { RoomProvider } from "@liveblocks/react";
-import { liveblocksConfig, LiveblocksPlugin } from "@liveblocks/react-lexical";
-
-/* ... initial config ... */
-
-function Editor() {
-  return (
-    <RoomProvider id="room-id">
-      <LexicalComposer initialConfig={initialConfig}>
-        <LiveblocksPlugin />
-        <RichTextPlugin
-          contentEditable={<ContentEditable />}
-          placeholder={<div>Enter some text...</div>}
-          ErrorBoundary={LexicalErrorBoundary}
-        />
-      </LexicalComposer>
-    </RoomProvider>
-  );
-}
+```tsx highlight="2"
+<LexicalComposer initialConfig={initialConfig}>
+  <LiveblocksPlugin />
+</LexicalComposer>
 ```
 
-## liveblocksConfig
+TODO: Image
 
-Function that takes a Lexical editor config and modify it to add the necessary
-`nodes` and `theme` necessary to make our `LiveblocksPlugin` works properly.
-
-```tsx
-/* ... Lexical imports ... */
-import { RoomProvider } from "@liveblocks/react";
+```tsx highlight=""
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { liveblocksConfig, LiveblocksPlugin } from "@liveblocks/react-lexical";
 
 const initialConfig = liveblocksConfig({
   namespace: "MyEditor",
   theme: {},
   nodes: [],
-  onError,
+  onError: (err) => console.error(err),
 });
 
 function Editor() {
@@ -74,67 +54,184 @@ function Editor() {
 }
 ```
 
-Note that `liveblocksConfig` set `editorState` to `null` because
-`LiveblocksPlugin` is responsible to initialize it from the server.
+Learn more in our [get started guide](/docs/get-started/yjs-lexical-react).
+
+## liveblocksConfig
+
+Function that takes a Lexical editor config and modifies it to add the necessary
+`nodes` and `theme` to make [`LiveblocksPlugin`][] works correctly.
+
+```tsx highlight="3-8,12"
+import { liveblocksConfig, LexicalComposer } from "@liveblocks/react-lexical";
+
+const initialConfig = liveblocksConfig({
+  namespace: "MyEditor",
+  theme: {},
+  nodes: [],
+  onError: (err) => console.error(err),
+});
+
+function Editor() {
+  return (
+    <LexicalComposer initialConfig={initialConfig}>{/* ... */}</LexicalComposer>
+  );
+}
+```
+
+```tsx highlight="7-12,16"
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+import { liveblocksConfig, LiveblocksPlugin } from "@liveblocks/react-lexical";
+
+const initialConfig = liveblocksConfig({
+  namespace: "MyEditor",
+  theme: {},
+  nodes: [],
+  onError: (err) => console.error(err),
+});
+
+function Editor() {
+  return (
+    <LexicalComposer initialConfig={initialConfig}>
+      <LiveblocksPlugin />
+      <RichTextPlugin
+        contentEditable={<ContentEditable />}
+        placeholder={<div>Enter some text...</div>}
+        ErrorBoundary={LexicalErrorBoundary}
+      />
+    </LexicalComposer>
+  );
+}
+```
+
+Note that `liveblocksConfig` sets `editorState` to `null` because
+`LiveblocksPlugin` is responsible for initializing it on the server.
 
 ## FloatingComposer
 
-Display a `Composer` close to the current lexical selection. It should live
-below the `LiveblocksPlugin`.
+Displays a `Composer` near the current lexical selection. Should be nested
+inside [`LiveblocksPlugin`][].
 
-```tsx
-<FloatingComposer />
+```tsx highlight="3"
+<LexicalComposer initialConfig={initialConfig}>
+  <LiveblocksPlugin>
+    <FloatingComposer />
+  </LiveblocksPlugin>
+</LexicalComposer>
 ```
 
 TODO: Image
 
 Submitting a comment will attach an annotation thread at the current selection.
 
-```tsx
+```tsx highlight="8,22"
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
-import { LiveblocksPlugin, FloatingComposer } from "@liveblocks/react-lexical";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+import {
+  liveblocksConfig,
+  LiveblocksPlugin,
+  FloatingComposer,
+} from "@liveblocks/react-lexical";
 
-<LexicalComposer initialConfig={initialConfig}>
-  <LiveblocksPlugin>
-    <FloatingComposer />
-  </LiveblocksPlugin>
-  {/* ... */}
-</LexicalComposer>;
+const initialConfig = liveblocksConfig({
+  namespace: "MyEditor",
+  theme: {},
+  nodes: [],
+  onError: (err) => console.error(err),
+});
+
+function Editor() {
+  return (
+    <LexicalComposer initialConfig={initialConfig}>
+      <LiveblocksPlugin>
+        <FloatingComposer />
+      </LiveblocksPlugin>
+      <RichTextPlugin
+        contentEditable={<ContentEditable />}
+        placeholder={<div>Enter some text...</div>}
+        ErrorBoundary={LexicalErrorBoundary}
+      />
+    </LexicalComposer>
+  );
+}
 ```
 
 ### Opening the `FloatingComposer`
 
-To open the `FloatingComposer`, you need to dispatch a
-[Lexical command](https://lexical.dev/docs/concepts/commands)
-`OPEN_FLOATING_COMPOSER_COMMAND`;
+To open the `FloatingComposer`, you need to dispatch the
+`OPEN_FLOATING_COMPOSER_COMMAND`
+[Lexical command](https://lexical.dev/docs/concepts/commands).
 
-```tsx
+```tsx highlight="10"
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { OPEN_FLOATING_COMPOSER_COMMAND } from "@liveblocks/react-lexical";
 
-const [editor] = useLexicalComposerContext();
+function Toolbar() {
+  const [editor] = useLexicalComposerContext();
 
-<button
-  onClick={() => {
-    editor.dispatchCommand(OPEN_FLOATING_COMPOSER_COMMAND, undefined);
-  }}
-/>;
+  return (
+    <button
+      onClick={() => {
+        editor.dispatchCommand(OPEN_FLOATING_COMPOSER_COMMAND);
+      }}
+    >
+      💬 Add comment
+    </button>
+  );
+}
 ```
 
 ## ThreadPanel
 
-Display the annotation threads attached to your Lexical editor. It should live
-below the `LiveblocksPlugin`.
+Display annotation threads attached to your Lexical editor. Should be nested
+inside [`LiveblocksPlugin`][].
 
-```tsx
-import { LexicalComposer } from "@lexical/react/LexicalComposer";
-import { LiveblocksPlugin, ThreadPanel } from "@liveblocks/react-lexical";
-
+```tsx highlight="3"
 <LexicalComposer initialConfig={initialConfig}>
   <LiveblocksPlugin>
     <ThreadPanel />
   </LiveblocksPlugin>
-  {/* ... */}
-</LexicalComposer>;
+</LexicalComposer>
 ```
 
 TODO: Image
+
+```tsx highlight="8,22"
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+import {
+  liveblocksConfig,
+  LiveblocksPlugin,
+  ThreadPanel,
+} from "@liveblocks/react-lexical";
+
+const initialConfig = liveblocksConfig({
+  namespace: "MyEditor",
+  theme: {},
+  nodes: [],
+  onError: (err) => console.error(err),
+});
+
+function Editor() {
+  return (
+    <LexicalComposer initialConfig={initialConfig}>
+      <LiveblocksPlugin>
+        <ThreadPanel />
+      </LiveblocksPlugin>
+      <RichTextPlugin
+        contentEditable={<ContentEditable />}
+        placeholder={<div>Enter some text...</div>}
+        ErrorBoundary={LexicalErrorBoundary}
+      />
+    </LexicalComposer>
+  );
+}
+```
+
+[`LiveblocksPlugin`]: #LiveblocksPlugin
