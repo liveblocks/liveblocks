@@ -13,6 +13,10 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 -->
 
+# Week 24 (2024-06-15)
+
+## Contributors
+
 # Week 21 (2024-05-24)
 
 ![banner](/assets/changelog/week-21.png)
