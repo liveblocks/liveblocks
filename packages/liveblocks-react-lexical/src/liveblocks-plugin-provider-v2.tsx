@@ -11,13 +11,8 @@ import type {
 import { kInternal } from "@liveblocks/core";
 import { useClient, useRoom, useSelf } from "@liveblocks/react";
 import LiveblocksProvider from "@liveblocks/yjs";
-import React, {
-  ReactNode,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import type { ReactNode } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Doc } from "yjs";
 
 import { CommentPluginProvider } from "./comments/comment-plugin-provider";
