@@ -12,6 +12,6 @@
     "prettier": "2.8.3"
   },
   "dependencies": {
-    "@liveblocks/client": "^2.0.0-alpha1"
+    "@liveblocks/client": "^2.0.0-alpha2"
   }
 }

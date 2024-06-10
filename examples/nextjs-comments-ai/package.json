@@ -9,10 +9,10 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^2.0.0-alpha1",
-    "@liveblocks/node": "^2.0.0-alpha1",
-    "@liveblocks/react": "^2.0.0-alpha1",
-    "@liveblocks/react-ui": "^2.0.0-alpha1",
+    "@liveblocks/client": "^2.0.0-alpha2",
+    "@liveblocks/node": "^2.0.0-alpha2",
+    "@liveblocks/react": "^2.0.0-alpha2",
+    "@liveblocks/react-ui": "^2.0.0-alpha2",
     "next": "^13.4.16",
     "openai": "^4.21.0",
     "react": "^18.2.0",

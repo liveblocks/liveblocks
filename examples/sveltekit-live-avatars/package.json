@@ -22,7 +22,7 @@
     "vite": "^5.0.0"
   },
   "dependencies": {
-    "@liveblocks/client": "^2.0.0-alpha1",
-    "@liveblocks/node": "^2.0.0-alpha1"
+    "@liveblocks/client": "^2.0.0-alpha2",
+    "@liveblocks/node": "^2.0.0-alpha2"
   }
 }
