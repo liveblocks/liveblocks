@@ -1,17 +1,22 @@
 @import "./utils";
 @import "./constants";
 
-.lb-lexical-threads-empty {
+.lb-lexical-threads-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.lb-lexical-threads-panel-empty {
+  position: absolute;
+  inset: 0;
   display: flex;
   justify-content: center;
   align-items: center;
-  block-size: max-content;
-  color: rgb(55 53 47 / 50%);
-}
-
-.lb-lexical-threads {
-  display: flex;
-  flex-direction: column;
+  padding: var(--lb-spacing);
+  color: var(--lb-foreground-tertiary);
+  font-size: 0.875em;
+  text-align: center;
+  text-wrap: balance;
 }
 
 /*************************************

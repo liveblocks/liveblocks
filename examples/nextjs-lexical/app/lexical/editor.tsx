@@ -9,7 +9,7 @@ import {
   FloatingComposer,
   liveblocksConfig,
   LiveblocksPlugin,
-  ThreadPanel,
+  ThreadsPanel,
 } from "@liveblocks/react-lexical";
 import FloatingToolbarPlugin from "./floating-toolbar-plugin";
 
@@ -44,9 +44,7 @@ export default function Editor() {
             </div>
           </div>
 
-          <div className="text-sm relative w-[350px] h-full overflow-auto border-l">
-            <ThreadPanel />
-          </div>
+          <ThreadsPanel className="text-sm relative w-[350px] h-full overflow-auto border-l" />
 
           <FloatingToolbarPlugin />
 
