@@ -38,7 +38,7 @@ export default function Home() {
       initialStorage={{ items: new LiveList() }}
     >
       <ClientSideSuspense fallback={<div>Loading...</div>}>
-        {() => <Sandbox />}
+        <Sandbox />
       </ClientSideSuspense>
     </RoomProvider>
   );
