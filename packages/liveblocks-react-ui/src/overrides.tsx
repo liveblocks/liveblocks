@@ -58,8 +58,8 @@ export interface ThreadOverrides {
   THREAD_COMPOSER_SEND: string;
 }
 
-export interface ThreadsPanelOverrides {
-  THREADS_PANEL_EMPTY: string;
+export interface ThreadPanelOverrides {
+  THREAD_PANEL_EMPTY: string;
 }
 
 export interface InboxNotificationOverrides {
@@ -85,7 +85,7 @@ export type Overrides = LocalizationOverrides &
   ComposerOverrides &
   CommentOverrides &
   ThreadOverrides &
-  ThreadsPanelOverrides &
+  ThreadPanelOverrides &
   InboxNotificationOverrides;
 
 type OverridesProviderProps = PropsWithChildren<{
@@ -131,7 +131,7 @@ export const defaultOverrides: Overrides = {
   THREAD_NEW_INDICATOR_DESCRIPTION: "New comments",
   THREAD_COMPOSER_PLACEHOLDER: "Reply to thread…",
   THREAD_COMPOSER_SEND: "Reply",
-  THREADS_PANEL_EMPTY: "No threads yet.",
+  THREAD_PANEL_EMPTY: "No threads yet.",
   INBOX_NOTIFICATION_MORE: "More",
   INBOX_NOTIFICATION_MARK_AS_READ: "Mark as read",
   INBOX_NOTIFICATION_THREAD_COMMENTS_LIST: (

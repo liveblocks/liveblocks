@@ -9,8 +9,8 @@ export {
   OPEN_FLOATING_COMPOSER_COMMAND,
 } from "./comments/floating-composer";
 export { ThreadMarkNode } from "./comments/thread-mark-node";
-export type { ThreadsPanelProps } from "./comments/ThreadsPanel";
-export { ThreadsPanel } from "./comments/ThreadsPanel";
+export type { ThreadPanelProps } from "./comments/ThreadPanel";
+export { ThreadPanel } from "./comments/ThreadPanel";
 export { liveblocksConfig } from "./liveblocks-config";
 export { LiveblocksPlugin } from "./liveblocks-plugin-provider";
 export { Mention } from "./mentions/mention-component";

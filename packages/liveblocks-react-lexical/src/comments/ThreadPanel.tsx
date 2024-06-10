@@ -5,8 +5,8 @@ import type {
   ComposerOverrides,
   GlobalOverrides,
   ThreadOverrides,
+  ThreadPanelOverrides,
   ThreadProps,
-  ThreadsPanelOverrides,
 } from "@liveblocks/react-ui";
 import { Thread as DefaultThread, useOverrides } from "@liveblocks/react-ui";
 import type { ComponentProps, ComponentType } from "react";
@@ -18,22 +18,22 @@ import {
   OnDeleteThreadCallback,
 } from "./comment-plugin-provider";
 
-type ThreadsPanelComponents = {
+type ThreadPanelComponents = {
   Thread: ComponentType<ThreadProps>;
 };
 
-export interface ThreadsPanelProps extends ComponentProps<"div"> {
+export interface ThreadPanelProps extends ComponentProps<"div"> {
   /**
    * Override the component's components.
    */
-  components?: Partial<ThreadsPanelComponents>;
+  components?: Partial<ThreadPanelComponents>;
 
   /**
    * Override the component's strings.
    */
   overrides?: Partial<
     GlobalOverrides &
-      ThreadsPanelOverrides &
+      ThreadPanelOverrides &
       ThreadOverrides &
       CommentOverrides &
       ComposerOverrides
@@ -68,7 +68,7 @@ const ThreadWrapper = ({ Thread, isActive, ...props }: ThreadWrapperProps) => {
   );
 };
 
-export const ThreadsPanel = forwardRef<HTMLDivElement, ThreadsPanelProps>(
+export const ThreadPanel = forwardRef<HTMLDivElement, ThreadPanelProps>(
   ({ components, overrides, className, ...props }, forwardedRef) => {
     const $ = useOverrides(overrides);
     const { threads } = useThreads();
@@ -77,7 +77,7 @@ export const ThreadsPanel = forwardRef<HTMLDivElement, ThreadsPanelProps>(
 
     return (
       <div
-        className={classNames(className, "lb-root lb-lexical-threads-panel")}
+        className={classNames(className, "lb-root lb-lexical-thread-panel")}
         ref={forwardedRef}
         {...props}
       >
@@ -89,13 +89,13 @@ export const ThreadsPanel = forwardRef<HTMLDivElement, ThreadsPanelProps>(
                 isActive={isThreadActive(thread.id)}
                 key={thread.id}
                 thread={thread}
-                className="lb-lexical-threads-panel-thread"
+                className="lb-lexical-thread-panel-thread"
               />
             );
           })
         ) : (
-          <div className="lb-lexical-threads-panel-empty">
-            {$.THREADS_PANEL_EMPTY}
+          <div className="lb-lexical-thread-panel-empty">
+            {$.THREAD_PANEL_EMPTY}
           </div>
         )}
       </div>

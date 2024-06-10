@@ -1,12 +1,12 @@
 @import "./utils";
 @import "./constants";
 
-.lb-lexical-threads-panel {
+.lb-lexical-thread-panel {
   display: flex;
   flex-direction: column;
 }
 
-.lb-lexical-threads-panel-empty {
+.lb-lexical-thread-panel-empty {
   position: absolute;
   inset: 0;
   display: flex;
@@ -17,6 +17,12 @@
   font-size: 0.875em;
   text-align: center;
   text-wrap: balance;
+}
+
+.lb-lexical-thread-panel-thread {
+  &:where(:not(:last-of-type)) {
+    border-block-end: 1px solid var(--lb-foreground-subtle);
+  }
 }
 
 /*************************************
