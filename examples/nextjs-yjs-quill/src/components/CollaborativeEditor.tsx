@@ -6,7 +6,7 @@ import QuillCursors from "quill-cursors";
 import { QuillBinding } from "y-quill";
 import * as Y from "yjs";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
-import { useRoom, useSelf } from "@/liveblocks.config";
+import { useRoom, useSelf } from "@liveblocks/react/suspense";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Toolbar } from "./Toolbar";
 import styles from "./CollaborativeEditor.module.css";

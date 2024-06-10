@@ -1,26 +1,8 @@
-import { createClient } from "@liveblocks/client";
-import { createRoomContext } from "@liveblocks/react";
-
-// Try changing the lostConnectionTimeout value to increase
-// or reduct the time it takes to reconnect
-const client = createClient({
-  authEndpoint: "/api/liveblocks-auth",
-});
-
 // Presence represents the properties that exist on every user in the Room
 // and that will automatically be kept in sync. Accessible through the
 // `user.presence` property. Must be JSON-serializable.
 type Presence = {
   cursor: { x: number; y: number } | null;
-  // ...
-};
-
-// Optionally, Storage represents the shared document that persists in the
-// Room, even after all users leave. Fields under Storage typically are
-// LiveList, LiveMap, LiveObject instances, for which updates are
-// automatically persisted and synced to all connected clients.
-type Storage = {
-  // author: LiveObject<{ firstName: string, lastName: string }>,
   // ...
 };
 
@@ -36,35 +18,11 @@ type UserMeta = {
   }; // Accessible through `user.info`
 };
 
-// Optionally, the type of custom events broadcast and listened to in this
-// room. Use a union for multiple events. Must be JSON-serializable.
-type RoomEvent = {
-  // type: "NOTIFICATION",
-  // ...
-};
+declare global {
+  interface Liveblocks {
+    Presence: Presence;
+    UserMeta: UserMeta;
+  }
+}
 
-export const {
-  suspense: {
-    RoomProvider,
-    useRoom,
-    useMyPresence,
-    useUpdateMyPresence,
-    useSelf,
-    useOthers,
-    useOthersMapped,
-    useOthersConnectionIds,
-    useOther,
-    useBroadcastEvent,
-    useEventListener,
-    useErrorListener,
-    useStorage,
-    useHistory,
-    useUndo,
-    useRedo,
-    useCanUndo,
-    useCanRedo,
-    useMutation,
-    useStatus,
-    useLostConnectionListener,
-  },
-} = createRoomContext<Presence, Storage, UserMeta, RoomEvent>(client);
+export {};
