@@ -1,6 +1,6 @@
 "use client";
 
-import { RoomProvider } from "@/liveblocks.config";
+import { RoomProvider } from "@liveblocks/react/suspense";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { useSearchParams } from "next/navigation";
 import { ReactNode, useMemo } from "react";

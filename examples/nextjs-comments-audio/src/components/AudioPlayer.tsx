@@ -3,7 +3,7 @@
 import { NewThreadComposer } from "@/components/NewThreadComposer";
 import { ThreadsTimeline } from "@/components/ThreadsTimeline";
 import { WaveForm } from "@/components/WaveForm";
-import { useUpdateMyPresence } from "@/liveblocks.config";
+import { useUpdateMyPresence } from "@liveblocks/react/suspense";
 import { useSkipToListener } from "@/utils";
 import { ClientSideSuspense } from "@liveblocks/react";
 import * as Slider from "@radix-ui/react-slider";

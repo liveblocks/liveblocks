@@ -1,8 +1,6 @@
-import { UserMeta } from "@/liveblocks.config";
-
 export const AI_USER_ID = "__ai__";
 
-const USER_INFO: UserMeta[] = [
+const USER_INFO: Liveblocks["UserMeta"][] = [
   {
     id: AI_USER_ID,
     info: {

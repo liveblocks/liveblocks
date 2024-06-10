@@ -1,8 +1,7 @@
 "use client";
-
 import { Link } from "@/components/Link";
 import { Mention } from "@/components/Mention";
-import { ThreadMetadata, useThreads, useUser } from "@/liveblocks.config";
+import { useThreads, useUser } from "@liveblocks/react/suspense";
 import { useSkipTo } from "@/utils";
 import { ThreadData } from "@liveblocks/core";
 import { ClientSideSuspense } from "@liveblocks/react";
@@ -33,7 +32,7 @@ function PinnedThreads() {
   );
 }
 
-function PinnedThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
+function PinnedThread({ thread }: { thread: ThreadData }) {
   const skipTo = useSkipTo();
   const { user } = useUser(thread.comments?.[0].userId || "");
   const [highlighted, setHighlighted] = useState(false);

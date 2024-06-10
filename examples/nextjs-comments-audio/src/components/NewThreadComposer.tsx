@@ -3,7 +3,7 @@
 import { Link } from "@/components/Link";
 import { Mention } from "@/components/Mention";
 import { MentionSuggestions } from "@/components/MentionSuggestions";
-import { useCreateThread, useSelf } from "@/liveblocks.config";
+import { useCreateThread, useSelf } from "@liveblocks/react/suspense";
 import {
   Composer,
   ComposerSubmitComment,
