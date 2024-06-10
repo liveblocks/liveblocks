@@ -14,9 +14,7 @@ comments, and mentions. Read our
 
 ## LiveblocksPlugin
 
-Liveblocks plugin for Lexical that adds collaboration to your editor. It should
-always be nested inside
-[`LexicalComposer`](https://lexical.dev/docs/react/plugins).
+Liveblocks plugin for Lexical that adds collaboration to your editor.
 
 ```tsx highlight="2"
 <LexicalComposer initialConfig={initialConfig}>
@@ -24,9 +22,11 @@ always be nested inside
 </LexicalComposer>
 ```
 
-TODO: Image
+{/* TODO: Image */}
 
-```tsx highlight=""
+`LiveblocksPlugin` should always be nested inside [`LexicalComposer`][].
+
+```tsx highlight="5,17"
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
@@ -61,8 +61,8 @@ Learn more in our [get started guide](/docs/get-started/yjs-lexical-react).
 Function that takes a Lexical editor config and modifies it to add the necessary
 `nodes` and `theme` to make [`LiveblocksPlugin`][] works correctly.
 
-```tsx highlight="3-8,12"
-import { liveblocksConfig, LexicalComposer } from "@liveblocks/react-lexical";
+```tsx
+import { liveblocksConfig } from "@liveblocks/react-lexical";
 
 const initialConfig = liveblocksConfig({
   namespace: "MyEditor",
@@ -70,13 +70,10 @@ const initialConfig = liveblocksConfig({
   nodes: [],
   onError: (err) => console.error(err),
 });
-
-function Editor() {
-  return (
-    <LexicalComposer initialConfig={initialConfig}>{/* ... */}</LexicalComposer>
-  );
-}
 ```
+
+The config created by `liveblocksConfig` should be passed to `initialConfig` in
+[`LexicalComposer`][].
 
 ```tsx highlight="7-12,16"
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
@@ -111,8 +108,7 @@ Note that `liveblocksConfig` sets `editorState` to `null` because
 
 ## FloatingComposer
 
-Displays a `Composer` near the current lexical selection. Should be nested
-inside [`LiveblocksPlugin`][].
+Displays a `Composer` near the current lexical selection.
 
 ```tsx highlight="3"
 <LexicalComposer initialConfig={initialConfig}>
@@ -122,9 +118,10 @@ inside [`LiveblocksPlugin`][].
 </LexicalComposer>
 ```
 
-TODO: Image
+{/* TODO: Image */}
 
 Submitting a comment will attach an annotation thread at the current selection.
+Should be nested inside [`LiveblocksPlugin`][].
 
 ```tsx highlight="8,22"
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
@@ -179,7 +176,7 @@ function Toolbar() {
         editor.dispatchCommand(OPEN_FLOATING_COMPOSER_COMMAND);
       }}
     >
-      💬 Add comment
+      💬 New comment
     </button>
   );
 }
@@ -187,8 +184,7 @@ function Toolbar() {
 
 ## ThreadPanel
 
-Display annotation threads attached to your Lexical editor. Should be nested
-inside [`LiveblocksPlugin`][].
+Display annotation threads attached to your Lexical editor.
 
 ```tsx highlight="3"
 <LexicalComposer initialConfig={initialConfig}>
@@ -198,7 +194,9 @@ inside [`LiveblocksPlugin`][].
 </LexicalComposer>
 ```
 
-TODO: Image
+{/* TODO: Image */}
+
+`ThreadPanel` should be nested inside [`LiveblocksPlugin`][].
 
 ```tsx highlight="8,22"
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
@@ -235,3 +233,4 @@ function Editor() {
 ```
 
 [`LiveblocksPlugin`]: #LiveblocksPlugin
+[`LexicalComposer`]: https://lexical.dev/docs/react/plugins
