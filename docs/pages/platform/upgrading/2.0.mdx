@@ -21,6 +21,9 @@ Breaking changes:
 - In `@liveblocks/node`, `client.getThread<MyMeta>()` no longer takes type
   params. Use global type augmentation instead.
 - Removal of the deprecated APIs
+- The webhook event NotificationEvent's type can represent multiple kinds of
+  notifications (`"thread"`, `"textMention"`, and custom ones (e.g.
+  `"$myNotification"`))
 - Yjs package changes
   - No longer has a default export, change:
     ```diff
