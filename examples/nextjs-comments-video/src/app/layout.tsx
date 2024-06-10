@@ -4,6 +4,7 @@ import "../globals.css";
 import "@liveblocks/react-ui/styles.css";
 import "@liveblocks/react-ui/styles/dark/attributes.css";
 import "../comments.css";
+import { Providers } from "./Providers";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -38,7 +39,9 @@ export default function RootLayout({
         />
       </head>
 
-      <body>{children}</body>
+      <body>
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

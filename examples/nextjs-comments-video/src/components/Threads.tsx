@@ -1,6 +1,5 @@
 "use client";
-
-import { ThreadMetadata, useThreads } from "@/liveblocks.config";
+import { useThreads } from "@liveblocks/react/suspense";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { Thread } from "@liveblocks/react-ui";
 import { FormEvent, useCallback, useRef, useState } from "react";
@@ -39,7 +38,7 @@ function ThreadList() {
   );
 }
 
-function CustomThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
+function CustomThread({ thread }: { thread: ThreadData }) {
   const ref = useRef<HTMLDivElement>(null);
   const threadHasTime = thread.metadata.timePercentage !== -1;
   const skipTo = useSkipTo();
@@ -101,10 +100,7 @@ function CustomThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
   );
 }
 
-function sortThreads(
-  a: ThreadData<ThreadMetadata>,
-  b: ThreadData<ThreadMetadata>
-) {
+function sortThreads(a: ThreadData, b: ThreadData) {
   if (a.metadata.timePercentage > b.metadata.timePercentage) {
     return 1;
   }

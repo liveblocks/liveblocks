@@ -13,7 +13,7 @@ import { ClientSideSuspense } from "@liveblocks/react";
 import { ThreadsTimeline } from "@/components/ThreadsTimeline";
 import { NewThreadComposer } from "@/components/NewThreadComposer";
 import { ExitFullscreenIcon } from "@/icons/ExitFullscreen";
-import { useUpdateMyPresence } from "@/liveblocks.config";
+import { useUpdateMyPresence } from "@liveblocks/react/suspense";
 import { useKeyDownListener, useSkipToListener } from "@/utils";
 
 export function VideoPlayer() {

@@ -1,6 +1,5 @@
 "use client";
-
-import { ThreadMetadata, useThreads, useUser } from "@/liveblocks.config";
+import { useThreads, useUser } from "@liveblocks/react/suspense";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
 import styles from "./ThreadsTimeline.module.css";
@@ -40,7 +39,7 @@ function PinnedThreads() {
   );
 }
 
-function PinnedThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
+function PinnedThread({ thread }: { thread: ThreadData }) {
   const { user } = useUser(thread.comments?.[0].userId || "");
   const highlightThread = useHighlightThread(thread.id);
   const [highlightedPin, setHighlightedPin] = useState(false);

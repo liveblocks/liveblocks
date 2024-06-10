@@ -14,7 +14,7 @@
 }
 
 .thread {
-  --lb-background: var(--gray2)
+  --lb-background: var(--gray2);
 }
 
 .threadWrapper[data-highlight] {
@@ -22,7 +22,7 @@
 }
 
 .threadWrapper[data-highlight] .thread {
-  --lb-background: var(--gray3)
+  --lb-background: var(--gray3);
 }
 
 @keyframes highlight {

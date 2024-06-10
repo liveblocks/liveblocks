@@ -1,6 +1,6 @@
 "use client";
-
-import { PresenceStates, useOthers, useSelf } from "@/liveblocks.config";
+import { useOthers, useSelf } from "@liveblocks/react/suspense";
+import { PresenceStates } from "@/liveblocks.config";
 import styles from "./Presence.module.css";
 import { PauseIcon } from "@/icons/Pause";
 import { PlayIcon } from "@/icons/Play";
