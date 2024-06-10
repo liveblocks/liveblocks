@@ -1,6 +1,6 @@
 import c from "ansi-colors";
 import { detect } from "detect-package-manager";
-import { execa } from "execa";
+import execa from "execa";
 import { PackageJson, readPackage } from "read-pkg";
 
 function findLiveblocksDependencies(
