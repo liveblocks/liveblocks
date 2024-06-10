@@ -48,7 +48,7 @@ import { ClientSideSuspense, useStorage } from "@liveblocks/react/suspense";
 
 function App() {
   <ClientSideSuspense fallback={<div>Loading…</div>}>
-    {() => <Component />}
+    <Component />
   </ClientSideSuspense>;
 }
 
