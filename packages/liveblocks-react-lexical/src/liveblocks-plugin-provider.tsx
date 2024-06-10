@@ -1,10 +1,11 @@
+import { CollaborationContext } from "@lexical/react/LexicalCollaborationContext";
 import { CollaborationPlugin } from "@lexical/react/LexicalCollaborationPlugin";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { Provider } from "@lexical/yjs";
 import { kInternal, nn } from "@liveblocks/core";
 import { useClient, useRoom, useSelf } from "@liveblocks/react";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useContext, useEffect, useRef } from "react";
 import { Doc } from "yjs";
 
 import { CommentPluginProvider } from "./comments/comment-plugin-provider";
@@ -28,6 +29,7 @@ export const LiveblocksPlugin = ({
     client[kInternal].resolveMentionSuggestions !== undefined;
   const [editor] = useLexicalComposerContext();
   const room = useRoom();
+  const collabContext = useContext(CollaborationContext);
   const previousRoomIdRef = useRef<string | null>(null);
 
   // Warn users if initialConfig.editorState, set on the composer, is not null
@@ -53,7 +55,7 @@ export const LiveblocksPlugin = ({
 
   // Get user info or allow override from props
   const info = useSelf((me) => me.info);
-  const username = info?.name;
+  const username = info?.name || ""; // use empty string to prevent random name
   const cursorcolor = info?.color as string | undefined;
 
   const providerFactory = useCallback(
@@ -86,6 +88,10 @@ export const LiveblocksPlugin = ({
     },
     [room]
   );
+
+  useEffect(() => {
+    collabContext.name = username || "";
+  }, [collabContext, username]);
 
   return (
     <>
