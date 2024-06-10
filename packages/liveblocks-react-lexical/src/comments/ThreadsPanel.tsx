@@ -1,7 +1,7 @@
 import type { BaseMetadata, ThreadData } from "@liveblocks/core";
 import { useThreads } from "@liveblocks/react";
 import type { ThreadProps } from "@liveblocks/react-ui";
-import { Thread } from "@liveblocks/react-ui";
+import { Thread as DefaultThread } from "@liveblocks/react-ui";
 import type { ComponentProps, ComponentType } from "react";
 import React, { forwardRef, useCallback, useContext } from "react";
 
@@ -11,23 +11,26 @@ import {
   OnDeleteThreadCallback,
 } from "./comment-plugin-provider";
 
-export interface ThreadComponentProps extends ThreadProps {
-  isActive: boolean;
-}
-
 type ThreadsPanelComponents = {
-  Thread: ComponentType<ThreadComponentProps>;
+  Thread: ComponentType<ThreadProps>;
 };
 
 export interface ThreadsPanelProps extends ComponentProps<"div"> {
   components?: Partial<ThreadsPanelComponents>;
 }
 
-const DefaultThread = ({ thread, isActive }: ThreadComponentProps) => {
+interface ThreadWrapperProps extends ThreadProps {
+  Thread: ComponentType<ThreadProps>;
+  isActive: boolean;
+}
+
+const ThreadWrapper = ({ Thread, isActive, ...props }: ThreadWrapperProps) => {
   const onDeleteThread = useContext(OnDeleteThreadCallback);
+
   if (onDeleteThread === null) {
     throw new Error("OnDeleteThreadCallback not provided");
   }
+
   const handleThreadDelete = useCallback(
     (thread: ThreadData<BaseMetadata>) => {
       onDeleteThread(thread.id);
@@ -37,9 +40,9 @@ const DefaultThread = ({ thread, isActive }: ThreadComponentProps) => {
 
   return (
     <Thread
-      thread={thread}
-      data-state={isActive ? "active" : null}
       onThreadDelete={handleThreadDelete}
+      data-state={isActive ? "active" : null}
+      {...props}
     />
   );
 };
@@ -59,10 +62,12 @@ export const ThreadsPanel = forwardRef<HTMLDivElement, ThreadsPanelProps>(
         {threads && threads.length > 0 ? (
           threads.map((thread) => {
             return (
-              <Thread
+              <ThreadWrapper
+                Thread={Thread}
                 isActive={isThreadActive(thread.id)}
                 key={thread.id}
                 thread={thread}
+                className="lb-lexical-threads-panel-thread"
               />
             );
           })
