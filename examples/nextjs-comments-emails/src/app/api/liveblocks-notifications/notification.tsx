@@ -17,16 +17,25 @@ const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
 });
 
-export async function notification({
-  kind,
-  channel,
-  roomId,
-  threadId,
-  inboxNotificationId,
-  userId,
-  projectId,
-  createdAt,
-}: NotificationEvent["data"]): Promise<Response> {
+export async function notification(
+  eventData: NotificationEvent["data"]
+): Promise<Response> {
+  if (eventData.kind !== "thread") {
+    // Ignore non-thread notifications
+    return new Response(null, { status: 200 });
+  }
+
+  const {
+    kind,
+    channel,
+    roomId,
+    threadId,
+    inboxNotificationId,
+    userId,
+    projectId,
+    createdAt,
+  } = eventData;
+
   // Get info on the thread involved and the current inbox notification
   const [thread, inboxNotification] = await Promise.all([
     liveblocks.getThread({ roomId, threadId }),
