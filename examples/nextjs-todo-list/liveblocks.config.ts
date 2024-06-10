@@ -1,9 +1,4 @@
-import { createClient, LiveList, LiveObject } from "@liveblocks/client";
-import { createRoomContext } from "@liveblocks/react";
-
-const client = createClient({
-  publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY!,
-});
+import type { LiveList, LiveObject } from "@liveblocks/client";
 
 // Presence represents the properties that will exist on every User in the Room
 // and that will automatically be kept in sync. Accessible through the
@@ -25,24 +20,9 @@ type Todo = {
   checked?: boolean;
 };
 
-// Optionally, UserMeta represents static/readonly metadata on each User, as
-// provided by your own custom auth backend (if used). Useful for data that
-// will not change during a session, like a User's name or avatar.
-// type UserMeta = {
-//   id?: string,  // Accessible through `user.id`
-//   info?: Json,  // Accessible through `user.info`
-// };
-
-// Optionally, the type of custom events broadcasted and listened for in this
-// room. Must be JSON-serializable.
-// type RoomEvent = {};
-
-export const {
-  suspense: {
-    RoomProvider,
-    useStorage,
-    useOthers,
-    useUpdateMyPresence,
-    useMutation,
-  },
-} = createRoomContext<Presence, Storage /* UserMeta, RoomEvent */>(client);
+declare global {
+  interface Liveblocks {
+    Presence: Presence;
+    Storage: Storage;
+  }
+}

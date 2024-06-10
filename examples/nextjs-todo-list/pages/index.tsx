@@ -5,7 +5,7 @@ import {
   useUpdateMyPresence,
   useStorage,
   useMutation,
-} from "../liveblocks.config";
+} from "@liveblocks/react/suspense";
 import "@liveblocks/react";
 import { LiveList, LiveObject } from "@liveblocks/client";
 import { useRouter } from "next/router";
