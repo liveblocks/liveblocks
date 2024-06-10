@@ -44,9 +44,7 @@ export default function Editor() {
             </div>
           </div>
 
-          <div className="text-sm relative w-[350px] h-full overflow-auto border-l">
-            <ThreadPanel />
-          </div>
+          <ThreadPanel className="text-sm relative w-[350px] h-full overflow-auto border-l" />
 
           <FloatingToolbarPlugin />
 
