@@ -8,7 +8,7 @@ import * as Popover from "@radix-ui/react-popover";
 import { Suspense } from "react";
 import Loading from "./loading";
 
-export default function Notifications() {
+export default function NotificationsPopover() {
   return (
     <Popover.Root>
       <Popover.Trigger className="relative w-8 h-8 rounded-md inline-flex items-center justify-center p-1 text-center text-sm font-medium bg-gray-50 hover:bg-gray-100 text-gray-900 transition-colors">
@@ -41,7 +41,7 @@ export default function Notifications() {
         <Popover.Content
           side="bottom"
           align="end"
-          className="text-sm bg-white rounded-md border overflow-hidden w-[500px]"
+          className="text-sm bg-white rounded-md border overflow-hidden w-[500px] z-20"
         >
           <Suspense fallback={<Loading />}>
             <Inbox />
@@ -98,27 +98,6 @@ function Inbox() {
           </InboxNotificationList>
         )}
       </div>
-    </>
-  );
-
-  return (
-    <>
-      {inboxNotifications.length === 0 ? (
-        <div className="flex items-center justify-center">
-          There aren’t any notifications yet.
-        </div>
-      ) : (
-        <InboxNotificationList>
-          {inboxNotifications.map((inboxNotification) => {
-            return (
-              <InboxNotification
-                key={inboxNotification.id}
-                inboxNotification={inboxNotification}
-              />
-            );
-          })}
-        </InboxNotificationList>
-      )}
     </>
   );
 }
