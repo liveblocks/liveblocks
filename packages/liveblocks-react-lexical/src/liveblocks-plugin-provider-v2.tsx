@@ -10,7 +10,7 @@ import type {
 } from "@liveblocks/core";
 import { kInternal } from "@liveblocks/core";
 import { useClient, useRoom, useSelf } from "@liveblocks/react";
-import LiveblocksProvider from "@liveblocks/yjs";
+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import React, {
   ReactNode,
   useCallback,
@@ -32,20 +32,20 @@ export const LiveblocksPlugin = ({ children }: LiveblocksPluginProps) => {
   const room = useRoom();
 
   const [provider, setProvider] = useState<
-    | LiveblocksProvider<
-        JsonObject,
-        LsonObject,
-        BaseUserMeta,
-        Json,
-        BaseMetadata
-      >
+    | LiveblocksYjsProvider<
+      JsonObject,
+      LsonObject,
+      BaseUserMeta,
+      Json,
+      BaseMetadata
+    >
     | undefined
   >();
 
   const doc = useMemo(() => new Doc(), []);
 
   useEffect(() => {
-    const _provider = new LiveblocksProvider(room, doc);
+    const _provider = new LiveblocksYjsProvider(room, doc);
     setProvider(_provider);
     return () => {
       _provider.destroy();
@@ -88,7 +88,7 @@ function LiveblocksPluginImpl({
   children,
 }: {
   doc: Doc;
-  provider: LiveblocksProvider<
+  provider: LiveblocksYjsProvider<
     JsonObject,
     LsonObject,
     BaseUserMeta,

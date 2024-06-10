@@ -86,8 +86,7 @@ describe("presence", () => {
     leave();
   });
 
-  // XXX This test is no longer passing - has it ever?
-  test.skip("When others update, we should get awareness state correctly and update should be called", async () => {
+  test("When others update, we should get awareness state correctly and update should be called", async () => {
     const client = createClient({ authEndpoint: "/api/auth" });
     const { room, leave } = client.enterRoom<{ __yjs?: JsonObject }>("room", {
       initialPresence: {},
@@ -121,7 +120,10 @@ describe("presence", () => {
         type: ServerMsgCode.UPDATE_PRESENCE,
         targetActor: -1,
         actor: 1,
-        data: { __yjs: { test: "yjs awareness another user" } },
+        data: {
+          __yjs_clientid: 1,
+          __yjs: { test: "yjs awareness another user" },
+        },
       } as UpdatePresenceServerMsg<JsonObject>),
     } as MessageEvent);
 
