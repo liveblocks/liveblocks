@@ -18,7 +18,8 @@ Breaking changes:
 - Rename `@liveblocks/react-comments` to `@liveblocks/react-ui` and
   `<CommentsConfig />` to `<LiveblocksUIConfig />` (codemod)
 - Rename `@liveblocks/node`'s `RoomInfo` to `RoomData` (codemod)
-- In `@liveblocks/node`, `client.getThread<MyMeta>()` no longer takes type params. Use global type augmentation instead.
+- In `@liveblocks/node`, `client.getThread<MyMeta>()` no longer takes type
+  params. Use global type augmentation instead.
 - Removal of the deprecated APIs
 - Maybe some Yjs package changes
 
@@ -37,9 +38,7 @@ upgrade. You can make a Git commit after every one of these changes.
    1. Do a search for `@liveblocks/react-comments` to find any remaining
       references and rename them manually, for example if you import the default
       styles from within your own CSS files using `@import`.
-1. Upgrade _all_ `@liveblocks/*` packages to `@latest`:
-   1. Run `npm i @liveblocks/client@latest @liveblocks/react@latest ...` for
-      every package you have
+1. Run `npx create-liveblocks-app@latest --upgrade`
 1. Run `tsc` again, no new errors should pop up at this point. If they do, they
    should only be from APIs that were long-deprecated and now removed. Adjust
    accordingly. See section above.
