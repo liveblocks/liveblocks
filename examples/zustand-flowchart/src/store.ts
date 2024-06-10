@@ -12,32 +12,12 @@ import {
   OnEdgesChange,
   OnNodesChange,
 } from "reactflow";
-import { createClient, Json } from "@liveblocks/client";
+import { createClient } from "@liveblocks/client";
+import type { EnsureJson } from "@liveblocks/core"; // XXX Import from client instead
 import { liveblocks } from "@liveblocks/zustand";
 import type { WithLiveblocks } from "@liveblocks/zustand";
 import nodes from "./nodes";
 import edges from "./edges";
-
-// XXX Remove when upgrading to 2.0.0-alpha2
-type EnsureJson<T> =
-  // Retain all valid `JSON` fields
-  T extends Json
-    ? T
-    : // Retain all valid arrays
-      T extends Array<infer I>
-      ? EnsureJson<I>[]
-      : // Retain `unknown` fields, but just treat them as if they're Json | undefined
-        [unknown] extends [T]
-        ? Json | undefined
-        : // Remove functions
-          T extends (...args: any[]) => any
-          ? never
-          : // Resolve all other values explicitly
-            {
-              [K in keyof T as EnsureJson<T[K]> extends never
-                ? never
-                : K]: EnsureJson<T[K]>;
-            };
 
 /**
  * This file contains the Zustand store & Liveblocks middleware

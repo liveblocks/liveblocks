@@ -1,6 +1,4 @@
 import { useOthers, useSelf } from "@/liveblocks.config";
-// XXX What's different about this example compared to others where we can just do this?
-// @ts-expect-error - Cannot find module '../styles/index.module.css' or its corresponding type declarations
 import styles from "./Avatars.module.css";
 
 export function Avatars() {

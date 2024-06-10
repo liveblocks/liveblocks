@@ -10,8 +10,6 @@ import { javascript } from "@codemirror/lang-javascript";
 import { useCallback, useEffect, useState } from "react";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import { TypedLiveblocksProvider, useRoom, useSelf } from "@/liveblocks.config";
-// XXX What's different about this example compared to others where we can just do this?
-// @ts-expect-error - Cannot find module '../styles/index.module.css' or its corresponding type declarations
 import styles from "./CollaborativeEditor.module.css";
 import { Avatars } from "@/components/Avatars";
 import { Toolbar } from "@/components/Toolbar";
