@@ -149,7 +149,7 @@ function Page() {
     <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
       <RoomProvider id="my-room-id" initialPresence={{}}>
         <ClientSideSuspense fallback={<div>Loading…</div>}>
-          {() => <App />}
+          <App />
         </ClientSideSuspense>
       </RoomProvider>
     </LiveblocksProvider>
