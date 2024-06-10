@@ -8,9 +8,12 @@ type Props = {
   selectionColor?: string;
 };
 
-export default function Ellipse(
-  { layer, onPointerDown, id, selectionColor }: Props
-) {
+export default function Ellipse({
+  layer,
+  onPointerDown,
+  id,
+  selectionColor,
+}: Props) {
   return (
     <ellipse
       onPointerDown={(e) => onPointerDown(e, id)}

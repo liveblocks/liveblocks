@@ -1,4 +1,7 @@
-import { useOthersMapped, useOthersConnectionIds } from "@liveblocks/react/suspense";
+import {
+  useOthersMapped,
+  useOthersConnectionIds,
+} from "@liveblocks/react/suspense";
 import { shallow } from "@liveblocks/client";
 import React from "react";
 import { colorToCss } from "../utils";

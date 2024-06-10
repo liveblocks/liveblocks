@@ -8,9 +8,12 @@ type Props = {
   selectionColor?: string;
 };
 
-export default function Rectangle(
-  { layer, onPointerDown, id, selectionColor }: Props
-) {
+export default function Rectangle({
+  layer,
+  onPointerDown,
+  id,
+  selectionColor,
+}: Props) {
   const { x, y, width, height, fill } = layer;
 
   return (

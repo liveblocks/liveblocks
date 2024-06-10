@@ -13,9 +13,11 @@ type SelectionToolsProps = {
   setLastUsedColor: (color: Color) => void;
 };
 
-function SelectionTools(
-  { isAnimated, camera, setLastUsedColor }: SelectionToolsProps
-) {
+function SelectionTools({
+  isAnimated,
+  camera,
+  setLastUsedColor,
+}: SelectionToolsProps) {
   const selection = useSelf((me) => me.presence.selection);
 
   /**
