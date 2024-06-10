@@ -3,9 +3,7 @@ import * as React from "react";
 
 type Props = {
   fallback: ReactNode;
-  children: // TODO Restore this again later
-  // (() => ReactNode | undefined) |
-  ReactNode | undefined;
+  children: (() => ReactNode | undefined) | ReactNode | undefined;
 };
 
 /**
@@ -36,7 +34,11 @@ export function ClientSideSuspense(props: Props) {
 
   return (
     <React.Suspense fallback={props.fallback}>
-      {mounted ? props.children : props.fallback}
+      {mounted
+        ? typeof props.children === "function"
+          ? props.children()
+          : props.children
+        : props.fallback}
     </React.Suspense>
   );
 }
