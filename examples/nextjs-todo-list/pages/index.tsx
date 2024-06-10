@@ -113,7 +113,7 @@ export default function Page() {
       initialStorage={{ todos: new LiveList() }}
     >
       <ClientSideSuspense fallback={<Loading />}>
-        {() => <Example />}
+        <Example />
       </ClientSideSuspense>
     </RoomProvider>
   );

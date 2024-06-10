@@ -18,7 +18,7 @@ import { TimeIcon } from "@/icons/Time";
 export function Threads() {
   return (
     <ClientSideSuspense fallback={null}>
-      {() => <ThreadList />}
+      <ThreadList />
     </ClientSideSuspense>
   );
 }

@@ -6,7 +6,9 @@ import { Pause as PauseIcon, Play as PlayIcon } from "react-feather";
 
 export function Presence() {
   return (
-    <ClientSideSuspense fallback={null}>{() => <Avatars />}</ClientSideSuspense>
+    <ClientSideSuspense fallback={null}>
+      <Avatars />
+    </ClientSideSuspense>
   );
 }
 

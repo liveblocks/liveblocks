@@ -12,7 +12,7 @@ import { ClientSideSuspense } from "@liveblocks/react";
 export function Cursors() {
   return (
     <ClientSideSuspense fallback={null}>
-      {() => <CursorsComponent />}
+      <CursorsComponent />
     </ClientSideSuspense>
   );
 }

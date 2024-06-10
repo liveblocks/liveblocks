@@ -24,7 +24,7 @@ export function User({ className, ...props }: ComponentProps<"div">) {
   return (
     <ErrorBoundary fallback={fallback}>
       <ClientSideSuspense fallback={fallback}>
-        {() => <Avatar className={className} {...props} />}
+        <Avatar className={className} {...props} />
       </ClientSideSuspense>
     </ErrorBoundary>
   );

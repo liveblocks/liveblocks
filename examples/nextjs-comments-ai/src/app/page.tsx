@@ -37,7 +37,7 @@ export default function Page() {
         }
       >
         <ClientSideSuspense fallback={<Loading />}>
-          {() => <Example />}
+          <Example />
         </ClientSideSuspense>
       </ErrorBoundary>
     </RoomProvider>

@@ -65,7 +65,7 @@ export default function Room() {
     >
       <div className={styles.container}>
         <ClientSideSuspense fallback={<Loading />}>
-          {() => <Canvas />}
+          <Canvas />
         </ClientSideSuspense>
       </div>
     </RoomProvider>

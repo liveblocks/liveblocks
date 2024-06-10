@@ -22,7 +22,7 @@ import { Placeholder } from "@tiptap/extension-placeholder";
 export function TextEditor() {
   return (
     <ClientSideSuspense fallback={<DocumentSpinner />}>
-      {() => <Editor />}
+      <Editor />
     </ClientSideSuspense>
   );
 }

@@ -37,7 +37,7 @@ function Room({ room }: { room: string }) {
         }
       >
         <ClientSideSuspense fallback={<Loading />}>
-          {() => <Example />}
+          <Example />
         </ClientSideSuspense>
       </ErrorBoundary>
     </RoomProvider>

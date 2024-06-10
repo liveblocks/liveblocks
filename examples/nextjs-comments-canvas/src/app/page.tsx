@@ -19,7 +19,7 @@ export default function Page() {
         }
       >
         <ClientSideSuspense fallback={<Loading />}>
-          {() => <CommentsCanvas />}
+          <CommentsCanvas />
         </ClientSideSuspense>
       </ErrorBoundary>
     </RoomProvider>

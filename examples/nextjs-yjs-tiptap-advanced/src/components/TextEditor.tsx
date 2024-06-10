@@ -28,7 +28,7 @@ import { Avatars } from "@/components/Avatars";
 export function TextEditor() {
   return (
     <ClientSideSuspense fallback={<DocumentSpinner />}>
-      {() => <Editor />}
+      <Editor />
     </ClientSideSuspense>
   );
 }

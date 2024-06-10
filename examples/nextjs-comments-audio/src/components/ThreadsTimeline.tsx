@@ -15,7 +15,7 @@ export function ThreadsTimeline() {
     // @ts-ignore
     <ErrorBoundary fallback={<div>error</div>}>
       <ClientSideSuspense fallback={null}>
-        {() => <PinnedThreads />}
+        <PinnedThreads />
       </ClientSideSuspense>
     </ErrorBoundary>
   );

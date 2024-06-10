@@ -15,7 +15,7 @@ import {
 export function Threads() {
   return (
     <ClientSideSuspense fallback={null}>
-      {() => <ThreadList />}
+      <ThreadList />
     </ClientSideSuspense>
   );
 }

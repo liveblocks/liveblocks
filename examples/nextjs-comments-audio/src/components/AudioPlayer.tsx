@@ -211,7 +211,7 @@ export function AudioPlayer() {
 
       {/* Write a comment input */}
       <ClientSideSuspense fallback={null}>
-        {() => <NewThreadComposer duration={duration} time={time} />}
+        <NewThreadComposer duration={duration} time={time} />
       </ClientSideSuspense>
     </div>
   );

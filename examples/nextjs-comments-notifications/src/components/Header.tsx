@@ -31,7 +31,7 @@ export function Header({ className, ...props }: ComponentProps<"header">) {
       {room ? (
         <ErrorBoundary fallback={null}>
           <ClientSideSuspense fallback={null}>
-            {() => <TitleRoom className="header-title" room={room} />}
+            <TitleRoom className="header-title" room={room} />
           </ClientSideSuspense>
         </ErrorBoundary>
       ) : (

@@ -8,7 +8,9 @@ import { ClientSideSuspense } from "@liveblocks/react";
 
 export function Presence() {
   return (
-    <ClientSideSuspense fallback={null}>{() => <Avatars />}</ClientSideSuspense>
+    <ClientSideSuspense fallback={null}>
+      <Avatars />
+    </ClientSideSuspense>
   );
 }
 
