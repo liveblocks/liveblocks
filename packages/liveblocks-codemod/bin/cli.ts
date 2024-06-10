@@ -24,6 +24,10 @@ import {
 
 const TRANSFORMER_INQUIRER_CHOICES = [
   {
+    name: "remove-liveblocks-config-contexts: Replaces `createRoomContext` and `createLiveblocksContext` in `liveblock.config` files with global `Liveblocks` types and updates all imports to `@liveblocks/react` accordingly.",
+    value: "remove-liveblocks-config-contexts",
+  },
+  {
     name: "react-comments-to-react-ui: Updates `@liveblocks/react-comments` imports to `@liveblocks/react-ui` and renames `<CommentsConfig />` to `<LiveblocksUIConfig />`.",
     value: "react-comments-to-react-ui",
   },
@@ -79,7 +83,7 @@ export function runTransform({
   transformer,
 }: {
   files: string[];
-  flags: { dry: boolean; print: boolean };
+  flags: { dry: boolean; print: boolean; suspense: boolean };
   transformer: string;
 }) {
   const transformerPath = path.join(transformerDirectory, `${transformer}.js`);
@@ -103,6 +107,10 @@ export function runTransform({
   args.push("--ignore-pattern=**/node_modules/**");
 
   args.push("--extensions=tsx,ts,jsx,js");
+
+  if (flags.suspense) {
+    args.push("--suspense");
+  }
 
   args = args.concat(["--transform", transformerPath]);
 
@@ -174,6 +182,9 @@ export function run() {
       help: {
         type: "boolean",
         shortFlag: "h",
+      },
+      suspense: {
+        type: "boolean",
       },
       // string: ["_"],
     },
