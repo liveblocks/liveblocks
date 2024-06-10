@@ -1,6 +1,6 @@
 import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
-import LiveblocksProvider from "@liveblocks/yjs";
+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 
 const client = createClient({
   authEndpoint: "/api/liveblocks-auth",
@@ -36,7 +36,7 @@ export const {
   suspense: { RoomProvider, useRoom, useOthers, useSelf },
 } = createRoomContext<Presence, Storage, UserMeta /*, RoomEvent */>(client);
 
-export type LiveblocksProviderType = LiveblocksProvider<
+export type LiveblocksProviderType = LiveblocksYjsProvider<
   Presence,
   Storage,
   UserMeta,

@@ -1,6 +1,6 @@
 "use client";
 
-import LiveblocksProvider from "@liveblocks/yjs";
+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createEditor, Editor, Transforms } from "slate";
 import { Editable, Slate, withReact } from "slate-react";
@@ -24,7 +24,7 @@ export default function CollaborativeEditor() {
   // Set up Liveblocks Yjs provider
   useEffect(() => {
     const yDoc = new Y.Doc();
-    const yProvider = new LiveblocksProvider(room, yDoc);
+    const yProvider = new LiveblocksYjsProvider(room, yDoc);
     const sharedDoc = yDoc.get("slate", Y.XmlText) as Y.XmlText;
     yProvider.on("sync", setConnected);
 

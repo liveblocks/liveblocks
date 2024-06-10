@@ -1,6 +1,6 @@
 "use client";
 
-import LiveblocksProvider from "@liveblocks/yjs";
+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import * as Y from "yjs";
 import { useRoom, useSelf } from "@/liveblocks.config";
 import styles from "./Editor.module.css";
@@ -79,7 +79,7 @@ export default function Editor() {
               // Set up Liveblocks Yjs provider
               const doc = new Y.Doc();
               yjsDocMap.set(id, doc);
-              const provider = new LiveblocksProvider(room, doc) as Provider;
+              const provider = new LiveblocksYjsProvider(room, doc) as Provider;
               return provider;
             }}
             initialEditorState={initialEditorState}

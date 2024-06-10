@@ -5,7 +5,7 @@ import ReactQuill from "react-quill";
 import QuillCursors from "quill-cursors";
 import { QuillBinding } from "y-quill";
 import * as Y from "yjs";
-import LiveblocksProvider from "@liveblocks/yjs";
+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import { useRoom, useSelf } from "@/liveblocks.config";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Toolbar } from "./Toolbar";
@@ -25,7 +25,7 @@ export function CollaborativeEditor() {
   useEffect(() => {
     const yDoc = new Y.Doc();
     const yText = yDoc.getText("quill");
-    const yProvider = new LiveblocksProvider(room, yDoc);
+    const yProvider = new LiveblocksYjsProvider(room, yDoc);
     setText(yText);
     setProvider(yProvider);
 

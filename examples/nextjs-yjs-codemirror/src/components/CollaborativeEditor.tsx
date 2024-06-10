@@ -8,7 +8,7 @@ import { EditorView, basicSetup } from "codemirror";
 import { EditorState } from "@codemirror/state";
 import { javascript } from "@codemirror/lang-javascript";
 import { useCallback, useEffect, useState } from "react";
-import LiveblocksProvider from "@liveblocks/yjs";
+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import { TypedLiveblocksProvider, useRoom, useSelf } from "@/liveblocks.config";
 // XXX What's different about this example compared to others where we can just do this?
 // @ts-expect-error - Cannot find module '../styles/index.module.css' or its corresponding type declarations
@@ -42,7 +42,7 @@ export function CollaborativeEditor() {
 
     // Create Yjs provider and document
     ydoc = new Y.Doc();
-    provider = new LiveblocksProvider(room as any, ydoc);
+    provider = new LiveblocksYjsProvider(room as any, ydoc);
     const ytext = ydoc.getText("codemirror");
     const undoManager = new Y.UndoManager(ytext);
     setYUndoManager(undoManager);

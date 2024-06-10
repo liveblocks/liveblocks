@@ -1,6 +1,6 @@
 import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
-import LiveblocksProvider from "@liveblocks/yjs";
+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 
 // Try changing the lostConnectionTimeout value to increase
 // or reduct the time it takes to reconnect
@@ -57,7 +57,7 @@ type ThreadMetadata = {
   // positionY: number
 };
 
-export type TypedLiveblocksProvider = LiveblocksProvider<
+export type TypedLiveblocksProvider = LiveblocksYjsProvider<
   Presence,
   Storage,
   UserMeta,

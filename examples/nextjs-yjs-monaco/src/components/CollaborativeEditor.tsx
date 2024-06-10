@@ -1,7 +1,7 @@
 "use client";
 
 import * as Y from "yjs";
-import LiveblocksProvider from "@liveblocks/yjs";
+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import { TypedLiveblocksProvider, useRoom } from "@/liveblocks.config";
 import { useCallback, useEffect, useState } from "react";
 import styles from "./CollaborativeEditor.module.css";
@@ -28,7 +28,7 @@ export function CollaborativeEditor() {
     if (editorRef) {
       yDoc = new Y.Doc();
       const yText = yDoc.getText("monaco");
-      yProvider = new LiveblocksProvider(room, yDoc);
+      yProvider = new LiveblocksYjsProvider(room, yDoc);
       setProvider(yProvider);
 
       // Attach Yjs to Monaco
