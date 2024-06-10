@@ -1,7 +1,14 @@
 import type { BaseMetadata, ThreadData } from "@liveblocks/core";
 import { useThreads } from "@liveblocks/react";
-import type { ThreadProps } from "@liveblocks/react-ui";
-import { Thread as DefaultThread } from "@liveblocks/react-ui";
+import type {
+  CommentOverrides,
+  ComposerOverrides,
+  GlobalOverrides,
+  ThreadOverrides,
+  ThreadProps,
+  ThreadsPanelOverrides,
+} from "@liveblocks/react-ui";
+import { Thread as DefaultThread, useOverrides } from "@liveblocks/react-ui";
 import type { ComponentProps, ComponentType } from "react";
 import React, { forwardRef, useCallback, useContext } from "react";
 
@@ -16,7 +23,21 @@ type ThreadsPanelComponents = {
 };
 
 export interface ThreadsPanelProps extends ComponentProps<"div"> {
+  /**
+   * Override the component's components.
+   */
   components?: Partial<ThreadsPanelComponents>;
+
+  /**
+   * Override the component's strings.
+   */
+  overrides?: Partial<
+    GlobalOverrides &
+      ThreadsPanelOverrides &
+      ThreadOverrides &
+      CommentOverrides &
+      ComposerOverrides
+  >;
 }
 
 interface ThreadWrapperProps extends ThreadProps {
@@ -48,7 +69,8 @@ const ThreadWrapper = ({ Thread, isActive, ...props }: ThreadWrapperProps) => {
 };
 
 export const ThreadsPanel = forwardRef<HTMLDivElement, ThreadsPanelProps>(
-  ({ components, className, ...props }, forwardedRef) => {
+  ({ components, overrides, className, ...props }, forwardedRef) => {
+    const $ = useOverrides(overrides);
     const { threads } = useThreads();
     const isThreadActive = useContext(IsActiveThreadContext);
     const Thread = components?.Thread ?? DefaultThread;
@@ -72,7 +94,9 @@ export const ThreadsPanel = forwardRef<HTMLDivElement, ThreadsPanelProps>(
             );
           })
         ) : (
-          <div className="lb-lexical-threads-panel-empty">No threads yet</div>
+          <div className="lb-lexical-threads-panel-empty">
+            {$.THREADS_PANEL_EMPTY}
+          </div>
         )}
       </div>
     );

@@ -25,6 +25,16 @@ export { InboxNotificationList } from "./components/InboxNotificationList";
 export type { ThreadProps } from "./components/Thread";
 export { Thread } from "./components/Thread";
 export { LiveblocksUIConfig } from "./config";
+export type {
+  CommentOverrides,
+  ComposerOverrides,
+  GlobalOverrides,
+  InboxNotificationOverrides,
+  LocalizationOverrides,
+  Overrides,
+  ThreadOverrides,
+  ThreadsPanelOverrides,
+} from "./overrides";
 export { useOverrides } from "./overrides";
 export type { ComposerSubmitComment } from "./primitives";
 export { useMentionSuggestions } from "./shared";
