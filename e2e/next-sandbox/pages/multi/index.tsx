@@ -28,7 +28,7 @@ const {
 } = createRoomContext<Presence, Storage>(client);
 
 const initialPresence = (): Presence => ({});
-const initialStorage = (): Storage => ({ items: new LiveList() });
+const initialStorage = (): Storage => ({ items: new LiveList([]) });
 
 export default function Home() {
   const [numColumns, setNumColumns] = React.useState(1);

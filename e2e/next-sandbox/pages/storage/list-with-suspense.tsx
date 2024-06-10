@@ -35,7 +35,7 @@ export default function Home() {
     <RoomProvider
       id={roomId}
       initialPresence={{} as never}
-      initialStorage={{ items: new LiveList() }}
+      initialStorage={{ items: new LiveList([]) }}
     >
       <ClientSideSuspense fallback={<div>Loading...</div>}>
         <Sandbox />
