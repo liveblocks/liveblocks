@@ -7,7 +7,8 @@ export function findAndReplace(
 ) {
   const files = globby.sync(glob, {
     gitignore: true,
-    ignore: ["**/node_modules/**", "**/.*"],
+    ignore: ["**/node_modules/**"],
+    dot: false,
   });
 
   try {
