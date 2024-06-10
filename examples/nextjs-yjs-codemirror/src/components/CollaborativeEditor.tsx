@@ -1,8 +1,6 @@
 "use client";
 
 import * as Y from "yjs";
-// XXX Ignore external typing error?
-// @ts-expect-error - The 'y-codemirror.next' library may need to update its package.json or typings.
 import { yCollab } from "y-codemirror.next";
 import { EditorView, basicSetup } from "codemirror";
 import { EditorState } from "@codemirror/state";
