@@ -64,8 +64,4 @@ export async function create() {
   await execa(pkgManager, [installCommand, ...latestDependencies], {
     stdio: "inherit",
   });
-
-  // console.log(
-  //   `Executing ${pkgManager} ${installCommand} ${latestDependencies.join(" ")}`
-  // );
 }
