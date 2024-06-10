@@ -24,6 +24,8 @@
 **[Liveblocks](https://liveblocks.io) is the platform for adding collaborative
 editing, comments, and notifications into your application.**
 
+**[Get started now](https://liveblocks.io/signup)**
+
 <img src="./assets/concepts/products.png" alt="Liveblocks products"   />
 
 ### Products
