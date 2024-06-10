@@ -15,6 +15,10 @@ export const commandLineFlags: OptionDefinition[] = [
     type: Boolean,
   },
   {
+    name: "upgrade",
+    type: Boolean,
+  },
+  {
     name: "example",
     type: String,
   },
