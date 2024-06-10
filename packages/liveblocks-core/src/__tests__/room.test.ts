@@ -2509,7 +2509,7 @@ describe("room", () => {
     test("initialize room with initial storage should send operation only once", async () => {
       const { wss, expectStorage } = await prepareIsolatedStorageTest<{
         items: LiveList<string>;
-      }>([createSerializedObject("0:0", {})], 1, { items: new LiveList() });
+      }>([createSerializedObject("0:0", {})], 1, { items: new LiveList([]) });
 
       expectStorage({
         items: [],
