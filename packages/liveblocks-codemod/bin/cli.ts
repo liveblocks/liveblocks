@@ -104,7 +104,9 @@ export function runTransform({
 
   args.push("--verbose=2");
 
-  args.push("--ignore-pattern=**/{node_modules,.*}/**");
+  args.push("--ignore-config=.gitignore");
+
+  args.push("--ignore-pattern=**/node_modules/**");
 
   args.push("--extensions=tsx,ts,jsx,js");
 
