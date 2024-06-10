@@ -110,7 +110,7 @@ export default function Page() {
       initialPresence={{
         isTyping: false,
       }}
-      initialStorage={{ todos: new LiveList() }}
+      initialStorage={{ todos: new LiveList([]) }}
     >
       <ClientSideSuspense fallback={<Loading />}>
         <Example />

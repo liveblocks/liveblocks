@@ -60,7 +60,7 @@ export default function Room() {
       }}
       initialStorage={{
         layers: new LiveMap<string, LiveObject<Layer>>(),
-        layerIds: new LiveList(),
+        layerIds: new LiveList([]),
       }}
     >
       <div className={styles.container}>
