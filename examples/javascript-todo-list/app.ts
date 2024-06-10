@@ -1,5 +1,21 @@
 import { createClient, LiveList } from "@liveblocks/client";
 
+declare global {
+  interface Liveblocks {
+    Presence: {
+      isTyping: boolean;
+    };
+
+    Storage: {
+      todos: LiveList<Todo>;
+    };
+  }
+}
+
+type Todo = {
+  text: string;
+};
+
 async function run() {
   let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
   let roomId = "javascript-todo-list";
@@ -17,23 +33,11 @@ async function run() {
     publicApiKey: PUBLIC_KEY,
   });
 
-  type Presence = {
-    isTyping: boolean;
-  };
-
-  type Todo = {
-    text: string;
-  };
-
-  type Storage = {
-    todos: LiveList<Todo>;
-  };
-
   // If you no longer need the room (for example when you unmount your
   // component), make sure to call leave()
-  const { room, leave } = client.enterRoom<Presence, Storage>(roomId, {
+  const { room, leave } = client.enterRoom(roomId, {
     initialPresence: { isTyping: false },
-    initialStorage: { todos: new LiveList() },
+    initialStorage: { todos: new LiveList([]) },
   });
 
   const whoIsHere = document.getElementById("who_is_here") as HTMLDivElement;
