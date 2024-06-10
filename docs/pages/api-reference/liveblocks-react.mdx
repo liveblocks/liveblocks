@@ -73,7 +73,7 @@ function App() {
   return (
     <ErrorBoundary fallback={<div>Error</div>}>
       <ClientSideSuspense fallback={<div>Loading…</div>}>
-        {() => <Component />}
+        <Component />
       </ClientSideSuspense>
     </ErrorBoundary>
   );
