@@ -6,7 +6,7 @@ meta:
 alwaysShowAllNavigationLevels: false
 ---
 
-`@liveblocks/node-lexical` provides a nodejs package to export and modify
+`@liveblocks/node-lexical` provides a Node.js package to export and modify
 [Lexical](https://lexical.dev/) documents on the server.
 
 ## Setup
@@ -34,23 +34,28 @@ await withLexicalDocument(
 
 You can return data from the `withLexicalDocument` closure.
 
-````ts
+```ts
 const textContent = await withLexicalDocument(
-  {roomId: "your-room-id", client: liveblocks},
+  { roomId: "your-room-id", client: liveblocks },
   (doc) => doc.getTextContent()
 );
 ```
 
 ### Custom nodes
 
-If your lexical document has custom nodes, they must be passed into the `withLexicalDocument` function, just like you would with a frontend lexical client.
+If your lexical document has custom nodes, they must be passed into the
+`withLexicalDocument` function, just like you would with a frontend lexical
+client.
 
 ```ts
 import { CodeNode } from "@lexical/code";
-await withLexicalDocument({roomId: "your-room-id", client: liveblocks, nodes: [CodeNode]}, (api: LiveblocksDocumentApi) => {
-  // modify or export the document here
-});
-````
+await withLexicalDocument(
+  { roomId: "your-room-id", client: liveblocks, nodes: [CodeNode] },
+  (api: LiveblocksDocumentApi) => {
+    // modify or export the document here
+  }
+);
+```
 
 ### Lexical Document API
 
@@ -81,9 +86,9 @@ await withLexicalDocument(
 
 Returns the text content from the root node as a `string`.
 
-`````ts
+```ts
 const textContent = await withLexicalDocument(
-  {roomId: "your-room-id", client: liveblocks},
+  { roomId: "your-room-id", client: liveblocks },
   (doc) => doc.getTextContent()
 );
 ```
@@ -94,25 +99,31 @@ Returns Lexical's [editorState](https://lexical.dev/docs/concepts/editor-state).
 
 #### documentApi.getEditor
 
-Returns a headless Lexical editor. [@lexical/headless](https://lexical.dev/docs/packages/lexical-headless).
+Returns a headless Lexical editor.
+[@lexical/headless](https://lexical.dev/docs/packages/lexical-headless).
 
 #### documentApi.toJSON
-Returns a serailized JSON object representation of your document. See Lexical's [Serialization & Deserialization](https://lexical.dev/docs/concepts/serialization) page for more information.
 
-````ts
+Returns a serailized JSON object representation of your document. See Lexical's
+[Serialization & Deserialization](https://lexical.dev/docs/concepts/serialization)
+page for more information.
+
+```ts
 const docAsJSON = await withLexicalDocument(
-  {roomId: "your-room-id", client: liveblocks},
+  { roomId: "your-room-id", client: liveblocks },
   (doc) => doc.toJson()
 );
 ```
 
 #### documentApi.toMarkdown
-Returns a markdown `string` of your document. See Lexical's [@lexical/markdown](https://lexical.dev/docs/concepts/serialization) page for more information.
 
-````ts
+Returns a markdown `string` of your document. See Lexical's
+[@lexical/markdown](https://lexical.dev/docs/concepts/serialization) page for
+more information.
+
+```ts
 const markdown = await withLexicalDocument(
-  {roomId: "your-room-id", client: liveblocks},
+  { roomId: "your-room-id", client: liveblocks },
   (doc) => doc.toMarkdown()
 );
 ```
-`````
