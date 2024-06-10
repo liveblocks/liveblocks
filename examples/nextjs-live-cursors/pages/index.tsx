@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { useRouter } from "next/router";
-import { RoomProvider, useOthers, useMyPresence } from "../liveblocks.config";
+import { RoomProvider, useOthers, useMyPresence } from "@liveblocks/react";
 import Cursor from "../components/Cursor";
 import styles from "./index.module.css";
 
