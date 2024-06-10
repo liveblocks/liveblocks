@@ -3,7 +3,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import type { Provider } from "@lexical/yjs";
 import { kInternal, nn } from "@liveblocks/core";
 import { useClient, useRoom, useSelf } from "@liveblocks/react";
-import LiveblocksProvider from "@liveblocks/yjs";
+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import React, { useCallback, useEffect, useRef } from "react";
 import { Doc } from "yjs";
 

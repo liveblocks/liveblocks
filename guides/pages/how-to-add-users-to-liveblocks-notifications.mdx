@@ -1,0 +1,225 @@
+---
+meta:
+  title: "How to add users to Liveblocks Notifications"
+  description:
+    "Learn how to add your user’s avatars and names to Liveblocks Notifications
+    using the resolver functions."
+---
+
+After following the get started guide for Notifications, and sending
+notifications with [Comments](/docs/products/comments) or
+[Text editor](/docs/products/text-editor), you’ll notice that each user is
+currently “Anonymous”, and that there’s no way to mention or tag other users. To
+enable these features, we need to tell Notifications where to find your users’
+information.
+
+<Figure>
+  <Image
+    src="/assets/notifications/notifications-inbox.jpg"
+    alt="Thread"
+    width={1344}
+    height={896}
+  />
+</Figure>
+
+## What we’re learning
+
+In this guide we’ll be modifying
+[`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider),
+learning how to:
+
+- Add names and avatars to notifications with
+  [`resolveUsers`](/docs/api-reference/liveblocks-react#resolveUsers).
+
+## Authenticate your application
+
+The first step is to find an
+[authentication guide for your framework](/docs/authentication) and authenticate
+your app, as this is necessary for Notifications.
+
+Make sure to follow the metadata step in the guide, and attach the name of your
+user, along with the URL of their avatar, as these properties will both be used
+in the [default components](/docs/products/notifications#Components). Here’s an
+example using access token authentication, with an email address as a user’s ID.
+
+```ts title="Metadata in access tokens"
+const session = liveblocks.prepareSession("marc@example.com", {
+  userInfo: {
+    name: "Marc",
+    avatar: "https://example.com/marc.png",
+
+    // Your custom metadata
+    // ...
+  },
+});
+```
+
+If you’re using ID token authentication, it’ll look a little different.
+
+```ts title="Metadata in ID tokens" isCollapsed isCollapsable
+const { status, body } = await liveblocks.identifyUser(
+  {
+    userId: "marc@example.com",
+    groupIds: [], // Optional
+  },
+  {
+    userInfo: {
+      name: "Marc",
+      avatar: "https://example.com/marc.png",
+
+      // Your custom metadata
+      // ...
+    },
+  }
+);
+```
+
+Don’t forget to modify your `UserMeta` type in `liveblocks.config.ts` to match
+the metadata format, adding type hints to your editor.
+
+```ts file="liveblocks.config.ts"
+declare global {
+  interface Liveblocks {
+    UserMeta: {
+      id: string;
+
+      info: {
+        name: string;
+        avatar: string;
+
+        // Your custom metadata
+        // ...
+      };
+    };
+  }
+}
+```
+
+## Resolving users
+
+To show each user’s name and avatar in threads and comments, we need to use
+[`resolveUsers`](https://liveblocks.io/docs/api-reference/liveblocks-client#resolveUsers).
+
+<Figure>
+  <Image
+    src="/assets/notifications/notifications-inbox.jpg"
+    alt="Thread"
+    width={1344}
+    height={896}
+  />
+</Figure>
+
+<Steps>
+  <Step>
+    <StepTitle>Add the function to your LiveblocksProvider</StepTitle>
+    <StepContent>
+      The [`resolveUsers`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers) function is passed as an option to
+      [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider)—let’s add it. This function
+      provides you with `userIds`, an array of user IDs that have interacted with Notifications.
+      These `userIds` match the IDs set when authenticating users in your app.
+
+      ```tsx highlight="2-8"
+      <LiveblocksProvider
+        resolveUsers={async ({ userIds }) => {
+          // ["marc@example.com", ...]
+          console.log(userIds);
+
+          // Return a list of users
+          // ...
+        }}
+
+        // ...
+      />;
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Return your users</StepTitle>
+    <StepContent>
+      `resolveUsers` requires you to return a list of users in
+      the `UserMeta["info"]` format we set earlier. Remember
+      that _name_ and _avatar_ are required for the default components,
+      but you can also use any other metadata in your app.
+
+      ```tsx highlight="7-16"
+      <LiveblocksProvider
+        resolveUsers={async ({ userIds }) => {
+          // ["marc@example.com", ...]
+          console.log(userIds);
+
+          // Return a list of users
+          return [
+            {
+              name: "Marc",
+              avatar: "https://example.com/marc.png",
+
+              // Your custom metadata
+              // ...
+            },
+            // ...
+          ];
+        }}
+
+        // ...
+      />;
+      ```
+
+      We’re only returning one user here, but make sure to return an
+      array containing  each user, in the same order you received the IDs.
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Real-world example</StepTitle>
+    <StepContent>
+      In your real application you’ll probably be getting users from your
+      API endpoint and database via `fetch`. This is how we’d recommend
+      building out this function.
+
+      ```tsx highlight="3-7"
+      <LiveblocksProvider
+        resolveUsers={async ({ userIds }) => {
+          // Get users from your back end
+          const users = await __fetchUsers__(userIds);
+
+          // Return a list of users
+          return users;
+        }}
+
+        // ...
+      />;
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+    <StepTitle>Users are now visible</StepTitle>
+    <StepContent>
+      After adding this, you should now be able to see your users in notifications!
+
+      <Figure>
+        <Image
+          src="/assets/notifications/notifications-inbox.jpg"
+          alt="Thread"
+          width={1344}
+          height={896}
+        />
+      </Figure>
+
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## Next steps
+
+You’re now ready to start building your Notifications application! Here’s where
+you can learn more:
+
+- [API reference](/docs/api-reference/liveblocks-react#Notifications)
+- [Component reference](/docs/api-reference/liveblocks-ui#Notifications)
+- [Examples](/examples/browse/notifications)

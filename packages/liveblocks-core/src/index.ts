@@ -86,6 +86,7 @@ export * as console from "./lib/fancy-console";
 export { freeze } from "./lib/freeze";
 export type { Json, JsonArray, JsonObject, JsonScalar } from "./lib/Json";
 export { isJsonArray, isJsonObject, isJsonScalar } from "./lib/Json";
+export type { NoInfr } from "./lib/NoInfer";
 export { objectToQuery } from "./lib/objectToQuery";
 export { makePoller } from "./lib/Poller";
 export { asPos, makePosition } from "./lib/position";
@@ -233,16 +234,23 @@ export { detectDupes };
  */
 // prettier-ignore
 export type EnsureJson<T> =
-  // Retain `unknown` fields
-  [unknown] extends [T] ? T :
-  // Retain functions
-  T extends (...args: unknown[]) => unknown ? T :
+  // Retain all valid `JSON` fields
+  T extends Json ? T :
+  // Retain all valid arrays
+  T extends Array<infer I> ? (EnsureJson<I>)[] :
+  // Retain `unknown` fields, but just treat them as if they're Json | undefined
+  [unknown] extends [T] ? Json | undefined :
+  // Dates become strings when serialized to JSON
+  T extends Date ? string :
+  // Remove functions
+  T extends (...args: any[]) => any ? never :
   // Resolve all other values explicitly
-  { [K in keyof T]: EnsureJson<T[K]> };
+  { [K in keyof T as EnsureJson<T[K]> extends never ? never : K]: EnsureJson<T[K]> };
 
 // Support for DevTools
 import type * as DevToolsMsg from "./devtools/protocol";
 export type { DevToolsMsg };
+import type { Json } from "./lib/Json";
 import type * as DevTools from "./types/DevToolsTreeNode";
 export type { DevTools };
 

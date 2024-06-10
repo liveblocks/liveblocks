@@ -25,7 +25,9 @@ import Button from "../../utils/Button";
 import { createLiveblocksClientOptions } from "../../utils/createClient";
 
 const initialPresence = (): Liveblocks["Presence"] => ({});
-const initialStorage = (): Liveblocks["Storage"] => ({ items: new LiveList() });
+const initialStorage = (): Liveblocks["Storage"] => ({
+  items: new LiveList([]),
+});
 
 export default function Home() {
   const count = useRenderCount();

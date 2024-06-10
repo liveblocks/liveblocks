@@ -1,17 +1,28 @@
 @import "./utils";
 @import "./constants";
 
-.lb-lexical-threads-empty {
+.lb-lexical-thread-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.lb-lexical-thread-panel-empty {
+  position: absolute;
+  inset: 0;
   display: flex;
   justify-content: center;
   align-items: center;
-  block-size: max-content;
-  color: rgb(55 53 47 / 50%);
+  padding: var(--lb-spacing);
+  color: var(--lb-foreground-tertiary);
+  font-size: 0.875em;
+  text-align: center;
+  text-wrap: balance;
 }
 
-.lb-lexical-threads {
-  display: flex;
-  flex-direction: column;
+.lb-lexical-thread-panel-thread {
+  &:where(:not(:last-of-type)) {
+    border-block-end: 1px solid var(--lb-foreground-subtle);
+  }
 }
 
 /*************************************

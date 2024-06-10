@@ -1,5 +1,5 @@
 import { createRoomContext } from "@liveblocks/react";
-import LiveblocksProvider from "@liveblocks/yjs";
+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import React, { useEffect, useMemo, useState } from "react";
 import * as Y from "yjs";
 
@@ -37,7 +37,7 @@ function Sandbox() {
     const handler = () => {
       setText(doc.getText("test").toString());
     };
-    const provider = new LiveblocksProvider(room, doc);
+    const provider = new LiveblocksYjsProvider(room, doc);
     provider.on("sync", () => {
       setSynced(true);
     });

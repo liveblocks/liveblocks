@@ -502,6 +502,14 @@
         "path": "/api-reference/liveblocks-react-ui"
       },
       {
+        "title": "@liveblocks/react-lexical",
+        "path": "/api-reference/liveblocks-react-lexical"
+      },
+      {
+        "title": "@liveblocks/node-lexical",
+        "path": "/api-reference/liveblocks-node-lexical"
+      },
+      {
         "title": "@liveblocks/redux",
         "path": "/api-reference/liveblocks-redux"
       },

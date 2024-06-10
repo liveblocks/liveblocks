@@ -98,12 +98,7 @@
     var(--lb-foreground-contrast),
     800
   );
-  --lb-selection: color-mix-scale(
-    var(--lb-dynamic-background),
-    var(--lb-accent) 40%,
-    var(--lb-foreground-contrast),
-    800
-  );
+  --lb-selection: color-mix(in srgb, var(--lb-accent) 40%, transparent);
 
   overflow-wrap: break-word;
   accent-color: var(--lb-accent);

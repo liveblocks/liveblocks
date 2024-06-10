@@ -915,7 +915,7 @@ describe("legacy_patchImmutableObject", () => {
     const root = new LiveObject<{
       list: typeof liveList;
     }>();
-    const liveList = new LiveList<LiveObject<{ a: number }>>();
+    const liveList = new LiveList<LiveObject<{ a: number }>>([]);
     liveList.push(new LiveObject({ a: 1 }));
     liveList.push(new LiveObject({ a: 2 }));
     liveList.push(new LiveObject({ a: 3 }));
@@ -950,7 +950,7 @@ describe("legacy_patchImmutableObject", () => {
     const root = new LiveObject<{
       list: typeof liveList;
     }>();
-    const liveList = new LiveList<LiveObject<{ a: number }>>();
+    const liveList = new LiveList<LiveObject<{ a: number }>>([]);
     liveList.push(new LiveObject({ a: 1 }));
     liveList.push(new LiveObject({ a: 2 }));
     const obj1 = new LiveObject({ a: 3 });
@@ -983,7 +983,7 @@ describe("legacy_patchImmutableObject", () => {
     const root = new LiveObject<{
       list: typeof liveList;
     }>();
-    const liveList = new LiveList<LiveObject<{ a: number }>>();
+    const liveList = new LiveList<LiveObject<{ a: number }>>([]);
     const newObj = new LiveObject({ a: 0 });
     liveList.push(newObj);
     liveList.push(new LiveObject({ a: 1 }));
@@ -1013,7 +1013,7 @@ describe("legacy_patchImmutableObject", () => {
     };
 
     const root = new LiveObject<{ list: typeof liveList }>();
-    const liveList = new LiveList<LiveObject<{ a: number }>>();
+    const liveList = new LiveList<LiveObject<{ a: number }>>([]);
     const newObj1 = new LiveObject({ a: 2 });
     const newObj2 = new LiveObject({ a: 3 });
 
@@ -1049,7 +1049,7 @@ describe("legacy_patchImmutableObject", () => {
     };
 
     const root = new LiveObject<{ list: typeof liveList }>();
-    const liveList = new LiveList<LiveObject<{ a: number }>>();
+    const liveList = new LiveList<LiveObject<{ a: number }>>([]);
     const newObj1 = new LiveObject({ a: 2 });
     const newObj2 = new LiveObject({ a: 3 });
 
@@ -1085,7 +1085,7 @@ describe("legacy_patchImmutableObject", () => {
     };
 
     const root = new LiveObject<{ list: typeof liveList }>();
-    const liveList = new LiveList<LiveObject<{ a: number }>>();
+    const liveList = new LiveList<LiveObject<{ a: number }>>([]);
     liveList.push(new LiveObject({ a: 1 }));
     const newObj = new LiveObject({ a: 15 });
     liveList.push(newObj);
@@ -1116,7 +1116,7 @@ describe("legacy_patchImmutableObject", () => {
     };
 
     const root = new LiveObject<{ list: typeof liveList }>();
-    const liveList = new LiveList<LiveObject<{ a: number }>>();
+    const liveList = new LiveList<LiveObject<{ a: number }>>([]);
     liveList.push(new LiveObject({ a: 1 }));
     root.set("list", liveList);
 
@@ -1143,7 +1143,7 @@ describe("legacy_patchImmutableObject", () => {
     };
 
     const root = new LiveObject<{ list: typeof liveList }>();
-    const liveList = new LiveList<LiveObject<{ a: number }>>();
+    const liveList = new LiveList<LiveObject<{ a: number }>>([]);
     liveList.push(new LiveObject({ a: 1 }));
     liveList.push(new LiveObject({ a: 2 }));
     liveList.delete(0);
@@ -1172,7 +1172,7 @@ describe("legacy_patchImmutableObject", () => {
     };
 
     const root = new LiveObject<{ list: typeof liveList }>();
-    const liveList = new LiveList<LiveObject<{ a: number }>>();
+    const liveList = new LiveList<LiveObject<{ a: number }>>([]);
     liveList.push(new LiveObject({ a: 1 }));
     liveList.push(new LiveObject({ a: 2 }));
     liveList.push(new LiveObject({ a: 3 }));
@@ -1207,7 +1207,7 @@ describe("legacy_patchImmutableObject", () => {
       };
 
       const root = new LiveObject<{ list: typeof liveList }>();
-      const liveList = new LiveList<LiveObject<{ i: string }>>();
+      const liveList = new LiveList<LiveObject<{ i: string }>>([]);
       const movedObj = new LiveObject({ i: "c" });
       liveList.push(movedObj);
       liveList.push(new LiveObject({ i: "a" }));
@@ -1243,7 +1243,7 @@ describe("legacy_patchImmutableObject", () => {
       };
 
       const root = new LiveObject<{ list: typeof liveList }>();
-      const liveList = new LiveList<LiveObject<{ i: string }>>();
+      const liveList = new LiveList<LiveObject<{ i: string }>>([]);
       liveList.push(new LiveObject({ i: "b" }));
       liveList.push(new LiveObject({ i: "c" }));
       liveList.push(new LiveObject({ i: "d" }));
@@ -1279,7 +1279,7 @@ describe("legacy_patchImmutableObject", () => {
       };
 
       const root = new LiveObject<{ list: typeof liveList }>();
-      const liveList = new LiveList<LiveObject<{ i: string }>>();
+      const liveList = new LiveList<LiveObject<{ i: string }>>([]);
       liveList.push(new LiveObject({ i: "a" }));
       liveList.push(new LiveObject({ i: "c" }));
       liveList.push(new LiveObject({ i: "d" }));
@@ -1315,7 +1315,7 @@ describe("legacy_patchImmutableObject", () => {
       };
 
       const root = new LiveObject<{ list: typeof liveList }>();
-      const liveList = new LiveList<LiveObject<{ i: string }>>();
+      const liveList = new LiveList<LiveObject<{ i: string }>>([]);
       liveList.push(new LiveObject({ i: "a" }));
       liveList.push(new LiveObject({ i: "c" }));
       const movedObj = new LiveObject({ i: "b" });
@@ -1351,7 +1351,7 @@ describe("legacy_patchImmutableObject", () => {
       };
 
       const root = new LiveObject<{ list: typeof liveList }>();
-      const liveList = new LiveList<LiveObject<{ i: string }>>();
+      const liveList = new LiveList<LiveObject<{ i: string }>>([]);
       const objA = new LiveObject({ i: "a" });
       const objB = new LiveObject({ i: "b" });
       const objC = new LiveObject({ i: "c" });
@@ -1391,7 +1391,7 @@ describe("legacy_patchImmutableObject", () => {
       };
 
       const root = new LiveObject<{ list: typeof liveList }>();
-      const liveList = new LiveList<LiveObject<{ i: string }>>();
+      const liveList = new LiveList<LiveObject<{ i: string }>>([]);
       const objA = new LiveObject({ i: "a" });
       const objB = new LiveObject({ i: "b" });
       const objC = new LiveObject({ i: "c" });
