@@ -18,7 +18,7 @@ import {
   dataPlatforms,
   dataActivation,
 } from "../src/data";
-import { useMyPresence, useOthersMapped } from "../src/liveblocks.config";
+import { useMyPresence, useOthersMapped } from "@liveblocks/react";
 import styles from "./index.module.css";
 import Header from "../src/components/Header";
 import Card from "../src/components/Card";
