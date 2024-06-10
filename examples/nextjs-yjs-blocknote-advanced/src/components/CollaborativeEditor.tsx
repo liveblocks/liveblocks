@@ -6,7 +6,7 @@ import { BlockNoteView, useCreateBlockNote } from "@blocknote/react";
 import "@blocknote/react/style.css";
 import * as Y from "yjs";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
-import { useRoom, useSelf } from "@/liveblocks.config";
+import { useRoom, useSelf } from "@liveblocks/react/suspense";
 import { useCallback, useEffect, useState } from "react";
 import { Avatars } from "@/components/Avatars";
 import styles from "./CollaborativeEditor.module.css";
