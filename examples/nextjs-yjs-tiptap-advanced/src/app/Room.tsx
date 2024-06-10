@@ -1,6 +1,5 @@
 "use client";
 
-import { LiveblocksProvider } from "@liveblocks/react";
 import { ReactNode, useMemo } from "react";
 import { RoomProvider } from "@liveblocks/react/suspense";
 import { useSearchParams } from "next/navigation";
@@ -13,21 +12,16 @@ export function Room({ children }: { children: ReactNode }) {
   );
 
   return (
-    <LiveblocksProvider
-      authEndpoint="/api/liveblocks-auth"
-      // throttle: 100,
+    <RoomProvider
+      id={roomId}
+      initialPresence={{
+        cursor: null,
+      }}
     >
-      <RoomProvider
-        id={roomId}
-        initialPresence={{
-          cursor: null,
-        }}
-      >
-        <ClientSideSuspense fallback={<DocumentSpinner />}>
-          {children}
-        </ClientSideSuspense>
-      </RoomProvider>
-    </LiveblocksProvider>
+      <ClientSideSuspense fallback={<DocumentSpinner />}>
+        {children}
+      </ClientSideSuspense>
+    </RoomProvider>
   );
 }
 
