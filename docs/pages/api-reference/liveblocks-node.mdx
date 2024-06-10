@@ -1662,6 +1662,29 @@ await liveblocks.triggerInboxNotification({
 });
 ```
 
+##### Typing custom notifications
+
+To type custom notifications, edit the `ActivitiesData` type in your config
+file.
+
+```ts file="liveblocks.config.ts" highlight="4-10"
+declare global {
+  interface Liveblocks {
+    // Custom activities data for custom notification kinds
+    ActivitiesData: {
+      // Example, a custom $alert kind
+      $alert: {
+        title: string;
+        message: string;
+      };
+    };
+
+    // Other types
+    // ...
+  }
+}
+```
+
 ### Error handling [#error-handling]
 
 Errors in our API methods, such as network failures, invalid arguments, or

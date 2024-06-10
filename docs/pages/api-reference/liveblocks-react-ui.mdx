@@ -1307,6 +1307,88 @@ valid to render any custom JSX.
 />
 ```
 
+##### Typing custom notifications
+
+To type custom notifications, edit the `ActivitiesData` type in your config
+file.
+
+```ts file="liveblocks.config.ts" highlight="4-10"
+declare global {
+  interface Liveblocks {
+    // Custom activities data for custom notification kinds
+    ActivitiesData: {
+      // Example, a custom $alert kind
+      $alert: {
+        title: string;
+        message: string;
+      };
+    };
+
+    // Other types
+    // ...
+  }
+}
+```
+
+Your activities data is now correctly typed in inline functions.
+
+```tsx highlight="4-5"
+<InboxNotification
+  kinds={{
+    $alert: (props) => {
+      // `title` and `message` are correctly typed, as defined in your config
+      const { title, message } = props.inboxNotification.activities[0].data;
+
+      return (
+        <InboxNotification.Custom
+          {...props}
+          title={title}
+          aside={<InboxNotification.Icon>❗</InboxNotification.Icon>}
+        >
+          {message}
+        </InboxNotification.Custom>
+      );
+    },
+  }}
+/>
+```
+
+If you’d like to create a typed function elsewhere, you can use
+`InboxNotificationCustomProps` with a generic. In the example below we’re using
+the `$alert` notification kind as a generic,
+`InboxNotificationCustomKindProps<"$alert">`.
+
+```tsx highlight="6-8,27"
+import {
+  InboxNotification,
+  InboxNotificationCustomKindProps,
+} from "@liveblocks/react-ui";
+
+function AlertNotification(props: InboxNotificationCustomKindProps<"$alert">) {
+  // `title` and `message` are correctly typed, as defined in your config
+  const { title, message } = props.inboxNotification.activities[0].data;
+
+  return (
+    <InboxNotification.Custom
+      {...props}
+      title={title}
+      aside={<InboxNotification.Icon>❗</InboxNotification.Icon>}
+    >
+      {message}
+    </InboxNotification.Custom>
+  );
+}
+
+function Notification({ inboxNotification }) {
+  return (
+    <InboxNotification
+      inboxNotification={inboxNotification}
+      kinds={{ $alert: AlertNotification }}
+    />
+  );
+}
+```
+
 ##### Props [#InboxNotification-props]
 
 <PropertiesList>

@@ -2441,6 +2441,9 @@ declare global {
 
     // Custom room info set with resolveRoomsInfo, for useRoomInfo
     RoomInfo: {};
+
+    // Custom activities data for custom notification kinds
+    ActivitiesData: {};
   }
 }
 ```
@@ -2490,6 +2493,15 @@ declare global {
       // Example, rooms with a title and url
       title: string;
       url: string;
+    };
+
+    // Custom activities data for custom notification kinds
+    ActivitiesData: {
+      // Example, a custom $alert kind
+      $alert: {
+        title: string;
+        message: string;
+      };
     };
   }
 }
