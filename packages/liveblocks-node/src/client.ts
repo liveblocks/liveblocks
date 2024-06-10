@@ -126,7 +126,7 @@ export type RoomData = {
 
 type RoomDataPlain = DateToString<RoomData>;
 
-export type RoomUser<U extends BaseUserMeta> = {
+export type RoomUser<U extends BaseUserMeta = DU> = {
   type: "user";
   id: string | null;
   connectionId: number;
