@@ -7,14 +7,16 @@ import * as nextjsTemplate from "./templates/nextjs-starter-kit";
 import * as exampleTemplate from "./templates/example";
 import * as helpTemplate from "./templates/help";
 import * as initTemplate from "./templates/init";
+import * as upgradeTemplate from "./templates/upgrade";
 
-type TemplateName = "next" | "example" | "help" | "init";
+type TemplateName = "next" | "example" | "help" | "init" | "upgrade";
 
 const templates: { [K in TemplateName]: any } = {
   next: nextjsTemplate,
   example: exampleTemplate,
   help: helpTemplate,
   init: initTemplate,
+  upgrade: upgradeTemplate,
 };
 
 export async function createLiveblocksApp() {
@@ -81,6 +83,10 @@ export async function createLiveblocksApp() {
     flags.template = "init";
   }
 
+  if (flags.upgrade) {
+    flags.template = "upgrade";
+  }
+
   const initialQuestions: PromptObject<"template">[] = [
     {
       // Skip question if template already set
@@ -93,6 +99,10 @@ export async function createLiveblocksApp() {
         {
           title: "Create a liveblocks.config file",
           value: "init",
+        },
+        {
+          title: "Upgrade Liveblocks packages",
+          value: "upgrade",
         },
       ],
     },

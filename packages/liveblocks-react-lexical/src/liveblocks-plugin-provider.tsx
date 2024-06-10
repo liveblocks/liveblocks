@@ -10,7 +10,7 @@ import type {
 } from "@liveblocks/core";
 import { kInternal } from "@liveblocks/core";
 import { useClient, useRoom, useSelf } from "@liveblocks/react";
-import LiveblocksProvider from "@liveblocks/yjs";
+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Doc } from "yjs";
 
@@ -31,7 +31,7 @@ export const LiveblocksPlugin = ({
   const room = useRoom();
 
   const [provider, setProvider] = useState<
-    | LiveblocksProvider<
+    | LiveblocksYjsProvider<
         JsonObject,
         LsonObject,
         BaseUserMeta,
@@ -44,7 +44,7 @@ export const LiveblocksPlugin = ({
   const doc = useMemo(() => new Doc(), []);
 
   useEffect(() => {
-    const _provider = new LiveblocksProvider(room, doc);
+    const _provider = new LiveblocksYjsProvider(room, doc);
     setProvider(_provider);
     return () => {
       _provider.destroy();
@@ -64,13 +64,14 @@ export const LiveblocksPlugin = ({
       }
     }
 
-    // Report that this is lexical and root is the rootKey
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    room[kInternal].reportTextEditor("lexical", "root");
-
     // we know editor is already defined as we're inside LexicalComposer, and we only want this running the first time
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    // Report that this is lexical and root is the rootKey
+    room[kInternal].reportTextEditor("lexical", "root");
+  }, [room]);
 
   // Get user info or allow override from props
   const info = useSelf((me) => me.info);

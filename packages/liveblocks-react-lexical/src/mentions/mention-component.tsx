@@ -1,18 +1,11 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { NodeKey } from "lexical";
 import { $createNodeSelection, $getNodeByKey, $setSelection } from "lexical";
-import type { HTMLAttributes, ReactNode } from "react";
-import React, {
-  createContext,
-  forwardRef,
-  useCallback,
-  useContext,
-} from "react";
+import type { ReactNode } from "react";
+import React, { useCallback } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
-const IsSelectedContext = createContext<boolean | null>(null);
-
-export function MentionWrapper({
+export function Mention({
   nodeKey,
   children,
 }: {
@@ -34,31 +27,15 @@ export function MentionWrapper({
   }
 
   return (
-    <IsSelectedContext.Provider value={isSelected}>
-      <span onClick={handleClick}>{children}</span>
-    </IsSelectedContext.Provider>
-  );
-}
-
-export const Mention = forwardRef<
-  HTMLSpanElement,
-  HTMLAttributes<HTMLSpanElement>
->(function (props, forwardedRef) {
-  const isSelected = useContext(IsSelectedContext);
-  if (isSelected === null) {
-    throw new Error("Mention component must be wrapped in MentionWrapper");
-  }
-
-  return (
     <span
+      onClick={handleClick}
       data-selected={isSelected ? "" : undefined}
-      {...props}
-      ref={forwardedRef}
+      className="lb-lexical-mention"
     >
-      {props.children}
+      {children}
     </span>
   );
-});
+}
 
 function $isNodeSelected(key: NodeKey): boolean {
   const node = $getNodeByKey(key);

@@ -36,10 +36,9 @@ declare global {
       };
     };
 
-    RoomEvent: {
-      type: "emoji";
-      emoji: string;
-    };
+    RoomEvent:
+      | { type: "emoji"; emoji: string }
+      | { type: "beep"; times?: number };
 
     ThreadMetadata: {
       color: "red" | "blue";

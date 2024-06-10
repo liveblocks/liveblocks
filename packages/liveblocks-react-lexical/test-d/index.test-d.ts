@@ -6,7 +6,7 @@ import { expectType } from "tsd";
 
   // TODO: Write type-level tests for these exports
   // expectType<unknown>(lbrl.FloatingComposer);
-  // expectType<unknown>(lbrl.liveblocksLexicalConfig);
+  // expectType<unknown>(lbrl.liveblocksConfig);
   // expectType<unknown>(lbrl.LiveblocksPlugin);
   // expectType<unknown>(lbrl.Mention);
   // expectType<unknown>(lbrl.OPEN_FLOATING_COMPOSER_COMMAND);

@@ -97,7 +97,7 @@ import type {
 } from "./types/IWebSocket";
 import type { NodeMap } from "./types/NodeMap";
 import type { InternalOthersEvent, OthersEvent } from "./types/Others";
-import type { PartialNullable } from "./types/PartialNullable";
+import type { Patchable } from "./types/Patchable";
 import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 import type { User } from "./types/User";
 import { PKG_VERSION } from "./version";
@@ -486,7 +486,7 @@ type CommentsApi<M extends BaseMetadata> = {
     body: CommentBody;
   }): Promise<ThreadData<M>>;
   editThreadMetadata(options: {
-    metadata: PartialNullable<M>;
+    metadata: Patchable<M>;
     threadId: string;
   }): Promise<M>;
   createComment(options: {
@@ -1192,7 +1192,7 @@ function createCommentsApi<M extends BaseMetadata>(
     threadId,
   }: {
     roomId: string;
-    metadata: PartialNullable<M>;
+    metadata: Patchable<M>;
     threadId: string;
   }) {
     return await fetchJson<M>(
@@ -1726,9 +1726,16 @@ export function createRoom<
   }
 
   async function reportTextEditor(type: "lexical", rootKey: string) {
-    return httpPostToRoom("/text-metadata", {
-      type,
-      rootKey,
+    const authValue = await delegates.authenticate();
+    return fetchClientApi(config.roomId, "/text-metadata", authValue, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        type,
+        rootKey,
+      }),
     });
   }
 

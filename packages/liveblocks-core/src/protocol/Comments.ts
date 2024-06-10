@@ -123,7 +123,7 @@ export type ThreadDeleteInfo = {
 
 export type ThreadDeleteInfoPlain = DateToString<ThreadDeleteInfo>;
 
-type QueryMetadataStringValue<T extends string> =
+type StringOperators<T> =
   | T
   | {
       startsWith: string;
@@ -138,5 +138,5 @@ type QueryMetadataStringValue<T extends string> =
  *  - `startsWith` (`^` in query string)
  */
 export type QueryMetadata<M extends BaseMetadata> = {
-  [K in keyof M]: M[K] extends string ? QueryMetadataStringValue<M[K]> : M[K];
+  [K in keyof M]: string extends M[K] ? StringOperators<M[K]> : M[K];
 };

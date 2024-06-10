@@ -276,6 +276,13 @@
     "path": "/how-to-add-users-to-liveblocks-comments",
     "topics": ["comments", "tutorials", "data-fetching"],
     "technologies": ["react-comments", "react"],
+    "date": "2023-11-02"
+  },
+  {
+    "title": "How to add users to Liveblocks Notifications",
+    "path": "/how-to-add-users-to-liveblocks-notifications",
+    "topics": ["notifications", "tutorials", "data-fetching"],
+    "technologies": ["react-notifications", "react"],
     "date": "2023-11-02",
     "featured": true
   },
