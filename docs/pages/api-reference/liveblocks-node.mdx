@@ -347,10 +347,10 @@ You can use `nextCursor` to paginate rooms. In this example, when `getNextPage`
 is called, the next set of rooms is added to `pages`.
 
 ```ts
-import { RoomInfo } from "@liveblocks/node";
+import { RoomData } from "@liveblocks/node";
 
 // An array of pages, each containing a list of retrieved rooms
-const pages: RoomInfo[][] = [];
+const pages: RoomData[][] = [];
 
 // Holds the pagination cursor for the next set of rooms
 let startingAfter;
@@ -1626,6 +1626,7 @@ const inboxNotification = await liveblocks.getInboxNotification({
 });
 
 // { id: "in_3dH7sF3...", kind: "thread", ... }
+// or { id: "in_3dH7sF3...", kind: "textMention", ... }
 // or { id: "in_3dH7sF3...", kind: "$yourKind", ... }
 console.log(inboxNotification);
 ```

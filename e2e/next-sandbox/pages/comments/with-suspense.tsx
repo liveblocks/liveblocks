@@ -18,7 +18,7 @@ export default function Home() {
   return (
     <RoomProvider id={roomId} initialPresence={{} as never}>
       <ClientSideSuspense fallback="Loading...">
-        {() => <Sandbox />}
+        <Sandbox />
       </ClientSideSuspense>
     </RoomProvider>
   );

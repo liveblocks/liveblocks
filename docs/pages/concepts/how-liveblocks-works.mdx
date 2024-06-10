@@ -7,16 +7,16 @@ meta:
     performant collaborative experiences."
 ---
 
-Liveblocks is a realtime collaboration infrastructure for building performant
-collaborative experiences. The foundations of Liveblocks are built upon four
-core concepts: products, rooms, integrations, and platform.
+Liveblocks is the platform for adding collaborative editing, comments, and
+notifications into your application.
 
 ## Products
 
 Liveblocks is a fully integrated solution built around core products, each
 enabling a different facet of collaborative experiences:
 [Comments](/docs/products/comments),
-[Notifications](/docs/products/notifications), and
+[Notifications](/docs/products/notifications),
+[Text Editor](/docs/products/text-editor), and
 [Realtime APIs](/docs/products/realtime-apis). You can decide what products you
 want to use based on your requirements and collaborative experiences you’re
 looking to build.
@@ -57,32 +57,34 @@ users can receive notifications from other rooms.
 
 {/* TODO create image */}
 
-## Integrations
+## Packages and SDKs
 
 Integrations for specific libraries and frameworks to add Liveblocks-powered
 collaborative experiences to your product:
 [JavaScript](/docs/api-reference/liveblocks-client),
 [React](/docs/api-reference/liveblocks-react),
+[React UI](/docs/api-reference/liveblocks-react-ui),
+[React Lexical](/docs/api-reference/liveblocks-react-lexical),
+[Node.js Lexical](/docs/api-reference/liveblocks-node-lexical),
 [Redux](/docs/api-reference/liveblocks-redux),
-[Zustand](/docs/api-reference/liveblocks-zustand), and
-[Yjs](/docs/api-reference/liveblocks-yjs). Integrations are designed to serve
-various collaboration use cases such as text editors, comments, creative tools,
-forms, and more.
+[Zustand](/docs/api-reference/liveblocks-zustand),
+[Yjs](/docs/api-reference/liveblocks-yjs), and
+[Node.js](/docs/api-reference/liveblocks-node). Integrations for specific
+libraries and frameworks to add Liveblocks-powered collaborative experiences to
+your product. Integrations are designed to serve various collaboration use cases
+such as collaborative text editors, comments, notifications, and more.
+
+{/* TODO image: add lexical, tiptap */}
 
 - [`@liveblocks/client`](https://liveblocks.io/docs/api-reference/liveblocks-client)
 - [`@liveblocks/react`](https://liveblocks.io/docs/api-reference/liveblocks-react)
+- [`@liveblocks/react-ui`](https://liveblocks.io/docs/api-reference/liveblocks-react-ui)
+- [`@liveblocks/react-lexical`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical)
+- [`@liveblocks/node-lexical`](https://liveblocks.io/docs/api-reference/liveblocks-node-lexical)
 - [`@liveblocks/redux`](https://liveblocks.io/docs/api-reference/liveblocks-redux)
 - [`@liveblocks/zustand`](https://liveblocks.io/docs/api-reference/liveblocks-zustand)
 - [`@liveblocks/yjs`](https://liveblocks.io/docs/api-reference/liveblocks-yjs)
-
-<Figure highlight>
-  <Image
-    src="/assets/concepts/integrations.png"
-    alt="How Liveblocks works - Integrations"
-    width={768}
-    height={440}
-  />
-</Figure>
+- [`@liveblocks/node`](https://liveblocks.io/docs/api-reference/liveblocks-node)
 
 ## Platform
 
@@ -93,12 +95,3 @@ powerful tools such as our [REST API](/docs/api-reference/rest-api-endpoints),
 [webhooks](/docs/platform/webhooks),
 [schema validation](/docs/platform/schema-validation),
 [analytics](/docs/platform/analytics), and more.
-
-<Figure highlight>
-  <Image
-    src="/assets/concepts/platform.png"
-    alt="How Liveblocks works - platform"
-    width={768}
-    height={440}
-  />
-</Figure>

@@ -77,28 +77,22 @@ start building your own security logic in Next.js’ `/app` directory.
     <StepTitle>Set up the client</StepTitle>
     <StepContent>
       On the front end, you can now replace the `publicApiKey`
-      option with `authEndpoint` pointing to the endpoint you
-      just created.
+      prop on [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider)
+      with `authEndpoint` pointing to the endpoint you just created.
 
-      ```ts file="liveblocks.config.ts"
-      import { createClient } from "@liveblocks/client";
-
-      const client = createClient({
-        authEndpoint: "/api/liveblocks-auth",
-      });
+      ```tsx
+      <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
       ```
 
       If you need to pass custom headers or data to your endpoint, you can
       use
-      [authEndpoint as a callback](/docs/api-reference/liveblocks-client#createClientCallback)
+      [authEndpoint as a callback](/docs/api-reference/liveblocks-client#LiveblocksProviderCallback)
       instead.
 
-      ```ts file="liveblocks.config.ts" isCollapsed isCollapsable
-      import { createClient } from "@liveblocks/client";
-
-      // Passing custom headers and body to your endpoint
-      const client = createClient({
-        authEndpoint: async (room) => {
+      ```tsx title="Pass custom headers" isCollapsed isCollapsable
+      <LiveblocksProvider
+        authEndpoint={async (room) => {
+          // Passing custom headers and body to your endpoint
           const headers = {
             // Custom headers
             // ...
@@ -120,8 +114,8 @@ start building your own security logic in Next.js’ `/app` directory.
           });
 
           return await response.json();
-        },
-      });
+        }}
+      />
       ```
 
     </StepContent>
@@ -134,15 +128,22 @@ start building your own security logic in Next.js’ `/app` directory.
         be accessible in your app. First you need to define the types in
         your config file, under `UserMeta["info"]`.
 
-        ```ts file="liveblocks.config.ts" highlight="5-9"
-        type User = {
-          id: string;
+        ```ts file="liveblocks.config.ts" highlight="7-11"
+        declare global
+          interface Liveblocks {
+            UserMeta: {
+              id: string;
 
-          // Example, use any JSON-compatible data in your metadata
-          info: {
-            name: string;
-            avatar: string;
-            colors: string[];
+              // Example, use any JSON-compatible data in your metadata
+              info: {
+                name: string;
+                avatar: string;
+                colors: string[];
+              }
+            }
+
+            // Other type definitions
+            // ...
           }
         }
         ```
@@ -171,7 +172,7 @@ start building your own security logic in Next.js’ `/app` directory.
         [`useSelf`](/docs/api-reference/liveblocks-react#useSelf).
 
         ```tsx highlight="4"
-        export { useSelf } from "../liveblocks.config.ts";
+        export { useSelf } from "@liveblocks/react/suspense";
 
         function Component() {
           const { name, avatar, colors } = useSelf((me) => me.info);

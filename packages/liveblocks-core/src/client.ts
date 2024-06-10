@@ -13,6 +13,7 @@ import { createStore } from "./lib/create-store";
 import { deprecateIf } from "./lib/deprecation";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
+import type { NoInfr } from "./lib/NoInfer";
 import type { Resolve } from "./lib/Resolve";
 import type { GetInboxNotificationsOptions } from "./notifications";
 import { createNotificationsApi } from "./notifications";
@@ -168,7 +169,7 @@ export type Client<U extends BaseUserMeta = DU> = {
     M extends BaseMetadata = DM,
   >(
     roomId: string,
-    options: EnterOptions<P, S>
+    options: EnterOptions<NoInfr<P>, NoInfr<S>>
   ): {
     room: Room<P, S, U, E, M>;
     leave: () => void;
@@ -318,12 +319,12 @@ export function createClient<U extends BaseUserMeta = DU>(
 
   const authManager = createAuthManager(options);
 
-  type RoomInfo = {
+  type RoomDetails = {
     room: OpaqueRoom;
     unsubs: Set<() => void>;
   };
 
-  const roomsById = new Map<string, RoomInfo>();
+  const roomsById = new Map<string, RoomDetails>();
 
   function teardownRoom(room: OpaqueRoom) {
     unlinkDevTools(room.id);
@@ -338,7 +339,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     E extends Json,
     M extends BaseMetadata,
   >(
-    info: RoomInfo
+    details: RoomDetails
   ): {
     room: Room<P, S, U, E, M>;
     leave: () => void;
@@ -347,21 +348,21 @@ export function createClient<U extends BaseUserMeta = DU>(
     const leave = () => {
       const self = leave; // A reference to the currently executing function itself
 
-      if (!info.unsubs.delete(self)) {
+      if (!details.unsubs.delete(self)) {
         console.warn(
           "This leave function was already called. Calling it more than once has no effect."
         );
       } else {
         // Was this the last room lease? If so, tear down the room
-        if (info.unsubs.size === 0) {
-          teardownRoom(info.room);
+        if (details.unsubs.size === 0) {
+          teardownRoom(details.room);
         }
       }
     };
 
-    info.unsubs.add(leave);
+    details.unsubs.add(leave);
     return {
-      room: info.room as Room<P, S, U, E, M>,
+      room: details.room as Room<P, S, U, E, M>,
       leave,
     };
   }
@@ -374,7 +375,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     M extends BaseMetadata,
   >(
     roomId: string,
-    options: EnterOptions<P, S>
+    options: EnterOptions<NoInfr<P>, NoInfr<S>>
   ): {
     room: Room<P, S, U, E, M>;
     leave: () => void;
@@ -416,11 +417,11 @@ export function createClient<U extends BaseUserMeta = DU>(
       }
     );
 
-    const newRoomInfo: RoomInfo = {
+    const newRoomDetails: RoomDetails = {
       room: newRoom,
       unsubs: new Set(),
     };
-    roomsById.set(roomId, newRoomInfo);
+    roomsById.set(roomId, newRoomDetails);
 
     setupDevTools(() => Array.from(roomsById.keys()));
     linkDevTools(roomId, newRoom);
@@ -441,18 +442,7 @@ export function createClient<U extends BaseUserMeta = DU>(
       newRoom.connect();
     }
 
-    return leaseRoom(newRoomInfo);
-  }
-
-  function enter<
-    P extends JsonObject,
-    S extends LsonObject,
-    U extends BaseUserMeta,
-    E extends Json,
-    M extends BaseMetadata,
-  >(roomId: string, options: EnterOptions<P, S>): Room<P, S, U, E, M> {
-    const { room, leave: _ } = enterRoom<P, S, U, E, M>(roomId, options);
-    return room;
+    return leaseRoom(newRoomDetails);
   }
 
   function getRoom<
@@ -464,13 +454,6 @@ export function createClient<U extends BaseUserMeta = DU>(
   >(roomId: string): Room<P, S, U, E, M> | null {
     const room = roomsById.get(roomId)?.room;
     return room ? (room as Room<P, S, U, E, M>) : null;
-  }
-
-  function forceLeave(roomId: string) {
-    const unsubs = roomsById.get(roomId)?.unsubs ?? new Set();
-    for (const unsub of unsubs) {
-      unsub();
-    }
   }
 
   function logout() {
@@ -540,15 +523,10 @@ export function createClient<U extends BaseUserMeta = DU>(
 
   return Object.defineProperty(
     {
-      logout,
-
-      // Old, deprecated APIs
-      enter,
-      getRoom,
-      leave: forceLeave,
-
-      // New, preferred API
       enterRoom,
+      getRoom,
+
+      logout,
 
       // Internal
       [kInternal]: {

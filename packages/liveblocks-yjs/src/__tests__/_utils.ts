@@ -23,6 +23,10 @@ export class MockWebSocket {
   readyState: number;
   static instances: MockWebSocket[] = [];
 
+  static reset() {
+    MockWebSocket.instances = [];
+  }
+
   isMock = true;
 
   callbacks = {

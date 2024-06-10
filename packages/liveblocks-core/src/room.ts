@@ -97,7 +97,7 @@ import type {
 } from "./types/IWebSocket";
 import type { NodeMap } from "./types/NodeMap";
 import type { InternalOthersEvent, OthersEvent } from "./types/Others";
-import type { PartialNullable } from "./types/PartialNullable";
+import type { Patchable } from "./types/Patchable";
 import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 import type { User } from "./types/User";
 import { PKG_VERSION } from "./version";
@@ -486,7 +486,7 @@ type CommentsApi<M extends BaseMetadata> = {
     body: CommentBody;
   }): Promise<ThreadData<M>>;
   editThreadMetadata(options: {
-    metadata: PartialNullable<M>;
+    metadata: Patchable<M>;
     threadId: string;
   }): Promise<M>;
   createComment(options: {
@@ -758,6 +758,12 @@ export type PrivateRoomApi<M extends BaseMetadata> = {
   // For DevTools support (Liveblocks browser extension)
   getSelf_forDevTools(): DevTools.UserTreeNode | null;
   getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
+
+  // For reporting editor metadata
+  reportTextEditor(editor: "lexical", rootKey: string): void;
+
+  createTextMention(userId: string, mentionId: string): Promise<Response>;
+  deleteTextMention(mentionId: string): Promise<Response>;
 
   // NOTE: These are only used in our e2e test app!
   simulate: {
@@ -1186,7 +1192,7 @@ function createCommentsApi<M extends BaseMetadata>(
     threadId,
   }: {
     roomId: string;
-    metadata: PartialNullable<M>;
+    metadata: Patchable<M>;
     threadId: string;
   }) {
     return await fetchJson<M>(
@@ -1665,7 +1671,10 @@ export function createRoom<
     });
   }
 
-  async function httpPostToRoom(endpoint: "/send-message", body: JsonObject) {
+  async function httpPostToRoom(
+    endpoint: "/send-message" | "/text-metadata",
+    body: JsonObject
+  ) {
     if (!managedSocket.authValue) {
       throw new Error("Not authorized");
     }
@@ -1676,6 +1685,57 @@ export function createRoom<
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
+    });
+  }
+
+  async function createTextMention(userId: string, mentionId: string) {
+    if (!managedSocket.authValue) {
+      throw new Error("Not authorized");
+    }
+
+    return fetchClientApi(
+      config.roomId,
+      "/text-mentions",
+      managedSocket.authValue,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          mentionId,
+        }),
+      }
+    );
+  }
+
+  async function deleteTextMention(mentionId: string) {
+    if (!managedSocket.authValue) {
+      throw new Error("Not authorized");
+    }
+
+    return fetchClientApi(
+      config.roomId,
+      `/text-mentions/${mentionId}`,
+      managedSocket.authValue,
+      {
+        method: "DELETE",
+      }
+    );
+  }
+
+  async function reportTextEditor(type: "lexical", rootKey: string) {
+    const authValue = await delegates.authenticate();
+    return fetchClientApi(config.roomId, "/text-metadata", authValue, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        type,
+        rootKey,
+      }),
     });
   }
 
@@ -2769,8 +2829,7 @@ export function createRoom<
     comments: eventHub.comments.observable,
   };
 
-  // TODO Change `never` to `M` in 2.0
-  const commentsApi = createCommentsApi<never>(
+  const commentsApi = createCommentsApi<M>(
     config.roomId,
     delegates.authenticate,
     fetchClientApi
@@ -2874,6 +2933,13 @@ export function createRoom<
         get presenceBuffer() { return deepClone(context.buffer.presenceUpdates?.data ?? null) }, // prettier-ignore
         get undoStack() { return deepClone(context.undoStack) }, // prettier-ignore
         get nodeCount() { return context.nodes.size }, // prettier-ignore
+
+        // send metadata when using a text editor
+        reportTextEditor,
+        // create a text mention when using a text editor
+        createTextMention,
+        // delete a text mention when using a text editor
+        deleteTextMention,
 
         // Support for the Liveblocks browser extension
         getSelf_forDevTools: () => selfAsTreeNode.current,

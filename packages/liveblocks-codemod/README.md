@@ -13,13 +13,41 @@ Codemods for updating Liveblocks apps.
 
 ## Transforms
 
+### General
+
+#### `remove-liveblocks-config-contexts`
+
+Replaces `createRoomContext` and `createLiveblocksContext` in `liveblock.config`
+files with global `Liveblocks` types and updates all imports to
+`@liveblocks/react` accordingly.
+
+```shell
+npx @liveblocks/codemod@latest remove-liveblocks-config-contexts
+```
+
+If you export the Suspense versions of hooks from `createRoomContext` and
+`createLiveblocksContext`, add the `--suspense` flag to update all imports to
+`@liveblocks/react/suspense` instead.
+
+```shell
+npx @liveblocks/codemod@latest remove-liveblocks-config-contexts --suspense
+```
+
 ### 2.0
 
 #### `react-comments-to-react-ui`
 
-Transforms `@liveblocks/react-comments` imports to `@liveblocks/react-ui` and
-`<CommentsConfig />` to `<LiveblocksUIConfig />`.
+Updates `@liveblocks/react-comments` imports to `@liveblocks/react-ui` and
+renames `<CommentsConfig />` to `<LiveblocksUIConfig />`.
 
 ```shell
 npx @liveblocks/codemod@latest react-comments-to-react-ui
+```
+
+#### `room-info-to-room-data`
+
+Renames `RoomInfo` type from `@liveblocks/node` to `RoomData`.
+
+```shell
+npx @liveblocks/codemod@latest room-info-to-room-data
 ```

@@ -9,7 +9,7 @@ describe.skip("LiveList conflicts", () => {
       "remote insert conflicts with another insert",
       prepareTestsConflicts(
         {
-          list: new LiveList(),
+          list: new LiveList<string>([]),
         },
         async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").push("A");
@@ -82,7 +82,7 @@ describe.skip("LiveList conflicts", () => {
       "remote insert conflicts with set",
       prepareTestsConflicts(
         {
-          list: new LiveList<string>(),
+          list: new LiveList<string>([]),
         },
         async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").push("A");
@@ -475,7 +475,7 @@ describe.skip("LiveList conflicts", () => {
       "push + set / push + set",
       prepareTestsConflicts(
         {
-          list: new LiveList<string>(),
+          list: new LiveList<string>([]),
         },
         async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").push("A");
@@ -668,7 +668,7 @@ describe.skip("LiveList conflicts", () => {
       "insert + delete / insert",
       prepareTestsConflicts(
         {
-          list: new LiveList<string>(),
+          list: new LiveList<string>([]),
         },
         async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").insert("A", 0);
@@ -742,7 +742,7 @@ describe.skip("LiveList conflicts", () => {
       "remote insert conflicts with another insert via undo",
       prepareTestsConflicts(
         {
-          list: new LiveList(),
+          list: new LiveList<string>([]),
         },
         async ({ root1, root2, room2, wsUtils, assert }) => {
           root1.get("list").push("A");
@@ -767,7 +767,7 @@ describe.skip("LiveList conflicts", () => {
       "undo insert + redo insert / delete",
       prepareTestsConflicts(
         {
-          list: new LiveList(),
+          list: new LiveList<string>([]),
         },
         async ({ root1, root2, room1, wsUtils, assert }) => {
           root1.get("list").push("A");

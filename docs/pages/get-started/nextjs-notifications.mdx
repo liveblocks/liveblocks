@@ -6,16 +6,11 @@ meta:
     "Learn how to get started with Notifications using Liveblocks and Next.js"
 ---
 
-TODO
-
----
-
 Liveblocks is a realtime collaboration infrastructure for building performant
-collaborative experiences. Follow the following steps to start adding a
-commenting experience to your Next.js `/app` directory application using the
-hooks from [`@liveblocks/react`](/docs/api-reference/liveblocks-react) and the
-components from
-[`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
+collaborative experiences. Follow the following steps to start adding
+notifications to your Next.js `/app` directory application using the hooks from
+[`@liveblocks/react`](/docs/api-reference/liveblocks-react) and the components
+from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
 
 <Banner title="Public beta">
 
@@ -32,6 +27,8 @@ to hear from you.
     <StepTitle>Install Liveblocks</StepTitle>
     <StepContent>
 
+      Every package should use the same version.
+
       ```bash
       npm install @liveblocks/client @liveblocks/react @liveblocks/react-ui
       ```
@@ -43,6 +40,8 @@ to hear from you.
     <StepTitle>Initialize the `liveblocks.config.ts` file</StepTitle>
     <StepContent>
 
+      We can use this file later to [define types for our application](/docs/api-reference/liveblocks-react#Typing-your-data).
+
       ```bash
       npx create-liveblocks-app@latest --init --framework react
       ```
@@ -51,71 +50,50 @@ to hear from you.
 
   </Step>
   <Step>
-    <StepTitle>Set up the Liveblocks client</StepTitle>
+    <StepTitle>Create a Liveblocks provider</StepTitle>
     <StepContent>
 
-      The first step in connecting to Liveblocks is creating a client which
-      will be responsible for communicating with the back end. You can do
-      this by modifying `createClient` in your config file, and
-      passing your public API key.
+      Liveblocks Notifications uses the concept of projects, which relate to
+      projects in [your dashboard](/dashboard). Notifications are sent between
+      users in the same project. To connect and receive notifications, you must
+      add [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider)
+      to a client component in your app.
 
-      ```tsx file="liveblocks.config.ts"
-      const client = createClient({
-        publicApiKey: "{{PUBLIC_KEY}}",
-      });
-      ```
-
-    </StepContent>
-
-  </Step>
-  <Step>
-    <StepTitle>Join a Liveblocks room</StepTitle>
-    <StepContent>
-
-      Liveblocks uses the concept of rooms, separate virtual spaces where people
-      collaborate. To create a realtime experience, multiple users must be
-      connected to the same room. When using Next.js’ `/app`
-      directory, we recommend creating your room in a `Room.tsx`
-      file in the same directory as your current route.
-
-      ```tsx file="app/Room.tsx" highlight="9-13"
+      ```tsx file="app/NotificationsProvider.tsx" highlight="8-10"
       "use client";
 
       import { ReactNode } from "react";
-      import { RoomProvider } from "../liveblocks.config";
-      import { ClientSideSuspense } from "@liveblocks/react";
+      import { LiveblocksProvider } from "@liveblocks/react";
 
-      export function Room({ children }: { children: ReactNode }) {
+      export function NotificationsProvider({ children }: { children: ReactNode }) {
         return (
-          <RoomProvider id="my-room" initialPresence={{}}>
-            <ClientSideSuspense fallback={<div>Loading…</div>}>
-              {() => children}
-            </ClientSideSuspense>
-          </RoomProvider>
+          <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
+            {children}
+          </LiveblocksProvider>
         );
       }
-      ```
+    ```
 
     </StepContent>
 
   </Step>
   <Step>
-    <StepTitle>Add the Liveblocks room to your page</StepTitle>
+    <StepTitle>Add the provider to your layout</StepTitle>
     <StepContent>
 
-      After creating your room file, it’s time to join it. Import
-      your room into your `page.tsx` file, and place
+      After creating your provider file, it’s time to join it. Import
+      your room into your `layout.tsx` file, and place
       your collaborative app components inside it.
 
-      ```tsx file="app/page.tsx" highlight="6-8"
-      import { Room } from "./Room";
-      import { CollaborativeApp } from "./CollaborativeApp";
+      ```tsx file="app/layout.tsx" highlight="6-1-"
+      import { NotificationsProvider } from "./NotificationsProvider";
+      import { MyApp } from "./MyApp";
 
-      export default function Page() {
+      export default function Layout({ children }) {
         return (
-          <Room>
-            <CollaborativeApp />
-          </Room>
+          <NotificationsProvider>
+            <MyApp />
+          </NotificationsProvider>
         );
       }
       ```
@@ -127,26 +105,32 @@ to hear from you.
     <StepTitle>Use the Liveblocks hooks and components</StepTitle>
     <StepContent>
 
-      Now that we’re connected to a room, we can start using the Liveblocks hooks and components.
-      We’ll add `useThreads` to get the threads in the room, then we’ll use the `Thread` component
-      to render them. Finally, we’ll add a way to create threads by adding a `Composer`.
+      Now that we’ve set up the provider, we can start using the Liveblocks hooks and components.
+      We’ll add [`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications)
+      to get the current project’s notifications, then we’ll
+      use [`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification) and [`InboxNotificationList`](/docs/api-reference/liveblocks-react-ui#InboxNotificationList) to render them.
 
-      ```tsx file="app/CollaborativeApp.tsx" highlight="7,11-14"
+      ```tsx file="app/MyApp.tsx" highlight="10,13-20"
       "use client";
 
-      import { useThreads } from "../liveblocks.config";
-      import { Composer, Thread } from "@liveblocks/react-ui";
+      import { useInboxNotifications } from "@liveblocks/react/suspense";
+      import {
+        InboxNotification,
+        InboxNotificationList,
+      } from "@liveblocks/react-ui";
 
       export function CollaborativeApp() {
-        const { threads } = useThreads();
+        const { inboxNotifications } = useInboxNotifications();
 
         return (
-          <div>
-            {threads.map((thread) => (
-              <Thread key={thread.id} thread={thread} />
+          <InboxNotificationList>
+            {inboxNotifications.map((inboxNotification) => (
+              <InboxNotification
+                key={inboxNotification.id}
+                inboxNotification={inboxNotification}
+              />
             ))}
-            <Composer />
-          </div>
+          </InboxNotificationList>
         );
       }
       ```
@@ -172,12 +156,12 @@ to hear from you.
     <StepTitle>Next: authenticate and add your users</StepTitle>
     <StepContent>
 
-      Comments is set up and working now, but each user is anonymous—the next step is to
-      authenticate each user as they connect, and attach their name and avatar to their comments.
+      Notifications is set up and working now, but each user is anonymous—the next step is to
+      authenticate each user as they connect, and attach their name and avatar to their notifications.
 
       <Button asChild  className="not-markdown">
-        <a href="/docs/guides/how-to-add-users-to-liveblocks-comments">
-          Add your users to Comments
+        <a href="/docs/guides/how-to-add-users-to-liveblocks-notifications">
+          Add your users to Notifications
         </a>
       </Button>
     </StepContent>
@@ -187,51 +171,24 @@ to hear from you.
 
 ## What to read next
 
-Congratulations! You’ve set up the foundation to start building a commenting
-experience for your Next.js application.
+Congratulations! You’ve set up the foundation to start building a notifications
+experience for your React application.
 
-- [API Reference](/docs/api-reference/liveblocks-react-ui)
-- [How to send email notifications when comments are created](/docs/guides/how-to-send-email-notifications-when-comments-are-created)
+- [API reference](/docs/api-reference/liveblocks-react#Notifications)
+- [Component reference](/docs/api-reference/liveblocks-react-ui#Notifications)
 
 ---
 
-## Examples using Next.js
+## Examples using Notifications
 
 <ListGrid columns={2}>
   <ExampleCard
     example={{
-      title: "Comments",
-      slug: "comments/nextjs-comments",
-      image: "/images/examples/thumbnails/comments.jpg",
+      title: "Comments notifications",
+      slug: "comments-notifications/nextjs-comments-notifications",
+      image: "/images/examples/thumbnails/comments-notifications.png",
     }}
     technologies={["nextjs", "react"]}
-    openInNewWindow
-  />
-  <ExampleCard
-    example={{
-      title: "Video Comments",
-      slug: "video-comments/nextjs-comments-video",
-      image: "/images/examples/thumbnails/comments-video.png",
-    }}
-    technologies={["nextjs"]}
-    openInNewWindow
-  />
-  <ExampleCard
-    example={{
-      title: "Overlay Comments",
-      slug: "overlay-comments/nextjs-comments-overlay",
-      image: "/images/examples/thumbnails/comments-overlay.png",
-    }}
-    technologies={["nextjs"]}
-    openInNewWindow
-  />
-  <ExampleCard
-    example={{
-      title: "Text Editor Comments",
-      slug: "text-editor-comments/nextjs-comments-tiptap",
-      image: "/images/examples/thumbnails/comments-text-editor.png",
-    }}
-    technologies={["nextjs"]}
     openInNewWindow
   />
 </ListGrid>

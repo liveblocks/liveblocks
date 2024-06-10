@@ -385,7 +385,7 @@
         ]
       },
       {
-        "title": "Text editor",
+        "title": "Text Editor",
         "path": "/products/text-editor",
         "routes": [
           {
@@ -399,20 +399,12 @@
         "path": "/products/realtime-apis",
         "routes": [
           {
-            "title": "Yjs",
-            "path": "/products/realtime-apis/yjs"
+            "title": "Liveblocks Yjs",
+            "path": "/products/realtime-apis/liveblocks-yjs"
           },
           {
-            "title": "Storage",
-            "path": "/products/realtime-apis/storage"
-          },
-          {
-            "title": "Presence",
-            "path": "/products/realtime-apis/presence"
-          },
-          {
-            "title": "Broadcast",
-            "path": "/products/realtime-apis/broadcast"
+            "title": "Liveblocks Storage",
+            "path": "/products/realtime-apis/liveblocks-storage"
           }
         ]
       }
@@ -450,6 +442,34 @@
       {
         "title": "Access token doesn't grant enough permissions",
         "path": "/errors/liveblocks-client/access-tokens-not-enough-permissions"
+      },
+      {
+        "title": "The type you provided for 'Presence' is not a valid JSON object",
+        "path": "/errors/Presence"
+      },
+      {
+        "title": "The type you provided for 'Storage' is not a valid LSON value",
+        "path": "/errors/Storage"
+      },
+      {
+        "title": "The type you provided for 'UserMeta' does not match its requirements",
+        "path": "/errors/UserMeta"
+      },
+      {
+        "title": "The type you provided for 'RoomEvent' is not a valid JSON value",
+        "path": "/errors/RoomEvent"
+      },
+      {
+        "title": "The type you provided for 'ThreadMetadata' does not match its requirements",
+        "path": "/errors/ThreadMetadata"
+      },
+      {
+        "title": "The type you provided for 'RoomInfo' does not match its requirements",
+        "path": "/errors/RoomInfo"
+      },
+      {
+        "title": "The type you provided for 'ActivitiesData' does not match its requirements",
+        "path": "/errors/ActivitiesData"
       }
     ]
   },
@@ -480,6 +500,14 @@
       {
         "title": "@liveblocks/react-ui",
         "path": "/api-reference/liveblocks-react-ui"
+      },
+      {
+        "title": "@liveblocks/react-lexical",
+        "path": "/api-reference/liveblocks-react-lexical"
+      },
+      {
+        "title": "@liveblocks/node-lexical",
+        "path": "/api-reference/liveblocks-node-lexical"
       },
       {
         "title": "@liveblocks/redux",

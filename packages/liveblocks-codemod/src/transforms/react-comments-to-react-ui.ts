@@ -2,8 +2,6 @@ import type { API, FileInfo, Options } from "jscodeshift";
 
 // Based on https://github.com/vercel/next.js/blob/main/packages/next-codemod
 
-// TODO: Handle `package.json`?
-
 export default function transformer(
   file: FileInfo,
   api: API,
@@ -66,6 +64,25 @@ export default function transformer(
         "@liveblocks/react-ui/primitives"
       );
     });
+
+  /**
+   * Before: import "@liveblocks/react-comments/styles.css"
+   *  After: import "@liveblocks/react-ui/styles.css"
+   */
+  root.find(j.ImportDeclaration).forEach((path) => {
+    if (path.node.type === "ImportDeclaration") {
+      if (
+        typeof path.node.source.value === "string" &&
+        path.node.source.value.startsWith("@liveblocks/react-comments") &&
+        path.node.source.value.endsWith(".css")
+      ) {
+        path.node.source.value = path.node.source.value.replace(
+          "@liveblocks/react-comments",
+          "@liveblocks/react-ui"
+        );
+      }
+    }
+  });
 
   return root.toSource(options);
 }

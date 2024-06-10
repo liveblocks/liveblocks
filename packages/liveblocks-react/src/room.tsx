@@ -496,6 +496,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   return {
     store,
     incrementQuerySubscribers,
+    commentsErrorEventSource,
     getThreadsUpdates,
     getThreadsAndInboxNotifications,
     getInboxNotificationSettings,
@@ -643,6 +644,8 @@ function makeRoomContextBundle<
 
       ...shared.suspense,
     },
+
+    useCommentsErrorListener,
   };
 
   return Object.defineProperty(bundle, kInternal, {
@@ -1266,9 +1269,24 @@ function useThreads<M extends BaseMetadata>(
   return state;
 }
 
-function useCreateThread<M extends BaseMetadata>() {
+function useCommentsErrorListener<M extends BaseMetadata>(
+  callback: (error: CommentsError<M>) => void
+) {
+  const client = useClient();
+  const savedCallback = useLatest(callback);
+  const { commentsErrorEventSource } = getExtrasForClient<M>(client);
+
+  React.useEffect(() => {
+    return commentsErrorEventSource.subscribe(savedCallback.current);
+  }, [savedCallback, commentsErrorEventSource]);
+}
+
+function useCreateThread<M extends BaseMetadata>(): (
+  options: CreateThreadOptions<M>
+) => ThreadData<M> {
   const client = useClient();
   const room = useRoom();
+
   return React.useCallback(
     (options: CreateThreadOptions<M>): ThreadData<M> => {
       const body = options.body;
@@ -1305,6 +1323,7 @@ function useCreateThread<M extends BaseMetadata>() {
         type: "create-thread",
         thread: newThread,
         id: optimisticUpdateId,
+        roomId: room.id,
       });
 
       const commentsAPI = (room[kInternal] as PrivateRoomApi<M>).comments;
@@ -1612,6 +1631,7 @@ function useEditComment(): (options: EditCommentOptions) => void {
 function useDeleteComment() {
   const client = useClient();
   const room = useRoom();
+
   return React.useCallback(
     ({ threadId, commentId }: DeleteCommentOptions): void => {
       const deletedAt = new Date();
@@ -1625,6 +1645,7 @@ function useDeleteComment() {
         commentId,
         deletedAt,
         id: optimisticUpdateId,
+        roomId: room.id,
       });
 
       room[kInternal].comments.deleteComment({ threadId, commentId }).then(
@@ -2310,6 +2331,7 @@ const _useUpdateMyPresence: DefaultRoomContextBundle["useUpdateMyPresence"] =
   useUpdateMyPresence;
 
 export {
+  CreateThreadError,
   RoomContext,
   _RoomProvider as RoomProvider,
   _useAddReaction as useAddReaction,
@@ -2317,6 +2339,8 @@ export {
   _useBroadcastEvent as useBroadcastEvent,
   useCanRedo,
   useCanUndo,
+  // TODO: Move to `liveblocks-react-lexical`
+  useCommentsErrorListener,
   useCreateComment,
   _useCreateThread as useCreateThread,
   useDeleteComment,

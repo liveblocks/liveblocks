@@ -60,7 +60,7 @@ function WithRoomProvider(props: React.PropsWithChildren) {
   return (
     <RoomProvider id={roomId} initialPresence={{} as never}>
       <ClientSideSuspense fallback="Loading...">
-        {() => props.children}
+        {props.children}
       </ClientSideSuspense>
     </RoomProvider>
   );
@@ -70,7 +70,7 @@ function WithLiveblocksProvider(props: React.PropsWithChildren) {
   return (
     <LiveblocksProvider>
       <ClientSideSuspense fallback="Loading...">
-        {() => props.children}
+        {props.children}
       </ClientSideSuspense>
     </LiveblocksProvider>
   );

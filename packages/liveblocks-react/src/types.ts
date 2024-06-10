@@ -20,7 +20,7 @@ import type {
   DRI,
   InboxNotificationData,
   LiveblocksError,
-  PartialNullable,
+  Patchable,
   QueryMetadata,
   Resolve,
   RoomEventMessage,
@@ -53,6 +53,8 @@ export type UseThreadsOptions<M extends BaseMetadata> = {
 };
 
 import type { PropsWithChildren } from "react";
+
+import type { CommentsError } from "./comments/errors";
 
 export type UserStateLoading = {
   isLoading: true;
@@ -107,7 +109,7 @@ export type CreateThreadOptions<M extends BaseMetadata> =
 
 export type EditThreadMetadataOptions<M extends BaseMetadata> = {
   threadId: string;
-  metadata: PartialNullable<M>;
+  metadata: Patchable<M>;
 };
 
 export type CreateCommentOptions = {
@@ -791,6 +793,19 @@ type RoomContextBundleCommon<
   useThreadSubscription(threadId: string): ThreadSubscription;
 };
 
+/**
+ * @private
+ *
+ * Private methods and variables used in the core internals, but as a user
+ * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
+ * will probably happen if you do.
+ */
+type PrivateRoomContextApi = {
+  useCommentsErrorListener<M extends BaseMetadata>(
+    callback: (err: CommentsError<M>) => void
+  ): void;
+};
+
 export type RoomContextBundle<
   P extends JsonObject,
   S extends LsonObject,
@@ -970,7 +985,7 @@ export type RoomContextBundle<
             ];
           }
       >;
-    }
+    } & PrivateRoomContextApi
 >;
 
 /**

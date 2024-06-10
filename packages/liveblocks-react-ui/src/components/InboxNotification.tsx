@@ -1,8 +1,10 @@
 "use client";
 
 import type {
+  DAD,
   InboxNotificationCustomData,
   InboxNotificationData,
+  InboxNotificationTextMentionData,
   InboxNotificationThreadData,
 } from "@liveblocks/core";
 import { assertNever, console } from "@liveblocks/core";
@@ -57,11 +59,14 @@ type ComponentTypeWithRef<
   P,
 > = ComponentType<P & Pick<ComponentProps<T>, "ref">>;
 
-type InboxNotificationKinds = Record<
-  `$${string}`,
-  ComponentTypeWithRef<"a", InboxNotificationCustomKindProps>
-> & {
+type InboxNotificationKinds = {
+  [K in keyof DAD]: ComponentTypeWithRef<
+    "a",
+    InboxNotificationCustomKindProps<K>
+  >;
+} & {
   thread: ComponentTypeWithRef<"a", InboxNotificationThreadKindProps>;
+  textMention: ComponentTypeWithRef<"a", InboxNotificationTextMentionProps>;
 };
 
 interface InboxNotificationSharedProps {
@@ -111,6 +116,20 @@ export interface InboxNotificationThreadProps
   showRoomName?: boolean;
 }
 
+export interface InboxNotificationTextMentionProps
+  extends Omit<InboxNotificationProps, "kinds">,
+    InboxNotificationSharedProps {
+  /**
+   * The inbox notification to display.
+   */
+  inboxNotification: InboxNotificationTextMentionData;
+
+  /**
+   * Whether to show the room name in the title.
+   */
+  showRoomName?: boolean;
+}
+
 export interface InboxNotificationCustomProps
   extends Omit<InboxNotificationProps, "kinds">,
     InboxNotificationSharedProps,
@@ -149,11 +168,17 @@ export type InboxNotificationThreadKindProps = Omit<
   inboxNotification: InboxNotificationThreadData;
 };
 
-export type InboxNotificationCustomKindProps = Omit<
+export type InboxNotificationTextMentionKindProps = Omit<
   InboxNotificationProps,
   "kinds"
 > & {
-  inboxNotification: InboxNotificationCustomData;
+  inboxNotification: InboxNotificationTextMentionData;
+};
+
+export type InboxNotificationCustomKindProps<
+  K extends `$${string}` = `$${string}`,
+> = Omit<InboxNotificationProps, "kinds"> & {
+  inboxNotification: InboxNotificationCustomData<K>;
 };
 
 interface InboxNotificationLayoutProps
@@ -498,6 +523,55 @@ const InboxNotificationThread = forwardRef<
 );
 
 /**
+ * Displays a text mention notification kind.
+ */
+const InboxNotificationTextMention = forwardRef<
+  HTMLAnchorElement,
+  InboxNotificationTextMentionProps
+>(
+  (
+    {
+      inboxNotification,
+      showActions = "hover",
+      showRoomName = true,
+      overrides,
+      ...props
+    },
+    ref
+  ) => {
+    const $ = useOverrides(overrides);
+
+    const unread = useMemo(() => {
+      return (
+        !inboxNotification.readAt ||
+        inboxNotification.notifiedAt > inboxNotification.readAt
+      );
+    }, [inboxNotification.notifiedAt, inboxNotification.readAt]);
+
+    return (
+      <InboxNotificationLayout
+        inboxNotification={inboxNotification}
+        aside={<InboxNotificationIcon />}
+        title={$.INBOX_NOTIFICATION_TEXT_MENTION(
+          <User
+            key={inboxNotification.createdBy}
+            userId={inboxNotification.createdBy}
+            capitalize
+          />,
+          showRoomName ? <Room roomId={inboxNotification.roomId} /> : undefined
+        )}
+        date={inboxNotification.notifiedAt}
+        unread={unread}
+        overrides={overrides}
+        showActions={showActions}
+        {...props}
+        ref={ref}
+      />
+    );
+  }
+);
+
+/**
  * Displays a custom notification kind.
  */
 const InboxNotificationCustom = forwardRef<
@@ -606,6 +680,16 @@ export const InboxNotification = Object.assign(
           );
         }
 
+        case "textMention": {
+          return (
+            <InboxNotificationTextMention
+              inboxNotification={inboxNotification}
+              {...props}
+              ref={forwardedRef}
+            />
+          );
+        }
+
         default: {
           const ResolvedInboxNotificationCustom =
             kinds?.[inboxNotification.kind];
@@ -646,6 +730,7 @@ export const InboxNotification = Object.assign(
   ),
   {
     Thread: InboxNotificationThread,
+    TextMention: InboxNotificationTextMention,
     Custom: InboxNotificationCustom,
     Icon: InboxNotificationIcon,
     Avatar: InboxNotificationAvatar,

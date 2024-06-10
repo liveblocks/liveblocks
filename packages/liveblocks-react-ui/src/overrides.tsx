@@ -58,6 +58,10 @@ export interface ThreadOverrides {
   THREAD_COMPOSER_SEND: string;
 }
 
+export interface ThreadPanelOverrides {
+  THREAD_PANEL_EMPTY: string;
+}
+
 export interface InboxNotificationOverrides {
   INBOX_NOTIFICATION_MORE: string;
   INBOX_NOTIFICATION_MARK_AS_READ: string;
@@ -70,6 +74,10 @@ export interface InboxNotificationOverrides {
     user: ReactNode,
     room: ReactNode | undefined
   ) => ReactNode;
+  INBOX_NOTIFICATION_TEXT_MENTION: (
+    user: ReactNode,
+    room: ReactNode | undefined
+  ) => ReactNode;
 }
 
 export type Overrides = LocalizationOverrides &
@@ -77,6 +85,7 @@ export type Overrides = LocalizationOverrides &
   ComposerOverrides &
   CommentOverrides &
   ThreadOverrides &
+  ThreadPanelOverrides &
   InboxNotificationOverrides;
 
 type OverridesProviderProps = PropsWithChildren<{
@@ -122,6 +131,7 @@ export const defaultOverrides: Overrides = {
   THREAD_NEW_INDICATOR_DESCRIPTION: "New comments",
   THREAD_COMPOSER_PLACEHOLDER: "Reply to thread…",
   THREAD_COMPOSER_SEND: "Reply",
+  THREAD_PANEL_EMPTY: "No threads yet.",
   INBOX_NOTIFICATION_MORE: "More",
   INBOX_NOTIFICATION_MARK_AS_READ: "Mark as read",
   INBOX_NOTIFICATION_THREAD_COMMENTS_LIST: (
@@ -134,6 +144,11 @@ export const defaultOverrides: Overrides = {
     </>
   ),
   INBOX_NOTIFICATION_THREAD_MENTION: (user: ReactNode, room: ReactNode) => (
+    <>
+      {user} mentioned you{room ? <> in {room}</> : null}
+    </>
+  ),
+  INBOX_NOTIFICATION_TEXT_MENTION: (user: ReactNode, room: ReactNode) => (
     <>
       {user} mentioned you{room ? <> in {room}</> : null}
     </>
