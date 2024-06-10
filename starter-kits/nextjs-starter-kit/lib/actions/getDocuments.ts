@@ -1,6 +1,5 @@
 "use server";
 
-import { RoomData } from "@liveblocks/node";
 import { auth } from "@/auth";
 import {
   buildDocuments,
@@ -43,15 +42,15 @@ export async function getDocuments({
   limit = 20,
 }: GetDocumentsProps) {
   // Build getRooms arguments
-  const metadata: RoomData["metadata"] = {};
+  let query: string | undefined = undefined;
 
   if (documentType) {
-    metadata["type"] = documentType;
+    query = `metadata["type"]:${JSON.stringify(documentType)}`;
   }
 
   let getRoomsOptions: Parameters<typeof liveblocks.getRooms>[0] = {
     limit,
-    metadata,
+    query,
   };
 
   const draftGroupName = getDraftsGroupName(userId || "");
