@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { Composer, Thread } from "@liveblocks/react-ui";
-import { RoomProvider, useThreads } from "../liveblocks.config";
+import { RoomProvider, useThreads } from "@liveblocks/react/suspense";
 import { Loading } from "./components/Loading";
 import { ErrorBoundary } from "react-error-boundary";
 
