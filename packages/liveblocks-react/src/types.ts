@@ -993,12 +993,8 @@ export type RoomContextBundle<
  */
 type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
   /**
-   * Sets up a client for connecting to Liveblocks, and is the recommended way to do
-   * this for React apps. You must define either `authEndpoint` or `publicApiKey`.
-   * Resolver functions should be placed inside here, and a number of other options
-   * are available, which correspond with those passed to `createClient`.
-   * Unlike `RoomProvider`, `LiveblocksProvider` doesn’t call Liveblocks servers when mounted,
-   * and it should be placed higher in your app’s component tree.
+   * Makes Liveblocks features outside of rooms (e.g. Notifications) available
+   * in the component hierarchy below.
    */
   LiveblocksProvider(props: PropsWithChildren): JSX.Element;
 
