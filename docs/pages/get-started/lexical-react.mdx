@@ -29,7 +29,7 @@ to hear from you.
       Every Liveblocks package should use the same version.
 
       ```bash
-      npm install @liveblocks/client @liveblocks/react @liveblocks/lexical-react lexical @lexical/react
+      npm install @liveblocks/client @liveblocks/react @liveblocks/react-ui @liveblocks/lexical-react lexical @lexical/react
       ```
 
     </StepContent>
@@ -171,7 +171,21 @@ to hear from you.
     </StepContent>
 
   </Step>
+  <Step>
+    <StepTitle>Import default styles</StepTitle>
+    <StepContent>
 
+      The default components come with default styles, you can import them into the
+      root layout of your app or directly into a CSS file with `@import`.
+
+      ```tsx
+      import "@liveblocks/react-ui/styles.css";
+      import "@liveblocks/react-lexical/styles.css";
+      ```
+
+    </StepContent>
+
+  </Step>
   <Step lastStep>
     <StepTitle>Next: set up authentication</StepTitle>
     <StepContent>

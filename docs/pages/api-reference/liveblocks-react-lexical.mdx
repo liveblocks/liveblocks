@@ -232,5 +232,24 @@ function Editor() {
 }
 ```
 
+## Stylesheets
+
+React Lexical comes with default styles, and these can be imported into the root
+of your app or directly into a CSS file with `@import`. Note that you must also
+install and import a stylesheet from
+[`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui) to use these
+styles.
+
+```tsx
+import "@liveblocks/react-ui/styles.css";
+import "@liveblocks/react-lexical/styles.css";
+```
+
+### Customizing your styles
+
+Adding dark mode and customizing your styles is part of `@liveblocks/react-ui`,
+learn how to do this under
+[styling and customization](/docs/api-reference/liveblocks-react-ui#Styling-and-customization).
+
 [`LiveblocksPlugin`]: #LiveblocksPlugin
 [`LexicalComposer`]: https://lexical.dev/docs/react/plugins
