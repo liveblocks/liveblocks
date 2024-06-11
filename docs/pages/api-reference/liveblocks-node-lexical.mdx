@@ -112,7 +112,7 @@ await withLexicalDocument(
 
 The callback can also be an `async` function.
 
-#### documentApi.getTextContent
+#### doc.getTextContent
 
 Returns the text content from the root node as a `string`.
 
@@ -123,18 +123,32 @@ const textContent = await withLexicalDocument(
 );
 ```
 
-#### documentApi.getEditorState
+#### doc.getEditorState
 
 Returns Lexical’s [editorState](https://lexical.dev/docs/concepts/editor-state).
 
-#### documentApi.getEditor
+```ts
+const editorState = await withLexicalDocument(
+  { roomId: "my-room-id", client: liveblocks },
+  (doc) => doc.getEditorState()
+);
+```
+
+#### doc.getEditor
 
 Returns a headless Lexical editor.
 [@lexical/headless](https://lexical.dev/docs/packages/lexical-headless).
 
-#### documentApi.toJSON
+```ts
+const headlessEditor = await withLexicalDocument(
+  { roomId: "my-room-id", client: liveblocks },
+  (doc) => doc.getEditor()
+);
+```
 
-Returns a serailized JSON object representation of your document. See Lexical’s
+#### doc.toJSON
+
+Returns a serialized JSON object representation of your document. See Lexical’s
 [Serialization & Deserialization](https://lexical.dev/docs/concepts/serialization)
 page for more information.
 
@@ -145,7 +159,7 @@ const docAsJSON = await withLexicalDocument(
 );
 ```
 
-#### documentApi.toMarkdown
+#### doc.toMarkdown
 
 Returns a markdown `string` of your document. See Lexical’s
 [@lexical/markdown](https://lexical.dev/docs/concepts/serialization) page for
