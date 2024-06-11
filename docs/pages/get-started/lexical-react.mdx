@@ -29,7 +29,7 @@ to hear from you.
       Every Liveblocks package should use the same version.
 
       ```bash
-      npm install @liveblocks/client @liveblocks/react @liveblocks/lexical-react lexical @lexical/react
+      npm install @liveblocks/client @liveblocks/react @liveblocks/react-ui @liveblocks/lexical-react lexical @lexical/react
       ```
 
     </StepContent>
@@ -118,7 +118,12 @@ to hear from you.
     <StepContent>
 
       Now that we set up Liveblocks, we can start integrating Lexical and Liveblocks in the `Editor.tsx` file.
-      To make the editor collaborative, we can rely on the `LiveblocksPlugin` from `@liveblocks/lexical-react`.
+      To make the editor collaborative, we can use
+      [`LiveblocksPlugin`](http://localhost:3001/docs/api-reference/liveblocks-react-lexical#LiveblocksPlugin)
+      from `@liveblocks/lexical-react`. [`FloatingComposer`](/docs/api-reference/liveblocks-react-lexical#FloatingComposer)
+      and [`ThreadPanel`](/docs/api-reference/liveblocks-react-lexical#ThreadPanel) add
+      [Comments](/docs/products/comments) to your text editor, and are both optional.
+
 
       ```tsx file="Editor.tsx"
       "use client";
@@ -127,7 +132,12 @@ to hear from you.
       import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
       import { ContentEditable } from "@lexical/react/LexicalContentEditable";
       import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
-      import { liveblocksConfig, LiveblocksPlugin } from "@liveblocks/react-lexical";
+      import {
+        liveblocksConfig,
+        LiveblocksPlugin,
+        FloatingComposer,
+        ThreadPanel,
+      } from "@liveblocks/react-lexical";
 
       export default Editor() {
         const room = useRoom();
@@ -150,7 +160,10 @@ to hear from you.
               }
               ErrorBoundary={LexicalErrorBoundary}
             />
-            <LiveblocksPlugin />
+            <LiveblocksPlugin>
+              <FloatingComposer />
+              <ThreadPanel />
+            </LiveblocksPlugin>
           </LexicalComposer>
         );
       }
@@ -158,7 +171,21 @@ to hear from you.
     </StepContent>
 
   </Step>
+  <Step>
+    <StepTitle>Import default styles</StepTitle>
+    <StepContent>
 
+      The default components come with default styles, you can import them into the
+      root layout of your app or directly into a CSS file with `@import`.
+
+      ```tsx
+      import "@liveblocks/react-ui/styles.css";
+      import "@liveblocks/react-lexical/styles.css";
+      ```
+
+    </StepContent>
+
+  </Step>
   <Step lastStep>
     <StepTitle>Next: set up authentication</StepTitle>
     <StepContent>
@@ -184,9 +211,8 @@ to hear from you.
 Congratulations! You now have set up the foundation for your collaborative
 Lexical text editor inside your React application.
 
-- [How to create a collaborative text editor with Lexical, Next.js, and Liveblocks ](/docs/guides/how-to-create-a-collaborative-text-editor-with-lexical-yjs-nextjs-and-liveblocks#Create-live-avatars-with-Liveblocks-hooks)
-- [@liveblocks/lexical-react API Reference](/docs/api-reference/liveblocks-lexical-react)
-- [@liveblocks/node-lexical API Reference](/docs/api-reference/node-lexical)
+- [`@liveblocks/lexical-react` API Reference](/docs/api-reference/liveblocks-lexical-react)
+- [`@liveblocks/node-lexical` API Reference](/docs/api-reference/node-lexical)
 - [Lexical website](https://lexical.dev/)
 
 ---
