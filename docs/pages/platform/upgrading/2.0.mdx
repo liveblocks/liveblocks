@@ -217,52 +217,163 @@ multiple versions ago:
 
 ## Simplifying your Liveblocks application (optional) [#simplifying]
 
-I found the following order of mechanical changes to be most ideal path to
-upgrade. You can make a Git commit after every one of these changes.
+If you have dealt with the breaking changes above, or concluded they they don’t
+apply to your situation, we can go a step further and really simplify your
+Liveblocks setup.
 
-1. Start with a clean slate, run `tsc` to make sure your project contains no
-   TypeScript errors to begin with.
-1. Replace `@liveblocks/react-comments` by `@liveblocks/react-ui`:
-   1. Run the codemod:
-      `npx @liveblocks/codemod@latest react-comments-to-react-ui`
-1. Upgrade _all_ `@liveblocks/*` packages to `@latest`:
-   1. Run `npx create-liveblocks-app@latest --upgrade`
-1. Run `tsc` again, no new errors should pop up at this point. If they do, they
-   should only be from APIs that were long-deprecated and now removed. Adjust
-   accordingly. See section above.
-1. [Mechanical change] Go to `liveblocks.config.ts`, look at the
-   `createRoomContext()` call. Add the `declare global { ... }` definition right
-   above it, and move the type params to the global. Remove the type params.
-   [Example of this change](https://github.com/liveblocks/liveblocks/commit/da750d4ac9e88d812c0fb612ce18f02920d65463).
-   And another
-   [example](https://github.com/liveblocks/liveblocks/commit/1c14e6e553463538d722b0b91baacc2aa4ff3267).
-1. [Mechanical change]
-   1. If using `const { suspense: { ... } } = createRoomContext()`, do a mass
-      search & replace of `"../../path/to/liveblocks.config"` to
-      `"@liveblocks/react/suspense"`.
-      [Examples of this change](https://github.com/liveblocks/liveblocks/commit/9e6fd25f21e1bcbc4e625161f8d33ce6aaafb0ab).
-   1. If using `const { ... } = createRoomContext()`, do a mass search & replace
-      of `"../../path/to/liveblocks.config"` to `"@liveblocks/react"`.
-      [Example of this change](https://github.com/liveblocks/liveblocks/commit/adc5692b072ef291082c2e1a22e77eb30c2b1667).
-1. Run `tsc` again. There should not be any TypeScript issues at this point.
-   However, the code will not work.
-1. [Mechanical change]
-   1. Go to `liveblocks.config.ts`, look at the `createClient()` call.
-   1. Copy its options, then remove the `createClient()` call and the `client`
-      global instance.
-   1. Find the module where you are importing `RoomProvider`.
-   1. Around the existing `<RoomProvider>` instance (or higher up the component
-      tree), wrap a new `<LiveblocksProvider /* options */>` around it. Pass all
-      the copied client options in here as props.
-   1. If you have other places in your components that are using the `client`
-      instance directly, you can use the new `useClient()` hook to get it.
-   1. [Example of this change](https://github.com/liveblocks/liveblocks/commit/414f83c655ec5c5b5e045ab970423fb2ef79c50f).
-1. [Optional cleanup] At this point you are converted, but you can further
-   simplify your types. Find all places where you're using `Presence`,
-   `Storage`, etc as types, and remove them as type params from our Liveblocks
-   types, like `User<MyPresence, MyUserMeta>` and just remove those.
-   [Example of this change](https://github.com/liveblocks/liveblocks/commit/d079a0056a792c15c752dcd581ee9cc264269b81).
-1. That's it! You're converted! 🎉🎉🎉
+**Note:** If your Liveblocks application has multiple room types, and therefore
+you have more than one instance of `createRoomContext()` in your application,
+the following simplification does not apply to you. We will keep supporting
+`createRoomContext()` for the advanced use case of multiple room types.
+
+### Step 1: Use the new global Liveblocks custom types
+
+Go to your `liveblocks.config.ts`, find your `createRoomContext()` call. Now
+decide which codemod to run.
+
+**Option 1**: If you have `const { suspense: { ... } } = createRoomContext()`,
+run:
+
+```bash
+npx @liveblocks/codemod@latest remove-liveblocks-config-contexts --suspense
+```
+
+**Option 2**: If instead you have `const { ... } = createRoomContext()`, run:
+
+```bash
+npx @liveblocks/codemod@latest remove-liveblocks-config-contexts
+```
+
+This codemod will make the following changes to your code.
+
+First it will move your type annotations to a global `Liveblocks` interface,
+which all Liveblocks API will recognize and use:
+
+```diff showLineNumbers={false}
++declare global {
++  interface Liveblocks {
++    Presence: MyPresence;
++    Storage: MyStorage;
++    UserMeta: MyUserMeta;
++    RoomEvent: MyRoomEvent;
++    ThreadMetadata: MyThreadMetadata;
++  }
++}
++
+-const { ... } = createRoomContext<MyPresence, MyStorage, MyUserMeta, MyRoomEvent, MyThreadMetadata>(client);
++const { ... } = createRoomContext(client);
+```
+
+Secondly, it will change all imports in your code base to import the hooks
+directly instead:
+
+```diff showLineNumbers={false}
+-import { RoomProvider, useRoom, useThreads } from "./liveblocks.config.ts";
++import { RoomProvider, useRoom, useThreads } from "@liveblocks/react/suspense";
+```
+
+## Step 2: Set up a LiveblocksProvider
+
+At this point, there should not be any new TypeScript issues. However, running
+the code will not yet work. This is because previously the hooks were bound to
+the `client` instance by passing it to the `createRoomContext()` factory, which
+we now removed. When using the global types, we’ll have to provide the
+Liveblocks client otherwise.
+
+The way to do it is to use a pretty standard React provider. Make the following
+change:
+
+```diff showLineNumbers={false}
+ // In liveblocks.config.ts
+-import { createClient } from "@liveblocks/client";
+-
+-const client = createClient({
+-  authEndpoint: "/api/liveblocks-auth",
+-  throttle: 16,
+-  /* etc */
+-);
+
+ // High up in your component tree
++"use client";
++
++import { LiveblocksProvider } from "@liveblocks/react";
++
++function Layout({ children }) {
++  return (
++    <LiveblocksProvider
++      authEndpoint="/api/liveblocks-auth"
++      throttle={16}
++      /* etc */
++    >
++      {children}
++    </LiveblocksProvider>
++  )
++}
+```
+
+<Banner type="info" title="Where to put this?">
+
+We recommend placing the `LiveblocksProvider` as high up your component tree as
+you can, preferably in your `_app.tsx` or `layout.tsx` (or equivalent for your
+React framework of choice). Unfortunately, we cannot provide a codemod for this
+step, because we cannot mechanically decide where exactly to inject the
+Liveblocks provider in your application.
+
+</Banner>
+
+If you were exporting the `client` instance before and have components that
+directly accessed it before, you can now obtain a reference to the `client`
+instance that the `LiveblocksProvider` creates for you using the `useClient`
+hook:
+
+```diff
+-import { client } from "./liveblocks.config";
++import { useClient } from "@liveblocks/react/suspense";
+
++function MyComponent() {
++  const client = useClient();
++}
+```
+
+## Step 3: Optional cleanup of type annotations
+
+If you also exported your `Presence`, `Storage`, etc types from
+`liveblocks.config.ts` before, you no longer need to do that. The main reason to
+export these before was to use them in helper functions that used some of the
+Liveblocks types, like `User`, or `Room`.
+
+For example:
+
+```tsx
+import type { Room, User } from "@liveblocks/client";
+import type { MyPresence, MyStorage } from "./liveblocks.config";
+
+function isAdult(user: User<MyPresence, MyUserMeta>) {
+  return user.info.age >= 18;
+  //               ^^^ Coming from MyUserMeta
+}
+
+function doSomethingWithRoom(
+  room: Room<MyPresence, MyStorage, MyUserMeta, never>
+) {
+  /* ... */
+}
+```
+
+This is no longer needed. You can simply remove them.
+
+```tsx
+import type { Room, User } from "@liveblocks/client";
+
+function isAdult(user: User) {
+  return user.info.age >= 18;
+  //               ^^^ Still coming from configured UserMeta custom type
+}
+
+function doSomethingWithRoom(room: Room) {
+  /* ... */
+}
+```
 
 ## Improvements
 
