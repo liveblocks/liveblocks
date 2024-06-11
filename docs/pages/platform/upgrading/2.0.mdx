@@ -91,19 +91,11 @@ versions. The easiest way to do that is to run the following command:
 npx create-liveblocks-app@latest --upgrade
 ```
 
-### Breaking changes [#breaking-changes]
+There are also some **breaking changes in this update**. Most APIs are backward
+compatible, however there’s a chance that some of these changes will affect your
+code base. We’ve built codemods to help you transition.
 
-Most APIs will be backward compatible. However, there is a chance that some of
-these breaking changes will affect your code base. Many of these changes are
-trivial to adjust to.
-
-<Banner type="success" title="Codemods are available">
-
-We have codemods available for most of these breaking changes.
-
-</Banner>
-
-#### Breaking change 1: renamed package [#bc1]
+### Breaking change 1: renamed package [#bc1]
 
 Affects `@liveblocks/react-comments`. We’ve renamed our package
 `@liveblocks/react-comments` to `@liveblocks/react-ui`, because our library of
@@ -130,7 +122,7 @@ And also:
 +<LiveblocksUIConfig />
 ```
 
-#### Breaking change 2: renamed exports in our Node package [#bc2]
+### Breaking change 2: renamed exports in our Node package [#bc2]
 
 Affects `@liveblocks/node`. To avoid confusion with the newly introduced custom
 `RoomInfo` type, we’ve renamed the `RoomInfo` type in our `@liveblocks/node`
@@ -152,7 +144,7 @@ This will change:
 +const rooms: RoomData[] = []
 ```
 
-#### Breaking change 3: client methods from our Node package no longer take type params [#bc3]
+### Breaking change 3: client methods from our Node package no longer take type params [#bc3]
 
 Affects `@liveblocks/node`. In `@liveblocks/node`, none of the client methods,
 like `liveblocks.getThread()`, take type params any longer.
@@ -174,7 +166,7 @@ declare global {
 }
 ```
 
-#### Breaking change 4: changed default export to named export in Yjs package [#bc4]
+### Breaking change 4: changed default export to named export in Yjs package [#bc4]
 
 Affects `@liveblocks/yjs`. To make discoverability and refactorings easier, and
 to avoid confusion with the newly introduced `LiveblocksProvider` in our React
@@ -192,7 +184,7 @@ ready.
 
 </Banner>
 
-#### Breaking change 5: minor LiveList constructor change [#bc5]
+### Breaking change 5: minor LiveList constructor change [#bc5]
 
 Affects apps using Storage. The `LiveList()` constructor’s argument is no longer
 optional, because it causes unneeded but confusing type inference issues:
@@ -209,7 +201,7 @@ ready.
 
 </Banner>
 
-#### Breaking change 6: new webhook event types [#bc6]
+### Breaking change 6: new webhook event types [#bc6]
 
 Affects apps using webhooks. The webhook event `NotificationEvent`’s type can
 represent multiple kinds of notifications (`"thread"`, `"textMention"`, and
@@ -226,7 +218,7 @@ accessing them.
 +}
 ```
 
-#### Breaking change 7: removed deprecated APIs [#bc7]
+### Breaking change 7: removed deprecated APIs [#bc7]
 
 Affects all packages. All of the following APIs have been removed in 2.0, as
 they were deprecated multiple versions ago:
@@ -254,7 +246,7 @@ they were deprecated multiple versions ago:
 - The second argument `options` to `createRoomContext(client, options)` has been
   removed. These options have been moved to the client.
 
-### Simplifying your Liveblocks application (optional) [#simplifying]
+## Simplifying your Liveblocks application (optional) [#simplifying]
 
 If you have dealt with the breaking changes above, or concluded they they don’t
 apply to your situation, we can go a step further and really simplify your
@@ -265,7 +257,7 @@ you have more than one instance of `createRoomContext()` in your application,
 the following simplification does not apply to you. We will keep supporting
 `createRoomContext()` for the advanced use case of multiple room types.
 
-#### Step 1: Use the new global Liveblocks custom types [#step1]
+### Step 1: Use the new global Liveblocks custom types [#step1]
 
 Go to your `liveblocks.config.ts`, find your `createRoomContext()` call. Now
 decide which codemod to run.
@@ -310,7 +302,7 @@ directly instead:
 +import { RoomProvider, useRoom, useThreads } from "@liveblocks/react/suspense";
 ```
 
-#### Step 2: Set up a LiveblocksProvider [#step2]
+### Step 2: Set up a LiveblocksProvider [#step2]
 
 At this point, there should not be any new TypeScript issues. However, running
 the code will not yet work. This is because previously the hooks were bound to
@@ -373,7 +365,7 @@ hook:
 +}
 ```
 
-#### Step 3: Optional cleanup of type annotations [#step3]
+### Step 3: Optional cleanup of type annotations [#step3]
 
 If you also exported your `Presence`, `Storage`, etc types from
 `liveblocks.config.ts` before, you no longer have to. The main reason to export
@@ -413,12 +405,12 @@ function doSomethingWithRoom(room: Room) {
 }
 ```
 
-### Improvements
+## Improvements
 
 The following miscellaneous improvements have been made that are non-breaking
 changes:
 
-#### `ClientSideSuspense` no longer needs a function
+### `ClientSideSuspense` no longer needs a function
 
 Previously, the `ClientSideSuspense` helper needed a function as its `children`
 prop, but it no longer has to.
@@ -436,7 +428,7 @@ You can now change:
  }
 ```
 
-#### Improved `InboxNotification` props types
+### Improved `InboxNotification` props types
 
 When passing custom components to the `kinds` prop of [`InboxNotification`][],
 you could use types like `InboxNotificationThreadProps` for the props. But this
@@ -454,7 +446,7 @@ wasn’t always true for all notification kinds, so now you can use types named
 <InboxNotification kinds={{ thread: MyThreadNotification }} />
 ```
 
-#### New custom type `RoomInfo`
+### New custom type `RoomInfo`
 
 By using the [`resolveRoomsInfo`][] callback from [`createClient`][] or the new
 [`LiveblocksProvider`][], you can attach arbitrary room data to a room, which
@@ -472,7 +464,7 @@ declare global {
 }
 ```
 
-#### New custom type `ActivitiesData`
+### New custom type `ActivitiesData`
 
 By providing a custom `ActivitiesData` type, you can improve how your custom
 notifications and their activities’ data are typed.
