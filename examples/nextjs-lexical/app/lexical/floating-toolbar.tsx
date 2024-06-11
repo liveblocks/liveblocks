@@ -16,6 +16,8 @@ import {
   size,
   useFloating,
 } from "@floating-ui/react-dom";
+import BoldIcon from "./icons/bold-icon";
+import CommentIcon from "./icons/comment-icon";
 
 export default function FloatingToolbar() {
   const [editor] = useLexicalComposerContext();
@@ -108,10 +110,10 @@ function Toolbar({
         minWidth: "max-content",
       }}
     >
-      <div className="flex items-center justify-center gap-2 p-1.5 w-full min-w-max rounded-lg bg-white border shadow">
+      <div className="flex items-center justify-center gap-2 p-1.5 w-full min-w-max rounded-lg border shadow border-border/80 text-foreground bg-card">
         <button
           onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")}
-          className="relative w-[30px] h-[30px] rounded-md inline-flex items-center justify-center p-2 text-center text-sm font-medium bg-white hover:bg-gray-100 text-gray-900 transition-colors"
+          className="inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground w-8 h-8 data-[active]:bg-accent"
         >
           <BoldIcon />
         </button>
@@ -126,51 +128,13 @@ function Toolbar({
               onRangeChange(null);
             }
           }}
-          className="relative  w-[30px] h-[30px] rounded-md inline-flex items-center justify-center p-2 text-center text-sm font-medium bg-white hover:bg-gray-100 text-gray-900 transition-colors"
+          className="inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground w-8 h-8 data-[active]:bg-accent"
         >
           <CommentIcon />
         </button>
       </div>
     </div>,
     container
-  );
-}
-
-function BoldIcon(props: React.SVGAttributes<SVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <path d="M6 12h9a4 4 0 0 1 0 8H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h7a4 4 0 0 1 0 8" />
-    </svg>
-  );
-}
-
-function CommentIcon(props: React.SVGAttributes<SVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-    </svg>
   );
 }
 

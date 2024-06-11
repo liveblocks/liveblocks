@@ -26,7 +26,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         />
       </head>
       <body className={inter.className}>
-        <main className="relative h-screen max-h-screen">{children}</main>
+        <main className="text-base relative h-screen max-h-screen bg-background/95 text-foreground">
+          {children}
+        </main>
       </body>
     </html>
   );

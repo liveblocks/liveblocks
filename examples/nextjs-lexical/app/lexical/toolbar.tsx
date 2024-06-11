@@ -5,80 +5,89 @@ import {
   $isHeadingNode,
 } from "@lexical/rich-text";
 import { $setBlocksType } from "@lexical/selection";
-import { $getSelection, $isRangeSelection, $isRootOrShadowRoot } from "lexical";
-import { SVGAttributes, useCallback, useSyncExternalStore } from "react";
+import {
+  $createParagraphNode,
+  $getSelection,
+  $isRangeSelection,
+  $isRootOrShadowRoot,
+} from "lexical";
+import { useCallback, useSyncExternalStore } from "react";
 import { $findMatchingParent } from "@lexical/utils";
+import HeadingOneIcon from "./icons/heading-one-icon";
+import HeadingTwoIcon from "./icons/heading-two-icon";
+import HeadingThreeIcon from "./icons/heading-three-icon";
+import BlockQuoteIcon from "./icons/blockquote-icon";
 
 export default function Toolbar() {
   const [editor] = useLexicalComposerContext();
   const activeBlock = useActiveBlock();
 
+  function toggleBlock(type: "h1" | "h2" | "h3" | "quote") {
+    const selection = $getSelection();
+
+    if (activeBlock === type) {
+      return $setBlocksType(selection, () => $createParagraphNode());
+    }
+
+    if (type === "h1") {
+      return $setBlocksType(selection, () => $createHeadingNode("h1"));
+    }
+
+    if (type === "h2") {
+      return $setBlocksType(selection, () => $createHeadingNode("h2"));
+    }
+
+    if (type === "h3") {
+      return $setBlocksType(selection, () => $createHeadingNode("h3"));
+    }
+
+    if (type === "quote") {
+      return $setBlocksType(selection, () => $createQuoteNode());
+    }
+  }
+
   return (
     <>
       <button
-        onClick={() => {
-          editor.update(() => {
-            const selection = $getSelection();
-            $setBlocksType(selection, () => $createHeadingNode("h1"));
-          });
-        }}
-        className="relative w-8 h-8 rounded-md inline-flex items-center justify-center p-2 text-center text-sm font-medium bg-white hover:bg-gray-100 text-gray-900 transition-colors"
-        style={{
-          backgroundColor:
-            activeBlock === "h1" ? "rgba(0, 0, 0, 0.05)" : "transparent",
-        }}
+        onClick={() => editor.update(() => toggleBlock("h1"))}
+        data-active={activeBlock === "h1" ? "" : undefined}
+        className={
+          "inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground w-8 h-8 data-[active]:bg-accent"
+        }
       >
         <HeadingOneIcon />
       </button>
 
       <button
-        onClick={() => {
-          editor.update(() => {
-            const selection = $getSelection();
-            $setBlocksType(selection, () => $createHeadingNode("h2"));
-          });
-        }}
-        className="relative w-8 h-8 rounded-md inline-flex items-center justify-center p-2 text-center text-sm font-medium bg-white hover:bg-gray-100 text-gray-900 transition-colors"
-        style={{
-          backgroundColor:
-            activeBlock === "h2" ? "rgba(0, 0, 0, 0.05)" : "transparent",
-        }}
+        onClick={() => editor.update(() => toggleBlock("h2"))}
+        data-active={activeBlock === "h2" ? "" : undefined}
+        className={
+          "inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground w-8 h-8 data-[active]:bg-accent"
+        }
       >
         <HeadingTwoIcon />
       </button>
 
       <button
-        onClick={() => {
-          editor.update(() => {
-            const selection = $getSelection();
-            $setBlocksType(selection, () => $createHeadingNode("h3"));
-          });
-        }}
-        className="relative w-8 h-8 rounded-md inline-flex items-center justify-center p-2 text-center text-sm font-medium bg-white hover:bg-gray-100 text-gray-900 transition-colors"
-        style={{
-          backgroundColor:
-            activeBlock === "h3" ? "rgba(0, 0, 0, 0.05)" : "transparent",
-        }}
+        onClick={() => editor.update(() => toggleBlock("h3"))}
+        data-active={activeBlock === "h3" ? "" : undefined}
+        className={
+          "inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground w-8 h-8 data-[active]:bg-accent"
+        }
       >
         <HeadingThreeIcon />
       </button>
 
-      <span className="w-[1px] bg-zinc-900 py-2 mx-2" />
+      <span className="w-[1px] py-2 mx-2 bg-border" />
 
       <button
-        onClick={() => {
-          editor.update(() => {
-            const selection = $getSelection();
-            $setBlocksType(selection, () => $createQuoteNode());
-          });
-        }}
-        className="relative w-8 h-8 rounded-md inline-flex items-center justify-center p-2 text-center text-sm font-medium bg-white hover:bg-gray-100 text-gray-900 transition-colors"
-        style={{
-          backgroundColor:
-            activeBlock === "quote" ? "rgba(0, 0, 0, 0.05)" : "transparent",
-        }}
+        onClick={() => editor.update(() => toggleBlock("quote"))}
+        data-active={activeBlock === "quote" ? "" : undefined}
+        className={
+          "inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground w-8 h-8 data-[active]:bg-accent"
+        }
       >
-        <QuoteIcon />
+        <BlockQuoteIcon />
       </button>
     </>
   );
@@ -121,93 +130,4 @@ function useActiveBlock() {
   }, [editor]);
 
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-}
-
-function HeadingOneIcon(props: SVGAttributes<SVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <path d="M4 12h8" />
-      <path d="M4 18V6" />
-      <path d="M12 18V6" />
-      <path d="m17 12 3-2v8" />
-    </svg>
-  );
-}
-
-function HeadingTwoIcon(props: SVGAttributes<SVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <path d="M4 12h8" />
-      <path d="M4 18V6" />
-      <path d="M12 18V6" />
-      <path d="M21 18h-4c0-4 4-3 4-6 0-1.5-2-2.5-4-1" />
-    </svg>
-  );
-}
-
-function HeadingThreeIcon(props: SVGAttributes<SVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <path d="M4 12h8" />
-      <path d="M4 18V6" />
-      <path d="M12 18V6" />
-      <path d="M17.5 10.5c1.7-1 3.5 0 3.5 1.5a2 2 0 0 1-2 2" />
-      <path d="M17 17.5c2 1.5 4 .3 4-1.5a2 2 0 0 0-2-2" />
-    </svg>
-  );
-}
-
-function QuoteIcon(props: SVGAttributes<SVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <path d="M17 6H3" />
-      <path d="M21 12H8" />
-      <path d="M21 18H8" />
-      <path d="M3 12v6" />
-    </svg>
-  );
 }

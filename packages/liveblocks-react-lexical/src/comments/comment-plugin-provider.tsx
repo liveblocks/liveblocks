@@ -298,3 +298,12 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     </OnDeleteThreadCallback.Provider>
   );
 }
+
+export function useIsActive(threadId: string): boolean {
+  const isActive = React.useContext(IsActiveThreadContext);
+  if (isActive === null) {
+    throw new Error("useIsActive must be used within a LiveblocksPlugin");
+  }
+
+  return isActive(threadId);
+}

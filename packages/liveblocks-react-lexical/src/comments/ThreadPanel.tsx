@@ -17,9 +17,9 @@ import React, { forwardRef, useCallback, useContext } from "react";
 import { classNames } from "../classnames";
 import type { ThreadToNodesMap } from "./comment-plugin-provider";
 import {
-  IsActiveThreadContext,
   OnDeleteThreadCallback,
   ThreadToNodesContext,
+  useIsActive,
 } from "./comment-plugin-provider";
 import { $isThreadMarkNode } from "./thread-mark-node";
 
@@ -50,18 +50,17 @@ interface ThreadWrapperProps extends ThreadProps {
 }
 
 const ThreadWrapper = ({ Thread, ...props }: ThreadWrapperProps) => {
-  const isActive = useContext(IsActiveThreadContext);
   const onDeleteThread = useContext(OnDeleteThreadCallback);
   const threadToNodes = useThreadToNodes();
   const [editor] = useLexicalComposerContext();
 
-  if (onDeleteThread === null || onDeleteThread === null || isActive === null) {
+  if (onDeleteThread === null || onDeleteThread === null) {
     throw new Error(
       "ThreadPanel component must be used within a LiveblocksPlugin"
     );
   }
 
-  const isThreadActive = isActive(props.thread.id);
+  const isActive = useIsActive(props.thread.id);
 
   const handleThreadDelete = useCallback(
     (thread: ThreadData<BaseMetadata>) => {
@@ -74,7 +73,7 @@ const ThreadWrapper = ({ Thread, ...props }: ThreadWrapperProps) => {
     const nodes = threadToNodes.get(props.thread.id);
     if (nodes === undefined || nodes.size === 0) return;
 
-    if (isThreadActive) return;
+    if (isActive) return;
 
     editor.update(() => {
       const [key] = nodes;
@@ -82,13 +81,13 @@ const ThreadWrapper = ({ Thread, ...props }: ThreadWrapperProps) => {
       if (!$isThreadMarkNode(node)) return;
       node.selectStart();
     });
-  }, [editor, threadToNodes, isThreadActive, props.thread.id]);
+  }, [editor, threadToNodes, isActive, props.thread.id]);
 
   return (
     <Thread
       onThreadDelete={handleThreadDelete}
       onClick={handleThreadClick}
-      data-state={isThreadActive ? "active" : null}
+      data-state={isActive ? "active" : null}
       {...props}
     />
   );

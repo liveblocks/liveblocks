@@ -11,7 +11,7 @@ import Loading from "./loading";
 export default function NotificationsPopover() {
   return (
     <Popover.Root>
-      <Popover.Trigger className="relative w-8 h-8 rounded-md inline-flex items-center justify-center p-1 text-center text-sm font-medium bg-gray-50 hover:bg-gray-100 text-gray-900 transition-colors">
+      <Popover.Trigger className="inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground w-8 h-8">
         <svg
           width="20"
           height="20"
@@ -41,7 +41,7 @@ export default function NotificationsPopover() {
         <Popover.Content
           side="bottom"
           align="end"
-          className="text-sm bg-white rounded-md border overflow-hidden w-[500px] z-20"
+          className="rounded-xl border border-border bg-card text-card-foreground shadow text-sm overflow-hidden w-[500px] z-20"
         >
           <Suspense fallback={<Loading />}>
             <Inbox />
@@ -70,9 +70,9 @@ function Inbox() {
 
   return (
     <>
-      <div className="flex bg-[#fafafa] p-3 border-b justify-end">
+      <div className="flex p-3 border-b border-border justify-end bg-muted/50">
         <button
-          className="inline-flex h-8 select-none text-sm items-center whitespace-nowrap rounded-md border border-zinc-700 bg-zinc-900 px-3.5 font-medium text-zinc-100 ease-in-out hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 relative transition-all"
+          className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-8 px-4 py-2"
           disabled={inboxNotifications.length === 0}
           onClick={markAllNotificationsAsRead}
         >
@@ -82,7 +82,7 @@ function Inbox() {
 
       <div className="max-h-[500px] overflow-auto">
         {inboxNotifications.length === 0 ? (
-          <div className="flex items-center justify-center p-4 text-slate-500">
+          <div className="flex items-center justify-center p-6 text-muted-foreground">
             No notifications yet
           </div>
         ) : (
