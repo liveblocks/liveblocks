@@ -101,7 +101,7 @@ export const LiveblocksPlugin = ({
 
   if (!editor.hasNodes([ThreadMarkNode, MentionNode])) {
     throw new Error(
-      "LiveblocksPlugin requires Lexical configuration be wrapped in the `liveblocksConfig(options)` function. For more information: https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#liveblocksConfig"
+      "LiveblocksPlugin requires Lexical configuration to be wrapped in the `liveblocksConfig(options)` function. For more information: https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#liveblocksConfig"
     );
   }
 
