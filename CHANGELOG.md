@@ -1,11 +1,54 @@
 ## v2.0.0 (not yet released)
 
 This major release marks the maturity of Liveblocks. It contains new products
-(`@liveblocks/react-lexical`), clarifications (e.g. `@liveblocks/react-comments`
-is now called `@liveblocks/react-ui`), and major DX improvements (e.g.
-`@liveblocks/react` hooks can be imported directly and typed globally).
+(`@liveblocks/react-lexical`) and clarifications (e.g.
+`@liveblocks/react-comments` is now called `@liveblocks/react-ui`).
 
-For upgrade instructions and codemods, see the
+Also, we bring major DX improvements by allowing you to specify your types
+globally now. These types will be typed once and shared across all Liveblocks
+APIs, which includes your Node backend.
+
+```ts file="liveblocks.config.ts"
+// ❌ Before
+export const {
+  suspense: {
+    RoomProvider,
+    useRoom,
+    // etc
+  },
+} = createRoomContext<Presence, Storage>(client);
+
+// ✅ After
+declare global {
+  interface Liveblocks {
+    Presence: Presence;
+    Storage: Storage;
+  }
+}
+```
+
+In `@liveblocks/react`, you can now import hooks directly:
+
+```ts file="MyComponent.tsx"
+// ❌ Before: get hooks exported from your Liveblocks config
+import { RoomProvider, useRoom, ... } from "./liveblocks.config";
+
+// ✅ After: import hooks directly
+import { RoomProvider, useRoom, ... } from "@liveblocks/react";
+import { RoomProvider, useRoom, ... } from "@liveblocks/react/suspense";
+```
+
+```ts
+// ❌ Before
+const client = createClient(/* options */);
+
+// ✅ After
+<LiveblocksProvider /* options */>
+  <App />
+</LiveblocksProvider>
+```
+
+For full upgrade instructions and codemods, see the
 [2.0 upgrade guide](https://liveblocks.io/docs/guides/upgrading/2.0).
 
 ### `create-liveblocks-app`
@@ -14,10 +57,17 @@ For upgrade instructions and codemods, see the
 - Add `--upgrade` flag to automatically update all Liveblocks package to their
   latest version.
 
+### `@liveblocks/client`
+
+- DX improvements: type once, globally, benefit everywhere
+
 ### `@liveblocks/react`
 
-- DX improvements:
-  - TODO
+- DX improvement: import hooks directly
+- DX improvement: `<ClientSideSuspense>` no longer needs a function as its
+  `children`
+- New provider: `LiveblocksProvider` (replaces the need for `createClient`)
+- New hook: `useClient`
 - Tweak `useMutation` error message to be less confusing.
 - Allow thread and activity metadata types to contain `undefined` values.
 
@@ -42,8 +92,8 @@ For upgrade instructions and codemods, see the
 
 ### `@liveblocks/node`
 
-- DX improvements:
-  - TODO
+- DX improvements: all Node client methods will pick up the same global types
+  you’re using in your frontend
 - Rename `RoomInfo` to `RoomData`.
 - The webhook event `NotificationEvent`’s type can represent multiple kinds of
   notifications. (`"thread"`, `"textMention"`, and custom ones (e.g.
