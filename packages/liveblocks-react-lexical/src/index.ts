@@ -4,7 +4,7 @@ import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
-export { useIsActive } from "./comments/comment-plugin-provider";
+export { useIsThreadActive } from "./comments/comment-plugin-provider";
 export {
   FloatingComposer,
   OPEN_FLOATING_COMPOSER_COMMAND,

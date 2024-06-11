@@ -299,10 +299,15 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
   );
 }
 
-export function useIsActive(threadId: string): boolean {
+/**
+ * Returns whether the associated thread annotation for the given thread id is selected or not in the editor.
+ * @param threadId The id of the thread to check if the associated annotation is selected or not.
+ * @returns true if the associated annotation for the thread is selected, false otherwise.
+ */
+export function useIsThreadActive(threadId: string): boolean {
   const isActive = React.useContext(IsActiveThreadContext);
   if (isActive === null) {
-    throw new Error("useIsActive must be used within a LiveblocksPlugin");
+    throw new Error("useIsThreadActive must be used within a LiveblocksPlugin");
   }
 
   return isActive(threadId);

@@ -200,6 +200,20 @@ function Toolbar() {
 }
 ```
 
+## useIsThreadActive
+
+Accepts a thread id and returns whether the thread annotation for this thread is
+selected or not in the Lexical editor.
+
+```ts
+import { useIsThreadActive } from "@liveblocks/react-lexical";
+
+const isActive = useIsThreadActive(thread.id);
+```
+
+This hook can be useful to style threads based on whether their associated
+thread annotations are selected or not in the editor.
+
 ## Stylesheets
 
 React Lexical comes with default styles, and these can be imported into the root
