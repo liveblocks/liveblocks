@@ -118,7 +118,12 @@ to hear from you.
     <StepContent>
 
       Now that we set up Liveblocks, we can start integrating Lexical and Liveblocks in the `Editor.tsx` file.
-      To make the editor collaborative, we can rely on the `LiveblocksPlugin` from `@liveblocks/lexical-react`.
+      To make the editor collaborative, we can use
+      [`LiveblocksPlugin`](http://localhost:3001/docs/api-reference/liveblocks-react-lexical#LiveblocksPlugin)
+      from `@liveblocks/lexical-react`. [`FloatingComposer`](/docs/api-reference/liveblocks-react-lexical#FloatingComposer)
+      and [`ThreadPanel`](/docs/api-reference/liveblocks-react-lexical#ThreadPanel) and add
+      [Comments](/docs/products/comments) to your text editor, and are both optional.
+
 
       ```tsx file="Editor.tsx"
       "use client";
@@ -127,7 +132,12 @@ to hear from you.
       import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
       import { ContentEditable } from "@lexical/react/LexicalContentEditable";
       import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
-      import { liveblocksConfig, LiveblocksPlugin } from "@liveblocks/react-lexical";
+      import {
+        liveblocksConfig,
+        LiveblocksPlugin,
+        FloatingComposer,
+        ThreadPanel,
+      } from "@liveblocks/react-lexical";
 
       export default Editor() {
         const room = useRoom();
@@ -150,7 +160,10 @@ to hear from you.
               }
               ErrorBoundary={LexicalErrorBoundary}
             />
-            <LiveblocksPlugin />
+            <LiveblocksPlugin>
+              <FloatingComposer />
+              <ThreadPanel />
+            </LiveblocksPlugin>
           </LexicalComposer>
         );
       }
