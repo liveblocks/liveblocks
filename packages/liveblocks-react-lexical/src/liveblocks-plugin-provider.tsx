@@ -88,6 +88,39 @@ export type LiveblocksPluginProps = {
   children?: React.ReactNode;
 };
 
+/**
+ * Liveblocks plugin for Lexical that adds collaboration to your editor.
+ *
+ * `LiveblocksPlugin` should always be nested inside `LexicalComposer`.
+ *
+ * @example
+ *
+ * import { LexicalComposer } from "@lexical/react/LexicalComposer";
+ * import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+ * import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+ * import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+ * import { liveblocksConfig, LiveblocksPlugin } from "@liveblocks/react-lexical";
+ *
+ * const initialConfig = liveblocksConfig({
+ *   namespace: "MyEditor",
+ *   theme: {},
+ *   nodes: [],
+ *   onError: (err) => console.error(err),
+ * });
+ *
+ * function Editor() {
+ *   return (
+ *     <LexicalComposer initialConfig={initialConfig}>
+ *       <LiveblocksPlugin />
+ *       <RichTextPlugin
+ *         contentEditable={<ContentEditable />}
+ *         placeholder={<div>Enter some text...</div>}
+ *         ErrorBoundary={LexicalErrorBoundary}
+ *       />
+ *     </LexicalComposer>
+ *   );
+ * }
+ */
 export const LiveblocksPlugin = ({
   children,
 }: LiveblocksPluginProps): JSX.Element => {

@@ -38,6 +38,27 @@ import { createDOMRange } from "../create-dom-range";
 import { createRectsFromDOMRange } from "../create-rects-from-dom-range";
 import $wrapSelectionInThreadMarkNode from "./wrap-selection-in-thread-mark-node";
 
+/**
+ * Dispatching OPEN_FLOATING_COMPOSER_COMMAND will display the FloatingComposer
+ *
+ * @example
+ * import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+ * import { OPEN_FLOATING_COMPOSER_COMMAND } from "@liveblocks/react-lexical";
+ *
+ * function Toolbar() {
+ *   const [editor] = useLexicalComposerContext();
+ *
+ *   return (
+ *     <button
+ *       onClick={() => {
+ *         editor.dispatchCommand(OPEN_FLOATING_COMPOSER_COMMAND);
+ *       }}
+ *     >
+ *       💬 New comment
+ *     </button>
+ *   );
+ * }
+ */
 export const OPEN_FLOATING_COMPOSER_COMMAND: LexicalCommand<void> =
   createCommand("OPEN_FLOATING_COMPOSER_COMMAND");
 
@@ -52,6 +73,14 @@ type FloatingComposerProps<M extends BaseMetadata = ThreadMetadata> = Omit<
   "threadId" | "commentId"
 >;
 
+/**
+ * Displays a `Composer` near the current lexical selection.
+ *
+ * To open it, dispatch `OPEN_FLOATING_COMPOSER_COMMAND`.
+ *
+ * Submitting a comment will attach an annotation thread at the current selection.
+ * Should be nested inside `LiveblocksPlugin`.
+ */
 export const FloatingComposer = forwardRef<
   ComposerElement,
   FloatingComposerProps
