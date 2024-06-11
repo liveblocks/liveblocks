@@ -106,6 +106,24 @@ function Editor() {
 Note that `liveblocksConfig` sets `editorState` to `null` because
 `LiveblocksPlugin` is responsible for initializing it on the server.
 
+## useEditorStatus
+
+Returns the current editor status.
+
+```ts
+import { useEditorStatus } from "@liveblocks/react-lexical";
+
+const status = useEditorStatus();
+```
+
+The possible value are:
+
+- `not-loaded`: Initial editor state when entering the room.
+- `loading`: Once the editor state has been requested by `LiveblocksPlugin`.
+- `synchronizing`: Not working yet at runtime! Will be available in a future
+  release.
+- `synchronized`: The editor state is sync with Liveblocks servers.
+
 ## FloatingComposer
 
 Displays a `Composer` near the current lexical selection.
@@ -178,56 +196,6 @@ function Toolbar() {
     >
       💬 New comment
     </button>
-  );
-}
-```
-
-## ThreadPanel
-
-Display annotation threads attached to your Lexical editor.
-
-```tsx highlight="3"
-<LexicalComposer initialConfig={initialConfig}>
-  <LiveblocksPlugin>
-    <ThreadPanel />
-  </LiveblocksPlugin>
-</LexicalComposer>
-```
-
-{/* TODO: Image */}
-
-`ThreadPanel` should be nested inside [`LiveblocksPlugin`][].
-
-```tsx highlight="8,22"
-import { LexicalComposer } from "@lexical/react/LexicalComposer";
-import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
-import { ContentEditable } from "@lexical/react/LexicalContentEditable";
-import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
-import {
-  liveblocksConfig,
-  LiveblocksPlugin,
-  ThreadPanel,
-} from "@liveblocks/react-lexical";
-
-const initialConfig = liveblocksConfig({
-  namespace: "MyEditor",
-  theme: {},
-  nodes: [],
-  onError: (err) => console.error(err),
-});
-
-function Editor() {
-  return (
-    <LexicalComposer initialConfig={initialConfig}>
-      <LiveblocksPlugin>
-        <ThreadPanel />
-      </LiveblocksPlugin>
-      <RichTextPlugin
-        contentEditable={<ContentEditable />}
-        placeholder={<div>Enter some text...</div>}
-        ErrorBoundary={LexicalErrorBoundary}
-      />
-    </LexicalComposer>
   );
 }
 ```
