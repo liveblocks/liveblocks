@@ -42,6 +42,36 @@ export type LiveblocksDocumentApi = {
   toMarkdown: () => string;
 };
 
+/**
+ *
+ * `withLexicalDocument` is the main entry point to access and modify Lexical documents on your backend.
+ * This function internally instantiates a Lexical headless editor and allows you to modify and export its values asynchronously
+ * with a simplified interface.
+ *
+ * @param options Specify the roomId, client, and nodes.
+ * @param callback The call back function is optionally async and receives the document API as its only argument.
+ *
+ * @example
+ *
+ * import { Liveblocks } from "@liveblocks/node";
+ * import { withLexicalDocument } from "@liveblocks/node-lexical";
+ *
+ * const client = new Liveblocks({secret: "sk_your_secret_key"});
+ * const text = await withLexicalDocument(
+ *   { client, roomId: "your-room" },
+ *   async (doc) => {
+ *     await doc.update(() => {
+ *       const root = $getRoot();
+ *       const paragraphNode = $createParagraphNode();
+ *       const textNode = $createTextNode(asABird);
+ *       paragraphNode.append(textNode);
+ *       root.append(paragraphNode);
+ *     });
+ *     return doc.getTextContent();
+ *   }
+ * );
+ *
+ */
 export async function withLexicalDocument<T>(
   { roomId, nodes, client }: LiveblocksLexicalOptions,
   callback: (api: LiveblocksDocumentApi) => Promise<T> | T
@@ -62,6 +92,9 @@ export async function withLexicalDocument<T>(
   editor.update(() => {}, { discrete: true });
 
   const val = await callback({
+    /**
+     * Fetches and resyncs the latest document with Liveblocks
+     */
     refresh: async () => {
       const latest = new Uint8Array(
         await client.getYjsDocumentAsBinaryUpdate(roomId)
@@ -69,6 +102,9 @@ export async function withLexicalDocument<T>(
       applyUpdate(binding.doc, latest);
       editor.update(() => {}, { discrete: true });
     },
+    /**
+     * Provide a callback to modify documetns with Lexical's standard api. All calls are discrete.
+     */
     update: async (modifyFn) => {
       // Flush any pending updates (there really shouldn't be any?), this may be a NOOP
       editor.update(() => {}, { discrete: true });
@@ -83,6 +119,9 @@ export async function withLexicalDocument<T>(
       const diffUpdate = encodeStateAsUpdate(binding.doc, beforeVector);
       return client.sendYjsBinaryUpdate(roomId, diffUpdate);
     },
+    /**
+     * Helper function to easily provide the text content from the root, i.e. `$getRoot().getTextContent()`
+     */
     getTextContent: () => {
       let content = "";
       editor.getEditorState().read(() => {
@@ -90,9 +129,15 @@ export async function withLexicalDocument<T>(
       });
       return content;
     },
+    /**
+     * Helper function to return editorState in JSON form
+     */
     toJSON: () => {
       return editor.getEditorState().toJSON();
     },
+    /**
+     * Helper function to return editor state as Markdown
+     */
     toMarkdown: () => {
       let markdown: string = "";
       editor.getEditorState().read(() => {
@@ -100,9 +145,15 @@ export async function withLexicalDocument<T>(
       });
       return markdown;
     },
+    /**
+     * Helper function to return the editor's current state
+     */
     getEditorState: () => {
       return editor.getEditorState();
     },
+    /**
+     * Helper function to return the current headless editor instance
+     */
     getLexicalEditor: () => {
       return editor;
     },
