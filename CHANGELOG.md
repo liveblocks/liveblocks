@@ -1,4 +1,4 @@
-## v2.0.0 (not yet released)
+## v2.0.0
 
 This major release marks the maturity of Liveblocks. It contains new products
 (`@liveblocks/react-lexical`) and clarifications (e.g.
