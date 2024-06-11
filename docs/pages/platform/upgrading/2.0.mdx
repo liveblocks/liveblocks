@@ -272,7 +272,7 @@ directly instead:
 +import { RoomProvider, useRoom, useThreads } from "@liveblocks/react/suspense";
 ```
 
-## Step 2: Set up a LiveblocksProvider
+### Step 2: Set up a LiveblocksProvider
 
 At this point, there should not be any new TypeScript issues. However, running
 the code will not yet work. This is because previously the hooks were bound to
@@ -335,7 +335,7 @@ hook:
 +}
 ```
 
-## Step 3: Optional cleanup of type annotations
+### Step 3: Optional cleanup of type annotations
 
 If you also exported your `Presence`, `Storage`, etc types from
 `liveblocks.config.ts` before, you no longer have to. The main reason to export
