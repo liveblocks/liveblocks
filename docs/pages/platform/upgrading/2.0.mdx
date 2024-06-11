@@ -138,9 +138,9 @@ And also:
 ### Breaking change 2: renamed exports in our Node package [#bc2]
 
 To avoid confusion with the newly introduced custom `RoomInfo` type, we’ve
-renamed the `RoomInfo` type in our Node package.
+renamed the `RoomInfo` type in our `@liveblocks/node` package.
 
-There is a codemod available for you to run to perform this code change:
+There is a **codemod available** for you to run to perform this code change:
 
 ```bash
 npx @liveblocks/codemod@latest room-info-to-room-data
@@ -184,8 +184,6 @@ To make discoverability and refactorings easier, and to avoid confusion with the
 newly introduced `LiveblocksProvider` in our React package, we’re no longer
 using default exports, but named exports only:
 
-Change:
-
 ```diff showLineNumbers={false}
 -import LiveblocksProvider from "@liveblocks/yjs";
 +import { LiveblocksYjsProvider } from "@liveblocks/yjs";
@@ -217,11 +215,20 @@ ready.
 
 ### Breaking change 6: new webhook event types [#bc6]
 
-TODO: Detail this section
-
 The webhook event `NotificationEvent`’s type can represent multiple kinds of
 notifications (`"thread"`, `"textMention"`, and custom ones (e.g.
 `"$myNotification"`)).
+
+If you were using properties only available on the `"thread"` kind (e.g.
+`threadId`), you will need to first check for the kind of notification before
+accessing them.
+
+```diff showLineNumbers={false}
+-const threadId = event.data.threadId;
++if (event.date.kind === "thread") {
++  const threadId = event.data.threadId;
++}
+```
 
 ### Breaking change 7: removed deprecated APIs [#bc7]
 
@@ -435,7 +442,21 @@ You can now change:
 
 ### Improved `InboxNotification` props types
 
-TODO: Detail this section
+When passing custom components to the `kinds` prop of [`InboxNotification`][],
+you could use types like `InboxNotificationThreadProps` for the props. But this
+wasn’t always true for all notification kinds, so now you can use types named
+`InboxNotificationThreadKindProps` for your components, while
+`InboxNotificationThreadProps` describes the props of our own
+`InboxNotification.Thread`.
+
+```diff
+-function MyThreadNotification(props: InboxNotificationThreadProps) {
++function MyThreadNotification(props: InboxNotificationThreadKindProps) {
+  return <InboxNotification.Thread {...props} />;
+}
+
+<InboxNotification kinds={{ thread: MyThreadNotification }} />
+```
 
 ### New custom type `RoomInfo`
 
@@ -457,6 +478,7 @@ declare global {
 
 [`createClient`]: /docs/api-reference/liveblocks-client#createClient
 [`LiveblocksProvider`]: /docs/api-reference/liveblocks-react#LiveblocksProvider
+[`InboxNotification`]: /docs/api-reference/liveblocks-react-ui#InboxNotification
 [`resolveRoomsInfo`]:
   /docs/api-reference/liveblocks-client#createClientResolveRoomsInfo
 [`useRoomInfo`]: /docs/api-reference/liveblocks-react#useRoomInfo
