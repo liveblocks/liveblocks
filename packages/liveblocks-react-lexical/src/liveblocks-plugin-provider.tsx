@@ -1,21 +1,21 @@
+import { CollaborationContext } from "@lexical/react/LexicalCollaborationContext";
 import { CollaborationPlugin } from "@lexical/react/LexicalCollaborationPlugin";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { Provider } from "@lexical/yjs";
-import type {
-  BaseMetadata,
-  BaseUserMeta,
-  Json,
-  JsonObject,
-  LsonObject,
-} from "@liveblocks/core";
-import { kInternal } from "@liveblocks/core";
+import { kInternal, nn } from "@liveblocks/core";
 import { useClient, useRoom, useSelf } from "@liveblocks/react";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useContext, useEffect, useRef } from "react";
 import { Doc } from "yjs";
 
 import { CommentPluginProvider } from "./comments/comment-plugin-provider";
 import { MentionPlugin } from "./mentions/mention-plugin";
+
+// TODO: Replace by ref once I understand why useRef is not stable (?!)
+const providersMap = new Map<
+  string,
+  LiveblocksYjsProvider<never, never, never, never, never>
+>();
 
 export type LiveblocksPluginProps = {
   children?: React.ReactNode;
@@ -29,28 +29,8 @@ export const LiveblocksPlugin = ({
     client[kInternal].resolveMentionSuggestions !== undefined;
   const [editor] = useLexicalComposerContext();
   const room = useRoom();
-
-  const [provider, setProvider] = useState<
-    | LiveblocksYjsProvider<
-        JsonObject,
-        LsonObject,
-        BaseUserMeta,
-        Json,
-        BaseMetadata
-      >
-    | undefined
-  >();
-
-  const doc = useMemo(() => new Doc(), []);
-
-  useEffect(() => {
-    const _provider = new LiveblocksYjsProvider(room, doc);
-    setProvider(_provider);
-    return () => {
-      _provider.destroy();
-      setProvider(undefined);
-    };
-  }, [room, doc]);
+  const collabContext = useContext(CollaborationContext);
+  const previousRoomIdRef = useRef<string | null>(null);
 
   // Warn users if initialConfig.editorState, set on the composer, is not null
   useEffect(() => {
@@ -75,29 +55,56 @@ export const LiveblocksPlugin = ({
 
   // Get user info or allow override from props
   const info = useSelf((me) => me.info);
-  const username = info?.name;
+  const username = info?.name || ""; // use empty string to prevent random name
   const cursorcolor = info?.color as string | undefined;
 
-  // Create the provider factory
   const providerFactory = useCallback(
-    (id: string, yjsDocMap: Map<string, Doc>) => {
-      yjsDocMap.set(id, doc);
-      return provider as Provider;
+    (id: string, yjsDocMap: Map<string, Doc>): Provider => {
+      // Destroy previously used provider to avoid memory leaks
+      // TODO: Find a way to destroy the last used provider on unmount (while working with StrictMode)
+      if (
+        previousRoomIdRef.current !== null &&
+        previousRoomIdRef.current !== id
+      ) {
+        const previousProvider = providersMap.get(id);
+        if (previousProvider !== undefined) {
+          previousProvider.destroy();
+        }
+      }
+
+      let doc = yjsDocMap.get(id);
+
+      if (doc === undefined) {
+        doc = new Doc();
+        const provider = new LiveblocksYjsProvider(room, doc);
+        yjsDocMap.set(id, doc);
+        providersMap.set(id, provider);
+      }
+
+      return nn(
+        providersMap.get(id),
+        "Internal error. Should never happen"
+      ) as Provider;
     },
-    [provider, doc]
+    [room]
   );
+
+  useEffect(() => {
+    collabContext.name = username || "";
+  }, [collabContext, username]);
 
   return (
     <>
-      {provider && (
-        <CollaborationPlugin
-          providerFactory={providerFactory}
-          id={"liveblocks-document"}
-          username={username}
-          cursorColor={cursorcolor}
-          shouldBootstrap={true}
-        />
-      )}
+      <CollaborationPlugin
+        // Setting the key allows us to reset the internal Y.doc used by useYjsCollaboration
+        // without implementing `reload` event
+        key={room.id}
+        id={room.id}
+        providerFactory={providerFactory}
+        username={username}
+        cursorColor={cursorcolor}
+        shouldBootstrap={true}
+      />
 
       {hasResolveMentionSuggestions && <MentionPlugin />}
 

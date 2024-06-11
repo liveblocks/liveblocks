@@ -2829,8 +2829,7 @@ export function createRoom<
     comments: eventHub.comments.observable,
   };
 
-  // TODO Change `never` to `M` in 2.0
-  const commentsApi = createCommentsApi<never>(
+  const commentsApi = createCommentsApi<M>(
     config.roomId,
     delegates.authenticate,
     fetchClientApi

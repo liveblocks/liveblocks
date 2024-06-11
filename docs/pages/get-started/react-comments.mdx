@@ -94,7 +94,7 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
           <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
             <RoomProvider id="my-room" initialPresence={{}}>
               <ClientSideSuspense fallback={<div>Loading…</div>}>
-                {() => <Room />}
+                <Room />
               </ClientSideSuspense>
             </RoomProvider>
           </LiveblocksProvider>

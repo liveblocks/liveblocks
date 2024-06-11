@@ -1,21 +1,21 @@
 ---
 meta:
-  title: "Get started with Liveblocks, Lexical, Yjs, and React"
+  title: "Get started with Liveblocks, Lexical, and React"
   parentTitle: "Get started"
-  description:
-    "Learn how to get started with Liveblocks, Lexical, Yjs, and React."
+  description: "Learn how to get started with Liveblocks, Lexical, and React."
 ---
 
 Liveblocks is a realtime collaboration infrastructure for building performant
 collaborative experiences. Follow the following steps to start adding
 collaboration to your React application using the APIs from the
-[`@liveblocks/yjs`](/docs/api-reference/liveblocks-yjs) package.
+[`@liveblocks/react-lexical`](/docs/api-reference/liveblocks-react-lexicals)
+package.
 
 <Banner title="Public beta">
 
-Yjs support is currently in beta. If you have any questions or feedback, please
-join us on our [Discord server](https://liveblocks.io/discord). We’d love to
-hear from you.
+Lexical support is currently in beta. If you have any questions or feedback,
+please join us on our [Discord server](https://liveblocks.io/discord). We’d love
+to hear from you.
 
 </Banner>
 
@@ -23,13 +23,13 @@ hear from you.
 
 <Steps>
   <Step>
-    <StepTitle>Install Liveblocks, Yjs, and Lexical</StepTitle>
+    <StepTitle>Install Liveblocks and Lexical</StepTitle>
     <StepContent>
 
       Every Liveblocks package should use the same version.
 
       ```bash
-      npm install @liveblocks/client @liveblocks/react @liveblocks/yjs yjs lexical @lexical/react @lexical/yjs
+      npm install @liveblocks/client @liveblocks/react @liveblocks/lexical-react lexical @lexical/react
       ```
 
     </StepContent>
@@ -64,7 +64,7 @@ hear from you.
         LiveblocksProvider,
         RoomProvider,
       } from "@liveblocks/react/suspense";
-      import { Room } from "./Room";
+      import { Editor } from "./Editor";
 
       export default function App() {
         return (
@@ -102,7 +102,7 @@ hear from you.
           <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
             <RoomProvider id="my-room" initialPresence={{}}>
               <ClientSideSuspense fallback={<div>Loading…</div>}>
-                {() => <Editor />}
+                <Editor />
               </ClientSideSuspense>
             </RoomProvider>
           </LiveblocksProvider>
@@ -117,48 +117,29 @@ hear from you.
     <StepTitle>Set up the collaborative Lexical text editor</StepTitle>
     <StepContent>
 
-      Now that we set up Liveblocks, we can start integrating Lexical and Yjs in the `Editor.tsx` file.
-      To make the editor collaborative, we can rely on the `CollaborationPlugin` from `@lexical/react/LexicalCollaborationPlugin`.
+      Now that we set up Liveblocks, we can start integrating Lexical and Liveblocks in the `Editor.tsx` file.
+      To make the editor collaborative, we can rely on the `LiveblocksPlugin` from `@liveblocks/lexical-react`.
 
       ```tsx file="Editor.tsx"
       "use client";
 
-      import { useRoom } from "../liveblocks.config";
-      import * as Y from "yjs";
-      import { LiveblocksYjsProvider } from "@liveblocks/yjs";
-      import {
-        $getRoot,
-        $createParagraphNode,
-        $createTextNode,
-        LexicalEditor,
-      } from "lexical";
       import { LexicalComposer } from "@lexical/react/LexicalComposer";
-      import { ContentEditable } from "@lexical/react/LexicalContentEditable";
       import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
-      import { CollaborationPlugin } from "@lexical/react/LexicalCollaborationPlugin";
-      import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
-      import { Provider } from "@lexical/yjs";
-
-      function initialEditorState(editor: LexicalEditor): void {
-        const root = $getRoot();
-        const paragraph = $createParagraphNode();
-        const text = $createTextNode();
-        paragraph.append(text);
-        root.append(paragraph);
-      }
+      import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+      import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+      import { liveblocksConfig, LiveblocksPlugin } from "@liveblocks/react-lexical";
 
       export default Editor() {
         const room = useRoom();
 
-        // Lexical config
-        const initialConfig = {
-          // Don’t set default state, allow CollaborationPlugin to do it instead
-          editorState: null,
+        // Wrap your initial config with `liveblocksConfig`
+        const initialConfig = liveblocksConfig({
           namespace: "Demo",
-          nodes: [],
-          theme: {},
-          onError: (error: unknown) => throw error,
-        };
+          onError: (error: unknown) => {
+            console.error(error);
+            throw error;
+          },
+        });
 
         return (
           <LexicalComposer initialConfig={initialConfig}>
@@ -169,16 +150,7 @@ hear from you.
               }
               ErrorBoundary={LexicalErrorBoundary}
             />
-            <CollaborationPlugin
-              id="yjs-plugin"
-              providerFactory={(id, yDocMap) => {
-                const yDoc = new Y.Doc();
-                yDocMap.set(id, yDoc);
-                return new LiveblocksProvider(room, yDoc) as Provider;
-              }}
-              initialEditorState={initialEditorState}
-              shouldBootstrap={true}
-            />
+            <LiveblocksPlugin />
           </LexicalComposer>
         );
       }
@@ -212,9 +184,9 @@ hear from you.
 Congratulations! You now have set up the foundation for your collaborative
 Lexical text editor inside your React application.
 
-- [Yjs and Lexical guides](/docs/guides?technologies=yjs%2Clexical)
-- [How to create a collaborative text editor with Lexical, Yjs, Next.js, and Liveblocks ](/docs/guides/how-to-create-a-collaborative-text-editor-with-lexical-yjs-nextjs-and-liveblocks#Create-live-avatars-with-Liveblocks-hooks)
-- [@liveblocks/yjs API Reference](/docs/api-reference/liveblocks-yjs)
+- [How to create a collaborative text editor with Lexical, Next.js, and Liveblocks ](/docs/guides/how-to-create-a-collaborative-text-editor-with-lexical-yjs-nextjs-and-liveblocks#Create-live-avatars-with-Liveblocks-hooks)
+- [@liveblocks/lexical-react API Reference](/docs/api-reference/liveblocks-lexical-react)
+- [@liveblocks/node-lexical API Reference](/docs/api-reference/node-lexical)
 - [Lexical website](https://lexical.dev/)
 
 ---
@@ -225,7 +197,7 @@ Lexical text editor inside your React application.
   <ExampleCard
     example={{
       title: "Collaborative Text Editor",
-      slug: "collaborative-text-editor/nextjs-yjs-lexical",
+      slug: "collaborative-text-editor/nextjs-lexical",
       image: "/images/examples/thumbnails/text-editor.jpg",
     }}
     technologies={["nextjs"]}

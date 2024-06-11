@@ -77,6 +77,11 @@
             "hidden": true
           },
           {
+            "title": "Lexical React",
+            "path": "/get-started/lexical-react",
+            "hidden": true
+          },
+          {
             "title": "Yjs CodeMirror Svelte",
             "path": "/get-started/yjs-codemirror-svelte",
             "hidden": true
@@ -109,11 +114,6 @@
           {
             "title": "Yjs Monaco JavaScript",
             "path": "/get-started/yjs-monaco-javascript",
-            "hidden": true
-          },
-          {
-            "title": "Yjs Lexical React",
-            "path": "/get-started/yjs-lexical-react",
             "hidden": true
           },
           {

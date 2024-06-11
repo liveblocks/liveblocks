@@ -9,8 +9,6 @@
 
 # `@liveblocks/node-lexical`
 
-WIP
-
 ## License
 
 Licensed under the Apache License 2.0, Copyright © 2021-present

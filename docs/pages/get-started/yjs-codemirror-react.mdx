@@ -63,7 +63,7 @@ hear from you.
         LiveblocksProvider,
         RoomProvider,
       } from "@liveblocks/react/suspense";
-      import { Room } from "./Room";
+      import { Editor } from "./Editor";
 
       export default function App() {
         return (
@@ -101,7 +101,7 @@ hear from you.
           <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
             <RoomProvider id="my-room" initialPresence={{}}>
               <ClientSideSuspense fallback={<div>Loading…</div>}>
-                {() => <Editor />}
+                <Editor />
               </ClientSideSuspense>
             </RoomProvider>
           </LiveblocksProvider>
