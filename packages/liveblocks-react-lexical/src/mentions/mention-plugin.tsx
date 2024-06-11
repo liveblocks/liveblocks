@@ -233,16 +233,6 @@ export function MentionPlugin() {
   }, [editor]);
 
   useEffect(() => {
-    const root = editor.getRootElement();
-    if (root === null) return;
-
-    root.classList.add("lb-root");
-    return () => {
-      root.classList.remove("lb-root");
-    };
-  }, [editor]);
-
-  useEffect(() => {
     function $handleBackspace(event: KeyboardEvent): boolean {
       const selection = $getSelection();
 

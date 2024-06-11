@@ -30,7 +30,7 @@ export function Mention({
     <span
       onClick={handleClick}
       data-selected={isSelected ? "" : undefined}
-      className="lb-lexical-mention"
+      className="lb-root lb-lexical-mention"
     >
       {children}
     </span>

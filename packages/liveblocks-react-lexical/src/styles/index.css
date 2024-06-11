@@ -126,6 +126,7 @@
  *************************************/
 
 .lb-thread-mark {
+  background: var(--lb-accent-subtle);
   color: var(--lb-foreground);
   outline: none;
   font-weight: 500;
