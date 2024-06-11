@@ -203,7 +203,8 @@ function Toolbar() {
 ## useIsThreadActive
 
 Accepts a thread id and returns whether the thread annotation for this thread is
-selected or not in the Lexical editor.
+selected or not in the Lexical editor. This hook must be used in a component
+nested inside [`LiveblocksPlugin`][].
 
 ```ts
 import { useIsThreadActive } from "@liveblocks/react-lexical";

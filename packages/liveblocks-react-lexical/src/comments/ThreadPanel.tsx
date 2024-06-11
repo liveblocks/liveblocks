@@ -19,7 +19,7 @@ import type { ThreadToNodesMap } from "./comment-plugin-provider";
 import {
   OnDeleteThreadCallback,
   ThreadToNodesContext,
-  useIsActive,
+  useIsThreadActive,
 } from "./comment-plugin-provider";
 import { $isThreadMarkNode } from "./thread-mark-node";
 
@@ -60,7 +60,7 @@ const ThreadWrapper = ({ Thread, ...props }: ThreadWrapperProps) => {
     );
   }
 
-  const isActive = useIsActive(props.thread.id);
+  const isActive = useIsThreadActive(props.thread.id);
 
   const handleThreadDelete = useCallback(
     (thread: ThreadData<BaseMetadata>) => {

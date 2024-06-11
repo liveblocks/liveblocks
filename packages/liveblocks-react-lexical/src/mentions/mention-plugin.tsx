@@ -159,10 +159,6 @@ function $getRangeAtMatch(match: RegExpExecArray): globalThis.Range | null {
 export function MentionPlugin() {
   const [editor] = useLexicalComposerContext();
 
-  if (!editor.hasNodes([MentionNode])) {
-    throw new Error("MentionPlugin: MentionNode not registered on editor");
-  }
-
   const [match, setMatch] = useState<RegExpExecArray | null>(null); // Represents the current match of the mention regex. A `null` value means there is no match.
   const matchingString = match?.[3];
 

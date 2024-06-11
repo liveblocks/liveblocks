@@ -12,7 +12,7 @@ import {
   liveblocksConfig,
   LiveblocksPlugin,
   useEditorStatus,
-  useIsActive,
+  useIsThreadActive,
 } from "@liveblocks/react-lexical";
 import FloatingToolbar from "./floating-toolbar";
 import NotificationsPopover from "../notifications-popover";
@@ -97,7 +97,7 @@ function Threads() {
 }
 
 function ThreadWrapper({ thread }: { thread: ThreadData<BaseMetadata> }) {
-  const isActive = useIsActive(thread.id);
+  const isActive = useIsThreadActive(thread.id);
 
   return (
     <Thread
