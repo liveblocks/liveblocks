@@ -36,24 +36,37 @@ refactoring to make this possible.
 
 We’ll dive in soon, but here is a sneak peek:
 
-```diff showLineNumbers={false} file="liveblocks.config.ts"
-+declare global {
-+  // These custom types are all optional, use whichever ones you want/need
-+  interface Liveblocks {
-+    Presence: MyPresence;
-+    Storage: MyStorage;
-+    UserMeta: MyUserMeta;
-+    RoomEvent: MyRoomEvent;
-+    ThreadMetadata: MyThreadMetadata;
-+  }
-+}
-+
--const { ... } = createRoomContext<MyPresence, MyStorage, MyUserMeta, MyRoomEvent, MyThreadMetadata>(client);
+```tsx showLineNumbers={false} file="liveblocks.config.ts"
+// ❌ This pattern is no longer recommended unless you need multiple room types
+export const {
+  suspense: { RoomProvider, useRoom, useThread },
+} = createRoomContext<
+  MyPresence,
+  MyStorage,
+  MyUserMeta,
+  MyRoomEvent,
+  MyThreadMetadata
+>(client);
+
+// ✅ After
+declare global {
+  // These custom types are all optional, just define the ones you want/need
+  interface Liveblocks {
+    Presence: MyPresence;
+    Storage: MyStorage;
+    UserMeta: MyUserMeta;
+    RoomEvent: MyRoomEvent;
+    ThreadMetadata: MyThreadMetadata;
+  }
+}
 ```
 
-```diff showLineNumbers={false} file="Component.tsx"
--import { RoomProvider, useRoom, useThreads } from "./liveblocks.config.ts";
-+import { RoomProvider, useRoom, useThreads } from "@liveblocks/react/suspense";
+```tsx showLineNumbers={false} file="Component.tsx"
+// ❌ Before
+import { RoomProvider, useRoom, useThreads } from "./liveblocks.config.ts";
+
+// ✅ After
+import { RoomProvider, useRoom, useThreads } from "@liveblocks/react/suspense";
 ```
 
 We’ll first go over all the breaking changes, then we’ll show you how to
