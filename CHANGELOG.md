@@ -1,21 +1,57 @@
 ## v2.0.0 (not yet released)
 
-<!-- Next major release marks the maturity of Liveblocks. For upgrade instructions,
-see the [2.0 upgrade guide](https://liveblocks.io/docs/guides/upgrading/2.0). -->
+This major release marks the maturity of Liveblocks. It contains new products
+(`@liveblocks/react-lexical`), clarifications (e.g. `@liveblocks/react-comments`
+is now called `@liveblocks/react-ui`), and major DX improvements (e.g.
+`@liveblocks/react` hooks can be imported directly and typed globally).
 
-- ...
+For upgrade instructions and codemods, see the
+[2.0 upgrade guide](https://liveblocks.io/docs/guides/upgrading/2.0).
 
 ### `create-liveblocks-app`
 
-- Updated config generation for Liveblocks 2.0.
-
-## v1.13.0 (not yet released)
+- Update config generation for Liveblocks 2.0.
+- Add `--upgrade` flag to automatically update all Liveblocks package to their
+  latest version.
 
 ### `@liveblocks/react`
 
-- Tweak `useMutation` error message to be less confusing
-- Type fix: allow thread and activity metadata to contain `undefined` values
-- Large internal refactorings to support a simpler DX in a future version
+- DX improvements:
+  - TODO
+- Tweak `useMutation` error message to be less confusing.
+- Allow thread and activity metadata types to contain `undefined` values.
+
+### `@liveblocks/react-ui`
+
+- Rename from `@liveblocks/react-comments`.
+- Rename `<CommentsConfig />` to `<LiveblocksUIConfig />`.
+- Improve `InboxNotification` props types.
+
+### `@liveblocks/react-lexical`
+
+- Initial release.
+
+### `@liveblocks/node-lexical`
+
+- Initial release.
+
+### `@liveblocks/yjs`
+
+- `LiveblocksProvider` is no longer a default export, it’s now
+  `import { LiveblocksYjsProvider } from "@liveblocks/yjs"`.
+
+### `@liveblocks/node`
+
+- DX improvements:
+  - TODO
+- Rename `RoomInfo` to `RoomData`.
+- The webhook event `NotificationEvent`’s type can represent multiple kinds of
+  notifications. (`"thread"`, `"textMention"`, and custom ones (e.g.
+  `"$myNotification"`))
+
+### `@liveblocks/codemod`
+
+- Initial release.
 
 ## v1.12.0
 
