@@ -10,21 +10,1139 @@ alwaysShowAllNavigationLevels: false
 our realtime collaboration APIs, built on top of WebSockets. Read our
 [getting started](/docs/get-started) guides to learn more.
 
+## Suspense
+
+All Liveblocks React components and hooks can be exported from two different
+locations, `@liveblocks/react/suspense` and `@liveblocks/react`. This is because
+Liveblocks provides two types of hooks; those that support
+[React Suspense](https://react.dev/reference/react/Suspense), and those that
+don’t.
+
+```tsx
+// Import the Suspense hook
+import { useThreads } from "@/liveblocks/react/suspense";
+
+// Import the regular hook
+import { useThreads } from "@/liveblocks/react";
+```
+
+We recommend importing from `@liveblocks/react/suspense` and using Suspense by
+default, as it often makes it easier to build your collaborative application.
+
+<Banner title="Enable Suspense with createRoomContext">
+
+If you’re using the non-standard [`createRoomContext`](#createRoomContext)
+function to build your hooks, you must
+[enable suspense differently](#createRoomContext-Suspense).
+
+</Banner>
+
+### Suspense hooks
+
+Suspense hooks can be wrapped in [`ClientSideSuspense`][], which acts as a
+loading spinner for any components below it. When using this, all components
+below will only render once their hook contents have been loaded.
+
+```tsx
+import { ClientSideSuspense, useStorage } from "@liveblocks/react/suspense";
+
+function App() {
+  <ClientSideSuspense fallback={<div>Loading…</div>}>
+    <Component />
+  </ClientSideSuspense>;
+}
+
+function Component() {
+  // `animals` is always defined
+  const animals = useStorage((root) => root.animals);
+
+  // ...
+}
+```
+
+Advanced hooks using the `{ ..., error, isLoading }` syntax, such as
+[`useThreads`][], can also use
+[`ErrorBoundary`](https://github.com/bvaughn/react-error-boundary) to render an
+error if the hook runs into a problem.
+
+```tsx
+import { ClientSideSuspense, useThreads } from "@liveblocks/react/suspense";
+import { ErrorBoundary } from "react-error-boundary";
+
+function App() {
+  return (
+    <ErrorBoundary fallback={<div>Error</div>}>
+      <ClientSideSuspense fallback={<div>Loading…</div>}>
+        <Component />
+      </ClientSideSuspense>
+    </ErrorBoundary>
+  );
+}
+
+function Component() {
+  // `threads` is always defined
+  const { threads } = useThreads();
+
+  // ...
+}
+```
+
+An advantage of Suspense hooks is that you can have multiple different hooks in
+your tree, and you only need a single `ClientSideSuspense` component to render a
+loading spinner for all of them.
+
+### Regular hooks
+
+Regular hooks often return `null` whilst a component is loading, and you must
+check for this to render a loading spinner.
+
+```tsx
+import { ClientSideSuspense, useStorage } from "@liveblocks/react";
+
+function Component() {
+  // `animals` is `null` when loading
+  const animals = useStorage((root) => root.animals);
+
+  if (!animals) {
+    return <div>Loading…</div>;
+  }
+
+  // ...
+}
+```
+
+Advanced hooks using the `{ ..., error, isLoading }` syntax, such as
+[`useThreads`][], require you to make sure there isn’t a problem before using
+the data.
+
+```tsx
+import { ClientSideSuspense, useThreads } from "@liveblocks/react";
+
+function Component() {
+  // Check for `error` and `isLoading` before `threads` is defined
+  const { threads, error, isLoading } = useThreads();
+
+  if (error) {
+    return <div>Error</div>;
+  }
+
+  if (isLoading) {
+    return <div>Loading…</div>;
+  }
+
+  // ...
+}
+```
+
+### ClientSideSuspense
+
+Liveblocks provides a component named `ClientSideSuspense` which works as a
+replacement for `Suspense`. This is helpful as our Suspense hooks will throw an
+error when they’re run on the server, and this component avoids this issue by
+always rendering the `fallback` on the server.
+
+```tsx highlight="7-9"
+import { ClientSideSuspense } from "@liveblocks/react/suspense";
+
+function Page() {
+  return (
+    <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
+      <RoomProvider id="my-room-id" initialPresence={{}}>
+        <ClientSideSuspense fallback={<div>Loading…</div>}>
+          <App />
+        </ClientSideSuspense>
+      </RoomProvider>
+    </LiveblocksProvider>
+  );
+}
+```
+
+#### Loading spinners
+
+Instead of wrapping your entire Liveblocks application inside a single
+`ClientSideSuspense` component, you can use multiple of these components in
+different parts of your application, and each will work as a loading fallback
+for any components further down your tree.
+
+```tsx highlight="10-12,16-18"
+import { ClientSideSuspense } from "@liveblocks/react/suspense";
+
+function Page() {
+  return (
+    <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
+      <RoomProvider id="my-room-id" initialPresence={{}}>
+        <header>My title</header>
+
+        <main>
+          <ClientSideSuspense fallback={<div>Loading…</div>}>
+            <Canvas />
+          </ClientSideSuspense>
+        </main>
+
+        <aside>
+          <ClientSideSuspense fallback={<div>Loading…</div>}>
+            <LiveAvatars />
+          </ClientSideSuspense>
+        </aside>
+      </RoomProvider>
+    </LiveblocksProvider>
+  );
+}
+```
+
+This is a great way to build a static skeleton around your dynamic collaborative
+application.
+
+## Liveblocks
+
+### LiveblocksProvider
+
+Sets up a client for connecting to Liveblocks, and is the recommended way to
+create to do this for React apps. You must define either `authEndpoint` or
+`publicApiKey`. Resolver functions should be placed inside here, and a number of
+other options are available, which correspond with those passed to
+[`createClient`][]. Unlike [`RoomProvider`][], `LiveblocksProvider` doesn’t call
+Liveblocks servers when mounted, and it should be placed higher in your app’s
+component tree.
+
+```tsx
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
+
+function App() {
+  return (
+    <LiveblocksProvider
+    // publicApiKey=""
+    // authEndpoint="/api/liveblocks-auth"
+    >
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+```tsx title="All LiveblocksProvider props" isCollapsable isCollapsed
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
+
+function App() {
+  return (
+    <LiveblocksProvider
+      // Connect with authEndpoint
+      authEndpoint="/api/liveblocks-auth"
+      // ---
+      // Alternatively, use an authEndpoint callback
+      // authEndpoint={async (room) => {
+      //   const response = await fetch("/api/liveblocks-auth", {
+      //     method: "POST",
+      //     headers: {
+      //       Authentication: "<your own headers here>",
+      //       "Content-Type": "application/json",
+      //     },
+      //     body: JSON.stringify({ room }),
+      //   });
+      //   return await response.json();
+      // }}
+      //
+      // Alternatively, use a public key
+      // publicApiKey="pk_..."
+      //
+      // Throttle time (ms) between WebSocket updates
+      throttle={100}
+      // ---
+      // Throw lost-connection event after 5 seconds offline
+      lostConnectionTimeout={5000}
+      // ---
+      // Disconnect users after X (ms) of inactivity, disabled by default
+      backgroundKeepAliveTimeout={undefined}
+      // ---
+      // Resolve user info for Comments and Notifications
+      resolveUsers={async ({ userIds }) => {
+        const usersData = await __getUsersFromDB__(userIds);
+
+        return usersData.map((userData) => ({
+          name: userData.name,
+          avatar: userData.avatar.src,
+        }));
+      }}
+      // ---
+      // Resolve room info for Notifications
+      resolveRoomsInfo={async ({ roomIds }) => {
+        const documentsData = await __getDocumentsFromDB__(roomIds);
+
+        return documentsData.map((documentData) => ({
+          name: documentData.name,
+          // url: documentData.url,
+        }));
+      }}
+      // ---
+      // Resolve mention suggestions for Comments
+      resolveMentionSuggestions={async ({ text, roomId }) => {
+        const workspaceUsers = await __getWorkspaceUsersFromDB__(roomId);
+
+        if (!text) {
+          // Show all workspace users by default
+          return __getUserIds__(workspaceUsers);
+        } else {
+          const matchingUsers = __findUsers__(workspaceUsers, text);
+          return __getUserIds__(matchingUsers);
+        }
+      }}
+      // ---
+      // Polyfill options for non-browser environments
+      polyfills={
+        {
+          // atob,
+          // fetch,
+          // WebSocket,
+        }
+      }
+    >
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+<PropertiesList title="Props">
+  <PropertiesListItem
+    name="authEndpoint"
+    detailedType="string | async ((room?: string) => CustomAuthenticationResult)"
+  >
+    The URL of your back end’s [authentication endpoint](/docs/authentication)
+    as a string, or an async callback function that returns a Liveblocks token
+    result. Either `authEndpoint` or `publicApikey` are required. Learn more
+    about [using a URL string](#LiveblocksProviderAuthEndpoint) and [using a
+    callback](#LiveblocksProviderCallback).
+  </PropertiesListItem>
+  <PropertiesListItem name="publicApiKey" type="string">
+    The public API key taken from your project’s
+    [dashboard](/dashboard/apikeys). Generally not recommended for production
+    use. Either `authEndpoint` or `publicApikey` are required. [Learn
+    more](#LiveblocksProviderPublicKey).
+  </PropertiesListItem>
+  <PropertiesListItem name="throttle" type="number" defaultValue="100">
+    The throttle time between WebSocket messages in milliseconds, a number
+    between `16` and `1000` is allowed. Using `16` means your app will update 60
+    times per second. [Learn more](#LiveblocksProviderThrottle).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="lostConnectionTimeout"
+    type="number"
+    defaultValue="5000"
+  >
+    After a user disconnects, the time in milliseconds before a
+    [`"lost-connection"`](/docs/api-reference/liveblocks-client#Room.subscribe.lost-connection)
+    event is fired. [Learn more](#LiveblocksProviderLostConnectionTimeout).
+  </PropertiesListItem>
+  <PropertiesListItem name="backgroundKeepAliveTimeout" type="number">
+    The time before an inactive WebSocket connection is disconnected. This is
+    disabled by default, but setting a number will activate it. [Learn
+    more](#LiveblocksProviderBackgroundKeepAliveTimeout).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="resolveUsers"
+    detailedType='async? (args: ResolveUsersArgs) => (TUserMeta["info"] | undefined)[] | undefined'
+  >
+    A function that resolves user information in
+    [Comments](/docs/products/comments). Return an array of `TUserMeta["info"]`
+    objects in the same order they arrived. [Learn
+    more](#LiveblocksProviderResolveUsers).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="resolveRoomsInfo"
+    detailedType="async? (args: ResolveRoomsInfoArgs) => (RoomInfo | undefined)[] | undefined"
+  >
+    A function that resolves room information in
+    [Comments](/docs/products/comments). Return an array of `RoomInfo` objects
+    in the same order they arrived. [Learn
+    more](#LiveblocksProviderResolveRoomsInfo).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="resolveMentionSuggestions"
+    detailedType="async? (args: ResolveMentionSuggestionsArgs) => string[]"
+  >
+    A function that resolves mention suggestions in
+    [Comments](/docs/products/comments). Return an array of user IDs. [Learn
+    more](#LiveblocksProviderResolveMentionSuggestions).
+  </PropertiesListItem>
+  <PropertiesListItem name="polyfills">
+    Place polyfills for `atob`, `fetch`, and `WebSocket` inside here. Useful
+    when using a non-browser environment, such as
+    [Node.js](#LiveblocksProviderNode) or [React
+    Native](#LiveblocksProviderReactNative).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="unstable_fallbackToHTTP"
+    type="boolean"
+    defaultValue="false"
+  >
+    Experimental. Automatically fall back to HTTP when a message is too large
+    for WebSockets.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="unstable_streamData"
+    type="boolean"
+    defaultValue="false"
+  >
+    Experimental. Stream the initial Storage content over HTTP, instead of
+    waiting for a large initial WebSocket message to be sent from the server.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### LiveblocksProvider with public key [#LiveblocksProviderPublicKey]
+
+When creating a client with a public key, you don’t need to set up an
+authorization endpoint. We only recommend using a public key when prototyping,
+or on public landing pages, as it makes it possible for end users to access any
+room’s data. You should instead use an
+[auth endpoint](#LiveblocksProviderAuthEndpoint).
+
+```tsx
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
+
+function App() {
+  return (
+    <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+#### LiveblocksProvider with auth endpoint [#LiveblocksProviderAuthEndpoint]
+
+If you are not using a public key, you need to set up your own `authEndpoint`.
+Please refer to our [Authentication guide](/docs/authentication).
+
+```tsx
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
+
+function App() {
+  return (
+    <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+#### LiveblocksProvider with auth endpoint callback [#LiveblocksProviderCallback]
+
+If you need to add additional headers or use your own function to call your
+endpoint, `authEndpoint` can be provided as a custom callback. You should return
+the token created with
+[`Liveblocks.prepareSession`](/docs/api-reference/liveblocks-node#access-tokens)
+or [`liveblocks.identifyUser`](/docs/api-reference/liveblocks-node#id-tokens),
+learn more in [authentication guide](/docs/rooms/authentication).
+
+```tsx
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
+
+function App() {
+  return (
+    <LiveblocksProvider
+      authEndpoint={async (room) => {
+        // Fetch your authentication endpoint and retrieve your access or ID token
+        // ...
+
+        return '{ "token": "..." }';
+      }}
+    >
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+`room` is the room ID that the user is connecting to. When using
+[Notifications](/docs/products/comments/notifications), `room` can be
+`undefined`, as the client is requesting a token that grants access to multiple
+rooms, rather than a specific room.
+
+##### Fetch your endpoint
+
+Here’s an example of fetching your API endpoint at `/api/liveblocks-auth` within
+the callback.
+
+```tsx
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
+
+function App() {
+  return (
+    <LiveblocksProvider
+      authEndpoint={async (room) => {
+        const response = await fetch("/api/liveblocks-auth", {
+          method: "POST",
+          headers: {
+            Authentication: "<your own headers here>",
+            "Content-Type": "application/json",
+          },
+          // Don't forget to pass `room` down. Note that it
+          // can be undefined when using Notifications.
+          body: JSON.stringify({ room }),
+        });
+        return await response.json();
+      }}
+    >
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+##### Token details
+
+You should return the token created with
+[`Liveblocks.prepareSession`](/docs/api-reference/liveblocks-node#access-tokens)
+or [`liveblocks.identifyUser`](/docs/api-reference/liveblocks-node#id-tokens).
+These are the values the functions can return.
+
+1. A valid token, it returns a `'{ "token": "..." }'` shaped response.
+1. A token that explicitly forbids access, it returns an
+   `'{ "error": "forbidden", "reason": "..." }'` shaped response. If this is
+   returned, the client will disconnect and won't keep trying to authorize.
+
+Any other error will be treated as an unexpected error, after which the client
+will retry the request until it receives either 1. or 2.
+
+#### WebSocket throttle [#LiveblocksProviderThrottle]
+
+By default, the client throttles the WebSocket messages sent to one every 100
+milliseconds, which translates to 10 updates per second. It’s possible to
+override that configuration with the `throttle` option with a value between `16`
+and `1000` milliseconds.
+
+```tsx
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
+
+function App() {
+  return (
+    <LiveblocksProvider
+      throttle={16}
+
+      // Other options
+      // ...
+    >
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+This option is helpful for smoothing out realtime animations in your
+application, as you can effectively increase the framerate without using any
+interpolation. Here are some examples with their approximate frames per second
+(FPS) values.
+
+```ts
+throttle:  16, // 60 FPS
+throttle:  32, // 30 FPS
+throttle: 200, //  5 FPS
+```
+
+#### Lost connection timeout [#LiveblocksProviderLostConnectionTimeout]
+
+If you’re connected to a room and briefly lose connection, Liveblocks will
+reconnect automatically and quickly. However, if reconnecting takes longer than
+usual, for example if your network is offline, then the room will emit an event
+informing you about this.
+
+How quickly this event is triggered can be configured with the
+`lostConnectionTimeout` setting, and it takes a number in milliseconds.
+`lostConnectionTimeout` can be set between `1000` and `30000` milliseconds. The
+default is `5000`, or 5 seconds.
+
+```tsx
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
+
+function App() {
+  return (
+    <LiveblocksProvider
+      lostConnectionTimeout={5000}
+
+      // Other props
+      // ...
+    >
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+You can listen to the event with [`room.subscribe("lost-connection")`][]. Note
+that this also affects when `others` are reset to an empty array after a
+disconnection. This helps prevent temporary flashes in your application as a
+user quickly disconnects and reconnects. For a demonstration of this behavior,
+see our [connection status example][].
+
+#### Background keep-alive timeout [#LiveblocksProviderBackgroundKeepAliveTimeout]
+
+By default, Liveblocks applications will maintain an active WebSocket connection
+to the Liveblocks servers, even when running in a browser tab that’s in the
+background. However, if you’d prefer for background tabs to disconnect after a
+period of inactivity, then you can use `backgroundKeepAliveTimeout`.
+
+When `backgroundKeepAliveTimeout` is specified, the client will automatically
+disconnect applications that have been in an unfocused background tab for _at
+least_ the specified time. When the browser tab is refocused, the client will
+immediately reconnect to the room and synchronize the document.
+
+```tsx
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
+
+function App() {
+  return (
+    <LiveblocksProvider
+      // Disconnect users after 15 minutes of inactivity
+      backgroundKeepAliveTimeout={15 * 60 * 1000}
+
+      // Other props
+      // ...
+    >
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+`backgroundKeepAliveTimeout` accepts a number in milliseconds—we advise using a
+value of at least a few minutes, to avoid unnecessary disconnections.
+
+#### resolveUsers [#LiveblocksProviderResolveUsers]
+
+[Comments](/docs/products/comments) stores user IDs in its system, but no other
+user information. To display user information in Comments components, such as a
+user’s name or avatar, you need to resolve these IDs into user objects. This
+function receives a list of user IDs and you should return a list of user
+objects of the same size, in the same order.
+
+```tsx
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
+
+function App() {
+  return (
+    <LiveblocksProvider
+      resolveUsers={async ({ userIds }) => {
+        const usersData = await __getUsersFromDB__(userIds);
+
+        return usersData.map((userData) => ({
+          name: userData.name,
+          avatar: userData.avatar.src,
+        }));
+      }}
+
+      // Other props
+      // ...
+    >
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+The name and avatar you return are rendered in
+[`Thread`](/docs/api-reference/liveblocks-react-ui#Thread) components.
+
+##### User objects
+
+The user objects returned by the resolver function take the shape of
+`UserMeta["info"]`, which contains `name` and `avatar` by default. These two
+values are optional, though if you’re using the
+[Comments default components](/docs/api-reference/liveblocks-react-ui#Components),
+they are necessary. Here’s an example of `userIds` and the exact values
+returned.
+
+```tsx
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
+
+function App() {
+  return (
+    <LiveblocksProvider
+      resolveUsers={async ({ userIds }) => {
+        // ["marc@example.com", "nimesh@example.com"];
+        console.log(userIds);
+
+        return [
+          { name: "Marc", avatar: "https://example.com/marc.png" },
+          { name: "Nimesh", avatar: "https://example.com/nimesh.png" },
+        ];
+      }}
+
+      // Other props
+      // ...
+    >
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+You can also return custom information, for example, a user’s `color`:
+
+```tsx highlight="14"
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
+
+function App() {
+  return (
+    <LiveblocksProvider
+      resolveUsers={async ({ userIds }) => {
+        // ["marc@example.com"];
+        console.log(userIds);
+
+        return [
+          {
+            name: "Marc",
+            avatar: "https://example.com/marc.png",
+            color: "purple",
+          },
+        ];
+      }}
+
+      // Other props
+      // ...
+    >
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+##### Accessing user data
+
+You can access any values set within `resolveUsers` with the
+[`useUser`](/docs/api-reference/liveblocks-react#useUser) hook.
+
+```tsx
+import { useUser } from "@liveblocks/react/suspense";
+
+function Component() {
+  const user = useUser("marc@example.com");
+
+  // { name: "Marc", avatar: "https://...", ... }
+  console.log(user);
+}
+```
+
+#### resolveRoomsInfo [#LiveblocksProviderResolveRoomsInfo]
+
+When using [Notifications](/docs/products/comments/notifications) with
+[Comments](/docs/products/comments), room IDs will be used to contextualize
+notifications (e.g. “Chris mentioned you in _room-id_”) in the
+[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
+component. To replace room IDs with more fitting names (e.g. document names,
+“Chris mentioned you in _Document A_”), you can provide a resolver function to
+the `resolveRoomsInfo` option in [`LiveblocksProvider`](#LiveblocksProvider).
+
+This resolver function will receive a list of room IDs and should return a list
+of room info objects of the same size and in the same order.
+
+```tsx
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
+
+function App() {
+  return (
+    <LiveblocksProvider
+      resolveRoomsInfo={async ({ roomIds }) => {
+        const documentsData = await __getDocumentsFromDB__(roomIds);
+
+        return documentsData.map((documentData) => ({
+          name: documentData.name,
+          // url: documentData.url,
+        }));
+      }}
+
+      // Other props
+      // ...
+    >
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+In addition to the room’s name, you can also provide a room’s URL as the `url`
+property. If you do so, the
+[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
+component will automatically use it. It’s possible to use an inbox
+notification’s `roomId` property to construct a room’s URL directly in React and
+set it on
+[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
+via `href`, but the room ID might not be enough for you to construct the URL ,
+you might need to call your backend for example. In that case, providing it via
+`resolveRoomsInfo` is the preferred way.
+
+#### resolveMentionSuggestions [#LiveblocksProviderResolveMentionSuggestions]
+
+To enable creating mentions in [Comments](/docs/products/comments), you can
+provide a resolver function to the `resolveMentionSuggestions` option in
+[`LiveblocksProvider`](#LiveblocksProvider). These mentions will be displayed in
+the [`Composer`](/docs/api-reference/liveblocks-react-ui#Composer) component.
+
+This resolver function will receive the mention currently being typed (e.g. when
+writing “@jane”, `text` will be `jane`) and should return a list of user IDs
+matching that text. This function will be called every time the text changes but
+with some debouncing.
+
+```tsx
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
+
+function App() {
+  return (
+    <LiveblocksProvider
+      resolveMentionSuggestions={async ({ text, roomId }) => {
+        const workspaceUsers = await __getWorkspaceUsersFromDB__(roomId);
+
+        if (!text) {
+          // Show all workspace users by default
+          return __getUserIds__(workspaceUsers);
+        } else {
+          const matchingUsers = __findUsers__(workspaceUsers, text);
+          return __getUserIds__(matchingUsers);
+        }
+      }}
+
+      // Other props
+      // ...
+    >
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+#### LiveblocksProvider for Node.js [#LiveblocksProviderNode]
+
+To use `@liveblocks/client` in Node.js, you need to provide [`WebSocket`][] and
+[`fetch`][] polyfills. As polyfills, we recommend installing [`ws`][] and
+[`node-fetch`][].
+
+```bash
+npm install ws node-fetch
+```
+
+Then, pass them to the `LiveblocksProvider` polyfill option as below.
+
+```tsx
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
+import fetch from "node-fetch";
+import WebSocket from "ws";
+
+function App() {
+  return (
+    <LiveblocksProvider
+      polyfills={{
+        fetch,
+        WebSocket,
+      }}
+
+      // Other props
+      // ...
+    >
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+Note that `node-fetch` v3+
+[does not support CommonJS](https://github.com/node-fetch/node-fetch/blob/main/docs/v3-UPGRADE-GUIDE.md#converted-to-es-module).
+If you are using CommonJS, downgrade `node-fetch` to v2.
+
+#### LiveblocksProvider for React Native [#LiveblocksProviderReactNative]
+
+To use `@liveblocks/client` with [React Native](https://reactnative.dev/), you
+need to add an [`atob`][] polyfill. As a polyfill, we recommend installing
+[`base-64`][].
+
+```bash
+npm install base-64
+```
+
+Then you can pass the `decode` function to our `atob` polyfill option when you
+create the client.
+
+```ts
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
+import { decode } from "base-64";
+
+function App() {
+  return (
+    <LiveblocksProvider
+      polyfills={{
+        atob: decode,
+      }}
+
+      // Other props
+      // ...
+    >
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+
+```
+
+### createLiveblocksContext
+
+<Banner>
+
+This used to be the default way to start your app, but now it’s recommend for
+advanced usage only. We generally recommend using [`LiveblocksProvider`][] and
+following [typing your data with the Liveblocks interface](#Typing-your-data],
+unless you need to define multiple room types in your application.
+
+</Banner>
+
+Creates a [`LiveblocksProvider`][] and a set of typed hooks. Note that any
+`LiveblocksProvider` created in this way takes no props, because it uses
+settings from the `client` instead. We recommend using it in
+`liveblocks.config.ts` and re-exporting your typed hooks like below.
+
+While [`createRoomContext`](#createRoomContext) offers APIs for interacting with
+rooms (e.g. Presence, Storage, and Comments),
+[`createLiveblocksContext`](#createLiveblocksContext) offers APIs for
+interacting with Liveblocks features that are not tied to a specific room (e.g.
+Notifications).
+
+```tsx file="liveblocks.config.ts"
+import { createClient } from "@liveblocks/client";
+import { createRoomContext, createLiveblocksContext } from "@liveblocks/react";
+
+const client = createClient({
+  // publicApiKey: "",
+  // authEndpoint: "/api/liveblocks-auth",
+  // throttle: 100,
+});
+
+// ...
+
+export const { RoomProvider } = createRoomContext(client);
+
+export const {
+  LiveblocksProvider,
+  useInboxNotifications,
+
+  // Other hooks
+  // ...
+} = createLiveblocksContext(client);
+```
+
+### useClient [@badge=LiveblocksProvider]
+
+Returns the [`client`][/docs/api-reference/liveblocks-client#Client] of the
+nearest [`LiveblocksProvider`][] above in the React component tree.
+
+```ts
+import { useClient } from "@liveblocks/react/suspense";
+
+const client = useClient();
+```
+
 ## Room
+
+### RoomProvider
+
+Makes a [`Room`][] available in the component hierarchy below. Joins the room
+when the component is mounted, and automatically leaves the room when the
+component is unmounted. When using
+[Realtime APIs](/docs/products/realtime-apis), initial Presence values for each
+user, and Storage values for the room can be set.
+
+```tsx
+import { RoomProvider } from "@liveblocks/react/suspense";
+
+function App() {
+  return (
+    <RoomProvider id="my-room-id" initialPresence={{}}>
+      {/* children */}
+    </RoomProvider>
+  );
+}
+```
+
+<PropertiesList title="Props">
+  <PropertiesListItem name="id" type="string" required>
+    The unique ID for the current room. `RoomProvider` will join this room when
+    it loads. If the room doesn’t exist already it will automatically create the
+    room first then join. After setting up
+    [authentication](/docs/authentication) for your app, it can helpful to
+    decide on a naming pattern for your room IDs.
+  </PropertiesListItem>
+  <PropertiesListItem name="initialPresence" type="JsonObject" required>
+    The initial Presence of the user entering the room. Each user has their own
+    presence, and this is readable for all other connected users. A user’s
+    Presence resets every time they disconnect. This object must be
+    JSON-serializable. This value is ignored after the first render. [Learn
+    more](#setting-initial-presence).
+  </PropertiesListItem>
+  <PropertiesListItem name="initialStorage" type="LsonObject">
+    The initial Storage structure for the room when it’s joined for the first
+    time. This is only set a single time, when the room has not yet been
+    populated. This object must contain [conflict-free live
+    structures](/docs/api-reference/liveblocks-client#Storage). This value is
+    ignored after the first render, and if Storage for the current room has
+    already been created. [Learn more](#setting-initial-storage).
+  </PropertiesListItem>
+  <PropertiesListItem name="autoConnect" type="boolean" defaultValue="true">
+    Whether the room immediately connects to Liveblocks servers. This value is
+    ignored after the first render.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Setting initial Presence [#setting-initial-presence]
+
+Presence is used for storing temporary user-based values, such as a user’s
+cursor coordinates, or their current selection. Each user has their own
+presence, and this is readable for all other connected users. Set your initial
+Presence value by using `initialPresence`.
+
+```tsx highlight="7-12"
+import { RoomProvider } from "@liveblocks/react/suspense";
+
+function App() {
+  return (
+    <RoomProvider
+      id="my-room"
+      initialPresence={{
+        cursor: null,
+        colors: ["red", "purple"],
+        selection: {
+          id: 72426,
+        }}
+    >
+      {/* children */}
+    </RoomProvider>
+  );
+}
+```
+
+Each user’s Presence resets every time they disconnect, as this is only meant
+for temporary data. Any JSON-serializable object is allowed (the `JsonObject`
+type).
+
+#### Setting initial Storage [#setting-initial-storage]
+
+Storage is used to store permanent data that’s used in your application, such as
+shapes on a whiteboard, nodes on a flowchart, or text in a form. The first time
+a room is entered, you can set an initial value by using `initialStorage`. Note
+that this value is only read a single time.
+
+```tsx highlight="9-15"
+import { LiveList, LiveObject, LiveMap } from "@liveblocks/client";
+import { RoomProvider } from "@liveblocks/react/suspense";
+
+function App() {
+  return (
+    <RoomProvider
+      id="my-room"
+      initialPresence={}
+      initialStorage={{
+        title: "Untitled",
+        names: new LiveList(["Steven", "Guillaume"]),
+        shapes: new LiveMap([
+          ["g9shu0", new LiveObject({ type: "rectangle", color: "red" })],
+          ["djs3g5", new LiveObject({ type: "circle", color: "yellow" })],
+        ]),
+      }}
+    >
+      {/* children */}
+    </RoomProvider>
+  );
+}
+```
+
+Any
+[conflict-free live structures](/docs/api-reference/liveblocks-client#Storage)
+and JSON-serializable objects are allowed (the `LsonObject` type).
 
 ### createRoomContext
 
-Creates a [`RoomProvider`][] and a set of typed hooks. We recommend using it in
-`liveblocks.config.ts` and re-exporting your typed hooks like below.
+<Banner>
 
-```tsx file="liveblocks.config.ts"
+This used to be the default way to start your app, but now it’s recommend for
+advanced usage only. We generally recommend using [`LiveblocksProvider`][] and
+following [typing your data with the Liveblocks interface](#Typing-your-data],
+unless you need to define multiple room types in your application.
+
+</Banner>
+
+Creates a [`RoomProvider`][] and a set of typed hooks to use in your app. Note
+that any `RoomProvider` created in this way does not need to be nested in
+[`LiveblocksProvider`][], as it already has access to the `client`. We generally
+recommend typing your app using the newer method instead. When using
+`createRoomContext` it can be helpful to use it in `liveblocks.config.ts` and
+re-export your typed hooks as below.
+
+```tsx file="liveblocks.config.ts" highlight="15-23"
 import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
 const client = createClient({
   // publicApiKey: "",
   // authEndpoint: "/api/liveblocks-auth",
-  // throttle: 100,
+});
+
+type Presence = {};
+type Storage = {};
+type UserMeta = {};
+type RoomEvent = {};
+type ThreadMetadata = {};
+
+export const {
+  RoomProvider,
+  useMyPresence,
+
+  // Other hooks
+  // ...
+} = createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(
+  client
+);
+```
+
+#### Suspense with createRoomContext [#createRoomContext-Suspense]
+
+To use the React suspense version of our hooks with `createRoomContext`, you can
+export from the `suspense` property instead.
+
+```tsx file="liveblocks.config.ts" highlight="16-22"
+import { createClient } from "@liveblocks/client";
+import { createRoomContext } from "@liveblocks/react";
+
+const client = createClient({
+  // publicApiKey: "",
+  // authEndpoint: "/api/liveblocks-auth",
+});
+
+type Presence = {};
+type Storage = {};
+type UserMeta = {};
+type RoomEvent = {};
+type ThreadMetadata = {};
+
+export const {
+  suspense: {
+    RoomProvider,
+    useMyPresence,
+
+    // Other suspense hooks
+    // ...
+  },
+} = createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(
+  client
+);
+```
+
+#### Typing createRoomContext
+
+To type your hooks, you can pass multiple different types to
+`createRoomContext`. A full explanation is in the code snippet below.
+
+```tsx file="liveblocks.config.ts" isCollapsable isCollapsed
+import { createClient } from "@liveblocks/client";
+import { createRoomContext } from "@liveblocks/react";
+
+const client = createClient({
+  // publicApiKey: "",
+  // authEndpoint: "/api/liveblocks-auth",
 });
 
 // Presence represents the properties that exist on every user in the Room
@@ -68,69 +1186,14 @@ export const {
   RoomProvider,
   useMyPresence,
   useStorage,
-  /* ...all the other hooks you’re using... */
+
+  // Other hooks
+  // ...
 } = createRoomContext<
   Presence,
   Storage
   /* UserMeta, RoomEvent, ThreadMetadata */
 >(client);
-```
-
-### RoomProvider
-
-Makes a [`Room`] available in the component hierarchy below. Joins the room when
-the component is mounted, and automatically leaves the room when the component
-is unmounted.
-
-- `initialPresence` - The initial Presence to use for the User currently
-  entering the Room. Presence data belongs to the current User and is readable
-  to all other Users in the room while the current User is connected to the
-  Room. Must be serializable to JSON.
-- `initialStorage` (optional) - The initial Storage structure to create when a
-  new Room is entered for the first time. Storage data is shared and belongs to
-  the Room itself. It persists even after all Users leave the room, and is
-  mutable by every client. Must either contain Live structures (e.g.
-  `new LiveList()`, `new LiveObject({ a: 1 })`, etc.) or be serializable to
-  JSON.
-- `autoConnect` (optional) - Whether or not the room should automatically
-  connect to Liveblocks servers when the RoomProvider is mounted. By default
-  it’s set to `typeof window !== "undefined"`, meaning the RoomProvider attempts
-  to connect to Liveblocks servers only on the client side.
-
-The `initialPresence`, `initialStorage` and `autoConnect` props are ignored
-after the first render, so changes to the initial value argument won’t have an
-effect.
-
-```tsx
-import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
-import { RoomProvider } from "./liveblocks.config";
-
-function AppRoot() {
-  return (
-    <RoomProvider
-      id="my-room"
-      // 😎 Replace with your own data!
-      initialPresence={{ cursor: { x: 0, y: 0 } }}
-      // 😎 Replace with your own data!
-      initialStorage={() => ({
-        animals: new LiveList(["🦁", "🦊", "🐵"]),
-
-        mathematician: new LiveObject({
-          firstName: "Ada",
-          lastName: "Lovelace",
-        }),
-
-        fruitsByName: new LiveMap([
-          ["apple", "🍎"],
-          ["banana", "🍌"],
-          ["cherry", "🍒"],
-        ]),
-      })}
-    >
-      {/* children */}
-    </RoomProvider>
-  );
-}
 ```
 
 ### useRoom [@badge=RoomProvider]
@@ -139,7 +1202,7 @@ Returns the [`Room`][] of the nearest [`RoomProvider`][] above in the React
 component tree.
 
 ```ts
-import { useRoom } from "./liveblocks.config";
+import { useRoom } from "@liveblocks/react/suspense";
 
 const room = useRoom();
 ```
@@ -149,7 +1212,7 @@ const room = useRoom();
 Listen to potential room connection errors.
 
 ```ts
-import { useErrorListener } from "./liveblocks.config";
+import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
   switch (error.code) {
@@ -183,7 +1246,7 @@ Returns the current WebSocket connection status of the room, and will re-render
 your component whenever it changes.
 
 ```ts
-import { useStatus } from "./liveblocks.config";
+import { useStatus } from "@liveblocks/react/suspense";
 
 const status = useStatus();
 ```
@@ -271,68 +1334,6 @@ Automatically unsubscribes when the component is unmounted.
 
 For a demonstration of this behavior, see our [connection status example][].
 
-## Liveblocks
-
-### createLiveblocksContext
-
-Creates a [`LiveblocksProvider`][] and a set of typed hooks. We recommend using
-it in `liveblocks.config.ts` and re-exporting your typed hooks like below.
-
-While [`createRoomContext`](#createRoomContext) offers APIs for interacting with
-rooms (e.g. Presence, Storage, and Comments),
-[`createLiveblocksContext`](#createLiveblocksContext) offers APIs for
-interacting with Liveblocks features that are not tied to a specific room (e.g.
-Notifications).
-
-```tsx file="liveblocks.config.ts"
-import { createClient } from "@liveblocks/client";
-import { createRoomContext, createLiveblocksContext } from "@liveblocks/react";
-
-const client = createClient({
-  // publicApiKey: "",
-  // authEndpoint: "/api/liveblocks-auth",
-  // throttle: 100,
-});
-
-// ...
-
-export const { RoomProvider } = createRoomContext(client);
-
-export const {
-  LiveblocksProvider,
-  useInboxNotifications,
-  /* ...all the other hooks you’re using... */
-} = createLiveblocksContext(client);
-```
-
-### LiveblocksProvider
-
-Makes Liveblocks features outside of rooms (e.g. Notifications) available in the
-component hierarchy below.
-
-Unlike [`RoomProvider`][], `LiveblocksProvider` doesn’t call Liveblocks servers
-when mounted, so it can (and should) live higher in the component tree of your
-app.
-
-```tsx
-import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
-import { LiveblocksProvider } from "./liveblocks.config";
-
-function AppRoot() {
-  return <LiveblocksProvider>{/* children */}</LiveblocksProvider>;
-}
-```
-
-<Banner title="Different API in 0.18 and earlier versions">
-
-In 0.18 and earlier versions, a different `LiveblocksProvider` API was
-available. It was exported from `@liveblocks/react` directly instead of
-`createLiveblocksContext`, and accepted the
-[`Client`](/docs/api-reference/liveblocks-client#Client) via the `client` prop.
-This previous API has been deprecated in 0.17 and removed in 0.18.
-
-</Banner>
-
 ## Presence
 
 <Banner title="Need help troubleshooting presence?">
@@ -353,7 +1354,7 @@ presence object to `updateMyPresence`, and any changes will be merged into the
 current presence. It will not replace the entire presence object.
 
 ```ts
-import { useMyPresence } from "./liveblocks.config";
+import { useMyPresence } from "@liveblocks/react/suspense";
 
 const [myPresence, updateMyPresence] = useMyPresence();
 updateMyPresence({ x: 0 });
@@ -391,7 +1392,7 @@ presence object to `updateMyPresence`, and any changes will be merged into the
 current presence. It will not replace the entire presence object.
 
 ```ts
-import { useUpdateMyPresence } from "./liveblocks.config";
+import { useUpdateMyPresence } from "@liveblocks/react/suspense";
 
 const updateMyPresence = useUpdateMyPresence();
 
@@ -411,7 +1412,7 @@ Returns the current user once it is connected to the room, and automatically
 subscribes to updates to the current user.
 
 ```ts
-import { useSelf } from "./liveblocks.config";
+import { useSelf } from "@liveblocks/react/suspense";
 
 const currentUser = useSelf();
 // {
@@ -622,7 +1623,7 @@ Returns a callback that lets you broadcast custom events to other users in the
 room.
 
 ```ts highlight="3-5"
-import { useBroadcastEvent } from "./liveblocks.config";
+import { useBroadcastEvent } from "@liveblocks/react/suspense";
 
 // On client A
 const broadcast = useBroadcastEvent();
@@ -646,7 +1647,7 @@ the user that sent the message. If an event was sent from the
 REST API, `connectionId` will be `-1`.
 
 ```ts highlight="7-13"
-import { useEventListener } from "./liveblocks.config";
+import { useEventListener } from "@liveblocks/react/suspense";
 
 // On client A
 const broadcast = useBroadcastEvent();
@@ -670,23 +1671,23 @@ Automatically unsubscribes when the component is unmounted.
 
 ## Storage
 
-<Banner title="Need help troubleshooting storage?">
+Each room contains Storage, a conflict-free data store that multiple users can
+edit at the same time. When users make edits simultaneously, conflicts are
+resolved automatically, and each user will see the same state. Storage is ideal
+for storing permanent document state, such as shapes on a canvas, notes on a
+whiteboard, or cells in a spreadsheet.
 
-Try the [Liveblocks DevTools extension](/devtools) to visualize your
-collaborative experiences as you build them, in realtime.
+### Data structures
 
-</Banner>
-
-The room’s storage is a conflicts-free state that multiple users can edit at the
-same time. It persists even after everyone leaves the room. Liveblocks provides
-3 data structures that can be nested to create the state that you want.
+Storage provides three different conflict-free data structures, which you can
+use to build your application. All structures are permanent and persist when all
+users have left the room, unlike [Presence](/docs/products/presence) which is
+temporary.
 
 - [`LiveObject`][] - Similar to JavaScript object. Use this for storing records
   with fixed key names and where the values don’t necessarily have the same
-  types. For example, a `Person` with a `name` (string) and an `age` (number)
-  field.
-
-  If multiple clients update the same property simultaneously, the last
+  types. For example, a `Person` with a `name: string` and an `age: number`
+  field. If multiple clients update the same property simultaneously, the last
   modification received by the Liveblocks servers is the winner.
 
 - [`LiveList`][] - An ordered collection of items synchronized across clients.
@@ -698,8 +1699,141 @@ same time. It persists even after everyone leaves the room. Liveblocks provides
   by their name. If multiple users update the same property simultaneously, the
   last modification received by the Liveblocks servers is the winner.
 
-`@liveblocks/react` provides a set of hooks that let you interact with the
-room’s storage.
+### Typing Storage [#typing-storage]
+
+To type the Storage values you receive, make sure to set your `Storage` type.
+
+```ts
+import { LiveList } from "@liveblocks/client";
+
+declare global {
+  interface Liveblocks {
+    Storage: {
+      animals: LiveList<string>;
+    };
+  }
+}
+```
+
+You can then set an initial value in [`RoomProvider`][].
+
+```tsx highlight="9"
+import { LiveList } from "@liveblocks/client";
+import { RoomProvider } from "@liveblocks/react/suspense";
+
+function App() {
+  return (
+    <RoomProvider
+      id="my-room-name"
+      initialPresence={{}}
+      initialStorage={{ animals: new LiveList(["Fido"]) }}
+    >
+      {/* children */}
+    </RoomProvider>
+  );
+}
+```
+
+The type received in your Storage will match the type passed. Learn more under
+[typing your data](#typing-your-data).
+
+```tsx
+import { useMutation } from "@liveblocks/react/suspense";
+
+function App() {
+  const addAnimal = useMutation(({ storage }) => {
+    const animals = storage.get("animals");
+
+    // LiveList<["Fido"]>
+    console.log(animals);
+
+    animals.push("Felix");
+
+    // LiveList<["Fido", "Felix"]>
+    console.log(animals);
+  });
+
+  return <button onClick={addAnimal}>Add animal</button>;
+}
+```
+
+[`useStorage`][] will return an immutable copy of the data, for example a
+`LiveList` is converted to an `array`, which makes it easy to render.
+
+```tsx
+import { useStorage } from "@liveblocks/react/suspense";
+
+function App() {
+  const animals = useStorage((root) => root.animals);
+
+  // ["Fido", "Felix"]
+  console.log(animals);
+
+  return (
+    <ul>
+      {animals.map((animal) => (
+        <li key={animal}>{animal}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+### Nesting data structures
+
+All Storage data structures can be nested, allowing you to create complex trees
+of conflict-free data.
+
+```ts
+import { LiveObject, LiveList, LiveMap } from "@liveblocks/client";
+
+type Person = LiveObject<{
+  name: string;
+  pets: LiveList<string>;
+}>;
+
+declare global {
+  interface Liveblocks {
+    Storage: {
+      people: LiveMap<string, Person>;
+    };
+  }
+}
+```
+
+Here’s an example of setting `initialStorage` for this type.
+
+```tsx highlight="10-16"
+import { LiveObject, LiveList, LiveMap } from "@liveblocks/client";
+import { RoomProvider } from "@liveblocks/react/suspense";
+
+function App() {
+  return (
+    <RoomProvider
+      id="my-room-name"
+      initialPresence={{}}
+      initialStorage={{
+        people: new LiveMap([
+          "alicia",
+          new LiveObject({
+            name: "Alicia",
+            pets: new LiveList(["Fido", "Felix"]),
+          }),
+        ]),
+      }}
+    >
+      {/* children */}
+    </RoomProvider>
+  );
+}
+```
+
+<Banner title="Need help troubleshooting Storage?">
+
+Get the [Liveblocks DevTools extension](/devtools) to develop and debug your
+application as you build it.
+
+</Banner>
 
 ### useStorage [@badge=RoomProvider]
 
@@ -776,7 +1910,7 @@ has run. Every modification made during the batch is merged into a single
 history item (undo/redo).
 
 ```tsx
-import { useBatch } from "./liveblocks.config";
+import { useBatch } from "@liveblocks/react/suspense";
 
 const batch = useBatch();
 batch(() => {
@@ -799,7 +1933,7 @@ batch(() => /*... */);
 Returns the room’s history. See [`Room.history`][] for more information.
 
 ```ts
-import { useHistory } from "./liveblocks.config";
+import { useHistory } from "@liveblocks/react/suspense";
 
 const { undo, redo, pause, resume } = useHistory();
 ```
@@ -810,7 +1944,7 @@ Returns a function that undoes the last operation executed by the current
 client. It does not impact operations made by other clients.
 
 ```ts
-import { useUndo } from "./liveblocks.config";
+import { useUndo } from "@liveblocks/react/suspense";
 
 const undo = useUndo();
 ```
@@ -821,7 +1955,7 @@ Returns a function that redoes the last operation executed by the current
 client. It does not impact operations made by other clients.
 
 ```ts
-import { useRedo } from "./liveblocks.config";
+import { useRedo } from "@liveblocks/react/suspense";
 
 const redo = useRedo();
 ```
@@ -831,7 +1965,7 @@ const redo = useRedo();
 Returns whether there are any operations to undo.
 
 ```ts
-import { useCanUndo, useUpdateMyPresence } from "./liveblocks.config";
+import { useCanUndo, useUpdateMyPresence } from "@liveblocks/react/suspense";
 
 const updateMyPresence = useUpdateMyPresence();
 const canUndo = useCanUndo();
@@ -846,7 +1980,11 @@ updateMyPresence({ y: 0 });
 Returns whether there are any operations to redo.
 
 ```ts
-import { useCanRedo, useUndo, useUpdateMyPresence } from "./liveblocks.config";
+import {
+  useCanRedo,
+  useUndo,
+  useUpdateMyPresence,
+} from "@liveblocks/react/suspense";
 
 const updateMyPresence = useUpdateMyPresence();
 const undo = useUndo();
@@ -863,6 +2001,8 @@ undo();
 Creates a callback function that lets you mutate Liveblocks state.
 
 ```tsx
+import { useMutation } from "@liveblocks/react/suspense";
+
 const fillWithRed = useMutation(
   // Mutation context is passed as the first argument
   ({ storage, setMyPresence }) => {
@@ -991,7 +2131,7 @@ the dependency arrays of your `useMutation` calls:
 Returns the threads within the current room.
 
 ```tsx
-import { useThreads } from "./liveblocks.config";
+import { useThreads } from "@liveblocks/react/suspense";
 
 const { threads, error, isLoading } = useThreads();
 ```
@@ -1031,6 +2171,8 @@ return a loading state and will throw when there’s an error.
 Returns the subscription status of a thread.
 
 ```tsx
+import { useThreadSubscription } from "@liveblocks/react/suspense";
+
 const { status, unreadSince } = useThreadSubscription("th_xxx");
 ```
 
@@ -1040,6 +2182,8 @@ Returns a function that creates a thread with an initial comment, and optionally
 some metadata.
 
 ```tsx
+import { useCreateThread } from "@liveblocks/react/suspense";
+
 const createThread = useCreateThread();
 const thread = createThread({ body: {}, metadata: {} });
 ```
@@ -1056,6 +2200,8 @@ To delete an existing metadata property, set its value to `null`. Passing
 </Banner>
 
 ```tsx
+import { useEditThreadMetadata } from "@liveblocks/react/suspense";
+
 const editThreadMetadata = useEditThreadMetadata();
 const thread = editThreadMetadata({ threadId: "th_xxx", metadata: {} });
 ```
@@ -1065,6 +2211,8 @@ const thread = editThreadMetadata({ threadId: "th_xxx", metadata: {} });
 Returns a function that marks a thread as read.
 
 ```tsx
+import { useMarkThreadAsRead } from "@liveblocks/react/suspense";
+
 const markThreadAsRead = useMarkThreadAsRead();
 markThreadAsRead("th_xxx");
 ```
@@ -1074,6 +2222,8 @@ markThreadAsRead("th_xxx");
 Returns a function that adds a comment to a thread.
 
 ```tsx
+import { useCreateComment } from "@liveblocks/react/suspense";
+
 const createComment = useCreateComment();
 const comment = createComment({ threadId: "th_xxx", body: {} });
 ```
@@ -1083,6 +2233,8 @@ const comment = createComment({ threadId: "th_xxx", body: {} });
 Returns a function that edits a comment’s body.
 
 ```tsx
+import { useEditComment } from "@liveblocks/react/suspense";
+
 const editComment = useEditComment();
 const comment = editComment({
   threadId: "th_xxx",
@@ -1097,6 +2249,8 @@ Returns a function that deletes a comment. If it is the last non-deleted
 comment, the thread also gets deleted.
 
 ```tsx
+import { useDeleteComment } from "@liveblocks/react/suspense";
+
 const deleteComment = useDeleteComment();
 deleteComment({ threadId: "th_xxx", commentId: "cm_xxx" });
 ```
@@ -1106,6 +2260,8 @@ deleteComment({ threadId: "th_xxx", commentId: "cm_xxx" });
 Returns a function that adds a reaction to a comment.
 
 ```tsx
+import { useAddReaction } from "@liveblocks/react/suspense";
+
 const addReaction = useAddReaction();
 addReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
 ```
@@ -1115,6 +2271,8 @@ addReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
 Returns a function that removes a reaction from a comment.
 
 ```tsx
+import { useRemoveReaction } from "@liveblocks/react/suspense";
+
 const removeReaction = useRemoveReaction();
 removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
 ```
@@ -1134,6 +2292,8 @@ to hear from you.
 Returns the inbox notifications for the current user.
 
 ```tsx
+import { useInboxNotifications } from "@liveblocks/react/suspense";
+
 const { inboxNotifications, error, isLoading } = useInboxNotifications();
 ```
 
@@ -1145,6 +2305,8 @@ return a loading state and will throw when there’s an error.
 Returns the number of unread inbox notifications for the current user.
 
 ```tsx
+import { useUnreadInboxNotificationsCount } from "@liveblocks/react/suspense";
+
 const { count, error, isLoading } = useUnreadInboxNotificationsCount();
 ```
 
@@ -1156,6 +2318,8 @@ return a loading state and will throw when there’s an error.
 Returns a function that marks an inbox notification as read.
 
 ```tsx
+import { useMarkInboxNotificationAsRead } from "@liveblocks/react/suspense";
+
 const markInboxNotificationAsRead = useMarkInboxNotificationAsRead();
 markInboxNotificationAsRead("in_xxx");
 ```
@@ -1165,6 +2329,8 @@ markInboxNotificationAsRead("in_xxx");
 Returns a function that marks all inbox notifications as read.
 
 ```tsx
+import { useMarkAllInboxNotificationsAsRead } from "@liveblocks/react/suspense";
+
 const markAllInboxNotificationsAsRead = useMarkAllInboxNotificationsAsRead();
 markAllInboxNotificationsAsRead();
 ```
@@ -1174,6 +2340,8 @@ markAllInboxNotificationsAsRead();
 Returns the thread associated with a `"thread"` inbox notification.
 
 ```tsx
+import { useInboxNotificationThread } from "@liveblocks/react/suspense";
+
 const thread = useInboxNotificationThread("in_xxx");
 ```
 
@@ -1183,6 +2351,8 @@ Returns the user’s notification settings for the current room and a function t
 update them.
 
 ```tsx
+import { useRoomNotificationSettings } from "@liveblocks/react/suspense";
+
 const [{ settings }, updateSettings] = useRoomNotificationSettings();
 ```
 
@@ -1195,6 +2365,8 @@ Use this if you don’t need the current user’s notification settings in your
 component, but you need to update them (e.g. an unsubscribe button).
 
 ```tsx
+import { useUpdateRoomNotificationSettings } from "@liveblocks/react/suspense";
+
 const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
 updateRoomNotificationSettings({ threads: "all" });
 ```
@@ -1206,7 +2378,7 @@ updateRoomNotificationSettings({ threads: "all" });
 Returns user info from a given user ID.
 
 ```tsx
-import { useUser } from "./liveblocks.config";
+import { useUser } from "@liveblocks/react/suspense";
 
 const { user, error, isLoading } = useUser("user-id");
 ```
@@ -1226,7 +2398,7 @@ To use `useUser`, you should provide a resolver function to the
 Returns room info from a given room ID.
 
 ```tsx
-import { useRoomInfo } from "./liveblocks.config";
+import { useRoomInfo } from "@liveblocks/react/suspense";
 
 const { info, error, isLoading } = useRoomInfo("room-id");
 ```
@@ -1240,6 +2412,183 @@ To use `useRoomInfo`, you should provide a resolver function to the
 [`resolveRoomsInfo`][] option in [`createClient`][].
 
 </Banner>
+
+## TypeScript
+
+### Typing your data
+
+It’s possible to have automatic types flow through your application by defining
+a global `Liveblocks` interface. We recommend doing this in a
+`liveblocks.config.ts` file in the root of your app, so it’s easy to keep track
+of your types. Each type (`Presence`, `Storage`, etc.), is optional, but it’s
+recommended to make use of them.
+
+```ts file="liveblocks.config.ts"
+declare global {
+  interface Liveblocks {
+    // Each user's Presence, for useMyPresence, useOthers, etc.
+    Presence: {};
+
+    // The Storage tree for the room, for useMutation, useStorage, etc.
+    Storage: {};
+
+    UserMeta: {
+      id: string;
+      // Custom user info set when authenticating with a secret key
+      info: {};
+    };
+
+    // Custom events, for useBroadcastEvent, useEventListener
+    RoomEvent: {};
+
+    // Custom metadata set on threads, for useThreads, useCreateThread, etc.
+    ThreadMetadata: {};
+
+    // Custom room info set with resolveRoomsInfo, for useRoomInfo
+    RoomInfo: {};
+
+    // Custom activities data for custom notification kinds
+    ActivitiesData: {};
+  }
+}
+
+// Necessary if you have no imports/exports
+export {};
+```
+
+Here are some example values that might be used.
+
+```ts file="liveblocks.config.ts"
+import { LiveList } from "@liveblocks/client";
+
+declare global {
+  interface Liveblocks {
+    // Each user's Presence, for useMyPresence, useOthers, etc.
+    Presence: {
+      // Example, real-time cursor coordinates
+      cursor: { x: number; y: number };
+    };
+
+    // The Storage tree for the room, for useMutation, useStorage, etc.
+    Storage: {
+      // Example, a conflict-free list
+      animals: LiveList<string>;
+    };
+
+    UserMeta: {
+      id: string;
+      // Custom user info set when authenticating with a secret key
+      info: {
+        // Example properties, for useSelf, useUser, useOthers, etc.
+        name: string;
+        avatar: string;
+      };
+    };
+
+    // Custom events, for useBroadcastEvent, useEventListener
+    // Example has two events, using a union
+    RoomEvent: { type: "PLAY" } | { type: "REACTION"; emoji: "🔥" };
+
+    // Custom metadata set on threads, for useThreads, useCreateThread, etc.
+    ThreadMetadata: {
+      // Example, attaching coordinates to a thread
+      x: number;
+      y: number;
+    };
+
+    // Custom room info set with resolveRoomsInfo, for useRoomInfo
+    RoomInfo: {
+      // Example, rooms with a title and url
+      title: string;
+      url: string;
+    };
+
+    // Custom activities data for custom notification kinds
+    ActivitiesData: {
+      // Example, a custom $alert kind
+      $alert: {
+        title: string;
+        message: string;
+      };
+    };
+  }
+}
+
+// Necessary if you have no imports/exports
+export {};
+```
+
+### Typing with createRoomContext
+
+Before Liveblocks 2.0, it was recommended to create your hooks using
+[`createRoomContext`][], and manually pass your types to this function. This is
+no longer [the recommended method](#Typing-your-data) for setting up Liveblocks,
+but it can still be helpful, for example you can use `createRoomContext`
+multiple times to create different room types, each with their own correctly
+typed hooks.
+
+```tsx file="liveblocks.config.ts" isCollapsable isCollapsed
+import { createClient } from "@liveblocks/client";
+import { createRoomContext } from "@liveblocks/react";
+
+const client = createClient({
+  // publicApiKey: "",
+  // authEndpoint: "/api/liveblocks-auth",
+});
+
+// Presence represents the properties that exist on every user in the Room
+// and that will automatically be kept in sync. Accessible through the
+// `user.presence` property. Must be JSON-serializable.
+type Presence = {
+  // cursor: { x: number, y: number } | null,
+  // ...
+};
+
+// Optionally, Storage represents the shared document that persists in the
+// Room, even after all users leave. Fields under Storage typically are
+// LiveList, LiveMap, LiveObject instances, for which updates are
+// automatically persisted and synced to all connected clients.
+type Storage = {
+  // animals: LiveList<string>,
+  // ...
+};
+
+// Optionally, UserMeta represents static/readonly metadata on each user, as
+// provided by your own custom auth back end (if used). Useful for data that
+// will not change during a session, like a user's name or avatar.
+// type UserMeta = {
+//   id?: string,  // Accessible through `user.id`
+//   info?: Json,  // Accessible through `user.info`
+// };
+
+// Optionally, the type of custom events broadcast and listened to in this
+// room. Use a union for multiple events. Must be JSON-serializable.
+// type RoomEvent = {};
+
+// Optionally, when using Comments, ThreadMetadata represents metadata on
+// each thread. Can only contain booleans, strings, and numbers.
+// export type ThreadMetadata = {
+//   resolved: boolean;
+//   quote: string;
+//   time: number;
+// };
+
+export const {
+  RoomProvider,
+  useMyPresence,
+  useStorage,
+
+  // Other hooks
+  // ...
+} = createRoomContext<
+  Presence,
+  Storage
+  /* UserMeta, RoomEvent, ThreadMetadata */
+>(client);
+```
+
+To upgrade to Liveblocks 2.0 and the new typing system, follow the
+[2.0 migration guide](/docs/platform/upgrading/2.0).
 
 ## Helpers
 
@@ -1467,133 +2816,8 @@ And the following timeline:
 - Because the previous value and this value are different, the component will
   rerender, seeing the updated value.
 
-## Adopting Suspense [#suspense] [@keywords=["null"]]
-
-Starting with 0.18, you can use Liveblocks hooks with React’s
-[Suspense](https://reactjs.org/docs/react-api.html#suspense).
-
-The benefit of using Suspense with Liveblocks is that the hooks will no longer
-return `null` when Liveblocks is still loading. Instead, you can let your
-Suspense boundary handle the still-loading case centrally by showing the
-fallback state.
-
-This can turn code like this:
-
-```tsx
-// This example uses the "normal" version of useSelf
-
-function MyComponent() {
-  const cursor = useSelf((me) => me.presence.cursor);
-
-  // Liveblocks hasn’t loaded yet...
-  if (cursor === null) {
-    return null;
-  }
-
-  const { x, y } = cursor;
-  return <Cursor x={x} y={y} />;
-}
-```
-
-Into:
-
-```tsx
-// This example uses the "Suspense" version of useSelf
-
-function MyComponent() {
-  // Will never be null, so you can directly unpack 👍
-  const { x, y } = useSelf((me) => me.presence.cursor);
-  return <Cursor x={x} y={y} />;
-}
-```
-
-### Importing the special Suspense hooks [#suspense-hooks]
-
-To start using the special “Suspense versions” of our hooks, you can simply
-import them from under the `suspense` key in the object returned by the
-`createRoomContext` call. All the hooks have the same name, so switching is
-easy.
-
-```tsx file="liveblocks.config.ts" highlight="2"
-export const {
-  suspense: {
-    RoomProvider,
-    useHistory,
-    useSelf,
-    useOthers,
-    useStorage,
-    /* ... */
-  },
-} = createRoomContext(client);
-```
-
-Now all these hooks will no longer return `null` values while Liveblocks is
-still loading, and instead suspend rendering.
-
-<Banner type="success" title="Keep things simple">
-
-While you can absolutely use a mix of normal and Suspense hooks in your app
-without a problem, we don’t recommend it to keep things simple. We suggest to
-either get all hooks in their normal versions, or get them all as their Suspense
-versions. Even hooks that don’t strictly have a “Suspense version”—like
-`RoomProvider` or `useHistory`—are still available under the `suspense` key for
-convenience.
-
-</Banner>
-
-### Setting up the Suspense boundary [#suspense-boundary-setup]
-
-Next, you’ll have to wrap your app in a `<Suspense>` boundary where you want to
-centrally handle the loading state.
-
-Normally, this looks like:
-
-```tsx highlight="1,6"
-import { Suspense } from "react";
-
-function Page() {
-  return (
-    <RoomProvider /* ... */>
-      <Suspense fallback={<Loading />}>
-        <App />
-      </Suspense>
-    </RoomProvider>
-  );
-}
-```
-
-The above works fine if your app only runs in a browser. If your project uses
-server-side rendering (e.g. Next.js app), then the above solution won’t work and
-throw errors. In that case, please read on.
-
-### Avoid calling Suspense hooks on the server side [#suspense-avoid-ssr]
-
-One caveat with the Suspense hooks is that they cannot be run on the server
-side, as they will throw an error. So you’ll need to avoid rendering those
-components on the server side.
-
-Fortunately, this is easy to avoid with a tiny helper component we ship with our
-React package. It can be used in place of React’s default `<Suspense>`, almost
-as a drop-in replacement. This helper will make sure to always render the
-`fallback` on the server side, and only ever rendering its children on the
-client side, when it’s no problem.
-
-```tsx highlight="2,7-8"
-// Drop-in replacement for standard `Suspense`
-import { ClientSideSuspense } from "@liveblocks/react";
-
-function Page() {
-  return (
-    <RoomProvider /* ... */>
-      <ClientSideSuspense fallback={<Loading />}>
-        <App />
-      </ClientSideSuspense>
-    </RoomProvider>
-  );
-}
-```
-
 [`createclient`]: /docs/api-reference/liveblocks-client#createClient
+[`createRoomContext`]: /docs/api-reference/liveblocks-react#createRoomContext
 [`livelist`]: /docs/api-reference/liveblocks-client#LiveList
 [`livemap`]: /docs/api-reference/liveblocks-client#LiveMap
 [`liveobject`]: /docs/api-reference/liveblocks-client#LiveObject
@@ -1610,13 +2834,22 @@ function Page() {
 [`useothersconnectionids`]:
   /docs/api-reference/liveblocks-react#useOthersConnectionIds
 [`useother`]: /docs/api-reference/liveblocks-react#useOther
+[`useother`]: /docs/api-reference/liveblocks-react#useOther
+[`clientsidesuspense`]: /docs/api-reference/liveblocks-react#ClientSideSuspsnse
 [`usebroadcastevent`]: /docs/api-reference/liveblocks-react#useBroadcastEvent
+[`usethreads`]: /docs/api-reference/liveblocks-react#useThreads
 [`room`]: /docs/api-reference/liveblocks-client#Room
 [`shallow`]: /docs/api-reference/liveblocks-react#shallow
 [`resolveusers`]: /docs/api-reference/liveblocks-client#resolveUsers
 [`resolveroomsinfo`]: /docs/api-reference/liveblocks-client#resolveRoomsInfo
 [selector]: /docs/api-reference/liveblocks-react#selectors
 [how selectors work]: /docs/api-reference/liveblocks-react#selectors
-[suspense version]: /docs/api-reference/liveblocks-react#suspense-hooks
+[suspense version]: /docs/api-reference/liveblocks-react#Suspense
 [connection status example]:
   https://liveblocks.io/examples/connection-status/nextjs
+[`atob`]: https://developer.mozilla.org/en-US/docs/Web/API/atob
+[`base-64`]: https://www.npmjs.com/package/base-64
+[`websocket`]: https://developer.mozilla.org/en-US/docs/Web/API/WebSocket
+[`ws`]: https://www.npmjs.com/package/ws
+[`fetch`]: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
+[`node-fetch`]: https://npmjs.com/package/node-fetch

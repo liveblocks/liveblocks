@@ -11,8 +11,11 @@
   },
   "dependencies": {
     "@floating-ui/react-dom": "^2.1.0",
+    "@lexical/list": "^0.16.0",
     "@lexical/react": "^0.16.0",
     "@lexical/rich-text": "^0.16.0",
+    "@lexical/selection": "^0.16.0",
+    "@lexical/utils": "^0.16.0",
     "@liveblocks/client": "*",
     "@liveblocks/node": "*",
     "@liveblocks/react": "*",

@@ -1,6 +1,5 @@
 "use client";
 
-import Room from "./room";
 import Loading from "./loading";
 import {
   ClientSideSuspense,
@@ -8,6 +7,7 @@ import {
   RoomProvider,
 } from "@liveblocks/react/suspense";
 import { useSearchParams } from "next/navigation";
+import Editor from "./lexical/editor";
 
 // Learn how to structure your collaborative Next.js app
 // https://liveblocks.io/docs/guides/how-to-use-liveblocks-with-nextjs-app-directory
@@ -46,9 +46,6 @@ export default function Page() {
         return userIds;
       }}
     >
-      {/* <ClientSideSuspense fallback={<Loading />}>
-          {() => <CollaborativeEditor />}
-        </ClientSideSuspense> */}
       <RoomProvider
         id={roomId}
         initialPresence={{
@@ -56,7 +53,7 @@ export default function Page() {
         }}
       >
         <ClientSideSuspense fallback={<Loading />}>
-          <Room />
+          <Editor />
         </ClientSideSuspense>
       </RoomProvider>
     </LiveblocksProvider>
