@@ -10,10 +10,10 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@liveblocks/client": "^2.0.0-alpha2",
-    "@liveblocks/node": "^2.0.0-alpha2",
-    "@liveblocks/react": "^2.0.0-alpha2",
-    "@liveblocks/yjs": "^2.0.0-alpha2",
+    "@liveblocks/client": "^2.0.0-alpha3",
+    "@liveblocks/node": "^2.0.0-alpha3",
+    "@liveblocks/react": "^2.0.0-alpha3",
+    "@liveblocks/yjs": "^2.0.0-alpha3",
     "@slate-yjs/core": "^1.0.2",
     "@slate-yjs/react": "^1.1.0",
     "@types/node": "^18.11.18",

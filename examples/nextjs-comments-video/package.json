@@ -10,10 +10,10 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@liveblocks/client": "^2.0.0-alpha2",
-    "@liveblocks/node": "^2.0.0-alpha2",
-    "@liveblocks/react": "^2.0.0-alpha2",
-    "@liveblocks/react-ui": "^2.0.0-alpha2",
+    "@liveblocks/client": "^2.0.0-alpha3",
+    "@liveblocks/node": "^2.0.0-alpha3",
+    "@liveblocks/react": "^2.0.0-alpha3",
+    "@liveblocks/react-ui": "^2.0.0-alpha3",
     "@radix-ui/react-slider": "^1.1.2",
     "@radix-ui/react-tooltip": "^1.0.7",
     "@types/node": "20.3.1",
