@@ -37,10 +37,14 @@ export const OnDeleteThreadCallback = createContext<
 >(null);
 
 export const IsActiveThreadContext = createContext<
-  (threadId: string) => boolean
->((_: string) => false);
+  ((threadId: string) => boolean) | null
+>(null);
 
-type ThreadToNodesMap = Map<string, Set<NodeKey>>;
+export type ThreadToNodesMap = Map<string, Set<NodeKey>>;
+
+export const ThreadToNodesContext = createContext<ThreadToNodesMap | null>(
+  null
+);
 
 export function CommentPluginProvider({ children }: PropsWithChildren) {
   const [editor, context] = useLexicalComposerContext();
@@ -287,7 +291,9 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
   return (
     <OnDeleteThreadCallback.Provider value={handleThreadDelete}>
       <IsActiveThreadContext.Provider value={isThreadActive}>
-        {children}
+        <ThreadToNodesContext.Provider value={threadToNodes}>
+          {children}
+        </ThreadToNodesContext.Provider>
       </IsActiveThreadContext.Provider>
     </OnDeleteThreadCallback.Provider>
   );

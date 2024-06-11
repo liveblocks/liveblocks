@@ -23,6 +23,20 @@
   &:where(:not(:last-of-type)) {
     border-block-end: 1px solid var(--lb-foreground-subtle);
   }
+
+  &:where([data-state="active"]) {
+    background: var(--lb-accent-subtle);
+    transition-timing-function: var(--lb-transition-easing);
+    transition-duration: var(--lb-transition-duration);
+    transition-property: background, color, opacity;
+
+    :where(.lb-comment, .lb-composer) {
+      background: var(--lb-accent-subtle);
+      transition-timing-function: var(--lb-transition-easing);
+      transition-duration: var(--lb-transition-duration);
+      transition-property: background, color, opacity;
+    }
+  }
 }
 
 /*************************************

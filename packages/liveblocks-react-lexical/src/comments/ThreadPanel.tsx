@@ -1,3 +1,4 @@
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { BaseMetadata, ThreadData } from "@liveblocks/core";
 import { useThreads } from "@liveblocks/react";
 import type {
@@ -9,14 +10,18 @@ import type {
   ThreadProps,
 } from "@liveblocks/react-ui";
 import { Thread as DefaultThread, useOverrides } from "@liveblocks/react-ui";
+import { $getNodeByKey } from "lexical";
 import type { ComponentProps, ComponentType } from "react";
 import React, { forwardRef, useCallback, useContext } from "react";
 
 import { classNames } from "../classnames";
+import type { ThreadToNodesMap } from "./comment-plugin-provider";
 import {
   IsActiveThreadContext,
   OnDeleteThreadCallback,
+  ThreadToNodesContext,
 } from "./comment-plugin-provider";
+import { $isThreadMarkNode } from "./thread-mark-node";
 
 type ThreadPanelComponents = {
   Thread: ComponentType<ThreadProps>;
@@ -42,15 +47,21 @@ export interface ThreadPanelProps extends ComponentProps<"div"> {
 
 interface ThreadWrapperProps extends ThreadProps {
   Thread: ComponentType<ThreadProps>;
-  isActive: boolean;
 }
 
-const ThreadWrapper = ({ Thread, isActive, ...props }: ThreadWrapperProps) => {
+const ThreadWrapper = ({ Thread, ...props }: ThreadWrapperProps) => {
+  const isActive = useContext(IsActiveThreadContext);
   const onDeleteThread = useContext(OnDeleteThreadCallback);
+  const threadToNodes = useThreadToNodes();
+  const [editor] = useLexicalComposerContext();
 
-  if (onDeleteThread === null) {
-    throw new Error("OnDeleteThreadCallback not provided");
+  if (onDeleteThread === null || onDeleteThread === null || isActive === null) {
+    throw new Error(
+      "ThreadPanel component must be used within a LiveblocksPlugin"
+    );
   }
+
+  const isThreadActive = isActive(props.thread.id);
 
   const handleThreadDelete = useCallback(
     (thread: ThreadData<BaseMetadata>) => {
@@ -59,10 +70,25 @@ const ThreadWrapper = ({ Thread, isActive, ...props }: ThreadWrapperProps) => {
     [onDeleteThread]
   );
 
+  const handleThreadClick = useCallback(() => {
+    const nodes = threadToNodes.get(props.thread.id);
+    if (nodes === undefined || nodes.size === 0) return;
+
+    if (isThreadActive) return;
+
+    editor.update(() => {
+      const [key] = nodes;
+      const node = $getNodeByKey(key);
+      if (!$isThreadMarkNode(node)) return;
+      node.selectStart();
+    });
+  }, [editor, threadToNodes, isThreadActive, props.thread.id]);
+
   return (
     <Thread
       onThreadDelete={handleThreadDelete}
-      data-state={isActive ? "active" : null}
+      onClick={handleThreadClick}
+      data-state={isThreadActive ? "active" : null}
       {...props}
     />
   );
@@ -72,7 +98,8 @@ export const ThreadPanel = forwardRef<HTMLDivElement, ThreadPanelProps>(
   ({ components, overrides, className, ...props }, forwardedRef) => {
     const $ = useOverrides(overrides);
     const { threads } = useThreads();
-    const isThreadActive = useContext(IsActiveThreadContext);
+    const threadToNodes = useThreadToNodes();
+
     const Thread = components?.Thread ?? DefaultThread;
 
     return (
@@ -83,10 +110,13 @@ export const ThreadPanel = forwardRef<HTMLDivElement, ThreadPanelProps>(
       >
         {threads && threads.length > 0 ? (
           threads.map((thread) => {
+            // Check if the thread has any nodes associated with it, if not, we do not render the thread
+            const nodes = threadToNodes.get(thread.id);
+            if (nodes === undefined || nodes.size === 0) return null;
+
             return (
               <ThreadWrapper
                 Thread={Thread}
-                isActive={isThreadActive(thread.id)}
                 key={thread.id}
                 thread={thread}
                 className="lb-lexical-thread-panel-thread"
@@ -102,3 +132,13 @@ export const ThreadPanel = forwardRef<HTMLDivElement, ThreadPanelProps>(
     );
   }
 );
+
+function useThreadToNodes(): ThreadToNodesMap {
+  const threadToNodes = React.useContext(ThreadToNodesContext);
+  if (threadToNodes === null) {
+    throw new Error(
+      "ThreadPanel component must be used within a LiveblocksPlugin"
+    );
+  }
+  return threadToNodes;
+}
