@@ -18,6 +18,8 @@ import React, {
 import { Doc } from "yjs";
 
 import { CommentPluginProvider } from "./comments/comment-plugin-provider";
+import { ThreadMarkNode } from "./comments/thread-mark-node";
+import { MentionNode } from "./mentions/mention-node";
 import { MentionPlugin } from "./mentions/mention-plugin";
 
 // TODO: Replace by ref once I understand why useRef is not stable (?!)
@@ -96,6 +98,12 @@ export const LiveblocksPlugin = ({
   const room = useRoom();
   const collabContext = useContext(CollaborationContext);
   const previousRoomIdRef = useRef<string | null>(null);
+
+  if (!editor.hasNodes([ThreadMarkNode, MentionNode])) {
+    throw new Error(
+      "LiveblocksPlugin requires Lexical configuration be wrapped in the `liveblocksConfig(options)` function. For more information: https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#liveblocksConfig"
+    );
+  }
 
   const [containerRef, setContainerRef] = useState<
     MutableRefObject<HTMLDivElement | null> | undefined

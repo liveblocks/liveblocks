@@ -59,14 +59,6 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
 
   const room = useRoom();
 
-  useEffect(() => {
-    if (!editor.hasNodes([ThreadMarkNode])) {
-      throw new Error(
-        "CommentPluginProvider: ThreadMarkNode not registered on editor"
-      );
-    }
-  }, [editor]);
-
   const isThreadActive = useCallback(
     (threadId: string) => {
       return activeThreads.includes(threadId);
@@ -307,7 +299,9 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
 export function useIsThreadActive(threadId: string): boolean {
   const isActive = React.useContext(IsActiveThreadContext);
   if (isActive === null) {
-    throw new Error("useIsThreadActive must be used within a LiveblocksPlugin");
+    throw new Error(
+      "useIsThreadActive must be used within LiveblocksPlugin. For more information: https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#useIsThreadActive"
+    );
   }
 
   return isActive(threadId);
