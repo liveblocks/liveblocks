@@ -14,9 +14,9 @@ declare global {
       // animals: LiveList<string>;
     };
 
+    // Custom user info set when authenticating with a secret key
     UserMeta: {
       id: string;
-      // Custom user info set when authenticating with a secret key
       info: {
         // Example properties, for useSelf, useUser, useOthers, etc.
         // name: string;
@@ -63,9 +63,9 @@ declare global {
       // animals: LiveList<string>;
     };
 
+    // Custom user info set when authenticating with a secret key
     UserMeta: {
       id: string;
-      // Custom user info set when authenticating with a secret key
       info: {
         // Example properties, for room.getSelf, room.subscribe("others"), etc.
         // name: string;
