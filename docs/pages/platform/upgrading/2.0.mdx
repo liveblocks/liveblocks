@@ -5,33 +5,217 @@ meta:
   description: "Guide to upgrade to Liveblocks version 2.0"
 ---
 
-TODO
+Liveblocks 2.0 is our second major release, and focuses on removing any rough
+edges and smoothening the developer experience. It make Liveblocks simpler to
+set up for new users as well as for existing users. Our long term goal is to
+empower you to write and evolve your apps in the best way possible, and at
+enterprise scale.
 
-Non-breaking changes:
+Liveblocks has always embraced the benefits of static typing with TypeScript.
+Roughly two years ago, we published 0.17, which introduced the pattern of
+calling `createRoomContext()` and returning a “bundle” of type-safe hooks that
+you could then use in your application. This pattern worked nicely because all
+the hooks were bound to your custom type definitions for `Presence`, `Storage`,
+etc. in one single place, and every Liveblocks API would deeply know about it.
+No need for manual type annotations anywhere else in your codebase.
 
-- Module augmentation + importable hooks
-- Improve `InboxNotification` props types
-- Allow typing `RoomInfo` via augmentation
+There were, however, a couple of downsides to this approach that we have always
+been well aware of:
 
-Breaking changes:
+- Importing hooks from a local config file was a little bit awkward. It wasn’t
+  an all too familiar pattern for most users.
+- Re-exporting the list of hooks took maintenance. If we added a new hook, you’d
+  have to also re-export it manually.
+- Due to how TypeScript works, the type params you’d provide to
+  `createRoomContext()` had a fixed ordering to them. If you wanted to specify
+  only `Presence` and `RoomEvent`, ‘you’d have to “skip” other custom types, by
+  doing `createRoomContext<Presence, {}, {}, RoomEvent>()` or similar.
 
-- Rename `@liveblocks/react-comments` to `@liveblocks/react-ui` and
-  `<CommentsConfig />` to `<LiveblocksUIConfig />` (codemod)
-- Rename `@liveblocks/node`'s `RoomInfo` to `RoomData` (codemod)
-- In `@liveblocks/node`, `client.getThread<MyMeta>()` no longer takes type
-  params. Use global type augmentation instead.
-- Removal of the deprecated APIs
-- The webhook event NotificationEvent's type can represent multiple kinds of
-  notifications (`"thread"`, `"textMention"`, and custom ones (e.g.
-  `"$myNotification"`))
-- Yjs package changes
-  - No longer has a default export, change:
-    ```diff
-    -import LiveblocksProvider from "@liveblocks/yjs";
-    +import { LiveblocksYjsProvider } from "@liveblocks/yjs";
-    ```
+With 2.0, this all becomes a lot simpler. We’ve done a lot of internal
+refactoring to make this possible.
 
-## Step-wise migration guide
+Let’s dive in and show you how to simplify your Liveblocks application.
+
+We’ll first go over all the breaking changes, then we’ll show you how to
+simplify your codebase.
+
+- [Upgrading your Liveblocks packages](#upgrading)
+- [Possible breaking changes](#breaking-changes)
+  - [Breaking change 1](#bc1)
+  - [Breaking change 2](#bc2)
+  - [Breaking change 3](#bc3)
+  - [Breaking change 4](#bc4)
+  - [Breaking change 5](#bc5)
+  - [Breaking change 6](#bc6)
+  - [Breaking change 7](#bc7)
+- [Simplifying your Liveblocks application](#simplifying) (optional)
+- [Improvements](#improvements)
+
+## Upgrade your Liveblocks packages [#upgrading]
+
+First of all, let’s upgrade all Liveblocks dependencies to their latest
+versions. The easiest way to do that is to run the following command:
+
+```bash
+npx create-liveblocks-app@latest --upgrade
+```
+
+## Possible breaking changes [#breaking-changes]
+
+Most APIs will be backward compatible. However, there is a chance that some of
+these breaking changes will affect your code base. Many of these changes are
+trivial to adjust to.
+
+<Banner type="success" title="Codemods are available">
+
+We have codemods available for most of these breaking changes.
+
+</Banner>
+
+### Breaking change 1: renamed package [#bc1]
+
+We’ve renamed our package `@liveblocks/react-comments` to
+`@liveblocks/react-ui`, because our library of pre-built UI components now
+contains more than just Comments-related components, we’ve renamed our package
+accordingly, so please adjust your imports.
+
+There is a **codemod available** for you to run to perform this code change:
+
+```bash
+npx @liveblocks/codemod@latest react-comments-to-react-ui
+```
+
+This will change your imports like this:
+
+```diff showLineNumbers={false}
+-import { Thread } from "@liveblocks/react-comments"
++import { Thread } from "@liveblocks/react-ui"
+```
+
+And also:
+
+```diff showLineNumbers={false}
+-<CommentsConfig />
++<LiveblocksUIConfig />
+```
+
+### Breaking change 2: renamed exports in our Node package [#bc2]
+
+To avoid confusion with the newly introduced custom `RoomInfo` type, we’ve
+renamed the `RoomInfo` type in our Node package.
+
+There is a codemod available for you to run to perform this code change:
+
+```bash
+npx @liveblocks/codemod@latest room-info-to-room-data
+```
+
+This will change:
+
+```diff showLineNumbers={false}
+-import { RoomInfo } from "@liveblocks/node"
++import { RoomData } from "@liveblocks/node"
+
+-const rooms: RoomInfo[] = []
++const rooms: RoomData[] = []
+```
+
+### Breaking change 3: client methods from our Node package no longer take type params [#bc3]
+
+In `@liveblocks/node`, none of the client methods, like `client.getThread()`,
+take type params any longer.
+
+```diff showLineNumbers={false}
+-const thread = client.getThread<MyThreadMetadata>()
++const thread = client.getThread()
+```
+
+You should use global type augmentation instead. Please see
+[“Simplifying your Liveblocks application”](#simplifying) below for a lot more
+detail on this transition.
+
+```diff showLineNumbers={false}
+declare global {
+  interface Liveblocks {
+    ThreadMetadata: MyThreadMetadata
+  }
+}
+```
+
+### Breaking change 4: changed default export to named export in Yjs package [#bc4]
+
+To make discoverability and refactorings easier, and to avoid confusion with the
+newly introduced `LiveblocksProvider` in our React package, we’re no longer
+using default exports, but named exports only:
+
+Change:
+
+```diff showLineNumbers={false}
+-import LiveblocksProvider from "@liveblocks/yjs";
++import { LiveblocksYjsProvider } from "@liveblocks/yjs";
+```
+
+<Banner type="warning" title="We’re working on a codemod">
+
+We are working on a codemod for this step, and will update this guide when it’s
+ready.
+
+</Banner>
+
+### Breaking change 5: removed deprecated APIs [#bc5]
+
+The `LiveList()` constructor’s argument is no longer optional, because it causes
+unneeded but confusing type inference issues:
+
+```diff showLineNumbers={false}
+-const mylist = new LiveList();
++const mylist = new LiveList([]);
+```
+
+<Banner type="warning" title="We’re working on a codemod">
+
+We are working on a codemod for this step, and will update this guide when it’s
+ready.
+
+</Banner>
+
+### Breaking change 6: removed deprecated APIs [#bc6]
+
+TODO: Detail this section
+
+The webhook event `NotificationEvent`’s type can represent multiple kinds of
+notifications (`"thread"`, `"textMention"`, and custom ones (e.g.
+`"$myNotification"`)).
+
+### Breaking change 7: removed deprecated APIs [#bc7]
+
+All of the following APIs have been removed in 2.0. These all were deprecated
+multiple versions ago:
+
+- The `useMap`, `useList`, and `useObject` hooks. These have been deprecated
+  since the release of 0.18 (more than two years ago). Please see
+  [the 0.18 upgrade guide](/docs/platform/upgrading/0.18#Step-5a:-Replace-reads-with-useStorage)
+  for tips on how to rewrite these hooks to `useStorage`.
+- Remove legacy `authorize` method from `@liveblocks/node`. Please refer to
+  [the 1.2 upgrade guide](/docs/platform/upgrading/1.2#how) to learn how to
+  upgrade your auth endpoint.
+- Legacy connection status APIs, e.g. `room.getConnectionState()` and
+  `.subscribe("connection")`. You can use `.getStatus()` or
+  `.subscribe("status")` instead.
+- Legacy option `shouldInitiallyConnect` is now renamed to `autoConnect`
+- `Client.enter()` has been replaced by `Client.enterRoom()`
+- `Client.leave()` has been replaced by `Client.enterRoom()`, which returns a
+  `leave` function
+- Legacy exports in Zustand/Redux packages
+- Client option `fetchPolyfill`, `WebSocketPolyfill`, are replaced by
+  `polyfills: { fetch, WebSocket }`
+- The `Others<P, U>` type. Please change to `readonly User<P, U>`.
+- `user.isReadOnly` field is replaced by `!user.canWrite` (note the negation
+  here)
+- The second argument `options` to `createRoomContext(client, options)` has been
+  removed. These options have been moved to the client.
+
+## Simplifying your Liveblocks application (optional) [#simplifying]
 
 I found the following order of mechanical changes to be most ideal path to
 upgrade. You can make a Git commit after every one of these changes.
@@ -79,3 +263,13 @@ upgrade. You can make a Git commit after every one of these changes.
    types, like `User<MyPresence, MyUserMeta>` and just remove those.
    [Example of this change](https://github.com/liveblocks/liveblocks/commit/d079a0056a792c15c752dcd581ee9cc264269b81).
 1. That's it! You're converted! 🎉🎉🎉
+
+## Improvements
+
+TODO: Detail this section
+
+The following smaller improvements have been made that are non-breaking changes:
+
+- `ClientSideSuspense` no longer requires a function as `children`
+- Improve `InboxNotification` props types
+- Allow typing `RoomInfo` via augmentation
