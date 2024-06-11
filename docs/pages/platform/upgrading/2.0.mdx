@@ -212,7 +212,7 @@ multiple versions ago:
 - Legacy exports in Zustand/Redux packages
 - Client option `fetchPolyfill`, `WebSocketPolyfill`, are replaced by
   `polyfills: { fetch, WebSocket }`
-- The `Others<P, U>` type. Please change to `readonly User<P, U>`.
+- The `Others<P, U>` type. Please change to `readonly User<P, U>[]`.
 - `user.isReadOnly` field is replaced by `!user.canWrite` (note the negation
   here)
 - The second argument `options` to `createRoomContext(client, options)` has been
