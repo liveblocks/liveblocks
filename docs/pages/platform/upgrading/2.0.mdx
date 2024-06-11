@@ -380,10 +380,51 @@ function doSomethingWithRoom(room: Room) {
 
 ## Improvements
 
+The following miscellaneous improvements have been made that are non-breaking
+changes:
+
+### `ClientSideSuspense` no longer needs a function
+
+Previously, the `ClientSideSuspense` helper needed a function as its `children`
+prop, but it no longer has to.
+
+You can now change:
+
+```diff
+ function MyComponent() {
+   return (
+     <ClientSideSuspense fallback={<Loading />}>
+-      {() => <MyApp />}
++      <MyApp />
+     </ClientSideSuspense>
+   );
+ }
+```
+
+### Improved `InboxNotification` props types
+
 TODO: Detail this section
 
-The following smaller improvements have been made that are non-breaking changes:
+### New custom type `RoomInfo`
 
-- `ClientSideSuspense` no longer requires a function as `children`
-- Improve `InboxNotification` props types
-- Allow typing `RoomInfo` via augmentation
+By using the [`resolveRoomsInfo`][] callback from [`createClient`][] or the new
+[`LiveblocksProvider`][], you can attach arbitrary room data to a room, which
+you can retrieve with the [`useRoomInfo`][] hook.
+
+Both of these APIs will now respect the type you provide via:
+
+```tsx
+declare global {
+  interface Liveblocks {
+    RoomInfo: {
+      /* your custom type definition here */
+    };
+  }
+}
+```
+
+[`createClient`]: /docs/api-reference/liveblocks-client#createClient
+[`LiveblocksProvider`]: /docs/api-reference/liveblocks-react#LiveblocksProvider
+[`resolveRoomsInfo`]:
+  /docs/api-reference/liveblocks-client#createClientResolveRoomsInfo
+[`useRoomInfo`]: /docs/api-reference/liveblocks-react#useRoomInfo
