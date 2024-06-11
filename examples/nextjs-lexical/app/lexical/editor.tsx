@@ -17,7 +17,6 @@ import FloatingToolbar from "./floating-toolbar";
 import NotificationsPopover from "../notifications-popover";
 import Toolbar from "./toolbar";
 import { useThreads } from "@liveblocks/react/suspense";
-import { useSelf } from "@liveblocks/react";
 import { Suspense } from "react";
 import Loading from "../loading";
 import { BaseMetadata, ThreadData } from "@liveblocks/client";
@@ -33,8 +32,6 @@ const initialConfig = liveblocksConfig({
 });
 
 export default function Editor() {
-  const self = useSelf();
-
   return (
     <div className="relative flex flex-col h-full w-full">
       <LexicalComposer initialConfig={initialConfig}>
@@ -44,10 +41,7 @@ export default function Editor() {
             <Toolbar />
           </div>
 
-          <div className="flex items-center gap-4">
-            <span className="text-xs font-medium">{self?.info.name}</span>
-            <NotificationsPopover />
-          </div>
+          <NotificationsPopover />
         </div>
 
         <div className="relative flex flex-row justify-between h-[calc(100%-50px)] w-full flex-1">
