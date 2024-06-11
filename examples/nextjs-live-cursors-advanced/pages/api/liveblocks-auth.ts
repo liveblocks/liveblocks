@@ -21,7 +21,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
       name: NAMES[userIndex],
       color: COLORS[Math.floor(Math.random() * COLORS.length)] as [
         string,
-        string
+        string,
       ],
       avatar: `https://liveblocks.io/avatars/avatar-${Math.floor(
         Math.random() * 30

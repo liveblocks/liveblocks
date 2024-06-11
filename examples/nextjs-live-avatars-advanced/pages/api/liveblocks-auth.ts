@@ -21,7 +21,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
       name: NAMES[userIndex],
       color: COLORS[Math.floor(Math.random() * COLORS.length)] as [
         string,
-        string
+        string,
       ],
 
       // Uncomment below and refresh to see with avatar graphics

@@ -1,20 +1,20 @@
 :root {
-  --bn-colors-editor-text: #3F3F3F;
+  --bn-colors-editor-text: #3f3f3f;
   --bn-colors-editor-background: var(--surface-backdrop-elevated);
-  --bn-colors-menu-text: #3F3F3F;
-  --bn-colors-menu-background: #FFFFFF;
-  --bn-colors-tooltip-text: #3F3F3F;
-  --bn-colors-tooltip-background: #EFEFEF;
-  --bn-colors-hovered-text: #3F3F3F;
-  --bn-colors-hovered-background: #EFEFEF;
-  --bn-colors-selected-text: #FFFFFF;
-  --bn-colors-selected-background: #3F3F3F;
-  --bn-colors-disabled-text: #AFAFAF;
-  --bn-colors-disabled-background: #EFEFEF;
+  --bn-colors-menu-text: #3f3f3f;
+  --bn-colors-menu-background: #ffffff;
+  --bn-colors-tooltip-text: #3f3f3f;
+  --bn-colors-tooltip-background: #efefef;
+  --bn-colors-hovered-text: #3f3f3f;
+  --bn-colors-hovered-background: #efefef;
+  --bn-colors-selected-text: #ffffff;
+  --bn-colors-selected-background: #3f3f3f;
+  --bn-colors-disabled-text: #afafaf;
+  --bn-colors-disabled-background: #efefef;
 
-  --bn-colors-shadow: #CFCFCF;
-  --bn-colors-border: #EFEFEF;
-  --bn-colors-side-menu: #CFCFCF;
+  --bn-colors-shadow: #cfcfcf;
+  --bn-colors-border: #efefef;
+  --bn-colors-side-menu: #cfcfcf;
 
   --bn-colors-highlights-gray-text: #9b9a97;
   --bn-colors-highlights-gray-background: #ebeced;
@@ -35,11 +35,13 @@
   --bn-colors-highlights-pink-text: #ad1a72;
   --bn-colors-highlights-pink-background: #f4dfeb;
 
-  --bn-font-family: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Open Sans", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  --bn-font-family: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont,
+    "Open Sans", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell",
+    "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
   --bn-border-radius: 6px;
 }
 
-.bn-container[data-color-scheme=dark] {
+.bn-container[data-color-scheme="dark"] {
   --bn-colors-editor-background: var(--surface-backdrop-elevated);
 }
 
@@ -71,4 +73,3 @@
   padding: 2px 6px;
   pointer-events: none;
 }
-

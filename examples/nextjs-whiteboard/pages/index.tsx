@@ -148,8 +148,8 @@ function Rectangle({ id, onShapePointerDown }: RectangleProps) {
   const selectionColor = selectedByMe
     ? "blue"
     : selectedByOthers
-    ? "green"
-    : "transparent";
+      ? "green"
+      : "transparent";
 
   return (
     <div
