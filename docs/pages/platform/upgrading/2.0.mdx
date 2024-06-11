@@ -476,6 +476,29 @@ declare global {
 }
 ```
 
+### New custom type `ActivitiesData`
+
+By providing a custom `ActivitiesData` type, you can improve how your custom
+notifications and their activities’ data are typed.
+
+```tsx
+declare global {
+  interface Liveblocks {
+    // Custom activities data for custom notification kinds
+    ActivitiesData: {
+      // Example, a custom $alert kind
+      $alert: {
+        title: string;
+        message: string;
+      };
+    };
+
+    // Other kinds
+    // ...
+  }
+}
+```
+
 [`createClient`]: /docs/api-reference/liveblocks-client#createClient
 [`LiveblocksProvider`]: /docs/api-reference/liveblocks-react#LiveblocksProvider
 [`InboxNotification`]: /docs/api-reference/liveblocks-react-ui#InboxNotification
