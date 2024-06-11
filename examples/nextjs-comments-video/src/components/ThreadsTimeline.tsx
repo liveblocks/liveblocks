@@ -1,4 +1,5 @@
 "use client";
+
 import { useThreads, useUser } from "@liveblocks/react/suspense";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";

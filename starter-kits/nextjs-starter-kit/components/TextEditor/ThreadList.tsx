@@ -1,4 +1,5 @@
 "use client";
+
 import { ThreadData } from "@liveblocks/client";
 import { useCreateThread, useThreads } from "@liveblocks/react/suspense";
 import { Composer, ComposerSubmitComment, Thread } from "@liveblocks/react-ui";

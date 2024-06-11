@@ -1,4 +1,5 @@
 "use client";
+
 import { useOthers, useSelf } from "@liveblocks/react/suspense";
 import { PresenceStates } from "@/liveblocks.config";
 import { ClientSideSuspense } from "@liveblocks/react";

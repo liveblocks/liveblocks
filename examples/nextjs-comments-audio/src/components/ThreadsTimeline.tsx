@@ -1,4 +1,5 @@
 "use client";
+
 import { Link } from "@/components/Link";
 import { Mention } from "@/components/Mention";
 import { useThreads, useUser } from "@liveblocks/react/suspense";

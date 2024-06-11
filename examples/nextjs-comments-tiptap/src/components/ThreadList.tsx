@@ -1,4 +1,5 @@
 "use client";
+
 import { useCreateThread, useThreads } from "@liveblocks/react/suspense";
 import { Composer, Thread } from "@liveblocks/react-ui";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";

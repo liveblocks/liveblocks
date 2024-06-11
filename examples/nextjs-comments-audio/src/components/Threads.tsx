@@ -1,4 +1,5 @@
 "use client";
+
 import { formatTime } from "@/components/Duration";
 import { useThreads } from "@liveblocks/react/suspense";
 import { useSkipTo } from "@/utils";

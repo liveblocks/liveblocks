@@ -1,4 +1,5 @@
 "use client";
+
 import { useThreads } from "@liveblocks/react/suspense";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { Thread } from "@liveblocks/react-ui";

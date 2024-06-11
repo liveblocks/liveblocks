@@ -1,4 +1,5 @@
 "use client";
+
 import styles from "./Sidebar.module.css";
 import { Thread } from "@liveblocks/react-ui";
 import { useThreads } from "@liveblocks/react/suspense";
