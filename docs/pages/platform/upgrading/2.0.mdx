@@ -137,10 +137,10 @@ You should use global type augmentation instead. Please see
 [“Simplifying your Liveblocks application”](#simplifying) below for a lot more
 detail on this transition.
 
-```diff showLineNumbers={false}
+```tsx showLineNumbers={false}
 declare global {
   interface Liveblocks {
-    ThreadMetadata: MyThreadMetadata
+    ThreadMetadata: MyThreadMetadata;
   }
 }
 ```
