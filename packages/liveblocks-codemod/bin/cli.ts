@@ -28,7 +28,7 @@ const TRANSFORMER_INQUIRER_CHOICES = [
     value: "remove-liveblocks-config-contexts",
   },
   {
-    name: "react-comments-to-react-ui: Updates `@liveblocks/react-comments` imports to `@liveblocks/react-ui` and renames `<CommentsConfig />` to `<LiveblocksUIConfig />`.",
+    name: "react-comments-to-react-ui: Updates `@liveblocks/react-comments` to `@liveblocks/react-ui` and renames `<CommentsConfig />` to `<LiveblocksUIConfig />`.",
     value: "react-comments-to-react-ui",
   },
   {
@@ -103,8 +103,6 @@ export function runTransform({
   args.push("--run-in-band");
 
   args.push("--verbose=2");
-
-  args.push("--ignore-config=.gitignore");
 
   args.push("--ignore-pattern=**/node_modules/**");
 

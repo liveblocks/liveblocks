@@ -37,8 +37,8 @@ npx @liveblocks/codemod@latest remove-liveblocks-config-contexts --suspense
 
 #### `react-comments-to-react-ui`
 
-Updates `@liveblocks/react-comments` imports to `@liveblocks/react-ui` and
-renames `<CommentsConfig />` to `<LiveblocksUIConfig />`.
+Updates `@liveblocks/react-comments` to `@liveblocks/react-ui` and renames
+`<CommentsConfig />` to `<LiveblocksUIConfig />`.
 
 ```shell
 npx @liveblocks/codemod@latest react-comments-to-react-ui
