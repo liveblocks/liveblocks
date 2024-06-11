@@ -10,4 +10,7 @@ export {
   OPEN_FLOATING_COMPOSER_COMMAND,
 } from "./comments/floating-composer";
 export { liveblocksConfig } from "./liveblocks-config";
-export { LiveblocksPlugin } from "./liveblocks-plugin-provider";
+export {
+  LiveblocksPlugin,
+  useEditorStatus,
+} from "./liveblocks-plugin-provider";

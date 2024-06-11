@@ -11,6 +11,7 @@ import {
   FloatingComposer,
   liveblocksConfig,
   LiveblocksPlugin,
+  useEditorStatus,
   useIsActive,
 } from "@liveblocks/react-lexical";
 import FloatingToolbar from "./floating-toolbar";
@@ -32,6 +33,8 @@ const initialConfig = liveblocksConfig({
 });
 
 export default function Editor() {
+  const status = useEditorStatus();
+
   return (
     <div className="relative flex flex-col h-full w-full">
       <LexicalComposer initialConfig={initialConfig}>
@@ -47,21 +50,24 @@ export default function Editor() {
         <div className="relative flex flex-row justify-between h-[calc(100%-60px)] w-full flex-1">
           {/* Editable */}
           <div className="relative h-full w-[calc(100%-350px)] overflow-auto">
-            <div className="relative max-w-[950px] mx-auto">
-              <RichTextPlugin
-                contentEditable={
-                  <ContentEditable className="relative outline-none p-8 w-full h-full" />
-                }
-                placeholder={
-                  <p className="pointer-events-none absolute top-0 left-0 p-8 text-muted-foreground w-full h-full">
-                    Try mentioning a user with @
-                  </p>
-                }
-                ErrorBoundary={LexicalErrorBoundary}
-              />
-
-              <FloatingToolbar />
-            </div>
+            {status === "not-loaded" || status === "loading" ? (
+              <Loading />
+            ) : (
+              <div className="relative max-w-[950px] mx-auto">
+                <RichTextPlugin
+                  contentEditable={
+                    <ContentEditable className="relative outline-none p-8 w-full h-full" />
+                  }
+                  placeholder={
+                    <p className="pointer-events-none absolute top-0 left-0 p-8 text-muted-foreground w-full h-full">
+                      Try mentioning a user with @
+                    </p>
+                  }
+                  ErrorBoundary={LexicalErrorBoundary}
+                />
+                <FloatingToolbar />
+              </div>
+            )}
           </div>
 
           <LiveblocksPlugin>

@@ -26,6 +26,62 @@ const providersMap = new Map<
   LiveblocksYjsProvider<never, never, never, never, never>
 >();
 
+export type EditorStatus =
+  /* The editor state is not loaded and has not been requested. */
+  | "not-loaded"
+  /* The editor state is loading from Liveblocks servers */
+  | "loading"
+  /**
+   * Not working yet! Will be available in a future release.
+   * Some editor state modifications has not been acknowledged yet by the server
+   */
+  | "synchronizing"
+  /* The editor state is sync with Liveblocks servers */
+  | "synchronized";
+
+function getEditorStatus(
+  provider?: LiveblocksYjsProvider<never, never, never, never, never>
+) {
+  if (provider === undefined) {
+    return "not-loaded";
+  }
+
+  return provider.synced ? "synchronized" : "loading";
+}
+
+/**
+ * Get the storage status.
+ *
+ * - `not-loaded`: Initial state when entering the room.
+ * - `loading`: Once the editor state has been requested by LiveblocksPlugin.
+ * - `synchronizing`: Not working yet! Will be available in a future release.
+ * - `synchronized`:  The editor state is sync with Liveblocks servers.
+ */
+export function useEditorStatus(): EditorStatus {
+  const room = useRoom();
+  const provider = providersMap.get(room.id);
+
+  const [status, setStatus] = useState<EditorStatus>(getEditorStatus(provider));
+
+  useEffect(() => {
+    const provider = providersMap.get(room.id);
+
+    setStatus(getEditorStatus(provider));
+
+    if (provider === undefined) {
+      return;
+    }
+
+    const cb = () => setStatus(getEditorStatus(provider));
+
+    provider.on("sync", cb);
+
+    return () => provider.off("sync", cb);
+  }, [room]);
+
+  return status;
+}
+
 export type LiveblocksPluginProps = {
   children?: React.ReactNode;
 };
