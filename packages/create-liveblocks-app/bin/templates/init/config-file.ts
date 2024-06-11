@@ -45,6 +45,8 @@ declare global {
     };
   }
 }
+
+export {}
 `;
 
 export const JAVASCRIPT_CONFIG = `// Define Liveblocks types for your application
@@ -94,4 +96,6 @@ declare global {
     };
   }
 }
+
+export {}
 `;
