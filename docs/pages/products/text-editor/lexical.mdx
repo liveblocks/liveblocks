@@ -163,6 +163,40 @@ export function CollaborativeApp() {
 Learn more about
 [sending email notifications with Notifications](/docs/products/notifications/email-notifications).
 
+## AI agents and editing on the server
+
+Fetch and modify your text editor’s content from the server, enabling features
+such as AI agents. Easily make changes that update in real-time for every
+connected user.
+
+<Figure>
+  <Image
+    src="/assets/text-editor/ai.png"
+    alt="AI suggestions"
+    width={750}
+    height={500}
+  />
+</Figure>
+
+Use
+[`withLexicalDocument`](/docs/api-reference/liveblocks-node-lexical#withLexicalDocument)
+to get your editor’s content and make modifications live.
+
+```tsx
+await withLexicalDocument(
+  { roomId: "my-room-id", client: liveblocks },
+  async (doc) => {
+    // Get editor content
+    const textContent = doc.getTextContent();
+
+    await doc.update(async () => {
+      // Make real-time updates
+      // ...
+    });
+  }
+);
+```
+
 ## Lexical API Reference
 
 <ListGrid columns={2}>
