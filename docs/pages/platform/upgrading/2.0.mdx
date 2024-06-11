@@ -49,6 +49,9 @@ simplify your codebase.
   - [Breaking change 6](#bc6)
   - [Breaking change 7](#bc7)
 - [Simplifying your Liveblocks application](#simplifying) (optional)
+  - [Step 1](#step1)
+  - [Step 2](#step2)
+  - [Step 3](#step3)
 - [Improvements](#improvements)
 
 ## Upgrade your Liveblocks packages [#upgrading]
@@ -226,7 +229,7 @@ you have more than one instance of `createRoomContext()` in your application,
 the following simplification does not apply to you. We will keep supporting
 `createRoomContext()` for the advanced use case of multiple room types.
 
-### Step 1: Use the new global Liveblocks custom types
+### Step 1: Use the new global Liveblocks custom types [#step1]
 
 Go to your `liveblocks.config.ts`, find your `createRoomContext()` call. Now
 decide which codemod to run.
@@ -272,7 +275,7 @@ directly instead:
 +import { RoomProvider, useRoom, useThreads } from "@liveblocks/react/suspense";
 ```
 
-### Step 2: Set up a LiveblocksProvider
+### Step 2: Set up a LiveblocksProvider [#step2]
 
 At this point, there should not be any new TypeScript issues. However, running
 the code will not yet work. This is because previously the hooks were bound to
@@ -335,7 +338,7 @@ hook:
 +}
 ```
 
-### Step 3: Optional cleanup of type annotations
+### Step 3: Optional cleanup of type annotations [#step3]
 
 If you also exported your `Presence`, `Storage`, etc types from
 `liveblocks.config.ts` before, you no longer have to. The main reason to export
