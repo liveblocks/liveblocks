@@ -63,7 +63,7 @@ export type LiveblocksDocumentApi = {
  *     await doc.update(() => {
  *       const root = $getRoot();
  *       const paragraphNode = $createParagraphNode();
- *       const textNode = $createTextNode(asABird);
+ *       const textNode = $createTextNode("Hello from node");
  *       paragraphNode.append(textNode);
  *       root.append(paragraphNode);
  *     });
