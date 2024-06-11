@@ -36,7 +36,7 @@ export default function Editor() {
     <div className="relative flex flex-col h-full w-full">
       <LexicalComposer initialConfig={initialConfig}>
         {/* Sticky header */}
-        <div className="sticky top-0 left-0  h-[60px] flex items-center justify-between px-4 border-b border-border/80">
+        <div className="sticky top-0 left-0  h-[60px] flex items-center justify-between px-4 border-b border-border/80 z-20 bg-background/95">
           <div className="flex items-center gap-2 h-full">
             <Toolbar />
           </div>
@@ -44,7 +44,7 @@ export default function Editor() {
           <NotificationsPopover />
         </div>
 
-        <div className="relative flex flex-row justify-between h-[calc(100%-50px)] w-full flex-1">
+        <div className="relative flex flex-row justify-between h-[calc(100%-60px)] w-full flex-1">
           {/* Editable */}
           <div className="relative h-full w-[calc(100%-350px)] overflow-auto">
             <div className="relative max-w-[950px] mx-auto">

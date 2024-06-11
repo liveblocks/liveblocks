@@ -1,3 +1,4 @@
+import { autoUpdate, useFloating } from "@floating-ui/react-dom";
 import { CollaborationContext } from "@lexical/react/LexicalCollaborationContext";
 import { CollaborationPlugin } from "@lexical/react/LexicalCollaborationPlugin";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
@@ -5,7 +6,15 @@ import type { Provider } from "@lexical/yjs";
 import { kInternal, nn } from "@liveblocks/core";
 import { useClient, useRoom, useSelf } from "@liveblocks/react";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
-import React, { useCallback, useContext, useEffect, useRef } from "react";
+import type { MutableRefObject } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { Doc } from "yjs";
 
 import { CommentPluginProvider } from "./comments/comment-plugin-provider";
@@ -31,6 +40,25 @@ export const LiveblocksPlugin = ({
   const room = useRoom();
   const collabContext = useContext(CollaborationContext);
   const previousRoomIdRef = useRef<string | null>(null);
+
+  const [containerRef, setContainerRef] = useState<
+    MutableRefObject<HTMLDivElement | null> | undefined
+  >(undefined);
+
+  const {
+    refs: { setReference, setFloating },
+    strategy,
+    x,
+    y,
+  } = useFloating({
+    strategy: "fixed",
+    placement: "bottom",
+    whileElementsMounted: (...args) => {
+      return autoUpdate(...args, {
+        animationFrame: true,
+      });
+    },
+  });
 
   // Warn users if initialConfig.editorState, set on the composer, is not null
   useEffect(() => {
@@ -93,8 +121,36 @@ export const LiveblocksPlugin = ({
     collabContext.name = username || "";
   }, [collabContext, username]);
 
+  useLayoutEffect(() => {
+    const editable = editor.getRootElement();
+    if (editable === null) return;
+
+    setReference({
+      getBoundingClientRect: () => editable.getBoundingClientRect(),
+    });
+  }, [setReference, editor]);
+
+  const handleFloatingRef = useCallback(
+    (node: HTMLDivElement) => {
+      setFloating(node);
+      setContainerRef({ current: node });
+    },
+    [setFloating, setContainerRef]
+  );
+
   return (
     <>
+      <div
+        ref={handleFloatingRef}
+        style={{
+          position: strategy,
+          top: 0,
+          left: 0,
+          transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`,
+          minWidth: "max-content",
+        }}
+      />
+
       <CollaborationPlugin
         // Setting the key allows us to reset the internal Y.doc used by useYjsCollaboration
         // without implementing `reload` event
@@ -103,6 +159,7 @@ export const LiveblocksPlugin = ({
         providerFactory={providerFactory}
         username={username}
         cursorColor={cursorcolor}
+        cursorsContainerRef={containerRef}
         shouldBootstrap={true}
       />
 
