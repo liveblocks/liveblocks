@@ -97,7 +97,7 @@ Regular hooks often return `null` whilst a component is loading, and you must
 check for this to render a loading spinner.
 
 ```tsx
-import { ClientSideSuspense, useStorage } from "@liveblocks/react";
+import { useStorage } from "@liveblocks/react";
 
 function Component() {
   // `animals` is `null` when loading
@@ -116,7 +116,7 @@ Advanced hooks using the `{ ..., error, isLoading }` syntax, such as
 the data.
 
 ```tsx
-import { ClientSideSuspense, useThreads } from "@liveblocks/react";
+import { useThreads } from "@liveblocks/react";
 
 function Component() {
   // Check for `error` and `isLoading` before `threads` is defined
