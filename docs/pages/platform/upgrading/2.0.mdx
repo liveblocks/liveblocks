@@ -38,7 +38,7 @@ been well aware of:
   have to also re-export it manually.
 - Due to how TypeScript works, the type params you’d provide to
   `createRoomContext()` had a fixed ordering to them. If you wanted to specify
-  only `Presence` and `RoomEvent`, ‘you’d have to “skip” other custom types, by
+  only `Presence` and `RoomEvent`, you’d have to “skip” some type params, by
   doing `createRoomContext<Presence, {}, {}, RoomEvent>()` or similar.
 
 ### Liveblocks 2.0
@@ -91,18 +91,20 @@ versions. The easiest way to do that is to run the following command:
 npx create-liveblocks-app@latest --upgrade
 ```
 
-There are also some **breaking changes in this update**. Most APIs are backward
-compatible, however there’s a chance that some of these changes will affect your
-code base. We’ve built codemods to help you transition.
+There are also some **breaking changes** in this update. **Most users will not
+run into any of these**, but there is a chance that some of these will affect
+your situation. Making the necessary code adjustments should however be easy. In
+many cases, we provide a codemod that makes the actual change for you, so you
+don’t have to do so manually.
 
 ### Breaking change 1: renamed package [#bc1]
 
 Affects `@liveblocks/react-comments`. We’ve renamed our package
 `@liveblocks/react-comments` to `@liveblocks/react-ui`, because our library of
-pre-built UI components now contains more than just Comments-related components,
-we’ve renamed our package accordingly, so please adjust your imports.
+pre-built UI components now contains more than just Comments-related components.
+Please adjust your imports.
 
-There is a **codemod available** for you to run to perform this code change:
+Run the following **codemod** or manually make the changes:
 
 ```bash
 npx @liveblocks/codemod@latest react-comments-to-react-ui
@@ -128,7 +130,7 @@ Affects `@liveblocks/node`. To avoid confusion with the newly introduced custom
 `RoomInfo` type, we’ve renamed the `RoomInfo` type in our `@liveblocks/node`
 package.
 
-There is a **codemod available** for you to run to perform this code change:
+Run the following **codemod** or manually make the changes:
 
 ```bash
 npx @liveblocks/codemod@latest room-info-to-room-data
@@ -149,16 +151,23 @@ This will change:
 Affects `@liveblocks/node`. In `@liveblocks/node`, none of the client methods,
 like `liveblocks.getThread()`, take type params any longer.
 
-```diff showLineNumbers={false}
--const thread = await liveblocks.getThread<MyThreadMetadata>()
-+const thread = await liveblocks.getThread()
-```
+Make the following changes:
 
-You should use global type augmentation instead. Please see
-[“Simplifying your Liveblocks application”](#simplifying) below for a lot more
-detail on this transition.
+```ts showLineNumbers={false}
+// ❌ Before
+await liveblocks.createThread<MyThreadMetadata>();
+await liveblocks.editThreadMetadata<MyThreadMetadata>();
+await liveblocks.getThreads<MyThreadMetadata>();
+await liveblocks.getThread<MyThreadMetadata>();
+//                         ^^^^^^^^^^^^^^^^ No longer possible
 
-```tsx showLineNumbers={false}
+// ✅ After
+await liveblocks.createThread();
+await liveblocks.editThreadMetadata();
+await liveblocks.getThreads();
+await liveblocks.getThread();
+
+// In liveblocks.config.ts
 declare global {
   interface Liveblocks {
     ThreadMetadata: MyThreadMetadata;
@@ -166,15 +175,25 @@ declare global {
 }
 ```
 
+You should use global type augmentation instead. Please see
+[“Simplifying your Liveblocks application”](#simplifying) below for a lot more
+detail on this transition.
+
 ### Breaking change 4: changed default export to named export in Yjs package [#bc4]
 
 Affects `@liveblocks/yjs`. To make discoverability and refactorings easier, and
 to avoid confusion with the newly introduced `LiveblocksProvider` in our React
-package, we’re no longer using default exports, but named exports only:
+package, we’re no longer using default exports, but named exports only.
+
+Change:
 
 ```diff showLineNumbers={false}
 -import LiveblocksProvider from "@liveblocks/yjs";
 +import { LiveblocksYjsProvider } from "@liveblocks/yjs";
+
+ const yDoc = new Y.Doc();
+-const yProvider = new LiveblocksProvider(room, yDoc);
++const yProvider = new LiveblocksYjsProvider(room, yDoc);
 ```
 
 <Banner type="warning" title="We’re working on a codemod">
@@ -204,78 +223,105 @@ ready.
 ### Breaking change 6: new webhook event types [#bc6]
 
 Affects apps using webhooks. The webhook event `NotificationEvent`’s type can
-represent multiple kinds of notifications (`"thread"`, `"textMention"`, and
-custom ones (e.g. `"$myNotification"`)).
+represent multiple kinds of notifications: `"thread"`, `"textMention"`, and
+custom ones (e.g. `"$myNotification"`).
 
 If you were using properties only available on the `"thread"` kind (e.g.
 `threadId`), you will need to first check for the kind of notification before
 accessing them.
 
-```diff showLineNumbers={false}
--const threadId = event.data.threadId;
-+if (event.date.kind === "thread") {
-+  const threadId = event.data.threadId;
-+}
+```ts showLineNumbers={false}
+// ❌ Before
+const threadId = event.data.threadId;
+
+// ✅ After
+if (event.date.kind === "thread") {
+  const threadId = event.data.threadId;
+}
 ```
 
 ### Breaking change 7: removed deprecated APIs [#bc7]
 
-Affects all packages. All of the following APIs have been removed in 2.0, as
-they were deprecated multiple versions ago:
+All of the following APIs have been removed in 2.0, as they were deprecated
+multiple versions ago.
+
+**Affecting `@liveblocks/client`:**
+
+- `Client.enter()` has been replaced by `Client.enterRoom()`
+- `Client.leave()` has been replaced by `Client.enterRoom()`, which returns a
+  `leave` function
+- Client option `fetchPolyfill`, `WebSocketPolyfill`, are replaced by
+  `polyfills: { fetch, WebSocket }`
+- Legacy option `shouldInitiallyConnect` is now renamed to `autoConnect`
+- Legacy connection status APIs, e.g. `room.getConnectionState()` and
+  `.subscribe("connection")`. You can use `.getStatus()` or
+  `.subscribe("status")` instead.
+- `user.isReadOnly` field is replaced by `!user.canWrite` (note the negation
+  here)
+- The `Others<P, U>` type. Please change to `readonly User<P, U>[]`.
+
+**Affecting `@liveblocks/react`:**
 
 - The `useMap`, `useList`, and `useObject` hooks. These have been deprecated
   since the release of 0.18 (more than two years ago). Please see
   [the 0.18 upgrade guide](/docs/platform/upgrading/0.18#Step-5a:-Replace-reads-with-useStorage)
   for tips on how to rewrite these hooks to `useStorage`.
-- Remove legacy `authorize` method from `@liveblocks/node`. Please refer to
-  [the 1.2 upgrade guide](/docs/platform/upgrading/1.2#how) to learn how to
-  upgrade your auth endpoint.
-- Legacy connection status APIs, e.g. `room.getConnectionState()` and
-  `.subscribe("connection")`. You can use `.getStatus()` or
-  `.subscribe("status")` instead.
-- Legacy option `shouldInitiallyConnect` is now renamed to `autoConnect`
-- `Client.enter()` has been replaced by `Client.enterRoom()`
-- `Client.leave()` has been replaced by `Client.enterRoom()`, which returns a
-  `leave` function
-- Legacy exports in Zustand/Redux packages
-- Client option `fetchPolyfill`, `WebSocketPolyfill`, are replaced by
-  `polyfills: { fetch, WebSocket }`
-- The `Others<P, U>` type. Please change to `readonly User<P, U>[]`.
-- `user.isReadOnly` field is replaced by `!user.canWrite` (note the negation
-  here)
 - The second argument `options` to `createRoomContext(client, options)` has been
   removed. These options have been moved to the client.
 
+**Affecting `@liveblocks/node`:**
+
+- Remove legacy `authorize` method from `@liveblocks/node`. Please refer to
+  [the 1.2 upgrade guide](/docs/platform/upgrading/1.2#how) to learn how to
+  upgrade your auth endpoint.
+
+**Affecting `@liveblocks/redux` and `@liveblocks/zustand`:**
+
+- Legacy aliased exports in Zustand/Redux packages are removed
+
 ## Simplifying your Liveblocks application (optional) [#simplifying]
+
+<Banner title="Optional, but recommended">
+
+This section is optional, but highly recommended. You can do it now, or come
+back to do it later.
+
+</Banner>
 
 If you have dealt with the breaking changes above, or concluded they they don’t
 apply to your situation, we can go a step further and really simplify your
 Liveblocks setup.
 
-**Note:** If your Liveblocks application has multiple room types, and therefore
-you have more than one instance of `createRoomContext()` in your application,
-the following simplification does not apply to you. We will keep supporting
-`createRoomContext()` for the advanced use case of multiple room types.
+<Banner type="warning" title="Do you have multiple room types?">
+
+If your Liveblocks application has multiple room types, and therefore you have
+multiple Liveblocks config files—one for each room type—then you cannot switch
+to a single global type definition. In that advanced case, the following
+simplifications do not apply to you. We will keep supporting the
+`createRoomContext` API for these advanced use cases, but no longer recommend it
+for the more common case of having just a single room type.
+
+</Banner>
 
 ### Step 1: Use the new global Liveblocks custom types [#step1]
 
 Go to your `liveblocks.config.ts`, find your `createRoomContext()` call. Now
 decide which codemod to run.
 
-**Option 1**: If you have `const { suspense: { ... } } = createRoomContext()`,
-run:
+**Option 1: You are using Suspense hooks.**
+(`const { suspense: { useRoom, ... } }`)
 
 ```bash
 npx @liveblocks/codemod@latest remove-liveblocks-config-contexts --suspense
 ```
 
-**Option 2**: If instead you have `const { ... } = createRoomContext()`, run:
+**Option 2: You are using classic hooks.** (`const { useRoom, ... }`)
 
 ```bash
 npx @liveblocks/codemod@latest remove-liveblocks-config-contexts
 ```
 
-This codemod will make the following changes to your code.
+Running either of these will make the following changes.
 
 First it will move your type annotations to a global `Liveblocks` interface,
 which all Liveblocks API will recognize and use:
@@ -298,8 +344,9 @@ Secondly, it will change all imports in your code base to import the hooks
 directly instead:
 
 ```diff showLineNumbers={false}
--import { RoomProvider, useRoom, useThreads } from "./liveblocks.config.ts";
-+import { RoomProvider, useRoom, useThreads } from "@liveblocks/react/suspense";
+-import { RoomProvider, useRoom, ... } from "./liveblocks.config.ts";
++import { RoomProvider, useRoom, ... } from "@liveblocks/react/suspense";  // Option 1
++import { RoomProvider, useRoom, ... } from "@liveblocks/react";           // Option 2
 ```
 
 ### Step 2: Set up a LiveblocksProvider [#step2]
