@@ -21,7 +21,7 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.0.6",
     "@types/recharts": "^1.8.24",
-    "prettier": "^2.6.2",
+    "prettier": "^3.3.2",
     "typescript": "^5.4.5"
   }
 }

@@ -9,7 +9,7 @@
   },
   "devDependencies": {
     "esbuild": "0.17.5",
-    "prettier": "2.8.3"
+    "prettier": "^3.3.2"
   },
   "dependencies": {
     "@liveblocks/client": "^2.0.0-alpha2"

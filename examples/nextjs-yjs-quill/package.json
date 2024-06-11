@@ -28,6 +28,7 @@
   },
   "devDependencies": {
     "@types/quill": "^2.0.10",
+    "prettier": "^3.3.2",
     "typescript": "^5.4.5"
   }
 }
