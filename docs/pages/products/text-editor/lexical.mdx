@@ -5,10 +5,167 @@ meta:
   description: "Learn about using Lexical text editor"
 ---
 
-Our Lexical integration provides you with a [React](https://react.dev/) plugin
-that adds collaboration to any [Lexical](https://lexical.dev/) text editor. It
-also adds realtime cursors, document persistence on the cloud, comments, and
-mentions.
+A quick overview of the Text Editor packages for Lexical.
+
+## Concepts
+
+Liveblocks Lexical allows you add collaboration to any
+[Lexical](https://lexical.dev/) text editor, along with a number of related
+features. Each [collaborative room](/docs/concepts/how-liveblocks-works#Rooms)
+in your application can store one document each, and these documents are
+persisted on the cloud, visible on [your dashboard](/dashboard), and are
+integrated into other Liveblocks products such as
+[Comments](/docs/products/comments) and
+[Notifications](/docs/products/notifications).
+
+## Users and mentions
+
+Users can be added to your document, and you can tag others inline. You can also
+easily enable mention suggestions.
+
+<Figure>
+  <Image
+    src="/assets/text-editor/mentions.png"
+    alt="User mentions"
+    width={700}
+    height={500}
+  />
+</Figure>
+
+Users and mention suggestions can be added with
+[`resolveUsers`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers),
+and
+[`resolveMentionSuggestions`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveMentionSuggestions).
+
+```tsx highlight="6-13"
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
+
+function App() {
+  return (
+    <LiveblocksProvider
+      resolveUsers={async ({ userIds }) => {
+        // Return user info from their `userIds`
+        // ...
+      }}
+      resolveMentionSuggestions={async ({ text, roomId }) => {
+        // Return suggestions from the search `text`
+        // ...
+      }}
+    >
+      {/* children */}
+    </LiveblocksProvider>
+  );
+}
+```
+
+## Real-time editing
+
+Your document can be edited in real-time by multiple users at once. Each user
+renders a cursors on screen that updates live as they move, select, and edit.
+
+<Figure>
+  <Image
+    src="/assets/text-editor/cursors.png"
+    alt="Real-time text cursors"
+    width={700}
+    height={500}
+  />
+</Figure>
+
+When [authenticating your users](/docs/authentication) with
+[`prepareSession`](/docs/api-reference/liveblocks-node#access-tokens) or
+[`identifyUsers`](/docs/api-reference/liveblocks-node#id-tokens), pass `name`
+and `color` properties to their `userInfo` to add their cursor information.
+
+```js
+userInfo: {
+  name: "Marie",
+  color: "#00ff00",
+}
+```
+
+## Annotations and comments
+
+Add [Comments](/docs/products/comments) to your text editor, allowing others to
+select words in the editor, and leave annotations. Each annotation creates a
+[thread](/docs/products/comments/concepts#Threads), and inside each you can
+reply, use emoji reactions, mention others, and more.
+
+<Figure>
+  <Image
+    src="/assets/text-editor/annotations.png"
+    alt="Text editor annotations"
+    width={700}
+    height={500}
+  />
+</Figure>
+
+Add Comments to your text editor using
+[`FloatingComposer`](/docs/api-reference/liveblocks-react-lexical#FloatingComposer)
+and [`ThreadPanel`](/docs/api-reference/liveblocks-react-lexical#ThreadPanel).
+
+```tsx highlight="3-4"
+<LexicalComposer initialConfig={initialConfig}>
+  <LiveblocksPlugin>
+    <FloatingComposer />
+    <ThreadPanel />
+  </LiveblocksPlugin>
+</LexicalComposer>
+```
+
+You can
+[open a new annotation composer](/docs/api-reference/liveblocks-react-lexical#Opening-the-FloatingComposer)
+for the current selection with `OPEN_FLOATING_COMPOSER_COMMAND`.
+
+```tsx
+<button onClick={() => editor.dispatchCommand(OPEN_FLOATING_COMPOSER_COMMAND)}>
+  💬 New comment
+</button>
+```
+
+## Notifications
+
+Add a [Notifications](/docs/products/notifications) UI to your application, and
+automatically notify users when they’ve been mentioned. Notifications also
+allows you to trigger sending emails, Slack, or any other kind of notification,
+using our webhooks.
+
+<Figure>
+  <Image
+    src="/assets/text-editor/notifications.png"
+    alt="Text editor notifications"
+    width={700}
+    height={500}
+  />
+</Figure>
+
+Notifications is enabled by default, follow our
+[get started guides](/docs/get-started/notifications) to learn how to set up
+[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification).
+
+```tsx
+export function CollaborativeApp() {
+  const { inboxNotifications } = useInboxNotifications();
+
+  return (
+    <InboxNotificationList>
+      {inboxNotifications.map((inboxNotification) => (
+        <InboxNotification
+          key={inboxNotification.id}
+          inboxNotification={inboxNotification}
+        />
+      ))}
+    </InboxNotificationList>
+  );
+}
+```
+
+Learn more about
+[sending email notifications with Notifications](/docs/products/notifications/email-notifications).
+
+---
+
+enabling real-time cursors, comments, and mentions.
 
 ## One lexical document per room
 
@@ -29,3 +186,22 @@ mentions.
 
 - Dispatching OPEN_FLOATING_COMPOSER_COMMAND to open a floating composer near
   the current selection to start a Thread
+
+## Lexical API Reference
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="Lexical React"
+    href="/docs/api-reference/liveblocks-react-lexical"
+    description="@liveblocks/react-lexical"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Lexical Node"
+    href="/docs/api-reference/liveblocks-node-lexical"
+    description="@liveblocks/node-lexical"
+    visual={<DocsApiIcon />}
+  />
+</ListGrid>
