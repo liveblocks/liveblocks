@@ -7,13 +7,10 @@ export const client = createClient({
 
 declare global {
   interface Liveblocks {
-    // Presence represents the properties that exist on every user in the Room
-    // and that will automatically be kept in sync. Accessible through the
-    // `user.presence` property. Must be JSON-serializable.
+    // Each user's Presence, for room.getPresence, room.subscribe("others"), etc.
     Presence: {
       name: string;
       avatar: string;
-      // ...
     };
   }
 }

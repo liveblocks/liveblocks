@@ -5,6 +5,7 @@ import type { WithLiveblocks } from "@liveblocks/zustand";
 
 declare global {
   interface Liveblocks {
+    // Each user's Presence, for room.getPresence, room.subscribe("others"), etc.
     Presence: {
       isTyping: boolean;
     };

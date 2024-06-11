@@ -21,6 +21,7 @@ import edges from "./edges";
 
 declare global {
   interface Liveblocks {
+    // The Storage tree for the room, for useMutation, useStorage, etc.
     Storage: Storage;
   }
 }
