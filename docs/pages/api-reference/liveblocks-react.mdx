@@ -568,11 +568,11 @@ function App() {
 }
 ```
 
-You can listen to the event with [`room.subscribe("lost-connection")`][]. Note
-that this also affects when `others` are reset to an empty array after a
-disconnection. This helps prevent temporary flashes in your application as a
-user quickly disconnects and reconnects. For a demonstration of this behavior,
-see our [connection status example][].
+You can listen to the event with [`useLostConnectionListener`][]. Note that this
+also affects when `others` are reset to an empty array after a disconnection.
+This helps prevent temporary flashes in your application as a user quickly
+disconnects and reconnects. For a demonstration of this behavior, see our
+[connection status example][].
 
 #### Background keep-alive timeout [#LiveblocksProviderBackgroundKeepAliveTimeout]
 
@@ -2834,7 +2834,8 @@ And the following timeline:
 [`useothersconnectionids`]:
   /docs/api-reference/liveblocks-react#useOthersConnectionIds
 [`useother`]: /docs/api-reference/liveblocks-react#useOther
-[`useother`]: /docs/api-reference/liveblocks-react#useOther
+[`uselostconnectionlistener`]:
+  /docs/api-reference/liveblocks-react#useLostConnectionListener
 [`clientsidesuspense`]: /docs/api-reference/liveblocks-react#ClientSideSuspsnse
 [`usebroadcastevent`]: /docs/api-reference/liveblocks-react#useBroadcastEvent
 [`usethreads`]: /docs/api-reference/liveblocks-react#useThreads
