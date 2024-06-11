@@ -360,32 +360,35 @@ Liveblocks client otherwise.
 The way to do it is to use a pretty standard React provider. Make the following
 change:
 
-```diff showLineNumbers={false}
- // In liveblocks.config.ts
--import { createClient } from "@liveblocks/client";
--
--const client = createClient({
--  authEndpoint: "/api/liveblocks-auth",
--  throttle: 16,
--  /* etc */
--);
+```tsx showLineNumbers={false} file="liveblocks.config.ts"
+// ❌ Before
+import { createClient } from "@liveblocks/client";
 
- // High up in your component tree
-+"use client";
-+
-+import { LiveblocksProvider } from "@liveblocks/react";
-+
-+function Layout({ children }) {
-+  return (
-+    <LiveblocksProvider
-+      authEndpoint="/api/liveblocks-auth"
-+      throttle={16}
-+      /* etc */
-+    >
-+      {children}
-+    </LiveblocksProvider>
-+  )
-+}
+// ❌ You no longer have to import or call createClient()
+const client = createClient({
+  authEndpoint: "/api/liveblocks-auth",
+  throttle: 16,
+  /* etc */
+);
+```
+
+```tsx showLineNumbers={false} file="layout.tsx"
+"use client";
+
+import { LiveblocksProvider } from "@liveblocks/react";
+
+export function Layout({ children }) {
+  return (
+    // ✅ Move client options here
+    <LiveblocksProvider
+      authEndpoint="/api/liveblocks-auth"
+      throttle={16}
+      /* etc */
+    >
+      {children}
+    </LiveblocksProvider>
+  );
+}
 ```
 
 <Banner type="info" title="Where to put this?">
@@ -405,14 +408,16 @@ hook:
 
 ```diff
 -import { client } from "./liveblocks.config";
++import { useClient } from "@liveblocks/react";  // or
 +import { useClient } from "@liveblocks/react/suspense";
 
-+function MyComponent() {
+ function MyComponent() {
 +  const client = useClient();
-+}
+   doSomethingWith(client);
+ }
 ```
 
-### Step 3: Optional cleanup of type annotations [#step3]
+### Step 3: Optional cleanup of type params [#step3]
 
 If you also exported your `Presence`, `Storage`, etc types from
 `liveblocks.config.ts` before, you no longer have to. The main reason to export
@@ -454,8 +459,8 @@ function doSomethingWithRoom(room: Room) {
 
 ## Improvements
 
-The following miscellaneous improvements have been made that are non-breaking
-changes:
+Furthermore, the following miscellaneous quality-of-life improvements have been
+made that are non-breaking changes.
 
 ### `ClientSideSuspense` no longer needs a function
 
@@ -533,6 +538,12 @@ declare global {
   }
 }
 ```
+
+That’s it!
+
+If you have issues with these new patterns or otherwise need help, please let us
+know [by email](mailto:support@liveblocks.io) or by joining our
+[Discord community](/discord)! We’re here to help!
 
 [`createClient`]: /docs/api-reference/liveblocks-client#createClient
 [`LiveblocksProvider`]: /docs/api-reference/liveblocks-react#LiveblocksProvider
