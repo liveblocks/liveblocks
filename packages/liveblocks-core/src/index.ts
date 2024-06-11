@@ -49,6 +49,7 @@ export {
   convertToInboxNotificationData,
   convertToThreadData,
 } from "./convert-plain-data";
+export type { ManagedPool } from "./crdts/AbstractCrdt";
 export { cloneLson, isLiveNode } from "./crdts/liveblocks-helpers";
 export { LiveList } from "./crdts/LiveList";
 export { LiveMap } from "./crdts/LiveMap";
