@@ -17,10 +17,7 @@ import path from "path";
 import { bgMagenta, bold, magenta, yellow } from "picocolors";
 
 import { findAndReplace } from "../src/lib/find-and-replace";
-import {
-  replaceReactCommentsImportsInCss,
-  replaceReactCommentsInPackageJson,
-} from "../src/replacements/react-comments-to-react-ui";
+import { replaceReactCommentsImportsInCss } from "../src/replacements/react-comments-to-react-ui";
 
 const TRANSFORMER_INQUIRER_CHOICES = [
   {
@@ -128,7 +125,6 @@ export function runTransform({
   // Post-codemod changes
 
   if (!dry && transformer === "react-comments-to-react-ui") {
-    findAndReplace("**/package.json", replaceReactCommentsInPackageJson);
     findAndReplace("**/*.css", replaceReactCommentsImportsInCss);
   }
 }
