@@ -139,7 +139,8 @@ using our webhooks.
   />
 </Figure>
 
-Notifications is enabled by default, follow our
+Notifications is enabled by default, which means you just need to add our UI
+components to keep your users notified. Follow our
 [get started guides](/docs/get-started/notifications) to learn how to set up
 [`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification).
 
@@ -160,8 +161,10 @@ export function CollaborativeApp() {
 }
 ```
 
-Learn more about
-[sending email notifications with Notifications](/docs/products/notifications/email-notifications).
+Inline mentions also trigger
+[`TextMention`](/docs/platform/webhooks#TextMention-notification) notification
+webhook events. Learn more about
+[sending email notifications](/docs/products/notifications/email-notifications).
 
 ## AI agents and editing on the server
 
