@@ -121,8 +121,7 @@ to hear from you.
       To make the editor collaborative, we can use
       [`LiveblocksPlugin`](http://localhost:3001/docs/api-reference/liveblocks-react-lexical#LiveblocksPlugin)
       from `@liveblocks/lexical-react`. [`FloatingComposer`](/docs/api-reference/liveblocks-react-lexical#FloatingComposer)
-      and [`ThreadPanel`](/docs/api-reference/liveblocks-react-lexical#ThreadPanel) add
-      [Comments](/docs/products/comments) to your text editor, and are both optional.
+      is optional and adds [Comments](/docs/products/comments) to your text editor.
 
 
       ```tsx file="Editor.tsx"
@@ -136,7 +135,6 @@ to hear from you.
         liveblocksConfig,
         LiveblocksPlugin,
         FloatingComposer,
-        ThreadPanel,
       } from "@liveblocks/react-lexical";
 
       export default Editor() {
@@ -162,7 +160,6 @@ to hear from you.
             />
             <LiveblocksPlugin>
               <FloatingComposer />
-              <ThreadPanel />
             </LiveblocksPlugin>
           </LexicalComposer>
         );
