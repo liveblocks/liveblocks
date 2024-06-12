@@ -42,7 +42,7 @@ are using the global types).
 npx @liveblocks/codemod@latest remove-unneeded-type-params
 ```
 
-### 2.0
+### 2.0 (breaking changes)
 
 #### `react-comments-to-react-ui`
 
