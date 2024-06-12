@@ -9,14 +9,19 @@ jobs:
     strategy:
       matrix:
         node-version: [18.x]
-        pkg:
-          [
+        pkg: [
             "@liveblocks/core",
             "@liveblocks/client",
             "@liveblocks/react",
             "@liveblocks/redux",
             "@liveblocks/zustand",
             "@liveblocks/node",
+            "@liveblocks/yjs",
+            "@liveblocks/react-ui",
+            "@liveblocks/react-lexical",
+            "@liveblocks/node-lexical",
+            # TODO: Re-enable once we figure out why it's breaking
+            # "@liveblocks/codemod",
           ]
 
     steps:

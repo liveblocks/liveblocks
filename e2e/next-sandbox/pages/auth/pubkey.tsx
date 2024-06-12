@@ -1,3 +1,10 @@
+import type {
+  BaseMetadata,
+  BaseUserMeta,
+  Json,
+  JsonObject,
+  LsonObject,
+} from "@liveblocks/client";
 import { nn } from "@liveblocks/core";
 import { createRoomContext } from "@liveblocks/react";
 import Link from "next/link";
@@ -14,7 +21,11 @@ const client = createLiveblocksClient({
 });
 
 const { RoomProvider, useMyPresence, useSelf, useOthers, useStatus } =
-  createRoomContext(client);
+  // NOTE: We have to annotate the params here explicitly because otherwise it
+  // would pick up the globally augmented types here
+  createRoomContext<JsonObject, LsonObject, BaseUserMeta, Json, BaseMetadata>(
+    client
+  );
 
 export default function Home() {
   React.useEffect(() => {

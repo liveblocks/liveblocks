@@ -1,3 +1,4 @@
+import type { DAD } from "../globals/augmentation";
 import type { DateToString } from "../lib/DateToString";
 
 export type InboxNotificationThreadData = {
@@ -9,30 +10,45 @@ export type InboxNotificationThreadData = {
   readAt: Date | null;
 };
 
+export type InboxNotificationTextMentionData = {
+  kind: "textMention";
+  id: string;
+  roomId: string;
+  notifiedAt: Date;
+  readAt: Date | null;
+  createdBy: string;
+  mentionId: string;
+};
+
+export type InboxNotificationTextMentionDataPlain =
+  DateToString<InboxNotificationTextMentionData>;
+
 export type ActivityData = Record<
   string,
   string | boolean | number | undefined
 >;
 
-type InboxNotificationActivity = {
+type InboxNotificationActivity<K extends `$${string}` = `$${string}`> = {
   id: string;
   createdAt: Date;
-  data: ActivityData;
+  data: K extends keyof DAD ? DAD[K] : ActivityData;
 };
 
-export type InboxNotificationCustomData = {
-  kind: `$${string}`;
-  id: string;
-  roomId?: string;
-  subjectId: string;
-  notifiedAt: Date;
-  readAt: Date | null;
-  activities: InboxNotificationActivity[];
-};
+export type InboxNotificationCustomData<K extends `$${string}` = `$${string}`> =
+  {
+    kind: `$${string}`;
+    id: string;
+    roomId?: string;
+    subjectId: string;
+    notifiedAt: Date;
+    readAt: Date | null;
+    activities: InboxNotificationActivity<K>[];
+  };
 
 export type InboxNotificationData =
   | InboxNotificationThreadData
-  | InboxNotificationCustomData;
+  | InboxNotificationCustomData
+  | InboxNotificationTextMentionData;
 
 export type InboxNotificationThreadDataPlain =
   DateToString<InboxNotificationThreadData>;
@@ -46,7 +62,8 @@ export type InboxNotificationCustomDataPlain = Omit<
 
 export type InboxNotificationDataPlain =
   | InboxNotificationThreadDataPlain
-  | InboxNotificationCustomDataPlain;
+  | InboxNotificationCustomDataPlain
+  | InboxNotificationTextMentionDataPlain;
 
 export type InboxNotificationDeleteInfo = {
   type: "deletedInboxNotification";

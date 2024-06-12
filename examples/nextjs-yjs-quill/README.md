@@ -27,7 +27,7 @@ This example shows how to build a collaborative text editor with
 [Quill](https://quilljs.com), and [Next.js](https://nextjs.org/).
 
 As users edit the document, changes will be automatically persisted and
-synced—allowing for an editor that updates in real-time across clients. Users
+synced—allowing for an editor that updates in realtime across clients. Users
 will also be able to see each other’s cursors in the document.
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/text-editor.png" width="536" alt="Collaborative Text Editor" />

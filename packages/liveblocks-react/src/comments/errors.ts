@@ -1,8 +1,4 @@
-import type {
-  BaseMetadata,
-  CommentBody,
-  PartialNullable,
-} from "@liveblocks/core";
+import type { BaseMetadata, CommentBody, Patchable } from "@liveblocks/core";
 
 export class CreateThreadError<M extends BaseMetadata> extends Error {
   constructor(
@@ -26,7 +22,7 @@ export class EditThreadMetadataError<M extends BaseMetadata> extends Error {
     public context: {
       roomId: string;
       threadId: string;
-      metadata: PartialNullable<M>;
+      metadata: Patchable<M>;
     }
   ) {
     super("Edit thread metadata failed.");

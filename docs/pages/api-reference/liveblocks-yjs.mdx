@@ -7,7 +7,7 @@ alwaysShowAllNavigationLevels: false
 ---
 
 `@liveblocks/yjs` is a [Yjs](https://yjs.dev/) provider enabling you to use
-Liveblocks as the hosted back end of your real-time collaborative application.
+Liveblocks as the hosted back end of your realtime collaborative application.
 Read our [getting started](/docs/get-started) guides to learn more.
 
 <Banner title="Public beta">
@@ -18,20 +18,20 @@ hear from you.
 
 </Banner>
 
-## LiveblocksProvider [#LiveblocksProvider]
+## LiveblocksYjsProvider [#LiveblocksYjsProvider]
 
-`LiveblocksProvider` is a [Yjs provider](https://github.com/yjs/yjs#providers)
+`LiveblocksYjsProvider` is a [Yjs provider](https://github.com/yjs/yjs#providers)
 that allows you to connect a Yjs document to Liveblocks. Any changes you make to
 the document will be stored on Liveblocks servers and synchronized with other
 clients in the room.
 
 You can connect by creating a Yjs document, then passing it to
-`LiveblocksProvider` along with the currently connected Liveblocks room.
+`LiveblocksYjsProvider` along with the currently connected Liveblocks room.
 
 ```ts highlight="13-15"
 import * as Y from "yjs";
 import { createClient } from "@liveblocks/client";
-import LiveblocksProvider from "@liveblocks/yjs";
+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 
 const client = createClient({
   publicApiKey: "{{PUBLIC_KEY}}",
@@ -43,17 +43,17 @@ const { room, leave } = client.enterRoom("your-room-id", {
 
 // Create Yjs document and provider
 const yDoc = new Y.Doc();
-const yProvider = new LiveblocksProvider(room, yDoc);
+const yProvider = new LiveblocksYjsProvider(room, yDoc);
 ```
 
-When using [`@liveblocks/react`][] you can connect by using `LiveblocksProvider`
+When using [`@liveblocks/react`][] you can connect by using `LiveblocksYjsProvider`
 within an effect, taking the room from [`useRoom`][], and cleaning up
 afterwards.
 
 ```ts highlight="7,10-12"
 import { useEffect } from "react";
 import * as Y from "yjs";
-import LiveblocksProvider from "@liveblocks/yjs";
+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import { useRoom } from "../liveblocks.config.ts";
 
 function Component() {
@@ -62,7 +62,7 @@ function Component() {
   useEffect(() => {
     // Create Yjs document and provider
     const yDoc = new Y.Doc();
-    const yProvider = new LiveblocksProvider(room, yDoc);
+    const yProvider = new LiveblocksYjsProvider(room, yDoc);
 
     // ...
 
@@ -76,7 +76,7 @@ function Component() {
 }
 ```
 
-### LiveblocksProvider.awareness [#LiveblocksProvider.awareness]
+### LiveblocksYjsProvider.awareness [#LiveblocksYjsProvider.awareness]
 
 The [awareness](#Awareness) instance attached to the provider.
 
@@ -85,9 +85,9 @@ The [awareness](#Awareness) instance attached to the provider.
 const awareness = yProvider.awareness;
 ```
 
-### LiveblocksProvider.destroy
+### LiveblocksYjsProvider.destroy
 
-Cleanup function. Destroys the [`LiveblocksProvider`][] instance and removes all
+Cleanup function. Destroys the [`LiveblocksYjsProvider`][] instance and removes all
 resources.
 
 ```ts
@@ -95,7 +95,7 @@ resources.
 yProvider.destroy();
 ```
 
-### LiveblocksProvider.on("sync") [#LiveblocksProvider.on.sync]
+### LiveblocksYjsProvider.on("sync") [#LiveblocksYjsProvider.on.sync]
 
 Add an event listener for the `sync` event. The `sync` event is triggered when
 the client has received content from the server. Can be used to fire events when
@@ -112,7 +112,7 @@ yProvider.on("sync", (isSynced: boolean) => {
 });
 ```
 
-Aliased by `LiveblocksProvider.on("synced")`.
+Aliased by `LiveblocksYjsProvider.on("synced")`.
 
 ```ts
 // "sync" and "synced" both listen to the same event
@@ -120,11 +120,11 @@ yProvider.on("sync", (sync: boolean) => /* ... */);
 yProvider.on("synced", (sync: boolean) => /* ... */);
 ```
 
-### LiveblocksProvider.off("sync") [#LiveblocksProvider.off.sync]
+### LiveblocksYjsProvider.off("sync") [#LiveblocksYjsProvider.off.sync]
 
 Remove an event listener for the `sync` event. The `sync` event is triggered
 when the client has received content from the server. Used to clean up
-[`LiveblocksProvider.on("sync")`][].
+[`LiveblocksYjsProvider.on("sync")`][].
 
 ```ts
 const handleSync = (synced: boolean) => {};
@@ -134,7 +134,7 @@ yProvider.on("sync", handleSync);
 yProvider.off("sync", handleSync);
 ```
 
-Aliased by `LiveblocksProvider.on("synced")`.
+Aliased by `LiveblocksYjsProvider.on("synced")`.
 
 ```ts
 // "sync" and "synced" both listen to the same event
@@ -142,7 +142,7 @@ yProvider.off("sync", (sync: boolean) => /* ... */);
 yProvider.off("synced", (sync: boolean) => /* ... */);
 ```
 
-### LiveblocksProvider.once("sync") [#LiveblocksProvider.once.sync]
+### LiveblocksYjsProvider.once("sync") [#LiveblocksYjsProvider.once.sync]
 
 Add a one-time event listener for the `sync` event. The `sync` event is
 triggered when the client has received content from the server. Can be used to
@@ -159,7 +159,7 @@ yProvider.once("sync", (isSynced: boolean) => {
 });
 ```
 
-Aliased by `LiveblocksProvider.once("synced")`.
+Aliased by `LiveblocksYjsProvider.once("synced")`.
 
 ```ts
 // "sync" and "synced" both listen to the same event
@@ -167,7 +167,7 @@ yProvider.once("sync", (sync: boolean) => /* ... */);
 yProvider.once("synced", (sync: boolean) => /* ... */);
 ```
 
-### LiveblocksProvider.emit("sync") [#LiveblocksProvider.emit.sync]
+### LiveblocksYjsProvider.emit("sync") [#LiveblocksYjsProvider.emit.sync]
 
 Synchronously call each listener for the `sync` event in the order they were
 registered, passing the supplied arguments to each.
@@ -177,7 +177,7 @@ registered, passing the supplied arguments to each.
 yProvider.emit("sync", true);
 ```
 
-Aliased by `LiveblocksProvider.emit("synced")`.
+Aliased by `LiveblocksYjsProvider.emit("synced")`.
 
 ```ts
 // "sync" and "synced" both listen to the same event
@@ -185,7 +185,7 @@ yProvider.emit("sync" /* , ... */);
 yProvider.emit("synced" /* , ... */);
 ```
 
-### LiveblocksProvider.synced [#LiveblocksProvider.synced]
+### LiveblocksYjsProvider.synced [#LiveblocksYjsProvider.synced]
 
 Boolean. Returns whether the client is synchronized with the back end.
 
@@ -194,19 +194,19 @@ Boolean. Returns whether the client is synchronized with the back end.
 const isSynced: boolean = yProvider.synced;
 ```
 
-### LiveblocksProvider.connect [#LiveblocksProvider.connect]
+### LiveblocksYjsProvider.connect [#LiveblocksYjsProvider.connect]
 
 Does nothing, added for compatibility. Connections are handled by the
 [Liveblocks client](https://liveblocks.io/docs/api-reference/liveblocks-client#createClient).
 
-### LiveblocksProvider.disconnect [#LiveblocksProvider.disconnect]
+### LiveblocksYjsProvider.disconnect [#LiveblocksYjsProvider.disconnect]
 
 Does nothing, added for compatibility. Connections are handled by the
 [Liveblocks client](https://liveblocks.io/docs/api-reference/liveblocks-client#createClient).
 
 ## Awareness [#Awareness]
 
-[`LiveblocksProvider`][] instances have an `awareness` property, which is
+[`LiveblocksYjsProvider`][] instances have an `awareness` property, which is
 powered by
 [Liveblocks Presence](/docs/api-reference/liveblocks-client#Room.getPresence).
 You can pass it to various bindings which implement awareness, for example
@@ -214,7 +214,7 @@ plugins that enable multiplayer cursors in text editors.
 
 ```ts
 const yDoc = new Y.Doc();
-const yProvider = new LiveblocksProvider(room, yDoc);
+const yProvider = new LiveblocksYjsProvider(room, yDoc);
 
 // Yjs awareness
 const awareness = yProvider.awareness;
@@ -313,7 +313,7 @@ const meta: Map<number, { click: number; lastUpdated: number }> =
 
 Provided for compatibility, but generally not necessary. Cleanup function.
 Destroys the [`Awareness`][] instance and removes all resources. Used internally
-by [`LiveblocksProvider`][].
+by [`LiveblocksYjsProvider`][].
 
 ```ts
 // Cleanup function
@@ -373,16 +373,16 @@ awareness.emit("destroy", true);
 [`useRoom`]: /docs/api-reference/liveblocks-react#useRoom
 [`room.getPresence`]: /docs/api-reference/liveblocks-client#Room.getPresence
 [`useMyPresence`]: /docs/api-reference/liveblocks-react#useMyPresence
-[`LiveblocksProvider`]: #LiveblocksProvider
-[`LiveblocksProvider.awareness]: #LiveblocksProvider.awareness
-[`LiveblocksProvider.destroy]: #LiveblocksProvider.destroy
-[`LiveblocksProvider.on("sync")`]: #LiveblocksProvider.on.sync
-[`LiveblocksProvider.off("sync")`]: #LiveblocksProvider.off.sync
-[`LiveblocksProvider.once("sync")`]: #LiveblocksProvider.once.sync
-[`LiveblocksProvider.emit("sync")`]: #LiveblocksProvider.emit.sync
-[`LiveblocksProvider.synced`]: #LiveblocksProvider.synced
-[`LiveblocksProvider.connect`]: #LiveblocksProvider.connect
-[`LiveblocksProvider.disconnect`]: #LiveblocksProvider.disconnect
+[`LiveblocksYjsProvider`]: #LiveblocksYjsProvider
+[`LiveblocksYjsProvider.awareness]: #LiveblocksYjsProvider.awareness
+[`LiveblocksYjsProvider.destroy]: #LiveblocksYjsProvider.destroy
+[`LiveblocksYjsProvider.on("sync")`]: #LiveblocksYjsProvider.on.sync
+[`LiveblocksYjsProvider.off("sync")`]: #LiveblocksYjsProvider.off.sync
+[`LiveblocksYjsProvider.once("sync")`]: #LiveblocksYjsProvider.once.sync
+[`LiveblocksYjsProvider.emit("sync")`]: #LiveblocksYjsProvider.emit.sync
+[`LiveblocksYjsProvider.synced`]: #LiveblocksYjsProvider.synced
+[`LiveblocksYjsProvider.connect`]: #LiveblocksYjsProvider.connect
+[`LiveblocksYjsProvider.disconnect`]: #LiveblocksYjsProvider.disconnect
 [`Awareness`]: #Awareness
 [`Awareness.doc`]: #Awareness.doc
 [`Awareness.clientId]: #Awareness.clientId

@@ -565,11 +565,7 @@ describe("client", () => {
     const client = new Liveblocks({ secret: "sk_xxx" });
 
     await expect(
-      client.getThreads<{
-        status: "open";
-        priority: 3;
-        organization: "liveblocks:engineering";
-      }>({
+      client.getThreads({
         roomId: "room1",
         query: {
           metadata: {

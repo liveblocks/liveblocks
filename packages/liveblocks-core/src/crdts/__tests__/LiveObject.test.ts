@@ -526,7 +526,7 @@ describe("LiveObject", () => {
 
         expectStorage({ a: [] });
 
-        const newList = new LiveList<LiveObject<{ b: number }>>();
+        const newList = new LiveList<LiveObject<{ b: number }>>([]);
         newList.push(new LiveObject({ b: 1 }));
         root.set("a", newList);
 

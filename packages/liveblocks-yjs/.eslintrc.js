@@ -28,6 +28,8 @@ module.exports = {
 
       // Special config for test files
       rules: {
+        "@typescript-eslint/explicit-module-boundary-types": "off",
+
         // Ideally, enable these lint rules again later, as they are useful
         // to catch bugs
         "@typescript-eslint/no-unsafe-argument": "off",

@@ -1,9 +1,9 @@
-import type { ReactElement, ReactNode } from "react";
+import type { ReactNode } from "react";
 import * as React from "react";
 
 type Props = {
-  fallback: NonNullable<ReactNode> | null;
-  children: () => ReactNode | undefined;
+  fallback: ReactNode;
+  children: (() => ReactNode | undefined) | ReactNode | undefined;
 };
 
 /**
@@ -19,11 +19,11 @@ type Props = {
  * To:
  *
  *   <ClientSideSuspense fallback={<Loading />}>
- *     {() => <MyRealComponent a={1} />}
+ *     <MyRealComponent a={1} />
  *   </ClientSideSuspense>
  *
  */
-export function ClientSideSuspense(props: Props): ReactElement {
+export function ClientSideSuspense(props: Props) {
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
@@ -34,7 +34,11 @@ export function ClientSideSuspense(props: Props): ReactElement {
 
   return (
     <React.Suspense fallback={props.fallback}>
-      {mounted ? props.children() : props.fallback}
+      {mounted
+        ? typeof props.children === "function"
+          ? props.children()
+          : props.children
+        : props.fallback}
     </React.Suspense>
   );
 }

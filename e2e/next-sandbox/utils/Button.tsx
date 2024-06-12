@@ -18,6 +18,7 @@ export type Props = Omit<
   };
 
 export default function Button(props: Props) {
+  // eslint-disable-next-line prefer-const
   let { enabled, ...rest } = props;
   enabled ??= true;
   const opacity = enabled ? undefined : 0.7;
