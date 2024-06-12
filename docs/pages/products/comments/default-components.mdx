@@ -34,7 +34,7 @@ The best way to get started is to import the [`useThreads`][] hook, and loop
 through each thread in the current room.
 
 ```tsx highlight="5,9-11"
-import { Thread } from "@liveblocks/react-comments";
+import { Thread } from "@liveblocks/react-ui";
 import { useThreads } from "../liveblocks.config";
 
 function Component() {
@@ -74,7 +74,7 @@ Get started by importing the component. By default, it’ll create a new thread
 when the form’s submitted.
 
 ```tsx
-import { Composer } from "@liveblocks/react-comments";
+import { Composer } from "@liveblocks/react-ui";
 
 // Creates a new thread
 function Component() {
@@ -84,10 +84,10 @@ function Component() {
 
 [`Composer`][] can also be used in other ways:
 
-- [Adding metadata to a new thread](/docs/api-reference/liveblocks-react-comments#Adding-thread-metadata)
-- [Replying to a thread](/docs/api-reference/liveblocks-react-comments#Replying-to-a-thread)
-- [Modifying a comment](/docs/api-reference/liveblocks-react-comments#Modifying-a-comment)
-- [Custom behavior](/docs/api-reference/liveblocks-react-comments#Custom-behavior)
+- [Adding metadata to a new thread](/docs/api-reference/liveblocks-react-ui#Adding-thread-metadata)
+- [Replying to a thread](/docs/api-reference/liveblocks-react-ui#Replying-to-a-thread)
+- [Modifying a comment](/docs/api-reference/liveblocks-react-ui#Modifying-a-comment)
+- [Custom behavior](/docs/api-reference/liveblocks-react-ui#Custom-behavior)
 
 ## Comment
 
@@ -109,7 +109,7 @@ standalone comment.
 Start by importing the component, and passing the comment to it.
 
 ```tsx highlight="9"
-import { Comment } from "@liveblocks/react-comments";
+import { Comment } from "@liveblocks/react-ui";
 import { ThreadData } from "@liveblocks/client";
 
 // Renders a list of comments attached to the specified `thread`
@@ -124,9 +124,9 @@ function MyComment({ thread }: { thread: ThreadData }) {
 }
 ```
 
-[`Composer`]: /docs/api-reference/liveblocks-react-comments#Composer
-[`Comment`]: /docs/api-reference/liveblocks-react-comments#Comment
-[`Thread`]: /docs/api-reference/liveblocks-react-comments#Thread
+[`Composer`]: /docs/api-reference/liveblocks-react-ui#Composer
+[`Comment`]: /docs/api-reference/liveblocks-react-ui#Comment
+[`Thread`]: /docs/api-reference/liveblocks-react-ui#Thread
 [`useThreads`]: /docs/api-reference/liveblocks-react#useThreads
 
 ## Customization

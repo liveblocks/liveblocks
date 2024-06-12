@@ -5,6 +5,7 @@ import type {
   LsonObject,
   Room,
 } from "@liveblocks/client";
+import type { BaseMetadata, DE, DM, DP, DS, DU } from "@liveblocks/core";
 import { ClientMsgCode, detectDupes } from "@liveblocks/core";
 import { Observable } from "lib0/observable";
 import type * as Y from "yjs";
@@ -23,25 +24,26 @@ const DefaultOptions: ProviderOptions = {
   autoloadSubdocs: false,
 };
 
-export default class LiveblocksProvider<
-  P extends JsonObject,
-  S extends LsonObject,
-  U extends BaseUserMeta,
-  E extends Json,
+export class LiveblocksYjsProvider<
+  P extends JsonObject = DP,
+  S extends LsonObject = DS,
+  U extends BaseUserMeta = DU,
+  E extends Json = DE,
+  M extends BaseMetadata = DM,
 > extends Observable<unknown> {
-  private room: Room<P, S, U, E>;
+  private room: Room<P, S, U, E, M>;
   private rootDoc: Y.Doc;
   private options: ProviderOptions;
 
   private unsubscribers: Array<() => void> = [];
 
-  public awareness: Awareness;
+  public awareness: Awareness<P, S, U, E, M>;
 
   public rootDocHandler: yDocHandler;
   public subdocHandlers: Map<string, yDocHandler> = new Map();
 
   constructor(
-    room: Room<P, S, U, E>,
+    room: Room<P, S, U, E, M>,
     doc: Y.Doc,
     options: ProviderOptions | undefined = DefaultOptions
   ) {

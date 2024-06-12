@@ -83,9 +83,9 @@ export const {
 
 ### Composer component
 
-The [`<Composer />`](/docs/api-reference/liveblocks-react-comments#Composer)
-component is used to create threads and comments, and by default it’ll create a
-new thread, with optional metadata, when its form is submitted.
+The [`<Composer />`](/docs/api-reference/liveblocks-react-ui#Composer) component
+is used to create threads and comments, and by default it’ll create a new
+thread, with optional metadata, when its form is submitted.
 
 <Figure>
   <Image
@@ -97,12 +97,12 @@ new thread, with optional metadata, when its form is submitted.
 </Figure>
 
 When using it to create a thread, you can
-[pass custom metadata](/docs/api-reference/liveblocks-react-comments#Adding-thread-metadata),
+[pass custom metadata](/docs/api-reference/liveblocks-react-ui#Adding-thread-metadata),
 which will be attached to the thread. You can also import your `ThreadMetadata`
 type from your config file to take advantage of TypeScript.
 
 ```tsx highlight="7-14"
-import { Composer } from "@liveblocks/react-comments";
+import { Composer } from "@liveblocks/react-ui";
 import { ThreadMetadata } from "../liveblocks.config";
 
 // Creates a new thread with custom metadata

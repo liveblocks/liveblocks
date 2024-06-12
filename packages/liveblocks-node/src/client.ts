@@ -6,21 +6,28 @@
 import type {
   ActivityData,
   BaseMetadata,
+  BaseUserMeta,
   CommentBody,
   CommentData,
   CommentDataPlain,
   CommentUserReaction,
   CommentUserReactionPlain,
+  DE,
+  DM,
+  DS,
+  DU,
   InboxNotificationData,
   InboxNotificationDataPlain,
-  IUserInfo,
   Json,
   JsonObject,
+  LsonObject,
+  Patchable,
   PlainLsonObject,
   QueryMetadata,
   RoomNotificationSettings,
   ThreadData,
   ThreadDataPlain,
+  ToImmutable,
 } from "@liveblocks/core";
 import {
   convertToCommentData,
@@ -43,6 +50,10 @@ import {
   type URLSafeString,
 } from "./utils";
 
+type ToSimplifiedJson<S extends LsonObject> = LsonObject extends S
+  ? JsonObject
+  : ToImmutable<S>;
+
 export type LiveblocksOptions = {
   /**
    * The Liveblocks secret key. Must start with "sk_".
@@ -57,16 +68,16 @@ export type LiveblocksOptions = {
   baseUrl?: string;
 };
 
-type Nullable<T> = {
-  [P in keyof T]: T[P] | null;
-};
-
 type DateToString<T> = {
   [P in keyof T]: Date extends T[P] ? string : T[P];
 };
 
-export type CreateSessionOptions = {
-  userInfo: IUserInfo;
+export type CreateSessionOptions<U extends BaseUserMeta = DU> = {
+  userInfo: U["info"];
+};
+
+export type IdentifyUserOptions<U extends BaseUserMeta = DU> = {
+  userInfo: U["info"];
 };
 
 export type AuthResponse = {
@@ -84,6 +95,13 @@ export type ThreadParticipants = {
   participantIds: string[];
 };
 
+export type CreateThreadOptions<M extends BaseMetadata> = {
+  roomId: string;
+  data: {
+    comment: { userId: string; createdAt?: Date; body: CommentBody };
+  } & (Record<string, never> extends M ? { metadata?: M } : { metadata: M });
+};
+
 export type RoomPermission =
   | []
   | ["room:write"]
@@ -95,7 +113,7 @@ export type RoomAccesses = Record<
 export type RoomMetadata = Record<string, string | string[]>;
 type QueryRoomMetadata = Record<string, string>;
 
-export type RoomInfo = {
+export type RoomData = {
   type: "room";
   id: string;
   createdAt: Date;
@@ -106,13 +124,13 @@ export type RoomInfo = {
   metadata: RoomMetadata;
 };
 
-type RoomInfoPlain = DateToString<RoomInfo>;
+type RoomDataPlain = DateToString<RoomData>;
 
-export type RoomUser<Info> = {
+export type RoomUser<U extends BaseUserMeta = DU> = {
   type: "user";
   id: string | null;
   connectionId: number;
-  info: Info;
+  info: U["info"];
 };
 
 export type Schema = {
@@ -125,6 +143,17 @@ export type Schema = {
 };
 
 type SchemaPlain = DateToString<Schema>;
+
+// NOTE: We should _never_ rely on using the default types (DS, DU, DE, ...)
+// inside the Liveblocks implementation. We should only rely on the type
+// "params" (S, U, E, ...) instead, where the concrete type is bound to the
+// class. In this case, we're not doing that at the class level, but globally.
+// The idea is that we "start small" and could always add them in at the class
+// level later.
+type E = DE;
+type M = DM;
+type S = DS;
+type U = DU;
 
 /**
  * Interact with the Liveblocks API from your Node.js backend.
@@ -234,7 +263,7 @@ export class Liveblocks {
    * `other.info` property.
    *
    */
-  prepareSession(userId: string, options?: CreateSessionOptions): Session {
+  prepareSession(userId: string, options?: CreateSessionOptions<U>): Session {
     return new Session(this.post.bind(this), userId, options?.userInfo);
   }
 
@@ -275,10 +304,7 @@ export class Liveblocks {
     identity:
       | string // Shorthand for userId
       | Identity,
-    options?: {
-      userInfo: IUserInfo;
-      // ....
-    }
+    options?: IdentifyUserOptions<U>
   ): Promise<AuthResponse> {
     const path = url`/v2/identify-user`;
     const userId = typeof identity === "string" ? identity : identity.userId;
@@ -332,7 +358,8 @@ export class Liveblocks {
       limit?: number;
       startingAfter?: string;
       /**
-       * @deprecated Use `query` instead.
+       * @deprecated Use `query` property instead. Support for the `metadata`
+       * field will be removed in a future version.
        */
       metadata?: QueryRoomMetadata;
       userId?: string;
@@ -371,7 +398,7 @@ export class Liveblocks {
   ): Promise<{
     nextPage: string | null;
     nextCursor: string | null;
-    data: RoomInfo[];
+    data: RoomData[];
   }> {
     const path = url`/v2/rooms`;
 
@@ -408,7 +435,7 @@ export class Liveblocks {
     const data = (await res.json()) as {
       nextPage: string | null;
       nextCursor: string | null;
-      data: RoomInfoPlain[];
+      data: RoomDataPlain[];
     };
 
     const rooms = data.data.map((room) => {
@@ -448,7 +475,7 @@ export class Liveblocks {
       usersAccesses?: RoomAccesses;
       metadata?: RoomMetadata;
     }
-  ): Promise<RoomInfo> {
+  ): Promise<RoomData> {
     const { defaultAccesses, groupsAccesses, usersAccesses, metadata } = params;
 
     const res = await this.post(url`/v2/rooms`, {
@@ -464,7 +491,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    const data = (await res.json()) as RoomInfoPlain;
+    const data = (await res.json()) as RoomDataPlain;
 
     // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
     const lastConnectionAt = data.lastConnectionAt
@@ -484,7 +511,7 @@ export class Liveblocks {
    * @param roomId The id of the room to return.
    * @returns The room with the given id.
    */
-  public async getRoom(roomId: string): Promise<RoomInfo> {
+  public async getRoom(roomId: string): Promise<RoomData> {
     const res = await this.get(url`/v2/rooms/${roomId}`);
 
     if (!res.ok) {
@@ -492,7 +519,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    const data = (await res.json()) as RoomInfoPlain;
+    const data = (await res.json()) as RoomDataPlain;
 
     // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
     const lastConnectionAt = data.lastConnectionAt
@@ -531,7 +558,7 @@ export class Liveblocks {
       >;
       metadata?: Record<string, string | string[] | null>;
     }
-  ): Promise<RoomInfo> {
+  ): Promise<RoomData> {
     const { defaultAccesses, groupsAccesses, usersAccesses, metadata } = params;
 
     const res = await this.post(url`/v2/rooms/${roomId}`, {
@@ -546,7 +573,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    const data = (await res.json()) as RoomInfoPlain;
+    const data = (await res.json()) as RoomDataPlain;
 
     // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
     const lastConnectionAt = data.lastConnectionAt
@@ -579,9 +606,9 @@ export class Liveblocks {
    * @param roomId The id of the room to get the users from.
    * @returns A list of users currently present in the requested room.
    */
-  public async getActiveUsers<T = unknown>(
+  public async getActiveUsers(
     roomId: string
-  ): Promise<{ data: RoomUser<T>[] }> {
+  ): Promise<{ data: RoomUser<U>[] }> {
     const res = await this.get(url`/v2/rooms/${roomId}/active_users`);
 
     if (!res.ok) {
@@ -589,7 +616,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    return (await res.json()) as Promise<{ data: RoomUser<T>[] }>;
+    return (await res.json()) as Promise<{ data: RoomUser<U>[] }>;
   }
 
   /**
@@ -597,7 +624,7 @@ export class Liveblocks {
    * @param roomId The id of the room to broadcast the event to.
    * @param message The message to broadcast. It can be any JSON serializable value.
    */
-  public async broadcastEvent(roomId: string, message: Json): Promise<void> {
+  public async broadcastEvent(roomId: string, message: E): Promise<void> {
     const res = await this.post(
       url`/v2/rooms/${roomId}/broadcast_event`,
       message
@@ -640,18 +667,18 @@ export class Liveblocks {
   public getStorageDocument(
     roomId: string,
     format: "json"
-  ): Promise<JsonObject>;
+  ): Promise<ToSimplifiedJson<S>>;
 
   public async getStorageDocument(
     roomId: string,
     format: "plain-lson" | "json" = "plain-lson"
-  ): Promise<PlainLsonObject | JsonObject> {
+  ): Promise<PlainLsonObject | ToSimplifiedJson<S>> {
     const res = await this.get(url`/v2/rooms/${roomId}/storage`, { format });
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
-    return (await res.json()) as Promise<PlainLsonObject | JsonObject>;
+    return (await res.json()) as Promise<PlainLsonObject | ToSimplifiedJson<S>>;
   }
 
   /**
@@ -934,7 +961,7 @@ export class Liveblocks {
    * @param params.query The query to filter threads by. It is based on our query language and can filter by metadata.
    * @returns A list of threads.
    */
-  public async getThreads<M extends BaseMetadata>(params: {
+  public async getThreads(params: {
     roomId: string;
     /**
      * The query to filter threads by. It is based on our query language.
@@ -966,7 +993,7 @@ export class Liveblocks {
       | {
           metadata?: Partial<QueryMetadata<M>>;
         };
-  }): Promise<{ data: ThreadData[] }> {
+  }): Promise<{ data: ThreadData<M>[] }> {
     const { roomId } = params;
 
     let query: string | undefined;
@@ -984,7 +1011,7 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
-    const { data } = (await res.json()) as { data: ThreadDataPlain[] };
+    const { data } = (await res.json()) as { data: ThreadDataPlain<M>[] };
     return {
       data: data.map((thread) => convertToThreadData(thread)),
     };
@@ -997,9 +1024,10 @@ export class Liveblocks {
    * @param params.threadId The thread ID.
    * @returns A thread.
    */
-  public async getThread<
-    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
-  >(params: { roomId: string; threadId: string }): Promise<ThreadData<M>> {
+  public async getThread(params: {
+    roomId: string;
+    threadId: string;
+  }): Promise<ThreadData<M>> {
     const { roomId, threadId } = params;
 
     const res = await this.get(url`/v2/rooms/${roomId}/threads/${threadId}`);
@@ -1163,19 +1191,9 @@ export class Liveblocks {
    * @param params.thread.comment.body The body of the comment.
    * @returns The created thread. The thread will be created with the specified comment as its first comment.
    */
-  public async createThread<
-    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
-  >(params: {
-    roomId: string;
-    data: {
-      metadata?: [M] extends [never] ? Record<string, never> : M;
-      comment: {
-        userId: string;
-        createdAt?: Date;
-        body: CommentBody;
-      };
-    };
-  }): Promise<ThreadData<M>> {
+  public async createThread(
+    params: CreateThreadOptions<M>
+  ): Promise<ThreadData<M>> {
     const { roomId, data } = params;
 
     const res = await this.post(url`/v2/rooms/${roomId}/threads`, {
@@ -1203,13 +1221,11 @@ export class Liveblocks {
    * @param params.data.updatedAt (optional) The date the thread is set to be updated.
    * @returns The updated thread.
    */
-  public async editThreadMetadata<
-    M extends BaseMetadata = never, // TODO Change this to DM for 2.0
-  >(params: {
+  public async editThreadMetadata(params: {
     roomId: string;
     threadId: string;
     data: {
-      metadata: Nullable<BaseMetadata>;
+      metadata: Patchable<M>;
       userId: string;
       updatedAt?: Date;
     };
@@ -1404,7 +1420,7 @@ export class Liveblocks {
   public async updateRoomId(params: {
     currentRoomId: string;
     newRoomId: string;
-  }): Promise<RoomInfo> {
+  }): Promise<RoomData> {
     const { currentRoomId, newRoomId } = params;
 
     const res = await this.post(
@@ -1418,7 +1434,7 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
-    const data = (await res.json()) as RoomInfoPlain;
+    const data = (await res.json()) as RoomDataPlain;
     return {
       ...data,
       createdAt: new Date(data.createdAt),

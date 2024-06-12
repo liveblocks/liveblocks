@@ -1,0 +1,173 @@
+---
+meta:
+  title: "@liveblocks/node-lexical"
+  parentTitle: "API Reference"
+  description: "API Reference for the @liveblocks/node-lexical package"
+alwaysShowAllNavigationLevels: false
+---
+
+`@liveblocks/node-lexical` provides a Node.js package to export and modify
+[Lexical](https://lexical.dev/) documents on the server.
+
+## withLexicalDocument
+
+`withLexicalDocument` is the main entry point to modifying a document on the
+server. It takes a room ID and a
+[Liveblocks Node client](/docs/api-reference/liveblocks-node#Liveblocks-client),
+and returns a callback used to work with Lexical documents stored in Liveblocks.
+
+```ts highlight="8-14"
+import { Liveblocks } from "@liveblocks/node";
+import { withLexicalDocument } from "@liveblocks/node-lexical";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+await withLexicalDocument(
+  { roomId: "your-room-id", client: liveblocks },
+  (doc) => {
+    // Modify your Lexical `doc`
+    // ...
+  }
+);
+```
+
+### Returning data
+
+Get your editor’s text content by returning `doc.getTextContent` inside the
+callback.
+
+```ts
+const textContent = await withLexicalDocument(
+  { roomId: "my-room-id", client: liveblocks },
+  (doc) => doc.getTextContent()
+);
+
+// "My content"
+console.log(TextContent);
+```
+
+### Custom nodes
+
+If your Lexical document has custom nodes, they must be passed into the
+`withLexicalDocument`, similarly to with a front end Lexical client.
+
+```ts highlight="4"
+import { CodeNode } from "@lexical/code";
+
+await withLexicalDocument(
+  { roomId: "my-room-id", client: liveblocks, nodes: [CodeNode] },
+  (doc) => {
+    // Modify your Lexical `doc`
+    // ...
+  }
+);
+```
+
+### Lexical document API
+
+You can easily modify your document with the Lexical document API.
+
+#### doc.update
+
+Liveblocks provides `doc.update` which is a callback function similar to
+Lexical’s `editor.update`. This makes it easy to use Lexical’s editor functions.
+Any edits will be persisted and appear in realtime to connected users as soon as
+the `update` promise resolves. Unlike Lexical’s `editor.update`, this change is
+always discrete.
+
+```ts
+await withLexicalDocument(
+  { roomId: "my-room-id", client: liveblocks },
+  async (doc) => {
+    await doc.update(() => {
+      // Make your modifications
+      // ...
+    });
+  }
+);
+```
+
+Here’s an example of some modifications to a Lexical document.
+
+```ts
+import { $getRoot } from "lexical";
+import { $createParagraphNode, $createTextNode } from "lexical/nodes";
+
+await withLexicalDocument(
+  { roomId: "my-room-id", client: liveblocks },
+  async (doc) => {
+    await doc.update(() => {
+      // Adding a paragraph node with contained text node
+      const root = $getRoot();
+      const paragraphNode = $createParagraphNode();
+      const textNode = $createTextNode("Hello world");
+      paragraphNode.append(textNode);
+      root.append(paragraphNode);
+    });
+  }
+);
+```
+
+The callback can also be an `async` function.
+
+#### doc.getTextContent
+
+Returns the text content from the root node as a `string`.
+
+```ts
+const textContent = await withLexicalDocument(
+  { roomId: "my-room-id", client: liveblocks },
+  (doc) => doc.getTextContent()
+);
+```
+
+#### doc.getEditorState
+
+Returns Lexical’s [editorState](https://lexical.dev/docs/concepts/editor-state).
+
+```ts
+const editorState = await withLexicalDocument(
+  { roomId: "my-room-id", client: liveblocks },
+  (doc) => doc.getEditorState()
+);
+```
+
+#### doc.getEditor
+
+Returns a headless Lexical editor.
+[@lexical/headless](https://lexical.dev/docs/packages/lexical-headless).
+
+```ts
+const headlessEditor = await withLexicalDocument(
+  { roomId: "my-room-id", client: liveblocks },
+  (doc) => doc.getEditor()
+);
+```
+
+#### doc.toJSON
+
+Returns a serialized JSON object representation of your document. See Lexical’s
+[Serialization & Deserialization](https://lexical.dev/docs/concepts/serialization)
+page for more information.
+
+```ts
+const docAsJSON = await withLexicalDocument(
+  { roomId: "my-room-id", client: liveblocks },
+  (doc) => doc.toJson()
+);
+```
+
+#### doc.toMarkdown
+
+Returns a markdown `string` of your document. See Lexical’s
+[@lexical/markdown](https://lexical.dev/docs/concepts/serialization) page for
+more information.
+
+```ts
+const markdown = await withLexicalDocument(
+  { roomId: "my-room-id", client: liveblocks },
+  (doc) => doc.toMarkdown()
+);
+```

@@ -1,8 +1,9 @@
 {
   "name": "@liveblocks/yjs",
-  "version": "1.12.0",
+  "version": "2.0.0-alpha5",
   "description": "An integration with . Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
+  "type": "commonjs",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -27,13 +28,13 @@
     "build": "tsup",
     "format": "eslint --fix src/; prettier --write src/",
     "lint": "eslint src/",
-    "lint:package": "publint --strict && attw --pack --ignore-rules cjs-only-exports-default",
+    "lint:package": "publint --strict && attw --pack",
     "test": "jest --silent --verbose --color=always",
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
   "dependencies": {
-    "@liveblocks/client": "1.12.0",
-    "@liveblocks/core": "1.12.0",
+    "@liveblocks/client": "2.0.0-alpha5",
+    "@liveblocks/core": "2.0.0-alpha5",
     "js-base64": "^3.7.5"
   },
   "peerDependencies": {
@@ -42,7 +43,8 @@
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
-    "@testing-library/jest-dom": "^5.16.5"
+    "@testing-library/jest-dom": "^5.16.5",
+    "msw": "^0.47.4"
   },
   "sideEffects": false,
   "bugs": {

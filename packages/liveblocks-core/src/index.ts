@@ -20,6 +20,8 @@ export type {
   Client,
   ClientOptions,
   EnterOptions,
+  OpaqueClient,
+  PrivateClientApi,
   ResolveMentionSuggestionsArgs,
   ResolveRoomsInfoArgs,
   ResolveUsersArgs,
@@ -38,11 +40,7 @@ export {
   stringifyCommentBody,
 } from "./comments/comment-body";
 export type { BaseAuthResult, Delegates, LiveblocksError } from "./connection";
-export type {
-  LegacyConnectionStatus,
-  LostConnectionEvent,
-  Status,
-} from "./connection";
+export type { LostConnectionEvent, Status } from "./connection";
 export {
   convertToCommentData,
   convertToCommentUserReaction,
@@ -68,6 +66,7 @@ export type {
 } from "./crdts/StorageUpdates";
 export type { ToImmutable } from "./crdts/utils";
 export { toPlainLson } from "./crdts/utils";
+export type { DAD, DE, DM, DP, DRI, DS, DU } from "./globals/augmentation";
 export {
   legacy_patchImmutableObject,
   lsonToJson,
@@ -87,6 +86,7 @@ export * as console from "./lib/fancy-console";
 export { freeze } from "./lib/freeze";
 export type { Json, JsonArray, JsonObject, JsonScalar } from "./lib/Json";
 export { isJsonArray, isJsonObject, isJsonScalar } from "./lib/Json";
+export type { NoInfr } from "./lib/NoInfer";
 export { objectToQuery } from "./lib/objectToQuery";
 export { makePoller } from "./lib/Poller";
 export { asPos, makePosition } from "./lib/position";
@@ -102,6 +102,8 @@ export {
   withTimeout,
 } from "./lib/utils";
 export type { CustomAuthenticationResult } from "./protocol/Authentication";
+export type { BaseActivitiesData } from "./protocol/BaseActivitiesData";
+export type { BaseRoomInfo } from "./protocol/BaseRoomInfo";
 export type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 export type {
   BroadcastEventClientMsg,
@@ -142,6 +144,8 @@ export type {
   InboxNotificationCustomDataPlain,
   InboxNotificationData,
   InboxNotificationDataPlain,
+  InboxNotificationTextMentionData,
+  InboxNotificationTextMentionDataPlain,
   InboxNotificationThreadData,
   InboxNotificationThreadDataPlain,
 } from "./protocol/InboxNotifications";
@@ -190,6 +194,7 @@ export type { PrivateRoomApi } from "./room";
 export type {
   BroadcastOptions,
   History,
+  OpaqueRoom,
   Room,
   RoomEventMessage,
   RoomInitializers,
@@ -208,8 +213,8 @@ export type {
 export { WebsocketCloseCodes } from "./types/IWebSocket";
 export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 export type { OptionalPromise } from "./types/OptionalPromise";
-export type { Others, OthersEvent } from "./types/Others";
-export type { PartialNullable } from "./types/PartialNullable";
+export type { OthersEvent } from "./types/Others";
+export type { Patchable } from "./types/Patchable";
 export type {
   PlainLson,
   PlainLsonFields,
@@ -217,7 +222,6 @@ export type {
   PlainLsonMap,
   PlainLsonObject,
 } from "./types/PlainLson";
-export type { RoomInfo } from "./types/RoomInfo";
 export type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 export type { User } from "./types/User";
 export { detectDupes };
@@ -230,16 +234,23 @@ export { detectDupes };
  */
 // prettier-ignore
 export type EnsureJson<T> =
-  // Retain `unknown` fields
-  [unknown] extends [T] ? T :
-  // Retain functions
-  T extends (...args: unknown[]) => unknown ? T :
+  // Retain all valid `JSON` fields
+  T extends Json ? T :
+  // Retain all valid arrays
+  T extends Array<infer I> ? (EnsureJson<I>)[] :
+  // Retain `unknown` fields, but just treat them as if they're Json | undefined
+  [unknown] extends [T] ? Json | undefined :
+  // Dates become strings when serialized to JSON
+  T extends Date ? string :
+  // Remove functions
+  T extends (...args: any[]) => any ? never :
   // Resolve all other values explicitly
-  { [K in keyof T]: EnsureJson<T[K]> };
+  { [K in keyof T as EnsureJson<T[K]> extends never ? never : K]: EnsureJson<T[K]> };
 
 // Support for DevTools
 import type * as DevToolsMsg from "./devtools/protocol";
 export type { DevToolsMsg };
+import type { Json } from "./lib/Json";
 import type * as DevTools from "./types/DevToolsTreeNode";
 export type { DevTools };
 

@@ -1,13 +1,13 @@
 ---
 meta:
-  title: "Revalidate API data in real-time with SWR"
+  title: "Revalidate API data in realtime with SWR"
   description:
-    "Learn how use Liveblocks and SWR to revalidate API data in real-time"
+    "Learn how use Liveblocks and SWR to revalidate API data in realtime"
 ---
 
 [SWR](https://swr.vercel.app) is a library that provides
 [React](https://react.dev) hooks for data fetching. It’s possible to revalidate
-your data in real-time by broadcasting events using Liveblocks.
+your data in realtime by broadcasting events using Liveblocks.
 
 An example usage of this may be a share dialog containing a list of users—when a
 new user is added to the dialog, we can broadcast an event telling other online
@@ -29,7 +29,7 @@ function Component() {
 }
 ```
 
-To create a function that allows us to update this data in real-time, we can
+To create a function that allows us to update this data in realtime, we can
 broadcast an event telling other clients to revalidate their data with
 [useBroadcastEvent](https://liveblocks.io/docs/api-reference/liveblocks-react#useBroadcastEvent):
 
@@ -93,6 +93,6 @@ function Component() {
 }
 ```
 
-Great, data that revalidates in real-time at the click of a button! You can find
+Great, data that revalidates in realtime at the click of a button! You can find
 an example of this technique being used in the
 [Next.js Starter Kit](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/components/ShareDialog/ShareDialog.tsx#L123-L131).

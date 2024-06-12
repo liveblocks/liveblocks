@@ -10,7 +10,7 @@ import {
   createCommentId,
   createInboxNotificationId,
   createThreadId,
-} from "../comments/lib/createIds";
+} from "./_createIds";
 
 export function dummyThreadData(): ThreadData<BaseMetadata> {
   const now = new Date();

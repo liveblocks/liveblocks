@@ -1,7 +1,5 @@
 import type {
   BaseUserMeta,
-  Client,
-  Json,
   JsonObject,
   LiveObject,
   LsonObject,
@@ -9,7 +7,7 @@ import type {
   Status,
   User,
 } from "@liveblocks/client";
-import type { LegacyConnectionStatus } from "@liveblocks/core";
+import type { OpaqueClient, OpaqueRoom } from "@liveblocks/core";
 import {
   detectDupes,
   legacy_patchImmutableObject,
@@ -28,8 +26,6 @@ import {
 import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
-
-type OpaqueRoom = Room<JsonObject, LsonObject, BaseUserMeta, Json>;
 
 export type Mapping<T> = {
   [K in keyof T]?: boolean;
@@ -55,36 +51,10 @@ type LiveblocksContext<P extends JsonObject, U extends BaseUserMeta> = {
    */
   readonly isStorageLoading: boolean;
   /**
-   * Legacy connection status of the room.
-   *
-   * @deprecated This API will be removed in a future version of Liveblocks.
-   * Prefer using the newer `.status` property.
-   *
-   * We recommend making the following changes if you use these APIs:
-   *
-   *     OLD STATUSES         NEW STATUSES
-   *     closed          -->  initial
-   *     authenticating  -->  connecting
-   *     connecting      -->  connecting
-   *     open            -->  connected
-   *     unavailable     -->  reconnecting
-   *     failed          -->  disconnected
-   */
-  readonly connection: LegacyConnectionStatus;
-  /**
    * Connection status of the room.
    */
   readonly status: Status;
 };
-
-/**
- * @deprecated Please rename to WithLiveblocks<...>
- */
-export type LiveblocksState<
-  TState,
-  P extends JsonObject,
-  U extends BaseUserMeta,
-> = WithLiveblocks<TState, P, U>;
 
 /**
  * Adds the `liveblocks` property to your custom Redux state.
@@ -96,7 +66,7 @@ export type WithLiveblocks<
 > = TState & { readonly liveblocks: LiveblocksContext<P, U> };
 
 const internalEnhancer = <TState>(options: {
-  client: Client;
+  client: OpaqueClient;
   storageMapping?: Mapping<TState>;
   presenceMapping?: Mapping<TState>;
 }) => {
@@ -237,7 +207,6 @@ const internalEnhancer = <TState>(options: {
             store.dispatch({
               type: ACTION_TYPES.UPDATE_CONNECTION,
               status,
-              connection: room.getConnectionState(), // For backward-compatibility
             });
           })
         );
@@ -382,15 +351,10 @@ function leaveRoom(): {
  * Redux store.
  */
 export const liveblocksEnhancer = internalEnhancer as <TState>(options: {
-  client: Client;
+  client: OpaqueClient;
   storageMapping?: Mapping<TState>;
   presenceMapping?: Mapping<TState>;
 }) => StoreEnhancer;
-
-/**
- * @deprecated Renamed to `liveblocksEnhancer`.
- */
-export const enhancer = liveblocksEnhancer;
 
 function patchLiveblocksStorage<O extends LsonObject, TState>(
   root: LiveObject<O>,
@@ -415,7 +379,7 @@ function patchLiveblocksStorage<O extends LsonObject, TState>(
 }
 
 function updatePresence<P extends JsonObject>(
-  room: Room<P, any, any, any>,
+  room: Room<P, any, any, any, any>,
   oldState: P,
   newState: P,
   presenceMapping: Mapping<P>

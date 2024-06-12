@@ -215,7 +215,6 @@ describe("middleware", () => {
 
     await waitForSocketToBeConnected();
 
-    expect(store.getState().liveblocks.connection).toBe("open");
     expect(store.getState().liveblocks.status).toBe("connected");
   });
 

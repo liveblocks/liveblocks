@@ -9,7 +9,7 @@ import { rest } from "msw";
 import { setupServer } from "msw/node";
 import * as Y from "yjs";
 
-import LiveblocksProvider from "..";
+import { LiveblocksYjsProvider } from "..";
 import { MockWebSocket, waitFor } from "./_utils";
 
 type UpdateType = { added: string[]; removed: string[]; updated: string[] };
@@ -31,14 +31,11 @@ const server = setupServer(
 );
 
 beforeAll(() => server.listen());
-afterEach(() => {
-  MockWebSocket.reset();
-});
-beforeEach(() => {
-  MockWebSocket.reset();
-});
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
+
+afterEach(() => MockWebSocket.reset());
+beforeEach(() => MockWebSocket.reset());
 
 async function waitForSocketToBeConnected() {
   await waitFor(() => MockWebSocket.instances.length === 1);
@@ -53,12 +50,12 @@ async function waitForSocketToBeConnected() {
 describe("presence", () => {
   test("Setting local state should remove local state", async () => {
     const client = createClient({ authEndpoint: "/api/auth" });
-    const { room, leave } = client.enterRoom<{
-      __yjs?: JsonObject;
-    }>("room", { initialPresence: {} });
+    const { room, leave } = client.enterRoom<{ __yjs?: JsonObject }>("room", {
+      initialPresence: {},
+    });
     await waitForSocketToBeConnected();
     const yDoc = new Y.Doc();
-    const yProvider = new LiveblocksProvider(room, yDoc);
+    const yProvider = new LiveblocksYjsProvider(room, yDoc);
     yProvider.awareness.setLocalState({ test: "local state" });
     const presence = room.getSelf()?.presence;
     expect(presence).toHaveProperty("__yjs");
@@ -71,12 +68,12 @@ describe("presence", () => {
 
   test("Update handler should be called", async () => {
     const client = createClient({ authEndpoint: "/api/auth" });
-    const { room, leave } = client.enterRoom<{
-      __yjs?: JsonObject;
-    }>("room", { initialPresence: {} });
+    const { room, leave } = client.enterRoom<{ __yjs?: JsonObject }>("room", {
+      initialPresence: {},
+    });
     await waitForSocketToBeConnected();
     const yDoc = new Y.Doc();
-    const yProvider = new LiveblocksProvider(room, yDoc);
+    const yProvider = new LiveblocksYjsProvider(room, yDoc);
     let updatesCalled = 0;
     let update: UpdateType | undefined;
     yProvider.awareness.on("update", (updateArray: UpdateType) => {
@@ -91,12 +88,12 @@ describe("presence", () => {
 
   test("When others update, we should get awareness state correctly and update should be called", async () => {
     const client = createClient({ authEndpoint: "/api/auth" });
-    const { room, leave } = client.enterRoom<{
-      __yjs?: JsonObject;
-    }>("room", { initialPresence: {} });
+    const { room, leave } = client.enterRoom<{ __yjs?: JsonObject }>("room", {
+      initialPresence: {},
+    });
     const socket = await waitForSocketToBeConnected();
     const yDoc = new Y.Doc();
-    const yProvider = new LiveblocksProvider(room, yDoc);
+    const yProvider = new LiveblocksYjsProvider(room, yDoc);
     let updatesCalled = 0;
     let update: UpdateType | undefined;
     yProvider.awareness.on("update", (updateArray: UpdateType) => {
@@ -123,7 +120,10 @@ describe("presence", () => {
         type: ServerMsgCode.UPDATE_PRESENCE,
         targetActor: -1,
         actor: 1,
-        data: { __yjs: { test: "yjs awareness another user" } },
+        data: {
+          __yjs_clientid: 1,
+          __yjs: { test: "yjs awareness another user" },
+        },
       } as UpdatePresenceServerMsg<JsonObject>),
     } as MessageEvent);
 
