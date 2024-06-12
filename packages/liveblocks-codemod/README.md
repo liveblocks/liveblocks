@@ -51,3 +51,20 @@ Renames `RoomInfo` type from `@liveblocks/node` to `RoomData`.
 ```shell
 npx @liveblocks/codemod@latest room-info-to-room-data
 ```
+
+#### `remove-yjs-default-export`
+
+Replaces the default import of `@liveblocks/yjs` by a named
+`LiveblocksYjsProvider` one, and update its usage accordingly.
+
+```shell
+npx @liveblocks/codemod@latest remove-yjs-default-export
+```
+
+#### `live-list-constructor`
+
+Adds an array to empty `LiveList` constructors.
+
+```shell
+npx @liveblocks/codemod@latest live-list-constructor
+```

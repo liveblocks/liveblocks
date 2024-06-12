@@ -188,7 +188,13 @@ Affects `@liveblocks/yjs`. To make discoverability and refactorings easier, and
 to avoid confusion with the newly introduced `LiveblocksProvider` in our React
 package, we’re no longer using default exports, but named exports only.
 
-Change:
+Run the following **codemod** or manually make the changes:
+
+```bash
+npx @liveblocks/codemod@latest remove-yjs-default-export
+```
+
+This will change your import (and its usage) like this:
 
 ```diff showLineNumbers={false}
 -import LiveblocksProvider from "@liveblocks/yjs";
@@ -199,29 +205,23 @@ Change:
 +const yProvider = new LiveblocksYjsProvider(room, yDoc);
 ```
 
-<Banner type="warning" title="We’re working on a codemod">
-
-We are working on a codemod for this step, and will update this guide when it’s
-ready.
-
-</Banner>
-
 ### Breaking change 5: minor LiveList constructor change [#bc5]
 
 Affects apps using Storage. The `LiveList()` constructor’s argument is no longer
-optional, because it causes unneeded but confusing type inference issues:
+optional, because it causes unneeded but confusing type inference issues.
+
+Run the following **codemod** or manually make the changes:
+
+```bash
+npx @liveblocks/codemod@latest live-list-constructor
+```
+
+This will add an array to empty `LiveList` constructors:
 
 ```diff showLineNumbers={false}
 -const mylist = new LiveList();
 +const mylist = new LiveList([]);
 ```
-
-<Banner type="warning" title="We’re working on a codemod">
-
-We are working on a codemod for this step, and will update this guide when it’s
-ready.
-
-</Banner>
 
 ### Breaking change 6: new webhook event types [#bc6]
 
