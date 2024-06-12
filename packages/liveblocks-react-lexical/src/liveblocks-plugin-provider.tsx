@@ -15,6 +15,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { Doc } from "yjs";
 
 import { CommentPluginProvider } from "./comments/comment-plugin-provider";
@@ -216,16 +217,37 @@ export const LiveblocksPlugin = ({
 
   useEffect(() => {
     collabContext.name = username || "";
-  }, [collabContext, username]);
+    const provider = providerFactory(
+      room.id,
+      collabContext.yjsDocMap
+    ) as LiveblocksYjsProvider;
+    let localState = provider.awareness.getLocalState();
+    if (localState?.name !== collabContext.name) {
+      if (localState === null) {
+        // we don't have any local state, so set it
+        localState = {
+          anchorPos: null,
+          awarenessData: {},
+          color: cursorcolor,
+          focusPos: null,
+          focusing: false,
+          name: collabContext.name,
+        };
+      }
+      // update the name
+      localState.name = collabContext.name;
+      provider.awareness.setLocalState(localState);
+    }
+  }, [collabContext, username, room, cursorcolor, providerFactory]);
+
+  const root = useRootElement();
 
   useLayoutEffect(() => {
-    const editable = editor.getRootElement();
-    if (editable === null) return;
-
+    if (root === null) return;
     setReference({
-      getBoundingClientRect: () => editable.getBoundingClientRect(),
+      getBoundingClientRect: () => root.getBoundingClientRect(),
     });
-  }, [setReference, editor]);
+  }, [setReference, root]);
 
   const handleFloatingRef = useCallback(
     (node: HTMLDivElement) => {
@@ -266,3 +288,20 @@ export const LiveblocksPlugin = ({
     </>
   );
 };
+
+function useRootElement(): HTMLElement | null {
+  const [editor] = useLexicalComposerContext();
+
+  const subscribe = useCallback(
+    (onStoreChange: () => void) => {
+      return editor.registerRootListener(onStoreChange);
+    },
+    [editor]
+  );
+
+  const getSnapshot = useCallback(() => {
+    return editor.getRootElement();
+  }, [editor]);
+
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+}
