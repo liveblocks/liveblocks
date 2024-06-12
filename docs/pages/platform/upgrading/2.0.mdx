@@ -17,20 +17,21 @@ Skip ahead to the [how to upgrade](#how-to-upgrade) section.
 
 </Banner>
 
-## Reasoning
+## Rationale
 
 Liveblocks has always embraced the benefits of static typing with TypeScript.
-Roughly two years ago, we published 0.17, which introduced the pattern of
-calling `createRoomContext()` and returning a “bundle” of type-safe hooks that
-you could then use in your application. This pattern worked nicely because all
-the hooks were bound to your custom type definitions for `Presence`, `Storage`,
-etc. in one single place, and every Liveblocks API would deeply know about it.
-No need for manual type annotations anywhere else in your codebase.
+Roughly two years ago, we published 0.17, which
+[introduced](/blog/whats-new-in-v0-17) the pattern of calling
+`createRoomContext()` and returning a “bundle” of type-safe hooks that you could
+then use in your application. This pattern worked nicely because all the hooks
+were bound to your custom type definitions for `Presence`, `Storage`, etc. in
+one single place, and every Liveblocks API would deeply know about it. No need
+for manual type annotations anywhere else in your codebase.
 
-### Previous downsides
+### Downsides to this approach
 
-There were, however, a couple of downsides to this approach that we have always
-been well aware of:
+There were, however, a couple of downsides to this approach that have always
+kept itching:
 
 - Importing hooks from a local config file was a little bit awkward. It wasn’t
   an all too familiar pattern for most users.
@@ -41,7 +42,7 @@ been well aware of:
   only `Presence` and `RoomEvent`, you’d have to “skip” some type params, by
   doing `createRoomContext<Presence, {}, {}, RoomEvent>()` or similar.
 
-### Liveblocks 2.0
+### Introducing Liveblocks 2.0
 
 With 2.0, this all becomes a lot simpler. We’ve done a lot of internal
 refactoring to make this possible. We’ll dive in soon, but here is a sneak peek:
@@ -77,6 +78,8 @@ import { RoomProvider, useRoom, useThreads } from "./liveblocks.config.ts";
 
 // ✅ After
 import { RoomProvider, useRoom, useThreads } from "@liveblocks/react/suspense";
+// or
+import { RoomProvider, useRoom, useThreads } from "@liveblocks/react";
 ```
 
 We’ll first go over all the breaking changes, then we’ll show you how to
@@ -235,7 +238,7 @@ accessing them.
 const threadId = event.data.threadId;
 
 // ✅ After
-if (event.date.kind === "thread") {
+if (event.data.kind === "thread") {
   const threadId = event.data.threadId;
 }
 ```
