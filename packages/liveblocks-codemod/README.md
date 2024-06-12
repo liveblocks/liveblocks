@@ -59,3 +59,12 @@ Adds an argument to `new LiveList()` empty constructors.
 ```shell
 npx @liveblocks/codemod@latest live-list-argument
 ```
+
+#### `liveblocks-yjs-provider`
+
+Replaces the default import of `@liveblocks/yjs` by a named
+`LiveblocksYjsProvider` import, and update its usage accordingly.
+
+```shell
+npx @liveblocks/codemod@latest liveblocks-yjs-provider
+```
