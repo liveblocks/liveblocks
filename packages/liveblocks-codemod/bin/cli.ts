@@ -44,6 +44,10 @@ const TRANSFORMER_INQUIRER_CHOICES = [
     name: "live-list-constructor: Adds an array to empty `LiveList` constructors.",
     value: "live-list-constructor",
   },
+  {
+    name: "remove-clientsidesuspense-thunk: Removes any thunks from <ClientSideSuspense>'s children.",
+    value: "remove-clientsidesuspense-thunk",
+  },
 ];
 
 export const jscodeshiftExecutable = require.resolve(".bin/jscodeshift");

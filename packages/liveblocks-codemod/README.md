@@ -42,6 +42,14 @@ are using the global types).
 npx @liveblocks/codemod@latest remove-unneeded-type-params
 ```
 
+#### `remove-clientsidesuspense-thunk`
+
+Removes any thunks from `<ClientSideSuspense>`’s children.
+
+```shell
+npx @liveblocks/codemod@latest remove-clientsidesuspense-thunk
+```
+
 ### 2.0 (breaking changes)
 
 Liveblocks 2.0 comes with a number of breaking changes and most are covered by
