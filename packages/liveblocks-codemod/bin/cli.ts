@@ -32,6 +32,10 @@ const TRANSFORMER_INQUIRER_CHOICES = [
     name: "room-info-to-room-data: Renames `RoomInfo` type from `@liveblocks/node` to `RoomData`.",
     value: "room-info-to-room-data",
   },
+  {
+    name: "live-list-argument: Adds an argument to `new LiveList()` empty constructors.",
+    value: "live-list-argument",
+  },
 ];
 
 export const jscodeshiftExecutable = require.resolve(".bin/jscodeshift");

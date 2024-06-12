@@ -51,3 +51,11 @@ Renames `RoomInfo` type from `@liveblocks/node` to `RoomData`.
 ```shell
 npx @liveblocks/codemod@latest room-info-to-room-data
 ```
+
+#### `live-list-argument`
+
+Adds an argument to `new LiveList()` empty constructors.
+
+```shell
+npx @liveblocks/codemod@latest live-list-argument
+```
