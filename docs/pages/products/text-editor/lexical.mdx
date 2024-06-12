@@ -101,14 +101,12 @@ reply, use emoji reactions, mention others, and more.
 </Figure>
 
 Add Comments to your text editor using
-[`FloatingComposer`](/docs/api-reference/liveblocks-react-lexical#FloatingComposer)
-and [`ThreadPanel`](/docs/api-reference/liveblocks-react-lexical#ThreadPanel).
+[`FloatingComposer`](/docs/api-reference/liveblocks-react-lexical#FloatingComposer).
 
 ```tsx highlight="3-4"
 <LexicalComposer initialConfig={initialConfig}>
   <LiveblocksPlugin>
     <FloatingComposer />
-    <ThreadPanel />
   </LiveblocksPlugin>
 </LexicalComposer>
 ```
@@ -121,6 +119,26 @@ for the current selection with `OPEN_FLOATING_COMPOSER_COMMAND`.
 <button onClick={() => editor.dispatchCommand(OPEN_FLOATING_COMPOSER_COMMAND)}>
   💬 New comment
 </button>
+```
+
+Add [`useThreads`](/docs/products/comments/hooks#threads-hook) to render your
+comments to the page.
+
+```tsx
+import { useThreads } from "@liveblocks/react/suspense";
+import { Thread } from "@liveblocks/react-ui";
+
+function Component() {
+  const { threads } = useThreads();
+
+  return (
+    <>
+      {threads.map((thread) => (
+        <Thread key={thread.id} thread={thread} />
+      ))}
+    </>
+  );
+}
 ```
 
 ## Notifications
