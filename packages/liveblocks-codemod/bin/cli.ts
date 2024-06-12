@@ -40,6 +40,10 @@ const TRANSFORMER_INQUIRER_CHOICES = [
     name: "live-list-constructor: Adds an array to empty `LiveList` constructors.",
     value: "live-list-constructor",
   },
+  {
+    name: "remove-unneeded-type-params: Removes no longer needed type params from Liveblocks types (only use this if you are using the global types).",
+    value: "remove-unneeded-type-params",
+  },
 ];
 
 export const jscodeshiftExecutable = require.resolve(".bin/jscodeshift");
