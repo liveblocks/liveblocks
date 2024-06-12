@@ -539,31 +539,6 @@ const activeUsers = await liveblocks.getActiveUsers("my-room-id");
 console.log(activeUsers);
 ```
 
-Using `UserMeta["info"]` from your config file as a generic adds typing to the
-returned `activeUsers`.
-
-```ts file="liveblocks.config.ts" highlight="5-8"
-// ...
-
-export type UserMeta = {
-  id: string;
-  info: {
-    name: string;
-    avatar: string;
-  };
-};
-```
-
-```ts highlight="4"
-import { UserMeta } from "../liveblocks.config";
-
-const activeUsers =
-  await liveblocks.getActiveUsers<UserMeta["info"]>("my-room-id");
-
-// { data: [{ ..., info: { name: "Nimesh", avatar: "https://..." }, ...] }
-console.log(activeUsers);
-```
-
 #### Liveblocks.broadcastEvent [#post-broadcast-event]
 
 Broadcasts a custom event to the room. Throws an error if the room isn’t found.
@@ -623,9 +598,13 @@ in this format. This is the same as using `"plain-json"` in the second argument.
 const storage = await liveblocks.getStorageDocument("my-room-id", "plain-lson");
 
 // If this were your Storage type...
-type Storage = {
-  names: LiveList<string>;
-};
+declare global {
+  interface Liveblocks {
+    Storage: {
+      names: LiveList<string>;
+    };
+  }
+}
 
 // {
 //   liveblocksType: "LiveObject",
@@ -647,9 +626,13 @@ argument.
 const storage = await liveblocks.getStorageDocument("my-room-id", "json");
 
 // If this were your Storage type...
-type Storage = {
-  names: LiveList<string>;
-};
+declare global {
+  interface Liveblocks {
+    Storage: {
+      names: LiveList<string>;
+    };
+  }
+}
 
 // {
 //   names: ["Olivier", "Nimesh"]
@@ -690,9 +673,13 @@ const room = await liveblocks.createRoom("my-room-id", {
 });
 
 // If this were your Storage type...
-type Storage = {
-  names: LiveList<string>;
-};
+declare global {
+  interface Liveblocks {
+    Storage: {
+      names: LiveList<string>;
+    };
+  }
+}
 
 // Create this Storage and add names to the LiveList
 const storage = await liveblocks.initializeStorageDocument("my-room-id", {
@@ -718,9 +705,13 @@ const room = await liveblocks.createRoom("my-room-id", {
 });
 
 // If this were your Storage type...
-type Storage = {
-  names: LiveList<string>;
-};
+declare global {
+  interface Liveblocks {
+    Storage: {
+      names: LiveList<string>;
+    };
+  }
+}
 
 // Create the initial conflict-free data
 const initialStorage: LiveObject<Storage> = new LiveObject({
