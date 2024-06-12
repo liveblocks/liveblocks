@@ -216,7 +216,25 @@ export const LiveblocksPlugin = ({
 
   useEffect(() => {
     collabContext.name = username || "";
-  }, [collabContext, username]);
+    const provider = providerFactory(room.id, collabContext.yjsDocMap) as LiveblocksYjsProvider;
+    let localState = provider.awareness.getLocalState();
+    if (localState?.name !== collabContext.name) {
+      if (localState === null) {
+        // we don't have any local state, so set it
+        localState = {
+          anchorPos: null,
+          awarenessData: {},
+          color: cursorcolor,
+          focusPos: null,
+          focusing: false,
+          name: collabContext.name,
+        };
+      }
+      // update the name
+      localState.name = collabContext.name;
+      provider.awareness.setLocalState(localState);
+    }
+  }, [collabContext, username, room, cursorcolor, providerFactory]);
 
   useLayoutEffect(() => {
     const editable = editor.getRootElement();
