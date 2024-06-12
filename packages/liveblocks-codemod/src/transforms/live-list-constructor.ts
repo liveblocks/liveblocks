@@ -11,7 +11,7 @@ export default function transformer(
   const root = j(file.source);
 
   const sources = ["@liveblocks/core", "@liveblocks/client"];
-  let identifiersToChange = [];
+  const identifiersToChange = [];
 
   root.find(j.ImportDeclaration).forEach((path) => {
     if (sources.includes(path.node.source.value as string)) {

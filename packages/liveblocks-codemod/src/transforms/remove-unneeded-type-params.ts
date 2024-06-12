@@ -26,7 +26,7 @@ export default function transformer(
     "User",
   ];
 
-  let typeNamesToChange: string[] = [];
+  const typeNamesToChange: string[] = [];
 
   root.find(j.ImportDeclaration).forEach((path) => {
     if (sourcePkgs.includes(path.node.source.value as string)) {
