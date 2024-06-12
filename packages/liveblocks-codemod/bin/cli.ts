@@ -33,12 +33,12 @@ const TRANSFORMER_INQUIRER_CHOICES = [
     value: "room-info-to-room-data",
   },
   {
-    name: "live-list-argument: Adds an argument to `new LiveList()` empty constructors.",
-    value: "live-list-argument",
-  },
-  {
     name: "liveblocks-yjs-provider: Replaces the default import of `@liveblocks/yjs` by a named `LiveblocksYjsProvider` import, and update its usage accordingly.",
     value: "liveblocks-yjs-provider",
+  },
+  {
+    name: "live-list-argument: Adds an argument to `new LiveList()` empty constructors.",
+    value: "live-list-argument",
   },
 ];
 
