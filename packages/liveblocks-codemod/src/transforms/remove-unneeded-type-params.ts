@@ -15,7 +15,16 @@ export default function transformer(
    *          import { Room, type Room as R2 } from "@liveblocks/client";
    */
   const sourcePkgs = ["@liveblocks/core", "@liveblocks/client"];
-  const sourceNames = ["User", "Room"];
+  const sourceNames = [
+    "Client",
+    "ClientOptions",
+    "CommentBodyMentionElementArgs",
+    "OthersEvent",
+    "Room",
+    "StringifyCommentBodyElements",
+    "ThreadData",
+    "User",
+  ];
 
   let typeNamesToChange: string[] = [];
 
