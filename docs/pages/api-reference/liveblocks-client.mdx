@@ -443,7 +443,7 @@ You can access any values set within `resolveUsers` with the
 [`useUser`](/docs/api-reference/liveblocks-react#useUser) hook.
 
 ```tsx
-import { useUser } from "../liveblocks.config";
+import { useUser } from "@liveblocks/react/suspense";
 
 function Component() {
   const user = useUser("marc@example.com");

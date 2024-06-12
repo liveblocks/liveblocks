@@ -512,7 +512,7 @@ in your application to get the new room’s ID, and redirect users to the rename
 room.
 
 ```tsx
-import { useErrorListener } from "../liveblocks.config";
+import { useErrorListener } from "@liveblocks/react/suspense";
 
 function App() {
   useErrorListener((error) => {
@@ -588,7 +588,7 @@ When receiving an event sent with `Liveblocks.broadcastEvent`, `user` will be
 `null` and `connectionId` will be `-1`.
 
 ```tsx
-import { useEventListener } from "./liveblocks.config";
+import { useEventListener } from "@liveblocks/react/suspense";
 
 // When receiving an event sent from `@liveblocks/node`
 useEventListener(({ event, user, connectionId }) => {
