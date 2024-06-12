@@ -21,6 +21,7 @@ jobs:
             "@liveblocks/react-ui",
             "@liveblocks/react-lexical",
             "@liveblocks/node-lexical",
+            "@liveblocks/codemod",
           ]
 
     steps:
