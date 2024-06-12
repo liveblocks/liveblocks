@@ -33,7 +33,6 @@ export type {
   LocalizationOverrides,
   Overrides,
   ThreadOverrides,
-  ThreadPanelOverrides,
 } from "./overrides";
 export { useOverrides } from "./overrides";
 export type { ComposerSubmitComment } from "./primitives";

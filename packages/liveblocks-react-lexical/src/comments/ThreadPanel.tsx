@@ -1,14 +1,7 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { BaseMetadata, ThreadData } from "@liveblocks/core";
 import { useThreads } from "@liveblocks/react";
-import type {
-  CommentOverrides,
-  ComposerOverrides,
-  GlobalOverrides,
-  ThreadOverrides,
-  ThreadPanelOverrides,
-  ThreadProps,
-} from "@liveblocks/react-ui";
+import type { ThreadProps } from "@liveblocks/react-ui";
 import { Thread as DefaultThread, useOverrides } from "@liveblocks/react-ui";
 import { $getNodeByKey } from "lexical";
 import type { ComponentProps, ComponentType } from "react";
@@ -33,16 +26,16 @@ export interface ThreadPanelProps extends ComponentProps<"div"> {
    */
   components?: Partial<ThreadPanelComponents>;
 
-  /**
-   * Override the component's strings.
-   */
-  overrides?: Partial<
-    GlobalOverrides &
-      ThreadPanelOverrides &
-      ThreadOverrides &
-      CommentOverrides &
-      ComposerOverrides
-  >;
+  // /**
+  //  * Override the component's strings.
+  //  */
+  // overrides?: Partial<
+  //   GlobalOverrides &
+  //     ThreadPanelOverrides &
+  //     ThreadOverrides &
+  //     CommentOverrides &
+  //     ComposerOverrides
+  // >;
 }
 
 interface ThreadWrapperProps extends ThreadProps {
@@ -94,8 +87,8 @@ const ThreadWrapper = ({ Thread, ...props }: ThreadWrapperProps) => {
 };
 
 export const ThreadPanel = forwardRef<HTMLDivElement, ThreadPanelProps>(
-  ({ components, overrides, className, ...props }, forwardedRef) => {
-    const $ = useOverrides(overrides);
+  ({ components, /* overrides, */ className, ...props }, forwardedRef) => {
+    // const $ = useOverrides(overrides);
     const { threads } = useThreads();
     const threadToNodes = useThreadToNodes();
 
@@ -123,9 +116,7 @@ export const ThreadPanel = forwardRef<HTMLDivElement, ThreadPanelProps>(
             );
           })
         ) : (
-          <div className="lb-lexical-thread-panel-empty">
-            {$.THREAD_PANEL_EMPTY}
-          </div>
+          <div className="lb-lexical-thread-panel-empty">No threads yet.</div>
         )}
       </div>
     );
