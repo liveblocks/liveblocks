@@ -68,3 +68,12 @@ Adds an array to empty `LiveList` constructors.
 ```shell
 npx @liveblocks/codemod@latest live-list-constructor
 ```
+
+#### `remove-unneeded-type-params`
+
+Removes no longer needed type params from Liveblocks types (only use this if you
+are using the global types).
+
+```shell
+npx @liveblocks/codemod@latest remove-unneeded-type-params
+```

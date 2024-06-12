@@ -13,8 +13,8 @@
     "build": "tsc -d --project ./tsconfig.json",
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "lint": "eslint src/",
-    "test": "jest --silent --verbose --color=always --passWithNoTests",
-    "test:watch": "jest --silent --verbose --color=always --passWithNoTests --watch"
+    "test": "jest --silent --verbose --color=always",
+    "test:watch": "jest --silent --verbose --color=always --watch"
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
