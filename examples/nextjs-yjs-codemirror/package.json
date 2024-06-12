@@ -22,7 +22,7 @@
     "next": "^13.5.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "y-codemirror.next": "^0.3.2",
+    "y-codemirror.next": "^0.3.4",
     "yjs": "^13.6.4"
   },
   "devDependencies": {
