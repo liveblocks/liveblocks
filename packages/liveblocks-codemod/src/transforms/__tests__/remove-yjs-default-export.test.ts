@@ -6,7 +6,7 @@ const defineTest = require("jscodeshift/dist/testUtils").defineTest;
 const { readdirSync } = require("fs");
 const { join } = require("path");
 
-const fixtureDir = "liveblocks-yjs-provider";
+const fixtureDir = "remove-yjs-default-export";
 const fixtureDirPath = join(__dirname, "..", "__testfixtures__", fixtureDir);
 const fixtures = readdirSync(fixtureDirPath)
   .filter((file) => file.endsWith(".input.tsx"))

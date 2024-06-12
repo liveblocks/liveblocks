@@ -33,8 +33,8 @@ const TRANSFORMER_INQUIRER_CHOICES = [
     value: "room-info-to-room-data",
   },
   {
-    name: "liveblocks-yjs-provider: Replaces the default import of `@liveblocks/yjs` by a named `LiveblocksYjsProvider` import, and update its usage accordingly.",
-    value: "liveblocks-yjs-provider",
+    name: "remove-yjs-default-export: Replaces the default import of `@liveblocks/yjs` by a named `LiveblocksYjsProvider` one, and update its usage accordingly.",
+    value: "remove-yjs-default-export",
   },
   {
     name: "live-list-constructor: Adds an array to empty `LiveList` constructors.",
