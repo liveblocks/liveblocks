@@ -42,6 +42,16 @@
             "hidden": true
           },
           {
+            "title": "Lexical",
+            "path": "/get-started/react-lexical",
+            "hidden": true
+          },
+          {
+            "title": "Lexical",
+            "path": "/get-started/nextjs-lexical",
+            "hidden": true
+          },
+          {
             "title": "Redux",
             "path": "/get-started/redux",
             "hidden": true
@@ -74,11 +84,6 @@
           {
             "title": "Yjs CodeMirror React",
             "path": "/get-started/yjs-codemirror-react",
-            "hidden": true
-          },
-          {
-            "title": "Lexical React",
-            "path": "/get-started/react-lexical",
             "hidden": true
           },
           {
