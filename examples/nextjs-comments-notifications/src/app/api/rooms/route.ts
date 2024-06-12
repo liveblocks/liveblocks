@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 
   const rooms = (
     await Promise.all(roomIds.map((roomId) => getRoom(roomId)))
-  ).map((room) => room?.info);
+  ).map((room) => room);
 
   return NextResponse.json(rooms);
 }

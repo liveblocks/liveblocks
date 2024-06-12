@@ -1,5 +1,5 @@
 import { shallow } from "@liveblocks/react";
-import { useOthersMapped, useUpdateMyPresence } from "../liveblocks.config";
+import { useOthersMapped, useUpdateMyPresence } from "@liveblocks/react";
 import React, { MutableRefObject, useEffect } from "react";
 import Cursor from "./Cursor";
 import { useBoundingClientRectRef } from "../utils/useBoundingClientRectRef";

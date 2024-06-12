@@ -5,7 +5,7 @@ import {
   useMutation,
   useStorage,
   useSelf,
-} from "../liveblocks.config";
+} from "@liveblocks/react";
 import React from "react";
 import Avatar from "../components/Avatar";
 import Selection from "../components/Selection";

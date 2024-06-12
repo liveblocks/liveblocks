@@ -1,11 +1,10 @@
-import { Thread } from "@liveblocks/react-comments";
+import { Thread } from "@liveblocks/react-ui";
 import { ThreadData } from "@liveblocks/core";
 import {
-  ThreadMetadata,
   useThreads,
   useEditThreadMetadata,
   useUser,
-} from "../../liveblocks.config";
+} from "@liveblocks/react/suspense";
 import {
   DataRef,
   DndContext,
@@ -40,9 +39,8 @@ export function CommentsCanvas() {
 
   // On drag end, update thread metadata with new coords
   const handleDragEnd = useCallback(({ active, delta }: DragEndEvent) => {
-    const thread = (
-      active.data as DataRef<{ thread: ThreadData<ThreadMetadata> }>
-    ).current?.thread;
+    const thread = (active.data as DataRef<{ thread: ThreadData }>).current
+      ?.thread;
 
     if (!thread) {
       return;
@@ -70,7 +68,7 @@ export function CommentsCanvas() {
 }
 
 // A draggable thread
-function DraggableThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
+function DraggableThread({ thread }: { thread: ThreadData }) {
   // Open threads that have just been created
   const startOpen = useMemo(() => {
     return Number(new Date()) - Number(new Date(thread.createdAt)) <= 100;

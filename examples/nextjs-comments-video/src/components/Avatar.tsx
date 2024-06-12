@@ -1,4 +1,4 @@
-import { useUser } from "../liveblocks.config";
+import { useUser } from "@liveblocks/react/suspense";
 import { ComponentProps } from "react";
 
 interface AvatarProps extends ComponentProps<"img"> {

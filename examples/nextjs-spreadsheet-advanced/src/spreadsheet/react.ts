@@ -1,6 +1,6 @@
 import type { User } from "@liveblocks/client";
 import { useCallback, useEffect, useState } from "react";
-import { useRoom } from "../liveblocks.config";
+import { useRoom } from "@liveblocks/react";
 import type {
   CellAddress,
   Column,

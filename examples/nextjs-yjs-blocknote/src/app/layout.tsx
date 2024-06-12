@@ -1,5 +1,6 @@
 import "../globals.css";
 import { Suspense } from "react";
+import { Providers } from "./Providers";
 
 export const metadata = {
   title: "Liveblocks",
@@ -27,7 +28,9 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <Suspense>{children}</Suspense>
+        <Providers>
+          <Suspense>{children}</Suspense>
+        </Providers>
       </body>
     </html>
   );

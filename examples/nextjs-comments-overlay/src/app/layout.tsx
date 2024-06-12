@@ -2,6 +2,7 @@ import "@/styles/globals.css";
 import type { Metadata } from "next";
 import { Archivo, Inter } from "next/font/google";
 import { Header } from "@/components/site/Header";
+import { Providers } from "./Providers";
 
 const archivo = Archivo({
   subsets: ["latin"],
@@ -43,8 +44,10 @@ export default function RootLayout({
         />
       </head>
       <body className={archivo.variable + " " + inter.className}>
-        <Header />
-        {children}
+        <Providers>
+          <Header />
+          {children}
+        </Providers>
       </body>
     </html>
   );

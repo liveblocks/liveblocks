@@ -1,7 +1,7 @@
 import {
   CommentBodyLinkProps,
   ComposerEditorLinkProps,
-} from "@liveblocks/react-comments/primitives";
+} from "@liveblocks/react-ui/primitives";
 
 export function Link({
   href,

@@ -2,9 +2,9 @@
 
 import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import { RoomProvider, useThreads } from "../../liveblocks.config";
+import { RoomProvider, useThreads } from "@liveblocks/react/suspense";
 import { Loading } from "../components/Loading";
-import { Composer, Thread } from "@liveblocks/react-comments";
+import { Composer, Thread } from "@liveblocks/react-ui";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
 
@@ -37,7 +37,7 @@ export default function Page() {
         }
       >
         <ClientSideSuspense fallback={<Loading />}>
-          {() => <Example />}
+          <Example />
         </ClientSideSuspense>
       </ErrorBoundary>
     </RoomProvider>

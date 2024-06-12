@@ -26,7 +26,7 @@ import {
   useCanUndo,
   useHistory,
   useSelf,
-} from "../liveblocks.config";
+} from "@liveblocks/react";
 import { useSpreadsheet } from "../spreadsheet/react";
 import { createInitialStorage } from "../spreadsheet/utils";
 import { appendUnit } from "../utils/appendUnit";

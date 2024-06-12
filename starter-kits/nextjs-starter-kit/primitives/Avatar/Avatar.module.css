@@ -18,7 +18,9 @@
 }
 
 .avatarOutline::before {
-  box-shadow: 0 0 0 2px var(--color-surface-elevated), 0 0 0 4px currentColor;
+  box-shadow:
+    0 0 0 2px var(--color-surface-elevated),
+    0 0 0 4px currentColor;
 }
 
 .avatar::after {

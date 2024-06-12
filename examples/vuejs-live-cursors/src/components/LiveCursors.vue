@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 import { onUnmounted, ref } from "vue";
 import Cursor from "@/components/Cursor.vue";
-import type { TypedRoom } from "@/liveblocks.config";
+import type { Room } from "@liveblocks/client";
 
 const { room } = defineProps<{
-  room: TypedRoom;
+  room: Room;
 }>();
 
 // Get initial values for presence and others

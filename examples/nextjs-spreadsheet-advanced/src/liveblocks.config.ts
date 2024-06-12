@@ -1,16 +1,12 @@
-import { createClient } from "@liveblocks/client";
-import { createRoomContext } from "@liveblocks/react";
 import { Presence, Storage, UserMeta } from "./types";
 
-const client = createClient({
-  authEndpoint: "/api/liveblocks-auth",
-});
-
-export const {
-  RoomProvider,
-  useRoom,
-  useHistory,
-  useSelf,
-  useCanUndo,
-  useCanRedo,
-} = createRoomContext<Presence, Storage, UserMeta>(client);
+declare global {
+  interface Liveblocks {
+    // Each user's Presence, for useMyPresence, useOthers, etc.
+    Presence: Presence;
+    // The Storage tree for the room, for useMutation, useStorage, etc.
+    Storage: Storage;
+    // Custom user info set when authenticating with a secret key
+    UserMeta: UserMeta;
+  }
+}

@@ -9,9 +9,9 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.11.0",
-    "@liveblocks/node": "^1.11.0",
-    "@liveblocks/react": "^1.11.0",
+    "@liveblocks/client": "^2.0.0",
+    "@liveblocks/node": "^2.0.0",
+    "@liveblocks/react": "^2.0.0",
     "classnames": "^2.3.1",
     "framer-motion": "^10.16.4",
     "next": "^13.5.4",
@@ -24,7 +24,7 @@
     "@types/react-dom": "^18.0.6",
     "@types/uuid": "^8.3.4",
     "autoprefixer": "^10.4.7",
-    "prettier": "^2.7.1",
-    "typescript": "^5.2.2"
+    "prettier": "^3.3.2",
+    "typescript": "^5.4.5"
   }
 }

@@ -20,7 +20,7 @@ import {
   useState,
 } from "react";
 import { COLORS } from "../constants";
-import { useHistory, useSelf } from "../liveblocks.config";
+import { useHistory, useSelf } from "@liveblocks/react";
 import tokenizer, {
   SyntaxKind,
   tokenToString,

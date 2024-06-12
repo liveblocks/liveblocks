@@ -6,7 +6,7 @@ import {
   RoomProvider,
   useCreateThread,
   useThreads,
-} from "../../liveblocks.config";
+} from "@liveblocks/react/suspense";
 import { Loading } from "../components/Loading";
 import { Composer } from "../components/Composer";
 import { Thread } from "../components/Thread";
@@ -56,7 +56,7 @@ export default function Page() {
         }
       >
         <ClientSideSuspense fallback={<Loading />}>
-          {() => <Example />}
+          <Example />
         </ClientSideSuspense>
       </ErrorBoundary>
     </RoomProvider>

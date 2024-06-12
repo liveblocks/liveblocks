@@ -1,4 +1,4 @@
-import { useCreateComment } from "../../liveblocks.config";
+import { useCreateComment } from "@liveblocks/react/suspense";
 import clsx from "clsx";
 import { Comment } from "./Comment";
 import { Composer } from "./Composer";

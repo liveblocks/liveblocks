@@ -2,7 +2,7 @@ import {
   RoomProvider,
   useOthers,
   useUpdateMyPresence,
-} from "../liveblocks.config";
+} from "@liveblocks/react";
 import { useRouter } from "next/router";
 import React, { useMemo } from "react";
 import Selection from "../components/Selection";

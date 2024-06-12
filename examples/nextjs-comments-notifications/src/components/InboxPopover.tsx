@@ -1,15 +1,12 @@
 "use client";
 
-import {
-  InboxNotification,
-  InboxNotificationList,
-} from "@liveblocks/react-comments";
+import { InboxNotification, InboxNotificationList } from "@liveblocks/react-ui";
 import * as Popover from "@radix-ui/react-popover";
 import {
   useInboxNotifications,
   useMarkAllInboxNotificationsAsRead,
   useUnreadInboxNotificationsCount,
-} from "../../liveblocks.config";
+} from "@liveblocks/react/suspense";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { Loading } from "./Loading";
 import { ComponentPropsWithoutRef, useEffect, useState } from "react";
@@ -65,7 +62,7 @@ export function InboxPopover({
       <Popover.Trigger className={clsx(className, "button square")}>
         <ErrorBoundary fallback={null}>
           <ClientSideSuspense fallback={null}>
-            {() => <InboxPopoverUnreadCount />}
+            <InboxPopoverUnreadCount />
           </ClientSideSuspense>
         </ErrorBoundary>
         <svg
@@ -112,7 +109,7 @@ export function InboxPopover({
             }
           >
             <ClientSideSuspense fallback={<Loading />}>
-              {() => <Inbox />}
+              <Inbox />
             </ClientSideSuspense>
           </ErrorBoundary>
         </Popover.Content>

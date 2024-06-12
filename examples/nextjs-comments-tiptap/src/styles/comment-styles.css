@@ -34,7 +34,7 @@
   --comment-border-color: var(--comment-highlight-complete-border);
 }
 
-.comment-highlight[data-selected="true"]{
+.comment-highlight[data-selected="true"] {
   --comment-highlight-color: var(--comment-highlight-selected);
   --comment-border-color: var(--comment-highlight-selected-border);
 }

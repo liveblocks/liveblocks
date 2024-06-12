@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import { RoomProvider } from "../../liveblocks.config";
+import { RoomProvider } from "@liveblocks/react/suspense";
 import { Loading } from "../components/Loading";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
@@ -19,7 +19,7 @@ export default function Page() {
         }
       >
         <ClientSideSuspense fallback={<Loading />}>
-          {() => <CommentsCanvas />}
+          <CommentsCanvas />
         </ClientSideSuspense>
       </ErrorBoundary>
     </RoomProvider>

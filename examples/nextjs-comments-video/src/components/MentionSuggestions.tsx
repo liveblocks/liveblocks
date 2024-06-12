@@ -3,7 +3,7 @@
 import {
   Composer,
   ComposerEditorMentionSuggestionsProps,
-} from "@liveblocks/react-comments/primitives";
+} from "@liveblocks/react-ui/primitives";
 import styles from "./MentionSuggestions.module.css";
 import { Avatar } from "./Avatar";
 import { Suspense } from "react";

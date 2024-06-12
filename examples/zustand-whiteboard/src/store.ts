@@ -4,6 +4,15 @@ import { liveblocks } from "@liveblocks/zustand";
 import type { WithLiveblocks } from "@liveblocks/zustand";
 import React from "react";
 
+declare global {
+  interface Liveblocks {
+    // Each user's Presence, for room.getPresence, room.subscribe("others"), etc.
+    Presence: {
+      selectedShape: string | null;
+    };
+  }
+}
+
 let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
 
 overrideApiKey();
@@ -42,11 +51,7 @@ type Store = {
   onCanvasPointerMove: (e: React.PointerEvent) => void;
 };
 
-type Presence = {
-  selectedShape: string | null;
-};
-
-const useStore = create<WithLiveblocks<Store, Presence>>()(
+const useStore = create<WithLiveblocks<Store>>()(
   liveblocks(
     (set, get) => ({
       shapes: {},

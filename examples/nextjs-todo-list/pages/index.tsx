@@ -5,7 +5,7 @@ import {
   useUpdateMyPresence,
   useStorage,
   useMutation,
-} from "../liveblocks.config";
+} from "@liveblocks/react/suspense";
 import "@liveblocks/react";
 import { LiveList, LiveObject } from "@liveblocks/client";
 import { useRouter } from "next/router";
@@ -110,10 +110,10 @@ export default function Page() {
       initialPresence={{
         isTyping: false,
       }}
-      initialStorage={{ todos: new LiveList() }}
+      initialStorage={{ todos: new LiveList([]) }}
     >
       <ClientSideSuspense fallback={<Loading />}>
-        {() => <Example />}
+        <Example />
       </ClientSideSuspense>
     </RoomProvider>
   );

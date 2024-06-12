@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "../globals.css";
+import { Providers } from "./Providers";
 
 export const metadata: Metadata = {
   title: "Soundblocks | Liveblocks example",
@@ -36,7 +37,7 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-neutral-50 text-neutral-900 antialiased">
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

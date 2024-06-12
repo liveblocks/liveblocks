@@ -37,17 +37,15 @@ export function DocumentHeader({ documentId, className, ...props }: Props) {
             </span>
           }
         >
-          {() => (
-            <DocumentHeaderName
-              onDocumentRename={(name) => renameDocument({ documentId, name })}
-            />
-          )}
+          <DocumentHeaderName
+            onDocumentRename={(name) => renameDocument({ documentId, name })}
+          />
         </ClientSideSuspense>
       </div>
       <div className={styles.collaboration}>
         <div className={styles.presence}>
           <ClientSideSuspense fallback={null}>
-            {() => <DocumentHeaderAvatars />}
+            <DocumentHeaderAvatars />
           </ClientSideSuspense>
         </div>
         <ClientSideSuspense
@@ -57,11 +55,9 @@ export function DocumentHeader({ documentId, className, ...props }: Props) {
             </Button>
           }
         >
-          {() => (
-            <ShareDialog>
-              <Button icon={<ShareIcon />}>Share</Button>
-            </ShareDialog>
-          )}
+          <ShareDialog>
+            <Button icon={<ShareIcon />}>Share</Button>
+          </ShareDialog>
         </ClientSideSuspense>
 
         <InboxPopover align="end" sideOffset={4} />

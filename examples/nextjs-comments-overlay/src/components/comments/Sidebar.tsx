@@ -1,8 +1,8 @@
 "use client";
 
 import styles from "./Sidebar.module.css";
-import { Thread } from "@liveblocks/react-comments";
-import { ThreadMetadata, useThreads } from "@/liveblocks.config";
+import { Thread } from "@liveblocks/react-ui";
+import { useThreads } from "@liveblocks/react/suspense";
 import { useMemo } from "react";
 import { DocumentMagnifyingIcon } from "@/components/icons/DocumentMagnifyingIcon";
 import { DocumentCompleteIcon } from "@/components/icons/DocumentCompleteIcon";
@@ -72,10 +72,7 @@ function CreateThreadMessage() {
   );
 }
 
-function sortResolved(
-  a: ThreadData<ThreadMetadata>,
-  b: ThreadData<ThreadMetadata>
-) {
+function sortResolved(a: ThreadData, b: ThreadData) {
   if (a.metadata.resolved && !b.metadata.resolved) {
     return 1;
   }
