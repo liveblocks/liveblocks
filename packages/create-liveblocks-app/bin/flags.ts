@@ -19,6 +19,12 @@ export const commandLineFlags: OptionDefinition[] = [
     type: Boolean,
   },
   {
+    // Used only when `--upgrade` is also given
+    name: "tag",
+    type: String,
+    defaultValue: "latest",
+  },
+  {
     name: "example",
     type: String,
   },

@@ -85,6 +85,7 @@ export async function createLiveblocksApp() {
 
   if (flags.upgrade) {
     flags.template = "upgrade";
+    flags.tag = flags.tag;
   }
 
   const initialQuestions: PromptObject<"template">[] = [
