@@ -1,6 +1,6 @@
 /* eslint-disable */
 // @ts-nocheck
-import { RoomInfo, Liveblocks } from "@liveblocks/node";
+import { RoomInfo, RoomInfo as RoomInfo2, Liveblocks } from "@liveblocks/node";
 
 interface Settings {
   largestRoom: RoomInfo | null;
