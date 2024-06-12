@@ -44,6 +44,11 @@ npx @liveblocks/codemod@latest remove-unneeded-type-params
 
 ### 2.0 (breaking changes)
 
+Liveblocks 2.0 comes with a number of breaking changes and most are covered by
+the following codemods, see the
+[upgrade guide](https://liveblocks.io/docs/platform/upgrading/2.0) to learn more
+about the changes.
+
 #### `react-comments-to-react-ui`
 
 Updates `@liveblocks/react-comments` to `@liveblocks/react-ui` and renames
