@@ -213,10 +213,10 @@ optional, because it causes unneeded but confusing type inference issues.
 Run the following **codemod** or manually make the changes:
 
 ```bash
-npx @liveblocks/codemod@latest live-list-argument
+npx @liveblocks/codemod@latest live-list-constructor
 ```
 
-This will add an empty array to empty `LiveList` constructors:
+This will add an array to empty `LiveList` constructors:
 
 ```diff showLineNumbers={false}
 -const mylist = new LiveList();

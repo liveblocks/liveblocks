@@ -61,10 +61,10 @@ Replaces the default import of `@liveblocks/yjs` by a named
 npx @liveblocks/codemod@latest liveblocks-yjs-provider
 ```
 
-#### `live-list-argument`
+#### `live-list-constructor`
 
-Adds an argument to `new LiveList()` empty constructors.
+Adds an array to empty `LiveList` constructors.
 
 ```shell
-npx @liveblocks/codemod@latest live-list-argument
+npx @liveblocks/codemod@latest live-list-constructor
 ```

@@ -37,8 +37,8 @@ const TRANSFORMER_INQUIRER_CHOICES = [
     value: "liveblocks-yjs-provider",
   },
   {
-    name: "live-list-argument: Adds an argument to `new LiveList()` empty constructors.",
-    value: "live-list-argument",
+    name: "live-list-constructor: Adds an array to empty `LiveList` constructors.",
+    value: "live-list-constructor",
   },
 ];
 
