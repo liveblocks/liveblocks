@@ -11,8 +11,9 @@ export default function transformer(
   const root = j(file.source);
   let isLiveListImported = false;
 
+  const sources = ["@liveblocks/core", "@liveblocks/client"];
   root.find(j.ImportDeclaration).forEach((path) => {
-    if (path.node.source.value === "@liveblocks/client") {
+    if (sources.includes(path.node.source.value as string)) {
       path.node.specifiers.forEach((specifier) => {
         if (
           specifier.type === "ImportSpecifier" &&
