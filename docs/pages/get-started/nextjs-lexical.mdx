@@ -22,7 +22,7 @@ to hear from you.
 
 <Steps>
   <Step>
-    <StepTitle>Install Liveblocks</StepTitle>
+    <StepTitle>Install Liveblocks and Lexical</StepTitle>
     <StepContent>
 
       Every package should use the same version.
@@ -53,26 +53,38 @@ to hear from you.
 
       Liveblocks uses the concept of rooms, separate virtual spaces where people
       collaborate, and to create a realtime experience, multiple users must
-      be connected to the same room. Set up a Liveblocks client with [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider), and join a room with [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider). When using Next.js’ `/app`
-      directory, we recommend creating your room in a `Room.tsx`
-      file in the same directory as your current route.
+      be connected to the same room. When using Next.js’ `/app` router,
+      we recommend creating your room in a `Room.tsx` file in the same directory
+      as your current route.
 
-      ```tsx file="app/Room.tsx" highlight="8-12"
+      Set up a Liveblocks client with
+      [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider),
+      join a room with [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider),
+      and use [`ClientSideSuspense`](/docs/api-reference/liveblocks-react#ClientSideSuspense)
+      to add a loading spinner to your app.
+
+      ```tsx file="app/Room.tsx" highlight="12-18"
       "use client";
 
       import { ReactNode } from "react";
-      import { LiveblocksProvider, RoomProvider } from "@liveblocks/react/suspense";
+      import {
+        LiveblocksProvider,
+        RoomProvider,
+        ClientSideSuspense,
+      } from "@liveblocks/react/suspense";
 
       export function Room({ children }: { children: ReactNode }) {
         return (
           <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
             <RoomProvider id="my-room" initialPresence={{}}>
-              {children}
+              <ClientSideSuspense fallback={<div>Loading…</div>}>
+                {children}
+              </ClientSideSuspense>
             </RoomProvider>
           </LiveblocksProvider>
         );
       }
-    ```
+      ```
 
     </StepContent>
 
@@ -83,20 +95,16 @@ to hear from you.
 
       After creating your room file, it’s time to join it. Import
       your room into your `page.tsx` file, and place
-      your collaborative app components inside it. Use
-      [`ClientSideSuspense`](/docs/api-reference/liveblocks-react#ClientSideSuspense) to add loading spinners to your app.
+      your collaborative app components inside it.
 
-      ```tsx file="app/page.tsx" highlight="7-11"
-      import { ClientSideSuspense } from "@liveblocks/react/suspense";
+      ```tsx file="app/page.tsx" highlight="6-8"
       import { Room } from "./Room";
       import { Editor } from "./Editor";
 
       export default function Page() {
         return (
           <Room>
-            <ClientSideSuspense fallback={<div>Loading…</div>}>
-              <Editor />
-            </ClientSideSuspense>
+            <Editor/>
           </Room>
         );
       }
