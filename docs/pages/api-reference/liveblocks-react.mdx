@@ -2203,7 +2203,7 @@ To delete an existing metadata property, set its value to `null`. Passing
 import { useEditThreadMetadata } from "@liveblocks/react/suspense";
 
 const editThreadMetadata = useEditThreadMetadata();
-const thread = editThreadMetadata({ threadId: "th_xxx", metadata: {} });
+editThreadMetadata({ threadId: "th_xxx", metadata: {} });
 ```
 
 ### useMarkThreadAsRead [@badge=RoomProvider]
@@ -2236,7 +2236,7 @@ Returns a function that edits a comment’s body.
 import { useEditComment } from "@liveblocks/react/suspense";
 
 const editComment = useEditComment();
-const comment = editComment({
+editComment({
   threadId: "th_xxx",
   commentId: "cm_xxx",
   body: {},

@@ -96,7 +96,7 @@ export interface Props extends ComponentProps<"div"> {
   type: "column" | "row";
 }
 
-export interface HeaderProps extends ComponentProps<"div"> {
+export interface HeaderProps extends Omit<ComponentProps<"div">, "onResize"> {
   canDelete: () => boolean;
   canInsert: () => boolean;
   canMoveAfter: () => boolean;

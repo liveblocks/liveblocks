@@ -33,7 +33,10 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   });
 
   // Use a naming pattern to allow access to rooms with a wildcard
-  liveblocksSession.allow(`liveblocks:examples:*`, session.FULL_ACCESS);
+  liveblocksSession.allow(
+    `liveblocks:examples:*`,
+    liveblocksSession.FULL_ACCESS
+  );
 
   const { status, body } = await liveblocksSession.authorize();
   res.status(status).end(body);

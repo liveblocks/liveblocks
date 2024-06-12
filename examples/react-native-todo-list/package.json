@@ -8,8 +8,7 @@
     "android": "react-native run-android",
     "ios": "react-native run-ios",
     "lint": "eslint .",
-    "dev": "react-native start",
-    "test": "jest"
+    "dev": "react-native start"
   },
   "dependencies": {
     "@liveblocks/client": "^1.11.0",

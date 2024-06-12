@@ -16,14 +16,14 @@
     "@liveblocks/yjs": "^1.11.0",
     "@monaco-editor/react": "^4.5.1",
     "@types/node": "^20.3.1",
-    "@types/react": "^18.2.12",
+    "@types/react": "^18.3.3",
     "@types/react-dom": "^18.2.5",
     "next": "^13.5.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "typescript": "^5.2.2",
     "y-monaco": "^0.1.4",
-    "y-protocols": "^1.0.5",
+    "y-protocols": "^1.0.6",
     "yjs": "^13.6.7"
   }
 }
