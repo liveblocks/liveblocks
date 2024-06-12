@@ -25,6 +25,10 @@ const TRANSFORMER_INQUIRER_CHOICES = [
     value: "remove-liveblocks-config-contexts",
   },
   {
+    name: "remove-unneeded-type-params: Removes no longer needed type params from Liveblocks types (only use this if you are using the global types).",
+    value: "remove-unneeded-type-params",
+  },
+  {
     name: "react-comments-to-react-ui: Updates `@liveblocks/react-comments` to `@liveblocks/react-ui` and renames `<CommentsConfig />` to `<LiveblocksUIConfig />`.",
     value: "react-comments-to-react-ui",
   },
@@ -39,10 +43,6 @@ const TRANSFORMER_INQUIRER_CHOICES = [
   {
     name: "live-list-constructor: Adds an array to empty `LiveList` constructors.",
     value: "live-list-constructor",
-  },
-  {
-    name: "remove-unneeded-type-params: Removes no longer needed type params from Liveblocks types (only use this if you are using the global types).",
-    value: "remove-unneeded-type-params",
   },
 ];
 

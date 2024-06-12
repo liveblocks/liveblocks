@@ -33,6 +33,15 @@ If you export the Suspense versions of hooks from `createRoomContext` and
 npx @liveblocks/codemod@latest remove-liveblocks-config-contexts --suspense
 ```
 
+#### `remove-unneeded-type-params`
+
+Removes no longer needed type params from Liveblocks types (only use this if you
+are using the global types).
+
+```shell
+npx @liveblocks/codemod@latest remove-unneeded-type-params
+```
+
 ### 2.0
 
 #### `react-comments-to-react-ui`
@@ -67,13 +76,4 @@ Adds an array to empty `LiveList` constructors.
 
 ```shell
 npx @liveblocks/codemod@latest live-list-constructor
-```
-
-#### `remove-unneeded-type-params`
-
-Removes no longer needed type params from Liveblocks types (only use this if you
-are using the global types).
-
-```shell
-npx @liveblocks/codemod@latest remove-unneeded-type-params
 ```
