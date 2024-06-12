@@ -9,9 +9,10 @@ export default function transformer(
 ) {
   const j = api.jscodeshift.withParser("tsx");
   const root = j(file.source);
-  let isLiveListImported = false;
 
   const sources = ["@liveblocks/core", "@liveblocks/client"];
+  let identifiersToChange = [];
+
   root.find(j.ImportDeclaration).forEach((path) => {
     if (sources.includes(path.node.source.value as string)) {
       path.node.specifiers.forEach((specifier) => {
@@ -19,7 +20,9 @@ export default function transformer(
           specifier.type === "ImportSpecifier" &&
           specifier.imported.name === "LiveList"
         ) {
-          isLiveListImported = true;
+          identifiersToChange.push(
+            specifier.local?.name ?? specifier.imported.name
+          );
         }
       });
     }
@@ -29,11 +32,11 @@ export default function transformer(
    * Before: new LiveList()
    *  After: new LiveList([])
    */
-  if (isLiveListImported) {
+  if (identifiersToChange.length > 0) {
     root.find(j.NewExpression).forEach((path) => {
       if (
         path.node.callee.type === "Identifier" &&
-        path.node.callee.name === "LiveList"
+        identifiersToChange.includes(path.node.callee.name)
       ) {
         if (path.node.arguments.length === 0) {
           j(path).replaceWith(
