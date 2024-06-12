@@ -102,10 +102,15 @@ don’t have to do so manually.
 
 ### Breaking change 1: renamed package [#bc1]
 
-Affects `@liveblocks/react-comments`. We’ve renamed our package
-`@liveblocks/react-comments` to `@liveblocks/react-ui`, because our library of
-pre-built UI components now contains more than just Comments-related components.
-Please adjust your imports.
+<Banner>
+
+This breaking change only affects users of `@liveblocks/react-comments`.
+
+</Banner>
+
+We’ve renamed our package `@liveblocks/react-comments` to
+`@liveblocks/react-ui`, because our library of pre-built UI components now
+contains more than just Comments-related components. Please adjust your imports.
 
 Run the following **codemod** or manually make the changes:
 
@@ -129,9 +134,15 @@ And also:
 
 ### Breaking change 2: renamed exports in our Node package [#bc2]
 
-Affects `@liveblocks/node`. To avoid confusion with the newly introduced custom
-`RoomInfo` type, we’ve renamed the `RoomInfo` type in our `@liveblocks/node`
-package.
+<Banner>
+
+This breaking change only affects users of `@liveblocks/node`.
+
+</Banner>
+
+To avoid confusion with the newly introduced custom
+[`RoomInfo`](#New-custom-type-RoomInfo) type, we’ve renamed the `RoomInfo` type
+in our `@liveblocks/node` package.
 
 Run the following **codemod** or manually make the changes:
 
@@ -151,8 +162,14 @@ This will change:
 
 ### Breaking change 3: client methods from our Node package no longer take type params [#bc3]
 
-Affects `@liveblocks/node`. In `@liveblocks/node`, none of the client methods,
-like `liveblocks.getThread()`, take type params any longer.
+<Banner>
+
+This breaking change only affects users of `@liveblocks/node`.
+
+</Banner>
+
+In `@liveblocks/node`, none of the client methods, like
+`liveblocks.getThread()`, take type params any longer.
 
 Make the following changes:
 
@@ -184,9 +201,15 @@ detail on this transition.
 
 ### Breaking change 4: changed default export to named export in Yjs package [#bc4]
 
-Affects `@liveblocks/yjs`. To make discoverability and refactorings easier, and
-to avoid confusion with the newly introduced `LiveblocksProvider` in our React
-package, we’re no longer using default exports, but named exports only.
+<Banner>
+
+This breaking change only affects users of `@liveblocks/yjs`.
+
+</Banner>
+
+To make discoverability and refactorings easier, and to avoid confusion with the
+newly introduced [`LiveblocksProvider`][] in our React package, we’re no longer
+using default exports, but named exports only.
 
 Run the following **codemod** or manually make the changes:
 
@@ -207,8 +230,14 @@ This will change your import (and its usage) like this:
 
 ### Breaking change 5: minor LiveList constructor change [#bc5]
 
-Affects apps using Storage. The `LiveList()` constructor’s argument is no longer
-optional, because it causes unneeded but confusing type inference issues.
+<Banner>
+
+This breaking change only affects users of Storage.
+
+</Banner>
+
+The `LiveList()` constructor’s argument is no longer optional, because it causes
+unneeded but confusing type inference issues.
 
 Run the following **codemod** or manually make the changes:
 
@@ -225,9 +254,15 @@ This will add an array to empty `LiveList` constructors:
 
 ### Breaking change 6: new webhook event types [#bc6]
 
-Affects apps using webhooks. The webhook event `NotificationEvent`’s type can
-represent multiple kinds of notifications: `"thread"`, `"textMention"`, and
-custom ones (e.g. `"$myNotification"`).
+<Banner>
+
+This breaking change only affects users of webhooks.
+
+</Banner>
+
+The webhook event `NotificationEvent`’s type can represent multiple kinds of
+notifications: `"thread"`, `"textMention"`, and custom ones (e.g.
+`"$myNotification"`).
 
 If you were using properties only available on the `"thread"` kind (e.g.
 `threadId`), you will need to first check for the kind of notification before
@@ -546,8 +581,9 @@ That’s it!
 
 ## Questions? Please ask!
 
-If you have any trouble with these new patterns or otherwise want help, please
-let us know [by email](mailto:support@liveblocks.io) or by joining our
+If you have any trouble with these new patterns, run into a bug with one of the
+codemods, or otherwise need help, please let us know
+[by email](mailto:support@liveblocks.io) or by joining our
 [Discord community](/discord)! We’re here to help!
 
 [`createClient`]: /docs/api-reference/liveblocks-client#createClient
