@@ -421,7 +421,7 @@ Events available for use include:
 - `YDocUpdated`
 - `CommentCreated/CommentEdited/CommentDeleted`
 - `CommentReactionAdded/CommentReactionRemoved`
-- `ThreadCreated/ThreadMetadataUpdated`
+- `ThreadCreated/ThreadDeleted/ThreadMetadataUpdated`
 - `Notification`
 
 More events will come later, such as:
@@ -814,6 +814,36 @@ const threadCreatedEvent = {
     threadId: "my-thread-id",
     createdAt: "2021-10-06T01:45:56.558Z",
     createdBy: "my-user-id",
+  },
+};
+```
+
+#### ThreadDeletedEvent
+
+An event is triggered when a thread is deleted. This event is not throttled. A
+thread is deleted when all comments in the thread are deleted or when the thread
+is manually deleted.
+
+```ts
+// Schema
+type ThreadDeletedEvent = {
+  type: "threadDeleted";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    deletedAt: string;
+  };
+};
+
+// Example
+const threadDeletedEvent = {
+  type: "threadDeleted",
+  data: {
+    projectId: "my-project-id",
+    roomId: "my-room-id",
+    threadId: "my-thread-id",
+    deletedAt: "2021-10-06T01:45:56.558Z",
   },
 };
 ```
