@@ -1685,6 +1685,61 @@ describe("WebSocket events", () => {
     unmount();
   });
 
+  test("THREAD_DELETED event should delete thread", async () => {
+    const newThread = dummyThreadData();
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            data: [newThread],
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
+
+    const { result, unmount } = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id="room-id" initialPresence={{}}>
+          {children}
+        </RoomProvider>
+      ),
+    });
+
+    const sim = await websocketSimulator();
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [newThread],
+      })
+    );
+
+    sim.simulateIncomingMessage({
+      type: ServerMsgCode.THREAD_DELETED,
+      threadId: newThread.id,
+    });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [],
+      })
+    );
+
+    unmount();
+  });
+
   test("Websocket event should not refresh thread if updatedAt is earlier than the cached updatedAt", async () => {
     const now = new Date();
     const initialThread = dummyThreadData();
