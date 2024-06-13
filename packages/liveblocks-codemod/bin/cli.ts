@@ -45,8 +45,8 @@ const TRANSFORMER_INQUIRER_CHOICES = [
     value: "live-list-constructor",
   },
   {
-    name: "remove-clientsidesuspense-thunk: Removes any thunks from <ClientSideSuspense>'s children.",
-    value: "remove-clientsidesuspense-thunk",
+    name: "simplify-client-side-suspense-children: Removes the function-style body from <ClientSideSuspense>'s children.",
+    value: "simplify-client-side-suspense-children",
   },
 ];
 

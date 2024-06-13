@@ -42,12 +42,12 @@ are using the global types).
 npx @liveblocks/codemod@latest remove-unneeded-type-params
 ```
 
-#### `remove-clientsidesuspense-thunk`
+#### `simplify-client-side-suspense-children`
 
-Removes any thunks from `<ClientSideSuspense>`’s children.
+Removes any function-style body from `<ClientSideSuspense>`’s `children` prop.
 
 ```shell
-npx @liveblocks/codemod@latest remove-clientsidesuspense-thunk
+npx @liveblocks/codemod@latest simplify-client-side-suspense-children
 ```
 
 ### 2.0 (breaking changes)
