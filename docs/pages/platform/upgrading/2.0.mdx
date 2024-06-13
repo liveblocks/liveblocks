@@ -509,7 +509,11 @@ made that are non-breaking changes.
 Previously, the `ClientSideSuspense` helper needed a function as its `children`
 prop, but it no longer has to.
 
-You can now change:
+```bash
+npx @liveblocks/codemod@latest simplify-client-side-suspense-children
+```
+
+This will change:
 
 ```diff
  function MyComponent() {
