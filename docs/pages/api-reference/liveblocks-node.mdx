@@ -1304,6 +1304,20 @@ const editedMetadata = await liveblocks.editThreadMetadata({
 console.log(editedMetadata);
 ```
 
+#### Liveblocks.deleteThread [#delete-rooms-roomId-threads-threadId]
+
+Deletes a thread. Throws an error if the room or thread isn’t found. This is a
+wrapper around the
+[Delete Thread API](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId-threads-threadId)
+and returns no response.
+
+```ts
+await liveblocks.deleteThread({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+});
+```
+
 #### Liveblocks.createComment [#post-rooms-roomId-threads-threadId-comments] [@badge=Beta]
 
 Creates a new comment in a specific thread within a room. This method allows
