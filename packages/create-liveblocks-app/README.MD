@@ -94,7 +94,7 @@ Options:
   Open browser without asking permission, when deploying to Vercel or getting API key
 
   --upgrade [version]
-  Upgrade all Liveblocks packages to a certain version. If no version passed, use `latest`/
+  Upgrade all Liveblocks packages to a certain version. If no version passed, use `latest`
   e.g. `--upgrade` for latest, `--upgrade 2.0.0` for 2.0.0
 
   --help
