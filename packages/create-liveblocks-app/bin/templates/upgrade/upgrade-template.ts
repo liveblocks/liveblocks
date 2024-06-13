@@ -12,7 +12,7 @@ function findLiveblocksDependencies(
 }
 
 type Flags = {
-  tag: string;
+  upgrade: string;
 };
 
 export async function create(flags: Flags) {
@@ -54,7 +54,7 @@ export async function create(flags: Flags) {
     (d) => d === "@liveblocks/react-comments"
   );
 
-  // === Upgrade collected dependencies to latest ===========================================
+  // === Upgrade collected dependencies ====================================================
 
   const pkgManager = await detect();
 
@@ -88,7 +88,7 @@ export async function create(flags: Flags) {
   if (depsToUpgrade.length > 0) {
     await execa(
       pkgManager,
-      [installCmd, ...depsToUpgrade.map((dep) => `${dep}@${flags.tag}`)],
+      [installCmd, ...depsToUpgrade.map((dep) => `${dep}@${flags.upgrade}`)],
       { stdio: "inherit" }
     );
   }

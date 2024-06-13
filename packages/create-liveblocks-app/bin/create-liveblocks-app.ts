@@ -83,9 +83,13 @@ export async function createLiveblocksApp() {
     flags.template = "init";
   }
 
-  if (flags.upgrade) {
+  if (flags.upgrade !== undefined) {
+    // If --upgrade is specified without a version/tag, default to `latest`
+    if (flags.upgrade === null) {
+      flags.upgrade = "latest";
+    }
+
     flags.template = "upgrade";
-    flags.tag = flags.tag;
   }
 
   const initialQuestions: PromptObject<"template">[] = [
