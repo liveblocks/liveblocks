@@ -1,9 +1,8 @@
 "use client";
 
 import { BlockNoteEditor } from "@blocknote/core";
-import "@blocknote/core/fonts/inter.css";
-import { BlockNoteView, useCreateBlockNote } from "@blocknote/react";
-import "@blocknote/react/style.css";
+import { useCreateBlockNote } from "@blocknote/react";
+import { BlockNoteView } from "@blocknote/mantine";
 import * as Y from "yjs";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import { useRoom, useSelf } from "@liveblocks/react/suspense";
@@ -73,11 +72,12 @@ function BlockNote({ doc, provider }: EditorProps) {
       <BlockNoteView
         editor={editor}
         className={styles.editorContainer}
+        theme="light"
         formattingToolbar={false}
-        hyperlinkToolbar={false}
+        linkToolbar={false}
         sideMenu={false}
         slashMenu={false}
-        imageToolbar={false}
+        filePanel={false}
         tableHandles={false}
       />
     </div>
