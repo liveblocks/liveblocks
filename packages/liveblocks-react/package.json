@@ -1,8 +1,9 @@
 {
   "name": "@liveblocks/react",
-  "version": "1.12.0",
+  "version": "2.0.0",
   "description": "A set of React hooks and providers to use Liveblocks declaratively. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
+  "type": "commonjs",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -16,10 +17,22 @@
         "module": "./dist/index.mjs",
         "default": "./dist/index.js"
       }
+    },
+    "./suspense": {
+      "import": {
+        "types": "./dist/suspense.d.mts",
+        "default": "./dist/suspense.mjs"
+      },
+      "require": {
+        "types": "./dist/suspense.d.ts",
+        "module": "./dist/suspense.mjs",
+        "default": "./dist/suspense.js"
+      }
     }
   },
   "files": [
     "dist/**",
+    "suspense/**",
     "README.md"
   ],
   "scripts": {
@@ -30,14 +43,14 @@
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack",
     "test": "jest --silent --verbose --color=always",
-    "test:types": "tsd",
+    "test:types": "ls test-d/* | xargs -n1 tsd --files",
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
   "dependencies": {
-    "@liveblocks/client": "1.12.0",
-    "@liveblocks/core": "1.12.0",
+    "@liveblocks/client": "2.0.0",
+    "@liveblocks/core": "2.0.0",
     "nanoid": "^3",
-    "use-sync-external-store": "^1.2.0"
+    "use-sync-external-store": "^1.2.2"
   },
   "peerDependencies": {
     "react": "^16.14.0 || ^17 || ^18"
@@ -48,7 +61,7 @@
     "@liveblocks/query-parser": "^0.0.3",
     "@testing-library/jest-dom": "6.1.6",
     "@testing-library/react": "14.1.2",
-    "@types/use-sync-external-store": "^0.0.3",
+    "@types/use-sync-external-store": "^0.0.6",
     "date-fns": "^3.0.6",
     "eslint-plugin-react-hooks": "^4.6.0",
     "itertools": "^2.3.1",

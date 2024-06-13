@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { ErrorBoundary } from "react-error-boundary";
 import { InboxPopover } from "./InboxPopover";
 import { User } from "./User";
-import { useRoomInfo } from "../../liveblocks.config";
+import { useRoomInfo } from "@liveblocks/react/suspense";
 import { useExampleRoomId } from "../example.client";
 import { ClientSideSuspense } from "@liveblocks/react";
 
@@ -31,7 +31,7 @@ export function Header({ className, ...props }: ComponentProps<"header">) {
       {room ? (
         <ErrorBoundary fallback={null}>
           <ClientSideSuspense fallback={null}>
-            {() => <TitleRoom className="header-title" room={room} />}
+            <TitleRoom className="header-title" room={room} />
           </ClientSideSuspense>
         </ErrorBoundary>
       ) : (

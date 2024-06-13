@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 import { onUnmounted, ref } from "vue";
 import Avatar from "@/components/Avatar.vue";
-import type { TypedRoom } from "@/liveblocks.config";
+import type { Room } from "@liveblocks/client";
 
 const { room } = defineProps<{
-  room: TypedRoom;
+  room: Room;
 }>();
 
 // Get initial values for presence and others

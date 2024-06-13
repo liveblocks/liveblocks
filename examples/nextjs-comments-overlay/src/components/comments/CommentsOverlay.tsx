@@ -1,11 +1,10 @@
 "use client";
 
 import {
-  ThreadMetadata,
   useEditThreadMetadata,
   useThreads,
   useUser,
-} from "@/liveblocks.config";
+} from "@liveblocks/react/suspense";
 import { ThreadData } from "@liveblocks/client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import styles from "./CommentsOverlay.module.css";
@@ -42,7 +41,7 @@ export function CommentsOverlay() {
 }
 
 type OverlayThreadProps = {
-  thread: ThreadData<ThreadMetadata>;
+  thread: ThreadData;
   maxZIndex: number;
   onDragChange: (dragging: boolean) => void;
 };

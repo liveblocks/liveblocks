@@ -4,7 +4,7 @@ import {
   useEventListener,
   useMyPresence,
   useOthers,
-} from "../liveblocks.config";
+} from "@liveblocks/react";
 import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { useRouter } from "next/router";
 import Cursor from "../components/Cursor";

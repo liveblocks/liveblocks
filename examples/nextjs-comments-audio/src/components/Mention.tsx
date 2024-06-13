@@ -3,7 +3,7 @@
 import {
   CommentBodyMentionProps,
   ComposerEditorMentionProps,
-} from "@liveblocks/react-comments/primitives";
+} from "@liveblocks/react-ui/primitives";
 import { Suspense } from "react";
 import { User } from "./User";
 

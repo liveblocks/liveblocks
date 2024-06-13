@@ -1,4 +1,4 @@
-import create from "zustand";
+import { create } from "zustand";
 import {
   addEdge,
   applyEdgeChanges,
@@ -12,11 +12,19 @@ import {
   OnEdgesChange,
   OnNodesChange,
 } from "reactflow";
-import { createClient, EnsureJson } from "@liveblocks/client";
+import { createClient } from "@liveblocks/client";
+import type { EnsureJson } from "@liveblocks/client";
 import { liveblocks } from "@liveblocks/zustand";
 import type { WithLiveblocks } from "@liveblocks/zustand";
 import nodes from "./nodes";
 import edges from "./edges";
+
+declare global {
+  interface Liveblocks {
+    // The Storage tree for the room, for useMutation, useStorage, etc.
+    Storage: Storage;
+  }
+}
 
 /**
  * This file contains the Zustand store & Liveblocks middleware
@@ -37,13 +45,13 @@ type FlowState = {
   onConnect: OnConnect;
 };
 
-type Storage = {
+type Storage = EnsureJson<{
   nodes: FlowState["nodes"];
   edges: FlowState["edges"];
-};
+}>;
 
 // Define your fully-typed Zustand store
-const useStore = create<WithLiveblocks<FlowState, {}, EnsureJson<Storage>>>()(
+const useStore = create<WithLiveblocks<FlowState>>()(
   liveblocks(
     (set, get) => ({
       // Initial values for nodes and edges

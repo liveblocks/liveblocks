@@ -2,11 +2,11 @@
 
 import { Link } from "@/components/Link";
 import { Mention } from "@/components/Mention";
-import { ThreadMetadata, useThreads, useUser } from "@/liveblocks.config";
+import { useThreads, useUser } from "@liveblocks/react/suspense";
 import { useSkipTo } from "@/utils";
 import { ThreadData } from "@liveblocks/core";
 import { ClientSideSuspense } from "@liveblocks/react";
-import { Comment } from "@liveblocks/react-comments/primitives";
+import { Comment } from "@liveblocks/react-ui/primitives";
 import { CSSProperties, useCallback, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
@@ -15,7 +15,7 @@ export function ThreadsTimeline() {
     // @ts-ignore
     <ErrorBoundary fallback={<div>error</div>}>
       <ClientSideSuspense fallback={null}>
-        {() => <PinnedThreads />}
+        <PinnedThreads />
       </ClientSideSuspense>
     </ErrorBoundary>
   );
@@ -33,7 +33,7 @@ function PinnedThreads() {
   );
 }
 
-function PinnedThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
+function PinnedThread({ thread }: { thread: ThreadData }) {
   const skipTo = useSkipTo();
   const { user } = useUser(thread.comments?.[0].userId || "");
   const [highlighted, setHighlighted] = useState(false);

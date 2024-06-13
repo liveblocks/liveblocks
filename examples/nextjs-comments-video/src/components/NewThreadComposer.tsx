@@ -3,9 +3,9 @@
 import {
   Composer,
   ComposerSubmitComment,
-} from "@liveblocks/react-comments/primitives";
+} from "@liveblocks/react-ui/primitives";
 import { ChangeEvent, FormEvent, useCallback, useState } from "react";
-import { useCreateThread, useSelf } from "@/liveblocks.config";
+import { useCreateThread, useSelf } from "@liveblocks/react/suspense";
 import { formatTime } from "@/components/Duration";
 import { Mention } from "@/components/Mention";
 import { MentionSuggestions } from "@/components/MentionSuggestions";

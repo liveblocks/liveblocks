@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { Composer } from "@liveblocks/react-comments";
-import { useCreateThread, useSelf } from "../../liveblocks.config";
+import { Composer } from "@liveblocks/react-ui";
+import { useCreateThread, useSelf } from "@liveblocks/react/suspense";
 import styles from "./Toolbar.module.css";
 import avatarStyles from "./CommentsCanvas.module.css";
 

@@ -1,8 +1,8 @@
 "use client";
 
 import * as Y from "yjs";
-import LiveblocksProvider from "@liveblocks/yjs";
-import { TypedLiveblocksProvider, useRoom } from "@/liveblocks.config";
+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
+import { useRoom } from "@liveblocks/react/suspense";
 import { useCallback, useEffect, useState } from "react";
 import styles from "./CollaborativeEditor.module.css";
 import { Avatars } from "@/components/Avatars";
@@ -16,19 +16,19 @@ import { Toolbar } from "@/components/Toolbar";
 // Collaborative code editor with undo/redo, live cursors, and live avatars
 export function CollaborativeEditor() {
   const room = useRoom();
-  const [provider, setProvider] = useState<TypedLiveblocksProvider>();
+  const [provider, setProvider] = useState<LiveblocksYjsProvider>();
   const [editorRef, setEditorRef] = useState<editor.IStandaloneCodeEditor>();
 
   // Set up Liveblocks Yjs provider and attach Monaco editor
   useEffect(() => {
-    let yProvider: TypedLiveblocksProvider;
+    let yProvider: LiveblocksYjsProvider;
     let yDoc: Y.Doc;
     let binding: MonacoBinding;
 
     if (editorRef) {
       yDoc = new Y.Doc();
       const yText = yDoc.getText("monaco");
-      yProvider = new LiveblocksProvider(room, yDoc);
+      yProvider = new LiveblocksYjsProvider(room, yDoc);
       setProvider(yProvider);
 
       // Attach Yjs to Monaco

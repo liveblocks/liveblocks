@@ -15,7 +15,7 @@ You can upgrade to 1.10 by downloading the latest version of each Liveblocks
 package you’re using, for example in a React app:
 
 ```bash
-npm install @liveblocks/client@latest @liveblocks/react@latest @liveblocks/react-comments@latest @liveblocks/node@latest
+npm install @liveblocks/client@latest @liveblocks/react@latest @liveblocks/react-ui@latest @liveblocks/node@latest
 ```
 
 <Banner title="Update every Liveblocks package">
@@ -132,8 +132,8 @@ import { ResolveUsersArgs } from "@liveblocks/node";
 ## Comments CSS variables
 
 Some `elevation` and `tooltip`
-[CSS variables](/docs/api-reference/liveblocks-react-comments#CSS-variables)
-have been removed:
+[CSS variables](/docs/api-reference/liveblocks-react-ui#CSS-variables) have been
+removed:
 
 - `--lb-tooltip-background`
 - `--lb-tooltip-foreground`
@@ -218,4 +218,4 @@ After:
 
 When upgrading, remember that overrides can be applied both globally with
 `<CommentsConfig>`, and per component, e.g. `<Composer>`. Learn more in the
-[overrides API reference](/docs/api-reference/liveblocks-react-comments#Overrides).
+[overrides API reference](/docs/api-reference/liveblocks-react-ui#Overrides).

@@ -1,14 +1,11 @@
 import { ClientSideSuspense } from "@liveblocks/react";
 import {
-  InboxNotification,
-  InboxNotificationList,
-} from "@liveblocks/react-comments";
-import clsx from "clsx";
-import { ComponentProps } from "react";
-import {
   useInboxNotifications,
   useMarkAllInboxNotificationsAsRead,
-} from "@/liveblocks.config";
+} from "@liveblocks/react/suspense";
+import { InboxNotification, InboxNotificationList } from "@liveblocks/react-ui";
+import clsx from "clsx";
+import { ComponentProps } from "react";
 import { Button } from "@/primitives/Button";
 import { Link } from "@/primitives/Link";
 import { Spinner } from "@/primitives/Spinner";
@@ -58,7 +55,7 @@ export function Inbox({ className, ...props }: ComponentProps<"div">) {
           </div>
         }
       >
-        {() => <InboxContent />}
+        <InboxContent />
       </ClientSideSuspense>
     </div>
   );

@@ -1,4 +1,4 @@
-import { useOthers, useSelf } from "@/liveblocks.config";
+import { useOthers, useSelf } from "@liveblocks/react/suspense";
 import styles from "./Avatars.module.css";
 
 export function Avatars() {

@@ -13,9 +13,7 @@ function App({ room }) {
     });
 
     const unsubscribeOthers = room.subscribe("others", (others) => {
-      const othersWithPresence = others
-        .toArray()
-        .filter((other) => other?.presence);
+      const othersWithPresence = others.filter((user) => user?.presence);
       setUsers(othersWithPresence);
     });
 

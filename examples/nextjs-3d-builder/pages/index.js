@@ -2,7 +2,7 @@ import { Canvas } from "@react-three/fiber";
 import React, { useState, Suspense } from "react";
 import { useGLTF, OrbitControls, ContactShadows } from "@react-three/drei";
 import { HexColorPicker } from "react-colorful";
-import { useStorage, useMutation } from "../liveblocks.config";
+import { useStorage, useMutation } from "@liveblocks/react";
 import styles from "./index.module.css";
 
 /**

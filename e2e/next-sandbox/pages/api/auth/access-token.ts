@@ -33,6 +33,7 @@ export default async function accessTokenAuth(
       userInfo: {
         name: user.name,
         issuedBy: "/api/auth/access-token",
+        echo: Number(req.query.echo) || undefined,
       },
     }
   );

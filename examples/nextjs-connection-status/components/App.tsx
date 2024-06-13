@@ -3,7 +3,7 @@
 import { LostConnectionToasts } from "@/components/LostConnectionToasts";
 import { Status } from "@/components/Status";
 import { LiveAvatars } from "@/components/LiveAvatars";
-import { useMyPresence, useOthers } from "@/liveblocks.config";
+import { useMyPresence, useOthers } from "@liveblocks/react/suspense";
 import Cursor from "@/components/Cursor";
 import styles from "./App.module.css";
 

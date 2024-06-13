@@ -37,7 +37,7 @@ export default function Home() {
     <RoomProvider
       id={roomId}
       initialPresence={{} as never}
-      initialStorage={{ items: new LiveList() }}
+      initialStorage={{ items: new LiveList([]) }}
     >
       <Sandbox roomId={roomId} />
     </RoomProvider>

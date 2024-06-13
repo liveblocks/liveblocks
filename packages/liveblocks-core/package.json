@@ -1,7 +1,8 @@
 {
   "name": "@liveblocks/core",
-  "version": "1.12.0",
+  "version": "2.0.0",
   "description": "Private internals for Liveblocks. DO NOT import directly from this package!",
+  "type": "commonjs",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -37,7 +38,7 @@
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack",
     "test": "jest --silent --verbose --color=always",
-    "test:types": "tsd",
+    "test:types": "ls test-d/* | xargs -n1 tsd --files",
     "test:watch": "jest --silent --verbose --color=always --watch",
     "test:e2e": "jest --silent --verbose --color=always --config=./jest.config.e2e.js",
     "test:deps": "depcruise src --exclude __tests__",

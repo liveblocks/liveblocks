@@ -10,10 +10,10 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.11.0",
-    "@liveblocks/node": "^1.11.0",
-    "@liveblocks/react": "^1.11.0",
-    "@liveblocks/yjs": "^1.11.0",
+    "@liveblocks/client": "^2.0.0",
+    "@liveblocks/node": "^2.0.0",
+    "@liveblocks/react": "^2.0.0",
+    "@liveblocks/yjs": "^2.0.0",
     "@tiptap/extension-collaboration": "^2.0.4",
     "@tiptap/extension-collaboration-cursor": "^2.0.4",
     "@tiptap/pm": "^2.0.4",
@@ -25,7 +25,10 @@
     "next": "^13.5.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "typescript": "^5.2.2",
     "yjs": "^13.6.7"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.2",
+    "typescript": "^5.4.5"
   }
 }

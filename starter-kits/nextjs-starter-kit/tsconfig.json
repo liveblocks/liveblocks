@@ -1,10 +1,7 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "lib": [
-      "dom",
-      "esnext"
-    ],
+    "lib": ["dom", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -18,12 +15,8 @@
     "jsx": "preserve",
     "incremental": true,
     "paths": {
-      "react": [
-        "./node_modules/@types/react"
-      ],
-      "@/*": [
-        "./*"
-      ]
+      "react": ["./node_modules/@types/react"],
+      "@/*": ["./*"]
     },
     "plugins": [
       {
@@ -31,12 +24,6 @@
       }
     ]
   },
-  "include": [
-    ".next/types/**/*.ts",
-    "**/*.ts",
-    "**/*.tsx"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": [".next/types/**/*.ts", "**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"]
 }

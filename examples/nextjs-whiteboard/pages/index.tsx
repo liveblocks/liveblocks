@@ -6,7 +6,7 @@ import {
   useStorage,
   useMutation,
   useSelf,
-} from "../liveblocks.config";
+} from "@liveblocks/react/suspense";
 import { LiveMap, LiveObject } from "@liveblocks/client";
 import { shallow, ClientSideSuspense } from "@liveblocks/react";
 import styles from "../styles/index.module.css";
@@ -22,7 +22,7 @@ export default function Room() {
     >
       <div className={styles.container}>
         <ClientSideSuspense fallback={<Loading />}>
-          {() => <Canvas />}
+          <Canvas />
         </ClientSideSuspense>
       </div>
     </RoomProvider>
@@ -148,8 +148,8 @@ function Rectangle({ id, onShapePointerDown }: RectangleProps) {
   const selectionColor = selectedByMe
     ? "blue"
     : selectedByOthers
-    ? "green"
-    : "transparent";
+      ? "green"
+      : "transparent";
 
   return (
     <div

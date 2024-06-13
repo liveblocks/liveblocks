@@ -62,7 +62,7 @@ import {
   ResetIcon,
   TrashIcon,
 } from "../icons";
-import { useHistory, useSelf } from "../liveblocks.config";
+import { useHistory, useSelf } from "@liveblocks/react";
 import { getHeaderLabel } from "../spreadsheet/interpreter/utils";
 import { getCellId } from "../spreadsheet/utils";
 import type { Cell, Column, Row } from "../types";

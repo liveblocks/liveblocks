@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { client, type Presence } from "@/liveblocks.config";
+import { client } from "@/liveblocks.config";
 import { onUnmounted } from "vue";
 import LiveCursors from "@/components/LiveCursors.vue";
 
@@ -12,7 +12,7 @@ let roomId = "vuejs-live-cursors";
 applyExampleRoomId();
 
 // Join a room
-const { room, leave } = client.enterRoom<Presence>(roomId, { initialPresence });
+const { room, leave } = client.enterRoom(roomId, { initialPresence });
 
 // Leave room onUnmount
 onUnmounted(() => {

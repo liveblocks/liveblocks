@@ -15,7 +15,7 @@
     "@liveblocks/core": "*",
     "@liveblocks/node": "*",
     "@liveblocks/react": "*",
-    "@liveblocks/react-comments": "*",
+    "@liveblocks/react-ui": "*",
     "@liveblocks/redux": "*",
     "@liveblocks/yjs": "*",
     "@liveblocks/zustand": "*",

@@ -32,6 +32,26 @@
             "hidden": true
           },
           {
+            "title": "Notifications",
+            "path": "/get-started/react-notifications",
+            "hidden": true
+          },
+          {
+            "title": "Notifications",
+            "path": "/get-started/nextjs-notifications",
+            "hidden": true
+          },
+          {
+            "title": "Lexical",
+            "path": "/get-started/react-lexical",
+            "hidden": true
+          },
+          {
+            "title": "Lexical",
+            "path": "/get-started/nextjs-lexical",
+            "hidden": true
+          },
+          {
             "title": "Redux",
             "path": "/get-started/redux",
             "hidden": true
@@ -99,11 +119,6 @@
           {
             "title": "Yjs Monaco JavaScript",
             "path": "/get-started/yjs-monaco-javascript",
-            "hidden": true
-          },
-          {
-            "title": "Yjs Lexical React",
-            "path": "/get-started/yjs-lexical-react",
             "hidden": true
           },
           {
@@ -311,28 +326,6 @@
     "title": "Products",
     "routes": [
       {
-        "title": "Presence",
-        "path": "/products/presence"
-      },
-      {
-        "title": "Broadcast",
-        "path": "/products/broadcast"
-      },
-      {
-        "title": "Document",
-        "path": "/products/document",
-        "routes": [
-          {
-            "title": "Storage",
-            "path": "/products/document/storage"
-          },
-          {
-            "title": "Yjs",
-            "path": "/products/document/yjs"
-          }
-        ]
-      },
-      {
         "title": "Comments",
         "path": "/products/comments",
         "routes": [
@@ -365,12 +358,58 @@
             "path": "/products/comments/styling-and-customization"
           },
           {
-            "title": "Notifications",
-            "path": "/products/comments/notifications"
+            "title": "Email notifications",
+            "path": "/products/comments/email-notifications"
+          }
+        ]
+      },
+      {
+        "title": "Notifications",
+        "path": "/products/notifications",
+        "routes": [
+          {
+            "title": "Concepts",
+            "path": "/products/notifications/concepts"
+          },
+          {
+            "title": "Default components",
+            "path": "/products/notifications/default-components"
+          },
+          {
+            "title": "Hooks",
+            "path": "/products/notifications/hooks"
+          },
+          {
+            "title": "Styling and customization",
+            "path": "/products/notifications/styling-and-customization"
           },
           {
             "title": "Email notifications",
-            "path": "/products/comments/email-notifications"
+            "path": "/products/notifications/email-notifications"
+          }
+        ]
+      },
+      {
+        "title": "Text Editor",
+        "path": "/products/text-editor",
+        "routes": [
+          {
+            "title": "Lexical",
+            "path": "/products/text-editor/lexical"
+          }
+        ]
+      },
+      {
+        "title": "Realtime APIs",
+        "path": "/products/realtime-apis",
+        "routes": [
+          {
+            "title": "Liveblocks Yjs",
+            "path": "/products/realtime-apis/liveblocks-yjs"
+          },
+          {
+            "title": "Liveblocks Storage",
+            "path": "/products/realtime-apis/liveblocks-storage"
           }
         ]
       }
@@ -408,6 +447,34 @@
       {
         "title": "Access token doesn't grant enough permissions",
         "path": "/errors/liveblocks-client/access-tokens-not-enough-permissions"
+      },
+      {
+        "title": "The type you provided for 'Presence' is not a valid JSON object",
+        "path": "/errors/Presence"
+      },
+      {
+        "title": "The type you provided for 'Storage' is not a valid LSON value",
+        "path": "/errors/Storage"
+      },
+      {
+        "title": "The type you provided for 'UserMeta' does not match its requirements",
+        "path": "/errors/UserMeta"
+      },
+      {
+        "title": "The type you provided for 'RoomEvent' is not a valid JSON value",
+        "path": "/errors/RoomEvent"
+      },
+      {
+        "title": "The type you provided for 'ThreadMetadata' does not match its requirements",
+        "path": "/errors/ThreadMetadata"
+      },
+      {
+        "title": "The type you provided for 'RoomInfo' does not match its requirements",
+        "path": "/errors/RoomInfo"
+      },
+      {
+        "title": "The type you provided for 'ActivitiesData' does not match its requirements",
+        "path": "/errors/ActivitiesData"
       }
     ]
   },
@@ -436,8 +503,16 @@
         "path": "/api-reference/liveblocks-react"
       },
       {
-        "title": "@liveblocks/react-comments",
-        "path": "/api-reference/liveblocks-react-comments"
+        "title": "@liveblocks/react-ui",
+        "path": "/api-reference/liveblocks-react-ui"
+      },
+      {
+        "title": "@liveblocks/react-lexical",
+        "path": "/api-reference/liveblocks-react-lexical"
+      },
+      {
+        "title": "@liveblocks/node-lexical",
+        "path": "/api-reference/liveblocks-node-lexical"
       },
       {
         "title": "@liveblocks/redux",
@@ -539,7 +614,8 @@
           { "title": "Upgrading to 1.2", "path": "/platform/upgrading/1.2" },
           { "title": "Upgrading to 1.5", "path": "/platform/upgrading/1.5" },
           { "title": "Upgrading to 1.9", "path": "/platform/upgrading/1.9" },
-          { "title": "Upgrading to 1.10", "path": "/platform/upgrading/1.10" }
+          { "title": "Upgrading to 1.10", "path": "/platform/upgrading/1.10" },
+          { "title": "Upgrading to 2.0", "path": "/platform/upgrading/2.0" }
         ]
       },
       {

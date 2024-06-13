@@ -1,4 +1,4 @@
-import { useStorage } from "../../liveblocks.config";
+import { useStorage } from "@liveblocks/react/suspense";
 import React, { memo } from "react";
 import Ellipse from "./Ellipse";
 import Path from "./Path";

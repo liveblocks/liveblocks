@@ -22,7 +22,7 @@
 
 This example shows how to build a collaborative to-do list with [Liveblocks](https://liveblocks.io), [React](https://reactjs.org/) and [Zustand](https://github.com/pmndrs/zustand).
 
-As users edit the list, changes will be automatically persisted and synced—allowing for a list that updates in real-time across clients. Users will also be able to see who else is currently online and when a user is typing.
+As users edit the list, changes will be automatically persisted and synced—allowing for a list that updates in realtime across clients. Users will also be able to see who else is currently online and when a user is typing.
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/collaborative-todo-list.png" width="536" alt="Collaborative To-do List" />
 

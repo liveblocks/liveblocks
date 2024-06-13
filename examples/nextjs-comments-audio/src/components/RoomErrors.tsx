@@ -1,7 +1,7 @@
 import {
   useErrorListener,
   useLostConnectionListener,
-} from "@/liveblocks.config";
+} from "@liveblocks/react/suspense";
 import { toast } from "sonner";
 
 export default function RoomErrors() {

@@ -1,4 +1,4 @@
-import { createClient } from "@liveblocks/client";
+import { BaseMetadata, createClient } from "@liveblocks/client";
 import type {
   BaseUserMeta,
   Json,
@@ -12,16 +12,18 @@ type Presence = JsonObject;
 type Storage = LsonObject;
 type UserMeta = BaseUserMeta;
 type RoomEvent = Json;
+type ThreadMeta = BaseMetadata;
 
 type P = Presence;
 type S = Storage;
 type U = UserMeta;
 type E = RoomEvent;
+type M = ThreadMeta;
 
-const client = createClient({ publicApiKey: "pk_whatever" });
+const client = createClient<U>({ publicApiKey: "pk_whatever" });
 
 // Test some Room types
-const { room, leave } = client.enterRoom<P, S, U, E>("my-room", {
+const { room, leave } = client.enterRoom<P, S, E, M>("my-room", {
   initialPresence: {},
 });
 expectType<string>(room.id);

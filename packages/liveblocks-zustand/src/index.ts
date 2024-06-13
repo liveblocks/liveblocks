@@ -1,6 +1,5 @@
 import type {
   BaseUserMeta,
-  Client,
   Json,
   JsonObject,
   LiveObject,
@@ -9,7 +8,17 @@ import type {
   Status,
   User,
 } from "@liveblocks/client";
-import type { LegacyConnectionStatus, StorageUpdate } from "@liveblocks/core";
+import type {
+  BaseMetadata,
+  DE,
+  DM,
+  DP,
+  DS,
+  DU,
+  OpaqueClient,
+  OpaqueRoom,
+  StorageUpdate,
+} from "@liveblocks/core";
 import {
   detectDupes,
   errorIf,
@@ -22,21 +31,6 @@ import type { StateCreator, StoreMutatorIdentifier } from "zustand";
 import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
-
-//
-// Default concrete types for each of the user-provided type placeholders.
-//
-
-/** DP = Default Presence type */
-type DP = JsonObject;
-/** DS = Default Storage type */
-type DS = LsonObject;
-/** DU = Default UserMeta type */
-type DU = BaseUserMeta;
-/** DE = Default (Room)Event type */
-type DE = Json;
-/** DM = Default Thread Metadata type */
-// type DM = BaseMetadata;
 
 const ERROR_PREFIX = "Invalid @liveblocks/zustand middleware config.";
 
@@ -51,6 +45,7 @@ export type LiveblocksContext<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
+  M extends BaseMetadata,
 > = {
   /**
    * Enters a room and starts sync it with zustand state
@@ -65,7 +60,7 @@ export type LiveblocksContext<
   /**
    * The room currently synced to your zustand state.
    */
-  readonly room: Room<P, S, U, E> | null;
+  readonly room: Room<P, S, U, E, M> | null;
   /**
    * Other users in the room. Empty no room is currently synced
    */
@@ -75,38 +70,10 @@ export type LiveblocksContext<
    */
   readonly isStorageLoading: boolean;
   /**
-   * Legacy connection status of the room.
-   *
-   * @deprecated This API will be removed in a future version of Liveblocks.
-   * Prefer using the newer `.status` property.
-   *
-   * We recommend making the following changes if you use these APIs:
-   *
-   *     OLD STATUSES         NEW STATUSES
-   *     closed          -->  initial
-   *     authenticating  -->  connecting
-   *     connecting      -->  connecting
-   *     open            -->  connected
-   *     unavailable     -->  reconnecting
-   *     failed          -->  disconnected
-   */
-  readonly connection: LegacyConnectionStatus;
-  /**
    * Connection status of the room.
    */
   readonly status: Status;
 };
-
-/**
- * @deprecated Renamed to WithLiveblocks<...>
- */
-export type LiveblocksState<
-  TState,
-  P extends JsonObject = DP,
-  S extends LsonObject = DS,
-  U extends BaseUserMeta = DU,
-  E extends Json = DE,
-> = WithLiveblocks<TState, P, S, U, E>;
 
 /**
  * Adds the `liveblocks` property to your custom Zustand state.
@@ -117,8 +84,9 @@ export type WithLiveblocks<
   S extends LsonObject = DS,
   U extends BaseUserMeta = DU,
   E extends Json = DE,
+  M extends BaseMetadata = DM,
 > = TState & {
-  readonly liveblocks: LiveblocksContext<P, S, U, E>;
+  readonly liveblocks: LiveblocksContext<P, S, U, E, M>;
 };
 
 export type Mapping<T> = {
@@ -129,7 +97,7 @@ type Options<T> = {
   /**
    * Liveblocks client created by @liveblocks/client createClient
    */
-  client: Client;
+  client: OpaqueClient;
   /**
    * Mapping used to synchronize a part of your zustand state with one Liveblocks Room storage.
    */
@@ -155,7 +123,8 @@ type InnerLiveblocksMiddleware = <
       JsonObject,
       LsonObject,
       BaseUserMeta,
-      Json
+      Json,
+      BaseMetadata
     >;
   },
 >(
@@ -163,13 +132,11 @@ type InnerLiveblocksMiddleware = <
   options: Options<TState>
 ) => StateCreator<TState, [], []>;
 
-type ExtractPresence<
-  TRoom extends Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-> = TRoom extends Room<infer P, any, any, any> ? P : never;
+type ExtractPresence<TRoom extends OpaqueRoom> =
+  TRoom extends Room<infer P, any, any, any, any> ? P : never;
 
-type ExtractStorage<
-  TRoom extends Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-> = TRoom extends Room<any, infer S, any, any> ? S : never;
+type ExtractStorage<TRoom extends OpaqueRoom> =
+  TRoom extends Room<any, infer S, any, any, any> ? S : never;
 
 const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
   type TState = ReturnType<typeof config>;
@@ -220,7 +187,6 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
         room.events.status.subscribe((status) => {
           updateLiveblocksContext(set, {
             status,
-            connection: room.getConnectionState(), // For backward-compatibility
           });
         })
       );
@@ -292,7 +258,7 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
 
         updateLiveblocksContext(set, {
           others: [],
-          connection: "closed",
+          status: "initial",
           isStorageLoading: false,
           room: null,
         });
@@ -349,11 +315,6 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
 export const liveblocks =
   middlewareImpl as unknown as OuterLiveblocksMiddleware;
 
-/**
- * @deprecated Renamed to `liveblocks`.
- */
-export const middleware = liveblocks;
-
 function patchState<T>(
   state: T,
   updates: StorageUpdate[],
@@ -394,13 +355,14 @@ function updateLiveblocksContext<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
+  M extends BaseMetadata,
 >(
   set: (
     callbackOrPartial: (
-      current: WithLiveblocks<TState, P, S, U, E>
+      current: WithLiveblocks<TState, P, S, U, E, M>
     ) => WithLiveblocks<TState, P, S, U, E> | Partial<any>
   ) => void,
-  partial: Partial<LiveblocksContext<P, S, U, E>>
+  partial: Partial<LiveblocksContext<P, S, U, E, M>>
 ) {
   set((state) => ({ liveblocks: { ...state.liveblocks, ...partial } }));
 }
@@ -410,8 +372,9 @@ function updatePresence<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
+  M extends BaseMetadata,
 >(
-  room: Room<P, S, U, E>,
+  room: Room<P, S, U, E, M>,
   oldState: P,
   newState: P,
   presenceMapping: Mapping<P>
@@ -496,7 +459,7 @@ function validateMapping<T>(
 }
 
 function validateOptions<TState>(options: Options<TState>): {
-  client: Client;
+  client: OpaqueClient;
   presenceMapping: Mapping<TState>;
   storageMapping: Mapping<TState>;
 } {

@@ -1,0 +1,4 @@
+{
+  "main": "../dist/suspense.js",
+  "types": "../dist/suspense.d.ts"
+}

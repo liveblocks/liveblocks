@@ -21,56 +21,40 @@
   </a>
 </p>
 
-**[Liveblocks](https://liveblocks.io) is a real-time collaboration
-infrastructure for building performant collaborative experiences.**
+**[Liveblocks](https://liveblocks.io) is the platform for adding collaborative
+editing, comments, and notifications into your application.**
 
-<img src="./assets/concepts/platform.png" alt="Liveblocks"   />
+**[Get started now](https://liveblocks.io/signup)**
 
-## How Liveblocks works
-
-The foundations of Liveblocks are built upon four core concepts: products,
-rooms, integrations, and platform.
+<img src="./assets/concepts/products.png" alt="Liveblocks products"   />
 
 ### Products
 
 Liveblocks is a fully integrated solution built around core products, each
 enabling a different facet of collaborative experiences:
-[Presence](https://liveblocks.io/docs/products/presence),
-[Broadcast](https://liveblocks.io/docs/products/broadcast),
-[Document](https://liveblocks.io/docs/products/document), and
-[Comments](https://liveblocks.io/docs/products/comments) (public beta). You can
-decide what products you want to use based on your requirements and
-collaborative experiences you’re looking to build.
+[Comments](/docs/products/comments),
+[Notifications](/docs/products/notifications),
+[Text Editor](/docs/products/text-editor), and
+[Realtime APIs](/docs/products/realtime-apis). You can decide what products you
+want to use based on your requirements and collaborative experiences you’re
+looking to build.
 
-### Rooms
+### Packages and SDKs
 
-A room is the digital space in which people collaborate. You can require your
-users to be [authenticated](https://liveblocks.io/docs/authentication) to
-interact with rooms, and each room can have specific permissions and
-[metadata](https://liveblocks.io/docs/rooms/metadata) associated with them.
-
-### Integrations
-
-Integrations for specific libraries and frameworks to add Liveblocks-powered
+Packages for specific libraries and frameworks to add Liveblocks-powered
 collaborative experiences to your product. Integrations are designed to serve
-various collaboration use cases such as text editors, comments, creative tools,
-forms, and more.
+various collaboration use cases such as collaborative text editors, comments,
+notifications, and more.
 
 - [`@liveblocks/client`](https://liveblocks.io/docs/api-reference/liveblocks-client)
 - [`@liveblocks/react`](https://liveblocks.io/docs/api-reference/liveblocks-react)
+- [`@liveblocks/react-ui`](https://liveblocks.io/docs/api-reference/liveblocks-react-ui)
+- [`@liveblocks/react-lexical`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical)
+- [`@liveblocks/node-lexical`](https://liveblocks.io/docs/api-reference/liveblocks-node-lexical)
 - [`@liveblocks/redux`](https://liveblocks.io/docs/api-reference/liveblocks-redux)
 - [`@liveblocks/zustand`](https://liveblocks.io/docs/api-reference/liveblocks-zustand)
 - [`@liveblocks/yjs`](https://liveblocks.io/docs/api-reference/liveblocks-yjs)
-
-### Platform
-
-Liveblocks provides a fully-hosted platform built around a WebSocket edge
-infrastructure that effortlessly scales to millions of users. The platform
-equips you with a set of powerful tools such as our
-[REST API](https://liveblocks.io/docs/api-reference/rest-api-endpoints),
-[webhooks](https://liveblocks.io/docs/platform/webhooks),
-[schema validation](https://liveblocks.io/docs/platform/schema-validation),
-analytics, and more.
+- [`@liveblocks/node`](https://liveblocks.io/docs/api-reference/liveblocks-node)
 
 ## Developers
 

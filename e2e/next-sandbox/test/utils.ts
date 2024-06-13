@@ -37,13 +37,29 @@ export function genRoomId(testInfo: TestInfo) {
     .replace(/-+/g, "-")
     .replace(/^-+/, "")
     .replace(/-+$/, "");
-  const roomId = `e2e:${title}`;
+  let roomId = `e2e:${title}`;
   if (roomId.length > 128) {
-    throw new Error(
-      `The generated room ID is too long (${roomId.length} > 128 characters) and will not work. Please use a shorter test name`
-    );
+    // Room IDs cannot be longer than 128 chars. If this happens, take a short
+    // hash from the full room ID, then cut it off and attach the hash. This
+    // way, test names can still be arbitrarily long, human-readable (at least
+    // the first part of it), and yet still stable for reuse, so we don't have
+    // an ever-growing set of rooms when running against DEV or PROD.
+    const hash = hash7(roomId);
+    roomId = roomId.slice(0, 128 - hash.length) + hash;
   }
   return roomId;
+}
+
+/**
+ * Super lightweight, simple, synchronous, hash function, using the DJB2
+ * algorithm.
+ */
+function hash7(str: string): string {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 33) ^ str.charCodeAt(i);
+  }
+  return (hash >>> 0).toString(16).padStart(7, "0").slice(0, 7); // Ensure the hash is treated as an unsigned 32-bit integer
 }
 
 type WindowOptions = {

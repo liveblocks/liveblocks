@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useThreads } from "@/liveblocks.config";
+import { useThreads } from "@liveblocks/react/suspense";
 
 export function useMaxZIndex() {
   const { threads } = useThreads();

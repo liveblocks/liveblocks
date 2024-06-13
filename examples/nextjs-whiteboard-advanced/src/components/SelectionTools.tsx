@@ -5,7 +5,7 @@ import { Camera, Color } from "../types";
 import styles from "./SelectionTools.module.css";
 import useDeleteLayers from "../hooks/useDeleteLayers";
 import useSelectionBounds from "../hooks/useSelectionBounds";
-import { useSelf, useMutation } from "../../liveblocks.config";
+import { useSelf, useMutation } from "@liveblocks/react/suspense";
 
 type SelectionToolsProps = {
   isAnimated: boolean;
@@ -13,9 +13,11 @@ type SelectionToolsProps = {
   setLastUsedColor: (color: Color) => void;
 };
 
-function SelectionTools(
-  { isAnimated, camera, setLastUsedColor }: SelectionToolsProps
-) {
+function SelectionTools({
+  isAnimated,
+  camera,
+  setLastUsedColor,
+}: SelectionToolsProps) {
   const selection = useSelf((me) => me.presence.selection);
 
   /**

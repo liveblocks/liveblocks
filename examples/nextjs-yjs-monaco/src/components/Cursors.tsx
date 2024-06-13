@@ -1,13 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  AwarenessList,
-  TypedLiveblocksProvider,
-  UserAwareness,
-  useSelf,
-} from "@/liveblocks.config";
+import { useSelf } from "@liveblocks/react/suspense";
+import { AwarenessList, UserAwareness } from "@/liveblocks.config";
+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 
 type Props = {
-  yProvider: TypedLiveblocksProvider;
+  yProvider: LiveblocksYjsProvider;
 };
 
 export function Cursors({ yProvider }: Props) {

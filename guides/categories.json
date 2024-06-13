@@ -5,6 +5,10 @@
       "name": "Comments"
     },
     {
+      "id": "notifications",
+      "name": "Notifications"
+    },
+    {
       "id": "data-fetching",
       "name": "Data fetching"
     },
@@ -43,10 +47,6 @@
     {
       "id": "databases",
       "name": "Databases"
-    },
-    {
-      "id": "notifications",
-      "name": "Notifications"
     },
     {
       "id": "errors",
@@ -107,8 +107,8 @@
       "name": "Yjs"
     },
     {
-      "id": "react-comments",
-      "name": "React Comments"
+      "id": "react-ui",
+      "name": "React UI"
     },
     {
       "id": "lexical",

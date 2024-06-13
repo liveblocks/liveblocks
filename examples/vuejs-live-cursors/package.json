@@ -11,7 +11,7 @@
     "type-check": "vue-tsc --noEmit -p tsconfig.app.json --composite false"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.11.0",
+    "@liveblocks/client": "^2.0.0",
     "vue": "^3.3.2"
   },
   "devDependencies": {
@@ -20,7 +20,8 @@
     "@vitejs/plugin-vue": "^4.2.3",
     "@vue/tsconfig": "^0.4.0",
     "npm-run-all": "^4.1.5",
-    "typescript": "~5.0.4",
+    "prettier": "^3.3.2",
+    "typescript": "^5.4.5",
     "vite": "^4.3.5",
     "vue-tsc": "^1.6.4"
   }

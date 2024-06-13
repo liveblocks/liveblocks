@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode, useMemo } from "react";
-import { RoomProvider } from "@/liveblocks.config";
+import { RoomProvider } from "@liveblocks/react/suspense";
 import { useSearchParams } from "next/navigation";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { Loading } from "@/components/Loading";
@@ -10,15 +10,8 @@ export function Room({ children }: { children: ReactNode }) {
   const roomId = useExampleRoomId("liveblocks:examples:nextjs-yjs-lexical");
 
   return (
-    <RoomProvider
-      id={roomId}
-      initialPresence={{
-        cursor: null,
-      }}
-    >
-      <ClientSideSuspense fallback={<Loading />}>
-        {() => children}
-      </ClientSideSuspense>
+    <RoomProvider id={roomId} initialPresence={{}}>
+      <ClientSideSuspense fallback={<Loading />}>{children}</ClientSideSuspense>
     </RoomProvider>
   );
 }
