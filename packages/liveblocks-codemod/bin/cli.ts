@@ -45,7 +45,7 @@ const TRANSFORMER_INQUIRER_CHOICES = [
     value: "live-list-constructor",
   },
   {
-    name: "simplify-client-side-suspense-children: Removes the function-style body from <ClientSideSuspense>'s children.",
+    name: "simplify-client-side-suspense-children: Removes any function-style body from `<ClientSideSuspense>`’s `children` prop.",
     value: "simplify-client-side-suspense-children",
   },
 ];
