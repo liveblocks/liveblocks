@@ -1225,6 +1225,25 @@ export class Liveblocks {
   }
 
   /**
+   * Deletes a thread and all of its comments.
+   * @param params.roomId The room ID to delete the thread in.
+   * @param params.threadId The thread ID to delete.
+   */
+  public async deleteThread(params: {
+    roomId: string;
+    threadId: string;
+  }): Promise<void> {
+    const { roomId, threadId } = params;
+
+    const res = await this.delete(url`/v2/rooms/${roomId}/threads/${threadId}`);
+    console.log("deleteThread res", res);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+  }
+
+  /**
    * Updates the metadata of the specified thread in a room.
    * @param params.roomId The room ID to update the thread in.
    * @param params.threadId The thread ID to update.
