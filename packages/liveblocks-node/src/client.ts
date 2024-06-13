@@ -72,13 +72,15 @@ type DateToString<T> = {
   [P in keyof T]: Date extends T[P] ? string : T[P];
 };
 
-export type CreateSessionOptions<U extends BaseUserMeta = DU> = {
-  userInfo: U["info"];
-};
+export type CreateSessionOptions<U extends BaseUserMeta = DU> =
+  Record<string, never> extends U["info"]
+    ? { userInfo?: U["info"] }
+    : { userInfo: U["info"] };
 
-export type IdentifyUserOptions<U extends BaseUserMeta = DU> = {
-  userInfo: U["info"];
-};
+export type IdentifyUserOptions<U extends BaseUserMeta = DU> =
+  Record<string, never> extends U["info"]
+    ? { userInfo?: U["info"] }
+    : { userInfo: U["info"] };
 
 export type AuthResponse = {
   status: number;
@@ -263,7 +265,13 @@ export class Liveblocks {
    * `other.info` property.
    *
    */
-  prepareSession(userId: string, options?: CreateSessionOptions<U>): Session {
+  prepareSession(
+    userId: string,
+    ...rest: Record<string, never> extends CreateSessionOptions<U>
+      ? [options?: CreateSessionOptions<U>]
+      : [options: CreateSessionOptions<U>]
+  ): Session {
+    const options = rest[0];
     return new Session(this.post.bind(this), userId, options?.userInfo);
   }
 
@@ -304,8 +312,12 @@ export class Liveblocks {
     identity:
       | string // Shorthand for userId
       | Identity,
-    options?: IdentifyUserOptions<U>
+    ...rest: Record<string, never> extends IdentifyUserOptions<U>
+      ? [options?: IdentifyUserOptions<U>]
+      : [options: IdentifyUserOptions<U>]
   ): Promise<AuthResponse> {
+    const options = rest[0];
+
     const path = url`/v2/identify-user`;
     const userId = typeof identity === "string" ? identity : identity.userId;
     const groupIds =

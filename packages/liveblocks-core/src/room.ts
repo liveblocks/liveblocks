@@ -1348,10 +1348,7 @@ export function createRoom<
   E extends Json,
   M extends BaseMetadata,
 >(
-  options: Omit<
-    RoomInitializers<P, S>,
-    "autoConnect" | "shouldInitiallyConnect"
-  >,
+  options: Omit<RoomInitializers<P, S>, "autoConnect">,
   config: RoomConfig
 ): Room<P, S, U, E, M> {
   const initialPresence =

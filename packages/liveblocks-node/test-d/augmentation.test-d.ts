@@ -53,14 +53,18 @@ declare global {
 async () => {
   const client = new Liveblocks({ secret: "sk_xxx" });
 
-  // .prepareSession()
+  // .prepareSession() without all mandatory userInfo is an error
   {
-    const session = await client.prepareSession("user-123");
-    session.allow("org1:*", session.READ_ACCESS);
-    const resp = await session.authorize();
-    expectType<number>(resp.status);
-    expectType<string>(resp.body);
-    expectType<Error | undefined>(resp.error);
+    expectError(await client.prepareSession("user-123"));
+    expectError(await client.prepareSession("user-123", {}));
+    // TODO: Re-enable this when tsd supports the TS2739 error
+    // expectError(await client.prepareSession("user-123", { userInfo: {} }));
+    expectError(
+      await client.prepareSession("user-123", { userInfo: { name: "Vincent" } })
+    );
+    expectError(
+      await client.prepareSession("user-123", { userInfo: { age: 42 } })
+    );
   }
 
   // .prepareSession() with user info
@@ -82,12 +86,18 @@ async () => {
     );
   }
 
-  // .identifyUser()
+  // .identifyUser() without all mandatory userInfo is an error
   {
-    const resp = await client.identifyUser("user-123");
-    expectType<number>(resp.status);
-    expectType<string>(resp.body);
-    expectType<Error | undefined>(resp.error);
+    expectError(await client.identifyUser("user-123"));
+    expectError(await client.identifyUser("user-123", {}));
+    // TODO: Re-enable this when tsd supports the TS2739 error
+    // expectError(await client.identifyUser("user-123", { userInfo: {} }));
+    expectError(
+      await client.identifyUser("user-123", { userInfo: { name: "Vincent" } })
+    );
+    expectError(
+      await client.identifyUser("user-123", { userInfo: { age: 42 } })
+    );
   }
 
   // .identifyUser() with user info
