@@ -15,7 +15,115 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 # Week 24 (2024-06-15)
 
+## v2.0.0
+
+This major release marks the maturity of Liveblocks. It contains new products
+(`@liveblocks/react-lexical`) and clarifications (e.g.
+`@liveblocks/react-comments` is now called `@liveblocks/react-ui`).
+
+Also, we bring major DX improvements by allowing you to specify your types
+globally now. These types will be typed once and shared across all Liveblocks
+APIs, which includes your Node backend.
+
+```ts file="liveblocks.config.ts"
+// ❌ Before
+export const {
+  suspense: {
+    RoomProvider,
+    useRoom,
+    // etc
+  },
+} = createRoomContext<Presence, Storage>(client);
+
+// ✅ After
+declare global {
+  interface Liveblocks {
+    Presence: Presence;
+    Storage: Storage;
+  }
+}
+```
+
+In `@liveblocks/react`, you can now import hooks directly:
+
+```ts file="MyComponent.tsx"
+// ❌ Before: get hooks exported from your Liveblocks config
+import { RoomProvider, useRoom, ... } from "./liveblocks.config";
+
+// ✅ After: import hooks directly
+import { RoomProvider, useRoom, ... } from "@liveblocks/react";
+import { RoomProvider, useRoom, ... } from "@liveblocks/react/suspense";
+```
+
+```ts
+// ❌ Before
+const client = createClient(/* options */);
+
+// ✅ After
+<LiveblocksProvider /* options */>
+  <App />
+</LiveblocksProvider>
+```
+
+For full upgrade instructions and codemods, see the
+[2.0 upgrade guide](https://liveblocks.io/docs/guides/upgrading/2.0).
+
+### `create-liveblocks-app`
+
+- Update config generation for Liveblocks 2.0.
+- Add `--upgrade` flag to automatically update all Liveblocks package to their
+  latest version.
+
+### `@liveblocks/client`
+
+- DX improvements: type once, globally, benefit everywhere
+
+### `@liveblocks/react`
+
+- DX improvement: import hooks directly
+- DX improvement: `<ClientSideSuspense>` no longer needs a function as its
+  `children`
+- New provider: `LiveblocksProvider` (replaces the need for `createClient`)
+- New hook: `useClient`
+- Tweak `useMutation` error message to be less confusing.
+- Allow thread and activity metadata types to contain `undefined` values.
+
+### `@liveblocks/react-ui`
+
+- Rename from `@liveblocks/react-comments`.
+- Rename `<CommentsConfig />` to `<LiveblocksUIConfig />`.
+- Improve `InboxNotification` props types.
+
+### `@liveblocks/react-lexical`
+
+- Initial release.
+
+### `@liveblocks/node-lexical`
+
+- Initial release.
+
+### `@liveblocks/yjs`
+
+- `LiveblocksProvider` is no longer a default export, it’s now
+  `import { LiveblocksYjsProvider } from "@liveblocks/yjs"`.
+
+### `@liveblocks/node`
+
+- DX improvements: all Node client methods will pick up the same global types
+  you’re using in your frontend
+- Rename `RoomInfo` to `RoomData`.
+- The webhook event `NotificationEvent`’s type can represent multiple kinds of
+  notifications. (`"thread"`, `"textMention"`, and custom ones (e.g.
+  `"$myNotification"`))
+
+### `@liveblocks/codemod`
+
+- Initial release.
+
 ## Contributors
+
+adigau, ctnicholas, flowflorent, guillaumesalles, jrowny, marcbouchenoire,
+nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 # Week 21 (2024-05-24)
 
