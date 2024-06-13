@@ -89,6 +89,12 @@ export async function createLiveblocksApp() {
       flags.upgrade = "latest";
     }
 
+    flags.upgrade = flags.upgrade.trim();
+
+    if (flags.upgrade.startsWith("@")) {
+      return flags.upgrade.substring(1);
+    }
+
     flags.template = "upgrade";
   }
 
