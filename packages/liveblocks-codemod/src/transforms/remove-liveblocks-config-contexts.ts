@@ -160,56 +160,62 @@ export default function transformer(
 
     // Create global declaration
     if (Object.values(globalTypes).some((type) => type !== null)) {
+      const intrface = j.tsInterfaceDeclaration(
+        j.identifier("Liveblocks"),
+        j.tsInterfaceBody([
+          ...(globalTypes.Presence
+            ? [
+                j.tsPropertySignature(
+                  j.identifier("Presence"),
+                  j.tsTypeAnnotation(globalTypes.Presence)
+                ),
+              ]
+            : []),
+          ...(globalTypes.Storage
+            ? [
+                j.tsPropertySignature(
+                  j.identifier("Storage"),
+                  j.tsTypeAnnotation(globalTypes.Storage)
+                ),
+              ]
+            : []),
+          ...(globalTypes.UserMeta
+            ? [
+                j.tsPropertySignature(
+                  j.identifier("UserMeta"),
+                  j.tsTypeAnnotation(globalTypes.UserMeta)
+                ),
+              ]
+            : []),
+          ...(globalTypes.RoomEvent
+            ? [
+                j.tsPropertySignature(
+                  j.identifier("RoomEvent"),
+                  j.tsTypeAnnotation(globalTypes.RoomEvent)
+                ),
+              ]
+            : []),
+          ...(globalTypes.ThreadMetadata
+            ? [
+                j.tsPropertySignature(
+                  j.identifier("ThreadMetadata"),
+                  j.tsTypeAnnotation(globalTypes.ThreadMetadata)
+                ),
+              ]
+            : []),
+        ])
+      );
+
+      intrface.comments = [
+        j.commentLine(
+          " For more information, see https://liveblocks.io/docs/api-reference/liveblocks-client#TypeScript"
+        ),
+      ];
+
       // HACK: It's not possible to generate a `declare global` block, so we generate a `declare module global` block instead and later find-and-replace it
       const globalDeclaration = j.declareModule(
         j.identifier("global"),
-        j.blockStatement([
-          j.tsInterfaceDeclaration(
-            j.identifier("Liveblocks"),
-            j.tsInterfaceBody([
-              ...(globalTypes.Presence
-                ? [
-                    j.tsPropertySignature(
-                      j.identifier("Presence"),
-                      j.tsTypeAnnotation(globalTypes.Presence)
-                    ),
-                  ]
-                : []),
-              ...(globalTypes.Storage
-                ? [
-                    j.tsPropertySignature(
-                      j.identifier("Storage"),
-                      j.tsTypeAnnotation(globalTypes.Storage)
-                    ),
-                  ]
-                : []),
-              ...(globalTypes.UserMeta
-                ? [
-                    j.tsPropertySignature(
-                      j.identifier("UserMeta"),
-                      j.tsTypeAnnotation(globalTypes.UserMeta)
-                    ),
-                  ]
-                : []),
-              ...(globalTypes.RoomEvent
-                ? [
-                    j.tsPropertySignature(
-                      j.identifier("RoomEvent"),
-                      j.tsTypeAnnotation(globalTypes.RoomEvent)
-                    ),
-                  ]
-                : []),
-              ...(globalTypes.ThreadMetadata
-                ? [
-                    j.tsPropertySignature(
-                      j.identifier("ThreadMetadata"),
-                      j.tsTypeAnnotation(globalTypes.ThreadMetadata)
-                    ),
-                  ]
-                : []),
-            ])
-          ),
-        ])
+        j.blockStatement([intrface])
       );
 
       (root.get() as ASTPath<File>).node.program.body.push(globalDeclaration);
