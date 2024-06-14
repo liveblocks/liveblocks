@@ -390,11 +390,18 @@ export function createClient<U extends BaseUserMeta = DU>(
       "Please provide an initial presence value for the current user when entering the room."
     );
 
+    const initialPresence =
+      (typeof options.initialPresence === "function"
+        ? options.initialPresence(roomId)
+        : options.initialPresence) ?? ({} as P);
+
+    const initialStorage =
+      (typeof options.initialStorage === "function"
+        ? options.initialStorage(roomId)
+        : options.initialStorage) ?? ({} as S);
+
     const newRoom = createRoom<P, S, U, E, M>(
-      {
-        initialPresence: options.initialPresence ?? {},
-        initialStorage: options.initialStorage ?? ({} as S),
-      },
+      { initialPresence, initialStorage },
       {
         roomId,
         throttleDelay,

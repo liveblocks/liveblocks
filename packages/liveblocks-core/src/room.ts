@@ -919,8 +919,8 @@ export type OptionalTupleUnless<C, T extends any[]> =
 
 /** @internal */
 type CreateRoomOptions<P extends JsonObject, S extends LsonObject> = {
-  initialPresence: P | ((roomId: string) => P);
-  initialStorage: S | ((roomId: string) => S);
+  initialPresence: P;
+  initialStorage: S;
 };
 
 export type RoomInitializers<
@@ -1381,14 +1381,8 @@ export function createRoom<
   E extends Json,
   M extends BaseMetadata,
 >(options: CreateRoomOptions<P, S>, config: RoomConfig): Room<P, S, U, E, M> {
-  const initialPresence =
-    typeof options.initialPresence === "function"
-      ? options.initialPresence(config.roomId)
-      : options.initialPresence;
-  const initialStorage =
-    typeof options.initialStorage === "function"
-      ? options.initialStorage(config.roomId)
-      : options.initialStorage;
+  const initialPresence = options.initialPresence; // ?? {};
+  const initialStorage = options.initialStorage; // ?? {};
 
   const [inBackgroundSince, uninstallBgTabSpy] = installBackgroundTabSpy();
 
