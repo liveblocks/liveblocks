@@ -1236,7 +1236,6 @@ export class Liveblocks {
     const { roomId, threadId } = params;
 
     const res = await this.delete(url`/v2/rooms/${roomId}/threads/${threadId}`);
-    console.log("deleteThread res", res);
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
