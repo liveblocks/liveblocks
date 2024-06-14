@@ -853,13 +853,9 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       ]
     );
 
-    useImperativeHandle(
-      forwardedRef,
-      () => {
-        return ReactEditor.toDOMNode(editor, editor) as HTMLDivElement;
-      },
-      [editor]
-    );
+    useImperativeHandle(forwardedRef, () => {
+      return ReactEditor.toDOMNode(editor, editor) as HTMLDivElement;
+    }, [editor]);
 
     // Manually focus the editor when `autoFocus` is true
     useEffect(() => {
@@ -1007,7 +1003,9 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       (event: FormEvent<HTMLFormElement>) => {
         onSubmit?.(event);
 
-        if (event.isDefaultPrevented()) {
+        if (!onComposerSubmit || event.isDefaultPrevented()) {
+          event.preventDefault();
+
           return;
         }
 
@@ -1016,7 +1014,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
         );
         const comment = { body };
 
-        const promise = onComposerSubmit?.(comment, event);
+        const promise = onComposerSubmit(comment, event);
 
         event.preventDefault();
 
