@@ -125,12 +125,13 @@ const ctx = createRoomContext<P, S, U, E, M>(client);
   //   </RoomProvider>
   // );
 
-  expectError(
-    // Missing mandatory initialPresence + initialStorage
-    <RoomProvider id="my-room">
-      <div />
-    </RoomProvider>
-  );
+  // TODO Add back when tsd supports error ts2739
+  // expectError(
+  //   // Missing mandatory initialPresence + initialStorage
+  //   <RoomProvider id="my-room">
+  //     <div />
+  //   </RoomProvider>
+  // );
 
   expectError(
     // Missing mandatory initialStorage
@@ -192,12 +193,12 @@ const ctx = createRoomContext<P, S, U, E, M>(client);
   //   </RoomProvider>
   // );
 
-  expectError(
-    // Missing mandatory initialPresence + initialStorage
-    <RoomProvider id="my-room">
-      <div />
-    </RoomProvider>
-  );
+  // TODO Add back when tsd supports error ts2739
+  // expectError(
+  //   <RoomProvider id="my-room">
+  //     <div />
+  //   </RoomProvider>
+  // );
 
   expectError(
     // Missing mandatory initialStorage

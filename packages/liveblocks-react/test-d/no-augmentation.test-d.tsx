@@ -68,25 +68,37 @@ import { expectAssignable, expectError, expectType } from "tsd";
 {
   const RoomProvider = classic.RoomProvider;
 
-  // Missing mandatory props is an error
-  // TODO Add back when tsd supports error ts2739
-  // expectError(
-  //   <RoomProvider>
-  //     <div />
-  //   </RoomProvider>
-  // );
+  // Missing mandatory room ID is an error
+  expectError(
+    <RoomProvider /* no room id */>
+      <div />
+    </RoomProvider>
+  );
 
   <RoomProvider id="my-room">
     <div />
   </RoomProvider>;
 
-  <RoomProvider id="my-room" initialPresence={{ cursor: { x: 0, y: 0 } }}>
+  <RoomProvider
+    id="my-room"
+    initialPresence={{ anything: ["is", "fine", "here"] }}
+  >
     <div />
   </RoomProvider>;
 
   <RoomProvider
     id="my-room"
-    initialPresence={{ cursor: { x: 0, y: 0 } }}
+    initialStorage={{
+      foo: new LiveList([]),
+      bar: new LiveObject(),
+    }}
+  >
+    <div />
+  </RoomProvider>;
+
+  <RoomProvider
+    id="my-room"
+    initialPresence={{ anything: ["is", "fine", "here"] }}
     initialStorage={{
       foo: new LiveList([]),
       bar: new LiveObject(),
@@ -100,25 +112,37 @@ import { expectAssignable, expectError, expectType } from "tsd";
 {
   const RoomProvider = suspense.RoomProvider;
 
-  // Missing mandatory props is an error
-  // TODO Add back when tsd supports error ts2739
-  // expectError(
-  //   <RoomProvider>
-  //     <div />
-  //   </RoomProvider>
-  // );
+  // Missing mandatory room ID is an error
+  expectError(
+    <RoomProvider /* no room id */>
+      <div />
+    </RoomProvider>
+  );
 
   <RoomProvider id="my-room">
     <div />
   </RoomProvider>;
 
-  <RoomProvider id="my-room" initialPresence={{ cursor: { x: 0, y: 0 } }}>
+  <RoomProvider
+    id="my-room"
+    initialPresence={{ anything: ["is", "fine", "here"] }}
+  >
     <div />
   </RoomProvider>;
 
   <RoomProvider
     id="my-room"
-    initialPresence={{ cursor: { x: 0, y: 0 } }}
+    initialStorage={{
+      foo: new LiveList([]),
+      bar: new LiveObject(),
+    }}
+  >
+    <div />
+  </RoomProvider>;
+
+  <RoomProvider
+    id="my-room"
+    initialPresence={{ anything: ["is", "fine", "here"] }}
     initialStorage={{
       foo: new LiveList([]),
       bar: new LiveObject(),

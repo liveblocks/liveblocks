@@ -108,20 +108,28 @@ declare global {
   // Missing mandatory props is an error
   // TODO Add back when tsd supports error ts2739
   // expectError(
-  //   <RoomProvider>
+  //   <RoomProvider /* no room id */>
+  //     <div />
+  //   </RoomProvider>
+  // );
+
+  // TODO Add back when tsd supports error ts2739
+  // expectError(
+  //   // Missing initialPresence is an error
+  //   <RoomProvider id="my-room">
   //     <div />
   //   </RoomProvider>
   // );
 
   expectError(
-    // Missing mandatory initialPresence + initialStorage
-    <RoomProvider id="my-room">
+    // Missing mandatory initialStorage is an error
+    <RoomProvider id="my-room" initialPresence={{ cursor: { x: 0, y: 0 } }}>
       <div />
     </RoomProvider>
   );
 
   expectError(
-    // Missing mandatory initialPresence
+    // Missing mandatory initialPresence is an error
     <RoomProvider
       id="my-room"
       initialStorage={{
@@ -175,20 +183,28 @@ declare global {
   // Missing mandatory props is an error
   // TODO Add back when tsd supports error ts2739
   // expectError(
-  //   <RoomProvider>
+  //   <RoomProvider /* no room id */>
+  //     <div />
+  //   </RoomProvider>
+  // );
+
+  // TODO Add back when tsd supports error ts2739
+  // expectError(
+  //   // Missing initialPresence is an error
+  //   <RoomProvider id="my-room">
   //     <div />
   //   </RoomProvider>
   // );
 
   expectError(
-    // Missing mandatory initialPresence + initialStorage
-    <RoomProvider id="my-room">
+    // Missing mandatory initialStorage is an error
+    <RoomProvider id="my-room" initialPresence={{ cursor: { x: 0, y: 0 } }}>
       <div />
     </RoomProvider>
   );
 
   expectError(
-    // Missing mandatory initialPresence
+    // Missing mandatory initialPresence is an error
     <RoomProvider
       id="my-room"
       initialStorage={{
