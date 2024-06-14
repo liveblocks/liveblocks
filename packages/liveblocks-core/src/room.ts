@@ -852,7 +852,7 @@ type RoomState<
   readonly others: OthersRef<P, U>;
 
   idFactory: IdFactory | null;
-  initialStorage?: S;
+  initialStorage: S;
 
   clock: number;
   opClock: number;
@@ -920,8 +920,7 @@ export type OptionalTupleUnless<C, T extends any[]> =
 /** @internal */
 type CreateRoomOptions<P extends JsonObject, S extends LsonObject> = {
   initialPresence: P | ((roomId: string) => P);
-  initialStorage?: S | ((roomId: string) => S);
-  //            ^ XXX Make this mandatory in this signature eventually (but not _necessarily_ in the public APIs)
+  initialStorage: S | ((roomId: string) => S);
 };
 
 export type RoomInitializers<

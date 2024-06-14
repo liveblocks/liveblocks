@@ -393,7 +393,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     const newRoom = createRoom<P, S, U, E, M>(
       {
         initialPresence: options.initialPresence ?? {},
-        initialStorage: options.initialStorage,
+        initialStorage: options.initialStorage ?? ({} as S),
       },
       {
         roomId,
