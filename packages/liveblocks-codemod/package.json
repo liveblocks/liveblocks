@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/codemod",
-  "version": "2.0.0",
+  "version": "2.0.2",
   "description": "Codemods for updating Liveblocks apps.",
   "license": "Apache-2.0",
   "bin": "dist/bin/liveblocks-codemod.js",
