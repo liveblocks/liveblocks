@@ -917,28 +917,41 @@ export type PartialUnless<C, T> =
 export type OptionalTupleUnless<C, T extends any[]> =
   Record<string, never> extends C ? OptionalTuple<T> : T;
 
+/** @internal */
+type CreateRoomOptions<P extends JsonObject, S extends LsonObject> = {
+  initialPresence: P | ((roomId: string) => P);
+  initialStorage?: S | ((roomId: string) => S);
+  //            ^ XXX Make this mandatory in this signature eventually (but not _necessarily_ in the public APIs)
+};
+
 export type RoomInitializers<
   P extends JsonObject,
   S extends LsonObject,
-> = Resolve<{
-  /**
-   * The initial Presence to use and announce when you enter the Room. The
-   * Presence is available on all users in the Room (me & others).
-   */
-  initialPresence: P | ((roomId: string) => P);
-  /**
-   * The initial Storage to use when entering a new Room.
-   */
-  initialStorage?: S | ((roomId: string) => S);
-  /**
-   * Whether or not the room automatically connects to Liveblock servers.
-   * Default is true.
-   *
-   * Usually set to false when the client is used from the server to not call
-   * the authentication endpoint or connect via WebSocket.
-   */
-  autoConnect?: boolean;
-}>;
+> = Resolve<
+  Resolve<
+    {
+      /**
+       * The initial Presence to use and announce when you enter the Room. The
+       * Presence is available on all users in the Room (me & others).
+       */
+      initialPresence: P | ((roomId: string) => P);
+    } & Partial<{
+      /**
+       * The initial Storage to use when entering a new Room.
+       */
+      initialStorage: S | ((roomId: string) => S);
+    }>
+  > & {
+    /**
+     * Whether or not the room automatically connects to Liveblock servers.
+     * Default is true.
+     *
+     * Usually set to false when the client is used from the server to not call
+     * the authentication endpoint or connect via WebSocket.
+     */
+    autoConnect?: boolean;
+  }
+>;
 
 export type RoomDelegates = Omit<Delegates<AuthValue>, "canZombie">;
 
@@ -1368,10 +1381,7 @@ export function createRoom<
   U extends BaseUserMeta,
   E extends Json,
   M extends BaseMetadata,
->(
-  options: Omit<RoomInitializers<P, S>, "autoConnect">,
-  config: RoomConfig
-): Room<P, S, U, E, M> {
+>(options: CreateRoomOptions<P, S>, config: RoomConfig): Room<P, S, U, E, M> {
   const initialPresence =
     typeof options.initialPresence === "function"
       ? options.initialPresence(config.roomId)
