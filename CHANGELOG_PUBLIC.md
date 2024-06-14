@@ -122,29 +122,52 @@ For full upgrade instructions and codemods, see the
 
 ## Documentation
 
-- New API reference page for [`@liveblocks/react-lexical`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical).
-- Added lots of new information to [`@liveblocks/react`](https://liveblocks.io/docs/api-reference/liveblocks-react) API reference page.
-- Information includes details [Suspense](https://liveblocks.io/docs/api-reference/liveblocks-react#Suspense) section, new [`LiveblocksProvider`](https://liveblocks.io/docs/api-reference/liveblocks-react#Liveblocks) props, details on typing, and more.
-- Added a set of product pages for [Notifications](https://liveblocks.io/docs/products/notifications), with info on concepts, components, hooks, styling, and email notifications.
-- Added product page for [Lexical](https://liveblocks.io/docs/products/text-editor/lexical) summarising all its features.
+- New API reference page for
+  [`@liveblocks/react-lexical`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical).
+- Added lots of new information to
+  [`@liveblocks/react`](https://liveblocks.io/docs/api-reference/liveblocks-react)
+  API reference page.
+- Information includes details
+  [Suspense](https://liveblocks.io/docs/api-reference/liveblocks-react#Suspense)
+  section, new
+  [`LiveblocksProvider`](https://liveblocks.io/docs/api-reference/liveblocks-react#Liveblocks)
+  props, details on typing, and more.
+- Added a set of product pages for
+  [Notifications](https://liveblocks.io/docs/products/notifications), with info
+  on concepts, components, hooks, styling, and email notifications.
+- Added product page for
+  [Lexical](https://liveblocks.io/docs/products/text-editor/lexical) summarising
+  all its features.
 - Restructured and updated existing product pages for our new products.
-- More information on the [`NotificationEvent`](https://liveblocks.io/docs/platform/webhooks#NotificationEvent) webhook, including the new [`textMention`](https://liveblocks.io/docs/platform/webhooks#TextMention-notification) kind.
-- Created new guide on [adding users to Liveblocks Notifications](https://liveblocks.io/docs/guides/how-to-add-users-to-liveblocks-notifications).
-- Created new guide on [adding users to Liveblocks Text Editor](https://liveblocks.io/docs/guides/how-to-add-users-to-liveblocks-text-editor).
+- More information on the
+  [`NotificationEvent`](https://liveblocks.io/docs/platform/webhooks#NotificationEvent)
+  webhook, including the new
+  [`textMention`](https://liveblocks.io/docs/platform/webhooks#TextMention-notification)
+  kind.
+- Created new guide on
+  [adding users to Liveblocks Notifications](https://liveblocks.io/docs/guides/how-to-add-users-to-liveblocks-notifications).
+- Created new guide on
+  [adding users to Liveblocks Text Editor](https://liveblocks.io/docs/guides/how-to-add-users-to-liveblocks-text-editor).
 - Created new get started guides for our new Lexical packages.
 - Added product badges to get started guides.
 - Updated all get started guides for new type improvements.
 - Updated API references for new type improvements.
 - Updated various guides for new type improvements.
-- Updated images and text on [How Liveblocks works](https://liveblocks.io/docs/concepts/how-liveblocks-works) page.
+- Updated images and text on
+  [How Liveblocks works](https://liveblocks.io/docs/concepts/how-liveblocks-works)
+  page.
 
 ## Website
 
-- We redesigned our website to represent the Liveblocks product offering more accurately. Here are some of the key changes:
+- We redesigned our website to represent the Liveblocks product offering more
+  accurately. Here are some of the key changes:
   - New homepage with interactive 3D game in the hero.
-  - New page product page for [Liveblocks Text Editor](https://liveblocks.io/text-editor)
-  - New page product page for [Liveblocks Notifications](https://liveblocks.io/notifications)
-  - New page product page for [Liveblocks Realtime APIs](https://liveblocks.io/realtime-apis)
+  - New page product page for
+    [Liveblocks Text Editor](https://liveblocks.io/text-editor)
+  - New page product page for
+    [Liveblocks Notifications](https://liveblocks.io/notifications)
+  - New page product page for
+    [Liveblocks Realtime APIs](https://liveblocks.io/realtime-apis)
   - Improved [pricing page](https://liveblocks.io)
   - New navigation
 
@@ -152,6 +175,11 @@ For full upgrade instructions and codemods, see the
 
 - Added new example: `nextjs-lexical`
 - Upgraded and adjusted all examples to 2.0
+
+## Infrastructure
+
+- [Webhooks](https://liveblocks.io/docs/platform/webhooks) are now available to
+  everyone.
 
 ## Contributors
 
@@ -174,9 +202,9 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
   locations
 
 ## Misc
-- Ongoing internal refactorings to enable simpler setup for `@liveblocks/react` in the
-  future.
 
+- Ongoing internal refactorings to enable simpler setup for `@liveblocks/react`
+  in the future.
 
 ## Contributors
 
