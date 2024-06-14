@@ -8,9 +8,8 @@ const client = createClient({ publicApiKey: "pk_xxx" });
 {
   {
     // No options at all is fine
-    // XXX Enable this test as well, once all the others work!
-    // const { room } = client.enterRoom("my-room");
-    // expectType<JsonObject>(room.getPresence());
+    const { room } = client.enterRoom("my-room");
+    expectType<JsonObject>(room.getPresence());
   }
 
   {
@@ -29,20 +28,21 @@ const client = createClient({ publicApiKey: "pk_xxx" });
 
   {
     // Initial presence is required
-    expectError<{ foo: string }>(client.enterRoom("room"));
-    expectError<{ foo: string }>(client.enterRoom("room", {}));
-    expectError<{ foo: string }>(
-      client.enterRoom("room", { initialPresence: {} })
+    expectError(client.enterRoom<{ foo: string }>("room"));
+    expectError(client.enterRoom<{ foo: string }>("room", {}));
+    expectError(
+      client.enterRoom<{ foo: string }>("room", { initialPresence: {} })
     );
-    expectError<{ foo: string }>(
-      client.enterRoom("room", { initialPresence: { bar: "" } })
+    expectError(
+      client.enterRoom<{ foo: string }>("room", {
+        initialPresence: { bar: "" },
+      })
     );
   }
 
   {
     // Initial presence is not required when it has only optional fields
-    // XXX Enable this test as well, once all the others work!
-    // client.enterRoom<{ foo?: string; bar?: number }>("room");
+    client.enterRoom<{ foo?: string; bar?: number }>("room");
     client.enterRoom<{ foo?: string; bar?: number }>("room", {});
     client.enterRoom<{ foo?: string; bar?: number }>("room", {
       initialPresence: {},
