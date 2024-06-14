@@ -1,10 +1,17 @@
-## v2.0.1
+## v2.0.1 (not released yet)
 
 ### `@liveblocks/node`
 
 - Fix type signatures of `client.identifyUser()` and `client.prepareSession()`
   to require `userInfo` if it's mandatory according to your global `UserMeta`
   type definition.
+
+### `@liveblocks/react-ui`
+
+- Don't clear the composer if it's not handled. (via `onComposerSubmit`)
+- Prevent the composer from splitting text being composed.
+- Count whitespace as empty to prevent posting empty comments.
+- Handle parentheses around and within auto-links.
 
 ## v2.0.0
 
