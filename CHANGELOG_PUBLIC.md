@@ -130,7 +130,8 @@ For full upgrade instructions and codemods, see the
 - Added product page for [Lexical](https://liveblocks.io/docs/products/text-editor/lexical) summarising all its features.
 - Restructured and updated existing product pages for our new products.
 - More information on the [`NotificationEvent`](https://liveblocks.io/docs/platform/webhooks#NotificationEvent) webhook, including the new [`textMention`](https://liveblocks.io/docs/platform/webhooks#TextMention-notification) kind.
-- Created new guide on [adding users to Liveblocks notifications](https://liveblocks.io/docs/guides/how-to-add-users-to-liveblocks-notifications).
+- Created new guide on [adding users to Liveblocks Notifications](https://liveblocks.io/docs/guides/how-to-add-users-to-liveblocks-notifications).
+- Created new guide on [adding users to Liveblocks Text Editor](https://liveblocks.io/docs/guides/how-to-add-users-to-liveblocks-text-editor).
 - Created new get started guides for our new Lexical packages.
 - Added product badges to get started guides.
 - Updated all get started guides for new type improvements.
