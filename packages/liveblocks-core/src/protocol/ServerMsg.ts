@@ -19,7 +19,9 @@ export enum ServerMsgCode {
   // For Yjs Docs
   UPDATE_YDOC = 300,
 
+  // For Comments
   THREAD_CREATED = 400,
+  THREAD_DELETED = 407,
   THREAD_METADATA_UPDATED = 401,
   COMMENT_CREATED = 402,
   COMMENT_EDITED = 403,
