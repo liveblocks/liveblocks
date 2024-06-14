@@ -917,12 +917,6 @@ export type PartialUnless<C, T> =
 export type OptionalTupleUnless<C, T extends any[]> =
   Record<string, never> extends C ? OptionalTuple<T> : T;
 
-/** @internal */
-type CreateRoomOptions<P extends JsonObject, S extends LsonObject> = {
-  initialPresence: P;
-  initialStorage: S;
-};
-
 export type RoomInitializers<
   P extends JsonObject,
   S extends LsonObject,
@@ -1380,7 +1374,10 @@ export function createRoom<
   U extends BaseUserMeta,
   E extends Json,
   M extends BaseMetadata,
->(options: CreateRoomOptions<P, S>, config: RoomConfig): Room<P, S, U, E, M> {
+>(
+  options: { initialPresence: P; initialStorage: S },
+  config: RoomConfig
+): Room<P, S, U, E, M> {
   const initialPresence = options.initialPresence; // ?? {};
   const initialStorage = options.initialStorage; // ?? {};
 
