@@ -139,6 +139,11 @@ For full upgrade instructions and codemods, see the
 - Updated various guides for new type improvements.
 - Updated images and text on [How Liveblocks works](https://liveblocks.io/docs/concepts/how-liveblocks-works) page.
 
+## Examples
+
+- Added new example: `nextjs-lexical`
+- Upgraded and adjusted all examples to 2.0
+
 ## Contributors
 
 adigau, ctnicholas, flowflorent, guillaumesalles, jrowny, marcbouchenoire,
