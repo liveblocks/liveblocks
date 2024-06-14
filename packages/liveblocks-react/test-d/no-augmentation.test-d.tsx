@@ -75,11 +75,10 @@ import { expectAssignable, expectError, expectType } from "tsd";
   //     <div />
   //   </RoomProvider>
   // );
-  expectError(
-    <RoomProvider id="my-room">
-      <div />
-    </RoomProvider>
-  );
+
+  <RoomProvider id="my-room">
+    <div />
+  </RoomProvider>;
 
   <RoomProvider id="my-room" initialPresence={{ cursor: { x: 0, y: 0 } }}>
     <div />
@@ -108,11 +107,10 @@ import { expectAssignable, expectError, expectType } from "tsd";
   //     <div />
   //   </RoomProvider>
   // );
-  expectError(
-    <RoomProvider id="my-room">
-      <div />
-    </RoomProvider>
-  );
+
+  <RoomProvider id="my-room">
+    <div />
+  </RoomProvider>;
 
   <RoomProvider id="my-room" initialPresence={{ cursor: { x: 0, y: 0 } }}>
     <div />

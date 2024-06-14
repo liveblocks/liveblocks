@@ -112,15 +112,34 @@ declare global {
   //     <div />
   //   </RoomProvider>
   // );
+
   expectError(
+    // Missing mandatory initialPresence + initialStorage
     <RoomProvider id="my-room">
       <div />
     </RoomProvider>
   );
 
-  <RoomProvider id="my-room" initialPresence={{ cursor: { x: 0, y: 0 } }}>
-    <div />
-  </RoomProvider>;
+  expectError(
+    // Missing mandatory initialPresence
+    <RoomProvider
+      id="my-room"
+      initialStorage={{
+        animals: new LiveList([]),
+        person: new LiveObject(),
+        scores: new LiveMap(),
+      }}
+    >
+      <div />
+    </RoomProvider>
+  );
+
+  expectError(
+    // Missing mandatory initialStorage
+    <RoomProvider id="my-room" initialPresence={{ cursor: { x: 0, y: 0 } }}>
+      <div />
+    </RoomProvider>
+  );
 
   expectError(
     <RoomProvider
@@ -160,15 +179,34 @@ declare global {
   //     <div />
   //   </RoomProvider>
   // );
+
   expectError(
+    // Missing mandatory initialPresence + initialStorage
     <RoomProvider id="my-room">
       <div />
     </RoomProvider>
   );
 
-  <RoomProvider id="my-room" initialPresence={{ cursor: { x: 0, y: 0 } }}>
-    <div />
-  </RoomProvider>;
+  expectError(
+    // Missing mandatory initialPresence
+    <RoomProvider
+      id="my-room"
+      initialStorage={{
+        animals: new LiveList([]),
+        person: new LiveObject(),
+        scores: new LiveMap(),
+      }}
+    >
+      <div />
+    </RoomProvider>
+  );
+
+  expectError(
+    // Missing mandatory initialStorage
+    <RoomProvider id="my-room" initialPresence={{ cursor: { x: 0, y: 0 } }}>
+      <div />
+    </RoomProvider>
+  );
 
   expectError(
     <RoomProvider
