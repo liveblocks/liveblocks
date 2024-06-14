@@ -149,6 +149,7 @@ export class WebhookHandler {
         "commentReactionRemoved",
         "threadMetadataUpdated",
         "threadCreated",
+        "threadDeleted",
         "ydocUpdated",
         "notification",
       ].includes(event.type)
@@ -220,6 +221,7 @@ type WebhookEvent =
   | ThreadMetadataUpdatedEvent
   | NotificationEvent
   | ThreadCreatedEvent
+  | ThreadDeletedEvent
   | YDocUpdatedEvent;
 
 type StorageUpdatedEvent = {
@@ -420,6 +422,20 @@ type ThreadCreatedEvent = {
   };
 };
 
+type ThreadDeletedEvent = {
+  type: "threadDeleted";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    /**
+     * ISO 8601 datestring
+     * @example "2021-03-01T12:00:00.000Z"
+     */
+    deletedAt: string;
+  };
+};
+
 type ThreadNotificationEvent = {
   type: "notification";
   data: {
@@ -494,6 +510,7 @@ export type {
   StorageUpdatedEvent,
   TextMentionNotificationEvent,
   ThreadCreatedEvent,
+  ThreadDeletedEvent,
   ThreadMetadataUpdatedEvent,
   ThreadNotificationEvent,
   UserEnteredEvent,

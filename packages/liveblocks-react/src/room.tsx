@@ -774,6 +774,13 @@ function RoomProviderInner<
     const { store } = getExtrasForClient(client);
 
     async function handleCommentEvent(message: CommentsEventServerMsg) {
+      // If thread deleted event is received, we remove the thread from the local cache
+      // no need for more processing
+      if (message.type === ServerMsgCode.THREAD_DELETED) {
+        store.deleteThread(message.threadId);
+        return;
+      }
+
       // TODO: Error handling
       const info = await room[kInternal].comments.getThread({
         threadId: message.threadId,

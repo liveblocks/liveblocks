@@ -164,6 +164,15 @@ describe("WebhookHandler", () => {
         },
       ],
       [
+        "threadDeleted",
+        {
+          projectId: "605a50b01a36d5ea7a2e9104",
+          threadId: "605a50b01a36d5ea7a2e9104",
+          roomId: "examples-hero-21-07-2022",
+          deletedAt: "2023-01-27T20:33:23.737Z",
+        },
+      ],
+      [
         "notification",
         {
           kind: "thread",
