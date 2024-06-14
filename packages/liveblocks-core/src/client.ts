@@ -98,12 +98,15 @@ export type EnterOptions<
       initialPresence: P | ((roomId: string) => P);
     }
   > &
-    Partial<{
-      /**
-       * The initial Storage to use when entering a new Room.
-       */
-      initialStorage: S | ((roomId: string) => S);
-    }> & {
+    PartialUnless<
+      S,
+      {
+        /**
+         * The initial Storage to use when entering a new Room.
+         */
+        initialStorage: S | ((roomId: string) => S);
+      }
+    > & {
       /**
        * Whether or not the room automatically connects to Liveblock servers.
        * Default is true.
