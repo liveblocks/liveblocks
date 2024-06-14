@@ -1,7 +1,13 @@
 import React from "react";
 React; // To silence tsd warning
 
-import type { BaseMetadata, Json, Lson } from "@liveblocks/client";
+import {
+  BaseMetadata,
+  Json,
+  LiveList,
+  LiveObject,
+  Lson,
+} from "@liveblocks/client";
 import * as classic from "@liveblocks/react";
 import * as suspense from "@liveblocks/react/suspense";
 import { expectAssignable, expectError, expectType } from "tsd";
@@ -56,6 +62,72 @@ import { expectAssignable, expectError, expectType } from "tsd";
     authEndpoint="/api/auth"
     resolveUsers={async () => [{ name: "Vincent", age: 42 }]}
   />;
+}
+
+// RoomProvider
+{
+  const RoomProvider = classic.RoomProvider;
+
+  // Missing mandatory props is an error
+  // TODO Add back when tsd supports error ts2739
+  // expectError(
+  //   <RoomProvider>
+  //     <div />
+  //   </RoomProvider>
+  // );
+  expectError(
+    <RoomProvider id="my-room">
+      <div />
+    </RoomProvider>
+  );
+
+  <RoomProvider id="my-room" initialPresence={{ cursor: { x: 0, y: 0 } }}>
+    <div />
+  </RoomProvider>;
+
+  <RoomProvider
+    id="my-room"
+    initialPresence={{ cursor: { x: 0, y: 0 } }}
+    initialStorage={{
+      foo: new LiveList([]),
+      bar: new LiveObject(),
+    }}
+  >
+    <div />
+  </RoomProvider>;
+}
+
+// RoomProvider (suspense)
+{
+  const RoomProvider = suspense.RoomProvider;
+
+  // Missing mandatory props is an error
+  // TODO Add back when tsd supports error ts2739
+  // expectError(
+  //   <RoomProvider>
+  //     <div />
+  //   </RoomProvider>
+  // );
+  expectError(
+    <RoomProvider id="my-room">
+      <div />
+    </RoomProvider>
+  );
+
+  <RoomProvider id="my-room" initialPresence={{ cursor: { x: 0, y: 0 } }}>
+    <div />
+  </RoomProvider>;
+
+  <RoomProvider
+    id="my-room"
+    initialPresence={{ cursor: { x: 0, y: 0 } }}
+    initialStorage={{
+      foo: new LiveList([]),
+      bar: new LiveObject(),
+    }}
+  >
+    <div />
+  </RoomProvider>;
 }
 
 // ---------------------------------------------------------
