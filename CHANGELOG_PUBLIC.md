@@ -181,6 +181,9 @@ For full upgrade instructions and codemods, see the
 - [Webhooks](https://liveblocks.io/docs/platform/webhooks) are now available to
   everyone.
 
+## Dashboard
+- Show Lexical information in rooms that use the new Lexical plugin.
+
 ## Contributors
 
 adigau, ctnicholas, flowflorent, guillaumesalles, jrowny, marcbouchenoire,
