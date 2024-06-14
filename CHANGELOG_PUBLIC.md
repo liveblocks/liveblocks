@@ -123,7 +123,6 @@ For full upgrade instructions and codemods, see the
 ## Documentation
 
 - New API reference page for [`@liveblocks/react-lexical`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical).
-  New API reference page for [`@liveblocks/node-lexical`](https://liveblocks.io/docs/api-reference/liveblocks-node-lexical).
 - Added lots of new information to [`@liveblocks/react`](https://liveblocks.io/docs/api-reference/liveblocks-react) API reference page.
 - Information includes details [Suspense](https://liveblocks.io/docs/api-reference/liveblocks-react#Suspense) section, new [`LiveblocksProvider`](https://liveblocks.io/docs/api-reference/liveblocks-react#Liveblocks) props, details on typing, and more.
 - Added a set of product pages for [Notifications](https://liveblocks.io/docs/products/notifications), with info on concepts, components, hooks, styling, and email notifications.
@@ -138,6 +137,16 @@ For full upgrade instructions and codemods, see the
 - Updated API references for new type improvements.
 - Updated various guides for new type improvements.
 - Updated images and text on [How Liveblocks works](https://liveblocks.io/docs/concepts/how-liveblocks-works) page.
+
+## Website
+
+- We redesigned our website to represent the Liveblocks product offering more accurately. Here are some of the key changes:
+  - New homepage with interactive 3D game in the hero.
+  - New page product page for [Liveblocks Text Editor](https://liveblocks.io/text-editor)
+  - New page product page for [Liveblocks Notifications](https://liveblocks.io/notifications)
+  - New page product page for [Liveblocks Realtime APIs](https://liveblocks.io/realtime-apis)
+  - Improved [pricing page](https://liveblocks.io)
+  - New navigation
 
 ## Examples
 
