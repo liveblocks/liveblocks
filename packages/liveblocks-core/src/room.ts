@@ -43,7 +43,6 @@ import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
 import { objectToQuery } from "./lib/objectToQuery";
 import { asPos } from "./lib/position";
-import type { Resolve } from "./lib/Resolve";
 import type { QueryParams } from "./lib/url";
 import { urljoin } from "./lib/url";
 import { compact, deepClone, tryParseJson } from "./lib/utils";
@@ -916,35 +915,6 @@ export type PartialUnless<C, T> =
  */
 export type OptionalTupleUnless<C, T extends any[]> =
   Record<string, never> extends C ? OptionalTuple<T> : T;
-
-export type RoomInitializers<
-  P extends JsonObject,
-  S extends LsonObject,
-> = Resolve<
-  Resolve<
-    {
-      /**
-       * The initial Presence to use and announce when you enter the Room. The
-       * Presence is available on all users in the Room (me & others).
-       */
-      initialPresence: P | ((roomId: string) => P);
-    } & Partial<{
-      /**
-       * The initial Storage to use when entering a new Room.
-       */
-      initialStorage: S | ((roomId: string) => S);
-    }>
-  > & {
-    /**
-     * Whether or not the room automatically connects to Liveblock servers.
-     * Default is true.
-     *
-     * Usually set to false when the client is used from the server to not call
-     * the authentication endpoint or connect via WebSocket.
-     */
-    autoConnect?: boolean;
-  }
->;
 
 export type RoomDelegates = Omit<Delegates<AuthValue>, "canZombie">;
 

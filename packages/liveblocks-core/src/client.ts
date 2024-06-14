@@ -28,13 +28,7 @@ import type {
   InboxNotificationData,
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
-import type {
-  OpaqueRoom,
-  Polyfills,
-  Room,
-  RoomDelegates,
-  RoomInitializers,
-} from "./room";
+import type { OpaqueRoom, Polyfills, Room, RoomDelegates } from "./room";
 import {
   createRoom,
   makeAuthDelegateForRoom,
@@ -87,18 +81,40 @@ export type EnterOptions<
   P extends JsonObject = DP,
   S extends LsonObject = DS,
 > = Resolve<
+  // XXX Maybe inline RoomInitializers<P, S> here again later?
   // Enter options are just room initializers, plus an internal option
-  RoomInitializers<P, S> & {
+  {
     /**
-     * Only necessary when you’re using Liveblocks with React v17 or lower.
-     *
-     * If so, pass in a reference to `ReactDOM.unstable_batchedUpdates` here.
-     * This will allow Liveblocks to circumvent the so-called "zombie child
-     * problem". To learn more, see
-     * https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child
+     * The initial Presence to use and announce when you enter the Room. The
+     * Presence is available on all users in the Room (me & others).
      */
-    unstable_batchedUpdates?: (cb: () => void) => void;
-  }
+    initialPresence: P | ((roomId: string) => P);
+  } & Partial<{
+    /**
+     * The initial Storage to use when entering a new Room.
+     */
+    initialStorage: S | ((roomId: string) => S);
+  }> & {
+      /**
+       * Whether or not the room automatically connects to Liveblock servers.
+       * Default is true.
+       *
+       * Usually set to false when the client is used from the server to not call
+       * the authentication endpoint or connect via WebSocket.
+       */
+      autoConnect?: boolean;
+    } & {
+      // ------------------------------------------------------------------------
+      /**
+       * Only necessary when you’re using Liveblocks with React v17 or lower.
+       *
+       * If so, pass in a reference to `ReactDOM.unstable_batchedUpdates` here.
+       * This will allow Liveblocks to circumvent the so-called "zombie child
+       * problem". To learn more, see
+       * https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child
+       */
+      unstable_batchedUpdates?: (cb: () => void) => void;
+    }
 >;
 
 /**

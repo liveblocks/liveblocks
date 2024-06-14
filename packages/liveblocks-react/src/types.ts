@@ -25,7 +25,6 @@ import type {
   QueryMetadata,
   Resolve,
   RoomEventMessage,
-  RoomInitializers,
   ThreadData,
   ToImmutable,
 } from "@liveblocks/core";
@@ -234,6 +233,7 @@ export type RoomNotificationSettingsState =
   | RoomNotificationSettingsStateError
   | RoomNotificationSettingsStateSuccess;
 
+// XXX Fix this later
 export type RoomProviderProps<
   P extends JsonObject,
   S extends LsonObject,
@@ -244,33 +244,45 @@ export type RoomProviderProps<
      */
     id: string;
     children: React.ReactNode;
-
+  } & {
     /**
-     * Whether or not the room should connect to Liveblocks servers
-     * when the RoomProvider is rendered.
-     *
-     * By default equals to `typeof window !== "undefined"`,
-     * meaning the RoomProvider tries to connect to Liveblocks servers
-     * only on the client side.
+     * The initial Presence to use and announce when you enter the Room. The
+     * Presence is available on all users in the Room (me & others).
      */
-    autoConnect?: boolean;
+    initialPresence: P | ((roomId: string) => P);
+  } & Partial<{
+      /**
+       * The initial Storage to use when entering a new Room.
+       */
+      initialStorage: S | ((roomId: string) => S);
+    }> & {
+      // --------------------------------------------------------------------
+      /**
+       * Whether or not the room should connect to Liveblocks servers
+       * when the RoomProvider is rendered.
+       *
+       * By default equals to `typeof window !== "undefined"`,
+       * meaning the RoomProvider tries to connect to Liveblocks servers
+       * only on the client side.
+       */
+      autoConnect?: boolean;
 
-    /**
-     * If you're on React 17 or lower, pass in a reference to
-     * `ReactDOM.unstable_batchedUpdates` or
-     * `ReactNative.unstable_batchedUpdates` here.
-     *
-     * @example
-     * import { unstable_batchedUpdates } from "react-dom";
-     *
-     * <RoomProvider ... unstable_batchedUpdates={unstable_batchedUpdates} />
-     *
-     * This will prevent you from running into the so-called "stale props"
-     * and/or "zombie child" problem that React 17 and lower can suffer from.
-     * Not necessary when you're on React v18 or later.
-     */
-    unstable_batchedUpdates?: (cb: () => void) => void;
-  } & RoomInitializers<P, S>
+      /**
+       * If you're on React 17 or lower, pass in a reference to
+       * `ReactDOM.unstable_batchedUpdates` or
+       * `ReactNative.unstable_batchedUpdates` here.
+       *
+       * @example
+       * import { unstable_batchedUpdates } from "react-dom";
+       *
+       * <RoomProvider ... unstable_batchedUpdates={unstable_batchedUpdates} />
+       *
+       * This will prevent you from running into the so-called "stale props"
+       * and/or "zombie child" problem that React 17 and lower can suffer from.
+       * Not necessary when you're on React v18 or later.
+       */
+      unstable_batchedUpdates?: (cb: () => void) => void;
+    }
 >;
 
 /**

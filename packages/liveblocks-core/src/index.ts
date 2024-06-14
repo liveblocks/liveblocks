@@ -199,7 +199,6 @@ export type {
   PartialUnless,
   Room,
   RoomEventMessage,
-  RoomInitializers,
   StorageStatus,
 } from "./room";
 export type { GetThreadsOptions } from "./room";
