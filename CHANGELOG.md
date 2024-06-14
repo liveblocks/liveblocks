@@ -1,3 +1,10 @@
+## v2.0.2
+
+### `@liveblocks/node`
+
+- Add `deleteThread` method to the client to delete a room's thread.
+- Add the `threadDeleted` webhook event to notify when a thread is deleted.
+
 ## v2.0.1
 
 ### `@liveblocks/node`
