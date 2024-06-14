@@ -29,6 +29,7 @@ import type {
 } from "./protocol/InboxNotifications";
 import type {
   OpaqueRoom,
+  OptionalTupleUnless,
   PartialUnless,
   Polyfills,
   Room,
@@ -197,7 +198,10 @@ export type Client<U extends BaseUserMeta = DU> = {
     M extends BaseMetadata = DM,
   >(
     roomId: string,
-    options: EnterOptions<NoInfr<P>, NoInfr<S>>
+    ...args: OptionalTupleUnless<
+      P & S,
+      [options: EnterOptions<NoInfr<P>, NoInfr<S>>]
+    >
   ): {
     room: Room<P, S, U, E, M>;
     leave: () => void;
