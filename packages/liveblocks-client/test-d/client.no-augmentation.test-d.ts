@@ -41,6 +41,18 @@ const client = createClient({ publicApiKey: "pk_xxx" });
   }
 
   {
+    // Initial presence is required... unless it's not required
+    client.enterRoom<{ foo?: string }>("room");
+    client.enterRoom<{ foo?: string }>("room", {});
+    client.enterRoom<{ foo?: string }>("room", { initialPresence: {} });
+    expectError(
+      client.enterRoom<{ foo?: string }>("room", {
+        initialPresence: { bar: "" },
+      })
+    );
+  }
+
+  {
     // Initial presence is not required when it has only optional fields
     client.enterRoom<{ foo?: string; bar?: number }>("room");
     client.enterRoom<{ foo?: string; bar?: number }>("room", {});
