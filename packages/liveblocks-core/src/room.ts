@@ -908,13 +908,25 @@ type OptionalTuple<T extends any[]> = { [K in keyof T]?: T[K] };
  * Returns Partial<T> if all fields on C are optional, T otherwise.
  */
 export type PartialUnless<C, T> =
-  Record<string, never> extends C ? Partial<T> : T;
+  Record<string, never> extends C
+    ? Partial<T>
+    : // Extra test. We'll want to treat "never" as if the empty object is
+      // assignable to it, because otherwise it will not
+      [C] extends [never]
+      ? Partial<T>
+      : T;
 
 /**
  * Returns OptionalTupleUnless<T> if all fields on C are optional, T otherwise.
  */
 export type OptionalTupleUnless<C, T extends any[]> =
-  Record<string, never> extends C ? OptionalTuple<T> : T;
+  Record<string, never> extends C
+    ? OptionalTuple<T>
+    : // Extra test. We'll want to treat "never" as if the empty object is
+      // assignable to it, because otherwise it will not
+      [C] extends [never]
+      ? OptionalTuple<T>
+      : T;
 
 export type RoomDelegates = Omit<Delegates<AuthValue>, "canZombie">;
 
