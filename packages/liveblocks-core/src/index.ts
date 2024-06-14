@@ -195,6 +195,8 @@ export type {
   BroadcastOptions,
   History,
   OpaqueRoom,
+  OptionalTupleUnless,
+  PartialUnless,
   Room,
   RoomEventMessage,
   RoomInitializers,

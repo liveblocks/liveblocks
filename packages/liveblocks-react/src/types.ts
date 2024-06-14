@@ -20,6 +20,7 @@ import type {
   DRI,
   InboxNotificationData,
   LiveblocksError,
+  PartialUnless,
   Patchable,
   QueryMetadata,
   Resolve,
@@ -102,10 +103,12 @@ export type RoomInfoState =
   | RoomInfoStateError
   | RoomInfoStateSuccess;
 
+// prettier-ignore
 export type CreateThreadOptions<M extends BaseMetadata> =
-  Record<string, never> extends M
-    ? { body: CommentBody; metadata?: M }
-    : { body: CommentBody; metadata: M };
+  Resolve<
+    { body: CommentBody }
+    & PartialUnless<M, { metadata: M }>
+  >;
 
 export type EditThreadMetadataOptions<M extends BaseMetadata> = {
   threadId: string;

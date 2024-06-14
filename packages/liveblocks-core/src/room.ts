@@ -896,6 +896,27 @@ export type Polyfills = {
   WebSocket?: IWebSocket;
 };
 
+/**
+ * Makes all tuple positions optional.
+ * Example, turns:
+ *   [foo: string; bar: number]
+ * into:
+ *   [foo?: string; bar?: number]
+ */
+type OptionalTuple<T extends any[]> = { [K in keyof T]?: T[K] };
+
+/**
+ * Returns Partial<T> if all fields on C are optional, T otherwise.
+ */
+export type PartialUnless<C, T> =
+  Record<string, never> extends C ? Partial<T> : T;
+
+/**
+ * Returns OptionalTupleUnless<T> if all fields on C are optional, T otherwise.
+ */
+export type OptionalTupleUnless<C, T extends any[]> =
+  Record<string, never> extends C ? OptionalTuple<T> : T;
+
 export type RoomInitializers<
   P extends JsonObject,
   S extends LsonObject,
