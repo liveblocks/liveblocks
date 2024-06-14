@@ -941,9 +941,13 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     );
 
     const submit = useCallback(() => {
-      if (ref.current) {
-        requestSubmit(ref.current);
-      }
+      // We need to wait for the next frame in some cases like when composing diacritics,
+      // we want any native handling to be done first while still being handled on `keydown`.
+      requestAnimationFrame(() => {
+        if (ref.current) {
+          requestSubmit(ref.current);
+        }
+      });
     }, []);
 
     const clear = useCallback(() => {
@@ -1001,6 +1005,18 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 
     const handleSubmit = useCallback(
       (event: FormEvent<HTMLFormElement>) => {
+        // In some situations (e.g. pressing Enter while composing diacritics), it's possible
+        // for the form to be submitted as empty even though we already checked whether the
+        // editor was empty when handling the key press.
+        const isEmpty = isEditorEmpty(editor, editor.children);
+
+        // We even prevent the user's `onSubmit` handler from being called if the editor is empty.
+        if (isEmpty) {
+          event.preventDefault();
+
+          return;
+        }
+
         onSubmit?.(event);
 
         if (!onComposerSubmit || event.isDefaultPrevented()) {
@@ -1024,7 +1040,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
           onSubmitEnd();
         }
       },
-      [editor.children, onComposerSubmit, onSubmit, onSubmitEnd]
+      [editor, onComposerSubmit, onSubmit, onSubmitEnd]
     );
 
     return (
