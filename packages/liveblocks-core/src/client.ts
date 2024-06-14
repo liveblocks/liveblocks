@@ -10,7 +10,6 @@ import type { BatchStore } from "./lib/batch";
 import { createBatchStore } from "./lib/batch";
 import type { Store } from "./lib/create-store";
 import { createStore } from "./lib/create-store";
-import { deprecateIf } from "./lib/deprecation";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import type { NoInfr } from "./lib/NoInfer";
@@ -28,7 +27,13 @@ import type {
   InboxNotificationData,
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
-import type { OpaqueRoom, Polyfills, Room, RoomDelegates } from "./room";
+import type {
+  OpaqueRoom,
+  PartialUnless,
+  Polyfills,
+  Room,
+  RoomDelegates,
+} from "./room";
 import {
   createRoom,
   makeAuthDelegateForRoom,
@@ -83,18 +88,22 @@ export type EnterOptions<
 > = Resolve<
   // XXX Maybe inline RoomInitializers<P, S> here again later?
   // Enter options are just room initializers, plus an internal option
-  {
-    /**
-     * The initial Presence to use and announce when you enter the Room. The
-     * Presence is available on all users in the Room (me & others).
-     */
-    initialPresence: P | ((roomId: string) => P);
-  } & Partial<{
-    /**
-     * The initial Storage to use when entering a new Room.
-     */
-    initialStorage: S | ((roomId: string) => S);
-  }> & {
+  PartialUnless<
+    P,
+    {
+      /**
+       * The initial Presence to use and announce when you enter the Room. The
+       * Presence is available on all users in the Room (me & others).
+       */
+      initialPresence: P | ((roomId: string) => P);
+    }
+  > &
+    Partial<{
+      /**
+       * The initial Storage to use when entering a new Room.
+       */
+      initialStorage: S | ((roomId: string) => S);
+    }> & {
       /**
        * Whether or not the room automatically connects to Liveblock servers.
        * Default is true.
@@ -400,11 +409,6 @@ export function createClient<U extends BaseUserMeta = DU>(
     if (existing !== undefined) {
       return leaseRoom(existing);
     }
-
-    deprecateIf(
-      options.initialPresence === null || options.initialPresence === undefined,
-      "Please provide an initial presence value for the current user when entering the room."
-    );
 
     const initialPresence =
       (typeof options.initialPresence === "function"
