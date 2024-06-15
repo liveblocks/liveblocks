@@ -100,10 +100,11 @@ reply, use emoji reactions, mention others, and more.
   />
 </Figure>
 
-Add Comments to your text editor using
+
+Add a floating Comments composer to your text editor using
 [`FloatingComposer`](/docs/api-reference/liveblocks-react-lexical#FloatingComposer).
 
-```tsx highlight="3-4"
+```tsx highlight="3"
 <LexicalComposer initialConfig={initialConfig}>
   <LiveblocksPlugin>
     <FloatingComposer />
@@ -111,8 +112,9 @@ Add Comments to your text editor using
 </LexicalComposer>
 ```
 
-You can
-[open a new annotation composer](/docs/api-reference/liveblocks-react-lexical#Opening-the-FloatingComposer)
+
+You can then create a button that
+[opens the new annotation composer](/docs/api-reference/liveblocks-react-lexical#Opening-the-FloatingComposer)
 for the current selection with `OPEN_FLOATING_COMPOSER_COMMAND`.
 
 ```tsx

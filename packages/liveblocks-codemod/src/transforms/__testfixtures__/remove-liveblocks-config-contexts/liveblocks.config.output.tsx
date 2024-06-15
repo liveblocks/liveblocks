@@ -30,6 +30,7 @@ type UserMeta = {
 };
 
 declare global {
+  // For more information, see https://liveblocks.io/docs/api-reference/liveblocks-client#TypeScript
   interface Liveblocks {
     Presence: Presence;
     UserMeta: UserMeta;

@@ -13,6 +13,182 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 -->
 
+# Week 24 (2024-06-15)
+
+## v2.0.0
+
+This major release marks the maturity of Liveblocks. It contains new products
+(`@liveblocks/react-lexical`) and clarifications (e.g.
+`@liveblocks/react-comments` is now called `@liveblocks/react-ui`).
+
+Also, we bring major DX improvements by allowing you to specify your types
+globally now. These types will be typed once and shared across all Liveblocks
+APIs, which includes your Node backend.
+
+```ts file="liveblocks.config.ts"
+// ❌ Before
+export const {
+  suspense: {
+    RoomProvider,
+    useRoom,
+    // etc
+  },
+} = createRoomContext<Presence, Storage>(client);
+
+// ✅ After
+declare global {
+  interface Liveblocks {
+    Presence: Presence;
+    Storage: Storage;
+  }
+}
+```
+
+In `@liveblocks/react`, you can now import hooks directly:
+
+```ts file="MyComponent.tsx"
+// ❌ Before: get hooks exported from your Liveblocks config
+import { RoomProvider, useRoom, ... } from "./liveblocks.config";
+
+// ✅ After: import hooks directly
+import { RoomProvider, useRoom, ... } from "@liveblocks/react";
+import { RoomProvider, useRoom, ... } from "@liveblocks/react/suspense";
+```
+
+```ts
+// ❌ Before
+const client = createClient(/* options */);
+
+// ✅ After
+<LiveblocksProvider /* options */>
+  <App />
+</LiveblocksProvider>
+```
+
+For full upgrade instructions and codemods, see the
+[2.0 upgrade guide](https://liveblocks.io/docs/guides/upgrading/2.0).
+
+### `create-liveblocks-app`
+
+- Update config generation for Liveblocks 2.0.
+- Add `--upgrade` flag to automatically update all Liveblocks package to their
+  latest version.
+
+### `@liveblocks/client`
+
+- DX improvements: type once, globally, benefit everywhere
+
+### `@liveblocks/react`
+
+- DX improvement: import hooks directly
+- DX improvement: `<ClientSideSuspense>` no longer needs a function as its
+  `children`
+- New provider: `LiveblocksProvider` (replaces the need for `createClient`)
+- New hook: `useClient`
+- Tweak `useMutation` error message to be less confusing.
+- Allow thread and activity metadata types to contain `undefined` values.
+
+### `@liveblocks/react-ui`
+
+- Rename from `@liveblocks/react-comments`.
+- Rename `<CommentsConfig />` to `<LiveblocksUIConfig />`.
+- Improve `InboxNotification` props types.
+
+### `@liveblocks/react-lexical`
+
+- Initial release.
+
+### `@liveblocks/node-lexical`
+
+- Initial release.
+
+### `@liveblocks/yjs`
+
+- `LiveblocksProvider` is no longer a default export, it’s now
+  `import { LiveblocksYjsProvider } from "@liveblocks/yjs"`.
+
+### `@liveblocks/node`
+
+- DX improvements: all Node client methods will pick up the same global types
+  you’re using in your frontend
+- Rename `RoomInfo` to `RoomData`.
+- The webhook event `NotificationEvent`’s type can represent multiple kinds of
+  notifications. (`"thread"`, `"textMention"`, and custom ones (e.g.
+  `"$myNotification"`))
+
+### `@liveblocks/codemod`
+
+- Initial release.
+
+## Documentation
+
+- New API reference page for
+  [`@liveblocks/react-lexical`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical).
+- Added lots of new information to
+  [`@liveblocks/react`](https://liveblocks.io/docs/api-reference/liveblocks-react)
+  API reference page.
+- Information includes details
+  [Suspense](https://liveblocks.io/docs/api-reference/liveblocks-react#Suspense)
+  section, new
+  [`LiveblocksProvider`](https://liveblocks.io/docs/api-reference/liveblocks-react#Liveblocks)
+  props, details on typing, and more.
+- Added a set of product pages for
+  [Notifications](https://liveblocks.io/docs/products/notifications), with info
+  on concepts, components, hooks, styling, and email notifications.
+- Added product page for
+  [Lexical](https://liveblocks.io/docs/products/text-editor/lexical) summarising
+  all its features.
+- Restructured and updated existing product pages for our new products.
+- More information on the
+  [`NotificationEvent`](https://liveblocks.io/docs/platform/webhooks#NotificationEvent)
+  webhook, including the new
+  [`textMention`](https://liveblocks.io/docs/platform/webhooks#TextMention-notification)
+  kind.
+- Created new guide on
+  [adding users to Liveblocks Notifications](https://liveblocks.io/docs/guides/how-to-add-users-to-liveblocks-notifications).
+- Created new guide on
+  [adding users to Liveblocks Text Editor](https://liveblocks.io/docs/guides/how-to-add-users-to-liveblocks-text-editor).
+- Created new get started guides for our new Lexical packages.
+- Added product badges to get started guides.
+- Updated all get started guides for new type improvements.
+- Updated API references for new type improvements.
+- Updated various guides for new type improvements.
+- Updated images and text on
+  [How Liveblocks works](https://liveblocks.io/docs/concepts/how-liveblocks-works)
+  page.
+
+## Website
+
+- We redesigned our website to represent the Liveblocks product offering more
+  accurately. Here are some of the key changes:
+  - New homepage with interactive 3D game in the hero.
+  - New page product page for
+    [Liveblocks Text Editor](https://liveblocks.io/text-editor)
+  - New page product page for
+    [Liveblocks Notifications](https://liveblocks.io/notifications)
+  - New page product page for
+    [Liveblocks Realtime APIs](https://liveblocks.io/realtime-apis)
+  - Improved [pricing page](https://liveblocks.io)
+  - New navigation
+
+## Examples
+
+- Added new example: `nextjs-lexical`
+- Upgraded and adjusted all examples to 2.0
+
+## Infrastructure
+
+- [Webhooks](https://liveblocks.io/docs/platform/webhooks) are now available to
+  everyone.
+
+## Dashboard
+- Show Lexical information in rooms that use the new Lexical plugin.
+
+## Contributors
+
+adigau, ctnicholas, flowflorent, guillaumesalles, jrowny, marcbouchenoire,
+nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
+
 # Week 21 (2024-05-24)
 
 ![banner](/assets/changelog/week-21.png)
@@ -29,9 +205,9 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
   locations
 
 ## Misc
-- Ongoing internal refactorings to enable simpler setup for `@liveblocks/react` in the
-  future.
 
+- Ongoing internal refactorings to enable simpler setup for `@liveblocks/react`
+  in the future.
 
 ## Contributors
 

@@ -11,7 +11,11 @@ function findLiveblocksDependencies(
   );
 }
 
-export async function create() {
+type Flags = {
+  upgrade: string;
+};
+
+export async function create(flags: Flags) {
   // === Read package.json ===============================================================
   let pkg: PackageJson;
 
@@ -50,7 +54,7 @@ export async function create() {
     (d) => d === "@liveblocks/react-comments"
   );
 
-  // === Upgrade collected dependencies to latest ===========================================
+  // === Upgrade collected dependencies ====================================================
 
   const pkgManager = await detect();
 
@@ -84,7 +88,7 @@ export async function create() {
   if (depsToUpgrade.length > 0) {
     await execa(
       pkgManager,
-      [installCmd, ...depsToUpgrade.map((dep) => `${dep}@latest`)],
+      [installCmd, ...depsToUpgrade.map((dep) => `${dep}@${flags.upgrade}`)],
       { stdio: "inherit" }
     );
   }

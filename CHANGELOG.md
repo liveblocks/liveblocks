@@ -1,3 +1,18 @@
+## v2.0.2
+
+### `@liveblocks/node`
+
+- Add `deleteThread` method to the client to delete a room's thread.
+- Add the `threadDeleted` webhook event to notify when a thread is deleted.
+
+## v2.0.1
+
+### `@liveblocks/node`
+
+- Fix type signatures of `client.identifyUser()` and `client.prepareSession()`
+  to require `userInfo` if it's mandatory according to your global `UserMeta`
+  type definition.
+
 ## v2.0.0
 
 This major release marks the maturity of Liveblocks. It contains new products

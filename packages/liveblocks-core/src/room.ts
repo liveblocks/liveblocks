@@ -1348,10 +1348,7 @@ export function createRoom<
   E extends Json,
   M extends BaseMetadata,
 >(
-  options: Omit<
-    RoomInitializers<P, S>,
-    "autoConnect" | "shouldInitiallyConnect"
-  >,
+  options: Omit<RoomInitializers<P, S>, "autoConnect">,
   config: RoomConfig
 ): Room<P, S, U, E, M> {
   const initialPresence =
@@ -2416,6 +2413,7 @@ export function createRoom<
           }
 
           case ServerMsgCode.THREAD_CREATED:
+          case ServerMsgCode.THREAD_DELETED:
           case ServerMsgCode.THREAD_METADATA_UPDATED:
           case ServerMsgCode.COMMENT_REACTION_ADDED:
           case ServerMsgCode.COMMENT_REACTION_REMOVED:

@@ -1596,6 +1596,46 @@
             "$ref": "#/components/responses/404-thread"
           }
         }
+      },
+      "delete": {
+        "summary": "Delete thread",
+        "tags": ["Comments"],
+        "description": "This endpoint deletes a thread by its ID. Corresponds to [`liveblocks.deleteThread`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-threads-threadId).",
+        "operationId": "delete-rooms-roomId-threads-threadId",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the thread"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success. The thread has been deleted."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-thread"
+          }
+        }
       }
     },
     "/rooms/{roomId}/threads/{threadId}/participants": {
