@@ -107,6 +107,7 @@ declare global {
 
   // Missing mandatory props is an error
   // TODO Add back when tsd supports error ts2739
+  // TODO See https://github.com/tsdjs/tsd/issues/215
   // expectError(
   //   <RoomProvider /* no room id */>
   //     <div />
@@ -114,6 +115,7 @@ declare global {
   // );
 
   // TODO Add back when tsd supports error ts2739
+  // TODO See https://github.com/tsdjs/tsd/issues/215
   // expectError(
   //   // Missing initialPresence is an error
   //   <RoomProvider id="my-room">
@@ -182,6 +184,7 @@ declare global {
 
   // Missing mandatory props is an error
   // TODO Add back when tsd supports error ts2739
+  // TODO See https://github.com/tsdjs/tsd/issues/215
   // expectError(
   //   <RoomProvider /* no room id */>
   //     <div />
@@ -189,6 +192,7 @@ declare global {
   // );
 
   // TODO Add back when tsd supports error ts2739
+  // TODO See https://github.com/tsdjs/tsd/issues/215
   // expectError(
   //   // Missing initialPresence is an error
   //   <RoomProvider id="my-room">
