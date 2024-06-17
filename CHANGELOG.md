@@ -10,6 +10,13 @@
 - In `<RoomProvider>`, the props `initialPresence` and `initialStorage` are now
   only mandatory if your custom type requires them to be.
 
+### `@liveblocks/react-ui`
+
+- Prevent the composer from splitting text being composed.
+- Handle parentheses around and within auto-links.
+- Count whitespace as empty to prevent posting empty comments.
+- Prevent clearing the composer if it's not handled. (via `onComposerSubmit`)
+
 ## v2.0.2
 
 ### `@liveblocks/node`
