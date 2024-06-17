@@ -21,16 +21,21 @@ export type {
   CommentEditedEvent,
   CommentReactionAdded,
   CommentReactionRemoved,
+  CustomNotificationEvent,
   NotificationEvent,
   RoomCreatedEvent,
   RoomDeletedEvent,
   StorageUpdatedEvent,
+  TextMentionNotificationEvent,
   ThreadCreatedEvent,
+  ThreadDeletedEvent,
   ThreadMetadataUpdatedEvent,
+  ThreadNotificationEvent,
   UserEnteredEvent,
   UserLeftEvent,
   WebhookEvent,
   WebhookRequest,
+  YDocUpdatedEvent,
 } from "./webhooks";
 export { WebhookHandler } from "./webhooks";
 export type {

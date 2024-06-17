@@ -17,6 +17,10 @@
 - Count whitespace as empty to prevent posting empty comments.
 - Prevent clearing the composer if it's not handled. (via `onComposerSubmit`)
 
+### `@liveblocks/yjs`
+
+- Add missing type exports
+
 ## v2.0.2
 
 ### `@liveblocks/node`
