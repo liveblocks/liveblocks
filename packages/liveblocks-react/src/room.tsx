@@ -529,8 +529,15 @@ function makeRoomContextBundle<
   function RoomProvider_withImplicitLiveblocksProvider(
     props: RoomProviderProps<P, S>
   ) {
+    // NOTE: Normally, nesting LiveblocksProvider is not allowed. This
+    // factory-bound version of the RoomProvider will create an implicit
+    // LiveblocksProvider. This means that if an end user nests this
+    // RoomProvider under a LiveblocksProvider context, that would be an error.
+    // However, we'll allow that nesting only in this specific situation, and
+    // only because this wrapper will keep the Liveblocks context and the Room
+    // context consistent internally.
     return (
-      <LiveblocksProviderWithClient client={client}>
+      <LiveblocksProviderWithClient client={client} allowNesting>
         <RoomProvider {...props} />
       </LiveblocksProviderWithClient>
     );

@@ -743,9 +743,9 @@ export function createSharedContext<U extends BaseUserMeta>(
 /**
  * @private This is an internal API.
  */
-function useEnsureNoLiveblocksProvider() {
+function useEnsureNoLiveblocksProvider(options?: { allowNesting?: boolean }) {
   const existing = useClientOrNull();
-  if (existing !== null) {
+  if (!options?.allowNesting && existing !== null) {
     throw new Error(
       "You can have at most one LiveblocksProvider in your React tree. Nesting is not supported."
     );
@@ -770,12 +770,18 @@ export function useClient<U extends BaseUserMeta>() {
 }
 
 /**
- * @private
+ * @private This is a private API.
  */
 export function LiveblocksProviderWithClient(
-  props: PropsWithChildren<{ client: OpaqueClient }>
+  props: PropsWithChildren<{
+    client: OpaqueClient;
+
+    // Private flag, used only to skip the nesting check if this is
+    // a LiveblocksProvider created implicitly by a factory-bound RoomProvider.
+    allowNesting?: boolean;
+  }>
 ) {
-  useEnsureNoLiveblocksProvider();
+  useEnsureNoLiveblocksProvider(props);
   return (
     <ClientContext.Provider value={props.client}>
       {props.children}
