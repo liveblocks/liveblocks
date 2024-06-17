@@ -12,10 +12,10 @@
 
 ### `@liveblocks/react-ui`
 
-- Improve the composer if it's not handled. (via `onComposerSubmit`)
 - Prevent the composer from splitting text being composed.
-- Count whitespace as empty to prevent posting empty comments.
 - Handle parentheses around and within auto-links.
+- Count whitespace as empty to prevent posting empty comments.
+- Prevent clearing the composer if it's not handled. (via `onComposerSubmit`)
 
 ## v2.0.2
 
