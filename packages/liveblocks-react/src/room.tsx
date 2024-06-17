@@ -776,7 +776,6 @@ function RoomProviderInner<
     unstable_batchedUpdates: props.unstable_batchedUpdates,
     autoConnect: props.autoConnect ?? typeof window !== "undefined",
   }) as EnterOptions<P, S>;
-  // XXX This Should™ not have to be necessary? Figure out why.
 
   const [{ room }, setRoomLeavePair] = React.useState(() =>
     stableEnterRoom(roomId, {
