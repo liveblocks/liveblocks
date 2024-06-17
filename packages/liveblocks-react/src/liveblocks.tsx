@@ -747,7 +747,7 @@ function useEnsureNoLiveblocksProvider(options?: { allowNesting?: boolean }) {
   const existing = useClientOrNull();
   if (!options?.allowNesting && existing !== null) {
     throw new Error(
-      "You can have at most one LiveblocksProvider in your React tree. Nesting is not supported."
+      "You cannot nest multiple LiveblocksProvider instances in the same React tree."
     );
   }
 }
