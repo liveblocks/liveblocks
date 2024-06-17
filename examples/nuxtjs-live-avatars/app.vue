@@ -84,7 +84,7 @@ export default {
     this._room = room;
     this._leave = leave;
     this._unsubscribeOthers = room.events.others.subscribe(this.onOthersChange);
-    this._unsubscribeSelf = room.events.self.subscribe(this.onStatusChange);
+    this._unsubscribeSelf = room.events.self.subscribe(this.onSelfChange);
   },
   destroyed() {
     this._unsubscribeOthers();
@@ -101,7 +101,7 @@ export default {
         name: user.info?.name,
       }));
     },
-    onStatusChange(self) {
+    onSelfChange(self) {
       this.currentUser = self;
     },
   },
