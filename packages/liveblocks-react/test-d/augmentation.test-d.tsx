@@ -106,22 +106,18 @@ declare global {
   const RoomProvider = classic.RoomProvider;
 
   // Missing mandatory props is an error
-  // TODO Add back when tsd supports error ts2739
-  // TODO See https://github.com/tsdjs/tsd/issues/215
-  // expectError(
-  //   <RoomProvider /* no room id */>
-  //     <div />
-  //   </RoomProvider>
-  // );
+  expectError(
+    <RoomProvider /* no room id */>
+      <div />
+    </RoomProvider>
+  );
 
-  // TODO Add back when tsd supports error ts2739
-  // TODO See https://github.com/tsdjs/tsd/issues/215
-  // expectError(
-  //   // Missing initialPresence is an error
-  //   <RoomProvider id="my-room">
-  //     <div />
-  //   </RoomProvider>
-  // );
+  expectError(
+    // Missing initialPresence is an error
+    <RoomProvider id="my-room">
+      <div />
+    </RoomProvider>
+  );
 
   expectError(
     // Missing mandatory initialStorage is an error
@@ -183,22 +179,18 @@ declare global {
   const RoomProvider = suspense.RoomProvider;
 
   // Missing mandatory props is an error
-  // TODO Add back when tsd supports error ts2739
-  // TODO See https://github.com/tsdjs/tsd/issues/215
-  // expectError(
-  //   <RoomProvider /* no room id */>
-  //     <div />
-  //   </RoomProvider>
-  // );
+  expectError(
+    <RoomProvider /* no room id */>
+      <div />
+    </RoomProvider>
+  );
 
-  // TODO Add back when tsd supports error ts2739
-  // TODO See https://github.com/tsdjs/tsd/issues/215
-  // expectError(
-  //   // Missing initialPresence is an error
-  //   <RoomProvider id="my-room">
-  //     <div />
-  //   </RoomProvider>
-  // );
+  expectError(
+    // Missing initialPresence is an error
+    <RoomProvider id="my-room">
+      <div />
+    </RoomProvider>
+  );
 
   expectError(
     // Missing mandatory initialStorage is an error
