@@ -86,7 +86,7 @@ to hear from you.
       export function Room({ children }: { children: ReactNode }) {
         return (
           <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
-            <RoomProvider id="my-room" initialPresence={{}}>
+            <RoomProvider id="my-room">
               <ClientSideSuspense fallback={<div>Loading…</div>}>
                 {children}
               </ClientSideSuspense>

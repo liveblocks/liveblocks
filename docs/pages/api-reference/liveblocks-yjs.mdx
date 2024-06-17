@@ -20,10 +20,10 @@ hear from you.
 
 ## LiveblocksYjsProvider [#LiveblocksYjsProvider]
 
-`LiveblocksYjsProvider` is a [Yjs provider](https://github.com/yjs/yjs#providers)
-that allows you to connect a Yjs document to Liveblocks. Any changes you make to
-the document will be stored on Liveblocks servers and synchronized with other
-clients in the room.
+`LiveblocksYjsProvider` is a
+[Yjs provider](https://github.com/yjs/yjs#providers) that allows you to connect
+a Yjs document to Liveblocks. Any changes you make to the document will be
+stored on Liveblocks servers and synchronized with other clients in the room.
 
 You can connect by creating a Yjs document, then passing it to
 `LiveblocksYjsProvider` along with the currently connected Liveblocks room.
@@ -37,18 +37,16 @@ const client = createClient({
   publicApiKey: "{{PUBLIC_KEY}}",
 });
 
-const { room, leave } = client.enterRoom("your-room-id", {
-  initialPresence: {},
-});
+const { room, leave } = client.enterRoom("your-room-id");
 
 // Create Yjs document and provider
 const yDoc = new Y.Doc();
 const yProvider = new LiveblocksYjsProvider(room, yDoc);
 ```
 
-When using [`@liveblocks/react`][] you can connect by using `LiveblocksYjsProvider`
-within an effect, taking the room from [`useRoom`][], and cleaning up
-afterwards.
+When using [`@liveblocks/react`][] you can connect by using
+`LiveblocksYjsProvider` within an effect, taking the room from [`useRoom`][],
+and cleaning up afterwards.
 
 ```ts highlight="7,10-12"
 import { useEffect } from "react";
@@ -87,8 +85,8 @@ const awareness = yProvider.awareness;
 
 ### LiveblocksYjsProvider.destroy
 
-Cleanup function. Destroys the [`LiveblocksYjsProvider`][] instance and removes all
-resources.
+Cleanup function. Destroys the [`LiveblocksYjsProvider`][] instance and removes
+all resources.
 
 ```ts
 // Clean up yProvider
