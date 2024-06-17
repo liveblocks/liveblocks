@@ -10,7 +10,7 @@ export default function Example() {
   );
 
   return (
-    <RoomProvider id={roomId} initialPresence={{}}>
+    <RoomProvider id={roomId}>
       <main className={styles.main}>
         <LiveAvatars />
       </main>

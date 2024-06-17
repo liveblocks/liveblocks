@@ -68,9 +68,6 @@ const client = createClient({
   authEndpoint: "/api/liveblocks-auth",
 });
 
-// Presence not used in this example
-const initialPresence = {};
-
 let roomId = "liveblocks:examples:nuxtjs-live-avatars";
 
 export default {
@@ -83,7 +80,7 @@ export default {
   mounted() {
     applyExampleRoomId();
 
-    const { room, leave } = client.enterRoom(roomId, { initialPresence });
+    const { room, leave } = client.enterRoom(roomId);
     this._room = room;
     this._leave = leave;
     this._unsubscribeOthers = room.subscribe("others", this.onOthersChange);

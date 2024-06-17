@@ -24,7 +24,7 @@ function Example() {
 
 export default function App({ roomId }: { roomId: string }) {
   return (
-    <RoomProvider id={roomId} initialPresence={{}}>
+    <RoomProvider id={roomId}>
       <ErrorBoundary
         fallback={
           <div className="error">There was an error while getting threads.</div>

@@ -30,7 +30,7 @@ export default function Page() {
   const roomId = useExampleRoomId("liveblocks:examples:nextjs-comments-emails");
 
   return (
-    <RoomProvider id={roomId} initialPresence={{}}>
+    <RoomProvider id={roomId}>
       <ErrorBoundary
         fallback={
           <div className="error">There was an error while getting threads.</div>

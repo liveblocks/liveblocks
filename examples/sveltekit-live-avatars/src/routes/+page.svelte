@@ -45,10 +45,7 @@
       authEndpoint: "/api/liveblocks-auth",
     });
 
-    const info = client.enterRoom<Presence, Storage /* UserMeta, RoomEvent */>(roomId, {
-      initialPresence: {},
-      initialStorage: {},
-    });
+    const info = client.enterRoom<Presence, Storage /* UserMeta, RoomEvent */>(roomId);
 
     room = info.room;
     leave = info.leave;

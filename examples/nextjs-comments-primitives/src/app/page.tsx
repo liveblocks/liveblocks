@@ -47,7 +47,7 @@ export default function Page() {
   );
 
   return (
-    <RoomProvider id={roomId} initialPresence={{}}>
+    <RoomProvider id={roomId}>
       <ErrorBoundary
         fallback={
           <div className="absolute flex h-screen w-screen place-content-center items-center">
