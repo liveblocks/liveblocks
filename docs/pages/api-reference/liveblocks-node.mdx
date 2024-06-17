@@ -663,10 +663,42 @@ const storage = await liveblocks.initializeStorageDocument("my-room-id", {
 ```
 
 LSON is a custom Liveblocks format that preserves information about
-conflict-free data types. Here’s an example of initializing a simple Storage
-value.
+conflict-free data types. The easiest way to create it is using the
+`toPlainLson` helper provided by `@liveblocks/client`. Note that your Storage
+root should always be a `LiveObject`.
 
-```ts highlight="7-9,13-19"
+```ts highlight="11-13,18-20,25"
+import { toPlainLson, LiveList, LiveObject } from "@liveblocks/client";
+
+// Create a new room
+const room = await liveblocks.createRoom("my-room-id", {
+  defaultAccesses: ["room:write"],
+});
+
+// If this were your Storage type...
+declare global {
+  interface Liveblocks {
+    Storage: {
+      names: LiveList<string>;
+    };
+  }
+}
+
+// Create the initial conflict-free data
+const initialStorage: LiveObject<Liveblocks["Storage"]> = new LiveObject({
+  names: new LiveList(["Olivier", "Nimesh"]),
+});
+
+// Convert to LSON and create Storage
+const storage = await liveblocks.initializeStorageDocument(
+  "my-room-id",
+  toPlainLson(initialStorage)
+);
+```
+
+It’s also possible to create LSON manually, without the helper function.
+
+```ts highlight="9-11,17-23"
 // Create a new room
 const room = await liveblocks.createRoom("my-room-id", {
   defaultAccesses: ["room:write"],
@@ -691,38 +723,6 @@ const storage = await liveblocks.initializeStorageDocument("my-room-id", {
     },
   },
 });
-```
-
-Using the `toPlainLson` helper provided by `@liveblocks/client`, you can more
-easily create LSON.
-
-```ts highlight="1,14-16,21"
-import { toPlainLson, LiveList, LiveObject } from "@liveblocks/client";
-
-// Create a new room
-const room = await liveblocks.createRoom("my-room-id", {
-  defaultAccesses: ["room:write"],
-});
-
-// If this were your Storage type...
-declare global {
-  interface Liveblocks {
-    Storage: {
-      names: LiveList<string>;
-    };
-  }
-}
-
-// Create the initial conflict-free data
-const initialStorage: LiveObject<Storage> = new LiveObject({
-  names: new LiveList[("Olivier", "Nimesh")](),
-});
-
-// Convert to LSON and create Storage
-const storage = await liveblocks.initializeStorageDocument(
-  "my-room-id",
-  toPlainLson(initialStorage)
-);
 ```
 
 #### Liveblocks.deleteStorageDocument [#delete-rooms-roomId-storage]
