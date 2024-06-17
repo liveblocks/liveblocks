@@ -214,6 +214,7 @@ async () => {
     expectError(client.editThreadMetadata({ roomId }));
     expectError(client.editThreadMetadata({ threadId }));
     // TODO: Uncomment later, when tsd supports ts2739 error code
+    // TODO See https://github.com/tsdjs/tsd/issues/215
     // expectError(
     //   client.editThreadMetadata({
     //     roomId: "my-room",

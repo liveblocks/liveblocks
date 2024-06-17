@@ -43,7 +43,6 @@ import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
 import { objectToQuery } from "./lib/objectToQuery";
 import { asPos } from "./lib/position";
-import type { Resolve } from "./lib/Resolve";
 import type { QueryParams } from "./lib/url";
 import { urljoin } from "./lib/url";
 import { compact, deepClone, tryParseJson } from "./lib/utils";
@@ -852,7 +851,7 @@ type RoomState<
   readonly others: OthersRef<P, U>;
 
   idFactory: IdFactory | null;
-  initialStorage?: S;
+  initialStorage: S;
 
   clock: number;
   opClock: number;
@@ -896,28 +895,38 @@ export type Polyfills = {
   WebSocket?: IWebSocket;
 };
 
-export type RoomInitializers<
-  P extends JsonObject,
-  S extends LsonObject,
-> = Resolve<{
-  /**
-   * The initial Presence to use and announce when you enter the Room. The
-   * Presence is available on all users in the Room (me & others).
-   */
-  initialPresence: P | ((roomId: string) => P);
-  /**
-   * The initial Storage to use when entering a new Room.
-   */
-  initialStorage?: S | ((roomId: string) => S);
-  /**
-   * Whether or not the room automatically connects to Liveblock servers.
-   * Default is true.
-   *
-   * Usually set to false when the client is used from the server to not call
-   * the authentication endpoint or connect via WebSocket.
-   */
-  autoConnect?: boolean;
-}>;
+/**
+ * Makes all tuple positions optional.
+ * Example, turns:
+ *   [foo: string; bar: number]
+ * into:
+ *   [foo?: string; bar?: number]
+ */
+type OptionalTuple<T extends any[]> = { [K in keyof T]?: T[K] };
+
+/**
+ * Returns Partial<T> if all fields on C are optional, T otherwise.
+ */
+export type PartialUnless<C, T> =
+  Record<string, never> extends C
+    ? Partial<T>
+    : // Extra test. We'll want to treat "never" as if the empty object is
+      // assignable to it, because otherwise it will not
+      [C] extends [never]
+      ? Partial<T>
+      : T;
+
+/**
+ * Returns OptionalTupleUnless<T> if all fields on C are optional, T otherwise.
+ */
+export type OptionalTupleUnless<C, T extends any[]> =
+  Record<string, never> extends C
+    ? OptionalTuple<T>
+    : // Extra test. We'll want to treat "never" as if the empty object is
+      // assignable to it, because otherwise it will not
+      [C] extends [never]
+      ? OptionalTuple<T>
+      : T;
 
 export type RoomDelegates = Omit<Delegates<AuthValue>, "canZombie">;
 
@@ -1348,17 +1357,11 @@ export function createRoom<
   E extends Json,
   M extends BaseMetadata,
 >(
-  options: Omit<RoomInitializers<P, S>, "autoConnect">,
+  options: { initialPresence: P; initialStorage: S },
   config: RoomConfig
 ): Room<P, S, U, E, M> {
-  const initialPresence =
-    typeof options.initialPresence === "function"
-      ? options.initialPresence(config.roomId)
-      : options.initialPresence;
-  const initialStorage =
-    typeof options.initialStorage === "function"
-      ? options.initialStorage(config.roomId)
-      : options.initialStorage;
+  const initialPresence = options.initialPresence; // ?? {};
+  const initialStorage = options.initialStorage; // ?? {};
 
   const [inBackgroundSince, uninstallBgTabSpy] = installBackgroundTabSpy();
 
@@ -2413,6 +2416,7 @@ export function createRoom<
           }
 
           case ServerMsgCode.THREAD_CREATED:
+          case ServerMsgCode.THREAD_DELETED:
           case ServerMsgCode.THREAD_METADATA_UPDATED:
           case ServerMsgCode.COMMENT_REACTION_ADDED:
           case ServerMsgCode.COMMENT_REACTION_REMOVED:

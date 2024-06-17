@@ -7,14 +7,17 @@ meta:
 
 Liveblocks is a realtime collaboration infrastructure for building performant
 collaborative experiences. Follow the following steps to start adding
-collaboration to your React application using the APIs from the
+collaboration to your Next.js application using the APIs from the
 [`@liveblocks/react-lexical`](/docs/api-reference/liveblocks-react-lexicals)
 package.
 
 <Banner title="Next.js 14" type="warning">
 
-  Our Lexical plugin is in beta, and is not currently compatible with Next.js 14.
-  We’re aware of this issue and are looking into a fix.
+Our Lexical plugin is currently in beta and is not compatible with Next.js
+versions 14.2.0 and above. We recommend using Next.js 14.1 or disabling strict
+mode until a new version of Lexical is released. For more details and to follow
+the progress, please refer to the GitHub PR
+[here](https://github.com/facebook/lexical/pull/6271).
 
 </Banner>
 
@@ -189,17 +192,14 @@ to hear from you.
 
   </Step>
   <Step lastStep>
-    <StepTitle>Next: set up authentication</StepTitle>
+    <StepTitle>Next: authenticate and add your users</StepTitle>
     <StepContent>
-      By default, Liveblocks is configured to work without an authentication endpoint
-      where everyone automatically has access to rooms. This approach is great for
-      prototyping and marketing pages where setting up your own security isn’t always
-      required. If you want to limit access to a room for certain users, you’ll need
-      to set up an authentication endpoint to enable permissions.
+      Text Editor is set up and working now, but each user is anonymous—the next step is to
+      authenticate each user as they connect, and attach their name, color, and avatar, to their cursors and mentions.
 
-      <Button asChild className="not-markdown">
-        <a href="/docs/authentication">
-          Set up authentication
+      <Button asChild  className="not-markdown">
+        <a href="/docs/guides/how-to-add-users-to-liveblocks-text-editor">
+          Add your users to Text Editor
         </a>
       </Button>
     </StepContent>
@@ -210,8 +210,9 @@ to hear from you.
 ## What to read next
 
 Congratulations! You now have set up the foundation for your collaborative
-Lexical text editor inside your React application.
+Lexical text editor inside your Next.js application.
 
+- [Overview](/docs/products/text-editor/lexical)
 - [`@liveblocks/lexical-react` API Reference](/docs/api-reference/liveblocks-lexical-react)
 - [`@liveblocks/node-lexical` API Reference](/docs/api-reference/node-lexical)
 - [Lexical website](https://lexical.dev/)

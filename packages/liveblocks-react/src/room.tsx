@@ -668,28 +668,29 @@ function RoomProvider<
   // Produce a version of client.enterRoom() that when called for the same
   // room ID multiple times, will not keep producing multiple leave
   // functions, but instead return the cached one.
-  const stableEnterRoom = React.useCallback(
-    (
-      roomId: string,
-      options: EnterOptions<P, S>
-    ): RoomLeavePair<P, S, U, E, M> => {
-      const cached = cache.get(roomId);
-      if (cached) return cached;
+  const stableEnterRoom: typeof client.enterRoom<P, S, E, M> =
+    React.useCallback(
+      (
+        roomId: string,
+        options: EnterOptions<P, S>
+      ): RoomLeavePair<P, S, U, E, M> => {
+        const cached = cache.get(roomId);
+        if (cached) return cached;
 
-      const rv = client.enterRoom<P, S, E, M>(roomId, options);
+        const rv = client.enterRoom<P, S, E, M>(roomId, options);
 
-      // Wrap the leave function to also delete the cached value
-      const origLeave = rv.leave;
-      rv.leave = () => {
-        origLeave();
-        cache.delete(roomId);
-      };
+        // Wrap the leave function to also delete the cached value
+        const origLeave = rv.leave;
+        rv.leave = () => {
+          origLeave();
+          cache.delete(roomId);
+        };
 
-      cache.set(roomId, rv);
-      return rv;
-    },
-    [client, cache]
-  );
+        cache.set(roomId, rv);
+        return rv;
+      },
+      [client, cache]
+    );
 
   //
   // RATIONALE:
@@ -710,8 +711,24 @@ function RoomProvider<
   // use by some party that hasn't called `leave()` on it yet, thus causing the
   // Room to not be freed and destroyed when the component unmounts later.
   //
-  return <RoomProviderInner {...props} stableEnterRoom={stableEnterRoom} />;
+  return (
+    <RoomProviderInner<P, S, U, E, M>
+      {...(props as any)}
+      stableEnterRoom={stableEnterRoom}
+    />
+  );
 }
+
+type EnterRoomType<
+  P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
+  M extends BaseMetadata,
+> = (
+  roomId: string,
+  options: EnterOptions<P, S>
+) => RoomLeavePair<P, S, U, E, M>;
 
 /** @internal */
 function RoomProviderInner<
@@ -722,13 +739,10 @@ function RoomProviderInner<
   M extends BaseMetadata,
 >(
   props: RoomProviderProps<P, S> & {
-    stableEnterRoom: (
-      roomId: string,
-      options: EnterOptions<P, S>
-    ) => RoomLeavePair<P, S, U, E, M>;
+    stableEnterRoom: EnterRoomType<P, S, U, E, M>;
   }
 ) {
-  const client = useClient();
+  const client = useClient<U>();
   const { id: roomId, stableEnterRoom } = props;
 
   if (process.env.NODE_ENV !== "production") {
@@ -761,7 +775,7 @@ function RoomProviderInner<
     initialStorage: props.initialStorage,
     unstable_batchedUpdates: props.unstable_batchedUpdates,
     autoConnect: props.autoConnect ?? typeof window !== "undefined",
-  });
+  }) as EnterOptions<P, S>;
 
   const [{ room }, setRoomLeavePair] = React.useState(() =>
     stableEnterRoom(roomId, {
@@ -774,6 +788,13 @@ function RoomProviderInner<
     const { store } = getExtrasForClient(client);
 
     async function handleCommentEvent(message: CommentsEventServerMsg) {
+      // If thread deleted event is received, we remove the thread from the local cache
+      // no need for more processing
+      if (message.type === ServerMsgCode.THREAD_DELETED) {
+        store.deleteThread(message.threadId);
+        return;
+      }
+
       // TODO: Error handling
       const info = await room[kInternal].comments.getThread({
         threadId: message.threadId,

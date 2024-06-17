@@ -13,15 +13,15 @@ import type { LiveObject } from "../src/crdts/LiveObject";
 import type { LsonObject } from "../src/crdts/Lson";
 import type { ToImmutable } from "../src/crdts/utils";
 import { createClient } from "../src/client";
-import type { BaseMetadata } from "../src";
+import type { BaseMetadata, NoInfr } from "../src";
 
 async function initializeRoomForTest<
-  P extends JsonObject,
-  S extends LsonObject,
-  U extends BaseUserMeta,
-  E extends Json,
-  M extends BaseMetadata,
->(roomId: string, initialPresence: P, initialStorage?: S) {
+  P extends JsonObject = JsonObject,
+  S extends LsonObject = LsonObject,
+  U extends BaseUserMeta = BaseUserMeta,
+  E extends Json = Json,
+  M extends BaseMetadata = BaseMetadata,
+>(roomId: string, initialPresence: NoInfr<P>, initialStorage: NoInfr<S>) {
   const publicApiKey = process.env.LIVEBLOCKS_PUBLIC_KEY;
 
   if (publicApiKey == null) {
@@ -73,7 +73,7 @@ async function initializeRoomForTest<
   const { room, leave } = client.enterRoom<P, S, E, M>(roomId, {
     initialPresence,
     initialStorage,
-  });
+  } as any);
   await waitUntilStatus(room, "connected");
 
   return {
@@ -96,8 +96,8 @@ export function prepareTestsConflicts<S extends LsonObject>(
   callback: (args: {
     root1: LiveObject<S>;
     root2: LiveObject<S>;
-    room2: Room<never, S, never, never, never>;
-    room1: Room<never, S, never, never, never>;
+    room2: Room<JsonObject, S>;
+    room1: Room<JsonObject, S>;
 
     /**
      * Assert that room1 and room2 storage are equal to the provided immutable
@@ -115,14 +115,15 @@ export function prepareTestsConflicts<S extends LsonObject>(
   return async () => {
     const roomName = "storage-requirements-e2e-tests-" + new Date().getTime();
 
-    const actor1 = await initializeRoomForTest<never, S, never, never, never>(
+    const actor1 = await initializeRoomForTest<JsonObject, S>(
       roomName,
-      {} as never,
+      {},
       initialStorage
     );
-    const actor2 = await initializeRoomForTest<never, S, never, never, never>(
+    const actor2 = await initializeRoomForTest<JsonObject, S>(
       roomName,
-      {} as never
+      {},
+      {} as S
     );
 
     const { root: root1 } = await actor1.room.getStorage();
