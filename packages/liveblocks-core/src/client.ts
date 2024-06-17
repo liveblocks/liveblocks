@@ -408,7 +408,10 @@ export function createClient<U extends BaseUserMeta = DU>(
     M extends BaseMetadata,
   >(
     roomId: string,
-    options: EnterOptions<NoInfr<P>, NoInfr<S>>
+    ...args: OptionalTupleUnless<
+      P & S,
+      [options: EnterOptions<NoInfr<P>, NoInfr<S>>]
+    >
   ): {
     room: Room<P, S, U, E, M>;
     leave: () => void;
@@ -418,6 +421,7 @@ export function createClient<U extends BaseUserMeta = DU>(
       return leaseRoom(existing);
     }
 
+    const options = args[0] ?? ({} as EnterOptions<P, S>);
     const initialPresence =
       (typeof options.initialPresence === "function"
         ? options.initialPresence(roomId)
