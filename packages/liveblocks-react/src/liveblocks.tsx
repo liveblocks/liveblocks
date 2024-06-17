@@ -325,6 +325,7 @@ function makeLiveblocksContextBundle<
   // NOTE: This version of the LiveblocksProvider does _not_ take any props.
   // This is because we already have a client bound to it.
   function LiveblocksProvider(props: PropsWithChildren) {
+    useEnsureNoLiveblocksProvider();
     return (
       <ClientContext.Provider value={client}>
         {props.children}
@@ -742,6 +743,18 @@ export function createSharedContext<U extends BaseUserMeta>(
 /**
  * @private This is an internal API.
  */
+function useEnsureNoLiveblocksProvider() {
+  const existing = useClientOrNull();
+  if (existing !== null) {
+    throw new Error(
+      "You can have at most one LiveblocksProvider in your React tree. Nesting is not supported."
+    );
+  }
+}
+
+/**
+ * @private This is an internal API.
+ */
 export function useClientOrNull<U extends BaseUserMeta>() {
   return useContext(ClientContext) as Client<U> | null;
 }
@@ -762,6 +775,7 @@ export function useClient<U extends BaseUserMeta>() {
 export function LiveblocksProviderWithClient(
   props: PropsWithChildren<{ client: OpaqueClient }>
 ) {
+  useEnsureNoLiveblocksProvider();
   return (
     <ClientContext.Provider value={props.client}>
       {props.children}

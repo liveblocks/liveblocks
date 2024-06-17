@@ -9,6 +9,7 @@
 
 - In `<RoomProvider>`, the props `initialPresence` and `initialStorage` are now
   only mandatory if your custom type requires them to be.
+- Nesting `<LiveblocksProvider>`s will now throw to prevent incorrect usage.
 
 ### `@liveblocks/react-ui`
 
