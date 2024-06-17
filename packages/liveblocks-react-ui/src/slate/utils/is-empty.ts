@@ -4,11 +4,6 @@ import { Editor as SlateEditor, Text as SlateText } from "slate";
 import { isEmptyString } from "./is-empty-string";
 
 export function isEmpty(editor: SlateEditor, children: Descendant[]) {
-  // No children
-  if (children.length === 0) {
-    return true;
-  }
-
   // Check if all blocks are empty, stopping at the first non-empty block
   for (const child of children) {
     if (SlateText.isText(child)) {
