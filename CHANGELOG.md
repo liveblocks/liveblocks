@@ -1,3 +1,15 @@
+## v2.0.3 (not released yet)
+
+### `@liveblocks/client`
+
+- In `client.enterRoom()`, the options `initialPresence` and `initialStorage`
+  are now only mandatory if your custom type requires them to be.
+
+### `@liveblocks/react`
+
+- In `<RoomProvider>`, the props `initialPresence` and `initialStorage` are now
+  only mandatory if your custom type requires them to be.
+
 ## v2.0.2
 
 ### `@liveblocks/node`

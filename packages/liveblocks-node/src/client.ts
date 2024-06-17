@@ -21,6 +21,8 @@ import type {
   Json,
   JsonObject,
   LsonObject,
+  OptionalTupleUnless,
+  PartialUnless,
   Patchable,
   PlainLsonObject,
   QueryMetadata,
@@ -73,14 +75,12 @@ type DateToString<T> = {
 };
 
 export type CreateSessionOptions<U extends BaseUserMeta = DU> =
-  Record<string, never> extends U["info"]
-    ? { userInfo?: U["info"] }
-    : { userInfo: U["info"] };
+  //
+  PartialUnless<U["info"], { userInfo: U["info"] }>;
 
 export type IdentifyUserOptions<U extends BaseUserMeta = DU> =
-  Record<string, never> extends U["info"]
-    ? { userInfo?: U["info"] }
-    : { userInfo: U["info"] };
+  //
+  PartialUnless<U["info"], { userInfo: U["info"] }>;
 
 export type AuthResponse = {
   status: number;
@@ -101,7 +101,7 @@ export type CreateThreadOptions<M extends BaseMetadata> = {
   roomId: string;
   data: {
     comment: { userId: string; createdAt?: Date; body: CommentBody };
-  } & (Record<string, never> extends M ? { metadata?: M } : { metadata: M });
+  } & PartialUnless<M, { metadata: M }>;
 };
 
 export type RoomPermission =
@@ -267,9 +267,10 @@ export class Liveblocks {
    */
   prepareSession(
     userId: string,
-    ...rest: Record<string, never> extends CreateSessionOptions<U>
-      ? [options?: CreateSessionOptions<U>]
-      : [options: CreateSessionOptions<U>]
+    ...rest: OptionalTupleUnless<
+      CreateSessionOptions<U>,
+      [options: CreateSessionOptions<U>]
+    >
   ): Session {
     const options = rest[0];
     return new Session(this.post.bind(this), userId, options?.userInfo);
@@ -312,9 +313,10 @@ export class Liveblocks {
     identity:
       | string // Shorthand for userId
       | Identity,
-    ...rest: Record<string, never> extends IdentifyUserOptions<U>
-      ? [options?: IdentifyUserOptions<U>]
-      : [options: IdentifyUserOptions<U>]
+    ...rest: OptionalTupleUnless<
+      IdentifyUserOptions<U>,
+      [options: IdentifyUserOptions<U>]
+    >
   ): Promise<AuthResponse> {
     const options = rest[0];
 

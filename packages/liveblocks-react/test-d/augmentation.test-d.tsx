@@ -1,7 +1,7 @@
 import * as React from "react";
 React; // To silence tsd warning
 
-import type { LiveList, LiveMap, LiveObject } from "@liveblocks/core";
+import { LiveList, LiveMap, LiveObject } from "@liveblocks/core";
 import * as classic from "@liveblocks/react";
 import * as suspense from "@liveblocks/react/suspense";
 import { expectAssignable, expectError, expectType } from "tsd";
@@ -99,6 +99,160 @@ declare global {
     authEndpoint="/api/auth"
     resolveUsers={async () => [{ name: "Vincent", age: 42 }]}
   />;
+}
+
+// RoomProvider
+{
+  const RoomProvider = classic.RoomProvider;
+
+  // Missing mandatory props is an error
+  // TODO Add back when tsd supports error ts2739
+  // TODO See https://github.com/tsdjs/tsd/issues/215
+  // expectError(
+  //   <RoomProvider /* no room id */>
+  //     <div />
+  //   </RoomProvider>
+  // );
+
+  // TODO Add back when tsd supports error ts2739
+  // TODO See https://github.com/tsdjs/tsd/issues/215
+  // expectError(
+  //   // Missing initialPresence is an error
+  //   <RoomProvider id="my-room">
+  //     <div />
+  //   </RoomProvider>
+  // );
+
+  expectError(
+    // Missing mandatory initialStorage is an error
+    <RoomProvider id="my-room" initialPresence={{ cursor: { x: 0, y: 0 } }}>
+      <div />
+    </RoomProvider>
+  );
+
+  expectError(
+    // Missing mandatory initialPresence is an error
+    <RoomProvider
+      id="my-room"
+      initialStorage={{
+        animals: new LiveList([]),
+        person: new LiveObject(),
+        scores: new LiveMap(),
+      }}
+    >
+      <div />
+    </RoomProvider>
+  );
+
+  expectError(
+    // Missing mandatory initialStorage
+    <RoomProvider id="my-room" initialPresence={{ cursor: { x: 0, y: 0 } }}>
+      <div />
+    </RoomProvider>
+  );
+
+  expectError(
+    <RoomProvider
+      id="my-room"
+      initialPresence={{ cursor: { x: 0, y: 0 } }}
+      initialStorage={{
+        // Incorrect storage shape
+        foo: new LiveList([]),
+        bar: new LiveObject(),
+      }}
+    >
+      <div />
+    </RoomProvider>
+  );
+
+  <RoomProvider
+    id="my-room"
+    initialPresence={{ cursor: { x: 0, y: 0 } }}
+    initialStorage={{
+      animals: new LiveList([]),
+      person: new LiveObject(),
+      scores: new LiveMap(),
+    }}
+  >
+    <div />
+  </RoomProvider>;
+}
+
+// RoomProvider (suspense)
+{
+  const RoomProvider = suspense.RoomProvider;
+
+  // Missing mandatory props is an error
+  // TODO Add back when tsd supports error ts2739
+  // TODO See https://github.com/tsdjs/tsd/issues/215
+  // expectError(
+  //   <RoomProvider /* no room id */>
+  //     <div />
+  //   </RoomProvider>
+  // );
+
+  // TODO Add back when tsd supports error ts2739
+  // TODO See https://github.com/tsdjs/tsd/issues/215
+  // expectError(
+  //   // Missing initialPresence is an error
+  //   <RoomProvider id="my-room">
+  //     <div />
+  //   </RoomProvider>
+  // );
+
+  expectError(
+    // Missing mandatory initialStorage is an error
+    <RoomProvider id="my-room" initialPresence={{ cursor: { x: 0, y: 0 } }}>
+      <div />
+    </RoomProvider>
+  );
+
+  expectError(
+    // Missing mandatory initialPresence is an error
+    <RoomProvider
+      id="my-room"
+      initialStorage={{
+        animals: new LiveList([]),
+        person: new LiveObject(),
+        scores: new LiveMap(),
+      }}
+    >
+      <div />
+    </RoomProvider>
+  );
+
+  expectError(
+    // Missing mandatory initialStorage
+    <RoomProvider id="my-room" initialPresence={{ cursor: { x: 0, y: 0 } }}>
+      <div />
+    </RoomProvider>
+  );
+
+  expectError(
+    <RoomProvider
+      id="my-room"
+      initialPresence={{ cursor: { x: 0, y: 0 } }}
+      initialStorage={{
+        // Incorrect storage shape
+        foo: new LiveList([]),
+        bar: new LiveObject(),
+      }}
+    >
+      <div />
+    </RoomProvider>
+  );
+
+  <RoomProvider
+    id="my-room"
+    initialPresence={{ cursor: { x: 0, y: 0 } }}
+    initialStorage={{
+      animals: new LiveList([]),
+      person: new LiveObject(),
+      scores: new LiveMap(),
+    }}
+  >
+    <div />
+  </RoomProvider>;
 }
 
 // ---------------------------------------------------------
