@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/react",
-  "version": "2.0.3-test1",
+  "version": "2.0.3-test2",
   "description": "A set of React hooks and providers to use Liveblocks declaratively. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
   "type": "commonjs",
@@ -47,8 +47,8 @@
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
   "dependencies": {
-    "@liveblocks/client": "2.0.3-test1",
-    "@liveblocks/core": "2.0.3-test1",
+    "@liveblocks/client": "2.0.3-test2",
+    "@liveblocks/core": "2.0.3-test2",
     "nanoid": "^3",
     "use-sync-external-store": "^1.2.2"
   },
