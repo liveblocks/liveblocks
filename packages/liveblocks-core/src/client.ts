@@ -83,13 +83,32 @@ export type ResolveRoomsInfoArgs = {
   roomIds: string[];
 };
 
-export type EnterOptions<
-  P extends JsonObject = DP,
-  S extends LsonObject = DS,
-> = Resolve<
-  // XXX Maybe inline RoomInitializers<P, S> here again later?
-  // Enter options are just room initializers, plus an internal option
-  PartialUnless<
+export type EnterOptions<P extends JsonObject = DP, S extends LsonObject = DS> =
+  // prettier-ignore
+  Resolve<
+  {
+    /**
+     * Whether or not the room automatically connects to Liveblock servers.
+     * Default is true.
+     *
+     * Usually set to false when the client is used from the server to not call
+     * the authentication endpoint or connect via WebSocket.
+     */
+    autoConnect?: boolean;
+
+    /**
+     * Only necessary when you’re using Liveblocks with React v17 or lower.
+     *
+     * If so, pass in a reference to `ReactDOM.unstable_batchedUpdates` here.
+     * This will allow Liveblocks to circumvent the so-called "zombie child
+     * problem". To learn more, see
+     * https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child
+     */
+    unstable_batchedUpdates?: (cb: () => void) => void;
+  }
+
+  // Initial presence is only mandatory if the custom type requires it to be
+  & PartialUnless<
     P,
     {
       /**
@@ -98,36 +117,18 @@ export type EnterOptions<
        */
       initialPresence: P | ((roomId: string) => P);
     }
-  > &
-    PartialUnless<
-      S,
-      {
-        /**
-         * The initial Storage to use when entering a new Room.
-         */
-        initialStorage: S | ((roomId: string) => S);
-      }
-    > & {
+  >
+  
+  // Initial storage is only mandatory if the custom type requires it to be
+  & PartialUnless<
+    S,
+    {
       /**
-       * Whether or not the room automatically connects to Liveblock servers.
-       * Default is true.
-       *
-       * Usually set to false when the client is used from the server to not call
-       * the authentication endpoint or connect via WebSocket.
+       * The initial Storage to use when entering a new Room.
        */
-      autoConnect?: boolean;
-    } & {
-      // ------------------------------------------------------------------------
-      /**
-       * Only necessary when you’re using Liveblocks with React v17 or lower.
-       *
-       * If so, pass in a reference to `ReactDOM.unstable_batchedUpdates` here.
-       * This will allow Liveblocks to circumvent the so-called "zombie child
-       * problem". To learn more, see
-       * https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child
-       */
-      unstable_batchedUpdates?: (cb: () => void) => void;
+      initialStorage: S | ((roomId: string) => S);
     }
+  >
 >;
 
 /**

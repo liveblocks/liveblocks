@@ -233,11 +233,9 @@ export type RoomNotificationSettingsState =
   | RoomNotificationSettingsStateError
   | RoomNotificationSettingsStateSuccess;
 
-// XXX Fix this later
-export type RoomProviderProps<
-  P extends JsonObject,
-  S extends LsonObject,
-> = Resolve<
+export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
+  // prettier-ignore
+  Resolve<
   {
     /**
      * The id of the room you want to connect to
@@ -270,7 +268,10 @@ export type RoomProviderProps<
      * Not necessary when you're on React v18 or later.
      */
     unstable_batchedUpdates?: (cb: () => void) => void;
-  } & PartialUnless<
+  }
+
+  // Initial presence is only mandatory if the custom type requires it to be
+  & PartialUnless<
     P,
     {
       /**
@@ -279,16 +280,18 @@ export type RoomProviderProps<
        */
       initialPresence: P | ((roomId: string) => P);
     }
-  > &
-    PartialUnless<
-      S,
-      {
-        /**
-         * The initial Storage to use when entering a new Room.
-         */
-        initialStorage: S | ((roomId: string) => S);
-      }
-    >
+  >
+
+  // Initial storage is only mandatory if the custom type requires it to be
+  & PartialUnless<
+    S,
+    {
+      /**
+       * The initial Storage to use when entering a new Room.
+       */
+      initialStorage: S | ((roomId: string) => S);
+    }
+  >
 >;
 
 /**
