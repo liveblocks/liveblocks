@@ -73,9 +73,7 @@ hear from you.
 
       onMount(() => {
         // Enter a multiplayer room
-        const { room, leave } = client.enterRoom("my-room", {
-          initialPresence: {},
-        });
+        const { room, leave } = client.enterRoom("my-room");
 
         // Set up Yjs document, shared text, undo manager, and Liveblocks Yjs provider
         const yDoc = new Y.Doc();

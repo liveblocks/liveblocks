@@ -72,9 +72,7 @@ hear from you.
       });
 
       // Enter a multiplayer room
-      const info = client.enterRoom("my-room", {
-        initialPresence: {},
-      });
+      const info = client.enterRoom("my-room");
       const room = info.room;
       leave.value = info.leave;
 

@@ -11,11 +11,7 @@ function App({ Component, pageProps }) {
     <LiveblocksProvider
       publicApiKey={process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY}
     >
-      <RoomProvider
-        id={roomId}
-        initialPresence={{}}
-        initialStorage={{ colors: new LiveObject() }}
-      >
+      <RoomProvider id={roomId} initialStorage={{ colors: new LiveObject() }}>
         <Head>
           <title>Liveblocks</title>
           <meta name="robots" content="noindex" />

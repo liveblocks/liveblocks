@@ -59,7 +59,7 @@ collaboration to your React application using the hooks from the
       export default function App() {
         return (
           <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
-            <RoomProvider id="my-room" initialPresence={{}}>
+            <RoomProvider id="my-room">
               {/* ... */}
             </RoomProvider>
           </LiveblocksProvider>
@@ -90,7 +90,7 @@ collaboration to your React application using the hooks from the
       export default function App() {
         return (
           <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
-            <RoomProvider id="my-room" initialPresence={{}}>
+            <RoomProvider id="my-room">
               <ClientSideSuspense fallback={<div>Loading…</div>}>
                 <Room />
               </ClientSideSuspense>

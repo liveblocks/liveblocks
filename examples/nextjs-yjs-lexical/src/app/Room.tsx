@@ -10,7 +10,7 @@ export function Room({ children }: { children: ReactNode }) {
   const roomId = useExampleRoomId("liveblocks:examples:nextjs-yjs-lexical");
 
   return (
-    <RoomProvider id={roomId} initialPresence={{}}>
+    <RoomProvider id={roomId}>
       <ClientSideSuspense fallback={<Loading />}>{children}</ClientSideSuspense>
     </RoomProvider>
   );
