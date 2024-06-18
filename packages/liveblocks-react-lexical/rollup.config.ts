@@ -65,7 +65,7 @@ function createMainConfig(format: "cjs" | "esm"): RollupOptions {
       replace({
         values: {
           __VERSION__: JSON.stringify(pkg.version),
-          TSUP_FORMAT: JSON.stringify(format),
+          ROLLUP_FORMAT: JSON.stringify(format),
         },
         preventAssignment: true,
       }),
