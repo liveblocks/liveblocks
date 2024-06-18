@@ -3,7 +3,7 @@
  * This is because this package is made to be used in Node.js, and
  * @liveblocks/core has browser-specific code.
  */
-import type {
+import {
   ActivityData,
   BaseMetadata,
   BaseUserMeta,
@@ -20,6 +20,7 @@ import type {
   InboxNotificationDataPlain,
   Json,
   JsonObject,
+  LiveObject,
   LsonObject,
   OptionalTupleUnless,
   PartialUnless,
@@ -30,6 +31,7 @@ import type {
   ThreadData,
   ThreadDataPlain,
   ToImmutable,
+  toPlainLson,
 } from "@liveblocks/core";
 import {
   convertToCommentData,
@@ -705,9 +707,11 @@ export class Liveblocks {
    */
   public async initializeStorageDocument(
     roomId: string,
-    document: PlainLsonObject
+    document: LiveObject<S> | PlainLsonObject
   ): Promise<PlainLsonObject> {
-    const res = await this.post(url`/v2/rooms/${roomId}/storage`, document);
+    const doc =
+      document instanceof LiveObject ? toPlainLson(document) : document;
+    const res = await this.post(url`/v2/rooms/${roomId}/storage`, doc);
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
