@@ -1,3 +1,10 @@
+## v2.0.4 (not released yet)
+
+### `@liveblocks/node`
+
+- Fix `client.initializeStorageDocument()` which can now take a `LiveObject`
+  instance directly.
+
 ## v2.0.3
 
 ### `@liveblocks/client`
