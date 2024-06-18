@@ -1,12 +1,13 @@
 import { expectError, expectType } from "tsd";
 import { Liveblocks } from "../src/client";
+import { LiveList, PlainLson } from "@liveblocks/core";
+import { LiveObject } from "@liveblocks/core";
 import type {
-  CommentReaction,
   CommentBody,
   CommentBodyBlockElement,
   CommentData,
+  CommentReaction,
   Json,
-  PlainLson,
   JsonObject,
 } from "@liveblocks/core";
 
@@ -293,5 +294,16 @@ async () => {
     expectType<string>(reaction.emoji);
     expectType<string>(reaction.userId);
     expectType<Date>(reaction.createdAt);
+  }
+
+  // .initializeStorageDocument()
+  {
+    const storage = await client.initializeStorageDocument(
+      "my-room",
+      new LiveObject({ animals: new LiveList(["🦊"]) })
+    );
+
+    expectType<"LiveObject">(storage.liveblocksType);
+    expectType<PlainLson | undefined>(storage.data["field"]);
   }
 };

@@ -5,11 +5,9 @@ import type {
   CommentBody,
   CommentBodyBlockElement,
   CommentData,
-  LiveList,
-  LiveMap,
-  LiveObject,
   PlainLson,
 } from "@liveblocks/core";
+import { LiveList, LiveMap, LiveObject } from "@liveblocks/core";
 
 //
 // User-provided type augmentations
@@ -356,5 +354,28 @@ async () => {
     expectType<string>(reaction.emoji);
     expectType<string>(reaction.userId);
     expectType<Date>(reaction.createdAt);
+  }
+
+  // .initializeStorageDocument()
+  {
+    // Missing fields
+    expectError(
+      await client.initializeStorageDocument(
+        "my-room",
+        new LiveObject({ animals: new LiveList(["🦊"]) })
+      )
+    );
+
+    const storage = await client.initializeStorageDocument(
+      "my-room",
+      new LiveObject({
+        animals: new LiveList(["🦊"]),
+        person: new LiveObject({ name: "Vincent", age: 42 }),
+        scores: new LiveMap(),
+      })
+    );
+
+    expectType<"LiveObject">(storage.liveblocksType);
+    expectType<PlainLson | undefined>(storage.data["field"]);
   }
 };
