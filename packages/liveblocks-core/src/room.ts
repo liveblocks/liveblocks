@@ -1198,7 +1198,7 @@ function createCommentsApi<M extends BaseMetadata>(
   }
 
   async function deleteThread({ threadId }: { threadId: string }) {
-    await fetchCommentsApi(`/threads/${encodeURIComponent(threadId)}`, {
+    await fetchJson(`/threads/${encodeURIComponent(threadId)}`, {
       method: "DELETE",
     });
   }
