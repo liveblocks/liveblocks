@@ -1,9 +1,4 @@
-/**
- * NOTE: only types should be imported from @liveblocks/core.
- * This is because this package is made to be used in Node.js, and
- * @liveblocks/core has browser-specific code.
- */
-import {
+import type {
   ActivityData,
   BaseMetadata,
   BaseUserMeta,
@@ -20,7 +15,6 @@ import {
   InboxNotificationDataPlain,
   Json,
   JsonObject,
-  LiveObject,
   LsonObject,
   OptionalTupleUnless,
   PartialUnless,
@@ -31,14 +25,15 @@ import {
   ThreadData,
   ThreadDataPlain,
   ToImmutable,
-  toPlainLson,
 } from "@liveblocks/core";
 import {
   convertToCommentData,
   convertToCommentUserReaction,
   convertToInboxNotificationData,
   convertToThreadData,
+  LiveObject,
   objectToQuery,
+  toPlainLson,
 } from "@liveblocks/core";
 
 import { Session } from "./Session";
