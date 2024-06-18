@@ -2,6 +2,7 @@
 
 ### `@liveblocks/client`
 
+- Add missing type export for `CommentReaction`
 - Don’t attempt to write missing initialStorage keys if the current user has no
   write access to storage. This will no longer throw, but issue a warning
   message in the console.
