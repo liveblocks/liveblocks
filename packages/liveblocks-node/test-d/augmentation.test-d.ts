@@ -57,9 +57,7 @@ async () => {
   {
     expectError(await client.prepareSession("user-123"));
     expectError(await client.prepareSession("user-123", {}));
-    // TODO: Re-enable this when tsd supports the TS2739 error
-    // TODO See https://github.com/tsdjs/tsd/issues/215
-    // expectError(await client.prepareSession("user-123", { userInfo: {} }));
+    expectError(await client.prepareSession("user-123", { userInfo: {} }));
     expectError(
       await client.prepareSession("user-123", { userInfo: { name: "Vincent" } })
     );
@@ -91,9 +89,7 @@ async () => {
   {
     expectError(await client.identifyUser("user-123"));
     expectError(await client.identifyUser("user-123", {}));
-    // TODO: Re-enable this when tsd supports the TS2739 error
-    // TODO See https://github.com/tsdjs/tsd/issues/215
-    // expectError(await client.identifyUser("user-123", { userInfo: {} }));
+    expectError(await client.identifyUser("user-123", { userInfo: {} }));
     expectError(
       await client.identifyUser("user-123", { userInfo: { name: "Vincent" } })
     );
@@ -266,15 +262,13 @@ async () => {
     // Invalid calls
     expectError(client.editThreadMetadata({ roomId }));
     expectError(client.editThreadMetadata({ threadId }));
-    // TODO: Uncomment later, when tsd supports ts2739 error code
-    // TODO See https://github.com/tsdjs/tsd/issues/215
-    // expectError(
-    //   client.editThreadMetadata({
-    //     roomId: "my-room",
-    //     threadId: "th_xxx",
-    //     data: {},
-    //   })
-    // );
+    expectError(
+      client.editThreadMetadata({
+        roomId: "my-room",
+        threadId: "th_xxx",
+        data: {},
+      })
+    );
     expectError(
       client.editThreadMetadata({ roomId, threadId, data: { userId } })
     );

@@ -118,22 +118,18 @@ const ctx = createRoomContext<P, S, U, E, M>(client);
   const RoomProvider = ctx.RoomProvider;
 
   // Missing mandatory props is an error
-  // TODO Add back when tsd supports error ts2739
-  // TODO See https://github.com/tsdjs/tsd/issues/215
-  // expectError(
-  //   <RoomProvider>
-  //     <div />
-  //   </RoomProvider>
-  // );
+  expectError(
+    <RoomProvider>
+      <div />
+    </RoomProvider>
+  );
 
-  // TODO Add back when tsd supports error ts2739
-  // TODO See https://github.com/tsdjs/tsd/issues/215
-  // expectError(
-  //   // Missing mandatory initialPresence + initialStorage
-  //   <RoomProvider id="my-room">
-  //     <div />
-  //   </RoomProvider>
-  // );
+  expectError(
+    // Missing mandatory initialPresence + initialStorage
+    <RoomProvider id="my-room">
+      <div />
+    </RoomProvider>
+  );
 
   expectError(
     // Missing mandatory initialStorage
@@ -188,21 +184,17 @@ const ctx = createRoomContext<P, S, U, E, M>(client);
   const RoomProvider = ctx.suspense.RoomProvider;
 
   // Missing mandatory props is an error
-  // TODO Add back when tsd supports error ts2739
-  // TODO See https://github.com/tsdjs/tsd/issues/215
-  // expectError(
-  //   <RoomProvider>
-  //     <div />
-  //   </RoomProvider>
-  // );
+  expectError(
+    <RoomProvider>
+      <div />
+    </RoomProvider>
+  );
 
-  // TODO Add back when tsd supports error ts2739
-  // TODO See https://github.com/tsdjs/tsd/issues/215
-  // expectError(
-  //   <RoomProvider id="my-room">
-  //     <div />
-  //   </RoomProvider>
-  // );
+  expectError(
+    <RoomProvider id="my-room">
+      <div />
+    </RoomProvider>
+  );
 
   expectError(
     // Missing mandatory initialStorage
