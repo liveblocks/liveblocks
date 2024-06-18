@@ -47,6 +47,8 @@ export function CustomNotifications() {
 }
 
 function SendNotificationButtons() {
+  // These notifications are sent to the current user
+  // with `self.id`, but they can go to any user ID
   const self = useSelf();
 
   return (

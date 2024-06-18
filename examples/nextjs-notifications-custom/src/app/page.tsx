@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { LiveblocksProvider, RoomProvider } from "@liveblocks/react/suspense";
 import { CustomNotifications } from "../components/CustomNotifications";
+import { authWithExampleId } from "../example";
 
 export default function Page() {
   const roomId = useExampleRoomId(
@@ -12,7 +13,7 @@ export default function Page() {
 
   return (
     <LiveblocksProvider
-      authEndpoint="/api/liveblocks-auth"
+      authEndpoint={authWithExampleId("/api/liveblocks-auth")}
       resolveUsers={async ({ userIds }) => {
         // Get users' info from their ID
         const searchParams = new URLSearchParams(

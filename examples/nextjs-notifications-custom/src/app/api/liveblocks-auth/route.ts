@@ -1,6 +1,7 @@
 import { Liveblocks } from "@liveblocks/node";
 import { NextRequest } from "next/server";
 import { getUser } from "../../../database";
+import { getExampleUserId } from "../../../example";
 
 // Authenticating your Liveblocks application
 // https://liveblocks.io/docs/authentication
@@ -17,9 +18,11 @@ export async function POST(request: NextRequest) {
     return new Response("User not found", { status: 404 });
   }
 
+  const userId = await getExampleUserId(user.id, request);
+
   // Create a session for the current user
   // userInfo is made available in Liveblocks presence hooks, e.g. useOthers
-  const session = liveblocks.prepareSession(`${user.id}`, {
+  const session = liveblocks.prepareSession(userId, {
     userInfo: user.info,
   });
 
