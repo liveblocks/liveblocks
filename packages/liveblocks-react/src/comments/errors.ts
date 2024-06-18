@@ -16,6 +16,19 @@ export class CreateThreadError<M extends BaseMetadata> extends Error {
   }
 }
 
+export class DeleteThreadError extends Error {
+  constructor(
+    public cause: Error,
+    public context: {
+      roomId: string;
+      threadId: string;
+    }
+  ) {
+    super("Delete thread failed.");
+    this.name = "DeleteThreadError";
+  }
+}
+
 export class EditThreadMetadataError<M extends BaseMetadata> extends Error {
   constructor(
     public cause: Error,
