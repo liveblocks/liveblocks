@@ -29,7 +29,7 @@ function atobPolyfillMock(data: string): string {
 
 function enterAndLeave(options: ClientOptions) {
   const client = createClient(options);
-  const { room: _, leave } = client.enterRoom("room", { initialPresence: {} });
+  const { room: _, leave } = client.enterRoom("room");
 
   // Entering starts asynchronous jobs in the background (timers, promises,
   // etc). Not leaving the room would leave those open handles dangling which
@@ -110,27 +110,6 @@ describe("createClient", () => {
     }
   });
 
-  test("should not try to connect if autoConnect is false (old style)", () => {
-    const authMock = jest.fn();
-
-    const client = createClient({
-      authEndpoint: authMock,
-      polyfills: {
-        atob: atobPolyfillMock,
-      },
-    });
-
-    client.enter("room", {
-      initialPresence: {},
-      autoConnect: false,
-    });
-    try {
-      expect(authMock).not.toHaveBeenCalled();
-    } finally {
-      client.leave("room");
-    }
-  });
-
   test("entering twice returns the same room (new style)", () => {
     const authMock = jest.fn();
 
@@ -167,31 +146,6 @@ describe("createClient", () => {
 
     // Clean things up nicely before ending the test
     view4.leave();
-  });
-
-  test("entering twice returns the same room (old style)", () => {
-    const authMock = jest.fn();
-
-    const client = createClient({
-      authEndpoint: authMock,
-      polyfills: {
-        atob: atobPolyfillMock,
-      },
-    });
-    const options = { initialPresence: {}, autoConnect: false };
-
-    const room1 = client.enter("room", options);
-    const room2 = client.enter("room", options);
-
-    expect(room1).toBe(room2);
-
-    // In the old style API, leaving once destroys the room instance
-    client.leave("room");
-
-    const room3 = client.enter("room", options);
-    expect(room1).not.toBe(room3);
-
-    client.leave("room");
   });
 
   test("should not throw if authEndpoint is string and fetch polyfill is defined", () => {
@@ -243,7 +197,7 @@ describe("createClient", () => {
       },
     });
 
-    const { room, leave } = client.enterRoom("room", { initialPresence: {} });
+    const { room, leave } = client.enterRoom("room");
     try {
       // Room will fail to connect, and move to "closed" state, basically giving up reconnecting
       await waitUntilStatus(room, "disconnected");
@@ -261,7 +215,7 @@ describe("createClient", () => {
     const spy = jest.spyOn(console, "error");
 
     const client = createClient({ authEndpoint: authEndpointCallback });
-    const { room, leave } = client.enterRoom("room", { initialPresence: {} });
+    const { room, leave } = client.enterRoom("room");
     try {
       // Room will fail to connect, and move to "closed" state, basically giving up reconnecting
       await waitUntilStatus(room, "disconnected");

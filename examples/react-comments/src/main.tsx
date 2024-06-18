@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./styles/globals.css";
+import { LiveblocksProvider } from "@liveblocks/react";
 
 let roomId = "react-comments";
 
@@ -9,7 +10,11 @@ applyExampleRoomId();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App roomId={roomId} />
+    <LiveblocksProvider
+      publicApiKey={import.meta.env.VITE_LIVEBLOCKS_PUBLIC_KEY}
+    >
+      <App roomId={roomId} />
+    </LiveblocksProvider>
   </React.StrictMode>
 );
 

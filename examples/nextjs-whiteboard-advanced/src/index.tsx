@@ -7,7 +7,7 @@ import {
   useOthersMapped,
   useCanUndo,
   useCanRedo,
-} from "../liveblocks.config";
+} from "@liveblocks/react/suspense";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
@@ -60,12 +60,12 @@ export default function Room() {
       }}
       initialStorage={{
         layers: new LiveMap<string, LiveObject<Layer>>(),
-        layerIds: new LiveList(),
+        layerIds: new LiveList([]),
       }}
     >
       <div className={styles.container}>
         <ClientSideSuspense fallback={<Loading />}>
-          {() => <Canvas />}
+          <Canvas />
         </ClientSideSuspense>
       </div>
     </RoomProvider>

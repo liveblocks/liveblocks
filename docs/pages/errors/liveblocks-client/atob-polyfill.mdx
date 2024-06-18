@@ -6,13 +6,13 @@ meta:
     "@liveblocks/client error: atob polyfill is required in your environment."
 ---
 
-### Why this error occured
+## Why this error occurred
 
 You are using `@liveblocks/client` within a JavaScript runtime which doesn't
 implement [`atob`](https://developer.mozilla.org/en-US/docs/Web/API/atob).
 (environments like React Native or Node < 16)
 
-### Possible ways to fix it
+## Possible ways to fix it
 
 As a polyfill, we recommend installing the package
 [`base-64`](https://www.npmjs.com/package/base-64).

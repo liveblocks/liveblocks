@@ -1,5 +1,4 @@
 import type {
-  BaseMetadata,
   ThreadData,
   ThreadDataWithDeleteInfo,
   ThreadDeleteInfo,
@@ -54,7 +53,7 @@ describe("applyThreadUpdates", () => {
   });
 
   it("should update an existing thread with a newer one", () => {
-    const thread1Updated: ThreadData<BaseMetadata> = {
+    const thread1Updated: ThreadData = {
       ...thread1,
       updatedAt: new Date("2024-01-03"), // A newer date than the original thread1
       metadata: { resolved: true }, // Simulate changes in the thread

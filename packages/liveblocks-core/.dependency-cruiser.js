@@ -142,7 +142,7 @@ module.exports = {
         "All modules in lib/ must have no other dependencies. They aren't Liveblocks-specific. They could, theoretically, be NPM packages of their own.",
       severity: "error",
       from: { path: "^src/lib/" },
-      to: { pathNot: "^src/(lib)/" },
+      to: { pathNot: "^src/(globals|lib)/" },
     },
 
     // "Swimlane 1" - protocol/
@@ -152,7 +152,7 @@ module.exports = {
         "All modules in protocol/ must have no other dependencies apart from lib/.",
       severity: "error",
       from: { path: "^src/protocol/" },
-      to: { pathNot: "^src/(protocol|lib)/" },
+      to: { pathNot: "^src/(globals|protocol|lib)/" },
     },
 
     // "Swimlane 2" - types/
@@ -162,7 +162,7 @@ module.exports = {
         "All modules in types/ must have no other dependencies apart from protocol/ or lib/.",
       severity: "error",
       from: { path: "^src/types/" },
-      to: { pathNot: "^src/(types|protocol|lib)/" },
+      to: { pathNot: "^src/(globals|types|protocol|lib)/" },
     },
 
     // "Swimlane 3" - refs/
@@ -172,7 +172,7 @@ module.exports = {
         "All modules in refs/ must have no other dependencies apart from types/, protocol/ or lib/.",
       severity: "error",
       from: { path: "^src/refs/" },
-      to: { pathNot: "^src/(refs|types|protocol|lib)/" },
+      to: { pathNot: "^src/(globals|refs|types|protocol|lib)/" },
     },
 
     // "Swimlane 4" - crdts/
@@ -182,7 +182,7 @@ module.exports = {
         "All modules in crdts/ must have no other dependencies apart from refs/, types/, protocol/ or lib/.",
       severity: "error",
       from: { path: "^src/crdts/" },
-      to: { pathNot: "^src/(crdts|refs|types|protocol|lib)/" },
+      to: { pathNot: "^src/(globals|crdts|refs|types|protocol|lib)/" },
     },
   ],
 

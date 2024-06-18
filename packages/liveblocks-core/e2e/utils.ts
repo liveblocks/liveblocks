@@ -13,13 +13,15 @@ import type { LiveObject } from "../src/crdts/LiveObject";
 import type { LsonObject } from "../src/crdts/Lson";
 import type { ToImmutable } from "../src/crdts/utils";
 import { createClient } from "../src/client";
+import type { BaseMetadata, NoInfr } from "../src";
 
 async function initializeRoomForTest<
-  P extends JsonObject,
-  S extends LsonObject,
-  U extends BaseUserMeta,
-  E extends Json,
->(roomId: string, initialPresence: P, initialStorage?: S) {
+  P extends JsonObject = JsonObject,
+  S extends LsonObject = LsonObject,
+  U extends BaseUserMeta = BaseUserMeta,
+  E extends Json = Json,
+  M extends BaseMetadata = BaseMetadata,
+>(roomId: string, initialPresence: NoInfr<P>, initialStorage: NoInfr<S>) {
   const publicApiKey = process.env.LIVEBLOCKS_PUBLIC_KEY;
 
   if (publicApiKey == null) {
@@ -58,7 +60,7 @@ async function initializeRoomForTest<
     }
   }
 
-  const client = createClient({
+  const client = createClient<U>({
     publicApiKey,
     polyfills: {
       // @ts-ignore-error
@@ -68,12 +70,10 @@ async function initializeRoomForTest<
     baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
   });
 
-  const { room, leave } = client.enterRoom<
-    P,
-    S,
-    U,
-    E
-  >(roomId, { initialPresence, initialStorage });
+  const { room, leave } = client.enterRoom<P, S, E, M>(roomId, {
+    initialPresence,
+    initialStorage,
+  } as any);
   await waitUntilStatus(room, "connected");
 
   return {
@@ -96,8 +96,8 @@ export function prepareTestsConflicts<S extends LsonObject>(
   callback: (args: {
     root1: LiveObject<S>;
     root2: LiveObject<S>;
-    room2: Room<never, S, never, never>;
-    room1: Room<never, S, never, never>;
+    room2: Room<JsonObject, S>;
+    room1: Room<JsonObject, S>;
 
     /**
      * Assert that room1 and room2 storage are equal to the provided immutable
@@ -105,10 +105,7 @@ export function prepareTestsConflicts<S extends LsonObject>(
      * rooms' storages are expected to be equal. It also ensures that immutable
      * states updated with the updates generated from conflicts are equal.
      */
-    assert: (
-      immRoot1: ToImmutable<S>,
-      immRoot2?: ToImmutable<S>
-    ) => void;
+    assert: (immRoot1: ToImmutable<S>, immRoot2?: ToImmutable<S>) => void;
     wsUtils: {
       flushSocket1Messages: () => Promise<void>;
       flushSocket2Messages: () => Promise<void>;
@@ -118,14 +115,15 @@ export function prepareTestsConflicts<S extends LsonObject>(
   return async () => {
     const roomName = "storage-requirements-e2e-tests-" + new Date().getTime();
 
-    const actor1 = await initializeRoomForTest<never, S, never, never>(
+    const actor1 = await initializeRoomForTest<JsonObject, S>(
       roomName,
-      {} as never,
+      {},
       initialStorage
     );
-    const actor2 = await initializeRoomForTest<never, S, never, never>(
+    const actor2 = await initializeRoomForTest<JsonObject, S>(
       roomName,
-      {} as never
+      {},
+      {} as S
     );
 
     const { root: root1 } = await actor1.room.getStorage();
@@ -171,10 +169,7 @@ export function prepareTestsConflicts<S extends LsonObject>(
       { isDeep: true }
     );
 
-    function assert(
-      immRoot1: ToImmutable<S>,
-      immRoot2?: ToImmutable<S>
-    ) {
+    function assert(immRoot1: ToImmutable<S>, immRoot2?: ToImmutable<S>) {
       if (immRoot2 == null) {
         immRoot2 = immRoot1;
       }
@@ -211,14 +206,14 @@ export function prepareSingleClientTest<S extends LsonObject>(
   initialStorage: S,
   callback: (args: {
     root: LiveObject<S>;
-    room: Room<never, S, never, never>;
+    room: Room<never, S, never, never, never>;
     flushSocketMessages: () => Promise<void>;
   }) => Promise<void>
 ): () => Promise<void> {
   return async () => {
     const roomName = "storage-requirements-e2e-tests-" + new Date().getTime();
 
-    const actor = await initializeRoomForTest<never, S, never, never>(
+    const actor = await initializeRoomForTest<never, S, never, never, never>(
       roomName,
       {} as never,
       initialStorage
@@ -265,7 +260,7 @@ export function wait(ms: number) {
  * a limited time window, or else this will fail, to avoid hanging.
  */
 async function waitUntilStatus(
-  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
+  room: Room<JsonObject, LsonObject, BaseUserMeta, Json, BaseMetadata>,
   targetStatus: Status
 ): Promise<void> {
   if (room.getStatus() === targetStatus) {

@@ -1,10 +1,14 @@
 import { AppProps } from "next/app";
 import Head from "next/head";
 import "../styles/globals.css";
+import { LiveblocksProvider } from "@liveblocks/react";
 
 function App({ Component, pageProps }: AppProps) {
   return (
-    <>
+    <LiveblocksProvider
+      throttle={16}
+      publicApiKey={process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY!}
+    >
       <Head>
         <title>Liveblocks</title>
         <meta name="robots" content="noindex" />
@@ -23,7 +27,7 @@ function App({ Component, pageProps }: AppProps) {
         />
       </Head>
       <Component {...pageProps} />
-    </>
+    </LiveblocksProvider>
   );
 }
 export default App;

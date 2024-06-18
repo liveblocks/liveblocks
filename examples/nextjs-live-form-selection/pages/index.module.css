@@ -79,7 +79,8 @@
   border: none;
   background-color: var(--color-background-input) !important;
   border-radius: 6px;
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1),
+  box-shadow:
+    0px 2px 4px rgba(0, 0, 0, 0.1),
     0px 0px 0px 1px rgba(0, 0, 0, 0.05);
   color: var(--color-foreground-primary);
   outline: none;
@@ -87,7 +88,8 @@
 
 .input:hover:not(:focus):not(:disabled) {
   background-color: var(--color-background-input) !important;
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.16),
+  box-shadow:
+    0px 2px 4px rgba(0, 0, 0, 0.16),
     0px 0px 0px 1px rgba(0, 0, 0, 0.05);
 }
 

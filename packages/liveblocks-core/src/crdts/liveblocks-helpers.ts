@@ -27,7 +27,7 @@ export function creationOpToLson(op: CreateOp): Lson {
     case OpCode.CREATE_MAP:
       return new LiveMap();
     case OpCode.CREATE_LIST:
-      return new LiveList();
+      return new LiveList([]);
     default:
       return assertNever(op, "Unknown creation Op");
   }

@@ -17,15 +17,14 @@ import type {
   BaseMetadata,
   CommentBody,
   CommentData,
+  DRI,
   InboxNotificationData,
-  kInternal,
   LiveblocksError,
-  PartialNullable,
+  PartialUnless,
+  Patchable,
   QueryMetadata,
   Resolve,
   RoomEventMessage,
-  RoomInfo,
-  RoomInitializers,
   ThreadData,
   ToImmutable,
 } from "@liveblocks/core";
@@ -54,6 +53,8 @@ export type UseThreadsOptions<M extends BaseMetadata> = {
 };
 
 import type { PropsWithChildren } from "react";
+
+import type { CommentsError } from "./comments/errors";
 
 export type UserStateLoading = {
   isLoading: true;
@@ -92,7 +93,7 @@ export type RoomInfoStateError = {
 
 export type RoomInfoStateSuccess = {
   isLoading: false;
-  info: RoomInfo;
+  info: DRI;
   error?: never;
 };
 
@@ -101,15 +102,17 @@ export type RoomInfoState =
   | RoomInfoStateError
   | RoomInfoStateSuccess;
 
-export type CreateThreadOptions<M extends BaseMetadata> = [M] extends [never]
-  ? { body: CommentBody }
-  : { body: CommentBody; metadata: M };
+// prettier-ignore
+export type CreateThreadOptions<M extends BaseMetadata> =
+  Resolve<
+    { body: CommentBody }
+    & PartialUnless<M, { metadata: M }>
+  >;
 
-export type EditThreadMetadataOptions<M extends BaseMetadata> = [M] extends [
-  never,
-]
-  ? { threadId: string }
-  : { threadId: string; metadata: Resolve<PartialNullable<M>> };
+export type EditThreadMetadataOptions<M extends BaseMetadata> = {
+  threadId: string;
+  metadata: Patchable<M>;
+};
 
 export type CreateCommentOptions = {
   threadId: string;
@@ -230,10 +233,9 @@ export type RoomNotificationSettingsState =
   | RoomNotificationSettingsStateError
   | RoomNotificationSettingsStateSuccess;
 
-export type RoomProviderProps<
-  P extends JsonObject,
-  S extends LsonObject,
-> = Resolve<
+export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
+  // prettier-ignore
+  Resolve<
   {
     /**
      * The id of the room you want to connect to
@@ -250,8 +252,6 @@ export type RoomProviderProps<
      * only on the client side.
      */
     autoConnect?: boolean;
-    /** @deprecated Renamed to `autoConnect` */
-    shouldInitiallyConnect?: boolean;
 
     /**
      * If you're on React 17 or lower, pass in a reference to
@@ -268,7 +268,30 @@ export type RoomProviderProps<
      * Not necessary when you're on React v18 or later.
      */
     unstable_batchedUpdates?: (cb: () => void) => void;
-  } & RoomInitializers<P, S>
+  }
+
+  // Initial presence is only mandatory if the custom type requires it to be
+  & PartialUnless<
+    P,
+    {
+      /**
+       * The initial Presence to use and announce when you enter the Room. The
+       * Presence is available on all users in the Room (me & others).
+       */
+      initialPresence: P | ((roomId: string) => P);
+    }
+  >
+
+  // Initial storage is only mandatory if the custom type requires it to be
+  & PartialUnless<
+    S,
+    {
+      /**
+       * The initial Storage to use when entering a new Room.
+       */
+      initialStorage: S | ((roomId: string) => S);
+    }
+  >
 >;
 
 /**
@@ -316,8 +339,6 @@ export type ThreadSubscription =
 export type SharedContextBundle<U extends BaseUserMeta> = {
   classic: {
     /**
-     * @beta
-     *
      * Returns user info from a given user ID.
      *
      * @example
@@ -326,8 +347,6 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
     useUser(userId: string): UserState<U["info"]>;
 
     /**
-     * @private
-     *
      * Returns room info from a given room ID.
      *
      * @example
@@ -338,8 +357,6 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
 
   suspense: {
     /**
-     * @beta
-     *
      * Returns user info from a given user ID.
      *
      * @example
@@ -348,8 +365,6 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
     useUser(userId: string): UserStateSuccess<U["info"]>;
 
     /**
-     * @private
-     *
      * Returns room info from a given room ID.
      *
      * @example
@@ -374,7 +389,7 @@ type RoomContextBundleCommon<
    * it can be necessary if you're building an advanced app where you need to
    * set up a context bridge between two React renderers.
    */
-  RoomContext: React.Context<Room<P, S, U, E> | null>;
+  RoomContext: React.Context<Room<P, S, U, E, M> | null>;
 
   /**
    * Makes a Room available in the component hierarchy below.
@@ -387,7 +402,7 @@ type RoomContextBundleCommon<
    * Returns the Room of the nearest RoomProvider above in the React component
    * tree.
    */
-  useRoom(): Room<P, S, U, E>;
+  useRoom(): Room<P, S, U, E, M>;
 
   /**
    * Returns the current connection status for the Room, and triggers
@@ -396,6 +411,9 @@ type RoomContextBundleCommon<
   useStatus(): Status;
 
   /**
+   * @deprecated It's recommended to use `useMutation` for writing to Storage,
+   * which will automatically batch all mutations.
+   *
    * Returns a function that batches modifications made during the given function.
    * All the modifications are sent to other clients in a single message.
    * All the modifications are merged in a single history item (undo/redo).
@@ -703,8 +721,6 @@ type RoomContextBundleCommon<
   ): T;
 
   /**
-   * @beta
-   *
    * Returns a function that creates a thread with an initial comment, and optionally some metadata.
    *
    * @example
@@ -714,8 +730,6 @@ type RoomContextBundleCommon<
   useCreateThread(): (options: CreateThreadOptions<M>) => ThreadData<M>;
 
   /**
-   * @beta
-   *
    * Returns a function that edits a thread's metadata.
    * To delete an existing metadata property, set its value to `null`.
    *
@@ -726,8 +740,6 @@ type RoomContextBundleCommon<
   useEditThreadMetadata(): (options: EditThreadMetadataOptions<M>) => void;
 
   /**
-   * @beta
-   *
    * Returns a function that adds a comment to a thread.
    *
    * @example
@@ -737,8 +749,6 @@ type RoomContextBundleCommon<
   useCreateComment(): (options: CreateCommentOptions) => CommentData;
 
   /**
-   * @beta
-   *
    * Returns a function that edits a comment's body.
    *
    * @example
@@ -748,8 +758,6 @@ type RoomContextBundleCommon<
   useEditComment(): (options: EditCommentOptions) => void;
 
   /**
-   * @beta
-   *
    * Returns a function that deletes a comment.
    * If it is the last non-deleted comment, the thread also gets deleted.
    *
@@ -760,8 +768,6 @@ type RoomContextBundleCommon<
   useDeleteComment(): (options: DeleteCommentOptions) => void;
 
   /**
-   * @beta
-   *
    * Returns a function that adds a reaction from a comment.
    *
    * @example
@@ -771,8 +777,6 @@ type RoomContextBundleCommon<
   useAddReaction(): (options: CommentReactionOptions) => void;
 
   /**
-   * @beta
-   *
    * Returns a function that removes a reaction on a comment.
    *
    * @example
@@ -796,8 +800,6 @@ type RoomContextBundleCommon<
   ) => void;
 
   /**
-   * @beta
-   *
    * Returns a function that marks a thread as read.
    *
    * @example
@@ -807,8 +809,6 @@ type RoomContextBundleCommon<
   useMarkThreadAsRead(): (threadId: string) => void;
 
   /**
-   * @beta
-   *
    * Returns the subscription status of a thread.
    *
    * @example
@@ -825,8 +825,9 @@ type RoomContextBundleCommon<
  * will probably happen if you do.
  */
 type PrivateRoomContextApi = {
-  useMentionSuggestions(search?: string): string[] | undefined;
-  useCurrentUserId(): string | null;
+  useCommentsErrorListener<M extends BaseMetadata>(
+    callback: (err: CommentsError<M>) => void
+  ): void;
 };
 
 export type RoomContextBundle<
@@ -900,8 +901,6 @@ export type RoomContextBundle<
       ): T | null;
 
       /**
-       * @beta
-       *
        * Returns the threads within the current room.
        *
        * @example
@@ -922,63 +921,6 @@ export type RoomContextBundle<
         RoomNotificationSettingsState,
         (settings: Partial<RoomNotificationSettings>) => void,
       ];
-
-      //
-      // Legacy hooks
-      //
-
-      /**
-       * Returns the LiveList associated with the provided key. The hook triggers
-       * a re-render if the LiveList is updated, however it does not triggers
-       * a re-render if a nested CRDT is updated.
-       *
-       * @param key The top-level storage key associated with the LiveList
-       * @returns null while storage is still loading, otherwise, returns the LiveList instance at the storage key
-       *
-       * @example
-       * const animals = useList("animals");  // e.g. [] or ["🦁", "🐍", "🦍"]  // ❌ No longer recommended
-       * const animals = useStorage((root) => root.animals);                    // ✅ Do this instead
-       *
-       * @deprecated We no longer recommend using `useList`. Prefer `useStorage`
-       * for reading and `useMutation` for writing.
-       */
-      useList<TKey extends Extract<keyof S, string>>(key: TKey): S[TKey] | null;
-
-      /**
-       * Returns the LiveMap associated with the provided key. If the LiveMap
-       * does not exist, a new empty LiveMap will be created. The hook triggers
-       * a re-render if the LiveMap is updated, however it does not triggers
-       * a re-render if a nested CRDT is updated.
-       *
-       * @param key The top-level storage key associated with the LiveMap
-       * @returns null while storage is still loading, otherwise, returns the LiveMap instance at the storage key
-       *
-       * @example
-       * const shapesById = useMap("shapes");                   // ❌ No longer recommended
-       * const shapesById = useStorage((root) => root.shapes);  // ✅ Do this instead
-       *
-       * @deprecated We no longer recommend using `useMap`. Prefer `useStorage`
-       * for reading and `useMutation` for writing.
-       */
-      useMap<TKey extends Extract<keyof S, string>>(key: TKey): S[TKey] | null;
-
-      /**
-       * Returns the LiveObject associated with the provided key.
-       * The hook triggers a re-render if the LiveObject is updated, however it does not triggers a re-render if a nested CRDT is updated.
-       *
-       * @param key The top-level storage key associated with the LiveObject
-       * @returns null while storage is still loading, otherwise, returns the LiveObject instance at the storage key
-       *
-       * @example
-       * const object = useObject("obj");                // ❌ No longer recommended
-       * const object = useStorage((root) => root.obj);  // ✅ Do this instead
-       *
-       * @deprecated We no longer recommend using `useObject`. Prefer `useStorage`
-       * for reading and `useMutation` for writing.
-       */
-      useObject<TKey extends Extract<keyof S, string>>(
-        key: TKey
-      ): S[TKey] | null;
 
       suspense: Resolve<
         RoomContextBundleCommon<P, S, U, E, M> &
@@ -1045,8 +987,6 @@ export type RoomContextBundle<
             ): T;
 
             /**
-             * @beta
-             *
              * Returns the threads within the current room.
              *
              * @example
@@ -1067,84 +1007,16 @@ export type RoomContextBundle<
               RoomNotificationSettingsStateSuccess,
               (settings: Partial<RoomNotificationSettings>) => void,
             ];
-
-            //
-            // Legacy hooks
-            //
-
-            /**
-             * Returns the LiveList associated with the provided key. The hook triggers
-             * a re-render if the LiveList is updated, however it does not triggers
-             * a re-render if a nested CRDT is updated.
-             *
-             * @param key The top-level storage key associated with the LiveList
-             * @returns Returns the LiveList instance at the storage key
-             *
-             * @example
-             * const animals = useList("animals");  // e.g. [] or ["🦁", "🐍", "🦍"]  // ❌ No longer recommended
-             * const animals = useStorage((root) => root.animals);                    // ✅ Do this instead
-             *
-             * @deprecated We no longer recommend using `useList`. Prefer `useStorage`
-             * for reading and `useMutation` for writing.
-             */
-            useList<TKey extends Extract<keyof S, string>>(key: TKey): S[TKey];
-
-            /**
-             * Returns the LiveMap associated with the provided key. If the LiveMap
-             * does not exist, a new empty LiveMap will be created. The hook triggers
-             * a re-render if the LiveMap is updated, however it does not triggers
-             * a re-render if a nested CRDT is updated.
-             *
-             * @param key The top-level storage key associated with the LiveMap
-             * @returns Returns the LiveMap instance at the storage key
-             *
-             * @example
-             * const shapesById = useMap("shapes");                   // ❌ No longer recommended
-             * const shapesById = useStorage((root) => root.shapes);  // ✅ Do this instead
-             *
-             * @deprecated We no longer recommend using `useMap`. Prefer `useStorage`
-             * for reading and `useMutation` for writing.
-             */
-            useMap<TKey extends Extract<keyof S, string>>(key: TKey): S[TKey];
-
-            /**
-             * Returns the LiveObject associated with the provided key.
-             * The hook triggers a re-render if the LiveObject is updated, however it does not triggers a re-render if a nested CRDT is updated.
-             *
-             * @param key The top-level storage key associated with the LiveObject
-             * @returns Returns the LiveObject instance at the storage key
-             *
-             * @example
-             * const object = useObject("obj");                // ❌ No longer recommended
-             * const object = useStorage((root) => root.obj);  // ✅ Do this instead
-             *
-             * @deprecated We no longer recommend using `useObject`. Prefer `useStorage`
-             * for reading and `useMutation` for writing.
-             */
-            useObject<TKey extends Extract<keyof S, string>>(
-              key: TKey
-            ): S[TKey];
           }
       >;
-    }
-> & {
-  /**
-   * @private
-   *
-   * Private methods and variables used in the core internals, but as a user
-   * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
-   * will probably happen if you do.
-   */
-  readonly [kInternal]: PrivateRoomContextApi;
-};
+    } & PrivateRoomContextApi
+>;
 
 /**
  * Properties that are the same in LiveblocksContext and LiveblocksContext["suspense"].
  */
 type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
   /**
-   * @beta
-   *
    * Makes Liveblocks features outside of rooms (e.g. Notifications) available
    * in the component hierarchy below.
    */
@@ -1181,22 +1053,6 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
    * const thread = useInboxNotificationThread("in_xxx");
    */
   useInboxNotificationThread(inboxNotificationId: string): ThreadData<M>;
-};
-
-/**
- * @private
- *
- * Private methods and variables used in the core internals, but as a user
- * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
- * will probably happen if you do.
- */
-type PrivateLiveblocksContextApi = {
-  /**
-   * @private
-   *
-   * Returns the current user ID. Can only be used after making a call to a Notifications API.
-   */
-  useCurrentUserId(): string | null;
 };
 
 export type LiveblocksContextBundle<
@@ -1250,13 +1106,4 @@ export type LiveblocksContextBundle<
           }
       >;
     }
-> & {
-  /**
-   * @private
-   *
-   * Private methods and variables used in the core internals, but as a user
-   * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
-   * will probably happen if you do.
-   */
-  readonly [kInternal]: PrivateLiveblocksContextApi;
-};
+>;

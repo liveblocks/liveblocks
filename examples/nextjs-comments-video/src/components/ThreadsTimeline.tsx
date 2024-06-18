@@ -1,12 +1,12 @@
 "use client";
 
-import { ThreadMetadata, useThreads, useUser } from "@/liveblocks.config";
+import { useThreads, useUser } from "@liveblocks/react/suspense";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
 import styles from "./ThreadsTimeline.module.css";
 import { ThreadData } from "@liveblocks/core";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { Comment } from "@liveblocks/react-comments/primitives";
+import { Comment } from "@liveblocks/react-ui/primitives";
 import {
   resetAllHighlights,
   useHighlightPinListener,
@@ -22,7 +22,7 @@ export function ThreadsTimeline() {
     // @ts-ignore
     <ErrorBoundary fallback={<div>Error</div>}>
       <ClientSideSuspense fallback={null}>
-        {() => <PinnedThreads />}
+        <PinnedThreads />
       </ClientSideSuspense>
     </ErrorBoundary>
   );
@@ -40,7 +40,7 @@ function PinnedThreads() {
   );
 }
 
-function PinnedThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
+function PinnedThread({ thread }: { thread: ThreadData }) {
   const { user } = useUser(thread.comments?.[0].userId || "");
   const highlightThread = useHighlightThread(thread.id);
   const [highlightedPin, setHighlightedPin] = useState(false);

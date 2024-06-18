@@ -8,7 +8,9 @@
   padding: var(--menu-inset);
   background: var(--menu-background);
   border-radius: calc(var(--menu-item-radius) + var(--menu-inset));
-  box-shadow: 0 0 0 1px rgb(31 41 55 / 4%), 0 2px 6px rgb(31 41 55 / 8%),
+  box-shadow:
+    0 0 0 1px rgb(31 41 55 / 4%),
+    0 2px 6px rgb(31 41 55 / 8%),
     0 8px 24px -2px rgb(31 41 55 / 16%);
   user-select: none;
 }

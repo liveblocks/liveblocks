@@ -40,7 +40,9 @@
 }
 
 .cell:global(.editing)::before {
-  box-shadow: 0 2px 12px var(--cell-selection), 0 2px 12px rgb(31 41 55 / 30%),
+  box-shadow:
+    0 2px 12px var(--cell-selection),
+    0 2px 12px rgb(31 41 55 / 30%),
     0 6px 32px -2px rgb(31 41 55 / 20%);
 }
 
@@ -76,7 +78,9 @@
   place-items: center;
   pointer-events: none;
   transform: translateY(var(--user-height));
-  transition: transform 0.12s ease-in-out, opacity 0.12s ease-in-out;
+  transition:
+    transform 0.12s ease-in-out,
+    opacity 0.12s ease-in-out;
 }
 
 .user_avatar {

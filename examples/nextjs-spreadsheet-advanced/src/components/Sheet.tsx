@@ -2,7 +2,7 @@ import cx from "classnames";
 import { type ComponentProps, useCallback, useMemo, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { GRID_MAX_COLUMNS, GRID_MAX_ROWS } from "../constants";
-import { useHistory } from "../liveblocks.config";
+import { useHistory } from "@liveblocks/react";
 import { getHeaderLabel } from "../spreadsheet/interpreter/utils";
 import type { ReactSpreadsheet } from "../spreadsheet/react";
 import { getCellId } from "../spreadsheet/utils";

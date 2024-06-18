@@ -1,7 +1,7 @@
 "use client";
 
 import React, { memo } from "react";
-import { useOther } from "@/liveblocks.config";
+import { useOther } from "@liveblocks/react/suspense";
 import { getCoordsFromAccurateCursorPositions } from "@/lib/coords";
 import { motion } from "framer-motion";
 import styles from "./Cursor.module.css";

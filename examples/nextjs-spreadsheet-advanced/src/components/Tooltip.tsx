@@ -11,7 +11,8 @@ import cx from "classnames";
 import { type ReactNode, forwardRef } from "react";
 import styles from "./Tooltip.module.css";
 
-export interface Props extends TooltipProps, TooltipContentProps {
+export interface Props
+  extends Omit<TooltipProps & TooltipContentProps, "content"> {
   content: ReactNode;
 }
 

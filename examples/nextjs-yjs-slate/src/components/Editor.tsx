@@ -1,12 +1,12 @@
 "use client";
 
-import LiveblocksProvider from "@liveblocks/yjs";
+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createEditor, Editor, Transforms } from "slate";
 import { Editable, Slate, withReact } from "slate-react";
 import { withCursors, withYjs, YjsEditor } from "@slate-yjs/core";
 import * as Y from "yjs";
-import { LiveblocksProviderType, useRoom, useSelf } from "@/liveblocks.config";
+import { useRoom, useSelf } from "@liveblocks/react/suspense";
 import { Loading } from "@/components/Loading";
 import styles from "./Editor.module.css";
 import { Toolbar } from "@/components/Toolbar";
@@ -19,12 +19,12 @@ export default function CollaborativeEditor() {
   const room = useRoom();
   const [connected, setConnected] = useState(false);
   const [sharedType, setSharedType] = useState<Y.XmlText>();
-  const [provider, setProvider] = useState<LiveblocksProviderType>();
+  const [provider, setProvider] = useState<LiveblocksYjsProvider>();
 
   // Set up Liveblocks Yjs provider
   useEffect(() => {
     const yDoc = new Y.Doc();
-    const yProvider = new LiveblocksProvider(room, yDoc);
+    const yProvider = new LiveblocksYjsProvider(room, yDoc);
     const sharedDoc = yDoc.get("slate", Y.XmlText) as Y.XmlText;
     yProvider.on("sync", setConnected);
 
@@ -54,7 +54,7 @@ function SlateEditor({
   provider,
 }: {
   sharedType: Y.XmlText;
-  provider: LiveblocksProviderType;
+  provider: LiveblocksYjsProvider;
 }) {
   // Get user info from Liveblocks authentication endpoint
   const userInfo = useSelf((self) => self.info);

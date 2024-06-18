@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useOthers, useSelf } from "../../liveblocks.config";
+import { useOthers, useSelf } from "@liveblocks/react/suspense";
 import { AvatarStack } from "../../primitives/AvatarStack";
 
 export function DocumentHeaderAvatars() {

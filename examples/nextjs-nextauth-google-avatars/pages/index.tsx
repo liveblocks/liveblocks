@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { Avatar } from "../components/Avatar";
 import Button from "../components/Button";
-import { RoomProvider, useOthers, useSelf } from "../liveblocks.config";
+import { RoomProvider, useOthers, useSelf } from "@liveblocks/react";
 import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
 import { getServerSession } from "./api/auth/getServerSession";
@@ -53,7 +53,7 @@ export default function Page() {
   );
 
   return (
-    <RoomProvider id={roomId} initialPresence={{}}>
+    <RoomProvider id={roomId}>
       <Example />
     </RoomProvider>
   );

@@ -39,7 +39,7 @@ export function ToolbarHeadings({ editor }: Props) {
           break;
       }
     },
-    [editor],
+    [editor]
   );
 
   return (

@@ -1,0 +1,238 @@
+---
+meta:
+  title: "@liveblocks/react-lexical"
+  parentTitle: "API Reference"
+  description: "API Reference for the @liveblocks/react-lexical package"
+alwaysShowAllNavigationLevels: false
+---
+
+`@liveblocks/react-lexical` provides you with a [React](https://react.dev/)
+plugin that adds collaboration to any [Lexical](https://lexical.dev/) text
+editor. It also adds realtime cursors, document persistence on the cloud,
+comments, and mentions. Read our
+[get started guide](/docs/get-started/yjs-lexical-react) to learn more.
+
+## LiveblocksPlugin
+
+Liveblocks plugin for Lexical that adds collaboration to your editor.
+
+```tsx highlight="2"
+<LexicalComposer initialConfig={initialConfig}>
+  <LiveblocksPlugin />
+</LexicalComposer>
+```
+
+{/* TODO: Image */}
+
+`LiveblocksPlugin` should always be nested inside [`LexicalComposer`][].
+
+```tsx highlight="5,17"
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+import { liveblocksConfig, LiveblocksPlugin } from "@liveblocks/react-lexical";
+
+const initialConfig = liveblocksConfig({
+  namespace: "MyEditor",
+  theme: {},
+  nodes: [],
+  onError: (err) => console.error(err),
+});
+
+function Editor() {
+  return (
+    <LexicalComposer initialConfig={initialConfig}>
+      <LiveblocksPlugin />
+      <RichTextPlugin
+        contentEditable={<ContentEditable />}
+        placeholder={<div>Enter some text...</div>}
+        ErrorBoundary={LexicalErrorBoundary}
+      />
+    </LexicalComposer>
+  );
+}
+```
+
+Learn more in our [get started guide](/docs/get-started/yjs-lexical-react).
+
+## liveblocksConfig
+
+Function that takes a Lexical editor config and modifies it to add the necessary
+`nodes` and `theme` to make [`LiveblocksPlugin`][] works correctly.
+
+```tsx
+import { liveblocksConfig } from "@liveblocks/react-lexical";
+
+const initialConfig = liveblocksConfig({
+  namespace: "MyEditor",
+  theme: {},
+  nodes: [],
+  onError: (err) => console.error(err),
+});
+```
+
+The config created by `liveblocksConfig` should be passed to `initialConfig` in
+[`LexicalComposer`][].
+
+```tsx highlight="7-12,16"
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+import { liveblocksConfig, LiveblocksPlugin } from "@liveblocks/react-lexical";
+
+const initialConfig = liveblocksConfig({
+  namespace: "MyEditor",
+  theme: {},
+  nodes: [],
+  onError: (err) => console.error(err),
+});
+
+function Editor() {
+  return (
+    <LexicalComposer initialConfig={initialConfig}>
+      <LiveblocksPlugin />
+      <RichTextPlugin
+        contentEditable={<ContentEditable />}
+        placeholder={<div>Enter some text...</div>}
+        ErrorBoundary={LexicalErrorBoundary}
+      />
+    </LexicalComposer>
+  );
+}
+```
+
+Note that `liveblocksConfig` sets `editorState` to `null` because
+`LiveblocksPlugin` is responsible for initializing it on the server.
+
+## useEditorStatus
+
+Returns the current editor status.
+
+```ts
+import { useEditorStatus } from "@liveblocks/react-lexical";
+
+const status = useEditorStatus();
+```
+
+The possible value are:
+
+- `not-loaded`: Initial editor state when entering the room.
+- `loading`: Once the editor state has been requested by `LiveblocksPlugin`.
+- `synchronizing`: Not working yet at runtime! Will be available in a future
+  release.
+- `synchronized`: The editor state is sync with Liveblocks servers.
+
+## FloatingComposer
+
+Displays a `Composer` near the current lexical selection.
+
+```tsx highlight="3"
+<LexicalComposer initialConfig={initialConfig}>
+  <LiveblocksPlugin>
+    <FloatingComposer />
+  </LiveblocksPlugin>
+</LexicalComposer>
+```
+
+{/* TODO: Image */}
+
+Submitting a comment will attach an annotation thread at the current selection.
+Should be nested inside [`LiveblocksPlugin`][].
+
+```tsx highlight="8,22"
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+import {
+  liveblocksConfig,
+  LiveblocksPlugin,
+  FloatingComposer,
+} from "@liveblocks/react-lexical";
+
+const initialConfig = liveblocksConfig({
+  namespace: "MyEditor",
+  theme: {},
+  nodes: [],
+  onError: (err) => console.error(err),
+});
+
+function Editor() {
+  return (
+    <LexicalComposer initialConfig={initialConfig}>
+      <LiveblocksPlugin>
+        <FloatingComposer />
+      </LiveblocksPlugin>
+      <RichTextPlugin
+        contentEditable={<ContentEditable />}
+        placeholder={<div>Enter some text...</div>}
+        ErrorBoundary={LexicalErrorBoundary}
+      />
+    </LexicalComposer>
+  );
+}
+```
+
+### Opening the `FloatingComposer`
+
+To open the `FloatingComposer`, you need to dispatch the
+`OPEN_FLOATING_COMPOSER_COMMAND`
+[Lexical command](https://lexical.dev/docs/concepts/commands).
+
+```tsx highlight="10"
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { OPEN_FLOATING_COMPOSER_COMMAND } from "@liveblocks/react-lexical";
+
+function Toolbar() {
+  const [editor] = useLexicalComposerContext();
+
+  return (
+    <button
+      onClick={() => {
+        editor.dispatchCommand(OPEN_FLOATING_COMPOSER_COMMAND);
+      }}
+    >
+      💬 New comment
+    </button>
+  );
+}
+```
+
+## useIsThreadActive
+
+Accepts a thread id and returns whether the thread annotation for this thread is
+selected or not in the Lexical editor. This hook must be used in a component
+nested inside [`LiveblocksPlugin`][].
+
+```ts
+import { useIsThreadActive } from "@liveblocks/react-lexical";
+
+const isActive = useIsThreadActive(thread.id);
+```
+
+This hook can be useful to style threads based on whether their associated
+thread annotations are selected or not in the editor.
+
+## Stylesheets
+
+React Lexical comes with default styles, and these can be imported into the root
+of your app or directly into a CSS file with `@import`. Note that you must also
+install and import a stylesheet from
+[`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui) to use these
+styles.
+
+```tsx
+import "@liveblocks/react-ui/styles.css";
+import "@liveblocks/react-lexical/styles.css";
+```
+
+### Customizing your styles
+
+Adding dark mode and customizing your styles is part of `@liveblocks/react-ui`,
+learn how to do this under
+[styling and customization](/docs/api-reference/liveblocks-react-ui#Styling-and-customization).
+
+[`LiveblocksPlugin`]: #LiveblocksPlugin
+[`LexicalComposer`]: https://lexical.dev/docs/react/plugins

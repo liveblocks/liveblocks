@@ -1,8 +1,8 @@
 import { ClientSideSuspense } from "@liveblocks/react";
+import { useUnreadInboxNotificationsCount } from "@liveblocks/react/suspense";
 import { usePathname } from "next/navigation";
 import { ComponentProps, useEffect, useState } from "react";
 import { InboxIcon } from "@/icons";
-import { useUnreadInboxNotificationsCount } from "@/liveblocks.config";
 import { Button } from "@/primitives/Button";
 import { Popover } from "@/primitives/Popover";
 import { Inbox } from "./Inbox";
@@ -35,7 +35,7 @@ export function InboxPopover(
     >
       <Button variant="secondary" icon={<InboxIcon />} iconButton>
         <ClientSideSuspense fallback={null}>
-          {() => <InboxPopoverUnreadCount />}
+          <InboxPopoverUnreadCount />
         </ClientSideSuspense>
       </Button>
     </Popover>

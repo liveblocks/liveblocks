@@ -1,5 +1,17 @@
 import { createClient } from "@liveblocks/client";
 
+declare global {
+  interface Liveblocks {
+    // Each user's Presence, for room.getPresence, room.subscribe("others"), etc.
+    Presence: {
+      cursor: {
+        x: number;
+        y: number;
+      } | null;
+    };
+  }
+}
+
 let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
 let roomId = "javascript-live-cursors";
 
@@ -17,16 +29,9 @@ const client = createClient({
   publicApiKey: PUBLIC_KEY,
 });
 
-type Presence = {
-  cursor: {
-    x: number;
-    y: number;
-  } | null;
-};
-
 // If you no longer need the room (for example when you unmount your
 // component), make sure to call leave()
-const { room, leave } = client.enterRoom<Presence>(roomId, {
+const { room, leave } = client.enterRoom(roomId, {
   initialPresence: { cursor: null },
 });
 

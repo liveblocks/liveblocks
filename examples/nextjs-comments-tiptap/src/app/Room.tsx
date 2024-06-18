@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode, useMemo } from "react";
-import { RoomProvider } from "@/liveblocks.config";
+import { RoomProvider } from "@liveblocks/react/suspense";
 import { useSearchParams } from "next/navigation";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { DocumentSpinner } from "@/components/Spinner";
@@ -17,7 +17,7 @@ export function Room({ children }: { children: ReactNode }) {
       }}
     >
       <ClientSideSuspense fallback={<DocumentSpinner />}>
-        {() => children}
+        {children}
       </ClientSideSuspense>
     </RoomProvider>
   );

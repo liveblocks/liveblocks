@@ -1,7 +1,7 @@
 "use client";
 
 import { ClientSideSuspense } from "@liveblocks/react";
-import LiveblocksProvider from "@liveblocks/yjs";
+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
 import Highlight from "@tiptap/extension-highlight";
@@ -17,7 +17,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { EditorView } from "prosemirror-view";
 import { useEffect, useState } from "react";
 import * as Y from "yjs";
-import { useRoom, useSelf } from "@/liveblocks.config";
+import { useRoom, useSelf } from "@liveblocks/react/suspense";
 import { DocumentSpinner } from "@/primitives/Spinner";
 import { CustomTaskItem } from "./CustomTaskItem";
 import { SelectionMenu } from "./SelectionMenu";
@@ -28,7 +28,7 @@ import { Avatars } from "@/components/Avatars";
 export function TextEditor() {
   return (
     <ClientSideSuspense fallback={<DocumentSpinner />}>
-      {() => <Editor />}
+      <Editor />
     </ClientSideSuspense>
   );
 }
@@ -42,7 +42,7 @@ export function Editor() {
   // Set up Liveblocks Yjs provider
   useEffect(() => {
     const yDoc = new Y.Doc();
-    const yProvider = new LiveblocksProvider(room, yDoc);
+    const yProvider = new LiveblocksYjsProvider(room, yDoc);
     setDoc(yDoc);
     setProvider(yProvider);
 

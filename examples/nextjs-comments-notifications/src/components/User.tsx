@@ -3,7 +3,7 @@
 import clsx from "clsx";
 import { ComponentProps } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import { useUser } from "../../liveblocks.config";
+import { useUser } from "@liveblocks/react/suspense";
 import { useExampleUserId } from "../example.client";
 import { ClientSideSuspense } from "@liveblocks/react";
 
@@ -24,7 +24,7 @@ export function User({ className, ...props }: ComponentProps<"div">) {
   return (
     <ErrorBoundary fallback={fallback}>
       <ClientSideSuspense fallback={fallback}>
-        {() => <Avatar className={className} {...props} />}
+        <Avatar className={className} {...props} />
       </ClientSideSuspense>
     </ErrorBoundary>
   );

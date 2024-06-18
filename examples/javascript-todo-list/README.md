@@ -23,7 +23,7 @@ This example shows how to build a collaborative to-do list with
 [Liveblocks](https://liveblocks.io) and [esbuild](https://esbuild.github.io/).
 
 As users edit the list, changes will be automatically persisted and
-synced—allowing for a list that updates in real-time across clients. Users will
+synced—allowing for a list that updates in realtime across clients. Users will
 also be able to see who else is currently online and when a user is typing.
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/collaborative-todo-list.png" width="536" alt="Collaborative To-do List" />

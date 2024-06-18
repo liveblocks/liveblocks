@@ -1,4 +1,4 @@
-import { RoomProvider } from "../liveblocks.config";
+import { RoomProvider } from "@liveblocks/react";
 import { useRouter } from "next/router";
 import LiveAvatars from "../components/LiveAvatars";
 import { useMemo } from "react";
@@ -10,7 +10,7 @@ export default function Example() {
   );
 
   return (
-    <RoomProvider id={roomId} initialPresence={{}}>
+    <RoomProvider id={roomId}>
       <main className={styles.main}>
         <LiveAvatars />
       </main>

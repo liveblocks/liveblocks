@@ -14,7 +14,8 @@ import cx from "classnames";
 import { type ReactNode, forwardRef } from "react";
 import styles from "./DropdownMenu.module.css";
 
-export interface Props extends DropdownMenuProps, DropdownMenuContentProps {
+export interface Props
+  extends Omit<DropdownMenuProps & DropdownMenuContentProps, "content"> {
   content: DropdownMenuContentProps["children"];
 }
 

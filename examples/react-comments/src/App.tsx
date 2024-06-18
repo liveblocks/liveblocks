@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import { Composer, Thread } from "@liveblocks/react-comments";
-import { RoomProvider, useThreads } from "../liveblocks.config";
+import { Composer, Thread } from "@liveblocks/react-ui";
+import { RoomProvider, useThreads } from "@liveblocks/react/suspense";
 import { Loading } from "./components/Loading";
 import { ErrorBoundary } from "react-error-boundary";
 
@@ -24,7 +24,7 @@ function Example() {
 
 export default function App({ roomId }: { roomId: string }) {
   return (
-    <RoomProvider id={roomId} initialPresence={{}}>
+    <RoomProvider id={roomId}>
       <ErrorBoundary
         fallback={
           <div className="error">There was an error while getting threads.</div>

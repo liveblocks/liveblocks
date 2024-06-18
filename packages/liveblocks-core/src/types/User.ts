@@ -1,10 +1,11 @@
+import type { DP, DU } from "../globals/augmentation";
 import type { JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 
 /**
  * Represents a user connected in a room. Treated as immutable.
  */
-export type User<P extends JsonObject, U extends BaseUserMeta> = {
+export type User<P extends JsonObject = DP, U extends BaseUserMeta = DU> = {
   /**
    * The connection ID of the User. It is unique and increment at every new connection.
    */
@@ -22,13 +23,6 @@ export type User<P extends JsonObject, U extends BaseUserMeta> = {
    * The user’s presence data.
    */
   readonly presence: P;
-
-  /**
-   * @deprecated Use `!user.canWrite` instead.
-   * False if the user can mutate the Room’s Storage and/or YDoc, true if they
-   * can only read but not mutate it.
-   */
-  readonly isReadOnly: boolean;
 
   /**
    * True if the user can mutate the Room’s Storage and/or YDoc, false if they

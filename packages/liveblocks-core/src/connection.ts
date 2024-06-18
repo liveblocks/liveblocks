@@ -22,17 +22,6 @@ import {
 } from "./types/IWebSocket";
 
 /**
- * Old connection statuses, here for backward-compatibility reasons only.
- */
-export type LegacyConnectionStatus =
-  | "closed" // Room hasn't been entered, or has left already
-  | "authenticating" // This state is no longer used, but older versions of the Liveblocks client still use it
-  | "connecting" // In the process of authenticating and establishing a WebSocket connection
-  | "open" // Successful room connection, on the happy path
-  | "unavailable" // Connection lost unexpectedly, considered a temporary hiccup, will retry
-  | "failed"; // Connection failed and we won't retry automatically (e.g. unauthorized)
-
-/**
  * Returns a human-readable status indicating the current connection status of
  * a Room, as returned by `room.getStatus()`. Can be used to implement
  * a connection status badge.
@@ -66,29 +55,6 @@ export type LostConnectionEvent =
   | "lost" // the client is trying to reconnect to Liveblocks, but it's taking (much) longer than usual
   | "restored" // the client did reconnect after all
   | "failed"; // the client was told to stop trying
-
-export function newToLegacyStatus(status: Status): LegacyConnectionStatus {
-  switch (status) {
-    case "connecting":
-      return "connecting";
-
-    case "connected":
-      return "open";
-
-    case "reconnecting":
-      return "unavailable";
-
-    case "disconnected":
-      return "failed";
-
-    case "initial":
-      return "closed";
-
-    // istanbul ignore next
-    default:
-      return "closed";
-  }
-}
 
 /**
  * Maps internal machine state to the public Status API.
@@ -1047,10 +1013,6 @@ export class ManagedSocket<T extends BaseAuthResult> {
     this.machine = machine;
     this.events = events;
     this.cleanups = cleanups;
-  }
-
-  getLegacyStatus(): LegacyConnectionStatus {
-    return newToLegacyStatus(this.getStatus());
   }
 
   getStatus(): Status {

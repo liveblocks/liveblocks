@@ -10,8 +10,11 @@ PACKAGE_DIRS=(
     "packages/liveblocks-redux"
     "packages/liveblocks-zustand"
     "packages/liveblocks-yjs"
-    "packages/liveblocks-react-comments"
+    "packages/liveblocks-react-ui"
+    "packages/liveblocks-react-lexical"
+    "packages/liveblocks-node-lexical"
     "packages/create-liveblocks-app"
+    "packages/liveblocks-codemod"
 )
 
 err () {

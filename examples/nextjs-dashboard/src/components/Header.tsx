@@ -1,4 +1,4 @@
-import { useOthersConnectionIds } from "../liveblocks.config";
+import { useOthersConnectionIds } from "@liveblocks/react";
 import Avatar from "./Avatar";
 import { COLORS_PRESENCE } from "../constants";
 import styles from "./Header.module.css";

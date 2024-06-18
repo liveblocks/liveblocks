@@ -5,7 +5,7 @@ meta:
   description: "Learn how to get started with Liveblocks and JavaScript"
 ---
 
-Liveblocks is a real-time collaboration infrastructure for building performant
+Liveblocks is a realtime collaboration infrastructure for building performant
 collaborative experiences. Follow the following steps to start adding
 collaboration to your JavaScript application using the APIs from the
 [`@liveblocks/client`](/docs/api-reference/liveblocks-client) package.
@@ -17,8 +17,23 @@ collaboration to your JavaScript application using the APIs from the
     <StepTitle>Install Liveblocks</StepTitle>
     <StepContent>
 
+      Every package should use the same version.
+
       ```bash
       npm install @liveblocks/client
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Initialize the `liveblocks.config.ts` file</StepTitle>
+    <StepContent>
+
+      We can use this file later to [define types for our application](/docs/api-reference/liveblocks-client#Typing-your-data).
+
+      ```bash
+      npx create-liveblocks-app@latest --init --framework javascript
       ```
 
     </StepContent>
@@ -46,10 +61,10 @@ collaboration to your JavaScript application using the APIs from the
     <StepContent>
 
       Liveblocks uses the concept of rooms, separate virtual spaces where people collaborate.
-      To create a real-time experience, multiple users must be connected to the same room.
+      To create a realtime experience, multiple users must be connected to the same room.
 
       ```js file="room.js"
-      const { room, leave } = client.enterRoom("my-room", { initialPresence: {} });
+      const { room, leave } = client.enterRoom("my-room");
       ```
 
     </StepContent>

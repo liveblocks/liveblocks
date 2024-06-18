@@ -1,7 +1,7 @@
 "use client";
 
 import { PropsWithChildren, useMemo } from "react";
-import { RoomProvider } from "@/liveblocks.config";
+import { RoomProvider } from "@liveblocks/react/suspense";
 import { useSearchParams } from "next/navigation";
 
 export function Room({ children }: PropsWithChildren) {

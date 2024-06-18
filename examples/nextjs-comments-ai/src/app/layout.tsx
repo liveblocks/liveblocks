@@ -1,4 +1,5 @@
 import "@/styles/globals.css";
+import { Providers } from "./Providers";
 
 export default function RootLayout({
   children,
@@ -26,32 +27,34 @@ export default function RootLayout({
         />
       </head>
       <body>
-        {children}
-        {!HAS_OPENAI_KEY ? (
-          <div className="no-key">
-            <div>
-              <h2>OpenAI API key required</h2>
-              <p>
-                To run this example, download the project and add your OpenAI
-                API key to <code>.env.local</code>
-              </p>
-              <pre>
-                <code>
-                  OPENAI_API_KEY=sk-...
-                  <br />
-                  LIVEBLOCKS_SECRET_KEY=sk_...
-                  <br />
-                  LIVEBLOCKS_WEBHOOK_SECRET_KEY=whsec...
-                </code>
-              </pre>
-              <p>
-                <a href={"https://platform.openai.com/api-keys"}>
-                  Create your OpenAI API key here
-                </a>
-              </p>
+        <Providers>
+          {children}
+          {!HAS_OPENAI_KEY ? (
+            <div className="no-key">
+              <div>
+                <h2>OpenAI API key required</h2>
+                <p>
+                  To run this example, download the project and add your OpenAI
+                  API key to <code>.env.local</code>
+                </p>
+                <pre>
+                  <code>
+                    OPENAI_API_KEY=sk-...
+                    <br />
+                    LIVEBLOCKS_SECRET_KEY=sk_...
+                    <br />
+                    LIVEBLOCKS_WEBHOOK_SECRET_KEY=whsec...
+                  </code>
+                </pre>
+                <p>
+                  <a href={"https://platform.openai.com/api-keys"}>
+                    Create your OpenAI API key here
+                  </a>
+                </p>
+              </div>
             </div>
-          </div>
-        ) : null}
+          ) : null}
+        </Providers>
       </body>
     </html>
   );

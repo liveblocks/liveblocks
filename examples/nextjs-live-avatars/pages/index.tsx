@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { Avatar } from "../components/Avatar";
-import { RoomProvider, useOthers, useSelf } from "../liveblocks.config";
+import { RoomProvider, useOthers, useSelf } from "@liveblocks/react";
 import { useRouter } from "next/router";
 import styles from "./index.module.css";
 
@@ -34,7 +34,7 @@ export default function Page() {
   const roomId = useExampleRoomId("liveblocks:examples:nextjs-live-avatars");
 
   return (
-    <RoomProvider id={roomId} initialPresence={{}}>
+    <RoomProvider id={roomId}>
       <Example />
     </RoomProvider>
   );

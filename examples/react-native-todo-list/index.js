@@ -6,8 +6,8 @@ import App from "./App";
 import { name as appName } from "./app.json";
 import { URL } from "react-native-url-polyfill";
 
-window.addEventListener = () => { }; // workaround until a solution is found to handle reconnection in RN
-window.postMessage = () => { }; // used for Liveblocks DevTools. Not supported by RN
+window.addEventListener = () => {}; // workaround until a solution is found to handle reconnection in RN
+window.postMessage = () => {}; // used for Liveblocks DevTools. Not supported by RN
 global.URL = URL; // need polyfill in RN
 
 const roomId = "react-native-todo-list";

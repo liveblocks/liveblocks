@@ -51,5 +51,5 @@ export type FixedArray<T, N extends number> = N extends N
 type RecursiveFixedArray<
   T,
   N extends number,
-  R extends unknown[]
+  R extends unknown[],
 > = R["length"] extends N ? R : RecursiveFixedArray<T, N, [T, ...R]>;

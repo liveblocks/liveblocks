@@ -13,7 +13,7 @@ import { ClientSideSuspense } from "@liveblocks/react";
 import { ThreadsTimeline } from "@/components/ThreadsTimeline";
 import { NewThreadComposer } from "@/components/NewThreadComposer";
 import { ExitFullscreenIcon } from "@/icons/ExitFullscreen";
-import { useUpdateMyPresence } from "@/liveblocks.config";
+import { useUpdateMyPresence } from "@liveblocks/react/suspense";
 import { useKeyDownListener, useSkipToListener } from "@/utils";
 
 export function VideoPlayer() {
@@ -136,19 +136,17 @@ export function VideoPlayer() {
           onDoubleClick={handleFullscreen}
         >
           <ClientSideSuspense fallback={null}>
-            {() => (
-              <ReactPlayer
-                ref={player}
-                width="100%"
-                height="auto"
-                playing={playing}
-                onDuration={setDuration}
-                onProgress={handleProgress}
-                onEnded={handleEnded}
-                url="michael-james-16296843-720p.mp4"
-                className={styles.reactPlayer}
-              />
-            )}
+            <ReactPlayer
+              ref={player}
+              width="100%"
+              height="auto"
+              playing={playing}
+              onDuration={setDuration}
+              onProgress={handleProgress}
+              onEnded={handleEnded}
+              url="michael-james-16296843-720p.mp4"
+              className={styles.reactPlayer}
+            />
           </ClientSideSuspense>
         </div>
 
@@ -200,13 +198,11 @@ export function VideoPlayer() {
 
       {/* Add comment component */}
       <ClientSideSuspense fallback={null}>
-        {() => (
-          <NewThreadComposer
-            getCurrentPercentage={getCurrentPercentage}
-            setPlaying={setPlaying}
-            time={duration * time}
-          />
-        )}
+        <NewThreadComposer
+          getCurrentPercentage={getCurrentPercentage}
+          setPlaying={setPlaying}
+          time={duration * time}
+        />
       </ClientSideSuspense>
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import styles from "./Status.module.css";
-import { useStatus } from "@/liveblocks.config";
+import { useStatus } from "@liveblocks/react/suspense";
 
 export function Status() {
   const status = useStatus();

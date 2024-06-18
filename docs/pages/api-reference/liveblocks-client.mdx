@@ -6,7 +6,7 @@ meta:
 alwaysShowAllNavigationLevels: false
 ---
 
-`@liveblocks/client` provides you with JavaScript bindings for our real-time
+`@liveblocks/client` provides you with JavaScript bindings for our realtime
 collaboration APIs, built on top of WebSockets. Read our
 [getting started](/docs/get-started) guides to learn more.
 
@@ -303,7 +303,7 @@ const client = createClient({
 });
 ```
 
-This option is helpful for smoothing out real-time animations in your
+This option is helpful for smoothing out realtime animations in your
 application, as you can effectively increase the framerate without using any
 interpolation. Here are some examples with their approximate frames per second
 (FPS) values.
@@ -372,14 +372,6 @@ value of at least a few minutes, to avoid unnecessary disconnections.
 
 ### resolveUsers [#createClientResolveUsers]
 
-<Banner title="Public beta">
-
-Comments is currently in beta. If you have any questions or feedback, please
-join us on our [Discord server](https://liveblocks.io/discord). We’d love to
-hear from you.
-
-</Banner>
-
 [Comments](/docs/products/comments) stores user IDs in its system, but no other
 user information. To display user information in Comments components, such as a
 user’s name or avatar, you need to resolve these IDs into user objects. This
@@ -405,14 +397,14 @@ const client = createClient({
 ```
 
 The name and avatar you return are rendered in
-[`Thread`](/docs/api-reference/liveblocks-react-comments#Thread) components.
+[`Thread`](/docs/api-reference/liveblocks-react-ui#Thread) components.
 
 #### User objects
 
 The user objects returned by the resolver function take the shape of
 `UserMeta["info"]`, which contains `name` and `avatar` by default. These two
 values are optional, though if you’re using the
-[Comments default components](/docs/api-reference/liveblocks-react-comments#Components),
+[Comments default components](/docs/api-reference/liveblocks-react-ui#Components),
 they are necessary. Here’s an example of `userIds` and the exact values
 returned.
 
@@ -451,7 +443,7 @@ You can access any values set within `resolveUsers` with the
 [`useUser`](/docs/api-reference/liveblocks-react#useUser) hook.
 
 ```tsx
-import { useUser } from "../liveblocks.config";
+import { useUser } from "@liveblocks/react/suspense";
 
 function Component() {
   const user = useUser("marc@example.com");
@@ -463,18 +455,10 @@ function Component() {
 
 ### resolveRoomsInfo [#createClientResolveRoomsInfo]
 
-<Banner title="Public beta">
-
-Comments is currently in beta. If you have any questions or feedback, please
-join us on our [Discord server](https://liveblocks.io/discord). We’d love to
-hear from you.
-
-</Banner>
-
 When using [Notifications](/docs/products/comments/notifications) with
 [Comments](/docs/products/comments), room IDs will be used to contextualize
 notifications (e.g. “Chris mentioned you in _room-id_”) in the
-[`InboxNotification`](/docs/api-reference/liveblocks-react-comments#InboxNotification)
+[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
 component. To replace room IDs with more fitting names (e.g. document names,
 “Chris mentioned you in _Document A_”), you can provide a resolver function to
 the `resolveRoomsInfo` option in [`createClient`](#createClient).
@@ -502,29 +486,21 @@ const client = createClient({
 
 In addition to the room’s name, you can also provide a room’s URL as the `url`
 property. If you do so, the
-[`InboxNotification`](/docs/api-reference/liveblocks-react-comments#InboxNotification)
+[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
 component will automatically use it. It’s possible to use an inbox
 notification’s `roomId` property to construct a room’s URL directly in React and
 set it on
-[`InboxNotification`](/docs/api-reference/liveblocks-react-comments#InboxNotification)
+[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
 via `href`, but the room ID might not be enough for you to construct the URL ,
 you might need to call your backend for example. In that case, providing it via
 `resolveRoomsInfo` is the preferred way.
 
 ### resolveMentionSuggestions [#createClientResolveMentionSuggestions]
 
-<Banner title="Public beta">
-
-Comments is currently in beta. If you have any questions or feedback, please
-join us on our [Discord server](https://liveblocks.io/discord). We’d love to
-hear from you.
-
-</Banner>
-
 To enable creating mentions in [Comments](/docs/products/comments), you can
 provide a resolver function to the `resolveMentionSuggestions` option in
 [`createClient`](#createClient). These mentions will be displayed in the
-[`Composer`](/docs/api-reference/liveblocks-react-comments#Composer) component.
+[`Composer`](/docs/api-reference/liveblocks-react-ui#Composer) component.
 
 This resolver function will receive the mention currently being typed (e.g. when
 writing “@jane”, `text` will be `jane`) and should return a list of user IDs
@@ -625,14 +601,12 @@ and [initial Storage](#setting-initial-storage) values.
 
 ```ts
 const { room, leave } = client.enterRoom("my-room-id", {
-  initialPresence: {},
-
-  // Other options
+  // Options
   // ...
 });
 ```
 
-Note that it’s possible to [add types to your room](#typing-your-room).
+Note that it’s possible to [add types to your room](#typing-your-data).
 
 <PropertiesList title="Returns">
   <PropertiesListItem
@@ -640,7 +614,7 @@ Note that it’s possible to [add types to your room](#typing-your-room).
     type="Room<TPresence, TStorage, TUserMeta, TRoomEvent>"
   >
     A [Room](#Room), used for building your Liveblocks application. Learn more
-    about [typing your room](#typing-your-room).
+    about [typing your room](#typing-your-data).
   </PropertiesListItem>
   <PropertiesListItem name="leave" type="() => void">
     A function that’s used to leave the room and disconnect.
@@ -726,55 +700,6 @@ Any
 [conflict-free live structures](/docs/api-reference/liveblocks-client#Storage)
 and JSON-serializable objects are allowed (the `LsonObject` type).
 
-### Client.enter [@badge=Deprecated]
-
-Enters a room and returns its local `Room` instance.
-
-<Banner title="Deprecated since 1.5" type="warning">
-
-We no longer recommend this API, because issues will occur if you simultaneously
-connect to the same room with multiple instances. We recommend using
-[`client.enterRoom`][] instead.
-
-</Banner>
-
-```ts
-// ❌ This API was recommended before 1.5
-const room = client.enter("my-room", {
-  initialPresence: { cursor: null },
-  initialStorage: { todos: new LiveList() },
-});
-client.leave(roomId);
-
-// ✅ Prefer this instead
-const { room, leave } = client.enterRoom("my-room", {
-  initialPresence: { cursor: null },
-  initialStorage: { todos: new LiveList() },
-});
-leave();
-```
-
-### Client.leave [@badge=Deprecated]
-
-Leaves a room.
-
-<Banner title="Deprecated since 1.5" type="warning">
-
-We no longer recommend this API, because issues will occur if you simultaneously
-connect to the same room with multiple instances. We recommend using
-[`client.enterRoom`][] instead.
-
-</Banner>
-
-```ts
-// ❌ This API was recommended before 1.5
-client.leave("my-room");
-
-// ✅ Prefer this instead
-const { room, leave } = client.enterRoom("my-room" /* options */);
-leave();
-```
-
 ### Client.getRoom
 
 Gets a room by its ID. Returns `null` if [`client.enterRoom`][] has not been
@@ -786,7 +711,7 @@ const room = client.getRoom("my-room");
 
 It’s unlikely you’ll need this API if you’re using the newer
 [`client.enterRoom`][] API. Note that it’s possible to
-[add types to your room](#typing-your-room).
+[add types to your room](#typing-your-data).
 
 <PropertiesList title="Returns">
   <PropertiesListItem
@@ -795,7 +720,7 @@ It’s unlikely you’ll need this API if you’re using the newer
   >
     A [Room](#Room), used for building your Liveblocks application. Returns
     `null` if the room has not yet been joined by the current client. Learn more
-    about [typing your room](#typing-your-room).
+    about [typing your room](#typing-your-data).
   </PropertiesListItem>
 </PropertiesList>
 
@@ -845,10 +770,14 @@ Presence is set with [`updatePresence`](#Room.updatePresence) and can be typed
 when you [enter a room](#enter-room-typing-a-room). The example above is using
 the following type:
 
-```ts
-type Presence = {
-  cursor: { x: number; y: number };
-};
+```ts file="liveblocks.config.ts"
+declare global {
+  interface Liveblocks {
+    Presence: {
+      cursor: { x: number; y: number };
+    };
+  }
+}
 ```
 
 <PropertiesList title="Returns">
@@ -991,26 +920,21 @@ between different events on the receiving end.
 
 #### Typing multiple events [#typing-multiple-events]
 
-When [defining your types](#typing-your-room), you can pass a `RoomEvent` type
-to the fourth generic in [`client.enterRoom`][] to receive type hints in your
-app. To define multiple different custom events, use a union.
+When [defining your types](#typing-your-data), you can pass a `RoomEvent` type
+in your config file to receive type hints in your app. To define multiple
+different custom events, use a union.
 
-```ts highlight="5-7,17-22"
-type Presence = {};
-type Storage = {};
-type UserMeta = {};
+```ts
+declare global {
+  interface Liveblocks {
+    RoomEvent:
+      | { type: "REACTION"; emoji: string }
+      | { type: "ACTION"; action: string };
+  }
+}
+```
 
-type ReactionEvent = { type: "REACTION"; emoji: string };
-type ActionEvent = { type: "ACTION"; action: string };
-type RoomEvent = ReactionEvent | ActionEvent;
-
-const { room, leave } = client.enterRoom<
-  Presence,
-  Storage,
-  UserMeta,
-  RoomEvent
->("my-room-id", { initialPresence: {} });
-
+```ts
 room.subscribe("event", ({ event, user, connectionId }) => {
   if (event.type === "REACTION") {
     // Do something
@@ -1192,16 +1116,20 @@ const unsubscribe = room.subscribe(root, (updatedRoot) => {
 
 To type the Storage values you receive, make sure to set your `Storage` type.
 
-```ts
+```ts file="liveblocks.config.ts"
 import { LiveList } from "@liveblocks/client";
 
-type Storage = {
-  animals: LiveList<{ name: string }>;
-};
+declare global {
+  interface Liveblocks {
+    Storage: {
+      animals: LiveList<{ name: string }>;
+    };
+  }
+}
 ```
 
 The type received in the callback will match the type passed. Learn more under
-[typing your room](#typing-your-room).
+[typing your room](#typing-your-data).
 
 ```ts
 const { root } = await room.getStorage();
@@ -1218,14 +1146,18 @@ const unsubscribe = room.subscribe(animals, (updatedAnimals) => {
 You can subscribe to any live structure, be it the Storage `root`, a child, or a
 structure even more deeply nested.
 
-```ts
-import { LiveObject, LiveMap } from "@liveblocks/client";
+```ts file="liveblocks.config.ts"
+import { LiveMap, LiveObject } from "@liveblocks/client";
 
 type Person = LiveObject<{ name: string; age: number }>;
 
-type Storage = {
-  people: LiveMap<string, Person>;
-};
+declare global {
+  interface Liveblocks {
+    Storage: {
+      people: LiveMap<string, Person>;
+    };
+  }
+}
 ```
 
 ```ts
@@ -1377,26 +1309,21 @@ const unsubscribe = room.subscribe("event", ({ event, user, connectionId }) => {
 
 #### Typing events
 
-When [defining your types](#typing-your-room), you can pass a `RoomEvent` type
-to the fourth generic in [`client.enterRoom`][] to receive type hints in your
-app. To define multiple different custom events, use a union.
+When [defining your types](#typing-your-data), you can pass a `RoomEvent` type
+to your config file to receive type hints in your app. To define multiple
+different custom events, use a union.
 
-```ts highlight="5-7,17-22"
-type Presence = {};
-type Storage = {};
-type UserMeta = {};
+```ts
+declare global {
+  interface Liveblocks {
+    RoomEvent:
+      | { type: "REACTION"; emoji: string }
+      | { type: "ACTION"; action: string };
+  }
+}
+```
 
-type ReactionEvent = { type: "REACTION"; emoji: string };
-type ActionEvent = { type: "ACTION"; action: string };
-type RoomEvent = ReactionEvent | ActionEvent;
-
-const { room, leave } = client.enterRoom<
-  Presence,
-  Storage,
-  UserMeta,
-  RoomEvent
->("my-room-id", { initialPresence: {} });
-
+```ts
 room.subscribe("event", ({ event, user, connectionId }) => {
   if (event.type === "REACTION") {
     // Do something
@@ -1471,15 +1398,19 @@ const unsubscribe = room.subscribe("my-presence", (presence) => {
 
 To type the Presence values you receive, make sure to set your Presence type.
 
-```ts
-type Presence = {
-  status: string;
-  cursor: { x: number; y: number };
-};
+```ts file="liveblocks.config.ts"
+declare global {
+  interface Liveblocks {
+    Presence: {
+      status: string;
+      cursor: { x: number; y: number };
+    };
+  }
+}
 ```
 
 The type received in the callback will match the type passed. Learn more under
-[typing your room](#typing-your-room).
+[typing your data](#typing-your-data).
 
 ```ts
 const unsubscribe = room.subscribe("my-presence", (presence) => {
@@ -1527,15 +1458,19 @@ const unsubscribe = room.subscribe("others", (others, event) => {
 
 To type the Presence values you receive, make sure to set your Presence type.
 
-```ts
-type Presence = {
-  status: string;
-  cursor: { x: number; y: number };
-};
+```ts file="liveblocks.config.ts"
+declare global {
+  interface Liveblocks {
+    Presence: {
+      status: string;
+      cursor: { x: number; y: number };
+    };
+  }
+}
 ```
 
 The type received in the callback will match the type passed. Learn more under
-[typing your room](#typing-your-room).
+[typing your data](#typing-your-data).
 
 ```ts
 const unsubscribe = room.subscribe("others", (others, event) => {
@@ -1580,20 +1515,18 @@ Here’s a basic example showing you how to render live cursors.
 [`Room.updatePresence`](/docs/api-reference/liveblocks-client#Room.updatePresence)
 is being used to update each user’s cursor position.
 
-```ts highlight="15-18,20,22-28"
-type Presence = {
-  cursor: { x: number; y: number };
-};
-type Storage = {};
-type UserMeta = { id: string };
-type RoomEvent = {};
+```ts file="liveblocks.config.ts"
+declare global {
+  interface Liveblocks {
+    Presence: {
+      cursor: { x: number; y: number };
+    };
+  }
+}
+```
 
-const { room, leave } = client.enterRoom<
-  Presence,
-  Storage,
-  UserMeta,
-  RoomEvent
->("my-room-id", { initialPresence: {} });
+```ts
+const { room, leave } = client.enterRoom("my-room-id");
 
 // Call this to update the current user's Presence
 function updateCursorPosition({ x, y }) {
@@ -1781,25 +1714,6 @@ const client = createClient({
   lostConnectionTimeout: 5000,
 
   // ...
-});
-```
-
-### Room.subscribe("connection") [#Room.subscribe.connection]
-
-<Banner title="Deprecated since 1.1" type="warning">
-
-Support for this subscription overload will be removed in a future version. We
-recommend switching to [`Room.subscribe("status")`][] instead.
-
-</Banner>
-
-Subscribe to our legacy WebSocket connection status updates. Takes a callback
-that is called when the connection status changes. Returns an unsubscribe
-function.
-
-```ts
-const unsubscribe = room.subscribe("connection", (status) => {
-  // Do something
 });
 ```
 
@@ -2342,16 +2256,20 @@ temporary.
 
 To type the Storage values you receive, make sure to set your `Storage` type.
 
-```ts
+```ts highlight="liveblocks.config.ts"
 import { LiveList } from "@liveblocks/client";
 
-type Storage = {
-  animals: LiveList<{ name: string }>;
-};
+declare global {
+  interface Liveblocks {
+    Storage: {
+      animals: LiveList<{ name: string }>;
+    };
+  }
+}
 ```
 
 The type received in the callback will match the type passed. Learn more under
-[typing your room](#typing-your-room).
+[typing your data](#typing-your-data).
 
 ```ts
 const { root } = await room.getStorage();
@@ -2368,7 +2286,7 @@ const unsubscribe = room.subscribe(animals, (updatedAnimals) => {
 All Storage data structures can be nested, allowing you to create complex trees
 of conflict-free data.
 
-```ts
+```ts file="liveblocks.config.ts"
 import { LiveObject, LiveList, LiveMap } from "@liveblocks/client";
 
 type Person = LiveObject<{
@@ -2376,9 +2294,13 @@ type Person = LiveObject<{
   pets: LiveList<string>;
 }>;
 
-type Storage = {
-  people: LiveMap<string, Person>;
-};
+declare global {
+  interface Liveblocks {
+    Storage: {
+      people: LiveMap<string, Person>;
+    };
+  }
+}
 ```
 
 ```ts
@@ -3745,14 +3667,120 @@ await stringifyCommentBody(comment.body, {
 
 ## TypeScript
 
-### Typing your room [#typing-your-room]
+### Typing your data
 
-By passing Presence, Storage, UserMeta, and RoomEvents types to
-[`client.enterRoom`][], you can enable type hints on your room. Here are some
-example values.
+It’s possible to have automatic types flow through your application by defining
+a global `Liveblocks` interface. We recommend doing this in a
+`liveblocks.config.ts` file in the root of your app, so it’s easy to keep track
+of your types. Each type (`Presence`, `Storage`, etc.), is optional, but it’s
+recommended to make use of them.
+
+```ts file="liveblocks.config.ts"
+declare global {
+  interface Liveblocks {
+    // Each user's Presence
+    Presence: {};
+
+    // The Storage tree for the room
+    Storage: {};
+
+    UserMeta: {
+      id: string;
+      // Custom user info set when authenticating with a secret key
+      info: {};
+    };
+
+    // Custom events
+    RoomEvent: {};
+
+    // Custom metadata set on threads
+    ThreadMetadata: {};
+
+    // Custom room info set with resolveRoomsInfo
+    RoomInfo: {};
+
+    // Custom activities data for custom notification kinds
+    ActivitiesData: {};
+  }
+}
+
+// Necessary if you have no imports/exports
+export {};
+```
+
+Here are some example values that might be used.
+
+```ts file="liveblocks.config.ts"
+import { LiveList } from "@liveblocks/client";
+
+declare global {
+  interface Liveblocks {
+    // Each user's Presence
+    Presence: {
+      // Example, real-time cursor coordinates
+      cursor: { x: number; y: number };
+    };
+
+    // The Storage tree for the room
+    Storage: {
+      // Example, a conflict-free list
+      animals: LiveList<string>;
+    };
+
+    UserMeta: {
+      id: string;
+      // Custom user info set when authenticating with a secret key
+      info: {
+        // Example properties
+        name: string;
+        avatar: string;
+      };
+    };
+
+    // Custom events
+    // Example has two events, using a union
+    RoomEvent: { type: "PLAY" } | { type: "REACTION"; emoji: "🔥" };
+
+    // Custom metadata set on threads
+    ThreadMetadata: {
+      // Example, attaching coordinates to a thread
+      x: number;
+      y: number;
+    };
+
+    // Custom room info set with resolveRoomsInfo
+    RoomInfo: {
+      // Example, rooms with a title and url
+      title: string;
+      url: string;
+    };
+
+    // Custom activities data for custom notification kinds
+    ActivitiesData: {
+      // Example, a custom $alert kind
+      $alert: {
+        title: string;
+        message: string;
+      };
+    };
+  }
+}
+
+// Necessary if you have no imports/exports
+export {};
+```
+
+### Typing with client.enter
+
+Before Liveblocks 2.0, it was recommended to type your data by passing
+`Presence`, `Storage`, `UserMeta`, and `RoomEvents` types to
+[`client.enterRoom`][]. This is no longer
+[the recommended method](#Typing-your-data) for setting up Liveblocks, but it
+can still be helpful, for example you can use `client.enter` multiple times to
+create different room types, each with their own correctly typed hooks.
 
 ```ts
-import { LiveList } from "@/liveblocks/client";
+import { LiveList } from "@liveblocks/client";
 
 // Each user’s Presence
 type Presence = {
@@ -3783,7 +3811,7 @@ const { room, leave } = client.enterRoom<
   Storage,
   UserMeta,
   RoomEvent
->("my-room-id", { initialPresence: {} });
+>("my-room-id");
 ```
 
 You can also pass types to
@@ -3799,32 +3827,30 @@ const { room, leave } = client.getRoom<Presence, Storage, UserMeta, RoomEvent>(
 
 `User` is a type that’s returned by [`room.getSelf`][], [`room.getOthers`][],
 and other functions. Some of its values are set when
-[typing your room](#typing-your-room), here are some example values:
+[typing your room](#typing-your-data), here are some example values:
 
-```ts highlight="1-4,9-16,25-38"
-// Each user’s Presence
-type Presence = {
-  cursor: { x: number: y: number }
-}
+```ts file="liveblocks.config.ts" highlight="4-6,11-14"
+declare global {
+  interface Liveblocks {
+    // Each user's Presence
+    Presence: {
+      cursor: { x: number; y: number };
+    };
 
-type Storage = {}
-type RoomEvent = {}
-
-// User information set when authenticating with a secret key
-type UserMeta = {
-  id: string;
-  info: {
-    // Custom `userInfo` properties set when authenticating
-    avatar: string;
+    UserMeta: {
+      id: string;
+      // Custom user info set when authenticating with a secret key
+      info: {
+        name: string;
+        avatar: string;
+      };
+    };
   }
 }
+```
 
-const { room, leave } = client.enterRoom<
-  Presence,
-  Storage,
-  UserMeta,
-  RoomEvent
->("my-room-id", { initialPresence: {} });
+```ts highlight="5-7,9-12"
+const { room, leave } = client.enterRoom("my-room-id");
 
 // {
 //   connectionId: 52,
@@ -3833,11 +3859,11 @@ const { room, leave } = client.enterRoom<
 //   },
 //   id: "mislav.abha@example.com",
 //   info: {
+//     name: "Mislav Abha",
 //     avatar: "/mislav.png",
 //   },
 //   canWrite: true,
 //   canComment: true,
-//   isReadOnly: false,
 // }
 const user = room.getSelf();
 ```
@@ -3866,11 +3892,52 @@ const user = room.getSelf();
     The ID of the User that has been set in the authentication endpoint. Useful
     to get additional information about the connected user.
   </PropertiesListItem>
-  <PropertiesListItem name="isReadOnly" type="boolean" deprecated>
-    Deprecated. False if the user can mutate the Room’s Storage and/or YDoc,
-    true if they can only read but not mutate it.
-  </PropertiesListItem>
 </PropertiesList>
+
+## Deprecated
+
+### Client.enter [@badge=Deprecated]
+
+<Banner title="Deprecated" type="error">
+  This is no longer supported. We recommend using [`client.enterRoom`][]
+  instead.
+</Banner>
+
+Enters a room and returns its local `Room` instance.
+
+```ts
+// ❌ This API was recommended before 1.5
+const room = client.enter("my-room", {
+  initialPresence: { cursor: null },
+  initialStorage: { todos: new LiveList() },
+});
+client.leave(roomId);
+
+// ✅ Prefer this instead
+const { room, leave } = client.enterRoom("my-room", {
+  initialPresence: { cursor: null },
+  initialStorage: { todos: new LiveList() },
+});
+leave();
+```
+
+### Client.leave [@badge=Deprecated]
+
+<Banner title="Deprecated" type="error">
+  This is no longer supported. We recommend using [`client.enterRoom`][]
+  instead.
+</Banner>
+
+Leaves a room.
+
+```ts
+// ❌ This API was recommended before 1.5
+client.leave("my-room");
+
+// ✅ Prefer this instead
+const { room, leave } = client.enterRoom("my-room" /* options */);
+leave();
+```
 
 [`atob`]: https://developer.mozilla.org/en-US/docs/Web/API/atob
 [`base-64`]: https://www.npmjs.com/package/base-64

@@ -7,14 +7,16 @@ import * as nextjsTemplate from "./templates/nextjs-starter-kit";
 import * as exampleTemplate from "./templates/example";
 import * as helpTemplate from "./templates/help";
 import * as initTemplate from "./templates/init";
+import * as upgradeTemplate from "./templates/upgrade";
 
-type TemplateName = "next" | "example" | "help" | "init";
+type TemplateName = "next" | "example" | "help" | "init" | "upgrade";
 
 const templates: { [K in TemplateName]: any } = {
   next: nextjsTemplate,
   example: exampleTemplate,
   help: helpTemplate,
   init: initTemplate,
+  upgrade: upgradeTemplate,
 };
 
 export async function createLiveblocksApp() {
@@ -54,8 +56,6 @@ export async function createLiveblocksApp() {
     process.exit(0);
   }
 
-  flags.comments = true;
-
   // If any --no-[FLAGNAME] is set, set --[FLAGNAME] to false
   // e.g. `--no-install === true` -> `--install === false`
   Object.entries(flags).forEach(([key, val]) => {
@@ -79,8 +79,28 @@ export async function createLiveblocksApp() {
     flags.template = "next";
   }
 
+  // If --init specified, this is the config generator
   if (flags.init) {
     flags.template = "init";
+  }
+
+  // If --upgrade specified, this is the upgrader
+  if (flags.upgrade !== undefined) {
+    flags.template = "upgrade";
+
+    if (flags.upgrade === null) {
+      // --upgrade flag but no package
+      flags.upgrade = "latest";
+    } else {
+      // --upgrade flag with package string
+      flags.upgrade = flags.upgrade.trim();
+      if (flags.upgrade.startsWith("@")) {
+        flags.upgrade = flags.upgrade.substring(1);
+      }
+    }
+  } else {
+    // If no --upgrade flag, use latest (when selecting "upgrade" in menu)
+    flags.upgrade = "latest";
   }
 
   const initialQuestions: PromptObject<"template">[] = [
@@ -95,6 +115,10 @@ export async function createLiveblocksApp() {
         {
           title: "Create a liveblocks.config file",
           value: "init",
+        },
+        {
+          title: "Upgrade Liveblocks packages",
+          value: "upgrade",
         },
       ],
     },

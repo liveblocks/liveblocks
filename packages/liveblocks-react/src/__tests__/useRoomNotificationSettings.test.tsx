@@ -140,7 +140,7 @@ describe("useRoomNotificationSettings", () => {
 
     const updateRoomNotificationSettings = result.current[1];
     // Update the room notification settings to none
-    await act(() => {
+    act(() => {
       updateRoomNotificationSettings({ threads: "none" });
     });
 
