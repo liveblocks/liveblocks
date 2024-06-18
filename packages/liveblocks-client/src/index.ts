@@ -24,6 +24,7 @@ export type {
   CommentBodyText,
   CommentBodyTextElementArgs,
   CommentData,
+  CommentReaction,
   EnsureJson,
   History,
   Immutable,
