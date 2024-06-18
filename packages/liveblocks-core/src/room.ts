@@ -1434,6 +1434,8 @@ export function createRoom<
       process.env.NODE_ENV !== "production"
         ? new Map<string, string>()
         : undefined,
+
+    // Add boolean saying storage limit has been reached
   };
 
   const doNotBatchUpdates = (cb: () => void): void => cb();
@@ -1630,6 +1632,8 @@ export function createRoom<
     self: makeEventSource<User<P, U>>(),
     myPresence: makeEventSource<P>(),
     others: makeEventSource<OthersEvent<P, U>>(),
+
+    // here possibly
     error: makeEventSource<LiveblocksError>(),
     storage: makeEventSource<StorageUpdate[]>(),
     history: makeEventSource<HistoryEvent>(),
@@ -2361,6 +2365,12 @@ export function createRoom<
           }
 
           case ServerMsgCode.UPDATE_YDOC: {
+            /**
+             * These events will stop happening if
+             *
+             * 1. Storage app limit is reached
+             * 2. Storage text limit is reached
+             */
             eventHub.ydoc.notify(message);
             break;
           }
@@ -2385,6 +2395,8 @@ export function createRoom<
                 mergeStorageUpdates(updates.storageUpdates.get(key), value)
               );
             }
+
+            // clear error boolean
             break;
           }
 
@@ -2398,6 +2410,19 @@ export function createRoom<
               "Storage mutation rejection error",
               message.reason
             );
+
+            /**
+             * REJECT_STORAGE_OP can happen for 3 different reasons (for now)
+             *
+             * 1. Schema validation error
+             * 2. Storage text limit reached
+             * 3. Storage app limit reached
+             *
+             * We want to show a log message in the  console.
+             *
+             * We add a boolean to the context so that it's logged just once (there could be multiple REJECT_STORAGE_OP messages in a single batch of messages).
+             *
+             */
 
             if (process.env.NODE_ENV !== "production") {
               const traces: Set<string> = new Set();
@@ -2789,6 +2814,9 @@ export function createRoom<
     }
   }
 
+  /**
+   * possibly extend this to include the yjs status
+   */
   function getStorageStatus(): StorageStatus {
     if (context.root === undefined) {
       return _getStorage$ === null ? "not-loaded" : "loading";
@@ -2797,6 +2825,10 @@ export function createRoom<
         ? "synchronized"
         : "synchronizing";
     }
+  }
+
+  function getTextEditorStorageStatus() {
+    context;
   }
 
   /**
