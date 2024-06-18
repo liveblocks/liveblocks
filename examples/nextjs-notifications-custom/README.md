@@ -22,7 +22,7 @@
 
 This example shows how to build a notification inbox with custom notifications using [Liveblocks](https://liveblocks.io) and [Next.js](https://nextjs.org/).
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/comments-notifications.png" width="536" alt="Custom Notifications" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/custom-notifications.png" width="536" alt="Custom Notifications" />
 
 ## Getting started
 
