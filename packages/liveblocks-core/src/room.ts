@@ -2422,6 +2422,13 @@ export function createRoom<
              *
              * We add a boolean to the context so that it's logged just once (there could be multiple REJECT_STORAGE_OP messages in a single batch of messages).
              *
+             * We should also notify through the event hub that the storage was rejected.
+             *
+             * Currently we only use eventHub.error to notify about connection errors.
+             *
+             * Do we want to use the same? Or create a new eventHub.updateError?
+             *
+             * Where updateError would be used for all errors related to storage updates (text / schema / storage)
              */
 
             if (process.env.NODE_ENV !== "production") {
