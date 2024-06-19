@@ -13,14 +13,24 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 -->
 
-# Week 24 (2024-06-15)
+# Week 25 (2024-06-21)
+
+## Examples
+
+- New (custom notifications example)[[CHANGELOG-WEEK-24](https://liveblocks.io/examples/notifications-custom/nextjs-notifications-custom)].
+
+## Contributors
+
+ctnicholas
+
+# Week 24 (2024-06-14)
 
 ## v2.0.0
 
 This major release marks the maturity of Liveblocks. It contains new products
 (`@liveblocks/react-lexical`) and clarifications (e.g.
 `@liveblocks/react-comments` is now called `@liveblocks/react-ui`).
-
+t
 Also, we bring major DX improvements by allowing you to specify your types
 globally now. These types will be typed once and shared across all Liveblocks
 APIs, which includes your Node backend.
