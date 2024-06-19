@@ -120,16 +120,22 @@ npx @liveblocks/codemod@latest react-comments-to-react-ui
 
 This will change your imports like this:
 
-```diff showLineNumbers={false}
--import { Thread } from "@liveblocks/react-comments"
-+import { Thread } from "@liveblocks/react-ui"
+```tsx showLineNumbers={false}
+// ❌ Before
+import { Thread } from "@liveblocks/react-comments";
+
+// ✅ After
+import { Thread } from "@liveblocks/react-ui";
 ```
 
 And also:
 
-```diff showLineNumbers={false}
--<CommentsConfig />
-+<LiveblocksUIConfig />
+```tsx showLineNumbers={false}
+// ❌ Before
+<CommentsConfig />
+
+// ✅ After
+<LiveblocksUIConfig />
 ```
 
 ### Breaking change 2: renamed exports in our Node package [#bc2]
@@ -152,12 +158,14 @@ npx @liveblocks/codemod@latest room-info-to-room-data
 
 This will change:
 
-```diff showLineNumbers={false}
--import { RoomInfo } from "@liveblocks/node"
-+import { RoomData } from "@liveblocks/node"
+```tsx showLineNumbers={false}
+// ❌ Before
+import { RoomInfo } from "@liveblocks/node";
+const rooms: RoomInfo[] = [];
 
--const rooms: RoomInfo[] = []
-+const rooms: RoomData[] = []
+// ✅ After
+import { RoomData } from "@liveblocks/node";
+const rooms: RoomData[] = [];
 ```
 
 ### Breaking change 3: client methods from our Node package no longer take type params [#bc3]
@@ -173,7 +181,7 @@ In `@liveblocks/node`, none of the client methods, like
 
 Make the following changes:
 
-```ts showLineNumbers={false}
+```tsx showLineNumbers={false}
 // ❌ Before
 await liveblocks.createThread<MyThreadMetadata>();
 await liveblocks.editThreadMetadata<MyThreadMetadata>();
@@ -219,13 +227,18 @@ npx @liveblocks/codemod@latest remove-yjs-default-export
 
 This will change your import (and its usage) like this:
 
-```diff showLineNumbers={false}
--import LiveblocksProvider from "@liveblocks/yjs";
-+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
+```tsx showLineNumbers={false}
+// ❌ Before
+import LiveblocksProvider from "@liveblocks/yjs";
+const yDoc = new Y.Doc();
+const yProvider = new LiveblocksProvider(room, yDoc);
+```
 
- const yDoc = new Y.Doc();
--const yProvider = new LiveblocksProvider(room, yDoc);
-+const yProvider = new LiveblocksYjsProvider(room, yDoc);
+```tsx showLineNumbers={false}
+// ✅ After
+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
+const yDoc = new Y.Doc();
+const yProvider = new LiveblocksYjsProvider(room, yDoc);
 ```
 
 ### Breaking change 5: minor LiveList constructor change [#bc5]
@@ -247,9 +260,12 @@ npx @liveblocks/codemod@latest live-list-constructor
 
 This will add an array to empty `LiveList` constructors:
 
-```diff showLineNumbers={false}
--const mylist = new LiveList();
-+const mylist = new LiveList([]);
+```tsx showLineNumbers={false}
+// ❌ Before
+const mylist = new LiveList();
+
+// ✅ After
+const mylist = new LiveList([]);
 ```
 
 ### Breaking change 6: new webhook event types [#bc6]
@@ -361,30 +377,38 @@ npx @liveblocks/codemod@latest remove-liveblocks-config-contexts
 
 Running either of these will make the following changes.
 
-First it will move your type annotations to a global `Liveblocks` interface,
-which all Liveblocks API will recognize and use:
+```tsx showLineNumbers={false}
+// ❌ Before
+export const {
+  ...
+} = createRoomContext<MyPresence, MyStorage, MyUserMeta, MyRoomEvent, MyThreadMetadata>(client);
+```
 
-```diff showLineNumbers={false}
-+declare global {
-+  interface Liveblocks {
-+    Presence: MyPresence;
-+    Storage: MyStorage;
-+    UserMeta: MyUserMeta;
-+    RoomEvent: MyRoomEvent;
-+    ThreadMetadata: MyThreadMetadata;
-+  }
-+}
-+
--const { ... } = createRoomContext<MyPresence, MyStorage, MyUserMeta, MyRoomEvent, MyThreadMetadata>(client);
+```tsx showLineNumbers={false}
+// ✅ After
+declare global {
+  interface Liveblocks {
+    Presence: MyPresence;
+    Storage: MyStorage;
+    UserMeta: MyUserMeta;
+    RoomEvent: MyRoomEvent;
+    ThreadMetadata: MyThreadMetadata;
+  }
+}
 ```
 
 Secondly, it will change all imports in your code base to import the hooks
 directly instead:
 
-```diff showLineNumbers={false}
--import { RoomProvider, useRoom, ... } from "./liveblocks.config.ts";
-+import { RoomProvider, useRoom, ... } from "@liveblocks/react/suspense";  // Option 1
-+import { RoomProvider, useRoom, ... } from "@liveblocks/react";           // Option 2
+```tsx showLineNumbers={false}
+// ❌ Before
+import { RoomProvider, useRoom, ... } from "./liveblocks.config.ts";
+```
+
+```tsx showLineNumbers={false}
+// ✅ After
+import { RoomProvider, useRoom, ... } from "@liveblocks/react/suspense";  // Option 1
+import { RoomProvider, useRoom, ... } from "@liveblocks/react";           // Option 2
 ```
 
 ### Step 2: Set up a LiveblocksProvider [#step2]
@@ -399,10 +423,9 @@ The way to do it is to use a pretty standard React provider. Make the following
 change:
 
 ```tsx showLineNumbers={false} file="liveblocks.config.ts"
-// ❌ Before
+// ❌ Before, you no longer have to use createClient()
 import { createClient } from "@liveblocks/client";
 
-// ❌ You no longer have to import or call createClient()
 const client = createClient({
   authEndpoint: "/api/liveblocks-auth",
   throttle: 16,
@@ -411,13 +434,14 @@ const client = createClient({
 ```
 
 ```tsx showLineNumbers={false} file="layout.tsx"
+// ✅ After
 "use client";
 
 import { LiveblocksProvider } from "@liveblocks/react";
 
 export function Layout({ children }) {
   return (
-    // ✅ Move client options here
+    // Move options here, client will be created for you
     <LiveblocksProvider
       authEndpoint="/api/liveblocks-auth"
       throttle={16}
@@ -444,15 +468,24 @@ directly accessed it before, you can now obtain a reference to the `client`
 instance that the `LiveblocksProvider` creates for you using the `useClient`
 hook:
 
-```diff
--import { client } from "./liveblocks.config";
-+import { useClient } from "@liveblocks/react";  // or
-+import { useClient } from "@liveblocks/react/suspense";
+```tsx showLineNumbers={false}
+// ❌ Before
+import { client } from "./liveblocks.config";
 
- function MyComponent() {
-+  const client = useClient();
-   doSomethingWith(client);
- }
+function MyComponent() {
+  doSomethingWith(client);
+}
+```
+
+```tsx showLineNumbers={false}
+// ✅ After
+import { useClient } from "@liveblocks/react"; // or
+import { useClient } from "@liveblocks/react/suspense";
+
+function MyComponent() {
+  const client = useClient();
+  doSomethingWith(client);
+}
 ```
 
 ### Step 3: Optional cleanup of type params [#step3]
@@ -468,32 +501,39 @@ npx @liveblocks/codemod@latest remove-unneeded-type-params
 
 For example:
 
-```tsx
+```tsx showLineNumbers={false}
 import type { Room, User } from "@liveblocks/client";
 import type { MyPresence, MyStorage } from "./liveblocks.config";
 
+// ❌ Before
 function isAdult(user: User<MyPresence, MyUserMeta>) {
+  //                        ^^^^^^^^^^^^^^^^^^^^^^
   return user.info.age >= 18;
   //               ^^^ Coming from MyUserMeta
 }
 
+// ❌ Before
 function doSomethingWithRoom(
   room: Room<MyPresence, MyStorage, MyUserMeta, never>
+  //         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ) {
   /* ... */
 }
 ```
 
-This is no longer needed. You can simply remove them.
+This is no longer needed. You can simply remove them. TypeScript will still know
+about your custom `age` property on `user.info`.
 
-```tsx
+```tsx showLineNumbers={false}
 import type { Room, User } from "@liveblocks/client";
 
+// ✅ After
 function isAdult(user: User) {
   return user.info.age >= 18;
   //               ^^^ Still coming from configured UserMeta custom type
 }
 
+// ✅ After
 function doSomethingWithRoom(room: Room) {
   /* ... */
 }
@@ -509,17 +549,24 @@ made that are non-breaking changes.
 Previously, the `ClientSideSuspense` helper needed a function as its `children`
 prop, but it no longer has to.
 
-You can now change:
+```bash
+npx @liveblocks/codemod@latest simplify-client-side-suspense-children
+```
 
-```diff
- function MyComponent() {
-   return (
-     <ClientSideSuspense fallback={<Loading />}>
--      {() => <MyApp />}
-+      <MyApp />
-     </ClientSideSuspense>
-   );
- }
+This will change:
+
+```tsx showLineNumbers={false}
+// ❌ Before
+<ClientSideSuspense fallback={<Loading />}>
+  {() => <MyApp />}
+</ClientSideSuspense>
+```
+
+```tsx showLineNumbers={false}
+// ✅ After
+<ClientSideSuspense fallback={<Loading />}>
+  <MyApp />
+</ClientSideSuspense>
 ```
 
 ### Improved `InboxNotification` props types
@@ -531,13 +578,23 @@ wasn’t always true for all notification kinds, so now you can use types named
 `InboxNotificationThreadProps` describes the props of our own
 `InboxNotification.Thread`.
 
-```diff
--function MyThreadNotification(props: InboxNotificationThreadProps) {
-+function MyThreadNotification(props: InboxNotificationThreadKindProps) {
+```tsx showLineNumbers={false}
+// ❌ Before
+function MyThreadNotification(props: InboxNotificationThreadProps) {
   return <InboxNotification.Thread {...props} />;
 }
 
-<InboxNotification kinds={{ thread: MyThreadNotification }} />
+<InboxNotification kinds={{ thread: MyThreadNotification }} />;
+```
+
+```tsx showLineNumbers={false}
+// ✅ After
+function MyThreadNotification(props: InboxNotificationThreadKindProps) {
+  //                                                        ^^^^
+  return <InboxNotification.Thread {...props} />;
+}
+
+<InboxNotification kinds={{ thread: MyThreadNotification }} />;
 ```
 
 ### New custom type `RoomInfo`
@@ -548,7 +605,7 @@ you can retrieve with the [`useRoomInfo`][] hook.
 
 Both of these APIs will now respect the type you provide via:
 
-```tsx
+```tsx showLineNumbers={false}
 declare global {
   interface Liveblocks {
     RoomInfo: {
@@ -563,7 +620,7 @@ declare global {
 By providing a custom `ActivitiesData` type, you can improve how your custom
 notifications and their activities’ data are typed.
 
-```tsx
+```tsx showLineNumbers={false}
 declare global {
   interface Liveblocks {
     // Custom activities data for custom notification kinds

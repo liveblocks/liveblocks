@@ -1,14 +1,8 @@
 import React from "react";
 React; // To silence tsd warning
 
-import type {
-  Json,
-  LiveList,
-  LiveMap,
-  LiveObject,
-  Room,
-  User,
-} from "@liveblocks/client";
+import type { Json, Room, User } from "@liveblocks/client";
+import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import { createClient } from "@liveblocks/client";
 import { createLiveblocksContext, createRoomContext } from "@liveblocks/react";
 import { expectAssignable, expectError, expectType } from "tsd";
@@ -117,6 +111,137 @@ const ctx = createRoomContext<P, S, U, E, M>(client);
       resolveUsers={async () => [{ name: "Vincent", age: 42 }]}
     />
   );
+}
+
+// RoomProvider
+{
+  const RoomProvider = ctx.RoomProvider;
+
+  // Missing mandatory props is an error
+  expectError(
+    <RoomProvider>
+      <div />
+    </RoomProvider>
+  );
+
+  expectError(
+    // Missing mandatory initialPresence + initialStorage
+    <RoomProvider id="my-room">
+      <div />
+    </RoomProvider>
+  );
+
+  expectError(
+    // Missing mandatory initialStorage
+    <RoomProvider id="my-room" initialPresence={{ cursor: { x: 0, y: 0 } }}>
+      <div />
+    </RoomProvider>
+  );
+
+  expectError(
+    // Missing mandatory initialPresence
+    <RoomProvider
+      id="my-room"
+      initialStorage={{
+        animals: new LiveList([]),
+        person: new LiveObject(),
+        scores: new LiveMap(),
+      }}
+    >
+      <div />
+    </RoomProvider>
+  );
+
+  expectError(
+    // Incorrect initialStorage
+    <RoomProvider
+      id="my-room"
+      initialPresence={{ cursor: { x: 0, y: 0 } }}
+      initialStorage={{
+        foo: new LiveList([]),
+        bar: new LiveObject(),
+      }}
+    >
+      <div />
+    </RoomProvider>
+  );
+
+  <RoomProvider
+    id="my-room"
+    initialPresence={{ cursor: { x: 0, y: 0 } }}
+    initialStorage={{
+      animals: new LiveList([]),
+      person: new LiveObject(),
+      scores: new LiveMap(),
+    }}
+  >
+    <div />
+  </RoomProvider>;
+}
+
+// RoomProvider (suspense)
+{
+  const RoomProvider = ctx.suspense.RoomProvider;
+
+  // Missing mandatory props is an error
+  expectError(
+    <RoomProvider>
+      <div />
+    </RoomProvider>
+  );
+
+  expectError(
+    <RoomProvider id="my-room">
+      <div />
+    </RoomProvider>
+  );
+
+  expectError(
+    // Missing mandatory initialStorage
+    <RoomProvider id="my-room" initialPresence={{ cursor: { x: 0, y: 0 } }}>
+      <div />
+    </RoomProvider>
+  );
+
+  expectError(
+    // Missing mandatory initialPresence
+    <RoomProvider
+      id="my-room"
+      initialStorage={{
+        animals: new LiveList([]),
+        person: new LiveObject(),
+        scores: new LiveMap(),
+      }}
+    >
+      <div />
+    </RoomProvider>
+  );
+
+  expectError(
+    // Incorrect initialStorage
+    <RoomProvider
+      id="my-room"
+      initialPresence={{ cursor: { x: 0, y: 0 } }}
+      initialStorage={{
+        foo: new LiveList([]),
+        bar: new LiveObject(),
+      }}
+    >
+      <div />
+    </RoomProvider>
+  );
+
+  <RoomProvider
+    id="my-room"
+    initialPresence={{ cursor: { x: 0, y: 0 } }}
+    initialStorage={{
+      animals: new LiveList([]),
+      person: new LiveObject(),
+      scores: new LiveMap(),
+    }}
+  >
+    <div />
+  </RoomProvider>;
 }
 
 // ---------------------------------------------------------

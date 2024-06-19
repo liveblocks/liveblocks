@@ -79,12 +79,28 @@ export async function createLiveblocksApp() {
     flags.template = "next";
   }
 
+  // If --init specified, this is the config generator
   if (flags.init) {
     flags.template = "init";
   }
 
-  if (flags.upgrade) {
+  // If --upgrade specified, this is the upgrader
+  if (flags.upgrade !== undefined) {
     flags.template = "upgrade";
+
+    if (flags.upgrade === null) {
+      // --upgrade flag but no package
+      flags.upgrade = "latest";
+    } else {
+      // --upgrade flag with package string
+      flags.upgrade = flags.upgrade.trim();
+      if (flags.upgrade.startsWith("@")) {
+        flags.upgrade = flags.upgrade.substring(1);
+      }
+    }
+  } else {
+    // If no --upgrade flag, use latest (when selecting "upgrade" in menu)
+    flags.upgrade = "latest";
   }
 
   const initialQuestions: PromptObject<"template">[] = [

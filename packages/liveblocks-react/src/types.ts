@@ -20,11 +20,11 @@ import type {
   DRI,
   InboxNotificationData,
   LiveblocksError,
+  PartialUnless,
   Patchable,
   QueryMetadata,
   Resolve,
   RoomEventMessage,
-  RoomInitializers,
   ThreadData,
   ToImmutable,
 } from "@liveblocks/core";
@@ -102,10 +102,12 @@ export type RoomInfoState =
   | RoomInfoStateError
   | RoomInfoStateSuccess;
 
+// prettier-ignore
 export type CreateThreadOptions<M extends BaseMetadata> =
-  Record<string, never> extends M
-    ? { body: CommentBody; metadata?: M }
-    : { body: CommentBody; metadata: M };
+  Resolve<
+    { body: CommentBody }
+    & PartialUnless<M, { metadata: M }>
+  >;
 
 export type EditThreadMetadataOptions<M extends BaseMetadata> = {
   threadId: string;
@@ -231,10 +233,9 @@ export type RoomNotificationSettingsState =
   | RoomNotificationSettingsStateError
   | RoomNotificationSettingsStateSuccess;
 
-export type RoomProviderProps<
-  P extends JsonObject,
-  S extends LsonObject,
-> = Resolve<
+export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
+  // prettier-ignore
+  Resolve<
   {
     /**
      * The id of the room you want to connect to
@@ -267,7 +268,30 @@ export type RoomProviderProps<
      * Not necessary when you're on React v18 or later.
      */
     unstable_batchedUpdates?: (cb: () => void) => void;
-  } & RoomInitializers<P, S>
+  }
+
+  // Initial presence is only mandatory if the custom type requires it to be
+  & PartialUnless<
+    P,
+    {
+      /**
+       * The initial Presence to use and announce when you enter the Room. The
+       * Presence is available on all users in the Room (me & others).
+       */
+      initialPresence: P | ((roomId: string) => P);
+    }
+  >
+
+  // Initial storage is only mandatory if the custom type requires it to be
+  & PartialUnless<
+    S,
+    {
+      /**
+       * The initial Storage to use when entering a new Room.
+       */
+      initialStorage: S | ((roomId: string) => S);
+    }
+  >
 >;
 
 /**

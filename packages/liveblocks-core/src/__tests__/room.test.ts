@@ -103,7 +103,7 @@ function createTestableRoom<
   const { wss, delegates } = defineBehavior(authBehavior, socketBehavior);
 
   const room = createRoom<P, S, U, E, M>(
-    { initialPresence, initialStorage },
+    { initialPresence, initialStorage: initialStorage ?? ({} as S) },
     makeRoomConfig(delegates, config)
   );
 
@@ -130,7 +130,10 @@ describe("room / auth", () => {
 
   test("when auth-manager throws StopRetrying error - should fail", async () => {
     const room = createRoom(
-      { initialPresence: {} as never },
+      {
+        initialPresence: {},
+        initialStorage: {},
+      },
       {
         ...makeRoomConfig({
           authenticate: () => {

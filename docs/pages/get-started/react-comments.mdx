@@ -61,7 +61,7 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
       export default function App() {
         return (
           <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
-            <RoomProvider id="my-room" initialPresence={{}}>
+            <RoomProvider id="my-room">
               {/* ... */}
             </RoomProvider>
           </LiveblocksProvider>
@@ -92,7 +92,7 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
       export default function App() {
         return (
           <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
-            <RoomProvider id="my-room" initialPresence={{}}>
+            <RoomProvider id="my-room">
               <ClientSideSuspense fallback={<div>Loading…</div>}>
                 <Room />
               </ClientSideSuspense>

@@ -29,7 +29,7 @@ function atobPolyfillMock(data: string): string {
 
 function enterAndLeave(options: ClientOptions) {
   const client = createClient(options);
-  const { room: _, leave } = client.enterRoom("room", { initialPresence: {} });
+  const { room: _, leave } = client.enterRoom("room");
 
   // Entering starts asynchronous jobs in the background (timers, promises,
   // etc). Not leaving the room would leave those open handles dangling which
@@ -197,7 +197,7 @@ describe("createClient", () => {
       },
     });
 
-    const { room, leave } = client.enterRoom("room", { initialPresence: {} });
+    const { room, leave } = client.enterRoom("room");
     try {
       // Room will fail to connect, and move to "closed" state, basically giving up reconnecting
       await waitUntilStatus(room, "disconnected");
@@ -215,7 +215,7 @@ describe("createClient", () => {
     const spy = jest.spyOn(console, "error");
 
     const client = createClient({ authEndpoint: authEndpointCallback });
-    const { room, leave } = client.enterRoom("room", { initialPresence: {} });
+    const { room, leave } = client.enterRoom("room");
     try {
       // Room will fail to connect, and move to "closed" state, basically giving up reconnecting
       await waitUntilStatus(room, "disconnected");

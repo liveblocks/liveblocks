@@ -2,7 +2,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import type { BaseMetadata, ThreadData } from "@liveblocks/core";
 import { useThreads } from "@liveblocks/react";
 import type { ThreadProps } from "@liveblocks/react-ui";
-import { Thread as DefaultThread, useOverrides } from "@liveblocks/react-ui";
+import { Thread as DefaultThread } from "@liveblocks/react-ui";
 import { $getNodeByKey } from "lexical";
 import type { ComponentProps, ComponentType } from "react";
 import React, { forwardRef, useCallback, useContext } from "react";

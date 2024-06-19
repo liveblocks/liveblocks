@@ -69,7 +69,7 @@ the [`@liveblocks/react`](/docs/api-reference/liveblocks-react) package.
       export function Room({ children }: { children: ReactNode }) {
         return (
           <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
-            <RoomProvider id="my-room" initialPresence={{}}>
+            <RoomProvider id="my-room">
               <ClientSideSuspense fallback={<div>Loading…</div>}>
                 {children}
               </ClientSideSuspense>

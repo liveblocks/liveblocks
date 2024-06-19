@@ -19,7 +19,9 @@ export enum ServerMsgCode {
   // For Yjs Docs
   UPDATE_YDOC = 300,
 
+  // For Comments
   THREAD_CREATED = 400,
+  THREAD_DELETED = 407,
   THREAD_METADATA_UPDATED = 401,
   COMMENT_CREATED = 402,
   COMMENT_EDITED = 403,
@@ -54,6 +56,7 @@ export type ServerMsg<
 
 export type CommentsEventServerMsg =
   | ThreadCreatedEvent
+  | ThreadDeletedEvent
   | ThreadMetadataUpdatedEvent
   | CommentCreatedEvent
   | CommentEditedEvent
@@ -63,6 +66,11 @@ export type CommentsEventServerMsg =
 
 type ThreadCreatedEvent = {
   type: ServerMsgCode.THREAD_CREATED;
+  threadId: string;
+};
+
+type ThreadDeletedEvent = {
+  type: ServerMsgCode.THREAD_DELETED;
   threadId: string;
 };
 

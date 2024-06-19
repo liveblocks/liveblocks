@@ -53,7 +53,7 @@ export default function Page() {
   );
 
   return (
-    <RoomProvider id={roomId} initialPresence={{}}>
+    <RoomProvider id={roomId}>
       <Example />
     </RoomProvider>
   );

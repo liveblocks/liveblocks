@@ -50,7 +50,6 @@
 
     const info = client.enterRoom<Presence, Storage /* UserMeta, RoomEvent */>(roomId, {
       initialPresence: { cursor: null },
-      initialStorage: {},
     });
 
     room = info.room;

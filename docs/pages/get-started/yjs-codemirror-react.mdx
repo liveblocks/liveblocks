@@ -68,7 +68,7 @@ hear from you.
       export default function App() {
         return (
           <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
-            <RoomProvider id="my-room" initialPresence={{}}>
+            <RoomProvider id="my-room">
               {/* ... */}
             </RoomProvider>
           </LiveblocksProvider>
@@ -99,7 +99,7 @@ hear from you.
       export default function App() {
         return (
           <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
-            <RoomProvider id="my-room" initialPresence={{}}>
+            <RoomProvider id="my-room">
               <ClientSideSuspense fallback={<div>Loading…</div>}>
                 <Editor />
               </ClientSideSuspense>

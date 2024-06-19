@@ -147,7 +147,7 @@ import { ClientSideSuspense } from "@liveblocks/react/suspense";
 function Page() {
   return (
     <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
-      <RoomProvider id="my-room-id" initialPresence={{}}>
+      <RoomProvider id="my-room-id">
         <ClientSideSuspense fallback={<div>Loading…</div>}>
           <App />
         </ClientSideSuspense>
@@ -170,7 +170,7 @@ import { ClientSideSuspense } from "@liveblocks/react/suspense";
 function Page() {
   return (
     <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
-      <RoomProvider id="my-room-id" initialPresence={{}}>
+      <RoomProvider id="my-room-id">
         <header>My title</header>
 
         <main>
@@ -952,7 +952,7 @@ import { RoomProvider } from "@liveblocks/react/suspense";
 
 function App() {
   return (
-    <RoomProvider id="my-room-id" initialPresence={{}}>
+    <RoomProvider id="my-room-id">
       {/* children */}
     </RoomProvider>
   );

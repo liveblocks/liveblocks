@@ -21,6 +21,8 @@ import type {
   Json,
   JsonObject,
   LsonObject,
+  OptionalTupleUnless,
+  PartialUnless,
   Patchable,
   PlainLsonObject,
   QueryMetadata,
@@ -72,13 +74,13 @@ type DateToString<T> = {
   [P in keyof T]: Date extends T[P] ? string : T[P];
 };
 
-export type CreateSessionOptions<U extends BaseUserMeta = DU> = {
-  userInfo: U["info"];
-};
+export type CreateSessionOptions<U extends BaseUserMeta = DU> =
+  //
+  PartialUnless<U["info"], { userInfo: U["info"] }>;
 
-export type IdentifyUserOptions<U extends BaseUserMeta = DU> = {
-  userInfo: U["info"];
-};
+export type IdentifyUserOptions<U extends BaseUserMeta = DU> =
+  //
+  PartialUnless<U["info"], { userInfo: U["info"] }>;
 
 export type AuthResponse = {
   status: number;
@@ -99,7 +101,7 @@ export type CreateThreadOptions<M extends BaseMetadata> = {
   roomId: string;
   data: {
     comment: { userId: string; createdAt?: Date; body: CommentBody };
-  } & (Record<string, never> extends M ? { metadata?: M } : { metadata: M });
+  } & PartialUnless<M, { metadata: M }>;
 };
 
 export type RoomPermission =
@@ -263,7 +265,14 @@ export class Liveblocks {
    * `other.info` property.
    *
    */
-  prepareSession(userId: string, options?: CreateSessionOptions<U>): Session {
+  prepareSession(
+    userId: string,
+    ...rest: OptionalTupleUnless<
+      CreateSessionOptions<U>,
+      [options: CreateSessionOptions<U>]
+    >
+  ): Session {
+    const options = rest[0];
     return new Session(this.post.bind(this), userId, options?.userInfo);
   }
 
@@ -304,8 +313,13 @@ export class Liveblocks {
     identity:
       | string // Shorthand for userId
       | Identity,
-    options?: IdentifyUserOptions<U>
+    ...rest: OptionalTupleUnless<
+      IdentifyUserOptions<U>,
+      [options: IdentifyUserOptions<U>]
+    >
   ): Promise<AuthResponse> {
+    const options = rest[0];
+
     const path = url`/v2/identify-user`;
     const userId = typeof identity === "string" ? identity : identity.userId;
     const groupIds =
@@ -1210,6 +1224,25 @@ export class Liveblocks {
     }
 
     return convertToThreadData((await res.json()) as ThreadDataPlain<M>);
+  }
+
+  /**
+   * Deletes a thread and all of its comments.
+   * @param params.roomId The room ID to delete the thread in.
+   * @param params.threadId The thread ID to delete.
+   */
+  public async deleteThread(params: {
+    roomId: string;
+    threadId: string;
+  }): Promise<void> {
+    const { roomId, threadId } = params;
+
+    const res = await this.delete(url`/v2/rooms/${roomId}/threads/${threadId}`);
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
   }
 
   /**

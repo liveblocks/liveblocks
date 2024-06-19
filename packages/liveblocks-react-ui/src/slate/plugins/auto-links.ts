@@ -94,9 +94,11 @@ export function isComposerBodyAutoLink(
 const URL_REGEX =
   /((https?:\/\/(www\.)?)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9().@:%_+~#?&//=]*)/;
 
-const PUNCTUATION_OR_SPACE = /[.,;!?\s]/;
+const PUNCTUATION_OR_SPACE = /[.,;!?\s()]/;
 
 const PERIOD_OR_QUESTION_MARK_FOLLOWED_BY_ALPHANUMERIC = /^[.?][a-zA-Z0-9]+/;
+
+const PARENTHESES = /[()]/;
 
 /**
  * Helper function to check if a character is a separator (punctuation or space)
@@ -135,6 +137,38 @@ function endsWithPeriodOrQuestionMark(textContent: string): boolean {
     textContent[textContent.length - 1] === "." ||
     textContent[textContent.length - 1] === "?"
   );
+}
+
+/**
+ * Helper function to get the "logical length" of a URL, taking into account things like opening/closing parentheses
+ * @param url The URL to check
+ * @returns The "logical length" of the URL
+ */
+function getUrlLogicalLength(url: string): number {
+  if (!PARENTHESES.test(url)) {
+    return url.length;
+  }
+
+  let logicalLength = 0;
+  let parenthesesCount = 0;
+
+  for (const character of url) {
+    if (character === "(") {
+      parenthesesCount++;
+    }
+
+    if (character === ")") {
+      parenthesesCount--;
+
+      if (parenthesesCount < 0) {
+        break;
+      }
+    }
+
+    logicalLength++;
+  }
+
+  return logicalLength;
 }
 
 /**
@@ -239,13 +273,40 @@ const handleLinkEdit = (
     return;
   }
 
-  // Step 4: Ensure that the text content of the Link node is surrounded by separators or the start/end of the text content
+  // Step 4: Allow some conditions to shorten the URL (e.g. supporting parentheses but only if they are balanced)
+  const logicalLength = getUrlLogicalLength(text);
+
+  if (logicalLength < text.length) {
+    Transforms.unwrapNodes(editor, { at: path });
+
+    const logicalText = text.slice(0, logicalLength);
+
+    // Keep the "logical" text and wrap it in a new link node
+    Transforms.wrapNodes<ComposerBodyAutoLink>(
+      editor,
+      {
+        type: "auto-link",
+        url: logicalText,
+        children: [],
+      },
+      {
+        at: {
+          anchor: { path, offset: 0 },
+          focus: { path, offset: logicalText.length },
+        },
+        split: true,
+      }
+    );
+    return;
+  }
+
+  // Step 5: Ensure that the text content of the Link node is surrounded by separators or the start/end of the text content
   if (!isPreviousNodeValid(editor, path) || !isNextNodeValid(editor, path)) {
     Transforms.unwrapNodes(editor, { at: path });
     return;
   }
 
-  // Step 5: Ensure that the url attribute of the Link node is identical to its text content
+  // Step 6: Ensure that the url attribute of the Link node is identical to its text content
   if (node.url !== text) {
     Transforms.setNodes(editor, { url: match[0] }, { at: path });
     return;

@@ -31,8 +31,6 @@ const pkgJson = `{
   }
 }`;
 
-const flags = "";
-
 /**
  * Use `npm run demo` and check in .demo folder
  */
@@ -45,7 +43,7 @@ fs.rmSync(testDir, { recursive: true, force: true });
 fs.mkdirSync(testDir);
 fs.writeFileSync(path.join(testDir, "package.json"), pkgJson);
 
-execSync(`node ${esbuildOptions.outfile} ${flags}`, {
+execSync(`node ${esbuildOptions.outfile} ${process.argv.slice(2)}`, {
   cwd: testDir,
   stdio: "inherit",
 });

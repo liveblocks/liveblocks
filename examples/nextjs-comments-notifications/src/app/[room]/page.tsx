@@ -30,7 +30,7 @@ function Room({ room }: { room: string }) {
   const roomId = useExampleRoomId(room);
 
   return (
-    <RoomProvider id={roomId} initialPresence={{}}>
+    <RoomProvider id={roomId}>
       <ErrorBoundary
         fallback={
           <div className="error">There was an error while getting threads.</div>

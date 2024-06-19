@@ -1,3 +1,51 @@
+## v2.0.4 (not released yet)
+
+### All packages
+
+- Improve TS error message location if `UserMeta` type is not compatible with
+  base requirement
+
+### `@liveblocks/client`
+
+- Add missing type export for `CommentReaction`
+- Don’t attempt to write missing initialStorage keys if the current user has no
+  write access to storage. This will no longer throw, but issue a warning
+  message in the console.
+
+## v2.0.3
+
+### `@liveblocks/client`
+
+- In `client.enterRoom()`, the options `initialPresence` and `initialStorage`
+  are now only mandatory if your custom type requires them to be.
+
+### `@liveblocks/react`
+
+- In `<RoomProvider>`, the props `initialPresence` and `initialStorage` are now
+  only mandatory if your custom type requires them to be.
+- Nesting `<LiveblocksProvider>`s will now throw to prevent incorrect usage.
+
+### `@liveblocks/react-ui`
+
+- Prevent the composer from splitting text being composed.
+- Handle parentheses around and within auto-links.
+- Count whitespace as empty to prevent posting empty comments.
+- Prevent clearing the composer if it's not handled. (via `onComposerSubmit`)
+
+### `@liveblocks/yjs`
+
+- Add missing type exports
+
+## v2.0.2
+
+### `@liveblocks/node`
+
+- Add `deleteThread` method to the client to delete a room's thread.
+- Add the `threadDeleted` webhook event to notify when a thread is deleted.
+- Fix type signatures of `client.identifyUser()` and `client.prepareSession()`
+  to require `userInfo` if it's mandatory according to your global `UserMeta`
+  type definition.
+
 ## v2.0.0
 
 This major release marks the maturity of Liveblocks. It contains new products

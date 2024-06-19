@@ -10,7 +10,6 @@ import type { BatchStore } from "./lib/batch";
 import { createBatchStore } from "./lib/batch";
 import type { Store } from "./lib/create-store";
 import { createStore } from "./lib/create-store";
-import { deprecateIf } from "./lib/deprecation";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import type { NoInfr } from "./lib/NoInfer";
@@ -30,10 +29,11 @@ import type {
 } from "./protocol/InboxNotifications";
 import type {
   OpaqueRoom,
+  OptionalTupleUnless,
+  PartialUnless,
   Polyfills,
   Room,
   RoomDelegates,
-  RoomInitializers,
 } from "./room";
 import {
   createRoom,
@@ -83,12 +83,19 @@ export type ResolveRoomsInfoArgs = {
   roomIds: string[];
 };
 
-export type EnterOptions<
-  P extends JsonObject = DP,
-  S extends LsonObject = DS,
-> = Resolve<
-  // Enter options are just room initializers, plus an internal option
-  RoomInitializers<P, S> & {
+export type EnterOptions<P extends JsonObject = DP, S extends LsonObject = DS> =
+  // prettier-ignore
+  Resolve<
+  {
+    /**
+     * Whether or not the room automatically connects to Liveblock servers.
+     * Default is true.
+     *
+     * Usually set to false when the client is used from the server to not call
+     * the authentication endpoint or connect via WebSocket.
+     */
+    autoConnect?: boolean;
+
     /**
      * Only necessary when you’re using Liveblocks with React v17 or lower.
      *
@@ -99,6 +106,29 @@ export type EnterOptions<
      */
     unstable_batchedUpdates?: (cb: () => void) => void;
   }
+
+  // Initial presence is only mandatory if the custom type requires it to be
+  & PartialUnless<
+    P,
+    {
+      /**
+       * The initial Presence to use and announce when you enter the Room. The
+       * Presence is available on all users in the Room (me & others).
+       */
+      initialPresence: P | ((roomId: string) => P);
+    }
+  >
+  
+  // Initial storage is only mandatory if the custom type requires it to be
+  & PartialUnless<
+    S,
+    {
+      /**
+       * The initial Storage to use when entering a new Room.
+       */
+      initialStorage: S | ((roomId: string) => S);
+    }
+  >
 >;
 
 /**
@@ -169,7 +199,10 @@ export type Client<U extends BaseUserMeta = DU> = {
     M extends BaseMetadata = DM,
   >(
     roomId: string,
-    options: EnterOptions<NoInfr<P>, NoInfr<S>>
+    ...args: OptionalTupleUnless<
+      P & S,
+      [options: EnterOptions<NoInfr<P>, NoInfr<S>>]
+    >
   ): {
     room: Room<P, S, U, E, M>;
     leave: () => void;
@@ -375,7 +408,10 @@ export function createClient<U extends BaseUserMeta = DU>(
     M extends BaseMetadata,
   >(
     roomId: string,
-    options: EnterOptions<NoInfr<P>, NoInfr<S>>
+    ...args: OptionalTupleUnless<
+      P & S,
+      [options: EnterOptions<NoInfr<P>, NoInfr<S>>]
+    >
   ): {
     room: Room<P, S, U, E, M>;
     leave: () => void;
@@ -385,16 +421,19 @@ export function createClient<U extends BaseUserMeta = DU>(
       return leaseRoom(existing);
     }
 
-    deprecateIf(
-      options.initialPresence === null || options.initialPresence === undefined,
-      "Please provide an initial presence value for the current user when entering the room."
-    );
+    const options = args[0] ?? ({} as EnterOptions<P, S>);
+    const initialPresence =
+      (typeof options.initialPresence === "function"
+        ? options.initialPresence(roomId)
+        : options.initialPresence) ?? ({} as P);
+
+    const initialStorage =
+      (typeof options.initialStorage === "function"
+        ? options.initialStorage(roomId)
+        : options.initialStorage) ?? ({} as S);
 
     const newRoom = createRoom<P, S, U, E, M>(
-      {
-        initialPresence: options.initialPresence ?? {},
-        initialStorage: options.initialStorage,
-      },
+      { initialPresence, initialStorage },
       {
         roomId,
         throttleDelay,

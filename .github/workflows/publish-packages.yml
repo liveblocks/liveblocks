@@ -28,7 +28,7 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           token: ${{ secrets.WRITE_ACCESS_TOKEN }}
 
@@ -62,10 +62,10 @@ jobs:
           echo "${{ steps.npm_tag.outputs.value }}"
 
       - name: Setup Node.js environment
-        uses: actions/setup-node@v3.6.0
+        uses: actions/setup-node@v4
         with:
+          node-version: "18.x"
           registry-url: "https://registry.npmjs.org"
-          node-version: 18
 
       - name: Setup git config
         run: |

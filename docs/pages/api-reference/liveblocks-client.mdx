@@ -601,9 +601,7 @@ and [initial Storage](#setting-initial-storage) values.
 
 ```ts
 const { room, leave } = client.enterRoom("my-room-id", {
-  initialPresence: {},
-
-  // Other options
+  // Options
   // ...
 });
 ```
@@ -1528,7 +1526,7 @@ declare global {
 ```
 
 ```ts
-const { room, leave } = client.enterRoom("my-room-id", { initialPresence: {} });
+const { room, leave } = client.enterRoom("my-room-id");
 
 // Call this to update the current user's Presence
 function updateCursorPosition({ x, y }) {
@@ -3813,7 +3811,7 @@ const { room, leave } = client.enterRoom<
   Storage,
   UserMeta,
   RoomEvent
->("my-room-id", { initialPresence: {} });
+>("my-room-id");
 ```
 
 You can also pass types to
@@ -3852,7 +3850,7 @@ declare global {
 ```
 
 ```ts highlight="5-7,9-12"
-const { room, leave } = client.enterRoom("my-room-id", { initialPresence: {} });
+const { room, leave } = client.enterRoom("my-room-id");
 
 // {
 //   connectionId: 52,

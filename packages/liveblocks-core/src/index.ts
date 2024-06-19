@@ -195,9 +195,10 @@ export type {
   BroadcastOptions,
   History,
   OpaqueRoom,
+  OptionalTupleUnless,
+  PartialUnless,
   Room,
   RoomEventMessage,
-  RoomInitializers,
   StorageStatus,
 } from "./room";
 export type { GetThreadsOptions } from "./room";
