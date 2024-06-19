@@ -5,13 +5,15 @@ import type {
   CommentBodyMention,
   CommentBodyText,
 } from "@liveblocks/core";
-import { Text as SlateText } from "slate";
 
 import { isComposerBodyAutoLink } from "../../slate/plugins/auto-links";
+import { isComposerBodyCustomLink } from "../../slate/plugins/custom-links";
 import { isComposerBodyMention } from "../../slate/plugins/mentions";
+import { isText } from "../../slate/utils/is-text";
 import type {
   ComposerBody,
   ComposerBodyAutoLink,
+  ComposerBodyCustomLink,
   ComposerBodyMention,
   ComposerBodyText,
   Direction,
@@ -42,6 +44,16 @@ export function composerBodyAutoLinkToCommentBodyLink(
   };
 }
 
+export function composerBodyCustomLinkToCommentBodyLink(
+  link: ComposerBodyCustomLink
+): CommentBodyLink {
+  return {
+    type: "link",
+    url: link.url,
+    text: link.children.map((child) => child.text).join("") ?? "",
+  };
+}
+
 export function commentBodyMentionToComposerBodyMention(
   mention: CommentBodyMention
 ): ComposerBodyMention {
@@ -54,16 +66,20 @@ export function commentBodyMentionToComposerBodyMention(
 
 export function commentBodyLinkToComposerBodyLink(
   link: CommentBodyLink
-): ComposerBodyAutoLink {
-  return {
-    type: "auto-link",
-    url: link.url,
-    children: [
-      {
-        text: link.url,
-      },
-    ],
-  };
+): ComposerBodyAutoLink | ComposerBodyCustomLink {
+  if (link.text) {
+    return {
+      type: "custom-link",
+      url: link.url,
+      children: [{ text: link.text }],
+    };
+  } else {
+    return {
+      type: "auto-link",
+      url: link.url,
+      children: [{ text: link.url }],
+    };
+  }
 }
 
 export function composerBodyToCommentBody(body: ComposerBody): CommentBody {
@@ -80,7 +96,11 @@ export function composerBodyToCommentBody(body: ComposerBody): CommentBody {
             return composerBodyAutoLinkToCommentBodyLink(inline);
           }
 
-          if (SlateText.isText(inline)) {
+          if (isComposerBodyCustomLink(inline)) {
+            return composerBodyCustomLinkToCommentBodyLink(inline);
+          }
+
+          if (isText(inline)) {
             return inline as CommentBodyText;
           }
 

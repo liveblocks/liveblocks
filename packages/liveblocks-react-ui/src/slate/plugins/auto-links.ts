@@ -1,7 +1,8 @@
-import type { NodeEntry } from "slate";
-import { Editor, Element, Node, Path, Range, Text, Transforms } from "slate";
+import type { NodeEntry, Text } from "slate";
+import { Editor, Element, Node, Path, Range, Transforms } from "slate";
 
 import type { ComposerBodyAutoLink } from "../../types";
+import { isText } from "../utils/is-text";
 
 /**
  * This implementation is inspired by Lexical's AutoLink plugin.
@@ -19,7 +20,7 @@ export function withAutoLinks(editor: Editor): Editor {
   editor.normalizeNode = (entry) => {
     const [node, path] = entry;
 
-    if (Text.isText(node)) {
+    if (isText(node)) {
       const parentNode = Node.parent(editor, path);
 
       if (isComposerBodyAutoLink(parentNode)) {
@@ -179,7 +180,7 @@ function isPreviousNodeValid(editor: Editor, path: Path): boolean {
   if (!entry) return true;
 
   return (
-    Text.isText(entry[0]) &&
+    isText(entry[0]) &&
     (endsWithSeparator(entry[0].text) || entry[0].text === "")
   );
 }
@@ -192,7 +193,7 @@ function isNextNodeValid(editor: Editor, path: Path): boolean {
   if (!entry) return true;
 
   return (
-    Text.isText(entry[0]) &&
+    isText(entry[0]) &&
     (startsWithSeparator(entry[0].text) || entry[0].text === "")
   );
 }
@@ -234,7 +235,7 @@ const handleLinkEdit = (
   // Step 1: Ensure that the Link node only contains text nodes as children
   const children = Node.children(editor, path);
   for (const [child] of children) {
-    if (Text.isText(child)) continue;
+    if (isText(child)) continue;
     Transforms.unwrapNodes(editor, { at: path });
     return;
   }

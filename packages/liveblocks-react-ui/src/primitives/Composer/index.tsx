@@ -63,6 +63,7 @@ import { FLOATING_ELEMENT_COLLISION_PADDING } from "../../constants";
 import { useMentionSuggestions } from "../../shared";
 import { withAutoFormatting } from "../../slate/plugins/auto-formatting";
 import { withAutoLinks } from "../../slate/plugins/auto-links";
+import { withCustomLinks } from "../../slate/plugins/custom-links";
 import { withEmptyClearFormatting } from "../../slate/plugins/empty-clear-formatting";
 import type { MentionDraft } from "../../slate/plugins/mentions";
 import {
@@ -78,6 +79,7 @@ import { leaveMarkEdge, toggleMark } from "../../slate/utils/marks";
 import type {
   ComposerBody as ComposerBodyData,
   ComposerBodyAutoLink,
+  ComposerBodyCustomLink,
   ComposerBodyMention,
 } from "../../types";
 import { isKey } from "../../utils/is-key";
@@ -138,10 +140,12 @@ const emptyCommentBody: CommentBody = {
 };
 
 function createComposerEditor() {
-  return withAutoLinks(
+  return withEmptyClearFormatting(
     withMentions(
-      withEmptyClearFormatting(
-        withAutoFormatting(withHistory(withReact(createEditor())))
+      withCustomLinks(
+        withAutoLinks(
+          withAutoFormatting(withHistory(withReact(createEditor())))
+        )
       )
     )
   );
@@ -322,10 +326,13 @@ function ComposerEditorElement({
         />
       );
     case "auto-link":
+    case "custom-link":
       return (
         <ComposerEditorLinkWrapper
           Link={Link}
-          {...(props as RenderElementSpecificProps<ComposerBodyAutoLink>)}
+          {...(props as RenderElementSpecificProps<
+            ComposerBodyAutoLink | ComposerBodyCustomLink
+          >)}
         />
       );
     case "paragraph":

@@ -111,7 +111,7 @@ const CommentBody = forwardRef<HTMLDivElement, CommentBodyProps>(
 
                       return (
                         <Link href={href} key={index}>
-                          {inline.url}
+                          {inline.text ?? inline.url}
                         </Link>
                       );
                     }
