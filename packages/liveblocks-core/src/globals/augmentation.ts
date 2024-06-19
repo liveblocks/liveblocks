@@ -25,35 +25,55 @@ type ExtendableTypes =
   | "RoomInfo"
   | "ActivitiesData";
 
-type ExtendedType<
+type MakeErrorString<
+  K extends ExtendableTypes,
+  Reason extends string = "does not match its requirements",
+> = `The type you provided for '${K}' ${Reason}. To learn how to fix this, see https://liveblocks.io/docs/errors/${K}`;
+
+type GetOverride<
   K extends ExtendableTypes,
   B,
-  ErrorReason extends string = "does not match its requirements",
+  Reason extends string = "does not match its requirements",
+> = GetOverrideOrErrorValue<K, B, MakeErrorString<K, Reason>>;
+
+type GetOverrideOrErrorValue<
+  K extends ExtendableTypes,
+  B,
+  ErrorType,
 > = unknown extends Liveblocks[K]
   ? B
   : Liveblocks[K] extends B
     ? Liveblocks[K]
-    : `The type you provided for '${K}' ${ErrorReason}. To learn how to fix this, see https://liveblocks.io/docs/errors/${K}`;
+    : ErrorType;
 
 // ------------------------------------------------------------------------
 
-export type DP = ExtendedType<
+export type DP = GetOverride<
   "Presence",
   JsonObject,
   "is not a valid JSON object"
 >;
 
-export type DS = ExtendedType<
+export type DS = GetOverride<
   "Storage",
   LsonObject,
   "is not a valid LSON value"
 >;
 
-export type DU = ExtendedType<"UserMeta", BaseUserMeta>;
+export type DU = GetOverrideOrErrorValue<
+  "UserMeta",
+  BaseUserMeta,
+  // Normally, the error will be a string value, but by building this custom
+  // error shape for the UserMeta type, the errors will more likely trickle
+  // down into the end user's code base, instead of happening inside
+  // node_modules, where it may remain hidden if skipLibCheck is set in the end
+  // user's project.
+  Record<"id" | "info", MakeErrorString<"UserMeta">>
+>;
 
-export type DE = ExtendedType<"RoomEvent", Json, "is not a valid JSON value">;
+export type DE = GetOverride<"RoomEvent", Json, "is not a valid JSON value">;
 
-export type DM = ExtendedType<"ThreadMetadata", BaseMetadata>;
+export type DM = GetOverride<"ThreadMetadata", BaseMetadata>;
 
-export type DRI = ExtendedType<"RoomInfo", BaseRoomInfo>;
-export type DAD = ExtendedType<"ActivitiesData", BaseActivitiesData>;
+export type DRI = GetOverride<"RoomInfo", BaseRoomInfo>;
+export type DAD = GetOverride<"ActivitiesData", BaseActivitiesData>;
