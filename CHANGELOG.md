@@ -1,5 +1,10 @@
 ## v2.0.4 (not released yet)
 
+### All packages
+
+- Improve TS error message location if `UserMeta` type is not compatible with
+  base requirement
+
 ### `@liveblocks/client`
 
 - Add missing type export for `CommentReaction`

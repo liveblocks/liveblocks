@@ -60,7 +60,16 @@ export type DS = GetOverride<
   "is not a valid LSON value"
 >;
 
-export type DU = GetOverride<"UserMeta", BaseUserMeta>;
+export type DU = GetOverrideOrErrorValue<
+  "UserMeta",
+  BaseUserMeta,
+  // Normally, the error will be a string value, but by building this custom
+  // error shape for the UserMeta type, the errors will more likely trickle
+  // down into the end user's code base, instead of happening inside
+  // node_modules, where it may remain hidden if skipLibCheck is set in the end
+  // user's project.
+  Record<"id" | "info", MakeErrorString<"UserMeta">>
+>;
 
 export type DE = GetOverride<"RoomEvent", Json, "is not a valid JSON value">;
 
