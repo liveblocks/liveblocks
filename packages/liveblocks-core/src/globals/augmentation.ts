@@ -25,7 +25,7 @@ type ExtendableTypes =
   | "RoomInfo"
   | "ActivitiesData";
 
-type ExtendedType<
+type GetOverride<
   K extends ExtendableTypes,
   B,
   ErrorReason extends string = "does not match its requirements",
@@ -37,23 +37,23 @@ type ExtendedType<
 
 // ------------------------------------------------------------------------
 
-export type DP = ExtendedType<
+export type DP = GetOverride<
   "Presence",
   JsonObject,
   "is not a valid JSON object"
 >;
 
-export type DS = ExtendedType<
+export type DS = GetOverride<
   "Storage",
   LsonObject,
   "is not a valid LSON value"
 >;
 
-export type DU = ExtendedType<"UserMeta", BaseUserMeta>;
+export type DU = GetOverride<"UserMeta", BaseUserMeta>;
 
-export type DE = ExtendedType<"RoomEvent", Json, "is not a valid JSON value">;
+export type DE = GetOverride<"RoomEvent", Json, "is not a valid JSON value">;
 
-export type DM = ExtendedType<"ThreadMetadata", BaseMetadata>;
+export type DM = GetOverride<"ThreadMetadata", BaseMetadata>;
 
-export type DRI = ExtendedType<"RoomInfo", BaseRoomInfo>;
-export type DAD = ExtendedType<"ActivitiesData", BaseActivitiesData>;
+export type DRI = GetOverride<"RoomInfo", BaseRoomInfo>;
+export type DAD = GetOverride<"ActivitiesData", BaseActivitiesData>;
