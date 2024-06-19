@@ -1815,11 +1815,19 @@ export function createRoom<
       context.root = LiveObject._fromItems<S>(message.items, pool);
     }
 
+    const canWrite = self.current?.canWrite ?? true;
+
     // Populate missing top-level keys using `initialStorage`
     const stackSizeBefore = context.undoStack.length;
     for (const key in context.initialStorage) {
       if (context.root.get(key) === undefined) {
-        context.root.set(key, cloneLson(context.initialStorage[key]));
+        if (canWrite) {
+          context.root.set(key, cloneLson(context.initialStorage[key]));
+        } else {
+          console.warn(
+            `Attempted to populate missing storage key '${key}', but current user has no write access`
+          );
+        }
       }
     }
 

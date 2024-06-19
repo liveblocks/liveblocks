@@ -1,0 +1,31 @@
+.welcomeNotification {
+  background: #fff;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+
+.warningIcon {
+  width: 36px;
+  height: 36px;
+  background: #f3f3f3;
+  border-radius: 100%;
+  padding: 8px;
+  color: #c99f00;
+}
+
+.buttonBar {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.imageSurround {}
+
+.image {
+  margin: 6px 0 16px;
+  border-radius: 8px;
+  max-width: 60%;
+}
