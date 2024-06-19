@@ -61,12 +61,12 @@ import {
   CreateCommentError,
   CreateThreadError,
   DeleteCommentError,
+  DeleteThreadError,
   EditCommentError,
   EditThreadMetadataError,
   MarkInboxNotificationAsReadError,
   RemoveReactionError,
   UpdateNotificationSettingsError,
-  DeleteThreadError,
 } from "./comments/errors";
 import { createCommentId, createThreadId } from "./comments/lib/createIds";
 import { selectNotificationSettings } from "./comments/lib/select-notification-settings";
@@ -2430,8 +2430,8 @@ export {
   useCommentsErrorListener,
   useCreateComment,
   _useCreateThread as useCreateThread,
-  _useDeleteThread as useDeleteThread,
   useDeleteComment,
+  _useDeleteThread as useDeleteThread,
   useEditComment,
   _useEditThreadMetadata as useEditThreadMetadata,
   useErrorListener,

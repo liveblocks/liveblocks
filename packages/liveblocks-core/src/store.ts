@@ -461,7 +461,7 @@ export function applyOptimisticUpdates<M extends BaseMetadata>(
         break;
       }
 
-      case "delete-thread":
+      case "delete-thread": {
         const thread = result.threads[optimisticUpdate.threadId];
         // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
@@ -475,6 +475,7 @@ export function applyOptimisticUpdates<M extends BaseMetadata>(
           comments: [],
         };
         break;
+      }
       case "add-reaction": {
         const thread = result.threads[optimisticUpdate.threadId];
         // If the thread doesn't exist in the cache, we do not apply the update

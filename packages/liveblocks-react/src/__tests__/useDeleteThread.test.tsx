@@ -24,7 +24,6 @@ afterAll(() => server.close());
 
 describe("useDeleteThread", () => {
   test("should delete a thread optimistically", async () => {
-    // const fakeCreatedAt = addMinutes(new Date(), 5);
     const threads = [dummyThreadData()];
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
