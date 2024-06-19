@@ -21,15 +21,18 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 ## Documentation
 
-- Create new guide on [how to add users to Liveblocks text editor](https://liveblocks.io/docs/guides/how-to-add-users-to-liveblocks-text-editor)
+- Create new guide on [how to add users to Liveblocks text editor](https://liveblocks.io/docs/guides/how-to-add-users-to-liveblocks-text-editor).
 - Updated [Lexical product page](https://liveblocks.io/docs/products/text-editor/lexical) with new information.
 - Improved Lexical get started guides.
 - Improved [`Liveblocks.initializeStorageDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-storage) section.
 
+## Website
+
+- New blog post: [How Zapier added collaborative features to their Canvas product in just a couple of weeks]([https://liveblocks.io/blog/introducing-liveblocks-2-0](https://liveblocks.io/blog/how-zapier-added-collaborative-features-to-their-canvas-product-in-just-a-couple-of-weeks))
 
 ## Contributors
 
-ctnicholas
+ctnicholas, stevenfabre
 
 # Week 24 (2024-06-14)
 
@@ -188,6 +191,7 @@ For full upgrade instructions and codemods, see the
     [Liveblocks Realtime APIs](https://liveblocks.io/realtime-apis)
   - Improved [pricing page](https://liveblocks.io)
   - New navigation
+- New blog post: [Introducing Liveblocks 2.0](https://liveblocks.io/blog/introducing-liveblocks-2-0).
 
 ## Examples
 
