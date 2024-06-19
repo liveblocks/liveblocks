@@ -25,15 +25,26 @@ type ExtendableTypes =
   | "RoomInfo"
   | "ActivitiesData";
 
+type MakeErrorString<
+  K extends ExtendableTypes,
+  Reason extends string = "does not match its requirements",
+> = `The type you provided for '${K}' ${Reason}. To learn how to fix this, see https://liveblocks.io/docs/errors/${K}`;
+
 type GetOverride<
   K extends ExtendableTypes,
   B,
-  ErrorReason extends string = "does not match its requirements",
+  Reason extends string = "does not match its requirements",
+> = GetOverrideOrErrorValue<K, B, MakeErrorString<K, Reason>>;
+
+type GetOverrideOrErrorValue<
+  K extends ExtendableTypes,
+  B,
+  ErrorType,
 > = unknown extends Liveblocks[K]
   ? B
   : Liveblocks[K] extends B
     ? Liveblocks[K]
-    : `The type you provided for '${K}' ${ErrorReason}. To learn how to fix this, see https://liveblocks.io/docs/errors/${K}`;
+    : ErrorType;
 
 // ------------------------------------------------------------------------
 
