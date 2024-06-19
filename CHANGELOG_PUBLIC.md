@@ -28,7 +28,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 ## Website
 
-- New blog post: [How Zapier added collaborative features to their Canvas product in just a couple of weeks]([https://liveblocks.io/blog/introducing-liveblocks-2-0](https://liveblocks.io/blog/how-zapier-added-collaborative-features-to-their-canvas-product-in-just-a-couple-of-weeks))
+- New blog post: [How Zapier added collaborative features to their Canvas product in just a couple of weeks](https://liveblocks.io/blog/how-zapier-added-collaborative-features-to-their-canvas-product-in-just-a-couple-of-weeks)
 
 ## Contributors
 
