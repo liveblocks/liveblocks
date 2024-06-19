@@ -17,7 +17,15 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 ## Examples
 
-- New (custom notifications example)[[CHANGELOG-WEEK-24](https://liveblocks.io/examples/notifications-custom/nextjs-notifications-custom)].
+- New [custom notifications example](https://liveblocks.io/examples/notifications-custom/nextjs-notifications-custom).
+
+## Documentation
+
+- Create new guide on [how to add users to Liveblocks text editor](https://liveblocks.io/docs/guides/how-to-add-users-to-liveblocks-text-editor)
+- Updated [Lexical product page](https://liveblocks.io/docs/products/text-editor/lexical) with new information.
+- Improved Lexical get started guides.
+- Improved [`Liveblocks.initializeStorageDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-storage) section.
+
 
 ## Contributors
 
