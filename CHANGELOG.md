@@ -2,8 +2,8 @@
 
 ### All packages
 
-- Improve TS error message location if `UserMeta` type is not compatible with
-  base requirement
+- Improve TS error messages and error locations if custom `UserMeta` or
+  `ActivitiesData` types do not match their requirements
 
 ### `@liveblocks/client`
 
