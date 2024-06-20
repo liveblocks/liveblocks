@@ -80,10 +80,10 @@ export type DAD = GetOverrideOrErrorValue<
   "ActivitiesData",
   BaseActivitiesData,
   {
-    [K in keyof Liveblocks["ActivitiesData"]]: `At least one of the custom notification kinds you provided for 'ActivitiesData' does not match its requirements. To learn how to fix this, see https://liveblocks.io/docs/errors/ActivitiesData`;
+    [K in keyof Liveblocks["ActivitiesData"]]: "At least one of the custom notification kinds you provided for 'ActivitiesData' does not match its requirements. To learn how to fix this, see https://liveblocks.io/docs/errors/ActivitiesData";
   }
 >;
 
 export type KDAD = keyof DAD extends `$${string}`
   ? keyof DAD
-  : `Your custom 'ActivitiesData' type can only contain kind names that start with '$'. To learn how to fix this, see https://liveblocks.io/docs/errors/ActivitiesData`;
+  : "Your custom 'ActivitiesData' type can only contain kind names that start with '$'. To learn how to fix this, see https://liveblocks.io/docs/errors/ActivitiesData";

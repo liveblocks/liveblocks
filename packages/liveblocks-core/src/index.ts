@@ -67,7 +67,6 @@ export type {
 export type { ToImmutable } from "./crdts/utils";
 export { toPlainLson } from "./crdts/utils";
 export type {
-  KDAD,
   DAD,
   DE,
   DM,
@@ -75,6 +74,7 @@ export type {
   DRI,
   DS,
   DU,
+  KDAD,
 } from "./globals/augmentation";
 export {
   legacy_patchImmutableObject,
