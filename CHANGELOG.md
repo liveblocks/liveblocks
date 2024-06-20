@@ -820,8 +820,7 @@ leave();
 ## v1.3.0
 
 This release marks the initial release of
-[Liveblocks Comments](https://liveblocks.io/comments), which is currently in
-private beta.
+[Liveblocks Comments](https://liveblocks.io/comments) (private beta).
 
 ### `@liveblocks/client`
 
