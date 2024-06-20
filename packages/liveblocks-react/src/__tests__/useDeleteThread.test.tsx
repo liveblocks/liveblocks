@@ -54,7 +54,7 @@ describe("useDeleteThread", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             {children}
           </RoomProvider>
         ),
@@ -103,7 +103,7 @@ describe("useDeleteThread", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             {children}
           </RoomProvider>
         ),
