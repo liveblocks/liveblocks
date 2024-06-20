@@ -8,11 +8,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Use Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
+          node-version: "18.x"
           cache: "npm"
           cache-dependency-path: "**/package-lock.json"
 
@@ -21,7 +22,7 @@ jobs:
 
       - name: Turbo Cache
         id: turbo-cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           key: turbo-cache-@liveblocks/devtools-bust
           path: node_modules/.cache/turbo

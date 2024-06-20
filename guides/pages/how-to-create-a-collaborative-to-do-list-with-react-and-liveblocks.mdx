@@ -113,15 +113,11 @@ We can now import the `RoomProvider` directly from our `liveblocks.config.ts`
 file. Every component wrapped inside `RoomProvider` will have access to the
 React hooks we’ll be using to interact with this room.
 
-```tsx file="pages/index.tsx" highlight="1,5-7"
+```tsx file="pages/index.tsx" highlight="1,4"
 import { RoomProvider } from "@/liveblocks.config";
 
 export default function Page() {
-  return (
-    <RoomProvider id={"nextjs-todo-list"} initialPresence={{}}>
-      {/* ... */}
-    </RoomProvider>
-  );
+  return <RoomProvider id="nextjs-todo-list">{/* ... */}</RoomProvider>;
 }
 ```
 
@@ -140,9 +136,9 @@ import { RoomProvider } from "@/liveblocks.config";
 
 export default function Page() {
   return (
-    <RoomProvider id={"nextjs-todo-list"} initialPresence={{}}>
+    <RoomProvider id="nextjs-todo-list">
       <ClientSideSuspense fallback={<div>Loading...</div>}>
-        {() => <TodoList />}
+        <TodoList />
       </ClientSideSuspense>
     </RoomProvider>
   );

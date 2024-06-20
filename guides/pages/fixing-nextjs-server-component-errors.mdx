@@ -21,7 +21,6 @@ export default function Layout({ children }: { children: ReactNode }) {
       <body>
         <RoomProvider
           id="my-room-name"
-          initialPresence={{}}
           initialStorage={{
             // ❌ This line causes the error
             session: new LiveObject(),

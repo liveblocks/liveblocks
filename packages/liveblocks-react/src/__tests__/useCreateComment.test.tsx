@@ -86,9 +86,7 @@ describe("useCreateComment", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -172,9 +170,7 @@ describe("useCreateComment", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -245,9 +241,7 @@ describe("useCreateComment", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );

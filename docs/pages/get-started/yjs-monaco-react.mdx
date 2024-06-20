@@ -11,14 +11,6 @@ collaborative experiences. Follow the following steps to start adding
 collaboration to your React application using the APIs from the
 [`@liveblocks/yjs`](/docs/api-reference/liveblocks-yjs) package.
 
-<Banner title="Public beta">
-
-Yjs support is currently in beta. If you have any questions or feedback, please
-join us on our [Discord server](https://liveblocks.io/discord). We’d love to
-hear from you.
-
-</Banner>
-
 ## Quickstart
 
 <Steps>
@@ -57,7 +49,7 @@ hear from you.
       collaborate, and to create a realtime experience, multiple users must
       be connected to the same room. Set up a Liveblocks client with [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider), and join a room with [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider).
 
-      ```tsx file="App.tsx" highlight="11-15"
+      ```tsx file="App.tsx"
       "use client";
 
       import {
@@ -68,11 +60,13 @@ hear from you.
 
       export default function App() {
         return (
+          // +++
           <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
             <RoomProvider id="my-room">
               {/* ... */}
             </RoomProvider>
           </LiveblocksProvider>
+          // +++
         );
       }
       ```
@@ -102,7 +96,7 @@ hear from you.
           <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
             <RoomProvider id="my-room">
               <ClientSideSuspense fallback={<div>Loading…</div>}>
-                {() => <CollaborativeEditor />}
+                <CollaborativeEditor />
               </ClientSideSuspense>
             </RoomProvider>
           </LiveblocksProvider>

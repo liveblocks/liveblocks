@@ -96,9 +96,7 @@ describe("useMarkThreadAsRead", () => {
       {
         wrapper: ({ children }) => (
           <LiveblocksProvider>
-            <RoomProvider id="room-id" initialPresence={{}}>
-              {children}
-            </RoomProvider>
+            <RoomProvider id="room-id">{children}</RoomProvider>
           </LiveblocksProvider>
         ),
       }
@@ -169,9 +167,7 @@ describe("useMarkThreadAsRead", () => {
       {
         wrapper: ({ children }) => (
           <LiveblocksProvider>
-            <RoomProvider id="room-id" initialPresence={{}}>
-              {children}
-            </RoomProvider>
+            <RoomProvider id="room-id">{children}</RoomProvider>
           </LiveblocksProvider>
         ),
       }

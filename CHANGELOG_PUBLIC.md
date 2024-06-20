@@ -182,6 +182,7 @@ For full upgrade instructions and codemods, see the
   everyone.
 
 ## Dashboard
+
 - Show Lexical information in rooms that use the new Lexical plugin.
 
 ## Contributors
@@ -946,8 +947,7 @@ leave();
 # v1.3.0
 
 This release marks the initial release of
-[Liveblocks Comments](https://liveblocks.io/comments), which is currently in
-private beta.
+[Liveblocks Comments](https://liveblocks.io/comments) (private beta).
 
 ## `@liveblocks/client`
 

@@ -4,7 +4,6 @@
  * @liveblocks/core has browser-specific code.
  */
 import type {
-  ActivityData,
   BaseMetadata,
   BaseUserMeta,
   CommentBody,
@@ -12,6 +11,7 @@ import type {
   CommentDataPlain,
   CommentUserReaction,
   CommentUserReactionPlain,
+  DAD,
   DE,
   DM,
   DS,
@@ -20,6 +20,7 @@ import type {
   InboxNotificationDataPlain,
   Json,
   JsonObject,
+  KDAD,
   LsonObject,
   OptionalTupleUnless,
   PartialUnless,
@@ -1477,12 +1478,12 @@ export class Liveblocks {
     };
   }
 
-  public async triggerInboxNotification(params: {
+  public async triggerInboxNotification<K extends KDAD>(params: {
     userId: string;
-    kind: `$${string}`;
+    kind: K;
     roomId?: string;
     subjectId: string;
-    activityData: ActivityData;
+    activityData: DAD[K];
   }): Promise<void> {
     const res = await this.post(url`/v2/inbox-notifications/trigger`, params);
 
