@@ -86,4 +86,4 @@ export type DAD = GetOverrideOrErrorValue<
 
 export type KDAD = keyof DAD extends `$${string}`
   ? keyof DAD
-  : "Your custom 'ActivitiesData' type can only contain kind names that start with '$'. To learn how to fix this, see https://liveblocks.io/docs/errors/ActivitiesData";
+  : "Custom notification kinds must start with '$' but your custom 'ActivitiesData' type contains at least one kind which doesn't. To learn how to fix this, see https://liveblocks.io/docs/errors/ActivitiesData";
