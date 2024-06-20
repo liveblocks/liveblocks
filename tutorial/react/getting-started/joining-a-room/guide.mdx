@@ -40,7 +40,7 @@ this, pass `<Room>`, and include a loading `fallback`:
 return (
   <RoomProvider id={roomId}>
     <ClientSideSuspense fallback={<div>Loading…</div>}>
-      {() => <Room />}
+      <Room />
     </ClientSideSuspense>
   </RoomProvider>
 );

@@ -102,7 +102,7 @@ hear from you.
           <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
             <RoomProvider id="my-room">
               <ClientSideSuspense fallback={<div>Loading…</div>}>
-                {() => <CollaborativeEditor />}
+                <CollaborativeEditor />
               </ClientSideSuspense>
             </RoomProvider>
           </LiveblocksProvider>
