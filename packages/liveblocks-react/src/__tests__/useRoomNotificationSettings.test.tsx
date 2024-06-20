@@ -71,9 +71,7 @@ describe("useRoomNotificationSettings", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -120,9 +118,7 @@ describe("useRoomNotificationSettings", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -192,9 +188,7 @@ describe("useRoomNotificationSettings: error", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -230,9 +224,7 @@ describe("useRoomNotificationSettings: error", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -288,9 +280,7 @@ describe("useRoomNotificationSettings: error", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -353,9 +343,7 @@ describe("useRoomNotificationSettings: error", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );

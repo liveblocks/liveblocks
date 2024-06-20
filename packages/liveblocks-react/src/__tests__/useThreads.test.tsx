@@ -123,9 +123,7 @@ describe("useThreads", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id">
-          {children}
-        </RoomProvider>
+        <RoomProvider id="room-id">{children}</RoomProvider>
       ),
     });
 
@@ -166,9 +164,7 @@ describe("useThreads", () => {
 
     const { result, unmount, rerender } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id">
-          {children}
-        </RoomProvider>
+        <RoomProvider id="room-id">{children}</RoomProvider>
       ),
     });
 
@@ -223,9 +219,7 @@ describe("useThreads", () => {
       },
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -287,9 +281,7 @@ describe("useThreads", () => {
       () => useThreads({ query: { metadata: { resolved: true } } }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -361,9 +353,7 @@ describe("useThreads", () => {
         }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -414,9 +404,7 @@ describe("useThreads", () => {
       },
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -475,9 +463,7 @@ describe("useThreads", () => {
         useThreads({ query: { metadata: { resolved } } }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
         initialProps: { resolved: true },
       }
@@ -564,9 +550,7 @@ describe("useThreads", () => {
       () => useThreads(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room1">
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room1">{children}</RoomProvider>
         ),
       }
     );
@@ -575,9 +559,7 @@ describe("useThreads", () => {
       () => useThreads(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room2">
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room2">{children}</RoomProvider>
         ),
       }
     );
@@ -658,9 +640,7 @@ describe("useThreads", () => {
 
       return (
         <RoomIdDispatchContext.Provider value={setRoomId}>
-          <RoomProvider id={roomId}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         </RoomIdDispatchContext.Provider>
       );
     };
@@ -725,9 +705,7 @@ describe("useThreads", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id">
-          {children}
-        </RoomProvider>
+        <RoomProvider id="room-id">{children}</RoomProvider>
       ),
     });
 
@@ -777,9 +755,7 @@ describe("useThreads", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -849,9 +825,7 @@ describe("useThreads", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -924,9 +898,7 @@ describe("useThreads", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -992,9 +964,7 @@ describe("useThreads", () => {
       () => useThreads({ query: { metadata: {} } }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -1059,9 +1029,7 @@ describe("useThreads", () => {
 
     const firstRenderResult = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id">
-          {children}
-        </RoomProvider>
+        <RoomProvider id="room-id">{children}</RoomProvider>
       ),
     });
 
@@ -1083,9 +1051,7 @@ describe("useThreads", () => {
     // Render the RoomProvider again and verify the threads are updated
     const secondRenderResult = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id">
-          {children}
-        </RoomProvider>
+        <RoomProvider id="room-id">{children}</RoomProvider>
       ),
     });
 
@@ -1221,9 +1187,7 @@ describe("useThreads", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id">
-          {children}
-        </RoomProvider>
+        <RoomProvider id="room-id">{children}</RoomProvider>
       ),
     });
 
@@ -1283,9 +1247,7 @@ describe("useThreads: error", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id">
-          {children}
-        </RoomProvider>
+        <RoomProvider id="room-id">{children}</RoomProvider>
       ),
     });
 
@@ -1339,9 +1301,7 @@ describe("useThreads: error", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id">
-          {children}
-        </RoomProvider>
+        <RoomProvider id="room-id">{children}</RoomProvider>
       ),
     });
 
@@ -1407,9 +1367,7 @@ describe("useThreads: error", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id">
-          {children}
-        </RoomProvider>
+        <RoomProvider id="room-id">{children}</RoomProvider>
       ),
     });
 
@@ -1594,9 +1552,7 @@ describe("WebSocket events", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id">
-          {children}
-        </RoomProvider>
+        <RoomProvider id="room-id">{children}</RoomProvider>
       ),
     });
 
@@ -1653,9 +1609,7 @@ describe("WebSocket events", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id">
-          {children}
-        </RoomProvider>
+        <RoomProvider id="room-id">{children}</RoomProvider>
       ),
     });
 
@@ -1710,9 +1664,7 @@ describe("WebSocket events", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id">
-          {children}
-        </RoomProvider>
+        <RoomProvider id="room-id">{children}</RoomProvider>
       ),
     });
 
@@ -1803,9 +1755,7 @@ describe("WebSocket events", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id">
-          {children}
-        </RoomProvider>
+        <RoomProvider id="room-id">{children}</RoomProvider>
       ),
     });
 
