@@ -65,7 +65,10 @@ describe("useDeleteThread", () => {
 
     await waitFor(() => expect(result.current.threads).toEqual(threads));
 
-    await act(() => result.current.deleteThread(threads[0].id));
+    await act(() => {
+      result.current.deleteThread(threads[0].id);
+      return null;
+    });
 
     await waitFor(() => expect(result.current.threads).toEqual([]));
 
@@ -75,8 +78,8 @@ describe("useDeleteThread", () => {
   test("should rollback optimistic deletion if server fails", async () => {
     const threads = [dummyThreadData()];
     server.use(
-      mockGetThreads(async (_req, res, ctx) => {
-        return res(
+      mockGetThreads(async (_req, res, ctx) =>
+        res(
           ctx.json({
             data: threads,
             inboxNotifications: [],
@@ -86,11 +89,11 @@ describe("useDeleteThread", () => {
               requestedAt: new Date().toISOString(),
             },
           })
-        );
-      }),
-      mockDeleteThread({ threadId: threads[0].id }, async (_req, res, ctx) => {
-        return res(ctx.status(500));
-      })
+        )
+      ),
+      mockDeleteThread({ threadId: threads[0].id }, async (_req, res, ctx) =>
+        res(ctx.status(500))
+      )
     );
 
     const { RoomProvider, useThreads, useDeleteThread } =
@@ -114,7 +117,10 @@ describe("useDeleteThread", () => {
 
     await waitFor(() => expect(result.current.threads).toEqual(threads));
 
-    await act(() => result.current.deleteThread(threads[0].id));
+    await act(() => {
+      result.current.deleteThread(threads[0].id);
+      return null;
+    });
 
     await waitFor(() => expect(result.current.threads).toEqual(threads));
 
