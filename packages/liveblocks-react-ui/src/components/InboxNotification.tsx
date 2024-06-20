@@ -60,6 +60,10 @@ type ComponentTypeWithRef<
 > = ComponentType<P & Pick<ComponentProps<T>, "ref">>;
 
 type InboxNotificationKinds<KS extends KDAD = KDAD> = {
+  // For some reason, we cannot directly use KDAD in the mapped type line
+  // below, because it will result in '{}' rather than picking up the
+  // definition from the user-provided 'ActivitiesData'. Might be an internal
+  // TS optimization, so we're making it a param to defer the resolution.
   [K in KS]: ComponentTypeWithRef<"a", InboxNotificationCustomKindProps<K>>;
 } & {
   thread: ComponentTypeWithRef<"a", InboxNotificationThreadKindProps>;
