@@ -2185,8 +2185,8 @@ const thread = createThread({ body: {}, metadata: {} });
 
 ### useDeleteThread [@badge=RoomProvider]
 
-Returns a function that deletes a thread by ID, all its comments are also
-deleted. Only the thread creator can delete the thread.
+Returns a function that deletes a thread and all its associated comments by ID.
+Only the thread creator can delete the thread.
 
 ```tsx
 import { useDeleteThread } from "@liveblocks/react/suspense";
