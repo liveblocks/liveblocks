@@ -539,7 +539,6 @@ function makeRoomContextBundle<
     // context consistent internally.
     return (
       <LiveblocksProviderWithClient client={client} allowNesting>
-        {/* Why type error? */}
         <RoomProvider {...props} />
       </LiveblocksProviderWithClient>
     );
