@@ -26,6 +26,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 - Updated [Lexical product page](https://liveblocks.io/docs/products/text-editor/lexical) with new information.
 - Improved Lexical get started guides.
 - Improved [`Liveblocks.initializeStorageDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-storage) section.
+- Fixed typo with token syntax passed to `authEndpoint`.
 
 ## Website
 
