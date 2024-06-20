@@ -43,7 +43,7 @@ export default function Page() {
         return rooms;
       }}
     >
-      <RoomProvider id={roomId} initialPresence={{}}>
+      <RoomProvider id={roomId}>
         <CustomNotifications />
       </RoomProvider>
     </LiveblocksProvider>
