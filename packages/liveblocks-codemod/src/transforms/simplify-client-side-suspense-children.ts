@@ -1,9 +1,8 @@
-import type { FileInfo, API, Options } from "jscodeshift";
+import type { API, FileInfo } from "jscodeshift";
 
 export default function transform(
   file: FileInfo,
-  api: API,
-  options?: Options
+  api: API
 ): string | undefined {
   const j = api.jscodeshift;
   const root = j(file.source);

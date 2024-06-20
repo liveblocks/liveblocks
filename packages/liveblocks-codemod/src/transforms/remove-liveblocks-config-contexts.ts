@@ -4,7 +4,6 @@ import type {
   File,
   FileInfo,
   Options,
-  Program,
   TSTypeParameterInstantiation,
   VariableDeclarator,
 } from "jscodeshift";
