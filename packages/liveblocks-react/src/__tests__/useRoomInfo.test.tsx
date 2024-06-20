@@ -57,7 +57,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             {children}
           </RoomProvider>
         ),
@@ -87,7 +87,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             {children}
           </RoomProvider>
         ),
@@ -115,7 +115,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             {children}
           </RoomProvider>
         ),
@@ -160,7 +160,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             {children}
           </RoomProvider>
         ),
@@ -206,7 +206,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             {children}
           </RoomProvider>
         ),
@@ -253,7 +253,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             {children}
           </RoomProvider>
         ),
@@ -284,7 +284,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             {children}
           </RoomProvider>
         ),
@@ -315,7 +315,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             {children}
           </RoomProvider>
         ),
@@ -356,7 +356,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             {children}
           </RoomProvider>
         ),
@@ -407,7 +407,7 @@ describe("useRoomInfoSuspense", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             <Suspense fallback={<div>Loading</div>}>{children}</Suspense>
           </RoomProvider>
         ),
@@ -442,7 +442,7 @@ describe("useRoomInfoSuspense", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             <ErrorBoundary
               fallback={<div>There was an error while getting room info.</div>}
             >

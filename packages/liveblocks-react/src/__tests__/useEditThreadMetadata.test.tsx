@@ -76,7 +76,7 @@ describe("useEditThreadMetadata", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             {children}
           </RoomProvider>
         ),
@@ -149,7 +149,7 @@ describe("useEditThreadMetadata", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             {children}
           </RoomProvider>
         ),

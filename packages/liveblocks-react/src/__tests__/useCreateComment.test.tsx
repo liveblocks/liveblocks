@@ -86,7 +86,7 @@ describe("useCreateComment", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             {children}
           </RoomProvider>
         ),
@@ -172,7 +172,7 @@ describe("useCreateComment", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             {children}
           </RoomProvider>
         ),
@@ -245,7 +245,7 @@ describe("useCreateComment", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             {children}
           </RoomProvider>
         ),

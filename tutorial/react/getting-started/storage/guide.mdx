@@ -47,10 +47,9 @@ Now we’ve defined the type, we can switch to [App.tsx][] and add an
 `intialStorage` value, that is used when the room’s storage is created. We can
 match the `Storage` type by creating a new [`LiveObject`][].
 
-```tsx highlight="4-6" modifyTutorialFile="/App.tsx"
+```tsx highlight="3-5" modifyTutorialFile="/App.tsx"
 <RoomProvider
   id={roomId}
-  initialPresence={{}}
   initialStorage={{
     person: new LiveObject({ name: "Marie", age: 30 }),
   }}

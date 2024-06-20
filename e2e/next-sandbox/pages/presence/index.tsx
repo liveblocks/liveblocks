@@ -55,7 +55,7 @@ export default function Home() {
       </div>
 
       {isVisible && (
-        <RoomProvider id={roomId} initialPresence={{}}>
+        <RoomProvider id={roomId}>
           <PresenceSandbox />
           <EventSandbox />
         </RoomProvider>
