@@ -235,7 +235,7 @@ const client = createClient({
     // Fetch your authentication endpoint and retrieve your access or ID token
     // ...
 
-    return '{ "token": "..." }';
+    return { "token": "..." };
   },
 });
 ```
@@ -277,9 +277,9 @@ You should return the token created with
 or [`liveblocks.identifyUser`](/docs/api-reference/liveblocks-node#id-tokens).
 These are the values the functions can return.
 
-1. A valid token, it returns a `'{ "token": "..." }'` shaped response.
+1. A valid token, it returns a `{ "token": "..." }` shaped response.
 1. A token that explicitly forbids access, it returns an
-   `'{ "error": "forbidden", "reason": "..." }'` shaped response. If this is
+   `{ "error": "forbidden", "reason": "..." }` shaped response. If this is
    returned, the client will disconnect and won't keep trying to authorize.
 
 Any other error will be treated as an unexpected error, after which the client
