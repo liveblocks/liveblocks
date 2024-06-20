@@ -9,13 +9,12 @@ export default function App() {
   return (
     <RoomProvider
       id={roomId}
-      initialPresence={{}}
       initialStorage={{
         person: new LiveObject({ name: "Marie", age: 30 }),
       }}
     >
       <ClientSideSuspense fallback={<div>Loading…</div>}>
-        {() => <Room />}
+        <Room />
       </ClientSideSuspense>
     </RoomProvider>
   );

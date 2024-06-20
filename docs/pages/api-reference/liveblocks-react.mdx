@@ -141,16 +141,18 @@ replacement for `Suspense`. This is helpful as our Suspense hooks will throw an
 error when they’re run on the server, and this component avoids this issue by
 always rendering the `fallback` on the server.
 
-```tsx highlight="7-9"
+```tsx
 import { ClientSideSuspense } from "@liveblocks/react/suspense";
 
 function Page() {
   return (
     <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
       <RoomProvider id="my-room-id">
+        +++
         <ClientSideSuspense fallback={<div>Loading…</div>}>
           <App />
         </ClientSideSuspense>
+        +++
       </RoomProvider>
     </LiveblocksProvider>
   );
@@ -164,7 +166,7 @@ Instead of wrapping your entire Liveblocks application inside a single
 different parts of your application, and each will work as a loading fallback
 for any components further down your tree.
 
-```tsx highlight="10-12,16-18"
+```tsx
 import { ClientSideSuspense } from "@liveblocks/react/suspense";
 
 function Page() {
@@ -174,15 +176,19 @@ function Page() {
         <header>My title</header>
 
         <main>
+          +++
           <ClientSideSuspense fallback={<div>Loading…</div>}>
             <Canvas />
           </ClientSideSuspense>
+          +++
         </main>
 
         <aside>
+          +++
           <ClientSideSuspense fallback={<div>Loading…</div>}>
             <LiveAvatars />
           </ClientSideSuspense>
+          +++
         </aside>
       </RoomProvider>
     </LiveblocksProvider>
@@ -678,7 +684,7 @@ function App() {
 
 You can also return custom information, for example, a user’s `color`:
 
-```tsx highlight="14"
+```tsx
 import { LiveblocksProvider } from "@liveblocks/react/suspense";
 
 function App() {
@@ -692,7 +698,9 @@ function App() {
           {
             name: "Marc",
             avatar: "https://example.com/marc.png",
+            // +++
             color: "purple",
+            // +++
           },
         ];
       }}
@@ -951,11 +959,7 @@ user, and Storage values for the room can be set.
 import { RoomProvider } from "@liveblocks/react/suspense";
 
 function App() {
-  return (
-    <RoomProvider id="my-room-id">
-      {/* children */}
-    </RoomProvider>
-  );
+  return <RoomProvider id="my-room-id">{/* children */}</RoomProvider>;
 }
 ```
 
@@ -967,7 +971,7 @@ function App() {
     [authentication](/docs/authentication) for your app, it can helpful to
     decide on a naming pattern for your room IDs.
   </PropertiesListItem>
-  <PropertiesListItem name="initialPresence" type="JsonObject" required>
+  <PropertiesListItem name="initialPresence" type="JsonObject">
     The initial Presence of the user entering the room. Each user has their own
     presence, and this is readable for all other connected users. A user’s
     Presence resets every time they disconnect. This object must be
@@ -995,19 +999,22 @@ cursor coordinates, or their current selection. Each user has their own
 presence, and this is readable for all other connected users. Set your initial
 Presence value by using `initialPresence`.
 
-```tsx highlight="7-12"
+```tsx
 import { RoomProvider } from "@liveblocks/react/suspense";
 
 function App() {
   return (
     <RoomProvider
       id="my-room"
+      // +++
       initialPresence={{
         cursor: null,
         colors: ["red", "purple"],
         selection: {
           id: 72426,
-        }}
+        },
+      }}
+      // +++
     >
       {/* children */}
     </RoomProvider>
@@ -1026,7 +1033,7 @@ shapes on a whiteboard, nodes on a flowchart, or text in a form. The first time
 a room is entered, you can set an initial value by using `initialStorage`. Note
 that this value is only read a single time.
 
-```tsx highlight="9-15"
+```tsx
 import { LiveList, LiveObject, LiveMap } from "@liveblocks/client";
 import { RoomProvider } from "@liveblocks/react/suspense";
 
@@ -1035,6 +1042,7 @@ function App() {
     <RoomProvider
       id="my-room"
       initialPresence={}
+      // +++
       initialStorage={{
         title: "Untitled",
         names: new LiveList(["Steven", "Guillaume"]),
@@ -1043,6 +1051,7 @@ function App() {
           ["djs3g5", new LiveObject({ type: "circle", color: "yellow" })],
         ]),
       }}
+      // +++
     >
       {/* children */}
     </RoomProvider>
@@ -1072,7 +1081,7 @@ recommend typing your app using the newer method instead. When using
 `createRoomContext` it can be helpful to use it in `liveblocks.config.ts` and
 re-export your typed hooks as below.
 
-```tsx file="liveblocks.config.ts" highlight="15-23"
+```tsx file="liveblocks.config.ts"
 import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
@@ -1087,6 +1096,7 @@ type UserMeta = {};
 type RoomEvent = {};
 type ThreadMetadata = {};
 
+// +++
 export const {
   RoomProvider,
   useMyPresence,
@@ -1096,6 +1106,7 @@ export const {
 } = createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(
   client
 );
+// +++
 ```
 
 #### Suspense with createRoomContext [#createRoomContext-Suspense]
@@ -1103,7 +1114,7 @@ export const {
 To use the React suspense version of our hooks with `createRoomContext`, you can
 export from the `suspense` property instead.
 
-```tsx file="liveblocks.config.ts" highlight="16-22"
+```tsx file="liveblocks.config.ts"
 import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
@@ -1119,6 +1130,7 @@ type RoomEvent = {};
 type ThreadMetadata = {};
 
 export const {
+  // +++
   suspense: {
     RoomProvider,
     useMyPresence,
@@ -1126,6 +1138,7 @@ export const {
     // Other suspense hooks
     // ...
   },
+  // +++
 } = createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(
   client
 );
@@ -1581,16 +1594,20 @@ The reason this hook exists is to enable the most efficient rerendering model
 for high-frequency updates to other’s presences, which is the following
 structure:
 
-```tsx file="Cursors.tsx" highlight="2-3,4,9"
+```tsx file="Cursors.tsx"
 const Cursors =
+  // +++
   // (1) Wrap parent component in a memo and make sure it takes no props
   React.memo(function () {
     const othersConnectionIds = useOthersConnectionIds(); // (2)
+    // +++
     return (
       <>
         {othersConnectionIds.map((connectionId) => (
           <Cursor
+            // +++
             key={connectionId} // (3)
+            // +++
             connectionId={connectionId}
           />
         ))}
@@ -1599,9 +1616,11 @@ const Cursors =
   });
 ```
 
-```tsx file="Cursor.tsx" highlight="2"
+```tsx file="Cursor.tsx"
 function Cursor({ connectionId }) {
+  // +++
   const { x, y } = useOther(connectionId, (other) => other.presence.cursor); // (4)
+  // +++
   return <Cursor x={x} y={y} />;
 }
 ```
@@ -1622,12 +1641,14 @@ return `null`.
 Returns a callback that lets you broadcast custom events to other users in the
 room.
 
-```ts highlight="3-5"
+```ts
 import { useBroadcastEvent } from "@liveblocks/react/suspense";
 
+// +++
 // On client A
 const broadcast = useBroadcastEvent();
 broadcast({ type: "EMOJI", emoji: "🔥" });
+// +++
 
 // On client B
 useEventListener(({ event, user, connectionId }) => {
@@ -1646,13 +1667,14 @@ the user that sent the message. If an event was sent from the
 [Broadcast to a room](/docs/api-reference/rest-api-endpoints#post-broadcast-event)
 REST API, `connectionId` will be `-1`.
 
-```ts highlight="7-13"
+```ts
 import { useEventListener } from "@liveblocks/react/suspense";
 
 // On client A
 const broadcast = useBroadcastEvent();
 broadcast({ type: "EMOJI", emoji: "🔥" });
 
+// +++
 // On client B
 useEventListener(({ event, user, connectionId }) => {
   //                       ^^^^ Will be Client A
@@ -1660,6 +1682,7 @@ useEventListener(({ event, user, connectionId }) => {
     // Do something
   }
 });
+// +++
 ```
 
 The `user` property will indicate which User instance sent the message. This
@@ -1717,7 +1740,7 @@ declare global {
 
 You can then set an initial value in [`RoomProvider`][].
 
-```tsx highlight="9"
+```tsx
 import { LiveList } from "@liveblocks/client";
 import { RoomProvider } from "@liveblocks/react/suspense";
 
@@ -1725,8 +1748,9 @@ function App() {
   return (
     <RoomProvider
       id="my-room-name"
-      initialPresence={{}}
+      // +++
       initialStorage={{ animals: new LiveList(["Fido"]) }}
+      // +++
     >
       {/* children */}
     </RoomProvider>
@@ -1803,7 +1827,7 @@ declare global {
 
 Here’s an example of setting `initialStorage` for this type.
 
-```tsx highlight="10-16"
+```tsx
 import { LiveObject, LiveList, LiveMap } from "@liveblocks/client";
 import { RoomProvider } from "@liveblocks/react/suspense";
 
@@ -1811,8 +1835,8 @@ function App() {
   return (
     <RoomProvider
       id="my-room-name"
-      initialPresence={{}}
       initialStorage={{
+        // +++
         people: new LiveMap([
           "alicia",
           new LiveObject({
@@ -1820,6 +1844,7 @@ function App() {
             pets: new LiveList(["Fido", "Felix"]),
           }),
         ]),
+        // +++
       }}
     >
       {/* children */}
@@ -2031,7 +2056,7 @@ Both are equally fine, just a matter of preference.
 
 #### With dependency arrays [#useMutation-dep-arrays]
 
-```tsx highlight="9"
+```tsx
 // Local state maintained outside Liveblocks
 const [currentColor, setCurrentColor] = useState("red");
 
@@ -2040,7 +2065,9 @@ const fillWithCurrentColor = useMutation(
     storage.get("shapes").get("circle1").set("fill", currentColor);
     setMyPresence({ lastUsedColor: currentColor });
   },
+  // +++
   [currentColor] // Works just like it would in useCallback
+  // +++
 );
 
 // JSX
@@ -2059,10 +2086,12 @@ the correct use of your dependency arrays.
 
 Alternatively, you can add extra parameters to your callback function:
 
-```tsx highlight="2,3,11,12"
+```tsx
 const fill = useMutation(
+  // +++
   // Note the second argument
   ({ storage, setMyPresence }, color: string) => {
+    // +++
     storage.get("shapes").get("circle1").set("fill", color);
     setMyPresence({ lastUsedColor: color });
   },
@@ -2070,8 +2099,10 @@ const fill = useMutation(
 );
 
 // JSX
+// +++
 return <button onClick={() => fill("red")} />;
 //                            ^^^^^^^^^^^ Now fill takes a color argument
+// +++
 ```
 
 #### Depending on current presence [#useMutation-presence]
@@ -2083,13 +2114,17 @@ in case your mutation depends on it.
 For example, here’s a mutation that will delete all the shapes selected by the
 current user.
 
-```tsx highlight="3,6"
+```tsx
 const deleteSelectedShapes = useMutation(
   // You can use current "self" or "others" state in the mutation
+  // +++
   ({ storage, self, others, setMyPresence }) => {
+    // +++
     // Delete the selected shapes
     const shapes = storage.get("shapes");
+    // +++
     for (const shapeId of self.presence.selectedShapeIds) {
+      // +++
       shapes.delete(shapeId);
     }
 

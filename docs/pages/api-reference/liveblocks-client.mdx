@@ -422,7 +422,7 @@ resolveUsers: async ({ userIds }) => {
 
 You can also return custom information, for example, a user’s `color`:
 
-```ts highlight="9"
+```ts
 resolveUsers: async ({ userIds }) => {
   // ["marc@example.com"];
   console.log(userIds);
@@ -431,7 +431,9 @@ resolveUsers: async ({ userIds }) => {
     {
       name: "Marc",
       avatar: "https://example.com/marc.png",
+      // +++
       color: "purple",
+      // +++
     },
   ];
 };
@@ -625,7 +627,7 @@ Note that it’s possible to [add types to your room](#typing-your-data).
   <PropertiesListItem name="roomId" type="string" required>
     The ID of the room you’re connecting to.
   </PropertiesListItem>
-  <PropertiesListItem name="options.initialPresence" type="JsonObject" required>
+  <PropertiesListItem name="options.initialPresence" type="JsonObject">
     The initial Presence of the user entering the room. Each user has their own
     presence, and this is readable for all other connected users. A user’s
     Presence resets every time they disconnect. This object must be
@@ -654,8 +656,9 @@ cursor coordinates, or their current selection. Each user has their own
 presence, and this is readable for all other connected users. Set your initial
 Presence value by using `initialPresence`.
 
-```ts highlight="2-8"
+```ts
 const { room, leave } = client.enterRoom("my-room-id", {
+  // +++
   initialPresence: {
     cursor: null,
     colors: ["red", "purple"],
@@ -663,6 +666,7 @@ const { room, leave } = client.enterRoom("my-room-id", {
       id: 72426,
     },
   },
+  // +++
 
   // Other options
   // ...
@@ -680,16 +684,18 @@ shapes on a whiteboard, nodes on a flowchart, or text in a form. The first time
 a room is entered, you can set an initial value by using `initialStorage`. Note
 that this value is only read a single time.
 
-```ts highlight="4-9"
+```ts
 import { LiveList, LiveObject } from "@liveblocks/client";
 
 const { room, leave } = client.enterRoom("my-room-id", {
+  // +++
   initialStorage: {
     title: "Untitled",
     shapes: new LiveList([
       new LiveObject({ type: "rectangle", color: "yellow" }),
     ]),
   },
+  // +++
 
   // Other options
   // ...
@@ -959,11 +965,13 @@ so it may be deprecated and replaced with something else.
 
 </Banner>
 
-```ts highlight="4"
+```ts
 room.broadcastEvent(
   { type: "REACTION", emoji: "🔥" },
   {
+    // +++
     shouldQueueEventIfNotReady: true,
+    // +++
   }
 );
 ```
@@ -1268,10 +1276,11 @@ that’s run when another user calls [`Room.broadcastEvent`][]. Provides the
 `event` along with the `user` and their `connectionId` of the user that sent the
 message. Returns an unsubscribe function.
 
-```ts highlight="4-10"
+```ts
 // User 1
 room.broadcastEvent({ type: "REACTION", emoji: "🔥" });
 
+// +++
 // User 2
 const unsubscribe = room.subscribe("event", ({ event, user, connectionId }) => {
   //                                                  ^^^^ Will be User 1
@@ -1279,6 +1288,7 @@ const unsubscribe = room.subscribe("event", ({ event, user, connectionId }) => {
     // Do something
   }
 });
+// +++
 ```
 
 <PropertiesList title="Returns">
@@ -2256,7 +2266,7 @@ temporary.
 
 To type the Storage values you receive, make sure to set your `Storage` type.
 
-```ts highlight="liveblocks.config.ts"
+```ts file="liveblocks.config.ts"
 import { LiveList } from "@liveblocks/client";
 
 declare global {
@@ -3829,39 +3839,47 @@ const { room, leave } = client.getRoom<Presence, Storage, UserMeta, RoomEvent>(
 and other functions. Some of its values are set when
 [typing your room](#typing-your-data), here are some example values:
 
-```ts file="liveblocks.config.ts" highlight="4-6,11-14"
+```ts file="liveblocks.config.ts"
 declare global {
   interface Liveblocks {
     // Each user's Presence
+    // +++
     Presence: {
       cursor: { x: number; y: number };
     };
+    // +++
 
     UserMeta: {
       id: string;
       // Custom user info set when authenticating with a secret key
+      // +++
       info: {
         name: string;
         avatar: string;
       };
+      // +++
     };
   }
 }
 ```
 
-```ts highlight="5-7,9-12"
+```ts
 const { room, leave } = client.enterRoom("my-room-id");
 
 // {
 //   connectionId: 52,
+//   +++
 //   presence: {
 //     cursor: { x: 263, y: 786 },
 //   },
+//   +++
 //   id: "mislav.abha@example.com",
+//   +++
 //   info: {
 //     name: "Mislav Abha",
 //     avatar: "/mislav.png",
 //   },
+//   +++
 //   canWrite: true,
 //   canComment: true,
 // }

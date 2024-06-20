@@ -19,7 +19,6 @@ export default function Room({ children }: { children: ReactNode }) {
   return (
     <RoomProvider
       id="my-room-name"
-      initialPresence={{}}
       initialStorage={{
         // ✅ This is a client component, so everything works!
         session: new LiveObject(),

@@ -51,7 +51,7 @@ describe("useMentionSuggestions", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             {children}
           </RoomProvider>
         ),
@@ -78,7 +78,7 @@ describe("useMentionSuggestions", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             {children}
           </RoomProvider>
         ),
@@ -117,7 +117,7 @@ describe("useMentionSuggestions", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             {children}
           </RoomProvider>
         ),
@@ -151,7 +151,7 @@ describe("useMentionSuggestions", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             {children}
           </RoomProvider>
         ),
@@ -205,7 +205,7 @@ describe("useMentionSuggestions", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             {children}
           </RoomProvider>
         ),
