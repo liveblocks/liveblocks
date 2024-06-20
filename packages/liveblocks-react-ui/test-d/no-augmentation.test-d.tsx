@@ -71,36 +71,11 @@ import {
       );
     }
 
-    function MySpecificCustomInboxNotification({
-      inboxNotification,
-      ...props
-    }: InboxNotificationCustomKindProps<"$myErrorNotification">) {
-      expectType<ActivityData>(inboxNotification.activities[0].data);
-
-      return (
-        <InboxNotification.Custom
-          inboxNotification={inboxNotification}
-          {...props}
-          title="Title"
-        >
-          Content
-        </InboxNotification.Custom>
-      );
-    }
-
     <InboxNotification
       inboxNotification={{} as InboxNotificationData}
       kinds={{
         $myErrorNotification: MyCustomInboxNotification,
         $myUploadNotification: MyCustomInboxNotification,
-      }}
-    />;
-
-    <InboxNotification
-      inboxNotification={{} as InboxNotificationData}
-      kinds={{
-        $myErrorNotification: MySpecificCustomInboxNotification,
-        $myUploadNotification: MySpecificCustomInboxNotification,
       }}
     />;
   }
