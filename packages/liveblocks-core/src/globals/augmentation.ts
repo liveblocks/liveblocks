@@ -76,4 +76,14 @@ export type DE = GetOverride<"RoomEvent", Json, "is not a valid JSON value">;
 export type DM = GetOverride<"ThreadMetadata", BaseMetadata>;
 
 export type DRI = GetOverride<"RoomInfo", BaseRoomInfo>;
-export type DAD = GetOverride<"ActivitiesData", BaseActivitiesData>;
+export type DAD = GetOverrideOrErrorValue<
+  "ActivitiesData",
+  BaseActivitiesData,
+  {
+    [K in keyof Liveblocks["ActivitiesData"]]: "At least one of the custom notification kinds you provided for 'ActivitiesData' does not match its requirements. To learn how to fix this, see https://liveblocks.io/docs/errors/ActivitiesData";
+  }
+>;
+
+export type KDAD = keyof DAD extends `$${string}`
+  ? keyof DAD
+  : "Custom notification kinds must start with '$' but your custom 'ActivitiesData' type contains at least one kind which doesn't. To learn how to fix this, see https://liveblocks.io/docs/errors/ActivitiesData";

@@ -57,9 +57,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -87,9 +85,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -115,9 +111,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
         initialProps: { roomId: "abc" },
       }
@@ -160,9 +154,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
         initialProps: { roomId: "abc" },
       }
@@ -206,9 +198,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -253,9 +243,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -284,9 +272,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -315,9 +301,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -356,9 +340,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );

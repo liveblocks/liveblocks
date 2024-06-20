@@ -28,22 +28,21 @@ export type ActivityData = Record<
   string | boolean | number | undefined
 >;
 
-type InboxNotificationActivity<K extends `$${string}` = `$${string}`> = {
+type InboxNotificationActivity<K extends keyof DAD = keyof DAD> = {
   id: string;
   createdAt: Date;
-  data: K extends keyof DAD ? DAD[K] : ActivityData;
+  data: DAD[K];
 };
 
-export type InboxNotificationCustomData<K extends `$${string}` = `$${string}`> =
-  {
-    kind: `$${string}`;
-    id: string;
-    roomId?: string;
-    subjectId: string;
-    notifiedAt: Date;
-    readAt: Date | null;
-    activities: InboxNotificationActivity<K>[];
-  };
+export type InboxNotificationCustomData<K extends keyof DAD = keyof DAD> = {
+  kind: K;
+  id: string;
+  roomId?: string;
+  subjectId: string;
+  notifiedAt: Date;
+  readAt: Date | null;
+  activities: InboxNotificationActivity<K>[];
+};
 
 export type InboxNotificationData =
   | InboxNotificationThreadData

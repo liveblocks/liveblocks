@@ -1,6 +1,5 @@
 import React from "react";
 import type {
-  ActivityData,
   InboxNotificationData,
   LiveList,
   LiveMap,
@@ -87,9 +86,7 @@ declare global {
             props.inboxNotification.activities[0].data.message
           );
           expectType<number>(props.inboxNotification.activities[0].data.code);
-          expectType<ActivityData[string]>(
-            props.inboxNotification.activities[0].data.nonexisting
-          );
+          expectError(props.inboxNotification.activities[0].data.nonexisting);
           expectError(props.inboxNotification.threadId);
           expectError(props.inboxNotification.mentionId);
 
@@ -121,7 +118,10 @@ declare global {
       inboxNotification,
       ...props
     }: InboxNotificationCustomKindProps) {
-      expectType<ActivityData>(inboxNotification.activities[0].data);
+      expectType<
+        | { message: string; code: number }
+        | { duration: number; uploadId: string }
+      >(inboxNotification.activities[0].data);
 
       return (
         <InboxNotification.Custom
@@ -140,9 +140,7 @@ declare global {
     }: InboxNotificationCustomKindProps<"$myErrorNotification">) {
       expectType<string>(inboxNotification.activities[0].data.message);
       expectType<number>(inboxNotification.activities[0].data.code);
-      expectType<ActivityData[string]>(
-        inboxNotification.activities[0].data.nonexisting
-      );
+      expectError(inboxNotification.activities[0].data.nonexisting);
 
       return (
         <InboxNotification.Custom
