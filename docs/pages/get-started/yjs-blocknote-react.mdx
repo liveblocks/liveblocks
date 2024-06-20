@@ -29,7 +29,7 @@ hear from you.
       Every Liveblocks package should use the same version.
 
       ```bash
-      npm install @liveblocks/client @liveblocks/react @liveblocks/yjs yjs @blocknote/core @blocknote/react
+      npm install @liveblocks/client @liveblocks/react @liveblocks/yjs yjs @blocknote/core @blocknote/react @blocknote/mantine
       ```
 
     </StepContent>
@@ -123,11 +123,12 @@ hear from you.
       import { useEffect, useState } from "react";
       import { BlockNoteEditor } from "@blocknote/core";
       import "@blocknote/core/fonts/inter.css";
-      import { BlockNoteView, useCreateBlockNote } from "@blocknote/react";
-      import "@blocknote/react/styles.css";
+      import { useCreateBlockNote } from "@blocknote/react";
+      import { BlockNoteView } from "@blocknote/mantine";
+      import "@blocknote/mantine/styles.css";
       import * as Y from "yjs";
       import { LiveblocksYjsProvider } from "@liveblocks/yjs";
-      import { useRoom } from "../liveblocks.config";
+      import { useRoom } from "@liveblocks/react/suspense";
 
       type EditorProps = {
         doc: Y.Doc,
