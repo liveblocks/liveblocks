@@ -1,4 +1,4 @@
-## v2.0.4 (not released yet)
+## v2.0.4
 
 ### All packages
 
@@ -11,6 +11,12 @@
 - Don’t attempt to write missing initialStorage keys if the current user has no
   write access to storage. This will no longer throw, but issue a warning
   message in the console.
+
+### `@liveblocks/react`
+
+- Add
+  [`useDeleteThread`](https://liveblocks.io/docs/api-reference/liveblocks-react#useDeleteThread)
+  hook to delete a thread and its associated comments.
 
 ## v2.0.3
 
