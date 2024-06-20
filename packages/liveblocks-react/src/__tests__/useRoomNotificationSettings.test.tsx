@@ -71,7 +71,7 @@ describe("useRoomNotificationSettings", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             {children}
           </RoomProvider>
         ),
@@ -120,7 +120,7 @@ describe("useRoomNotificationSettings", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             {children}
           </RoomProvider>
         ),
@@ -192,7 +192,7 @@ describe("useRoomNotificationSettings: error", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             {children}
           </RoomProvider>
         ),
@@ -230,7 +230,7 @@ describe("useRoomNotificationSettings: error", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             {children}
           </RoomProvider>
         ),
@@ -288,7 +288,7 @@ describe("useRoomNotificationSettings: error", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             {children}
           </RoomProvider>
         ),
@@ -353,7 +353,7 @@ describe("useRoomNotificationSettings: error", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             {children}
           </RoomProvider>
         ),
@@ -412,7 +412,7 @@ describe("useRoomNotificationSettings suspense", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             <Suspense>{children}</Suspense>
           </RoomProvider>
         ),
@@ -475,7 +475,7 @@ describe("useRoomNotificationSettingsSuspense: error", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             <ErrorBoundary FallbackComponent={Fallback}>
               <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
             </ErrorBoundary>
@@ -538,7 +538,7 @@ describe("useRoomNotificationSettingsSuspense: error", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             <ErrorBoundary FallbackComponent={Fallback}>
               <Suspense fallback={<div>Loading</div>}>{children}</Suspense>
             </ErrorBoundary>
