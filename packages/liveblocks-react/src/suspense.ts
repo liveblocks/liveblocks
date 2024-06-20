@@ -30,6 +30,7 @@ export {
   useCanUndo,
   useCreateComment,
   useCreateThread,
+  useDeleteThread,
   useDeleteComment,
   useEditComment,
   useEditThreadMetadata,

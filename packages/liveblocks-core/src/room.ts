@@ -484,6 +484,7 @@ type CommentsApi<M extends BaseMetadata> = {
     metadata: M | undefined;
     body: CommentBody;
   }): Promise<ThreadData<M>>;
+  deleteThread(options: { threadId: string }): Promise<void>;
   editThreadMetadata(options: {
     metadata: Patchable<M>;
     threadId: string;
@@ -1196,6 +1197,12 @@ function createCommentsApi<M extends BaseMetadata>(
     return convertToThreadData(thread);
   }
 
+  async function deleteThread({ threadId }: { threadId: string }) {
+    await fetchJson(`/threads/${encodeURIComponent(threadId)}`, {
+      method: "DELETE",
+    });
+  }
+
   async function editThreadMetadata({
     metadata,
     threadId,
@@ -1335,6 +1342,7 @@ function createCommentsApi<M extends BaseMetadata>(
     getThreads,
     getThread,
     createThread,
+    deleteThread,
     editThreadMetadata,
     createComment,
     editComment,

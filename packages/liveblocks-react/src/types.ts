@@ -730,6 +730,16 @@ type RoomContextBundleCommon<
   useCreateThread(): (options: CreateThreadOptions<M>) => ThreadData<M>;
 
   /**
+   * Returns a function that deletes a thread.
+   * If the thread has comments, they will also be deleted.
+   *
+   * @example
+   * const deleteThread = useDeleteThread();
+   * deleteThread("th_xxx");
+   */
+  useDeleteThread(): (threadId: string) => void;
+
+  /**
    * Returns a function that edits a thread's metadata.
    * To delete an existing metadata property, set its value to `null`.
    *

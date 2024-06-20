@@ -21,6 +21,7 @@ import type { RoomNotificationSettings } from "./types/RoomNotificationSettings"
 
 type OptimisticUpdate<M extends BaseMetadata> =
   | CreateThreadOptimisticUpdate<M>
+  | DeleteThreadOptimisticUpdate
   | EditThreadMetadataOptimisticUpdate<M>
   | CreateCommentOptimisticUpdate
   | EditCommentOptimisticUpdate
@@ -36,6 +37,14 @@ type CreateThreadOptimisticUpdate<M extends BaseMetadata> = {
   id: string;
   roomId: string;
   thread: ThreadData<M>;
+};
+
+type DeleteThreadOptimisticUpdate = {
+  type: "delete-thread";
+  id: string;
+  roomId: string;
+  threadId: string;
+  deletedAt: Date;
 };
 
 type EditThreadMetadataOptimisticUpdate<M extends BaseMetadata> = {
@@ -449,6 +458,22 @@ export function applyOptimisticUpdates<M extends BaseMetadata>(
           optimisticUpdate.deletedAt
         );
 
+        break;
+      }
+
+      case "delete-thread": {
+        const thread = result.threads[optimisticUpdate.threadId];
+        // If the thread doesn't exist in the cache, we do not apply the update
+        if (thread === undefined) {
+          break;
+        }
+
+        result.threads[optimisticUpdate.threadId] = {
+          ...result.threads[optimisticUpdate.threadId],
+          deletedAt: optimisticUpdate.deletedAt,
+          updatedAt: optimisticUpdate.deletedAt,
+          comments: [],
+        };
         break;
       }
       case "add-reaction": {

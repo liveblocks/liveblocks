@@ -54,6 +54,16 @@ export function mockCreateThread(
   );
 }
 
+export function mockDeleteThread(
+  params: { threadId: string },
+  resolver: ResponseResolver<RestRequest<never, never>, RestContext, any>
+) {
+  return rest.delete(
+    `https://api.liveblocks.io/v2/c/rooms/room-id/threads/${params.threadId}`,
+    resolver
+  );
+}
+
 export function mockCreateComment(
   params: { threadId: string },
   resolver: ResponseResolver<

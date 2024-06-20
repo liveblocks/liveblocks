@@ -61,6 +61,7 @@ import {
   CreateCommentError,
   CreateThreadError,
   DeleteCommentError,
+  DeleteThreadError,
   EditCommentError,
   EditThreadMetadataError,
   MarkInboxNotificationAsReadError,
@@ -581,6 +582,7 @@ function makeRoomContextBundle<
     useThreads,
 
     useCreateThread,
+    useDeleteThread,
     useEditThreadMetadata,
     useCreateComment,
     useEditComment,
@@ -637,6 +639,7 @@ function makeRoomContextBundle<
       useThreads: useThreadsSuspense,
 
       useCreateThread,
+      useDeleteThread,
       useEditThreadMetadata,
       useCreateComment,
       useEditComment,
@@ -1384,6 +1387,59 @@ function useCreateThread<M extends BaseMetadata>(): (
       );
 
       return newThread;
+    },
+    [client, room]
+  );
+}
+
+function useDeleteThread(): (threadId: string) => void {
+  const client = useClient();
+  const room = useRoom();
+  return React.useCallback(
+    (threadId: string): void => {
+      const optimisticUpdateId = nanoid();
+
+      const { store, onMutationFailure } = getExtrasForClient(client);
+      store.pushOptimisticUpdate({
+        type: "delete-thread",
+        id: optimisticUpdateId,
+        roomId: room.id,
+        threadId,
+        deletedAt: new Date(),
+      });
+
+      const commentsAPI = room[kInternal].comments;
+      commentsAPI.deleteThread({ threadId }).then(
+        () => {
+          store.set((state) => {
+            const existingThread = state.threads[threadId];
+            if (existingThread === undefined) {
+              return state;
+            }
+
+            return {
+              ...state,
+              threads: {
+                ...state.threads,
+                [threadId]: {
+                  ...existingThread,
+                  updatedAt: new Date(),
+                  deletedAt: new Date(),
+                },
+              },
+              optimisticUpdates: state.optimisticUpdates.filter(
+                (update) => update.id !== optimisticUpdateId
+              ),
+            };
+          });
+        },
+        (err: Error) =>
+          onMutationFailure(
+            err,
+            optimisticUpdateId,
+            (err) => new DeleteThreadError(err, { roomId: room.id, threadId })
+          )
+      );
     },
     [client, room]
   );
@@ -2329,6 +2385,8 @@ const _useAddReaction: DefaultRoomContextBundle["useAddReaction"] =
 const _useMutation: DefaultRoomContextBundle["useMutation"] = useMutation;
 const _useCreateThread: DefaultRoomContextBundle["useCreateThread"] =
   useCreateThread;
+const _useDeleteThread: DefaultRoomContextBundle["useDeleteThread"] =
+  useDeleteThread;
 const _useEditThreadMetadata: DefaultRoomContextBundle["useEditThreadMetadata"] =
   useEditThreadMetadata;
 const _useEventListener: DefaultRoomContextBundle["useEventListener"] =
@@ -2372,6 +2430,7 @@ export {
   useCreateComment,
   _useCreateThread as useCreateThread,
   useDeleteComment,
+  _useDeleteThread as useDeleteThread,
   useEditComment,
   _useEditThreadMetadata as useEditThreadMetadata,
   useErrorListener,
