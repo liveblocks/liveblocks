@@ -18,6 +18,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 ## Examples
 
 - New [custom notifications example](https://liveblocks.io/examples/notifications-custom/nextjs-notifications-custom).
+- Updated [BlockNote example](https://liveblocks.io/examples/collaborative-text-editor-advanced/nextjs-yjs-blocknote-advanced) and guide to v0.14.1.
 
 ## Documentation
 
@@ -32,7 +33,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 ## Contributors
 
-ctnicholas, stevenfabre
+ctnicholas, stevenfabre, matthewlipski
 
 # Week 24 (2024-06-14)
 
