@@ -35,10 +35,10 @@ export function withCustomLinks(editor: Editor): Editor {
     if (selection && !Range.isCollapsed(selection)) {
       // Check if the selection is contained in a single block
       if (selection.anchor.path[0] === selection.focus.path[0]) {
-        // Check if the selection only contains (rich and/or plain) text nodes
-        if (!selectionContainsInlines(editor, (node) => !isText(node))) {
-          // Finally, check if the pasted text is a valid URL
-          if (isUrl(pastedText)) {
+        // Check if the pasted text is a valid URL
+        if (isUrl(pastedText)) {
+          // Check if the selection only contains (rich and/or plain) text nodes
+          if (!selectionContainsInlines(editor, (node) => !isText(node))) {
             // If all conditions are met, wrap the selected nodes in a custom link
             Transforms.wrapNodes<ComposerBodyCustomLink>(
               editor,
