@@ -25,11 +25,25 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 ## v2.0.3
 
-### `@liveblocks/node`
+### `@liveblocks/client`
 
-- Add `deleteThread` method to the client to delete a room's thread.
-- Add the `threadDeleted` webhook event to notify when a thread is deleted.
-- Fix type signatures of `client.identifyUser()` and `client.prepareSession()` to require `userInfo` if it's mandatory according to your global `UserMeta` type definition.
+- In `client.enterRoom()`, the options `initialPresence` and `initialStorage` are now only mandatory if your custom type requires them to be.
+
+### `@liveblocks/react`
+
+- In `<RoomProvider>`, the props `initialPresence` and `initialStorage` are now only mandatory if your custom type requires them to be.
+- Nesting `<LiveblocksProvider>`s will now throw to prevent incorrect usage
+
+### `@liveblocks/react-ui`
+
+- Prevent the composer from splitting text being composed.
+- Handle parentheses around and within auto-links.
+- Count whitespace as empty to prevent posting empty comments.
+- Prevent clearing the composer if it's not handled. (via `onComposerSubmit`)
+
+### `@liveblocks/yjs`
+
+- Add missing type exports
 
 ## v2.0.4
 
