@@ -1,4 +1,8 @@
-import type { BaseMetadata, JsonObject } from "@liveblocks/client";
+import type {
+  BaseMetadata,
+  ClientOptions,
+  JsonObject,
+} from "@liveblocks/client";
 import { createClient, LiveList, LiveObject } from "@liveblocks/client";
 import type { RenderHookResult, RenderOptions } from "@testing-library/react";
 import { render, renderHook } from "@testing-library/react";
@@ -52,13 +56,35 @@ function customRenderHook<Result, Props>(
   return renderHook(render, { wrapper: AllTheProviders, ...options });
 }
 
-export function createRoomContextForTest<M extends BaseMetadata>() {
-  const client = createClient({
-    publicApiKey: "pk_xxx",
+type Options = {
+  userId?: string;
+};
+
+export function createRoomContextForTest<M extends BaseMetadata>({
+  userId,
+}: Options = {}) {
+  let clientOptions: ClientOptions = {
     polyfills: {
       WebSocket: MockWebSocket as any,
     },
-  });
+    publicApiKey: "pk_xxx",
+  };
+
+  if (userId) {
+    clientOptions = {
+      authEndpoint: async () => {
+        const token = await generateFakeJwt({ userId });
+        return {
+          token,
+        };
+      },
+      polyfills: {
+        WebSocket: MockWebSocket as any,
+      },
+    };
+  }
+
+  const client = createClient(clientOptions);
 
   return createRoomContext<JsonObject, never, never, never, M>(client);
 }

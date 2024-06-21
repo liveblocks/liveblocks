@@ -1400,6 +1400,15 @@ function useDeleteThread(): (threadId: string) => void {
       const optimisticUpdateId = nanoid();
 
       const { store, onMutationFailure } = getExtrasForClient(client);
+
+      const thread = store.get().threads[threadId];
+
+      const userId = getCurrentUserId(room);
+
+      if (thread?.comments?.[0]?.userId !== userId) {
+        throw new Error("Only the thread creator can delete the thread");
+      }
+
       store.pushOptimisticUpdate({
         type: "delete-thread",
         id: optimisticUpdateId,

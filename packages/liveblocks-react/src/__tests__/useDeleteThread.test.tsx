@@ -2,7 +2,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
 import React from "react";
 
-import { dummyThreadData } from "./_dummies";
+import { dummyCommentData, dummyThreadData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import { mockDeleteThread, mockGetThreads } from "./_restMocks";
 import { createRoomContextForTest } from "./_utils";
@@ -23,8 +23,20 @@ afterEach(() => {
 afterAll(() => server.close());
 
 describe("useDeleteThread", () => {
+  const userId = "batman";
+  const threads = [
+    {
+      ...dummyThreadData(),
+      comments: [
+        {
+          ...dummyCommentData(),
+          userId,
+        },
+      ],
+    },
+  ];
+
   test("should delete a thread optimistically", async () => {
-    const threads = [dummyThreadData()];
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
         return res(
@@ -45,7 +57,7 @@ describe("useDeleteThread", () => {
     );
 
     const { RoomProvider, useThreads, useDeleteThread } =
-      createRoomContextForTest();
+      createRoomContextForTest({ userId });
 
     const { result, unmount } = renderHook(
       () => ({
@@ -54,9 +66,7 @@ describe("useDeleteThread", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -75,8 +85,56 @@ describe("useDeleteThread", () => {
     unmount();
   });
 
+  test("should throw an error when a user attempts to delete someone else's thread", async () => {
+    server.use(
+      mockGetThreads(async (_req, res, ctx) =>
+        res(
+          ctx.json({
+            data: threads,
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        )
+      )
+      // no need to mock delete thread, as it should not be called
+    );
+
+    const { RoomProvider, useThreads, useDeleteThread } =
+      createRoomContextForTest({ userId: "superman" });
+
+    const { result, unmount } = renderHook(
+      () => ({
+        threads: useThreads().threads,
+        deleteThread: useDeleteThread(),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id="room-id">{children}</RoomProvider>
+        ),
+      }
+    );
+
+    expect(result.current.threads).toBeUndefined();
+
+    await waitFor(() => expect(result.current.threads).toEqual(threads));
+
+    try {
+      result.current.deleteThread(threads[0].id);
+    } catch (error) {
+      const message = (error as Error).message;
+      expect(message).toMatch("Only the thread creator can delete the thread");
+    }
+
+    await waitFor(() => expect(result.current.threads).toEqual(threads));
+
+    unmount();
+  });
+
   test("should rollback optimistic deletion if server fails", async () => {
-    const threads = [dummyThreadData()];
     server.use(
       mockGetThreads(async (_req, res, ctx) =>
         res(
@@ -97,7 +155,7 @@ describe("useDeleteThread", () => {
     );
 
     const { RoomProvider, useThreads, useDeleteThread } =
-      createRoomContextForTest();
+      createRoomContextForTest({ userId });
 
     const { result, unmount } = renderHook(
       () => ({
@@ -106,9 +164,7 @@ describe("useDeleteThread", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
