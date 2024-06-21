@@ -1,3 +1,11 @@
+## v2.0.5
+
+### `@liveblocks/react`
+
+- Improved DX: `useDeleteThread` will now throw a client-side error if someone
+  else than the thread owner tries to delete a thread. This will help you catch
+  and handle this case more easily.
+
 ## v2.0.4
 
 ### All packages
