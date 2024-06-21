@@ -1406,10 +1406,7 @@ function useDeleteThread(): (threadId: string) => void {
       const userId = getCurrentUserId(room);
 
       if (
-        thread &&
-        thread.comments &&
-        thread.comments[0] &&
-        thread.comments[0].userId !== userId
+        thread?.comments?.[0]?.userId !== userId
       ) {
         throw new Error("Only the thread creator can delete the thread");
       }
