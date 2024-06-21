@@ -28,6 +28,7 @@ please join us on our [Discord server](https://liveblocks.io/discord). We’d lo
 to hear from you.
 
 </Banner>
+
 ## Quickstart
 
 <Steps>
@@ -134,7 +135,7 @@ to hear from you.
       is optional and adds [Comments](/docs/products/comments) to your text editor.
 
 
-      ```tsx file="Editor.tsx"
+      ```tsx file="app/Editor.tsx"
       "use client";
 
       import { LexicalComposer } from "@lexical/react/LexicalComposer";
@@ -146,8 +147,8 @@ to hear from you.
         LiveblocksPlugin,
         FloatingComposer,
       } from "@liveblocks/react-lexical";
-      import { Toolbar } from "@/app/Toolbar";
-      import { Threads } from "@/app/Threads";
+      import { Toolbar } from "./Toolbar";
+      import { Threads } from "./Threads";
 
       export function Editor() {
         // Wrap your Lexical config with `liveblocksConfig`
@@ -189,7 +190,7 @@ to hear from you.
       To create annotations and post comments, we need to create a button for triggers the action.
       Create a toolbar in `Toolbar.tsx` that enables this.
 
-      ```tsx file="Toolbar.tsx"
+      ```tsx file="app/Toolbar.tsx"
       "use client";
 
       import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
@@ -222,7 +223,7 @@ to hear from you.
       When each thread and comment is created, we need to render it to the page. Create
       a `Threads.tsx` file that lists each thread.
 
-      ```tsx file="Threads.tsx"
+      ```tsx file="app/Threads.tsx"
       "use client";
 
       import { useThreads } from "@liveblocks/react/suspense";
@@ -250,7 +251,7 @@ to hear from you.
       Lexical text editor is unstyled by default, so we can create some custom styles for it in a `globals.css` file. Import `globals.css`, alongside the default Liveblocks styles. You can import them into the
       root layout of your app or directly into a CSS file with `@import`.
       
-      ```css file="globals.css" isCollapsed isCollapsable
+      ```css file="app/globals.css" isCollapsed isCollapsable
       .wrapper {
         position: relative;
         display: flex;
