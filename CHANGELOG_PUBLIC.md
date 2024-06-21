@@ -15,6 +15,35 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 # Week 25 (2024-06-21)
 
+## v2.0.2
+
+### `@liveblocks/node`
+
+- Add `deleteThread` method to the client to delete a room's thread.
+- Add the `threadDeleted` webhook event to notify when a thread is deleted.
+- Fix type signatures of `client.identifyUser()` and `client.prepareSession()` to require `userInfo` if it's mandatory according to your global `UserMeta` type definition.
+
+## v2.0.3
+
+### `@liveblocks/node`
+
+- Add `deleteThread` method to the client to delete a room's thread.
+- Add the `threadDeleted` webhook event to notify when a thread is deleted.
+- Fix type signatures of `client.identifyUser()` and `client.prepareSession()` to require `userInfo` if it's mandatory according to your global `UserMeta` type definition.
+
+## v2.0.4
+
+- Improve TS error messages and error locations if custom `UserMeta` or `ActivitiesData` types do not match their requirements.
+
+### `@liveblocks/client`
+
+- Add missing type export for `CommentReaction`
+- Don’t attempt to write missing initialStorage keys if the current user has no write access to storage. This will no longer throw, but issue a warning message in the console.
+
+### `@liveblocks/react`
+
+- Add [`useDeleteThread`](https://liveblocks.io/docs/api-reference/liveblocks-react#useDeleteThread) hook to delete a thread and its associated comments.
+
 ## Examples
 
 - New [custom notifications example](https://liveblocks.io/examples/notifications-custom/nextjs-notifications-custom).
@@ -30,11 +59,11 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 ## Website
 
-- New blog post: [How Zapier added collaborative features to their Canvas product in just a couple of weeks](https://liveblocks.io/blog/how-zapier-added-collaborative-features-to-their-canvas-product-in-just-a-couple-of-weeks)
+- New blog post: [How Zapier added collaborative features to their Canvas product in just a couple of weeks](https://liveblocks.io/blog/how-zapier-added-collaborative-features-to-their-canvas-product-in-just-a-couple-of-weeks).
 
 ## Contributors
 
-ctnicholas, stevenfabre, matthewlipski
+ctnicholas, stevenfabre, matthewlipski, flowflorent, nvie
 
 # Week 24 (2024-06-14)
 
