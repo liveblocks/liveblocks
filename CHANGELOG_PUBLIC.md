@@ -13,14 +13,80 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 -->
 
-# Week 24 (2024-06-15)
+# Week 25 (2024-06-21)
+
+## v2.0.2
+
+### `@liveblocks/node`
+
+- Add `deleteThread` method to the client to delete a room's thread.
+- Add the `threadDeleted` webhook event to notify when a thread is deleted.
+- Fix type signatures of `client.identifyUser()` and `client.prepareSession()` to require `userInfo` if it's mandatory according to your global `UserMeta` type definition.
+
+## v2.0.3
+
+### `@liveblocks/client`
+
+- In `client.enterRoom()`, the options `initialPresence` and `initialStorage` are now only mandatory if your custom type requires them to be.
+
+### `@liveblocks/react`
+
+- In `<RoomProvider>`, the props `initialPresence` and `initialStorage` are now only mandatory if your custom type requires them to be.
+- Nesting `<LiveblocksProvider>`s will now throw to prevent incorrect usage
+
+### `@liveblocks/react-ui`
+
+- Prevent the composer from splitting text being composed.
+- Handle parentheses around and within auto-links.
+- Count whitespace as empty to prevent posting empty comments.
+- Prevent clearing the composer if it's not handled. (via `onComposerSubmit`)
+
+### `@liveblocks/yjs`
+
+- Add missing type exports
+
+## v2.0.4
+
+- Improve TS error messages and error locations if custom `UserMeta` or `ActivitiesData` types do not match their requirements.
+
+### `@liveblocks/client`
+
+- Add missing type export for `CommentReaction`
+- Don’t attempt to write missing initialStorage keys if the current user has no write access to storage. This will no longer throw, but issue a warning message in the console.
+
+### `@liveblocks/react`
+
+- Add [`useDeleteThread`](https://liveblocks.io/docs/api-reference/liveblocks-react#useDeleteThread) hook to delete a thread and its associated comments.
+
+## Examples
+
+- New [custom notifications example](https://liveblocks.io/examples/notifications-custom/nextjs-notifications-custom).
+- Updated [BlockNote example](https://liveblocks.io/examples/collaborative-text-editor-advanced/nextjs-yjs-blocknote-advanced) and guide to v0.14.1.
+
+## Documentation
+
+- Create new guide on [how to add users to Liveblocks text editor](https://liveblocks.io/docs/guides/how-to-add-users-to-liveblocks-text-editor).
+- Updated [Lexical product page](https://liveblocks.io/docs/products/text-editor/lexical) with new information.
+- Improved Lexical get started guides.
+- Improved [`Liveblocks.initializeStorageDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-storage) section.
+- Fixed typo with token syntax passed to `authEndpoint`.
+
+## Website
+
+- New blog post: [How Zapier added collaborative features to their Canvas product in just a couple of weeks](https://liveblocks.io/blog/how-zapier-added-collaborative-features-to-their-canvas-product-in-just-a-couple-of-weeks).
+
+## Contributors
+
+ctnicholas, stevenfabre, matthewlipski, flowflorent, nvie
+
+# Week 24 (2024-06-14)
 
 ## v2.0.0
 
 This major release marks the maturity of Liveblocks. It contains new products
 (`@liveblocks/react-lexical`) and clarifications (e.g.
 `@liveblocks/react-comments` is now called `@liveblocks/react-ui`).
-
+t
 Also, we bring major DX improvements by allowing you to specify your types
 globally now. These types will be typed once and shared across all Liveblocks
 APIs, which includes your Node backend.
@@ -170,6 +236,7 @@ For full upgrade instructions and codemods, see the
     [Liveblocks Realtime APIs](https://liveblocks.io/realtime-apis)
   - Improved [pricing page](https://liveblocks.io)
   - New navigation
+- New blog post: [Introducing Liveblocks 2.0](https://liveblocks.io/blog/introducing-liveblocks-2-0).
 
 ## Examples
 
