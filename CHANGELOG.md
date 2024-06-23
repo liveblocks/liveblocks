@@ -111,7 +111,7 @@ const client = createClient(/* options */);
 ```
 
 For full upgrade instructions and codemods, see the
-[2.0 upgrade guide](https://liveblocks.io/docs/guides/upgrading/2.0).
+[2.0 upgrade guide](https://liveblocks.io/docs/platform/upgrading/2.0).
 
 ### `create-liveblocks-app`
 
