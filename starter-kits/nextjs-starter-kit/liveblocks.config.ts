@@ -1,5 +1,5 @@
 import { LiveMap, LiveObject } from "@liveblocks/client";
-import { User } from "./types";
+import { Document, User } from "./types";
 
 export type Note = LiveObject<{
   x: number;
@@ -34,6 +34,11 @@ declare global {
     ThreadMetadata: {
       resolved: boolean;
       highlightId: string;
+    };
+    ActivitiesData: {
+      $addedToDocument: {
+        documentId: Document["id"];
+      };
     };
   }
 }
