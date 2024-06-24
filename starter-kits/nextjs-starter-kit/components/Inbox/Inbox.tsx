@@ -1,7 +1,11 @@
 import { ClientSideSuspense } from "@liveblocks/react";
 import {
+  useInboxNotifications,
+  useMarkAllInboxNotificationsAsRead,
+} from "@liveblocks/react/suspense";
+import {
   InboxNotification,
-  InboxNotificationCustomProps,
+  InboxNotificationCustomKindProps,
   InboxNotificationList,
 } from "@liveblocks/react-ui";
 import clsx from "clsx";
@@ -10,10 +14,6 @@ import { DocumentIcon } from "@/components/Documents";
 import { DOCUMENT_URL } from "@/constants";
 import { getDocument } from "@/lib/actions";
 import { useDocumentsFunctionSWR } from "@/lib/hooks";
-import {
-  useInboxNotifications,
-  useMarkAllInboxNotificationsAsRead,
-} from "@liveblocks/react/suspense";
 import { Button, LinkButton } from "@/primitives/Button";
 import { Link } from "@/primitives/Link";
 import { Spinner } from "@/primitives/Spinner";
@@ -36,9 +36,7 @@ function InboxContent(props: ComponentProps<"div">) {
                 key={inboxNotification.id}
                 inboxNotification={inboxNotification}
                 components={{ Anchor: Link }}
-                kinds={{
-                  $addedToDocument: AddedToDocumentNotification as any,
-                }}
+                kinds={{ $addedToDocument: AddedToDocumentNotification }}
               />
             );
           })}
@@ -48,10 +46,12 @@ function InboxContent(props: ComponentProps<"div">) {
   );
 }
 
-function AddedToDocumentNotification(props: InboxNotificationCustomProps) {
+function AddedToDocumentNotification(
+  props: InboxNotificationCustomKindProps<"$addedToDocument">
+) {
   const { documentId } = props.inboxNotification.activities[0].data;
   const { data: document } = useDocumentsFunctionSWR(
-    [getDocument, { documentId: documentId as string }],
+    [getDocument, { documentId }],
     { refreshInterval: 10000 }
   );
 
