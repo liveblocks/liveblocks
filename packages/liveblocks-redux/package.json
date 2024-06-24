@@ -43,7 +43,7 @@
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
     "@reduxjs/toolkit": "^1.7.2",
-    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/jest-dom": "^6.4.6",
     "msw": "^0.36.4",
     "redux": "^4.1.2"
   },

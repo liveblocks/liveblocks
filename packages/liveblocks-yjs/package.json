@@ -35,7 +35,7 @@
   "dependencies": {
     "@liveblocks/client": "2.0.5",
     "@liveblocks/core": "2.0.5",
-    "js-base64": "^3.7.5"
+    "js-base64": "^3.7.7"
   },
   "peerDependencies": {
     "yjs": "^13.6.1"
@@ -43,7 +43,7 @@
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
-    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/jest-dom": "^6.4.6",
     "msw": "^0.47.4"
   },
   "sideEffects": false,
