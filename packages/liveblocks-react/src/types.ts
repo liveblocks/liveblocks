@@ -25,9 +25,15 @@ import type {
   QueryMetadata,
   Resolve,
   RoomEventMessage,
+  StorageStatus,
   ThreadData,
   ToImmutable,
 } from "@liveblocks/core";
+
+export type StorageStatusSuccess = Exclude<
+  StorageStatus,
+  "not-loaded" | "loading"
+>;
 
 export type UseThreadsOptions<M extends BaseMetadata> = {
   /**
@@ -850,6 +856,13 @@ export type RoomContextBundle<
   RoomContextBundleCommon<P, S, U, E, M> &
     SharedContextBundle<U>["classic"] & {
       /**
+       * Returns the current storage status for the Room, and triggers
+       * a re-render whenever it changes. Can be used to render a "Saving..."
+       * indicator.
+       */
+      useStorageStatus(): StorageStatus;
+
+      /**
        * Extract arbitrary data from the Liveblocks Storage state, using an
        * arbitrary selector function.
        *
@@ -935,6 +948,13 @@ export type RoomContextBundle<
       suspense: Resolve<
         RoomContextBundleCommon<P, S, U, E, M> &
           SharedContextBundle<U>["suspense"] & {
+            /**
+             * Returns the current storage status for the Room, and triggers
+             * a re-render whenever it changes. Can be used to render a "Saving..."
+             * indicator.
+             */
+            useStorageStatus(): StorageStatusSuccess;
+
             /**
              * Extract arbitrary data from the Liveblocks Storage state, using an
              * arbitrary selector function.
