@@ -1,3 +1,13 @@
+## v2.1.0
+
+### `@liveblocks/react`
+
+- Add new `isStorageReady` property to `useMutation`'s first callback argument.
+  You can use this new property if you’re running into the
+  `Error: This mutation cannot be used until Storage has loaded` error. (For
+  example, to decide to make your mutation a no-op.)
+- Add new `isPresenceReady` property to `useMutation`'s first callback argument.
+
 ## v2.0.5
 
 ### `@liveblocks/react`
