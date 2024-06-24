@@ -34,13 +34,13 @@ To add this to storage, first we must define our types. Open
 `person` as a generic.
 
 ```ts modifyTutorialFile="/liveblocks.config.ts"
-// Storage types
-type Storage = {
+// Storage type
+Storage: {
   person: LiveObject<{
     name: string;
     age: number;
   }>;
-};
+}
 ```
 
 Now we’ve defined the type, we can switch to [App.tsx][] and add an
@@ -76,7 +76,7 @@ JavaScript counterpart, so a `LiveObject` becomes a regular JavaScript object.
 We can implement this ourselves by adding the following code to [Room.tsx][]:
 
 ```tsx modifyTutorialFile="/Room.tsx"
-import { useStorage } from "./liveblocks.config";
+import { useStorage } from "@liveblocks/react/suspense";
 
 export function Room() {
   const person = useStorage((root) => root.person);

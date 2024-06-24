@@ -1,10 +1,10 @@
 import { LiveList, LiveObject } from "@liveblocks/client";
-import { Room } from "./Room";
 import {
   ClientSideSuspense,
   LiveblocksProvider,
   RoomProvider,
 } from "@liveblocks/react/suspense";
+import { Room } from "./Room";
 
 export default function App() {
   const roomId = "{% ROOM_ID %}";
