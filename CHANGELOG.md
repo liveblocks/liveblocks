@@ -1,3 +1,9 @@
+## v2.1.0 (not published yet)
+
+### `@liveblocks/core`
+
+- Various internal refactorings
+
 ## v2.0.5
 
 ### `@liveblocks/react`
