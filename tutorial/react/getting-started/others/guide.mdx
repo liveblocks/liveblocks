@@ -9,11 +9,11 @@ _other_ users are connected to the room.
 
 ### useOthers
 
-Switch to [Room.tsx][] and import the hook from [liveblocks.config.ts][]—we’ll
-be building our realtime app in here.
+Switch to [Room.tsx][] and import the hook from
+`@liveblocks/react/suspense`—we’ll be building our realtime app in here.
 
 ```ts highlight="3" modifyTutorialFile="/Room.tsx"
-import { useOthers } from "./liveblocks.config";
+import { useOthers } from "@liveblocks/react/suspense";
 ```
 
 The [`useOthers`][] hook returns a list of users that are currently online,
