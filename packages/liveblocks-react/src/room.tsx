@@ -2211,27 +2211,19 @@ function useOtherSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
   return useOther(connectionId, selector, isEqual);
 }
 
-function useSuspendUntilStorageLoaded(): void {
-  const room = useRoom();
-  if (room.getStorageSnapshot() !== null) {
-    return;
-  }
-
+function useSuspendUntilStorageReady(): void {
+  // Throw an error if we're calling this on the server side
   ensureNotServerSide();
 
-  // Throw a _promise_. Suspense will suspend the component tree until this
-  // promise resolves (aka until storage has loaded). After that, it will
-  // render this component tree again.
-  throw new Promise<void>((res) => {
-    room.events.storageDidLoad.subscribeOnce(() => res());
-  });
+  const room = useRoom();
+  use(room.waitUntilStorageReady());
 }
 
 function useStorageSuspense<S extends LsonObject, T>(
   selector: (root: ToImmutable<S>) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T {
-  useSuspendUntilStorageLoaded();
+  useSuspendUntilStorageReady();
   return useStorage(
     selector,
     isEqual as (prev: T | null, curr: T | null) => boolean
@@ -2239,7 +2231,7 @@ function useStorageSuspense<S extends LsonObject, T>(
 }
 
 function useStorageStatusSuspense(): StorageStatusSuccess {
-  useSuspendUntilStorageLoaded();
+  useSuspendUntilStorageReady();
   const room = useRoom();
   const subscribe = room.events.storageStatus.subscribe;
   const getSnapshot = room.getStorageStatus as () => StorageStatusSuccess;

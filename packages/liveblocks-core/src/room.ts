@@ -719,6 +719,7 @@ export type Room<
   getStorageStatus(): StorageStatus;
 
   isPresenceReady(): boolean;
+  isStorageReady(): boolean;
 
   /**
    * Returns a Promise that resolves as soon as Presence is available, which
@@ -729,6 +730,14 @@ export type Room<
    * the same Promise instance.
    */
   waitUntilPresenceReady(): Promise<void>;
+
+  /**
+   * Returns a Promise that resolves as soon as Storage has been loaded and
+   * available. After awaiting this promise, `.isStorageReady()` will be
+   * guaranteed to be true. Even when calling this function multiple times,
+   * it's guaranteed to return the same Promise instance.
+   */
+  waitUntilStorageReady(): Promise<void>;
 
   /**
    * Start an attempt to connect the room (aka "enter" it). Calling
@@ -2864,6 +2873,17 @@ export function createRoom<
     }
   }
 
+  function isStorageReady() {
+    return getStorageSnapshot() !== null;
+  }
+
+  async function waitUntilStorageReady(): Promise<void> {
+    while (!isStorageReady()) {
+      // Trigger a load of Storage and wait until it finished
+      await getStorage();
+    }
+  }
+
   // Derived cached state for use in DevTools
   const others_forDevTools = new DerivedRef(context.others, (others) =>
     others.map((other, index) => userToTreeNode(`Other ${index}`, other))
@@ -3056,8 +3076,11 @@ export function createRoom<
       getStorage,
       getStorageSnapshot,
       getStorageStatus,
+
       isPresenceReady,
+      isStorageReady,
       waitUntilPresenceReady: once(waitUntilPresenceReady),
+      waitUntilStorageReady: once(waitUntilStorageReady),
 
       events,
 
