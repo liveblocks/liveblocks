@@ -170,10 +170,6 @@ function makeMutationContext<
   const needsStorage = `${cannotUseUntil} Storage has loaded. Hint: check \`({ isStorageReady })\` before accessing \`storage\``;
 
   return {
-    get isPresenceReady() {
-      return room.getSelf() !== null;
-    },
-
     get isStorageReady() {
       return room.getStorageSnapshot() !== null;
     },

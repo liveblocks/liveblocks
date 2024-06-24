@@ -312,7 +312,6 @@ export type MutationContext<
 > = {
   isStorageReady: boolean;
   storage: LiveObject<S>;
-  isPresenceReady: boolean;
   self: User<P, U>;
   others: readonly User<P, U>[];
   setMyPresence: (
