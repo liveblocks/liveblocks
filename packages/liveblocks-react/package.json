@@ -59,7 +59,7 @@
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
     "@liveblocks/query-parser": "^0.0.3",
-    "@testing-library/jest-dom": "6.1.6",
+    "@testing-library/jest-dom": "6.4.6",
     "@testing-library/react": "14.1.2",
     "@types/use-sync-external-store": "^0.0.6",
     "date-fns": "^3.0.6",
