@@ -247,6 +247,39 @@ describe("useStorage", () => {
     expect(render1).toBe(render2); // Referentially equal!
   });
 
+  test("unpacking storage before storage has loaded is possible", async () => {
+    // Mutation 1 unpacks storage, but doesn't access it
+    const { result: mut1 } = renderHook(() =>
+      useMutation(({ storage, isStorageReady }: any) => {
+        if (isStorageReady) {
+          // Will never execute (= deliberate!)
+          storage.get("obj").set("a", 42);
+        }
+      }, [])
+    );
+
+    // Mutation 2 unpacks and uses storage
+    const { result: mut2 } = renderHook(() =>
+      useMutation(({ storage }) => storage.get("obj").set("a", 42), [])
+    );
+
+    // Mutation 1 doesn't throw, but mutation 2 does
+    act(() => mut1.current());
+    act(() =>
+      expect(() => mut2.current()).toThrow(
+        "This mutation cannot be used until storage has been loaded"
+      )
+    );
+
+    // After storage has loaded, both mutations work
+    const sim = await websocketSimulator();
+    act(() => sim.simulateStorageLoaded());
+
+    // Mutation 1 doesn't throw, but mutation 2 does
+    act(() => mut1.current());
+    act(() => mut2.current());
+  });
+
   test("unchanged nested data remains referentially equal between mutations", async () => {
     const { result } = renderHook(() => useStorage((root) => root.obj));
     const { result: mut } = renderHook(() =>
