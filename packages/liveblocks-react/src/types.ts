@@ -310,7 +310,7 @@ export type MutationContext<
   S extends LsonObject,
   U extends BaseUserMeta,
 > = {
-  isStorageReady: boolean;
+  isStorageLoaded: boolean;
   storage: LiveObject<S>;
   self: User<P, U>;
   others: readonly User<P, U>[];

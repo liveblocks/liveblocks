@@ -167,10 +167,10 @@ function makeMutationContext<
 >(room: Room<P, S, U, E, M>): MutationContext<P, S, U> {
   const cannotUseUntil = "This mutation cannot be used until";
   const needsPresence = `${cannotUseUntil} connected to the Liveblocks room`;
-  const needsStorage = `${cannotUseUntil} Storage has loaded. Hint: check \`({ isStorageReady })\` before accessing \`storage\``;
+  const needsStorage = `${cannotUseUntil} Storage has loaded. Hint: check \`({ isStorageLoaded })\` before accessing \`storage\``;
 
   return {
-    get isStorageReady() {
+    get isStorageLoaded() {
       return room.getStorageSnapshot() !== null;
     },
 
