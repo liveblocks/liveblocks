@@ -1,8 +1,8 @@
 ---
 title: "Connecting to Liveblocks"
 description: "How to connect with createClient"
-openFile: "/liveblocks.config.ts"
-showFiles: ["/liveblocks.config.ts"]
+openFile: "/App.tsx"
+showFiles: ["/App.tsx", "/liveblocks.config.ts"]
 ---
 
 To use Liveblocks in React, you need to install our packages to your project.
@@ -20,63 +20,43 @@ config file, which we’ve already done on this page:
 npx create-liveblocks-app@latest --init
 ```
 
-This file is named [liveblocks.config.ts][].
+This file is named [liveblocks.config.ts][], and it’s used to define your
+TypeScript types.
 
 ### Setting up a client
 
 The first step in connecting to Liveblocks is creating a client which will be
-responsible for communicating with our back end. You can do this by modifying
-[`createClient`][] in your config file, and passing your public API key.
+responsible for communicating with our back end. You can do this by adding
+[`LiveblocksProvider`][], and passing your public API key.
 
-```ts
-const client = createClient({
-  publicApiKey: "{% LIVEBLOCKS_PUBLIC_KEY %}",
-});
+```tsx
+<LiveblocksProvider
+  publicApiKey="{% LIVEBLOCKS_PUBLIC_KEY %}"
+>
 ```
+
+Every Liveblocks application needs to be nested inside this. Open [App.tsx][],
+set up [`LiveblocksProvider`][], and return the `CollaborativeApplication`
+component inside.
+
+```tsx modifyTutorialFile="/App.tsx"
+return (
+  <LiveblocksProvider publicApiKey="{% LIVEBLOCKS_PUBLIC_KEY %}">
+    <CollaborativeApplication />
+  </LiveblocksProvider>
+);
+```
+
+You should now be seeing a demo application!
+
+### Authentication
 
 Ordinarily, you’d find your API keys on the [dashboard](/dashboard/apikeys), but
-for this tutorial we’ll let you borrow a temporary key.
+for this tutorial we’re providing you with a temporary key. In most production
+apps we recommend setting up Liveblocks on the server with your secret key, but
+for now, the public key is fine. Learn more under
+[authentication](/docs/authentication).
 
-<Banner title="Secret key">
-
-In most production apps we recommend setting up Liveblocks on the server with
-your secret key, but for now, the public key is fine. We’ll come back to this in
-the authentication section.
-
-</Banner>
-
-### Exporting hooks and components
-
-When building Liveblocks apps, we’ll be exporting all React hooks and components
-from this file, which enables you to have full type safety with minimal effort.
-
-We’ll be editing the four types in this file later, but for now, take note that
-we’re exporting from the `suspense` property; this enables the
-[React Suspense](/docs/api-reference/liveblocks-react#suspense) version of our
-hooks, which we recommend for easier development.
-
-```ts
-export const {
-  suspense: {
-    // ...
-  },
-};
-```
-
-`RoomProvider` is the component that acts as the root of your realtime app—try
-uncommenting the export in the code panel to see the app connect to Liveblocks!
-
-```ts modifyTutorialFile="/liveblocks.config.ts" highlight="3"
-export const {
-  suspense: {
-    RoomProvider,
-    // ...
-  },
-};
-```
-
-[`@liveblocks/client`]: /docs/api-reference/liveblocks-client
-[`createClient`]: /docs/api-reference/liveblocks-client#createClient
-[`createRoomContext`]: /docs/api-reference/liveblocks-react#createRoomContext
-[`RoomProvider`]: /docs/api-reference/liveblocks-react#RoomProvider
+[`LiveblocksProvider`]: /docs/api-reference/liveblocks-react#LiveblocksProvider
 [liveblocks.config.ts]: #/liveblocks.config.ts
+[App.tsx]: #/App.tsx

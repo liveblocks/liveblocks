@@ -4,5 +4,9 @@ import { CollaborativeApplication } from "./CollaborativeApplication";
 export default function App() {
   const roomId = "{% ROOM_ID %}";
 
-  return <div>Not connected</div>;
+  return (
+    <LiveblocksProvider publicApiKey="{% LIVEBLOCKS_PUBLIC_KEY %}">
+      <CollaborativeApplication />
+    </LiveblocksProvider>
+  );
 }
