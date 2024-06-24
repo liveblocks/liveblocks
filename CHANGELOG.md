@@ -1,6 +1,6 @@
 ## v2.1.0 (not published yet)
 
-### `@liveblocks/core`
+### `@liveblocks/client`
 
 - Various internal refactorings
 
