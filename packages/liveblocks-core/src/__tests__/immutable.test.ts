@@ -70,7 +70,7 @@ export async function prepareStorageImmutableTest<
   state = lsonToJson(subject.storage.root) as ToJson<S>;
   refState = lsonToJson(ref.storage.root) as ToJson<S>;
 
-  ref.room.events.storage.subscribe(() => {
+  ref.room.events.storageBatch.subscribe(() => {
     refState = lsonToJson(ref.storage.root) as ToJson<S>;
   });
 

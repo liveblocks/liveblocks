@@ -1,4 +1,8 @@
-## v2.1.0
+## v2.1.0 (not published yet)
+
+### `@liveblocks/client`
+
+- Various internal refactorings
 
 ### `@liveblocks/react`
 

@@ -1498,7 +1498,9 @@ describe("room", () => {
 
       let receivedUpdates: StorageUpdate[] = [];
 
-      room.events.storage.subscribe((updates) => (receivedUpdates = updates));
+      room.events.storageBatch.subscribe(
+        (updates) => (receivedUpdates = updates)
+      );
 
       const immutableState = root.toImmutable() as {
         items: Array<{ names: Array<string> }>;

@@ -468,10 +468,10 @@ export async function prepareStorageUpdateTest<
   const jsonUpdates: JsonStorageUpdate[][] = [];
   const refJsonUpdates: JsonStorageUpdate[][] = [];
 
-  subject.room.events.storage.subscribe((updates) =>
+  subject.room.events.storageBatch.subscribe((updates) =>
     jsonUpdates.push(updates.map(serializeUpdateToJson))
   );
-  ref.room.events.storage.subscribe((updates) =>
+  ref.room.events.storageBatch.subscribe((updates) =>
     refJsonUpdates.push(updates.map(serializeUpdateToJson))
   );
 

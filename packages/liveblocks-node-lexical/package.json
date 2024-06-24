@@ -36,7 +36,7 @@
   "dependencies": {
     "@liveblocks/core": "2.0.5",
     "@liveblocks/node": "2.0.5",
-    "yjs": "^13.6.15"
+    "yjs": "^13.6.18"
   },
   "peerDependencies": {
     "@lexical/headless": "0.16.0",
@@ -48,7 +48,7 @@
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
-    "@types/node": "^20.7.1"
+    "@types/node": "^20.14.8"
   },
   "bugs": {
     "url": "https://github.com/liveblocks/liveblocks/issues"

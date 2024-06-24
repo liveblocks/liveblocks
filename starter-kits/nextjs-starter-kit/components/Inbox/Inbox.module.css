@@ -24,3 +24,19 @@
   place-items: center;
   text-align: center;
 }
+
+.icon {
+  display: flex;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-elevated);
+  border-radius: 100%;
+  place-content: center;
+  place-items: center;
+}
+
+.addedToDocumentButton {
+  display: flex;
+  margin-top: var(--space-4);
+}
