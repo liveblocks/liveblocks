@@ -195,8 +195,6 @@ export async function withTimeout<T>(
  * instance.
  */
 export function once<T>(promiseFn: () => Promise<T>): () => Promise<T> {
-  let p$: Promise<T> | null = null;
-  return () => {
-    return (p$ ??= promiseFn());
-  };
+  let memoedPromise: Promise<T> | null = null;
+  return () => (memoedPromise ??= promiseFn());
 }
