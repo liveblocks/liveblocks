@@ -43,7 +43,7 @@
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
-    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/jest-dom": "^6.4.6",
     "msw": "^0.36.4",
     "zustand": "^4.1.3"
   },
