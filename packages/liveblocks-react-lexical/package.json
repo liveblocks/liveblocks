@@ -49,7 +49,7 @@
     "@liveblocks/yjs": "2.0.5",
     "nanoid": "^3",
     "use-sync-external-store": "^1.2.2",
-    "yjs": "^13.6.14"
+    "yjs": "^13.6.18"
   },
   "peerDependencies": {
     "@lexical/react": "^0.16.0",

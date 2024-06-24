@@ -50,7 +50,7 @@ function customRenderHook<Result, Props>(
   render: (initialProps: Props) => Result,
   options?: {
     initialProps?: Props;
-    wrapper?: React.JSXElementConstructor<{ children: React.ReactElement }>;
+    wrapper?: React.JSXElementConstructor<{ children: React.ReactNode }>;
   }
 ): RenderHookResult<Result, Props> {
   return renderHook(render, { wrapper: AllTheProviders, ...options });
