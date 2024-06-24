@@ -2488,6 +2488,8 @@ export {
   useStatus,
   _useStorage as useStorage,
   _useStorageRoot as useStorageRoot,
+  useStorageStatus,
+  useStorageStatusSuspense,
   _useStorageSuspense as useStorageSuspense,
   _useThreads as useThreads,
   _useThreadsSuspense as useThreadsSuspense,

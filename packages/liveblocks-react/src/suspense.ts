@@ -30,8 +30,8 @@ export {
   useCanUndo,
   useCreateComment,
   useCreateThread,
-  useDeleteThread,
   useDeleteComment,
+  useDeleteThread,
   useEditComment,
   useEditThreadMetadata,
   useErrorListener,
@@ -63,6 +63,7 @@ export {
   useOthersMappedSuspense as useOthersMapped,
   useSelfSuspense as useSelf,
   useStorageSuspense as useStorage,
+  useStorageStatusSuspense as useStorageStatus,
   useThreadsSuspense as useThreads,
 } from "./room";
 export {
