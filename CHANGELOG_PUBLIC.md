@@ -15,7 +15,17 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 # Week 26 (2024-06-28)
 
+## v2.0.5
+
+### `@liveblocks/react`
+
+- Improved DX: `useDeleteThread` will now throw a client-side error if someone
+  else than the thread owner tries to delete the thread. This will help you
+  catch and handle this case more easily.
+
 ## Contributors
+
+flowflorent
 
 # Week 25 (2024-06-21)
 
