@@ -166,8 +166,8 @@ function makeMutationContext<
   M extends BaseMetadata,
 >(room: Room<P, S, U, E, M>): MutationContext<P, S, U> {
   const cannotUseUntil = "This mutation cannot be used until";
-  const needsPresence = `${cannotUseUntil} connected to the Liveblocks room (Hint: check \`isPresenceReady\` before accessing \`self\` or \`others\`)`;
-  const needsStorage = `${cannotUseUntil} Storage has loaded (Hint: check \`isStorageReady\` before accessing \`storage\`)`;
+  const needsPresence = `${cannotUseUntil} connected to the Liveblocks room`;
+  const needsStorage = `${cannotUseUntil} Storage has loaded. Hint: check \`({ isStorageReady })\` before accessing \`storage\``;
 
   return {
     get isPresenceReady() {
