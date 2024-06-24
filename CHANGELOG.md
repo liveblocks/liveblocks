@@ -6,6 +6,9 @@
 
 ### `@liveblocks/react`
 
+- Add
+  [`useDeleteThread`](https://liveblocks.io/docs/api-reference/liveblocks-react#useDeleteThread)
+  hook to delete a thread and its associated comments.
 - Add new hook `useStorageStatus()`, which returns the current storage status of
   the room, and will re-render your component whenever it changes. This can used
   to build "Saving..." UIs.
