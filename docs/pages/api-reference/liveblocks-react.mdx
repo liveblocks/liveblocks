@@ -2053,27 +2053,6 @@ options:
 
 Both are equally fine, just a matter of preference.
 
-#### Waiting for Storage to load
-
-If Storage is modified inside a mutation before it has been initially loaded, an
-error will occur. It’s recommended to not call your mutation functions until
-Storage has loaded. If that is impractical, you can detect this situation using
-the `isStorageReady` boolean.
-
-```tsx
-const deleteCircle = useMutation(
-  // Mutation context is passed as the first argument
-  ({ storage, isStorageReady }) => {
-    // No-op if storage has already loaded
-    if (!isStorageReady) return;
-
-    // Here, `storage` is guaranteed to be available
-    storage.get("shapes").get("circle1").delete();
-  },
-  []
-);
-```
-
 #### With dependency arrays [#useMutation-dep-arrays]
 
 ```tsx
@@ -2160,6 +2139,27 @@ return <button onClick={deleteSelectedShapes} />;
 
 Mutations are automatically batched, so when using `useMutation` there’s no need
 to use `useBatch`, or call `room.batch()` manually.
+
+#### Waiting for Storage to load
+
+If Storage is modified inside a mutation before it has been initially loaded, an
+error will occur. It’s recommended to not call your mutation functions until
+Storage has loaded. If that is impractical, you can detect this situation using
+the `isStorageReady` boolean.
+
+```tsx
+const deleteCircle = useMutation(
+  // Mutation context is passed as the first argument
+  ({ storage, isStorageReady }) => {
+    // No-op if storage has already loaded
+    if (!isStorageReady) return;
+
+    // Here, `storage` is guaranteed to be available
+    storage.get("shapes").get("circle1").delete();
+  },
+  []
+);
+```
 
 #### ESLint rule [#useMutation-lint-rule] [@keywords=["exhaustive-deps", "additionalHooks", "eslint-plugin-react-hooks"]]
 
