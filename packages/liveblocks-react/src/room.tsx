@@ -32,6 +32,7 @@ import type {
   PrivateRoomApi,
   RoomEventMessage,
   RoomNotificationSettings,
+  StorageStatus,
   ThreadData,
   ToImmutable,
 } from "@liveblocks/core";
@@ -95,6 +96,7 @@ import type {
   RoomNotificationSettingsState,
   RoomNotificationSettingsStateSuccess,
   RoomProviderProps,
+  StorageStatusSuccess,
   ThreadsState,
   ThreadsStateSuccess,
   ThreadSubscription,
@@ -563,6 +565,7 @@ function makeRoomContextBundle<
 
     useRoom,
     useStatus,
+    useStorageStatus,
 
     useBatch,
     useBroadcastEvent,
@@ -614,6 +617,7 @@ function makeRoomContextBundle<
 
       useRoom,
       useStatus,
+      useStorageStatus: useStorageStatusSuspense,
 
       useBatch,
       useBroadcastEvent,
@@ -920,6 +924,14 @@ function useStatus(): Status {
   const subscribe = room.events.status.subscribe;
   const getSnapshot = room.getStatus;
   const getServerSnapshot = room.getStatus;
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
+
+function useStorageStatus(): StorageStatus {
+  const room = useRoom();
+  const subscribe = room.events.storageStatus.subscribe;
+  const getSnapshot = room.getStorageStatus;
+  const getServerSnapshot = room.getStorageStatus;
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
@@ -2247,6 +2259,15 @@ function useStorageSuspense<S extends LsonObject, T>(
   ) as T;
 }
 
+function useStorageStatusSuspense(): StorageStatusSuccess {
+  useSuspendUntilStorageLoaded();
+  const room = useRoom();
+  const subscribe = room.events.storageStatus.subscribe;
+  const getSnapshot = room.getStorageStatus as () => StorageStatusSuccess;
+  const getServerSnapshot = room.getStorageStatus as () => StorageStatusSuccess;
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
+
 function useThreadsSuspense<M extends BaseMetadata>(
   options: UseThreadsOptions<M> = {
     query: { metadata: {} },
@@ -2478,6 +2499,8 @@ export {
   useStatus,
   _useStorage as useStorage,
   _useStorageRoot as useStorageRoot,
+  useStorageStatus,
+  useStorageStatusSuspense,
   _useStorageSuspense as useStorageSuspense,
   _useThreads as useThreads,
   _useThreadsSuspense as useThreadsSuspense,

@@ -6,6 +6,12 @@
 
 ### `@liveblocks/react`
 
+- Add
+  [`useDeleteThread`](https://liveblocks.io/docs/api-reference/liveblocks-react#useDeleteThread)
+  hook to delete a thread and its associated comments.
+- Add new hook `useStorageStatus()`, which returns the current storage status of
+  the room, and will re-render your component whenever it changes. This can used
+  to build "Saving..." UIs.
 - Add new `isStorageReady` property to `useMutation`'s first callback argument.
   You can use this new property if you’re running into the
   `Error: This mutation cannot be used until Storage has loaded` error. (For
@@ -124,7 +130,7 @@ const client = createClient(/* options */);
 ```
 
 For full upgrade instructions and codemods, see the
-[2.0 upgrade guide](https://liveblocks.io/docs/guides/upgrading/2.0).
+[2.0 upgrade guide](https://liveblocks.io/docs/platform/upgrading/2.0).
 
 ### `create-liveblocks-app`
 
