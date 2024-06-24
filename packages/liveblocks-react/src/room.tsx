@@ -171,12 +171,10 @@ function makeMutationContext<
 
   return {
     get isPresenceReady() {
-      // XXX Replace by room.isPresenceLoaded() soon
       return room.getSelf() !== null;
     },
 
     get isStorageReady() {
-      // XXX Replace by room.isStorageLoaded() soon
       return room.getStorageSnapshot() !== null;
     },
 
