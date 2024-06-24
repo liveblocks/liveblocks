@@ -2058,14 +2058,14 @@ Both are equally fine, just a matter of preference.
 If Storage is modified inside a mutation before it has been initially loaded, an
 error will occur. It’s recommended to not call your mutation functions until
 Storage has loaded. If that is impractical, you can detect this situation using
-the `isStorageLoaded` boolean.
+the `isStorageReady` boolean.
 
 ```tsx
 const deleteCircle = useMutation(
   // Mutation context is passed as the first argument
-  ({ storage, isStorageLoaded }) => {
+  ({ storage, isStorageReady }) => {
     // No-op if storage has already loaded
-    if (!isStorageLoaded) return;
+    if (!isStorageReady) return;
 
     // Here, `storage` is guaranteed to be available
     storage.get("shapes").get("circle1").delete();
