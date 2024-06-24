@@ -74,6 +74,7 @@ import { selectNotificationSettings } from "./comments/lib/select-notification-s
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 import { selectedThreads } from "./comments/lib/selected-threads";
 import { retryError } from "./lib/retry-error";
+import { use } from "./lib/use-polyfill";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import {
@@ -2138,23 +2139,12 @@ function ensureNotServerSide(): void {
   }
 }
 
-function useSuspendUntilPresenceLoaded(): void {
-  const room = useRoom();
-  if (room.getSelf() !== null) {
-    return;
-  }
-
+function useSuspendUntilPresenceReady(): void {
+  // Throw an error if we're calling this on the server side
   ensureNotServerSide();
 
-  // Throw a _promise_. Suspense will suspend the component tree until either
-  // until either a presence update event, or a connection status change has
-  // happened. After that, it will render this component tree again and
-  // re-evaluate the .getSelf() condition above, or re-suspend again until
-  // such event happens.
-  throw new Promise<void>((res) => {
-    room.events.self.subscribeOnce(() => res());
-    room.events.status.subscribeOnce(() => res());
-  });
+  const room = useRoom();
+  use(room.waitUntilPresenceReady());
 }
 
 function useSelfSuspense<P extends JsonObject, U extends BaseUserMeta>(): User<
@@ -2169,7 +2159,7 @@ function useSelfSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
   selector?: (me: User<P, U>) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T | User<P, U> {
-  useSuspendUntilPresenceLoaded();
+  useSuspendUntilPresenceReady();
   return useSelf(
     selector as (me: User<P, U>) => T,
     isEqual as (prev: T | null, curr: T | null) => boolean
@@ -2188,7 +2178,7 @@ function useOthersSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
   selector?: (others: readonly User<P, U>[]) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T | readonly User<P, U>[] {
-  useSuspendUntilPresenceLoaded();
+  useSuspendUntilPresenceReady();
   return useOthers(
     selector as (others: readonly User<P, U>[]) => T,
     isEqual as (prev: T, curr: T) => boolean
@@ -2196,7 +2186,7 @@ function useOthersSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
 }
 
 function useOthersConnectionIdsSuspense(): readonly number[] {
-  useSuspendUntilPresenceLoaded();
+  useSuspendUntilPresenceReady();
   return useOthersConnectionIds();
 }
 
@@ -2208,7 +2198,7 @@ function useOthersMappedSuspense<
   itemSelector: (other: User<P, U>) => T,
   itemIsEqual?: (prev: T, curr: T) => boolean
 ): ReadonlyArray<readonly [connectionId: number, data: T]> {
-  useSuspendUntilPresenceLoaded();
+  useSuspendUntilPresenceReady();
   return useOthersMapped(itemSelector, itemIsEqual);
 }
 
@@ -2217,7 +2207,7 @@ function useOtherSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
   selector: (other: User<P, U>) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T {
-  useSuspendUntilPresenceLoaded();
+  useSuspendUntilPresenceReady();
   return useOther(connectionId, selector, isEqual);
 }
 

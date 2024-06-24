@@ -2542,4 +2542,32 @@ describe("room", () => {
       ]);
     });
   });
+
+  describe("room load promises", () => {
+    test("presence promise", async () => {
+      const { room } = createTestableRoom({
+        initialPresence: {},
+        initialStorage: {},
+      });
+
+      const p1 = room.waitUntilPresenceReady();
+      const p2 = room.waitUntilPresenceReady();
+      expect(p1).toBe(p2); // Promises must be exactly equal
+
+      expect(room.isPresenceReady()).toEqual(false);
+
+      room.connect();
+
+      expect(room.isPresenceReady()).toEqual(false);
+      await room.waitUntilPresenceReady();
+      expect(room.isPresenceReady()).toEqual(true);
+
+      room.disconnect();
+      expect(room.isPresenceReady()).toEqual(true);
+
+      room.connect();
+      await room.waitUntilPresenceReady();
+      expect(room.isPresenceReady()).toEqual(true);
+    });
+  });
 });
