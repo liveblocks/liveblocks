@@ -24,10 +24,14 @@ type Person = LiveObject<{
   age: number;
 }>;
 
-// Storage type
-type Storage = {
-  people: LiveList<Person>;
-};
+// Global types
+declare global {
+  interface Liveblocks {
+    Storage: {
+      people: LiveList<Person>;
+    };
+  }
+}
 ```
 
 Then, open [App.tsx][], and modify the `initialStorage` value to match your

@@ -1,5 +1,5 @@
 import { LiveObject } from "@liveblocks/client";
-import { useStorage, useMutation } from "./liveblocks.config";
+import { useStorage, useMutation } from "@liveblocks/react/suspense";
 
 export function Room() {
   const people = useStorage((root) => root.people);
