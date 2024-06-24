@@ -657,6 +657,12 @@ export type Room<
    */
   getStorageSnapshot(): LiveObject<S> | null;
 
+  /**
+   * All possible room events, subscribable from a single place.
+   *
+   * @private These event sources are private for now, but will become public
+   * once they're stable.
+   */
   readonly events: {
     readonly status: Observable<Status>;
     readonly lostConnection: Observable<LostConnectionEvent>;
@@ -666,7 +672,12 @@ export type Room<
     readonly myPresence: Observable<P>;
     readonly others: Observable<OthersEvent<P, U>>;
     readonly error: Observable<LiveblocksError>;
+    /**
+     * @deprecated Renamed to `storageBatch`. The `storage` event source will
+     * soon be replaced by another/incompatible API.
+     */
     readonly storage: Observable<StorageUpdate[]>;
+    readonly storageBatch: Observable<StorageUpdate[]>;
     readonly history: Observable<HistoryEvent>;
 
     /**
@@ -1639,7 +1650,7 @@ export function createRoom<
     myPresence: makeEventSource<P>(),
     others: makeEventSource<OthersEvent<P, U>>(),
     error: makeEventSource<LiveblocksError>(),
-    storage: makeEventSource<StorageUpdate[]>(),
+    storageBatch: makeEventSource<StorageUpdate[]>(),
     history: makeEventSource<HistoryEvent>(),
     storageDidLoad: makeEventSource<void>(),
     storageStatus: makeEventSource<StorageStatus>(),
@@ -1917,7 +1928,7 @@ export function createRoom<
 
       if (storageUpdates !== undefined && storageUpdates.size > 0) {
         const updates = Array.from(storageUpdates.values());
-        eventHub.storage.notify(updates);
+        eventHub.storageBatch.notify(updates);
       }
       notifyStorageStatus();
     });
@@ -2837,7 +2848,9 @@ export function createRoom<
     self: eventHub.self.observable,
     myPresence: eventHub.myPresence.observable,
     error: eventHub.error.observable,
-    storage: eventHub.storage.observable,
+    /** @deprecated */
+    storage: eventHub.storageBatch.observable,
+    storageBatch: eventHub.storageBatch.observable,
     history: eventHub.history.observable,
     storageDidLoad: eventHub.storageDidLoad.observable,
     storageStatus: eventHub.storageStatus.observable,
@@ -3054,7 +3067,7 @@ function makeClassicSubscribeFn<
     node: L,
     callback: (updates: StorageUpdate[]) => void
   ): () => void {
-    return events.storage.subscribe((updates) => {
+    return events.storageBatch.subscribe((updates) => {
       const relatedUpdates = updates.filter((update) =>
         isSameNodeOrChildOf(update.node, node)
       );
@@ -3068,7 +3081,7 @@ function makeClassicSubscribeFn<
     node: L,
     callback: (node: L) => void
   ): () => void {
-    return events.storage.subscribe((updates) => {
+    return events.storageBatch.subscribe((updates) => {
       for (const update of updates) {
         if (update.node._id === node._id) {
           callback(update.node as L);
@@ -3145,7 +3158,7 @@ function makeClassicSubscribeFn<
     if (second === undefined || typeof first === "function") {
       if (typeof first === "function") {
         const storageCallback = first;
-        return events.storage.subscribe(storageCallback);
+        return events.storageBatch.subscribe(storageCallback);
       } else {
         // istanbul ignore next
         throw new Error("Please specify a listener callback");

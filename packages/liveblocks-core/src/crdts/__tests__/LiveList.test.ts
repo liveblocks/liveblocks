@@ -1139,7 +1139,7 @@ describe("LiveList", () => {
       );
 
       const callback = jest.fn();
-      room.events.storage.subscribe(callback);
+      room.events.storageBatch.subscribe(callback);
 
       const root = storage.root;
       const liveList = root.get("items");
@@ -1177,7 +1177,7 @@ describe("LiveList", () => {
       );
 
       const callback = jest.fn();
-      room.events.storage.subscribe(callback);
+      room.events.storageBatch.subscribe(callback);
 
       const root = storage.root;
       const liveList = root.get("items");
@@ -1494,7 +1494,7 @@ describe("LiveList", () => {
         const items = root.get("items");
 
         const callback = jest.fn();
-        room.events.storage.subscribe(callback);
+        room.events.storageBatch.subscribe(callback);
 
         applyRemoteOperations([
           {
