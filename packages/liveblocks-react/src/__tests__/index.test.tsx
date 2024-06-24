@@ -1,5 +1,5 @@
 import { createClient, shallow } from "@liveblocks/client";
-import { ClientMsgCode, CrdtType, ServerMsgCode } from "@liveblocks/core";
+import { ClientMsgCode, ServerMsgCode } from "@liveblocks/core";
 import { render } from "@testing-library/react";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
@@ -11,7 +11,6 @@ import {
   useCanUndo,
   useMutation,
   useMyPresence,
-  useObject,
   useOthers,
   useRoom,
   useStorage,
@@ -60,7 +59,7 @@ describe("RoomProvider", () => {
     const { RoomProvider } = createRoomContext(client);
 
     render(
-      <RoomProvider id="room" initialPresence={{}} autoConnect={false}>
+      <RoomProvider id="room" autoConnect={false}>
         <></>
       </RoomProvider>
     );
@@ -77,7 +76,7 @@ describe("RoomProvider", () => {
     const { RoomProvider } = createRoomContext(client);
 
     render(
-      <RoomProvider id="room" initialPresence={{}} autoConnect={true}>
+      <RoomProvider id="room" autoConnect={true}>
         <></>
       </RoomProvider>
     );
@@ -225,65 +224,6 @@ describe("useOthers", () => {
   });
 });
 
-describe("useObject", () => {
-  test("initialization happens asynchronously", async () => {
-    const { result } = renderHook(() => useObject("obj"));
-
-    // On the initial render, this hook will return `null`
-    expect(result.current).toBeNull();
-
-    const sim = await websocketSimulator();
-    act(() => sim.simulateStorageLoaded());
-
-    expect(result.current!.toImmutable()).toEqual({
-      a: 0,
-      nested: ["foo", "bar"],
-    });
-  });
-
-  test("initialization of non-existing fields does not crash (regression)", async () => {
-    const { result } = renderHook(() => useObject("non-existing-field" as any));
-
-    // On the initial render, this hook will return `null` (indicating storage hasn't loaded)
-    expect(result.current).toBeNull();
-
-    const sim = await websocketSimulator();
-    act(() => sim.simulateStorageLoaded());
-
-    // After loading storage, this value will be `undefined` (because missing)
-    // Previously this used to throw a confusing Error: `"undefined" is not a valid event name`
-    expect(result.current).toBeUndefined();
-  });
-
-  test("unmounting useObject while storage is loading should not cause a memory leak", async () => {
-    const { result, rerender, unmount } = renderHook(() => useObject("obj"));
-
-    // On the initial render, this hook will return `null`
-    expect(result.current).toBeNull();
-
-    const sim = await websocketSimulator();
-
-    rerender();
-    expect(result.current).toBeNull();
-
-    // Grab a handle to the callback before unmounting the component
-    const callback = sim.callbacks.message[0];
-    unmount();
-
-    act(() =>
-      // Manually simulate an incoming server message
-      callback({
-        data: JSON.stringify({
-          type: ServerMsgCode.INITIAL_STORAGE_STATE,
-          items: [["root", { type: CrdtType.OBJECT, data: {} }]],
-        }),
-      } as MessageEvent)
-    );
-
-    expect(result.current).toBeNull();
-  });
-});
-
 describe("useStorage", () => {
   test("return null before storage has loaded", () => {
     const { result } = renderHook(() => useStorage((root) => root.obj));
@@ -309,16 +249,15 @@ describe("useStorage", () => {
 
   test("unchanged nested data remains referentially equal between mutations", async () => {
     const { result } = renderHook(() => useStorage((root) => root.obj));
-    const { result: liveObj } = renderHook(() => useObject("obj")); // Used to trigger mutations
+    const { result: mut } = renderHook(() =>
+      useMutation(({ storage }) => storage.get("obj").set("a", 1), [])
+    ); // Used to trigger mutations
 
     const sim = await websocketSimulator();
     act(() => sim.simulateStorageLoaded());
 
     const render1 = result.current!;
-    act(() =>
-      // Now, only change `a`, let `nested` remain untouched
-      liveObj.current!.set("a", 1)
-    );
+    act(() => mut.current());
     const render2 = result.current!;
 
     // Property `a` changed between renders...
@@ -349,7 +288,9 @@ describe("useStorage", () => {
         shallow // <-- Important! Key line of the test!
       )
     );
-    const { result: liveObj } = renderHook(() => useObject("obj")); // Used to trigger mutations
+    const { result: mut } = renderHook(() =>
+      useMutation(({ storage }) => storage.get("obj").set("a", 1), [])
+    ); // Used to trigger mutations
 
     const sim = await websocketSimulator();
     act(() => sim.simulateStorageLoaded());
@@ -357,7 +298,7 @@ describe("useStorage", () => {
     const render1 = result.current!;
     act(() =>
       // Now, only change `a`, let `nested` remain untouched
-      liveObj.current!.set("a", 1)
+      mut.current()
     );
 
     const render2 = result.current!;

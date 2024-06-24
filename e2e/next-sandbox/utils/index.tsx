@@ -1,5 +1,9 @@
 import type { Json } from "@liveblocks/client";
-import React from "react";
+import { raise } from "@liveblocks/core";
+import type { Reducer } from "react";
+import React, { useReducer } from "react";
+
+import { FAKE_USERS } from "../pages/api/_utils";
 
 export function getRoomFromUrl(): string {
   if (typeof window === "undefined") {
@@ -12,6 +16,14 @@ export function getRoomFromUrl(): string {
     throw new Error("Specify ?room= in URL, please");
   }
   return room;
+}
+
+export function getUserFromUrl(): number {
+  const q = new URL(window.location.href).searchParams;
+  const user = Number(q.get("user"));
+  return user && !isNaN(user) && user >= 1 && user <= FAKE_USERS.length
+    ? user
+    : raise("Specify ?user= in URL, please");
 }
 
 /**
@@ -52,6 +64,10 @@ export function randomIndices(array: { length: number }): [number, number] {
 export function useRenderCount() {
   const ref = React.useRef(0);
   return ++ref.current;
+}
+
+export function useRerender() {
+  return useReducer<Reducer<number, unknown>>((x: number) => x + 1, 0)[1];
 }
 
 // A predefined mono style

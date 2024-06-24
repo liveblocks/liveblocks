@@ -2,11 +2,11 @@
 
 import styles from "./Pinned.module.css";
 import { PointerEventHandler } from "react";
-import { UserMeta } from "@/liveblocks.config";
-import { Composer, ComposerProps } from "@liveblocks/react-comments";
+
+import { Composer, ComposerProps } from "@liveblocks/react-ui";
 
 type Props = {
-  user: UserMeta["info"];
+  user: Liveblocks["UserMeta"]["info"];
   onPointerDown: PointerEventHandler<HTMLDivElement>;
   onPointerMove: PointerEventHandler<HTMLDivElement>;
   onPointerUp: PointerEventHandler<HTMLDivElement>;

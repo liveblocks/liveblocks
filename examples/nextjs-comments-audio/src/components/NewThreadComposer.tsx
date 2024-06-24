@@ -3,11 +3,11 @@
 import { Link } from "@/components/Link";
 import { Mention } from "@/components/Mention";
 import { MentionSuggestions } from "@/components/MentionSuggestions";
-import { useCreateThread, useSelf } from "@/liveblocks.config";
+import { useCreateThread, useSelf } from "@liveblocks/react/suspense";
 import {
   Composer,
   ComposerSubmitComment,
-} from "@liveblocks/react-comments/primitives";
+} from "@liveblocks/react-ui/primitives";
 import cx from "classnames";
 import { FormEvent, useCallback } from "react";
 import { Send as SendIcon } from "react-feather";

@@ -16,16 +16,17 @@ while maintaining the stability of our infrastructure.
 
 ### Typical usage guidelines
 
-|                                      | Starter                                       | Pro                                          | Enterprise |
-| ------------------------------------ | --------------------------------------------- | -------------------------------------------- | ---------- |
-| Monthly collaborative users included | <Limits.FreeMcuMax />                         | <Limits.ProMcuIncluded />                    | Custom     |
-| Monthly collaborative users limit    | <Limits.FreeMcuMax />                         | <Limits.ProMcuMax />                         | Unlimited  |
-| Monthly active users limit           | <Limits.FreeMauMax />                         | Unlimited                                    | Unlimited  |
-| Projects limit                       | Unlimited                                     | Unlimited                                    | Unlimited  |
-| Average connections per MAU          | Up to <Limits.FreeAvgConnectionsPerMau />     | Up to <Limits.ProAvgConnectionsPerMau />     | Custom     |
-| Maximum storage size per room        | Up to <Limits.FreeMaxStorageSizePerRoom /> MB | Up to <Limits.ProMaxStorageSizePerRoom /> MB | Custom     |
-| Simultaneous connections per room    | Up to <Limits.FreeMaxConnectionsPerRoom />    | Up to <Limits.ProMaxConnectionsPerRoom />    | Custom     |
-| Team members per account             | <Limits.FreeTeamMembersPerAccount />          | <Limits.ProTeamMembersPerAccount />          | Custom     |
+|                                      | Starter                                          | Pro                                          | Enterprise |
+| ------------------------------------ | ------------------------------------------------ | -------------------------------------------- | ---------- |
+| Monthly active users included        | <Limits.StarterMauIncluded />                    | <Limits.ProMauIncluded />                    | Custom     |
+| Monthly active users cap             | <Limits.StarterMauMax />                         | <Limits.ProMauMax />                         | Unlimited  |
+| Projects                             | <Limits.StarterMaxProjects />                    | <Limits.ProMaxProjects />                    | Unlimited  |
+| Average connections per MAU          | Up to <Limits.StarterAvgConnectionsPerMau />     | Up to <Limits.ProAvgConnectionsPerMau />     | Custom     |
+| Maximum data stored size per room    | Up to <Limits.StarterMaxStorageSizePerRoom />    | Up to <Limits.ProMaxStorageSizePerRoom />    | Custom     |
+| Simultaneous connections per room    | Up to <Limits.StarterMaxConnectionsPerRoom />    | Up to <Limits.ProMaxConnectionsPerRoom />    | Custom     |
+| Simultaneous connections per project | Up to <Limits.StarterMaxConnectionsPerProject /> | Up to <Limits.ProMaxConnectionsPerProject /> | Custom     |
+| Team members per account             | <Limits.StarterTeamMembersPerAccount />          | <Limits.ProTeamMembersPerAccount />          | Custom     |
+| Monthly public key connections       | <Limits.StarterMaxAnonymousConnections />        | <Limits.ProMaxAnonymousConnections />        | Custom     |
 
 To learn more about how monthly active users are calculated for each plan, take
 a look at the [plans](/docs/platform/plans) docs.

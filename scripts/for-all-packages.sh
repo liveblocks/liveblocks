@@ -39,7 +39,7 @@ while getopts qc:fh flag; do
 done
 shift $(($OPTIND - 1))
 
-for dir in $(find packages -maxdepth 1 -type d | grep -Ee /); do
+for dir in $(find packages -maxdepth 1 -type d \! -iname '.*' | grep -Ee /); do
     if [ $quiet -eq 0 ]; then
         err
         err "==> In $dir"

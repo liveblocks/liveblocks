@@ -1,0 +1,94 @@
+---
+meta:
+  title: "The type you provided for 'RoomInfo' does not match its requirements"
+  parentTitle: "Error"
+  description: "Your 'RoomInfo' type is incorrect and needs to be updated"
+---
+
+## Why this error occurred
+
+You have provided a custom `RoomInfo` type for your application, but the type
+you provided isn’t a (completely) valid definition.
+
+```ts highlight="4-10"
+declare global {
+  interface Liveblocks {
+    RoomInfo: {
+      // Your custom fields go here...
+      name: string;
+      url: URL; // ❌ The issue is here
+      geo: {
+        city: string;
+        country: string;
+      };
+    };
+  }
+}
+```
+
+In the example above, the problem is the `URL` field. Values like `Date`, `Map`,
+`Set`, functions, classes (including `URL`), or `unknown` aren’t valid JSON.
+
+## The rules of the RoomInfo type
+
+The following rules apply if you want to specify a custom `RoomInfo` type:
+
+- You can provide any keys and values here, as long as the values are valid
+  JSON.
+- Two small constraints:
+  - _If_ you specify `name`, it _must_ be assignable to `string | undefined`.
+  - _If_ you specify `url`, then it _must_ be assignable to
+    `string | undefined`.
+
+The reason for these two restrictions is that some of our higher-level
+components will pick these values up and use them to provide default UIs.
+
+## How to fix it
+
+You’ll need to figure out what part of your provided `RoomInfo` type definition
+isn’t valid. The example above can be fixed as follows:
+
+```tsx
+declare global {
+  interface Liveblocks {
+    RoomInfo: {
+      // Your custom fields go here...
+      name: string;
+      url: string; // ✅ Valid
+      geo: {
+        city: string;
+        country: string;
+      };
+    };
+  }
+}
+```
+
+## If you cannot find the root cause
+
+Sometimes types can be complex and the root cause is still unclear. In those
+cases, there is a small trick you can use. Try to assign your type to the
+required base type, with this line:
+
+```ts highlight="9-10"
+import type { BaseRoomInfo } from "@liveblocks/client";
+
+declare global {
+  interface Liveblocks {
+    RoomInfo: MyRoomInfo;
+  }
+}
+
+// Quick debugging snippet to find root cause
+const xxx: BaseRoomInfo = {} as MyRoomInfo;
+//    ^?
+//    The error will appear here
+```
+
+Now TypeScript will explain why it thinks your type isn’t valid room info:
+
+```error showLineNumbers={false}
+Type 'MyRoomInfo' is not assignable to type 'BaseRoomInfo'.
+  Types of property 'url' are incompatible.
+    Type 'URL' is not assignable to type 'string'.
+```

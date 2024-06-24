@@ -9,9 +9,9 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.11.0",
-    "@liveblocks/node": "^1.11.0",
-    "@liveblocks/react": "^1.11.0",
+    "@liveblocks/client": "^2.0.3",
+    "@liveblocks/node": "^2.0.3",
+    "@liveblocks/react": "^2.0.3",
     "classnames": "^2.3.2",
     "next": "^13.5.4",
     "next-auth": "^4.23.2",
@@ -21,12 +21,12 @@
   "devDependencies": {
     "@svgr/webpack": "^7.0.0",
     "@types/node": "^14.14.31",
-    "@types/react": "^18.0.27",
+    "@types/react": "^18.3.3",
     "autoprefixer": "^10.2.5",
     "postcss": "^8.2.13",
-    "prettier": "^3.0.0",
+    "prettier": "^3.3.2",
     "prettier-plugin-tailwindcss": "^0.5.1",
     "tailwindcss": "^3.1.4",
-    "typescript": "^5.2.2"
+    "typescript": "^5.4.5"
   }
 }

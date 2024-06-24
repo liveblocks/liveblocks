@@ -379,7 +379,7 @@ describe("useInboxNotifications: error", () => {
     // and so on...
   });
 
-  test("should retry with exponential backoff with a maximum retry limit", async () => {
+  test("should retry with exponential backoff with a maximum retry limit 1", async () => {
     let getInboxNotificationsReqCount = 0;
     server.use(
       mockGetInboxNotifications(async (_req, res, ctx) => {
@@ -430,7 +430,7 @@ describe("useInboxNotifications: error", () => {
     expect(getInboxNotificationsReqCount).toBe(1 + 5);
   });
 
-  test("should retry with exponential backoff with a maximum retry limit", async () => {
+  test("should retry with exponential backoff with a maximum retry limit 2", async () => {
     let getInboxNotificationsReqCount = 0;
     server.use(
       mockGetInboxNotifications(async (_req, res, ctx) => {

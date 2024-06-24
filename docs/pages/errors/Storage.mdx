@@ -1,0 +1,92 @@
+---
+meta:
+  title: "The type you provided for 'Storage' is not a valid LSON value"
+  parentTitle: "Error"
+  description: "Your 'Storage' type is incorrect and needs to be updated"
+---
+
+## Why this error occurred
+
+You have provided a custom `Storage` type for your application, but the type you
+provided isn’t a (completely) valid LSON object. Values like `Date`, `Map`,
+`Set`, functions, classes, or `unknown` aren’t valid LSON.
+
+<Banner type="success" title="What was LSON again?">
+
+LSON is either a valid JSON value, or an instance of `LiveMap`, `LiveList`, or
+`LiveObject`.
+
+</Banner>
+
+```ts highlight="6"
+declare global {
+  interface Liveblocks {
+    Storage: {
+      layers: LiveMap<string, LiveObject<Layer>>;
+      layerIds: LiveList<string>;
+      createdAt: Date; // ❌ The issue is here
+    };
+  }
+}
+```
+
+In the example above, the problem is in the `Date` field, because a `Date` isn’t
+a valid LSON value.
+
+## How to fix it
+
+You’ll need to figure out what part of your provided `Storage` type definition
+isn’t valid LSON. Sometimes this is immediately obvious, like in the example
+above.
+
+Sometimes the issue may be a bit less obvious:
+
+```ts highlight="7-8"
+import type { Lson } from "@liveblocks/client";
+
+declare global {
+  interface Liveblocks {
+    Storage: {
+      layers: LiveMap<string, LiveObject<Layer>>;
+      layerIds: LiveList<unknown>; // ❌ Unknowns could contain non-LSON
+      layerIds: LiveList<Lson>; // ✅ Prefer using Lson
+    };
+  }
+}
+```
+
+By using `Lson`, you can still work with unknown or unspecified values, but
+still ensure they will be valid LSON.
+
+## If you cannot find the root cause
+
+Sometimes types can be complex and the root cause is still unclear. In those
+cases, there is a small trick you can use. Try to assign your type to the
+required base type, with this line:
+
+```ts highlight="9-10"
+import type { LsonObject } from "@liveblocks/client";
+
+declare global {
+  interface Liveblocks {
+    Storage: MyStorage;
+  }
+}
+
+// Quick debugging snippet to find root cause
+const xxx: LsonObject = {} as MyStorage;
+//    ^?
+//    The error will appear here
+```
+
+Now TypeScript will explain why it thinks your type isn’t valid LSON:
+
+```error showLineNumbers={false}
+Type 'MyStorage' is not assignable to type 'LsonObject'.
+  Property 'layerIds' is incompatible with index signature.
+    Type 'LiveList<unknown>' is not assignable to type 'Lson | undefined'.
+      Type 'LiveList<unknown>' is not assignable to type 'LiveList<Lson>'.
+        The types returned by 'toArray()' are incompatible between these types.
+          Type 'unknown[]' is not assignable to type 'Lson[]'.
+            Type 'unknown' is not assignable to type 'Lson'.
+```

@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import { RoomProvider } from "../../liveblocks.config";
+import { RoomProvider } from "@liveblocks/react/suspense";
 import { Loading } from "../components/Loading";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
@@ -12,14 +12,14 @@ export default function Page() {
   const roomId = useExampleRoomId("liveblocks:examples:nextjs-comments-canvas");
 
   return (
-    <RoomProvider id={roomId} initialPresence={{}}>
+    <RoomProvider id={roomId}>
       <ErrorBoundary
         fallback={
           <div className="error">There was an error while getting threads.</div>
         }
       >
         <ClientSideSuspense fallback={<Loading />}>
-          {() => <CommentsCanvas />}
+          <CommentsCanvas />
         </ClientSideSuspense>
       </ErrorBoundary>
     </RoomProvider>

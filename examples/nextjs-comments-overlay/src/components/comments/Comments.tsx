@@ -17,12 +17,8 @@ export function Comments() {
       }
     >
       <ClientSideSuspense fallback={null}>
-        {() => (
-          <>
-            <Toolbar />
-            <CommentsOverlay />
-          </>
-        )}
+        <Toolbar />
+        <CommentsOverlay />
       </ClientSideSuspense>
     </ErrorBoundary>
   );

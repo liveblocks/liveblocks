@@ -6,13 +6,13 @@ import { getCoordsFromElement } from "@/lib/coords";
 import {
   useOthersConnectionIds,
   useUpdateMyPresence,
-} from "@/liveblocks.config";
+} from "@liveblocks/react/suspense";
 import { ClientSideSuspense } from "@liveblocks/react";
 
 export function Cursors() {
   return (
     <ClientSideSuspense fallback={null}>
-      {() => <CursorsComponent />}
+      <CursorsComponent />
     </ClientSideSuspense>
   );
 }

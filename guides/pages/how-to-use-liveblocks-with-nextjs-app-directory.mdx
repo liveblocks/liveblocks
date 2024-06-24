@@ -19,7 +19,6 @@ export default function Room({ children }: { children: ReactNode }) {
   return (
     <RoomProvider
       id="my-room-name"
-      initialPresence={{}}
       initialStorage={{
         // ✅ This is a client component, so everything works!
         session: new LiveObject(),
@@ -53,7 +52,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 ## Structuring your app
 
 To take this one step further, you can then server-render your layout within
-`Room`’s `children`, whilst using other client components for real-time parts of
+`Room`’s `children`, whilst using other client components for realtime parts of
 your app:
 
 ```tsx file="room.tsx"

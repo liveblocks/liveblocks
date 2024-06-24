@@ -37,7 +37,9 @@
   border-collapse: collapse;
   border-radius: var(--radius);
   border-spacing: 0;
-  box-shadow: 0 0 0 1px rgb(31 41 55 / 4%), 0 2px 4px rgb(31 41 55 / 6%),
+  box-shadow:
+    0 0 0 1px rgb(31 41 55 / 4%),
+    0 2px 4px rgb(31 41 55 / 6%),
     0 4px 16px -2px rgb(31 41 55 / 12%);
   outline: none;
 }

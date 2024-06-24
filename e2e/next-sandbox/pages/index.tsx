@@ -52,6 +52,16 @@ export default function Home() {
           </Link>
         </li>
         <li>
+          <Link href="/inbox-notifications?room=e2e-inbox-notif&user=12">
+            <a>Inbox notifications (as user 12)</a>
+          </Link>
+        </li>
+        <li>
+          <Link href="/inbox-notifications?room=e2e-inbox-notif&user=7">
+            <a>Inbox notifications (as user 7)</a>
+          </Link>
+        </li>
+        <li>
           <Link href="/offline?room=e2e-offline">
             <a>Offline</a>
           </Link>
@@ -97,9 +107,19 @@ export default function Home() {
           </ul>
         </li>
         <li>
-          <Link href="/multi?room=e2e-multi">
-            <a>Multiple rooms</a>
-          </Link>
+          <div>Multiple rooms</div>
+          <ul>
+            <li>
+              <Link href="/multi?room=e2e-multi">
+                <a>With factory</a>
+              </Link>
+            </li>
+            <li>
+              <Link href="/multi/with-global-augmentation?room=e2e-multi">
+                <a>With global augmentation</a>
+              </Link>
+            </li>
+          </ul>
         </li>
         <li>
           <div>Yjs</div>

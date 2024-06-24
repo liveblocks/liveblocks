@@ -1,7 +1,9 @@
+import type {
+  ThreadData,
+  ThreadDataWithDeleteInfo,
+  ThreadDeleteInfo,
+} from "../protocol/Comments";
 import { applyThreadUpdates } from "../store";
-import type { BaseMetadata } from "../types/BaseMetadata";
-import type { ThreadData, ThreadDataWithDeleteInfo } from "../types/ThreadData";
-import type { ThreadDeleteInfo } from "../types/ThreadDeleteInfo";
 
 describe("applyThreadUpdates", () => {
   const thread1: ThreadDataWithDeleteInfo = {
@@ -51,7 +53,7 @@ describe("applyThreadUpdates", () => {
   });
 
   it("should update an existing thread with a newer one", () => {
-    const thread1Updated: ThreadData<BaseMetadata> = {
+    const thread1Updated: ThreadData = {
       ...thread1,
       updatedAt: new Date("2024-01-03"), // A newer date than the original thread1
       metadata: { resolved: true }, // Simulate changes in the thread

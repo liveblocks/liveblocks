@@ -6,7 +6,7 @@ meta:
 
 In this 15-minute tutorial, we’ll be building a collaborative to-do list using
 React and Liveblocks. As users edit the list, changes will be automatically
-synced and persisted, allowing for a list that updates in real-time across
+synced and persisted, allowing for a list that updates in realtime across
 clients. Users will also be able to see who else is currently online, and when
 another user is typing.
 
@@ -113,15 +113,11 @@ We can now import the `RoomProvider` directly from our `liveblocks.config.ts`
 file. Every component wrapped inside `RoomProvider` will have access to the
 React hooks we’ll be using to interact with this room.
 
-```tsx file="pages/index.tsx" highlight="1,5-7"
+```tsx file="pages/index.tsx" highlight="1,4"
 import { RoomProvider } from "@/liveblocks.config";
 
 export default function Page() {
-  return (
-    <RoomProvider id={"nextjs-todo-list"} initialPresence={{}}>
-      {/* ... */}
-    </RoomProvider>
-  );
+  return <RoomProvider id="nextjs-todo-list">{/* ... */}</RoomProvider>;
 }
 ```
 
@@ -140,9 +136,9 @@ import { RoomProvider } from "@/liveblocks.config";
 
 export default function Page() {
   return (
-    <RoomProvider id={"nextjs-todo-list"} initialPresence={{}}>
+    <RoomProvider id="nextjs-todo-list">
       <ClientSideSuspense fallback={<div>Loading...</div>}>
-        {() => <TodoList />}
+        <TodoList />
       </ClientSideSuspense>
     </RoomProvider>
   );
@@ -162,7 +158,7 @@ function TodoList() {
 <Banner title="Need help troubleshooting presence?">
 
 Try the [Liveblocks DevTools extension](/devtools) to inspect and debug your
-collaborative experiences as you build them, in real-time.
+collaborative experiences as you build them, in realtime.
 
 </Banner>
 
@@ -464,7 +460,7 @@ export default function Page() {
 <Banner title="Need help troubleshooting storage?">
 
 Try the [Liveblocks DevTools extension](/devtools) to inspect and debug your
-collaborative experiences as you build them, in real-time.
+collaborative experiences as you build them, in realtime.
 
 </Banner>
 
@@ -482,7 +478,7 @@ using presence to store these values. For this, we need something new.
 
 We’re going to use a [`LiveList`][] to store the list of todos inside the room’s
 storage, a type of storage that Liveblocks provides. A `LiveList` is similar to
-a JavaScript array, but its items are synced in real-time across different
+a JavaScript array, but its items are synced in realtime across different
 clients. Even if multiple users insert, delete, or move items simultaneously,
 the `LiveList` will still be consistent for all users in the room.
 

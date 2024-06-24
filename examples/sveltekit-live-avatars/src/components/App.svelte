@@ -49,10 +49,7 @@
     <!-- Show the current user's avatar-->
     {#if currentUser}
       <div class="current_user_container">
-        <Avatar
-          src={currentUser.info?.avatar}
-          name={currentUser.info?.name}
-        />
+        <Avatar src={currentUser.info?.avatar} name={currentUser.info?.name} />
       </div>
     {/if}
   </div>

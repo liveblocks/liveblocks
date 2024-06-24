@@ -1,6 +1,6 @@
 "use client";
 
-import { useLostConnectionListener } from "@/liveblocks.config";
+import { useLostConnectionListener } from "@liveblocks/react/suspense";
 import { useRef } from "react";
 import toast, { Toaster } from "react-hot-toast";
 

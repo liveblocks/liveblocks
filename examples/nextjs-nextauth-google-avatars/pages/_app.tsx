@@ -3,10 +3,11 @@ import Head from "next/head";
 import { Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
 import "../styles/globals.css";
+import { LiveblocksProvider } from "@liveblocks/react";
 
 function App({ Component, pageProps }: AppProps<{ session: Session }>) {
   return (
-    <>
+    <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
       <Head>
         <title>Liveblocks</title>
         <meta name="robots" content="noindex" />
@@ -27,7 +28,7 @@ function App({ Component, pageProps }: AppProps<{ session: Session }>) {
       <SessionProvider session={pageProps.session}>
         <Component {...pageProps} />
       </SessionProvider>
-    </>
+    </LiveblocksProvider>
   );
 }
 export default App;

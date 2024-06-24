@@ -7,11 +7,16 @@ import type {
 import type {
   CacheState,
   CacheStore,
+  ClientOptions,
+  DM,
+  DU,
   InboxNotificationData,
   InboxNotificationDeleteInfo,
+  OpaqueClient,
+  PrivateClientApi,
   ThreadDeleteInfo,
 } from "@liveblocks/core";
-import { kInternal, makePoller, raise } from "@liveblocks/core";
+import { createClient, kInternal, makePoller, raise } from "@liveblocks/core";
 import { nanoid } from "nanoid";
 import type { PropsWithChildren } from "react";
 import React, {
@@ -19,33 +24,47 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
 } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 import { retryError } from "./lib/retry-error";
-import { useInitial } from "./lib/use-initial";
-import { createSharedContext } from "./shared";
+import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import type {
   InboxNotificationsState,
   InboxNotificationsStateSuccess,
   LiveblocksContextBundle,
+  RoomInfoState,
+  RoomInfoStateSuccess,
+  SharedContextBundle,
   UnreadInboxNotificationsCountState,
   UnreadInboxNotificationsCountStateSuccess,
+  UserState,
+  UserStateSuccess,
 } from "./types";
 
-const ClientContext = createContext<Client | null>(null);
+export const ClientContext = createContext<OpaqueClient | null>(null);
 
+const missingUserError = new Error(
+  "resolveUsers didn't return anything for this user ID."
+);
+const missingRoomInfoError = new Error(
+  "resolveRoomsInfo didn't return anything for this room ID."
+);
+
+const _extras = new WeakMap<
+  OpaqueClient,
+  ReturnType<typeof makeExtrasForClient>
+>();
 const _bundles = new WeakMap<
-  Client,
+  OpaqueClient,
   LiveblocksContextBundle<BaseUserMeta, BaseMetadata>
 >();
 
 export const POLLING_INTERVAL = 60 * 1000; // 1 minute
 export const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
-
-// --- Selector helpers ------------------------------------------------- {{{
 
 function selectorFor_useInboxNotifications(
   state: CacheState<BaseMetadata>
@@ -128,56 +147,54 @@ function selectorFor_useUnreadInboxNotificationsCountSuspense(
   };
 }
 
-// ---------------------------------------------------------------------- }}}
-// --- Private APIs ----------------------------------------------------- {{{
-
 function getOrCreateContextBundle<
-  TUserMeta extends BaseUserMeta,
-  TThreadMetadata extends BaseMetadata,
->(client: Client): LiveblocksContextBundle<TUserMeta, TThreadMetadata> {
+  U extends BaseUserMeta,
+  M extends BaseMetadata,
+>(client: OpaqueClient): LiveblocksContextBundle<U, M> {
   let bundle = _bundles.get(client);
   if (!bundle) {
     bundle = makeLiveblocksContextBundle(client);
     _bundles.set(client, bundle);
   }
-  return bundle as LiveblocksContextBundle<TUserMeta, TThreadMetadata>;
+  return bundle as LiveblocksContextBundle<U, M>;
 }
 
-function makeLiveblocksContextBundle<
-  TUserMeta extends BaseUserMeta,
-  TThreadMetadata extends BaseMetadata,
->(client: Client): LiveblocksContextBundle<TUserMeta, TThreadMetadata> {
-  const shared = createSharedContext<TUserMeta>(client);
-
-  const store = client[kInternal]
-    .cacheStore as unknown as CacheStore<TThreadMetadata>;
-
-  const notifications = client[kInternal].notifications;
-
-  function LiveblocksProvider(props: PropsWithChildren) {
-    return (
-      <ClientContext.Provider value={client}>
-        {props.children}
-      </ClientContext.Provider>
-    );
+// TODO: Likely a better / more clear name for this helper will arise. I'll
+// rename this later. All of these are implementation details to support inbox
+// notifications on a per-client basis.
+function getExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
+  let extras = _extras.get(client);
+  if (!extras) {
+    extras = makeExtrasForClient(client);
+    _extras.set(client, extras);
   }
 
-  // TODO: Unify request cache
+  return extras as unknown as Omit<typeof extras, "store"> & {
+    store: CacheStore<M>;
+  };
+}
+
+function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
+  client: OpaqueClient
+) {
+  const internals = client[kInternal] as PrivateClientApi<U, M>;
+  const store = internals.cacheStore;
+  const notifications = internals.notifications;
+
   let fetchInboxNotificationsRequest: Promise<{
     inboxNotifications: InboxNotificationData[];
-    threads: ThreadData<TThreadMetadata>[];
+    threads: ThreadData<M>[];
     deletedThreads: ThreadDeleteInfo[];
     deletedInboxNotifications: InboxNotificationDeleteInfo[];
     meta: {
       requestedAt: Date;
     };
   }> | null = null;
+
   let lastRequestedAt: Date | undefined;
 
-  const poller = makePoller(refreshThreadsAndNotifications);
-
-  function refreshThreadsAndNotifications() {
-    return notifications.getInboxNotifications({ since: lastRequestedAt }).then(
+  const poller = makePoller(() =>
+    notifications.getInboxNotifications({ since: lastRequestedAt }).then(
       (result) => {
         lastRequestedAt = result.meta.requestedAt;
 
@@ -192,8 +209,8 @@ function makeLiveblocksContextBundle<
       () => {
         // TODO: Error handling
       }
-    );
-  }
+    )
+  );
 
   async function fetchInboxNotifications(
     { retryCount }: { retryCount: number } = { retryCount: 0 }
@@ -283,64 +300,155 @@ function makeLiveblocksContextBundle<
     }, [autoFetch]);
   }
 
-  function useInboxNotifications(): InboxNotificationsState {
-    useSubscribeToInboxNotificationsEffect();
-    return useSyncExternalStoreWithSelector(
-      store.subscribe,
-      store.get,
-      store.get,
-      selectorFor_useInboxNotifications
+  return {
+    store,
+    notifications,
+    fetchInboxNotifications,
+    useSubscribeToInboxNotificationsEffect,
+  };
+}
+
+function makeLiveblocksContextBundle<
+  U extends BaseUserMeta,
+  M extends BaseMetadata,
+>(client: Client<U>): LiveblocksContextBundle<U, M> {
+  // Bind all hooks to the current client instance
+  const useInboxNotificationThread = (inboxNotificationId: string) =>
+    useInboxNotificationThread_withClient<M>(client, inboxNotificationId);
+
+  const useMarkInboxNotificationAsRead = () =>
+    useMarkInboxNotificationAsRead_withClient(client);
+
+  const useMarkAllInboxNotificationsAsRead = () =>
+    useMarkAllInboxNotificationsAsRead_withClient(client);
+
+  // NOTE: This version of the LiveblocksProvider does _not_ take any props.
+  // This is because we already have a client bound to it.
+  function LiveblocksProvider(props: PropsWithChildren) {
+    useEnsureNoLiveblocksProvider();
+    return (
+      <ClientContext.Provider value={client}>
+        {props.children}
+      </ClientContext.Provider>
     );
   }
 
-  function useInboxNotificationsSuspense(): InboxNotificationsStateSuccess {
-    const query = store.get().queries[INBOX_NOTIFICATIONS_QUERY];
+  const shared = createSharedContext<U>(client);
 
-    if (query === undefined || query.isLoading) {
-      throw fetchInboxNotifications();
-    }
+  const bundle: LiveblocksContextBundle<U, M> = {
+    LiveblocksProvider,
 
-    if (query.error !== undefined) {
-      throw query.error;
-    }
+    useInboxNotifications: () => useInboxNotifications_withClient(client),
+    useUnreadInboxNotificationsCount: () =>
+      useUnreadInboxNotificationsCount_withClient(client),
 
-    useSubscribeToInboxNotificationsEffect({ autoFetch: false });
-    return useSyncExternalStoreWithSelector(
-      store.subscribe,
-      store.get,
-      store.get,
-      selectorFor_useInboxNotificationsSuspense
-    );
+    useMarkInboxNotificationAsRead,
+    useMarkAllInboxNotificationsAsRead,
+
+    useInboxNotificationThread,
+
+    ...shared.classic,
+
+    suspense: {
+      LiveblocksProvider,
+
+      useInboxNotifications: () =>
+        useInboxNotificationsSuspense_withClient(client),
+      useUnreadInboxNotificationsCount: () =>
+        useUnreadInboxNotificationsCountSuspense_withClient(client),
+
+      useMarkInboxNotificationAsRead,
+      useMarkAllInboxNotificationsAsRead,
+
+      useInboxNotificationThread,
+
+      ...shared.suspense,
+    },
+  };
+  return bundle;
+}
+
+function useInboxNotifications_withClient(client: OpaqueClient) {
+  const { store, useSubscribeToInboxNotificationsEffect } =
+    getExtrasForClient(client);
+
+  useSubscribeToInboxNotificationsEffect();
+  return useSyncExternalStoreWithSelector(
+    store.subscribe,
+    store.get,
+    store.get,
+    selectorFor_useInboxNotifications
+  );
+}
+
+function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
+  const {
+    store,
+    fetchInboxNotifications,
+    useSubscribeToInboxNotificationsEffect,
+  } = getExtrasForClient(client);
+
+  const query = store.get().queries[INBOX_NOTIFICATIONS_QUERY];
+
+  if (query === undefined || query.isLoading) {
+    throw fetchInboxNotifications();
   }
 
-  function useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountState {
-    useSubscribeToInboxNotificationsEffect();
-    return useSyncExternalStoreWithSelector(
-      store.subscribe,
-      store.get,
-      store.get,
-      selectorFor_useUnreadInboxNotificationsCount
-    );
+  if (query.error !== undefined) {
+    throw query.error;
   }
 
-  function useUnreadInboxNotificationsCountSuspense(): UnreadInboxNotificationsCountStateSuccess {
-    const query = store.get().queries[INBOX_NOTIFICATIONS_QUERY];
+  useSubscribeToInboxNotificationsEffect({ autoFetch: false });
+  return useSyncExternalStoreWithSelector(
+    store.subscribe,
+    store.get,
+    store.get,
+    selectorFor_useInboxNotificationsSuspense
+  );
+}
 
-    if (query === undefined || query.isLoading) {
-      throw fetchInboxNotifications();
-    }
+function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
+  const { store, useSubscribeToInboxNotificationsEffect } =
+    getExtrasForClient(client);
 
-    useSubscribeToInboxNotificationsEffect({ autoFetch: false });
-    return useSyncExternalStoreWithSelector(
-      store.subscribe,
-      store.get,
-      store.get,
-      selectorFor_useUnreadInboxNotificationsCountSuspense
-    );
+  useSubscribeToInboxNotificationsEffect();
+  return useSyncExternalStoreWithSelector(
+    store.subscribe,
+    store.get,
+    store.get,
+    selectorFor_useUnreadInboxNotificationsCount
+  );
+}
+
+function useUnreadInboxNotificationsCountSuspense_withClient(
+  client: OpaqueClient
+) {
+  const {
+    store,
+    fetchInboxNotifications,
+    useSubscribeToInboxNotificationsEffect,
+  } = getExtrasForClient(client);
+
+  const query = store.get().queries[INBOX_NOTIFICATIONS_QUERY];
+
+  if (query === undefined || query.isLoading) {
+    throw fetchInboxNotifications();
   }
 
-  function useMarkInboxNotificationAsRead() {
-    return useCallback((inboxNotificationId: string) => {
+  useSubscribeToInboxNotificationsEffect({ autoFetch: false });
+  return useSyncExternalStoreWithSelector(
+    store.subscribe,
+    store.get,
+    store.get,
+    selectorFor_useUnreadInboxNotificationsCountSuspense
+  );
+}
+
+function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
+  return useCallback(
+    (inboxNotificationId: string) => {
+      const { store, notifications } = getExtrasForClient(client);
+
       const optimisticUpdateId = nanoid();
       const readAt = new Date();
       store.pushOptimisticUpdate({
@@ -391,159 +499,289 @@ function makeLiveblocksContextBundle<
           }));
         }
       );
-    }, []);
-  }
-
-  function useMarkAllInboxNotificationsAsRead() {
-    return useCallback(() => {
-      const optimisticUpdateId = nanoid();
-      const readAt = new Date();
-      store.pushOptimisticUpdate({
-        type: "mark-inbox-notifications-as-read",
-        id: optimisticUpdateId,
-        readAt,
-      });
-
-      notifications.markAllInboxNotificationsAsRead().then(
-        () => {
-          store.set((state) => ({
-            ...state,
-            inboxNotifications: Object.fromEntries(
-              Array.from(Object.entries(state.inboxNotifications)).map(
-                ([id, inboxNotification]) => [
-                  id,
-                  { ...inboxNotification, readAt },
-                ]
-              )
-            ),
-            optimisticUpdates: state.optimisticUpdates.filter(
-              (update) => update.id !== optimisticUpdateId
-            ),
-          }));
-        },
-        () => {
-          // TODO: Broadcast errors to client
-          store.set((state) => ({
-            ...state,
-            optimisticUpdates: state.optimisticUpdates.filter(
-              (update) => update.id !== optimisticUpdateId
-            ),
-          }));
-        }
-      );
-    }, []);
-  }
-
-  function useInboxNotificationThread(
-    inboxNotificationId: string
-  ): ThreadData<TThreadMetadata> {
-    const selector = useCallback(
-      (state: CacheState<TThreadMetadata>) => {
-        const inboxNotification =
-          state.inboxNotifications[inboxNotificationId] ??
-          raise(
-            `Inbox notification with ID "${inboxNotificationId}" not found`
-          );
-
-        if (inboxNotification.kind !== "thread") {
-          raise(
-            `Inbox notification with ID "${inboxNotificationId}" is not of kind "thread"`
-          );
-        }
-
-        const thread =
-          state.threads[inboxNotification.threadId] ??
-          raise(
-            `Thread with ID "${inboxNotification.threadId}" not found, this inbox notification might not be of kind "thread"`
-          );
-
-        return thread;
-      },
-      [inboxNotificationId]
-    );
-
-    return useSyncExternalStoreWithSelector(
-      store.subscribe,
-      store.get,
-      store.get,
-      selector
-    );
-  }
-
-  const currentUserIdStore = client[kInternal].currentUserIdStore;
-
-  function useCurrentUserId() {
-    return useSyncExternalStore(
-      currentUserIdStore.subscribe,
-      currentUserIdStore.get,
-      currentUserIdStore.get
-    );
-  }
-
-  const bundle: LiveblocksContextBundle<TUserMeta, TThreadMetadata> = {
-    LiveblocksProvider,
-
-    useInboxNotifications,
-    useUnreadInboxNotificationsCount,
-
-    useMarkInboxNotificationAsRead,
-    useMarkAllInboxNotificationsAsRead,
-
-    useInboxNotificationThread,
-
-    ...shared,
-
-    suspense: {
-      LiveblocksProvider,
-
-      useInboxNotifications: useInboxNotificationsSuspense,
-      useUnreadInboxNotificationsCount:
-        useUnreadInboxNotificationsCountSuspense,
-
-      useMarkInboxNotificationAsRead,
-      useMarkAllInboxNotificationsAsRead,
-
-      useInboxNotificationThread,
-
-      ...shared.suspense,
     },
-
-    [kInternal]: {
-      useCurrentUserId,
-    },
-  };
-
-  return Object.defineProperty(bundle, kInternal, {
-    enumerable: false,
-  });
+    [client]
+  );
 }
 
-// ---------------------------------------------------------------------- }}}
-// --- Public APIs ------------------------------------------------------ {{{
+function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
+  return useCallback(() => {
+    const { store, notifications } = getExtrasForClient(client);
+    const optimisticUpdateId = nanoid();
+    const readAt = new Date();
+    store.pushOptimisticUpdate({
+      type: "mark-inbox-notifications-as-read",
+      id: optimisticUpdateId,
+      readAt,
+    });
+
+    notifications.markAllInboxNotificationsAsRead().then(
+      () => {
+        store.set((state) => ({
+          ...state,
+          inboxNotifications: Object.fromEntries(
+            Array.from(Object.entries(state.inboxNotifications)).map(
+              ([id, inboxNotification]) => [
+                id,
+                { ...inboxNotification, readAt },
+              ]
+            )
+          ),
+          optimisticUpdates: state.optimisticUpdates.filter(
+            (update) => update.id !== optimisticUpdateId
+          ),
+        }));
+      },
+      () => {
+        // TODO: Broadcast errors to client
+        store.set((state) => ({
+          ...state,
+          optimisticUpdates: state.optimisticUpdates.filter(
+            (update) => update.id !== optimisticUpdateId
+          ),
+        }));
+      }
+    );
+  }, [client]);
+}
+
+function useInboxNotificationThread_withClient<M extends BaseMetadata>(
+  client: OpaqueClient,
+  inboxNotificationId: string
+): ThreadData<M> {
+  const { store } = getExtrasForClient<M>(client);
+
+  const selector = useCallback(
+    (state: CacheState<M>) => {
+      const inboxNotification =
+        state.inboxNotifications[inboxNotificationId] ??
+        raise(`Inbox notification with ID "${inboxNotificationId}" not found`);
+
+      if (inboxNotification.kind !== "thread") {
+        raise(
+          `Inbox notification with ID "${inboxNotificationId}" is not of kind "thread"`
+        );
+      }
+
+      const thread =
+        state.threads[inboxNotification.threadId] ??
+        raise(
+          `Thread with ID "${inboxNotification.threadId}" not found, this inbox notification might not be of kind "thread"`
+        );
+
+      return thread;
+    },
+    [inboxNotificationId]
+  );
+
+  return useSyncExternalStoreWithSelector(
+    store.subscribe,
+    store.get,
+    store.get,
+    selector
+  );
+}
+
+function useUser_withClient<U extends BaseUserMeta>(
+  client: Client<U>,
+  userId: string
+): UserState<U["info"]> {
+  const usersStore = client[kInternal].usersStore;
+
+  const getUserState = useCallback(
+    () => usersStore.getState(userId),
+    [usersStore, userId]
+  );
+
+  useEffect(() => {
+    void usersStore.get(userId);
+  }, [usersStore, userId]);
+
+  const state = useSyncExternalStore(
+    usersStore.subscribe,
+    getUserState,
+    getUserState
+  );
+
+  return state
+    ? ({
+        isLoading: state.isLoading,
+        user: state.data,
+        // Return an error if `undefined` was returned by `resolveUsers` for this user ID
+        error:
+          !state.isLoading && !state.data && !state.error
+            ? missingUserError
+            : state.error,
+      } as UserState<U["info"]>)
+    : { isLoading: true };
+}
+
+function useUserSuspense_withClient<U extends BaseUserMeta>(
+  client: Client<U>,
+  userId: string
+) {
+  const usersStore = client[kInternal].usersStore;
+
+  const getUserState = useCallback(
+    () => usersStore.getState(userId),
+    [usersStore, userId]
+  );
+  const userState = getUserState();
+
+  if (!userState || userState.isLoading) {
+    throw usersStore.get(userId);
+  }
+
+  if (userState.error) {
+    throw userState.error;
+  }
+
+  // Throw an error if `undefined` was returned by `resolveUsers` for this user ID
+  if (!userState.data) {
+    throw missingUserError;
+  }
+
+  const state = useSyncExternalStore(
+    usersStore.subscribe,
+    getUserState,
+    getUserState
+  );
+
+  return {
+    isLoading: false,
+    user: state?.data,
+    error: state?.error,
+  } as UserStateSuccess<U["info"]>;
+}
+
+function useRoomInfo_withClient(
+  client: OpaqueClient,
+  roomId: string
+): RoomInfoState {
+  const roomsInfoStore = client[kInternal].roomsInfoStore;
+
+  const getRoomInfoState = useCallback(
+    () => roomsInfoStore.getState(roomId),
+    [roomsInfoStore, roomId]
+  );
+
+  useEffect(() => {
+    void roomsInfoStore.get(roomId);
+  }, [roomsInfoStore, roomId]);
+
+  const state = useSyncExternalStore(
+    roomsInfoStore.subscribe,
+    getRoomInfoState,
+    getRoomInfoState
+  );
+
+  return state
+    ? ({
+        isLoading: state.isLoading,
+        info: state.data,
+        // Return an error if `undefined` was returned by `resolveRoomsInfo` for this room ID
+        error:
+          !state.isLoading && !state.data && !state.error
+            ? missingRoomInfoError
+            : state.error,
+      } as RoomInfoState)
+    : { isLoading: true };
+}
+
+function useRoomInfoSuspense_withClient(client: OpaqueClient, roomId: string) {
+  const roomsInfoStore = client[kInternal].roomsInfoStore;
+
+  const getRoomInfoState = useCallback(
+    () => roomsInfoStore.getState(roomId),
+    [roomsInfoStore, roomId]
+  );
+  const roomInfoState = getRoomInfoState();
+
+  if (!roomInfoState || roomInfoState.isLoading) {
+    throw roomsInfoStore.get(roomId);
+  }
+
+  if (roomInfoState.error) {
+    throw roomInfoState.error;
+  }
+
+  // Throw an error if `undefined` was returned by `resolveRoomsInfo` for this room ID
+  if (!roomInfoState.data) {
+    throw missingRoomInfoError;
+  }
+
+  const state = useSyncExternalStore(
+    roomsInfoStore.subscribe,
+    getRoomInfoState,
+    getRoomInfoState
+  );
+
+  return {
+    isLoading: false,
+    info: state?.data,
+    error: state?.error,
+  } as RoomInfoStateSuccess;
+}
+
+/** @internal */
+export function createSharedContext<U extends BaseUserMeta>(
+  client: Client<U>
+): SharedContextBundle<U> {
+  return {
+    classic: {
+      useUser: (userId: string) => useUser_withClient(client, userId),
+      useRoomInfo: (roomId: string) => useRoomInfo_withClient(client, roomId),
+    },
+    suspense: {
+      useUser: (userId: string) => useUserSuspense_withClient(client, userId),
+      useRoomInfo: (roomId: string) =>
+        useRoomInfoSuspense_withClient(client, roomId),
+    },
+  };
+}
 
 /**
  * @private This is an internal API.
  */
-export function useClientOrNull() {
-  return useContext(ClientContext);
+function useEnsureNoLiveblocksProvider(options?: { allowNesting?: boolean }) {
+  const existing = useClientOrNull();
+  if (!options?.allowNesting && existing !== null) {
+    throw new Error(
+      "You cannot nest multiple LiveblocksProvider instances in the same React tree."
+    );
+  }
 }
 
 /**
- * @beta This is an internal API for now, but it will become public eventually.
+ * @private This is an internal API.
  */
-export function useClient() {
+export function useClientOrNull<U extends BaseUserMeta>() {
+  return useContext(ClientContext) as Client<U> | null;
+}
+
+/**
+ * Obtains a reference to the current Liveblocks client.
+ */
+export function useClient<U extends BaseUserMeta>() {
   return (
-    useClientOrNull() ??
+    useClientOrNull<U>() ??
     raise("LiveblocksProvider is missing from the React tree.")
   );
 }
 
 /**
- * @beta This is an internal API for now, but it will become public eventually.
+ * @private This is a private API.
  */
-export function LiveblocksProvider(
-  props: PropsWithChildren<{ client: Client }>
+export function LiveblocksProviderWithClient(
+  props: PropsWithChildren<{
+    client: OpaqueClient;
+
+    // Private flag, used only to skip the nesting check if this is
+    // a LiveblocksProvider created implicitly by a factory-bound RoomProvider.
+    allowNesting?: boolean;
+  }>
 ) {
+  useEnsureNoLiveblocksProvider(props);
   return (
     <ClientContext.Provider value={props.client}>
       {props.children}
@@ -552,30 +790,133 @@ export function LiveblocksProvider(
 }
 
 /**
- * @private
- *
- * This is an internal API, use "createLiveblocksContext" instead.
+ * Sets up a client for connecting to Liveblocks, and is the recommended way to do
+ * this for React apps. You must define either `authEndpoint` or `publicApiKey`.
+ * Resolver functions should be placed inside here, and a number of other options
+ * are available, which correspond with those passed to `createClient`.
+ * Unlike `RoomProvider`, `LiveblocksProvider` doesn’t call Liveblocks servers when mounted,
+ * and it should be placed higher in your app’s component tree.
  */
-export function useLiveblocksContextBundleOrNull() {
-  const client = useClientOrNull();
-  return client !== null ? getOrCreateContextBundle(client) : null;
-}
+export function LiveblocksProvider<U extends BaseUserMeta = DU>(
+  props: PropsWithChildren<ClientOptions<U>>
+) {
+  const { children, ...o } = props;
 
-/**
- * @private
- *
- * This is an internal API, use "createLiveblocksContext" instead.
- */
-export function useLiveblocksContextBundle() {
-  const client = useClient();
-  return getOrCreateContextBundle(client);
+  // It's important that the static options remain stable, otherwise we'd be
+  // creating new client instances on every render.
+  const options = {
+    publicApiKey: useInitial(o.publicApiKey),
+    throttle: useInitial(o.throttle),
+    lostConnectionTimeout: useInitial(o.lostConnectionTimeout),
+    backgroundKeepAliveTimeout: useInitial(o.backgroundKeepAliveTimeout),
+    polyfills: useInitial(o.polyfills),
+    unstable_fallbackToHTTP: useInitial(o.unstable_fallbackToHTTP),
+    unstable_streamData: useInitial(o.unstable_streamData),
+
+    authEndpoint: useInitialUnlessFunction(o.authEndpoint),
+    resolveMentionSuggestions: useInitialUnlessFunction(
+      o.resolveMentionSuggestions
+    ),
+    resolveUsers: useInitialUnlessFunction(o.resolveUsers),
+    resolveRoomsInfo: useInitialUnlessFunction(o.resolveRoomsInfo),
+
+    baseUrl: useInitial(
+      // @ts-expect-error - Hidden config options
+      o.baseUrl as string | undefined
+    ),
+    enableDebugLogging: useInitial(
+      // @ts-expect-error - Hidden config options
+      o.enableDebugLogging as boolean | undefined
+    ),
+  } as ClientOptions<U>;
+
+  // NOTE: Deliberately not passing any deps here, because we'll _never_ want
+  // to recreate a client instance after the first render.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const client = useMemo(() => createClient<U>(options), []);
+  return (
+    <LiveblocksProviderWithClient client={client}>
+      {children}
+    </LiveblocksProviderWithClient>
+  );
 }
 
 export function createLiveblocksContext<
-  TUserMeta extends BaseUserMeta = BaseUserMeta,
-  TThreadMetadata extends BaseMetadata = never,
->(client: Client): LiveblocksContextBundle<TUserMeta, TThreadMetadata> {
-  return getOrCreateContextBundle<TUserMeta, TThreadMetadata>(client);
+  U extends BaseUserMeta = DU,
+  M extends BaseMetadata = DM,
+>(client: OpaqueClient): LiveblocksContextBundle<U, M> {
+  return getOrCreateContextBundle<U, M>(client);
 }
 
-// ---------------------------------------------------------------------- }}}
+function useInboxNotifications() {
+  return useInboxNotifications_withClient(useClient());
+}
+
+function useInboxNotificationsSuspense() {
+  return useInboxNotificationsSuspense_withClient(useClient());
+}
+
+function useInboxNotificationThread<M extends BaseMetadata>(
+  inboxNotificationId: string
+) {
+  return useInboxNotificationThread_withClient<M>(
+    useClient(),
+    inboxNotificationId
+  );
+}
+
+function useMarkAllInboxNotificationsAsRead() {
+  return useMarkAllInboxNotificationsAsRead_withClient(useClient());
+}
+
+function useMarkInboxNotificationAsRead() {
+  return useMarkInboxNotificationAsRead_withClient(useClient());
+}
+
+function useUnreadInboxNotificationsCount() {
+  return useUnreadInboxNotificationsCount_withClient(useClient());
+}
+
+function useUnreadInboxNotificationsCountSuspense() {
+  return useUnreadInboxNotificationsCountSuspense_withClient(useClient());
+}
+
+function useUser<U extends BaseUserMeta>(userId: string) {
+  const client = useClient<U>();
+  return useUser_withClient(client, userId);
+}
+
+function useUserSuspense<U extends BaseUserMeta>(userId: string) {
+  const client = useClient<U>();
+  return useUserSuspense_withClient(client, userId);
+}
+
+function useRoomInfo(roomId: string) {
+  return useRoomInfo_withClient(useClient(), roomId);
+}
+
+function useRoomInfoSuspense(roomId: string) {
+  return useRoomInfoSuspense_withClient(useClient(), roomId);
+}
+
+// TODO in 2.0 Copy/paste all the docstrings onto these global hooks :(
+const __1: LiveblocksContextBundle<DU, DM>["useInboxNotificationThread"] =
+  useInboxNotificationThread;
+const __2: LiveblocksContextBundle<DU, DM>["useUser"] = useUser;
+const __3: LiveblocksContextBundle<DU, DM>["suspense"]["useUser"] =
+  useUserSuspense;
+
+// eslint-disable-next-line simple-import-sort/exports
+export {
+  __1 as useInboxNotificationThread,
+  __2 as useUser,
+  __3 as useUserSuspense,
+  useInboxNotifications,
+  useInboxNotificationsSuspense,
+  useMarkAllInboxNotificationsAsRead,
+  useMarkInboxNotificationAsRead,
+  useRoomInfo,
+  useRoomInfoSuspense,
+  useUnreadInboxNotificationsCount,
+  useUnreadInboxNotificationsCountSuspense,
+};

@@ -7,24 +7,24 @@ import { ImmutableRef, merge } from "./ImmutableRef";
  * Managed immutable cache for read-only-accessing an object that can be
  * patched.
  */
-export class PatchableRef<T extends JsonObject> extends ImmutableRef<T> {
+export class PatchableRef<J extends JsonObject> extends ImmutableRef<J> {
   /** @internal */
-  private _data: Readonly<T>;
+  private _data: Readonly<J>;
 
-  constructor(data: T) {
+  constructor(data: J) {
     super();
     this._data = freeze(compactObject(data));
   }
 
   /** @internal */
-  _toImmutable(): Readonly<T> {
+  _toImmutable(): Readonly<J> {
     return this._data;
   }
 
   /**
    * Patches the current object.
    */
-  patch(patch: Partial<T>): void {
+  patch(patch: Partial<J>): void {
     const oldData = this._data;
     const newData = merge(oldData, patch);
     if (oldData !== newData) {

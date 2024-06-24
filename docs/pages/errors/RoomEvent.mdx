@@ -1,0 +1,69 @@
+---
+meta:
+  title: "The type you provided for 'RoomEvent' is not a valid JSON value"
+  parentTitle: "Error"
+  description: "Your 'RoomEvent' type is incorrect and needs to be updated"
+---
+
+## Why this error occurred
+
+You have provided a custom `RoomEvent` type for your application, but the type
+you provided isn’t a (completely) valid JSON value. Values like `Date`, `Map`,
+`Set`, functions, classes, or `unknown` aren’t valid JSON.
+
+For example, suppose you have defined three broadcastable events for your
+application:
+
+```ts highlight="4-7"
+declare global {
+  interface Liveblocks {
+    RoomEvent:
+      | { type: "beep" }
+      | { type: "boop"; target: HtmlElement }
+      //                        ^^^^^^^^^^^ ❌ The issue is here
+      | { type: "buzz"; volume: number };
+  }
+}
+```
+
+In the example above, the problem is in the `HTMLElement` field, because a
+`HTMLElement` isn’t a valid JSON value.
+
+## How to fix it
+
+You’ll need to figure out what part of your provided `RoomEvent` type definition
+isn’t valid JSON. Sometimes this is immediately obvious, but sometimes the issue
+may be a bit less obvious.
+
+## If you cannot find the root cause
+
+Sometimes types can be complex and the root cause is still unclear. In those
+cases, there is a small trick you can use. Try to assign your type to the
+required base type, with this line:
+
+```ts highlight="9-10"
+import type { Json } from "@liveblocks/client";
+
+declare global {
+  interface Liveblocks {
+    RoomEvent: MyRoomEvent;
+  }
+}
+
+// Quick debugging snippet to find root cause
+const xxx: Json = {} as MyRoomEvent;
+//    ^?
+//    The error will appear here
+```
+
+Now TypeScript will explain why it thinks your type isn’t valid JSON:
+
+```error showLineNumbers={false}
+Type 'MyRoomEvent' is not assignable to type 'Json'.
+  Type '{ type: "boop"; target: HTMLElement; }' is not assignable to type 'Json'.
+    Type '{ type: "boop"; target: HTMLElement; }' is not assignable to type 'JsonObject'.
+      Property 'target' is incompatible with index signature.
+        Type 'HTMLElement' is not assignable to type 'Json | undefined'.
+          Type 'HTMLElement' is not assignable to type 'JsonObject'.
+            Index signature for type 'string' is missing in type 'HTMLElement'.
+```

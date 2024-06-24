@@ -1,0 +1,134 @@
+---
+meta:
+  title: "The type you provided for 'UserMeta' does not match its requirements"
+  parentTitle: "Error"
+  description: "Your 'UserMeta' type is incorrect and needs to be updated"
+---
+
+## Why this error occurred
+
+You have provided a custom `UserMeta` type for your application, but the type
+you provided isn’t a (completely) valid definition.
+
+```ts highlight="4-10"
+declare global {
+  interface Liveblocks {
+    UserMeta: {
+      id: string;
+      info: {
+        name: string;
+        color: string;
+        picture: string;
+        lastLogin: Date; // ❌ The issue is here
+      };
+    };
+  }
+}
+```
+
+In the example above, the problem is in the `Date` field. Values like `Date`,
+`Map`, `Set`, functions, classes, or `unknown` aren’t valid JSON.
+
+## The rules of the UserMeta type
+
+The following rules apply if you want to specify a custom `UserMeta` type:
+
+- Top-level fields `id` and `info` are special. They are optional, but only
+  these two fields can exist. Extra fields you specify will not have any effect
+  and will be ignored.
+- _If_ you specify `id`, it _must_ still be assignable to `string | undefined`.
+- _If_ you specify `info`, then it _must_ be a valid JSON object value.
+  Furthermore:
+  - _If_ you specify a `name` field inside `info`, it _must_ still be assignable
+    to `string | undefined`.
+  - _If_ you specify a `avatar` field inside `info`, it _must_ still be
+    assignable to `string | undefined`.
+
+The reason for the last two restrictions is that some of our higher-level
+components will pick these values up and use them to provide default UIs.
+
+```tsx
+declare global {
+  interface Liveblocks {
+    UserMeta: {
+      id: string; // ✅ Valid
+      id?: string; // ✅ Valid
+      id?: number; // ❌ Invalid, not assignable to string | undefined
+
+      info: {
+        name: string; // ✅ Valid
+        name?: string; // ✅ Valid
+        name: number; // ❌ Invalid, not assignable to string | undefined
+
+        avatar: string; // ✅ Valid
+        avatar?: string; // ✅ Valid
+        avatar: number; // ❌ Invalid, not assignable to string | undefined
+
+        // Other field names are not special and are free-form
+        custom: string; // ✅ Valid
+        custom?: string; // ✅ Valid
+        custom: number; // ✅ Valid
+        custom: Json; // ✅ Valid, can take _any_ valid Json value
+
+        // However, they still need to be valid JSON
+        custom: unknown; // ❌ Invalid, not value JSON
+      };
+    };
+  }
+}
+```
+
+Also please note:
+
+```tsx
+declare global {
+  interface Liveblocks {
+    UserMeta: {
+      id: string;
+      info: { name: string };
+
+      // Only `id` or `info` make sense inside `UserMeta`
+      iWillBeIgnored: string;
+    };
+  }
+}
+```
+
+## How to fix it
+
+You’ll need to figure out what part of your provided `UserMeta` type definition
+isn’t valid. Sometimes this is immediately obvious, but sometimes the issue may
+be a bit less obvious.
+
+## If you cannot find the root cause
+
+Sometimes types can be complex and the root cause is still unclear. In those
+cases, there is a small trick you can use. Try to assign your type to the
+required base type, with this line:
+
+```ts highlight="9-10"
+import type { BaseUserMeta } from "@liveblocks/client";
+
+declare global {
+  interface Liveblocks {
+    UserMeta: MyUserMeta;
+  }
+}
+
+// Quick debugging snippet to find root cause
+const xxx: BaseUserMeta = {} as MyUserMeta;
+//    ^?
+//    The error will appear here
+```
+
+Now TypeScript will explain why it thinks your type isn’t valid JSON:
+
+```error showLineNumbers={false}
+Type 'MyUserMeta' is not assignable to type 'BaseUserMeta'.
+  Types of property 'info' are incompatible.
+    Type '{ name: string; color: string; picture: string; lastLogin: Date; }' is not assignable to type 'IUserInfo'.
+      Property 'lastLogin' is incompatible with index signature.
+        Type 'Date' is not assignable to type 'Json | undefined'.
+          Type 'Date' is not assignable to type 'JsonObject'.
+            Index signature for type 'string' is missing in type 'Date'.
+```

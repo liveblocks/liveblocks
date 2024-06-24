@@ -23,13 +23,13 @@ information.
 ## What we’re learning
 
 In this guide we’ll be modifying
-[`createClient`](/docs/api-reference/liveblocks-client#createClient) in our
-config file, learning how to:
+[`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider),
+learning how to:
 
 - Add names and avatars to threads and comments with
-  [`resolveUsers`](/docs/api-reference/liveblocks-client#resolveUsers).
+  [`resolveUsers`](/docs/api-reference/liveblocks-react#resolveUsers).
 - Create user mention suggestions in the composer using
-  [`resolveMentionSuggestions`](/docs/api-reference/liveblocks-client#resolveMentionSuggestions).
+  [`resolveMentionSuggestions`](/docs/api-reference/liveblocks-react#resolveMentionSuggestions).
 
 ## Authenticate your application
 
@@ -78,17 +78,21 @@ Don’t forget to modify your `UserMeta` type in `liveblocks.config.ts` to match
 the metadata format, adding type hints to your editor.
 
 ```ts file="liveblocks.config.ts"
-type UserMeta = {
-  id: string;
+declare global {
+  interface Liveblocks {
+    UserMeta: {
+      id: string;
 
-  info: {
-    name: string;
-    avatar: string;
+      info: {
+        name: string;
+        avatar: string;
 
-    // Your custom metadata
-    // ...
-  };
-};
+        // Your custom metadata
+        // ...
+      };
+    };
+  }
+}
 ```
 
 ## Resolving users
@@ -107,27 +111,25 @@ To show each user’s name and avatar in threads and comments, we need to use
 
 <Steps>
   <Step>
-    <StepTitle>Add the function to your config file</StepTitle>
+    <StepTitle>Add the function to your LiveblocksProvider</StepTitle>
     <StepContent>
-      The `resolveUsers` function is passed as an option to
-      [`createClient`](/docs/api-reference/liveblocks-client#createClient)
-      at the bottom of your `liveblocks.config.ts` file—let’s add it. This function
+      The [`resolveUsers`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers) function is passed as an option to
+      [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider)—let’s add it. This function
       provides you with `userIds`, an array of user IDs that have interacted with Comments.
       These `userIds` match the IDs set when authenticating users in your app.
 
-      ```ts highlight="5-11" file="liveblocks.config.ts"
-      // ...
-
-      const client = createClient({
-        // ...
-        async resolveUsers({ userIds }) {
+      ```tsx highlight="2-8"
+      <LiveblocksProvider
+        resolveUsers={async ({ userIds }) => {
           // ["marc@example.com", ...]
           console.log(userIds);
 
           // Return a list of users
           // ...
-        },
-      });
+        }}
+
+        // ...
+      />;
       ```
 
     </StepContent>
@@ -141,12 +143,9 @@ To show each user’s name and avatar in threads and comments, we need to use
       that _name_ and _avatar_ are required for the default components,
       but you can also use any other metadata in your app.
 
-      ```ts highlight="10-19" file="liveblocks.config.ts"
-      // ...
-
-      const client = createClient({
-        // ...
-        async resolveUsers({ userIds }) {
+      ```tsx highlight="7-16"
+      <LiveblocksProvider
+        resolveUsers={async ({ userIds }) => {
           // ["marc@example.com", ...]
           console.log(userIds);
 
@@ -161,8 +160,10 @@ To show each user’s name and avatar in threads and comments, we need to use
             },
             // ...
           ];
-        },
-      });
+        }}
+
+        // ...
+      />;
       ```
 
       We’re only returning one user here, but make sure to return an
@@ -178,19 +179,18 @@ To show each user’s name and avatar in threads and comments, we need to use
       API endpoint and database via `fetch`. This is how we’d recommend
       building out this function.
 
-      ```ts highlight="6-11" file="liveblocks.config.ts"
-      // ...
-
-      const client = createClient({
-        // ...
-        async resolveUsers({ userIds }) {
+      ```tsx highlight="3-7"
+      <LiveblocksProvider
+        resolveUsers={async ({ userIds }) => {
           // Get users from your back end
           const users = await __fetchUsers__(userIds);
 
           // Return a list of users
           return users;
-        },
-      });
+        }}
+
+        // ...
+      />;
       ```
 
     </StepContent>
@@ -220,7 +220,7 @@ To show each user’s name and avatar in threads and comments, we need to use
 We can see the users that have commented, but we don’t have a way to search for
 users to mention, for example after typing the `@` character. We can create a
 simple search that resolves this data with
-[`resolveMentionSuggestions`](/docs/api-reference/liveblocks-client#resolveMentionSuggestions).
+[`resolveMentionSuggestions`](/docs/api-reference/liveblocks-react#resolveMentionSuggestions).
 
 <Figure>
   <Image
@@ -239,22 +239,21 @@ simple search that resolves this data with
       provides you with `text`, which is the string that the user is searching for.
       You can use this string to return a list of matching user IDs.
 
-      ```ts highlight="8-15" file="liveblocks.config.ts"
-      // ...
-
-      const client = createClient({
-        // ...
-        async resolveUsers({ userIds }) {
+      ```tsx highlight="5-11"
+      <LiveblocksProvider
+        resolveUsers={async ({ userIds }) => {
           // ...
-        },
-        async resolveMentionSuggestions({ text, roomId }) {
+        }}
+        resolveMentionSuggestions={async ({ text, roomId }) => {
           // The text the user is searching for, e.g. "mar"
           console.log(text);
 
           // Return a list of user IDs that match the query
           return ["marc@example.com", "marissa@example.com"];
-        },
-      });
+        }}
+
+        // ...
+      />;
       ```
 
     </StepContent>
@@ -268,15 +267,12 @@ simple search that resolves this data with
       before filtering the list by the user’s names or IDs. If `text` is an empty
       string, then you need to return a list of every user, instead of a filtered list.
 
-      ```ts highlight="9-19" file="liveblocks.config.ts"
-      // ...
-
-      const client = createClient({
-        // ...
-        async resolveUsers({ userIds }) {
+      ```tsx highlight="6-16"
+      <LiveblocksProvider
+        resolveUsers={async ({ userIds }) => {
           // ...
-        },
-        async resolveMentionSuggestions({ text, roomId }) {
+        }}
+        resolveMentionSuggestions={async ({ text, roomId }) => {
           // Fetch all users from your back end
           let users = await __fetchAllUsers__();
 
@@ -288,8 +284,10 @@ simple search that resolves this data with
 
           // Return the filtered `userIds`
           return users.map((user) => user.id);
-        },
-      });
+        }}
+
+        // ...
+      />;
       ```
 
     </StepContent>
@@ -321,5 +319,6 @@ simple search that resolves this data with
 You’re now ready to start building your Comments application! Here’s where you
 can learn more:
 
-- [API reference](/docs/api-reference/liveblocks-react-comments)
+- [API reference](/docs/api-reference/liveblocks-react#Comments)
+- [Component reference](/docs/api-reference/liveblocks-ui#Comments)
 - [Examples](/examples/browse/comments)

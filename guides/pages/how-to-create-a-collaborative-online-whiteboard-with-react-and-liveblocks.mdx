@@ -8,7 +8,7 @@ meta:
 In this 25-minute tutorial, we’ll be building a collaborative whiteboard app
 using React and Liveblocks. As users add and move rectangles in a canvas,
 changes will be automatically synced and persisted, allowing for a canvas that
-updates in real-time across clients. Users will also be able to see other users
+updates in realtime across clients. Users will also be able to see other users
 selections, and undo and redo actions.
 
 <Figure>
@@ -114,7 +114,7 @@ import { RoomProvider } from "./liveblocks.config";
 
 ReactDOM.render(
   <React.StrictMode>
-    <RoomProvider id="react-whiteboard-app" initialPresence={{}}>
+    <RoomProvider id="react-whiteboard-app">
       <App />
     </RoomProvider>
   </React.StrictMode>,
@@ -130,13 +130,13 @@ React hooks we’ll be using to interact with this room.
 We’re going to use a [`LiveMap`](/docs/api-reference/liveblocks-client#LiveMap)
 to store a map of shapes inside the room’s storage. A `LiveMap` is a type of
 storage that Liveblocks provides. A `LiveMap` is like a JavaScript map, but its
-items are synced in real-time across different clients. Even if multiple users
+items are synced in realtime across different clients. Even if multiple users
 insert or delete items simultaneously, the `LiveMap` will still be consistent
 for all users in the room.
 
 Initialize the storage with the `initialStorage` prop on the `RoomProvider`.
 
-```jsx highlight="6,16-20" file="src/index.js"
+```jsx highlight="6,17-19" file="src/index.js"
 import React from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
@@ -153,7 +153,6 @@ ReactDOM.render(
   <React.StrictMode>
     <RoomProvider
       id="react-whiteboard-app"
-      initialPresence={{}}
       initialStorage={{
         shapes: new LiveMap(),
       }}
@@ -664,7 +663,7 @@ function Canvas({ shapes }) {
 ### Pause and resume history [#pause-resume-history]
 
 When a user moves a rectangle, a large number of actions are sent to Liveblocks
-and live synced, enabling other users to see movements in real-time.
+and live synced, enabling other users to see movements in realtime.
 
 The problem with this is that the undo button returns the rectangle to the last
 intermediary position, and not the position where the rectangle started its

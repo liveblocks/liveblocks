@@ -10,11 +10,9 @@ import {
   createCommentId,
   createInboxNotificationId,
   createThreadId,
-} from "../comments/lib/createIds";
+} from "./_createIds";
 
-export function dummyThreadData<
-  TThreadMetadata extends BaseMetadata = BaseMetadata,
->(): ThreadData<TThreadMetadata> {
+export function dummyThreadData(): ThreadData<BaseMetadata> {
   const now = new Date();
   const threadId = createThreadId();
 
@@ -30,7 +28,7 @@ export function dummyThreadData<
     metadata: {}, // TODO Fix type
     updatedAt: now,
     comments: [comment],
-  } as ThreadData<TThreadMetadata>;
+  };
 }
 
 export function dummyCommentData(): CommentData {

@@ -2,28 +2,20 @@ import c from "ansi-colors";
 import path from "path";
 import fs from "fs";
 import { initPrompts } from "./init-prompts";
-import { configGeneration } from "./config-generation";
+import { REACT_CONFIG, JAVASCRIPT_CONFIG } from "./config-file";
+
 export async function create(flags: Record<string, any>) {
-  const { framework, suspense, typescript, comments } = await initPrompts(
-    flags
-  );
+  const { framework } = await initPrompts(flags);
 
   const appDir = process.cwd();
+  const configFileName = "liveblocks.config.ts";
 
   const filesToWrite: { location: string; content: string }[] = [];
-
-  const configFileName = "liveblocks.config." + (typescript ? "ts" : "js");
-  const configFile = configGeneration({
-    framework,
-    suspense,
-    typescript,
-    comments,
-  });
 
   // === Add config file ==================================================
   filesToWrite.push({
     location: path.join(appDir, configFileName),
-    content: configFile,
+    content: framework === "react" ? REACT_CONFIG : JAVASCRIPT_CONFIG,
   });
 
   // === Write files, install, set up git ================================

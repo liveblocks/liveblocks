@@ -37,9 +37,7 @@ afterEach(() => {
 afterAll(() => server.close());
 
 // TODO: Dry up and create utils that wrap renderHook
-function createRoomContextForTest<
-  TThreadMetadata extends BaseMetadata = BaseMetadata,
->() {
+function createRoomContextForTest<M extends BaseMetadata>() {
   const client = createClient({
     publicApiKey: "pk_xxx",
     polyfills: {
@@ -48,13 +46,7 @@ function createRoomContextForTest<
   });
 
   return {
-    roomCtx: createRoomContext<
-      JsonObject,
-      never,
-      never,
-      never,
-      TThreadMetadata
-    >(client),
+    roomCtx: createRoomContext<JsonObject, never, never, never, M>(client),
     liveblocksCtx: createLiveblocksContext(client),
   };
 }
@@ -79,9 +71,7 @@ describe("useRoomNotificationSettings", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -128,9 +118,7 @@ describe("useRoomNotificationSettings", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -148,7 +136,7 @@ describe("useRoomNotificationSettings", () => {
 
     const updateRoomNotificationSettings = result.current[1];
     // Update the room notification settings to none
-    await act(() => {
+    act(() => {
       updateRoomNotificationSettings({ threads: "none" });
     });
 
@@ -200,9 +188,7 @@ describe("useRoomNotificationSettings: error", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -238,9 +224,7 @@ describe("useRoomNotificationSettings: error", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -296,9 +280,7 @@ describe("useRoomNotificationSettings: error", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -361,9 +343,7 @@ describe("useRoomNotificationSettings: error", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -420,7 +400,7 @@ describe("useRoomNotificationSettings suspense", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             <Suspense>{children}</Suspense>
           </RoomProvider>
         ),
@@ -483,7 +463,7 @@ describe("useRoomNotificationSettingsSuspense: error", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             <ErrorBoundary FallbackComponent={Fallback}>
               <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
             </ErrorBoundary>
@@ -546,7 +526,7 @@ describe("useRoomNotificationSettingsSuspense: error", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             <ErrorBoundary FallbackComponent={Fallback}>
               <Suspense fallback={<div>Loading</div>}>{children}</Suspense>
             </ErrorBoundary>

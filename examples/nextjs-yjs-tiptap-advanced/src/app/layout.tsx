@@ -1,3 +1,4 @@
+import { Providers } from "./Providers";
 import "../styles/globals.css";
 import "../styles/text-editor.css";
 
@@ -26,7 +27,9 @@ export default function RootLayout({
           type="image/png"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

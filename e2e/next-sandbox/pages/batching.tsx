@@ -27,11 +27,7 @@ const {
 export default function Home() {
   const roomId = getRoomFromUrl();
   return (
-    <RoomProvider
-      id={roomId}
-      initialPresence={{}}
-      initialStorage={{ liveMap: new LiveMap() }}
-    >
+    <RoomProvider id={roomId} initialStorage={{ liveMap: new LiveMap() }}>
       <Sandbox />
     </RoomProvider>
   );

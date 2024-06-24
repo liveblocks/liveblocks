@@ -1,4 +1,4 @@
-import { useUser } from "../../liveblocks.config";
+import { useUser } from "@liveblocks/react/suspense";
 import clsx from "clsx";
 import React, { ComponentProps } from "react";
 

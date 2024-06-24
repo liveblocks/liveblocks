@@ -25,9 +25,7 @@ afterEach(() => {
 afterAll(() => server.close());
 
 // TODO: Dry up and create utils that wrap renderHook
-function createRoomContextForTest<
-  TThreadMetadata extends BaseMetadata = BaseMetadata,
->() {
+function createRoomContextForTest<M extends BaseMetadata>() {
   const client = createClient({
     publicApiKey: "pk_xxx",
     polyfills: {
@@ -35,9 +33,7 @@ function createRoomContextForTest<
     },
   });
 
-  return createRoomContext<JsonObject, never, never, never, TThreadMetadata>(
-    client
-  );
+  return createRoomContext<JsonObject, never, never, never, M>(client);
 }
 
 describe("useEditThreadMetadata", () => {
@@ -80,9 +76,7 @@ describe("useEditThreadMetadata", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -93,7 +87,7 @@ describe("useEditThreadMetadata", () => {
       expect(result.current.threads).toEqual([initialThread])
     );
 
-    await act(() =>
+    act(() =>
       result.current.editThreadMetadata({
         threadId: initialThread.id,
         metadata: {
@@ -153,9 +147,7 @@ describe("useEditThreadMetadata", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -166,7 +158,7 @@ describe("useEditThreadMetadata", () => {
       expect(result.current.threads).toEqual([initialThread])
     );
 
-    await act(() =>
+    act(() =>
       result.current.editThreadMetadata({
         threadId: initialThread.id,
         metadata: {

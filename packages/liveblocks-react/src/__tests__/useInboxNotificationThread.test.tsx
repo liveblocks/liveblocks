@@ -2,6 +2,7 @@ import "@testing-library/jest-dom";
 
 import { createClient } from "@liveblocks/core";
 import { renderHook, waitFor } from "@testing-library/react";
+import { sorted } from "itertools";
 import { setupServer } from "msw/node";
 import React from "react";
 
@@ -167,8 +168,13 @@ describe("useInboxNotificationThread", () => {
     await waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
-        inboxNotifications,
+        inboxNotifications: expect.any(Array),
       })
+    );
+
+    const sortedNotifications = sorted(inboxNotifications, (ibn) => ibn.id);
+    expect(sorted(result.current.inboxNotifications!, (ibn) => ibn.id)).toEqual(
+      sortedNotifications
     );
 
     // Use the hook with a notification that does not exist should throw

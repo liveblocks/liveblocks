@@ -2,6 +2,7 @@ import "@testing-library/jest-dom";
 
 import type {
   BaseMetadata,
+  BaseUserMeta,
   ClientOptions,
   JsonObject,
   ResolveRoomsInfoArgs,
@@ -15,9 +16,9 @@ import { createRoomContext } from "../room";
 import { generateFakeJwt } from "./_utils";
 
 // TODO: Dry up and create utils that wrap renderHook
-function createRoomContextForTest<
-  TThreadMetadata extends BaseMetadata = BaseMetadata,
->(options?: Omit<ClientOptions, "authEndpoint" | "publicApiKey">) {
+function createRoomContextForTest<M extends BaseMetadata>(
+  options?: Omit<ClientOptions<BaseUserMeta>, "authEndpoint" | "publicApiKey">
+) {
   const client = createClient({
     async authEndpoint() {
       return {
@@ -33,9 +34,7 @@ function createRoomContextForTest<
     ...options,
   });
 
-  return createRoomContext<JsonObject, never, never, never, TThreadMetadata>(
-    client
-  );
+  return createRoomContext<JsonObject, never, never, never, M>(client);
 }
 
 describe("useRoomInfo", () => {
@@ -58,9 +57,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -88,9 +85,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -116,9 +111,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
         initialProps: { roomId: "abc" },
       }
@@ -161,9 +154,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
         initialProps: { roomId: "abc" },
       }
@@ -207,9 +198,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -254,9 +243,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -285,9 +272,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -316,9 +301,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -357,9 +340,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -408,7 +389,7 @@ describe("useRoomInfoSuspense", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             <Suspense fallback={<div>Loading</div>}>{children}</Suspense>
           </RoomProvider>
         ),
@@ -443,7 +424,7 @@ describe("useRoomInfoSuspense", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             <ErrorBoundary
               fallback={<div>There was an error while getting room info.</div>}
             >

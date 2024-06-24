@@ -62,7 +62,7 @@ import {
   ResetIcon,
   TrashIcon,
 } from "../icons";
-import { useHistory, useSelf } from "../liveblocks.config";
+import { useHistory, useSelf } from "@liveblocks/react";
 import { getHeaderLabel } from "../spreadsheet/interpreter/utils";
 import { getCellId } from "../spreadsheet/utils";
 import type { Cell, Column, Row } from "../types";
@@ -96,7 +96,7 @@ export interface Props extends ComponentProps<"div"> {
   type: "column" | "row";
 }
 
-export interface HeaderProps extends ComponentProps<"div"> {
+export interface HeaderProps extends Omit<ComponentProps<"div">, "onResize"> {
   canDelete: () => boolean;
   canInsert: () => boolean;
   canMoveAfter: () => boolean;

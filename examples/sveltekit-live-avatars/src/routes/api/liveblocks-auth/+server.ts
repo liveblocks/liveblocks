@@ -1,5 +1,5 @@
 import { json } from "@sveltejs/kit";
-import { Liveblocks, authorize } from "@liveblocks/node";
+import { Liveblocks } from "@liveblocks/node";
 
 /**
  * Authenticating your Liveblocks application

@@ -1,4 +1,5 @@
 import "@/globals.css";
+import { Providers } from "./Providers";
 
 export const metadata = {
   title: "Liveblocks",
@@ -25,7 +26,9 @@ export default function RootLayout({
           type="image/png"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

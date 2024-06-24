@@ -3,7 +3,7 @@
 import { NewThreadComposer } from "@/components/NewThreadComposer";
 import { ThreadsTimeline } from "@/components/ThreadsTimeline";
 import { WaveForm } from "@/components/WaveForm";
-import { useUpdateMyPresence } from "@/liveblocks.config";
+import { useUpdateMyPresence } from "@liveblocks/react/suspense";
 import { useSkipToListener } from "@/utils";
 import { ClientSideSuspense } from "@liveblocks/react";
 import * as Slider from "@radix-ui/react-slider";
@@ -211,7 +211,7 @@ export function AudioPlayer() {
 
       {/* Write a comment input */}
       <ClientSideSuspense fallback={null}>
-        {() => <NewThreadComposer duration={duration} time={time} />}
+        <NewThreadComposer duration={duration} time={time} />
       </ClientSideSuspense>
     </div>
   );

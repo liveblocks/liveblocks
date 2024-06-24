@@ -56,7 +56,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   /** @internal */
   private _unacknowledgedSets: Map<string, string>;
 
-  constructor(items: TItem[] = []) {
+  constructor(items: TItem[]) {
     super();
     this._items = [];
     this._implicitlyDeletedItems = new WeakSet();
@@ -78,7 +78,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     parentToChildren: ParentToChildNodeMap,
     pool: ManagedPool
   ): LiveList<Lson> {
-    const list = new LiveList();
+    const list = new LiveList([]);
     list._attach(id, pool);
 
     const children = parentToChildren.get(id);

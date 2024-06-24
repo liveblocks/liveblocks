@@ -1,0 +1,655 @@
+---
+meta:
+  title: "Upgrading to 2.0"
+  parentTitle: "Upgrading"
+  description: "Guide to upgrade to Liveblocks version 2.0"
+---
+
+Liveblocks 2.0 is our second major release, and focuses on removing any rough
+edges and smoothening the developer experience. It makes Liveblocks simpler to
+set up for new users as well as for existing users. Our long term goal is to
+empower you to write and evolve your apps in the best way possible, and at
+enterprise scale.
+
+<Banner title="Just want to upgrade?">
+
+Skip ahead to the [how to upgrade](#how-to-upgrade) section.
+
+</Banner>
+
+## Rationale
+
+Liveblocks has always embraced the benefits of static typing with TypeScript.
+Roughly two years ago, we published 0.17, which
+[introduced](/blog/whats-new-in-v0-17) the pattern of calling
+`createRoomContext()` and returning a “bundle” of type-safe hooks that you could
+then use in your application. This pattern worked nicely because all the hooks
+were bound to your custom type definitions for `Presence`, `Storage`, etc. in
+one single place, and every Liveblocks API would deeply know about it. No need
+for manual type annotations anywhere else in your codebase.
+
+### Downsides to this approach
+
+There were, however, a couple of downsides to this approach that have always
+kept itching:
+
+- Importing hooks from a local config file was a little bit awkward. It wasn’t
+  an all too familiar pattern for most users.
+- Re-exporting the list of hooks took maintenance. If we added a new hook, you’d
+  have to also re-export it manually.
+- Due to how TypeScript works, the type params you’d provide to
+  `createRoomContext()` had a fixed ordering to them. If you wanted to specify
+  only `Presence` and `RoomEvent`, you’d have to “skip” some type params, by
+  doing `createRoomContext<Presence, {}, {}, RoomEvent>()` or similar.
+
+### Introducing Liveblocks 2.0
+
+With 2.0, this all becomes a lot simpler. We’ve done a lot of internal
+refactoring to make this possible. We’ll dive in soon, but here is a sneak peek:
+
+```tsx showLineNumbers={false} file="liveblocks.config.ts"
+// ❌ This pattern is no longer recommended unless you need multiple room types
+export const {
+  suspense: { RoomProvider, useRoom, useThread },
+} = createRoomContext<
+  MyPresence,
+  MyStorage,
+  MyUserMeta,
+  MyRoomEvent,
+  MyThreadMetadata
+>(client);
+
+// ✅ After
+declare global {
+  // These custom types are all optional, just define the ones you want/need
+  interface Liveblocks {
+    Presence: MyPresence;
+    Storage: MyStorage;
+    UserMeta: MyUserMeta;
+    RoomEvent: MyRoomEvent;
+    ThreadMetadata: MyThreadMetadata;
+  }
+}
+```
+
+```tsx showLineNumbers={false} file="Component.tsx"
+// ❌ Before
+import { RoomProvider, useRoom, useThreads } from "./liveblocks.config.ts";
+
+// ✅ After
+import { RoomProvider, useRoom, useThreads } from "@liveblocks/react/suspense";
+// or
+import { RoomProvider, useRoom, useThreads } from "@liveblocks/react";
+```
+
+We’ll first go over all the breaking changes, then we’ll show you how to
+simplify your codebase.
+
+## How to upgrade [#how-to-upgrade]
+
+First of all, let’s upgrade all Liveblocks dependencies to their latest
+versions. The easiest way to do that is to run the following command:
+
+```bash
+npx create-liveblocks-app@latest --upgrade
+```
+
+There are also some **breaking changes** in this update. **Most users will not
+run into any of these**, but there is a chance that some of these will affect
+your situation. Making the necessary code adjustments should however be easy. In
+many cases, we provide a codemod that makes the actual change for you, so you
+don’t have to do so manually.
+
+### Breaking change 1: renamed package [#bc1]
+
+<Banner>
+
+This breaking change only affects users of `@liveblocks/react-comments`.
+
+</Banner>
+
+We’ve renamed our package `@liveblocks/react-comments` to
+`@liveblocks/react-ui`, because our library of pre-built UI components now
+contains more than just Comments-related components. Please adjust your imports.
+
+Run the following **codemod** or manually make the changes:
+
+```bash
+npx @liveblocks/codemod@latest react-comments-to-react-ui
+```
+
+This will change your imports like this:
+
+```tsx showLineNumbers={false}
+// ❌ Before
+import { Thread } from "@liveblocks/react-comments";
+
+// ✅ After
+import { Thread } from "@liveblocks/react-ui";
+```
+
+And also:
+
+```tsx showLineNumbers={false}
+// ❌ Before
+<CommentsConfig />
+
+// ✅ After
+<LiveblocksUIConfig />
+```
+
+### Breaking change 2: renamed exports in our Node package [#bc2]
+
+<Banner>
+
+This breaking change only affects users of `@liveblocks/node`.
+
+</Banner>
+
+To avoid confusion with the newly introduced custom
+[`RoomInfo`](#New-custom-type-RoomInfo) type, we’ve renamed the `RoomInfo` type
+in our `@liveblocks/node` package.
+
+Run the following **codemod** or manually make the changes:
+
+```bash
+npx @liveblocks/codemod@latest room-info-to-room-data
+```
+
+This will change:
+
+```tsx showLineNumbers={false}
+// ❌ Before
+import { RoomInfo } from "@liveblocks/node";
+const rooms: RoomInfo[] = [];
+
+// ✅ After
+import { RoomData } from "@liveblocks/node";
+const rooms: RoomData[] = [];
+```
+
+### Breaking change 3: client methods from our Node package no longer take type params [#bc3]
+
+<Banner>
+
+This breaking change only affects users of `@liveblocks/node`.
+
+</Banner>
+
+In `@liveblocks/node`, none of the client methods, like
+`liveblocks.getThread()`, take type params any longer.
+
+Make the following changes:
+
+```tsx showLineNumbers={false}
+// ❌ Before
+await liveblocks.createThread<MyThreadMetadata>();
+await liveblocks.editThreadMetadata<MyThreadMetadata>();
+await liveblocks.getThreads<MyThreadMetadata>();
+await liveblocks.getThread<MyThreadMetadata>();
+//                         ^^^^^^^^^^^^^^^^ No longer possible
+
+// ✅ After
+await liveblocks.createThread();
+await liveblocks.editThreadMetadata();
+await liveblocks.getThreads();
+await liveblocks.getThread();
+
+// In liveblocks.config.ts
+declare global {
+  interface Liveblocks {
+    ThreadMetadata: MyThreadMetadata;
+  }
+}
+```
+
+You should use global type augmentation instead. Please see
+[“Simplifying your Liveblocks application”](#simplifying) below for a lot more
+detail on this transition.
+
+### Breaking change 4: changed default export to named export in Yjs package [#bc4]
+
+<Banner>
+
+This breaking change only affects users of `@liveblocks/yjs`.
+
+</Banner>
+
+To make discoverability and refactorings easier, and to avoid confusion with the
+newly introduced [`LiveblocksProvider`][] in our React package, we’re no longer
+using default exports, but named exports only.
+
+Run the following **codemod** or manually make the changes:
+
+```bash
+npx @liveblocks/codemod@latest remove-yjs-default-export
+```
+
+This will change your import (and its usage) like this:
+
+```tsx showLineNumbers={false}
+// ❌ Before
+import LiveblocksProvider from "@liveblocks/yjs";
+const yDoc = new Y.Doc();
+const yProvider = new LiveblocksProvider(room, yDoc);
+```
+
+```tsx showLineNumbers={false}
+// ✅ After
+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
+const yDoc = new Y.Doc();
+const yProvider = new LiveblocksYjsProvider(room, yDoc);
+```
+
+### Breaking change 5: minor LiveList constructor change [#bc5]
+
+<Banner>
+
+This breaking change only affects users of Storage.
+
+</Banner>
+
+The `LiveList()` constructor’s argument is no longer optional, because it causes
+unneeded but confusing type inference issues.
+
+Run the following **codemod** or manually make the changes:
+
+```bash
+npx @liveblocks/codemod@latest live-list-constructor
+```
+
+This will add an array to empty `LiveList` constructors:
+
+```tsx showLineNumbers={false}
+// ❌ Before
+const mylist = new LiveList();
+
+// ✅ After
+const mylist = new LiveList([]);
+```
+
+### Breaking change 6: new webhook event types [#bc6]
+
+<Banner>
+
+This breaking change only affects users of webhooks.
+
+</Banner>
+
+The webhook event `NotificationEvent`’s type can represent multiple kinds of
+notifications: `"thread"`, `"textMention"`, and custom ones (e.g.
+`"$myNotification"`).
+
+If you were using properties only available on the `"thread"` kind (e.g.
+`threadId`), you will need to first check for the kind of notification before
+accessing them.
+
+```ts showLineNumbers={false}
+// ❌ Before
+const threadId = event.data.threadId;
+
+// ✅ After
+if (event.data.kind === "thread") {
+  const threadId = event.data.threadId;
+}
+```
+
+### Breaking change 7: removed deprecated APIs [#bc7]
+
+All of the following APIs have been removed in 2.0, as they were deprecated
+multiple versions ago.
+
+**Affecting `@liveblocks/client`:**
+
+- `Client.enter()` has been replaced by `Client.enterRoom()`
+- `Client.leave()` has been replaced by `Client.enterRoom()`, which returns a
+  `leave` function
+- Client option `fetchPolyfill`, `WebSocketPolyfill`, are replaced by
+  `polyfills: { fetch, WebSocket }`
+- Legacy option `shouldInitiallyConnect` is now renamed to `autoConnect`
+- Legacy connection status APIs, e.g. `room.getConnectionState()` and
+  `.subscribe("connection")`. You can use `.getStatus()` or
+  `.subscribe("status")` instead.
+- `user.isReadOnly` field is replaced by `!user.canWrite` (note the negation
+  here)
+- The `Others<P, U>` type. Please change to `readonly User<P, U>[]`.
+
+**Affecting `@liveblocks/react`:**
+
+- The `useMap`, `useList`, and `useObject` hooks. These have been deprecated
+  since the release of 0.18 (more than two years ago). Please see
+  [the 0.18 upgrade guide](/docs/platform/upgrading/0.18#Step-5a:-Replace-reads-with-useStorage)
+  for tips on how to rewrite these hooks to `useStorage`.
+- The second argument `options` to `createRoomContext(client, options)` has been
+  removed. These options have been moved to the client.
+
+**Affecting `@liveblocks/node`:**
+
+- Remove legacy `authorize` method from `@liveblocks/node`. Please refer to
+  [the 1.2 upgrade guide](/docs/platform/upgrading/1.2#how) to learn how to
+  upgrade your auth endpoint.
+
+**Affecting `@liveblocks/redux` and `@liveblocks/zustand`:**
+
+- Legacy aliased exports in Zustand/Redux packages are removed
+
+## Simplifying your Liveblocks application (optional) [#simplifying]
+
+<Banner title="Optional, but recommended">
+
+This section is optional, but highly recommended. You can do it now, or come
+back to do it later.
+
+</Banner>
+
+If you have dealt with the breaking changes above, or concluded they they don’t
+apply to your situation, we can go a step further and really simplify your
+Liveblocks setup.
+
+<Banner type="warning" title="Do you have multiple room types?">
+
+If your Liveblocks application has multiple room types, and therefore you have
+multiple Liveblocks config files—one for each room type—then you cannot switch
+to a single global type definition. In that advanced case, the following
+simplifications do not apply to you. We will keep supporting the
+`createRoomContext` API for these advanced use cases, but no longer recommend it
+for the more common case of having just a single room type.
+
+</Banner>
+
+### Step 1: Use the new global Liveblocks custom types [#step1]
+
+Go to your `liveblocks.config.ts`, find your `createRoomContext()` call. Now
+decide which codemod to run.
+
+**Option 1: You are using Suspense hooks.**
+(`const { suspense: { useRoom, ... } }`)
+
+```bash
+npx @liveblocks/codemod@latest remove-liveblocks-config-contexts --suspense
+```
+
+**Option 2: You are using classic hooks.** (`const { useRoom, ... }`)
+
+```bash
+npx @liveblocks/codemod@latest remove-liveblocks-config-contexts
+```
+
+Running either of these will make the following changes.
+
+```tsx showLineNumbers={false}
+// ❌ Before
+export const {
+  ...
+} = createRoomContext<MyPresence, MyStorage, MyUserMeta, MyRoomEvent, MyThreadMetadata>(client);
+```
+
+```tsx showLineNumbers={false}
+// ✅ After
+declare global {
+  interface Liveblocks {
+    Presence: MyPresence;
+    Storage: MyStorage;
+    UserMeta: MyUserMeta;
+    RoomEvent: MyRoomEvent;
+    ThreadMetadata: MyThreadMetadata;
+  }
+}
+```
+
+Secondly, it will change all imports in your code base to import the hooks
+directly instead:
+
+```tsx showLineNumbers={false}
+// ❌ Before
+import { RoomProvider, useRoom, ... } from "./liveblocks.config.ts";
+```
+
+```tsx showLineNumbers={false}
+// ✅ After
+import { RoomProvider, useRoom, ... } from "@liveblocks/react/suspense";  // Option 1
+import { RoomProvider, useRoom, ... } from "@liveblocks/react";           // Option 2
+```
+
+### Step 2: Set up a LiveblocksProvider [#step2]
+
+At this point, there should not be any new TypeScript issues. However, running
+the code will not yet work. This is because previously the hooks were bound to
+the `client` instance by passing it to the `createRoomContext()` factory, which
+we now removed. When using the global types, we’ll have to provide the
+Liveblocks client otherwise.
+
+The way to do it is to use a pretty standard React provider. Make the following
+change:
+
+```tsx showLineNumbers={false} file="liveblocks.config.ts"
+// ❌ Before, you no longer have to use createClient()
+import { createClient } from "@liveblocks/client";
+
+const client = createClient({
+  authEndpoint: "/api/liveblocks-auth",
+  throttle: 16,
+  /* etc */
+);
+```
+
+```tsx showLineNumbers={false} file="layout.tsx"
+// ✅ After
+"use client";
+
+import { LiveblocksProvider } from "@liveblocks/react";
+
+export function Layout({ children }) {
+  return (
+    // Move options here, client will be created for you
+    <LiveblocksProvider
+      authEndpoint="/api/liveblocks-auth"
+      throttle={16}
+      /* etc */
+    >
+      {children}
+    </LiveblocksProvider>
+  );
+}
+```
+
+<Banner type="info" title="Where to put this?">
+
+We recommend placing the `LiveblocksProvider` as high up your component tree as
+you can, preferably in your `_app.tsx` or `layout.tsx` (or equivalent for your
+React framework of choice). Unfortunately, we cannot provide a codemod for this
+step, because we cannot mechanically decide where exactly to inject the
+Liveblocks provider in your application.
+
+</Banner>
+
+If you were exporting the `client` instance before and have components that
+directly accessed it before, you can now obtain a reference to the `client`
+instance that the `LiveblocksProvider` creates for you using the `useClient`
+hook:
+
+```tsx showLineNumbers={false}
+// ❌ Before
+import { client } from "./liveblocks.config";
+
+function MyComponent() {
+  doSomethingWith(client);
+}
+```
+
+```tsx showLineNumbers={false}
+// ✅ After
+import { useClient } from "@liveblocks/react"; // or
+import { useClient } from "@liveblocks/react/suspense";
+
+function MyComponent() {
+  const client = useClient();
+  doSomethingWith(client);
+}
+```
+
+### Step 3: Optional cleanup of type params [#step3]
+
+If you also exported your `Presence`, `Storage`, etc types from
+`liveblocks.config.ts` before, you no longer have to. The main reason to export
+these before was to use them in helper functions that used some of the
+Liveblocks types, like `User`, or `Room`.
+
+```bash
+npx @liveblocks/codemod@latest remove-unneeded-type-params
+```
+
+For example:
+
+```tsx showLineNumbers={false}
+import type { Room, User } from "@liveblocks/client";
+import type { MyPresence, MyStorage } from "./liveblocks.config";
+
+// ❌ Before
+function isAdult(user: User<MyPresence, MyUserMeta>) {
+  //                        ^^^^^^^^^^^^^^^^^^^^^^
+  return user.info.age >= 18;
+  //               ^^^ Coming from MyUserMeta
+}
+
+// ❌ Before
+function doSomethingWithRoom(
+  room: Room<MyPresence, MyStorage, MyUserMeta, never>
+  //         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+) {
+  /* ... */
+}
+```
+
+This is no longer needed. You can simply remove them. TypeScript will still know
+about your custom `age` property on `user.info`.
+
+```tsx showLineNumbers={false}
+import type { Room, User } from "@liveblocks/client";
+
+// ✅ After
+function isAdult(user: User) {
+  return user.info.age >= 18;
+  //               ^^^ Still coming from configured UserMeta custom type
+}
+
+// ✅ After
+function doSomethingWithRoom(room: Room) {
+  /* ... */
+}
+```
+
+## Improvements
+
+Furthermore, the following miscellaneous quality-of-life improvements have been
+made that are non-breaking changes.
+
+### `ClientSideSuspense` no longer needs a function
+
+Previously, the `ClientSideSuspense` helper needed a function as its `children`
+prop, but it no longer has to.
+
+```bash
+npx @liveblocks/codemod@latest simplify-client-side-suspense-children
+```
+
+This will change:
+
+```tsx showLineNumbers={false}
+// ❌ Before
+<ClientSideSuspense fallback={<Loading />}>
+  {() => <MyApp />}
+</ClientSideSuspense>
+```
+
+```tsx showLineNumbers={false}
+// ✅ After
+<ClientSideSuspense fallback={<Loading />}>
+  <MyApp />
+</ClientSideSuspense>
+```
+
+### Improved `InboxNotification` props types
+
+When passing custom components to the `kinds` prop of [`InboxNotification`][],
+you could use types like `InboxNotificationThreadProps` for the props. But this
+wasn’t always true for all notification kinds, so now you can use types named
+`InboxNotificationThreadKindProps` for your components, while
+`InboxNotificationThreadProps` describes the props of our own
+`InboxNotification.Thread`.
+
+```tsx showLineNumbers={false}
+// ❌ Before
+function MyThreadNotification(props: InboxNotificationThreadProps) {
+  return <InboxNotification.Thread {...props} />;
+}
+
+<InboxNotification kinds={{ thread: MyThreadNotification }} />;
+```
+
+```tsx showLineNumbers={false}
+// ✅ After
+function MyThreadNotification(props: InboxNotificationThreadKindProps) {
+  //                                                        ^^^^
+  return <InboxNotification.Thread {...props} />;
+}
+
+<InboxNotification kinds={{ thread: MyThreadNotification }} />;
+```
+
+### New custom type `RoomInfo`
+
+By using the [`resolveRoomsInfo`][] callback from [`createClient`][] or the new
+[`LiveblocksProvider`][], you can attach arbitrary room data to a room, which
+you can retrieve with the [`useRoomInfo`][] hook.
+
+Both of these APIs will now respect the type you provide via:
+
+```tsx showLineNumbers={false}
+declare global {
+  interface Liveblocks {
+    RoomInfo: {
+      /* your custom type definition here */
+    };
+  }
+}
+```
+
+### New custom type `ActivitiesData`
+
+By providing a custom `ActivitiesData` type, you can improve how your custom
+notifications and their activities’ data are typed.
+
+```tsx showLineNumbers={false}
+declare global {
+  interface Liveblocks {
+    // Custom activities data for custom notification kinds
+    ActivitiesData: {
+      // Example, a custom $alert kind
+      $alert: {
+        title: string;
+        message: string;
+      };
+    };
+
+    // Other kinds
+    // ...
+  }
+}
+```
+
+That’s it!
+
+## Questions? Please ask!
+
+If you have any trouble with these new patterns, run into a bug with one of the
+codemods, or otherwise need help, please let us know
+[by email](mailto:support@liveblocks.io) or by joining our
+[Discord community](/discord)! We’re here to help!
+
+[`createClient`]: /docs/api-reference/liveblocks-client#createClient
+[`LiveblocksProvider`]: /docs/api-reference/liveblocks-react#LiveblocksProvider
+[`InboxNotification`]: /docs/api-reference/liveblocks-react-ui#InboxNotification
+[`resolveRoomsInfo`]:
+  /docs/api-reference/liveblocks-client#createClientResolveRoomsInfo
+[`useRoomInfo`]: /docs/api-reference/liveblocks-react#useRoomInfo

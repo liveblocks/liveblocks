@@ -96,10 +96,10 @@ const basicStateCreator: StateCreator<BasicStore> = (set) => ({
 
 function prepareClientAndStore<
   TState,
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json,
+  P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
 >(
   stateCreator: StateCreator<TState>,
   options: {
@@ -108,9 +108,7 @@ function prepareClientAndStore<
   }
 ) {
   const client = createClient({ authEndpoint: "/api/auth" });
-  const store = create<
-    WithLiveblocks<TState, TPresence, TStorage, TUserMeta, TRoomEvent>
-  >()(
+  const store = create<WithLiveblocks<TState, P, S, U, E>>()(
     liveblocksMiddleware(stateCreator, {
       ...options,
       client,
@@ -217,7 +215,6 @@ describe("middleware", () => {
 
     await waitForSocketToBeConnected();
 
-    expect(store.getState().liveblocks.connection).toBe("open");
     expect(store.getState().liveblocks.status).toBe("connected");
   });
 

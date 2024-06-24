@@ -1,7 +1,5 @@
 import type {
   BaseUserMeta,
-  Client,
-  Json,
   JsonObject,
   LiveObject,
   LsonObject,
@@ -9,7 +7,7 @@ import type {
   Status,
   User,
 } from "@liveblocks/client";
-import type { LegacyConnectionStatus } from "@liveblocks/core";
+import type { OpaqueClient, OpaqueRoom } from "@liveblocks/core";
 import {
   detectDupes,
   legacy_patchImmutableObject,
@@ -43,35 +41,15 @@ const ACTION_TYPES = {
   UPDATE_OTHERS: "@@LIVEBLOCKS/UPDATE_OTHERS",
 };
 
-type LiveblocksContext<
-  TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta,
-> = {
+type LiveblocksContext<P extends JsonObject, U extends BaseUserMeta> = {
   /**
    * Other users in the room. Empty no room is currently synced
    */
-  readonly others: readonly User<TPresence, TUserMeta>[];
+  readonly others: readonly User<P, U>[];
   /**
    * Whether or not the room storage is currently loading
    */
   readonly isStorageLoading: boolean;
-  /**
-   * Legacy connection status of the room.
-   *
-   * @deprecated This API will be removed in a future version of Liveblocks.
-   * Prefer using the newer `.status` property.
-   *
-   * We recommend making the following changes if you use these APIs:
-   *
-   *     OLD STATUSES         NEW STATUSES
-   *     closed          -->  initial
-   *     authenticating  -->  connecting
-   *     connecting      -->  connecting
-   *     open            -->  connected
-   *     unavailable     -->  reconnecting
-   *     failed          -->  disconnected
-   */
-  readonly connection: LegacyConnectionStatus;
   /**
    * Connection status of the room.
    */
@@ -79,30 +57,19 @@ type LiveblocksContext<
 };
 
 /**
- * @deprecated Please rename to WithLiveblocks<...>
- */
-export type LiveblocksState<
-  TState,
-  TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta,
-> = WithLiveblocks<TState, TPresence, TUserMeta>;
-
-/**
  * Adds the `liveblocks` property to your custom Redux state.
  */
 export type WithLiveblocks<
   TState,
-  TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta,
-> = TState & { readonly liveblocks: LiveblocksContext<TPresence, TUserMeta> };
+  P extends JsonObject,
+  U extends BaseUserMeta,
+> = TState & { readonly liveblocks: LiveblocksContext<P, U> };
 
 const internalEnhancer = <TState>(options: {
-  client: Client;
+  client: OpaqueClient;
   storageMapping?: Mapping<TState>;
   presenceMapping?: Mapping<TState>;
 }) => {
-  type OpaqueRoom = Room<JsonObject, LsonObject, BaseUserMeta, Json>;
-
   if (process.env.NODE_ENV !== "production" && options.client == null) {
     throw missingClient();
   }
@@ -240,7 +207,6 @@ const internalEnhancer = <TState>(options: {
             store.dispatch({
               type: ACTION_TYPES.UPDATE_CONNECTION,
               status,
-              connection: room.getConnectionState(), // For backward-compatibility
             });
           })
         );
@@ -385,15 +351,10 @@ function leaveRoom(): {
  * Redux store.
  */
 export const liveblocksEnhancer = internalEnhancer as <TState>(options: {
-  client: Client;
+  client: OpaqueClient;
   storageMapping?: Mapping<TState>;
   presenceMapping?: Mapping<TState>;
 }) => StoreEnhancer;
-
-/**
- * @deprecated Renamed to `liveblocksEnhancer`.
- */
-export const enhancer = liveblocksEnhancer;
 
 function patchLiveblocksStorage<O extends LsonObject, TState>(
   root: LiveObject<O>,
@@ -417,11 +378,11 @@ function patchLiveblocksStorage<O extends LsonObject, TState>(
   }
 }
 
-function updatePresence<TPresence extends JsonObject>(
-  room: Room<TPresence, any, any, any>,
-  oldState: TPresence,
-  newState: TPresence,
-  presenceMapping: Mapping<TPresence>
+function updatePresence<P extends JsonObject>(
+  room: Room<P, any, any, any, any>,
+  oldState: P,
+  newState: P,
+  presenceMapping: Mapping<P>
 ) {
   for (const key in presenceMapping) {
     if (typeof newState[key] === "function") {
@@ -429,7 +390,7 @@ function updatePresence<TPresence extends JsonObject>(
     }
 
     if (oldState[key] !== newState[key]) {
-      room.updatePresence({ [key]: newState[key] } as TPresence);
+      room.updatePresence({ [key]: newState[key] } as P);
     }
   }
 }

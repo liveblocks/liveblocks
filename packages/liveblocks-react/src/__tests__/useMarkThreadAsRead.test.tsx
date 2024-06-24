@@ -26,9 +26,7 @@ afterEach(() => {
 afterAll(() => server.close());
 
 // TODO: Dry up and create utils that wrap renderHook
-function createRoomContextForTest<
-  TThreadMetadata extends BaseMetadata = BaseMetadata,
->() {
+function createRoomContextForTest<M extends BaseMetadata>() {
   const client = createClient({
     async authEndpoint() {
       return {
@@ -41,13 +39,7 @@ function createRoomContextForTest<
   });
 
   return {
-    roomCtx: createRoomContext<
-      JsonObject,
-      never,
-      never,
-      never,
-      TThreadMetadata
-    >(client),
+    roomCtx: createRoomContext<JsonObject, never, never, never, M>(client),
     liveblocksCtx: createLiveblocksContext(client),
   };
 }
@@ -104,9 +96,7 @@ describe("useMarkThreadAsRead", () => {
       {
         wrapper: ({ children }) => (
           <LiveblocksProvider>
-            <RoomProvider id="room-id" initialPresence={{}}>
-              {children}
-            </RoomProvider>
+            <RoomProvider id="room-id">{children}</RoomProvider>
           </LiveblocksProvider>
         ),
       }
@@ -177,9 +167,7 @@ describe("useMarkThreadAsRead", () => {
       {
         wrapper: ({ children }) => (
           <LiveblocksProvider>
-            <RoomProvider id="room-id" initialPresence={{}}>
-              {children}
-            </RoomProvider>
+            <RoomProvider id="room-id">{children}</RoomProvider>
           </LiveblocksProvider>
         ),
       }

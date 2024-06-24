@@ -1,0 +1,1795 @@
+---
+meta:
+  title: "@liveblocks/react-ui"
+  parentTitle: "API Reference"
+  description: "API Reference for the @liveblocks/react-ui package"
+alwaysShowAllNavigationLevels: false
+---
+
+`@liveblocks/react-ui` provides you with [React](https://react.dev/) components
+to build collaborative experiences. Read our
+[Comments](/docs/get-started/comments) and
+[Notifications](/docs/get-started/notifications) get started guides to learn
+more.
+
+## Comments
+
+### Default components [#Components]
+
+#### Thread
+
+Displays a thread of comments. Each thread has a composer for creating replies.
+
+```tsx
+<Thread thread={thread} />
+```
+
+<Figure>
+  <Image
+    src="/assets/comments/thread.png"
+    alt="Thread"
+    width={768}
+    height={446}
+  />
+</Figure>
+
+Map through `threads` to render a list of the room’s threads and comments.
+Threads can be retrieved with
+[`useThreads`](/docs/api-reference/liveblocks-react#useThreads).
+
+```tsx highlight="10"
+import { Thread } from "@liveblocks/react-ui";
+import { useThreads } from "../liveblocks.config";
+
+function Component() {
+  const { threads } = useThreads();
+
+  return (
+    <>
+      {threads.map((thread) => (
+        <Thread key={thread.id} thread={thread} />
+      ))}
+    </>
+  );
+}
+```
+
+##### Resolved thread metadata
+
+A thread allows you to attach custom metadata to it when using the
+[mutation hooks](/docs/api-reference/liveblocks-react#Comments), and when
+creating a thread [with the composer](#Adding-thread-metadata). The `Thread`
+component automatically adds the `resolved` property to `metadata`, and this
+property is used to display a checkbox which denotes whether the thread has been
+resolved or not.
+
+```ts
+const resolved = thread.metadata.resolved; // true | false
+```
+
+If you’d like to use this, make sure to add the `resolved` property to
+`ThreadMetadata` in your config file for valid type-checking.
+
+```tsx file="liveblocks.config.ts"
+export type ThreadMetadata = {
+  resolved: boolean;
+
+  // Custom metadata
+  // ...
+};
+```
+
+##### Props [#Thread-props]
+
+<PropertiesList>
+  <PropertiesListItem name="thread" type="ThreadData" required>
+    The thread to display.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="showComposer"
+    type='boolean | "collapsed"'
+    defaultValue='"collapsed"'
+  >
+    How to show or hide the composer to reply to the thread.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="showActions"
+    type='boolean | "hover"'
+    defaultValue='"hover"'
+  >
+    How to show or hide the actions.
+  </PropertiesListItem>
+  <PropertiesListItem name="showReactions" type="boolean" defaultValue="true">
+    Whether to show reactions.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="showResolveAction"
+    type="boolean"
+    defaultValue="true"
+  >
+    Whether to show the action to resolve the thread.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="indentCommentContent"
+    type="boolean"
+    defaultValue="true"
+  >
+    Whether to indent the comments’ content.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="showDeletedComments"
+    type="boolean"
+    defaultValue="false"
+  >
+    Whether to show deleted comments.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onResolvedChange"
+    type="function"
+    detailedType="(resolved: boolean) => void"
+  >
+    The event handler called when changing the resolved status.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onThreadDelete"
+    type="function"
+    detailedType="(thread: ThreadData) => void"
+  >
+    The event handler called when the thread is deleted. A thread is deleted
+    when all its comments are deleted.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onCommentEdit"
+    type="function"
+    detailedType="(comment: CommentData) => void"
+  >
+    The event handler called when a comment is edited.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onCommentDelete"
+    type="function"
+    detailedType="(comment: CommentData) => void"
+  >
+    The event handler called when a comment is deleted.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onAuthorClick"
+    type="function"
+    detailedType="(userId: string, event: MouseEvent<HTMLElement>) => void"
+  >
+    The event handler called when clicking on a comment’s author.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onMentionClick"
+    type="function"
+    detailedType="(userId: string, event: MouseEvent<HTMLElement>) => void"
+  >
+    The event handler called when clicking on a mention.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="overrides"
+    type="Partial<GlobalOverrides & ThreadOverrides & CommentOverrides & ComposerOverrides>"
+  >
+    Override the component’s strings.
+  </PropertiesListItem>
+</PropertiesList>
+
+{/* TODO: Document classes and data attributes */}
+
+#### Composer
+
+Displays a composer for creating threads or comments.
+
+```tsx
+<Composer />
+```
+
+<Figure>
+  <Image
+    src="/assets/comments/composer.png"
+    alt="Composer"
+    width={768}
+    height={446}
+  />
+</Figure>
+
+By default, submitting the composer will create a new thread.
+
+```tsx
+import { Composer } from "@liveblocks/react-ui";
+
+// Creates a new thread
+function Component() {
+  return <Composer />;
+}
+```
+
+##### Adding thread metadata
+
+If you’d like to attach custom metadata to the newly created thread, you can add
+a `metadata` prop.
+
+```tsx
+import { Composer } from "@liveblocks/react-ui";
+
+// Creates a new thread with custom metadata
+function Component() {
+  return (
+    <Composer
+      metadata={{
+        // Custom metadata here, e.g. colors, coordinates
+        color: "purple",
+        x: 80,
+        y: 120,
+      }}
+    />
+  );
+}
+```
+
+###### Typed metadata
+
+Optionally, you can type `metadata` by importing your custom `ThreadMetadata`
+type from your config file.
+
+```tsx highlight="2,7"
+import { Composer } from "@liveblocks/react-ui";
+import { ThreadMetadata } from "../liveblocks.config";
+
+// Creates a new thread with custom metadata
+function Component() {
+  return (
+    <Composer<ThreadMetadata>
+      metadata={{
+        // Custom metadata with typing
+        color: "purple",
+      }}
+    />
+  );
+}
+```
+
+```tsx file="liveblocks.config.ts"
+export type ThreadMetadata = {
+  color: string;
+};
+```
+
+##### Replying to a thread
+
+If you provide a `threadId`, then submitting the composer will add a new reply
+to the thread.
+
+```tsx
+import { Composer } from "@liveblocks/react-ui";
+
+// Adds a new comment to a thread
+function Component({ threadId }) {
+  return <Composer threadId={threadId} />;
+}
+```
+
+##### Modifying a comment
+
+If you provide both a `threadId` and a `commentId`, then submitting the composer
+will edit the comment.
+
+```tsx
+import { Composer } from "@liveblocks/react-ui";
+
+// Edits an existing comment
+function Component({ threadId, commentId }) {
+  return <Composer threadId={threadId} commentId={commentId} />;
+}
+```
+
+##### Custom behavior
+
+If you’d like to customize submission behavior, you can use
+`event.preventDefault()` in `onComposerSubmit` to disable the default behavior
+and call comment and thread mutation methods manually.
+
+```tsx
+import { Composer } from "@liveblocks/react-ui";
+import { useEditComment, useAddReaction } from "../liveblocks.config";
+
+// Custom submission behavior (edits a comment and adds a reaction)
+function Component({ threadId, commentId }) {
+  const editComment = useEditComment();
+  const addReaction = useAddReaction();
+
+  return (
+    <Composer
+      onComposerSubmit={({ body }, event) => {
+        event.preventDefault();
+
+        // Example mutations
+        editComment({ threadId, commentId, body });
+        addReaction({ threadId, commentId, emoji: "✅" });
+
+        // Other custom behavior
+        // ...
+      }}
+    />
+  );
+}
+```
+
+Learn more about mutation hooks under
+[`@liveblocks/react`](/docs/api-reference/liveblocks-react#Comments).
+
+##### Props [#Composer-props]
+
+<PropertiesList>
+  <PropertiesListItem name="threadId" type="string">
+    The ID of the thread to reply to or to edit a comment in.
+  </PropertiesListItem>
+  <PropertiesListItem name="commentId" type="string">
+    The ID of the comment to edit.
+  </PropertiesListItem>
+  <PropertiesListItem name="metadata" type="ThreadMetadata">
+    The metadata of the thread to create.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onComposerSubmit"
+    type="function"
+    detailedType="(comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => Promise<void> | void"
+  >
+    The event handler called when the composer is submitted.
+  </PropertiesListItem>
+  <PropertiesListItem name="defaultValue" type="CommentBody">
+    The composer’s initial value.
+  </PropertiesListItem>
+  <PropertiesListItem name="collapsed" type="boolean">
+    Whether the composer is collapsed. Setting a value will make the composer
+    controlled.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onCollapsedChange"
+    type="function"
+    detailedType="(collapsed: boolean) => void"
+  >
+    The event handler called when the collapsed state of the composer changes.
+  </PropertiesListItem>
+  <PropertiesListItem name="defaultCollapsed" type="boolean">
+    Whether the composer is initially collapsed. Setting a value will make the
+    composer uncontrolled.
+  </PropertiesListItem>
+  <PropertiesListItem name="disabled" type="boolean">
+    Whether the composer is disabled.
+  </PropertiesListItem>
+  <PropertiesListItem name="autoFocus" type="boolean">
+    Whether to focus the composer on mount.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="overrides"
+    type="Partial<GlobalOverrides & ComposerOverrides>"
+  >
+    Override the component’s strings.
+  </PropertiesListItem>
+</PropertiesList>
+
+{/* TODO: Document classes and data attributes */}
+
+#### Comment
+
+Displays a single comment.
+
+```tsx
+<Comment comment={comment} />
+```
+
+<Figure>
+  <Image
+    src="/assets/comments/comment.png"
+    alt="Comment"
+    width={768}
+    height={446}
+  />
+</Figure>
+
+Map through `thread.comments` to render each comment in a thread. Threads can be
+retrieved with [`useThreads`](/docs/api-reference/liveblocks-react#useThreads).
+
+```tsx highlight="9"
+import { Comment } from "@liveblocks/react-ui";
+import { ThreadData } from "@liveblocks/client";
+
+// Renders a list of comments attach to the specified `thread`
+function Component({ thread }: { thread: ThreadData }) {
+  return (
+    <>
+      {thread.comments.map((comment) => (
+        <Comment key={comment.id} comment={comment} />
+      ))}
+    </>
+  );
+}
+```
+
+##### Custom thread components
+
+[`Comment`](#Comment) can be used in combination with [`Composer`](#Composer) to
+create a custom thread component. The composer in this example is used to
+[reply to the existing thread](/docs/api-reference/liveblocks-react-ui#Replying-to-a-thread).
+
+```tsx highlight="10"
+import { Comment, Composer } from "@liveblocks/react-ui";
+import { ThreadData } from "@liveblocks/client";
+import { useThreads } from "../liveblocks.config";
+
+// Renders a list of comments and a composer for adding new comments
+function CustomThread({ thread }: { thread: ThreadData }) {
+  return (
+    <>
+      {thread.comments.map((comment) => (
+        <Comment key={comment.id} comment={comment} />
+      ))}
+      <Composer threadId={thread.id} />
+    </>
+  );
+}
+
+// Renders a list of custom thread components
+function Component() {
+  const { threads } = useThreads();
+
+  return (
+    <>
+      {threads.map((thread) => (
+        <CustomThread key={thread.id} />
+      ))}
+    </>
+  );
+}
+```
+
+##### Props [#Comment-props]
+
+<PropertiesList>
+  <PropertiesListItem name="comment" type="CommentData" required>
+    The comment to display.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="showActions"
+    type='boolean | "hover"'
+    defaultValue='"hover"'
+  >
+    How to show or hide the actions.
+  </PropertiesListItem>
+  <PropertiesListItem name="showReactions" type="boolean" defaultValue="true">
+    Whether to show reactions.
+  </PropertiesListItem>
+  <PropertiesListItem name="indentContent" type="boolean" defaultValue="true">
+    Whether to indent the comment’s content.
+  </PropertiesListItem>
+  <PropertiesListItem name="showDeleted" type="boolean" defaultValue="false">
+    Whether to show the comment if it was deleted. If set to `false`, it will
+    render deleted comments as `null`.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onCommentEdit"
+    type="function"
+    detailedType="(comment: CommentData) => void"
+  >
+    The event handler called when the comment is edited.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onCommentDelete"
+    type="function"
+    detailedType="(comment: CommentData) => void"
+  >
+    The event handler called when the comment is deleted.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onAuthorClick"
+    type="function"
+    detailedType="(userId: string, event: MouseEvent<HTMLElement>) => void"
+  >
+    The event handler called when clicking on the author.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onMentionClick"
+    type="function"
+    detailedType="(userId: string, event: MouseEvent<HTMLElement>) => void"
+  >
+    The event handler called when clicking on a mention.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="overrides"
+    type="Partial<GlobalOverrides & CommentOverrides & ComposerOverrides>"
+  >
+    Override the component’s strings.
+  </PropertiesListItem>
+</PropertiesList>
+
+{/* TODO: Document classes and data attributes */}
+
+### Primitives
+
+Primitives are unstyled, headless components that can be used to create fully
+custom commenting experiences.
+
+<Banner title="Using primitives with TypeScript">
+
+If you run into the
+`Cannot find module '@liveblocks/react-ui/primitives' or its corresponding type declarations`
+error, you should update your `tsconfig.json`’s `moduleResolution`
+[property](https://www.typescriptlang.org/tsconfig#moduleResolution) to
+`"node16"` or `"nodenext"` (or `"bundler"` if you’re on TS >=5).
+
+</Banner>
+
+#### Composition
+
+All primitives are composable; they forward their props and refs, merge their
+classes and styles, and chain their event handlers.
+
+Inspired by [Radix](https://www.radix-ui.com/) (and powered by its
+[`Slot`](https://www.radix-ui.com/primitives/docs/utilities/slot) utility), most
+of the primitives also support an `asChild` prop to replace the rendered element
+by any provided child, and both set of props will be merged.
+
+```tsx
+import { Button } from "@/my-design-system";
+
+// Use the default <button> element
+<Composer.Submit disabled>Send</Composer.Submit>;
+
+// Use an existing custom <Button> component
+<Composer.Submit disabled asChild>
+  <Button variant="primary">Send</Button>
+</Composer.Submit>;
+```
+
+Learn more about this concept on
+[Radix’s composition guide](https://www.radix-ui.com/primitives/docs/guides/composition).
+
+#### Composer [#primitives-Composer]
+
+Used to render a composer for creating, or editing, threads and comments.
+
+```tsx
+<Composer.Form>
+  <Composer.Editor
+    components={{
+      Mention: () => <Composer.Mention />,
+      MentionSuggestions: () => (
+        <Composer.Suggestions>
+          <Composer.SuggestionsList>
+            <Composer.SuggestionsListItem />
+          </Composer.SuggestionsList>
+        </Composer.Suggestions>
+      ),
+      Link: () => <Composer.Link />,
+    }}
+  />
+  <Composer.Submit />
+</Composer.Form>
+```
+
+Combine with
+[`useCreateThread`](/docs/api-reference/liveblocks-react#useCreateThread) to
+render a composer that creates threads.
+
+```tsx highlight="13,21-25,29-38"
+import {
+  Composer,
+  CommentBodyLinkProps,
+  CommentBodyMentionProps,
+  ComposerEditorMentionSuggestionsProps,
+  ComposerSubmitComment,
+} from "@liveblocks/react-ui/primitives";
+import { useCreateThread, useUser } from "../liveblocks.config.ts";
+import { FormEvent } from "react";
+
+// Render a custom composer that creates a thread on submit
+function MyComposer() {
+  const createThread = useCreateThread();
+
+  function handleComposerSubmit(
+    { body }: ComposerSubmitComment,
+    event: FormEvent<HTMLFormElement>
+  ) {
+    event.preventdefault();
+
+    // Create a new thread
+    const thread = createThread({
+      body,
+      metadata: {},
+    });
+  }
+
+  return (
+    <Composer.Form onComposerSubmit={handleComposerSubmit}>
+      <Composer.Editor
+        components={{
+          Mention,
+          MentionSuggestions,
+          Link,
+        }}
+      />
+      <Composer.Submit>Create thread</Composer.Submit>
+    </Composer.Form>
+  );
+}
+
+// Render a mention in the composer's editor, e.g. "@Emil Joyce"
+function Mention({ userId }: CommentBodyMentionProps) {
+  return <Comment.Mention>@{userId}</Comment.Mention>;
+}
+
+// Render a list of mention suggestions, used after typing "@" in the editor
+function MentionSuggestions({
+  userIds,
+  selectedUserId,
+}: ComposerEditorMentionSuggestionsProps) {
+  return (
+    <Composer.Suggestions>
+      <Composer.SuggestionsList>
+        {userIds.map((userId) => (
+          <MentionSuggestion key={userId} userId={userId} />
+        ))}
+      </Composer.SuggestionsList>
+    </Composer.Suggestions>
+  );
+}
+
+// Render a single mention suggestion from a `userId`
+function MentionSuggestion({ userId }: { userId: string }) {
+  const { user } = useUser(userId);
+
+  return (
+    <Composer.SuggestionsListItem value={user.id}>
+      <img src={user.avatar} alt={user.name} />
+      {user.name}
+    </Composer.SuggestionsListItem>
+  );
+}
+
+// Render a link in the composer's editor, e.g. "https://liveblocks.io"
+function Link({ href, children }: CommentBodyLinkProps) {
+  return <Comment.Link href={href}>{children}</Comment.Link>;
+}
+```
+
+##### Composer.Form [#primitives-Composer.Form]
+
+Surrounds the composer’s content and handles submissions. By default, no action
+occurs when the composer is submitted. You must create your own mutations within
+`onComposerSubmit` for
+[creating threads](/docs/api-reference/liveblocks-react#useCreateThread),
+[creating comments](/docs/api-reference/liveblocks-react#useCreateComment),
+[editing comments](/docs/api-reference/liveblocks-react#useEditComment), etc.
+
+```tsx
+<Composer.Form onComposerSubmit={({ body }) => {}}>{/* ... */}</Composer.Form>
+```
+
+<PropertiesList>
+  <PropertiesListItem
+    name="onComposerSubmit"
+    type="function"
+    detailedType="(comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => Promise<void> | void"
+  >
+    The event handler called when the form is submitted.
+  </PropertiesListItem>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropertiesListItem>
+</PropertiesList>
+
+##### Composer.Editor [#primitives-Composer.Editor]
+
+Displays the composer’s editor.
+
+```tsx
+<Composer.Editor placeholder="Write a comment…" />
+```
+
+<PropertiesList>
+  <PropertiesListItem name="defaultValue" type="CommentBody">
+    The editor’s initial value.
+  </PropertiesListItem>
+  <PropertiesListItem name="placeholder" type="string">
+    The text to display when the editor is empty.
+  </PropertiesListItem>
+  <PropertiesListItem name="disabled" type="boolean">
+    Whether the editor is disabled.
+  </PropertiesListItem>
+  <PropertiesListItem name="autoFocus" type="boolean">
+    Whether to focus the editor on mount.
+  </PropertiesListItem>
+  <PropertiesListItem name="dir" type='"ltr" | "rtl"'>
+    The reading direction of the editor and related elements.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="components"
+    type="Partial<ComposerEditorComponents>"
+  >
+    The components displayed within the editor.
+  </PropertiesListItem>
+</PropertiesList>
+
+<Table columns={["28%", "auto"]}>
+
+| Attribute       | Value                                   |
+| --------------- | --------------------------------------- |
+| `data-focused`  | Present when the component is focused.  |
+| `data-disabled` | Present when the component is disabled. |
+
+</Table>
+
+###### components [#primitives-Composer.Editor-components]
+
+The components displayed within the editor.
+
+<PropertiesList>
+  <PropertiesListItem
+    name="Mention"
+    type="ComponentType<ComposerEditorMentionProps>"
+  >
+    The component used to display mentions. Defaults to the mention’s `userId`
+    prefixed by an @.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="MentionSuggestions"
+    type="ComponentType<ComposerEditorMentionSuggestionProps>"
+  >
+    The component used to display mention suggestions. Defaults to a list of the
+    suggestions’ `userId`.
+  </PropertiesListItem>
+  <PropertiesListItem name="Link" type="ComponentType<ComposerEditorLinkProps>">
+    The component used to display links. Defaults to the link’s `children`
+    property.
+  </PropertiesListItem>
+</PropertiesList>
+
+####### Mention [#primitives-Composer.Editor-Mention]
+
+The component used to display mentions.
+
+```tsx
+<Composer.Editor
+  components={{
+    Mention: ({ userId, isSelected }) => (
+      <Composer.Mention>@{userId}</Composer.Mention>
+    ),
+  }}
+/>
+```
+
+<PropertiesList>
+  <PropertiesListItem name="userId" type="string">
+    The mention’s user ID.
+  </PropertiesListItem>
+  <PropertiesListItem name="isSelected" type="boolean">
+    Whether the mention is selected.
+  </PropertiesListItem>
+</PropertiesList>
+
+####### MentionSuggestions [#primitives-Composer.Editor-MentionSuggestions]
+
+The component used to display mention suggestions.
+
+<PropertiesList>
+  <PropertiesListItem name="userIds" type="string[]">
+    The list of suggested user IDs.
+  </PropertiesListItem>
+  <PropertiesListItem name="selectedUserId" type="string">
+    he currently selected user ID.
+  </PropertiesListItem>
+</PropertiesList>
+
+```tsx
+<Composer.Editor
+  components={{
+    MentionSuggestions: () => (
+      <Composer.Suggestions>
+        <Composer.SuggestionsList>
+          <Composer.SuggestionsListItem />
+        </Composer.SuggestionsList>
+      </Composer.Suggestions>
+    ),
+  }}
+/>
+```
+
+####### Link [#primitives-Composer.Editor-Link]
+
+The component used to display links.
+
+```tsx
+<Composer.Editor
+  components={{
+    Link: ({ href, children }) => <Composer.Link>{children}</Composer.Link>,
+  }}
+/>
+```
+
+<PropertiesList>
+  <PropertiesListItem name="href" type="string">
+    The link’s absolute URL.
+  </PropertiesListItem>
+  <PropertiesListItem name="children" type="ReactNode">
+    The link’s content.
+  </PropertiesListItem>
+</PropertiesList>
+
+##### Composer.Mention [#primitives-Composer.Mention]
+
+Displays mentions within `Composer.Editor`.
+
+```tsx
+<Composer.Mention>@{userId}</Composer.Mention>
+```
+
+<PropertiesList>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropertiesListItem>
+</PropertiesList>
+
+<Table columns={["28%", "auto"]}>
+
+| Attribute       | Value                                 |
+| --------------- | ------------------------------------- |
+| `data-selected` | Present when the mention is selected. |
+
+</Table>
+
+##### Composer.Suggestions [#primitives-Composer.Suggestions]
+
+Contains suggestions within `Composer.Editor`.
+
+```tsx
+<Composer.Suggestions>{/* … */}<Composer.Suggestions>
+```
+
+<PropertiesList>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropertiesListItem>
+</PropertiesList>
+
+##### Composer.SuggestionsList [#primitives-Composer.SuggestionsList]
+
+Displays a list of suggestions within `Composer.Editor`.
+
+```tsx
+<Composer.SuggestionsList>
+  {userIds.map((userId) => (
+    <Composer.SuggestionsListItem key={userId} value={userId}>
+      @{userId}
+    </Composer.SuggestionsListItem>
+  ))}
+</Composer.SuggestionsList>
+```
+
+<PropertiesList>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropertiesListItem>
+</PropertiesList>
+
+##### Composer.SuggestionsListItem [#primitives-Composer.SuggestionsListItem]
+
+Displays a suggestion within `Composer.SuggestionsList`.
+
+```tsx
+<Composer.SuggestionsListItem key={userId} value={userId}>
+  @{userId}
+</Composer.SuggestionsListItem>
+```
+
+<PropertiesList>
+  <PropertiesListItem name="value" type="string" required>
+    The suggestion’s value.
+  </PropertiesListItem>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropertiesListItem>
+</PropertiesList>
+
+<Table columns={["28%", "auto"]}>
+
+| Attribute       | Value                              |
+| --------------- | ---------------------------------- |
+| `data-selected` | Present when the item is selected. |
+
+</Table>
+
+##### Composer.Link [#primitives-Composer.Link]
+
+Displays links within `Composer.Editor`.
+
+```tsx
+<Composer.Link href={href}>{children}</Composer.Link>
+```
+
+<PropertiesList>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropertiesListItem>
+</PropertiesList>
+
+##### Composer.Submit [#primitives-Composer.Submit]
+
+A button to submit the composer.
+
+```tsx
+<Composer.Submit>Send</Composer.Submit>
+```
+
+<PropertiesList>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Comment [#primitives-Comment]
+
+Used to render a single comment.
+
+```tsx
+<Comment.Body
+  components={{
+    Mention: <Comment.Mention />,
+    Link: <Comment.Link />,
+  }}
+/>
+```
+
+Map through `thread.comments` to render each comment in a thread. Threads can be
+retrieved with [`useThreads`](/docs/api-reference/liveblocks-react#useThreads).
+
+```tsx highlight="13-21"
+import {
+  Comment,
+  CommentBodyLinkProps,
+  CommentBodyMentionProps,
+} from "@liveblocks/react-ui/primitives";
+import { ThreadData } from "@liveblocks/client";
+
+// Render custom comments in a thread. Pass a thread from `useThreads`.
+function MyComments({ thread }: { thread: ThreadData }) {
+  return (
+    <>
+      {thread.comments.map((comment) => (
+        <div key={comment.id}>
+          <Comment.Body
+            body={comment.body}
+            components={{
+              Mention,
+              Link,
+            }}
+          />
+        </div>
+      ))}
+    </>
+  );
+}
+
+// Render a mention in the comment, e.g. "@Emil Joyce"
+function Mention({ userId }: CommentBodyMentionProps) {
+  return <Comment.Mention>@{userId}</Comment.Mention>;
+}
+
+// Render a link in the comment, e.g. "https://liveblocks.io"
+function Link({ href, children }: CommentBodyLinkProps) {
+  return <Comment.Link href={href}>{children}</Comment.Link>;
+}
+```
+
+##### Comment.Body [#primitives-Comment.Body]
+
+Displays a comment body.
+
+```tsx
+<Comment.Body body={comment.body} />
+```
+
+<PropertiesList>
+  <PropertiesListItem name="body" type="CommentBody">
+    The comment body to display. If not defined, the component will render
+    `null`.
+  </PropertiesListItem>
+  <PropertiesListItem name="components" type="Partial<CommentBodyComponents>">
+    The components displayed within the comment body.
+  </PropertiesListItem>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropertiesListItem>
+</PropertiesList>
+
+###### components [#primitives-Comment.Body-components]
+
+The components displayed within the comment body.
+
+<PropertiesList>
+  <PropertiesListItem
+    name="Mention"
+    type="ComponentType<CommentBodyMentionProps>"
+  >
+    The component used to display mentions. Defaults to the mention’s `userId`
+    prefixed by an @.
+  </PropertiesListItem>
+  <PropertiesListItem name="Link" type="ComponentType<CommentBodyLinkProps>">
+    The component used to display links. Defaults to the link’s `children`
+    property.
+  </PropertiesListItem>
+</PropertiesList>
+
+####### Mention [#primitives-Comment.Body-Mention]
+
+The component used to display mentions.
+
+```tsx
+<Comment.Body
+  components={{
+    Mention: ({ userId }) => <Comment.Mention>@{userId}</Comment.Mention>,
+  }}
+/>
+```
+
+<PropertiesList>
+  <PropertiesListItem name="userId" type="string">
+    The mention’s user ID.
+  </PropertiesListItem>
+</PropertiesList>
+
+####### Link [#primitives-Comment.Body-Link]
+
+The component used to display links.
+
+```tsx
+<Comment.Body
+  components={{
+    Link: ({ href, children }) => (
+      <Comment.Link href={href}>{children}</Comment.Link>
+    ),
+  }}
+/>
+```
+
+<PropertiesList>
+  <PropertiesListItem name="href" type="string">
+    The link’s absolute URL.
+  </PropertiesListItem>
+  <PropertiesListItem name="children" type="ReactNode">
+    The link’s content.
+  </PropertiesListItem>
+</PropertiesList>
+
+##### Comment.Mention [#primitives-Comment.Mention]
+
+Displays mentions within `Comment.Body`.
+
+```tsx
+<Comment.Mention>@{userId}</Comment.Mention>
+```
+
+<PropertiesList>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropertiesListItem>
+</PropertiesList>
+
+##### Comment.Link [#primitives-Comment.Link]
+
+Displays links within `Comment.Body`.
+
+```tsx
+<Comment.Link href={href}>{children}</Comment.Link>
+```
+
+<PropertiesList>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Timestamp [#primitives-Timestamp]
+
+Displays a formatted date, and automatically re-renders to support relative
+formatting. Defaults to relative formatting for recent dates (e.g. “5 minutes
+ago”) and a short absolute formatting for older ones (e.g. “25 Aug”).
+
+```tsx
+<Timestamp date={new Date()} />
+```
+
+Use with `comment.createdAt`, `comment.editedAt`, or `comment.deletedAt` to
+display a human-readable time.
+
+```tsx highlight="8"
+import { ThreadData, Timestamp } from "@liveblocks/react-ui";
+
+function MyComments({ thread }: { thread: ThreadData }) {
+  return (
+    <>
+      {thread.comments.map((comment) => (
+        <div key={comment.id}>
+          <Timestamp date={comment.createdAt} />
+          <Comment.Body body={comment.body} components={/* ... */} />
+        </div>
+      ))}
+    </>
+  );
+}
+```
+
+<PropertiesList>
+  <PropertiesListItem name="date" type="Date | string | number" required>
+    The date to display.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="children"
+    type="function"
+    detailedType="(date: Date) => ReactNode"
+  >
+    A function to format the displayed date. Defaults to a relative date
+    formatting function.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="title"
+    type="string | function"
+    detailedType="string | ((date: Date) => string)"
+  >
+    The `title` attribute’s value or a function to format it. Defaults to an
+    absolute date formatting function.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="interval"
+    type="number | false"
+    defaultValue="30000"
+  >
+    The interval in milliseconds at which the component will re-render. Can be
+    set to `false` to disable re-rendering.
+  </PropertiesListItem>
+  <PropertiesListItem name="locale" type="string">
+    The locale used when formatting the date. Defaults to the browser’s locale.
+  </PropertiesListItem>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Hooks
+
+#### useComposer
+
+Returns states and methods related to the composer. Can only be used within the
+[`Composer.Form`](#primitives-Composer.Form) primitive.
+
+```tsx
+import { useComposer } from "@liveblocks/react-ui/primitives";
+
+const { isEmpty, submit } = useComposer();
+```
+
+This hook has a number of uses, for example constructing a custom button that
+submits threads, and disabling it when the composer input is empty.
+
+```tsx highlight="14,17-19"
+import { Composer, useComposer } from "@liveblocks/react-ui/primitives";
+
+function MyComposer() {
+  return (
+    <Composer.Form onComposerSubmit={/* handle submit */}>
+      <Composer.Editor components={/* Your custom component parts */} />
+      <MyComposerButton />
+    </Composer.Form>
+  );
+}
+
+// Button that submits the form, and is disabled when the input is empty
+function MyComposerButton() {
+  const { isEmpty, submit } = useComposer();
+
+  return (
+    <button onClick={submit} disabled={isEmpty}>
+      Create thread
+    </button>
+  );
+}
+```
+
+#### Other hooks
+
+Other Comments hooks are part of
+[`@liveblocks/react`](/docs/api-reference/liveblocks-react), you can find them
+on the
+[React API reference page](/docs/api-reference/liveblocks-react#Comments).
+
+- [`useThreads`](/docs/api-reference/liveblocks-react#useThreads)
+- [`useCreateThread`](/docs/api-reference/liveblocks-react#useCreateThread)
+- [`useDeleteThread`](/docs/api-reference/liveblocks-react#useDeleteThread)
+- [`useEditThreadMetadata`](/docs/api-reference/liveblocks-react#useEditThreadMetadata)
+- [`useCreateComment`](/docs/api-reference/liveblocks-react#useCreateComment)
+- [`useEditComment`](/docs/api-reference/liveblocks-react#useEditComment)
+- [`useDeleteComment`](/docs/api-reference/liveblocks-react#useDeleteComment)
+- [`useAddReaction`](/docs/api-reference/liveblocks-react#useAddReaction)
+- [`useRemoveReaction`](/docs/api-reference/liveblocks-react#useRemoveReaction)
+
+## Notifications
+
+### Default components
+
+#### InboxNotification
+
+Displays a single inbox notification.
+
+```tsx
+<InboxNotification inboxNotification={inboxNotification} />
+```
+
+<Figure>
+  <Image
+    src="/assets/notifications/inbox-notification.png"
+    alt="InboxNotification"
+    width={768}
+    height={446}
+  />
+</Figure>
+
+Map through `inboxNotifications` with
+[`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications)
+to render a list of the room’s notifications.
+
+```tsx highlight="10-13"
+import { InboxNotification } from "@liveblocks/react-ui";
+import { useInboxNotifications } from "../liveblocks.config";
+
+function Component() {
+  const { inboxNotifications } = useInboxNotifications();
+
+  return (
+    <>
+      {inboxNotifications.map((inboxNotification) => (
+        <InboxNotification
+          key={inboxNotification.id}
+          inboxNotification={inboxNotification}
+        />
+      ))}
+    </>
+  );
+}
+```
+
+##### Rendering notification kinds differently
+
+Different `kinds` of notifications are available, for example `thread` which is
+triggered when using Comments, or `$myCustomNotification` which would be a
+custom notification you’ve triggered manually. You can choose to render each
+notification differently.
+
+```tsx highlight="3-13"
+<InboxNotification
+  kinds={{
+    thread: (props) => (
+      <InboxNotification.Thread {...props} showRoomName={false} />
+    ),
+    $myCustomNotification: (props) => (
+      <InboxNotification.Custom
+        {...props}
+        title="New notification"
+        aside={<InboxNotification.Icon>❕</InboxNotification.Icon>}
+      >
+        My custom notification
+      </InboxNotification.Custom>
+    ),
+  }}
+/>
+```
+
+Adding these two properties to `kinds` will overwrite the default component
+that’s displayed for those two notification types. Using
+[`InboxNotification.Thread`](/docs/api-reference/liveblocks-react-ui#InboxNotification.Thread)
+and
+[`InboxNotification.Custom`](/docs/api-reference/liveblocks-react-ui#InboxNotification.Custom)
+in this way allow you to easily create components that fit into the existing
+design system, whilst still adding lots of customization. However, it’s also
+valid to render any custom JSX.
+
+```tsx highlight="2-4"
+<InboxNotification
+  kinds={{
+    $myCustomNotification: (props) => <div>New notification</div>,
+  }}
+/>
+```
+
+##### Typing custom notifications
+
+To type custom notifications, edit the `ActivitiesData` type in your config
+file.
+
+```ts file="liveblocks.config.ts" highlight="4-10"
+declare global {
+  interface Liveblocks {
+    // Custom activities data for custom notification kinds
+    ActivitiesData: {
+      // Example, a custom $alert kind
+      $alert: {
+        title: string;
+        message: string;
+      };
+    };
+
+    // Other kinds
+    // ...
+  }
+}
+```
+
+Your activities data is now correctly typed in inline functions.
+
+```tsx highlight="4-5"
+<InboxNotification
+  kinds={{
+    $alert: (props) => {
+      // `title` and `message` are correctly typed, as defined in your config
+      const { title, message } = props.inboxNotification.activities[0].data;
+
+      return (
+        <InboxNotification.Custom
+          {...props}
+          title={title}
+          aside={<InboxNotification.Icon>❗</InboxNotification.Icon>}
+        >
+          {message}
+        </InboxNotification.Custom>
+      );
+    },
+  }}
+/>
+```
+
+If you’d like to create a typed function elsewhere, you can use
+`InboxNotificationCustomProps` with a generic. In the example below we’re using
+the `$alert` notification kind as a generic,
+`InboxNotificationCustomKindProps<"$alert">`.
+
+```tsx highlight="6-8,25"
+import {
+  InboxNotification,
+  InboxNotificationCustomKindProps,
+} from "@liveblocks/react-ui";
+
+function AlertNotification(props: InboxNotificationCustomKindProps<"$alert">) {
+  // `title` and `message` are correctly typed, as defined in your config
+  const { title, message } = props.inboxNotification.activities[0].data;
+
+  return (
+    <InboxNotification.Custom
+      {...props}
+      title={title}
+      aside={<InboxNotification.Icon>❗</InboxNotification.Icon>}
+    >
+      {message}
+    </InboxNotification.Custom>
+  );
+}
+
+function Notification({ inboxNotification }) {
+  return (
+    <InboxNotification
+      inboxNotification={inboxNotification}
+      kinds={{ $alert: AlertNotification }}
+    />
+  );
+}
+```
+
+##### Props [#InboxNotification-props]
+
+<PropertiesList>
+  <PropertiesListItem
+    name="inboxNotification"
+    type="InboxNotificationData"
+    required
+  >
+    The inbox notification to display.
+  </PropertiesListItem>
+  <PropertiesListItem name="href" type="string">
+    The URL which the inbox notification links to.
+  </PropertiesListItem>
+  <PropertiesListItem name="showActions" type='boolean | "hover"'>
+    How to show or hide the actions.
+  </PropertiesListItem>
+  <PropertiesListItem name="kinds" type="Partial<InboxNotificationKinds>">
+    Override specific kinds of inbox notifications.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="overrides"
+    type="Partial<GlobalOverrides & InboxNotificationOverrides & CommentOverrides>"
+  >
+    Override the component’s strings.
+  </PropertiesListItem>
+  <PropertiesListItem name="components" type="Partial<GlobalComponents>">
+    Override the component’s components.
+  </PropertiesListItem>
+</PropertiesList>
+
+###### kinds [#InboxNotification-kinds]
+
+Override specific kinds of inbox notifications.
+
+<PropertiesList>
+  <PropertiesListItem
+    name="thread"
+    type="ComponentType<InboxNotificationThreadKindProps>"
+  >
+    The component used to display thread notifications. Defaults to
+    `InboxNotification.Thread`.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="$${string}"
+    type="ComponentType<InboxNotificationCustomKindProps>"
+  >
+    The component used to display a custom notification kind. Custom
+    notification kinds must start with a `$`.
+  </PropertiesListItem>
+</PropertiesList>
+
+###### InboxNotification.Thread [#InboxNotification.Thread]
+
+Displays a thread inbox notification.
+
+```tsx
+<InboxNotification
+  kinds={{
+    thread: (props) => (
+      <InboxNotification.Thread {...props} showRoomName={false} />
+    ),
+  }}
+/>
+```
+
+<PropertiesList>
+  <PropertiesListItem
+    name="inboxNotification"
+    type="InboxNotificationThreadData"
+    required
+  >
+    The inbox notification to display.
+  </PropertiesListItem>
+  <PropertiesListItem name="showActions" type='boolean | "hover"'>
+    How to show or hide the actions.
+  </PropertiesListItem>
+  <PropertiesListItem name="showRoomName" type="boolean">
+    Whether to show the room name in the title.
+  </PropertiesListItem>
+</PropertiesList>
+
+###### InboxNotification.Custom [#InboxNotification.Custom]
+
+Displays a custom notification kind.
+
+```tsx
+<InboxNotification
+  kinds={{
+    $myCustomNotificationKind: (props) => {
+      const activityData = props.inboxNotification.activities[0].data;
+
+      return(
+        <InboxNotification.Custom
+          title={<>User <strong>{activityData.file}</strong></>}
+          aside={<InboxNotification.Icon>❌</InboxNotification.Icon>}
+          {...props}
+        >
+          {activityData.errorDescription}
+        </InboxNotification>
+      )
+    },
+  }}
+/>
+```
+
+<PropertiesList>
+  <PropertiesListItem
+    name="inboxNotification"
+    type="InboxNotificationCustomData"
+    required
+  >
+    The inbox notification to display.
+  </PropertiesListItem>
+  <PropertiesListItem name="title" type="ReactNode" required>
+    The inbox notification’s title.
+  </PropertiesListItem>
+  <PropertiesListItem name="children" type="ReactNode" required>
+    The inbox notification’s content.
+  </PropertiesListItem>
+  <PropertiesListItem name="showActions" type='boolean | "hover"'>
+    How to show or hide the actions.
+  </PropertiesListItem>
+  <PropertiesListItem name="aside" type="ReactNode">
+    The inbox notification’s aside content. Can be combined with{" "}
+    <code>InboxNotification.Icon</code> or <code>InboxNotification.Avatar</code>{" "}
+    to easily follow default styles.
+  </PropertiesListItem>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### InboxNotificationList
+
+Displays inbox notifications as a list. Each
+[`InboxNotification`](#InboxNotification) component will be wrapped in a `li`
+element.
+
+```tsx
+<InboxNotificationList>
+  <InboxNotification />
+  <InboxNotification />
+  <InboxNotification />
+</InboxNotificationList>
+```
+
+<Figure>
+  <Image
+    src="/assets/notifications/inbox-notification-list.png"
+    alt="InboxNotificationList"
+    width={768}
+    height={446}
+  />
+</Figure>
+
+##### Props [#InboxNotificationList-props]
+
+<PropertiesList>
+  <PropertiesListItem name="children" type="ReactNode">
+    The inbox notifications to display.
+  </PropertiesListItem>
+</PropertiesList>
+
+## Utilities
+
+### Components
+
+#### LiveblocksUIConfig
+
+Set configuration options for all `@liveblocks/react-ui` components, such as
+[overrides](#overrides).
+
+```tsx
+<LiveblocksUIConfig overrides={{ locale: "fr", USER_UNKNOWN: "Anonyme" }} />
+```
+
+##### Props [#LiveblocksUIConfig-props]
+
+<PropertiesList>
+  <PropertiesListItem name="overrides" type="Partial<Overrides>">
+    Override the components’ strings.
+  </PropertiesListItem>
+  <PropertiesListItem name="components" type="Partial<Components>">
+    Override the components’ components.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="portalContainer"
+    type="HTMLElement"
+    defaultValue="document.body"
+  >
+    The container to render the portal into.
+  </PropertiesListItem>
+</PropertiesList>
+
+## Styling and customization
+
+### Default styles
+
+The default components come with default styles. These styles can be imported
+into the root of your app or directly into a CSS file with `@import`.
+
+```tsx
+import "@liveblocks/react-ui/styles.css";
+```
+
+### Dark mode
+
+You can also import default dark mode styling. There are two versions to choose
+from, the first uses the
+[system theme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme).
+
+```tsx
+// Dark mode using the system theme with `prefers-color-scheme`
+import "@liveblocks/react-ui/styles/dark/media-query.css";
+```
+
+The second uses the `dark` class name, and two commonly used data attributes.
+
+```tsx
+// Dark mode using `className="dark"`, `data-theme="dark"`, or `data-dark="true"`
+import "@liveblocks/react-ui/styles/dark/attributes.css";
+```
+
+{/* TODO: Mention --elevation-background, --elevation-foreground here */}
+
+### CSS variables
+
+The default components are built around a set of customizable CSS variables. Set
+these variables within `.lb-root` to globally style your components.
+
+```css
+/* Styles all default Comments components */
+.lb-root {
+  --lb-accent: purple;
+  --lb-spacing: 1em;
+  --lb-radius: 0;
+}
+```
+
+<PropertiesList>
+  <PropertiesListItem name="--lb-radius" defaultValue="0.5em">
+    The border radius scale. `em` values recommended.
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-spacing" defaultValue="1em">
+    The spacing scale. `em` values recommended.
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-accent" defaultValue="#1177ff">
+    The accent color.
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-accent-foreground" defaultValue="#ffffff">
+    The foreground color used over the accent color.
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-destructive" defaultValue="#ff4455">
+    The destructive color.
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-destructive-foreground" defaultValue="#ffffff">
+    The foreground color used over the destructive color.
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-background" defaultValue="#ffffff">
+    The main background color.
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-foreground" defaultValue="#111111">
+    The main foreground color.
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-icon-size" defaultValue="20px">
+    The size of icons.
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-icon-weight" defaultValue="1.5px">
+    The stroke weight of icons.
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-avatar-radius" defaultValue="50%">
+    The border radius used for avatars.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="--lb-button-radius"
+    defaultValue="calc(0.75 * var(--lb-radius))"
+  >
+    The border radius used for buttons.
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-transition-duration" defaultValue="0.1s">
+    The duration used for transitioned elements.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="--lb-transition-easing"
+    defaultValue="cubic-bezier(0.4, 0, 0.2, 1)"
+  >
+    The easing function used for transitioned elements.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="--lb-elevation-shadow"
+    defaultValue="0 0 0 1px rgb(0 0 0 / 4%), 0 2px 6px rgb(0 0 0 / 8%),  0 8px 26px rgb(0 0 0 / 12%)"
+  >
+    The box shadow added to elevated elements.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="--lb-tooltip-shadow"
+    defaultValue="0 2px 4px rgb(0 0 0 / 8%), 0 4px 12px rgb(0 0 0 / 12%)"
+  >
+    The box shadow added to tooltips.
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-accent-contrast" defaultValue="8%">
+    Affects the lightness of accent colors. `%` value required.
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-destructive-contrast" defaultValue="8%">
+    Affects the lightness of destructive colors. `%` value required.
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-foreground-contrast" defaultValue="6%">
+    Affects the lightness of foreground colors. `%` value required.
+  </PropertiesListItem>
+</PropertiesList>
+
+{/* TODO: Explain automatic color scales (with a palette-type visual) */}
+
+### Class names
+
+Each default component has a set of predefined class names, which can be helpful
+for custom styling, for example.
+
+```css
+.lb-thread {
+  /* Customise thread */
+}
+
+.lb-composer {
+  /* Customise composer */
+}
+```
+
+Additionally, some elements also have data attributes to provide contextual
+information, for example:
+
+```css
+.lb-button[data-variant="primary"] {
+  /* Customise primary buttons */
+}
+
+.lb-avatar[data-loading] {
+  /* Customise avatar loading state */
+}
+```
+
+<Banner title="Internal classes" type="warning">
+
+Classes containing colons `:` are internal and may change over time.
+
+</Banner>
+
+{/* TODO: Think about adding back the browser support section */}
+
+### Portaled elements
+
+Floating elements within the default components (e.g. tooltips, drowdowns, etc)
+are portaled to the end of the document to avoid `z-index` conflicts and
+`overflow` issues.
+
+When portaled, those elements are also wrapped in a container to handle their
+positioning. These containers don’t have any specific class names or data
+attributes so they shouldn’t be targeted or styled directly, but they will
+mirror whichever `z-index` value is set on their inner element (which would be
+`auto` by default). So if you need to set a specific `z-index` value on floating
+elements, you should set it on the floating elements themselves directly,
+ignoring their containers. You can either target specific floating elements
+(e.g. `.lb-tooltip`, `.lb-dropdown`, etc) or all of them at once via the
+`.lb-portal` class name.
+
+```css
+/* Target all floating elements */
+.lb-portal {
+  z-index: 5;
+}
+
+/* Target a specific floating element */
+.lb-tooltip {
+  z-index: 10;
+}
+```
+
+### Overrides
+
+Overrides can be used to customize components’ strings and localization-related
+properties, such as locale and reading direction.
+
+They can be set globally for all components using `LiveblocksUIConfig`:
+
+```tsx
+import { LiveblocksUIConfig } from "@liveblocks/react-ui";
+
+export function App() {
+  return (
+    <LiveblocksUIConfig
+      overrides={{ locale: "fr", USER_UNKNOWN: "Anonyme" /* ... */ }}
+    >
+      {/* ... */}
+    </LiveblocksUIConfig>
+  );
+}
+```
+
+Overrides can also be set per-component, and these settings will take precedence
+over global settings. This is particularly useful in certain contexts, for
+example when you’re using a `<Composer />` component for creating replies to
+threads:
+
+```tsx
+<Composer
+  overrides={{
+    COMPOSER_PLACEHOLDER: "Reply to thread…",
+    COMPOSER_SEND: "Reply",
+  }}
+/>
+```

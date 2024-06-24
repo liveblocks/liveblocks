@@ -1,4 +1,4 @@
-import { RoomProvider, useMyPresence } from "../liveblocks.config";
+import { RoomProvider, useMyPresence } from "@liveblocks/react";
 import { useRouter } from "next/router";
 import LiveCursors from "../components/LiveCursors";
 import { useMemo, useRef } from "react";

@@ -4,20 +4,37 @@ import { isIdle } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
+import type { DE, DM, DP, DRI, DS, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
 import type { BatchStore } from "./lib/batch";
 import { createBatchStore } from "./lib/batch";
 import type { Store } from "./lib/create-store";
 import { createStore } from "./lib/create-store";
-import { deprecateIf } from "./lib/deprecation";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
+import type { NoInfr } from "./lib/NoInfer";
 import type { Resolve } from "./lib/Resolve";
 import type { GetInboxNotificationsOptions } from "./notifications";
 import { createNotificationsApi } from "./notifications";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
-import type { Polyfills, Room, RoomDelegates, RoomInitializers } from "./room";
+import type {
+  BaseMetadata,
+  ThreadData,
+  ThreadDeleteInfo,
+} from "./protocol/Comments";
+import type {
+  InboxNotificationData,
+  InboxNotificationDeleteInfo,
+} from "./protocol/InboxNotifications";
+import type {
+  OpaqueRoom,
+  OptionalTupleUnless,
+  PartialUnless,
+  Polyfills,
+  Room,
+  RoomDelegates,
+} from "./room";
 import {
   createRoom,
   makeAuthDelegateForRoom,
@@ -25,13 +42,7 @@ import {
 } from "./room";
 import type { CacheStore } from "./store";
 import { createClientStore } from "./store";
-import type { BaseMetadata } from "./types/BaseMetadata";
-import type { InboxNotificationData } from "./types/InboxNotificationData";
-import type { InboxNotificationDeleteInfo } from "./types/InboxNotificationDeleteInfo";
 import type { OptionalPromise } from "./types/OptionalPromise";
-import type { RoomInfo } from "./types/RoomInfo";
-import type { ThreadData } from "./types/ThreadData";
-import type { ThreadDeleteInfo } from "./types/ThreadDeleteInfo";
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1_000;
@@ -72,12 +83,19 @@ export type ResolveRoomsInfoArgs = {
   roomIds: string[];
 };
 
-export type EnterOptions<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-> = Resolve<
-  // Enter options are just room initializers, plus an internal option
-  RoomInitializers<TPresence, TStorage> & {
+export type EnterOptions<P extends JsonObject = DP, S extends LsonObject = DS> =
+  // prettier-ignore
+  Resolve<
+  {
+    /**
+     * Whether or not the room automatically connects to Liveblock servers.
+     * Default is true.
+     *
+     * Usually set to false when the client is used from the server to not call
+     * the authentication endpoint or connect via WebSocket.
+     */
+    autoConnect?: boolean;
+
     /**
      * Only necessary when you’re using Liveblocks with React v17 or lower.
      *
@@ -88,6 +106,29 @@ export type EnterOptions<
      */
     unstable_batchedUpdates?: (cb: () => void) => void;
   }
+
+  // Initial presence is only mandatory if the custom type requires it to be
+  & PartialUnless<
+    P,
+    {
+      /**
+       * The initial Presence to use and announce when you enter the Room. The
+       * Presence is available on all users in the Room (me & others).
+       */
+      initialPresence: P | ((roomId: string) => P);
+    }
+  >
+  
+  // Initial storage is only mandatory if the custom type requires it to be
+  & PartialUnless<
+    S,
+    {
+      /**
+       * The initial Storage to use when entering a new Room.
+       */
+      initialStorage: S | ((roomId: string) => S);
+    }
+  >
 >;
 
 /**
@@ -97,20 +138,20 @@ export type EnterOptions<
  * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
  * will probably happen if you do.
  */
-type PrivateClientApi<TUserMeta extends BaseUserMeta> = {
-  notifications: NotificationsApi;
-  currentUserIdStore: Store<string | null>;
-  resolveMentionSuggestions: ClientOptions["resolveMentionSuggestions"];
-  cacheStore: CacheStore<BaseMetadata>;
-  usersStore: BatchStore<TUserMeta["info"] | undefined, [string]>;
-  roomsInfoStore: BatchStore<RoomInfo | undefined, [string]>;
-  getRoomIds: () => string[];
+export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
+  readonly notifications: NotificationsApi<M>;
+  readonly currentUserIdStore: Store<string | null>;
+  readonly resolveMentionSuggestions: ClientOptions<U>["resolveMentionSuggestions"];
+  readonly cacheStore: CacheStore<BaseMetadata>;
+  readonly usersStore: BatchStore<U["info"] | undefined, [string]>;
+  readonly roomsInfoStore: BatchStore<DRI | undefined, [string]>;
+  readonly getRoomIds: () => string[];
 };
 
-export type NotificationsApi<TThreadMetadata extends BaseMetadata = never> = {
+export type NotificationsApi<M extends BaseMetadata> = {
   getInboxNotifications(options?: GetInboxNotificationsOptions): Promise<{
     inboxNotifications: InboxNotificationData[];
-    threads: ThreadData<TThreadMetadata>[];
+    threads: ThreadData<M>[];
     deletedThreads: ThreadDeleteInfo[];
     deletedInboxNotifications: InboxNotificationDeleteInfo[];
     meta: {
@@ -122,20 +163,28 @@ export type NotificationsApi<TThreadMetadata extends BaseMetadata = never> = {
   markInboxNotificationAsRead(inboxNotificationId: string): Promise<void>;
 };
 
-export type Client<TUserMeta extends BaseUserMeta = BaseUserMeta> = {
+/**
+ * @private Widest-possible Client type, matching _any_ Client instance. Note
+ * that this type is different from `Client`-without-type-arguments. That
+ * represents a Client instance using globally augmented types only, which is
+ * narrower.
+ */
+export type OpaqueClient = Client<BaseUserMeta>;
+
+export type Client<U extends BaseUserMeta = DU> = {
   /**
    * Gets a room. Returns null if {@link Client.enter} has not been called previously.
    *
    * @param roomId The id of the room
    */
   getRoom<
-    TPresence extends JsonObject,
-    TStorage extends LsonObject = LsonObject,
-    TUserMeta extends BaseUserMeta = BaseUserMeta,
-    TRoomEvent extends Json = never,
+    P extends JsonObject = DP,
+    S extends LsonObject = DS,
+    E extends Json = DE,
+    M extends BaseMetadata = DM,
   >(
     roomId: string
-  ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null;
+  ): Room<P, S, U, E, M> | null;
 
   /**
    * Enter a room.
@@ -144,48 +193,20 @@ export type Client<TUserMeta extends BaseUserMeta = BaseUserMeta> = {
    * @returns The room and a leave function. Call the returned leave() function when you no longer need the room.
    */
   enterRoom<
-    TPresence extends JsonObject,
-    TStorage extends LsonObject = LsonObject,
-    TUserMeta extends BaseUserMeta = BaseUserMeta,
-    TRoomEvent extends Json = never,
+    P extends JsonObject = DP,
+    S extends LsonObject = DS,
+    E extends Json = DE,
+    M extends BaseMetadata = DM,
   >(
     roomId: string,
-    options: EnterOptions<TPresence, TStorage>
+    ...args: OptionalTupleUnless<
+      P & S,
+      [options: EnterOptions<NoInfr<P>, NoInfr<S>>]
+    >
   ): {
-    room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
+    room: Room<P, S, U, E, M>;
     leave: () => void;
   };
-
-  /**
-   * @deprecated - Prefer using {@link Client.enterRoom} instead.
-   *
-   * Enters a room and returns it.
-   * @param roomId The id of the room
-   * @param options Optional. You can provide initializers for the Presence or Storage when entering the Room.
-   */
-  enter<
-    TPresence extends JsonObject,
-    TStorage extends LsonObject = LsonObject,
-    TUserMeta extends BaseUserMeta = BaseUserMeta,
-    TRoomEvent extends Json = never,
-  >(
-    roomId: string,
-    options: EnterOptions<TPresence, TStorage>
-  ): Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
-
-  /**
-   * @deprecated - Prefer using {@link Client.enterRoom} and calling the returned leave function instead, which is safer.
-   *
-   * Forcefully leaves a room.
-   *
-   * Only call this if you know for sure there are no other "instances" of this
-   * room used elsewhere in your application. Force-leaving can trigger
-   * unexpected conditions in other parts of your application that may not
-   * expect this.
-   *
-   * @param roomId The id of the room
-   */
-  leave(roomId: string): void;
 
   /**
    * Purges all cached auth tokens and reconnects all rooms that are still
@@ -202,7 +223,8 @@ export type Client<TUserMeta extends BaseUserMeta = BaseUserMeta> = {
    * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
    * will probably happen if you do.
    */
-  readonly [kInternal]: PrivateClientApi<TUserMeta>;
+  // TODO Make this a getter, so we can provide M
+  readonly [kInternal]: PrivateClientApi<U, BaseMetadata>;
 };
 
 export type AuthEndpoint =
@@ -213,7 +235,7 @@ export type AuthEndpoint =
  * The authentication endpoint that is called to ensure that the current user has access to a room.
  * Can be an url or a callback if you need to add additional headers.
  */
-export type ClientOptions<TUserMeta extends BaseUserMeta = BaseUserMeta> = {
+export type ClientOptions<U extends BaseUserMeta = DU> = {
   throttle?: number; // in milliseconds
   lostConnectionTimeout?: number; // in milliseconds
   backgroundKeepAliveTimeout?: number; // in milliseconds
@@ -222,20 +244,6 @@ export type ClientOptions<TUserMeta extends BaseUserMeta = BaseUserMeta> = {
   unstable_streamData?: boolean;
 
   /**
-   * @deprecated Use `polyfills: { fetch: ... }` instead.
-   * This option will be removed in a future release.
-   */
-  fetchPolyfill?: Polyfills["fetch"];
-
-  /**
-   * @deprecated Use `polyfills: { WebSocket: ... }` instead.
-   * This option will be removed in a future release.
-   */
-  WebSocketPolyfill?: Polyfills["WebSocket"];
-
-  /**
-   * @beta
-   *
    * A function that returns a list of user IDs matching a string.
    */
   resolveMentionSuggestions?: (
@@ -243,22 +251,18 @@ export type ClientOptions<TUserMeta extends BaseUserMeta = BaseUserMeta> = {
   ) => OptionalPromise<string[]>;
 
   /**
-   * @beta
-   *
    * A function that returns user info from user IDs.
    */
   resolveUsers?: (
     args: ResolveUsersArgs
-  ) => OptionalPromise<(TUserMeta["info"] | undefined)[] | undefined>;
+  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
 
   /**
-   * @beta
-   *
    * A function that returns room info from room IDs.
    */
   resolveRoomsInfo?: (
     args: ResolveRoomsInfoArgs
-  ) => OptionalPromise<(RoomInfo | undefined)[] | undefined>;
+  ) => OptionalPromise<(DRI | undefined)[] | undefined>;
 
   /**
    * @internal To point the client to a different Liveblocks server. Only
@@ -333,11 +337,9 @@ export function getAuthBearerHeaderFromAuthValue(authValue: AuthValue): string {
  *   }
  * });
  */
-export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
-  options: ClientOptions<TUserMeta>
-): Client<TUserMeta> {
-  type OpaqueRoom = Room<JsonObject, LsonObject, BaseUserMeta, Json>;
-
+export function createClient<U extends BaseUserMeta = DU>(
+  options: ClientOptions<U>
+): Client<U> {
   const clientOptions = options;
   const throttleDelay = getThrottle(clientOptions.throttle ?? DEFAULT_THROTTLE);
   const lostConnectionTimeout = getLostConnectionTimeout(
@@ -350,12 +352,12 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
 
   const authManager = createAuthManager(options);
 
-  type RoomInfo = {
+  type RoomDetails = {
     room: OpaqueRoom;
     unsubs: Set<() => void>;
   };
 
-  const roomsById = new Map<string, RoomInfo>();
+  const roomsById = new Map<string, RoomDetails>();
 
   function teardownRoom(room: OpaqueRoom) {
     unlinkDevTools(room.id);
@@ -364,49 +366,54 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
   }
 
   function leaseRoom<
-    TPresence extends JsonObject,
-    TStorage extends LsonObject,
-    TUserMeta extends BaseUserMeta,
-    TRoomEvent extends Json,
+    P extends JsonObject,
+    S extends LsonObject,
+    U extends BaseUserMeta,
+    E extends Json,
+    M extends BaseMetadata,
   >(
-    info: RoomInfo
+    details: RoomDetails
   ): {
-    room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
+    room: Room<P, S, U, E, M>;
     leave: () => void;
   } {
     // Create a new self-destructing leave function
     const leave = () => {
       const self = leave; // A reference to the currently executing function itself
 
-      if (!info.unsubs.delete(self)) {
+      if (!details.unsubs.delete(self)) {
         console.warn(
           "This leave function was already called. Calling it more than once has no effect."
         );
       } else {
         // Was this the last room lease? If so, tear down the room
-        if (info.unsubs.size === 0) {
-          teardownRoom(info.room);
+        if (details.unsubs.size === 0) {
+          teardownRoom(details.room);
         }
       }
     };
 
-    info.unsubs.add(leave);
+    details.unsubs.add(leave);
     return {
-      room: info.room as Room<TPresence, TStorage, TUserMeta, TRoomEvent>,
+      room: details.room as Room<P, S, U, E, M>,
       leave,
     };
   }
 
   function enterRoom<
-    TPresence extends JsonObject,
-    TStorage extends LsonObject = LsonObject,
-    TUserMeta extends BaseUserMeta = BaseUserMeta,
-    TRoomEvent extends Json = never,
+    P extends JsonObject,
+    S extends LsonObject,
+    U extends BaseUserMeta,
+    E extends Json,
+    M extends BaseMetadata,
   >(
     roomId: string,
-    options: EnterOptions<TPresence, TStorage>
+    ...args: OptionalTupleUnless<
+      P & S,
+      [options: EnterOptions<NoInfr<P>, NoInfr<S>>]
+    >
   ): {
-    room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
+    room: Room<P, S, U, E, M>;
     leave: () => void;
   } {
     const existing = roomsById.get(roomId);
@@ -414,16 +421,19 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
       return leaseRoom(existing);
     }
 
-    deprecateIf(
-      options.initialPresence === null || options.initialPresence === undefined,
-      "Please provide an initial presence value for the current user when entering the room."
-    );
+    const options = args[0] ?? ({} as EnterOptions<P, S>);
+    const initialPresence =
+      (typeof options.initialPresence === "function"
+        ? options.initialPresence(roomId)
+        : options.initialPresence) ?? ({} as P);
 
-    const newRoom = createRoom<TPresence, TStorage, TUserMeta, TRoomEvent>(
-      {
-        initialPresence: options.initialPresence ?? {},
-        initialStorage: options.initialStorage,
-      },
+    const initialStorage =
+      (typeof options.initialStorage === "function"
+        ? options.initialStorage(roomId)
+        : options.initialStorage) ?? ({} as S);
+
+    const newRoom = createRoom<P, S, U, E, M>(
+      { initialPresence, initialStorage },
       {
         roomId,
         throttleDelay,
@@ -446,17 +456,16 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
       }
     );
 
-    const newRoomInfo: RoomInfo = {
+    const newRoomDetails: RoomDetails = {
       room: newRoom,
       unsubs: new Set(),
     };
-    roomsById.set(roomId, newRoomInfo);
+    roomsById.set(roomId, newRoomDetails);
 
     setupDevTools(() => Array.from(roomsById.keys()));
     linkDevTools(roomId, newRoom);
 
-    const shouldConnect =
-      options.autoConnect ?? options.shouldInitiallyConnect ?? true;
+    const shouldConnect = options.autoConnect ?? true;
     if (shouldConnect) {
       // we need to check here because nextjs would fail earlier with Node < 16
       if (typeof atob === "undefined") {
@@ -472,44 +481,18 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
       newRoom.connect();
     }
 
-    return leaseRoom(newRoomInfo);
-  }
-
-  function enter<
-    TPresence extends JsonObject,
-    TStorage extends LsonObject = LsonObject,
-    TUserMeta extends BaseUserMeta = BaseUserMeta,
-    TRoomEvent extends Json = never,
-  >(
-    roomId: string,
-    options: EnterOptions<TPresence, TStorage>
-  ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
-    const { room, leave: _ } = enterRoom<
-      TPresence,
-      TStorage,
-      TUserMeta,
-      TRoomEvent
-    >(roomId, options);
-    return room;
+    return leaseRoom(newRoomDetails);
   }
 
   function getRoom<
-    TPresence extends JsonObject,
-    TStorage extends LsonObject = LsonObject,
-    TUserMeta extends BaseUserMeta = BaseUserMeta,
-    TRoomEvent extends Json = never,
-  >(roomId: string): Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null {
+    P extends JsonObject,
+    S extends LsonObject,
+    U extends BaseUserMeta,
+    E extends Json,
+    M extends BaseMetadata,
+  >(roomId: string): Room<P, S, U, E, M> | null {
     const room = roomsById.get(roomId)?.room;
-    return room
-      ? (room as Room<TPresence, TStorage, TUserMeta, TRoomEvent>)
-      : null;
-  }
-
-  function forceLeave(roomId: string) {
-    const unsubs = roomsById.get(roomId)?.unsubs ?? new Set();
-    for (const unsub of unsubs) {
-      unsub();
-    }
+    return room ? (room as Room<P, S, U, E, M>) : null;
   }
 
   function logout() {
@@ -579,15 +562,10 @@ export function createClient<TUserMeta extends BaseUserMeta = BaseUserMeta>(
 
   return Object.defineProperty(
     {
-      logout,
-
-      // Old, deprecated APIs
-      enter,
-      getRoom,
-      leave: forceLeave,
-
-      // New, preferred API
       enterRoom,
+      getRoom,
+
+      logout,
 
       // Internal
       [kInternal]: {

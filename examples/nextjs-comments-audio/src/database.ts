@@ -1,6 +1,4 @@
-import { UserMeta } from "@/liveblocks.config";
-
-const USER_INFO: UserMeta[] = [
+const USER_INFO: Liveblocks["UserMeta"][] = [
   {
     id: "charlie.layne@example.com",
     info: {

@@ -1,16 +1,13 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: ["src/index.ts"],
+  entry: ["src/index.ts", "src/suspense.ts"],
   dts: true,
   splitting: true,
   clean: true,
   target: "es2020",
   format: ["esm", "cjs"],
   sourcemap: true,
-  banner: {
-    js: '"use client";',
-  },
 
   esbuildOptions(options, _context) {
     // Replace __VERSION__ globals with concrete version

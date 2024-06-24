@@ -20,13 +20,13 @@ to construct a fully styled comment body and rich-text comment composer.
 ## Concepts
 
 Each primitive is made up of one or more components, for example
-[`Comment`](/docs/api-reference/liveblocks-react-comments#primitives-Comment)
-only needs `Comment.Body`. This component takes a comment’s body, and turns it
-into readable text, with links and mentions.
+[`Comment`](/docs/api-reference/liveblocks-react-ui#primitives-Comment) only
+needs `Comment.Body`. This component takes a comment’s body, and turns it into
+readable text, with links and mentions.
 
 ```tsx highlight="6"
 import { CommentData } from "@liveblocks/client";
-import { Comment } from "@liveblocks/react-comments/primitives";
+import { Comment } from "@liveblocks/react-ui/primitives";
 
 // Render a custom comment body
 function MyComment({ comment }: { comment: CommentData }) {
@@ -43,7 +43,7 @@ your component.
 
 ```tsx highlight="9-11"
 import { CommentData } from "@liveblocks/client";
-import { Comment } from "@liveblocks/react-comments/primitives";
+import { Comment } from "@liveblocks/react-ui/primitives";
 
 // Render a custom comment body
 function MyComment({ comment }: { comment: CommentData }) {
@@ -71,10 +71,7 @@ purple and bold.
 
 ```tsx highlight="13-15,21-28"
 import { CommentData } from "@liveblocks/client";
-import {
-  Comment,
-  CommentBodyLinkProps,
-} from "@liveblocks/react-comments/primitives";
+import { Comment, CommentBodyLinkProps } from "@liveblocks/react-ui/primitives";
 
 // Render a custom comment body
 function MyComment({ comment }: { comment: CommentData }) {
@@ -167,14 +164,13 @@ import { Button } from "@/my-design-system";
 
 ## Composer
 
-The
-[`Composer`](/docs/api-reference/liveblocks-react-comments#primitives-Composer)
+The [`Composer`](/docs/api-reference/liveblocks-react-ui#primitives-Composer)
 primitive allows you to build a custom rich-text composer, which can be used for
 creating, or editing, threads and comments. Here’s an example of a composer that
 creates a new thread when it’s submitted.
 
 ```tsx
-import { Composer } from "@liveblocks/react-comments/primitives";
+import { Composer } from "@liveblocks/react-ui/primitives";
 import { useCreateThread } from "../liveblocks.config.ts";
 
 // Render a custom composer that creates a thread on submit
@@ -199,20 +195,18 @@ function MyComposer() {
 ```
 
 Custom component parts can be used to render custom
-[mentions](/docs/api-reference/liveblocks-react-comments#primitives-Composer.Editor-Mention),
-[links](/docs/api-reference/liveblocks-react-comments#primitives-Composer.Link),
-and a
-[suggestions selection popover](/docs/api-reference/liveblocks-react-comments#primitives-Composer.Suggestions).
+[mentions](/docs/api-reference/liveblocks-react-ui#primitives-Composer.Editor-Mention),
+[links](/docs/api-reference/liveblocks-react-ui#primitives-Composer.Link), and a
+[suggestions selection popover](/docs/api-reference/liveblocks-react-ui#primitives-Composer.Suggestions).
 
 ### useComposer
 
-The [`useComposer`](/docs/api-reference/liveblocks-react-comments#useComposer)
-hook can be placed within `<Composer.Form>` to check if the composer input is
-empty, or to submit the form, helpful for creating your own button, or styling
-the UI.
+The [`useComposer`](/docs/api-reference/liveblocks-react-ui#useComposer) hook
+can be placed within `<Composer.Form>` to check if the composer input is empty,
+or to submit the form, helpful for creating your own button, or styling the UI.
 
 ```tsx highlight="14,17-19"
-import { Composer, useComposer } from "@liveblocks/react-comments/primitives";
+import { Composer, useComposer } from "@liveblocks/react-ui/primitives";
 
 function MyComposer() {
   return (
@@ -237,13 +231,12 @@ function MyComposerButton() {
 
 ## Comment
 
-The
-[`Comment`](/docs/api-reference/liveblocks-react-comments#primitives-Comment)
+The [`Comment`](/docs/api-reference/liveblocks-react-ui#primitives-Comment)
 primitive is used to render a `comment.body` object as text, mentions, and
 links.
 
 ```tsx
-import { Comment } from "@liveblocks/react-comments/primitives";
+import { Comment } from "@liveblocks/react-ui/primitives";
 import { CommentData } from "@liveblocks/client";
 
 // Render custom comments in a thread.
@@ -283,20 +276,19 @@ function MyThreads() {
 ```
 
 Custom component parts can be used to render
-[mentions](/docs/api-reference/liveblocks-react-comments#primitives-Comment.Mention)
+[mentions](/docs/api-reference/liveblocks-react-ui#primitives-Comment.Mention)
 and
-[links](http://localhost:3001/docs/api-reference/liveblocks-react-comments#primitives-Comment.Link).
+[links](http://localhost:3001/docs/api-reference/liveblocks-react-ui#primitives-Comment.Link).
 
 ## Timestamp
 
-The
-[`Timestamp`](/docs/api-reference/liveblocks-react-comments#primitives-Timestamp)
+The [`Timestamp`](/docs/api-reference/liveblocks-react-ui#primitives-Timestamp)
 primitive is a quick helper that will convert a date object, or timestamp, into
 a friendly format. For example, it’ll render a format similar to “5 minutes ago”
 for a recent comment, and “22 Dec” for an older comment.
 
 ```tsx highlight="12"
-import { Timestamp } from "@liveblocks/react-comments";
+import { Timestamp } from "@liveblocks/react-ui";
 import { useThreads } from "../liveblocks.config";
 
 // Render threads with friendly datetime messages above

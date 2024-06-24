@@ -16,8 +16,8 @@ a list of each thread in the current room. This can be used to render a list of
 threads, either using the
 [default components](/docs/products/comments/default-components), or
 [primitives](/docs/products/comments/primitives). Here’s an example of it used
-with the default
-[`Thread`](/docs/api-reference/liveblocks-react-comments#Thread) component.
+with the default [`Thread`](/docs/api-reference/liveblocks-react-ui#Thread)
+component.
 
 ```tsx
 import { useThreads } from "../liveblocks.config";
@@ -45,8 +45,8 @@ There are two versions of the
 
 ## useUser hook [#user-hook]
 
-The only information Comments stores about users is their user ID, which is set
-when [authenticating with Liveblocks](/docs/authentication). With the
+The only information Liveblocks stores about users is their user ID, which is
+set when [authenticating with Liveblocks](/docs/authentication). With the
 [`useUser`](/docs/api-reference/liveblocks-react#useUser) hook, you can fetch a
 user’s information from their ID. This is particularly helpful when building
 primitive components, as this allows you fetch their name, avatar, and any other
@@ -130,7 +130,7 @@ more complex behaviour and are designed to work alongside
 import {
   Composer,
   ComposerSubmitComment,
-} from "@liveblocks/react-comments/primitives";
+} from "@liveblocks/react-ui/primitives";
 import { useCreateThread } from "../liveblocks.config.ts";
 import { FormEvent } from "react";
 
@@ -162,6 +162,7 @@ function MyComposer() {
 You can find more information on each mutation hook in our API reference pages:
 
 - [`useCreateThread`](/docs/api-reference/liveblocks-react#useCreateThread)
+- [`useDeleteThread`](/docs/api-reference/liveblocks-react#useDeleteThread)
 - [`useEditThreadMetadata`](/docs/api-reference/liveblocks-react#useEditThreadMetadata)
 - [`useCreateComment`](/docs/api-reference/liveblocks-react#useCreateComment)
 - [`useEditComment`](/docs/api-reference/liveblocks-react#useEditComment)
@@ -182,7 +183,7 @@ recommend using the Suspense versions, as they often result in simpler code.
 ### Suspense hooks [#suspense-hooks]
 
 Using Suspense hooks means that any data retrieved, for example `threads` from
-`getThreads`, will never be `undefined`, and your component will never see an
+`useThreads`, will never be `undefined`, and your component will never see an
 error.
 
 ```tsx
@@ -210,7 +211,7 @@ function Component() {
   return (
     <ErrorBoundary fallback={<div>Error</div>}>
       <ClientSideSuspense fallback={<div>Loading...</div>}>
-        {() => <MyThreads />}
+        <MyThreads />
       </ClientSideSuspense>
     </ErrorBoundary>
   );

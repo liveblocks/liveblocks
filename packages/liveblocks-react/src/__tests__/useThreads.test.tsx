@@ -74,9 +74,7 @@ afterEach(() => {
 afterAll(() => server.close());
 
 // TODO: Dry up and create utils that wrap renderHook
-function createRoomContextForTest<
-  TThreadMetadata extends BaseMetadata = BaseMetadata,
->() {
+function createRoomContextForTest<M extends BaseMetadata>() {
   const client = createClient({
     publicApiKey: "pk_xxx",
     polyfills: {
@@ -85,13 +83,7 @@ function createRoomContextForTest<
   });
 
   return {
-    roomCtx: createRoomContext<
-      JsonObject,
-      never,
-      never,
-      never,
-      TThreadMetadata
-    >(client),
+    roomCtx: createRoomContext<JsonObject, never, never, never, M>(client),
     liveblocksCtx: createLiveblocksContext(client),
     client,
   };
@@ -131,9 +123,7 @@ describe("useThreads", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id" initialPresence={{}}>
-          {children}
-        </RoomProvider>
+        <RoomProvider id="room-id">{children}</RoomProvider>
       ),
     });
 
@@ -174,9 +164,7 @@ describe("useThreads", () => {
 
     const { result, unmount, rerender } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id" initialPresence={{}}>
-          {children}
-        </RoomProvider>
+        <RoomProvider id="room-id">{children}</RoomProvider>
       ),
     });
 
@@ -231,9 +219,7 @@ describe("useThreads", () => {
       },
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -295,9 +281,7 @@ describe("useThreads", () => {
       () => useThreads({ query: { metadata: { resolved: true } } }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -369,9 +353,7 @@ describe("useThreads", () => {
         }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -422,9 +404,7 @@ describe("useThreads", () => {
       },
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -483,9 +463,7 @@ describe("useThreads", () => {
         useThreads({ query: { metadata: { resolved } } }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
         initialProps: { resolved: true },
       }
@@ -572,9 +550,7 @@ describe("useThreads", () => {
       () => useThreads(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room1" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room1">{children}</RoomProvider>
         ),
       }
     );
@@ -583,9 +559,7 @@ describe("useThreads", () => {
       () => useThreads(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room2" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room2">{children}</RoomProvider>
         ),
       }
     );
@@ -666,9 +640,7 @@ describe("useThreads", () => {
 
       return (
         <RoomIdDispatchContext.Provider value={setRoomId}>
-          <RoomProvider id={roomId} initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         </RoomIdDispatchContext.Provider>
       );
     };
@@ -733,9 +705,7 @@ describe("useThreads", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id" initialPresence={{}}>
-          {children}
-        </RoomProvider>
+        <RoomProvider id="room-id">{children}</RoomProvider>
       ),
     });
 
@@ -785,9 +755,7 @@ describe("useThreads", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -857,9 +825,7 @@ describe("useThreads", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -932,9 +898,7 @@ describe("useThreads", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -1000,9 +964,7 @@ describe("useThreads", () => {
       () => useThreads({ query: { metadata: {} } }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -1067,9 +1029,7 @@ describe("useThreads", () => {
 
     const firstRenderResult = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id" initialPresence={{}}>
-          {children}
-        </RoomProvider>
+        <RoomProvider id="room-id">{children}</RoomProvider>
       ),
     });
 
@@ -1091,9 +1051,7 @@ describe("useThreads", () => {
     // Render the RoomProvider again and verify the threads are updated
     const secondRenderResult = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id" initialPresence={{}}>
-          {children}
-        </RoomProvider>
+        <RoomProvider id="room-id">{children}</RoomProvider>
       ),
     });
 
@@ -1142,7 +1100,7 @@ describe("useThreads", () => {
 
     const Room = () => {
       return (
-        <RoomProvider id="room-id" initialPresence={{}}>
+        <RoomProvider id="room-id">
           <Threads />
         </RoomProvider>
       );
@@ -1229,9 +1187,7 @@ describe("useThreads", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id" initialPresence={{}}>
-          {children}
-        </RoomProvider>
+        <RoomProvider id="room-id">{children}</RoomProvider>
       ),
     });
 
@@ -1291,9 +1247,7 @@ describe("useThreads: error", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id" initialPresence={{}}>
-          {children}
-        </RoomProvider>
+        <RoomProvider id="room-id">{children}</RoomProvider>
       ),
     });
 
@@ -1347,9 +1301,7 @@ describe("useThreads: error", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id" initialPresence={{}}>
-          {children}
-        </RoomProvider>
+        <RoomProvider id="room-id">{children}</RoomProvider>
       ),
     });
 
@@ -1415,9 +1367,7 @@ describe("useThreads: error", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id" initialPresence={{}}>
-          {children}
-        </RoomProvider>
+        <RoomProvider id="room-id">{children}</RoomProvider>
       ),
     });
 
@@ -1488,7 +1438,7 @@ describe("useThreads: polling", () => {
 
     const Room = () => {
       return (
-        <RoomProvider id="room-id" initialPresence={{}}>
+        <RoomProvider id="room-id">
           <Threads />
         </RoomProvider>
       );
@@ -1546,7 +1496,7 @@ describe("useThreads: polling", () => {
 
     const Room = () => {
       return (
-        <RoomProvider id="room-id" initialPresence={{}}>
+        <RoomProvider id="room-id">
           <NoThreads />
         </RoomProvider>
       );
@@ -1602,9 +1552,7 @@ describe("WebSocket events", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id" initialPresence={{}}>
-          {children}
-        </RoomProvider>
+        <RoomProvider id="room-id">{children}</RoomProvider>
       ),
     });
 
@@ -1661,9 +1609,7 @@ describe("WebSocket events", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id" initialPresence={{}}>
-          {children}
-        </RoomProvider>
+        <RoomProvider id="room-id">{children}</RoomProvider>
       ),
     });
 
@@ -1681,6 +1627,59 @@ describe("WebSocket events", () => {
       type: ServerMsgCode.COMMENT_DELETED,
       threadId: newThread.id,
       commentId: newThread.comments[0].id,
+    });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [],
+      })
+    );
+
+    unmount();
+  });
+
+  test("THREAD_DELETED event should delete thread", async () => {
+    const newThread = dummyThreadData();
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            data: [newThread],
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      roomCtx: { RoomProvider, useThreads },
+    } = createRoomContextForTest();
+
+    const { result, unmount } = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id="room-id">{children}</RoomProvider>
+      ),
+    });
+
+    const sim = await websocketSimulator();
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [newThread],
+      })
+    );
+
+    sim.simulateIncomingMessage({
+      type: ServerMsgCode.THREAD_DELETED,
+      threadId: newThread.id,
     });
 
     await waitFor(() =>
@@ -1756,9 +1755,7 @@ describe("WebSocket events", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id" initialPresence={{}}>
-          {children}
-        </RoomProvider>
+        <RoomProvider id="room-id">{children}</RoomProvider>
       ),
     });
 
@@ -1823,7 +1820,7 @@ describe("useThreadsSuspense", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id" initialPresence={{}}>
+        <RoomProvider id="room-id">
           <Suspense fallback={<div>Loading</div>}>{children}</Suspense>
         </RoomProvider>
       ),
@@ -1869,7 +1866,7 @@ describe("useThreadsSuspense", () => {
 
     const { result, unmount, rerender } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id" initialPresence={{}}>
+        <RoomProvider id="room-id">
           <Suspense fallback={<div>Loading</div>}>{children}</Suspense>
         </RoomProvider>
       ),
@@ -1909,7 +1906,7 @@ describe("useThreadsSuspense", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id" initialPresence={{}}>
+        <RoomProvider id="room-id">
           <ErrorBoundary
             fallback={<div>There was an error while getting threads.</div>}
           >
@@ -1986,7 +1983,7 @@ describe("useThreadsSuspense: error", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id" initialPresence={{}}>
+        <RoomProvider id="room-id">
           <ErrorBoundary FallbackComponent={Fallback}>
             <Suspense fallback={<div>Loading</div>}>{children}</Suspense>
           </ErrorBoundary>

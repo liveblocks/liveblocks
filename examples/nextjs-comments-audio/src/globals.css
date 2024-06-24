@@ -1,4 +1,4 @@
-@import url("@liveblocks/react-comments/styles.css");
+@import url("@liveblocks/react-ui/styles.css");
 
 @tailwind base;
 @tailwind components;

@@ -9,10 +9,10 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.11.0",
-    "@liveblocks/node": "^1.11.0",
-    "@liveblocks/react": "^1.11.0",
-    "@liveblocks/react-comments": "^1.11.0",
+    "@liveblocks/client": "^2.0.3",
+    "@liveblocks/node": "^2.0.3",
+    "@liveblocks/react": "^2.0.3",
+    "@liveblocks/react-ui": "^2.0.3",
     "next": "^13.4.16",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -20,8 +20,8 @@
   },
   "devDependencies": {
     "@types/node": "^20.4.2",
-    "@types/react": "^18.2.15",
-    "prettier": "^3.0.0",
-    "typescript": "^5.1.6"
+    "@types/react": "^18.3.3",
+    "prettier": "^3.3.2",
+    "typescript": "^5.4.5"
   }
 }

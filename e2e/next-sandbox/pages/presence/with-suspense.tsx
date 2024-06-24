@@ -57,14 +57,10 @@ export default function Home() {
       </div>
 
       {isVisible && (
-        <RoomProvider id={roomId} initialPresence={{}}>
+        <RoomProvider id={roomId}>
           <ClientSideSuspense fallback="Loading...">
-            {() => (
-              <>
-                <PresenceSandbox />
-                <EventSandbox />
-              </>
-            )}
+            <PresenceSandbox />
+            <EventSandbox />
           </ClientSideSuspense>
         </RoomProvider>
       )}

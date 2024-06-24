@@ -114,7 +114,9 @@
   opacity: 0;
   place-content: center;
   place-items: center;
-  transition: opacity 0.12s ease-in-out, background 0.12s ease-in-out;
+  transition:
+    opacity 0.12s ease-in-out,
+    background 0.12s ease-in-out;
 }
 
 .header_control:hover,

@@ -6,8 +6,8 @@ import { EditorView, basicSetup } from "codemirror";
 import { EditorState } from "@codemirror/state";
 import { javascript } from "@codemirror/lang-javascript";
 import { useCallback, useEffect, useState } from "react";
-import LiveblocksProvider from "@liveblocks/yjs";
-import { TypedLiveblocksProvider, useRoom, useSelf } from "@/liveblocks.config";
+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
+import { useRoom, useSelf } from "@liveblocks/react/suspense";
 import styles from "./CollaborativeEditor.module.css";
 import { Avatars } from "@/components/Avatars";
 import { Toolbar } from "@/components/Toolbar";
@@ -28,7 +28,7 @@ export function CollaborativeEditor() {
 
   // Set up Liveblocks Yjs provider and attach CodeMirror editor
   useEffect(() => {
-    let provider: TypedLiveblocksProvider;
+    let provider: LiveblocksYjsProvider;
     let ydoc: Y.Doc;
     let view: EditorView;
 
@@ -38,7 +38,7 @@ export function CollaborativeEditor() {
 
     // Create Yjs provider and document
     ydoc = new Y.Doc();
-    provider = new LiveblocksProvider(room as any, ydoc);
+    provider = new LiveblocksYjsProvider(room as any, ydoc);
     const ytext = ydoc.getText("codemirror");
     const undoManager = new Y.UndoManager(ytext);
     setYUndoManager(undoManager);

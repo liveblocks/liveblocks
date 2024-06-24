@@ -1,0 +1,87 @@
+---
+meta:
+  title:
+    "At least one of the custom notification kinds you provided for
+    'ActivitiesData' does not match its requirements"
+  parentTitle: "Error"
+  description: "Your 'ActivitiesData' type is incorrect and needs to be updated"
+---
+
+## Why this error occurred
+
+You have provided a custom `ActivitiesData` type for your application, but the
+type you provided isn’t a (completely) valid definition.
+
+```ts highlight="4-8"
+declare global {
+  interface Liveblocks {
+    ActivitiesData: {
+      // Your custom notification kinds go here...
+      $error: {
+        code: number;
+        date: Date; // ❌ Values must simple
+      };
+      // ❌ Custom notification kinds must start with $
+      success: {
+        message: string;
+      };
+    };
+  }
+}
+```
+
+In the example above, there are two problems. Activities data may only contain
+simple key/value pairs, where the values must always be assignable to
+`string | number | boolean | undefined` and custom notification kinds must start
+with `$`.
+
+## How to fix it
+
+You’ll need to figure out what part of your provided `ActivitiesData` type
+definition isn’t valid. The example above could be fixed as such:
+
+```ts highlight="6-8"
+declare global {
+  interface Liveblocks {
+    ActivitiesData: {
+      // Your custom notification kinds go here...
+      $error: {
+        code: number;
+        date: string;
+      };
+      $success: {
+        message: string;
+      };
+    };
+  }
+}
+```
+
+## If you cannot find the root cause
+
+Sometimes types can be complex and the root cause is still unclear. In those
+cases, there is a small trick you can use. Try to assign your type to the
+required base type, with this line:
+
+```ts highlight="9-10"
+import type { BaseActivitiesData } from "@liveblocks/client";
+
+declare global {
+  interface Liveblocks {
+    ActivitiesData: MyActivitiesData;
+  }
+}
+
+// Quick debugging snippet to find root cause
+const xxx: BaseActivitiesData = {} as MyActivitiesData;
+//    ^?
+//    The error will appear here
+```
+
+Now TypeScript will explain why it thinks your type isn’t valid:
+
+```error showLineNumbers={false}
+Type 'MyActivitiesData' is not assignable to type 'BaseActivitiesData'.
+  Property 'date' is incompatible with index signature.
+    Type 'Date' is not assignable to type 'string | number | boolean | undefined'.
+```

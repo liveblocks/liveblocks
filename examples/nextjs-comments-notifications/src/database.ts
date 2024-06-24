@@ -1,7 +1,6 @@
-import { Room, User } from "../liveblocks.config";
 import { capitalize, createExampleRoomId } from "./example";
 
-const USERS: User[] = [
+const USERS: Liveblocks["UserMeta"][] = [
   {
     id: "user-0",
     info: {
@@ -18,13 +17,15 @@ const USERS: User[] = [
   },
 ];
 
-const ROOMS: Room[] = ["general", "engineering", "design"].map((room) => ({
+const ROOMS: Liveblocks["RoomInfo"][] = [
+  "general",
+  "engineering",
+  "design",
+].map((room) => ({
   id: createExampleRoomId(room),
-  info: {
-    slug: room,
-    name: capitalize(room),
-    url: `/${room}`,
-  },
+  slug: room,
+  name: capitalize(room),
+  url: `/${room}`,
 }));
 
 // Simulate getting a user from a database.

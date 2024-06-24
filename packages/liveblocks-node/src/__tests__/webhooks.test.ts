@@ -164,6 +164,15 @@ describe("WebhookHandler", () => {
         },
       ],
       [
+        "threadDeleted",
+        {
+          projectId: "605a50b01a36d5ea7a2e9104",
+          threadId: "605a50b01a36d5ea7a2e9104",
+          roomId: "examples-hero-21-07-2022",
+          deletedAt: "2023-01-27T20:33:23.737Z",
+        },
+      ],
+      [
         "notification",
         {
           kind: "thread",
@@ -172,6 +181,32 @@ describe("WebhookHandler", () => {
           roomId: "examples-hero-21-07-2022",
           inboxNotificationId: "605a50b01a36d5ea7a2e9104",
           threadId: "605a50b01a36d5ea7a2e9104",
+          userId: "userId",
+          createdAt: "2023-01-27T20:33:23.737Z",
+        },
+      ],
+      [
+        "notification",
+        {
+          kind: "textMention",
+          channel: "email",
+          projectId: "605a50b01a36d5ea7a2e9104",
+          roomId: "examples-hero-21-07-2022",
+          inboxNotificationId: "605a50b01a36d5ea7a2e9104",
+          mentionId: "605a50b01a36d5ea7a2e9104",
+          userId: "userId",
+          createdAt: "2023-01-27T20:33:23.737Z",
+        },
+      ],
+      [
+        "notification",
+        {
+          kind: "$custom",
+          channel: "email",
+          projectId: "605a50b01a36d5ea7a2e9104",
+          roomId: "examples-hero-21-07-2022",
+          inboxNotificationId: "605a50b01a36d5ea7a2e9104",
+          subjectId: "605a50ba1a36d5ea7a2e9104",
           userId: "userId",
           createdAt: "2023-01-27T20:33:23.737Z",
         },

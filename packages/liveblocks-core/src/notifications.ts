@@ -14,10 +14,15 @@ import { Batch } from "./lib/batch";
 import type { Store } from "./lib/create-store";
 import { type QueryParams, urljoin } from "./lib/url";
 import { TokenKind } from "./protocol/AuthToken";
-import type { InboxNotificationDataPlain } from "./types/InboxNotificationData";
-import type { InboxNotificationDeleteInfoPlain } from "./types/InboxNotificationDeleteInfo";
-import type { ThreadDataPlain } from "./types/ThreadData";
-import type { ThreadDeleteInfoPlain } from "./types/ThreadDeleteInfo";
+import type {
+  BaseMetadata,
+  ThreadDataPlain,
+  ThreadDeleteInfoPlain,
+} from "./protocol/Comments";
+import type {
+  InboxNotificationDataPlain,
+  InboxNotificationDeleteInfoPlain,
+} from "./protocol/InboxNotifications";
 
 const MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY = 50;
 
@@ -26,7 +31,7 @@ export type GetInboxNotificationsOptions = {
   since?: Date;
 };
 
-export function createNotificationsApi({
+export function createNotificationsApi<M extends BaseMetadata>({
   baseUrl,
   authManager,
   currentUserIdStore,
@@ -36,7 +41,7 @@ export function createNotificationsApi({
   authManager: AuthManager;
   currentUserIdStore: Store<string | null>;
   fetcher: (url: string, init?: RequestInit) => Promise<Response>;
-}): NotificationsApi {
+}): NotificationsApi<M> {
   async function fetchJson<T>(
     endpoint: string,
     options?: RequestInit,
@@ -99,7 +104,7 @@ export function createNotificationsApi({
 
   async function getInboxNotifications(options?: GetInboxNotificationsOptions) {
     const json = await fetchJson<{
-      threads: ThreadDataPlain[];
+      threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
       deletedThreads: ThreadDeleteInfoPlain[];
       deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
