@@ -9,6 +9,8 @@
 
 # `@liveblocks/react-comments`
 
+Test: change in @liveblocks/react-ui
+
 <p>
   <a href="https://npmjs.org/package/@liveblocks/react-ui">
     <img src="https://img.shields.io/npm/v/@liveblocks/react-ui?style=flat&label=npm&color=c33" alt="NPM" />
