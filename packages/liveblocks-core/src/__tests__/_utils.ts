@@ -122,7 +122,7 @@ function makeRoomConfig(mockedDelegates: RoomDelegates) {
  * Sets up a Room instance that auto-connects to a server, but does not yet
  * start loading the initial storage.
  */
-export async function prepareRoomWithStorage_loadWithDelay<
+export function prepareRoomWithStorage_loadWithDelay<
   P extends JsonObject,
   S extends LsonObject,
   U extends BaseUserMeta,

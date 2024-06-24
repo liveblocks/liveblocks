@@ -74,9 +74,9 @@ import { selectNotificationSettings } from "./comments/lib/select-notification-s
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 import { selectedThreads } from "./comments/lib/selected-threads";
 import { retryError } from "./lib/retry-error";
-import { use } from "./lib/use-polyfill";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
+import { use } from "./lib/use-polyfill";
 import {
   createSharedContext,
   LiveblocksProviderWithClient,
