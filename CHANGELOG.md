@@ -4,6 +4,12 @@
 
 - Various internal refactorings
 
+### `@liveblocks/react`
+
+- Add new hook `useStorageStatus()`, which returns the current storage status of
+  the room, and will re-render your component whenever it changes. This can used
+  to build "Saving..." UIs.
+
 ## v2.0.5
 
 ### `@liveblocks/react`
