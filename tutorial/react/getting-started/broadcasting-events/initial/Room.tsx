@@ -1,4 +1,7 @@
-import { useBroadcastEvent, useEventListener } from "./liveblocks.config";
+import {
+  useBroadcastEvent,
+  useEventListener,
+} from "@liveblocks/react/suspense";
 import { useToast } from "./useToast";
 
 export function Room() {
