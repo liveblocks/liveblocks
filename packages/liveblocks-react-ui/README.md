@@ -7,7 +7,7 @@
   </a>
 </p>
 
-# `@liveblocks/react-comments`
+# `@liveblocks/react-ui`
 
 <p>
   <a href="https://npmjs.org/package/@liveblocks/react-ui">
