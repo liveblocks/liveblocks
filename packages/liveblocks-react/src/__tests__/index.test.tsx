@@ -267,7 +267,7 @@ describe("useStorage", () => {
     act(() => mut1.current());
     act(() =>
       expect(() => mut2.current()).toThrow(
-        "This mutation cannot be used until Storage has loaded"
+        "This mutation cannot be used until Storage has loaded (Hint: check `isStorageReady` before accessing `storage`)"
       )
     );
 
