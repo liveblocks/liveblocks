@@ -657,6 +657,12 @@ export type Room<
    */
   getStorageSnapshot(): LiveObject<S> | null;
 
+  /**
+   * All possible room events, subscribable from a single place.
+   *
+   * @private These event sources are private for now, but will become public
+   * once they're stable.
+   */
   readonly events: {
     readonly status: Observable<Status>;
     readonly lostConnection: Observable<LostConnectionEvent>;
