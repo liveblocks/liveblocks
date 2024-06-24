@@ -132,18 +132,9 @@ export async function prepareRoomWithStorage<
 >(
   items: IdTuple<SerializedCrdt>[],
   actor: number = 0,
-  onSend_DEPRECATED:
-    | ((messages: ClientMsg<P, E>[]) => void)
-    | undefined = undefined,
   defaultStorage?: S,
   scopes: string[] = ["room:write"]
 ) {
-  if (onSend_DEPRECATED !== undefined) {
-    throw new Error(
-      "Can no longer use `onSend` effect, please rewrite unit test"
-    );
-  }
-
   const { wss, delegates } = defineBehavior(
     ALWAYS_AUTH_WITH_LEGACY_TOKEN(actor, scopes),
     SOCKET_AUTOCONNECT_AND_ROOM_STATE(actor, scopes)
@@ -192,7 +183,7 @@ export async function prepareIsolatedStorageTest<S extends LsonObject>(
     never,
     never,
     never
-  >(items, actor, undefined, defaultStorage || ({} as S));
+  >(items, actor, defaultStorage || ({} as S));
 
   return {
     root: storage.root,
@@ -241,14 +232,12 @@ export async function prepareStorageTest<
     items,
     -1,
     undefined,
-    undefined,
     scopes
   );
 
   const subject = await prepareRoomWithStorage<P, S, U, E, M>(
     items,
     currentActor,
-    undefined,
     undefined,
     scopes
   );
