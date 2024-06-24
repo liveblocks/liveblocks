@@ -2848,6 +2848,7 @@ export function createRoom<
     self: eventHub.self.observable,
     myPresence: eventHub.myPresence.observable,
     error: eventHub.error.observable,
+    /** @deprecated */
     storage: eventHub.storageBatch.observable,
     storageBatch: eventHub.storageBatch.observable,
     history: eventHub.history.observable,
