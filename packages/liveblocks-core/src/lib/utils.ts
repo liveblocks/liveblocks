@@ -188,3 +188,15 @@ export async function withTimeout<T>(
       .finally(() => clearTimeout(timerID))
   );
 }
+
+/**
+ * Memoize a promise factory, guaranteeing that the given promise will run at
+ * most once. After that, every subsequent call will return the same promise
+ * instance.
+ */
+export function once<T>(promiseFn: () => Promise<T>): () => Promise<T> {
+  let p$: Promise<T> | null = null;
+  return () => {
+    return (p$ ??= promiseFn());
+  };
+}
