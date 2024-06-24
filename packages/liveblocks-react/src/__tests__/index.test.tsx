@@ -250,7 +250,7 @@ describe("useStorage", () => {
   test("unpacking storage before storage has loaded is possible", async () => {
     // Mutation 1 unpacks storage, but doesn't access it
     const { result: mut1 } = renderHook(() =>
-      useMutation(({ storage, isStorageReady }: any) => {
+      useMutation(({ storage, isStorageReady }) => {
         if (isStorageReady) {
           // Will never execute (= deliberate!)
           storage.get("obj").set("a", 42);
@@ -267,7 +267,7 @@ describe("useStorage", () => {
     act(() => mut1.current());
     act(() =>
       expect(() => mut2.current()).toThrow(
-        "This mutation cannot be used until storage has been loaded"
+        "This mutation cannot be used until Storage has loaded"
       )
     );
 
