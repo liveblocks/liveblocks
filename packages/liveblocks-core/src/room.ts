@@ -666,6 +666,11 @@ export type Room<
     readonly myPresence: Observable<P>;
     readonly others: Observable<OthersEvent<P, U>>;
     readonly error: Observable<LiveblocksError>;
+    /**
+     * @deprecated Renamed to `storageBatch`. The `storage` event source will
+     * soon be replaced by another/incompatible API.
+     */
+    readonly storage: Observable<StorageUpdate[]>;
     readonly storageBatch: Observable<StorageUpdate[]>;
     readonly history: Observable<HistoryEvent>;
 
@@ -2837,6 +2842,7 @@ export function createRoom<
     self: eventHub.self.observable,
     myPresence: eventHub.myPresence.observable,
     error: eventHub.error.observable,
+    storage: eventHub.storageBatch.observable,
     storageBatch: eventHub.storageBatch.observable,
     history: eventHub.history.observable,
     storageDidLoad: eventHub.storageDidLoad.observable,
