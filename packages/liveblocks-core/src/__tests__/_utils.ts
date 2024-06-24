@@ -119,6 +119,57 @@ function makeRoomConfig(mockedDelegates: RoomDelegates) {
 }
 
 /**
+ * Sets up a Room instance that auto-connects to a server, but does not yet
+ * start loading the initial storage.
+ */
+export async function prepareRoomWithStorage_loadWithDelay<
+  P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
+  M extends BaseMetadata,
+>(
+  items: IdTuple<SerializedCrdt>[],
+  actor: number = 0,
+  defaultStorage?: S,
+  scopes: string[] = ["room:write"],
+  delay = 0
+) {
+  const { wss, delegates } = defineBehavior(
+    ALWAYS_AUTH_WITH_LEGACY_TOKEN(actor, scopes),
+    SOCKET_AUTOCONNECT_AND_ROOM_STATE(actor, scopes)
+  );
+
+  const clonedItems = deepClone(items);
+  wss.onConnection((conn) => {
+    const sendStorageMsg = () =>
+      conn.server.send(
+        serverMessage({
+          type: ServerMsgCode.INITIAL_STORAGE_STATE,
+          items: clonedItems,
+        })
+      );
+
+    if (delay) {
+      setTimeout(() => sendStorageMsg(), delay);
+    } else {
+      sendStorageMsg();
+    }
+  });
+
+  const room = createRoom<P, S, U, E, M>(
+    {
+      initialPresence: {} as P,
+      initialStorage: defaultStorage || ({} as S),
+    },
+    makeRoomConfig(delegates)
+  );
+
+  room.connect();
+  return { room, wss };
+}
+
+/**
  * Sets up a Room instance that auto-connects to a server. It will receive the
  * given initial storage items from the server. It awaits until storage has
  * loaded.
@@ -135,30 +186,13 @@ export async function prepareRoomWithStorage<
   defaultStorage?: S,
   scopes: string[] = ["room:write"]
 ) {
-  const { wss, delegates } = defineBehavior(
-    ALWAYS_AUTH_WITH_LEGACY_TOKEN(actor, scopes),
-    SOCKET_AUTOCONNECT_AND_ROOM_STATE(actor, scopes)
-  );
-
-  const clonedItems = deepClone(items);
-  wss.onConnection((conn) => {
-    conn.server.send(
-      serverMessage({
-        type: ServerMsgCode.INITIAL_STORAGE_STATE,
-        items: clonedItems,
-      })
-    );
-  });
-
-  const room = createRoom<P, S, U, E, M>(
-    {
-      initialPresence: {} as P,
-      initialStorage: defaultStorage || ({} as S),
-    },
-    makeRoomConfig(delegates)
-  );
-
-  room.connect();
+  const { room, wss } = await prepareRoomWithStorage_loadWithDelay<
+    P,
+    S,
+    U,
+    E,
+    M
+  >(items, actor, defaultStorage, scopes);
 
   const storage = await room.getStorage();
   return { storage, room, wss };
