@@ -12,6 +12,7 @@
 - Add new hook `useStorageStatus()`, which returns the current storage status of
   the room, and will re-render your component whenever it changes. This can used
   to build "Saving..." UIs.
+- Future-proof Suspense internals to support React 19's `use`
 
 ## v2.0.5
 
