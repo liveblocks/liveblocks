@@ -103,7 +103,7 @@ function startSyncStream(room: OpaqueRoom): void {
     room.events.storageDidLoad.subscribeOnce(() => partialSyncStorage(room)),
 
     // Any time storage updates, send the new storage root
-    room.events.storage.subscribe(() => partialSyncStorage(room)),
+    room.events.storageBatch.subscribe(() => partialSyncStorage(room)),
 
     // Any time "me" or "others" updates, send the new values accordingly
     room.events.self.subscribe(() => partialSyncMe(room)),
