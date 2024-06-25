@@ -30,9 +30,7 @@ responsible for communicating with our back end. You can do this by adding
 [`LiveblocksProvider`][], and passing your public API key.
 
 ```tsx
-<LiveblocksProvider
-  publicApiKey="{% LIVEBLOCKS_PUBLIC_KEY %}"
->
+<LiveblocksProvider publicApiKey="pk_s9bs7fl...">
 ```
 
 Every Liveblocks application needs to be nested inside this. Open [App.tsx][],
@@ -41,7 +39,7 @@ component inside.
 
 ```tsx modifyTutorialFile="/App.tsx"
 return (
-  <LiveblocksProvider publicApiKey="{% LIVEBLOCKS_PUBLIC_KEY %}">
+  <LiveblocksProvider publicApiKey={publicApiKey}>
     <CollaborativeApplication />
   </LiveblocksProvider>
 );

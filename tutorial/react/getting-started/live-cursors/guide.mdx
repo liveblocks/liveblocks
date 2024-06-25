@@ -76,11 +76,8 @@ We can actually make these cursors even smoother, by requesting Liveblocks send
 more frequent updates. We can do this in [App.tsx][] by adding the `throttle`
 prop `LiveblocksProvider`.
 
-```tsx highlight="3" modifyTutorialFile="/App.tsx"
-<LiveblocksProvider
-  publicApiKey="{% LIVEBLOCKS_PUBLIC_KEY %}"
-  throttle={16}
->
+```tsx modifyTutorialFile="/App.tsx"
+<LiveblocksProvider publicApiKey={publicApiKey} throttle={16}>
 ```
 
 **Press the refresh button in the preview window** to reload the client, and you

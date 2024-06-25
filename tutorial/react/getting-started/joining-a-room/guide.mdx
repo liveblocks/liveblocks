@@ -15,7 +15,7 @@ requires an `id` prop, which represents the unique name of the room. Switch to
 
 ```tsx modifyTutorialFile="/App.tsx"
 return (
-  <LiveblocksProvider publicApiKey="{% LIVEBLOCKS_PUBLIC_KEY %}">
+  <LiveblocksProvider publicApiKey={publicApiKey}>
     <RoomProvider id={roomId}>
       <Room />
     </RoomProvider>
@@ -36,7 +36,7 @@ also makes it easy to display a loading screen around components by using
 
 ```tsx highlight="4,6" modifyTutorialFile="/App.tsx"
 return (
-  <LiveblocksProvider publicApiKey="{% LIVEBLOCKS_PUBLIC_KEY %}">
+  <LiveblocksProvider publicApiKey={publicApiKey}>
     <RoomProvider id={roomId}>
       <ClientSideSuspense fallback={<div>Loading…</div>}>
         <Room />

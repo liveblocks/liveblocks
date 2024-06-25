@@ -3,9 +3,10 @@ import { CollaborativeApplication } from "./CollaborativeApplication";
 
 export default function App() {
   const roomId = "{% ROOM_ID %}";
+  const publicApiKey = "{% LIVEBLOCKS_PUBLIC_KEY %}";
 
   return (
-    <LiveblocksProvider publicApiKey="{% LIVEBLOCKS_PUBLIC_KEY %}">
+    <LiveblocksProvider publicApiKey={publicApiKey}>
       <CollaborativeApplication />
     </LiveblocksProvider>
   );

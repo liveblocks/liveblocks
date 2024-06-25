@@ -7,9 +7,10 @@ import { Room } from "./Room";
 
 export default function App() {
   const roomId = "{% ROOM_ID %}";
+  const publicApiKey = "{% LIVEBLOCKS_PUBLIC_KEY %}";
 
   return (
-    <LiveblocksProvider publicApiKey="{% LIVEBLOCKS_PUBLIC_KEY %}">
+    <LiveblocksProvider publicApiKey={publicApiKey}>
       <RoomProvider id={roomId} initialPresence={{ cursor: null }}>
         <ClientSideSuspense fallback={<div>Loading…</div>}>
           <Room />
