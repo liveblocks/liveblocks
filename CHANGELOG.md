@@ -12,6 +12,10 @@
 - Add new hook `useStorageStatus()`, which returns the current storage status of
   the room, and will re-render your component whenever it changes. This can used
   to build "Saving..." UIs.
+- Add new `isStorageReady` property to `useMutation`'s first callback argument.
+  You can use this new property if you’re running into the
+  `Error: This mutation cannot be used until Storage has loaded` error. (For
+  example, to decide to make your mutation a no-op.)
 
 ## v2.0.5
 

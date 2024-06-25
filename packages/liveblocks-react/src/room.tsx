@@ -47,6 +47,7 @@ import {
   makeEventSource,
   makePoller,
   NotificationsApiError,
+  raise,
   removeReaction,
   ServerMsgCode,
   stringify,
@@ -168,13 +169,24 @@ function makeMutationContext<
 >(room: Room<P, S, U, E, M>): MutationContext<P, S, U> {
   const cannotUseUntil = "This mutation cannot be used until";
   const needsPresence = `${cannotUseUntil} connected to the Liveblocks room`;
-  const needsStorage = `${cannotUseUntil} storage has been loaded`;
+  const needsStorage = `${cannotUseUntil} Storage has loaded. Hint: check \`({ isStorageReady })\` before accessing \`storage\``;
 
   return {
+    get isStorageReady() {
+      return room.getStorageSnapshot() !== null;
+    },
+
     get storage() {
       const mutableRoot = room.getStorageSnapshot();
       if (mutableRoot === null) {
-        throw new Error(needsStorage);
+        return new Proxy({} as LiveObject<S>, {
+          get() {
+            raise(needsStorage);
+          },
+          set() {
+            raise(needsStorage);
+          },
+        });
       }
       return mutableRoot;
     },
@@ -188,11 +200,10 @@ function makeMutationContext<
     },
 
     get others() {
-      const others = room.getOthers();
       if (room.getSelf() === null) {
         throw new Error(needsPresence);
       }
-      return others;
+      return room.getOthers();
     },
 
     setMyPresence: room.updatePresence,
