@@ -87,6 +87,7 @@ export function composerBodyToCommentBody(body: ComposerBody): CommentBody {
     version: 1,
     content: body
       .map((block) => {
+        // All root blocks are paragraphs at the moment
         if (block.type !== "paragraph") {
           return null;
         }
@@ -131,6 +132,7 @@ export function commentBodyToComposerBody(body: CommentBody): ComposerBody {
 
   return body.content
     .map((block) => {
+      // All root blocks are paragraphs at the moment
       if (block.type !== "paragraph") {
         return null;
       }
