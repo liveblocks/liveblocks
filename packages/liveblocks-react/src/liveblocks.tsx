@@ -181,7 +181,7 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
   const store = internals.cacheStore;
   const notifications = internals.notifications;
 
-  let fetchInboxNotificationsRequest: Promise<{
+  let fetchInboxNotifications$: Promise<{
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<M>[];
     deletedThreads: ThreadDeleteInfo[];
@@ -215,8 +215,8 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
   async function fetchInboxNotifications(
     { retryCount }: { retryCount: number } = { retryCount: 0 }
   ) {
-    if (fetchInboxNotificationsRequest !== null) {
-      return fetchInboxNotificationsRequest;
+    if (fetchInboxNotifications$ !== null) {
+      return fetchInboxNotifications$;
     }
 
     store.setQueryState(INBOX_NOTIFICATIONS_QUERY, {
@@ -224,9 +224,9 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
     });
 
     try {
-      fetchInboxNotificationsRequest = notifications.getInboxNotifications();
+      fetchInboxNotifications$ = notifications.getInboxNotifications();
 
-      const result = await fetchInboxNotificationsRequest;
+      const result = await fetchInboxNotifications$;
 
       store.updateThreadsAndNotifications(
         result.threads,
@@ -251,7 +251,7 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
 
       poller.start(POLLING_INTERVAL);
     } catch (er) {
-      fetchInboxNotificationsRequest = null;
+      fetchInboxNotifications$ = null;
 
       // Retry the action using the exponential backoff algorithm
       retryError(() => {
