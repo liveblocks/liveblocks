@@ -4,6 +4,9 @@ import { relative } from "path";
 import { Project, Node, SyntaxKind } from "ts-morph";
 import { sorted } from "itertools";
 
+// Configuration
+const ALLOW_NO_JSDOCS = ["MutationContext", "UseThreadsOptions"];
+
 let numIssues = 0;
 
 type Location = {
@@ -146,13 +149,15 @@ function yellow(text: string | number): string {
 // Warn about any symbols that aren't documented yet
 for (const sym of [...classicExports, ...suspenseExports]) {
   if (!sym.jsDoc) {
-    warn(
-      formatLocation(sym),
-      "Symbol",
-      blue(sym.name),
-      "has no JSDoc comment",
-      "💬"
-    );
+    if (!ALLOW_NO_JSDOCS.includes(sym.name)) {
+      warn(
+        formatLocation(sym),
+        "Symbol",
+        blue(sym.name),
+        "has no JSDoc comment",
+        "💬"
+      );
+    }
   }
 }
 
