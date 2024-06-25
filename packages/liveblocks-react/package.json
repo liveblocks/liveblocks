@@ -41,7 +41,7 @@
     "start": "tsup --watch",
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "lint": "eslint src/",
-    "lint:package": "publint --strict && attw --pack",
+    "lint:package": "publint --strict && attw --pack && bun ../../scripts/check-exports.ts",
     "test": "jest --silent --verbose --color=always",
     "test:types": "ls test-d/* | xargs -n1 tsd --files",
     "test:watch": "jest --silent --verbose --color=always --watch"
