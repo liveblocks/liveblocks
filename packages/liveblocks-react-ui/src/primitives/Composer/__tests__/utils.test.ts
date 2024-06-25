@@ -510,7 +510,7 @@ const composerBodyToCommentBodyFixtures: [string, ComposerBody, CommentBody][] =
         content: [],
       },
     ],
-    // // ===========================================================
+    // ===========================================================
     [
       "a composer body with an unknown inline element",
       // ---------------------------------------------------------
@@ -528,6 +528,48 @@ const composerBodyToCommentBodyFixtures: [string, ComposerBody, CommentBody][] =
           {
             type: "paragraph",
             children: [],
+          },
+        ],
+      },
+    ],
+    // ===========================================================
+    [
+      "a composer body with rich inlines inside a link element",
+      // ---------------------------------------------------------
+      [
+        {
+          type: "paragraph",
+          children: [
+            {
+              type: "custom-link",
+              url: "https://liveblocks.io",
+              children: [
+                {
+                  text: "Live",
+                },
+                {
+                  text: "blocks",
+                  bold: true,
+                  italic: true,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      // ---------------------------------------------------------
+      {
+        version: 1,
+        content: [
+          {
+            type: "paragraph",
+            children: [
+              {
+                type: "link",
+                url: "https://liveblocks.io",
+                text: "Liveblocks",
+              },
+            ],
           },
         ],
       },
