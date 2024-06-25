@@ -85,34 +85,40 @@ export function commentBodyLinkToComposerBodyLink(
 export function composerBodyToCommentBody(body: ComposerBody): CommentBody {
   return {
     version: 1,
-    content: body.map((block) => {
-      const children = block.children
-        .map((inline) => {
-          if (isComposerBodyMention(inline)) {
-            return composerBodyMentionToCommentBodyMention(inline);
-          }
-
-          if (isComposerBodyAutoLink(inline)) {
-            return composerBodyAutoLinkToCommentBodyLink(inline);
-          }
-
-          if (isComposerBodyCustomLink(inline)) {
-            return composerBodyCustomLinkToCommentBodyLink(inline);
-          }
-
-          if (isText(inline)) {
-            return inline as CommentBodyText;
-          }
-
+    content: body
+      .map((block) => {
+        if (block.type !== "paragraph") {
           return null;
-        })
-        .filter(exists);
+        }
 
-      return {
-        ...block,
-        children,
-      };
-    }),
+        const children = block.children
+          .map((inline) => {
+            if (isComposerBodyMention(inline)) {
+              return composerBodyMentionToCommentBodyMention(inline);
+            }
+
+            if (isComposerBodyAutoLink(inline)) {
+              return composerBodyAutoLinkToCommentBodyLink(inline);
+            }
+
+            if (isComposerBodyCustomLink(inline)) {
+              return composerBodyCustomLinkToCommentBodyLink(inline);
+            }
+
+            if (isText(inline)) {
+              return inline as CommentBodyText;
+            }
+
+            return null;
+          })
+          .filter(exists);
+
+        return {
+          ...block,
+          children,
+        };
+      })
+      .filter(exists),
   };
 }
 
