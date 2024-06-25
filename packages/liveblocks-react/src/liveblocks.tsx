@@ -238,7 +238,7 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
 
       /**
        * We set the `lastRequestedAt` to the timestamp returned by the current request if:
-       * 1. The `lastRequestedAt`has not been set
+       * 1. The `lastRequestedAt` has not been set
        * OR
        * 2. The current `lastRequestedAt` is older than the timestamp returned by the current request
        */
