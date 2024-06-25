@@ -2815,6 +2815,7 @@ const _useThreadsSuspense: TypedBundle["suspense"]["useThreads"] =
  */
 const _useOther: TypedBundle["useOther"] = useOther;
 
+// TODO This one is tricky, as it has overloads
 const _useOthers: TypedBundle["useOthers"] = useOthers;
 
 /**
@@ -2828,6 +2829,7 @@ const _useOthers: TypedBundle["useOthers"] = useOthers;
  */
 const _useOtherSuspense: TypedBundle["suspense"]["useOther"] = useOtherSuspense;
 
+// TODO This one is tricky, as it has overloads
 const _useOthersSuspense: TypedBundle["suspense"]["useOthers"] =
   useOthersSuspense;
 
@@ -2874,8 +2876,10 @@ const _useStorage: TypedBundle["useStorage"] = useStorage;
 const _useStorageSuspense: TypedBundle["suspense"]["useStorage"] =
   useStorageSuspense;
 
+// TODO This one is tricky, as it has overloads
 const _useSelf: TypedBundle["useSelf"] = useSelf;
 
+// TODO This one is tricky, as it has overloads
 const _useSelfSuspense: TypedBundle["suspense"]["useSelf"] = useSelfSuspense;
 
 /**
