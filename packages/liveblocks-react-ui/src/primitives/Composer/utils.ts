@@ -123,30 +123,36 @@ export function commentBodyToComposerBody(body: CommentBody): ComposerBody {
     return emptyComposerBody;
   }
 
-  return body.content.map((block) => {
-    const children = block.children
-      .map((inline) => {
-        if (isCommentBodyMention(inline)) {
-          return commentBodyMentionToComposerBodyMention(inline);
-        }
-
-        if (isCommentBodyLink(inline)) {
-          return commentBodyLinkToComposerBodyLink(inline);
-        }
-
-        if (isCommentBodyText(inline)) {
-          return inline as ComposerBodyText;
-        }
-
+  return body.content
+    .map((block) => {
+      if (block.type !== "paragraph") {
         return null;
-      })
-      .filter(exists);
+      }
 
-    return {
-      ...block,
-      children,
-    };
-  });
+      const children = block.children
+        .map((inline) => {
+          if (isCommentBodyMention(inline)) {
+            return commentBodyMentionToComposerBodyMention(inline);
+          }
+
+          if (isCommentBodyLink(inline)) {
+            return commentBodyLinkToComposerBodyLink(inline);
+          }
+
+          if (isCommentBodyText(inline)) {
+            return inline as ComposerBodyText;
+          }
+
+          return null;
+        })
+        .filter(exists);
+
+      return {
+        ...block,
+        children,
+      };
+    })
+    .filter(exists);
 }
 
 export function getPlacementFromPosition(
