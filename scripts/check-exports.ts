@@ -7,6 +7,32 @@ import { sorted } from "itertools";
 // Configuration
 const ALLOW_NO_JSDOCS = ["MutationContext", "UseThreadsOptions"];
 
+// Add any hooks here that are allowed to have a different doc string between
+// their classic and suspense versions! Because... they're actually different!
+// TODO Expand to still enforce a certain similarity percentage maybe later?
+const ALLOW_DIFFERENT_JSDOCS = [
+  "useInboxNotifications",
+  "useRoomInfo",
+  "useSelf",
+  "useThreads",
+  "useUnreadInboxNotificationsCount",
+  "useUser",
+];
+
+/**
+ * Any exported symbols are by default expected to be exported from both
+ * ./index and ./suspense subpaths.
+ *
+ * Note that this requirement is not needed if the exported symbol is marked
+ * "private".
+ *
+ * To make an exception for public APIs here, add it to this list.
+ */
+const CLASSIC_ONLY = ["createLiveblocksContext", "createRoomContext"];
+const SUSPENSE_ONLY = [];
+
+// -------------------------------------------------------------------------------------
+
 let numIssues = 0;
 
 type Location = {
@@ -181,15 +207,6 @@ function difference<T>(xs: T[], ys: T[]): T[] {
   return result;
 }
 
-/**
- * Any symbol is by default expected to be exported in both ./index and
- * ./suspense. This isn't needed if the exported symbol has an @-private
- * directive.
- *
- * These symbols are expected to only exist in ./index, but not in ./suspense subpath.
- */
-const CLASSIC_ONLY = ["createLiveblocksContext", "createRoomContext"];
-
 // Warn about any symbols that aren't documented yet
 const classicNames = classicExports.map((e) => e.name);
 const suspenseNames = suspenseExports.map((e) => e.name);
@@ -216,6 +233,11 @@ for (const name of difference(classicNames, suspenseNames)) {
 }
 
 for (const name of difference(suspenseNames, classicNames)) {
+  if (SUSPENSE_ONLY.includes(name)) {
+    // Skip known suspense-only symbols
+    continue;
+  }
+
   const sym = suspenseExports.find((x) => x.name === name)!;
   if (isPrivate(sym)) {
     // Skip check: @private-symbols are not required to have both exports
@@ -236,12 +258,36 @@ for (const name of intersection(suspenseNames, classicNames)) {
   const sym2 = suspenseExports.find((x) => x.name === name)!;
 
   if (sym1.jsDoc !== sym2.jsDoc) {
+    if (ALLOW_DIFFERENT_JSDOCS.includes(name)) {
+      continue;
+    }
+
     warn(
       "Symbol",
       blue(name),
-      "has different doc strings for classic vs suspense"
-      // TODO: Show diff here?
+      "has different doc strings for classic vs suspense!"
     );
+    console.warn(
+      [
+        "    -------------------------------------------------",
+        sym1.jsDoc
+          .split("\n")
+          .map((line) => `    [classic]  ${line}`)
+          .join("\n"),
+        "    -------------------------------------------------",
+        sym2.jsDoc
+          .split("\n")
+          .map((line) => `    [suspense] ${line}`)
+          .join("\n"),
+        "    -------------------------------------------------",
+      ]
+        .flatMap((comment) => comment.split("\n"))
+        .join("\n")
+    );
+    console.warn(
+      "Either fix this, or allow it by adding this symbol to ALLOW_DIFFERENT_JSDOCS."
+    );
+    console.warn();
   }
 }
 
