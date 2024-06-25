@@ -39,8 +39,43 @@ function normalizeCommentText(rawText: string): string {
 
 // Function to extract JSDoc comments from a node
 function getJSDoc(node: Node): string {
-  return node
-    .getChildrenOfKind(SyntaxKind.JSDoc)
+  //
+  // If node is a VariableDeclaration, then the JSDoc will not be associated to
+  // it directly. Instead, the AST looks like:
+  //
+  //   VariableStatement              👈 This is where the JSDoc is attached typically
+  //   -> VariableDeclarationList
+  //      -> VariableDeclaration      👈 ...but we're here, so we'll have to walk up a bit
+  //
+  if (node.getKind() === SyntaxKind.VariableDeclaration) {
+    node = node.getParentWhileOrThrow(
+      (_parent, child) => child.getKind() !== SyntaxKind.VariableStatement
+    );
+  }
+
+  const jsDocBlocks = node.getChildrenOfKind(SyntaxKind.JSDoc);
+  // if (node.getText(true).includes("const RoomContext")) {
+  //   for (const block of jsDocBlocks) {
+  //     console.log({
+  //       formattext: block.formatText(),
+  //       gettext: block.getText(),
+  //       getfulltext: block.getFullText(),
+  //       getcomment: block.getComment(),
+  //       getdescription: block.getDescription(),
+  //       getindentationtext: block.getIndentationText(),
+  //       // gettags: j.getTags(),
+  //       // gettype: j.getType(),
+  //       getcommenttext: block.getCommentText(),
+  //       rv: jsDocBlocks
+  //         .map((block) => normalizeCommentText(block.getText()))
+  //         .filter(Boolean)
+  //         .join("\n\n")
+  //         .trim(),
+  //     });
+  //   }
+  // }
+
+  return jsDocBlocks
     .map((block) => normalizeCommentText(block.getText()))
     .filter(Boolean)
     .join("\n\n")
@@ -55,11 +90,12 @@ function* iterExports(filePath: string): Generator<ExportedSymbol> {
 
   const sourceFile = project.addSourceFileAtPath(filePath);
 
-  const exports = sorted(sourceFile.getExportedDeclarations(), ([name]) =>
-    name.toLowerCase()
+  const exportedDeclarations = sorted(
+    sourceFile.getExportedDeclarations(),
+    ([name]) => name.toLowerCase()
   );
 
-  for (const [name, declarations] of exports) {
+  for (const [name, declarations] of exportedDeclarations) {
     for (const decl of declarations) {
       const jsDoc = getJSDoc(decl);
       yield {
