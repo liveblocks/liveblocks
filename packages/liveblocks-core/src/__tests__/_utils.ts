@@ -186,13 +186,12 @@ export async function prepareRoomWithStorage<
   defaultStorage?: S,
   scopes: string[] = ["room:write"]
 ) {
-  const { room, wss } = await prepareRoomWithStorage_loadWithDelay<
-    P,
-    S,
-    U,
-    E,
-    M
-  >(items, actor, defaultStorage, scopes);
+  const { room, wss } = prepareRoomWithStorage_loadWithDelay<P, S, U, E, M>(
+    items,
+    actor,
+    defaultStorage,
+    scopes
+  );
 
   const storage = await room.getStorage();
   return { storage, room, wss };

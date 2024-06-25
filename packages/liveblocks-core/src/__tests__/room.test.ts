@@ -2572,7 +2572,7 @@ describe("room", () => {
     });
 
     test("storage-ready promise", async () => {
-      const { room } = await prepareRoomWithStorage_loadWithDelay(
+      const { room } = prepareRoomWithStorage_loadWithDelay(
         [["root", { type: CrdtType.OBJECT, data: {} }]],
         undefined,
         undefined,
