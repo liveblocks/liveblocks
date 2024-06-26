@@ -152,6 +152,7 @@ export class WebhookHandler {
         "threadDeleted",
         "ydocUpdated",
         "notification",
+        "threadResolvedUpdated",
       ].includes(event.type)
     ) {
       if (event.type === "notification") {
@@ -222,6 +223,7 @@ type WebhookEvent =
   | NotificationEvent
   | ThreadCreatedEvent
   | ThreadDeletedEvent
+  | ThreadResolvedUpdatedEvent
   | YDocUpdatedEvent;
 
 type StorageUpdatedEvent = {
@@ -436,6 +438,22 @@ type ThreadDeletedEvent = {
   };
 };
 
+type ThreadResolvedUpdatedEvent = {
+  type: "threadResolvedUpdated";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    updatedAt: string;
+    /**
+     * ISO 8601 datestring
+     * @example "2021-03-01T12:00:00.000Z"
+     */
+    updatedBy: string;
+    resolved: boolean;
+  };
+};
+
 type ThreadNotificationEvent = {
   type: "notification";
   data: {
@@ -513,6 +531,7 @@ export type {
   ThreadDeletedEvent,
   ThreadMetadataUpdatedEvent,
   ThreadNotificationEvent,
+  ThreadResolvedUpdatedEvent,
   UserEnteredEvent,
   UserLeftEvent,
   WebhookEvent,
