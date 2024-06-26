@@ -31,13 +31,13 @@ module.exports = {
         selector:
           "ImportDeclaration[source.value='react'] ImportSpecifier[imported.name='useId']",
         message:
-          "useId is only available on React >=18. Import it from 'src/utils/use-id' instead.",
+          "useId is only available on React >=18. Import it from '/src/utils/use-id' instead.",
       },
       {
         selector:
           "ImportDeclaration[source.value='react'] ImportSpecifier[imported.name='useTransition']",
         message:
-          "useTransition is only available on React >=18. Import it from 'src/utils/use-transition' instead.",
+          "useTransition is only available on React >=18. Import it from '/src/utils/use-transition' instead.",
       },
     ],
 
