@@ -13,6 +13,7 @@
   the room, and will re-render your component whenever it changes. This can used
   to build "Saving..." UIs.
 - Add missing JSDoc comments
+- Improve some error messages and stack traces to contain more info
 
 ## v2.0.5
 

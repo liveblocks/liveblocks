@@ -69,7 +69,7 @@ describe("useRoomInfo", () => {
     expect(result.current.roomInfo).toEqual({
       isLoading: false,
       error: new Error(
-        "resolveRoomsInfo didn't return anything for this room ID."
+        "resolveRoomsInfo didn't return anything for room 'abc'"
       ),
     });
 
@@ -313,7 +313,7 @@ describe("useRoomInfo", () => {
     expect(result.current.roomInfo).toEqual({
       isLoading: false,
       error: new Error(
-        "resolveRoomsInfo didn't return anything for this room ID."
+        "resolveRoomsInfo didn't return anything for room 'abc'"
       ),
     });
 
@@ -353,7 +353,7 @@ describe("useRoomInfo", () => {
     expect(result.current.roomInfoAbc).toEqual({
       isLoading: false,
       error: new Error(
-        "resolveRoomsInfo didn't return anything for this room ID."
+        "resolveRoomsInfo didn't return anything for room 'abc'"
       ),
     });
 
