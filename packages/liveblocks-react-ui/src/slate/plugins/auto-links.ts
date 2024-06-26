@@ -2,7 +2,7 @@ import type { NodeEntry, Text } from "slate";
 import { Editor, Element, Node, Path, Range, Transforms } from "slate";
 
 import type { ComposerBodyAutoLink } from "../../types";
-import { isText } from "../utils/is-text";
+import { isPlainText, isText } from "../utils/is-text";
 import { isComposerBodyCustomLink } from "./custom-links";
 
 /**
@@ -21,7 +21,7 @@ export function withAutoLinks(editor: Editor): Editor {
   editor.normalizeNode = (entry) => {
     const [node, path] = entry;
 
-    // Prevent auto-links from being nested inside custom links
+    // Prevent auto links from being created inside custom links
     if (isComposerBodyCustomLink(node)) {
       return;
     }
@@ -29,12 +29,19 @@ export function withAutoLinks(editor: Editor): Editor {
     if (isText(node)) {
       const parentNode = Node.parent(editor, path);
 
-      // Prevent auto-links from being nested inside custom links
+      // Prevent auto links from being created inside custom links
       if (isComposerBodyCustomLink(parentNode)) {
         return;
       } else if (isComposerBodyAutoLink(parentNode)) {
         const parentPath = Path.parent(path);
         handleLinkEdit(editor, [parentNode, parentPath]);
+
+        // Prevent rich text within auto links by removing all marks of inner text nodes
+        if (!isPlainText(node)) {
+          const marks = Object.keys(node).filter((key) => key !== "text");
+
+          Transforms.unsetNodes(editor, marks, { at: path });
+        }
       } else {
         handleLinkCreate(editor, [node, path]);
         handleNeighbours(editor, [node, path]);

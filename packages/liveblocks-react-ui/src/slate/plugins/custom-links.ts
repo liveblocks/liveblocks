@@ -1,5 +1,5 @@
-import type { Editor, Node } from "slate";
-import { Element, Range, Transforms } from "slate";
+import type { Editor } from "slate";
+import { Element, Node, Range, Transforms } from "slate";
 
 import type { ComposerBodyCustomLink } from "../../types";
 import { isPlainText, isText } from "../utils/is-text";
@@ -15,10 +15,29 @@ function isUrl(string: string) {
 }
 
 export function withCustomLinks(editor: Editor): Editor {
-  const { isInline, insertData } = editor;
+  const { isInline, normalizeNode, insertData } = editor;
 
   editor.isInline = (element) => {
     return element.type === "custom-link" ? true : isInline(element);
+  };
+
+  editor.normalizeNode = (entry) => {
+    const [node, path] = entry;
+
+    if (isText(node)) {
+      const parentNode = Node.parent(editor, path);
+
+      // Prevent rich text within custom links by removing all marks of inner text nodes
+      if (isComposerBodyCustomLink(parentNode)) {
+        if (!isPlainText(node)) {
+          const marks = Object.keys(node).filter((key) => key !== "text");
+
+          Transforms.unsetNodes(editor, marks, { at: path });
+        }
+      }
+    }
+
+    normalizeNode(entry);
   };
 
   // Create custom links when pasting URLs while some text is selected

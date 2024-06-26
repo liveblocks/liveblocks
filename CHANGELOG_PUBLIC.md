@@ -182,6 +182,7 @@ For full upgrade instructions and codemods, see the
   everyone.
 
 ## Dashboard
+
 - Show Lexical information in rooms that use the new Lexical plugin.
 
 ## Contributors
@@ -921,7 +922,7 @@ leave();
 
 ## `@liveblocks/react-comments`
 
-- Add support for auto-links. (e.g. `"www.liveblocks.io"`)
+- Add support for auto links. (e.g. `"www.liveblocks.io"`)
 
 # v1.3.2
 
