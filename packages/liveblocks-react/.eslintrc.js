@@ -11,18 +11,36 @@ module.exports = {
     "no-restricted-syntax": [
       "error",
       ...commonRestrictedSyntax,
-      // TODO: Enable the following error once React 19 is released and our polyfill is ready
-      // {
-      //   selector:
-      //     "ImportDeclaration[source.value='react'] ImportSpecifier[imported.name='use']",
-      //   message:
-      //     "use is only available on React >=19. Import it from '/src/lib/use-polyfill' instead.",
-      // },
+      {
+        selector:
+          "ImportDeclaration[source.value='react'] ImportSpecifier[imported.name='use']",
+        message: "use is only available on React >=19.",
+      },
       {
         selector:
           "ImportDeclaration[source.value='react'] ImportSpecifier[imported.name='useSyncExternalStore']",
         message:
           "useSyncExternalStore is only available on React >=18. Import it from 'use-sync-external-store/shim/index.js' instead.",
+      },
+      {
+        selector:
+          "ImportDeclaration[source.value='react'] ImportSpecifier[imported.name='useId']",
+        message: "useId is only available on React >=18.",
+      },
+      {
+        selector:
+          "ImportDeclaration[source.value='react'] ImportSpecifier[imported.name='useTransition']",
+        message: "useTransition is only available on React >=18.",
+      },
+      {
+        selector:
+          "ImportDeclaration[source.value='react'] ImportSpecifier[imported.name='useDeferredValue']",
+        message: "useDeferredValue is only available on React >=18.",
+      },
+      {
+        selector:
+          "ImportDeclaration[source.value='react'] ImportSpecifier[imported.name='useInsertionEffect']",
+        message: "useInsertionEffect is only available on React >=18.",
       },
     ],
 

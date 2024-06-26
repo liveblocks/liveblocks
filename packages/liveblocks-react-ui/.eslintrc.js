@@ -23,6 +23,11 @@ module.exports = {
       ...commonRestrictedSyntax,
       {
         selector:
+          "ImportDeclaration[source.value='react'] ImportSpecifier[imported.name='use']",
+        message: "use is only available on React >=19.",
+      },
+      {
+        selector:
           "ImportDeclaration[source.value='react'] ImportSpecifier[imported.name='useSyncExternalStore']",
         message:
           "useSyncExternalStore is only available on React >=18. Import it from 'use-sync-external-store/shim/index.js' instead.",
@@ -38,6 +43,16 @@ module.exports = {
           "ImportDeclaration[source.value='react'] ImportSpecifier[imported.name='useTransition']",
         message:
           "useTransition is only available on React >=18. Import it from '/src/utils/use-transition' instead.",
+      },
+      {
+        selector:
+          "ImportDeclaration[source.value='react'] ImportSpecifier[imported.name='useDeferredValue']",
+        message: "useDeferredValue is only available on React >=18.",
+      },
+      {
+        selector:
+          "ImportDeclaration[source.value='react'] ImportSpecifier[imported.name='useInsertionEffect']",
+        message: "useInsertionEffect is only available on React >=18.",
       },
     ],
 
