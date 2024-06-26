@@ -2710,8 +2710,13 @@ const _useEditThreadMetadata: TypedBundle["useEditThreadMetadata"] =
  * useEventListener is a React hook that allows you to respond to events broadcast
  * by other users in the room.
  *
+ * The `user` argument will indicate which `User` instance sent the message.
+ * This will be equal to one of the others in the room, but it can be `null`
+ * in case this event was broadcasted from the server.
+ *
  * @example
- * useEventListener(({ connectionId, event }) => {
+ * useEventListener(({ event, user, connectionId }) => {
+ * //                         ^^^^ Will be Client A
  *   if (event.type === "CUSTOM_EVENT") {
  *     // Do something
  *   }
