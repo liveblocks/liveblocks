@@ -14,6 +14,10 @@
   to build "Saving..." UIs.
 - Add missing JSDoc comments
 
+### `@liveblocks/react-ui`
+
+- Fix improper `useSyncExternalStore` import which would break on React <18.
+
 ## v2.0.5
 
 ### `@liveblocks/react`
