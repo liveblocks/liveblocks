@@ -18,7 +18,28 @@ module.exports = {
     // -------------------------------
     // Custom syntax we want to forbid
     // -------------------------------
-    "no-restricted-syntax": ["error", ...commonRestrictedSyntax],
+    "no-restricted-syntax": [
+      "error",
+      ...commonRestrictedSyntax,
+      {
+        selector:
+          "ImportDeclaration[source.value='react'] ImportSpecifier[imported.name='useSyncExternalStore']",
+        message:
+          "useSyncExternalStore is only available on React >=18. Import it from 'use-sync-external-store/shim/index.js' instead.",
+      },
+      {
+        selector:
+          "ImportDeclaration[source.value='react'] ImportSpecifier[imported.name='useId']",
+        message:
+          "useId is only available on React >=18. Import it from 'src/utils/use-id' instead.",
+      },
+      {
+        selector:
+          "ImportDeclaration[source.value='react'] ImportSpecifier[imported.name='useTransition']",
+        message:
+          "useTransition is only available on React >=18. Import it from 'src/utils/use-transition' instead.",
+      },
+    ],
 
     // ----------------------------------------------------------------------
     // Overrides from default rule config used in all other projects!
