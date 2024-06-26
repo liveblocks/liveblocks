@@ -82,29 +82,8 @@ function getJSDoc(node: Node): string {
     );
   }
 
-  const jsDocBlocks = node.getChildrenOfKind(SyntaxKind.JSDoc);
-  // if (node.getText(true).includes("const RoomContext")) {
-  //   for (const block of jsDocBlocks) {
-  //     console.log({
-  //       formattext: block.formatText(),
-  //       gettext: block.getText(),
-  //       getfulltext: block.getFullText(),
-  //       getcomment: block.getComment(),
-  //       getdescription: block.getDescription(),
-  //       getindentationtext: block.getIndentationText(),
-  //       // gettags: j.getTags(),
-  //       // gettype: j.getType(),
-  //       getcommenttext: block.getCommentText(),
-  //       rv: jsDocBlocks
-  //         .map((block) => normalizeCommentText(block.getText()))
-  //         .filter(Boolean)
-  //         .join("\n\n")
-  //         .trim(),
-  //     });
-  //   }
-  // }
-
-  return jsDocBlocks
+  return node
+    .getChildrenOfKind(SyntaxKind.JSDoc)
     .map((block) => normalizeCommentText(block.getText()))
     .filter(Boolean)
     .join("\n\n")
