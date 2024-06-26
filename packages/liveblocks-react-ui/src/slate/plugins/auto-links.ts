@@ -3,6 +3,7 @@ import { Editor, Element, Node, Path, Range, Transforms } from "slate";
 
 import type { ComposerBodyAutoLink } from "../../types";
 import { isText } from "../utils/is-text";
+import { isComposerBodyCustomLink } from "./custom-links";
 
 /**
  * This implementation is inspired by Lexical's AutoLink plugin.
@@ -20,10 +21,18 @@ export function withAutoLinks(editor: Editor): Editor {
   editor.normalizeNode = (entry) => {
     const [node, path] = entry;
 
+    // Prevent auto-links from being nested inside custom links
+    if (isComposerBodyCustomLink(node)) {
+      return;
+    }
+
     if (isText(node)) {
       const parentNode = Node.parent(editor, path);
 
-      if (isComposerBodyAutoLink(parentNode)) {
+      // Prevent auto-links from being nested inside custom links
+      if (isComposerBodyCustomLink(parentNode)) {
+        return;
+      } else if (isComposerBodyAutoLink(parentNode)) {
         const parentPath = Path.parent(path);
         handleLinkEdit(editor, [parentNode, parentPath]);
       } else {
