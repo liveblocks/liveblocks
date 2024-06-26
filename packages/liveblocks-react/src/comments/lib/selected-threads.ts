@@ -7,6 +7,9 @@ import {
 
 import type { UseThreadsOptions } from "../../types";
 
+/**
+ * @private Do not rely on this internal API.
+ */
 export function selectedThreads<M extends BaseMetadata>(
   roomId: string,
   state: CacheState<M>,

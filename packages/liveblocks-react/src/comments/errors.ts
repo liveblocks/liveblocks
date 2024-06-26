@@ -1,5 +1,8 @@
 import type { BaseMetadata, CommentBody, Patchable } from "@liveblocks/core";
 
+/**
+ * @private Internal API, do not rely on it.
+ */
 export class CreateThreadError<M extends BaseMetadata> extends Error {
   constructor(
     public cause: Error,

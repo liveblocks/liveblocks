@@ -490,8 +490,13 @@ type RoomContextBundleCommon<
    * useEventListener is a React hook that allows you to respond to events broadcast
    * by other users in the room.
    *
+   * The `user` argument will indicate which `User` instance sent the message.
+   * This will be equal to one of the others in the room, but it can be `null`
+   * in case this event was broadcasted from the server.
+   *
    * @example
-   * useEventListener(({ connectionId, event }) => {
+   * useEventListener(({ event, user, connectionId }) => {
+   * //                         ^^^^ Will be Client A
    *   if (event.type === "CUSTOM_EVENT") {
    *     // Do something
    *   }
@@ -574,10 +579,9 @@ type RoomContextBundleCommon<
    * The first argument that gets passed into your callback will be
    * a "mutation context", which exposes the following:
    *
-   *   - `root` - The mutable Storage root.
-   *              You can normal mutation on Live structures with this, for
-   *              example: root.get('layers').get('layer1').set('fill',
-   *              'red')
+   *   - `storage` - The mutable Storage root.
+   *                 You can mutate any Live structures with this, for example:
+   *                 `storage.get('layers').get('layer1').set('fill', 'red')`
    *
    *   - `setMyPresence` - Call this with a new (partial) Presence value.
    *
@@ -591,11 +595,11 @@ type RoomContextBundleCommon<
    * that gets passed into your callback will be a "mutation context".
    *
    * If you want get access to the immutable root somewhere in your mutation,
-   * you can use `root.ToImmutable()`.
+   * you can use `storage.ToImmutable()`.
    *
    * @example
    * const fillLayers = useMutation(
-   *   ({ root }, color: Color) => {
+   *   ({ storage }, color: Color) => {
    *     ...
    *   },
    *   [],
@@ -604,7 +608,7 @@ type RoomContextBundleCommon<
    * fillLayers('red');
    *
    * const deleteLayers = useMutation(
-   *   ({ root }) => {
+   *   ({ storage }) => {
    *     ...
    *   },
    *   [],
