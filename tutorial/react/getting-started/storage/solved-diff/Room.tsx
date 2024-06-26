@@ -1,4 +1,4 @@
-import { useStorage } from "./liveblocks.config";
+import { useStorage } from "@liveblocks/react/suspense";
 
 export function Room() {
   const person = useStorage((root) => root.person);

@@ -1,4 +1,4 @@
-import { useMyPresence } from "./liveblocks.config";
+import { useMyPresence } from "@liveblocks/react/suspense";
 
 export function Room() {
   const [myPresence, updateMyPresence] = useMyPresence();

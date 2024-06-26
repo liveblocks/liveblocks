@@ -7,6 +7,12 @@ Storage allows us to create persistent data that multiple users can edit
 simultaneously. This is ideal for storing realtime document state, such as
 shapes on a canvas, paragraphs in a text editor, or cells in a spreadsheet.
 
+<Banner>
+
+Storage is part of our [Realtime APIs](/docs/products/realtime-apis) product.
+
+</Banner>
+
 ### Conflict-free data types
 
 To build applications using storage, you can make use of our conflict-free data
@@ -34,13 +40,13 @@ To add this to storage, first we must define our types. Open
 `person` as a generic.
 
 ```ts modifyTutorialFile="/liveblocks.config.ts"
-// Storage types
-type Storage = {
+// Storage type
+Storage: {
   person: LiveObject<{
     name: string;
     age: number;
   }>;
-};
+}
 ```
 
 Now we’ve defined the type, we can switch to [App.tsx][] and add an
@@ -76,7 +82,7 @@ JavaScript counterpart, so a `LiveObject` becomes a regular JavaScript object.
 We can implement this ourselves by adding the following code to [Room.tsx][]:
 
 ```tsx modifyTutorialFile="/Room.tsx"
-import { useStorage } from "./liveblocks.config";
+import { useStorage } from "@liveblocks/react/suspense";
 
 export function Room() {
   const person = useStorage((root) => root.person);

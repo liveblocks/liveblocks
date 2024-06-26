@@ -1,4 +1,4 @@
-import { useMyPresence, useOthers } from "./liveblocks.config";
+import { useMyPresence, useOthers } from "@liveblocks/react/suspense";
 import { Cursor } from "./Cursor";
 
 export function Room() {

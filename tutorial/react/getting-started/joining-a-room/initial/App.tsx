@@ -1,9 +1,17 @@
-import { RoomProvider } from "./liveblocks.config";
+import {
+  ClientSideSuspense,
+  LiveblocksProvider,
+  RoomProvider,
+} from "@liveblocks/react/suspense";
 import { Room } from "./Room";
-import { ClientSideSuspense } from "@liveblocks/react";
 
 export default function App() {
   const roomId = "{% ROOM_ID %}";
+  const publicApiKey = "{% LIVEBLOCKS_PUBLIC_KEY %}";
 
-  return <>Not in a room</>;
+  return (
+    <LiveblocksProvider publicApiKey={publicApiKey}>
+      <div>Not in a room</div>
+    </LiveblocksProvider>
+  );
 }
