@@ -53,12 +53,15 @@ import type {
  */
 export const ClientContext = createContext<OpaqueClient | null>(null);
 
-const missingUserError = new Error(
-  "resolveUsers didn't return anything for this user ID."
-);
-const missingRoomInfoError = new Error(
-  "resolveRoomsInfo didn't return anything for this room ID."
-);
+function missingUserError(userId: string) {
+  return new Error(`resolveUsers didn't return anything for user '${userId}'`);
+}
+
+function missingRoomInfoError(roomId: string) {
+  return new Error(
+    `resolveRoomsInfo didn't return anything for room '${roomId}'`
+  );
+}
 
 const _extras = new WeakMap<
   OpaqueClient,
@@ -616,7 +619,7 @@ function useUser_withClient<U extends BaseUserMeta>(
         // Return an error if `undefined` was returned by `resolveUsers` for this user ID
         error:
           !state.isLoading && !state.data && !state.error
-            ? missingUserError
+            ? missingUserError(userId)
             : state.error,
       } as UserState<U["info"]>)
     : { isLoading: true };
@@ -644,7 +647,7 @@ function useUserSuspense_withClient<U extends BaseUserMeta>(
 
   // Throw an error if `undefined` was returned by `resolveUsers` for this user ID
   if (!userState.data) {
-    throw missingUserError;
+    throw missingUserError(userId);
   }
 
   const state = useSyncExternalStore(
@@ -688,7 +691,7 @@ function useRoomInfo_withClient(
         // Return an error if `undefined` was returned by `resolveRoomsInfo` for this room ID
         error:
           !state.isLoading && !state.data && !state.error
-            ? missingRoomInfoError
+            ? missingRoomInfoError(roomId)
             : state.error,
       } as RoomInfoState)
     : { isLoading: true };
@@ -713,7 +716,7 @@ function useRoomInfoSuspense_withClient(client: OpaqueClient, roomId: string) {
 
   // Throw an error if `undefined` was returned by `resolveRoomsInfo` for this room ID
   if (!roomInfoState.data) {
-    throw missingRoomInfoError;
+    throw missingRoomInfoError(roomId);
   }
 
   const state = useSyncExternalStore(
