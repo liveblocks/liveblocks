@@ -15,6 +15,10 @@
 - Add missing JSDoc comments
 - Improve some error messages and stack traces to contain more info
 
+### `@liveblocks/react-ui`
+
+- Fix improper `useSyncExternalStore` import which would break on React <18.
+
 ## v2.0.5
 
 ### `@liveblocks/react`
