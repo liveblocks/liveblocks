@@ -7,8 +7,9 @@ import type {
 } from "@liveblocks/client";
 import type { BaseMetadata, DE, DM, DP, DS, DU } from "@liveblocks/core";
 import { ClientMsgCode, detectDupes } from "@liveblocks/core";
+import { Base64 } from "js-base64";
 import { Observable } from "lib0/observable";
-import type * as Y from "yjs";
+import * as Y from "yjs";
 
 import { Awareness } from "./awareness";
 import yDocHandler from "./doc";
@@ -41,6 +42,8 @@ export class LiveblocksYjsProvider<
 
   public rootDocHandler: yDocHandler;
   public subdocHandlers: Map<string, yDocHandler> = new Map();
+
+  private pending: string[] = [];
 
   constructor(
     room: Room<P, S, U, E, M>,
@@ -77,14 +80,30 @@ export class LiveblocksYjsProvider<
           // don't apply updates that came from the client
           return;
         }
-        const { stateVector, update, guid } = message;
-        // find the right doc and update
-        if (guid !== undefined) {
-          this.subdocHandlers
-            .get(guid)
-            ?.handleServerUpdate({ update, stateVector });
-        } else {
-          this.rootDocHandler.handleServerUpdate({ update, stateVector });
+        const { stateVector, update: updateStr, guid } = message;
+        const update = Base64.toUint8Array(updateStr);
+        // we use base64 encoded version for comparison because otherwise we need to implement u8array equality
+        const updateVector = Base64.fromUint8Array(
+          Y.encodeStateVectorFromUpdateV2(update)
+        );
+        let foundPendingUpdate = false;
+        this.pending = this.pending.filter((pendingUpdate) => {
+          if (pendingUpdate === updateVector) {
+            foundPendingUpdate = true;
+            return false;
+          }
+          return true;
+        });
+        // if we found a pending update, we don't need to handle it
+        if (!foundPendingUpdate) {
+          // find the right doc and update
+          if (guid !== undefined) {
+            this.subdocHandlers
+              .get(guid)
+              ?.handleServerUpdate({ update, stateVector });
+          } else {
+            this.rootDocHandler.handleServerUpdate({ update, stateVector });
+          }
         }
       })
     );
@@ -126,8 +145,11 @@ export class LiveblocksYjsProvider<
     }
   };
 
-  private updateDoc = (update: string, guid?: string) => {
-    this.room.updateYDoc(update, guid);
+  private updateDoc = (update: Uint8Array, guid?: string) => {
+    this.pending.push(
+      Base64.fromUint8Array(Y.encodeStateVectorFromUpdateV2(update))
+    );
+    this.room.updateYDoc(Base64.fromUint8Array(update), guid);
   };
 
   private fetchDoc = (vector: string, guid?: string) => {
@@ -171,6 +193,12 @@ export class LiveblocksYjsProvider<
   // The sync'd property is required by some provider implementations
   get synced(): boolean {
     return this.rootDocHandler.synced;
+  }
+
+  public status(): "pending" | "synced" {
+    return this.rootDocHandler.synced && this.pending.length === 0
+      ? "synced"
+      : "pending";
   }
 
   destroy(): void {
