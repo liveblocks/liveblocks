@@ -18,12 +18,13 @@ import {
 } from "@floating-ui/react-dom";
 import BoldIcon from "./icons/bold-icon";
 import CommentIcon from "./icons/comment-icon";
-import { useChat } from "ai/react";
-import { usePreviousSelection, useSelection } from "./hooks";
+import { useSelection } from "./hooks";
+import { CoreMessage } from "ai";
+import { continueConversation } from "../actions/ai";
+import { readStreamableValue } from "ai/rsc";
 
 export default function FloatingToolbar() {
   const [editor] = useLexicalComposerContext();
-
   const [range, setRange] = useState<Range | null>(null);
 
   useEffect(() => {
@@ -70,6 +71,8 @@ function Toolbar({
   container: HTMLElement;
 }) {
   const padding = 20;
+  const [fullWidth, setFullWidth] = useState(false);
+  const [editor] = useLexicalComposerContext();
 
   const {
     refs: { setReference, setFloating },
@@ -102,15 +105,29 @@ function Toolbar({
   return createPortal(
     <div
       ref={setFloating}
-      style={{
-        position: strategy,
-        top: 0,
-        left: 0,
-        transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`,
-        minWidth: "max-content",
-      }}
+      style={
+        fullWidth && editor._rootElement
+          ? {
+              position: strategy,
+              top: 0,
+              left: editor._rootElement.getBoundingClientRect().left + 30,
+              transform: `translate3d(0, ${Math.round(y)}px, 0)`,
+              minWidth: "max-content",
+              width: editor._rootElement.getBoundingClientRect().width - 30 * 2,
+            }
+          : {
+              position: strategy,
+              top: 0,
+              left: 0,
+              transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`,
+              minWidth: "max-content",
+            }
+      }
     >
-      <ToolbarOptions onRangeChange={onRangeChange} />
+      <ToolbarOptions
+        onRangeChange={onRangeChange}
+        setFullWidth={setFullWidth}
+      />
     </div>,
     container
   );
@@ -118,8 +135,10 @@ function Toolbar({
 
 function ToolbarOptions({
   onRangeChange,
+  setFullWidth,
 }: {
   onRangeChange: (range: Range | null) => void;
+  setFullWidth: (isFullWidth: boolean) => void;
 }) {
   const [editor] = useLexicalComposerContext();
   const [state, setState] = useState<"default" | "ai">("default");
@@ -130,11 +149,15 @@ function ToolbarOptions({
         <AskAi setState={setState} />
       </div>
 
-      <div className="flex items-center justify-center gap-2 ">
+      <div
+        style={{ display: state !== "ai" ? "block" : "none" }}
+        className="flex items-center justify-center gap-2 "
+      >
         <button
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
             setState("ai");
+            setFullWidth(true);
           }}
           className="inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground w-8 h-8 data-[active]:bg-accent"
         >
@@ -144,6 +167,7 @@ function ToolbarOptions({
           onClick={() => {
             editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
             setState("default");
+            setFullWidth(false);
           }}
           className="inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground w-8 h-8 data-[active]:bg-accent"
         >
@@ -160,6 +184,7 @@ function ToolbarOptions({
               onRangeChange(null);
             }
             setState("default");
+            setFullWidth(false);
           }}
           className="inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground w-8 h-8 data-[active]:bg-accent"
         >
@@ -172,7 +197,10 @@ function ToolbarOptions({
 
 function AskAi({ setState }: { setState: (state: "default" | "ai") => void }) {
   const [editor] = useLexicalComposerContext();
-  const { messages, input, handleInputChange, handleSubmit } = useChat();
+
+  const [messages, setMessages] = useState<CoreMessage[]>([]);
+  const [input, setInput] = useState("");
+
   const lastAiMessage = messages
     .filter((m) => m.role === "assistant")
     .slice(-1)[0];
@@ -184,19 +212,49 @@ function AskAi({ setState }: { setState: (state: "default" | "ai") => void }) {
   return (
     <div>
       <div>
-        AI <button onClick={() => setState("default")}>X</button>
-      </div>
-      <div>
         {lastAiMessage?.content ? (
           <div className="whitespace-pre-wrap">{lastAiMessage.content}</div>
         ) : null}
-        <form onSubmit={handleSubmit} className="w-24">
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+
+            const systemMessage = `The user is selecting this text: 
+            
+            """
+            ${textContent || ""}
+            """
+            `;
+
+            const newMessages: CoreMessage[] = [
+              ...messages,
+              { content: systemMessage, role: "system" },
+              { content: input, role: "user" },
+            ];
+
+            setMessages(newMessages);
+            setInput("");
+
+            const result = await continueConversation(newMessages);
+
+            for await (const content of readStreamableValue(result)) {
+              setMessages([
+                ...newMessages,
+                {
+                  role: "assistant",
+                  content: content as string,
+                },
+              ]);
+            }
+          }}
+          className="w-24"
+        >
           <div>
             <input
               className="w-full max-w-md p-2 mb-8 border border-gray-300 rounded shadow-xl"
               value={input}
               placeholder="Say something..."
-              onChange={handleInputChange}
+              onChange={(e) => setInput(e.target.value)}
             />
           </div>
           <div>

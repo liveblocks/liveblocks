@@ -1,22 +1,15 @@
 "use server";
 
-import { Liveblocks } from "@liveblocks/node";
-import { withLexicalDocument } from "@liveblocks/node-lexical";
-import { $getRoot, $createParagraphNode, $createTextNode } from "lexical";
+import { createStreamableValue } from "ai/rsc";
+import { CoreMessage, streamText } from "ai";
+import { openai } from "@ai-sdk/openai";
 
-const liveblocks = new Liveblocks({
-  secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
-});
-
-export async function askAi(roomId: string, query: string) {
-  await withLexicalDocument({ roomId, client: liveblocks }, async (doc) => {
-    await doc.update(() => {
-      // Adding a paragraph node with contained text node
-      const root = $getRoot();
-      const paragraphNode = $createParagraphNode();
-      const textNode = $createTextNode("Hello world");
-      paragraphNode.append(textNode);
-      root.append(paragraphNode);
-    });
+export async function continueConversation(messages: CoreMessage[]) {
+  const result = await streamText({
+    model: openai("gpt-3.5-turbo"),
+    messages,
   });
+
+  const stream = createStreamableValue(result.textStream);
+  return stream.value;
 }

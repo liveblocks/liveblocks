@@ -9,6 +9,10 @@ import {
 import { useSearchParams } from "next/navigation";
 import Editor from "./lexical/editor";
 
+// Force the page to be dynamic and allow streaming responses up to 30 seconds for AI
+export const dynamic = "force-dynamic";
+export const maxDuration = 30;
+
 // Learn how to structure your collaborative Next.js app
 // https://liveblocks.io/docs/guides/how-to-use-liveblocks-with-nextjs-app-directory
 

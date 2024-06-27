@@ -21,7 +21,6 @@ import { useThreads, useRoom } from "@liveblocks/react/suspense";
 import { Suspense } from "react";
 import Loading from "../loading";
 import { BaseMetadata, ThreadData } from "@liveblocks/client";
-import { askAi } from "../actions/ai";
 
 // Wrap your initial config with `liveblocksConfig`
 const initialConfig = liveblocksConfig({
@@ -39,7 +38,6 @@ export default function Editor() {
 
   return (
     <div className="relative flex flex-col h-full w-full">
-      <button onClick={() => askAi(room.id, "")}>ask ai</button>
       <LexicalComposer initialConfig={initialConfig}>
         {/* Sticky header */}
         <div className="sticky top-0 left-0  h-[60px] flex items-center justify-between px-4 border-b border-border/80 z-20 bg-background/95">
@@ -56,7 +54,7 @@ export default function Editor() {
             {status === "not-loaded" || status === "loading" ? (
               <Loading />
             ) : (
-              <div className="relative max-w-[950px] mx-auto">
+              <div className="relative max-w-[650px] mx-auto">
                 <RichTextPlugin
                   contentEditable={
                     <ContentEditable className="relative outline-none p-8 w-full h-full" />
