@@ -81,7 +81,7 @@ jobs:
 
       - name: Build all CLI tools
         run: |
-          npm run build -- --filter='./tools/*'
+          npm run build -- --filter='./tools/*' --filter='!@liveblocks/devtools'
 
       - name: Publish packages
         env:
