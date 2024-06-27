@@ -37,11 +37,12 @@ import {
 } from "./PreserveSelection";
 import { RubbishIcon } from "../icons/RubbishIcon";
 import { InsertParagraphIcon } from "../icons/InsertParagraphIcon";
+import { SummariseIcon } from "../icons/SummariseIcon";
 
 type OptionChild = {
   text: string;
   prompt: string;
-  icon: ReactNode;
+  icon?: ReactNode;
   children?: never;
 };
 
@@ -73,7 +74,13 @@ const languages = [
   "Spanish",
 ];
 
-const styles = ["Formal", "Friendly", "Pirate", "Poetic"];
+const styles = [
+  "Professional",
+  "Friendly",
+  "Straightforward",
+  "Pirate",
+  "Poetic",
+];
 
 const optionsGroups: OptionGroup[] = [
   {
@@ -105,6 +112,11 @@ const optionsGroups: OptionGroup[] = [
     text: "Generate",
     options: [
       {
+        text: "Summarise",
+        prompt: "Summarise the text",
+        icon: <SummariseIcon className="h-full" />,
+      },
+      {
         text: "Translate into…",
         children: languages.map((lang) => ({
           text: lang,
@@ -113,7 +125,7 @@ const optionsGroups: OptionGroup[] = [
         icon: <TranslateIcon className="h-full" />,
       },
       {
-        text: "Change style…",
+        text: "Change style to…",
         children: styles.map((style) => ({
           text: style,
           prompt: `Change text into ${style} style`,
@@ -210,7 +222,9 @@ ${textContent || ""}
       <div className="rounded-lg border shadow-2xl border-border/80 bg-card pointer-events-auto">
         {lastAiMessage?.content ? (
           // If the AI has streamed in content, show it
-          <div className="whitespace-pre-wrap p-2">{lastAiMessage.content}</div>
+          <div className="whitespace-pre-wrap p-2 max-h-[130px] overflow-y-auto">
+            {lastAiMessage.content}
+          </div>
         ) : null}
 
         <form
@@ -258,7 +272,7 @@ ${textContent || ""}
               }
             }
           }}
-          className="mt-1 rounded-lg border shadow-2xl border-border/80 bg-card max-w-[210px] max-h-[290px] overflow-y-auto pointer-events-auto"
+          className="mt-1 rounded-lg border shadow-2xl border-border/80 bg-card max-w-[210px] max-h-[320px] overflow-y-auto pointer-events-auto"
         >
           <Command.List>
             {lastAiMessage?.content && !page ? (

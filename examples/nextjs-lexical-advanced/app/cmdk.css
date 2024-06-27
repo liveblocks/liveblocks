@@ -2,6 +2,10 @@
  * Styles for the AI command panel
  */
 
+[cmdk-root] {
+  outline: none;
+}
+
 [cmdk-group-heading] {
   @apply text-xs font-medium text-gray-400 px-3.5 pt-2 pb-1;
 }
