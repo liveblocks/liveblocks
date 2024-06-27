@@ -24,10 +24,14 @@ type Person = LiveObject<{
   age: number;
 }>;
 
-// Storage type
-type Storage = {
-  people: LiveList<Person>;
-};
+// Global types
+declare global {
+  interface Liveblocks {
+    Storage: {
+      people: LiveList<Person>;
+    };
+  }
+}
 ```
 
 Then, open [App.tsx][], and modify the `initialStorage` value to match your
@@ -94,11 +98,12 @@ Because [`useStorage`][] converts your conflict-free data structures into
 regular JavaScript structures, `people` is an `array`, meaning we can simply map
 through it in React like any other.
 
-```tsx highlight="3-9" modifyTutorialFile="/Room.tsx"
+```tsx highlight="3-10" modifyTutorialFile="/Room.tsx"
 return (
   <div>
     {people.map((person, index) => (
       <input
+        key={index}
         type="text"
         value={person.name}
         onChange={(e) => updateName(e.target.value, index)}
@@ -111,11 +116,12 @@ return (
 Make sure to pass the index to `updateName`! After adding this, we can then
 create a button that calls `addPerson`.
 
-```tsx highlight="10" modifyTutorialFile="/Room.tsx"
+```tsx highlight="11" modifyTutorialFile="/Room.tsx"
 return (
   <div>
     {people.map((person, index) => (
       <input
+        key={index}
         type="text"
         value={person.name}
         onChange={(e) => updateName(e.target.value, index)}

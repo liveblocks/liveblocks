@@ -7,13 +7,19 @@ Now that we’re connected to a room, we can start using the Liveblocks hooks. T
 first we’ll add is [`useOthers`][], a hook that provides information about which
 _other_ users are connected to the room.
 
+### Suspense hooks
+
+From this point on, we’ll be using the Suspense version of our hooks and
+components, which we’ve enabled by adding [`ClientSideSuspense`][] to
+[App.tsx][]. To use them, export from `@liveblocks/react/suspense`.
+
 ### useOthers
 
-Switch to [Room.tsx][] and import the hook from [liveblocks.config.ts][]—we’ll
-be building our realtime app in here.
+Switch to [Room.tsx][] and import the suspense version of hook—we’ll be building
+our realtime app in this component.
 
 ```ts highlight="3" modifyTutorialFile="/Room.tsx"
-import { useOthers } from "./liveblocks.config";
+import { useOthers } from "@liveblocks/react/suspense";
 ```
 
 The [`useOthers`][] hook returns a list of users that are currently online,
@@ -33,3 +39,4 @@ coming back to [`useOthers`][] again shortly after learning about _presence_.
 [liveblocks.config.ts]: #/liveblocks.config.ts
 [App.tsx]: #/App.tsx
 [Room.tsx]: #/Room.tsx
+[`clientsidesuspense`]: /docs/api-reference/liveblocks-react#suspense-avoid-ssr

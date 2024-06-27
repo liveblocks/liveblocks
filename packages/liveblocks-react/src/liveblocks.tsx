@@ -45,14 +45,23 @@ import type {
   UserStateSuccess,
 } from "./types";
 
+/**
+ * Raw access to the React context where the LiveblocksProvider stores the
+ * current client. Exposed for advanced use cases only.
+ *
+ * @private This is a private/advanced API. Do not rely on it.
+ */
 export const ClientContext = createContext<OpaqueClient | null>(null);
 
-const missingUserError = new Error(
-  "resolveUsers didn't return anything for this user ID."
-);
-const missingRoomInfoError = new Error(
-  "resolveRoomsInfo didn't return anything for this room ID."
-);
+function missingUserError(userId: string) {
+  return new Error(`resolveUsers didn't return anything for user '${userId}'`);
+}
+
+function missingRoomInfoError(roomId: string) {
+  return new Error(
+    `resolveRoomsInfo didn't return anything for room '${roomId}'`
+  );
+}
 
 const _extras = new WeakMap<
   OpaqueClient,
@@ -610,7 +619,7 @@ function useUser_withClient<U extends BaseUserMeta>(
         // Return an error if `undefined` was returned by `resolveUsers` for this user ID
         error:
           !state.isLoading && !state.data && !state.error
-            ? missingUserError
+            ? missingUserError(userId)
             : state.error,
       } as UserState<U["info"]>)
     : { isLoading: true };
@@ -638,7 +647,7 @@ function useUserSuspense_withClient<U extends BaseUserMeta>(
 
   // Throw an error if `undefined` was returned by `resolveUsers` for this user ID
   if (!userState.data) {
-    throw missingUserError;
+    throw missingUserError(userId);
   }
 
   const state = useSyncExternalStore(
@@ -682,7 +691,7 @@ function useRoomInfo_withClient(
         // Return an error if `undefined` was returned by `resolveRoomsInfo` for this room ID
         error:
           !state.isLoading && !state.data && !state.error
-            ? missingRoomInfoError
+            ? missingRoomInfoError(roomId)
             : state.error,
       } as RoomInfoState)
     : { isLoading: true };
@@ -707,7 +716,7 @@ function useRoomInfoSuspense_withClient(client: OpaqueClient, roomId: string) {
 
   // Throw an error if `undefined` was returned by `resolveRoomsInfo` for this room ID
   if (!roomInfoState.data) {
-    throw missingRoomInfoError;
+    throw missingRoomInfoError(roomId);
   }
 
   const state = useSyncExternalStore(
@@ -841,6 +850,11 @@ export function LiveblocksProvider<U extends BaseUserMeta = DU>(
   );
 }
 
+/**
+ * Creates a LiveblocksProvider and a set of typed hooks. Note that any
+ * LiveblocksProvider created in this way takes no props, because it uses
+ * settings from the given client instead.
+ */
 export function createLiveblocksContext<
   U extends BaseUserMeta = DU,
   M extends BaseMetadata = DM,
@@ -848,10 +862,26 @@ export function createLiveblocksContext<
   return getOrCreateContextBundle<U, M>(client);
 }
 
+/**
+ * @beta
+ *
+ * Returns the inbox notifications for the current user.
+ *
+ * @example
+ * const { inboxNotifications, error, isLoading } = useInboxNotifications();
+ */
 function useInboxNotifications() {
   return useInboxNotifications_withClient(useClient());
 }
 
+/**
+ * @beta
+ *
+ * Returns the inbox notifications for the current user.
+ *
+ * @example
+ * const { inboxNotifications } = useInboxNotifications();
+ */
 function useInboxNotificationsSuspense() {
   return useInboxNotificationsSuspense_withClient(useClient());
 }
@@ -865,18 +895,52 @@ function useInboxNotificationThread<M extends BaseMetadata>(
   );
 }
 
+/**
+ * @beta
+ *
+ * Returns a function that marks all inbox notifications as read.
+ *
+ * @example
+ * const markAllInboxNotificationsAsRead = useMarkAllInboxNotificationsAsRead();
+ * markAllInboxNotificationsAsRead();
+ */
 function useMarkAllInboxNotificationsAsRead() {
   return useMarkAllInboxNotificationsAsRead_withClient(useClient());
 }
 
+/**
+ * @beta
+ *
+ * Returns a function that marks an inbox notification as read.
+ *
+ * @example
+ * const markInboxNotificationAsRead = useMarkInboxNotificationAsRead();
+ * markInboxNotificationAsRead("in_xxx");
+ */
 function useMarkInboxNotificationAsRead() {
   return useMarkInboxNotificationAsRead_withClient(useClient());
 }
 
+/**
+ * @beta
+ *
+ * Returns the number of unread inbox notifications for the current user.
+ *
+ * @example
+ * const { count, error, isLoading } = useUnreadInboxNotificationsCount();
+ */
 function useUnreadInboxNotificationsCount() {
   return useUnreadInboxNotificationsCount_withClient(useClient());
 }
 
+/**
+ * @beta
+ *
+ * Returns the number of unread inbox notifications for the current user.
+ *
+ * @example
+ * const { count } = useUnreadInboxNotificationsCount();
+ */
 function useUnreadInboxNotificationsCountSuspense() {
   return useUnreadInboxNotificationsCountSuspense_withClient(useClient());
 }
@@ -891,26 +955,60 @@ function useUserSuspense<U extends BaseUserMeta>(userId: string) {
   return useUserSuspense_withClient(client, userId);
 }
 
+/**
+ * Returns room info from a given room ID.
+ *
+ * @example
+ * const { info, error, isLoading } = useRoomInfo("room-id");
+ */
 function useRoomInfo(roomId: string) {
   return useRoomInfo_withClient(useClient(), roomId);
 }
 
+/**
+ * Returns room info from a given room ID.
+ *
+ * @example
+ * const { info } = useRoomInfo("room-id");
+ */
 function useRoomInfoSuspense(roomId: string) {
   return useRoomInfoSuspense_withClient(useClient(), roomId);
 }
 
-// TODO in 2.0 Copy/paste all the docstrings onto these global hooks :(
-const __1: LiveblocksContextBundle<DU, DM>["useInboxNotificationThread"] =
+type TypedBundle = LiveblocksContextBundle<DU, DM>;
+
+/**
+ * @beta
+ *
+ * Returns the thread associated with a `"thread"` inbox notification.
+ *
+ * @example
+ * const thread = useInboxNotificationThread("in_xxx");
+ */
+const _useInboxNotificationThread: TypedBundle["useInboxNotificationThread"] =
   useInboxNotificationThread;
-const __2: LiveblocksContextBundle<DU, DM>["useUser"] = useUser;
-const __3: LiveblocksContextBundle<DU, DM>["suspense"]["useUser"] =
-  useUserSuspense;
+
+/**
+ * Returns user info from a given user ID.
+ *
+ * @example
+ * const { user, error, isLoading } = useUser("user-id");
+ */
+const _useUser: TypedBundle["useUser"] = useUser;
+
+/**
+ * Returns user info from a given user ID.
+ *
+ * @example
+ * const { user } = useUser("user-id");
+ */
+const _useUserSuspense: TypedBundle["suspense"]["useUser"] = useUserSuspense;
 
 // eslint-disable-next-line simple-import-sort/exports
 export {
-  __1 as useInboxNotificationThread,
-  __2 as useUser,
-  __3 as useUserSuspense,
+  _useInboxNotificationThread as useInboxNotificationThread,
+  _useUser as useUser,
+  _useUserSuspense as useUserSuspense,
   useInboxNotifications,
   useInboxNotificationsSuspense,
   useMarkAllInboxNotificationsAsRead,

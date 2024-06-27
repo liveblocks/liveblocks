@@ -12,7 +12,13 @@
 - Add new hook `useStorageStatus()`, which returns the current storage status of
   the room, and will re-render your component whenever it changes. This can used
   to build "Saving..." UIs.
-- Future-proof Suspense internals to support React 19's `use`
+- Add missing JSDoc comments
+- Improve some error messages and stack traces to contain more info
+- Refactorings to Suspense internals
+
+### `@liveblocks/react-ui`
+
+- Fix improper `useSyncExternalStore` import which would break on React <18.
 
 ## v2.0.5
 

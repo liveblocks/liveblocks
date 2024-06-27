@@ -66,7 +66,7 @@ describe("useUser", () => {
 
     expect(result.current.user).toEqual({
       isLoading: false,
-      error: new Error("resolveUsers didn't return anything for this user ID."),
+      error: new Error("resolveUsers didn't return anything for user 'abc'"),
     });
 
     unmount();
@@ -308,7 +308,7 @@ describe("useUser", () => {
 
     expect(result.current.user).toEqual({
       isLoading: false,
-      error: new Error("resolveUsers didn't return anything for this user ID."),
+      error: new Error("resolveUsers didn't return anything for user 'abc'"),
     });
 
     unmount();
@@ -346,7 +346,7 @@ describe("useUser", () => {
 
     expect(result.current.userAbc).toEqual({
       isLoading: false,
-      error: new Error("resolveUsers didn't return anything for this user ID."),
+      error: new Error("resolveUsers didn't return anything for user 'abc'"),
     });
 
     expect(result.current.user123).toEqual({

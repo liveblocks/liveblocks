@@ -6,7 +6,13 @@ type CursorProps = {
 
 export default function Cursor({ x, y, avatar }: CursorProps) {
   return (
-    <div className="cursor" style={{ transform: `translate(${x}px, ${y}px` }}>
+    <div
+      className="cursor"
+      style={{
+        transform: `translate(${x}px, ${y}px`,
+        transition: "transform 120ms linear",
+      }}
+    >
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
         <defs>
           <filter id="avatar-blur">

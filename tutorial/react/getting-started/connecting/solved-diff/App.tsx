@@ -5,5 +5,9 @@ export default function App() {
   const roomId = "{% ROOM_ID %}";
   const publicApiKey = "{% LIVEBLOCKS_PUBLIC_KEY %}";
 
-  return <div>Not connected</div>;
+  return (
+    <LiveblocksProvider publicApiKey={publicApiKey}>
+      <CollaborativeApplication />
+    </LiveblocksProvider>
+  );
 }
