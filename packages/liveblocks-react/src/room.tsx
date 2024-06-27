@@ -2976,7 +2976,9 @@ const _useStorageSuspense: TypedBundle["suspense"]["useStorage"] =
  *
  * @example
  * const me = useSelf();
- * const { x, y } = me.presence.cursor;
+ * if (me !== null) {
+ *   const { x, y } = me.presence.cursor;
+ * }
  */
 function _useSelf(): User<DP, DU> | null;
 /**
@@ -3032,13 +3034,9 @@ function _useSelfSuspense(): User<DP, DU>;
  * the result of a .map() or .filter() call from the selector. In those
  * cases, you'll probably want to use a `shallow` comparison check.
  *
- * Will return `null` while Liveblocks isn't connected to a room yet.
- *
  * @example
  * const cursor = useSelf(me => me.presence.cursor);
- * if (cursor !== null) {
- *   const { x, y } = cursor;
- * }
+ * const { x, y } = cursor;
  *
  */
 function _useSelfSuspense<T>(
