@@ -18,6 +18,8 @@ import {
 } from "@floating-ui/react-dom";
 import BoldIcon from "./icons/bold-icon";
 import CommentIcon from "./icons/comment-icon";
+import { useChat } from "ai/react";
+import { usePreviousSelection, useSelection } from "./hooks";
 
 export default function FloatingToolbar() {
   const [editor] = useLexicalComposerContext();
@@ -67,8 +69,6 @@ function Toolbar({
   onRangeChange: (range: Range | null) => void;
   container: HTMLElement;
 }) {
-  const [editor] = useLexicalComposerContext();
-
   const padding = 20;
 
   const {
@@ -110,9 +110,41 @@ function Toolbar({
         minWidth: "max-content",
       }}
     >
-      <div className="flex items-center justify-center gap-2 p-1.5 w-full min-w-max rounded-lg border shadow border-border/80 text-foreground bg-card">
+      <ToolbarOptions onRangeChange={onRangeChange} />
+    </div>,
+    container
+  );
+}
+
+function ToolbarOptions({
+  onRangeChange,
+}: {
+  onRangeChange: (range: Range | null) => void;
+}) {
+  const [editor] = useLexicalComposerContext();
+  const [state, setState] = useState<"default" | "ai">("default");
+
+  return (
+    <div className="p-1.5 w-full min-w-max rounded-lg border shadow border-border/80 text-foreground bg-card">
+      <div style={{ display: state === "ai" ? "block" : "none" }}>
+        <AskAi setState={setState} />
+      </div>
+
+      <div className="flex items-center justify-center gap-2 ">
         <button
-          onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => {
+            setState("ai");
+          }}
+          className="inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground w-8 h-8 data-[active]:bg-accent"
+        >
+          AI
+        </button>
+        <button
+          onClick={() => {
+            editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
+            setState("default");
+          }}
           className="inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground w-8 h-8 data-[active]:bg-accent"
         >
           <BoldIcon />
@@ -127,14 +159,65 @@ function Toolbar({
             if (isOpen) {
               onRangeChange(null);
             }
+            setState("default");
           }}
           className="inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground w-8 h-8 data-[active]:bg-accent"
         >
           <CommentIcon />
         </button>
       </div>
-    </div>,
-    container
+    </div>
+  );
+}
+
+function AskAi({ setState }: { setState: (state: "default" | "ai") => void }) {
+  const [editor] = useLexicalComposerContext();
+  const { messages, input, handleInputChange, handleSubmit } = useChat();
+  const lastAiMessage = messages
+    .filter((m) => m.role === "assistant")
+    .slice(-1)[0];
+
+  const { selection, textContent } = useSelection();
+  console.log("selection: ", textContent);
+  console.log("ai:", lastAiMessage);
+
+  return (
+    <div>
+      <div>
+        AI <button onClick={() => setState("default")}>X</button>
+      </div>
+      <div>
+        {lastAiMessage?.content ? (
+          <div className="whitespace-pre-wrap">{lastAiMessage.content}</div>
+        ) : null}
+        <form onSubmit={handleSubmit} className="w-24">
+          <div>
+            <input
+              className="w-full max-w-md p-2 mb-8 border border-gray-300 rounded shadow-xl"
+              value={input}
+              placeholder="Say something..."
+              onChange={handleInputChange}
+            />
+          </div>
+          <div>
+            <button
+              onClick={() => {
+                if (!lastAiMessage?.content) {
+                  return;
+                }
+                editor.update(() => {
+                  const selection = $getSelection();
+                  selection?.insertRawText(lastAiMessage.content);
+                });
+              }}
+              // disabled={!lastAiMessage?.content}
+            >
+              Go
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }
 
@@ -148,10 +231,10 @@ function Toolbar({
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE

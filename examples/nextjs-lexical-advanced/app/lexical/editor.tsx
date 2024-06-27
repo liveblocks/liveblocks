@@ -17,10 +17,11 @@ import {
 import FloatingToolbar from "./floating-toolbar";
 import NotificationsPopover from "../notifications-popover";
 import Toolbar from "./toolbar";
-import { useThreads } from "@liveblocks/react/suspense";
+import { useThreads, useRoom } from "@liveblocks/react/suspense";
 import { Suspense } from "react";
 import Loading from "../loading";
 import { BaseMetadata, ThreadData } from "@liveblocks/client";
+import { askAi } from "../actions/ai";
 
 // Wrap your initial config with `liveblocksConfig`
 const initialConfig = liveblocksConfig({
@@ -34,9 +35,11 @@ const initialConfig = liveblocksConfig({
 
 export default function Editor() {
   const status = useEditorStatus();
+  const room = useRoom();
 
   return (
     <div className="relative flex flex-col h-full w-full">
+      <button onClick={() => askAi(room.id, "")}>ask ai</button>
       <LexicalComposer initialConfig={initialConfig}>
         {/* Sticky header */}
         <div className="sticky top-0 left-0  h-[60px] flex items-center justify-between px-4 border-b border-border/80 z-20 bg-background/95">
