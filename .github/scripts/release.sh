@@ -2,39 +2,23 @@
 set -eu
 
 echo "Running release scripts..."
-PACKAGE_DIRS=(
-    "packages/liveblocks-core"
-    "packages/liveblocks-client"
-    "packages/liveblocks-node"
-    "packages/liveblocks-react"
-    "packages/liveblocks-redux"
-    "packages/liveblocks-zustand"
-    "packages/liveblocks-yjs"
-    "packages/liveblocks-react-ui"
-    "packages/liveblocks-react-lexical"
-    "packages/liveblocks-node-lexical"
-    "packages/create-liveblocks-app"
-    "packages/liveblocks-codemod"
-)
 
 err () {
     echo "$@" >&2
 }
 
-
 usage () {
-    err "usage: release.sh [-V <version>] [-h]"
+    err "usage: release.sh [-h] [-V <version>] <pkgdir> [<pkgdir>...]"
     err
+    err "Prepare a release by updating files in this repo."
+    err "Run this prior to publishing to NPM."
     err ""
-    err "Create a release for the CI to publish."
-    err
-    err "Options:"
-    err "-V <version>  Set version to publish (default: prompt)"
-    err "Example: 1.0.0 or 1.0.1-beta1"
+    err "    -V   the new NPM version"
+    err ""
 }
 
 VERSION=
-while getopts V:t:h flag; do
+while getopts V:h flag; do
     case "$flag" in
         V) VERSION=$OPTARG;;
         *) usage; exit 2;;
@@ -42,8 +26,7 @@ while getopts V:t:h flag; do
 done
 shift "$(($OPTIND - 1))"
 
-if [ "$#" -ne 0 ]; then
-    err "Unknown arguments: $@"
+if [ "$#" -eq 0 ]; then
     usage
     exit 2
 fi
@@ -59,7 +42,7 @@ check_is_valid_version () {
 ROOT="$(git rev-parse --show-toplevel)"
 
 all_published_pkgnames () {
-    for pkgdir in ${PACKAGE_DIRS[@]}; do
+    for pkgdir in "$@"; do
         jq -r .name "$ROOT/$pkgdir/package.json"
     done
 }
@@ -104,7 +87,7 @@ check_is_valid_version "$VERSION"
 # Set up turbo
 npm install
 
-for PKGDIR in "${PACKAGE_DIRS[@]}"; do
+for PKGDIR in "$@"; do
     update_package_version "$PKGDIR" "$VERSION"
 done
 

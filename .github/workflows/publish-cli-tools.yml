@@ -75,7 +75,9 @@ jobs:
       - name: Prepare release
         env:
           VERSION: ${{steps.version.outputs.value}}
-        run: ./.github/scripts/release.sh -V "$VERSION"
+        run:
+          ./.github/scripts/release.sh -V "$VERSION"
+          "tools/create-liveblocks-app" "tools/liveblocks-codemod"
 
       - name: Build all CLI tools
         run: |
@@ -90,7 +92,7 @@ jobs:
           NPM_TAG: ${{ steps.npm_tag.outputs.value }}
         run:
           ./.github/scripts/publish.sh -V "$VERSION" -t "$NPM_TAG"
-          "packages/create-liveblocks-app" "packages/liveblocks-codemod"
+          "tools/create-liveblocks-app" "tools/liveblocks-codemod"
 
       - name:
           Creating release tag, don't forget to fill the changelog if necessary!
