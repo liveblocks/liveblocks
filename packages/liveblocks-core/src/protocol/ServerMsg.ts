@@ -23,12 +23,12 @@ export enum ServerMsgCode {
   THREAD_CREATED = 400,
   THREAD_DELETED = 407,
   THREAD_METADATA_UPDATED = 401,
+  THREAD_UPDATED = 408,
   COMMENT_CREATED = 402,
   COMMENT_EDITED = 403,
   COMMENT_DELETED = 404,
   COMMENT_REACTION_ADDED = 405,
   COMMENT_REACTION_REMOVED = 406,
-  THREAD_RESOLVED_UPDATED = 408,
 }
 
 /**
@@ -59,7 +59,7 @@ export type CommentsEventServerMsg =
   | ThreadCreatedEvent
   | ThreadDeletedEvent
   | ThreadMetadataUpdatedEvent
-  | ThreadResolvedUpdatedEvent
+  | ThreadUpdatedEvent
   | CommentCreatedEvent
   | CommentEditedEvent
   | CommentDeletedEvent
@@ -81,8 +81,8 @@ type ThreadMetadataUpdatedEvent = {
   threadId: string;
 };
 
-type ThreadResolvedUpdatedEvent = {
-  type: ServerMsgCode.THREAD_RESOLVED_UPDATED;
+type ThreadUpdatedEvent = {
+  type: ServerMsgCode.THREAD_UPDATED;
   threadId: string;
 };
 

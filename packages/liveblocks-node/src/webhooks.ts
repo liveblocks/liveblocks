@@ -152,7 +152,8 @@ export class WebhookHandler {
         "threadDeleted",
         "ydocUpdated",
         "notification",
-        "threadResolvedUpdated",
+        "threadMarkedAsResolved",
+        "threadMarkedAsUnresolved",
       ].includes(event.type)
     ) {
       if (event.type === "notification") {
@@ -223,7 +224,8 @@ type WebhookEvent =
   | NotificationEvent
   | ThreadCreatedEvent
   | ThreadDeletedEvent
-  | ThreadResolvedUpdatedEvent
+  | ThreadMarkedAsResolvedEvent
+  | ThreadMarkedAsUnresolvedEvent
   | YDocUpdatedEvent;
 
 type StorageUpdatedEvent = {
@@ -438,8 +440,8 @@ type ThreadDeletedEvent = {
   };
 };
 
-type ThreadResolvedUpdatedEvent = {
-  type: "threadResolvedUpdated";
+type ThreadMarkedAsResolvedEvent = {
+  type: "threadMarkedAsResolved";
   data: {
     projectId: string;
     roomId: string;
@@ -450,7 +452,21 @@ type ThreadResolvedUpdatedEvent = {
      * @example "2021-03-01T12:00:00.000Z"
      */
     updatedBy: string;
-    resolved: boolean;
+  };
+};
+
+type ThreadMarkedAsUnresolvedEvent = {
+  type: "threadMarkedAsUnresolved";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    updatedAt: string;
+    /**
+     * ISO 8601 datestring
+     * @example "2021-03-01T12:00:00.000Z"
+     */
+    updatedBy: string;
   };
 };
 
@@ -531,7 +547,8 @@ export type {
   ThreadDeletedEvent,
   ThreadMetadataUpdatedEvent,
   ThreadNotificationEvent,
-  ThreadResolvedUpdatedEvent,
+  ThreadMarkedAsResolvedEvent,
+  ThreadMarkedAsUnresolvedEvent,
   UserEnteredEvent,
   UserLeftEvent,
   WebhookEvent,

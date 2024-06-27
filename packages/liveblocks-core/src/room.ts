@@ -2445,7 +2445,7 @@ export function createRoom<
           case ServerMsgCode.THREAD_CREATED:
           case ServerMsgCode.THREAD_DELETED:
           case ServerMsgCode.THREAD_METADATA_UPDATED:
-          case ServerMsgCode.THREAD_RESOLVED_UPDATED:
+          case ServerMsgCode.THREAD_UPDATED:
           case ServerMsgCode.COMMENT_REACTION_ADDED:
           case ServerMsgCode.COMMENT_REACTION_REMOVED:
           case ServerMsgCode.COMMENT_CREATED:
