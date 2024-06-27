@@ -23,6 +23,10 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
   else than the thread owner tries to delete the thread. This will help you
   catch and handle this case more easily.
 
+## Documentation
+
+- Updated the [interactive tutorial](https://liveblocks.io/docs/tutorial/react/getting-started/welcome) for Liveblocks 2.0.
+
 ## Contributors
 
 flowflorent
