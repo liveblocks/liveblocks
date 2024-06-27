@@ -3,6 +3,7 @@ import { Transforms } from "slate";
 import { jsx } from "slate-hyperscript";
 
 import type {
+  ComposerBodyAutoLink,
   ComposerBodyBlockElement,
   ComposerBodyCustomLink,
   ComposerBodyInlineElement,
@@ -27,11 +28,29 @@ type DeserializedNode =
   | ComposerBodyText[]
   | DeserializedNode[];
 
+function areUrlsEqual(a: string, b: string) {
+  try {
+    const urlA = new URL(a);
+    const urlB = new URL(b);
+
+    return urlA.origin === urlB.origin && urlA.pathname === urlB.pathname;
+  } catch {
+    return false;
+  }
+}
+
 const ELEMENT_TAGS = {
-  A: (element): OmitTextChildren<ComposerBodyCustomLink> => ({
-    type: "custom-link",
-    url: element.getAttribute("href") ?? "",
-  }),
+  A: (
+    element
+  ): OmitTextChildren<ComposerBodyCustomLink | ComposerBodyAutoLink> => {
+    const href = element.getAttribute("href");
+    const innerText = element.innerText;
+
+    return {
+      type: href && areUrlsEqual(href, innerText) ? "auto-link" : "custom-link",
+      url: href ?? "",
+    };
+  },
   P: (): OmitTextChildren<ComposerBodyParagraph> => ({ type: "paragraph" }),
 } as Record<string, (node: HTMLElement) => ComposerBodyElementTag>;
 
