@@ -49,7 +49,7 @@ check_is_valid_version () {
 check_is_valid_tag () {
     if ! [[ "$TAG" =~ ^[a-z0-9]+$ ]]; then
         err "Invalid tag: $TAG"
-        err "Tag must be in the form of <tag>"
+        err "Tag must only contain alphanumeric chars"
         exit 2
     fi
 }
@@ -91,8 +91,8 @@ check_is_valid_tag "$TAG"
 # Publish to NPM
 for pkgdir in "$@"; do
     pkgname="$(npm_pkgname "$pkgdir")"
-    echo "==> Publishing ${pkgname} to NPM"
-    ( cd "$pkgdir" && publish_to_npm "$pkgname")
+    echo "==> Publishing $pkgname to NPM"
+    ( cd "$pkgdir" && publish_to_npm "$pkgname" )
 done
 
 # By now, all packages should be published under a "private" tag.
@@ -104,8 +104,8 @@ for pkgdir in "$@"; do
     pkgname="$(npm_pkgname "$pkgdir")"
     while true; do
         if npm dist-tag ls "$pkgname" | grep -qEe ": $VERSION\$"; then
-            echo "==> Adding tag ${TAG:-latest} to $pkgname@$VERSION"
-            npm dist-tag add "$pkgname@$VERSION" "${TAG:-latest}"
+            echo "==> Adding tag $TAG to $pkgname@$VERSION"
+            npm dist-tag add "$pkgname@$VERSION" "$TAG"
             break
         else
             err "I can't find $pkgname@$VERSION on NPM yet..."
