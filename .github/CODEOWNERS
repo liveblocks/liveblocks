@@ -1,9 +1,9 @@
 # Public packages
 /packages/   @nvie
 /packages/liveblocks-devtools/   @nvie @marcbouchenoire
-/packages/create-liveblocks-app/   @CTNicholas
 /packages/liveblocks-node/   @nvie @ofoucherot @FlowFlorent
 /packages/liveblocks-react-ui/   @marcbouchenoire
+/tools/create-liveblocks-app/   @CTNicholas
 /shared/   @nvie
 /e2e/   @nvie
 
