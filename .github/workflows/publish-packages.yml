@@ -88,7 +88,13 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           VERSION: ${{ steps.version.outputs.value }}
           NPM_TAG: ${{ steps.npm_tag.outputs.value }}
-        run: ./.github/scripts/publish.sh -V "$VERSION" -t "$NPM_TAG"
+        run:
+          ./.github/scripts/publish.sh -V "$VERSION" -t "$NPM_TAG"
+          "packages/liveblocks-core" "packages/liveblocks-client"
+          "packages/liveblocks-node" "packages/liveblocks-react"
+          "packages/liveblocks-redux" "packages/liveblocks-zustand"
+          "packages/liveblocks-yjs" "packages/liveblocks-react-lexical"
+          "packages/liveblocks-node-lexical" "packages/liveblocks-react-ui"
 
       - name:
           Creating release tag, don't forget to fill the changelog if necessary!
