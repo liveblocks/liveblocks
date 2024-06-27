@@ -14,6 +14,7 @@
   to build "Saving..." UIs.
 - Add missing JSDoc comments
 - Improve some error messages and stack traces to contain more info
+- Refactorings to Suspense internals
 
 ### `@liveblocks/react-ui`
 

@@ -188,3 +188,17 @@ export async function withTimeout<T>(
       .finally(() => clearTimeout(timerID))
   );
 }
+
+/**
+ * Memoize a factory function, so that each subsequent call to the returned
+ * function will return the exact same value.
+ */
+export function memoize<T>(factoryFn: () => T): () => T {
+  let cached: { value: T } | null = null;
+  return () => {
+    if (cached === null) {
+      cached = { value: factoryFn() };
+    }
+    return cached.value;
+  };
+}
