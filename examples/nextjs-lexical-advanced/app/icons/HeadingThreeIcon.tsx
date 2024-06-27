@@ -1,7 +1,7 @@
 import React from "react";
 import { SVGAttributes } from "react";
 
-export default function BoldIcon(props: SVGAttributes<SVGElement>) {
+export function HeadingThreeIcon(props: SVGAttributes<SVGElement>) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -15,7 +15,11 @@ export default function BoldIcon(props: SVGAttributes<SVGElement>) {
       strokeLinejoin="round"
       {...props}
     >
-      <path d="M6 12h9a4 4 0 0 1 0 8H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h7a4 4 0 0 1 0 8" />
+      <path d="M4 12h8" />
+      <path d="M4 18V6" />
+      <path d="M12 18V6" />
+      <path d="M17.5 10.5c1.7-1 3.5 0 3.5 1.5a2 2 0 0 1-2 2" />
+      <path d="M17 17.5c2 1.5 4 .3 4-1.5a2 2 0 0 0-2-2" />
     </svg>
   );
 }

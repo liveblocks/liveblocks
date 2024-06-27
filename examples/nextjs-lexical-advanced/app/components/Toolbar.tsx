@@ -13,12 +13,12 @@ import {
 } from "lexical";
 import { useCallback, useSyncExternalStore } from "react";
 import { $findMatchingParent } from "@lexical/utils";
-import HeadingOneIcon from "./icons/heading-one-icon";
-import HeadingTwoIcon from "./icons/heading-two-icon";
-import HeadingThreeIcon from "./icons/heading-three-icon";
-import BlockQuoteIcon from "./icons/blockquote-icon";
+import { HeadingOneIcon } from "../icons/HeadingOneIcon";
+import { HeadingTwoIcon } from "../icons/HeadingTwoIcon";
+import { HeadingThreeIcon } from "../icons/HeadingThreeIcon";
+import { BlockquoteIcon } from "../icons/BlockquoteIcon";
 
-export default function Toolbar() {
+export function Toolbar() {
   const [editor] = useLexicalComposerContext();
   const activeBlock = useActiveBlock();
 
@@ -87,7 +87,7 @@ export default function Toolbar() {
           "inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground w-8 h-8 data-[active]:bg-accent"
         }
       >
-        <BlockQuoteIcon />
+        <BlockquoteIcon />
       </button>
     </>
   );

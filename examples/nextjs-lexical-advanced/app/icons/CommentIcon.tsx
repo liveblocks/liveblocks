@@ -1,7 +1,7 @@
 import React from "react";
 import { SVGAttributes } from "react";
 
-export default function HeadingOneIcon(props: SVGAttributes<SVGElement>) {
+export function CommentIcon(props: SVGAttributes<SVGElement>) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -15,10 +15,7 @@ export default function HeadingOneIcon(props: SVGAttributes<SVGElement>) {
       strokeLinejoin="round"
       {...props}
     >
-      <path d="M4 12h8" />
-      <path d="M4 18V6" />
-      <path d="M12 18V6" />
-      <path d="m17 12 3-2v8" />
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
     </svg>
   );
 }

@@ -1,7 +1,7 @@
 import React from "react";
 import { SVGAttributes } from "react";
 
-export default function HeadingTwoIcon(props: SVGAttributes<SVGElement>) {
+export function HeadingTwoIcon(props: SVGAttributes<SVGElement>) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

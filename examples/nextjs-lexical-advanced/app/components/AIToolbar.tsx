@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 import { CoreMessage } from "ai";
-import { useSelection } from "./hooks";
+import { useSelection } from "../hooks";
 import { continueConversation } from "../actions/ai";
 import { readStreamableValue } from "ai/rsc";
 import { $getSelection, $isRangeSelection, TextNode } from "lexical";

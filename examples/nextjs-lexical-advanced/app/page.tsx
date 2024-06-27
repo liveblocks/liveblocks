@@ -1,13 +1,13 @@
 "use client";
 
-import Loading from "./loading";
+import { Loading } from "./components/Loading";
 import {
   ClientSideSuspense,
   LiveblocksProvider,
   RoomProvider,
 } from "@liveblocks/react/suspense";
 import { useSearchParams } from "next/navigation";
-import Editor from "./lexical/editor";
+import { Editor } from "./components/Editor";
 
 // Force the page to be dynamic and allow streaming responses up to 30 seconds for AI
 export const dynamic = "force-dynamic";

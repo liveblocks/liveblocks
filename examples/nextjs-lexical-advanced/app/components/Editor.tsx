@@ -14,12 +14,12 @@ import {
   useEditorStatus,
   useIsThreadActive,
 } from "@liveblocks/react-lexical";
-import FloatingToolbar from "./floating-toolbar";
-import NotificationsPopover from "../notifications-popover";
-import Toolbar from "./toolbar";
-import { useThreads, useRoom } from "@liveblocks/react/suspense";
+import { FloatingToolbar } from "./FloatingToolbar";
+import { NotificationsPopover } from "./NotificationsPopover";
+import { Toolbar } from "./Toolbar";
+import { useThreads } from "@liveblocks/react/suspense";
 import { Suspense } from "react";
-import Loading from "../loading";
+import { Loading } from "./Loading";
 import { BaseMetadata, ThreadData } from "@liveblocks/client";
 
 // Wrap your initial config with `liveblocksConfig`
@@ -32,7 +32,7 @@ const initialConfig = liveblocksConfig({
   },
 });
 
-export default function Editor() {
+export function Editor() {
   const status = useEditorStatus();
 
   return (

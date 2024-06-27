@@ -1,7 +1,7 @@
 import React from "react";
 import { SVGAttributes } from "react";
 
-export default function CommentIcon(props: SVGAttributes<SVGElement>) {
+export function BoldIcon(props: SVGAttributes<SVGElement>) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -15,7 +15,7 @@ export default function CommentIcon(props: SVGAttributes<SVGElement>) {
       strokeLinejoin="round"
       {...props}
     >
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+      <path d="M6 12h9a4 4 0 0 1 0 8H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h7a4 4 0 0 1 0 8" />
     </svg>
   );
 }

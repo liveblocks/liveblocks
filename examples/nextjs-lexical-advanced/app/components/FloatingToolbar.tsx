@@ -16,11 +16,11 @@ import {
   size,
   useFloating,
 } from "@floating-ui/react-dom";
-import BoldIcon from "./icons/bold-icon";
-import CommentIcon from "./icons/comment-icon";
-import { AIToolbar } from "./ai-toolbar";
+import { BoldIcon } from "../icons/BoldIcon";
+import { CommentIcon } from "../icons/CommentIcon";
+import { AIToolbar } from "./AIToolbar";
 
-export default function FloatingToolbar() {
+export function FloatingToolbar() {
   const [editor] = useLexicalComposerContext();
   const [range, setRange] = useState<Range | null>(null);
 
