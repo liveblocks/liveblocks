@@ -54,6 +54,14 @@
   }
 }
 
+::selection {
+  @apply bg-violet-200/75;
+}
+
+p {
+  margin: 0.8rem 0;
+}
+
 h1 {
   font-size: 2rem;
   font-weight: 700;

@@ -11,7 +11,13 @@ import { CoreMessage } from "ai";
 import { useSelection } from "../hooks";
 import { continueConversation } from "../actions/ai";
 import { readStreamableValue } from "ai/rsc";
-import { $getSelection, $isRangeSelection, TextNode } from "lexical";
+import {
+  $createParagraphNode,
+  $createTextNode,
+  $getSelection,
+  $isRangeSelection,
+  TextNode,
+} from "lexical";
 import * as React from "react";
 import { Command } from "cmdk";
 import { TranslateIcon } from "../icons/TranslateIcon";
@@ -23,6 +29,14 @@ import { StyleIcon } from "../icons/StyleIcon";
 import { ReplaceIcon } from "../icons/ReplaceIcon";
 import { InsertInlineIcon } from "../icons/InsertInlineIcon";
 import { BackIcon } from "../icons/BackIcon";
+import { RestartIcon } from "../icons/RestartIcon";
+import { OptionsIcon } from "../icons/OptionsIcon";
+import {
+  RESTORE_SELECTION_COMMAND,
+  SAVE_SELECTION_COMMAND,
+} from "./PreserveSelection";
+import { RubbishIcon } from "../icons/RubbishIcon";
+import { InsertParagraphIcon } from "../icons/InsertParagraphIcon";
 
 type OptionChild = {
   text: string;
@@ -124,7 +138,9 @@ export function AIToolbar({
   const [messages, setMessages] = useState<CoreMessage[]>([]);
   const [input, setInput] = useState("");
 
-  const [loading, setLoading] = useState(false);
+  const [aiState, setAiState] = useState<"initial" | "loading" | "complete">(
+    "initial"
+  );
   const lastAiMessage = messages.filter((m) => m.role === "assistant")[0];
 
   const { selection, textContent } = useSelection();
@@ -140,11 +156,14 @@ export function AIToolbar({
     )
     .find((option) => option.text === page);
 
+  const [previousPrompt, setPreviousPrompt] = useState("");
+
   // Send prompt to AI
   const submitPrompt = useCallback(
     async (prompt: string) => {
-      setLoading(true);
+      setAiState("loading");
       setInput("");
+      setPreviousPrompt(prompt);
 
       // Send on the user's text
       const systemMessage = `Do not surround your answer in quote marks. Only return the answer, nothing else. The user is selecting this text: 
@@ -173,9 +192,9 @@ ${textContent || ""}
           },
         ]);
       }
-      setLoading(false);
+      setAiState("complete");
     },
-    [textContent, setLoading]
+    [textContent, setAiState]
   );
 
   // Focus command panel on load
@@ -184,7 +203,7 @@ ${textContent || ""}
     if (state === "ai" && commandRef.current) {
       commandRef.current.focus();
     }
-  }, [state, loading, page]);
+  }, [state, aiState, page]);
 
   return (
     <>
@@ -207,11 +226,19 @@ ${textContent || ""}
             value={input}
             placeholder="Prompt AI…"
             onChange={(e) => setInput(e.target.value)}
+            onMouseDown={(e) => {
+              editor.dispatchCommand(SAVE_SELECTION_COMMAND, null);
+              e.preventDefault();
+              editor.dispatchCommand(RESTORE_SELECTION_COMMAND, null);
+            }}
+            onMouseUp={() => {
+              // editor.dispatchCommand(RESTORE_SELECTION_COMMAND, null);
+            }}
           />
         </form>
       </div>
 
-      {!loading ? (
+      {aiState !== "loading" ? (
         // Don't show command panel when a result is streaming in
         <Command
           ref={commandRef}
@@ -231,7 +258,7 @@ ${textContent || ""}
               }
             }
           }}
-          className="mt-1 rounded-lg border shadow-2xl border-border/80 bg-card max-w-xs pointer-events-auto"
+          className="mt-1 rounded-lg border shadow-2xl border-border/80 bg-card max-w-[210px] max-h-[290px] overflow-y-auto pointer-events-auto"
         >
           <Command.List>
             {lastAiMessage?.content && !page ? (
@@ -248,6 +275,10 @@ ${textContent || ""}
                       const selection = $getSelection();
                       selection?.insertRawText(lastAiMessage.content);
                     });
+
+                    onClose();
+                    setState("default");
+                    setAiState("initial");
                   }}
                 >
                   Replace selection
@@ -273,72 +304,139 @@ ${textContent || ""}
                         }
                       }
                     });
+
+                    onClose();
+                    setState("default");
+                    setAiState("initial");
                   }}
                 >
-                  Insert after
+                  Add text inline
                 </CommandItem>
-                <Command.Separator />
+                <CommandItem
+                  icon={<InsertParagraphIcon className="h-full" />}
+                  onSelect={() => {
+                    if (!lastAiMessage?.content) {
+                      return;
+                    }
+
+                    // Insert into a new paragraph after the current one
+                    editor.update(() => {
+                      const selection = $getSelection();
+                      if ($isRangeSelection(selection)) {
+                        const focus = selection.focus;
+                        const focusNode = focus.getNode();
+                        const textNode = $createTextNode(lastAiMessage.content);
+                        const paragraphNode = $createParagraphNode();
+                        paragraphNode.append(textNode);
+                        focusNode.insertAfter(paragraphNode);
+                      }
+                    });
+
+                    onClose();
+                    setState("default");
+                    setAiState("initial");
+                  }}
+                >
+                  Add in paragraph
+                </CommandItem>
+                {aiState === "complete" ? (
+                  <>
+                    <Command.Separator />
+                    <Command.Group heading="Modify">
+                      <CommandItem
+                        icon={<RestartIcon className="h-full" />}
+                        onSelect={() => {
+                          submitPrompt(previousPrompt);
+                        }}
+                      >
+                        Regenerate
+                      </CommandItem>
+                      <CommandItem
+                        icon={<OptionsIcon className="h-full" />}
+                        onSelect={() => {
+                          setAiState("initial");
+                        }}
+                      >
+                        Other options
+                      </CommandItem>
+                    </Command.Group>
+                    <Command.Separator />
+                    <CommandItem
+                      icon={<RubbishIcon className="h-full text-gray-600" />}
+                      onSelect={() => {
+                        onClose();
+                      }}
+                    >
+                      Discard
+                    </CommandItem>
+                  </>
+                ) : null}
               </>
             ) : null}
 
-            {page ? (
-              <CommandItem
-                icon={<BackIcon className="h-full" />}
-                onSelect={() => setPages([])}
-              >
-                Back
-              </CommandItem>
-            ) : (
-              optionsGroups.map((optionGroup, index) => (
-                <Fragment key={optionGroup.text}>
-                  {index !== 0 ? <Command.Separator /> : null}
-                  <Command.Group heading={optionGroup.text}>
-                    {optionGroup.options.map((option) =>
-                      option.prompt ? (
-                        // An item with a prompt
-                        <CommandItem
-                          key={option.text}
-                          icon={option.icon}
-                          onSelect={() => {
-                            submitPrompt(option.prompt);
-                            setPages([]);
-                          }}
-                        >
-                          {option.text}
-                        </CommandItem>
-                      ) : (
-                        // An item that opens another page
-                        <CommandItem
-                          key={option.text}
-                          icon={option.icon}
-                          onSelect={() => {
-                            setPages([...pages, option.text]);
-                          }}
-                        >
-                          {option.text}
-                        </CommandItem>
-                      )
-                    )}
-                  </Command.Group>
-                </Fragment>
-              ))
-            )}
-
-            {selectedOption?.children
-              ? selectedOption.children.map((option) => (
-                  // The items in the current page
+            {aiState === "initial" ? (
+              // Show AI options in initial state
+              <>
+                {page ? (
                   <CommandItem
-                    key={option.text}
-                    icon={option.icon}
-                    onSelect={() => {
-                      submitPrompt(option.prompt);
-                      setPages([]);
-                    }}
+                    icon={<BackIcon className="h-full" />}
+                    onSelect={() => setPages([])}
                   >
-                    {option.text}
+                    Back
                   </CommandItem>
-                ))
-              : null}
+                ) : (
+                  optionsGroups.map((optionGroup, index) => (
+                    <Fragment key={optionGroup.text}>
+                      {index !== 0 ? <Command.Separator /> : null}
+                      <Command.Group heading={optionGroup.text}>
+                        {optionGroup.options.map((option) =>
+                          option.prompt ? (
+                            // An item with a prompt
+                            <CommandItem
+                              key={option.text}
+                              icon={option.icon}
+                              onSelect={() => {
+                                submitPrompt(option.prompt);
+                                setPages([]);
+                              }}
+                            >
+                              {option.text}
+                            </CommandItem>
+                          ) : (
+                            // An item that opens another page
+                            <CommandItem
+                              key={option.text}
+                              icon={option.icon}
+                              onSelect={() => {
+                                setPages([...pages, option.text]);
+                              }}
+                            >
+                              {option.text}
+                            </CommandItem>
+                          )
+                        )}
+                      </Command.Group>
+                    </Fragment>
+                  ))
+                )}
+
+                {selectedOption?.children
+                  ? selectedOption.children.map((option) => (
+                      // The items in the current page
+                      <CommandItem
+                        key={option.text}
+                        icon={option.icon}
+                        onSelect={() => {
+                          submitPrompt(option.prompt);
+                          setPages([]);
+                        }}
+                      >
+                        {option.text}
+                      </CommandItem>
+                    ))
+                  : null}
+              </>
+            ) : null}
           </Command.List>
         </Command>
       ) : null}

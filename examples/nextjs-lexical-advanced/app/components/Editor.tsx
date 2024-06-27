@@ -21,6 +21,7 @@ import { useThreads } from "@liveblocks/react/suspense";
 import { Suspense } from "react";
 import { Loading } from "./Loading";
 import { BaseMetadata, ThreadData } from "@liveblocks/client";
+import { PreserveSelectionPlugin } from "./PreserveSelection";
 
 // Wrap your initial config with `liveblocksConfig`
 const initialConfig = liveblocksConfig({
@@ -79,6 +80,7 @@ export function Editor() {
             </Suspense>
           </LiveblocksPlugin>
         </div>
+        <PreserveSelectionPlugin />
       </LexicalComposer>
     </div>
   );
