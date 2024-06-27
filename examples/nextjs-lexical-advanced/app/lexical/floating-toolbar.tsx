@@ -113,7 +113,6 @@ function Toolbar({
               top: 0,
               left: editor._rootElement.getBoundingClientRect().left + 30,
               transform: `translate3d(0, ${Math.round(y)}px, 0)`,
-              minWidth: "max-content",
               width: editor._rootElement.getBoundingClientRect().width - 30 * 2,
             }
           : {
@@ -145,7 +144,7 @@ function ToolbarOptions({
   const [state, setState] = useState<"default" | "ai">("default");
 
   return (
-    <div className="p-1.5 w-full min-w-max rounded-lg border shadow border-border/80 text-foreground bg-card">
+    <div className="p-1.5 w-full rounded-lg border shadow border-border/80 text-foreground bg-card">
       <div style={{ display: state === "ai" ? "block" : "none" }}>
         <AIToolbar state={state} setState={setState} />
       </div>
