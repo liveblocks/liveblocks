@@ -1,4 +1,4 @@
-## v2.1.0 (not published yet)
+## v2.1.0
 
 ### `@liveblocks/client`
 
