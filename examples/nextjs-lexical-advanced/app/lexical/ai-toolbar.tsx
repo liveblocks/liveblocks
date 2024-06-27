@@ -19,6 +19,10 @@ import {
 } from "lexical";
 import * as React from "react";
 import { Command } from "cmdk";
+import {
+  RESTORE_SELECTION_COMMAND,
+  SAVE_SELECTION_COMMAND,
+} from "./preserve-selection";
 
 type OptionChild = { text: string; prompt: string; children?: never };
 type OptionParent = { text: string; children: OptionChild[]; prompt?: never };
@@ -259,6 +263,7 @@ ${textContent || ""}
                   <Command.Group heading={optionGroup.text}>
                     {optionGroup.options.map((option) =>
                       option.prompt ? (
+                        // Final prompt
                         <CommandItem
                           key={option.text}
                           onSelect={() => {
@@ -269,9 +274,12 @@ ${textContent || ""}
                           {option.text}
                         </CommandItem>
                       ) : (
+                        // Open another page
                         <CommandItem
                           key={option.text}
-                          onSelect={() => setPages([...pages, option.text])}
+                          onSelect={() => {
+                            setPages([...pages, option.text]);
+                          }}
                         >
                           {option.text}
                         </CommandItem>
@@ -309,5 +317,9 @@ function CommandItem({
   children: ReactNode;
   onSelect: ((value: string) => void) | undefined;
 }) {
-  return <Command.Item onSelect={onSelect}>{children}</Command.Item>;
+  return (
+    <Command.Item onSelect={onSelect} onMouseDown={(e) => e.preventDefault()}>
+      {children}
+    </Command.Item>
+  );
 }
