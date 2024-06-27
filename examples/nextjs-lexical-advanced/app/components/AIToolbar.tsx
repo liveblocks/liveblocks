@@ -129,8 +129,8 @@ export function AIToolbar({
   setState,
   onClose,
 }: {
-  state: "default" | "ai";
-  setState: (state: "default" | "ai") => void;
+  state: "default" | "ai" | "closed";
+  setState: (state: "default" | "ai" | "closed") => void;
   onClose: () => void;
 }) {
   const [editor] = useLexicalComposerContext();
@@ -276,9 +276,9 @@ ${textContent || ""}
                       selection?.insertRawText(lastAiMessage.content);
                     });
 
-                    onClose();
+                    setPages([]);
                     setState("default");
-                    setAiState("initial");
+                    onClose();
                   }}
                 >
                   Replace selection
@@ -305,9 +305,9 @@ ${textContent || ""}
                       }
                     });
 
-                    onClose();
+                    setPages([]);
                     setState("default");
-                    setAiState("initial");
+                    onClose();
                   }}
                 >
                   Add text inline
@@ -332,12 +332,13 @@ ${textContent || ""}
                       }
                     });
 
-                    onClose();
+                    setPages([]);
                     setState("default");
                     setAiState("initial");
+                    onClose();
                   }}
                 >
-                  Add in paragraph
+                  Add new paragraph
                 </CommandItem>
                 {aiState === "complete" ? (
                   <>

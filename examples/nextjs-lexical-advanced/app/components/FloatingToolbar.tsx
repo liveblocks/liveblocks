@@ -19,6 +19,7 @@ import {
 import { BoldIcon } from "../icons/BoldIcon";
 import { CommentIcon } from "../icons/CommentIcon";
 import { AIToolbar } from "./AIToolbar";
+import { SparklesIcon } from "../icons/SparklesIcon";
 
 export function FloatingToolbar() {
   const [editor] = useLexicalComposerContext();
@@ -138,7 +139,11 @@ function ToolbarOptions({
   setFullWidth: (isFullWidth: boolean) => void;
 }) {
   const [editor] = useLexicalComposerContext();
-  const [state, setState] = useState<"default" | "ai">("default");
+  const [state, setState] = useState<"default" | "ai" | "closed">("default");
+
+  if (state === "closed") {
+    return null;
+  }
 
   return (
     <div className="w-full text-foreground text-sm leading-relaxed">
@@ -146,13 +151,16 @@ function ToolbarOptions({
         <AIToolbar
           state={state}
           setState={setState}
-          onClose={() => onRangeChange(null)}
+          onClose={() => {
+            onRangeChange(null);
+            setState("closed");
+          }}
         />
       </div>
 
       <div
         style={{ display: state !== "ai" ? "block" : "none" }}
-        className="flex items-center justify-center gap-2 p-1.5 rounded-lg border shadow border-border/80 bg-card pointer-events-auto"
+        className="flex items-center justify-center gap-2 p-1 rounded-lg border shadow border-border/80 bg-card pointer-events-auto"
       >
         <button
           onMouseDown={(e) => e.preventDefault()}
@@ -160,9 +168,11 @@ function ToolbarOptions({
             setState("ai");
             setFullWidth(true);
           }}
-          className="inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground w-8 h-8 data-[active]:bg-accent"
+          className="px-2 inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-8 data-[active]:bg-accent"
         >
-          AI
+          <div className="flex items-center text-indigo-500 font-semibold">
+            <SparklesIcon className="h-4 -ml-1" /> AI
+          </div>
         </button>
         <button
           onClick={() => {
