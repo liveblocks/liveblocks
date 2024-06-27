@@ -2820,8 +2820,8 @@ const _useThreadsSuspense: TypedBundle["suspense"]["useThreads"] =
 const _useOther: TypedBundle["useOther"] = useOther;
 
 /**
- * Returns an object that lets you get information about all the users
- * currently connected in the room.
+ * Returns an array with information about all the users currently connected in
+ * the room (except yourself).
  *
  * @example
  * const others = useOthers();
@@ -2880,8 +2880,8 @@ function _useOthers(...args: any[]) {
 const _useOtherSuspense: TypedBundle["suspense"]["useOther"] = useOtherSuspense;
 
 /**
- * Returns an object that lets you get information about all the users
- * currently connected in the room.
+ * Returns an array with information about all the users currently connected in
+ * the room (except yourself).
  *
  * @example
  * const others = useOthers();

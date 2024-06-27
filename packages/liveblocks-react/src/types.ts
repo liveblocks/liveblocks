@@ -624,8 +624,8 @@ type RoomContextBundleCommon<
   ): OmitFirstArg<F>;
 
   /**
-   * Returns an object that lets you get information about all the users
-   * currently connected in the room.
+   * Returns an array with information about all the users currently connected
+   * in the room (except yourself).
    *
    * @example
    * const others = useOthers();
