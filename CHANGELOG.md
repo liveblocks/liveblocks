@@ -6,14 +6,15 @@
 
 ### `@liveblocks/react`
 
+- Add new hook
+  [`useStorageStatus`](https://liveblocks.io/docs/api-reference/liveblocks-react#useStorageStatus),
+  which returns the current storage status of the room, and will re-render your
+  component whenever it changes. This can used to build "Saving..." UIs.
 - Add
   [`useDeleteThread`](https://liveblocks.io/docs/api-reference/liveblocks-react#useDeleteThread)
   hook to delete a thread and its associated comments.
-- Add new hook `useStorageStatus()`, which returns the current storage status of
-  the room, and will re-render your component whenever it changes. This can used
-  to build "Saving..." UIs.
-- Add missing JSDoc comments
-- Improve some error messages and stack traces to contain more info
+- Fix: add missing JSDoc comments
+- Fix: improve some error messages and stack traces to contain more info
 - Refactorings to Suspense internals
 
 ### `@liveblocks/react-ui`
