@@ -75,7 +75,13 @@ jobs:
       - name: Prepare release
         env:
           VERSION: ${{steps.version.outputs.value}}
-        run: ./.github/scripts/release.sh -V "$VERSION"
+        run:
+          ./.github/scripts/release.sh -V "$VERSION" "packages/liveblocks-core"
+          "packages/liveblocks-client" "packages/liveblocks-node"
+          "packages/liveblocks-react" "packages/liveblocks-redux"
+          "packages/liveblocks-zustand" "packages/liveblocks-yjs"
+          "packages/liveblocks-react-ui" "packages/liveblocks-react-lexical"
+          "packages/liveblocks-node-lexical"
 
       - name: Build all packages
         run: |
