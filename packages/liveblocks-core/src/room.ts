@@ -46,7 +46,7 @@ import { objectToQuery } from "./lib/objectToQuery";
 import { asPos } from "./lib/position";
 import type { QueryParams } from "./lib/url";
 import { urljoin } from "./lib/url";
-import { compact, deepClone, once, tryParseJson } from "./lib/utils";
+import { compact, deepClone, memoize, tryParseJson } from "./lib/utils";
 import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 import type { ClientMsg, UpdateYDocClientMsg } from "./protocol/ClientMsg";
@@ -3079,8 +3079,8 @@ export function createRoom<
 
       isPresenceReady,
       isStorageReady,
-      waitUntilPresenceReady: once(waitUntilPresenceReady),
-      waitUntilStorageReady: once(waitUntilStorageReady),
+      waitUntilPresenceReady: memoize(waitUntilPresenceReady),
+      waitUntilStorageReady: memoize(waitUntilStorageReady),
 
       events,
 

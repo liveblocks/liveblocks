@@ -190,11 +190,15 @@ export async function withTimeout<T>(
 }
 
 /**
- * Memoize a promise factory, guaranteeing that the given promise will run at
- * most once. After that, every subsequent call will return the same promise
- * instance.
+ * Memoize a factory function, so that each subsequent call to the returned
+ * function will return the exact same value.
  */
-export function once<T>(promiseFn: () => Promise<T>): () => Promise<T> {
-  let memoedPromise: Promise<T> | null = null;
-  return () => (memoedPromise ??= promiseFn());
+export function memoize<T>(factoryFn: () => T): () => T {
+  let cached: { value: T } | null;
+  return () => {
+    if (cached === null) {
+      cached = { value: factoryFn() };
+    }
+    return cached.value;
+  };
 }
