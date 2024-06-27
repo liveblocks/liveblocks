@@ -88,9 +88,13 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 - Updated the [interactive tutorial](https://liveblocks.io/docs/tutorial/react/getting-started/welcome) for Liveblocks 2.0.
 
+## Processes
+
+- Versioning and publishing of public packages is now decoupled from versioning/publishing of our CLI tools
+
 ## Contributors
 
-flowflorent, ctnicholas
+flowflorent, ctnicholas, nvie
 
 # Week 25 (2024-06-21)
 
