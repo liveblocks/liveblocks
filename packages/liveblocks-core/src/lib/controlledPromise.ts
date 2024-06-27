@@ -19,6 +19,7 @@ export function controlledPromise<T>(): [
     resolve = res;
     reject = rej;
   });
+  // eslint-disable-next-line no-restricted-syntax
   return [promise, resolve!, reject!];
 }
 
