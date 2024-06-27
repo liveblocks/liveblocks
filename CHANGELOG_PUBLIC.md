@@ -38,13 +38,51 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 - Fix improper `useSyncExternalStore` import which would break on React <18.
 
-## v2.0.5
+## v2.0.5 (2024-06-21)
 
 ### `@liveblocks/react`
 
 - Improved DX: `useDeleteThread` will now throw a client-side error if someone
   else than the thread owner tries to delete the thread. This will help you
   catch and handle this case more easily.
+
+## v2.0.4 (2024-06-20)
+
+### All packages
+
+- Improve TS error messages and error locations if custom `UserMeta` or
+  `ActivitiesData` types do not match their requirements
+
+### `@liveblocks/client`
+
+- Add missing type export for `CommentReaction`
+- Don’t attempt to write missing initialStorage keys if the current user has no
+  write access to storage. This will no longer throw, but issue a warning
+  message in the console.
+
+## v2.0.3 (2024-06-17)
+
+### `@liveblocks/client`
+
+- In `client.enterRoom()`, the options `initialPresence` and `initialStorage`
+  are now only mandatory if your custom type requires them to be.
+
+### `@liveblocks/react`
+
+- In `<RoomProvider>`, the props `initialPresence` and `initialStorage` are now
+  only mandatory if your custom type requires them to be.
+- Nesting `<LiveblocksProvider>`s will now throw to prevent incorrect usage.
+
+### `@liveblocks/react-ui`
+
+- Prevent the composer from splitting text being composed.
+- Handle parentheses around and within auto-links.
+- Count whitespace as empty to prevent posting empty comments.
+- Prevent clearing the composer if it's not handled. (via `onComposerSubmit`)
+
+### `@liveblocks/yjs`
+
+- Add missing type exports
 
 ## Documentation
 
