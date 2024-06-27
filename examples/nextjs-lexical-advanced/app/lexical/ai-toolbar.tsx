@@ -16,6 +16,10 @@ import { Command } from "cmdk";
 type OptionChild = { text: string; prompt: string; children?: never };
 type OptionParent = { text: string; children: OptionChild[]; prompt?: never };
 type Option = OptionChild | OptionParent;
+type OptionGroup = {
+  text: string;
+  options: Option[];
+};
 
 const languages = [
   //"Arabic",
@@ -33,34 +37,44 @@ const languages = [
   "Spanish",
 ];
 
-const styles = ["Formal", "Friendly", "Pirate", "Poetic", "As a bird"];
+const styles = ["Formal", "Friendly", "Pirate", "Poetic"];
 
-const options: Option[] = [
+const optionsGroups: OptionGroup[] = [
   {
-    text: "Fix mistakes",
-    prompt: "Fix any typos or general errors in the text",
+    text: "Modify",
+    options: [
+      {
+        text: "Fix mistakes",
+        prompt: "Fix any typos or general errors in the text",
+      },
+      {
+        text: "Shorten",
+        prompt: "Shorten the text",
+      },
+      {
+        text: "Lengthen",
+        prompt: "Lengthen the text, going into more detail",
+      },
+    ],
   },
   {
-    text: "Shorten",
-    prompt: "Shorten the text",
-  },
-  {
-    text: "Lengthen",
-    prompt: "Lengthen the text, going into more detail",
-  },
-  {
-    text: "Translate",
-    children: languages.map((lang) => ({
-      text: lang,
-      prompt: `Translate text into the ${lang} language`,
-    })),
-  },
-  {
-    text: "Change style",
-    children: styles.map((style) => ({
-      text: style,
-      prompt: `Change text into ${style} style`,
-    })),
+    text: "Generate",
+    options: [
+      {
+        text: "Translate into…",
+        children: languages.map((lang) => ({
+          text: lang,
+          prompt: `Translate text into the ${lang} language`,
+        })),
+      },
+      {
+        text: "Change style…",
+        children: styles.map((style) => ({
+          text: style,
+          prompt: `Change text into ${style} style`,
+        })),
+      },
+    ],
   },
 ];
 
@@ -84,15 +98,16 @@ export function AIToolbar({
   // console.log("selection: ", textContent);
   // console.log("ai:", lastAiMessage);
 
-  //const [open, setOpen] = useState(true);
-
-  const ref = React.useRef(null);
-  const [open, setOpen] = React.useState(false);
-  const [search, setSearch] = React.useState("");
   const [pages, setPages] = React.useState<string[]>([]);
   const page = pages[pages.length - 1];
-  const selectedOption =
-    options.filter((option) => page === option.text)?.[0] || null;
+  // const selectedOption =
+  //   optionsGroups.filter((option) => page === option.text)?.[0] || null;
+  const selectedOption = optionsGroups
+    .flatMap((group) => group.options)
+    .flatMap((option) =>
+      option.children ? [option, ...option.children] : [option]
+    )
+    .find((option) => option.text === page);
 
   const submitPrompt = useCallback(
     async (prompt: string) => {
@@ -130,103 +145,113 @@ ${textContent || ""}
 
   return (
     <>
-      {lastAiMessage?.content ? (
-        <div className="whitespace-pre-wrap">{lastAiMessage.content}</div>
-      ) : null}
-      {/*<Command.Input value={search} onValueChange={setSearch} />*/}
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          submitPrompt(input);
-        }}
-        className="w-full"
-      >
-        <input
-          className="block w-full p-2 mb-8 border border-gray-300 rounded shadow-xl"
-          value={input}
-          placeholder="Say something..."
-          onChange={(e) => setInput(e.target.value)}
-        />
-      </form>
+      <div className="rounded-lg border shadow-xl border-border/80 bg-card">
+        {lastAiMessage?.content ? (
+          <div className="whitespace-pre-wrap p-2">{lastAiMessage.content}</div>
+        ) : null}
+        {/*<Command.Input value={search} onValueChange={setSearch} />*/}
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            submitPrompt(input);
+          }}
+          className="w-full"
+        >
+          <input
+            className="block w-full p-2 border border-gray-300 rounded shadow-xl"
+            value={input}
+            placeholder="Say something..."
+            onChange={(e) => setInput(e.target.value)}
+          />
+        </form>
+      </div>
       <Command
         autoFocus={true}
         onKeyDown={(e) => {
-          // Escape goes to previous page
-          // Backspace goes to previous page when search is empty
-          if (e.key === "Escape" || (e.key === "Backspace" && !search)) {
+          // Escape and backspace go back to previous page
+          if (e.key === "Escape" || e.key === "Backspace") {
             e.preventDefault();
             setPages((pages) => pages.slice(0, -1));
           }
         }}
+        className="mt-1 rounded-lg border shadow-xl border-border/80 bg-card max-w-xs"
       >
         <Command.List>
-          {lastAiMessage?.content ? (
+          {lastAiMessage?.content && !page ? (
             <>
-              <CommandItem
-                onSelect={() => {
-                  if (!lastAiMessage?.content) {
-                    return;
-                  }
-                  editor.update(() => {
-                    const selection = $getSelection();
-                    selection?.insertRawText(lastAiMessage.content);
-                  });
-                }}
-              >
-                Replace selection
-              </CommandItem>
-              <CommandItem
-                onSelect={() => {
-                  if (!lastAiMessage?.content) {
-                    return;
-                  }
-                  editor.update(() => {
-                    const selection = $getSelection();
-                    if ($isRangeSelection(selection)) {
-                      const node = selection.focus.getNode();
-                      const offset = selection.focus.offset;
-
-                      if (node instanceof TextNode) {
-                        const textContent = node.getTextContent();
-                        const beforeText = textContent.slice(0, offset);
-                        const afterText = textContent.slice(offset);
-
-                        const newText = `${beforeText} ${lastAiMessage.content}${afterText}`;
-                        node.replace(new TextNode(newText));
-                      }
+              <Command.Group heading="Modify content">
+                <CommandItem
+                  onSelect={() => {
+                    if (!lastAiMessage?.content) {
+                      return;
                     }
-                  });
-                }}
-              >
-                Insert after
-              </CommandItem>
+                    editor.update(() => {
+                      const selection = $getSelection();
+                      selection?.insertRawText(lastAiMessage.content);
+                    });
+                  }}
+                >
+                  Replace selection
+                </CommandItem>
+                <CommandItem
+                  onSelect={() => {
+                    if (!lastAiMessage?.content) {
+                      return;
+                    }
+                    editor.update(() => {
+                      const selection = $getSelection();
+                      if ($isRangeSelection(selection)) {
+                        const node = selection.focus.getNode();
+                        const offset = selection.focus.offset;
+
+                        if (node instanceof TextNode) {
+                          const textContent = node.getTextContent();
+                          const beforeText = textContent.slice(0, offset);
+                          const afterText = textContent.slice(offset);
+
+                          const newText = `${beforeText} ${lastAiMessage.content}${afterText}`;
+                          node.replace(new TextNode(newText));
+                        }
+                      }
+                    });
+                  }}
+                >
+                  Insert after
+                </CommandItem>
+              </Command.Group>
+              <Command.Separator />
             </>
           ) : null}
 
-          <Command.Separator />
-
-          {!page &&
-            options.map((option) =>
-              option.prompt ? (
-                <CommandItem
-                  onSelect={() => {
-                    submitPrompt(option.prompt);
-                    setPages([]);
-                  }}
-                >
-                  {option.text}
-                </CommandItem>
-              ) : (
-                <Command.Item
-                  onSelect={() => setPages([...pages, option.text])}
-                  asChild
-                >
-                  <div className="data-[selected=true]:bg-gray-500 hover:bg-gray-100">
-                    {option.text}
-                  </div>
-                </Command.Item>
-              )
-            )}
+          {page ? (
+            <CommandItem onSelect={() => setPages([])}>← Back</CommandItem>
+          ) : (
+            optionsGroups.map((optionGroup, index) => (
+              <>
+                {index !== 0 ? <Command.Separator /> : null}
+                <Command.Group heading={optionGroup.text}>
+                  {optionGroup.options.map((option) =>
+                    option.prompt ? (
+                      <CommandItem
+                        onSelect={() => {
+                          submitPrompt(option.prompt);
+                          setPages([]);
+                        }}
+                      >
+                        {option.text}
+                      </CommandItem>
+                    ) : (
+                      <CommandItem
+                        onSelect={() => setPages([...pages, option.text])}
+                      >
+                        {option.text}
+                      </CommandItem>
+                    )
+                  )}
+                </Command.Group>
+              </>
+            ))
+          )}
 
           {selectedOption?.children
             ? selectedOption.children.map((option) => (
@@ -253,11 +278,5 @@ function CommandItem({
   children: ReactNode;
   onSelect: ((value: string) => void) | undefined;
 }) {
-  return (
-    <Command.Item onSelect={onSelect} asChild>
-      <div className="data-[selected=true]:bg-gray-500 hover:bg-gray-100">
-        {children}
-      </div>
-    </Command.Item>
-  );
+  return <Command.Item onSelect={onSelect}>{children}</Command.Item>;
 }

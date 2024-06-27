@@ -18,10 +18,6 @@ import {
 } from "@floating-ui/react-dom";
 import BoldIcon from "./icons/bold-icon";
 import CommentIcon from "./icons/comment-icon";
-import { useSelection } from "./hooks";
-import { CoreMessage } from "ai";
-import { continueConversation } from "../actions/ai";
-import { readStreamableValue } from "ai/rsc";
 import { AIToolbar } from "./ai-toolbar";
 
 export default function FloatingToolbar() {
@@ -144,14 +140,14 @@ function ToolbarOptions({
   const [state, setState] = useState<"default" | "ai">("default");
 
   return (
-    <div className="p-1.5 w-full rounded-lg border shadow border-border/80 text-foreground bg-card">
+    <div className="w-full text-foreground text-sm leading-relaxed">
       <div style={{ display: state === "ai" ? "block" : "none" }}>
         <AIToolbar state={state} setState={setState} />
       </div>
 
       <div
         style={{ display: state !== "ai" ? "block" : "none" }}
-        className="flex items-center justify-center gap-2 "
+        className="flex items-center justify-center gap-2 p-1.5 rounded-lg border shadow border-border/80  bg-card"
       >
         <button
           onMouseDown={(e) => e.preventDefault()}
