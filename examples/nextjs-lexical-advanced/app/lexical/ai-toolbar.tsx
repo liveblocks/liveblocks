@@ -1,5 +1,5 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { ReactNode, useCallback, useState } from "react";
+import { ReactNode, useCallback, useEffect, useState } from "react";
 import { CoreMessage } from "ai";
 import { useSelection } from "./hooks";
 import { continueConversation } from "../actions/ai";
@@ -41,8 +41,12 @@ const styles = ["Formal", "Friendly", "Pirate", "Poetic"];
 
 const optionsGroups: OptionGroup[] = [
   {
-    text: "Modify",
+    text: "Modify selection",
     options: [
+      {
+        text: "Improve writing",
+        prompt: "Improve the quality of the text",
+      },
       {
         text: "Fix mistakes",
         prompt: "Fix any typos or general errors in the text",
@@ -143,9 +147,15 @@ ${textContent || ""}
     [textContent]
   );
 
+  useEffect(() => {
+    if (state === "ai") {
+      console.log("START");
+    }
+  }, [state]);
+
   return (
     <>
-      <div className="rounded-lg border shadow-xl border-border/80 bg-card">
+      <div className="rounded-lg border shadow-2xl border-border/80 bg-card pointer-events-auto">
         {lastAiMessage?.content ? (
           <div className="whitespace-pre-wrap p-2">{lastAiMessage.content}</div>
         ) : null}
@@ -166,7 +176,7 @@ ${textContent || ""}
         </form>
       </div>
       <Command
-        autoFocus={true}
+        shouldFilter={false}
         onKeyDown={(e) => {
           // Escape and backspace go back to previous page
           if (e.key === "Escape" || e.key === "Backspace") {
@@ -174,7 +184,7 @@ ${textContent || ""}
             setPages((pages) => pages.slice(0, -1));
           }
         }}
-        className="mt-1 rounded-lg border shadow-xl border-border/80 bg-card max-w-xs"
+        className="mt-1 rounded-lg border shadow-2xl border-border/80 bg-card max-w-xs pointer-events-auto"
       >
         <Command.List>
           {lastAiMessage?.content && !page ? (

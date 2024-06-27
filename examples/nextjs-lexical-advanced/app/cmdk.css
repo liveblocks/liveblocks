@@ -7,7 +7,7 @@
 }
 
 [cmdk-item] {
-  @apply hover:bg-gray-100 rounded-[6px] px-2.5 py-1 m-1;
+  @apply hover:bg-gray-100 rounded-[6px] px-2.5 py-1 m-1 cursor-pointer;
 }
 
 [cmdk-item][data-selected="true"] {

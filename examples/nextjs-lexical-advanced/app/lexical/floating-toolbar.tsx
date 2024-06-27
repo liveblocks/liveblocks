@@ -102,6 +102,7 @@ function Toolbar({
   return createPortal(
     <div
       ref={setFloating}
+      className="pointer-events-none"
       style={
         fullWidth && editor._rootElement
           ? {
@@ -147,7 +148,7 @@ function ToolbarOptions({
 
       <div
         style={{ display: state !== "ai" ? "block" : "none" }}
-        className="flex items-center justify-center gap-2 p-1.5 rounded-lg border shadow border-border/80  bg-card"
+        className="flex items-center justify-center gap-2 p-1.5 rounded-lg border shadow border-border/80 bg-card pointer-events-auto"
       >
         <button
           onMouseDown={(e) => e.preventDefault()}
