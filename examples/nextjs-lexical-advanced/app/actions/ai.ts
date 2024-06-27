@@ -6,7 +6,7 @@ import { openai } from "@ai-sdk/openai";
 
 export async function continueConversation(messages: CoreMessage[]) {
   const result = await streamText({
-    model: openai("gpt-3.5-turbo"),
+    model: openai("gpt-4o"),
     messages,
   });
 

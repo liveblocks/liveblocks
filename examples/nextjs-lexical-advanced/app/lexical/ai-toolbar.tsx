@@ -1,5 +1,12 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { ReactNode, useCallback, useEffect, useState } from "react";
+import {
+  Fragment,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { CoreMessage } from "ai";
 import { useSelection } from "./hooks";
 import { continueConversation } from "../actions/ai";
@@ -85,9 +92,11 @@ const optionsGroups: OptionGroup[] = [
 export function AIToolbar({
   state,
   setState,
+  onClose,
 }: {
   state: "default" | "ai";
   setState: (state: "default" | "ai") => void;
+  onClose: () => void;
 }) {
   const [editor] = useLexicalComposerContext();
 
@@ -147,11 +156,13 @@ ${textContent || ""}
     [textContent, setLoading]
   );
 
+  // Focus command panel on load
+  const commandRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (state === "ai") {
-      console.log("START");
+    if (state === "ai" && commandRef.current) {
+      commandRef.current.focus();
     }
-  }, [state]);
+  }, [state, loading, page]);
 
   return (
     <>
@@ -176,12 +187,20 @@ ${textContent || ""}
       </div>
       {!loading ? (
         <Command
+          ref={commandRef}
           shouldFilter={false}
           onKeyDown={(e) => {
-            // Escape and backspace go back to previous page
+            // Escape and backspace go back to previous page or exit
             if (e.key === "Escape" || e.key === "Backspace") {
               e.preventDefault();
-              setPages((pages) => pages.slice(0, -1));
+
+              if (page) {
+                setPages((pages) => pages.slice(0, -1));
+              } else {
+                setPages([]);
+                setState("default");
+                onClose();
+              }
             }
           }}
           className="mt-1 rounded-lg border shadow-2xl border-border/80 bg-card max-w-xs pointer-events-auto"
@@ -235,12 +254,13 @@ ${textContent || ""}
               <CommandItem onSelect={() => setPages([])}>← Back</CommandItem>
             ) : (
               optionsGroups.map((optionGroup, index) => (
-                <>
+                <Fragment key={optionGroup.text}>
                   {index !== 0 ? <Command.Separator /> : null}
                   <Command.Group heading={optionGroup.text}>
                     {optionGroup.options.map((option) =>
                       option.prompt ? (
                         <CommandItem
+                          key={option.text}
                           onSelect={() => {
                             submitPrompt(option.prompt);
                             setPages([]);
@@ -250,6 +270,7 @@ ${textContent || ""}
                         </CommandItem>
                       ) : (
                         <CommandItem
+                          key={option.text}
                           onSelect={() => setPages([...pages, option.text])}
                         >
                           {option.text}
@@ -257,13 +278,14 @@ ${textContent || ""}
                       )
                     )}
                   </Command.Group>
-                </>
+                </Fragment>
               ))
             )}
 
             {selectedOption?.children
               ? selectedOption.children.map((option) => (
                   <CommandItem
+                    key={option.text}
                     onSelect={() => {
                       submitPrompt(option.prompt);
                       setPages([]);

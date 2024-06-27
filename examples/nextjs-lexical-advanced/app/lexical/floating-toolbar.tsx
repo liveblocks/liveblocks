@@ -143,7 +143,11 @@ function ToolbarOptions({
   return (
     <div className="w-full text-foreground text-sm leading-relaxed">
       <div style={{ display: state === "ai" ? "block" : "none" }}>
-        <AIToolbar state={state} setState={setState} />
+        <AIToolbar
+          state={state}
+          setState={setState}
+          onClose={() => onRangeChange(null)}
+        />
       </div>
 
       <div
