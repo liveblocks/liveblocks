@@ -88,7 +88,9 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           VERSION: ${{ steps.version.outputs.value }}
           NPM_TAG: ${{ steps.npm_tag.outputs.value }}
-        run: ./.github/scripts/publish.sh -V "$VERSION" -t "$NPM_TAG"
+        run:
+          ./.github/scripts/publish.sh -V "$VERSION" -t "$NPM_TAG"
+          "packages/create-liveblocks-app" "packages/liveblocks-codemod"
 
       - name:
           Creating release tag, don't forget to fill the changelog if necessary!
