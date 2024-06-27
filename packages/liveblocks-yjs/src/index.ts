@@ -25,6 +25,13 @@ const DefaultOptions: ProviderOptions = {
   autoloadSubdocs: false,
 };
 
+enum SyncStatus {
+  Loading = "loading",
+  NotLoaded = "not-loaded",
+  Synchronizing = "synchronizing",
+  Synchronized = "synchronized",
+}
+
 export class LiveblocksYjsProvider<
   P extends JsonObject = DP,
   S extends LsonObject = DS,
@@ -44,6 +51,7 @@ export class LiveblocksYjsProvider<
   public subdocHandlers: Map<string, yDocHandler> = new Map();
 
   private pending: string[] = [];
+  private roomConnected = false;
 
   constructor(
     room: Room<P, S, U, E, M>,
@@ -67,9 +75,12 @@ export class LiveblocksYjsProvider<
       this.room.events.status.subscribe((status) => {
         if (status === "connected") {
           this.rootDocHandler.syncDoc();
+          this.roomConnected = true;
         } else {
           this.rootDocHandler.synced = false;
+          this.roomConnected = false;
         }
+        this.emit("status", [this.getStatus()]);
       })
     );
 
@@ -83,12 +94,11 @@ export class LiveblocksYjsProvider<
         const { stateVector, update: updateStr, guid } = message;
         const update = Base64.toUint8Array(updateStr);
         // we use base64 encoded version for comparison because otherwise we need to implement u8array equality
-        const updateVector = Base64.fromUint8Array(
-          Y.encodeStateVectorFromUpdateV2(update)
-        );
+
         let foundPendingUpdate = false;
+        const updateId = this.getUniqueUpdateId(update);
         this.pending = this.pending.filter((pendingUpdate) => {
-          if (pendingUpdate === updateVector) {
+          if (pendingUpdate === updateId) {
             foundPendingUpdate = true;
             return false;
           }
@@ -105,9 +115,13 @@ export class LiveblocksYjsProvider<
             this.rootDocHandler.handleServerUpdate({ update, stateVector });
           }
         }
+
+        // notify any listeners that the status has changed
+        this.emit("status", [this.getStatus()]);
       })
     );
 
+    // different consumers listen to sync and synced
     this.rootDocHandler.on("synced", () => {
       const state = this.rootDocHandler.synced;
       for (const [_, handler] of this.subdocHandlers) {
@@ -115,6 +129,7 @@ export class LiveblocksYjsProvider<
       }
       this.emit("synced", [state]);
       this.emit("sync", [state]);
+      this.emit("status", [this.getStatus()]);
     });
     this.rootDoc.on("subdocs", this.handleSubdocs);
     this.syncDoc();
@@ -145,11 +160,17 @@ export class LiveblocksYjsProvider<
     }
   };
 
+  private getUniqueUpdateId = (update: Uint8Array) => {
+    const clock =
+      Y.parseUpdateMeta(update).to.get(this.rootDoc.clientID) ?? "-1";
+    return this.rootDoc.clientID + ":" + clock;
+  };
+
   private updateDoc = (update: Uint8Array, guid?: string) => {
-    this.pending.push(
-      Base64.fromUint8Array(Y.encodeStateVectorFromUpdateV2(update))
-    );
+    const updateId = this.getUniqueUpdateId(update);
+    this.pending.push(updateId);
     this.room.updateYDoc(Base64.fromUint8Array(update), guid);
+    this.emit("status", [this.getStatus()]);
   };
 
   private fetchDoc = (vector: string, guid?: string) => {
@@ -195,10 +216,16 @@ export class LiveblocksYjsProvider<
     return this.rootDocHandler.synced;
   }
 
-  public status(): "pending" | "synced" {
-    return this.rootDocHandler.synced && this.pending.length === 0
-      ? "synced"
-      : "pending";
+  public getStatus(): SyncStatus {
+    if (!this.roomConnected) {
+      return SyncStatus.NotLoaded;
+    }
+    if (!this.synced) {
+      return SyncStatus.Loading;
+    }
+    return this.pending.length === 0
+      ? SyncStatus.Synchronized
+      : SyncStatus.Synchronizing;
   }
 
   destroy(): void {
