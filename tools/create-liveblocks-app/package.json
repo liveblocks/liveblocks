@@ -37,7 +37,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/liveblocks/liveblocks.git",
-    "directory": "packages/create-liveblocks-app"
+    "directory": "tools/create-liveblocks-app"
   },
   "homepage": "https://liveblocks.io",
   "keywords": [

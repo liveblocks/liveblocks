@@ -47,7 +47,7 @@ export async function createLiveblocksApp() {
       console.log();
       console.log(c.bold("Learn more:"));
       console.log(
-        "https://github.com/liveblocks/liveblocks/blob/main/packages/create-liveblocks-app/README.MD"
+        "https://github.com/liveblocks/liveblocks/blob/main/tools/create-liveblocks-app/README.MD"
       );
     } else {
       console.log(c.redBright.bold("Error"));

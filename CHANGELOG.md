@@ -1124,7 +1124,7 @@ Recommended steps to upgrade:
 ### `create-liveblocks-app`
 
 - Added
-  [flags](https://github.com/liveblocks/liveblocks/tree/main/packages/create-liveblocks-app#flags-optional)
+  [flags](https://github.com/liveblocks/liveblocks/tree/main/tools/create-liveblocks-app#flags-optional)
   for creating config files with `--init`. (e.g. `--framework react`)
 - Added an error if an incorrect flag is used.
 - Slightly changed the format of the default config file.
