@@ -15,6 +15,29 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 # Week 26 (2024-06-28)
 
+## v2.1.0
+
+### `@liveblocks/client`
+
+- Various internal refactorings
+
+### `@liveblocks/react`
+
+- Add new hook
+  [`useStorageStatus`](https://liveblocks.io/docs/api-reference/liveblocks-react#useStorageStatus),
+  which returns the current storage status of the room, and will re-render your
+  component whenever it changes. This can used to build "Saving..." UIs.
+- Add
+  [`useDeleteThread`](https://liveblocks.io/docs/api-reference/liveblocks-react#useDeleteThread)
+  hook to delete a thread and its associated comments.
+- Fix: add missing JSDoc comments
+- Fix: improve some error messages and stack traces to contain more info
+- Refactorings to Suspense internals
+
+### `@liveblocks/react-ui`
+
+- Fix improper `useSyncExternalStore` import which would break on React <18.
+
 ## v2.0.5
 
 ### `@liveblocks/react`
