@@ -2864,12 +2864,12 @@ export function createRoom<
     while (!isPresenceReady()) {
       const { promise, resolve } = Promise_withResolvers();
 
-      const u1 = events.self.subscribeOnce(resolve);
-      const u2 = events.status.subscribeOnce(resolve);
+      const unsub1 = events.self.subscribeOnce(resolve);
+      const unsub2 = events.status.subscribeOnce(resolve);
       // Return whenever one of these returns, whichever is first
       await promise;
-      u1();
-      u2();
+      unsub1();
+      unsub2();
     }
   }
 
