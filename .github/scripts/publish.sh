@@ -16,7 +16,6 @@ PACKAGE_DIRS=(
     "packages/create-liveblocks-app"
     "packages/liveblocks-codemod"
 )
-PRIMARY_PKG=${PACKAGE_DIRS[0]}
 
 err () {
     echo "$@" >&2
