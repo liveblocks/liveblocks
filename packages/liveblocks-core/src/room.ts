@@ -35,7 +35,7 @@ import type { DE, DM, DP, DS, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
 import { Batch } from "./lib/batch";
-import { controlledPromise } from "./lib/controlledPromise";
+import { Promise_withResolvers } from "./lib/controlledPromise";
 import { captureStackTrace } from "./lib/debug";
 import type { Callback, Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
@@ -2862,12 +2862,12 @@ export function createRoom<
 
   async function waitUntilPresenceReady(): Promise<void> {
     while (!isPresenceReady()) {
-      const [p$, resolve] = controlledPromise();
+      const { promise, resolve } = Promise_withResolvers();
 
       const u1 = events.self.subscribeOnce(resolve);
       const u2 = events.status.subscribeOnce(resolve);
       // Return whenever one of these returns, whichever is first
-      await p$;
+      await promise;
       u1();
       u2();
     }

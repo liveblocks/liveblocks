@@ -21,3 +21,15 @@ export function controlledPromise<T>(): [
   });
   return [promise, resolve!, reject!];
 }
+
+/**
+ * Drop-in replacement for the ES2024 Promise.withResolvers() API.
+ */
+export function Promise_withResolvers<T>(): {
+  promise: Promise<T>;
+  resolve: (value: T) => void;
+  reject: (reason: unknown) => void;
+} {
+  const [promise, resolve, reject] = controlledPromise<T>();
+  return { promise, resolve, reject };
+}
