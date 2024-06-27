@@ -11,19 +11,9 @@ import { CoreMessage } from "ai";
 import { useSelection } from "./hooks";
 import { continueConversation } from "../actions/ai";
 import { readStreamableValue } from "ai/rsc";
-import {
-  $createTextNode,
-  $getSelection,
-  $isRangeSelection,
-  TextNode,
-} from "lexical";
+import { $getSelection, $isRangeSelection, TextNode } from "lexical";
 import * as React from "react";
 import { Command } from "cmdk";
-import {
-  RESTORE_SELECTION_COMMAND,
-  SAVE_SELECTION_COMMAND,
-} from "./preserve-selection";
-
 type OptionChild = { text: string; prompt: string; children?: never };
 type OptionParent = { text: string; children: OptionChild[]; prompt?: never };
 type Option = OptionChild | OptionParent;
@@ -108,7 +98,6 @@ export function AIToolbar({
   const [input, setInput] = useState("");
 
   const [loading, setLoading] = useState(false);
-
   const lastAiMessage = messages.filter((m) => m.role === "assistant")[0];
 
   const { selection, textContent } = useSelection();
@@ -124,28 +113,30 @@ export function AIToolbar({
     )
     .find((option) => option.text === page);
 
+  // Send prompt to AI
   const submitPrompt = useCallback(
     async (prompt: string) => {
       setLoading(true);
+      setInput("");
+
+      // Send on the user's text
       const systemMessage = `Do not surround your answer in quote marks. Only return the answer, nothing else. The user is selecting this text: 
             
 """
 ${textContent || ""}
 """
-
 `;
 
+      // Create new messages with selected text and prompt from user or command panel
       const newMessages: CoreMessage[] = [
         ...messages,
         { content: systemMessage, role: "system" },
         { content: prompt, role: "user" },
       ];
-
       setMessages(newMessages);
-      setInput("");
 
+      // Stream in results
       const result = await continueConversation(newMessages);
-
       for await (const content of readStreamableValue(result)) {
         setMessages([
           ...newMessages,
@@ -172,10 +163,13 @@ ${textContent || ""}
     <>
       <div className="rounded-lg border shadow-2xl border-border/80 bg-card pointer-events-auto">
         {lastAiMessage?.content ? (
+          // If the AI has streamed in content, show it
           <div className="whitespace-pre-wrap p-2">{lastAiMessage.content}</div>
         ) : null}
+
         <form
           onSubmit={async (e) => {
+            // Submit a custom prompt typed into the input
             e.preventDefault();
             submitPrompt(input);
           }}
@@ -184,23 +178,26 @@ ${textContent || ""}
           <input
             className="block w-full p-2 border border-gray-300 rounded shadow-xl"
             value={input}
-            placeholder="Say something..."
+            placeholder="Prompt AI…"
             onChange={(e) => setInput(e.target.value)}
           />
         </form>
       </div>
+
       {!loading ? (
+        // Don't show command panel when a result is streaming in
         <Command
           ref={commandRef}
           shouldFilter={false}
           onKeyDown={(e) => {
-            // Escape and backspace go back to previous page or exit
             if (e.key === "Escape" || e.key === "Backspace") {
               e.preventDefault();
 
               if (page) {
+                // Escape and backspace go back to previous page
                 setPages((pages) => pages.slice(0, -1));
               } else {
+                // or exit if at top level
                 setPages([]);
                 setState("default");
                 onClose();
@@ -217,6 +214,8 @@ ${textContent || ""}
                     if (!lastAiMessage?.content) {
                       return;
                     }
+
+                    // Replace currently selected text
                     editor.update(() => {
                       const selection = $getSelection();
                       selection?.insertRawText(lastAiMessage.content);
@@ -230,6 +229,8 @@ ${textContent || ""}
                     if (!lastAiMessage?.content) {
                       return;
                     }
+
+                    // Insert directly after the current text, inline
                     editor.update(() => {
                       const selection = $getSelection();
                       if ($isRangeSelection(selection)) {
@@ -238,10 +239,7 @@ ${textContent || ""}
 
                         if (node instanceof TextNode) {
                           const textContent = node.getTextContent();
-                          const beforeText = textContent.slice(0, offset);
-                          const afterText = textContent.slice(offset);
-
-                          const newText = `${beforeText} ${lastAiMessage.content}${afterText}`;
+                          const newText = `${textContent.slice(0, offset)} ${lastAiMessage.content} ${textContent.slice(offset)}`;
                           node.replace(new TextNode(newText));
                         }
                       }
@@ -263,7 +261,7 @@ ${textContent || ""}
                   <Command.Group heading={optionGroup.text}>
                     {optionGroup.options.map((option) =>
                       option.prompt ? (
-                        // Final prompt
+                        // An item with a prompt
                         <CommandItem
                           key={option.text}
                           onSelect={() => {
@@ -274,7 +272,7 @@ ${textContent || ""}
                           {option.text}
                         </CommandItem>
                       ) : (
-                        // Open another page
+                        // An item that opens another page
                         <CommandItem
                           key={option.text}
                           onSelect={() => {
@@ -292,6 +290,7 @@ ${textContent || ""}
 
             {selectedOption?.children
               ? selectedOption.children.map((option) => (
+                  // The items in the current page
                   <CommandItem
                     key={option.text}
                     onSelect={() => {
@@ -318,7 +317,13 @@ function CommandItem({
   onSelect: ((value: string) => void) | undefined;
 }) {
   return (
-    <Command.Item onSelect={onSelect} onMouseDown={(e) => e.preventDefault()}>
+    <Command.Item
+      onSelect={onSelect}
+      onMouseDown={(e) => {
+        // Preserve text editor selection
+        e.preventDefault();
+      }}
+    >
       {children}
     </Command.Item>
   );

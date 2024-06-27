@@ -21,7 +21,6 @@ import { useThreads, useRoom } from "@liveblocks/react/suspense";
 import { Suspense } from "react";
 import Loading from "../loading";
 import { BaseMetadata, ThreadData } from "@liveblocks/client";
-import { PreserveSelectionPlugin } from "./preserve-selection";
 
 // Wrap your initial config with `liveblocksConfig`
 const initialConfig = liveblocksConfig({
@@ -35,7 +34,6 @@ const initialConfig = liveblocksConfig({
 
 export default function Editor() {
   const status = useEditorStatus();
-  const room = useRoom();
 
   return (
     <div className="relative flex flex-col h-full w-full">
@@ -81,7 +79,6 @@ export default function Editor() {
             </Suspense>
           </LiveblocksPlugin>
         </div>
-        <PreserveSelectionPlugin />
       </LexicalComposer>
     </div>
   );
