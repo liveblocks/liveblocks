@@ -96,12 +96,14 @@ import {
       }}
     />;
 
-    <InboxNotification
-      inboxNotification={{} as InboxNotificationData}
-      kinds={{
-        $myErrorNotification: MySpecificCustomInboxNotification,
-        $myUploadNotification: MySpecificCustomInboxNotification,
-      }}
-    />;
+    expectError(
+      <InboxNotification
+        inboxNotification={{} as InboxNotificationData}
+        kinds={{
+          $myErrorNotification: MySpecificCustomInboxNotification,
+          $myUploadNotification: MySpecificCustomInboxNotification,
+        }}
+      />
+    );
   }
 }

@@ -57,9 +57,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -71,7 +69,7 @@ describe("useRoomInfo", () => {
     expect(result.current.roomInfo).toEqual({
       isLoading: false,
       error: new Error(
-        "resolveRoomsInfo didn't return anything for this room ID."
+        "resolveRoomsInfo didn't return anything for room 'abc'"
       ),
     });
 
@@ -87,9 +85,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -115,9 +111,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
         initialProps: { roomId: "abc" },
       }
@@ -160,9 +154,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
         initialProps: { roomId: "abc" },
       }
@@ -206,9 +198,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -253,9 +243,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -284,9 +272,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -315,9 +301,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -329,7 +313,7 @@ describe("useRoomInfo", () => {
     expect(result.current.roomInfo).toEqual({
       isLoading: false,
       error: new Error(
-        "resolveRoomsInfo didn't return anything for this room ID."
+        "resolveRoomsInfo didn't return anything for room 'abc'"
       ),
     });
 
@@ -356,9 +340,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
-            {children}
-          </RoomProvider>
+          <RoomProvider id="room-id">{children}</RoomProvider>
         ),
       }
     );
@@ -371,7 +353,7 @@ describe("useRoomInfo", () => {
     expect(result.current.roomInfoAbc).toEqual({
       isLoading: false,
       error: new Error(
-        "resolveRoomsInfo didn't return anything for this room ID."
+        "resolveRoomsInfo didn't return anything for room 'abc'"
       ),
     });
 
@@ -407,7 +389,7 @@ describe("useRoomInfoSuspense", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             <Suspense fallback={<div>Loading</div>}>{children}</Suspense>
           </RoomProvider>
         ),
@@ -442,7 +424,7 @@ describe("useRoomInfoSuspense", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id" initialPresence={{}}>
+          <RoomProvider id="room-id">
             <ErrorBoundary
               fallback={<div>There was an error while getting room info.</div>}
             >

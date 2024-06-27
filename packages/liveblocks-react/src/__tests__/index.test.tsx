@@ -59,7 +59,7 @@ describe("RoomProvider", () => {
     const { RoomProvider } = createRoomContext(client);
 
     render(
-      <RoomProvider id="room" initialPresence={{}} autoConnect={false}>
+      <RoomProvider id="room" autoConnect={false}>
         <></>
       </RoomProvider>
     );
@@ -76,7 +76,7 @@ describe("RoomProvider", () => {
     const { RoomProvider } = createRoomContext(client);
 
     render(
-      <RoomProvider id="room" initialPresence={{}} autoConnect={true}>
+      <RoomProvider id="room" autoConnect={true}>
         <></>
       </RoomProvider>
     );

@@ -1,12 +1,9 @@
-import LiveblocksDemo from "./components/LiveblocksDemo";
-import React from "react";
-import { RoomProvider } from "./liveblocks.config";
-import Connected from "./components/Connected";
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
+import { CollaborativeApplication } from "./CollaborativeApplication";
 
-export default function Page() {
-  if (typeof RoomProvider === "undefined") {
-    return <Connected connected={false} />;
-  }
+export default function App() {
+  const roomId = "{% ROOM_ID %}";
+  const publicApiKey = "{% LIVEBLOCKS_PUBLIC_KEY %}";
 
-  return <LiveblocksDemo />;
+  return <div>Not connected</div>;
 }

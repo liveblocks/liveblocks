@@ -33,6 +33,7 @@ export {
   useCreateComment,
   useCreateThread,
   useDeleteComment,
+  useDeleteThread,
   useEditComment,
   useEditThreadMetadata,
   useErrorListener,
@@ -67,6 +68,7 @@ export {
   useOthersMapped,
   useSelf,
   useStorage,
+  useStorageStatus,
   useThreads,
 } from "./room";
 export {

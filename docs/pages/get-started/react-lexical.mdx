@@ -146,6 +146,8 @@ to hear from you.
         LiveblocksPlugin,
         FloatingComposer,
       } from "@liveblocks/react-lexical";
+      import { Toolbar } from "./Toolbar";
+      import { Threads } from "./Threads";
 
       export function Editor() {
         // Wrap your Lexical config with `liveblocksConfig`
@@ -159,15 +161,19 @@ to hear from you.
 
         return (
           <LexicalComposer initialConfig={initialConfig}>
-            <RichTextPlugin
-              contentEditable={<ContentEditable />}
-              placeholder={
-                <div>Start typing here…</div>
-              }
-              ErrorBoundary={LexicalErrorBoundary}
-            />
+            <Toolbar />
+            <div className="wrapper">
+              <div className="editor">
+                <RichTextPlugin
+                  contentEditable={<ContentEditable />}
+                  placeholder={<div className="placeholder">Start typing here…</div>}
+                  ErrorBoundary={LexicalErrorBoundary}
+                />
+              </div>
+              <Threads />
+            </div>
             <LiveblocksPlugin>
-              <FloatingComposer />
+              <FloatingComposer className="floating-composer" />
             </LiveblocksPlugin>
           </LexicalComposer>
         );
@@ -177,21 +183,146 @@ to hear from you.
 
   </Step>
   <Step>
-    <StepTitle>Import default styles</StepTitle>
+    <StepTitle>Create a toolbar</StepTitle>
     <StepContent>
 
-      The default components come with default styles, you can import them into the
+      To create annotations and post comments, we need to create a button for triggers the action.
+      Create a toolbar in `Toolbar.tsx` that enables this.
+
+      ```tsx file="Toolbar.tsx"
+      "use client";
+
+      import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+      import { OPEN_FLOATING_COMPOSER_COMMAND } from "@liveblocks/react-lexical";
+
+      export function Toolbar() {
+        const [editor] = useLexicalComposerContext();
+
+        return (
+          <div className="toolbar">
+            <button
+              className="add-comment"
+              onClick={() =>
+                editor.dispatchCommand(OPEN_FLOATING_COMPOSER_COMMAND, undefined)
+              }
+            >
+              💬 New comment
+            </button>
+          </div>
+        );
+      }
+      ```
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Render threads</StepTitle>
+    <StepContent>
+
+      When each thread and comment is created, we need to render it to the page. Create
+      a `Threads.tsx` file that lists each thread.
+
+      ```tsx file="Threads.tsx"
+      "use client";
+
+      import { useThreads } from "@liveblocks/react/suspense";
+      import { Thread } from "@liveblocks/react-ui";
+
+      export function Threads() {
+        const { threads } = useThreads();
+
+        return (
+          <div className="threads">
+            {threads.map((thread) => (
+              <Thread key={thread.id} thread={thread} className="thread" />
+            ))}
+          </div>
+        );
+      }
+      ```
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Style your editor</StepTitle>
+    <StepContent>
+
+      Lexical text editor is unstyled by default, so we can create some custom styles for it in a `globals.css` file. Import `globals.css`, alongside the default Liveblocks styles. You can import them into the
       root layout of your app or directly into a CSS file with `@import`.
+
+      ```css file="globals.css" isCollapsed isCollapsable
+      .wrapper {
+        position: relative;
+        display: flex;
+        width: 100%;
+        height: 100%;
+      }
+
+      .editor {
+        flex-grow: 1;
+      }
+
+      [data-lexical-editor] {
+        padding: 2px 12px;
+        outline: none;
+      }
+
+      [data-lexical-editor] p {
+        margin: 0.8em 0;
+      }
+
+      .toolbar {
+        padding: 12px;
+        border-bottom: 1px solid #E6E6E7;
+      }
+
+      .threads {
+        width: 350px;
+        border-left: 1px solid #E6E6E7;
+      }
+
+      .thread {
+        border-bottom: 1px solid #E6E6E7;
+      }
+
+      .thread .lb-thread-composer:after {
+        content: none;
+      }
+
+      .placeholder {
+        position: absolute;
+        left: 12px;
+        top: 16px;
+        pointer-events: none;
+        opacity: 0.5;
+      }
+
+      .floating-composer {
+        width: 350px;
+      }
+
+      .add-comment {
+        all: unset;
+        font-weight: 500;
+        padding: 12px;
+        border-radius: 6px;
+      }
+
+      .add-comment:hover {
+        background: #F4F4F5;
+      }
+      ```
 
       ```tsx
       import "@liveblocks/react-ui/styles.css";
       import "@liveblocks/react-lexical/styles.css";
+      import "./globals.css";
       ```
 
     </StepContent>
 
   </Step>
-  <Step lastStep>
+  <Step>
     <StepTitle>Next: authenticate and add your users</StepTitle>
     <StepContent>
       Text Editor is set up and working now, but each user is anonymous—the next step is to
@@ -200,6 +331,21 @@ to hear from you.
       <Button asChild  className="not-markdown">
         <a href="/docs/guides/how-to-add-users-to-liveblocks-text-editor">
           Add your users to Text Editor
+        </a>
+      </Button>
+    </StepContent>
+
+  </Step>
+   <Step lastStep>
+    <StepTitle>Optional: add more features</StepTitle>
+    <StepContent>
+      Lexical is a highly extensible text editor and it's possible to create complex rich-text applications.
+      A great example is in the [Lexical playground](https://playground.lexical.dev/) which enables features
+      such as tables, text highlights, embedded images, and more. This is all supported using Liveblocks.
+
+      <Button asChild  className="not-markdown">
+        <a href="https://lexical.dev/docs/intro">
+          Learn more about Lexical
         </a>
       </Button>
     </StepContent>
@@ -214,8 +360,8 @@ Congratulations! You now have set up the foundation for your collaborative
 Lexical text editor inside your React application.
 
 - [Overview](/docs/products/text-editor/lexical)
-- [`@liveblocks/lexical-react` API Reference](/docs/api-reference/liveblocks-lexical-react)
-- [`@liveblocks/node-lexical` API Reference](/docs/api-reference/node-lexical)
+- [`@liveblocks/lexical-react` API Reference](/docs/api-reference/liveblocks-react-lexical)
+- [`@liveblocks/node-lexical` API Reference](/docs/api-reference/liveblocks-node-lexical)
 - [Lexical website](https://lexical.dev/)
 
 ---

@@ -66,7 +66,16 @@ export type {
 } from "./crdts/StorageUpdates";
 export type { ToImmutable } from "./crdts/utils";
 export { toPlainLson } from "./crdts/utils";
-export type { DAD, DE, DM, DP, DRI, DS, DU } from "./globals/augmentation";
+export type {
+  DAD,
+  DE,
+  DM,
+  DP,
+  DRI,
+  DS,
+  DU,
+  KDAD,
+} from "./globals/augmentation";
 export {
   legacy_patchImmutableObject,
   lsonToJson,

@@ -25,9 +25,15 @@ import type {
   QueryMetadata,
   Resolve,
   RoomEventMessage,
+  StorageStatus,
   ThreadData,
   ToImmutable,
 } from "@liveblocks/core";
+
+export type StorageStatusSuccess = Exclude<
+  StorageStatus,
+  "not-loaded" | "loading"
+>;
 
 export type UseThreadsOptions<M extends BaseMetadata> = {
   /**
@@ -484,8 +490,13 @@ type RoomContextBundleCommon<
    * useEventListener is a React hook that allows you to respond to events broadcast
    * by other users in the room.
    *
+   * The `user` argument will indicate which `User` instance sent the message.
+   * This will be equal to one of the others in the room, but it can be `null`
+   * in case this event was broadcasted from the server.
+   *
    * @example
-   * useEventListener(({ connectionId, event }) => {
+   * useEventListener(({ event, user, connectionId }) => {
+   * //                         ^^^^ Will be Client A
    *   if (event.type === "CUSTOM_EVENT") {
    *     // Do something
    *   }
@@ -568,10 +579,9 @@ type RoomContextBundleCommon<
    * The first argument that gets passed into your callback will be
    * a "mutation context", which exposes the following:
    *
-   *   - `root` - The mutable Storage root.
-   *              You can normal mutation on Live structures with this, for
-   *              example: root.get('layers').get('layer1').set('fill',
-   *              'red')
+   *   - `storage` - The mutable Storage root.
+   *                 You can mutate any Live structures with this, for example:
+   *                 `storage.get('layers').get('layer1').set('fill', 'red')`
    *
    *   - `setMyPresence` - Call this with a new (partial) Presence value.
    *
@@ -585,11 +595,11 @@ type RoomContextBundleCommon<
    * that gets passed into your callback will be a "mutation context".
    *
    * If you want get access to the immutable root somewhere in your mutation,
-   * you can use `root.ToImmutable()`.
+   * you can use `storage.ToImmutable()`.
    *
    * @example
    * const fillLayers = useMutation(
-   *   ({ root }, color: Color) => {
+   *   ({ storage }, color: Color) => {
    *     ...
    *   },
    *   [],
@@ -598,7 +608,7 @@ type RoomContextBundleCommon<
    * fillLayers('red');
    *
    * const deleteLayers = useMutation(
-   *   ({ root }) => {
+   *   ({ storage }) => {
    *     ...
    *   },
    *   [],
@@ -614,8 +624,8 @@ type RoomContextBundleCommon<
   ): OmitFirstArg<F>;
 
   /**
-   * Returns an object that lets you get information about all the users
-   * currently connected in the room.
+   * Returns an array with information about all the users currently connected
+   * in the room (except yourself).
    *
    * @example
    * const others = useOthers();
@@ -730,6 +740,16 @@ type RoomContextBundleCommon<
   useCreateThread(): (options: CreateThreadOptions<M>) => ThreadData<M>;
 
   /**
+   * Returns a function that deletes a thread and its associated comments.
+   * Only the thread creator can delete a thread, it will throw otherwise.
+   *
+   * @example
+   * const deleteThread = useDeleteThread();
+   * deleteThread("th_xxx");
+   */
+  useDeleteThread(): (threadId: string) => void;
+
+  /**
    * Returns a function that edits a thread's metadata.
    * To delete an existing metadata property, set its value to `null`.
    *
@@ -840,6 +860,13 @@ export type RoomContextBundle<
   RoomContextBundleCommon<P, S, U, E, M> &
     SharedContextBundle<U>["classic"] & {
       /**
+       * Returns the current storage status for the Room, and triggers
+       * a re-render whenever it changes. Can be used to render a "Saving..."
+       * indicator.
+       */
+      useStorageStatus(): StorageStatus;
+
+      /**
        * Extract arbitrary data from the Liveblocks Storage state, using an
        * arbitrary selector function.
        *
@@ -868,7 +895,9 @@ export type RoomContextBundle<
        *
        * @example
        * const me = useSelf();
-       * const { x, y } = me.presence.cursor;
+       * if (me !== null) {
+       *   const { x, y } = me.presence.cursor;
+       * }
        */
       useSelf(): User<P, U> | null;
 
@@ -926,6 +955,13 @@ export type RoomContextBundle<
         RoomContextBundleCommon<P, S, U, E, M> &
           SharedContextBundle<U>["suspense"] & {
             /**
+             * Returns the current storage status for the Room, and triggers
+             * a re-render whenever it changes. Can be used to render a "Saving..."
+             * indicator.
+             */
+            useStorageStatus(): StorageStatusSuccess;
+
+            /**
              * Extract arbitrary data from the Liveblocks Storage state, using an
              * arbitrary selector function.
              *
@@ -972,13 +1008,9 @@ export type RoomContextBundle<
              * the result of a .map() or .filter() call from the selector. In those
              * cases, you'll probably want to use a `shallow` comparison check.
              *
-             * Will return `null` while Liveblocks isn't connected to a room yet.
-             *
              * @example
              * const cursor = useSelf(me => me.presence.cursor);
-             * if (cursor !== null) {
-             *   const { x, y } = cursor;
-             * }
+             * const { x, y } = cursor;
              *
              */
             useSelf<T>(

@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/core",
-  "version": "2.0.3",
+  "version": "2.1.0",
   "description": "Private internals for Liveblocks. DO NOT import directly from this package!",
   "type": "commonjs",
   "main": "./dist/index.js",
@@ -50,11 +50,11 @@
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
     "@liveblocks/query-parser": "^0.0.4",
-    "@types/ws": "^8.5.3",
-    "dotenv": "^16.0.3",
-    "eslint-plugin-rulesdir": "^0.2.1",
+    "@types/ws": "^8.5.10",
+    "dotenv": "^16.4.5",
+    "eslint-plugin-rulesdir": "^0.2.2",
     "msw": "^0.47.4",
-    "ws": "^8.5.0"
+    "ws": "^8.17.1"
   },
   "repository": {
     "type": "git",

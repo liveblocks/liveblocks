@@ -1,4 +1,40 @@
-## v2.0.4 (not released yet)
+## v2.1.0
+
+### `@liveblocks/client`
+
+- Various internal refactorings
+
+### `@liveblocks/react`
+
+- Add new hook
+  [`useStorageStatus`](https://liveblocks.io/docs/api-reference/liveblocks-react#useStorageStatus),
+  which returns the current storage status of the room, and will re-render your
+  component whenever it changes. This can used to build "Saving..." UIs.
+- Add
+  [`useDeleteThread`](https://liveblocks.io/docs/api-reference/liveblocks-react#useDeleteThread)
+  hook to delete a thread and its associated comments.
+- Fix: add missing JSDoc comments
+- Fix: improve some error messages and stack traces to contain more info
+- Refactorings to Suspense internals
+
+### `@liveblocks/react-ui`
+
+- Fix improper `useSyncExternalStore` import which would break on React <18.
+
+## v2.0.5
+
+### `@liveblocks/react`
+
+- Improved DX: `useDeleteThread` will now throw a client-side error if someone
+  else than the thread owner tries to delete the thread. This will help you
+  catch and handle this case more easily.
+
+## v2.0.4
+
+### All packages
+
+- Improve TS error messages and error locations if custom `UserMeta` or
+  `ActivitiesData` types do not match their requirements
 
 ### `@liveblocks/client`
 
@@ -6,6 +42,12 @@
 - Don’t attempt to write missing initialStorage keys if the current user has no
   write access to storage. This will no longer throw, but issue a warning
   message in the console.
+
+### `@liveblocks/react`
+
+- Add
+  [`useDeleteThread`](https://liveblocks.io/docs/api-reference/liveblocks-react#useDeleteThread)
+  hook to delete a thread and its associated comments.
 
 ## v2.0.3
 
@@ -92,7 +134,7 @@ const client = createClient(/* options */);
 ```
 
 For full upgrade instructions and codemods, see the
-[2.0 upgrade guide](https://liveblocks.io/docs/guides/upgrading/2.0).
+[2.0 upgrade guide](https://liveblocks.io/docs/platform/upgrading/2.0).
 
 ### `create-liveblocks-app`
 
@@ -815,8 +857,7 @@ leave();
 ## v1.3.0
 
 This release marks the initial release of
-[Liveblocks Comments](https://liveblocks.io/comments), which is currently in
-private beta.
+[Liveblocks Comments](https://liveblocks.io/comments) (private beta).
 
 ### `@liveblocks/client`
 

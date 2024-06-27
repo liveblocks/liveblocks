@@ -9,7 +9,8 @@ jobs:
     strategy:
       matrix:
         node-version: [18.x]
-        pkg: [
+        pkg:
+          [
             "@liveblocks/core",
             "@liveblocks/client",
             "@liveblocks/react",
@@ -20,8 +21,7 @@ jobs:
             "@liveblocks/react-ui",
             "@liveblocks/react-lexical",
             "@liveblocks/node-lexical",
-            # TODO: Re-enable once we figure out why it's breaking
-            # "@liveblocks/codemod",
+            "@liveblocks/codemod",
           ]
 
     steps:
@@ -101,7 +101,7 @@ jobs:
       - name: Run Playwright tests
         run: npm run test -- --filter @liveblocks/next-sandbox
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: playwright-report

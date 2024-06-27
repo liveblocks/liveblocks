@@ -35,6 +35,7 @@ import type { DE, DM, DP, DS, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
 import { Batch } from "./lib/batch";
+import { Promise_withResolvers } from "./lib/controlledPromise";
 import { captureStackTrace } from "./lib/debug";
 import type { Callback, Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
@@ -45,7 +46,7 @@ import { objectToQuery } from "./lib/objectToQuery";
 import { asPos } from "./lib/position";
 import type { QueryParams } from "./lib/url";
 import { urljoin } from "./lib/url";
-import { compact, deepClone, tryParseJson } from "./lib/utils";
+import { compact, deepClone, memoize, tryParseJson } from "./lib/utils";
 import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 import type { ClientMsg, UpdateYDocClientMsg } from "./protocol/ClientMsg";
@@ -484,6 +485,7 @@ type CommentsApi<M extends BaseMetadata> = {
     metadata: M | undefined;
     body: CommentBody;
   }): Promise<ThreadData<M>>;
+  deleteThread(options: { threadId: string }): Promise<void>;
   editThreadMetadata(options: {
     metadata: Patchable<M>;
     threadId: string;
@@ -656,6 +658,12 @@ export type Room<
    */
   getStorageSnapshot(): LiveObject<S> | null;
 
+  /**
+   * All possible room events, subscribable from a single place.
+   *
+   * @private These event sources are private for now, but will become public
+   * once they're stable.
+   */
   readonly events: {
     readonly status: Observable<Status>;
     readonly lostConnection: Observable<LostConnectionEvent>;
@@ -665,7 +673,12 @@ export type Room<
     readonly myPresence: Observable<P>;
     readonly others: Observable<OthersEvent<P, U>>;
     readonly error: Observable<LiveblocksError>;
+    /**
+     * @deprecated Renamed to `storageBatch`. The `storage` event source will
+     * soon be replaced by another/incompatible API.
+     */
     readonly storage: Observable<StorageUpdate[]>;
+    readonly storageBatch: Observable<StorageUpdate[]>;
     readonly history: Observable<HistoryEvent>;
 
     /**
@@ -704,6 +717,27 @@ export type Room<
    * - `synchronized`: Storage is in sync with Liveblocks servers.
    */
   getStorageStatus(): StorageStatus;
+
+  isPresenceReady(): boolean;
+  isStorageReady(): boolean;
+
+  /**
+   * Returns a Promise that resolves as soon as Presence is available, which
+   * happens shortly after the WebSocket connection has been established. Once
+   * this happens, `self` and `others` are known and available to use. After
+   * awaiting this promise, `.isPresenceReady()` will be guaranteed to be true.
+   * Even when calling this function multiple times, it's guaranteed to return
+   * the same Promise instance.
+   */
+  waitUntilPresenceReady(): Promise<void>;
+
+  /**
+   * Returns a Promise that resolves as soon as Storage has been loaded and
+   * available. After awaiting this promise, `.isStorageReady()` will be
+   * guaranteed to be true. Even when calling this function multiple times,
+   * it's guaranteed to return the same Promise instance.
+   */
+  waitUntilStorageReady(): Promise<void>;
 
   /**
    * Start an attempt to connect the room (aka "enter" it). Calling
@@ -1196,6 +1230,12 @@ function createCommentsApi<M extends BaseMetadata>(
     return convertToThreadData(thread);
   }
 
+  async function deleteThread({ threadId }: { threadId: string }) {
+    await fetchJson(`/threads/${encodeURIComponent(threadId)}`, {
+      method: "DELETE",
+    });
+  }
+
   async function editThreadMetadata({
     metadata,
     threadId,
@@ -1335,6 +1375,7 @@ function createCommentsApi<M extends BaseMetadata>(
     getThreads,
     getThread,
     createThread,
+    deleteThread,
     editThreadMetadata,
     createComment,
     editComment,
@@ -1631,7 +1672,7 @@ export function createRoom<
     myPresence: makeEventSource<P>(),
     others: makeEventSource<OthersEvent<P, U>>(),
     error: makeEventSource<LiveblocksError>(),
-    storage: makeEventSource<StorageUpdate[]>(),
+    storageBatch: makeEventSource<StorageUpdate[]>(),
     history: makeEventSource<HistoryEvent>(),
     storageDidLoad: makeEventSource<void>(),
     storageStatus: makeEventSource<StorageStatus>(),
@@ -1909,7 +1950,7 @@ export function createRoom<
 
       if (storageUpdates !== undefined && storageUpdates.size > 0) {
         const updates = Array.from(storageUpdates.values());
-        eventHub.storage.notify(updates);
+        eventHub.storageBatch.notify(updates);
       }
       notifyStorageStatus();
     });
@@ -2815,6 +2856,34 @@ export function createRoom<
     }
   }
 
+  function isPresenceReady() {
+    return self.current !== null;
+  }
+
+  async function waitUntilPresenceReady(): Promise<void> {
+    while (!isPresenceReady()) {
+      const { promise, resolve } = Promise_withResolvers();
+
+      const unsub1 = events.self.subscribeOnce(resolve);
+      const unsub2 = events.status.subscribeOnce(resolve);
+      // Return whenever one of these returns, whichever is first
+      await promise;
+      unsub1();
+      unsub2();
+    }
+  }
+
+  function isStorageReady() {
+    return getStorageSnapshot() !== null;
+  }
+
+  async function waitUntilStorageReady(): Promise<void> {
+    while (!isStorageReady()) {
+      // Trigger a load of Storage and wait until it finished
+      await getStorage();
+    }
+  }
+
   // Derived cached state for use in DevTools
   const others_forDevTools = new DerivedRef(context.others, (others) =>
     others.map((other, index) => userToTreeNode(`Other ${index}`, other))
@@ -2829,7 +2898,9 @@ export function createRoom<
     self: eventHub.self.observable,
     myPresence: eventHub.myPresence.observable,
     error: eventHub.error.observable,
-    storage: eventHub.storage.observable,
+    /** @deprecated */
+    storage: eventHub.storageBatch.observable,
+    storageBatch: eventHub.storageBatch.observable,
     history: eventHub.history.observable,
     storageDidLoad: eventHub.storageDidLoad.observable,
     storageStatus: eventHub.storageStatus.observable,
@@ -3006,6 +3077,11 @@ export function createRoom<
       getStorageSnapshot,
       getStorageStatus,
 
+      isPresenceReady,
+      isStorageReady,
+      waitUntilPresenceReady: memoize(waitUntilPresenceReady),
+      waitUntilStorageReady: memoize(waitUntilStorageReady),
+
       events,
 
       // Core
@@ -3046,7 +3122,7 @@ function makeClassicSubscribeFn<
     node: L,
     callback: (updates: StorageUpdate[]) => void
   ): () => void {
-    return events.storage.subscribe((updates) => {
+    return events.storageBatch.subscribe((updates) => {
       const relatedUpdates = updates.filter((update) =>
         isSameNodeOrChildOf(update.node, node)
       );
@@ -3060,7 +3136,7 @@ function makeClassicSubscribeFn<
     node: L,
     callback: (node: L) => void
   ): () => void {
-    return events.storage.subscribe((updates) => {
+    return events.storageBatch.subscribe((updates) => {
       for (const update of updates) {
         if (update.node._id === node._id) {
           callback(update.node as L);
@@ -3137,7 +3213,7 @@ function makeClassicSubscribeFn<
     if (second === undefined || typeof first === "function") {
       if (typeof first === "function") {
         const storageCallback = first;
-        return events.storage.subscribe(storageCallback);
+        return events.storageBatch.subscribe(storageCallback);
       } else {
         // istanbul ignore next
         throw new Error("Please specify a listener callback");

@@ -119,6 +119,57 @@ function makeRoomConfig(mockedDelegates: RoomDelegates) {
 }
 
 /**
+ * Sets up a Room instance that auto-connects to a server, but does not yet
+ * start loading the initial storage.
+ */
+export function prepareRoomWithStorage_loadWithDelay<
+  P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
+  M extends BaseMetadata,
+>(
+  items: IdTuple<SerializedCrdt>[],
+  actor: number = 0,
+  defaultStorage?: S,
+  scopes: string[] = ["room:write"],
+  delay = 0
+) {
+  const { wss, delegates } = defineBehavior(
+    ALWAYS_AUTH_WITH_LEGACY_TOKEN(actor, scopes),
+    SOCKET_AUTOCONNECT_AND_ROOM_STATE(actor, scopes)
+  );
+
+  const clonedItems = deepClone(items);
+  wss.onConnection((conn) => {
+    const sendStorageMsg = () =>
+      conn.server.send(
+        serverMessage({
+          type: ServerMsgCode.INITIAL_STORAGE_STATE,
+          items: clonedItems,
+        })
+      );
+
+    if (delay) {
+      setTimeout(() => sendStorageMsg(), delay);
+    } else {
+      sendStorageMsg();
+    }
+  });
+
+  const room = createRoom<P, S, U, E, M>(
+    {
+      initialPresence: {} as P,
+      initialStorage: defaultStorage || ({} as S),
+    },
+    makeRoomConfig(delegates)
+  );
+
+  room.connect();
+  return { room, wss };
+}
+
+/**
  * Sets up a Room instance that auto-connects to a server. It will receive the
  * given initial storage items from the server. It awaits until storage has
  * loaded.
@@ -132,42 +183,15 @@ export async function prepareRoomWithStorage<
 >(
   items: IdTuple<SerializedCrdt>[],
   actor: number = 0,
-  onSend_DEPRECATED:
-    | ((messages: ClientMsg<P, E>[]) => void)
-    | undefined = undefined,
   defaultStorage?: S,
   scopes: string[] = ["room:write"]
 ) {
-  if (onSend_DEPRECATED !== undefined) {
-    throw new Error(
-      "Can no longer use `onSend` effect, please rewrite unit test"
-    );
-  }
-
-  const { wss, delegates } = defineBehavior(
-    ALWAYS_AUTH_WITH_LEGACY_TOKEN(actor, scopes),
-    SOCKET_AUTOCONNECT_AND_ROOM_STATE(actor, scopes)
+  const { room, wss } = prepareRoomWithStorage_loadWithDelay<P, S, U, E, M>(
+    items,
+    actor,
+    defaultStorage,
+    scopes
   );
-
-  const clonedItems = deepClone(items);
-  wss.onConnection((conn) => {
-    conn.server.send(
-      serverMessage({
-        type: ServerMsgCode.INITIAL_STORAGE_STATE,
-        items: clonedItems,
-      })
-    );
-  });
-
-  const room = createRoom<P, S, U, E, M>(
-    {
-      initialPresence: {} as P,
-      initialStorage: defaultStorage || ({} as S),
-    },
-    makeRoomConfig(delegates)
-  );
-
-  room.connect();
 
   const storage = await room.getStorage();
   return { storage, room, wss };
@@ -192,7 +216,7 @@ export async function prepareIsolatedStorageTest<S extends LsonObject>(
     never,
     never,
     never
-  >(items, actor, undefined, defaultStorage || ({} as S));
+  >(items, actor, defaultStorage || ({} as S));
 
   return {
     root: storage.root,
@@ -241,14 +265,12 @@ export async function prepareStorageTest<
     items,
     -1,
     undefined,
-    undefined,
     scopes
   );
 
   const subject = await prepareRoomWithStorage<P, S, U, E, M>(
     items,
     currentActor,
-    undefined,
     undefined,
     scopes
   );
@@ -468,10 +490,10 @@ export async function prepareStorageUpdateTest<
   const jsonUpdates: JsonStorageUpdate[][] = [];
   const refJsonUpdates: JsonStorageUpdate[][] = [];
 
-  subject.room.events.storage.subscribe((updates) =>
+  subject.room.events.storageBatch.subscribe((updates) =>
     jsonUpdates.push(updates.map(serializeUpdateToJson))
   );
-  ref.room.events.storage.subscribe((updates) =>
+  ref.room.events.storageBatch.subscribe((updates) =>
     refJsonUpdates.push(updates.map(serializeUpdateToJson))
   );
 

@@ -1,3 +1,5 @@
+import "@blocknote/core/fonts/inter.css";
+import "@blocknote/mantine/style.css";
 import "../styles/globals.css";
 import "../styles/text-editor.css";
 import { Suspense } from "react";

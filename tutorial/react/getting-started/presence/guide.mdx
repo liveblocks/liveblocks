@@ -24,16 +24,15 @@ to represent an off-screen cursor.
 
 ```ts modifyTutorialFile="/liveblocks.config.ts"
 // Presence type
-type Presence = {
+Presence: {
   cursor: { x: number; y: number } | null;
 };
 ```
 
 <Banner title="Defining types">
 
-You’ll notice that at the bottom of the file, we’ve already added `Presence` to
-`createRoomContext`. Because we’re exporting our hooks from here, all our types
-will automatically propagate through our entire app.
+When using TypeScript, all types defined within this file are automatically
+propagated into function and properties in each Liveblocks package.
 
 </Banner>
 
@@ -51,7 +50,7 @@ To display the current user’s presence, we’ll add [`useMyPresence`][] to
 [Room.tsx][], and quickly display its value, similarly to `useState`.
 
 ```tsx modifyTutorialFile="/Room.tsx"
-import { useMyPresence } from "./liveblocks.config";
+import { useMyPresence } from "@liveblocks/react/suspense";
 
 export function Room() {
   const [myPresence, updateMyPresence] = useMyPresence();

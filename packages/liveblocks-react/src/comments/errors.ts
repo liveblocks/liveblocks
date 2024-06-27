@@ -1,5 +1,8 @@
 import type { BaseMetadata, CommentBody, Patchable } from "@liveblocks/core";
 
+/**
+ * @private Internal API, do not rely on it.
+ */
 export class CreateThreadError<M extends BaseMetadata> extends Error {
   constructor(
     public cause: Error,
@@ -13,6 +16,19 @@ export class CreateThreadError<M extends BaseMetadata> extends Error {
   ) {
     super("Create thread failed.");
     this.name = "CreateThreadError";
+  }
+}
+
+export class DeleteThreadError extends Error {
+  constructor(
+    public cause: Error,
+    public context: {
+      roomId: string;
+      threadId: string;
+    }
+  ) {
+    super("Delete thread failed.");
+    this.name = "DeleteThreadError";
   }
 }
 

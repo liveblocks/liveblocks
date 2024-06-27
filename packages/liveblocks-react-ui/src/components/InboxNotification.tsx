@@ -1,11 +1,11 @@
 "use client";
 
 import type {
-  DAD,
   InboxNotificationCustomData,
   InboxNotificationData,
   InboxNotificationTextMentionData,
   InboxNotificationThreadData,
+  KDAD,
 } from "@liveblocks/core";
 import { assertNever, console } from "@liveblocks/core";
 import {
@@ -59,11 +59,12 @@ type ComponentTypeWithRef<
   P,
 > = ComponentType<P & Pick<ComponentProps<T>, "ref">>;
 
-type InboxNotificationKinds = {
-  [K in keyof DAD]: ComponentTypeWithRef<
-    "a",
-    InboxNotificationCustomKindProps<K>
-  >;
+type InboxNotificationKinds<KS extends KDAD = KDAD> = {
+  // For some reason, we cannot directly use KDAD in the mapped type line
+  // below, because it will result in '{}' rather than picking up the
+  // definition from the user-provided 'ActivitiesData'. Might be an internal
+  // TS optimization, so we're making it a param to defer the resolution.
+  [K in KS]: ComponentTypeWithRef<"a", InboxNotificationCustomKindProps<K>>;
 } & {
   thread: ComponentTypeWithRef<"a", InboxNotificationThreadKindProps>;
   textMention: ComponentTypeWithRef<"a", InboxNotificationTextMentionProps>;
@@ -175,9 +176,10 @@ export type InboxNotificationTextMentionKindProps = Omit<
   inboxNotification: InboxNotificationTextMentionData;
 };
 
-export type InboxNotificationCustomKindProps<
-  K extends `$${string}` = `$${string}`,
-> = Omit<InboxNotificationProps, "kinds"> & {
+export type InboxNotificationCustomKindProps<K extends KDAD = KDAD> = Omit<
+  InboxNotificationProps,
+  "kinds"
+> & {
   inboxNotification: InboxNotificationCustomData<K>;
 };
 

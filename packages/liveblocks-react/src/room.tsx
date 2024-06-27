@@ -32,6 +32,7 @@ import type {
   PrivateRoomApi,
   RoomEventMessage,
   RoomNotificationSettings,
+  StorageStatus,
   ThreadData,
   ToImmutable,
 } from "@liveblocks/core";
@@ -61,6 +62,7 @@ import {
   CreateCommentError,
   CreateThreadError,
   DeleteCommentError,
+  DeleteThreadError,
   EditCommentError,
   EditThreadMetadataError,
   MarkInboxNotificationAsReadError,
@@ -74,6 +76,7 @@ import { selectedThreads } from "./comments/lib/selected-threads";
 import { retryError } from "./lib/retry-error";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
+import { use } from "./lib/use-polyfill";
 import {
   createSharedContext,
   LiveblocksProviderWithClient,
@@ -93,6 +96,7 @@ import type {
   RoomNotificationSettingsState,
   RoomNotificationSettingsStateSuccess,
   RoomProviderProps,
+  StorageStatusSuccess,
   ThreadsState,
   ThreadsStateSuccess,
   ThreadSubscription,
@@ -515,6 +519,12 @@ type RoomLeavePair<
   leave: () => void;
 };
 
+/**
+ * Raw access to the React context where the RoomProvider stores the current
+ * room. Exposed for advanced use cases only.
+ *
+ * @private This is a private/advanced API. Do not rely on it.
+ */
 const RoomContext = React.createContext<OpaqueRoom | null>(null);
 
 function makeRoomContextBundle<
@@ -551,6 +561,7 @@ function makeRoomContextBundle<
 
     useRoom,
     useStatus,
+    useStorageStatus,
 
     useBatch,
     useBroadcastEvent,
@@ -581,6 +592,7 @@ function makeRoomContextBundle<
     useThreads,
 
     useCreateThread,
+    useDeleteThread,
     useEditThreadMetadata,
     useCreateComment,
     useEditComment,
@@ -601,6 +613,7 @@ function makeRoomContextBundle<
 
       useRoom,
       useStatus,
+      useStorageStatus: useStorageStatusSuspense,
 
       useBatch,
       useBroadcastEvent,
@@ -637,6 +650,7 @@ function makeRoomContextBundle<
       useThreads: useThreadsSuspense,
 
       useCreateThread,
+      useDeleteThread,
       useEditThreadMetadata,
       useCreateComment,
       useEditComment,
@@ -901,6 +915,10 @@ function useRoom<
   return room;
 }
 
+/**
+ * Returns the current connection status for the Room, and triggers
+ * a re-render whenever it changes. Can be used to render a status badge.
+ */
 function useStatus(): Status {
   const room = useRoom();
   const subscribe = room.events.status.subscribe;
@@ -909,6 +927,28 @@ function useStatus(): Status {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
+/**
+ * Returns the current storage status for the Room, and triggers
+ * a re-render whenever it changes. Can be used to render a "Saving..."
+ * indicator.
+ */
+function useStorageStatus(): StorageStatus {
+  const room = useRoom();
+  const subscribe = room.events.storageStatus.subscribe;
+  const getSnapshot = room.getStorageStatus;
+  const getServerSnapshot = room.getStorageStatus;
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
+
+/**
+ * @deprecated It's recommended to use `useMutation` for writing to Storage,
+ * which will automatically batch all mutations.
+ *
+ * Returns a function that batches modifications made during the given function.
+ * All the modifications are sent to other clients in a single message.
+ * All the modifications are merged in a single history item (undo/redo).
+ * All the subscribers are called only after the batch is over.
+ */
 function useBatch<T>(): (callback: () => T) => T {
   return useRoom().batch;
 }
@@ -940,6 +980,26 @@ function useOthersListener<P extends JsonObject, U extends BaseUserMeta>(
   );
 }
 
+/**
+ * Get informed when reconnecting to the Liveblocks servers is taking
+ * longer than usual. This typically is a sign of a client that has lost
+ * internet connectivity.
+ *
+ * This isn't problematic (because the Liveblocks client is still trying to
+ * reconnect), but it's typically a good idea to inform users about it if
+ * the connection takes too long to recover.
+ *
+ * @example
+ * useLostConnectionListener(event => {
+ *   if (event === 'lost') {
+ *     toast.warn('Reconnecting to the Liveblocks servers is taking longer than usual...')
+ *   } else if (event === 'failed') {
+ *     toast.warn('Reconnecting to the Liveblocks servers failed.')
+ *   } else if (event === 'restored') {
+ *     toast.clear();
+ *   }
+ * })
+ */
 function useLostConnectionListener(
   callback: (event: LostConnectionEvent) => void
 ): void {
@@ -954,6 +1014,15 @@ function useLostConnectionListener(
   );
 }
 
+/**
+ * useErrorListener is a React hook that allows you to respond to potential room
+ * connection errors.
+ *
+ * @example
+ * useErrorListener(er => {
+ *   console.error(er);
+ * })
+ */
 function useErrorListener(callback: (err: LiveblocksError) => void): void {
   const room = useRoom();
   const savedCallback = useLatest(callback);
@@ -979,18 +1048,32 @@ function useEventListener<
   }, [room, savedCallback]);
 }
 
+/**
+ * Returns the room.history
+ */
 function useHistory(): History {
   return useRoom().history;
 }
 
+/**
+ * Returns a function that undoes the last operation executed by the current
+ * client. It does not impact operations made by other clients.
+ */
 function useUndo(): () => void {
   return useHistory().undo;
 }
 
+/**
+ * Returns a function that redoes the last operation executed by the current
+ * client. It does not impact operations made by other clients.
+ */
 function useRedo(): () => void {
   return useHistory().redo;
 }
 
+/**
+ * Returns whether there are any operations to undo.
+ */
 function useCanUndo(): boolean {
   const room = useRoom();
   const subscribe = room.events.history.subscribe;
@@ -998,6 +1081,9 @@ function useCanUndo(): boolean {
   return useSyncExternalStore(subscribe, canUndo, canUndo);
 }
 
+/**
+ * Returns whether there are any operations to redo.
+ */
 function useCanRedo(): boolean {
   const room = useRoom();
   const subscribe = room.events.history.subscribe;
@@ -1116,6 +1202,20 @@ function useOthersMapped<P extends JsonObject, U extends BaseUserMeta, T>(
   return useOthers(wrappedSelector, wrappedIsEqual);
 }
 
+/**
+ * Returns an array of connection IDs. This matches the values you'll get by
+ * using the `useOthers()` hook.
+ *
+ * Roughly equivalent to:
+ *   useOthers((others) => others.map(other => other.connectionId), shallow)
+ *
+ * This is useful in particular to implement efficiently rendering components
+ * for each user in the room, e.g. cursors.
+ *
+ * @example
+ * const ids = useOthersConnectionIds();
+ * // [2, 4, 7]
+ */
 function useOthersConnectionIds(): readonly number[] {
   return useOthers(selectorFor_useOthersConnectionIds, shallow);
 }
@@ -1297,6 +1397,9 @@ function useThreads<M extends BaseMetadata>(
   return state;
 }
 
+/**
+ * @private Internal API, do not rely on it.
+ */
 function useCommentsErrorListener<M extends BaseMetadata>(
   callback: (error: CommentsError<M>) => void
 ) {
@@ -1384,6 +1487,68 @@ function useCreateThread<M extends BaseMetadata>(): (
       );
 
       return newThread;
+    },
+    [client, room]
+  );
+}
+
+function useDeleteThread(): (threadId: string) => void {
+  const client = useClient();
+  const room = useRoom();
+  return React.useCallback(
+    (threadId: string): void => {
+      const optimisticUpdateId = nanoid();
+
+      const { store, onMutationFailure } = getExtrasForClient(client);
+
+      const thread = store.get().threads[threadId];
+
+      const userId = getCurrentUserId(room);
+
+      if (thread?.comments?.[0]?.userId !== userId) {
+        throw new Error("Only the thread creator can delete the thread");
+      }
+
+      store.pushOptimisticUpdate({
+        type: "delete-thread",
+        id: optimisticUpdateId,
+        roomId: room.id,
+        threadId,
+        deletedAt: new Date(),
+      });
+
+      const commentsAPI = room[kInternal].comments;
+      commentsAPI.deleteThread({ threadId }).then(
+        () => {
+          store.set((state) => {
+            const existingThread = state.threads[threadId];
+            if (existingThread === undefined) {
+              return state;
+            }
+
+            return {
+              ...state,
+              threads: {
+                ...state.threads,
+                [threadId]: {
+                  ...existingThread,
+                  updatedAt: new Date(),
+                  deletedAt: new Date(),
+                },
+              },
+              optimisticUpdates: state.optimisticUpdates.filter(
+                (update) => update.id !== optimisticUpdateId
+              ),
+            };
+          });
+        },
+        (err: Error) =>
+          onMutationFailure(
+            err,
+            optimisticUpdateId,
+            (err) => new DeleteThreadError(err, { roomId: room.id, threadId })
+          )
+      );
     },
     [client, room]
   );
@@ -1478,6 +1643,13 @@ function useEditThreadMetadata<M extends BaseMetadata>() {
   );
 }
 
+/**
+ * Returns a function that adds a comment to a thread.
+ *
+ * @example
+ * const createComment = useCreateComment();
+ * createComment({ threadId: "th_xxx", body: {} });
+ */
 function useCreateComment(): (options: CreateCommentOptions) => CommentData {
   const client = useClient();
   const room = useRoom();
@@ -1575,6 +1747,13 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
   );
 }
 
+/**
+ * Returns a function that edits a comment's body.
+ *
+ * @example
+ * const editComment = useEditComment()
+ * editComment({ threadId: "th_xxx", commentId: "cm_xxx", body: {} })
+ */
 function useEditComment(): (options: EditCommentOptions) => void {
   const client = useClient();
   const room = useRoom();
@@ -1656,6 +1835,14 @@ function useEditComment(): (options: EditCommentOptions) => void {
   );
 }
 
+/**
+ * Returns a function that deletes a comment.
+ * If it is the last non-deleted comment, the thread also gets deleted.
+ *
+ * @example
+ * const deleteComment = useDeleteComment();
+ * deleteComment({ threadId: "th_xxx", commentId: "cm_xxx" })
+ */
 function useDeleteComment() {
   const client = useClient();
   const room = useRoom();
@@ -1790,6 +1977,13 @@ function useAddReaction<M extends BaseMetadata>() {
   );
 }
 
+/**
+ * Returns a function that removes a reaction on a comment.
+ *
+ * @example
+ * const removeReaction = useRemoveReaction();
+ * removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" })
+ */
 function useRemoveReaction() {
   const client = useClient();
   const room = useRoom();
@@ -1863,6 +2057,13 @@ function useRemoveReaction() {
   );
 }
 
+/**
+ * Returns a function that marks a thread as read.
+ *
+ * @example
+ * const markThreadAsRead = useMarkThreadAsRead();
+ * markThreadAsRead("th_xxx");
+ */
 function useMarkThreadAsRead() {
   const client = useClient();
   const room = useRoom();
@@ -1924,6 +2125,12 @@ function useMarkThreadAsRead() {
   );
 }
 
+/**
+ * Returns the subscription status of a thread.
+ *
+ * @example
+ * const { status, unreadSince } = useThreadSubscription("th_xxx");
+ */
 function useThreadSubscription(threadId: string): ThreadSubscription {
   const client = useClient();
   const { store } = getExtrasForClient(client);
@@ -1960,6 +2167,15 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
   );
 }
 
+/**
+ * @beta
+ *
+ * Returns the user's notification settings for the current room
+ * and a function to update them.
+ *
+ * @example
+ * const [{ settings }, updateSettings] = useRoomNotificationSettings();
+ */
 function useRoomNotificationSettings(): [
   RoomNotificationSettingsState,
   (settings: Partial<RoomNotificationSettings>) => void,
@@ -2008,6 +2224,16 @@ function useRoomNotificationSettings(): [
   }, [settings, updateRoomNotificationSettings]);
 }
 
+/**
+ * @beta
+ *
+ * Returns a function that updates the user's notification settings
+ * for the current room.
+ *
+ * @example
+ * const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
+ * updateRoomNotificationSettings({ threads: "all" });
+ */
 function useUpdateRoomNotificationSettings() {
   const client = useClient();
   const room = useRoom();
@@ -2061,23 +2287,12 @@ function ensureNotServerSide(): void {
   }
 }
 
-function useSuspendUntilPresenceLoaded(): void {
-  const room = useRoom();
-  if (room.getSelf() !== null) {
-    return;
-  }
-
+function useSuspendUntilPresenceReady(): void {
+  // Throw an error if we're calling this on the server side
   ensureNotServerSide();
 
-  // Throw a _promise_. Suspense will suspend the component tree until either
-  // until either a presence update event, or a connection status change has
-  // happened. After that, it will render this component tree again and
-  // re-evaluate the .getSelf() condition above, or re-suspend again until
-  // such event happens.
-  throw new Promise<void>((res) => {
-    room.events.self.subscribeOnce(() => res());
-    room.events.status.subscribeOnce(() => res());
-  });
+  const room = useRoom();
+  use(room.waitUntilPresenceReady());
 }
 
 function useSelfSuspense<P extends JsonObject, U extends BaseUserMeta>(): User<
@@ -2092,7 +2307,7 @@ function useSelfSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
   selector?: (me: User<P, U>) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T | User<P, U> {
-  useSuspendUntilPresenceLoaded();
+  useSuspendUntilPresenceReady();
   return useSelf(
     selector as (me: User<P, U>) => T,
     isEqual as (prev: T | null, curr: T | null) => boolean
@@ -2111,15 +2326,29 @@ function useOthersSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
   selector?: (others: readonly User<P, U>[]) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T | readonly User<P, U>[] {
-  useSuspendUntilPresenceLoaded();
+  useSuspendUntilPresenceReady();
   return useOthers(
     selector as (others: readonly User<P, U>[]) => T,
     isEqual as (prev: T, curr: T) => boolean
   ) as T | readonly User<P, U>[];
 }
 
+/**
+ * Returns an array of connection IDs. This matches the values you'll get by
+ * using the `useOthers()` hook.
+ *
+ * Roughly equivalent to:
+ *   useOthers((others) => others.map(other => other.connectionId), shallow)
+ *
+ * This is useful in particular to implement efficiently rendering components
+ * for each user in the room, e.g. cursors.
+ *
+ * @example
+ * const ids = useOthersConnectionIds();
+ * // [2, 4, 7]
+ */
 function useOthersConnectionIdsSuspense(): readonly number[] {
-  useSuspendUntilPresenceLoaded();
+  useSuspendUntilPresenceReady();
   return useOthersConnectionIds();
 }
 
@@ -2131,7 +2360,7 @@ function useOthersMappedSuspense<
   itemSelector: (other: User<P, U>) => T,
   itemIsEqual?: (prev: T, curr: T) => boolean
 ): ReadonlyArray<readonly [connectionId: number, data: T]> {
-  useSuspendUntilPresenceLoaded();
+  useSuspendUntilPresenceReady();
   return useOthersMapped(itemSelector, itemIsEqual);
 }
 
@@ -2140,35 +2369,41 @@ function useOtherSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
   selector: (other: User<P, U>) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T {
-  useSuspendUntilPresenceLoaded();
+  useSuspendUntilPresenceReady();
   return useOther(connectionId, selector, isEqual);
 }
 
-function useSuspendUntilStorageLoaded(): void {
-  const room = useRoom();
-  if (room.getStorageSnapshot() !== null) {
-    return;
-  }
-
+function useSuspendUntilStorageReady(): void {
+  // Throw an error if we're calling this on the server side
   ensureNotServerSide();
 
-  // Throw a _promise_. Suspense will suspend the component tree until this
-  // promise resolves (aka until storage has loaded). After that, it will
-  // render this component tree again.
-  throw new Promise<void>((res) => {
-    room.events.storageDidLoad.subscribeOnce(() => res());
-  });
+  const room = useRoom();
+  use(room.waitUntilStorageReady());
 }
 
 function useStorageSuspense<S extends LsonObject, T>(
   selector: (root: ToImmutable<S>) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T {
-  useSuspendUntilStorageLoaded();
+  useSuspendUntilStorageReady();
   return useStorage(
     selector,
     isEqual as (prev: T | null, curr: T | null) => boolean
   ) as T;
+}
+
+/**
+ * Returns the current storage status for the Room, and triggers
+ * a re-render whenever it changes. Can be used to render a "Saving..."
+ * indicator.
+ */
+function useStorageStatusSuspense(): StorageStatusSuccess {
+  useSuspendUntilStorageReady();
+  const room = useRoom();
+  const subscribe = room.events.storageStatus.subscribe;
+  const getSnapshot = room.getStorageStatus as () => StorageStatusSuccess;
+  const getServerSnapshot = room.getStorageStatus as () => StorageStatusSuccess;
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
 function useThreadsSuspense<M extends BaseMetadata>(
@@ -2225,6 +2460,15 @@ function useThreadsSuspense<M extends BaseMetadata>(
   return state;
 }
 
+/**
+ * @beta
+ *
+ * Returns the user's notification settings for the current room
+ * and a function to update them.
+ *
+ * @example
+ * const [{ settings }, updateSettings] = useRoomNotificationSettings();
+ */
 function useRoomNotificationSettingsSuspense(): [
   RoomNotificationSettingsStateSuccess,
   (settings: Partial<RoomNotificationSettings>) => void,
@@ -2299,6 +2543,11 @@ export function useRoomContextBundle() {
   return getOrCreateRoomContextBundle(client);
 }
 
+/**
+ * Creates a RoomProvider and a set of typed hooks to use in your app. Note
+ * that any RoomProvider created in this way does not need to be nested in
+ * LiveblocksProvider, as it already has access to the client.
+ */
 export function createRoomContext<
   P extends JsonObject = DP,
   S extends LsonObject = DS,
@@ -2316,46 +2565,491 @@ export function generateQueryKey(
   return `${roomId}-${stringify(options ?? {})}`;
 }
 
-type DefaultRoomContextBundle = RoomContextBundle<DP, DS, DU, DE, DM>;
+type TypedBundle = RoomContextBundle<DP, DS, DU, DE, DM>;
 
-const _RoomProvider: DefaultRoomContextBundle["RoomProvider"] = RoomProvider;
-const _useBroadcastEvent: DefaultRoomContextBundle["useBroadcastEvent"] =
-  useBroadcastEvent;
-const _useOthersListener: DefaultRoomContextBundle["useOthersListener"] =
-  useOthersListener;
-const _useRoom: DefaultRoomContextBundle["useRoom"] = useRoom;
-const _useAddReaction: DefaultRoomContextBundle["useAddReaction"] =
-  useAddReaction;
-const _useMutation: DefaultRoomContextBundle["useMutation"] = useMutation;
-const _useCreateThread: DefaultRoomContextBundle["useCreateThread"] =
-  useCreateThread;
-const _useEditThreadMetadata: DefaultRoomContextBundle["useEditThreadMetadata"] =
+/**
+ * Makes a Room available in the component hierarchy below.
+ * Joins the room when the component is mounted, and automatically leaves
+ * the room when the component is unmounted.
+ */
+const _RoomProvider: TypedBundle["RoomProvider"] = RoomProvider;
+
+/**
+ * Returns a callback that lets you broadcast custom events to other users in the room
+ *
+ * @example
+ * const broadcast = useBroadcastEvent();
+ *
+ * broadcast({ type: "CUSTOM_EVENT", data: { x: 0, y: 0 } });
+ */
+const _useBroadcastEvent: TypedBundle["useBroadcastEvent"] = useBroadcastEvent;
+
+/**
+ * Get informed when users enter or leave the room, as an event.
+ *
+ * @example
+ * useOthersListener({ type, user, others }) => {
+ *   if (type === 'enter') {
+ *     // `user` has joined the room
+ *   } else if (type === 'leave') {
+ *     // `user` has left the room
+ *   }
+ * })
+ */
+const _useOthersListener: TypedBundle["useOthersListener"] = useOthersListener;
+
+/**
+ * Returns the Room of the nearest RoomProvider above in the React component
+ * tree.
+ */
+const _useRoom: TypedBundle["useRoom"] = useRoom;
+
+/**
+ * Returns a function that adds a reaction from a comment.
+ *
+ * @example
+ * const addReaction = useAddReaction();
+ * addReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" })
+ */
+const _useAddReaction: TypedBundle["useAddReaction"] = useAddReaction;
+
+/**
+ * Create a callback function that lets you mutate Liveblocks state.
+ *
+ * The first argument that gets passed into your callback will be
+ * a "mutation context", which exposes the following:
+ *
+ *   - `storage` - The mutable Storage root.
+ *                 You can mutate any Live structures with this, for example:
+ *                 `storage.get('layers').get('layer1').set('fill', 'red')`
+ *
+ *   - `setMyPresence` - Call this with a new (partial) Presence value.
+ *
+ *   - `self` - A read-only version of the latest self, if you need it to
+ *              compute the next state.
+ *
+ *   - `others` - A read-only version of the latest others list, if you
+ *                need it to compute the next state.
+ *
+ * useMutation is like React's useCallback, except that the first argument
+ * that gets passed into your callback will be a "mutation context".
+ *
+ * If you want get access to the immutable root somewhere in your mutation,
+ * you can use `storage.ToImmutable()`.
+ *
+ * @example
+ * const fillLayers = useMutation(
+ *   ({ storage }, color: Color) => {
+ *     ...
+ *   },
+ *   [],
+ * );
+ *
+ * fillLayers('red');
+ *
+ * const deleteLayers = useMutation(
+ *   ({ storage }) => {
+ *     ...
+ *   },
+ *   [],
+ * );
+ *
+ * deleteLayers();
+ */
+const _useMutation: TypedBundle["useMutation"] = useMutation;
+
+/**
+ * Returns a function that creates a thread with an initial comment, and optionally some metadata.
+ *
+ * @example
+ * const createThread = useCreateThread();
+ * createThread({ body: {}, metadata: {} });
+ */
+const _useCreateThread: TypedBundle["useCreateThread"] = useCreateThread;
+
+/**
+ * Returns a function that deletes a thread and its associated comments.
+ * Only the thread creator can delete a thread, it will throw otherwise.
+ *
+ * @example
+ * const deleteThread = useDeleteThread();
+ * deleteThread("th_xxx");
+ */
+const _useDeleteThread: TypedBundle["useDeleteThread"] = useDeleteThread;
+
+/**
+ * Returns a function that edits a thread's metadata.
+ * To delete an existing metadata property, set its value to `null`.
+ *
+ * @example
+ * const editThreadMetadata = useEditThreadMetadata();
+ * editThreadMetadata({ threadId: "th_xxx", metadata: {} })
+ */
+const _useEditThreadMetadata: TypedBundle["useEditThreadMetadata"] =
   useEditThreadMetadata;
-const _useEventListener: DefaultRoomContextBundle["useEventListener"] =
-  useEventListener;
-const _useMyPresence: DefaultRoomContextBundle["useMyPresence"] = useMyPresence;
-const _useOthersMapped: DefaultRoomContextBundle["useOthersMapped"] =
-  useOthersMapped;
-const _useOthersMappedSuspense: DefaultRoomContextBundle["suspense"]["useOthersMapped"] =
+
+/**
+ * useEventListener is a React hook that allows you to respond to events broadcast
+ * by other users in the room.
+ *
+ * The `user` argument will indicate which `User` instance sent the message.
+ * This will be equal to one of the others in the room, but it can be `null`
+ * in case this event was broadcasted from the server.
+ *
+ * @example
+ * useEventListener(({ event, user, connectionId }) => {
+ * //                         ^^^^ Will be Client A
+ *   if (event.type === "CUSTOM_EVENT") {
+ *     // Do something
+ *   }
+ * });
+ */
+const _useEventListener: TypedBundle["useEventListener"] = useEventListener;
+
+/**
+ * Returns the presence of the current user of the current room, and a function to update it.
+ * It is different from the setState function returned by the useState hook from React.
+ * You don't need to pass the full presence object to update it.
+ *
+ * @example
+ * const [myPresence, updateMyPresence] = useMyPresence();
+ * updateMyPresence({ x: 0 });
+ * updateMyPresence({ y: 0 });
+ *
+ * // At the next render, "myPresence" will be equal to "{ x: 0, y: 0 }"
+ */
+const _useMyPresence: TypedBundle["useMyPresence"] = useMyPresence;
+
+/**
+ * Related to useOthers(), but optimized for selecting only "subsets" of
+ * others. This is useful for performance reasons in particular, because
+ * selecting only a subset of users also means limiting the number of
+ * re-renders that will be triggered.
+ *
+ * @example
+ * const avatars = useOthersMapped(user => user.info.avatar);
+ * //    ^^^^^^^
+ * //    { connectionId: number; data: string }[]
+ *
+ * The selector function you pass to useOthersMapped() is called an "item
+ * selector", and operates on a single user at a time. If you provide an
+ * (optional) "item comparison" function, it will be used to compare each
+ * item pairwise.
+ *
+ * For example, to select multiple properties:
+ *
+ * @example
+ * const avatarsAndCursors = useOthersMapped(
+ *   user => [u.info.avatar, u.presence.cursor],
+ *   shallow,  // 👈
+ * );
+ */
+const _useOthersMapped: TypedBundle["useOthersMapped"] = useOthersMapped;
+
+/**
+ * Related to useOthers(), but optimized for selecting only "subsets" of
+ * others. This is useful for performance reasons in particular, because
+ * selecting only a subset of users also means limiting the number of
+ * re-renders that will be triggered.
+ *
+ * @example
+ * const avatars = useOthersMapped(user => user.info.avatar);
+ * //    ^^^^^^^
+ * //    { connectionId: number; data: string }[]
+ *
+ * The selector function you pass to useOthersMapped() is called an "item
+ * selector", and operates on a single user at a time. If you provide an
+ * (optional) "item comparison" function, it will be used to compare each
+ * item pairwise.
+ *
+ * For example, to select multiple properties:
+ *
+ * @example
+ * const avatarsAndCursors = useOthersMapped(
+ *   user => [u.info.avatar, u.presence.cursor],
+ *   shallow,  // 👈
+ * );
+ */
+const _useOthersMappedSuspense: TypedBundle["suspense"]["useOthersMapped"] =
   useOthersMappedSuspense;
-const _useThreads: DefaultRoomContextBundle["useThreads"] = useThreads;
-const _useThreadsSuspense: DefaultRoomContextBundle["suspense"]["useThreads"] =
+
+/**
+ * Returns the threads within the current room.
+ *
+ * @example
+ * const { threads, error, isLoading } = useThreads();
+ */
+const _useThreads: TypedBundle["useThreads"] = useThreads;
+
+/**
+ * Returns the threads within the current room.
+ *
+ * @example
+ * const { threads } = useThreads();
+ */
+const _useThreadsSuspense: TypedBundle["suspense"]["useThreads"] =
   useThreadsSuspense;
-const _useOther: DefaultRoomContextBundle["useOther"] = useOther;
-const _useOthers: DefaultRoomContextBundle["useOthers"] = useOthers;
-const _useOtherSuspense: DefaultRoomContextBundle["suspense"]["useOther"] =
-  useOtherSuspense;
-const _useOthersSuspense: DefaultRoomContextBundle["suspense"]["useOthers"] =
-  useOthersSuspense;
-const _useStorage: DefaultRoomContextBundle["useStorage"] = useStorage;
-const _useStorageSuspense: DefaultRoomContextBundle["suspense"]["useStorage"] =
+
+/**
+ * Given a connection ID (as obtained by using `useOthersConnectionIds`), you
+ * can call this selector deep down in your component stack to only have the
+ * component re-render if properties for this particular user change.
+ *
+ * @example
+ * // Returns only the selected values re-renders whenever that selection changes)
+ * const { x, y } = useOther(2, user => user.presence.cursor);
+ */
+const _useOther: TypedBundle["useOther"] = useOther;
+
+/**
+ * Returns an array with information about all the users currently connected in
+ * the room (except yourself).
+ *
+ * @example
+ * const others = useOthers();
+ *
+ * // Example to map all cursors in JSX
+ * return (
+ *   <>
+ *     {others.map((user) => {
+ *        if (user.presence.cursor == null) {
+ *          return null;
+ *        }
+ *        return <Cursor key={user.connectionId} cursor={user.presence.cursor} />
+ *      })}
+ *   </>
+ * )
+ */
+function _useOthers(): readonly User<DP, DU>[];
+/**
+ * Extract arbitrary data based on all the users currently connected in the
+ * room (except yourself).
+ *
+ * The selector function will get re-evaluated any time a user enters or
+ * leaves the room, as well as whenever their presence data changes.
+ *
+ * The component that uses this hook will automatically re-render if your
+ * selector function returns a different value from its previous run.
+ *
+ * By default `useOthers()` uses strict `===` to check for equality. Take
+ * extra care when returning a computed object or list, for example when you
+ * return the result of a .map() or .filter() call from the selector. In
+ * those cases, you'll probably want to use a `shallow` comparison check.
+ *
+ * @example
+ * const avatars = useOthers(users => users.map(u => u.info.avatar), shallow);
+ * const cursors = useOthers(users => users.map(u => u.presence.cursor), shallow);
+ * const someoneIsTyping = useOthers(users => users.some(u => u.presence.isTyping));
+ *
+ */
+function _useOthers<T>(
+  selector: (others: readonly User<DP, DU>[]) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T;
+function _useOthers(...args: any[]) {
+  return useOthers(...(args as []));
+}
+
+/**
+ * Given a connection ID (as obtained by using `useOthersConnectionIds`), you
+ * can call this selector deep down in your component stack to only have the
+ * component re-render if properties for this particular user change.
+ *
+ * @example
+ * // Returns only the selected values re-renders whenever that selection changes)
+ * const { x, y } = useOther(2, user => user.presence.cursor);
+ */
+const _useOtherSuspense: TypedBundle["suspense"]["useOther"] = useOtherSuspense;
+
+/**
+ * Returns an array with information about all the users currently connected in
+ * the room (except yourself).
+ *
+ * @example
+ * const others = useOthers();
+ *
+ * // Example to map all cursors in JSX
+ * return (
+ *   <>
+ *     {others.map((user) => {
+ *        if (user.presence.cursor == null) {
+ *          return null;
+ *        }
+ *        return <Cursor key={user.connectionId} cursor={user.presence.cursor} />
+ *      })}
+ *   </>
+ * )
+ */
+function _useOthersSuspense(): readonly User<DP, DU>[];
+/**
+ * Extract arbitrary data based on all the users currently connected in the
+ * room (except yourself).
+ *
+ * The selector function will get re-evaluated any time a user enters or
+ * leaves the room, as well as whenever their presence data changes.
+ *
+ * The component that uses this hook will automatically re-render if your
+ * selector function returns a different value from its previous run.
+ *
+ * By default `useOthers()` uses strict `===` to check for equality. Take
+ * extra care when returning a computed object or list, for example when you
+ * return the result of a .map() or .filter() call from the selector. In
+ * those cases, you'll probably want to use a `shallow` comparison check.
+ *
+ * @example
+ * const avatars = useOthers(users => users.map(u => u.info.avatar), shallow);
+ * const cursors = useOthers(users => users.map(u => u.presence.cursor), shallow);
+ * const someoneIsTyping = useOthers(users => users.some(u => u.presence.isTyping));
+ *
+ */
+function _useOthersSuspense<T>(
+  selector: (others: readonly User<DP, DU>[]) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T;
+function _useOthersSuspense(...args: any[]) {
+  return useOthersSuspense(...(args as []));
+}
+
+/**
+ * Extract arbitrary data from the Liveblocks Storage state, using an
+ * arbitrary selector function.
+ *
+ * The selector function will get re-evaluated any time something changes in
+ * Storage. The value returned by your selector function will also be the
+ * value returned by the hook.
+ *
+ * The `root` value that gets passed to your selector function is
+ * a immutable/readonly version of your Liveblocks storage root.
+ *
+ * The component that uses this hook will automatically re-render if the
+ * returned value changes.
+ *
+ * By default `useStorage()` uses strict `===` to check for equality. Take
+ * extra care when returning a computed object or list, for example when you
+ * return the result of a .map() or .filter() call from the selector. In
+ * those cases, you'll probably want to use a `shallow` comparison check.
+ */
+const _useStorage: TypedBundle["useStorage"] = useStorage;
+
+/**
+ * Extract arbitrary data from the Liveblocks Storage state, using an
+ * arbitrary selector function.
+ *
+ * The selector function will get re-evaluated any time something changes in
+ * Storage. The value returned by your selector function will also be the
+ * value returned by the hook.
+ *
+ * The `root` value that gets passed to your selector function is
+ * a immutable/readonly version of your Liveblocks storage root.
+ *
+ * The component that uses this hook will automatically re-render if the
+ * returned value changes.
+ *
+ * By default `useStorage()` uses strict `===` to check for equality. Take
+ * extra care when returning a computed object or list, for example when you
+ * return the result of a .map() or .filter() call from the selector. In
+ * those cases, you'll probably want to use a `shallow` comparison check.
+ */
+const _useStorageSuspense: TypedBundle["suspense"]["useStorage"] =
   useStorageSuspense;
-const _useSelf: DefaultRoomContextBundle["useSelf"] = useSelf;
-const _useSelfSuspense: DefaultRoomContextBundle["suspense"]["useSelf"] =
-  useSelfSuspense;
-const _useStorageRoot: DefaultRoomContextBundle["useStorageRoot"] =
-  useStorageRoot;
-const _useUpdateMyPresence: DefaultRoomContextBundle["useUpdateMyPresence"] =
+
+/**
+ * Gets the current user once it is connected to the room.
+ *
+ * @example
+ * const me = useSelf();
+ * if (me !== null) {
+ *   const { x, y } = me.presence.cursor;
+ * }
+ */
+function _useSelf(): User<DP, DU> | null;
+/**
+ * Extract arbitrary data based on the current user.
+ *
+ * The selector function will get re-evaluated any time your presence data
+ * changes.
+ *
+ * The component that uses this hook will automatically re-render if your
+ * selector function returns a different value from its previous run.
+ *
+ * By default `useSelf()` uses strict `===` to check for equality. Take extra
+ * care when returning a computed object or list, for example when you return
+ * the result of a .map() or .filter() call from the selector. In those
+ * cases, you'll probably want to use a `shallow` comparison check.
+ *
+ * Will return `null` while Liveblocks isn't connected to a room yet.
+ *
+ * @example
+ * const cursor = useSelf(me => me.presence.cursor);
+ * if (cursor !== null) {
+ *   const { x, y } = cursor;
+ * }
+ *
+ */
+function _useSelf<T>(
+  selector: (me: User<DP, DU>) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T | null;
+function _useSelf(...args: any[]) {
+  return useSelf(...(args as []));
+}
+
+/**
+ * Gets the current user once it is connected to the room.
+ *
+ * @example
+ * const me = useSelf();
+ * const { x, y } = me.presence.cursor;
+ */
+function _useSelfSuspense(): User<DP, DU>;
+/**
+ * Extract arbitrary data based on the current user.
+ *
+ * The selector function will get re-evaluated any time your presence data
+ * changes.
+ *
+ * The component that uses this hook will automatically re-render if your
+ * selector function returns a different value from its previous run.
+ *
+ * By default `useSelf()` uses strict `===` to check for equality. Take extra
+ * care when returning a computed object or list, for example when you return
+ * the result of a .map() or .filter() call from the selector. In those
+ * cases, you'll probably want to use a `shallow` comparison check.
+ *
+ * @example
+ * const cursor = useSelf(me => me.presence.cursor);
+ * const { x, y } = cursor;
+ *
+ */
+function _useSelfSuspense<T>(
+  selector: (me: User<DP, DU>) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T;
+function _useSelfSuspense(...args: any[]) {
+  return useSelfSuspense(...(args as []));
+}
+
+/**
+ * Returns the mutable (!) Storage root. This hook exists for
+ * backward-compatible reasons.
+ *
+ * @example
+ * const [root] = useStorageRoot();
+ */
+const _useStorageRoot: TypedBundle["useStorageRoot"] = useStorageRoot;
+
+/**
+ * useUpdateMyPresence is similar to useMyPresence but it only returns the function to update the current user presence.
+ * If you don't use the current user presence in your component, but you need to update it (e.g. live cursor), it's better to use useUpdateMyPresence to avoid unnecessary renders.
+ *
+ * @example
+ * const updateMyPresence = useUpdateMyPresence();
+ * updateMyPresence({ x: 0 });
+ * updateMyPresence({ y: 0 });
+ *
+ * // At the next render, the presence of the current user will be equal to "{ x: 0, y: 0 }"
+ */
+const _useUpdateMyPresence: TypedBundle["useUpdateMyPresence"] =
   useUpdateMyPresence;
 
 export {
@@ -2372,6 +3066,7 @@ export {
   useCreateComment,
   _useCreateThread as useCreateThread,
   useDeleteComment,
+  _useDeleteThread as useDeleteThread,
   useEditComment,
   _useEditThreadMetadata as useEditThreadMetadata,
   useErrorListener,
@@ -2399,6 +3094,8 @@ export {
   useStatus,
   _useStorage as useStorage,
   _useStorageRoot as useStorageRoot,
+  useStorageStatus,
+  useStorageStatusSuspense,
   _useStorageSuspense as useStorageSuspense,
   _useThreads as useThreads,
   _useThreadsSuspense as useThreadsSuspense,

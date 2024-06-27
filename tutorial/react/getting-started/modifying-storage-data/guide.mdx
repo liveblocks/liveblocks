@@ -13,12 +13,12 @@ Currently, our storage consists of a [`LiveObject`][] called `person`. `Storage`
 itself is also always a [`LiveObject`][].
 
 ```ts
-type Storage = {
+Storage: {
   person: LiveObject<{
     name: string;
     age: number;
   }>;
-};
+}
 ```
 
 To access `person`, we must first retrieve it from our storage with

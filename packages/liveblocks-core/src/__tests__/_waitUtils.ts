@@ -81,7 +81,7 @@ export async function waitUntilSynchronized(room: OpaqueRoom): Promise<void> {
 
 export async function waitUntilStorageUpdate(room: OpaqueRoom): Promise<void> {
   await withTimeout(
-    room.events.storage.waitUntil(),
+    room.events.storageBatch.waitUntil(),
     1000,
     "Room never received a storage update within 1s"
   );

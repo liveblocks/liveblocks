@@ -11,6 +11,9 @@
 export type Json = JsonScalar | JsonArray | JsonObject;
 export type JsonScalar = string | number | boolean | null;
 export type JsonArray = Json[];
+/**
+ * Any valid JSON object.
+ */
 export type JsonObject = { [key: string]: Json | undefined };
 
 export function isJsonScalar(data: Json): data is JsonScalar {
