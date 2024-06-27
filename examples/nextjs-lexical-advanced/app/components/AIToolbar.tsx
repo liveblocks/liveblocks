@@ -14,12 +14,33 @@ import { readStreamableValue } from "ai/rsc";
 import { $getSelection, $isRangeSelection, TextNode } from "lexical";
 import * as React from "react";
 import { Command } from "cmdk";
-type OptionChild = { text: string; prompt: string; children?: never };
-type OptionParent = { text: string; children: OptionChild[]; prompt?: never };
-type Option = OptionChild | OptionParent;
+import { TranslateIcon } from "../icons/TranslateIcon";
+import { SpellcheckIcon } from "../icons/SpellcheckIcon";
+import { WandIcon } from "../icons/WandIcon";
+import { ShortenIcon } from "../icons/ShortenIcon";
+import { LengthenIcon } from "../icons/LengthenIcon";
+import { StyleIcon } from "../icons/StyleIcon";
+import { ReplaceIcon } from "../icons/ReplaceIcon";
+import { InsertInlineIcon } from "../icons/InsertInlineIcon";
+import { BackIcon } from "../icons/BackIcon";
+
+type OptionChild = {
+  text: string;
+  prompt: string;
+  icon: ReactNode;
+  children?: never;
+};
+
+type OptionParent = {
+  text: string;
+  children: OptionChild[];
+  icon: ReactNode;
+  prompt?: never;
+};
+
 type OptionGroup = {
   text: string;
-  options: Option[];
+  options: (OptionChild | OptionParent)[];
 };
 
 const languages = [
@@ -47,18 +68,22 @@ const optionsGroups: OptionGroup[] = [
       {
         text: "Improve writing",
         prompt: "Improve the quality of the text",
+        icon: <WandIcon className="h-3.5" />,
       },
       {
         text: "Fix mistakes",
         prompt: "Fix any typos or general errors in the text",
+        icon: <SpellcheckIcon className="h-full" />,
       },
       {
         text: "Shorten",
         prompt: "Shorten the text",
+        icon: <ShortenIcon className="h-full" />,
       },
       {
         text: "Lengthen",
         prompt: "Lengthen the text, going into more detail",
+        icon: <LengthenIcon className="h-full" />,
       },
     ],
   },
@@ -71,6 +96,7 @@ const optionsGroups: OptionGroup[] = [
           text: lang,
           prompt: `Translate text into the ${lang} language`,
         })),
+        icon: <TranslateIcon className="h-full" />,
       },
       {
         text: "Change style…",
@@ -78,6 +104,7 @@ const optionsGroups: OptionGroup[] = [
           text: style,
           prompt: `Change text into ${style} style`,
         })),
+        icon: <StyleIcon className="h-full" />,
       },
     ],
   },
@@ -210,6 +237,7 @@ ${textContent || ""}
             {lastAiMessage?.content && !page ? (
               <>
                 <CommandItem
+                  icon={<ReplaceIcon className="h-full" />}
                   onSelect={() => {
                     if (!lastAiMessage?.content) {
                       return;
@@ -225,6 +253,7 @@ ${textContent || ""}
                   Replace selection
                 </CommandItem>
                 <CommandItem
+                  icon={<InsertInlineIcon className="h-full" />}
                   onSelect={() => {
                     if (!lastAiMessage?.content) {
                       return;
@@ -253,7 +282,12 @@ ${textContent || ""}
             ) : null}
 
             {page ? (
-              <CommandItem onSelect={() => setPages([])}>← Back</CommandItem>
+              <CommandItem
+                icon={<BackIcon className="h-full" />}
+                onSelect={() => setPages([])}
+              >
+                Back
+              </CommandItem>
             ) : (
               optionsGroups.map((optionGroup, index) => (
                 <Fragment key={optionGroup.text}>
@@ -264,6 +298,7 @@ ${textContent || ""}
                         // An item with a prompt
                         <CommandItem
                           key={option.text}
+                          icon={option.icon}
                           onSelect={() => {
                             submitPrompt(option.prompt);
                             setPages([]);
@@ -275,6 +310,7 @@ ${textContent || ""}
                         // An item that opens another page
                         <CommandItem
                           key={option.text}
+                          icon={option.icon}
                           onSelect={() => {
                             setPages([...pages, option.text]);
                           }}
@@ -293,6 +329,7 @@ ${textContent || ""}
                   // The items in the current page
                   <CommandItem
                     key={option.text}
+                    icon={option.icon}
                     onSelect={() => {
                       submitPrompt(option.prompt);
                       setPages([]);
@@ -311,9 +348,11 @@ ${textContent || ""}
 
 function CommandItem({
   children,
+  icon,
   onSelect,
 }: {
   children: ReactNode;
+  icon?: ReactNode;
   onSelect: ((value: string) => void) | undefined;
 }) {
   return (
@@ -324,7 +363,17 @@ function CommandItem({
         e.preventDefault();
       }}
     >
-      {children}
+      <div className="flex justify-between items-center">
+        <div className="flex items-center gap-1">
+          {icon ? (
+            <div className="w-5 h-[16px] text-indigo-500 flex items-center justify-center -ml-1">
+              {icon}
+            </div>
+          ) : null}
+          {children}
+        </div>
+        <div></div>
+      </div>
     </Command.Item>
   );
 }
