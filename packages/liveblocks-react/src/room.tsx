@@ -2801,8 +2801,54 @@ const _useThreadsSuspense: TypedBundle["suspense"]["useThreads"] =
  */
 const _useOther: TypedBundle["useOther"] = useOther;
 
-// TODO This one is tricky, as it has overloads
-const _useOthers: TypedBundle["useOthers"] = useOthers;
+/**
+ * Returns an array with information about all the users currently connected in
+ * the room (except yourself).
+ *
+ * @example
+ * const others = useOthers();
+ *
+ * // Example to map all cursors in JSX
+ * return (
+ *   <>
+ *     {others.map((user) => {
+ *        if (user.presence.cursor == null) {
+ *          return null;
+ *        }
+ *        return <Cursor key={user.connectionId} cursor={user.presence.cursor} />
+ *      })}
+ *   </>
+ * )
+ */
+function _useOthers(): readonly User<DP, DU>[];
+/**
+ * Extract arbitrary data based on all the users currently connected in the
+ * room (except yourself).
+ *
+ * The selector function will get re-evaluated any time a user enters or
+ * leaves the room, as well as whenever their presence data changes.
+ *
+ * The component that uses this hook will automatically re-render if your
+ * selector function returns a different value from its previous run.
+ *
+ * By default `useOthers()` uses strict `===` to check for equality. Take
+ * extra care when returning a computed object or list, for example when you
+ * return the result of a .map() or .filter() call from the selector. In
+ * those cases, you'll probably want to use a `shallow` comparison check.
+ *
+ * @example
+ * const avatars = useOthers(users => users.map(u => u.info.avatar), shallow);
+ * const cursors = useOthers(users => users.map(u => u.presence.cursor), shallow);
+ * const someoneIsTyping = useOthers(users => users.some(u => u.presence.isTyping));
+ *
+ */
+function _useOthers<T>(
+  selector: (others: readonly User<DP, DU>[]) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T;
+function _useOthers(...args: any[]) {
+  return useOthers(...(args as []));
+}
 
 /**
  * Given a connection ID (as obtained by using `useOthersConnectionIds`), you
@@ -2815,9 +2861,54 @@ const _useOthers: TypedBundle["useOthers"] = useOthers;
  */
 const _useOtherSuspense: TypedBundle["suspense"]["useOther"] = useOtherSuspense;
 
-// TODO This one is tricky, as it has overloads
-const _useOthersSuspense: TypedBundle["suspense"]["useOthers"] =
-  useOthersSuspense;
+/**
+ * Returns an array with information about all the users currently connected in
+ * the room (except yourself).
+ *
+ * @example
+ * const others = useOthers();
+ *
+ * // Example to map all cursors in JSX
+ * return (
+ *   <>
+ *     {others.map((user) => {
+ *        if (user.presence.cursor == null) {
+ *          return null;
+ *        }
+ *        return <Cursor key={user.connectionId} cursor={user.presence.cursor} />
+ *      })}
+ *   </>
+ * )
+ */
+function _useOthersSuspense(): readonly User<DP, DU>[];
+/**
+ * Extract arbitrary data based on all the users currently connected in the
+ * room (except yourself).
+ *
+ * The selector function will get re-evaluated any time a user enters or
+ * leaves the room, as well as whenever their presence data changes.
+ *
+ * The component that uses this hook will automatically re-render if your
+ * selector function returns a different value from its previous run.
+ *
+ * By default `useOthers()` uses strict `===` to check for equality. Take
+ * extra care when returning a computed object or list, for example when you
+ * return the result of a .map() or .filter() call from the selector. In
+ * those cases, you'll probably want to use a `shallow` comparison check.
+ *
+ * @example
+ * const avatars = useOthers(users => users.map(u => u.info.avatar), shallow);
+ * const cursors = useOthers(users => users.map(u => u.presence.cursor), shallow);
+ * const someoneIsTyping = useOthers(users => users.some(u => u.presence.isTyping));
+ *
+ */
+function _useOthersSuspense<T>(
+  selector: (others: readonly User<DP, DU>[]) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T;
+function _useOthersSuspense(...args: any[]) {
+  return useOthersSuspense(...(args as []));
+}
 
 /**
  * Extract arbitrary data from the Liveblocks Storage state, using an
@@ -2862,11 +2953,81 @@ const _useStorage: TypedBundle["useStorage"] = useStorage;
 const _useStorageSuspense: TypedBundle["suspense"]["useStorage"] =
   useStorageSuspense;
 
-// TODO This one is tricky, as it has overloads
-const _useSelf: TypedBundle["useSelf"] = useSelf;
+/**
+ * Gets the current user once it is connected to the room.
+ *
+ * @example
+ * const me = useSelf();
+ * if (me !== null) {
+ *   const { x, y } = me.presence.cursor;
+ * }
+ */
+function _useSelf(): User<DP, DU> | null;
+/**
+ * Extract arbitrary data based on the current user.
+ *
+ * The selector function will get re-evaluated any time your presence data
+ * changes.
+ *
+ * The component that uses this hook will automatically re-render if your
+ * selector function returns a different value from its previous run.
+ *
+ * By default `useSelf()` uses strict `===` to check for equality. Take extra
+ * care when returning a computed object or list, for example when you return
+ * the result of a .map() or .filter() call from the selector. In those
+ * cases, you'll probably want to use a `shallow` comparison check.
+ *
+ * Will return `null` while Liveblocks isn't connected to a room yet.
+ *
+ * @example
+ * const cursor = useSelf(me => me.presence.cursor);
+ * if (cursor !== null) {
+ *   const { x, y } = cursor;
+ * }
+ *
+ */
+function _useSelf<T>(
+  selector: (me: User<DP, DU>) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T | null;
+function _useSelf(...args: any[]) {
+  return useSelf(...(args as []));
+}
 
-// TODO This one is tricky, as it has overloads
-const _useSelfSuspense: TypedBundle["suspense"]["useSelf"] = useSelfSuspense;
+/**
+ * Gets the current user once it is connected to the room.
+ *
+ * @example
+ * const me = useSelf();
+ * const { x, y } = me.presence.cursor;
+ */
+function _useSelfSuspense(): User<DP, DU>;
+/**
+ * Extract arbitrary data based on the current user.
+ *
+ * The selector function will get re-evaluated any time your presence data
+ * changes.
+ *
+ * The component that uses this hook will automatically re-render if your
+ * selector function returns a different value from its previous run.
+ *
+ * By default `useSelf()` uses strict `===` to check for equality. Take extra
+ * care when returning a computed object or list, for example when you return
+ * the result of a .map() or .filter() call from the selector. In those
+ * cases, you'll probably want to use a `shallow` comparison check.
+ *
+ * @example
+ * const cursor = useSelf(me => me.presence.cursor);
+ * const { x, y } = cursor;
+ *
+ */
+function _useSelfSuspense<T>(
+  selector: (me: User<DP, DU>) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T;
+function _useSelfSuspense(...args: any[]) {
+  return useSelfSuspense(...(args as []));
+}
 
 /**
  * Returns the mutable (!) Storage root. This hook exists for
