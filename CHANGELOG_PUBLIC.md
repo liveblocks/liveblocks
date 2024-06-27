@@ -15,7 +15,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 # Week 26 (2024-06-28)
 
-## v2.1.0
+## v2.1.0 (2024-06-27)
 
 ### `@liveblocks/client`
 
