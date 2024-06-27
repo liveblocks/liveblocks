@@ -17,6 +17,14 @@ PACKAGE_DIRS=(
     "packages/liveblocks-codemod"
 )
 
+usage () {
+    err "publish.sh [-V <version>] [-t <git tag>] <pkgdir> [<pkgdir>...]"
+    err ""
+    err "    -V   the version to publish to NPM"
+    err "    -t   the NPM tag to use"
+    err ""
+}
+
 err () {
     echo "$@" >&2
 }
