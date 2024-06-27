@@ -147,7 +147,7 @@ function ToolbarOptions({
   return (
     <div className="p-1.5 w-full min-w-max rounded-lg border shadow border-border/80 text-foreground bg-card">
       <div style={{ display: state === "ai" ? "block" : "none" }}>
-        <AIToolbar setState={setState} />
+        <AIToolbar state={state} setState={setState} />
       </div>
 
       <div
