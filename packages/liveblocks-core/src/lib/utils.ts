@@ -194,7 +194,7 @@ export async function withTimeout<T>(
  * function will return the exact same value.
  */
 export function memoize<T>(factoryFn: () => T): () => T {
-  let cached: { value: T } | null;
+  let cached: { value: T } | null = null;
   return () => {
     if (cached === null) {
       cached = { value: factoryFn() };
