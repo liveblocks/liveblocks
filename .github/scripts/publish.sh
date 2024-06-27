@@ -4,7 +4,7 @@ set -eu
 GITHUB_URL="https://github.com/liveblocks/liveblocks"
 
 usage () {
-    err "publish.sh [-V <version>] [-t <git tag>] <pkgdir> [<pkgdir>...]"
+    err "publish.sh [-V <version>] [-t <tag>] <pkgdir> [<pkgdir>...]"
     err ""
     err "    -V   the version to publish to NPM"
     err "    -t   the NPM tag to use"
