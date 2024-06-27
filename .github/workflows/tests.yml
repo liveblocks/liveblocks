@@ -47,6 +47,9 @@ jobs:
           restore-keys:
             turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-bust3
 
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v1
+
       - name: Build
         run: npm run build -- --filter ${{ matrix.pkg }}
 
