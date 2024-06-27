@@ -32,7 +32,7 @@ const languages = [
   //"Hindi",
   //"Japanese",
   //"Korean",
-  "Nepalese",
+  "Nepali",
   //"Portuguese",
   "Spanish",
 ];
@@ -94,9 +94,9 @@ export function AIToolbar({
   const [messages, setMessages] = useState<CoreMessage[]>([]);
   const [input, setInput] = useState("");
 
-  const lastAiMessage = messages
-    .filter((m) => m.role === "assistant")
-    .slice(-1)[0];
+  const [loading, setLoading] = useState(false);
+
+  const lastAiMessage = messages.filter((m) => m.role === "assistant")[0];
 
   const { selection, textContent } = useSelection();
   // console.log("selection: ", textContent);
@@ -104,8 +104,6 @@ export function AIToolbar({
 
   const [pages, setPages] = React.useState<string[]>([]);
   const page = pages[pages.length - 1];
-  // const selectedOption =
-  //   optionsGroups.filter((option) => page === option.text)?.[0] || null;
   const selectedOption = optionsGroups
     .flatMap((group) => group.options)
     .flatMap((option) =>
@@ -115,6 +113,7 @@ export function AIToolbar({
 
   const submitPrompt = useCallback(
     async (prompt: string) => {
+      setLoading(true);
       const systemMessage = `Do not surround your answer in quote marks. Only return the answer, nothing else. The user is selecting this text: 
             
 """
@@ -143,8 +142,9 @@ ${textContent || ""}
           },
         ]);
       }
+      setLoading(false);
     },
-    [textContent]
+    [textContent, setLoading]
   );
 
   useEffect(() => {
@@ -159,7 +159,6 @@ ${textContent || ""}
         {lastAiMessage?.content ? (
           <div className="whitespace-pre-wrap p-2">{lastAiMessage.content}</div>
         ) : null}
-        {/*<Command.Input value={search} onValueChange={setSearch} />*/}
         <form
           onSubmit={async (e) => {
             e.preventDefault();
@@ -175,21 +174,21 @@ ${textContent || ""}
           />
         </form>
       </div>
-      <Command
-        shouldFilter={false}
-        onKeyDown={(e) => {
-          // Escape and backspace go back to previous page
-          if (e.key === "Escape" || e.key === "Backspace") {
-            e.preventDefault();
-            setPages((pages) => pages.slice(0, -1));
-          }
-        }}
-        className="mt-1 rounded-lg border shadow-2xl border-border/80 bg-card max-w-xs pointer-events-auto"
-      >
-        <Command.List>
-          {lastAiMessage?.content && !page ? (
-            <>
-              <Command.Group heading="Modify content">
+      {!loading ? (
+        <Command
+          shouldFilter={false}
+          onKeyDown={(e) => {
+            // Escape and backspace go back to previous page
+            if (e.key === "Escape" || e.key === "Backspace") {
+              e.preventDefault();
+              setPages((pages) => pages.slice(0, -1));
+            }
+          }}
+          className="mt-1 rounded-lg border shadow-2xl border-border/80 bg-card max-w-xs pointer-events-auto"
+        >
+          <Command.List>
+            {lastAiMessage?.content && !page ? (
+              <>
                 <CommandItem
                   onSelect={() => {
                     if (!lastAiMessage?.content) {
@@ -228,55 +227,55 @@ ${textContent || ""}
                 >
                   Insert after
                 </CommandItem>
-              </Command.Group>
-              <Command.Separator />
-            </>
-          ) : null}
-
-          {page ? (
-            <CommandItem onSelect={() => setPages([])}>← Back</CommandItem>
-          ) : (
-            optionsGroups.map((optionGroup, index) => (
-              <>
-                {index !== 0 ? <Command.Separator /> : null}
-                <Command.Group heading={optionGroup.text}>
-                  {optionGroup.options.map((option) =>
-                    option.prompt ? (
-                      <CommandItem
-                        onSelect={() => {
-                          submitPrompt(option.prompt);
-                          setPages([]);
-                        }}
-                      >
-                        {option.text}
-                      </CommandItem>
-                    ) : (
-                      <CommandItem
-                        onSelect={() => setPages([...pages, option.text])}
-                      >
-                        {option.text}
-                      </CommandItem>
-                    )
-                  )}
-                </Command.Group>
+                <Command.Separator />
               </>
-            ))
-          )}
+            ) : null}
 
-          {selectedOption?.children
-            ? selectedOption.children.map((option) => (
-                <CommandItem
-                  onSelect={() => {
-                    submitPrompt(option.prompt);
-                    setPages([]);
-                  }}
-                >
-                  {option.text}
-                </CommandItem>
+            {page ? (
+              <CommandItem onSelect={() => setPages([])}>← Back</CommandItem>
+            ) : (
+              optionsGroups.map((optionGroup, index) => (
+                <>
+                  {index !== 0 ? <Command.Separator /> : null}
+                  <Command.Group heading={optionGroup.text}>
+                    {optionGroup.options.map((option) =>
+                      option.prompt ? (
+                        <CommandItem
+                          onSelect={() => {
+                            submitPrompt(option.prompt);
+                            setPages([]);
+                          }}
+                        >
+                          {option.text}
+                        </CommandItem>
+                      ) : (
+                        <CommandItem
+                          onSelect={() => setPages([...pages, option.text])}
+                        >
+                          {option.text}
+                        </CommandItem>
+                      )
+                    )}
+                  </Command.Group>
+                </>
               ))
-            : null}
-        </Command.List>
-      </Command>
+            )}
+
+            {selectedOption?.children
+              ? selectedOption.children.map((option) => (
+                  <CommandItem
+                    onSelect={() => {
+                      submitPrompt(option.prompt);
+                      setPages([]);
+                    }}
+                  >
+                    {option.text}
+                  </CommandItem>
+                ))
+              : null}
+          </Command.List>
+        </Command>
+      ) : null}
     </>
   );
 }
