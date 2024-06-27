@@ -29,7 +29,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 ## Contributors
 
-flowflorent
+flowflorent, ctnicholas
 
 # Week 25 (2024-06-21)
 
