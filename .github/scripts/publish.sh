@@ -77,7 +77,6 @@ publish_to_npm () {
     fi
 
     echo "I'm ready to publish $PKGNAME to NPM, under $VERSION!"
-    # TODO: remove dry-run
     npm publish --tag private
 }
 
