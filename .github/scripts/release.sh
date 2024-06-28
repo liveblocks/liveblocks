@@ -8,19 +8,22 @@ err () {
 }
 
 usage () {
-    err "usage: release.sh [-h] [-V <version>] <pkgdir> [<pkgdir>...]"
+    err "usage: release.sh [-h] [-V <version>] [-p] <pkgdir> [<pkgdir>...]"
     err
     err "Prepare a release by updating files in this repo."
-    err "Run this prior to publishing to NPM."
+    err "Run this prior to publishing to NPM (or elsewhere, e.g. DevTools)."
     err ""
     err "    -V   the new NPM version"
+    err "    -p   push the bump commit (no need if publish.sh is called afterwards)"
     err ""
 }
 
 VERSION=
-while getopts V:h flag; do
+PUSH_COMMIT="false"
+while getopts V:p:h flag; do
     case "$flag" in
         V) VERSION=$OPTARG;;
+        p) PUSH_COMMIT="true";;
         *) usage; exit 2;;
     esac
 done
@@ -82,6 +85,16 @@ commit_to_git () {
         git add "$@"
         if git is-dirty -i; then
             git commit -m "$msg"
+        fi
+        if [ "$PUSH_COMMIT" = "true" ]; then
+            echo "==> Pushing changes to GitHub"
+            if ! git push-current; then
+                echo "WARNING: Could not push this branch to GitHub!" >&2
+                echo "Please manually fix that now." >&2
+                exit 2
+            else
+                echo "Done!"
+            fi
         fi
     ) )
 }
