@@ -736,12 +736,15 @@ function useRoomInfoSuspense_withClient(client: OpaqueClient, roomId: string) {
 export function createSharedContext<U extends BaseUserMeta>(
   client: Client<U>
 ): SharedContextBundle<U> {
+  const useClient = () => client;
   return {
     classic: {
+      useClient,
       useUser: (userId: string) => useUser_withClient(client, userId),
       useRoomInfo: (roomId: string) => useRoomInfo_withClient(client, roomId),
     },
     suspense: {
+      useClient,
       useUser: (userId: string) => useUserSuspense_withClient(client, userId),
       useRoomInfo: (roomId: string) =>
         useRoomInfoSuspense_withClient(client, roomId),
