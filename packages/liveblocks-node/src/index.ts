@@ -31,6 +31,8 @@ export type {
   ThreadDeletedEvent,
   ThreadMetadataUpdatedEvent,
   ThreadNotificationEvent,
+  ThreadMarkedAsResolvedEvent,
+  ThreadMarkedAsUnresolvedEvent,
   UserEnteredEvent,
   UserLeftEvent,
   WebhookEvent,
