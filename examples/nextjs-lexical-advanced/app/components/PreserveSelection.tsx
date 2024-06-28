@@ -16,10 +16,10 @@ export const RESTORE_SELECTION_COMMAND: LexicalCommand<null> = createCommand();
 export function PreserveSelectionPlugin() {
   const [editor] = useLexicalComposerContext();
   const savedSelection = useRef<RangeSelection | null>(null);
+
   useEffect(() => {
     const saveSelection = () => {
       const selection = $getSelection();
-      console.log("save", selection);
       if ($isRangeSelection(selection)) {
         savedSelection.current = selection;
       }
@@ -27,8 +27,7 @@ export function PreserveSelectionPlugin() {
     };
 
     const restoreSelection = () => {
-      console.log("restore", savedSelection.current);
-      if (savedSelection) {
+      if (savedSelection.current) {
         $setSelection(savedSelection.current);
       }
       return true;
