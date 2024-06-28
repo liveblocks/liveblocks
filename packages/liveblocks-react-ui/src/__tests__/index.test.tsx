@@ -234,6 +234,7 @@ const thread: ThreadData = {
   updatedAt: new Date("2023-08-14T12:41:50.243Z"),
   comments: [comment, editedComment, deletedComment],
   metadata: {},
+  resolved: false,
 };
 
 describe("Components", () => {

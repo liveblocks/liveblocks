@@ -1446,6 +1446,7 @@ function useCreateThread<M extends BaseMetadata>(): (
         roomId: room.id,
         metadata,
         comments: [newComment],
+        resolved: false,
       };
 
       const optimisticUpdateId = nanoid();

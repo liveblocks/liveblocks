@@ -28,6 +28,7 @@ export function dummyThreadData(): ThreadData<BaseMetadata> {
     metadata: {}, // TODO Fix type
     updatedAt: now,
     comments: [comment],
+    resolved: false,
   };
 }
 
