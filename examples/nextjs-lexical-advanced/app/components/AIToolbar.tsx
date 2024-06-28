@@ -42,6 +42,7 @@ import { SummariseIcon } from "../icons/SummariseIcon";
 import { SparklesIcon } from "../icons/SparklesIcon";
 import { SendIcon } from "../icons/SendIcon";
 import { ExplainIcon } from "../icons/ExplainIcon";
+import { ContinueIcon } from "../icons/ContinueIcon";
 
 type OptionChild = {
   text: string;
@@ -80,9 +81,11 @@ const languages = [
 
 const styles = [
   "Professional",
-  "Friendly",
   "Straightforward",
-  "Poetry",
+  "Friendly",
+  "Poetic",
+  "Overly polite",
+  "Passive aggressive",
   "Pirate",
 ];
 
@@ -169,10 +172,7 @@ export function AIToolbar({
       : null;
   }, [messages]);
 
-  const { selection, textContent } = useSelection();
-  // console.log("selection: ", textContent);
-  // console.log("ai:", lastAiMessage);
-
+  const { textContent } = useSelection();
   const [pages, setPages] = React.useState<string[]>([]);
   const page = pages[pages.length - 1];
 
@@ -377,12 +377,25 @@ ${textContent || ""}
                     onClose();
                   }}
                 >
-                  Add new paragraph
+                  Add below paragraph
                 </CommandItem>
+                <Command.Separator />
                 {aiState === "complete" ? (
                   <>
-                    <Command.Separator />
                     <Command.Group heading="Modify">
+                      <CommandItem
+                        icon={<ContinueIcon className="h-full" />}
+                        onSelect={() => {
+                          submitPrompt(`Start with this text and continue. Output this text at the start: 
+
+"""
+${lastAiMessage.content}
+"""
+                          `);
+                        }}
+                      >
+                        Continue writing
+                      </CommandItem>
                       <CommandItem
                         icon={<RestartIcon className="h-full" />}
                         onSelect={() => {
