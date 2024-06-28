@@ -22,6 +22,7 @@ import { Suspense } from "react";
 import { Loading } from "./Loading";
 import { BaseMetadata, ThreadData } from "@liveblocks/client";
 import { PreserveSelectionPlugin } from "./PreserveSelection";
+import { DocumentName } from "./DocumentName";
 
 // Wrap your initial config with `liveblocksConfig`
 const initialConfig = liveblocksConfig({
@@ -55,6 +56,7 @@ export function Editor() {
               <Loading />
             ) : (
               <div className="relative max-w-[680px] mx-auto pb-[400px]">
+                <DocumentName />
                 <RichTextPlugin
                   contentEditable={
                     <ContentEditable className="relative outline-none p-8 w-full h-full" />

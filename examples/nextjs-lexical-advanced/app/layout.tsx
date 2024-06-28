@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { Suspense } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -27,7 +28,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body className={inter.className}>
         <main className="text-base relative h-screen max-h-screen bg-background/95 text-foreground">
-          {children}
+          <Suspense>{children}</Suspense>
         </main>
       </body>
     </html>
