@@ -1,14 +1,45 @@
 name: Publish Liveblocks DevTools extension
 
-on: [workflow_dispatch]
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        type: string
+        required: true
+        description:
+          "Extension version to publish (use format vX.Y.Z, no '-test' or any
+          other tag). Can only be run from the 'main' branch."
 
 jobs:
   publish:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Install moreutils
+        run: sudo apt-get install -y moreutils
+
+      - name: Install git-toolbelt
+        run: |
+          wget https://github.com/nvie/git-toolbelt/archive/v1.9.2.tar.gz
+          tar -xzf v1.9.2.tar.gz
+          mkdir -p "$HOME/.local/bin"
+          cp git-toolbelt-1.9.2/git-* "$HOME/.local/bin"
+          rm -rf v1.9.2.tar.gz git-toolbelt-1.9.2
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.WRITE_ACCESS_TOKEN }}
+
+      - name: Validate version
+        env:
+          VERSION_TAG: ${{ inputs.tag }}
+        run: |
+          [[ "${VERSION_TAG}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+
+      - name: Validate branch
+        run: test "$(git rev-parse --abbrev-ref HEAD)" == "main"
 
       - name: Use Node.js
         uses: actions/setup-node@v4
@@ -27,6 +58,19 @@ jobs:
           key: turbo-cache-@liveblocks/devtools-bust
           path: node_modules/.cache/turbo
           restore-keys: turbo-cache-@liveblocks/devtools-bust
+
+      - name: Set release version
+        id: version
+        env:
+          VERSION_TAG: ${{ inputs.tag }}
+        run: echo "value=${VERSION_TAG#v}" >> $GITHUB_OUTPUT
+
+      - name: Prepare release
+        env:
+          STRIPPED_VERSION: ${{steps.version.outputs.value}}
+        run:
+          ./.github/scripts/release.sh -V "$STRIPPED_VERSION"
+          "tools/liveblocks-devtools"
 
       - name: Build for Chromium
         run: npx --no turbo run build --filter=@liveblocks/devtools

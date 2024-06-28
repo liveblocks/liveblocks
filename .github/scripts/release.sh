@@ -2,39 +2,23 @@
 set -eu
 
 echo "Running release scripts..."
-PACKAGE_DIRS=(
-    "packages/liveblocks-core"
-    "packages/liveblocks-client"
-    "packages/liveblocks-node"
-    "packages/liveblocks-react"
-    "packages/liveblocks-redux"
-    "packages/liveblocks-zustand"
-    "packages/liveblocks-yjs"
-    "packages/liveblocks-react-ui"
-    "packages/liveblocks-react-lexical"
-    "packages/liveblocks-node-lexical"
-    "packages/create-liveblocks-app"
-    "packages/liveblocks-codemod"
-)
 
 err () {
     echo "$@" >&2
 }
 
-
 usage () {
-    err "usage: release.sh [-V <version>] [-h]"
+    err "usage: release.sh [-h] [-V <version>] <pkgdir> [<pkgdir>...]"
     err
+    err "Prepare a release by updating files in this repo."
+    err "Run this prior to publishing to NPM."
     err ""
-    err "Create a release for the CI to publish."
-    err
-    err "Options:"
-    err "-V <version>  Set version to publish (default: prompt)"
-    err "Example: 1.0.0 or 1.0.1-beta1"
+    err "    -V   the new NPM version"
+    err ""
 }
 
 VERSION=
-while getopts V:t:h flag; do
+while getopts V:h flag; do
     case "$flag" in
         V) VERSION=$OPTARG;;
         *) usage; exit 2;;
@@ -42,11 +26,12 @@ while getopts V:t:h flag; do
 done
 shift "$(($OPTIND - 1))"
 
-if [ "$#" -ne 0 ]; then
-    err "Unknown arguments: $@"
+if [ "$#" -eq 0 ]; then
     usage
     exit 2
 fi
+
+PKGS_TO_RELEASE=("$@")
 
 check_is_valid_version () {
     if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9]+)?$ ]]; then
@@ -59,16 +44,16 @@ check_is_valid_version () {
 ROOT="$(git rev-parse --show-toplevel)"
 
 all_published_pkgnames () {
-    for pkgdir in ${PACKAGE_DIRS[@]}; do
+    for pkgdir in "${PKGS_TO_RELEASE[@]}"; do
         jq -r .name "$ROOT/$pkgdir/package.json"
     done
 }
 
-get_package_name_from_dir(){
+get_package_name_from_dir () {
     ( cd "$1" && jq -r .name package.json )
 }
 
-update_dependencies_to_new_package_versions(){
+update_dependencies_to_new_package_versions () {
     for pkgname in $( all_published_pkgnames ); do
       for key in dependencies devDependencies peerDependencies; do
           currversion="$(jq -r ".${key}.\"${pkgname}\"" package.json)"
@@ -80,11 +65,13 @@ update_dependencies_to_new_package_versions(){
 }
 
 update_package_version () {
-    PACKAGE_DIR="$1"
-    PKGNAME="$(get_package_name_from_dir "$PACKAGE_DIR")"
+    PKGDIR="$1"
+    VERSION="$2"
+
+    PKGNAME="$( get_package_name_from_dir "$PKGDIR" )"
 
     echo "==> Updating package.json version for $PKGNAME"
-    ( cd "$PKGDIR" && npm version "$2" --no-git-tag-version && update_dependencies_to_new_package_versions "$2" )
+    ( cd "$PKGDIR" && npm version "$VERSION" --no-git-tag-version && update_dependencies_to_new_package_versions "$2" )
 }
 
 commit_to_git () {
@@ -104,10 +91,10 @@ check_is_valid_version "$VERSION"
 # Set up turbo
 npm install
 
-for PKGDIR in "${PACKAGE_DIRS[@]}"; do
+for PKGDIR in "${PKGS_TO_RELEASE[@]}"; do
     update_package_version "$PKGDIR" "$VERSION"
 done
 
 # Update package-lock.json with newly bumped versions
 npm install
-commit_to_git "Bump to $VERSION" "package-lock.json" "packages/"
+commit_to_git "Bump to $VERSION" "package-lock.json" "packages/" "tools/"

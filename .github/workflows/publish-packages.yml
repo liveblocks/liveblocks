@@ -7,7 +7,7 @@ on:
         type: string
         required: true
         description:
-          "Git tag to create (e.g. v1.2.3-test4). See also
+          "NPM version to publish (e.g. v1.2.3-test4). See also
           https://github.com/liveblocks/liveblocks/blob/main/CONTRIBUTING.MD#releasing"
 
 jobs:
@@ -20,11 +20,11 @@ jobs:
 
       - name: Install git-toolbelt
         run: |
-          wget https://github.com/nvie/git-toolbelt/archive/v1.8.0.tar.gz
-          tar -xzf v1.8.0.tar.gz
+          wget https://github.com/nvie/git-toolbelt/archive/v1.9.2.tar.gz
+          tar -xzf v1.9.2.tar.gz
           mkdir -p "$HOME/.local/bin"
-          cp git-toolbelt-1.8.0/git-* "$HOME/.local/bin"
-          rm -rf v1.8.0.tar.gz git-toolbelt-1.8.0
+          cp git-toolbelt-1.9.2/git-* "$HOME/.local/bin"
+          rm -rf v1.9.2.tar.gz git-toolbelt-1.9.2
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Checkout
@@ -75,11 +75,17 @@ jobs:
       - name: Prepare release
         env:
           VERSION: ${{steps.version.outputs.value}}
-        run: ./.github/scripts/release.sh -V "$VERSION"
+        run:
+          ./.github/scripts/release.sh -V "$VERSION" "packages/liveblocks-core"
+          "packages/liveblocks-client" "packages/liveblocks-node"
+          "packages/liveblocks-react" "packages/liveblocks-redux"
+          "packages/liveblocks-zustand" "packages/liveblocks-yjs"
+          "packages/liveblocks-react-ui" "packages/liveblocks-react-lexical"
+          "packages/liveblocks-node-lexical"
 
       - name: Build all packages
         run: |
-          npm run build -- --filter='./packages/*' --filter='!@liveblocks/devtools'
+          npm run build -- --filter='./packages/*'
 
       - name: Publish packages
         env:
@@ -88,7 +94,13 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           VERSION: ${{ steps.version.outputs.value }}
           NPM_TAG: ${{ steps.npm_tag.outputs.value }}
-        run: ./.github/scripts/publish.sh -V "$VERSION" -t "$NPM_TAG"
+        run:
+          ./.github/scripts/publish.sh -V "$VERSION" -t "$NPM_TAG"
+          "packages/liveblocks-core" "packages/liveblocks-client"
+          "packages/liveblocks-node" "packages/liveblocks-react"
+          "packages/liveblocks-redux" "packages/liveblocks-zustand"
+          "packages/liveblocks-yjs" "packages/liveblocks-react-lexical"
+          "packages/liveblocks-node-lexical" "packages/liveblocks-react-ui"
 
       - name:
           Creating release tag, don't forget to fill the changelog if necessary!

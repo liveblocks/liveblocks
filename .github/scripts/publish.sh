@@ -2,21 +2,14 @@
 set -eu
 
 GITHUB_URL="https://github.com/liveblocks/liveblocks"
-PACKAGE_DIRS=(
-    "packages/liveblocks-core"
-    "packages/liveblocks-client"
-    "packages/liveblocks-node"
-    "packages/liveblocks-react"
-    "packages/liveblocks-redux"
-    "packages/liveblocks-zustand"
-    "packages/liveblocks-yjs"
-    "packages/liveblocks-react-lexical"
-    "packages/liveblocks-node-lexical"
-    "packages/liveblocks-react-ui"
-    "packages/create-liveblocks-app"
-    "packages/liveblocks-codemod"
-)
-PRIMARY_PKG=${PACKAGE_DIRS[0]}
+
+usage () {
+    err "publish.sh [-V <version>] [-t <tag>] <pkgdir> [<pkgdir>...]"
+    err ""
+    err "    -V   the version to publish to NPM"
+    err "    -t   the NPM tag to use"
+    err ""
+}
 
 err () {
     echo "$@" >&2
@@ -33,11 +26,17 @@ while getopts V:t:h flag; do
 done
 shift $(($OPTIND - 1))
 
-if [ "$#" -ne 0 ]; then
-    err "Unknown arguments: $@"
+if [ "$#" -eq 0 ]; then
     usage
     exit 2
 fi
+
+for pkgdir in "$@"; do
+  if [ ! -d "$pkgdir" ]; then
+      err "Directory not found: $pkgdir"
+      exit 2
+  fi
+done
 
 check_is_valid_version () {
     if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9]+)?$ ]]; then
@@ -50,7 +49,7 @@ check_is_valid_version () {
 check_is_valid_tag () {
     if ! [[ "$TAG" =~ ^[a-z0-9]+$ ]]; then
         err "Invalid tag: $TAG"
-        err "Tag must be in the form of <tag>"
+        err "Tag must only contain alphanumeric chars"
         exit 2
     fi
 }
@@ -78,7 +77,6 @@ publish_to_npm () {
     fi
 
     echo "I'm ready to publish $PKGNAME to NPM, under $VERSION!"
-    # TODO: remove dry-run
     npm publish --tag private
 }
 
@@ -91,10 +89,10 @@ check_is_valid_version "$VERSION"
 check_is_valid_tag "$TAG"
 
 # Publish to NPM
-for pkgdir in ${PACKAGE_DIRS[@]}; do
+for pkgdir in "$@"; do
     pkgname="$(npm_pkgname "$pkgdir")"
-    echo "==> Publishing ${pkgname} to NPM"
-    ( cd "$pkgdir" && publish_to_npm "$pkgname")
+    echo "==> Publishing $pkgname to NPM"
+    ( cd "$pkgdir" && publish_to_npm "$pkgname" )
 done
 
 # By now, all packages should be published under a "private" tag.
@@ -102,12 +100,12 @@ done
 # instead. Afterwards, we'll remove the "private" tags again.
 echo ""
 echo "Assigning definitive NPM tags"
-for pkgdir in ${PACKAGE_DIRS[@]}; do
+for pkgdir in "$@"; do
     pkgname="$(npm_pkgname "$pkgdir")"
     while true; do
         if npm dist-tag ls "$pkgname" | grep -qEe ": $VERSION\$"; then
-            echo "==> Adding tag ${TAG:-latest} to $pkgname@$VERSION"
-            npm dist-tag add "$pkgname@$VERSION" "${TAG:-latest}"
+            echo "==> Adding tag $TAG to $pkgname@$VERSION"
+            npm dist-tag add "$pkgname@$VERSION" "$TAG"
             break
         else
             err "I can't find $pkgname@$VERSION on NPM yet..."
@@ -117,7 +115,7 @@ for pkgdir in ${PACKAGE_DIRS[@]}; do
 done
 
 # Clean up those temporary "private" tags
-for pkgdir in ${PACKAGE_DIRS[@]}; do
+for pkgdir in "$@"; do
     pkgname="$(npm_pkgname "$pkgdir")"
     npm dist-tag rm "$pkgname@$VERSION" private || echo "Continuing despite error..."
 done
@@ -126,7 +124,7 @@ echo ""
 echo "All published!"
 echo ""
 echo "You can double-check the NPM releases here:"
-for pkgdir in ${PACKAGE_DIRS[@]}; do
+for pkgdir in "$@"; do
     pkgname="$(npm_pkgname "$pkgdir")"
     echo "  - https://www.npmjs.com/package/$pkgname"
 done
