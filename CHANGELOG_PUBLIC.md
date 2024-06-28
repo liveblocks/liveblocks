@@ -91,6 +91,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 ## Website
 
 - New blog post: [Introducing Liveblocks collaboration kit for Figma](https://liveblocks.io/blog/introducing-liveblocks-collaboration-kit-for-figma).
+- Updated [contact page](https://liveblocks.io/contact) with two separate forms for sales and support.
 
 ## Processes
 
