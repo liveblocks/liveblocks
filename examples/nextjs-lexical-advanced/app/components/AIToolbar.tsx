@@ -158,13 +158,18 @@ export function AIToolbar({
   onClose: () => void;
 }) {
   const [editor] = useLexicalComposerContext();
-
-  const [messages, setMessages] = useState<CoreMessage[]>([]);
+  const { textContent } = useSelection();
   const [input, setInput] = useState("");
 
+  // Current state of components and
   const [aiState, setAiState] = useState<"initial" | "loading" | "complete">(
     "initial"
   );
+
+  // Store all messages to and from AI
+  const [messages, setMessages] = useState<CoreMessage[]>([]);
+
+  // Get the last message sent from AI
   const lastAiMessage = useMemo(() => {
     const lastMessage = messages.filter((m) => m.role === "assistant")[0];
     return lastMessage
@@ -172,11 +177,11 @@ export function AIToolbar({
       : null;
   }, [messages]);
 
-  const { textContent } = useSelection();
+  // Store each "page" in the command panel
   const [pages, setPages] = React.useState<string[]>([]);
   const page = pages[pages.length - 1];
 
-  // Get currently selected option
+  // Get currently selected page
   const selectedOption = useMemo(() => {
     return optionsGroups
       .flatMap((group) => group.options)
@@ -186,6 +191,7 @@ export function AIToolbar({
       .find((option) => option.text === page);
   }, [page]);
 
+  // Remember previous prompt for continuing and regenerating
   const [previousPrompt, setPreviousPrompt] = useState("");
 
   // Send prompt to AI
@@ -227,7 +233,7 @@ ${textContent || ""}
     [textContent, setAiState]
   );
 
-  // Focus command panel on load
+  // Focus command panel on load and page change
   const commandRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (state === "ai" && commandRef.current) {
@@ -251,6 +257,8 @@ ${textContent || ""}
             e.preventDefault();
             submitPrompt(input);
             setInput("");
+
+            // Restore text editor selection when prompt submitted
             editor.dispatchCommand(RESTORE_SELECTION_COMMAND, null);
           }}
           className="w-full relative"
@@ -259,10 +267,11 @@ ${textContent || ""}
             className="block w-full p-2 pl-3 rounded-lg outline-none disabled:transition-colors"
             value={input}
             placeholder={aiState === "loading" ? "Writing…" : "Custom prompt…"}
-            onChange={(e) => setInput(e.target.value)}
-            onMouseDown={(e) => {
+            onMouseDown={() => {
+              // Save text editor selection before entering input
               editor.dispatchCommand(SAVE_SELECTION_COMMAND, null);
             }}
+            onChange={(e) => setInput(e.target.value)}
             disabled={aiState === "loading"}
           />
           <button
@@ -301,6 +310,7 @@ ${textContent || ""}
         >
           <Command.List>
             {lastAiMessage && !page ? (
+              // Commands to be shown after a prompt has been completed one time
               <>
                 <CommandItem
                   icon={<ReplaceIcon className="h-full" />}
@@ -379,8 +389,11 @@ ${textContent || ""}
                 >
                   Add below paragraph
                 </CommandItem>
+
                 <Command.Separator />
+
                 {aiState === "complete" ? (
+                  // Commands to be shown on the completed prompt page
                   <>
                     <Command.Group heading="Modify">
                       <CommandItem
@@ -428,9 +441,10 @@ ${lastAiMessage.content}
             ) : null}
 
             {aiState === "initial" ? (
-              // Show AI options in initial state
+              // Commands to be shown when awaiting prompt
               <>
                 {page ? (
+                  // Show back button if page selected
                   <CommandItem
                     icon={<BackIcon className="h-full" />}
                     onSelect={() => setPages([])}
@@ -439,6 +453,7 @@ ${lastAiMessage.content}
                   </CommandItem>
                 ) : (
                   optionsGroups.map((optionGroup, index) => (
+                    // Otherwise, show home page
                     <Fragment key={optionGroup.text}>
                       {index !== 0 ? <Command.Separator /> : null}
                       <Command.Group heading={optionGroup.text}>
@@ -475,7 +490,7 @@ ${lastAiMessage.content}
 
                 {selectedOption?.children
                   ? selectedOption.children.map((option) => (
-                      // The items in the current page
+                      // If a page is selected, render child items on that page
                       <CommandItem
                         key={option.text}
                         icon={option.icon}
