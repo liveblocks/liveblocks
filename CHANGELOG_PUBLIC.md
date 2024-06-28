@@ -56,7 +56,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 ### `@liveblocks/client`
 
 - Add missing type export for `CommentReaction`
-- Don’t attempt to write missing initialStorage keys if the current user has no
+- Don’t attempt to write missing `initialStorage` keys if the current user has no
   write access to storage. This will no longer throw, but issue a warning
   message in the console.
 
@@ -76,7 +76,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 ### `@liveblocks/react-ui`
 
 - Prevent the composer from splitting text being composed.
-- Handle parentheses around and within auto-links.
+- Handle parentheses around and within auto links.
 - Count whitespace as empty to prevent posting empty comments.
 - Prevent clearing the composer if it's not handled. (via `onComposerSubmit`)
 
@@ -98,7 +98,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 ## Contributors
 
-flowflorent, ctnicholas, nvie, stevenfabre, pierrelevaillant
+flowflorent, ctnicholas, nvie, stevenfabre, pierrelevaillant, marcbouchenoire
 
 # Week 25 (2024-06-21)
 
@@ -124,7 +124,7 @@ flowflorent, ctnicholas, nvie, stevenfabre, pierrelevaillant
 ### `@liveblocks/react-ui`
 
 - Prevent the composer from splitting text being composed.
-- Handle parentheses around and within auto-links.
+- Handle parentheses around and within auto links.
 - Count whitespace as empty to prevent posting empty comments.
 - Prevent clearing the composer if it's not handled. (via `onComposerSubmit`)
 
@@ -1076,7 +1076,7 @@ leave();
 
 ## `@liveblocks/react-comments`
 
-- Add support for auto-links. (e.g. `"www.liveblocks.io"`)
+- Add support for auto links. (e.g. `"www.liveblocks.io"`)
 
 # v1.3.2
 
