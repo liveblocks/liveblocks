@@ -134,9 +134,8 @@ ${textContent || ""}
     <>
       <div
         className="isolate rounded-lg border shadow-xl border-gray-300/75 bg-card pointer-events-auto overflow-hidden"
-        onMouseDown={(e) => {
+        onMouseDown={() => {
           // Prevent clicks outside of input from removing selection
-          //e.preventDefault();
           editor.dispatchCommand(SAVE_SELECTION_COMMAND, null);
         }}
         onMouseUp={() =>
@@ -146,7 +145,7 @@ ${textContent || ""}
         {lastAiMessage ? (
           // If the AI has streamed in content, show it
           <div className="flex items-start border-b border-gray-300 px-3 py-2 pr-2">
-            <div className="flex-grow whitespace-pre-wrap max-h-[130px] overflow-y-auto ">
+            <div className="flex-grow whitespace-pre-wrap max-h-[130px] overflow-y-auto select-none">
               {lastAiMessage.content}
             </div>
             <button
@@ -186,6 +185,9 @@ ${textContent || ""}
             onMouseDown={() => {
               // Save text editor selection before entering input
               editor.dispatchCommand(SAVE_SELECTION_COMMAND, null);
+            }}
+            onMouseUp={(e) => {
+              e.stopPropagation();
             }}
             onChange={(e) => setInput(e.target.value)}
             disabled={aiState === "loading"}
