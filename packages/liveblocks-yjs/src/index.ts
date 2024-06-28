@@ -93,8 +93,6 @@ export class LiveblocksYjsProvider<
         }
         const { stateVector, update: updateStr, guid } = message;
         const update = Base64.toUint8Array(updateStr);
-        // we use base64 encoded version for comparison because otherwise we need to implement u8array equality
-
         let foundPendingUpdate = false;
         const updateId = this.getUniqueUpdateId(update);
         this.pending = this.pending.filter((pendingUpdate) => {
