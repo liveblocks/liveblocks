@@ -29,7 +29,6 @@ const ALLOW_NO_FACTORY = [
   "MutationContext",
   "shallow",
   "UseThreadsOptions",
-  "useClient", // XXX Should we export this from the factory too, for consistency? 🤔
 ];
 
 /**

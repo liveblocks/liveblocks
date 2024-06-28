@@ -1,3 +1,10 @@
+## v2.2.0 (not published yet
+
+### `@liveblocks/react`
+
+- The `useClient()` hook is now also available for users of
+  `createRoomContext()` and/or `createLiveblocksContext()`
+
 ## v2.1.0
 
 ### `@liveblocks/client`
