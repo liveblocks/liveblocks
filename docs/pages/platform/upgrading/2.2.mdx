@@ -1,0 +1,49 @@
+---
+meta:
+  title: "Upgrading to 2.2"
+  parentTitle: "Upgrading"
+  description: "Guide to upgrade to Liveblocks version 2.2"
+---
+
+We are making Thread "resolved" a first-class citizen property. You don't have
+to use thread's metadata to set a thread as resolved anymore.
+
+## All breaking changes are for Comments and only if you use a metadata "resolved"
+
+If you are using Comments without using a metadata `resolved`, there are no
+breaking changes for you! However, if you are using a thread's metadata
+"resolved", and have logic based on the webhook event `threadMetadataUpdated`,
+keep reading.
+
+### Webhook events
+
+When you upgrade to 2.2, our React component will update the thread first-class
+citizen property instead of the metadata. When a thread is marked as resolved or
+unresolved, we will send the events `threadMarkedAsResolved` and
+`threadMarkedAsUnresolved` instead of `threadMetadataUpdated`.
+
+Before upgrading to 2.2, you should update you webhook endpoint to process those
+new events accordingly.
+
+### REST API update thread metadata endpoint
+
+If you use the REST endpoint
+[`update thread metadata`](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-metadata)
+to update the metadata `resolved`, you should instead use the endpoints
+[`mark thread as resolved`](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-mark-as-resolved)
+and
+[`mark thread as unresolved`](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-mark-as-unresolved).
+
+Note that updating the metadata "resolved" automatically updates the first-class
+citizen property.
+
+### Migration plan
+
+Here is the plan to migrate the metadata `resolved` to the first-class citizen
+property.
+
+1. Support the new events `threadMarkedAsResolved` and
+   `threadMarkedAsUnresolved` in your webhook endpoint.
+2. Upgrade liveblocks packages to 2.2.
+3. Update your back-end to use the new "mark thread as resolved/unresolved"
+   endpoints.
