@@ -46,6 +46,10 @@ export function Room({ children }: { children: ReactNode }) {
         initialPresence={{
           cursor: null,
         }}
+        initialStorage={{
+          title: "Untitled document",
+          lastModified: new Date().getTime(),
+        }}
       >
         <ClientSideSuspense fallback={<Loading />}>
           {children}

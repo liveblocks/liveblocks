@@ -1,38 +1,24 @@
 "use client";
 
-import {
-  useBroadcastEvent,
-  useEventListener,
-  useRoom,
-} from "@liveblocks/react/suspense";
-import { ChangeEvent, useCallback, useEffect, useState } from "react";
-import { getRoomTitle, setRoomTitle } from "../actions/liveblocks";
+import { useMutation, useStorage } from "@liveblocks/react/suspense";
+import { ChangeEvent } from "react";
 
 export function DocumentName() {
-  const room = useRoom();
-  const broadcast = useBroadcastEvent();
-  const [title, setTitle] = useState("");
+  const title = useStorage((root) => root.title);
 
-  useEffect(() => {
-    getRoomTitle(room.id).then(setTitle);
-  }, [room]);
-
-  const handleChange = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
-    setTitle(e.target.value);
-    await setRoomTitle(room.id, e.target.value);
-    broadcast({ type: "TITLE_UPDATE" });
-  }, []);
-
-  useEventListener(({ event }) => {
-    if (event.type === "TITLE_UPDATE") {
-      getRoomTitle(room.id).then(setTitle);
-      return;
-    }
-  });
+  const handleChange = useMutation(
+    ({ storage }, e: ChangeEvent<HTMLInputElement>) => {
+      storage.set("title", e.target.value);
+    },
+    []
+  );
 
   return (
-    <h1>
-      <input type="text" value={title} onChange={handleChange} />
-    </h1>
+    <input
+      type="text"
+      value={title}
+      onChange={handleChange}
+      className="outline-none"
+    />
   );
 }

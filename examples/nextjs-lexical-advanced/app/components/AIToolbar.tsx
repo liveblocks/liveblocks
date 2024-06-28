@@ -256,7 +256,7 @@ ${textContent || ""}
           className="w-full relative"
         >
           <input
-            className="block w-full p-2 pl-3 rounded-lg outline-none"
+            className="block w-full p-2 pl-3 rounded-lg outline-none disabled:transition-colors"
             value={input}
             placeholder={aiState === "loading" ? "Writing…" : "Custom prompt…"}
             onChange={(e) => setInput(e.target.value)}
@@ -266,12 +266,12 @@ ${textContent || ""}
             disabled={aiState === "loading"}
           />
           <button
-            className="absolute right-0 px-2 top-0 bottom-0 disabled:opacity-50 hover:bg-gray-100"
+            className="absolute right-0 px-2 top-0 bottom-0 disabled:opacity-50 hover:bg-gray-100 disabled:transition-opacity"
             disabled={aiState === "loading" || !input}
           >
             <SparklesIcon
               style={aiState === "loading" ? { opacity: 0.6 } : {}}
-              className="h-4 text-indigo-500  pointer-events-none"
+              className="h-4 text-indigo-500  pointer-events-none disabled:transition-opacity"
             />
           </button>
         </form>

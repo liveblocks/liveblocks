@@ -8,8 +8,9 @@ declare global {
         color: string;
       };
     };
-    RoomEvent: {
-      type: "TITLE_UPDATE";
+    Storage: {
+      title: string;
+      lastModified: number;
     };
   }
 }

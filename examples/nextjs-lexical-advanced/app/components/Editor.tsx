@@ -55,20 +55,26 @@ export function Editor() {
             {status === "not-loaded" || status === "loading" ? (
               <Loading />
             ) : (
-              <div className="relative max-w-[680px] mx-auto pb-[400px]">
-                <DocumentName />
-                <RichTextPlugin
-                  contentEditable={
-                    <ContentEditable className="relative outline-none p-8 w-full h-full" />
-                  }
-                  placeholder={
-                    <p className="pointer-events-none absolute top-0 left-0 p-8 text-muted-foreground w-full h-full">
-                      Try mentioning a user with @
-                    </p>
-                  }
-                  ErrorBoundary={LexicalErrorBoundary}
-                />
-                <FloatingToolbar />
+              <div className="relative max-w-[680px] mx-auto pb-[400px] p-8">
+                <header className="mt-20 mb-8">
+                  <h1>
+                    <DocumentName />
+                  </h1>
+                </header>
+                <section>
+                  <RichTextPlugin
+                    contentEditable={
+                      <ContentEditable className="relative outline-none w-full h-full" />
+                    }
+                    placeholder={
+                      <p className="pointer-events-none absolute top-0 left-0 p-8 text-muted-foreground w-full h-full">
+                        Try mentioning a user with @
+                      </p>
+                    }
+                    ErrorBoundary={LexicalErrorBoundary}
+                  />
+                  <FloatingToolbar />
+                </section>
               </div>
             )}
           </div>

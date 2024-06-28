@@ -108,9 +108,9 @@ function Toolbar({
           ? {
               position: strategy,
               top: 0,
-              left: editor._rootElement.getBoundingClientRect().left + 30,
+              left: editor._rootElement.getBoundingClientRect().left,
               transform: `translate3d(0, ${Math.round(y)}px, 0)`,
-              width: editor._rootElement.getBoundingClientRect().width - 30 * 2,
+              width: editor._rootElement.getBoundingClientRect().width,
             }
           : {
               position: strategy,
