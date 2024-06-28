@@ -35,7 +35,8 @@ jobs:
       - name: Validate version
         env:
           VERSION_TAG: ${{ inputs.tag }}
-        run: test "${VERSION_TAG}" =~ "^v[0-9]+\.[0-9]+\.[0-9]+$"
+        run: |
+          [[ "${VERSION_TAG}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
 
       - name: Validate branch
         run: test "$(git rev-parse --abbrev-ref HEAD)" == "main"
