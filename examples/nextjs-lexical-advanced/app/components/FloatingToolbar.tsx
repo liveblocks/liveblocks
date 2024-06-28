@@ -81,7 +81,6 @@ function Toolbar({
     strategy: "fixed",
     placement: "bottom",
     middleware: [
-      flip({ padding, crossAxis: false }),
       offset(10),
       hide({ padding }),
       shift({ padding, limiter: limitShift() }),

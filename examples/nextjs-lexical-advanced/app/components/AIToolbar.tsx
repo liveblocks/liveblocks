@@ -41,6 +41,7 @@ import { InsertParagraphIcon } from "../icons/InsertParagraphIcon";
 import { SummariseIcon } from "../icons/SummariseIcon";
 import { SparklesIcon } from "../icons/SparklesIcon";
 import { SendIcon } from "../icons/SendIcon";
+import { ExplainIcon } from "../icons/ExplainIcon";
 
 type OptionChild = {
   text: string;
@@ -62,18 +63,18 @@ type OptionGroup = {
 };
 
 const languages = [
-  //"Arabic",
-  //"Bengali",
-  //"Chinese",
+  "Arabic",
+  "Bengali",
+  "Chinese",
   "Dutch",
   "English",
   "French",
-  //"German",
-  //"Hindi",
-  //"Japanese",
-  //"Korean",
+  "German",
+  "Hindi",
+  "Japanese",
+  "Korean",
   "Nepali",
-  //"Portuguese",
+  "Portuguese",
   "Spanish",
 ];
 
@@ -100,12 +101,12 @@ const optionsGroups: OptionGroup[] = [
         icon: <SpellcheckIcon className="h-full -ml-0.5" />,
       },
       {
-        text: "Shorten",
-        prompt: "Shorten the text",
+        text: "Simplify",
+        prompt: "Shorten the text, simplifying it",
         icon: <ShortenIcon className="h-full" />,
       },
       {
-        text: "Lengthen",
+        text: "Add more detail",
         prompt: "Lengthen the text, going into more detail",
         icon: <LengthenIcon className="h-full" />,
       },
@@ -134,6 +135,11 @@ const optionsGroups: OptionGroup[] = [
           prompt: `Change text into ${style} style`,
         })),
         icon: <StyleIcon className="h-full" />,
+      },
+      {
+        text: "Explain",
+        prompt: "Explain what the text is about",
+        icon: <ExplainIcon className="h-full" />,
       },
     ],
   },
@@ -291,7 +297,7 @@ ${textContent || ""}
               }
             }
           }}
-          className="z-10 relative mt-1 rounded-lg border shadow-2xl border-gray-300/75 bg-card max-w-[210px] max-h-[320px] overflow-y-auto pointer-events-auto"
+          className="z-10 relative mt-1 rounded-lg border shadow-2xl border-gray-300/75 bg-card max-w-[210px] max-h-[360px] overflow-y-auto pointer-events-auto"
         >
           <Command.List>
             {lastAiMessage && !page ? (

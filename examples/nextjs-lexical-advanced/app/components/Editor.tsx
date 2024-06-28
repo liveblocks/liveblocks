@@ -54,7 +54,7 @@ export function Editor() {
             {status === "not-loaded" || status === "loading" ? (
               <Loading />
             ) : (
-              <div className="relative max-w-[680px] mx-auto pb-[300px]">
+              <div className="relative max-w-[680px] mx-auto pb-[400px]">
                 <RichTextPlugin
                   contentEditable={
                     <ContentEditable className="relative outline-none p-8 w-full h-full" />
