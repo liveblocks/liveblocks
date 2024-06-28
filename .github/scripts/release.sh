@@ -22,7 +22,7 @@ usage () {
 VERSION=
 PUSH_COMMIT="false"
 COMMIT_MESSAGE="Bump to "
-while getopts V:p:h flag; do
+while getopts V:p:m:h flag; do
     case "$flag" in
         V) VERSION=$OPTARG;;
         p) PUSH_COMMIT="true";;
