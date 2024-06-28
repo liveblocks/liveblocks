@@ -40,6 +40,7 @@ import { RubbishIcon } from "../icons/RubbishIcon";
 import { InsertParagraphIcon } from "../icons/InsertParagraphIcon";
 import { SummariseIcon } from "../icons/SummariseIcon";
 import { SparklesIcon } from "../icons/SparklesIcon";
+import { SendIcon } from "../icons/SendIcon";
 
 type OptionChild = {
   text: string;
@@ -80,8 +81,8 @@ const styles = [
   "Professional",
   "Friendly",
   "Straightforward",
-  "Pirate",
   "Poetry",
+  "Pirate",
 ];
 
 const optionsGroups: OptionGroup[] = [
@@ -96,7 +97,7 @@ const optionsGroups: OptionGroup[] = [
       {
         text: "Fix mistakes",
         prompt: "Fix any typos or general errors in the text",
-        icon: <SpellcheckIcon className="h-full" />,
+        icon: <SpellcheckIcon className="h-full -ml-0.5" />,
       },
       {
         text: "Shorten",
@@ -230,10 +231,10 @@ ${textContent || ""}
 
   return (
     <>
-      <div className="isolate rounded-lg border shadow-2xl border-border/80 bg-card pointer-events-auto">
+      <div className="isolate rounded-lg border shadow-xl border-gray-300/75 bg-card pointer-events-auto overflow-hidden">
         {lastAiMessage ? (
           // If the AI has streamed in content, show it
-          <div className="whitespace-pre-wrap p-2 max-h-[130px] overflow-y-auto">
+          <div className="whitespace-pre-wrap p-2 max-h-[130px] overflow-y-auto border-b border-gray-300">
             {lastAiMessage.content}
           </div>
         ) : null}
@@ -243,21 +244,30 @@ ${textContent || ""}
             // Submit a custom prompt typed into the input
             e.preventDefault();
             submitPrompt(input);
+            setInput("");
             editor.dispatchCommand(RESTORE_SELECTION_COMMAND, null);
           }}
           className="w-full relative"
         >
-          <SparklesIcon className="h-4 text-indigo-500 absolute left-1.5 top-3 pointer-events-none" />
           <input
-            className="block w-full p-2 pl-9 border border-gray-300 rounded shadow-xl outline-none"
+            className="block w-full p-2 pl-3 rounded-lg outline-none"
             value={input}
-            placeholder="Custom prompt…"
+            placeholder={aiState === "loading" ? "Writing…" : "Custom prompt…"}
             onChange={(e) => setInput(e.target.value)}
             onMouseDown={(e) => {
               editor.dispatchCommand(SAVE_SELECTION_COMMAND, null);
             }}
+            disabled={aiState === "loading"}
           />
-          <button className="absolute right-2 top-0 bottom-0">Go</button>
+          <button
+            className="absolute right-0 px-2 top-0 bottom-0 disabled:opacity-50 hover:bg-gray-100"
+            disabled={aiState === "loading" || !input}
+          >
+            <SparklesIcon
+              style={aiState === "loading" ? { opacity: 0.6 } : {}}
+              className="h-4 text-indigo-500  pointer-events-none"
+            />
+          </button>
         </form>
       </div>
 
@@ -281,7 +291,7 @@ ${textContent || ""}
               }
             }
           }}
-          className="z-10 relative mt-1 rounded-lg border shadow-2xl border-border/80 bg-card max-w-[210px] max-h-[320px] overflow-y-auto pointer-events-auto"
+          className="z-10 relative mt-1 rounded-lg border shadow-2xl border-gray-300/75 bg-card max-w-[210px] max-h-[320px] overflow-y-auto pointer-events-auto"
         >
           <Command.List>
             {lastAiMessage && !page ? (
