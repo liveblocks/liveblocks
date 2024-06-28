@@ -1,6 +1,11 @@
 "use client";
 
-import type { BaseMetadata, CommentData, ThreadData } from "@liveblocks/core";
+import type {
+  BaseMetadata,
+  CommentData,
+  DM,
+  ThreadData,
+} from "@liveblocks/core";
 import {
   useEditThreadMetadata,
   useThreadSubscription,
@@ -31,7 +36,6 @@ import type {
   ThreadOverrides,
 } from "../overrides";
 import { useOverrides } from "../overrides";
-import type { ThreadMetadata } from "../types";
 import { classNames } from "../utils/class-names";
 import { findLastIndex } from "../utils/find-last-index";
 import type { CommentProps } from "./Comment";
@@ -40,7 +44,7 @@ import { Composer } from "./Composer";
 import { Button } from "./internal/Button";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";
 
-export interface ThreadProps<M extends BaseMetadata = ThreadMetadata>
+export interface ThreadProps<M extends BaseMetadata = DM>
   extends ComponentPropsWithoutRef<"div"> {
   /**
    * The thread to display.
@@ -128,7 +132,7 @@ export interface ThreadProps<M extends BaseMetadata = ThreadMetadata>
  * </>
  */
 export const Thread = forwardRef(
-  <M extends BaseMetadata = ThreadMetadata>(
+  <M extends BaseMetadata = DM>(
     {
       thread,
       indentCommentContent = true,
@@ -240,9 +244,7 @@ export const Thread = forwardRef(
             showActions === "hover" && "lb-thread:show-actions-hover",
             className
           )}
-          data-resolved={
-            (thread.metadata as ThreadMetadata).resolved ? "" : undefined
-          }
+          data-resolved={thread.resolved ? "" : undefined}
           data-unread={unreadIndex !== undefined ? "" : undefined}
           dir={$.dir}
           {...props}
@@ -280,13 +282,13 @@ export const Thread = forwardRef(
                     isFirstComment && showResolveAction ? (
                       <Tooltip
                         content={
-                          (thread.metadata as ThreadMetadata).resolved
+                          thread.resolved
                             ? $.THREAD_UNRESOLVE
                             : $.THREAD_RESOLVE
                         }
                       >
                         <TogglePrimitive.Root
-                          pressed={(thread.metadata as ThreadMetadata).resolved}
+                          pressed={thread.resolved}
                           onPressedChange={handleResolvedChange}
                           asChild
                         >
@@ -294,12 +296,12 @@ export const Thread = forwardRef(
                             className="lb-comment-action"
                             onClick={stopPropagation}
                             aria-label={
-                              (thread.metadata as ThreadMetadata).resolved
+                              thread.resolved
                                 ? $.THREAD_UNRESOLVE
                                 : $.THREAD_RESOLVE
                             }
                           >
-                            {(thread.metadata as ThreadMetadata).resolved ? (
+                            {thread.resolved ? (
                               <ResolvedIcon className="lb-button-icon" />
                             ) : (
                               <ResolveIcon className="lb-button-icon" />
@@ -347,6 +349,6 @@ export const Thread = forwardRef(
       </TooltipProvider>
     );
   }
-) as <M extends BaseMetadata = ThreadMetadata>(
+) as <M extends BaseMetadata = DM>(
   props: ThreadProps<M> & RefAttributes<HTMLDivElement>
 ) => JSX.Element;

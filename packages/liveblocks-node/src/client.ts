@@ -984,7 +984,7 @@ export class Liveblocks {
      * @example
      * ```
      * {
-     *   query: "metadata['organization']^'liveblocks:' AND metadata['status']:'open' AND metadata['resolved']:false AND metadata['priority']:3"
+     *   query: "metadata['organization']^'liveblocks:' AND metadata['status']:'open' AND metadata['pinned']:false AND metadata['priority']:3"
      * }
      * ```
      * @example
@@ -993,7 +993,7 @@ export class Liveblocks {
      *   query: {
      *     metadata: {
      *       status: "open",
-     *       resolved: false,
+     *       pinned: false,
      *       priority: 3,
      *       organization: {
      *         startsWith: "liveblocks:"
