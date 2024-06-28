@@ -36,7 +36,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 ### `@liveblocks/react-ui`
 
-- Fix improper `useSyncExternalStore` import which would break on React <18.
+- Fix improper `useSyncExternalStore` import which would break on React versions lower than 18.
 
 ## v2.0.5
 
