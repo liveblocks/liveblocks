@@ -55,7 +55,7 @@
 }
 
 ::selection {
-  @apply bg-violet-200/75;
+  @apply bg-indigo-100/75;
 }
 
 p {

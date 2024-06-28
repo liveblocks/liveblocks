@@ -4,6 +4,7 @@ import {
   ReactNode,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -38,6 +39,7 @@ import {
 import { RubbishIcon } from "../icons/RubbishIcon";
 import { InsertParagraphIcon } from "../icons/InsertParagraphIcon";
 import { SummariseIcon } from "../icons/SummariseIcon";
+import { SparklesIcon } from "../icons/SparklesIcon";
 
 type OptionChild = {
   text: string;
@@ -79,7 +81,7 @@ const styles = [
   "Friendly",
   "Straightforward",
   "Pirate",
-  "Poetic",
+  "Poetry",
 ];
 
 const optionsGroups: OptionGroup[] = [
@@ -153,7 +155,12 @@ export function AIToolbar({
   const [aiState, setAiState] = useState<"initial" | "loading" | "complete">(
     "initial"
   );
-  const lastAiMessage = messages.filter((m) => m.role === "assistant")[0];
+  const lastAiMessage = useMemo(() => {
+    const lastMessage = messages.filter((m) => m.role === "assistant")[0];
+    return lastMessage
+      ? { role: "assistant", content: `${lastMessage.content}` }
+      : null;
+  }, [messages]);
 
   const { selection, textContent } = useSelection();
   // console.log("selection: ", textContent);
@@ -161,12 +168,16 @@ export function AIToolbar({
 
   const [pages, setPages] = React.useState<string[]>([]);
   const page = pages[pages.length - 1];
-  const selectedOption = optionsGroups
-    .flatMap((group) => group.options)
-    .flatMap((option) =>
-      option.children ? [option, ...option.children] : [option]
-    )
-    .find((option) => option.text === page);
+
+  // Get currently selected option
+  const selectedOption = useMemo(() => {
+    return optionsGroups
+      .flatMap((group) => group.options)
+      .flatMap((option) =>
+        option.children ? [option, ...option.children] : [option]
+      )
+      .find((option) => option.text === page);
+  }, [page]);
 
   const [previousPrompt, setPreviousPrompt] = useState("");
 
@@ -219,8 +230,8 @@ ${textContent || ""}
 
   return (
     <>
-      <div className="rounded-lg border shadow-2xl border-border/80 bg-card pointer-events-auto">
-        {lastAiMessage?.content ? (
+      <div className="isolate rounded-lg border shadow-2xl border-border/80 bg-card pointer-events-auto">
+        {lastAiMessage ? (
           // If the AI has streamed in content, show it
           <div className="whitespace-pre-wrap p-2 max-h-[130px] overflow-y-auto">
             {lastAiMessage.content}
@@ -232,23 +243,21 @@ ${textContent || ""}
             // Submit a custom prompt typed into the input
             e.preventDefault();
             submitPrompt(input);
+            editor.dispatchCommand(RESTORE_SELECTION_COMMAND, null);
           }}
-          className="w-full"
+          className="w-full relative"
         >
+          <SparklesIcon className="h-4 text-indigo-500 absolute left-1.5 top-3 pointer-events-none" />
           <input
-            className="block w-full p-2 border border-gray-300 rounded shadow-xl"
+            className="block w-full p-2 pl-9 border border-gray-300 rounded shadow-xl outline-none"
             value={input}
-            placeholder="Prompt AI…"
+            placeholder="Custom prompt…"
             onChange={(e) => setInput(e.target.value)}
             onMouseDown={(e) => {
               editor.dispatchCommand(SAVE_SELECTION_COMMAND, null);
-              e.preventDefault();
-              editor.dispatchCommand(RESTORE_SELECTION_COMMAND, null);
-            }}
-            onMouseUp={() => {
-              // editor.dispatchCommand(RESTORE_SELECTION_COMMAND, null);
             }}
           />
+          <button className="absolute right-2 top-0 bottom-0">Go</button>
         </form>
       </div>
 
@@ -272,10 +281,10 @@ ${textContent || ""}
               }
             }
           }}
-          className="mt-1 rounded-lg border shadow-2xl border-border/80 bg-card max-w-[210px] max-h-[320px] overflow-y-auto pointer-events-auto"
+          className="z-10 relative mt-1 rounded-lg border shadow-2xl border-border/80 bg-card max-w-[210px] max-h-[320px] overflow-y-auto pointer-events-auto"
         >
           <Command.List>
-            {lastAiMessage?.content && !page ? (
+            {lastAiMessage && !page ? (
               <>
                 <CommandItem
                   icon={<ReplaceIcon className="h-full" />}
