@@ -76,7 +76,7 @@ jobs:
         env:
           VERSION: ${{steps.version.outputs.value}}
         run:
-          ./.github/scripts/release.sh -V "$VERSION"
+          ./.github/scripts/release.sh -V "$VERSION" -m "Bump CLI tools to "
           "tools/create-liveblocks-app" "tools/liveblocks-codemod"
 
       - name: Build all CLI tools

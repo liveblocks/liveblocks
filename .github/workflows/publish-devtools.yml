@@ -74,8 +74,8 @@ jobs:
         env:
           STRIPPED_VERSION: ${{steps.version.outputs.value}}
         run:
-          ./.github/scripts/release.sh -V "$STRIPPED_VERSION"
-          "tools/liveblocks-devtools"
+          ./.github/scripts/release.sh -V "$STRIPPED_VERSION" -p -m "Bump
+          DevTools to " "tools/liveblocks-devtools"
 
       - name: Build for Chromium
         run: npx --no turbo run build --filter=@liveblocks/devtools

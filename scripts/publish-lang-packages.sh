@@ -312,7 +312,7 @@ build_version_everywhere "$VERSION"
 
 # Update package-lock.json with newly bumped versions
 npm install
-commit_to_git "Bump to $VERSION" "package-lock.json" "schema-lang/"
+commit_to_git "Bump language packages to $VERSION" "package-lock.json" "schema-lang/"
 
 echo "==> Rebuilding packages"
 turbo run build --force
