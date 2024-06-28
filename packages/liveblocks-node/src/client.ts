@@ -984,7 +984,7 @@ export class Liveblocks {
      * @example
      * ```
      * {
-     *   query: "metadata['organization']^'liveblocks:' AND metadata['status']:'open' AND metadata['pinned']:false AND metadata['priority']:3"
+     *   query: "metadata['organization']^'liveblocks:' AND metadata['status']:'open' AND metadata['pinned']:false AND metadata['priority']:3 AND resolved:true"
      * }
      * ```
      * @example
@@ -998,7 +998,8 @@ export class Liveblocks {
      *       organization: {
      *         startsWith: "liveblocks:"
      *       }
-     *     }
+     *     },
+     *     resolved: true
      *   }
      * }
      * ```
@@ -1007,6 +1008,7 @@ export class Liveblocks {
       | string
       | {
           metadata?: Partial<QueryMetadata<M>>;
+          resolved?: boolean;
         };
   }): Promise<{ data: ThreadData<M>[] }> {
     const { roomId } = params;
@@ -1244,6 +1246,64 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
+  }
+
+  /**
+   * Mark a thread as resolved.
+   * @param params.roomId The room ID to update the thread in.
+   * @param params.threadId The thread ID to update.
+   * @param params.data.userId The user ID of the user who updated the thread.
+   * @returns The updated thread.
+   */
+  public async markThreadAsResolved(params: {
+    roomId: string;
+    threadId: string;
+    data: {
+      userId: string;
+    };
+  }): Promise<M> {
+    const { roomId, threadId } = params;
+
+    const res = await this.post(
+      url`/v2/rooms/${roomId}/threads/${threadId}/mark-as-resolved`,
+      {}
+    );
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    return (await res.json()) as M;
+  }
+
+  /**
+   * Mark a thread as unresolved.
+   * @param params.roomId The room ID to update the thread in.
+   * @param params.threadId The thread ID to update.
+   * @param params.data.userId The user ID of the user who updated the thread.
+   * @returns The updated thread.
+   */
+  public async markThreadAsUnresolved(params: {
+    roomId: string;
+    threadId: string;
+    data: {
+      userId: string;
+    };
+  }): Promise<M> {
+    const { roomId, threadId } = params;
+
+    const res = await this.post(
+      url`/v2/rooms/${roomId}/threads/${threadId}/mark-as-unresolved`,
+      {}
+    );
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    return (await res.json()) as M;
   }
 
   /**
