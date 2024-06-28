@@ -15,7 +15,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 # Week 26 (2024-06-28)
 
-## v2.1.0 (2024-06-27)
+## v2.1.0
 
 ### `@liveblocks/client`
 
@@ -38,7 +38,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 - Fix improper `useSyncExternalStore` import which would break on React <18.
 
-## v2.0.5 (2024-06-21)
+## v2.0.5
 
 ### `@liveblocks/react`
 
@@ -46,7 +46,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
   else than the thread owner tries to delete the thread. This will help you
   catch and handle this case more easily.
 
-## v2.0.4 (2024-06-20)
+## v2.0.4
 
 ### All packages
 
@@ -60,7 +60,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
   write access to storage. This will no longer throw, but issue a warning
   message in the console.
 
-## v2.0.3 (2024-06-17)
+## v2.0.3
 
 ### `@liveblocks/client`
 
@@ -88,13 +88,17 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 - Updated the [interactive tutorial](https://liveblocks.io/docs/tutorial/react/getting-started/welcome) for Liveblocks 2.0.
 
+## Website
+
+- New blog post: [Introducing Liveblocks collaboration kit for Figma](https://liveblocks.io/blog/introducing-liveblocks-collaboration-kit-for-figma).
+
 ## Processes
 
-- Versioning and publishing of public packages is now decoupled from versioning/publishing of our CLI tools
+- Versioning and publishing of public packages is now decoupled from versioning/publishing of our CLI tools.
 
 ## Contributors
 
-flowflorent, ctnicholas, nvie
+flowflorent, ctnicholas, nvie, stevenfabre, pierrelevaillant
 
 # Week 25 (2024-06-21)
 
