@@ -322,7 +322,7 @@ ${textContent || ""}
                 {aiState === "complete" ? (
                   // Commands to be shown on the completed prompt page
                   <>
-                    <Command.Group heading="Modify">
+                    <Command.Group heading="Modify further">
                       <CommandItem
                         icon={<ContinueIcon className="h-full" />}
                         onSelect={() => {
@@ -355,7 +355,7 @@ ${lastAiMessage.content}
                     </Command.Group>
                     <Command.Separator />
                     <CommandItem
-                      icon={<RubbishIcon className="h-full text-gray-600" />}
+                      icon={<RubbishIcon className="h-full text-gray-500" />}
                       onSelect={() => {
                         onClose();
                       }}

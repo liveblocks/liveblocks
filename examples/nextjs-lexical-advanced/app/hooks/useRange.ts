@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   $getSelection,
   $isRangeSelection,
@@ -12,6 +12,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 export function useRange() {
   const [editor] = useLexicalComposerContext();
   const [range, setRange] = useState<Range | null>(null);
+  const rangeRef = useRef<Range | null>(null);
 
   useEffect(() => {
     editor.registerUpdateListener(({ tags }) => {
@@ -22,6 +23,7 @@ export function useRange() {
         const selection = $getSelection();
         if (!$isRangeSelection(selection) || selection.isCollapsed()) {
           setRange(null);
+          rangeRef.current = null;
           return;
         }
 
@@ -36,11 +38,12 @@ export function useRange() {
         );
 
         setRange(range);
+        rangeRef.current = range;
       });
     });
   }, [editor]);
 
-  return range;
+  return { range, rangeRef };
 }
 
 /**

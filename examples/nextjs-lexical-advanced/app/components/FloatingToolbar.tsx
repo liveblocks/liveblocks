@@ -17,6 +17,7 @@ import { CommentIcon } from "../icons/CommentIcon";
 import { AIToolbar } from "./AIToolbar";
 import { SparklesIcon } from "../icons/SparklesIcon";
 import { useRange } from "../hooks/useRange";
+import { useMouseListener } from "../hooks/useMouseListener";
 
 export function FloatingToolbar() {
   const padding = 20;
@@ -46,7 +47,7 @@ export function FloatingToolbar() {
   });
 
   // Pass position of current selection to floating ui
-  const range = useRange();
+  const { range, rangeRef } = useRange();
   useLayoutEffect(() => {
     setReference({
       getBoundingClientRect: () =>
@@ -61,7 +62,18 @@ export function FloatingToolbar() {
     }
   }, [range]);
 
-  if (range === null) {
+  // Don't show toolbar when mouse is down and creating a new selection
+  const [creatingMouseSelection, setCreatingMouseSelection] = useState(false);
+  useMouseListener((mouse) => {
+    // Wait two ticks in case Lexical needs to remove previous selection
+    setTimeout(() => {
+      setTimeout(() => {
+        setCreatingMouseSelection(!rangeRef.current && mouse === "down");
+      });
+    });
+  });
+
+  if (range === null || creatingMouseSelection) {
     return null;
   }
 
@@ -121,7 +133,7 @@ function ToolbarOptions({
       {/* Initial toolbar */}
       <div
         style={{ display: state !== "ai" ? "block" : "none" }}
-        className="flex items-center justify-center gap-2 p-1 rounded-lg border shadow border-border/80 bg-card pointer-events-auto"
+        className="flex items-center justify-center gap-2 p-1 rounded-lg border shadow-lg border-border/80 bg-card pointer-events-auto"
       >
         <button
           // onMouseDown={(e) => e.preventDefault()}
