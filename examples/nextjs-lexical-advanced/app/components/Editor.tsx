@@ -61,15 +61,15 @@ export function Editor() {
                     <DocumentName />
                   </h1>
                 </header>
-                <section>
+                <section className="relative">
                   <RichTextPlugin
                     contentEditable={
                       <ContentEditable className="relative outline-none w-full h-full" />
                     }
                     placeholder={
-                      <p className="pointer-events-none absolute top-0 left-0 p-8 text-muted-foreground w-full h-full">
+                      <span className="pointer-events-none absolute top-0 left-0 text-muted-foreground w-full h-full">
                         Try mentioning a user with @
-                      </p>
+                      </span>
                     }
                     ErrorBoundary={LexicalErrorBoundary}
                   />
