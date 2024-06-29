@@ -134,7 +134,7 @@ ${textContent || ""}
   return (
     <>
       <motion.div
-        //layoutId="floating-toolbar-main"
+        layoutId="floating-toolbar-main"
         initial={{ opacity: 0, scale: 0.93 }}
         animate={{
           opacity: 1,
@@ -144,7 +144,7 @@ ${textContent || ""}
           type: "spring",
           duration: 0.25,
         }}
-        className="isolate rounded-lg border shadow-xl border-gray-300/75 bg-card pointer-events-auto overflow-hidden origin-bottom-left"
+        className="isolate rounded-lg border shadow-xl border-gray-300/75 bg-card pointer-events-auto overflow-hidden origin-top-left"
         onMouseDown={() => {
           // Prevent clicks outside of input from removing selection
           editor.dispatchCommand(SAVE_SELECTION_COMMAND, null);
@@ -223,6 +223,7 @@ ${textContent || ""}
       {aiState !== "loading" ? (
         // Don't show command panel when a result is streaming in
         <motion.div
+          layoutId="floating-toolbar-command-panel"
           className="origin-top-left"
           initial={{ opacity: 0, scale: 0.93 }}
           animate={{

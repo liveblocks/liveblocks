@@ -5,6 +5,7 @@ import { OPEN_FLOATING_COMPOSER_COMMAND } from "@liveblocks/react-lexical";
 import { CommentIcon } from "../icons/CommentIcon";
 import { motion } from "framer-motion";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { useEffect, useState } from "react";
 
 export function FloatingToolbarOptions({
   state,
@@ -19,10 +20,10 @@ export function FloatingToolbarOptions({
 
   return (
     <motion.div
-      // layoutId="floating-toolbar-main"
+      layoutId="floating-toolbar-main"
       style={{ display: state !== "ai" ? "block" : "none" }}
       className="flex items-center justify-center gap-2 p-1 rounded-lg border shadow-lg border-border/80 bg-card pointer-events-auto origin-top"
-      initial={{ opacity: 0, scale: 0.93 }}
+      initial={{ x: 0, y: 0, opacity: 0, scale: 0.93 }}
       animate={{
         opacity: 1,
         scale: 1,
