@@ -10,7 +10,7 @@ import { ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 
 export function Room({ children }: { children: ReactNode }) {
-  const roomId = useExampleRoomId("liveblocks:lexical-examples:nextjs");
+  const roomId = useExampleRoomId("liveblocks:lexical-examples:nextjs-2");
 
   return (
     <LiveblocksProvider

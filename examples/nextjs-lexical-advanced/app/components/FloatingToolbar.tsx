@@ -18,6 +18,7 @@ import { AIToolbar } from "./AIToolbar";
 import { SparklesIcon } from "../icons/SparklesIcon";
 import { useRange } from "../hooks/useRange";
 import { useMouseListener } from "../hooks/useMouseListener";
+import { motion } from "framer-motion";
 
 export function FloatingToolbar() {
   const padding = 20;
@@ -68,7 +69,9 @@ export function FloatingToolbar() {
     // Wait two ticks in case Lexical needs to remove previous selection
     setTimeout(() => {
       setTimeout(() => {
-        setCreatingMouseSelection(!rangeRef.current && mouse === "down");
+        setCreatingMouseSelection(
+          rangeRef.current === null && mouse === "down"
+        );
       });
     });
   });
@@ -99,7 +102,19 @@ export function FloatingToolbar() {
             }
       }
     >
-      <ToolbarOptions setFullWidth={setFullWidth} />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.93 }}
+        animate={{
+          opacity: 1,
+          scale: 1,
+        }}
+        transition={{
+          type: "spring",
+          duration: 0.25,
+        }}
+      >
+        <ToolbarOptions setFullWidth={setFullWidth} />
+      </motion.div>
     </div>,
     document.body
   );
@@ -133,7 +148,7 @@ function ToolbarOptions({
       {/* Initial toolbar */}
       <div
         style={{ display: state !== "ai" ? "block" : "none" }}
-        className="flex items-center justify-center gap-2 p-1 rounded-lg border shadow-lg border-border/80 bg-card pointer-events-auto"
+        className="flex items-center justify-center gap-2 p-1 rounded-lg border shadow-lg border-border/80 bg-card pointer-events-auto origin-top"
       >
         <button
           // onMouseDown={(e) => e.preventDefault()}

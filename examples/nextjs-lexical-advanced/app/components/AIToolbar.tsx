@@ -298,14 +298,26 @@ ${textContent || ""}
                     // Insert into a new paragraph after the current one
                     editor.update(() => {
                       const selection = $getSelection();
+
                       if ($isRangeSelection(selection)) {
-                        const focus = selection.focus;
-                        const focusNode = focus.getNode();
-                        const textNode = $createTextNode(lastAiMessage.content);
+                        const anchorNode = selection.anchor.getNode();
                         const paragraphNode = $createParagraphNode();
-                        paragraphNode.append(textNode);
-                        focusNode.insertAfter(paragraphNode);
+                        paragraphNode.append(
+                          $createTextNode(lastAiMessage.content)
+                        );
+                        anchorNode
+                          .getTopLevelElementOrThrow()
+                          .insertAfter(paragraphNode);
                       }
+
+                      // if ($isRangeSelection(selection)) {
+                      //   const focus = selection.focus;
+                      //   const focusNode = focus.getNode();
+                      //   const textNode = $createTextNode(lastAiMessage.content);
+                      //   const paragraphNode = $createParagraphNode();
+                      //   paragraphNode.append(textNode);
+                      //   focusNode.insertAfter(paragraphNode);
+                      // }
                     });
 
                     setPages([]);

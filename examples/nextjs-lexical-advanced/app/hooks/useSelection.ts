@@ -9,19 +9,21 @@ export function useSelection() {
   const [textContent, setTextContent] = useState<string | null>();
 
   useEffect(() => {
-    // Subscribe to selection changes
-    const removeListener = editor.registerUpdateListener(({ editorState }) => {
+    // Set initial state
+    editor.update(() => {
+      const currentSelection = $getSelection();
+      setSelection(currentSelection);
+      setTextContent(currentSelection?.getTextContent());
+    });
+
+    // Subscribe to selection changes and clean up
+    return editor.registerUpdateListener(({ editorState }) => {
       editorState.read(() => {
         const currentSelection = $getSelection();
         setSelection(currentSelection);
         setTextContent(currentSelection?.getTextContent());
       });
     });
-
-    // Clean up the listener when the component unmounts
-    return () => {
-      removeListener();
-    };
   }, [editor]);
 
   // Removes a selection
