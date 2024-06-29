@@ -10,13 +10,10 @@ import {
 } from "react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
-  $getNodeByKey,
   $getSelection,
   $isRangeSelection,
-  $isTextNode,
   COMMAND_PRIORITY_NORMAL,
   KEY_ARROW_UP_COMMAND,
-  LexicalEditor,
 } from "lexical";
 
 export function DocumentName() {

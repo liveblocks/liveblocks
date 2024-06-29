@@ -144,25 +144,30 @@ ${textContent || ""}
       >
         {lastAiMessage ? (
           // If the AI has streamed in content, show it
-          <div className="flex items-start border-b border-gray-300 px-3 py-2 pr-2">
-            <div className="flex-grow whitespace-pre-wrap max-h-[130px] overflow-y-auto select-none">
+          <div className="flex items-start border-b border-gray-300  gap-1.5">
+            <div className="flex-grow whitespace-pre-wrap max-h-[130px] overflow-y-auto select-none relative px-3 py-2 pr-10">
+              <div className="sticky w-full top-1 right-0">
+                <button
+                  className="opacity-30 transition-opacity hover:opacity-60 absolute top-0 -right-8"
+                  onClick={async () => {
+                    if (!lastAiMessage.content) {
+                      return;
+                    }
+                    // Copy generated text to clipboard
+                    try {
+                      await navigator.clipboard.writeText(
+                        lastAiMessage.content
+                      );
+                    } catch (err) {
+                      console.error("Failed to copy: ", err);
+                    }
+                  }}
+                >
+                  <CopyIcon className="h-4" />
+                </button>
+              </div>
               {lastAiMessage.content}
             </div>
-            <button
-              className="opacity-30 transition-opacity hover:opacity-60 mt-1"
-              onClick={async () => {
-                if (!lastAiMessage.content) {
-                  return;
-                }
-                try {
-                  await navigator.clipboard.writeText(lastAiMessage.content);
-                } catch (err) {
-                  console.error("Failed to copy: ", err);
-                }
-              }}
-            >
-              <CopyIcon className="h-4" />
-            </button>
           </div>
         ) : null}
 
