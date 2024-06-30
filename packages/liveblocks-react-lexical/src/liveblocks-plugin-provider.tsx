@@ -44,7 +44,7 @@ export type EditorStatus =
 
 function getEditorStatus(
   provider?: LiveblocksYjsProvider<never, never, never, never, never>
-) {
+): "not-loaded" | "loading" | "synchronizing" | "synchronized" {
   if (provider === undefined) {
     return "not-loaded";
   }
