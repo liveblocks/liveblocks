@@ -187,7 +187,9 @@ ${textContent || ""}
           </motion.div>
         ) : null}
 
-        <form
+        <motion.form
+          layout="position"
+          transition={{ duration: 0 }}
           onSubmit={async (e) => {
             // Submit a custom prompt typed into the input
             e.preventDefault();
@@ -222,7 +224,7 @@ ${textContent || ""}
               className="h-4 text-indigo-500  pointer-events-none disabled:transition-opacity"
             />
           </button>
-        </form>
+        </motion.form>
       </motion.div>
 
       {aiState !== "loading" ? (
