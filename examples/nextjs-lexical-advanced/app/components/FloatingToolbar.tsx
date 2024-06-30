@@ -122,7 +122,6 @@ function ToolbarOptions({
   const [state, setState] = useState<"default" | "ai" | "closed">("default");
 
   if (state === "closed") {
-    // setFullWidth(false);
     return null;
   }
 
@@ -135,6 +134,7 @@ function ToolbarOptions({
           setState={setState}
           onClose={() => {
             setState("closed");
+            setFullWidth(false);
           }}
         />
       ) : null}

@@ -492,7 +492,7 @@ function CommandItem({
         e.preventDefault();
       }}
     >
-      <div className="flex justify-between items-center">
+      <motion.div className="flex justify-between items-center" layout={false}>
         <div className="flex items-center gap-1">
           {icon ? (
             <div className="w-5 h-[16px] text-indigo-500 flex items-center justify-center -ml-1">
@@ -502,7 +502,7 @@ function CommandItem({
           {children}
         </div>
         <div></div>
-      </div>
+      </motion.div>
     </Command.Item>
   );
 }
