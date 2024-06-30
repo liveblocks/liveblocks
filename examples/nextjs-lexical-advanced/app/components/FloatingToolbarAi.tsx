@@ -246,6 +246,7 @@ ${textContent || ""}
         >
           <Command
             ref={commandRef}
+            tabIndex={0}
             shouldFilter={false}
             onKeyDown={(e) => {
               if (e.key === "Escape" || e.key === "Backspace") {
@@ -268,7 +269,7 @@ ${textContent || ""}
             }}
             className="z-10 relative mt-1 rounded-lg border shadow-2xl border-gray-300/75 bg-card max-w-[210px] max-h-[360px] overflow-y-auto pointer-events-auto"
           >
-            <Command.List>
+            <Command.List tabIndex={0} className="rounded-lg">
               {lastAiMessage && !page ? (
                 // Commands to be shown after a prompt has been completed one time
                 <>
