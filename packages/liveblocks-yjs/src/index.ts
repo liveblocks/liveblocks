@@ -26,7 +26,6 @@ const DefaultOptions: ProviderOptions = {
 };
 
 enum SyncStatus {
-  NotLoaded = "not-loaded",
   Loading = "loading",
   Synchronizing = "synchronizing",
   Synchronized = "synchronized",
