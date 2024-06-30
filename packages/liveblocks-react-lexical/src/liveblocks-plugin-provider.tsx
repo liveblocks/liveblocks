@@ -44,12 +44,12 @@ export type EditorStatus =
 
 function getEditorStatus(
   provider?: LiveblocksYjsProvider<never, never, never, never, never>
-) {
+): "not-loaded" | "loading" | "synchronizing" | "synchronized" {
   if (provider === undefined) {
     return "not-loaded";
   }
 
-  return provider.synced ? "synchronized" : "loading";
+  return provider.getStatus();
 }
 
 /**
@@ -77,7 +77,7 @@ export function useEditorStatus(): EditorStatus {
 
     const cb = () => setStatus(getEditorStatus(provider));
 
-    provider.on("sync", cb);
+    provider.on("status", cb);
 
     return () => provider.off("sync", cb);
   }, [room]);
