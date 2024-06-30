@@ -51,7 +51,6 @@ export class LiveblocksYjsProvider<
   public subdocHandlers: Map<string, yDocHandler> = new Map();
 
   private pending: string[] = [];
-  private roomConnected = false;
 
   constructor(
     room: Room<P, S, U, E, M>,
@@ -75,10 +74,8 @@ export class LiveblocksYjsProvider<
       this.room.events.status.subscribe((status) => {
         if (status === "connected") {
           this.rootDocHandler.syncDoc();
-          this.roomConnected = true;
         } else {
           this.rootDocHandler.synced = false;
-          this.roomConnected = false;
         }
         this.emit("status", [this.getStatus()]);
       })
@@ -215,9 +212,6 @@ export class LiveblocksYjsProvider<
   }
 
   public getStatus(): SyncStatus {
-    if (!this.roomConnected) {
-      return SyncStatus.NotLoaded;
-    }
     if (!this.synced) {
       return SyncStatus.Loading;
     }
