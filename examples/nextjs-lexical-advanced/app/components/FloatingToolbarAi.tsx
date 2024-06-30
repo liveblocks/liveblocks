@@ -135,6 +135,7 @@ ${textContent || ""}
     <>
       <motion.div
         layoutId="floating-toolbar-main"
+        layout="size"
         initial={{ opacity: 0, scale: 0.93 }}
         animate={{
           opacity: 1,
@@ -155,7 +156,11 @@ ${textContent || ""}
       >
         {lastAiMessage ? (
           // If the AI has streamed in content, show it
-          <div className="flex items-start border-b border-gray-300  gap-1.5">
+          <motion.div
+            layout="position"
+            transition={{ duration: 0 }}
+            className="flex items-start border-b border-gray-300  gap-1.5"
+          >
             <div className="flex-grow whitespace-pre-wrap max-h-[130px] overflow-y-auto select-none relative px-3 py-2 pr-10">
               <div className="sticky w-full top-1 right-0">
                 <button
@@ -179,7 +184,7 @@ ${textContent || ""}
               </div>
               {lastAiMessage.content}
             </div>
-          </div>
+          </motion.div>
         ) : null}
 
         <form
@@ -224,6 +229,7 @@ ${textContent || ""}
         // Don't show command panel when a result is streaming in
         <motion.div
           layoutId="floating-toolbar-command-panel"
+          layout="size"
           className="origin-top-left"
           initial={{ opacity: 0, scale: 0.93 }}
           animate={{

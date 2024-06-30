@@ -21,6 +21,7 @@ export function FloatingToolbarOptions({
   return (
     <motion.div
       layoutId="floating-toolbar-main"
+      layout="size"
       style={{ display: state !== "ai" ? "block" : "none" }}
       className="flex items-center justify-center gap-2 p-1 rounded-lg border shadow-lg border-border/80 bg-card pointer-events-auto origin-top"
       initial={{ x: 0, y: 0, opacity: 0, scale: 0.93 }}
