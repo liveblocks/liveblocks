@@ -853,13 +853,9 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       ]
     );
 
-    useImperativeHandle(
-      forwardedRef,
-      () => {
-        return ReactEditor.toDOMNode(editor, editor) as HTMLDivElement;
-      },
-      [editor]
-    );
+    useImperativeHandle(forwardedRef, () => {
+      return ReactEditor.toDOMNode(editor, editor) as HTMLDivElement;
+    }, [editor]);
 
     // Manually focus the editor when `autoFocus` is true
     useEffect(() => {
