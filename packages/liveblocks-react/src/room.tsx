@@ -100,9 +100,12 @@ import type {
   ThreadsState,
   ThreadsStateSuccess,
   ThreadSubscription,
+  UseStorageStatusOptions,
   UseThreadsOptions,
 } from "./types";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
+
+const SMOOTH_DELAY = 1000;
 
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
@@ -932,12 +935,47 @@ function useStatus(): Status {
  * a re-render whenever it changes. Can be used to render a "Saving..."
  * indicator.
  */
-function useStorageStatus(): StorageStatus {
+function useStorageStatus(options?: UseStorageStatusOptions): StorageStatus {
+  const smooth = useInitial(options?.smooth ?? false);
+  if (smooth) {
+    return useStorageStatusSmooth();
+  } else {
+    return useStorageStatusImmediate();
+  }
+}
+
+function useStorageStatusImmediate(): StorageStatus {
   const room = useRoom();
   const subscribe = room.events.storageStatus.subscribe;
   const getSnapshot = room.getStorageStatus;
   const getServerSnapshot = room.getStorageStatus;
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
+
+function useStorageStatusSmooth(): StorageStatus {
+  const room = useRoom();
+  const [status, setStatus] = React.useState(room.getStorageStatus);
+
+  React.useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const unsub = room.events.storageStatus.subscribe((newStatus) => {
+      if (newStatus === "synchronized") {
+        // Delay delivery of the "synchronized" event
+        timeoutId = setTimeout(() => setStatus(newStatus), SMOOTH_DELAY);
+      } else if (timeoutId) {
+        clearTimeout(timeoutId);
+        setStatus(newStatus);
+      }
+    });
+
+    // Clean up
+    return () => {
+      clearTimeout(timeoutId);
+      unsub();
+    };
+  }, [room]);
+
+  return status;
 }
 
 /**
@@ -2397,7 +2435,9 @@ function useStorageSuspense<S extends LsonObject, T>(
  * a re-render whenever it changes. Can be used to render a "Saving..."
  * indicator.
  */
-function useStorageStatusSuspense(): StorageStatusSuccess {
+function useStorageStatusSuspense(
+  options?: UseStorageStatusOptions
+): StorageStatusSuccess {
   useSuspendUntilStorageReady();
   return useStorageStatus(options) as StorageStatusSuccess;
 }
