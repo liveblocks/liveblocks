@@ -270,15 +270,8 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
     // });
   }
 
-  function useSubscribeToInboxNotificationsEffect(options?: {
-    autoFetch: boolean;
-  }) {
-    const autoFetch = useInitial(options?.autoFetch ?? true);
+  function useSubscribeToInboxNotificationsEffect() {
     useEffect(() => {
-      if (autoFetch) {
-        void fetchInboxNotifications();
-      }
-
       // Increment
       pollerSubscribers++;
       poller.start(POLLING_INTERVAL);
@@ -297,7 +290,7 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
           poller.stop();
         }
       };
-    }, [autoFetch]);
+    }, []);
   }
 
   return {
@@ -392,6 +385,10 @@ function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
     useSubscribeToInboxNotificationsEffect,
   } = getExtrasForClient(client);
 
+  // XXX Replace everything below with this?
+  // use(waitUntilInboxNotificationsLoaded());
+  // return useInboxNotifications_withClient(client)
+
   const query = store.get().queries[INBOX_NOTIFICATIONS_QUERY];
 
   if (query === undefined || query.isLoading) {
@@ -402,7 +399,7 @@ function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
     throw query.error;
   }
 
-  useSubscribeToInboxNotificationsEffect({ autoFetch: false });
+  useSubscribeToInboxNotificationsEffect();
   return useSyncExternalStoreWithSelector(
     store.subscribe,
     store.get,
@@ -443,7 +440,7 @@ function useUnreadInboxNotificationsCountSuspense_withClient(
     throw fetchInboxNotifications();
   }
 
-  useSubscribeToInboxNotificationsEffect({ autoFetch: false });
+  useSubscribeToInboxNotificationsEffect();
   return useSyncExternalStoreWithSelector(
     store.subscribe,
     store.get,
