@@ -83,19 +83,16 @@ export default {
     const { room, leave } = client.enterRoom(roomId);
     this._room = room;
     this._leave = leave;
-    this._unsubscribeOthers = room.subscribe("others", this.onOthersChange);
-    this._unsubscribeConnection = room.subscribe(
-      "connection",
-      this.onConnectionChange
-    );
+    this._unsubscribeOthers = room.events.others.subscribe(this.onOthersChange);
+    this._unsubscribeSelf = room.events.self.subscribe(this.onSelfChange);
   },
   destroyed() {
     this._unsubscribeOthers();
-    this._unsubscribeConnection();
+    this._unsubscribeSelf();
     this._leave();
   },
   methods: {
-    onOthersChange(others) {
+    onOthersChange({ others }) {
       // The avatar and name are coming from the authentication endpoint
       // See api.js for and https://liveblocks.io/docs/api-reference/liveblocks-node#authorize for more information
       this.others = others.map((user) => ({
@@ -104,8 +101,8 @@ export default {
         name: user.info?.name,
       }));
     },
-    onConnectionChange() {
-      this.currentUser = this._room.getSelf();
+    onSelfChange(self) {
+      this.currentUser = self;
     },
   },
 };

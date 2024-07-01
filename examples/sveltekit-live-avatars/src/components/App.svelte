@@ -15,18 +15,18 @@
   let currentUser = room.getSelf();
 
   // Subscribe to further changes
-  const unsubscribeOthers = room.subscribe("others", (others) => {
+  const unsubscribeOthers = room.events.others.subscribe(({ others }) => {
     users = others;
   });
 
-  const unsubscribeConnection = room.subscribe("connection", () => {
-    currentUser = room.getSelf();
+  const unsubscribeSelf = room.events.self.subscribe((self) => {
+    currentUser = self;
   });
 
   // Unsubscribe when unmounting
   onDestroy(() => {
     unsubscribeOthers();
-    unsubscribeConnection();
+    unsubscribeSelf();
   });
 
   $: hasMoreUsers = users ? [...users].length > 3 : false;

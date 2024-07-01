@@ -3248,8 +3248,7 @@ function isRoomEventName(value: string): value is RoomEventName {
     value === "history" ||
     value === "status" ||
     value === "storage-status" ||
-    value === "lost-connection" ||
-    value === "connection"
+    value === "lost-connection"
   );
 }
 
