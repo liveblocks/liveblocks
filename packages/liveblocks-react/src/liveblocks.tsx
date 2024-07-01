@@ -14,6 +14,7 @@ import type {
   PrivateClientApi,
 } from "@liveblocks/core";
 import {
+  assert,
   createClient,
   kInternal,
   makePoller,
@@ -36,15 +37,14 @@ import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/w
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 import { autoRetry } from "./lib/retry-error";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
+import { use } from "./lib/use-polyfill";
 import type {
   InboxNotificationsState,
-  InboxNotificationsStateSuccess,
   LiveblocksContextBundle,
   RoomInfoState,
   RoomInfoStateSuccess,
   SharedContextBundle,
   UnreadInboxNotificationsCountState,
-  UnreadInboxNotificationsCountStateSuccess,
   UserState,
   UserStateSuccess,
 } from "./types";
@@ -103,15 +103,6 @@ function selectorFor_useInboxNotifications(
   };
 }
 
-function selectorFor_useInboxNotificationsSuspense(
-  state: CacheState<BaseMetadata>
-): InboxNotificationsStateSuccess {
-  return {
-    inboxNotifications: selectedInboxNotifications(state),
-    isLoading: false,
-  };
-}
-
 function selectUnreadInboxNotificationsCount(state: CacheState<BaseMetadata>) {
   let count = 0;
 
@@ -145,15 +136,6 @@ function selectorFor_useUnreadInboxNotificationsCount(
     };
   }
 
-  return {
-    isLoading: false,
-    count: selectUnreadInboxNotificationsCount(state),
-  };
-}
-
-function selectorFor_useUnreadInboxNotificationsCountSuspense(
-  state: CacheState<BaseMetadata>
-): UnreadInboxNotificationsCountStateSuccess {
   return {
     isLoading: false,
     count: selectUnreadInboxNotificationsCount(state),
@@ -271,13 +253,6 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
     }
   });
 
-  async function fetchInboxNotifications() {
-    await waitUntilInboxNotificationsLoaded();
-
-    // XXX Do NOT start polling here right away!
-    poller.start(POLLING_INTERVAL);
-  }
-
   function useSubscribeToInboxNotificationsEffect() {
     useEffect(() => {
       // Increment
@@ -304,9 +279,8 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
   return {
     store,
     notifications,
-    // XXX Stop exporting fetchInboxNotifications
-    fetchInboxNotifications,
     useSubscribeToInboxNotificationsEffect,
+    waitUntilInboxNotificationsLoaded,
   };
 }
 
@@ -370,7 +344,6 @@ function makeLiveblocksContextBundle<
   return bundle;
 }
 
-// XXX Reimplement/check this
 function useInboxNotifications_withClient(client: OpaqueClient) {
   const { store, useSubscribeToInboxNotificationsEffect } =
     getExtrasForClient(client);
@@ -385,39 +358,20 @@ function useInboxNotifications_withClient(client: OpaqueClient) {
   );
 }
 
-// XXX Reimplement/check this
 function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
-  const {
-    store,
-    fetchInboxNotifications,
-    useSubscribeToInboxNotificationsEffect,
-  } = getExtrasForClient(client);
+  const { waitUntilInboxNotificationsLoaded } = getExtrasForClient(client);
 
-  // XXX Replace everything below with this?
-  // use(waitUntilInboxNotificationsLoaded());
-  // return useInboxNotifications_withClient(client)
+  // Suspend until there are at least some inbox notifications
+  use(waitUntilInboxNotificationsLoaded());
 
-  const query = store.get().queries[INBOX_NOTIFICATIONS_QUERY];
-
-  if (query === undefined || query.isLoading) {
-    throw fetchInboxNotifications();
-  }
-
-  if (query.error !== undefined) {
-    throw query.error;
-  }
-
-  useSubscribeToInboxNotificationsEffect();
-  return useSyncExternalStoreWithSelector(
-    store.subscribe,
-    store.get,
-    store.get,
-    selectorFor_useInboxNotificationsSuspense,
-    shallow
-  );
+  // We're in a Suspense world here, and as such, the useInboxNotifications()
+  // hook is expected to only return success results when we're here.
+  const result = useInboxNotifications_withClient(client);
+  assert(!result.error, "Did not expect error");
+  assert(!result.isLoading, "Did not expect loading");
+  return result;
 }
 
-// XXX Reimplement/check this
 function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
   const { store, useSubscribeToInboxNotificationsEffect } =
     getExtrasForClient(client);
@@ -432,30 +386,18 @@ function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
   );
 }
 
-// XXX Reimplement/check this
 function useUnreadInboxNotificationsCountSuspense_withClient(
   client: OpaqueClient
 ) {
-  const {
-    store,
-    fetchInboxNotifications,
-    useSubscribeToInboxNotificationsEffect,
-  } = getExtrasForClient(client);
+  const { waitUntilInboxNotificationsLoaded } = getExtrasForClient(client);
 
-  const query = store.get().queries[INBOX_NOTIFICATIONS_QUERY];
+  // Suspend until there are at least some inbox notifications
+  use(waitUntilInboxNotificationsLoaded());
 
-  if (query === undefined || query.isLoading) {
-    throw fetchInboxNotifications();
-  }
-
-  useSubscribeToInboxNotificationsEffect();
-  return useSyncExternalStoreWithSelector(
-    store.subscribe,
-    store.get,
-    store.get,
-    selectorFor_useUnreadInboxNotificationsCountSuspense,
-    shallow
-  );
+  const result = useUnreadInboxNotificationsCount_withClient(client);
+  assert(!result.isLoading, "Did not expect loading");
+  assert(!result.error, "Did not expect error");
+  return result;
 }
 
 function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {

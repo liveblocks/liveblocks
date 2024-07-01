@@ -187,12 +187,6 @@ export type InboxNotificationsStateLoading = {
   error?: never;
 };
 
-export type InboxNotificationsStateResolved = {
-  isLoading: false;
-  inboxNotifications: InboxNotificationData[];
-  error?: Error;
-};
-
 export type InboxNotificationsStateSuccess = {
   isLoading: false;
   inboxNotifications: InboxNotificationData[];
@@ -207,7 +201,7 @@ export type InboxNotificationsStateError = {
 
 export type InboxNotificationsState =
   | InboxNotificationsStateLoading
-  | InboxNotificationsStateResolved
+  | InboxNotificationsStateSuccess
   | InboxNotificationsStateError;
 
 export type UnreadInboxNotificationsCountStateLoading = {
