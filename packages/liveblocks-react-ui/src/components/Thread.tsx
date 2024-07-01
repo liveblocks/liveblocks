@@ -7,7 +7,8 @@ import type {
   ThreadData,
 } from "@liveblocks/core";
 import {
-  useEditThreadMetadata,
+  useMarkThreadAsResolved,
+  useMarkThreadAsUnresolved,
   useThreadSubscription,
 } from "@liveblocks/react";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
@@ -153,7 +154,8 @@ export const Thread = forwardRef(
     }: ThreadProps<M>,
     forwardedRef: ForwardedRef<HTMLDivElement>
   ) => {
-    const editThreadMetadata = useEditThreadMetadata();
+    const markThreadAsResolved = useMarkThreadAsResolved();
+    const markThreadAsUnresolved = useMarkThreadAsUnresolved();
     const $ = useOverrides(overrides);
     const firstCommentIndex = useMemo(() => {
       return showDeletedComments
@@ -216,9 +218,18 @@ export const Thread = forwardRef(
       (resolved: boolean) => {
         onResolvedChange?.(resolved);
 
-        editThreadMetadata({ threadId: thread.id, metadata: { resolved } });
+        if (resolved) {
+          markThreadAsResolved(thread.id);
+        } else {
+          markThreadAsUnresolved(thread.id);
+        }
       },
-      [editThreadMetadata, onResolvedChange, thread.id]
+      [
+        markThreadAsResolved,
+        markThreadAsUnresolved,
+        onResolvedChange,
+        thread.id,
+      ]
     );
 
     const handleCommentDelete = useCallback(
