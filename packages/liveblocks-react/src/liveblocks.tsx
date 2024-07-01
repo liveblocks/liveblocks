@@ -16,7 +16,13 @@ import type {
   PrivateClientApi,
   ThreadDeleteInfo,
 } from "@liveblocks/core";
-import { createClient, kInternal, makePoller, raise } from "@liveblocks/core";
+import {
+  createClient,
+  kInternal,
+  makePoller,
+  raise,
+  shallow,
+} from "@liveblocks/core";
 import { nanoid } from "nanoid";
 import type { PropsWithChildren } from "react";
 import React, {
@@ -386,7 +392,8 @@ function useInboxNotifications_withClient(client: OpaqueClient) {
     store.subscribe,
     store.get,
     store.get,
-    selectorFor_useInboxNotifications
+    selectorFor_useInboxNotifications,
+    shallow
   );
 }
 
@@ -412,7 +419,8 @@ function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
     store.subscribe,
     store.get,
     store.get,
-    selectorFor_useInboxNotificationsSuspense
+    selectorFor_useInboxNotificationsSuspense,
+    shallow
   );
 }
 
@@ -425,7 +433,8 @@ function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
     store.subscribe,
     store.get,
     store.get,
-    selectorFor_useUnreadInboxNotificationsCount
+    selectorFor_useUnreadInboxNotificationsCount,
+    shallow
   );
 }
 
@@ -449,7 +458,8 @@ function useUnreadInboxNotificationsCountSuspense_withClient(
     store.subscribe,
     store.get,
     store.get,
-    selectorFor_useUnreadInboxNotificationsCountSuspense
+    selectorFor_useUnreadInboxNotificationsCountSuspense,
+    shallow
   );
 }
 

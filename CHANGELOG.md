@@ -4,6 +4,7 @@
 
 - The `useClient()` hook is now also available for users of
   `createRoomContext()` and/or `createLiveblocksContext()`
+- Fix: avoid unnecessary re-renders if inbox notifications haven't changed
 
 ## v2.1.0
 
