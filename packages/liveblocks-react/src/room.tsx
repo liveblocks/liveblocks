@@ -2399,11 +2399,7 @@ function useStorageSuspense<S extends LsonObject, T>(
  */
 function useStorageStatusSuspense(): StorageStatusSuccess {
   useSuspendUntilStorageReady();
-  const room = useRoom();
-  const subscribe = room.events.storageStatus.subscribe;
-  const getSnapshot = room.getStorageStatus as () => StorageStatusSuccess;
-  const getServerSnapshot = room.getStorageStatus as () => StorageStatusSuccess;
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return useStorageStatus(options) as StorageStatusSuccess;
 }
 
 function useThreadsSuspense<M extends BaseMetadata>(
