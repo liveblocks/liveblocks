@@ -15,6 +15,7 @@ import type {
 } from "@liveblocks/client";
 import type {
   BaseMetadata,
+  Client,
   CommentBody,
   CommentData,
   DRI,
@@ -345,6 +346,11 @@ export type ThreadSubscription =
 export type SharedContextBundle<U extends BaseUserMeta> = {
   classic: {
     /**
+     * Obtains a reference to the current Liveblocks client.
+     */
+    useClient(): Client<U>;
+
+    /**
      * Returns user info from a given user ID.
      *
      * @example
@@ -362,6 +368,11 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
   };
 
   suspense: {
+    /**
+     * Obtains a reference to the current Liveblocks client.
+     */
+    useClient(): Client<U>;
+
     /**
      * Returns user info from a given user ID.
      *

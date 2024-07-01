@@ -1,3 +1,10 @@
+## v2.2.0 (not published yet)
+
+### `@liveblocks/react`
+
+- The `useClient()` hook is now also available for users of
+  `createRoomContext()` and/or `createLiveblocksContext()`
+
 ## v2.1.0
 
 ### `@liveblocks/client`
@@ -19,7 +26,7 @@
 
 ### `@liveblocks/react-ui`
 
-- Fix improper `useSyncExternalStore` import which would break on React <18.
+- Fix improper `useSyncExternalStore` import which would break on React versions lower than 18.
 
 ## v2.0.5
 
@@ -39,7 +46,7 @@
 ### `@liveblocks/client`
 
 - Add missing type export for `CommentReaction`
-- Don’t attempt to write missing initialStorage keys if the current user has no
+- Don’t attempt to write missing `initialStorage` keys if the current user has no
   write access to storage. This will no longer throw, but issue a warning
   message in the console.
 
@@ -1124,7 +1131,7 @@ Recommended steps to upgrade:
 ### `create-liveblocks-app`
 
 - Added
-  [flags](https://github.com/liveblocks/liveblocks/tree/main/packages/create-liveblocks-app#flags-optional)
+  [flags](https://github.com/liveblocks/liveblocks/tree/main/tools/create-liveblocks-app#flags-optional)
   for creating config files with `--init`. (e.g. `--framework react`)
 - Added an error if an incorrect flag is used.
 - Slightly changed the format of the default config file.

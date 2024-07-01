@@ -4,6 +4,7 @@
   "workspaces": [
     "shared/*",
     "packages/*",
+    "tools/*",
     "schema-lang/*",
     "e2e/next-sandbox"
   ],
@@ -21,6 +22,7 @@
     "dependency-cruiser": "^16.3.3",
     "prettier": "^3.2.5",
     "publint": "^0.2.8",
+    "ts-morph": "^22.0.0",
     "tsd": "^0.31.1",
     "tsup": "^8.1.0",
     "turbo": "^1.13.4",
