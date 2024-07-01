@@ -5,6 +5,11 @@
 - The `useClient()` hook is now also available for users of
   `createRoomContext()` and/or `createLiveblocksContext()`
 
+### `@liveblocks/react-ui`
+
+- Fix improper `useTransition` fallback which would break on React versions
+  lower than 18.
+
 ## v2.1.0
 
 ### `@liveblocks/client`
@@ -26,7 +31,8 @@
 
 ### `@liveblocks/react-ui`
 
-- Fix improper `useSyncExternalStore` import which would break on React versions lower than 18.
+- Fix improper `useSyncExternalStore` import which would break on React versions
+  lower than 18.
 
 ## v2.0.5
 
@@ -46,8 +52,8 @@
 ### `@liveblocks/client`
 
 - Add missing type export for `CommentReaction`
-- Don’t attempt to write missing `initialStorage` keys if the current user has no
-  write access to storage. This will no longer throw, but issue a warning
+- Don’t attempt to write missing `initialStorage` keys if the current user has
+  no write access to storage. This will no longer throw, but issue a warning
   message in the console.
 
 ### `@liveblocks/react`
