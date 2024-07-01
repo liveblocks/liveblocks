@@ -36,6 +36,8 @@ export {
   useDeleteThread,
   useEditComment,
   useEditThreadMetadata,
+  useMarkThreadAsResolved,
+  useMarkThreadAsUnresolved,
   useErrorListener,
   useEventListener,
   useHistory,
