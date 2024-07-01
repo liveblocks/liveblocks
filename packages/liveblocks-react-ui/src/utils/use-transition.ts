@@ -9,13 +9,13 @@ const useReactTransition: typeof React.useTransition = (React as any)[
   "useTransition".toString()
 ];
 
-function useTransitionFallback() {
+function useTransitionFallback(): ReturnType<typeof useReactTransition> {
   const startTransition = useCallback(
     (callback: TransitionFunction) => callback(),
     []
   );
 
-  return [false, startTransition] as ReturnType<typeof useReactTransition>;
+  return [false, startTransition];
 }
 
 // React's `useTransition` is only available in React >=18.
