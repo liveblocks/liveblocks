@@ -1,4 +1,5 @@
-import React from "react";
+import type { TransitionFunction } from "react";
+import React, { useCallback } from "react";
 
 // Prevent bundlers from importing `useTransition` directly
 // See https://github.com/radix-ui/primitives/pull/1028
@@ -8,8 +9,13 @@ const useReactTransition: typeof React.useTransition = (React as any)[
   "useTransition".toString()
 ];
 
-function useTransitionFallback(transition: () => void) {
-  return [false, transition] as ReturnType<typeof useReactTransition>;
+function useTransitionFallback() {
+  const startTransition = useCallback(
+    (callback: TransitionFunction) => callback(),
+    []
+  );
+
+  return [false, startTransition] as ReturnType<typeof useReactTransition>;
 }
 
 // React's `useTransition` is only available in React >=18.
