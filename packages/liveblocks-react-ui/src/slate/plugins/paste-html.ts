@@ -39,6 +39,10 @@ function areUrlsEqual(a: string, b: string) {
   }
 }
 
+const createParagraphElement = (): OmitTextChildren<ComposerBodyParagraph> => ({
+  type: "paragraph",
+});
+
 const ELEMENT_TAGS = {
   A: (
     element
@@ -51,7 +55,16 @@ const ELEMENT_TAGS = {
       url: href ?? "",
     };
   },
-  P: (): OmitTextChildren<ComposerBodyParagraph> => ({ type: "paragraph" }),
+  P: createParagraphElement,
+  // Falling back to paragraphs for unsupported elements
+  BLOCKQUOTE: createParagraphElement,
+  H1: createParagraphElement,
+  H2: createParagraphElement,
+  H3: createParagraphElement,
+  H4: createParagraphElement,
+  H5: createParagraphElement,
+  H6: createParagraphElement,
+  LI: createParagraphElement,
 } as Record<string, (node: HTMLElement) => ComposerBodyElementTag>;
 
 const TEXT_TAGS = {
@@ -65,6 +78,22 @@ const TEXT_TAGS = {
   // B: (): ComposerBodyTextTag => ({ bold: true }),
 } as Record<string, (node: HTMLElement) => ComposerBodyTextTag>;
 
+function flattenListItems(node: HTMLElement): HTMLElement[] {
+  const listItems: HTMLElement[] = [];
+
+  if (node.nodeName === "LI") {
+    listItems.push(node);
+  }
+
+  node.childNodes.forEach((child) => {
+    if (child.nodeType === 1) {
+      listItems.push(...flattenListItems(child as HTMLElement));
+    }
+  });
+
+  return listItems;
+}
+
 function deserialize(node: Node): DeserializedNode {
   if (node.nodeType === 3) {
     return node.textContent;
@@ -76,6 +105,13 @@ function deserialize(node: Node): DeserializedNode {
 
   const childNodes = Array.from(node.childNodes);
   let children = childNodes.map(deserialize).flat();
+
+  // Lists aren't supported (yet), so we flatten them into paragraphs
+  if (node.nodeName === "UL" || node.nodeName === "OL") {
+    const listItems = flattenListItems(node as HTMLElement);
+
+    children = listItems.map((li) => deserialize(li)).flat();
+  }
 
   if (children.length === 0) {
     children = [{ text: "" }];
