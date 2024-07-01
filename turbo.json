@@ -1,7 +1,7 @@
 {
   "$schema": "https://turborepo.org/schema.json",
   "globalDependencies": [".envrc"],
-  "pipeline": {
+  "tasks": {
     "dev": {
       "dependsOn": ["^build"],
       "cache": false
