@@ -3,7 +3,6 @@ import type {
   CommentBody,
   CommentBodyLink,
   CommentBodyMention,
-  CommentBodyText,
 } from "@liveblocks/core";
 
 import { isComposerBodyAutoLink } from "../../slate/plugins/auto-links";
@@ -107,7 +106,7 @@ export function composerBodyToCommentBody(body: ComposerBody): CommentBody {
             }
 
             if (isText(inline)) {
-              return inline as CommentBodyText;
+              return inline;
             }
 
             return null;
