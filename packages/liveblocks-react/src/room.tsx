@@ -936,12 +936,18 @@ function useStatus(): Status {
  * indicator.
  */
 function useStorageStatus(options?: UseStorageStatusOptions): StorageStatus {
+  // Normally the Rules of Hooks™ dictate that you should not call hooks
+  // conditionally. In this case, we're good here, because the same code path
+  // will always be taken on every subsequent render here, because we've frozen
+  // the value.
+  /* eslint-disable react-hooks/rules-of-hooks */
   const smooth = useInitial(options?.smooth ?? false);
   if (smooth) {
     return useStorageStatusSmooth();
   } else {
     return useStorageStatusImmediate();
   }
+  /* eslint-enable react-hooks/rules-of-hooks */
 }
 
 function useStorageStatusImmediate(): StorageStatus {
@@ -955,13 +961,13 @@ function useStorageStatusImmediate(): StorageStatus {
 function useStorageStatusSmooth(): StorageStatus {
   const room = useRoom();
   const [status, setStatus] = React.useState(room.getStorageStatus);
-  const currStatus = useLatest(room.getStorageStatus());
+  const oldStatus = useLatest(room.getStorageStatus());
 
   React.useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>;
     const unsub = room.events.storageStatus.subscribe((newStatus) => {
       if (
-        currStatus.current === "synchronizing" &&
+        oldStatus.current === "synchronizing" &&
         newStatus === "synchronized"
       ) {
         // Delay delivery of the "synchronized" event
@@ -977,7 +983,7 @@ function useStorageStatusSmooth(): StorageStatus {
       clearTimeout(timeoutId);
       unsub();
     };
-  }, [room]);
+  }, [room, oldStatus]);
 
   return status;
 }
