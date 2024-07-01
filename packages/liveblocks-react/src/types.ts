@@ -771,6 +771,24 @@ type RoomContextBundleCommon<
   useEditThreadMetadata(): (options: EditThreadMetadataOptions<M>) => void;
 
   /**
+   * Returns a function that marks a thread as resolved.
+   *
+   * @example
+   * const markThreadAsResolved = useMarkThreadAsResolved();
+   * markThreadAsResolved("th_xxx");
+   */
+  useMarkThreadAsResolved(): (threadId: string) => void;
+
+  /**
+   * Returns a function that marks a thread as unresolved.
+   *
+   * @example
+   * const markThreadAsUnresolved = useMarkThreadAsUnresolved();
+   * markThreadAsUnresolved("th_xxx");
+   */
+  useMarkThreadAsUnresolved(): (threadId: string) => void;
+
+  /**
    * Returns a function that adds a comment to a thread.
    *
    * @example
