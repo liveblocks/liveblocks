@@ -955,14 +955,18 @@ function useStorageStatusImmediate(): StorageStatus {
 function useStorageStatusSmooth(): StorageStatus {
   const room = useRoom();
   const [status, setStatus] = React.useState(room.getStorageStatus);
+  const currStatus = useLatest(room.getStorageStatus());
 
   React.useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>;
     const unsub = room.events.storageStatus.subscribe((newStatus) => {
-      if (newStatus === "synchronized") {
+      if (
+        currStatus.current === "synchronizing" &&
+        newStatus === "synchronized"
+      ) {
         // Delay delivery of the "synchronized" event
         timeoutId = setTimeout(() => setStatus(newStatus), SMOOTH_DELAY);
-      } else if (timeoutId) {
+      } else {
         clearTimeout(timeoutId);
         setStatus(newStatus);
       }
