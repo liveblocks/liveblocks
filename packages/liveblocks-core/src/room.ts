@@ -457,6 +457,7 @@ type SubscribeFn<
 
 export type GetThreadsOptions<M extends BaseMetadata> = {
   query?: {
+    resolved?: boolean;
     metadata?: Partial<QueryMetadata<M>>;
   };
   since?: Date;

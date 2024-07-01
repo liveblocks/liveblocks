@@ -43,6 +43,12 @@ export type UseThreadsOptions<M extends BaseMetadata> = {
    */
   query?: {
     /**
+     * Whether to only return threads marked as resolved or unresolved. If not provided,
+     * all threads will be returned.
+     */
+    resolved?: boolean;
+
+    /**
      * The metadata to filter the threads by. If provided, only threads with metadata that matches
      * the provided metadata will be returned. If not provided, all threads will be returned.
      */
