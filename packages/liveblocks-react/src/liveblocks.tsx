@@ -383,6 +383,7 @@ function makeLiveblocksContextBundle<
   return bundle;
 }
 
+// XXX Reimplement/check this
 function useInboxNotifications_withClient(client: OpaqueClient) {
   const { store, useSubscribeToInboxNotificationsEffect } =
     getExtrasForClient(client);
@@ -397,6 +398,7 @@ function useInboxNotifications_withClient(client: OpaqueClient) {
   );
 }
 
+// XXX Reimplement/check this
 function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
   const {
     store,
@@ -424,6 +426,7 @@ function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
   );
 }
 
+// XXX Reimplement/check this
 function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
   const { store, useSubscribeToInboxNotificationsEffect } =
     getExtrasForClient(client);
@@ -438,6 +441,7 @@ function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
   );
 }
 
+// XXX Reimplement/check this
 function useUnreadInboxNotificationsCountSuspense_withClient(
   client: OpaqueClient
 ) {
