@@ -1,3 +1,5 @@
+import { wait } from "@liveblocks/core";
+
 const MAX_ERROR_RETRY_COUNT = 5;
 
 const ERROR_RETRY_INTERVAL = 5000; // 5 seconds

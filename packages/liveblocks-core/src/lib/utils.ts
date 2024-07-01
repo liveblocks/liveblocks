@@ -163,6 +163,13 @@ export function compactObject<O extends Record<string, unknown>>(
 }
 
 /**
+ * Returns a promise that resolves after the given number of milliseconds.
+ */
+export function wait(millis: number) {
+  return new Promise((res) => setTimeout(res, millis));
+}
+
+/**
  * Returns whatever the given promise returns, but will be rejected with
  * a "Timed out" error if the given promise does not return or reject within
  * the given timeout period (in milliseconds).

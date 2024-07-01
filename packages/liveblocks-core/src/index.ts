@@ -109,6 +109,7 @@ export {
   memoizeOnSuccess,
   raise,
   tryParseJson,
+  wait,
   withTimeout,
 } from "./lib/utils";
 export type { CustomAuthenticationResult } from "./protocol/Authentication";
