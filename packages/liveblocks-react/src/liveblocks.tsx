@@ -249,12 +249,23 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
       isLoading: true,
     });
 
-    await autoRetry(
-      () => updateInboxNotifications(),
-      5,
-      // XXX: Previously we did 40000, 80000 here, but... do we really wait until over a minute? Seems too long to me.
-      [5000, 10000, 20000]
-    );
+    try {
+      await autoRetry(
+        () => updateInboxNotifications(),
+        5,
+        // XXX: Previously we did 40000, 80000 here, but... do we really wait until over a minute? Seems too long to me.
+        [5000, 10000, 20000]
+      );
+    } catch (err) {
+      // Store the error in the cache as a side-effect, for non-Suspense
+      store.setQueryState(INBOX_NOTIFICATIONS_QUERY, {
+        isLoading: false,
+        error: err as Error,
+      });
+
+      // Rethrow it for Suspense, where this promise must fail
+      throw err;
+    }
   });
 
   async function fetchInboxNotifications() {
@@ -262,12 +273,6 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
 
     // XXX Do NOT start polling here right away!
     poller.start(POLLING_INTERVAL);
-
-    // XXX Check if this is relied on somewhere
-    // store.setQueryState(INBOX_NOTIFICATIONS_QUERY, {
-    //   isLoading: false,
-    //   error: er as Error,
-    // });
   }
 
   function useSubscribeToInboxNotificationsEffect() {
