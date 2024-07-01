@@ -190,15 +190,21 @@ export async function withTimeout<T>(
 }
 
 /**
- * Memoize a factory function, so that each subsequent call to the returned
- * function will return the exact same value.
+ * Memoize a promise factory, so that each subsequent call will return the same
+ * pending or success promise, but if the promise rejects, the next call to the
+ * function will start a new promise.
  */
-export function memoize<T>(factoryFn: () => T): () => T {
-  let cached: { value: T } | null = null;
+export function memoizeOnSuccess<T>(
+  factoryFn: () => Promise<T>
+): () => Promise<T> {
+  let cached: Promise<T> | null = null;
   return () => {
     if (cached === null) {
-      cached = { value: factoryFn() };
+      cached = factoryFn().catch((err) => {
+        cached = null;
+        throw err;
+      });
     }
-    return cached.value;
+    return cached;
   };
 }

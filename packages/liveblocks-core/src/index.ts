@@ -106,6 +106,7 @@ export type { Brand } from "./lib/utils";
 export {
   b64decode,
   isPlainObject,
+  memoizeOnSuccess,
   raise,
   tryParseJson,
   withTimeout,
