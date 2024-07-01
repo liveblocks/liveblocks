@@ -50,7 +50,7 @@ export function composerBodyCustomLinkToCommentBodyLink(
   return {
     type: "link",
     url: link.url,
-    text: link.children.map((child) => child.text).join("") ?? "",
+    text: link.children.map((child) => child.text).join(""),
   };
 }
 
