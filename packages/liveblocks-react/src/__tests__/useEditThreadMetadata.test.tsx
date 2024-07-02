@@ -91,12 +91,12 @@ describe("useEditThreadMetadata", () => {
       result.current.editThreadMetadata({
         threadId: initialThread.id,
         metadata: {
-          resolved: true,
+          pinned: true,
         },
       })
     );
 
-    expect(result.current.threads![0]?.metadata.resolved).toBe(true);
+    expect(result.current.threads![0]?.metadata.pinned).toBe(true);
 
     // Thread updatedAt is not updated by the server response so exceptionally,
     // we need to check if mock has been called
@@ -107,7 +107,7 @@ describe("useEditThreadMetadata", () => {
 
   test("should remove thread metadata optimistically and update it with the server response", async () => {
     const initialThread = dummyThreadData();
-    initialThread.metadata = { color: "blue", resolved: true };
+    initialThread.metadata = { color: "blue", pinned: true };
     let hasCalledEditThreadMetadata = false;
 
     server.use(
@@ -163,14 +163,14 @@ describe("useEditThreadMetadata", () => {
         threadId: initialThread.id,
         metadata: {
           color: "yellow",
-          resolved: null,
+          pinned: null,
         },
       })
     );
 
     expect(result.current.threads).toBeDefined();
     expect(result.current.threads![0].metadata).toEqual({
-      resolved: null,
+      pinned: null,
       color: "yellow",
     });
 

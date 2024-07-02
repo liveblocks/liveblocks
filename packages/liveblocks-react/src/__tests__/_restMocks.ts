@@ -88,6 +88,26 @@ export function mockEditThreadMetadata<M extends BaseMetadata>(
   );
 }
 
+export function mockMarkThreadAsResolved(
+  params: { threadId: string },
+  resolver: ResponseResolver<RestRequest<never, never>, RestContext>
+) {
+  return rest.post(
+    `https://api.liveblocks.io/v2/c/rooms/room-id/threads/${params.threadId}/mark-as-resolved`,
+    resolver
+  );
+}
+
+export function mockMarkThreadAsUnresolved(
+  params: { threadId: string },
+  resolver: ResponseResolver<RestRequest<never, never>, RestContext>
+) {
+  return rest.post(
+    `https://api.liveblocks.io/v2/c/rooms/room-id/threads/${params.threadId}/mark-as-unresolved`,
+    resolver
+  );
+}
+
 export function mockMarkInboxNotificationsAsRead(
   resolver: ResponseResolver<RestRequest<never, never>, RestContext, any>
 ) {

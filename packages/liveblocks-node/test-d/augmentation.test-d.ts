@@ -39,7 +39,7 @@ declare global {
 
     ThreadMetadata: {
       color: "red" | "blue";
-      resolved?: boolean;
+      pinned?: boolean;
     };
 
     RoomInfo: {
@@ -291,7 +291,7 @@ async () => {
     await client.editThreadMetadata({
       roomId,
       threadId,
-      data: { userId, metadata: { color: "red", resolved: null } }, // Correct metadata updates
+      data: { userId, metadata: { color: "red", pinned: null } }, // Correct metadata updates
     });
 
     expectError(

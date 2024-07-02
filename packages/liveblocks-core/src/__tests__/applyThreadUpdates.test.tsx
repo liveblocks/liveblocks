@@ -13,6 +13,7 @@ describe("applyThreadUpdates", () => {
     roomId: "room_1",
     comments: [],
     metadata: {},
+    resolved: false,
   };
 
   const thread2: ThreadDataWithDeleteInfo = {
@@ -22,6 +23,7 @@ describe("applyThreadUpdates", () => {
     roomId: "room_1",
     comments: [],
     metadata: {},
+    resolved: false,
   };
 
   const thread1DeleteInfo: ThreadDeleteInfo = {

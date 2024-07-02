@@ -99,6 +99,7 @@ export type ThreadData<M extends BaseMetadata = DM> = {
   updatedAt?: Date;
   comments: CommentData[];
   metadata: M;
+  resolved: boolean;
 };
 
 export interface ThreadDataWithDeleteInfo<M extends BaseMetadata = DM>

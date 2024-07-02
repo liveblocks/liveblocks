@@ -44,6 +44,8 @@ expectDocCommentIncludes<_>(suspense.ClientSideSuspense({} as any));
 // context.useDeleteComment
 // context.useEditComment
 // context.useEditThreadMetadata
+// context.useMarkThreadAsResolved
+// context.useEditThreadAsUnresolved
 // context.useErrorListener
 // context.useEventListener
 // context.useHistory
@@ -98,6 +100,8 @@ expectDocCommentIncludes<_>(suspense.ClientSideSuspense({} as any));
 // classic.useDeleteComment
 // classic.useEditComment
 // classic.useEditThreadMetadata
+// classic.useMarkThreadAsResolved
+// classic.useEditThreadAsUnresolved
 // classic.useErrorListener
 // classic.useEventListener
 // classic.useHistory
@@ -153,6 +157,8 @@ expectDocCommentIncludes<_>(suspense.ClientSideSuspense({} as any));
 // suspense.useDeleteComment
 // suspense.useEditComment
 // suspense.useEditThreadMetadata
+// suspense.useMarkThreadAsResolved
+// suspense.useEditThreadAsUnresolved
 // suspense.useErrorListener
 // suspense.useEventListener
 // suspense.useHistory

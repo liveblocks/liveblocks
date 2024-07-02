@@ -31,7 +31,7 @@ type MyRoomEvent =
 
 type MyThreadMetadata = {
   color: "red" | "blue";
-  resolved?: boolean;
+  pinned?: boolean;
 };
 
 type P = MyPresence;
@@ -701,7 +701,7 @@ ctx.useErrorListener((err) => {
     expectType<void>(
       editMetadata({
         threadId: "th_xxx",
-        metadata: { color: "red", resolved: null },
+        metadata: { color: "red", pinned: null },
       })
     );
     expectError(
@@ -743,7 +743,7 @@ ctx.useErrorListener((err) => {
     expectType<void>(
       editMetadata({
         threadId: "th_xxx",
-        metadata: { color: "red", resolved: null },
+        metadata: { color: "red", pinned: null },
       })
     );
     expectError(

@@ -16,6 +16,7 @@ export function createThread(
     deletedAt,
     comments = [],
     metadata = {},
+    resolved = false,
   } = overrides;
 
   return {
@@ -27,6 +28,7 @@ export function createThread(
     deletedAt,
     comments,
     metadata,
+    resolved,
   };
 }
 

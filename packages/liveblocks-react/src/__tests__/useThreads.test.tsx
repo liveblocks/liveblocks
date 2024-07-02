@@ -234,14 +234,14 @@ describe("useThreads", () => {
   });
 
   test("should fetch threads for a given query", async () => {
-    const resolvedThread = dummyThreadData();
-    resolvedThread.metadata = {
-      resolved: true,
+    const pinnedThread = dummyThreadData();
+    pinnedThread.metadata = {
+      pinned: true,
     };
 
-    const unresolvedThread = dummyThreadData();
-    unresolvedThread.metadata = {
-      resolved: false,
+    const unpinnedThread = dummyThreadData();
+    unpinnedThread.metadata = {
+      pinned: false,
     };
 
     server.use(
@@ -249,16 +249,16 @@ describe("useThreads", () => {
         const query = req.url.searchParams.get("query");
         const parseRes = parser.parse(query ?? "");
 
-        const metadataResolved = getFilter(
+        const metadataPinned = getFilter(
           parseRes.query.clauses,
           "metadata",
-          "resolved"
+          "pinned"
         );
 
         return res(
           ctx.json({
-            data: [resolvedThread, unresolvedThread].filter(
-              (thread) => thread.metadata.resolved === metadataResolved.value
+            data: [pinnedThread, unpinnedThread].filter(
+              (thread) => thread.metadata.pinned === metadataPinned.value
             ),
             inboxNotifications: [],
             deletedThreads: [],
@@ -274,11 +274,11 @@ describe("useThreads", () => {
     const {
       roomCtx: { RoomProvider, useThreads },
     } = createRoomContextForTest<{
-      resolved: boolean;
+      pinned: boolean;
     }>();
 
     const { result, unmount } = renderHook(
-      () => useThreads({ query: { metadata: { resolved: true } } }),
+      () => useThreads({ query: { metadata: { pinned: true } } }),
       {
         wrapper: ({ children }) => (
           <RoomProvider id="room-id">{children}</RoomProvider>
@@ -291,7 +291,7 @@ describe("useThreads", () => {
     await waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
-        threads: [resolvedThread],
+        threads: [pinnedThread],
       })
     );
 
@@ -394,13 +394,13 @@ describe("useThreads", () => {
     const {
       roomCtx: { RoomProvider, useThreads },
     } = createRoomContextForTest<{
-      resolved: boolean;
+      pinned: boolean;
     }>();
 
     const { unmount } = renderHook(
       () => {
-        useThreads({ query: { metadata: { resolved: true } } });
-        useThreads({ query: { metadata: { resolved: true } } });
+        useThreads({ query: { metadata: { pinned: true } } });
+        useThreads({ query: { metadata: { pinned: true } } });
       },
       {
         wrapper: ({ children }) => (
@@ -415,14 +415,14 @@ describe("useThreads", () => {
   });
 
   test("should refetch threads if query changed dynamically and should display threads instantly if query already been done in the past", async () => {
-    const resolvedThread = dummyThreadData();
-    resolvedThread.metadata = {
-      resolved: true,
+    const pinnedThread = dummyThreadData();
+    pinnedThread.metadata = {
+      pinned: true,
     };
 
-    const unresolvedThread = dummyThreadData();
-    unresolvedThread.metadata = {
-      resolved: false,
+    const unpinnedThread = dummyThreadData();
+    unpinnedThread.metadata = {
+      pinned: false,
     };
 
     server.use(
@@ -430,16 +430,16 @@ describe("useThreads", () => {
         const query = req.url.searchParams.get("query");
         const parseRes = parser.parse(query ?? "");
 
-        const metadataResolved = getFilter(
+        const metadataPinned = getFilter(
           parseRes.query.clauses,
           "metadata",
-          "resolved"
+          "pinned"
         );
 
         return res(
           ctx.json({
-            data: [resolvedThread, unresolvedThread].filter(
-              (thread) => thread.metadata.resolved === metadataResolved.value
+            data: [pinnedThread, unpinnedThread].filter(
+              (thread) => thread.metadata.pinned === metadataPinned.value
             ),
             inboxNotifications: [],
             deletedThreads: [],
@@ -455,17 +455,17 @@ describe("useThreads", () => {
     const {
       roomCtx: { RoomProvider, useThreads },
     } = createRoomContextForTest<{
-      resolved: boolean;
+      pinned: boolean;
     }>();
 
     const { result, unmount, rerender } = renderHook(
-      ({ resolved }: { resolved: boolean }) =>
-        useThreads({ query: { metadata: { resolved } } }),
+      ({ pinned }: { pinned: boolean }) =>
+        useThreads({ query: { metadata: { pinned } } }),
       {
         wrapper: ({ children }) => (
           <RoomProvider id="room-id">{children}</RoomProvider>
         ),
-        initialProps: { resolved: true },
+        initialProps: { pinned: true },
       }
     );
 
@@ -474,27 +474,27 @@ describe("useThreads", () => {
     await waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
-        threads: [resolvedThread],
+        threads: [pinnedThread],
       })
     );
 
-    rerender({ resolved: false });
+    rerender({ pinned: false });
 
     expect(result.current).toEqual({ isLoading: true });
 
     await waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
-        threads: [unresolvedThread],
+        threads: [unpinnedThread],
       })
     );
 
-    rerender({ resolved: true });
+    rerender({ pinned: true });
 
-    // Resolved threads are displayed instantly because we already fetched them previously
+    // Pinned threads are displayed instantly because we already fetched them previously
     expect(result.current).toEqual({
       isLoading: false,
-      threads: [resolvedThread],
+      threads: [pinnedThread],
     });
 
     unmount();
