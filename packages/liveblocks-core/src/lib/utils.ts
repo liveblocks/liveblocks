@@ -165,7 +165,7 @@ export function compactObject<O extends Record<string, unknown>>(
 /**
  * Returns a promise that resolves after the given number of milliseconds.
  */
-export function wait(millis: number) {
+export function wait(millis: number): Promise<void> {
   return new Promise((res) => setTimeout(res, millis));
 }
 
