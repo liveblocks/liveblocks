@@ -1,0 +1,19 @@
+name: Deploy examples to Vercel
+
+on:
+  push:
+    branches:
+      - examples
+
+jobs:
+  post_request:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy examples
+        run: |
+          # Example foo
+          curl -X POST https://api.vercel.com/v1/integrations/deploy/prj_98g22o5YUFVHlKOzj9vKPTyN2SDG/tKybBxqhQs
+
+          # Example foo
+          curl -X POST https://api.vercel.com/v1/integrations/deploy/prj_98g22o5YUFVHlKOzj9vKPTyN2SDG/tKybBxqhQs
