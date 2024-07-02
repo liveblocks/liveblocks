@@ -6,7 +6,7 @@ on:
       - examples
 
 jobs:
-  post_request:
+  deploy-examples:
     runs-on: ubuntu-latest
 
     steps:
