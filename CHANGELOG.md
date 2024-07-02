@@ -13,6 +13,15 @@
 - Fix improper `useTransition` fallback which would break on React versions
   lower than 18.
 
+### @liveblocks/react-lexical
+
+- Upgrade `lexical` peer dependency to version `^0.16.1` that fixes
+  compatibility issues with Next.js versions 14.2.0 and above.
+
+### @liveblocks/node-lexical
+
+- Upgrade `lexical` peer dependency to version `0.16.1`.
+
 ## v2.1.0
 
 ### `@liveblocks/client`
