@@ -1250,10 +1250,10 @@ export class Liveblocks {
 
   /**
    * Mark a thread as resolved.
-   * @param params.roomId The room ID to update the thread in.
-   * @param params.threadId The thread ID to update.
-   * @param params.data.userId The user ID of the user who updated the thread.
-   * @returns The updated thread.
+   * @param params.roomId the room ID of the thread.
+   * @param params.threadId The thread ID to mark as resolved.
+   * @param params.data.userId The user ID of the user who marked the thread as resolved.
+   * @returns The thread marked as resolved.
    */
   public async markThreadAsResolved(params: {
     roomId: string;
@@ -1261,7 +1261,7 @@ export class Liveblocks {
     data: {
       userId: string;
     };
-  }): Promise<M> {
+  }): Promise<ThreadData<M>> {
     const { roomId, threadId } = params;
 
     const res = await this.post(
@@ -1274,15 +1274,15 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    return (await res.json()) as M;
+    return convertToThreadData((await res.json()) as ThreadDataPlain<M>);
   }
 
   /**
    * Mark a thread as unresolved.
-   * @param params.roomId The room ID to update the thread in.
-   * @param params.threadId The thread ID to update.
-   * @param params.data.userId The user ID of the user who updated the thread.
-   * @returns The updated thread.
+   * @param params.roomId the room ID of the thread.
+   * @param params.threadId The thread ID to mark as unresolved.
+   * @param params.data.userId The user ID of the user who marked the thread as unresolved.
+   * @returns The thread marked as unresolved.
    */
   public async markThreadAsUnresolved(params: {
     roomId: string;
@@ -1290,7 +1290,7 @@ export class Liveblocks {
     data: {
       userId: string;
     };
-  }): Promise<M> {
+  }): Promise<ThreadData<M>> {
     const { roomId, threadId } = params;
 
     const res = await this.post(
@@ -1303,7 +1303,7 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    return (await res.json()) as M;
+    return convertToThreadData((await res.json()) as ThreadDataPlain<M>);
   }
 
   /**
