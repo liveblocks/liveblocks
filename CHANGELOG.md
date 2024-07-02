@@ -4,6 +4,8 @@
 
 - The `useClient()` hook is now also available for users of
   `createRoomContext()` and/or `createLiveblocksContext()`
+- Fix bug where all subsequent fetches of inbox notifications were not
+  incremental.
 
 ### `@liveblocks/react-ui`
 
