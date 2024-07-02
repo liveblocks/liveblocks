@@ -8,7 +8,7 @@ import type {
   SerializedRegister,
   SerializedRootObject,
 } from "@liveblocks/core";
-import { CrdtType, ServerMsgCode } from "@liveblocks/core";
+import { CrdtType, ServerMsgCode, wait } from "@liveblocks/core";
 
 export function remove<T>(array: T[], item: T): void {
   for (let i = 0; i < array.length; i++) {
@@ -81,10 +81,6 @@ export class MockWebSocket {
   close(): void {
     this.readyState = 3 /* CLOSED */;
   }
-}
-
-export function wait(delay: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, delay));
 }
 
 export async function waitFor(predicate: () => boolean): Promise<void> {

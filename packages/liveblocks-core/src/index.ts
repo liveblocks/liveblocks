@@ -106,8 +106,10 @@ export type { Brand } from "./lib/utils";
 export {
   b64decode,
   isPlainObject,
+  memoizeOnSuccess,
   raise,
   tryParseJson,
+  wait,
   withTimeout,
 } from "./lib/utils";
 export type { CustomAuthenticationResult } from "./protocol/Authentication";

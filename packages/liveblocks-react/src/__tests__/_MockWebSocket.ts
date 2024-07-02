@@ -5,9 +5,9 @@ import type {
   RoomStateServerMsg,
   ServerMsg,
 } from "@liveblocks/core";
-import { CrdtType, ServerMsgCode } from "@liveblocks/core";
+import { CrdtType, ServerMsgCode, wait } from "@liveblocks/core";
 
-import { wait, waitFor } from "./_utils";
+import { waitFor } from "./_utils";
 
 /**
  * https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent/code

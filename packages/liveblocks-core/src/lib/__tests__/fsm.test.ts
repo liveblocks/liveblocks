@@ -1,12 +1,5 @@
 import { distance, FSM, patterns } from "../fsm";
-
-async function sleep(ms: number): Promise<42> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(42);
-    }, ms);
-  });
-}
+import { wait } from "../utils";
 
 async function failAfter(ms: number): Promise<void> {
   return new Promise((_, reject) => {
@@ -664,7 +657,7 @@ describe("finite state machine", () => {
     test("promise-based transitions (on success)", async () => {
       jest.useFakeTimers();
 
-      const fsm = makeFSM(() => sleep(2000));
+      const fsm = makeFSM(() => wait(2000));
       fsm.start();
 
       expect(fsm.currentState).toEqual("waiting.one");
@@ -690,7 +683,7 @@ describe("finite state machine", () => {
     test("promise-based transitions abort successfully (on success)", async () => {
       jest.useFakeTimers();
 
-      const fsm = makeFSM(() => sleep(2000));
+      const fsm = makeFSM(() => wait(2000));
       fsm.start();
 
       expect(fsm.currentState).toEqual("waiting.one");
@@ -751,7 +744,7 @@ describe("finite state machine", () => {
         }
         signal.addEventListener("abort", f);
         try {
-          await sleep(2000);
+          await wait(2000);
         } finally {
           signal.removeEventListener("abort", f);
         }
@@ -778,7 +771,7 @@ describe("finite state machine", () => {
 
       const fsm = makeFSM(async (_, signal: AbortSignal) => {
         hijackedSignal = signal;
-        await sleep(2000);
+        await wait(2000);
       });
 
       fsm.start();
@@ -795,7 +788,7 @@ describe("finite state machine", () => {
       let gotAborted = false;
 
       const fsm = makeFSM(async (_, signal: AbortSignal) => {
-        await sleep(2000);
+        await wait(2000);
         gotAborted = signal.aborted;
       });
 
@@ -820,7 +813,7 @@ describe("finite state machine", () => {
 
       const fsm = makeFSM(async (_, signal: AbortSignal) => {
         hijackedSignal = signal;
-        await sleep(2000);
+        await wait(2000);
       });
 
       fsm.start();
