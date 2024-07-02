@@ -10,16 +10,14 @@ import type {
   ClientOptions,
   DM,
   DU,
-  InboxNotificationData,
-  InboxNotificationDeleteInfo,
   OpaqueClient,
   PrivateClientApi,
-  ThreadDeleteInfo,
 } from "@liveblocks/core";
 import {
   createClient,
   kInternal,
   makePoller,
+  memoizeOnSuccess,
   raise,
   shallow,
 } from "@liveblocks/core";
@@ -36,7 +34,7 @@ import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
-import { retryError } from "./lib/retry-error";
+import { autoRetry } from "./lib/retry-error";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import type {
   InboxNotificationsState,
@@ -196,94 +194,81 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
   const store = internals.cacheStore;
   const notifications = internals.notifications;
 
-  let fetchInboxNotifications$: Promise<{
-    inboxNotifications: InboxNotificationData[];
-    threads: ThreadData<M>[];
-    deletedThreads: ThreadDeleteInfo[];
-    deletedInboxNotifications: InboxNotificationDeleteInfo[];
-    meta: {
-      requestedAt: Date;
-    };
-  }> | null = null;
-
   let lastRequestedAt: Date | undefined;
 
-  const poller = makePoller(() =>
-    notifications.getInboxNotifications({ since: lastRequestedAt }).then(
-      (result) => {
-        lastRequestedAt = result.meta.requestedAt;
+  /**
+   * Performs one network fetch, and updates the store and last requested at
+   * date if successful. If unsuccessful, will throw.
+   */
+  async function updateInboxNotifications() {
+    const since =
+      lastRequestedAt !== undefined ? { since: lastRequestedAt } : undefined;
 
-        store.updateThreadsAndNotifications(
-          result.threads,
-          result.inboxNotifications,
-          result.deletedThreads,
-          result.deletedInboxNotifications,
-          INBOX_NOTIFICATIONS_QUERY
-        );
-      },
-      () => {
-        // TODO: Error handling
-      }
-    )
-  );
+    const result = await notifications.getInboxNotifications(since);
 
-  async function fetchInboxNotifications(
-    { retryCount }: { retryCount: number } = { retryCount: 0 }
-  ) {
-    if (fetchInboxNotifications$ !== null) {
-      return fetchInboxNotifications$;
+    store.updateThreadsAndNotifications(
+      result.threads,
+      result.inboxNotifications,
+      result.deletedThreads,
+      result.deletedInboxNotifications,
+      INBOX_NOTIFICATIONS_QUERY
+    );
+
+    /**
+     * We set the `lastRequestedAt` to the timestamp returned by the current request if:
+     * 1. The `lastRequestedAt` has not been set
+     * OR
+     * 2. The current `lastRequestedAt` is older than the timestamp returned by the current request
+     */
+    if (
+      lastRequestedAt === undefined ||
+      lastRequestedAt < result.meta.requestedAt
+    ) {
+      lastRequestedAt = result.meta.requestedAt;
     }
+  }
 
+  let pollerSubscribers = 0;
+  const poller = makePoller(async () => {
+    return waitUntilInboxNotificationsLoaded()
+      .then(updateInboxNotifications)
+      .catch(() => {
+        // When polling, we don't want to throw errors, ever
+        // XXX Maybe issue console warnings here though?
+      });
+  });
+
+  /**
+   * Will trigger an initial fetch of inbox notifications if this hasn't
+   * already happened. Will resolve once there is initial data. Will retry
+   * a few times automatically in case fetching fails, with incremental backoff
+   * delays. Will throw eventually only if all retries fail.
+   */
+  const waitUntilInboxNotificationsLoaded = memoizeOnSuccess(async () => {
     store.setQueryState(INBOX_NOTIFICATIONS_QUERY, {
       isLoading: true,
     });
 
-    try {
-      fetchInboxNotifications$ = notifications.getInboxNotifications();
+    await autoRetry(
+      () => updateInboxNotifications(),
+      5,
+      // XXX: Previously we did 40000, 80000 here, but... do we really wait until over a minute? Seems too long to me.
+      [5000, 10000, 20000]
+    );
+  });
 
-      const result = await fetchInboxNotifications$;
+  async function fetchInboxNotifications() {
+    await waitUntilInboxNotificationsLoaded();
 
-      store.updateThreadsAndNotifications(
-        result.threads,
-        result.inboxNotifications,
-        result.deletedThreads,
-        result.deletedInboxNotifications,
-        INBOX_NOTIFICATIONS_QUERY
-      );
+    // XXX Do NOT start polling here right away!
+    poller.start(POLLING_INTERVAL);
 
-      /**
-       * We set the `lastRequestedAt` to the timestamp returned by the current request if:
-       * 1. The `lastRequestedAt` has not been set
-       * OR
-       * 2. The current `lastRequestedAt` is older than the timestamp returned by the current request
-       */
-      if (
-        lastRequestedAt === undefined ||
-        lastRequestedAt > result.meta.requestedAt
-      ) {
-        lastRequestedAt = result.meta.requestedAt;
-      }
-
-      poller.start(POLLING_INTERVAL);
-    } catch (er) {
-      fetchInboxNotifications$ = null;
-
-      // Retry the action using the exponential backoff algorithm
-      retryError(() => {
-        void fetchInboxNotifications({
-          retryCount: retryCount + 1,
-        });
-      }, retryCount);
-
-      store.setQueryState(INBOX_NOTIFICATIONS_QUERY, {
-        isLoading: false,
-        error: er as Error,
-      });
-    }
-    return;
+    // XXX Check if this is relied on somewhere
+    // store.setQueryState(INBOX_NOTIFICATIONS_QUERY, {
+    //   isLoading: false,
+    //   error: er as Error,
+    // });
   }
-
-  let inboxNotificationsSubscribers = 0;
 
   function useSubscribeToInboxNotificationsEffect(options?: {
     autoFetch: boolean;
@@ -295,20 +280,20 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
       }
 
       // Increment
-      inboxNotificationsSubscribers++;
+      pollerSubscribers++;
       poller.start(POLLING_INTERVAL);
 
       return () => {
         // Decrement
-        if (inboxNotificationsSubscribers <= 0) {
+        if (pollerSubscribers <= 0) {
           console.warn(
             `Internal unexpected behavior. Cannot decrease subscriber count for query "${INBOX_NOTIFICATIONS_QUERY}"`
           );
           return;
         }
 
-        inboxNotificationsSubscribers--;
-        if (inboxNotificationsSubscribers <= 0) {
+        pollerSubscribers--;
+        if (pollerSubscribers <= 0) {
           poller.stop();
         }
       };
@@ -318,6 +303,7 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
   return {
     store,
     notifications,
+    // XXX Stop exporting fetchInboxNotifications
     fetchInboxNotifications,
     useSubscribeToInboxNotificationsEffect,
   };
