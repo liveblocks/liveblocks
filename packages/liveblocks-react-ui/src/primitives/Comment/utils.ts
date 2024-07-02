@@ -8,7 +8,11 @@ import type {
 export function isCommentBodyText(
   element: CommentBodyElement
 ): element is CommentBodyText {
-  return "text" in element && typeof element.text === "string";
+  return (
+    !("type" in element) &&
+    "text" in element &&
+    typeof element.text === "string"
+  );
 }
 
 export function isCommentBodyMention(
