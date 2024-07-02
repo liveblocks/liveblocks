@@ -1093,10 +1093,12 @@ const { data: threads } = await liveblocks.getThreads({
 
   // Optional, use advanced filtering
   query: {
+    // Optional, filter based on resolved status
+    resolved: false,
     // Optional, filter for metadata values
     metadata: {
       status: "open",
-      resolved: true,
+      pinned: true,
       priority: 3,
 
       // You can match the start of a metadata string
@@ -1184,7 +1186,7 @@ const thread = await liveblocks.createThread({
     metadata: {
       color: "blue",
       page: 3,
-      resolved: true,
+      pinned: true,
     },
 
     // Data for the first comment in the thread
@@ -1268,7 +1270,7 @@ const editedMetadata = await liveblocks.editThreadMetadata({
   },
 });
 
-// { color: "yellow", page: 3, resolved: true }
+// { color: "yellow", page: 3, pinned: true }
 console.log(editedMetadata);
 ```
 
@@ -1286,7 +1288,7 @@ const editedMetadata = await liveblocks.editThreadMetadata({
       // Metadata can be a string, number, or boolean
       title: "My thread title",
       page: 3,
-      resolved: true,
+      pinned: true,
 
       // Remove metadata with null
       color: null,
@@ -1300,7 +1302,7 @@ const editedMetadata = await liveblocks.editThreadMetadata({
   },
 });
 
-// { title: "My thread title", page: 3, resolved: true }
+// { title: "My thread title", page: 3, pinned: true }
 console.log(editedMetadata);
 ```
 
