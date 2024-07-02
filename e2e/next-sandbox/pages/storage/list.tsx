@@ -25,6 +25,7 @@ const {
   useSelf,
   useStatus,
   useStorage,
+  useStorageStatus,
   useUndo,
 } = createRoomContext<never, { items: LiveList<string> }>(client);
 
@@ -52,6 +53,9 @@ function Sandbox() {
   const items = useStorage((root) => root.items);
   const me = useSelf();
   const status = useStatus();
+  const storageStatus = useStorageStatus();
+  const smoothStorageStatus1 = useStorageStatus({ smooth: 1 });
+  const smoothStorageStatus2 = useStorageStatus({ smooth: 2 });
 
   const push = useMutation(
     ({ storage }, value: string) => {
@@ -189,7 +193,22 @@ function Sandbox() {
       <table style={styles.dataTable}>
         <tbody>
           <Row id="renderCount" name="Render count" value={renderCount} />
-          <Row id="socketStatus" name="WebSocket count" value={status} />
+          <Row id="socketStatus" name="WebSocket status" value={status} />
+          <Row
+            id="storageStatus"
+            name="Storage status (immediate)"
+            value={storageStatus}
+          />
+          <Row
+            id="smoothStorageStatusAlternative1"
+            name="Storage status (smooth, v1)"
+            value={smoothStorageStatus1}
+          />
+          <Row
+            id="smoothStorageStatusAlternative2"
+            name="Storage status (smooth, v2)"
+            value={smoothStorageStatus2}
+          />
           <Row id="numItems" name="List size" value={items.length} />
           <Row id="items" name="Serialized" value={items} />
         </tbody>

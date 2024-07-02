@@ -100,9 +100,12 @@ import type {
   ThreadsState,
   ThreadsStateSuccess,
   ThreadSubscription,
+  UseStorageStatusOptions,
   UseThreadsOptions,
 } from "./types";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
+
+const SMOOTH_DELAY = 1000;
 
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
@@ -932,12 +935,98 @@ function useStatus(): Status {
  * a re-render whenever it changes. Can be used to render a "Saving..."
  * indicator.
  */
-function useStorageStatus(): StorageStatus {
+function useStorageStatus(options?: UseStorageStatusOptions): StorageStatus {
+  // Normally the Rules of Hooks™ dictate that you should not call hooks
+  // conditionally. In this case, we're good here, because the same code path
+  // will always be taken on every subsequent render here, because we've frozen
+  // the value.
+  /* eslint-disable react-hooks/rules-of-hooks */
+  const smooth = useInitial(options?.smooth ?? 0);
+  if (smooth === 2) {
+    return useStorageStatusSmooth2();
+  } else if (smooth === 1) {
+    return useStorageStatusSmooth1();
+  } else {
+    return useStorageStatusImmediate();
+  }
+  /* eslint-enable react-hooks/rules-of-hooks */
+}
+
+function useStorageStatusImmediate(): StorageStatus {
   const room = useRoom();
   const subscribe = room.events.storageStatus.subscribe;
   const getSnapshot = room.getStorageStatus;
   const getServerSnapshot = room.getStorageStatus;
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
+
+function useStorageStatusSmooth1(): StorageStatus {
+  const room = useRoom();
+  const [status, setStatus] = React.useState(room.getStorageStatus);
+  const oldStatus = useLatest(room.getStorageStatus());
+
+  React.useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const unsub = room.events.storageStatus.subscribe((newStatus) => {
+      if (
+        oldStatus.current === "synchronizing" &&
+        newStatus === "synchronized"
+      ) {
+        // Delay delivery of the "synchronized" event
+        timeoutId = setTimeout(() => setStatus(newStatus), SMOOTH_DELAY);
+      } else {
+        clearTimeout(timeoutId);
+        setStatus(newStatus);
+      }
+    });
+
+    // Clean up
+    return () => {
+      clearTimeout(timeoutId);
+      unsub();
+    };
+  }, [room, oldStatus]);
+
+  return status;
+}
+
+function useStorageStatusSmooth2(): StorageStatus {
+  const room = useRoom();
+  const [status, setStatus] = React.useState(room.getStorageStatus);
+
+  React.useEffect(() => {
+    // While timeoutId is non-null, it's considered "frozen"
+    let freezeTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    const unsub = room.events.storageStatus.subscribe((newStatus) => {
+      if (freezeTimeout !== null) {
+        return;
+      }
+
+      // Otherwise, we're not frozen, so update the status immediately
+      setStatus(newStatus);
+
+      // ...but if the new status is synchronizing, freeze it again
+      if (newStatus === "synchronizing") {
+        // Do not update the status immediately
+        freezeTimeout = setTimeout(() => {
+          freezeTimeout = null;
+          return setStatus(room.getStorageStatus());
+        }, SMOOTH_DELAY);
+      }
+    });
+
+    // Clean up
+    return () => {
+      if (freezeTimeout !== null) {
+        clearTimeout(freezeTimeout);
+        freezeTimeout = null;
+      }
+      unsub();
+    };
+  }, [room]);
+
+  return status;
 }
 
 /**
@@ -2397,13 +2486,11 @@ function useStorageSuspense<S extends LsonObject, T>(
  * a re-render whenever it changes. Can be used to render a "Saving..."
  * indicator.
  */
-function useStorageStatusSuspense(): StorageStatusSuccess {
+function useStorageStatusSuspense(
+  options?: UseStorageStatusOptions
+): StorageStatusSuccess {
   useSuspendUntilStorageReady();
-  const room = useRoom();
-  const subscribe = room.events.storageStatus.subscribe;
-  const getSnapshot = room.getStorageStatus as () => StorageStatusSuccess;
-  const getServerSnapshot = room.getStorageStatus as () => StorageStatusSuccess;
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return useStorageStatus(options) as StorageStatusSuccess;
 }
 
 function useThreadsSuspense<M extends BaseMetadata>(

@@ -2,6 +2,10 @@
 
 ### `@liveblocks/react`
 
+- The
+  [`useStorageStatus`](https://liveblocks.io/docs/api-reference/liveblocks-react#useStorageStatus)
+  hook now also has a `{ smooth: true }` setting to make building calm UIs with
+  it a bit easier
 - The `useClient()` hook is now also available for users of
   `createRoomContext()` and/or `createLiveblocksContext()`
 
