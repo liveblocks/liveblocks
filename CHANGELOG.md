@@ -10,6 +10,7 @@
 - Preserve rich text when pasting into the composer.
 - Add support for custom links to the composer. (either by pasting URLs with
   plain text selected or by pasting existing links)
+- Preserve whitespace and empty lines in comments.
 - Fix improper `useTransition` fallback which would break on React versions
   lower than 18.
 
