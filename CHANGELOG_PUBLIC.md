@@ -13,6 +13,10 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 -->
 
+# Week 27 (2024-07-05)
+
+## Contributors
+
 # Week 26 (2024-06-28)
 
 ## v2.1.0
