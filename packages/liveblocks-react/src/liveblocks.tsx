@@ -866,8 +866,6 @@ export function createLiveblocksContext<
 }
 
 /**
- * @beta
- *
  * Returns the inbox notifications for the current user.
  *
  * @example
@@ -878,8 +876,6 @@ function useInboxNotifications() {
 }
 
 /**
- * @beta
- *
  * Returns the inbox notifications for the current user.
  *
  * @example
@@ -899,8 +895,6 @@ function useInboxNotificationThread<M extends BaseMetadata>(
 }
 
 /**
- * @beta
- *
  * Returns a function that marks all inbox notifications as read.
  *
  * @example
@@ -912,8 +906,6 @@ function useMarkAllInboxNotificationsAsRead() {
 }
 
 /**
- * @beta
- *
  * Returns a function that marks an inbox notification as read.
  *
  * @example
@@ -925,8 +917,6 @@ function useMarkInboxNotificationAsRead() {
 }
 
 /**
- * @beta
- *
  * Returns the number of unread inbox notifications for the current user.
  *
  * @example
@@ -937,8 +927,6 @@ function useUnreadInboxNotificationsCount() {
 }
 
 /**
- * @beta
- *
  * Returns the number of unread inbox notifications for the current user.
  *
  * @example
@@ -981,8 +969,6 @@ function useRoomInfoSuspense(roomId: string) {
 type TypedBundle = LiveblocksContextBundle<DU, DM>;
 
 /**
- * @beta
- *
  * Returns the thread associated with a `"thread"` inbox notification.
  *
  * @example
