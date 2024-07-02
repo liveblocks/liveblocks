@@ -74,6 +74,7 @@
     "react-virtuoso": "^4.7.4",
     "slate": "^0.102.0",
     "slate-history": "^0.100.0",
+    "slate-hyperscript": "^0.100.0",
     "slate-react": "^0.102.0",
     "use-sync-external-store": "^1.2.2"
   },
