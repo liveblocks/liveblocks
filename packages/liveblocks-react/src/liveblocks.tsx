@@ -253,7 +253,15 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
     }
   });
 
-  function useSubscribeToInboxNotificationsEffect() {
+  /**
+   * Enables polling for inbox notifications when the component mounts. Stops
+   * polling on unmount.
+   *
+   * Safe to be called multiple times from different components. The first
+   * component to mount starts the polling. The last component to unmount stops
+   * the polling.
+   */
+  function useEnableInboxNotificationsPolling() {
     useEffect(() => {
       // Increment
       pollerSubscribers++;
@@ -279,7 +287,7 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
   return {
     store,
     notifications,
-    useSubscribeToInboxNotificationsEffect,
+    useEnableInboxNotificationsPolling,
     waitUntilInboxNotificationsLoaded,
   };
 }
@@ -345,10 +353,10 @@ function makeLiveblocksContextBundle<
 }
 
 function useInboxNotifications_withClient(client: OpaqueClient) {
-  const { store, useSubscribeToInboxNotificationsEffect } =
+  const { store, useEnableInboxNotificationsPolling } =
     getExtrasForClient(client);
 
-  useSubscribeToInboxNotificationsEffect();
+  useEnableInboxNotificationsPolling();
   return useSyncExternalStoreWithSelector(
     store.subscribe,
     store.get,
@@ -373,10 +381,10 @@ function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
 }
 
 function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
-  const { store, useSubscribeToInboxNotificationsEffect } =
+  const { store, useEnableInboxNotificationsPolling } =
     getExtrasForClient(client);
 
-  useSubscribeToInboxNotificationsEffect();
+  useEnableInboxNotificationsPolling();
   return useSyncExternalStoreWithSelector(
     store.subscribe,
     store.get,
