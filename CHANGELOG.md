@@ -7,6 +7,12 @@
 - Fix bug where all subsequent fetches of inbox notifications were not
   incremental.
 
+### `@liveblocks/react-ui`
+
+- Preserve rich text when pasting into the composer.
+- Add support for custom links to the composer. (either by pasting URLs with
+  plain text selected or by pasting existing links)
+
 ## v2.1.0
 
 ### `@liveblocks/client`
@@ -28,7 +34,8 @@
 
 ### `@liveblocks/react-ui`
 
-- Fix improper `useSyncExternalStore` import which would break on React versions lower than 18.
+- Fix improper `useSyncExternalStore` import which would break on React versions
+  lower than 18.
 
 ## v2.0.5
 
@@ -48,8 +55,8 @@
 ### `@liveblocks/client`
 
 - Add missing type export for `CommentReaction`
-- Don’t attempt to write missing `initialStorage` keys if the current user has no
-  write access to storage. This will no longer throw, but issue a warning
+- Don’t attempt to write missing `initialStorage` keys if the current user has
+  no write access to storage. This will no longer throw, but issue a warning
   message in the console.
 
 ### `@liveblocks/react`

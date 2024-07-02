@@ -65,6 +65,7 @@ export type CommentBodyMention = {
 export type CommentBodyLink = {
   type: "link";
   url: string;
+  text?: string;
 };
 
 export type CommentBodyText = {
