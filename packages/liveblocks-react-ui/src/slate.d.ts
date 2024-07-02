@@ -4,6 +4,7 @@ import type { ReactEditor, RenderElementProps } from "slate-react";
 
 import type {
   ComposerBodyAutoLink,
+  ComposerBodyCustomLink,
   ComposerBodyMention,
   ComposerBodyParagraph,
   ComposerBodyText,
@@ -12,7 +13,11 @@ import type {
 declare module "slate" {
   interface CustomTypes {
     Editor: BaseEditor & ReactEditor & HistoryEditor;
-    Element: ComposerBodyParagraph | ComposerBodyMention | ComposerBodyAutoLink;
+    Element:
+      | ComposerBodyParagraph
+      | ComposerBodyMention
+      | ComposerBodyAutoLink
+      | ComposerBodyCustomLink;
     Text: ComposerBodyText;
   }
 }

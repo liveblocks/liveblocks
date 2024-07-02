@@ -1,0 +1,19 @@
+name: Deploy examples to Vercel
+
+on:
+  push:
+    branches:
+      - examples
+
+jobs:
+  post_request:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy examples
+        run: |
+          # For nextjs-comments-canvas
+          curl -X POST https://api.vercel.com/v1/integrations/deploy/prj_yFy3klLqgmfMNMZI6FVhBj5w5UIl/hS0RaUAXGw
+
+          # For nextjs-whiteboard-advanced
+          curl -X POST https://api.vercel.com/v1/integrations/deploy/prj_IxnlQqkzTmSTo2SMguCk2iqNLHmF/nMcl52zGt5

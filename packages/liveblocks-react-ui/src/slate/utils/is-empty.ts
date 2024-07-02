@@ -1,12 +1,13 @@
 import type { Descendant } from "slate";
-import { Editor as SlateEditor, Text as SlateText } from "slate";
+import { Editor as SlateEditor } from "slate";
 
 import { isEmptyString } from "./is-empty-string";
+import { isText } from "./is-text";
 
 export function isEmpty(editor: SlateEditor, children: Descendant[]) {
   // Check if all blocks are empty, stopping at the first non-empty block
   for (const child of children) {
-    if (SlateText.isText(child)) {
+    if (isText(child)) {
       // Non-empty text
       if (!isEmptyString(child.text)) {
         return false;
@@ -15,10 +16,7 @@ export function isEmpty(editor: SlateEditor, children: Descendant[]) {
       // Non-empty paragraph
       if (
         child.children.length > 1 ||
-        !(
-          SlateText.isText(child.children[0]) &&
-          isEmptyString(child.children[0].text)
-        )
+        !(isText(child.children[0]) && isEmptyString(child.children[0].text))
       ) {
         return false;
       }

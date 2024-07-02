@@ -142,7 +142,11 @@ function isCommentBodyParagraph(
 function isCommentBodyText(
   element: CommentBodyElement
 ): element is CommentBodyText {
-  return "text" in element && typeof element.text === "string";
+  return (
+    !("type" in element) &&
+    "text" in element &&
+    typeof element.text === "string"
+  );
 }
 
 function isCommentBodyMention(
@@ -455,7 +459,7 @@ const stringifyCommentBodyPlainElements: StringifyCommentBodyElements<BaseUserMe
   {
     paragraph: ({ children }) => children,
     text: ({ element }) => element.text,
-    link: ({ element }) => element.url,
+    link: ({ element }) => element.text ?? element.url,
     mention: ({ element, user }) => {
       return `@${user?.name ?? element.id}`;
     },
@@ -499,7 +503,7 @@ const stringifyCommentBodyHtmlElements: StringifyCommentBodyElements<BaseUserMet
     },
     link: ({ element, href }) => {
       // prettier-ignore
-      return html`<a href="${href}" target="_blank" rel="noopener noreferrer">${element.url}</a>`;
+      return html`<a href="${href}" target="_blank" rel="noopener noreferrer">${element.text ?? element.url}</a>`;
     },
     mention: ({ element, user }) => {
       // prettier-ignore
@@ -544,7 +548,7 @@ const stringifyCommentBodyMarkdownElements: StringifyCommentBodyElements<BaseUse
     },
     link: ({ element, href }) => {
       // prettier-ignore
-      return markdown`[${element.url}](${href})`;
+      return markdown`[${element.text ?? element.url}](${href})`;
     },
     mention: ({ element, user }) => {
       // prettier-ignore

@@ -3,15 +3,16 @@ import type {
   CommentBody,
   CommentBodyLink,
   CommentBodyMention,
-  CommentBodyText,
 } from "@liveblocks/core";
-import { Text as SlateText } from "slate";
 
 import { isComposerBodyAutoLink } from "../../slate/plugins/auto-links";
+import { isComposerBodyCustomLink } from "../../slate/plugins/custom-links";
 import { isComposerBodyMention } from "../../slate/plugins/mentions";
+import { isText } from "../../slate/utils/is-text";
 import type {
   ComposerBody,
   ComposerBodyAutoLink,
+  ComposerBodyCustomLink,
   ComposerBodyMention,
   ComposerBodyText,
   Direction,
@@ -42,6 +43,16 @@ export function composerBodyAutoLinkToCommentBodyLink(
   };
 }
 
+export function composerBodyCustomLinkToCommentBodyLink(
+  link: ComposerBodyCustomLink
+): CommentBodyLink {
+  return {
+    type: "link",
+    url: link.url,
+    text: link.children.map((child) => child.text).join(""),
+  };
+}
+
 export function commentBodyMentionToComposerBodyMention(
   mention: CommentBodyMention
 ): ComposerBodyMention {
@@ -54,45 +65,60 @@ export function commentBodyMentionToComposerBodyMention(
 
 export function commentBodyLinkToComposerBodyLink(
   link: CommentBodyLink
-): ComposerBodyAutoLink {
-  return {
-    type: "auto-link",
-    url: link.url,
-    children: [
-      {
-        text: link.url,
-      },
-    ],
-  };
+): ComposerBodyAutoLink | ComposerBodyCustomLink {
+  if (link.text) {
+    return {
+      type: "custom-link",
+      url: link.url,
+      children: [{ text: link.text }],
+    };
+  } else {
+    return {
+      type: "auto-link",
+      url: link.url,
+      children: [{ text: link.url }],
+    };
+  }
 }
 
 export function composerBodyToCommentBody(body: ComposerBody): CommentBody {
   return {
     version: 1,
-    content: body.map((block) => {
-      const children = block.children
-        .map((inline) => {
-          if (isComposerBodyMention(inline)) {
-            return composerBodyMentionToCommentBodyMention(inline);
-          }
-
-          if (isComposerBodyAutoLink(inline)) {
-            return composerBodyAutoLinkToCommentBodyLink(inline);
-          }
-
-          if (SlateText.isText(inline)) {
-            return inline as CommentBodyText;
-          }
-
+    content: body
+      .map((block) => {
+        // All root blocks are paragraphs at the moment
+        if (block.type !== "paragraph") {
           return null;
-        })
-        .filter(exists);
+        }
 
-      return {
-        ...block,
-        children,
-      };
-    }),
+        const children = block.children
+          .map((inline) => {
+            if (isComposerBodyMention(inline)) {
+              return composerBodyMentionToCommentBodyMention(inline);
+            }
+
+            if (isComposerBodyAutoLink(inline)) {
+              return composerBodyAutoLinkToCommentBodyLink(inline);
+            }
+
+            if (isComposerBodyCustomLink(inline)) {
+              return composerBodyCustomLinkToCommentBodyLink(inline);
+            }
+
+            if (isText(inline)) {
+              return inline;
+            }
+
+            return null;
+          })
+          .filter(exists);
+
+        return {
+          ...block,
+          children,
+        };
+      })
+      .filter(exists),
   };
 }
 
@@ -103,30 +129,37 @@ export function commentBodyToComposerBody(body: CommentBody): ComposerBody {
     return emptyComposerBody;
   }
 
-  return body.content.map((block) => {
-    const children = block.children
-      .map((inline) => {
-        if (isCommentBodyMention(inline)) {
-          return commentBodyMentionToComposerBodyMention(inline);
-        }
-
-        if (isCommentBodyLink(inline)) {
-          return commentBodyLinkToComposerBodyLink(inline);
-        }
-
-        if (isCommentBodyText(inline)) {
-          return inline as ComposerBodyText;
-        }
-
+  return body.content
+    .map((block) => {
+      // All root blocks are paragraphs at the moment
+      if (block.type !== "paragraph") {
         return null;
-      })
-      .filter(exists);
+      }
 
-    return {
-      ...block,
-      children,
-    };
-  });
+      const children = block.children
+        .map((inline) => {
+          if (isCommentBodyMention(inline)) {
+            return commentBodyMentionToComposerBodyMention(inline);
+          }
+
+          if (isCommentBodyLink(inline)) {
+            return commentBodyLinkToComposerBodyLink(inline);
+          }
+
+          if (isCommentBodyText(inline)) {
+            return inline as ComposerBodyText;
+          }
+
+          return null;
+        })
+        .filter(exists);
+
+      return {
+        ...block,
+        children,
+      };
+    })
+    .filter(exists);
 }
 
 export function getPlacementFromPosition(
