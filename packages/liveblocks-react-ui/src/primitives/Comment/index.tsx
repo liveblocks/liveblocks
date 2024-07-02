@@ -81,7 +81,7 @@ const defaultBodyComponents: CommentBodyComponents = {
  * <Comment.Body body={comment.body} />
  */
 const CommentBody = forwardRef<HTMLDivElement, CommentBodyProps>(
-  ({ body, components, asChild, ...props }, forwardedRef) => {
+  ({ body, components, style, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
     const { Mention, Link } = useMemo(
       () => ({ ...defaultBodyComponents, ...components }),
@@ -93,12 +93,16 @@ const CommentBody = forwardRef<HTMLDivElement, CommentBodyProps>(
     }
 
     return (
-      <Component {...props} ref={forwardedRef}>
+      <Component
+        {...props}
+        style={{ whiteSpace: "break-spaces", ...style }}
+        ref={forwardedRef}
+      >
         {body.content.map((block, index) => {
           switch (block.type) {
             case "paragraph":
               return (
-                <p key={index}>
+                <p key={index} style={{ minHeight: "1lh" }}>
                   {block.children.map((inline, index) => {
                     if (isCommentBodyMention(inline)) {
                       return inline.id ? (
