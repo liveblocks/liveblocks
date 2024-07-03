@@ -40,6 +40,7 @@ import {
   FIRST_POSITION,
   prepareDisconnectedStorageUpdateTest,
   prepareIsolatedStorageTest,
+  prepareRoomWithStorage_loadWithDelay,
   prepareStorageTest,
   prepareStorageUpdateTest,
   serverMessage,
@@ -2540,6 +2541,69 @@ describe("room", () => {
           },
         ],
       ]);
+    });
+  });
+
+  describe("room load promises", () => {
+    test("presence-ready promise", async () => {
+      const { room } = createTestableRoom({
+        initialPresence: {},
+        initialStorage: {},
+      });
+
+      const p1 = room.waitUntilPresenceReady();
+      const p2 = room.waitUntilPresenceReady();
+      expect(p1).toBe(p2); // Promises must be exactly equal
+
+      expect(room.isPresenceReady()).toEqual(false);
+
+      room.connect();
+
+      expect(room.isPresenceReady()).toEqual(false);
+      await room.waitUntilPresenceReady();
+      expect(room.isPresenceReady()).toEqual(true);
+
+      room.disconnect();
+      expect(room.isPresenceReady()).toEqual(true);
+
+      room.connect();
+      await room.waitUntilPresenceReady();
+      expect(room.isPresenceReady()).toEqual(true);
+    });
+
+    test("storage-ready promise", async () => {
+      const { room } = prepareRoomWithStorage_loadWithDelay(
+        [["root", { type: CrdtType.OBJECT, data: {} }]],
+        undefined,
+        undefined,
+        undefined,
+        100 // Send initial storage after 100ms
+      );
+
+      const p1 = room.waitUntilStorageReady();
+      const p2 = room.waitUntilStorageReady();
+      expect(p1).toBe(p2); // Promises must be exactly equal
+
+      expect(room.isStorageReady()).toEqual(false);
+
+      room.connect();
+
+      expect(room.isStorageReady()).toEqual(false);
+
+      // Waiting for *Presence* will not lead to *Storage* being ready
+      await room.waitUntilPresenceReady();
+      expect(room.isStorageReady()).toEqual(false);
+
+      // Waiting for *Storage* to be ready will, though
+      await room.waitUntilStorageReady();
+      expect(room.isStorageReady()).toEqual(true);
+
+      room.disconnect();
+      expect(room.isStorageReady()).toEqual(true);
+
+      room.connect();
+      await room.waitUntilStorageReady();
+      expect(room.isStorageReady()).toEqual(true);
     });
   });
 });

@@ -1267,6 +1267,27 @@ const status = useStatus();
 The possible value are: `initial`, `connecting`, `connected`, `reconnecting`, or
 `disconnected`.
 
+### useStorageStatus [@badge=RoomProvider]
+
+Returns the current storage status of the room, and will re-render your
+component whenever it changes.
+
+```ts
+import { useStorageStatus } from "@liveblocks/react";
+
+const status = useStatus();
+// "not-loaded" | "loading" | "synchronizing" | "synchronized"
+```
+
+👉 A [Suspense version][] of this hook is also available.
+
+```ts
+import { useStorageStatus } from "@liveblocks/react/suspense";
+
+const status = useStatus();
+// "synchronizing" | "synchronized"
+```
+
 ### useOthersListener [@badge=RoomProvider]
 
 Calls the given callback when an “others” event occurs. Possible event types
@@ -1837,13 +1858,13 @@ function App() {
       id="my-room-name"
       initialStorage={{
         // +++
-        people: new LiveMap([
+        people: new LiveMap([[
           "alicia",
           new LiveObject({
             name: "Alicia",
             pets: new LiveList(["Fido", "Felix"]),
           }),
-        ]),
+        ]]),
         // +++
       }}
     >

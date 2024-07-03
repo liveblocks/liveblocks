@@ -16,7 +16,13 @@ import type {
   PrivateClientApi,
   ThreadDeleteInfo,
 } from "@liveblocks/core";
-import { createClient, kInternal, makePoller, raise } from "@liveblocks/core";
+import {
+  createClient,
+  kInternal,
+  makePoller,
+  raise,
+  shallow,
+} from "@liveblocks/core";
 import { nanoid } from "nanoid";
 import type { PropsWithChildren } from "react";
 import React, {
@@ -190,7 +196,7 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
   const store = internals.cacheStore;
   const notifications = internals.notifications;
 
-  let fetchInboxNotificationsRequest: Promise<{
+  let fetchInboxNotifications$: Promise<{
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<M>[];
     deletedThreads: ThreadDeleteInfo[];
@@ -224,8 +230,8 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
   async function fetchInboxNotifications(
     { retryCount }: { retryCount: number } = { retryCount: 0 }
   ) {
-    if (fetchInboxNotificationsRequest !== null) {
-      return fetchInboxNotificationsRequest;
+    if (fetchInboxNotifications$ !== null) {
+      return fetchInboxNotifications$;
     }
 
     store.setQueryState(INBOX_NOTIFICATIONS_QUERY, {
@@ -233,9 +239,9 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
     });
 
     try {
-      fetchInboxNotificationsRequest = notifications.getInboxNotifications();
+      fetchInboxNotifications$ = notifications.getInboxNotifications();
 
-      const result = await fetchInboxNotificationsRequest;
+      const result = await fetchInboxNotifications$;
 
       store.updateThreadsAndNotifications(
         result.threads,
@@ -247,7 +253,7 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
 
       /**
        * We set the `lastRequestedAt` to the timestamp returned by the current request if:
-       * 1. The `lastRequestedAt`has not been set
+       * 1. The `lastRequestedAt` has not been set
        * OR
        * 2. The current `lastRequestedAt` is older than the timestamp returned by the current request
        */
@@ -260,7 +266,7 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
 
       poller.start(POLLING_INTERVAL);
     } catch (er) {
-      fetchInboxNotificationsRequest = null;
+      fetchInboxNotifications$ = null;
 
       // Retry the action using the exponential backoff algorithm
       retryError(() => {
@@ -386,7 +392,8 @@ function useInboxNotifications_withClient(client: OpaqueClient) {
     store.subscribe,
     store.get,
     store.get,
-    selectorFor_useInboxNotifications
+    selectorFor_useInboxNotifications,
+    shallow
   );
 }
 
@@ -412,7 +419,8 @@ function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
     store.subscribe,
     store.get,
     store.get,
-    selectorFor_useInboxNotificationsSuspense
+    selectorFor_useInboxNotificationsSuspense,
+    shallow
   );
 }
 
@@ -425,7 +433,8 @@ function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
     store.subscribe,
     store.get,
     store.get,
-    selectorFor_useUnreadInboxNotificationsCount
+    selectorFor_useUnreadInboxNotificationsCount,
+    shallow
   );
 }
 
@@ -449,7 +458,8 @@ function useUnreadInboxNotificationsCountSuspense_withClient(
     store.subscribe,
     store.get,
     store.get,
-    selectorFor_useUnreadInboxNotificationsCountSuspense
+    selectorFor_useUnreadInboxNotificationsCountSuspense,
+    shallow
   );
 }
 
@@ -736,12 +746,15 @@ function useRoomInfoSuspense_withClient(client: OpaqueClient, roomId: string) {
 export function createSharedContext<U extends BaseUserMeta>(
   client: Client<U>
 ): SharedContextBundle<U> {
+  const useClient = () => client;
   return {
     classic: {
+      useClient,
       useUser: (userId: string) => useUser_withClient(client, userId),
       useRoomInfo: (roomId: string) => useRoomInfo_withClient(client, roomId),
     },
     suspense: {
+      useClient,
       useUser: (userId: string) => useUserSuspense_withClient(client, userId),
       useRoomInfo: (roomId: string) =>
         useRoomInfoSuspense_withClient(client, roomId),
@@ -863,8 +876,6 @@ export function createLiveblocksContext<
 }
 
 /**
- * @beta
- *
  * Returns the inbox notifications for the current user.
  *
  * @example
@@ -875,8 +886,6 @@ function useInboxNotifications() {
 }
 
 /**
- * @beta
- *
  * Returns the inbox notifications for the current user.
  *
  * @example
@@ -896,8 +905,6 @@ function useInboxNotificationThread<M extends BaseMetadata>(
 }
 
 /**
- * @beta
- *
  * Returns a function that marks all inbox notifications as read.
  *
  * @example
@@ -909,8 +916,6 @@ function useMarkAllInboxNotificationsAsRead() {
 }
 
 /**
- * @beta
- *
  * Returns a function that marks an inbox notification as read.
  *
  * @example
@@ -922,8 +927,6 @@ function useMarkInboxNotificationAsRead() {
 }
 
 /**
- * @beta
- *
  * Returns the number of unread inbox notifications for the current user.
  *
  * @example
@@ -934,8 +937,6 @@ function useUnreadInboxNotificationsCount() {
 }
 
 /**
- * @beta
- *
  * Returns the number of unread inbox notifications for the current user.
  *
  * @example
@@ -978,8 +979,6 @@ function useRoomInfoSuspense(roomId: string) {
 type TypedBundle = LiveblocksContextBundle<DU, DM>;
 
 /**
- * @beta
- *
  * Returns the thread associated with a `"thread"` inbox notification.
  *
  * @example

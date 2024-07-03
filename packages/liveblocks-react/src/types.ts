@@ -15,6 +15,7 @@ import type {
 } from "@liveblocks/client";
 import type {
   BaseMetadata,
+  Client,
   CommentBody,
   CommentData,
   DRI,
@@ -345,6 +346,11 @@ export type ThreadSubscription =
 export type SharedContextBundle<U extends BaseUserMeta> = {
   classic: {
     /**
+     * Obtains a reference to the current Liveblocks client.
+     */
+    useClient(): Client<U>;
+
+    /**
      * Returns user info from a given user ID.
      *
      * @example
@@ -362,6 +368,11 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
   };
 
   suspense: {
+    /**
+     * Obtains a reference to the current Liveblocks client.
+     */
+    useClient(): Client<U>;
+
     /**
      * Returns user info from a given user ID.
      *
@@ -624,8 +635,8 @@ type RoomContextBundleCommon<
   ): OmitFirstArg<F>;
 
   /**
-   * Returns an object that lets you get information about all the users
-   * currently connected in the room.
+   * Returns an array with information about all the users currently connected
+   * in the room (except yourself).
    *
    * @example
    * const others = useOthers();
@@ -806,8 +817,6 @@ type RoomContextBundleCommon<
   useRemoveReaction(): (options: CommentReactionOptions) => void;
 
   /**
-   * @beta
-   *
    * Returns a function that updates the user's notification settings
    * for the current room.
    *
@@ -895,7 +904,9 @@ export type RoomContextBundle<
        *
        * @example
        * const me = useSelf();
-       * const { x, y } = me.presence.cursor;
+       * if (me !== null) {
+       *   const { x, y } = me.presence.cursor;
+       * }
        */
       useSelf(): User<P, U> | null;
 
@@ -936,8 +947,6 @@ export type RoomContextBundle<
       useThreads(options?: UseThreadsOptions<M>): ThreadsState<M>;
 
       /**
-       * @beta
-       *
        * Returns the user's notification settings for the current room
        * and a function to update them.
        *
@@ -1006,13 +1015,9 @@ export type RoomContextBundle<
              * the result of a .map() or .filter() call from the selector. In those
              * cases, you'll probably want to use a `shallow` comparison check.
              *
-             * Will return `null` while Liveblocks isn't connected to a room yet.
-             *
              * @example
              * const cursor = useSelf(me => me.presence.cursor);
-             * if (cursor !== null) {
-             *   const { x, y } = cursor;
-             * }
+             * const { x, y } = cursor;
              *
              */
             useSelf<T>(
@@ -1029,8 +1034,6 @@ export type RoomContextBundle<
             useThreads(options?: UseThreadsOptions<M>): ThreadsStateSuccess<M>;
 
             /**
-             * @beta
-             *
              * Returns the user's notification settings for the current room
              * and a function to update them.
              *
@@ -1057,8 +1060,6 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
   LiveblocksProvider(props: PropsWithChildren): JSX.Element;
 
   /**
-   * @beta
-   *
    * Returns a function that marks an inbox notification as read.
    *
    * @example
@@ -1068,8 +1069,6 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
   useMarkInboxNotificationAsRead(): (inboxNotificationId: string) => void;
 
   /**
-   * @beta
-   *
    * Returns a function that marks all inbox notifications as read.
    *
    * @example
@@ -1079,8 +1078,6 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
   useMarkAllInboxNotificationsAsRead(): () => void;
 
   /**
-   * @beta
-   *
    * Returns the thread associated with a `"thread"` inbox notification.
    *
    * @example
@@ -1096,8 +1093,6 @@ export type LiveblocksContextBundle<
   LiveblocksContextBundleCommon<M> &
     SharedContextBundle<U>["classic"] & {
       /**
-       * @beta
-       *
        * Returns the inbox notifications for the current user.
        *
        * @example
@@ -1106,8 +1101,6 @@ export type LiveblocksContextBundle<
       useInboxNotifications(): InboxNotificationsState;
 
       /**
-       * @beta
-       *
        * Returns the number of unread inbox notifications for the current user.
        *
        * @example
@@ -1119,8 +1112,6 @@ export type LiveblocksContextBundle<
         LiveblocksContextBundleCommon<M> &
           SharedContextBundle<U>["suspense"] & {
             /**
-             * @beta
-             *
              * Returns the inbox notifications for the current user.
              *
              * @example
@@ -1129,8 +1120,6 @@ export type LiveblocksContextBundle<
             useInboxNotifications(): InboxNotificationsStateSuccess;
 
             /**
-             * @beta
-             *
              * Returns the number of unread inbox notifications for the current user.
              *
              * @example

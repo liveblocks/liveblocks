@@ -13,6 +13,94 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 -->
 
+# Week 26 (2024-06-28)
+
+## v2.1.0
+
+### `@liveblocks/client`
+
+- Various internal refactorings
+
+### `@liveblocks/react`
+
+- Add new hook
+  [`useStorageStatus`](https://liveblocks.io/docs/api-reference/liveblocks-react#useStorageStatus),
+  which returns the current storage status of the room, and will re-render your
+  component whenever it changes. This can used to build "Saving..." UIs.
+- Add
+  [`useDeleteThread`](https://liveblocks.io/docs/api-reference/liveblocks-react#useDeleteThread)
+  hook to delete a thread and its associated comments.
+- Fix: add missing JSDoc comments
+- Fix: improve some error messages and stack traces to contain more info
+- Refactorings to Suspense internals
+
+### `@liveblocks/react-ui`
+
+- Fix improper `useSyncExternalStore` import which would break on React versions lower than 18.
+
+## v2.0.5
+
+### `@liveblocks/react`
+
+- Improved DX: `useDeleteThread` will now throw a client-side error if someone
+  else than the thread owner tries to delete the thread. This will help you
+  catch and handle this case more easily.
+
+## v2.0.4
+
+### All packages
+
+- Improve TS error messages and error locations if custom `UserMeta` or
+  `ActivitiesData` types do not match their requirements
+
+### `@liveblocks/client`
+
+- Add missing type export for `CommentReaction`
+- Don’t attempt to write missing `initialStorage` keys if the current user has no
+  write access to storage. This will no longer throw, but issue a warning
+  message in the console.
+
+## v2.0.3
+
+### `@liveblocks/client`
+
+- In `client.enterRoom()`, the options `initialPresence` and `initialStorage`
+  are now only mandatory if your custom type requires them to be.
+
+### `@liveblocks/react`
+
+- In `<RoomProvider>`, the props `initialPresence` and `initialStorage` are now
+  only mandatory if your custom type requires them to be.
+- Nesting `<LiveblocksProvider>`s will now throw to prevent incorrect usage.
+
+### `@liveblocks/react-ui`
+
+- Prevent the composer from splitting text being composed.
+- Handle parentheses around and within auto links.
+- Count whitespace as empty to prevent posting empty comments.
+- Prevent clearing the composer if it's not handled. (via `onComposerSubmit`)
+
+### `@liveblocks/yjs`
+
+- Add missing type exports
+
+## Documentation
+
+- Updated the [interactive tutorial](https://liveblocks.io/docs/tutorial/react/getting-started/welcome) for Liveblocks 2.0.
+
+## Website
+
+- New blog post: [Introducing Liveblocks collaboration kit for Figma](https://liveblocks.io/blog/introducing-liveblocks-collaboration-kit-for-figma).
+- Updated [contact page](https://liveblocks.io/contact) with two separate forms for sales and support.
+
+## Processes
+
+- Versioning and publishing of public packages is now decoupled from versioning/publishing of our CLI tools.
+
+## Contributors
+
+flowflorent, ctnicholas, nvie, stevenfabre, pierrelevaillant, marcbouchenoire
+
 # Week 25 (2024-06-21)
 
 ## v2.0.2
@@ -37,7 +125,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 ### `@liveblocks/react-ui`
 
 - Prevent the composer from splitting text being composed.
-- Handle parentheses around and within auto-links.
+- Handle parentheses around and within auto links.
 - Count whitespace as empty to prevent posting empty comments.
 - Prevent clearing the composer if it's not handled. (via `onComposerSubmit`)
 
@@ -989,7 +1077,7 @@ leave();
 
 ## `@liveblocks/react-comments`
 
-- Add support for auto-links. (e.g. `"www.liveblocks.io"`)
+- Add support for auto links. (e.g. `"www.liveblocks.io"`)
 
 # v1.3.2
 
@@ -1281,7 +1369,7 @@ Recommended steps to upgrade:
 ## `create-liveblocks-app`
 
 - Added
-  [flags](https://github.com/liveblocks/liveblocks/tree/main/packages/create-liveblocks-app#flags-optional)
+  [flags](https://github.com/liveblocks/liveblocks/tree/main/tools/create-liveblocks-app#flags-optional)
   for creating config files with `--init`. (e.g. `--framework react`)
 - Added an error if an incorrect flag is used.
 - Slightly changed the format of the default config file.

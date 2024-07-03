@@ -1,4 +1,30 @@
-## v2.1.0 (not published yet)
+## v2.2.0 (not published yet)
+
+### `@liveblocks/react`
+
+- The `useClient()` hook is now also available for users of
+  `createRoomContext()` and/or `createLiveblocksContext()`
+- Fix: avoid unnecessary re-renders if inbox notifications haven't changed
+
+### `@liveblocks/react-ui`
+
+- Preserve rich text when pasting into the composer.
+- Add support for custom links to the composer. (either by pasting URLs with
+  plain text selected or by pasting existing links)
+- Preserve whitespace and empty lines in comments.
+- Fix improper `useTransition` fallback which would break on React versions
+  lower than 18.
+
+### @liveblocks/react-lexical
+
+- Upgrade `lexical` peer dependency to version `^0.16.1` that fixes
+  compatibility issues with Next.js versions 14.2.0 and above.
+
+### @liveblocks/node-lexical
+
+- Upgrade `lexical` peer dependency to version `0.16.1`.
+
+## v2.1.0
 
 ### `@liveblocks/client`
 
@@ -6,14 +32,21 @@
 
 ### `@liveblocks/react`
 
+- Add new hook
+  [`useStorageStatus`](https://liveblocks.io/docs/api-reference/liveblocks-react#useStorageStatus),
+  which returns the current storage status of the room, and will re-render your
+  component whenever it changes. This can used to build "Saving..." UIs.
 - Add
   [`useDeleteThread`](https://liveblocks.io/docs/api-reference/liveblocks-react#useDeleteThread)
   hook to delete a thread and its associated comments.
-- Add new hook `useStorageStatus()`, which returns the current storage status of
-  the room, and will re-render your component whenever it changes. This can used
-  to build "Saving..." UIs.
-- Add missing JSDoc comments
-- Improve some error messages and stack traces to contain more info
+- Fix: add missing JSDoc comments
+- Fix: improve some error messages and stack traces to contain more info
+- Refactorings to Suspense internals
+
+### `@liveblocks/react-ui`
+
+- Fix improper `useSyncExternalStore` import which would break on React versions
+  lower than 18.
 
 ## v2.0.5
 
@@ -33,8 +66,8 @@
 ### `@liveblocks/client`
 
 - Add missing type export for `CommentReaction`
-- Don’t attempt to write missing initialStorage keys if the current user has no
-  write access to storage. This will no longer throw, but issue a warning
+- Don’t attempt to write missing `initialStorage` keys if the current user has
+  no write access to storage. This will no longer throw, but issue a warning
   message in the console.
 
 ### `@liveblocks/react`
@@ -59,7 +92,7 @@
 ### `@liveblocks/react-ui`
 
 - Prevent the composer from splitting text being composed.
-- Handle parentheses around and within auto-links.
+- Handle parentheses around and within auto links.
 - Count whitespace as empty to prevent posting empty comments.
 - Prevent clearing the composer if it's not handled. (via `onComposerSubmit`)
 
@@ -826,7 +859,7 @@ leave();
 
 ### `@liveblocks/react-comments`
 
-- Add support for auto-links. (e.g. `"www.liveblocks.io"`)
+- Add support for auto links. (e.g. `"www.liveblocks.io"`)
 
 ## v1.3.2
 
@@ -1118,7 +1151,7 @@ Recommended steps to upgrade:
 ### `create-liveblocks-app`
 
 - Added
-  [flags](https://github.com/liveblocks/liveblocks/tree/main/packages/create-liveblocks-app#flags-optional)
+  [flags](https://github.com/liveblocks/liveblocks/tree/main/tools/create-liveblocks-app#flags-optional)
   for creating config files with `--init`. (e.g. `--framework react`)
 - Added an error if an incorrect flag is used.
 - Slightly changed the format of the default config file.

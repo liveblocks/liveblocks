@@ -20,6 +20,11 @@ interface Pkg {
 
 const pkg = createRequire(import.meta.url)("./package.json") as Pkg;
 
+// Match dependencies exactly or with any subpath
+function createExternals(dependencies: string[]) {
+  return dependencies.map((dependency) => new RegExp(`^${dependency}(/.*)?$`));
+}
+
 function createMainConfig(format: "cjs" | "esm"): RollupOptions {
   const output: RollupOptions["output"] =
     format === "cjs"
@@ -42,8 +47,12 @@ function createMainConfig(format: "cjs" | "esm"): RollupOptions {
   return {
     input: ENTRIES,
     external: [
-      ...Object.keys(pkg.dependencies),
-      ...Object.keys(pkg.peerDependencies),
+      ...createExternals([
+        ...Object.keys(pkg.dependencies),
+        ...Object.keys(pkg.peerDependencies),
+      ]),
+
+      // "react-dom" is an implicit peer dependency
       "react-dom",
     ],
     output,

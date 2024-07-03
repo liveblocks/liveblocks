@@ -35,6 +35,7 @@ import type { DE, DM, DP, DS, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
 import { Batch } from "./lib/batch";
+import { Promise_withResolvers } from "./lib/controlledPromise";
 import { captureStackTrace } from "./lib/debug";
 import type { Callback, Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
@@ -45,7 +46,7 @@ import { objectToQuery } from "./lib/objectToQuery";
 import { asPos } from "./lib/position";
 import type { QueryParams } from "./lib/url";
 import { urljoin } from "./lib/url";
-import { compact, deepClone, tryParseJson } from "./lib/utils";
+import { compact, deepClone, memoize, tryParseJson } from "./lib/utils";
 import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 import type { ClientMsg, UpdateYDocClientMsg } from "./protocol/ClientMsg";
@@ -716,6 +717,27 @@ export type Room<
    * - `synchronized`: Storage is in sync with Liveblocks servers.
    */
   getStorageStatus(): StorageStatus;
+
+  isPresenceReady(): boolean;
+  isStorageReady(): boolean;
+
+  /**
+   * Returns a Promise that resolves as soon as Presence is available, which
+   * happens shortly after the WebSocket connection has been established. Once
+   * this happens, `self` and `others` are known and available to use. After
+   * awaiting this promise, `.isPresenceReady()` will be guaranteed to be true.
+   * Even when calling this function multiple times, it's guaranteed to return
+   * the same Promise instance.
+   */
+  waitUntilPresenceReady(): Promise<void>;
+
+  /**
+   * Returns a Promise that resolves as soon as Storage has been loaded and
+   * available. After awaiting this promise, `.isStorageReady()` will be
+   * guaranteed to be true. Even when calling this function multiple times,
+   * it's guaranteed to return the same Promise instance.
+   */
+  waitUntilStorageReady(): Promise<void>;
 
   /**
    * Start an attempt to connect the room (aka "enter" it). Calling
@@ -2834,6 +2856,34 @@ export function createRoom<
     }
   }
 
+  function isPresenceReady() {
+    return self.current !== null;
+  }
+
+  async function waitUntilPresenceReady(): Promise<void> {
+    while (!isPresenceReady()) {
+      const { promise, resolve } = Promise_withResolvers();
+
+      const unsub1 = events.self.subscribeOnce(resolve);
+      const unsub2 = events.status.subscribeOnce(resolve);
+      // Return whenever one of these returns, whichever is first
+      await promise;
+      unsub1();
+      unsub2();
+    }
+  }
+
+  function isStorageReady() {
+    return getStorageSnapshot() !== null;
+  }
+
+  async function waitUntilStorageReady(): Promise<void> {
+    while (!isStorageReady()) {
+      // Trigger a load of Storage and wait until it finished
+      await getStorage();
+    }
+  }
+
   // Derived cached state for use in DevTools
   const others_forDevTools = new DerivedRef(context.others, (others) =>
     others.map((other, index) => userToTreeNode(`Other ${index}`, other))
@@ -3026,6 +3076,11 @@ export function createRoom<
       getStorage,
       getStorageSnapshot,
       getStorageStatus,
+
+      isPresenceReady,
+      isStorageReady,
+      waitUntilPresenceReady: memoize(waitUntilPresenceReady),
+      waitUntilStorageReady: memoize(waitUntilStorageReady),
 
       events,
 

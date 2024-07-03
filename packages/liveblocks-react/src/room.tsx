@@ -76,6 +76,7 @@ import { selectedThreads } from "./comments/lib/selected-threads";
 import { retryError } from "./lib/retry-error";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
+import { use } from "./lib/use-polyfill";
 import {
   createSharedContext,
   LiveblocksProviderWithClient,
@@ -2167,8 +2168,6 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
 }
 
 /**
- * @beta
- *
  * Returns the user's notification settings for the current room
  * and a function to update them.
  *
@@ -2224,8 +2223,6 @@ function useRoomNotificationSettings(): [
 }
 
 /**
- * @beta
- *
  * Returns a function that updates the user's notification settings
  * for the current room.
  *
@@ -2286,23 +2283,12 @@ function ensureNotServerSide(): void {
   }
 }
 
-function useSuspendUntilPresenceLoaded(): void {
-  const room = useRoom();
-  if (room.getSelf() !== null) {
-    return;
-  }
-
+function useSuspendUntilPresenceReady(): void {
+  // Throw an error if we're calling this on the server side
   ensureNotServerSide();
 
-  // Throw a _promise_. Suspense will suspend the component tree until either
-  // until either a presence update event, or a connection status change has
-  // happened. After that, it will render this component tree again and
-  // re-evaluate the .getSelf() condition above, or re-suspend again until
-  // such event happens.
-  throw new Promise<void>((res) => {
-    room.events.self.subscribeOnce(() => res());
-    room.events.status.subscribeOnce(() => res());
-  });
+  const room = useRoom();
+  use(room.waitUntilPresenceReady());
 }
 
 function useSelfSuspense<P extends JsonObject, U extends BaseUserMeta>(): User<
@@ -2317,7 +2303,7 @@ function useSelfSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
   selector?: (me: User<P, U>) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T | User<P, U> {
-  useSuspendUntilPresenceLoaded();
+  useSuspendUntilPresenceReady();
   return useSelf(
     selector as (me: User<P, U>) => T,
     isEqual as (prev: T | null, curr: T | null) => boolean
@@ -2336,7 +2322,7 @@ function useOthersSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
   selector?: (others: readonly User<P, U>[]) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T | readonly User<P, U>[] {
-  useSuspendUntilPresenceLoaded();
+  useSuspendUntilPresenceReady();
   return useOthers(
     selector as (others: readonly User<P, U>[]) => T,
     isEqual as (prev: T, curr: T) => boolean
@@ -2358,7 +2344,7 @@ function useOthersSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
  * // [2, 4, 7]
  */
 function useOthersConnectionIdsSuspense(): readonly number[] {
-  useSuspendUntilPresenceLoaded();
+  useSuspendUntilPresenceReady();
   return useOthersConnectionIds();
 }
 
@@ -2370,7 +2356,7 @@ function useOthersMappedSuspense<
   itemSelector: (other: User<P, U>) => T,
   itemIsEqual?: (prev: T, curr: T) => boolean
 ): ReadonlyArray<readonly [connectionId: number, data: T]> {
-  useSuspendUntilPresenceLoaded();
+  useSuspendUntilPresenceReady();
   return useOthersMapped(itemSelector, itemIsEqual);
 }
 
@@ -2379,31 +2365,23 @@ function useOtherSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
   selector: (other: User<P, U>) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T {
-  useSuspendUntilPresenceLoaded();
+  useSuspendUntilPresenceReady();
   return useOther(connectionId, selector, isEqual);
 }
 
-function useSuspendUntilStorageLoaded(): void {
-  const room = useRoom();
-  if (room.getStorageSnapshot() !== null) {
-    return;
-  }
-
+function useSuspendUntilStorageReady(): void {
+  // Throw an error if we're calling this on the server side
   ensureNotServerSide();
 
-  // Throw a _promise_. Suspense will suspend the component tree until this
-  // promise resolves (aka until storage has loaded). After that, it will
-  // render this component tree again.
-  throw new Promise<void>((res) => {
-    room.events.storageDidLoad.subscribeOnce(() => res());
-  });
+  const room = useRoom();
+  use(room.waitUntilStorageReady());
 }
 
 function useStorageSuspense<S extends LsonObject, T>(
   selector: (root: ToImmutable<S>) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T {
-  useSuspendUntilStorageLoaded();
+  useSuspendUntilStorageReady();
   return useStorage(
     selector,
     isEqual as (prev: T | null, curr: T | null) => boolean
@@ -2416,7 +2394,7 @@ function useStorageSuspense<S extends LsonObject, T>(
  * indicator.
  */
 function useStorageStatusSuspense(): StorageStatusSuccess {
-  useSuspendUntilStorageLoaded();
+  useSuspendUntilStorageReady();
   const room = useRoom();
   const subscribe = room.events.storageStatus.subscribe;
   const getSnapshot = room.getStorageStatus as () => StorageStatusSuccess;
@@ -2479,8 +2457,6 @@ function useThreadsSuspense<M extends BaseMetadata>(
 }
 
 /**
- * @beta
- *
  * Returns the user's notification settings for the current room
  * and a function to update them.
  *
@@ -2819,8 +2795,54 @@ const _useThreadsSuspense: TypedBundle["suspense"]["useThreads"] =
  */
 const _useOther: TypedBundle["useOther"] = useOther;
 
-// TODO This one is tricky, as it has overloads
-const _useOthers: TypedBundle["useOthers"] = useOthers;
+/**
+ * Returns an array with information about all the users currently connected in
+ * the room (except yourself).
+ *
+ * @example
+ * const others = useOthers();
+ *
+ * // Example to map all cursors in JSX
+ * return (
+ *   <>
+ *     {others.map((user) => {
+ *        if (user.presence.cursor == null) {
+ *          return null;
+ *        }
+ *        return <Cursor key={user.connectionId} cursor={user.presence.cursor} />
+ *      })}
+ *   </>
+ * )
+ */
+function _useOthers(): readonly User<DP, DU>[];
+/**
+ * Extract arbitrary data based on all the users currently connected in the
+ * room (except yourself).
+ *
+ * The selector function will get re-evaluated any time a user enters or
+ * leaves the room, as well as whenever their presence data changes.
+ *
+ * The component that uses this hook will automatically re-render if your
+ * selector function returns a different value from its previous run.
+ *
+ * By default `useOthers()` uses strict `===` to check for equality. Take
+ * extra care when returning a computed object or list, for example when you
+ * return the result of a .map() or .filter() call from the selector. In
+ * those cases, you'll probably want to use a `shallow` comparison check.
+ *
+ * @example
+ * const avatars = useOthers(users => users.map(u => u.info.avatar), shallow);
+ * const cursors = useOthers(users => users.map(u => u.presence.cursor), shallow);
+ * const someoneIsTyping = useOthers(users => users.some(u => u.presence.isTyping));
+ *
+ */
+function _useOthers<T>(
+  selector: (others: readonly User<DP, DU>[]) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T;
+function _useOthers(...args: any[]) {
+  return useOthers(...(args as []));
+}
 
 /**
  * Given a connection ID (as obtained by using `useOthersConnectionIds`), you
@@ -2833,9 +2855,54 @@ const _useOthers: TypedBundle["useOthers"] = useOthers;
  */
 const _useOtherSuspense: TypedBundle["suspense"]["useOther"] = useOtherSuspense;
 
-// TODO This one is tricky, as it has overloads
-const _useOthersSuspense: TypedBundle["suspense"]["useOthers"] =
-  useOthersSuspense;
+/**
+ * Returns an array with information about all the users currently connected in
+ * the room (except yourself).
+ *
+ * @example
+ * const others = useOthers();
+ *
+ * // Example to map all cursors in JSX
+ * return (
+ *   <>
+ *     {others.map((user) => {
+ *        if (user.presence.cursor == null) {
+ *          return null;
+ *        }
+ *        return <Cursor key={user.connectionId} cursor={user.presence.cursor} />
+ *      })}
+ *   </>
+ * )
+ */
+function _useOthersSuspense(): readonly User<DP, DU>[];
+/**
+ * Extract arbitrary data based on all the users currently connected in the
+ * room (except yourself).
+ *
+ * The selector function will get re-evaluated any time a user enters or
+ * leaves the room, as well as whenever their presence data changes.
+ *
+ * The component that uses this hook will automatically re-render if your
+ * selector function returns a different value from its previous run.
+ *
+ * By default `useOthers()` uses strict `===` to check for equality. Take
+ * extra care when returning a computed object or list, for example when you
+ * return the result of a .map() or .filter() call from the selector. In
+ * those cases, you'll probably want to use a `shallow` comparison check.
+ *
+ * @example
+ * const avatars = useOthers(users => users.map(u => u.info.avatar), shallow);
+ * const cursors = useOthers(users => users.map(u => u.presence.cursor), shallow);
+ * const someoneIsTyping = useOthers(users => users.some(u => u.presence.isTyping));
+ *
+ */
+function _useOthersSuspense<T>(
+  selector: (others: readonly User<DP, DU>[]) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T;
+function _useOthersSuspense(...args: any[]) {
+  return useOthersSuspense(...(args as []));
+}
 
 /**
  * Extract arbitrary data from the Liveblocks Storage state, using an
@@ -2880,11 +2947,81 @@ const _useStorage: TypedBundle["useStorage"] = useStorage;
 const _useStorageSuspense: TypedBundle["suspense"]["useStorage"] =
   useStorageSuspense;
 
-// TODO This one is tricky, as it has overloads
-const _useSelf: TypedBundle["useSelf"] = useSelf;
+/**
+ * Gets the current user once it is connected to the room.
+ *
+ * @example
+ * const me = useSelf();
+ * if (me !== null) {
+ *   const { x, y } = me.presence.cursor;
+ * }
+ */
+function _useSelf(): User<DP, DU> | null;
+/**
+ * Extract arbitrary data based on the current user.
+ *
+ * The selector function will get re-evaluated any time your presence data
+ * changes.
+ *
+ * The component that uses this hook will automatically re-render if your
+ * selector function returns a different value from its previous run.
+ *
+ * By default `useSelf()` uses strict `===` to check for equality. Take extra
+ * care when returning a computed object or list, for example when you return
+ * the result of a .map() or .filter() call from the selector. In those
+ * cases, you'll probably want to use a `shallow` comparison check.
+ *
+ * Will return `null` while Liveblocks isn't connected to a room yet.
+ *
+ * @example
+ * const cursor = useSelf(me => me.presence.cursor);
+ * if (cursor !== null) {
+ *   const { x, y } = cursor;
+ * }
+ *
+ */
+function _useSelf<T>(
+  selector: (me: User<DP, DU>) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T | null;
+function _useSelf(...args: any[]) {
+  return useSelf(...(args as []));
+}
 
-// TODO This one is tricky, as it has overloads
-const _useSelfSuspense: TypedBundle["suspense"]["useSelf"] = useSelfSuspense;
+/**
+ * Gets the current user once it is connected to the room.
+ *
+ * @example
+ * const me = useSelf();
+ * const { x, y } = me.presence.cursor;
+ */
+function _useSelfSuspense(): User<DP, DU>;
+/**
+ * Extract arbitrary data based on the current user.
+ *
+ * The selector function will get re-evaluated any time your presence data
+ * changes.
+ *
+ * The component that uses this hook will automatically re-render if your
+ * selector function returns a different value from its previous run.
+ *
+ * By default `useSelf()` uses strict `===` to check for equality. Take extra
+ * care when returning a computed object or list, for example when you return
+ * the result of a .map() or .filter() call from the selector. In those
+ * cases, you'll probably want to use a `shallow` comparison check.
+ *
+ * @example
+ * const cursor = useSelf(me => me.presence.cursor);
+ * const { x, y } = cursor;
+ *
+ */
+function _useSelfSuspense<T>(
+  selector: (me: User<DP, DU>) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T;
+function _useSelfSuspense(...args: any[]) {
+  return useSelfSuspense(...(args as []));
+}
 
 /**
  * Returns the mutable (!) Storage root. This hook exists for

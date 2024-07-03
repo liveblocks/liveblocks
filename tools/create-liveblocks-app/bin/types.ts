@@ -3,7 +3,7 @@ export type ExampleEnvironmentVariable = {
   type: "public" | "secret";
 };
 
-// This file should match liveblocks/liveblocks/packages/create-liveblocks-app/bin/templates/types.ts
+// This file should match liveblocks/liveblocks/tools/create-liveblocks-app/bin/templates/types.ts
 
 // These are kept short because they need to be sent through encoded URL params
 export enum IntegrationOrigin {

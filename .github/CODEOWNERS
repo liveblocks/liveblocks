@@ -1,9 +1,9 @@
 # Public packages
 /packages/   @nvie
-/packages/liveblocks-devtools/   @nvie @marcbouchenoire
-/packages/create-liveblocks-app/   @CTNicholas
 /packages/liveblocks-node/   @nvie @ofoucherot @FlowFlorent
 /packages/liveblocks-react-ui/   @marcbouchenoire
+/tools/create-liveblocks-app/   @CTNicholas
+/tools/liveblocks-devtools/   @nvie @marcbouchenoire
 /shared/   @nvie
 /e2e/   @nvie
 
@@ -17,6 +17,3 @@
 
 # Scripts
 /scripts/   @nvie
-
-# Vercel deployments
-/scripts/should-example-rebuild-on-vercel.sh   @nvie @marcbouchenoire

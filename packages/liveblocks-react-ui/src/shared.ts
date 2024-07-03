@@ -7,7 +7,8 @@ import {
   useRoom,
   useSelf,
 } from "@liveblocks/react";
-import React, { useContext, useSyncExternalStore } from "react";
+import React, { useContext } from "react";
+import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
 const MENTION_SUGGESTIONS_DEBOUNCE = 500;
 

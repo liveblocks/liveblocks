@@ -172,7 +172,7 @@ export function run() {
     help: `
     Usage
       $ npx @liveblocks/codemod@latest <transform> <path> <...options>
-        transform    One of the choices from https://github.com/liveblocks/liveblocks/tree/main/packages/liveblocks-codemod
+        transform    One of the choices from https://github.com/liveblocks/liveblocks/tree/main/tools/liveblocks-codemod
         path         Files or directory to transform. Can be a glob like src/**.ts
     Options
       --force            Bypass Git safety checks and forcibly run codemods

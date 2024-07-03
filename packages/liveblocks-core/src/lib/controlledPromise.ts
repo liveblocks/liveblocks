@@ -1,23 +1,36 @@
 /**
- * Returns a pair of a Promise, and a flagger function that can be passed
+ * Returns a pair of a Promise, and a resolve function that can be passed
  * around to resolve the promise "from anywhere".
  *
- * The Promise will remain unresolved, until the flagger function is called.
- * Once the flagger function is called with a value, the Promise will resolve
+ * The Promise will remain unresolved, until the resolve function is called.
+ * Once the resolve function is called with a value, the Promise will resolve
  * to that value.
  *
- * Calling the flagger function beyond the first time is a no-op.
+ * Calling the resolve function beyond the first time is a no-op.
  */
 export function controlledPromise<T>(): [
   promise: Promise<T>,
-  flagger: (value: T) => void,
+  resolve: (value: T) => void,
+  reject: (reason: unknown) => void,
 ] {
-  let flagger: ((value: T) => void) | undefined;
-  const promise = new Promise<T>((res) => {
-    flagger = res;
+  let resolve: ((value: T) => void) | undefined;
+  let reject: ((reason: unknown) => void) | undefined;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
   });
-  if (!flagger) {
-    throw new Error("Should never happen");
-  }
-  return [promise, flagger];
+  // eslint-disable-next-line no-restricted-syntax
+  return [promise, resolve!, reject!];
+}
+
+/**
+ * Drop-in replacement for the ES2024 Promise.withResolvers() API.
+ */
+export function Promise_withResolvers<T>(): {
+  promise: Promise<T>;
+  resolve: (value: T) => void;
+  reject: (reason: unknown) => void;
+} {
+  const [promise, resolve, reject] = controlledPromise<T>();
+  return { promise, resolve, reject };
 }

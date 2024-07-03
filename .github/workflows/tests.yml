@@ -8,7 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x]
+        node-version: [22.x]
         pkg:
           [
             "@liveblocks/core",
@@ -47,6 +47,9 @@ jobs:
           restore-keys:
             turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-bust3
 
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v1
+
       - name: Build
         run: npm run build -- --filter ${{ matrix.pkg }}
 
@@ -70,7 +73,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x]
+        node-version: [22.x]
 
     timeout-minutes: 60
 
@@ -113,7 +116,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x]
+        node-version: [22.x]
 
     timeout-minutes: 60
 
@@ -143,7 +146,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x]
+        node-version: [22.x]
         pkg: ["@liveblocks/schema", "@liveblocks/infer-schema"]
 
     steps:
