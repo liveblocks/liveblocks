@@ -57,6 +57,7 @@ import { MENTION_CHARACTER } from "../slate/plugins/mentions";
 import { classNames } from "../utils/class-names";
 import { useRefs } from "../utils/use-refs";
 import { useVisibleCallback } from "../utils/use-visible";
+import { useWindowFocus } from "../utils/use-window-focus";
 import { Composer } from "./Composer";
 import { Avatar } from "./internal/Avatar";
 import { Button } from "./internal/Button";
@@ -336,12 +337,18 @@ function MarkThreadAsReadWhenVisibleHandler({
   ref: RefObject<HTMLElement>;
 }) {
   const markThreadAsRead = useMarkThreadAsRead();
+  const isWindowFocused = useWindowFocus();
 
-  useVisibleCallback(ref, () => {
-    if (threadId) {
+  useVisibleCallback(
+    ref,
+    () => {
       markThreadAsRead(threadId);
+    },
+    {
+      // The underlying IntersectionObserver is only enabled when the window is focused
+      enabled: isWindowFocused,
     }
-  });
+  );
 
   return null;
 }
