@@ -627,7 +627,7 @@ describe("useInboxNotifications: polling", () => {
   });
 });
 
-describe("useThreadsSuspense: error", () => {
+describe("useInboxNotificationsSuspense: error", () => {
   beforeEach(() => {
     jest.useFakeTimers();
   });
@@ -670,6 +670,7 @@ describe("useThreadsSuspense: error", () => {
       ),
     });
 
+    // Hook did not return a value. Instead, an error was thrown
     expect(result.current).toEqual(null);
 
     await waitFor(() =>
