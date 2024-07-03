@@ -354,8 +354,15 @@ function makeLiveblocksContextBundle<
 }
 
 function useInboxNotifications_withClient(client: OpaqueClient) {
-  const { store, useEnableInboxNotificationsPolling } =
-    getExtrasForClient(client);
+  const {
+    store,
+    useEnableInboxNotificationsPolling,
+    waitUntilInboxNotificationsLoaded,
+  } = getExtrasForClient(client);
+
+  // Trigger initial loading of inbox notifications if it hasn't started
+  // already, but don't await its promise.
+  void waitUntilInboxNotificationsLoaded();
 
   useEnableInboxNotificationsPolling();
   return useSyncExternalStoreWithSelector(
@@ -382,8 +389,15 @@ function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
 }
 
 function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
-  const { store, useEnableInboxNotificationsPolling } =
-    getExtrasForClient(client);
+  const {
+    store,
+    useEnableInboxNotificationsPolling,
+    waitUntilInboxNotificationsLoaded,
+  } = getExtrasForClient(client);
+
+  // Trigger initial loading of inbox notifications if it hasn't started
+  // already, but don't await its promise.
+  void waitUntilInboxNotificationsLoaded();
 
   useEnableInboxNotificationsPolling();
   return useSyncExternalStoreWithSelector(
