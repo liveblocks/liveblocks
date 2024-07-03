@@ -1,8 +1,7 @@
 {
   // Extend the global Turbo file
   "extends": ["//"],
-
-  "pipeline": {
+  "tasks": {
     "test:e2e": {
       "dependsOn": ["build"],
       "inputs": [

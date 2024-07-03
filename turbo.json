@@ -1,7 +1,8 @@
 {
   "$schema": "https://turborepo.org/schema.json",
   "globalDependencies": [".envrc"],
-  "pipeline": {
+  "globalEnv": ["CI", "LIVEBLOCKS_*", "NEXT_PUBLIC_*"],
+  "tasks": {
     "dev": {
       "dependsOn": ["^build"],
       "cache": false
