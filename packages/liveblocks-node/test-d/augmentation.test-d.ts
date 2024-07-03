@@ -357,4 +357,40 @@ async () => {
     expectType<string>(reaction.userId);
     expectType<Date>(reaction.createdAt);
   }
+
+  // .markThreadAsResolved()
+  {
+    const thread = await client.markThreadAsResolved({
+      roomId: "my-room",
+      threadId: "th_xxx",
+      data: {
+        userId: "user-id",
+      },
+    });
+    expectType<"thread">(thread.type);
+    expectType<string>(thread.id);
+    expectType<string>(thread.roomId);
+    expectType<boolean>(thread.resolved);
+    expectType<Date>(thread.createdAt);
+    expectType<Date | undefined>(thread.updatedAt);
+    expectType<CommentData[]>(thread.comments);
+  }
+
+  // .markThreadAsUnresolved()
+  {
+    const thread = await client.markThreadAsUnresolved({
+      roomId: "my-room",
+      threadId: "th_xxx",
+      data: {
+        userId: "user-id",
+      },
+    });
+    expectType<"thread">(thread.type);
+    expectType<string>(thread.id);
+    expectType<string>(thread.roomId);
+    expectType<boolean>(thread.resolved);
+    expectType<Date>(thread.createdAt);
+    expectType<Date | undefined>(thread.updatedAt);
+    expectType<CommentData[]>(thread.comments);
+  }
 };
