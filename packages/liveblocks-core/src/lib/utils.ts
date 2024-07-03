@@ -208,7 +208,10 @@ export function memoizeOnSuccess<T>(
   return () => {
     if (cached === null) {
       cached = factoryFn().catch((err) => {
-        cached = null;
+        // XXX Hmm. Explicit reset may be better here, or pass this an identifier somehow, think useId()! Will have to discuss with Nimesh.
+        setTimeout(() => {
+          cached = null;
+        }, 5_000);
         throw err;
       });
     }
