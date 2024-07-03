@@ -163,6 +163,13 @@ export function compactObject<O extends Record<string, unknown>>(
 }
 
 /**
+ * Returns a promise that resolves after the given number of milliseconds.
+ */
+export function wait(millis: number): Promise<void> {
+  return new Promise((res) => setTimeout(res, millis));
+}
+
+/**
  * Returns whatever the given promise returns, but will be rejected with
  * a "Timed out" error if the given promise does not return or reject within
  * the given timeout period (in milliseconds).
@@ -190,15 +197,21 @@ export async function withTimeout<T>(
 }
 
 /**
- * Memoize a factory function, so that each subsequent call to the returned
- * function will return the exact same value.
+ * Memoize a promise factory, so that each subsequent call will return the same
+ * pending or success promise, but if the promise rejects, the next call to the
+ * function will start a new promise.
  */
-export function memoize<T>(factoryFn: () => T): () => T {
-  let cached: { value: T } | null = null;
+export function memoizeOnSuccess<T>(
+  factoryFn: () => Promise<T>
+): () => Promise<T> {
+  let cached: Promise<T> | null = null;
   return () => {
     if (cached === null) {
-      cached = { value: factoryFn() };
+      cached = factoryFn().catch((err) => {
+        cached = null;
+        throw err;
+      });
     }
-    return cached.value;
+    return cached;
   };
 }
