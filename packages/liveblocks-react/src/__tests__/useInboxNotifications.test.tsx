@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 
-import { createClient, kInternal } from "@liveblocks/core";
+import { createClient, kInternal, wait } from "@liveblocks/core";
 import {
   fireEvent,
   render,
@@ -238,16 +238,14 @@ describe("useInboxNotifications", () => {
       ),
     });
 
-    expect(result.current).toEqual({
-      isLoading: true,
-    });
+    expect(result.current).toEqual({ isLoading: true });
 
-    await waitFor(() =>
-      expect(result.current).toEqual({
-        isLoading: false,
-        error: expect.any(Error),
-      })
-    );
+    // An error will only be thrown after the initial load failed, which
+    // happens after 5 retries (>1 minute) at earliest, so this is annoying
+    // to test here.
+    await wait(1000);
+
+    expect(result.current).toEqual({ isLoading: true });
 
     unmount();
   });
