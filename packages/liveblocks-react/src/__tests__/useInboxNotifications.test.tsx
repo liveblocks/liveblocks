@@ -370,17 +370,25 @@ describe("useInboxNotifications: error", () => {
     // A new fetch request for the inbox notifications should have been made after the first retry
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(2));
 
-    // The second retry should be made after 10s
-    await jest.advanceTimersByTimeAsync(10_000);
+    // The second retry should be made after 5s
+    await jest.advanceTimersByTimeAsync(5_000);
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(3));
 
-    // The third retry should be made after 20s
-    await jest.advanceTimersByTimeAsync(20_000);
+    // The third retry should be made after 10s
+    await jest.advanceTimersByTimeAsync(10_000);
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(4));
 
-    // The fourth retry should be made after 40s
-    await jest.advanceTimersByTimeAsync(40_000);
+    // The fourth retry should be made after 10s
+    await jest.advanceTimersByTimeAsync(10_000);
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(5));
+
+    // The fifth retry should be made after 20s
+    await jest.advanceTimersByTimeAsync(20_000);
+    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(6));
+
+    // The sixth retry should be made after 20s
+    await jest.advanceTimersByTimeAsync(20_000);
+    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(7));
 
     // and so on...
   });

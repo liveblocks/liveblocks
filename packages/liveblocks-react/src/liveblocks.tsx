@@ -234,13 +234,8 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
     try {
       await autoRetry(
         () => updateInboxNotifications(),
-        5,
-        // XXX: We're currently doing wait as high as 40000, 80000 here, but...
-        // do we really wait until over a minute? Seems too long to me. Maybe
-        // instead we want to try a bit more often, and with a bit less waiting
-        // time?
-        // XXX: Proposal: change the array below to [5000, 5000, 10000, 10000, 15000, 15000] (= total timeout of 1 minute)
-        [5000, 10000, 20000, 40000, 80000]
+        7,
+        [5000, 5000, 10000, 10000, 15000, 15000]
       );
     } catch (err) {
       // Store the error in the cache as a side-effect, for non-Suspense
