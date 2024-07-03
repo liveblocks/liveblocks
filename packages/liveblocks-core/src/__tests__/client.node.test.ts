@@ -212,6 +212,9 @@ describe("createClient", () => {
   });
 
   test("should fail to connect and stop retrying if WebSocketPolyfill is not set", async () => {
+    const ws = globalThis.WebSocket;
+    delete (globalThis as any).WebSocket;
+
     const spy = jest.spyOn(console, "error");
 
     const client = createClient({ authEndpoint: authEndpointCallback });
@@ -226,6 +229,7 @@ describe("createClient", () => {
     } finally {
       // Clean things up
       leave();
+      globalThis.WebSocket = ws;
     }
   });
 });
