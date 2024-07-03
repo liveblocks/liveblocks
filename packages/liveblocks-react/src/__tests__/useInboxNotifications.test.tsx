@@ -355,31 +355,31 @@ describe("useInboxNotifications: error", () => {
       isLoading: true,
     });
 
-    await waitFor(() =>
-      expect(result.current).toEqual({
-        isLoading: false,
-        error: expect.any(Error),
-      })
-    );
+    // An error will only be thrown after the initial load failed, which
+    // happens after 5 retries (>1 minute) at earliest, so this is annoying
+    // to test here.
+    await jest.advanceTimersByTimeAsync(1_000);
+
+    expect(result.current).toEqual({ isLoading: true });
 
     // Unmount so polling doesn't interfere with the test
     unmount();
 
-    // The first retry should be made after 5000ms * 2^0 (5000ms is the currently set error retry interval)
-    jest.advanceTimersByTime(5000);
+    // The first retry should be made after 5s
+    await jest.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the inbox notifications should have been made after the first retry
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(2));
 
-    // The second retry should be made after 5000ms * 2^1
-    jest.advanceTimersByTime(5000 * Math.pow(2, 1));
+    // The second retry should be made after 10s
+    await jest.advanceTimersByTimeAsync(10_000);
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(3));
 
-    // The third retry should be made after 5000ms * 2^2
-    jest.advanceTimersByTime(5000 * Math.pow(2, 2));
+    // The third retry should be made after 20s
+    await jest.advanceTimersByTimeAsync(20_000);
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(4));
 
-    // The fourth retry should be made after 5000ms * 2^3
-    jest.advanceTimersByTime(5000 * Math.pow(2, 3));
+    // The fourth retry should be made after 40s
+    await jest.advanceTimersByTimeAsync(40_000);
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(5));
 
     // and so on...
@@ -408,12 +408,12 @@ describe("useInboxNotifications: error", () => {
       isLoading: true,
     });
 
-    await waitFor(() =>
-      expect(result.current).toEqual({
-        isLoading: false,
-        error: expect.any(Error),
-      })
-    );
+    // An error will only be thrown after the initial load failed, which
+    // happens after 5 retries (>1 minute) at earliest, so this is annoying
+    // to test here.
+    await wait(1000);
+
+    expect(result.current).toEqual({ isLoading: true });
 
     // Unmount so polling doesn't interfere with the test
     unmount();
@@ -473,12 +473,12 @@ describe("useInboxNotifications: error", () => {
       isLoading: true,
     });
 
-    await waitFor(() =>
-      expect(result.current).toEqual({
-        isLoading: false,
-        error: expect.any(Error),
-      })
-    );
+    // An error will only be thrown after the initial load failed, which
+    // happens after 5 retries (>1 minute) at earliest, so this is annoying
+    // to test here.
+    await wait(1000);
+
+    expect(result.current).toEqual({ isLoading: true });
 
     // The first retry should be made after 5000ms * 2^0 (5000ms is the currently set error retry interval)
     jest.advanceTimersByTime(5000);
