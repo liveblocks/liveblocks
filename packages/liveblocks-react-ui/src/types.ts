@@ -21,7 +21,8 @@ export type ComposerBodyBlockElement = ComposerBodyParagraph;
 export type ComposerBodyInlineElement =
   | ComposerBodyText
   | ComposerBodyMention
-  | ComposerBodyAutoLink;
+  | ComposerBodyAutoLink
+  | ComposerBodyCustomLink;
 
 export type ComposerBodyParagraph = {
   type: "paragraph";
@@ -30,6 +31,12 @@ export type ComposerBodyParagraph = {
 
 export type ComposerBodyAutoLink = {
   type: "auto-link";
+  url: string;
+  children: ComposerBodyText[];
+};
+
+export type ComposerBodyCustomLink = {
+  type: "custom-link";
   url: string;
   children: ComposerBodyText[];
 };

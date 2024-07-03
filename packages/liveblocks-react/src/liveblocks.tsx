@@ -16,7 +16,13 @@ import type {
   PrivateClientApi,
   ThreadDeleteInfo,
 } from "@liveblocks/core";
-import { createClient, kInternal, makePoller, raise } from "@liveblocks/core";
+import {
+  createClient,
+  kInternal,
+  makePoller,
+  raise,
+  shallow,
+} from "@liveblocks/core";
 import { nanoid } from "nanoid";
 import type { PropsWithChildren } from "react";
 import React, {
@@ -386,7 +392,8 @@ function useInboxNotifications_withClient(client: OpaqueClient) {
     store.subscribe,
     store.get,
     store.get,
-    selectorFor_useInboxNotifications
+    selectorFor_useInboxNotifications,
+    shallow
   );
 }
 
@@ -412,7 +419,8 @@ function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
     store.subscribe,
     store.get,
     store.get,
-    selectorFor_useInboxNotificationsSuspense
+    selectorFor_useInboxNotificationsSuspense,
+    shallow
   );
 }
 
@@ -425,7 +433,8 @@ function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
     store.subscribe,
     store.get,
     store.get,
-    selectorFor_useUnreadInboxNotificationsCount
+    selectorFor_useUnreadInboxNotificationsCount,
+    shallow
   );
 }
 
@@ -449,7 +458,8 @@ function useUnreadInboxNotificationsCountSuspense_withClient(
     store.subscribe,
     store.get,
     store.get,
-    selectorFor_useUnreadInboxNotificationsCountSuspense
+    selectorFor_useUnreadInboxNotificationsCountSuspense,
+    shallow
   );
 }
 
@@ -866,8 +876,6 @@ export function createLiveblocksContext<
 }
 
 /**
- * @beta
- *
  * Returns the inbox notifications for the current user.
  *
  * @example
@@ -878,8 +886,6 @@ function useInboxNotifications() {
 }
 
 /**
- * @beta
- *
  * Returns the inbox notifications for the current user.
  *
  * @example
@@ -899,8 +905,6 @@ function useInboxNotificationThread<M extends BaseMetadata>(
 }
 
 /**
- * @beta
- *
  * Returns a function that marks all inbox notifications as read.
  *
  * @example
@@ -912,8 +916,6 @@ function useMarkAllInboxNotificationsAsRead() {
 }
 
 /**
- * @beta
- *
  * Returns a function that marks an inbox notification as read.
  *
  * @example
@@ -925,8 +927,6 @@ function useMarkInboxNotificationAsRead() {
 }
 
 /**
- * @beta
- *
  * Returns the number of unread inbox notifications for the current user.
  *
  * @example
@@ -937,8 +937,6 @@ function useUnreadInboxNotificationsCount() {
 }
 
 /**
- * @beta
- *
  * Returns the number of unread inbox notifications for the current user.
  *
  * @example
@@ -981,8 +979,6 @@ function useRoomInfoSuspense(roomId: string) {
 type TypedBundle = LiveblocksContextBundle<DU, DM>;
 
 /**
- * @beta
- *
  * Returns the thread associated with a `"thread"` inbox notification.
  *
  * @example

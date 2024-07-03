@@ -4,6 +4,25 @@
 
 - The `useClient()` hook is now also available for users of
   `createRoomContext()` and/or `createLiveblocksContext()`
+- Fix: avoid unnecessary re-renders if inbox notifications haven't changed
+
+### `@liveblocks/react-ui`
+
+- Preserve rich text when pasting into the composer.
+- Add support for custom links to the composer. (either by pasting URLs with
+  plain text selected or by pasting existing links)
+- Preserve whitespace and empty lines in comments.
+- Fix improper `useTransition` fallback which would break on React versions
+  lower than 18.
+
+### @liveblocks/react-lexical
+
+- Upgrade `lexical` peer dependency to version `^0.16.1` that fixes
+  compatibility issues with Next.js versions 14.2.0 and above.
+
+### @liveblocks/node-lexical
+
+- Upgrade `lexical` peer dependency to version `0.16.1`.
 
 ## v2.1.0
 
@@ -26,7 +45,8 @@
 
 ### `@liveblocks/react-ui`
 
-- Fix improper `useSyncExternalStore` import which would break on React <18.
+- Fix improper `useSyncExternalStore` import which would break on React versions
+  lower than 18.
 
 ## v2.0.5
 
@@ -46,8 +66,8 @@
 ### `@liveblocks/client`
 
 - Add missing type export for `CommentReaction`
-- Don’t attempt to write missing initialStorage keys if the current user has no
-  write access to storage. This will no longer throw, but issue a warning
+- Don’t attempt to write missing `initialStorage` keys if the current user has
+  no write access to storage. This will no longer throw, but issue a warning
   message in the console.
 
 ### `@liveblocks/react`
@@ -72,7 +92,7 @@
 ### `@liveblocks/react-ui`
 
 - Prevent the composer from splitting text being composed.
-- Handle parentheses around and within auto-links.
+- Handle parentheses around and within auto links.
 - Count whitespace as empty to prevent posting empty comments.
 - Prevent clearing the composer if it's not handled. (via `onComposerSubmit`)
 
@@ -839,7 +859,7 @@ leave();
 
 ### `@liveblocks/react-comments`
 
-- Add support for auto-links. (e.g. `"www.liveblocks.io"`)
+- Add support for auto links. (e.g. `"www.liveblocks.io"`)
 
 ## v1.3.2
 
