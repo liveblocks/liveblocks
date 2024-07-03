@@ -375,7 +375,8 @@ function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
   const { waitUntilInboxNotificationsLoaded } = getExtrasForClient(client);
 
   // Suspend until there are at least some inbox notifications
-  use(waitUntilInboxNotificationsLoaded());
+  const promise = useInitial(waitUntilInboxNotificationsLoaded());
+  use(promise);
 
   // We're in a Suspense world here, and as such, the useInboxNotifications()
   // hook is expected to only return success results when we're here.
@@ -414,7 +415,8 @@ function useUnreadInboxNotificationsCountSuspense_withClient(
   const { waitUntilInboxNotificationsLoaded } = getExtrasForClient(client);
 
   // Suspend until there are at least some inbox notifications
-  use(waitUntilInboxNotificationsLoaded());
+  const promise = useInitial(waitUntilInboxNotificationsLoaded());
+  use(promise);
 
   const result = useUnreadInboxNotificationsCount_withClient(client);
   assert(!result.isLoading, "Did not expect loading");
