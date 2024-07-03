@@ -32,7 +32,6 @@ declare global {
     };
     // Custom metadata set on threads, for useThreads, useCreateThread, etc.
     ThreadMetadata: {
-      resolved: boolean;
       highlightId: string;
     };
     ActivitiesData: {

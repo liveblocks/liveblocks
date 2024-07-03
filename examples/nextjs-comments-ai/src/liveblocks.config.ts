@@ -10,10 +10,6 @@ declare global {
         color: string;
       };
     };
-    // Custom metadata set on threads, for useThreads, useCreateThread, etc.
-    ThreadMetadata: {
-      resolved: boolean;
-    };
   }
 }
 
