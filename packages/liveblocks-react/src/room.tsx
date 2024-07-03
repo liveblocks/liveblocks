@@ -941,11 +941,9 @@ function useStorageStatus(options?: UseStorageStatusOptions): StorageStatus {
   // will always be taken on every subsequent render here, because we've frozen
   // the value.
   /* eslint-disable react-hooks/rules-of-hooks */
-  const smooth = useInitial(options?.smooth ?? 0);
-  if (smooth === 2) {
-    return useStorageStatusSmooth2();
-  } else if (smooth === 1) {
-    return useStorageStatusSmooth1();
+  const smooth = useInitial(options?.smooth ?? false);
+  if (smooth) {
+    return useStorageStatusSmooth();
   } else {
     return useStorageStatusImmediate();
   }
@@ -960,7 +958,7 @@ function useStorageStatusImmediate(): StorageStatus {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
-function useStorageStatusSmooth1(): StorageStatus {
+function useStorageStatusSmooth(): StorageStatus {
   const room = useRoom();
   const [status, setStatus] = React.useState(room.getStorageStatus);
   const oldStatus = useLatest(room.getStorageStatus());
@@ -986,45 +984,6 @@ function useStorageStatusSmooth1(): StorageStatus {
       unsub();
     };
   }, [room, oldStatus]);
-
-  return status;
-}
-
-function useStorageStatusSmooth2(): StorageStatus {
-  const room = useRoom();
-  const [status, setStatus] = React.useState(room.getStorageStatus);
-
-  React.useEffect(() => {
-    // While timeoutId is non-null, it's considered "frozen"
-    let freezeTimeout: ReturnType<typeof setTimeout> | null = null;
-
-    const unsub = room.events.storageStatus.subscribe((newStatus) => {
-      if (freezeTimeout !== null) {
-        return;
-      }
-
-      // Otherwise, we're not frozen, so update the status immediately
-      setStatus(newStatus);
-
-      // ...but if the new status is synchronizing, freeze it again
-      if (newStatus === "synchronizing") {
-        // Do not update the status immediately
-        freezeTimeout = setTimeout(() => {
-          freezeTimeout = null;
-          return setStatus(room.getStorageStatus());
-        }, SMOOTH_DELAY);
-      }
-    });
-
-    // Clean up
-    return () => {
-      if (freezeTimeout !== null) {
-        clearTimeout(freezeTimeout);
-        freezeTimeout = null;
-      }
-      unsub();
-    };
-  }, [room]);
 
   return status;
 }

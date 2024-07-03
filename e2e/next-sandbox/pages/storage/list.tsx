@@ -54,8 +54,7 @@ function Sandbox() {
   const me = useSelf();
   const status = useStatus();
   const storageStatus = useStorageStatus();
-  const smoothStorageStatus1 = useStorageStatus({ smooth: 1 });
-  const smoothStorageStatus2 = useStorageStatus({ smooth: 2 });
+  const smoothStorageStatus = useStorageStatus({ smooth: true });
 
   const push = useMutation(
     ({ storage }, value: string) => {
@@ -200,14 +199,9 @@ function Sandbox() {
             value={storageStatus}
           />
           <Row
-            id="smoothStorageStatusAlternative1"
-            name="Storage status (smooth, v1)"
-            value={smoothStorageStatus1}
-          />
-          <Row
-            id="smoothStorageStatusAlternative2"
-            name="Storage status (smooth, v2)"
-            value={smoothStorageStatus2}
+            id="smoothStorageStatus"
+            name="Storage status (smooth)"
+            value={smoothStorageStatus}
           />
           <Row id="numItems" name="List size" value={items.length} />
           <Row id="items" name="Serialized" value={items} />

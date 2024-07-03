@@ -38,7 +38,7 @@ export type UseStorageStatusOptions = {
    * quickly between synchronizing and synchronized. If you use this hook to
    * build a "Saving changes..." style UI, prefer setting `smooth: true`.
    */
-  smooth?: 0 | 1 | 2;
+  smooth?: boolean;
 };
 
 export type StorageStatusSuccess = Exclude<
