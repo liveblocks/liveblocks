@@ -5,7 +5,11 @@ import { Project, Node, SyntaxKind } from "ts-morph";
 import { sorted } from "itertools";
 
 // Configuration
-const ALLOW_NO_JSDOCS = ["MutationContext", "UseThreadsOptions"];
+const ALLOW_NO_JSDOCS = [
+  "MutationContext",
+  "UseStorageStatusOptions",
+  "UseThreadsOptions",
+];
 
 // Add any hooks here that are allowed to have a different doc string between
 // their classic and suspense versions! Because... they're actually different!
@@ -24,10 +28,15 @@ const ALLOW_NO_FACTORY = [
   "ClientSideSuspense",
   "createLiveblocksContext", // the factories themselves, obviously
   "createRoomContext", // the factories themselves, obviously
+  "shallow",
+
+  // TODO: These are all exported types, which cannot be returned by the
+  // factories, so it makes no sense to warn about these. We should auto-detect
+  // if these are types, and ignore them. For now, I'm hard-coding the list.
   "Json",
   "JsonObject",
   "MutationContext",
-  "shallow",
+  "UseStorageStatusOptions",
   "UseThreadsOptions",
 ];
 

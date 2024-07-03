@@ -31,6 +31,16 @@ import type {
   ToImmutable,
 } from "@liveblocks/core";
 
+export type UseStorageStatusOptions = {
+  /**
+   * When setting smooth, the hook will not update immediately as status
+   * changes. This is because in typical applications, these states can change
+   * quickly between synchronizing and synchronized. If you use this hook to
+   * build a "Saving changes..." style UI, prefer setting `smooth: true`.
+   */
+  smooth?: boolean;
+};
+
 export type StorageStatusSuccess = Exclude<
   StorageStatus,
   "not-loaded" | "loading"
@@ -873,7 +883,7 @@ export type RoomContextBundle<
        * a re-render whenever it changes. Can be used to render a "Saving..."
        * indicator.
        */
-      useStorageStatus(): StorageStatus;
+      useStorageStatus(options?: UseStorageStatusOptions): StorageStatus;
 
       /**
        * Extract arbitrary data from the Liveblocks Storage state, using an
@@ -966,7 +976,9 @@ export type RoomContextBundle<
              * a re-render whenever it changes. Can be used to render a "Saving..."
              * indicator.
              */
-            useStorageStatus(): StorageStatusSuccess;
+            useStorageStatus(
+              options?: UseStorageStatusOptions
+            ): StorageStatusSuccess;
 
             /**
              * Extract arbitrary data from the Liveblocks Storage state, using an
