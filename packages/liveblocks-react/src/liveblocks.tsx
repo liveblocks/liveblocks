@@ -357,7 +357,9 @@ function useInboxNotifications_withClient(client: OpaqueClient) {
 
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
-  void waitUntilInboxNotificationsLoaded();
+  useEffect(() => {
+    void waitUntilInboxNotificationsLoaded();
+  }, []);
 
   useEnableInboxNotificationsPolling();
   return useSyncExternalStoreWithSelector(
@@ -392,7 +394,9 @@ function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
 
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
-  void waitUntilInboxNotificationsLoaded();
+  useEffect(() => {
+    void waitUntilInboxNotificationsLoaded();
+  }, []);
 
   useEnableInboxNotificationsPolling();
   return useSyncExternalStoreWithSelector(
