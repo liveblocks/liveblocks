@@ -18,6 +18,7 @@ import type {
   FormEvent,
   MouseEvent,
   ReactNode,
+  RefObject,
   SyntheticEvent,
 } from "react";
 import React, {
@@ -323,6 +324,28 @@ export const CommentNonInteractiveReaction = forwardRef<
   );
 });
 
+// A void component (which doesn't render anything) responsible for marking a thread
+// as read when the comment it's used in becomes visible.
+// Moving this logic into a separate component allows us to use the visibility
+// and focus hooks "conditionally" by conditionally rendering this component.
+function MarkThreadAsReadWhenVisibleHandler({
+  threadId,
+  ref,
+}: {
+  threadId: string;
+  ref: RefObject<HTMLElement>;
+}) {
+  const markThreadAsRead = useMarkThreadAsRead();
+
+  useVisibleCallback(ref, () => {
+    if (threadId) {
+      markThreadAsRead(threadId);
+    }
+  });
+
+  return null;
+}
+
 /**
  * Displays a single comment.
  *
@@ -361,22 +384,11 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     const editComment = useEditComment();
     const addReaction = useAddReaction();
     const removeReaction = useRemoveReaction();
-    const markThreadAsRead = useMarkThreadAsRead();
     const $ = useOverrides(overrides);
     const [isEditing, setEditing] = useState(false);
     const [isTarget, setTarget] = useState(false);
     const [isMoreActionOpen, setMoreActionOpen] = useState(false);
     const [isReactionActionOpen, setReactionActionOpen] = useState(false);
-
-    const markVisibleThreadAsRead = useCallback(() => {
-      if (markThreadAsReadWhenVisible) {
-        markThreadAsRead(markThreadAsReadWhenVisible);
-      }
-    }, [markThreadAsRead, markThreadAsReadWhenVisible]);
-
-    useVisibleCallback(ref, markVisibleThreadAsRead, {
-      enabled: Boolean(markThreadAsReadWhenVisible),
-    });
 
     const stopPropagation = useCallback((event: SyntheticEvent) => {
       event.stopPropagation();
@@ -481,6 +493,12 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
 
     return (
       <TooltipProvider>
+        {markThreadAsReadWhenVisible && (
+          <MarkThreadAsReadWhenVisibleHandler
+            ref={ref}
+            threadId={markThreadAsReadWhenVisible}
+          />
+        )}
         <div
           id={comment.id}
           className={classNames(
