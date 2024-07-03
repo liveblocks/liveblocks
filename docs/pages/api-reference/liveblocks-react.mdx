@@ -1190,7 +1190,7 @@ type Storage = {
 // Optionally, when using Comments, ThreadMetadata represents metadata on
 // each thread. Can only contain booleans, strings, and numbers.
 // export type ThreadMetadata = {
-//   resolved: boolean;
+//   pinned: boolean;
 //   quote: string;
 //   time: number;
 // };
@@ -2192,16 +2192,19 @@ const { threads, error, isLoading } = useThreads();
 ```
 
 `useThreads` supports a few options as its first argument, one is `query` and it
-can be used to filter threads based on their metadata.
+can be used to filter threads based on their metadata or resolved status.
 
 ```tsx
-// Returns threads that match the entire `query`, e.g. { color: "blue", resolved: true, ... }
+// Returns threads that match the entire `query`, e.g. { color: "blue", pinned: true, ... }
 const { threads } = useThreads({
   query: {
+    // Filter for unresolved threads
+    resolved: false,
+
     metadata: {
       // Filter for threads that contain specific string, boolean, and number data
       color: "blue",
-      resolved: true,
+      pinned: true,
       priority: 3,
 
       // Filter for threads with string metadata that starts with a certain value
@@ -2649,7 +2652,7 @@ type Storage = {
 // Optionally, when using Comments, ThreadMetadata represents metadata on
 // each thread. Can only contain booleans, strings, and numbers.
 // export type ThreadMetadata = {
-//   resolved: boolean;
+//   pinned: boolean;
 //   quote: string;
 //   time: number;
 // };
