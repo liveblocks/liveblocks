@@ -827,8 +827,6 @@ type RoomContextBundleCommon<
   useRemoveReaction(): (options: CommentReactionOptions) => void;
 
   /**
-   * @beta
-   *
    * Returns a function that updates the user's notification settings
    * for the current room.
    *
@@ -959,8 +957,6 @@ export type RoomContextBundle<
       useThreads(options?: UseThreadsOptions<M>): ThreadsState<M>;
 
       /**
-       * @beta
-       *
        * Returns the user's notification settings for the current room
        * and a function to update them.
        *
@@ -1050,8 +1046,6 @@ export type RoomContextBundle<
             useThreads(options?: UseThreadsOptions<M>): ThreadsStateSuccess<M>;
 
             /**
-             * @beta
-             *
              * Returns the user's notification settings for the current room
              * and a function to update them.
              *
@@ -1078,8 +1072,6 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
   LiveblocksProvider(props: PropsWithChildren): JSX.Element;
 
   /**
-   * @beta
-   *
    * Returns a function that marks an inbox notification as read.
    *
    * @example
@@ -1089,8 +1081,6 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
   useMarkInboxNotificationAsRead(): (inboxNotificationId: string) => void;
 
   /**
-   * @beta
-   *
    * Returns a function that marks all inbox notifications as read.
    *
    * @example
@@ -1100,8 +1090,6 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
   useMarkAllInboxNotificationsAsRead(): () => void;
 
   /**
-   * @beta
-   *
    * Returns the thread associated with a `"thread"` inbox notification.
    *
    * @example
@@ -1117,8 +1105,6 @@ export type LiveblocksContextBundle<
   LiveblocksContextBundleCommon<M> &
     SharedContextBundle<U>["classic"] & {
       /**
-       * @beta
-       *
        * Returns the inbox notifications for the current user.
        *
        * @example
@@ -1127,8 +1113,6 @@ export type LiveblocksContextBundle<
       useInboxNotifications(): InboxNotificationsState;
 
       /**
-       * @beta
-       *
        * Returns the number of unread inbox notifications for the current user.
        *
        * @example
@@ -1140,8 +1124,6 @@ export type LiveblocksContextBundle<
         LiveblocksContextBundleCommon<M> &
           SharedContextBundle<U>["suspense"] & {
             /**
-             * @beta
-             *
              * Returns the inbox notifications for the current user.
              *
              * @example
@@ -1150,8 +1132,6 @@ export type LiveblocksContextBundle<
             useInboxNotifications(): InboxNotificationsStateSuccess;
 
             /**
-             * @beta
-             *
              * Returns the number of unread inbox notifications for the current user.
              *
              * @example

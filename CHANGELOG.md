@@ -8,14 +8,25 @@
   it a bit easier
 - The `useClient()` hook is now also available for users of
   `createRoomContext()` and/or `createLiveblocksContext()`
+- Fix: avoid unnecessary re-renders if inbox notifications haven't changed
 
 ### `@liveblocks/react-ui`
 
 - Preserve rich text when pasting into the composer.
 - Add support for custom links to the composer. (either by pasting URLs with
   plain text selected or by pasting existing links)
+- Preserve whitespace and empty lines in comments.
 - Fix improper `useTransition` fallback which would break on React versions
   lower than 18.
+
+### @liveblocks/react-lexical
+
+- Upgrade `lexical` peer dependency to version `^0.16.1` that fixes
+  compatibility issues with Next.js versions 14.2.0 and above.
+
+### @liveblocks/node-lexical
+
+- Upgrade `lexical` peer dependency to version `0.16.1`.
 
 ## v2.1.0
 

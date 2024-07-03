@@ -2216,8 +2216,6 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
 }
 
 /**
- * @beta
- *
  * Returns the user's notification settings for the current room
  * and a function to update them.
  *
@@ -2273,8 +2271,6 @@ function useRoomNotificationSettings(): [
 }
 
 /**
- * @beta
- *
  * Returns a function that updates the user's notification settings
  * for the current room.
  *
@@ -2507,8 +2503,6 @@ function useThreadsSuspense<M extends BaseMetadata>(
 }
 
 /**
- * @beta
- *
  * Returns the user's notification settings for the current room
  * and a function to update them.
  *
