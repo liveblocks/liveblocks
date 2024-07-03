@@ -331,16 +331,16 @@ export const CommentNonInteractiveReaction = forwardRef<
 // and focus hooks "conditionally" by conditionally rendering this component.
 function MarkThreadAsReadWhenVisibleHandler({
   threadId,
-  ref,
+  commentRef,
 }: {
   threadId: string;
-  ref: RefObject<HTMLElement>;
+  commentRef: RefObject<HTMLElement>;
 }) {
   const markThreadAsRead = useMarkThreadAsRead();
   const isWindowFocused = useWindowFocus();
 
   useVisibleCallback(
-    ref,
+    commentRef,
     () => {
       markThreadAsRead(threadId);
     },
@@ -502,7 +502,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       <TooltipProvider>
         {markThreadAsReadWhenVisible && (
           <MarkThreadAsReadWhenVisibleHandler
-            ref={ref}
+            commentRef={ref}
             threadId={markThreadAsReadWhenVisible}
           />
         )}
