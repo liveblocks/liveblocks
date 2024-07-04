@@ -198,8 +198,9 @@ export async function withTimeout<T>(
 
 /**
  * Memoize a promise factory, so that each subsequent call will return the same
- * pending or success promise, but if the promise rejects, the next call to the
- * function will start a new promise.
+ * pending or success promise. If the promise rejects, will retain that failed
+ * promise for 5 seconds, after which the next attempt will reset the memoized
+ * value.
  */
 export function memoizeOnSuccess<T>(
   factoryFn: () => Promise<T>
@@ -208,7 +209,8 @@ export function memoizeOnSuccess<T>(
   return () => {
     if (cached === null) {
       cached = factoryFn().catch((err) => {
-        // XXX Hmm. Explicit reset may be better here, or pass this an identifier somehow, think useId()! Will have to discuss with Nimesh.
+        // Keep returning the failed promise for the next 5 seconds, after
+        // which we'll trigger a fresh promise again.
         setTimeout(() => {
           cached = null;
         }, 5_000);
