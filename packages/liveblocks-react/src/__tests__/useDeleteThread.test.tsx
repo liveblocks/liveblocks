@@ -1,5 +1,6 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
+import { nanoid } from "nanoid";
 import React from "react";
 
 import { dummyCommentData, dummyThreadData } from "./_dummies";
@@ -22,11 +23,13 @@ afterEach(() => {
 
 afterAll(() => server.close());
 
-function createDummyThreads(userId: string) {
+function createDummyThreads(roomId: string, userId: string) {
   return [
     dummyThreadData({
+      roomId,
       comments: [
         dummyCommentData({
+          roomId,
           userId,
         }),
       ],
@@ -38,7 +41,8 @@ describe("useDeleteThread", () => {
   const userId = "batman";
 
   test("should delete a thread optimistically", async () => {
-    const threads = createDummyThreads(userId);
+    const roomId = nanoid();
+    const threads = createDummyThreads(roomId, userId);
 
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
@@ -69,7 +73,7 @@ describe("useDeleteThread", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -90,7 +94,8 @@ describe("useDeleteThread", () => {
   });
 
   test("should throw an error when a user attempts to delete someone else's thread", async () => {
-    const threads = createDummyThreads(userId);
+    const roomId = nanoid();
+    const threads = createDummyThreads(roomId, userId);
 
     server.use(
       mockGetThreads(async (_req, res, ctx) =>
@@ -122,7 +127,7 @@ describe("useDeleteThread", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -153,7 +158,8 @@ describe("useDeleteThread", () => {
   });
 
   test("should rollback optimistic deletion if server fails", async () => {
-    const threads = createDummyThreads(userId);
+    const roomId = nanoid();
+    const threads = createDummyThreads(roomId, userId);
 
     server.use(
       mockGetThreads(async (_req, res, ctx) =>
@@ -184,7 +190,7 @@ describe("useDeleteThread", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
