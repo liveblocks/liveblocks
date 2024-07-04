@@ -9,10 +9,6 @@ declare global {
         avatar: string;
       }; // Accessible through `user.info`
     };
-    // Custom metadata set on threads, for useThreads, useCreateThread, etc.
-    ThreadMetadata: {
-      resolved: boolean;
-    };
   }
 }
 

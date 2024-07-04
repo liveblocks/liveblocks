@@ -210,7 +210,6 @@ export function NewThread({ children }: Props) {
           cursorSelectors: cursorSelectors.join(","),
           cursorX,
           cursorY,
-          resolved: false,
           zIndex: maxZIndex + 1,
         },
       });

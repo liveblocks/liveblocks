@@ -31,7 +31,6 @@ export function NewThreadComposer({ duration, time }: Props) {
       createThread({
         body,
         metadata: {
-          resolved: false,
           time,
           timePercentage: (time / duration) * 100,
         },
