@@ -1250,7 +1250,7 @@ export class Liveblocks {
 
   /**
    * Mark a thread as resolved.
-   * @param params.roomId the room ID of the thread.
+   * @param params.roomId The room ID of the thread.
    * @param params.threadId The thread ID to mark as resolved.
    * @param params.data.userId The user ID of the user who marked the thread as resolved.
    * @returns The thread marked as resolved.
@@ -1279,7 +1279,7 @@ export class Liveblocks {
 
   /**
    * Mark a thread as unresolved.
-   * @param params.roomId the room ID of the thread.
+   * @param params.roomId The room ID of the thread.
    * @param params.threadId The thread ID to mark as unresolved.
    * @param params.data.userId The user ID of the user who marked the thread as unresolved.
    * @returns The thread marked as unresolved.
@@ -1313,7 +1313,7 @@ export class Liveblocks {
    * @param params.data.metadata The metadata for the thread. Value must be a string, boolean or number
    * @param params.data.userId The user ID of the user who updated the thread.
    * @param params.data.updatedAt (optional) The date the thread is set to be updated.
-   * @returns The updated thread.
+   * @returns The updated thread metadata.
    */
   public async editThreadMetadata(params: {
     roomId: string;
