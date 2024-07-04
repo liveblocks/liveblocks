@@ -1368,7 +1368,7 @@
             },
             "in": "query",
             "name": "query",
-            "description": "Query to filter threads. You can filter by `metadata` and `resolved`, for example, `metadata[\"status\"]:\"open\" AND metadata[\"resolved\"]:true AND resolved:true`. Learn more about [filtering threads with query language](/docs/guides/how-to-filter-threads-using-query-language)."
+            "description": "Query to filter threads. You can filter by `metadata` and `resolved`, for example, `metadata[\"status\"]:\"open\" AND metadata[\"color\"]:"red" AND resolved:true`. Learn more about [filtering threads with query language](/docs/guides/how-to-filter-threads-using-query-language)."
           }
         ],
         "operationId": "get-rooms-roomId-threads",
