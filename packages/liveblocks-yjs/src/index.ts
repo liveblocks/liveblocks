@@ -18,10 +18,12 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 type ProviderOptions = {
   autoloadSubdocs: boolean;
+  readOnly: boolean;
 };
 
 const DefaultOptions: ProviderOptions = {
   autoloadSubdocs: false,
+  readOnly: false,
 };
 
 export class LiveblocksYjsProvider<
@@ -80,11 +82,17 @@ export class LiveblocksYjsProvider<
         const { stateVector, update, guid } = message;
         // find the right doc and update
         if (guid !== undefined) {
-          this.subdocHandlers
-            .get(guid)
-            ?.handleServerUpdate({ update, stateVector });
+          this.subdocHandlers.get(guid)?.handleServerUpdate({
+            update,
+            stateVector,
+            readOnly: this.options.readOnly,
+          });
         } else {
-          this.rootDocHandler.handleServerUpdate({ update, stateVector });
+          this.rootDocHandler.handleServerUpdate({
+            update,
+            stateVector,
+            readOnly: this.options.readOnly,
+          });
         }
       })
     );
@@ -127,6 +135,7 @@ export class LiveblocksYjsProvider<
   };
 
   private updateDoc = (update: string, guid?: string) => {
+    if (this.options.readOnly) return;
     this.room.updateYDoc(update, guid);
   };
 
