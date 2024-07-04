@@ -212,12 +212,13 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
 
   let pollerSubscribers = 0;
   const poller = makePoller(async () => {
-    return waitUntilInboxNotificationsLoaded()
-      .then(fetchInboxNotifications)
-      .catch(() => {
-        // When polling, we don't want to throw errors, ever
-        // XXX Maybe issue console warnings here though?
-      });
+    try {
+      await waitUntilInboxNotificationsLoaded();
+      await fetchInboxNotifications();
+    } catch {
+      // When polling, we don't want to throw errors, ever
+      // XXX Maybe issue console warnings here though?
+    }
   });
 
   /**
