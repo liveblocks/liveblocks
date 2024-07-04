@@ -3,7 +3,7 @@
 We are making `resolved` a first-class citizen property on
 [threads](https://liveblocks.io/docs/products/comments/concepts#Threads), for
 more information about this change please read our
-[Upgrade Guide for 2.2](https://liveblocks.io/docs/guides/upgrading/2.2).
+[Upgrade Guide for 2.2](https://liveblocks.io/docs/platform/upgrading/2.2).
 
 ### `@liveblocks/react`
 
@@ -1225,7 +1225,7 @@ Non-existent.
 ## v1.0.0
 
 This major release marks the maturity of Liveblocks. For upgrade instructions,
-see the [1.0 upgrade guide](https://liveblocks.io/docs/guides/upgrading/1.0).
+see the [1.0 upgrade guide](https://liveblocks.io/docs/platform/upgrading/1.0).
 
 ## `@liveblocks/node`
 
@@ -1505,7 +1505,7 @@ In **@liveblocks/react**:
 ## v0.18.0
 
 For information, please read our
-[Upgrade Guide for 0.18](https://liveblocks.io/docs/guides/upgrading/0.18).
+[Upgrade Guide for 0.18](https://liveblocks.io/docs/platform/upgrading/0.18).
 
 ### New React hooks ✨
 
@@ -1535,7 +1535,7 @@ For information, please read our
 - Remove support for directly importing hooks from **@liveblocks/client** (e.g.
   `import { useMyPresence } from '@liveblocks/react'`). If you’re still using
   these imports, see the
-  [Upgrade Guide for 0.17](https://liveblocks.io/docs/guides/upgrading/0.17) for
+  [Upgrade Guide for 0.17](https://liveblocks.io/docs/platform/upgrading/0.17) for
   instructions.
 - Remove `ClientProvider` and `useClient` hook
 - Remove `defaultPresence` and `defaultStorageRoot` arguments. (Just use
@@ -1684,7 +1684,7 @@ Fix `@liveblocks/nodes` packaging.
 ## v0.17.0
 
 For information, please read our
-[Upgrade Guide](https://liveblocks.io/docs/guides/upgrading/0.17).
+[Upgrade Guide](https://liveblocks.io/docs/platform/upgrading/0.17).
 
 ### TypeScript improvements ✨
 
@@ -1695,7 +1695,7 @@ longer need to provide any extra type annotations anywhere for your Liveblocks
 code! 🙌
 
 To learn how to set that up, follow the instructions in our
-[Upgrade Guide](https://liveblocks.io/docs/guides/upgrading/0.17).
+[Upgrade Guide](https://liveblocks.io/docs/platform/upgrading/0.17).
 
 - No more `any` types used (in `@liveblocks/client` and `@liveblocks/react`)
 - All APIs that work with Presence data will now require it to be
@@ -1756,8 +1756,8 @@ It's surprisingly simple!
 
   - Importing the React hooks directly is deprecated, instead use the new
     `createRoomContext()` helper. For help, read the
-    [Recommended Upgrade Steps section](https://liveblocks.io/docs/guides/upgrading/0.17#recommended-upgrade-steps)
-    within our [Upgrade Guide](https://liveblocks.io/docs/guides/upgrading/0.17)
+    [Recommended Upgrade Steps section](https://liveblocks.io/docs/platform/upgrading/0.17#recommended-upgrade-steps)
+    within our [Upgrade Guide](https://liveblocks.io/docs/platform/upgrading/0.17)
   - The second argument to `useList()`, `useObject()`, and `useMap()` is
     deprecated
   - The RoomProvider's `defaultPresence` is renamed to `initialPresence`
