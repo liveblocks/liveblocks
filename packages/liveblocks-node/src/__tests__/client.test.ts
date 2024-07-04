@@ -75,6 +75,7 @@ describe("client", () => {
     },
     createdAt: new Date("2022-07-13T14:32:50.697Z"),
     comments: [comment],
+    resolved: false,
   };
 
   const reaction: CommentUserReaction = {
@@ -573,7 +574,8 @@ describe("client", () => {
   });
 
   test("should return a filtered list of threads when a query parameter is used for getThreads", async () => {
-    const query = "metadata['status']:'open' AND metadata['priority']:3";
+    const query =
+      "metadata['status']:'open' AND metadata['priority']:3 AND resolved:true";
     server.use(
       http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads`, (res) => {
         const url = new URL(res.request.url);

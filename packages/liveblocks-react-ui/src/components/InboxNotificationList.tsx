@@ -8,8 +8,6 @@ import { classNames } from "../utils/class-names";
 export type InboxNotificationListProps = ComponentPropsWithoutRef<"ol">;
 
 /**
- * @beta
- *
  * Displays inbox notifications as a list.
  *
  * @example

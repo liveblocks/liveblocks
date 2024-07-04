@@ -29,6 +29,8 @@ export type {
   TextMentionNotificationEvent,
   ThreadCreatedEvent,
   ThreadDeletedEvent,
+  ThreadMarkedAsResolvedEvent,
+  ThreadMarkedAsUnresolvedEvent,
   ThreadMetadataUpdatedEvent,
   ThreadNotificationEvent,
   UserEnteredEvent,

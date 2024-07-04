@@ -45,6 +45,16 @@ const commentBodyWithMultipleParagraphs: CommentBody = {
         },
       ],
     },
+    {
+      type: "paragraph",
+      children: [
+        {
+          type: "link",
+          url: "https://liveblocks.io",
+          text: "Liveblocks",
+        },
+      ],
+    },
   ],
 };
 
@@ -185,7 +195,7 @@ describe("getMentionedIdsFromCommentBody", () => {
 describe("stringifyCommentBody", () => {
   const commentBodyFixturesStringifiedPlain = [
     "Hello world and @chris",
-    "Hello world and @vincent\nhttps://liveblocks.io",
+    "Hello world and @vincent\nhttps://liveblocks.io\nLiveblocks",
     "",
     "",
     "",
@@ -197,7 +207,7 @@ describe("stringifyCommentBody", () => {
   );
   const commentBodyFixturesStringifiedHtml = [
     "<p>Hello <strong>world</strong> and <span data-mention>@chris</span></p>",
-    '<p>Hello <em><strong>world</strong></em> and <span data-mention>@vincent</span></p>\n<p><a href="https://liveblocks.io" target="_blank" rel="noopener noreferrer">https://liveblocks.io</a></p>',
+    '<p>Hello <em><strong>world</strong></em> and <span data-mention>@vincent</span></p>\n<p><a href="https://liveblocks.io" target="_blank" rel="noopener noreferrer">https://liveblocks.io</a></p>\n<p><a href="https://liveblocks.io" target="_blank" rel="noopener noreferrer">Liveblocks</a></p>',
     "",
     "",
     "",
@@ -209,7 +219,7 @@ describe("stringifyCommentBody", () => {
   );
   const commentBodyFixturesStringifiedMarkdown = [
     "Hello **world** and @chris",
-    "Hello _**world**_ and @vincent\n\n[https://liveblocks.io](https://liveblocks.io)",
+    "Hello _**world**_ and @vincent\n\n[https://liveblocks.io](https://liveblocks.io)\n\n[Liveblocks](https://liveblocks.io)",
     "",
     "",
     "",
@@ -326,7 +336,9 @@ describe("stringifyCommentBody", () => {
       stringifyCommentBody(commentBodyWithMultipleParagraphs, {
         separator: "\n\n\n",
       })
-    ).resolves.toBe("Hello world and @vincent\n\n\nhttps://liveblocks.io");
+    ).resolves.toBe(
+      "Hello world and @vincent\n\n\nhttps://liveblocks.io\n\n\nLiveblocks"
+    );
   });
 
   test("accepts custom elements", async () => {
@@ -342,7 +354,7 @@ describe("stringifyCommentBody", () => {
           },
           link: ({ element, href }) => {
             // prettier-ignore
-            return `<Link to="${href}">${element.url}</Link>`;
+            return `<Link to="${href}">${element.text ?? element.url}</Link>`;
           },
           mention: ({ element }) => {
             // prettier-ignore
@@ -351,7 +363,7 @@ describe("stringifyCommentBody", () => {
         },
       })
     ).resolves.toBe(
-      '<Paragraph>Hello world and <Mention>@vincent</Mention></Paragraph>\n<Paragraph><Link to="https://liveblocks.io">https://liveblocks.io</Link></Paragraph>'
+      '<Paragraph>Hello world and <Mention>@vincent</Mention></Paragraph>\n<Paragraph><Link to="https://liveblocks.io">https://liveblocks.io</Link></Paragraph>\n<Paragraph><Link to="https://liveblocks.io">Liveblocks</Link></Paragraph>'
     );
   });
 

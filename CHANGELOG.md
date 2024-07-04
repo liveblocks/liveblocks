@@ -1,9 +1,49 @@
-## v2.2.0 (not published yet)
+## v2.2.0
+
+We are making `resolved` a first-class citizen property on
+[threads](https://liveblocks.io/docs/products/comments/concepts#Threads), for
+more information about this change please read our
+[Upgrade Guide for 2.2](https://liveblocks.io/docs/guides/upgrading/2.2).
 
 ### `@liveblocks/react`
 
+- Add `useMarkThreadAsResolved` and `useMarkThreadAsUnresolved` hooks.
+- Support `query.resolved` when filtering threads.
+- The
+  [`useStorageStatus`](https://liveblocks.io/docs/api-reference/liveblocks-react#useStorageStatus)
+  hook now also has a `{ smooth: true }` setting to make building calm UIs with
+  it a bit easier.
 - The `useClient()` hook is now also available for users of
   `createRoomContext()` and/or `createLiveblocksContext()`
+- Fix: avoid unnecessary re-renders if inbox notifications haven't changed
+
+### `@liveblocks/react-ui`
+
+- Use first-class citizen `resolved` property in `Thread` component.
+- Preserve rich text when pasting into the composer.
+- Add support for custom links to the composer. (either by pasting URLs with
+  plain text selected or by pasting existing links)
+- Preserve whitespace and empty lines in comments.
+- Mark threads as read when visible (like before), but only if the window is
+  focused.
+- Fix improper `useTransition` fallback which would break on React versions
+  lower than 18.
+
+### `@liveblocks/node`
+
+- Add `markThreadAsResolved` and `markThreadAsUnresolved` methods.
+- Add `ThreadMarkedAsResolvedEvent` and `ThreadMarkedAsUnresolvedEvent` webhook
+  events.
+- Support `query.resolved` when querying threads.
+
+### @liveblocks/react-lexical
+
+- Upgrade `lexical` peer dependency to version `^0.16.1` that fixes
+  compatibility issues with Next.js versions 14.2.0 and above.
+
+### @liveblocks/node-lexical
+
+- Upgrade `lexical` peer dependency to version `0.16.1`.
 
 ## v2.1.0
 
@@ -26,7 +66,8 @@
 
 ### `@liveblocks/react-ui`
 
-- Fix improper `useSyncExternalStore` import which would break on React versions lower than 18.
+- Fix improper `useSyncExternalStore` import which would break on React versions
+  lower than 18.
 
 ## v2.0.5
 
@@ -46,8 +87,8 @@
 ### `@liveblocks/client`
 
 - Add missing type export for `CommentReaction`
-- Don’t attempt to write missing `initialStorage` keys if the current user has no
-  write access to storage. This will no longer throw, but issue a warning
+- Don’t attempt to write missing `initialStorage` keys if the current user has
+  no write access to storage. This will no longer throw, but issue a warning
   message in the console.
 
 ### `@liveblocks/react`

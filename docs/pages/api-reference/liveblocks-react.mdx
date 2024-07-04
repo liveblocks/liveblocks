@@ -1190,7 +1190,7 @@ type Storage = {
 // Optionally, when using Comments, ThreadMetadata represents metadata on
 // each thread. Can only contain booleans, strings, and numbers.
 // export type ThreadMetadata = {
-//   resolved: boolean;
+//   pinned: boolean;
 //   quote: string;
 //   time: number;
 // };
@@ -1270,12 +1270,14 @@ The possible value are: `initial`, `connecting`, `connected`, `reconnecting`, or
 ### useStorageStatus [@badge=RoomProvider]
 
 Returns the current storage status of the room, and will re-render your
-component whenever it changes.
+component whenever it changes. A `{ smooth: true }` option is also available,
+which prevents quick changes between states, making it ideal for
+[rendering a synchronization badge in your app](#display-synchronization-badge).
 
 ```ts
 import { useStorageStatus } from "@liveblocks/react";
 
-const status = useStatus();
+const storageStatus = useStorageStatus();
 // "not-loaded" | "loading" | "synchronizing" | "synchronized"
 ```
 
@@ -1284,8 +1286,62 @@ const status = useStatus();
 ```ts
 import { useStorageStatus } from "@liveblocks/react/suspense";
 
-const status = useStatus();
+const storageStatus = useStorageStatus();
 // "synchronizing" | "synchronized"
+```
+
+#### Display a synchronization badge [#display-synchronization-badge]
+
+Passing `{ smooth: true }` prevents the status changing from `"synchronizing"`
+to `"synchronized"` until 1 second has passed after the final change. This means
+it’s ideal for rendering a Storage status badge, as it won’t flicker in a
+distracting manner when changes are made in quick succession.
+
+```tsx
+import { useStorageStatus } from "@liveblocks/react/suspense";
+
+function StorageStatusBadge() {
+  const storageStatus = useStorageStatus({ smooth: true });
+
+  return (
+    <div>{storageStatus === "synchronized" ? "✅ Saved" : "🔄 Saving"}</div>
+  );
+}
+```
+
+#### Prevent users losing unsaved changes [#prevent-users-losing-unsaved-changes]
+
+Storage usually synchronizes milliseconds after a change, but in some
+circumstances, such as a user with a poor connection, it may take longer before
+they receive a response from our servers. It can be helpful to check if Storage
+changes have been synchronized, and prevent users from leaving the page if they
+haven’t.
+
+It’s possible to implement this with `useStorageStatus`, however with
+[`useRoom`](/docs/api-reference/liveblocks-react#useRoom) you can create a
+version that renders much less frequently, so we recommend using this instead.
+
+```tsx
+import { useRoom } from "@liveblocks/react/suspense";
+
+function usePreventUnsavedChanges() {
+  const room = useRoom();
+
+  useEffect(() => {
+    function beforeUnload(e: BeforeUnloadEvent) {
+      if (room.getStorageStatus() === "synchronized") {
+        return;
+      }
+      e.preventDefault();
+    }
+
+    window.addEventListener("beforeunload", beforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", beforeUnload);
+    };
+  }, [room]);
+}
 ```
 
 ### useOthersListener [@badge=RoomProvider]
@@ -1461,8 +1517,8 @@ const currentUser = useSelf((me) => me.presence.cursor);
 The benefit of using a selector is that it will only update your component if
 that particular selection changes. For full details, see [how selectors work][].
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return `null`.
+👉 A [Suspense version][] of this hook is also available, which will never return
+`null`.
 
 ### useOthers [@badge=RoomProvider]
 
@@ -1489,8 +1545,8 @@ const typingUsers = useOthers(
 );
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return `null`.
+👉 A [Suspense version][] of this hook is also available, which will never return
+`null`.
 
 One caveat with this API is that selecting a subset of data for each user
 quickly becomes tricky. When you want to select and get updates for only a
@@ -1529,8 +1585,7 @@ arguments.
 ### useOthersMapped [@badge=RoomProvider]
 
 Extract data using a [selector][] for every user in the room, and subscribe to
-all changes to the selected data. A [Suspense version][] of this hook is also
-available.
+all changes to the selected data. A [Suspense version][] of this hook is also available.
 
 The key difference with [`useOthers`][] is that the selector (and the optional
 comparison function) work at the _item_ level, like doing a `.map()` over the
@@ -1600,8 +1655,8 @@ useOthers((others) => others.map((other) => other.connectionId), shallow);
 ### useOther [@badge=RoomProvider]
 
 Extract data using a [selector][] for one specific user in the room, and
-subscribe to all changes to the selected data. A [Suspense version][] of this
-hook is also available.
+subscribe to all changes to the selected data. A [Suspense version][] of this hook
+is also available.
 
 ```tsx
 // ✅ Rerenders when this specific user’s isTyping changes (but not when their cursor changes)
@@ -1652,8 +1707,8 @@ function Cursor({ connectionId }) {
 3. Makes sure each cursor remains associated to the same connection.
 4. Makes sure each cursor rerenders whenever _its_ data changes only.
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return `null`.
+👉 A [Suspense version][] of this hook is also available, which will never return
+`null`.
 
 ## Broadcast
 
@@ -1859,11 +1914,13 @@ function App() {
       initialStorage={{
         // +++
         people: new LiveMap([
-          "alicia",
-          new LiveObject({
-            name: "Alicia",
-            pets: new LiveList(["Fido", "Felix"]),
-          }),
+          [
+            "alicia",
+            new LiveObject({
+              name: "Alicia",
+              pets: new LiveList(["Fido", "Felix"]),
+            }),
+          ],
         ]),
         // +++
       }}
@@ -2193,16 +2250,19 @@ const { threads, error, isLoading } = useThreads();
 ```
 
 `useThreads` supports a few options as its first argument, one is `query` and it
-can be used to filter threads based on their metadata.
+can be used to filter threads based on their metadata or resolved status.
 
 ```tsx
-// Returns threads that match the entire `query`, e.g. { color: "blue", resolved: true, ... }
+// Returns threads that match the entire `query`, e.g. { color: "blue", pinned: true, ... }
 const { threads } = useThreads({
   query: {
+    // Filter for unresolved threads
+    resolved: false,
+
     metadata: {
       // Filter for threads that contain specific string, boolean, and number data
       color: "blue",
-      resolved: true,
+      pinned: true,
       priority: 3,
 
       // Filter for threads with string metadata that starts with a certain value
@@ -2219,8 +2279,8 @@ the URL’s hash is set to a comment ID (e.g.
 `https://example.com/my-room#cm_xxx`), the page will scroll to that comment once
 the threads are loaded.
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there’s an error.
+👉 A [Suspense version][] of this hook is also available, which will never return
+a loading state and will throw when there’s an error.
 
 ### useThreadSubscription [@badge=RoomProvider]
 
@@ -2256,7 +2316,7 @@ const deleteThread = useDeleteThread();
 deleteThread("th_xxx");
 ```
 
-### useEditThreadMetadata
+### useEditThreadMetadata [@badge=RoomProvider]
 
 Returns a function that edits a thread’s metadata.
 
@@ -2272,6 +2332,28 @@ import { useEditThreadMetadata } from "@liveblocks/react/suspense";
 
 const editThreadMetadata = useEditThreadMetadata();
 editThreadMetadata({ threadId: "th_xxx", metadata: {} });
+```
+
+### useMarkThreadAsResolved [@badge=RoomProvider]
+
+Returns a function that marks a thread as resolved.
+
+```tsx
+import { useMarkThreadAsResolved } from "@liveblocks/react/suspense";
+
+const markThreadAsResolved = useMarkThreadAsResolved();
+markThreadAsResolved("th_xxx");
+```
+
+### useMarkThreadAsUnresolved [@badge=RoomProvider]
+
+Returns a function that marks a thread as unresolved.
+
+```tsx
+import { useMarkThreadAsUnresolved } from "@liveblocks/react/suspense";
+
+const markThreadAsUnresolved = useMarkThreadAsUnresolved();
+markThreadAsUnresolved("th_xxx");
 ```
 
 ### useMarkThreadAsRead [@badge=RoomProvider]
@@ -2357,8 +2439,8 @@ import { useInboxNotifications } from "@liveblocks/react/suspense";
 const { inboxNotifications, error, isLoading } = useInboxNotifications();
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there’s an error.
+👉 A [Suspense version][] of this hook is also available, which will never return
+a loading state and will throw when there’s an error.
 
 ### useUnreadInboxNotificationsCount [@badge=LiveblocksProvider]
 
@@ -2370,8 +2452,8 @@ import { useUnreadInboxNotificationsCount } from "@liveblocks/react/suspense";
 const { count, error, isLoading } = useUnreadInboxNotificationsCount();
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there’s an error.
+👉 A [Suspense version][] of this hook is also available, which will never return
+a loading state and will throw when there’s an error.
 
 ### useMarkInboxNotificationAsRead [@badge=LiveblocksProvider]
 
@@ -2443,8 +2525,8 @@ import { useUser } from "@liveblocks/react/suspense";
 const { user, error, isLoading } = useUser("user-id");
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there’s an error.
+👉 A [Suspense version][] of this hook is also available, which will never return
+a loading state and will throw when there’s an error.
 
 <Banner title="Providing a resolver function">
 
@@ -2463,8 +2545,8 @@ import { useRoomInfo } from "@liveblocks/react/suspense";
 const { info, error, isLoading } = useRoomInfo("room-id");
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there’s an error.
+👉 A [Suspense version][] of this hook is also available, which will never return
+a loading state and will throw when there’s an error.
 
 <Banner title="Providing a resolver function">
 
@@ -2628,7 +2710,7 @@ type Storage = {
 // Optionally, when using Comments, ThreadMetadata represents metadata on
 // each thread. Can only contain booleans, strings, and numbers.
 // export type ThreadMetadata = {
-//   resolved: boolean;
+//   pinned: boolean;
 //   quote: string;
 //   time: number;
 // };

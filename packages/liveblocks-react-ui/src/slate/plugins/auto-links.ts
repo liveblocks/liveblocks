@@ -1,7 +1,9 @@
-import type { NodeEntry } from "slate";
-import { Editor, Element, Node, Path, Range, Text, Transforms } from "slate";
+import type { NodeEntry, Text } from "slate";
+import { Editor, Element, Node, Path, Range, Transforms } from "slate";
 
 import type { ComposerBodyAutoLink } from "../../types";
+import { isPlainText, isText } from "../utils/is-text";
+import { isComposerBodyCustomLink } from "./custom-links";
 
 /**
  * This implementation is inspired by Lexical's AutoLink plugin.
@@ -19,12 +21,27 @@ export function withAutoLinks(editor: Editor): Editor {
   editor.normalizeNode = (entry) => {
     const [node, path] = entry;
 
-    if (Text.isText(node)) {
+    // Prevent auto links from being created inside custom links
+    if (isComposerBodyCustomLink(node)) {
+      return;
+    }
+
+    if (isText(node)) {
       const parentNode = Node.parent(editor, path);
 
-      if (isComposerBodyAutoLink(parentNode)) {
+      // Prevent auto links from being created inside custom links
+      if (isComposerBodyCustomLink(parentNode)) {
+        return;
+      } else if (isComposerBodyAutoLink(parentNode)) {
         const parentPath = Path.parent(path);
         handleLinkEdit(editor, [parentNode, parentPath]);
+
+        // Prevent rich text within auto links by removing all marks of inner text nodes
+        if (!isPlainText(node)) {
+          const marks = Object.keys(node).filter((key) => key !== "text");
+
+          Transforms.unsetNodes(editor, marks, { at: path });
+        }
       } else {
         handleLinkCreate(editor, [node, path]);
         handleNeighbours(editor, [node, path]);
@@ -179,7 +196,7 @@ function isPreviousNodeValid(editor: Editor, path: Path): boolean {
   if (!entry) return true;
 
   return (
-    Text.isText(entry[0]) &&
+    isText(entry[0]) &&
     (endsWithSeparator(entry[0].text) || entry[0].text === "")
   );
 }
@@ -192,7 +209,7 @@ function isNextNodeValid(editor: Editor, path: Path): boolean {
   if (!entry) return true;
 
   return (
-    Text.isText(entry[0]) &&
+    isText(entry[0]) &&
     (startsWithSeparator(entry[0].text) || entry[0].text === "")
   );
 }
@@ -234,7 +251,7 @@ const handleLinkEdit = (
   // Step 1: Ensure that the Link node only contains text nodes as children
   const children = Node.children(editor, path);
   for (const [child] of children) {
-    if (Text.isText(child)) continue;
+    if (isText(child)) continue;
     Transforms.unwrapNodes(editor, { at: path });
     return;
   }

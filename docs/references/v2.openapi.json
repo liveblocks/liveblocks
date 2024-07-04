@@ -1368,7 +1368,7 @@
             },
             "in": "query",
             "name": "query",
-            "description": "Query to filter threads. You can filter by `metadata`, for example, `metadata[\"status\"]:\"open\" AND metadata[\"resolved\"]:true`. Learn more about [filtering threads with query language](/docs/guides/how-to-filter-threads-using-query-language)."
+            "description": "Query to filter threads. You can filter by `metadata` and `resolved`, for example, `metadata[\"status\"]:\"open\" AND metadata[\"color\"]:\"red\" AND resolved:true`. Learn more about [filtering threads with query language](/docs/guides/how-to-filter-threads-using-query-language)."
           }
         ],
         "operationId": "get-rooms-roomId-threads",
@@ -1433,7 +1433,6 @@
       },
       "post": {
         "summary": "Create thread",
-        "x-badge": "Beta",
         "description": "This endpoint creates a new thread and the first comment in the thread. Corresponds to [`liveblocks.createThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads).\n\nA comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to construct a comment’s body, which can be submitted under `comment.body`.\n\n```json\n\"version\": 1,\n\"content\": [\n  {\n    \"type\": \"paragraph\",\n    \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]\n  }\n]\n```",
         "tags": ["Comments"],
         "operationId": "post-rooms-roomId-threads",
@@ -1705,7 +1704,6 @@
     "/rooms/{roomId}/threads/{threadId}/metadata": {
       "post": {
         "summary": "Edit thread metadata",
-        "x-badge": "Beta",
         "tags": ["Comments"],
         "description": "This endpoint edits the metadata of a thread. The metadata is a JSON object that can be used to store any information you want about the thread, in `string`, `number`, or `boolean` form. Set a property to `null` to remove it. Corresponds to [`liveblocks.editThreadMetadata`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-metadata).",
         "operationId": "post-rooms-roomId-threads-threadId-metadata",
@@ -1776,10 +1774,101 @@
         }
       }
     },
+    "/rooms/{roomId}/threads/{threadId}/mark-as-resolved": {
+      "post": {
+        "summary": "Mark thread as resolved",
+        "tags": ["Comments"],
+        "description": "This endpoint marks a thread as resolved.",
+        "operationId": "post-rooms-roomId-threads-threadId-mark-as-resolved",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the thread"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the updated thread.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Thread"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-thread"
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/threads/{threadId}/mark-as-unresolved": {
+      "post": {
+        "summary": "Mark thread as unresolved",
+        "tags": ["Comments"],
+        "description": "This endpoint marks a thread as unresolved.",
+        "operationId": "post-rooms-roomId-threads-threadId-mark-as-unresolved",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the thread"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the updated thread.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Thread"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-thread"
+          }
+        }
+      }
+    },
     "/rooms/{roomId}/threads/{threadId}/comments": {
       "post": {
         "summary": "Create comment",
-        "x-badge": "Beta",
         "description": "This endpoint creates a new comment, adding it as a reply to a thread. Corresponds to [`liveblocks.createComment`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments).\n\nA comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to construct a comment’s body, which can be submitted under `body`.\n\n```json\n\"version\": 1,\n\"content\": [\n  {\n    \"type\": \"paragraph\",\n    \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]\n  }\n]\n",
         "tags": ["Comments"],
         "operationId": "post-rooms-roomId-threads-threadId-comments",
@@ -1940,7 +2029,6 @@
       },
       "post": {
         "summary": "Edit comment",
-        "x-badge": "Beta",
         "description": "This endpoint edits the specified comment. Corresponds to [`liveblocks.editComment`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId).\n\nA comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to construct a comment’s body, which can be submitted under `body`.\n\n```json\n\"version\": 1,\n\"content\": [\n  {\n    \"type\": \"paragraph\",\n    \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]\n  }\n]\n",
         "tags": ["Comments"],
         "operationId": "post-rooms-roomId-threads-threadId-comments-commentId",
@@ -2036,7 +2124,6 @@
       },
       "delete": {
         "summary": "Delete comment",
-        "x-badge": "Beta",
         "tags": ["Comments"],
         "parameters": [
           {
@@ -2087,7 +2174,6 @@
     },
     "/rooms/{roomId}/threads/{threadId}/comments/{commentId}/add-reaction": {
       "post": {
-        "x-badge": "Beta",
         "summary": "Add comment reaction",
         "description": "This endpoint adds a reaction to a comment. Corresponds to [`liveblocks.addCommentReaction`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction).",
         "tags": ["Comments"],
@@ -2177,7 +2263,6 @@
     "/rooms/{roomId}/threads/{threadId}/comments/{commentId}/remove-reaction": {
       "post": {
         "summary": "Remove comment reaction",
-        "x-badge": "Beta",
         "description": "This endpoint removes a comment reaction. A deleted comment reaction is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.removeCommentReaction`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction).",
         "tags": ["Comments"],
         "operationId": "post-rooms-roomId-threads-threadId-comments-commentId-remove-reaction",
@@ -2507,7 +2592,6 @@
       ],
       "get": {
         "summary": "Get inbox notification",
-        "x-badge": "Beta",
         "tags": ["Notifications"],
         "parameters": [
           {
@@ -2582,7 +2666,6 @@
       ],
       "get": {
         "summary": "Get room notification settings",
-        "x-badge": "Beta",
         "tags": ["Notifications"],
         "operationId": "get-rooms-roomId-users-userId-notification-settings",
         "description": "This endpoint returns a user’s notification settings for a specific room. Corresponds to [`liveblocks.getRoomNotificationSettings`](/docs/api-reference/liveblocks-node#get-rooms-roomId-users-userId-notification-settings).",
@@ -2630,7 +2713,6 @@
       },
       "post": {
         "summary": "Update room notification settings",
-        "x-badge": "Beta",
         "tags": ["Notifications"],
         "operationId": "post-rooms-roomId-users-userId-notification-settings",
         "description": "This endpoint updates a user’s notification settings for a specific room. Corresponds to [`liveblocks.updateRoomNotificationSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-notification-settings).",
@@ -2690,7 +2772,6 @@
       },
       "delete": {
         "summary": "Delete room notification settings",
-        "x-badge": "Beta",
         "tags": ["Notifications"],
         "operationId": "delete-rooms-roomId-users-userId-notification-settings",
         "description": "This endpoint deletes a user’s notification settings for a specific room. Corresponds to [`liveblocks.deleteRoomNotificationSettings`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-users-userId-notification-settings).",
@@ -2734,7 +2815,6 @@
       "parameters": [],
       "post": {
         "summary": "Trigger inbox notification",
-        "x-badge": "Beta",
         "tags": ["Notifications"],
         "operationId": "post-inbox-notifications-trigger",
         "description": "This endpoint triggers an inbox notification. Corresponds to [`liveblocks.triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger).",
@@ -3106,6 +3186,9 @@
           },
           "metadata": {
             "type": "object"
+          },
+          "resolved": {
+            "type": "boolean"
           },
           "updatedAt": {
             "type": "string",

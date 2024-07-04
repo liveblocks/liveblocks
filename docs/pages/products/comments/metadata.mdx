@@ -21,7 +21,7 @@ example:
 ```ts
 metadata: {
   priority: "URGENT",
-  resolved: false,
+  pinned: false,
   timestamp: 1703073188013,
 }
 ```
@@ -65,7 +65,7 @@ type RoomEvent = {};
 // Set your custom metadata properties
 export type ThreadMetadata = {
   priority: string;
-  resolved: boolean;
+  pinned: boolean;
   timestamp: number;
 };
 
@@ -112,7 +112,7 @@ function Component() {
       metadata={{
         // Custom metadata here
         priority: "URGENT",
-        resolved: false,
+        pinned: false,
         timestamp: 1703073188013,
       }}
     />
@@ -127,13 +127,13 @@ edit thread metadata:
 [`useEditThreadMetadata`](/docs/api-reference/liveblocks-react#useEditThreadMetadata)
 and
 [`useCreateThread`](http://localhost:3001/docs/api-reference/liveblocks-react#useCreateThread).
-Here’s one way to create a button that sets the `resolved` metadata property to
+Here’s one way to create a button that sets the `pinned` metadata property to
 `true`.
 
 ```tsx highlight="5,10-13"
 import { useEditThreadMetadata } from "../liveblocks.config";
 
-// Button that sets `resolved` metadata to `true`
+// Button that sets `pinned` metadata to `true`
 function Component() {
   const editThreadMetadata = useEditThreadMetadata();
 
@@ -142,11 +142,11 @@ function Component() {
       onClick={() =>
         editThreadMetadata({
           threadId: "th_d75sF3...",
-          metadata: { resolved: true },
+          metadata: { pinned: true },
         })
       }
     >
-      Resolve thread
+      Pin thread
     </button>
   );
 }

@@ -66,6 +66,8 @@ import {
   EditCommentError,
   EditThreadMetadataError,
   MarkInboxNotificationAsReadError,
+  MarkThreadAsResolvedError,
+  MarkThreadAsUnresolvedError,
   RemoveReactionError,
   UpdateNotificationSettingsError,
 } from "./comments/errors";
@@ -100,9 +102,12 @@ import type {
   ThreadsState,
   ThreadsStateSuccess,
   ThreadSubscription,
+  UseStorageStatusOptions,
   UseThreadsOptions,
 } from "./types";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
+
+const SMOOTH_DELAY = 1000;
 
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
@@ -594,6 +599,8 @@ function makeRoomContextBundle<
     useCreateThread,
     useDeleteThread,
     useEditThreadMetadata,
+    useMarkThreadAsResolved,
+    useMarkThreadAsUnresolved,
     useCreateComment,
     useEditComment,
     useDeleteComment,
@@ -652,6 +659,8 @@ function makeRoomContextBundle<
       useCreateThread,
       useDeleteThread,
       useEditThreadMetadata,
+      useMarkThreadAsResolved,
+      useMarkThreadAsUnresolved,
       useCreateComment,
       useEditComment,
       useDeleteComment,
@@ -833,6 +842,7 @@ function RoomProviderInner<
       switch (message.type) {
         case ServerMsgCode.COMMENT_EDITED:
         case ServerMsgCode.THREAD_METADATA_UPDATED:
+        case ServerMsgCode.THREAD_UPDATED:
         case ServerMsgCode.COMMENT_REACTION_ADDED:
         case ServerMsgCode.COMMENT_REACTION_REMOVED:
         case ServerMsgCode.COMMENT_DELETED:
@@ -932,12 +942,57 @@ function useStatus(): Status {
  * a re-render whenever it changes. Can be used to render a "Saving..."
  * indicator.
  */
-function useStorageStatus(): StorageStatus {
+function useStorageStatus(options?: UseStorageStatusOptions): StorageStatus {
+  // Normally the Rules of Hooks™ dictate that you should not call hooks
+  // conditionally. In this case, we're good here, because the same code path
+  // will always be taken on every subsequent render here, because we've frozen
+  // the value.
+  /* eslint-disable react-hooks/rules-of-hooks */
+  const smooth = useInitial(options?.smooth ?? false);
+  if (smooth) {
+    return useStorageStatusSmooth();
+  } else {
+    return useStorageStatusImmediate();
+  }
+  /* eslint-enable react-hooks/rules-of-hooks */
+}
+
+function useStorageStatusImmediate(): StorageStatus {
   const room = useRoom();
   const subscribe = room.events.storageStatus.subscribe;
   const getSnapshot = room.getStorageStatus;
   const getServerSnapshot = room.getStorageStatus;
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
+
+function useStorageStatusSmooth(): StorageStatus {
+  const room = useRoom();
+  const [status, setStatus] = React.useState(room.getStorageStatus);
+  const oldStatus = useLatest(room.getStorageStatus());
+
+  React.useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const unsub = room.events.storageStatus.subscribe((newStatus) => {
+      if (
+        oldStatus.current === "synchronizing" &&
+        newStatus === "synchronized"
+      ) {
+        // Delay delivery of the "synchronized" event
+        timeoutId = setTimeout(() => setStatus(newStatus), SMOOTH_DELAY);
+      } else {
+        clearTimeout(timeoutId);
+        setStatus(newStatus);
+      }
+    });
+
+    // Clean up
+    return () => {
+      clearTimeout(timeoutId);
+      unsub();
+    };
+  }, [room, oldStatus]);
+
+  return status;
 }
 
 /**
@@ -1445,6 +1500,7 @@ function useCreateThread<M extends BaseMetadata>(): (
         roomId: room.id,
         metadata,
         comments: [newComment],
+        resolved: false,
       };
 
       const optimisticUpdateId = nanoid();
@@ -2126,6 +2182,180 @@ function useMarkThreadAsRead() {
 }
 
 /**
+ * Returns a function that marks a thread as resolved.
+ *
+ * @example
+ * const markThreadAsResolved = useMarkThreadAsResolved();
+ * markThreadAsResolved("th_xxx");
+ */
+function useMarkThreadAsResolved() {
+  const client = useClient();
+  const room = useRoom();
+  return React.useCallback(
+    (threadId: string) => {
+      const optimisticUpdateId = nanoid();
+      const updatedAt = new Date();
+
+      const { store, onMutationFailure } = getExtrasForClient(client);
+      store.pushOptimisticUpdate({
+        type: "mark-thread-as-resolved",
+        id: optimisticUpdateId,
+        threadId,
+        updatedAt,
+      });
+
+      const commentsAPI = room[kInternal].comments;
+      commentsAPI.markThreadAsResolved({ threadId }).then(
+        () => {
+          store.set((state) => {
+            const existingThread = state.threads[threadId];
+            const updatedOptimisticUpdates = state.optimisticUpdates.filter(
+              (update) => update.id !== optimisticUpdateId
+            );
+
+            // If the thread doesn't exist in the cache, we do not update the resolved property
+            if (existingThread === undefined) {
+              return {
+                ...state,
+                optimisticUpdates: updatedOptimisticUpdates,
+              };
+            }
+
+            // If the thread has been deleted, we do not update the resolved property
+            if (existingThread.deletedAt !== undefined) {
+              return {
+                ...state,
+                optimisticUpdates: updatedOptimisticUpdates,
+              };
+            }
+
+            if (
+              existingThread.updatedAt &&
+              existingThread.updatedAt > updatedAt
+            ) {
+              return {
+                ...state,
+                optimisticUpdates: updatedOptimisticUpdates,
+              };
+            }
+
+            return {
+              ...state,
+              threads: {
+                ...state.threads,
+                [threadId]: {
+                  ...existingThread,
+                  resolved: true,
+                },
+              },
+              optimisticUpdates: updatedOptimisticUpdates,
+            };
+          });
+        },
+        (err: Error) =>
+          onMutationFailure(
+            err,
+            optimisticUpdateId,
+            (error) =>
+              new MarkThreadAsResolvedError(error, {
+                roomId: room.id,
+                threadId,
+              })
+          )
+      );
+    },
+    [client, room]
+  );
+}
+
+/**
+ * Returns a function that marks a thread as unresolved.
+ *
+ * @example
+ * const markThreadAsUnresolved = useMarkThreadAsUnresolved();
+ * markThreadAsUnresolved("th_xxx");
+ */
+function useMarkThreadAsUnresolved() {
+  const client = useClient();
+  const room = useRoom();
+  return React.useCallback(
+    (threadId: string) => {
+      const optimisticUpdateId = nanoid();
+      const updatedAt = new Date();
+
+      const { store, onMutationFailure } = getExtrasForClient(client);
+      store.pushOptimisticUpdate({
+        type: "mark-thread-as-unresolved",
+        id: optimisticUpdateId,
+        threadId,
+        updatedAt,
+      });
+
+      const commentsAPI = room[kInternal].comments;
+      commentsAPI.markThreadAsUnresolved({ threadId }).then(
+        () => {
+          store.set((state) => {
+            const existingThread = state.threads[threadId];
+            const updatedOptimisticUpdates = state.optimisticUpdates.filter(
+              (update) => update.id !== optimisticUpdateId
+            );
+
+            // If the thread doesn't exist in the cache, we do not update the resolved property
+            if (existingThread === undefined) {
+              return {
+                ...state,
+                optimisticUpdates: updatedOptimisticUpdates,
+              };
+            }
+
+            // If the thread has been deleted, we do not update the resolved property
+            if (existingThread.deletedAt !== undefined) {
+              return {
+                ...state,
+                optimisticUpdates: updatedOptimisticUpdates,
+              };
+            }
+
+            if (
+              existingThread.updatedAt &&
+              existingThread.updatedAt > updatedAt
+            ) {
+              return {
+                ...state,
+                optimisticUpdates: updatedOptimisticUpdates,
+              };
+            }
+
+            return {
+              ...state,
+              threads: {
+                ...state.threads,
+                [threadId]: {
+                  ...existingThread,
+                  resolved: false,
+                },
+              },
+              optimisticUpdates: updatedOptimisticUpdates,
+            };
+          });
+        },
+        (err: Error) =>
+          onMutationFailure(
+            err,
+            optimisticUpdateId,
+            (error) =>
+              new MarkThreadAsUnresolvedError(error, {
+                roomId: room.id,
+                threadId,
+              })
+          )
+      );
+    },
+    [client, room]
+  );
+}
+
+/**
  * Returns the subscription status of a thread.
  *
  * @example
@@ -2168,8 +2398,6 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
 }
 
 /**
- * @beta
- *
  * Returns the user's notification settings for the current room
  * and a function to update them.
  *
@@ -2225,8 +2453,6 @@ function useRoomNotificationSettings(): [
 }
 
 /**
- * @beta
- *
  * Returns a function that updates the user's notification settings
  * for the current room.
  *
@@ -2397,13 +2623,11 @@ function useStorageSuspense<S extends LsonObject, T>(
  * a re-render whenever it changes. Can be used to render a "Saving..."
  * indicator.
  */
-function useStorageStatusSuspense(): StorageStatusSuccess {
+function useStorageStatusSuspense(
+  options?: UseStorageStatusOptions
+): StorageStatusSuccess {
   useSuspendUntilStorageReady();
-  const room = useRoom();
-  const subscribe = room.events.storageStatus.subscribe;
-  const getSnapshot = room.getStorageStatus as () => StorageStatusSuccess;
-  const getServerSnapshot = room.getStorageStatus as () => StorageStatusSuccess;
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return useStorageStatus(options) as StorageStatusSuccess;
 }
 
 function useThreadsSuspense<M extends BaseMetadata>(
@@ -2461,8 +2685,6 @@ function useThreadsSuspense<M extends BaseMetadata>(
 }
 
 /**
- * @beta
- *
  * Returns the user's notification settings for the current room
  * and a function to update them.
  *
@@ -3074,6 +3296,8 @@ export {
   useHistory,
   useLostConnectionListener,
   useMarkThreadAsRead,
+  useMarkThreadAsResolved,
+  useMarkThreadAsUnresolved,
   _useMutation as useMutation,
   _useMyPresence as useMyPresence,
   _useOther as useOther,

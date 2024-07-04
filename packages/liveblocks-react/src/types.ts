@@ -31,6 +31,16 @@ import type {
   ToImmutable,
 } from "@liveblocks/core";
 
+export type UseStorageStatusOptions = {
+  /**
+   * When setting smooth, the hook will not update immediately as status
+   * changes. This is because in typical applications, these states can change
+   * quickly between synchronizing and synchronized. If you use this hook to
+   * build a "Saving changes..." style UI, prefer setting `smooth: true`.
+   */
+  smooth?: boolean;
+};
+
 export type StorageStatusSuccess = Exclude<
   StorageStatus,
   "not-loaded" | "loading"
@@ -42,6 +52,12 @@ export type UseThreadsOptions<M extends BaseMetadata> = {
    * that match the query will be returned. If not provided, all threads will be returned.
    */
   query?: {
+    /**
+     * Whether to only return threads marked as resolved or unresolved. If not provided,
+     * all threads will be returned.
+     */
+    resolved?: boolean;
+
     /**
      * The metadata to filter the threads by. If provided, only threads with metadata that matches
      * the provided metadata will be returned. If not provided, all threads will be returned.
@@ -771,6 +787,24 @@ type RoomContextBundleCommon<
   useEditThreadMetadata(): (options: EditThreadMetadataOptions<M>) => void;
 
   /**
+   * Returns a function that marks a thread as resolved.
+   *
+   * @example
+   * const markThreadAsResolved = useMarkThreadAsResolved();
+   * markThreadAsResolved("th_xxx");
+   */
+  useMarkThreadAsResolved(): (threadId: string) => void;
+
+  /**
+   * Returns a function that marks a thread as unresolved.
+   *
+   * @example
+   * const markThreadAsUnresolved = useMarkThreadAsUnresolved();
+   * markThreadAsUnresolved("th_xxx");
+   */
+  useMarkThreadAsUnresolved(): (threadId: string) => void;
+
+  /**
    * Returns a function that adds a comment to a thread.
    *
    * @example
@@ -817,8 +851,6 @@ type RoomContextBundleCommon<
   useRemoveReaction(): (options: CommentReactionOptions) => void;
 
   /**
-   * @beta
-   *
    * Returns a function that updates the user's notification settings
    * for the current room.
    *
@@ -875,7 +907,7 @@ export type RoomContextBundle<
        * a re-render whenever it changes. Can be used to render a "Saving..."
        * indicator.
        */
-      useStorageStatus(): StorageStatus;
+      useStorageStatus(options?: UseStorageStatusOptions): StorageStatus;
 
       /**
        * Extract arbitrary data from the Liveblocks Storage state, using an
@@ -949,8 +981,6 @@ export type RoomContextBundle<
       useThreads(options?: UseThreadsOptions<M>): ThreadsState<M>;
 
       /**
-       * @beta
-       *
        * Returns the user's notification settings for the current room
        * and a function to update them.
        *
@@ -970,7 +1000,9 @@ export type RoomContextBundle<
              * a re-render whenever it changes. Can be used to render a "Saving..."
              * indicator.
              */
-            useStorageStatus(): StorageStatusSuccess;
+            useStorageStatus(
+              options?: UseStorageStatusOptions
+            ): StorageStatusSuccess;
 
             /**
              * Extract arbitrary data from the Liveblocks Storage state, using an
@@ -1038,8 +1070,6 @@ export type RoomContextBundle<
             useThreads(options?: UseThreadsOptions<M>): ThreadsStateSuccess<M>;
 
             /**
-             * @beta
-             *
              * Returns the user's notification settings for the current room
              * and a function to update them.
              *
@@ -1066,8 +1096,6 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
   LiveblocksProvider(props: PropsWithChildren): JSX.Element;
 
   /**
-   * @beta
-   *
    * Returns a function that marks an inbox notification as read.
    *
    * @example
@@ -1077,8 +1105,6 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
   useMarkInboxNotificationAsRead(): (inboxNotificationId: string) => void;
 
   /**
-   * @beta
-   *
    * Returns a function that marks all inbox notifications as read.
    *
    * @example
@@ -1088,8 +1114,6 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
   useMarkAllInboxNotificationsAsRead(): () => void;
 
   /**
-   * @beta
-   *
    * Returns the thread associated with a `"thread"` inbox notification.
    *
    * @example
@@ -1105,8 +1129,6 @@ export type LiveblocksContextBundle<
   LiveblocksContextBundleCommon<M> &
     SharedContextBundle<U>["classic"] & {
       /**
-       * @beta
-       *
        * Returns the inbox notifications for the current user.
        *
        * @example
@@ -1115,8 +1137,6 @@ export type LiveblocksContextBundle<
       useInboxNotifications(): InboxNotificationsState;
 
       /**
-       * @beta
-       *
        * Returns the number of unread inbox notifications for the current user.
        *
        * @example
@@ -1128,8 +1148,6 @@ export type LiveblocksContextBundle<
         LiveblocksContextBundleCommon<M> &
           SharedContextBundle<U>["suspense"] & {
             /**
-             * @beta
-             *
              * Returns the inbox notifications for the current user.
              *
              * @example
@@ -1138,8 +1156,6 @@ export type LiveblocksContextBundle<
             useInboxNotifications(): InboxNotificationsStateSuccess;
 
             /**
-             * @beta
-             *
              * Returns the number of unread inbox notifications for the current user.
              *
              * @example

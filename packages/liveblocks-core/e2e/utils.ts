@@ -7,7 +7,7 @@ import WebSocket from "ws";
 import type { Room } from "../src/room";
 import type { Status } from "../src/connection";
 import type { BaseUserMeta } from "../src/protocol/BaseUserMeta";
-import { withTimeout } from "../src/lib/utils";
+import { wait, withTimeout } from "../src/lib/utils";
 import type { Json, JsonObject } from "../src/lib/Json";
 import type { LiveObject } from "../src/crdts/LiveObject";
 import type { LsonObject } from "../src/crdts/Lson";
@@ -248,10 +248,6 @@ export function prepareSingleClientTest<S extends LsonObject>(
       throw er;
     }
   };
-}
-
-export function wait(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**

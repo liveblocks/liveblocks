@@ -89,8 +89,6 @@ export function createRoomContextForTest<M extends BaseMetadata>({
   return createRoomContext<JsonObject, never, never, never, M>(client);
 }
 
-export const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
 export * from "@testing-library/react";
 export { customRender as render, customRenderHook as renderHook };
 

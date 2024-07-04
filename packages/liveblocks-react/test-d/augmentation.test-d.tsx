@@ -34,7 +34,7 @@ declare global {
 
     ThreadMetadata: {
       color: "red" | "blue";
-      resolved?: boolean;
+      pinned?: boolean;
     };
 
     RoomInfo: {
@@ -591,7 +591,7 @@ declare global {
   expectType<void>(
     editMetadata({
       threadId: "th_xxx",
-      metadata: { color: "red", resolved: null },
+      metadata: { color: "red", pinned: null },
     })
   );
 
@@ -614,7 +614,7 @@ declare global {
   expectType<void>(
     editMetadata({
       threadId: "th_xxx",
-      metadata: { color: "red", resolved: null },
+      metadata: { color: "red", pinned: null },
     })
   );
 

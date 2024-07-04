@@ -46,7 +46,12 @@ import { objectToQuery } from "./lib/objectToQuery";
 import { asPos } from "./lib/position";
 import type { QueryParams } from "./lib/url";
 import { urljoin } from "./lib/url";
-import { compact, deepClone, memoize, tryParseJson } from "./lib/utils";
+import {
+  compact,
+  deepClone,
+  memoizeOnSuccess,
+  tryParseJson,
+} from "./lib/utils";
 import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 import type { ClientMsg, UpdateYDocClientMsg } from "./protocol/ClientMsg";
@@ -457,6 +462,7 @@ type SubscribeFn<
 
 export type GetThreadsOptions<M extends BaseMetadata> = {
   query?: {
+    resolved?: boolean;
     metadata?: Partial<QueryMetadata<M>>;
   };
   since?: Date;
@@ -490,6 +496,8 @@ type CommentsApi<M extends BaseMetadata> = {
     metadata: Patchable<M>;
     threadId: string;
   }): Promise<M>;
+  markThreadAsResolved(options: { threadId: string }): Promise<void>;
+  markThreadAsUnresolved(options: { threadId: string }): Promise<void>;
   createComment(options: {
     threadId: string;
     commentId: string;
@@ -1256,6 +1264,24 @@ function createCommentsApi<M extends BaseMetadata>(
     );
   }
 
+  async function markThreadAsResolved({ threadId }: { threadId: string }) {
+    await fetchJson(
+      `/threads/${encodeURIComponent(threadId)}/mark-as-resolved`,
+      {
+        method: "POST",
+      }
+    );
+  }
+
+  async function markThreadAsUnresolved({ threadId }: { threadId: string }) {
+    await fetchJson(
+      `/threads/${encodeURIComponent(threadId)}/mark-as-unresolved`,
+      {
+        method: "POST",
+      }
+    );
+  }
+
   async function createComment({
     threadId,
     commentId,
@@ -1377,6 +1403,8 @@ function createCommentsApi<M extends BaseMetadata>(
     createThread,
     deleteThread,
     editThreadMetadata,
+    markThreadAsResolved,
+    markThreadAsUnresolved,
     createComment,
     editComment,
     deleteComment,
@@ -2467,6 +2495,7 @@ export function createRoom<
           case ServerMsgCode.THREAD_CREATED:
           case ServerMsgCode.THREAD_DELETED:
           case ServerMsgCode.THREAD_METADATA_UPDATED:
+          case ServerMsgCode.THREAD_UPDATED:
           case ServerMsgCode.COMMENT_REACTION_ADDED:
           case ServerMsgCode.COMMENT_REACTION_REMOVED:
           case ServerMsgCode.COMMENT_CREATED:
@@ -3079,8 +3108,8 @@ export function createRoom<
 
       isPresenceReady,
       isStorageReady,
-      waitUntilPresenceReady: memoize(waitUntilPresenceReady),
-      waitUntilStorageReady: memoize(waitUntilStorageReady),
+      waitUntilPresenceReady: memoizeOnSuccess(waitUntilPresenceReady),
+      waitUntilStorageReady: memoizeOnSuccess(waitUntilStorageReady),
 
       events,
 
