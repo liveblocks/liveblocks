@@ -44,7 +44,7 @@ export type EditorStatus =
 
 function getEditorStatus(
   provider?: LiveblocksYjsProvider<never, never, never, never, never>
-) {
+): EditorStatus {
   if (provider === undefined) {
     return "not-loaded";
   }
@@ -64,7 +64,7 @@ export function useEditorStatus(): EditorStatus {
   const room = useRoom();
   const provider = providersMap.get(room.id);
 
-  const [status, setStatus] = useState<EditorStatus>(getEditorStatus(provider));
+  const [status, setStatus] = useState(getEditorStatus(provider));
 
   useEffect(() => {
     const provider = providersMap.get(room.id);

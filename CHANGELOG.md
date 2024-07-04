@@ -9,6 +9,10 @@ more information about this change please read our
 
 - Add `useMarkThreadAsResolved` and `useMarkThreadAsUnresolved` hooks.
 - Support `query.resolved` when filtering threads.
+- The
+  [`useStorageStatus`](https://liveblocks.io/docs/api-reference/liveblocks-react#useStorageStatus)
+  hook now also has a `{ smooth: true }` setting to make building calm UIs with
+  it a bit easier.
 - The `useClient()` hook is now also available for users of
   `createRoomContext()` and/or `createLiveblocksContext()`
 - Fix: avoid unnecessary re-renders if inbox notifications haven't changed

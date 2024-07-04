@@ -1,5 +1,5 @@
-import { sleep } from "../../__tests__/_waitUtils";
 import { Batch } from "../batch";
+import { wait } from "../utils";
 
 const SOME_TIME = 5;
 const ERROR_MESSAGE = "error";
@@ -10,7 +10,7 @@ const synchronousCallback = (args: [string][]) => {
 };
 
 const asynchronousCallback = async (args: [string][]) => {
-  await sleep(SOME_TIME);
+  await wait(SOME_TIME);
 
   return args.map(([userId]) => userId);
 };
@@ -49,7 +49,7 @@ describe("Batch", () => {
     const batch = new Batch<string, [string]>(callback, { delay: SOME_TIME });
 
     const a = batch.get("a");
-    await sleep(SOME_TIME * 1.5);
+    await wait(SOME_TIME * 1.5);
     const b = batch.get("b");
 
     await expect(a).resolves.toEqual("a");
@@ -165,7 +165,7 @@ describe("Batch", () => {
 
     const a = batch.get("a");
     const b = batch.get("b");
-    await sleep(SOME_TIME * 1.5);
+    await wait(SOME_TIME * 1.5);
     const duplicatedA = batch.get("a");
 
     await expect(a).resolves.toEqual("a");
