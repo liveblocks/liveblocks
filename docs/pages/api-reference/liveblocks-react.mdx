@@ -1270,10 +1270,8 @@ The possible value are: `initial`, `connecting`, `connected`, `reconnecting`, or
 ### useStorageStatus [@badge=RoomProvider]
 
 Returns the current storage status of the room, and will re-render your
-component whenever it changes. Can be helpful for
-[preventing users from leaving your app before changes are saved](#prevent-users-losing-unsaved-changes).
-A `{ smooth: true }` option is also available, which prevents quick changes
-between states, making it ideal for
+component whenever it changes. A `{ smooth: true }` option is also available,
+which prevents quick changes between states, making it ideal for
 [rendering a synchronization badge in your app](#display-synchronization-badge).
 
 ```ts
@@ -1292,37 +1290,6 @@ const storageStatus = useStorageStatus();
 // "synchronizing" | "synchronized"
 ```
 
-#### Prevent users losing unsaved changes [#prevent-users-losing-unsaved-changes]
-
-Storage usually synchronizes milliseconds after a change, but in some
-circumstances, such as a user with a poor connection, it may take longer before
-they receive a response from our servers. It can be helpful to check if Storage
-changes have been synchronized, and prevent users from leaving the page if they
-haven’t.
-
-```tsx
-import { useStorageStatus } from "@liveblocks/react/suspense";
-
-function usePreventUnsavedChanges() {
-  const storageStatus = useStorageStatus();
-
-  useEffect(() => {
-    function beforeUnload(e: BeforeUnloadEvent) {
-      if (storageStatus === "synchronized") {
-        return;
-      }
-      e.preventDefault();
-    }
-
-    window.addEventListener("beforeunload", beforeUnload);
-
-    return () => {
-      window.removeEventListener("beforeunload", beforeUnload);
-    };
-  }, [storageStatus]);
-}
-```
-
 #### Display a synchronization badge [#display-synchronization-badge]
 
 Passing `{ smooth: true }` prevents the status changing from `"synchronizing"`
@@ -1339,6 +1306,41 @@ function StorageStatusBadge() {
   return (
     <div>{storageStatus === "synchronized" ? "✅ Saved" : "🔄 Saving"}</div>
   );
+}
+```
+
+#### Prevent users losing unsaved changes [#prevent-users-losing-unsaved-changes]
+
+Storage usually synchronizes milliseconds after a change, but in some
+circumstances, such as a user with a poor connection, it may take longer before
+they receive a response from our servers. It can be helpful to check if Storage
+changes have been synchronized, and prevent users from leaving the page if they
+haven’t.
+
+It’s possible to implement this with `useStorageStatus`, however with
+[`useRoom`](/docs/api-reference/liveblocks-react#useRoom) you can create a
+version that renders much less frequently, so we recommend using this instead.
+
+```tsx
+import { useRoom } from "@liveblocks/react/suspense";
+
+function usePreventUnsavedChanges() {
+  const room = useRoom();
+
+  useEffect(() => {
+    function beforeUnload(e: BeforeUnloadEvent) {
+      if (room.getStorageStatus() === "synchronized") {
+        return;
+      }
+      e.preventDefault();
+    }
+
+    window.addEventListener("beforeunload", beforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", beforeUnload);
+    };
+  }, [room]);
 }
 ```
 
