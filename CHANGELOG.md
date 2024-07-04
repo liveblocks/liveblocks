@@ -24,6 +24,8 @@ more information about this change please read our
 - Add support for custom links to the composer. (either by pasting URLs with
   plain text selected or by pasting existing links)
 - Preserve whitespace and empty lines in comments.
+- Mark threads as read when visible (like before), but only if the window is
+  focused.
 - Fix improper `useTransition` fallback which would break on React versions
   lower than 18.
 

@@ -281,7 +281,7 @@ export const Thread = forwardRef(
                   onCommentDelete={handleCommentDelete}
                   onAuthorClick={onAuthorClick}
                   onMentionClick={onMentionClick}
-                  markThreadAsReadWhenVisible={
+                  autoMarkReadThreadId={
                     index === lastCommentIndex && isUnread
                       ? thread.id
                       : undefined
