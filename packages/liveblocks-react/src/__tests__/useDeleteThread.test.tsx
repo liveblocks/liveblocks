@@ -131,13 +131,19 @@ describe("useDeleteThread", () => {
 
     await waitFor(() => expect(result.current.threads).toEqual(threads));
 
-    try {
-      result.current.deleteThread(threads[0].id);
-    } catch (error) {
-      const message = (error as Error).message;
+    let message: string | undefined;
 
-      expect(message).toMatch("Only the thread creator can delete the thread");
-    }
+    await act(() => {
+      try {
+        result.current.deleteThread(threads[0].id);
+      } catch (error) {
+        message = (error as Error).message;
+      }
+
+      return null;
+    });
+
+    expect(message).toMatch("Only the thread creator can delete the thread");
 
     await waitFor(() => expect(result.current.threads).toEqual(threads));
 
