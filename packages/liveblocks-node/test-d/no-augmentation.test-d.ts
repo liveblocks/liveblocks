@@ -240,7 +240,7 @@ async () => {
     await client.editThreadMetadata({
       roomId,
       threadId,
-      data: { userId, metadata: { color: "red", resolved: null } }, // Correct metadata updates
+      data: { userId, metadata: { color: "red", pinned: null } }, // Correct metadata updates
     });
   }
 
@@ -293,5 +293,39 @@ async () => {
     expectType<string>(reaction.emoji);
     expectType<string>(reaction.userId);
     expectType<Date>(reaction.createdAt);
+  }
+  // .markThreadAsResolved()
+  {
+    const thread = await client.markThreadAsResolved({
+      roomId: "my-room",
+      threadId: "th_xxx",
+      data: {
+        userId: "user-id",
+      },
+    });
+    expectType<"thread">(thread.type);
+    expectType<string>(thread.id);
+    expectType<string>(thread.roomId);
+    expectType<boolean>(thread.resolved);
+    expectType<Date>(thread.createdAt);
+    expectType<Date | undefined>(thread.updatedAt);
+    expectType<CommentData[]>(thread.comments);
+  }
+  // .markThreadAsUnresolved()
+  {
+    const thread = await client.markThreadAsUnresolved({
+      roomId: "my-room",
+      threadId: "th_xxx",
+      data: {
+        userId: "user-id",
+      },
+    });
+    expectType<"thread">(thread.type);
+    expectType<string>(thread.id);
+    expectType<string>(thread.roomId);
+    expectType<boolean>(thread.resolved);
+    expectType<Date>(thread.createdAt);
+    expectType<Date | undefined>(thread.updatedAt);
+    expectType<CommentData[]>(thread.comments);
   }
 };

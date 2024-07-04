@@ -9,7 +9,7 @@ import {
   useFloating,
 } from "@floating-ui/react-dom";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import type { BaseMetadata } from "@liveblocks/core";
+import type { BaseMetadata, DM } from "@liveblocks/core";
 import { useCreateThread } from "@liveblocks/react";
 import type {
   ComposerProps,
@@ -64,11 +64,7 @@ export const OPEN_FLOATING_COMPOSER_COMMAND: LexicalCommand<void> =
 
 type ComposerElement = ComponentRef<typeof Composer>;
 
-type ThreadMetadata = {
-  resolved?: boolean;
-};
-
-type FloatingComposerProps<M extends BaseMetadata = ThreadMetadata> = Omit<
+type FloatingComposerProps<M extends BaseMetadata = DM> = Omit<
   ComposerProps<M>,
   "threadId" | "commentId"
 >;

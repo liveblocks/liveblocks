@@ -23,6 +23,8 @@ type OptimisticUpdate<M extends BaseMetadata> =
   | CreateThreadOptimisticUpdate<M>
   | DeleteThreadOptimisticUpdate
   | EditThreadMetadataOptimisticUpdate<M>
+  | MarkThreadAsResolvedOptimisticUpdate
+  | MarkThreadAsUnresolvedOptimisticUpdate
   | CreateCommentOptimisticUpdate
   | EditCommentOptimisticUpdate
   | DeleteCommentOptimisticUpdate
@@ -52,6 +54,20 @@ type EditThreadMetadataOptimisticUpdate<M extends BaseMetadata> = {
   id: string;
   threadId: string;
   metadata: Resolve<Patchable<M>>;
+  updatedAt: Date;
+};
+
+type MarkThreadAsResolvedOptimisticUpdate = {
+  type: "mark-thread-as-resolved";
+  id: string;
+  threadId: string;
+  updatedAt: Date;
+};
+
+type MarkThreadAsUnresolvedOptimisticUpdate = {
+  type: "mark-thread-as-unresolved";
+  id: string;
+  threadId: string;
   updatedAt: Date;
 };
 
@@ -397,6 +413,44 @@ export function applyOptimisticUpdates<M extends BaseMetadata>(
             ...thread.metadata,
             ...optimisticUpdate.metadata,
           },
+        };
+
+        break;
+      }
+      case "mark-thread-as-resolved": {
+        const thread = result.threads[optimisticUpdate.threadId];
+        // If the thread doesn't exist in the cache, we do not apply the update
+        if (thread === undefined) {
+          break;
+        }
+
+        // If the thread has been deleted, we do not apply the update
+        if (thread.deletedAt !== undefined) {
+          break;
+        }
+
+        result.threads[thread.id] = {
+          ...thread,
+          resolved: true,
+        };
+
+        break;
+      }
+      case "mark-thread-as-unresolved": {
+        const thread = result.threads[optimisticUpdate.threadId];
+        // If the thread doesn't exist in the cache, we do not apply the update
+        if (thread === undefined) {
+          break;
+        }
+
+        // If the thread has been deleted, we do not apply the update
+        if (thread.deletedAt !== undefined) {
+          break;
+        }
+
+        result.threads[thread.id] = {
+          ...thread,
+          resolved: false,
         };
 
         break;

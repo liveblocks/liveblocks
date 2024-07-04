@@ -457,6 +457,7 @@ type SubscribeFn<
 
 export type GetThreadsOptions<M extends BaseMetadata> = {
   query?: {
+    resolved?: boolean;
     metadata?: Partial<QueryMetadata<M>>;
   };
   since?: Date;
@@ -490,6 +491,8 @@ type CommentsApi<M extends BaseMetadata> = {
     metadata: Patchable<M>;
     threadId: string;
   }): Promise<M>;
+  markThreadAsResolved(options: { threadId: string }): Promise<void>;
+  markThreadAsUnresolved(options: { threadId: string }): Promise<void>;
   createComment(options: {
     threadId: string;
     commentId: string;
@@ -1256,6 +1259,24 @@ function createCommentsApi<M extends BaseMetadata>(
     );
   }
 
+  async function markThreadAsResolved({ threadId }: { threadId: string }) {
+    await fetchJson(
+      `/threads/${encodeURIComponent(threadId)}/mark-as-resolved`,
+      {
+        method: "POST",
+      }
+    );
+  }
+
+  async function markThreadAsUnresolved({ threadId }: { threadId: string }) {
+    await fetchJson(
+      `/threads/${encodeURIComponent(threadId)}/mark-as-unresolved`,
+      {
+        method: "POST",
+      }
+    );
+  }
+
   async function createComment({
     threadId,
     commentId,
@@ -1377,6 +1398,8 @@ function createCommentsApi<M extends BaseMetadata>(
     createThread,
     deleteThread,
     editThreadMetadata,
+    markThreadAsResolved,
+    markThreadAsUnresolved,
     createComment,
     editComment,
     deleteComment,

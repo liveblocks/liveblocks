@@ -2258,7 +2258,7 @@ const deleteThread = useDeleteThread();
 deleteThread("th_xxx");
 ```
 
-### useEditThreadMetadata
+### useEditThreadMetadata [@badge=RoomProvider]
 
 Returns a function that edits a thread’s metadata.
 
@@ -2274,6 +2274,28 @@ import { useEditThreadMetadata } from "@liveblocks/react/suspense";
 
 const editThreadMetadata = useEditThreadMetadata();
 editThreadMetadata({ threadId: "th_xxx", metadata: {} });
+```
+
+### useMarkThreadAsResolved [@badge=RoomProvider]
+
+Returns a function that marks a thread as resolved.
+
+```tsx
+import { useMarkThreadAsResolved } from "@liveblocks/react/suspense";
+
+const markThreadAsResolved = useMarkThreadAsResolved();
+markThreadAsResolved("th_xxx");
+```
+
+### useMarkThreadAsUnresolved [@badge=RoomProvider]
+
+Returns a function that marks a thread as unresolved.
+
+```tsx
+import { useMarkThreadAsUnresolved } from "@liveblocks/react/suspense";
+
+const markThreadAsUnresolved = useMarkThreadAsUnresolved();
+markThreadAsUnresolved("th_xxx");
 ```
 
 ### useMarkThreadAsRead [@badge=RoomProvider]
