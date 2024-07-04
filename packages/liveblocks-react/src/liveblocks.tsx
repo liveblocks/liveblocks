@@ -182,7 +182,7 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
    * Performs one network fetch, and updates the store and last requested at
    * date if successful. If unsuccessful, will throw.
    */
-  async function updateInboxNotifications() {
+  async function fetchInboxNotifications() {
     const since =
       lastRequestedAt !== undefined ? { since: lastRequestedAt } : undefined;
 
@@ -213,7 +213,7 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
   let pollerSubscribers = 0;
   const poller = makePoller(async () => {
     return waitUntilInboxNotificationsLoaded()
-      .then(updateInboxNotifications)
+      .then(fetchInboxNotifications)
       .catch(() => {
         // When polling, we don't want to throw errors, ever
         // XXX Maybe issue console warnings here though?
@@ -233,7 +233,7 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
 
     try {
       await autoRetry(
-        () => updateInboxNotifications(),
+        () => fetchInboxNotifications(),
         7,
         [5000, 5000, 10000, 10000, 15000, 15000]
       );
