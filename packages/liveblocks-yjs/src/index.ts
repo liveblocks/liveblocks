@@ -17,13 +17,8 @@ import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 type ProviderOptions = {
-  autoloadSubdocs: boolean;
-  readOnly: boolean;
-};
-
-const DefaultOptions: ProviderOptions = {
-  autoloadSubdocs: false,
-  readOnly: false,
+  autoloadSubdocs?: boolean;
+  readOnly?: boolean;
 };
 
 export class LiveblocksYjsProvider<
@@ -47,7 +42,7 @@ export class LiveblocksYjsProvider<
   constructor(
     room: Room<P, S, U, E, M>,
     doc: Y.Doc,
-    options: ProviderOptions | undefined = DefaultOptions
+    options: ProviderOptions | undefined = {}
   ) {
     super();
     this.rootDoc = doc;
@@ -85,13 +80,13 @@ export class LiveblocksYjsProvider<
           this.subdocHandlers.get(guid)?.handleServerUpdate({
             update,
             stateVector,
-            readOnly: this.options.readOnly,
+            readOnly: this.options.readOnly ?? false,
           });
         } else {
           this.rootDocHandler.handleServerUpdate({
             update,
             stateVector,
-            readOnly: this.options.readOnly,
+            readOnly: this.options.readOnly ?? false,
           });
         }
       })
