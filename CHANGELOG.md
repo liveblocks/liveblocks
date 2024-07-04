@@ -1,4 +1,4 @@
-## v2.2.0 (not published yet)
+## v2.2.0
 
 We are making `resolved` a first-class citizen property on
 [threads](https://liveblocks.io/docs/products/comments/concepts#Threads), for
