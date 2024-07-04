@@ -22,21 +22,25 @@ afterEach(() => {
 
 afterAll(() => server.close());
 
-describe("useDeleteThread", () => {
-  const userId = "batman";
-  const threads = [
+function createDummyThreads(userId: string) {
+  return [
     {
       ...dummyThreadData(),
       comments: [
-        {
-          ...dummyCommentData(),
+        dummyCommentData({
           userId,
-        },
+        }),
       ],
     },
   ];
+}
+
+describe("useDeleteThread", () => {
+  const userId = "batman";
 
   test("should delete a thread optimistically", async () => {
+    const threads = createDummyThreads(userId);
+
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
         return res(
@@ -77,6 +81,7 @@ describe("useDeleteThread", () => {
 
     await act(() => {
       result.current.deleteThread(threads[0].id);
+
       return null;
     });
 
@@ -86,6 +91,8 @@ describe("useDeleteThread", () => {
   });
 
   test("should throw an error when a user attempts to delete someone else's thread", async () => {
+    const threads = createDummyThreads(userId);
+
     server.use(
       mockGetThreads(async (_req, res, ctx) =>
         res(
@@ -104,7 +111,9 @@ describe("useDeleteThread", () => {
     );
 
     const { RoomProvider, useThreads, useDeleteThread } =
-      createRoomContextForTest({ userId: "superman" });
+      createRoomContextForTest({
+        userId: "not-the-thread-creator",
+      });
 
     const { result, unmount } = renderHook(
       () => ({
@@ -126,6 +135,7 @@ describe("useDeleteThread", () => {
       result.current.deleteThread(threads[0].id);
     } catch (error) {
       const message = (error as Error).message;
+
       expect(message).toMatch("Only the thread creator can delete the thread");
     }
 
@@ -135,6 +145,8 @@ describe("useDeleteThread", () => {
   });
 
   test("should rollback optimistic deletion if server fails", async () => {
+    const threads = createDummyThreads(userId);
+
     server.use(
       mockGetThreads(async (_req, res, ctx) =>
         res(
@@ -175,6 +187,7 @@ describe("useDeleteThread", () => {
 
     await act(() => {
       result.current.deleteThread(threads[0].id);
+
       return null;
     });
 
