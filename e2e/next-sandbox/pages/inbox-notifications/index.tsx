@@ -12,6 +12,8 @@ import {
   Thread,
 } from "@liveblocks/react-ui";
 import * as React from "react";
+import type { FallbackProps } from "react-error-boundary";
+import { ErrorBoundary } from "react-error-boundary";
 
 import { getRoomFromUrl, getUserFromUrl, Row } from "../../utils";
 import Button from "../../utils/Button";
@@ -55,13 +57,25 @@ const {
   suspense: { RoomProvider, useSelf, useThreads, useDeleteComment },
 } = createRoomContext(client);
 
+function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
+  return (
+    <div style={{ border: "2px solid red", color: "red" }}>
+      <p>Oops, an unexpected error happened.</p>
+      <pre>{String(error)}</pre>
+      <button onClick={resetErrorBoundary}>Retry</button>
+    </div>
+  );
+}
+
 function WithRoomProvider(props: React.PropsWithChildren) {
   const roomId = getRoomFromUrl();
   return (
     <RoomProvider id={roomId} initialPresence={{} as never}>
-      <ClientSideSuspense fallback="Loading...">
-        {props.children}
-      </ClientSideSuspense>
+      <ErrorBoundary FallbackComponent={ErrorFallback}>
+        <ClientSideSuspense fallback="Loading...">
+          {props.children}
+        </ClientSideSuspense>
+      </ErrorBoundary>
     </RoomProvider>
   );
 }
@@ -69,9 +83,11 @@ function WithRoomProvider(props: React.PropsWithChildren) {
 function WithLiveblocksProvider(props: React.PropsWithChildren) {
   return (
     <LiveblocksProvider>
-      <ClientSideSuspense fallback="Loading...">
-        {props.children}
-      </ClientSideSuspense>
+      <ErrorBoundary FallbackComponent={ErrorFallback}>
+        <ClientSideSuspense fallback="Loading...">
+          {props.children}
+        </ClientSideSuspense>
+      </ErrorBoundary>
     </LiveblocksProvider>
   );
 }
