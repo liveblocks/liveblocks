@@ -1777,7 +1777,6 @@
     "/rooms/{roomId}/threads/{threadId}/mark-as-resolved": {
       "post": {
         "summary": "Mark thread as resolved",
-        "x-badge": "Beta",
         "tags": ["Comments"],
         "description": "This endpoint marks a thread as resolved.",
         "operationId": "post-rooms-roomId-threads-threadId-mark-as-resolved",
@@ -1824,7 +1823,6 @@
     "/rooms/{roomId}/threads/{threadId}/mark-as-unresolved": {
       "post": {
         "summary": "Mark thread as unresolved",
-        "x-badge": "Beta",
         "tags": ["Comments"],
         "description": "This endpoint marks a thread as unresolved.",
         "operationId": "post-rooms-roomId-threads-threadId-mark-as-unresolved",
