@@ -54,30 +54,28 @@ function Component() {
 }
 ```
 
-##### Resolved thread metadata
+##### Resolved and unresolved threads
 
-A thread allows you to attach custom metadata to it when using the
-[mutation hooks](/docs/api-reference/liveblocks-react#Comments), and when
-creating a thread [with the composer](#Adding-thread-metadata). The `Thread`
-component automatically adds the `resolved` property to `metadata`, and this
-property is used to display a checkbox which denotes whether the thread has been
-resolved or not.
+A thread can be marked as resolved or unresolved via its `resolved` property.
+The `Thread` component automatically handles this through its `resolved` toggle
+button displayed by default.
 
-```ts
-const resolved = thread.metadata.resolved; // true | false
-```
+You can additionally use `thread.resolved` to filter the displayed threads for
+example. Or if you want to create your own `Thread` component using
+[the primitives](/docs/products/comments/primitives), you can use
+[`useMarkThreadAsResolved`](/docs/api-reference/liveblocks-react#useMarkThreadAsResolved)
+and
+[`useMarkThreadAsUnresolved`](/docs/api-reference/liveblocks-react#useMarkThreadAsUnresolved)
+to update the property.
 
-If you’d like to use this, make sure to add the `resolved` property to
-`ThreadMetadata` in your config file for valid type-checking.
+<Banner title="Resolved in metadata before 2.2">
 
-```tsx file="liveblocks.config.ts"
-export type ThreadMetadata = {
-  resolved: boolean;
+Before 2.2, `resolved` was an optional property in a thread’s metadata, it’s now
+a first-class citizen. If you’re upgrading from a previous version, learn more
+about this change in our
+[Upgrade Guide for 2.2](https://liveblocks.io/docs/guides/upgrading/2.2).
 
-  // Custom metadata
-  // ...
-};
-```
+</Banner>
 
 ##### Props [#Thread-props]
 
