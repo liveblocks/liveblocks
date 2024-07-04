@@ -24,14 +24,13 @@ afterAll(() => server.close());
 
 function createDummyThreads(userId: string) {
   return [
-    {
-      ...dummyThreadData(),
+    dummyThreadData({
       comments: [
         dummyCommentData({
           userId,
         }),
       ],
-    },
+    }),
   ];
 }
 
@@ -107,9 +106,10 @@ describe("useDeleteThread", () => {
           })
         )
       )
-      // no need to mock delete thread, as it should not be called
+      // No need to mock delete thread, as it should not be called
     );
 
+    // In this test, the current user's ID is "not-the-thread-creator"
     const { RoomProvider, useThreads, useDeleteThread } =
       createRoomContextForTest({
         userId: "not-the-thread-creator",
@@ -131,19 +131,21 @@ describe("useDeleteThread", () => {
 
     await waitFor(() => expect(result.current.threads).toEqual(threads));
 
-    let message: string | undefined;
+    let errorMessage: string | undefined;
 
     await act(() => {
       try {
         result.current.deleteThread(threads[0].id);
       } catch (error) {
-        message = (error as Error).message;
+        errorMessage = (error as Error).message;
       }
 
       return null;
     });
 
-    expect(message).toMatch("Only the thread creator can delete the thread");
+    expect(errorMessage).toMatch(
+      "Only the thread creator can delete the thread"
+    );
 
     await waitFor(() => expect(result.current.threads).toEqual(threads));
 
