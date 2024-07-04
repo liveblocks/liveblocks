@@ -27,7 +27,6 @@ declare global {
     };
     // Custom metadata set on threads, for useThreads, useCreateThread, etc.
     ThreadMetadata: {
-      resolved: boolean;
       zIndex: number;
       cursorSelectors: string;
       cursorX: AccurateCursorPositions["cursorX"];

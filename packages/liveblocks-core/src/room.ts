@@ -462,6 +462,7 @@ type SubscribeFn<
 
 export type GetThreadsOptions<M extends BaseMetadata> = {
   query?: {
+    resolved?: boolean;
     metadata?: Partial<QueryMetadata<M>>;
   };
   since?: Date;
@@ -495,6 +496,8 @@ type CommentsApi<M extends BaseMetadata> = {
     metadata: Patchable<M>;
     threadId: string;
   }): Promise<M>;
+  markThreadAsResolved(options: { threadId: string }): Promise<void>;
+  markThreadAsUnresolved(options: { threadId: string }): Promise<void>;
   createComment(options: {
     threadId: string;
     commentId: string;
@@ -1261,6 +1264,24 @@ function createCommentsApi<M extends BaseMetadata>(
     );
   }
 
+  async function markThreadAsResolved({ threadId }: { threadId: string }) {
+    await fetchJson(
+      `/threads/${encodeURIComponent(threadId)}/mark-as-resolved`,
+      {
+        method: "POST",
+      }
+    );
+  }
+
+  async function markThreadAsUnresolved({ threadId }: { threadId: string }) {
+    await fetchJson(
+      `/threads/${encodeURIComponent(threadId)}/mark-as-unresolved`,
+      {
+        method: "POST",
+      }
+    );
+  }
+
   async function createComment({
     threadId,
     commentId,
@@ -1382,6 +1403,8 @@ function createCommentsApi<M extends BaseMetadata>(
     createThread,
     deleteThread,
     editThreadMetadata,
+    markThreadAsResolved,
+    markThreadAsUnresolved,
     createComment,
     editComment,
     deleteComment,
@@ -2472,6 +2495,7 @@ export function createRoom<
           case ServerMsgCode.THREAD_CREATED:
           case ServerMsgCode.THREAD_DELETED:
           case ServerMsgCode.THREAD_METADATA_UPDATED:
+          case ServerMsgCode.THREAD_UPDATED:
           case ServerMsgCode.COMMENT_REACTION_ADDED:
           case ServerMsgCode.COMMENT_REACTION_REMOVED:
           case ServerMsgCode.COMMENT_CREATED:

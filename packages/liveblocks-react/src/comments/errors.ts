@@ -46,6 +46,32 @@ export class EditThreadMetadataError<M extends BaseMetadata> extends Error {
   }
 }
 
+export class MarkThreadAsResolvedError extends Error {
+  constructor(
+    public cause: Error,
+    public context: {
+      roomId: string;
+      threadId: string;
+    }
+  ) {
+    super("Mark thread as resolved failed.");
+    this.name = "MarkThreadAsResolvedError";
+  }
+}
+
+export class MarkThreadAsUnresolvedError extends Error {
+  constructor(
+    public cause: Error,
+    public context: {
+      roomId: string;
+      threadId: string;
+    }
+  ) {
+    super("Mark thread as unresolved failed.");
+    this.name = "MarkThreadAsUnresolvedError";
+  }
+}
+
 export class CreateCommentError extends Error {
   constructor(
     public cause: Error,

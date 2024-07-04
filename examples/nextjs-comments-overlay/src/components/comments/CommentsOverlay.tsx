@@ -27,7 +27,7 @@ export function CommentsOverlay() {
       data-hide-cursors
     >
       {threads
-        .filter((thread) => !thread.metadata.resolved)
+        .filter((thread) => !thread.resolved)
         .map((thread) => (
           <OverlayThread
             key={thread.id}

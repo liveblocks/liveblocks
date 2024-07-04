@@ -1368,7 +1368,7 @@
             },
             "in": "query",
             "name": "query",
-            "description": "Query to filter threads. You can filter by `metadata`, for example, `metadata[\"status\"]:\"open\" AND metadata[\"resolved\"]:true`. Learn more about [filtering threads with query language](/docs/guides/how-to-filter-threads-using-query-language)."
+            "description": "Query to filter threads. You can filter by `metadata` and `resolved`, for example, `metadata[\"status\"]:\"open\" AND metadata[\"color\"]:\"red\" AND resolved:true`. Learn more about [filtering threads with query language](/docs/guides/how-to-filter-threads-using-query-language)."
           }
         ],
         "operationId": "get-rooms-roomId-threads",
@@ -1770,6 +1770,98 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/threads/{threadId}/mark-as-resolved": {
+      "post": {
+        "summary": "Mark thread as resolved",
+        "tags": ["Comments"],
+        "description": "This endpoint marks a thread as resolved.",
+        "operationId": "post-rooms-roomId-threads-threadId-mark-as-resolved",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the thread"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the updated thread.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Thread"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-thread"
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/threads/{threadId}/mark-as-unresolved": {
+      "post": {
+        "summary": "Mark thread as unresolved",
+        "tags": ["Comments"],
+        "description": "This endpoint marks a thread as unresolved.",
+        "operationId": "post-rooms-roomId-threads-threadId-mark-as-unresolved",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the thread"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the updated thread.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Thread"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-thread"
           }
         }
       }
@@ -3094,6 +3186,9 @@
           },
           "metadata": {
             "type": "object"
+          },
+          "resolved": {
+            "type": "boolean"
           },
           "updatedAt": {
             "type": "string",

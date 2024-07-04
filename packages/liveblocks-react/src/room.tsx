@@ -66,6 +66,8 @@ import {
   EditCommentError,
   EditThreadMetadataError,
   MarkInboxNotificationAsReadError,
+  MarkThreadAsResolvedError,
+  MarkThreadAsUnresolvedError,
   RemoveReactionError,
   UpdateNotificationSettingsError,
 } from "./comments/errors";
@@ -597,6 +599,8 @@ function makeRoomContextBundle<
     useCreateThread,
     useDeleteThread,
     useEditThreadMetadata,
+    useMarkThreadAsResolved,
+    useMarkThreadAsUnresolved,
     useCreateComment,
     useEditComment,
     useDeleteComment,
@@ -655,6 +659,8 @@ function makeRoomContextBundle<
       useCreateThread,
       useDeleteThread,
       useEditThreadMetadata,
+      useMarkThreadAsResolved,
+      useMarkThreadAsUnresolved,
       useCreateComment,
       useEditComment,
       useDeleteComment,
@@ -836,6 +842,7 @@ function RoomProviderInner<
       switch (message.type) {
         case ServerMsgCode.COMMENT_EDITED:
         case ServerMsgCode.THREAD_METADATA_UPDATED:
+        case ServerMsgCode.THREAD_UPDATED:
         case ServerMsgCode.COMMENT_REACTION_ADDED:
         case ServerMsgCode.COMMENT_REACTION_REMOVED:
         case ServerMsgCode.COMMENT_DELETED:
@@ -1493,6 +1500,7 @@ function useCreateThread<M extends BaseMetadata>(): (
         roomId: room.id,
         metadata,
         comments: [newComment],
+        resolved: false,
       };
 
       const optimisticUpdateId = nanoid();
@@ -2168,6 +2176,180 @@ function useMarkThreadAsRead() {
             return;
           }
         );
+    },
+    [client, room]
+  );
+}
+
+/**
+ * Returns a function that marks a thread as resolved.
+ *
+ * @example
+ * const markThreadAsResolved = useMarkThreadAsResolved();
+ * markThreadAsResolved("th_xxx");
+ */
+function useMarkThreadAsResolved() {
+  const client = useClient();
+  const room = useRoom();
+  return React.useCallback(
+    (threadId: string) => {
+      const optimisticUpdateId = nanoid();
+      const updatedAt = new Date();
+
+      const { store, onMutationFailure } = getExtrasForClient(client);
+      store.pushOptimisticUpdate({
+        type: "mark-thread-as-resolved",
+        id: optimisticUpdateId,
+        threadId,
+        updatedAt,
+      });
+
+      const commentsAPI = room[kInternal].comments;
+      commentsAPI.markThreadAsResolved({ threadId }).then(
+        () => {
+          store.set((state) => {
+            const existingThread = state.threads[threadId];
+            const updatedOptimisticUpdates = state.optimisticUpdates.filter(
+              (update) => update.id !== optimisticUpdateId
+            );
+
+            // If the thread doesn't exist in the cache, we do not update the resolved property
+            if (existingThread === undefined) {
+              return {
+                ...state,
+                optimisticUpdates: updatedOptimisticUpdates,
+              };
+            }
+
+            // If the thread has been deleted, we do not update the resolved property
+            if (existingThread.deletedAt !== undefined) {
+              return {
+                ...state,
+                optimisticUpdates: updatedOptimisticUpdates,
+              };
+            }
+
+            if (
+              existingThread.updatedAt &&
+              existingThread.updatedAt > updatedAt
+            ) {
+              return {
+                ...state,
+                optimisticUpdates: updatedOptimisticUpdates,
+              };
+            }
+
+            return {
+              ...state,
+              threads: {
+                ...state.threads,
+                [threadId]: {
+                  ...existingThread,
+                  resolved: true,
+                },
+              },
+              optimisticUpdates: updatedOptimisticUpdates,
+            };
+          });
+        },
+        (err: Error) =>
+          onMutationFailure(
+            err,
+            optimisticUpdateId,
+            (error) =>
+              new MarkThreadAsResolvedError(error, {
+                roomId: room.id,
+                threadId,
+              })
+          )
+      );
+    },
+    [client, room]
+  );
+}
+
+/**
+ * Returns a function that marks a thread as unresolved.
+ *
+ * @example
+ * const markThreadAsUnresolved = useMarkThreadAsUnresolved();
+ * markThreadAsUnresolved("th_xxx");
+ */
+function useMarkThreadAsUnresolved() {
+  const client = useClient();
+  const room = useRoom();
+  return React.useCallback(
+    (threadId: string) => {
+      const optimisticUpdateId = nanoid();
+      const updatedAt = new Date();
+
+      const { store, onMutationFailure } = getExtrasForClient(client);
+      store.pushOptimisticUpdate({
+        type: "mark-thread-as-unresolved",
+        id: optimisticUpdateId,
+        threadId,
+        updatedAt,
+      });
+
+      const commentsAPI = room[kInternal].comments;
+      commentsAPI.markThreadAsUnresolved({ threadId }).then(
+        () => {
+          store.set((state) => {
+            const existingThread = state.threads[threadId];
+            const updatedOptimisticUpdates = state.optimisticUpdates.filter(
+              (update) => update.id !== optimisticUpdateId
+            );
+
+            // If the thread doesn't exist in the cache, we do not update the resolved property
+            if (existingThread === undefined) {
+              return {
+                ...state,
+                optimisticUpdates: updatedOptimisticUpdates,
+              };
+            }
+
+            // If the thread has been deleted, we do not update the resolved property
+            if (existingThread.deletedAt !== undefined) {
+              return {
+                ...state,
+                optimisticUpdates: updatedOptimisticUpdates,
+              };
+            }
+
+            if (
+              existingThread.updatedAt &&
+              existingThread.updatedAt > updatedAt
+            ) {
+              return {
+                ...state,
+                optimisticUpdates: updatedOptimisticUpdates,
+              };
+            }
+
+            return {
+              ...state,
+              threads: {
+                ...state.threads,
+                [threadId]: {
+                  ...existingThread,
+                  resolved: false,
+                },
+              },
+              optimisticUpdates: updatedOptimisticUpdates,
+            };
+          });
+        },
+        (err: Error) =>
+          onMutationFailure(
+            err,
+            optimisticUpdateId,
+            (error) =>
+              new MarkThreadAsUnresolvedError(error, {
+                roomId: room.id,
+                threadId,
+              })
+          )
+      );
     },
     [client, room]
   );
@@ -3114,6 +3296,8 @@ export {
   useHistory,
   useLostConnectionListener,
   useMarkThreadAsRead,
+  useMarkThreadAsResolved,
+  useMarkThreadAsUnresolved,
   _useMutation as useMutation,
   _useMyPresence as useMyPresence,
   _useOther as useOther,

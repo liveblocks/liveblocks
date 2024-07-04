@@ -13,6 +13,7 @@ describe("applyThreadUpdates", () => {
     roomId: "room_1",
     comments: [],
     metadata: {},
+    resolved: false,
   };
 
   const thread2: ThreadDataWithDeleteInfo = {
@@ -22,6 +23,7 @@ describe("applyThreadUpdates", () => {
     roomId: "room_1",
     comments: [],
     metadata: {},
+    resolved: false,
   };
 
   const thread1DeleteInfo: ThreadDeleteInfo = {
@@ -56,7 +58,7 @@ describe("applyThreadUpdates", () => {
     const thread1Updated: ThreadData = {
       ...thread1,
       updatedAt: new Date("2024-01-03"), // A newer date than the original thread1
-      metadata: { resolved: true }, // Simulate changes in the thread
+      metadata: { pinned: true }, // Simulate changes in the thread
     };
 
     // Initial state with the original thread1
