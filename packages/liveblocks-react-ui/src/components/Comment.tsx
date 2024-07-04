@@ -129,7 +129,7 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   /**
    * @internal
    */
-  markThreadAsReadWhenVisible?: string;
+  autoMarkReadThreadId?: string;
 
   /**
    * @internal
@@ -329,7 +329,7 @@ export const CommentNonInteractiveReaction = forwardRef<
 // as read when the comment it's used in becomes visible.
 // Moving this logic into a separate component allows us to use the visibility
 // and focus hooks "conditionally" by conditionally rendering this component.
-function MarkThreadAsReadWhenVisibleHandler({
+function AutoMarkReadThreadIdHandler({
   threadId,
   commentRef,
 }: {
@@ -379,7 +379,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       className,
       additionalActions,
       additionalActionsClassName,
-      markThreadAsReadWhenVisible,
+      autoMarkReadThreadId,
       ...props
     },
     forwardedRef
@@ -500,10 +500,10 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
 
     return (
       <TooltipProvider>
-        {markThreadAsReadWhenVisible && (
-          <MarkThreadAsReadWhenVisibleHandler
+        {autoMarkReadThreadId && (
+          <AutoMarkReadThreadIdHandler
             commentRef={ref}
-            threadId={markThreadAsReadWhenVisible}
+            threadId={autoMarkReadThreadId}
           />
         )}
         <div
