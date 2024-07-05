@@ -2,6 +2,7 @@ import "@testing-library/jest-dom";
 
 import { createClient, kInternal, wait } from "@liveblocks/core";
 import {
+  act,
   fireEvent,
   render,
   renderHook,
@@ -534,8 +535,7 @@ describe("useInboxNotificationsSuspense: error", () => {
     jest.useRealTimers(); // Restores the real timers
   });
 
-  // XXX Get this test to work again :(
-  test.skip("should trigger error boundary if initial fetch throws an error", async () => {
+  test("should trigger error boundary if initial fetch throws an error", async () => {
     server.use(
       mockGetInboxNotifications((_req, res, ctx) => {
         // Mock an error response from the server for the initial fetch
@@ -552,7 +552,7 @@ describe("useInboxNotificationsSuspense: error", () => {
     function Fallback({ resetErrorBoundary }: FallbackProps) {
       return (
         <div>
-          <p>There was an error while getting inbox notifications.</p>
+          <p>Oops, error grabbing inbox notifications.</p>
           <button onClick={resetErrorBoundary}>Retry</button>
         </div>
       );
@@ -562,7 +562,7 @@ describe("useInboxNotificationsSuspense: error", () => {
       wrapper: ({ children }) => (
         <LiveblocksProvider>
           <ErrorBoundary FallbackComponent={Fallback}>
-            <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
+            <Suspense fallback="Loading, yo">{children}</Suspense>
           </ErrorBoundary>
         </LiveblocksProvider>
       ),
@@ -571,14 +571,19 @@ describe("useInboxNotificationsSuspense: error", () => {
     // Hook did not return a value. Instead, an error was thrown
     expect(result.current).toEqual(null);
 
-    await waitFor(() =>
-      // Check if the error boundary's fallback is displayed
-      expect(
-        screen.getByText(
-          "There was an error while getting inbox notifications."
-        )
-      ).toBeInTheDocument()
-    );
+    expect(screen.getByText("Loading, yo")).toBeInTheDocument();
+
+    // Wait for a long period
+    await act(() => jest.advanceTimersToNextTimerAsync()); // fetch attempt 1
+    await act(() => jest.advanceTimersByTimeAsync(5_000)); // fetch attempt 2
+    await act(() => jest.advanceTimersByTimeAsync(5_000)); // fetch attempt 3
+    await act(() => jest.advanceTimersByTimeAsync(10_000)); // fetch attempt 4
+    await act(() => jest.advanceTimersByTimeAsync(15_000)); // fetch attempt 5
+
+    // Check if the error boundary's fallback is displayed
+    expect(
+      screen.getByText("Oops, error grabbing inbox notifications.")
+    ).toBeInTheDocument();
 
     unmount();
   });
