@@ -2,6 +2,7 @@ import type { BaseMetadata, JsonObject } from "@liveblocks/core";
 import { createClient } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
+import { nanoid } from "nanoid";
 import React from "react";
 
 import { createLiveblocksContext } from "../liveblocks";
@@ -46,10 +47,15 @@ function createRoomContextForTest<M extends BaseMetadata>() {
 
 describe("useMarkThreadAsRead", () => {
   test("should mark notification as read optimistically", async () => {
-    const threads = [dummyThreadData()];
-    const inboxNotifications = [dummyThreadInboxNotificationData()];
-    inboxNotifications[0].threadId = threads[0].id;
-    inboxNotifications[0].readAt = null;
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+    const inboxNotifications = [
+      dummyThreadInboxNotificationData({
+        roomId,
+        threadId: threads[0].id,
+        readAt: null,
+      }),
+    ];
 
     server.use(
       mockGetThreads((_req, res, ctx) =>
@@ -96,7 +102,7 @@ describe("useMarkThreadAsRead", () => {
       {
         wrapper: ({ children }) => (
           <LiveblocksProvider>
-            <RoomProvider id="room-id">{children}</RoomProvider>
+            <RoomProvider id={roomId}>{children}</RoomProvider>
           </LiveblocksProvider>
         ),
       }
@@ -117,10 +123,15 @@ describe("useMarkThreadAsRead", () => {
   });
 
   test("should mark inbox notification as read optimistically and revert the updates if error response from server", async () => {
-    const threads = [dummyThreadData()];
-    const inboxNotifications = [dummyThreadInboxNotificationData()];
-    inboxNotifications[0].threadId = threads[0].id;
-    inboxNotifications[0].readAt = null;
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+    const inboxNotifications = [
+      dummyThreadInboxNotificationData({
+        roomId,
+        threadId: threads[0].id,
+        readAt: null,
+      }),
+    ];
 
     server.use(
       mockGetThreads((_req, res, ctx) =>
@@ -167,7 +178,7 @@ describe("useMarkThreadAsRead", () => {
       {
         wrapper: ({ children }) => (
           <LiveblocksProvider>
-            <RoomProvider id="room-id">{children}</RoomProvider>
+            <RoomProvider id={roomId}>{children}</RoomProvider>
           </LiveblocksProvider>
         ),
       }

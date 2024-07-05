@@ -2,6 +2,7 @@ import type { BaseMetadata, JsonObject } from "@liveblocks/core";
 import { createClient } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
+import { nanoid } from "nanoid";
 import React from "react";
 
 import { createLiveblocksContext } from "../liveblocks";
@@ -45,15 +46,20 @@ function createRoomContextForTest<M extends BaseMetadata>() {
 
 describe("useMarkAllInboxNotificationsAsRead", () => {
   test("should mark notification as read optimistically", async () => {
-    const threads = [dummyThreadData(), dummyThreadData()];
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId }), dummyThreadData({ roomId })];
     const inboxNotifications = [
-      dummyThreadInboxNotificationData(),
-      dummyThreadInboxNotificationData(),
+      dummyThreadInboxNotificationData({
+        roomId,
+        threadId: threads[0].id,
+        readAt: null,
+      }),
+      dummyThreadInboxNotificationData({
+        roomId,
+        threadId: threads[1].id,
+        readAt: null,
+      }),
     ];
-    inboxNotifications[0].threadId = threads[0].id;
-    inboxNotifications[0].readAt = null;
-    inboxNotifications[1].threadId = threads[1].id;
-    inboxNotifications[1].readAt = null;
 
     server.use(
       mockGetInboxNotifications((_req, res, ctx) =>
@@ -113,15 +119,20 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
   });
 
   test("should mark inbox notification as read optimistically and revert the updates if error response from server", async () => {
-    const threads = [dummyThreadData(), dummyThreadData()];
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId }), dummyThreadData({ roomId })];
     const inboxNotifications = [
-      dummyThreadInboxNotificationData(),
-      dummyThreadInboxNotificationData(),
+      dummyThreadInboxNotificationData({
+        roomId,
+        threadId: threads[0].id,
+        readAt: null,
+      }),
+      dummyThreadInboxNotificationData({
+        roomId,
+        threadId: threads[1].id,
+        readAt: null,
+      }),
     ];
-    inboxNotifications[0].threadId = threads[0].id;
-    inboxNotifications[0].readAt = null;
-    inboxNotifications[1].threadId = threads[1].id;
-    inboxNotifications[1].readAt = null;
 
     server.use(
       mockGetInboxNotifications((_req, res, ctx) =>

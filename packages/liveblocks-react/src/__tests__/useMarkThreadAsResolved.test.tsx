@@ -2,6 +2,7 @@ import type { BaseMetadata, JsonObject } from "@liveblocks/core";
 import { createClient } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
+import { nanoid } from "nanoid";
 import React from "react";
 
 import { createRoomContext } from "../room";
@@ -38,7 +39,8 @@ function createRoomContextForTest<M extends BaseMetadata>() {
 
 describe("useMarkThreadAsResolved", () => {
   test("should mark thread as resolved optimistically", async () => {
-    const initialThread = dummyThreadData({ resolved: false });
+    const roomId = nanoid();
+    const initialThread = dummyThreadData({ roomId, resolved: false });
     let hasCalledMarkThreadAsResolved = false;
 
     server.use(
@@ -75,7 +77,7 @@ describe("useMarkThreadAsResolved", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );

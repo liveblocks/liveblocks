@@ -9,6 +9,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { setupServer } from "msw/node";
+import { nanoid } from "nanoid";
 import React, { Suspense } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 
@@ -55,10 +56,11 @@ function createLiveblocksContextForTest() {
 
 describe("useInboxNotifications", () => {
   test("should fetch inbox notifications", async () => {
-    const threads = [dummyThreadData()];
-    const inboxNotification = dummyThreadInboxNotificationData();
-    inboxNotification.threadId = threads[0].id;
-    const inboxNotifications = [inboxNotification];
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+    const inboxNotifications = [
+      dummyThreadInboxNotificationData({ roomId, threadId: threads[0].id }),
+    ];
 
     server.use(
       mockGetInboxNotifications(async (_req, res, ctx) => {
@@ -101,10 +103,11 @@ describe("useInboxNotifications", () => {
   });
 
   test("should be referentially stable after rerendering", async () => {
-    const threads = [dummyThreadData()];
-    const inboxNotification = dummyThreadInboxNotificationData();
-    inboxNotification.threadId = threads[0].id;
-    const inboxNotifications = [inboxNotification];
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+    const inboxNotifications = [
+      dummyThreadInboxNotificationData({ roomId, threadId: threads[0].id }),
+    ];
 
     server.use(
       mockGetInboxNotifications(async (_req, res, ctx) => {
@@ -152,10 +155,11 @@ describe("useInboxNotifications", () => {
   });
 
   test("multiple instances of useInboxNotifications should dedupe requests", async () => {
-    const threads = [dummyThreadData()];
-    const inboxNotification = dummyThreadInboxNotificationData();
-    inboxNotification.threadId = threads[0].id;
-    const inboxNotifications = [inboxNotification];
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+    const inboxNotifications = [
+      dummyThreadInboxNotificationData({ roomId, threadId: threads[0].id }),
+    ];
 
     server.use(
       mockGetInboxNotifications(async (_req, res, ctx) => {
@@ -249,15 +253,19 @@ describe("useInboxNotifications", () => {
   });
 
   test("sort inbox notifications by notified at date before returning", async () => {
-    const thread1 = dummyThreadData();
-    const oldInboxNotification = dummyThreadInboxNotificationData();
-    oldInboxNotification.threadId = thread1.id;
-    oldInboxNotification.notifiedAt = new Date("2021-01-01");
-
-    const thread2 = dummyThreadData();
-    const newInboxNotification = dummyThreadInboxNotificationData();
-    newInboxNotification.threadId = thread2.id;
-    newInboxNotification.notifiedAt = new Date("2021-01-02");
+    const roomId = nanoid();
+    const thread1 = dummyThreadData({ roomId });
+    const oldInboxNotification = dummyThreadInboxNotificationData({
+      roomId,
+      threadId: thread1.id,
+      notifiedAt: new Date("2021-01-01"),
+    });
+    const thread2 = dummyThreadData({ roomId });
+    const newInboxNotification = dummyThreadInboxNotificationData({
+      roomId,
+      threadId: thread2.id,
+      notifiedAt: new Date("2021-01-02"),
+    });
 
     server.use(
       mockGetInboxNotifications(async (_req, res, ctx) => {
@@ -495,10 +503,11 @@ describe("useInboxNotifications: error", () => {
 
 describe("useInboxNotifications - Suspense", () => {
   test("should be referentially stable after rerendering", async () => {
-    const threads = [dummyThreadData()];
-    const inboxNotification = dummyThreadInboxNotificationData();
-    inboxNotification.threadId = threads[0].id;
-    const inboxNotifications = [inboxNotification];
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+    const inboxNotifications = [
+      dummyThreadInboxNotificationData({ roomId, threadId: threads[0].id }),
+    ];
 
     server.use(
       mockGetInboxNotifications(async (_req, res, ctx) => {
@@ -561,12 +570,12 @@ describe("useInboxNotifications: polling", () => {
     jest.useRealTimers();
   });
   test("should poll threads every x seconds", async () => {
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+    const inboxNotifications = [
+      dummyThreadInboxNotificationData({ roomId, threadId: threads[0].id }),
+    ];
     let getInboxNotificationsReqCount = 0;
-
-    const threads = [dummyThreadData()];
-    const inboxNotification = dummyThreadInboxNotificationData();
-    inboxNotification.threadId = threads[0].id;
-    const inboxNotifications = [inboxNotification];
 
     server.use(
       mockGetInboxNotifications(async (_req, res, ctx) => {
@@ -678,12 +687,13 @@ describe("useThreadsSuspense: error", () => {
   });
 
   test("should retry with exponential backoff on error and clear error boundary", async () => {
-    const threads = [dummyThreadData()];
-    const inboxNotification = dummyThreadInboxNotificationData();
-    inboxNotification.threadId = threads[0].id;
-    const inboxNotifications = [inboxNotification];
-
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+    const inboxNotifications = [
+      dummyThreadInboxNotificationData({ roomId, threadId: threads[0].id }),
+    ];
     let getInboxNotificationsReqCount = 0;
+
     server.use(
       mockGetInboxNotifications((_req, res, ctx) => {
         getInboxNotificationsReqCount++;

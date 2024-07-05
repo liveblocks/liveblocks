@@ -15,6 +15,7 @@ import {
 import { addSeconds } from "date-fns";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
+import { nanoid } from "nanoid";
 import type { ReactNode } from "react";
 import React, { Suspense } from "react";
 import type { FallbackProps } from "react-error-boundary";
@@ -99,7 +100,8 @@ describe("useThreads", () => {
   });
 
   test("should fetch threads", async () => {
-    const threads = [dummyThreadData()];
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
 
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
@@ -123,7 +125,7 @@ describe("useThreads", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id">{children}</RoomProvider>
+        <RoomProvider id={roomId}>{children}</RoomProvider>
       ),
     });
 
@@ -140,7 +142,8 @@ describe("useThreads", () => {
   });
 
   test("should be referentially stable after a re-render", async () => {
-    const threads = [dummyThreadData()];
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
 
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
@@ -164,7 +167,7 @@ describe("useThreads", () => {
 
     const { result, unmount, rerender } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id">{children}</RoomProvider>
+        <RoomProvider id={roomId}>{children}</RoomProvider>
       ),
     });
 
@@ -187,9 +190,10 @@ describe("useThreads", () => {
   });
 
   test("multiple instances of useThreads should not fetch threads multiple times (dedupe requests)", async () => {
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
     let getThreadsReqCount = 0;
 
-    const threads = [dummyThreadData()];
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
         getThreadsReqCount++;
@@ -219,7 +223,7 @@ describe("useThreads", () => {
       },
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -234,15 +238,19 @@ describe("useThreads", () => {
   });
 
   test("should fetch threads for a given query", async () => {
-    const pinnedThread = dummyThreadData();
-    pinnedThread.metadata = {
-      pinned: true,
-    };
-
-    const unpinnedThread = dummyThreadData();
-    unpinnedThread.metadata = {
-      pinned: false,
-    };
+    const roomId = nanoid();
+    const pinnedThread = dummyThreadData({
+      roomId,
+      metadata: {
+        pinned: true,
+      },
+    });
+    const unpinnedThread = dummyThreadData({
+      roomId,
+      metadata: {
+        pinned: false,
+      },
+    });
 
     server.use(
       mockGetThreads(async (req, res, ctx) => {
@@ -281,7 +289,7 @@ describe("useThreads", () => {
       () => useThreads({ query: { metadata: { pinned: true } } }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -299,20 +307,25 @@ describe("useThreads", () => {
   });
 
   test("shoud fetch threads for a given query with a startsWith filter", async () => {
-    const liveblocksEngineeringThread = dummyThreadData();
-    liveblocksEngineeringThread.metadata = {
-      organization: "liveblocks:engineering",
-    };
-
-    const liveblocksDesignThread = dummyThreadData();
-    liveblocksDesignThread.metadata = {
-      organization: "liveblocks:design",
-    };
-
-    const acmeEngineeringThread = dummyThreadData();
-    acmeEngineeringThread.metadata = {
-      organization: "acme",
-    };
+    const roomId = nanoid();
+    const liveblocksEngineeringThread = dummyThreadData({
+      roomId,
+      metadata: {
+        organization: "liveblocks:engineering",
+      },
+    });
+    const liveblocksDesignThread = dummyThreadData({
+      roomId,
+      metadata: {
+        organization: "liveblocks:design",
+      },
+    });
+    const acmeEngineeringThread = dummyThreadData({
+      roomId,
+      metadata: {
+        organization: "acme",
+      },
+    });
 
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
@@ -353,7 +366,7 @@ describe("useThreads", () => {
         }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -371,9 +384,10 @@ describe("useThreads", () => {
   });
 
   test("should dedupe fetch threads for a given query", async () => {
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
     let getThreadsReqCount = 0;
 
-    const threads = [dummyThreadData()];
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
         getThreadsReqCount++;
@@ -404,7 +418,7 @@ describe("useThreads", () => {
       },
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -415,15 +429,19 @@ describe("useThreads", () => {
   });
 
   test("should refetch threads if query changed dynamically and should display threads instantly if query already been done in the past", async () => {
-    const pinnedThread = dummyThreadData();
-    pinnedThread.metadata = {
-      pinned: true,
-    };
-
-    const unpinnedThread = dummyThreadData();
-    unpinnedThread.metadata = {
-      pinned: false,
-    };
+    const roomId = nanoid();
+    const pinnedThread = dummyThreadData({
+      roomId,
+      metadata: {
+        pinned: true,
+      },
+    });
+    const unpinnedThread = dummyThreadData({
+      roomId,
+      metadata: {
+        pinned: false,
+      },
+    });
 
     server.use(
       mockGetThreads(async (req, res, ctx) => {
@@ -463,7 +481,7 @@ describe("useThreads", () => {
         useThreads({ query: { metadata: { pinned } } }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
         initialProps: { pinned: true },
       }
@@ -501,15 +519,14 @@ describe("useThreads", () => {
   });
 
   test("multiple instances of RoomProvider should render their corresponding threads correctly", async () => {
-    const room1Threads = [dummyThreadData()];
-    room1Threads.map((thread) => (thread.roomId = "room1"));
-
-    const room2Threads = [dummyThreadData()];
-    room2Threads.map((thread) => (thread.roomId = "room2"));
+    const room1Id = nanoid();
+    const room2Id = nanoid();
+    const room1Threads = [dummyThreadData({ roomId: room1Id })];
+    const room2Threads = [dummyThreadData({ roomId: room2Id })];
 
     server.use(
       rest.get(
-        "https://api.liveblocks.io/v2/c/rooms/room1/threads",
+        `https://api.liveblocks.io/v2/c/rooms/${room1Id}/threads`,
         async (_req, res, ctx) => {
           return res(
             ctx.json({
@@ -525,7 +542,7 @@ describe("useThreads", () => {
         }
       ),
       rest.get(
-        "https://api.liveblocks.io/v2/c/rooms/room2/threads",
+        `https://api.liveblocks.io/v2/c/rooms/${room2Id}/threads`,
         async (_req, res, ctx) => {
           return res(
             ctx.json({
@@ -550,7 +567,7 @@ describe("useThreads", () => {
       () => useThreads(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room1">{children}</RoomProvider>
+          <RoomProvider id={room1Id}>{children}</RoomProvider>
         ),
       }
     );
@@ -559,7 +576,7 @@ describe("useThreads", () => {
       () => useThreads(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room2">{children}</RoomProvider>
+          <RoomProvider id={room2Id}>{children}</RoomProvider>
         ),
       }
     );
@@ -586,15 +603,14 @@ describe("useThreads", () => {
   });
 
   test("should correctly display threads if room id changed dynamically and should display threads instantly if query for the room already been done in the past", async () => {
-    const room1Threads = [dummyThreadData()];
-    room1Threads.map((thread) => (thread.roomId = "room1"));
-
-    const room2Threads = [dummyThreadData()];
-    room2Threads.map((thread) => (thread.roomId = "room2"));
+    const room1Id = nanoid();
+    const room2Id = nanoid();
+    const room1Threads = [dummyThreadData({ roomId: room1Id })];
+    const room2Threads = [dummyThreadData({ roomId: room2Id })];
 
     server.use(
       rest.get(
-        "https://api.liveblocks.io/v2/c/rooms/room1/threads",
+        `https://api.liveblocks.io/v2/c/rooms/${room1Id}/threads`,
         async (_req, res, ctx) => {
           return res(
             ctx.json({
@@ -610,7 +626,7 @@ describe("useThreads", () => {
         }
       ),
       rest.get(
-        "https://api.liveblocks.io/v2/c/rooms/room2/threads",
+        `https://api.liveblocks.io/v2/c/rooms/${room2Id}/threads`,
         async (_req, res, ctx) => {
           return res(
             ctx.json({
@@ -636,7 +652,7 @@ describe("useThreads", () => {
     >(null);
 
     const Wrapper = ({ children }: { children: ReactNode }) => {
-      const [roomId, setRoomId] = React.useState("room1");
+      const [roomId, setRoomId] = React.useState(room1Id);
 
       return (
         <RoomIdDispatchContext.Provider value={setRoomId}>
@@ -665,7 +681,7 @@ describe("useThreads", () => {
     );
 
     act(() => {
-      result.current.setRoomId?.("room2");
+      result.current.setRoomId?.(room2Id);
     });
 
     expect(result.current.state).toEqual({ isLoading: true });
@@ -678,7 +694,7 @@ describe("useThreads", () => {
     );
 
     act(() => {
-      result.current.setRoomId?.("room1");
+      result.current.setRoomId?.(room1Id);
     });
 
     await waitFor(() =>
@@ -692,6 +708,8 @@ describe("useThreads", () => {
   });
 
   test("should include an error object in the returned value if initial fetch throws an error", async () => {
+    const roomId = nanoid();
+
     server.use(
       mockGetThreads((_req, res, ctx) => {
         // Mock an error response from the server for the initial fetch
@@ -705,7 +723,7 @@ describe("useThreads", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id">{children}</RoomProvider>
+        <RoomProvider id={roomId}>{children}</RoomProvider>
       ),
     });
 
@@ -723,11 +741,15 @@ describe("useThreads", () => {
   });
 
   test("should sort threads by creation date before returning", async () => {
-    const oldThread = dummyThreadData();
-    oldThread.createdAt = new Date("2021-01-01T00:00:00Z");
-
-    const newThread = dummyThreadData();
-    newThread.createdAt = new Date("2021-01-02T00:00:00Z");
+    const roomId = nanoid();
+    const oldThread = dummyThreadData({
+      roomId,
+      createdAt: new Date("2021-01-01T00:00:00Z"),
+    });
+    const newThread = dummyThreadData({
+      roomId,
+      createdAt: new Date("2021-01-02T00:00:00Z"),
+    });
 
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
@@ -755,7 +777,7 @@ describe("useThreads", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -773,14 +795,19 @@ describe("useThreads", () => {
   });
 
   test("should sort threads by creation date before returning (when GET THREADS resolves before GET INBOX NOTIFICATIONS request)", async () => {
-    const oldThread = dummyThreadData();
-    oldThread.createdAt = new Date("2021-01-01T00:00:00Z");
-
-    const newThread = dummyThreadData();
-    newThread.createdAt = new Date("2021-01-02T00:00:00Z");
-
-    const inboxNotification = dummyThreadInboxNotificationData();
-    inboxNotification.threadId = oldThread.id;
+    const roomId = nanoid();
+    const oldThread = dummyThreadData({
+      roomId,
+      createdAt: new Date("2021-01-01T00:00:00Z"),
+    });
+    const newThread = dummyThreadData({
+      roomId,
+      createdAt: new Date("2021-01-02T00:00:00Z"),
+    });
+    const inboxNotification = dummyThreadInboxNotificationData({
+      roomId,
+      threadId: oldThread.id,
+    });
 
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
@@ -825,7 +852,7 @@ describe("useThreads", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -846,14 +873,19 @@ describe("useThreads", () => {
   });
 
   test("should sort threads by creation date before returning (when GET THREADS resolves after GET INBOX NOTIFICATIONS request)", async () => {
-    const oldThread = dummyThreadData();
-    oldThread.createdAt = new Date("2021-01-01T00:00:00Z");
-
-    const newThread = dummyThreadData();
-    newThread.createdAt = new Date("2021-01-02T00:00:00Z");
-
-    const inboxNotification = dummyThreadInboxNotificationData();
-    inboxNotification.threadId = newThread.id;
+    const roomId = nanoid();
+    const oldThread = dummyThreadData({
+      roomId,
+      createdAt: new Date("2021-01-01T00:00:00Z"),
+    });
+    const newThread = dummyThreadData({
+      roomId,
+      createdAt: new Date("2021-01-02T00:00:00Z"),
+    });
+    const inboxNotification = dummyThreadInboxNotificationData({
+      roomId,
+      threadId: newThread.id,
+    });
 
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
@@ -898,7 +930,7 @@ describe("useThreads", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -919,11 +951,14 @@ describe("useThreads", () => {
   });
 
   test("should not return deleted threads", async () => {
-    const thread1 = dummyThreadData();
-    const thread2WithDeletedAt = {
-      ...dummyThreadData(),
+    const roomId = nanoid();
+    const thread1 = dummyThreadData({ roomId });
+    const thread2WithDeletedAt = dummyThreadData({
+      roomId,
+
+      // @ts-expect-error: deletedAt isn't publicly typed on ThreadData
       deletedAt: new Date(),
-    };
+    });
 
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
@@ -954,7 +989,7 @@ describe("useThreads", () => {
         [thread2WithDeletedAt.id]: thread2WithDeletedAt,
       },
       queries: {
-        [generateQueryKey("room-id", { metadata: {} })]: {
+        [generateQueryKey(roomId, { metadata: {} })]: {
           isLoading: false,
         },
       },
@@ -964,7 +999,7 @@ describe("useThreads", () => {
       () => useThreads({ query: { metadata: {} } }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -982,7 +1017,8 @@ describe("useThreads", () => {
   });
 
   test("should update threads if room has been mounted after being unmounted", async () => {
-    let threads = [dummyThreadData(), dummyThreadData()];
+    const roomId = nanoid();
+    let threads = [dummyThreadData({ roomId }), dummyThreadData({ roomId })];
     const originalThreads = [...threads];
 
     server.use(
@@ -1029,7 +1065,7 @@ describe("useThreads", () => {
 
     const firstRenderResult = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id">{children}</RoomProvider>
+        <RoomProvider id={roomId}>{children}</RoomProvider>
       ),
     });
 
@@ -1046,12 +1082,12 @@ describe("useThreads", () => {
     firstRenderResult.unmount();
 
     // Add a new thread to the threads array to simulate a new thread being added to the room
-    threads = [...originalThreads, dummyThreadData()];
+    threads = [...originalThreads, dummyThreadData({ roomId })];
 
     // Render the RoomProvider again and verify the threads are updated
     const secondRenderResult = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id">{children}</RoomProvider>
+        <RoomProvider id={roomId}>{children}</RoomProvider>
       ),
     });
 
@@ -1073,7 +1109,8 @@ describe("useThreads", () => {
   });
 
   test("should not refetch threads if room has been mounted after being unmounted if another RoomProvider for the same id is still mounted", async () => {
-    const threads = [dummyThreadData()];
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
     let getThreadsReqCount = 0;
 
     server.use(
@@ -1100,7 +1137,7 @@ describe("useThreads", () => {
 
     const Room = () => {
       return (
-        <RoomProvider id="room-id">
+        <RoomProvider id={roomId}>
           <Threads />
         </RoomProvider>
       );
@@ -1123,7 +1160,7 @@ describe("useThreads", () => {
     // A new fetch request for the threads should have been made
     await waitFor(() => expect(getThreadsReqCount).toBe(1));
 
-    const room = client.getRoom("room-id");
+    const room = client.getRoom(roomId);
     expect(room).not.toBeNull();
     if (room === null) return;
 
@@ -1141,7 +1178,8 @@ describe("useThreads", () => {
   });
 
   test("should update threads for a room when the browser comes back online", async () => {
-    const threads = [dummyThreadData(), dummyThreadData()];
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId }), dummyThreadData({ roomId })];
 
     server.use(
       mockGetThreads(async (req, res, ctx) => {
@@ -1187,7 +1225,7 @@ describe("useThreads", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id">{children}</RoomProvider>
+        <RoomProvider id={roomId}>{children}</RoomProvider>
       ),
     });
 
@@ -1202,7 +1240,7 @@ describe("useThreads", () => {
     );
 
     // Add a new thread to the threads array to simulate a new thread being added to the room
-    threads.push(dummyThreadData());
+    threads.push(dummyThreadData({ roomId }));
 
     // Simulate browser going online
     act(() => {
@@ -1232,7 +1270,9 @@ describe("useThreads: error", () => {
   });
 
   test("should retry with exponential backoff on error", async () => {
+    const roomId = nanoid();
     let getThreadsReqCount = 0;
+
     server.use(
       mockGetThreads((_req, res, ctx) => {
         getThreadsReqCount++;
@@ -1247,7 +1287,7 @@ describe("useThreads: error", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id">{children}</RoomProvider>
+        <RoomProvider id={roomId}>{children}</RoomProvider>
       ),
     });
 
@@ -1285,6 +1325,7 @@ describe("useThreads: error", () => {
   });
 
   test("should retry with exponential backoff with a maximum retry limit", async () => {
+    const roomId = nanoid();
     let getThreadsReqCount = 0;
 
     server.use(
@@ -1301,7 +1342,7 @@ describe("useThreads: error", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id">{children}</RoomProvider>
+        <RoomProvider id={roomId}>{children}</RoomProvider>
       ),
     });
 
@@ -1335,7 +1376,9 @@ describe("useThreads: error", () => {
   });
 
   test("should clear error state after a successful error retry", async () => {
+    const roomId = nanoid();
     let getThreadsReqCount = 0;
+
     server.use(
       mockGetThreads((_req, res, ctx) => {
         getThreadsReqCount++;
@@ -1367,7 +1410,7 @@ describe("useThreads: error", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id">{children}</RoomProvider>
+        <RoomProvider id={roomId}>{children}</RoomProvider>
       ),
     });
 
@@ -1409,11 +1452,10 @@ describe("useThreads: polling", () => {
     jest.useRealTimers();
   });
   test("should poll threads every x seconds", async () => {
-    let getThreadsReqCount = 0;
-
-    const threads = [dummyThreadData()];
-
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
     const now = new Date().toISOString();
+    let getThreadsReqCount = 0;
 
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
@@ -1438,7 +1480,7 @@ describe("useThreads: polling", () => {
 
     const Room = () => {
       return (
-        <RoomProvider id="room-id">
+        <RoomProvider id={roomId}>
           <Threads />
         </RoomProvider>
       );
@@ -1467,11 +1509,10 @@ describe("useThreads: polling", () => {
   });
 
   test("should not poll if useThreads isn't used", async () => {
-    let hasCalledGetThreads = false;
-
-    const threads = [dummyThreadData()];
-
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
     const now = new Date().toISOString();
+    let hasCalledGetThreads = false;
 
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
@@ -1496,7 +1537,7 @@ describe("useThreads: polling", () => {
 
     const Room = () => {
       return (
-        <RoomProvider id="room-id">
+        <RoomProvider id={roomId}>
           <NoThreads />
         </RoomProvider>
       );
@@ -1520,7 +1561,8 @@ describe("useThreads: polling", () => {
 
 describe("WebSocket events", () => {
   test("COMMENT_CREATED event should refresh thread", async () => {
-    const newThread = dummyThreadData();
+    const roomId = nanoid();
+    const newThread = dummyThreadData({ roomId });
 
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
@@ -1552,7 +1594,7 @@ describe("WebSocket events", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id">{children}</RoomProvider>
+        <RoomProvider id={roomId}>{children}</RoomProvider>
       ),
     });
 
@@ -1582,7 +1624,8 @@ describe("WebSocket events", () => {
   });
 
   test("COMMENT_DELETED event should delete thread if getThread return 404", async () => {
-    const newThread = dummyThreadData();
+    const roomId = nanoid();
+    const newThread = dummyThreadData({ roomId });
 
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
@@ -1609,7 +1652,7 @@ describe("WebSocket events", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id">{children}</RoomProvider>
+        <RoomProvider id={roomId}>{children}</RoomProvider>
       ),
     });
 
@@ -1640,7 +1683,8 @@ describe("WebSocket events", () => {
   });
 
   test("THREAD_DELETED event should delete thread", async () => {
-    const newThread = dummyThreadData();
+    const roomId = nanoid();
+    const newThread = dummyThreadData({ roomId });
 
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
@@ -1664,7 +1708,7 @@ describe("WebSocket events", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id">{children}</RoomProvider>
+        <RoomProvider id={roomId}>{children}</RoomProvider>
       ),
     });
 
@@ -1693,17 +1737,18 @@ describe("WebSocket events", () => {
   });
 
   test("Websocket event should not refresh thread if updatedAt is earlier than the cached updatedAt", async () => {
+    const roomId = nanoid();
     const now = new Date();
-    const initialThread = dummyThreadData();
-    initialThread.updatedAt = now;
-    initialThread.metadata = { counter: 0 };
-
+    const initialThread = dummyThreadData({
+      roomId,
+      updatedAt: now,
+      metadata: { counter: 0 },
+    });
     const delayedThread = {
       ...initialThread,
       updatedAt: addSeconds(now, 1),
       metadata: { counter: 1 },
     };
-
     const latestThread = {
       ...initialThread,
       updatedAt: addSeconds(now, 2),
@@ -1755,7 +1800,7 @@ describe("WebSocket events", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id">{children}</RoomProvider>
+        <RoomProvider id={roomId}>{children}</RoomProvider>
       ),
     });
 
@@ -1793,7 +1838,8 @@ describe("WebSocket events", () => {
 
 describe("useThreadsSuspense", () => {
   test("should fetch threads", async () => {
-    const threads = [dummyThreadData()];
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
 
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
@@ -1820,7 +1866,7 @@ describe("useThreadsSuspense", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id">
+        <RoomProvider id={roomId}>
           <Suspense fallback={<div>Loading</div>}>{children}</Suspense>
         </RoomProvider>
       ),
@@ -1839,7 +1885,8 @@ describe("useThreadsSuspense", () => {
   });
 
   test("should be referentially stable after a re-render", async () => {
-    const threads = [dummyThreadData()];
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
 
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
@@ -1866,7 +1913,7 @@ describe("useThreadsSuspense", () => {
 
     const { result, unmount, rerender } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id">
+        <RoomProvider id={roomId}>
           <Suspense fallback={<div>Loading</div>}>{children}</Suspense>
         </RoomProvider>
       ),
@@ -1891,6 +1938,8 @@ describe("useThreadsSuspense", () => {
   });
 
   test("should trigger error boundary if initial fetch throws an error", async () => {
+    const roomId = nanoid();
+
     server.use(
       mockGetThreads((_req, res, ctx) => {
         return res(ctx.status(500));
@@ -1906,7 +1955,7 @@ describe("useThreadsSuspense", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id">
+        <RoomProvider id={roomId}>
           <ErrorBoundary
             fallback={<div>There was an error while getting threads.</div>}
           >
@@ -1940,7 +1989,9 @@ describe("useThreadsSuspense: error", () => {
   });
 
   test("should retry with exponential backoff on error and clear error boundary", async () => {
+    const roomId = nanoid();
     let getThreadsReqCount = 0;
+
     server.use(
       mockGetThreads((_req, res, ctx) => {
         getThreadsReqCount++;
@@ -1983,7 +2034,7 @@ describe("useThreadsSuspense: error", () => {
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
-        <RoomProvider id="room-id">
+        <RoomProvider id={roomId}>
           <ErrorBoundary FallbackComponent={Fallback}>
             <Suspense fallback={<div>Loading</div>}>{children}</Suspense>
           </ErrorBoundary>

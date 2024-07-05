@@ -2,6 +2,7 @@ import type { BaseMetadata, JsonObject } from "@liveblocks/core";
 import { createClient } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
+import { nanoid } from "nanoid";
 import React from "react";
 
 import { createRoomContext } from "../room";
@@ -38,7 +39,8 @@ function createRoomContextForTest<M extends BaseMetadata>() {
 
 describe("useEditThreadMetadata", () => {
   test("should edit thread metadata optimistically", async () => {
-    const initialThread = dummyThreadData();
+    const roomId = nanoid();
+    const initialThread = dummyThreadData({ roomId });
     let hasCalledEditThreadMetadata = false;
 
     server.use(
@@ -76,7 +78,7 @@ describe("useEditThreadMetadata", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -106,8 +108,11 @@ describe("useEditThreadMetadata", () => {
   });
 
   test("should remove thread metadata optimistically and update it with the server response", async () => {
-    const initialThread = dummyThreadData();
-    initialThread.metadata = { color: "blue", pinned: true };
+    const roomId = nanoid();
+    const initialThread = dummyThreadData({
+      roomId,
+      metadata: { color: "blue", pinned: true },
+    });
     let hasCalledEditThreadMetadata = false;
 
     server.use(
@@ -147,7 +152,7 @@ describe("useEditThreadMetadata", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
