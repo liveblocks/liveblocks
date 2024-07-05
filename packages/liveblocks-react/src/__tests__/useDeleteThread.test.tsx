@@ -82,10 +82,8 @@ describe("useDeleteThread", () => {
 
     await waitFor(() => expect(result.current.threads).toEqual(threads));
 
-    await act(() => {
+    act(() => {
       result.current.deleteThread(threads[0].id);
-
-      return null;
     });
 
     await waitFor(() => expect(result.current.threads).toEqual([]));
@@ -138,14 +136,12 @@ describe("useDeleteThread", () => {
 
     let errorMessage: string | undefined;
 
-    await act(() => {
+    act(() => {
       try {
         result.current.deleteThread(threads[0].id);
       } catch (error) {
         errorMessage = (error as Error).message;
       }
-
-      return null;
     });
 
     expect(errorMessage).toMatch(
@@ -199,10 +195,8 @@ describe("useDeleteThread", () => {
 
     await waitFor(() => expect(result.current.threads).toEqual(threads));
 
-    await act(() => {
+    act(() => {
       result.current.deleteThread(threads[0].id);
-
-      return null;
     });
 
     await waitFor(() => expect(result.current.threads).toEqual(threads));
