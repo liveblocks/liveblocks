@@ -1,3 +1,9 @@
+## v2.2.1 (not released yet)
+
+### `@liveblocks/yjs`
+
+- Don’t attempt to write Yjs changes if the current user has no write access.
+
 ## v2.2.0
 
 We are making `resolved` a first-class citizen property on
