@@ -1,4 +1,4 @@
-## v2.2.1 (not released yet)
+## v2.2.1
 
 ### `@liveblocks/yjs`
 
