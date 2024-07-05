@@ -29,7 +29,7 @@ export function retryError(action: () => void, retryCount: number) {
  * If the last attempt is rejected too, the returned promise will fail too.
  *
  * @param promiseFn The promise factory to execute
- * @param maxTries The number of retries (beyond the first time)
+ * @param maxTries The number of total tries (must be >=1)
  * @param backoff An array of timings to inject between each promise attempt
  */
 export async function autoRetry<T>(
@@ -39,20 +39,23 @@ export async function autoRetry<T>(
 ): Promise<T> {
   const fallbackBackoff = backoff.length > 0 ? backoff[backoff.length - 1] : 0;
 
-  let lastErr: Error | null = null;
+  let attempt = 0;
 
-  let attempt = 1;
-  while (attempt <= maxTries) {
+  while (true) {
+    attempt++;
+
     const promise = promiseFn();
     try {
       return await promise;
     } catch (err) {
-      lastErr = err as Error;
-      const delay = backoff[attempt - 1] ?? fallbackBackoff;
-      await wait(delay);
+      if (attempt >= maxTries) {
+        // Fail the entire promise right now
+        throw new Error(`Failed after ${maxTries} attempts: ${err}`);
+      }
     }
-    attempt++;
-  }
 
-  throw new Error(`Failed after ${maxTries} attempts: ${lastErr}`);
+    // Do another retry
+    const delay = backoff[attempt - 1] ?? fallbackBackoff;
+    await wait(delay);
+  }
 }
