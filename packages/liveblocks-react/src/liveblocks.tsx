@@ -250,6 +250,14 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
   });
 
   /**
+   * Triggers an initial fetch of inbox notifications if this hasn't
+   * already happened.
+   */
+  function loadInboxNotifications(): void {
+    void waitUntilInboxNotificationsLoaded().catch(() => void 0);
+  }
+
+  /**
    * Enables polling for inbox notifications when the component mounts. Stops
    * polling on unmount.
    *
@@ -285,6 +293,7 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
     notifications,
     useEnableInboxNotificationsPolling,
     waitUntilInboxNotificationsLoaded,
+    loadInboxNotifications,
   };
 }
 
@@ -349,16 +358,13 @@ function makeLiveblocksContextBundle<
 }
 
 function useInboxNotifications_withClient(client: OpaqueClient) {
-  const {
-    store,
-    useEnableInboxNotificationsPolling,
-    waitUntilInboxNotificationsLoaded,
-  } = getExtrasForClient(client);
+  const { loadInboxNotifications, store, useEnableInboxNotificationsPolling } =
+    getExtrasForClient(client);
 
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
   useEffect(() => {
-    void waitUntilInboxNotificationsLoaded();
+    loadInboxNotifications();
   }, []);
 
   useEnableInboxNotificationsPolling();
@@ -386,16 +392,13 @@ function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
 }
 
 function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
-  const {
-    store,
-    useEnableInboxNotificationsPolling,
-    waitUntilInboxNotificationsLoaded,
-  } = getExtrasForClient(client);
+  const { store, loadInboxNotifications, useEnableInboxNotificationsPolling } =
+    getExtrasForClient(client);
 
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
   useEffect(() => {
-    void waitUntilInboxNotificationsLoaded();
+    loadInboxNotifications();
   }, []);
 
   useEnableInboxNotificationsPolling();
