@@ -50,7 +50,7 @@ export async function autoRetry<T>(
     } catch (err) {
       if (attempt >= maxTries) {
         // Fail the entire promise right now
-        throw new Error(`Failed after ${maxTries} attempts: ${err}`);
+        throw new Error(`Failed after ${maxTries} attempts: ${String(err)}`);
       }
     }
 

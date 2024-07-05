@@ -33,6 +33,7 @@ import React, {
 } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
+
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 import { autoRetry } from "./lib/retry-error";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
@@ -254,7 +255,9 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
    * already happened.
    */
   function loadInboxNotifications(): void {
-    void waitUntilInboxNotificationsLoaded().catch(() => void 0);
+    void waitUntilInboxNotificationsLoaded().catch(() => {
+      // Deliberately catch and ignore any errors here
+    });
   }
 
   /**
@@ -365,7 +368,7 @@ function useInboxNotifications_withClient(client: OpaqueClient) {
   // already, but don't await its promise.
   useEffect(() => {
     loadInboxNotifications();
-  }, []);
+  }, [loadInboxNotifications]);
 
   useEnableInboxNotificationsPolling();
   return useSyncExternalStoreWithSelector(
@@ -399,7 +402,7 @@ function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
   // already, but don't await its promise.
   useEffect(() => {
     loadInboxNotifications();
-  }, []);
+  }, [loadInboxNotifications]);
 
   useEnableInboxNotificationsPolling();
   return useSyncExternalStoreWithSelector(
