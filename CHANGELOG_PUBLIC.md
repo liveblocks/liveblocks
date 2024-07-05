@@ -100,44 +100,6 @@ flowflorent, ofoucherot, nvie, marcbouchenoire, nimeshnayaju
   else than the thread owner tries to delete the thread. This will help you
   catch and handle this case more easily.
 
-## v2.0.4
-
-### All packages
-
-- Improve TS error messages and error locations if custom `UserMeta` or
-  `ActivitiesData` types do not match their requirements
-
-### `@liveblocks/client`
-
-- Add missing type export for `CommentReaction`
-- Don’t attempt to write missing `initialStorage` keys if the current user has
-  no write access to storage. This will no longer throw, but issue a warning
-  message in the console.
-
-## v2.0.3
-
-### `@liveblocks/client`
-
-- In `client.enterRoom()`, the options `initialPresence` and `initialStorage`
-  are now only mandatory if your custom type requires them to be.
-
-### `@liveblocks/react`
-
-- In `<RoomProvider>`, the props `initialPresence` and `initialStorage` are now
-  only mandatory if your custom type requires them to be.
-- Nesting `<LiveblocksProvider>`s will now throw to prevent incorrect usage.
-
-### `@liveblocks/react-ui`
-
-- Prevent the composer from splitting text being composed.
-- Handle parentheses around and within auto links.
-- Count whitespace as empty to prevent posting empty comments.
-- Prevent clearing the composer if it's not handled. (via `onComposerSubmit`)
-
-### `@liveblocks/yjs`
-
-- Add missing type exports
-
 ## Documentation
 
 - Updated the
@@ -162,15 +124,23 @@ flowflorent, ctnicholas, nvie, stevenfabre, pierrelevaillant, marcbouchenoire
 
 # Week 25 (2024-06-21)
 
-## v2.0.2
+## v2.0.4
 
-### `@liveblocks/node`
+- Improve TS error messages and error locations if custom `UserMeta` or
+  `ActivitiesData` types do not match their requirements.
 
-- Add `deleteThread` method to the client to delete a room's thread.
-- Add the `threadDeleted` webhook event to notify when a thread is deleted.
-- Fix type signatures of `client.identifyUser()` and `client.prepareSession()`
-  to require `userInfo` if it's mandatory according to your global `UserMeta`
-  type definition.
+### `@liveblocks/client`
+
+- Add missing type export for `CommentReaction`
+- Don’t attempt to write missing initialStorage keys if the current user has no
+  write access to storage. This will no longer throw, but issue a warning
+  message in the console.
+
+### `@liveblocks/react`
+
+- Add
+  [`useDeleteThread`](https://liveblocks.io/docs/api-reference/liveblocks-react#useDeleteThread)
+  hook to delete a thread and its associated comments.
 
 ## v2.0.3
 
@@ -196,23 +166,15 @@ flowflorent, ctnicholas, nvie, stevenfabre, pierrelevaillant, marcbouchenoire
 
 - Add missing type exports
 
-## v2.0.4
+## v2.0.2
 
-- Improve TS error messages and error locations if custom `UserMeta` or
-  `ActivitiesData` types do not match their requirements.
+### `@liveblocks/node`
 
-### `@liveblocks/client`
-
-- Add missing type export for `CommentReaction`
-- Don’t attempt to write missing initialStorage keys if the current user has no
-  write access to storage. This will no longer throw, but issue a warning
-  message in the console.
-
-### `@liveblocks/react`
-
-- Add
-  [`useDeleteThread`](https://liveblocks.io/docs/api-reference/liveblocks-react#useDeleteThread)
-  hook to delete a thread and its associated comments.
+- Add `deleteThread` method to the client to delete a room's thread.
+- Add the `threadDeleted` webhook event to notify when a thread is deleted.
+- Fix type signatures of `client.identifyUser()` and `client.prepareSession()`
+  to require `userInfo` if it's mandatory according to your global `UserMeta`
+  type definition.
 
 ## Examples
 
