@@ -31,8 +31,8 @@ more information about this change please read our
   hook now also has a `{ smooth: true }` setting to make building calm UIs with
   it a bit easier.
 - The `useClient()` hook is now also available for users of
-  `createRoomContext()` and/or `createLiveblocksContext()`
-- Fix: avoid unnecessary re-renders if inbox notifications haven't changed
+  `createRoomContext()` and/or `createLiveblocksContext()`.
+- Fix: avoid unnecessary re-renders if inbox notifications haven't changed.
 
 ### `@liveblocks/react-ui`
 
@@ -70,7 +70,7 @@ more information about this change please read our
 ## Website
 
 - New blog post: [How Hashnode added collaboration to their text editor to sell to larger organizations
-](https://liveblocks.io/blog/how-hashnode-added-collaboration-to-their-text-editor-to-sell-to-larger-organizations)
+](https://liveblocks.io/blog/how-hashnode-added-collaboration-to-their-text-editor-to-sell-to-larger-organizations).
 
 ## Contributors
 
