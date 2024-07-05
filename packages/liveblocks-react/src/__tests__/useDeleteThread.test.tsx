@@ -108,12 +108,14 @@ describe("useDeleteThread", () => {
             },
           })
         )
-      )
-      // No need to mock delete thread, as it should not be called
+      ),
+      mockDeleteThread({ threadId: threads[0].id }, async (_req, res, ctx) => {
+        return res(ctx.status(403));
+      })
     );
 
     // In this test, the current user's ID is "not-the-thread-creator"
-    const { RoomProvider, useThreads, useDeleteThread } =
+    const { RoomProvider, useThreads, useDeleteThread, useRoom } =
       createRoomContextForTest({
         userId: "not-the-thread-creator",
       });
@@ -122,6 +124,7 @@ describe("useDeleteThread", () => {
       () => ({
         threads: useThreads().threads,
         deleteThread: useDeleteThread(),
+        room: useRoom(),
       }),
       {
         wrapper: ({ children }) => (
@@ -133,6 +136,8 @@ describe("useDeleteThread", () => {
     expect(result.current.threads).toBeUndefined();
 
     await waitFor(() => expect(result.current.threads).toEqual(threads));
+
+    expect(result.current.room.getSelf()?.id).toEqual("not-the-thread-creator");
 
     let errorMessage: string | undefined;
 
@@ -171,9 +176,9 @@ describe("useDeleteThread", () => {
           })
         )
       ),
-      mockDeleteThread({ threadId: threads[0].id }, async (_req, res, ctx) =>
-        res(ctx.status(500))
-      )
+      mockDeleteThread({ threadId: threads[0].id }, async (_req, res, ctx) => {
+        return res(ctx.status(500));
+      })
     );
 
     const { RoomProvider, useThreads, useDeleteThread } =
@@ -198,6 +203,8 @@ describe("useDeleteThread", () => {
     act(() => {
       result.current.deleteThread(threads[0].id);
     });
+
+    expect(result.current.threads).toEqual([]);
 
     await waitFor(() => expect(result.current.threads).toEqual(threads));
 
