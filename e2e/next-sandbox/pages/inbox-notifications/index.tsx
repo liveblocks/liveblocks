@@ -103,9 +103,8 @@ function useInboxNotificationsForThisPage() {
   const roomId = getRoomFromUrl();
   const [pageLoadTimestamp] = React.useState(() => Date.now());
 
-  if (isLoading || error) {
-    return [];
-  }
+  if (isLoading) return null;
+  if (error) return error;
 
   return inboxNotifications.filter(
     (ibn) =>
@@ -159,7 +158,10 @@ function TopPart() {
           <Row
             id="numOfNotifications"
             name="Number of Notifications"
-            value={inboxNotifications?.length}
+            value={
+              (Array.isArray(inboxNotifications) ? inboxNotifications : [])
+                ?.length
+            }
           />
           <Row
             id="numPendingUpdates"
@@ -220,11 +222,17 @@ function RightSide() {
           // padding: 20,
         }}
       >
-        <InboxNotificationList>
-          {inboxNotifications.map((ibn) => (
-            <InboxNotification key={ibn.id} inboxNotification={ibn} />
-          ))}
-        </InboxNotificationList>
+        {inboxNotifications === null ? (
+          "Loading..."
+        ) : !Array.isArray(inboxNotifications) ? (
+          <pre style={{ color: "red" }}>{String(inboxNotifications)}</pre>
+        ) : (
+          <InboxNotificationList>
+            {inboxNotifications.map((ibn) => (
+              <InboxNotification key={ibn.id} inboxNotification={ibn} />
+            ))}
+          </InboxNotificationList>
+        )}
       </div>
     </div>
   );
