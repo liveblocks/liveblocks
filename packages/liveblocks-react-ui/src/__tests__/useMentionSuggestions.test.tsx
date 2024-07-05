@@ -8,6 +8,7 @@ import type {
 import { createClient } from "@liveblocks/core";
 import { createRoomContext } from "@liveblocks/react";
 import { renderHook, waitFor } from "@testing-library/react";
+import { nanoid } from "nanoid";
 import React from "react";
 
 import { useMentionSuggestions } from "../shared";
@@ -43,6 +44,8 @@ describe("useMentionSuggestions", () => {
   });
 
   test("should return the results from resolveMentionSuggestions", async () => {
+    const roomId = nanoid();
+
     const { RoomProvider } = createRoomContextForTest();
 
     const { result, unmount } = renderHook(
@@ -51,7 +54,7 @@ describe("useMentionSuggestions", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -68,6 +71,8 @@ describe("useMentionSuggestions", () => {
   });
 
   test("should update whenever the text changes", async () => {
+    const roomId = nanoid();
+
     const { RoomProvider } = createRoomContextForTest();
 
     const { result, rerender, unmount } = renderHook(
@@ -76,7 +81,7 @@ describe("useMentionSuggestions", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
         initialProps: { text: "abc" },
       }
@@ -100,6 +105,8 @@ describe("useMentionSuggestions", () => {
   });
 
   test("should invoke resolveMentionSuggestions with the expected arguments", async () => {
+    const roomId = nanoid();
+
     const resolveMentionSuggestions = jest.fn(
       ({ text }: ResolveMentionSuggestionsArgs) => text.split("")
     );
@@ -113,7 +120,7 @@ describe("useMentionSuggestions", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
         initialProps: { text: "abc" },
       }
@@ -125,13 +132,15 @@ describe("useMentionSuggestions", () => {
 
     expect(resolveMentionSuggestions).toHaveBeenCalledWith({
       text: "abc",
-      roomId: "room-id",
+      roomId,
     });
 
     unmount();
   });
 
   test("should cache results and not invoke resolveMentionSuggestions with previously provided arguments", async () => {
+    const roomId = nanoid();
+
     const resolveMentionSuggestions = jest.fn(
       ({ text }: ResolveMentionSuggestionsArgs) => text.split("")
     );
@@ -145,7 +154,7 @@ describe("useMentionSuggestions", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
         initialProps: { text: "abc" },
       }
@@ -172,18 +181,20 @@ describe("useMentionSuggestions", () => {
 
     expect(resolveMentionSuggestions).toHaveBeenNthCalledWith(1, {
       text: "abc",
-      roomId: "room-id",
+      roomId,
     });
 
     expect(resolveMentionSuggestions).toHaveBeenNthCalledWith(2, {
       text: "123",
-      roomId: "room-id",
+      roomId,
     });
 
     unmount();
   });
 
   test("should debounce the invokations of resolveMentionSuggestions", async () => {
+    const roomId = nanoid();
+
     const resolveMentionSuggestions = jest.fn(
       ({ text }: ResolveMentionSuggestionsArgs) => text.split("")
     );
@@ -197,7 +208,7 @@ describe("useMentionSuggestions", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
         initialProps: { text: "" },
       }
@@ -219,12 +230,12 @@ describe("useMentionSuggestions", () => {
 
     expect(resolveMentionSuggestions).toHaveBeenNthCalledWith(1, {
       text: "",
-      roomId: "room-id",
+      roomId,
     });
 
     expect(resolveMentionSuggestions).toHaveBeenNthCalledWith(2, {
       text: "abc",
-      roomId: "room-id",
+      roomId,
     });
 
     unmount();

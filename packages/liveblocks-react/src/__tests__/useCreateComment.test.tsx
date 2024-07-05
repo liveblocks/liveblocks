@@ -3,6 +3,7 @@ import { createClient } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { addMinutes } from "date-fns";
 import { setupServer } from "msw/node";
+import { nanoid } from "nanoid";
 import React from "react";
 
 import { createRoomContext } from "../room";
@@ -43,8 +44,9 @@ function createRoomContextForTest<M extends BaseMetadata>() {
 
 describe("useCreateComment", () => {
   test("should create a comment optimistically and override with thread coming from server", async () => {
+    const roomId = nanoid();
     const fakeCreatedAt = addMinutes(new Date(), 5);
-    const initialThread = dummyThreadData();
+    const initialThread = dummyThreadData({ roomId });
 
     server.use(
       mockGetThreads((_req, res, ctx) => {
@@ -65,11 +67,12 @@ describe("useCreateComment", () => {
         async (req, res, ctx) => {
           const json = await req.json<{ id: string; body: CommentBody }>();
 
-          const comment = dummyCommentData();
-          comment.id = json.id;
-          comment.body = json.body;
-          comment.createdAt = fakeCreatedAt;
-          comment.threadId = initialThread.id;
+          const comment = dummyCommentData({
+            roomId,
+            threadId: initialThread.id,
+            body: json.body,
+            createdAt: fakeCreatedAt,
+          });
 
           return res(ctx.json(comment));
         }
@@ -86,7 +89,7 @@ describe("useCreateComment", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -120,10 +123,13 @@ describe("useCreateComment", () => {
   });
 
   test("should mark thread as read optimistically", async () => {
-    const initialThread = dummyThreadData();
-    const initialInboxNotification = dummyThreadInboxNotificationData();
+    const roomId = nanoid();
+    const initialThread = dummyThreadData({ roomId });
+    const initialInboxNotification = dummyThreadInboxNotificationData({
+      roomId,
+      threadId: initialThread.id,
+    });
     const fakeCreatedAt = addMinutes(new Date(), 5);
-    initialInboxNotification.threadId = initialThread.id;
 
     server.use(
       mockGetThreads((_req, res, ctx) => {
@@ -144,11 +150,13 @@ describe("useCreateComment", () => {
         async (req, res, ctx) => {
           const json = await req.json<{ id: string; body: CommentBody }>();
 
-          const comment = dummyCommentData();
-          comment.id = json.id;
-          comment.body = json.body;
-          comment.createdAt = fakeCreatedAt;
-          comment.threadId = initialThread.id;
+          const comment = dummyCommentData({
+            roomId,
+            id: json.id,
+            body: json.body,
+            createdAt: fakeCreatedAt,
+            threadId: initialThread.id,
+          });
 
           return res(ctx.json(comment));
         }
@@ -170,7 +178,7 @@ describe("useCreateComment", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -207,7 +215,8 @@ describe("useCreateComment", () => {
   });
 
   test("should rollback optimistic update", async () => {
-    const initialThread = dummyThreadData();
+    const roomId = nanoid();
+    const initialThread = dummyThreadData({ roomId });
 
     server.use(
       mockGetThreads((_req, res, ctx) => {
@@ -241,7 +250,7 @@ describe("useCreateComment", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );

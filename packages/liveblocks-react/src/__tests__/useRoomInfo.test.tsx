@@ -9,6 +9,7 @@ import type {
 } from "@liveblocks/core";
 import { createClient } from "@liveblocks/core";
 import { renderHook, screen, waitFor } from "@testing-library/react";
+import { nanoid } from "nanoid";
 import React, { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
@@ -47,6 +48,8 @@ describe("useRoomInfo", () => {
   });
 
   test("should return an error if resolveRoomsInfo is not set", async () => {
+    const roomId = nanoid();
+
     const { RoomProvider, useRoomInfo } = createRoomContextForTest({
       resolveRoomsInfo: undefined,
     });
@@ -57,7 +60,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -77,6 +80,8 @@ describe("useRoomInfo", () => {
   });
 
   test("should return the results from resolveRoomsInfo", async () => {
+    const roomId = nanoid();
+
     const { RoomProvider, useRoomInfo } = createRoomContextForTest();
 
     const { result, unmount } = renderHook(
@@ -85,7 +90,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -103,6 +108,8 @@ describe("useRoomInfo", () => {
   });
 
   test("should support changing room ID", async () => {
+    const roomId = nanoid();
+
     const { RoomProvider, useRoomInfo } = createRoomContextForTest();
 
     const { result, rerender, unmount } = renderHook(
@@ -111,7 +118,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
         initialProps: { roomId: "abc" },
       }
@@ -141,6 +148,8 @@ describe("useRoomInfo", () => {
   });
 
   test("should cache results based on room ID", async () => {
+    const roomId = nanoid();
+
     const resolveRoomsInfo = jest.fn(({ roomIds }: ResolveRoomsInfoArgs) =>
       roomIds.map((roomId) => ({ name: roomId }))
     );
@@ -154,7 +163,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
         initialProps: { roomId: "abc" },
       }
@@ -183,6 +192,8 @@ describe("useRoomInfo", () => {
   });
 
   test("should batch (and deduplicate) requests for the same room ID", async () => {
+    const roomId = nanoid();
+
     const resolveRoomsInfo = jest.fn(({ roomIds }: ResolveRoomsInfoArgs) =>
       roomIds.map((roomId) => ({ name: roomId }))
     );
@@ -198,7 +209,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -232,6 +243,8 @@ describe("useRoomInfo", () => {
   });
 
   test("should support resolveRoomsInfo throwing an error", async () => {
+    const roomId = nanoid();
+
     const { RoomProvider, useRoomInfo } = createRoomContextForTest({
       resolveRoomsInfo: () => {
         throw new Error("error");
@@ -243,7 +256,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -261,6 +274,8 @@ describe("useRoomInfo", () => {
   });
 
   test("should support resolveRoomsInfo returning a rejected promise", async () => {
+    const roomId = nanoid();
+
     const { RoomProvider, useRoomInfo } = createRoomContextForTest({
       resolveRoomsInfo: () => {
         return Promise.reject("error");
@@ -272,7 +287,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -290,6 +305,8 @@ describe("useRoomInfo", () => {
   });
 
   test("should return an error if resolveRoomsInfo returns undefined", async () => {
+    const roomId = nanoid();
+
     const { RoomProvider, useRoomInfo } = createRoomContextForTest({
       resolveRoomsInfo: () => {
         return undefined;
@@ -301,7 +318,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -321,6 +338,8 @@ describe("useRoomInfo", () => {
   });
 
   test("should return an error if resolveRoomsInfo returns undefined for a specifc room ID", async () => {
+    const roomId = nanoid();
+
     const resolveRoomsInfo = jest.fn(({ roomIds }: ResolveRoomsInfoArgs) =>
       roomIds.map((roomId) => {
         if (roomId === "abc") {
@@ -340,7 +359,7 @@ describe("useRoomInfo", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -378,6 +397,8 @@ describe("useRoomInfoSuspense", () => {
   });
 
   test("should suspend with Suspense", async () => {
+    const roomId = nanoid();
+
     const {
       RoomProvider,
       suspense: { useRoomInfo },
@@ -389,7 +410,7 @@ describe("useRoomInfoSuspense", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
+          <RoomProvider id={roomId}>
             <Suspense fallback={<div>Loading</div>}>{children}</Suspense>
           </RoomProvider>
         ),
@@ -409,6 +430,8 @@ describe("useRoomInfoSuspense", () => {
   });
 
   test("should trigger error boundaries with Suspense", async () => {
+    const roomId = nanoid();
+
     const {
       RoomProvider,
       suspense: { useRoomInfo },
@@ -424,7 +447,7 @@ describe("useRoomInfoSuspense", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
+          <RoomProvider id={roomId}>
             <ErrorBoundary
               fallback={<div>There was an error while getting room info.</div>}
             >

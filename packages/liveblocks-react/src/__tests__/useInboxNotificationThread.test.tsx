@@ -4,6 +4,7 @@ import { createClient } from "@liveblocks/core";
 import { renderHook, waitFor } from "@testing-library/react";
 import { sorted } from "itertools";
 import { setupServer } from "msw/node";
+import { nanoid } from "nanoid";
 import React from "react";
 
 import { createLiveblocksContext } from "../liveblocks";
@@ -49,9 +50,12 @@ function createLiveblocksContextForTest() {
 
 describe("useInboxNotificationThread", () => {
   test("should return a thread after notifications are fetched", async () => {
-    const threads = [dummyThreadData()];
-    const inboxNotification = dummyThreadInboxNotificationData();
-    inboxNotification.threadId = threads[0].id;
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+    const inboxNotification = dummyThreadInboxNotificationData({
+      roomId,
+      threadId: threads[0].id,
+    });
     const inboxNotifications = [inboxNotification];
 
     server.use(
@@ -116,10 +120,13 @@ describe("useInboxNotificationThread", () => {
   });
 
   test("it should throw when the notification is not found or the thread is not found", async () => {
-    const threads = [dummyThreadData()];
-    const inboxNotification = dummyThreadInboxNotificationData();
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+    const inboxNotification = dummyThreadInboxNotificationData({
+      roomId,
+      threadId: threads[0].id,
+    });
     const customInboxNotification = dummyCustomInboxNoficationData();
-    inboxNotification.threadId = threads[0].id;
     const inboxNotifications = [inboxNotification, customInboxNotification];
 
     server.use(

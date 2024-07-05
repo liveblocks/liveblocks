@@ -12,50 +12,65 @@ import {
   createThreadId,
 } from "./_createIds";
 
-export function dummyThreadData(
-  overrides?: Partial<ThreadData<BaseMetadata>>
-): ThreadData<BaseMetadata> {
+type AtLeast<T, K extends keyof T> = Partial<T> & Pick<T, K>;
+
+export function dummyThreadData({
+  roomId,
+  ...overrides
+}: AtLeast<ThreadData<BaseMetadata>, "roomId">): ThreadData<BaseMetadata> {
   const now = new Date();
   const threadId = createThreadId();
-
-  const comment = dummyCommentData();
-  comment.threadId = threadId;
-  comment.createdAt = now;
 
   return {
     id: threadId,
     type: "thread",
-    roomId: "room-id",
+    roomId,
     createdAt: now,
-    metadata: {}, // TODO Fix type
+    metadata: {},
     updatedAt: now,
-    comments: [comment],
+    comments: [
+      dummyCommentData({
+        roomId,
+        threadId,
+        createdAt: now,
+      }),
+    ],
     resolved: false,
     ...overrides,
   };
 }
 
-export function dummyCommentData(
-  overrides?: Partial<Omit<CommentData, "deletedAt">>
-): CommentData {
+export function dummyCommentData({
+  roomId,
+  ...overrides
+}: AtLeast<CommentData, "roomId">): CommentData {
   const id = createCommentId();
   const threadId = createThreadId();
   const now = new Date();
+
+  const conditionalProperties = overrides?.deletedAt
+    ? {
+        deletedAt: overrides.deletedAt,
+        body: undefined,
+      }
+    : {
+        body: overrides?.body ?? {
+          version: 1,
+          content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
+        },
+        deletedAt: undefined,
+      };
 
   return {
     id,
     type: "comment",
     threadId,
     userId: "user-id",
-    roomId: "room-id",
-    body: {
-      version: 1,
-      content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
-    },
-    deletedAt: undefined,
+    roomId,
     createdAt: now,
     reactions: [],
     ...overrides,
+    ...conditionalProperties,
   };
 }
 
@@ -67,7 +82,6 @@ export function dummyCustomInboxNoficationData(
 
   return {
     kind: "$custom",
-    roomId: "room-id",
     id,
     notifiedAt: now,
     readAt: null,
@@ -88,16 +102,20 @@ export function dummyCustomInboxNoficationData(
   };
 }
 
-export function dummyThreadInboxNotificationData(
-  overrides?: Partial<InboxNotificationThreadData>
-): InboxNotificationThreadData {
+export function dummyThreadInboxNotificationData({
+  roomId,
+  ...overrides
+}: AtLeast<
+  InboxNotificationThreadData,
+  "roomId"
+>): InboxNotificationThreadData {
   const id = createInboxNotificationId();
   const threadId = createThreadId();
   const now = new Date();
 
   return {
     kind: "thread",
-    roomId: "room-id",
+    roomId,
     id,
     notifiedAt: now,
     threadId,
