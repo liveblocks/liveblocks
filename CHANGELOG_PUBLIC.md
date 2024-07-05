@@ -65,10 +65,11 @@ more information about this change please read our
 ## Documentation
 
 - Add [`useStorageStatus`](https://liveblocks.io/docs/api-reference/liveblocks-react#useStorageStatus) information.
+- Fix code snippet in [Nested data types page](https://liveblocks.io/docs/tutorial/react/getting-started/nesting-data-types) of interactive tutorial.
 
 ## Contributors
 
-flowflorent, ofoucherot, nvie, marcbouchenoire, nimeshnayaju, ctnicholas
+flowflorent, ofoucherot, nvie, marcbouchenoire, nimeshnayaju, ctnicholas, Teddarific
 
 # Week 26 (2024-06-28)
 
