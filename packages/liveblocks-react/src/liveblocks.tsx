@@ -214,9 +214,9 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
     try {
       await waitUntilInboxNotificationsLoaded();
       await fetchInboxNotifications();
-    } catch {
+    } catch (err) {
       // When polling, we don't want to throw errors, ever
-      // XXX Maybe issue console warnings here though?
+      console.warn(`Polling new inbox notifications failed: ${String(err)}`);
     }
   });
 
