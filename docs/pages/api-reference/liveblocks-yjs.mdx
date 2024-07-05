@@ -73,13 +73,10 @@ LiveblocksYjsProvider:
 
 - autoloadSubdocs: `boolean` (default: `false`). This option will load subdocs
   automatically.
-- readOnly: `boolean` (default: `false`). This option will make the provider
-  read-only, it will not send changes to the server.
 
 ```ts
 const yProvider = new LiveblocksYjsProvider(room, yDoc, {
   autoloadSubdocs: true, // default false
-  readOnly: true, // default false
 });
 ```
 
