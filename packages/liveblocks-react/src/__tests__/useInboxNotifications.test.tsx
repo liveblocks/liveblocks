@@ -380,20 +380,12 @@ describe("useInboxNotifications: error", () => {
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(4));
 
     // The fourth retry should be made after 10s
-    await jest.advanceTimersByTimeAsync(10_000);
+    await jest.advanceTimersByTimeAsync(15_000);
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(5));
 
-    // The fifth retry should be made after 20s
+    // Won't try more than 5 attempts
     await jest.advanceTimersByTimeAsync(20_000);
-    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(6));
-
-    // The sixth retry should be made after 20s
-    await jest.advanceTimersByTimeAsync(20_000);
-    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(7));
-
-    // Won't try more than 7 attempts
-    await jest.advanceTimersByTimeAsync(20_000);
-    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(7));
+    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(5));
   });
 });
 
@@ -573,7 +565,7 @@ describe("useInboxNotificationsSuspense: error", () => {
 
     expect(screen.getByText("Loading, yo")).toBeInTheDocument();
 
-    // Wait for a long period
+    // Wait until all fetch attempts have been done
     await act(() => jest.advanceTimersToNextTimerAsync()); // fetch attempt 1
     await act(() => jest.advanceTimersByTimeAsync(5_000)); // fetch attempt 2
     await act(() => jest.advanceTimersByTimeAsync(5_000)); // fetch attempt 3
@@ -585,39 +577,46 @@ describe("useInboxNotificationsSuspense: error", () => {
       screen.getByText("Oops, error grabbing inbox notifications.")
     ).toBeInTheDocument();
 
+    // Wait until the error boundary auto-clears
+    await act(() => jest.advanceTimersByTimeAsync(5_000));
+
+    // Simulate clicking the retry button
+    fireEvent.click(screen.getByText("Retry"));
+
+    // The error boundary's fallback should be cleared
+    expect(screen.getByText("Loading, yo")).toBeInTheDocument();
+
     unmount();
   });
 
-  // XXX Get this test to work again :(
-  test.skip("should retry with exponential backoff on error and clear error boundary", async () => {
+  test("loads initial inbox notification data, even if there is a fetch hiccup", async () => {
     const roomId = nanoid();
     const threads = [dummyThreadData({ roomId })];
     const inboxNotifications = [
       dummyThreadInboxNotificationData({ roomId, threadId: threads[0].id }),
     ];
-    let getInboxNotificationsReqCount = 0;
 
+    let n = 0;
     server.use(
       mockGetInboxNotifications((_req, res, ctx) => {
-        getInboxNotificationsReqCount++;
-
-        if (getInboxNotificationsReqCount === 1) {
+        n++;
+        if (n <= 1) {
           // Mock an error response from the server
           return res(ctx.status(500));
-        } else {
-          // Mock a successful response from the server for the subsequent fetches
-          return res(
-            ctx.json({
-              threads,
-              inboxNotifications,
-              deletedThreads: [],
-              deletedInboxNotifications: [],
-              meta: {
-                requestedAt: new Date().toISOString(),
-              },
-            })
-          );
         }
+
+        // Mock a successful response from the server for the subsequent fetches
+        return res(
+          ctx.json({
+            threads,
+            inboxNotifications,
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
       })
     );
 
@@ -630,7 +629,7 @@ describe("useInboxNotificationsSuspense: error", () => {
     function Fallback({ resetErrorBoundary }: FallbackProps) {
       return (
         <div>
-          <p>There was an error while getting inbox notifications.</p>
+          <p>Oops, couldnt load notifications.</p>
           <button onClick={resetErrorBoundary}>Retry</button>
         </div>
       );
@@ -640,40 +639,23 @@ describe("useInboxNotificationsSuspense: error", () => {
       wrapper: ({ children }) => (
         <LiveblocksProvider>
           <ErrorBoundary FallbackComponent={Fallback}>
-            <Suspense fallback={<div>Loading</div>}>{children}</Suspense>
+            <Suspense fallback="Loading your notifications">
+              <div>Done loading!</div>
+              {children}
+            </Suspense>
           </ErrorBoundary>
         </LiveblocksProvider>
       ),
     });
 
     expect(result.current).toEqual(null);
+    expect(screen.getByText("Loading your notifications")).toBeInTheDocument();
 
-    // A new fetch request for the threads should have been made after the initial render
-    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(1));
+    // Wait until all fetch attempts have been done
+    await act(() => jest.advanceTimersToNextTimerAsync()); // fetch attempt 1
+
     // Check if the error boundary's fallback is displayed
-    expect(
-      screen.getByText("There was an error while getting inbox notifications.")
-    ).toBeInTheDocument();
-
-    // The first retry should be made after 5000ms * 2^0 (5000ms is the currently set error retry interval)
-    jest.advanceTimersByTime(5000);
-    // A new fetch request for the threads should have been made after the first retry
-    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(2));
-
-    // Simulate clicking the retry button
-    fireEvent.click(screen.getByText("Retry"));
-
-    // The error boundary's fallback should be cleared
-    expect(
-      screen.queryByText(
-        "There was an error while getting inbox notifications."
-      )
-    ).not.toBeInTheDocument();
-
-    expect(result.current).toEqual({
-      isLoading: false,
-      inboxNotifications,
-    });
+    expect(screen.getByText("Done loading!")).toBeInTheDocument();
 
     unmount();
   });
