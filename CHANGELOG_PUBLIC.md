@@ -69,8 +69,7 @@ more information about this change please read our
 
 ## Website
 
-- New blog post: [How Hashnode added collaboration to their text editor to sell to larger organizations
-](https://liveblocks.io/blog/how-hashnode-added-collaboration-to-their-text-editor-to-sell-to-larger-organizations).
+- New blog post: [How Hashnode added collaboration to their text editor to sell to larger organizations](https://liveblocks.io/blog/how-hashnode-added-collaboration-to-their-text-editor-to-sell-to-larger-organizations).
 
 ## Contributors
 
