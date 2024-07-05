@@ -71,8 +71,15 @@ function Component() {
 There are a few options you can pass as a third argument into the
 LiveblocksYjsProvider:
 
-- autoloadSubdocs: `boolean` (default: `false`). This option will load subdocs
-  automatically.
+<PropertiesList title="Constructor options">
+  <PropertiesListItem
+    name="autoloadSubdocs"
+    type="boolean"
+    defaultValue="false"
+  >
+    This option will load subdocs automatically.
+  </PropertiesListItem>
+</PropertiesList>
 
 ```ts
 const yProvider = new LiveblocksYjsProvider(room, yDoc, {
