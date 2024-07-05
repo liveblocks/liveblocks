@@ -234,8 +234,8 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
     try {
       await autoRetry(
         () => fetchInboxNotifications(),
-        7,
-        [5000, 5000, 10000, 10000, 15000, 15000]
+        5,
+        [5000, 5000, 10000, 15000]
       );
     } catch (err) {
       // Store the error in the cache as a side-effect, for non-Suspense
