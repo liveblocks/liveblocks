@@ -67,9 +67,14 @@ more information about this change please read our
 - Add [`useStorageStatus`](https://liveblocks.io/docs/api-reference/liveblocks-react#useStorageStatus) information.
 - Fix code snippet in [Nested data types page](https://liveblocks.io/docs/tutorial/react/getting-started/nesting-data-types) of interactive tutorial.
 
+## Website
+
+- New blog post: [How Hashnode added collaboration to their text editor to sell to larger organizations
+](https://liveblocks.io/blog/how-hashnode-added-collaboration-to-their-text-editor-to-sell-to-larger-organizations)
+
 ## Contributors
 
-flowflorent, ofoucherot, nvie, marcbouchenoire, nimeshnayaju, ctnicholas, Teddarific
+flowflorent, ofoucherot, nvie, marcbouchenoire, nimeshnayaju, ctnicholas, Teddarific, stevenfabre
 
 # Week 26 (2024-06-28)
 
