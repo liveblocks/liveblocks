@@ -62,9 +62,13 @@ more information about this change please read our
 
 - Upgrade `lexical` peer dependency to version `0.16.1`.
 
+## Documentation
+
+- Add [`useStorageStatus`](https://liveblocks.io/docs/api-reference/liveblocks-react#useStorageStatus) information.
+
 ## Contributors
 
-flowflorent, ofoucherot, nvie, marcbouchenoire, nimeshnayaju
+flowflorent, ofoucherot, nvie, marcbouchenoire, nimeshnayaju, ctnicholas
 
 # Week 26 (2024-06-28)
 
