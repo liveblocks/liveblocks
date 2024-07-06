@@ -2146,36 +2146,34 @@ function useMarkThreadAsRead() {
         readAt: now,
       });
 
-      room[kInternal].notifications
-        .markInboxNotificationAsRead(inboxNotification.id)
-        .then(
-          () => {
-            store.set((state) => ({
-              ...state,
-              inboxNotifications: {
-                ...state.inboxNotifications,
-                [inboxNotification.id]: {
-                  ...inboxNotification,
-                  readAt: now,
-                },
+      client.markInboxNotificationAsRead(inboxNotification.id).then(
+        () => {
+          store.set((state) => ({
+            ...state,
+            inboxNotifications: {
+              ...state.inboxNotifications,
+              [inboxNotification.id]: {
+                ...inboxNotification,
+                readAt: now,
               },
-              optimisticUpdates: state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              ),
-            }));
-          },
-          (err: Error) => {
-            onMutationFailure(
-              err,
-              optimisticUpdateId,
-              (error) =>
-                new MarkInboxNotificationAsReadError(error, {
-                  inboxNotificationId: inboxNotification.id,
-                })
-            );
-            return;
-          }
-        );
+            },
+            optimisticUpdates: state.optimisticUpdates.filter(
+              (update) => update.id !== optimisticUpdateId
+            ),
+          }));
+        },
+        (err: Error) => {
+          onMutationFailure(
+            err,
+            optimisticUpdateId,
+            (error) =>
+              new MarkInboxNotificationAsReadError(error, {
+                inboxNotificationId: inboxNotification.id,
+              })
+          );
+          return;
+        }
+      );
     },
     [client, room]
   );

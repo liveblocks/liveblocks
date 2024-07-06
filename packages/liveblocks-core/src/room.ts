@@ -34,7 +34,6 @@ import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
 import type { DE, DM, DP, DS, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
-import { Batch } from "./lib/batch";
 import { Promise_withResolvers } from "./lib/controlledPromise";
 import { captureStackTrace } from "./lib/debug";
 import type { Callback, Observable } from "./lib/EventSource";
@@ -819,7 +818,6 @@ export type PrivateRoomApi<M extends BaseMetadata> = {
     updateRoomNotificationSettings(
       settings: Partial<RoomNotificationSettings>
     ): Promise<RoomNotificationSettings>;
-    markInboxNotificationAsRead(notificationId: string): Promise<void>;
   };
 };
 
@@ -1412,8 +1410,6 @@ function createCommentsApi<M extends BaseMetadata>(
     removeReaction,
   };
 }
-
-const MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY = 50;
 
 /**
  * @internal
@@ -3011,31 +3007,6 @@ export function createRoom<
     );
   }
 
-  async function markInboxNotificationsAsRead(inboxNotificationIds: string[]) {
-    await fetchNotificationsJson("/inbox-notifications/read", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ inboxNotificationIds }),
-    });
-  }
-
-  const batchedMarkInboxNotificationsAsRead = new Batch(
-    async (batchedInboxNotificationIds: [string][]) => {
-      const inboxNotificationIds = batchedInboxNotificationIds.flat();
-
-      await markInboxNotificationsAsRead(inboxNotificationIds);
-
-      return inboxNotificationIds;
-    },
-    { delay: MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY }
-  );
-
-  async function markInboxNotificationAsRead(inboxNotificationId: string) {
-    await batchedMarkInboxNotificationsAsRead.get(inboxNotificationId);
-  }
-
   return Object.defineProperty(
     {
       [kInternal]: {
@@ -3069,7 +3040,6 @@ export function createRoom<
         notifications: {
           getRoomNotificationSettings,
           updateRoomNotificationSettings,
-          markInboxNotificationAsRead,
         },
       },
 
