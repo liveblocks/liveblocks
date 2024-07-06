@@ -10,11 +10,8 @@ import type {
   ClientOptions,
   DM,
   DU,
-  InboxNotificationData,
-  InboxNotificationDeleteInfo,
   OpaqueClient,
   PrivateClientApi,
-  ThreadDeleteInfo,
 } from "@liveblocks/core";
 import {
   createClient,
@@ -189,27 +186,18 @@ function getExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   };
 }
 
-function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
-  client: OpaqueClient
-) {
-  const internals = client[kInternal] as PrivateClientApi<U, M>;
+function makeExtrasForClient<U extends BaseUserMeta>(client: OpaqueClient) {
+  const internals = client[kInternal] as PrivateClientApi<U>;
   const store = internals.cacheStore;
-  const notifications = internals.notifications;
 
-  let fetchInboxNotifications$: Promise<{
-    inboxNotifications: InboxNotificationData[];
-    threads: ThreadData<M>[];
-    deletedThreads: ThreadDeleteInfo[];
-    deletedInboxNotifications: InboxNotificationDeleteInfo[];
-    meta: {
-      requestedAt: Date;
-    };
-  }> | null = null;
+  let fetchInboxNotifications$: ReturnType<
+    typeof client.getInboxNotifications
+  > | null = null;
 
   let lastRequestedAt: Date | undefined;
 
   const poller = makePoller(() =>
-    notifications.getInboxNotifications({ since: lastRequestedAt }).then(
+    client.getInboxNotifications({ since: lastRequestedAt }).then(
       (result) => {
         lastRequestedAt = result.meta.requestedAt;
 
@@ -239,7 +227,7 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
     });
 
     try {
-      fetchInboxNotifications$ = notifications.getInboxNotifications();
+      fetchInboxNotifications$ = client.getInboxNotifications();
 
       const result = await fetchInboxNotifications$;
 
@@ -317,7 +305,6 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
 
   return {
     store,
-    notifications,
     fetchInboxNotifications,
     useSubscribeToInboxNotificationsEffect,
   };
@@ -466,7 +453,7 @@ function useUnreadInboxNotificationsCountSuspense_withClient(
 function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
   return useCallback(
     (inboxNotificationId: string) => {
-      const { store, notifications } = getExtrasForClient(client);
+      const { store } = getExtrasForClient(client);
 
       const optimisticUpdateId = nanoid();
       const readAt = new Date();
@@ -477,7 +464,7 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
         readAt,
       });
 
-      notifications.markInboxNotificationAsRead(inboxNotificationId).then(
+      client.markInboxNotificationAsRead(inboxNotificationId).then(
         () => {
           store.set((state) => {
             const existingNotification =
@@ -525,7 +512,7 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
 
 function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
   return useCallback(() => {
-    const { store, notifications } = getExtrasForClient(client);
+    const { store } = getExtrasForClient(client);
     const optimisticUpdateId = nanoid();
     const readAt = new Date();
     store.pushOptimisticUpdate({
@@ -534,7 +521,7 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
       readAt,
     });
 
-    notifications.markAllInboxNotificationsAsRead().then(
+    client.markAllInboxNotificationsAsRead().then(
       () => {
         store.set((state) => ({
           ...state,

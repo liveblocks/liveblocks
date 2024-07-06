@@ -138,8 +138,7 @@ export type EnterOptions<P extends JsonObject = DP, S extends LsonObject = DS> =
  * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
  * will probably happen if you do.
  */
-export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
-  readonly notifications: NotificationsApi<M>;
+export type PrivateClientApi<U extends BaseUserMeta> = {
   readonly currentUserIdStore: Store<string | null>;
   readonly resolveMentionSuggestions: ClientOptions<U>["resolveMentionSuggestions"];
   readonly cacheStore: CacheStore<BaseMetadata>;
@@ -171,7 +170,7 @@ export type NotificationsApi<M extends BaseMetadata> = {
  */
 export type OpaqueClient = Client<BaseUserMeta>;
 
-export type Client<U extends BaseUserMeta = DU> = {
+export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
   /**
    * Gets a room. Returns null if {@link Client.enter} has not been called previously.
    *
@@ -224,8 +223,8 @@ export type Client<U extends BaseUserMeta = DU> = {
    * will probably happen if you do.
    */
   // TODO Make this a getter, so we can provide M
-  readonly [kInternal]: PrivateClientApi<U, BaseMetadata>;
-};
+  readonly [kInternal]: PrivateClientApi<U>;
+} & NotificationsApi<M>;
 
 export type AuthEndpoint =
   | string
@@ -567,14 +566,13 @@ export function createClient<U extends BaseUserMeta = DU>(
 
       logout,
 
+      getInboxNotifications,
+      getUnreadInboxNotificationsCount,
+      markAllInboxNotificationsAsRead,
+      markInboxNotificationAsRead,
+
       // Internal
       [kInternal]: {
-        notifications: {
-          getInboxNotifications,
-          getUnreadInboxNotificationsCount,
-          markAllInboxNotificationsAsRead,
-          markInboxNotificationAsRead,
-        },
         currentUserIdStore,
         resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,
         cacheStore,
