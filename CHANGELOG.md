@@ -1,3 +1,9 @@
+## v2.2.2 (not released yet)
+
+### `@liveblocks/react-ui`
+
+- Fix broken CSS selector in default styles.
+
 ## v2.2.1
 
 ### `@liveblocks/yjs`
@@ -1541,8 +1547,8 @@ For information, please read our
 - Remove support for directly importing hooks from **@liveblocks/client** (e.g.
   `import { useMyPresence } from '@liveblocks/react'`). If you’re still using
   these imports, see the
-  [Upgrade Guide for 0.17](https://liveblocks.io/docs/platform/upgrading/0.17) for
-  instructions.
+  [Upgrade Guide for 0.17](https://liveblocks.io/docs/platform/upgrading/0.17)
+  for instructions.
 - Remove `ClientProvider` and `useClient` hook
 - Remove `defaultPresence` and `defaultStorageRoot` arguments. (Just use
   `initialPresence` and `initialStorage` arguments now.)
@@ -1763,7 +1769,8 @@ It's surprisingly simple!
   - Importing the React hooks directly is deprecated, instead use the new
     `createRoomContext()` helper. For help, read the
     [Recommended Upgrade Steps section](https://liveblocks.io/docs/platform/upgrading/0.17#recommended-upgrade-steps)
-    within our [Upgrade Guide](https://liveblocks.io/docs/platform/upgrading/0.17)
+    within our
+    [Upgrade Guide](https://liveblocks.io/docs/platform/upgrading/0.17)
   - The second argument to `useList()`, `useObject()`, and `useMap()` is
     deprecated
   - The RoomProvider's `defaultPresence` is renamed to `initialPresence`
