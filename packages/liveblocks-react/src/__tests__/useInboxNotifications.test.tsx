@@ -296,9 +296,7 @@ describe("useInboxNotifications", () => {
         [newInboxNotification.id]: newInboxNotification,
       },
       queries: {
-        [INBOX_NOTIFICATIONS_QUERY]: {
-          isLoading: false,
-        },
+        [INBOX_NOTIFICATIONS_QUERY]: { isLoading: false, data: undefined },
       },
     }));
 

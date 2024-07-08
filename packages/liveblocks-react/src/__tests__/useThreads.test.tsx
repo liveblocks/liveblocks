@@ -991,6 +991,7 @@ describe("useThreads", () => {
       queries: {
         [generateQueryKey(roomId, { metadata: {} })]: {
           isLoading: false,
+          data: undefined,
         },
       },
     }));

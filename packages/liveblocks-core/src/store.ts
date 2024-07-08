@@ -1,3 +1,4 @@
+import type { AsyncResult } from "./lib/AsyncResult";
 import type { Store } from "./lib/create-store";
 import { createStore } from "./lib/create-store";
 import { makeEventSource } from "./lib/EventSource";
@@ -130,10 +131,8 @@ type UpdateNotificationSettingsOptimisticUpdate = {
   settings: Partial<RoomNotificationSettings>;
 };
 
-type QueryState =
-  | { isLoading: true; error?: never } // pending
-  | { isLoading: false; error?: never } // success
-  | { isLoading: false; error: Error }; // error
+type QueryState = AsyncResult<undefined>;
+//                            ^^^^^^^^^ We don't store the actual query result in this status
 
 export type CacheState<M extends BaseMetadata> = {
   /**
@@ -269,9 +268,7 @@ export function createClientStore<M extends BaseMetadata>(): CacheStore<M> {
           queryKey !== undefined
             ? {
                 ...state.queries,
-                [queryKey]: {
-                  isLoading: false,
-                },
+                [queryKey]: { isLoading: false, data: undefined },
               }
             : state.queries,
       }));
@@ -290,9 +287,7 @@ export function createClientStore<M extends BaseMetadata>(): CacheStore<M> {
         },
         queries: {
           ...state.queries,
-          [queryKey]: {
-            isLoading: false,
-          },
+          [queryKey]: { isLoading: false, data: undefined },
         },
       }));
     },
