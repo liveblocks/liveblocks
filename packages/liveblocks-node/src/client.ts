@@ -477,8 +477,8 @@ export class Liveblocks {
    * Creates a new room with the given id.
    * @param roomId The id of the room to create.
    * @param params.defaultAccesses The default accesses for the room.
-   * @param params.groupAccesses (optional) The group accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
-   * @param params.userAccesses (optional) The user accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.groupsAccesses (optional) The group accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.usersAccesses (optional) The user accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
    * @param params.metadata (optional) The metadata for the room. Supports upto a maximum of 50 entries. Key length has a limit of 40 characters. Value length has a limit of 256 characters.
    * @returns The created room.
    */
@@ -554,8 +554,8 @@ export class Liveblocks {
    * Setting a property to `null` means to delete this property.
    * @param roomId The id of the room to update.
    * @param params.defaultAccesses (optional) The default accesses for the room.
-   * @param params.groupAccesses (optional) The group accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
-   * @param params.userAccesses (optional) The user accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.groupsAccesses (optional) The group accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.usersAccesses (optional) The user accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
    * @param params.metadata (optional) The metadata for the room. Supports upto a maximum of 50 entries. Key length has a limit of 40 characters. Value length has a limit of 256 characters.
    * @returns The updated room.
    */

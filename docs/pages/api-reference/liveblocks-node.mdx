@@ -314,7 +314,7 @@ const {
   // Optional, the amount of rooms to load, between 1 and 100, defaults to 20
   limit: 20,
 
-  // Optional, filter for rooms that allow entry to group ID(s) in `groupAccesses`
+  // Optional, filter for rooms that allow entry to group ID(s) in `groupsAccesses`
   groupIds: ["engineering", "design"],
 
   // Optional, filter for rooms that allow entry to a user's ID in `usersAccesses`
@@ -390,13 +390,13 @@ const room = await liveblocks.createRoom("my-room-id", {
   defaultAccesses: [],
 
   // Optional, the room's group ID permissions
-  groupAccesses: {
+  groupsAccesses: {
     design: ["room:write"],
     engineering: ["room:presence:write", "room:read"],
   },
 
   // Optional, the room's user ID permissions
-  userAccesses: {
+  usersAccesses: {
     "my-user-id": ["room:write"],
   },
 
@@ -452,13 +452,13 @@ const room = await liveblocks.createRoom("my-room-id", {
   defaultAccesses: [],
 
   // Optional, update the room's group ID permissions
-  groupAccesses: {
+  groupsAccesses: {
     design: ["room:write"],
     engineering: ["room:presence:write", "room:read"],
   },
 
   // Optional, update the room's user ID permissions
-  userAccesses: {
+  usersAccesses: {
     "my-user-id": ["room:write"],
   },
 
