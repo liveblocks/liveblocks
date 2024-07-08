@@ -4,7 +4,6 @@ import { makeEventSource } from "./EventSource";
 import { stringify } from "./stringify";
 
 const DEFAULT_SIZE = 50;
-const DEFAULT_DELAY = 100;
 
 type Resolve<T> = (value: T | Promise<T>) => void;
 type Reject = (reason?: unknown) => void;
@@ -27,7 +26,7 @@ interface Options {
   /**
    * How long to wait before flushing the batch.
    */
-  delay?: number;
+  delay: number;
 }
 
 const noop = () => {};
@@ -55,10 +54,10 @@ export class Batch<T, A extends unknown[] = []> {
   private delayTimeoutId?: ReturnType<typeof setTimeout>;
   public error = false;
 
-  constructor(callback: BatchCallback<T, A>, options?: Options) {
+  constructor(callback: BatchCallback<T, A>, options: Options) {
     this.callback = callback;
-    this.size = options?.size ?? DEFAULT_SIZE;
-    this.delay = options?.delay ?? DEFAULT_DELAY;
+    this.size = options.size ?? DEFAULT_SIZE;
+    this.delay = options.delay;
   }
 
   private clearDelayTimeout(): void {
@@ -160,7 +159,7 @@ export class Batch<T, A extends unknown[] = []> {
 // XXX Change type params to <O, I, AS extends I[]> here?
 export function createBatchStore<T, A extends unknown[]>(
   callback: BatchCallback<T, A>,
-  options?: Options
+  options: Options
 ): BatchStore<T, A> {
   const batch = new Batch(callback, options);
   const cache = new Map<string, AsyncResult<T>>();
