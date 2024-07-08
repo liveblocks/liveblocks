@@ -104,8 +104,9 @@ commit_to_git () {
 
 check_is_valid_version "$VERSION"
 
-# Set up turbo
+# Run a fresh `npm i` to ensure the lock file isn't outdated before continuing
 npm install
+git is-dirty -v
 
 for PKGDIR in "${PKGS_TO_RELEASE[@]}"; do
     update_package_version "$PKGDIR" "$VERSION"
