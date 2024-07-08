@@ -105,13 +105,23 @@ commit_to_git () {
 check_is_valid_version "$VERSION"
 
 # Run a fresh `npm i` to ensure the lock file isn't outdated before continuing
-npm install
-git is-dirty -v
+npm install --no-audit
+git is-clean -v
 
 for PKGDIR in "${PKGS_TO_RELEASE[@]}"; do
     update_package_version "$PKGDIR" "$VERSION"
 done
 
 # Update package-lock.json with newly bumped versions
-npm install
+touch node_modules
+npm install --no-audit
+
+# The following pattern is always indicative of a bug in this script, so let's
+# fail if this is found
+if grep -qEe 'packages/liveblocks-.*/node_modules/@liveblocks' package-lock.json; then
+    err "The lockfile contains a pattern that should not exist"
+    err "Please manually debug this to figure out what went wrong during the update"
+    exit 4
+fi
+
 commit_to_git "${COMMIT_MESSAGE}${VERSION}" "package-lock.json" "packages/" "tools/"
