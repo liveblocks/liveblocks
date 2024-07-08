@@ -105,7 +105,7 @@ commit_to_git () {
 check_is_valid_version "$VERSION"
 
 # Run a fresh `npm i` to ensure the lock file isn't outdated before continuing
-npm install
+npm install --no-audit
 git is-clean -v
 
 for PKGDIR in "${PKGS_TO_RELEASE[@]}"; do
@@ -113,5 +113,5 @@ for PKGDIR in "${PKGS_TO_RELEASE[@]}"; do
 done
 
 # Update package-lock.json with newly bumped versions
-npm install
+npm install --no-audit
 commit_to_git "${COMMIT_MESSAGE}${VERSION}" "package-lock.json" "packages/" "tools/"
