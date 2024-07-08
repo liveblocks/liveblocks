@@ -837,7 +837,7 @@
   /**
    * Prevent empty lines from collapsing
    */
-  :where(p span:only-child:empty::before) {
+  :where(p span:only-child:empty)::before {
     content: "\FEFF";
     user-select: none;
   }
