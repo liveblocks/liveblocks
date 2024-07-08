@@ -312,14 +312,3 @@ export function useIsThreadActive(threadId: string): boolean {
 
   return isActive(threadId);
 }
-
-export function useActiveThreads(): string[] {
-  const activeThreads = React.useContext(ActiveThreadsContext);
-  if (activeThreads === null) {
-    throw new Error(
-      "useActiveThreads must be used within LiveblocksPlugin. For more information: https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#useActiveThreads"
-    );
-  }
-
-  return activeThreads;
-}

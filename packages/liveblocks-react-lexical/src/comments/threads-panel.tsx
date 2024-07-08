@@ -19,8 +19,8 @@ import React, {
 import { classNames } from "../classnames";
 import { useRootElement } from "../liveblocks-plugin-provider";
 import {
+  ActiveThreadsContext,
   type ThreadToNodesMap,
-  useActiveThreads,
 } from "./comment-plugin-provider";
 import { ThreadToNodesContext } from "./comment-plugin-provider";
 import { $isThreadMarkNode } from "./thread-mark-node";
@@ -417,4 +417,13 @@ function useThreadToNodes(): ThreadToNodesMap {
     );
   }
   return threadToNodes;
+}
+
+function useActiveThreads() {
+  const activeThreads = useContext(ActiveThreadsContext);
+  if (activeThreads === null) {
+    throw new Error("ThreadsPanel must be used within LiveblocksPlugin.");
+  }
+
+  return activeThreads;
 }
