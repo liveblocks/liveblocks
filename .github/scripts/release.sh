@@ -113,7 +113,8 @@ for PKGDIR in "${PKGS_TO_RELEASE[@]}"; do
 done
 
 # Update package-lock.json with newly bumped versions
-touch node_modules
+npm install --no-audit
+npm ci --no-audit
 npm install --no-audit
 
 # The following pattern is always indicative of a bug in this script, so let's
