@@ -550,7 +550,7 @@ export type Room<
    * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
    * will probably happen if you do.
    */
-  readonly [kInternal]: PrivateRoomApi<M>;
+  readonly [kInternal]: PrivateRoomApi;
 
   /**
    * The id of the room.
@@ -784,7 +784,7 @@ export type Room<
   updateRoomNotificationSettings(
     settings: Partial<RoomNotificationSettings>
   ): Promise<RoomNotificationSettings>;
-};
+} & CommentsApi<M>;
 
 /**
  * @private
@@ -794,7 +794,7 @@ export type Room<
  * Liveblocks, NEVER USE ANY OF THESE METHODS DIRECTLY, because bad things
  * will probably happen if you do.
  */
-export type PrivateRoomApi<M extends BaseMetadata> = {
+export type PrivateRoomApi = {
   // For introspection in unit tests only
   presenceBuffer: Json | undefined;
   undoStack: readonly (readonly Readonly<HistoryOp<JsonObject>>[])[];
@@ -815,8 +815,6 @@ export type PrivateRoomApi<M extends BaseMetadata> = {
     explicitClose(event: IWebSocketCloseEvent): void;
     rawSend(data: string): void;
   };
-
-  comments: CommentsApi<M>;
 };
 
 // The maximum message size on websockets is 1MB. We'll set the threshold
@@ -3030,10 +3028,6 @@ export function createRoom<
           explicitClose: (event) => managedSocket._privateSendMachineEvent({ type: "EXPLICIT_SOCKET_CLOSE", event }),
           rawSend: (data) => managedSocket.send(data),
         },
-
-        comments: {
-          ...commentsApi,
-        },
       },
 
       id: config.roomId,
@@ -3086,6 +3080,8 @@ export function createRoom<
 
       getRoomNotificationSettings,
       updateRoomNotificationSettings,
+
+      ...commentsApi,
     },
 
     // Explictly make the internal field non-enumerable, to avoid aggressive
