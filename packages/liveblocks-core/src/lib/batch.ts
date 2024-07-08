@@ -1,5 +1,5 @@
-import type { EventSource } from "./EventSource";
 import { makeEventSource } from "./EventSource";
+import type { Observable } from "./EventSource";
 import { stringify } from "./stringify";
 
 const DEFAULT_SIZE = 50;
@@ -36,9 +36,7 @@ export type BatchStoreState<T> =
   | BatchStoreStateError
   | BatchStoreStateSuccess<T>;
 
-export type BatchStore<T, A extends unknown[]> = EventSource<
-  BatchStoreState<T> | undefined
-> & {
+export type BatchStore<T, A extends unknown[]> = Observable<void> & {
   get: (...args: A) => Promise<void>;
   getState: (...args: A) => BatchStoreState<T> | undefined;
 };
@@ -186,25 +184,18 @@ export function createBatchStore<T, A extends unknown[]>(
 ): BatchStore<T, A> {
   const batch = new Batch(callback, options);
   const cache = new Map<string, BatchStoreState<T>>();
-  const eventSource = makeEventSource<BatchStoreState<T> | undefined>();
+  const eventSource = makeEventSource<void>();
 
   function getCacheKey(args: A): string {
     return stringify(args);
   }
 
-  function setStateAndNotify(
-    cacheKey: string,
-    state: BatchStoreState<T> | undefined
-  ) {
+  function setStateAndNotify(cacheKey: string, state: BatchStoreState<T>) {
     // Set or delete the state.
-    if (state) {
-      cache.set(cacheKey, state);
-    } else {
-      cache.delete(cacheKey);
-    }
+    cache.set(cacheKey, state);
 
     // Notify subscribers.
-    eventSource.notify(state);
+    eventSource.notify();
   }
 
   async function get(...args: A) {
@@ -254,7 +245,7 @@ export function createBatchStore<T, A extends unknown[]>(
   }
 
   return {
-    ...eventSource,
+    ...eventSource.observable,
     get,
     getState,
   };
