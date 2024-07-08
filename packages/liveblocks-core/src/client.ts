@@ -531,7 +531,7 @@ export function createClient<U extends BaseUserMeta = DU>(
   );
 
   const usersStore = createBatchStore(
-    async (batchedUserIds: [string][]) => {
+    async (batchedUserIds: [userId: string][]) => {
       const userIds = batchedUserIds.flat();
       const users = await resolveUsers?.({ userIds });
 
@@ -549,7 +549,7 @@ export function createClient<U extends BaseUserMeta = DU>(
   );
 
   const roomsInfoStore = createBatchStore(
-    async (batchedRoomIds: [string][]) => {
+    async (batchedRoomIds: [roomId: string][]) => {
       const roomIds = batchedRoomIds.flat();
       const roomsInfo = await resolveRoomsInfo?.({ roomIds });
 
