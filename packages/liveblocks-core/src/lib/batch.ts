@@ -1,11 +1,12 @@
 import type { AsyncResult } from "./AsyncResult";
+import { Promise_withResolvers } from "./controlledPromise";
 import type { Observable } from "./EventSource";
 import { makeEventSource } from "./EventSource";
 import { stringify } from "./stringify";
 
 const DEFAULT_SIZE = 50;
 
-type Resolve<T> = (value: T | Promise<T>) => void;
+type Resolve<T> = (value: T) => void;
 type Reject = (reason?: unknown) => void;
 
 export type BatchCallback<T, A extends unknown[]> = (
@@ -29,17 +30,19 @@ interface Options {
   delay: number;
 }
 
-const noop = () => {};
-
-// XXX Does this really need to be a class?
 class BatchCall<T, A extends unknown[]> {
   readonly args: A;
-  resolve: Resolve<T> = noop;
-  reject: Reject = noop;
-  promise: Promise<T> = new Promise(noop);
+  readonly resolve: Resolve<T>;
+  readonly reject: Reject;
+  readonly promise: Promise<T>;
 
   constructor(args: A) {
     this.args = args;
+
+    const { promise, resolve, reject } = Promise_withResolvers<T>();
+    this.promise = promise;
+    this.resolve = resolve;
+    this.reject = reject;
   }
 }
 
@@ -134,11 +137,6 @@ export class Batch<T, A extends unknown[] = []> {
 
     // If no existing call exists, add the call to the queue and schedule a flush.
     const call = new BatchCall<T, A>(args);
-    // XXX Looks like Promise_withResolvers
-    call.promise = new Promise<T>((resolve, reject) => {
-      call.resolve = resolve;
-      call.reject = reject;
-    });
     this.queue.push(call);
     this.schedule();
 
