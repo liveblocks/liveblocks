@@ -15,7 +15,7 @@ export type BatchCallback<T, A extends unknown[]> = (
 
 export type BatchStore<T, A extends unknown[]> = Observable<void> & {
   get: (...args: A) => Promise<void>;
-  getState: (...args: A) => AsyncResult<T> | undefined;
+  getState: (...args: A) => AsyncResult<T>;
 };
 
 interface Options {
@@ -32,6 +32,7 @@ interface Options {
 
 const noop = () => {};
 
+// XXX Does this really need to be a class?
 class BatchCall<T, A extends unknown[]> {
   readonly args: A;
   resolve: Resolve<T> = noop;
@@ -134,6 +135,7 @@ export class Batch<T, A extends unknown[] = []> {
 
     // If no existing call exists, add the call to the queue and schedule a flush.
     const call = new BatchCall<T, A>(args);
+    // XXX Looks like Promise_withResolvers
     call.promise = new Promise<T>((resolve, reject) => {
       call.resolve = resolve;
       call.reject = reject;
@@ -155,6 +157,7 @@ export class Batch<T, A extends unknown[] = []> {
  * Create a store based on a batch callback.
  * Each call will be cached and get its own state in addition to being batched.
  */
+// XXX Change type params to <O, I, AS extends I[]> here?
 export function createBatchStore<T, A extends unknown[]>(
   callback: BatchCallback<T, A>,
   options?: Options
@@ -175,7 +178,7 @@ export function createBatchStore<T, A extends unknown[]>(
     eventSource.notify();
   }
 
-  async function get(...args: A) {
+  async function get(...args: A): Promise<void> {
     const cacheKey = getCacheKey(args);
 
     // If this call already has a state, return early.
@@ -215,7 +218,7 @@ export function createBatchStore<T, A extends unknown[]>(
     }
   }
 
-  function getState(...args: A) {
+  function getState(...args: A): AsyncResult<T> | undefined {
     const cacheKey = getCacheKey(args);
 
     return cache.get(cacheKey);
