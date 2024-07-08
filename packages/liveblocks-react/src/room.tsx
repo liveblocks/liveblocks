@@ -445,8 +445,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     if (existingRequest !== undefined) return existingRequest;
 
     try {
-      const request =
-        room[kInternal].notifications.getRoomNotificationSettings();
+      const request = room.getRoomNotificationSettings();
 
       requestsByQuery.set(queryKey, request);
 
@@ -2473,30 +2472,28 @@ function useUpdateRoomNotificationSettings() {
         settings,
       });
 
-      room[kInternal].notifications
-        .updateRoomNotificationSettings(settings)
-        .then(
-          (settings) => {
-            store.set((state) => ({
-              ...state,
-              notificationSettings: {
-                [room.id]: settings,
-              },
-              optimisticUpdates: state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              ),
-            }));
-          },
-          (err: Error) =>
-            onMutationFailure(
-              err,
-              optimisticUpdateId,
-              (error) =>
-                new UpdateNotificationSettingsError(error, {
-                  roomId: room.id,
-                })
-            )
-        );
+      room.updateRoomNotificationSettings(settings).then(
+        (settings) => {
+          store.set((state) => ({
+            ...state,
+            notificationSettings: {
+              [room.id]: settings,
+            },
+            optimisticUpdates: state.optimisticUpdates.filter(
+              (update) => update.id !== optimisticUpdateId
+            ),
+          }));
+        },
+        (err: Error) =>
+          onMutationFailure(
+            err,
+            optimisticUpdateId,
+            (error) =>
+              new UpdateNotificationSettingsError(error, {
+                roomId: room.id,
+              })
+          )
+      );
     },
     [client, room]
   );

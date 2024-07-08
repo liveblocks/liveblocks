@@ -779,6 +779,11 @@ export type Room<
    * connection. If the room is not connected yet, initiate it.
    */
   reconnect(): void;
+
+  getRoomNotificationSettings(): Promise<RoomNotificationSettings>;
+  updateRoomNotificationSettings(
+    settings: Partial<RoomNotificationSettings>
+  ): Promise<RoomNotificationSettings>;
 };
 
 /**
@@ -812,13 +817,6 @@ export type PrivateRoomApi<M extends BaseMetadata> = {
   };
 
   comments: CommentsApi<M>;
-
-  notifications: {
-    getRoomNotificationSettings(): Promise<RoomNotificationSettings>;
-    updateRoomNotificationSettings(
-      settings: Partial<RoomNotificationSettings>
-    ): Promise<RoomNotificationSettings>;
-  };
 };
 
 // The maximum message size on websockets is 1MB. We'll set the threshold
@@ -3036,11 +3034,6 @@ export function createRoom<
         comments: {
           ...commentsApi,
         },
-
-        notifications: {
-          getRoomNotificationSettings,
-          updateRoomNotificationSettings,
-        },
       },
 
       id: config.roomId,
@@ -3090,6 +3083,9 @@ export function createRoom<
       // Presence
       getPresence: () => context.myPresence.current,
       getOthers: () => context.others.current,
+
+      getRoomNotificationSettings,
+      updateRoomNotificationSettings,
     },
 
     // Explictly make the internal field non-enumerable, to avoid aggressive
