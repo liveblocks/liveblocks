@@ -4,7 +4,7 @@ import {
   registerNestedElementResolver,
   removeClassNamesFromElement,
 } from "@lexical/utils";
-import { kInternal } from "@liveblocks/core";
+import { kInternal, shallow } from "@liveblocks/core";
 import {
   CreateThreadError,
   selectedThreads,
@@ -35,6 +35,8 @@ import $unwrapThreadMarkNode from "./unwrap-thread-mark-node";
 export const OnDeleteThreadCallback = createContext<
   ((threadId: string) => void) | null
 >(null);
+
+export const ActiveThreadsContext = createContext<string[] | null>(null);
 
 export const IsActiveThreadContext = createContext<
   ((threadId: string) => boolean) | null
@@ -106,9 +108,11 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     store.get,
     store.get,
     useCallback(
-      () => selectedThreads(room.id, store.get(), {}),
+      () =>
+        selectedThreads(room.id, store.get(), {}).map((thread) => thread.id),
       [room.id, store]
-    )
+    ),
+    shallow
   );
 
   /**
@@ -118,8 +122,8 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     function getThreadMarkElements() {
       const activeElements = new Set<HTMLElement>();
 
-      for (const thread of threads) {
-        const keys = threadToNodes.get(thread.id);
+      for (const id of threads) {
+        const keys = threadToNodes.get(id);
         if (keys === undefined) continue;
 
         for (const key of keys) {
@@ -282,11 +286,13 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
 
   return (
     <OnDeleteThreadCallback.Provider value={handleThreadDelete}>
-      <IsActiveThreadContext.Provider value={isThreadActive}>
-        <ThreadToNodesContext.Provider value={threadToNodes}>
-          {children}
-        </ThreadToNodesContext.Provider>
-      </IsActiveThreadContext.Provider>
+      <ActiveThreadsContext.Provider value={activeThreads}>
+        <IsActiveThreadContext.Provider value={isThreadActive}>
+          <ThreadToNodesContext.Provider value={threadToNodes}>
+            {children}
+          </ThreadToNodesContext.Provider>
+        </IsActiveThreadContext.Provider>
+      </ActiveThreadsContext.Provider>
     </OnDeleteThreadCallback.Provider>
   );
 }
@@ -305,4 +311,15 @@ export function useIsThreadActive(threadId: string): boolean {
   }
 
   return isActive(threadId);
+}
+
+export function useActiveThreads(): string[] {
+  const activeThreads = React.useContext(ActiveThreadsContext);
+  if (activeThreads === null) {
+    throw new Error(
+      "useActiveThreads must be used within LiveblocksPlugin. For more information: https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#useActiveThreads"
+    );
+  }
+
+  return activeThreads;
 }

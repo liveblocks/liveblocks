@@ -9,6 +9,7 @@ export {
   FloatingComposer,
   OPEN_FLOATING_COMPOSER_COMMAND,
 } from "./comments/floating-composer";
+export { ThreadsPanel } from "./comments/threads-panel";
 export { liveblocksConfig } from "./liveblocks-config";
 export {
   LiveblocksPlugin,
