@@ -1,44 +1,21 @@
-import { makeEventSource } from "./EventSource";
+import type { AsyncResult } from "./AsyncResult";
 import type { Observable } from "./EventSource";
+import { makeEventSource } from "./EventSource";
 import { stringify } from "./stringify";
 
 const DEFAULT_SIZE = 50;
 const DEFAULT_DELAY = 100;
 
 type Resolve<T> = (value: T | Promise<T>) => void;
-
 type Reject = (reason?: unknown) => void;
 
 export type BatchCallback<T, A extends unknown[]> = (
   args: A[]
 ) => (T | Error)[] | Promise<(T | Error)[]>;
 
-export type BatchStoreStateLoading = {
-  isLoading: true;
-  data?: never;
-  error?: never;
-};
-
-export type BatchStoreStateError = {
-  isLoading: false;
-  data?: never;
-  error: Error;
-};
-
-export type BatchStoreStateSuccess<T> = {
-  isLoading: false;
-  data: T;
-  error?: never;
-};
-
-export type BatchStoreState<T> =
-  | BatchStoreStateLoading
-  | BatchStoreStateError
-  | BatchStoreStateSuccess<T>;
-
 export type BatchStore<T, A extends unknown[]> = Observable<void> & {
   get: (...args: A) => Promise<void>;
-  getState: (...args: A) => BatchStoreState<T> | undefined;
+  getState: (...args: A) => AsyncResult<T> | undefined;
 };
 
 interface Options {
@@ -183,14 +160,14 @@ export function createBatchStore<T, A extends unknown[]>(
   options?: Options
 ): BatchStore<T, A> {
   const batch = new Batch(callback, options);
-  const cache = new Map<string, BatchStoreState<T>>();
+  const cache = new Map<string, AsyncResult<T>>();
   const eventSource = makeEventSource<void>();
 
   function getCacheKey(args: A): string {
     return stringify(args);
   }
 
-  function setStateAndNotify(cacheKey: string, state: BatchStoreState<T>) {
+  function setStateAndNotify(cacheKey: string, state: AsyncResult<T>) {
     // Set or delete the state.
     cache.set(cacheKey, state);
 
