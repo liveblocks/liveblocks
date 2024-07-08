@@ -106,7 +106,7 @@ check_is_valid_version "$VERSION"
 
 # Run a fresh `npm i` to ensure the lock file isn't outdated before continuing
 npm install
-git is-dirty -v
+git is-clean -v
 
 for PKGDIR in "${PKGS_TO_RELEASE[@]}"; do
     update_package_version "$PKGDIR" "$VERSION"
