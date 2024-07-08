@@ -27,7 +27,6 @@ describe("Batch", () => {
     await expect(b).resolves.toEqual("b");
 
     // Callback should be called only once for both "a" and "b".
-    // XXX Change to ['a', 'b']?
     expect(callback).toHaveBeenCalledWith([["a"], ["b"]]);
   });
 
@@ -77,7 +76,6 @@ describe("Batch", () => {
 
     // Callback should be called twice, once for "a" and once for "b".
     expect(callback).toHaveBeenCalledTimes(2);
-    // XXX Change to ['a']?
     expect(callback).toHaveBeenNthCalledWith(1, [["a"]]);
     expect(callback).toHaveBeenNthCalledWith(2, [["b"]]);
   });
@@ -158,7 +156,6 @@ describe("Batch", () => {
 
     // Callback should be called only once for ["a", "b"].
     expect(callback).toHaveBeenCalledTimes(1);
-    // XXX Change to ['a', 'b']?
     expect(callback).toHaveBeenCalledWith([["a"], ["b"]]);
   });
 

@@ -154,7 +154,6 @@ export class Batch<T, A extends unknown[] = []> {
  * Create a store based on a batch callback.
  * Each call will be cached and get its own state in addition to being batched.
  */
-// XXX Change type params to <O, I, AS extends I[]> here?
 export function createBatchStore<T, A extends unknown[]>(
   callback: BatchCallback<T, A>,
   options: Options
