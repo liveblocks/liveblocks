@@ -199,8 +199,8 @@ export async function withTimeout<T>(
 /**
  * Memoize a promise factory, so that each subsequent call will return the same
  * pending or success promise. If the promise rejects, will retain that failed
- * promise for 5 seconds, after which the next attempt will reset the memoized
- * value.
+ * promise for a small time period, after which the next attempt will reset the
+ * memoized value.
  */
 export function memoizeOnSuccess<T>(
   factoryFn: () => Promise<T>
@@ -209,8 +209,18 @@ export function memoizeOnSuccess<T>(
   return () => {
     if (cached === null) {
       cached = factoryFn().catch((err) => {
-        // Keep returning the failed promise for the next 5 seconds, after
-        // which we'll trigger a fresh promise again.
+        //
+        // Keep returning the failed promise for any calls to the memoized
+        // promise for the next 5 seconds. This time period is a bit arbitrary,
+        // but exists to make this play nicely with frameworks like React.
+        //
+        // In React, after a component is suspended and its promise is
+        // rejected, React will re-render the component, and expect the next
+        // call to this function to return the rejected promise, so its error
+        // can be shown. If we immediately reset this value, then such next
+        // render would instantly trigger a new promise which would trigger an
+        // infinite loop and keeping the component in loading state forever.
+        //
         setTimeout(() => {
           cached = null;
         }, 5_000);
