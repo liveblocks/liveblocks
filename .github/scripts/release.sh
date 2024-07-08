@@ -114,4 +114,13 @@ done
 
 # Update package-lock.json with newly bumped versions
 npm install --no-audit
+
+# The following pattern is always indicative of a bug in this script, so let's
+# fail if this is found
+if grep -qEe 'packages/liveblocks-.*/node_modules/@liveblocks' package-lock.json; then
+    err "The lockfile contains a pattern that should not exist"
+    err "Please manually debug this to figure out what went wrong during the update"
+    exit 4
+fi
+
 commit_to_git "${COMMIT_MESSAGE}${VERSION}" "package-lock.json" "packages/" "tools/"
