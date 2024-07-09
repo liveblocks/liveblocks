@@ -10,5 +10,5 @@ import { expectType } from "tsd";
   // expectType<unknown>(lbrl.LiveblocksPlugin);
   // expectType<unknown>(lbrl.Mention);
   // expectType<unknown>(lbrl.OPEN_FLOATING_COMPOSER_COMMAND);
-  // expectType<unknown>(lbrl.ThreadPanel);
+  // expectType<unknown>(lbrl.ThreadsPanel);
 })();

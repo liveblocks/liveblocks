@@ -44,7 +44,7 @@ function DefaultThread({ thread, ...props }: ThreadProps) {
   );
 }
 
-type ThreadPanelComponents = {
+type ThreadsPanelComponents = {
   Thread: ComponentType<ThreadProps>;
 };
 
@@ -65,7 +65,7 @@ export interface ThreadsPanelProps<M extends BaseMetadata = DM>
   /**
    * Override the component's components.
    */
-  components?: Partial<ThreadPanelComponents>;
+  components?: Partial<ThreadsPanelComponents>;
 }
 
 export function ThreadsPanel({
@@ -300,7 +300,7 @@ export function ThreadsPanel({
   return (
     <div
       {...divProps}
-      className={classNames(className, "lb-root lb-lexical-thread-panel")}
+      className={classNames(className, "lb-root lb-lexical-threads-panel")}
       ref={containerRef}
       style={{
         position: "relative",
