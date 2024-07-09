@@ -298,6 +298,7 @@ function ThreadWrapper({
   onItemRemove,
   thread,
   Thread,
+  className,
   ...divProps
 }: ThreadWrapperProps) {
   const [editor] = useLexicalComposerContext();
@@ -354,7 +355,14 @@ function ThreadWrapper({
   }, [thread.id, onItemAdd, onItemRemove]);
 
   return (
-    <div ref={divRef} {...divProps}>
+    <div
+      ref={divRef}
+      className={classNames(
+        "lb-lexical-threads-panel-thread-container",
+        className
+      )}
+      {...divProps}
+    >
       <Thread
         thread={thread}
         data-state={isActive ? "active" : "inactive"}
