@@ -36,15 +36,15 @@ export default function Editor() {
     <div className="relative min-h-screen flex flex-col">
       <LexicalComposer initialConfig={initialConfig}>
         <LiveblocksPlugin>
-          <div className="h-[60px] flex items-center justify-end px-4 border-b border-border/80 bg-background">
-            <NotificationsPopover />
-          </div>
+          {status === "not-loaded" || status === "loading" ? (
+            <Loading />
+          ) : (
+            <>
+              <div className="h-[60px] flex items-center justify-end px-4 border-b border-border/80 bg-background">
+                <NotificationsPopover />
+              </div>
 
-          <div className="relative flex flex-row justify-between w-full flex-1 py-16 xl:px-52 md:px-14 px-10 overflow-auto gap-12">
-            {status === "not-loaded" || status === "loading" ? (
-              <Loading />
-            ) : (
-              <>
+              <div className="relative flex flex-row justify-between w-full flex-1 py-16 xl:px-52 md:px-14 px-10 overflow-auto gap-12">
                 {/* Editable */}
                 <div className="flex w-[calc(100%-350px)]">
                   <RichTextPlugin
@@ -64,12 +64,12 @@ export default function Editor() {
                   <FloatingToolbar />
                 </div>
 
-                <Suspense fallback={<Loading />}>
+                <Suspense fallback={null}>
                   <Threads />
                 </Suspense>
-              </>
-            )}
-          </div>
+              </div>
+            </>
+          )}
         </LiveblocksPlugin>
       </LexicalComposer>
     </div>

@@ -54,6 +54,10 @@
   }
 }
 
+.lb-portal {
+  @apply z-30;
+}
+
 h1 {
   font-size: 2rem;
   font-weight: 700;
@@ -125,8 +129,4 @@ li::marker {
   text-indent: 0px !important;
   text-align: start !important;
   text-align-last: start !important;
-}
-
-.lb-portal {
-  @apply z-30;
 }
