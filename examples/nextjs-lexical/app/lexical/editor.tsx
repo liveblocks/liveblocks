@@ -46,7 +46,7 @@ export default function Editor() {
 
               <div className="relative flex flex-row justify-between w-full flex-1 py-16 xl:px-52 md:px-14 px-10 overflow-auto gap-12">
                 {/* Editable */}
-                <div className="flex w-[calc(100%-350px)]">
+                <div className="relative flex w-[calc(100%-350px)]">
                   <RichTextPlugin
                     contentEditable={
                       <ContentEditable className="outline-none flex-1" />
