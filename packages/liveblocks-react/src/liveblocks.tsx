@@ -5,6 +5,8 @@ import type {
   ThreadData,
 } from "@liveblocks/client";
 import type {
+  AsyncResult,
+  BaseRoomInfo,
   CacheState,
   CacheStore,
   ClientOptions,
@@ -139,6 +141,62 @@ function selectorFor_useUnreadInboxNotificationsCount(
   return {
     isLoading: false,
     count: selectUnreadInboxNotificationsCount(state),
+  };
+}
+
+function selectorFor_useUser<U extends BaseUserMeta>(
+  state: AsyncResult<U["info"] | undefined> | undefined,
+  userId: string
+): UserAsyncResult<U["info"]> {
+  if (state === undefined || state?.isLoading) {
+    return state ?? { isLoading: true };
+  }
+
+  if (state.error) {
+    return state;
+  }
+
+  // If this is a "success" state, but there still is no data, then it means
+  // the "resolving of this user" returned undefined. In that case, still treat
+  // this as an error state.
+  if (!state.data) {
+    return {
+      isLoading: false,
+      error: missingUserError(userId),
+    };
+  }
+
+  return {
+    isLoading: false,
+    user: state.data,
+  };
+}
+
+function selectorFor_useRoomInfo(
+  state: AsyncResult<BaseRoomInfo | undefined> | undefined,
+  roomId: string
+): RoomInfoAsyncResult {
+  if (state === undefined || state?.isLoading) {
+    return state ?? { isLoading: true };
+  }
+
+  if (state.error) {
+    return state;
+  }
+
+  // If this is a "success" state, but there still is no data, then it means
+  // the "resolving of this user" returned undefined. In that case, still treat
+  // this as an error state.
+  if (!state.data) {
+    return {
+      isLoading: false,
+      error: missingRoomInfoError(roomId),
+    };
+  }
+
+  return {
+    isLoading: false,
+    info: state.data,
   };
 }
 
@@ -578,26 +636,23 @@ function useUser_withClient<U extends BaseUserMeta>(
   );
 
   useEffect(() => {
+    // NOTE: .get() will trigger any actual fetches, whereas .getState() will not
     void usersStore.get(userId);
   }, [usersStore, userId]);
 
-  const state = useSyncExternalStore(
-    usersStore.subscribe,
-    getUserState,
-    getUserState
+  const selector = useCallback(
+    (state: ReturnType<typeof getUserState>) =>
+      selectorFor_useUser(state, userId),
+    [userId]
   );
 
-  return state
-    ? ({
-        isLoading: state.isLoading,
-        user: state.data,
-        // Return an error if `undefined` was returned by `resolveUsers` for this user ID
-        error:
-          !state.isLoading && !state.data && !state.error
-            ? missingUserError(userId)
-            : state.error,
-      } as UserAsyncResult<U["info"]>)
-    : { isLoading: true };
+  return useSyncExternalStoreWithSelector(
+    usersStore.subscribe,
+    getUserState,
+    getUserState,
+    selector,
+    shallow
+  );
 }
 
 function useUserSuspense_withClient<U extends BaseUserMeta>(
@@ -651,27 +706,23 @@ function useRoomInfo_withClient(
     [roomsInfoStore, roomId]
   );
 
+  const selector = useCallback(
+    (state: ReturnType<typeof getRoomInfoState>) =>
+      selectorFor_useRoomInfo(state, roomId),
+    [roomId]
+  );
+
   useEffect(() => {
     void roomsInfoStore.get(roomId);
   }, [roomsInfoStore, roomId]);
 
-  const state = useSyncExternalStore(
+  return useSyncExternalStoreWithSelector(
     roomsInfoStore.subscribe,
     getRoomInfoState,
-    getRoomInfoState
+    getRoomInfoState,
+    selector,
+    shallow
   );
-
-  return state
-    ? ({
-        isLoading: state.isLoading,
-        info: state.data,
-        // Return an error if `undefined` was returned by `resolveRoomsInfo` for this room ID
-        error:
-          !state.isLoading && !state.data && !state.error
-            ? missingRoomInfoError(roomId)
-            : state.error,
-      } as RoomInfoAsyncResult)
-    : { isLoading: true };
 }
 
 function useRoomInfoSuspense_withClient(client: OpaqueClient, roomId: string) {
