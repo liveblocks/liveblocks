@@ -275,7 +275,6 @@ export function ThreadsPanel({
               left: 0,
               width: "100%",
               paddingBottom: gap,
-              transition: "transform 0.2s",
             }}
           />
         );

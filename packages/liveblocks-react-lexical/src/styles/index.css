@@ -145,14 +145,17 @@
  *          Threads Panel            *
  *************************************/
 
+.lb-lexical-threads-panel-thread-container {
+  transition-duration: calc(var(--lb-transition-duration) * 2);
+  transition-property: transform;
+}
+
 .lb-lexical-threads-panel-thread {
   position: relative;
   overflow: hidden;
   border-radius: var(--lb-radius);
   background: var(--lb-dynamic-background);
   box-shadow: $lb-threads-panel-shadow;
-  transition-timing-function: var(--lb-transition-easing);
-  transition-duration: var(--lb-transition-duration);
   transition-property: background, box-shadow;
 
   &::after {
