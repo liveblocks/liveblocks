@@ -68,10 +68,8 @@ type ThreadMetadata = {
   resolved?: boolean;
 };
 
-type FloatingComposerProps<M extends BaseMetadata = ThreadMetadata> = Omit<
-  ComposerProps<M>,
-  "threadId" | "commentId"
->;
+export type FloatingComposerProps<M extends BaseMetadata = ThreadMetadata> =
+  Omit<ComposerProps<M>, "threadId" | "commentId">;
 
 /**
  * Displays a `Composer` near the current lexical selection.

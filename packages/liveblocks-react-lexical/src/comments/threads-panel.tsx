@@ -5,7 +5,11 @@ import {
   type ThreadProps,
 } from "@liveblocks/react-ui";
 import { $getNodeByKey } from "lexical";
-import type { ComponentType, HTMLAttributes } from "react";
+import type {
+  ComponentPropsWithoutRef,
+  ComponentType,
+  HTMLAttributes,
+} from "react";
 import React, {
   useCallback,
   useContext,
@@ -45,13 +49,19 @@ type ThreadPanelComponents = {
 };
 
 export interface ThreadsPanelProps<M extends BaseMetadata = DM>
-  extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
+  extends Omit<ComponentPropsWithoutRef<"div">, "children"> {
+  /**
+   * The threads to display.
+   */
   threads: ThreadData<M>[];
+
   /**
    * The gap between threads.
+   *
    * @default 20
    */
   gap?: number;
+
   /**
    * Override the component's components.
    */
