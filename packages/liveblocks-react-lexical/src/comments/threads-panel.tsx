@@ -1,7 +1,7 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { BaseMetadata, DM, ThreadData } from "@liveblocks/core";
 import {
-  Thread as _DefaultThread,
+  Thread as DefaultThread,
   type ThreadProps,
 } from "@liveblocks/react-ui";
 import { $getNodeByKey } from "lexical";
@@ -30,19 +30,6 @@ import { ThreadToNodesContext } from "./comment-plugin-provider";
 import { $isThreadMarkNode } from "./thread-mark-node";
 
 const DEFAULT_GAP = 20;
-
-function DefaultThread({ thread, ...props }: ThreadProps) {
-  const activeThreads = useActiveThreads();
-  const isActive = activeThreads.includes(thread.id);
-
-  return (
-    <_DefaultThread
-      thread={thread}
-      showComposer={isActive ? true : false}
-      {...props}
-    />
-  );
-}
 
 type ThreadsPanelComponents = {
   Thread: ComponentType<ThreadProps>;
@@ -373,6 +360,7 @@ function ThreadWrapper({
         data-state={isActive ? "active" : "inactive"}
         onClick={handleThreadClick}
         className="lb-lexical-threads-panel-thread"
+        showComposer={isActive ? true : false}
       />
     </div>
   );
