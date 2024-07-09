@@ -126,13 +126,3 @@ li::marker {
   text-align: start !important;
   text-align-last: start !important;
 }
-
-.lb-thread-composer:after {
-  content: none;
-}
-
-.lb-thread[data-state="active"],
-.lb-thread[data-state="active"] .lb-comment,
-.lb-thread[data-state="active"] .lb-composer {
-  background: var(--lb-accent-subtle);
-}
