@@ -5,11 +5,7 @@ import {
   type ThreadProps,
 } from "@liveblocks/react-ui";
 import { $getNodeByKey } from "lexical";
-import type {
-  ComponentPropsWithoutRef,
-  ComponentType,
-  HTMLAttributes,
-} from "react";
+import type { ComponentPropsWithoutRef, ComponentType } from "react";
 import React, {
   useCallback,
   useContext,
@@ -35,11 +31,11 @@ const DEFAULT_ACTIVE_THREAD_OFFSET = -12;
 const GAP = `var(--lb-lexical-threads-panel-gap, ${DEFAULT_GAP}px)`;
 const ACTIVE_THREAD_OFFSET = `var(--lb-lexical-threads-panel-active-thread-offset, ${DEFAULT_ACTIVE_THREAD_OFFSET}px)`;
 
-type ThreadsPanelComponents = {
+type AnchoredThreadsComponents = {
   Thread: ComponentType<ThreadProps>;
 };
 
-export interface ThreadsPanelProps<M extends BaseMetadata = DM>
+export interface AnchoredThreadsProps<M extends BaseMetadata = DM>
   extends Omit<ComponentPropsWithoutRef<"div">, "children"> {
   /**
    * The threads to display.
@@ -49,7 +45,7 @@ export interface ThreadsPanelProps<M extends BaseMetadata = DM>
   /**
    * Override the component's components.
    */
-  components?: Partial<ThreadsPanelComponents>;
+  components?: Partial<AnchoredThreadsComponents>;
 }
 
 /**
@@ -59,7 +55,7 @@ export interface ThreadsPanelProps<M extends BaseMetadata = DM>
  * @param b The second node to compare
  * @returns -1 if a comes before b, 1 if a comes after b, and 0 if they are the same node.
  */
-function compareNodes(a: Node, b: Node): number {
+export function compareNodes(a: Node, b: Node): number {
   // Calculate the position of node 'b' relative to node 'a'
   const position = a.compareDocumentPosition(b);
   if (position & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
@@ -67,13 +63,13 @@ function compareNodes(a: Node, b: Node): number {
   return 0;
 }
 
-export function ThreadsPanel({
+export function AnchoredThreads({
   threads,
   components,
   className,
   style,
   ...divProps
-}: ThreadsPanelProps) {
+}: AnchoredThreadsProps) {
   const [editor] = useLexicalComposerContext();
   const Thread = components?.Thread ?? DefaultThread;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -281,9 +277,6 @@ export function ThreadsPanel({
 
 interface ThreadWrapperProps extends ThreadProps {
   Thread: ComponentType<ThreadProps>;
-}
-
-interface ThreadWrapperProps extends HTMLAttributes<HTMLDivElement> {
   onItemAdd: (id: string, el: HTMLElement) => void;
   onItemRemove: (id: string) => void;
 }
@@ -349,7 +342,7 @@ function useThreadToNodes(): ThreadToNodesMap {
   const threadToNodes = useContext(ThreadToNodesContext);
   if (threadToNodes === null) {
     throw new Error(
-      "ThreadsPanel component must be used within a LiveblocksPlugin component."
+      "AnchoredThreads component must be used within a LiveblocksPlugin component."
     );
   }
   return threadToNodes;
@@ -358,7 +351,9 @@ function useThreadToNodes(): ThreadToNodesMap {
 function useActiveThreads() {
   const activeThreads = useContext(ActiveThreadsContext);
   if (activeThreads === null) {
-    throw new Error("ThreadsPanel must be used within LiveblocksPlugin.");
+    throw new Error(
+      "AnchoredThreads component must be used within LiveblocksPlugin."
+    );
   }
 
   return activeThreads;

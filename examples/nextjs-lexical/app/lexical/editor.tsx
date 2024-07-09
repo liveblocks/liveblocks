@@ -8,7 +8,7 @@ import { ListNode, ListItemNode } from "@lexical/list";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import {
   FloatingComposer,
-  ThreadsPanel,
+  AnchoredThreads,
   liveblocksConfig,
   LiveblocksPlugin,
   useEditorStatus,
@@ -79,5 +79,5 @@ export default function Editor() {
 function Threads() {
   const { threads } = useThreads();
 
-  return <ThreadsPanel threads={threads} className="w-[350px]" />;
+  return <AnchoredThreads threads={threads} className="w-[350px]" />;
 }

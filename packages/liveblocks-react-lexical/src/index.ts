@@ -10,8 +10,10 @@ export {
   FloatingComposer,
   OPEN_FLOATING_COMPOSER_COMMAND,
 } from "./comments/floating-composer";
-export type { ThreadsPanelProps } from "./comments/threads-panel";
-export { ThreadsPanel } from "./comments/threads-panel";
+export type { FloatingThreadsProps } from "./comments/floating-threads";
+export { FloatingThreads } from "./comments/floating-threads";
+export type { AnchoredThreadsProps } from "./comments/anchored-threads";
+export { AnchoredThreads } from "./comments/anchored-threads";
 export { liveblocksConfig } from "./liveblocks-config";
 export {
   LiveblocksPlugin,
