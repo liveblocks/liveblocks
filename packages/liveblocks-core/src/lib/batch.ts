@@ -15,7 +15,7 @@ export type BatchCallback<T, A extends unknown[]> = (
 
 export type BatchStore<T, A extends unknown[]> = Observable<void> & {
   get: (...args: A) => Promise<void>;
-  getState: (...args: A) => AsyncResult<T>;
+  getState: (...args: A) => AsyncResult<T> | undefined;
 };
 
 interface Options {
