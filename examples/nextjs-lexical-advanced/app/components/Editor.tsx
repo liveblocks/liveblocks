@@ -23,6 +23,7 @@ import { Loading } from "./Loading";
 import { BaseMetadata, ThreadData } from "@liveblocks/client";
 import { PreserveSelectionPlugin } from "./PreserveSelection";
 import { DocumentName } from "./DocumentName";
+import DraggableBlockPlugin from "../plugins/DraggableBlockPlugin";
 
 // Wrap your initial config with `liveblocksConfig`
 const initialConfig = liveblocksConfig({
@@ -41,17 +42,13 @@ export function Editor() {
     <div className="relative flex flex-col h-full w-full">
       <LexicalComposer initialConfig={initialConfig}>
         {/* Sticky header */}
-        <div className="sticky top-0 left-0  h-[60px] flex items-center justify-between px-4 border-b border-border/80 z-20 bg-background/95">
-          <div className="flex items-center gap-2 h-full">
-            <Toolbar />
-          </div>
-
+        <div className="sticky top-0 left-0  h-[60px] flex items-center justify-end px-4 z-20">
           <NotificationsPopover />
         </div>
 
         <div className="relative flex flex-row justify-between h-[calc(100%-60px)] w-full flex-1">
           {/* Editable */}
-          <div className="relative h-full w-[calc(100%-350px)] overflow-auto">
+          <div className="relative h-full w-full overflow-auto">
             {status === "not-loaded" || status === "loading" ? (
               <Loading />
             ) : (
@@ -81,11 +78,6 @@ export function Editor() {
 
           <LiveblocksPlugin>
             <FloatingComposer className="w-[350px]" />
-
-            {/* Threads List */}
-            <Suspense fallback={<Loading />}>
-              <Threads />
-            </Suspense>
           </LiveblocksPlugin>
         </div>
         <PreserveSelectionPlugin />
