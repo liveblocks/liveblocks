@@ -26,7 +26,7 @@ describe("Batch", () => {
     await expect(b).resolves.toEqual("b");
 
     // Callback should be called only once for both "a" and "b".
-    expect(callback).toHaveBeenCalledWith([["a"], ["b"]]);
+    expect(callback).toHaveBeenCalledWith(["a", "b"]);
   });
 
   test("should batch asynchronous calls", async () => {
@@ -40,7 +40,7 @@ describe("Batch", () => {
     await expect(b).resolves.toEqual("b");
 
     // Callback should be called only once for both "a" and "b".
-    expect(callback).toHaveBeenCalledWith([["a"], ["b"]]);
+    expect(callback).toHaveBeenCalledWith(["a", "b"]);
   });
 
   test("should batch based on delay", async () => {
@@ -56,8 +56,8 @@ describe("Batch", () => {
 
     // Callback should be called twice, once for "a" and once for "b".
     expect(callback).toHaveBeenCalledTimes(2);
-    expect(callback).toHaveBeenNthCalledWith(1, [["a"]]);
-    expect(callback).toHaveBeenNthCalledWith(2, [["b"]]);
+    expect(callback).toHaveBeenNthCalledWith(1, ["a"]);
+    expect(callback).toHaveBeenNthCalledWith(2, ["b"]);
   });
 
   test("should batch based on size", async () => {
@@ -75,8 +75,8 @@ describe("Batch", () => {
 
     // Callback should be called twice, once for "a" and once for "b".
     expect(callback).toHaveBeenCalledTimes(2);
-    expect(callback).toHaveBeenNthCalledWith(1, [["a"]]);
-    expect(callback).toHaveBeenNthCalledWith(2, [["b"]]);
+    expect(callback).toHaveBeenNthCalledWith(1, ["a"]);
+    expect(callback).toHaveBeenNthCalledWith(2, ["b"]);
   });
 
   test("should reject batch errors", async () => {
@@ -155,7 +155,7 @@ describe("Batch", () => {
 
     // Callback should be called only once for ["a", "b"].
     expect(callback).toHaveBeenCalledTimes(1);
-    expect(callback).toHaveBeenCalledWith([["a"], ["b"]]);
+    expect(callback).toHaveBeenCalledWith(["a", "b"]);
   });
 
   test("should not deduplicate identical calls if they're not in the same batch", async () => {
@@ -173,7 +173,7 @@ describe("Batch", () => {
 
     // Callback should be called twice, once for ["a", "b"] and once for ["a"] again.
     expect(callback).toHaveBeenCalledTimes(2);
-    expect(callback).toHaveBeenNthCalledWith(1, [["a"], ["b"]]);
-    expect(callback).toHaveBeenNthCalledWith(2, [["a"]]);
+    expect(callback).toHaveBeenNthCalledWith(1, ["a", "b"]);
+    expect(callback).toHaveBeenNthCalledWith(2, ["a"]);
   });
 });
