@@ -7,6 +7,10 @@
   `kinds` on `InboxNotification`.
 - Fix broken CSS selector in default styles.
 
+### `@liveblocks/react-lexical`
+
+- Add a new `AnchoredThreads` component.
+
 ## v2.2.1
 
 ### `@liveblocks/yjs`

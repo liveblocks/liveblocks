@@ -64,7 +64,7 @@ export const OPEN_FLOATING_COMPOSER_COMMAND: LexicalCommand<void> =
 
 type ComposerElement = ComponentRef<typeof Composer>;
 
-type FloatingComposerProps<M extends BaseMetadata = DM> = Omit<
+export type FloatingComposerProps<M extends BaseMetadata = DM> = Omit<
   ComposerProps<M>,
   "threadId" | "commentId"
 >;
