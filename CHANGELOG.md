@@ -2,6 +2,9 @@
 
 ### `@liveblocks/react-ui`
 
+- Fix missing avatar in `textMention` inbox notifications.
+- Fix `textMention` usage (and its props type) when customizing rendering via
+  `kinds` on `InboxNotification`.
 - Fix broken CSS selector in default styles.
 
 ## v2.2.1

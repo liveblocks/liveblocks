@@ -67,7 +67,7 @@ type InboxNotificationKinds<KS extends KDAD = KDAD> = {
   [K in KS]: ComponentTypeWithRef<"a", InboxNotificationCustomKindProps<K>>;
 } & {
   thread: ComponentTypeWithRef<"a", InboxNotificationThreadKindProps>;
-  textMention: ComponentTypeWithRef<"a", InboxNotificationTextMentionProps>;
+  textMention: ComponentTypeWithRef<"a", InboxNotificationTextMentionKindProps>;
 };
 
 interface InboxNotificationSharedProps {
@@ -553,7 +553,7 @@ const InboxNotificationTextMention = forwardRef<
     return (
       <InboxNotificationLayout
         inboxNotification={inboxNotification}
-        aside={<InboxNotificationIcon />}
+        aside={<InboxNotificationAvatar userId={inboxNotification.createdBy} />}
         title={$.INBOX_NOTIFICATION_TEXT_MENTION(
           <User
             key={inboxNotification.createdBy}
@@ -681,8 +681,11 @@ export const InboxNotification = Object.assign(
         }
 
         case "textMention": {
+          const ResolvedInboxNotificationTextMention =
+            kinds?.textMention ?? InboxNotificationTextMention;
+
           return (
-            <InboxNotificationTextMention
+            <ResolvedInboxNotificationTextMention
               inboxNotification={inboxNotification}
               {...props}
               ref={forwardedRef}
