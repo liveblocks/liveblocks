@@ -3021,8 +3021,8 @@ export function createRoom<
     });
   }
 
-  const batchedMarkInboxNotificationsAsRead = new Batch(
-    async (batchedInboxNotificationIds: [string][]) => {
+  const batchedMarkInboxNotificationsAsRead = new Batch<string, string>(
+    async (batchedInboxNotificationIds) => {
       const inboxNotificationIds = batchedInboxNotificationIds.flat();
 
       await markInboxNotificationsAsRead(inboxNotificationIds);

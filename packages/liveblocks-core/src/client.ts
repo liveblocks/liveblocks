@@ -143,8 +143,8 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
   readonly currentUserIdStore: Store<string | null>;
   readonly resolveMentionSuggestions: ClientOptions<U>["resolveMentionSuggestions"];
   readonly cacheStore: CacheStore<BaseMetadata>;
-  readonly usersStore: BatchStore<U["info"] | undefined, [string]>;
-  readonly roomsInfoStore: BatchStore<DRI | undefined, [string]>;
+  readonly usersStore: BatchStore<U["info"] | undefined, string>;
+  readonly roomsInfoStore: BatchStore<DRI | undefined, string>;
   readonly getRoomIds: () => string[];
 };
 
@@ -531,7 +531,7 @@ export function createClient<U extends BaseUserMeta = DU>(
   );
 
   const usersStore = createBatchStore(
-    async (batchedUserIds: [userId: string][]) => {
+    async (batchedUserIds: string[]) => {
       const userIds = batchedUserIds.flat();
       const users = await resolveUsers?.({ userIds });
 
@@ -549,7 +549,7 @@ export function createClient<U extends BaseUserMeta = DU>(
   );
 
   const roomsInfoStore = createBatchStore(
-    async (batchedRoomIds: [roomId: string][]) => {
+    async (batchedRoomIds: string[]) => {
       const roomIds = batchedRoomIds.flat();
       const roomsInfo = await resolveRoomsInfo?.({ roomIds });
 
