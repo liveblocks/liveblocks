@@ -30,6 +30,10 @@ import { ThreadToNodesContext } from "./comment-plugin-provider";
 import { $isThreadMarkNode } from "./thread-mark-node";
 
 const DEFAULT_GAP = 20;
+const DEFAULT_ACTIVE_THREAD_OFFSET = -12;
+
+const GAP = `var(--lb-lexical-threads-panel-gap, ${DEFAULT_GAP}px)`;
+const ACTIVE_THREAD_OFFSET = `var(--lb-lexical-threads-panel-active-thread-offset, ${DEFAULT_ACTIVE_THREAD_OFFSET}px)`;
 
 type ThreadsPanelComponents = {
   Thread: ComponentType<ThreadProps>;
@@ -41,13 +45,6 @@ export interface ThreadsPanelProps<M extends BaseMetadata = DM>
    * The threads to display.
    */
   threads: ThreadData<M>[];
-
-  /**
-   * The gap between threads.
-   *
-   * @default 20
-   */
-  gap?: number;
 
   /**
    * Override the component's components.
@@ -72,7 +69,6 @@ function compareNodes(a: Node, b: Node): number {
 
 export function ThreadsPanel({
   threads,
-  gap = DEFAULT_GAP,
   components,
   className,
   style,
@@ -271,10 +267,10 @@ export function ThreadsPanel({
             onItemRemove={onItemRemove}
             style={{
               position: "absolute",
-              transform: `translateX(${isActive ? -12 : 0}px) translateY(${top}px)`,
+              transform: `translate3d(${isActive ? ACTIVE_THREAD_OFFSET : 0}, ${top}px, 0)`,
               left: 0,
               width: "100%",
-              paddingBottom: gap,
+              paddingBottom: GAP,
             }}
           />
         );
