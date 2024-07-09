@@ -46,7 +46,6 @@ import type {
   SharedContextBundle,
   UnreadInboxNotificationsCountState,
   UserState,
-  UserStateSuccess,
 } from "./types";
 
 /**
@@ -630,12 +629,14 @@ function useUserSuspense_withClient<U extends BaseUserMeta>(
     getUserState,
     getUserState
   );
-
+  assert(state !== undefined, "Unexpected missing state");
+  assert(!state.isLoading, "Unexpected loading state");
+  assert(!state.error, "Unexpected error state");
   return {
     isLoading: false,
-    user: state?.data,
-    error: state?.error,
-  } as UserStateSuccess<U["info"]>;
+    user: state.data,
+    error: undefined,
+  } as const;
 }
 
 function useRoomInfo_withClient(
@@ -699,12 +700,15 @@ function useRoomInfoSuspense_withClient(client: OpaqueClient, roomId: string) {
     getRoomInfoState,
     getRoomInfoState
   );
-
+  assert(state !== undefined, "Unexpected missing state");
+  assert(!state.isLoading, "Unexpected loading state");
+  assert(!state.error, "Unexpected error state");
+  assert(state.data !== undefined, "Unexpected missing room info data");
   return {
     isLoading: false,
-    info: state?.data,
-    error: state?.error,
-  } as RoomInfoStateSuccess;
+    info: state.data,
+    error: undefined,
+  } as const;
 }
 
 /** @internal */
@@ -927,7 +931,7 @@ function useUserSuspense<U extends BaseUserMeta>(userId: string) {
  * @example
  * const { info, error, isLoading } = useRoomInfo("room-id");
  */
-function useRoomInfo(roomId: string) {
+function useRoomInfo(roomId: string): RoomInfoState {
   return useRoomInfo_withClient(useClient(), roomId);
 }
 
@@ -937,7 +941,7 @@ function useRoomInfo(roomId: string) {
  * @example
  * const { info } = useRoomInfo("room-id");
  */
-function useRoomInfoSuspense(roomId: string) {
+function useRoomInfoSuspense(roomId: string): RoomInfoStateSuccess {
   return useRoomInfoSuspense_withClient(useClient(), roomId);
 }
 
