@@ -35,6 +35,7 @@ import type { DE, DM, DP, DS, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
 import { Promise_withResolvers } from "./lib/controlledPromise";
+import { createCommentId, createThreadId } from "./lib/createIds";
 import { captureStackTrace } from "./lib/debug";
 import type { Callback, Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
@@ -485,8 +486,8 @@ type CommentsApi<M extends BaseMetadata> = {
     | undefined
   >;
   createThread(options: {
-    threadId: string;
-    commentId: string;
+    threadId?: string;
+    commentId?: string;
     metadata: M | undefined;
     body: CommentBody;
   }): Promise<ThreadData<M>>;
@@ -499,7 +500,7 @@ type CommentsApi<M extends BaseMetadata> = {
   markThreadAsUnresolved(options: { threadId: string }): Promise<void>;
   createComment(options: {
     threadId: string;
-    commentId: string;
+    commentId?: string;
     body: CommentBody;
   }): Promise<CommentData>;
   editComment(options: {
@@ -1205,12 +1206,12 @@ function createCommentsApi<M extends BaseMetadata>(
   async function createThread({
     metadata,
     body,
-    commentId,
-    threadId,
+    commentId = createCommentId(),
+    threadId = createThreadId(),
   }: {
     roomId: string;
-    threadId: string;
-    commentId: string;
+    threadId?: string;
+    commentId?: string;
     metadata: M | undefined;
     body: CommentBody;
   }) {
@@ -1278,11 +1279,11 @@ function createCommentsApi<M extends BaseMetadata>(
 
   async function createComment({
     threadId,
-    commentId,
+    commentId = createCommentId(),
     body,
   }: {
     threadId: string;
-    commentId: string;
+    commentId?: string;
     body: CommentBody;
   }) {
     const comment = await fetchJson<CommentDataPlain>(
