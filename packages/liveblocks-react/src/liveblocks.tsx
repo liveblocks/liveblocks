@@ -41,11 +41,12 @@ import { use } from "./lib/use-polyfill";
 import type {
   InboxNotificationsState,
   LiveblocksContextBundle,
-  RoomInfoState,
-  RoomInfoStateSuccess,
+  RoomInfoAsyncResult,
+  RoomInfoAsyncSuccess,
   SharedContextBundle,
   UnreadInboxNotificationsCountState,
-  UserState,
+  UserAsyncResult,
+  UserAsyncSuccess,
 } from "./types";
 
 /**
@@ -568,7 +569,7 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
 function useUser_withClient<U extends BaseUserMeta>(
   client: Client<U>,
   userId: string
-): UserState<U["info"]> {
+): UserAsyncResult<U["info"]> {
   const usersStore = client[kInternal].usersStore;
 
   const getUserState = useCallback(
@@ -595,7 +596,7 @@ function useUser_withClient<U extends BaseUserMeta>(
           !state.isLoading && !state.data && !state.error
             ? missingUserError(userId)
             : state.error,
-      } as UserState<U["info"]>)
+      } as UserAsyncResult<U["info"]>)
     : { isLoading: true };
 }
 
@@ -642,7 +643,7 @@ function useUserSuspense_withClient<U extends BaseUserMeta>(
 function useRoomInfo_withClient(
   client: OpaqueClient,
   roomId: string
-): RoomInfoState {
+): RoomInfoAsyncResult {
   const roomsInfoStore = client[kInternal].roomsInfoStore;
 
   const getRoomInfoState = useCallback(
@@ -669,7 +670,7 @@ function useRoomInfo_withClient(
           !state.isLoading && !state.data && !state.error
             ? missingRoomInfoError(roomId)
             : state.error,
-      } as RoomInfoState)
+      } as RoomInfoAsyncResult)
     : { isLoading: true };
 }
 
@@ -920,7 +921,9 @@ function useUser<U extends BaseUserMeta>(userId: string) {
   return useUser_withClient(client, userId);
 }
 
-function useUserSuspense<U extends BaseUserMeta>(userId: string) {
+function useUserSuspense<U extends BaseUserMeta>(
+  userId: string
+): UserAsyncSuccess<U["info"]> {
   const client = useClient<U>();
   return useUserSuspense_withClient(client, userId);
 }
@@ -931,7 +934,7 @@ function useUserSuspense<U extends BaseUserMeta>(userId: string) {
  * @example
  * const { info, error, isLoading } = useRoomInfo("room-id");
  */
-function useRoomInfo(roomId: string): RoomInfoState {
+function useRoomInfo(roomId: string): RoomInfoAsyncResult {
   return useRoomInfo_withClient(useClient(), roomId);
 }
 
@@ -941,7 +944,7 @@ function useRoomInfo(roomId: string): RoomInfoState {
  * @example
  * const { info } = useRoomInfo("room-id");
  */
-function useRoomInfoSuspense(roomId: string): RoomInfoStateSuccess {
+function useRoomInfoSuspense(roomId: string): RoomInfoAsyncSuccess {
   return useRoomInfoSuspense_withClient(useClient(), roomId);
 }
 

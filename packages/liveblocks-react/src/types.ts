@@ -80,14 +80,17 @@ import type { PropsWithChildren } from "react";
 
 import type { CommentsError } from "./comments/errors";
 
-export type UserState<T> = AsyncResultWithDataField<T, "user">;
-export type UserStateSuccess<T> = Resolve<
-  UserState<T> & { readonly isLoading: false; readonly error?: undefined }
+export type UserAsyncResult<T> = AsyncResultWithDataField<T, "user">;
+export type UserAsyncSuccess<T> = Resolve<
+  UserAsyncResult<T> & { readonly isLoading: false; readonly error?: undefined }
 >;
 
-export type RoomInfoState = AsyncResultWithDataField<DRI, "info">;
-export type RoomInfoStateSuccess = Resolve<
-  RoomInfoState & { readonly isLoading: false; readonly error?: undefined }
+export type RoomInfoAsyncResult = AsyncResultWithDataField<DRI, "info">;
+export type RoomInfoAsyncSuccess = Resolve<
+  RoomInfoAsyncResult & {
+    readonly isLoading: false;
+    readonly error?: undefined;
+  }
 >;
 
 // prettier-ignore
@@ -331,7 +334,7 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * @example
      * const { user, error, isLoading } = useUser("user-id");
      */
-    useUser(userId: string): UserState<U["info"]>;
+    useUser(userId: string): UserAsyncResult<U["info"]>;
 
     /**
      * Returns room info from a given room ID.
@@ -339,7 +342,7 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * @example
      * const { info, error, isLoading } = useRoomInfo("room-id");
      */
-    useRoomInfo(roomId: string): RoomInfoState;
+    useRoomInfo(roomId: string): RoomInfoAsyncResult;
   };
 
   suspense: {
@@ -354,7 +357,7 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * @example
      * const { user } = useUser("user-id");
      */
-    useUser(userId: string): UserStateSuccess<U["info"]>;
+    useUser(userId: string): UserAsyncSuccess<U["info"]>;
 
     /**
      * Returns room info from a given room ID.
@@ -362,7 +365,7 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * @example
      * const { info } = useRoomInfo("room-id");
      */
-    useRoomInfo(roomId: string): RoomInfoStateSuccess;
+    useRoomInfo(roomId: string): RoomInfoAsyncSuccess;
   };
 };
 
