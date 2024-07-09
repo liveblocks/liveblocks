@@ -1120,6 +1120,11 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
    * so we recommend only using it when customizing the rendering or in other
    * situations where you can guarantee the kind of the notification.
    *
+   * When `useInboxNotifications` returns `"thread"` inbox notifications,
+   * it also receives the associated threads and caches them behind the scenes.
+   * When you call `useInboxNotificationThread`, it simply returns the cached thread
+   * for the inbox notification ID you passed to it, without any fetching or waterfalls.
+   *
    * @example
    * const thread = useInboxNotificationThread("in_xxx");
    */

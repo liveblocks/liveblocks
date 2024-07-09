@@ -2492,6 +2492,15 @@ import { useInboxNotificationThread } from "@liveblocks/react/suspense";
 const thread = useInboxNotificationThread("in_xxx");
 ```
 
+<Banner type="info" title="No fetching and waterfalls">
+
+When `useInboxNotifications` returns `"thread"` inbox notifications, it also
+receives the associated threads and caches them behind the scenes. When you call
+`useInboxNotificationThread`, it simply returns the cached thread for the inbox
+notification ID you passed to it, without any fetching or waterfalls.
+
+</Banner>
+
 ### useRoomNotificationSettings [@badge=RoomProvider]
 
 Returns the user’s notification settings for the current room and a function to
