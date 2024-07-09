@@ -413,7 +413,7 @@ function ThreadWrapper({
         thread={thread}
         data-state={isActive ? "active" : "inactive"}
         onClick={handleThreadClick}
-        className={"lb-lexical-threads-panel-thread lb-elevation"}
+        className="lb-lexical-threads-panel-thread"
       />
     </div>
   );
