@@ -325,7 +325,8 @@ const ComposerWithContext = forwardRef<
     }, []);
 
     const handleEditorClick = useCallback(
-      (_event: MouseEvent<HTMLDivElement>) => {
+      (event: MouseEvent<HTMLDivElement>) => {
+        event.preventDefault();
         if (isEmpty) {
           onCollapsedChange?.(false);
         }
