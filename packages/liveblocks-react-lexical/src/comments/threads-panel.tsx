@@ -68,6 +68,21 @@ export interface ThreadsPanelProps<M extends BaseMetadata = DM>
   components?: Partial<ThreadsPanelComponents>;
 }
 
+/**
+ * Compares two nodes based on their position in the DOM.
+ * Returns -1 if a comes before b, 1 if a comes after b, and 0 if they are the same node.
+ * @param a The first node to compare
+ * @param b The second node to compare
+ * @returns -1 if a comes before b, 1 if a comes after b, and 0 if they are the same node.
+ */
+function compareNodes(a: Node, b: Node): number {
+  // Calculate the position of node 'b' relative to node 'a'
+  const position = a.compareDocumentPosition(b);
+  if (position & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
+  if (position & Node.DOCUMENT_POSITION_PRECEDING) return 1;
+  return 0;
+}
+
 export function ThreadsPanel({
   threads,
   gap = DEFAULT_GAP,
@@ -84,51 +99,34 @@ export function ThreadsPanel({
 
   const nodes = useThreadToNodes(); // A map of thread ids to a set of thread mark nodes associated with the thread
 
-  // Sort threads by the position of the first element associated with the thread in the document (top to bottom, left to right)
-  const orderedThreads = useMemo(() => {
-    return (
-      threads
-        // Map each thread to an object containing the thread and the rect of the first element associated with the thread
-        .map((thread) => {
-          // Retrieve all keys of nodes associated with the thread
-          const keys = nodes.get(thread.id);
-          if (keys === undefined || keys.size === 0) return null;
+  const getOrderedThreads = useCallback(() => {
+    return threads
+      .map((thread) => {
+        const keys = nodes.get(thread.id);
+        if (keys === undefined || keys.size === 0) return null;
 
-          // Retrieve all elements associated with the keys and sort them by their position in the document (top to bottom, left to right)
-          const rects = Array.from(keys.values())
-            .map((key) => {
-              const element = editor.getElementByKey(key);
-              if (element === null) return null;
-              return element.getBoundingClientRect();
-            })
-            .filter((rect): rect is DOMRect => rect !== null)
-            .sort((a, b) => {
-              if (a.top < b.top) return -1;
-              if (a.top > b.top) return 1;
+        const elements = Array.from(keys.values())
+          .map((key) => editor.getElementByKey(key))
+          .filter(Boolean) as HTMLElement[];
+        if (elements.length === 0) return null;
 
-              return a.left - b.left;
-            });
-
-          if (rects.length === 0) return null;
-
-          return {
-            thread,
-            rect: rects[0],
-          };
-        })
-        .filter(
-          (entry): entry is { thread: ThreadData; rect: DOMRect } =>
-            entry !== null
-        )
-        // Sort threads by the position of the (first) thread mark node in the document
-        .sort((a, b) => {
-          if (a.rect.top < b.rect.top) return -1;
-          if (a.rect.top > b.rect.top) return 1;
-
-          return a.rect.left - b.rect.left;
-        })
-    );
+        const element = elements.sort(compareNodes)[0];
+        return {
+          thread,
+          element,
+        };
+      })
+      .filter(
+        (entry): entry is { thread: ThreadData; element: HTMLElement } =>
+          entry !== null
+      )
+      .sort((a, b) => {
+        return compareNodes(a.element, b.element);
+      });
   }, [editor, threads, nodes]);
+
+  // Sort threads by the position of the first element associated with the thread in the document (top to bottom, left to right)
+  const orderedThreads = useMemo(getOrderedThreads, [getOrderedThreads]);
 
   const [elements, setElements] = useState<Map<string, HTMLElement>>(new Map());
 
@@ -150,46 +148,7 @@ export function ThreadsPanel({
     const container = containerRef.current;
     if (container === null) return;
 
-    const orderedThreads = threads
-      // Map each thread to an object containing the thread and the rect of the first element associated with the thread
-      .map((thread) => {
-        // Retrieve all keys of nodes associated with the thread
-        const keys = nodes.get(thread.id);
-        if (keys === undefined || keys.size === 0) return null;
-
-        // Retrieve all elements associated with the keys and sort them by their position in the document (top to bottom, left to right)
-        const rects = Array.from(keys.values())
-          .map((key) => {
-            const element = editor.getElementByKey(key);
-            if (element === null) return null;
-            return element.getBoundingClientRect();
-          })
-          .filter((rect): rect is DOMRect => rect !== null)
-          .sort((a, b) => {
-            if (a.top < b.top) return -1;
-            if (a.top > b.top) return 1;
-
-            return a.left - b.left;
-          });
-
-        if (rects.length === 0) return null;
-
-        return {
-          thread,
-          rect: rects[0],
-        };
-      })
-      .filter(
-        (entry): entry is { thread: ThreadData; rect: DOMRect } =>
-          entry !== null
-      )
-      // Sort threads by the position of the (first) thread mark node in the document
-      .sort((a, b) => {
-        if (a.rect.top < b.rect.top) return -1;
-        if (a.rect.top > b.rect.top) return 1;
-
-        return a.rect.left - b.rect.left;
-      });
+    const orderedThreads = getOrderedThreads();
 
     // Returns an array of threads that should be positioned in ascending order - this includes threads that are active and threads that should come after the active threads
     function getAscendingThreads() {
@@ -202,15 +161,12 @@ export function ThreadsPanel({
       );
 
       // Filter threads that should come after the active threads
-      const after = orderedThreads.filter(({ thread, rect }) => {
+      const after = orderedThreads.filter(({ thread, element }) => {
         if (activeThreads.includes(thread.id)) return false;
 
         // Check if the current thread comes after any of the active threads
-        const isAfter = active.some(({ rect: activeRect }) => {
-          if (rect.top < activeRect.top) return false;
-          if (rect.top > activeRect.top) return true;
-
-          return rect.left > activeRect.left;
+        const isAfter = active.some(({ element: activeElement }) => {
+          return compareNodes(activeElement, element) === -1;
         });
 
         return isAfter;
@@ -229,7 +185,8 @@ export function ThreadsPanel({
     const newPositions = new Map<string, number>();
 
     // Iterate over each thread and calculate its new position by taking into account the position of the previously positioned threads
-    for (const { thread, rect } of ascending) {
+    for (const { thread, element } of ascending) {
+      const rect = element.getBoundingClientRect();
       let top = rect.top - container.getBoundingClientRect().top;
 
       for (const [id, position] of newPositions) {
@@ -248,7 +205,8 @@ export function ThreadsPanel({
       newPositions.set(thread.id, top);
     }
 
-    for (const { thread, rect } of descending.reverse()) {
+    for (const { thread, element } of descending.reverse()) {
+      const rect = element.getBoundingClientRect();
       // Retrieve the element associated with the current thread
       const el = elements.get(thread.id);
       if (el === undefined) continue;
@@ -264,7 +222,7 @@ export function ThreadsPanel({
     }
 
     setPositions(newPositions);
-  }, [editor, threads, nodes, activeThreads, elements]);
+  }, [getOrderedThreads, activeThreads, elements]);
 
   useLayoutEffect(() => {
     handlePositionThreads();
@@ -307,7 +265,8 @@ export function ThreadsPanel({
         ...style,
       }}
     >
-      {orderedThreads.map(({ thread, rect }) => {
+      {orderedThreads.map(({ thread, element }) => {
+        const rect = element.getBoundingClientRect();
         let top = rect.top;
 
         if (positions.has(thread.id)) {
