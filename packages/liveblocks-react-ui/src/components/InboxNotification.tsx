@@ -67,7 +67,7 @@ type InboxNotificationKinds<KS extends KDAD = KDAD> = {
   [K in KS]: ComponentTypeWithRef<"a", InboxNotificationCustomKindProps<K>>;
 } & {
   thread: ComponentTypeWithRef<"a", InboxNotificationThreadKindProps>;
-  textMention: ComponentTypeWithRef<"a", InboxNotificationTextMentionProps>;
+  textMention: ComponentTypeWithRef<"a", InboxNotificationTextMentionKindProps>;
 };
 
 interface InboxNotificationSharedProps {
