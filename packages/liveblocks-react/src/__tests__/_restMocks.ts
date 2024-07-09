@@ -19,7 +19,7 @@ export function mockGetThreads(
   >
 ) {
   return rest.get(
-    "https://api.liveblocks.io/v2/c/rooms/room-id/threads",
+    "https://api.liveblocks.io/v2/c/rooms/:roomId/threads",
     resolver
   );
 }
@@ -36,7 +36,7 @@ export function mockGetThread(
   >
 ) {
   return rest.get(
-    `https://api.liveblocks.io/v2/c/rooms/room-id/thread-with-notification/${params.threadId}`,
+    `https://api.liveblocks.io/v2/c/rooms/:roomId/thread-with-notification/${params.threadId}`,
     resolver
   );
 }
@@ -49,7 +49,7 @@ export function mockCreateThread(
   >
 ) {
   return rest.post(
-    "https://api.liveblocks.io/v2/c/rooms/room-id/threads",
+    "https://api.liveblocks.io/v2/c/rooms/:roomId/threads",
     resolver
   );
 }
@@ -59,7 +59,7 @@ export function mockDeleteThread(
   resolver: ResponseResolver<RestRequest<never, never>, RestContext, any>
 ) {
   return rest.delete(
-    `https://api.liveblocks.io/v2/c/rooms/room-id/threads/${params.threadId}`,
+    `https://api.liveblocks.io/v2/c/rooms/:roomId/threads/${params.threadId}`,
     resolver
   );
 }
@@ -73,7 +73,7 @@ export function mockCreateComment(
   >
 ) {
   return rest.post(
-    `https://api.liveblocks.io/v2/c/rooms/room-id/threads/${params.threadId}/comments`,
+    `https://api.liveblocks.io/v2/c/rooms/:roomId/threads/${params.threadId}/comments`,
     resolver
   );
 }
@@ -83,7 +83,27 @@ export function mockEditThreadMetadata<M extends BaseMetadata>(
   resolver: ResponseResolver<RestRequest<never, never>, RestContext, M>
 ) {
   return rest.post(
-    `https://api.liveblocks.io/v2/c/rooms/room-id/threads/${params.threadId}/metadata`,
+    `https://api.liveblocks.io/v2/c/rooms/:roomId/threads/${params.threadId}/metadata`,
+    resolver
+  );
+}
+
+export function mockMarkThreadAsResolved(
+  params: { threadId: string },
+  resolver: ResponseResolver<RestRequest<never, never>, RestContext>
+) {
+  return rest.post(
+    `https://api.liveblocks.io/v2/c/rooms/:roomId/threads/${params.threadId}/mark-as-resolved`,
+    resolver
+  );
+}
+
+export function mockMarkThreadAsUnresolved(
+  params: { threadId: string },
+  resolver: ResponseResolver<RestRequest<never, never>, RestContext>
+) {
+  return rest.post(
+    `https://api.liveblocks.io/v2/c/rooms/:roomId/threads/${params.threadId}/mark-as-unresolved`,
     resolver
   );
 }
@@ -92,7 +112,7 @@ export function mockMarkInboxNotificationsAsRead(
   resolver: ResponseResolver<RestRequest<never, never>, RestContext, any>
 ) {
   return rest.post(
-    "https://api.liveblocks.io/v2/c/rooms/room-id/inbox-notifications/read",
+    "https://api.liveblocks.io/v2/c/rooms/:roomId/inbox-notifications/read",
     resolver
   );
 }
@@ -121,7 +141,7 @@ export function mockGetRoomNotificationSettings(
   >
 ) {
   return rest.get(
-    "https://api.liveblocks.io/v2/c/rooms/room-id/notification-settings",
+    "https://api.liveblocks.io/v2/c/rooms/:roomId/notification-settings",
     resolver
   );
 }
@@ -134,7 +154,7 @@ export function mockUpdateRoomNotificationSettings(
   >
 ) {
   return rest.post(
-    "https://api.liveblocks.io/v2/c/rooms/room-id/notification-settings",
+    "https://api.liveblocks.io/v2/c/rooms/:roomId/notification-settings",
     resolver
   );
 }

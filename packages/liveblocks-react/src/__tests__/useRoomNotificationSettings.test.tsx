@@ -10,6 +10,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { setupServer } from "msw/node";
+import { nanoid } from "nanoid";
 import React, { Suspense } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 
@@ -53,6 +54,8 @@ function createRoomContextForTest<M extends BaseMetadata>() {
 
 describe("useRoomNotificationSettings", () => {
   test("should be referentially stable", async () => {
+    const roomId = nanoid();
+
     server.use(
       mockGetRoomNotificationSettings(async (_req, res, ctx) => {
         return res(
@@ -71,7 +74,7 @@ describe("useRoomNotificationSettings", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -97,6 +100,8 @@ describe("useRoomNotificationSettings", () => {
   });
 
   test("should update room notification settings optimistically and revert the updates if error response from server", async () => {
+    const roomId = nanoid();
+
     server.use(
       mockGetRoomNotificationSettings(async (_req, res, ctx) => {
         return res(
@@ -118,7 +123,7 @@ describe("useRoomNotificationSettings", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -173,6 +178,8 @@ describe("useRoomNotificationSettings: error", () => {
   });
 
   test("should include an error object in the returned value if initial fetch throws an error", async () => {
+    const roomId = nanoid();
+
     server.use(
       mockGetRoomNotificationSettings((_req, res, ctx) => {
         // Mock an error response from the server for the initial fetch
@@ -188,7 +195,7 @@ describe("useRoomNotificationSettings: error", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -206,6 +213,7 @@ describe("useRoomNotificationSettings: error", () => {
   });
 
   test("should retry with exponential backoff on error", async () => {
+    const roomId = nanoid();
     let getRoomNotificationSettingsReqCount = 0;
 
     server.use(
@@ -224,7 +232,7 @@ describe("useRoomNotificationSettings: error", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -262,6 +270,7 @@ describe("useRoomNotificationSettings: error", () => {
   });
 
   test("should retry with exponential backoff with a maximum retry limit", async () => {
+    const roomId = nanoid();
     let getRoomNotificationSettingsReqCount = 0;
 
     server.use(
@@ -280,7 +289,7 @@ describe("useRoomNotificationSettings: error", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -316,6 +325,7 @@ describe("useRoomNotificationSettings: error", () => {
   });
 
   test("should clear error state after a successful error retry", async () => {
+    const roomId = nanoid();
     let getRoomNotificationSettingsReqCount = 0;
 
     server.use(
@@ -343,7 +353,7 @@ describe("useRoomNotificationSettings: error", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -380,6 +390,8 @@ describe("useRoomNotificationSettings: error", () => {
 
 describe("useRoomNotificationSettings suspense", () => {
   test("should be referentially stable", async () => {
+    const roomId = nanoid();
+
     server.use(
       mockGetRoomNotificationSettings(async (_req, res, ctx) => {
         return res(
@@ -400,7 +412,7 @@ describe("useRoomNotificationSettings suspense", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
+          <RoomProvider id={roomId}>
             <Suspense>{children}</Suspense>
           </RoomProvider>
         ),
@@ -427,6 +439,8 @@ describe("useRoomNotificationSettings suspense", () => {
 });
 
 describe("useRoomNotificationSettingsSuspense: error", () => {
+  const roomId = nanoid();
+
   beforeEach(() => {
     jest.useFakeTimers();
   });
@@ -463,7 +477,7 @@ describe("useRoomNotificationSettingsSuspense: error", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
+          <RoomProvider id={roomId}>
             <ErrorBoundary FallbackComponent={Fallback}>
               <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
             </ErrorBoundary>
@@ -526,7 +540,7 @@ describe("useRoomNotificationSettingsSuspense: error", () => {
       () => useRoomNotificationSettings(),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
+          <RoomProvider id={roomId}>
             <ErrorBoundary FallbackComponent={Fallback}>
               <Suspense fallback={<div>Loading</div>}>{children}</Suspense>
             </ErrorBoundary>

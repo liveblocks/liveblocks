@@ -9,6 +9,7 @@ import type {
 } from "@liveblocks/core";
 import { createClient } from "@liveblocks/core";
 import { renderHook, screen, waitFor } from "@testing-library/react";
+import { nanoid } from "nanoid";
 import React, { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
@@ -45,6 +46,8 @@ describe("useUser", () => {
   });
 
   test("should return an error if resolveUsers is not set", async () => {
+    const roomId = nanoid();
+
     const { RoomProvider, useUser } = createRoomContextForTest({
       resolveUsers: undefined,
     });
@@ -55,7 +58,7 @@ describe("useUser", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -73,6 +76,8 @@ describe("useUser", () => {
   });
 
   test("should return the results from resolveUsers", async () => {
+    const roomId = nanoid();
+
     const { RoomProvider, useUser } = createRoomContextForTest();
 
     const { result, unmount } = renderHook(
@@ -81,7 +86,7 @@ describe("useUser", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -99,6 +104,8 @@ describe("useUser", () => {
   });
 
   test("should support changing user ID", async () => {
+    const roomId = nanoid();
+
     const { RoomProvider, useUser } = createRoomContextForTest();
 
     const { result, rerender, unmount } = renderHook(
@@ -107,7 +114,7 @@ describe("useUser", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
         initialProps: { userId: "abc" },
       }
@@ -137,6 +144,8 @@ describe("useUser", () => {
   });
 
   test("should cache results based on user ID", async () => {
+    const roomId = nanoid();
+
     const resolveUsers = jest.fn(({ userIds }: ResolveUsersArgs) =>
       userIds.map((userId) => ({ name: userId }))
     );
@@ -150,7 +159,7 @@ describe("useUser", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
         initialProps: { userId: "abc" },
       }
@@ -179,6 +188,8 @@ describe("useUser", () => {
   });
 
   test("should batch (and deduplicate) requests for the same user ID", async () => {
+    const roomId = nanoid();
+
     const resolveUsers = jest.fn(({ userIds }: ResolveUsersArgs) =>
       userIds.map((userId) => ({ name: userId }))
     );
@@ -194,7 +205,7 @@ describe("useUser", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -228,6 +239,8 @@ describe("useUser", () => {
   });
 
   test("should support resolveUsers throwing an error", async () => {
+    const roomId = nanoid();
+
     const { RoomProvider, useUser } = createRoomContextForTest({
       resolveUsers: () => {
         throw new Error("error");
@@ -239,7 +252,7 @@ describe("useUser", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -257,6 +270,8 @@ describe("useUser", () => {
   });
 
   test("should support resolveUsers returning a rejected promise", async () => {
+    const roomId = nanoid();
+
     const { RoomProvider, useUser } = createRoomContextForTest({
       resolveUsers: () => {
         return Promise.reject("error");
@@ -268,7 +283,7 @@ describe("useUser", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -286,6 +301,8 @@ describe("useUser", () => {
   });
 
   test("should return an error if resolveUsers returns undefined", async () => {
+    const roomId = nanoid();
+
     const { RoomProvider, useUser } = createRoomContextForTest({
       resolveUsers: () => {
         return undefined;
@@ -297,7 +314,7 @@ describe("useUser", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -315,6 +332,8 @@ describe("useUser", () => {
   });
 
   test("should return an error if resolveUsers returns undefined for a specifc user ID", async () => {
+    const roomId = nanoid();
+
     const resolveUsers = jest.fn(({ userIds }: ResolveUsersArgs) =>
       userIds.map((userId) => {
         if (userId === "abc") {
@@ -334,7 +353,7 @@ describe("useUser", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -370,6 +389,8 @@ describe("useUserSuspense", () => {
   });
 
   test("should suspend with Suspense", async () => {
+    const roomId = nanoid();
+
     const {
       RoomProvider,
       suspense: { useUser },
@@ -381,7 +402,7 @@ describe("useUserSuspense", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
+          <RoomProvider id={roomId}>
             <Suspense fallback={<div>Loading</div>}>{children}</Suspense>
           </RoomProvider>
         ),
@@ -401,6 +422,8 @@ describe("useUserSuspense", () => {
   });
 
   test("should trigger error boundaries with Suspense", async () => {
+    const roomId = nanoid();
+
     const {
       RoomProvider,
       suspense: { useUser },
@@ -416,7 +439,7 @@ describe("useUserSuspense", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">
+          <RoomProvider id={roomId}>
             <ErrorBoundary
               fallback={<div>There was an error while getting user.</div>}
             >

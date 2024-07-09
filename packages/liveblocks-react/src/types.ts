@@ -53,6 +53,12 @@ export type UseThreadsOptions<M extends BaseMetadata> = {
    */
   query?: {
     /**
+     * Whether to only return threads marked as resolved or unresolved. If not provided,
+     * all threads will be returned.
+     */
+    resolved?: boolean;
+
+    /**
      * The metadata to filter the threads by. If provided, only threads with metadata that matches
      * the provided metadata will be returned. If not provided, all threads will be returned.
      */
@@ -781,6 +787,24 @@ type RoomContextBundleCommon<
   useEditThreadMetadata(): (options: EditThreadMetadataOptions<M>) => void;
 
   /**
+   * Returns a function that marks a thread as resolved.
+   *
+   * @example
+   * const markThreadAsResolved = useMarkThreadAsResolved();
+   * markThreadAsResolved("th_xxx");
+   */
+  useMarkThreadAsResolved(): (threadId: string) => void;
+
+  /**
+   * Returns a function that marks a thread as unresolved.
+   *
+   * @example
+   * const markThreadAsUnresolved = useMarkThreadAsUnresolved();
+   * markThreadAsUnresolved("th_xxx");
+   */
+  useMarkThreadAsUnresolved(): (threadId: string) => void;
+
+  /**
    * Returns a function that adds a comment to a thread.
    *
    * @example
@@ -1091,6 +1115,15 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
 
   /**
    * Returns the thread associated with a `"thread"` inbox notification.
+   *
+   * It can **only** be called with IDs of `"thread"` inbox notifications,
+   * so we recommend only using it when customizing the rendering or in other
+   * situations where you can guarantee the kind of the notification.
+   *
+   * When `useInboxNotifications` returns `"thread"` inbox notifications,
+   * it also receives the associated threads and caches them behind the scenes.
+   * When you call `useInboxNotificationThread`, it simply returns the cached thread
+   * for the inbox notification ID you passed to it, without any fetching or waterfalls.
    *
    * @example
    * const thread = useInboxNotificationThread("in_xxx");

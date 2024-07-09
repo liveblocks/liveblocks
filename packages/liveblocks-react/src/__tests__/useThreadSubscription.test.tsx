@@ -2,6 +2,7 @@ import type { BaseMetadata, JsonObject } from "@liveblocks/core";
 import { createClient } from "@liveblocks/core";
 import { renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
+import { nanoid } from "nanoid";
 import React from "react";
 
 import { createRoomContext } from "../room";
@@ -38,9 +39,11 @@ function createRoomContextForTest<M extends BaseMetadata>() {
 
 describe("useThreadSubscription", () => {
   test("should return the expected object if the associated inbox notification hasn't been read at all", async () => {
-    const threads = [dummyThreadData()];
-    const inboxNotifications = [dummyThreadInboxNotificationData()];
-    inboxNotifications[0].threadId = threads[0].id;
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+    const inboxNotifications = [
+      dummyThreadInboxNotificationData({ roomId, threadId: threads[0].id }),
+    ];
 
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
@@ -68,7 +71,7 @@ describe("useThreadSubscription", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -92,10 +95,15 @@ describe("useThreadSubscription", () => {
   });
 
   test("should return the expected object if the associated inbox notification has been read", async () => {
-    const threads = [dummyThreadData()];
-    const inboxNotifications = [dummyThreadInboxNotificationData()];
-    inboxNotifications[0].threadId = threads[0].id;
-    inboxNotifications[0].readAt = new Date();
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+    const inboxNotifications = [
+      dummyThreadInboxNotificationData({
+        roomId,
+        threadId: threads[0].id,
+        readAt: new Date(),
+      }),
+    ];
 
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
@@ -123,7 +131,7 @@ describe("useThreadSubscription", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -147,7 +155,8 @@ describe("useThreadSubscription", () => {
   });
 
   test("should return the expected object if the thread doesn't have any inbox notification associated with it", async () => {
-    const threads = [dummyThreadData()];
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
 
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
@@ -175,7 +184,7 @@ describe("useThreadSubscription", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -196,9 +205,14 @@ describe("useThreadSubscription", () => {
   });
 
   test("should be referentially stable", async () => {
-    const threads = [dummyThreadData()];
-    const inboxNotifications = [dummyThreadInboxNotificationData()];
-    inboxNotifications[0].threadId = threads[0].id;
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+    const inboxNotifications = [
+      dummyThreadInboxNotificationData({
+        roomId,
+        threadId: threads[0].id,
+      }),
+    ];
 
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
@@ -226,7 +240,7 @@ describe("useThreadSubscription", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );

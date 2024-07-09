@@ -112,7 +112,7 @@ function ThreadComposer({ editor }: Props) {
 
       createThread({
         body,
-        metadata: { resolved: false, highlightId },
+        metadata: { highlightId },
       });
 
       editor.commands.setCommentHighlight({
@@ -182,11 +182,11 @@ function ThreadComposer({ editor }: Props) {
 }
 
 function sortThreads(a: ThreadData, b: ThreadData) {
-  if (a.metadata.resolved) {
+  if (a.resolved) {
     return 1;
   }
 
-  if (b.metadata.resolved) {
+  if (b.resolved) {
     return -1;
   }
 

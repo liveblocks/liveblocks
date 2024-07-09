@@ -1,7 +1,7 @@
 import type {
   BaseMetadata,
   CommentData,
-  InboxNotificationData,
+  InboxNotificationCustomData,
   InboxNotificationThreadData,
   ThreadData,
 } from "@liveblocks/core";
@@ -12,68 +12,76 @@ import {
   createThreadId,
 } from "./_createIds";
 
-export function dummyThreadData(): ThreadData<BaseMetadata> {
+type AtLeast<T, K extends keyof T> = Partial<T> & Pick<T, K>;
+
+export function dummyThreadData({
+  roomId,
+  ...overrides
+}: AtLeast<ThreadData<BaseMetadata>, "roomId">): ThreadData<BaseMetadata> {
   const now = new Date();
   const threadId = createThreadId();
-
-  const comment = dummyCommentData();
-  comment.threadId = threadId;
-  comment.createdAt = now;
 
   return {
     id: threadId,
     type: "thread",
-    roomId: "room-id",
+    roomId,
     createdAt: now,
-    metadata: {}, // TODO Fix type
+    metadata: {},
     updatedAt: now,
-    comments: [comment],
+    comments: [
+      dummyCommentData({
+        roomId,
+        threadId,
+        createdAt: now,
+      }),
+    ],
+    resolved: false,
+    ...overrides,
   };
 }
 
-export function dummyCommentData(): CommentData {
+export function dummyCommentData({
+  roomId,
+  ...overrides
+}: AtLeast<CommentData, "roomId">): CommentData {
   const id = createCommentId();
   const threadId = createThreadId();
   const now = new Date();
+
+  const conditionalProperties = overrides?.deletedAt
+    ? {
+        deletedAt: overrides.deletedAt,
+        body: undefined,
+      }
+    : {
+        body: overrides?.body ?? {
+          version: 1,
+          content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
+        },
+        deletedAt: undefined,
+      };
 
   return {
     id,
     type: "comment",
     threadId,
     userId: "user-id",
-    roomId: "room-id",
-    body: {
-      version: 1,
-      content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
-    },
-    deletedAt: undefined,
+    roomId,
     createdAt: now,
     reactions: [],
+    ...overrides,
+    ...conditionalProperties,
   };
 }
 
-export function dummyInboxNoficationData(): InboxNotificationData {
-  const id = createInboxNotificationId();
-  const threadId = createThreadId();
-  const now = new Date();
-
-  return {
-    kind: "thread",
-    roomId: "room-id",
-    id,
-    notifiedAt: now,
-    threadId,
-    readAt: null,
-  };
-}
-
-export function dummyCustomInboxNoficationData(): InboxNotificationData {
+export function dummyCustomInboxNoficationData(
+  overrides?: Partial<InboxNotificationCustomData>
+): InboxNotificationCustomData {
   const id = createInboxNotificationId();
   const now = new Date();
 
   return {
     kind: "$custom",
-    roomId: "room-id",
     id,
     notifiedAt: now,
     readAt: null,
@@ -90,20 +98,28 @@ export function dummyCustomInboxNoficationData(): InboxNotificationData {
         },
       },
     ],
+    ...overrides,
   };
 }
 
-export function dummyThreadInboxNotificationData(): InboxNotificationThreadData {
+export function dummyThreadInboxNotificationData({
+  roomId,
+  ...overrides
+}: AtLeast<
+  InboxNotificationThreadData,
+  "roomId"
+>): InboxNotificationThreadData {
   const id = createInboxNotificationId();
   const threadId = createThreadId();
   const now = new Date();
 
   return {
     kind: "thread",
-    roomId: "room-id",
+    roomId,
     id,
     notifiedAt: now,
     threadId,
     readAt: null,
+    ...overrides,
   };
 }

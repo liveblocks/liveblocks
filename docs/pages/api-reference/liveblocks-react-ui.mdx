@@ -54,30 +54,28 @@ function Component() {
 }
 ```
 
-##### Resolved thread metadata
+##### Resolved and unresolved threads
 
-A thread allows you to attach custom metadata to it when using the
-[mutation hooks](/docs/api-reference/liveblocks-react#Comments), and when
-creating a thread [with the composer](#Adding-thread-metadata). The `Thread`
-component automatically adds the `resolved` property to `metadata`, and this
-property is used to display a checkbox which denotes whether the thread has been
-resolved or not.
+A thread can be marked as resolved or unresolved via its `resolved` property.
+The `Thread` component automatically handles this through its `resolved` toggle
+button displayed by default.
 
-```ts
-const resolved = thread.metadata.resolved; // true | false
-```
+You can additionally use `thread.resolved` to filter the displayed threads for
+example. Or if you want to create your own `Thread` component using
+[the primitives](/docs/products/comments/primitives), you can use
+[`useMarkThreadAsResolved`](/docs/api-reference/liveblocks-react#useMarkThreadAsResolved)
+and
+[`useMarkThreadAsUnresolved`](/docs/api-reference/liveblocks-react#useMarkThreadAsUnresolved)
+to update the property.
 
-If you’d like to use this, make sure to add the `resolved` property to
-`ThreadMetadata` in your config file for valid type-checking.
+<Banner title="Resolved in metadata before 2.2">
 
-```tsx file="liveblocks.config.ts"
-export type ThreadMetadata = {
-  resolved: boolean;
+Before 2.2, `resolved` was an optional property in a thread’s metadata, it’s now
+a first-class citizen. If you’re upgrading from a previous version, learn more
+about this change in our
+[Upgrade Guide for 2.2](https://liveblocks.io/docs/platform/upgrading/2.2).
 
-  // Custom metadata
-  // ...
-};
-```
+</Banner>
 
 ##### Props [#Thread-props]
 
@@ -1206,6 +1204,8 @@ on the
 - [`useCreateThread`](/docs/api-reference/liveblocks-react#useCreateThread)
 - [`useDeleteThread`](/docs/api-reference/liveblocks-react#useDeleteThread)
 - [`useEditThreadMetadata`](/docs/api-reference/liveblocks-react#useEditThreadMetadata)
+- [`useMarkThreadAsResolved`](/docs/api-reference/liveblocks-react#useMarkThreadAsResolved)
+- [`useMarkThreadAsUnresolved`](/docs/api-reference/liveblocks-react#useMarkThreadAsUnresolved)
 - [`useCreateComment`](/docs/api-reference/liveblocks-react#useCreateComment)
 - [`useEditComment`](/docs/api-reference/liveblocks-react#useEditComment)
 - [`useDeleteComment`](/docs/api-reference/liveblocks-react#useDeleteComment)
@@ -1264,8 +1264,9 @@ triggered when using Comments, or `$myCustomNotification` which would be a
 custom notification you’ve triggered manually. You can choose to render each
 notification differently.
 
-```tsx highlight="3-13"
+```tsx highlight="4-14"
 <InboxNotification
+  inboxNotification={inboxNotification}
   kinds={{
     thread: (props) => (
       <InboxNotification.Thread {...props} showRoomName={false} />
@@ -1292,8 +1293,9 @@ in this way allow you to easily create components that fit into the existing
 design system, whilst still adding lots of customization. However, it’s also
 valid to render any custom JSX.
 
-```tsx highlight="2-4"
+```tsx highlight="3-5"
 <InboxNotification
+  inboxNotification={inboxNotification}
   kinds={{
     $myCustomNotification: (props) => <div>New notification</div>,
   }}
@@ -1325,8 +1327,9 @@ declare global {
 
 Your activities data is now correctly typed in inline functions.
 
-```tsx highlight="4-5"
+```tsx highlight="5-6"
 <InboxNotification
+  inboxNotification={inboxNotification}
   kinds={{
     $alert: (props) => {
       // `title` and `message` are correctly typed, as defined in your config
@@ -1439,6 +1442,7 @@ Displays a thread inbox notification.
 
 ```tsx
 <InboxNotification
+  inboxNotification={inboxNotification}
   kinds={{
     thread: (props) => (
       <InboxNotification.Thread {...props} showRoomName={false} />
@@ -1469,6 +1473,7 @@ Displays a custom notification kind.
 
 ```tsx
 <InboxNotification
+  inboxNotification={inboxNotification}
   kinds={{
     $myCustomNotificationKind: (props) => {
       const activityData = props.inboxNotification.activities[0].data;
