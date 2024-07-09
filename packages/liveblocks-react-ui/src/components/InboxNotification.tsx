@@ -681,8 +681,11 @@ export const InboxNotification = Object.assign(
         }
 
         case "textMention": {
+          const ResolvedInboxNotificationTextMention =
+            kinds?.textMention ?? InboxNotificationTextMention;
+
           return (
-            <InboxNotificationTextMention
+            <ResolvedInboxNotificationTextMention
               inboxNotification={inboxNotification}
               {...props}
               ref={forwardedRef}
