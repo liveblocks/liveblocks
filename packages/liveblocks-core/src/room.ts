@@ -784,8 +784,8 @@ export type Room<
    */
   reconnect(): void;
 
-  getRoomNotificationSettings(): Promise<RoomNotificationSettings>;
-  updateRoomNotificationSettings(
+  getNotificationSettings(): Promise<RoomNotificationSettings>;
+  updateNotificationSettings(
     settings: Partial<RoomNotificationSettings>
   ): Promise<RoomNotificationSettings>;
 } & CommentsApi<M>;
@@ -2986,13 +2986,13 @@ export function createRoom<
     return body;
   }
 
-  function getRoomNotificationSettings(): Promise<RoomNotificationSettings> {
+  function getNotificationSettings(): Promise<RoomNotificationSettings> {
     return fetchNotificationsJson<RoomNotificationSettings>(
       "/notification-settings"
     );
   }
 
-  function updateRoomNotificationSettings(
+  function updateNotificationSettings(
     settings: Partial<RoomNotificationSettings>
   ): Promise<RoomNotificationSettings> {
     return fetchNotificationsJson<RoomNotificationSettings>(
@@ -3082,8 +3082,8 @@ export function createRoom<
       getPresence: () => context.myPresence.current,
       getOthers: () => context.others.current,
 
-      getRoomNotificationSettings,
-      updateRoomNotificationSettings,
+      getNotificationSettings,
+      updateNotificationSettings,
 
       ...commentsApi,
     },

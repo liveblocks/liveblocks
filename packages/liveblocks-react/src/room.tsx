@@ -448,7 +448,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     if (existingRequest !== undefined) return existingRequest;
 
     try {
-      const request = room.getRoomNotificationSettings();
+      const request = room.getNotificationSettings();
 
       requestsByQuery.set(queryKey, request);
 
@@ -2466,7 +2466,7 @@ function useUpdateRoomNotificationSettings() {
         settings,
       });
 
-      room.updateRoomNotificationSettings(settings).then(
+      room.updateNotificationSettings(settings).then(
         (settings) => {
           store.set((state) => ({
             ...state,
