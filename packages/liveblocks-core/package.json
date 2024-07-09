@@ -46,6 +46,9 @@
     "showdeps:high-level": "depcruise src --include-only '^src' --exclude='(^src/index.ts|shallow.ts|__tests__)' --collapse='^src/(refs|lib|compat|types|crdts|protocol)' --output-type dot | dot -T svg > /tmp/dependency-graph.svg && open /tmp/dependency-graph.svg"
   },
   "license": "Apache-2.0",
+  "dependencies": {
+    "nanoid": "^3"
+  },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",

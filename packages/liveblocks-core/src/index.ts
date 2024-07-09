@@ -84,6 +84,11 @@ export {
 export { kInternal } from "./internal";
 export { assert, assertNever, nn } from "./lib/assert";
 export {
+  createThreadId,
+  createCommentId,
+  createInboxNotificationId,
+} from "./lib/createIds";
+export {
   deprecate,
   deprecateIf,
   errorIf,

@@ -70,7 +70,7 @@ import {
   RemoveReactionError,
   UpdateNotificationSettingsError,
 } from "./comments/errors";
-import { createCommentId, createThreadId } from "./comments/lib/createIds";
+import { createCommentId, createThreadId } from "@liveblocks/core";
 import { selectNotificationSettings } from "./comments/lib/select-notification-settings";
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 import { selectedThreads } from "./comments/lib/selected-threads";
