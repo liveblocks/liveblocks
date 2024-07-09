@@ -14,6 +14,7 @@ import type {
   User,
 } from "@liveblocks/client";
 import type {
+  AsyncResultWithDataField,
   BaseMetadata,
   Client,
   CommentBody,
@@ -79,51 +80,15 @@ import type { PropsWithChildren } from "react";
 
 import type { CommentsError } from "./comments/errors";
 
-export type UserStateLoading = {
-  isLoading: true;
-  user?: never;
-  error?: never;
-};
+export type UserState<T> = AsyncResultWithDataField<T, "user">;
+export type UserStateSuccess<T> = Resolve<
+  UserState<T> & { readonly isLoading: false; readonly error?: undefined }
+>;
 
-export type UserStateError = {
-  isLoading: false;
-  user?: never;
-  error: Error;
-};
-
-export type UserStateSuccess<T> = {
-  isLoading: false;
-  user: T;
-  error?: never;
-};
-
-export type UserState<T> =
-  | UserStateLoading
-  | UserStateError
-  | UserStateSuccess<T>;
-
-export type RoomInfoStateLoading = {
-  isLoading: true;
-  info?: never;
-  error?: never;
-};
-
-export type RoomInfoStateError = {
-  isLoading: false;
-  info?: never;
-  error: Error;
-};
-
-export type RoomInfoStateSuccess = {
-  isLoading: false;
-  info: DRI;
-  error?: never;
-};
-
-export type RoomInfoState =
-  | RoomInfoStateLoading
-  | RoomInfoStateError
-  | RoomInfoStateSuccess;
+export type RoomInfoState = AsyncResultWithDataField<DRI, "info">;
+export type RoomInfoStateSuccess = Resolve<
+  RoomInfoState & { readonly isLoading: false; readonly error?: undefined }
+>;
 
 // prettier-ignore
 export type CreateThreadOptions<M extends BaseMetadata> =
