@@ -553,7 +553,7 @@ const InboxNotificationTextMention = forwardRef<
     return (
       <InboxNotificationLayout
         inboxNotification={inboxNotification}
-        aside={<InboxNotificationIcon />}
+        aside={<InboxNotificationAvatar userId={inboxNotification.createdBy} />}
         title={$.INBOX_NOTIFICATION_TEXT_MENTION(
           <User
             key={inboxNotification.createdBy}
