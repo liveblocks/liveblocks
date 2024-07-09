@@ -178,6 +178,7 @@ type RoomEventCallbackMap<
   error: Callback<Error>;
   history: Callback<HistoryEvent>;
   "storage-status": Callback<StorageStatus>;
+  comments: Callback<CommentsEventServerMsg>;
 };
 
 export interface History {
@@ -458,6 +459,8 @@ type SubscribeFn<
    * });
    */
   (type: "storage-status", listener: Callback<StorageStatus>): () => void;
+
+  (type: "comments", listener: Callback<CommentsEventServerMsg>): () => void;
 };
 
 export type GetThreadsOptions<M extends BaseMetadata> = {
@@ -3103,12 +3106,7 @@ function makeClassicSubscribeFn<
   U extends BaseUserMeta,
   E extends Json,
   M extends BaseMetadata,
->(
-  events: Omit<
-    Room<P, S, U, E, M>["events"],
-    "comments" // comments is an internal events so we omit it from the subscribe method
-  >
-): SubscribeFn<P, S, U, E> {
+>(events: Room<P, S, U, E, M>["events"]): SubscribeFn<P, S, U, E> {
   // Set up the "subscribe" wrapper API
   function subscribeToLiveStructureDeeply<L extends LiveStructure>(
     node: L,
@@ -3193,6 +3191,11 @@ function makeClassicSubscribeFn<
             callback as Callback<StorageStatus>
           );
 
+        case "comments":
+          return events.comments.subscribe(
+            callback as Callback<CommentsEventServerMsg>
+          );
+
         // istanbul ignore next
         default:
           return assertNever(
@@ -3241,7 +3244,8 @@ function isRoomEventName(value: string): value is RoomEventName {
     value === "status" ||
     value === "storage-status" ||
     value === "lost-connection" ||
-    value === "connection"
+    value === "connection" ||
+    value === "comments"
   );
 }
 
