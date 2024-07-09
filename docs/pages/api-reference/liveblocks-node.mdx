@@ -1693,6 +1693,29 @@ declare global {
 }
 ```
 
+#### Liveblocks.deleteInboxNotification [#delete-users-userId-inboxNotifications-inboxNotificationId]
+
+Deletes a user’s inbox notification. This is a wrapper around the
+[Delete Inbox Notification API](/docs/api-reference/rest-api-endpoints#delete-users-userId-inboxNotifications-inboxNotificationId).
+
+```ts
+await liveblocks.deleteInboxNotification({
+  userId: "steven@example.com",
+  inboxNotificationId: "in_3dH7sF3...",
+});
+```
+
+#### Liveblocks.deleteInboxNotifications [#delete-users-userId-inboxNotifications-inboxNotificationId]
+
+Deletes all inbox notifications for a user. This is a wrapper around the
+[Delete Inbox Notifications API](/docs/api-reference/rest-api-endpoints#delete-users-userId-inboxNotifications).
+
+```ts
+await liveblocks.deleteInboxNotifications({
+  userId: "steven@example.com",
+});
+```
+
 ### Error handling [#error-handling]
 
 Errors in our API methods, such as network failures, invalid arguments, or
