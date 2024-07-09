@@ -1552,6 +1552,42 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
   }
+
+  /**
+   * Deletes an inbox notification for a user.
+   * @param params.userId The user ID of the inbox notification to delete.
+   * @param params.inboxNotificationId The ID of the inbox notification to delete.
+   */
+  public async deleteInboxNotification(params: {
+    userId: string;
+    inboxNotificationId: string;
+  }): Promise<void> {
+    const { userId, inboxNotificationId } = params;
+
+    const res = await this.delete(
+      url`/v2/users/${userId}/inbox-notifications/${inboxNotificationId}`
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+  }
+
+  /**
+   * Deletes all inbox notifications for a user.
+   * @param params.userId The ID of the user to delete the inbox notifications.
+   */
+  public async deleteInboxNotifications(params: {
+    userId: string;
+  }): Promise<void> {
+    const { userId } = params;
+
+    const res = await this.delete(url`/v2/users/${userId}/inbox-notifications`);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+  }
 }
 
 export class LiveblocksError extends Error {

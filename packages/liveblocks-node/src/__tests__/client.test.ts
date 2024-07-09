@@ -1164,4 +1164,48 @@ describe("client", () => {
       })
     ).resolves.toBeUndefined();
   });
+
+  test("should delete user's inbox notification", async () => {
+    const userId = "user1";
+    const inboxNotificationId = "in_123";
+
+    server.use(
+      http.delete(
+        `${DEFAULT_BASE_URL}/v2/users/:userId/inbox-notifications/:inboxNotificationId`,
+        () => {
+          return HttpResponse.json(undefined, { status: 204 });
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    await expect(
+      client.deleteInboxNotification({
+        userId,
+        inboxNotificationId,
+      })
+    ).resolves.toBeUndefined();
+  });
+
+  test("should delete all user's inbox notifications", async () => {
+    const userId = "user1";
+
+    server.use(
+      http.delete(
+        `${DEFAULT_BASE_URL}/v2/users/:userId/inbox-notifications`,
+        () => {
+          return HttpResponse.json(undefined, { status: 204 });
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    await expect(
+      client.deleteInboxNotifications({
+        userId,
+      })
+    ).resolves.toBeUndefined();
+  });
 });
