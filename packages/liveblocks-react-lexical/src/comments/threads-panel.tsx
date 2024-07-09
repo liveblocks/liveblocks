@@ -298,7 +298,6 @@ function ThreadWrapper({
 }: ThreadWrapperProps) {
   const [editor] = useLexicalComposerContext();
   const nodes = useThreadToNodes();
-  const divRef = useRef<HTMLDivElement>(null);
 
   const activeThreads = useActiveThreads();
 
@@ -310,48 +309,25 @@ function ThreadWrapper({
 
     if (activeThreads.includes(thread.id)) return;
 
-    editor.update(
-      () => {
-        const [key] = keys;
-        const node = $getNodeByKey(key);
-        if (!$isThreadMarkNode(node)) return;
-        node.selectStart();
-      },
-      {
-        onUpdate: () => {
-          const container = divRef.current;
-          if (container === null) return;
-
-          const composer = container.querySelector(".lb-composer-editor");
-          if (composer !== null) {
-            if (!(composer instanceof HTMLElement)) return;
-            composer.focus();
-          }
-          // If the composer is not found (and this can happen if `showComposer` is set to `false`), wait for the next render and try again to focus the composer.
-          else {
-            setTimeout(() => {
-              const composer = container.querySelector(".lb-composer-editor");
-              if (composer === null) return;
-              if (!(composer instanceof HTMLElement)) return;
-              composer.focus();
-            }, 0);
-          }
-        },
-      }
-    );
+    editor.update(() => {
+      const [key] = keys;
+      const node = $getNodeByKey(key);
+      if (!$isThreadMarkNode(node)) return;
+      node.selectStart();
+    });
   }
 
-  useLayoutEffect(() => {
-    const div = divRef.current;
-    if (div === null) return;
-
-    onItemAdd(thread.id, div);
-    return () => onItemRemove(thread.id);
-  }, [thread.id, onItemAdd, onItemRemove]);
+  const handleRef = useCallback(
+    (el: HTMLDivElement) => {
+      onItemAdd(thread.id, el);
+      return () => onItemRemove(thread.id);
+    },
+    [thread.id, onItemAdd, onItemRemove]
+  );
 
   return (
     <div
-      ref={divRef}
+      ref={handleRef}
       className={classNames(
         "lb-lexical-threads-panel-thread-container",
         className
