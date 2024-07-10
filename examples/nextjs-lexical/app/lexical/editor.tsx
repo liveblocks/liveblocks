@@ -12,12 +12,13 @@ import {
   liveblocksConfig,
   LiveblocksPlugin,
   useEditorStatus,
+  FloatingThreads,
 } from "@liveblocks/react-lexical";
 import FloatingToolbar from "./floating-toolbar";
 import NotificationsPopover from "../notifications-popover";
 import Loading from "../loading";
 import { useThreads } from "@liveblocks/react/suspense";
-import { Suspense } from "react";
+import { Suspense, useSyncExternalStore } from "react";
 
 // Wrap your initial config with `liveblocksConfig`
 const initialConfig = liveblocksConfig({
@@ -44,9 +45,9 @@ export default function Editor() {
                 <NotificationsPopover />
               </div>
 
-              <div className="relative flex flex-row justify-between w-full flex-1 py-16 xl:px-52 md:px-14 px-10 overflow-auto gap-12">
+              <div className="relative flex flex-row justify-between w-full flex-1 py-16 px-32 overflow-auto gap-12">
                 {/* Editable */}
-                <div className="relative flex w-[calc(100%-350px)]">
+                <div className="relative flex flex-1">
                   <RichTextPlugin
                     contentEditable={
                       <ContentEditable className="outline-none flex-1" />
@@ -79,5 +80,26 @@ export default function Editor() {
 function Threads() {
   const { threads } = useThreads();
 
-  return <AnchoredThreads threads={threads} className="w-[350px]" />;
+  const isMobile = useIsMobile();
+
+  return isMobile ? (
+    <FloatingThreads threads={threads} className="w-[350px]" />
+  ) : (
+    <AnchoredThreads threads={threads} className="w-[350px]" />
+  );
+}
+
+function useIsMobile() {
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+}
+
+const query = window.matchMedia("(max-width: 1024px)");
+
+function subscribe(callback: () => void) {
+  query.addEventListener("change", callback);
+  return () => query.removeEventListener("change", callback);
+}
+
+function getSnapshot() {
+  return query.matches;
 }

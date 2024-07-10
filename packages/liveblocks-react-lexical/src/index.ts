@@ -12,6 +12,8 @@ export {
   FloatingComposer,
   OPEN_FLOATING_COMPOSER_COMMAND,
 } from "./comments/floating-composer";
+export type { FloatingThreadsProps } from "./comments/floating-threads";
+export { FloatingThreads } from "./comments/floating-threads";
 export { liveblocksConfig } from "./liveblocks-config";
 export {
   LiveblocksPlugin,
