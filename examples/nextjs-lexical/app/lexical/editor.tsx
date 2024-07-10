@@ -83,7 +83,7 @@ function Threads() {
   const isMobile = useIsMobile();
 
   return isMobile ? (
-    <FloatingThreads threads={threads} className="w-[350px]" />
+    <FloatingThreads threads={threads} />
   ) : (
     <AnchoredThreads threads={threads} className="w-[350px]" />
   );
@@ -93,13 +93,17 @@ function useIsMobile() {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
-const query = window.matchMedia("(max-width: 1024px)");
-
 function subscribe(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+  const query = window.matchMedia("(max-width: 1024px)");
+
   query.addEventListener("change", callback);
   return () => query.removeEventListener("change", callback);
 }
 
 function getSnapshot() {
+  if (typeof window === "undefined") return () => {};
+
+  const query = window.matchMedia("(max-width: 1024px)");
   return query.matches;
 }

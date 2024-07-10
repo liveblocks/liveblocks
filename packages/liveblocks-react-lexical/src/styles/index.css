@@ -188,8 +188,14 @@
  *          Floating threads         *
  *************************************/
 
-/* .lb-lexical-floating-threads {
+.lb-lexical-floating-threads {
+  --lb-lexical-floating-threads-thread-width: 350px;
 }
 
 .lb-lexical-floating-threads-thread {
-} */
+  inline-size: var(--lb-lexical-floating-threads-thread-width);
+
+  &:where(:not(:last-of-type)) {
+    border-block-end: 1px solid var(--lb-foreground-subtle);
+  }
+}

@@ -246,7 +246,6 @@ interface ThreadWrapperProps extends ThreadProps {
 function ThreadWrapper({
   thread,
   Thread,
-  style,
   onEscapeKeydown,
   onKeyDown,
   ...threadProps
@@ -263,19 +262,7 @@ function ThreadWrapper({
     [onEscapeKeydown, onKeyDown]
   );
 
-  return (
-    <Thread
-      thread={thread}
-      onKeyDown={handleKeyDown}
-      style={{
-        maxHeight: "var(--lb-lexical-floating-threads-available-height)",
-        maxWidth: "var(--lb-lexical-floating-threads-available-width)",
-        overflow: "auto",
-        ...style,
-      }}
-      {...threadProps}
-    />
-  );
+  return <Thread thread={thread} onKeyDown={handleKeyDown} {...threadProps} />;
 }
 
 function useThreadToNodes(): ThreadToNodesMap {
