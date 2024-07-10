@@ -1,8 +1,6 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { FORMAT_TEXT_COMMAND } from "lexical";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { OPEN_FLOATING_COMPOSER_COMMAND } from "@liveblocks/react-lexical";
 import {
   autoUpdate,
   hide,
@@ -12,19 +10,12 @@ import {
   size,
   useFloating,
 } from "@floating-ui/react-dom";
-import { BoldIcon } from "../icons/BoldIcon";
-import { CommentIcon } from "../icons/CommentIcon";
 import { FloatingToolbarAi } from "./FloatingToolbarAi";
-import { SparklesIcon } from "../icons/SparklesIcon";
 import { useRange } from "../hooks/useRange";
 import { useMouseListener } from "../hooks/useMouseListener";
-import {
-  AnimatePresence,
-  AnimateSharedLayout,
-  LayoutGroup,
-  motion,
-} from "framer-motion";
 import { FloatingToolbarOptions } from "./FloatingToolbarOptions";
+
+const MARGIN_X = 32;
 
 export function FloatingToolbar() {
   const padding = 20;
@@ -95,9 +86,11 @@ export function FloatingToolbar() {
           ? {
               position: strategy,
               top: 0,
-              left: editor._rootElement.getBoundingClientRect().left,
+              left: editor._rootElement.getBoundingClientRect().left + MARGIN_X,
               transform: `translate3d(0, ${Math.round(y)}px, 0)`,
-              width: editor._rootElement.getBoundingClientRect().width,
+              width:
+                editor._rootElement.getBoundingClientRect().width -
+                MARGIN_X * 2,
             }
           : {
               position: strategy,

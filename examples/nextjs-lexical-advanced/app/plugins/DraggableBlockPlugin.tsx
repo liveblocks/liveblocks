@@ -30,8 +30,9 @@ import { createPortal } from "react-dom";
 import { isHTMLElement } from "../utils/guard";
 import { Point } from "../utils/point";
 import { Rect } from "../utils/rect";
+import { GripIcon } from "../icons/GripIcon";
 
-const SPACE = 4;
+const SPACE = 0;
 const TARGET_LINE_HALF_HEIGHT = 2;
 const DRAGGABLE_BLOCK_MENU_CLASSNAME = "draggable-block-menu";
 const DRAG_DATA_FORMAT = "application/x-lexical-drag-block";
@@ -417,15 +418,25 @@ function useDraggableBlockMenu(
   return createPortal(
     <>
       <div
-        className="icon draggable-block-menu"
+        className={`${DRAGGABLE_BLOCK_MENU_CLASSNAME} opacity-0 rounded absolute will-change-transform left-2 top-0 hover:bg-gray-200 cursor-grab active:cursor-grabbing`}
         ref={menuRef}
         draggable={true}
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
       >
-        <div className={isEditable ? "icon" : ""} />
+        {isEditable && (
+          <div className="w-5 h-6 flex justify-center items-center opacity-30">
+            <GripIcon className="pointer-events-none h-5 w-full" />
+          </div>
+        )}
       </div>
-      <div className="draggable-block-target-line" ref={targetLineRef} />
+      <div
+        className="draggable-block-target-line flex justify-between items-center pointer-events-none bg-indigo-500 h-0.5 absolute -left-2 -right-2 top-0.5 opacity-0 will-change-transform"
+        ref={targetLineRef}
+      >
+        <div className="rounded-full bg-indigo-500 h-2 w-2" />
+        <div className="rounded-full bg-indigo-500 h-2 w-2" />
+      </div>
     </>,
     anchorElem
   );

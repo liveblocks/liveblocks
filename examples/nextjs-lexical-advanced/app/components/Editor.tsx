@@ -18,12 +18,13 @@ import { FloatingToolbar } from "./FloatingToolbar";
 import { NotificationsPopover } from "./NotificationsPopover";
 import { Toolbar } from "./Toolbar";
 import { useThreads } from "@liveblocks/react/suspense";
-import { Suspense } from "react";
+import { Suspense, useRef, useState } from "react";
 import { Loading } from "./Loading";
 import { BaseMetadata, ThreadData } from "@liveblocks/client";
 import { PreserveSelectionPlugin } from "./PreserveSelection";
 import { DocumentName } from "./DocumentName";
 import DraggableBlockPlugin from "../plugins/DraggableBlockPlugin";
+import { getElementById } from "lib0/dom";
 
 // Wrap your initial config with `liveblocksConfig`
 const initialConfig = liveblocksConfig({
@@ -37,6 +38,14 @@ const initialConfig = liveblocksConfig({
 
 export function Editor() {
   const status = useEditorStatus();
+
+  const [floatingAnchorElem, setFloatingAnchorElem] =
+    useState<HTMLDivElement | null>(null);
+  const onRef = (_floatingAnchorElem: HTMLDivElement) => {
+    if (_floatingAnchorElem !== null) {
+      setFloatingAnchorElem(_floatingAnchorElem);
+    }
+  };
 
   return (
     <div className="relative flex flex-col h-full w-full">
@@ -52,8 +61,8 @@ export function Editor() {
             {status === "not-loaded" || status === "loading" ? (
               <Loading />
             ) : (
-              <div className="relative max-w-[680px] mx-auto pb-[400px] p-8">
-                <header className="mt-20 mb-8">
+              <div className="relative max-w-[740px] w-full mx-auto pb-[400px] p-8">
+                <header className="mt-20 mb-0">
                   <h1>
                     <DocumentName />
                   </h1>
@@ -61,7 +70,9 @@ export function Editor() {
                 <section className="relative">
                   <RichTextPlugin
                     contentEditable={
-                      <ContentEditable className="relative outline-none w-full h-full" />
+                      <div ref={onRef}>
+                        <ContentEditable className="relative outline-none w-full h-full px-8 py-4" />
+                      </div>
                     }
                     placeholder={
                       <span className="pointer-events-none absolute top-0 left-0 text-muted-foreground w-full h-full">
@@ -70,6 +81,9 @@ export function Editor() {
                     }
                     ErrorBoundary={LexicalErrorBoundary}
                   />
+                  {floatingAnchorElem ? (
+                    <DraggableBlockPlugin anchorElem={floatingAnchorElem} />
+                  ) : null}
                   <FloatingToolbar />
                 </section>
               </div>

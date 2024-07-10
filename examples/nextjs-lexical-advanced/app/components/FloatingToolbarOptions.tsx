@@ -135,7 +135,7 @@ export function FloatingToolbarOptions({
           </div>
         </button>
 
-        <span className="w-[1px] py-3.5 mx-2 bg-border/50" />
+        <span className="w-[1px] py-3.5 mx-1 bg-border/50" />
 
         <label htmlFor="select-block" className="h-8 items-center align-top">
           <span className="sr-only">Select block type</span>
