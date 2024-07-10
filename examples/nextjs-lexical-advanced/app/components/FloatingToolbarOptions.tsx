@@ -9,13 +9,14 @@ import { OPEN_FLOATING_COMPOSER_COMMAND } from "@liveblocks/react-lexical";
 import { CommentIcon } from "../icons/CommentIcon";
 import { motion } from "framer-motion";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { useCallback } from "react";
+import { MouseEventHandler, ReactNode, useCallback } from "react";
 import { $setBlocksType } from "@lexical/selection";
 import { $createHeadingNode, $createQuoteNode } from "@lexical/rich-text";
 import { useActiveBlock } from "../hooks/useActiveBlock";
 import { ItalicIcon } from "../icons/ItalicIcon";
 import { UnderlineIcon } from "../icons/UnderlineIcon";
 import { StrikethroughIcon } from "../icons/StrikethroughIcon";
+import { CodeIcon } from "../icons/CodeIcon";
 
 const DROPDOWN_OPTIONS = [
   {
@@ -154,45 +155,50 @@ export function FloatingToolbarOptions({
           </select>
         </label>
 
-        <button
+        <ToolbarButton
           onClick={() => {
             editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
             setState("default");
           }}
-          className="inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground w-8 h-8 data-[active]:bg-accent"
         >
           <BoldIcon className="w-4 h-4" />
-        </button>
+        </ToolbarButton>
 
-        <button
+        <ToolbarButton
           onClick={() => {
             editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
             setState("default");
           }}
-          className="inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground w-8 h-8 data-[active]:bg-accent"
         >
           <ItalicIcon className="w-4 h-4" />
-        </button>
+        </ToolbarButton>
 
-        <button
+        <ToolbarButton
           onClick={() => {
             editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline");
             setState("default");
           }}
-          className="inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground w-8 h-8 data-[active]:bg-accent"
         >
           <UnderlineIcon className="w-4 h-4" />
-        </button>
+        </ToolbarButton>
 
-        <button
+        <ToolbarButton
           onClick={() => {
             editor.dispatchCommand(FORMAT_TEXT_COMMAND, "strikethrough");
             setState("default");
           }}
-          className="inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground w-8 h-8 data-[active]:bg-accent"
         >
           <StrikethroughIcon className="w-4 h-4" />
-        </button>
+        </ToolbarButton>
+
+        <ToolbarButton
+          onClick={() => {
+            editor.dispatchCommand(FORMAT_TEXT_COMMAND, "code");
+            setState("default");
+          }}
+        >
+          <CodeIcon className="w-4 h-4" />
+        </ToolbarButton>
 
         <span className="w-[1px] py-3.5 bg-border/50" />
 
@@ -206,16 +212,32 @@ export function FloatingToolbarOptions({
         {/*  <BlockquoteIcon />*/}
         {/*</button>*/}
 
-        <button
+        <ToolbarButton
           onClick={() => {
             editor.dispatchCommand(OPEN_FLOATING_COMPOSER_COMMAND, undefined);
-            setState("default");
+            setState("closed");
           }}
-          className="inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground w-8 h-8 data-[active]:bg-accent"
         >
           <CommentIcon className="w-4 h-4" />
-        </button>
+        </ToolbarButton>
       </div>
     </motion.div>
+  );
+}
+
+function ToolbarButton({
+  onClick,
+  children,
+}: {
+  onClick: MouseEventHandler<HTMLButtonElement>;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground w-8 h-8 data-[active]:bg-accent"
+    >
+      {children}
+    </button>
   );
 }

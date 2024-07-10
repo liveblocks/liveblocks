@@ -48,7 +48,6 @@ const styles = [
   "Straightforward",
   "Friendly",
   "Poetic",
-  "Overly polite",
   "Passive aggressive",
   "Pirate",
 ];
