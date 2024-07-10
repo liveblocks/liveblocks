@@ -167,3 +167,7 @@ select {
 .lb-thread[data-state="active"] .lb-composer {
   background: var(--lb-accent-subtle);
 }
+
+.lb-root {
+  font-size: 14px;
+}
