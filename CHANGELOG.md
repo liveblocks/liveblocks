@@ -9,7 +9,7 @@
 
 ### `@liveblocks/react-lexical`
 
-- Add a new `AnchoredThreads` component.
+- Add new `AnchoredThreads` and `FloatingThreads` component.
 
 ## v2.2.1
 
