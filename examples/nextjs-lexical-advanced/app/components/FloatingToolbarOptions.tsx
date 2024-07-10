@@ -13,10 +13,9 @@ import { useCallback } from "react";
 import { $setBlocksType } from "@lexical/selection";
 import { $createHeadingNode, $createQuoteNode } from "@lexical/rich-text";
 import { useActiveBlock } from "../hooks/useActiveBlock";
-import { HeadingOneIcon } from "../icons/HeadingOneIcon";
-import { HeadingTwoIcon } from "../icons/HeadingTwoIcon";
-import { HeadingThreeIcon } from "../icons/HeadingThreeIcon";
-import { BlockquoteIcon } from "../icons/BlockquoteIcon";
+import { ItalicIcon } from "../icons/ItalicIcon";
+import { UnderlineIcon } from "../icons/UnderlineIcon";
+import { StrikethroughIcon } from "../icons/StrikethroughIcon";
 
 const DROPDOWN_OPTIONS = [
   {
@@ -122,7 +121,7 @@ export function FloatingToolbarOptions({
         duration: 0.25,
       }}
     >
-      <div className="flex items-center justify-center gap-0">
+      <div className="flex items-center justify-center gap-1">
         <button
           onClick={() => {
             setState("ai");
@@ -135,7 +134,7 @@ export function FloatingToolbarOptions({
           </div>
         </button>
 
-        <span className="w-[1px] py-3.5 mx-1 bg-border/50" />
+        <span className="w-[1px] py-3.5 bg-border/50" />
 
         <label htmlFor="select-block" className="h-8 items-center align-top">
           <span className="sr-only">Select block type</span>
@@ -144,7 +143,7 @@ export function FloatingToolbarOptions({
             onInput={(e) => {
               editor.update(() => toggleBlock(e.currentTarget.value));
             }}
-            className="bg-white h-8 px-2 pb-px rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-accent hover:text-accent-foreground data-[active]:bg-accent"
+            className="bg-white border-0 h-8 pl-2 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-accent hover:text-accent-foreground data-[active]:bg-accent"
             value={activeBlock || "paragraph"}
           >
             {DROPDOWN_OPTIONS.map(({ id, text }) => (
@@ -162,10 +161,40 @@ export function FloatingToolbarOptions({
           }}
           className="inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground w-8 h-8 data-[active]:bg-accent"
         >
-          <BoldIcon />
+          <BoldIcon className="w-4 h-4" />
         </button>
 
-        <span className="w-[1px] py-3.5 mx-2 bg-border/50" />
+        <button
+          onClick={() => {
+            editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
+            setState("default");
+          }}
+          className="inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground w-8 h-8 data-[active]:bg-accent"
+        >
+          <ItalicIcon className="w-4 h-4" />
+        </button>
+
+        <button
+          onClick={() => {
+            editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline");
+            setState("default");
+          }}
+          className="inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground w-8 h-8 data-[active]:bg-accent"
+        >
+          <UnderlineIcon className="w-4 h-4" />
+        </button>
+
+        <button
+          onClick={() => {
+            editor.dispatchCommand(FORMAT_TEXT_COMMAND, "strikethrough");
+            setState("default");
+          }}
+          className="inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground w-8 h-8 data-[active]:bg-accent"
+        >
+          <StrikethroughIcon className="w-4 h-4" />
+        </button>
+
+        <span className="w-[1px] py-3.5 mx-1 bg-border/50" />
 
         {/*<button*/}
         {/*  onClick={() => editor.update(() => toggleBlock("quote"))}*/}

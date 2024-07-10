@@ -100,8 +100,8 @@ h6 {
 
 blockquote {
   box-sizing: border-box;
-  border-left: 0.25rem solid rgba(209, 213, 219);
-  padding-left: 1rem;
+  border-left: 3px solid rgb(90, 88, 99);
+  padding-left: 0.9rem;
 }
 
 ul {
@@ -139,6 +139,23 @@ li::marker {
   text-indent: 0 !important;
   text-align: start !important;
   text-align-last: start !important;
+}
+
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.3rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 1.8rem;
+}
+
+.lexical-underline {
+  text-decoration: underline;
+}
+
+.lexical-strikethrough {
+  text-decoration: line-through;
 }
 
 .lb-thread-composer:after {

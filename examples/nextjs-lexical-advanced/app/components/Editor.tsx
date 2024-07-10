@@ -34,6 +34,12 @@ const initialConfig = liveblocksConfig({
     console.error(error);
     throw error;
   },
+  theme: {
+    text: {
+      underline: "lexical-underline",
+      strikethrough: "lexical-strikethrough",
+    },
+  },
 });
 
 export function Editor() {
