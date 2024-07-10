@@ -88,7 +88,7 @@ export function Editor() {
                       </div>
                     }
                     placeholder={
-                      <span className="pointer-events-none absolute top-0 left-0 text-muted-foreground w-full h-full">
+                      <span className="pointer-events-none absolute top-7 mt-px left-8 text-muted-foreground w-full h-full">
                         Try mentioning a user with @
                       </span>
                     }
