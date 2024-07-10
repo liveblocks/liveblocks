@@ -1002,6 +1002,35 @@ ctx.useErrorListener((err) => {
 
 // ---------------------------------------------------------
 
+// The useDeleteInboxNotification() hook
+{
+  const deleteNotification = lbctx.useDeleteInboxNotification();
+  expectType<void>(deleteNotification("in_xxx"));
+}
+
+// The useDeleteInboxNotification() hook (suspense)
+{
+  const deleteNotification = lbctx.suspense.useDeleteInboxNotification();
+  expectType<void>(deleteNotification("in_xxx"));
+}
+
+// ---------------------------------------------------------
+
+// The useDeleteAllInboxNotifications() hook
+{
+  const deleteAllNotifications = lbctx.useDeleteAllInboxNotifications();
+  expectType<void>(deleteAllNotifications());
+}
+
+// The useDeleteAllInboxNotifications() hook (suspense)
+{
+  const deleteAllNotifications =
+    lbctx.suspense.useDeleteAllInboxNotifications();
+  expectType<void>(deleteAllNotifications());
+}
+
+// ---------------------------------------------------------
+
 // The useUnreadInboxNotificationsCount() hook
 {
   const { count, error, isLoading } = lbctx.useUnreadInboxNotificationsCount();

@@ -871,6 +871,34 @@ declare global {
 
 // ---------------------------------------------------------
 
+// The useDeleteInboxNotification() hook
+{
+  const deleteNotification = classic.useDeleteInboxNotification();
+  expectType<void>(deleteNotification("in_xxx"));
+}
+
+// The useDeleteInboxNotification() hook (suspense)
+{
+  const deleteNotification = suspense.useDeleteInboxNotification();
+  expectType<void>(deleteNotification("in_xxx"));
+}
+
+// ---------------------------------------------------------
+
+// The useDeleteAllInboxNotifications() hook
+{
+  const deleteAllNotifications = classic.useDeleteAllInboxNotifications();
+  expectType<void>(deleteAllNotifications());
+}
+
+// The useDeleteAllInboxNotifications() hook (suspense)
+{
+  const deleteAllNotifications = suspense.useDeleteAllInboxNotifications();
+  expectType<void>(deleteAllNotifications());
+}
+
+// ---------------------------------------------------------
+
 // The useUnreadInboxNotificationsCount() hook
 {
   const { count, error, isLoading } =

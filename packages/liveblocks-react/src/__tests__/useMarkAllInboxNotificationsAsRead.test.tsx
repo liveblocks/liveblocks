@@ -45,7 +45,7 @@ function createRoomContextForTest<M extends BaseMetadata>() {
 }
 
 describe("useMarkAllInboxNotificationsAsRead", () => {
-  test("should mark notification as read optimistically", async () => {
+  test("should mark all notifications as read optimistically", async () => {
     const roomId = nanoid();
     const threads = [dummyThreadData({ roomId }), dummyThreadData({ roomId })];
     const inboxNotifications = [
@@ -118,7 +118,7 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
     unmount();
   });
 
-  test("should mark inbox notification as read optimistically and revert the updates if error response from server", async () => {
+  test("should mark all inbox notifications as read optimistically and revert the updates if error response from server", async () => {
     const roomId = nanoid();
     const threads = [dummyThreadData({ roomId }), dummyThreadData({ roomId })];
     const inboxNotifications = [

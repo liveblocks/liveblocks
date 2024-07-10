@@ -54,6 +54,8 @@ expectDocCommentIncludes<_>(suspense.ClientSideSuspense({} as any));
 // context.useLostConnectionListener
 // context.useMarkAllInboxNotificationsAsRead
 // context.useMarkInboxNotificationAsRead
+// context.useDeleteAllInboxNotifications
+// context.useDeleteInboxNotification
 // context.useMarkThreadAsRead
 // context.useMutation
 // context.useMyPresence
@@ -111,6 +113,8 @@ expectDocCommentIncludes<_>(suspense.ClientSideSuspense({} as any));
 // classic.useLostConnectionListener
 // classic.useMarkAllInboxNotificationsAsRead
 // classic.useMarkInboxNotificationAsRead
+// classic.useDeleteAllInboxNotifications
+// classic.useDeleteInboxNotification
 // classic.useMarkThreadAsRead
 // classic.useMutation
 // classic.useMyPresence
@@ -167,6 +171,8 @@ expectDocCommentIncludes<_>(suspense.ClientSideSuspense({} as any));
 // suspense.useLostConnectionListener
 // suspense.useMarkAllInboxNotificationsAsRead
 // suspense.useMarkInboxNotificationAsRead
+// suspense.useDeleteAllInboxNotifications
+// suspense.useDeleteInboxNotification
 // suspense.useMarkThreadAsRead
 // suspense.useMutation
 // suspense.useMyPresence
