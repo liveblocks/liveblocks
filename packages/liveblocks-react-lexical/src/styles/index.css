@@ -155,6 +155,12 @@
   transition-property: transform;
 }
 
+@media (prefers-reduced-motion) {
+  .lb-lexical-anchored-threads-thread-container {
+    transition-duration: 0s;
+  }
+}
+
 .lb-lexical-anchored-threads-thread {
   position: relative;
   overflow: hidden;
@@ -182,8 +188,8 @@
  *          Floating threads         *
  *************************************/
 
-.lb-lexical-floating-threads {
+/* .lb-lexical-floating-threads {
 }
 
 .lb-lexical-floating-threads-thread {
-}
+} */
