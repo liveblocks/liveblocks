@@ -142,25 +142,25 @@
 }
 
 /*************************************
- *          Threads Panel            *
+ *          Anchored threads         *
  *************************************/
 
-.lb-lexical-threads-panel {
-  --lb-lexical-threads-panel-gap: 1.25rem;
-  --lb-lexical-threads-panel-active-thread-offset: -0.75rem;
+.lb-lexical-anchored-threads {
+  --lb-lexical-anchored-threads-gap: 1.25rem;
+  --lb-lexical-anchored-threads-active-thread-offset: -0.75rem;
 }
 
-.lb-lexical-threads-panel-thread-container {
+.lb-lexical-anchored-threads-thread-container {
   transition-duration: calc(var(--lb-transition-duration) * 2);
   transition-property: transform;
 }
 
-.lb-lexical-threads-panel-thread {
+.lb-lexical-anchored-threads-thread {
   position: relative;
   overflow: hidden;
   border-radius: var(--lb-radius);
   background: var(--lb-dynamic-background);
-  box-shadow: $lb-threads-panel-shadow;
+  box-shadow: $lb-lexical-anchored-threads-shadow;
   transition-property: background, box-shadow;
 
   &::after {
@@ -174,6 +174,16 @@
   }
 
   &:where([data-state="active"]) {
-    box-shadow: $lb-threads-panel-active-shadow;
+    box-shadow: $lb-lexical-anchored-threads-active-shadow;
   }
+}
+
+/*************************************
+ *          Floating threads         *
+ *************************************/
+
+.lb-lexical-floating-threads {
+}
+
+.lb-lexical-floating-threads-thread {
 }

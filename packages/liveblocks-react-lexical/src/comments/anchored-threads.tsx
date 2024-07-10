@@ -28,8 +28,8 @@ import { $isThreadMarkNode } from "./thread-mark-node";
 const DEFAULT_GAP = 20;
 const DEFAULT_ACTIVE_THREAD_OFFSET = -12;
 
-const GAP = `var(--lb-lexical-threads-panel-gap, ${DEFAULT_GAP}px)`;
-const ACTIVE_THREAD_OFFSET = `var(--lb-lexical-threads-panel-active-thread-offset, ${DEFAULT_ACTIVE_THREAD_OFFSET}px)`;
+const GAP = `var(--lb-lexical-anchored-threads-gap, ${DEFAULT_GAP}px)`;
+const ACTIVE_THREAD_OFFSET = `var(--lb-lexical-anchored-threads-active-thread-offset, ${DEFAULT_ACTIVE_THREAD_OFFSET}px)`;
 
 type AnchoredThreadsComponents = {
   Thread: ComponentType<ThreadProps>;
@@ -237,7 +237,7 @@ export function AnchoredThreads({
   return (
     <div
       {...divProps}
-      className={classNames(className, "lb-root lb-lexical-threads-panel")}
+      className={classNames(className, "lb-root lb-lexical-anchored-threads")}
       ref={containerRef}
       style={{
         position: "relative",
@@ -322,7 +322,7 @@ function ThreadWrapper({
     <div
       ref={handleRef}
       className={classNames(
-        "lb-lexical-threads-panel-thread-container",
+        "lb-lexical-anchored-threads-thread-container",
         className
       )}
       {...divProps}
@@ -331,7 +331,7 @@ function ThreadWrapper({
         thread={thread}
         data-state={isActive ? "active" : "inactive"}
         onClick={handleThreadClick}
-        className="lb-lexical-threads-panel-thread"
+        className="lb-lexical-anchored-threads-thread"
         showComposer={isActive ? true : false}
       />
     </div>
