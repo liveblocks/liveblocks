@@ -176,10 +176,27 @@ export function createNotificationsApi<M extends BaseMetadata>({
     await batchedMarkInboxNotificationsAsRead.get(inboxNotificationId);
   }
 
+  async function deleteAllInboxNotifications() {
+    await fetchJson("/inbox-notifications", {
+      method: "DELETE",
+    });
+  }
+
+  async function deleteInboxNotification(inboxNotificationId: string) {
+    await fetchJson(
+      `/inbox-notifications/${encodeURIComponent(inboxNotificationId)}`,
+      {
+        method: "DELETE",
+      }
+    );
+  }
+
   return {
     getInboxNotifications,
     getUnreadInboxNotificationsCount,
     markAllInboxNotificationsAsRead,
     markInboxNotificationAsRead,
+    deleteAllInboxNotifications,
+    deleteInboxNotification,
   };
 }
