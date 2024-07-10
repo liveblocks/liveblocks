@@ -1076,6 +1076,24 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
   useMarkAllInboxNotificationsAsRead(): () => void;
 
   /**
+   * Returns a function that deletes an inbox notification.
+   *
+   * @example
+   * const deleteInboxNotification = useDeleteInboxNotification();
+   * deleteInboxNotification("in_xxx");
+   */
+  useDeleteInboxNotification(): (inboxNotificationId: string) => void;
+
+  /**
+   * Returns a function that deletes all inbox notifications.
+   *
+   * @example
+   * const deleteAllInboxNotifications = useDeleteAllInboxNotifications();
+   * deleteAllInboxNotifications();
+   */
+  useDeleteAllInboxNotifications(): () => void;
+
+  /**
    * Returns the thread associated with a `"thread"` inbox notification.
    *
    * It can **only** be called with IDs of `"thread"` inbox notifications,
