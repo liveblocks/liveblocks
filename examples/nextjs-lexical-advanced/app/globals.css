@@ -102,6 +102,7 @@ blockquote {
   box-sizing: border-box;
   border-left: 3px solid rgb(90, 88, 99);
   padding-left: 0.9rem;
+  margin: 0.8rem 0;
 }
 
 ul {
@@ -109,8 +110,8 @@ ul {
   list-style-type: disc;
   margin-block-start: 1rem;
   margin-block-end: 1rem;
-  margin-inline-start: 0px;
-  margin-inline-end: 0px;
+  margin-inline-start: 0;
+  margin-inline-end: 0;
   padding-inline-start: 40px;
   unicode-bidi: isolate;
 }
@@ -120,8 +121,8 @@ ol {
   list-style-type: decimal;
   margin-block-start: 1rem;
   margin-block-end: 1rem;
-  margin-inline-start: 0px;
-  margin-inline-end: 0px;
+  margin-inline-start: 0;
+  margin-inline-end: 0;
   padding-inline-start: 40px;
   unicode-bidi: isolate;
 }
@@ -167,6 +168,11 @@ select {
 
 .lb-root {
   --lb-accent: rgb(84, 85, 250);
+  --lb-elevation-shadow: rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.1) 0px 4px 6px -4px;
+}
+
+.lb-lexical-floating-composer {
+  border: 1px solid rgba(228, 228, 231, 0.8);
 }
 
 .lb-composer, .lb-thread {
