@@ -325,14 +325,15 @@ const InboxNotificationLayout = forwardRef<
                     align="end"
                     content={
                       <>
-                        <DropdownItem
-                          onSelect={handleMarkAsRead}
-                          onClick={stopPropagation}
-                          disabled={!unread}
-                        >
-                          <CheckIcon className="lb-dropdown-item-icon" />
-                          {$.INBOX_NOTIFICATION_MARK_AS_READ}
-                        </DropdownItem>
+                        {unread ? (
+                          <DropdownItem
+                            onSelect={handleMarkAsRead}
+                            onClick={stopPropagation}
+                          >
+                            <CheckIcon className="lb-dropdown-item-icon" />
+                            {$.INBOX_NOTIFICATION_MARK_AS_READ}
+                          </DropdownItem>
+                        ) : null}
                         <DropdownItem
                           onSelect={handleDelete}
                           onClick={stopPropagation}
