@@ -5,31 +5,38 @@ import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { ListNode, ListItemNode } from "@lexical/list";
+import { TRANSFORMERS } from "@lexical/markdown";
+import { CodeNode } from "@lexical/code";
+import { LinkNode } from "@lexical/link";
+import { HorizontalRuleNode } from "@lexical/react/LexicalHorizontalRuleNode";
+import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
-import { Thread } from "@liveblocks/react-ui";
 import {
   FloatingComposer,
   liveblocksConfig,
   LiveblocksPlugin,
   useEditorStatus,
-  useIsThreadActive,
 } from "@liveblocks/react-lexical";
 import { FloatingToolbar } from "./FloatingToolbar";
 import { NotificationsPopover } from "./NotificationsPopover";
-import { Toolbar } from "./Toolbar";
-import { useThreads } from "@liveblocks/react/suspense";
-import { Suspense, useRef, useState } from "react";
+import { useState } from "react";
 import { Loading } from "./Loading";
-import { BaseMetadata, ThreadData } from "@liveblocks/client";
 import { PreserveSelectionPlugin } from "./PreserveSelection";
 import { DocumentName } from "./DocumentName";
 import DraggableBlockPlugin from "../plugins/DraggableBlockPlugin";
-import { getElementById } from "lib0/dom";
 
 // Wrap your initial config with `liveblocksConfig`
 const initialConfig = liveblocksConfig({
   namespace: "Demo",
-  nodes: [HeadingNode, QuoteNode, ListNode, ListItemNode],
+  nodes: [
+    HorizontalRuleNode,
+    CodeNode,
+    LinkNode,
+    ListNode,
+    ListItemNode,
+    HeadingNode,
+    QuoteNode,
+  ],
   onError: (error: unknown) => {
     console.error(error);
     throw error;
@@ -101,31 +108,8 @@ export function Editor() {
           </LiveblocksPlugin>
         </div>
         <PreserveSelectionPlugin />
+        <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
       </LexicalComposer>
     </div>
-  );
-}
-
-function Threads() {
-  const { threads } = useThreads();
-
-  return (
-    <div className="text-sm relative w-[350px] h-full overflow-auto border-l border-border/80">
-      {threads.map((thread) => {
-        return <ThreadWrapper key={thread.id} thread={thread} />;
-      })}
-    </div>
-  );
-}
-
-function ThreadWrapper({ thread }: { thread: ThreadData<BaseMetadata> }) {
-  const isActive = useIsThreadActive(thread.id);
-
-  return (
-    <Thread
-      thread={thread}
-      data-state={isActive ? "active" : null}
-      className="p-2 border-b border-border"
-    />
   );
 }

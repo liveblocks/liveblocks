@@ -23,6 +23,10 @@ const DROPDOWN_OPTIONS = [
     text: "Paragraph",
   },
   {
+    id: "quote",
+    text: "Quote",
+  },
+  {
     id: "h1",
     text: "Heading 1",
   },
@@ -45,10 +49,6 @@ const DROPDOWN_OPTIONS = [
   {
     id: "h6",
     text: "Heading 6",
-  },
-  {
-    id: "quote",
-    text: "Quote",
   },
 ];
 

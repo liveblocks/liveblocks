@@ -158,6 +158,14 @@ select {
   text-decoration: line-through;
 }
 
+.lb-root {
+  --lb-accent: rgb(84, 85, 250);
+}
+
+.lb-composer, .lb-thread {
+  font-size: 14px;
+}
+
 .lb-thread-composer:after {
   content: none;
 }
@@ -168,6 +176,4 @@ select {
   background: var(--lb-accent-subtle);
 }
 
-.lb-root {
-  font-size: 14px;
-}
+
