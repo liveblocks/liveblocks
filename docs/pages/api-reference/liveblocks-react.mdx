@@ -2477,6 +2477,28 @@ const markAllInboxNotificationsAsRead = useMarkAllInboxNotificationsAsRead();
 markAllInboxNotificationsAsRead();
 ```
 
+### useDeleteInboxNotification [@badge=LiveblocksProvider]
+
+Returns a function that deletes an inbox notification.
+
+```tsx
+import { useDeleteInboxNotification } from "@liveblocks/react/suspense";
+
+const deleteInboxNotification = useDeleteInboxNotification();
+deleteInboxNotification("in_xxx");
+```
+
+### useDeleteAllInboxNotifications [@badge=LiveblocksProvider]
+
+Returns a function that deletes all inbox notifications.
+
+```tsx
+import { useDeleteAllInboxNotifications } from "@liveblocks/react/suspense";
+
+const deleteAllInboxNotifications = useDeleteAllInboxNotifications();
+deleteAllInboxNotifications();
+```
+
 ### useInboxNotificationThread [@badge=LiveblocksProvider]
 
 Returns the thread associated with a `"thread"` inbox notification.
