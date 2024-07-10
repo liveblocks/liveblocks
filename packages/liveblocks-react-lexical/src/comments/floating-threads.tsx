@@ -225,7 +225,6 @@ function FloatingThreadPortal(props: FloatingThreadPortalProps) {
         left: 0,
         transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`,
         minWidth: "max-content",
-        overflowY: "auto",
       }}
       className={classNames(
         "lb-root lb-portal lb-elevation lb-lexical-floating-threads",
@@ -271,6 +270,7 @@ function ThreadWrapper({
       style={{
         maxHeight: "var(--lb-lexical-floating-threads-available-height)",
         maxWidth: "var(--lb-lexical-floating-threads-available-width)",
+        overflow: "auto",
         ...style,
       }}
       {...threadProps}
