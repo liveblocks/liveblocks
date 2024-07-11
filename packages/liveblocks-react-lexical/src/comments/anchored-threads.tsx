@@ -68,7 +68,7 @@ export function AnchoredThreads({
   components,
   className,
   style,
-  ...divProps
+  ...props
 }: AnchoredThreadsProps) {
   const [editor] = useLexicalComposerContext();
   const Thread = components?.Thread ?? DefaultThread;
@@ -234,7 +234,7 @@ export function AnchoredThreads({
 
   return (
     <div
-      {...divProps}
+      {...props}
       className={classNames(className, "lb-root lb-lexical-anchored-threads")}
       ref={containerRef}
       style={{
@@ -285,7 +285,7 @@ function ThreadWrapper({
   thread,
   Thread,
   className,
-  ...divProps
+  ...props
 }: ThreadWrapperProps) {
   const [editor] = useLexicalComposerContext();
   const nodes = useThreadToNodes();
@@ -323,7 +323,7 @@ function ThreadWrapper({
         "lb-lexical-anchored-threads-thread-container",
         className
       )}
-      {...divProps}
+      {...props}
     >
       <Thread
         thread={thread}

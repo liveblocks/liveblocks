@@ -61,7 +61,7 @@ export interface FloatingThreadsProps<M extends BaseMetadata = DM>
 export function FloatingThreads({
   threads,
   components,
-  ...divProps
+  ...props
 }: FloatingThreadsProps) {
   const activeThreads = useActiveThreads();
 
@@ -148,7 +148,7 @@ export function FloatingThreads({
     <FloatingThreadPortal
       range={range.range}
       container={document.body}
-      {...divProps}
+      {...props}
     >
       {range.threads.map((thread) => (
         <ThreadWrapper
@@ -172,9 +172,14 @@ interface FloatingThreadPortalProps
 
 export const FLOATING_THREAD_COLLISION_PADDING = 10;
 
-function FloatingThreadPortal(props: FloatingThreadPortalProps) {
-  const { container, range, children, className, style, ...divProps } = props;
-
+function FloatingThreadPortal({
+  container,
+  range,
+  children,
+  className,
+  style,
+  ...props
+}: FloatingThreadPortalProps) {
   const {
     refs: { setReference, setFloating },
     strategy,
@@ -221,7 +226,7 @@ function FloatingThreadPortal(props: FloatingThreadPortalProps) {
   return createPortal(
     <div
       ref={setFloating}
-      {...divProps}
+      {...props}
       style={{
         ...style,
         position: strategy,
