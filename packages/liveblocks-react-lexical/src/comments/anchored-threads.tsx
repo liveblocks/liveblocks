@@ -232,8 +232,6 @@ export function AnchoredThreads({
     return () => observer.disconnect();
   }, [root, handlePositionThreads]);
 
-  if (orderedThreads.length === 0) return;
-
   return (
     <div
       {...divProps}

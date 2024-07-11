@@ -66,9 +66,11 @@ export default function Editor() {
                   <FloatingToolbar />
                 </div>
 
-                <Suspense fallback={null}>
-                  <Threads />
-                </Suspense>
+                <div className="lg:w-[350px]">
+                  <Suspense fallback={null}>
+                    <Threads />
+                  </Suspense>
+                </div>
               </div>
             </>
           )}
@@ -85,6 +87,6 @@ function Threads() {
   return isMobile ? (
     <FloatingThreads threads={threads} />
   ) : (
-    <AnchoredThreads threads={threads} className="w-[350px]" />
+    <AnchoredThreads threads={threads} />
   );
 }

@@ -5,7 +5,6 @@ export function useIsMobile() {
 }
 
 function subscribe(callback: () => void) {
-  if (typeof window === "undefined") return () => {};
   const query = window.matchMedia("(max-width: 1024px)");
 
   query.addEventListener("change", callback);
@@ -13,8 +12,6 @@ function subscribe(callback: () => void) {
 }
 
 function getSnapshot() {
-  if (typeof window === "undefined") return () => {};
-
   const query = window.matchMedia("(max-width: 1024px)");
   return query.matches;
 }
