@@ -1,8 +1,10 @@
-## v2.2.3 (Not released)
+## v2.3.0 (Not released)
 
 ### `@liveblocks/react-lexical`
 
-- Add new `AnchoredThreads` and `FloatingThreads` components.
+- New default components: `AnchoredThreads` and `FlatingThreads` to display
+  threads that are tied to a specific part of the document, similar to Notion,
+  Linear.
 
 ## v2.2.2
 
