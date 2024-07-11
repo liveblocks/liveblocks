@@ -47,7 +47,11 @@ type ThreadPanelComponents = {
 
 export interface FloatingThreadsProps<M extends BaseMetadata = DM>
   extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
+  /**
+   * The threads to display.
+   */
   threads: ThreadData<M>[];
+
   /**
    * Override the component's components.
    */
@@ -227,7 +231,7 @@ function FloatingThreadPortal(props: FloatingThreadPortalProps) {
         minWidth: "max-content",
       }}
       className={classNames(
-        "lb-root lb-portal lb-elevation lb-lexical-floating-threads",
+        "lb-root lb-portal lb-elevation lb-lexical-floating lb-lexical-floating-threads",
         className
       )}
     >

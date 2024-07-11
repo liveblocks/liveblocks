@@ -363,7 +363,7 @@ function FloatingComposerPortal({
         transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`,
         minWidth: "max-content",
       }}
-      className="lb-root lb-portal lb-elevation lb-lexical-floating-composer"
+      className="lb-root lb-portal lb-elevation lb-lexical-floating lb-lexical-floating-composer"
     >
       {children}
     </div>,

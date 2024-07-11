@@ -185,17 +185,29 @@
 }
 
 /*************************************
+ *        Floating components        *
+ *************************************/
+
+.lb-lexical-floating {
+  --lb-lexical-floating-size: 350px;
+}
+
+/*************************************
  *          Floating threads         *
  *************************************/
 
-.lb-lexical-floating-threads {
-  --lb-lexical-floating-threads-thread-inline-size: 350px;
-}
-
 .lb-lexical-floating-threads-thread {
-  inline-size: var(--lb-lexical-floating-threads-thread-inline-size);
+  inline-size: var(--lb-lexical-floating-size);
 
   &:where(:not(:last-of-type)) {
     border-block-end: 1px solid var(--lb-foreground-subtle);
   }
+}
+
+/*************************************
+ *         Floating composer         *
+ *************************************/
+
+.lb-lexical-floating-composer {
+  inline-size: var(--lb-lexical-floating-size);
 }
