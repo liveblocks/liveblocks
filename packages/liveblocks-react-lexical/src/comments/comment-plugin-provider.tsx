@@ -139,7 +139,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
 
     const theme = context.getTheme();
 
-    const classNames = ["lb-root", "lb-thread-mark"];
+    const classNames = ["lb-root", "lb-lexical-thread-mark"];
     if (theme && theme.liveblocks && "threadMark" in theme.liveblocks) {
       classNames.push((theme.liveblocks as { threadMark: string }).threadMark);
     }
