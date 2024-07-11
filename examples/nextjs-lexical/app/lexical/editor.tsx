@@ -18,7 +18,8 @@ import FloatingToolbar from "./floating-toolbar";
 import NotificationsPopover from "../notifications-popover";
 import Loading from "../loading";
 import { useThreads } from "@liveblocks/react/suspense";
-import { Suspense, useSyncExternalStore } from "react";
+import { Suspense } from "react";
+import { useIsMobile } from "./use-is-mobile";
 
 // Wrap your initial config with `liveblocksConfig`
 const initialConfig = liveblocksConfig({
@@ -79,7 +80,6 @@ export default function Editor() {
 
 function Threads() {
   const { threads } = useThreads();
-
   const isMobile = useIsMobile();
 
   return isMobile ? (
@@ -87,23 +87,4 @@ function Threads() {
   ) : (
     <AnchoredThreads threads={threads} className="w-[350px]" />
   );
-}
-
-function useIsMobile() {
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-}
-
-function subscribe(callback: () => void) {
-  if (typeof window === "undefined") return () => {};
-  const query = window.matchMedia("(max-width: 1024px)");
-
-  query.addEventListener("change", callback);
-  return () => query.removeEventListener("change", callback);
-}
-
-function getSnapshot() {
-  if (typeof window === "undefined") return () => {};
-
-  const query = window.matchMedia("(max-width: 1024px)");
-  return query.matches;
 }
