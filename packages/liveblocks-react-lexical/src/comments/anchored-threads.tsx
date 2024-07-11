@@ -232,6 +232,8 @@ export function AnchoredThreads({
     return () => observer.disconnect();
   }, [root, handlePositionThreads]);
 
+  if (orderedThreads.length === 0) return null;
+
   return (
     <div
       {...props}
@@ -244,7 +246,9 @@ export function AnchoredThreads({
     >
       {orderedThreads.map(({ thread, element }) => {
         const rect = element.getBoundingClientRect();
-        let top = rect.top;
+        const offset = root !== null ? root.getBoundingClientRect().top : 0;
+
+        let top = rect.top - offset;
 
         if (positions.has(thread.id)) {
           top = positions.get(thread.id)!;

@@ -18,7 +18,6 @@ import FloatingToolbar from "./floating-toolbar";
 import NotificationsPopover from "../notifications-popover";
 import Loading from "../loading";
 import { useThreads } from "@liveblocks/react/suspense";
-import { Suspense } from "react";
 import { useIsMobile } from "./use-is-mobile";
 
 // Wrap your initial config with `liveblocksConfig`
@@ -46,12 +45,12 @@ export default function Editor() {
                 <NotificationsPopover />
               </div>
 
-              <div className="relative flex flex-row justify-between w-full flex-1 py-16 px-32 overflow-auto gap-12">
+              <div className="relative flex flex-row justify-between w-full py-16 xl:pl-[250px] pl-[100px] gap-[50px]">
                 {/* Editable */}
                 <div className="relative flex flex-1">
                   <RichTextPlugin
                     contentEditable={
-                      <ContentEditable className="outline-none flex-1" />
+                      <ContentEditable className="outline-none flex-1 transition-all" />
                     }
                     placeholder={
                       <p className="pointer-events-none absolute top-0 left-0 text-muted-foreground w-full h-full">
@@ -66,10 +65,8 @@ export default function Editor() {
                   <FloatingToolbar />
                 </div>
 
-                <div className="lg:w-[350px]">
-                  <Suspense fallback={null}>
-                    <Threads />
-                  </Suspense>
+                <div className="xl:[&:not(:has(.lb-lexical-anchored-threads))]:pr-[200px] [&:not(:has(.lb-lexical-anchored-threads))]:pr-[50px]">
+                  <Threads />
                 </div>
               </div>
             </>
@@ -87,6 +84,9 @@ function Threads() {
   return isMobile ? (
     <FloatingThreads threads={threads} />
   ) : (
-    <AnchoredThreads threads={threads} />
+    <AnchoredThreads
+      threads={threads}
+      className="w-[350px] xl:mr-[100px] mr-[50px]"
+    />
   );
 }
