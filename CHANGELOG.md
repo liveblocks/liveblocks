@@ -1,3 +1,9 @@
+## v2.2.3 (Not released)
+
+### `@liveblocks/react-lexical`
+
+- Add new `AnchoredThreads` and `FloatingThreads` components.
+
 ## v2.2.2
 
 ### `@liveblocks/react-ui`
@@ -6,10 +12,6 @@
 - Fix `textMention` usage (and its props type) when customizing rendering via
   `kinds` on `InboxNotification`.
 - Fix broken CSS selector in default styles.
-
-### `@liveblocks/react-lexical`
-
-- Add new `AnchoredThreads` and `FloatingThreads` components.
 
 ## v2.2.1
 
