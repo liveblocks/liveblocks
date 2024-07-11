@@ -264,9 +264,9 @@ export function AnchoredThreads({
             style={{
               position: "absolute",
               transform: `translate3d(${isActive ? ACTIVE_THREAD_OFFSET : 0}, ${top}px, 0)`,
-              left: 0,
-              width: "100%",
-              paddingBottom: GAP,
+              insetInlineStart: 0,
+              inlineSize: "100%",
+              paddingBlockEnd: GAP,
             }}
           />
         );
