@@ -10,8 +10,8 @@ import { createRoomContext } from "../room";
 import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import {
+  mockDeleteInboxNotification,
   mockGetInboxNotifications,
-  mockMarkInboxNotificationsAsRead,
 } from "./_restMocks";
 import { generateFakeJwt } from "./_utils";
 
@@ -44,22 +44,23 @@ function createRoomContextForTest<M extends BaseMetadata>() {
   };
 }
 
-describe("useMarkAllInboxNotificationsAsRead", () => {
-  test("should mark all notifications as read optimistically", async () => {
+describe("useDeleteInboxNotifications", () => {
+  test("should delete a notification optimistically", async () => {
     const roomId = nanoid();
-    const threads = [dummyThreadData({ roomId }), dummyThreadData({ roomId })];
-    const inboxNotifications = [
-      dummyThreadInboxNotificationData({
-        roomId,
-        threadId: threads[0].id,
-        readAt: null,
-      }),
-      dummyThreadInboxNotificationData({
-        roomId,
-        threadId: threads[1].id,
-        readAt: null,
-      }),
-    ];
+    const thread1 = dummyThreadData({ roomId });
+    const thread2 = dummyThreadData({ roomId });
+    const threads = [thread1, thread2];
+    const notification1 = dummyThreadInboxNotificationData({
+      roomId,
+      threadId: thread1.id,
+      readAt: null,
+    });
+    const notification2 = dummyThreadInboxNotificationData({
+      roomId,
+      threadId: thread2.id,
+      readAt: null,
+    });
+    const inboxNotifications = [notification1, notification2];
 
     server.use(
       mockGetInboxNotifications((_req, res, ctx) =>
@@ -76,20 +77,23 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
           })
         )
       ),
-      mockMarkInboxNotificationsAsRead((_req, res, ctx) => res(ctx.status(200)))
+      mockDeleteInboxNotification(
+        { inboxNotificationId: notification1.id },
+        (_req, res, ctx) => res(ctx.status(204))
+      )
     );
 
     const {
       liveblocksCtx: {
         LiveblocksProvider,
         useInboxNotifications,
-        useMarkAllInboxNotificationsAsRead,
+        useDeleteInboxNotification,
       },
     } = createRoomContextForTest();
 
     const { result, unmount } = renderHook(
       () => ({
-        markAllInboxNotificationsAsRead: useMarkAllInboxNotificationsAsRead(),
+        deleteInboxNotification: useDeleteInboxNotification(),
         inboxNotifications: useInboxNotifications().inboxNotifications,
         deletedThreads: [],
         deletedInboxNotifications: [],
@@ -109,30 +113,30 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
     );
 
     act(() => {
-      result.current.markAllInboxNotificationsAsRead();
+      result.current.deleteInboxNotification(notification1.id);
     });
 
-    expect(result.current.inboxNotifications![0].readAt).not.toBe(null);
-    expect(result.current.inboxNotifications![1].readAt).not.toBe(null);
+    expect(result.current.inboxNotifications).toEqual([notification2]);
 
     unmount();
   });
 
-  test("should mark all inbox notifications as read optimistically and revert the updates if error response from server", async () => {
+  test("should delete a notification optimistically and revert the update if error response from server", async () => {
     const roomId = nanoid();
-    const threads = [dummyThreadData({ roomId }), dummyThreadData({ roomId })];
-    const inboxNotifications = [
-      dummyThreadInboxNotificationData({
-        roomId,
-        threadId: threads[0].id,
-        readAt: null,
-      }),
-      dummyThreadInboxNotificationData({
-        roomId,
-        threadId: threads[1].id,
-        readAt: null,
-      }),
-    ];
+    const thread1 = dummyThreadData({ roomId });
+    const thread2 = dummyThreadData({ roomId });
+    const threads = [thread1, thread2];
+    const notification1 = dummyThreadInboxNotificationData({
+      roomId,
+      threadId: thread1.id,
+      readAt: null,
+    });
+    const notification2 = dummyThreadInboxNotificationData({
+      roomId,
+      threadId: thread2.id,
+      readAt: null,
+    });
+    const inboxNotifications = [notification1, notification2];
 
     server.use(
       mockGetInboxNotifications((_req, res, ctx) =>
@@ -149,21 +153,29 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
           })
         )
       ),
-      mockMarkInboxNotificationsAsRead((_req, res, ctx) => res(ctx.status(500)))
+      mockDeleteInboxNotification(
+        { inboxNotificationId: notification1.id },
+        (_req, res, ctx) => res(ctx.status(500))
+      )
     );
 
     const {
       liveblocksCtx: {
         LiveblocksProvider,
         useInboxNotifications,
-        useMarkAllInboxNotificationsAsRead,
+        useDeleteInboxNotification,
       },
     } = createRoomContextForTest();
 
     const { result, unmount } = renderHook(
       () => ({
-        markInboxNotificationsAsRead: useMarkAllInboxNotificationsAsRead(),
+        deleteInboxNotification: useDeleteInboxNotification(),
         inboxNotifications: useInboxNotifications().inboxNotifications,
+        deletedThreads: [],
+        deletedInboxNotifications: [],
+        meta: {
+          requestedAt: new Date().toISOString(),
+        },
       }),
       {
         wrapper: ({ children }) => (
@@ -176,18 +188,16 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
       expect(result.current.inboxNotifications).toEqual(inboxNotifications)
     );
 
+    // We delete the notification optimitiscally
     act(() => {
-      result.current.markInboxNotificationsAsRead();
+      result.current.deleteInboxNotification(notification1.id);
     });
 
-    // We mark the notifications as read optimitiscally
-    expect(result.current.inboxNotifications![0].readAt).not.toBe(null);
-    expect(result.current.inboxNotifications![1].readAt).not.toBe(null);
+    expect(result.current.inboxNotifications).toEqual([notification2]);
 
     await waitFor(() => {
-      // The readAt field should have been updated in the inbox notifications cache
-      expect(result.current.inboxNotifications![0].readAt).toEqual(null);
-      expect(result.current.inboxNotifications![1].readAt).toEqual(null);
+      // The optimistic update is reverted because of the error response
+      expect(result.current.inboxNotifications).toEqual(inboxNotifications);
     });
 
     unmount();

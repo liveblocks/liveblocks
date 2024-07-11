@@ -133,6 +133,25 @@ export function mockGetInboxNotifications(
   );
 }
 
+export function mockDeleteAllInboxNotifications(
+  resolver: ResponseResolver<RestRequest<never, never>, RestContext, any>
+) {
+  return rest.delete(
+    "https://api.liveblocks.io/v2/c/inbox-notifications",
+    resolver
+  );
+}
+
+export function mockDeleteInboxNotification(
+  params: { inboxNotificationId: string },
+  resolver: ResponseResolver<RestRequest<never, never>, RestContext, any>
+) {
+  return rest.delete(
+    `https://api.liveblocks.io/v2/c/inbox-notifications/${params.inboxNotificationId}`,
+    resolver
+  );
+}
+
 export function mockGetRoomNotificationSettings(
   resolver: ResponseResolver<
     RestRequest<never, never>,
