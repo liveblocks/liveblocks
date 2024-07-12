@@ -31,7 +31,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 ## Contributors
 
-nvie, marcbouchenoire
+jrowny, nvie, marcbouchenoire
 
 # Week 27 (2024-07-05)
 
