@@ -2,7 +2,13 @@
 
 ### `@liveblocks/react`
 
-- Various refactorings to Suspense internals
+- Add `useDeleteInboxNotification` and `useDeleteAllInboxNotifications` hooks.
+- Various refactorings to Suspense internals.
+
+### `@liveblocks/react-ui`
+
+- Add "Delete notification" action to `InboxNotification`.
+- Hide "Mark as read" action in `InboxNotification` when already read.
 
 ## v2.2.2
 
