@@ -1,19 +1,14 @@
-import type { BaseMetadata, JsonObject } from "@liveblocks/core";
-import { createClient } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
 import { nanoid } from "nanoid";
 import React from "react";
 
-import { createLiveblocksContext } from "../liveblocks";
-import { createRoomContext } from "../room";
 import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
-import MockWebSocket from "./_MockWebSocket";
 import {
   mockDeleteAllInboxNotifications,
   mockGetInboxNotifications,
 } from "./_restMocks";
-import { generateFakeJwt } from "./_utils";
+import { createContextsForTest } from "./_utils";
 
 const server = setupServer();
 
@@ -24,25 +19,6 @@ afterEach(() => {
 });
 
 afterAll(() => server.close());
-
-// TODO: Dry up and create utils that wrap renderHook
-function createRoomContextForTest<M extends BaseMetadata>() {
-  const client = createClient({
-    async authEndpoint() {
-      return {
-        token: await generateFakeJwt({ userId: "userId" }),
-      };
-    },
-    polyfills: {
-      WebSocket: MockWebSocket as any,
-    },
-  });
-
-  return {
-    roomCtx: createRoomContext<JsonObject, never, never, never, M>(client),
-    liveblocksCtx: createLiveblocksContext(client),
-  };
-}
 
 describe("useDeleteAllInboxNotifications", () => {
   test("should delete all notifications optimistically", async () => {
@@ -80,12 +56,12 @@ describe("useDeleteAllInboxNotifications", () => {
     );
 
     const {
-      liveblocksCtx: {
+      liveblocks: {
         LiveblocksProvider,
         useInboxNotifications,
         useDeleteAllInboxNotifications,
       },
-    } = createRoomContextForTest();
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(
       () => ({
@@ -152,12 +128,12 @@ describe("useDeleteAllInboxNotifications", () => {
     );
 
     const {
-      liveblocksCtx: {
+      liveblocks: {
         LiveblocksProvider,
         useInboxNotifications,
         useDeleteAllInboxNotifications,
       },
-    } = createRoomContextForTest();
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(
       () => ({

@@ -1,7 +1,6 @@
 import "@testing-library/jest-dom";
 
-import type { BaseMetadata, JsonObject } from "@liveblocks/core";
-import { createClient, kInternal, ServerMsgCode } from "@liveblocks/core";
+import { kInternal, ServerMsgCode } from "@liveblocks/core";
 import type { AST } from "@liveblocks/query-parser";
 import { QueryParser } from "@liveblocks/query-parser";
 import {
@@ -21,8 +20,7 @@ import React, { Suspense } from "react";
 import type { FallbackProps } from "react-error-boundary";
 import { ErrorBoundary } from "react-error-boundary";
 
-import { createLiveblocksContext } from "../liveblocks";
-import { createRoomContext, generateQueryKey, POLLING_INTERVAL } from "../room";
+import { generateQueryKey, POLLING_INTERVAL } from "../room";
 import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
 import MockWebSocket, { websocketSimulator } from "./_MockWebSocket";
 import {
@@ -30,6 +28,7 @@ import {
   mockGetThread,
   mockGetThreads,
 } from "./_restMocks";
+import { createContextsForTest } from "./_utils";
 
 const server = setupServer();
 
@@ -74,22 +73,6 @@ afterEach(() => {
 
 afterAll(() => server.close());
 
-// TODO: Dry up and create utils that wrap renderHook
-function createRoomContextForTest<M extends BaseMetadata>() {
-  const client = createClient({
-    publicApiKey: "pk_xxx",
-    polyfills: {
-      WebSocket: MockWebSocket as any,
-    },
-  });
-
-  return {
-    roomCtx: createRoomContext<JsonObject, never, never, never, M>(client),
-    liveblocksCtx: createLiveblocksContext(client),
-    client,
-  };
-}
-
 describe("useThreads", () => {
   beforeAll(() => {
     jest.useFakeTimers();
@@ -120,8 +103,8 @@ describe("useThreads", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useThreads },
-    } = createRoomContextForTest();
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
@@ -162,8 +145,8 @@ describe("useThreads", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useThreads },
-    } = createRoomContextForTest();
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest();
 
     const { result, unmount, rerender } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
@@ -212,8 +195,8 @@ describe("useThreads", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useThreads },
-    } = createRoomContextForTest();
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest();
 
     const { unmount, rerender } = renderHook(
       () => {
@@ -280,8 +263,8 @@ describe("useThreads", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useThreads },
-    } = createRoomContextForTest<{
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest<{
       pinned: boolean;
     }>();
 
@@ -348,8 +331,8 @@ describe("useThreads", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useThreads },
-    } = createRoomContextForTest<{
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest<{
       organization: string;
     }>();
 
@@ -406,8 +389,8 @@ describe("useThreads", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useThreads },
-    } = createRoomContextForTest<{
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest<{
       pinned: boolean;
     }>();
 
@@ -471,8 +454,8 @@ describe("useThreads", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useThreads },
-    } = createRoomContextForTest<{
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest<{
       pinned: boolean;
     }>();
 
@@ -560,8 +543,8 @@ describe("useThreads", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useThreads },
-    } = createRoomContextForTest();
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest();
 
     const { result: room1Result, unmount: unmountRoom1 } = renderHook(
       () => useThreads(),
@@ -644,8 +627,8 @@ describe("useThreads", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useThreads },
-    } = createRoomContextForTest();
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest();
 
     const RoomIdDispatchContext = React.createContext<
       ((value: string) => void) | null
@@ -718,8 +701,8 @@ describe("useThreads", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useThreads },
-    } = createRoomContextForTest();
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
@@ -768,8 +751,8 @@ describe("useThreads", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useThreads },
-    } = createRoomContextForTest();
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(
       () => ({
@@ -841,9 +824,9 @@ describe("useThreads", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useThreads },
-      liveblocksCtx: { useInboxNotifications },
-    } = createRoomContextForTest();
+      room: { RoomProvider, useThreads },
+      liveblocks: { useInboxNotifications },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(
       () => ({
@@ -919,9 +902,9 @@ describe("useThreads", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useThreads },
-      liveblocksCtx: { useInboxNotifications },
-    } = createRoomContextForTest();
+      room: { RoomProvider, useThreads },
+      liveblocks: { useInboxNotifications },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(
       () => ({
@@ -977,9 +960,9 @@ describe("useThreads", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useThreads },
+      room: { RoomProvider, useThreads },
       client,
-    } = createRoomContextForTest();
+    } = createContextsForTest();
 
     const store = client[kInternal].cacheStore;
     store.set((state) => ({
@@ -1061,8 +1044,8 @@ describe("useThreads", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useThreads },
-    } = createRoomContextForTest();
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest();
 
     const firstRenderResult = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
@@ -1132,9 +1115,9 @@ describe("useThreads", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useThreads },
+      room: { RoomProvider, useThreads },
       client,
-    } = createRoomContextForTest();
+    } = createContextsForTest();
 
     const Room = () => {
       return (
@@ -1221,8 +1204,8 @@ describe("useThreads", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useThreads },
-    } = createRoomContextForTest();
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
@@ -1283,8 +1266,8 @@ describe("useThreads: error", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useThreads },
-    } = createRoomContextForTest();
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
@@ -1338,8 +1321,8 @@ describe("useThreads: error", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useThreads },
-    } = createRoomContextForTest();
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
@@ -1406,8 +1389,8 @@ describe("useThreads: error", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useThreads },
-    } = createRoomContextForTest();
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
@@ -1476,8 +1459,8 @@ describe("useThreads: polling", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useThreads },
-    } = createRoomContextForTest();
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest();
 
     const Room = () => {
       return (
@@ -1533,8 +1516,8 @@ describe("useThreads: polling", () => {
     );
 
     const {
-      roomCtx: { RoomProvider },
-    } = createRoomContextForTest();
+      room: { RoomProvider },
+    } = createContextsForTest();
 
     const Room = () => {
       return (
@@ -1590,8 +1573,8 @@ describe("WebSocket events", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useThreads },
-    } = createRoomContextForTest();
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
@@ -1648,8 +1631,8 @@ describe("WebSocket events", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useThreads },
-    } = createRoomContextForTest();
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
@@ -1704,8 +1687,8 @@ describe("WebSocket events", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useThreads },
-    } = createRoomContextForTest();
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
@@ -1796,8 +1779,8 @@ describe("WebSocket events", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useThreads },
-    } = createRoomContextForTest();
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
@@ -1859,11 +1842,11 @@ describe("useThreadsSuspense", () => {
     );
 
     const {
-      roomCtx: {
+      room: {
         RoomProvider,
         suspense: { useThreads },
       },
-    } = createRoomContextForTest();
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
@@ -1906,11 +1889,11 @@ describe("useThreadsSuspense", () => {
     );
 
     const {
-      roomCtx: {
+      room: {
         RoomProvider,
         suspense: { useThreads },
       },
-    } = createRoomContextForTest();
+    } = createContextsForTest();
 
     const { result, unmount, rerender } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
@@ -1948,11 +1931,11 @@ describe("useThreadsSuspense", () => {
     );
 
     const {
-      roomCtx: {
+      room: {
         RoomProvider,
         suspense: { useThreads },
       },
-    } = createRoomContextForTest();
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(() => useThreads(), {
       wrapper: ({ children }) => (
@@ -2018,11 +2001,11 @@ describe("useThreadsSuspense: error", () => {
     );
 
     const {
-      roomCtx: {
+      room: {
         RoomProvider,
         suspense: { useThreads },
       },
-    } = createRoomContextForTest();
+    } = createContextsForTest();
 
     function Fallback({ resetErrorBoundary }: FallbackProps) {
       return (

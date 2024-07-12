@@ -1,7 +1,5 @@
 import "@testing-library/jest-dom";
 
-import type { BaseMetadata, JsonObject } from "@liveblocks/core";
-import { createClient } from "@liveblocks/core";
 import {
   act,
   fireEvent,
@@ -14,13 +12,12 @@ import { nanoid } from "nanoid";
 import React, { Suspense } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 
-import { createLiveblocksContext } from "../liveblocks";
-import { createRoomContext } from "../room";
 import MockWebSocket from "./_MockWebSocket";
 import {
   mockGetRoomNotificationSettings,
   mockUpdateRoomNotificationSettings,
 } from "./_restMocks";
+import { createContextsForTest } from "./_utils";
 
 const server = setupServer();
 
@@ -37,21 +34,6 @@ afterEach(() => {
 
 afterAll(() => server.close());
 
-// TODO: Dry up and create utils that wrap renderHook
-function createRoomContextForTest<M extends BaseMetadata>() {
-  const client = createClient({
-    publicApiKey: "pk_xxx",
-    polyfills: {
-      WebSocket: MockWebSocket as any,
-    },
-  });
-
-  return {
-    roomCtx: createRoomContext<JsonObject, never, never, never, M>(client),
-    liveblocksCtx: createLiveblocksContext(client),
-  };
-}
-
 describe("useRoomNotificationSettings", () => {
   test("should be referentially stable", async () => {
     const roomId = nanoid();
@@ -67,8 +49,8 @@ describe("useRoomNotificationSettings", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useRoomNotificationSettings },
-    } = createRoomContextForTest();
+      room: { RoomProvider, useRoomNotificationSettings },
+    } = createContextsForTest();
 
     const { result, unmount, rerender } = renderHook(
       () => useRoomNotificationSettings(),
@@ -116,8 +98,8 @@ describe("useRoomNotificationSettings", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useRoomNotificationSettings },
-    } = createRoomContextForTest();
+      room: { RoomProvider, useRoomNotificationSettings },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(
       () => useRoomNotificationSettings(),
@@ -188,8 +170,8 @@ describe("useRoomNotificationSettings: error", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useRoomNotificationSettings },
-    } = createRoomContextForTest();
+      room: { RoomProvider, useRoomNotificationSettings },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(
       () => useRoomNotificationSettings(),
@@ -225,8 +207,8 @@ describe("useRoomNotificationSettings: error", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useRoomNotificationSettings },
-    } = createRoomContextForTest();
+      room: { RoomProvider, useRoomNotificationSettings },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(
       () => useRoomNotificationSettings(),
@@ -282,8 +264,8 @@ describe("useRoomNotificationSettings: error", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useRoomNotificationSettings },
-    } = createRoomContextForTest();
+      room: { RoomProvider, useRoomNotificationSettings },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(
       () => useRoomNotificationSettings(),
@@ -346,8 +328,8 @@ describe("useRoomNotificationSettings: error", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useRoomNotificationSettings },
-    } = createRoomContextForTest();
+      room: { RoomProvider, useRoomNotificationSettings },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(
       () => useRoomNotificationSettings(),
@@ -403,10 +385,10 @@ describe("useRoomNotificationSettings suspense", () => {
     );
 
     const {
-      roomCtx: {
+      room: {
         suspense: { RoomProvider, useRoomNotificationSettings },
       },
-    } = createRoomContextForTest();
+    } = createContextsForTest();
 
     const { result, unmount, rerender } = renderHook(
       () => useRoomNotificationSettings(),
@@ -459,10 +441,10 @@ describe("useRoomNotificationSettingsSuspense: error", () => {
     );
 
     const {
-      roomCtx: {
+      room: {
         suspense: { RoomProvider, useRoomNotificationSettings },
       },
-    } = createRoomContextForTest();
+    } = createContextsForTest();
 
     function Fallback({ resetErrorBoundary }: FallbackProps) {
       return (
@@ -521,11 +503,11 @@ describe("useRoomNotificationSettingsSuspense: error", () => {
     );
 
     const {
-      roomCtx: {
+      room: {
         RoomProvider,
         suspense: { useRoomNotificationSettings },
       },
-    } = createRoomContextForTest();
+    } = createContextsForTest();
 
     function Fallback({ resetErrorBoundary }: FallbackProps) {
       return (

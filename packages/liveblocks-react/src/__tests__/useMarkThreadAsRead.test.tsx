@@ -1,20 +1,15 @@
-import type { BaseMetadata, JsonObject } from "@liveblocks/core";
-import { createClient } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
 import { nanoid } from "nanoid";
 import React from "react";
 
-import { createLiveblocksContext } from "../liveblocks";
-import { createRoomContext } from "../room";
 import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
-import MockWebSocket from "./_MockWebSocket";
 import {
   mockGetInboxNotifications,
   mockGetThreads,
   mockMarkInboxNotificationsAsRead,
 } from "./_restMocks";
-import { generateFakeJwt } from "./_utils";
+import { createContextsForTest } from "./_utils";
 
 const server = setupServer();
 
@@ -25,25 +20,6 @@ afterEach(() => {
 });
 
 afterAll(() => server.close());
-
-// TODO: Dry up and create utils that wrap renderHook
-function createRoomContextForTest<M extends BaseMetadata>() {
-  const client = createClient({
-    async authEndpoint() {
-      return {
-        token: await generateFakeJwt({ userId: "userId" }),
-      };
-    },
-    polyfills: {
-      WebSocket: MockWebSocket as any,
-    },
-  });
-
-  return {
-    roomCtx: createRoomContext<JsonObject, never, never, never, M>(client),
-    liveblocksCtx: createLiveblocksContext(client),
-  };
-}
 
 describe("useMarkThreadAsRead", () => {
   test("should mark notification as read optimistically", async () => {
@@ -90,9 +66,9 @@ describe("useMarkThreadAsRead", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useMarkThreadAsRead },
-      liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
-    } = createRoomContextForTest();
+      room: { RoomProvider, useMarkThreadAsRead },
+      liveblocks: { LiveblocksProvider, useInboxNotifications },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(
       () => ({
@@ -166,9 +142,9 @@ describe("useMarkThreadAsRead", () => {
     );
 
     const {
-      roomCtx: { RoomProvider, useMarkThreadAsRead },
-      liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
-    } = createRoomContextForTest();
+      room: { RoomProvider, useMarkThreadAsRead },
+      liveblocks: { LiveblocksProvider, useInboxNotifications },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(
       () => ({
