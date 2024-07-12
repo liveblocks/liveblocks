@@ -12,7 +12,13 @@ editor. It also adds realtime cursors, document persistence on the cloud,
 comments, and mentions. Read our
 [get started guide](/docs/get-started/yjs-lexical-react) to learn more.
 
-## LiveblocksPlugin
+## Setup
+
+To set up your collaborative Lexical editor, you must use
+[`LiveblocksPlugin`](#LiveblocksPlugin) and
+[`liveblocksConfig`](#liveblocksConfig).
+
+### LiveblocksPlugin
 
 Liveblocks plugin for Lexical that adds collaboration to your editor.
 
@@ -24,14 +30,18 @@ Liveblocks plugin for Lexical that adds collaboration to your editor.
 
 {/* TODO: Image */}
 
-`LiveblocksPlugin` should always be nested inside [`LexicalComposer`][].
+`LiveblocksPlugin` should always be nested inside [`LexicalComposer`][], and
+each [Lexical default component](#Default-components) you’re using should be
+placed inside the plugin.
 
-```tsx highlight="5,17"
+```tsx
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+// +++
 import { liveblocksConfig, LiveblocksPlugin } from "@liveblocks/react-lexical";
+// +++
 
 const initialConfig = liveblocksConfig({
   namespace: "MyEditor",
@@ -43,7 +53,13 @@ const initialConfig = liveblocksConfig({
 function Editor() {
   return (
     <LexicalComposer initialConfig={initialConfig}>
-      <LiveblocksPlugin />
+      // +++
+      <LiveblocksPlugin>
+        <FloatingThreads />
+        <FloatingComposer />
+        <AnchoredThreads />
+      </LiveblocksPlugin>
+      // +++
       <RichTextPlugin
         contentEditable={<ContentEditable />}
         placeholder={<div>Enter some text...</div>}
@@ -56,7 +72,7 @@ function Editor() {
 
 Learn more in our [get started guide](/docs/get-started/yjs-lexical-react).
 
-## liveblocksConfig
+### liveblocksConfig
 
 Function that takes a Lexical editor config and modifies it to add the necessary
 `nodes` and `theme` to make [`LiveblocksPlugin`][] works correctly.
@@ -92,7 +108,11 @@ const initialConfig = liveblocksConfig({
 function Editor() {
   return (
     <LexicalComposer initialConfig={initialConfig}>
-      <LiveblocksPlugin />
+      <LiveblocksPlugin>
+        <FloatingThreads />
+        <FloatingComposer />
+        <AnchoredThreads />
+      </LiveblocksPlugin>
       <RichTextPlugin
         contentEditable={<ContentEditable />}
         placeholder={<div>Enter some text...</div>}
@@ -106,25 +126,9 @@ function Editor() {
 Note that `liveblocksConfig` sets `editorState` to `null` because
 `LiveblocksPlugin` is responsible for initializing it on the server.
 
-## useEditorStatus
+## Default components
 
-Returns the current editor status.
-
-```ts
-import { useEditorStatus } from "@liveblocks/react-lexical";
-
-const status = useEditorStatus();
-```
-
-The possible value are:
-
-- `not-loaded`: Initial editor state when entering the room.
-- `loading`: Once the editor state has been requested by `LiveblocksPlugin`.
-- `synchronizing`: Not working yet at runtime! Will be available in a future
-  release.
-- `synchronized`: The editor state is sync with Liveblocks servers.
-
-## FloatingComposer
+### FloatingComposer
 
 Displays a `Composer` near the current lexical selection.
 
@@ -175,7 +179,7 @@ function Editor() {
 }
 ```
 
-### Opening the `FloatingComposer`
+#### Opening the `FloatingComposer`
 
 To open the `FloatingComposer`, you need to dispatch the
 `OPEN_FLOATING_COMPOSER_COMMAND`
@@ -200,7 +204,35 @@ function Toolbar() {
 }
 ```
 
-## useIsThreadActive
+### AnchoredThreads
+
+[TODO]
+
+### FloatingThreads
+
+[TODO]
+
+## Hooks
+
+### useEditorStatus
+
+Returns the current editor status.
+
+```ts
+import { useEditorStatus } from "@liveblocks/react-lexical";
+
+const status = useEditorStatus();
+```
+
+The possible value are:
+
+- `not-loaded`: Initial editor state when entering the room.
+- `loading`: Once the editor state has been requested by `LiveblocksPlugin`.
+- `synchronizing`: Not working yet at runtime! Will be available in a future
+  release.
+- `synchronized`: The editor state is sync with Liveblocks servers.
+
+### useIsThreadActive
 
 Accepts a thread id and returns whether the thread annotation for this thread is
 selected or not in the Lexical editor. This hook must be used in a component
