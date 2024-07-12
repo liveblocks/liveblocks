@@ -244,7 +244,7 @@ export const LiveblocksPlugin = ({
         }}
       />
 
-      {self && (
+      {info && (
         <CollaborationPlugin
           // Setting the key allows us to reset the internal Y.doc used by useYjsCollaboration
           // without implementing `reload` event
