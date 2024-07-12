@@ -171,8 +171,12 @@ select {
   --lb-elevation-shadow: rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.1) 0px 4px 6px -4px;
 }
 
-.lb-lexical-floating-composer {
+.lb-lexical-floating-composer, .lb-lexical-floating-threads {
   border: 1px solid rgba(228, 228, 231, 0.8);
+}
+
+.lb-composer {
+  border-top: 1px solid rgba(228, 228, 231, 0.8);
 }
 
 .lb-composer, .lb-thread {
