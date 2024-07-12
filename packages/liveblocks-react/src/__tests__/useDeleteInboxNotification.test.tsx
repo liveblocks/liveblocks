@@ -1,3 +1,4 @@
+import { wait } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
 import { nanoid } from "nanoid";
@@ -233,7 +234,7 @@ describe("useDeleteInboxNotification", () => {
         useInboxNotifications,
         useDeleteInboxNotification,
       },
-    } = createContextsForTest();
+    } = createContextsForTest({ userId: "user-id" });
 
     const { result, unmount } = renderHook(
       () => ({
@@ -272,6 +273,11 @@ describe("useDeleteInboxNotification", () => {
     });
 
     expect(result.current.inboxNotifications).toEqual([notification2]);
+
+    // TODO: We should wait for the `deleteThread` call to be finished but we don't have APIs for that yet
+    //       We should expose a way to know (and be updated about) if there are still pending optimistic updates
+    //       Until then, we'll just wait a bit to make sure the request doesn't leak into the next tests
+    await wait(1000);
 
     unmount();
   });
@@ -323,7 +329,7 @@ describe("useDeleteInboxNotification", () => {
         useInboxNotifications,
         useDeleteInboxNotification,
       },
-    } = createContextsForTest();
+    } = createContextsForTest({ userId });
 
     const { result, unmount } = renderHook(
       () => ({
@@ -365,6 +371,11 @@ describe("useDeleteInboxNotification", () => {
     });
 
     expect(result.current.inboxNotifications).toEqual([]);
+
+    // TODO: We should wait for the `deleteComment` call to be finished but we don't have APIs for that yet
+    //       We should expose a way to know (and be updated about) if there are still pending optimistic updates
+    //       Until then, we'll just wait a bit to make sure the request doesn't leak into the next tests
+    await wait(1000);
 
     unmount();
   });
