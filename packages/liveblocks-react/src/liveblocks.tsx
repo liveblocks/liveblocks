@@ -5,21 +5,22 @@ import type {
   ThreadData,
 } from "@liveblocks/client";
 import type {
+  AsyncResult,
+  BaseRoomInfo,
   CacheState,
   CacheStore,
   ClientOptions,
   DM,
   DU,
-  InboxNotificationData,
-  InboxNotificationDeleteInfo,
   OpaqueClient,
   PrivateClientApi,
-  ThreadDeleteInfo,
 } from "@liveblocks/core";
 import {
+  assert,
   createClient,
   kInternal,
   makePoller,
+  memoizeOnSuccess,
   raise,
   shallow,
 } from "@liveblocks/core";
@@ -36,19 +37,18 @@ import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
-import { retryError } from "./lib/retry-error";
+import { autoRetry } from "./lib/retry-error";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
+import { use } from "./lib/use-polyfill";
 import type {
   InboxNotificationsState,
-  InboxNotificationsStateSuccess,
   LiveblocksContextBundle,
-  RoomInfoState,
-  RoomInfoStateSuccess,
+  RoomInfoAsyncResult,
+  RoomInfoAsyncSuccess,
   SharedContextBundle,
   UnreadInboxNotificationsCountState,
-  UnreadInboxNotificationsCountStateSuccess,
-  UserState,
-  UserStateSuccess,
+  UserAsyncResult,
+  UserAsyncSuccess,
 } from "./types";
 
 /**
@@ -105,15 +105,6 @@ function selectorFor_useInboxNotifications(
   };
 }
 
-function selectorFor_useInboxNotificationsSuspense(
-  state: CacheState<BaseMetadata>
-): InboxNotificationsStateSuccess {
-  return {
-    inboxNotifications: selectedInboxNotifications(state),
-    isLoading: false,
-  };
-}
-
 function selectUnreadInboxNotificationsCount(state: CacheState<BaseMetadata>) {
   let count = 0;
 
@@ -153,12 +144,59 @@ function selectorFor_useUnreadInboxNotificationsCount(
   };
 }
 
-function selectorFor_useUnreadInboxNotificationsCountSuspense(
-  state: CacheState<BaseMetadata>
-): UnreadInboxNotificationsCountStateSuccess {
+function selectorFor_useUser<U extends BaseUserMeta>(
+  state: AsyncResult<U["info"] | undefined> | undefined,
+  userId: string
+): UserAsyncResult<U["info"]> {
+  if (state === undefined || state?.isLoading) {
+    return state ?? { isLoading: true };
+  }
+
+  if (state.error) {
+    return state;
+  }
+
+  // If this is a "success" state, but there still is no data, then it means
+  // the "resolving of this user" returned undefined. In that case, still treat
+  // this as an error state.
+  if (!state.data) {
+    return {
+      isLoading: false,
+      error: missingUserError(userId),
+    };
+  }
+
   return {
     isLoading: false,
-    count: selectUnreadInboxNotificationsCount(state),
+    user: state.data,
+  };
+}
+
+function selectorFor_useRoomInfo(
+  state: AsyncResult<BaseRoomInfo | undefined> | undefined,
+  roomId: string
+): RoomInfoAsyncResult {
+  if (state === undefined || state?.isLoading) {
+    return state ?? { isLoading: true };
+  }
+
+  if (state.error) {
+    return state;
+  }
+
+  // If this is a "success" state, but there still is no data, then it means
+  // the "resolving of this user" returned undefined. In that case, still treat
+  // this as an error state.
+  if (!state.data) {
+    return {
+      isLoading: false,
+      error: missingRoomInfoError(roomId),
+    };
+  }
+
+  return {
+    isLoading: false,
+    info: state.data,
   };
 }
 
@@ -196,130 +234,127 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
   const store = internals.cacheStore;
   const notifications = internals.notifications;
 
-  let fetchInboxNotifications$: Promise<{
-    inboxNotifications: InboxNotificationData[];
-    threads: ThreadData<M>[];
-    deletedThreads: ThreadDeleteInfo[];
-    deletedInboxNotifications: InboxNotificationDeleteInfo[];
-    meta: {
-      requestedAt: Date;
-    };
-  }> | null = null;
-
   let lastRequestedAt: Date | undefined;
 
-  const poller = makePoller(() =>
-    notifications.getInboxNotifications({ since: lastRequestedAt }).then(
-      (result) => {
-        lastRequestedAt = result.meta.requestedAt;
+  /**
+   * Performs one network fetch, and updates the store and last requested at
+   * date if successful. If unsuccessful, will throw.
+   */
+  async function fetchInboxNotifications() {
+    const since =
+      lastRequestedAt !== undefined ? { since: lastRequestedAt } : undefined;
 
-        store.updateThreadsAndNotifications(
-          result.threads,
-          result.inboxNotifications,
-          result.deletedThreads,
-          result.deletedInboxNotifications,
-          INBOX_NOTIFICATIONS_QUERY
-        );
-      },
-      () => {
-        // TODO: Error handling
-      }
-    )
-  );
+    const result = await notifications.getInboxNotifications(since);
 
-  async function fetchInboxNotifications(
-    { retryCount }: { retryCount: number } = { retryCount: 0 }
-  ) {
-    if (fetchInboxNotifications$ !== null) {
-      return fetchInboxNotifications$;
+    store.updateThreadsAndNotifications(
+      result.threads,
+      result.inboxNotifications,
+      result.deletedThreads,
+      result.deletedInboxNotifications,
+      INBOX_NOTIFICATIONS_QUERY
+    );
+
+    /**
+     * We set the `lastRequestedAt` to the timestamp returned by the current request if:
+     * 1. The `lastRequestedAt` has not been set
+     * OR
+     * 2. The current `lastRequestedAt` is older than the timestamp returned by the current request
+     */
+    if (
+      lastRequestedAt === undefined ||
+      lastRequestedAt < result.meta.requestedAt
+    ) {
+      lastRequestedAt = result.meta.requestedAt;
     }
+  }
 
+  let pollerSubscribers = 0;
+  const poller = makePoller(async () => {
+    try {
+      await waitUntilInboxNotificationsLoaded();
+      await fetchInboxNotifications();
+    } catch (err) {
+      // When polling, we don't want to throw errors, ever
+      console.warn(`Polling new inbox notifications failed: ${String(err)}`);
+    }
+  });
+
+  /**
+   * Will trigger an initial fetch of inbox notifications if this hasn't
+   * already happened. Will resolve once there is initial data. Will retry
+   * a few times automatically in case fetching fails, with incremental backoff
+   * delays. Will throw eventually only if all retries fail.
+   */
+  const waitUntilInboxNotificationsLoaded = memoizeOnSuccess(async () => {
     store.setQueryState(INBOX_NOTIFICATIONS_QUERY, {
       isLoading: true,
     });
 
     try {
-      fetchInboxNotifications$ = notifications.getInboxNotifications();
-
-      const result = await fetchInboxNotifications$;
-
-      store.updateThreadsAndNotifications(
-        result.threads,
-        result.inboxNotifications,
-        result.deletedThreads,
-        result.deletedInboxNotifications,
-        INBOX_NOTIFICATIONS_QUERY
+      await autoRetry(
+        () => fetchInboxNotifications(),
+        5,
+        [5000, 5000, 10000, 15000]
       );
-
-      /**
-       * We set the `lastRequestedAt` to the timestamp returned by the current request if:
-       * 1. The `lastRequestedAt` has not been set
-       * OR
-       * 2. The current `lastRequestedAt` is older than the timestamp returned by the current request
-       */
-      if (
-        lastRequestedAt === undefined ||
-        lastRequestedAt > result.meta.requestedAt
-      ) {
-        lastRequestedAt = result.meta.requestedAt;
-      }
-
-      poller.start(POLLING_INTERVAL);
-    } catch (er) {
-      fetchInboxNotifications$ = null;
-
-      // Retry the action using the exponential backoff algorithm
-      retryError(() => {
-        void fetchInboxNotifications({
-          retryCount: retryCount + 1,
-        });
-      }, retryCount);
-
+    } catch (err) {
+      // Store the error in the cache as a side-effect, for non-Suspense
       store.setQueryState(INBOX_NOTIFICATIONS_QUERY, {
         isLoading: false,
-        error: er as Error,
+        error: err as Error,
       });
+
+      // Rethrow it for Suspense, where this promise must fail
+      throw err;
     }
-    return;
+  });
+
+  /**
+   * Triggers an initial fetch of inbox notifications if this hasn't
+   * already happened.
+   */
+  function loadInboxNotifications(): void {
+    void waitUntilInboxNotificationsLoaded().catch(() => {
+      // Deliberately catch and ignore any errors here
+    });
   }
 
-  let inboxNotificationsSubscribers = 0;
-
-  function useSubscribeToInboxNotificationsEffect(options?: {
-    autoFetch: boolean;
-  }) {
-    const autoFetch = useInitial(options?.autoFetch ?? true);
+  /**
+   * Enables polling for inbox notifications when the component mounts. Stops
+   * polling on unmount.
+   *
+   * Safe to be called multiple times from different components. The first
+   * component to mount starts the polling. The last component to unmount stops
+   * the polling.
+   */
+  function useEnableInboxNotificationsPolling() {
     useEffect(() => {
-      if (autoFetch) {
-        void fetchInboxNotifications();
-      }
-
       // Increment
-      inboxNotificationsSubscribers++;
+      pollerSubscribers++;
       poller.start(POLLING_INTERVAL);
 
       return () => {
         // Decrement
-        if (inboxNotificationsSubscribers <= 0) {
+        if (pollerSubscribers <= 0) {
           console.warn(
             `Internal unexpected behavior. Cannot decrease subscriber count for query "${INBOX_NOTIFICATIONS_QUERY}"`
           );
           return;
         }
 
-        inboxNotificationsSubscribers--;
-        if (inboxNotificationsSubscribers <= 0) {
+        pollerSubscribers--;
+        if (pollerSubscribers <= 0) {
           poller.stop();
         }
       };
-    }, [autoFetch]);
+    }, []);
   }
 
   return {
     store,
     notifications,
-    fetchInboxNotifications,
-    useSubscribeToInboxNotificationsEffect,
+    useEnableInboxNotificationsPolling,
+    waitUntilInboxNotificationsLoaded,
+    loadInboxNotifications,
   };
 }
 
@@ -384,10 +419,16 @@ function makeLiveblocksContextBundle<
 }
 
 function useInboxNotifications_withClient(client: OpaqueClient) {
-  const { store, useSubscribeToInboxNotificationsEffect } =
+  const { loadInboxNotifications, store, useEnableInboxNotificationsPolling } =
     getExtrasForClient(client);
 
-  useSubscribeToInboxNotificationsEffect();
+  // Trigger initial loading of inbox notifications if it hasn't started
+  // already, but don't await its promise.
+  useEffect(() => {
+    loadInboxNotifications();
+  }, [loadInboxNotifications]);
+
+  useEnableInboxNotificationsPolling();
   return useSyncExternalStoreWithSelector(
     store.subscribe,
     store.get,
@@ -398,37 +439,30 @@ function useInboxNotifications_withClient(client: OpaqueClient) {
 }
 
 function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
-  const {
-    store,
-    fetchInboxNotifications,
-    useSubscribeToInboxNotificationsEffect,
-  } = getExtrasForClient(client);
+  const { waitUntilInboxNotificationsLoaded } = getExtrasForClient(client);
 
-  const query = store.get().queries[INBOX_NOTIFICATIONS_QUERY];
+  // Suspend until there are at least some inbox notifications
+  use(waitUntilInboxNotificationsLoaded());
 
-  if (query === undefined || query.isLoading) {
-    throw fetchInboxNotifications();
-  }
-
-  if (query.error !== undefined) {
-    throw query.error;
-  }
-
-  useSubscribeToInboxNotificationsEffect({ autoFetch: false });
-  return useSyncExternalStoreWithSelector(
-    store.subscribe,
-    store.get,
-    store.get,
-    selectorFor_useInboxNotificationsSuspense,
-    shallow
-  );
+  // We're in a Suspense world here, and as such, the useInboxNotifications()
+  // hook is expected to only return success results when we're here.
+  const result = useInboxNotifications_withClient(client);
+  assert(!result.error, "Did not expect error");
+  assert(!result.isLoading, "Did not expect loading");
+  return result;
 }
 
 function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
-  const { store, useSubscribeToInboxNotificationsEffect } =
+  const { store, loadInboxNotifications, useEnableInboxNotificationsPolling } =
     getExtrasForClient(client);
 
-  useSubscribeToInboxNotificationsEffect();
+  // Trigger initial loading of inbox notifications if it hasn't started
+  // already, but don't await its promise.
+  useEffect(() => {
+    loadInboxNotifications();
+  }, [loadInboxNotifications]);
+
+  useEnableInboxNotificationsPolling();
   return useSyncExternalStoreWithSelector(
     store.subscribe,
     store.get,
@@ -441,26 +475,15 @@ function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
 function useUnreadInboxNotificationsCountSuspense_withClient(
   client: OpaqueClient
 ) {
-  const {
-    store,
-    fetchInboxNotifications,
-    useSubscribeToInboxNotificationsEffect,
-  } = getExtrasForClient(client);
+  const { waitUntilInboxNotificationsLoaded } = getExtrasForClient(client);
 
-  const query = store.get().queries[INBOX_NOTIFICATIONS_QUERY];
+  // Suspend until there are at least some inbox notifications
+  use(waitUntilInboxNotificationsLoaded());
 
-  if (query === undefined || query.isLoading) {
-    throw fetchInboxNotifications();
-  }
-
-  useSubscribeToInboxNotificationsEffect({ autoFetch: false });
-  return useSyncExternalStoreWithSelector(
-    store.subscribe,
-    store.get,
-    store.get,
-    selectorFor_useUnreadInboxNotificationsCountSuspense,
-    shallow
-  );
+  const result = useUnreadInboxNotificationsCount_withClient(client);
+  assert(!result.isLoading, "Did not expect loading");
+  assert(!result.error, "Did not expect error");
+  return result;
 }
 
 function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
@@ -604,7 +627,7 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
 function useUser_withClient<U extends BaseUserMeta>(
   client: Client<U>,
   userId: string
-): UserState<U["info"]> {
+): UserAsyncResult<U["info"]> {
   const usersStore = client[kInternal].usersStore;
 
   const getUserState = useCallback(
@@ -613,26 +636,23 @@ function useUser_withClient<U extends BaseUserMeta>(
   );
 
   useEffect(() => {
+    // NOTE: .get() will trigger any actual fetches, whereas .getState() will not
     void usersStore.get(userId);
   }, [usersStore, userId]);
 
-  const state = useSyncExternalStore(
-    usersStore.subscribe,
-    getUserState,
-    getUserState
+  const selector = useCallback(
+    (state: ReturnType<typeof getUserState>) =>
+      selectorFor_useUser(state, userId),
+    [userId]
   );
 
-  return state
-    ? ({
-        isLoading: state.isLoading,
-        user: state.data,
-        // Return an error if `undefined` was returned by `resolveUsers` for this user ID
-        error:
-          !state.isLoading && !state.data && !state.error
-            ? missingUserError(userId)
-            : state.error,
-      } as UserState<U["info"]>)
-    : { isLoading: true };
+  return useSyncExternalStoreWithSelector(
+    usersStore.subscribe,
+    getUserState,
+    getUserState,
+    selector,
+    shallow
+  );
 }
 
 function useUserSuspense_withClient<U extends BaseUserMeta>(
@@ -665,18 +685,20 @@ function useUserSuspense_withClient<U extends BaseUserMeta>(
     getUserState,
     getUserState
   );
-
+  assert(state !== undefined, "Unexpected missing state");
+  assert(!state.isLoading, "Unexpected loading state");
+  assert(!state.error, "Unexpected error state");
   return {
     isLoading: false,
-    user: state?.data,
-    error: state?.error,
-  } as UserStateSuccess<U["info"]>;
+    user: state.data,
+    error: undefined,
+  } as const;
 }
 
 function useRoomInfo_withClient(
   client: OpaqueClient,
   roomId: string
-): RoomInfoState {
+): RoomInfoAsyncResult {
   const roomsInfoStore = client[kInternal].roomsInfoStore;
 
   const getRoomInfoState = useCallback(
@@ -684,27 +706,23 @@ function useRoomInfo_withClient(
     [roomsInfoStore, roomId]
   );
 
+  const selector = useCallback(
+    (state: ReturnType<typeof getRoomInfoState>) =>
+      selectorFor_useRoomInfo(state, roomId),
+    [roomId]
+  );
+
   useEffect(() => {
     void roomsInfoStore.get(roomId);
   }, [roomsInfoStore, roomId]);
 
-  const state = useSyncExternalStore(
+  return useSyncExternalStoreWithSelector(
     roomsInfoStore.subscribe,
     getRoomInfoState,
-    getRoomInfoState
+    getRoomInfoState,
+    selector,
+    shallow
   );
-
-  return state
-    ? ({
-        isLoading: state.isLoading,
-        info: state.data,
-        // Return an error if `undefined` was returned by `resolveRoomsInfo` for this room ID
-        error:
-          !state.isLoading && !state.data && !state.error
-            ? missingRoomInfoError(roomId)
-            : state.error,
-      } as RoomInfoState)
-    : { isLoading: true };
 }
 
 function useRoomInfoSuspense_withClient(client: OpaqueClient, roomId: string) {
@@ -734,12 +752,15 @@ function useRoomInfoSuspense_withClient(client: OpaqueClient, roomId: string) {
     getRoomInfoState,
     getRoomInfoState
   );
-
+  assert(state !== undefined, "Unexpected missing state");
+  assert(!state.isLoading, "Unexpected loading state");
+  assert(!state.error, "Unexpected error state");
+  assert(state.data !== undefined, "Unexpected missing room info data");
   return {
     isLoading: false,
-    info: state?.data,
-    error: state?.error,
-  } as RoomInfoStateSuccess;
+    info: state.data,
+    error: undefined,
+  } as const;
 }
 
 /** @internal */
@@ -951,7 +972,9 @@ function useUser<U extends BaseUserMeta>(userId: string) {
   return useUser_withClient(client, userId);
 }
 
-function useUserSuspense<U extends BaseUserMeta>(userId: string) {
+function useUserSuspense<U extends BaseUserMeta>(
+  userId: string
+): UserAsyncSuccess<U["info"]> {
   const client = useClient<U>();
   return useUserSuspense_withClient(client, userId);
 }
@@ -962,7 +985,7 @@ function useUserSuspense<U extends BaseUserMeta>(userId: string) {
  * @example
  * const { info, error, isLoading } = useRoomInfo("room-id");
  */
-function useRoomInfo(roomId: string) {
+function useRoomInfo(roomId: string): RoomInfoAsyncResult {
   return useRoomInfo_withClient(useClient(), roomId);
 }
 
@@ -972,7 +995,7 @@ function useRoomInfo(roomId: string) {
  * @example
  * const { info } = useRoomInfo("room-id");
  */
-function useRoomInfoSuspense(roomId: string) {
+function useRoomInfoSuspense(roomId: string): RoomInfoAsyncSuccess {
   return useRoomInfoSuspense_withClient(useClient(), roomId);
 }
 

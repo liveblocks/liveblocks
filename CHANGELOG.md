@@ -1,3 +1,9 @@
+## v2.3.0 (not released yet)
+
+### `@liveblocks/react`
+
+- Various refactorings to Suspense internals
+
 ## v2.2.2
 
 ### `@liveblocks/react-ui`

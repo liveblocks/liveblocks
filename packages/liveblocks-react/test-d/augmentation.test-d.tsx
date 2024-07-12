@@ -461,9 +461,9 @@ declare global {
 {
   const { user, error, isLoading } = classic.useUser("user-id");
   expectType<boolean>(isLoading);
-  expectType<string | undefined>(user?.name);
+  expectType<string>(user!.name);
   expectError(user?.avatar);
-  expectType<number | undefined>(user?.age);
+  expectType<number>(user!.age);
   expectError(user?.anyOtherProp);
   expectType<Error | undefined>(error);
 }
@@ -485,8 +485,8 @@ declare global {
 {
   const { info, error, isLoading } = classic.useRoomInfo("room-id");
   expectType<boolean>(isLoading);
-  expectType<string | undefined>(info?.name);
-  expectType<string | undefined>(info?.url);
+  expectType<string>(info!.name);
+  expectType<string | undefined>(info!.url);
   expectType<"public" | "private" | undefined>(info?.type);
   expectError(info?.nonexisting);
   expectType<Error | undefined>(error);

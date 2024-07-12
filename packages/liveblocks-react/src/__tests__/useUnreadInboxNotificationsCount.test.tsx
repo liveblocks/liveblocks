@@ -44,7 +44,7 @@ function createLiveblocksContextForTest() {
 }
 
 describe("useUnreadInboxNotificationsCount", () => {
-  test("should fetch inbox notifications", async () => {
+  test("should fetch inbox notification count", async () => {
     const roomId = nanoid();
     const threads = [dummyThreadData({ roomId })];
     const inboxNotification = dummyThreadInboxNotificationData({
