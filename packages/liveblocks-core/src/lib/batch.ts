@@ -1,46 +1,21 @@
-import type { EventSource } from "./EventSource";
+import type { AsyncResult } from "./AsyncResult";
+import { Promise_withResolvers } from "./controlledPromise";
+import type { Observable } from "./EventSource";
 import { makeEventSource } from "./EventSource";
 import { stringify } from "./stringify";
 
 const DEFAULT_SIZE = 50;
-const DEFAULT_DELAY = 100;
 
-type Resolve<T> = (value: T | Promise<T>) => void;
-
+type Resolve<T> = (value: T) => void;
 type Reject = (reason?: unknown) => void;
 
-export type BatchCallback<T, A extends unknown[]> = (
-  args: A[]
-) => (T | Error)[] | Promise<(T | Error)[]>;
+export type BatchCallback<O, I> = (
+  inputs: I[]
+) => (O | Error)[] | Promise<(O | Error)[]>;
 
-export type BatchStoreStateLoading = {
-  isLoading: true;
-  data?: never;
-  error?: never;
-};
-
-export type BatchStoreStateError = {
-  isLoading: false;
-  data?: never;
-  error: Error;
-};
-
-export type BatchStoreStateSuccess<T> = {
-  isLoading: false;
-  data: T;
-  error?: never;
-};
-
-export type BatchStoreState<T> =
-  | BatchStoreStateLoading
-  | BatchStoreStateError
-  | BatchStoreStateSuccess<T>;
-
-export type BatchStore<T, A extends unknown[]> = EventSource<
-  BatchStoreState<T> | undefined
-> & {
-  get: (...args: A) => Promise<void>;
-  getState: (...args: A) => BatchStoreState<T> | undefined;
+export type BatchStore<O, I> = Observable<void> & {
+  get: (input: I) => Promise<void>;
+  getState: (input: I) => AsyncResult<O> | undefined;
 };
 
 interface Options {
@@ -52,37 +27,40 @@ interface Options {
   /**
    * How long to wait before flushing the batch.
    */
-  delay?: number;
+  delay: number;
 }
 
-const noop = () => {};
+class BatchCall<O, I> {
+  readonly input: I;
+  readonly resolve: Resolve<O>;
+  readonly reject: Reject;
+  readonly promise: Promise<O>;
 
-class BatchCall<T, A extends unknown[]> {
-  readonly args: A;
-  resolve: Resolve<T> = noop;
-  reject: Reject = noop;
-  promise: Promise<T> = new Promise(noop);
+  constructor(input: I) {
+    this.input = input;
 
-  constructor(args: A) {
-    this.args = args;
+    const { promise, resolve, reject } = Promise_withResolvers<O>();
+    this.promise = promise;
+    this.resolve = resolve;
+    this.reject = reject;
   }
 }
 
 /**
  * Batch calls to a function, either by number of calls or by a maximum delay.
  */
-export class Batch<T, A extends unknown[] = []> {
-  private queue: BatchCall<T, A>[] = [];
-  private callback: BatchCallback<T, A>;
+export class Batch<O, I> {
+  private queue: BatchCall<O, I>[] = [];
+  private callback: BatchCallback<O, I>;
   private size: number;
   private delay: number;
   private delayTimeoutId?: ReturnType<typeof setTimeout>;
   public error = false;
 
-  constructor(callback: BatchCallback<T, A>, options?: Options) {
+  constructor(callback: BatchCallback<O, I>, options: Options) {
     this.callback = callback;
-    this.size = options?.size ?? DEFAULT_SIZE;
-    this.delay = options?.delay ?? DEFAULT_DELAY;
+    this.size = options.size ?? DEFAULT_SIZE;
+    this.delay = options.delay;
   }
 
   private clearDelayTimeout(): void {
@@ -111,11 +89,11 @@ export class Batch<T, A extends unknown[] = []> {
 
     // Empty the queue and get its calls.
     const calls = this.queue.splice(0);
-    const args = calls.map((call) => call.args);
+    const inputs = calls.map((call) => call.input);
 
     try {
       // Call the batch callback with the queued arguments.
-      const results = await this.callback(args);
+      const results = await this.callback(inputs);
       this.error = false;
 
       // Resolve or reject each call.
@@ -146,10 +124,10 @@ export class Batch<T, A extends unknown[] = []> {
     }
   }
 
-  get(...args: A): Promise<T> {
+  get(input: I): Promise<O> {
     // Check if there's already an identical call in the queue.
     const existingCall = this.queue.find(
-      (call) => stringify(call.args) === stringify(args)
+      (call) => stringify(call.input) === stringify(input)
     );
 
     // If an existing call exists, return its promise.
@@ -158,11 +136,7 @@ export class Batch<T, A extends unknown[] = []> {
     }
 
     // If no existing call exists, add the call to the queue and schedule a flush.
-    const call = new BatchCall<T, A>(args);
-    call.promise = new Promise<T>((resolve, reject) => {
-      call.resolve = resolve;
-      call.reject = reject;
-    });
+    const call = new BatchCall<O, I>(input);
     this.queue.push(call);
     this.schedule();
 
@@ -180,35 +154,28 @@ export class Batch<T, A extends unknown[] = []> {
  * Create a store based on a batch callback.
  * Each call will be cached and get its own state in addition to being batched.
  */
-export function createBatchStore<T, A extends unknown[]>(
-  callback: BatchCallback<T, A>,
-  options?: Options
-): BatchStore<T, A> {
+export function createBatchStore<O, I>(
+  callback: BatchCallback<O, I>,
+  options: Options
+): BatchStore<O, I> {
   const batch = new Batch(callback, options);
-  const cache = new Map<string, BatchStoreState<T>>();
-  const eventSource = makeEventSource<BatchStoreState<T> | undefined>();
+  const cache = new Map<string, AsyncResult<O>>();
+  const eventSource = makeEventSource<void>();
 
-  function getCacheKey(args: A): string {
+  function getCacheKey(args: I): string {
     return stringify(args);
   }
 
-  function setStateAndNotify(
-    cacheKey: string,
-    state: BatchStoreState<T> | undefined
-  ) {
+  function setStateAndNotify(cacheKey: string, state: AsyncResult<O>) {
     // Set or delete the state.
-    if (state) {
-      cache.set(cacheKey, state);
-    } else {
-      cache.delete(cacheKey);
-    }
+    cache.set(cacheKey, state);
 
     // Notify subscribers.
-    eventSource.notify(state);
+    eventSource.notify();
   }
 
-  async function get(...args: A) {
-    const cacheKey = getCacheKey(args);
+  async function get(input: I): Promise<void> {
+    const cacheKey = getCacheKey(input);
 
     // If this call already has a state, return early.
     if (cache.has(cacheKey)) {
@@ -220,7 +187,7 @@ export function createBatchStore<T, A extends unknown[]>(
       setStateAndNotify(cacheKey, { isLoading: true });
 
       // Wait for the batch to process this call.
-      const result = await batch.get(...args);
+      const result = await batch.get(input);
 
       // Set the state to the result.
       setStateAndNotify(cacheKey, { isLoading: false, data: result });
@@ -247,14 +214,14 @@ export function createBatchStore<T, A extends unknown[]>(
     }
   }
 
-  function getState(...args: A) {
-    const cacheKey = getCacheKey(args);
+  function getState(input: I): AsyncResult<O> | undefined {
+    const cacheKey = getCacheKey(input);
 
     return cache.get(cacheKey);
   }
 
   return {
-    ...eventSource,
+    ...eventSource.observable,
     get,
     getState,
   };
