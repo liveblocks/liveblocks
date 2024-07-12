@@ -1,15 +1,13 @@
 import { autoUpdate, useFloating } from "@floating-ui/react-dom";
-import { CollaborationContext } from "@lexical/react/LexicalCollaborationContext";
 import { CollaborationPlugin } from "@lexical/react/LexicalCollaborationPlugin";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { Provider } from "@lexical/yjs";
-import { kInternal, nn } from "@liveblocks/core";
+import { kInternal, makeEventSource, nn } from "@liveblocks/core";
 import { useClient, useRoom, useSelf } from "@liveblocks/react";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import type { MutableRefObject } from "react";
 import React, {
   useCallback,
-  useContext,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -62,28 +60,23 @@ function getEditorStatus(
  */
 export function useEditorStatus(): EditorStatus {
   const room = useRoom();
-  const provider = providersMap.get(room.id);
-
-  const [status, setStatus] = useState(getEditorStatus(provider));
+  const [status, setStatus] = useState<EditorStatus>("not-loaded");
 
   useEffect(() => {
-    const provider = providersMap.get(room.id);
-
-    setStatus(getEditorStatus(provider));
-
-    if (provider === undefined) {
-      return;
-    }
-
-    const cb = () => setStatus(getEditorStatus(provider));
-
-    provider.on("sync", cb);
-
-    return () => provider.off("sync", cb);
+    return providerEventSource.subscribe((event) => {
+      if (event.id !== room.id) return;
+      setStatus(event.status);
+    });
   }, [room]);
 
   return status;
 }
+
+// An event source to notify the provider status
+const providerEventSource = makeEventSource<{
+  id: string;
+  status: EditorStatus;
+}>();
 
 export type LiveblocksPluginProps = {
   children?: React.ReactNode;
@@ -130,7 +123,6 @@ export const LiveblocksPlugin = ({
     client[kInternal].resolveMentionSuggestions !== undefined;
   const [editor] = useLexicalComposerContext();
   const room = useRoom();
-  const collabContext = useContext(CollaborationContext);
   const previousRoomIdRef = useRef<string | null>(null);
 
   if (!editor.hasNodes([ThreadMarkNode, MentionNode])) {
@@ -205,6 +197,13 @@ export const LiveblocksPlugin = ({
         const provider = new LiveblocksYjsProvider(room, doc);
         yjsDocMap.set(id, doc);
         providersMap.set(id, provider);
+
+        provider.on("sync", () =>
+          providerEventSource.notify({
+            id: room.id,
+            status: getEditorStatus(provider),
+          })
+        );
       }
 
       return nn(
@@ -214,10 +213,6 @@ export const LiveblocksPlugin = ({
     },
     [room]
   );
-
-  useEffect(() => {
-    collabContext.name = username || "";
-  }, [collabContext, username]);
 
   const root = useRootElement();
 
@@ -249,17 +244,19 @@ export const LiveblocksPlugin = ({
         }}
       />
 
-      <CollaborationPlugin
-        // Setting the key allows us to reset the internal Y.doc used by useYjsCollaboration
-        // without implementing `reload` event
-        key={room.id}
-        id={room.id}
-        providerFactory={providerFactory}
-        username={username}
-        cursorColor={cursorcolor}
-        cursorsContainerRef={containerRef}
-        shouldBootstrap={true}
-      />
+      {self && (
+        <CollaborationPlugin
+          // Setting the key allows us to reset the internal Y.doc used by useYjsCollaboration
+          // without implementing `reload` event
+          key={room.id}
+          id={room.id}
+          providerFactory={providerFactory}
+          username={username}
+          cursorColor={cursorcolor}
+          cursorsContainerRef={containerRef}
+          shouldBootstrap={true}
+        />
+      )}
 
       {hasResolveMentionSuggestions && <MentionPlugin />}
 
