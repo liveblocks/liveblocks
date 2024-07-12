@@ -202,4 +202,92 @@ describe("useDeleteInboxNotifications", () => {
 
     unmount();
   });
+
+  test("should support deleting a notification and its related thread", async () => {
+    const roomId = nanoid();
+    const thread1 = dummyThreadData({ roomId });
+    const thread2 = dummyThreadData({ roomId });
+    const threads = [thread1, thread2];
+    const notification1 = dummyThreadInboxNotificationData({
+      roomId,
+      threadId: thread1.id,
+      readAt: null,
+    });
+    const notification2 = dummyThreadInboxNotificationData({
+      roomId,
+      threadId: thread2.id,
+      readAt: null,
+    });
+    const inboxNotifications = [notification1, notification2];
+
+    server.use(
+      mockGetInboxNotifications((_req, res, ctx) =>
+        res(
+          ctx.status(200),
+          ctx.json({
+            inboxNotifications,
+            threads,
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        )
+      ),
+      mockDeleteInboxNotification(
+        { inboxNotificationId: notification1.id },
+        (_req, res, ctx) => res(ctx.status(500))
+      )
+    );
+
+    const {
+      roomCtx: { RoomProvider, useDeleteThread },
+      liveblocksCtx: {
+        LiveblocksProvider,
+        useInboxNotifications,
+        useDeleteInboxNotification,
+      },
+    } = createRoomContextForTest();
+
+    const { result, unmount } = renderHook(
+      () => ({
+        deleteInboxNotification: useDeleteInboxNotification(),
+        deleteThread: useDeleteThread(),
+        inboxNotifications: useInboxNotifications().inboxNotifications,
+        deletedThreads: [],
+        deletedInboxNotifications: [],
+        meta: {
+          requestedAt: new Date().toISOString(),
+        },
+      }),
+      {
+        wrapper: ({ children }) => (
+          <LiveblocksProvider>
+            <RoomProvider id={roomId}>{children}</RoomProvider>
+          </LiveblocksProvider>
+        ),
+      }
+    );
+
+    await waitFor(() =>
+      expect(result.current.inboxNotifications).toEqual(inboxNotifications)
+    );
+
+    // We delete the notification optimitiscally
+    act(() => {
+      result.current.deleteInboxNotification(notification1.id);
+    });
+
+    expect(result.current.inboxNotifications).toEqual([notification2]);
+
+    // We also delete its related thread optimitiscally
+    act(() => {
+      result.current.deleteThread(thread1.id);
+    });
+
+    expect(result.current.inboxNotifications).toEqual([notification2]);
+
+    unmount();
+  });
 });
