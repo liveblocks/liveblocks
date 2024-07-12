@@ -1029,7 +1029,7 @@ function useInboxNotificationThread<M extends BaseMetadata>(
 }
 
 /**
- * Returns a function that marks all inbox notifications as read.
+ * Returns a function that marks all of the current user's inbox notifications as read.
  *
  * @example
  * const markAllInboxNotificationsAsRead = useMarkAllInboxNotificationsAsRead();
@@ -1040,7 +1040,7 @@ function useMarkAllInboxNotificationsAsRead() {
 }
 
 /**
- * Returns a function that marks an inbox notification as read.
+ * Returns a function that marks an inbox notification as read for the current user.
  *
  * @example
  * const markInboxNotificationAsRead = useMarkInboxNotificationAsRead();
@@ -1051,7 +1051,7 @@ function useMarkInboxNotificationAsRead() {
 }
 
 /**
- * Returns a function that deletes all inbox notifications.
+ * Returns a function that deletes all of the current user's inbox notifications.
  *
  * @example
  * const deleteAllInboxNotifications = useDeleteAllInboxNotifications();
@@ -1062,7 +1062,7 @@ function useDeleteAllInboxNotifications() {
 }
 
 /**
- * Returns a function that deletes an inbox notification.
+ * Returns a function that deletes an inbox notification for the current user.
  *
  * @example
  * const deleteInboxNotification = useDeleteInboxNotification();
