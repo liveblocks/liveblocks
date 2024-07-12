@@ -3,6 +3,8 @@
 ### `@liveblocks/react`
 
 - Various refactorings to Suspense internals
+- Fix `resolved` query not being applied when filtering threads inside
+  `useThreads` hook.
 
 ## v2.2.2
 
