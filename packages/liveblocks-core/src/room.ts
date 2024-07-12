@@ -387,7 +387,6 @@ type SubscribeFn<
 
   /**
    * Subscribes to changes made on a Live structure. Returns an unsubscribe function.
-   * In a future version, we will also expose what exactly changed in the Live structure.
    *
    * @param callback The callback this called when the Live structure changes.
    *

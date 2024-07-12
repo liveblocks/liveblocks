@@ -1,3 +1,18 @@
+## v2.2.2
+
+### `@liveblocks/react-ui`
+
+- Fix missing avatar in `textMention` inbox notifications.
+- Fix `textMention` usage (and its props type) when customizing rendering via
+  `kinds` on `InboxNotification`.
+- Fix broken CSS selector in default styles.
+
+## v2.2.1
+
+### `@liveblocks/yjs`
+
+- Don’t attempt to write Yjs changes if the current user has no write access.
+
 ## v2.2.0
 
 We are making `resolved` a first-class citizen property on
@@ -1535,8 +1550,8 @@ For information, please read our
 - Remove support for directly importing hooks from **@liveblocks/client** (e.g.
   `import { useMyPresence } from '@liveblocks/react'`). If you’re still using
   these imports, see the
-  [Upgrade Guide for 0.17](https://liveblocks.io/docs/platform/upgrading/0.17) for
-  instructions.
+  [Upgrade Guide for 0.17](https://liveblocks.io/docs/platform/upgrading/0.17)
+  for instructions.
 - Remove `ClientProvider` and `useClient` hook
 - Remove `defaultPresence` and `defaultStorageRoot` arguments. (Just use
   `initialPresence` and `initialStorage` arguments now.)
@@ -1757,7 +1772,8 @@ It's surprisingly simple!
   - Importing the React hooks directly is deprecated, instead use the new
     `createRoomContext()` helper. For help, read the
     [Recommended Upgrade Steps section](https://liveblocks.io/docs/platform/upgrading/0.17#recommended-upgrade-steps)
-    within our [Upgrade Guide](https://liveblocks.io/docs/platform/upgrading/0.17)
+    within our
+    [Upgrade Guide](https://liveblocks.io/docs/platform/upgrading/0.17)
   - The second argument to `useList()`, `useObject()`, and `useMap()` is
     deprecated
   - The RoomProvider's `defaultPresence` is renamed to `initialPresence`

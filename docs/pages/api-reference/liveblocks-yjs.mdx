@@ -71,15 +71,19 @@ function Component() {
 There are a few options you can pass as a third argument into the
 LiveblocksYjsProvider:
 
-- autoloadSubdocs: `boolean` (default: `false`). This option will load subdocs
-  automatically.
-- readOnly: `boolean` (default: `false`). This option will make the provider
-  read-only, it will not send changes to the server.
+<PropertiesList title="Constructor options">
+  <PropertiesListItem
+    name="autoloadSubdocs"
+    type="boolean"
+    defaultValue="false"
+  >
+    This option will load subdocs automatically.
+  </PropertiesListItem>
+</PropertiesList>
 
 ```ts
 const yProvider = new LiveblocksYjsProvider(room, yDoc, {
   autoloadSubdocs: true, // default false
-  readOnly: true, // default false
 });
 ```
 

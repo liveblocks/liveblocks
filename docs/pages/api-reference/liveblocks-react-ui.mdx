@@ -73,7 +73,7 @@ to update the property.
 Before 2.2, `resolved` was an optional property in a thread’s metadata, it’s now
 a first-class citizen. If you’re upgrading from a previous version, learn more
 about this change in our
-[Upgrade Guide for 2.2](https://liveblocks.io/docs/guides/upgrading/2.2).
+[Upgrade Guide for 2.2](https://liveblocks.io/docs/platform/upgrading/2.2).
 
 </Banner>
 
@@ -1264,8 +1264,9 @@ triggered when using Comments, or `$myCustomNotification` which would be a
 custom notification you’ve triggered manually. You can choose to render each
 notification differently.
 
-```tsx highlight="3-13"
+```tsx highlight="4-14"
 <InboxNotification
+  inboxNotification={inboxNotification}
   kinds={{
     thread: (props) => (
       <InboxNotification.Thread {...props} showRoomName={false} />
@@ -1292,8 +1293,9 @@ in this way allow you to easily create components that fit into the existing
 design system, whilst still adding lots of customization. However, it’s also
 valid to render any custom JSX.
 
-```tsx highlight="2-4"
+```tsx highlight="3-5"
 <InboxNotification
+  inboxNotification={inboxNotification}
   kinds={{
     $myCustomNotification: (props) => <div>New notification</div>,
   }}
@@ -1325,8 +1327,9 @@ declare global {
 
 Your activities data is now correctly typed in inline functions.
 
-```tsx highlight="4-5"
+```tsx highlight="5-6"
 <InboxNotification
+  inboxNotification={inboxNotification}
   kinds={{
     $alert: (props) => {
       // `title` and `message` are correctly typed, as defined in your config
@@ -1439,6 +1442,7 @@ Displays a thread inbox notification.
 
 ```tsx
 <InboxNotification
+  inboxNotification={inboxNotification}
   kinds={{
     thread: (props) => (
       <InboxNotification.Thread {...props} showRoomName={false} />
@@ -1469,6 +1473,7 @@ Displays a custom notification kind.
 
 ```tsx
 <InboxNotification
+  inboxNotification={inboxNotification}
   kinds={{
     $myCustomNotificationKind: (props) => {
       const activityData = props.inboxNotification.activities[0].data;
