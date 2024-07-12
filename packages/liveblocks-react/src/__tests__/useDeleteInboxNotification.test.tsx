@@ -3,9 +3,15 @@ import { setupServer } from "msw/node";
 import { nanoid } from "nanoid";
 import React from "react";
 
-import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
 import {
+  dummyCommentData,
+  dummyThreadData,
+  dummyThreadInboxNotificationData,
+} from "./_dummies";
+import {
+  mockDeleteComment,
   mockDeleteInboxNotification,
+  mockDeleteThread,
   mockGetInboxNotifications,
 } from "./_restMocks";
 import { createContextsForTest } from "./_utils";
@@ -20,7 +26,7 @@ afterEach(() => {
 
 afterAll(() => server.close());
 
-describe("useDeleteInboxNotifications", () => {
+describe("useDeleteInboxNotification", () => {
   test("should delete a notification optimistically", async () => {
     const roomId = nanoid();
     const thread1 = dummyThreadData({ roomId });
@@ -214,7 +220,10 @@ describe("useDeleteInboxNotifications", () => {
       mockDeleteInboxNotification(
         { inboxNotificationId: notification1.id },
         (_req, res, ctx) => res(ctx.status(500))
-      )
+      ),
+      mockDeleteThread({ threadId: threads[0].id }, async (_req, res, ctx) => {
+        return res(ctx.status(204));
+      })
     );
 
     const {
@@ -263,6 +272,99 @@ describe("useDeleteInboxNotifications", () => {
     });
 
     expect(result.current.inboxNotifications).toEqual([notification2]);
+
+    unmount();
+  });
+
+  test("should support deleting a notification and its related thread implicitly by deleting all its comments", async () => {
+    const roomId = nanoid();
+    const userId = "userId";
+    const comment = dummyCommentData({ roomId, userId });
+    const thread = dummyThreadData({ roomId, comments: [comment] });
+    const threads = [thread];
+    const notification = dummyThreadInboxNotificationData({
+      roomId,
+      threadId: thread.id,
+      readAt: null,
+    });
+    const inboxNotifications = [notification];
+
+    server.use(
+      mockGetInboxNotifications((_req, res, ctx) =>
+        res(
+          ctx.status(200),
+          ctx.json({
+            inboxNotifications,
+            threads,
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        )
+      ),
+      mockDeleteInboxNotification(
+        { inboxNotificationId: notification.id },
+        (_req, res, ctx) => res(ctx.status(500))
+      ),
+      mockDeleteComment(
+        { threadId: thread.id, commentId: comment.id },
+        async (_req, res, ctx) => {
+          return res(ctx.status(204));
+        }
+      )
+    );
+
+    const {
+      room: { RoomProvider, useDeleteComment },
+      liveblocks: {
+        LiveblocksProvider,
+        useInboxNotifications,
+        useDeleteInboxNotification,
+      },
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(
+      () => ({
+        deleteInboxNotification: useDeleteInboxNotification(),
+        deleteComment: useDeleteComment(),
+        inboxNotifications: useInboxNotifications().inboxNotifications,
+        deletedThreads: [],
+        deletedInboxNotifications: [],
+        meta: {
+          requestedAt: new Date().toISOString(),
+        },
+      }),
+      {
+        wrapper: ({ children }) => (
+          <LiveblocksProvider>
+            <RoomProvider id={roomId}>{children}</RoomProvider>
+          </LiveblocksProvider>
+        ),
+      }
+    );
+
+    await waitFor(() =>
+      expect(result.current.inboxNotifications).toEqual(inboxNotifications)
+    );
+
+    // We delete the notification optimitiscally
+    act(() => {
+      result.current.deleteInboxNotification(notification.id);
+    });
+
+    expect(result.current.inboxNotifications).toEqual([]);
+
+    // We also delete its related thread implicitly by deleting its only comment optimitiscally
+    act(() => {
+      result.current.deleteComment({
+        threadId: thread.id,
+        commentId: comment.id,
+      });
+    });
+
+    expect(result.current.inboxNotifications).toEqual([]);
 
     unmount();
   });

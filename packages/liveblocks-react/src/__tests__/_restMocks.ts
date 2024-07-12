@@ -78,6 +78,16 @@ export function mockCreateComment(
   );
 }
 
+export function mockDeleteComment(
+  params: { threadId: string; commentId: string },
+  resolver: ResponseResolver<RestRequest<never, never>, RestContext, any>
+) {
+  return rest.delete(
+    `https://api.liveblocks.io/v2/c/rooms/:roomId/threads/${params.threadId}/comments/${params.commentId}`,
+    resolver
+  );
+}
+
 export function mockEditThreadMetadata<M extends BaseMetadata>(
   params: { threadId: string },
   resolver: ResponseResolver<RestRequest<never, never>, RestContext, M>
