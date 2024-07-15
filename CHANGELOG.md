@@ -1,4 +1,10 @@
-## v2.2.2 (not released yet)
+## v2.3.0 (not released yet)
+
+### `@liveblocks/node`
+
+- Add `deleteInboxNotification` and `deleteAllInboxNotifications` methods.
+
+## v2.2.2
 
 ### `@liveblocks/react-ui`
 
