@@ -174,7 +174,7 @@ function Editor() {
   return (
     <LexicalComposer initialConfig={initialConfig}>
       <LiveblocksPlugin>
-        <FloatingComposer />
+        <FloatingComposer style={{ width: "350px" }} />
       </LiveblocksPlugin>
       <RichTextPlugin
         contentEditable={<ContentEditable />}
@@ -279,7 +279,6 @@ Displays floating [`Thread`][] components below text highlights in the editor.
 
 Takes a list of threads retrieved from [`useThreads`][] and renders them to the
 page. Each thread is opened by clicking on its corresponding text highlight.
-Should be nested inside [`LiveblocksPlugin`][].
 
 ```tsx
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
@@ -326,6 +325,8 @@ function Editor() {
 }
 ```
 
+Should be nested inside [`LiveblocksPlugin`][].
+
 #### Recommended usage
 
 [`FloatingThreads`][] and [`AnchoredThreads`][] have been designed to work
@@ -356,39 +357,26 @@ function ThreadOverlay() {
 }
 ```
 
-We can place this component inside [`ClientSideSuspense`][] to prevent it
-rendering until threads have loaded.
-
-```tsx
-<LexicalComposer initialConfig={initialConfig}>
-  <LiveblocksPlugin>
-    <FloatingComposer />
-    // +++
-    <ClientSideSuspense fallback={null}>
-      <ThreadOverlay />
-    </ClientSideSuspense>
-    // +++
-  </LiveblocksPlugin>
-</LexicalComposer>
-```
-
-A more render-efficient way to implement `ThreadOverlay` would be with a
-`useIsMobile` hook, allowing us to conditionally render the components.
-
-```tsx title="useIsMobile" isCollapsed isCollapsable
+```tsx title="Alternatively use a media query hook" isCollapsed isCollapsable
 import { useSyncExternalStore } from "react";
 import { useThreads } from "@liveblocks/react/suspense";
 import { AnchoredThreads, FloatingThreads } from "@liveblocks/react-lexical";
 
 function ThreadOverlay() {
-  const isMobile = useIsMobile();
   const { threads } = useThreads({ query: { resolved: false } });
+  // +++
+  const isMobile = useIsMobile();
+  // +++
 
+  // +++
   if (isMobile) {
     return <FloatingThreads threads={threads} style={{ width: "350px" }} />;
   }
+  // +++
 
+  // +++
   return <AnchoredThreads threads={threads} style={{ width: "350px" }} />;
+  //+++
 }
 
 export function useIsMobile() {
@@ -406,6 +394,22 @@ function getSnapshot() {
   const query = window.matchMedia("(max-width: 1024px)");
   return query.matches;
 }
+```
+
+We can place this component inside [`ClientSideSuspense`][] to prevent it
+rendering until threads have loaded.
+
+```tsx
+<LexicalComposer initialConfig={initialConfig}>
+  <LiveblocksPlugin>
+    <FloatingComposer />
+    // +++
+    <ClientSideSuspense fallback={null}>
+      <ThreadOverlay />
+    </ClientSideSuspense>
+    // +++
+  </LiveblocksPlugin>
+</LexicalComposer>
 ```
 
 #### Props [#FloatingThreads-props]
@@ -431,12 +435,12 @@ function getSnapshot() {
 
 ### AnchoredThreads
 
-[TODO one line description of features @Nimesh]
+Displays a list of [`Thread`][] components vertically alongside the editor.
 
 ```tsx highlight="3"
 <LexicalComposer initialConfig={initialConfig}>
   <LiveblocksPlugin>
-    <AnchoredThreads />
+    <AnchoredThreads threads={threads} />
   </LiveblocksPlugin>
 </LexicalComposer>
 ```
@@ -450,7 +454,57 @@ function getSnapshot() {
   />
 </Figure>
 
-[TODO any other info we need @Nimesh]
+Takes a list of threads retrieved from [`useThreads`][] and renders them to the
+page. Each thread is displayed at the same vertical coordinates as its
+corresponding text highlight. If multiple highlights are in the same location,
+each thread is placed in order below the previous thread.
+
+```tsx
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+import { useThreads } from "@liveblocks/react/suspense";
+import {
+  liveblocksConfig,
+  LiveblocksPlugin,
+  FloatingComposer,
+  // +++
+  AnchoredThreads,
+  // +++
+} from "@liveblocks/react-lexical";
+
+const initialConfig = liveblocksConfig({
+  namespace: "MyEditor",
+  theme: {},
+  nodes: [],
+  onError: (err) => console.error(err),
+});
+
+function Editor() {
+  // +++
+  const { threads } = useThreads();
+  // +++
+
+  return (
+    <LexicalComposer initialConfig={initialConfig}>
+      <LiveblocksPlugin>
+        <FloatingComposer />
+        // +++
+        <AnchoredThreads threads={threads} style={{ width: "350px" }} />
+        // +++
+      </LiveblocksPlugin>
+      <RichTextPlugin
+        contentEditable={<ContentEditable />}
+        placeholder={<div>Enter some text...</div>}
+        ErrorBoundary={LexicalErrorBoundary}
+      />
+    </LexicalComposer>
+  );
+}
+```
+
+Should be nested inside [`LiveblocksPlugin`][].
 
 #### Recommended usage
 
@@ -482,39 +536,26 @@ function ThreadOverlay() {
 }
 ```
 
-We can place this component inside [`ClientSideSuspense`][] to prevent it
-rendering until threads have loaded.
-
-```tsx
-<LexicalComposer initialConfig={initialConfig}>
-  <LiveblocksPlugin>
-    <FloatingComposer />
-    // +++
-    <ClientSideSuspense fallback={null}>
-      <ThreadOverlay />
-    </ClientSideSuspense>
-    // +++
-  </LiveblocksPlugin>
-</LexicalComposer>
-```
-
-A more render-efficient way to implement `ThreadOverlay` would be with a
-`useIsMobile` hook, allowing us to conditionally render the components.
-
-```tsx title="useIsMobile" isCollapsed isCollapsable
+```tsx title="Alternatively use a media query hook" isCollapsed isCollapsable
 import { useSyncExternalStore } from "react";
 import { useThreads } from "@liveblocks/react/suspense";
 import { AnchoredThreads, FloatingThreads } from "@liveblocks/react-lexical";
 
 function ThreadOverlay() {
-  const isMobile = useIsMobile();
   const { threads } = useThreads({ query: { resolved: false } });
+  // +++
+  const isMobile = useIsMobile();
+  // +++
 
+  // +++
   if (isMobile) {
     return <FloatingThreads threads={threads} style={{ width: "350px" }} />;
   }
+  // +++
 
+  // +++
   return <AnchoredThreads threads={threads} style={{ width: "350px" }} />;
+  //+++
 }
 
 export function useIsMobile() {
@@ -532,6 +573,22 @@ function getSnapshot() {
   const query = window.matchMedia("(max-width: 1024px)");
   return query.matches;
 }
+```
+
+We can place this component inside [`ClientSideSuspense`][] to prevent it
+rendering until threads have loaded.
+
+```tsx
+<LexicalComposer initialConfig={initialConfig}>
+  <LiveblocksPlugin>
+    <FloatingComposer />
+    // +++
+    <ClientSideSuspense fallback={null}>
+      <ThreadOverlay />
+    </ClientSideSuspense>
+    // +++
+  </LiveblocksPlugin>
+</LexicalComposer>
 ```
 
 #### Props [#AnchoredThreads-props]
