@@ -327,7 +327,7 @@ function Editor() {
 
 Should be nested inside [`LiveblocksPlugin`][].
 
-#### Recommended usage
+#### Recommended usage [#FloatingThreads-recommended-usage]
 
 [`FloatingThreads`][] and [`AnchoredThreads`][] have been designed to work
 together to provide the optimal experience on mobile and desktop. We generally
@@ -410,6 +410,67 @@ rendering until threads have loaded.
     // +++
   </LiveblocksPlugin>
 </LexicalComposer>
+```
+
+#### Customization [#AnchoredThreads-customization]
+
+The `FloatingThreads` component acts as a wrappar around each individual
+[`Thread`][]. You can treat the component like you would a `div`, using classes,
+listeners, and more.
+
+```tsx
+<FloatingThreads threads={threads} className="my-floating-thread" />
+```
+
+To apply styling to each [`Thread`][], you can pass a custom `Thread` property
+to `components` and modify this in any way. This is the best way to modify a
+thread’s width.
+
+```tsx
+import { Thread } from "@liveblocks/react-ui";
+
+<FloatingThreads
+  threads={threads}
+  className="my-floating-thread"
+  // +++
+  components={{
+    Thread: (props) => (
+      <Thread {...props} className="border shadow" style={{ width: "300px" }} />
+    ),
+  }}
+  // +++
+/>;
+```
+
+You can return any custom `ReactNode` here, including anything from a simple
+wrapper around `Thread`, up to a full custom `Thread` component built using our
+[Comment primitives](/docs/api-reference/liveblocks-react-ui#primitives-Comment).
+
+```tsx
+import { Comment } from "@liveblocks/react-ui/primitives";
+
+<FloatingThreads
+  threads={threads}
+  className="my-floating-thread"
+  components={{
+    Thread: (props) => (
+      // +++
+      <div>
+        {props.thread.comments.map((comment) => (
+          <Comment.Body
+            key={comment.id}
+            body={comment.body}
+            components={{
+              Mention,
+              Link,
+            }}
+          />
+        ))}
+      </div>
+      // +++
+    ),
+  }}
+/>;
 ```
 
 #### Props [#FloatingThreads-props]
@@ -506,7 +567,7 @@ function Editor() {
 
 Should be nested inside [`LiveblocksPlugin`][].
 
-#### Recommended usage
+#### Recommended usage [#AnchoredThreads-recommended-usage]
 
 [`FloatingThreads`][] and [`AnchoredThreads`][] have been designed to work
 together to provide the optimal experience on mobile and desktop. We generally
@@ -589,6 +650,77 @@ rendering until threads have loaded.
     // +++
   </LiveblocksPlugin>
 </LexicalComposer>
+```
+
+#### Customization [#AnchoredThreads-customization]
+
+The `AnchoredThreads` component acts as a wrapper around each [`Thread`][]. It
+has no width, so setting this is required, and each thread will take on the
+width of the wrapper. You can treat the component like you would a `div`, using
+classes, listeners, and more.
+
+```tsx
+<AnchoredThreads
+  threads={threads}
+  style={{ width: "350px" }}
+  className="my-anchored-thread"
+/>
+```
+
+To apply styling to each [`Thread`][], you can pass a custom `Thread` property
+to `components` and modify this in any way.
+
+```tsx
+import { Thread } from "@liveblocks/react-ui";
+
+<AnchoredThreads
+  threads={threads}
+  style={{ width: "350px" }}
+  className="my-anchored-thread"
+  // +++
+  components={{
+    Thread: (props) => (
+      <Thread
+        {...props}
+        className="border shadow"
+        style={{ background: "white" }}
+      />
+    ),
+  }}
+  // +++
+/>;
+```
+
+You can return any custom `ReactNode` here, including anything from a simple
+wrapper around `Thread`, up to a full custom `Thread` component built using our
+[Comment primitives](/docs/api-reference/liveblocks-react-ui#primitives-Comment).
+
+```tsx
+import { Comment } from "@liveblocks/react-ui/primitives";
+
+<AnchoredThreads
+  threads={threads}
+  style={{ width: "350px" }}
+  className="my-anchored-thread"
+  components={{
+    Thread: (props) => (
+      // +++
+      <div>
+        {props.thread.comments.map((comment) => (
+          <Comment.Body
+            key={comment.id}
+            body={comment.body}
+            components={{
+              Mention,
+              Link,
+            }}
+          />
+        ))}
+      </div>
+      // +++
+    ),
+  }}
+/>;
 ```
 
 #### Props [#AnchoredThreads-props]
