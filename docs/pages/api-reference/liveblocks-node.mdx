@@ -1705,13 +1705,13 @@ await liveblocks.deleteInboxNotification({
 });
 ```
 
-#### Liveblocks.deleteInboxNotifications [#delete-users-userId-inboxNotifications-inboxNotificationId]
+#### Liveblocks.deleteAllInboxNotifications [#delete-users-userId-inboxNotifications-inboxNotificationId]
 
-Deletes all inbox notifications for a user. This is a wrapper around the
+Deletes all the user’s inbox notifications. This is a wrapper around the
 [Delete Inbox Notifications API](/docs/api-reference/rest-api-endpoints#delete-users-userId-inboxNotifications).
 
 ```ts
-await liveblocks.deleteInboxNotifications({
+await liveblocks.deleteAllInboxNotifications({
   userId: "steven@example.com",
 });
 ```

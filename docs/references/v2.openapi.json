@@ -2697,7 +2697,7 @@
         }
       ],
       "delete": {
-        "summary": "Delete user's inbox notifications",
+        "summary": "Delete all inbox notifications",
         "tags": ["Notifications"],
         "parameters": [
           {
@@ -2711,7 +2711,7 @@
           }
         ],
         "operationId": "delete-users-userId-inboxNotifications",
-        "description": "This endpoint deletes a user’s inbox notifications.",
+        "description": "This endpoint deletes all the user’s inbox notifications.",
         "responses": {
           "204": {
             "description": ""

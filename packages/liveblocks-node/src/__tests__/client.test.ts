@@ -1203,7 +1203,7 @@ describe("client", () => {
     const client = new Liveblocks({ secret: "sk_xxx" });
 
     await expect(
-      client.deleteInboxNotifications({
+      client.deleteAllInboxNotifications({
         userId,
       })
     ).resolves.toBeUndefined();

@@ -1555,7 +1555,7 @@ export class Liveblocks {
 
   /**
    * Deletes an inbox notification for a user.
-   * @param params.userId The user ID of the inbox notification to delete.
+   * @param params.userId The user ID for which to delete the inbox notification.
    * @param params.inboxNotificationId The ID of the inbox notification to delete.
    */
   public async deleteInboxNotification(params: {
@@ -1575,9 +1575,9 @@ export class Liveblocks {
 
   /**
    * Deletes all inbox notifications for a user.
-   * @param params.userId The ID of the user to delete the inbox notifications.
+   * @param params.userId The user ID for which to delete all the inbox notifications.
    */
-  public async deleteInboxNotifications(params: {
+  public async deleteAllInboxNotifications(params: {
     userId: string;
   }): Promise<void> {
     const { userId } = params;
