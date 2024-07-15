@@ -414,7 +414,7 @@ rendering until threads have loaded.
 
 #### Customization [#AnchoredThreads-customization]
 
-The `FloatingThreads` component acts as a wrappar around each individual
+The `FloatingThreads` component acts as a wrapper around each individual
 [`Thread`][]. You can treat the component like you would a `div`, using classes,
 listeners, and more.
 
@@ -460,10 +460,7 @@ import { Comment } from "@liveblocks/react-ui/primitives";
           <Comment.Body
             key={comment.id}
             body={comment.body}
-            components={{
-              Mention,
-              Link,
-            }}
+            components={/* ... */}
           />
         ))}
       </div>
@@ -710,10 +707,7 @@ import { Comment } from "@liveblocks/react-ui/primitives";
           <Comment.Body
             key={comment.id}
             body={comment.body}
-            components={{
-              Mention,
-              Link,
-            }}
+            components={/* ... */}
           />
         ))}
       </div>
@@ -721,6 +715,21 @@ import { Comment } from "@liveblocks/react-ui/primitives";
     ),
   }}
 />;
+```
+
+##### Modifying thread floating positions
+
+Using CSS variables you can modify the gap between threads, and the horizontal
+offset that when a thread is selected.
+
+```css
+.lb-lexical-anchored-threads {
+  /* Minimum gap between threads */
+  --lb-lexical-anchored-threads-gap: 8px;
+
+  /* How far the active thread is offset to the left */
+  --lb-lexical-anchored-threads-active-thread-offset: 12px;
+}
 ```
 
 #### Props [#AnchoredThreads-props]
