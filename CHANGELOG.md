@@ -6,6 +6,10 @@
 - Fix `resolved` query not being applied when filtering threads inside
   `useThreads` hook.
 
+### `@liveblocks/react-ui`
+
+- Improve keyboard navigation within emoji pickers.
+
 ## v2.2.2
 
 ### `@liveblocks/react-ui`
