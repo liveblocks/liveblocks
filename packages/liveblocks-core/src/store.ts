@@ -1,3 +1,4 @@
+import type { AsyncResult } from "./lib/AsyncResult";
 import type { Store } from "./lib/create-store";
 import { createStore } from "./lib/create-store";
 import { makeEventSource } from "./lib/EventSource";
@@ -32,6 +33,8 @@ type OptimisticUpdate<M extends BaseMetadata> =
   | RemoveReactionOptimisticUpdate
   | MarkInboxNotificationAsReadOptimisticUpdate
   | MarkAllInboxNotificationsAsReadOptimisticUpdate
+  | DeleteInboxNotificationOptimisticUpdate
+  | DeleteAllInboxNotificationsOptimisticUpdate
   | UpdateNotificationSettingsOptimisticUpdate;
 
 type CreateThreadOptimisticUpdate<M extends BaseMetadata> = {
@@ -118,9 +121,22 @@ type MarkInboxNotificationAsReadOptimisticUpdate = {
 };
 
 type MarkAllInboxNotificationsAsReadOptimisticUpdate = {
-  type: "mark-inbox-notifications-as-read";
+  type: "mark-all-inbox-notifications-as-read";
   id: string;
   readAt: Date;
+};
+
+type DeleteInboxNotificationOptimisticUpdate = {
+  type: "delete-inbox-notification";
+  id: string;
+  inboxNotificationId: string;
+  deletedAt: Date;
+};
+
+type DeleteAllInboxNotificationsOptimisticUpdate = {
+  type: "delete-all-inbox-notifications";
+  id: string;
+  deletedAt: Date;
 };
 
 type UpdateNotificationSettingsOptimisticUpdate = {
@@ -130,9 +146,8 @@ type UpdateNotificationSettingsOptimisticUpdate = {
   settings: Partial<RoomNotificationSettings>;
 };
 
-type QueryState =
-  | { isLoading: true; error?: never }
-  | { isLoading: false; error?: Error };
+type QueryState = AsyncResult<undefined>;
+//                            ^^^^^^^^^ We don't store the actual query result in this status
 
 export type CacheState<M extends BaseMetadata> = {
   /**
@@ -268,9 +283,7 @@ export function createClientStore<M extends BaseMetadata>(): CacheStore<M> {
           queryKey !== undefined
             ? {
                 ...state.queries,
-                [queryKey]: {
-                  isLoading: false,
-                },
+                [queryKey]: { isLoading: false, data: undefined },
               }
             : state.queries,
       }));
@@ -289,9 +302,7 @@ export function createClientStore<M extends BaseMetadata>(): CacheStore<M> {
         },
         queries: {
           ...state.queries,
-          [queryKey]: {
-            isLoading: false,
-          },
+          [queryKey]: { isLoading: false, data: undefined },
         },
       }));
     },
@@ -569,13 +580,25 @@ export function applyOptimisticUpdates<M extends BaseMetadata>(
         };
         break;
       }
-      case "mark-inbox-notifications-as-read": {
+      case "mark-all-inbox-notifications-as-read": {
         for (const id in result.inboxNotifications) {
           result.inboxNotifications[id] = {
             ...result.inboxNotifications[id],
             readAt: optimisticUpdate.readAt,
           };
         }
+        break;
+      }
+      case "delete-inbox-notification": {
+        const {
+          [optimisticUpdate.inboxNotificationId]: _,
+          ...inboxNotifications
+        } = result.inboxNotifications;
+        result.inboxNotifications = inboxNotifications;
+        break;
+      }
+      case "delete-all-inbox-notifications": {
+        result.inboxNotifications = {};
         break;
       }
       case "update-notification-settings": {

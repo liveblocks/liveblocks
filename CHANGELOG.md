@@ -1,5 +1,18 @@
 ## v2.3.0 (not released yet)
 
+### `@liveblocks/react`
+
+- Add `useDeleteInboxNotification` and `useDeleteAllInboxNotifications` hooks.
+- Fix `resolved` query not being applied when filtering threads inside
+  `useThreads` hook.
+- Various refactorings to Suspense internals.
+
+### `@liveblocks/react-ui`
+
+- Add "Delete notification" action to `InboxNotification`.
+- Hide "Mark as read" action in `InboxNotification` when already read.
+- Improve keyboard navigation within emoji pickers.
+
 ### `@liveblocks/node`
 
 - Add `deleteInboxNotification` and `deleteAllInboxNotifications` methods.

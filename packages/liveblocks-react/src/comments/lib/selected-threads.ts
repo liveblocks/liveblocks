@@ -30,6 +30,11 @@ export function selectedThreads<M extends BaseMetadata>(
       const query = options.query;
       if (!query) return true;
 
+      // If the query includes 'resolved' filter and the thread's 'resolved' value does not match the query's 'resolved' value, exclude the thread
+      if (query.resolved !== undefined && thread.resolved !== query.resolved) {
+        return false;
+      }
+
       for (const key in query.metadata) {
         const metadataValue = thread.metadata[key];
         const filterValue = query.metadata[key];

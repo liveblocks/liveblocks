@@ -1,41 +1,18 @@
 import "@testing-library/jest-dom";
 
-import type {
-  BaseMetadata,
-  BaseUserMeta,
-  ClientOptions,
-  JsonObject,
-  ResolveRoomsInfoArgs,
-} from "@liveblocks/core";
-import { createClient } from "@liveblocks/core";
+import type { ResolveRoomsInfoArgs } from "@liveblocks/core";
 import { renderHook, screen, waitFor } from "@testing-library/react";
 import { nanoid } from "nanoid";
 import React, { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
-import { createRoomContext } from "../room";
-import { generateFakeJwt } from "./_utils";
+import { createContextsForTest } from "./_utils";
 
-// TODO: Dry up and create utils that wrap renderHook
-function createRoomContextForTest<M extends BaseMetadata>(
-  options?: Omit<ClientOptions<BaseUserMeta>, "authEndpoint" | "publicApiKey">
-) {
-  const client = createClient({
-    async authEndpoint() {
-      return {
-        token: await generateFakeJwt({ userId: "userId" }),
-      };
-    },
-    // eslint-disable-next-line @typescript-eslint/require-await
-    resolveRoomsInfo: async ({ roomIds }) => {
-      return roomIds.map((roomId) => ({
-        name: roomId,
-      }));
-    },
-    ...options,
-  });
-
-  return createRoomContext<JsonObject, never, never, never, M>(client);
+// eslint-disable-next-line @typescript-eslint/require-await
+async function defaultResolveRoomsInfo({ roomIds }: ResolveRoomsInfoArgs) {
+  return roomIds.map((roomId) => ({
+    name: roomId,
+  }));
 }
 
 describe("useRoomInfo", () => {
@@ -50,7 +27,9 @@ describe("useRoomInfo", () => {
   test("should return an error if resolveRoomsInfo is not set", async () => {
     const roomId = nanoid();
 
-    const { RoomProvider, useRoomInfo } = createRoomContextForTest({
+    const {
+      room: { RoomProvider, useRoomInfo },
+    } = createContextsForTest({
       resolveRoomsInfo: undefined,
     });
 
@@ -82,7 +61,11 @@ describe("useRoomInfo", () => {
   test("should return the results from resolveRoomsInfo", async () => {
     const roomId = nanoid();
 
-    const { RoomProvider, useRoomInfo } = createRoomContextForTest();
+    const {
+      room: { RoomProvider, useRoomInfo },
+    } = createContextsForTest({
+      resolveRoomsInfo: defaultResolveRoomsInfo,
+    });
 
     const { result, unmount } = renderHook(
       () => ({
@@ -110,7 +93,11 @@ describe("useRoomInfo", () => {
   test("should support changing room ID", async () => {
     const roomId = nanoid();
 
-    const { RoomProvider, useRoomInfo } = createRoomContextForTest();
+    const {
+      room: { RoomProvider, useRoomInfo },
+    } = createContextsForTest({
+      resolveRoomsInfo: defaultResolveRoomsInfo,
+    });
 
     const { result, rerender, unmount } = renderHook(
       ({ roomId }: { roomId: string }) => ({
@@ -153,7 +140,9 @@ describe("useRoomInfo", () => {
     const resolveRoomsInfo = jest.fn(({ roomIds }: ResolveRoomsInfoArgs) =>
       roomIds.map((roomId) => ({ name: roomId }))
     );
-    const { RoomProvider, useRoomInfo } = createRoomContextForTest({
+    const {
+      room: { RoomProvider, useRoomInfo },
+    } = createContextsForTest({
       resolveRoomsInfo,
     });
 
@@ -197,7 +186,9 @@ describe("useRoomInfo", () => {
     const resolveRoomsInfo = jest.fn(({ roomIds }: ResolveRoomsInfoArgs) =>
       roomIds.map((roomId) => ({ name: roomId }))
     );
-    const { RoomProvider, useRoomInfo } = createRoomContextForTest({
+    const {
+      room: { RoomProvider, useRoomInfo },
+    } = createContextsForTest({
       resolveRoomsInfo,
     });
 
@@ -245,7 +236,9 @@ describe("useRoomInfo", () => {
   test("should support resolveRoomsInfo throwing an error", async () => {
     const roomId = nanoid();
 
-    const { RoomProvider, useRoomInfo } = createRoomContextForTest({
+    const {
+      room: { RoomProvider, useRoomInfo },
+    } = createContextsForTest({
       resolveRoomsInfo: () => {
         throw new Error("error");
       },
@@ -276,7 +269,9 @@ describe("useRoomInfo", () => {
   test("should support resolveRoomsInfo returning a rejected promise", async () => {
     const roomId = nanoid();
 
-    const { RoomProvider, useRoomInfo } = createRoomContextForTest({
+    const {
+      room: { RoomProvider, useRoomInfo },
+    } = createContextsForTest({
       resolveRoomsInfo: () => {
         return Promise.reject("error");
       },
@@ -307,7 +302,9 @@ describe("useRoomInfo", () => {
   test("should return an error if resolveRoomsInfo returns undefined", async () => {
     const roomId = nanoid();
 
-    const { RoomProvider, useRoomInfo } = createRoomContextForTest({
+    const {
+      room: { RoomProvider, useRoomInfo },
+    } = createContextsForTest({
       resolveRoomsInfo: () => {
         return undefined;
       },
@@ -349,7 +346,9 @@ describe("useRoomInfo", () => {
         return { name: roomId };
       })
     );
-    const { RoomProvider, useRoomInfo } = createRoomContextForTest({
+    const {
+      room: { RoomProvider, useRoomInfo },
+    } = createContextsForTest({
       resolveRoomsInfo,
     });
     const { result, unmount } = renderHook(
@@ -400,9 +399,13 @@ describe("useRoomInfoSuspense", () => {
     const roomId = nanoid();
 
     const {
-      RoomProvider,
-      suspense: { useRoomInfo },
-    } = createRoomContextForTest();
+      room: {
+        RoomProvider,
+        suspense: { useRoomInfo },
+      },
+    } = createContextsForTest({
+      resolveRoomsInfo: defaultResolveRoomsInfo,
+    });
 
     const { result, unmount } = renderHook(
       () => ({
@@ -433,9 +436,11 @@ describe("useRoomInfoSuspense", () => {
     const roomId = nanoid();
 
     const {
-      RoomProvider,
-      suspense: { useRoomInfo },
-    } = createRoomContextForTest({
+      room: {
+        RoomProvider,
+        suspense: { useRoomInfo },
+      },
+    } = createContextsForTest({
       resolveRoomsInfo: () => {
         throw new Error("error");
       },

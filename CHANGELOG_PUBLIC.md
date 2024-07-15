@@ -13,6 +13,26 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 -->
 
+# Week 28 (2024-07-12)
+
+## v2.2.2
+
+### `@liveblocks/react-ui`
+
+- Fix missing avatar in `textMention` inbox notifications.
+- Fix `textMention` usage (and its props type) when customizing rendering via `kinds` on `InboxNotification`.
+- Fix broken CSS selector in default styles.
+
+## v2.2.1
+
+### `@liveblocks/yjs`
+
+- Don’t attempt to write Yjs changes if the current user has no write access
+
+## Contributors
+
+jrowny, nvie, marcbouchenoire
+
 # Week 27 (2024-07-05)
 
 ## v2.2.0

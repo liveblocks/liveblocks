@@ -61,6 +61,7 @@ export interface ThreadOverrides {
 export interface InboxNotificationOverrides {
   INBOX_NOTIFICATION_MORE: string;
   INBOX_NOTIFICATION_MARK_AS_READ: string;
+  INBOX_NOTIFICATION_DELETE: string;
   INBOX_NOTIFICATION_THREAD_COMMENTS_LIST: (
     list: ReactNode,
     room: ReactNode | undefined,
@@ -128,6 +129,7 @@ export const defaultOverrides: Overrides = {
   THREAD_COMPOSER_SEND: "Reply",
   INBOX_NOTIFICATION_MORE: "More",
   INBOX_NOTIFICATION_MARK_AS_READ: "Mark as read",
+  INBOX_NOTIFICATION_DELETE: "Delete notification",
   INBOX_NOTIFICATION_THREAD_COMMENTS_LIST: (
     list: ReactNode,
     room: ReactNode

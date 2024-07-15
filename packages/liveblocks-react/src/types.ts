@@ -14,6 +14,7 @@ import type {
   User,
 } from "@liveblocks/client";
 import type {
+  AsyncResultWithDataField,
   BaseMetadata,
   Client,
   CommentBody,
@@ -79,51 +80,18 @@ import type { PropsWithChildren } from "react";
 
 import type { CommentsError } from "./comments/errors";
 
-export type UserStateLoading = {
-  isLoading: true;
-  user?: never;
-  error?: never;
-};
+export type UserAsyncResult<T> = AsyncResultWithDataField<T, "user">;
+export type UserAsyncSuccess<T> = Resolve<
+  UserAsyncResult<T> & { readonly isLoading: false; readonly error?: undefined }
+>;
 
-export type UserStateError = {
-  isLoading: false;
-  user?: never;
-  error: Error;
-};
-
-export type UserStateSuccess<T> = {
-  isLoading: false;
-  user: T;
-  error?: never;
-};
-
-export type UserState<T> =
-  | UserStateLoading
-  | UserStateError
-  | UserStateSuccess<T>;
-
-export type RoomInfoStateLoading = {
-  isLoading: true;
-  info?: never;
-  error?: never;
-};
-
-export type RoomInfoStateError = {
-  isLoading: false;
-  info?: never;
-  error: Error;
-};
-
-export type RoomInfoStateSuccess = {
-  isLoading: false;
-  info: DRI;
-  error?: never;
-};
-
-export type RoomInfoState =
-  | RoomInfoStateLoading
-  | RoomInfoStateError
-  | RoomInfoStateSuccess;
+export type RoomInfoAsyncResult = AsyncResultWithDataField<DRI, "info">;
+export type RoomInfoAsyncSuccess = Resolve<
+  RoomInfoAsyncResult & {
+    readonly isLoading: false;
+    readonly error?: undefined;
+  }
+>;
 
 // prettier-ignore
 export type CreateThreadOptions<M extends BaseMetadata> =
@@ -187,12 +155,6 @@ export type InboxNotificationsStateLoading = {
   error?: never;
 };
 
-export type InboxNotificationsStateResolved = {
-  isLoading: false;
-  inboxNotifications: InboxNotificationData[];
-  error?: Error;
-};
-
 export type InboxNotificationsStateSuccess = {
   isLoading: false;
   inboxNotifications: InboxNotificationData[];
@@ -207,7 +169,7 @@ export type InboxNotificationsStateError = {
 
 export type InboxNotificationsState =
   | InboxNotificationsStateLoading
-  | InboxNotificationsStateResolved
+  | InboxNotificationsStateSuccess
   | InboxNotificationsStateError;
 
 export type UnreadInboxNotificationsCountStateLoading = {
@@ -372,7 +334,7 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * @example
      * const { user, error, isLoading } = useUser("user-id");
      */
-    useUser(userId: string): UserState<U["info"]>;
+    useUser(userId: string): UserAsyncResult<U["info"]>;
 
     /**
      * Returns room info from a given room ID.
@@ -380,7 +342,7 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * @example
      * const { info, error, isLoading } = useRoomInfo("room-id");
      */
-    useRoomInfo(roomId: string): RoomInfoState;
+    useRoomInfo(roomId: string): RoomInfoAsyncResult;
   };
 
   suspense: {
@@ -395,7 +357,7 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * @example
      * const { user } = useUser("user-id");
      */
-    useUser(userId: string): UserStateSuccess<U["info"]>;
+    useUser(userId: string): UserAsyncSuccess<U["info"]>;
 
     /**
      * Returns room info from a given room ID.
@@ -403,7 +365,7 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * @example
      * const { info } = useRoomInfo("room-id");
      */
-    useRoomInfo(roomId: string): RoomInfoStateSuccess;
+    useRoomInfo(roomId: string): RoomInfoAsyncSuccess;
   };
 };
 
@@ -1096,7 +1058,7 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
   LiveblocksProvider(props: PropsWithChildren): JSX.Element;
 
   /**
-   * Returns a function that marks an inbox notification as read.
+   * Returns a function that marks an inbox notification as read for the current user.
    *
    * @example
    * const markInboxNotificationAsRead = useMarkInboxNotificationAsRead();
@@ -1105,13 +1067,31 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
   useMarkInboxNotificationAsRead(): (inboxNotificationId: string) => void;
 
   /**
-   * Returns a function that marks all inbox notifications as read.
+   * Returns a function that marks all of the current user's inbox notifications as read.
    *
    * @example
    * const markAllInboxNotificationsAsRead = useMarkAllInboxNotificationsAsRead();
    * markAllInboxNotificationsAsRead();
    */
   useMarkAllInboxNotificationsAsRead(): () => void;
+
+  /**
+   * Returns a function that deletes an inbox notification for the current user.
+   *
+   * @example
+   * const deleteInboxNotification = useDeleteInboxNotification();
+   * deleteInboxNotification("in_xxx");
+   */
+  useDeleteInboxNotification(): (inboxNotificationId: string) => void;
+
+  /**
+   * Returns a function that deletes all of the current user's inbox notifications.
+   *
+   * @example
+   * const deleteAllInboxNotifications = useDeleteAllInboxNotifications();
+   * deleteAllInboxNotifications();
+   */
+  useDeleteAllInboxNotifications(): () => void;
 
   /**
    * Returns the thread associated with a `"thread"` inbox notification.

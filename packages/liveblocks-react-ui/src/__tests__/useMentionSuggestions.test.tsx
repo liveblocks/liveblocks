@@ -1,37 +1,16 @@
-import type {
-  BaseMetadata,
-  BaseUserMeta,
-  ClientOptions,
-  JsonObject,
-  ResolveMentionSuggestionsArgs,
-} from "@liveblocks/core";
-import { createClient } from "@liveblocks/core";
-import { createRoomContext } from "@liveblocks/react";
+import type { ResolveMentionSuggestionsArgs } from "@liveblocks/core";
 import { renderHook, waitFor } from "@testing-library/react";
 import { nanoid } from "nanoid";
 import React from "react";
 
 import { useMentionSuggestions } from "../shared";
-import { generateFakeJwt } from "./_utils";
+import { createContextsForTest } from "./_utils";
 
-// TODO: Dry up and create utils that wrap renderHook
-function createRoomContextForTest<M extends BaseMetadata>(
-  options?: Omit<ClientOptions<BaseUserMeta>, "authEndpoint" | "publicApiKey">
-) {
-  const client = createClient({
-    async authEndpoint() {
-      return {
-        token: await generateFakeJwt({ userId: "userId" }),
-      };
-    },
-    // eslint-disable-next-line @typescript-eslint/require-await
-    resolveMentionSuggestions: async ({ text }) => {
-      return text.split("");
-    },
-    ...options,
-  });
-
-  return createRoomContext<JsonObject, never, never, never, M>(client);
+// eslint-disable-next-line @typescript-eslint/require-await
+async function defaultResolveMentionSuggestions({
+  text,
+}: ResolveMentionSuggestionsArgs) {
+  return text.split("");
 }
 
 describe("useMentionSuggestions", () => {
@@ -46,7 +25,11 @@ describe("useMentionSuggestions", () => {
   test("should return the results from resolveMentionSuggestions", async () => {
     const roomId = nanoid();
 
-    const { RoomProvider } = createRoomContextForTest();
+    const {
+      room: { RoomProvider },
+    } = createContextsForTest({
+      resolveMentionSuggestions: defaultResolveMentionSuggestions,
+    });
 
     const { result, unmount } = renderHook(
       () => ({
@@ -73,7 +56,11 @@ describe("useMentionSuggestions", () => {
   test("should update whenever the text changes", async () => {
     const roomId = nanoid();
 
-    const { RoomProvider } = createRoomContextForTest();
+    const {
+      room: { RoomProvider },
+    } = createContextsForTest({
+      resolveMentionSuggestions: defaultResolveMentionSuggestions,
+    });
 
     const { result, rerender, unmount } = renderHook(
       ({ text }: { text: string }) => ({
@@ -110,7 +97,9 @@ describe("useMentionSuggestions", () => {
     const resolveMentionSuggestions = jest.fn(
       ({ text }: ResolveMentionSuggestionsArgs) => text.split("")
     );
-    const { RoomProvider } = createRoomContextForTest({
+    const {
+      room: { RoomProvider },
+    } = createContextsForTest({
       resolveMentionSuggestions,
     });
 
@@ -144,7 +133,9 @@ describe("useMentionSuggestions", () => {
     const resolveMentionSuggestions = jest.fn(
       ({ text }: ResolveMentionSuggestionsArgs) => text.split("")
     );
-    const { RoomProvider } = createRoomContextForTest({
+    const {
+      room: { RoomProvider },
+    } = createContextsForTest({
       resolveMentionSuggestions,
     });
 
@@ -198,7 +189,9 @@ describe("useMentionSuggestions", () => {
     const resolveMentionSuggestions = jest.fn(
       ({ text }: ResolveMentionSuggestionsArgs) => text.split("")
     );
-    const { RoomProvider } = createRoomContextForTest({
+    const {
+      room: { RoomProvider },
+    } = createContextsForTest({
       resolveMentionSuggestions,
     });
 

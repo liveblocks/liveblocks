@@ -1,3 +1,10 @@
+import {
+  type BaseMetadata,
+  type ClientOptions,
+  createClient,
+  type JsonObject,
+} from "@liveblocks/core";
+import { createLiveblocksContext, createRoomContext } from "@liveblocks/react";
 import type { RenderHookResult, RenderOptions } from "@testing-library/react";
 import { render, renderHook } from "@testing-library/react";
 import type { ReactElement } from "react";
@@ -53,6 +60,36 @@ export function generateFakeJwt(options: { userId: string }) {
       })
     )}.${btoa("fake_signature")}`
   );
+}
+
+export function createContextsForTest<M extends BaseMetadata>(
+  {
+    userId,
+    ...options
+  }: Omit<ClientOptions, "authEndpoint" | "publicApiKey"> & {
+    userId?: string;
+  } = { userId: "userId" }
+) {
+  const clientOptions: ClientOptions = options as ClientOptions;
+
+  if (userId) {
+    clientOptions.authEndpoint = async () => {
+      const token = await generateFakeJwt({ userId });
+      return {
+        token,
+      };
+    };
+  } else {
+    clientOptions.publicApiKey = "pk_xxx";
+  }
+
+  const client = createClient(clientOptions);
+
+  return {
+    room: createRoomContext<JsonObject, never, never, never, M>(client),
+    liveblocks: createLiveblocksContext(client),
+    client,
+  };
 }
 
 export * from "@testing-library/react";
