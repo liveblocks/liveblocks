@@ -5,20 +5,19 @@ const SOME_TIME = 5;
 const ERROR_MESSAGE = "error";
 const ERROR = new Error(ERROR_MESSAGE);
 
-const synchronousCallback = (args: [string][]) => {
-  return args.map(([userId]) => userId);
+const synchronousCallback = (inputs: string[]) => {
+  return inputs.map((userId) => userId);
 };
 
-const asynchronousCallback = async (args: [string][]) => {
+const asynchronousCallback = async (inputs: string[]) => {
   await wait(SOME_TIME);
-
-  return args.map(([userId]) => userId);
+  return inputs.map((userId) => userId);
 };
 
 describe("Batch", () => {
   test("should batch synchronous calls", async () => {
     const callback = jest.fn(synchronousCallback);
-    const batch = new Batch<string, [string]>(callback, { delay: SOME_TIME });
+    const batch = new Batch<string, string>(callback, { delay: SOME_TIME });
 
     const a = batch.get("a");
     const b = batch.get("b");
@@ -27,12 +26,12 @@ describe("Batch", () => {
     await expect(b).resolves.toEqual("b");
 
     // Callback should be called only once for both "a" and "b".
-    expect(callback).toHaveBeenCalledWith([["a"], ["b"]]);
+    expect(callback).toHaveBeenCalledWith(["a", "b"]);
   });
 
   test("should batch asynchronous calls", async () => {
     const callback = jest.fn(asynchronousCallback);
-    const batch = new Batch<string, [string]>(callback, { delay: SOME_TIME });
+    const batch = new Batch<string, string>(callback, { delay: SOME_TIME });
 
     const a = batch.get("a");
     const b = batch.get("b");
@@ -41,12 +40,12 @@ describe("Batch", () => {
     await expect(b).resolves.toEqual("b");
 
     // Callback should be called only once for both "a" and "b".
-    expect(callback).toHaveBeenCalledWith([["a"], ["b"]]);
+    expect(callback).toHaveBeenCalledWith(["a", "b"]);
   });
 
   test("should batch based on delay", async () => {
     const callback = jest.fn(synchronousCallback);
-    const batch = new Batch<string, [string]>(callback, { delay: SOME_TIME });
+    const batch = new Batch<string, string>(callback, { delay: SOME_TIME });
 
     const a = batch.get("a");
     await wait(SOME_TIME * 1.5);
@@ -57,13 +56,13 @@ describe("Batch", () => {
 
     // Callback should be called twice, once for "a" and once for "b".
     expect(callback).toHaveBeenCalledTimes(2);
-    expect(callback).toHaveBeenNthCalledWith(1, [["a"]]);
-    expect(callback).toHaveBeenNthCalledWith(2, [["b"]]);
+    expect(callback).toHaveBeenNthCalledWith(1, ["a"]);
+    expect(callback).toHaveBeenNthCalledWith(2, ["b"]);
   });
 
   test("should batch based on size", async () => {
     const callback = jest.fn(synchronousCallback);
-    const batch = new Batch<string, [string]>(callback, {
+    const batch = new Batch<string, string>(callback, {
       delay: SOME_TIME,
       size: 1,
     });
@@ -76,15 +75,15 @@ describe("Batch", () => {
 
     // Callback should be called twice, once for "a" and once for "b".
     expect(callback).toHaveBeenCalledTimes(2);
-    expect(callback).toHaveBeenNthCalledWith(1, [["a"]]);
-    expect(callback).toHaveBeenNthCalledWith(2, [["b"]]);
+    expect(callback).toHaveBeenNthCalledWith(1, ["a"]);
+    expect(callback).toHaveBeenNthCalledWith(2, ["b"]);
   });
 
   test("should reject batch errors", async () => {
     const callback = jest.fn(() => {
       throw ERROR;
     });
-    const batch = new Batch<string, [string]>(callback, { delay: SOME_TIME });
+    const batch = new Batch<string, string>(callback, { delay: SOME_TIME });
 
     const a = batch.get("a");
     const b = batch.get("b");
@@ -98,7 +97,7 @@ describe("Batch", () => {
     const callback = jest.fn(() => {
       return Promise.reject(ERROR_MESSAGE);
     });
-    const batch = new Batch<string, [string]>(callback, { delay: SOME_TIME });
+    const batch = new Batch<string, string>(callback, { delay: SOME_TIME });
 
     const a = batch.get("a");
     const b = batch.get("b");
@@ -112,7 +111,7 @@ describe("Batch", () => {
     const callback = jest.fn(() => {
       return ["a", ERROR];
     });
-    const batch = new Batch<string, [string]>(callback, { delay: SOME_TIME });
+    const batch = new Batch<string, string>(callback, { delay: SOME_TIME });
 
     const a = batch.get("a");
     const b = batch.get("b");
@@ -124,7 +123,7 @@ describe("Batch", () => {
 
   test("should reject if callback doesn't return an array", async () => {
     const callback = jest.fn();
-    const batch = new Batch<string, [string]>(callback, { delay: SOME_TIME });
+    const batch = new Batch<string, string>(callback, { delay: SOME_TIME });
 
     await expect(batch.get("a")).rejects.toEqual(
       new Error("Callback must return an array.")
@@ -133,7 +132,7 @@ describe("Batch", () => {
 
   test("should reject if callback doesn't return an array of the same length as batch", async () => {
     const callback = jest.fn(() => []);
-    const batch = new Batch<string, [string]>(callback, { delay: SOME_TIME });
+    const batch = new Batch<string, string>(callback, { delay: SOME_TIME });
 
     await expect(batch.get("a")).rejects.toEqual(
       new Error(
@@ -144,7 +143,7 @@ describe("Batch", () => {
 
   test("should deduplicate identical calls", async () => {
     const callback = jest.fn(synchronousCallback);
-    const batch = new Batch<string, [string]>(callback, { delay: SOME_TIME });
+    const batch = new Batch<string, string>(callback, { delay: SOME_TIME });
 
     const a = batch.get("a");
     const b = batch.get("b");
@@ -156,12 +155,12 @@ describe("Batch", () => {
 
     // Callback should be called only once for ["a", "b"].
     expect(callback).toHaveBeenCalledTimes(1);
-    expect(callback).toHaveBeenCalledWith([["a"], ["b"]]);
+    expect(callback).toHaveBeenCalledWith(["a", "b"]);
   });
 
   test("should not deduplicate identical calls if they're not in the same batch", async () => {
     const callback = jest.fn(synchronousCallback);
-    const batch = new Batch<string, [string]>(callback, { delay: SOME_TIME });
+    const batch = new Batch<string, string>(callback, { delay: SOME_TIME });
 
     const a = batch.get("a");
     const b = batch.get("b");
@@ -174,7 +173,7 @@ describe("Batch", () => {
 
     // Callback should be called twice, once for ["a", "b"] and once for ["a"] again.
     expect(callback).toHaveBeenCalledTimes(2);
-    expect(callback).toHaveBeenNthCalledWith(1, [["a"], ["b"]]);
-    expect(callback).toHaveBeenNthCalledWith(2, [["a"]]);
+    expect(callback).toHaveBeenNthCalledWith(1, ["a", "b"]);
+    expect(callback).toHaveBeenNthCalledWith(2, ["a"]);
   });
 });

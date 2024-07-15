@@ -7,7 +7,7 @@ import React from "react";
 import { dummyCommentData, dummyThreadData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import { mockDeleteThread, mockGetThreads } from "./_restMocks";
-import { createRoomContextForTest } from "./_utils";
+import { createContextsForTest } from "./_utils";
 
 const server = setupServer();
 
@@ -64,8 +64,9 @@ describe("useDeleteThread", () => {
       })
     );
 
-    const { RoomProvider, useThreads, useDeleteThread } =
-      createRoomContextForTest({ userId });
+    const {
+      room: { RoomProvider, useThreads, useDeleteThread },
+    } = createContextsForTest({ userId });
 
     const { result, unmount } = renderHook(
       () => ({
@@ -119,10 +120,11 @@ describe("useDeleteThread", () => {
     );
 
     // In this test, the current user's ID is "not-the-thread-creator"
-    const { RoomProvider, useThreads, useDeleteThread, useRoom } =
-      createRoomContextForTest({
-        userId: "not-the-thread-creator",
-      });
+    const {
+      room: { RoomProvider, useThreads, useDeleteThread, useRoom },
+    } = createContextsForTest({
+      userId: "not-the-thread-creator",
+    });
 
     const { result, unmount } = renderHook(
       () => ({
@@ -185,8 +187,9 @@ describe("useDeleteThread", () => {
       })
     );
 
-    const { RoomProvider, useThreads, useDeleteThread } =
-      createRoomContextForTest({ userId });
+    const {
+      room: { RoomProvider, useThreads, useDeleteThread },
+    } = createContextsForTest({ userId });
 
     const { result, unmount } = renderHook(
       () => ({

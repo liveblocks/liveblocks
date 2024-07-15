@@ -1,5 +1,6 @@
 import { kInternal } from "@liveblocks/core";
 import {
+  ClientSideSuspense,
   createLiveblocksContext,
   createRoomContext,
   useClient,
@@ -11,6 +12,8 @@ import {
   Thread,
 } from "@liveblocks/react-ui";
 import * as React from "react";
+import type { FallbackProps } from "react-error-boundary";
+import { ErrorBoundary } from "react-error-boundary";
 
 import { getRoomFromUrl, getUserFromUrl, Row } from "../../utils";
 import Button from "../../utils/Button";
@@ -46,23 +49,47 @@ const client = createLiveblocksClient({
   },
 });
 
-const { LiveblocksProvider, useInboxNotifications } =
-  createLiveblocksContext(client);
+const {
+  suspense: { LiveblocksProvider, useInboxNotifications },
+} = createLiveblocksContext(client);
 
-const { RoomProvider, useSelf, useThreads, useDeleteComment } =
-  createRoomContext(client);
+const {
+  suspense: { RoomProvider, useSelf, useThreads, useDeleteComment },
+} = createRoomContext(client);
+
+function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
+  return (
+    <div style={{ border: "2px solid red", color: "red" }}>
+      <p>Oops, an unexpected error happened.</p>
+      <pre>{String(error)}</pre>
+      <button onClick={resetErrorBoundary}>Retry</button>
+    </div>
+  );
+}
 
 function WithRoomProvider(props: React.PropsWithChildren) {
   const roomId = getRoomFromUrl();
   return (
     <RoomProvider id={roomId} initialPresence={{} as never}>
-      {props.children}
+      <ErrorBoundary FallbackComponent={ErrorFallback}>
+        <ClientSideSuspense fallback="Loading...">
+          {props.children}
+        </ClientSideSuspense>
+      </ErrorBoundary>
     </RoomProvider>
   );
 }
 
 function WithLiveblocksProvider(props: React.PropsWithChildren) {
-  return <LiveblocksProvider>{props.children}</LiveblocksProvider>;
+  return (
+    <LiveblocksProvider>
+      <ErrorBoundary FallbackComponent={ErrorFallback}>
+        <ClientSideSuspense fallback="Loading...">
+          {props.children}
+        </ClientSideSuspense>
+      </ErrorBoundary>
+    </LiveblocksProvider>
+  );
 }
 
 export default function Home() {
@@ -94,7 +121,7 @@ export default function Home() {
 }
 
 function useInboxNotificationsForThisPage() {
-  const { isLoading, error, inboxNotifications } = useInboxNotifications();
+  const { inboxNotifications: allInboxNotifications } = useInboxNotifications();
 
   // Filter down inbox notifications to just the notifications from this room,
   // and only the ones that happened since the page was loaded. If we didn't
@@ -103,15 +130,14 @@ function useInboxNotificationsForThisPage() {
   const roomId = getRoomFromUrl();
   const [pageLoadTimestamp] = React.useState(() => Date.now());
 
-  if (isLoading) return null;
-  if (error) return error;
-
-  return inboxNotifications.filter(
+  const inboxNotifications = allInboxNotifications.filter(
     (ibn) =>
       ibn.kind === "thread" &&
       ibn.roomId === roomId &&
       ibn.notifiedAt.getTime() > pageLoadTimestamp
   );
+
+  return inboxNotifications;
 }
 
 function TopPart() {
@@ -123,12 +149,10 @@ function TopPart() {
   const deleteComment = useDeleteComment();
 
   function deleteAllMine() {
-    if (threads) {
-      for (const th of threads) {
-        for (const cm of th.comments) {
-          if (cm.userId === me?.id) {
-            deleteComment({ threadId: th.id, commentId: cm.id });
-          }
+    for (const th of threads) {
+      for (const cm of th.comments) {
+        if (cm.userId === me.id) {
+          deleteComment({ threadId: th.id, commentId: cm.id });
         }
       }
     }
@@ -143,8 +167,8 @@ function TopPart() {
       </div>
       <table>
         <tbody>
-          <Row id="userId" name="userId" value={me?.id} />
-          <Row id="name" name="name" value={me?.info?.name} />
+          <Row id="userId" name="userId" value={me.id} />
+          <Row id="name" name="name" value={me.info?.name} />
           <Row
             id="numOfThreads"
             name="Number of Threads"
@@ -158,10 +182,7 @@ function TopPart() {
           <Row
             id="numOfNotifications"
             name="Number of Notifications"
-            value={
-              (Array.isArray(inboxNotifications) ? inboxNotifications : [])
-                ?.length
-            }
+            value={inboxNotifications?.length}
           />
           <Row
             id="numPendingUpdates"
@@ -181,7 +202,7 @@ function usePendingUpdatesCount() {
     () => store.get().optimisticUpdates.length,
     [store]
   );
-  return React.useSyncExternalStore(store.subscribe, getter, getter);
+  return React.useSyncExternalStore(store.subscribe, getter);
 }
 
 function LeftSide() {
@@ -195,7 +216,7 @@ function LeftSide() {
           paddingTop: 1,
         }}
       >
-        {(threads ?? []).map((thread) => (
+        {threads.map((thread) => (
           <div key={thread.id} style={{ margin: 20 }}>
             <Thread thread={thread} />
           </div>
@@ -222,17 +243,11 @@ function RightSide() {
           // padding: 20,
         }}
       >
-        {inboxNotifications === null ? (
-          "Loading..."
-        ) : !Array.isArray(inboxNotifications) ? (
-          <pre style={{ color: "red" }}>{String(inboxNotifications)}</pre>
-        ) : (
-          <InboxNotificationList>
-            {inboxNotifications.map((ibn) => (
-              <InboxNotification key={ibn.id} inboxNotification={ibn} />
-            ))}
-          </InboxNotificationList>
-        )}
+        <InboxNotificationList>
+          {inboxNotifications.map((ibn) => (
+            <InboxNotification key={ibn.id} inboxNotification={ibn} />
+          ))}
+        </InboxNotificationList>
       </div>
     </div>
   );

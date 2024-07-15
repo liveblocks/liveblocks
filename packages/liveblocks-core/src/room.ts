@@ -3010,6 +3010,12 @@ export function createRoom<
     );
   }
 
+  // This method (and the following batch handling) isn't the same as the one in
+  // src/notifications.ts, this one is room-based: /v2/c/rooms/:roomId/inbox-notifications/read.
+  //
+  // The reason for this is that unlike the room-based Comments ones, the Notifications endpoints
+  // don't work with a public key. Since `markThreadAsRead` needs to mark the related inbox notifications
+  // as read, this room-based method is necessary to keep all Comments features working with a public key.
   async function markInboxNotificationsAsRead(inboxNotificationIds: string[]) {
     await fetchNotificationsJson("/inbox-notifications/read", {
       method: "POST",
@@ -3020,8 +3026,8 @@ export function createRoom<
     });
   }
 
-  const batchedMarkInboxNotificationsAsRead = new Batch(
-    async (batchedInboxNotificationIds: [string][]) => {
+  const batchedMarkInboxNotificationsAsRead = new Batch<string, string>(
+    async (batchedInboxNotificationIds) => {
       const inboxNotificationIds = batchedInboxNotificationIds.flat();
 
       await markInboxNotificationsAsRead(inboxNotificationIds);

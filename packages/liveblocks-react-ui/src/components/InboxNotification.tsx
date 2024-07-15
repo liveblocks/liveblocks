@@ -9,6 +9,7 @@ import type {
 } from "@liveblocks/core";
 import { assertNever, console } from "@liveblocks/core";
 import {
+  useDeleteInboxNotification,
   useInboxNotificationThread,
   useMarkInboxNotificationAsRead,
   useRoomInfo,
@@ -28,6 +29,7 @@ import React, { forwardRef, useCallback, useMemo, useState } from "react";
 import type { GlobalComponents } from "../components";
 import { useComponents } from "../components";
 import { CheckIcon } from "../icons/Check";
+import { DeleteIcon } from "../icons/Delete";
 import { EllipsisIcon } from "../icons/Ellipsis";
 import { MissingIcon } from "../icons/Missing";
 import type {
@@ -230,6 +232,7 @@ const InboxNotificationLayout = forwardRef<
     const Component = asChild ? Slot : Anchor;
     const [isMoreActionOpen, setMoreActionOpen] = useState(false);
     const markInboxNotificationAsRead = useMarkInboxNotificationAsRead();
+    const deleteInboxNotification = useDeleteInboxNotification();
 
     const handleClick = useCallback(
       (event: ReactMouseEvent<HTMLAnchorElement, MouseEvent>) => {
@@ -272,6 +275,10 @@ const InboxNotificationLayout = forwardRef<
     const handleMarkAsRead = useCallback(() => {
       markInboxNotificationAsRead(inboxNotification.id);
     }, [inboxNotification.id, markInboxNotificationAsRead]);
+
+    const handleDelete = useCallback(() => {
+      deleteInboxNotification(inboxNotification.id);
+    }, [inboxNotification.id, deleteInboxNotification]);
 
     return (
       <TooltipProvider>
@@ -318,13 +325,21 @@ const InboxNotificationLayout = forwardRef<
                     align="end"
                     content={
                       <>
+                        {unread ? (
+                          <DropdownItem
+                            onSelect={handleMarkAsRead}
+                            onClick={stopPropagation}
+                          >
+                            <CheckIcon className="lb-dropdown-item-icon" />
+                            {$.INBOX_NOTIFICATION_MARK_AS_READ}
+                          </DropdownItem>
+                        ) : null}
                         <DropdownItem
-                          onSelect={handleMarkAsRead}
+                          onSelect={handleDelete}
                           onClick={stopPropagation}
-                          disabled={!unread}
                         >
-                          <CheckIcon className="lb-dropdown-item-icon" />
-                          {$.INBOX_NOTIFICATION_MARK_AS_READ}
+                          <DeleteIcon className="lb-dropdown-item-icon" />
+                          {$.INBOX_NOTIFICATION_DELETE}
                         </DropdownItem>
                       </>
                     }
