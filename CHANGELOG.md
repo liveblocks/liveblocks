@@ -13,6 +13,10 @@
 - Hide "Mark as read" action in `InboxNotification` when already read.
 - Improve keyboard navigation within emoji pickers.
 
+### `@liveblocks/node`
+
+- Add `deleteInboxNotification` and `deleteAllInboxNotifications` methods.
+
 ## v2.2.2
 
 ### `@liveblocks/react-ui`
