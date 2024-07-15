@@ -1,5 +1,4 @@
 import type { CommentBody, ThreadData } from "@liveblocks/core";
-import { createClient } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { addMinutes } from "date-fns";
 import type { ResponseComposition, RestContext, RestRequest } from "msw";
@@ -7,10 +6,10 @@ import { setupServer } from "msw/node";
 import { nanoid } from "nanoid";
 import React from "react";
 
-import { createRoomContext } from "../room";
 import { dummyCommentData, dummyThreadData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import { mockCreateThread, mockGetThreads } from "./_restMocks";
+import { createContextsForTest } from "./_utils";
 
 const server = setupServer();
 
@@ -26,18 +25,6 @@ afterEach(() => {
 });
 
 afterAll(() => server.close());
-
-// TODO: Dry up and create utils that wrap renderHook
-function createRoomContextForTest() {
-  const client = createClient({
-    publicApiKey: "pk_xxx",
-    polyfills: {
-      WebSocket: MockWebSocket as any,
-    },
-  });
-
-  return createRoomContext(client);
-}
 
 describe("useCreateThread", () => {
   test("should create a thread optimistically and override with thread coming from server", async () => {
@@ -84,8 +71,9 @@ describe("useCreateThread", () => {
       )
     );
 
-    const { RoomProvider, useThreads, useCreateThread } =
-      createRoomContextForTest();
+    const {
+      room: { RoomProvider, useThreads, useCreateThread },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(
       () => ({
@@ -139,8 +127,9 @@ describe("useCreateThread", () => {
       })
     );
 
-    const { RoomProvider, useThreads, useCreateThread } =
-      createRoomContextForTest();
+    const {
+      room: { RoomProvider, useThreads, useCreateThread },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(
       () => ({

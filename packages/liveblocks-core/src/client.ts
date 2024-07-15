@@ -161,6 +161,8 @@ export type NotificationsApi<M extends BaseMetadata> = {
   getUnreadInboxNotificationsCount(): Promise<number>;
   markAllInboxNotificationsAsRead(): Promise<void>;
   markInboxNotificationAsRead(inboxNotificationId: string): Promise<void>;
+  deleteAllInboxNotifications(): Promise<void>;
+  deleteInboxNotification(inboxNotificationId: string): Promise<void>;
 };
 
 /**
@@ -515,6 +517,8 @@ export function createClient<U extends BaseUserMeta = DU>(
     getUnreadInboxNotificationsCount,
     markAllInboxNotificationsAsRead,
     markInboxNotificationAsRead,
+    deleteAllInboxNotifications,
+    deleteInboxNotification,
   } = createNotificationsApi({
     baseUrl,
     fetcher: clientOptions.polyfills?.fetch || /* istanbul ignore next */ fetch,
@@ -574,6 +578,8 @@ export function createClient<U extends BaseUserMeta = DU>(
           getUnreadInboxNotificationsCount,
           markAllInboxNotificationsAsRead,
           markInboxNotificationAsRead,
+          deleteAllInboxNotifications,
+          deleteInboxNotification,
         },
         currentUserIdStore,
         resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,

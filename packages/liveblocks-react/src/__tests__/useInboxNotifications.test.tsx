@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 
-import { createClient, kInternal, wait } from "@liveblocks/core";
+import { kInternal, wait } from "@liveblocks/core";
 import {
   act,
   fireEvent,
@@ -14,15 +14,11 @@ import { nanoid } from "nanoid";
 import React, { Suspense } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 
-import {
-  createLiveblocksContext,
-  INBOX_NOTIFICATIONS_QUERY,
-  POLLING_INTERVAL,
-} from "../liveblocks";
+import { INBOX_NOTIFICATIONS_QUERY, POLLING_INTERVAL } from "../liveblocks";
 import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import { mockGetInboxNotifications } from "./_restMocks";
-import { generateFakeJwt } from "./_utils";
+import { createContextsForTest } from "./_utils";
 
 const server = setupServer();
 
@@ -38,22 +34,6 @@ afterEach(() => {
 });
 
 afterAll(() => server.close());
-
-// TODO: Dry up and create utils that wrap renderHook
-function createLiveblocksContextForTest() {
-  const client = createClient({
-    async authEndpoint() {
-      return {
-        token: await generateFakeJwt({ userId: "userId" }),
-      };
-    },
-    polyfills: {
-      WebSocket: MockWebSocket as any,
-    },
-  });
-
-  return { liveblocksCtx: createLiveblocksContext(client), client };
-}
 
 describe("useInboxNotifications", () => {
   test("should fetch inbox notifications", async () => {
@@ -80,8 +60,8 @@ describe("useInboxNotifications", () => {
     );
 
     const {
-      liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
-    } = createLiveblocksContextForTest();
+      liveblocks: { LiveblocksProvider, useInboxNotifications },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(() => useInboxNotifications(), {
       wrapper: ({ children }) => (
@@ -127,8 +107,8 @@ describe("useInboxNotifications", () => {
     );
 
     const {
-      liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
-    } = createLiveblocksContextForTest();
+      liveblocks: { LiveblocksProvider, useInboxNotifications },
+    } = createContextsForTest();
 
     const { result, unmount, rerender } = renderHook(
       () => useInboxNotifications(),
@@ -197,8 +177,8 @@ describe("useInboxNotifications", () => {
     );
 
     const {
-      liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
-    } = createLiveblocksContextForTest();
+      liveblocks: { LiveblocksProvider, useInboxNotifications },
+    } = createContextsForTest();
 
     const { rerender, unmount } = renderHook(
       () => {
@@ -230,8 +210,8 @@ describe("useInboxNotifications", () => {
     );
 
     const {
-      liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
-    } = createLiveblocksContextForTest();
+      liveblocks: { LiveblocksProvider, useInboxNotifications },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(() => useInboxNotifications(), {
       wrapper: ({ children }) => (
@@ -283,9 +263,9 @@ describe("useInboxNotifications", () => {
     );
 
     const {
-      liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
+      liveblocks: { LiveblocksProvider, useInboxNotifications },
       client,
-    } = createLiveblocksContextForTest();
+    } = createContextsForTest();
 
     const store = client[kInternal].cacheStore;
     store.set((state) => ({
@@ -341,8 +321,8 @@ describe("useInboxNotifications: error", () => {
     );
 
     const {
-      liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
-    } = createLiveblocksContextForTest();
+      liveblocks: { LiveblocksProvider, useInboxNotifications },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(() => useInboxNotifications(), {
       wrapper: ({ children }) => (
@@ -412,10 +392,10 @@ describe("useInboxNotifications - Suspense", () => {
     );
 
     const {
-      liveblocksCtx: {
+      liveblocks: {
         suspense: { LiveblocksProvider, useInboxNotifications },
       },
-    } = createLiveblocksContextForTest();
+    } = createContextsForTest();
 
     const { result, unmount, rerender } = renderHook(
       () => useInboxNotifications(),
@@ -481,8 +461,8 @@ describe("useInboxNotifications: polling", () => {
     );
 
     const {
-      liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
-    } = createLiveblocksContextForTest();
+      liveblocks: { LiveblocksProvider, useInboxNotifications },
+    } = createContextsForTest();
 
     const Room = () => {
       return (
@@ -534,10 +514,10 @@ describe("useInboxNotificationsSuspense: error", () => {
     );
 
     const {
-      liveblocksCtx: {
+      liveblocks: {
         suspense: { LiveblocksProvider, useInboxNotifications },
       },
-    } = createLiveblocksContextForTest();
+    } = createContextsForTest();
 
     function Fallback({ resetErrorBoundary }: FallbackProps) {
       return (
@@ -619,10 +599,10 @@ describe("useInboxNotificationsSuspense: error", () => {
     );
 
     const {
-      liveblocksCtx: {
+      liveblocks: {
         suspense: { LiveblocksProvider, useInboxNotifications },
       },
-    } = createLiveblocksContextForTest();
+    } = createContextsForTest();
 
     function Fallback({ resetErrorBoundary }: FallbackProps) {
       return (

@@ -372,6 +372,12 @@ function makeLiveblocksContextBundle<
   const useMarkAllInboxNotificationsAsRead = () =>
     useMarkAllInboxNotificationsAsRead_withClient(client);
 
+  const useDeleteInboxNotification = () =>
+    useDeleteInboxNotification_withClient(client);
+
+  const useDeleteAllInboxNotifications = () =>
+    useDeleteAllInboxNotifications_withClient(client);
+
   // NOTE: This version of the LiveblocksProvider does _not_ take any props.
   // This is because we already have a client bound to it.
   function LiveblocksProvider(props: PropsWithChildren) {
@@ -395,6 +401,9 @@ function makeLiveblocksContextBundle<
     useMarkInboxNotificationAsRead,
     useMarkAllInboxNotificationsAsRead,
 
+    useDeleteInboxNotification,
+    useDeleteAllInboxNotifications,
+
     useInboxNotificationThread,
 
     ...shared.classic,
@@ -409,6 +418,9 @@ function makeLiveblocksContextBundle<
 
       useMarkInboxNotificationAsRead,
       useMarkAllInboxNotificationsAsRead,
+
+      useDeleteInboxNotification,
+      useDeleteAllInboxNotifications,
 
       useInboxNotificationThread,
 
@@ -552,7 +564,7 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
     const optimisticUpdateId = nanoid();
     const readAt = new Date();
     store.pushOptimisticUpdate({
-      type: "mark-inbox-notifications-as-read",
+      type: "mark-all-inbox-notifications-as-read",
       id: optimisticUpdateId,
       readAt,
     });
@@ -569,6 +581,97 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
               ]
             )
           ),
+          optimisticUpdates: state.optimisticUpdates.filter(
+            (update) => update.id !== optimisticUpdateId
+          ),
+        }));
+      },
+      () => {
+        // TODO: Broadcast errors to client
+        store.set((state) => ({
+          ...state,
+          optimisticUpdates: state.optimisticUpdates.filter(
+            (update) => update.id !== optimisticUpdateId
+          ),
+        }));
+      }
+    );
+  }, [client]);
+}
+
+function useDeleteInboxNotification_withClient(client: OpaqueClient) {
+  return useCallback(
+    (inboxNotificationId: string) => {
+      const { store, notifications } = getExtrasForClient(client);
+
+      const optimisticUpdateId = nanoid();
+      const deletedAt = new Date();
+      store.pushOptimisticUpdate({
+        type: "delete-inbox-notification",
+        id: optimisticUpdateId,
+        inboxNotificationId,
+        deletedAt,
+      });
+
+      notifications.deleteInboxNotification(inboxNotificationId).then(
+        () => {
+          store.set((state) => {
+            const existingNotification =
+              state.inboxNotifications[inboxNotificationId];
+
+            // If existing notification has been deleted, we return the existing state
+            if (existingNotification === undefined) {
+              return {
+                ...state,
+                optimisticUpdates: state.optimisticUpdates.filter(
+                  (update) => update.id !== optimisticUpdateId
+                ),
+              };
+            }
+
+            const { [inboxNotificationId]: _, ...inboxNotifications } =
+              state.inboxNotifications;
+
+            return {
+              ...state,
+              inboxNotifications,
+              optimisticUpdates: state.optimisticUpdates.filter(
+                (update) => update.id !== optimisticUpdateId
+              ),
+            };
+          });
+        },
+        () => {
+          // TODO: Broadcast errors to client
+          store.set((state) => ({
+            ...state,
+            optimisticUpdates: state.optimisticUpdates.filter(
+              (update) => update.id !== optimisticUpdateId
+            ),
+          }));
+        }
+      );
+    },
+    [client]
+  );
+}
+
+function useDeleteAllInboxNotifications_withClient(client: OpaqueClient) {
+  return useCallback(() => {
+    const { store, notifications } = getExtrasForClient(client);
+    const optimisticUpdateId = nanoid();
+    const deletedAt = new Date();
+    store.pushOptimisticUpdate({
+      type: "delete-all-inbox-notifications",
+      id: optimisticUpdateId,
+      deletedAt,
+    });
+
+    notifications.deleteAllInboxNotifications().then(
+      () => {
+        store.set((state) => ({
+          ...state,
+          inboxNotifications: {},
           optimisticUpdates: state.optimisticUpdates.filter(
             (update) => update.id !== optimisticUpdateId
           ),
@@ -926,7 +1029,7 @@ function useInboxNotificationThread<M extends BaseMetadata>(
 }
 
 /**
- * Returns a function that marks all inbox notifications as read.
+ * Returns a function that marks all of the current user's inbox notifications as read.
  *
  * @example
  * const markAllInboxNotificationsAsRead = useMarkAllInboxNotificationsAsRead();
@@ -937,7 +1040,7 @@ function useMarkAllInboxNotificationsAsRead() {
 }
 
 /**
- * Returns a function that marks an inbox notification as read.
+ * Returns a function that marks an inbox notification as read for the current user.
  *
  * @example
  * const markInboxNotificationAsRead = useMarkInboxNotificationAsRead();
@@ -945,6 +1048,28 @@ function useMarkAllInboxNotificationsAsRead() {
  */
 function useMarkInboxNotificationAsRead() {
   return useMarkInboxNotificationAsRead_withClient(useClient());
+}
+
+/**
+ * Returns a function that deletes all of the current user's inbox notifications.
+ *
+ * @example
+ * const deleteAllInboxNotifications = useDeleteAllInboxNotifications();
+ * deleteAllInboxNotifications();
+ */
+function useDeleteAllInboxNotifications() {
+  return useDeleteAllInboxNotifications_withClient(useClient());
+}
+
+/**
+ * Returns a function that deletes an inbox notification for the current user.
+ *
+ * @example
+ * const deleteInboxNotification = useDeleteInboxNotification();
+ * deleteInboxNotification("in_xxx");
+ */
+function useDeleteInboxNotification() {
+  return useDeleteInboxNotification_withClient(useClient());
 }
 
 /**
@@ -1044,6 +1169,8 @@ export {
   useInboxNotificationsSuspense,
   useMarkAllInboxNotificationsAsRead,
   useMarkInboxNotificationAsRead,
+  useDeleteAllInboxNotifications,
+  useDeleteInboxNotification,
   useRoomInfo,
   useRoomInfoSuspense,
   useUnreadInboxNotificationsCount,

@@ -1,14 +1,12 @@
-import type { BaseMetadata, JsonObject } from "@liveblocks/core";
-import { createClient } from "@liveblocks/core";
 import { renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
 import { nanoid } from "nanoid";
 import React from "react";
 
-import { createRoomContext } from "../room";
 import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import { mockGetThreads } from "./_restMocks";
+import { createContextsForTest } from "./_utils";
 
 const server = setupServer();
 
@@ -24,18 +22,6 @@ afterEach(() => {
 });
 
 afterAll(() => server.close());
-
-// TODO: Dry up and create utils that wrap renderHook
-function createRoomContextForTest<M extends BaseMetadata>() {
-  const client = createClient({
-    publicApiKey: "pk_xxx",
-    polyfills: {
-      WebSocket: MockWebSocket as any,
-    },
-  });
-
-  return createRoomContext<JsonObject, never, never, never, M>(client);
-}
 
 describe("useThreadSubscription", () => {
   test("should return the expected object if the associated inbox notification hasn't been read at all", async () => {
@@ -61,8 +47,9 @@ describe("useThreadSubscription", () => {
       })
     );
 
-    const { RoomProvider, useThreads, useThreadSubscription } =
-      createRoomContextForTest();
+    const {
+      room: { RoomProvider, useThreads, useThreadSubscription },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(
       () => ({
@@ -121,8 +108,9 @@ describe("useThreadSubscription", () => {
       })
     );
 
-    const { RoomProvider, useThreads, useThreadSubscription } =
-      createRoomContextForTest();
+    const {
+      room: { RoomProvider, useThreads, useThreadSubscription },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(
       () => ({
@@ -174,8 +162,9 @@ describe("useThreadSubscription", () => {
       })
     );
 
-    const { RoomProvider, useThreads, useThreadSubscription } =
-      createRoomContextForTest();
+    const {
+      room: { RoomProvider, useThreads, useThreadSubscription },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(
       () => ({
@@ -230,8 +219,9 @@ describe("useThreadSubscription", () => {
       })
     );
 
-    const { RoomProvider, useThreads, useThreadSubscription } =
-      createRoomContextForTest();
+    const {
+      room: { RoomProvider, useThreads, useThreadSubscription },
+    } = createContextsForTest();
 
     const { result, unmount, rerender } = renderHook(
       () => ({
