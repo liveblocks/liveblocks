@@ -393,10 +393,13 @@ const placeholderRowAttributes: EmojiPickerContentEmojiRowAttributes = {
   categoryRowsCount: 0,
 };
 
+// About `data-testid={undefined}`: Virtuoso bakes test IDs into the components we pass
+// to it, so we manually remove them.
+
 const VirtuosoScroller = forwardRef<HTMLDivElement, ScrollerProps>(
   ({ children, ...props }, forwardedRef) => {
     return (
-      <div {...props} tabIndex={-1} data-test-id={undefined} ref={forwardedRef}>
+      <div {...props} tabIndex={-1} data-testid={undefined} ref={forwardedRef}>
         {children}
       </div>
     );
@@ -406,7 +409,7 @@ const VirtuosoScroller = forwardRef<HTMLDivElement, ScrollerProps>(
 const VirtuosoTopList = forwardRef<HTMLDivElement, TopItemListProps>(
   ({ children, ...props }, forwardedRef) => {
     return (
-      <div {...props} data-test-id={undefined} ref={forwardedRef}>
+      <div {...props} data-testid={undefined} ref={forwardedRef}>
         {children}
       </div>
     );
@@ -473,7 +476,7 @@ const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
                 role="grid"
                 aria-colcount={columns}
                 {...props}
-                data-test-id={undefined}
+                data-testid={undefined}
                 ref={forwardedRef}
               >
                 {children}
