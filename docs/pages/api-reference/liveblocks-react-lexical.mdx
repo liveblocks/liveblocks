@@ -213,6 +213,51 @@ function Toolbar() {
 
 [TODO]
 
+#### Props [#FloatingComposer-props]
+
+<PropertiesList>
+  <PropertiesListItem name="metadata" type="ThreadMetadata">
+    The metadata of the thread to create.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onComposerSubmit"
+    type="function"
+    detailedType="(comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => Promise<void> | void"
+  >
+    The event handler called when the composer is submitted.
+  </PropertiesListItem>
+  <PropertiesListItem name="defaultValue" type="CommentBody">
+    The composer’s initial value.
+  </PropertiesListItem>
+  <PropertiesListItem name="collapsed" type="boolean">
+    Whether the composer is collapsed. Setting a value will make the composer
+    controlled.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onCollapsedChange"
+    type="function"
+    detailedType="(collapsed: boolean) => void"
+  >
+    The event handler called when the collapsed state of the composer changes.
+  </PropertiesListItem>
+  <PropertiesListItem name="defaultCollapsed" type="boolean">
+    Whether the composer is initially collapsed. Setting a value will make the
+    composer uncontrolled.
+  </PropertiesListItem>
+  <PropertiesListItem name="disabled" type="boolean">
+    Whether the composer is disabled.
+  </PropertiesListItem>
+  <PropertiesListItem name="autoFocus" type="boolean">
+    Whether to focus the composer on mount.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="overrides"
+    type="Partial<GlobalOverrides & ComposerOverrides>"
+  >
+    Override the component’s strings.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### FloatingThreads
 
 [TODO one line description of features @Nimesh]
@@ -236,6 +281,27 @@ function Toolbar() {
 
 [TODO any other info we need @Nimesh]
 
+#### Props [#FloatingThreads-props]
+
+<PropertiesList>
+  <PropertiesListItem name="threads" type="ThreadData[]" required>
+    The threads to display.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="components"
+    type="Partial<AnchoredThreadsComponents>"
+  >
+    Override the component’s components.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="components.Thread"
+    type="(props: ThreadProps) => ReactNode"
+  >
+    Override the [`Thread`](/docs/api-reference/liveblocks-react-ui#Thread)
+    component.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### AnchoredThreads
 
 [TODO one line description of features @Nimesh]
@@ -258,6 +324,27 @@ function Toolbar() {
 </Figure>
 
 [TODO any other info we need @Nimesh]
+
+#### Props [#AnchoredThreads-props]
+
+<PropertiesList>
+  <PropertiesListItem name="threads" type="ThreadData[]" required>
+    The threads to display.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="components"
+    type="Partial<AnchoredThreadsComponents>"
+  >
+    Override the component’s components.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="components.Thread"
+    type="(props: ThreadProps) => ReactNode"
+  >
+    Override the [`Thread`](/docs/api-reference/liveblocks-react-ui#Thread)
+    component.
+  </PropertiesListItem>
+</PropertiesList>
 
 ## Hooks
 
