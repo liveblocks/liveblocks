@@ -64,7 +64,7 @@ export const OPEN_FLOATING_COMPOSER_COMMAND: LexicalCommand<void> =
 
 type ComposerElement = ComponentRef<typeof Composer>;
 
-type FloatingComposerProps<M extends BaseMetadata = DM> = Omit<
+export type FloatingComposerProps<M extends BaseMetadata = DM> = Omit<
   ComposerProps<M>,
   "threadId" | "commentId"
 >;
@@ -299,7 +299,7 @@ function ActiveSelectionPortal({
               left: rect.left - range.getBoundingClientRect().left,
               width: rect.width,
               height: rect.height,
-              backgroundColor: "rgba(0, 0, 255, 0.2)",
+              backgroundColor: "var(--lb-selection, rgba(0, 0, 255, 0.2))",
               pointerEvents: "none",
             }}
             className="lb-lexical-active-selection"
@@ -363,7 +363,7 @@ function FloatingComposerPortal({
         transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`,
         minWidth: "max-content",
       }}
-      className="lb-root lb-portal lb-elevation lb-lexical-floating-composer"
+      className="lb-root lb-portal lb-elevation lb-lexical-floating lb-lexical-floating-composer"
     >
       {children}
     </div>,
