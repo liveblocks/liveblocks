@@ -1,13 +1,13 @@
-## v2.3.0 (Not released)
+## v2.3.0
 
 ### `@liveblocks/react-lexical`
 
 - New default components: `AnchoredThreads` and `FloatingThreads` to display
   threads that are tied to a specific part of the document, similar to Notion,
   Linear, etc:
-  - [`FloatingThreads`](/docs/api-reference/liveblocks-react-lexical#FloatingThreads)
+  - [`FloatingThreads`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#FloatingThreads)
     displays floating `Thread` components below text highlights in the editor.
-  - [`AnchoredThreads`](/docs/api-reference/liveblocks-react-lexical#AnchoredThreads)
+  - [`AnchoredThreads`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#AnchoredThreads)
     displays a list of `Thread` components vertically alongside the editor.
   - These components can be used in the same application to create a UI that
     works on both mobile and desktop.
@@ -15,8 +15,8 @@
 ### `@liveblocks/react`
 
 - Add `useDeleteInboxNotification` and `useDeleteAllInboxNotifications` hooks.
-- Fix `resolved` query not being applied when filtering threads inside
-  `useThreads` hook.
+- Fix `resolved` query not being applied when filtering threads with
+  `useThreads`.
 - Various refactorings to Suspense internals.
 
 ### `@liveblocks/react-ui`
