@@ -1188,7 +1188,7 @@ const ComposerSubmit = forwardRef<HTMLButtonElement, ComposerSubmitProps>(
  * A button to add attachments to the composer.
  *
  * @example
- * <Composer.Attach>Attach file</Composer.Attach>
+ * <Composer.Attach>Attach files</Composer.Attach>
  */
 const ComposerAttach = forwardRef<HTMLButtonElement, ComposerAttachProps>(
   ({ children, onClick, asChild, ...props }, forwardedRef) => {

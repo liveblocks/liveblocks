@@ -736,14 +736,37 @@
 .lb-composer-attachments-drop-area {
   position: absolute;
   inset: 0;
+  display: flex;
+  place-content: center;
+  place-items: center;
 
-  &::before {
+  /* TODO: var(--lb-destructive) when drop is not accepted */
+  color: var(--lb-accent);
+
+  &::before,
+  &::after {
     content: "";
     position: absolute;
-    inset: 0;
-    background: var(--lb-dynamic-background);
-    opacity: 0.5;
+    inset: calc(0.5 * var(--lb-spacing));
+    border-radius: calc(0.75 * var(--lb-radius));
   }
+
+  &::before {
+    background: currentcolor;
+    opacity: calc(1 * var(--lb-accent-contrast));
+  }
+
+  &::after {
+    border: 2px dashed currentcolor;
+    opacity: calc(2 * var(--lb-accent-contrast));
+  }
+}
+
+.lb-composer-attachments-drop-area-label {
+  display: flex;
+  gap: calc(0.25 * var(--lb-spacing));
+  place-items: center;
+  pointer-events: none;
 }
 
 /*************************************

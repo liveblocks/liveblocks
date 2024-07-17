@@ -28,9 +28,9 @@ import React, {
   useState,
 } from "react";
 
+import { AttachmentIcon } from "../icons/Attachment";
 import { EmojiIcon } from "../icons/Emoji";
 import { MentionIcon } from "../icons/Mention";
-import { MissingIcon } from "../icons/Missing";
 import { SendIcon } from "../icons/Send";
 import type { ComposerOverrides, GlobalOverrides } from "../overrides";
 import { useOverrides } from "../overrides";
@@ -255,7 +255,7 @@ function ComposerInsertAttachmentEditorAction({
           aria-label={label}
           {...props}
         >
-          <MissingIcon className="lb-button-icon" />
+          <AttachmentIcon className="lb-button-icon" />
         </Button>
       </ComposerPrimitive.Attach>
     </Tooltip>
@@ -589,8 +589,7 @@ export const Composer = forwardRef(
                 />
                 {showAttachments && (
                   <ComposerInsertAttachmentEditorAction
-                    // TODO: $.COMPOSER_ADD_ATTACHMENT
-                    label="Attach files"
+                    label={$.COMPOSER_ATTACH_FILES}
                     disabled={isDisabled}
                   />
                 )}
@@ -626,7 +625,10 @@ export const Composer = forwardRef(
               onDragLeave={handleDropAreaDragLeave}
               onDrop={handleDropAreaDrop}
             >
-              Hello world
+              <div className="lb-composer-attachments-drop-area-label">
+                <AttachmentIcon />
+                {$.COMPOSER_ATTACH_FILES}
+              </div>
             </ComposerPrimitive.AttachmentsDropArea>
           )}
         </ComposerPrimitive.Form>
