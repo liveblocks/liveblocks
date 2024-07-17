@@ -11,6 +11,7 @@ import {
 } from "@liveblocks/react";
 import type {
   ComponentPropsWithoutRef,
+  DragEvent,
   FocusEvent,
   FormEvent,
   ForwardedRef,
@@ -19,10 +20,17 @@ import type {
   RefAttributes,
   SyntheticEvent,
 } from "react";
-import React, { forwardRef, useCallback, useMemo, useState } from "react";
+import React, {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import { EmojiIcon } from "../icons/Emoji";
 import { MentionIcon } from "../icons/Mention";
+import { MissingIcon } from "../icons/Missing";
 import { SendIcon } from "../icons/Send";
 import type { ComposerOverrides, GlobalOverrides } from "../overrides";
 import { useOverrides } from "../overrides";
@@ -130,6 +138,11 @@ export type ComposerProps<M extends BaseMetadata = DM> = Omit<
     defaultCollapsed?: boolean;
 
     /**
+     * Whether to show and allow adding attachments.
+     */
+    showAttachments?: boolean;
+
+    /**
      * Whether the composer is disabled.
      */
     disabled?: ComposerEditorProps["disabled"];
@@ -224,6 +237,31 @@ function ComposerInsertEmojiEditorAction({
   );
 }
 
+function ComposerInsertAttachmentEditorAction({
+  label,
+  className,
+  ...props
+}: EditorActionProps) {
+  const preventDefault = useCallback((event: SyntheticEvent) => {
+    event.preventDefault();
+  }, []);
+
+  return (
+    <Tooltip content={label}>
+      <ComposerPrimitive.Attach asChild>
+        <Button
+          className={classNames("lb-composer-editor-action", className)}
+          onMouseDown={preventDefault}
+          aria-label={label}
+          {...props}
+        >
+          <MissingIcon className="lb-button-icon" />
+        </Button>
+      </ComposerPrimitive.Attach>
+    </Tooltip>
+  );
+}
+
 function ComposerMention({ userId }: ComposerEditorMentionProps) {
   return (
     <ComposerPrimitive.Mention className="lb-composer-mention">
@@ -268,35 +306,97 @@ function ComposerLink({ href, children }: ComposerEditorLinkProps) {
   );
 }
 
+function ComposerAttachments({
+  className,
+  ...props
+}: ComponentPropsWithoutRef<"div">) {
+  const { attachments, removeAttachment } = useComposer();
+
+  if (attachments.length === 0) {
+    return null;
+  }
+
+  return (
+    <div
+      className={classNames("lb-composer-attachments", className)}
+      {...props}
+    >
+      {attachments.map((attachment) => {
+        if (attachment.type === "remote") {
+          return null;
+        }
+
+        return (
+          <div key={attachment.id}>
+            {attachment.file.name} ({attachment.file.size} -{" "}
+            {attachment.file.type})
+            <button onClick={() => removeAttachment(attachment.id)}>
+              Delete
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 const editorComponents: ComposerEditorComponents = {
   Mention: ComposerMention,
   MentionSuggestions: ComposerMentionSuggestions,
   Link: ComposerLink,
 };
 
-const ComposerWithContext = forwardRef<
-  HTMLFormElement,
-  Omit<ComposerProps, "threadId" | "commentId" | "onComposerSubmit">
->(
-  (
+// A void component (which doesn't render anything) needed to access `isEmpty`, since
+// `Composer.Form` is the root of a composer (with its context providers).
+function IsEmptyHandler({
+  onEmptyChange,
+}: {
+  onEmptyChange: (isEmpty: boolean) => void;
+}) {
+  const { isEmpty } = useComposer();
+
+  useEffect(() => {
+    onEmptyChange(isEmpty);
+  }, [isEmpty, onEmptyChange]);
+
+  return null;
+}
+
+/**
+ * Displays a composer to create comments.
+ *
+ * @example
+ * <Composer />
+ */
+export const Composer = forwardRef(
+  <M extends BaseMetadata = DM>(
     {
+      threadId,
+      commentId,
+      metadata,
+      onComposerSubmit,
       defaultValue,
       disabled,
       autoFocus,
       collapsed: controlledCollapsed,
       defaultCollapsed,
       onCollapsedChange: controlledOnCollapsedChange,
+      showAttachments = true,
       actions,
       overrides,
       showAttribution,
-      onFocus,
       onBlur,
       className,
+      onFocus,
+      onDragEnter,
       ...props
-    },
-    forwardedRef
+    }: ComposerProps<M>,
+    forwardedRef: ForwardedRef<HTMLFormElement>
   ) => {
     const client = useClient();
+    const createThread = useCreateThread();
+    const createComment = useCreateComment();
+    const editComment = useEditComment();
     const hasResolveMentionSuggestions =
       client[kInternal].resolveMentionSuggestions !== undefined;
     const self = useSelf();
@@ -304,10 +404,11 @@ const ComposerWithContext = forwardRef<
       () => disabled || !self?.canComment,
       [disabled, self?.canComment]
     );
-    const { isEmpty } = useComposer();
+    const [isEmpty, setEmpty] = useState(true);
+    const [isDraggingOver, setDraggingOver] = useState(false);
     const $ = useOverrides(overrides);
     const [isEmojiPickerOpen, setEmojiPickerOpen] = useState(false);
-    const [collapsed, onCollapsedChange] = useControllableState(
+    const [isCollapsed, onCollapsedChange] = useControllableState(
       // If the composer is neither controlled nor uncontrolled, it defaults to controlled as uncollapsed.
       controlledCollapsed === undefined && defaultCollapsed === undefined
         ? false
@@ -358,8 +459,16 @@ const ComposerWithContext = forwardRef<
           return;
         }
 
+        setDraggingOver(false);
+
+        console.log(event);
+
         const isOutside = !event.currentTarget.contains(event.relatedTarget);
 
+        console.log(isOutside);
+
+        // TODO: If file picker is open, don't collapse
+        // TODO: Handle "delete" buttons on attachments
         if (isOutside && isEmpty && !isEmojiPickerOpen) {
           onCollapsedChange?.(true);
         }
@@ -367,95 +476,37 @@ const ComposerWithContext = forwardRef<
       [isEmojiPickerOpen, isEmpty, onBlur, onCollapsedChange]
     );
 
-    return (
-      <form
-        className={classNames(
-          "lb-root lb-composer lb-composer-form",
-          className
-        )}
-        dir={$.dir}
-        {...props}
-        ref={forwardedRef}
-        data-collapsed={collapsed ? "" : undefined}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-      >
-        <ComposerPrimitive.Editor
-          className="lb-composer-editor"
-          onClick={handleEditorClick}
-          placeholder={$.COMPOSER_PLACEHOLDER}
-          defaultValue={defaultValue}
-          disabled={isDisabled}
-          autoFocus={autoFocus}
-          components={editorComponents}
-          dir={$.dir}
-        />
-        {!collapsed && (
-          <div className="lb-composer-footer">
-            <div className="lb-composer-editor-actions">
-              {hasResolveMentionSuggestions && (
-                <ComposerInsertMentionEditorAction
-                  label={$.COMPOSER_INSERT_MENTION}
-                  disabled={isDisabled}
-                />
-              )}
-              <ComposerInsertEmojiEditorAction
-                label={$.COMPOSER_INSERT_EMOJI}
-                onPickerOpenChange={setEmojiPickerOpen}
-                disabled={isDisabled}
-              />
-            </div>
-            {showAttribution && <Attribution />}
-            <div className="lb-composer-actions">
-              {actions ?? (
-                <>
-                  <ShortcutTooltip
-                    content={$.COMPOSER_SEND}
-                    shortcut={<ShortcutTooltipKey name="enter" />}
-                  >
-                    <ComposerPrimitive.Submit disabled={isDisabled} asChild>
-                      <Button
-                        onMouseDown={preventDefault}
-                        onClick={stopPropagation}
-                        className="lb-composer-action"
-                        variant="primary"
-                        aria-label={$.COMPOSER_SEND}
-                      >
-                        <SendIcon />
-                      </Button>
-                    </ComposerPrimitive.Submit>
-                  </ShortcutTooltip>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-      </form>
-    );
-  }
-);
+    const handleDragEnter = useCallback(
+      (event: DragEvent<HTMLFormElement>) => {
+        onDragEnter?.(event);
 
-/**
- * Displays a composer to create comments.
- *
- * @example
- * <Composer />
- */
-export const Composer = forwardRef(
-  <M extends BaseMetadata = DM>(
-    {
-      threadId,
-      commentId,
-      metadata,
-      onComposerSubmit,
-      onFocus,
-      ...props
-    }: ComposerProps<M>,
-    forwardedRef: ForwardedRef<HTMLFormElement>
-  ) => {
-    const createThread = useCreateThread();
-    const createComment = useCreateComment();
-    const editComment = useEditComment();
+        if (event.isDefaultPrevented()) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        setDraggingOver(true);
+      },
+      [onDragEnter]
+    );
+
+    const handleDropAreaDragLeave = useCallback(
+      (event: DragEvent<HTMLDivElement>) => {
+        if (event.isDefaultPrevented()) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        setDraggingOver(false);
+      },
+      []
+    );
+
+    const handleDropAreaDrop = useCallback(() => {
+      setDraggingOver(false);
+    }, []);
 
     const handleCommentSubmit = useCallback(
       (comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => {
@@ -498,10 +549,86 @@ export const Composer = forwardRef(
       <TooltipProvider>
         <ComposerPrimitive.Form
           onComposerSubmit={handleCommentSubmit}
-          onFocus={onFocus}
-          asChild
+          className={classNames(
+            "lb-root lb-composer lb-composer-form",
+            className
+          )}
+          dir={$.dir}
+          {...props}
+          ref={forwardedRef}
+          data-collapsed={isCollapsed ? "" : undefined}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          onDragEnter={handleDragEnter}
         >
-          <ComposerWithContext {...props} ref={forwardedRef} />
+          <IsEmptyHandler onEmptyChange={setEmpty} />
+          <ComposerPrimitive.Editor
+            className="lb-composer-editor"
+            onClick={handleEditorClick}
+            placeholder={$.COMPOSER_PLACEHOLDER}
+            defaultValue={defaultValue}
+            disabled={isDisabled}
+            autoFocus={autoFocus}
+            components={editorComponents}
+            dir={$.dir}
+          />
+          {showAttachments && <ComposerAttachments />}
+          {(!isCollapsed || isDraggingOver) && (
+            <div className="lb-composer-footer">
+              <div className="lb-composer-editor-actions">
+                {hasResolveMentionSuggestions && (
+                  <ComposerInsertMentionEditorAction
+                    label={$.COMPOSER_INSERT_MENTION}
+                    disabled={isDisabled}
+                  />
+                )}
+                <ComposerInsertEmojiEditorAction
+                  label={$.COMPOSER_INSERT_EMOJI}
+                  onPickerOpenChange={setEmojiPickerOpen}
+                  disabled={isDisabled}
+                />
+                {showAttachments && (
+                  <ComposerInsertAttachmentEditorAction
+                    // TODO: $.COMPOSER_ADD_ATTACHMENT
+                    label="Attach files"
+                    disabled={isDisabled}
+                  />
+                )}
+              </div>
+              {showAttribution && <Attribution />}
+              <div className="lb-composer-actions">
+                {actions ?? (
+                  <>
+                    <ShortcutTooltip
+                      content={$.COMPOSER_SEND}
+                      shortcut={<ShortcutTooltipKey name="enter" />}
+                    >
+                      <ComposerPrimitive.Submit disabled={isDisabled} asChild>
+                        <Button
+                          onMouseDown={preventDefault}
+                          onClick={stopPropagation}
+                          className="lb-composer-action"
+                          variant="primary"
+                          aria-label={$.COMPOSER_SEND}
+                        >
+                          <SendIcon />
+                        </Button>
+                      </ComposerPrimitive.Submit>
+                    </ShortcutTooltip>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+          {showAttachments && isDraggingOver && (
+            <ComposerPrimitive.AttachmentsDropArea
+              className="lb-composer-attachments-drop-area"
+              onDragLeave={handleDropAreaDragLeave}
+              onDrop={handleDropAreaDrop}
+            >
+              Hello world
+            </ComposerPrimitive.AttachmentsDropArea>
+          )}
         </ComposerPrimitive.Form>
       </TooltipProvider>
     );

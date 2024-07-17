@@ -15,12 +15,16 @@ import {
 } from "@floating-ui/react-dom";
 import type { CommentBody } from "@liveblocks/core";
 import { useSelf } from "@liveblocks/react";
-import { Slot } from "@radix-ui/react-slot";
+import { Slot, Slottable } from "@radix-ui/react-slot";
+import { nanoid } from "nanoid";
 import type {
   AriaAttributes,
+  ChangeEvent,
+  DragEvent,
   FocusEvent,
   FormEvent,
   KeyboardEvent,
+  MouseEvent,
   PointerEvent,
 } from "react";
 import React, {
@@ -94,14 +98,19 @@ import { useLayoutEffect } from "../../utils/use-layout-effect";
 import { useRefs } from "../../utils/use-refs";
 import { toAbsoluteUrl } from "../Comment/utils";
 import {
+  ComposerAttachmentsContext,
   ComposerContext,
   ComposerEditorContext,
   ComposerSuggestionsContext,
   useComposer,
+  useComposerAttachmentsContext,
   useComposerEditorContext,
   useComposerSuggestionsContext,
 } from "./contexts";
 import type {
+  ComposerAttachment,
+  ComposerAttachmentsDropAreaProps,
+  ComposerAttachProps,
   ComposerEditorComponents,
   ComposerEditorElementProps,
   ComposerEditorLinkWrapperProps,
@@ -110,6 +119,7 @@ import type {
   ComposerEditorProps,
   ComposerFormProps,
   ComposerLinkProps,
+  ComposerLocalAttachment,
   ComposerMentionProps,
   ComposerSubmitProps,
   ComposerSuggestionsListItemProps,
@@ -133,6 +143,8 @@ const COMPOSER_SUGGESTIONS_LIST_NAME = "ComposerSuggestionsList";
 const COMPOSER_SUGGESTIONS_LIST_ITEM_NAME = "ComposerSuggestionsListItem";
 const COMPOSER_SUBMIT_NAME = "ComposerSubmit";
 const COMPOSER_EDITOR_NAME = "ComposerEditor";
+const COMPOSER_ATTACH_NAME = "ComposerAttach";
+const COMPOSER_ATTACHMENTS_DROP_AREA_NAME = "ComposerAttachmentsDropArea";
 const COMPOSER_FORM_NAME = "ComposerForm";
 
 const emptyCommentBody: CommentBody = {
@@ -940,8 +952,10 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const editor = useInitial(createComposerEditor);
     const [isEmpty, setEmpty] = useState(true);
     const [isFocused, setFocused] = useState(false);
+    const [attachments, setAttachments] = useState<ComposerAttachment[]>([]);
     const ref = useRef<HTMLFormElement>(null);
     const mergedRefs = useRefs(forwardedRef, ref);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const validate = useCallback(
       (value: SlateElement[]) => {
@@ -995,11 +1009,6 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       ReactEditor.blur(editor);
     }, [editor]);
 
-    const onSubmitEnd = useCallback(() => {
-      clear();
-      blur();
-    }, [blur, clear]);
-
     const createMention = useCallback(() => {
       focus();
       insertMentionCharacter(editor);
@@ -1012,6 +1021,49 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       },
       [editor, focus]
     );
+
+    const appendAttachments = useCallback((files: File[]) => {
+      const localAttachments: ComposerLocalAttachment[] = files.map((file) => ({
+        type: "local",
+        id: nanoid(),
+        file,
+      }));
+
+      // TODO: Start uploading the local attachments
+
+      setAttachments((attachments) => [...attachments, ...localAttachments]);
+    }, []);
+
+    const addAttachments = useCallback(() => {
+      if (fileInputRef.current) {
+        fileInputRef.current.click();
+      }
+    }, []);
+
+    const removeAttachment = useCallback((id: string) => {
+      // TODO: If the attachment is remote, we should remove it from the server
+      // TODO: If the attachment is local but not yet fully uploaded, we should cancel the upload
+
+      setAttachments((attachments) =>
+        attachments.filter((attachment) => attachment.id !== id)
+      );
+    }, []);
+
+    const handleFileInputChange = useCallback(
+      (event: ChangeEvent<HTMLInputElement>) => {
+        const files = event.target.files;
+
+        if (files) {
+          appendAttachments(Array.from(files));
+        }
+      },
+      [appendAttachments]
+    );
+
+    const onSubmitEnd = useCallback(() => {
+      clear();
+      blur();
+    }, [blur, clear]);
 
     const handleSubmit = useCallback(
       (event: FormEvent<HTMLFormElement>) => {
@@ -1038,19 +1090,22 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
         const body = composerBodyToCommentBody(
           editor.children as ComposerBodyData
         );
-        const comment = { body };
+        const comment = { body, attachments };
+
+        console.log(attachments);
 
         const promise = onComposerSubmit(comment, event);
 
         event.preventDefault();
 
         if (promise) {
+          // TODO: Loading/disabled state while the promise is running?
           promise.then(onSubmitEnd);
         } else {
           onSubmitEnd();
         }
       },
-      [editor, onComposerSubmit, onSubmit, onSubmitEnd]
+      [editor, attachments, onComposerSubmit, onSubmit, onSubmitEnd]
     );
 
     return (
@@ -1061,23 +1116,40 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
           setFocused,
         }}
       >
-        <ComposerContext.Provider
+        <ComposerAttachmentsContext.Provider
           value={{
-            isFocused,
-            isEmpty,
-            submit,
-            clear,
-            select,
-            focus,
-            blur,
-            createMention,
-            insertText,
+            appendAttachments,
           }}
         >
-          <Component {...props} onSubmit={handleSubmit} ref={mergedRefs}>
-            {children}
-          </Component>
-        </ComposerContext.Provider>
+          <ComposerContext.Provider
+            value={{
+              isFocused,
+              isEmpty,
+              submit,
+              clear,
+              select,
+              focus,
+              blur,
+              createMention,
+              insertText,
+              attachments,
+              addAttachments,
+              removeAttachment,
+            }}
+          >
+            <Component {...props} onSubmit={handleSubmit} ref={mergedRefs}>
+              <input
+                type="file"
+                multiple
+                ref={fileInputRef}
+                onChange={handleFileInputChange}
+                tabIndex={-1}
+                style={{ display: "none" }}
+              />
+              <Slottable>{children}</Slottable>
+            </Component>
+          </ComposerContext.Provider>
+        </ComposerAttachmentsContext.Provider>
       </ComposerEditorContext.Provider>
     );
   }
@@ -1112,7 +1184,131 @@ const ComposerSubmit = forwardRef<HTMLButtonElement, ComposerSubmitProps>(
   }
 );
 
+/**
+ * A button to add attachments to the composer.
+ *
+ * @example
+ * <Composer.Attach>Attach file</Composer.Attach>
+ */
+const ComposerAttach = forwardRef<HTMLButtonElement, ComposerAttachProps>(
+  ({ children, onClick, asChild, ...props }, forwardedRef) => {
+    const Component = asChild ? Slot : "button";
+    const { addAttachments } = useComposer();
+
+    const handleClick = useCallback(
+      (event: MouseEvent<HTMLButtonElement>) => {
+        onClick?.(event);
+
+        if (!event.isDefaultPrevented()) {
+          addAttachments();
+        }
+      },
+      [addAttachments, onClick]
+    );
+
+    return (
+      <Component {...props} onClick={handleClick} ref={forwardedRef}>
+        {children}
+      </Component>
+    );
+  }
+);
+
+/**
+ * TODO:
+ */
+const ComposerAttachmentsDropArea = forwardRef<
+  HTMLDivElement,
+  ComposerAttachmentsDropAreaProps
+>(
+  (
+    { onDragEnter, onDragLeave, onDragOver, onDrop, asChild, ...props },
+    forwardedRef
+  ) => {
+    const Component = asChild ? Slot : "div";
+    const { appendAttachments } = useComposerAttachmentsContext();
+    const [isDraggingOver, setDraggingOver] = useState(false);
+
+    const handleDragEnter = useCallback(
+      (event: DragEvent<HTMLDivElement>) => {
+        onDragEnter?.(event);
+
+        if (event.isDefaultPrevented()) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        setDraggingOver(true);
+      },
+      [onDragEnter]
+    );
+
+    const handleDragLeave = useCallback(
+      (event: DragEvent<HTMLDivElement>) => {
+        onDragLeave?.(event);
+
+        if (event.isDefaultPrevented()) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        setDraggingOver(false);
+      },
+      [onDragLeave]
+    );
+
+    const handleDragOver = useCallback(
+      (event: DragEvent<HTMLDivElement>) => {
+        onDragOver?.(event);
+
+        if (event.isDefaultPrevented()) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+      },
+      [onDragOver]
+    );
+
+    const handleDrop = useCallback(
+      (event: DragEvent<HTMLDivElement>) => {
+        onDrop?.(event);
+
+        if (event.isDefaultPrevented()) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        setDraggingOver(false);
+
+        const files = Array.from(event.dataTransfer.files);
+        appendAttachments(files);
+      },
+      [onDrop, appendAttachments]
+    );
+
+    return (
+      <Component
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+        // TODO: "accepted" or "rejected" depending on the current files being dragged
+        data-drop-area={isDraggingOver ? "accepted" : undefined}
+        {...props}
+        ref={forwardedRef}
+      />
+    );
+  }
+);
+
 if (process.env.NODE_ENV !== "production") {
+  ComposerAttach.displayName = COMPOSER_ATTACH_NAME;
+  ComposerAttachmentsDropArea.displayName = COMPOSER_ATTACHMENTS_DROP_AREA_NAME;
   ComposerEditor.displayName = COMPOSER_EDITOR_NAME;
   ComposerForm.displayName = COMPOSER_FORM_NAME;
   ComposerMention.displayName = COMPOSER_MENTION_NAME;
@@ -1125,6 +1321,8 @@ if (process.env.NODE_ENV !== "production") {
 
 // NOTE: Every export from this file will be available publicly as Composer.*
 export {
+  ComposerAttach as Attach,
+  ComposerAttachmentsDropArea as AttachmentsDropArea,
   ComposerEditor as Editor,
   ComposerForm as Form,
   ComposerLink as Link,

@@ -137,11 +137,37 @@ export interface ComposerFormProps extends ComponentPropsWithSlot<"form"> {
 
 export type ComposerSubmitProps = ComponentPropsWithSlot<"button">;
 
+export type ComposerAttachProps = ComponentPropsWithSlot<"button">;
+
+export type ComposerAttachmentsDropAreaProps = ComponentPropsWithSlot<"div">;
+
+export type ComposerLocalAttachment = {
+  type: "local";
+  id: string;
+  file: File;
+  preview?: any;
+};
+
+export type ComposerRemoteAttachment = {
+  type: "remote";
+  id: string;
+  url: string;
+};
+
+export type ComposerAttachment =
+  | ComposerLocalAttachment
+  | ComposerRemoteAttachment;
+
 export interface ComposerSubmitComment {
   /**
    * The submitted comment's body.
    */
   body: CommentBody;
+
+  /**
+   * TODO:
+   */
+  attachments: ComposerAttachment[];
 }
 
 export interface ComposerEditorElementProps extends RenderElementProps {

@@ -5,6 +5,8 @@ import type { Dispatch, Ref, SetStateAction } from "react";
 import { createContext, useContext } from "react";
 import type { Editor as SlateEditor, Element as SlateElement } from "slate";
 
+import type { ComposerAttachment } from "./types";
+
 export type ComposerContext = {
   /**
    * Whether the editor is currently focused.
@@ -22,7 +24,7 @@ export type ComposerContext = {
   submit: () => void;
 
   /**
-   * Clear the editor programmatically.
+   * Clear the composer programmatically.
    */
   clear: () => void;
 
@@ -50,12 +52,31 @@ export type ComposerContext = {
    * Insert text at the current selection.
    */
   insertText: (text: string) => void;
+
+  /**
+   * The current attachments.
+   */
+  attachments: ComposerAttachment[];
+
+  /**
+   * Open the file picker to add attachments.
+   */
+  addAttachments: () => void;
+
+  /**
+   * Remove an attachment by its ID.
+   */
+  removeAttachment: (attachmentId: string) => void;
 };
 
 export type ComposerEditorContext = {
   validate: (value: SlateElement[]) => void;
   editor: SlateEditor;
   setFocused: Dispatch<SetStateAction<boolean>>;
+};
+
+export type ComposerAttachmentsContext = {
+  appendAttachments: (files: File[]) => void;
 };
 
 export type ComposerSuggestionsContext = {
@@ -72,6 +93,8 @@ export type ComposerSuggestionsContext = {
 export const ComposerContext = createContext<ComposerContext | null>(null);
 export const ComposerEditorContext =
   createContext<ComposerEditorContext | null>(null);
+export const ComposerAttachmentsContext =
+  createContext<ComposerAttachmentsContext | null>(null);
 export const ComposerSuggestionsContext =
   createContext<ComposerSuggestionsContext | null>(null);
 
@@ -84,10 +107,13 @@ export function useComposerEditorContext() {
   );
 }
 
-export function useComposer(): ComposerContext {
-  const composerContext = useContext(ComposerContext);
+export function useComposerAttachmentsContext() {
+  const composerAttachmentsContext = useContext(ComposerAttachmentsContext);
 
-  return nn(composerContext, "Composer.Form is missing from the React tree.");
+  return nn(
+    composerAttachmentsContext,
+    "Composer.Form is missing from the React tree."
+  );
 }
 
 export function useComposerSuggestionsContext(
@@ -99,4 +125,10 @@ export function useComposerSuggestionsContext(
     composerSuggestionsContext,
     `${source} can’t be used outside of Composer.Editor.`
   );
+}
+
+export function useComposer(): ComposerContext {
+  const composerContext = useContext(ComposerContext);
+
+  return nn(composerContext, "Composer.Form is missing from the React tree.");
 }

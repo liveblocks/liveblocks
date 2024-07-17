@@ -97,6 +97,11 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   showReactions?: boolean;
 
   /**
+   * Whether to show attachments (if there are any).
+   */
+  showAttachments?: boolean;
+
+  /**
    * Whether to indent the comment's content.
    */
   indentContent?: boolean;
@@ -371,6 +376,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       showDeleted,
       showActions = "hover",
       showReactions = true,
+      showAttachments = true,
       onAuthorClick,
       onMentionClick,
       onCommentEdit,
@@ -629,6 +635,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                 defaultValue={comment.body}
                 autoFocus
                 showAttribution={false}
+                showAttachments={showAttachments}
                 actions={
                   <>
                     <Tooltip

@@ -83,6 +83,11 @@ export interface ThreadProps<M extends BaseMetadata = DM>
   showDeletedComments?: CommentProps["showDeleted"];
 
   /**
+   * Whether to show attachments (if there are any).
+   */
+  showAttachments?: boolean;
+
+  /**
    * The event handler called when changing the resolved status.
    */
   onResolvedChange?: (resolved: boolean) => void;

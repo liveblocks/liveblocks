@@ -733,6 +733,19 @@
   }
 }
 
+.lb-composer-attachments-drop-area {
+  position: absolute;
+  inset: 0;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--lb-dynamic-background);
+    opacity: 0.5;
+  }
+}
+
 /*************************************
  *              Comment              *
  *************************************/
