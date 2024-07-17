@@ -739,9 +739,15 @@
   display: flex;
   place-content: center;
   place-items: center;
+  color: var(--lb-foreground);
 
-  /* TODO: var(--lb-destructive) when drop is not accepted */
-  color: var(--lb-accent);
+  &:where([data-drop="accepted"]) {
+    color: var(--lb-accent);
+  }
+
+  &:where([data-drop="rejected"]) {
+    color: var(--lb-destructive);
+  }
 
   &::before,
   &::after {

@@ -1298,7 +1298,7 @@ const ComposerAttachmentsDropArea = forwardRef<
         onDragOver={handleDragOver}
         onDrop={handleDrop}
         // TODO: "accepted" or "rejected" depending on the current files being dragged
-        data-drop-area={isDraggingOver ? "accepted" : undefined}
+        data-drop={isDraggingOver ? "accepted" : undefined}
         {...props}
         ref={forwardedRef}
       />

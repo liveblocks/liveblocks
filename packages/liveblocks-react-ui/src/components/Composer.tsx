@@ -461,14 +461,11 @@ export const Composer = forwardRef(
 
         setDraggingOver(false);
 
-        console.log(event);
+        const isOutside = !event.currentTarget.contains(
+          event.relatedTarget ?? document.activeElement
+        );
 
-        const isOutside = !event.currentTarget.contains(event.relatedTarget);
-
-        console.log(isOutside);
-
-        // TODO: If file picker is open, don't collapse
-        // TODO: Handle "delete" buttons on attachments
+        // TODO: Handle "delete" buttons on attachments (hide them when the composer is collapsed)
         if (isOutside && isEmpty && !isEmojiPickerOpen) {
           onCollapsedChange?.(true);
         }
