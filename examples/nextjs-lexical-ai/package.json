@@ -1,6 +1,6 @@
 {
-  "name": "@liveblocks-examples/nextjs-lexical",
-  "description": "This example shows how to build a collaborative text editor with Liveblocks, Yjs, Lexical, and Next.js.",
+  "name": "@liveblocks-examples/nextjs-lexical-ai",
+  "description": "This example shows how to build a collaborative text editor with an AI toolbar using Liveblocks, Lexical, Vercel AI SDK, and Next.js.",
   "license": "Apache-2.0",
   "private": true,
   "scripts": {
