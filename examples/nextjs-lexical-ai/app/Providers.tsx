@@ -7,7 +7,9 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <LiveblocksProvider
       authEndpoint="/api/liveblocks-auth"
+      // Get users' info from their ID
       resolveUsers={async ({ userIds }) => {
+        console.log(userIds);
         const searchParams = new URLSearchParams(
           userIds.map((userId) => ["userIds", userId])
         );
@@ -18,8 +20,10 @@ export function Providers({ children }: { children: ReactNode }) {
         }
 
         const users = await response.json();
+        console.log(users);
         return users;
       }}
+      // Find a list of users that match the current search term
       resolveMentionSuggestions={async ({ text }) => {
         const response = await fetch(
           `/api/users/search?text=${encodeURIComponent(text)}`

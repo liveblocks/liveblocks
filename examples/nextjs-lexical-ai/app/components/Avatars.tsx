@@ -21,17 +21,13 @@ function AvatarStack() {
     <div className="flex items-center">
       {currentUser && (
         <div className="relative ml-2">
-          <Avatar picture={currentUser.info.picture} name="You" />
+          <Avatar src={currentUser.info.avatar} name="You" />
         </div>
       )}
       <div className="flex">
         {users.map(({ connectionId, info }) => {
           return (
-            <Avatar
-              key={connectionId}
-              picture={info.picture}
-              name={info.name}
-            />
+            <Avatar key={connectionId} src={info.avatar} name={info.name} />
           );
         })}
       </div>
@@ -42,7 +38,7 @@ function AvatarStack() {
   );
 }
 
-export function Avatar({ picture, name }: { picture: string; name: string }) {
+export function Avatar({ src, name }: { src: string; name: string }) {
   return (
     <div
       style={{ width: AVATAR_SIZE, height: AVATAR_SIZE }}
@@ -54,7 +50,7 @@ export function Avatar({ picture, name }: { picture: string; name: string }) {
       </div>
       <img
         alt={name}
-        src={picture}
+        src={src}
         className="w-full h-full rounded-full"
         data-tooltip={name}
       />
