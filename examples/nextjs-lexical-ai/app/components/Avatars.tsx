@@ -1,7 +1,6 @@
 "use client";
 
 import { useOthers, useSelf } from "@liveblocks/react/suspense";
-import styles from "./Avatars.module.css";
 import { ClientSideSuspense } from "@liveblocks/react";
 
 export function Avatars() {
@@ -12,23 +11,31 @@ export function Avatars() {
   );
 }
 
+const AVATAR_SIZE = 36;
+
 function AvatarStack() {
   const users = useOthers();
   const currentUser = useSelf();
 
   return (
-    <div className="flex items-center pl-3">
+    <div className="flex items-center">
       {currentUser && (
-        <div className="relative mr-4">
+        <div className="relative ml-2">
           <Avatar picture={currentUser.info.picture} name="You" />
         </div>
       )}
-      {users.map(({ connectionId, info }) => {
-        return (
-          <Avatar key={connectionId} picture={info.picture} name={info.name} />
-        );
-      })}
-      <div className="ml-2 text-gray-500 text-sm">
+      <div className="flex">
+        {users.map(({ connectionId, info }) => {
+          return (
+            <Avatar
+              key={connectionId}
+              picture={info.picture}
+              name={info.name}
+            />
+          );
+        })}
+      </div>
+      <div className="ml-2 text-gray-500 text-sm select-none">
         {users.length + 1} user{users.length ? "s" : ""} editing
       </div>
     </div>
@@ -37,7 +44,14 @@ function AvatarStack() {
 
 export function Avatar({ picture, name }: { picture: string; name: string }) {
   return (
-    <div className={styles.avatar} data-tooltip={name}>
+    <div
+      style={{ width: AVATAR_SIZE, height: AVATAR_SIZE }}
+      className="group -ml-2 flex shrink-0 place-content-center relative border-4 border-white rounded-full bg-gray-400"
+      data-tooltip={name}
+    >
+      <div className="opacity-0 group-hover:opacity-100 absolute top-full py-1 px-2 text-white text-xs rounded-lg mt-2.5 z-10 bg-black whitespace-nowrap transition-opacity">
+        {name}
+      </div>
       <img
         alt={name}
         src={picture}
