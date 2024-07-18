@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  ClientSideSuspense,
-  LiveblocksProvider,
-  RoomProvider,
-} from "@liveblocks/react/suspense";
-import { Loading } from "./components/Loading";
+import { RoomProvider } from "@liveblocks/react/suspense";
 import { ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 
@@ -13,49 +8,18 @@ export function Room({ children }: { children: ReactNode }) {
   const roomId = useExampleRoomId("liveblocks:examples:nextjs-lexical-ai");
 
   return (
-    <LiveblocksProvider
-      authEndpoint="/api/liveblocks-auth"
-      resolveUsers={async ({ userIds }) => {
-        const searchParams = new URLSearchParams(
-          userIds.map((userId) => ["userIds", userId])
-        );
-        const response = await fetch(`/api/users?${searchParams}`);
-
-        if (!response.ok) {
-          throw new Error("Problem resolving users");
-        }
-
-        const users = await response.json();
-        return users;
+    <RoomProvider
+      id={roomId}
+      initialPresence={{
+        cursor: null,
       }}
-      resolveMentionSuggestions={async ({ text }) => {
-        const response = await fetch(
-          `/api/users/search?text=${encodeURIComponent(text)}`
-        );
-
-        if (!response.ok) {
-          throw new Error("Problem resolving mention suggestions");
-        }
-
-        const userIds = await response.json();
-        return userIds;
+      initialStorage={{
+        title: "Untitled document",
+        lastModified: new Date().getTime(),
       }}
     >
-      <RoomProvider
-        id={roomId}
-        initialPresence={{
-          cursor: null,
-        }}
-        initialStorage={{
-          title: "Untitled document",
-          lastModified: new Date().getTime(),
-        }}
-      >
-        <ClientSideSuspense fallback={<Loading />}>
-          {children}
-        </ClientSideSuspense>
-      </RoomProvider>
-    </LiveblocksProvider>
+      {children}
+    </RoomProvider>
   );
 }
 

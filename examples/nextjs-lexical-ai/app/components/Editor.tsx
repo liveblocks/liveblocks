@@ -20,13 +20,13 @@ import {
   useEditorStatus,
 } from "@liveblocks/react-lexical";
 import { FloatingToolbar } from "./FloatingToolbar";
-import { NotificationsPopover } from "./NotificationsPopover";
 import { useState } from "react";
 import { Loading } from "./Loading";
 import { PreserveSelectionPlugin } from "./PreserveSelection";
 import { DocumentName } from "./DocumentName";
 import DraggableBlockPlugin from "../plugins/DraggableBlockPlugin";
 import { useThreads } from "@liveblocks/react/suspense";
+import { ClientSideSuspense } from "@liveblocks/react";
 
 // Wrap your initial config with `liveblocksConfig`
 const initialConfig = liveblocksConfig({
@@ -53,6 +53,14 @@ const initialConfig = liveblocksConfig({
 });
 
 export function Editor() {
+  return (
+    <ClientSideSuspense fallback={<Loading />}>
+      <LexicalEditor />
+    </ClientSideSuspense>
+  );
+}
+
+function LexicalEditor() {
   const status = useEditorStatus();
 
   const [floatingAnchorElem, setFloatingAnchorElem] =
@@ -66,64 +74,57 @@ export function Editor() {
   const { threads } = useThreads();
 
   return (
-    <div className="relative flex flex-col h-full w-full">
-      <LexicalComposer initialConfig={initialConfig}>
-        <LiveblocksPlugin>
-          {/* Sticky header */}
-          <div className="sticky top-0 left-0  h-[60px] flex items-center justify-end px-4 z-20">
-            <NotificationsPopover />
-          </div>
+    <LexicalComposer initialConfig={initialConfig}>
+      <LiveblocksPlugin>
+        <div className="relative flex flex-row justify-between h-[calc(100%-60px)] w-full flex-1">
+          {/* Editable */}
+          <div className="relative h-full w-full overflow-auto">
+            <FloatingComposer className="w-[350px]" />
 
-          <div className="relative flex flex-row justify-between h-[calc(100%-60px)] w-full flex-1">
-            {/* Editable */}
-            <div className="relative h-full w-full overflow-auto">
-              <FloatingComposer className="w-[350px]" />
-
-              <FloatingThreads threads={threads} className="block lg:hidden" />
-              {status === "not-loaded" || status === "loading" ? (
-                <Loading />
-              ) : (
-                <div className="lg:mr-[300px] xl:mr-[100px]">
-                  <div className="relative max-w-[740px] w-full mx-auto pb-[400px] p-8">
-                    <div className="absolute left-full -ml-6">
-                      <AnchoredThreads
-                        threads={threads}
-                        className="w-[300px] hidden lg:block"
-                      />
-                    </div>
-                    <header className="mt-20 mb-0">
-                      <h1>
-                        <DocumentName />
-                      </h1>
-                    </header>
-                    <section className="relative">
-                      <RichTextPlugin
-                        contentEditable={
-                          <div ref={onRef}>
-                            <ContentEditable className="relative outline-none w-full h-full px-8 py-4" />
-                          </div>
-                        }
-                        placeholder={
-                          <span className="pointer-events-none absolute top-7 mt-px left-8 text-muted-foreground w-full h-full">
-                            Try mentioning a user with @
-                          </span>
-                        }
-                        ErrorBoundary={LexicalErrorBoundary}
-                      />
-                      {floatingAnchorElem ? (
-                        <DraggableBlockPlugin anchorElem={floatingAnchorElem} />
-                      ) : null}
-                      <FloatingToolbar />
-                    </section>
+            <FloatingThreads threads={threads} className="block lg:hidden" />
+            {status === "not-loaded" || status === "loading" ? (
+              <Loading />
+            ) : (
+              <div className="lg:mr-[300px] xl:mr-[100px]">
+                <div className="relative max-w-[740px] w-full mx-auto pb-[400px] p-8">
+                  <div className="absolute left-full -ml-6">
+                    <AnchoredThreads
+                      threads={threads}
+                      className="w-[300px] hidden lg:block"
+                    />
                   </div>
+                  <header className="mt-20 mb-0">
+                    <h1>
+                      <DocumentName />
+                    </h1>
+                  </header>
+                  <section className="relative">
+                    <RichTextPlugin
+                      contentEditable={
+                        <div ref={onRef}>
+                          <ContentEditable className="relative outline-none w-full h-full px-8 py-4" />
+                        </div>
+                      }
+                      placeholder={
+                        <span className="pointer-events-none absolute top-7 mt-px left-8 text-muted-foreground w-full h-full">
+                          Try mentioning a user with @
+                        </span>
+                      }
+                      ErrorBoundary={LexicalErrorBoundary}
+                    />
+                    {floatingAnchorElem ? (
+                      <DraggableBlockPlugin anchorElem={floatingAnchorElem} />
+                    ) : null}
+                    <FloatingToolbar />
+                  </section>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
-          <PreserveSelectionPlugin />
-          <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
-        </LiveblocksPlugin>
-      </LexicalComposer>
-    </div>
+        </div>
+        <PreserveSelectionPlugin />
+        <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
+      </LiveblocksPlugin>
+    </LexicalComposer>
   );
 }

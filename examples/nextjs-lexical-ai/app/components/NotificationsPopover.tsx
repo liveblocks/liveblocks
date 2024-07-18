@@ -1,3 +1,5 @@
+"use client";
+
 import {
   useInboxNotifications,
   useMarkAllInboxNotificationsAsRead,
@@ -5,8 +7,8 @@ import {
 } from "@liveblocks/react/suspense";
 import { InboxNotification, InboxNotificationList } from "@liveblocks/react-ui";
 import * as Popover from "@radix-ui/react-popover";
-import { Suspense } from "react";
 import { Loading } from "./Loading";
+import { ClientSideSuspense } from "@liveblocks/react";
 
 export function NotificationsPopover() {
   return (
@@ -32,9 +34,9 @@ export function NotificationsPopover() {
           />
         </svg>
 
-        <Suspense fallback={null}>
+        <ClientSideSuspense fallback={null}>
           <UnreadNotificationsCount />
-        </Suspense>
+        </ClientSideSuspense>
       </Popover.Trigger>
 
       <Popover.Portal>
@@ -43,9 +45,9 @@ export function NotificationsPopover() {
           align="end"
           className="rounded-xl border border-border bg-card text-card-foreground shadow text-sm overflow-hidden w-[500px] z-20"
         >
-          <Suspense fallback={<Loading />}>
+          <ClientSideSuspense fallback={<Loading />}>
             <Inbox />
-          </Suspense>
+          </ClientSideSuspense>
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>
