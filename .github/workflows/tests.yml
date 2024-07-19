@@ -8,7 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22.x]
+        node-version: [22.4.1]
         pkg:
           [
             "@liveblocks/core",
@@ -82,7 +82,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22.x]
+        node-version: [22.4.1]
 
     timeout-minutes: 60
 
@@ -125,7 +125,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22.x]
+        node-version: [22.4.1]
 
     timeout-minutes: 60
 
@@ -155,7 +155,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22.x]
+        node-version: [22.4.1]
         pkg: ["@liveblocks/schema", "@liveblocks/infer-schema"]
 
     steps:

@@ -7,6 +7,8 @@ import {
   useMarkAllInboxNotificationsAsRead,
   useSelf,
   useUnreadInboxNotificationsCount,
+  useDeleteAllInboxNotifications,
+  ClientSideSuspense,
 } from "@liveblocks/react/suspense";
 import { ErrorBoundary } from "react-error-boundary";
 import {
@@ -20,13 +22,13 @@ import {
   ImageUploadNotification,
   InviteNotification,
 } from "./CustomNotificationKinds";
-import { ClientSideSuspense } from "@liveblocks/react";
 
 export function CustomNotifications() {
   return (
     <div className={styles.wrapper}>
       <div className={styles.buttonPanel}>
         <h2>Send notifications</h2>
+
         <ClientSideSuspense fallback={null}>
           <SendNotificationButtons />
         </ClientSideSuspense>
@@ -97,6 +99,7 @@ function NotificationPanel() {
   const { inboxNotifications } = useInboxNotifications();
   const { count } = useUnreadInboxNotificationsCount();
   const markInboxNotificationAsRead = useMarkAllInboxNotificationsAsRead();
+  const deleteAllInboxNotifications = useDeleteAllInboxNotifications();
 
   if (inboxNotifications.length === 0) {
     return <div>No notifications yet</div>;
@@ -106,7 +109,14 @@ function NotificationPanel() {
     <>
       <div className={styles.topBar}>
         <span>{count} unread</span>
-        <Button onClick={markInboxNotificationAsRead}>Mark all as read</Button>
+        <div className={styles.topBarButtons}>
+          <Button onClick={markInboxNotificationAsRead}>
+            Mark all as read
+          </Button>
+          <Button onClick={deleteAllInboxNotifications} variant="destructive">
+            Delete all
+          </Button>
+        </div>
       </div>
       <InboxNotificationList className={styles.notificationList}>
         {inboxNotifications.map((inboxNotification) => (
