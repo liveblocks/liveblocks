@@ -25,7 +25,7 @@ This example shows how to build a collaborative text editor with an AI toolbar u
 
 As users edit the document, changes will be automatically persisted and synced—allowing for an editor that updates in real-time across clients. Users will also be able to see who see each other’s cursors in the document. Query AI to generate improvements and new content.
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/text-editor.png" width="536" alt="Collaborative Text Editor" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/text-editor-ai.png" width="536" alt="Collaborative Text Editor" />
 
 ## Getting started
 
