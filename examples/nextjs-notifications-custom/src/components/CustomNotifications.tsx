@@ -28,6 +28,7 @@ export function CustomNotifications() {
     <div className={styles.wrapper}>
       <div className={styles.buttonPanel}>
         <h2>Send notifications</h2>
+
         <ClientSideSuspense fallback={null}>
           <SendNotificationButtons />
         </ClientSideSuspense>
