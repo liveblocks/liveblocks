@@ -46,11 +46,11 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 - Add `deleteInboxNotification` and `deleteAllInboxNotifications` methods.
 
-### Documentation
+## Documentation
 
 - Open the config file by default in the interactive [broadcasting events tutorial](https://liveblocks.io/docs/tutorial/react/getting-started/broadcasting-events).
 
-### Website
+## Website
 
 - Fix changelog images on mobile.
 
