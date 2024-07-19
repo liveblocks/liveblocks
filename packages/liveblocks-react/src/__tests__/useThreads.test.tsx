@@ -1148,14 +1148,11 @@ describe("useThreads", () => {
     expect(room).not.toBeNull();
     if (room === null) return;
 
-    // Mock the getThreads method so we can verify it wasn't called
-    room[kInternal].comments.getThreads = jest.fn();
-
     // Rerender the first RoomProvider and verify a new fetch request wasn't initiated
     rerender(<FirstRoom />);
 
     // A new fetch request for the threads should not have been made
-    expect(room[kInternal].comments.getThreads).not.toHaveBeenCalled();
+    expect(getThreadsReqCount).toBe(1);
 
     unmountFirstRoom();
     unmountSecondRoom();
