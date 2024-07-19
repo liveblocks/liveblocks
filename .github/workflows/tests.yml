@@ -82,7 +82,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22.x]
+        node-version: [22.4.1]
 
     timeout-minutes: 60
 
