@@ -7,6 +7,8 @@ import {
   useMarkAllInboxNotificationsAsRead,
   useSelf,
   useUnreadInboxNotificationsCount,
+  useDeleteAllInboxNotifications,
+  ClientSideSuspense,
 } from "@liveblocks/react/suspense";
 import { ErrorBoundary } from "react-error-boundary";
 import {
@@ -20,10 +22,6 @@ import {
   ImageUploadNotification,
   InviteNotification,
 } from "./CustomNotificationKinds";
-import {
-  ClientSideSuspense,
-  useDeleteAllInboxNotifications,
-} from "@liveblocks/react";
 
 export function CustomNotifications() {
   return (
