@@ -10,7 +10,7 @@ import {
   createCommentId,
   createInboxNotificationId,
   createThreadId,
-} from "./_createIds";
+} from "@liveblocks/core";
 
 type AtLeast<T, K extends keyof T> = Partial<T> & Pick<T, K>;
 

@@ -24,7 +24,7 @@ import {
   raise,
   shallow,
 } from "@liveblocks/core";
-import { nanoid } from "nanoid";
+import { nanoid } from "@liveblocks/core";
 import type { PropsWithChildren } from "react";
 import React, {
   createContext,

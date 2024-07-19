@@ -8,10 +8,4 @@ module.exports = {
 
   // Collect code coverage for this project, when using the --coverage flag
   coveragePathIgnorePatterns: ["/__tests__/"],
-
-  // https://github.com/ai/nanoid/issues/363#issuecomment-1140906651
-  transformIgnorePatterns: [`/node_modules/(?!nanoid)`],
-  moduleNameMapper: {
-    "^nanoid(/(.*)|$)": "nanoid$1",
-  },
 };

@@ -47,7 +47,6 @@
     "@liveblocks/react": "2.3.0",
     "@liveblocks/react-ui": "2.3.0",
     "@liveblocks/yjs": "2.3.0",
-    "nanoid": "^3",
     "use-sync-external-store": "^1.2.2",
     "yjs": "^13.6.18"
   },

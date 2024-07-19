@@ -14,7 +14,7 @@ import {
 import { addSeconds } from "date-fns";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
-import { nanoid } from "nanoid";
+import { nanoid } from "@liveblocks/core";
 import type { ReactNode } from "react";
 import React, { Suspense } from "react";
 import type { FallbackProps } from "react-error-boundary";

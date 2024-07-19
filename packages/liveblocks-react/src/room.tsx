@@ -51,7 +51,7 @@ import {
   stringify,
   upsertComment,
 } from "@liveblocks/core";
-import { nanoid } from "nanoid";
+import { nanoid } from "@liveblocks/core";
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 

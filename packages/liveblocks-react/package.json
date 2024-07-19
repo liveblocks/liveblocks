@@ -49,7 +49,6 @@
   "dependencies": {
     "@liveblocks/client": "2.3.0",
     "@liveblocks/core": "2.3.0",
-    "nanoid": "^3",
     "use-sync-external-store": "^1.2.2"
   },
   "peerDependencies": {
