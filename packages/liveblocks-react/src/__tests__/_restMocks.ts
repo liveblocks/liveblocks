@@ -78,6 +78,16 @@ export function mockCreateComment(
   );
 }
 
+export function mockDeleteComment(
+  params: { threadId: string; commentId: string },
+  resolver: ResponseResolver<RestRequest<never, never>, RestContext, any>
+) {
+  return rest.delete(
+    `https://api.liveblocks.io/v2/c/rooms/:roomId/threads/${params.threadId}/comments/${params.commentId}`,
+    resolver
+  );
+}
+
 export function mockEditThreadMetadata<M extends BaseMetadata>(
   params: { threadId: string },
   resolver: ResponseResolver<RestRequest<never, never>, RestContext, M>
@@ -129,6 +139,25 @@ export function mockGetInboxNotifications(
 ) {
   return rest.get(
     "https://api.liveblocks.io/v2/c/inbox-notifications",
+    resolver
+  );
+}
+
+export function mockDeleteAllInboxNotifications(
+  resolver: ResponseResolver<RestRequest<never, never>, RestContext, any>
+) {
+  return rest.delete(
+    "https://api.liveblocks.io/v2/c/inbox-notifications",
+    resolver
+  );
+}
+
+export function mockDeleteInboxNotification(
+  params: { inboxNotificationId: string },
+  resolver: ResponseResolver<RestRequest<never, never>, RestContext, any>
+) {
+  return rest.delete(
+    `https://api.liveblocks.io/v2/c/inbox-notifications/${params.inboxNotificationId}`,
     resolver
   );
 }

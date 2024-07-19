@@ -11,6 +11,7 @@ import React, {
   useState,
 } from "react";
 import type {
+  CalculateViewLocationParams,
   GroupedVirtuosoHandle,
   ListProps as VirtuosoListProps,
   ScrollerProps,
@@ -23,6 +24,7 @@ import {
   cancelIdleCallback,
   requestIdleCallback,
 } from "../../utils/request-idle-callback";
+import { useLayoutEffect } from "../../utils/use-layout-effect";
 import { useTransition } from "../../utils/use-transition";
 import { visuallyHidden } from "../../utils/visually-hidden";
 import { Emoji as EmojiPrimitive } from "../internal/Emoji";
@@ -391,10 +393,13 @@ const placeholderRowAttributes: EmojiPickerContentEmojiRowAttributes = {
   categoryRowsCount: 0,
 };
 
+// About `data-testid={undefined}`: Virtuoso bakes test IDs into the components we pass
+// to it, so we manually remove them.
+
 const VirtuosoScroller = forwardRef<HTMLDivElement, ScrollerProps>(
   ({ children, ...props }, forwardedRef) => {
     return (
-      <div {...props} tabIndex={-1} data-test-id={undefined} ref={forwardedRef}>
+      <div {...props} tabIndex={-1} data-testid={undefined} ref={forwardedRef}>
         {children}
       </div>
     );
@@ -404,7 +409,7 @@ const VirtuosoScroller = forwardRef<HTMLDivElement, ScrollerProps>(
 const VirtuosoTopList = forwardRef<HTMLDivElement, TopItemListProps>(
   ({ children, ...props }, forwardedRef) => {
     return (
-      <div {...props} data-test-id={undefined} ref={forwardedRef}>
+      <div {...props} data-testid={undefined} ref={forwardedRef}>
         {children}
       </div>
     );
@@ -438,6 +443,10 @@ const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
   ({ components, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
     const virtuosoRef = useRef<GroupedVirtuosoHandle>(null);
+    const placeholderContainerRef = useRef<HTMLDivElement>(null);
+    const rowScrollMarginTopRef = useRef<number>(0);
+    const rowScrollMarginBottomRef = useRef<number>(0);
+    const categoryHeaderHeightRef = useRef<number>(0);
     const {
       data,
       error,
@@ -467,7 +476,7 @@ const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
                 role="grid"
                 aria-colcount={columns}
                 {...props}
-                data-test-id={undefined}
+                data-testid={undefined}
                 ref={forwardedRef}
               >
                 {children}
@@ -492,31 +501,90 @@ const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
       }
     }, [interaction, setInteraction]);
 
+    useLayoutEffect(() => {
+      if (!placeholderContainerRef.current) {
+        return;
+      }
+
+      const row = placeholderContainerRef.current.childNodes[0];
+      const categoryHeader = placeholderContainerRef.current.childNodes[1];
+
+      if (row instanceof HTMLElement) {
+        const style = window.getComputedStyle(row);
+
+        rowScrollMarginTopRef.current = parseFloat(style.scrollMarginTop);
+        rowScrollMarginBottomRef.current = parseFloat(style.scrollMarginBottom);
+      }
+
+      if (categoryHeader instanceof HTMLElement) {
+        categoryHeaderHeightRef.current = categoryHeader.offsetHeight;
+      }
+    }, []);
+
+    // Customize `scrollIntoView` behavior to take into account category headers and margins
+    const calculateViewLocation = useCallback(
+      ({
+        itemTop,
+        itemBottom,
+        viewportTop,
+        viewportBottom,
+        locationParams: { behavior, align, ...params },
+      }: CalculateViewLocationParams) => {
+        if (
+          itemTop -
+            (categoryHeaderHeightRef.current + rowScrollMarginTopRef.current) <
+          viewportTop
+        ) {
+          return {
+            ...params,
+            behavior,
+            align: align ?? "start",
+          };
+        }
+
+        if (itemBottom > viewportBottom) {
+          return {
+            ...params,
+            behavior,
+            align: align ?? "end",
+            offset: rowScrollMarginBottomRef.current,
+          };
+        }
+
+        return null;
+      },
+      []
+    );
+
     useEffect(() => {
       if (interaction === "keyboard") {
         virtuosoRef.current?.scrollIntoView({
           index: selectedRowIndex,
           behavior: "auto",
+          calculateViewLocation,
         });
       }
-    }, [interaction, selectedRowIndex]);
+    }, [interaction, selectedRowIndex, calculateViewLocation]);
 
     return (
       <Component {...props} ref={forwardedRef}>
-        {/* Virtualized rows are absolutely positioned so they won't make
-            the container automatically pick up their width. To achieve
-            an automatic width, we add a relative (but hidden) full row. */}
         <div
           style={{
             visibility: "hidden",
             height: 0,
           }}
+          ref={placeholderContainerRef}
         >
+          {/* Virtualized rows are absolutely positioned so they won't make
+            the container automatically pick up their width. To achieve
+            an automatic width, we add a relative (but hidden) full row. */}
           <Row attributes={placeholderRowAttributes}>
             {placeholderColumns.map((placeholder, index) => (
               <Emoji emoji={placeholder} key={index} />
             ))}
           </Row>
+          {/* We also add a hidden category header to get its computed height. */}
+          <CategoryHeader category="Category" />
         </div>
         {isLoading ? (
           <Loading />

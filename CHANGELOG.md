@@ -1,4 +1,44 @@
-## v2.2.1 (not released yet)
+## v2.3.0
+
+### `@liveblocks/react-lexical`
+
+- New default components: `AnchoredThreads` and `FloatingThreads` to display
+  threads that are tied to a specific part of the document, similar to Notion,
+  Linear, etc:
+  - [`FloatingThreads`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#FloatingThreads)
+    displays floating `Thread` components below text highlights in the editor.
+  - [`AnchoredThreads`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#AnchoredThreads)
+    displays a list of `Thread` components vertically alongside the editor.
+  - These components can be used in the same application to create a UI that
+    works on both mobile and desktop.
+
+### `@liveblocks/react`
+
+- Add `useDeleteInboxNotification` and `useDeleteAllInboxNotifications` hooks.
+- Fix `resolved` query not being applied when filtering threads with
+  `useThreads`.
+- Various refactorings to Suspense internals.
+
+### `@liveblocks/react-ui`
+
+- Add "Delete notification" action to `InboxNotification`.
+- Hide "Mark as read" action in `InboxNotification` when already read.
+- Improve keyboard navigation within emoji pickers.
+
+### `@liveblocks/node`
+
+- Add `deleteInboxNotification` and `deleteAllInboxNotifications` methods.
+
+## v2.2.2
+
+### `@liveblocks/react-ui`
+
+- Fix missing avatar in `textMention` inbox notifications.
+- Fix `textMention` usage (and its props type) when customizing rendering via
+  `kinds` on `InboxNotification`.
+- Fix broken CSS selector in default styles.
+
+## v2.2.1
 
 ### `@liveblocks/yjs`
 
@@ -1541,8 +1581,8 @@ For information, please read our
 - Remove support for directly importing hooks from **@liveblocks/client** (e.g.
   `import { useMyPresence } from '@liveblocks/react'`). If you’re still using
   these imports, see the
-  [Upgrade Guide for 0.17](https://liveblocks.io/docs/platform/upgrading/0.17) for
-  instructions.
+  [Upgrade Guide for 0.17](https://liveblocks.io/docs/platform/upgrading/0.17)
+  for instructions.
 - Remove `ClientProvider` and `useClient` hook
 - Remove `defaultPresence` and `defaultStorageRoot` arguments. (Just use
   `initialPresence` and `initialStorage` arguments now.)
@@ -1763,7 +1803,8 @@ It's surprisingly simple!
   - Importing the React hooks directly is deprecated, instead use the new
     `createRoomContext()` helper. For help, read the
     [Recommended Upgrade Steps section](https://liveblocks.io/docs/platform/upgrading/0.17#recommended-upgrade-steps)
-    within our [Upgrade Guide](https://liveblocks.io/docs/platform/upgrading/0.17)
+    within our
+    [Upgrade Guide](https://liveblocks.io/docs/platform/upgrading/0.17)
   - The second argument to `useList()`, `useObject()`, and `useMap()` is
     deprecated
   - The RoomProvider's `defaultPresence` is renamed to `initialPresence`

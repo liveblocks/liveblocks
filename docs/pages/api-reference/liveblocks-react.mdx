@@ -2457,7 +2457,8 @@ a loading state and will throw when there’s an error.
 
 ### useMarkInboxNotificationAsRead [@badge=LiveblocksProvider]
 
-Returns a function that marks an inbox notification as read.
+Returns a function that marks an inbox notification as read for the current
+user.
 
 ```tsx
 import { useMarkInboxNotificationAsRead } from "@liveblocks/react/suspense";
@@ -2468,13 +2469,36 @@ markInboxNotificationAsRead("in_xxx");
 
 ### useMarkAllInboxNotificationsAsRead [@badge=LiveblocksProvider]
 
-Returns a function that marks all inbox notifications as read.
+Returns a function that marks all of the current user‘s inbox notifications as
+read.
 
 ```tsx
 import { useMarkAllInboxNotificationsAsRead } from "@liveblocks/react/suspense";
 
 const markAllInboxNotificationsAsRead = useMarkAllInboxNotificationsAsRead();
 markAllInboxNotificationsAsRead();
+```
+
+### useDeleteInboxNotification [@badge=LiveblocksProvider]
+
+Returns a function that deletes an inbox notification for the current user.
+
+```tsx
+import { useDeleteInboxNotification } from "@liveblocks/react/suspense";
+
+const deleteInboxNotification = useDeleteInboxNotification();
+deleteInboxNotification("in_xxx");
+```
+
+### useDeleteAllInboxNotifications [@badge=LiveblocksProvider]
+
+Returns a function that deletes all of the current user‘s inbox notifications.
+
+```tsx
+import { useDeleteAllInboxNotifications } from "@liveblocks/react/suspense";
+
+const deleteAllInboxNotifications = useDeleteAllInboxNotifications();
+deleteAllInboxNotifications();
 ```
 
 ### useInboxNotificationThread [@badge=LiveblocksProvider]
@@ -2486,6 +2510,20 @@ import { useInboxNotificationThread } from "@liveblocks/react/suspense";
 
 const thread = useInboxNotificationThread("in_xxx");
 ```
+
+It can **only** be called with IDs of `"thread"` inbox notifications, so we
+recommend only using it
+[when customizing the rendering](/docs/api-reference/liveblocks-react-ui#Rendering-notification-kinds-differently)
+or in other situations where you can guarantee the kind of the notification.
+
+<Banner type="info" title="No fetching and waterfalls">
+
+When `useInboxNotifications` returns `"thread"` inbox notifications, it also
+receives the associated threads and caches them behind the scenes. When you call
+`useInboxNotificationThread`, it simply returns the cached thread for the inbox
+notification ID you passed to it, without any fetching or waterfalls.
+
+</Banner>
 
 ### useRoomNotificationSettings [@badge=RoomProvider]
 

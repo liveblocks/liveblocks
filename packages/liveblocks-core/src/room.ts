@@ -34,6 +34,7 @@ import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
 import type { DE, DM, DP, DS, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
+import { Batch } from "./lib/batch";
 import { Promise_withResolvers } from "./lib/controlledPromise";
 import { createCommentId, createThreadId } from "./lib/createIds";
 import { captureStackTrace } from "./lib/debug";
@@ -388,7 +389,6 @@ type SubscribeFn<
 
   /**
    * Subscribes to changes made on a Live structure. Returns an unsubscribe function.
-   * In a future version, we will also expose what exactly changed in the Live structure.
    *
    * @param callback The callback this called when the Live structure changes.
    *
@@ -1410,6 +1410,8 @@ function createCommentsApi<M extends BaseMetadata>(
     removeReaction,
   };
 }
+
+const MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY = 50;
 
 /**
  * @internal
@@ -3007,6 +3009,37 @@ export function createRoom<
     );
   }
 
+  // This method (and the following batch handling) isn't the same as the one in
+  // src/notifications.ts, this one is room-based: /v2/c/rooms/:roomId/inbox-notifications/read.
+  //
+  // The reason for this is that unlike the room-based Comments ones, the Notifications endpoints
+  // don't work with a public key. Since `markThreadAsRead` needs to mark the related inbox notifications
+  // as read, this room-based method is necessary to keep all Comments features working with a public key.
+  async function markInboxNotificationsAsRead(inboxNotificationIds: string[]) {
+    await fetchNotificationsJson("/inbox-notifications/read", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ inboxNotificationIds }),
+    });
+  }
+
+  const batchedMarkInboxNotificationsAsRead = new Batch<string, string>(
+    async (batchedInboxNotificationIds) => {
+      const inboxNotificationIds = batchedInboxNotificationIds.flat();
+
+      await markInboxNotificationsAsRead(inboxNotificationIds);
+
+      return inboxNotificationIds;
+    },
+    { delay: MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY }
+  );
+
+  async function markInboxNotificationAsRead(inboxNotificationId: string) {
+    await batchedMarkInboxNotificationsAsRead.get(inboxNotificationId);
+  }
+
   return Object.defineProperty(
     {
       [kInternal]: {
@@ -3084,6 +3117,7 @@ export function createRoom<
 
       getNotificationSettings,
       updateNotificationSettings,
+      markInboxNotificationAsRead,
 
       ...commentsApi,
     },

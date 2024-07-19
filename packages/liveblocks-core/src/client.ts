@@ -142,8 +142,8 @@ export type PrivateClientApi<U extends BaseUserMeta> = {
   readonly currentUserIdStore: Store<string | null>;
   readonly resolveMentionSuggestions: ClientOptions<U>["resolveMentionSuggestions"];
   readonly cacheStore: CacheStore<BaseMetadata>;
-  readonly usersStore: BatchStore<U["info"] | undefined, [string]>;
-  readonly roomsInfoStore: BatchStore<DRI | undefined, [string]>;
+  readonly usersStore: BatchStore<U["info"] | undefined, string>;
+  readonly roomsInfoStore: BatchStore<DRI | undefined, string>;
   readonly getRoomIds: () => string[];
 };
 
@@ -160,6 +160,8 @@ export type NotificationsApi<M extends BaseMetadata> = {
   getUnreadInboxNotificationsCount(): Promise<number>;
   markAllInboxNotificationsAsRead(): Promise<void>;
   markInboxNotificationAsRead(inboxNotificationId: string): Promise<void>;
+  deleteAllInboxNotifications(): Promise<void>;
+  deleteInboxNotification(inboxNotificationId: string): Promise<void>;
 };
 
 /**
@@ -514,6 +516,8 @@ export function createClient<U extends BaseUserMeta = DU>(
     getUnreadInboxNotificationsCount,
     markAllInboxNotificationsAsRead,
     markInboxNotificationAsRead,
+    deleteAllInboxNotifications,
+    deleteInboxNotification,
   } = createNotificationsApi({
     baseUrl,
     fetcher: clientOptions.polyfills?.fetch || /* istanbul ignore next */ fetch,
@@ -530,7 +534,7 @@ export function createClient<U extends BaseUserMeta = DU>(
   );
 
   const usersStore = createBatchStore(
-    async (batchedUserIds: [string][]) => {
+    async (batchedUserIds: string[]) => {
       const userIds = batchedUserIds.flat();
       const users = await resolveUsers?.({ userIds });
 
@@ -548,7 +552,7 @@ export function createClient<U extends BaseUserMeta = DU>(
   );
 
   const roomsInfoStore = createBatchStore(
-    async (batchedRoomIds: [string][]) => {
+    async (batchedRoomIds: string[]) => {
       const roomIds = batchedRoomIds.flat();
       const roomsInfo = await resolveRoomsInfo?.({ roomIds });
 
@@ -570,6 +574,8 @@ export function createClient<U extends BaseUserMeta = DU>(
       getUnreadInboxNotificationsCount,
       markAllInboxNotificationsAsRead,
       markInboxNotificationAsRead,
+      deleteAllInboxNotifications,
+      deleteInboxNotification,
 
       // Internal
       [kInternal]: {

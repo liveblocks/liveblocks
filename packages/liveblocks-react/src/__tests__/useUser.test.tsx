@@ -1,39 +1,16 @@
 import "@testing-library/jest-dom";
 
-import type {
-  BaseMetadata,
-  BaseUserMeta,
-  ClientOptions,
-  JsonObject,
-  ResolveUsersArgs,
-} from "@liveblocks/core";
-import { createClient } from "@liveblocks/core";
+import type { ResolveUsersArgs } from "@liveblocks/core";
 import { renderHook, screen, waitFor } from "@testing-library/react";
 import { nanoid } from "nanoid";
 import React, { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
-import { createRoomContext } from "../room";
-import { generateFakeJwt } from "./_utils";
+import { createContextsForTest } from "./_utils";
 
-// TODO: Dry up and create utils that wrap renderHook
-function createRoomContextForTest<M extends BaseMetadata>(
-  options?: Omit<ClientOptions<BaseUserMeta>, "authEndpoint" | "publicApiKey">
-) {
-  const client = createClient({
-    async authEndpoint() {
-      return {
-        token: await generateFakeJwt({ userId: "userId" }),
-      };
-    },
-    // eslint-disable-next-line @typescript-eslint/require-await
-    resolveUsers: async ({ userIds }) => {
-      return userIds.map((userId) => ({ name: userId }));
-    },
-    ...options,
-  });
-
-  return createRoomContext<JsonObject, never, never, never, M>(client);
+// eslint-disable-next-line @typescript-eslint/require-await
+async function defaultResolveUsers({ userIds }: ResolveUsersArgs) {
+  return userIds.map((userId) => ({ name: userId }));
 }
 
 describe("useUser", () => {
@@ -48,7 +25,9 @@ describe("useUser", () => {
   test("should return an error if resolveUsers is not set", async () => {
     const roomId = nanoid();
 
-    const { RoomProvider, useUser } = createRoomContextForTest({
+    const {
+      room: { RoomProvider, useUser },
+    } = createContextsForTest({
       resolveUsers: undefined,
     });
 
@@ -78,7 +57,11 @@ describe("useUser", () => {
   test("should return the results from resolveUsers", async () => {
     const roomId = nanoid();
 
-    const { RoomProvider, useUser } = createRoomContextForTest();
+    const {
+      room: { RoomProvider, useUser },
+    } = createContextsForTest({
+      resolveUsers: defaultResolveUsers,
+    });
 
     const { result, unmount } = renderHook(
       () => ({
@@ -106,7 +89,11 @@ describe("useUser", () => {
   test("should support changing user ID", async () => {
     const roomId = nanoid();
 
-    const { RoomProvider, useUser } = createRoomContextForTest();
+    const {
+      room: { RoomProvider, useUser },
+    } = createContextsForTest({
+      resolveUsers: defaultResolveUsers,
+    });
 
     const { result, rerender, unmount } = renderHook(
       ({ userId }: { userId: string }) => ({
@@ -149,7 +136,9 @@ describe("useUser", () => {
     const resolveUsers = jest.fn(({ userIds }: ResolveUsersArgs) =>
       userIds.map((userId) => ({ name: userId }))
     );
-    const { RoomProvider, useUser } = createRoomContextForTest({
+    const {
+      room: { RoomProvider, useUser },
+    } = createContextsForTest({
       resolveUsers,
     });
 
@@ -193,7 +182,9 @@ describe("useUser", () => {
     const resolveUsers = jest.fn(({ userIds }: ResolveUsersArgs) =>
       userIds.map((userId) => ({ name: userId }))
     );
-    const { RoomProvider, useUser } = createRoomContextForTest({
+    const {
+      room: { RoomProvider, useUser },
+    } = createContextsForTest({
       resolveUsers,
     });
 
@@ -241,7 +232,9 @@ describe("useUser", () => {
   test("should support resolveUsers throwing an error", async () => {
     const roomId = nanoid();
 
-    const { RoomProvider, useUser } = createRoomContextForTest({
+    const {
+      room: { RoomProvider, useUser },
+    } = createContextsForTest({
       resolveUsers: () => {
         throw new Error("error");
       },
@@ -272,7 +265,9 @@ describe("useUser", () => {
   test("should support resolveUsers returning a rejected promise", async () => {
     const roomId = nanoid();
 
-    const { RoomProvider, useUser } = createRoomContextForTest({
+    const {
+      room: { RoomProvider, useUser },
+    } = createContextsForTest({
       resolveUsers: () => {
         return Promise.reject("error");
       },
@@ -303,7 +298,9 @@ describe("useUser", () => {
   test("should return an error if resolveUsers returns undefined", async () => {
     const roomId = nanoid();
 
-    const { RoomProvider, useUser } = createRoomContextForTest({
+    const {
+      room: { RoomProvider, useUser },
+    } = createContextsForTest({
       resolveUsers: () => {
         return undefined;
       },
@@ -343,7 +340,9 @@ describe("useUser", () => {
         return { name: userId };
       })
     );
-    const { RoomProvider, useUser } = createRoomContextForTest({
+    const {
+      room: { RoomProvider, useUser },
+    } = createContextsForTest({
       resolveUsers,
     });
     const { result, unmount } = renderHook(
@@ -392,9 +391,13 @@ describe("useUserSuspense", () => {
     const roomId = nanoid();
 
     const {
-      RoomProvider,
-      suspense: { useUser },
-    } = createRoomContextForTest();
+      room: {
+        RoomProvider,
+        suspense: { useUser },
+      },
+    } = createContextsForTest({
+      resolveUsers: defaultResolveUsers,
+    });
 
     const { result, unmount } = renderHook(
       () => ({
@@ -425,9 +428,11 @@ describe("useUserSuspense", () => {
     const roomId = nanoid();
 
     const {
-      RoomProvider,
-      suspense: { useUser },
-    } = createRoomContextForTest({
+      room: {
+        RoomProvider,
+        suspense: { useUser },
+      },
+    } = createContextsForTest({
       resolveUsers: () => {
         throw new Error("error");
       },
