@@ -46,6 +46,10 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 - Add `deleteInboxNotification` and `deleteAllInboxNotifications` methods.
 
+## Examples
+
+- Added delete all notifications button to notifications examples.
+
 ## Documentation
 
 - Open the config file by default in the interactive [broadcasting events tutorial](https://liveblocks.io/docs/tutorial/react/getting-started/broadcasting-events).
