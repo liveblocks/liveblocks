@@ -9,7 +9,7 @@ https://liveblocks.io/changelog
 
 TEAM MEMBERS
 adigau, ctnicholas, flowflorent, guillaumesalles, jrowny, marcbouchenoire,
-nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
+nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
 
@@ -50,9 +50,13 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 - Open the config file by default in the interactive [broadcasting events tutorial](https://liveblocks.io/docs/tutorial/react/getting-started/broadcasting-events).
 
+### Website
+
+- Fix changelog images on mobile.
+
 ## Contributors
 
-nimeshnayaju, ofoucherot, nvie, marcbouchenoire, dant2021
+nimeshnayaju, ofoucherot, nvie, marcbouchenoire, dant2021, ctnicholas
 
 # Week 28 (2024-07-12)
 
