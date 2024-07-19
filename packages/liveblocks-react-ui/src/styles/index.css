@@ -156,8 +156,6 @@
   outline: none;
   cursor: pointer;
   user-select: none;
-  transition-timing-function: var(--lb-transition-easing);
-  transition-duration: var(--lb-transition-duration);
   transition-property: background, color, opacity;
   -webkit-tap-highlight-color: transparent;
 
@@ -323,7 +321,7 @@
 
   display: flex;
   flex-direction: column;
-  block-size: 350px;
+  block-size: 360px;
   color: var(--lb-foreground);
 }
 
@@ -416,11 +414,11 @@
 
 .lb-emoji-picker-row {
   display: flex;
-  padding-inline: $lb-emoji-picker-padding;
-  scroll-margin-block: $lb-emoji-picker-padding;
+  padding-inline: var(--lb-emoji-picker-padding);
+  scroll-margin-block-end: var(--lb-emoji-picker-padding);
 
   &:where([data-last]) {
-    padding-block-end: $lb-emoji-picker-padding;
+    padding-block-end: var(--lb-emoji-picker-padding);
   }
 }
 

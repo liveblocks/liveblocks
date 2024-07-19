@@ -1058,7 +1058,7 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
   LiveblocksProvider(props: PropsWithChildren): JSX.Element;
 
   /**
-   * Returns a function that marks an inbox notification as read.
+   * Returns a function that marks an inbox notification as read for the current user.
    *
    * @example
    * const markInboxNotificationAsRead = useMarkInboxNotificationAsRead();
@@ -1067,13 +1067,31 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
   useMarkInboxNotificationAsRead(): (inboxNotificationId: string) => void;
 
   /**
-   * Returns a function that marks all inbox notifications as read.
+   * Returns a function that marks all of the current user's inbox notifications as read.
    *
    * @example
    * const markAllInboxNotificationsAsRead = useMarkAllInboxNotificationsAsRead();
    * markAllInboxNotificationsAsRead();
    */
   useMarkAllInboxNotificationsAsRead(): () => void;
+
+  /**
+   * Returns a function that deletes an inbox notification for the current user.
+   *
+   * @example
+   * const deleteInboxNotification = useDeleteInboxNotification();
+   * deleteInboxNotification("in_xxx");
+   */
+  useDeleteInboxNotification(): (inboxNotificationId: string) => void;
+
+  /**
+   * Returns a function that deletes all of the current user's inbox notifications.
+   *
+   * @example
+   * const deleteAllInboxNotifications = useDeleteAllInboxNotifications();
+   * deleteAllInboxNotifications();
+   */
+  useDeleteAllInboxNotifications(): () => void;
 
   /**
    * Returns the thread associated with a `"thread"` inbox notification.

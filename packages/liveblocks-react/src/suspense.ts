@@ -23,6 +23,8 @@ export {
   useInboxNotificationThread,
   useMarkAllInboxNotificationsAsRead,
   useMarkInboxNotificationAsRead,
+  useDeleteAllInboxNotifications,
+  useDeleteInboxNotification,
 } from "./liveblocks";
 export {
   RoomContext,

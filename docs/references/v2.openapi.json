@@ -2571,7 +2571,7 @@
         }
       }
     },
-    "/users/{userId}/inboxNotifications/{inboxNotificationId}": {
+    "/users/{userId}/inbox-notifications/{inboxNotificationId}": {
       "parameters": [
         {
           "schema": {
@@ -2595,13 +2595,13 @@
         "tags": ["Notifications"],
         "parameters": [
           {
-            "name": "roomId",
+            "name": "userId",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string"
             },
-            "description": "ID of the room"
+            "description": "ID of the user"
           },
           {
             "name": "inboxNotificationId",
@@ -2632,6 +2632,89 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete inbox notification",
+        "tags": ["Notifications"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the user"
+          },
+          {
+            "name": "inboxNotificationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the inbox notification"
+          }
+        ],
+        "operationId": "delete-users-userId-inboxNotifications-inboxNotificationId",
+        "description": "This endpoint deletes a user’s inbox notification by its ID.",
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/users/{userId}/inbox-notifications": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "userId",
+          "in": "path",
+          "required": true
+        }
+      ],
+      "delete": {
+        "summary": "Delete all inbox notifications",
+        "tags": ["Notifications"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the user"
+          }
+        ],
+        "operationId": "delete-users-userId-inboxNotifications",
+        "description": "This endpoint deletes all the user’s inbox notifications.",
+        "responses": {
+          "204": {
+            "description": ""
           },
           "401": {
             "description": "Unauthorized"
