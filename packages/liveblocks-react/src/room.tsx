@@ -2141,7 +2141,7 @@ function useMarkThreadAsRead() {
         readAt: now,
       });
 
-      client.markInboxNotificationAsRead(inboxNotification.id).then(
+      room.markInboxNotificationAsRead(inboxNotification.id).then(
         () => {
           store.set((state) => ({
             ...state,

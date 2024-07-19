@@ -788,6 +788,7 @@ export type Room<
   updateNotificationSettings(
     settings: Partial<RoomNotificationSettings>
   ): Promise<RoomNotificationSettings>;
+  markInboxNotificationAsRead(notificationId: string): Promise<void>;
 } & CommentsApi<M>;
 
 /**
