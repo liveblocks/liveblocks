@@ -12,7 +12,6 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { addSeconds } from "date-fns";
-import { rest } from "msw";
 import { setupServer } from "msw/node";
 import { nanoid } from "@liveblocks/core";
 import type { ReactNode } from "react";
@@ -508,9 +507,9 @@ describe("useThreads", () => {
     const room2Threads = [dummyThreadData({ roomId: room2Id })];
 
     server.use(
-      rest.get(
-        `https://api.liveblocks.io/v2/c/rooms/${room1Id}/threads`,
-        async (_req, res, ctx) => {
+      mockGetThreads((req, res, ctx) => {
+        const roomId = req.params.roomId;
+        if (roomId === room1Id) {
           return res(
             ctx.json({
               data: room1Threads,
@@ -522,11 +521,7 @@ describe("useThreads", () => {
               },
             })
           );
-        }
-      ),
-      rest.get(
-        `https://api.liveblocks.io/v2/c/rooms/${room2Id}/threads`,
-        async (_req, res, ctx) => {
+        } else if (roomId === room2Id) {
           return res(
             ctx.json({
               data: room2Threads,
@@ -539,7 +534,9 @@ describe("useThreads", () => {
             })
           );
         }
-      )
+
+        return res(ctx.status(404));
+      })
     );
 
     const {
@@ -592,9 +589,8 @@ describe("useThreads", () => {
     const room2Threads = [dummyThreadData({ roomId: room2Id })];
 
     server.use(
-      rest.get(
-        `https://api.liveblocks.io/v2/c/rooms/${room1Id}/threads`,
-        async (_req, res, ctx) => {
+      mockGetThreads((req, res, ctx) => {
+        if (req.params.roomId === room1Id) {
           return res(
             ctx.json({
               data: room1Threads,
@@ -606,11 +602,7 @@ describe("useThreads", () => {
               },
             })
           );
-        }
-      ),
-      rest.get(
-        `https://api.liveblocks.io/v2/c/rooms/${room2Id}/threads`,
-        async (_req, res, ctx) => {
+        } else if (req.params.roomId === room2Id) {
           return res(
             ctx.json({
               data: room2Threads,
@@ -623,7 +615,9 @@ describe("useThreads", () => {
             })
           );
         }
-      )
+
+        return res(ctx.status(404));
+      })
     );
 
     const {
