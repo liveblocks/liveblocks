@@ -1,12 +1,11 @@
 import "@testing-library/jest-dom";
 
-import { createClient } from "@liveblocks/core";
 import { renderHook, waitFor } from "@testing-library/react";
 import { sorted } from "itertools";
 import { setupServer } from "msw/node";
+import { nanoid } from "nanoid";
 import React from "react";
 
-import { createLiveblocksContext } from "../liveblocks";
 import {
   dummyCustomInboxNoficationData,
   dummyThreadData,
@@ -14,7 +13,7 @@ import {
 } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import { mockGetInboxNotifications } from "./_restMocks";
-import { generateFakeJwt } from "./_utils";
+import { createContextsForTest } from "./_utils";
 
 const server = setupServer();
 
@@ -31,27 +30,14 @@ afterEach(() => {
 
 afterAll(() => server.close());
 
-// TODO: Dry up and create utils that wrap renderHook
-function createLiveblocksContextForTest() {
-  const client = createClient({
-    async authEndpoint() {
-      return {
-        token: await generateFakeJwt({ userId: "userId" }),
-      };
-    },
-    polyfills: {
-      WebSocket: MockWebSocket as any,
-    },
-  });
-
-  return { liveblocksCtx: createLiveblocksContext(client), client };
-}
-
 describe("useInboxNotificationThread", () => {
   test("should return a thread after notifications are fetched", async () => {
-    const threads = [dummyThreadData()];
-    const inboxNotification = dummyThreadInboxNotificationData();
-    inboxNotification.threadId = threads[0].id;
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+    const inboxNotification = dummyThreadInboxNotificationData({
+      roomId,
+      threadId: threads[0].id,
+    });
     const inboxNotifications = [inboxNotification];
 
     server.use(
@@ -71,12 +57,12 @@ describe("useInboxNotificationThread", () => {
     );
 
     const {
-      liveblocksCtx: {
+      liveblocks: {
         LiveblocksProvider,
         useInboxNotifications,
         useInboxNotificationThread,
       },
-    } = createLiveblocksContextForTest();
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(() => useInboxNotifications(), {
       wrapper: ({ children }) => (
@@ -116,10 +102,13 @@ describe("useInboxNotificationThread", () => {
   });
 
   test("it should throw when the notification is not found or the thread is not found", async () => {
-    const threads = [dummyThreadData()];
-    const inboxNotification = dummyThreadInboxNotificationData();
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+    const inboxNotification = dummyThreadInboxNotificationData({
+      roomId,
+      threadId: threads[0].id,
+    });
     const customInboxNotification = dummyCustomInboxNoficationData();
-    inboxNotification.threadId = threads[0].id;
     const inboxNotifications = [inboxNotification, customInboxNotification];
 
     server.use(
@@ -139,12 +128,12 @@ describe("useInboxNotificationThread", () => {
     );
 
     const {
-      liveblocksCtx: {
+      liveblocks: {
         LiveblocksProvider,
         useInboxNotifications,
         useInboxNotificationThread,
       },
-    } = createLiveblocksContextForTest();
+    } = createContextsForTest();
 
     // Use the hook without fetching the notifications should throw
     expect(() =>

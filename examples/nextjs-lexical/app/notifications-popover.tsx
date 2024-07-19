@@ -41,7 +41,7 @@ export default function NotificationsPopover() {
         <Popover.Content
           side="bottom"
           align="end"
-          className="rounded-xl border border-border bg-card text-card-foreground shadow text-sm overflow-hidden w-[500px] z-20"
+          className="rounded-xl border border-border bg-card text-card-foreground shadow text-sm overflow-hidden w-[500px] min-h-[200px] z-20"
         >
           <Suspense fallback={<Loading />}>
             <Inbox />

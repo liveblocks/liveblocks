@@ -13,6 +13,88 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 -->
 
+# Week 28 (2024-07-12)
+
+## v2.2.2
+
+### `@liveblocks/react-ui`
+
+- Fix missing avatar in `textMention` inbox notifications.
+- Fix `textMention` usage (and its props type) when customizing rendering via `kinds` on `InboxNotification`.
+- Fix broken CSS selector in default styles.
+
+## v2.2.1
+
+### `@liveblocks/yjs`
+
+- Don’t attempt to write Yjs changes if the current user has no write access
+
+## Contributors
+
+jrowny, nvie, marcbouchenoire
+
+# Week 27 (2024-07-05)
+
+## v2.2.0
+
+We are making `resolved` a first-class citizen property on
+[threads](https://liveblocks.io/docs/products/comments/concepts#Threads), for
+more information about this change please read our
+[Upgrade Guide for 2.2](https://liveblocks.io/docs/platform/upgrading/2.2).
+
+### `@liveblocks/react`
+
+- Add `useMarkThreadAsResolved` and `useMarkThreadAsUnresolved` hooks.
+- Support `query.resolved` when filtering threads.
+- The
+  [`useStorageStatus`](https://liveblocks.io/docs/api-reference/liveblocks-react#useStorageStatus)
+  hook now also has a `{ smooth: true }` setting to make building calm UIs with
+  it a bit easier.
+- The `useClient()` hook is now also available for users of
+  `createRoomContext()` and/or `createLiveblocksContext()`.
+- Fix: avoid unnecessary re-renders if inbox notifications haven't changed.
+
+### `@liveblocks/react-ui`
+
+- Use first-class citizen `resolved` property in `Thread` component.
+- Preserve rich text when pasting into the composer.
+- Add support for custom links to the composer. (either by pasting URLs with
+  plain text selected or by pasting existing links)
+- Preserve whitespace and empty lines in comments.
+- Mark threads as read when visible (like before), but only if the window is
+  focused.
+- Fix improper `useTransition` fallback which would break on React versions
+  lower than 18.
+
+### `@liveblocks/node`
+
+- Add `markThreadAsResolved` and `markThreadAsUnresolved` methods.
+- Add `ThreadMarkedAsResolvedEvent` and `ThreadMarkedAsUnresolvedEvent` webhook
+  events.
+- Support `query.resolved` when querying threads.
+
+### `@liveblocks/react-lexical`
+
+- Upgrade `lexical` peer dependency to version `^0.16.1` that fixes
+  compatibility issues with Next.js versions 14.2.0 and above.
+
+### `@liveblocks/node-lexical`
+
+- Upgrade `lexical` peer dependency to version `0.16.1`.
+
+## Documentation
+
+- Add [`useStorageStatus`](https://liveblocks.io/docs/api-reference/liveblocks-react#useStorageStatus) information.
+- Fix code snippet in [Nested data types page](https://liveblocks.io/docs/tutorial/react/getting-started/nesting-data-types) of interactive tutorial.
+
+## Website
+
+- New blog post: [How Hashnode added collaboration to their text editor to sell to larger organizations](https://liveblocks.io/blog/how-hashnode-added-collaboration-to-their-text-editor-to-sell-to-larger-organizations).
+
+## Contributors
+
+flowflorent, ofoucherot, nvie, marcbouchenoire, nimeshnayaju, ctnicholas, Teddarific, stevenfabre
+
 # Week 26 (2024-06-28)
 
 ## v2.1.0
@@ -36,7 +118,8 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 ### `@liveblocks/react-ui`
 
-- Fix improper `useSyncExternalStore` import which would break on React versions lower than 18.
+- Fix improper `useSyncExternalStore` import which would break on React versions
+  lower than 18.
 
 ## v2.0.5
 
@@ -46,19 +129,47 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
   else than the thread owner tries to delete the thread. This will help you
   catch and handle this case more easily.
 
+## Documentation
+
+- Updated the
+  [interactive tutorial](https://liveblocks.io/docs/tutorial/react/getting-started/welcome)
+  for Liveblocks 2.0.
+
+## Website
+
+- New blog post:
+  [Introducing Liveblocks collaboration kit for Figma](https://liveblocks.io/blog/introducing-liveblocks-collaboration-kit-for-figma).
+- Updated [contact page](https://liveblocks.io/contact) with two separate forms
+  for sales and support.
+
+## Processes
+
+- Versioning and publishing of public packages is now decoupled from
+  versioning/publishing of our CLI tools.
+
+## Contributors
+
+flowflorent, ctnicholas, nvie, stevenfabre, pierrelevaillant, marcbouchenoire
+
+# Week 25 (2024-06-21)
+
 ## v2.0.4
 
-### All packages
-
 - Improve TS error messages and error locations if custom `UserMeta` or
-  `ActivitiesData` types do not match their requirements
+  `ActivitiesData` types do not match their requirements.
 
 ### `@liveblocks/client`
 
 - Add missing type export for `CommentReaction`
-- Don’t attempt to write missing `initialStorage` keys if the current user has no
+- Don’t attempt to write missing initialStorage keys if the current user has no
   write access to storage. This will no longer throw, but issue a warning
   message in the console.
+
+### `@liveblocks/react`
+
+- Add
+  [`useDeleteThread`](https://liveblocks.io/docs/api-reference/liveblocks-react#useDeleteThread)
+  hook to delete a thread and its associated comments.
 
 ## v2.0.3
 
@@ -71,55 +182,6 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 - In `<RoomProvider>`, the props `initialPresence` and `initialStorage` are now
   only mandatory if your custom type requires them to be.
-- Nesting `<LiveblocksProvider>`s will now throw to prevent incorrect usage.
-
-### `@liveblocks/react-ui`
-
-- Prevent the composer from splitting text being composed.
-- Handle parentheses around and within auto links.
-- Count whitespace as empty to prevent posting empty comments.
-- Prevent clearing the composer if it's not handled. (via `onComposerSubmit`)
-
-### `@liveblocks/yjs`
-
-- Add missing type exports
-
-## Documentation
-
-- Updated the [interactive tutorial](https://liveblocks.io/docs/tutorial/react/getting-started/welcome) for Liveblocks 2.0.
-
-## Website
-
-- New blog post: [Introducing Liveblocks collaboration kit for Figma](https://liveblocks.io/blog/introducing-liveblocks-collaboration-kit-for-figma).
-- Updated [contact page](https://liveblocks.io/contact) with two separate forms for sales and support.
-
-## Processes
-
-- Versioning and publishing of public packages is now decoupled from versioning/publishing of our CLI tools.
-
-## Contributors
-
-flowflorent, ctnicholas, nvie, stevenfabre, pierrelevaillant, marcbouchenoire
-
-# Week 25 (2024-06-21)
-
-## v2.0.2
-
-### `@liveblocks/node`
-
-- Add `deleteThread` method to the client to delete a room's thread.
-- Add the `threadDeleted` webhook event to notify when a thread is deleted.
-- Fix type signatures of `client.identifyUser()` and `client.prepareSession()` to require `userInfo` if it's mandatory according to your global `UserMeta` type definition.
-
-## v2.0.3
-
-### `@liveblocks/client`
-
-- In `client.enterRoom()`, the options `initialPresence` and `initialStorage` are now only mandatory if your custom type requires them to be.
-
-### `@liveblocks/react`
-
-- In `<RoomProvider>`, the props `initialPresence` and `initialStorage` are now only mandatory if your custom type requires them to be.
 - Nesting `<LiveblocksProvider>`s will now throw to prevent incorrect usage
 
 ### `@liveblocks/react-ui`
@@ -133,35 +195,41 @@ flowflorent, ctnicholas, nvie, stevenfabre, pierrelevaillant, marcbouchenoire
 
 - Add missing type exports
 
-## v2.0.4
+## v2.0.2
 
-- Improve TS error messages and error locations if custom `UserMeta` or `ActivitiesData` types do not match their requirements.
+### `@liveblocks/node`
 
-### `@liveblocks/client`
-
-- Add missing type export for `CommentReaction`
-- Don’t attempt to write missing initialStorage keys if the current user has no write access to storage. This will no longer throw, but issue a warning message in the console.
-
-### `@liveblocks/react`
-
-- Add [`useDeleteThread`](https://liveblocks.io/docs/api-reference/liveblocks-react#useDeleteThread) hook to delete a thread and its associated comments.
+- Add `deleteThread` method to the client to delete a room's thread.
+- Add the `threadDeleted` webhook event to notify when a thread is deleted.
+- Fix type signatures of `client.identifyUser()` and `client.prepareSession()`
+  to require `userInfo` if it's mandatory according to your global `UserMeta`
+  type definition.
 
 ## Examples
 
-- New [custom notifications example](https://liveblocks.io/examples/notifications-custom/nextjs-notifications-custom).
-- Updated [BlockNote example](https://liveblocks.io/examples/collaborative-text-editor-advanced/nextjs-yjs-blocknote-advanced) and guide to v0.14.1.
+- New
+  [custom notifications example](https://liveblocks.io/examples/notifications-custom/nextjs-notifications-custom).
+- Updated
+  [BlockNote example](https://liveblocks.io/examples/collaborative-text-editor-advanced/nextjs-yjs-blocknote-advanced)
+  and guide to v0.14.1.
 
 ## Documentation
 
-- Create new guide on [how to add users to Liveblocks text editor](https://liveblocks.io/docs/guides/how-to-add-users-to-liveblocks-text-editor).
-- Updated [Lexical product page](https://liveblocks.io/docs/products/text-editor/lexical) with new information.
+- Create new guide on
+  [how to add users to Liveblocks text editor](https://liveblocks.io/docs/guides/how-to-add-users-to-liveblocks-text-editor).
+- Updated
+  [Lexical product page](https://liveblocks.io/docs/products/text-editor/lexical)
+  with new information.
 - Improved Lexical get started guides.
-- Improved [`Liveblocks.initializeStorageDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-storage) section.
+- Improved
+  [`Liveblocks.initializeStorageDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-storage)
+  section.
 - Fixed typo with token syntax passed to `authEndpoint`.
 
 ## Website
 
-- New blog post: [How Zapier added collaborative features to their Canvas product in just a couple of weeks](https://liveblocks.io/blog/how-zapier-added-collaborative-features-to-their-canvas-product-in-just-a-couple-of-weeks).
+- New blog post:
+  [How Zapier added collaborative features to their Canvas product in just a couple of weeks](https://liveblocks.io/blog/how-zapier-added-collaborative-features-to-their-canvas-product-in-just-a-couple-of-weeks).
 
 ## Contributors
 
@@ -173,11 +241,10 @@ ctnicholas, stevenfabre, matthewlipski, flowflorent, nvie
 
 This major release marks the maturity of Liveblocks. It contains new products
 (`@liveblocks/react-lexical`) and clarifications (e.g.
-`@liveblocks/react-comments` is now called `@liveblocks/react-ui`).
-t
-Also, we bring major DX improvements by allowing you to specify your types
-globally now. These types will be typed once and shared across all Liveblocks
-APIs, which includes your Node backend.
+`@liveblocks/react-comments` is now called `@liveblocks/react-ui`). t Also, we
+bring major DX improvements by allowing you to specify your types globally now.
+These types will be typed once and shared across all Liveblocks APIs, which
+includes your Node backend.
 
 ```ts file="liveblocks.config.ts"
 // ❌ Before
@@ -324,7 +391,8 @@ For full upgrade instructions and codemods, see the
     [Liveblocks Realtime APIs](https://liveblocks.io/realtime-apis)
   - Improved [pricing page](https://liveblocks.io)
   - New navigation
-- New blog post: [Introducing Liveblocks 2.0](https://liveblocks.io/blog/introducing-liveblocks-2-0).
+- New blog post:
+  [Introducing Liveblocks 2.0](https://liveblocks.io/blog/introducing-liveblocks-2-0).
 
 ## Examples
 

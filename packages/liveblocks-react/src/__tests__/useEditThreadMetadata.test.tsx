@@ -1,13 +1,12 @@
-import type { BaseMetadata, JsonObject } from "@liveblocks/core";
-import { createClient } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
+import { nanoid } from "nanoid";
 import React from "react";
 
-import { createRoomContext } from "../room";
 import { dummyThreadData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import { mockEditThreadMetadata, mockGetThreads } from "./_restMocks";
+import { createContextsForTest } from "./_utils";
 
 const server = setupServer();
 
@@ -24,21 +23,10 @@ afterEach(() => {
 
 afterAll(() => server.close());
 
-// TODO: Dry up and create utils that wrap renderHook
-function createRoomContextForTest<M extends BaseMetadata>() {
-  const client = createClient({
-    publicApiKey: "pk_xxx",
-    polyfills: {
-      WebSocket: MockWebSocket as any,
-    },
-  });
-
-  return createRoomContext<JsonObject, never, never, never, M>(client);
-}
-
 describe("useEditThreadMetadata", () => {
   test("should edit thread metadata optimistically", async () => {
-    const initialThread = dummyThreadData();
+    const roomId = nanoid();
+    const initialThread = dummyThreadData({ roomId });
     let hasCalledEditThreadMetadata = false;
 
     server.use(
@@ -66,8 +54,9 @@ describe("useEditThreadMetadata", () => {
       )
     );
 
-    const { RoomProvider, useThreads, useEditThreadMetadata } =
-      createRoomContextForTest();
+    const {
+      room: { RoomProvider, useThreads, useEditThreadMetadata },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(
       () => ({
@@ -76,7 +65,7 @@ describe("useEditThreadMetadata", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -106,8 +95,11 @@ describe("useEditThreadMetadata", () => {
   });
 
   test("should remove thread metadata optimistically and update it with the server response", async () => {
-    const initialThread = dummyThreadData();
-    initialThread.metadata = { color: "blue", pinned: true };
+    const roomId = nanoid();
+    const initialThread = dummyThreadData({
+      roomId,
+      metadata: { color: "blue", pinned: true },
+    });
     let hasCalledEditThreadMetadata = false;
 
     server.use(
@@ -137,8 +129,9 @@ describe("useEditThreadMetadata", () => {
       )
     );
 
-    const { RoomProvider, useThreads, useEditThreadMetadata } =
-      createRoomContextForTest();
+    const {
+      room: { RoomProvider, useThreads, useEditThreadMetadata },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(
       () => ({
@@ -147,7 +140,7 @@ describe("useEditThreadMetadata", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );

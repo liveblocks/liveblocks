@@ -1,18 +1,14 @@
-import type { BaseMetadata, JsonObject } from "@liveblocks/core";
-import { createClient } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
+import { nanoid } from "nanoid";
 import React from "react";
 
-import { createLiveblocksContext } from "../liveblocks";
-import { createRoomContext } from "../room";
 import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
-import MockWebSocket from "./_MockWebSocket";
 import {
   mockGetInboxNotifications,
   mockMarkInboxNotificationsAsRead,
 } from "./_restMocks";
-import { generateFakeJwt } from "./_utils";
+import { createContextsForTest } from "./_utils";
 
 const server = setupServer();
 
@@ -24,31 +20,17 @@ afterEach(() => {
 
 afterAll(() => server.close());
 
-// TODO: Dry up and create utils that wrap renderHook
-function createRoomContextForTest<M extends BaseMetadata>() {
-  const client = createClient({
-    async authEndpoint() {
-      return {
-        token: await generateFakeJwt({ userId: "userId" }),
-      };
-    },
-    polyfills: {
-      WebSocket: MockWebSocket as any,
-    },
-  });
-
-  return {
-    roomCtx: createRoomContext<JsonObject, never, never, never, M>(client),
-    liveblocksCtx: createLiveblocksContext(client),
-  };
-}
-
 describe("useMarkInboxNotificationAsRead", () => {
   test("should mark notification as read optimistically", async () => {
-    const threads = [dummyThreadData()];
-    const inboxNotifications = [dummyThreadInboxNotificationData()];
-    inboxNotifications[0].threadId = threads[0].id;
-    inboxNotifications[0].readAt = null;
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+    const inboxNotifications = [
+      dummyThreadInboxNotificationData({
+        roomId,
+        threadId: threads[0].id,
+        readAt: null,
+      }),
+    ];
 
     server.use(
       mockGetInboxNotifications((_req, res, ctx) =>
@@ -69,12 +51,12 @@ describe("useMarkInboxNotificationAsRead", () => {
     );
 
     const {
-      liveblocksCtx: {
+      liveblocks: {
         LiveblocksProvider,
         useInboxNotifications,
         useMarkInboxNotificationAsRead,
       },
-    } = createRoomContextForTest();
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(
       () => ({
@@ -103,10 +85,15 @@ describe("useMarkInboxNotificationAsRead", () => {
   });
 
   test("should mark inbox notification as read optimistically and revert the updates if error response from server", async () => {
-    const threads = [dummyThreadData()];
-    const inboxNotifications = [dummyThreadInboxNotificationData()];
-    inboxNotifications[0].threadId = threads[0].id;
-    inboxNotifications[0].readAt = null;
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+    const inboxNotifications = [
+      dummyThreadInboxNotificationData({
+        roomId,
+        threadId: threads[0].id,
+        readAt: null,
+      }),
+    ];
 
     server.use(
       mockGetInboxNotifications((_req, res, ctx) =>
@@ -127,12 +114,12 @@ describe("useMarkInboxNotificationAsRead", () => {
     );
 
     const {
-      liveblocksCtx: {
+      liveblocks: {
         LiveblocksProvider,
         useInboxNotifications,
         useMarkInboxNotificationAsRead,
       },
-    } = createRoomContextForTest();
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(
       () => ({

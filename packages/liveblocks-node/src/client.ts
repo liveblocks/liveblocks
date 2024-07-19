@@ -477,8 +477,8 @@ export class Liveblocks {
    * Creates a new room with the given id.
    * @param roomId The id of the room to create.
    * @param params.defaultAccesses The default accesses for the room.
-   * @param params.groupAccesses (optional) The group accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
-   * @param params.userAccesses (optional) The user accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.groupsAccesses (optional) The group accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.usersAccesses (optional) The user accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
    * @param params.metadata (optional) The metadata for the room. Supports upto a maximum of 50 entries. Key length has a limit of 40 characters. Value length has a limit of 256 characters.
    * @returns The created room.
    */
@@ -554,8 +554,8 @@ export class Liveblocks {
    * Setting a property to `null` means to delete this property.
    * @param roomId The id of the room to update.
    * @param params.defaultAccesses (optional) The default accesses for the room.
-   * @param params.groupAccesses (optional) The group accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
-   * @param params.userAccesses (optional) The user accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.groupsAccesses (optional) The group accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.usersAccesses (optional) The user accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
    * @param params.metadata (optional) The metadata for the room. Supports upto a maximum of 50 entries. Key length has a limit of 40 characters. Value length has a limit of 256 characters.
    * @returns The updated room.
    */
@@ -1547,6 +1547,42 @@ export class Liveblocks {
   }): Promise<void> {
     const res = await this.post(url`/v2/inbox-notifications/trigger`, params);
 
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+  }
+
+  /**
+   * Deletes an inbox notification for a user.
+   * @param params.userId The user ID for which to delete the inbox notification.
+   * @param params.inboxNotificationId The ID of the inbox notification to delete.
+   */
+  public async deleteInboxNotification(params: {
+    userId: string;
+    inboxNotificationId: string;
+  }): Promise<void> {
+    const { userId, inboxNotificationId } = params;
+
+    const res = await this.delete(
+      url`/v2/users/${userId}/inbox-notifications/${inboxNotificationId}`
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+  }
+
+  /**
+   * Deletes all inbox notifications for a user.
+   * @param params.userId The user ID for which to delete all the inbox notifications.
+   */
+  public async deleteAllInboxNotifications(params: {
+    userId: string;
+  }): Promise<void> {
+    const { userId } = params;
+
+    const res = await this.delete(url`/v2/users/${userId}/inbox-notifications`);
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);

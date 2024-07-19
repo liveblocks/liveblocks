@@ -9,6 +9,7 @@ import { render, renderHook } from "@testing-library/react";
 import type { ReactElement } from "react";
 import * as React from "react";
 
+import { createLiveblocksContext } from "../liveblocks";
 import { createRoomContext } from "../room";
 import { RoomProvider } from "./_liveblocks.config";
 import MockWebSocket from "./_MockWebSocket";
@@ -56,37 +57,39 @@ function customRenderHook<Result, Props>(
   return renderHook(render, { wrapper: AllTheProviders, ...options });
 }
 
-type Options = {
-  userId?: string;
-};
-
-export function createRoomContextForTest<M extends BaseMetadata>({
-  userId,
-}: Options = {}) {
-  let clientOptions: ClientOptions = {
+export function createContextsForTest<M extends BaseMetadata>(
+  {
+    userId,
+    ...options
+  }: Omit<ClientOptions, "authEndpoint" | "publicApiKey"> & {
+    userId?: string;
+  } = { userId: "userId" }
+) {
+  const clientOptions: ClientOptions = {
     polyfills: {
       WebSocket: MockWebSocket as any,
     },
-    publicApiKey: "pk_xxx",
-  };
+    ...options,
+  } as ClientOptions;
 
   if (userId) {
-    clientOptions = {
-      authEndpoint: async () => {
-        const token = await generateFakeJwt({ userId });
-        return {
-          token,
-        };
-      },
-      polyfills: {
-        WebSocket: MockWebSocket as any,
-      },
+    clientOptions.authEndpoint = async () => {
+      const token = await generateFakeJwt({ userId });
+      return {
+        token,
+      };
     };
+  } else {
+    clientOptions.publicApiKey = "pk_xxx";
   }
 
   const client = createClient(clientOptions);
 
-  return createRoomContext<JsonObject, never, never, never, M>(client);
+  return {
+    room: createRoomContext<JsonObject, never, never, never, M>(client),
+    liveblocks: createLiveblocksContext(client),
+    client,
+  };
 }
 
 export * from "@testing-library/react";

@@ -6,21 +6,19 @@ import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { ListNode, ListItemNode } from "@lexical/list";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
-import { Thread } from "@liveblocks/react-ui";
 import {
   FloatingComposer,
+  AnchoredThreads,
   liveblocksConfig,
   LiveblocksPlugin,
   useEditorStatus,
-  useIsThreadActive,
+  FloatingThreads,
 } from "@liveblocks/react-lexical";
 import FloatingToolbar from "./floating-toolbar";
 import NotificationsPopover from "../notifications-popover";
-import Toolbar from "./toolbar";
-import { useThreads } from "@liveblocks/react/suspense";
-import { Suspense } from "react";
 import Loading from "../loading";
-import { BaseMetadata, ThreadData } from "@liveblocks/client";
+import { useThreads } from "@liveblocks/react/suspense";
+import { useIsMobile } from "./use-is-mobile";
 
 // Wrap your initial config with `liveblocksConfig`
 const initialConfig = liveblocksConfig({
@@ -36,49 +34,44 @@ export default function Editor() {
   const status = useEditorStatus();
 
   return (
-    <div className="relative flex flex-col h-full w-full">
+    <div className="relative min-h-screen flex flex-col">
       <LexicalComposer initialConfig={initialConfig}>
-        {/* Sticky header */}
-        <div className="sticky top-0 left-0  h-[60px] flex items-center justify-between px-4 border-b border-border/80 z-20 bg-background/95">
-          <div className="flex items-center gap-2 h-full">
-            <Toolbar />
-          </div>
-
-          <NotificationsPopover />
-        </div>
-
-        <div className="relative flex flex-row justify-between h-[calc(100%-60px)] w-full flex-1">
-          {/* Editable */}
-          <div className="relative h-full w-[calc(100%-350px)] overflow-auto">
-            {status === "not-loaded" || status === "loading" ? (
-              <Loading />
-            ) : (
-              <div className="relative max-w-[950px] mx-auto">
-                <RichTextPlugin
-                  contentEditable={
-                    <ContentEditable className="relative outline-none p-8 w-full h-full" />
-                  }
-                  placeholder={
-                    <p className="pointer-events-none absolute top-0 left-0 p-8 text-muted-foreground w-full h-full">
-                      Try mentioning a user with @
-                    </p>
-                  }
-                  ErrorBoundary={LexicalErrorBoundary}
-                />
-                <FloatingToolbar />
+        <LiveblocksPlugin>
+          {status === "not-loaded" || status === "loading" ? (
+            <Loading />
+          ) : (
+            <>
+              <div className="h-[60px] flex items-center justify-end px-4 border-b border-border/80 bg-background">
+                <NotificationsPopover />
               </div>
-            )}
-          </div>
 
-          <LiveblocksPlugin>
-            <FloatingComposer className="w-[350px]" />
+              <div className="relative flex flex-row justify-between w-full py-16 xl:pl-[250px] pl-[100px] gap-[50px]">
+                {/* Editable */}
+                <div className="relative flex flex-1">
+                  <RichTextPlugin
+                    contentEditable={
+                      <ContentEditable className="outline-none flex-1 transition-all" />
+                    }
+                    placeholder={
+                      <p className="pointer-events-none absolute top-0 left-0 text-muted-foreground w-full h-full">
+                        Try mentioning a user with @
+                      </p>
+                    }
+                    ErrorBoundary={LexicalErrorBoundary}
+                  />
 
-            {/* Threads List */}
-            <Suspense fallback={<Loading />}>
-              <Threads />
-            </Suspense>
-          </LiveblocksPlugin>
-        </div>
+                  <FloatingComposer className="w-[350px]" />
+
+                  <FloatingToolbar />
+                </div>
+
+                <div className="xl:[&:not(:has(.lb-lexical-anchored-threads))]:pr-[200px] [&:not(:has(.lb-lexical-anchored-threads))]:pr-[50px]">
+                  <Threads />
+                </div>
+              </div>
+            </>
+          )}
+        </LiveblocksPlugin>
       </LexicalComposer>
     </div>
   );
@@ -86,24 +79,14 @@ export default function Editor() {
 
 function Threads() {
   const { threads } = useThreads();
+  const isMobile = useIsMobile();
 
-  return (
-    <div className="text-sm relative w-[350px] h-full overflow-auto border-l border-border/80">
-      {threads.map((thread) => {
-        return <ThreadWrapper key={thread.id} thread={thread} />;
-      })}
-    </div>
-  );
-}
-
-function ThreadWrapper({ thread }: { thread: ThreadData<BaseMetadata> }) {
-  const isActive = useIsThreadActive(thread.id);
-
-  return (
-    <Thread
-      thread={thread}
-      data-state={isActive ? "active" : null}
-      className="p-2 border-b border-border"
+  return isMobile ? (
+    <FloatingThreads threads={threads} />
+  ) : (
+    <AnchoredThreads
+      threads={threads}
+      className="w-[350px] xl:mr-[100px] mr-[50px]"
     />
   );
 }

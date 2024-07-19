@@ -1,11 +1,13 @@
+import { wait } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
+import { nanoid } from "nanoid";
 import React from "react";
 
 import { dummyCommentData, dummyThreadData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import { mockDeleteThread, mockGetThreads } from "./_restMocks";
-import { createRoomContextForTest } from "./_utils";
+import { createContextsForTest } from "./_utils";
 
 const server = setupServer();
 
@@ -22,21 +24,27 @@ afterEach(() => {
 
 afterAll(() => server.close());
 
+function createDummyThreads(roomId: string, userId: string) {
+  return [
+    dummyThreadData({
+      roomId,
+      comments: [
+        dummyCommentData({
+          roomId,
+          userId,
+        }),
+      ],
+    }),
+  ];
+}
+
 describe("useDeleteThread", () => {
   const userId = "batman";
-  const threads = [
-    {
-      ...dummyThreadData(),
-      comments: [
-        {
-          ...dummyCommentData(),
-          userId,
-        },
-      ],
-    },
-  ];
 
   test("should delete a thread optimistically", async () => {
+    const roomId = nanoid();
+    const threads = createDummyThreads(roomId, userId);
+
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
         return res(
@@ -56,8 +64,9 @@ describe("useDeleteThread", () => {
       })
     );
 
-    const { RoomProvider, useThreads, useDeleteThread } =
-      createRoomContextForTest({ userId });
+    const {
+      room: { RoomProvider, useThreads, useDeleteThread },
+    } = createContextsForTest({ userId });
 
     const { result, unmount } = renderHook(
       () => ({
@@ -66,7 +75,7 @@ describe("useDeleteThread", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -75,17 +84,24 @@ describe("useDeleteThread", () => {
 
     await waitFor(() => expect(result.current.threads).toEqual(threads));
 
-    await act(() => {
+    act(() => {
       result.current.deleteThread(threads[0].id);
-      return null;
     });
 
     await waitFor(() => expect(result.current.threads).toEqual([]));
+
+    // TODO: We should wait for the `deleteThread` call to be finished but we don't have APIs for that yet
+    //       We should expose a way to know (and be updated about) if there are still pending optimistic updates
+    //       Until then, we'll just wait a bit to make sure the request doesn't leak into the next tests
+    await wait(1000);
 
     unmount();
   });
 
   test("should throw an error when a user attempts to delete someone else's thread", async () => {
+    const roomId = nanoid();
+    const threads = createDummyThreads(roomId, userId);
+
     server.use(
       mockGetThreads(async (_req, res, ctx) =>
         res(
@@ -100,20 +116,25 @@ describe("useDeleteThread", () => {
           })
         )
       )
-      // no need to mock delete thread, as it should not be called
+      // No need to mock delete thread, as it should not be called
     );
 
-    const { RoomProvider, useThreads, useDeleteThread } =
-      createRoomContextForTest({ userId: "superman" });
+    // In this test, the current user's ID is "not-the-thread-creator"
+    const {
+      room: { RoomProvider, useThreads, useDeleteThread, useRoom },
+    } = createContextsForTest({
+      userId: "not-the-thread-creator",
+    });
 
     const { result, unmount } = renderHook(
       () => ({
         threads: useThreads().threads,
         deleteThread: useDeleteThread(),
+        room: useRoom(),
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -122,12 +143,21 @@ describe("useDeleteThread", () => {
 
     await waitFor(() => expect(result.current.threads).toEqual(threads));
 
-    try {
-      result.current.deleteThread(threads[0].id);
-    } catch (error) {
-      const message = (error as Error).message;
-      expect(message).toMatch("Only the thread creator can delete the thread");
-    }
+    expect(result.current.room.getSelf()?.id).toEqual("not-the-thread-creator");
+
+    let errorMessage: string | undefined;
+
+    act(() => {
+      try {
+        result.current.deleteThread(threads[0].id);
+      } catch (error) {
+        errorMessage = (error as Error).message;
+      }
+    });
+
+    expect(errorMessage).toMatch(
+      "Only the thread creator can delete the thread"
+    );
 
     await waitFor(() => expect(result.current.threads).toEqual(threads));
 
@@ -135,6 +165,9 @@ describe("useDeleteThread", () => {
   });
 
   test("should rollback optimistic deletion if server fails", async () => {
+    const roomId = nanoid();
+    const threads = createDummyThreads(roomId, userId);
+
     server.use(
       mockGetThreads(async (_req, res, ctx) =>
         res(
@@ -149,13 +182,14 @@ describe("useDeleteThread", () => {
           })
         )
       ),
-      mockDeleteThread({ threadId: threads[0].id }, async (_req, res, ctx) =>
-        res(ctx.status(500))
-      )
+      mockDeleteThread({ threadId: threads[0].id }, async (_req, res, ctx) => {
+        return res(ctx.status(500));
+      })
     );
 
-    const { RoomProvider, useThreads, useDeleteThread } =
-      createRoomContextForTest({ userId });
+    const {
+      room: { RoomProvider, useThreads, useDeleteThread },
+    } = createContextsForTest({ userId });
 
     const { result, unmount } = renderHook(
       () => ({
@@ -164,7 +198,7 @@ describe("useDeleteThread", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -173,10 +207,11 @@ describe("useDeleteThread", () => {
 
     await waitFor(() => expect(result.current.threads).toEqual(threads));
 
-    await act(() => {
+    act(() => {
       result.current.deleteThread(threads[0].id);
-      return null;
     });
+
+    expect(result.current.threads).toEqual([]);
 
     await waitFor(() => expect(result.current.threads).toEqual(threads));
 

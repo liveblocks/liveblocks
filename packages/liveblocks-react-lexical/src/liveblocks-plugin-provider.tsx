@@ -268,7 +268,7 @@ export const LiveblocksPlugin = ({
   );
 };
 
-function useRootElement(): HTMLElement | null {
+export function useRootElement(): HTMLElement | null {
   const [editor] = useLexicalComposerContext();
 
   const subscribe = useCallback(
