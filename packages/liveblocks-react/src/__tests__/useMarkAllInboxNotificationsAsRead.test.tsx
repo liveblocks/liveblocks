@@ -102,11 +102,13 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
         roomId,
         threadId: threads[0].id,
         readAt: null,
+        notifiedAt: new Date(2024, 3, 6),
       }),
       dummyThreadInboxNotificationData({
         roomId,
         threadId: threads[1].id,
         readAt: null,
+        notifiedAt: new Date(2024, 3, 5),
       }),
     ];
 
