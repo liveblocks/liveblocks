@@ -115,15 +115,13 @@ export function createNotificationsApi<M extends BaseMetadata>({
     });
 
     return {
-      threads: json.threads.map((thread) => convertToThreadData(thread)),
-      inboxNotifications: json.inboxNotifications.map((notification) =>
-        convertToInboxNotificationData(notification)
+      threads: json.threads.map(convertToThreadData),
+      inboxNotifications: json.inboxNotifications.map(
+        convertToInboxNotificationData
       ),
-      deletedThreads: json.deletedThreads.map((info) =>
-        convertToThreadDeleteInfo(info)
-      ),
-      deletedInboxNotifications: json.deletedInboxNotifications.map((info) =>
-        convertToInboxNotificationDeleteInfo(info)
+      deletedThreads: json.deletedThreads.map(convertToThreadDeleteInfo),
+      deletedInboxNotifications: json.deletedInboxNotifications.map(
+        convertToInboxNotificationDeleteInfo
       ),
       requestedAt: new Date(json.meta.requestedAt),
     };
