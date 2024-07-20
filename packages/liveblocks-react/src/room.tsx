@@ -348,7 +348,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
       // Set the isFetchingThreadsUpdates flag to true to prevent multiple requests to fetch threads updates for the room from being made at the same time
       requestStatusByRoom.set(room.id, true);
 
-      const updates = await room.getThreads({ since });
+      const updates = await room.getThreadsSince({ since });
 
       // Set the isFetchingThreadsUpdates flag to false after a certain interval to prevent multiple requests from being made at the same time
       setTimeout(() => {
@@ -356,10 +356,10 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
       }, DEFAULT_DEDUPING_INTERVAL);
 
       store.updateThreadsAndNotifications(
-        updates.threads,
-        updates.inboxNotifications,
-        updates.deletedThreads,
-        updates.deletedInboxNotifications
+        updates.threads.modified,
+        updates.inboxNotifications.modified,
+        updates.threads.deleted,
+        updates.inboxNotifications.deleted
       );
 
       // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
@@ -397,8 +397,8 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
       store.updateThreadsAndNotifications(
         result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
         result.inboxNotifications,
-        result.deletedThreads,
-        result.deletedInboxNotifications,
+        [],
+        [],
         queryKey
       );
 

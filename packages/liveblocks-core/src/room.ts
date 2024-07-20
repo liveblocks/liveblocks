@@ -468,15 +468,41 @@ export type GetThreadsOptions<M extends BaseMetadata> = {
     resolved?: boolean;
     metadata?: Partial<QueryMetadata<M>>;
   };
-  since?: Date;
 };
 
 type CommentsApi<M extends BaseMetadata> = {
+  /**
+   * Get the room threads and their associated inbox notifications.
+   * It also returns the request date that can be used for subsequent polling.
+   *
+   * @example
+   * const {
+   *   threads,
+   *   inboxNotifications,
+   *   requestedAt
+   * } = await room.getThreads({ query: { resolved: false }});
+   */
   getThreads(options?: GetThreadsOptions<M>): Promise<{
     threads: ThreadData<M>[];
     inboxNotifications: InboxNotificationData[];
-    deletedThreads: ThreadDeleteInfo[];
-    deletedInboxNotifications: InboxNotificationDeleteInfo[];
+    requestedAt: Date;
+  }>;
+
+  /**
+   * Get the modified and deleted threads and their associated inbox notifications since the requested date.
+   *
+   * @example
+   * const result = await room.getThreadsSince({ since }});
+   */
+  getThreadsSince(options: { since: Date }): Promise<{
+    threads: {
+      modified: ThreadData<M>[];
+      deleted: ThreadDeleteInfo[];
+    };
+    inboxNotifications: {
+      modified: InboxNotificationData[];
+      deleted: InboxNotificationDeleteInfo[];
+    };
     requestedAt: Date;
   }>;
 
@@ -1220,6 +1246,60 @@ function createCommentsApi<M extends BaseMetadata>(
     return body;
   }
 
+  async function getThreadsSince(options: { since: Date }) {
+    const response = await fetchCommentsApi(
+      "/threads",
+      {
+        since: options?.since?.toISOString(),
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (response.ok) {
+      const json = await (response.json() as Promise<{
+        data: ThreadDataPlain<M>[];
+        inboxNotifications: InboxNotificationDataPlain[];
+        deletedThreads: ThreadDeleteInfoPlain[];
+        deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+        meta: {
+          requestedAt: string;
+        };
+      }>);
+
+      return {
+        threads: {
+          modified: json.data.map(convertToThreadData),
+          deleted: json.deletedThreads.map(convertToThreadDeleteInfo),
+        },
+        inboxNotifications: {
+          modified: json.inboxNotifications.map(convertToInboxNotificationData),
+          deleted: json.deletedInboxNotifications.map(
+            convertToInboxNotificationDeleteInfo
+          ),
+        },
+        requestedAt: new Date(json.meta.requestedAt),
+      };
+    } else if (response.status === 404) {
+      return {
+        threads: {
+          modified: [],
+          deleted: [],
+        },
+        inboxNotifications: {
+          modified: [],
+          deleted: [],
+        },
+        requestedAt: new Date(),
+      };
+    } else {
+      throw new Error("There was an error while getting threads.");
+    }
+  }
+
   async function getThreads(options?: GetThreadsOptions<M>) {
     let query: string | undefined;
 
@@ -1230,7 +1310,6 @@ function createCommentsApi<M extends BaseMetadata>(
     const response = await fetchCommentsApi(
       "/threads",
       {
-        since: options?.since?.toISOString(),
         query,
       },
       {
@@ -1252,15 +1331,9 @@ function createCommentsApi<M extends BaseMetadata>(
       }>);
 
       return {
-        threads: json.data.map((thread) => convertToThreadData(thread)),
-        inboxNotifications: json.inboxNotifications.map((notification) =>
-          convertToInboxNotificationData(notification)
-        ),
-        deletedThreads: json.deletedThreads.map((info) =>
-          convertToThreadDeleteInfo(info)
-        ),
-        deletedInboxNotifications: json.deletedInboxNotifications.map((info) =>
-          convertToInboxNotificationDeleteInfo(info)
+        threads: json.data.map(convertToThreadData),
+        inboxNotifications: json.inboxNotifications.map(
+          convertToInboxNotificationData
         ),
         requestedAt: new Date(json.meta.requestedAt),
       };
@@ -1492,6 +1565,7 @@ function createCommentsApi<M extends BaseMetadata>(
 
   return {
     getThreads,
+    getThreadsSince,
     getThread,
     createThread,
     deleteThread,
