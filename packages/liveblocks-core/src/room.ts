@@ -477,9 +477,7 @@ type CommentsApi<M extends BaseMetadata> = {
     inboxNotifications: InboxNotificationData[];
     deletedThreads: ThreadDeleteInfo[];
     deletedInboxNotifications: InboxNotificationDeleteInfo[];
-    meta: {
-      requestedAt: Date;
-    };
+    requestedAt: Date;
   }>;
   getThread(options: { threadId: string }): Promise<
     | {
@@ -1164,9 +1162,7 @@ function createCommentsApi<M extends BaseMetadata>(
         deletedInboxNotifications: json.deletedInboxNotifications.map((info) =>
           convertToInboxNotificationDeleteInfo(info)
         ),
-        meta: {
-          requestedAt: new Date(json.meta.requestedAt),
-        },
+        requestedAt: new Date(json.meta.requestedAt),
       };
     } else if (response.status === 404) {
       return {
@@ -1174,9 +1170,7 @@ function createCommentsApi<M extends BaseMetadata>(
         inboxNotifications: [],
         deletedThreads: [],
         deletedInboxNotifications: [],
-        meta: {
-          requestedAt: new Date(),
-        },
+        requestedAt: new Date(),
       };
     } else {
       throw new Error("There was an error while getting threads.");

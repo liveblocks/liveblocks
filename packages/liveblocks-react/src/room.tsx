@@ -363,7 +363,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
       );
 
       // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
-      lastRequestedAtByRoom.set(room.id, updates.meta.requestedAt);
+      lastRequestedAtByRoom.set(room.id, updates.requestedAt);
     } catch (err) {
       requestStatusByRoom.set(room.id, false);
       // TODO: Implement error handling
@@ -412,9 +412,9 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
        */
       if (
         lastRequestedAt === undefined ||
-        lastRequestedAt > result.meta.requestedAt
+        lastRequestedAt > result.requestedAt
       ) {
-        lastRequestedAtByRoom.set(room.id, result.meta.requestedAt);
+        lastRequestedAtByRoom.set(room.id, result.requestedAt);
       }
 
       poller.start(POLLING_INTERVAL);

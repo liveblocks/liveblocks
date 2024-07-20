@@ -257,11 +257,8 @@ function makeExtrasForClient<U extends BaseUserMeta>(client: OpaqueClient) {
      * OR
      * 2. The current `lastRequestedAt` is older than the timestamp returned by the current request
      */
-    if (
-      lastRequestedAt === undefined ||
-      lastRequestedAt < result.meta.requestedAt
-    ) {
-      lastRequestedAt = result.meta.requestedAt;
+    if (lastRequestedAt === undefined || lastRequestedAt < result.requestedAt) {
+      lastRequestedAt = result.requestedAt;
     }
   }
 

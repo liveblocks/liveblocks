@@ -153,9 +153,7 @@ export type NotificationsApi<M extends BaseMetadata> = {
     threads: ThreadData<M>[];
     deletedThreads: ThreadDeleteInfo[];
     deletedInboxNotifications: InboxNotificationDeleteInfo[];
-    meta: {
-      requestedAt: Date;
-    };
+    requestedAt: Date;
   }>;
   getUnreadInboxNotificationsCount(): Promise<number>;
   markAllInboxNotificationsAsRead(): Promise<void>;

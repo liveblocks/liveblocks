@@ -127,9 +127,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
       deletedInboxNotifications: json.deletedInboxNotifications.map((info) =>
         convertToInboxNotificationDeleteInfo(info)
       ),
-      meta: {
-        requestedAt: new Date(json.meta.requestedAt),
-      },
+      requestedAt: new Date(json.meta.requestedAt),
     };
   }
 
