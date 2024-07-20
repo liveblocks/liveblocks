@@ -910,7 +910,20 @@ export type Room<
    */
   reconnect(): void;
 
+  /**
+   * Gets the user's notification settings for the current room.
+   *
+   * @example
+   * const settings = await room.getNotificationSettings();
+   */
   getNotificationSettings(): Promise<RoomNotificationSettings>;
+
+  /**
+   * Updates the user's notification settings for the current room.
+   *
+   * @example
+   * await room.updateNotificationSettings({ threads: "replies_and_mentions" });
+   */
   updateNotificationSettings(
     settings: Partial<RoomNotificationSettings>
   ): Promise<RoomNotificationSettings>;
