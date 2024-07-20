@@ -2197,7 +2197,7 @@ function useMarkThreadAsResolved() {
         updatedAt,
       });
 
-      room.markThreadAsResolved({ threadId }).then(
+      room.markThreadAsResolved(threadId).then(
         () => {
           store.set((state) => {
             const existingThread = state.threads[threadId];
