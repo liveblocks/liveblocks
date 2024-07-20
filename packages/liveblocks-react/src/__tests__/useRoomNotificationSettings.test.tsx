@@ -1,5 +1,6 @@
 import "@testing-library/jest-dom";
 
+import { nanoid } from "@liveblocks/core";
 import {
   act,
   fireEvent,
@@ -8,7 +9,6 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { setupServer } from "msw/node";
-import { nanoid } from "@liveblocks/core";
 import React, { Suspense } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 

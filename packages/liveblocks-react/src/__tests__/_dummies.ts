@@ -5,7 +5,6 @@ import type {
   InboxNotificationThreadData,
   ThreadData,
 } from "@liveblocks/core";
-
 import {
   createCommentId,
   createInboxNotificationId,

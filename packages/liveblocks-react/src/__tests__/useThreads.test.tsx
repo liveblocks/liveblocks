@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 
-import { kInternal, ServerMsgCode } from "@liveblocks/core";
+import { kInternal, nanoid, ServerMsgCode } from "@liveblocks/core";
 import type { AST } from "@liveblocks/query-parser";
 import { QueryParser } from "@liveblocks/query-parser";
 import {
@@ -13,7 +13,6 @@ import {
 } from "@testing-library/react";
 import { addSeconds } from "date-fns";
 import { setupServer } from "msw/node";
-import { nanoid } from "@liveblocks/core";
 import type { ReactNode } from "react";
 import React, { Suspense } from "react";
 import type { FallbackProps } from "react-error-boundary";

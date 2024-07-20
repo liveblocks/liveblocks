@@ -39,19 +39,21 @@ import {
   addReaction,
   CommentsApiError,
   console,
+  createCommentId,
+  createThreadId,
   deleteComment,
   deprecateIf,
   errorIf,
   kInternal,
   makeEventSource,
   makePoller,
+  nanoid,
   NotificationsApiError,
   removeReaction,
   ServerMsgCode,
   stringify,
   upsertComment,
 } from "@liveblocks/core";
-import { nanoid } from "@liveblocks/core";
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
@@ -70,7 +72,6 @@ import {
   RemoveReactionError,
   UpdateNotificationSettingsError,
 } from "./comments/errors";
-import { createCommentId, createThreadId } from "@liveblocks/core";
 import { selectNotificationSettings } from "./comments/lib/select-notification-settings";
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 import { selectedThreads } from "./comments/lib/selected-threads";
