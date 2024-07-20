@@ -546,7 +546,7 @@ type CommentsApi<M extends BaseMetadata> = {
    * @example
    * await room.markThreadAsUnresolved("th_xxx");
    */
-  markThreadAsUnresolved(options: { threadId: string }): Promise<void>;
+  markThreadAsUnresolved(threadId: string): Promise<void>;
 
   /**
    * Creates a comment.
@@ -1366,7 +1366,7 @@ function createCommentsApi<M extends BaseMetadata>(
     );
   }
 
-  async function markThreadAsUnresolved({ threadId }: { threadId: string }) {
+  async function markThreadAsUnresolved(threadId: string) {
     await fetchJson(
       `/threads/${encodeURIComponent(threadId)}/mark-as-unresolved`,
       {

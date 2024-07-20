@@ -2283,7 +2283,7 @@ function useMarkThreadAsUnresolved() {
         updatedAt,
       });
 
-      room.markThreadAsUnresolved({ threadId }).then(
+      room.markThreadAsUnresolved(threadId).then(
         () => {
           store.set((state) => {
             const existingThread = state.threads[threadId];
