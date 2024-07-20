@@ -479,6 +479,13 @@ type CommentsApi<M extends BaseMetadata> = {
     deletedInboxNotifications: InboxNotificationDeleteInfo[];
     requestedAt: Date;
   }>;
+
+  /**
+   * Returns a thread and the associated inbox notification if it exists.
+   *
+   * @example
+   * const { thread, inboxNotification } = await room.getThread("th_xxx");
+   */
   getThread(options: { threadId: string }): Promise<
     | {
         thread: ThreadData<M>;
@@ -486,38 +493,131 @@ type CommentsApi<M extends BaseMetadata> = {
       }
     | undefined
   >;
+
+  /**
+   * Creates a thread.
+   *
+   * @example
+   * const thread = await room.createThread({
+   *   body: {
+   *     version: 1,
+   *     content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
+   *   },
+   * })
+   */
   createThread(options: {
     threadId?: string;
     commentId?: string;
     metadata: M | undefined;
     body: CommentBody;
   }): Promise<ThreadData<M>>;
+
+  /**
+   * Deletes a thread.
+   *
+   * @example
+   * await room.deleteThread("th_xxx");
+   */
   deleteThread(options: { threadId: string }): Promise<void>;
+
+  /**
+   * Edits a thread's metadata.
+   * To delete an existing metadata property, set its value to `null`.
+   *
+   * @example
+   * await room.editThreadMetadata({ threadId: "th_xxx", metadata: {} })
+   */
   editThreadMetadata(options: {
     metadata: Patchable<M>;
     threadId: string;
   }): Promise<M>;
+
+  /**
+   * Marks a thread as resolved.
+   *
+   * @example
+   * await room.markThreadAsResolved("th_xxx");
+   */
   markThreadAsResolved(options: { threadId: string }): Promise<void>;
+
+  /**
+   * Marks a thread as unresolved.
+   *
+   * @example
+   * await room.markThreadAsUnresolved("th_xxx");
+   */
   markThreadAsUnresolved(options: { threadId: string }): Promise<void>;
+
+  /**
+   * Creates a comment.
+   *
+   * @example
+   * await room.createComment({
+   *   threadId: "th_xxx",
+   *   body: {
+   *     version: 1,
+   *     content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
+   *   },
+   * });
+   */
   createComment(options: {
     threadId: string;
     commentId?: string;
     body: CommentBody;
   }): Promise<CommentData>;
+
+  /**
+   * Edit a comment.
+   *
+   * @example
+   * await room.editComment({
+   *   threadId: "th_xxx",
+   *   commentId: "cm_xxx"
+   *   body: {
+   *     version: 1,
+   *     content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
+   *   },
+   * });
+   */
   editComment(options: {
     threadId: string;
     commentId: string;
     body: CommentBody;
   }): Promise<CommentData>;
+
+  /**
+   * Deletes a comment.
+   * If it is the last non-deleted comment, the thread also gets deleted.
+   *
+   * @example
+   * await room.deleteComment({
+   *   threadId: "th_xxx",
+   *   commentId: "cm_xxx"
+   * });
+   */
   deleteComment(options: {
     threadId: string;
     commentId: string;
   }): Promise<void>;
+
+  /**
+   * Adds a reaction from a comment.
+   *
+   * @example
+   * await room.addReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" })
+   */
   addReaction(options: {
     threadId: string;
     commentId: string;
     emoji: string;
   }): Promise<CommentUserReaction>;
+
+  /**
+   * Removes a reaction from a comment.
+   *
+   * @example
+   * await room.removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" })
+   */
   removeReaction(options: {
     threadId: string;
     commentId: string;

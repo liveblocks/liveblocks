@@ -155,10 +155,45 @@ export type NotificationsApi<M extends BaseMetadata> = {
     deletedInboxNotifications: InboxNotificationDeleteInfo[];
     requestedAt: Date;
   }>;
+
+  /**
+   * Get the number of unread inbox notification for the current user.
+   *
+   * @example
+   * const count = await client.getUnreadInboxNotificationsCount();
+   */
   getUnreadInboxNotificationsCount(): Promise<number>;
+
+  /**
+   * Mark all inbox notifications as read for the current user.
+   *
+   * @example
+   * await client.markAllInboxNotificationsAsRead();
+   */
   markAllInboxNotificationsAsRead(): Promise<void>;
+
+  /**
+   * Mark an inbox notification as read.
+   *
+   * @example
+   * await client.markInboxNotificationAsRead("in_xxx");
+   */
   markInboxNotificationAsRead(inboxNotificationId: string): Promise<void>;
+
+  /**
+   * Deletes all inbox notifications for the current user.
+   *
+   * @example
+   * await client.deleteInboxNotifications();
+   */
   deleteAllInboxNotifications(): Promise<void>;
+
+  /**
+   * Deletes an inbox notification for the current user.
+   *
+   * @example
+   * await client.deleteInboxNotification("in_xxx");
+   */
   deleteInboxNotification(inboxNotificationId: string): Promise<void>;
 };
 
