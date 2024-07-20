@@ -14,7 +14,6 @@ import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import type { NoInfr } from "./lib/NoInfer";
 import type { Resolve } from "./lib/Resolve";
-import type { GetInboxNotificationsOptions } from "./notifications";
 import { createNotificationsApi } from "./notifications";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
@@ -148,11 +147,40 @@ export type PrivateClientApi<U extends BaseUserMeta> = {
 };
 
 export type NotificationsApi<M extends BaseMetadata> = {
-  getInboxNotifications(options?: GetInboxNotificationsOptions): Promise<{
+  /**
+   * Get the current user inbox notifications and their associated threads.
+   * It also returns the request date that can be used for subsequent polling.
+   *
+   * @example
+   * const {
+   *   inboxNotifications,
+   *   threads,
+   *   requestedAt
+   * } = await client.getInboxNotifications();
+   */
+  getInboxNotifications(): Promise<{
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<M>[];
-    deletedThreads: ThreadDeleteInfo[];
-    deletedInboxNotifications: InboxNotificationDeleteInfo[];
+    requestedAt: Date;
+  }>;
+
+  /**
+   * Get the modified and deleted inbox notifications and their associated threads since the requested date.
+   *
+   * @example
+   * const result = await client.getInboxNotifications();
+   * // ... //
+   * await client.getInboxNotificationsSince({ since: result.requestedAt }});
+   */
+  getInboxNotificationsSince(options: { since: Date }): Promise<{
+    inboxNotifications: {
+      modified: InboxNotificationData[];
+      deleted: InboxNotificationDeleteInfo[];
+    };
+    threads: {
+      modified: ThreadData<M>[];
+      deleted: ThreadDeleteInfo[];
+    };
     requestedAt: Date;
   }>;
 
@@ -546,6 +574,7 @@ export function createClient<U extends BaseUserMeta = DU>(
 
   const {
     getInboxNotifications,
+    getInboxNotificationsSince,
     getUnreadInboxNotificationsCount,
     markAllInboxNotificationsAsRead,
     markInboxNotificationAsRead,
@@ -604,6 +633,7 @@ export function createClient<U extends BaseUserMeta = DU>(
       logout,
 
       getInboxNotifications,
+      getInboxNotificationsSince,
       getUnreadInboxNotificationsCount,
       markAllInboxNotificationsAsRead,
       markInboxNotificationAsRead,

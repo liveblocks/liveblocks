@@ -26,10 +26,6 @@ import type {
 
 const MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY = 50;
 
-export type GetInboxNotificationsOptions = {
-  since?: Date;
-};
-
 export function createNotificationsApi<M extends BaseMetadata>({
   baseUrl,
   authManager,
@@ -101,7 +97,27 @@ export function createNotificationsApi<M extends BaseMetadata>({
     return body;
   }
 
-  async function getInboxNotifications(options?: GetInboxNotificationsOptions) {
+  async function getInboxNotifications() {
+    const json = await fetchJson<{
+      threads: ThreadDataPlain<M>[];
+      inboxNotifications: InboxNotificationDataPlain[];
+      deletedThreads: ThreadDeleteInfoPlain[];
+      deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+      meta: {
+        requestedAt: string;
+      };
+    }>("/inbox-notifications", undefined, {});
+
+    return {
+      threads: json.threads.map(convertToThreadData),
+      inboxNotifications: json.inboxNotifications.map(
+        convertToInboxNotificationData
+      ),
+      requestedAt: new Date(json.meta.requestedAt),
+    };
+  }
+
+  async function getInboxNotificationsSince(options: { since: Date }) {
     const json = await fetchJson<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
@@ -111,18 +127,20 @@ export function createNotificationsApi<M extends BaseMetadata>({
         requestedAt: string;
       };
     }>("/inbox-notifications", undefined, {
-      since: options?.since?.toISOString(),
+      since: options.since.toISOString(),
     });
 
     return {
-      threads: json.threads.map(convertToThreadData),
-      inboxNotifications: json.inboxNotifications.map(
-        convertToInboxNotificationData
-      ),
-      deletedThreads: json.deletedThreads.map(convertToThreadDeleteInfo),
-      deletedInboxNotifications: json.deletedInboxNotifications.map(
-        convertToInboxNotificationDeleteInfo
-      ),
+      threads: {
+        modified: json.threads.map(convertToThreadData),
+        deleted: json.deletedThreads.map(convertToThreadDeleteInfo),
+      },
+      inboxNotifications: {
+        modified: json.inboxNotifications.map(convertToInboxNotificationData),
+        deleted: json.deletedInboxNotifications.map(
+          convertToInboxNotificationDeleteInfo
+        ),
+      },
       requestedAt: new Date(json.meta.requestedAt),
     };
   }
@@ -187,6 +205,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
 
   return {
     getInboxNotifications,
+    getInboxNotificationsSince,
     getUnreadInboxNotificationsCount,
     markAllInboxNotificationsAsRead,
     markInboxNotificationAsRead,

@@ -492,7 +492,9 @@ type CommentsApi<M extends BaseMetadata> = {
    * Get the modified and deleted threads and their associated inbox notifications since the requested date.
    *
    * @example
-   * const result = await room.getThreadsSince({ since }});
+   * const result = await room.getThreads();
+   * // ... //
+   * await room.getThreadsSince({ since: result.requestedAt });
    */
   getThreadsSince(options: { since: Date }): Promise<{
     threads: {

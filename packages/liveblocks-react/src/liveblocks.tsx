@@ -238,27 +238,36 @@ function makeExtrasForClient<U extends BaseUserMeta>(client: OpaqueClient) {
    * date if successful. If unsuccessful, will throw.
    */
   async function fetchInboxNotifications() {
-    const since =
-      lastRequestedAt !== undefined ? { since: lastRequestedAt } : undefined;
+    // If inbox notifications have not been fetched yet, we get all of them
+    // Else, we fetch only what changed since the last request
+    if (lastRequestedAt === undefined) {
+      const result = await client.getInboxNotifications();
 
-    const result = await client.getInboxNotifications(since);
+      store.updateThreadsAndNotifications(
+        result.threads,
+        result.inboxNotifications,
+        [],
+        [],
+        INBOX_NOTIFICATIONS_QUERY
+      );
 
-    store.updateThreadsAndNotifications(
-      result.threads,
-      result.inboxNotifications,
-      result.deletedThreads,
-      result.deletedInboxNotifications,
-      INBOX_NOTIFICATIONS_QUERY
-    );
-
-    /**
-     * We set the `lastRequestedAt` to the timestamp returned by the current request if:
-     * 1. The `lastRequestedAt` has not been set
-     * OR
-     * 2. The current `lastRequestedAt` is older than the timestamp returned by the current request
-     */
-    if (lastRequestedAt === undefined || lastRequestedAt < result.requestedAt) {
       lastRequestedAt = result.requestedAt;
+    } else {
+      const result = await client.getInboxNotificationsSince({
+        since: lastRequestedAt,
+      });
+
+      store.updateThreadsAndNotifications(
+        result.threads.modified,
+        result.inboxNotifications.modified,
+        result.threads.deleted,
+        result.inboxNotifications.deleted,
+        INBOX_NOTIFICATIONS_QUERY
+      );
+
+      if (lastRequestedAt < result.requestedAt) {
+        lastRequestedAt = result.requestedAt;
+      }
     }
   }
 
