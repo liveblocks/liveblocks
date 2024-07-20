@@ -27,7 +27,6 @@ import type {
 const MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY = 50;
 
 export type GetInboxNotificationsOptions = {
-  limit?: number;
   since?: Date;
 };
 
@@ -112,7 +111,6 @@ export function createNotificationsApi<M extends BaseMetadata>({
         requestedAt: string;
       };
     }>("/inbox-notifications", undefined, {
-      limit: options?.limit,
       since: options?.since?.toISOString(),
     });
 
