@@ -518,7 +518,7 @@ type CommentsApi<M extends BaseMetadata> = {
    * @example
    * await room.deleteThread("th_xxx");
    */
-  deleteThread(options: { threadId: string }): Promise<void>;
+  deleteThread(threadId: string): Promise<void>;
 
   /**
    * Edits a thread's metadata.
@@ -1331,7 +1331,7 @@ function createCommentsApi<M extends BaseMetadata>(
     return convertToThreadData(thread);
   }
 
-  async function deleteThread({ threadId }: { threadId: string }) {
+  async function deleteThread(threadId: string) {
     await fetchJson(`/threads/${encodeURIComponent(threadId)}`, {
       method: "DELETE",
     });

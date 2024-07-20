@@ -1574,7 +1574,7 @@ function useDeleteThread(): (threadId: string) => void {
         deletedAt: new Date(),
       });
 
-      room.deleteThread({ threadId }).then(
+      room.deleteThread(threadId).then(
         () => {
           store.set((state) => {
             const existingThread = state.threads[threadId];
