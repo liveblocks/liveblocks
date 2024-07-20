@@ -828,9 +828,7 @@ function RoomProviderInner<
       }
 
       // TODO: Error handling
-      const info = await room.getThread({
-        threadId: message.threadId,
-      });
+      const info = await room.getThread(message.threadId);
 
       // If no thread info was returned (i.e., 404), we remove the thread and relevant inbox notifications from local cache.
       if (!info) {

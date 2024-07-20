@@ -486,7 +486,7 @@ type CommentsApi<M extends BaseMetadata> = {
    * @example
    * const { thread, inboxNotification } = await room.getThread("th_xxx");
    */
-  getThread(options: { threadId: string }): Promise<
+  getThread(threadId: string): Promise<
     | {
         thread: ThreadData<M>;
         inboxNotification?: InboxNotificationData;
@@ -1277,7 +1277,7 @@ function createCommentsApi<M extends BaseMetadata>(
     }
   }
 
-  async function getThread({ threadId }: { threadId: string }) {
+  async function getThread(threadId: string) {
     const response = await fetchCommentsApi(
       `/thread-with-notification/${threadId}`
     );
