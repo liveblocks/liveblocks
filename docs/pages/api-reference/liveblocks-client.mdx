@@ -2232,6 +2232,417 @@ room.disconnect();
 
 <PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
+## Comments
+
+### Room.getThreads
+
+Returns the threads within the current room and their associated inbox
+notifications. It also returns the request date that can be used for subsequent
+polling.
+
+```ts
+const { threads, inboxNotifications, requestedAt } = await room.getThreads({
+  query: { resolved: false },
+});
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="threads" type="ThreadData[]">
+    Threads within the currnet room.
+  </PropertiesListItem>
+  <PropertiesListItem name="inboxNotifications" type="InboxNotificationData[]">
+    Inbox notifications associated the threads.
+  </PropertiesListItem>
+  <PropertiesListItem name="requestedAt" type="Date">
+    The request date to use for subsequent polling.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Room.getThreadsSince
+
+Returns the modified and deleted threads and their associated inbox
+notifications since the requested date.
+
+```ts
+const result = await room.getThreads();
+// ... //
+await room.getThreadsSince({ since: result.requestedAt });
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="threads"
+    type="{ modified: ThreadData[], deleted: ThreadDeleteInfo[] }"
+  >
+    Threads that have been modified or deleted since the requested date.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="inboxNotifications"
+    type="{ modified: InboxNotificationData[], deleted: InboxNotificationDeleteInfo[] }"
+  >
+    Inbox notifications that have been modified or deleted since the requested
+    date.
+  </PropertiesListItem>
+  <PropertiesListItem name="requestedAt" type="Date">
+    The request date to use for subsequent polling.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="options" type="{ since: Date }">
+    `since`: Only the threads modified or deleted after this date will be
+    returned.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Room.getThread
+
+Returns a thread and the associated inbox notification if it exists.
+
+```ts
+const { thread, inboxNotification } = await room.getThread("th_xxx");
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="thread" type="ThreadData | undefined">
+    The requested thread or undefined if it does not exist.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="inboxNotification"
+    type="InboxNotificationThreadData | undefined"
+  >
+    The inbox notification associate to the thread or undefined if it does not
+    exist.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="value" type="threadId">
+    The ID of the thread you want to retrieve.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Room.createThread
+
+Creates a thread.
+
+```ts
+const thread = await room.createThread({
+  body: {
+    version: 1,
+    content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
+  },
+});
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="value" type="ThreadData">
+    The thread that has been created.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem
+    name="options"
+    type="{ body: CommentBody, metadata: ThreadMetadata }"
+  >
+    `body`: The content of the comment. <br /> `metadata`: The thread metadata.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Room.deleteThread
+
+Deletes a thread.
+
+```ts
+await room.deleteThread("th_xxx");
+```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="threadId" type="string">
+    The ID of the thread to delete.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Room.editThreadMetadata
+
+Edits a thread's metadata. To delete an existing metadata property, set its
+value to `null`.
+
+```ts
+await room.editThreadMetadata({
+  threadId: "th_xxx",
+  metadata: { x: 100, y: 100 },
+});
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="metadata" type="ThreadMetadata">
+    The thread metadata.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem
+    name="options"
+    type="{ metadata: Patchable<ThreadMetadata>, threadId: string }"
+  >
+    `metadata`: An object containing the metadata properties to update.
+    <br />
+    `threadId`: The ID of the thread.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Room.markThreadAsResolved
+
+Marks a thread as resolved.
+
+```ts
+await room.markThreadAsResolved("th_xxx");
+```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="threadId" type="string">
+    The ID of the thread to resolve.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Room.markThreadAsUnresolved
+
+Marks a thread as unresolved.
+
+```ts
+await room.markThreadAsUnresolved("th_xxx");
+```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="threadId" type="string">
+    The ID of the thread to resolve.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Room.createComment
+
+Creates a comment.
+
+```ts
+await room.createComment({
+  threadId: "th_xxx",
+  body: {
+    version: 1,
+    content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
+  },
+});
+```
+
+### Room.editComment
+
+Edits a comment.
+
+```ts
+await room.editComment({
+  threadId: "th_xxx",
+  commentId: "cm_xxx"
+  body: {
+    version: 1,
+    content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
+  },
+});
+```
+
+### Room.deleteComment
+
+Deletes a comment. If it is the last non-deleted comment, the thread also gets
+deleted.
+
+```ts
+await room.deleteComment({
+  threadId: "th_xxx",
+  commentId: "cm_xxx",
+});
+```
+
+### Room.addReaction
+
+Adds a reaction from a comment for the current user.
+
+```ts
+await room.addReaction({
+  threadId: "th_xxx",
+  commentId: "cm_xxx",
+  emoji: "👍",
+});
+```
+
+### Room.removeReaction
+
+Removes a reaction from a comment.
+
+```ts
+await room.removeReaction({
+  threadId: "th_xxx",
+  commentId: "cm_xxx",
+  emoji: "👍",
+});
+```
+
+## Notifications
+
+### Client.getInboxNotifications
+
+Returns the current user inbox notifications and their associated threads. It
+also returns the request date that can be used for subsequent polling.
+
+```ts
+const { inboxNotifications, threads, requestedAt } =
+  await client.getInboxNotifications();
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="inboxNotifications" type="InboxNotificationData[]">
+    Current user inbox notifications.
+  </PropertiesListItem>
+  <PropertiesListItem name="threads" type="ThreadData[]">
+    Threads associated to the inbox notifications.
+  </PropertiesListItem>
+  <PropertiesListItem name="requestedAt" type="Date">
+    The request date to use for subsequent polling.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+### Client.getInboxNotificationsSince
+
+Returns the modified and deleted inbox notifications and their associated
+threads since the requested date.
+
+```ts
+const result = await client.getInboxNotifications();
+/* ... */
+await client.getInboxNotificationsSince({ since: result.requestedAt }});
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="inboxNotifications"
+    type="{ modified: InboxNotificationData[], deleted: InboxNotificationDeleteInfo[] }"
+  >
+    Inbox notifications that have been modified or deleted since the requested
+    date.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="threads"
+    type="{ modified: ThreadData[], deleted: ThreadDeleteInfo[] }"
+  >
+    Threads that have been modified or deleted since the requested date.
+  </PropertiesListItem>
+  <PropertiesListItem name="requestedAt" type="Date">
+    The request date to use for subsequent polling.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="options" type="{ since: Date }">
+    `since`: Only the inbox notifications modified or deleted after this date
+    will be returned.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Client.getUnreadInboxNotificationsCount
+
+Gets the number of unread inbox notificatiosn for the current user.
+
+```ts
+const count = await client.getUnreadInboxNotificationsCount();
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="value" type="number">
+    Number of unread inbox notifications.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+### Client.markAllInboxNotificationsAsRead
+
+Marks all inbox notifications as read.
+
+```ts
+await client.markAllInboxNotificationsAsRead();
+```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+### Client.markInboxNotificationAsRead
+
+Marks an inbox notification as read.
+
+```ts
+await client.markAllInboxNotificationsAsRead("in_xxx");
+```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="inboxNotificationId" type="string">
+    The id of the inbox notification to be marked as read.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Client.deleteAllInboxNotifications
+
+Deletes an inbox notification for the current user.
+
+```ts
+await client.deleteAllInboxNotifications();
+```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+### Client.deleteInboxNotification
+
+Deletes an inbox notification for the current user.
+
+```ts
+await client.deleteInboxNotification("in_xxx");
+```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="inboxNotificationId" type="string">
+    The id of the inbox notification to be deleted.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Room.getNotificationSettings
+
+Gets the user's notification settings for the current room.
+
+```ts
+const settings = await room.getNotificationSettings();
+```
+
+### Room.updateNotificationSettings
+
+Updates the user's notification settings for the current room.
+
+```ts
+await room.updateNotificationSettings({ threads: "replies_and_mentions" });
+```
+
 ## Storage
 
 Each room contains Storage, a conflict-free data store that multiple users can

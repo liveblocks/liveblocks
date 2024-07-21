@@ -472,7 +472,7 @@ export type GetThreadsOptions<M extends BaseMetadata> = {
 
 type CommentsApi<M extends BaseMetadata> = {
   /**
-   * Get the room threads and their associated inbox notifications.
+   * Returns the threads within the current room and their associated inbox notifications.
    * It also returns the request date that can be used for subsequent polling.
    *
    * @example
@@ -489,7 +489,7 @@ type CommentsApi<M extends BaseMetadata> = {
   }>;
 
   /**
-   * Get the modified and deleted threads and their associated inbox notifications since the requested date.
+   * Returns the modified and deleted threads and their associated inbox notifications since the requested date.
    *
    * @example
    * const result = await room.getThreads();
@@ -553,7 +553,7 @@ type CommentsApi<M extends BaseMetadata> = {
    * To delete an existing metadata property, set its value to `null`.
    *
    * @example
-   * await room.editThreadMetadata({ threadId: "th_xxx", metadata: {} })
+   * await room.editThreadMetadata({ threadId: "th_xxx", metadata: { x: 100, y: 100 } })
    */
   editThreadMetadata(options: {
     metadata: Patchable<M>;
@@ -595,7 +595,7 @@ type CommentsApi<M extends BaseMetadata> = {
   }): Promise<CommentData>;
 
   /**
-   * Edit a comment.
+   * Edits a comment.
    *
    * @example
    * await room.editComment({
@@ -629,7 +629,7 @@ type CommentsApi<M extends BaseMetadata> = {
   }): Promise<void>;
 
   /**
-   * Adds a reaction from a comment.
+   * Adds a reaction from a comment for the current user.
    *
    * @example
    * await room.addReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" })
@@ -927,6 +927,10 @@ export type Room<
   updateNotificationSettings(
     settings: Partial<RoomNotificationSettings>
   ): Promise<RoomNotificationSettings>;
+
+  /**
+   * Internal use only. Signature might change in the future.
+   */
   markInboxNotificationAsRead(notificationId: string): Promise<void>;
 } & CommentsApi<M>;
 

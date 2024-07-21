@@ -148,7 +148,7 @@ export type PrivateClientApi<U extends BaseUserMeta> = {
 
 export type NotificationsApi<M extends BaseMetadata> = {
   /**
-   * Get the current user inbox notifications and their associated threads.
+   * Gets the current user inbox notifications and their associated threads.
    * It also returns the request date that can be used for subsequent polling.
    *
    * @example
@@ -165,7 +165,7 @@ export type NotificationsApi<M extends BaseMetadata> = {
   }>;
 
   /**
-   * Get the modified and deleted inbox notifications and their associated threads since the requested date.
+   * Gets the modified and deleted inbox notifications and their associated threads since the requested date.
    *
    * @example
    * const result = await client.getInboxNotifications();
@@ -185,7 +185,7 @@ export type NotificationsApi<M extends BaseMetadata> = {
   }>;
 
   /**
-   * Get the number of unread inbox notification for the current user.
+   * Gets the number of unread inbox notifications for the current user.
    *
    * @example
    * const count = await client.getUnreadInboxNotificationsCount();
@@ -193,7 +193,7 @@ export type NotificationsApi<M extends BaseMetadata> = {
   getUnreadInboxNotificationsCount(): Promise<number>;
 
   /**
-   * Mark all inbox notifications as read for the current user.
+   * Marks all inbox notifications as read.
    *
    * @example
    * await client.markAllInboxNotificationsAsRead();
@@ -201,7 +201,7 @@ export type NotificationsApi<M extends BaseMetadata> = {
   markAllInboxNotificationsAsRead(): Promise<void>;
 
   /**
-   * Mark an inbox notification as read.
+   * Marks an inbox notification as read.
    *
    * @example
    * await client.markInboxNotificationAsRead("in_xxx");
@@ -212,7 +212,7 @@ export type NotificationsApi<M extends BaseMetadata> = {
    * Deletes all inbox notifications for the current user.
    *
    * @example
-   * await client.deleteInboxNotifications();
+   * await client.deleteAllInboxNotifications();
    */
   deleteAllInboxNotifications(): Promise<void>;
 
