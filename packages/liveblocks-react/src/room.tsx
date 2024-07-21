@@ -832,7 +832,7 @@ function RoomProviderInner<
       const info = await room.getThread(message.threadId);
 
       // If no thread info was returned (i.e., 404), we remove the thread and relevant inbox notifications from local cache.
-      if (!info) {
+      if (!info.thread) {
         store.deleteThread(message.threadId);
         return;
       }

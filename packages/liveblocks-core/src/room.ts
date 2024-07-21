@@ -514,13 +514,10 @@ type CommentsApi<M extends BaseMetadata> = {
    * @example
    * const { thread, inboxNotification } = await room.getThread("th_xxx");
    */
-  getThread(threadId: string): Promise<
-    | {
-        thread: ThreadData<M>;
-        inboxNotification?: InboxNotificationData;
-      }
-    | undefined
-  >;
+  getThread(threadId: string): Promise<{
+    thread?: ThreadData<M>;
+    inboxNotification?: InboxNotificationData;
+  }>;
 
   /**
    * Creates a thread.
@@ -1387,7 +1384,10 @@ function createCommentsApi<M extends BaseMetadata>(
           : undefined,
       };
     } else if (response.status === 404) {
-      return;
+      return {
+        thread: undefined,
+        inboxNotification: undefined,
+      };
     } else {
       throw new Error(`There was an error while getting thread ${threadId}.`);
     }
