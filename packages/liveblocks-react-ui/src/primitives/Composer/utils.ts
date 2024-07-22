@@ -177,6 +177,16 @@ export function getSideAndAlignFromPlacement(placement: Placement) {
   return [side, align] as const;
 }
 
+export function getAcceptedFilesFromFileList(fileList: FileList | null) {
+  if (!fileList) {
+    return [];
+  }
+
+  const files = Array.from(fileList);
+
+  return files.filter((file) => file.type);
+}
+
 export function useComposerAttachmentsDropArea<
   T extends HTMLElement = HTMLElement,
 >(
@@ -197,8 +207,6 @@ export function useComposerAttachmentsDropArea<
 ) {
   const [isDraggingOver, setDraggingOver] = useState(false);
 
-  // TODO: event.dataTransfer.files.length
-
   const handleDragEnter = useCallback(
     (event: DragEvent<T>) => {
       onDragEnter?.(event);
@@ -207,10 +215,14 @@ export function useComposerAttachmentsDropArea<
         return;
       }
 
-      event.preventDefault();
-      event.stopPropagation();
+      const dataTransfer = event.dataTransfer;
 
-      setDraggingOver(true);
+      if (dataTransfer.types.includes("Files")) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        setDraggingOver(true);
+      }
     },
     [onDragEnter]
   );
@@ -239,14 +251,14 @@ export function useComposerAttachmentsDropArea<
     (event: DragEvent<T>) => {
       onDragOver?.(event);
 
-      if (event.isDefaultPrevented()) {
+      if (event.isDefaultPrevented() || !isDraggingOver) {
         return;
       }
 
       event.preventDefault();
       event.stopPropagation();
     },
-    [onDragOver]
+    [isDraggingOver, onDragOver]
   );
 
   const handleDrop = useCallback(
@@ -262,7 +274,7 @@ export function useComposerAttachmentsDropArea<
 
       setDraggingOver(false);
 
-      const files = Array.from(event.dataTransfer.files);
+      const files = getAcceptedFilesFromFileList(event.dataTransfer.files);
 
       handleFiles(files);
     },

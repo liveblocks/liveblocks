@@ -129,6 +129,7 @@ import type {
 import {
   commentBodyToComposerBody,
   composerBodyToCommentBody,
+  getAcceptedFilesFromFileList,
   getPlacementFromPosition,
   getSideAndAlignFromPlacement,
   useComposerAttachmentsDropArea,
@@ -1051,12 +1052,9 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 
     const handleAttachmentsInputChange = useCallback(
       (event: ChangeEvent<HTMLInputElement>) => {
-        const files = event.target.files;
+        const files = getAcceptedFilesFromFileList(event.target.files);
 
-        if (files) {
-          // TODO: Filter out invalid files
-          createAttachments(Array.from(files));
-        }
+        createAttachments(files);
       },
       [createAttachments]
     );
