@@ -189,29 +189,30 @@ export function getAcceptedFilesFromFileList(fileList: FileList | null) {
 
 export function useComposerAttachmentsDropArea<
   T extends HTMLElement = HTMLElement,
->(
-  handleFiles: (files: File[]) => void,
-  {
-    onDragEnter,
-    onDragLeave,
-    onDragOver,
-    onDrop,
-    ignoreLeaveEvent,
-  }: {
-    onDragEnter?: (event: DragEvent<T>) => void;
-    onDragLeave?: (event: DragEvent<T>) => void;
-    onDragOver?: (event: DragEvent<T>) => void;
-    onDrop?: (event: DragEvent<T>) => void;
-    ignoreLeaveEvent?: (event: DragEvent<T>) => boolean;
-  } = {}
-) {
+>({
+  handleFiles,
+  onDragEnter,
+  onDragLeave,
+  onDragOver,
+  onDrop,
+  ignoreLeaveEvent,
+  disabled,
+}: {
+  handleFiles: (files: File[]) => void;
+  onDragEnter?: (event: DragEvent<T>) => void;
+  onDragLeave?: (event: DragEvent<T>) => void;
+  onDragOver?: (event: DragEvent<T>) => void;
+  onDrop?: (event: DragEvent<T>) => void;
+  ignoreLeaveEvent?: (event: DragEvent<T>) => boolean;
+  disabled?: boolean;
+}) {
   const [isDraggingOver, setDraggingOver] = useState(false);
 
   const handleDragEnter = useCallback(
     (event: DragEvent<T>) => {
       onDragEnter?.(event);
 
-      if (event.isDefaultPrevented()) {
+      if (disabled || event.isDefaultPrevented()) {
         return;
       }
 
@@ -224,14 +225,14 @@ export function useComposerAttachmentsDropArea<
         setDraggingOver(true);
       }
     },
-    [onDragEnter]
+    [onDragEnter, disabled]
   );
 
   const handleDragLeave = useCallback(
     (event: DragEvent<T>) => {
       onDragLeave?.(event);
 
-      if (event.isDefaultPrevented()) {
+      if (disabled || event.isDefaultPrevented()) {
         return;
       }
 
@@ -244,28 +245,28 @@ export function useComposerAttachmentsDropArea<
 
       setDraggingOver(false);
     },
-    [onDragLeave, ignoreLeaveEvent]
+    [onDragLeave, ignoreLeaveEvent, disabled]
   );
 
   const handleDragOver = useCallback(
     (event: DragEvent<T>) => {
       onDragOver?.(event);
 
-      if (event.isDefaultPrevented() || !isDraggingOver) {
+      if (disabled || !isDraggingOver || event.isDefaultPrevented()) {
         return;
       }
 
       event.preventDefault();
       event.stopPropagation();
     },
-    [isDraggingOver, onDragOver]
+    [onDragOver, isDraggingOver, disabled]
   );
 
   const handleDrop = useCallback(
     (event: DragEvent<T>) => {
       onDrop?.(event);
 
-      if (event.isDefaultPrevented()) {
+      if (disabled || event.isDefaultPrevented()) {
         return;
       }
 
@@ -278,7 +279,7 @@ export function useComposerAttachmentsDropArea<
 
       handleFiles(files);
     },
-    [onDrop, handleFiles]
+    [onDrop, handleFiles, disabled]
   );
 
   return [

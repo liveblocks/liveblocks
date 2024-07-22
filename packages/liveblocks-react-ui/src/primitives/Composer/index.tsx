@@ -1221,22 +1221,36 @@ const ComposerAttachmentsDropArea = forwardRef<
   ComposerAttachmentsDropAreaProps
 >(
   (
-    { onDragEnter, onDragLeave, onDragOver, onDrop, asChild, ...props },
+    {
+      onDragEnter,
+      onDragLeave,
+      onDragOver,
+      onDrop,
+      disabled,
+      asChild,
+      ...props
+    },
     forwardedRef
   ) => {
     const Component = asChild ? Slot : "div";
     const { createAttachments } = useComposerAttachmentsContext();
-    const [, dropAreaProps] = useComposerAttachmentsDropArea(
-      createAttachments,
-      {
-        onDragEnter,
-        onDragLeave,
-        onDragOver,
-        onDrop,
-      }
-    );
+    const [, dropAreaProps] = useComposerAttachmentsDropArea({
+      onDragEnter,
+      onDragLeave,
+      onDragOver,
+      onDrop,
+      handleFiles: createAttachments,
+      disabled,
+    });
 
-    return <Component {...dropAreaProps} {...props} ref={forwardedRef} />;
+    return (
+      <Component
+        {...dropAreaProps}
+        data-disabled={disabled ? "" : undefined}
+        {...props}
+        ref={forwardedRef}
+      />
+    );
   }
 );
 

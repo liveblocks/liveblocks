@@ -139,7 +139,10 @@ export type ComposerSubmitProps = ComponentPropsWithSlot<"button">;
 
 export type ComposerAttachProps = ComponentPropsWithSlot<"button">;
 
-export type ComposerAttachmentsDropAreaProps = ComponentPropsWithSlot<"div">;
+export interface ComposerAttachmentsDropAreaProps
+  extends ComponentPropsWithSlot<"div"> {
+  disabled?: boolean;
+}
 
 export type ComposerLocalAttachment = {
   type: "local";

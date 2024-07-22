@@ -461,12 +461,11 @@ function ComposerEditorContainer({
     },
     []
   );
-  const [isDraggingOver, dropAreaProps] = useComposerAttachmentsDropArea(
-    createAttachments,
-    {
-      ignoreLeaveEvent: ignoreDropAreaLeaveEvent,
-    }
-  );
+  const [isDraggingOver, dropAreaProps] = useComposerAttachmentsDropArea({
+    ignoreLeaveEvent: ignoreDropAreaLeaveEvent,
+    handleFiles: createAttachments,
+    disabled: isDisabled,
+  });
 
   useLayoutEffect(() => {
     onEmptyChange(isEmpty);
