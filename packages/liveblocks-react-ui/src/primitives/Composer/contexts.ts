@@ -64,9 +64,9 @@ export type ComposerContext = {
   addAttachments: () => void;
 
   /**
-   * Remove an attachment by its ID.
+   * Delete an attachment by its ID.
    */
-  removeAttachment: (attachmentId: string) => void;
+  deleteAttachment: (attachmentId: string) => void;
 };
 
 export type ComposerEditorContext = {
@@ -76,7 +76,7 @@ export type ComposerEditorContext = {
 };
 
 export type ComposerAttachmentsContext = {
-  appendAttachments: (files: File[]) => void;
+  createAttachments: (files: File[]) => void;
 };
 
 export type ComposerSuggestionsContext = {

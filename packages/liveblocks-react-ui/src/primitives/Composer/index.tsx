@@ -20,7 +20,6 @@ import { nanoid } from "nanoid";
 import type {
   AriaAttributes,
   ChangeEvent,
-  DragEvent,
   FocusEvent,
   FormEvent,
   KeyboardEvent,
@@ -132,6 +131,7 @@ import {
   composerBodyToCommentBody,
   getPlacementFromPosition,
   getSideAndAlignFromPlacement,
+  useComposerAttachmentsDropArea,
 } from "./utils";
 
 const MENTION_SUGGESTIONS_POSITION: SuggestionsPosition = "top";
@@ -1022,7 +1022,13 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       [editor, focus]
     );
 
-    const appendAttachments = useCallback((files: File[]) => {
+    const addAttachments = useCallback(() => {
+      if (fileInputRef.current) {
+        fileInputRef.current.click();
+      }
+    }, []);
+
+    const createAttachments = useCallback((files: File[]) => {
       const localAttachments: ComposerLocalAttachment[] = files.map((file) => ({
         type: "local",
         id: nanoid(),
@@ -1034,13 +1040,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       setAttachments((attachments) => [...attachments, ...localAttachments]);
     }, []);
 
-    const addAttachments = useCallback(() => {
-      if (fileInputRef.current) {
-        fileInputRef.current.click();
-      }
-    }, []);
-
-    const removeAttachment = useCallback((id: string) => {
+    const deleteAttachment = useCallback((id: string) => {
       // TODO: If the attachment is remote, we should remove it from the server
       // TODO: If the attachment is local but not yet fully uploaded, we should cancel the upload
 
@@ -1049,15 +1049,16 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       );
     }, []);
 
-    const handleFileInputChange = useCallback(
+    const handleAttachmentsInputChange = useCallback(
       (event: ChangeEvent<HTMLInputElement>) => {
         const files = event.target.files;
 
         if (files) {
-          appendAttachments(Array.from(files));
+          // TODO: Filter out invalid files
+          createAttachments(Array.from(files));
         }
       },
-      [appendAttachments]
+      [createAttachments]
     );
 
     const onSubmitEnd = useCallback(() => {
@@ -1118,7 +1119,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       >
         <ComposerAttachmentsContext.Provider
           value={{
-            appendAttachments,
+            createAttachments,
           }}
         >
           <ComposerContext.Provider
@@ -1134,7 +1135,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
               insertText,
               attachments,
               addAttachments,
-              removeAttachment,
+              deleteAttachment,
             }}
           >
             <Component {...props} onSubmit={handleSubmit} ref={mergedRefs}>
@@ -1142,7 +1143,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
                 type="file"
                 multiple
                 ref={fileInputRef}
-                onChange={handleFileInputChange}
+                onChange={handleAttachmentsInputChange}
                 tabIndex={-1}
                 style={{ display: "none" }}
               />
@@ -1226,83 +1227,18 @@ const ComposerAttachmentsDropArea = forwardRef<
     forwardedRef
   ) => {
     const Component = asChild ? Slot : "div";
-    const { appendAttachments } = useComposerAttachmentsContext();
-    const [isDraggingOver, setDraggingOver] = useState(false);
-
-    const handleDragEnter = useCallback(
-      (event: DragEvent<HTMLDivElement>) => {
-        onDragEnter?.(event);
-
-        if (event.isDefaultPrevented()) {
-          return;
-        }
-
-        event.preventDefault();
-        event.stopPropagation();
-        setDraggingOver(true);
-      },
-      [onDragEnter]
+    const { createAttachments } = useComposerAttachmentsContext();
+    const [, dropAreaProps] = useComposerAttachmentsDropArea(
+      createAttachments,
+      {
+        onDragEnter,
+        onDragLeave,
+        onDragOver,
+        onDrop,
+      }
     );
 
-    const handleDragLeave = useCallback(
-      (event: DragEvent<HTMLDivElement>) => {
-        onDragLeave?.(event);
-
-        if (event.isDefaultPrevented()) {
-          return;
-        }
-
-        event.preventDefault();
-        event.stopPropagation();
-        setDraggingOver(false);
-      },
-      [onDragLeave]
-    );
-
-    const handleDragOver = useCallback(
-      (event: DragEvent<HTMLDivElement>) => {
-        onDragOver?.(event);
-
-        if (event.isDefaultPrevented()) {
-          return;
-        }
-
-        event.preventDefault();
-        event.stopPropagation();
-      },
-      [onDragOver]
-    );
-
-    const handleDrop = useCallback(
-      (event: DragEvent<HTMLDivElement>) => {
-        onDrop?.(event);
-
-        if (event.isDefaultPrevented()) {
-          return;
-        }
-
-        event.preventDefault();
-        event.stopPropagation();
-        setDraggingOver(false);
-
-        const files = Array.from(event.dataTransfer.files);
-        appendAttachments(files);
-      },
-      [onDrop, appendAttachments]
-    );
-
-    return (
-      <Component
-        onDragEnter={handleDragEnter}
-        onDragLeave={handleDragLeave}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-        // TODO: "accepted" or "rejected" depending on the current files being dragged
-        data-drop={isDraggingOver ? "accepted" : undefined}
-        {...props}
-        ref={forwardedRef}
-      />
-    );
+    return <Component {...dropAreaProps} {...props} ref={forwardedRef} />;
   }
 );
 

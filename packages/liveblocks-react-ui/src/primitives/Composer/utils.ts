@@ -4,6 +4,8 @@ import type {
   CommentBodyLink,
   CommentBodyMention,
 } from "@liveblocks/core";
+import type { DragEvent } from "react";
+import { useCallback, useState } from "react";
 
 import { isComposerBodyAutoLink } from "../../slate/plugins/auto-links";
 import { isComposerBodyCustomLink } from "../../slate/plugins/custom-links";
@@ -173,4 +175,108 @@ export function getSideAndAlignFromPlacement(placement: Placement) {
   const [side, align = "center"] = placement.split("-");
 
   return [side, align] as const;
+}
+
+export function useComposerAttachmentsDropArea<
+  T extends HTMLElement = HTMLElement,
+>(
+  handleFiles: (files: File[]) => void,
+  {
+    onDragEnter,
+    onDragLeave,
+    onDragOver,
+    onDrop,
+    ignoreLeaveEvent,
+  }: {
+    onDragEnter?: (event: DragEvent<T>) => void;
+    onDragLeave?: (event: DragEvent<T>) => void;
+    onDragOver?: (event: DragEvent<T>) => void;
+    onDrop?: (event: DragEvent<T>) => void;
+    ignoreLeaveEvent?: (event: DragEvent<T>) => boolean;
+  } = {}
+) {
+  const [isDraggingOver, setDraggingOver] = useState(false);
+
+  // TODO: event.dataTransfer.files.length
+
+  const handleDragEnter = useCallback(
+    (event: DragEvent<T>) => {
+      onDragEnter?.(event);
+
+      if (event.isDefaultPrevented()) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      setDraggingOver(true);
+    },
+    [onDragEnter]
+  );
+
+  const handleDragLeave = useCallback(
+    (event: DragEvent<T>) => {
+      onDragLeave?.(event);
+
+      if (event.isDefaultPrevented()) {
+        return;
+      }
+
+      if (ignoreLeaveEvent?.(event)) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      setDraggingOver(false);
+    },
+    [onDragLeave, ignoreLeaveEvent]
+  );
+
+  const handleDragOver = useCallback(
+    (event: DragEvent<T>) => {
+      onDragOver?.(event);
+
+      if (event.isDefaultPrevented()) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+    },
+    [onDragOver]
+  );
+
+  const handleDrop = useCallback(
+    (event: DragEvent<T>) => {
+      onDrop?.(event);
+
+      if (event.isDefaultPrevented()) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      setDraggingOver(false);
+
+      const files = Array.from(event.dataTransfer.files);
+
+      handleFiles(files);
+    },
+    [onDrop, handleFiles]
+  );
+
+  return [
+    isDraggingOver,
+    {
+      onDragEnter: handleDragEnter,
+      onDragLeave: handleDragLeave,
+      onDragOver: handleDragOver,
+      onDrop: handleDrop,
+      "data-drop": isDraggingOver ? "" : undefined,
+    } as const,
+  ] as const;
 }

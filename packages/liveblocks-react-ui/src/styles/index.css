@@ -699,6 +699,7 @@
   gap: calc(0.75 * var(--lb-spacing));
   align-items: center;
   block-size: calc($lb-button-size + var(--lb-spacing));
+  margin-block-start: calc(-0.125 * var(--lb-spacing));
   padding: 0 var(--lb-spacing) var(--lb-spacing);
 }
 
@@ -727,10 +728,16 @@
   }
 }
 
-.lb-composer:where(:not([data-collapsed])) {
-  :where(.lb-composer-editor) {
-    padding-block-end: calc(0.875 * var(--lb-spacing));
-  }
+.lb-composer-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(0.75 * var(--lb-spacing));
+  margin-block-end: var(--lb-spacing);
+  padding-inline: var(--lb-spacing);
+}
+
+.lb-composer-editor-container:where([data-drop]) * {
+  pointer-events: none;
 }
 
 .lb-composer-attachments-drop-area {
@@ -739,15 +746,7 @@
   display: flex;
   place-content: center;
   place-items: center;
-  color: var(--lb-foreground);
-
-  &:where([data-drop="accepted"]) {
-    color: var(--lb-accent);
-  }
-
-  &:where([data-drop="rejected"]) {
-    color: var(--lb-destructive);
-  }
+  color: var(--lb-accent);
 
   &::before,
   &::after {
@@ -881,6 +880,13 @@
     content: "\FEFF";
     user-select: none;
   }
+}
+
+.lb-comment-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(0.75 * var(--lb-spacing));
+  margin-block-start: calc(0.75 * var(--lb-spacing));
 }
 
 .lb-comment-reactions {
@@ -1058,6 +1064,58 @@
     border-block-start: 1px solid var(--lb-foreground-subtle);
     pointer-events: none;
     transition-property: border;
+  }
+}
+
+/*************************************
+ *            Attachments            *
+ *************************************/
+
+.lb-attachment {
+  position: relative;
+}
+
+.lb-attachment-delete {
+  position: absolute;
+  inset-inline-end: 0;
+  inset-block-start: 0;
+  inline-size: 10px;
+  block-size: 10px;
+  background: green;
+}
+
+.lb-file-attachment {
+  display: flex;
+  gap: calc(0.5 * var(--lb-spacing));
+  inline-size: max-content;
+  max-inline-size: 100%;
+  padding: calc(0.5 * var(--lb-spacing));
+  border-radius: var(--lb-radius);
+  background: var(--lb-foreground-subtle);
+
+  :where(.lb-file-attachment-icon) {
+    aspect-ratio: 1;
+    block-size: 2.5rem;
+    background: var(--lb-dynamic-background);
+  }
+
+  :where(.lb-attachment-details) {
+    display: flex;
+    flex-direction: column;
+    gap: calc(0.25 * var(--lb-spacing));
+    justify-content: center;
+    min-inline-size: 0;
+    font-size: 0.875em;
+    pointer-events: none;
+  }
+
+  :where(.lb-attachment-name),
+  :where(.lb-attachment-size) {
+    @include truncate;
+  }
+
+  :where(.lb-attachment-name) {
+    font-weight: 500;
   }
 }
 

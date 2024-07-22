@@ -330,6 +330,52 @@ export const CommentNonInteractiveReaction = forwardRef<
   );
 });
 
+function CommentFileAttachment({
+  className,
+  ...props
+}: ComponentPropsWithoutRef<"div">) {
+  return (
+    <div
+      className={classNames(
+        "lb-attachment lb-file-attachment lb-comment-attachment",
+        className
+      )}
+      {...props}
+    >
+      <div className="lb-file-attachment-icon" />
+      <div className="lb-attachment-details">
+        <span className="lb-attachment-name">image.png</span>
+        <span className="lb-attachment-size">35.2 KB</span>
+      </div>
+    </div>
+  );
+}
+
+function CommentImageAttachment({
+  className,
+  ...props
+}: ComponentPropsWithoutRef<"div">) {
+  return (
+    <div
+      className={classNames(
+        "lb-attachment lb-image-attachment lb-comment-attachment",
+        className
+      )}
+      {...props}
+    >
+      <img
+        className="lb-image-attachment-image"
+        alt="image.png"
+        // src="https://placekitten.com/200/300"
+      />
+      <div className="lb-attachment-details">
+        <span className="lb-attachment-name">image.png</span>
+        <span className="lb-attachment-size">35.2 KB</span>
+      </div>
+    </div>
+  );
+}
+
 // A void component (which doesn't render anything) responsible for marking a thread
 // as read when the comment it's used in becomes visible.
 // Moving this logic into a separate component allows us to use the visibility
@@ -685,6 +731,13 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                     Link: CommentLink,
                   }}
                 />
+                {showAttachments /* && comment.attachments.length > 0 */ ? (
+                  <div className="lb-comment-attachments">
+                    <CommentImageAttachment />
+                    <CommentFileAttachment />
+                    <CommentFileAttachment />
+                  </div>
+                ) : null}
                 {showReactions && comment.reactions.length > 0 && (
                   <div className="lb-comment-reactions">
                     {comment.reactions.map((reaction) => (
