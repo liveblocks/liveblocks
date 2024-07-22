@@ -45,7 +45,7 @@ export interface CommentOverrides {
 export interface ComposerOverrides {
   COMPOSER_INSERT_MENTION: string;
   COMPOSER_INSERT_EMOJI: string;
-  COMPOSER_ATTACH_FILES: string;
+  COMPOSER_ADD_ATTACHMENTS: string;
   COMPOSER_PLACEHOLDER: string;
   COMPOSER_SEND: string;
 }
@@ -104,7 +104,7 @@ export const defaultOverrides: Overrides = {
     "There was an error while getting the list of emoji.",
   COMPOSER_INSERT_MENTION: "Mention someone",
   COMPOSER_INSERT_EMOJI: "Add emoji",
-  COMPOSER_ATTACH_FILES: "Attach files",
+  COMPOSER_ADD_ATTACHMENTS: "Attach files",
   COMPOSER_PLACEHOLDER: "Write a comment…",
   COMPOSER_SEND: "Send",
   COMMENT_EDITED: "(edited)",

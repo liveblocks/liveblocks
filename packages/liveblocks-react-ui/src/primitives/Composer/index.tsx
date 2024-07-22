@@ -107,9 +107,9 @@ import {
   useComposerSuggestionsContext,
 } from "./contexts";
 import type {
+  ComposerAddAttachmentsProps,
   ComposerAttachment,
   ComposerAttachmentsDropAreaProps,
-  ComposerAttachProps,
   ComposerEditorComponents,
   ComposerEditorElementProps,
   ComposerEditorLinkWrapperProps,
@@ -144,7 +144,7 @@ const COMPOSER_SUGGESTIONS_LIST_NAME = "ComposerSuggestionsList";
 const COMPOSER_SUGGESTIONS_LIST_ITEM_NAME = "ComposerSuggestionsListItem";
 const COMPOSER_SUBMIT_NAME = "ComposerSubmit";
 const COMPOSER_EDITOR_NAME = "ComposerEditor";
-const COMPOSER_ATTACH_NAME = "ComposerAttach";
+const COMPOSER_ADD_ATTACHMENTS_NAME = "ComposerAddAttachments";
 const COMPOSER_ATTACHMENTS_DROP_AREA_NAME = "ComposerAttachmentsDropArea";
 const COMPOSER_FORM_NAME = "ComposerForm";
 
@@ -1187,31 +1187,32 @@ const ComposerSubmit = forwardRef<HTMLButtonElement, ComposerSubmitProps>(
  * A button to add attachments to the composer.
  *
  * @example
- * <Composer.Attach>Attach files</Composer.Attach>
+ * <Composer.AddAttachments>Attach files</Composer.AddAttachments>
  */
-const ComposerAttach = forwardRef<HTMLButtonElement, ComposerAttachProps>(
-  ({ children, onClick, asChild, ...props }, forwardedRef) => {
-    const Component = asChild ? Slot : "button";
-    const { addAttachments } = useComposer();
+const ComposerAddAttachments = forwardRef<
+  HTMLButtonElement,
+  ComposerAddAttachmentsProps
+>(({ children, onClick, asChild, ...props }, forwardedRef) => {
+  const Component = asChild ? Slot : "button";
+  const { addAttachments } = useComposer();
 
-    const handleClick = useCallback(
-      (event: MouseEvent<HTMLButtonElement>) => {
-        onClick?.(event);
+  const handleClick = useCallback(
+    (event: MouseEvent<HTMLButtonElement>) => {
+      onClick?.(event);
 
-        if (!event.isDefaultPrevented()) {
-          addAttachments();
-        }
-      },
-      [addAttachments, onClick]
-    );
+      if (!event.isDefaultPrevented()) {
+        addAttachments();
+      }
+    },
+    [addAttachments, onClick]
+  );
 
-    return (
-      <Component {...props} onClick={handleClick} ref={forwardedRef}>
-        {children}
-      </Component>
-    );
-  }
-);
+  return (
+    <Component {...props} onClick={handleClick} ref={forwardedRef}>
+      {children}
+    </Component>
+  );
+});
 
 /**
  * TODO:
@@ -1255,7 +1256,7 @@ const ComposerAttachmentsDropArea = forwardRef<
 );
 
 if (process.env.NODE_ENV !== "production") {
-  ComposerAttach.displayName = COMPOSER_ATTACH_NAME;
+  ComposerAddAttachments.displayName = COMPOSER_ADD_ATTACHMENTS_NAME;
   ComposerAttachmentsDropArea.displayName = COMPOSER_ATTACHMENTS_DROP_AREA_NAME;
   ComposerEditor.displayName = COMPOSER_EDITOR_NAME;
   ComposerForm.displayName = COMPOSER_FORM_NAME;
@@ -1269,7 +1270,7 @@ if (process.env.NODE_ENV !== "production") {
 
 // NOTE: Every export from this file will be available publicly as Composer.*
 export {
-  ComposerAttach as Attach,
+  ComposerAddAttachments as AddAttachments,
   ComposerAttachmentsDropArea as AttachmentsDropArea,
   ComposerEditor as Editor,
   ComposerForm as Form,

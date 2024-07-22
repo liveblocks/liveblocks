@@ -256,7 +256,7 @@ function ComposerInsertEmojiEditorAction({
   );
 }
 
-function ComposerInsertAttachmentEditorAction({
+function ComposerAddAttachmentsEditorAction({
   label,
   className,
   ...props
@@ -267,7 +267,7 @@ function ComposerInsertAttachmentEditorAction({
 
   return (
     <Tooltip content={label}>
-      <ComposerPrimitive.Attach asChild>
+      <ComposerPrimitive.AddAttachments asChild>
         <Button
           className={classNames("lb-composer-editor-action", className)}
           onMouseDown={preventDefault}
@@ -276,7 +276,7 @@ function ComposerInsertAttachmentEditorAction({
         >
           <AttachmentIcon className="lb-button-icon" />
         </Button>
-      </ComposerPrimitive.Attach>
+      </ComposerPrimitive.AddAttachments>
     </Tooltip>
   );
 }
@@ -507,8 +507,8 @@ function ComposerEditorContainer({
               disabled={isDisabled}
             />
             {showAttachments && (
-              <ComposerInsertAttachmentEditorAction
-                label={$.COMPOSER_ATTACH_FILES}
+              <ComposerAddAttachmentsEditorAction
+                label={$.COMPOSER_ADD_ATTACHMENTS}
                 disabled={isDisabled}
               />
             )}
@@ -542,7 +542,7 @@ function ComposerEditorContainer({
         <div className="lb-composer-attachments-drop-area">
           <div className="lb-composer-attachments-drop-area-label">
             <AttachmentIcon />
-            {$.COMPOSER_ATTACH_FILES}
+            {$.COMPOSER_ADD_ATTACHMENTS}
           </div>
         </div>
       )}

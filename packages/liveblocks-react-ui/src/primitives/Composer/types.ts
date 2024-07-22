@@ -137,7 +137,7 @@ export interface ComposerFormProps extends ComponentPropsWithSlot<"form"> {
 
 export type ComposerSubmitProps = ComponentPropsWithSlot<"button">;
 
-export type ComposerAttachProps = ComponentPropsWithSlot<"button">;
+export type ComposerAddAttachmentsProps = ComponentPropsWithSlot<"button">;
 
 export interface ComposerAttachmentsDropAreaProps
   extends ComponentPropsWithSlot<"div"> {
