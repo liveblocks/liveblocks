@@ -23,7 +23,6 @@ import type {
 import React, { forwardRef, useCallback, useMemo, useRef } from "react";
 
 import { AttachmentIcon } from "../icons/Attachment";
-import { CrossIcon } from "../icons/Cross";
 import { EmojiIcon } from "../icons/Emoji";
 import { MentionIcon } from "../icons/Mention";
 import { SendIcon } from "../icons/Send";
@@ -48,6 +47,7 @@ import { MENTION_CHARACTER } from "../slate/plugins/mentions";
 import { classNames } from "../utils/class-names";
 import { useControllableState } from "../utils/use-controllable-state";
 import { useLayoutEffect } from "../utils/use-layout-effect";
+import { FileAttachment } from "./internal/Attachment";
 import { Attribution } from "./internal/Attribution";
 import { Avatar } from "./internal/Avatar";
 import { Button } from "./internal/Button";
@@ -329,62 +329,60 @@ function ComposerFileAttachment({
   attachment,
   className,
   ...props
-}: ComponentPropsWithoutRef<"div"> & { attachment: ComposerLocalAttachment }) {
+}: ComponentPropsWithoutRef<"div"> & {
+  attachment: ComposerLocalAttachment;
+}) {
   const { deleteAttachment } = useComposer();
+  // TODO: Take into account the locale passed to the Composer
+  const $ = useOverrides();
+
+  const handleDeleteClick = useCallback(() => {
+    deleteAttachment(attachment.id);
+  }, [attachment.id, deleteAttachment]);
 
   return (
-    <div
-      className={classNames(
-        "lb-attachment lb-file-attachment lb-composer-attachment",
-        className
-      )}
+    <FileAttachment
+      className={classNames("lb-composer-attachment", className)}
       {...props}
-    >
-      <div className="lb-file-attachment-icon" />
-      <div className="lb-attachment-details">
-        <span className="lb-attachment-name">{attachment.file.name}</span>
-        <span className="lb-attachment-size">{attachment.file.size}</span>
-      </div>
-      <button
-        className="lb-attachment-delete"
-        onClick={() => deleteAttachment(attachment.id)}
-      >
-        <CrossIcon />
-      </button>
-    </div>
+      name={attachment.file.name}
+      type={attachment.file.type}
+      size={attachment.file.size}
+      locale={$.locale}
+      onDeleteClick={handleDeleteClick}
+    />
   );
 }
 
-function ComposerImageAttachment({
-  attachment,
-  className,
-  ...props
-}: ComponentPropsWithoutRef<"div"> & { attachment: ComposerLocalAttachment }) {
-  const { deleteAttachment } = useComposer();
+// function ComposerImageAttachment({
+//   attachment,
+//   className,
+//   ...props
+// }: ComponentPropsWithoutRef<"div"> & { attachment: ComposerLocalAttachment }) {
+//   const { deleteAttachment } = useComposer();
 
-  return (
-    <div
-      className={classNames(
-        "lb-attachment lb-image-attachment lb-composer-attachment",
-        className
-      )}
-      {...props}
-    >
-      <img
-        className="lb-image-attachment-image"
-        alt={attachment.file.name}
-        // src="https://placekitten.com/200/300"
-      />
-      <div className="lb-attachment-details">
-        <span className="lb-attachment-name">{attachment.file.name}</span>
-        <span className="lb-attachment-size">{attachment.file.size}</span>
-      </div>
-      <button onClick={() => deleteAttachment(attachment.id)}>
-        <CrossIcon />
-      </button>
-    </div>
-  );
-}
+//   return (
+//     <div
+//       className={classNames(
+//         "lb-attachment lb-image-attachment lb-composer-attachment",
+//         className
+//       )}
+//       {...props}
+//     >
+//       <img
+//         className="lb-image-attachment-image"
+//         alt={attachment.file.name}
+//         // src="https://placekitten.com/200/300"
+//       />
+//       <div className="lb-attachment-details">
+//         <span className="lb-attachment-name">{attachment.file.name}</span>
+//         <span className="lb-attachment-size">{attachment.file.size}</span>
+//       </div>
+//       <button onClick={() => deleteAttachment(attachment.id)}>
+//         <CrossIcon />
+//       </button>
+//     </div>
+//   );
+// }
 
 function ComposerAttachments({
   className,
@@ -406,21 +404,9 @@ function ComposerAttachments({
           return null;
         }
 
-        if (attachment.file.type.startsWith("image")) {
-          return (
-            <ComposerImageAttachment
-              key={attachment.id}
-              attachment={attachment}
-            />
-          );
-        } else {
-          return (
-            <ComposerFileAttachment
-              key={attachment.id}
-              attachment={attachment}
-            />
-          );
-        }
+        return (
+          <ComposerFileAttachment key={attachment.id} attachment={attachment} />
+        );
       })}
     </div>
   );

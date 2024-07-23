@@ -1,3 +1,36 @@
+/* Because of `all: unset`, we have to re-define some these values. */
+@mixin button {
+  all: unset;
+  position: relative;
+  box-sizing: inherit;
+  outline: none;
+  cursor: pointer;
+  user-select: none;
+  transition-timing-function: var(--lb-transition-easing);
+  transition-duration: var(--lb-transition-duration);
+  transition-property: background, color, opacity;
+  -webkit-tap-highlight-color: transparent;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    transition-property: box-shadow;
+  }
+
+  &:where(:focus-visible) {
+    z-index: 1;
+
+    &::after {
+      box-shadow:
+        var(--lb-dynamic-background) 0 0 0 2px,
+        var(--lb-accent) 0 0 0 4px;
+    }
+  }
+}
+
 @mixin truncate {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -8,6 +41,17 @@
   &::selection,
   *::selection {
     background: transparent;
+  }
+}
+
+@mixin invisible-scrollbar {
+  & {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  &::-webkit-scrollbar {
+    display: none;
   }
 }
 
