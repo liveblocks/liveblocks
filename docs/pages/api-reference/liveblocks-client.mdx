@@ -2265,13 +2265,10 @@ console.log(inboxNotifications);
 </PropertiesList>
 
 <PropertiesList title="Options">
-  <PropertiesListItem name="query" type="{ resolved, metadata }" optional>
-    Options for filtering threads.
-  </PropertiesListItem>
-  <PropertiesListItem name="query.resolved" type="boolean" optional>
+  <PropertiesListItem name="resolved" type="boolean" optional>
     Only return `resolved` or `unresolved` threads. [Learn more](#filtering-resolved-status).
   </PropertiesListItem>
-  <PropertiesListItem name="query.metadata" type="{ key: value }" optional>
+  <PropertiesListItem name="metadata" type="Partial<ThreadMetadata>" optional>
     Only return threads containing the custom metadata. Metadata is set yourself when creating a thread, for example `{ priority: "HIGH" }`. [Learn more](#filtering-metadata).
   </PropertiesListItem>
 </PropertiesList>
