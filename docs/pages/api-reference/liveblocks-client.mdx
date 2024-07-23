@@ -2322,13 +2322,13 @@ const latestThreads = await room.getThreadsSince({
 <PropertiesList title="Returns">
   <PropertiesListItem
     name="threads"
-    type="{ modified: ThreadData[], deleted: ThreadDeleteInfo[] }"
+    detailedType="{ modified: ThreadData[], deleted: ThreadDeleteInfo[] }"
   >
     Threads that have been modified or deleted since the requested date.
   </PropertiesListItem>
   <PropertiesListItem
     name="inboxNotifications"
-    type="{ modified: InboxNotificationData[], deleted: InboxNotificationDeleteInfo[] }"
+    detailedType="{ modified: InboxNotificationData[], deleted: InboxNotificationDeleteInfo[] }"
   >
     Inbox notifications that have been modified or deleted since the requested
     date.
