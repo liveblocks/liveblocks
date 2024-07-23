@@ -2308,8 +2308,8 @@ const { threads, inboxNotifications, requestedAt } = await room.getThreadsSince(
 );
 ```
 
-Helpful when used in combination with [`Room.getThreads`]() to initially fetch
-all threads, then update later.
+Helpful when used in combination with [`Room.getThreads`](#Room.getThreads) to
+initially fetch all threads, then update later.
 
 ```ts
 const initialThreads = await room.getThreads();
@@ -2370,7 +2370,7 @@ const query = {
 };
 
 // Fetches the latest threads
-async function updateThreads() {
+async function update() {
   const newThreads = await room.getThreadsSince({
     since: requestedAt,
     query,
@@ -2381,7 +2381,7 @@ async function updateThreads() {
   inboxNotifications.push(newThreads.inboxNotifications);
 }
 
-updateThreads();
+update();
 ```
 
 ### Room.getThread
@@ -2814,7 +2814,7 @@ await room.removeReaction({
 
 ### Client.getInboxNotifications
 
-Returns the current user inbox notifications and their associated threads. It
+Returns the current user’s inbox notifications and their associated threads. It
 also returns the request date that can be used for subsequent polling.
 
 ```ts
@@ -2824,10 +2824,10 @@ const { inboxNotifications, threads, requestedAt } =
 
 <PropertiesList title="Returns">
   <PropertiesListItem name="inboxNotifications" type="InboxNotificationData[]">
-    Current user inbox notifications.
+    Current user’s inbox notifications.
   </PropertiesListItem>
   <PropertiesListItem name="threads" type="ThreadData[]">
-    Threads associated to the inbox notifications.
+    Threads associated with the inbox notifications.
   </PropertiesListItem>
   <PropertiesListItem name="requestedAt" type="Date">
     The request date to use for subsequent polling.
@@ -2842,22 +2842,33 @@ Returns the modified and deleted inbox notifications and their associated
 threads since the requested date.
 
 ```ts
-const result = await client.getInboxNotifications();
-/* ... */
-await client.getInboxNotificationsSince({ since: result.requestedAt }});
+const { inboxNotifications, threads, requestedAt } =
+  await client.getInboxNotifications();
+```
+
+Helpful when used in combination with
+[`Client.getInboxNotifications`](#Client.getInboxNotifications) to initially
+fetch all inbox notifications, then update later.
+
+```ts
+const initial = await room.getInboxNotifications();
+
+const latest = await room.getInboxNotificationsSince({
+  since: initial.requestedAt,
+});
 ```
 
 <PropertiesList title="Returns">
   <PropertiesListItem
     name="inboxNotifications"
-    type="{ modified: InboxNotificationData[], deleted: InboxNotificationDeleteInfo[] }"
+    detailedType="{ modified: InboxNotificationData[], deleted: InboxNotificationDeleteInfo[] }"
   >
     Inbox notifications that have been modified or deleted since the requested
     date.
   </PropertiesListItem>
   <PropertiesListItem
     name="threads"
-    type="{ modified: ThreadData[], deleted: ThreadDeleteInfo[] }"
+    detailedType="{ modified: ThreadData[], deleted: ThreadDeleteInfo[] }"
   >
     Threads that have been modified or deleted since the requested date.
   </PropertiesListItem>
@@ -2872,6 +2883,31 @@ await client.getInboxNotificationsSince({ since: result.requestedAt }});
     will be returned.
   </PropertiesListItem>
 </PropertiesList>
+
+#### Updating inbox notifications
+
+`client.getInboxNotificationsSince` is helpful for update an existing list of
+notifications with any updates. Calling `update` in the snippet below fetches
+all new inbox notifications.
+
+```ts
+let requestedAt = new Date(0);
+const inboxNotifications = [];
+const threads = [];
+
+// Fetches the latest threads
+async function update() {
+  const newNotifications = await client.getInboxNotificationsSince({
+    since: requestedAt,
+  });
+
+  requestedAt = newNotifications.requestedAt;
+  inboxNotifications.push(newNotifications.inboxNotifications);
+  threads.push(newNotifications.threads);
+}
+
+update();
+```
 
 ### Client.getUnreadInboxNotificationsCount
 
