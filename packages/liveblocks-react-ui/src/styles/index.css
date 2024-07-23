@@ -1104,7 +1104,10 @@
 
   :where(.lb-attachment-icon) {
     position: relative;
+    display: flex;
     flex: none;
+    justify-content: center;
+    align-items: center;
     overflow: hidden;
     aspect-ratio: 1;
     inline-size: 2.65rem;
@@ -1116,6 +1119,7 @@
       inset: 0;
       background: var(--lb-foreground);
       opacity: calc(1 * var(--lb-foreground-contrast));
+      pointer-events: none;
     }
   }
 

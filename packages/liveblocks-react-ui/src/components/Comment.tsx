@@ -352,6 +352,7 @@ function CommentFileAttachment({
       type="image/png"
       size={300}
       locale={$.locale}
+      onContentClick={console.log}
       // onDeleteClick={handleDeleteClick}
     />
   );
