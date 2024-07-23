@@ -2259,7 +2259,7 @@ const { threads, inboxNotifications, requestedAt } = await room.getThreads({
 </PropertiesList>
 
 <PropertiesList title="Options">
-  <PropertiesListItem name="query" type="object" optional>
+  <PropertiesListItem name="query" type="{ resolved, metadata }" optional>
     Options for filtering threads.
   </PropertiesListItem>
   <PropertiesListItem name="query.resolved" type="boolean" optional>
@@ -2342,7 +2342,7 @@ const latestThreads = await room.getThreadsSince({
   <PropertiesListItem name="since" type="Date">
     Only return threads that have been modified or deleted after this date.
   </PropertiesListItem>
-  <PropertiesListItem name="query" type="object" optional>
+  <PropertiesListItem name="query" type="{ resolved, metadata }" optional>
     Options for filtering threads.
   </PropertiesListItem>
   <PropertiesListItem name="query.resolved" type="boolean" optional>
@@ -2422,7 +2422,9 @@ const { thread, inboxNotification } = await room.getThread(newThread.id);
 
 ### Room.createThread
 
-Creates a thread.
+Creates a thread, and its initial comment, in the current room. A comment’s body
+is an array of paragraphs, each containing child nodes, learn more under
+[creating thread content](#creating-thread-content).
 
 ```ts
 const thread = await room.createThread({
@@ -2439,14 +2441,66 @@ const thread = await room.createThread({
   </PropertiesListItem>
 </PropertiesList>
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem
-    name="options"
-    type="{ body: CommentBody, metadata: ThreadMetadata }"
-  >
-    `body`: The content of the comment. <br /> `metadata`: The thread metadata.
+<PropertiesList title="Options">
+  <PropertiesListItem name="body" type="CommentBody">
+    The content of the comment, see [creating thread
+    content](#creating-thread-content).
+  </PropertiesListItem>
+  <PropertiesListItem name="metadata" type="ThreadMetadata">
+    Custom metadata to be attached to the thread, see [defining thread
+    metadata](#defining-thread-metadata).
   </PropertiesListItem>
 </PropertiesList>
+
+#### Creating thread content [#creating-thread-content]
+
+A comment’s body is an array of paragraphs, each containing child nodes. Here’s
+an example of how to construct the following simple comment body, which can be
+passed to `room.createThread`.
+
+> Hello **world**
+>
+> <div className="h-2"></div>
+> _Second_ paragraph!
+
+```tsx
+import { CommentBody } from "@liveblocks/client";
+
+const body: CommentBody = {
+  version: 1,
+  content: [
+    // +++
+    {
+      type: "paragraph",
+      children: [{ text: "Hello " }, { text: "world", bold: true }],
+    },
+    {
+      type: "paragraph",
+      children: [{ text: "Second", italic: true }, { text: " paragraph!" }],
+    },
+    // +++
+  ],
+};
+
+const thread = await room.createThread({ body });
+```
+
+#### Defining thread metadata [#defining-thread-metadata]
+
+Custom metadata can be attached to each thread. `string`, `number`, and
+`boolean` properties are allowed.
+
+```ts
+import { ThreadMetadata } from "@liveblocks/client";
+
+const metadata: ThreadMetadata = {
+  color: "blue",
+  page: 3,
+  pinned: true,
+};
+
+const thread = await room.createThread({ body, metadata });
+```
 
 ### Room.deleteThread
 
@@ -2527,7 +2581,7 @@ await room.markThreadAsUnresolved("th_xxx");
 
 ### Room.createComment
 
-Creates a comment.
+Creates a comment in a given thread.
 
 ```ts
 await room.createComment({
@@ -2537,6 +2591,51 @@ await room.createComment({
     content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
   },
 });
+```
+
+<PropertiesList title="Options">
+  <PropertiesListItem name="threadId" type="string">
+    The ID of the thread that
+  </PropertiesListItem>
+  <PropertiesListItem name="body" type="CommentBody">
+    The content of the comment, see [creating comment
+    content](#creating-thread-content).
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Creating comment content [#creating-comment-content]
+
+A comment’s body is an array of paragraphs, each containing child nodes. Here’s
+an example of how to construct the following simple comment body, which can be
+passed to `room.createComment`.
+
+> Hello **world**
+>
+> <div className="h-2"></div>
+> _Second_ paragraph!
+
+```tsx
+import { CommentBody } from "@liveblocks/client";
+
+const thread = await room.createThread(/* ... */);
+
+const body: CommentBody = {
+  version: 1,
+  content: [
+    // +++
+    {
+      type: "paragraph",
+      children: [{ text: "Hello " }, { text: "world", bold: true }],
+    },
+    {
+      type: "paragraph",
+      children: [{ text: "Second", italic: true }, { text: " paragraph!" }],
+    },
+    // +++
+  ],
+};
+
+const thread = await room.createComment({ threadId: thread.id, body });
 ```
 
 ### Room.editComment
