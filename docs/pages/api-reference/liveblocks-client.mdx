@@ -2236,8 +2236,8 @@ room.disconnect();
 
 ### Room.getThreads
 
-Returns the threads within the current room and their associated inbox
-notifications. It also returns the request date that can be used for subsequent
+Returns threads, and their associated inbox notifications, that are in the
+current room. It also returns the request date that can be used for subsequent
 polling.
 
 ```ts
@@ -2248,25 +2248,75 @@ const { threads, inboxNotifications, requestedAt } = await room.getThreads({
 
 <PropertiesList title="Returns">
   <PropertiesListItem name="threads" type="ThreadData[]">
-    Threads within the currnet room.
+    Threads within the current room.
   </PropertiesListItem>
   <PropertiesListItem name="inboxNotifications" type="InboxNotificationData[]">
-    Inbox notifications associated the threads.
+    Inbox notifications associated with the threads.
   </PropertiesListItem>
   <PropertiesListItem name="requestedAt" type="Date">
     The request date to use for subsequent polling.
   </PropertiesListItem>
 </PropertiesList>
 
-### Room.getThreadsSince
+<PropertiesList title="Options">
+  <PropertiesListItem name="query" type="object" optional>
+    Options for filtering threads.
+  </PropertiesListItem>
+  <PropertiesListItem name="query.resolved" type="boolean" optional>
+    Only return `resolved` or `unresolved` threads.
+  </PropertiesListItem>
+  <PropertiesListItem name="query.metadata" type="{ key: value }" optional>
+    Only return threads containing the custom metadata. Metadata is set yourself when creating a thread, for example `{ priority: "HIGH" }`.
+  </PropertiesListItem>
+</PropertiesList>
 
-Returns the modified and deleted threads and their associated inbox
-notifications since the requested date.
+#### Filtering metadata
+
+You can define custom metadata when
+[creating a thread](/docs/api-reference/liveblocks-client#Room.createThread),
+and the `query.metadata` option allows you to return only threads that match.
 
 ```ts
-const result = await room.getThreads();
-// ... //
-await room.getThreadsSince({ since: result.requestedAt });
+// Creating a thread with `priority` metadata
+await room.createThread({
+  body: {
+    // ...
+  },
+  // +++
+  metadata: { priority: "HIGH" },
+  // +++
+});
+
+// Filtering for threads with the same metadata
+const threads = await room.getThreads({
+  query: {
+    // +++
+    metadata: { priority: "HIGH" },
+    // +++
+  },
+});
+```
+
+### Room.getThreadsSince
+
+Returns threads, and their associated inbox notifications, that have been
+modified or deleted since the requested date.
+
+```ts
+const { threads, inboxNotifications, requestedAt } = await room.getThreadsSince(
+  { since: result.requestedAt }
+);
+```
+
+Helpful when used in combination with [`Room.getThreads`]() to initially fetch
+all threads, then update later.
+
+```ts
+const initialThreads = await room.getThreads();
+
+const latestThreads = await room.getThreadsSince({
+  since: initialThreads.requestedAt,
+});
 ```
 
 <PropertiesList title="Returns">
@@ -2288,36 +2338,84 @@ await room.getThreadsSince({ since: result.requestedAt });
   </PropertiesListItem>
 </PropertiesList>
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem name="options" type="{ since: Date }">
-    `since`: Only the threads modified or deleted after this date will be
-    returned.
+<PropertiesList title="Options">
+  <PropertiesListItem name="since" type="Date">
+    Only return threads that have been modified or deleted after this date.
+  </PropertiesListItem>
+  <PropertiesListItem name="query" type="object" optional>
+    Options for filtering threads.
+  </PropertiesListItem>
+  <PropertiesListItem name="query.resolved" type="boolean" optional>
+    Only return `resolved` or `unresolved` threads.
+  </PropertiesListItem>
+  <PropertiesListItem name="query.metadata" type="{ key: value }" optional>
+    Only return threads containing the custom metadata. Metadata is set yourself when creating a thread, for example `{ priority: "HIGH" }`.
   </PropertiesListItem>
 </PropertiesList>
 
+#### Updating threads
+
+`room.getThreadsSince` is helpful for update an existing list of threads with
+any updates. Calling `update` in the snippet below fetches all new threads.
+
+```ts
+let requestedAt = new Date(0);
+const threads = [];
+const inboxNotifications = [];
+
+// Your custom thread query
+const query = {
+  resolved: true,
+  metadata: { priority: "HIGH" },
+};
+
+// Fetches the latest threads
+async function updateThreads() {
+  const newThreads = await room.getThreadsSince({
+    since: requestedAt,
+    query,
+  });
+
+  requestedAt = newThreads.requestedAt;
+  threads.push(newThreads.threads);
+  inboxNotifications.push(newThreads.inboxNotifications);
+}
+
+updateThreads();
+```
+
 ### Room.getThread
 
-Returns a thread and the associated inbox notification if it exists.
+Returns a thread and its associated inbox notification, from its ID, if it
+exists.
 
 ```ts
 const { thread, inboxNotification } = await room.getThread("th_xxx");
 ```
 
+The thread ID can be retrieved from existing threads.
+
+```ts
+const newThread = await room.createThread(/* ... */);
+
+const { thread, inboxNotification } = await room.getThread(newThread.id);
+```
+
 <PropertiesList title="Returns">
   <PropertiesListItem name="thread" type="ThreadData | undefined">
-    The requested thread or undefined if it does not exist.
+    The requested thread, or `undefined` if it doesn’t exist.
   </PropertiesListItem>
   <PropertiesListItem
     name="inboxNotification"
     type="InboxNotificationThreadData | undefined"
   >
-    The inbox notification associate to the thread or undefined if it does not
-    exist.
+    The inbox notification associated with the thread, or `undefined` if it
+    doesn’t exist.
   </PropertiesListItem>
 </PropertiesList>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="value" type="threadId">
+  <PropertiesListItem name="value" type="string">
     The ID of the thread you want to retrieve.
   </PropertiesListItem>
 </PropertiesList>
