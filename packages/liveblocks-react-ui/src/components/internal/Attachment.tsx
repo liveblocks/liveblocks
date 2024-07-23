@@ -1,5 +1,9 @@
-import type { ComponentPropsWithoutRef } from "react";
-import React, { useMemo } from "react";
+import type {
+  ComponentPropsWithoutRef,
+  MouseEventHandler,
+  PointerEvent,
+} from "react";
+import React, { useCallback, useMemo } from "react";
 
 import { CrossIcon } from "../../icons/Cross";
 import { classNames } from "../../utils/class-names";
@@ -9,8 +13,9 @@ interface FileAttachmentProps extends ComponentPropsWithoutRef<"div"> {
   name: string;
   type: string;
   size: number;
-  onContentClick?: () => void;
-  onDeleteClick?: () => void;
+  onContentClick?: MouseEventHandler<HTMLButtonElement>;
+  onDeleteClick?: MouseEventHandler<HTMLButtonElement>;
+  preventFocusOnDelete?: boolean;
   locale?: string;
 }
 
@@ -20,6 +25,7 @@ export function FileAttachment({
   size,
   onContentClick,
   onDeleteClick,
+  preventFocusOnDelete,
   locale,
   className,
   ...props
@@ -29,6 +35,15 @@ export function FileAttachment({
   }, [size, locale]);
 
   console.log(type);
+
+  const handleDeletePointerDown = useCallback(
+    (event: PointerEvent<HTMLButtonElement>) => {
+      if (preventFocusOnDelete) {
+        event.preventDefault();
+      }
+    },
+    [preventFocusOnDelete]
+  );
 
   return (
     <div
@@ -48,7 +63,11 @@ export function FileAttachment({
         </div>
       </button>
       {onDeleteClick && (
-        <button className="lb-attachment-delete" onClick={onDeleteClick}>
+        <button
+          className="lb-attachment-delete"
+          onClick={onDeleteClick}
+          onPointerDown={handleDeletePointerDown}
+        >
           <CrossIcon />
         </button>
       )}

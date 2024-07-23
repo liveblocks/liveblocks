@@ -349,6 +349,7 @@ function ComposerFileAttachment({
       size={attachment.file.size}
       locale={$.locale}
       onDeleteClick={handleDeleteClick}
+      preventFocusOnDelete
     />
   );
 }

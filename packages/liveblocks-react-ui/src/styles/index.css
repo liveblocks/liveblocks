@@ -1115,7 +1115,7 @@
       position: absolute;
       inset: 0;
       background: var(--lb-foreground);
-      opacity: calc(0.75 * var(--lb-foreground-contrast));
+      opacity: calc(1 * var(--lb-foreground-contrast));
     }
   }
 
