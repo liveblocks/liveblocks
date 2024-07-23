@@ -2485,6 +2485,30 @@ const body: CommentBody = {
 const thread = await room.createThread({ body });
 ```
 
+It’s also possible to create links and mentions.
+
+> <span title="jody.hekla">**@Jody Hekla**</span> the
+> **[Liveblocks](https://liveblocks.io)** website is cool!
+
+```ts
+const body: CommentBody = {
+  version: 1,
+  content: [
+    // +++
+    {
+      type: "paragraph",
+      children: [
+        { type: "mention", id: "jody.hekla" },
+        { text: " the " },
+        { text: "Liveblocks", type: "link", url: "https://liveblocks.io" },
+        { text: " website is cool!" },
+      ],
+    },
+    // +++
+  ],
+};
+```
+
 #### Defining thread metadata [#defining-thread-metadata]
 
 Custom metadata can be attached to each thread. `string`, `number`, and
@@ -2584,7 +2608,7 @@ await room.markThreadAsUnresolved("th_xxx");
 Creates a comment in a given thread.
 
 ```ts
-await room.createComment({
+const comment = await room.createComment({
   threadId: "th_xxx",
   body: {
     version: 1,
@@ -2635,7 +2659,31 @@ const body: CommentBody = {
   ],
 };
 
-const thread = await room.createComment({ threadId: thread.id, body });
+const comment = await room.createComment({ threadId: thread.id, body });
+```
+
+It’s also possible to create links and mentions.
+
+> <span title="jody.hekla">**@Jody Hekla**</span> the
+> **[Liveblocks](https://liveblocks.io)** website is cool!
+
+```ts
+const body: CommentBody = {
+  version: 1,
+  content: [
+    // +++
+    {
+      type: "paragraph",
+      children: [
+        { type: "mention", id: "jody.hekla" },
+        { text: " the " },
+        { text: "Liveblocks", type: "link", url: "https://liveblocks.io" },
+        { text: " website is cool!" },
+      ],
+    },
+    // +++
+  ],
+};
 ```
 
 ### Room.editComment
