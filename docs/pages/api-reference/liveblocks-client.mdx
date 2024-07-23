@@ -2911,7 +2911,7 @@ update();
 
 ### Client.getUnreadInboxNotificationsCount
 
-Gets the number of unread inbox notificatiosn for the current user.
+Gets the number of unread inbox notifications for the current user.
 
 ```ts
 const count = await client.getUnreadInboxNotificationsCount();
@@ -2927,7 +2927,7 @@ const count = await client.getUnreadInboxNotificationsCount();
 
 ### Client.markAllInboxNotificationsAsRead
 
-Marks all inbox notifications as read.
+Marks all inbox notifications as read, for the current user.
 
 ```ts
 await client.markAllInboxNotificationsAsRead();
@@ -2939,7 +2939,7 @@ await client.markAllInboxNotificationsAsRead();
 
 ### Client.markInboxNotificationAsRead
 
-Marks an inbox notification as read.
+Marks an inbox notification as read, for the current user.
 
 ```ts
 await client.markAllInboxNotificationsAsRead("in_xxx");
@@ -2949,7 +2949,7 @@ await client.markAllInboxNotificationsAsRead("in_xxx");
 
 <PropertiesList title="Arguments">
   <PropertiesListItem name="inboxNotificationId" type="string">
-    The id of the inbox notification to be marked as read.
+    The ID of the inbox notification to be marked as read.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -2977,25 +2977,89 @@ await client.deleteInboxNotification("in_xxx");
 
 <PropertiesList title="Arguments">
   <PropertiesListItem name="inboxNotificationId" type="string">
-    The id of the inbox notification to be deleted.
+    The ID of the inbox notification to be deleted.
   </PropertiesListItem>
 </PropertiesList>
 
 ### Room.getNotificationSettings
 
-Gets the user's notification settings for the current room.
+Gets the user’s notification settings for the current room.
 
 ```ts
 const settings = await room.getNotificationSettings();
 ```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="settings"
+    type="{ threads }"
+  >
+    Notification settings for Liveblocks products.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="settings.threads"
+    type={`"all" | "replies_and_mentions" | "none"`}
+  >
+    <div className="-mb-3">
+      Returns the current room’s notification settings for threads. It can return one of three values:
+    </div>
+
+    - `"all"` Receive notifications for every activity.
+    - `"replies_and_mentions"` Receive notifications for mentions and thread you’re participating in.
+    - `"none"` No notifications are received.
+
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
 ### Room.updateNotificationSettings
 
-Updates the user's notification settings for the current room.
+Updates the user’s notification settings for the current room.
 
 ```ts
-await room.updateNotificationSettings({ threads: "replies_and_mentions" });
+const settings = await room.updateNotificationSettings({
+  threads: "replies_and_mentions",
+});
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="settings"
+    type="{ threads }"
+  >
+    Notification settings for Liveblocks products.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="settings.threads"
+    type={`"all" | "replies_and_mentions" | "none"`}
+  >
+    <div className="-mb-3">
+      Returns the current room’s notification settings for threads. It can return one of three values:
+    </div>
+
+    - `"all"` Receive notifications for every activity.
+    - `"replies_and_mentions"` Receive notifications for mentions and thread you’re participating in.
+    - `"none"` No notifications are received.
+
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Options">
+  <PropertiesListItem
+    name="threads"
+    type={`"all" | "replies_and_mentions" | "none"`}
+  >
+    <div className="-mb-3">
+      Sets the current room’s notification settings for threads. It can be one of three values:
+    </div>
+
+    - `"all"` Receive notifications for every activity.
+    - `"replies_and_mentions"` Receive notifications for mentions and thread you’re participating in.
+    - `"none"` No notifications are received.
+
+  </PropertiesListItem>
+</PropertiesList>
 
 ## Storage
 
