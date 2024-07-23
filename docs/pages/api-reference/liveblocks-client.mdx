@@ -2528,7 +2528,7 @@ const thread = await room.createThread({ body, metadata });
 
 ### Room.deleteThread
 
-Deletes a thread.
+Deletes a thread by its ID.
 
 ```ts
 await room.deleteThread("th_xxx");
@@ -2544,8 +2544,8 @@ await room.deleteThread("th_xxx");
 
 ### Room.editThreadMetadata
 
-Edits a thread's metadata. To delete an existing metadata property, set its
-value to `null`.
+Edits a thread’s custom metadata. Metadata can be a `string`, `number`, or
+`boolean`. To delete an existing metadata property, set its value to `null`.
 
 ```ts
 await room.editThreadMetadata({
@@ -2560,14 +2560,14 @@ await room.editThreadMetadata({
   </PropertiesListItem>
 </PropertiesList>
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem
-    name="options"
-    type="{ metadata: Patchable<ThreadMetadata>, threadId: string }"
-  >
-    `metadata`: An object containing the metadata properties to update.
-    <br />
-    `threadId`: The ID of the thread.
+<PropertiesList title="Options">
+  <PropertiesListItem name="threadId" type="string">
+    The ID of the thread.
+  </PropertiesListItem>
+  <PropertiesListItem name="metadata" type="Patchable<ThreadMetadata>">
+    An object containing the metadata properties to update. Metadata can be a
+    `string`, `number`, or `boolean`. To delete an existing metadata property,
+    set its value to `null`.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -2617,13 +2617,19 @@ const comment = await room.createComment({
 });
 ```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem name="value" type="CommentData">
+    The comment that has been created.
+  </PropertiesListItem>
+</PropertiesList>
+
 <PropertiesList title="Options">
   <PropertiesListItem name="threadId" type="string">
-    The ID of the thread that
+    The ID of the thread that the comment will be added to.
   </PropertiesListItem>
   <PropertiesListItem name="body" type="CommentBody">
     The content of the comment, see [creating comment
-    content](#creating-thread-content).
+    content](#creating-comment-content).
   </PropertiesListItem>
 </PropertiesList>
 
@@ -2688,10 +2694,11 @@ const body: CommentBody = {
 
 ### Room.editComment
 
-Edits a comment.
+Edits a comment, replacing its existing comment body. Learn more about
+[creating comment content](#creating-comment-content).
 
 ```ts
-await room.editComment({
+const comment = await room.editComment({
   threadId: "th_xxx",
   commentId: "cm_xxx"
   body: {
@@ -2700,6 +2707,25 @@ await room.editComment({
   },
 });
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="value" type="CommentData">
+    The comment that has been edited.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Options">
+  <PropertiesListItem name="threadId" type="string">
+    The ID of the thread containing the comment.
+  </PropertiesListItem>
+  <PropertiesListItem name="threadId" type="string">
+    The ID of the comment that’s being edited.
+  </PropertiesListItem>
+  <PropertiesListItem name="body" type="CommentBody">
+    The content of the comment, see [creating comment
+    content](#creating-comment-content).
+  </PropertiesListItem>
+</PropertiesList>
 
 ### Room.deleteComment
 
@@ -2712,6 +2738,17 @@ await room.deleteComment({
   commentId: "cm_xxx",
 });
 ```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesList title="Options">
+  <PropertiesListItem name="threadId" type="string">
+    The ID of the thread containing the comment.
+  </PropertiesListItem>
+  <PropertiesListItem name="threadId" type="string">
+    The ID of the comment that’s being edited.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### Room.addReaction
 
