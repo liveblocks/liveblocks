@@ -616,37 +616,16 @@
   margin: 0;
 }
 
-/**
- * Progressive enhancement: Use :has instead of :focus-within to target the editor specifically
- */
-@supports selector(:has(*)) {
-  .lb-composer:where(:has(.lb-composer-editor:not(:focus-visible))) {
-    :where(.lb-button[data-variant="primary"]) {
-      --lb-button-background: var(--lb-foreground-subtle);
+.lb-composer:where(:has(.lb-composer-editor:not(:focus-visible))) {
+  :where(.lb-button[data-variant="primary"]) {
+    --lb-button-background: var(--lb-foreground-subtle);
 
-      color: var(--lb-foreground-tertiary);
+    color: var(--lb-foreground-tertiary);
 
-      &:where(:enabled:hover, :enabled:focus-visible) {
-        --lb-button-background: var(--lb-accent);
+    &:where(:enabled:hover, :enabled:focus-visible) {
+      --lb-button-background: var(--lb-accent);
 
-        color: var(--lb-accent-foreground);
-      }
-    }
-  }
-}
-
-@supports not selector(:has(*)) {
-  .lb-composer:where(:not(:focus-within)) {
-    :where(.lb-button[data-variant="primary"]) {
-      --lb-button-background: var(--lb-foreground-subtle);
-
-      color: var(--lb-foreground-tertiary);
-
-      &:where(:enabled:hover, :enabled:focus-visible) {
-        --lb-button-background: var(--lb-accent);
-
-        color: var(--lb-accent-foreground);
-      }
+      color: var(--lb-accent-foreground);
     }
   }
 }
@@ -1401,7 +1380,7 @@
   }
 
   /**
-   * Progressive enhancement: Merge adjacent inline code elements
+   * Merge adjacent inline code elements
    */
   :where(span:has(code) + span code) {
     padding-inline-start: 0;
