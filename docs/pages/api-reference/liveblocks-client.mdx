@@ -2238,12 +2238,18 @@ room.disconnect();
 
 Returns threads, and their associated inbox notifications, that are in the
 current room. It also returns the request date that can be used for subsequent
-polling.
+polling. It’s possible to filter for
+[a thread’s resolved status](#filtering-resolved-status) and using
+[custom metadata](#filtering-metadata).
 
 ```ts
-const { threads, inboxNotifications, requestedAt } = await room.getThreads({
-  query: { resolved: false },
-});
+const { threads, inboxNotifications, requestedAt } = await room.getThreads();
+
+// [{ id: "th_s436g8...", type: "thread" }, ...]
+console.log(threads);
+
+// [{ id: "in_fwh3d4...", kind: "thread", }, ...]
+console.log(inboxNotifications);
 ```
 
 <PropertiesList title="Returns">
@@ -2263,14 +2269,30 @@ const { threads, inboxNotifications, requestedAt } = await room.getThreads({
     Options for filtering threads.
   </PropertiesListItem>
   <PropertiesListItem name="query.resolved" type="boolean" optional>
-    Only return `resolved` or `unresolved` threads.
+    Only return `resolved` or `unresolved` threads. [Learn more](#filtering-resolved-status).
   </PropertiesListItem>
   <PropertiesListItem name="query.metadata" type="{ key: value }" optional>
-    Only return threads containing the custom metadata. Metadata is set yourself when creating a thread, for example `{ priority: "HIGH" }`.
+    Only return threads containing the custom metadata. Metadata is set yourself when creating a thread, for example `{ priority: "HIGH" }`. [Learn more](#filtering-metadata).
   </PropertiesListItem>
 </PropertiesList>
 
-#### Filtering metadata
+#### Filtering resolved status [#filtering-resolved-status]
+
+You can filter threads by those that are resolved, or unresolved, by passing a
+`boolean` to `query.resolved`.
+
+```ts
+// Filtering for threads that are unresolved
+const threads = await room.getThreads({
+  query: {
+    // +++
+    resolved: false,
+    // +++
+  },
+});
+```
+
+#### Filtering metadata [#filtering-metadata]
 
 You can define custom metadata when
 [creating a thread](/docs/api-reference/liveblocks-client#Room.createThread),
@@ -2300,23 +2322,22 @@ const threads = await room.getThreads({
 ### Room.getThreadsSince
 
 Returns threads, and their associated inbox notifications, that have been
-modified or deleted since the requested date.
+modified or deleted since the requested date. Helpful when used in combination
+with [`Room.getThreads`](#Room.getThreads) to initially fetch all threads, then
+receive updates later.
 
 ```ts
+const initial = await room.getThreads();
+
 const { threads, inboxNotifications, requestedAt } = await room.getThreadsSince(
-  { since: result.requestedAt }
+  { since: initial.requestedAt }
 );
-```
 
-Helpful when used in combination with [`Room.getThreads`](#Room.getThreads) to
-initially fetch all threads, then update later.
+// { modified: [{ id: "th_s4368s...", type: "thread" }, ...], deleted: [...] }
+console.log(threads);
 
-```ts
-const initialThreads = await room.getThreads();
-
-const latestThreads = await room.getThreadsSince({
-  since: initialThreads.requestedAt,
-});
+// { modified: [{ id: "in_ds83hs...", kind: "thread", }, ...], deleted: [...] }
+console.log(inboxNotifications);
 ```
 
 <PropertiesList title="Returns">
@@ -2342,47 +2363,7 @@ const latestThreads = await room.getThreadsSince({
   <PropertiesListItem name="since" type="Date">
     Only return threads that have been modified or deleted after this date.
   </PropertiesListItem>
-  <PropertiesListItem name="query" type="{ resolved, metadata }" optional>
-    Options for filtering threads.
-  </PropertiesListItem>
-  <PropertiesListItem name="query.resolved" type="boolean" optional>
-    Only return `resolved` or `unresolved` threads.
-  </PropertiesListItem>
-  <PropertiesListItem name="query.metadata" type="Patchable<ThreadMetadata>" optional>
-    Only return threads containing the custom metadata. Metadata is set yourself when creating a thread, for example `{ priority: "HIGH" }`.
-  </PropertiesListItem>
 </PropertiesList>
-
-#### Updating threads
-
-`room.getThreadsSince` is helpful for update an existing list of threads with
-any updates. Calling `update` in the snippet below fetches all new threads.
-
-```ts
-let requestedAt = new Date(0);
-const threads = [];
-const inboxNotifications = [];
-
-// Your custom thread query
-const query = {
-  resolved: true,
-  metadata: { priority: "HIGH" },
-};
-
-// Fetches the latest threads
-async function update() {
-  const newThreads = await room.getThreadsSince({
-    since: requestedAt,
-    query,
-  });
-
-  requestedAt = newThreads.requestedAt;
-  threads.push(newThreads.threads);
-  inboxNotifications.push(newThreads.inboxNotifications);
-}
-
-update();
-```
 
 ### Room.getThread
 
@@ -2820,6 +2801,12 @@ also returns the request date that can be used for subsequent polling.
 ```ts
 const { inboxNotifications, threads, requestedAt } =
   await client.getInboxNotifications();
+
+// [{ id: "in_fwh3d4...", kind: "thread", }, ...]
+console.log(inboxNotifications);
+
+// [{ id: "th_s436g8...", type: "thread" }, ...]
+console.log(threads);
 ```
 
 <PropertiesList title="Returns">
@@ -2839,23 +2826,21 @@ const { inboxNotifications, threads, requestedAt } =
 ### Client.getInboxNotificationsSince
 
 Returns the modified and deleted inbox notifications and their associated
-threads since the requested date.
-
-```ts
-const { inboxNotifications, threads, requestedAt } =
-  await client.getInboxNotifications();
-```
-
-Helpful when used in combination with
+threads since the requested date. Helpful when used in combination with
 [`Client.getInboxNotifications`](#Client.getInboxNotifications) to initially
-fetch all inbox notifications, then update later.
+fetch all notifications, then receive updates later.
 
 ```ts
-const initial = await room.getInboxNotifications();
+const initial = await client.getInboxNotifications();
 
-const latest = await room.getInboxNotificationsSince({
-  since: initial.requestedAt,
-});
+const { inboxNotifications, threads, requestedAt } =
+  await client.getInboxNotificationsSince({ since: initial.requestedAt });
+
+// { modified: [{ id: "in_ds83hs...", kind: "thread", }, ...], deleted: [...] }
+console.log(inboxNotifications);
+
+// { modified: [{ id: "th_s4368s...", type: "thread" }, ...], deleted: [...] }
+console.log(threads);
 ```
 
 <PropertiesList title="Returns">
@@ -2877,37 +2862,12 @@ const latest = await room.getInboxNotificationsSince({
   </PropertiesListItem>
 </PropertiesList>
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem name="options" type="{ since: Date }">
-    `since`: Only the inbox notifications modified or deleted after this date
-    will be returned.
+<PropertiesList title="Options">
+  <PropertiesListItem name="since" type="Date">
+    Only the inbox notifications modified or deleted after this date will be
+    returned.
   </PropertiesListItem>
 </PropertiesList>
-
-#### Updating inbox notifications
-
-`client.getInboxNotificationsSince` is helpful for update an existing list of
-notifications with any updates. Calling `update` in the snippet below fetches
-all new inbox notifications.
-
-```ts
-let requestedAt = new Date(0);
-const inboxNotifications = [];
-const threads = [];
-
-// Fetches the latest threads
-async function update() {
-  const newNotifications = await client.getInboxNotificationsSince({
-    since: requestedAt,
-  });
-
-  requestedAt = newNotifications.requestedAt;
-  inboxNotifications.push(newNotifications.inboxNotifications);
-  threads.push(newNotifications.threads);
-}
-
-update();
-```
 
 ### Client.getUnreadInboxNotificationsCount
 
