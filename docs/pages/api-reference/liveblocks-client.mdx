@@ -2348,7 +2348,7 @@ const latestThreads = await room.getThreadsSince({
   <PropertiesListItem name="query.resolved" type="boolean" optional>
     Only return `resolved` or `unresolved` threads.
   </PropertiesListItem>
-  <PropertiesListItem name="query.metadata" type="{ key: value }" optional>
+  <PropertiesListItem name="query.metadata" type="Patchable<ThreadMetadata>" optional>
     Only return threads containing the custom metadata. Metadata is set yourself when creating a thread, for example `{ priority: "HIGH" }`.
   </PropertiesListItem>
 </PropertiesList>
@@ -2550,7 +2550,11 @@ Edits a thread’s custom metadata. Metadata can be a `string`, `number`, or
 ```ts
 await room.editThreadMetadata({
   threadId: "th_xxx",
-  metadata: { x: 100, y: 100 },
+  metadata: {
+    color: "blue",
+    page: 3,
+    pinned: true,
+  },
 });
 ```
 
@@ -2752,15 +2756,33 @@ await room.deleteComment({
 
 ### Room.addReaction
 
-Adds a reaction from a comment for the current user.
+Adds a reaction from the current user on a comment.
 
 ```ts
-await room.addReaction({
+const reaction = await room.addReaction({
   threadId: "th_xxx",
   commentId: "cm_xxx",
   emoji: "👍",
 });
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="value" type="CommentUserReaction">
+    The reaction that has been created.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Options">
+  <PropertiesListItem name="threadId" type="string">
+    The ID of the thread containing the comment.
+  </PropertiesListItem>
+  <PropertiesListItem name="threadId" type="string">
+    The ID of the comment to add a reaction to.
+  </PropertiesListItem>
+  <PropertiesListItem name="emoji" type="string">
+    The emoji reaction to add.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### Room.removeReaction
 
@@ -2773,6 +2795,20 @@ await room.removeReaction({
   emoji: "👍",
 });
 ```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesList title="Options">
+  <PropertiesListItem name="threadId" type="string">
+    The ID of the thread containing the comment.
+  </PropertiesListItem>
+  <PropertiesListItem name="threadId" type="string">
+    The ID of the comment to remove a reaction from.
+  </PropertiesListItem>
+  <PropertiesListItem name="emoji" type="string">
+    The emoji reaction to remove.
+  </PropertiesListItem>
+</PropertiesList>
 
 ## Notifications
 
