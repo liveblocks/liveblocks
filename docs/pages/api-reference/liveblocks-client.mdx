@@ -2319,6 +2319,33 @@ const threads = await room.getThreads({
 });
 ```
 
+You can also filter for metadata that begins with a specific string.
+
+```ts
+// Creating a thread with `{ assigned: "sales:stacy" } metadata
+await room.createThread({
+  body: {
+    // ...
+  },
+  // +++
+  metadata: { assigned: "sales:stacy" },
+  // +++
+});
+
+// Filtering for threads with `assigned` metadata that starts with `sales:`
+const threads = await room.getThreads({
+  query: {
+    // +++
+    metadata: {
+      assigned: {
+        startsWith: "sales:",
+      },
+    },
+    // +++
+  },
+});
+```
+
 ### Room.getThreadsSince
 
 Returns threads, and their associated inbox notifications, that have been
