@@ -230,16 +230,18 @@ function Component() {
 You can use TypeScript to type your custom metadata by editing your config file.
 Metadata properties can be `string`, `number`, or `boolean`.
 
-```ts file="liveblocks.config.ts" highlight="4-10"
+```ts file="liveblocks.config.ts"
 declare global {
   interface Liveblocks {
     // Set your custom metadata types
+    // +++
     ThreadMetadata: {
       // Example types, e.g. colors, coordinates
       color: string;
       x: number;
       y: number;
     };
+    // +++
 
     // Other types
     // ...
