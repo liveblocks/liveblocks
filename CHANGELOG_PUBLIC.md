@@ -32,7 +32,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Contributors
 
-ctnicholas, SugarDarius, pierrelevaillant
+ctnicholas, sugardarius, pierrelevaillant
 
 # Week 29 (2024-07-19)
 
