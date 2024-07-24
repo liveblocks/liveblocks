@@ -1,7 +1,6 @@
-import { wait } from "@liveblocks/core";
+import { nanoid, wait } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
-import { nanoid } from "nanoid";
 import React from "react";
 
 import {
@@ -181,11 +180,13 @@ describe("useDeleteAllInboxNotifications", () => {
         roomId,
         threadId: threads[0].id,
         readAt: null,
+        notifiedAt: new Date(2024, 3, 6),
       }),
       dummyThreadInboxNotificationData({
         roomId,
         threadId: threads[1].id,
         readAt: null,
+        notifiedAt: new Date(2024, 3, 5),
       }),
     ];
 

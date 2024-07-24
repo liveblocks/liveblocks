@@ -1,3 +1,9 @@
+## v2.4.0
+
+### `@liveblocks/client`
+
+- Add vanilla Comments and Notifications APIs to `Client` and `Room`.
+
 ## v2.3.0
 
 ### `@liveblocks/react-lexical`

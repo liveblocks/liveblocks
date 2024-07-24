@@ -1,8 +1,8 @@
 import "@testing-library/jest-dom";
 
 import type { ResolveUsersArgs } from "@liveblocks/core";
+import { nanoid } from "@liveblocks/core";
 import { renderHook, screen, waitFor } from "@testing-library/react";
-import { nanoid } from "nanoid";
 import React, { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
