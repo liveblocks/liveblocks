@@ -357,8 +357,8 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
       }, DEFAULT_DEDUPING_INTERVAL);
 
       store.updateThreadsAndNotifications(
-        updates.threads.modified,
-        updates.inboxNotifications.modified,
+        updates.threads.updated,
+        updates.inboxNotifications.updated,
         updates.threads.deleted,
         updates.inboxNotifications.deleted
       );

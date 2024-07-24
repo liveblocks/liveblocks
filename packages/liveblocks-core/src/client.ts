@@ -165,7 +165,7 @@ export type NotificationsApi<M extends BaseMetadata> = {
   }>;
 
   /**
-   * Gets the modified and deleted inbox notifications and their associated threads since the requested date.
+   * Gets the updated and deleted inbox notifications and their associated threads since the requested date.
    *
    * @example
    * const result = await client.getInboxNotifications();
@@ -174,11 +174,11 @@ export type NotificationsApi<M extends BaseMetadata> = {
    */
   getInboxNotificationsSince(options: { since: Date }): Promise<{
     inboxNotifications: {
-      modified: InboxNotificationData[];
+      updated: InboxNotificationData[];
       deleted: InboxNotificationDeleteInfo[];
     };
     threads: {
-      modified: ThreadData<M>[];
+      updated: ThreadData<M>[];
       deleted: ThreadDeleteInfo[];
     };
     requestedAt: Date;

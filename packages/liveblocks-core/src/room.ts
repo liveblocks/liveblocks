@@ -489,7 +489,7 @@ type CommentsApi<M extends BaseMetadata> = {
   }>;
 
   /**
-   * Returns the modified and deleted threads and their associated inbox notifications since the requested date.
+   * Returns the updated and deleted threads and their associated inbox notifications since the requested date.
    *
    * @example
    * const result = await room.getThreads();
@@ -498,11 +498,11 @@ type CommentsApi<M extends BaseMetadata> = {
    */
   getThreadsSince(options: { since: Date }): Promise<{
     threads: {
-      modified: ThreadData<M>[];
+      updated: ThreadData<M>[];
       deleted: ThreadDeleteInfo[];
     };
     inboxNotifications: {
-      modified: InboxNotificationData[];
+      updated: InboxNotificationData[];
       deleted: InboxNotificationDeleteInfo[];
     };
     requestedAt: Date;
@@ -1288,11 +1288,11 @@ function createCommentsApi<M extends BaseMetadata>(
 
       return {
         threads: {
-          modified: json.data.map(convertToThreadData),
+          updated: json.data.map(convertToThreadData),
           deleted: json.deletedThreads.map(convertToThreadDeleteInfo),
         },
         inboxNotifications: {
-          modified: json.inboxNotifications.map(convertToInboxNotificationData),
+          updated: json.inboxNotifications.map(convertToInboxNotificationData),
           deleted: json.deletedInboxNotifications.map(
             convertToInboxNotificationDeleteInfo
           ),
@@ -1302,11 +1302,11 @@ function createCommentsApi<M extends BaseMetadata>(
     } else if (response.status === 404) {
       return {
         threads: {
-          modified: [],
+          updated: [],
           deleted: [],
         },
         inboxNotifications: {
-          modified: [],
+          updated: [],
           deleted: [],
         },
         requestedAt: new Date(),

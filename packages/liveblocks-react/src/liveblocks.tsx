@@ -258,8 +258,8 @@ function makeExtrasForClient<U extends BaseUserMeta>(client: OpaqueClient) {
       });
 
       store.updateThreadsAndNotifications(
-        result.threads.modified,
-        result.inboxNotifications.modified,
+        result.threads.updated,
+        result.inboxNotifications.updated,
         result.threads.deleted,
         result.inboxNotifications.deleted,
         INBOX_NOTIFICATIONS_QUERY

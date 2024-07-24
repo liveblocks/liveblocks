@@ -2346,7 +2346,7 @@ const threads = await room.getThreads({
 ### Room.getThreadsSince
 
 Returns threads, and their associated inbox notifications, that have been
-modified or deleted since the requested date. Helpful when used in combination
+updated or deleted since the requested date. Helpful when used in combination
 with [`Room.getThreads`](#Room.getThreads) to initially fetch all threads, then
 receive updates later.
 
@@ -2357,25 +2357,25 @@ const { threads, inboxNotifications, requestedAt } = await room.getThreadsSince(
   { since: initial.requestedAt }
 );
 
-// { modified: [{ id: "th_s4368s...", type: "thread" }, ...], deleted: [...] }
+// { updated: [{ id: "th_s4368s...", type: "thread" }, ...], deleted: [...] }
 console.log(threads);
 
-// { modified: [{ id: "in_ds83hs...", kind: "thread", }, ...], deleted: [...] }
+// { updated: [{ id: "in_ds83hs...", kind: "thread", }, ...], deleted: [...] }
 console.log(inboxNotifications);
 ```
 
 <PropertiesList title="Returns">
   <PropertiesListItem
     name="threads"
-    detailedType="{ modified: ThreadData[], deleted: ThreadDeleteInfo[] }"
+    detailedType="{ updated: ThreadData[], deleted: ThreadDeleteInfo[] }"
   >
-    Threads that have been modified or deleted since the requested date.
+    Threads that have been updated or deleted since the requested date.
   </PropertiesListItem>
   <PropertiesListItem
     name="inboxNotifications"
-    detailedType="{ modified: InboxNotificationData[], deleted: InboxNotificationDeleteInfo[] }"
+    detailedType="{ updated: InboxNotificationData[], deleted: InboxNotificationDeleteInfo[] }"
   >
-    Inbox notifications that have been modified or deleted since the requested
+    Inbox notifications that have been updated or deleted since the requested
     date.
   </PropertiesListItem>
   <PropertiesListItem name="requestedAt" type="Date">
@@ -2385,7 +2385,7 @@ console.log(inboxNotifications);
 
 <PropertiesList title="Options">
   <PropertiesListItem name="since" type="Date">
-    Only return threads that have been modified or deleted after this date.
+    Only return threads that have been updated or deleted after this date.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -2849,8 +2849,8 @@ console.log(threads);
 
 ### Client.getInboxNotificationsSince
 
-Returns the modified and deleted inbox notifications and their associated
-threads since the requested date. Helpful when used in combination with
+Returns the updated and deleted inbox notifications and their associated threads
+since the requested date. Helpful when used in combination with
 [`Client.getInboxNotifications`](#Client.getInboxNotifications) to initially
 fetch all notifications, then receive updates later.
 
@@ -2860,26 +2860,26 @@ const initial = await client.getInboxNotifications();
 const { inboxNotifications, threads, requestedAt } =
   await client.getInboxNotificationsSince({ since: initial.requestedAt });
 
-// { modified: [{ id: "in_ds83hs...", kind: "thread", }, ...], deleted: [...] }
+// { updated: [{ id: "in_ds83hs...", kind: "thread", }, ...], deleted: [...] }
 console.log(inboxNotifications);
 
-// { modified: [{ id: "th_s4368s...", type: "thread" }, ...], deleted: [...] }
+// { updated: [{ id: "th_s4368s...", type: "thread" }, ...], deleted: [...] }
 console.log(threads);
 ```
 
 <PropertiesList title="Returns">
   <PropertiesListItem
     name="inboxNotifications"
-    detailedType="{ modified: InboxNotificationData[], deleted: InboxNotificationDeleteInfo[] }"
+    detailedType="{ updated: InboxNotificationData[], deleted: InboxNotificationDeleteInfo[] }"
   >
-    Inbox notifications that have been modified or deleted since the requested
+    Inbox notifications that have been updated or deleted since the requested
     date.
   </PropertiesListItem>
   <PropertiesListItem
     name="threads"
-    detailedType="{ modified: ThreadData[], deleted: ThreadDeleteInfo[] }"
+    detailedType="{ updated: ThreadData[], deleted: ThreadDeleteInfo[] }"
   >
-    Threads that have been modified or deleted since the requested date.
+    Threads that have been updated or deleted since the requested date.
   </PropertiesListItem>
   <PropertiesListItem name="requestedAt" type="Date">
     The request date to use for subsequent polling.
@@ -2888,7 +2888,7 @@ console.log(threads);
 
 <PropertiesList title="Options">
   <PropertiesListItem name="since" type="Date">
-    Only the inbox notifications modified or deleted after this date will be
+    Only the inbox notifications updated or deleted after this date will be
     returned.
   </PropertiesListItem>
 </PropertiesList>

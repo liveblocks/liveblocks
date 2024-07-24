@@ -132,11 +132,11 @@ export function createNotificationsApi<M extends BaseMetadata>({
 
     return {
       threads: {
-        modified: json.threads.map(convertToThreadData),
+        updated: json.threads.map(convertToThreadData),
         deleted: json.deletedThreads.map(convertToThreadDeleteInfo),
       },
       inboxNotifications: {
-        modified: json.inboxNotifications.map(convertToInboxNotificationData),
+        updated: json.inboxNotifications.map(convertToInboxNotificationData),
         deleted: json.deletedInboxNotifications.map(
           convertToInboxNotificationDeleteInfo
         ),
