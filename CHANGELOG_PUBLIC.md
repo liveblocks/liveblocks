@@ -15,7 +15,14 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 30 (2024-07-26)
 
+## Documentation
+
+- Add info on [typing thread metadata](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Typed-metadata) to React UI API reference.
+- Various small fixes.
+
 ## Contributors
+
+ctnicholas
 
 # Week 29 (2024-07-19)
 
