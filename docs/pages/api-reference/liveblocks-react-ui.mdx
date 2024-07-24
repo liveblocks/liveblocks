@@ -227,30 +227,24 @@ function Component() {
 
 ###### Typed metadata
 
-Optionally, you can type `metadata` by importing your custom `ThreadMetadata`
-type from your config file.
+You can use TypeScript to type your custom metadata by editing your config file.
+Metadata properties can be `string`, `number`, or `boolean`.
 
-```tsx highlight="2,7"
-import { Composer } from "@liveblocks/react-ui";
-import { ThreadMetadata } from "../liveblocks.config";
+```ts file="liveblocks.config.ts" highlight="4-10"
+declare global {
+  interface Liveblocks {
+    // Set your custom metadata types
+    ThreadMetadata: {
+      // Example types, e.g. colors, coordinates
+      color: string;
+      x: number;
+      y: number;
+    };
 
-// Creates a new thread with custom metadata
-function Component() {
-  return (
-    <Composer<ThreadMetadata>
-      metadata={{
-        // Custom metadata with typing
-        color: "purple",
-      }}
-    />
-  );
+    // Other types
+    // ...
+  }
 }
-```
-
-```tsx file="liveblocks.config.ts"
-export type ThreadMetadata = {
-  color: string;
-};
 ```
 
 ##### Replying to a thread
