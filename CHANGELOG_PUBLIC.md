@@ -22,13 +22,13 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Dashboard
 
-- Add room search functionality in the Rooms tab
-- Include creation dates in the rooms table list
-- Fix number formatting issues for document sizes
-- Implement sorting options by room ID, last connection, comments count, document size, and creation date
-- Display the number of currently online users on the room details page
-- Add room deletion option in the detail page menu
-- Improve rooms table list responsiveness on mobile
+- Add room search functionality in the Rooms tab of a project.
+- Include creation dates in the rooms table list.
+- Fix number formatting issues for document sizes.
+- Implement sorting options by room ID, last connection, comments count, document size, and creation date.
+- Display the number of currently online users on the room details page.
+- Add room deletion option in the detail page menu.
+- Improve rooms table list responsiveness on mobile.
 
 ## Contributors
 
