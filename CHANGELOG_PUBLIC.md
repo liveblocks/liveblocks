@@ -20,9 +20,19 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 - Add info on [typing thread metadata](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Typed-metadata) to React UI API reference.
 - Various small fixes.
 
+## Dashboard
+
+- Add room search functionality in the Rooms tab
+- Include creation dates in the rooms table list
+- Fix number formatting issues for document sizes
+- Implement sorting options by room ID, last connection, comments count, document size, and creation date
+- Display the number of currently online users on the room details page
+- Add room deletion option in the detail page menu
+- Improve rooms table list responsiveness on mobile
+
 ## Contributors
 
-ctnicholas
+ctnicholas, SugarDarius, pierrelevaillant
 
 # Week 29 (2024-07-19)
 
