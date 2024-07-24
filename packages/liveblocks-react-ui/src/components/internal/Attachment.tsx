@@ -8,6 +8,7 @@ import React, { useCallback, useMemo } from "react";
 import { CrossIcon } from "../../icons/Cross";
 import { classNames } from "../../utils/class-names";
 import { formatFileSize } from "../../utils/format-file-size";
+import { Tooltip } from "./Tooltip";
 
 interface FileAttachmentProps extends ComponentPropsWithoutRef<"div"> {
   name: string;
@@ -48,13 +49,13 @@ export function FileAttachment({
   return (
     <div
       className={classNames("lb-attachment lb-file-attachment", className)}
-      title={name}
       {...props}
     >
       <button
         className="lb-attachment-content"
         onClick={onContentClick}
         tabIndex={onContentClick ? undefined : -1}
+        title={name}
       >
         <div className="lb-attachment-icon">
           <svg
@@ -91,13 +92,18 @@ export function FileAttachment({
         </div>
       </button>
       {onDeleteClick && (
-        <button
-          className="lb-attachment-delete"
-          onClick={onDeleteClick}
-          onPointerDown={handleDeletePointerDown}
-        >
-          <CrossIcon />
-        </button>
+        // TODO: Use $.DELETE_ATTACHMENT
+        <Tooltip content="Delete attachment">
+          <button
+            className="lb-attachment-delete"
+            onClick={onDeleteClick}
+            onPointerDown={handleDeletePointerDown}
+            // TODO: Use $.DELETE_ATTACHMENT
+            aria-label="Delete attachment"
+          >
+            <CrossIcon />
+          </button>
+        </Tooltip>
       )}
     </div>
   );

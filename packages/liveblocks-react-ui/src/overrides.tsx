@@ -46,6 +46,7 @@ export interface ComposerOverrides {
   COMPOSER_INSERT_MENTION: string;
   COMPOSER_INSERT_EMOJI: string;
   COMPOSER_ADD_ATTACHMENTS: string;
+  COMPOSER_DELETE_ATTACHMENT: string;
   COMPOSER_PLACEHOLDER: string;
   COMPOSER_SEND: string;
 }
@@ -105,6 +106,7 @@ export const defaultOverrides: Overrides = {
   COMPOSER_INSERT_MENTION: "Mention someone",
   COMPOSER_INSERT_EMOJI: "Add emoji",
   COMPOSER_ADD_ATTACHMENTS: "Attach files",
+  COMPOSER_DELETE_ATTACHMENT: "Delete attachment",
   COMPOSER_PLACEHOLDER: "Write a comment…",
   COMPOSER_SEND: "Send",
   COMMENT_EDITED: "(edited)",
