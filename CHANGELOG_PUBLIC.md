@@ -15,6 +15,8 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 30 (2024-07-26)
 
+## v2.4.0
+
 ### `@liveblocks/client`
 
 - Add vanilla [Comments](https://liveblocks.io/docs/api-reference/liveblocks-client#Comments) and [Notifications](https://liveblocks.io/docs/api-reference/liveblocks-client#Notifications) APIs to `Client` and `Room`, enabling these products outside of React.
