@@ -32,6 +32,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 - Include creation dates in the rooms table list.
 - Fix number formatting issues for document sizes.
 - Implement sorting options by room ID, last connection date, comments count, documents size, and creation date.
+- Improve date formatting across the dashboard. Now using more human-readable relative dates, with absolute dates displayed on hover.
 - Display the number of currently online users on the room details page.
 - Add room deletion option in the detail page menu.
 - Improve rooms table list responsiveness on mobile.
