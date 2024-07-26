@@ -10,7 +10,7 @@ import { rest } from "msw";
 
 export function mockGetThreads(
   resolver: ResponseResolver<
-    RestRequest<never, never>,
+    RestRequest<never, { roomId: string }>,
     RestContext,
     {
       data: ThreadData<any>[];

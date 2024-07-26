@@ -13,6 +13,35 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
 
+# Week 30 (2024-07-26)
+
+## v2.4.0
+
+### `@liveblocks/client`
+
+- Add vanilla [Comments](https://liveblocks.io/docs/api-reference/liveblocks-client#Comments) and [Notifications](https://liveblocks.io/docs/api-reference/liveblocks-client#Notifications) APIs to `Client` and `Room`, enabling these products outside of React.
+
+## Documentation
+
+- Add info on new [Comments](https://liveblocks.io/docs/api-reference/liveblocks-client#Comments) and [Notifications](https://liveblocks.io/docs/api-reference/liveblocks-client#Notifications) methods in `@liveblocks/client` API reference.
+- Add info on [typing thread metadata](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Typed-metadata) to React UI API reference.
+- Various small fixes.
+
+## Dashboard
+
+- Add room search functionality in the Rooms tab of a project.
+- Include creation dates in the rooms table list.
+- Fix number formatting issues for document sizes.
+- Implement sorting options by room ID, last connection date, comments count, documents size, and creation date.
+- Improve date formatting across the dashboard. Now using more human-readable relative dates, with absolute dates displayed on hover.
+- Display the number of currently online users on the room details page.
+- Add room deletion option in the detail page menu.
+- Improve rooms table list responsiveness on mobile.
+
+## Contributors
+
+guillaumesalles, ctnicholas, sugardarius, pierrelevaillant, nimeshnayaju
+
 # Week 29 (2024-07-19)
 
 ## v2.3.0

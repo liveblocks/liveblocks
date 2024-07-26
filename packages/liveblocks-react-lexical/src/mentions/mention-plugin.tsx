@@ -209,7 +209,14 @@ export function MentionPlugin() {
     return editor.registerMutationListener(
       MentionNode,
       (mutations, payload) => {
-        if (payload.updateTags.has("collaboration")) return;
+        // Ignore mutations to MentionNode (creation/updates/deletions) that are caused by collaboration (remote users) or history merge.
+        if (
+          payload.updateTags.has("collaboration") ||
+          payload.updateTags.has("history-merge")
+        ) {
+          return;
+        }
+
         $handleMutation(mutations, payload);
       }
     );
