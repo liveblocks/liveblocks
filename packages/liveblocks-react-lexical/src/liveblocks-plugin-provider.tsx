@@ -1,5 +1,4 @@
 import { autoUpdate, useFloating } from "@floating-ui/react-dom";
-import { CollaborationContext } from "@lexical/react/LexicalCollaborationContext";
 import { CollaborationPlugin } from "@lexical/react/LexicalCollaborationPlugin";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { Provider } from "@lexical/yjs";
@@ -9,7 +8,6 @@ import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import type { MutableRefObject } from "react";
 import React, {
   useCallback,
-  useContext,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -136,7 +134,6 @@ export const LiveblocksPlugin = ({
     client[kInternal].resolveMentionSuggestions !== undefined;
   const [editor] = useLexicalComposerContext();
   const room = useRoom();
-  const collabContext = useContext(CollaborationContext);
   const previousRoomIdRef = useRef<string | null>(null);
 
   if (!editor.hasNodes([ThreadMarkNode, MentionNode])) {
@@ -186,9 +183,7 @@ export const LiveblocksPlugin = ({
   }, [room]);
 
   // Get user info or allow override from props
-  const info = useSelf((me) => me.info);
-  const username = info?.name || ""; // use empty string to prevent random name
-  const cursorcolor = info?.color as string | undefined;
+  const self = useSelf();
 
   const providerFactory = useCallback(
     (id: string, yjsDocMap: Map<string, Doc>): Provider => {
@@ -221,10 +216,6 @@ export const LiveblocksPlugin = ({
     [room]
   );
 
-  useEffect(() => {
-    collabContext.name = username || "";
-  }, [collabContext, username]);
-
   const root = useRootElement();
 
   useLayoutEffect(() => {
@@ -255,17 +246,19 @@ export const LiveblocksPlugin = ({
         }}
       />
 
-      <CollaborationPlugin
-        // Setting the key allows us to reset the internal Y.doc used by useYjsCollaboration
-        // without implementing `reload` event
-        key={room.id}
-        id={room.id}
-        providerFactory={providerFactory}
-        username={username}
-        cursorColor={cursorcolor}
-        cursorsContainerRef={containerRef}
-        shouldBootstrap={true}
-      />
+      {self && (
+        <CollaborationPlugin
+          // Setting the key allows us to reset the internal Y.doc used by useYjsCollaboration
+          // without implementing `reload` event
+          key={room.id}
+          id={room.id}
+          providerFactory={providerFactory}
+          username={self.info?.name ?? ""} // use empty string to prevent random name
+          cursorColor={self.info?.color as string | undefined}
+          cursorsContainerRef={containerRef}
+          shouldBootstrap={true}
+        />
+      )}
 
       {hasResolveMentionSuggestions && <MentionPlugin />}
 
