@@ -1,3 +1,4 @@
+import { createInboxNotificationId } from "@liveblocks/core";
 import type {
   DOMConversionMap,
   DOMExportOutput,
@@ -7,7 +8,6 @@ import type {
   Spread,
 } from "lexical";
 import { $applyNodeReplacement, DecoratorNode } from "lexical";
-import { createInboxNotificationId } from "@liveblocks/core";
 import type { JSX } from "react";
 import * as React from "react";
 

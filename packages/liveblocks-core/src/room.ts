@@ -38,7 +38,7 @@ import { Batch } from "./lib/batch";
 import { Promise_withResolvers } from "./lib/controlledPromise";
 import { createCommentId, createThreadId } from "./lib/createIds";
 import { captureStackTrace } from "./lib/debug";
-import type { Callback, Observable, EventSource } from "./lib/EventSource";
+import type { Callback, EventSource, Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
