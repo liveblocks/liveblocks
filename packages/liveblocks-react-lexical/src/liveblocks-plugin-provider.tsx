@@ -42,14 +42,21 @@ export type EditorStatus =
   /* The editor state is sync with Liveblocks servers */
   | "synchronized";
 
-function getEditorStatus(
-  provider?: LiveblocksYjsProvider<never, never, never, never, never>
-): EditorStatus {
-  if (provider === undefined) {
-    return "not-loaded";
-  }
+function useProvider() {
+  const room = useRoom();
 
-  return provider.synced ? "synchronized" : "loading";
+  const subscribe = useCallback(
+    (onStoreChange: () => void) => {
+      return room[kInternal].onProviderUpdate.subscribe(onStoreChange);
+    },
+    [room]
+  );
+
+  const getSnapshot = useCallback(() => {
+    return room[kInternal].getProvider();
+  }, [room]);
+
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
 /**
@@ -61,28 +68,27 @@ function getEditorStatus(
  * - `synchronized`:  The editor state is sync with Liveblocks servers.
  */
 export function useEditorStatus(): EditorStatus {
-  const room = useRoom();
-  const provider = providersMap.get(room.id);
+  const provider = useProvider();
 
-  const [status, setStatus] = useState(getEditorStatus(provider));
+  const subscribe = useCallback(
+    (onStoreChange: () => void) => {
+      if (provider === undefined) return () => {};
+      provider.on("sync", onStoreChange);
+      return () => {
+        provider.off("sync", onStoreChange);
+      };
+    },
+    [provider]
+  );
 
-  useEffect(() => {
-    const provider = providersMap.get(room.id);
-
-    setStatus(getEditorStatus(provider));
-
+  const getSnapshot = useCallback(() => {
     if (provider === undefined) {
-      return;
+      return "not-loaded";
     }
+    return provider.synced ? "synchronized" : "loading";
+  }, [provider]);
 
-    const cb = () => setStatus(getEditorStatus(provider));
-
-    provider.on("sync", cb);
-
-    return () => provider.off("sync", cb);
-  }, [room]);
-
-  return status;
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
 export type LiveblocksPluginProps = {
