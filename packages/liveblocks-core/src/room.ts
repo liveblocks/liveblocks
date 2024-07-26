@@ -37,7 +37,7 @@ import { assertNever, nn } from "./lib/assert";
 import { Batch } from "./lib/batch";
 import { Promise_withResolvers } from "./lib/controlledPromise";
 import { captureStackTrace } from "./lib/debug";
-import type { Callback, Observable } from "./lib/EventSource";
+import type { Callback, Observable, EventSource } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
@@ -781,6 +781,12 @@ export type Room<
   reconnect(): void;
 };
 
+type Provider = {
+  synced: boolean;
+  on(event: "sync", listener: (synced: boolean) => void): void;
+  off(event: "sync", listener: (synced: boolean) => void): void;
+};
+
 /**
  * @private
  *
@@ -794,6 +800,12 @@ export type PrivateRoomApi<M extends BaseMetadata> = {
   presenceBuffer: Json | undefined;
   undoStack: readonly (readonly Readonly<HistoryOp<JsonObject>>[])[];
   nodeCount: number;
+
+  // For usage in Y.js provider
+  getProvider(): Provider | undefined;
+  setProvider(provider: Provider | undefined): void;
+
+  onProviderUpdate: Observable<void>;
 
   // For DevTools support (Liveblocks browser extension)
   getSelf_forDevTools(): DevTools.UserTreeNode | null;
@@ -893,6 +905,9 @@ type RoomState<
 
   idFactory: IdFactory | null;
   initialStorage: S;
+
+  provider: Provider | undefined;
+  readonly onProviderUpdate: EventSource<void>;
 
   clock: number;
   opClock: number;
@@ -1483,6 +1498,10 @@ export function createRoom<
 
     initialStorage,
     idFactory: null,
+
+    // Y.js
+    provider: undefined,
+    onProviderUpdate: makeEventSource(),
 
     // Storage
     clock: 0,
@@ -3047,6 +3066,17 @@ export function createRoom<
         get presenceBuffer() { return deepClone(context.buffer.presenceUpdates?.data ?? null) }, // prettier-ignore
         get undoStack() { return deepClone(context.undoStack) }, // prettier-ignore
         get nodeCount() { return context.nodes.size }, // prettier-ignore
+
+        getProvider() {
+          return context.provider;
+        },
+
+        setProvider(provider: Provider | undefined) {
+          context.provider = provider;
+          context.onProviderUpdate.notify();
+        },
+
+        onProviderUpdate: context.onProviderUpdate.observable,
 
         // send metadata when using a text editor
         reportTextEditor,
