@@ -23,6 +23,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Documentation
 
+- Add info on new [Comments](https://liveblocks.io/docs/api-reference/liveblocks-client#Comments) and [Notifications](https://liveblocks.io/docs/api-reference/liveblocks-client#Notifications) methods in `@liveblocks/client` API reference.
 - Add info on [typing thread metadata](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Typed-metadata) to React UI API reference.
 - Various small fixes.
 
