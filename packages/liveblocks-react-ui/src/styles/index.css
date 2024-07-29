@@ -1132,15 +1132,15 @@
   }
 
   :where(.lb-attachment-icon-background) {
-    fill-opacity: calc(1.2 * var(--lb-foreground-contrast));
+    fill-opacity: calc(1.5 * var(--lb-foreground-contrast));
   }
 
   :where(.lb-attachment-icon-fold) {
-    fill-opacity: calc(3 * var(--lb-foreground-contrast));
+    fill-opacity: calc(4 * var(--lb-foreground-contrast));
   }
 
   :where(.lb-attachment-icon-glyph) {
-    stroke-opacity: calc(6 * var(--lb-foreground-contrast));
+    stroke: var(--lb-foreground-tertiary);
   }
 
   :where(.lb-attachment-details) {

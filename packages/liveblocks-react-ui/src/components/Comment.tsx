@@ -349,7 +349,7 @@ function CommentFileAttachment({
       className={classNames("lb-comment-attachment", className)}
       {...props}
       name="image.png"
-      type="image/png"
+      mimeType="image/png"
       size={300}
       locale={$.locale}
       onContentClick={console.log}

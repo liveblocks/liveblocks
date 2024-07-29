@@ -345,7 +345,7 @@ function ComposerFileAttachment({
       className={classNames("lb-composer-attachment", className)}
       {...props}
       name={attachment.file.name}
-      type={attachment.file.type}
+      mimeType={attachment.file.type}
       size={attachment.file.size}
       locale={$.locale}
       onDeleteClick={handleDeleteClick}
