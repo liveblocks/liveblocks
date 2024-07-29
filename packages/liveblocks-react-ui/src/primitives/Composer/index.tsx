@@ -14,9 +14,9 @@ import {
   useFloating,
 } from "@floating-ui/react-dom";
 import type { CommentBody } from "@liveblocks/core";
+import { nanoid } from "@liveblocks/core";
 import { useSelf } from "@liveblocks/react";
 import { Slot, Slottable } from "@radix-ui/react-slot";
-import { nanoid } from "nanoid";
 import type {
   AriaAttributes,
   ChangeEvent,
