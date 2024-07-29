@@ -6,7 +6,7 @@ import type {
   Room,
 } from "@liveblocks/client";
 import type { BaseMetadata, DE, DM, DP, DS, DU } from "@liveblocks/core";
-import { ClientMsgCode, detectDupes } from "@liveblocks/core";
+import { ClientMsgCode, detectDupes, kInternal } from "@liveblocks/core";
 import { Observable } from "lib0/observable";
 import type * as Y from "yjs";
 
@@ -53,6 +53,10 @@ export class LiveblocksYjsProvider<
       updateDoc: this.updateDoc,
       fetchDoc: this.fetchDoc,
     });
+
+    // TODO: Display a warning if a provider is already attached to the room
+    room[kInternal].setProvider(this);
+
     // if we have a connectionId already during construction, use that
     this.awareness = new Awareness(this.rootDoc, this.room);
 
