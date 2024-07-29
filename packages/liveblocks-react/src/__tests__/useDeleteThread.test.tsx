@@ -1,7 +1,6 @@
-import { wait } from "@liveblocks/core";
+import { nanoid, wait } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
-import { nanoid } from "nanoid";
 import React from "react";
 
 import { dummyCommentData, dummyThreadData } from "./_dummies";

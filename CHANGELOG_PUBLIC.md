@@ -9,9 +9,87 @@ https://liveblocks.io/changelog
 
 TEAM MEMBERS
 adigau, ctnicholas, flowflorent, guillaumesalles, jrowny, marcbouchenoire,
-nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
+nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
+
+# Week 30 (2024-07-26)
+
+## v2.4.0
+
+### `@liveblocks/client`
+
+- Add vanilla [Comments](https://liveblocks.io/docs/api-reference/liveblocks-client#Comments) and [Notifications](https://liveblocks.io/docs/api-reference/liveblocks-client#Notifications) APIs to `Client` and `Room`, enabling these products outside of React.
+
+## Documentation
+
+- Add info on new [Comments](https://liveblocks.io/docs/api-reference/liveblocks-client#Comments) and [Notifications](https://liveblocks.io/docs/api-reference/liveblocks-client#Notifications) methods in `@liveblocks/client` API reference.
+- Add info on [typing thread metadata](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Typed-metadata) to React UI API reference.
+- Various small fixes.
+
+## Dashboard
+
+- Add room search functionality in the Rooms tab of a project.
+- Include creation dates in the rooms table list.
+- Fix number formatting issues for document sizes.
+- Implement sorting options by room ID, last connection date, comments count, documents size, and creation date.
+- Improve date formatting across the dashboard. Now using more human-readable relative dates, with absolute dates displayed on hover.
+- Display the number of currently online users on the room details page.
+- Add room deletion option in the detail page menu.
+- Improve rooms table list responsiveness on mobile.
+
+## Contributors
+
+guillaumesalles, ctnicholas, sugardarius, pierrelevaillant, nimeshnayaju
+
+# Week 29 (2024-07-19)
+
+## v2.3.0
+
+### `@liveblocks/react-lexical`
+
+- New default components: `AnchoredThreads` and `FloatingThreads` to display
+  threads that are tied to a specific part of the document, similar to Notion,
+  Linear, etc:
+  - [`FloatingThreads`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#FloatingThreads)
+    displays floating `Thread` components below text highlights in the editor.
+  - [`AnchoredThreads`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#AnchoredThreads)
+    displays a list of `Thread` components vertically alongside the editor.
+  - These components can be used in the same application to create a UI that
+    works on both mobile and desktop.
+
+### `@liveblocks/react`
+
+- Add `useDeleteInboxNotification` and `useDeleteAllInboxNotifications` hooks.
+- Fix `resolved` query not being applied when filtering threads with
+  `useThreads`.
+- Various refactorings to Suspense internals.
+
+### `@liveblocks/react-ui`
+
+- Add "Delete notification" action to `InboxNotification`.
+- Hide "Mark as read" action in `InboxNotification` when already read.
+- Improve keyboard navigation within emoji pickers.
+
+### `@liveblocks/node`
+
+- Add `deleteInboxNotification` and `deleteAllInboxNotifications` methods.
+
+## Examples
+
+- Added delete all notifications button to notifications examples.
+
+## Documentation
+
+- Open the config file by default in the interactive [broadcasting events tutorial](https://liveblocks.io/docs/tutorial/react/getting-started/broadcasting-events).
+
+## Website
+
+- Fix changelog images on mobile.
+
+## Contributors
+
+nimeshnayaju, ofoucherot, nvie, marcbouchenoire, dant2021, ctnicholas
 
 # Week 28 (2024-07-12)
 

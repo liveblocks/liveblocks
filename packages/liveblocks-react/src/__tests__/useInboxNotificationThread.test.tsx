@@ -1,9 +1,9 @@
 import "@testing-library/jest-dom";
 
+import { nanoid } from "@liveblocks/core";
 import { renderHook, waitFor } from "@testing-library/react";
 import { sorted } from "itertools";
 import { setupServer } from "msw/node";
-import { nanoid } from "nanoid";
 import React from "react";
 
 import {

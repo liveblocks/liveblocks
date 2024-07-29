@@ -69,7 +69,7 @@ Many primitives allow you to customize their parts by passing a `components`
 property. In this example, we’re modifying links in the comment, so that they’re
 purple and bold.
 
-```tsx highlight="13-15,21-28"
+```tsx
 import { CommentData } from "@liveblocks/client";
 import { Comment, CommentBodyLinkProps } from "@liveblocks/react-ui/primitives";
 
@@ -79,14 +79,17 @@ function MyComment({ comment }: { comment: CommentData }) {
     <div>
       <Comment.Body
         body={comment.body}
+        // +++
         components={{
           Link,
         }}
+        // +++
       />
     </div>
   );
 }
 
+// +++
 // Render a purple link in the comment, e.g. "https://liveblocks.io"
 function Link({ href, children }: CommentBodyLinkProps) {
   return (
@@ -95,6 +98,7 @@ function Link({ href, children }: CommentBodyLinkProps) {
     </Comment.Link>
   );
 }
+// +++
 ```
 
 ### Merge with your design system components

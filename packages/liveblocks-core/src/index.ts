@@ -85,6 +85,11 @@ export { kInternal } from "./internal";
 export { assert, assertNever, nn } from "./lib/assert";
 export type { AsyncResult, AsyncResultWithDataField } from "./lib/AsyncResult";
 export {
+  createCommentId,
+  createInboxNotificationId,
+  createThreadId,
+} from "./lib/createIds";
+export {
   deprecate,
   deprecateIf,
   errorIf,
@@ -96,6 +101,7 @@ export * as console from "./lib/fancy-console";
 export { freeze } from "./lib/freeze";
 export type { Json, JsonArray, JsonObject, JsonScalar } from "./lib/Json";
 export { isJsonArray, isJsonObject, isJsonScalar } from "./lib/Json";
+export { nanoid } from "./lib/nanoid";
 export type { NoInfr } from "./lib/NoInfer";
 export { objectToQuery } from "./lib/objectToQuery";
 export { makePoller } from "./lib/Poller";
