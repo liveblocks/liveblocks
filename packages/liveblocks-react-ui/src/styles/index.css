@@ -1081,6 +1081,15 @@
   box-shadow: 0 0 0 2px var(--lb-dynamic-background);
   opacity: 0;
 
+  /* Invisibly increase the button's hit target size */
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -4px;
+    z-index: -1;
+    border-radius: inherit;
+  }
+
   &:where(:hover, :focus-visible) {
     background: var(--lb-foreground-secondary);
     color: var(--lb-dynamic-background);
