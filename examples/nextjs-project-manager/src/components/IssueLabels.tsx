@@ -28,31 +28,46 @@ function Labels() {
   }, []);
 
   return (
-    <div className="text-sm flex flex-col gap-3 justify-start items-start font-medium">
+    <div className="text-sm flex gap-1.5 justify-start items-start font-medium max-w-full flex-wrap">
+      {LABELS.filter((label) => labels.includes(label.id)).map(
+        ({ id, text }) => (
+          <div
+            key={id}
+            className="text-sm font-medium rounded-full px-2 py-0.5 border shadow-xs flex items-center gap-1.5 select-none text-neutral-700"
+          >
+            <div className="bg-neutral-400/60 rounded-full w-2 h-2" />
+            {text}{" "}
+            <button
+              className="text-base leading-none pb-0.5 text-neutral-400"
+              onClick={() => removeLabel(id)}
+            >
+              ×
+            </button>
+          </div>
+        )
+      )}
       <select
         id="add-label"
         onInput={(e) => {
           addLabel(e.currentTarget.value);
         }}
-        className="block bg-transparent border-0 h-7 w-28 px-2 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-neutral-200 appearance-none"
+        className="flex items-center bg-transparent border-0 h-[26px] w-[26px] pl-1.5 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-neutral-200 appearance-none"
         value="add"
       >
         <option value="add" disabled hidden>
-          + Add label
+          ＋
         </option>
         {LABELS.map(({ id, text }) => (
-          <option key={id} value={id} disabled={labels.includes(id)}>
+          <option
+            key={id}
+            value={id}
+            disabled={labels.includes(id)}
+            className="text-sm"
+          >
             {text}
           </option>
         ))}
       </select>
-      {LABELS.filter((label) => labels.includes(label.id)).map(
-        ({ id, text }) => (
-          <div key={id}>
-            {text} <button onClick={() => removeLabel(id)}>x</button>
-          </div>
-        )
-      )}
     </div>
   );
 }

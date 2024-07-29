@@ -16,10 +16,12 @@ export function Issue() {
       <div className="flex-grow relative">
         <div className="absolute inset-0 flex flex-row">
           <div className="flex-grow h-full overflow-y-scroll">
-            <div className="max-w-screen-md mx-auto py-6">
-              <Editor />
-              <div className="border-t my-6" />
-              <Comments />
+            <div className="max-w-[840px] mx-auto py-6">
+              <div className="px-12">
+                <Editor />
+                <div className="border-t my-6" />
+                <Comments />
+              </div>
             </div>
           </div>
           <div className="border-l flex-grow-0 flex-shrink-0 w-[280px] px-4 flex flex-col gap-4">
@@ -31,7 +33,7 @@ export function Issue() {
             </div>
 
             <div>
-              <div className="text-xs font-medium text-neutral-600 mb-2 h-10 flex items-center">
+              <div className="text-xs font-medium text-neutral-600 mb-0 h-10 flex items-center">
                 Labels
               </div>
               <IssueLabels />
