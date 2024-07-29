@@ -5,7 +5,7 @@ import {
   useMutation,
   useStorage,
 } from "@liveblocks/react/suspense";
-import { priorityStates, progressStates } from "@/config";
+import { PRIORITY_STATES, PROGRESS_STATES } from "@/config";
 import { getUsers } from "@/database";
 
 export function IssueProperties() {
@@ -33,7 +33,7 @@ function Properties() {
         className="block bg-transparent border-0 h-7 w-28 px-2 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-neutral-200 appearance-none"
         value={properties.progress || undefined}
       >
-        {progressStates.map(({ id, text }) => (
+        {PROGRESS_STATES.map(({ id, text }) => (
           <option key={id} value={id}>
             {text}
           </option>
@@ -48,7 +48,7 @@ function Properties() {
         className="block bg-transparent border-0 h-7 w-28 px-2 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-neutral-200 appearance-none"
         value={properties.priority || undefined}
       >
-        {priorityStates.map(({ id, text }) => (
+        {PRIORITY_STATES.map(({ id, text }) => (
           <option key={id} value={id}>
             {text}
           </option>

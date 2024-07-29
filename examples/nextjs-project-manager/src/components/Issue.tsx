@@ -2,6 +2,7 @@ import { Presence } from "@/components/Presence";
 import { Comments } from "@/components/Comments";
 import { Editor } from "@/components/Editor";
 import { IssueProperties } from "@/components/IssueProperties";
+import { IssueLabels } from "@/components/IssueLabels";
 
 export function Issue() {
   return (
@@ -21,13 +22,20 @@ export function Issue() {
               <Comments />
             </div>
           </div>
-          <div className="border-l flex-grow-0 flex-shrink-0 w-[280px] px-4">
-            <div className="flex justify-between h-10 items-center mb-2">
-              <div className="text-xs font-medium text-neutral-600">
+          <div className="border-l flex-grow-0 flex-shrink-0 w-[280px] px-4 flex flex-col gap-4">
+            <div>
+              <div className="text-xs font-medium text-neutral-600 mb-2 h-10 flex items-center">
                 Properties
               </div>
+              <IssueProperties />
             </div>
-            <IssueProperties />
+
+            <div>
+              <div className="text-xs font-medium text-neutral-600 mb-2 h-10 flex items-center">
+                Labels
+              </div>
+              <IssueLabels />
+            </div>
           </div>
         </div>
       </div>
