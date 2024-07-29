@@ -1,17 +1,17 @@
 import { Room } from "@/app/Room";
-import { Logo } from "@/components/Logo";
 import RoomErrors from "@/components/RoomErrors";
 import { Issue } from "@/components/Issue";
 import { Inbox } from "@/components/Inbox";
+import { Nav } from "@/components/Nav";
 
-export default function PageInbox() {
+export default function PageHome() {
   return (
     <Room>
       <div className="flex flex-row h-full">
         <nav className="p-2 w-[250px]">
-          <div>Liveblocks</div>
+          <Nav />
         </nav>
-        <main className="m-2 border flex-grow bg-white rounded flex flex-row">
+        <main className="m-2 border flex-grow bg-neutral-50 rounded flex flex-row overflow-hidden">
           <div className="border-r w-[400px]">
             <Inbox />
           </div>
