@@ -1,0 +1,37 @@
+{
+  "name": "@liveblocks-examples/nextjs-comments-audio",
+  "description": "This example shows how to build an audio player with comments using Liveblocks, and Next.js.",
+  "license": "Apache-2.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@lexical/react": "^0.16.1",
+    "@liveblocks/client": "^2.4.0",
+    "@liveblocks/node": "^2.4.0",
+    "@liveblocks/react": "^2.4.0",
+    "@liveblocks/react-lexical": "^2.4.0",
+    "@liveblocks/react-ui": "^2.4.0",
+    "@types/node": "20.3.1",
+    "@types/react-dom": "18.2.5",
+    "autoprefixer": "^10.4.17",
+    "classnames": "^2.5.1",
+    "lexical": "^0.16.1",
+    "next": "^14.2.5",
+    "postcss": "^8.4.33",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-error-boundary": "^4.0.11",
+    "sonner": "^1.5.0",
+    "tailwindcss": "^3.4.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "prettier": "^3.3.2",
+    "typescript": "^5.5.4"
+  }
+}
