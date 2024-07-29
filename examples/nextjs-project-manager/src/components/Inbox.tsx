@@ -72,7 +72,9 @@ function SmallInboxNotification({
         </div>
       </div>
       <div className="flex-grow w-full overflow-hidden">
-        <div className="font-medium text-neutral-700">Document name</div>
+        <div className="font-medium text-neutral-700 truncate">
+          LB-598 - Prevent users closing the tab when not synched
+        </div>
         <div className="text-xs text-neutral-400 w-full truncate">
           {user.name} commented: {stringifyCommentBody(thread.comments[0].body)}
         </div>

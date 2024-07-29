@@ -8,9 +8,7 @@ export function Issue() {
   return (
     <div className="h-full flex flex-col">
       <header className="flex justify-between border-b h-10 px-4 items-center">
-        <div className="text-sm font-medium text-neutral-700">
-          Document name
-        </div>
+        <div className="text-sm font-medium text-neutral-700">LB-598</div>
         <Presence />
       </header>
       <div className="flex-grow relative">
