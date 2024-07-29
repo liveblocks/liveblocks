@@ -1102,25 +1102,45 @@
     padding: calc(0.5 * var(--lb-spacing));
   }
 
-  :where(.lb-attachment-icon) {
+  :where(.lb-attachment-preview) {
+    --lb-dynamic-background: var(--lb-background);
+
     position: relative;
     display: flex;
     flex: none;
     justify-content: center;
     align-items: center;
-    overflow: hidden;
     aspect-ratio: 1;
     inline-size: 2.65rem;
     border-radius: calc(0.5 * var(--lb-radius));
+    background: var(--lb-dynamic-background);
 
     &::before {
       content: "";
       position: absolute;
       inset: 0;
-      background: var(--lb-foreground);
-      opacity: calc(1 * var(--lb-foreground-contrast));
+      border-radius: inherit;
+      box-shadow: inset 0 0 0 1px var(--lb-foreground-subtle);
       pointer-events: none;
     }
+  }
+
+  :where(.lb-attachment-icon) {
+    flex: none;
+    color: var(--lb-foreground);
+    vector-effect: non-scaling-stroke;
+  }
+
+  :where(.lb-attachment-icon-background) {
+    fill-opacity: calc(1.2 * var(--lb-foreground-contrast));
+  }
+
+  :where(.lb-attachment-icon-fold) {
+    fill-opacity: calc(3 * var(--lb-foreground-contrast));
+  }
+
+  :where(.lb-attachment-icon-glyph) {
+    stroke-opacity: calc(6 * var(--lb-foreground-contrast));
   }
 
   :where(.lb-attachment-details) {
@@ -1153,10 +1173,6 @@
 
   :where(.lb-attachment-content:not([tabindex="-1"])) {
     &:where(:hover, :focus-visible) {
-      :where(.lb-attachment-icon)::before {
-        opacity: calc(1.5 * var(--lb-foreground-contrast));
-      }
-
       :where(.lb-attachment-name) {
         color: var(--lb-foreground);
       }

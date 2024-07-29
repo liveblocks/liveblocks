@@ -57,8 +57,9 @@ export function FileAttachment({
         tabIndex={onContentClick ? undefined : -1}
         title={name}
       >
-        <div className="lb-attachment-icon">
+        <div className="lb-attachment-preview">
           <svg
+            className="lb-attachment-icon"
             width={40}
             height={40}
             viewBox="0 0 40 40"
@@ -66,24 +67,31 @@ export function FileAttachment({
             xmlns="http://www.w3.org/2000/svg"
           >
             <path
-              d="M30 15v16a2 2 0 0 1-2 2H12a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h10m8 8-8-8m8 8h-8V7"
-              stroke="currentColor"
-              strokeLinejoin="round"
+              fillRule="evenodd"
+              clipRule="evenodd"
+              d="M12 7a2 2 0 0 0-2 2v22a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V17.157c0-.181-.012-.361-.037-.54A2 2 0 0 0 28 15h-4a2 2 0 0 1-2-2V9a2 2 0 0 0-1.618-1.964A4 4 0 0 0 19.843 7H12Z"
+              fill="currentColor"
+              fillOpacity={0.2}
+              className="lb-attachment-icon-background"
+            />
+            <path
+              fillRule="evenodd"
+              clipRule="evenodd"
+              d="M20.382 7.036a4 4 0 0 1 2.29 1.136l6.156 6.156a4 4 0 0 1 1.136 2.29A2 2 0 0 0 28 15h-4a2 2 0 0 1-2-2V9a2 2 0 0 0-1.618-1.964Z"
+              fill="currentColor"
+              fillOpacity={0.4}
+              className="lb-attachment-icon-fold"
             />
 
-            <text
-              x="50%"
-              y={25}
-              dominantBaseline="middle"
-              textAnchor="middle"
-              fill="currentColor"
-              xmlSpace="preserve"
-              // fontSize={8} // 1 or 2 characters
-              fontSize={6} // 3 characters
-              fontWeight="500"
-            >
-              PNG
-            </text>
+            <path
+              d="m18 21 5 3-5 3v-6Z"
+              stroke="currentColor"
+              strokeWidth={1.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeOpacity={0.6}
+              className="lb-attachment-icon-glyph"
+            />
           </svg>
         </div>
         <div className="lb-attachment-details">
