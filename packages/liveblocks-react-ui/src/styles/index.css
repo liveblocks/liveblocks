@@ -706,7 +706,6 @@
 .lb-composer-attachments-drop-area {
   position: absolute;
   inset: 0;
-  z-index: 1;
   display: flex;
   place-content: center;
   place-items: center;

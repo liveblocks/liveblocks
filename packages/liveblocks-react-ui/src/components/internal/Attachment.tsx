@@ -5,6 +5,7 @@ import type {
 } from "react";
 import React, { memo, useCallback, useMemo } from "react";
 
+import { FLOATING_ELEMENT_SIDE_OFFSET } from "../../constants";
 import { CrossIcon } from "../../icons/Cross";
 import { classNames } from "../../utils/class-names";
 import { formatFileSize } from "../../utils/format-file-size";
@@ -135,7 +136,12 @@ export function FileAttachment({
       className={classNames("lb-attachment lb-file-attachment", className)}
       {...props}
     >
-      <Tooltip content={name} multiline>
+      <Tooltip
+        content={name}
+        multiline
+        // Take into account the delete button
+        sideOffset={FLOATING_ELEMENT_SIDE_OFFSET + 6}
+      >
         <button
           className="lb-attachment-content"
           onClick={onContentClick}
