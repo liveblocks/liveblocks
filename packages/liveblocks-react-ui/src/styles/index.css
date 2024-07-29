@@ -422,6 +422,7 @@
   position: relative;
   display: flex;
   align-items: center;
+  max-inline-size: 300px;
   min-block-size: calc(
     $lb-tooltip-shortcut-height + 2 * $lb-tooltip-additional-padding
   );
@@ -432,6 +433,7 @@
   box-shadow: var(--lb-tooltip-shadow);
   font-size: 0.75rem;
   line-height: 1;
+  overflow-wrap: anywhere;
   pointer-events: none;
 
   &::after {

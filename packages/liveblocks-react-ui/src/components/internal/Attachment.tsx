@@ -135,21 +135,22 @@ export function FileAttachment({
       className={classNames("lb-attachment lb-file-attachment", className)}
       {...props}
     >
-      <button
-        className="lb-attachment-content"
-        onClick={onContentClick}
-        tabIndex={onContentClick ? undefined : -1}
-        title={name}
-      >
-        <div className="lb-attachment-preview">
-          {/* TODO: Preview image if possible instead of icon */}
-          <FileAttachmentIcon mimeType={mimeType} />
-        </div>
-        <div className="lb-attachment-details">
-          <span className="lb-attachment-name">{name}</span>
-          <span className="lb-attachment-size">{formattedFileSize}</span>
-        </div>
-      </button>
+      <Tooltip content={name} multiline>
+        <button
+          className="lb-attachment-content"
+          onClick={onContentClick}
+          tabIndex={onContentClick ? undefined : -1}
+        >
+          <div className="lb-attachment-preview">
+            {/* TODO: Preview image if possible instead of icon */}
+            <FileAttachmentIcon mimeType={mimeType} />
+          </div>
+          <div className="lb-attachment-details">
+            <span className="lb-attachment-name">{name}</span>
+            <span className="lb-attachment-size">{formattedFileSize}</span>
+          </div>
+        </button>
+      </Tooltip>
       {onDeleteClick && (
         // TODO: Use $.DELETE_ATTACHMENT
         <Tooltip content="Delete attachment">
