@@ -23,11 +23,13 @@ export function formatFileSize(bytes: number, locale?: string) {
   }
 
   const value = bytes / BASE ** unit;
+  // Hide decimals for KB values above 10
+  const hideDecimals = unit === 1 ? value >= 10 : false;
 
   const formattedUnit = UNITS[unit];
   const formattedValue = numberFormat(locale, {
     minimumFractionDigits: 0,
-    maximumFractionDigits: 1,
+    maximumFractionDigits: hideDecimals ? 0 : 1,
   }).format(value);
 
   return `${formattedValue} ${formattedUnit}`;
