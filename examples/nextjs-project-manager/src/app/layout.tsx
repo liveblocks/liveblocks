@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "../globals.css";
-import { Suspense } from "react";
+import { ReactNode, Suspense } from "react";
 import { Providers } from "./Providers";
 
 export const metadata: Metadata = {
@@ -16,11 +16,7 @@ const inter = Inter({
   display: "swap",
 });
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={inter.className}>
       <head>
@@ -38,7 +34,7 @@ export default function RootLayout({
         />
       </head>
       <Suspense>
-        <body className="bg-neutral-200/50 text-gray-900 antialiased absolute inset-0 overflow-hidden">
+        <body className="bg-neutral-200/50 text-neutral-900 antialiased absolute inset-0 overflow-hidden">
           <Providers>{children}</Providers>
         </body>
       </Suspense>

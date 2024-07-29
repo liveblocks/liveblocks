@@ -1,17 +1,27 @@
 "use client";
 
 import { RoomProvider } from "@liveblocks/react/suspense";
+import { LiveList, LiveObject } from "@liveblocks/client";
 import { useSearchParams } from "next/navigation";
 import { ReactNode, useMemo } from "react";
-import { LiveObject } from "@liveblocks/core";
 
 export function Room({ children }: { children: ReactNode }) {
-  const roomId = useExampleRoomId("liveblocks:examples:nextjs-comments-audio");
+  const roomId = useExampleRoomId(
+    "liveblocks:examples:nextjs-project-manager-3554"
+  );
 
   return (
     <RoomProvider
       id={roomId}
-      initialStorage={{ meta: new LiveObject({ title: "Untitled issue" }) }}
+      initialStorage={{
+        meta: new LiveObject({ title: "Untitled issue" }),
+        properties: new LiveObject({
+          progress: null,
+          priority: null,
+          assignedTo: null,
+        }),
+        labels: new LiveList([]),
+      }}
     >
       {children}
     </RoomProvider>

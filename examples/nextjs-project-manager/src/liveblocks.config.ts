@@ -1,14 +1,8 @@
-import { LiveObject } from "@liveblocks/core";
-
-export type PresenceStates = "playing" | "seeking" | "paused";
+import { LiveList, LiveObject } from "@liveblocks/core";
+import { Label, PriorityState, ProgressState } from "@/config";
 
 declare global {
   interface Liveblocks {
-    // Each user's Presence, for room.getPresence, room.subscribe("others"), etc.
-    // Presence: {
-    //   state: PresenceStates;
-    //   time: number;
-    // };
     // Custom user info set when authenticating with a secret key
     UserMeta: {
       id: string; // Accessible through `user.id`
@@ -18,15 +12,16 @@ declare global {
         avatar: string;
       }; // Accessible through `user.info`
     };
-    // Custom metadata set on threads, for useThreads, useCreateThread, etc.
-    // ThreadMetadata: {
-    //   time: number | -1;
-    //   timePercentage: number | -1;
-    // };
     Storage: {
       meta: LiveObject<{
         title: string;
       }>;
+      properties: LiveObject<{
+        progress: ProgressState | null;
+        priority: PriorityState | null;
+        assignedTo: string | null;
+      }>;
+      labels: LiveList<Label>;
     };
   }
 }

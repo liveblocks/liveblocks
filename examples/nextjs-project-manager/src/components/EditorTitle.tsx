@@ -21,13 +21,6 @@ import {
 } from "lexical";
 
 export function EditorTitle() {
-  return (
-    <ClientSideSuspense fallback={null}>
-      <Title />
-    </ClientSideSuspense>
-  );
-}
-function Title() {
   const title = useStorage((root) => root.meta.title);
   const [editor] = useLexicalComposerContext();
 
