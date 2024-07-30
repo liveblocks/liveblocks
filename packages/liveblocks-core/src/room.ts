@@ -797,6 +797,8 @@ export type PrivateRoomApi<M extends BaseMetadata> = {
 
   createTextMention(userId: string, mentionId: string): Promise<Response>;
   deleteTextMention(mentionId: string): Promise<Response>;
+  listTextVersions(): Promise<Response>;
+  getTextVersion(version: string): Promise<Response>;
 
   // NOTE: These are only used in our e2e test app!
   simulate: {
@@ -1778,6 +1780,25 @@ export function createRoom<
         rootKey,
       }),
     });
+  }
+
+  async function listTextVersions() {
+    const authValue = await delegates.authenticate();
+    return fetchClientApi(config.roomId, "/y-versions/", authValue, {
+      method: "GET",
+    });
+  }
+
+  async function getTextVersion(version: string) {
+    const authValue = await delegates.authenticate();
+    return fetchClientApi(
+      config.roomId,
+      `/y-version/${encodeURIComponent(version)}`,
+      authValue,
+      {
+        method: "GET",
+      }
+    );
   }
 
   function sendMessages(messages: ClientMsg<P, E>[]) {
@@ -3020,6 +3041,10 @@ export function createRoom<
         createTextMention,
         // delete a text mention when using a text editor
         deleteTextMention,
+        // list verions of the document
+        listTextVersions,
+        // get a specific version
+        getTextVersion,
 
         // Support for the Liveblocks browser extension
         getSelf_forDevTools: () => selfAsTreeNode.current,

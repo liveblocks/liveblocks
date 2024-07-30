@@ -22,6 +22,7 @@ import { CommentPluginProvider } from "./comments/comment-plugin-provider";
 import { ThreadMarkNode } from "./comments/thread-mark-node";
 import { MentionNode } from "./mentions/mention-node";
 import { MentionPlugin } from "./mentions/mention-plugin";
+import { VersionProvider } from "./versions/VersionContext";
 
 // TODO: Replace by ref once I understand why useRef is not stable (?!)
 const providersMap = new Map<
@@ -262,8 +263,9 @@ export const LiveblocksPlugin = ({
       />
 
       {hasResolveMentionSuggestions && <MentionPlugin />}
-
-      <CommentPluginProvider>{children}</CommentPluginProvider>
+      <VersionProvider>
+        <CommentPluginProvider>{children}</CommentPluginProvider>
+      </VersionProvider>
     </>
   );
 };

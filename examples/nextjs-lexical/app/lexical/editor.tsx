@@ -13,6 +13,8 @@ import {
   LiveblocksPlugin,
   useEditorStatus,
   useIsThreadActive,
+  Version,
+  Versions,
 } from "@liveblocks/react-lexical";
 import FloatingToolbar from "./floating-toolbar";
 import NotificationsPopover from "../notifications-popover";
@@ -71,10 +73,14 @@ export default function Editor() {
           </div>
 
           <LiveblocksPlugin>
+            <Version />
             <FloatingComposer className="w-[350px]" />
 
             {/* Threads List */}
             <Suspense fallback={<Loading />}>
+              <div className="text-sm relative w-[350px] h-full overflow-auto border-l border-border/80">
+                <Versions />
+              </div>
               <Threads />
             </Suspense>
           </LiveblocksPlugin>

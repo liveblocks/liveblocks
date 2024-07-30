@@ -48,11 +48,13 @@ export default class yDocHandler extends Observable<unknown> {
     if (stateVector) {
       // Use server state to calculate a diff and send it
       try {
-        const localUpdate = Y.encodeStateAsUpdate(
-          this.doc,
-          Base64.toUint8Array(stateVector)
-        );
-        this.updateRoomDoc(Base64.fromUint8Array(localUpdate));
+        const local = Y.encodeStateAsUpdate(this.doc);
+        const diff = Y.diffUpdate(local, Base64.toUint8Array(stateVector));
+        Y.logUpdate(diff);
+        if (diff.length === 2 && diff.at(1) === 0 && diff.at(0) === 0) {
+          return;
+        }
+        this.updateRoomDoc(Base64.fromUint8Array(diff));
       } catch (e) {
         // something went wrong encoding local state to send to the server
         console.warn(e);

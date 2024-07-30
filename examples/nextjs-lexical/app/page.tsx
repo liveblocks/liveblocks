@@ -17,6 +17,7 @@ export default function Page() {
 
   return (
     <LiveblocksProvider
+      baseUrl="http://localhost:8787"
       authEndpoint="/api/liveblocks-auth"
       resolveUsers={async ({ userIds }) => {
         const searchParams = new URLSearchParams(
