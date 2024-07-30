@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  ClientSideSuspense,
-  useMutation,
-  useStorage,
-} from "@liveblocks/react/suspense";
+import { useMutation, useStorage } from "@liveblocks/react/suspense";
 import {
   ChangeEvent,
   useCallback,
@@ -19,8 +15,10 @@ import {
   COMMAND_PRIORITY_NORMAL,
   KEY_ARROW_UP_COMMAND,
 } from "lexical";
+import { useRoomData } from "@/hooks/useRoomData";
 
 export function EditorTitle() {
+  const { updateRoomMetadata } = useRoomData();
   const title = useStorage((root) => root.meta.title);
   const [editor] = useLexicalComposerContext();
 
@@ -31,6 +29,15 @@ export function EditorTitle() {
     },
     []
   );
+
+  // Add title to room metadata 2 secs after last change for use elsewhere
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      updateRoomMetadata({ title });
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [title]);
 
   // Go to editor when down arrow pressed
   const handleKeyDown = useCallback((e: KeyboardEvent<HTMLInputElement>) => {

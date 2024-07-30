@@ -26,24 +26,17 @@ export async function updateRoom(
   }
 }
 
-export async function updateMetadata(
-  roomId: string,
-  metadata: Record<string, string>
-) {
-  const room = await liveblocks.updateRoom(roomId, metadata);
-  console.log(room);
-}
-
 export async function createIssue() {
   const issueId = nanoid();
   const metadata: Metadata = {
+    title: "Untitled",
     progress: "none",
     priority: "none",
     assignedTo: "none",
     labels: [],
   };
 
-  const room = await liveblocks.createRoom(getRoomId(issueId), {
+  await liveblocks.createRoom(getRoomId(issueId), {
     defaultAccesses: ["room:write"],
     metadata,
   });

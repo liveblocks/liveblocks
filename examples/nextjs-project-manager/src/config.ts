@@ -31,6 +31,7 @@ export function getRoomId(issueId: string) {
 }
 
 export type Metadata = {
+  title: string;
   progress: ProgressState;
   priority: PriorityState;
   assignedTo: string | "none";
