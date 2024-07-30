@@ -12,6 +12,7 @@ import { ErrorBoundary } from "react-error-boundary";
 import { InboxNotificationData, stringifyCommentBody } from "@liveblocks/core";
 import { Avatar } from "@/components/Avatar";
 import classNames from "classnames";
+import { useRoomData } from "@/hooks/useRoomData";
 
 export function Inbox() {
   return (
@@ -34,10 +35,6 @@ function InboxNotifications() {
           inboxNotification={inboxNotification}
           selected={index === 0}
         />
-        // <InboxNotification
-        //   key={inboxNotification.id}
-        //   inboxNotification={inboxNotification}
-        // />
       ))}
     </InboxNotificationList>
   );
@@ -52,13 +49,15 @@ function SmallInboxNotification({
 }) {
   const thread = useInboxNotificationThread(inboxNotification.id);
   const { user } = useUser(thread.comments[0].userId);
+  const { roomData } = useRoomData();
 
-  if (!thread.comments[0].body) {
+  if (!thread.comments[0].body || !roomData) {
     return null;
   }
 
   return (
-    <div
+    <a
+      href={`/inbox/${roomData.metadata.issueId}`}
       className={classNames(
         "flex flex-row items-center px-3 py-2.5 gap-2 m-1 rounded",
         {
@@ -73,12 +72,12 @@ function SmallInboxNotification({
       </div>
       <div className="flex-grow w-full overflow-hidden">
         <div className="font-medium text-neutral-700 truncate">
-          LB-598 - Prevent users closing the tab when not synched
+          {roomData.metadata.title}
         </div>
         <div className="text-xs text-neutral-400 w-full truncate">
           {user.name} commented: {stringifyCommentBody(thread.comments[0].body)}
         </div>
       </div>
-    </div>
+    </a>
   );
 }

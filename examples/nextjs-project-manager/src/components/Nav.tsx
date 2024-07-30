@@ -16,7 +16,7 @@ export function Nav() {
         </button>
       </div>
       <Link className="" href="/inbox">
-        <div className="text-xs text-neutral-700 font-semibold p-2 bg-gray-200 rounded">
+        <div className="text-sm text-neutral-700 font-semibold p-2 bg-gray-200 rounded">
           Inbox
         </div>
       </Link>

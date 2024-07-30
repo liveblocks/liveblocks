@@ -5,7 +5,7 @@ import { ThreadData } from "@liveblocks/client";
 import { Composer, Thread } from "@liveblocks/react-ui";
 import { useState } from "react";
 
-export function Comments() {
+export function Comments({ issueId }: { issueId: string }) {
   return (
     <>
       <div className="font-medium">Comments</div>
@@ -18,7 +18,10 @@ export function Comments() {
         }
       >
         <ThreadList />
-        <Composer className="border border-neutral-200 my-4 rounded-lg overflow-hidden shadow-sm bg-white" />
+        <Composer
+          className="border border-neutral-200 my-4 rounded-lg overflow-hidden shadow-sm bg-white"
+          metadata={{ issueId }}
+        />
       </ClientSideSuspense>
     </>
   );

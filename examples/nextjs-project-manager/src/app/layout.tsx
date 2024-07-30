@@ -18,7 +18,7 @@ const inter = Inter({
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={inter.className}>
+    <html lang="en" className={`${inter.className} absolute inset-0`}>
       <head>
         <link
           href="https://liveblocks.io/favicon-32x32.png"
@@ -34,7 +34,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <Suspense>
-        <body className="bg-neutral-200/50 text-neutral-900 antialiased absolute inset-0 overflow-hidden">
+        <body className="bg-neutral-200/50 text-neutral-900 antialiased w-full h-full overflow-hidden">
           <Providers>{children}</Providers>
         </body>
       </Suspense>

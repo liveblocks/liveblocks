@@ -25,5 +25,8 @@ declare global {
         label: string[];
       };
     };
+    ThreadMetadata: {
+      issueId: string;
+    };
   }
 }

@@ -4,11 +4,13 @@ import { Editor } from "@/components/Editor";
 import { IssueProperties } from "@/components/IssueProperties";
 import { IssueLabels } from "@/components/IssueLabels";
 
-export function Issue() {
+export function Issue({ issueId }: { issueId: string }) {
   return (
     <div className="h-full flex flex-col">
       <header className="flex justify-between border-b h-10 px-4 items-center">
-        <div className="text-sm font-medium text-neutral-700">LB-598</div>
+        <div className="text-sm font-medium text-neutral-400">
+          LB-{issueId.slice(0, 5).toUpperCase()}
+        </div>
         <Presence />
       </header>
       <div className="flex-grow relative">
@@ -18,7 +20,7 @@ export function Issue() {
               <div className="px-12">
                 <Editor />
                 <div className="border-t my-6" />
-                <Comments />
+                <Comments issueId={issueId} />
               </div>
             </div>
           </div>

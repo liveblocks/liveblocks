@@ -19,6 +19,8 @@ export default async function PageIssue() {
     (room) => room.metadata.progress === "progress"
   );
   const todo = rooms.filter((room) => room.metadata.progress === "todo");
+  const none = rooms.filter((room) => room.metadata.progress === "none");
+  const done = rooms.filter((room) => room.metadata.progress === "done");
 
   return (
     <div className="flex flex-row h-full">
@@ -44,6 +46,18 @@ export default async function PageIssue() {
         {todo.map((room) => (
           <Row key={room.id} room={room} />
         ))}
+        <div className="bg-neutral-200/60 px-4 py-1.5 text-sm font-medium text-neutral-800 w-full">
+          None
+        </div>
+        {none.map((room) => (
+          <Row key={room.id} room={room} />
+        ))}
+        <div className="bg-neutral-200/60 px-4 py-1.5 text-sm font-medium text-neutral-800 w-full">
+          Done
+        </div>
+        {done.map((room) => (
+          <Row key={room.id} room={room} />
+        ))}
       </main>
     </div>
   );
@@ -54,8 +68,6 @@ function Row({ room }: { room: RoomWithMetadata }) {
     room.metadata;
 
   const assignedUser = assignedTo !== "none" ? getUser(assignedTo) : null;
-
-  console.log(assignedTo, assignedUser);
 
   const date = room.createdAt.toLocaleDateString("en-US", {
     month: "short",
