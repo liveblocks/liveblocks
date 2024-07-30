@@ -29,6 +29,7 @@ export async function updateRoom(
 export async function createIssue() {
   const issueId = nanoid();
   const metadata: Metadata = {
+    issueId,
     title: "Untitled",
     progress: "none",
     priority: "none",
@@ -42,4 +43,9 @@ export async function createIssue() {
   });
 
   redirect(`/issue/${issueId}`);
+}
+
+export async function getRooms() {
+  console.log("start");
+  return (await liveblocks.getRooms()).data;
 }

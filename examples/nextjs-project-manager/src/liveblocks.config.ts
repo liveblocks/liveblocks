@@ -1,5 +1,4 @@
-import { LiveList, LiveObject } from "@liveblocks/core";
-import { Label, PriorityState, ProgressState } from "@/config";
+import { LiveObject } from "@liveblocks/core";
 
 declare global {
   interface Liveblocks {
@@ -16,12 +15,6 @@ declare global {
       meta: LiveObject<{
         title: string;
       }>;
-      properties: LiveObject<{
-        progress: ProgressState | null;
-        priority: PriorityState | null;
-        assignedTo: string | null;
-      }>;
-      labels: LiveList<Label>;
     };
     RoomEvent: {
       type: "ROOM_UPDATED";

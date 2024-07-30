@@ -66,6 +66,7 @@ function Properties() {
       <select
         id="assigned-to"
         onInput={(e) => {
+          console.log(e.currentTarget.value);
           updateRoomMetadata({ assignedTo: e.currentTarget.value });
         }}
         className="block bg-transparent border-0 h-7 w-28 px-2 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-neutral-200 appearance-none"

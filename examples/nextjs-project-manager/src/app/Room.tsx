@@ -20,12 +20,6 @@ export function Room({
       id={roomId}
       initialStorage={{
         meta: new LiveObject({ title: "Untitled issue" }),
-        properties: new LiveObject({
-          progress: null,
-          priority: null,
-          assignedTo: null,
-        }),
-        labels: new LiveList([]),
       }}
     >
       {children}
