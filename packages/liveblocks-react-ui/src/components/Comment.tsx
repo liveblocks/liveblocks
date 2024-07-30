@@ -261,6 +261,10 @@ export const CommentReaction = forwardRef<
     [$, reaction]
   );
 
+  const stopPropagation = useCallback((event: SyntheticEvent) => {
+    event.stopPropagation();
+  }, []);
+
   const handlePressedChange = useCallback(
     (isPressed: boolean) => {
       if (isPressed) {
@@ -290,6 +294,7 @@ export const CommentReaction = forwardRef<
         asChild
         pressed={isActive}
         onPressedChange={handlePressedChange}
+        onClick={stopPropagation}
         disabled={disabled}
         ref={forwardedRef}
       >
