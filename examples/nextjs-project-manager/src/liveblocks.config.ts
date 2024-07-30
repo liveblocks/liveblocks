@@ -23,5 +23,14 @@ declare global {
       }>;
       labels: LiveList<Label>;
     };
+    RoomEvent: {
+      type: "ROOM_UPDATED";
+      roomId: string;
+    };
+    RoomData: {
+      metadata: {
+        label: string[];
+      };
+    };
   }
 }

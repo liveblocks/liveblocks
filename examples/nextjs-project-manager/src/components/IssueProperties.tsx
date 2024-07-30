@@ -1,12 +1,14 @@
 "use client";
 
+import { ClientSideSuspense } from "@liveblocks/react/suspense";
 import {
-  ClientSideSuspense,
-  useMutation,
-  useStorage,
-} from "@liveblocks/react/suspense";
-import { PRIORITY_STATES, PROGRESS_STATES } from "@/config";
+  PRIORITY_STATES,
+  PriorityState,
+  PROGRESS_STATES,
+  ProgressState,
+} from "@/config";
 import { getUsers } from "@/database";
+import { useRoomData } from "@/hooks/useRoomData";
 
 export function IssueProperties() {
   return (
@@ -17,21 +19,25 @@ export function IssueProperties() {
 }
 
 function Properties() {
-  const properties = useStorage((root) => root.properties);
+  const { roomData, updateRoomMetadata } = useRoomData();
 
-  const editProperty = useMutation(({ storage }, prop, value) => {
-    storage.get("properties").set(prop, value);
-  }, []);
+  if (!roomData) {
+    return null;
+  }
+
+  const { progress, priority, assignedTo } = roomData.metadata;
 
   return (
     <div className="text-sm flex flex-col gap-3 justify-start items-start font-medium">
       <select
         id="progress"
         onInput={(e) => {
-          editProperty("progress", e.currentTarget.value);
+          updateRoomMetadata({
+            progress: e.currentTarget.value as ProgressState,
+          });
         }}
         className="block bg-transparent border-0 h-7 w-28 px-2 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-neutral-200 appearance-none"
-        value={properties.progress || undefined}
+        value={progress}
       >
         {PROGRESS_STATES.map(({ id, text }) => (
           <option key={id} value={id}>
@@ -43,10 +49,12 @@ function Properties() {
       <select
         id="priority"
         onInput={(e) => {
-          editProperty("priority", e.currentTarget.value);
+          updateRoomMetadata({
+            priority: e.currentTarget.value as PriorityState,
+          });
         }}
         className="block bg-transparent border-0 h-7 w-28 px-2 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-neutral-200 appearance-none"
-        value={properties.priority || undefined}
+        value={priority}
       >
         {PRIORITY_STATES.map(({ id, text }) => (
           <option key={id} value={id}>
@@ -58,11 +66,12 @@ function Properties() {
       <select
         id="assigned-to"
         onInput={(e) => {
-          editProperty("assignedTo", e.currentTarget.value);
+          updateRoomMetadata({ assignedTo: e.currentTarget.value });
         }}
         className="block bg-transparent border-0 h-7 w-28 px-2 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-neutral-200 appearance-none"
-        value={properties.assignedTo || undefined}
+        value={assignedTo}
       >
+        <option value="none">No Assignee</option>
         {getUsers().map(({ id, info: { name } }) => (
           <option key={id} value={id}>
             {name}

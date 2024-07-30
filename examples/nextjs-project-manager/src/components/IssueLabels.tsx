@@ -1,11 +1,8 @@
 "use client";
 
-import {
-  ClientSideSuspense,
-  useMutation,
-  useStorage,
-} from "@liveblocks/react/suspense";
+import { ClientSideSuspense } from "@liveblocks/react/suspense";
 import { LABELS } from "@/config";
+import { useRoomData } from "@/hooks/useRoomData";
 
 export function IssueLabels() {
   return (
@@ -16,16 +13,13 @@ export function IssueLabels() {
 }
 
 function Labels() {
-  const labels = useStorage((root) => root.labels);
+  const { roomData, updateRoomMetadata } = useRoomData();
 
-  const addLabel = useMutation(({ storage }, labelId) => {
-    storage.get("labels").push(labelId);
-  }, []);
+  if (!roomData) {
+    return null;
+  }
 
-  const removeLabel = useMutation(({ storage }, labelId) => {
-    const index = storage.get("labels").findIndex((label) => label === labelId);
-    storage.get("labels").delete(index);
-  }, []);
+  const labels = roomData.metadata.labels;
 
   return (
     <div className="text-sm flex gap-1.5 justify-start items-start font-medium max-w-full flex-wrap">
@@ -39,7 +33,11 @@ function Labels() {
             {text}{" "}
             <button
               className="text-base leading-none pb-0.5 text-neutral-400"
-              onClick={() => removeLabel(id)}
+              onClick={() => {
+                updateRoomMetadata({
+                  labels: roomData.metadata.labels.filter((val) => val !== id),
+                });
+              }}
             >
               ×
             </button>
@@ -49,7 +47,9 @@ function Labels() {
       <select
         id="add-label"
         onInput={(e) => {
-          addLabel(e.currentTarget.value);
+          updateRoomMetadata({
+            labels: [...roomData.metadata.labels, e.currentTarget.value],
+          });
         }}
         className="flex items-center bg-transparent border-0 h-[26px] w-[26px] pl-1.5 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-neutral-200 appearance-none"
         value="add"
