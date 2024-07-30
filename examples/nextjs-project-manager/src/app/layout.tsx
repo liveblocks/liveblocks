@@ -34,7 +34,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <Suspense>
-        <body className="bg-neutral-200/50 text-neutral-900 antialiased absolute inset-0 overflow-hidden">
+        <body className="bg-neutral-200/50 text-neutral-900 antialiased absolute inset-0 h-full w-full overflow-hidden">
           <Providers>{children}</Providers>
         </body>
       </Suspense>
