@@ -637,8 +637,8 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
   ) => {
     const self = useSelf();
     const isDisabled = useMemo(
-      () => disabled || !self?.canComment,
-      [disabled, self?.canComment]
+      () => disabled || (self ? !self.canComment : false),
+      [disabled, self?.canComment] // eslint-disable-line react-hooks/exhaustive-deps
     );
     const { editor, validate, setFocused } = useComposerEditorContext();
     const { submit, focus, select, isEmpty, isFocused } = useComposer();
