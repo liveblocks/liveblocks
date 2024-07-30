@@ -21,16 +21,33 @@ function Example() {
       {threads.map((thread) => (
         <Thread key={thread.id} thread={thread} className="thread" />
       ))}
-      <Composer className="composer" />
+      <Composer className="composer"/>
     </main>
   );
 }
 
 export default function Page() {
-  const roomId = useExampleRoomId("liveblocks:examples:nextjs-comments");
+  // 10 rooms are created for the example
+  const exampleIds = Array.from({ length: 1 }, (_, i) => i + 1);
 
   return (
-    <RoomProvider id={roomId}>
+    <div>
+      {exampleIds.map((exampleId) => (
+        <Room key={exampleId} exampleId={exampleId.toString()} />
+      ))}
+    </div>
+  );
+}
+
+function Room(props: { roomId?: string; exampleId: string }) {
+  // const roomId = useExampleRoomId("liveblocks:examples:nextjs-comments");
+  const roomId =
+    props.roomId ?? props.exampleId
+      ? `liveblocks:examples:nextjs-comments:${props.exampleId}`
+      : "liveblocks:examples:nextjs-comments";
+
+  return (    
+    <RoomProvider id={roomId} autoConnect={false}>
       <ErrorBoundary
         fallback={
           <div className="error">There was an error while getting threads.</div>
