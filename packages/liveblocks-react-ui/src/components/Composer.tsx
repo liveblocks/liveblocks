@@ -380,12 +380,14 @@ const ComposerWithContext = forwardRef<
         onFocus={handleFocus}
         onBlur={handleBlur}
       >
+        {/* TODO: Understand why composer won't allow to be focused */}
         <ComposerPrimitive.Editor
           className="lb-composer-editor"
           onClick={handleEditorClick}
           placeholder={$.COMPOSER_PLACEHOLDER}
           defaultValue={defaultValue}
-          disabled={isDisabled}
+          // disabled={isDisabled}
+          disabled={false} // check if relevant
           autoFocus={autoFocus}
           components={editorComponents}
           dir={$.dir}
@@ -396,13 +398,13 @@ const ComposerWithContext = forwardRef<
               {hasResolveMentionSuggestions && (
                 <ComposerInsertMentionEditorAction
                   label={$.COMPOSER_INSERT_MENTION}
-                  disabled={isDisabled}
+                  disabled={false}
                 />
               )}
               <ComposerInsertEmojiEditorAction
                 label={$.COMPOSER_INSERT_EMOJI}
                 onPickerOpenChange={setEmojiPickerOpen}
-                disabled={isDisabled}
+                disabled={false}
               />
             </div>
             {showAttribution && <Attribution />}
@@ -413,11 +415,12 @@ const ComposerWithContext = forwardRef<
                     content={$.COMPOSER_SEND}
                     shortcut={<ShortcutTooltipKey name="enter" />}
                   >
-                    <ComposerPrimitive.Submit disabled={isDisabled} asChild>
+                    <ComposerPrimitive.Submit disabled={false} asChild>
                       <Button
                         onMouseDown={preventDefault}
                         onClick={stopPropagation}
                         className="lb-composer-action"
+                        disabled={false}
                         variant="primary"
                         aria-label={$.COMPOSER_SEND}
                       >
