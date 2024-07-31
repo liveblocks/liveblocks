@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useLayoutEffect,
+} from "react";
 
 type InboxContextType = {
   isOpen: boolean;
@@ -20,8 +26,19 @@ export function useInbox() {
 export function InboxProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
 
+  useLayoutEffect(() => {
+    setIsOpen(localStorage.getItem("inboxOpen") === "true");
+  }, []);
+
   const toggleInbox = () => {
-    setIsOpen((prevIsOpen) => !prevIsOpen);
+    if (isOpen) {
+      setIsOpen(false);
+      localStorage.setItem("inboxOpen", "false");
+      return;
+    }
+
+    setIsOpen(true);
+    localStorage.setItem("inboxOpen", "true");
   };
 
   return (

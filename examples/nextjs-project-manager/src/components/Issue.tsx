@@ -4,6 +4,7 @@ import { Editor } from "@/components/Editor";
 import { IssueProperties } from "@/components/IssueProperties";
 import { IssueLabels } from "@/components/IssueLabels";
 import { RoomWithMetadata } from "@/config";
+import { IssueActions } from "@/components/IssueActions";
 
 export function Issue({ room }: { room: RoomWithMetadata }) {
   return (
@@ -36,6 +37,13 @@ export function Issue({ room }: { room: RoomWithMetadata }) {
                 Labels
               </div>
               <IssueLabels />
+            </div>
+
+            <div>
+              <div className="text-xs font-medium text-neutral-600 mb-0 h-10 flex items-center">
+                Actions
+              </div>
+              <IssueActions />
             </div>
           </div>
         </div>

@@ -34,3 +34,8 @@ export async function getRoomsFromIds(roomIds: string[]) {
 
   return (await Promise.all(promises)) as RoomWithMetadata[];
 }
+
+export async function deleteRoom(roomId: string) {
+  await liveblocks.deleteRoom(roomId);
+  redirect("/");
+}

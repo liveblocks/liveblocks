@@ -11,7 +11,7 @@ export function IssueLabels() {
   return (
     <ClientSideSuspense
       fallback={
-        <div className="bg-neutral-100 animate-pulse h-6 w-24 rounded-full" />
+        <div className="bg-neutral-100 animate-pulse h-6 my-px w-24 rounded-full" />
       }
     >
       <Labels />

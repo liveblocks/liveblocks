@@ -5,11 +5,14 @@ import {
   useSelf,
   ClientSideSuspense,
 } from "@liveblocks/react/suspense";
-import { PresenceStates } from "@/liveblocks.config";
 
 export function Presence() {
   return (
-    <ClientSideSuspense fallback={null}>
+    <ClientSideSuspense
+      fallback={
+        <div className="w-7 h-7 bg-neutral-100 aniamte-pulse rounded-full" />
+      }
+    >
       <Avatars />
     </ClientSideSuspense>
   );
@@ -24,32 +27,23 @@ function Avatars() {
       <div className="flex [&>div]:-ml-1.5">
         {users.map(({ connectionId, info, presence }) => {
           return (
-            <Avatar
-              key={connectionId}
-              src={info.avatar}
-              name={info.name}
-              state={presence.state}
-            />
+            <Avatar key={connectionId} src={info.avatar} name={info.name} />
           );
         })}
       </div>
 
       {currentUser && (
         <div className="relative ml-3 first:ml-0">
-          <Avatar
-            src={currentUser.info.avatar}
-            name={currentUser.info.name}
-            state={currentUser.presence.state}
-          />
+          <Avatar src={currentUser.info.avatar} name={currentUser.info.name} />
         </div>
       )}
     </div>
   );
 }
 
-type AvatarProps = { src: string; name: string; state: PresenceStates };
+type AvatarProps = { src: string; name: string };
 
-function Avatar({ src, name, state }: AvatarProps) {
+function Avatar({ src, name }: AvatarProps) {
   return (
     <div className="shrink-0 relative rounded-full border-2 border-neutral-50">
       <img src={src} className="w-7 h-7 rounded-full" alt={name} />
