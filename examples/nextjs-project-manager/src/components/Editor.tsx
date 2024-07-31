@@ -30,9 +30,9 @@ export function Editor() {
     <ClientSideSuspense
       fallback={
         <>
-          <div className="bg-gray-100 animate-pulse h-8 rounded-lg my-6" />
-          <div className="bg-gray-100 animate-pulse h-[98px] rounded-lg my-5" />
-          <div className="bg-gray-100 animate-pulse h-[98px] rounded-lg my-5" />
+          <div className="bg-neutral-100 animate-pulse h-8 rounded-lg my-6" />
+          <div className="bg-neutral-100 animate-pulse h-[98px] rounded-lg my-5" />
+          <div className="bg-neutral-100 animate-pulse h-[98px] rounded-lg my-5" />
         </>
       }
     >
@@ -54,14 +54,14 @@ function LexicalEditor() {
           <LiveblocksPlugin>
             {status === "not-loaded" || status === "loading" ? (
               <>
-                <div className="bg-gray-100 animate-pulse h-[98px] rounded-lg my-5" />
-                <div className="bg-gray-100 animate-pulse h-[98px] rounded-lg my-5" />
+                <div className="bg-neutral-100 animate-pulse h-[98px] rounded-lg my-5" />
+                <div className="bg-neutral-100 animate-pulse h-[98px] rounded-lg my-5" />
               </>
             ) : (
               <RichTextPlugin
                 contentEditable={<ContentEditable className="outline-none" />}
                 placeholder={
-                  <div className="absolute top-0 left-0 pointer-events-none text-gray-500">
+                  <div className="absolute top-0 left-0 pointer-events-none text-neutral-500">
                     Start typing here…
                   </div>
                 }

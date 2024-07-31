@@ -2,7 +2,7 @@
 
 import { nanoid } from "nanoid";
 import { redirect } from "next/navigation";
-import { getRoomId, Metadata } from "@/config";
+import { getRoomId, Metadata, RoomWithMetadata } from "@/config";
 import { liveblocks } from "@/liveblocks.server.config";
 
 export async function createIssue() {
@@ -32,5 +32,5 @@ export async function getRoomsFromIds(roomIds: string[]) {
     promises.push(await liveblocks.getRoom(roomId));
   }
 
-  return await Promise.all(promises);
+  return (await Promise.all(promises)) as RoomWithMetadata[];
 }

@@ -3,7 +3,7 @@
 import { RoomProvider } from "@liveblocks/react/suspense";
 import { LiveList, LiveObject } from "@liveblocks/client";
 import { useSearchParams } from "next/navigation";
-import { ReactNode, useMemo } from "react";
+import { createContext, ReactNode, useContext, useMemo, useState } from "react";
 import { getRoomId } from "@/config";
 
 export function Room({
@@ -13,7 +13,17 @@ export function Room({
   children: ReactNode;
   issueId: string;
 }) {
-  const roomId = useExampleRoomId(getRoomId(issueId));
+  const initialRoomId = useExampleRoomId(getRoomId(issueId));
+
+  return (
+    <RoomIdProvider initialRoomId={initialRoomId}>
+      <RoomComponent>{children}</RoomComponent>
+    </RoomIdProvider>
+  );
+}
+
+function RoomComponent({ children }: { children: ReactNode }) {
+  const { roomId } = useRoomId();
 
   return (
     <RoomProvider
@@ -30,6 +40,37 @@ export function Room({
     >
       {children}
     </RoomProvider>
+  );
+}
+
+type RoomIdContextType = {
+  roomId: string;
+  setRoomId: (roomId: string) => void;
+};
+
+const RoomIdContext = createContext<RoomIdContextType | undefined>(undefined);
+
+export function useRoomId() {
+  const context = useContext(RoomIdContext);
+  if (!context) {
+    throw new Error("useRoomId must be used within a RoomIdProvider");
+  }
+  return context;
+}
+
+export function RoomIdProvider({
+  children,
+  initialRoomId,
+}: {
+  children: ReactNode;
+  initialRoomId: string;
+}) {
+  const [roomId, setRoomId] = useState(initialRoomId);
+
+  return (
+    <RoomIdContext.Provider value={{ roomId, setRoomId }}>
+      {children}
+    </RoomIdContext.Provider>
   );
 }
 
