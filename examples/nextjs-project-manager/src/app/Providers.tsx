@@ -2,6 +2,8 @@
 
 import { LiveblocksProvider } from "@liveblocks/react/suspense";
 import { PropsWithChildren } from "react";
+import { InboxProvider } from "@/components/InboxContext";
+import { getRoomsFromIds } from "@/actions/liveblocks";
 
 export function Providers({ children }: PropsWithChildren) {
   return (
@@ -34,8 +36,13 @@ export function Providers({ children }: PropsWithChildren) {
         const userIds = await response.json();
         return userIds;
       }}
+      // Add room metadata to `useRoomInfo`
+      resolveRoomsInfo={async ({ roomIds }) => {
+        const rooms = await getRoomsFromIds(roomIds);
+        return rooms.map((room) => ({ metadata: room.metadata }));
+      }}
     >
-      {children}
+      <InboxProvider>{children}</InboxProvider>
     </LiveblocksProvider>
   );
 }

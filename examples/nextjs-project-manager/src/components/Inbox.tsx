@@ -5,12 +5,15 @@ import {
   ClientSideSuspense,
   useInboxNotificationThread,
   useUser,
+  useMarkAllInboxNotificationsAsRead,
+  useDeleteAllInboxNotifications,
 } from "@liveblocks/react/suspense";
 import { InboxNotificationList } from "@liveblocks/react-ui";
 import { ErrorBoundary } from "react-error-boundary";
 import { InboxNotificationData, stringifyCommentBody } from "@liveblocks/core";
 import { Avatar } from "@/components/Avatar";
 import classNames from "classnames";
+import { useRoomInfo } from "@liveblocks/react";
 
 export function Inbox() {
   return (
@@ -24,17 +27,25 @@ export function Inbox() {
 
 function InboxNotifications() {
   const { inboxNotifications } = useInboxNotifications();
+  const deleteAll = useDeleteAllInboxNotifications();
+  const markAsRead = useMarkAllInboxNotificationsAsRead();
 
   return (
-    <InboxNotificationList>
-      {inboxNotifications.map((inboxNotification, index) => (
-        <SmallInboxNotification
-          key={inboxNotification.id}
-          inboxNotification={inboxNotification}
-          selected={index === 0}
-        />
-      ))}
-    </InboxNotificationList>
+    <div className="flex flex-col justify-between h-full">
+      <InboxNotificationList>
+        {inboxNotifications.map((inboxNotification, index) => (
+          <SmallInboxNotification
+            key={inboxNotification.id}
+            inboxNotification={inboxNotification}
+            selected={index === 0}
+          />
+        ))}
+      </InboxNotificationList>
+      <div className="flex items-center justify-between p-2 text-sm border-t h-10">
+        <button onClick={markAsRead}>Mark all as read</button>
+        <button onClick={deleteAll}>Delete all</button>
+      </div>
+    </div>
   );
 }
 
@@ -47,8 +58,11 @@ function SmallInboxNotification({
 }) {
   const thread = useInboxNotificationThread(inboxNotification.id);
   const { user } = useUser(thread.comments[0].userId);
+  const { info, error, isLoading } = useRoomInfo(
+    inboxNotification?.roomId || ""
+  );
 
-  if (!thread.comments[0].body) {
+  if (!thread.comments[0].body || isLoading || error) {
     return null;
   }
 
@@ -68,7 +82,7 @@ function SmallInboxNotification({
       </div>
       <div className="flex-grow w-full overflow-hidden">
         <div className="font-medium text-neutral-700 truncate">
-          LB-598 - Prevent users losing data
+          {info.metadata.title}
         </div>
         <div className="text-xs text-neutral-400 w-full truncate">
           {user.name} commented: {stringifyCommentBody(thread.comments[0].body)}
