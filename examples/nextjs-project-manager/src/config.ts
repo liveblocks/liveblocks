@@ -1,6 +1,8 @@
 import { RoomData } from "@liveblocks/node";
 
 export const LABELS = [
+  { id: "feature", text: "Feature" },
+  { id: "bug", text: "Bug" },
   { id: "engineering", text: "Engineering" },
   { id: "design", text: "Design" },
   { id: "product", text: "Product" },

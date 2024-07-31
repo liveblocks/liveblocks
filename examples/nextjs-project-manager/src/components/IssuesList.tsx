@@ -1,9 +1,5 @@
 import { LABELS, RoomWithMetadata } from "@/config";
 import { getUser } from "@/database";
-import { liveblocks } from "@/liveblocks.server.config";
-import { Suspense } from "react";
-import { IssuesListRow } from "@/components/IssuesListRow";
-
 export function IssuesList({
   initialRooms,
 }: {
@@ -83,25 +79,27 @@ export function Row({ room }: { room: RoomWithMetadata }) {
   return (
     <a
       href={`/issue/${issueId}`}
-      className="flex h-10 items-center justify-between px-4 text-sm"
+      className="flex h-10 items-center justify-between px-4 text-sm transition-colors hover:bg-neutral-100 border-b"
     >
       <div className="flex gap-2 items-center">
         <div className="w-12">{priority}</div>
         <div className="font-medium">{title}</div>
       </div>
-      <div className="flex gap-5 items-center">
-        {LABELS.filter((label) => labels.includes(label.id)).map(
-          ({ id, text }) => (
-            <div
-              key={id}
-              className="text-sm rounded-full px-2 py-0.5 border shadow-xs flex items-center gap-1.5 select-none text-neutral-700"
-            >
-              <div className="bg-neutral-400/60 rounded-full w-2 h-2" />
-              {text}{" "}
-            </div>
-          )
-        )}
-        <div className="flex-none w-12 text-right">{date}</div>
+      <div className="flex gap-3 items-center">
+        <div className="flex gap-2 items-center">
+          {LABELS.filter((label) => labels.includes(label.id)).map(
+            ({ id, text }) => (
+              <div
+                key={id}
+                className="text-sm rounded-full px-2 py-0.5 border shadow-xs flex items-center gap-1.5 select-none text-neutral-700"
+              >
+                <div className="bg-neutral-400/60 rounded-full w-2 h-2" />
+                {text}{" "}
+              </div>
+            )
+          )}
+        </div>
+        <div className="flex-none w-12 text-right text-xs">{date}</div>
         <div>
           {assignedUser ? (
             <img
@@ -116,19 +114,3 @@ export function Row({ room }: { room: RoomWithMetadata }) {
     </a>
   );
 }
-
-// function Row({ room }: { room: RoomWithMetadata }) {
-//   return (
-//     <Suspense fallback={<div>loading</div>}>
-//       <LoadStorage room={room} />
-//     </Suspense>
-//   );
-// }
-//
-// // In a production environment I would instead use webhooks to sync storage to room metadata
-// // You would only need a single getRooms call for every document, as the metadata would be there
-// // It's easier to create an example without webhooks, which is why I've opted for this here
-// async function LoadStorage({ room }: { room: RoomWithMetadata }) {
-//   const storage = await liveblocks.getStorageDocument(room.id, "json");
-//   return <IssuesListRow room={room} storage={storage} />;
-// }

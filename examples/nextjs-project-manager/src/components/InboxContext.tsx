@@ -7,6 +7,7 @@ import {
   ReactNode,
   useLayoutEffect,
 } from "react";
+import { usePathname } from "next/navigation";
 
 type InboxContextType = {
   isOpen: boolean;
@@ -25,6 +26,12 @@ export function useInbox() {
 
 export function InboxProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
+
+  useLayoutEffect(() => {
+    // Reset when going to dashboard
+    localStorage.setItem("inboxOpen", "false");
+  }, [pathname]);
 
   useLayoutEffect(() => {
     setIsOpen(localStorage.getItem("inboxOpen") === "true");
