@@ -53,7 +53,10 @@ function LexicalEditor() {
         <div className="relative">
           <LiveblocksPlugin>
             {status === "not-loaded" || status === "loading" ? (
-              <div className="bg-gray-100 animate-pulse h-[74px] rounded-lg my-6" />
+              <>
+                <div className="bg-gray-100 animate-pulse h-[98px] rounded-lg my-5" />
+                <div className="bg-gray-100 animate-pulse h-[98px] rounded-lg my-5" />
+              </>
             ) : (
               <RichTextPlugin
                 contentEditable={<ContentEditable className="outline-none" />}

@@ -12,7 +12,7 @@ export default function PageHome() {
           <Nav />
         </nav>
         <main className="m-2 border flex-grow bg-neutral-50 rounded flex flex-row overflow-hidden">
-          <div className="border-r w-[400px]">
+          <div className="border-r w-[300px]">
             <Inbox />
           </div>
           <div className="flex-grow">

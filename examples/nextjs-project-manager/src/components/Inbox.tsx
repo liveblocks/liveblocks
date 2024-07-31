@@ -7,7 +7,6 @@ import {
   useUser,
 } from "@liveblocks/react/suspense";
 import { InboxNotificationList } from "@liveblocks/react-ui";
-import { Comment } from "@liveblocks/react-ui/primitives";
 import { ErrorBoundary } from "react-error-boundary";
 import { InboxNotificationData, stringifyCommentBody } from "@liveblocks/core";
 import { Avatar } from "@/components/Avatar";
@@ -34,10 +33,6 @@ function InboxNotifications() {
           inboxNotification={inboxNotification}
           selected={index === 0}
         />
-        // <InboxNotification
-        //   key={inboxNotification.id}
-        //   inboxNotification={inboxNotification}
-        // />
       ))}
     </InboxNotificationList>
   );
@@ -73,7 +68,7 @@ function SmallInboxNotification({
       </div>
       <div className="flex-grow w-full overflow-hidden">
         <div className="font-medium text-neutral-700 truncate">
-          LB-598 - Prevent users closing the tab when not synched
+          LB-598 - Prevent users losing data
         </div>
         <div className="text-xs text-neutral-400 w-full truncate">
           {user.name} commented: {stringifyCommentBody(thread.comments[0].body)}
