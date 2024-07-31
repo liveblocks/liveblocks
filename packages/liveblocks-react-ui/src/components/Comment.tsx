@@ -5,6 +5,7 @@ import type {
   CommentReaction as CommentReactionData,
 } from "@liveblocks/core";
 import {
+  RoomContext,
   useAddReaction,
   useDeleteComment,
   useEditComment,
@@ -23,6 +24,7 @@ import type {
 import React, {
   forwardRef,
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -388,6 +390,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     },
     forwardedRef
   ) => {
+    const isInRoom = Boolean(useContext(RoomContext));
     const ref = useRef<HTMLDivElement>(null);
     const mergedRefs = useRefs(forwardedRef, ref);
     const currentUserId = useCurrentUserId();
@@ -504,7 +507,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
 
     return (
       <TooltipProvider>
-        {autoMarkReadThreadId && (
+        {isInRoom && autoMarkReadThreadId && (
           <AutoMarkReadThreadIdHandler
             commentRef={ref}
             threadId={autoMarkReadThreadId}
