@@ -9,7 +9,11 @@ import { LABELS } from "@/config";
 
 export function IssueLabels() {
   return (
-    <ClientSideSuspense fallback={null}>
+    <ClientSideSuspense
+      fallback={
+        <div className="bg-neutral-100 animate-pulse h-6 w-24 rounded-full" />
+      }
+    >
       <Labels />
     </ClientSideSuspense>
   );

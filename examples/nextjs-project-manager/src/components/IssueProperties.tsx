@@ -10,7 +10,15 @@ import { getUsers } from "@/database";
 
 export function IssueProperties() {
   return (
-    <ClientSideSuspense fallback={null}>
+    <ClientSideSuspense
+      fallback={
+        <div className="flex flex-col gap-[18px]">
+          <div className="bg-neutral-100 animate-pulse h-6 w-24 rounded-lg" />
+          <div className="bg-neutral-100 animate-pulse h-6 w-24 rounded-lg" />
+          <div className="bg-neutral-100 animate-pulse h-6 w-24 rounded-lg" />
+        </div>
+      }
+    >
       <Properties />
     </ClientSideSuspense>
   );
