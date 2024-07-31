@@ -4,11 +4,16 @@ import { RoomProvider } from "@liveblocks/react/suspense";
 import { LiveList, LiveObject } from "@liveblocks/client";
 import { useSearchParams } from "next/navigation";
 import { ReactNode, useMemo } from "react";
+import { getRoomId } from "@/config";
 
-export function Room({ children }: { children: ReactNode }) {
-  const roomId = useExampleRoomId(
-    "liveblocks:examples:nextjs-project-manager-3554"
-  );
+export function Room({
+  children,
+  issueId,
+}: {
+  children: ReactNode;
+  issueId: string;
+}) {
+  const roomId = useExampleRoomId(getRoomId(issueId));
 
   return (
     <RoomProvider
@@ -16,9 +21,9 @@ export function Room({ children }: { children: ReactNode }) {
       initialStorage={{
         meta: new LiveObject({ title: "Untitled issue" }),
         properties: new LiveObject({
-          progress: null,
-          priority: null,
-          assignedTo: null,
+          progress: "none",
+          priority: "none",
+          assignedTo: "none",
         }),
         labels: new LiveList([]),
       }}

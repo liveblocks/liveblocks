@@ -17,9 +17,9 @@ declare global {
         title: string;
       }>;
       properties: LiveObject<{
-        progress: ProgressState | null;
-        priority: PriorityState | null;
-        assignedTo: string | null;
+        progress: ProgressState;
+        priority: PriorityState;
+        assignedTo: string | "none";
       }>;
       labels: LiveList<Label>;
     };

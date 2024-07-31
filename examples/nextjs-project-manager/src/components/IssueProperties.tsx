@@ -61,8 +61,9 @@ function Properties() {
           editProperty("assignedTo", e.currentTarget.value);
         }}
         className="block bg-transparent border-0 h-7 w-28 px-2 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-neutral-200 appearance-none"
-        value={properties.assignedTo || undefined}
+        value={properties.assignedTo}
       >
+        <option value="none">Unassigned</option>
         {getUsers().map(({ id, info: { name } }) => (
           <option key={id} value={id}>
             {name}
