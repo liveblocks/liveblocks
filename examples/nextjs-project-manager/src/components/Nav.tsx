@@ -4,9 +4,11 @@ import Link from "next/link";
 import { createIssue } from "@/actions/liveblocks";
 import { useInbox } from "@/components/InboxContext";
 import classNames from "classnames";
+import { usePathname } from "next/navigation";
 
 export function Nav() {
   const { isOpen, toggleInbox } = useInbox();
+  const pathname = usePathname();
 
   return (
     <div>
@@ -19,15 +21,28 @@ export function Nav() {
           + New
         </button>
       </div>
-      <button
-        onClick={toggleInbox}
-        className={classNames(
-          "block w-full text-sm text-neutral-700 font-semibold p-2 rounded text-left",
-          { "bg-neutral-200": isOpen }
-        )}
-      >
-        Inbox
-      </button>
+      {pathname.startsWith("/issue/") ? (
+        <button
+          onClick={toggleInbox}
+          className={classNames(
+            "block w-full text-sm text-neutral-700 font-semibold p-2 rounded text-left",
+            { "bg-neutral-200": isOpen }
+          )}
+        >
+          Inbox
+        </button>
+      ) : (
+        <Link href="/inbox">
+          <div
+            className={classNames(
+              "block w-full text-sm text-neutral-700 font-semibold p-2 rounded text-left",
+              { "bg-neutral-200": pathname === "/inbox" }
+            )}
+          >
+            Inbox
+          </div>
+        </Link>
+      )}
     </div>
   );
 }

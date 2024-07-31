@@ -14,6 +14,7 @@ import { InboxNotificationData, stringifyCommentBody } from "@liveblocks/core";
 import { Avatar } from "@/components/Avatar";
 import classNames from "classnames";
 import { useRoomInfo } from "@liveblocks/react";
+import Link from "next/link";
 
 export function Inbox() {
   return (
@@ -31,7 +32,14 @@ function InboxNotifications() {
   const markAsRead = useMarkAllInboxNotificationsAsRead();
 
   return (
-    <div className="flex flex-col justify-between h-full">
+    <div className="">
+      <div className="flex items-center justify-between px-4 text-sm border-b h-10">
+        <div>Inbox</div>
+        <div className="flex gap-2 text-xl">
+          <button onClick={markAsRead}>✓</button>
+          <button onClick={deleteAll}>✗</button>
+        </div>
+      </div>
       <InboxNotificationList>
         {inboxNotifications.map((inboxNotification, index) => (
           <SmallInboxNotification
@@ -41,10 +49,6 @@ function InboxNotifications() {
           />
         ))}
       </InboxNotificationList>
-      <div className="flex items-center justify-between p-2 text-sm border-t h-10">
-        <button onClick={markAsRead}>Mark all as read</button>
-        <button onClick={deleteAll}>Delete all</button>
-      </div>
     </div>
   );
 }
@@ -62,32 +66,40 @@ function SmallInboxNotification({
     inboxNotification?.roomId || ""
   );
 
-  if (!thread.comments[0].body || isLoading || error) {
+  if (
+    !thread.comments[0].body ||
+    isLoading ||
+    error ||
+    !info.metadata.issueId
+  ) {
     return null;
   }
 
   return (
-    <div
-      className={classNames(
-        "flex flex-row items-center px-3 py-2.5 gap-2 m-1 rounded",
-        {
-          "bg-neutral-200/40": selected,
-        }
-      )}
-    >
-      <div className="h-8 w-8">
-        <div className="rounded-full overflow-hidden">
-          <Avatar userId={thread.comments[0].userId} />
+    <Link href={`/issue/${info?.metadata.issueId}`}>
+      <div
+        className={classNames(
+          "flex flex-row items-center px-3 py-2.5 gap-2 m-1 rounded",
+          {
+            "bg-neutral-200/40": selected,
+          }
+        )}
+      >
+        <div className="h-8 w-8">
+          <div className="rounded-full overflow-hidden">
+            <Avatar userId={thread.comments[0].userId} />
+          </div>
+        </div>
+        <div className="flex-grow w-full overflow-hidden">
+          <div className="font-medium text-neutral-700 truncate">
+            {info.metadata.title}
+          </div>
+          <div className="text-xs text-neutral-400 w-full truncate">
+            {user.name} commented:{" "}
+            {stringifyCommentBody(thread.comments[0].body)}
+          </div>
         </div>
       </div>
-      <div className="flex-grow w-full overflow-hidden">
-        <div className="font-medium text-neutral-700 truncate">
-          {info.metadata.title}
-        </div>
-        <div className="text-xs text-neutral-400 w-full truncate">
-          {user.name} commented: {stringifyCommentBody(thread.comments[0].body)}
-        </div>
-      </div>
-    </div>
+    </Link>
   );
 }

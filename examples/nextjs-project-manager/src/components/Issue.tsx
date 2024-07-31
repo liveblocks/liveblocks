@@ -3,8 +3,9 @@ import { Comments } from "@/components/Comments";
 import { Editor } from "@/components/Editor";
 import { IssueProperties } from "@/components/IssueProperties";
 import { IssueLabels } from "@/components/IssueLabels";
+import { RoomWithMetadata } from "@/config";
 
-export function Issue() {
+export function Issue({ room }: { room: RoomWithMetadata }) {
   return (
     <div className="h-full flex flex-col">
       <header className="flex justify-between border-b h-10 px-4 items-center">
