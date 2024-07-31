@@ -24,6 +24,7 @@ declare global {
       labels: LiveList<Label>;
     };
     RoomInfo: {
+      id: string;
       metadata: Metadata;
     };
   }

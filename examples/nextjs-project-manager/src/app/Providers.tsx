@@ -40,7 +40,10 @@ export function Providers({ children }: PropsWithChildren) {
         // Add room metadata to `useRoomInfo`
         resolveRoomsInfo={async ({ roomIds }) => {
           const rooms = await getRoomsFromIds(roomIds);
-          return rooms.map((room) => ({ metadata: room.metadata }));
+          return rooms.map((room) => ({
+            id: room.id,
+            metadata: room.metadata,
+          }));
         }}
       >
         {children}

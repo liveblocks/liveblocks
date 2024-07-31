@@ -13,17 +13,7 @@ export function Room({
   children: ReactNode;
   issueId: string;
 }) {
-  const initialRoomId = useExampleRoomId(getRoomId(issueId));
-
-  return (
-    <RoomIdProvider initialRoomId={initialRoomId}>
-      <RoomComponent>{children}</RoomComponent>
-    </RoomIdProvider>
-  );
-}
-
-function RoomComponent({ children }: { children: ReactNode }) {
-  const { roomId } = useRoomId();
+  const roomId = useExampleRoomId(getRoomId(issueId));
 
   return (
     <RoomProvider
@@ -40,37 +30,6 @@ function RoomComponent({ children }: { children: ReactNode }) {
     >
       {children}
     </RoomProvider>
-  );
-}
-
-type RoomIdContextType = {
-  roomId: string;
-  setRoomId: (roomId: string) => void;
-};
-
-const RoomIdContext = createContext<RoomIdContextType | undefined>(undefined);
-
-export function useRoomId() {
-  const context = useContext(RoomIdContext);
-  if (!context) {
-    throw new Error("useRoomId must be used within a RoomIdProvider");
-  }
-  return context;
-}
-
-export function RoomIdProvider({
-  children,
-  initialRoomId,
-}: {
-  children: ReactNode;
-  initialRoomId: string;
-}) {
-  const [roomId, setRoomId] = useState(initialRoomId);
-
-  return (
-    <RoomIdContext.Provider value={{ roomId, setRoomId }}>
-      {children}
-    </RoomIdContext.Provider>
   );
 }
 

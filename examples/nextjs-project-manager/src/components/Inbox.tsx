@@ -13,7 +13,8 @@ import { InboxNotificationData, stringifyCommentBody } from "@liveblocks/core";
 import { Avatar } from "@/components/Avatar";
 import classNames from "classnames";
 import { useRoomInfo, useInboxNotificationThread } from "@liveblocks/react";
-import { useRoomId } from "@/app/Room";
+import Link from "next/link";
+import { useParams } from "next/navigation";
 
 export function Inbox() {
   return (
@@ -80,7 +81,6 @@ function InboxNotifications() {
             <SmallInboxNotification
               key={inboxNotification.id}
               inboxNotification={inboxNotification}
-              selected={index === 0}
             />
           </ClientSideSuspense>
         </div>
@@ -91,17 +91,15 @@ function InboxNotifications() {
 
 function SmallInboxNotification({
   inboxNotification,
-  selected,
 }: {
   inboxNotification: InboxNotificationData;
-  selected: boolean;
 }) {
   const thread = useInboxNotificationThread(inboxNotification.id);
   const { user } = useUser(thread.comments[0].userId);
   const { info, error, isLoading } = useRoomInfo(
     inboxNotification?.roomId || ""
   );
-  const { roomId, setRoomId } = useRoomId();
+  const params = useParams();
 
   if (
     !thread.comments[0].body ||
@@ -113,19 +111,13 @@ function SmallInboxNotification({
     return null;
   }
   return (
-    // <Link href={`/issue/${info?.metadata.issueId}`}>
-    <button
-      className="block text-left w-full"
-      onClick={(e) => {
-        e.preventDefault();
-        setRoomId(inboxNotification.roomId!);
-      }}
-    >
+    <Link href={`/issue/${info?.metadata.issueId}`}>
       <div
         className={classNames(
           "flex flex-row items-center px-3 py-2.5 gap-2 rounded",
           {
-            "bg-neutral-200/40": roomId === inboxNotification.roomId,
+            "bg-neutral-200/40":
+              params.id && inboxNotification.roomId.endsWith(`${params.id}`),
           }
         )}
       >
@@ -144,7 +136,8 @@ function SmallInboxNotification({
           </div>
         </div>
       </div>
-    </button>
-    // </Link>
+    </Link>
   );
 }
+
+function useInRoom() {}
