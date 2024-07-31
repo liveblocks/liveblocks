@@ -21,33 +21,47 @@ export function IssuesList({
 
   return (
     <div>
-      <div className="bg-neutral-200/60 px-4 py-1.5 text-sm font-medium text-neutral-800 w-full">
-        In Review
-      </div>
+      {inReview.length ? (
+        <div className="bg-neutral-200/60 px-4 py-1.5 text-sm font-medium text-neutral-800 w-full">
+          In Review
+        </div>
+      ) : null}
       {inReview.map((room) => (
         <Row key={room.id} room={room} />
       ))}
-      <div className="bg-neutral-200/60 px-4 py-1.5 text-sm font-medium text-neutral-800 w-full">
-        In Progress
-      </div>
+
+      {inProgress.length ? (
+        <div className="bg-neutral-200/60 px-4 py-1.5 text-sm font-medium text-neutral-800 w-full">
+          In Progress
+        </div>
+      ) : null}
       {inProgress.map((room) => (
         <Row key={room.id} room={room} />
       ))}
-      <div className="bg-neutral-200/60 px-4 py-1.5 text-sm font-medium text-neutral-800 w-full">
-        Todo
-      </div>
+
+      {todo.length ? (
+        <div className="bg-neutral-200/60 px-4 py-1.5 text-sm font-medium text-neutral-800 w-full">
+          Todo
+        </div>
+      ) : null}
       {todo.map((room) => (
         <Row key={room.id} room={room} />
       ))}
-      <div className="bg-neutral-200/60 px-4 py-1.5 text-sm font-medium text-neutral-800 w-full">
-        None
-      </div>
+
+      {none.length ? (
+        <div className="bg-neutral-200/60 px-4 py-1.5 text-sm font-medium text-neutral-800 w-full">
+          None
+        </div>
+      ) : null}
       {none.map((room) => (
         <Row key={room.id} room={room} />
       ))}
-      <div className="bg-neutral-200/60 px-4 py-1.5 text-sm font-medium text-neutral-800 w-full">
-        Done
-      </div>
+
+      {done.length ? (
+        <div className="bg-neutral-200/60 px-4 py-1.5 text-sm font-medium text-neutral-800 w-full">
+          Done
+        </div>
+      ) : null}
       {done.map((room) => (
         <Row key={room.id} room={room} />
       ))}
