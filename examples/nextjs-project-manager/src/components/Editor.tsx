@@ -12,8 +12,8 @@ import {
 import { EditorTitle } from "@/components/EditorTitle";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { ListNode, ListItemNode } from "@lexical/list";
-import { Loading } from "@/components/Loading";
 import { ClientSideSuspense } from "@liveblocks/react/suspense";
+import { EditorFloatingToolbar } from "@/components/EditorFloatingToolbar";
 
 // Wrap your Lexical config with `liveblocksConfig`
 const initialConfig = liveblocksConfig({
@@ -71,6 +71,7 @@ function LexicalEditor() {
           </LiveblocksPlugin>
         </div>
       </div>
+      <EditorFloatingToolbar />
     </LexicalComposer>
   );
 }
