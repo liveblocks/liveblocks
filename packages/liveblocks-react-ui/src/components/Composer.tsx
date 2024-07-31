@@ -306,8 +306,8 @@ const ComposerWithContext = forwardRef<
       client[kInternal].resolveMentionSuggestions !== undefined;
     const self = useSelf();
     const isDisabled = useMemo(
-      () => disabled || !self?.canComment,
-      [disabled, self?.canComment]
+      () => disabled || (self ? !self.canComment : false),
+      [disabled, self?.canComment] // eslint-disable-line react-hooks/exhaustive-deps
     );
     const { isEmpty } = useComposer();
     const $ = useOverrides(overrides);

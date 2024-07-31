@@ -1095,8 +1095,8 @@ const ComposerSubmit = forwardRef<HTMLButtonElement, ComposerSubmitProps>(
     const { isEmpty } = useComposer();
     const self = useSelf();
     const isDisabled = useMemo(
-      () => disabled || isEmpty || !self?.canComment,
-      [disabled, isEmpty, self?.canComment]
+      () => disabled || isEmpty || (self ? !self.canComment : false),
+      [disabled, isEmpty, self?.canComment] // eslint-disable-line react-hooks/exhaustive-deps
     );
 
     return (
