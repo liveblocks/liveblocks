@@ -26,7 +26,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Contributors
 
-pierrelevaillant, sugardarius, Teddarific, AssaadHalabi
+pierrelevaillant, sugardarius, teddarific, assaadhalabi
 
 # Week 30 (2024-07-26)
 
