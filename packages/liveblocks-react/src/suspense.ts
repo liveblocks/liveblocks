@@ -79,4 +79,5 @@ export {
   useRoomInfoSuspense as useRoomInfo,
   useUnreadInboxNotificationsCountSuspense as useUnreadInboxNotificationsCount,
   useUserSuspense as useUser,
+  useUserThreadsSuspense as experimental_useUserThreads,
 } from "./liveblocks";

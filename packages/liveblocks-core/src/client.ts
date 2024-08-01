@@ -137,13 +137,29 @@ export type EnterOptions<P extends JsonObject = DP, S extends LsonObject = DS> =
  * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
  * will probably happen if you do.
  */
-export type PrivateClientApi<U extends BaseUserMeta> = {
+export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
   readonly currentUserIdStore: Store<string | null>;
   readonly resolveMentionSuggestions: ClientOptions<U>["resolveMentionSuggestions"];
   readonly cacheStore: CacheStore<BaseMetadata>;
   readonly usersStore: BatchStore<U["info"] | undefined, string>;
   readonly roomsInfoStore: BatchStore<DRI | undefined, string>;
   readonly getRoomIds: () => string[];
+  readonly getThreads: () => Promise<{
+    threads: ThreadData<M>[];
+    inboxNotifications: InboxNotificationData[];
+    requestedAt: Date;
+  }>;
+  readonly getThreadsSince: (options: { since: Date }) => Promise<{
+    inboxNotifications: {
+      updated: InboxNotificationData[];
+      deleted: InboxNotificationDeleteInfo[];
+    };
+    threads: {
+      updated: ThreadData<M>[];
+      deleted: ThreadDeleteInfo[];
+    };
+    requestedAt: Date;
+  }>;
 };
 
 export type NotificationsApi<M extends BaseMetadata> = {
@@ -223,13 +239,6 @@ export type NotificationsApi<M extends BaseMetadata> = {
    * await client.deleteInboxNotification("in_xxx");
    */
   deleteInboxNotification(inboxNotificationId: string): Promise<void>;
-
-  /**
-   * @internal
-   */
-  getThreads(): Promise<{
-    threads: ThreadData<M>[];
-  }>;
 };
 
 /**
@@ -293,7 +302,7 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
    * will probably happen if you do.
    */
   // TODO Make this a getter, so we can provide M
-  readonly [kInternal]: PrivateClientApi<U>;
+  readonly [kInternal]: PrivateClientApi<U, M>;
 } & NotificationsApi<M>;
 
 export type AuthEndpoint =
@@ -588,6 +597,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     deleteAllInboxNotifications,
     deleteInboxNotification,
     getThreads,
+    getThreadsSince,
   } = createNotificationsApi({
     baseUrl,
     fetcher: clientOptions.polyfills?.fetch || /* istanbul ignore next */ fetch,
@@ -659,6 +669,8 @@ export function createClient<U extends BaseUserMeta = DU>(
         getRoomIds() {
           return Array.from(roomsById.keys());
         },
+        getThreads,
+        getThreadsSince,
       },
     },
     kInternal,
