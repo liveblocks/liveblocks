@@ -317,7 +317,7 @@ export async function POST(request: Request) {
     return new Response("Could not verify webhook call", { status: 400 });
   }
 
-  // When Storage document data has been udpated
+  // When Storage document data has been updated
   if (event.type === "storageUpdated") {
     const { roomId } = event.data;
 
@@ -404,7 +404,7 @@ export async function POST(request: Request) {
     return new Response("Could not verify webhook call", { status: 400 });
   }
 
-  // When Storage document data has been udpated
+  // When Storage document data has been updated
   if (event.type === "storageUpdated") {
     const { roomId } = event.data;
 

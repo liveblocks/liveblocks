@@ -412,7 +412,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     const { newItem, newIndex } = this._createAttachItemAndSort(op, key);
 
-    // TODO: add move udpate?
+    // TODO: add move update?
     return {
       modified: makeUpdate(this, [insertDelta(newIndex, newItem)]),
       reverse: [],
