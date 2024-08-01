@@ -477,8 +477,8 @@ export class Liveblocks {
    * Creates a new room with the given id.
    * @param roomId The id of the room to create.
    * @param params.defaultAccesses The default accesses for the room.
-   * @param params.groupAccesses (optional) The group accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
-   * @param params.userAccesses (optional) The user accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.groupsAccesses (optional) The group accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.usersAccesses (optional) The user accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
    * @param params.metadata (optional) The metadata for the room. Supports upto a maximum of 50 entries. Key length has a limit of 40 characters. Value length has a limit of 256 characters.
    * @returns The created room.
    */
@@ -554,8 +554,8 @@ export class Liveblocks {
    * Setting a property to `null` means to delete this property.
    * @param roomId The id of the room to update.
    * @param params.defaultAccesses (optional) The default accesses for the room.
-   * @param params.groupAccesses (optional) The group accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
-   * @param params.userAccesses (optional) The user accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.groupsAccesses (optional) The group accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.usersAccesses (optional) The user accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
    * @param params.metadata (optional) The metadata for the room. Supports upto a maximum of 50 entries. Key length has a limit of 40 characters. Value length has a limit of 256 characters.
    * @returns The updated room.
    */
@@ -984,7 +984,7 @@ export class Liveblocks {
      * @example
      * ```
      * {
-     *   query: "metadata['organization']^'liveblocks:' AND metadata['status']:'open' AND metadata['resolved']:false AND metadata['priority']:3"
+     *   query: "metadata['organization']^'liveblocks:' AND metadata['status']:'open' AND metadata['pinned']:false AND metadata['priority']:3 AND resolved:true"
      * }
      * ```
      * @example
@@ -993,12 +993,13 @@ export class Liveblocks {
      *   query: {
      *     metadata: {
      *       status: "open",
-     *       resolved: false,
+     *       pinned: false,
      *       priority: 3,
      *       organization: {
      *         startsWith: "liveblocks:"
      *       }
-     *     }
+     *     },
+     *     resolved: true
      *   }
      * }
      * ```
@@ -1007,6 +1008,7 @@ export class Liveblocks {
       | string
       | {
           metadata?: Partial<QueryMetadata<M>>;
+          resolved?: boolean;
         };
   }): Promise<{ data: ThreadData<M>[] }> {
     const { roomId } = params;
@@ -1247,13 +1249,71 @@ export class Liveblocks {
   }
 
   /**
+   * Mark a thread as resolved.
+   * @param params.roomId The room ID of the thread.
+   * @param params.threadId The thread ID to mark as resolved.
+   * @param params.data.userId The user ID of the user who marked the thread as resolved.
+   * @returns The thread marked as resolved.
+   */
+  public async markThreadAsResolved(params: {
+    roomId: string;
+    threadId: string;
+    data: {
+      userId: string;
+    };
+  }): Promise<ThreadData<M>> {
+    const { roomId, threadId } = params;
+
+    const res = await this.post(
+      url`/v2/rooms/${roomId}/threads/${threadId}/mark-as-resolved`,
+      {}
+    );
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    return convertToThreadData((await res.json()) as ThreadDataPlain<M>);
+  }
+
+  /**
+   * Mark a thread as unresolved.
+   * @param params.roomId The room ID of the thread.
+   * @param params.threadId The thread ID to mark as unresolved.
+   * @param params.data.userId The user ID of the user who marked the thread as unresolved.
+   * @returns The thread marked as unresolved.
+   */
+  public async markThreadAsUnresolved(params: {
+    roomId: string;
+    threadId: string;
+    data: {
+      userId: string;
+    };
+  }): Promise<ThreadData<M>> {
+    const { roomId, threadId } = params;
+
+    const res = await this.post(
+      url`/v2/rooms/${roomId}/threads/${threadId}/mark-as-unresolved`,
+      {}
+    );
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    return convertToThreadData((await res.json()) as ThreadDataPlain<M>);
+  }
+
+  /**
    * Updates the metadata of the specified thread in a room.
    * @param params.roomId The room ID to update the thread in.
    * @param params.threadId The thread ID to update.
    * @param params.data.metadata The metadata for the thread. Value must be a string, boolean or number
    * @param params.data.userId The user ID of the user who updated the thread.
    * @param params.data.updatedAt (optional) The date the thread is set to be updated.
-   * @returns The updated thread.
+   * @returns The updated thread metadata.
    */
   public async editThreadMetadata(params: {
     roomId: string;
@@ -1487,6 +1547,42 @@ export class Liveblocks {
   }): Promise<void> {
     const res = await this.post(url`/v2/inbox-notifications/trigger`, params);
 
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+  }
+
+  /**
+   * Deletes an inbox notification for a user.
+   * @param params.userId The user ID for which to delete the inbox notification.
+   * @param params.inboxNotificationId The ID of the inbox notification to delete.
+   */
+  public async deleteInboxNotification(params: {
+    userId: string;
+    inboxNotificationId: string;
+  }): Promise<void> {
+    const { userId, inboxNotificationId } = params;
+
+    const res = await this.delete(
+      url`/v2/users/${userId}/inbox-notifications/${inboxNotificationId}`
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+  }
+
+  /**
+   * Deletes all inbox notifications for a user.
+   * @param params.userId The user ID for which to delete all the inbox notifications.
+   */
+  public async deleteAllInboxNotifications(params: {
+    userId: string;
+  }): Promise<void> {
+    const { userId } = params;
+
+    const res = await this.delete(url`/v2/users/${userId}/inbox-notifications`);
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);

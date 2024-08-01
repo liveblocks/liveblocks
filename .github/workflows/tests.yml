@@ -8,7 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x]
+        node-version: [22.4.1]
         pkg:
           [
             "@liveblocks/core",
@@ -53,6 +53,15 @@ jobs:
       - name: Build
         run: npm run build -- --filter ${{ matrix.pkg }}
 
+      - name: Ensure no files are changed
+        run: |
+          CHANGED=$(git status --porcelain)
+          if [ -n "$CHANGED" ]; then
+            echo "Local, uncommitted changes found:"
+            echo "$CHANGED"
+            exit 1
+          fi
+
       - name: Run unit tests
         run: npm run test -- --filter ${{ matrix.pkg }} -- --coverage
 
@@ -73,7 +82,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x]
+        node-version: [22.4.1]
 
     timeout-minutes: 60
 
@@ -116,7 +125,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x]
+        node-version: [22.4.1]
 
     timeout-minutes: 60
 
@@ -146,7 +155,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x]
+        node-version: [22.4.1]
         pkg: ["@liveblocks/schema", "@liveblocks/infer-schema"]
 
     steps:
@@ -174,15 +183,6 @@ jobs:
 
       - name: Build
         run: npm run build -- --filter ${{ matrix.pkg }}
-
-      - name: Ensure no files are changed
-        run: |
-          CHANGED=$(git status --porcelain)
-          if [ -n "$CHANGED" ]; then
-            echo "Local, uncommitted changes found:"
-            echo "$CHANGED"
-            exit 1
-          fi
 
       - name: Run unit tests
         run: npm run test -- --filter ${{ matrix.pkg }}

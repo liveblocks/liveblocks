@@ -75,6 +75,7 @@ describe("client", () => {
     },
     createdAt: new Date("2022-07-13T14:32:50.697Z"),
     comments: [comment],
+    resolved: false,
   };
 
   const reaction: CommentUserReaction = {
@@ -573,7 +574,8 @@ describe("client", () => {
   });
 
   test("should return a filtered list of threads when a query parameter is used for getThreads", async () => {
-    const query = "metadata['status']:'open' AND metadata['priority']:3";
+    const query =
+      "metadata['status']:'open' AND metadata['priority']:3 AND resolved:true";
     server.use(
       http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads`, (res) => {
         const url = new URL(res.request.url);
@@ -1159,6 +1161,89 @@ describe("client", () => {
         kind: "$fileUploaded",
         subjectId: "subject1",
         activityData: { file: "url" },
+      })
+    ).resolves.toBeUndefined();
+  });
+
+  test("should delete user's inbox notification", async () => {
+    const userId = "user1";
+    const inboxNotificationId = "in_123";
+
+    server.use(
+      http.delete(
+        `${DEFAULT_BASE_URL}/v2/users/:userId/inbox-notifications/:inboxNotificationId`,
+        () => {
+          return HttpResponse.json(undefined, { status: 204 });
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    await expect(
+      client.deleteInboxNotification({
+        userId,
+        inboxNotificationId,
+      })
+    ).resolves.toBeUndefined();
+  });
+
+  test("should throw a LiveblocksError when deleteInboxNotification receives an error response", async () => {
+    const userId = "user1";
+    const inboxNotificationId = "in_123";
+
+    const error = {
+      error: "RESOURCE_NOT_FOUND",
+      message: "Inbox notification",
+    };
+
+    server.use(
+      http.delete(
+        `${DEFAULT_BASE_URL}/v2/users/:userId/inbox-notifications/:inboxNotificationId`,
+        () => {
+          return HttpResponse.json(error, { status: 404 });
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    // This should throw a LiveblocksError
+    try {
+      // Attempt to get, which should fail and throw an error.
+      await client.deleteInboxNotification({
+        userId,
+        inboxNotificationId,
+      });
+      // If it doesn't throw, fail the test.
+      expect(true).toBe(false);
+    } catch (err) {
+      expect(err instanceof LiveblocksError).toBe(true);
+      if (err instanceof LiveblocksError) {
+        expect(err.status).toBe(404);
+        expect(err.message).toBe(JSON.stringify(error));
+        expect(err.name).toBe("LiveblocksError");
+      }
+    }
+  });
+
+  test("should delete all user's inbox notifications", async () => {
+    const userId = "user1";
+
+    server.use(
+      http.delete(
+        `${DEFAULT_BASE_URL}/v2/users/:userId/inbox-notifications`,
+        () => {
+          return HttpResponse.json(undefined, { status: 204 });
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    await expect(
+      client.deleteAllInboxNotifications({
+        userId,
       })
     ).resolves.toBeUndefined();
   });

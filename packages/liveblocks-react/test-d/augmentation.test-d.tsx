@@ -34,7 +34,7 @@ declare global {
 
     ThreadMetadata: {
       color: "red" | "blue";
-      resolved?: boolean;
+      pinned?: boolean;
     };
 
     RoomInfo: {
@@ -461,9 +461,9 @@ declare global {
 {
   const { user, error, isLoading } = classic.useUser("user-id");
   expectType<boolean>(isLoading);
-  expectType<string | undefined>(user?.name);
+  expectType<string>(user!.name);
   expectError(user?.avatar);
-  expectType<number | undefined>(user?.age);
+  expectType<number>(user!.age);
   expectError(user?.anyOtherProp);
   expectType<Error | undefined>(error);
 }
@@ -485,8 +485,8 @@ declare global {
 {
   const { info, error, isLoading } = classic.useRoomInfo("room-id");
   expectType<boolean>(isLoading);
-  expectType<string | undefined>(info?.name);
-  expectType<string | undefined>(info?.url);
+  expectType<string>(info!.name);
+  expectType<string | undefined>(info!.url);
   expectType<"public" | "private" | undefined>(info?.type);
   expectError(info?.nonexisting);
   expectType<Error | undefined>(error);
@@ -591,7 +591,7 @@ declare global {
   expectType<void>(
     editMetadata({
       threadId: "th_xxx",
-      metadata: { color: "red", resolved: null },
+      metadata: { color: "red", pinned: null },
     })
   );
 
@@ -614,7 +614,7 @@ declare global {
   expectType<void>(
     editMetadata({
       threadId: "th_xxx",
-      metadata: { color: "red", resolved: null },
+      metadata: { color: "red", pinned: null },
     })
   );
 
@@ -867,6 +867,34 @@ declare global {
 {
   const markAllRead = suspense.useMarkAllInboxNotificationsAsRead();
   expectType<void>(markAllRead());
+}
+
+// ---------------------------------------------------------
+
+// The useDeleteInboxNotification() hook
+{
+  const deleteNotification = classic.useDeleteInboxNotification();
+  expectType<void>(deleteNotification("in_xxx"));
+}
+
+// The useDeleteInboxNotification() hook (suspense)
+{
+  const deleteNotification = suspense.useDeleteInboxNotification();
+  expectType<void>(deleteNotification("in_xxx"));
+}
+
+// ---------------------------------------------------------
+
+// The useDeleteAllInboxNotifications() hook
+{
+  const deleteAllNotifications = classic.useDeleteAllInboxNotifications();
+  expectType<void>(deleteAllNotifications());
+}
+
+// The useDeleteAllInboxNotifications() hook (suspense)
+{
+  const deleteAllNotifications = suspense.useDeleteAllInboxNotifications();
+  expectType<void>(deleteAllNotifications());
 }
 
 // ---------------------------------------------------------

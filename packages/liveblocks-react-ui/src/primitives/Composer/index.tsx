@@ -63,6 +63,7 @@ import { FLOATING_ELEMENT_COLLISION_PADDING } from "../../constants";
 import { useMentionSuggestions } from "../../shared";
 import { withAutoFormatting } from "../../slate/plugins/auto-formatting";
 import { withAutoLinks } from "../../slate/plugins/auto-links";
+import { withCustomLinks } from "../../slate/plugins/custom-links";
 import { withEmptyClearFormatting } from "../../slate/plugins/empty-clear-formatting";
 import type { MentionDraft } from "../../slate/plugins/mentions";
 import {
@@ -72,12 +73,14 @@ import {
   MENTION_CHARACTER,
   withMentions,
 } from "../../slate/plugins/mentions";
+import { withPasteHtml } from "../../slate/plugins/paste-html";
 import { getDOMRange } from "../../slate/utils/get-dom-range";
 import { isEmpty as isEditorEmpty } from "../../slate/utils/is-empty";
 import { leaveMarkEdge, toggleMark } from "../../slate/utils/marks";
 import type {
   ComposerBody as ComposerBodyData,
   ComposerBodyAutoLink,
+  ComposerBodyCustomLink,
   ComposerBodyMention,
 } from "../../types";
 import { isKey } from "../../utils/is-key";
@@ -138,10 +141,14 @@ const emptyCommentBody: CommentBody = {
 };
 
 function createComposerEditor() {
-  return withAutoLinks(
-    withMentions(
-      withEmptyClearFormatting(
-        withAutoFormatting(withHistory(withReact(createEditor())))
+  return withMentions(
+    withCustomLinks(
+      withAutoLinks(
+        withAutoFormatting(
+          withEmptyClearFormatting(
+            withPasteHtml(withHistory(withReact(createEditor())))
+          )
+        )
       )
     )
   );
@@ -322,10 +329,13 @@ function ComposerEditorElement({
         />
       );
     case "auto-link":
+    case "custom-link":
       return (
         <ComposerEditorLinkWrapper
           Link={Link}
-          {...(props as RenderElementSpecificProps<ComposerBodyAutoLink>)}
+          {...(props as RenderElementSpecificProps<
+            ComposerBodyAutoLink | ComposerBodyCustomLink
+          >)}
         />
       );
     case "paragraph":
@@ -853,13 +863,9 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       ]
     );
 
-    useImperativeHandle(
-      forwardedRef,
-      () => {
-        return ReactEditor.toDOMNode(editor, editor) as HTMLDivElement;
-      },
-      [editor]
-    );
+    useImperativeHandle(forwardedRef, () => {
+      return ReactEditor.toDOMNode(editor, editor) as HTMLDivElement;
+    }, [editor]);
 
     // Manually focus the editor when `autoFocus` is true
     useEffect(() => {

@@ -6,7 +6,7 @@ import type {
   Room,
 } from "@liveblocks/client";
 import type { BaseMetadata, DE, DM, DP, DS, DU } from "@liveblocks/core";
-import { ClientMsgCode, detectDupes } from "@liveblocks/core";
+import { ClientMsgCode, detectDupes, kInternal } from "@liveblocks/core";
 import { Base64 } from "js-base64";
 import { Observable } from "lib0/observable";
 import * as Y from "yjs";
@@ -18,11 +18,7 @@ import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 type ProviderOptions = {
-  autoloadSubdocs: boolean;
-};
-
-const DefaultOptions: ProviderOptions = {
-  autoloadSubdocs: false,
+  autoloadSubdocs?: boolean;
 };
 
 enum SyncStatus {
@@ -54,7 +50,7 @@ export class LiveblocksYjsProvider<
   constructor(
     room: Room<P, S, U, E, M>,
     doc: Y.Doc,
-    options: ProviderOptions | undefined = DefaultOptions
+    options: ProviderOptions | undefined = {}
   ) {
     super();
     this.rootDoc = doc;
@@ -66,6 +62,10 @@ export class LiveblocksYjsProvider<
       updateDoc: this.updateDoc,
       fetchDoc: this.fetchDoc,
     });
+
+    // TODO: Display a warning if a provider is already attached to the room
+    room[kInternal].setProvider(this);
+
     // if we have a connectionId already during construction, use that
     this.awareness = new Awareness(this.rootDoc, this.room);
 
@@ -88,6 +88,7 @@ export class LiveblocksYjsProvider<
           return;
         }
         const { stateVector, update: updateStr, guid } = message;
+        const canWrite = this.room.getSelf()?.canWrite ?? true;
         const update = Base64.toUint8Array(updateStr);
         let foundPendingUpdate = false;
         const updateId = this.getUniqueUpdateId(update);
@@ -98,15 +99,21 @@ export class LiveblocksYjsProvider<
           }
           return true;
         });
-        // if we found a pending update, we don't need to handle it
+        // if we found this update in our queue, we don't need to apply it
         if (!foundPendingUpdate) {
           // find the right doc and update
           if (guid !== undefined) {
-            this.subdocHandlers
-              .get(guid)
-              ?.handleServerUpdate({ update, stateVector });
+            this.subdocHandlers.get(guid)?.handleServerUpdate({
+              update,
+              stateVector,
+              readOnly: !canWrite,
+            });
           } else {
-            this.rootDocHandler.handleServerUpdate({ update, stateVector });
+            this.rootDocHandler.handleServerUpdate({
+              update,
+              stateVector,
+              readOnly: !canWrite,
+            });
           }
         }
 
@@ -161,10 +168,13 @@ export class LiveblocksYjsProvider<
   };
 
   private updateDoc = (update: Uint8Array, guid?: string) => {
-    const updateId = this.getUniqueUpdateId(update);
-    this.pending.push(updateId);
-    this.room.updateYDoc(Base64.fromUint8Array(update), guid);
-    this.emit("status", [this.getStatus()]);
+    const canWrite = this.room.getSelf()?.canWrite ?? true;
+    if (canWrite) {
+      const updateId = this.getUniqueUpdateId(update);
+      this.pending.push(updateId);
+      this.room.updateYDoc(Base64.fromUint8Array(update), guid);
+      this.emit("status", [this.getStatus()]);
+    }
   };
 
   private fetchDoc = (vector: string, guid?: string) => {

@@ -18,7 +18,7 @@ subscribe to events, and secure your endpoint.
 - [Edit endpoint events](#edit-endpoint-events)
 - [Security verification](#security-verification)
 - [Replaying events](#replaying-events)
-- [Testing locally]('testing-locally)
+- [Testing locally](#testing-locally)
 
 ### Creating an endpoint [#creating-an-endpoint]
 
@@ -869,6 +869,68 @@ type ThreadMetadataUpdatedEvent = {
 // Example
 const threadMetadataUpdatedEvent = {
   type: "threadMetadataUpdated",
+  data: {
+    projectId: "my-project-id",
+    roomId: "my-room-id",
+    threadId: "my-thread-id",
+    updatedAt: "2021-10-06T01:45:56.558Z",
+    updatedBy: "my-user-id",
+  },
+};
+```
+
+#### ThreadMarkedAsResolvedEvent
+
+An event is triggered when a thread is marked as resolved. This event is not
+throttled.
+
+```ts
+// Schema
+type ThreadMarkedAsResolvedEvent = {
+  type: "threadMarkedAsResolved";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    updatedAt: string;
+    updatedBy: string;
+  };
+};
+
+// Example
+const ThreadMarkedAsResolvedEvent = {
+  type: "threadMarkedAsResolved",
+  data: {
+    projectId: "my-project-id",
+    roomId: "my-room-id",
+    threadId: "my-thread-id",
+    updatedAt: "2021-10-06T01:45:56.558Z",
+    updatedBy: "my-user-id",
+  },
+};
+```
+
+#### ThreadMarkedAsUnresolvedEvent
+
+An event is triggered when a thread is marked as unresolved. This event is not
+throttled.
+
+```ts
+// Schema
+type ThreadMarkedAsUnresolvedEvent = {
+  type: "threadMarkedAsUnresolved";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    updatedAt: string;
+    updatedBy: string;
+  };
+};
+
+// Example
+const ThreadMarkedAsUnresolvedEvent = {
+  type: "threadMarkedAsUnresolved",
   data: {
     projectId: "my-project-id",
     roomId: "my-room-id",

@@ -163,6 +163,13 @@ export function compactObject<O extends Record<string, unknown>>(
 }
 
 /**
+ * Returns a promise that resolves after the given number of milliseconds.
+ */
+export function wait(millis: number): Promise<void> {
+  return new Promise((res) => setTimeout(res, millis));
+}
+
+/**
  * Returns whatever the given promise returns, but will be rejected with
  * a "Timed out" error if the given promise does not return or reject within
  * the given timeout period (in milliseconds).
@@ -190,15 +197,36 @@ export async function withTimeout<T>(
 }
 
 /**
- * Memoize a factory function, so that each subsequent call to the returned
- * function will return the exact same value.
+ * Memoize a promise factory, so that each subsequent call will return the same
+ * pending or success promise. If the promise rejects, will retain that failed
+ * promise for a small time period, after which the next attempt will reset the
+ * memoized value.
  */
-export function memoize<T>(factoryFn: () => T): () => T {
-  let cached: { value: T } | null = null;
+export function memoizeOnSuccess<T>(
+  factoryFn: () => Promise<T>
+): () => Promise<T> {
+  let cached: Promise<T> | null = null;
   return () => {
     if (cached === null) {
-      cached = { value: factoryFn() };
+      cached = factoryFn().catch((err) => {
+        //
+        // Keep returning the failed promise for any calls to the memoized
+        // promise for the next 5 seconds. This time period is a bit arbitrary,
+        // but exists to make this play nicely with frameworks like React.
+        //
+        // In React, after a component is suspended and its promise is
+        // rejected, React will re-render the component, and expect the next
+        // call to this function to return the rejected promise, so its error
+        // can be shown. If we immediately reset this value, then such next
+        // render would instantly trigger a new promise which would trigger an
+        // infinite loop and keeping the component in loading state forever.
+        //
+        setTimeout(() => {
+          cached = null;
+        }, 5_000);
+        throw err;
+      });
     }
-    return cached.value;
+    return cached;
   };
 }

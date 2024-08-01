@@ -1,3 +1,4 @@
+import { createInboxNotificationId } from "@liveblocks/core";
 import type {
   DOMConversionMap,
   DOMExportOutput,
@@ -7,7 +8,6 @@ import type {
   Spread,
 } from "lexical";
 import { $applyNodeReplacement, DecoratorNode } from "lexical";
-import { nanoid } from "nanoid";
 import type { JSX } from "react";
 import * as React from "react";
 
@@ -112,7 +112,6 @@ export function $isMentionNode(
 }
 
 export function $createMentionNode(userId: string): MentionNode {
-  const id = `in_${nanoid()}`;
-  const node = new MentionNode(id, userId);
+  const node = new MentionNode(createInboxNotificationId(), userId);
   return $applyNodeReplacement(node);
 }

@@ -1,6 +1,5 @@
 import { kInternal } from "@liveblocks/core";
 import {
-  ClientSideSuspense,
   createLiveblocksContext,
   createRoomContext,
   useClient,
@@ -47,33 +46,23 @@ const client = createLiveblocksClient({
   },
 });
 
-const {
-  suspense: { LiveblocksProvider, useInboxNotifications },
-} = createLiveblocksContext(client);
+const { LiveblocksProvider, useInboxNotifications } =
+  createLiveblocksContext(client);
 
-const {
-  suspense: { RoomProvider, useSelf, useThreads, useDeleteComment },
-} = createRoomContext(client);
+const { RoomProvider, useSelf, useThreads, useDeleteComment } =
+  createRoomContext(client);
 
 function WithRoomProvider(props: React.PropsWithChildren) {
   const roomId = getRoomFromUrl();
   return (
     <RoomProvider id={roomId} initialPresence={{} as never}>
-      <ClientSideSuspense fallback="Loading...">
-        {props.children}
-      </ClientSideSuspense>
+      {props.children}
     </RoomProvider>
   );
 }
 
 function WithLiveblocksProvider(props: React.PropsWithChildren) {
-  return (
-    <LiveblocksProvider>
-      <ClientSideSuspense fallback="Loading...">
-        {props.children}
-      </ClientSideSuspense>
-    </LiveblocksProvider>
-  );
+  return <LiveblocksProvider>{props.children}</LiveblocksProvider>;
 }
 
 export default function Home() {
@@ -105,7 +94,7 @@ export default function Home() {
 }
 
 function useInboxNotificationsForThisPage() {
-  const { inboxNotifications: allInboxNotifications } = useInboxNotifications();
+  const { isLoading, error, inboxNotifications } = useInboxNotifications();
 
   // Filter down inbox notifications to just the notifications from this room,
   // and only the ones that happened since the page was loaded. If we didn't
@@ -114,14 +103,15 @@ function useInboxNotificationsForThisPage() {
   const roomId = getRoomFromUrl();
   const [pageLoadTimestamp] = React.useState(() => Date.now());
 
-  const inboxNotifications = allInboxNotifications.filter(
+  if (isLoading) return null;
+  if (error) return error;
+
+  return inboxNotifications.filter(
     (ibn) =>
       ibn.kind === "thread" &&
       ibn.roomId === roomId &&
       ibn.notifiedAt.getTime() > pageLoadTimestamp
   );
-
-  return inboxNotifications;
 }
 
 function TopPart() {
@@ -133,10 +123,12 @@ function TopPart() {
   const deleteComment = useDeleteComment();
 
   function deleteAllMine() {
-    for (const th of threads) {
-      for (const cm of th.comments) {
-        if (cm.userId === me.id) {
-          deleteComment({ threadId: th.id, commentId: cm.id });
+    if (threads) {
+      for (const th of threads) {
+        for (const cm of th.comments) {
+          if (cm.userId === me?.id) {
+            deleteComment({ threadId: th.id, commentId: cm.id });
+          }
         }
       }
     }
@@ -151,8 +143,8 @@ function TopPart() {
       </div>
       <table>
         <tbody>
-          <Row id="userId" name="userId" value={me.id} />
-          <Row id="name" name="name" value={me.info?.name} />
+          <Row id="userId" name="userId" value={me?.id} />
+          <Row id="name" name="name" value={me?.info?.name} />
           <Row
             id="numOfThreads"
             name="Number of Threads"
@@ -166,7 +158,10 @@ function TopPart() {
           <Row
             id="numOfNotifications"
             name="Number of Notifications"
-            value={inboxNotifications?.length}
+            value={
+              (Array.isArray(inboxNotifications) ? inboxNotifications : [])
+                ?.length
+            }
           />
           <Row
             id="numPendingUpdates"
@@ -186,7 +181,7 @@ function usePendingUpdatesCount() {
     () => store.get().optimisticUpdates.length,
     [store]
   );
-  return React.useSyncExternalStore(store.subscribe, getter);
+  return React.useSyncExternalStore(store.subscribe, getter, getter);
 }
 
 function LeftSide() {
@@ -200,7 +195,7 @@ function LeftSide() {
           paddingTop: 1,
         }}
       >
-        {threads.map((thread) => (
+        {(threads ?? []).map((thread) => (
           <div key={thread.id} style={{ margin: 20 }}>
             <Thread thread={thread} />
           </div>
@@ -227,11 +222,17 @@ function RightSide() {
           // padding: 20,
         }}
       >
-        <InboxNotificationList>
-          {inboxNotifications.map((ibn) => (
-            <InboxNotification key={ibn.id} inboxNotification={ibn} />
-          ))}
-        </InboxNotificationList>
+        {inboxNotifications === null ? (
+          "Loading..."
+        ) : !Array.isArray(inboxNotifications) ? (
+          <pre style={{ color: "red" }}>{String(inboxNotifications)}</pre>
+        ) : (
+          <InboxNotificationList>
+            {inboxNotifications.map((ibn) => (
+              <InboxNotification key={ibn.id} inboxNotification={ibn} />
+            ))}
+          </InboxNotificationList>
+        )}
       </div>
     </div>
   );
