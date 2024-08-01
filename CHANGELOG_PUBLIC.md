@@ -17,12 +17,14 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Dashboard
 
-- Add room API docs into the dashboard. Copy and paste code snippets from the API reference straight from the room detail page.
+- Add the Room API docs to the dashboard. Copy pre-filled code snippets from the API reference directly from the Room detail page.
+- Optimize the width of rooms, schemas, and webhooks lists when a detail view is opened for more comfort on medium-sized screens.
 
 ## Documentation
 
 - Updated [How to modify Storage from the server](https://liveblocks.io/docs/guides/how-to-modify-liveblocks-storage-from-the-server) for Liveblocks 2.0.
 - Fixed various typos.
+- Show public/secret keys within the Bash code snippets for connected users.
 
 ## Contributors
 
