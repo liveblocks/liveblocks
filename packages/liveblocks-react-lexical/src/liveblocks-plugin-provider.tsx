@@ -72,9 +72,7 @@ export function useEditorStatus(): EditorStatus {
     (onStoreChange: () => void) => {
       if (provider === undefined) return () => { };
       provider.on("status", onStoreChange);
-      provider.on("sync", onStoreChange);
       return () => {
-        provider.off("sync", onStoreChange);
         provider.off("status", onStoreChange);
       };
     },
