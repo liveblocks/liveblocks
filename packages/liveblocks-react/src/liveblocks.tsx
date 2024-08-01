@@ -425,11 +425,7 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
     });
 
     try {
-      await autoRetry(
-        () => fetchInboxNotifications(),
-        5,
-        [5000, 5000, 10000, 15000]
-      );
+      await autoRetry(() => fetchUserThreads(), 5, [5000, 5000, 10000, 15000]);
     } catch (err) {
       // Store the error in the cache as a side-effect, for non-Suspense
       store.setQueryState(USER_THREADS_QUERY, {
