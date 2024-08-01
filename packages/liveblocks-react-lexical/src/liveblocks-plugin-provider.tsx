@@ -70,10 +70,10 @@ export function useEditorStatus(): EditorStatus {
 
   const subscribe = useCallback(
     (onStoreChange: () => void) => {
-      if (provider === undefined) return () => {};
-      provider.on("sync", onStoreChange);
+      if (provider === undefined) return () => { };
+      provider.on("status", onStoreChange);
       return () => {
-        provider.off("sync", onStoreChange);
+        provider.off("status", onStoreChange);
       };
     },
     [provider]
@@ -83,7 +83,7 @@ export function useEditorStatus(): EditorStatus {
     if (provider === undefined) {
       return "not-loaded";
     }
-    return provider.synced ? "synchronized" : "loading";
+    return provider.getStatus();
   }, [provider]);
 
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);

@@ -933,8 +933,9 @@ export type Room<
 
 type Provider = {
   synced: boolean;
-  on(event: "sync", listener: (synced: boolean) => void): void;
-  off(event: "sync", listener: (synced: boolean) => void): void;
+  getStatus: () => "loading" | "synchronizing" | "synchronized";
+  on(event: "sync" | "status", listener: (synced: boolean) => void): void;
+  off(event: "sync" | "status", listener: (synced: boolean) => void): void;
 };
 
 /**
