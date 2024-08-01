@@ -15,7 +15,13 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 31 (2024-08-02)
 
+## Dashboard
+
+- Add room API docs into the dashboard. Copy and paste code snippets from the API reference straight from the room detail page.
+
 ## Contributors
+
+pierrelevaillant, sugardarius
 
 # Week 30 (2024-07-26)
 
