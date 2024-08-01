@@ -1384,9 +1384,15 @@ const _useUser: TypedBundle["useUser"] = useUser;
  */
 const _useUserSuspense: TypedBundle["suspense"]["useUser"] = useUserSuspense;
 
+/**
+ * Experimental hook that could be removed at any time! Do not use unless explicitely recommended by the Liveblocks team.
+ */
 const _useUserThreads_experimental: TypedBundle["useUserThreads_experimental"] =
   useUserThreads_experimental;
 
+/**
+ * Experimental hook that could be removed at any time! Do not use unless explicitely recommended by the Liveblocks team.
+ */
 const _useUserThreadsSuspense_experimental: TypedBundle["suspense"]["useUserThreads_experimental"] =
   useUserThreadsSuspense_experimental;
 
