@@ -19,9 +19,14 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 - Add room API docs into the dashboard. Copy and paste code snippets from the API reference straight from the room detail page.
 
+## Documentation
+
+- Updated [How to modify Storage from the server](https://liveblocks.io/docs/guides/how-to-modify-liveblocks-storage-from-the-server) for Liveblocks 2.0.
+- Fixed various typos.
+
 ## Contributors
 
-pierrelevaillant, sugardarius
+pierrelevaillant, sugardarius, Teddarific, AssaadHalabi
 
 # Week 30 (2024-07-26)
 
