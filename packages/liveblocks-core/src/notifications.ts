@@ -1,5 +1,5 @@
 import type { AuthManager } from "./auth-manager";
-import type { NotificationsApi, PrivateClientApi } from "./client";
+import type { NotificationsApi } from "./client";
 import {
   getAuthBearerHeaderFromAuthValue,
   NotificationsApiError,
