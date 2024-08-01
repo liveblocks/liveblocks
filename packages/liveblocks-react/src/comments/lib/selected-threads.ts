@@ -24,8 +24,12 @@ export function selectedUserThreads<M extends BaseMetadata>(
     }
   );
 
-  // Sort threads by creation date (oldest first)
-  return threads.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  // Sort threads by updated date (newest first) and then created date
+  return threads.sort(
+    (a, b) =>
+      (b.updatedAt ?? b.createdAt).getTime() -
+      (a.updatedAt ?? a.createdAt).getTime()
+  );
 }
 
 /**

@@ -81,7 +81,7 @@ export {
 } from "./room";
 export {
   useInboxNotifications,
-  useUserThreads as experimental_useUserThreads,
+  useUserThreads_experimental as useUserThreads_experimental,
   useRoomInfo,
   useUnreadInboxNotificationsCount,
   useUser,

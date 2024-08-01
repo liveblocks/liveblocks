@@ -48,6 +48,7 @@ import type {
   RoomInfoAsyncSuccess,
   SharedContextBundle,
   ThreadsState,
+  ThreadsStateSuccess,
   UnreadInboxNotificationsCountState,
   UserAsyncResult,
   UserAsyncSuccess,
@@ -108,9 +109,9 @@ function selectorFor_useInboxNotifications(
   };
 }
 
-function selectorFor_useUserThreads(
-  state: CacheState<BaseMetadata>
-): ThreadsState<BaseMetadata> {
+function selectorFor_useUserThreads<M extends BaseMetadata>(
+  state: CacheState<M>
+): ThreadsState<M> {
   const query = state.queries[USER_THREADS_QUERY];
 
   if (query === undefined || query.isLoading) {
@@ -570,6 +571,7 @@ function makeLiveblocksContextBundle<
     useDeleteAllInboxNotifications,
 
     useInboxNotificationThread,
+    useUserThreads_experimental: () => useUserThreads_withClient<M>(client),
 
     ...shared.classic,
 
@@ -589,15 +591,20 @@ function makeLiveblocksContextBundle<
 
       useInboxNotificationThread,
 
+      useUserThreads_experimental: () =>
+        useUserThreadsSuspense_withClient(client),
+
       ...shared.suspense,
     },
   };
   return bundle;
 }
 
-function useUserThreads_withClient(client: OpaqueClient) {
+function useUserThreads_withClient<M extends BaseMetadata>(
+  client: OpaqueClient
+): ThreadsState<M> {
   const { loadUserThreads, store, useEnableUserThreadsPolling } =
-    getExtrasForClient(client);
+    getExtrasForClient<M>(client);
 
   // Trigger initial loading of user threads if it hasn't started
   // already, but don't await its promise.
@@ -615,7 +622,9 @@ function useUserThreads_withClient(client: OpaqueClient) {
   );
 }
 
-function useUserThreadsSuspense_withClient(client: OpaqueClient) {
+function useUserThreadsSuspense_withClient<M extends BaseMetadata>(
+  client: OpaqueClient
+): ThreadsStateSuccess<M> {
   const { waitUntilUserThreadsLoaded } = getExtrasForClient(client);
 
   // Suspend until there are at least some user threads
@@ -623,10 +632,10 @@ function useUserThreadsSuspense_withClient(client: OpaqueClient) {
 
   // We're in a Suspense world here, and as such, the useUserThreads()
   // hook is expected to only return success results when we're here.
-  const result = useUserThreads_withClient(client);
+  const result = useUserThreads_withClient<M>(client);
   assert(!result.error, "Did not expect error");
   assert(!result.isLoading, "Did not expect loading");
-  return result;
+  return result as ThreadsStateSuccess<M>; // TODO: Remove casting
 }
 
 function useInboxNotifications_withClient(client: OpaqueClient) {
@@ -1199,17 +1208,19 @@ export function createLiveblocksContext<
 }
 
 /**
- * Experimental hook that could be removed at any time! Do not use unless explicitely recommended
+ * Experimental hook that could be removed at any time! Do not use unless explicitely recommended by the Liveblocks team.
  */
-function useUserThreads() {
+function useUserThreads_experimental() {
   return useUserThreads_withClient(useClient());
 }
 
 /**
- * Experimental hook that could be removed at any time! Do not use unless explicitely recommended
+ * Experimental hook that could be removed at any time! Do not use unless explicitely recommended by the Liveblocks team.
  */
-function useUserThreadsSuspense() {
-  return useUserThreadsSuspense_withClient(useClient());
+function useUserThreadsSuspense_experimental<
+  M extends BaseMetadata,
+>(): ThreadsStateSuccess<M> {
+  return useUserThreadsSuspense_withClient<M>(useClient());
 }
 
 /**
@@ -1373,6 +1384,12 @@ const _useUser: TypedBundle["useUser"] = useUser;
  */
 const _useUserSuspense: TypedBundle["suspense"]["useUser"] = useUserSuspense;
 
+const _useUserThreads_experimental: TypedBundle["useUserThreads_experimental"] =
+  useUserThreads_experimental;
+
+const _useUserThreadsSuspense_experimental: TypedBundle["suspense"]["useUserThreads_experimental"] =
+  useUserThreadsSuspense_experimental;
+
 // eslint-disable-next-line simple-import-sort/exports
 export {
   _useInboxNotificationThread as useInboxNotificationThread,
@@ -1388,6 +1405,6 @@ export {
   useRoomInfoSuspense,
   useUnreadInboxNotificationsCount,
   useUnreadInboxNotificationsCountSuspense,
-  useUserThreads,
-  useUserThreadsSuspense,
+  _useUserThreads_experimental as useUserThreads_experimental,
+  _useUserThreadsSuspense_experimental as useUserThreadsSuspense_experimental,
 };

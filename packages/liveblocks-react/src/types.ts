@@ -1133,6 +1133,11 @@ export type LiveblocksContextBundle<
        */
       useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountState;
 
+      /**
+       * Experimental hook that could be removed at any time! Do not use unless explicitely recommended by the Liveblocks team.
+       */
+      useUserThreads_experimental(): ThreadsState<M>;
+
       suspense: Resolve<
         LiveblocksContextBundleCommon<M> &
           SharedContextBundle<U>["suspense"] & {
@@ -1151,6 +1156,11 @@ export type LiveblocksContextBundle<
              * const { count } = useUnreadInboxNotificationsCount();
              */
             useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountStateSuccess;
+
+            /**
+             * Experimental hook that could be removed at any time! Do not use unless explicitely recommended by the Liveblocks team.
+             */
+            useUserThreads_experimental(): ThreadsStateSuccess<M>;
           }
       >;
     }
