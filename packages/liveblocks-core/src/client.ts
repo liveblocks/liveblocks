@@ -1,4 +1,4 @@
-import type { AuthManager, AuthValue } from "./auth-manager";
+import type { AuthValue } from "./auth-manager";
 import { createAuthManager } from "./auth-manager";
 import { isIdle } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
@@ -144,7 +144,6 @@ export type PrivateClientApi<U extends BaseUserMeta> = {
   readonly usersStore: BatchStore<U["info"] | undefined, string>;
   readonly roomsInfoStore: BatchStore<DRI | undefined, string>;
   readonly getRoomIds: () => string[];
-  readonly authManager: AuthManager;
 };
 
 export type NotificationsApi<M extends BaseMetadata> = {
@@ -224,6 +223,13 @@ export type NotificationsApi<M extends BaseMetadata> = {
    * await client.deleteInboxNotification("in_xxx");
    */
   deleteInboxNotification(inboxNotificationId: string): Promise<void>;
+
+  /**
+   * @internal
+   */
+  getThreads(): Promise<{
+    threads: ThreadData<M>[];
+  }>;
 };
 
 /**
@@ -581,6 +587,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     markInboxNotificationAsRead,
     deleteAllInboxNotifications,
     deleteInboxNotification,
+    getThreads,
   } = createNotificationsApi({
     baseUrl,
     fetcher: clientOptions.polyfills?.fetch || /* istanbul ignore next */ fetch,
@@ -640,6 +647,7 @@ export function createClient<U extends BaseUserMeta = DU>(
       markInboxNotificationAsRead,
       deleteAllInboxNotifications,
       deleteInboxNotification,
+      getThreads,
 
       // Internal
       [kInternal]: {
@@ -651,7 +659,6 @@ export function createClient<U extends BaseUserMeta = DU>(
         getRoomIds() {
           return Array.from(roomsById.keys());
         },
-        authManager,
       },
     },
     kInternal,

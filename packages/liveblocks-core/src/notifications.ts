@@ -203,6 +203,26 @@ export function createNotificationsApi<M extends BaseMetadata>({
     );
   }
 
+  async function getThreads() {
+    const json = await fetchJson<{
+      threads: ThreadDataPlain<M>[];
+      inboxNotifications: InboxNotificationDataPlain[];
+      deletedThreads: ThreadDeleteInfoPlain[];
+      deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+      meta: {
+        requestedAt: string;
+      };
+    }>("/threads", undefined, {});
+
+    return {
+      threads: json.threads.map(convertToThreadData),
+      // inboxNotifications: json.inboxNotifications.map(
+      //   convertToInboxNotificationData
+      // ),
+      // requestedAt: new Date(json.meta.requestedAt),
+    };
+  }
+
   return {
     getInboxNotifications,
     getInboxNotificationsSince,
@@ -211,5 +231,6 @@ export function createNotificationsApi<M extends BaseMetadata>({
     markInboxNotificationAsRead,
     deleteAllInboxNotifications,
     deleteInboxNotification,
+    getThreads,
   };
 }
