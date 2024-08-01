@@ -14,46 +14,64 @@ type VersionResponse = {
 export function useVersions() {
   const room = useRoom();
   const [versions, setVersions] = useState<VersionResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const load = async () => {
+      setIsLoading(true);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
       const response = await room[kInternal].listTextVersions();
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       const data = await response.json() as { versions: VersionResponse[] };
 
       setVersions(data.versions.reverse());
+      setIsLoading(false);
     }
     load();
   }, [room]);
 
-  return versions;
+  return {
+    versions,
+    isLoading
+  };
 }
 
 export function Versions() {
   const $ = useOverrides();
   const room = useRoom();
-  const { setVersion } = useContext(VersionContext);
+  const { version, setVersion, setIsLoading } = useContext(VersionContext);
 
   // Usage in the component:
-  const versions = useVersions();
+  const { versions, isLoading } = useVersions();
 
   const handleGetVersion = useCallback(async (date: number) => {
+    setIsLoading(true);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     const response = await room[kInternal].getTextVersion(date.toString())
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     const buffer = await response.arrayBuffer();
-    const data = new Uint8Array(buffer as ArrayBuffer);
+    const data = new Uint8Array(buffer);
+    setIsLoading(false);
     setVersion({ id: date.toString(), data })
-  }, [room, setVersion]);
+  }, [room, setVersion, setIsLoading]);
 
   return (
     <>
+      <h4 style={{ padding: "8px 8px 4px 8px", fontSize: "1rem", color: "#838383" }}>Version History</h4>
+      {isLoading && <div style={{ padding: "16px" }}>Loading...</div>}
       {versions.map((v) => (
-        <div key={v.date} onClick={() => handleGetVersion(v.date)}>
+        <div
+          key={v.date}
+          onClick={() => handleGetVersion(v.date)}
+          style={{
+            cursor: "pointer",
+            backgroundColor: version?.id === v.date.toString() ? "rgba(255,255,255,0.05)" : "transparent",
+            padding: "8px",
+          }}
+        >
           <p><Timestamp locale={$.locale} date={new Date(v.date)} /></p>
           {v.authors?.length && v.authors.map((a, i) => (
-            <span key={a}>{i !== 0 && ","}<User userId={a} /></span>
+            <span key={a} style={{ fontSize: "0.75rem", color: "#838383" }}>{i !== 0 && ","}<User userId={a} /></span>
           ))}
         </div>
       ))}

@@ -82,13 +82,12 @@ function registerCollaborationListeners(
 
 
 
-
-export function Version() {
+export function Version({ onRestore }: { onRestore?: () => void }) {
   const [parentEditor, parentContext] = useLexicalComposerContext();
   const nodes = Array.from(parentEditor._nodes.values()).map((n) => n.klass);
   const editor = useRef<LexicalEditor>();
 
-  const { version } = useContext(VersionContext);
+  const { version, isLoading } = useContext(VersionContext);
 
   const initialConfig = liveblocksConfig({
     namespace: "VersionViewer",
@@ -120,22 +119,37 @@ export function Version() {
       return;
     }
     parentEditor.setEditorState(editor.current.getEditorState());
-  }, [parentEditor]);
+    if (onRestore) {
+      onRestore();
+    }
+  }, [parentEditor, onRestore]);
 
 
   return (
     <>
-      {version &&
+      {!isLoading && !version && <div style={{ padding: "16px" }}>Select a version</div>}
+      {isLoading && <div style={{ padding: "16px" }}>Loading...</div>}
+      {!isLoading && version &&
         <>
-          <button onClick={restore}>restore</button>
-          <LexicalComposer initialConfig={initialConfig}>
-            <EditorRefPlugin editorRef={editor} />
-            <RichTextPlugin
-              contentEditable={<ContentEditable />}
-              placeholder={<div>Empty Version History</div>}
-              ErrorBoundary={LexicalErrorBoundary}
-            />
-          </LexicalComposer>
+          <button onClick={restore} style={{
+            padding: "8px 16px",
+            textTransform: "capitalize",
+            border: "1px solid #d3d3d3",
+            borderRadius: "4px"
+          }}>
+            restore
+          </button>
+
+          {!version && <div className="text-center">Select a version to view</div>}
+          <div style={{ padding: "12px" }}>
+            <LexicalComposer initialConfig={initialConfig}>
+              <EditorRefPlugin editorRef={editor} />
+              <RichTextPlugin
+                contentEditable={<ContentEditable />}
+                placeholder={<div>Empty Version History</div>}
+                ErrorBoundary={LexicalErrorBoundary}
+              />
+            </LexicalComposer></div>
         </>
       }
     </>)

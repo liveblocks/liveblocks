@@ -23,6 +23,7 @@ import { useThreads } from "@liveblocks/react/suspense";
 import { Suspense } from "react";
 import Loading from "../loading";
 import { BaseMetadata, ThreadData } from "@liveblocks/client";
+import VersionsPopover from "../versions-popover";
 
 // Wrap your initial config with `liveblocksConfig`
 const initialConfig = liveblocksConfig({
@@ -40,51 +41,47 @@ export default function Editor() {
   return (
     <div className="relative flex flex-col h-full w-full">
       <LexicalComposer initialConfig={initialConfig}>
-        {/* Sticky header */}
-        <div className="sticky top-0 left-0  h-[60px] flex items-center justify-between px-4 border-b border-border/80 z-20 bg-background/95">
-          <div className="flex items-center gap-2 h-full">
-            <Toolbar />
+        <LiveblocksPlugin>
+          {/* Sticky header */}
+          <div className="sticky top-0 left-0  h-[60px] flex items-center justify-between px-4 border-b border-border/80 z-20 bg-background/95">
+            <div className="flex items-center gap-2 h-full grow">
+              <Toolbar />
+            </div>
+            <VersionsPopover />
+            <NotificationsPopover />
           </div>
 
-          <NotificationsPopover />
-        </div>
+          <div className="relative flex flex-row justify-between h-[calc(100%-60px)] w-full flex-1">
+            {/* Editable */}
+            <div className="relative h-full w-[calc(100%-350px)] overflow-auto">
+              {status === "not-loaded" || status === "loading" ? (
+                <Loading />
+              ) : (
+                <div className="relative max-w-[950px] mx-auto">
+                  <RichTextPlugin
+                    contentEditable={
+                      <ContentEditable className="relative outline-none p-8 w-full h-full" />
+                    }
+                    placeholder={
+                      <p className="pointer-events-none absolute top-0 left-0 p-8 text-muted-foreground w-full h-full">
+                        Try mentioning a user with @
+                      </p>
+                    }
+                    ErrorBoundary={LexicalErrorBoundary}
+                  />
+                  <FloatingToolbar />
+                </div>
+              )}
+            </div>
 
-        <div className="relative flex flex-row justify-between h-[calc(100%-60px)] w-full flex-1">
-          {/* Editable */}
-          <div className="relative h-full w-[calc(100%-350px)] overflow-auto">
-            {status === "not-loaded" || status === "loading" ? (
-              <Loading />
-            ) : (
-              <div className="relative max-w-[950px] mx-auto">
-                <RichTextPlugin
-                  contentEditable={
-                    <ContentEditable className="relative outline-none p-8 w-full h-full" />
-                  }
-                  placeholder={
-                    <p className="pointer-events-none absolute top-0 left-0 p-8 text-muted-foreground w-full h-full">
-                      Try mentioning a user with @
-                    </p>
-                  }
-                  ErrorBoundary={LexicalErrorBoundary}
-                />
-                <FloatingToolbar />
-              </div>
-            )}
-          </div>
-
-          <LiveblocksPlugin>
-            <Version />
             <FloatingComposer className="w-[350px]" />
 
             {/* Threads List */}
             <Suspense fallback={<Loading />}>
-              <div className="text-sm relative w-[350px] h-full overflow-auto border-l border-border/80">
-                <Versions />
-              </div>
               <Threads />
             </Suspense>
-          </LiveblocksPlugin>
-        </div>
+          </div>
+        </LiveblocksPlugin>
       </LexicalComposer>
     </div>
   );
